@@ -19,6 +19,8 @@
 - Footer shows local storage usage with downloadable report link
 - Spot price manual input closes when card is collapsed to avoid stuck dropdowns
 - Storage usage counter refreshes after imports and API syncs
+- Inventory table now defaults to showing 10 rows per page
+- Storage report export omits API keys for security
 
 ### Version 3.2.06rc – Auto Spot Price Sync (2025-08-09)
 - Automatically refreshes spot prices at startup when API keys exist and the cache is expired

@@ -490,10 +490,29 @@ const updateStorageStats = async () => {
  */
 const downloadStorageReport = () => {
   const report = {};
+
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);
+
+    // Skip or sanitize sensitive data such as API keys
+    if (key === API_KEY_STORAGE_KEY) {
+      try {
+        const config = JSON.parse(localStorage.getItem(key) || "{}");
+        if (config?.keys) {
+          // Remove any stored API keys before exporting
+          report[key] = { ...config, keys: {} };
+        } else {
+          report[key] = config;
+        }
+      } catch (err) {
+        console.warn("Could not sanitize API config for report", err);
+      }
+      continue;
+    }
+
     report[key] = localStorage.getItem(key);
   }
+
   downloadFile(
     "storage-report.json",
     JSON.stringify(report, null, 2),
