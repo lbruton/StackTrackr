@@ -382,13 +382,16 @@
        ============================================================================= -->
       <section class="table-section">
         <div class="table-controls">
-          <a href="#" id="changeLogLink" class="change-log-link">Change Log</a>
+          <button id="changeLogBtn" class="btn">Change Log</button>
+          <span class="table-disclaimer"
+            >All data is stored locally. Back up often.</span
+          >
           <div class="items-per-page">
-            <span>Items:</span>
+            <span class="items-label">Items:</span>
             <select class="pagination-select" id="itemsPerPage">
-              <option value="10">10</option>
+              <option selected value="10">10</option>
               <option value="15">15</option>
-              <option selected value="25">25</option>
+              <option value="25">25</option>
               <option value="50">50</option>
               <option value="100">100</option>
             </select>
@@ -1082,14 +1085,18 @@
         >GPL-3.0</a
       >.
       <br />
-      Report issues or bugs here:
-      <a
-        href="https://github.com/lbruton/StackTrackr/issues"
-        target="_blank"
-        rel="noopener"
-        >https://github.com/lbruton/StackTrackr/issues</a
-      >
-    </footer>
+  Report issues or bugs here:
+  <a
+    href="https://github.com/lbruton/StackTrackr/issues"
+    target="_blank"
+    rel="noopener"
+    >https://github.com/lbruton/StackTrackr/issues</a
+  >
+  <div class="storage-line">
+    Storage: <span id="storageUsage"></span>
+    <a href="#" id="storageReportLink">Download storage report</a>
+  </div>
+</footer>
     <!-- =============================================================================
        ABOUT & DISCLAIMER MODAL
        Comprehensive application information and disclaimer modal similar to the

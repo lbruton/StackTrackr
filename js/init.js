@@ -154,10 +154,12 @@ document.addEventListener("DOMContentLoaded", () => {
     elements.lastPage = safeGetElement("lastPage");
     elements.pageNumbers = safeGetElement("pageNumbers");
 
-    elements.changeLogLink = safeGetElement("changeLogLink");
-    elements.changeLogModal = safeGetElement("changeLogModal");
-    elements.changeLogCloseBtn = safeGetElement("changeLogCloseBtn");
-    elements.changeLogTable = safeGetElement("changeLogTable");
+      elements.changeLogBtn = safeGetElement("changeLogBtn");
+      elements.changeLogModal = safeGetElement("changeLogModal");
+      elements.changeLogCloseBtn = safeGetElement("changeLogCloseBtn");
+      elements.changeLogTable = safeGetElement("changeLogTable");
+      elements.storageUsage = safeGetElement("storageUsage");
+      elements.storageReportLink = safeGetElement("storageReportLink");
 
     // Search elements
     debugLog("Phase 6: Initializing search elements...");
@@ -295,9 +297,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Phase 13: Initial Rendering
     debugLog("Phase 13: Rendering initial display...");
-    renderTable();
-    fetchSpotPrice();
-    updateSyncButtonStates();
+      renderTable();
+      fetchSpotPrice();
+      updateSyncButtonStates();
+      if (typeof updateStorageStats === "function") {
+        updateStorageStats();
+      }
 
     // Automatically sync prices if cache is stale and API keys are available
     if (typeof autoSyncSpotPrices === "function") {

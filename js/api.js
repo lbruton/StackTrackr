@@ -899,6 +899,9 @@ const syncSpotPricesFromApi = async (
 
       // Update summary calculations
       updateSummary();
+      if (typeof updateStorageStats === "function") {
+        updateStorageStats();
+      }
 
       setProviderStatus(apiConfig.provider, "connected");
 

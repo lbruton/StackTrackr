@@ -84,7 +84,9 @@ const getLastUpdateTime = (metalName) => {
   if (!spotHistory || spotHistory.length === 0) return null;
 
   // Find the most recent entry for this metal
-  const metalEntries = spotHistory.filter((entry) => entry.metal === metalName);
+  const metalEntries = spotHistory.filter(
+    (entry) => entry.metal === metalName && entry.source === "api",
+  );
   if (metalEntries.length === 0) return null;
 
   const latestEntry = metalEntries[metalEntries.length - 1];
@@ -438,9 +440,9 @@ const getUserFriendlyMessage = (errorMessage) => {
  * @param {string} content - Content of the file
  * @param {string} mimeType - MIME type of the file (default: text/plain)
  */
-const downloadFile = (filename, content, mimeType = "text/plain") => {
-  try {
-    const blob = new Blob([content], { type: mimeType });
+  const downloadFile = (filename, content, mimeType = "text/plain") => {
+    try {
+      const blob = new Blob([content], { type: mimeType });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
 
@@ -458,6 +460,65 @@ const downloadFile = (filename, content, mimeType = "text/plain") => {
     console.error("Error downloading file:", error);
     handleError(error, "file download");
   }
+  };
+
+  // =============================================================================
+
+/**
+ * Updates footer with localStorage usage statistics
+ */
+const updateStorageStats = async () => {
+  try {
+    if (navigator?.storage?.estimate) {
+      const { usage, quota } = await navigator.storage.estimate();
+      const used = usage / 1024;
+      const total = quota / 1024;
+      const el = document.getElementById("storageUsage");
+      if (el) {
+        el.textContent = `${used.toFixed(1)} KB / ${total.toFixed(1)} KB`;
+      }
+    }
+  } catch (err) {
+    const el = document.getElementById("storageUsage");
+    if (el) el.textContent = "Storage info unavailable";
+    console.warn("Could not estimate storage", err);
+  }
 };
 
-// =============================================================================
+/**
+ * Downloads a report of all localStorage data
+ */
+const downloadStorageReport = () => {
+  const report = {};
+
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+
+    // Skip or sanitize sensitive data such as API keys
+    if (key === API_KEY_STORAGE_KEY) {
+      try {
+        const config = JSON.parse(localStorage.getItem(key) || "{}");
+        if (config?.keys) {
+          // Remove any stored API keys before exporting
+          report[key] = { ...config, keys: {} };
+        } else {
+          report[key] = config;
+        }
+      } catch (err) {
+        console.warn("Could not sanitize API config for report", err);
+      }
+      continue;
+    }
+
+    report[key] = localStorage.getItem(key);
+  }
+
+  downloadFile(
+    "storage-report.json",
+    JSON.stringify(report, null, 2),
+    "application/json",
+  );
+};
+
+window.updateStorageStats = updateStorageStats;
+window.downloadStorageReport = downloadStorageReport;

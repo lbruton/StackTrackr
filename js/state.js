@@ -12,7 +12,7 @@ let notesIndex = null;
 
 /** @type {Object} Pagination state */
 let currentPage = 1; // Current page number (1-based)
-let itemsPerPage = 25; // Number of items to display per page
+let itemsPerPage = 10; // Number of items to display per page
 
 /** @type {string} Current search query */
 let searchQuery = "";
@@ -120,10 +120,12 @@ const elements = {
   pageNumbers: null,
 
   // Change log elements
-  changeLogLink: null,
+  changeLogBtn: null,
   changeLogModal: null,
   changeLogCloseBtn: null,
   changeLogTable: null,
+  storageUsage: null,
+  storageReportLink: null,
 
   // Search elements
   searchInput: null,

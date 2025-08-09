@@ -586,19 +586,33 @@ const setupEventListeners = () => {
       );
     }
 
-    if (elements.changeLogLink) {
-      safeAttachListener(
-        elements.changeLogLink,
-        "click",
-        (e) => {
-          e.preventDefault();
-          renderChangeLog();
-          if (elements.changeLogModal)
-            elements.changeLogModal.style.display = "flex";
-        },
-        "Change log link",
-      );
-    }
+      if (elements.changeLogBtn) {
+        safeAttachListener(
+          elements.changeLogBtn,
+          "click",
+          (e) => {
+            e.preventDefault();
+            renderChangeLog();
+            if (elements.changeLogModal)
+              elements.changeLogModal.style.display = "flex";
+          },
+          "Change log button",
+        );
+      }
+
+      if (elements.storageReportLink) {
+        safeAttachListener(
+          elements.storageReportLink,
+          "click",
+          (e) => {
+            e.preventDefault();
+            if (typeof downloadStorageReport === "function") {
+              downloadStorageReport();
+            }
+          },
+          "Storage report link",
+        );
+      }
 
     if (elements.changeLogCloseBtn) {
       safeAttachListener(
@@ -619,9 +633,33 @@ const setupEventListeners = () => {
       const metalName = metalConfig.name;
 
       // Main spot price action buttons
-      const addBtn = document.getElementById(`addBtn${metalName}`);
-      const resetBtn = document.getElementById(`resetBtn${metalName}`);
-      const syncBtn = document.getElementById(`syncBtn${metalName}`);
+        const addBtn = document.getElementById(`addBtn${metalName}`);
+        const resetBtn = document.getElementById(`resetBtn${metalName}`);
+        const syncBtn = document.getElementById(`syncBtn${metalName}`);
+        const spotCard = document.querySelector(
+          `.spot-input.${metalKey} .spot-card`,
+        );
+        const actions = document.querySelector(
+          `.spot-input.${metalKey} .spot-actions`,
+        );
+
+        if (spotCard && actions) {
+          safeAttachListener(
+            spotCard,
+            "click",
+            () => {
+              const visible = actions.style.display === "flex";
+              document
+                .querySelectorAll(".spot-actions")
+                .forEach((el) => (el.style.display = "none"));
+              document
+                .querySelectorAll(".manual-input")
+                .forEach((el) => (el.style.display = "none"));
+              actions.style.display = visible ? "none" : "flex";
+            },
+            `${metalName} spot card`,
+          );
+        }
 
       // Manual input buttons
       const saveBtn = elements.saveSpotBtn[metalKey];
