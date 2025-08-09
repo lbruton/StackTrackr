@@ -652,6 +652,9 @@ const setupEventListeners = () => {
               document
                 .querySelectorAll(".spot-actions")
                 .forEach((el) => (el.style.display = "none"));
+              document
+                .querySelectorAll(".manual-input")
+                .forEach((el) => (el.style.display = "none"));
               actions.style.display = visible ? "none" : "flex";
             },
             `${metalName} spot card`,
