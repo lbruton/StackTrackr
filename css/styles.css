@@ -122,9 +122,10 @@ html {
 }
 
 body {
-  max-width: none;
-  min-width: 1800px;
-  margin: var(--spacing-lg) 10%;
+
+  width: 1024px;
+  margin: var(--spacing-lg) auto;
+
   padding: var(--spacing);
   transition: var(--transition);
 }
@@ -2358,7 +2359,7 @@ input:disabled + .slider {
 
 @media (max-width: 768px) {
   body {
-    max-width: 95vw;
+    width: 1024px;
     margin: var(--spacing) auto;
     padding: var(--spacing-sm);
   }
