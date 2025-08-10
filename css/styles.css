@@ -122,8 +122,10 @@ html {
 }
 
 body {
+
   width: 1024px;
   margin: var(--spacing-lg) auto;
+
   padding: var(--spacing);
   transition: var(--transition);
 }
