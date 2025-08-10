@@ -122,8 +122,9 @@ html {
 }
 
 body {
-  max-width: 2000px;
-  margin: var(--spacing-lg) auto;
+  max-width: none;
+  min-width: 1200px;
+  margin: var(--spacing-lg) 10%;
   padding: var(--spacing);
   transition: var(--transition);
 }
@@ -216,6 +217,16 @@ section {
 
 .app-footer a {
   color: var(--primary);
+}
+
+.storage-line {
+  margin-top: var(--spacing-sm);
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.storage-line a {
+  margin-left: var(--spacing-sm);
 }
 
 section:hover {
@@ -430,6 +441,7 @@ input[type="submit"] {
   margin-bottom: var(--spacing);
   border: 1px solid var(--border);
   box-shadow: var(--shadow-sm);
+  cursor: pointer;
 }
 
 .spot-card-label {
@@ -457,7 +469,7 @@ input[type="submit"] {
 
 /* Spot Price Action Buttons */
 .spot-actions {
-  display: flex;
+  display: none;
   gap: var(--spacing-sm);
   margin-bottom: var(--spacing);
   justify-content: center;
@@ -1047,7 +1059,7 @@ input[type="submit"] {
 }
 
 #changeLogModal .modal-content {
-  max-width: 800px;
+  max-width: 1200px;
 }
 
 #changeLogModal .modal-header,
@@ -1139,67 +1151,22 @@ input[type="submit"] {
   font-size: 0.9375rem;
 }
 
-.details-btn {
-  background: var(--primary);
-  color: white;
-  width: 100%;
-  margin-top: var(--spacing);
-  font-size: 0.875rem;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.75rem 1.5rem;
-  border: none;
-  border-radius: var(--radius);
-  font-weight: 500;
-  cursor: pointer;
-  transition: var(--transition);
-  position: relative;
-  overflow: hidden;
-  min-height: 2.75rem;
-}
-
-.details-btn:hover {
-  background: var(--primary-hover);
-  transform: translateY(-1px);
-  box-shadow: var(--shadow);
-}
-
-.details-btn:active {
-  transform: translateY(0);
-}
-
-.details-btn::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(255, 255, 255, 0.2),
-    transparent
-  );
-  transition: left 0.5s;
-}
-
-.details-btn:hover::before {
-  left: 100%;
-}
 
 .total-title {
   font-size: 1.0625rem;
   font-weight: 700;
   margin-bottom: var(--spacing);
-  color: var(--text-primary) !important;
+  color: var(--text-primary);
   text-align: center;
   padding-bottom: var(--spacing-sm);
   border-bottom: 4px solid var(--border); /* fallback, will be overridden below */
-  transition:
-    border-color 0.2s,
-    color 0.2s;
+  transition: border-color 0.2s, color 0.2s;
+  cursor: pointer;
+  user-select: none;
+}
+
+.total-title:hover {
+  color: var(--primary);
 }
 
 /* Metal-specific underline accent */
@@ -1872,25 +1839,28 @@ td input:checked + .slider:before {
   }
 }
 
-.details-content {
+.details-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: var(--spacing-xl);
   margin-bottom: var(--spacing-lg);
 }
 
-.details-section {
+.details-panel {
   background: var(--bg-secondary);
   border-radius: var(--radius);
   padding: var(--spacing-lg);
   border: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
 }
 
-.details-section-title {
+.details-panel-title {
   font-size: 1.125rem;
   font-weight: 600;
   color: var(--primary);
-  margin-bottom: var(--spacing);
+  margin: 0;
   text-align: center;
   border-bottom: 1px solid var(--border);
   padding-bottom: var(--spacing-sm);
@@ -1931,45 +1901,6 @@ td input:checked + .slider:before {
 .breakdown-value {
   color: var(--success);
   font-weight: 600;
-}
-
-/* =============================================================================
-   PIE CHART STYLES - Chart.js integration for analytics
-   
-   Provides styling for:
-   - Chart containers with proper aspect ratios
-   - Chart titles and section headers
-   - Responsive chart sizing for all screen sizes
-   - Grid layout for side-by-side chart display
-   - Integration with details modal layout
-   
-   Charts display breakdowns by:
-   - Item type (rounds, bars, coins, etc.)
-   - Purchase location (dealer, online, local, etc.)
-   ============================================================================= */
-
-.charts-section {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--spacing-xl);
-  margin-bottom: var(--spacing-lg);
-}
-
-.chart-container {
-  background: var(--bg-secondary);
-  border-radius: var(--radius);
-  padding: var(--spacing-lg);
-  border: 1px solid var(--border);
-  text-align: center;
-}
-
-.chart-title {
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: var(--primary);
-  margin-bottom: var(--spacing);
-  border-bottom: 1px solid var(--border);
-  padding-bottom: var(--spacing-sm);
 }
 
 .chart-canvas-container {
@@ -2024,24 +1955,31 @@ td input:checked + .slider:before {
   justify-content: flex-end;
   align-items: center;
   gap: var(--spacing-sm);
+  margin-left: auto;
 }
 
 .table-controls {
   display: flex;
-  justify-content: space-between;
   align-items: center;
   margin-bottom: var(--spacing-sm);
+  gap: var(--spacing-lg);
 }
 
-.change-log-link {
-  font-size: 0.9rem;
-  cursor: pointer;
-  color: var(--primary);
-  text-decoration: underline;
+.items-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.table-disclaimer {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-style: italic;
 }
 
 .pagination-select {
   width: 6rem;
+  height: 2.75rem;
 }
 
 .pagination-btn {
@@ -2322,8 +2260,7 @@ input:disabled + .slider {
     max-width: 900px;
   }
 
-  .details-content,
-  .charts-section {
+  .details-grid {
     grid-template-columns: 1fr;
   }
 }
@@ -2403,8 +2340,7 @@ input:disabled + .slider {
     grid-template-columns: 1fr;
   }
 
-  .details-content,
-  .charts-section {
+  .details-grid {
     grid-template-columns: 1fr;
     gap: var(--spacing);
   }

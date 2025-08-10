@@ -1059,6 +1059,9 @@ const importCsv = (file) => {
         inventory = imported;
         saveInventory();
         renderTable();
+        if (typeof updateStorageStats === "function") {
+          updateStorageStats();
+        }
       }
 
         this.value = "";
@@ -1212,6 +1215,9 @@ const importJson = (file) => {
         inventory = imported;
         saveInventory();
         renderTable();
+        if (typeof updateStorageStats === "function") {
+          updateStorageStats();
+        }
       }
     } catch (error) {
       endImportProgress();
@@ -1377,6 +1383,9 @@ const importExcel = (file) => {
         inventory = imported;
         saveInventory();
         renderTable();
+        if (typeof updateStorageStats === "function") {
+          updateStorageStats();
+        }
       }
     } catch (error) {
       endImportProgress();

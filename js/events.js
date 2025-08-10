@@ -237,19 +237,19 @@ const setupEventListeners = () => {
       );
     }
 
-    // Details modal buttons
-    if (elements.detailsButtons && elements.detailsButtons.length) {
-      elements.detailsButtons.forEach((btn) => {
+    // Details modal triggers
+    if (elements.totalTitles && elements.totalTitles.length) {
+      elements.totalTitles.forEach((title) => {
         safeAttachListener(
-          btn,
+          title,
           "click",
           () => {
-            const metal = btn.dataset.metal;
+            const metal = title.dataset.metal;
             if (typeof showDetailsModal === "function") {
               showDetailsModal(metal);
             }
           },
-          `Details button (${btn.dataset.metal})`,
+          `Totals title (${title.dataset.metal})`,
         );
       });
     }
@@ -586,19 +586,33 @@ const setupEventListeners = () => {
       );
     }
 
-    if (elements.changeLogLink) {
-      safeAttachListener(
-        elements.changeLogLink,
-        "click",
-        (e) => {
-          e.preventDefault();
-          renderChangeLog();
-          if (elements.changeLogModal)
-            elements.changeLogModal.style.display = "flex";
-        },
-        "Change log link",
-      );
-    }
+      if (elements.changeLogBtn) {
+        safeAttachListener(
+          elements.changeLogBtn,
+          "click",
+          (e) => {
+            e.preventDefault();
+            renderChangeLog();
+            if (elements.changeLogModal)
+              elements.changeLogModal.style.display = "flex";
+          },
+          "Change log button",
+        );
+      }
+
+      if (elements.storageReportLink) {
+        safeAttachListener(
+          elements.storageReportLink,
+          "click",
+          (e) => {
+            e.preventDefault();
+            if (typeof downloadStorageReport === "function") {
+              downloadStorageReport();
+            }
+          },
+          "Storage report link",
+        );
+      }
 
     if (elements.changeLogCloseBtn) {
       safeAttachListener(
@@ -619,9 +633,33 @@ const setupEventListeners = () => {
       const metalName = metalConfig.name;
 
       // Main spot price action buttons
-      const addBtn = document.getElementById(`addBtn${metalName}`);
-      const resetBtn = document.getElementById(`resetBtn${metalName}`);
-      const syncBtn = document.getElementById(`syncBtn${metalName}`);
+        const addBtn = document.getElementById(`addBtn${metalName}`);
+        const resetBtn = document.getElementById(`resetBtn${metalName}`);
+        const syncBtn = document.getElementById(`syncBtn${metalName}`);
+        const spotCard = document.querySelector(
+          `.spot-input.${metalKey} .spot-card`,
+        );
+        const actions = document.querySelector(
+          `.spot-input.${metalKey} .spot-actions`,
+        );
+
+        if (spotCard && actions) {
+          safeAttachListener(
+            spotCard,
+            "click",
+            () => {
+              const visible = actions.style.display === "flex";
+              document
+                .querySelectorAll(".spot-actions")
+                .forEach((el) => (el.style.display = "none"));
+              document
+                .querySelectorAll(".manual-input")
+                .forEach((el) => (el.style.display = "none"));
+              actions.style.display = visible ? "none" : "flex";
+            },
+            `${metalName} spot card`,
+          );
+        }
 
       // Manual input buttons
       const saveBtn = elements.saveSpotBtn[metalKey];
@@ -1066,37 +1104,6 @@ const setupThemeToggle = () => {
   } catch (error) {
     console.error("❌ Error setting up theme toggle:", error);
   }
-};
-
-/**
- * Sets up event listeners for details buttons (called after totals are rendered)
- */
-const setupDetailsButtons = () => {
-  debugLog("Setting up details buttons...");
-
-  // Re-query details buttons since they're created dynamically
-  const detailsButtons = document.querySelectorAll(".details-btn");
-
-  detailsButtons.forEach((btn) => {
-    safeAttachListener(
-      btn,
-      "click",
-      () => {
-        const metal = btn.dataset.metal;
-        debugLog(`Details button clicked for ${metal}`);
-        if (typeof showDetailsModal === "function") {
-          showDetailsModal(metal);
-        } else {
-          alert(
-            `Details modal for ${metal} would show analytics charts and breakdowns`,
-          );
-        }
-      },
-      `Details button (${btn.dataset.metal})`,
-    );
-  });
-
-  debugLog(`✓ Setup ${detailsButtons.length} details button listeners`);
 };
 
 /**
