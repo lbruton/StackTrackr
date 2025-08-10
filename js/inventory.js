@@ -1102,6 +1102,147 @@ const importCsv = (file) => {
 };
 
 /**
+ * Imports inventory data from a Numista CSV export
+ *
+ * Maps Numista fields to StackTrackr inventory structure:
+ * - N# number → numistaId (hidden)
+ * - Title (+ Year) → name; also stores issuedYear
+ * - Type → mapped via mapNumistaType()
+ * - Weight columns → max value converted from grams to ozt
+ * - Buying price (currency) → price in USD via convertToUsd()
+ * - Storage location / Acquisition place → defaults to "unknown" if blank
+ * - Acquisition date → parsed YYYY-MM-DD or today if blank
+ * - Notes appended with import source reference
+ *
+ * @param {File} file - CSV file from Numista
+ */
+const importNumistaCsv = (file) => {
+  try {
+    Papa.parse(file, {
+      header: true,
+      skipEmptyLines: true,
+      complete: function(results) {
+        const imported = [];
+        const skippedDetails = [];
+        const totalRows = results.data.length;
+        startImportProgress(totalRows);
+        let processed = 0;
+        let importedCount = 0;
+
+        for (const [index, row] of results.data.entries()) {
+          processed++;
+
+          const numistaId = (row['N# number'] || '').toString().trim();
+          const title = (row['Title'] || '').trim();
+          const year = (row['Year'] || '').trim();
+          const name = year.length >= 4 ? `${title} ${year}`.trim() : title;
+          const issuedYear = year.length >= 4 ? year : '';
+          const metal = (row['Metal'] || 'Silver').trim();
+          const qty = parseInt(row['Quantity'] || row['Qty'] || 1, 10);
+
+          const type = mapNumistaType(row['Type'] || '');
+
+          const weightCols = Object.keys(row).filter(k => k.toLowerCase().includes('weight'));
+          let weightGrams = 0;
+          for (const col of weightCols) {
+            const val = parseFloat(String(row[col]).replace(/[^0-9.]/g, ''));
+            if (!isNaN(val)) weightGrams = Math.max(weightGrams, val);
+          }
+          const weight = gramsToOzt(weightGrams);
+
+          const priceKey = Object.keys(row).find(k => k.startsWith('Buying price'));
+          let price = 0;
+          if (priceKey) {
+            const currencyMatch = priceKey.match(/\(([^)]+)\)/);
+            const currency = currencyMatch ? currencyMatch[1] : 'USD';
+            const amount = parseFloat(String(row[priceKey]).replace(/[^0-9.\-]/g, ''));
+            price = convertToUsd(amount, currency);
+          }
+
+          const purchaseLocRaw = row['Acquisition place'];
+          const purchaseLocation = purchaseLocRaw && purchaseLocRaw.trim() ? purchaseLocRaw.trim() : 'unknown';
+          const storageLocRaw = row['Storage location'];
+          const storageLocation = storageLocRaw && storageLocRaw.trim() ? storageLocRaw.trim() : 'unknown';
+
+          const dateStr = row['Acquisition date'] && row['Acquisition date'].trim() ? row['Acquisition date'].trim() : todayStr();
+          const date = parseDate(dateStr);
+
+          const baseNote = (row['Note'] || row['Notes'] || '').trim();
+          const notes = `${baseNote ? baseNote + ' ' : ''}(Imported from Numista.com [${numistaId}])`;
+
+          const isCollectable = false;
+          const spotPriceAtPurchase = spotPrices[metal.toLowerCase()] || 0;
+          const premiumPerOz = weight ? price / weight - spotPriceAtPurchase : 0;
+          const totalPremium = premiumPerOz * qty * weight;
+
+          const itemToValidate = {
+            metal,
+            name,
+            qty,
+            type,
+            weight,
+            price,
+            date,
+            purchaseLocation,
+            storageLocation,
+            notes,
+            spotPriceAtPurchase,
+            premiumPerOz,
+            totalPremium,
+            isCollectable,
+            numistaId,
+            issuedYear
+          };
+
+          const validation = validateInventoryItem(itemToValidate);
+          if (!validation.isValid) {
+            const reason = validation.errors.join(', ');
+            skippedDetails.push(`Row ${index + 2}: ${reason}`);
+            updateImportProgress(processed, importedCount, totalRows);
+            continue;
+          }
+
+          imported.push(itemToValidate);
+          importedCount++;
+          updateImportProgress(processed, importedCount, totalRows);
+        }
+
+        for (const err of results.errors) {
+          skippedDetails.push(`Row ${err.row + 1}: ${err.message}`);
+        }
+
+        endImportProgress();
+
+        if (skippedDetails.length > 0) {
+          alert('Skipped entries:\n' + skippedDetails.join('\n'));
+        }
+
+        if (imported.length === 0) return alert('No valid items to import.');
+
+        let msg = 'Replace current inventory with imported file?';
+        if (skippedDetails.length > 0) msg += `\n(${skippedDetails.length} rows skipped)`;
+
+        if (confirm(msg)) {
+          inventory = imported;
+          saveInventory();
+          renderTable();
+          if (typeof updateStorageStats === 'function') {
+            updateStorageStats();
+          }
+        }
+      },
+      error: function(error) {
+        endImportProgress();
+        handleError(error, 'Numista CSV import');
+      }
+    });
+  } catch (error) {
+    endImportProgress();
+    handleError(error, 'Numista CSV import initialization');
+  }
+};
+
+/**
  * Exports current inventory to CSV format
  */
 const exportCsv = () => {
