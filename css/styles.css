@@ -1377,6 +1377,10 @@ td {
   vertical-align: middle;
 }
 
+[data-column].hidden {
+  display: none;
+}
+
 tr:nth-child(even) {
   background: var(--bg-secondary);
 }
@@ -2562,6 +2566,11 @@ input:disabled + .slider {
   }
   td .action-btn {
     width: 4rem;
+  }
+
+  .pagination-btn {
+    padding: 0.25rem 0.4rem;
+    font-size: 0.7rem;
   }
 }
 

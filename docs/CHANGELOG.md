@@ -13,6 +13,7 @@
 - Added archived footer link back to root and updated workflow checklist
 - Clarified BRANCH.RELEASE.PATCH.state version scheme
 - Documented pre-release state codes and branching policy
+- Improved mobile usability with responsive column visibility and pagination sizing
 
 ### Version 3.03.01a – Comprehensive Storage Report System (2025-08-10)
 - **Enhanced Storage Reports**: Redesigned storage report from basic JSON export to comprehensive HTML reporting system
