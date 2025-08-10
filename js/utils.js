@@ -589,7 +589,6 @@ const openStorageReportPopup = () => {
  */
 const generateStorageReportHTML = () => {
   const reportData = analyzeStorageData();
-  const topItems = reportData.items.slice(0, 5);
   const timestamp = new Date().toLocaleString();
   const currentTheme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
   
@@ -651,13 +650,15 @@ const generateStorageReportHTML = () => {
                 </div>
                 <div class="chart-legend">
                     <h3>Click on chart or items below for details</h3>
-                    ${topItems.map((item, index) => `
-                        <div class="legend-item" onclick="showItemDetail('${item.key}')" data-index="${index}">
-                            <span class="legend-color" style="background-color: ${getChartColor(index)}"></span>
-                            <span class="legend-label">${getStorageItemDisplayName(item.key)}</span>
-                            <span class="legend-value">${item.size.toFixed(1)} KB (${item.percentage.toFixed(1)}%)</span>
-                        </div>
-                    `).join('')}
+                    <div class="legend-items">
+                        ${reportData.items.map((item, index) => `
+                            <div class="legend-item" onclick="showItemDetail('${item.key}')" data-index="${index}">
+                                <span class="legend-color" style="background-color: ${getChartColor(index)}"></span>
+                                <span class="legend-label">${getStorageItemDisplayName(item.key)}</span>
+                                <span class="legend-value">${item.size.toFixed(1)} KB (${item.percentage.toFixed(1)}%)</span>
+                            </div>
+                        `).join('')}
+                    </div>
                 </div>
             </div>
         </section>
@@ -1411,7 +1412,7 @@ const getStorageReportCSS = () => {
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: 2rem;
-        align-items: start;
+        align-items: stretch;
     }
     
     @media (max-width: 768px) {
@@ -1433,6 +1434,14 @@ const getStorageReportCSS = () => {
         border: 1px solid var(--border);
         border-radius: 0.5rem;
         padding: 1rem;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+    }
+
+    .legend-items {
+        overflow-y: auto;
+        flex: 1;
     }
     
     .chart-legend h3 {
@@ -1882,13 +1891,11 @@ const getStorageReportJS = () => {
             '#fd7e14', '#20c997', '#e83e8c', '#6c757d', '#17a2b8'
         ];
 
-        const topItems = reportData.items.slice(0, 5);
-
         const data = {
-            labels: topItems.map(item => getStorageItemDisplayName(item.key)),
+            labels: reportData.items.map(item => getStorageItemDisplayName(item.key)),
             datasets: [{
-                data: topItems.map(item => item.size),
-                backgroundColor: colors.slice(0, topItems.length),
+                data: reportData.items.map(item => item.size),
+                backgroundColor: reportData.items.map((_, index) => colors[index % colors.length]),
                 borderColor: isDark ? '#404040' : '#ffffff',
                 borderWidth: 2,
                 hoverBorderWidth: 3,
@@ -1911,7 +1918,7 @@ const getStorageReportJS = () => {
                     borderWidth: 1,
                     callbacks: {
                         label: (context) => {
-                    const item = topItems[context.dataIndex];
+                    const item = reportData.items[context.dataIndex];
                             return [
                                 \`\${context.label}: \${item.size.toFixed(2)} KB\`,
                                 \`\${item.percentage.toFixed(1)}% of total\`,
@@ -1924,7 +1931,7 @@ const getStorageReportJS = () => {
             onClick: (event, elements) => {
                 if (elements.length > 0) {
                     const index = elements[0].index;
-                    showItemDetail(topItems[index].key);
+                    showItemDetail(reportData.items[index].key);
                 }
             },
             animation: {
