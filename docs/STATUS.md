@@ -130,7 +130,7 @@ If continuing development in a new chat session:
 8. **Key Files**: Focus on `inventory.js`, `events.js`, and `state.js` for major modifications
 9. **Testing**: Use `sample.csv` for import testing (includes notes examples)
 10. **Version Updates**: Only update `APP_VERSION` in `constants.js` - propagates automatically
-11. **Timestamp Display**: Two-line source + last sync via `getLastUpdateTime()` utility function
+11. **Timestamp Display**: Two-line source with last sync or time entered via `getLastUpdateTime()` utility function
 
 ## 📁 Project Structure
 
