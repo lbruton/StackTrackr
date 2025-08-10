@@ -7,8 +7,8 @@ The StackTrackr now uses a dynamic version management system that automatically 
 ## How It Works
 
 ### Single Source of Truth
-- Version is defined once in `js/constants.js` as `APP_VERSION = '3.03.01a'`
-- This is the ONLY place you need to update the version number
+- Version is defined once in `js/constants.js` as `APP_VERSION = '3.03.02a'`
+  - This is the ONLY place you need to update the version number
 
 ### Automatic Propagation
 - **index.html**: JavaScript automatically updates the page title and heading
@@ -27,14 +27,14 @@ To release a new version:
 1. **Update ONLY the constants file:**
    ```javascript
    // In js/constants.js
-   const APP_VERSION = '3.03.01a';  // Change this line only
+   const APP_VERSION = '3.03.02a';  // Change this line only
    ```
 
 2. **All these will automatically update:**
-   - Page title: "StackTrackr v3.03.01a"
-   - Page heading: "StackTrackr v3.03.01a"
-   - Browser tab title: "StackTrackr v3.03.01a"
-   - App header: "StackTrackr v3.03.01a"
+   - Page title: "StackTrackr v3.03.02a"
+   - Page heading: "StackTrackr v3.03.02a"
+   - Browser tab title: "StackTrackr v3.03.02a"
+   - App header: "StackTrackr v3.03.02a"
 
 3. **Update changelog:** Add entry to `/docs/CHANGELOG.md` for documentation
 
@@ -57,35 +57,36 @@ appHeader.textContent = getAppTitle();
 - **Future-proof** - any new features can easily access current version
 
 ## Version Format
-Use semantic versioning: `MAJOR.MINOR.PATCH`
-- **MAJOR**: Breaking changes or major new features
-- **MINOR**: New features that are backwards compatible
-- **PATCH**: Bug fixes and small improvements
+StackTrackr versions follow the `BRANCH.RELEASE.PATCH.state` pattern:
 
-### Suffix Conventions
-Append letters to indicate pre-release stages:
-- `a` for alpha versions
-- `b` for beta releases
-- `rc` for release candidates
-- no suffix indicates a stable release
+- **BRANCH** – Major development branch
+- **RELEASE** – Two-digit feature release number
+- **PATCH** – Two-digit patch number for fixes
+- **state** – Optional pre-release code
+  - `a` = alpha
+  - `b` = beta
+  - `rc` = release candidate
+  - *(omit for stable builds)*
 
-### Numbering Guidelines
-- **Major**: 1-x
-- **Minor**: 1-9
-- **Patch**: 1-x (aim for fewer than 100 patches before incrementing the minor version)
+Example: `3.03.02a` → branch 3, release 03, patch 02, alpha build
+
+### Branching Policy
+- Each major **BRANCH** is developed on its own long-lived branch
+- New **RELEASE** and **PATCH** updates occur within that branch
+- Stable releases drop the state code when merged into the main line
 
 ## Example Usage in Code
 ```javascript
 // Get just the version number
-const version = APP_VERSION; // "3.03.01a"
+const version = APP_VERSION; // "3.03.02a"
 
 // Get formatted version string
-const versionString = getVersionString(); // "v3.03.01a"
-const customVersion = getVersionString('version '); // "version 3.03.01a"
+const versionString = getVersionString(); // "v3.03.02a"
+const customVersion = getVersionString('version '); // "version 3.03.02a"
 
 // Get full app title
-const title = getAppTitle(); // "StackTrackr v3.03.01a"
-const customTitle = getAppTitle('My Custom Tool'); // "My Custom Tool v3.03.01a"
+const title = getAppTitle(); // "StackTrackr v3.03.02a"
+const customTitle = getAppTitle('My Custom Tool'); // "My Custom Tool v3.03.02a"
 ```
 
 This system ensures version consistency and makes maintenance much easier!
