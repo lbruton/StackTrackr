@@ -220,13 +220,45 @@ section {
 }
 
 .storage-line {
-  margin-top: var(--spacing-sm);
+  margin-bottom: var(--spacing-sm);
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.footer-meta {
   font-size: 0.8rem;
   color: var(--text-secondary);
 }
 
 .storage-line a {
   margin-left: var(--spacing-sm);
+}
+
+.storage-line progress {
+  margin-left: var(--spacing-sm);
+  vertical-align: middle;
+  width: 150px;
+  height: 0.75rem;
+  appearance: none;
+  -webkit-appearance: none;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background-color: var(--bg-tertiary);
+}
+
+.storage-line progress::-webkit-progress-bar {
+  background-color: var(--bg-tertiary);
+  border-radius: var(--radius);
+}
+
+.storage-line progress::-webkit-progress-value {
+  background-color: var(--primary);
+  border-radius: var(--radius);
+}
+
+.storage-line progress::-moz-progress-bar {
+  background-color: var(--primary);
+  border-radius: var(--radius);
 }
 
 section:hover {
@@ -844,6 +876,20 @@ input[type="submit"] {
   flex-direction: column;
 }
 
+/* Storage report options modal */
+#storageOptionsModal .modal-content {
+  max-width: 400px;
+  text-align: center;
+}
+#storageOptionsModal .options-buttons {
+  display: flex;
+  gap: var(--spacing);
+  justify-content: center;
+}
+#storageOptionsModal .options-buttons .btn {
+  flex: 1;
+}
+
 #apiHistoryModal .modal-header {
   background: linear-gradient(135deg, var(--primary), var(--primary-hover));
   color: white;
@@ -1009,6 +1055,16 @@ input[type="submit"] {
 #apiModal .modal-body::-webkit-scrollbar-thumb:hover,
 #filesModal .modal-body::-webkit-scrollbar-thumb:hover {
   background-color: var(--primary-hover);
+}
+
+#filesModal .modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing);
+}
+
+#filesModal .settings-section {
+  margin-top: 0;
 }
 
 /* Cloud Sync modal layout */
