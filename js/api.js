@@ -19,10 +19,13 @@ const renderApiStatusSummary = () => {
       const statusText =
         status === "connected"
           ? "Connected"
-          : status === "error"
-            ? "Error"
-            : "Disconnected";
-      return `<span class="status-item ${status}">${name}: ${statusText}</span>`;
+          : status === "cached"
+            ? "Connected (cached)"
+            : status === "error"
+              ? "Error"
+              : "Disconnected";
+      const statusClass = status === "cached" ? "connected" : status;
+      return `<span class="status-item ${statusClass}">${name}: ${statusText}</span>`;
     })
     .join("");
   container.innerHTML = html;
@@ -200,8 +203,8 @@ const getCacheDurationMs = () => {
 /**
  * Sets connection status for a provider in the settings UI
  * @param {string} provider
- * @param {"connected"|"disconnected"|"error"} status
- */
+ * @param {"connected"|"disconnected"|"error"|"cached"} status
+*/
 const setProviderStatus = (provider, status) => {
   providerStatuses[provider] = status;
   renderApiStatusSummary();
@@ -213,16 +216,21 @@ const setProviderStatus = (provider, status) => {
     "status-connected",
     "status-disconnected",
     "status-error",
+    "status-cached",
   );
-  block.classList.add(`status-${status}`);
+  block.classList.add(
+    status === "cached" ? "status-connected" : `status-${status}`,
+  );
   const text = block.querySelector(".status-text");
   if (text) {
     text.textContent =
       status === "connected"
         ? "Connected"
-        : status === "error"
-          ? "Error"
-          : "Disconnected";
+        : status === "cached"
+          ? "Connected (cached)"
+          : status === "error"
+            ? "Error"
+            : "Disconnected";
   }
 };
 
@@ -277,6 +285,38 @@ const updateProviderHistoryTables = () => {
         saveApiConfig(cfg);
       });
     });
+  });
+};
+
+/**
+ * Refreshes provider statuses based on stored keys and cache age
+ */
+const refreshProviderStatuses = () => {
+  const config = loadApiConfig();
+  let cache = null;
+  try {
+    const stored = localStorage.getItem(API_CACHE_KEY);
+    cache = stored ? JSON.parse(stored) : null;
+  } catch (err) {
+    console.error("Error reading API cache for status check:", err);
+  }
+  const now = Date.now();
+  const duration = getCacheDurationMs();
+  Object.keys(API_PROVIDERS).forEach((prov) => {
+    if (config.keys[prov]) {
+      if (cache && cache.provider === prov && cache.timestamp) {
+        const age = now - cache.timestamp;
+        if (age <= duration) {
+          setProviderStatus(prov, "connected");
+        } else {
+          setProviderStatus(prov, "cached");
+        }
+      } else {
+        setProviderStatus(prov, "connected");
+      }
+    } else {
+      setProviderStatus(prov, "disconnected");
+    }
   });
 };
 
@@ -475,6 +515,7 @@ const hideApiHistoryModal = () => {
 const showApiProvidersModal = () => {
   const modal = document.getElementById("apiProvidersModal");
   if (modal) {
+    refreshProviderStatuses();
     updateProviderHistoryTables();
     modal.style.display = "flex";
   }

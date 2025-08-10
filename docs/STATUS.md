@@ -20,7 +20,7 @@ The tool features a **modular JavaScript architecture** with separate files for 
 
 ## ✨ Latest Changes (3.2.x Series)
 
-- **v3.2.07rc - Spot Timestamp Source Display**: Spot price cards show the API provider or Manual entry and the exact time of the last update
+- **v3.2.07rc - Spot Timestamp Source Display**: Spot price cards show the API provider or Manual entry and the exact time of the last update. API provider modal checks stored keys and cache age to display "Connected" or "Connected (cached)" statuses and its sync buttons read "Save and Test".
 - **v3.2.06rc - UI Refinements & Auto Sync**: Modal-based item entry with stacked filters, pagination polish with repositioned items-per-page selector, collectable status button, totals card label updates, improved About modal contrast, and automatic spot price refresh at startup
 - **v3.2.05rc - Splash Opt-Out & Branding**: Disclaimer modal can be hidden permanently, header adapts to hosting domain with updated subtitle, and each API provider stores its own key
 - **v3.2.03rc - Cache Flush Confirmation**: Added warning before clearing API cache and history
