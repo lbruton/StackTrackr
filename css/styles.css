@@ -861,7 +861,7 @@ input[type="submit"] {
 
 #apiHistoryModal .modal-body {
   padding: var(--spacing-xl);
-  overflow-y: auto;
+  overflow: auto;
   flex: 1;
 }
 
@@ -896,7 +896,8 @@ input[type="submit"] {
 }
 
 #apiHistoryTable {
-  width: 100%;
+  width: max-content;
+  min-width: 100%;
   flex: 1;
   overflow-y: auto;
 }
@@ -1099,8 +1100,13 @@ input[type="submit"] {
 #changeLogModal .modal-body,
 #detailsModal .modal-body {
   padding: var(--spacing-xl);
-  overflow-y: auto;
+  overflow: auto;
   flex: 1;
+}
+
+#changeLogTable {
+  width: max-content;
+  min-width: 100%;
 }
 
 #detailsModal {
