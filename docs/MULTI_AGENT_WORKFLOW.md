@@ -85,6 +85,13 @@ Before starting ANY subtask, read these files:
 - Add any new configuration to constants.js
 - Update planning notes if you discover issues
 - Document any architectural decisions
+- For every release, update:
+  - `docs/FUNCTIONSTABLE.md`
+  - `docs/CHANGELOG.md`
+  - `docs/IMPLEMENTATION_SUMMARY.md`
+  - `docs/ROADMAP.md`
+  - `docs/STATUS.md`
+  - `docs/STRUCTURE.md`
 
 ### **File Modification Guidelines**
 
@@ -288,6 +295,14 @@ Before starting ANY subtask, read these files:
 
 ### **Quality Checklist:**
 ✅ Functional ✅ Integration ✅ Code Quality ✅ Browser Testing ✅ Documentation
+
+### Release Documentation Checklist
+- [ ] Update `docs/FUNCTIONSTABLE.md`
+- [ ] Update `docs/CHANGELOG.md`
+- [ ] Update `docs/IMPLEMENTATION_SUMMARY.md`
+- [ ] Update `docs/ROADMAP.md`
+- [ ] Update `docs/STATUS.md`
+- [ ] Update `docs/STRUCTURE.md`
 
 ---
 
