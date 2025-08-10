@@ -14,8 +14,6 @@
 - Inventory change log tracks last 25 edits and displays the 10 most recent in a modal
 - Change Log and metal totals details modals now share the site's standard header style
 - Quantity column repositioned after item name for improved readability
-- Totals card titles now open analytics modal, replacing View Details buttons
-- Details modal reorganized into panel layout for consistent styling
 - Change Log modal widened and buttonized; items-per-page controls restyled with disclaimer and fixed layout
 - Spot price action buttons reveal on card click and timestamps now reflect only API updates
 - Footer shows local storage usage with downloadable report link
