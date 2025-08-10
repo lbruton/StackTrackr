@@ -7,7 +7,7 @@ The StackTrackr now uses a dynamic version management system that automatically 
 ## How It Works
 
 ### Single Source of Truth
-- Version is defined once in `js/constants.js` as `APP_VERSION = '3.03.03a'`
+- Version is defined once in `js/constants.js` as `APP_VERSION = '3.03.02a'`
   - This is the ONLY place you need to update the version number
 
 ### Automatic Propagation
@@ -27,14 +27,14 @@ To release a new version:
 1. **Update ONLY the constants file:**
    ```javascript
    // In js/constants.js
-   const APP_VERSION = '3.03.03a';  // Change this line only
+   const APP_VERSION = '3.03.02a';  // Change this line only
    ```
 
 2. **All these will automatically update:**
-   - Page title: "StackTrackr v3.03.03a"
-   - Page heading: "StackTrackr v3.03.03a"
-   - Browser tab title: "StackTrackr v3.03.03a"
-   - App header: "StackTrackr v3.03.03a"
+   - Page title: "StackTrackr v3.03.02a"
+   - Page heading: "StackTrackr v3.03.02a"
+   - Browser tab title: "StackTrackr v3.03.02a"
+   - App header: "StackTrackr v3.03.02a"
 
 3. **Update changelog:** Add entry to `/docs/CHANGELOG.md` for documentation
 
@@ -68,7 +68,7 @@ StackTrackr versions follow the `BRANCH.RELEASE.PATCH.state` pattern:
   - `rc` = release candidate
   - *(omit for stable builds)*
 
-Example: `3.03.03a` → branch 3, release 03, patch 02, alpha build
+Example: `3.03.02a` → branch 3, release 03, patch 02, alpha build
 
 ### Branching Policy
 - Each major **BRANCH** is developed on its own long-lived branch
@@ -78,15 +78,15 @@ Example: `3.03.03a` → branch 3, release 03, patch 02, alpha build
 ## Example Usage in Code
 ```javascript
 // Get just the version number
-const version = APP_VERSION; // "3.03.03a"
+const version = APP_VERSION; // "3.03.02a"
 
 // Get formatted version string
-const versionString = getVersionString(); // "v3.03.03a"
-const customVersion = getVersionString('version '); // "version 3.03.03a"
+const versionString = getVersionString(); // "v3.03.02a"
+const customVersion = getVersionString('version '); // "version 3.03.02a"
 
 // Get full app title
-const title = getAppTitle(); // "StackTrackr v3.03.03a"
-const customTitle = getAppTitle('My Custom Tool'); // "My Custom Tool v3.03.03a"
+const title = getAppTitle(); // "StackTrackr v3.03.02a"
+const customTitle = getAppTitle('My Custom Tool'); // "My Custom Tool v3.03.02a"
 ```
 
 This system ensures version consistency and makes maintenance much easier!

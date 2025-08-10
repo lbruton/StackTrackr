@@ -8,11 +8,9 @@
 
 ## 📋 Version History
 
-### Version 3.03.03a – Archive Workflow Update (2025-08-10)
+### Version 3.03.02a – Archive Workflow & Versioning Guide (2025-08-10)
 - Archived previous build to `archive/previous`
 - Added archived footer link back to root and updated workflow checklist
-
-### Version 3.03.02a – Versioning Guide Refinement (2025-08-10)
 - Clarified BRANCH.RELEASE.PATCH.state version scheme
 - Documented pre-release state codes and branching policy
 
