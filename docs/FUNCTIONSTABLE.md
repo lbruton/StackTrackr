@@ -101,6 +101,7 @@
 | inventory.js | endImportProgress |  |
 | inventory.js | importCsv | Imports inventory data from CSV file with comprehensive validation and error handling |
 | inventory.js | importNumistaCsv | Imports inventory data from a Numista CSV export |
+| inventory.js | exportNumistaCsv | Exports inventory data to Numista-compatible CSV format |
 | inventory.js | exportCsv | Exports current inventory to CSV format |
 | inventory.js | importJson | Imports inventory data from JSON file |
 | inventory.js | exportJson | Exports current inventory to JSON format |

@@ -899,6 +899,14 @@ const setupEventListeners = () => {
         "PDF export",
       );
     }
+    if (elements.numistaExportBtn) {
+      safeAttachListener(
+        elements.numistaExportBtn,
+        "click",
+        exportNumistaCsv,
+        "Numista CSV export",
+      );
+    }
     if (elements.cloudSyncBtn) {
       safeAttachListener(
         elements.cloudSyncBtn,
