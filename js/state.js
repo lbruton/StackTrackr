@@ -144,9 +144,13 @@ const elements = {
   ackModal: null,
   ackAcceptBtn: null,
 
-  // Settings & API elements
-  settingsBtn: null,
-  settingsModal: null,
+  // Appearance, API & Files elements
+  appearanceBtn: null,
+  apiBtn: null,
+  filesBtn: null,
+  appearanceModal: null,
+  apiModal: null,
+  filesModal: null,
   apiInfoModal: null,
   apiHistoryModal: null,
   apiProvidersModal: null,
