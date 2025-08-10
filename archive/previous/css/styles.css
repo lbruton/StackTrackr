@@ -220,29 +220,13 @@ section {
 }
 
 .storage-line {
-  margin-bottom: var(--spacing-sm);
-  font-size: 0.8rem;
-  color: var(--text-secondary);
-}
-
-.fallback-line {
-  margin-bottom: var(--spacing-sm);
-  font-size: 0.8rem;
-  color: var(--text-secondary);
-}
-
-.footer-meta {
+  margin-top: var(--spacing-sm);
   font-size: 0.8rem;
   color: var(--text-secondary);
 }
 
 .storage-line a {
   margin-left: var(--spacing-sm);
-}
-
-.storage-line progress {
-  margin-left: var(--spacing-sm);
-  vertical-align: middle;
 }
 
 section:hover {

@@ -477,37 +477,22 @@ const getUserFriendlyMessage = (errorMessage) => {
 
 /**
  * Updates footer with localStorage usage statistics
- * and visual usage indicator
  */
-const updateStorageStats = () => {
+const updateStorageStats = async () => {
   try {
-    // 5MB typical localStorage limit expressed in bytes
-    const limit = 5 * 1024 * 1024;
-    let used = 0;
-
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      const value = localStorage.getItem(key);
-      // localStorage stores strings in UTF-16 (~2 bytes per character)
-      used += (key.length + (value ? value.length : 0)) * 2;
-    }
-
-    const usedKB = used / 1024;
-    const limitKB = limit / 1024;
-    const el = document.getElementById("storageUsage");
-    if (el) {
-      el.textContent = `${usedKB.toFixed(1)} KB / ${limitKB.toFixed(1)} KB`;
-    }
-
-    const bar = document.getElementById("storageUsageBar");
-    if (bar) {
-      bar.max = limitKB;
-      bar.value = usedKB;
+    if (navigator?.storage?.estimate) {
+      const { usage, quota } = await navigator.storage.estimate();
+      const used = usage / 1024;
+      const total = quota / 1024;
+      const el = document.getElementById("storageUsage");
+      if (el) {
+        el.textContent = `${used.toFixed(1)} KB / ${total.toFixed(1)} KB`;
+      }
     }
   } catch (err) {
     const el = document.getElementById("storageUsage");
     if (el) el.textContent = "Storage info unavailable";
-    console.warn("Could not calculate storage", err);
+    console.warn("Could not estimate storage", err);
   }
 };
 

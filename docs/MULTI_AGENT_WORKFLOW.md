@@ -36,6 +36,7 @@ Before starting ANY subtask, read these files:
 - `docs/archive/notes/v3.2.0-planning-notes.md` - Technical implementation details
 - `docs/STATUS.md` - Current project status
 - `docs/STRUCTURE.md` - Project architecture and file organization
+- `docs/functionstable.md` - Reference table of all JavaScript functions
 
 ### **Step 2: Choose Your Subtask**
 1. **Review available subtasks** in `docs/ROADMAP.md`
@@ -191,6 +192,7 @@ Before starting ANY subtask, read these files:
 - [ ] Document any findings that affect other subtasks  
 - [ ] Note any changes to original requirements
 - [ ] Update version references if needed
+- [ ] Archive the previous build in `/archive/previous` and verify the footer rollback link
 
 ---
 
@@ -271,9 +273,11 @@ Before starting ANY subtask, read these files:
 ### **Essential Files:**
 - `docs/ROADMAP.md` - Your subtask list
 - `docs/archive/notes/v3.2.0-planning-notes.md` - Implementation details
+- `docs/functionstable.md` - Lookup table for all functions
 - `index.html` - Main application
 - `js/constants.js` - Configuration and version
 - `css/styles.css` - All styling
+- `archive/previous/` - Snapshot of the last stable build for user rollback
 
 ### **Testing Workflow:**
 1. **Unit test** your specific change
