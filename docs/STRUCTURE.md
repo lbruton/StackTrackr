@@ -6,7 +6,8 @@ The repository is organized as follows:
 ├── css/              # Styling for the application
 ├── debug/            # Development artifacts
 ├── docs/             # Project documentation and planning
-│   └── archive/      # Archived notes and historical docs
+│   ├── archive/      # Archived notes and historical docs
+│   └── future/       # Notes for upcoming features and enhancements
 ├── archive/          # Previous build snapshots for rollback
 ├── js/               # Modular JavaScript source files
 ├── index.html        # Main application interface
@@ -20,7 +21,7 @@ The repository is organized as follows:
 
 - **css/** – Contains the global `styles.css` stylesheet.
 - **debug/** – Holds temporary debugging files.
-- **docs/** – Changelogs, workflow notes, roadmap, and other documentation.
+- **docs/** – Changelogs, workflow notes, roadmap, and future planning documentation.
 - **archive/** – Contains the last stable build for users needing a fallback.
 - **js/** – All JavaScript modules powering the application.
 - **index.html** – Entry point and user interface for the tool.
