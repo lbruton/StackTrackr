@@ -21,7 +21,7 @@
 - **Chart Interactivity**: Hover tooltips, legend interactions, and click-to-drill-down functionality
 - **Theme Persistence**: Selected theme preserved in exported HTML reports and ZIP archives
 
-### Version 3.00.01a – Comprehensive Storage Report System (2025-08-10)
+### Version 3.03.01a – Comprehensive Storage Report System (2025-08-10)
 - **Enhanced Storage Reports**: Redesigned storage report from basic JSON export to comprehensive HTML reporting system
   - **Professional HTML Reports**: Clean, print-optimized layout formatted for letter paper (8.5" x 11")
   - **Interactive Modal System**: Click any storage item to view detailed breakdown in modal popup

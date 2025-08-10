@@ -1,11 +1,11 @@
-# StackTrackr v3.00.01a
+# StackTrackr v3.03.01a
 
 StackTrackr is a comprehensive client-side web application for tracking precious metal investments. It's designed to help users manage their silver, gold, platinum, and palladium holdings with detailed financial metrics and enhanced tracking capabilities.
 
 The public hosted version of the app is available at [stackrtrackr.com](https://stackrtrackr.com).
 
 ## Recent Updates
-- **v3.00.01a - Comprehensive Storage Report System**: Redesigned storage reports with top-five pie chart visualization and scrollable legend
+- **v3.03.01a - Comprehensive Storage Report System**: Redesigned storage reports with top-five pie chart visualization and scrollable legend
 - **v3.00.00 - Stable Release & Documentation Cleanup**: Finalized documentation and archived planning notes
 - **v3.2.07rc - Spot Timestamp Source Display**: Spot price cards now show the API provider or Manual entry along with the exact timestamp of the last update
 - **v3.2.06rc - UI Refinements & Auto Sync**: Adds modal-based item entry with stacked filters, pagination polish, collectable status button, notes button showing green "Yes" when notes exist, and automatic spot price refresh when cached data expires
@@ -23,7 +23,7 @@ The public hosted version of the app is available at [stackrtrackr.com](https://
 - **v3.1.8 - Backup System**: Full ZIP backup functionality with restoration guides
 - **v3.1.6 - Theme Toggle**: Fixed theme management with system preference detection
 
-## 🆕 What's New in v3.00.01a
+## 🆕 What's New in v3.03.01a
 - Comprehensive storage report system featuring pie chart visualization and scrollable legend
 - Includes spot timestamp source display from v3.2.07rc
 
@@ -256,7 +256,7 @@ This project is designed to be maintainable and extensible. When making changes:
 This project is open source and available for personal use.
 
 ---
-**Current Version**: 3.00.01a
+**Current Version**: 3.03.01a
 **Last Updated**: August 9, 2025
 **Status**: Feature complete release candidate
 
