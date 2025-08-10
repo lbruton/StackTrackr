@@ -110,7 +110,7 @@ const getLastUpdateTime = (metalName) => {
     timeLine = `Last sync ${dateText} ${timeText}`;
   } else if (latestEntry.source === "manual") {
     sourceLine = "Manual";
-    timeLine = "Manual";
+    timeLine = `Time entered ${dateText} ${timeText}`;
   } else if (latestEntry.source === "default") {
     sourceLine = "";
     timeLine = "";

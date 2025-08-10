@@ -10,6 +10,7 @@
 
 ### Version 3.2.07rc – Spot Timestamp Source Display (2025-08-09)
 - Spot price cards now show API provider or Manual entry along with exact timestamp of the last update
+- Manual spot price entries now display the entry time as "Time entered" with date and timestamp
 - Footer dynamically displays the active StackTrackr domain and links to issue reporting
 - Inventory change log records every edit and the modal displays the complete history with scrolling
 - Change Log and metal totals details modals now share the site's standard header style
