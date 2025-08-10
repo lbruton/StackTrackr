@@ -309,6 +309,42 @@ const sanitizeHtml = (text) => {
 };
 
 /**
+ * Converts grams to troy ounces
+ *
+ * @param {number} grams - Weight in grams
+ * @returns {number} Weight in troy ounces
+ */
+const gramsToOzt = (grams) => grams / 31.1034768;
+
+/**
+ * Converts amount from specified currency to USD using static rates
+ *
+ * @param {number} amount - Monetary amount
+ * @param {string} [currency="USD"] - Currency code of amount
+ * @returns {number} Amount converted to USD
+ */
+const convertToUsd = (amount, currency = "USD") => {
+  const rates = { USD: 1, EUR: 1.08, GBP: 1.27, CAD: 0.74 };
+  const rate = rates[currency.toUpperCase()] || 1;
+  return amount * rate;
+};
+
+/**
+ * Maps Numista type strings to internal StackTrackr categories
+ *
+ * @param {string} type - Numista type string
+ * @returns {string} Mapped internal type
+ */
+const mapNumistaType = (type = "") => {
+  const t = type.toLowerCase();
+  if (t.includes("aurum")) return "Aurum";
+  if (t.includes("note")) return "Notes";
+  if (t.includes("bar") || t.includes("round")) return "bars/rounds";
+  if (t.includes("coin")) return "coin";
+  return "other";
+};
+
+/**
  * Saves data to localStorage with JSON serialization
  *
  * @param {string} key - Storage key

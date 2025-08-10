@@ -100,6 +100,7 @@
 | inventory.js | updateImportProgress |  |
 | inventory.js | endImportProgress |  |
 | inventory.js | importCsv | Imports inventory data from CSV file with comprehensive validation and error handling |
+| inventory.js | importNumistaCsv | Imports inventory data from a Numista CSV export |
 | inventory.js | exportCsv | Exports current inventory to CSV format |
 | inventory.js | importJson | Imports inventory data from JSON file |
 | inventory.js | exportJson | Exports current inventory to JSON format |
@@ -137,6 +138,9 @@
 | utils.js | formatDollar | Formats a number as a dollar amount with two decimal places |
 | utils.js | formatLossProfit | Formats a profit/loss value with color coding |
 | utils.js | sanitizeHtml | Sanitizes text input for safe HTML display |
+| utils.js | gramsToOzt | Converts grams to troy ounces |
+| utils.js | convertToUsd | Converts amount from specified currency to USD using static rates |
+| utils.js | mapNumistaType | Maps Numista type strings to internal categories |
 | utils.js | saveData | Saves data to localStorage with JSON serialization |
 | utils.js | loadData | Loads data from localStorage with error handling |
 | utils.js | sortInventoryByDateNewestFirst | Sorts inventory by date (newest first) |
