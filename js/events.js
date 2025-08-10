@@ -159,24 +159,22 @@ const setupEventListeners = () => {
     // CRITICAL HEADER BUTTONS
     debugLog("Setting up header buttons...");
 
-    // Settings Button
-    if (elements.settingsBtn) {
+    // Files Button
+    if (elements.filesBtn) {
       safeAttachListener(
-        elements.settingsBtn,
+        elements.filesBtn,
         "click",
         (e) => {
           e.preventDefault();
-          debugLog("Settings button clicked");
-          if (typeof showSettingsModal === "function") {
-            showSettingsModal();
-          } else {
-            alert("Settings interface");
+          debugLog("Files button clicked");
+          if (typeof showFilesModal === "function") {
+            showFilesModal();
           }
         },
-        "Settings Button",
+        "Files Button",
       );
     } else {
-      console.error("Settings button element not found!");
+      console.error("Files button element not found!");
     }
 
     // About Button
@@ -191,6 +189,36 @@ const setupEventListeners = () => {
           }
         },
         "About Button",
+      );
+    }
+
+    // API Button
+    if (elements.apiBtn) {
+      safeAttachListener(
+        elements.apiBtn,
+        "click",
+        (e) => {
+          e.preventDefault();
+          if (typeof showApiModal === "function") {
+            showApiModal();
+          }
+        },
+        "API Button",
+      );
+    }
+
+    // Appearance Button
+    if (elements.appearanceBtn) {
+      safeAttachListener(
+        elements.appearanceBtn,
+        "click",
+        (e) => {
+          e.preventDefault();
+          if (typeof showAppearanceModal === "function") {
+            showAppearanceModal();
+          }
+        },
+        "Appearance Button",
       );
     }
 
@@ -925,6 +953,61 @@ const setupEventListeners = () => {
       );
     }
 
+    // Files modal close handlers
+    const filesModal = document.getElementById("filesModal");
+    const filesCloseBtn = document.getElementById("filesCloseBtn");
+    if (filesModal) {
+      safeAttachListener(
+        filesModal,
+        "click",
+        (e) => {
+          if (e.target === filesModal && typeof hideFilesModal === "function") {
+            hideFilesModal();
+          }
+        },
+        "Files modal background",
+      );
+    }
+    if (filesCloseBtn) {
+      safeAttachListener(
+        filesCloseBtn,
+        "click",
+        () => {
+          if (typeof hideFilesModal === "function") hideFilesModal();
+        },
+        "Files close button",
+      );
+    }
+
+    // Appearance modal close handlers
+    const appearanceModal = document.getElementById("appearanceModal");
+    const appearanceCloseBtn = document.getElementById("appearanceCloseBtn");
+    if (appearanceModal) {
+      safeAttachListener(
+        appearanceModal,
+        "click",
+        (e) => {
+          if (
+            e.target === appearanceModal &&
+            typeof hideAppearanceModal === "function"
+          ) {
+            hideAppearanceModal();
+          }
+        },
+        "Appearance modal background",
+      );
+    }
+    if (appearanceCloseBtn) {
+      safeAttachListener(
+        appearanceCloseBtn,
+        "click",
+        () => {
+          if (typeof hideAppearanceModal === "function") hideAppearanceModal();
+        },
+        "Appearance close button",
+      );
+    }
+
     // API MODAL EVENT LISTENERS
     debugLog("Setting up API modal listeners...");
     setupApiEvents();
@@ -1114,37 +1197,34 @@ const setupApiEvents = () => {
 
   try {
     let quotaProvider = null;
-    const settingsModal = document.getElementById("settingsModal");
-    const settingsCloseBtn = document.getElementById("settingsCloseBtn");
+    const apiModal = document.getElementById("apiModal");
+    const apiCloseBtn = document.getElementById("apiCloseBtn");
     const infoModal = document.getElementById("apiInfoModal");
     const infoCloseBtn = document.getElementById("apiInfoCloseBtn");
 
-    if (settingsModal) {
+    if (apiModal) {
       safeAttachListener(
-        settingsModal,
+        apiModal,
         "click",
         (e) => {
-          if (
-            e.target === settingsModal &&
-            typeof hideSettingsModal === "function"
-          ) {
-            hideSettingsModal();
+          if (e.target === apiModal && typeof hideApiModal === "function") {
+            hideApiModal();
           }
         },
-        "Settings modal background",
+        "API modal background",
       );
     }
 
-    if (settingsCloseBtn) {
+    if (apiCloseBtn) {
       safeAttachListener(
-        settingsCloseBtn,
+        apiCloseBtn,
         "click",
         () => {
-          if (typeof hideSettingsModal === "function") {
-            hideSettingsModal();
+          if (typeof hideApiModal === "function") {
+            hideApiModal();
           }
         },
-        "Settings close button",
+        "API close button",
       );
     }
 
@@ -1421,7 +1501,9 @@ const setupApiEvents = () => {
       "keydown",
       (e) => {
         if (e.key === "Escape") {
-          const settingsModal = document.getElementById("settingsModal");
+          const filesModal = document.getElementById("filesModal");
+          const apiModal = document.getElementById("apiModal");
+          const appearanceModal = document.getElementById("appearanceModal");
           const infoModal = document.getElementById("apiInfoModal");
           const historyModal = document.getElementById("apiHistoryModal");
           const providersModal = document.getElementById("apiProvidersModal");
@@ -1432,11 +1514,23 @@ const setupApiEvents = () => {
           const changeLogModal = document.getElementById("changeLogModal");
 
           if (
-            settingsModal &&
-            settingsModal.style.display === "flex" &&
-            typeof hideSettingsModal === "function"
+            filesModal &&
+            filesModal.style.display === "flex" &&
+            typeof hideFilesModal === "function"
           ) {
-            hideSettingsModal();
+            hideFilesModal();
+          } else if (
+            apiModal &&
+            apiModal.style.display === "flex" &&
+            typeof hideApiModal === "function"
+          ) {
+            hideApiModal();
+          } else if (
+            appearanceModal &&
+            appearanceModal.style.display === "flex" &&
+            typeof hideAppearanceModal === "function"
+          ) {
+            hideAppearanceModal();
           } else if (
             infoModal &&
             infoModal.style.display === "flex" &&

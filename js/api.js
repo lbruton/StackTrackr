@@ -1172,8 +1172,8 @@ const updateSyncButtonStates = (syncing = false) => {
 /**
  * Shows settings modal and populates API fields
  */
-const showSettingsModal = () => {
-  const modal = document.getElementById("settingsModal");
+const showApiModal = () => {
+  const modal = document.getElementById("apiModal");
   if (!modal) return;
   let currentConfig = loadApiConfig() || {
     provider: "",
@@ -1184,18 +1184,6 @@ const showSettingsModal = () => {
   if (!currentConfig.provider) {
     currentConfig.provider = Object.keys(API_PROVIDERS)[0];
     saveApiConfig(currentConfig);
-  }
-
-  const savedTheme = localStorage.getItem(THEME_KEY);
-  const themeValue = savedTheme ? savedTheme : "system";
-  const themeDisplay = document.getElementById("themeDisplay");
-  if (themeDisplay) {
-    themeDisplay.textContent =
-      themeValue === "dark"
-        ? "Dark Mode"
-        : themeValue === "light"
-          ? "Light Mode"
-          : "System";
   }
 
   Object.keys(API_PROVIDERS).forEach((prov) => {
@@ -1224,10 +1212,48 @@ const showSettingsModal = () => {
 };
 
 /**
- * Hides settings modal
+ * Hides API modal
  */
-const hideSettingsModal = () => {
-  const modal = document.getElementById("settingsModal");
+const hideApiModal = () => {
+  const modal = document.getElementById("apiModal");
+  if (modal) {
+    modal.style.display = "none";
+  }
+};
+
+const showFilesModal = () => {
+  const modal = document.getElementById("filesModal");
+  if (modal) {
+    modal.style.display = "flex";
+  }
+};
+
+const hideFilesModal = () => {
+  const modal = document.getElementById("filesModal");
+  if (modal) {
+    modal.style.display = "none";
+  }
+};
+
+const showAppearanceModal = () => {
+  const modal = document.getElementById("appearanceModal");
+  if (!modal) return;
+  const savedTheme = localStorage.getItem(THEME_KEY);
+  const themeValue = savedTheme ? savedTheme : "system";
+  const themeDisplay = document.getElementById("themeDisplay");
+  if (themeDisplay) {
+    themeDisplay.textContent =
+      themeValue === "dark"
+        ? "Dark Mode"
+        : themeValue === "light"
+          ? "Light Mode"
+          : "System";
+  }
+  modal.style.display = "flex";
+};
+
+const hideAppearanceModal = () => {
+  const modal = document.getElementById("appearanceModal");
   if (modal) {
     modal.style.display = "none";
   }
@@ -1279,8 +1305,12 @@ const hideProviderInfo = () => {
 };
 
 // Make modal controls available globally
-window.showSettingsModal = showSettingsModal;
-window.hideSettingsModal = hideSettingsModal;
+window.showApiModal = showApiModal;
+window.hideApiModal = hideApiModal;
+window.showFilesModal = showFilesModal;
+window.hideFilesModal = hideFilesModal;
+window.showAppearanceModal = showAppearanceModal;
+window.hideAppearanceModal = hideAppearanceModal;
 window.showProviderInfo = showProviderInfo;
 window.hideProviderInfo = hideProviderInfo;
 

@@ -72,13 +72,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Header buttons - CRITICAL
     debugLog("Phase 2: Initializing header buttons...");
-    elements.settingsBtn = safeGetElement("settingsBtn", true);
+    elements.appearanceBtn = safeGetElement("appearanceBtn");
+    elements.apiBtn = safeGetElement("apiBtn");
+    elements.filesBtn = safeGetElement("filesBtn", true);
     elements.aboutBtn = safeGetElement("aboutBtn");
 
     // Check if critical buttons exist
     debugLog(
-      "Settings Button found:",
-      !!document.getElementById("settingsBtn"),
+      "Files Button found:",
+      !!document.getElementById("filesBtn"),
     );
 
     // Import/Export elements
@@ -98,7 +100,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Modal elements
     debugLog("Phase 4: Initializing modal elements...");
-    elements.settingsModal = safeGetElement("settingsModal");
+    elements.appearanceModal = safeGetElement("appearanceModal");
+    elements.apiModal = safeGetElement("apiModal");
+    elements.filesModal = safeGetElement("filesModal");
     elements.apiInfoModal = safeGetElement("apiInfoModal");
     elements.apiHistoryModal = safeGetElement("apiHistoryModal");
     elements.apiProvidersModal = safeGetElement("apiProvidersModal");
@@ -335,7 +339,7 @@ document.addEventListener("DOMContentLoaded", () => {
     debugLog("✓ API configured:", !!apiConfig);
     debugLog("✓ Inventory items:", inventory.length);
     debugLog("✓ Critical elements check:");
-    debugLog("  - Settings button:", !!elements.settingsBtn);
+    debugLog("  - Files button:", !!elements.filesBtn);
     debugLog("  - Inventory form:", !!elements.inventoryForm);
     debugLog("  - Inventory table:", !!elements.inventoryTable);
   } catch (error) {
@@ -358,14 +362,32 @@ document.addEventListener("DOMContentLoaded", () => {
 function setupBasicEventListeners() {
   debugLog("Setting up basic event listeners as fallback...");
 
-  // Settings button
-  const settingsBtn = document.getElementById("settingsBtn");
-  if (settingsBtn) {
-    settingsBtn.onclick = function () {
-      if (typeof showSettingsModal === "function") {
-        showSettingsModal();
-      } else {
-        alert("Settings interface");
+  // Files button
+  const filesBtn = document.getElementById("filesBtn");
+  if (filesBtn) {
+    filesBtn.onclick = function () {
+      if (typeof showFilesModal === "function") {
+        showFilesModal();
+      }
+    };
+  }
+
+  // Appearance button
+  const appearanceBtn = document.getElementById("appearanceBtn");
+  if (appearanceBtn) {
+    appearanceBtn.onclick = function () {
+      if (typeof showAppearanceModal === "function") {
+        showAppearanceModal();
+      }
+    };
+  }
+
+  // API button
+  const apiBtn = document.getElementById("apiBtn");
+  if (apiBtn) {
+    apiBtn.onclick = function () {
+      if (typeof showApiModal === "function") {
+        showApiModal();
       }
     };
   }
