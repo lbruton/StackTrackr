@@ -496,11 +496,11 @@ const storageLocationColors = {};
 
 const getColor = (map, key) => {
   if (!map[key]) {
-    map[key] = (Object.keys(map).length * 137) % 360; // store hue for consistency
+    map[key] = (Object.keys(map).length * 137) % 360; // distribute hues using golden angle
   }
   const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-  const lightness = isDark ? 70 : 40;
-  return `hsl(${map[key]}, 60%, ${lightness}%)`;
+  const lightness = isDark ? 65 : 35;
+  return `hsl(${map[key]}, 70%, ${lightness}%)`;
 };
 
 const filterLink = (field, value, color) => {
@@ -549,7 +549,13 @@ const renderTable = () => {
       `);
     }
 
-    elements.inventoryTable.innerHTML = rows.join('');
+    const visibleCount = endIndex - startIndex;
+    const placeholders = Array.from(
+      { length: Math.max(0, itemsPerPage - visibleCount) },
+      () => '<tr><td class="shrink" colspan="14">&nbsp;</td></tr>'
+    );
+
+    elements.inventoryTable.innerHTML = rows.concat(placeholders).join('');
 
     // Update sort indicators
     const headers = document.querySelectorAll('#inventoryTable th');
@@ -780,7 +786,7 @@ const deleteItem = (idx) => {
     inventory.splice(idx, 1);
     saveInventory();
     renderTable();
-    if (item) logChange(item.name, 'Deleted', '', '');
+    if (item) logChange(item.name, 'Deleted', JSON.stringify(item), '', idx);
   }
 };
 
