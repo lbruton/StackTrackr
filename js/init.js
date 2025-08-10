@@ -175,7 +175,7 @@ document.addEventListener("DOMContentLoaded", () => {
     elements.typeBreakdown = safeGetElement("typeBreakdown");
     elements.locationBreakdown = safeGetElement("locationBreakdown");
     elements.detailsCloseBtn = safeGetElement("detailsCloseBtn");
-    elements.detailsButtons = document.querySelectorAll(".details-btn");
+    elements.totalTitles = document.querySelectorAll(".total-title");
 
     // Chart elements
     debugLog("Phase 8: Initializing chart elements...");

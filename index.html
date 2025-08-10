@@ -461,7 +461,7 @@
          - Purchase price vs current value calculations
          - Average prices (overall, collectable, non-collectable)
          - Premium analysis and profit/loss calculations
-         - "View Details" buttons that open analytics modals with pie charts
+         - Clickable totals titles opening analytics modals with pie charts
 
          All calculations are performed by updateSummary() in inventory.js
          Values are updated automatically when inventory changes
@@ -470,7 +470,7 @@
         <div class="totals">
           <!-- Silver totals card -->
           <div class="total-card silver">
-            <div class="total-title">Silver Totals</div>
+            <div class="total-title" data-metal="Silver">Silver Totals</div>
             <div class="total-group">
               <div class="total-item">
                 <span class="total-label">Total Items:</span>
@@ -521,13 +521,10 @@
                 <span class="total-value" id="lossProfitSilver">$0.00</span>
               </div>
             </div>
-            <button class="details-btn" data-metal="Silver">
-              View Details
-            </button>
           </div>
           <!-- Gold totals card -->
           <div class="total-card gold">
-            <div class="total-title">Gold Totals</div>
+            <div class="total-title" data-metal="Gold">Gold Totals</div>
             <div class="total-group">
               <div class="total-item">
                 <span class="total-label">Total Items:</span>
@@ -578,11 +575,10 @@
                 <span class="total-value" id="lossProfitGold">$0.00</span>
               </div>
             </div>
-            <button class="details-btn" data-metal="Gold">View Details</button>
           </div>
           <!-- Platinum totals card -->
           <div class="total-card platinum">
-            <div class="total-title">Platinum Totals</div>
+            <div class="total-title" data-metal="Platinum">Platinum Totals</div>
             <div class="total-group">
               <div class="total-item">
                 <span class="total-label">Total Items:</span>
@@ -635,13 +631,10 @@
                 <span class="total-value" id="lossProfitPlatinum">$0.00</span>
               </div>
             </div>
-            <button class="details-btn" data-metal="Platinum">
-              View Details
-            </button>
           </div>
           <!-- Palladium totals card -->
           <div class="total-card palladium">
-            <div class="total-title">Palladium Totals</div>
+            <div class="total-title" data-metal="Palladium">Palladium Totals</div>
             <div class="total-group">
               <div class="total-item">
                 <span class="total-label">Total Items:</span>
@@ -698,9 +691,6 @@
                 <span class="total-value" id="lossProfitPalladium">$0.00</span>
               </div>
             </div>
-            <button class="details-btn" data-metal="Palladium">
-              View Details
-            </button>
           </div>
         </div>
       </section>
@@ -1018,7 +1008,7 @@
     <!-- =============================================================================
        DETAILS MODAL WITH PIE CHARTS
        
-       Advanced analytics modal opened from "View Details" buttons on totals cards.
+       Advanced analytics modal opened by clicking totals titles.
        Provides in-depth analysis for selected metal including:
        
        VISUAL ANALYTICS:
@@ -1041,33 +1031,21 @@
           <button aria-label="Close modal" class="modal-close" id="detailsCloseBtn">×</button>
         </div>
         <div class="modal-body">
-          <!-- Pie Charts Section -->
-          <div class="charts-section">
-            <div class="chart-container">
-              <div class="chart-title">Breakdown by Type</div>
+          <div class="details-grid">
+            <div class="details-panel">
+              <h3 class="details-panel-title">Breakdown by Type</h3>
               <div class="chart-canvas-container">
                 <canvas class="chart-canvas" id="typeChart"></canvas>
               </div>
-            </div>
-            <div class="chart-container">
-              <div class="chart-title">Breakdown by Purchase Location</div>
-              <div class="chart-canvas-container">
-                <canvas class="chart-canvas" id="locationChart"></canvas>
-              </div>
-            </div>
-          </div>
-          <!-- Data Tables Section -->
-          <div class="details-content">
-            <!-- Type breakdown column -->
-            <div class="details-section">
-              <div class="details-section-title">Type Details</div>
               <div class="details-breakdown" id="typeBreakdown">
                 <!-- Content will be populated by JavaScript -->
               </div>
             </div>
-            <!-- Location breakdown column -->
-            <div class="details-section">
-              <div class="details-section-title">Location Details</div>
+            <div class="details-panel">
+              <h3 class="details-panel-title">Breakdown by Purchase Location</h3>
+              <div class="chart-canvas-container">
+                <canvas class="chart-canvas" id="locationChart"></canvas>
+              </div>
               <div class="details-breakdown" id="locationBreakdown">
                 <!-- Content will be populated by JavaScript -->
               </div>

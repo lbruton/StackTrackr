@@ -237,19 +237,19 @@ const setupEventListeners = () => {
       );
     }
 
-    // Details modal buttons
-    if (elements.detailsButtons && elements.detailsButtons.length) {
-      elements.detailsButtons.forEach((btn) => {
+    // Details modal triggers
+    if (elements.totalTitles && elements.totalTitles.length) {
+      elements.totalTitles.forEach((title) => {
         safeAttachListener(
-          btn,
+          title,
           "click",
           () => {
-            const metal = btn.dataset.metal;
+            const metal = title.dataset.metal;
             if (typeof showDetailsModal === "function") {
               showDetailsModal(metal);
             }
           },
-          `Details button (${btn.dataset.metal})`,
+          `Totals title (${title.dataset.metal})`,
         );
       });
     }
@@ -1104,37 +1104,6 @@ const setupThemeToggle = () => {
   } catch (error) {
     console.error("❌ Error setting up theme toggle:", error);
   }
-};
-
-/**
- * Sets up event listeners for details buttons (called after totals are rendered)
- */
-const setupDetailsButtons = () => {
-  debugLog("Setting up details buttons...");
-
-  // Re-query details buttons since they're created dynamically
-  const detailsButtons = document.querySelectorAll(".details-btn");
-
-  detailsButtons.forEach((btn) => {
-    safeAttachListener(
-      btn,
-      "click",
-      () => {
-        const metal = btn.dataset.metal;
-        debugLog(`Details button clicked for ${metal}`);
-        if (typeof showDetailsModal === "function") {
-          showDetailsModal(metal);
-        } else {
-          alert(
-            `Details modal for ${metal} would show analytics charts and breakdowns`,
-          );
-        }
-      },
-      `Details button (${btn.dataset.metal})`,
-    );
-  });
-
-  debugLog(`✓ Setup ${detailsButtons.length} details button listeners`);
 };
 
 /**

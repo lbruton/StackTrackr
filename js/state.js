@@ -105,7 +105,7 @@ const elements = {
   typeBreakdown: null,
   locationBreakdown: null,
   detailsCloseBtn: null,
-  detailsButtons: null,
+  totalTitles: null,
 
   // Chart canvas elements
   typeChart: null,

@@ -135,7 +135,7 @@ StackTrackr is a comprehensive client-side web application for tracking precious
 4. **Add Notes**: Include additional details about each item.
 5. **Search & Filter**: Use the search bar to find specific items.
 6. **Export Data**: Download your inventory in multiple formats.
-7. **View Analytics**: Click "View Details" on summary cards for breakdowns.
+7. **View Analytics**: Click a totals title on summary cards for breakdowns.
 
 ## Version Management
 This application uses a dynamic version management system. The version is automatically updated throughout the application from `js/constants.js`. The HTML files now use this dynamic system instead of hardcoded version numbers. See [docs/VERSIONING.md](docs/VERSIONING.md) for details on how to update versions.
