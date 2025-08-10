@@ -77,14 +77,6 @@
         <button class="btn" id="apiBtn" title="API" aria-label="API">
           API 🔌
         </button>
-        <button
-          class="btn"
-          id="appearanceBtn"
-          title="Appearance"
-          aria-label="Appearance"
-        >
-          Appearance 🎨
-        </button>
         <a
           class="btn"
           id="communityBtn"
@@ -104,6 +96,12 @@
         <button class="btn" id="filesBtn" title="Files" aria-label="Files">
           Files 📁
         </button>
+        <button
+          class="btn theme-btn"
+          id="appearanceBtn"
+          title="Theme"
+          aria-label="Theme"
+        ></button>
       </div>
     </div>
     <div class="container">
@@ -1293,35 +1291,6 @@
     </div>
     <!-- =============================================================================
        ============================================================================= -->
-
-    <div class="modal" id="appearanceModal" style="display: none">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h2>Appearance</h2>
-          <button
-            aria-label="Close modal"
-            class="modal-close"
-            id="appearanceCloseBtn"
-          >
-            ×
-          </button>
-        </div>
-        <div class="modal-body">
-          <div class="settings-section">
-            <h3>Appearance</h3>
-            <p class="settings-subtext">Set your default preference.</p>
-            <div class="theme-buttons">
-              <button class="btn theme-btn dark" id="darkModeBtn">Dark Mode</button>
-              <button class="btn theme-btn light" id="lightModeBtn">Light Mode</button>
-              <button class="btn theme-btn system" id="systemModeBtn">
-                Follow System
-              </button>
-              <div class="theme-display" id="themeDisplay"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
 
     <div class="modal" id="apiModal" style="display: none">
       <div class="modal-content">
