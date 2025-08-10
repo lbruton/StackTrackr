@@ -73,8 +73,7 @@ const fetchSpotPrice = () => {
       `spotTimestamp${metalConfig.name}`,
     );
     if (timestampElement) {
-      const lastUpdate = getLastUpdateTime(metalConfig.name);
-      timestampElement.textContent = lastUpdate || "No data";
+      timestampElement.innerHTML = getLastUpdateTime(metalConfig.name);
     }
   });
 
@@ -117,8 +116,7 @@ const updateManualSpot = (metalKey) => {
     `spotTimestamp${metalConfig.name}`,
   );
   if (timestampElement) {
-    timestampElement.textContent =
-      getLastUpdateTime(metalConfig.name) || "No data";
+    timestampElement.innerHTML = getLastUpdateTime(metalConfig.name);
   }
 
   updateSummary();
@@ -177,8 +175,7 @@ const resetSpot = (metalKey) => {
     `spotTimestamp${metalConfig.name}`,
   );
   if (timestampElement) {
-    timestampElement.textContent =
-      getLastUpdateTime(metalConfig.name) || "No data";
+    timestampElement.innerHTML = getLastUpdateTime(metalConfig.name);
   }
 
   // Update summary

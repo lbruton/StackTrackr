@@ -593,7 +593,7 @@ const refreshFromCache = () => {
 
       const ts = document.getElementById(`spotTimestamp${metalConfig.name}`);
       if (ts) {
-        ts.textContent = getLastUpdateTime(metalConfig.name) || "No data";
+        ts.innerHTML = getLastUpdateTime(metalConfig.name);
       }
 
       updatedCount++;
@@ -886,7 +886,7 @@ const syncSpotPricesFromApi = async (
 
         const ts = document.getElementById(`spotTimestamp${metalConfig.name}`);
         if (ts) {
-          ts.textContent = getLastUpdateTime(metalConfig.name) || "No data";
+          ts.innerHTML = getLastUpdateTime(metalConfig.name);
         }
 
         updatedCount++;
@@ -1044,7 +1044,7 @@ const handleProviderSync = async (provider) => {
         );
         const ts = document.getElementById(`spotTimestamp${metalConfig.name}`);
         if (ts) {
-          ts.textContent = getLastUpdateTime(metalConfig.name) || "No data";
+          ts.innerHTML = getLastUpdateTime(metalConfig.name);
         }
         updatedCount++;
       }
