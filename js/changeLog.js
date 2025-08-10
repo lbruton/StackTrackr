@@ -9,14 +9,17 @@
  * @param {string} field - Field that was changed
  * @param {any} oldValue - Previous value
  * @param {any} newValue - New value
- */
-const logChange = (itemName, field, oldValue, newValue) => {
+ * @param {number} idx - Index of item in inventory array
+*/
+const logChange = (itemName, field, oldValue, newValue, idx) => {
   changeLog.push({
     timestamp: Date.now(),
     itemName,
     field,
     oldValue,
     newValue,
+    idx,
+    undone: false,
   });
   if (changeLog.length > 25) {
     changeLog = changeLog.slice(-25);
@@ -48,7 +51,8 @@ const logItemChanges = (oldItem, newItem) => {
 
   fields.forEach((field) => {
     if (oldItem[field] !== newItem[field]) {
-      logChange(newItem.name, field, oldItem[field], newItem[field]);
+      const idx = inventory.indexOf(newItem);
+      logChange(newItem.name, field, oldItem[field], newItem[field], idx);
     }
   });
 };
@@ -61,18 +65,58 @@ const renderChangeLog = () => {
   if (!tableBody) return;
 
   const recent = changeLog.slice(-10).reverse();
-  const rows = recent.map((entry) => `
+  const rows = recent.map((entry, i) => {
+    const globalIndex = changeLog.length - 1 - i;
+    const actionLabel = entry.undone ? 'Redo' : 'Undo';
+    return `
     <tr>
       <td class="shrink">${new Date(entry.timestamp).toLocaleString()}</td>
       <td class="shrink">${sanitizeHtml(entry.itemName)}</td>
       <td class="shrink">${sanitizeHtml(entry.field)}</td>
       <td class="shrink">${sanitizeHtml(String(entry.oldValue))}</td>
       <td class="shrink">${sanitizeHtml(String(entry.newValue))}</td>
-    </tr>
-  `);
-  tableBody.innerHTML = rows.join('');
+      <td class="shrink"><button class="btn action-btn" style="margin:1px;" onclick="toggleChange(${globalIndex})">${actionLabel}</button></td>
+    </tr>`;
+  });
+
+  const placeholders = Array.from({ length: 10 - recent.length }, () => '<tr><td class="shrink" colspan="6">&nbsp;</td></tr>');
+  tableBody.innerHTML = rows.concat(placeholders).join('');
+};
+
+/**
+ * Toggles a logged change between undone and redone states
+ * @param {number} logIdx - Index of change entry in changeLog array
+ */
+const toggleChange = (logIdx) => {
+  const entry = changeLog[logIdx];
+  if (!entry) return;
+  if (entry.field === 'Deleted') {
+    if (entry.undone) {
+      inventory.splice(entry.idx, 1);
+      entry.undone = false;
+    } else {
+      const restored = JSON.parse(entry.oldValue || '{}');
+      inventory.splice(entry.idx, 0, restored);
+      entry.undone = true;
+    }
+  } else {
+    const item = inventory[entry.idx];
+    if (!item) return;
+    if (entry.undone) {
+      item[entry.field] = entry.newValue;
+      entry.undone = false;
+    } else {
+      item[entry.field] = entry.oldValue;
+      entry.undone = true;
+    }
+  }
+  saveInventory();
+  renderTable();
+  renderChangeLog();
+  localStorage.setItem('changeLog', JSON.stringify(changeLog));
 };
 
 window.logChange = logChange;
 window.logItemChanges = logItemChanges;
 window.renderChangeLog = renderChangeLog;
+window.toggleChange = toggleChange;
