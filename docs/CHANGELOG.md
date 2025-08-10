@@ -8,7 +8,7 @@
 
 ## 📋 Version History
 
-### Version 3.3.02 – Interactive Storage Report Dashboard (2025-08-10)
+### Version 3.00.02 – Interactive Storage Report Dashboard (2025-08-10)
 - **Interactive Dashboard**: Complete redesign of storage report from simple download options to comprehensive interactive dashboard
   - **Real-time Pie Chart**: Chart.js-powered visualization showing storage distribution with clickable segments
   - **Theme Toggle**: Independent dark/light mode toggle with inheritance from main application
@@ -21,7 +21,7 @@
 - **Chart Interactivity**: Hover tooltips, legend interactions, and click-to-drill-down functionality
 - **Theme Persistence**: Selected theme preserved in exported HTML reports and ZIP archives
 
-### Version 3.3.01 – Comprehensive Storage Report System (2025-08-10)
+### Version 3.03.01a – Comprehensive Storage Report System (2025-08-10)
 - **Enhanced Storage Reports**: Redesigned storage report from basic JSON export to comprehensive HTML reporting system
   - **Professional HTML Reports**: Clean, print-optimized layout formatted for letter paper (8.5" x 11")
   - **Interactive Modal System**: Click any storage item to view detailed breakdown in modal popup
@@ -34,7 +34,7 @@
 - **Professional Styling**: Consistent with application design language, responsive layout, proper typography
 - **Self-contained Reports**: HTML files include all CSS and JavaScript inline for standalone viewing
 
-### Version 3.3.00 – Stable Release (2025-08-10)
+### Version 3.00.00 – Stable Release (2025-08-10)
 - Promoted release candidate features to official stable version
 - Finalized documentation and archived planning notes
 - Added `docs/future/` directory for upcoming feature planning
