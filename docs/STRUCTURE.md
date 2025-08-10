@@ -6,6 +6,7 @@ The repository is organized as follows:
 ├── css/              # Styling for the application
 ├── debug/            # Development artifacts
 ├── docs/             # Project documentation and planning
+│   └── archive/      # Archived notes and historical docs
 ├── js/               # Modular JavaScript source files
 ├── index.html        # Main application interface
 ├── LICENSE           # License information
