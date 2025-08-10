@@ -1,10 +1,10 @@
-# Multi-Agent Development Workflow - StackTrackr v3.2.07rc
+# Multi-Agent Development Workflow - StackTrackr v3.3.00
 
 ## 🎯 Project Overview
 
-You are contributing to the **StackTrackr v3.2.07rc**, a comprehensive client-side web application for tracking precious metal investments (Silver, Gold, Platinum, Palladium). The project uses a modular JavaScript architecture with local storage, responsive CSS theming, and advanced features like API integration, data visualization, and comprehensive import/export capabilities.
+You are contributing to the **StackTrackr v3.3.00**, a comprehensive client-side web application for tracking precious metal investments (Silver, Gold, Platinum, Palladium). The project uses a modular JavaScript architecture with local storage, responsive CSS theming, and advanced features like API integration, data visualization, and comprehensive import/export capabilities.
 
-**Current Status**: v3.2.07rc (feature-complete release candidate)
+**Current Status**: v3.3.00 (stable release)
 **Your Role**: Complete individual 2-hour subtasks as part of a coordinated multi-agent development effort
 
 ---
@@ -33,7 +33,7 @@ You are contributing to the **StackTrackr v3.2.07rc**, a comprehensive client-si
 ### **Step 1: Read the Documentation**
 Before starting ANY subtask, read these files:
 - `docs/ROADMAP.md` - Complete development roadmap with all subtasks
-- `docs/notes/v3.2.0-planning-notes.md` - Technical implementation details
+- `docs/archive/notes/v3.2.0-planning-notes.md` - Technical implementation details
 - `docs/STATUS.md` - Current project status
 - `docs/STRUCTURE.md` - Project architecture and file organization
 
@@ -270,7 +270,7 @@ Before starting ANY subtask, read these files:
 
 ### **Essential Files:**
 - `docs/ROADMAP.md` - Your subtask list
-- `docs/notes/v3.2.0-planning-notes.md` - Implementation details
+- `docs/archive/notes/v3.2.0-planning-notes.md` - Implementation details
 - `index.html` - Main application
 - `js/constants.js` - Configuration and version
 - `css/styles.css` - All styling
@@ -287,6 +287,6 @@ Before starting ANY subtask, read these files:
 
 ---
 
-**Remember: Each subtask is designed to be completed independently while contributing to the larger v3.2.07rc vision. Focus on quality over speed, and don't hesitate to coordinate with other agents when working on shared components.**
+**Remember: Each subtask is designed to be completed independently while contributing to the larger v3.3.00 vision. Focus on quality over speed, and don't hesitate to coordinate with other agents when working on shared components.**
 
 **Your contribution helps build a professional-grade inventory management system that serves users worldwide. Every subtask matters!** 🚀
