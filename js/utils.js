@@ -651,7 +651,7 @@ const generateStorageReportHTML = () => {
                 <div class="chart-legend">
                     <h3>Click on chart or items below for details</h3>
                     <div class="legend-items">
-                        ${reportData.items.map((item, index) => `
+                        ${reportData.items.slice(0,5).map((item, index) => `
                             <div class="legend-item" onclick="showItemDetail('${item.key}')" data-index="${index}">
                                 <span class="legend-color" style="background-color: ${getChartColor(index)}"></span>
                                 <span class="legend-label">${getStorageItemDisplayName(item.key)}</span>
@@ -1060,164 +1060,6 @@ const getStorageReportCSS = () => {
         color: var(--primary);
     }
     
-    .storage-visualization-section {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 2rem;
-        margin-bottom: 2rem;
-    }
-    
-    @media (max-width: 768px) {
-        .storage-visualization-section {
-            grid-template-columns: 1fr;
-        }
-    }
-    
-    .chart-container {
-        background: var(--bg-primary);
-        border: 1px solid var(--border);
-        border-radius: 0.5rem;
-        padding: 1.5rem;
-        text-align: center;
-        position: relative;
-    }
-    
-    .chart-container h3 {
-        margin-bottom: 1rem;
-        color: var(--text-primary);
-        font-size: 1.1rem;
-        font-weight: 600;
-    }
-    
-    .chart-container canvas {
-        max-width: 100%;
-        height: 280px !important;
-        cursor: pointer;
-    }
-    
-    .storage-items-table {
-        background: var(--bg-primary);
-        border: 1px solid var(--border);
-        border-radius: 0.5rem;
-        padding: 1rem;
-    }
-    
-    .storage-items-table h3 {
-        margin-bottom: 1rem;
-        color: var(--text-primary);
-        font-size: 1.1rem;
-        font-weight: 600;
-    }
-    
-    .storage-items-list {
-        max-height: 320px;
-        overflow-y: auto;
-        scrollbar-width: thin;
-        scrollbar-color: var(--primary) var(--bg-secondary);
-    }
-    
-    .storage-items-list::-webkit-scrollbar {
-        width: 8px;
-    }
-    
-    .storage-items-list::-webkit-scrollbar-track {
-        background: var(--bg-secondary);
-        border-radius: 4px;
-    }
-    
-    .storage-items-list::-webkit-scrollbar-thumb {
-        background: var(--primary);
-        border-radius: 4px;
-    }
-    
-    .legend-instruction {
-        font-size: 0.9rem;
-        color: var(--text-secondary);
-        text-align: center;
-        margin-bottom: 1rem;
-        font-style: italic;
-    }
-    
-    .storage-legend-item {
-        display: flex;
-        align-items: center;
-        padding: 0.75rem;
-        border-radius: 0.5rem;
-        margin-bottom: 0.5rem;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        border: 1px solid transparent;
-    }
-    
-    .storage-legend-item:hover {
-        background: var(--bg-secondary);
-        border-color: var(--border);
-        transform: translateX(3px);
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    }
-    
-    .legend-color-bar {
-        width: 4px;
-        height: 32px;
-        border-radius: 2px;
-        margin-right: 0.75rem;
-        flex-shrink: 0;
-    }
-    
-    .legend-content {
-        flex: 1;
-        min-width: 0;
-    }
-    
-    .legend-name {
-        font-weight: 600;
-        color: var(--text-primary);
-        margin-bottom: 0.25rem;
-        font-size: 0.9rem;
-    }
-    
-    .legend-stats {
-        display: flex;
-        gap: 0.75rem;
-        font-size: 0.8rem;
-        color: var(--text-secondary);
-    }
-    
-    .legend-size {
-        font-weight: 600;
-        color: var(--success);
-    }
-    
-    .legend-percentage {
-        background: var(--primary);
-        color: white;
-        padding: 0.1rem 0.4rem;
-        border-radius: 0.75rem;
-        font-weight: 500;
-    }
-    
-    .legend-records {
-        color: var(--text-secondary);
-    }
-    
-    .legend-arrow {
-        font-size: 1.2rem;
-        color: var(--text-secondary);
-        margin-left: 0.5rem;
-        transition: transform 0.2s ease;
-    }
-    
-    .storage-legend-item:hover .legend-arrow {
-        transform: translateX(3px);
-        color: var(--primary);
-    }
-    
-    .loading-legend {
-        text-align: center;
-        color: var(--text-secondary);
-        font-style: italic;
-        padding: 2rem;
-    }
     
     .storage-report-actions {
         display: flex;
@@ -1427,8 +1269,18 @@ const getStorageReportCSS = () => {
         border-radius: 0.5rem;
         padding: 1rem;
         text-align: center;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
     }
-    
+
+    .chart-container canvas {
+        max-width: 100%;
+        height: 100% !important;
+        max-height: 400px;
+    }
+
     .chart-legend {
         background: var(--bg-primary);
         border: 1px solid var(--border);
@@ -1437,11 +1289,13 @@ const getStorageReportCSS = () => {
         display: flex;
         flex-direction: column;
         height: 100%;
+        overflow: hidden;
     }
 
     .legend-items {
         overflow-y: auto;
         flex: 1;
+        max-height: 400px;
     }
     
     .chart-legend h3 {
@@ -1861,7 +1715,15 @@ const getStorageReportJS = () => {
   return `
     let currentChart = null;
     let currentReportData = null;
-    
+
+    function getChartColor(index) {
+        const colors = [
+            '#007bff', '#28a745', '#ffc107', '#dc3545', '#6f42c1',
+            '#fd7e14', '#20c997', '#e83e8c', '#6c757d', '#17a2b8'
+        ];
+        return colors[index % colors.length];
+    }
+
     function toggleTheme() {
         const html = document.documentElement;
         const currentTheme = html.getAttribute('data-theme');
@@ -1877,6 +1739,7 @@ const getStorageReportJS = () => {
     
     function initializeStorageChart(reportData) {
         currentReportData = reportData;
+        const currentChartItems = reportData.items.slice(0, 5);
         const canvas = document.getElementById('storageChart');
         if (!canvas || typeof Chart === 'undefined') {
             console.warn('Chart.js not available or canvas not found');
@@ -1886,16 +1749,11 @@ const getStorageReportJS = () => {
         const ctx = canvas.getContext('2d');
         const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
 
-        const colors = [
-            '#007bff', '#28a745', '#ffc107', '#dc3545', '#6f42c1',
-            '#fd7e14', '#20c997', '#e83e8c', '#6c757d', '#17a2b8'
-        ];
-
         const data = {
-            labels: reportData.items.map(item => getStorageItemDisplayName(item.key)),
+            labels: currentChartItems.map(item => getStorageItemDisplayName(item.key)),
             datasets: [{
-                data: reportData.items.map(item => item.size),
-                backgroundColor: reportData.items.map((_, index) => colors[index % colors.length]),
+                data: currentChartItems.map(item => item.size),
+                backgroundColor: currentChartItems.map((_, index) => getChartColor(index)),
                 borderColor: isDark ? '#404040' : '#ffffff',
                 borderWidth: 2,
                 hoverBorderWidth: 3,
@@ -1918,7 +1776,7 @@ const getStorageReportJS = () => {
                     borderWidth: 1,
                     callbacks: {
                         label: (context) => {
-                    const item = reportData.items[context.dataIndex];
+                            const item = currentChartItems[context.dataIndex];
                             return [
                                 \`\${context.label}: \${item.size.toFixed(2)} KB\`,
                                 \`\${item.percentage.toFixed(1)}% of total\`,
@@ -1931,7 +1789,7 @@ const getStorageReportJS = () => {
             onClick: (event, elements) => {
                 if (elements.length > 0) {
                     const index = elements[0].index;
-                    showItemDetail(reportData.items[index].key);
+                    showItemDetail(currentChartItems[index].key);
                 }
             },
             animation: {

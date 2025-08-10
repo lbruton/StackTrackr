@@ -7,7 +7,7 @@ The StackTrackr now uses a dynamic version management system that automatically 
 ## How It Works
 
 ### Single Source of Truth
-- Version is defined once in `js/constants.js` as `APP_VERSION = '3.3.00'`
+- Version is defined once in `js/constants.js` as `APP_VERSION = '3.00.01a'`
 - This is the ONLY place you need to update the version number
 
 ### Automatic Propagation
@@ -27,14 +27,14 @@ To release a new version:
 1. **Update ONLY the constants file:**
    ```javascript
    // In js/constants.js
-   const APP_VERSION = '3.3.00';  // Change this line only
+   const APP_VERSION = '3.00.01a';  // Change this line only
    ```
 
 2. **All these will automatically update:**
-   - Page title: "StackTrackr v3.3.00"
-   - Page heading: "StackTrackr v3.3.00"
-   - Browser tab title: "StackTrackr v3.3.00"
-   - App header: "StackTrackr v3.3.00"
+   - Page title: "StackTrackr v3.00.01a"
+   - Page heading: "StackTrackr v3.00.01a"
+   - Browser tab title: "StackTrackr v3.00.01a"
+   - App header: "StackTrackr v3.00.01a"
 
 3. **Update changelog:** Add entry to `/docs/CHANGELOG.md` for documentation
 
@@ -62,6 +62,13 @@ Use semantic versioning: `MAJOR.MINOR.PATCH`
 - **MINOR**: New features that are backwards compatible
 - **PATCH**: Bug fixes and small improvements
 
+### Suffix Conventions
+Append letters to indicate pre-release stages:
+- `a` for alpha versions
+- `b` for beta releases
+- `rc` for release candidates
+- no suffix indicates a stable release
+
 ### Numbering Guidelines
 - **Major**: 1-x
 - **Minor**: 1-9
@@ -70,15 +77,15 @@ Use semantic versioning: `MAJOR.MINOR.PATCH`
 ## Example Usage in Code
 ```javascript
 // Get just the version number
-const version = APP_VERSION; // "3.3.00"
+const version = APP_VERSION; // "3.00.01a"
 
 // Get formatted version string
-const versionString = getVersionString(); // "v3.3.00"
-const customVersion = getVersionString('version '); // "version 3.3.00"
+const versionString = getVersionString(); // "v3.00.01a"
+const customVersion = getVersionString('version '); // "version 3.00.01a"
 
 // Get full app title
-const title = getAppTitle(); // "StackTrackr v3.3.00"
-const customTitle = getAppTitle('My Custom Tool'); // "My Custom Tool v3.3.00"
+const title = getAppTitle(); // "StackTrackr v3.00.01a"
+const customTitle = getAppTitle('My Custom Tool'); // "My Custom Tool v3.00.01a"
 ```
 
 This system ensures version consistency and makes maintenance much easier!
