@@ -18,7 +18,7 @@ This guide summarizes the typical tools and branch strategy for human contributo
 
 - **`main`** – primary development branch containing the latest features.
 - **`cloudflare`** – deployment branch tuned for Cloudflare hosting.
-- **`release_v*`** – versioned release branches (e.g., `release_v3.03.03a`).
+- **`release_v*`** – versioned release branches (e.g., `release_v3.03.02a`).
 
 ## Hosting URLs
 
