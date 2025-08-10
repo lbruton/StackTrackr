@@ -512,38 +512,889 @@ const updateStorageStats = () => {
 };
 
 /**
- * Downloads a report of all localStorage data
+ * Downloads a comprehensive HTML storage report with breakdown and print options
  */
 const downloadStorageReport = () => {
-  const report = {};
+  showStorageReportModal();
+};
 
+/**
+ * Shows the storage report modal with options to view/download HTML or tar.gz
+ */
+const showStorageReportModal = () => {
+  // Create modal if it doesn't exist
+  let modal = document.getElementById('storageReportModal');
+  if (!modal) {
+    modal = createStorageReportModal();
+    document.body.appendChild(modal);
+  }
+  
+  modal.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+};
+
+/**
+ * Creates the storage report options modal
+ */
+const createStorageReportModal = () => {
+  const modal = document.createElement('div');
+  modal.id = 'storageReportModal';
+  modal.className = 'modal';
+  modal.style.display = 'none';
+  
+  modal.innerHTML = `
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Storage Report Options</h2>
+        <button aria-label="Close modal" class="modal-close" id="storageReportCloseBtn">×</button>
+      </div>
+      <div class="modal-body">
+        <p>Choose how you'd like to access your storage report:</p>
+        <div class="storage-report-options">
+          <button class="btn premium" id="viewHtmlReportBtn">
+            📄 View HTML Report
+          </button>
+          <button class="btn" id="downloadHtmlReportBtn">
+            💾 Download HTML Report
+          </button>
+          <button class="btn secondary" id="downloadTarReportBtn">
+            📦 Download Compressed Report (.tar.gz)
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  // Set up event listeners
+  const closeBtn = modal.querySelector('#storageReportCloseBtn');
+  const viewBtn = modal.querySelector('#viewHtmlReportBtn');
+  const downloadHtmlBtn = modal.querySelector('#downloadHtmlReportBtn');
+  const downloadTarBtn = modal.querySelector('#downloadTarReportBtn');
+  
+  closeBtn.addEventListener('click', () => {
+    modal.style.display = 'none';
+    document.body.style.overflow = '';
+  });
+  
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) {
+      modal.style.display = 'none';
+      document.body.style.overflow = '';
+    }
+  });
+  
+  viewBtn.addEventListener('click', () => {
+    const htmlContent = generateStorageReportHTML();
+    const newWindow = window.open('', '_blank');
+    newWindow.document.write(htmlContent);
+    newWindow.document.close();
+    modal.style.display = 'none';
+    document.body.style.overflow = '';
+  });
+  
+  downloadHtmlBtn.addEventListener('click', () => {
+    const htmlContent = generateStorageReportHTML();
+    const timestamp = new Date().toISOString().split('T')[0];
+    downloadFile(`storage-report-${timestamp}.html`, htmlContent, 'text/html');
+    modal.style.display = 'none';
+    document.body.style.overflow = '';
+  });
+  
+  downloadTarBtn.addEventListener('click', async () => {
+    try {
+      const tarContent = await generateStorageReportTar();
+      const timestamp = new Date().toISOString().split('T')[0];
+      downloadFile(`storage-report-${timestamp}.tar.gz`, tarContent, 'application/gzip');
+    } catch (error) {
+      console.error('Error creating tar.gz file:', error);
+      alert('Error creating compressed report. Please try the HTML option instead.');
+    }
+    modal.style.display = 'none';
+    document.body.style.overflow = '';
+  });
+  
+  return modal;
+};
+
+/**
+ * Generates comprehensive HTML storage report
+ */
+const generateStorageReportHTML = () => {
+  const reportData = analyzeStorageData();
+  const timestamp = new Date().toLocaleString();
+  
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StackTrackr Storage Report</title>
+    <style>
+        ${getStorageReportCSS()}
+    </style>
+</head>
+<body>
+    <div class="report-container">
+        <header class="report-header">
+            <h1>📊 StackTrackr Storage Report</h1>
+            <div class="report-meta">
+                <span>Generated: ${timestamp}</span>
+                <span>Version: ${APP_VERSION}</span>
+            </div>
+        </header>
+        
+        <div class="print-controls">
+            <button onclick="window.print()" class="print-btn">🖨️ Print Report</button>
+        </div>
+        
+        <section class="storage-summary">
+            <h2>Storage Overview</h2>
+            <div class="summary-grid">
+                <div class="summary-item">
+                    <span class="summary-label">Total Storage Used:</span>
+                    <span class="summary-value">${reportData.totalSize.toFixed(2)} KB</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Storage Items:</span>
+                    <span class="summary-value">${reportData.items.length}</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Largest Item:</span>
+                    <span class="summary-value">${reportData.largestItem.name} (${reportData.largestItem.size.toFixed(2)} KB)</span>
+                </div>
+            </div>
+        </section>
+        
+        <section class="storage-breakdown">
+            <h2>Storage Breakdown by Item</h2>
+            <div class="items-grid">
+                ${reportData.items.map(item => `
+                    <div class="storage-item">
+                        <div class="item-header" onclick="toggleModal('${item.key}')">
+                            <h3>${getStorageItemDisplayName(item.key)}</h3>
+                            <div class="item-meta">
+                                <span class="item-size">${item.size.toFixed(2)} KB</span>
+                                <span class="item-percentage">${item.percentage.toFixed(1)}%</span>
+                            </div>
+                        </div>
+                        <div class="item-description">
+                            ${getStorageItemDescription(item.key)}
+                        </div>
+                        <div class="item-details">
+                            <span class="detail-item">Type: ${item.type}</span>
+                            <span class="detail-item">Records: ${item.recordCount}</span>
+                        </div>
+                        <button class="view-details-btn" onclick="toggleModal('${item.key}')">
+                            View Details
+                        </button>
+                    </div>
+                `).join('')}
+            </div>
+        </section>
+        
+        <footer class="report-footer">
+            <p>Generated by StackTrackr v${APP_VERSION} • ${new Date().getFullYear()}</p>
+            <p>This report contains a snapshot of your local browser storage data.</p>
+        </footer>
+    </div>
+    
+    <!-- Modals for detailed views -->
+    ${reportData.items.map(item => createStorageItemModal(item)).join('')}
+    
+    <script>
+        ${getStorageReportJS()}
+    </script>
+</body>
+</html>`;
+};
+
+/**
+ * Analyzes localStorage data and calculates memory usage
+ */
+const analyzeStorageData = () => {
+  const items = [];
+  let totalSize = 0;
+  
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);
-
-    // Skip or sanitize sensitive data such as API keys
+    let value = localStorage.getItem(key);
+    
+    // Sanitize sensitive data
     if (key === API_KEY_STORAGE_KEY) {
       try {
-        const config = JSON.parse(localStorage.getItem(key) || "{}");
+        const config = JSON.parse(value || '{}');
         if (config?.keys) {
-          // Remove any stored API keys before exporting
-          report[key] = { ...config, keys: {} };
-        } else {
-          report[key] = config;
+          value = JSON.stringify({ ...config, keys: {} });
         }
       } catch (err) {
-        console.warn("Could not sanitize API config for report", err);
+        console.warn('Could not sanitize API config for report', err);
       }
-      continue;
     }
-
-    report[key] = localStorage.getItem(key);
+    
+    // Calculate size (localStorage stores UTF-16, ~2 bytes per character)
+    const size = ((key.length + (value ? value.length : 0)) * 2) / 1024; // KB
+    totalSize += size;
+    
+    // Determine data type and record count
+    const analysis = analyzeStorageItem(key, value);
+    
+    items.push({
+      key,
+      size,
+      value,
+      type: analysis.type,
+      recordCount: analysis.recordCount,
+      parsedData: analysis.parsedData
+    });
   }
+  
+  // Calculate percentages and sort by size
+  items.forEach(item => {
+    item.percentage = (item.size / totalSize) * 100;
+  });
+  
+  items.sort((a, b) => b.size - a.size);
+  
+  return {
+    items,
+    totalSize,
+    largestItem: items[0] || { name: 'None', size: 0 }
+  };
+};
 
-  downloadFile(
-    "storage-report.json",
-    JSON.stringify(report, null, 2),
-    "application/json",
-  );
+/**
+ * Analyzes a storage item to determine its type and content
+ */
+const analyzeStorageItem = (key, value) => {
+  let type = 'String';
+  let recordCount = 1;
+  let parsedData = null;
+  
+  try {
+    parsedData = JSON.parse(value);
+    
+    if (Array.isArray(parsedData)) {
+      type = 'Array';
+      recordCount = parsedData.length;
+    } else if (typeof parsedData === 'object' && parsedData !== null) {
+      type = 'Object';
+      recordCount = Object.keys(parsedData).length;
+    } else {
+      type = 'JSON Value';
+    }
+  } catch (e) {
+    // Not JSON, treat as string
+    type = 'String';
+    recordCount = 1;
+  }
+  
+  return { type, recordCount, parsedData };
+};
+
+/**
+ * Gets display name for storage keys
+ */
+const getStorageItemDisplayName = (key) => {
+  const names = {
+    'precious-metals-inventory': 'Inventory Data',
+    'spot-price-history': 'Spot Price History',
+    'api-config': 'API Configuration',
+    'api-cache': 'API Cache',
+    'spotPriceSilver': 'Silver Spot Price',
+    'spotPriceGold': 'Gold Spot Price',
+    'spotPricePlatinum': 'Platinum Spot Price',
+    'spotPricePalladium': 'Palladium Spot Price',
+    'theme': 'Theme Setting',
+    'disclaimer-accepted': 'Disclaimer Acceptance'
+  };
+  
+  return names[key] || key;
+};
+
+/**
+ * Gets description for storage items
+ */
+const getStorageItemDescription = (key) => {
+  const descriptions = {
+    'precious-metals-inventory': 'Your complete inventory of precious metals items with all details',
+    'spot-price-history': 'Historical spot price data from API providers and manual entries',
+    'api-config': 'API provider configurations and usage statistics',
+    'api-cache': 'Cached spot price data to reduce API calls',
+    'spotPriceSilver': 'Current spot price setting for silver',
+    'spotPriceGold': 'Current spot price setting for gold', 
+    'spotPricePlatinum': 'Current spot price setting for platinum',
+    'spotPricePalladium': 'Current spot price setting for palladium',
+    'theme': 'User interface theme preference (dark/light/system)',
+    'disclaimer-accepted': 'Record of user accepting the application disclaimer'
+  };
+  
+  return descriptions[key] || 'Application data stored in browser localStorage';
+};
+
+/**
+ * Creates modal HTML for detailed item view
+ */
+const createStorageItemModal = (item) => {
+  const modalId = `modal-${item.key}`;
+  
+  return `
+    <div id="${modalId}" class="storage-modal" style="display: none;">
+        <div class="modal-content-large">
+            <div class="modal-header">
+                <h3>${getStorageItemDisplayName(item.key)} Details</h3>
+                <button class="modal-close" onclick="toggleModal('${item.key}')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-stats">
+                    <div class="stat-item">
+                        <span class="stat-label">Size:</span>
+                        <span class="stat-value">${item.size.toFixed(2)} KB</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Type:</span>
+                        <span class="stat-value">${item.type}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Records:</span>
+                        <span class="stat-value">${item.recordCount}</span>
+                    </div>
+                </div>
+                
+                ${generateItemDataTable(item)}
+            </div>
+        </div>
+    </div>
+  `;
+};
+
+/**
+ * Generates data table for storage item
+ */
+const generateItemDataTable = (item) => {
+  if (!item.parsedData) {
+    return `<div class="data-preview"><strong>Raw Data:</strong><pre>${item.value}</pre></div>`;
+  }
+  
+  if (Array.isArray(item.parsedData)) {
+    if (item.parsedData.length === 0) {
+      return '<p class="no-data">No records found</p>';
+    }
+    
+    // For inventory data, create a proper table
+    if (item.key === 'precious-metals-inventory') {
+      const headers = Object.keys(item.parsedData[0] || {});
+      return `
+        <div class="data-table-container">
+          <table class="data-table">
+            <thead>
+              <tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr>
+            </thead>
+            <tbody>
+              ${item.parsedData.slice(0, 50).map(record => 
+                `<tr>${headers.map(h => `<td>${sanitizeHtml(record[h]?.toString() || '')}</td>`).join('')}</tr>`
+              ).join('')}
+            </tbody>
+          </table>
+          ${item.parsedData.length > 50 ? `<p class="truncated">Showing first 50 of ${item.parsedData.length} records</p>` : ''}
+        </div>
+      `;
+    }
+    
+    // For other arrays, show a summary
+    return `
+      <div class="array-summary">
+        <p><strong>Array with ${item.parsedData.length} items</strong></p>
+        <div class="data-preview"><pre>${JSON.stringify(item.parsedData.slice(0, 3), null, 2)}${item.parsedData.length > 3 ? '\n...and ' + (item.parsedData.length - 3) + ' more items' : ''}</pre></div>
+      </div>
+    `;
+  }
+  
+  if (typeof item.parsedData === 'object') {
+    const keys = Object.keys(item.parsedData);
+    return `
+      <div class="object-summary">
+        <p><strong>Object with ${keys.length} properties</strong></p>
+        <div class="data-preview"><pre>${JSON.stringify(item.parsedData, null, 2)}</pre></div>
+      </div>
+    `;
+  }
+  
+  return `<div class="data-preview"><pre>${JSON.stringify(item.parsedData, null, 2)}</pre></div>`;
+};
+
+/**
+ * Gets CSS styles for the storage report
+ */
+const getStorageReportCSS = () => {
+  return `
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+    
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+        line-height: 1.6;
+        color: #333;
+        background: #f8f9fa;
+    }
+    
+    .report-container {
+        max-width: 8.5in;
+        margin: 0 auto;
+        background: white;
+        padding: 1in;
+        min-height: 11in;
+    }
+    
+    .report-header {
+        text-align: center;
+        border-bottom: 3px solid #007bff;
+        padding-bottom: 1rem;
+        margin-bottom: 2rem;
+    }
+    
+    .report-header h1 {
+        color: #007bff;
+        font-size: 2.5rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .report-meta {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.9rem;
+        color: #666;
+    }
+    
+    .print-controls {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+    
+    .print-btn {
+        background: #007bff;
+        color: white;
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 0.5rem;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+    
+    .print-btn:hover {
+        background: #0056b3;
+    }
+    
+    .storage-summary {
+        margin-bottom: 2rem;
+    }
+    
+    .storage-summary h2 {
+        color: #333;
+        margin-bottom: 1rem;
+        font-size: 1.5rem;
+    }
+    
+    .summary-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .summary-item {
+        background: #f8f9fa;
+        padding: 1rem;
+        border-radius: 0.5rem;
+        border-left: 4px solid #007bff;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .summary-label {
+        font-weight: 600;
+        color: #666;
+    }
+    
+    .summary-value {
+        font-weight: 700;
+        color: #007bff;
+        font-size: 1.1rem;
+    }
+    
+    .storage-breakdown h2 {
+        color: #333;
+        margin-bottom: 1rem;
+        font-size: 1.5rem;
+    }
+    
+    .items-grid {
+        display: grid;
+        gap: 1rem;
+    }
+    
+    .storage-item {
+        border: 1px solid #dee2e6;
+        border-radius: 0.5rem;
+        padding: 1rem;
+        background: white;
+        transition: box-shadow 0.2s;
+    }
+    
+    .storage-item:hover {
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .item-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.5rem;
+        cursor: pointer;
+    }
+    
+    .item-header h3 {
+        color: #007bff;
+        font-size: 1.2rem;
+    }
+    
+    .item-meta {
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+    }
+    
+    .item-size {
+        font-weight: 600;
+        color: #28a745;
+    }
+    
+    .item-percentage {
+        background: #007bff;
+        color: white;
+        padding: 0.25rem 0.5rem;
+        border-radius: 1rem;
+        font-size: 0.8rem;
+    }
+    
+    .item-description {
+        color: #666;
+        margin-bottom: 0.5rem;
+        font-size: 0.9rem;
+    }
+    
+    .item-details {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .detail-item {
+        background: #f8f9fa;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.25rem;
+        font-size: 0.8rem;
+        color: #666;
+    }
+    
+    .view-details-btn {
+        background: #28a745;
+        color: white;
+        border: none;
+        padding: 0.5rem 1rem;
+        border-radius: 0.25rem;
+        cursor: pointer;
+        font-size: 0.9rem;
+    }
+    
+    .view-details-btn:hover {
+        background: #1e7e34;
+    }
+    
+    .storage-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+    }
+    
+    .modal-content-large {
+        background: white;
+        border-radius: 0.5rem;
+        width: 90%;
+        max-width: 800px;
+        max-height: 80%;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .modal-header {
+        background: #007bff;
+        color: white;
+        padding: 1rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .modal-close {
+        background: none;
+        border: none;
+        color: white;
+        font-size: 1.5rem;
+        cursor: pointer;
+        padding: 0;
+        width: 2rem;
+        height: 2rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .modal-body {
+        padding: 1rem;
+        overflow-y: auto;
+        flex: 1;
+    }
+    
+    .modal-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .stat-item {
+        background: #f8f9fa;
+        padding: 0.75rem;
+        border-radius: 0.25rem;
+        display: flex;
+        justify-content: space-between;
+    }
+    
+    .stat-label {
+        font-weight: 600;
+        color: #666;
+    }
+    
+    .stat-value {
+        font-weight: 700;
+        color: #007bff;
+    }
+    
+    .data-table-container {
+        overflow-x: auto;
+        margin-top: 1rem;
+    }
+    
+    .data-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.8rem;
+    }
+    
+    .data-table th,
+    .data-table td {
+        border: 1px solid #dee2e6;
+        padding: 0.5rem;
+        text-align: left;
+    }
+    
+    .data-table th {
+        background: #f8f9fa;
+        font-weight: 600;
+        position: sticky;
+        top: 0;
+    }
+    
+    .data-table td {
+        max-width: 150px;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+    }
+    
+    .data-preview {
+        background: #f8f9fa;
+        padding: 1rem;
+        border-radius: 0.25rem;
+        margin-top: 1rem;
+    }
+    
+    .data-preview pre {
+        font-size: 0.8rem;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+        max-height: 300px;
+        overflow-y: auto;
+    }
+    
+    .truncated {
+        text-align: center;
+        color: #666;
+        font-style: italic;
+        margin-top: 0.5rem;
+    }
+    
+    .no-data {
+        text-align: center;
+        color: #666;
+        font-style: italic;
+        padding: 2rem;
+    }
+    
+    .report-footer {
+        margin-top: 3rem;
+        padding-top: 1rem;
+        border-top: 1px solid #dee2e6;
+        text-align: center;
+        color: #666;
+        font-size: 0.9rem;
+    }
+    
+    @media print {
+        body {
+            background: white;
+        }
+        
+        .print-controls {
+            display: none;
+        }
+        
+        .storage-modal {
+            display: none !important;
+        }
+        
+        .view-details-btn {
+            display: none;
+        }
+        
+        .report-container {
+            margin: 0;
+            padding: 0.5in;
+            max-width: none;
+            min-height: auto;
+        }
+        
+        .storage-item {
+            break-inside: avoid;
+            margin-bottom: 0.5rem;
+        }
+    }
+    
+    @media (max-width: 768px) {
+        .report-container {
+            padding: 1rem;
+        }
+        
+        .summary-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .item-meta {
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 0.5rem;
+        }
+        
+        .modal-content-large {
+            width: 95%;
+            max-height: 90%;
+        }
+    }
+  `;
+};
+
+/**
+ * Gets JavaScript for the storage report
+ */
+const getStorageReportJS = () => {
+  return `
+    function toggleModal(key) {
+        const modal = document.getElementById('modal-' + key);
+        if (modal) {
+            const isVisible = modal.style.display === 'flex';
+            modal.style.display = isVisible ? 'none' : 'flex';
+            
+            if (!isVisible) {
+                document.body.style.overflow = 'hidden';
+            } else {
+                document.body.style.overflow = '';
+            }
+        }
+    }
+    
+    // Close modal when clicking outside
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('storage-modal')) {
+            e.target.style.display = 'none';
+            document.body.style.overflow = '';
+        }
+    });
+    
+    // Close modal with ESC key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            const openModal = document.querySelector('.storage-modal[style*="flex"]');
+            if (openModal) {
+                openModal.style.display = 'none';
+                document.body.style.overflow = '';
+            }
+        }
+    });
+  `;
+};
+
+/**
+ * Generates a compressed tar.gz file with storage report
+ */
+const generateStorageReportTar = async () => {
+  // For now, create a simple ZIP file since tar.gz requires additional libraries
+  // This is a placeholder for future implementation
+  if (typeof JSZip === 'undefined') {
+    throw new Error('JSZip library not available for compressed reports');
+  }
+  
+  const zip = new JSZip();
+  const timestamp = new Date().toISOString().split('T')[0];
+  
+  // Add HTML report
+  const htmlContent = generateStorageReportHTML();
+  zip.file(`storage-report-${timestamp}.html`, htmlContent);
+  
+  // Add JSON data for each storage item
+  const reportData = analyzeStorageData();
+  const jsonReport = {
+    metadata: {
+      generated: new Date().toISOString(),
+      version: APP_VERSION,
+      totalSize: reportData.totalSize,
+      itemCount: reportData.items.length
+    },
+    items: reportData.items.map(item => ({
+      key: item.key,
+      size: item.size,
+      type: item.type,
+      recordCount: item.recordCount,
+      data: item.parsedData || item.value
+    }))
+  };
+  
+  zip.file(`storage-data-${timestamp}.json`, JSON.stringify(jsonReport, null, 2));
+  
+  // Generate the ZIP file
+  const content = await zip.generateAsync({ type: 'blob' });
+  return content;
 };
 
 window.updateStorageStats = updateStorageStats;

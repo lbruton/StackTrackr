@@ -20,6 +20,13 @@ The tool features a **modular JavaScript architecture** with separate files for 
 
 ## ✨ Latest Changes
 
+- **v3.3.01 - Comprehensive Storage Report System**: Redesigned storage reports from basic JSON to professional HTML system
+  - Professional HTML reports optimized for letter paper printing
+  - Interactive modals with detailed breakdowns for each storage item
+  - Multiple download options: view in browser, HTML file, or compressed ZIP
+  - Memory analysis showing size, percentage, type, and record counts
+  - Print-optimized CSS with dedicated print button
+  - API key sanitization for security
 - **v3.3.00 - Stable Release & Documentation Cleanup**: Finalized documentation and archived planning notes.
 - **v3.2.07rc - Spot Timestamp Source Display**: Spot price cards show the API provider or Manual entry and the exact time of the last update. API provider modal checks stored keys and cache age to display "Connected" or "Connected (cached)" statuses and its sync buttons read "Save and Test".
 - **v3.2.06rc - UI Refinements & Auto Sync**: Modal-based item entry with stacked filters, pagination polish with repositioned items-per-page selector, collectable status button, totals card label updates, improved About modal contrast, and automatic spot price refresh at startup
@@ -66,6 +73,7 @@ The tool features a **modular JavaScript architecture** with separate files for 
 ### **Data Management**
 - ✅ Complete import/export functionality (CSV, JSON, Excel, PDF)
 - ✅ **Comprehensive backup ZIP system** with all data formats
+- ✅ **Professional HTML storage reports** with interactive modals and print optimization
 - ✅ **Notes field included in all export formats**
 - ✅ Backwards compatibility with automatic data migration
 - ✅ Local storage persistence (no server dependencies)
@@ -121,8 +129,8 @@ All data is stored locally in the browser using localStorage with:
 
 If continuing development in a new chat session:
 
-1. **Current Version**: 3.3.00 (managed in `js/constants.js`)
-2. **Last Change**: Documentation cleanup and planning notes archived
+1. **Current Version**: 3.3.01 (managed in `js/constants.js`)
+2. **Last Change**: Comprehensive HTML storage report system with interactive modals and print optimization
 3. **Last Documentation Update**: August 10, 2025 - All docs synchronized
 4. **Architecture**: Fully modular with proper separation of concerns
 5. **Documentation**: Comprehensive JSDoc comments throughout codebase

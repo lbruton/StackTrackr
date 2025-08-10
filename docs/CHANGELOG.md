@@ -8,6 +8,19 @@
 
 ## 📋 Version History
 
+### Version 3.3.01 – Comprehensive Storage Report System (2025-08-10)
+- **Enhanced Storage Reports**: Redesigned storage report from basic JSON export to comprehensive HTML reporting system
+  - **Professional HTML Reports**: Clean, print-optimized layout formatted for letter paper (8.5" x 11")
+  - **Interactive Modal System**: Click any storage item to view detailed breakdown in modal popup
+  - **Multiple Download Options**: View in browser, download HTML file, or download compressed ZIP package
+  - **Memory Analysis**: Detailed breakdown showing size, percentage, type, and record count for each storage item
+  - **Print Integration**: Dedicated print button with optimized print CSS for professional output
+  - **Data Tables**: Full inventory tables with first 50 records shown in detailed modals
+  - **Security**: API keys automatically sanitized before inclusion in reports
+- **User Experience**: Storage report link in footer now opens options modal instead of direct JSON download
+- **Professional Styling**: Consistent with application design language, responsive layout, proper typography
+- **Self-contained Reports**: HTML files include all CSS and JavaScript inline for standalone viewing
+
 ### Version 3.3.00 – Stable Release (2025-08-10)
 - Promoted release candidate features to official stable version
 - Finalized documentation and archived planning notes
