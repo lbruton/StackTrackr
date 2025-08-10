@@ -2,6 +2,8 @@
 
 StackTrackr is a comprehensive client-side web application for tracking precious metal investments. It's designed to help users manage their silver, gold, platinum, and palladium holdings with detailed financial metrics and enhanced tracking capabilities.
 
+The public hosted version of the app is available at [stackrtrackr.com](https://stackrtrackr.com).
+
 ## Recent Updates
 - **v3.2.07rc - Spot Timestamp Source Display**: Spot price cards now show the API provider or Manual entry along with the exact timestamp of the last update
 - **v3.2.06rc - UI Refinements & Auto Sync**: Adds modal-based item entry with stacked filters, pagination polish, collectable status button, notes button showing green "Yes" when notes exist, and automatic spot price refresh when cached data expires

@@ -1,6 +1,6 @@
 /**
  * Change log tracking and rendering
- * Tracks the last 25 cell changes in the inventory table
+ * Tracks all cell changes in the inventory table
  */
 
 /**
@@ -21,9 +21,6 @@ const logChange = (itemName, field, oldValue, newValue, idx) => {
     idx,
     undone: false,
   });
-  if (changeLog.length > 25) {
-    changeLog = changeLog.slice(-25);
-  }
   localStorage.setItem('changeLog', JSON.stringify(changeLog));
 };
 
@@ -58,29 +55,30 @@ const logItemChanges = (oldItem, newItem) => {
 };
 
 /**
- * Renders the change log table with the 10 most recent entries
+ * Renders the change log table with all entries
  */
 const renderChangeLog = () => {
   const tableBody = document.querySelector('#changeLogTable tbody');
   if (!tableBody) return;
 
-  const recent = changeLog.slice(-10).reverse();
-  const rows = recent.map((entry, i) => {
-    const globalIndex = changeLog.length - 1 - i;
-    const actionLabel = entry.undone ? 'Redo' : 'Undo';
-    return `
-    <tr>
-      <td title="${new Date(entry.timestamp).toLocaleString()}">${new Date(entry.timestamp).toLocaleString()}</td>
-      <td title="${sanitizeHtml(entry.itemName)}">${sanitizeHtml(entry.itemName)}</td>
-      <td title="${sanitizeHtml(entry.field)}">${sanitizeHtml(entry.field)}</td>
-      <td title="${sanitizeHtml(String(entry.oldValue))}">${sanitizeHtml(String(entry.oldValue))}</td>
-      <td title="${sanitizeHtml(String(entry.newValue))}">${sanitizeHtml(String(entry.newValue))}</td>
-      <td class="action-cell"><button class="btn action-btn" style="margin:1px;" onclick="editFromChangeLog(${entry.idx})">Edit</button><button class="btn action-btn" style="margin:1px;" onclick="toggleChange(${globalIndex})">${actionLabel}</button></td>
-    </tr>`;
-  });
+  const rows = [...changeLog]
+    .slice()
+    .reverse()
+    .map((entry, i) => {
+      const globalIndex = changeLog.length - 1 - i;
+      const actionLabel = entry.undone ? 'Redo' : 'Undo';
+      return `
+      <tr>
+        <td title="${new Date(entry.timestamp).toLocaleString()}">${new Date(entry.timestamp).toLocaleString()}</td>
+        <td title="${sanitizeHtml(entry.itemName)}">${sanitizeHtml(entry.itemName)}</td>
+        <td title="${sanitizeHtml(entry.field)}">${sanitizeHtml(entry.field)}</td>
+        <td title="${sanitizeHtml(String(entry.oldValue))}">${sanitizeHtml(String(entry.oldValue))}</td>
+        <td title="${sanitizeHtml(String(entry.newValue))}">${sanitizeHtml(String(entry.newValue))}</td>
+        <td class="action-cell"><button class="btn action-btn" style="margin:1px;" onclick="editFromChangeLog(${entry.idx})">Edit</button><button class="btn action-btn" style="margin:1px;" onclick="toggleChange(${globalIndex})">${actionLabel}</button></td>
+      </tr>`;
+    });
 
-  const placeholders = Array.from({ length: 10 - recent.length }, () => '<tr><td colspan="6">&nbsp;</td></tr>');
-  tableBody.innerHTML = rows.concat(placeholders).join('');
+  tableBody.innerHTML = rows.join('');
 };
 
 /**

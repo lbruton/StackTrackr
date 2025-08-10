@@ -11,13 +11,16 @@
 ### Version 3.2.07rc – Spot Timestamp Source Display (2025-08-09)
 - Spot price cards now show API provider or Manual entry along with exact timestamp of the last update
 - Footer dynamically displays the active StackTrackr domain and links to issue reporting
-- Inventory change log tracks last 25 edits and displays the 10 most recent in a modal
+- Inventory change log records every edit and the modal displays the complete history with scrolling
 - Change Log and metal totals details modals now share the site's standard header style
 - Quantity column repositioned after item name for improved readability
 - Change Log modal widened and buttonized; items-per-page controls restyled with disclaimer and fixed layout
 - Spot price action buttons reveal on card click and timestamps now reflect only API updates
 - Footer shows local storage usage with downloadable report link
 - Spot price manual input closes when card is collapsed to avoid stuck dropdowns
+- Brand mapping updated so StackrTrackr renders without a space when hosted at stackrtrackr.com
+- Documentation notes the public instance at stackrtrackr.com with new Community button linking to Reddit
+- API price history modal shows separate charts for each metal in a 2x2 grid and the table lists all pulls with scrolling
 - Storage usage counter refreshes after imports and API syncs
 - Inventory table now defaults to showing 10 rows per page
 - Storage report export omits API keys for security

@@ -869,11 +869,10 @@ input[type="submit"] {
   flex: 1;
   display: flex;
   flex-direction: column;
+  gap: 1rem;
 }
 
-.api-history-table,
-.api-history-chart {
-  flex: 1;
+.api-history-table {
   display: flex;
   flex-direction: column;
 }
@@ -888,26 +887,35 @@ input[type="submit"] {
   flex: 1;
 }
 
-.api-history-pagination {
-  display: flex;
-  justify-content: center;
-  gap: 0.5rem;
-  margin-top: 0.5rem;
+.api-history-table-wrapper {
+  max-height: 20rem;
+  overflow-y: auto;
 }
 
 #apiHistoryTable {
-  width: max-content;
+  width: 100%;
   min-width: 100%;
-  flex: 1;
-  overflow-y: auto;
 }
 
 #apiHistoryTable th {
   cursor: pointer;
 }
 
-.api-history-chart canvas {
+.api-history-charts {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.api-history-charts .chart-panel {
+  display: flex;
+  flex-direction: column;
+}
+
+.api-history-charts canvas {
   flex: 1;
+  height: 200px;
 }
 
 .api-info-body {
@@ -1079,6 +1087,7 @@ input[type="submit"] {
 
 #changeLogModal .modal-content {
   max-width: 1200px;
+  max-height: 80vh;
 }
 
 #changeLogModal .modal-header,

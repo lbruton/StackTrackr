@@ -33,8 +33,6 @@ const renderApiStatusSummary = () => {
 
 // API history table state
 let apiHistoryEntries = [];
-let apiHistoryPage = 1;
-const API_HISTORY_PAGE_SIZE = 10;
 let apiHistorySortColumn = "";
 let apiHistorySortAsc = true;
 let apiHistoryFilterText = "";
@@ -372,17 +370,13 @@ const renderApiHistoryTable = () => {
       return 0;
     });
   }
-  const totalPages = Math.max(
-    1,
-    Math.ceil(data.length / API_HISTORY_PAGE_SIZE),
-  );
-  apiHistoryPage = Math.min(apiHistoryPage, totalPages);
-  const start = (apiHistoryPage - 1) * API_HISTORY_PAGE_SIZE;
-  const pageData = data.slice(start, start + API_HISTORY_PAGE_SIZE);
+  if (!apiHistorySortColumn) {
+    data.sort((a, b) => (a.timestamp < b.timestamp ? 1 : -1));
+  }
 
   let html =
     "<tr><th data-column=\"timestamp\">Time</th><th data-column=\"metal\">Metal</th><th data-column=\"spot\">Price</th><th data-column=\"provider\">API</th></tr>";
-  pageData.forEach((e) => {
+  data.forEach((e) => {
     html += `<tr><td>${e.timestamp}</td><td>${e.metal}</td><td>${formatDollar(
       e.spot,
     )}</td><td>${e.provider || ""}</td></tr>`;
@@ -402,68 +396,44 @@ const renderApiHistoryTable = () => {
     });
   });
 
-  const pag = document.getElementById("apiHistoryPagination");
-  if (pag) {
-    pag.innerHTML = "";
-    const prev = document.createElement("button");
-    prev.textContent = "Prev";
-    prev.disabled = apiHistoryPage === 1;
-    prev.onclick = () => {
-      apiHistoryPage--;
-      renderApiHistoryTable();
-    };
-    pag.appendChild(prev);
-
-    const info = document.createElement("span");
-    info.textContent = `${apiHistoryPage} / ${totalPages}`;
-    pag.appendChild(info);
-
-    const next = document.createElement("button");
-    next.textContent = "Next";
-    next.disabled = apiHistoryPage === totalPages;
-    next.onclick = () => {
-      apiHistoryPage++;
-      renderApiHistoryTable();
-    };
-    pag.appendChild(next);
-  }
 };
 
 /**
  * Renders API history chart
  */
-const renderApiHistoryChart = () => {
-  const ctx = document.getElementById("apiHistoryChart");
-  if (ctx) {
-    const metals = ["Silver", "Gold", "Platinum", "Palladium"];
-    const datasets = [];
-    let maxLen = 0;
-    metals.forEach((metal) => {
-      const data = apiHistoryEntries
-        .filter((e) => e.metal === metal)
-        .slice(-30)
-        .map((e) => e.spot);
-      if (data.length > maxLen) maxLen = data.length;
-      const color = getComputedStyle(document.documentElement).getPropertyValue(
-        `--${metal.toLowerCase()}`,
-      );
-      datasets.push({
-        label: metal,
-        data,
-        borderColor: color,
-        tension: 0.2,
-      });
-    });
-    const labels = Array.from({ length: maxLen }, (_, i) => i + 1);
-    if (chartInstances.apiHistoryChart) {
-      chartInstances.apiHistoryChart.destroy();
+const renderApiHistoryCharts = () => {
+  const metals = ["Silver", "Gold", "Platinum", "Palladium"];
+  metals.forEach((metal) => {
+    const ctx = document.getElementById(`apiHistoryChart${metal}`);
+    if (!ctx) return;
+    const data = apiHistoryEntries
+      .filter((e) => e.metal === metal)
+      .slice(-30)
+      .map((e) => e.spot);
+    const labels = data.map((_, i) => i + 1);
+    const color = getComputedStyle(document.documentElement).getPropertyValue(
+      `--${metal.toLowerCase()}`,
+    );
+    const key = `apiHistoryChart${metal}`;
+    if (chartInstances[key]) {
+      chartInstances[key].destroy();
     }
-    chartInstances.apiHistoryChart = new Chart(ctx, {
+    chartInstances[key] = new Chart(ctx, {
       type: "line",
-      data: { labels, datasets },
+      data: {
+        labels,
+        datasets: [
+          {
+            label: metal,
+            data,
+            borderColor: color,
+            tension: 0.2,
+          },
+        ],
+      },
       options: { responsive: true, maintainAspectRatio: false },
     });
-  }
+  });
 };
 
 /**
@@ -474,7 +444,6 @@ const showApiHistoryModal = () => {
   if (!modal) return;
   loadSpotHistory();
   apiHistoryEntries = spotHistory.filter((e) => e.source === "api");
-  apiHistoryPage = 1;
   apiHistorySortColumn = "";
   apiHistorySortAsc = true;
   apiHistoryFilterText = "";
@@ -484,7 +453,6 @@ const showApiHistoryModal = () => {
     filterInput.value = "";
     filterInput.oninput = (e) => {
       apiHistoryFilterText = e.target.value;
-      apiHistoryPage = 1;
       renderApiHistoryTable();
     };
   }
@@ -492,12 +460,11 @@ const showApiHistoryModal = () => {
     clearFilterBtn.onclick = () => {
       apiHistoryFilterText = "";
       if (filterInput) filterInput.value = "";
-      apiHistoryPage = 1;
       renderApiHistoryTable();
     };
   }
   renderApiHistoryTable();
-  renderApiHistoryChart();
+  renderApiHistoryCharts();
   modal.style.display = "flex";
 };
 
