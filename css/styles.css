@@ -2021,7 +2021,7 @@ td input:checked + .slider:before {
    ============================================================================= */
 
 .search-section {
-  margin-bottom: 0;
+  margin-bottom: var(--spacing-lg);
 }
 
 .search-container {
