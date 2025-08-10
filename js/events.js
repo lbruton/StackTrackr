@@ -146,6 +146,99 @@ const setupColumnResizing = () => {
   );
 };
 
+// RESPONSIVE TABLE HANDLING
+// =============================================================================
+
+/**
+ * Updates column visibility based on current viewport width
+ */
+const updateColumnVisibility = () => {
+  const width = window.innerWidth;
+  const hidden = new Set();
+
+  const breakpoints = [
+    { width: 1200, hide: ["purchaseLocation", "storageLocation", "collectable"] },
+    {
+      width: 992,
+      hide: [
+        "purchaseLocation",
+        "storageLocation",
+        "collectable",
+        "premium",
+        "spot",
+        "weight",
+      ],
+    },
+    {
+      width: 768,
+      hide: [
+        "purchaseLocation",
+        "storageLocation",
+        "collectable",
+        "premium",
+        "spot",
+        "weight",
+        "qty",
+        "metal",
+      ],
+    },
+    {
+      width: 576,
+      hide: [
+        "purchaseLocation",
+        "storageLocation",
+        "collectable",
+        "premium",
+        "spot",
+        "weight",
+        "qty",
+        "metal",
+        "type",
+      ],
+    },
+  ];
+
+  breakpoints.forEach((bp) => {
+    if (width < bp.width) bp.hide.forEach((c) => hidden.add(c));
+  });
+
+  const allColumns = [
+    "date",
+    "type",
+    "metal",
+    "name",
+    "qty",
+    "weight",
+    "purchasePrice",
+    "spot",
+    "premium",
+    "purchaseLocation",
+    "storageLocation",
+    "collectable",
+    "notes",
+    "delete",
+  ];
+
+  allColumns.forEach((col) => {
+    document.querySelectorAll(`[data-column="${col}"]`).forEach((el) => {
+      el.classList.toggle("hidden", hidden.has(col));
+    });
+  });
+};
+
+/**
+ * Sets up responsive column visibility handling
+ */
+const setupResponsiveColumns = () => {
+  updateColumnVisibility();
+  safeAttachListener(
+    window,
+    "resize",
+    updateColumnVisibility,
+    "Window resize for column visibility",
+  );
+};
+
 // MAIN EVENT LISTENERS SETUP
 // =============================================================================
 
@@ -156,6 +249,9 @@ const setupEventListeners = () => {
   console.log(`Setting up event listeners (v${APP_VERSION})...`);
 
   try {
+    // Responsive column handling
+    setupResponsiveColumns();
+
     // CRITICAL HEADER BUTTONS
     debugLog("Setting up header buttons...");
 

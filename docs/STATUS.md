@@ -20,6 +20,7 @@ The tool features a **modular JavaScript architecture** with separate files for 
 
 ## ✨ Latest Changes
 
+- **v3.03.02a - Responsive Table Columns**: Added viewport-based column hiding and mobile-friendly pagination sizing
 - **v3.03.02a - Archive Workflow & Versioning Guide Update**: Archived previous build and added rollback footer link requirement; clarified BRANCH.RELEASE.PATCH.state naming and pre-release codes
 - **v3.03.01a - Comprehensive Storage Report System**: Redesigned storage reports from basic JSON to professional HTML system
   - Professional HTML reports optimized for letter paper printing

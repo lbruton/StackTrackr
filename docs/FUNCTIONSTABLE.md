@@ -71,6 +71,8 @@
 | detailsModal.js | closeDetailsModal | Closes the details modal and cleans up charts |
 | events.js | safeAttachListener | Safely attaches event listener with fallback methods |
 | events.js | setupColumnResizing | Implements dynamic column resizing for the inventory table |
+| events.js | updateColumnVisibility | Updates column visibility based on viewport width |
+| events.js | setupResponsiveColumns | Sets up column visibility resize listener |
 | events.js | setupEventListeners | Sets up all primary event listeners for the application |
 | events.js | updateThemeDisplay |  |
 | events.js | setupPagination | Sets up pagination event listeners |
