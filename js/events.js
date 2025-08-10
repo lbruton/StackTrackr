@@ -621,8 +621,10 @@ const setupEventListeners = () => {
           (e) => {
             e.preventDefault();
             renderChangeLog();
-            if (elements.changeLogModal)
+            if (elements.changeLogModal) {
               elements.changeLogModal.style.display = "flex";
+              document.body.style.overflow = "hidden";
+            }
           },
           "Change log button",
         );
@@ -647,8 +649,10 @@ const setupEventListeners = () => {
         elements.changeLogCloseBtn,
         "click",
         () => {
-          if (elements.changeLogModal)
+          if (elements.changeLogModal) {
             elements.changeLogModal.style.display = "none";
+            document.body.style.overflow = "";
+          }
         },
         "Change log close button",
       );
@@ -1554,16 +1558,17 @@ const setupApiEvents = () => {
             editingIndex = null;
           } else if (addModal && addModal.style.display === "flex") {
             addModal.style.display = "none";
-          } else if (notesModal && notesModal.style.display === "flex") {
-            notesModal.style.display = "none";
-            notesIndex = null;
-          } else if (changeLogModal && changeLogModal.style.display === "flex") {
-            changeLogModal.style.display = "none";
-          } else if (
-            detailsModal &&
-            detailsModal.style.display === "flex" &&
-            typeof closeDetailsModal === "function"
-          ) {
+        } else if (notesModal && notesModal.style.display === "flex") {
+          notesModal.style.display = "none";
+          notesIndex = null;
+        } else if (changeLogModal && changeLogModal.style.display === "flex") {
+          changeLogModal.style.display = "none";
+          document.body.style.overflow = "";
+        } else if (
+          detailsModal &&
+          detailsModal.style.display === "flex" &&
+          typeof closeDetailsModal === "function"
+        ) {
             closeDetailsModal();
           }
         }
