@@ -1,12 +1,14 @@
 # StackTrackr - Project Structure
 
-## Current Structure (Version 3.2.06rc)
+## Current Structure (Version 3.3.00)
 
 ```text
 ├── css/
 │   └── styles.css
 ├── debug/
 ├── docs/
+│   ├── archive/
+│   │   └── notes/
 │   ├── CHANGELOG.md
 │   ├── IMPLEMENTATION_SUMMARY.md
 │   ├── MULTI_AGENT_WORKFLOW.md

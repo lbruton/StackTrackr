@@ -19,10 +19,13 @@ const renderApiStatusSummary = () => {
       const statusText =
         status === "connected"
           ? "Connected"
-          : status === "error"
-            ? "Error"
-            : "Disconnected";
-      return `<span class="status-item ${status}">${name}: ${statusText}</span>`;
+          : status === "cached"
+            ? "Connected (cached)"
+            : status === "error"
+              ? "Error"
+              : "Disconnected";
+      const statusClass = status === "cached" ? "connected" : status;
+      return `<span class="status-item ${statusClass}">${name}: ${statusText}</span>`;
     })
     .join("");
   container.innerHTML = html;
@@ -30,8 +33,6 @@ const renderApiStatusSummary = () => {
 
 // API history table state
 let apiHistoryEntries = [];
-let apiHistoryPage = 1;
-const API_HISTORY_PAGE_SIZE = 10;
 let apiHistorySortColumn = "";
 let apiHistorySortAsc = true;
 let apiHistoryFilterText = "";
@@ -200,8 +201,8 @@ const getCacheDurationMs = () => {
 /**
  * Sets connection status for a provider in the settings UI
  * @param {string} provider
- * @param {"connected"|"disconnected"|"error"} status
- */
+ * @param {"connected"|"disconnected"|"error"|"cached"} status
+*/
 const setProviderStatus = (provider, status) => {
   providerStatuses[provider] = status;
   renderApiStatusSummary();
@@ -213,16 +214,21 @@ const setProviderStatus = (provider, status) => {
     "status-connected",
     "status-disconnected",
     "status-error",
+    "status-cached",
   );
-  block.classList.add(`status-${status}`);
+  block.classList.add(
+    status === "cached" ? "status-connected" : `status-${status}`,
+  );
   const text = block.querySelector(".status-text");
   if (text) {
     text.textContent =
       status === "connected"
         ? "Connected"
-        : status === "error"
-          ? "Error"
-          : "Disconnected";
+        : status === "cached"
+          ? "Connected (cached)"
+          : status === "error"
+            ? "Error"
+            : "Disconnected";
   }
 };
 
@@ -281,6 +287,38 @@ const updateProviderHistoryTables = () => {
 };
 
 /**
+ * Refreshes provider statuses based on stored keys and cache age
+ */
+const refreshProviderStatuses = () => {
+  const config = loadApiConfig();
+  let cache = null;
+  try {
+    const stored = localStorage.getItem(API_CACHE_KEY);
+    cache = stored ? JSON.parse(stored) : null;
+  } catch (err) {
+    console.error("Error reading API cache for status check:", err);
+  }
+  const now = Date.now();
+  const duration = getCacheDurationMs();
+  Object.keys(API_PROVIDERS).forEach((prov) => {
+    if (config.keys[prov]) {
+      if (cache && cache.provider === prov && cache.timestamp) {
+        const age = now - cache.timestamp;
+        if (age <= duration) {
+          setProviderStatus(prov, "connected");
+        } else {
+          setProviderStatus(prov, "cached");
+        }
+      } else {
+        setProviderStatus(prov, "connected");
+      }
+    } else {
+      setProviderStatus(prov, "disconnected");
+    }
+  });
+};
+
+/**
  * Updates default provider button states
  */
 const updateDefaultProviderButtons = () => {
@@ -298,7 +336,7 @@ const updateDefaultProviderButtons = () => {
     if (!btn) return;
     btn.classList.remove("default", "backup", "inactive");
     if (config.provider === prov && keys[prov]) {
-      btn.textContent = "Default";
+      btn.textContent = "";
       btn.classList.add("default");
     } else if (keys[prov]) {
       btn.textContent = "Backup";
@@ -332,17 +370,13 @@ const renderApiHistoryTable = () => {
       return 0;
     });
   }
-  const totalPages = Math.max(
-    1,
-    Math.ceil(data.length / API_HISTORY_PAGE_SIZE),
-  );
-  apiHistoryPage = Math.min(apiHistoryPage, totalPages);
-  const start = (apiHistoryPage - 1) * API_HISTORY_PAGE_SIZE;
-  const pageData = data.slice(start, start + API_HISTORY_PAGE_SIZE);
+  if (!apiHistorySortColumn) {
+    data.sort((a, b) => (a.timestamp < b.timestamp ? 1 : -1));
+  }
 
   let html =
     "<tr><th data-column=\"timestamp\">Time</th><th data-column=\"metal\">Metal</th><th data-column=\"spot\">Price</th><th data-column=\"provider\">API</th></tr>";
-  pageData.forEach((e) => {
+  data.forEach((e) => {
     html += `<tr><td>${e.timestamp}</td><td>${e.metal}</td><td>${formatDollar(
       e.spot,
     )}</td><td>${e.provider || ""}</td></tr>`;
@@ -362,68 +396,44 @@ const renderApiHistoryTable = () => {
     });
   });
 
-  const pag = document.getElementById("apiHistoryPagination");
-  if (pag) {
-    pag.innerHTML = "";
-    const prev = document.createElement("button");
-    prev.textContent = "Prev";
-    prev.disabled = apiHistoryPage === 1;
-    prev.onclick = () => {
-      apiHistoryPage--;
-      renderApiHistoryTable();
-    };
-    pag.appendChild(prev);
-
-    const info = document.createElement("span");
-    info.textContent = `${apiHistoryPage} / ${totalPages}`;
-    pag.appendChild(info);
-
-    const next = document.createElement("button");
-    next.textContent = "Next";
-    next.disabled = apiHistoryPage === totalPages;
-    next.onclick = () => {
-      apiHistoryPage++;
-      renderApiHistoryTable();
-    };
-    pag.appendChild(next);
-  }
 };
 
 /**
  * Renders API history chart
  */
-const renderApiHistoryChart = () => {
-  const ctx = document.getElementById("apiHistoryChart");
-  if (ctx) {
-    const metals = ["Silver", "Gold", "Platinum", "Palladium"];
-    const datasets = [];
-    let maxLen = 0;
-    metals.forEach((metal) => {
-      const data = apiHistoryEntries
-        .filter((e) => e.metal === metal)
-        .slice(-30)
-        .map((e) => e.spot);
-      if (data.length > maxLen) maxLen = data.length;
-      const color = getComputedStyle(document.documentElement).getPropertyValue(
-        `--${metal.toLowerCase()}`,
-      );
-      datasets.push({
-        label: metal,
-        data,
-        borderColor: color,
-        tension: 0.2,
-      });
-    });
-    const labels = Array.from({ length: maxLen }, (_, i) => i + 1);
-    if (chartInstances.apiHistoryChart) {
-      chartInstances.apiHistoryChart.destroy();
+const renderApiHistoryCharts = () => {
+  const metals = ["Silver", "Gold", "Platinum", "Palladium"];
+  metals.forEach((metal) => {
+    const ctx = document.getElementById(`apiHistoryChart${metal}`);
+    if (!ctx) return;
+    const data = apiHistoryEntries
+      .filter((e) => e.metal === metal)
+      .slice(-30)
+      .map((e) => e.spot);
+    const labels = data.map((_, i) => i + 1);
+    const color = getComputedStyle(document.documentElement).getPropertyValue(
+      `--${metal.toLowerCase()}`,
+    );
+    const key = `apiHistoryChart${metal}`;
+    if (chartInstances[key]) {
+      chartInstances[key].destroy();
     }
-    chartInstances.apiHistoryChart = new Chart(ctx, {
+    chartInstances[key] = new Chart(ctx, {
       type: "line",
-      data: { labels, datasets },
+      data: {
+        labels,
+        datasets: [
+          {
+            label: metal,
+            data,
+            borderColor: color,
+            tension: 0.2,
+          },
+        ],
+      },
       options: { responsive: true, maintainAspectRatio: false },
     });
-  }
+  });
 };
 
 /**
@@ -434,7 +444,6 @@ const showApiHistoryModal = () => {
   if (!modal) return;
   loadSpotHistory();
   apiHistoryEntries = spotHistory.filter((e) => e.source === "api");
-  apiHistoryPage = 1;
   apiHistorySortColumn = "";
   apiHistorySortAsc = true;
   apiHistoryFilterText = "";
@@ -444,7 +453,6 @@ const showApiHistoryModal = () => {
     filterInput.value = "";
     filterInput.oninput = (e) => {
       apiHistoryFilterText = e.target.value;
-      apiHistoryPage = 1;
       renderApiHistoryTable();
     };
   }
@@ -452,12 +460,11 @@ const showApiHistoryModal = () => {
     clearFilterBtn.onclick = () => {
       apiHistoryFilterText = "";
       if (filterInput) filterInput.value = "";
-      apiHistoryPage = 1;
       renderApiHistoryTable();
     };
   }
   renderApiHistoryTable();
-  renderApiHistoryChart();
+  renderApiHistoryCharts();
   modal.style.display = "flex";
 };
 
@@ -475,6 +482,7 @@ const hideApiHistoryModal = () => {
 const showApiProvidersModal = () => {
   const modal = document.getElementById("apiProvidersModal");
   if (modal) {
+    refreshProviderStatuses();
     updateProviderHistoryTables();
     modal.style.display = "flex";
   }
@@ -593,7 +601,7 @@ const refreshFromCache = () => {
 
       const ts = document.getElementById(`spotTimestamp${metalConfig.name}`);
       if (ts) {
-        ts.textContent = getLastUpdateTime(metalConfig.name) || "No data";
+        ts.innerHTML = getLastUpdateTime(metalConfig.name);
       }
 
       updatedCount++;
@@ -886,7 +894,7 @@ const syncSpotPricesFromApi = async (
 
         const ts = document.getElementById(`spotTimestamp${metalConfig.name}`);
         if (ts) {
-          ts.textContent = getLastUpdateTime(metalConfig.name) || "No data";
+          ts.innerHTML = getLastUpdateTime(metalConfig.name);
         }
 
         updatedCount++;
@@ -899,6 +907,9 @@ const syncSpotPricesFromApi = async (
 
       // Update summary calculations
       updateSummary();
+      if (typeof updateStorageStats === "function") {
+        updateStorageStats();
+      }
 
       setProviderStatus(apiConfig.provider, "connected");
 
@@ -1041,7 +1052,7 @@ const handleProviderSync = async (provider) => {
         );
         const ts = document.getElementById(`spotTimestamp${metalConfig.name}`);
         if (ts) {
-          ts.textContent = getLastUpdateTime(metalConfig.name) || "No data";
+          ts.innerHTML = getLastUpdateTime(metalConfig.name);
         }
         updatedCount++;
       }
@@ -1128,8 +1139,8 @@ const updateSyncButtonStates = (syncing = false) => {
 /**
  * Shows settings modal and populates API fields
  */
-const showSettingsModal = () => {
-  const modal = document.getElementById("settingsModal");
+const showApiModal = () => {
+  const modal = document.getElementById("apiModal");
   if (!modal) return;
   let currentConfig = loadApiConfig() || {
     provider: "",
@@ -1140,18 +1151,6 @@ const showSettingsModal = () => {
   if (!currentConfig.provider) {
     currentConfig.provider = Object.keys(API_PROVIDERS)[0];
     saveApiConfig(currentConfig);
-  }
-
-  const savedTheme = localStorage.getItem(THEME_KEY);
-  const themeValue = savedTheme ? savedTheme : "system";
-  const themeDisplay = document.getElementById("themeDisplay");
-  if (themeDisplay) {
-    themeDisplay.textContent =
-      themeValue === "dark"
-        ? "Dark Mode"
-        : themeValue === "light"
-          ? "Light Mode"
-          : "System";
   }
 
   Object.keys(API_PROVIDERS).forEach((prov) => {
@@ -1180,10 +1179,48 @@ const showSettingsModal = () => {
 };
 
 /**
- * Hides settings modal
+ * Hides API modal
  */
-const hideSettingsModal = () => {
-  const modal = document.getElementById("settingsModal");
+const hideApiModal = () => {
+  const modal = document.getElementById("apiModal");
+  if (modal) {
+    modal.style.display = "none";
+  }
+};
+
+const showFilesModal = () => {
+  const modal = document.getElementById("filesModal");
+  if (modal) {
+    modal.style.display = "flex";
+  }
+};
+
+const hideFilesModal = () => {
+  const modal = document.getElementById("filesModal");
+  if (modal) {
+    modal.style.display = "none";
+  }
+};
+
+const showAppearanceModal = () => {
+  const modal = document.getElementById("appearanceModal");
+  if (!modal) return;
+  const savedTheme = localStorage.getItem(THEME_KEY);
+  const themeValue = savedTheme ? savedTheme : "system";
+  const themeDisplay = document.getElementById("themeDisplay");
+  if (themeDisplay) {
+    themeDisplay.textContent =
+      themeValue === "dark"
+        ? "Dark Mode"
+        : themeValue === "light"
+          ? "Light Mode"
+          : "System";
+  }
+  modal.style.display = "flex";
+};
+
+const hideAppearanceModal = () => {
+  const modal = document.getElementById("appearanceModal");
   if (modal) {
     modal.style.display = "none";
   }
@@ -1235,8 +1272,12 @@ const hideProviderInfo = () => {
 };
 
 // Make modal controls available globally
-window.showSettingsModal = showSettingsModal;
-window.hideSettingsModal = hideSettingsModal;
+window.showApiModal = showApiModal;
+window.hideApiModal = hideApiModal;
+window.showFilesModal = showFilesModal;
+window.hideFilesModal = hideFilesModal;
+window.showAppearanceModal = showAppearanceModal;
+window.hideAppearanceModal = hideAppearanceModal;
 window.showProviderInfo = showProviderInfo;
 window.hideProviderInfo = hideProviderInfo;
 

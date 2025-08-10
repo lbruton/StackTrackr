@@ -53,12 +53,6 @@ const fetchSpotPrice = () => {
           spotPrices[metalConfig.key],
         );
       }
-      const hasHistory = spotHistory.some(
-        (e) => e.metal === metalConfig.name,
-      );
-      if (!hasHistory) {
-        recordSpot(spotPrices[metalConfig.key], "stored", metalConfig.name);
-      }
     } else {
       // Use default price if no stored price
       const defaultPrice = metalConfig.defaultPrice;
@@ -79,8 +73,7 @@ const fetchSpotPrice = () => {
       `spotTimestamp${metalConfig.name}`,
     );
     if (timestampElement) {
-      const lastUpdate = getLastUpdateTime(metalConfig.name);
-      timestampElement.textContent = lastUpdate || "No data";
+      timestampElement.innerHTML = getLastUpdateTime(metalConfig.name);
     }
   });
 
@@ -123,8 +116,7 @@ const updateManualSpot = (metalKey) => {
     `spotTimestamp${metalConfig.name}`,
   );
   if (timestampElement) {
-    timestampElement.textContent =
-      getLastUpdateTime(metalConfig.name) || "No data";
+    timestampElement.innerHTML = getLastUpdateTime(metalConfig.name);
   }
 
   updateSummary();
@@ -183,8 +175,7 @@ const resetSpot = (metalKey) => {
     `spotTimestamp${metalConfig.name}`,
   );
   if (timestampElement) {
-    timestampElement.textContent =
-      getLastUpdateTime(metalConfig.name) || "No data";
+    timestampElement.innerHTML = getLastUpdateTime(metalConfig.name);
   }
 
   // Update summary

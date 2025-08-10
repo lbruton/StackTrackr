@@ -71,16 +71,38 @@
         <p class="app-subtitle">The open source precious metals tracking tool.</p>
       </div>
       <div style="margin-left: auto; display: flex; gap: 0.5rem">
-        <button
-          class="btn"
-          id="settingsBtn"
-          title="Settings"
-          aria-label="Settings"
-        >
-          Settings ⚙️
-        </button>
         <button class="btn" id="aboutBtn" title="About" aria-label="About">
           About 📖
+        </button>
+        <button class="btn" id="apiBtn" title="API" aria-label="API">
+          API 🔌
+        </button>
+        <button
+          class="btn"
+          id="appearanceBtn"
+          title="Appearance"
+          aria-label="Appearance"
+        >
+          Appearance 🎨
+        </button>
+        <a
+          class="btn"
+          id="communityBtn"
+          href="https://www.reddit.com/r/stackrtrackr/"
+          target="_blank"
+          rel="noopener"
+          title="Community"
+          aria-label="Community"
+        >
+          <img
+            src="https://www.redditstatic.com/desktop2x/img/favicon/favicon-32x32.png"
+            alt=""
+            style="height: 1em; width: 1em"
+          />
+          Community
+        </a>
+        <button class="btn" id="filesBtn" title="Files" aria-label="Files">
+          Files 📁
         </button>
       </div>
     </div>
@@ -325,17 +347,151 @@
             </div>
           </div>
         </div>
+      </section><!-- =============================================================================
+         INVENTORY FORM SECTION
+         
+         Primary data entry form for adding new inventory items. Includes fields for:
+         - Metal type selection (Silver, Gold, Platinum, Palladium)
+         - Item details (name, type, quantity, weight)
+         - Purchase information (price, location, storage location, date)
+         
+         Form submission is handled by events.js with validation and automatic
+         premium calculation based on current spot prices
+         ============================================================================= -->
+      <!--
+        Legacy add item form - commented out pending removal after
+        verifying new modal workflow.
+      <section class="form-section">
+        ...
+      </section>
+      -->
+      <!-- =============================================================================
+         INVENTORY
+
+         Wrapper containing search and inventory table
+         ============================================================================= -->
+      <section class="inventory-section">
+        <!-- =============================================================================
+           SEARCH FUNCTIONALITY
+
+           Live search interface that filters inventory table in real-time.
+           Searches across all relevant fields including:
+           - Metal type, name, type, purchase/storage locations, date
+           - Quantity, weight, price values
+           - Collectable status (yes/no)
+
+           Search is case-insensitive and supports partial matches
+           Implementation in search.js with filterInventory() function
+           ============================================================================= -->
+        <section class="search-section">
+          <div class="search-container">
+            <input
+              id="searchInput"
+              placeholder="Search inventory by metal, name, type, purchase location, storage location, notes, date..."
+              type="text"
+            />
+            <button class="btn" id="clearSearchBtn">Clear</button>
+            <button class="btn success" id="newItemBtn">New Item</button>
+          </div>
+          <div class="search-results-info" id="searchResultsInfo"></div>
+        </section>
+        <!-- =============================================================================
+           INVENTORY TABLE SECTION
+
+           Main data display table showing all inventory items with:
+           - Sortable columns (click headers to sort ascending/descending)
+           - Clickable item names for editing (opens edit modal)
+           - Collectable status checkboxes for quick toggle
+           - Delete buttons with confirmation
+           - Responsive design with column resizing capability
+
+        Table rendering handled by renderTable() in inventory.js
+         Pagination controls limit display to selected items per page
+         ============================================================================= -->
+        <section class="table-section">
+          <div class="table-controls">
+            <button id="changeLogBtn" class="btn">Change Log</button>
+            <span class="table-disclaimer"
+              >All data is stored locally. Back up often.</span
+          >
+          <div class="items-per-page">
+            <span class="items-label">Items:</span>
+            <select class="pagination-select" id="itemsPerPage">
+              <option selected value="10">10</option>
+              <option value="15">15</option>
+              <option value="25">25</option>
+              <option value="50">50</option>
+              <option value="100">100</option>
+            </select>
+          </div>
+          </div>
+          <table id="inventoryTable">
+          <thead>
+            <tr>
+              <th class="shrink">Date</th>
+              <th class="shrink">Type</th>
+              <th class="shrink">Metal</th>
+              <th class="expand">Name</th>
+              <th class="shrink">Qty</th>
+              <th class="shrink">Weight<br />(oz)</th>
+              <th class="shrink">Purchase<br />Price ($)</th>
+              <th class="shrink">Spot at<br />Purchase ($)</th>
+              <th class="shrink">Premium<br />($)</th>
+              <th class="shrink">Purchase<br />Location</th>
+              <th class="shrink">Storage<br />Location</th>
+              <th class="shrink">Collectable</th>
+              <th class="shrink">Notes</th>
+              <th class="shrink">Delete</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+        <!-- Pagination Controls -->
+        <section class="pagination-section">
+          <div class="pagination-container">
+            <div class="pagination-controls">
+              <div class="pagination-buttons">
+                <div class="pagination-left">
+                  <button
+                    class="pagination-btn"
+                    id="firstPage"
+                    title="First Page"
+                  >
+                    «
+                  </button>
+                  <button
+                    class="pagination-btn"
+                    id="prevPage"
+                    title="Previous Page"
+                  >
+                    ‹
+                  </button>
+                </div>
+                <div class="pagination-center" id="pageNumbers"></div>
+                <div class="pagination-right">
+                  <button class="pagination-btn" id="nextPage" title="Next Page">
+                    ›
+                  </button>
+                  <button class="pagination-btn" id="lastPage" title="Last Page">
+                    »
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </section>
       </section>
       <!-- =============================================================================
          TOTALS SECTION
-         
+
          Comprehensive financial summary cards for each metal type showing:
          - Total items and weight in inventory
          - Purchase price vs current value calculations
          - Average prices (overall, collectable, non-collectable)
          - Premium analysis and profit/loss calculations
-         - "View Details" buttons that open analytics modals with pie charts
-         
+         - Clickable totals titles opening analytics modals with pie charts
+
          All calculations are performed by updateSummary() in inventory.js
          Values are updated automatically when inventory changes
          ============================================================================= -->
@@ -343,7 +499,7 @@
         <div class="totals">
           <!-- Silver totals card -->
           <div class="total-card silver">
-            <div class="total-title">Silver Totals</div>
+            <div class="total-title" data-metal="Silver">Silver Totals</div>
             <div class="total-group">
               <div class="total-item">
                 <span class="total-label">Total Items:</span>
@@ -394,13 +550,10 @@
                 <span class="total-value" id="lossProfitSilver">$0.00</span>
               </div>
             </div>
-            <button class="details-btn" data-metal="Silver">
-              View Details
-            </button>
           </div>
           <!-- Gold totals card -->
           <div class="total-card gold">
-            <div class="total-title">Gold Totals</div>
+            <div class="total-title" data-metal="Gold">Gold Totals</div>
             <div class="total-group">
               <div class="total-item">
                 <span class="total-label">Total Items:</span>
@@ -451,11 +604,10 @@
                 <span class="total-value" id="lossProfitGold">$0.00</span>
               </div>
             </div>
-            <button class="details-btn" data-metal="Gold">View Details</button>
           </div>
           <!-- Platinum totals card -->
           <div class="total-card platinum">
-            <div class="total-title">Platinum Totals</div>
+            <div class="total-title" data-metal="Platinum">Platinum Totals</div>
             <div class="total-group">
               <div class="total-item">
                 <span class="total-label">Total Items:</span>
@@ -508,13 +660,10 @@
                 <span class="total-value" id="lossProfitPlatinum">$0.00</span>
               </div>
             </div>
-            <button class="details-btn" data-metal="Platinum">
-              View Details
-            </button>
           </div>
           <!-- Palladium totals card -->
           <div class="total-card palladium">
-            <div class="total-title">Palladium Totals</div>
+            <div class="total-title" data-metal="Palladium">Palladium Totals</div>
             <div class="total-group">
               <div class="total-item">
                 <span class="total-label">Total Items:</span>
@@ -571,133 +720,8 @@
                 <span class="total-value" id="lossProfitPalladium">$0.00</span>
               </div>
             </div>
-            <button class="details-btn" data-metal="Palladium">
-              View Details
-            </button>
           </div>
         </div>
-      </section>
-      <!-- =============================================================================
-         INVENTORY FORM SECTION
-         
-         Primary data entry form for adding new inventory items. Includes fields for:
-         - Metal type selection (Silver, Gold, Platinum, Palladium)
-         - Item details (name, type, quantity, weight)
-         - Purchase information (price, location, storage location, date)
-         
-         Form submission is handled by events.js with validation and automatic
-         premium calculation based on current spot prices
-         ============================================================================= -->
-      <!--
-        Legacy add item form - commented out pending removal after
-        verifying new modal workflow.
-      <section class="form-section">
-        ...
-      </section>
-      -->
-      <!-- =============================================================================
-         SEARCH FUNCTIONALITY
-         
-         Live search interface that filters inventory table in real-time.
-         Searches across all relevant fields including:
-         - Metal type, name, type, purchase/storage locations, date
-         - Quantity, weight, price values
-         - Collectable status (yes/no)
-         
-         Search is case-insensitive and supports partial matches
-         Implementation in search.js with filterInventory() function
-         ============================================================================= -->
-      <section class="search-section">
-        <div class="search-container">
-          <input
-            id="searchInput"
-            placeholder="Search inventory by metal, name, type, purchase location, storage location, notes, date..."
-            type="text"
-          />
-          <button class="btn" id="clearSearchBtn">Clear</button>
-          <button class="btn success" id="newItemBtn">New Item</button>
-        </div>
-        <div class="search-results-info" id="searchResultsInfo"></div>
-      </section>
-      <!-- =============================================================================
-         INVENTORY TABLE SECTION
-         
-         Main data display table showing all inventory items with:
-         - Sortable columns (click headers to sort ascending/descending)
-         - Clickable item names for editing (opens edit modal)
-         - Collectable status checkboxes for quick toggle
-         - Delete buttons with confirmation
-         - Responsive design with column resizing capability
-         
-      Table rendering handled by renderTable() in inventory.js
-       Pagination controls limit display to selected items per page
-       ============================================================================= -->
-      <section class="table-section">
-        <div class="items-per-page">
-          <span>Items:</span>
-          <select class="pagination-select" id="itemsPerPage">
-            <option value="10">10</option>
-            <option value="15">15</option>
-            <option selected value="25">25</option>
-            <option value="50">50</option>
-            <option value="100">100</option>
-          </select>
-        </div>
-        <table id="inventoryTable">
-          <thead>
-            <tr>
-              <th class="shrink">Date</th>
-              <th class="shrink">Type</th>
-              <th class="shrink">Metal</th>
-              <th class="shrink">Qty</th>
-              <th class="expand">Name</th>
-              <th class="shrink">Weight (oz)</th>
-              <th class="shrink">Purchase Price ($)</th>
-              <th class="shrink">Spot at Purchase ($)</th>
-              <th class="shrink">Premium ($)</th>
-              <th class="shrink">Purchase Location</th>
-              <th class="shrink">Storage Location</th>
-              <th class="shrink">Collectable</th>
-              <th class="shrink">Notes</th>
-              <th class="shrink">Delete</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-        <!-- Pagination Controls -->
-        <section class="pagination-section">
-          <div class="pagination-container">
-            <div class="pagination-controls">
-              <div class="pagination-buttons">
-                <div class="pagination-left">
-                  <button
-                    class="pagination-btn"
-                    id="firstPage"
-                    title="First Page"
-                  >
-                    «
-                  </button>
-                  <button
-                    class="pagination-btn"
-                    id="prevPage"
-                    title="Previous Page"
-                  >
-                    ‹
-                  </button>
-                </div>
-                <div class="pagination-center" id="pageNumbers"></div>
-                <div class="pagination-right">
-                  <button class="pagination-btn" id="nextPage" title="Next Page">
-                    ›
-                  </button>
-                  <button class="pagination-btn" id="lastPage" title="Last Page">
-                    »
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
       </section>
       <!-- =============================================================================
          IMPORT/EXPORT SECTION
@@ -982,9 +1006,39 @@
     </div>
 
     <!-- =============================================================================
+       CHANGE LOG MODAL
+
+       Displays the 10 most recent inventory cell changes tracked by the system.
+       Data is populated dynamically from localStorage and rendered as a table.
+       ============================================================================= -->
+    <div class="modal" id="changeLogModal" style="display: none">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Change Log</h2>
+          <button aria-label="Close modal" class="modal-close" id="changeLogCloseBtn">×</button>
+        </div>
+        <div class="modal-body">
+          <table id="changeLogTable">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Item</th>
+                <th>Field</th>
+                <th>Old Value</th>
+                <th>New Value</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- =============================================================================
        DETAILS MODAL WITH PIE CHARTS
        
-       Advanced analytics modal opened from "View Details" buttons on totals cards.
+       Advanced analytics modal opened by clicking totals titles.
        Provides in-depth analysis for selected metal including:
        
        VISUAL ANALYTICS:
@@ -1001,52 +1055,56 @@
        Data preparation and chart rendering handled by charts.js
        ============================================================================= -->
     <div class="modal" id="detailsModal" style="display: none">
-      <div class="details-modal-content">
-        <h2 class="details-modal-title" id="detailsModalTitle"></h2>
-        <!-- Pie Charts Section -->
-        <div class="charts-section">
-          <div class="chart-container">
-            <div class="chart-title">Breakdown by Type</div>
-            <div class="chart-canvas-container">
-              <canvas class="chart-canvas" id="typeChart"></canvas>
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 id="detailsModalTitle"></h2>
+          <button aria-label="Close modal" class="modal-close" id="detailsCloseBtn">×</button>
+        </div>
+        <div class="modal-body">
+          <div class="details-grid">
+            <div class="details-panel">
+              <h3 class="details-panel-title">Breakdown by Type</h3>
+              <div class="chart-canvas-container">
+                <canvas class="chart-canvas" id="typeChart"></canvas>
+              </div>
+              <div class="details-breakdown" id="typeBreakdown">
+                <!-- Content will be populated by JavaScript -->
+              </div>
             </div>
-          </div>
-          <div class="chart-container">
-            <div class="chart-title">Breakdown by Purchase Location</div>
-            <div class="chart-canvas-container">
-              <canvas class="chart-canvas" id="locationChart"></canvas>
+            <div class="details-panel">
+              <h3 class="details-panel-title">Breakdown by Purchase Location</h3>
+              <div class="chart-canvas-container">
+                <canvas class="chart-canvas" id="locationChart"></canvas>
+              </div>
+              <div class="details-breakdown" id="locationBreakdown">
+                <!-- Content will be populated by JavaScript -->
+              </div>
             </div>
           </div>
         </div>
-        <!-- Data Tables Section -->
-        <div class="details-content">
-          <!-- Type breakdown column -->
-          <div class="details-section">
-            <div class="details-section-title">Type Details</div>
-            <div class="details-breakdown" id="typeBreakdown">
-              <!-- Content will be populated by JavaScript -->
-            </div>
-          </div>
-          <!-- Location breakdown column -->
-          <div class="details-section">
-            <div class="details-section-title">Location Details</div>
-            <div class="details-breakdown" id="locationBreakdown">
-              <!-- Content will be populated by JavaScript -->
-            </div>
-          </div>
-        </div>
-        <button class="close-details-btn" id="closeDetailsBtn">Close</button>
       </div>
     </div>
     <footer class="app-footer">
-      © 2025 stacktrackr.com. Open source project licensed
+      © 2025 <span id="footerDomain">stacktrackr.com</span>. Open source project licensed
       <a
         href="https://www.gnu.org/licenses/gpl-3.0.en.html"
         target="_blank"
         rel="noopener"
         >GPL-3.0</a
       >.
-    </footer>
+      <br />
+  Report issues or bugs here:
+  <a
+    href="https://github.com/lbruton/StackTrackr/issues"
+    target="_blank"
+    rel="noopener"
+    >https://github.com/lbruton/StackTrackr/issues</a
+  >
+  <div class="storage-line">
+    Storage: <span id="storageUsage"></span>
+    <a href="#" id="storageReportLink">Download storage report</a>
+  </div>
+</footer>
     <!-- =============================================================================
        ABOUT & DISCLAIMER MODAL
        Comprehensive application information and disclaimer modal similar to the
@@ -1251,20 +1309,16 @@
       </div>
     </div>
     <!-- =============================================================================
-       API CONFIGURATION MODAL
-       
-       Modal for configuring API providers and keys for live spot price data.
-       Includes provider selection, API key input, and status display.
-       Data is stored in localStorage with 24-hour caching system.
        ============================================================================= -->
-    <div class="modal" id="settingsModal" style="display: none">
+
+    <div class="modal" id="appearanceModal" style="display: none">
       <div class="modal-content">
         <div class="modal-header">
-          <h2>Settings</h2>
+          <h2>Appearance</h2>
           <button
             aria-label="Close modal"
             class="modal-close"
-            id="settingsCloseBtn"
+            id="appearanceCloseBtn"
           >
             ×
           </button>
@@ -1282,7 +1336,19 @@
               <div class="theme-display" id="themeDisplay"></div>
             </div>
           </div>
+        </div>
+      </div>
+    </div>
 
+    <div class="modal" id="apiModal" style="display: none">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>API</h2>
+          <button aria-label="Close modal" class="modal-close" id="apiCloseBtn">
+            ×
+          </button>
+        </div>
+        <div class="modal-body">
           <div class="settings-section">
             <h3 style="margin-bottom: 1rem">API Configuration</h3>
             <p class="settings-subtext">Manage API cache, history, and providers.</p>
@@ -1315,7 +1381,19 @@
               </button>
             </div>
           </div>
+        </div>
+      </div>
+    </div>
 
+    <div class="modal" id="filesModal" style="display: none">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Files</h2>
+          <button aria-label="Close modal" class="modal-close" id="filesCloseBtn">
+            ×
+          </button>
+        </div>
+        <div class="modal-body">
           <div class="settings-section">
             <h3>Files</h3>
             <p class="settings-subtext">Import or export your data files.</p>
@@ -1431,7 +1509,6 @@
                       class="btn provider-default-btn"
                       data-provider="METALS_DEV"
                     >
-                      Default
                     </button>
                     <div class="provider-actions-right">
                       <button
@@ -1453,7 +1530,7 @@
                         class="btn api-sync-btn success"
                         data-provider="METALS_DEV"
                       >
-                        Test & Sync
+                        Save and Test
                       </button>
                     </div>
                   </div>
@@ -1493,7 +1570,6 @@
                       class="btn provider-default-btn"
                       data-provider="METALS_API"
                     >
-                      Default
                     </button>
                     <div class="provider-actions-right">
                       <button
@@ -1515,7 +1591,7 @@
                         class="btn api-sync-btn success"
                         data-provider="METALS_API"
                       >
-                        Test & Sync
+                        Save and Test
                       </button>
                     </div>
                   </div>
@@ -1561,7 +1637,6 @@
                       class="btn provider-default-btn"
                       data-provider="METAL_PRICE_API"
                     >
-                      Default
                     </button>
                     <div class="provider-actions-right">
                       <button
@@ -1583,7 +1658,7 @@
                         class="btn api-sync-btn success"
                         data-provider="METAL_PRICE_API"
                       >
-                        Test & Sync
+                        Save and Test
                       </button>
                     </div>
                   </div>
@@ -1642,7 +1717,6 @@
                       class="btn provider-default-btn"
                       data-provider="CUSTOM"
                     >
-                      Default
                     </button>
                     <div class="provider-actions-right">
                       <button
@@ -1664,7 +1738,7 @@
                         class="btn api-sync-btn success"
                         data-provider="CUSTOM"
                       >
-                        Test & Sync
+                        Save and Test
                       </button>
                     </div>
                   </div>
@@ -1756,11 +1830,27 @@
                   Clear
                 </button>
               </div>
-              <table id="apiHistoryTable"></table>
-              <div id="apiHistoryPagination" class="api-history-pagination"></div>
+              <div class="api-history-table-wrapper">
+                <table id="apiHistoryTable"></table>
+              </div>
             </div>
-            <div class="api-history-chart">
-              <canvas id="apiHistoryChart"></canvas>
+            <div class="api-history-charts">
+              <div class="chart-panel">
+                <h3>Silver</h3>
+                <canvas id="apiHistoryChartSilver"></canvas>
+              </div>
+              <div class="chart-panel">
+                <h3>Gold</h3>
+                <canvas id="apiHistoryChartGold"></canvas>
+              </div>
+              <div class="chart-panel">
+                <h3>Platinum</h3>
+                <canvas id="apiHistoryChartPlatinum"></canvas>
+              </div>
+              <div class="chart-panel">
+                <h3>Palladium</h3>
+                <canvas id="apiHistoryChartPalladium"></canvas>
+              </div>
             </div>
           </div>
         </div>
@@ -1785,6 +1875,7 @@
     <script defer src="./js/constants.js"></script>
     <script defer src="./js/state.js"></script>
     <script defer src="./js/utils.js"></script>
+    <script defer src="./js/changeLog.js"></script>
     <script defer src="./js/charts.js"></script>
     <script defer src="./js/theme.js"></script>
     <script defer src="./js/search.js"></script>

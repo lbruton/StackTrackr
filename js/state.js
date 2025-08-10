@@ -12,7 +12,7 @@ let notesIndex = null;
 
 /** @type {Object} Pagination state */
 let currentPage = 1; // Current page number (1-based)
-let itemsPerPage = 25; // Number of items to display per page
+let itemsPerPage = 10; // Number of items to display per page
 
 /** @type {string} Current search query */
 let searchQuery = "";
@@ -24,7 +24,10 @@ let columnFilters = {};
 let chartInstances = {
   typeChart: null,
   locationChart: null,
-  apiHistoryChart: null,
+  apiHistoryChartSilver: null,
+  apiHistoryChartGold: null,
+  apiHistoryChartPlatinum: null,
+  apiHistoryChartPalladium: null,
 };
 
 /** @type {Object} Cached DOM elements for performance */
@@ -104,8 +107,8 @@ const elements = {
   detailsModalTitle: null,
   typeBreakdown: null,
   locationBreakdown: null,
-  closeDetailsBtn: null,
-  detailsButtons: null,
+  detailsCloseBtn: null,
+  totalTitles: null,
 
   // Chart canvas elements
   typeChart: null,
@@ -118,6 +121,14 @@ const elements = {
   firstPage: null,
   lastPage: null,
   pageNumbers: null,
+
+  // Change log elements
+  changeLogBtn: null,
+  changeLogModal: null,
+  changeLogCloseBtn: null,
+  changeLogTable: null,
+  storageUsage: null,
+  storageReportLink: null,
 
   // Search elements
   searchInput: null,
@@ -136,9 +147,13 @@ const elements = {
   ackModal: null,
   ackAcceptBtn: null,
 
-  // Settings & API elements
-  settingsBtn: null,
-  settingsModal: null,
+  // Appearance, API & Files elements
+  appearanceBtn: null,
+  apiBtn: null,
+  filesBtn: null,
+  appearanceModal: null,
+  apiModal: null,
+  filesModal: null,
   apiInfoModal: null,
   apiHistoryModal: null,
   apiProvidersModal: null,
@@ -216,6 +231,9 @@ const elements = {
     },
   },
 };
+
+/** @type {Array} Change log entries */
+let changeLog = JSON.parse(localStorage.getItem('changeLog') || '[]');
 
 /** @type {Array} Main inventory data structure */
 let inventory = [];

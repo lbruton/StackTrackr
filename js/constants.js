@@ -93,7 +93,7 @@ const API_PROVIDERS = {
 // =============================================================================
 
 /** @constant {string} APP_VERSION - Application version */
-const APP_VERSION = "3.2.06rc";
+const APP_VERSION = "3.3.00";
 
 /** @constant {string} BRANDING_TITLE - Optional custom application title */
 const BRANDING_TITLE = "StackTrackr";
@@ -113,7 +113,7 @@ const BRANDING_DOMAIN_OPTIONS = {
   domainMap: {
     stackertracker: "Stacker Tracker",
     stacktrackr: "Stack Trackr",
-    stackrtrackr: "Stackr Trackr",
+    stackrtrackr: "StackrTrackr",
   },
   removeExtension: true,
   alwaysOverride: false,

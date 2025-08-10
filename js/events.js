@@ -159,24 +159,22 @@ const setupEventListeners = () => {
     // CRITICAL HEADER BUTTONS
     debugLog("Setting up header buttons...");
 
-    // Settings Button
-    if (elements.settingsBtn) {
+    // Files Button
+    if (elements.filesBtn) {
       safeAttachListener(
-        elements.settingsBtn,
+        elements.filesBtn,
         "click",
         (e) => {
           e.preventDefault();
-          debugLog("Settings button clicked");
-          if (typeof showSettingsModal === "function") {
-            showSettingsModal();
-          } else {
-            alert("Settings interface");
+          debugLog("Files button clicked");
+          if (typeof showFilesModal === "function") {
+            showFilesModal();
           }
         },
-        "Settings Button",
+        "Files Button",
       );
     } else {
-      console.error("Settings button element not found!");
+      console.error("Files button element not found!");
     }
 
     // About Button
@@ -191,6 +189,36 @@ const setupEventListeners = () => {
           }
         },
         "About Button",
+      );
+    }
+
+    // API Button
+    if (elements.apiBtn) {
+      safeAttachListener(
+        elements.apiBtn,
+        "click",
+        (e) => {
+          e.preventDefault();
+          if (typeof showApiModal === "function") {
+            showApiModal();
+          }
+        },
+        "API Button",
+      );
+    }
+
+    // Appearance Button
+    if (elements.appearanceBtn) {
+      safeAttachListener(
+        elements.appearanceBtn,
+        "click",
+        (e) => {
+          e.preventDefault();
+          if (typeof showAppearanceModal === "function") {
+            showAppearanceModal();
+          }
+        },
+        "Appearance Button",
       );
     }
 
@@ -237,26 +265,26 @@ const setupEventListeners = () => {
       );
     }
 
-    // Details modal buttons
-    if (elements.detailsButtons && elements.detailsButtons.length) {
-      elements.detailsButtons.forEach((btn) => {
+    // Details modal triggers
+    if (elements.totalTitles && elements.totalTitles.length) {
+      elements.totalTitles.forEach((title) => {
         safeAttachListener(
-          btn,
+          title,
           "click",
           () => {
-            const metal = btn.dataset.metal;
+            const metal = title.dataset.metal;
             if (typeof showDetailsModal === "function") {
               showDetailsModal(metal);
             }
           },
-          `Details button (${btn.dataset.metal})`,
+          `Totals title (${title.dataset.metal})`,
         );
       });
     }
 
-    if (elements.closeDetailsBtn) {
+    if (elements.detailsCloseBtn) {
       safeAttachListener(
-        elements.closeDetailsBtn,
+        elements.detailsCloseBtn,
         "click",
         () => {
           if (typeof closeDetailsModal === "function") {
@@ -447,6 +475,8 @@ const setupEventListeners = () => {
             totalPremium = premiumPerOz * qty * weight;
           }
 
+          const oldItem = { ...inventory[editingIndex] };
+
           // Update the item
           inventory[editingIndex] = {
             metal,
@@ -467,6 +497,7 @@ const setupEventListeners = () => {
 
           saveInventory();
           renderTable();
+          logItemChanges(oldItem, inventory[editingIndex]);
 
           // Close modal
           elements.editModal.style.display = "none";
@@ -534,9 +565,11 @@ const setupEventListeners = () => {
             elements.notesTextarea || document.getElementById("notesTextarea");
           const text = textareaElement ? textareaElement.value.trim() : "";
 
+          const oldItem = { ...inventory[notesIndex] };
           inventory[notesIndex].notes = text;
           saveInventory();
           renderTable();
+          logItemChanges(oldItem, inventory[notesIndex]);
 
           const modalElement =
             elements.notesModal || document.getElementById("notesModal");
@@ -581,6 +614,50 @@ const setupEventListeners = () => {
       );
     }
 
+      if (elements.changeLogBtn) {
+        safeAttachListener(
+          elements.changeLogBtn,
+          "click",
+          (e) => {
+            e.preventDefault();
+            renderChangeLog();
+            if (elements.changeLogModal) {
+              elements.changeLogModal.style.display = "flex";
+              document.body.style.overflow = "hidden";
+            }
+          },
+          "Change log button",
+        );
+      }
+
+      if (elements.storageReportLink) {
+        safeAttachListener(
+          elements.storageReportLink,
+          "click",
+          (e) => {
+            e.preventDefault();
+            if (typeof downloadStorageReport === "function") {
+              downloadStorageReport();
+            }
+          },
+          "Storage report link",
+        );
+      }
+
+    if (elements.changeLogCloseBtn) {
+      safeAttachListener(
+        elements.changeLogCloseBtn,
+        "click",
+        () => {
+          if (elements.changeLogModal) {
+            elements.changeLogModal.style.display = "none";
+            document.body.style.overflow = "";
+          }
+        },
+        "Change log close button",
+      );
+    }
+
     // SPOT PRICE EVENT LISTENERS
     debugLog("Setting up spot price listeners...");
     Object.values(METALS).forEach((metalConfig) => {
@@ -588,9 +665,33 @@ const setupEventListeners = () => {
       const metalName = metalConfig.name;
 
       // Main spot price action buttons
-      const addBtn = document.getElementById(`addBtn${metalName}`);
-      const resetBtn = document.getElementById(`resetBtn${metalName}`);
-      const syncBtn = document.getElementById(`syncBtn${metalName}`);
+        const addBtn = document.getElementById(`addBtn${metalName}`);
+        const resetBtn = document.getElementById(`resetBtn${metalName}`);
+        const syncBtn = document.getElementById(`syncBtn${metalName}`);
+        const spotCard = document.querySelector(
+          `.spot-input.${metalKey} .spot-card`,
+        );
+        const actions = document.querySelector(
+          `.spot-input.${metalKey} .spot-actions`,
+        );
+
+        if (spotCard && actions) {
+          safeAttachListener(
+            spotCard,
+            "click",
+            () => {
+              const visible = actions.style.display === "flex";
+              document
+                .querySelectorAll(".spot-actions")
+                .forEach((el) => (el.style.display = "none"));
+              document
+                .querySelectorAll(".manual-input")
+                .forEach((el) => (el.style.display = "none"));
+              actions.style.display = visible ? "none" : "flex";
+            },
+            `${metalName} spot card`,
+          );
+        }
 
       // Manual input buttons
       const saveBtn = elements.saveSpotBtn[metalKey];
@@ -856,6 +957,61 @@ const setupEventListeners = () => {
       );
     }
 
+    // Files modal close handlers
+    const filesModal = document.getElementById("filesModal");
+    const filesCloseBtn = document.getElementById("filesCloseBtn");
+    if (filesModal) {
+      safeAttachListener(
+        filesModal,
+        "click",
+        (e) => {
+          if (e.target === filesModal && typeof hideFilesModal === "function") {
+            hideFilesModal();
+          }
+        },
+        "Files modal background",
+      );
+    }
+    if (filesCloseBtn) {
+      safeAttachListener(
+        filesCloseBtn,
+        "click",
+        () => {
+          if (typeof hideFilesModal === "function") hideFilesModal();
+        },
+        "Files close button",
+      );
+    }
+
+    // Appearance modal close handlers
+    const appearanceModal = document.getElementById("appearanceModal");
+    const appearanceCloseBtn = document.getElementById("appearanceCloseBtn");
+    if (appearanceModal) {
+      safeAttachListener(
+        appearanceModal,
+        "click",
+        (e) => {
+          if (
+            e.target === appearanceModal &&
+            typeof hideAppearanceModal === "function"
+          ) {
+            hideAppearanceModal();
+          }
+        },
+        "Appearance modal background",
+      );
+    }
+    if (appearanceCloseBtn) {
+      safeAttachListener(
+        appearanceCloseBtn,
+        "click",
+        () => {
+          if (typeof hideAppearanceModal === "function") hideAppearanceModal();
+        },
+        "Appearance close button",
+      );
+    }
+
     // API MODAL EVENT LISTENERS
     debugLog("Setting up API modal listeners...");
     setupApiEvents();
@@ -1038,37 +1194,6 @@ const setupThemeToggle = () => {
 };
 
 /**
- * Sets up event listeners for details buttons (called after totals are rendered)
- */
-const setupDetailsButtons = () => {
-  debugLog("Setting up details buttons...");
-
-  // Re-query details buttons since they're created dynamically
-  const detailsButtons = document.querySelectorAll(".details-btn");
-
-  detailsButtons.forEach((btn) => {
-    safeAttachListener(
-      btn,
-      "click",
-      () => {
-        const metal = btn.dataset.metal;
-        debugLog(`Details button clicked for ${metal}`);
-        if (typeof showDetailsModal === "function") {
-          showDetailsModal(metal);
-        } else {
-          alert(
-            `Details modal for ${metal} would show analytics charts and breakdowns`,
-          );
-        }
-      },
-      `Details button (${btn.dataset.metal})`,
-    );
-  });
-
-  debugLog(`✓ Setup ${detailsButtons.length} details button listeners`);
-};
-
-/**
  * Sets up API-related event listeners
  */
 const setupApiEvents = () => {
@@ -1076,37 +1201,34 @@ const setupApiEvents = () => {
 
   try {
     let quotaProvider = null;
-    const settingsModal = document.getElementById("settingsModal");
-    const settingsCloseBtn = document.getElementById("settingsCloseBtn");
+    const apiModal = document.getElementById("apiModal");
+    const apiCloseBtn = document.getElementById("apiCloseBtn");
     const infoModal = document.getElementById("apiInfoModal");
     const infoCloseBtn = document.getElementById("apiInfoCloseBtn");
 
-    if (settingsModal) {
+    if (apiModal) {
       safeAttachListener(
-        settingsModal,
+        apiModal,
         "click",
         (e) => {
-          if (
-            e.target === settingsModal &&
-            typeof hideSettingsModal === "function"
-          ) {
-            hideSettingsModal();
+          if (e.target === apiModal && typeof hideApiModal === "function") {
+            hideApiModal();
           }
         },
-        "Settings modal background",
+        "API modal background",
       );
     }
 
-    if (settingsCloseBtn) {
+    if (apiCloseBtn) {
       safeAttachListener(
-        settingsCloseBtn,
+        apiCloseBtn,
         "click",
         () => {
-          if (typeof hideSettingsModal === "function") {
-            hideSettingsModal();
+          if (typeof hideApiModal === "function") {
+            hideApiModal();
           }
         },
-        "Settings close button",
+        "API close button",
       );
     }
 
@@ -1383,7 +1505,9 @@ const setupApiEvents = () => {
       "keydown",
       (e) => {
         if (e.key === "Escape") {
-          const settingsModal = document.getElementById("settingsModal");
+          const filesModal = document.getElementById("filesModal");
+          const apiModal = document.getElementById("apiModal");
+          const appearanceModal = document.getElementById("appearanceModal");
           const infoModal = document.getElementById("apiInfoModal");
           const historyModal = document.getElementById("apiHistoryModal");
           const providersModal = document.getElementById("apiProvidersModal");
@@ -1391,13 +1515,26 @@ const setupApiEvents = () => {
           const addModal = document.getElementById("addModal");
           const notesModal = document.getElementById("notesModal");
           const detailsModal = document.getElementById("detailsModal");
+          const changeLogModal = document.getElementById("changeLogModal");
 
           if (
-            settingsModal &&
-            settingsModal.style.display === "flex" &&
-            typeof hideSettingsModal === "function"
+            filesModal &&
+            filesModal.style.display === "flex" &&
+            typeof hideFilesModal === "function"
           ) {
-            hideSettingsModal();
+            hideFilesModal();
+          } else if (
+            apiModal &&
+            apiModal.style.display === "flex" &&
+            typeof hideApiModal === "function"
+          ) {
+            hideApiModal();
+          } else if (
+            appearanceModal &&
+            appearanceModal.style.display === "flex" &&
+            typeof hideAppearanceModal === "function"
+          ) {
+            hideAppearanceModal();
           } else if (
             infoModal &&
             infoModal.style.display === "flex" &&
@@ -1421,14 +1558,17 @@ const setupApiEvents = () => {
             editingIndex = null;
           } else if (addModal && addModal.style.display === "flex") {
             addModal.style.display = "none";
-          } else if (notesModal && notesModal.style.display === "flex") {
-            notesModal.style.display = "none";
-            notesIndex = null;
-          } else if (
-            detailsModal &&
-            detailsModal.style.display === "flex" &&
-            typeof closeDetailsModal === "function"
-          ) {
+        } else if (notesModal && notesModal.style.display === "flex") {
+          notesModal.style.display = "none";
+          notesIndex = null;
+        } else if (changeLogModal && changeLogModal.style.display === "flex") {
+          changeLogModal.style.display = "none";
+          document.body.style.overflow = "";
+        } else if (
+          detailsModal &&
+          detailsModal.style.display === "flex" &&
+          typeof closeDetailsModal === "function"
+        ) {
             closeDetailsModal();
           }
         }

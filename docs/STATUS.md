@@ -1,8 +1,8 @@
 # Project Status - StackTrackr
 
-## 🎯 Current State: **FEATURE COMPLETE v3.2.06rc** ✅ MAINTAINED & OPTIMIZED
+## 🎯 Current State: **STABLE RELEASE v3.3.00** ✅ MAINTAINED & OPTIMIZED
 
-**StackTrackr v3.2.06rc** is a fully-featured, client-side web application for tracking precious metal investments (Silver, Gold, Platinum, Palladium) with comprehensive inventory management, API integration, and complete backup capabilities. The 3.2.x series focuses on polish, maintenance, and optimization.
+**StackTrackr v3.3.00** is a fully-featured, client-side web application for tracking precious metal investments (Silver, Gold, Platinum, Palladium) with comprehensive inventory management, API integration, and complete backup capabilities. The 3.3.x series focuses on polish, maintenance, and optimization.
 
 ## 🏗️ Architecture Overview
 
@@ -18,8 +18,10 @@ The tool features a **modular JavaScript architecture** with separate files for 
 - `theme.js` - Dark/light theme management
 - `utils.js` - Helper functions and formatters
 
-## ✨ Latest Changes (3.2.x Series)
+## ✨ Latest Changes
 
+- **v3.3.00 - Stable Release & Documentation Cleanup**: Finalized documentation and archived planning notes.
+- **v3.2.07rc - Spot Timestamp Source Display**: Spot price cards show the API provider or Manual entry and the exact time of the last update. API provider modal checks stored keys and cache age to display "Connected" or "Connected (cached)" statuses and its sync buttons read "Save and Test".
 - **v3.2.06rc - UI Refinements & Auto Sync**: Modal-based item entry with stacked filters, pagination polish with repositioned items-per-page selector, collectable status button, totals card label updates, improved About modal contrast, and automatic spot price refresh at startup
 - **v3.2.05rc - Splash Opt-Out & Branding**: Disclaimer modal can be hidden permanently, header adapts to hosting domain with updated subtitle, and each API provider stores its own key
 - **v3.2.03rc - Cache Flush Confirmation**: Added warning before clearing API cache and history
@@ -106,11 +108,11 @@ All data is stored locally in the browser using localStorage with:
 - ✅ Modern, responsive user interface
 - ✅ Complete documentation and error handling
 
-## 📚 Documentation Status (Updated: August 9, 2025)
+## 📚 Documentation Status (Updated: August 10, 2025)
 
 **All documentation files are current and synchronized:**
-- ✅ **STATUS.md** - Updated with 3.1.x series changes and current state
-- ✅ **CHANGELOG.md** - Current through v3.1.12 documentation consolidation
+- ✅ **STATUS.md** - Updated for v3.3.00 release
+- ✅ **CHANGELOG.md** - Current through v3.3.00
 - ✅ **MULTI_AGENT_WORKFLOW.md** - Comprehensive AI assistant development guide
 - ✅ **STRUCTURE.md** - Reflects streamlined project organization
 - ✅ **VERSIONING.md** - Accurate version management documentation
@@ -119,9 +121,9 @@ All data is stored locally in the browser using localStorage with:
 
 If continuing development in a new chat session:
 
-1. **Current Version**: 3.2.06rc (managed in `js/constants.js`)
-2. **Last Change**: Introduced modal-based item entry, pagination refinements, totals card updates, and auto spot price refresh
-3. **Last Documentation Update**: August 9, 2025 - All docs synchronized
+1. **Current Version**: 3.3.00 (managed in `js/constants.js`)
+2. **Last Change**: Documentation cleanup and planning notes archived
+3. **Last Documentation Update**: August 10, 2025 - All docs synchronized
 4. **Architecture**: Fully modular with proper separation of concerns
 5. **Documentation**: Comprehensive JSDoc comments throughout codebase
 6. **Data Structure**: Includes all fields (metal, name, qty, type, weight, price, date, purchaseLocation, storageLocation, **notes**, spotPriceAtPurchase, premiumPerOz, totalPremium, isCollectable)
@@ -129,14 +131,14 @@ If continuing development in a new chat session:
 8. **Key Files**: Focus on `inventory.js`, `events.js`, and `state.js` for major modifications
 9. **Testing**: Use `sample.csv` for import testing (includes notes examples)
 10. **Version Updates**: Only update `APP_VERSION` in `constants.js` - propagates automatically
-11. **Timestamp Display**: Implemented via `getLastUpdateTime()` utility function
+11. **Timestamp Display**: Two-line source with last sync or time entered via `getLastUpdateTime()` utility function
 
 ## 📁 Project Structure
 
 ```
 StackTrackr/
 ├── js/                     # Modular JavaScript (cleaned structure)
-│   ├── constants.js        # Version 3.1.12 + metal configs
+│   ├── constants.js        # Version 3.3.00 + metal configs
 │   ├── state.js           # App state + DOM caching
 │   ├── inventory.js       # Core CRUD + notes handling
 │   ├── events.js          # UI event listeners
@@ -147,10 +149,10 @@ StackTrackr/
 ├── docs/                   # Documentation (ALL UPDATED)
 │   ├── CHANGELOG.md        # Version history
 │   ├── README.md          # Project overview
-│   ├── LLM.md             # Development guide
-│   ├── STATUS.md          # This file
-│   ├── STRUCTURE.md       # Project organization
-│   └── VERSIONING.md      # Version management
+│   ├── MULTI_AGENT_WORKFLOW.md  # Development guide
+│   ├── STATUS.md               # This file
+│   ├── STRUCTURE.md            # Project organization
+│   └── VERSIONING.md           # Version management
 ├── index.html             # Version selector page
 ├── sample.csv             # Test data (with notes)
 └── README.md              # Root documentation
@@ -158,6 +160,6 @@ StackTrackr/
 
 ---
 
-**Last Updated**: August 9, 2025
-**Status**: ✅ COMPLETE - Release candidate ready for production use
+**Last Updated**: August 10, 2025
+**Status**: ✅ COMPLETE - Stable release ready for production use
 **Documentation**: ✅ ALL FILES SYNCHRONIZED AND CURRENT

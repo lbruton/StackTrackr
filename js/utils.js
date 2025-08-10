@@ -39,6 +39,19 @@ const getAppTitle = (baseTitle = "StackTrackr") => {
 };
 
 /**
+ * Determines active domain for footer copyright
+ *
+ * @returns {string} Domain name to display
+ */
+const getFooterDomain = () => {
+  const host = window.location.hostname.toLowerCase();
+  if (host.includes("stackrtrackr.com")) return "stackrtrackr.com";
+  if (host.includes("stacktrackr.com")) return "stacktrackr.com";
+  if (host.includes("stackertrackr.com")) return "stackertrackr.com";
+  return "stacktrackr.com";
+};
+
+/**
  * Performance monitoring utility
  *
  * @param {Function} fn - Function to monitor
@@ -62,55 +75,52 @@ const monitorPerformance = (fn, name, ...args) => {
 };
 
 /**
- * Gets the most recent timestamp for a specific metal from spot history
+ * Builds two-line HTML showing source and last sync info for a metal
  *
  * @param {string} metalName - Metal name ('Silver', 'Gold', 'Platinum', 'Palladium')
- * @returns {string|null} Formatted timestamp or null if no data
+ * @returns {string} HTML string with source line and time line
  */
 const getLastUpdateTime = (metalName) => {
-  if (!spotHistory || spotHistory.length === 0) return null;
+  if (!spotHistory || spotHistory.length === 0) return "";
 
   // Find the most recent entry for this metal
   const metalEntries = spotHistory.filter((entry) => entry.metal === metalName);
-  if (metalEntries.length === 0) return null;
+  if (metalEntries.length === 0) return "";
 
   const latestEntry = metalEntries[metalEntries.length - 1];
   const timestamp = new Date(latestEntry.timestamp);
-  const now = new Date();
-  const diffMs = now - timestamp;
-  const diffMins = Math.floor(diffMs / (1000 * 60));
-  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
-  let timeText;
-  if (diffMins < 1) {
-    timeText = "Just now";
-  } else if (diffMins < 60) {
-    timeText = `${diffMins} min${diffMins === 1 ? "" : "s"} ago`;
-  } else if (diffHours < 24) {
-    timeText = `${diffHours} hr${diffHours === 1 ? "" : "s"} ago`;
-  } else if (diffDays < 30) {
-    timeText = `${diffDays} day${diffDays === 1 ? "" : "s"} ago`;
-  } else {
-    timeText = timestamp.toLocaleDateString();
-  }
+  const dateText = `${timestamp.getFullYear()}-${pad2(
+    timestamp.getMonth() + 1,
+  )}-${pad2(timestamp.getDate())}`;
+  const timeText = `${pad2(timestamp.getHours())}:${pad2(
+    timestamp.getMinutes(),
+  )}:${pad2(timestamp.getSeconds())}`;
 
-  let sourceText;
+  let sourceLine = "";
+  let timeLine = "";
+
   if (latestEntry.source === "api") {
-    sourceText = latestEntry.provider || "API";
+    sourceLine = latestEntry.provider || "API";
+    timeLine = `Last sync ${dateText} ${timeText}`;
   } else if (latestEntry.source === "cached") {
-    sourceText = latestEntry.provider
+    sourceLine = latestEntry.provider
       ? `${latestEntry.provider} (cached)`
       : "Cached";
+    timeLine = `Last sync ${dateText} ${timeText}`;
   } else if (latestEntry.source === "manual") {
-    sourceText = "Manual";
+    sourceLine = "Manual";
+    timeLine = `Time entered ${dateText} ${timeText}`;
   } else if (latestEntry.source === "default") {
-    sourceText = "Default";
+    sourceLine = "";
+    timeLine = "";
   } else {
-    sourceText = "Stored";
+    sourceLine = "Stored";
+    timeLine = `Last sync ${dateText} ${timeText}`;
   }
 
-  return `${sourceText} - ${timeText}`;
+  if (!sourceLine && !timeLine) return "";
+  return `${sourceLine}<br>${timeLine}`;
 };
 
 // =============================================================================
@@ -441,9 +451,9 @@ const getUserFriendlyMessage = (errorMessage) => {
  * @param {string} content - Content of the file
  * @param {string} mimeType - MIME type of the file (default: text/plain)
  */
-const downloadFile = (filename, content, mimeType = "text/plain") => {
-  try {
-    const blob = new Blob([content], { type: mimeType });
+  const downloadFile = (filename, content, mimeType = "text/plain") => {
+    try {
+      const blob = new Blob([content], { type: mimeType });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
 
@@ -461,6 +471,65 @@ const downloadFile = (filename, content, mimeType = "text/plain") => {
     console.error("Error downloading file:", error);
     handleError(error, "file download");
   }
+  };
+
+  // =============================================================================
+
+/**
+ * Updates footer with localStorage usage statistics
+ */
+const updateStorageStats = async () => {
+  try {
+    if (navigator?.storage?.estimate) {
+      const { usage, quota } = await navigator.storage.estimate();
+      const used = usage / 1024;
+      const total = quota / 1024;
+      const el = document.getElementById("storageUsage");
+      if (el) {
+        el.textContent = `${used.toFixed(1)} KB / ${total.toFixed(1)} KB`;
+      }
+    }
+  } catch (err) {
+    const el = document.getElementById("storageUsage");
+    if (el) el.textContent = "Storage info unavailable";
+    console.warn("Could not estimate storage", err);
+  }
 };
 
-// =============================================================================
+/**
+ * Downloads a report of all localStorage data
+ */
+const downloadStorageReport = () => {
+  const report = {};
+
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+
+    // Skip or sanitize sensitive data such as API keys
+    if (key === API_KEY_STORAGE_KEY) {
+      try {
+        const config = JSON.parse(localStorage.getItem(key) || "{}");
+        if (config?.keys) {
+          // Remove any stored API keys before exporting
+          report[key] = { ...config, keys: {} };
+        } else {
+          report[key] = config;
+        }
+      } catch (err) {
+        console.warn("Could not sanitize API config for report", err);
+      }
+      continue;
+    }
+
+    report[key] = localStorage.getItem(key);
+  }
+
+  downloadFile(
+    "storage-report.json",
+    JSON.stringify(report, null, 2),
+    "application/json",
+  );
+};
+
+window.updateStorageStats = updateStorageStats;
+window.downloadStorageReport = downloadStorageReport;

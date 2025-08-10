@@ -18,8 +18,8 @@ const sortInventory = (data = inventory) => {
       case 0: valA = a.date; valB = b.date; break; // Date
       case 1: valA = a.type; valB = b.type; break; // Type
       case 2: valA = a.metal; valB = b.metal; break; // Metal
-      case 3: valA = a.qty; valB = b.qty; break; // Qty
-      case 4: valA = a.name; valB = b.name; break; // Name
+      case 3: valA = a.name; valB = b.name; break; // Name
+      case 4: valA = a.qty; valB = b.qty; break; // Qty
       case 5: valA = a.weight; valB = b.weight; break; // Weight
       case 6: valA = a.price; valB = b.price; break; // Purchase Price
       case 7: valA = a.spotPriceAtPurchase; valB = b.spotPriceAtPurchase; break; // Spot at Purchase

@@ -1,8 +1,12 @@
-# StackTrackr v3.2.06rc
+# StackTrackr v3.3.00
 
 StackTrackr is a comprehensive client-side web application for tracking precious metal investments. It's designed to help users manage their silver, gold, platinum, and palladium holdings with detailed financial metrics and enhanced tracking capabilities.
 
+The public hosted version of the app is available at [stackrtrackr.com](https://stackrtrackr.com).
+
 ## Recent Updates
+- **v3.3.00 - Stable Release & Documentation Cleanup**: Finalized documentation and archived planning notes
+- **v3.2.07rc - Spot Timestamp Source Display**: Spot price cards now show the API provider or Manual entry along with the exact timestamp of the last update
 - **v3.2.06rc - UI Refinements & Auto Sync**: Adds modal-based item entry with stacked filters, pagination polish, collectable status button, notes button showing green "Yes" when notes exist, and automatic spot price refresh when cached data expires
 - **v3.2.05rc - Splash Opt-Out & Branding**: Disclaimer modal now hides after acknowledgment, header branding adapts to the hosting domain with an updated subtitle, and API providers store keys separately
 - **v3.2.04rc - Import Negative Price Handling**: Negative prices default to $0 during imports
@@ -17,6 +21,13 @@ StackTrackr is a comprehensive client-side web application for tracking precious
 - **v3.1.9 - UI Consistency**: Clear Cache button styling improvements across themes
 - **v3.1.8 - Backup System**: Full ZIP backup functionality with restoration guides
 - **v3.1.6 - Theme Toggle**: Fixed theme management with system preference detection
+
+## 🆕 What's New in v3.3.00
+- Official stable release with documentation finalized and planning notes archived
+- Includes spot timestamp source display from v3.2.07rc
+
+## 🆕 What's New in v3.2.07rc
+- Spot price cards display API provider or Manual entry along with exact timestamp of last update
 
 ## 🆕 What's New in v3.2.06rc
 - Automatically refreshes spot prices at startup when an API key is configured and cached data is stale
@@ -131,7 +142,7 @@ StackTrackr is a comprehensive client-side web application for tracking precious
 4. **Add Notes**: Include additional details about each item.
 5. **Search & Filter**: Use the search bar to find specific items.
 6. **Export Data**: Download your inventory in multiple formats.
-7. **View Analytics**: Click "View Details" on summary cards for breakdowns.
+7. **View Analytics**: Click a totals title on summary cards for breakdowns.
 
 ## Version Management
 This application uses a dynamic version management system. The version is automatically updated throughout the application from `js/constants.js`. The HTML files now use this dynamic system instead of hardcoded version numbers. See [docs/VERSIONING.md](docs/VERSIONING.md) for details on how to update versions.
@@ -236,7 +247,7 @@ This project is designed to be maintainable and extensible. When making changes:
 This project is open source and available for personal use.
 
 ---
-**Current Version**: 3.2.06rc
+**Current Version**: 3.3.00
 **Last Updated**: August 9, 2025
 **Status**: Feature complete release candidate
 
