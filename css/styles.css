@@ -876,6 +876,20 @@ input[type="submit"] {
   flex-direction: column;
 }
 
+/* Storage report options modal */
+#storageOptionsModal .modal-content {
+  max-width: 400px;
+  text-align: center;
+}
+#storageOptionsModal .options-buttons {
+  display: flex;
+  gap: var(--spacing);
+  justify-content: center;
+}
+#storageOptionsModal .options-buttons .btn {
+  flex: 1;
+}
+
 #apiHistoryModal .modal-header {
   background: linear-gradient(135deg, var(--primary), var(--primary-hover));
   color: white;
