@@ -510,459 +510,82 @@ const updateStorageStats = () => {
     console.warn("Could not calculate storage", err);
   }
 };
-
+ 
 /**
- * Downloads a comprehensive HTML storage report with breakdown and print options
+ * Opens the storage report options modal.
  */
 const downloadStorageReport = () => {
-  showStorageReportModal();
+  showStorageReportOptions();
 };
 
 /**
- * Shows the storage report modal with options to view/download HTML or enhanced report
+ * Displays a small modal with options to view or download the storage report.
  */
-const showStorageReportModal = () => {
-  // Create modal if it doesn't exist
+const showStorageReportOptions = () => {
   let modal = document.getElementById('storageReportModal');
   if (!modal) {
-    modal = createStorageReportModal();
+    modal = document.createElement('div');
+    modal.id = 'storageReportModal';
+    modal.className = 'modal';
+    modal.innerHTML = `
+      <div class="modal-content" style="max-width:400px">
+        <div class="modal-header">
+          <h2>Storage Report</h2>
+          <button aria-label="Close modal" class="modal-close" id="storageReportCloseBtn">×</button>
+        </div>
+        <div class="modal-body">
+          <button class="btn" id="viewStorageReportBtn">📄 View Report</button>
+          <button class="btn secondary" id="downloadStorageZipBtn">📦 Download ZIP</button>
+        </div>
+      </div>`;
     document.body.appendChild(modal);
+
+    modal.querySelector('#storageReportCloseBtn').addEventListener('click', closeStorageReportOptions);
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) closeStorageReportOptions();
+    });
+
+    modal.querySelector('#viewStorageReportBtn').addEventListener('click', () => {
+      const htmlContent = generateStorageReportHTML();
+      const width = 900, height = 700;
+      const left = (window.screenX || window.screenLeft) + (window.outerWidth - width) / 2;
+      const top = (window.screenY || window.screenTop) + (window.outerHeight - height) / 2;
+      const reportWin = window.open('', 'storageReport', `width=${width},height=${height},left=${left},top=${top}`);
+      if (reportWin) {
+        reportWin.document.write(htmlContent);
+        reportWin.document.close();
+        reportWin.focus();
+      } else {
+        alert('Popup blocked. Please allow popups to view the report.');
+      }
+    });
+
+    modal.querySelector('#downloadStorageZipBtn').addEventListener('click', async () => {
+      try {
+        const zipContent = await generateStorageReportTar();
+        const timestamp = new Date().toISOString().split('T')[0];
+        downloadFile(`storage-report-${timestamp}.zip`, zipContent, 'application/zip');
+      } catch (error) {
+        console.error('Error creating ZIP file:', error);
+        alert('Error creating compressed report. Please try again.');
+      }
+    });
   }
-  
+
   modal.style.display = 'flex';
   document.body.style.overflow = 'hidden';
 };
 
 /**
- * Creates the enhanced storage report modal with theme support and pie chart
+ * Closes the storage report options modal.
  */
-const createStorageReportModal = () => {
-  const modal = document.createElement('div');
-  modal.id = 'storageReportModal';
-  modal.className = 'modal';
-  modal.style.display = 'none';
-  
-  modal.innerHTML = `
-    <div class="modal-content storage-report-modal-content">
-      <div class="modal-header">
-        <h2>📊 Storage Report</h2>
-        <div class="storage-report-controls">
-          <button class="btn theme-btn" id="storageThemeToggle" title="Toggle theme">🌓</button>
-          <button aria-label="Close modal" class="modal-close" id="storageReportCloseBtn">×</button>
-        </div>
-      </div>
-      <div class="modal-body storage-report-body">
-        <div class="storage-report-header">
-          <div class="storage-summary-stats">
-            <div class="stat-card">
-              <span class="stat-label">Total Used</span>
-              <span class="stat-value" id="totalStorageUsed">0 KB</span>
-            </div>
-            <div class="stat-card">
-              <span class="stat-label">Items</span>
-              <span class="stat-value" id="totalStorageItems">0</span>
-            </div>
-            <div class="stat-card">
-              <span class="stat-label">Largest</span>
-              <span class="stat-value" id="largestStorageItem">-</span>
-            </div>
-          </div>
-        </div>
-        
-        <div class="storage-visualization-section">
-          <div class="chart-container">
-            <h3>Storage Distribution</h3>
-            <canvas id="storageChart" width="300" height="300"></canvas>
-          </div>
-          
-          <div class="storage-items-table">
-            <h3>Storage Items</h3>
-            <div class="storage-items-list" id="storageItemsList">
-              <!-- Populated by JS -->
-            </div>
-          </div>
-        </div>
-        
-        <div class="storage-report-actions">
-          <button class="btn" id="downloadFullReportBtn">💾 Download HTML Report</button>
-          <button class="btn secondary" id="downloadCompressedBtn">📦 Download ZIP</button>
-          <a href="#" class="btn success" onclick="document.getElementById('storageReportModal').style.display='none'; document.body.style.overflow='';">🏠 Back to App</a>
-        </div>
-      </div>
-    </div>
-    
-    <!-- Detail modals for each storage item -->
-    <div id="storageDetailModal" class="modal storage-detail-modal" style="display: none;">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h3 id="detailModalTitle">Item Details</h3>
-          <button aria-label="Close" class="modal-close" onclick="closeStorageDetailModal();">×</button>
-        </div>
-        <div class="modal-body">
-          <div id="detailModalContent"></div>
-        </div>
-      </div>
-    </div>
-  `;
-  
-  // Set up event listeners
-  setupStorageReportEventListeners(modal);
-  
-  // Initialize report data
-  populateStorageReport(modal);
-  
-  return modal;
-};
-
-/**
- * Sets up event listeners for the storage report modal
- */
-const setupStorageReportEventListeners = (modal) => {
-  const closeBtn = modal.querySelector('#storageReportCloseBtn');
-  const themeToggle = modal.querySelector('#storageThemeToggle');
-  const downloadFullBtn = modal.querySelector('#downloadFullReportBtn');
-  const downloadCompressedBtn = modal.querySelector('#downloadCompressedBtn');
-  
-  // Close modal
-  closeBtn.addEventListener('click', () => {
-    closeStorageReportModal();
-  });
-  
-  modal.addEventListener('click', (e) => {
-    if (e.target === modal) {
-      closeStorageReportModal();
-    }
-  });
-  
-  // Theme toggle for the report
-  themeToggle.addEventListener('click', () => {
-    toggleStorageReportTheme(modal);
-  });
-  
-  // Download actions
-  downloadFullBtn.addEventListener('click', () => {
-    const htmlContent = generateStorageReportHTML();
-    const timestamp = new Date().toISOString().split('T')[0];
-    downloadFile(`storage-report-${timestamp}.html`, htmlContent, 'text/html');
-  });
-  
-  downloadCompressedBtn.addEventListener('click', async () => {
-    try {
-      const zipContent = await generateStorageReportTar();
-      const timestamp = new Date().toISOString().split('T')[0];
-      downloadFile(`storage-report-${timestamp}.zip`, zipContent, 'application/zip');
-    } catch (error) {
-      console.error('Error creating ZIP file:', error);
-      alert('Error creating compressed report. Please try the HTML option instead.');
-    }
-  });
-};
-
-/**
- * Populates the storage report with current data and creates pie chart
- */
-const populateStorageReport = (modal) => {
-  const reportData = analyzeStorageData();
-  
-  // Update summary stats
-  modal.querySelector('#totalStorageUsed').textContent = `${reportData.totalSize.toFixed(2)} KB`;
-  modal.querySelector('#totalStorageItems').textContent = reportData.items.length;
-  modal.querySelector('#largestStorageItem').textContent = 
-    reportData.largestItem ? `${getStorageItemDisplayName(reportData.largestItem.key)}` : 'None';
-  
-  // Create pie chart
-  createStoragePieChart(reportData);
-  
-  // Populate items list
-  populateStorageItemsList(reportData, modal);
-  
-  // Apply current theme
-  const currentTheme = document.documentElement.getAttribute('data-theme');
-  if (currentTheme === 'dark') {
-    modal.classList.add('storage-dark-theme');
-  }
-};
-
-/**
- * Creates an interactive pie chart showing storage distribution
- */
-const createStoragePieChart = (reportData) => {
-  const canvas = document.getElementById('storageChart');
-  if (!canvas || typeof Chart === 'undefined') {
-    console.warn('Chart.js not available or canvas not found');
-    return;
-  }
-  
-  // Destroy existing chart if it exists
-  if (window.storageChart) {
-    window.storageChart.destroy();
-  }
-  
-  const ctx = canvas.getContext('2d');
-  const isDark = document.querySelector('#storageReportModal')?.classList.contains('storage-dark-theme');
-  
-  const colors = [
-    '#007bff', '#28a745', '#ffc107', '#dc3545', '#6f42c1',
-    '#fd7e14', '#20c997', '#e83e8c', '#6c757d', '#17a2b8'
-  ];
-  
-  const data = {
-    labels: reportData.items.map(item => getStorageItemDisplayName(item.key)),
-    datasets: [{
-      data: reportData.items.map(item => item.size),
-      backgroundColor: colors.slice(0, reportData.items.length),
-      borderColor: isDark ? '#404040' : '#ffffff',
-      borderWidth: 3,
-      hoverBorderWidth: 4,
-      hoverOffset: 8
-    }]
-  };
-  
-  const options = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        display: false // We'll create our own custom legend
-      },
-      tooltip: {
-        backgroundColor: isDark ? '#2d2d2d' : '#ffffff',
-        titleColor: isDark ? '#ffffff' : '#333333',
-        bodyColor: isDark ? '#ffffff' : '#333333',
-        borderColor: isDark ? '#6c757d' : '#dee2e6',
-        borderWidth: 1,
-        cornerRadius: 8,
-        displayColors: false,
-        callbacks: {
-          title: (context) => {
-            return getStorageItemDisplayName(reportData.items[context[0].dataIndex].key);
-          },
-          label: (context) => {
-            const item = reportData.items[context.dataIndex];
-            return [
-              `Size: ${item.size.toFixed(2)} KB`,
-              `Percentage: ${item.percentage.toFixed(1)}%`,
-              `Records: ${item.recordCount}`,
-              `Type: ${item.type}`
-            ];
-          }
-        }
-      }
-    },
-    onClick: (event, elements) => {
-      if (elements.length > 0) {
-        const index = elements[0].index;
-        showStorageItemDetail(reportData.items[index]);
-      }
-    },
-    animation: {
-      animateRotate: true,
-      animateScale: true,
-      duration: 1000,
-      easing: 'easeOutQuart'
-    },
-    interaction: {
-      intersect: false
-    }
-  };
-  
-  window.storageChart = new Chart(ctx, {
-    type: 'doughnut', // Changed from 'pie' to 'doughnut' for better visual appeal
-    data: data,
-    options: options
-  });
-  
-  // Create custom legend
-  createCustomLegend(reportData, colors, isDark);
-};
-
-/**
- * Creates a custom legend for the storage chart
- */
-const createCustomLegend = (reportData, colors, isDark) => {
-  const legendContainer = document.querySelector('#storageItemsList');
-  if (!legendContainer) return;
-  
-  // Clear existing content
-  legendContainer.innerHTML = '';
-  
-  // Add instruction text
-  const instruction = document.createElement('div');
-  instruction.className = 'legend-instruction';
-  instruction.textContent = 'Click items below or chart segments to view details';
-  legendContainer.appendChild(instruction);
-  
-  // Create legend items
-  reportData.items.forEach((item, index) => {
-    const legendItem = document.createElement('div');
-    legendItem.className = 'storage-legend-item';
-    legendItem.onclick = () => showStorageItemDetail(item);
-    
-    legendItem.innerHTML = `
-      <div class="legend-color-bar" style="background-color: ${colors[index % colors.length]}"></div>
-      <div class="legend-content">
-        <div class="legend-name">${getStorageItemDisplayName(item.key)}</div>
-        <div class="legend-stats">
-          <span class="legend-size">${item.size.toFixed(1)} KB</span>
-          <span class="legend-percentage">${item.percentage.toFixed(1)}%</span>
-          <span class="legend-records">${item.recordCount} records</span>
-        </div>
-      </div>
-      <div class="legend-arrow">›</div>
-    `;
-    
-    legendContainer.appendChild(legendItem);
-  });
-};
-
-/**
- * Populates the storage items list with clickable entries
- */
-const populateStorageItemsList = (reportData, modal) => {
-  const container = modal.querySelector('#storageItemsList');
-  
-  // This will be populated by createCustomLegend when the chart is created
-  container.innerHTML = '<div class="loading-legend">Creating interactive chart...</div>';
-};
-
-/**
- * Shows detailed information for a storage item
- */
-const showStorageItemDetail = (item) => {
-  const detailModal = document.getElementById('storageDetailModal');
-  const title = document.getElementById('detailModalTitle');
-  const content = document.getElementById('detailModalContent');
-  
-  if (!detailModal || !title || !content) return;
-  
-  title.textContent = `${getStorageItemDisplayName(item.key)} Details`;
-  content.innerHTML = generateDetailModalContent(item);
-  
-  // Apply theme to detail modal
-  const parentModal = document.getElementById('storageReportModal');
-  if (parentModal?.classList.contains('storage-dark-theme')) {
-    detailModal.classList.add('storage-dark-theme');
-  } else {
-    detailModal.classList.remove('storage-dark-theme');
-  }
-  
-  detailModal.style.display = 'flex';
-};
-
-/**
- * Generates content for the detail modal
- */
-const generateDetailModalContent = (item) => {
-  let content = `
-    <div class="detail-stats">
-      <div class="detail-stat">
-        <span class="stat-label">Size:</span>
-        <span class="stat-value">${item.size.toFixed(2)} KB</span>
-      </div>
-      <div class="detail-stat">
-        <span class="stat-label">Type:</span>
-        <span class="stat-value">${item.type}</span>
-      </div>
-      <div class="detail-stat">
-        <span class="stat-label">Records:</span>
-        <span class="stat-value">${item.recordCount}</span>
-      </div>
-      <div class="detail-stat">
-        <span class="stat-label">Percentage:</span>
-        <span class="stat-value">${item.percentage.toFixed(1)}%</span>
-      </div>
-    </div>
-  `;
-  
-  // Add data preview based on type
-  if (item.parsedData && Array.isArray(item.parsedData) && item.parsedData.length > 0) {
-    if (item.key === 'precious-metals-inventory') {
-      content += generateInventoryTable(item.parsedData);
-    } else {
-      content += `<div class="data-preview"><h4>Sample Data:</h4><pre>${JSON.stringify(item.parsedData.slice(0, 3), null, 2)}${item.parsedData.length > 3 ? '\n...and ' + (item.parsedData.length - 3) + ' more items' : ''}</pre></div>`;
-    }
-  } else if (item.parsedData) {
-    content += `<div class="data-preview"><h4>Data:</h4><pre>${JSON.stringify(item.parsedData, null, 2)}</pre></div>`;
-  } else {
-    content += `<div class="data-preview"><h4>Raw Data:</h4><pre>${item.value}</pre></div>`;
-  }
-  
-  return content;
-};
-
-/**
- * Generates a table view for inventory data
- */
-const generateInventoryTable = (data) => {
-  if (!data || data.length === 0) return '<p>No inventory data found</p>';
-  
-  const headers = Object.keys(data[0]);
-  const displayLimit = 20;
-  
-  return `
-    <div class="inventory-table-container">
-      <h4>Inventory Data (showing first ${Math.min(displayLimit, data.length)} of ${data.length} items)</h4>
-      <table class="inventory-detail-table">
-        <thead>
-          <tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr>
-        </thead>
-        <tbody>
-          ${data.slice(0, displayLimit).map(record => 
-            `<tr>${headers.map(h => `<td>${sanitizeHtml(String(record[h] || ''))}</td>`).join('')}</tr>`
-          ).join('')}
-        </tbody>
-      </table>
-    </div>
-  `;
-};
-
-/**
- * Closes the storage detail modal
- */
-const closeStorageDetailModal = () => {
-  const detailModal = document.getElementById('storageDetailModal');
-  if (detailModal) {
-    detailModal.style.display = 'none';
-  }
-};
-
-/**
- * Toggles the theme for the storage report modal
- */
-const toggleStorageReportTheme = (modal) => {
-  const isDark = modal.classList.contains('storage-dark-theme');
-  
-  if (isDark) {
-    modal.classList.remove('storage-dark-theme');
-  } else {
-    modal.classList.add('storage-dark-theme');
-  }
-  
-  // Recreate chart with new theme
-  const reportData = analyzeStorageData();
-  createStoragePieChart(reportData);
-};
-
-/**
- * Closes the storage report modal
- */
-const closeStorageReportModal = () => {
+const closeStorageReportOptions = () => {
   const modal = document.getElementById('storageReportModal');
   if (modal) {
     modal.style.display = 'none';
     document.body.style.overflow = '';
   }
-  
-  // Destroy chart to free memory
-  if (window.storageChart) {
-    window.storageChart.destroy();
-    window.storageChart = null;
-  }
 };
-
-// Make functions globally available
-window.showStorageItemDetail = showStorageItemDetail;
-window.closeStorageDetailModal = closeStorageDetailModal;
 
 /**
  * Generates comprehensive HTML storage report with theme support
@@ -971,7 +594,21 @@ const generateStorageReportHTML = () => {
   const reportData = analyzeStorageData();
   const timestamp = new Date().toLocaleString();
   const currentTheme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
-  
+
+  const chartItems = reportData.items.slice(0, 5);
+  if (reportData.items.length > 5) {
+    const otherItems = reportData.items.slice(5);
+    const otherSize = otherItems.reduce((sum, i) => sum + i.size, 0);
+    const otherRecords = otherItems.reduce((sum, i) => sum + i.recordCount, 0);
+    chartItems.push({
+      key: 'other',
+      size: otherSize,
+      percentage: (otherSize / reportData.totalSize) * 100,
+      type: 'Other',
+      recordCount: otherRecords
+    });
+  }
+
   return `<!DOCTYPE html>
 <html lang="en" data-theme="${currentTheme}">
 <head>
@@ -989,8 +626,8 @@ const generateStorageReportHTML = () => {
             <div class="header-content">
                 <h1>📊 StackTrackr Storage Report</h1>
                 <div class="header-controls">
-                    <button onclick="toggleTheme()" class="theme-toggle-btn">🌓</button>
-                    <a href="#" onclick="window.close(); return false;" class="back-link">🏠 Back to App</a>
+                    <button onclick="toggleTheme()" class="theme-toggle-btn" title="Toggle theme">🌓</button>
+                    <button onclick="window.close()" class="close-btn" title="Close report">×</button>
                 </div>
             </div>
             <div class="report-meta">
@@ -999,11 +636,11 @@ const generateStorageReportHTML = () => {
                 <span>Theme: ${currentTheme}</span>
             </div>
         </header>
-        
+
         <div class="print-controls">
             <button onclick="window.print()" class="print-btn">🖨️ Print Report</button>
         </div>
-        
+
         <section class="storage-summary">
             <h2>Storage Overview</h2>
             <div class="summary-grid">
@@ -1021,7 +658,7 @@ const generateStorageReportHTML = () => {
                 </div>
             </div>
         </section>
-        
+
         <section class="storage-visualization">
             <h2>Storage Distribution</h2>
             <div class="chart-section">
@@ -1029,18 +666,18 @@ const generateStorageReportHTML = () => {
                     <canvas id="storageChart" width="400" height="400"></canvas>
                 </div>
                 <div class="chart-legend">
-                    <h3>Click on chart or items below for details</h3>
-                    ${reportData.items.map((item, index) => `
-                        <div class="legend-item" onclick="showItemDetail('${item.key}')" data-index="${index}">
+                    <h3>Top Items</h3>
+                    ${chartItems.map((item, index) => `
+                        <div class="legend-item" ${item.key !== 'other' ? `onclick=\"showItemDetail('${item.key}')\"` : ''}>
                             <span class="legend-color" style="background-color: ${getChartColor(index)}"></span>
-                            <span class="legend-label">${getStorageItemDisplayName(item.key)}</span>
+                            <span class="legend-label">${item.key === 'other' ? 'Other Items' : getStorageItemDisplayName(item.key)}</span>
                             <span class="legend-value">${item.size.toFixed(1)} KB (${item.percentage.toFixed(1)}%)</span>
                         </div>
                     `).join('')}
                 </div>
             </div>
         </section>
-        
+
         <section class="storage-breakdown">
             <h2>Storage Items Details</h2>
             <div class="items-grid">
@@ -1064,14 +701,13 @@ const generateStorageReportHTML = () => {
                 `).join('')}
             </div>
         </section>
-        
+
         <footer class="report-footer">
             <p>Generated by StackTrackr v${APP_VERSION} • ${new Date().getFullYear()}</p>
             <p>This report contains a snapshot of your local browser storage data.</p>
-            <p><a href="#" onclick="window.close(); return false;">🏠 Return to StackTrackr Application</a></p>
         </footer>
     </div>
-    
+
     <!-- Modal for item details -->
     <div id="itemDetailModal" class="storage-modal" style="display: none;">
         <div class="modal-content-large">
@@ -1084,10 +720,10 @@ const generateStorageReportHTML = () => {
             </div>
         </div>
     </div>
-    
+
     <script>
         ${getStorageReportJS()}
-        
+
         // Initialize chart when page loads
         window.addEventListener('DOMContentLoaded', function() {
             initializeStorageChart(${JSON.stringify(reportData)});
@@ -1095,6 +731,102 @@ const generateStorageReportHTML = () => {
     </script>
 </body>
 </html>`;
+};
+
+const getStorageReportCSS = () => {
+  return `
+    :root {
+        --primary: #2563eb;
+        --primary-hover: #1d4ed8;
+        --bg-primary: #ffffff;
+        --bg-secondary: #f8fafc;
+        --text-primary: #1e293b;
+        --text-secondary: #64748b;
+        --border: #e2e8f0;
+        --radius: 8px;
+        --radius-lg: 12px;
+        --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    }
+
+    [data-theme="dark"] {
+        --bg-primary: #1e293b;
+        --bg-secondary: #0f172a;
+        --text-primary: #f1f5f9;
+        --text-secondary: #94a3b8;
+        --border: #334155;
+    }
+
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+        background: var(--bg-secondary);
+        color: var(--text-primary);
+        margin: 0;
+        line-height: 1.6;
+    }
+
+    .report-container { max-width: 1000px; margin: 0 auto; padding: 2rem; }
+
+    .header-content { display: flex; justify-content: space-between; align-items: center; }
+    .header-controls button { margin-left: 0.5rem; }
+
+    .theme-toggle-btn, .close-btn {
+        background: var(--bg-primary);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        width: 40px;
+        height: 40px;
+        cursor: pointer;
+    }
+    .theme-toggle-btn:hover, .close-btn:hover { background: var(--bg-secondary); }
+
+    .print-controls { text-align: right; margin: 1rem 0; }
+    .print-btn {
+        background: var(--primary);
+        color: #fff;
+        border: none;
+        padding: 0.5rem 1rem;
+        border-radius: var(--radius);
+        cursor: pointer;
+    }
+    .print-btn:hover { background: var(--primary-hover); }
+
+    .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px,1fr)); gap: 1rem; margin-top: 1rem; }
+    .summary-item { background: var(--bg-primary); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem; box-shadow: var(--shadow); }
+    .summary-label { display:block; color: var(--text-secondary); font-size:0.875rem; }
+    .summary-value { display:block; font-weight:600; margin-top:0.25rem; }
+
+    .chart-section { display:flex; flex-wrap:wrap; gap:2rem; margin-top:1rem; }
+    .chart-container { flex:1; min-width:260px; background:var(--bg-primary); border:1px solid var(--border); border-radius:var(--radius); padding:1rem; box-shadow:var(--shadow); }
+    .chart-legend { flex:1; min-width:260px; display:flex; flex-direction:column; gap:0.5rem; }
+    .legend-item { display:flex; align-items:center; gap:0.5rem; background:var(--bg-primary); border:1px solid var(--border); border-radius:var(--radius); padding:0.5rem; box-shadow:var(--shadow); cursor:pointer; }
+    .legend-item:hover { border-color: var(--primary); }
+    .legend-color { width:12px; height:12px; border-radius:2px; }
+    .legend-label { flex:1; }
+    .legend-value { color: var(--text-secondary); font-size:0.875rem; }
+
+    .items-grid { display:grid; gap:1rem; margin-top:1rem; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); }
+    .storage-item { background:var(--bg-primary); border:1px solid var(--border); border-radius:var(--radius); padding:1rem; box-shadow:var(--shadow); cursor:pointer; }
+    .storage-item:hover { border-color:var(--primary); }
+    .item-header h3 { margin:0 0 0.5rem 0; }
+    .item-meta { font-size:0.875rem; color:var(--text-secondary); display:flex; gap:0.5rem; margin-bottom:0.5rem; }
+    .item-description { margin-bottom:0.5rem; color:var(--text-secondary); }
+    .detail-item { font-size:0.875rem; color:var(--text-secondary); margin-right:0.5rem; }
+
+    .report-footer { text-align:center; margin-top:2rem; color:var(--text-secondary); font-size:0.875rem; }
+
+    .storage-modal { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); display:flex; align-items:center; justify-content:center; padding:1rem; }
+    .modal-content-large { background:var(--bg-primary); border:1px solid var(--border); border-radius:var(--radius-lg); max-width:800px; width:100%; max-height:90vh; overflow:auto; box-shadow:var(--shadow-lg); }
+    .modal-header { position:relative; padding:1rem; border-bottom:1px solid var(--border); }
+    .modal-header h3 { margin:0; }
+    .modal-close { position:absolute; right:1rem; top:1rem; background:none; border:1px solid var(--border); border-radius:var(--radius); width:32px; height:32px; cursor:pointer; }
+    .modal-body { padding:1rem; }
+
+    @media print {
+        .print-controls, .close-btn { display:none; }
+        body { background:#fff; }
+    }
+  `;
 };
 
 /**
@@ -1325,916 +1057,7 @@ const generateItemDataTable = (item) => {
 /**
  * Gets enhanced CSS styles for the storage report with theme support
  */
-const getStorageReportCSS = () => {
-  return `
-    :root {
-        --primary: #007bff;
-        --success: #28a745;
-        --warning: #ffc107;
-        --danger: #dc3545;
-        --info: #17a2b8;
-        --light: #f8f9fa;
-        --dark: #343a40;
-        --bg-primary: #ffffff;
-        --bg-secondary: #f8f9fa;
-        --text-primary: #333333;
-        --text-secondary: #666666;
-        --border: #dee2e6;
-    }
-    
-    [data-theme="dark"] {
-        --bg-primary: #1a1a1a;
-        --bg-secondary: #2d2d2d;
-        --text-primary: #ffffff;
-        --text-secondary: #cccccc;
-        --border: #404040;
-        --light: #2d2d2d;
-        --dark: #f8f9fa;
-    }
-    
-    * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-    }
-    
-    body {
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-        line-height: 1.6;
-        color: var(--text-primary);
-        background: var(--bg-secondary);
-        transition: all 0.3s ease;
-    }
-    
-    .storage-report-modal-content {
-        width: 95vw;
-        max-width: 1200px;
-        height: 90vh;
-        max-height: 900px;
-    }
-    
-    .storage-report-controls {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-    
-    .theme-btn {
-        background: none;
-        border: 1px solid var(--border);
-        padding: 0.5rem;
-        border-radius: 0.25rem;
-        cursor: pointer;
-        font-size: 1rem;
-        transition: all 0.2s ease;
-    }
-    
-    .theme-btn:hover {
-        background: var(--bg-secondary);
-        transform: scale(1.05);
-    }
-    
-    .storage-report-body {
-        padding: 1rem;
-        overflow-y: auto;
-        height: calc(90vh - 80px);
-    }
-    
-    .storage-report-header {
-        margin-bottom: 1.5rem;
-    }
-    
-    .storage-summary-stats {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-        gap: 1rem;
-        margin-bottom: 1.5rem;
-    }
-    
-    .stat-card {
-        background: var(--bg-primary);
-        border: 1px solid var(--border);
-        border-radius: 0.5rem;
-        padding: 1rem;
-        text-align: center;
-        transition: all 0.2s ease;
-    }
-    
-    .stat-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    }
-    
-    .stat-label {
-        display: block;
-        font-size: 0.875rem;
-        color: var(--text-secondary);
-        margin-bottom: 0.25rem;
-    }
-    
-    .stat-value {
-        display: block;
-        font-size: 1.5rem;
-        font-weight: 700;
-        color: var(--primary);
-    }
-    
-    .storage-visualization-section {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 2rem;
-        margin-bottom: 2rem;
-    }
-    
-    @media (max-width: 768px) {
-        .storage-visualization-section {
-            grid-template-columns: 1fr;
-        }
-    }
-    
-    .chart-container {
-        background: var(--bg-primary);
-        border: 1px solid var(--border);
-        border-radius: 0.5rem;
-        padding: 1.5rem;
-        text-align: center;
-        position: relative;
-    }
-    
-    .chart-container h3 {
-        margin-bottom: 1rem;
-        color: var(--text-primary);
-        font-size: 1.1rem;
-        font-weight: 600;
-    }
-    
-    .chart-container canvas {
-        max-width: 100%;
-        height: 280px !important;
-        cursor: pointer;
-    }
-    
-    .storage-items-table {
-        background: var(--bg-primary);
-        border: 1px solid var(--border);
-        border-radius: 0.5rem;
-        padding: 1rem;
-    }
-    
-    .storage-items-table h3 {
-        margin-bottom: 1rem;
-        color: var(--text-primary);
-        font-size: 1.1rem;
-        font-weight: 600;
-    }
-    
-    .storage-items-list {
-        max-height: 320px;
-        overflow-y: auto;
-        scrollbar-width: thin;
-        scrollbar-color: var(--primary) var(--bg-secondary);
-    }
-    
-    .storage-items-list::-webkit-scrollbar {
-        width: 8px;
-    }
-    
-    .storage-items-list::-webkit-scrollbar-track {
-        background: var(--bg-secondary);
-        border-radius: 4px;
-    }
-    
-    .storage-items-list::-webkit-scrollbar-thumb {
-        background: var(--primary);
-        border-radius: 4px;
-    }
-    
-    .legend-instruction {
-        font-size: 0.9rem;
-        color: var(--text-secondary);
-        text-align: center;
-        margin-bottom: 1rem;
-        font-style: italic;
-    }
-    
-    .storage-legend-item {
-        display: flex;
-        align-items: center;
-        padding: 0.75rem;
-        border-radius: 0.5rem;
-        margin-bottom: 0.5rem;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        border: 1px solid transparent;
-    }
-    
-    .storage-legend-item:hover {
-        background: var(--bg-secondary);
-        border-color: var(--border);
-        transform: translateX(3px);
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    }
-    
-    .legend-color-bar {
-        width: 4px;
-        height: 32px;
-        border-radius: 2px;
-        margin-right: 0.75rem;
-        flex-shrink: 0;
-    }
-    
-    .legend-content {
-        flex: 1;
-        min-width: 0;
-    }
-    
-    .legend-name {
-        font-weight: 600;
-        color: var(--text-primary);
-        margin-bottom: 0.25rem;
-        font-size: 0.9rem;
-    }
-    
-    .legend-stats {
-        display: flex;
-        gap: 0.75rem;
-        font-size: 0.8rem;
-        color: var(--text-secondary);
-    }
-    
-    .legend-size {
-        font-weight: 600;
-        color: var(--success);
-    }
-    
-    .legend-percentage {
-        background: var(--primary);
-        color: white;
-        padding: 0.1rem 0.4rem;
-        border-radius: 0.75rem;
-        font-weight: 500;
-    }
-    
-    .legend-records {
-        color: var(--text-secondary);
-    }
-    
-    .legend-arrow {
-        font-size: 1.2rem;
-        color: var(--text-secondary);
-        margin-left: 0.5rem;
-        transition: transform 0.2s ease;
-    }
-    
-    .storage-legend-item:hover .legend-arrow {
-        transform: translateX(3px);
-        color: var(--primary);
-    }
-    
-    .loading-legend {
-        text-align: center;
-        color: var(--text-secondary);
-        font-style: italic;
-        padding: 2rem;
-    }
-    
-    .storage-report-actions {
-        display: flex;
-        justify-content: center;
-        gap: 1rem;
-        margin-top: 2rem;
-        padding-top: 1rem;
-        border-top: 1px solid var(--border);
-    }
-    
-    .storage-detail-modal .modal-content {
-        width: 90%;
-        max-width: 800px;
-        max-height: 80%;
-    }
-    
-    .detail-stats {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-        gap: 1rem;
-        margin-bottom: 1.5rem;
-    }
-    
-    .detail-stat {
-        display: flex;
-        justify-content: space-between;
-        padding: 0.75rem;
-        background: var(--bg-secondary);
-        border-radius: 0.25rem;
-    }
-    
-    .inventory-table-container {
-        margin-top: 1rem;
-    }
-    
-    .inventory-detail-table {
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 0.875rem;
-    }
-    
-    .inventory-detail-table th,
-    .inventory-detail-table td {
-        border: 1px solid var(--border);
-        padding: 0.5rem;
-        text-align: left;
-    }
-    
-    .inventory-detail-table th {
-        background: var(--bg-secondary);
-        font-weight: 600;
-        position: sticky;
-        top: 0;
-    }
-    
-    .data-preview {
-        background: var(--bg-secondary);
-        border: 1px solid var(--border);
-        border-radius: 0.25rem;
-        padding: 1rem;
-        margin-top: 1rem;
-    }
-    
-    .data-preview h4 {
-        margin-bottom: 0.5rem;
-        color: var(--text-primary);
-    }
-    
-    .data-preview pre {
-        font-size: 0.75rem;
-        white-space: pre-wrap;
-        word-wrap: break-word;
-        max-height: 300px;
-        overflow-y: auto;
-        color: var(--text-primary);
-    }
-    
-    /* Dark theme for storage modals */
-    .storage-dark-theme {
-        background: var(--bg-primary);
-        color: var(--text-primary);
-    }
-    
-    .storage-dark-theme .modal-content {
-        background: var(--bg-primary);
-        border: 1px solid var(--border);
-    }
-    
-    .storage-dark-theme .modal-header {
-        background: var(--dark);
-        color: var(--text-primary);
-        border-bottom: 1px solid var(--border);
-    }
-    
-    .btn {
-        padding: 0.5rem 1rem;
-        border: 1px solid var(--border);
-        border-radius: 0.25rem;
-        background: var(--bg-primary);
-        color: var(--text-primary);
-        text-decoration: none;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        font-size: 0.875rem;
-    }
-    
-    .btn:hover {
-        background: var(--bg-secondary);
-        transform: translateY(-1px);
-    }
-    
-    .btn.premium {
-        background: var(--primary);
-        color: white;
-        border-color: var(--primary);
-    }
-    
-    .btn.success {
-        background: var(--success);
-        color: white;
-        border-color: var(--success);
-    }
-    
-    .btn.secondary {
-        background: var(--text-secondary);
-        color: white;
-        border-color: var(--text-secondary);
-    }
-    
-    /* Enhanced responsive design */
-    @media (max-width: 768px) {
-        .storage-report-modal-content {
-            width: 98vw;
-            height: 95vh;
-        }
-        
-        .storage-summary-stats {
-            grid-template-columns: 1fr;
-        }
-        
-        .storage-report-actions {
-            flex-direction: column;
-        }
-        
-        .detail-stats {
-            grid-template-columns: 1fr;
-        }
-    }
-    
-    .report-container {
-        max-width: 8.5in;
-        margin: 0 auto;
-        background: var(--bg-primary);
-        padding: 1in;
-        min-height: 11in;
-    }
-    
-    .header-content {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 0.5rem;
-    }
-    
-    .header-controls {
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-    }
-    
-    .theme-toggle-btn {
-        background: none;
-        border: 1px solid var(--border);
-        padding: 0.5rem;
-        border-radius: 0.25rem;
-        cursor: pointer;
-        font-size: 1rem;
-        transition: all 0.2s ease;
-    }
-    
-    .theme-toggle-btn:hover {
-        background: var(--bg-secondary);
-    }
-    
-    .back-link {
-        color: var(--success);
-        text-decoration: none;
-        font-weight: 600;
-        padding: 0.5rem 1rem;
-        border: 1px solid var(--success);
-        border-radius: 0.25rem;
-        transition: all 0.2s ease;
-    }
-    
-    .back-link:hover {
-        background: var(--success);
-        color: white;
-    }
-    
-    .storage-visualization {
-        margin-bottom: 2rem;
-    }
-    
-    .chart-section {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 2rem;
-        align-items: start;
-    }
-    
-    @media (max-width: 768px) {
-        .chart-section {
-            grid-template-columns: 1fr;
-        }
-    }
-    
-    .chart-container {
-        background: var(--bg-primary);
-        border: 1px solid var(--border);
-        border-radius: 0.5rem;
-        padding: 1rem;
-        text-align: center;
-    }
-    
-    .chart-legend {
-        background: var(--bg-primary);
-        border: 1px solid var(--border);
-        border-radius: 0.5rem;
-        padding: 1rem;
-    }
-    
-    .chart-legend h3 {
-        margin-bottom: 1rem;
-        color: var(--text-primary);
-        font-size: 1rem;
-    }
-    
-    .legend-item {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        padding: 0.5rem;
-        margin-bottom: 0.5rem;
-        border-radius: 0.25rem;
-        cursor: pointer;
-        transition: all 0.2s ease;
-    }
-    
-    .legend-item:hover {
-        background: var(--bg-secondary);
-        transform: translateX(5px);
-    }
-    
-    .legend-color {
-        width: 16px;
-        height: 16px;
-        border-radius: 50%;
-        flex-shrink: 0;
-    }
-    
-    .legend-label {
-        flex: 1;
-        font-weight: 500;
-        color: var(--text-primary);
-    }
-    
-    .legend-value {
-        font-size: 0.875rem;
-        color: var(--text-secondary);
-        font-weight: 600;
-    }
-    
-    .report-header {
-        text-align: center;
-        border-bottom: 3px solid #007bff;
-        padding-bottom: 1rem;
-        margin-bottom: 2rem;
-    }
-    
-    .report-header h1 {
-        color: #007bff;
-        font-size: 2.5rem;
-        margin-bottom: 0.5rem;
-    }
-    
-    .report-meta {
-        display: flex;
-        justify-content: space-between;
-        font-size: 0.9rem;
-        color: #666;
-    }
-    
-    .print-controls {
-        text-align: center;
-        margin-bottom: 2rem;
-    }
-    
-    .print-btn {
-        background: #007bff;
-        color: white;
-        border: none;
-        padding: 0.75rem 1.5rem;
-        border-radius: 0.5rem;
-        font-size: 1rem;
-        cursor: pointer;
-        transition: background 0.2s;
-    }
-    
-    .print-btn:hover {
-        background: #0056b3;
-    }
-    
-    .storage-summary {
-        margin-bottom: 2rem;
-    }
-    
-    .storage-summary h2 {
-        color: #333;
-        margin-bottom: 1rem;
-        font-size: 1.5rem;
-    }
-    
-    .summary-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 1rem;
-        margin-bottom: 1rem;
-    }
-    
-    .summary-item {
-        background: #f8f9fa;
-        padding: 1rem;
-        border-radius: 0.5rem;
-        border-left: 4px solid #007bff;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-    
-    .summary-label {
-        font-weight: 600;
-        color: #666;
-    }
-    
-    .summary-value {
-        font-weight: 700;
-        color: #007bff;
-        font-size: 1.1rem;
-    }
-    
-    .storage-breakdown h2 {
-        color: #333;
-        margin-bottom: 1rem;
-        font-size: 1.5rem;
-    }
-    
-    .items-grid {
-        display: grid;
-        gap: 1rem;
-    }
-    
-    .storage-item {
-        border: 1px solid #dee2e6;
-        border-radius: 0.5rem;
-        padding: 1rem;
-        background: white;
-        transition: box-shadow 0.2s;
-    }
-    
-    .storage-item:hover {
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    }
-    
-    .item-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 0.5rem;
-        cursor: pointer;
-    }
-    
-    .item-header h3 {
-        color: #007bff;
-        font-size: 1.2rem;
-    }
-    
-    .item-meta {
-        display: flex;
-        gap: 1rem;
-        align-items: center;
-    }
-    
-    .item-size {
-        font-weight: 600;
-        color: #28a745;
-    }
-    
-    .item-percentage {
-        background: #007bff;
-        color: white;
-        padding: 0.25rem 0.5rem;
-        border-radius: 1rem;
-        font-size: 0.8rem;
-    }
-    
-    .item-description {
-        color: #666;
-        margin-bottom: 0.5rem;
-        font-size: 0.9rem;
-    }
-    
-    .item-details {
-        display: flex;
-        gap: 1rem;
-        margin-bottom: 0.5rem;
-    }
-    
-    .detail-item {
-        background: #f8f9fa;
-        padding: 0.25rem 0.5rem;
-        border-radius: 0.25rem;
-        font-size: 0.8rem;
-        color: #666;
-    }
-    
-    .view-details-btn {
-        background: #28a745;
-        color: white;
-        border: none;
-        padding: 0.5rem 1rem;
-        border-radius: 0.25rem;
-        cursor: pointer;
-        font-size: 0.9rem;
-    }
-    
-    .view-details-btn:hover {
-        background: #1e7e34;
-    }
-    
-    .storage-modal {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0,0,0,0.5);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 1000;
-    }
-    
-    .modal-content-large {
-        background: white;
-        border-radius: 0.5rem;
-        width: 90%;
-        max-width: 800px;
-        max-height: 80%;
-        overflow: hidden;
-        display: flex;
-        flex-direction: column;
-    }
-    
-    .modal-header {
-        background: #007bff;
-        color: white;
-        padding: 1rem;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-    
-    .modal-close {
-        background: none;
-        border: none;
-        color: white;
-        font-size: 1.5rem;
-        cursor: pointer;
-        padding: 0;
-        width: 2rem;
-        height: 2rem;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-    
-    .modal-body {
-        padding: 1rem;
-        overflow-y: auto;
-        flex: 1;
-    }
-    
-    .modal-stats {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-        gap: 1rem;
-        margin-bottom: 1rem;
-    }
-    
-    .stat-item {
-        background: #f8f9fa;
-        padding: 0.75rem;
-        border-radius: 0.25rem;
-        display: flex;
-        justify-content: space-between;
-    }
-    
-    .stat-label {
-        font-weight: 600;
-        color: #666;
-    }
-    
-    .stat-value {
-        font-weight: 700;
-        color: #007bff;
-    }
-    
-    .data-table-container {
-        overflow-x: auto;
-        margin-top: 1rem;
-    }
-    
-    .data-table {
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 0.8rem;
-    }
-    
-    .data-table th,
-    .data-table td {
-        border: 1px solid #dee2e6;
-        padding: 0.5rem;
-        text-align: left;
-    }
-    
-    .data-table th {
-        background: #f8f9fa;
-        font-weight: 600;
-        position: sticky;
-        top: 0;
-    }
-    
-    .data-table td {
-        max-width: 150px;
-        word-wrap: break-word;
-        overflow-wrap: break-word;
-    }
-    
-    .data-preview {
-        background: #f8f9fa;
-        padding: 1rem;
-        border-radius: 0.25rem;
-        margin-top: 1rem;
-    }
-    
-    .data-preview pre {
-        font-size: 0.8rem;
-        white-space: pre-wrap;
-        word-wrap: break-word;
-        max-height: 300px;
-        overflow-y: auto;
-    }
-    
-    .truncated {
-        text-align: center;
-        color: #666;
-        font-style: italic;
-        margin-top: 0.5rem;
-    }
-    
-    .no-data {
-        text-align: center;
-        color: #666;
-        font-style: italic;
-        padding: 2rem;
-    }
-    
-    .report-footer {
-        margin-top: 3rem;
-        padding-top: 1rem;
-        border-top: 1px solid #dee2e6;
-        text-align: center;
-        color: #666;
-        font-size: 0.9rem;
-    }
-    
-    @media print {
-        body {
-            background: white;
-        }
-        
-        .print-controls {
-            display: none;
-        }
-        
-        .storage-modal {
-            display: none !important;
-        }
-        
-        .view-details-btn {
-            display: none;
-        }
-        
-        .report-container {
-            margin: 0;
-            padding: 0.5in;
-            max-width: none;
-            min-height: auto;
-        }
-        
-        .storage-item {
-            break-inside: avoid;
-            margin-bottom: 0.5rem;
-        }
-    }
-    
-    @media (max-width: 768px) {
-        .report-container {
-            padding: 1rem;
-        }
-        
-        .summary-grid {
-            grid-template-columns: 1fr;
-        }
-        
-        .item-meta {
-            flex-direction: column;
-            align-items: flex-end;
-            gap: 0.5rem;
-        }
-        
-        .modal-content-large {
-            width: 95%;
-            max-height: 90%;
-        }
-    }
-  `;
-};
+
 
 /**
  * Gets enhanced JavaScript for the storage report with theme and chart support
@@ -2243,6 +1066,7 @@ const getStorageReportJS = () => {
   return `
     let currentChart = null;
     let currentReportData = null;
+    let currentChartItems = null;
     
     function toggleTheme() {
         const html = document.documentElement;
@@ -2264,20 +1088,29 @@ const getStorageReportJS = () => {
             console.warn('Chart.js not available or canvas not found');
             return;
         }
-        
+
         const ctx = canvas.getContext('2d');
         const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-        
+
         const colors = [
             '#007bff', '#28a745', '#ffc107', '#dc3545', '#6f42c1',
             '#fd7e14', '#20c997', '#e83e8c', '#6c757d', '#17a2b8'
         ];
-        
+
+        const items = reportData.items.slice(0,5);
+        if (reportData.items.length > 5) {
+            const others = reportData.items.slice(5);
+            const otherSize = others.reduce((s,i) => s + i.size, 0);
+            const otherRecords = others.reduce((s,i) => s + i.recordCount, 0);
+            items.push({ key: 'other', size: otherSize, percentage: (otherSize / reportData.totalSize) * 100, recordCount: otherRecords });
+        }
+        currentChartItems = items;
+
         const data = {
-            labels: reportData.items.map(item => getStorageItemDisplayName(item.key)),
+            labels: items.map(item => item.key === 'other' ? 'Other Items' : getStorageItemDisplayName(item.key)),
             datasets: [{
-                data: reportData.items.map(item => item.size),
-                backgroundColor: colors.slice(0, reportData.items.length),
+                data: items.map(item => item.size),
+                backgroundColor: colors.slice(0, items.length),
                 borderColor: isDark ? '#404040' : '#ffffff',
                 borderWidth: 2,
                 hoverBorderWidth: 3,
@@ -2300,11 +1133,11 @@ const getStorageReportJS = () => {
                     borderWidth: 1,
                     callbacks: {
                         label: (context) => {
-                            const item = reportData.items[context.dataIndex];
+                            const item = currentChartItems[context.dataIndex];
                             return [
-                                \`\${context.label}: \${item.size.toFixed(2)} KB\`,
-                                \`\${item.percentage.toFixed(1)}% of total\`,
-                                \`\${item.recordCount} records\`
+                                `${context.label}: ${item.size.toFixed(2)} KB`,
+                                `${item.percentage.toFixed(1)}% of total`,
+                                `${item.recordCount} records`
                             ];
                         }
                     }
@@ -2313,7 +1146,10 @@ const getStorageReportJS = () => {
             onClick: (event, elements) => {
                 if (elements.length > 0) {
                     const index = elements[0].index;
-                    showItemDetail(reportData.items[index].key);
+                    const item = currentChartItems[index];
+                    if (item && item.key !== 'other') {
+                        showItemDetail(item.key);
+                    }
                 }
             },
             animation: {
@@ -2539,7 +1375,5 @@ This archive contains a complete snapshot of your StackTrackr storage data.`;
 // Make all storage report functions globally available
 window.updateStorageStats = updateStorageStats;
 window.downloadStorageReport = downloadStorageReport;
-window.showStorageReportModal = showStorageReportModal;
-window.closeStorageReportModal = closeStorageReportModal;
-window.showStorageItemDetail = showStorageItemDetail;
-window.closeStorageDetailModal = closeStorageDetailModal;
+window.showStorageReportOptions = showStorageReportOptions;
+window.closeStorageReportOptions = closeStorageReportOptions;
