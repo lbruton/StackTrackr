@@ -549,7 +549,13 @@ const renderTable = () => {
       `);
     }
 
-    elements.inventoryTable.innerHTML = rows.join('');
+    const visibleCount = endIndex - startIndex;
+    const placeholders = Array.from(
+      { length: Math.max(0, itemsPerPage - visibleCount) },
+      () => '<tr><td class="shrink" colspan="14">&nbsp;</td></tr>'
+    );
+
+    elements.inventoryTable.innerHTML = rows.concat(placeholders).join('');
 
     // Update sort indicators
     const headers = document.querySelectorAll('#inventoryTable th');
