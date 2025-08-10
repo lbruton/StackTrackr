@@ -512,14 +512,80 @@ const updateStorageStats = () => {
 };
 
 /**
- * Downloads a comprehensive HTML storage report with breakdown and print options
+ * Opens storage report options modal
  */
 const downloadStorageReport = () => {
-  showStorageReportModal();
+  showStorageOptionsModal();
 };
 
 /**
- * Shows the storage report modal with options to view/download HTML or enhanced report
+ * Shows a compact modal with view/download options
+ */
+const showStorageOptionsModal = () => {
+  let modal = document.getElementById('storageOptionsModal');
+  if (!modal) {
+    modal = createStorageOptionsModal();
+    document.body.appendChild(modal);
+  }
+
+  modal.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+};
+
+/**
+ * Creates the storage report options modal
+ */
+const createStorageOptionsModal = () => {
+  const modal = document.createElement('div');
+  modal.id = 'storageOptionsModal';
+  modal.className = 'modal';
+  modal.innerHTML = `
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Storage Report</h2>
+        <button aria-label="Close modal" class="modal-close" id="storageOptionsCloseBtn">×</button>
+      </div>
+      <div class="modal-body">
+        <p>Select an option:</p>
+        <div class="options-buttons">
+          <button class="btn" id="viewStorageReportBtn">View Report</button>
+          <button class="btn secondary" id="downloadStorageZipBtn">Download ZIP</button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  const close = () => {
+    modal.style.display = 'none';
+    document.body.style.overflow = '';
+  };
+
+  modal.querySelector('#storageOptionsCloseBtn').addEventListener('click', close);
+  modal.addEventListener('click', (e) => { if (e.target === modal) close(); });
+
+  modal.querySelector('#viewStorageReportBtn').addEventListener('click', () => {
+    close();
+    showStorageReportModal();
+  });
+
+  modal.querySelector('#downloadStorageZipBtn').addEventListener('click', async () => {
+    try {
+      const zipContent = await generateStorageReportZip();
+      const timestamp = new Date().toISOString().split('T')[0];
+      downloadFile(`storage-report-${timestamp}.zip`, zipContent, 'application/zip');
+    } catch (err) {
+      console.error('Error creating ZIP file:', err);
+      alert('Error creating compressed report. Please try again.');
+    } finally {
+      close();
+    }
+  });
+
+  return modal;
+};
+
+/**
+ * Shows the storage report modal with enhanced view
  */
 const showStorageReportModal = () => {
   // Create modal if it doesn't exist
@@ -537,6 +603,13 @@ const showStorageReportModal = () => {
  * Creates the enhanced storage report modal with theme support and pie chart
  */
 const createStorageReportModal = () => {
+  if (!document.getElementById('storageReportStyles')) {
+    const styleTag = document.createElement('style');
+    styleTag.id = 'storageReportStyles';
+    styleTag.textContent = getStorageReportCSS();
+    document.head.appendChild(styleTag);
+  }
+
   const modal = document.createElement('div');
   modal.id = 'storageReportModal';
   modal.className = 'modal';
@@ -584,9 +657,9 @@ const createStorageReportModal = () => {
         </div>
         
         <div class="storage-report-actions">
-          <button class="btn" id="downloadFullReportBtn">💾 Download HTML Report</button>
+          <button class="btn" id="printStorageReportBtn">🖨️ Print</button>
+          <button class="btn" id="downloadFullReportBtn">💾 Download HTML</button>
           <button class="btn secondary" id="downloadCompressedBtn">📦 Download ZIP</button>
-          <a href="#" class="btn success" onclick="document.getElementById('storageReportModal').style.display='none'; document.body.style.overflow='';">🏠 Back to App</a>
         </div>
       </div>
     </div>
@@ -622,6 +695,7 @@ const setupStorageReportEventListeners = (modal) => {
   const themeToggle = modal.querySelector('#storageThemeToggle');
   const downloadFullBtn = modal.querySelector('#downloadFullReportBtn');
   const downloadCompressedBtn = modal.querySelector('#downloadCompressedBtn');
+  const printBtn = modal.querySelector('#printStorageReportBtn');
   
   // Close modal
   closeBtn.addEventListener('click', () => {
@@ -638,17 +712,17 @@ const setupStorageReportEventListeners = (modal) => {
   themeToggle.addEventListener('click', () => {
     toggleStorageReportTheme(modal);
   });
-  
+
   // Download actions
   downloadFullBtn.addEventListener('click', () => {
     const htmlContent = generateStorageReportHTML();
     const timestamp = new Date().toISOString().split('T')[0];
     downloadFile(`storage-report-${timestamp}.html`, htmlContent, 'text/html');
   });
-  
+
   downloadCompressedBtn.addEventListener('click', async () => {
     try {
-      const zipContent = await generateStorageReportTar();
+      const zipContent = await generateStorageReportZip();
       const timestamp = new Date().toISOString().split('T')[0];
       downloadFile(`storage-report-${timestamp}.zip`, zipContent, 'application/zip');
     } catch (error) {
@@ -656,6 +730,10 @@ const setupStorageReportEventListeners = (modal) => {
       alert('Error creating compressed report. Please try the HTML option instead.');
     }
   });
+
+  if (printBtn) {
+    printBtn.addEventListener('click', () => window.print());
+  }
 };
 
 /**
@@ -706,11 +784,26 @@ const createStoragePieChart = (reportData) => {
     '#fd7e14', '#20c997', '#e83e8c', '#6c757d', '#17a2b8'
   ];
   
+  const topItems = reportData.items.slice(0, 5);
+  const otherItems = reportData.items.slice(5);
+  const chartItems = [...topItems];
+  if (otherItems.length) {
+    const otherSize = otherItems.reduce((sum, i) => sum + i.size, 0);
+    const otherRecords = otherItems.reduce((sum, i) => sum + i.recordCount, 0);
+    chartItems.push({
+      key: '__other__',
+      size: otherSize,
+      percentage: (otherSize / reportData.totalSize) * 100,
+      recordCount: otherRecords,
+      type: 'Other'
+    });
+  }
+
   const data = {
-    labels: reportData.items.map(item => getStorageItemDisplayName(item.key)),
+    labels: chartItems.map(item => item.key === '__other__' ? 'Other' : getStorageItemDisplayName(item.key)),
     datasets: [{
-      data: reportData.items.map(item => item.size),
-      backgroundColor: colors.slice(0, reportData.items.length),
+      data: chartItems.map(item => item.size),
+      backgroundColor: colors.slice(0, chartItems.length),
       borderColor: isDark ? '#404040' : '#ffffff',
       borderWidth: 3,
       hoverBorderWidth: 4,
@@ -735,10 +828,11 @@ const createStoragePieChart = (reportData) => {
         displayColors: false,
         callbacks: {
           title: (context) => {
-            return getStorageItemDisplayName(reportData.items[context[0].dataIndex].key);
+            const item = chartItems[context[0].dataIndex];
+            return item.key === '__other__' ? 'Other' : getStorageItemDisplayName(item.key);
           },
           label: (context) => {
-            const item = reportData.items[context.dataIndex];
+            const item = chartItems[context.dataIndex];
             return [
               `Size: ${item.size.toFixed(2)} KB`,
               `Percentage: ${item.percentage.toFixed(1)}%`,
@@ -752,7 +846,10 @@ const createStoragePieChart = (reportData) => {
     onClick: (event, elements) => {
       if (elements.length > 0) {
         const index = elements[0].index;
-        showStorageItemDetail(reportData.items[index]);
+        const item = chartItems[index];
+        if (item && item.key !== '__other__') {
+          showStorageItemDetail(item);
+        }
       }
     },
     animation: {
@@ -767,50 +864,52 @@ const createStoragePieChart = (reportData) => {
   };
   
   window.storageChart = new Chart(ctx, {
-    type: 'doughnut', // Changed from 'pie' to 'doughnut' for better visual appeal
+    type: 'doughnut',
     data: data,
     options: options
   });
-  
+
   // Create custom legend
-  createCustomLegend(reportData, colors, isDark);
+  createCustomLegend(chartItems, colors, isDark);
 };
 
 /**
  * Creates a custom legend for the storage chart
  */
-const createCustomLegend = (reportData, colors, isDark) => {
+const createCustomLegend = (items, colors, isDark) => {
   const legendContainer = document.querySelector('#storageItemsList');
   if (!legendContainer) return;
-  
+
   // Clear existing content
   legendContainer.innerHTML = '';
-  
+
   // Add instruction text
   const instruction = document.createElement('div');
   instruction.className = 'legend-instruction';
   instruction.textContent = 'Click items below or chart segments to view details';
   legendContainer.appendChild(instruction);
-  
+
   // Create legend items
-  reportData.items.forEach((item, index) => {
+  items.forEach((item, index) => {
     const legendItem = document.createElement('div');
     legendItem.className = 'storage-legend-item';
-    legendItem.onclick = () => showStorageItemDetail(item);
-    
+    if (item.key !== '__other__') {
+      legendItem.onclick = () => showStorageItemDetail(item);
+    }
+
     legendItem.innerHTML = `
       <div class="legend-color-bar" style="background-color: ${colors[index % colors.length]}"></div>
       <div class="legend-content">
-        <div class="legend-name">${getStorageItemDisplayName(item.key)}</div>
+        <div class="legend-name">${item.key === '__other__' ? 'Other' : getStorageItemDisplayName(item.key)}</div>
         <div class="legend-stats">
           <span class="legend-size">${item.size.toFixed(1)} KB</span>
           <span class="legend-percentage">${item.percentage.toFixed(1)}%</span>
           <span class="legend-records">${item.recordCount} records</span>
         </div>
       </div>
-      <div class="legend-arrow">›</div>
+      <div class="legend-arrow">${item.key === '__other__' ? '' : '›'}</div>
     `;
-    
+
     legendContainer.appendChild(legendItem);
   });
 };
@@ -971,6 +1070,20 @@ const generateStorageReportHTML = () => {
   const reportData = analyzeStorageData();
   const timestamp = new Date().toLocaleString();
   const currentTheme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+  const topItems = reportData.items.slice(0, 5);
+  const otherItems = reportData.items.slice(5);
+  const chartItems = [...topItems];
+  if (otherItems.length) {
+    const otherSize = otherItems.reduce((sum, i) => sum + i.size, 0);
+    const otherRecords = otherItems.reduce((sum, i) => sum + i.recordCount, 0);
+    chartItems.push({
+      key: '__other__',
+      size: otherSize,
+      percentage: (otherSize / reportData.totalSize) * 100,
+      recordCount: otherRecords,
+      type: 'Other'
+    });
+  }
   
   return `<!DOCTYPE html>
 <html lang="en" data-theme="${currentTheme}">
@@ -990,7 +1103,6 @@ const generateStorageReportHTML = () => {
                 <h1>📊 StackTrackr Storage Report</h1>
                 <div class="header-controls">
                     <button onclick="toggleTheme()" class="theme-toggle-btn">🌓</button>
-                    <a href="#" onclick="window.close(); return false;" class="back-link">🏠 Back to App</a>
                 </div>
             </div>
             <div class="report-meta">
@@ -1030,10 +1142,10 @@ const generateStorageReportHTML = () => {
                 </div>
                 <div class="chart-legend">
                     <h3>Click on chart or items below for details</h3>
-                    ${reportData.items.map((item, index) => `
-                        <div class="legend-item" onclick="showItemDetail('${item.key}')" data-index="${index}">
+                    ${chartItems.map((item, index) => `
+                        <div class="legend-item" ${item.key !== '__other__' ? `onclick=\"showItemDetail('${item.key}')\"` : ''} data-index="${index}">
                             <span class="legend-color" style="background-color: ${getChartColor(index)}"></span>
-                            <span class="legend-label">${getStorageItemDisplayName(item.key)}</span>
+                            <span class="legend-label">${item.key === '__other__' ? 'Other' : getStorageItemDisplayName(item.key)}</span>
                             <span class="legend-value">${item.size.toFixed(1)} KB (${item.percentage.toFixed(1)}%)</span>
                         </div>
                     `).join('')}
@@ -1068,7 +1180,6 @@ const generateStorageReportHTML = () => {
         <footer class="report-footer">
             <p>Generated by StackTrackr v${APP_VERSION} • ${new Date().getFullYear()}</p>
             <p>This report contains a snapshot of your local browser storage data.</p>
-            <p><a href="#" onclick="window.close(); return false;">🏠 Return to StackTrackr Application</a></p>
         </footer>
     </div>
     
@@ -1328,38 +1439,72 @@ const generateItemDataTable = (item) => {
 const getStorageReportCSS = () => {
   return `
     :root {
-        --primary: #007bff;
-        --success: #28a745;
-        --warning: #ffc107;
-        --danger: #dc3545;
-        --info: #17a2b8;
-        --light: #f8f9fa;
-        --dark: #343a40;
+        --primary: #2563eb;
+        --primary-hover: #1d4ed8;
+        --secondary: #64748b;
+        --secondary-hover: #475569;
+        --success: #059669;
+        --success-hover: #047857;
+        --info: #0ea5e9;
+        --warning: #d97706;
+        --warning-hover: #b45309;
+        --danger: #dc2626;
+        --danger-hover: #b91c1c;
         --bg-primary: #ffffff;
-        --bg-secondary: #f8f9fa;
-        --text-primary: #333333;
-        --text-secondary: #666666;
-        --border: #dee2e6;
+        --bg-secondary: #f8fafc;
+        --bg-tertiary: #f1f5f9;
+        --bg-card: #ffffff;
+        --text-primary: #1e293b;
+        --text-secondary: #64748b;
+        --text-muted: #94a3b8;
+        --border: #e2e8f0;
+        --border-hover: #cbd5e1;
+        --radius: 8px;
+        --radius-lg: 12px;
+        --spacing-sm: 0.4rem;
+        --spacing: 0.75rem;
+        --spacing-lg: 1.25rem;
+        --spacing-xl: 1.5rem;
+        --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+        --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+        --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     }
-    
+
     [data-theme="dark"] {
-        --bg-primary: #1a1a1a;
-        --bg-secondary: #2d2d2d;
-        --text-primary: #ffffff;
-        --text-secondary: #cccccc;
-        --border: #404040;
-        --light: #2d2d2d;
-        --dark: #f8f9fa;
+        --primary: #3b82f6;
+        --primary-hover: #2563eb;
+        --secondary: #6b7280;
+        --secondary-hover: #9ca3af;
+        --success: #10b981;
+        --success-hover: #059669;
+        --info: #38bdf8;
+        --warning: #f59e0b;
+        --warning-hover: #d97706;
+        --danger: #ef4444;
+        --danger-hover: #dc2626;
+        --bg-primary: #0f172a;
+        --bg-secondary: #1e293b;
+        --bg-tertiary: #334155;
+        --bg-card: #1e293b;
+        --text-primary: #f8fafc;
+        --text-secondary: #cbd5e1;
+        --text-muted: #94a3b8;
+        --border: #334155;
+        --border-hover: #475569;
+        --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
+        --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.3), 0 2px 4px -2px rgb(0 0 0 / 0.3);
+        --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.3), 0 4px 6px -4px rgb(0 0 0 / 0.3);
     }
-    
+
     * {
         margin: 0;
         padding: 0;
         box-sizing: border-box;
     }
-    
+
     body {
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+        font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
         line-height: 1.6;
         color: var(--text-primary);
         background: var(--bg-secondary);
@@ -1781,21 +1926,6 @@ const getStorageReportCSS = () => {
         background: var(--bg-secondary);
     }
     
-    .back-link {
-        color: var(--success);
-        text-decoration: none;
-        font-weight: 600;
-        padding: 0.5rem 1rem;
-        border: 1px solid var(--success);
-        border-radius: 0.25rem;
-        transition: all 0.2s ease;
-    }
-    
-    .back-link:hover {
-        background: var(--success);
-        color: white;
-    }
-    
     .storage-visualization {
         margin-bottom: 2rem;
     }
@@ -1871,22 +2001,22 @@ const getStorageReportCSS = () => {
     
     .report-header {
         text-align: center;
-        border-bottom: 3px solid #007bff;
+        border-bottom: 3px solid var(--primary);
         padding-bottom: 1rem;
         margin-bottom: 2rem;
     }
-    
+
     .report-header h1 {
-        color: #007bff;
+        color: var(--primary);
         font-size: 2.5rem;
         margin-bottom: 0.5rem;
     }
-    
+
     .report-meta {
         display: flex;
         justify-content: space-between;
         font-size: 0.9rem;
-        color: #666;
+        color: var(--text-secondary);
     }
     
     .print-controls {
@@ -1895,8 +2025,8 @@ const getStorageReportCSS = () => {
     }
     
     .print-btn {
-        background: #007bff;
-        color: white;
+        background: var(--primary);
+        color: #fff;
         border: none;
         padding: 0.75rem 1.5rem;
         border-radius: 0.5rem;
@@ -1904,9 +2034,9 @@ const getStorageReportCSS = () => {
         cursor: pointer;
         transition: background 0.2s;
     }
-    
+
     .print-btn:hover {
-        background: #0056b3;
+        background: var(--primary-hover);
     }
     
     .storage-summary {
@@ -1927,28 +2057,28 @@ const getStorageReportCSS = () => {
     }
     
     .summary-item {
-        background: #f8f9fa;
+        background: var(--bg-tertiary);
         padding: 1rem;
-        border-radius: 0.5rem;
-        border-left: 4px solid #007bff;
+        border-radius: var(--radius);
+        border-left: 4px solid var(--primary);
         display: flex;
         justify-content: space-between;
         align-items: center;
     }
-    
+
     .summary-label {
         font-weight: 600;
-        color: #666;
+        color: var(--text-secondary);
     }
-    
+
     .summary-value {
         font-weight: 700;
-        color: #007bff;
+        color: var(--primary);
         font-size: 1.1rem;
     }
     
     .storage-breakdown h2 {
-        color: #333;
+        color: var(--text-primary);
         margin-bottom: 1rem;
         font-size: 1.5rem;
     }
@@ -1959,15 +2089,16 @@ const getStorageReportCSS = () => {
     }
     
     .storage-item {
-        border: 1px solid #dee2e6;
-        border-radius: 0.5rem;
-        padding: 1rem;
-        background: white;
-        transition: box-shadow 0.2s;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: var(--spacing);
+        background: var(--bg-card);
+        box-shadow: var(--shadow-sm);
+        transition: var(--transition);
     }
-    
+
     .storage-item:hover {
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        box-shadow: var(--shadow);
     }
     
     .item-header {
@@ -1979,7 +2110,7 @@ const getStorageReportCSS = () => {
     }
     
     .item-header h3 {
-        color: #007bff;
+        color: var(--primary);
         font-size: 1.2rem;
     }
     
@@ -1991,19 +2122,19 @@ const getStorageReportCSS = () => {
     
     .item-size {
         font-weight: 600;
-        color: #28a745;
+        color: var(--success);
     }
-    
+
     .item-percentage {
-        background: #007bff;
-        color: white;
+        background: var(--primary);
+        color: #fff;
         padding: 0.25rem 0.5rem;
         border-radius: 1rem;
         font-size: 0.8rem;
     }
-    
+
     .item-description {
-        color: #666;
+        color: var(--text-secondary);
         margin-bottom: 0.5rem;
         font-size: 0.9rem;
     }
@@ -2015,25 +2146,26 @@ const getStorageReportCSS = () => {
     }
     
     .detail-item {
-        background: #f8f9fa;
+        background: var(--bg-tertiary);
         padding: 0.25rem 0.5rem;
         border-radius: 0.25rem;
         font-size: 0.8rem;
-        color: #666;
+        color: var(--text-secondary);
     }
-    
+
     .view-details-btn {
-        background: #28a745;
-        color: white;
+        background: var(--success);
+        color: #fff;
         border: none;
         padding: 0.5rem 1rem;
         border-radius: 0.25rem;
         cursor: pointer;
         font-size: 0.9rem;
+        transition: var(--transition);
     }
-    
+
     .view-details-btn:hover {
-        background: #1e7e34;
+        background: var(--success-hover);
     }
     
     .storage-modal {
@@ -2061,8 +2193,8 @@ const getStorageReportCSS = () => {
     }
     
     .modal-header {
-        background: #007bff;
-        color: white;
+        background: var(--primary);
+        color: #fff;
         padding: 1rem;
         display: flex;
         justify-content: space-between;
@@ -2097,21 +2229,21 @@ const getStorageReportCSS = () => {
     }
     
     .stat-item {
-        background: #f8f9fa;
+        background: var(--bg-tertiary);
         padding: 0.75rem;
         border-radius: 0.25rem;
         display: flex;
         justify-content: space-between;
     }
-    
+
     .stat-label {
         font-weight: 600;
-        color: #666;
+        color: var(--text-secondary);
     }
-    
+
     .stat-value {
         font-weight: 700;
-        color: #007bff;
+        color: var(--primary);
     }
     
     .data-table-container {
@@ -2127,13 +2259,13 @@ const getStorageReportCSS = () => {
     
     .data-table th,
     .data-table td {
-        border: 1px solid #dee2e6;
+        border: 1px solid var(--border);
         padding: 0.5rem;
         text-align: left;
     }
-    
+
     .data-table th {
-        background: #f8f9fa;
+        background: var(--bg-tertiary);
         font-weight: 600;
         position: sticky;
         top: 0;
@@ -2146,7 +2278,7 @@ const getStorageReportCSS = () => {
     }
     
     .data-preview {
-        background: #f8f9fa;
+        background: var(--bg-tertiary);
         padding: 1rem;
         border-radius: 0.25rem;
         margin-top: 1rem;
@@ -2162,24 +2294,24 @@ const getStorageReportCSS = () => {
     
     .truncated {
         text-align: center;
-        color: #666;
+        color: var(--text-secondary);
         font-style: italic;
         margin-top: 0.5rem;
     }
-    
+
     .no-data {
         text-align: center;
-        color: #666;
+        color: var(--text-secondary);
         font-style: italic;
         padding: 2rem;
     }
-    
+
     .report-footer {
         margin-top: 3rem;
         padding-top: 1rem;
-        border-top: 1px solid #dee2e6;
+        border-top: 1px solid var(--border);
         text-align: center;
-        color: #666;
+        color: var(--text-secondary);
         font-size: 0.9rem;
     }
     
@@ -2273,11 +2405,26 @@ const getStorageReportJS = () => {
             '#fd7e14', '#20c997', '#e83e8c', '#6c757d', '#17a2b8'
         ];
         
+        const topItems = reportData.items.slice(0, 5);
+        const otherItems = reportData.items.slice(5);
+        const chartItems = [...topItems];
+        if (otherItems.length) {
+            const otherSize = otherItems.reduce((s, i) => s + i.size, 0);
+            const otherRecords = otherItems.reduce((s, i) => s + i.recordCount, 0);
+            chartItems.push({
+                key: '__other__',
+                size: otherSize,
+                percentage: (otherSize / reportData.totalSize) * 100,
+                recordCount: otherRecords,
+                type: 'Other'
+            });
+        }
+
         const data = {
-            labels: reportData.items.map(item => getStorageItemDisplayName(item.key)),
+            labels: chartItems.map(item => item.key === '__other__' ? 'Other' : getStorageItemDisplayName(item.key)),
             datasets: [{
-                data: reportData.items.map(item => item.size),
-                backgroundColor: colors.slice(0, reportData.items.length),
+                data: chartItems.map(item => item.size),
+                backgroundColor: colors.slice(0, chartItems.length),
                 borderColor: isDark ? '#404040' : '#ffffff',
                 borderWidth: 2,
                 hoverBorderWidth: 3,
@@ -2300,7 +2447,7 @@ const getStorageReportJS = () => {
                     borderWidth: 1,
                     callbacks: {
                         label: (context) => {
-                            const item = reportData.items[context.dataIndex];
+                            const item = chartItems[context.dataIndex];
                             return [
                                 \`\${context.label}: \${item.size.toFixed(2)} KB\`,
                                 \`\${item.percentage.toFixed(1)}% of total\`,
@@ -2313,7 +2460,10 @@ const getStorageReportJS = () => {
             onClick: (event, elements) => {
                 if (elements.length > 0) {
                     const index = elements[0].index;
-                    showItemDetail(reportData.items[index].key);
+                    const item = chartItems[index];
+                    if (item && item.key !== '__other__') {
+                        showItemDetail(item.key);
+                    }
                 }
             },
             animation: {
@@ -2464,7 +2614,7 @@ const getStorageReportJS = () => {
 /**
  * Generates a comprehensive ZIP file with storage report and data
  */
-const generateStorageReportTar = async () => {
+const generateStorageReportZip = async () => {
   if (typeof JSZip === 'undefined') {
     throw new Error('JSZip library not available for compressed reports');
   }

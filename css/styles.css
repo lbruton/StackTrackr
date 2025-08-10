@@ -1536,6 +1536,19 @@ td input:checked + .slider:before {
   animation: modalSlideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* Compact storage options modal */
+#storageOptionsModal .modal-content {
+  max-width: 360px;
+  text-align: center;
+}
+
+#storageOptionsModal .options-buttons {
+  display: flex;
+  gap: var(--spacing);
+  justify-content: center;
+  margin-top: var(--spacing);
+}
+
 /* =============================================================================
    ABOUT MODAL STYLING - Enhanced splash page design
    ============================================================================= */
