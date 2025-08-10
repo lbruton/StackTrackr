@@ -344,47 +344,53 @@
       </section>
       -->
       <!-- =============================================================================
-         SEARCH FUNCTIONALITY
-         
-         Live search interface that filters inventory table in real-time.
-         Searches across all relevant fields including:
-         - Metal type, name, type, purchase/storage locations, date
-         - Quantity, weight, price values
-         - Collectable status (yes/no)
-         
-         Search is case-insensitive and supports partial matches
-         Implementation in search.js with filterInventory() function
+         INVENTORY
+
+         Wrapper containing search and inventory table
          ============================================================================= -->
-      <section class="search-section">
-        <div class="search-container">
-          <input
-            id="searchInput"
-            placeholder="Search inventory by metal, name, type, purchase location, storage location, notes, date..."
-            type="text"
-          />
-          <button class="btn" id="clearSearchBtn">Clear</button>
-          <button class="btn success" id="newItemBtn">New Item</button>
-        </div>
-        <div class="search-results-info" id="searchResultsInfo"></div>
-      </section>
-      <!-- =============================================================================
-         INVENTORY TABLE SECTION
-         
-         Main data display table showing all inventory items with:
-         - Sortable columns (click headers to sort ascending/descending)
-         - Clickable item names for editing (opens edit modal)
-         - Collectable status checkboxes for quick toggle
-         - Delete buttons with confirmation
-         - Responsive design with column resizing capability
-         
-      Table rendering handled by renderTable() in inventory.js
-       Pagination controls limit display to selected items per page
-       ============================================================================= -->
-      <section class="table-section">
-        <div class="table-controls">
-          <button id="changeLogBtn" class="btn">Change Log</button>
-          <span class="table-disclaimer"
-            >All data is stored locally. Back up often.</span
+      <section class="inventory-section">
+        <!-- =============================================================================
+           SEARCH FUNCTIONALITY
+
+           Live search interface that filters inventory table in real-time.
+           Searches across all relevant fields including:
+           - Metal type, name, type, purchase/storage locations, date
+           - Quantity, weight, price values
+           - Collectable status (yes/no)
+
+           Search is case-insensitive and supports partial matches
+           Implementation in search.js with filterInventory() function
+           ============================================================================= -->
+        <section class="search-section">
+          <div class="search-container">
+            <input
+              id="searchInput"
+              placeholder="Search inventory by metal, name, type, purchase location, storage location, notes, date..."
+              type="text"
+            />
+            <button class="btn" id="clearSearchBtn">Clear</button>
+            <button class="btn success" id="newItemBtn">New Item</button>
+          </div>
+          <div class="search-results-info" id="searchResultsInfo"></div>
+        </section>
+        <!-- =============================================================================
+           INVENTORY TABLE SECTION
+
+           Main data display table showing all inventory items with:
+           - Sortable columns (click headers to sort ascending/descending)
+           - Clickable item names for editing (opens edit modal)
+           - Collectable status checkboxes for quick toggle
+           - Delete buttons with confirmation
+           - Responsive design with column resizing capability
+
+        Table rendering handled by renderTable() in inventory.js
+         Pagination controls limit display to selected items per page
+         ============================================================================= -->
+        <section class="table-section">
+          <div class="table-controls">
+            <button id="changeLogBtn" class="btn">Change Log</button>
+            <span class="table-disclaimer"
+              >All data is stored locally. Back up often.</span
           >
           <div class="items-per-page">
             <span class="items-label">Items:</span>
@@ -396,8 +402,8 @@
               <option value="100">100</option>
             </select>
           </div>
-        </div>
-        <table id="inventoryTable">
+          </div>
+          <table id="inventoryTable">
           <thead>
             <tr>
               <th class="shrink">Date</th>
@@ -452,6 +458,7 @@
             </div>
           </div>
         </section>
+      </section>
       </section>
       <!-- =============================================================================
          TOTALS SECTION
