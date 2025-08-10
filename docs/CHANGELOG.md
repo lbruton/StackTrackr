@@ -8,18 +8,9 @@
 
 ## 📋 Version History
 
-### Version 3.00.02 – Interactive Storage Report Dashboard (2025-08-10)
-- **Interactive Dashboard**: Complete redesign of storage report from simple download options to comprehensive interactive dashboard
-  - **Real-time Pie Chart**: Chart.js-powered visualization showing storage distribution with clickable segments
-  - **Theme Toggle**: Independent dark/light mode toggle with inheritance from main application
-  - **Interactive Elements**: Click pie chart segments, legend items, or table rows to view detailed breakdowns
-  - **Auto-sizing Modal**: Responsive modal (95vw × 90vh, max 1200px × 900px) with proper centering
-  - **Themed Design**: Uses standard modal header styling consistent with other application modals
-- **Enhanced Downloads**: HTML reports now include interactive charts and theme support
-- **Navigation**: "Back to App" links in both modal and standalone HTML reports
-- **Data Exploration**: Detailed modals for each storage item with formatted tables and data previews
-- **Chart Interactivity**: Hover tooltips, legend interactions, and click-to-drill-down functionality
-- **Theme Persistence**: Selected theme preserved in exported HTML reports and ZIP archives
+### Version 3.03.02a – Versioning Guide Refinement (2025-08-10)
+- Clarified BRANCH.RELEASE.PATCH.state version scheme
+- Documented pre-release state codes and branching policy
 
 ### Version 3.03.01a – Comprehensive Storage Report System (2025-08-10)
 - **Enhanced Storage Reports**: Redesigned storage report from basic JSON export to comprehensive HTML reporting system
@@ -33,6 +24,19 @@
 - **User Experience**: Storage report link in footer now opens options modal instead of direct JSON download
 - **Professional Styling**: Consistent with application design language, responsive layout, proper typography
 - **Self-contained Reports**: HTML files include all CSS and JavaScript inline for standalone viewing
+
+### Version 3.00.02 – Interactive Storage Report Dashboard (2025-08-10)
+- **Interactive Dashboard**: Complete redesign of storage report from simple download options to comprehensive interactive dashboard
+  - **Real-time Pie Chart**: Chart.js-powered visualization showing storage distribution with clickable segments
+  - **Theme Toggle**: Independent dark/light mode toggle with inheritance from main application
+  - **Interactive Elements**: Click pie chart segments, legend items, or table rows to view detailed breakdowns
+  - **Auto-sizing Modal**: Responsive modal (95vw × 90vh, max 1200px × 900px) with proper centering
+  - **Themed Design**: Uses standard modal header styling consistent with other application modals
+- **Enhanced Downloads**: HTML reports now include interactive charts and theme support
+- **Navigation**: "Back to App" links in both modal and standalone HTML reports
+- **Data Exploration**: Detailed modals for each storage item with formatted tables and data previews
+- **Chart Interactivity**: Hover tooltips, legend interactions, and click-to-drill-down functionality
+- **Theme Persistence**: Selected theme preserved in exported HTML reports and ZIP archives
 
 ### Version 3.00.00 – Stable Release (2025-08-10)
 - Promoted release candidate features to official stable version

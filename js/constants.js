@@ -92,8 +92,12 @@ const API_PROVIDERS = {
 
 // =============================================================================
 
-/** @constant {string} APP_VERSION - Application version */
-const APP_VERSION = "3.03.01a";
+/**
+ * @constant {string} APP_VERSION - Application version
+ * Follows BRANCH.RELEASE.PATCH.state format
+ * Example: 3.03.02a → branch 3, release 03, patch 02, alpha
+ */
+const APP_VERSION = "3.03.02a";
 
 /** @constant {string} BRANDING_TITLE - Optional custom application title */
 const BRANDING_TITLE = "StackTrackr";
