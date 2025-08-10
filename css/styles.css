@@ -220,7 +220,12 @@ section {
 }
 
 .storage-line {
-  margin-top: var(--spacing-sm);
+  margin-bottom: var(--spacing-sm);
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.footer-meta {
   font-size: 0.8rem;
   color: var(--text-secondary);
 }
