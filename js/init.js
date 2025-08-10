@@ -97,6 +97,9 @@ document.addEventListener("DOMContentLoaded", () => {
     elements.numistaExportBtn = safeGetElement("numistaExportBtn");
     elements.cloudSyncBtn = safeGetElement("cloudSyncBtn");
     elements.syncAllBtn = safeGetElement("syncAllBtn");
+    elements.addMappingBtn = safeGetElement("addMappingBtn");
+    elements.applyMappingsBtn = safeGetElement("applyMappingsBtn");
+    elements.clearMappingsBtn = safeGetElement("clearMappingsBtn");
     elements.boatingAccidentBtn = safeGetElement("boatingAccidentBtn");
 
     // Modal elements
