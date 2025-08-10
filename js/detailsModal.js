@@ -148,6 +148,7 @@ const showDetailsModal = (metal) => {
 
   // Show modal
   elements.detailsModal.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
 
   // Add chart resize handling
   const resizeObserver = new ResizeObserver(() => {
@@ -166,6 +167,7 @@ const showDetailsModal = (metal) => {
  */
 const closeDetailsModal = () => {
   elements.detailsModal.style.display = 'none';
+  document.body.style.overflow = '';
   destroyCharts();
 };
 

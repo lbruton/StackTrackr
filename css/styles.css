@@ -1067,6 +1067,7 @@ input[type="submit"] {
 }
 
 /* Standardized modal layout for change log and details views */
+/* shared modal content structure */
 #changeLogModal .modal-content,
 #detailsModal .modal-content {
   display: flex;
@@ -1097,16 +1098,45 @@ input[type="submit"] {
   text-align: center;
 }
 
-#changeLogModal .modal-body,
-#detailsModal .modal-body {
+#changeLogModal .modal-body {
   padding: var(--spacing-xl);
   overflow: auto;
   flex: 1;
 }
 
+#detailsModal .modal-body {
+  padding: var(--spacing-xl);
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
 #changeLogTable {
-  width: max-content;
-  min-width: 100%;
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+}
+
+#changeLogTable th,
+#changeLogTable td {
+  padding: var(--spacing-sm);
+  text-align: left;
+}
+
+#changeLogTable td {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#changeLogTable th:last-child,
+#changeLogTable td:last-child {
+  width: 8rem;
+}
+
+#changeLogTable td.action-cell {
+  white-space: nowrap;
 }
 
 #detailsModal {
@@ -1876,6 +1906,8 @@ td input:checked + .slider:before {
   grid-template-columns: 1fr 1fr;
   gap: var(--spacing-xl);
   margin-bottom: var(--spacing-lg);
+  flex: 1;
+  overflow: hidden;
 }
 
 .details-panel {
@@ -1886,6 +1918,13 @@ td input:checked + .slider:before {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-lg);
+  overflow: hidden;
+}
+
+.details-breakdown {
+  flex: 1;
+  overflow: auto;
+  padding-right: var(--spacing-sm);
 }
 
 .details-panel-title {
@@ -1940,6 +1979,7 @@ td input:checked + .slider:before {
   height: 300px;
   width: 100%;
   margin: 0 auto;
+  flex: 0 0 300px;
 }
 
 .chart-canvas {
