@@ -94,8 +94,12 @@ document.addEventListener("DOMContentLoaded", () => {
     elements.exportJsonBtn = safeGetElement("exportJsonBtn");
     elements.exportExcelBtn = safeGetElement("exportExcelBtn");
     elements.exportPdfBtn = safeGetElement("exportPdfBtn");
+    elements.numistaExportBtn = safeGetElement("numistaExportBtn");
     elements.cloudSyncBtn = safeGetElement("cloudSyncBtn");
     elements.syncAllBtn = safeGetElement("syncAllBtn");
+    elements.addMappingBtn = safeGetElement("addMappingBtn");
+    elements.applyMappingsBtn = safeGetElement("applyMappingsBtn");
+    elements.clearMappingsBtn = safeGetElement("clearMappingsBtn");
     elements.boatingAccidentBtn = safeGetElement("boatingAccidentBtn");
 
     // Modal elements
@@ -274,6 +278,10 @@ document.addEventListener("DOMContentLoaded", () => {
     const aboutVersion = document.getElementById("aboutVersion");
     if (aboutVersion) {
       aboutVersion.textContent = `v${APP_VERSION}`;
+    }
+    const footerVersion = document.getElementById("footerVersion");
+    if (footerVersion) {
+      footerVersion.textContent = getVersionString();
     }
     const footerDomainEl = document.getElementById("footerDomain");
     if (footerDomainEl) {
