@@ -81,11 +81,11 @@ const monitorPerformance = (fn, name, ...args) => {
  * @returns {string} HTML string with source line and time line
  */
 const getLastUpdateTime = (metalName) => {
-  if (!spotHistory || spotHistory.length === 0) return "Default<br>Default";
+  if (!spotHistory || spotHistory.length === 0) return "";
 
   // Find the most recent entry for this metal
   const metalEntries = spotHistory.filter((entry) => entry.metal === metalName);
-  if (metalEntries.length === 0) return "Default<br>Default";
+  if (metalEntries.length === 0) return "";
 
   const latestEntry = metalEntries[metalEntries.length - 1];
   const timestamp = new Date(latestEntry.timestamp);
@@ -96,32 +96,30 @@ const getLastUpdateTime = (metalName) => {
   const timeText = `${pad2(timestamp.getHours())}:${pad2(
     timestamp.getMinutes(),
   )}:${pad2(timestamp.getSeconds())}`;
-  const diffMs = Date.now() - timestamp.getTime();
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-  const diffHours = Math.floor((diffMs / (1000 * 60 * 60)) % 24);
 
-  let sourceLine;
-  let timeLine;
+  let sourceLine = "";
+  let timeLine = "";
 
   if (latestEntry.source === "api") {
     sourceLine = latestEntry.provider || "API";
-    timeLine = `Last sync ${dateText} ${timeText} - ${diffDays}d ${diffHours}h ago`;
+    timeLine = `Last sync ${dateText} ${timeText}`;
   } else if (latestEntry.source === "cached") {
     sourceLine = latestEntry.provider
       ? `${latestEntry.provider} (cached)`
       : "Cached";
-    timeLine = `Last sync ${dateText} ${timeText} - ${diffDays}d ${diffHours}h ago`;
+    timeLine = `Last sync ${dateText} ${timeText}`;
   } else if (latestEntry.source === "manual") {
     sourceLine = "Manual";
     timeLine = "Manual";
   } else if (latestEntry.source === "default") {
-    sourceLine = "Default";
-    timeLine = "Default";
+    sourceLine = "";
+    timeLine = "";
   } else {
     sourceLine = "Stored";
-    timeLine = `Last sync ${dateText} ${timeText} - ${diffDays}d ${diffHours}h ago`;
+    timeLine = `Last sync ${dateText} ${timeText}`;
   }
 
+  if (!sourceLine && !timeLine) return "";
   return `${sourceLine}<br>${timeLine}`;
 };
 
