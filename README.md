@@ -165,13 +165,15 @@ Each inventory item includes:
 ├── debug/                              # Development artifacts
 ├── archive/                            # Previous build snapshots for fallback
 ├── docs/
+│   ├── archive/                        # Archived notes and historical docs
+│   ├── future/                         # Planning notes for upcoming enhancements
 │   ├── CHANGELOG.md                    # Detailed history of application changes
-│   ├── IMPLEMENTATION_SUMMARY.md        # Summary of major development work
+│   ├── IMPLEMENTATION_SUMMARY.md       # Summary of major development work
 │   ├── MULTI_AGENT_WORKFLOW.md         # AI assistant development workflow and coordination
 │   ├── ROADMAP.md                      # Planned features and subtasks
 │   ├── STATUS.md                       # Project status and features overview
 │   ├── STRUCTURE.md                    # Documentation of folder and file organization
-│   ├── functionstable.md               # Function reference table
+│   ├── FUNCTIONSTABLE.md               # Function reference table
 │   └── VERSIONING.md                   # Version management notes
 ├── js/
 │   ├── api.js
@@ -199,7 +201,7 @@ Each inventory item includes:
 - The `css` and `js` directories contain the application's styling and modular JavaScript files.
 - JavaScript is split into specialized modules to promote maintainability and separation of concerns.
 - Styles use CSS custom properties supporting dark/light themes and responsive layouts.
-- Documentation files in the `docs` folder keep changelogs, versioning info, project status, and development guides.
+- Documentation files in the `docs` folder keep changelogs, versioning info, project status, development guides, and future planning notes.
 - The root `index.html` hosts the main application interface.
 
 ## Documentation
@@ -207,9 +209,10 @@ Each inventory item includes:
 - **[docs/MULTI_AGENT_WORKFLOW.md](docs/MULTI_AGENT_WORKFLOW.md)** - AI assistant development workflow.
 - **[docs/CHANGELOG.md](docs/CHANGELOG.md)** - Version history and features.
 - **[docs/STATUS.md](docs/STATUS.md)** - Current project status.
-- **[docs/STRUCTURE.md](docs/STRUCTURE.md)** - Project organization.
-- **[docs/functionstable.md](docs/functionstable.md)** - Function reference table.
-- **[docs/VERSIONING.md](docs/VERSIONING.md)** - Version management.
+ - **[docs/STRUCTURE.md](docs/STRUCTURE.md)** - Project organization.
+ - **[docs/FUNCTIONSTABLE.md](docs/FUNCTIONSTABLE.md)** - Function reference table.
+ - **[docs/future/](docs/future/)** - Notes for future implementations and add-ons.
+ - **[docs/VERSIONING.md](docs/VERSIONING.md)** - Version management.
 - **[archive/previous/](archive/previous/)** - Last stable build for rollback.
 
 ## Code Quality

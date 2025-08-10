@@ -33,10 +33,10 @@ You are contributing to the **StackTrackr v3.3.00**, a comprehensive client-side
 ### **Step 1: Read the Documentation**
 Before starting ANY subtask, read these files:
 - `docs/ROADMAP.md` - Complete development roadmap with all subtasks
-- `docs/archive/notes/v3.2.0-planning-notes.md` - Technical implementation details
+- `docs/archive/notes/V3.2.0-PLANNING-NOTES.md` - Technical implementation details
 - `docs/STATUS.md` - Current project status
 - `docs/STRUCTURE.md` - Project architecture and file organization
-- `docs/functionstable.md` - Reference table of all JavaScript functions
+- `docs/FUNCTIONSTABLE.md` - Reference table of all JavaScript functions
 
 ### **Step 2: Choose Your Subtask**
 1. **Review available subtasks** in `docs/ROADMAP.md`
@@ -272,8 +272,8 @@ Before starting ANY subtask, read these files:
 
 ### **Essential Files:**
 - `docs/ROADMAP.md` - Your subtask list
-- `docs/archive/notes/v3.2.0-planning-notes.md` - Implementation details
-- `docs/functionstable.md` - Lookup table for all functions
+- `docs/archive/notes/V3.2.0-PLANNING-NOTES.md` - Implementation details
+- `docs/FUNCTIONSTABLE.md` - Lookup table for all functions
 - `index.html` - Main application
 - `js/constants.js` - Configuration and version
 - `css/styles.css` - All styling

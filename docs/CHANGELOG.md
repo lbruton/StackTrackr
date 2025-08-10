@@ -11,6 +11,7 @@
 ### Version 3.3.00 – Stable Release (2025-08-10)
 - Promoted release candidate features to official stable version
 - Finalized documentation and archived planning notes
+- Added `docs/future/` directory for upcoming feature planning
 - Inventory table automatically adjusts items-per-page dropdown when filtered results are fewer than selected
 
 ### Version 3.2.07rc – Spot Timestamp Source Display (2025-08-09)

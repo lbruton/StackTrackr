@@ -9,7 +9,9 @@
 ├── docs/
 │   ├── archive/
 │   │   └── notes/
+│   ├── future/
 │   ├── CHANGELOG.md
+│   ├── FUNCTIONSTABLE.md
 │   ├── IMPLEMENTATION_SUMMARY.md
 │   ├── MULTI_AGENT_WORKFLOW.md
 │   ├── ROADMAP.md
