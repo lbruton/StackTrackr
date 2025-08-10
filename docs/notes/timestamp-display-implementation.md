@@ -14,12 +14,13 @@ Added timestamp display to spot price cards showing when each metal price was la
 
 ### Key Function
 ```javascript
-getLastUpdateTime(metalName) // Returns formatted string like "2 hrs ago (API)"
+getLastUpdateTime(metalName) // Returns HTML: "Source<br>Last sync YYYY-MM-DD HH:MM:SS - Xd Xh ago"
 ```
 
 ### Features
-- Relative time display (mins/hrs/days ago vs absolute dates)
-- Source indicators (API, Manual, Cached, Default, Stored)
+- Two-line display separating source and sync time
+- Absolute timestamp with relative age (days + hours)
+- Source indicators (API, Cached, Manual, Default, Stored)
 - Auto-updates when prices change
 - Uses existing spotHistory data structure
 

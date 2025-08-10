@@ -75,41 +75,54 @@ const monitorPerformance = (fn, name, ...args) => {
 };
 
 /**
- * Gets the most recent timestamp for a specific metal from spot history
+ * Builds two-line HTML showing source and last sync info for a metal
  *
  * @param {string} metalName - Metal name ('Silver', 'Gold', 'Platinum', 'Palladium')
- * @returns {string|null} Formatted timestamp or null if no data
+ * @returns {string} HTML string with source line and time line
  */
 const getLastUpdateTime = (metalName) => {
-  if (!spotHistory || spotHistory.length === 0) return null;
+  if (!spotHistory || spotHistory.length === 0) return "Default<br>Default";
 
   // Find the most recent entry for this metal
-  const metalEntries = spotHistory.filter(
-    (entry) => entry.metal === metalName && entry.source === "api",
-  );
-  if (metalEntries.length === 0) return null;
+  const metalEntries = spotHistory.filter((entry) => entry.metal === metalName);
+  if (metalEntries.length === 0) return "Default<br>Default";
 
   const latestEntry = metalEntries[metalEntries.length - 1];
   const timestamp = new Date(latestEntry.timestamp);
 
-  const timeText = timestamp.toLocaleString();
+  const dateText = `${timestamp.getFullYear()}-${pad2(
+    timestamp.getMonth() + 1,
+  )}-${pad2(timestamp.getDate())}`;
+  const timeText = `${pad2(timestamp.getHours())}:${pad2(
+    timestamp.getMinutes(),
+  )}:${pad2(timestamp.getSeconds())}`;
+  const diffMs = Date.now() - timestamp.getTime();
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  const diffHours = Math.floor((diffMs / (1000 * 60 * 60)) % 24);
 
-  let sourceText;
+  let sourceLine;
+  let timeLine;
+
   if (latestEntry.source === "api") {
-    sourceText = latestEntry.provider || "API";
+    sourceLine = latestEntry.provider || "API";
+    timeLine = `Last sync ${dateText} ${timeText} - ${diffDays}d ${diffHours}h ago`;
   } else if (latestEntry.source === "cached") {
-    sourceText = latestEntry.provider
+    sourceLine = latestEntry.provider
       ? `${latestEntry.provider} (cached)`
       : "Cached";
+    timeLine = `Last sync ${dateText} ${timeText} - ${diffDays}d ${diffHours}h ago`;
   } else if (latestEntry.source === "manual") {
-    sourceText = "Manual";
+    sourceLine = "Manual";
+    timeLine = "Manual";
   } else if (latestEntry.source === "default") {
-    sourceText = "Default";
+    sourceLine = "Default";
+    timeLine = "Default";
   } else {
-    sourceText = "Stored";
+    sourceLine = "Stored";
+    timeLine = `Last sync ${dateText} ${timeText} - ${diffDays}d ${diffHours}h ago`;
   }
 
-  return `${sourceText} - ${timeText}`;
+  return `${sourceLine}<br>${timeLine}`;
 };
 
 // =============================================================================
