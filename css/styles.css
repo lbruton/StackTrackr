@@ -1057,6 +1057,16 @@ input[type="submit"] {
   background-color: var(--primary-hover);
 }
 
+#filesModal .modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing);
+}
+
+#filesModal .settings-section {
+  margin-top: 0;
+}
+
 /* Cloud Sync modal layout */
 #cloudSyncModal .modal-content {
   max-width: 400px;
