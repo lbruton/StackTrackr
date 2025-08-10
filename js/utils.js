@@ -711,8 +711,10 @@ const createStoragePieChart = (reportData) => {
     datasets: [{
       data: reportData.items.map(item => item.size),
       backgroundColor: colors.slice(0, reportData.items.length),
-      borderColor: isDark ? '#343a40' : '#ffffff',
-      borderWidth: 2
+      borderColor: isDark ? '#404040' : '#ffffff',
+      borderWidth: 3,
+      hoverBorderWidth: 4,
+      hoverOffset: 8
     }]
   };
   
@@ -721,38 +723,27 @@ const createStoragePieChart = (reportData) => {
     maintainAspectRatio: false,
     plugins: {
       legend: {
-        position: 'bottom',
-        labels: {
-          color: isDark ? '#ffffff' : '#333333',
-          font: { size: 12 },
-          generateLabels: (chart) => {
-            const data = chart.data;
-            return data.labels.map((label, index) => ({
-              text: `${label} (${reportData.items[index].size.toFixed(1)} KB)`,
-              fillStyle: data.datasets[0].backgroundColor[index],
-              strokeStyle: data.datasets[0].borderColor,
-              lineWidth: data.datasets[0].borderWidth,
-              index: index
-            }));
-          }
-        },
-        onClick: (e, legendItem) => {
-          showStorageItemDetail(reportData.items[legendItem.index]);
-        }
+        display: false // We'll create our own custom legend
       },
       tooltip: {
-        backgroundColor: isDark ? '#343a40' : '#ffffff',
-        titleColor: isDark ? '#ffffff' : '#000000',
-        bodyColor: isDark ? '#ffffff' : '#000000',
+        backgroundColor: isDark ? '#2d2d2d' : '#ffffff',
+        titleColor: isDark ? '#ffffff' : '#333333',
+        bodyColor: isDark ? '#ffffff' : '#333333',
         borderColor: isDark ? '#6c757d' : '#dee2e6',
         borderWidth: 1,
+        cornerRadius: 8,
+        displayColors: false,
         callbacks: {
+          title: (context) => {
+            return getStorageItemDisplayName(reportData.items[context[0].dataIndex].key);
+          },
           label: (context) => {
             const item = reportData.items[context.dataIndex];
             return [
-              `${context.label}: ${item.size.toFixed(2)} KB`,
-              `${item.percentage.toFixed(1)}% of total`,
-              `${item.recordCount} records`
+              `Size: ${item.size.toFixed(2)} KB`,
+              `Percentage: ${item.percentage.toFixed(1)}%`,
+              `Records: ${item.recordCount}`,
+              `Type: ${item.type}`
             ];
           }
         }
@@ -763,13 +754,64 @@ const createStoragePieChart = (reportData) => {
         const index = elements[0].index;
         showStorageItemDetail(reportData.items[index]);
       }
+    },
+    animation: {
+      animateRotate: true,
+      animateScale: true,
+      duration: 1000,
+      easing: 'easeOutQuart'
+    },
+    interaction: {
+      intersect: false
     }
   };
   
   window.storageChart = new Chart(ctx, {
-    type: 'pie',
+    type: 'doughnut', // Changed from 'pie' to 'doughnut' for better visual appeal
     data: data,
     options: options
+  });
+  
+  // Create custom legend
+  createCustomLegend(reportData, colors, isDark);
+};
+
+/**
+ * Creates a custom legend for the storage chart
+ */
+const createCustomLegend = (reportData, colors, isDark) => {
+  const legendContainer = document.querySelector('#storageItemsList');
+  if (!legendContainer) return;
+  
+  // Clear existing content
+  legendContainer.innerHTML = '';
+  
+  // Add instruction text
+  const instruction = document.createElement('div');
+  instruction.className = 'legend-instruction';
+  instruction.textContent = 'Click items below or chart segments to view details';
+  legendContainer.appendChild(instruction);
+  
+  // Create legend items
+  reportData.items.forEach((item, index) => {
+    const legendItem = document.createElement('div');
+    legendItem.className = 'storage-legend-item';
+    legendItem.onclick = () => showStorageItemDetail(item);
+    
+    legendItem.innerHTML = `
+      <div class="legend-color-bar" style="background-color: ${colors[index % colors.length]}"></div>
+      <div class="legend-content">
+        <div class="legend-name">${getStorageItemDisplayName(item.key)}</div>
+        <div class="legend-stats">
+          <span class="legend-size">${item.size.toFixed(1)} KB</span>
+          <span class="legend-percentage">${item.percentage.toFixed(1)}%</span>
+          <span class="legend-records">${item.recordCount} records</span>
+        </div>
+      </div>
+      <div class="legend-arrow">›</div>
+    `;
+    
+    legendContainer.appendChild(legendItem);
   });
 };
 
@@ -779,19 +821,8 @@ const createStoragePieChart = (reportData) => {
 const populateStorageItemsList = (reportData, modal) => {
   const container = modal.querySelector('#storageItemsList');
   
-  container.innerHTML = reportData.items.map((item, index) => `
-    <div class="storage-item-entry" onclick="showStorageItemDetail(${JSON.stringify(item).replace(/"/g, '&quot;')})">
-      <div class="item-info">
-        <span class="item-name">${getStorageItemDisplayName(item.key)}</span>
-        <span class="item-description">${getStorageItemDescription(item.key)}</span>
-      </div>
-      <div class="item-stats">
-        <span class="item-size">${item.size.toFixed(2)} KB</span>
-        <span class="item-percentage">${item.percentage.toFixed(1)}%</span>
-        <span class="item-records">${item.recordCount} records</span>
-      </div>
-    </div>
-  `).join('');
+  // This will be populated by createCustomLegend when the chart is created
+  container.innerHTML = '<div class="loading-legend">Creating interactive chart...</div>';
 };
 
 /**
@@ -1425,18 +1456,22 @@ const getStorageReportCSS = () => {
         background: var(--bg-primary);
         border: 1px solid var(--border);
         border-radius: 0.5rem;
-        padding: 1rem;
+        padding: 1.5rem;
         text-align: center;
+        position: relative;
     }
     
     .chart-container h3 {
         margin-bottom: 1rem;
         color: var(--text-primary);
+        font-size: 1.1rem;
+        font-weight: 600;
     }
     
     .chart-container canvas {
         max-width: 100%;
-        height: 300px !important;
+        height: 280px !important;
+        cursor: pointer;
     }
     
     .storage-items-table {
@@ -1449,69 +1484,118 @@ const getStorageReportCSS = () => {
     .storage-items-table h3 {
         margin-bottom: 1rem;
         color: var(--text-primary);
+        font-size: 1.1rem;
+        font-weight: 600;
     }
     
     .storage-items-list {
-        max-height: 350px;
+        max-height: 320px;
         overflow-y: auto;
+        scrollbar-width: thin;
+        scrollbar-color: var(--primary) var(--bg-secondary);
     }
     
-    .storage-item-entry {
+    .storage-items-list::-webkit-scrollbar {
+        width: 8px;
+    }
+    
+    .storage-items-list::-webkit-scrollbar-track {
+        background: var(--bg-secondary);
+        border-radius: 4px;
+    }
+    
+    .storage-items-list::-webkit-scrollbar-thumb {
+        background: var(--primary);
+        border-radius: 4px;
+    }
+    
+    .legend-instruction {
+        font-size: 0.9rem;
+        color: var(--text-secondary);
+        text-align: center;
+        margin-bottom: 1rem;
+        font-style: italic;
+    }
+    
+    .storage-legend-item {
         display: flex;
-        justify-content: space-between;
         align-items: center;
         padding: 0.75rem;
-        border: 1px solid var(--border);
-        border-radius: 0.25rem;
+        border-radius: 0.5rem;
         margin-bottom: 0.5rem;
         cursor: pointer;
         transition: all 0.2s ease;
+        border: 1px solid transparent;
     }
     
-    .storage-item-entry:hover {
+    .storage-legend-item:hover {
         background: var(--bg-secondary);
-        transform: translateX(5px);
+        border-color: var(--border);
+        transform: translateX(3px);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
     
-    .item-info {
+    .legend-color-bar {
+        width: 4px;
+        height: 32px;
+        border-radius: 2px;
+        margin-right: 0.75rem;
+        flex-shrink: 0;
+    }
+    
+    .legend-content {
         flex: 1;
+        min-width: 0;
     }
     
-    .item-name {
-        display: block;
+    .legend-name {
         font-weight: 600;
-        color: var(--primary);
+        color: var(--text-primary);
         margin-bottom: 0.25rem;
+        font-size: 0.9rem;
     }
     
-    .item-description {
-        font-size: 0.875rem;
+    .legend-stats {
+        display: flex;
+        gap: 0.75rem;
+        font-size: 0.8rem;
         color: var(--text-secondary);
     }
     
-    .item-stats {
-        display: flex;
-        flex-direction: column;
-        align-items: flex-end;
-        gap: 0.25rem;
-    }
-    
-    .item-size {
+    .legend-size {
         font-weight: 600;
         color: var(--success);
     }
     
-    .item-percentage {
+    .legend-percentage {
         background: var(--primary);
         color: white;
-        padding: 0.125rem 0.5rem;
-        border-radius: 1rem;
-        font-size: 0.75rem;
+        padding: 0.1rem 0.4rem;
+        border-radius: 0.75rem;
+        font-weight: 500;
     }
     
-    .item-records {
-        font-size: 0.75rem;
+    .legend-records {
         color: var(--text-secondary);
+    }
+    
+    .legend-arrow {
+        font-size: 1.2rem;
+        color: var(--text-secondary);
+        margin-left: 0.5rem;
+        transition: transform 0.2s ease;
+    }
+    
+    .storage-legend-item:hover .legend-arrow {
+        transform: translateX(3px);
+        color: var(--primary);
+    }
+    
+    .loading-legend {
+        text-align: center;
+        color: var(--text-secondary);
+        font-style: italic;
+        padding: 2rem;
     }
     
     .storage-report-actions {
