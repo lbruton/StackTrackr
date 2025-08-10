@@ -71,16 +71,22 @@
         <p class="app-subtitle">The open source precious metals tracking tool.</p>
       </div>
       <div style="margin-left: auto; display: flex; gap: 0.5rem">
-        <button
-          class="btn"
-          id="settingsBtn"
-          title="Settings"
-          aria-label="Settings"
-        >
-          Settings ⚙️
-        </button>
         <button class="btn" id="aboutBtn" title="About" aria-label="About">
           About 📖
+        </button>
+        <button class="btn" id="apiBtn" title="API" aria-label="API">
+          API 🔌
+        </button>
+        <button
+          class="btn"
+          id="appearanceBtn"
+          title="Appearance"
+          aria-label="Appearance"
+        >
+          Appearance 🎨
+        </button>
+        <button class="btn" id="filesBtn" title="Files" aria-label="Files">
+          Files 📁
         </button>
       </div>
     </div>
@@ -1287,20 +1293,16 @@
       </div>
     </div>
     <!-- =============================================================================
-       API CONFIGURATION MODAL
-       
-       Modal for configuring API providers and keys for live spot price data.
-       Includes provider selection, API key input, and status display.
-       Data is stored in localStorage with 24-hour caching system.
        ============================================================================= -->
-    <div class="modal" id="settingsModal" style="display: none">
+
+    <div class="modal" id="appearanceModal" style="display: none">
       <div class="modal-content">
         <div class="modal-header">
-          <h2>Settings</h2>
+          <h2>Appearance</h2>
           <button
             aria-label="Close modal"
             class="modal-close"
-            id="settingsCloseBtn"
+            id="appearanceCloseBtn"
           >
             ×
           </button>
@@ -1318,7 +1320,19 @@
               <div class="theme-display" id="themeDisplay"></div>
             </div>
           </div>
+        </div>
+      </div>
+    </div>
 
+    <div class="modal" id="apiModal" style="display: none">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>API</h2>
+          <button aria-label="Close modal" class="modal-close" id="apiCloseBtn">
+            ×
+          </button>
+        </div>
+        <div class="modal-body">
           <div class="settings-section">
             <h3 style="margin-bottom: 1rem">API Configuration</h3>
             <p class="settings-subtext">Manage API cache, history, and providers.</p>
@@ -1351,7 +1365,19 @@
               </button>
             </div>
           </div>
+        </div>
+      </div>
+    </div>
 
+    <div class="modal" id="filesModal" style="display: none">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Files</h2>
+          <button aria-label="Close modal" class="modal-close" id="filesCloseBtn">
+            ×
+          </button>
+        </div>
+        <div class="modal-body">
           <div class="settings-section">
             <h3>Files</h3>
             <p class="settings-subtext">Import or export your data files.</p>
