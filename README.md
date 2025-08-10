@@ -169,6 +169,7 @@ Each inventory item includes:
 │   ├── ROADMAP.md                      # Planned features and subtasks
 │   ├── STATUS.md                       # Project status and features overview
 │   ├── STRUCTURE.md                    # Documentation of folder and file organization
+│   ├── functionstable.md               # Function reference table
 │   └── VERSIONING.md                   # Version management notes
 ├── js/
 │   ├── api.js
@@ -205,6 +206,7 @@ Each inventory item includes:
 - **[docs/CHANGELOG.md](docs/CHANGELOG.md)** - Version history and features.
 - **[docs/STATUS.md](docs/STATUS.md)** - Current project status.
 - **[docs/STRUCTURE.md](docs/STRUCTURE.md)** - Project organization.
+- **[docs/functionstable.md](docs/functionstable.md)** - Function reference table.
 - **[docs/VERSIONING.md](docs/VERSIONING.md)** - Version management.
 
 ## Code Quality

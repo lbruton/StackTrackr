@@ -229,6 +229,11 @@ section {
   margin-left: var(--spacing-sm);
 }
 
+.storage-line progress {
+  margin-left: var(--spacing-sm);
+  vertical-align: middle;
+}
+
 section:hover {
   box-shadow: var(--shadow-lg);
 }
