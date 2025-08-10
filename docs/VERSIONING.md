@@ -17,7 +17,7 @@ The StackTrackr now uses a dynamic version management system that automatically 
 
 ### Utility Functions
 Two helper functions are available in `js/utils.js`:
-- `getVersionString(prefix)`: Returns formatted version (e.g., "v3.0.1")
+- `getVersionString(prefix)`: Returns formatted version (e.g., "v3.03.02a")
 - `getAppTitle(baseTitle)`: Returns full app title with version
 
 ## Updating the Version
@@ -57,23 +57,26 @@ appHeader.textContent = getAppTitle();
 - **Future-proof** - any new features can easily access current version
 
 ## Version Format
-StackTrackr versions follow the `BRANCH.RELEASE.PATCH.state` pattern:
+StackTrackr versions follow the `BRANCH.RELEASE.PATCH.state` pattern where the
+state code is appended directly to the patch number:
 
-- **BRANCH** – Major development branch
-- **RELEASE** – Two-digit feature release number
-- **PATCH** – Two-digit patch number for fixes
-- **state** – Optional pre-release code
-  - `a` = alpha
-  - `b` = beta
-  - `rc` = release candidate
+- **BRANCH** – Major development branch (e.g., `3`)
+- **RELEASE** – Two-digit feature release number (e.g., `03`)
+- **PATCH** – Two-digit patch number for fixes (e.g., `02`)
+- **state** – Optional pre-release code appended without a dot:
+  - `a` = alpha (unstable, internal testing)
+  - `b` = beta (feature complete, broader testing)
+  - `rc` = release candidate (final verification)
   - *(omit for stable builds)*
 
 Example: `3.03.02a` → branch 3, release 03, patch 02, alpha build
 
 ### Branching Policy
-- Each major **BRANCH** is developed on its own long-lived branch
-- New **RELEASE** and **PATCH** updates occur within that branch
-- Stable releases drop the state code when merged into the main line
+- Each major **BRANCH** corresponds to a long-lived Git branch
+- New **RELEASE** and **PATCH** iterations occur within that branch
+- Pre-release builds (`a`, `b`, `rc`) remain on that branch until stable
+- Stable releases drop the state code and merge back into `main`
+- Release branches are named `release_v<version>` when preparing a release
 
 ## Example Usage in Code
 ```javascript

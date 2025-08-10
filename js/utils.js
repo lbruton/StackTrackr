@@ -14,7 +14,7 @@ const debugLog = (...args) => {
  * Returns formatted version string
  *
  * @param {string} [prefix='v'] - Prefix to add before version
- * @returns {string} Formatted version string (e.g., "v3.0.1")
+ * @returns {string} Formatted version string (e.g., "v3.03.02a")
  */
 const getVersionString = (prefix = "v") => `${prefix}${APP_VERSION}`;
 
