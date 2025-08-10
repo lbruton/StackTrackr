@@ -512,463 +512,101 @@ const updateStorageStats = () => {
 };
 
 /**
- * Downloads a comprehensive HTML storage report with breakdown and print options
+ * Opens modal with options to view or download the storage report
  */
 const downloadStorageReport = () => {
-  showStorageReportModal();
+  showStorageReportOptionsModal();
 };
 
 /**
- * Shows the storage report modal with options to view/download HTML or enhanced report
+ * Displays the storage report options modal
  */
-const showStorageReportModal = () => {
-  // Create modal if it doesn't exist
-  let modal = document.getElementById('storageReportModal');
+const showStorageReportOptionsModal = () => {
+  let modal = document.getElementById('storageReportOptionsModal');
   if (!modal) {
-    modal = createStorageReportModal();
+    modal = document.createElement('div');
+    modal.id = 'storageReportOptionsModal';
+    modal.className = 'modal';
+    modal.innerHTML = `
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Storage Report</h2>
+          <button aria-label="Close" class="modal-close" id="storageOptionsCloseBtn">×</button>
+        </div>
+        <div class="modal-body">
+          <p>Select how you would like to access your storage report.</p>
+          <div class="btn-group">
+            <button class="btn" id="viewStorageReportBtn">View Report</button>
+            <button class="btn secondary" id="downloadStorageZipBtn">Download ZIP</button>
+          </div>
+        </div>
+      </div>
+    `;
     document.body.appendChild(modal);
+
+    modal.querySelector('#storageOptionsCloseBtn').addEventListener('click', closeStorageReportOptionsModal);
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) closeStorageReportOptionsModal();
+    });
+    modal.querySelector('#viewStorageReportBtn').addEventListener('click', () => {
+      closeStorageReportOptionsModal();
+      viewStorageReport();
+    });
+    modal.querySelector('#downloadStorageZipBtn').addEventListener('click', async () => {
+      closeStorageReportOptionsModal();
+      try {
+        const zipContent = await generateStorageReportTar();
+        const timestamp = new Date().toISOString().split('T')[0];
+        downloadFile(`storage-report-${timestamp}.zip`, zipContent, 'application/zip');
+      } catch (error) {
+        console.error('Error creating ZIP file:', error);
+        alert('Error creating compressed report. Please try again.');
+      }
+    });
   }
-  
+
   modal.style.display = 'flex';
   document.body.style.overflow = 'hidden';
 };
 
 /**
- * Creates the enhanced storage report modal with theme support and pie chart
+ * Closes the storage report options modal
  */
-const createStorageReportModal = () => {
-  const modal = document.createElement('div');
-  modal.id = 'storageReportModal';
-  modal.className = 'modal';
-  modal.style.display = 'none';
-  
-  modal.innerHTML = `
-    <div class="modal-content storage-report-modal-content">
-      <div class="modal-header">
-        <h2>📊 Storage Report</h2>
-        <div class="storage-report-controls">
-          <button class="btn theme-btn" id="storageThemeToggle" title="Toggle theme">🌓</button>
-          <button aria-label="Close modal" class="modal-close" id="storageReportCloseBtn">×</button>
-        </div>
-      </div>
-      <div class="modal-body storage-report-body">
-        <div class="storage-report-header">
-          <div class="storage-summary-stats">
-            <div class="stat-card">
-              <span class="stat-label">Total Used</span>
-              <span class="stat-value" id="totalStorageUsed">0 KB</span>
-            </div>
-            <div class="stat-card">
-              <span class="stat-label">Items</span>
-              <span class="stat-value" id="totalStorageItems">0</span>
-            </div>
-            <div class="stat-card">
-              <span class="stat-label">Largest</span>
-              <span class="stat-value" id="largestStorageItem">-</span>
-            </div>
-          </div>
-        </div>
-        
-        <div class="storage-visualization-section">
-          <div class="chart-container">
-            <h3>Storage Distribution</h3>
-            <canvas id="storageChart" width="300" height="300"></canvas>
-          </div>
-          
-          <div class="storage-items-table">
-            <h3>Storage Items</h3>
-            <div class="storage-items-list" id="storageItemsList">
-              <!-- Populated by JS -->
-            </div>
-          </div>
-        </div>
-        
-        <div class="storage-report-actions">
-          <button class="btn" id="downloadFullReportBtn">💾 Download HTML Report</button>
-          <button class="btn secondary" id="downloadCompressedBtn">📦 Download ZIP</button>
-          <a href="#" class="btn success" onclick="document.getElementById('storageReportModal').style.display='none'; document.body.style.overflow='';">🏠 Back to App</a>
-        </div>
-      </div>
-    </div>
-    
-    <!-- Detail modals for each storage item -->
-    <div id="storageDetailModal" class="modal storage-detail-modal" style="display: none;">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h3 id="detailModalTitle">Item Details</h3>
-          <button aria-label="Close" class="modal-close" onclick="closeStorageDetailModal();">×</button>
-        </div>
-        <div class="modal-body">
-          <div id="detailModalContent"></div>
-        </div>
-      </div>
-    </div>
-  `;
-  
-  // Set up event listeners
-  setupStorageReportEventListeners(modal);
-  
-  // Initialize report data
-  populateStorageReport(modal);
-  
-  return modal;
-};
-
-/**
- * Sets up event listeners for the storage report modal
- */
-const setupStorageReportEventListeners = (modal) => {
-  const closeBtn = modal.querySelector('#storageReportCloseBtn');
-  const themeToggle = modal.querySelector('#storageThemeToggle');
-  const downloadFullBtn = modal.querySelector('#downloadFullReportBtn');
-  const downloadCompressedBtn = modal.querySelector('#downloadCompressedBtn');
-  
-  // Close modal
-  closeBtn.addEventListener('click', () => {
-    closeStorageReportModal();
-  });
-  
-  modal.addEventListener('click', (e) => {
-    if (e.target === modal) {
-      closeStorageReportModal();
-    }
-  });
-  
-  // Theme toggle for the report
-  themeToggle.addEventListener('click', () => {
-    toggleStorageReportTheme(modal);
-  });
-  
-  // Download actions
-  downloadFullBtn.addEventListener('click', () => {
-    const htmlContent = generateStorageReportHTML();
-    const timestamp = new Date().toISOString().split('T')[0];
-    downloadFile(`storage-report-${timestamp}.html`, htmlContent, 'text/html');
-  });
-  
-  downloadCompressedBtn.addEventListener('click', async () => {
-    try {
-      const zipContent = await generateStorageReportTar();
-      const timestamp = new Date().toISOString().split('T')[0];
-      downloadFile(`storage-report-${timestamp}.zip`, zipContent, 'application/zip');
-    } catch (error) {
-      console.error('Error creating ZIP file:', error);
-      alert('Error creating compressed report. Please try the HTML option instead.');
-    }
-  });
-};
-
-/**
- * Populates the storage report with current data and creates pie chart
- */
-const populateStorageReport = (modal) => {
-  const reportData = analyzeStorageData();
-  
-  // Update summary stats
-  modal.querySelector('#totalStorageUsed').textContent = `${reportData.totalSize.toFixed(2)} KB`;
-  modal.querySelector('#totalStorageItems').textContent = reportData.items.length;
-  modal.querySelector('#largestStorageItem').textContent = 
-    reportData.largestItem ? `${getStorageItemDisplayName(reportData.largestItem.key)}` : 'None';
-  
-  // Create pie chart
-  createStoragePieChart(reportData);
-  
-  // Populate items list
-  populateStorageItemsList(reportData, modal);
-  
-  // Apply current theme
-  const currentTheme = document.documentElement.getAttribute('data-theme');
-  if (currentTheme === 'dark') {
-    modal.classList.add('storage-dark-theme');
-  }
-};
-
-/**
- * Creates an interactive pie chart showing storage distribution
- */
-const createStoragePieChart = (reportData) => {
-  const canvas = document.getElementById('storageChart');
-  if (!canvas || typeof Chart === 'undefined') {
-    console.warn('Chart.js not available or canvas not found');
-    return;
-  }
-  
-  // Destroy existing chart if it exists
-  if (window.storageChart) {
-    window.storageChart.destroy();
-  }
-  
-  const ctx = canvas.getContext('2d');
-  const isDark = document.querySelector('#storageReportModal')?.classList.contains('storage-dark-theme');
-  
-  const colors = [
-    '#007bff', '#28a745', '#ffc107', '#dc3545', '#6f42c1',
-    '#fd7e14', '#20c997', '#e83e8c', '#6c757d', '#17a2b8'
-  ];
-  
-  const data = {
-    labels: reportData.items.map(item => getStorageItemDisplayName(item.key)),
-    datasets: [{
-      data: reportData.items.map(item => item.size),
-      backgroundColor: colors.slice(0, reportData.items.length),
-      borderColor: isDark ? '#404040' : '#ffffff',
-      borderWidth: 3,
-      hoverBorderWidth: 4,
-      hoverOffset: 8
-    }]
-  };
-  
-  const options = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        display: false // We'll create our own custom legend
-      },
-      tooltip: {
-        backgroundColor: isDark ? '#2d2d2d' : '#ffffff',
-        titleColor: isDark ? '#ffffff' : '#333333',
-        bodyColor: isDark ? '#ffffff' : '#333333',
-        borderColor: isDark ? '#6c757d' : '#dee2e6',
-        borderWidth: 1,
-        cornerRadius: 8,
-        displayColors: false,
-        callbacks: {
-          title: (context) => {
-            return getStorageItemDisplayName(reportData.items[context[0].dataIndex].key);
-          },
-          label: (context) => {
-            const item = reportData.items[context.dataIndex];
-            return [
-              `Size: ${item.size.toFixed(2)} KB`,
-              `Percentage: ${item.percentage.toFixed(1)}%`,
-              `Records: ${item.recordCount}`,
-              `Type: ${item.type}`
-            ];
-          }
-        }
-      }
-    },
-    onClick: (event, elements) => {
-      if (elements.length > 0) {
-        const index = elements[0].index;
-        showStorageItemDetail(reportData.items[index]);
-      }
-    },
-    animation: {
-      animateRotate: true,
-      animateScale: true,
-      duration: 1000,
-      easing: 'easeOutQuart'
-    },
-    interaction: {
-      intersect: false
-    }
-  };
-  
-  window.storageChart = new Chart(ctx, {
-    type: 'doughnut', // Changed from 'pie' to 'doughnut' for better visual appeal
-    data: data,
-    options: options
-  });
-  
-  // Create custom legend
-  createCustomLegend(reportData, colors, isDark);
-};
-
-/**
- * Creates a custom legend for the storage chart
- */
-const createCustomLegend = (reportData, colors, isDark) => {
-  const legendContainer = document.querySelector('#storageItemsList');
-  if (!legendContainer) return;
-  
-  // Clear existing content
-  legendContainer.innerHTML = '';
-  
-  // Add instruction text
-  const instruction = document.createElement('div');
-  instruction.className = 'legend-instruction';
-  instruction.textContent = 'Click items below or chart segments to view details';
-  legendContainer.appendChild(instruction);
-  
-  // Create legend items
-  reportData.items.forEach((item, index) => {
-    const legendItem = document.createElement('div');
-    legendItem.className = 'storage-legend-item';
-    legendItem.onclick = () => showStorageItemDetail(item);
-    
-    legendItem.innerHTML = `
-      <div class="legend-color-bar" style="background-color: ${colors[index % colors.length]}"></div>
-      <div class="legend-content">
-        <div class="legend-name">${getStorageItemDisplayName(item.key)}</div>
-        <div class="legend-stats">
-          <span class="legend-size">${item.size.toFixed(1)} KB</span>
-          <span class="legend-percentage">${item.percentage.toFixed(1)}%</span>
-          <span class="legend-records">${item.recordCount} records</span>
-        </div>
-      </div>
-      <div class="legend-arrow">›</div>
-    `;
-    
-    legendContainer.appendChild(legendItem);
-  });
-};
-
-/**
- * Populates the storage items list with clickable entries
- */
-const populateStorageItemsList = (reportData, modal) => {
-  const container = modal.querySelector('#storageItemsList');
-  
-  // This will be populated by createCustomLegend when the chart is created
-  container.innerHTML = '<div class="loading-legend">Creating interactive chart...</div>';
-};
-
-/**
- * Shows detailed information for a storage item
- */
-const showStorageItemDetail = (item) => {
-  const detailModal = document.getElementById('storageDetailModal');
-  const title = document.getElementById('detailModalTitle');
-  const content = document.getElementById('detailModalContent');
-  
-  if (!detailModal || !title || !content) return;
-  
-  title.textContent = `${getStorageItemDisplayName(item.key)} Details`;
-  content.innerHTML = generateDetailModalContent(item);
-  
-  // Apply theme to detail modal
-  const parentModal = document.getElementById('storageReportModal');
-  if (parentModal?.classList.contains('storage-dark-theme')) {
-    detailModal.classList.add('storage-dark-theme');
-  } else {
-    detailModal.classList.remove('storage-dark-theme');
-  }
-  
-  detailModal.style.display = 'flex';
-};
-
-/**
- * Generates content for the detail modal
- */
-const generateDetailModalContent = (item) => {
-  let content = `
-    <div class="detail-stats">
-      <div class="detail-stat">
-        <span class="stat-label">Size:</span>
-        <span class="stat-value">${item.size.toFixed(2)} KB</span>
-      </div>
-      <div class="detail-stat">
-        <span class="stat-label">Type:</span>
-        <span class="stat-value">${item.type}</span>
-      </div>
-      <div class="detail-stat">
-        <span class="stat-label">Records:</span>
-        <span class="stat-value">${item.recordCount}</span>
-      </div>
-      <div class="detail-stat">
-        <span class="stat-label">Percentage:</span>
-        <span class="stat-value">${item.percentage.toFixed(1)}%</span>
-      </div>
-    </div>
-  `;
-  
-  // Add data preview based on type
-  if (item.parsedData && Array.isArray(item.parsedData) && item.parsedData.length > 0) {
-    if (item.key === 'precious-metals-inventory') {
-      content += generateInventoryTable(item.parsedData);
-    } else {
-      content += `<div class="data-preview"><h4>Sample Data:</h4><pre>${JSON.stringify(item.parsedData.slice(0, 3), null, 2)}${item.parsedData.length > 3 ? '\n...and ' + (item.parsedData.length - 3) + ' more items' : ''}</pre></div>`;
-    }
-  } else if (item.parsedData) {
-    content += `<div class="data-preview"><h4>Data:</h4><pre>${JSON.stringify(item.parsedData, null, 2)}</pre></div>`;
-  } else {
-    content += `<div class="data-preview"><h4>Raw Data:</h4><pre>${item.value}</pre></div>`;
-  }
-  
-  return content;
-};
-
-/**
- * Generates a table view for inventory data
- */
-const generateInventoryTable = (data) => {
-  if (!data || data.length === 0) return '<p>No inventory data found</p>';
-  
-  const headers = Object.keys(data[0]);
-  const displayLimit = 20;
-  
-  return `
-    <div class="inventory-table-container">
-      <h4>Inventory Data (showing first ${Math.min(displayLimit, data.length)} of ${data.length} items)</h4>
-      <table class="inventory-detail-table">
-        <thead>
-          <tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr>
-        </thead>
-        <tbody>
-          ${data.slice(0, displayLimit).map(record => 
-            `<tr>${headers.map(h => `<td>${sanitizeHtml(String(record[h] || ''))}</td>`).join('')}</tr>`
-          ).join('')}
-        </tbody>
-      </table>
-    </div>
-  `;
-};
-
-/**
- * Closes the storage detail modal
- */
-const closeStorageDetailModal = () => {
-  const detailModal = document.getElementById('storageDetailModal');
-  if (detailModal) {
-    detailModal.style.display = 'none';
-  }
-};
-
-/**
- * Toggles the theme for the storage report modal
- */
-const toggleStorageReportTheme = (modal) => {
-  const isDark = modal.classList.contains('storage-dark-theme');
-  
-  if (isDark) {
-    modal.classList.remove('storage-dark-theme');
-  } else {
-    modal.classList.add('storage-dark-theme');
-  }
-  
-  // Recreate chart with new theme
-  const reportData = analyzeStorageData();
-  createStoragePieChart(reportData);
-};
-
-/**
- * Closes the storage report modal
- */
-const closeStorageReportModal = () => {
-  const modal = document.getElementById('storageReportModal');
+const closeStorageReportOptionsModal = () => {
+  const modal = document.getElementById('storageReportOptionsModal');
   if (modal) {
     modal.style.display = 'none';
     document.body.style.overflow = '';
   }
-  
-  // Destroy chart to free memory
-  if (window.storageChart) {
-    window.storageChart.destroy();
-    window.storageChart = null;
+};
+
+/**
+ * Opens a centered popup with the HTML storage report
+ */
+const viewStorageReport = () => {
+  const htmlContent = generateStorageReportHTML();
+  const width = 1000;
+  const height = 700;
+  const left = window.screenX + (window.outerWidth - width) / 2;
+  const top = window.screenY + (window.outerHeight - height) / 2;
+  const popup = window.open('', 'StackTrackr Storage Report', `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes`);
+  if (popup) {
+    popup.document.write(htmlContent);
+    popup.document.close();
+  } else {
+    alert('Please allow popups to view the storage report.');
   }
 };
 
 // Make functions globally available
-window.showStorageItemDetail = showStorageItemDetail;
-window.closeStorageDetailModal = closeStorageDetailModal;
 
 /**
  * Generates comprehensive HTML storage report with theme support
  */
 const generateStorageReportHTML = () => {
-  const reportData = analyzeStorageData();
+  const fullData = analyzeStorageData();
+  const topItems = fullData.items.slice(0, 5);
+  const reportData = { ...fullData, items: topItems, largestItem: topItems[0] || null };
   const timestamp = new Date().toLocaleString();
   const currentTheme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
   
@@ -990,7 +628,7 @@ const generateStorageReportHTML = () => {
                 <h1>📊 StackTrackr Storage Report</h1>
                 <div class="header-controls">
                     <button onclick="toggleTheme()" class="theme-toggle-btn">🌓</button>
-                    <a href="#" onclick="window.close(); return false;" class="back-link">🏠 Back to App</a>
+                    <button onclick="window.close()" class="close-btn">✖</button>
                 </div>
             </div>
             <div class="report-meta">
@@ -1068,7 +706,6 @@ const generateStorageReportHTML = () => {
         <footer class="report-footer">
             <p>Generated by StackTrackr v${APP_VERSION} • ${new Date().getFullYear()}</p>
             <p>This report contains a snapshot of your local browser storage data.</p>
-            <p><a href="#" onclick="window.close(); return false;">🏠 Return to StackTrackr Application</a></p>
         </footer>
     </div>
     
@@ -1102,8 +739,7 @@ const generateStorageReportHTML = () => {
  */
 const getChartColor = (index) => {
   const colors = [
-    '#007bff', '#28a745', '#ffc107', '#dc3545', '#6f42c1',
-    '#fd7e14', '#20c997', '#e83e8c', '#6c757d', '#17a2b8'
+    '#2563eb', '#059669', '#d97706', '#dc2626', '#6b7280'
   ];
   return colors[index % colors.length];
 };
@@ -1328,28 +964,31 @@ const generateItemDataTable = (item) => {
 const getStorageReportCSS = () => {
   return `
     :root {
-        --primary: #007bff;
-        --success: #28a745;
-        --warning: #ffc107;
-        --danger: #dc3545;
-        --info: #17a2b8;
-        --light: #f8f9fa;
-        --dark: #343a40;
+        --primary: #2563eb;
+        --success: #059669;
+        --warning: #d97706;
+        --danger: #dc2626;
+        --info: #0ea5e9;
         --bg-primary: #ffffff;
-        --bg-secondary: #f8f9fa;
-        --text-primary: #333333;
-        --text-secondary: #666666;
-        --border: #dee2e6;
+        --bg-secondary: #f8fafc;
+        --text-primary: #1e293b;
+        --text-secondary: #64748b;
+        --border: #e2e8f0;
+        --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
     }
-    
+
     [data-theme="dark"] {
-        --bg-primary: #1a1a1a;
-        --bg-secondary: #2d2d2d;
-        --text-primary: #ffffff;
-        --text-secondary: #cccccc;
-        --border: #404040;
-        --light: #2d2d2d;
-        --dark: #f8f9fa;
+        --primary: #3b82f6;
+        --success: #10b981;
+        --warning: #f59e0b;
+        --danger: #ef4444;
+        --info: #38bdf8;
+        --bg-primary: #0f172a;
+        --bg-secondary: #1e293b;
+        --text-primary: #f8fafc;
+        --text-secondary: #cbd5e1;
+        --border: #334155;
+        --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
     }
     
     * {
@@ -1767,7 +1406,8 @@ const getStorageReportCSS = () => {
         gap: 1rem;
     }
     
-    .theme-toggle-btn {
+    .theme-toggle-btn,
+    .close-btn {
         background: none;
         border: 1px solid var(--border);
         padding: 0.5rem;
@@ -1776,8 +1416,9 @@ const getStorageReportCSS = () => {
         font-size: 1rem;
         transition: all 0.2s ease;
     }
-    
-    .theme-toggle-btn:hover {
+
+    .theme-toggle-btn:hover,
+    .close-btn:hover {
         background: var(--bg-secondary);
     }
     
@@ -1871,13 +1512,13 @@ const getStorageReportCSS = () => {
     
     .report-header {
         text-align: center;
-        border-bottom: 3px solid #007bff;
+        border-bottom: 3px solid var(--primary);
         padding-bottom: 1rem;
         margin-bottom: 2rem;
     }
     
     .report-header h1 {
-        color: #007bff;
+        color: var(--primary);
         font-size: 2.5rem;
         margin-bottom: 0.5rem;
     }
@@ -1886,7 +1527,7 @@ const getStorageReportCSS = () => {
         display: flex;
         justify-content: space-between;
         font-size: 0.9rem;
-        color: #666;
+        color: var(--text-secondary);
     }
     
     .print-controls {
@@ -1895,7 +1536,7 @@ const getStorageReportCSS = () => {
     }
     
     .print-btn {
-        background: #007bff;
+        background: var(--primary);
         color: white;
         border: none;
         padding: 0.75rem 1.5rem;
@@ -1906,7 +1547,8 @@ const getStorageReportCSS = () => {
     }
     
     .print-btn:hover {
-        background: #0056b3;
+        background: var(--primary);
+        opacity: 0.9;
     }
     
     .storage-summary {
@@ -1914,7 +1556,7 @@ const getStorageReportCSS = () => {
     }
     
     .storage-summary h2 {
-        color: #333;
+        color: var(--text-primary);
         margin-bottom: 1rem;
         font-size: 1.5rem;
     }
@@ -1927,10 +1569,10 @@ const getStorageReportCSS = () => {
     }
     
     .summary-item {
-        background: #f8f9fa;
+        background: var(--bg-secondary);
         padding: 1rem;
         border-radius: 0.5rem;
-        border-left: 4px solid #007bff;
+        border-left: 4px solid var(--primary);
         display: flex;
         justify-content: space-between;
         align-items: center;
@@ -1938,17 +1580,17 @@ const getStorageReportCSS = () => {
     
     .summary-label {
         font-weight: 600;
-        color: #666;
+        color: var(--text-secondary);
     }
     
     .summary-value {
         font-weight: 700;
-        color: #007bff;
+        color: var(--primary);
         font-size: 1.1rem;
     }
     
     .storage-breakdown h2 {
-        color: #333;
+        color: var(--text-primary);
         margin-bottom: 1rem;
         font-size: 1.5rem;
     }
@@ -1959,15 +1601,16 @@ const getStorageReportCSS = () => {
     }
     
     .storage-item {
-        border: 1px solid #dee2e6;
+        border: 1px solid var(--border);
         border-radius: 0.5rem;
         padding: 1rem;
-        background: white;
+        background: var(--bg-primary);
         transition: box-shadow 0.2s;
+        box-shadow: var(--shadow-sm);
     }
     
     .storage-item:hover {
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     }
     
     .item-header {
@@ -1979,7 +1622,7 @@ const getStorageReportCSS = () => {
     }
     
     .item-header h3 {
-        color: #007bff;
+        color: var(--primary);
         font-size: 1.2rem;
     }
     
@@ -1991,11 +1634,11 @@ const getStorageReportCSS = () => {
     
     .item-size {
         font-weight: 600;
-        color: #28a745;
+        color: var(--success);
     }
-    
+
     .item-percentage {
-        background: #007bff;
+        background: var(--primary);
         color: white;
         padding: 0.25rem 0.5rem;
         border-radius: 1rem;
@@ -2003,7 +1646,7 @@ const getStorageReportCSS = () => {
     }
     
     .item-description {
-        color: #666;
+        color: var(--text-secondary);
         margin-bottom: 0.5rem;
         font-size: 0.9rem;
     }
@@ -2015,15 +1658,15 @@ const getStorageReportCSS = () => {
     }
     
     .detail-item {
-        background: #f8f9fa;
+        background: var(--bg-secondary);
         padding: 0.25rem 0.5rem;
         border-radius: 0.25rem;
         font-size: 0.8rem;
-        color: #666;
+        color: var(--text-secondary);
     }
     
     .view-details-btn {
-        background: #28a745;
+        background: var(--success);
         color: white;
         border: none;
         padding: 0.5rem 1rem;
@@ -2033,7 +1676,8 @@ const getStorageReportCSS = () => {
     }
     
     .view-details-btn:hover {
-        background: #1e7e34;
+        background: var(--success);
+        opacity: 0.9;
     }
     
     .storage-modal {
@@ -2050,7 +1694,7 @@ const getStorageReportCSS = () => {
     }
     
     .modal-content-large {
-        background: white;
+        background: var(--bg-primary);
         border-radius: 0.5rem;
         width: 90%;
         max-width: 800px;
@@ -2061,7 +1705,7 @@ const getStorageReportCSS = () => {
     }
     
     .modal-header {
-        background: #007bff;
+        background: var(--primary);
         color: white;
         padding: 1rem;
         display: flex;
@@ -2097,7 +1741,7 @@ const getStorageReportCSS = () => {
     }
     
     .stat-item {
-        background: #f8f9fa;
+        background: var(--bg-secondary);
         padding: 0.75rem;
         border-radius: 0.25rem;
         display: flex;
@@ -2106,12 +1750,12 @@ const getStorageReportCSS = () => {
     
     .stat-label {
         font-weight: 600;
-        color: #666;
+        color: var(--text-secondary);
     }
     
     .stat-value {
         font-weight: 700;
-        color: #007bff;
+        color: var(--primary);
     }
     
     .data-table-container {
@@ -2127,13 +1771,13 @@ const getStorageReportCSS = () => {
     
     .data-table th,
     .data-table td {
-        border: 1px solid #dee2e6;
+        border: 1px solid var(--border);
         padding: 0.5rem;
         text-align: left;
     }
-    
+
     .data-table th {
-        background: #f8f9fa;
+        background: var(--bg-secondary);
         font-weight: 600;
         position: sticky;
         top: 0;
@@ -2146,7 +1790,7 @@ const getStorageReportCSS = () => {
     }
     
     .data-preview {
-        background: #f8f9fa;
+        background: var(--bg-secondary);
         padding: 1rem;
         border-radius: 0.25rem;
         margin-top: 1rem;
@@ -2162,14 +1806,14 @@ const getStorageReportCSS = () => {
     
     .truncated {
         text-align: center;
-        color: #666;
+        color: var(--text-secondary);
         font-style: italic;
         margin-top: 0.5rem;
     }
     
     .no-data {
         text-align: center;
-        color: #666;
+        color: var(--text-secondary);
         font-style: italic;
         padding: 2rem;
     }
@@ -2177,9 +1821,9 @@ const getStorageReportCSS = () => {
     .report-footer {
         margin-top: 3rem;
         padding-top: 1rem;
-        border-top: 1px solid #dee2e6;
+        border-top: 1px solid var(--border);
         text-align: center;
-        color: #666;
+        color: var(--text-secondary);
         font-size: 0.9rem;
     }
     
@@ -2269,8 +1913,7 @@ const getStorageReportJS = () => {
         const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
         
         const colors = [
-            '#007bff', '#28a745', '#ffc107', '#dc3545', '#6f42c1',
-            '#fd7e14', '#20c997', '#e83e8c', '#6c757d', '#17a2b8'
+            '#2563eb', '#059669', '#d97706', '#dc2626', '#6b7280'
         ];
         
         const data = {
@@ -2296,7 +1939,7 @@ const getStorageReportJS = () => {
                     backgroundColor: isDark ? '#343a40' : '#ffffff',
                     titleColor: isDark ? '#ffffff' : '#000000',
                     bodyColor: isDark ? '#ffffff' : '#000000',
-                    borderColor: isDark ? '#6c757d' : '#dee2e6',
+                    borderColor: isDark ? '#475569' : '#e2e8f0',
                     borderWidth: 1,
                     callbacks: {
                         label: (context) => {
@@ -2539,7 +2182,5 @@ This archive contains a complete snapshot of your StackTrackr storage data.`;
 // Make all storage report functions globally available
 window.updateStorageStats = updateStorageStats;
 window.downloadStorageReport = downloadStorageReport;
-window.showStorageReportModal = showStorageReportModal;
-window.closeStorageReportModal = closeStorageReportModal;
-window.showStorageItemDetail = showStorageItemDetail;
-window.closeStorageDetailModal = closeStorageDetailModal;
+window.viewStorageReport = viewStorageReport;
+window.closeStorageReportOptionsModal = closeStorageReportOptionsModal;

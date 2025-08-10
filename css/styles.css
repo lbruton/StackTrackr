@@ -1605,6 +1605,37 @@ td input:checked + .slider:before {
   background: rgba(255, 255, 255, 0.1);
 }
 
+/* Storage report options modal */
+#storageReportOptionsModal .modal-content {
+  max-width: 400px;
+  padding: 0;
+  text-align: center;
+}
+
+#storageReportOptionsModal .modal-header {
+  background: linear-gradient(135deg, var(--primary), var(--primary-hover));
+  color: white;
+  padding: var(--spacing-xl);
+  position: relative;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+}
+
+#storageReportOptionsModal .modal-header h2 {
+  margin: 0;
+  color: white;
+}
+
+#storageReportOptionsModal .modal-body {
+  padding: var(--spacing-xl);
+}
+
+#storageReportOptionsModal .btn-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing);
+  margin-top: var(--spacing);
+}
+
 .about-modal-body {
   padding: var(--spacing-xl);
   overflow-y: auto;
