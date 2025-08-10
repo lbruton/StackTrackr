@@ -113,7 +113,7 @@ const BRANDING_DOMAIN_OPTIONS = {
   domainMap: {
     stackertracker: "Stacker Tracker",
     stacktrackr: "Stack Trackr",
-    stackrtrackr: "Stackr Trackr",
+    stackrtrackr: "StackrTrackr",
   },
   removeExtension: true,
   alwaysOverride: false,

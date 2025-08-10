@@ -24,7 +24,10 @@ let columnFilters = {};
 let chartInstances = {
   typeChart: null,
   locationChart: null,
-  apiHistoryChart: null,
+  apiHistoryChartSilver: null,
+  apiHistoryChartGold: null,
+  apiHistoryChartPlatinum: null,
+  apiHistoryChartPalladium: null,
 };
 
 /** @type {Object} Cached DOM elements for performance */

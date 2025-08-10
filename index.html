@@ -85,6 +85,22 @@
         >
           Appearance 🎨
         </button>
+        <a
+          class="btn"
+          id="communityBtn"
+          href="https://www.reddit.com/r/stackrtrackr/"
+          target="_blank"
+          rel="noopener"
+          title="Community"
+          aria-label="Community"
+        >
+          <img
+            src="https://www.redditstatic.com/desktop2x/img/favicon/favicon-32x32.png"
+            alt=""
+            style="height: 1em; width: 1em"
+          />
+          Community
+        </a>
         <button class="btn" id="filesBtn" title="Files" aria-label="Files">
           Files 📁
         </button>
@@ -1814,11 +1830,27 @@
                   Clear
                 </button>
               </div>
-              <table id="apiHistoryTable"></table>
-              <div id="apiHistoryPagination" class="api-history-pagination"></div>
+              <div class="api-history-table-wrapper">
+                <table id="apiHistoryTable"></table>
+              </div>
             </div>
-            <div class="api-history-chart">
-              <canvas id="apiHistoryChart"></canvas>
+            <div class="api-history-charts">
+              <div class="chart-panel">
+                <h3>Silver</h3>
+                <canvas id="apiHistoryChartSilver"></canvas>
+              </div>
+              <div class="chart-panel">
+                <h3>Gold</h3>
+                <canvas id="apiHistoryChartGold"></canvas>
+              </div>
+              <div class="chart-panel">
+                <h3>Platinum</h3>
+                <canvas id="apiHistoryChartPlatinum"></canvas>
+              </div>
+              <div class="chart-panel">
+                <h3>Palladium</h3>
+                <canvas id="apiHistoryChartPalladium"></canvas>
+              </div>
             </div>
           </div>
         </div>
