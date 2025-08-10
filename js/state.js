@@ -75,7 +75,12 @@ const elements = {
   numistaExportBtn: null,
   cloudSyncBtn: null,
   syncAllBtn: null,
-  
+
+  // Custom mapping buttons
+  addMappingBtn: null,
+  applyMappingsBtn: null,
+  clearMappingsBtn: null,
+
   // Emergency reset button
   boatingAccidentBtn: null,
 

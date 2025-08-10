@@ -919,6 +919,45 @@ const setupEventListeners = () => {
       );
     }
 
+    // Custom mapping buttons
+    if (elements.addMappingBtn) {
+      safeAttachListener(
+        elements.addMappingBtn,
+        "click",
+        () => {
+          const pattern = prompt("Enter regex pattern to match:");
+          const field = prompt("Enter field name to map to:");
+          if (pattern && field) {
+            CustomMapping.addMapping(pattern, field);
+            alert(`Mapping added: ${pattern} → ${field}`);
+          }
+        },
+        "Add custom mapping",
+      );
+    }
+    if (elements.applyMappingsBtn) {
+      safeAttachListener(
+        elements.applyMappingsBtn,
+        "click",
+        () => {
+          console.log("Custom mappings:", CustomMapping.list());
+          alert("Mappings applied. Check console for details.");
+        },
+        "Apply custom mappings",
+      );
+    }
+    if (elements.clearMappingsBtn) {
+      safeAttachListener(
+        elements.clearMappingsBtn,
+        "click",
+        () => {
+          CustomMapping.clear();
+          alert("Custom mappings cleared.");
+        },
+        "Clear custom mappings",
+      );
+    }
+
     const cloudSyncCloseBtn = document.getElementById("cloudSyncCloseBtn");
     if (cloudSyncCloseBtn && elements.cloudSyncModal) {
       safeAttachListener(
