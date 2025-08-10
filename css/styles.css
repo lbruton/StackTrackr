@@ -1113,8 +1113,30 @@ input[type="submit"] {
 }
 
 #changeLogTable {
-  width: max-content;
-  min-width: 100%;
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+}
+
+#changeLogTable th,
+#changeLogTable td {
+  padding: var(--spacing-sm);
+  text-align: left;
+}
+
+#changeLogTable td {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#changeLogTable th:last-child,
+#changeLogTable td:last-child {
+  width: 8rem;
+}
+
+#changeLogTable td.action-cell {
+  white-space: nowrap;
 }
 
 #detailsModal {

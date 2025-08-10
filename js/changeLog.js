@@ -70,16 +70,16 @@ const renderChangeLog = () => {
     const actionLabel = entry.undone ? 'Redo' : 'Undo';
     return `
     <tr>
-      <td class="shrink">${new Date(entry.timestamp).toLocaleString()}</td>
-      <td class="shrink">${sanitizeHtml(entry.itemName)}</td>
-      <td class="shrink">${sanitizeHtml(entry.field)}</td>
-      <td class="shrink">${sanitizeHtml(String(entry.oldValue))}</td>
-      <td class="shrink">${sanitizeHtml(String(entry.newValue))}</td>
-      <td class="shrink"><button class="btn action-btn" style="margin:1px;" onclick="toggleChange(${globalIndex})">${actionLabel}</button></td>
+      <td title="${new Date(entry.timestamp).toLocaleString()}">${new Date(entry.timestamp).toLocaleString()}</td>
+      <td title="${sanitizeHtml(entry.itemName)}">${sanitizeHtml(entry.itemName)}</td>
+      <td title="${sanitizeHtml(entry.field)}">${sanitizeHtml(entry.field)}</td>
+      <td title="${sanitizeHtml(String(entry.oldValue))}">${sanitizeHtml(String(entry.oldValue))}</td>
+      <td title="${sanitizeHtml(String(entry.newValue))}">${sanitizeHtml(String(entry.newValue))}</td>
+      <td class="action-cell"><button class="btn action-btn" style="margin:1px;" onclick="editFromChangeLog(${entry.idx})">Edit</button><button class="btn action-btn" style="margin:1px;" onclick="toggleChange(${globalIndex})">${actionLabel}</button></td>
     </tr>`;
   });
 
-  const placeholders = Array.from({ length: 10 - recent.length }, () => '<tr><td class="shrink" colspan="6">&nbsp;</td></tr>');
+  const placeholders = Array.from({ length: 10 - recent.length }, () => '<tr><td colspan="6">&nbsp;</td></tr>');
   tableBody.innerHTML = rows.concat(placeholders).join('');
 };
 
@@ -120,3 +120,11 @@ window.logChange = logChange;
 window.logItemChanges = logItemChanges;
 window.renderChangeLog = renderChangeLog;
 window.toggleChange = toggleChange;
+window.editFromChangeLog = (idx) => {
+  const modal = document.getElementById('changeLogModal');
+  if (modal) {
+    modal.style.display = 'none';
+  }
+  document.body.style.overflow = '';
+  editItem(idx);
+};
