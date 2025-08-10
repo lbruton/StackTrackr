@@ -192,6 +192,7 @@ Before starting ANY subtask, read these files:
 - [ ] Document any findings that affect other subtasks  
 - [ ] Note any changes to original requirements
 - [ ] Update version references if needed
+- [ ] Archive the previous build in `/archive/previous` and verify the footer rollback link
 
 ---
 
@@ -276,6 +277,7 @@ Before starting ANY subtask, read these files:
 - `index.html` - Main application
 - `js/constants.js` - Configuration and version
 - `css/styles.css` - All styling
+- `archive/previous/` - Snapshot of the last stable build for user rollback
 
 ### **Testing Workflow:**
 1. **Unit test** your specific change

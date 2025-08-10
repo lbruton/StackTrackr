@@ -32,6 +32,7 @@
 │   ├── theme.js
 │   └── utils.js
 ├── index.html
+├── archive/
 ├── LICENSE
 ├── README.md
 ├── sample.csv
@@ -71,5 +72,8 @@
 - Responsive design for all screen sizes
 - Component-based organization
 - Modern CSS features and animations
+
+### Archive (`archive/`)
+- Stores the previous build so users can revert if issues arise
 
 This structure provides better maintainability, clearer separation of concerns, and easier version management going forward.
