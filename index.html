@@ -1378,58 +1378,78 @@
         </div>
         <div class="modal-body">
           <div class="settings-section">
-            <h3>Files</h3>
-            <p class="settings-subtext">Import or export your data files.</p>
-            <div class="file-blocks">
-              <div class="import-block">
-                <div class="import-export-grid">
-                  <label class="btn" id="importCsvBtn">
-                    Import CSV <span class="import-icon">⬇️</span>
-                    <input accept=".csv" hidden id="importCsvFile" type="file" />
-                  </label>
-                  <label class="btn" id="importJsonBtn">
-                    Import JSON <span class="import-icon">⬇️</span>
-                    <input accept=".json" hidden id="importJsonFile" type="file" />
-                  </label>
-                  <label class="btn" id="importExcelBtn">
-                    Import Excel <span class="import-icon">⬇️</span>
-                    <input
-                      accept=".xlsx,.xls"
-                      hidden
-                      id="importExcelFile"
-                      type="file"
-                    />
-                  </label>
-                  <button class="btn secondary" id="cloudSyncBtn">Cloud Sync ☁️</button>
-                </div>
-                <progress
-                  class="import-progress"
-                  id="importProgress"
-                  value="0"
-                  max="0"
-                ></progress>
-                <div class="import-progress-text" id="importProgressText"></div>
+            <h3>Import</h3>
+            <p class="settings-subtext">Import your data files.</p>
+            <div class="import-block">
+              <div class="import-export-grid">
+                <label class="btn" id="importCsvBtn">
+                  Import CSV <span class="import-icon">⬇️</span>
+                  <input accept=".csv" hidden id="importCsvFile" type="file" />
+                </label>
+                <label class="btn" id="importJsonBtn">
+                  Import JSON <span class="import-icon">⬇️</span>
+                  <input accept=".json" hidden id="importJsonFile" type="file" />
+                </label>
+                <label class="btn" id="importExcelBtn">
+                  Import Excel <span class="import-icon">⬇️</span>
+                  <input
+                    accept=".xlsx,.xls"
+                    hidden
+                    id="importExcelFile"
+                    type="file"
+                  />
+                </label>
+                <button class="btn secondary" id="cloudSyncBtn">Cloud Sync ☁️</button>
               </div>
-              <div class="export-block">
-                <div class="import-export-grid">
-                  <button class="btn" id="exportCsvBtn">
-                    Export CSV <span class="export-icon">⬆️</span>
-                  </button>
-                  <button class="btn" id="exportJsonBtn">
-                    Export JSON <span class="export-icon">⬆️</span>
-                  </button>
-                  <button class="btn" id="exportExcelBtn">
-                    Export Excel <span class="export-icon">⬆️</span>
-                  </button>
-                  <button class="btn" id="exportPdfBtn">
-                    Export PDF <span class="export-icon">⬆️</span>
-                  </button>
-                </div>
+              <progress
+                class="import-progress"
+                id="importProgress"
+                value="0"
+                max="0"
+              ></progress>
+              <div class="import-progress-text" id="importProgressText"></div>
+            </div>
+          </div>
+
+          <div class="settings-section">
+            <h3>Export</h3>
+            <p class="settings-subtext">Export your data files.</p>
+            <div class="export-block">
+              <div class="import-export-grid">
+                <button class="btn" id="exportCsvBtn">
+                  Export CSV <span class="export-icon">⬆️</span>
+                </button>
+                <button class="btn" id="exportJsonBtn">
+                  Export JSON <span class="export-icon">⬆️</span>
+                </button>
+                <button class="btn" id="exportExcelBtn">
+                  Export Excel <span class="export-icon">⬆️</span>
+                </button>
+                <button class="btn" id="exportPdfBtn">
+                  Export PDF <span class="export-icon">⬆️</span>
+                </button>
               </div>
             </div>
           </div>
 
+          <div class="settings-section">
+            <h3>Third-Party</h3>
+            <p class="settings-subtext">Connect with external services like Numista.</p>
+            <div class="third-party-block">
+              <div class="import-export-grid">
+                <button class="btn" id="numistaImportBtn">Import from Numista</button>
+                <button class="btn" id="numistaExportBtn">Export to Numista</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="settings-section">
+            <h3>Custom Mapping</h3>
+            <p class="settings-subtext">Custom mapping feature coming soon.</p>
+          </div>
+
           <div class="settings-section boating-accident-section">
+            <h3>Clear All Data</h3>
             <p class="settings-subtext">Clear all data from the app.</p>
             <div class="backup-buttons">
               <button class="btn danger" id="boatingAccidentBtn">
@@ -1731,7 +1751,6 @@
           </div>
         </div>
       </div>
-    </div>
 
     <div class="modal" id="cloudSyncModal" style="display: none">
       <div class="modal-content">
