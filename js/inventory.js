@@ -1243,6 +1243,69 @@ const importNumistaCsv = (file) => {
 };
 
 /**
+ * Exports inventory data to a Numista compatible CSV format
+ */
+const exportNumistaCsv = () => {
+  const timestamp = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+  const headers = [
+    'N# number',
+    'Title',
+    'Year',
+    'Metal',
+    'Quantity',
+    'Type',
+    'Weight (g)',
+    'Buying price (USD)',
+    'Acquisition place',
+    'Storage location',
+    'Acquisition date',
+    'Note'
+  ];
+
+  const sortedInventory = sortInventoryByDateNewestFirst();
+  const rows = [];
+
+  for (const item of sortedInventory) {
+    let title = item.name || '';
+    let year = item.issuedYear || '';
+    if (year) {
+      const yearRegex = new RegExp(`\\s*${year}\\b`);
+      title = title.replace(yearRegex, '').trim();
+    }
+
+    const weightGrams = parseFloat(item.weight)
+      ? parseFloat(item.weight) * 31.1034768
+      : 0;
+
+    rows.push([
+      item.numistaId || '',
+      title,
+      year,
+      item.metal || '',
+      item.qty || '',
+      item.type || '',
+      weightGrams ? weightGrams.toFixed(2) : '',
+      item.price ? Number(item.price).toFixed(2) : '',
+      item.purchaseLocation || '',
+      item.storageLocation || '',
+      item.date || '',
+      item.notes || ''
+    ]);
+  }
+
+  const csv = Papa.unparse([headers, ...rows]);
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `numista_export_${timestamp}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+};
+
+/**
  * Exports current inventory to CSV format
  */
 const exportCsv = () => {

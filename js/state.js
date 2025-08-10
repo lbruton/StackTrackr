@@ -72,6 +72,7 @@ const elements = {
   exportJsonBtn: null,
   exportExcelBtn: null,
   exportPdfBtn: null,
+  numistaExportBtn: null,
   cloudSyncBtn: null,
   syncAllBtn: null,
   

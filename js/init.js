@@ -94,6 +94,7 @@ document.addEventListener("DOMContentLoaded", () => {
     elements.exportJsonBtn = safeGetElement("exportJsonBtn");
     elements.exportExcelBtn = safeGetElement("exportExcelBtn");
     elements.exportPdfBtn = safeGetElement("exportPdfBtn");
+    elements.numistaExportBtn = safeGetElement("numistaExportBtn");
     elements.cloudSyncBtn = safeGetElement("cloudSyncBtn");
     elements.syncAllBtn = safeGetElement("syncAllBtn");
     elements.boatingAccidentBtn = safeGetElement("boatingAccidentBtn");
