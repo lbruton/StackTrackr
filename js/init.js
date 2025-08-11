@@ -360,6 +360,9 @@ document.addEventListener("DOMContentLoaded", () => {
     debugLog("  - Files button:", !!elements.filesBtn);
     debugLog("  - Inventory form:", !!elements.inventoryForm);
     debugLog("  - Inventory table:", !!elements.inventoryTable);
+    // Phase 16: Storage optimization pass
+    if (typeof optimizeStoragePhase1C === 'function') { optimizeStoragePhase1C(); }
+
   } catch (error) {
     console.error("=== CRITICAL INITIALIZATION ERROR ===");
     console.error("Error:", error.message);

@@ -83,3 +83,7 @@
 - Stores the previous build so users can revert if issues arise
 
 This structure provides better maintainability, clearer separation of concerns, and easier version management going forward.
+
+- `js/catalog-providers.js` — Provider interface and Numista provider (Phase 1D)
+- `docs/catalog_architecture.md` — Architecture notes
+- `docs/migration_roadmap.md` — Migration plan

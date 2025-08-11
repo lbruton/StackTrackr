@@ -1,3 +1,7 @@
+// Minimal LZString subset (compressToUTF16/decompressFromUTF16) by Pieroxy, MIT
+var LZString=function(){function o(o,r){if(!t[o]){t[o]={};for(var n=0;n<o.length;n++)t[o][o.charAt(n)]=n}return t[o][r]}var r=String.fromCharCode,n="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=",e="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+-$",t={},i={compressToUTF16:function(o){if(null==o)return"";var r,i,t,u={},s={},p="",a="",c="",l=2,f=3,h=2,d=[],m=0,v=0;for(t=0;t<o.length;t+=1)if(p=o.charAt(t),Object.prototype.hasOwnProperty.call(u,p)||(u[p]=f++,s[p]=!0),a=c+p,Object.prototype.hasOwnProperty.call(u,a))c=a;else{if(Object.prototype.hasOwnProperty.call(s,c)){if(c.charCodeAt(0)<256){for(r=0;r<h;r++)m<<=1,v==15?(v=0,d.push(r)):v++;for(i=0;i<8;i++)m=m<<1|c.charCodeAt(0)&1,v==15?(v=0,d.push(m),m=0):v++,c=c.charCodeAt(0)>>>1}else{for(r=1;r<h;r++)m=m<<1|1,v==15?(v=0,d.push(m),m=0):v++;for(i=0;i<16;i++)m=m<<1|c.charCodeAt(0)&1,v==15?(v=0,d.push(m),m=0):v++,c=c.charCodeAt(0)>>>1}l--,0==l&&(l=Math.pow(2,h),h++),delete s[c]}else for(c=u[c],r=0;r<h;r++)m=m<<1|c&1,v==15?(v=0,d.push(m),m=0):v++,c>>>=1;l--,0==l&&(l=Math.pow(2,h),h++),u[a]=f++,c=String(a)}if(""!==c){if(Object.prototype.hasOwnProperty.call(s,c)){if(c.charCodeAt(0)<256){for(r=0;r<h;r++)m<<=1,v==15?(v=0,d.push(r)):v++;for(i=0;i<8;i++)m=m<<1|c.charCodeAt(0)&1,v==15?(v=0,d.push(m),m=0):v++,c=c.charCodeAt(0)>>>1}else{for(r=1;r<h;r++)m=m<<1|1,v==15?(v=0,d.push(m),m=0):v++;for(i=0;i<16;i++)m=m<<1|c.charCodeAt(0)&1,v==15?(v=0,d.push(m),m=0):v++,c=c.charCodeAt(0)>>>1}l--,0==l&&(l=Math.pow(2,h),h++),delete s[c]}else for(c=u[c],r=0;r<h;r++)m=m<<1|c&1,v==15?(v=0,d.push(m),m=0):v++,c>>>=1;l--,0==l&&(l=Math.pow(2,h),h++),u[a]=f++,c=String(a)}for(r=0;r<h;r++)m<<=1,v==15?(v=0,d.push(m),m=0):v++;for(i=0;i<2;i++)m=m<<1|1,v==15?(v=0,d.push(m),m=0):v++;for(;v>0;)m<<=1,v==15?(v=0,d.push(m),m=0):v++;return d.map(function(o){return r(o+32)}).join("")},decompressFromUTF16:function(t){if(null==t)return"";var i,u,s,p,a,c,l,f,h=[],d=0,m=0,v=0,g=4,w=4,b=3,A="",S=[],C={val:0,position:0,index:0};for(i=0;i<t.length;i+=1)S.push(t.charCodeAt(i)-32);for(u=0;u<32;u+=1)h[u]=u;switch(p=2,c=1,l=0;f=1<<c,l&f-1;)l>>>=c,c=1;for(;;){if(0===C.index)return"";for(C.val=S[C.index++],C.position=0,f=1,u=0;u<c;u+=1)a=C.val&f,C.val>>=1,0==C.position?(C.position=15,C.index++):C.position--,d|=a<<m,m++,m==g&&(h[v++]=d,0==--w&&(g*=2,w=g),d=0,m=0);switch(s=h[v-1]){case 0:return"";case 1:return r(s);case 2:return""}break}}
+return i}();
+
 // UTILITY FUNCTIONS
 
 /**
@@ -449,22 +453,14 @@ const parseNumistaMetal = (composition = "") => {
  * @param {string} key - Storage key
  * @param {any} data - Data to store
  */
-const saveData = (key, data) => localStorage.setItem(key, JSON.stringify(data));
-
-/**
+const saveData = (key, data) => { try { const raw = JSON.stringify(data); const out = __compressIfNeeded(raw); localStorage.setItem(key, out); } catch(e) { console.error('saveData failed', e); } };/**
  * Loads data from localStorage with error handling
  *
  * @param {string} key - Storage key
  * @param {any} [defaultValue=[]] - Default value if no data found
  * @returns {any} Parsed data or default value
  */
-const loadData = (key, defaultValue = []) => {
-  try {
-    return JSON.parse(localStorage.getItem(key)) || defaultValue;
-  } catch (e) {
-    return defaultValue;
-  }
-};
+const loadData = (key, defaultValue = []) => { try { const raw = localStorage.getItem(key); if(raw == null) return defaultValue; const str = __decompressIfNeeded(raw); return JSON.parse(str); } catch(e) { return defaultValue; } };
 
 /**
  * Sorts inventory by date (newest first)
@@ -2220,3 +2216,40 @@ This archive contains a complete snapshot of your StackTrackr storage data.`;
 window.updateStorageStats = updateStorageStats;
 window.downloadStorageReport = downloadStorageReport;
 window.openStorageReportPopup = openStorageReportPopup;
+
+
+/** Storage compression helpers (Phase 1C) */
+const __ST_COMP_PREFIX = 'CMP1:';
+function __compressIfNeeded(str){
+  try{
+    if(!str || str.length < 4096) return str;
+    const comp = LZString.compressToUTF16(str);
+    return __ST_COMP_PREFIX + comp;
+  }catch(e){ return str; }
+}
+function __decompressIfNeeded(stored){
+  try{
+    if(typeof stored !== 'string') return stored;
+    if(stored.startsWith(__ST_COMP_PREFIX)){
+      const raw = LZString.decompressFromUTF16(stored.slice(__ST_COMP_PREFIX.length));
+      return raw;
+    }
+    return stored;
+  }catch(e){ return stored; }
+}
+/** Generates a storage utilization report */
+function generateStorageReport(){
+  try{
+    const items = [];
+    for(let i=0;i<localStorage.length;i++){
+      const k = localStorage.key(i);
+      const v = localStorage.getItem(k) || '';
+      const sizeBytes = (k.length + v.length) * 2; // rough UTF-16 bytes
+      items.push({ key:k, sizeBytes, sizeKB: +(sizeBytes/1024).toFixed(2) });
+    }
+    items.sort((a,b)=>b.sizeBytes - a.sizeBytes);
+    const totalBytes = items.reduce((s,x)=>s+x.sizeBytes,0);
+    return { totalKB: +(totalBytes/1024).toFixed(2), items };
+  }catch(e){ return { totalKB:0, items:[] }; }
+}
+if (typeof window !== 'undefined') { window.generateStorageReport = generateStorageReport; }

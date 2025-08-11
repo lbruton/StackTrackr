@@ -54,12 +54,13 @@ const createBackupZip = async () => {
         isCollectable: item.isCollectable,
         premiumPerOz: item.premiumPerOz,
         totalPremium: item.totalPremium,
-        numistaId: item.numistaId
+        numistaId: item.numistaId,
+        serial: item.serial
       }))
     };
     zip.file('inventory_data.json', JSON.stringify(inventoryData, null, 2));
 
-    // 2. Add current spot prices and settings
+    // 2. Add current spot prices, settings, and catalog mappings
     const settings = {
       version: APP_VERSION,
       exportDate: new Date().toISOString(),
@@ -69,7 +70,9 @@ const createBackupZip = async () => {
       currentPage: currentPage,
       searchQuery: searchQuery,
       sortColumn: sortColumn,
-      sortDirection: sortDirection
+      sortDirection: sortDirection,
+      // Add catalog mappings to settings for backup
+      catalogMappings: catalogManager.exportMappings()
     };
     zip.file('settings.json', JSON.stringify(settings, null, 2));
 
@@ -162,7 +165,8 @@ const createBackupZip = async () => {
         storageLocation: item.storageLocation,
         notes: item.notes,
         isCollectable: item.isCollectable,
-        numistaId: item.numistaId
+        numistaId: item.numistaId,
+        serial: item.serial
       }));
       zip.file('sample_data.json', JSON.stringify(sampleData, null, 2));
     }
@@ -230,6 +234,12 @@ const restoreBackupZip = async (file) => {
       }
       if (settingsObj.theme) {
         localStorage.setItem(THEME_KEY, settingsObj.theme);
+      }
+      
+      // Handle catalog mappings if present in backup
+      if (settingsObj.catalogMappings) {
+        // Use catalog manager to import mappings
+        catalogManager.importMappings(settingsObj.catalogMappings, false);
       }
     }
 
@@ -406,8 +416,8 @@ Store this archive in a secure location for data protection.
 
 // =============================================================================
 
-let catalogMap = loadData(CATALOG_MAP_KEY, {});
-window.catalogMap = catalogMap;
+// Note: catalogMap is now managed by catalogManager class
+// No need for the global catalogMap variable anymore
 
 const getNextSerial = () => {
   const next = (parseInt(localStorage.getItem(SERIAL_KEY) || '0', 10) + 1);
@@ -421,7 +431,7 @@ window.getNextSerial = getNextSerial;
  */
 const saveInventory = () => {
   saveData(LS_KEY, inventory);
-  saveData(CATALOG_MAP_KEY, catalogMap);
+  // CatalogManager handles its own saving, no need to explicitly save catalogMap
 };
 
 /**
@@ -436,11 +446,6 @@ const saveInventory = () => {
  * 
  * @returns {void} Updates the global inventory array with migrated data
  * @throws {Error} Logs errors to console if localStorage access fails
- * 
- * @example
- * // Called during app initialization to restore saved data
- * loadInventory();
- * console.log(inventory); // Array of properly formatted inventory items
  */
 const loadInventory = () => {
   const data = loadData(LS_KEY, []);
@@ -481,16 +486,29 @@ const loadInventory = () => {
   });
 
   let serialCounter = parseInt(localStorage.getItem(SERIAL_KEY) || '0', 10);
+  
+  // Process each inventory item: assign serials and sync with catalog manager
   inventory.forEach(item => {
+    // Assign serial numbers to items that don't have them
     if (!item.serial) {
       serialCounter += 1;
       item.serial = serialCounter;
     }
-    item.numistaId = item.numistaId || catalogMap[item.serial] || "";
-    catalogMap[item.serial] = item.numistaId;
+    
+    // Use CatalogManager to synchronize numistaId
+    catalogManager.syncItem(item);
   });
+  
+  // Save updated serial counter
   localStorage.setItem(SERIAL_KEY, serialCounter);
-  saveData(CATALOG_MAP_KEY, catalogMap);
+  
+  // Clean up any orphaned catalog mappings
+  if (typeof catalogManager.cleanupOrphans === 'function') {
+    const removed = catalogManager.cleanupOrphans(inventory);
+    if (removed > 0 && DEBUG) {
+      console.log(`Removed ${removed} orphaned catalog mappings`);
+    }
+  }
 };
 
 /**
@@ -508,15 +526,6 @@ const loadInventory = () => {
  * Called whenever inventory data changes or display settings update
  * 
  * @returns {void} Updates DOM elements with fresh inventory display
- * 
- * @example
- * // Refresh table after adding new item
- * inventory.push(newItem);
- * renderTable();
- * 
- * // Update display after search
- * searchQuery = 'silver';
- * renderTable();
  */
 const METAL_COLORS = {
   Silver: 'var(--silver)',
@@ -643,28 +652,6 @@ const renderTable = () => {
 
 /**
  * Calculates and updates all financial summary displays across the application
- * 
- * This comprehensive function:
- * - Processes entire inventory to calculate metal-specific totals
- * - Handles collectable vs non-collectable item calculations separately
- * - Updates DOM elements for all metal types (Silver, Gold, Platinum, Palladium)
- * - Calculates weighted averages for prices and premiums
- * - Formats currency and profit/loss values with appropriate styling
- * - Handles edge cases like division by zero and missing data
- * 
- * Key calculations performed:
- * - Total items, weight, purchase price, current value
- * - Average prices per ounce (overall, collectable, non-collectable)
- * - Premium analysis and profit/loss calculations
- * - Current market value based on spot prices
- * 
- * @returns {void} Updates DOM elements in totals cards and summary sections
- * 
- * @example
- * // Recalculate totals after inventory change
- * inventory[0].price = 150.00;
- * saveInventory();
- * updateSummary(); // Refreshes all totals displays
  */
 const updateSummary = () => {
   /**
@@ -964,6 +951,9 @@ const toggleCollectable = (idx) => {
   // Update collectable status
   item.isCollectable = isCollectable;
 
+  // Ensure catalog data is properly synced
+  catalogManager.syncItem(item);
+  
   saveInventory();
   renderTable();
   logItemChanges(oldItem, item);
@@ -998,32 +988,8 @@ const endImportProgress = () => {
 /**
  * Imports inventory data from CSV file with comprehensive validation and error handling
  * 
- * This function:
- * - Uses PapaParse library for robust CSV parsing
- * - Maps CSV columns to inventory object properties
- * - Validates data types and required fields
- * - Handles various date formats automatically
- * - Calculates premiums and totals for imported items
- * - Provides user feedback on import success/failure
- * - Offers replacement or append options (currently replacement only)
- * 
- * Supported CSV columns:
- * - Metal, Name, Qty, Type, Weight(oz), Purchase Price
- * - Purchase Location, Storage Location, Date, Collectable
- * - Spot Price ($/oz) for historical premium calculations
- * 
  * @param {File} file - CSV file selected by user through file input
  * @param {boolean} [override=false] - Replace existing inventory instead of merging
- * @returns {void} Updates inventory array if import successful
- * 
- * @example
- * // Typically called from file input change event
- * const fileInput = document.getElementById('importCsvFile');
- * fileInput.addEventListener('change', (e) => {
- *   if (e.target.files.length > 0) {
- *     importCsv(e.target.files[0]);
- *   }
- * });
  */
 const importCsv = (file, override = false) => {
   try {
@@ -1078,6 +1044,7 @@ const importCsv = (file, override = false) => {
           }
 
           const numistaId = row['N#'] || row['Numista #'] || row['numistaId'] || '';
+          const serial = row['Serial'] || row['serial'] || getNextSerial();
 
           addCompositionOption(composition);
 
@@ -1097,7 +1064,8 @@ const importCsv = (file, override = false) => {
             premiumPerOz,
             totalPremium,
             isCollectable,
-            numistaId
+            numistaId,
+            serial
           });
 
           imported.push(item);
@@ -1114,6 +1082,9 @@ const importCsv = (file, override = false) => {
         } else {
           inventory = inventory.concat(imported);
         }
+        
+        // Synchronize all items with catalog manager
+        inventory = catalogManager.syncInventory(inventory);
 
         saveInventory();
         renderTable();
@@ -1136,17 +1107,6 @@ const importCsv = (file, override = false) => {
 
 /**
  * Imports inventory data from a Numista CSV export
- *
- * Stores the raw Numista CSV in localStorage and maps fields to StackTrackr structure:
- * - N# number → numistaId (hidden)
- * - Title (+ Year) → name; also stores issuedYear
- * - Type → mapped via mapNumistaType()
- * - Weight columns → max value converted from grams to ozt
- * - Composition → metal detected via parseNumistaMetal(), defaults to Alloy
- * - Buying price (currency) → price in USD via convertToUsd()
- * - Storage location / Acquisition place → left blank if missing
- * - Acquisition date → parsed YYYY-MM-DD or today if blank
- * - Notes appended with import source reference
  *
  * @param {File} file - CSV file from Numista
  * @param {boolean} [override=false] - Replace existing inventory instead of merging
@@ -1234,6 +1194,7 @@ const importNumistaCsv = (file, override = false) => {
           const spotPriceAtPurchase = 0;
           const premiumPerOz = 0;
           const totalPremium = 0;
+          const serial = getNextSerial();
 
           const item = sanitizeImportedItem({
             metal,
@@ -1253,7 +1214,8 @@ const importNumistaCsv = (file, override = false) => {
             totalPremium,
             isCollectable,
             numistaId,
-            issuedYear
+            issuedYear,
+            serial
           });
 
           imported.push(item);
@@ -1270,6 +1232,9 @@ const importNumistaCsv = (file, override = false) => {
         } else {
           inventory = inventory.concat(imported);
         }
+
+        // Synchronize all items with catalog manager
+        inventory = catalogManager.syncInventory(inventory);
 
         saveInventory();
         renderTable();
@@ -1389,7 +1354,8 @@ const importJson = (file) => {
           isCollectable: item.isCollectable === true,
           premiumPerOz: item.premiumPerOz || 0,
           totalPremium: item.totalPremium || 0,
-          numistaId: item.numistaId || ''
+          numistaId: item.numistaId || '',
+          serial: item.serial || getNextSerial()
         };
 
         // Recalculate premium if needed
@@ -1430,6 +1396,10 @@ const importJson = (file) => {
 
       if (confirm(msg)) {
         inventory = imported;
+        
+        // Synchronize all items with catalog manager
+        inventory = catalogManager.syncInventory(inventory);
+        
         saveInventory();
         renderTable();
         if (typeof updateStorageStats === "function") {
@@ -1469,7 +1439,8 @@ const exportJson = () => {
     spotPriceAtPurchase: item.spotPriceAtPurchase,
     isCollectable: item.isCollectable,
     premiumPerOz: item.premiumPerOz,
-    totalPremium: item.totalPremium
+    totalPremium: item.totalPremium,
+    serial: item.serial
   }));
 
   const json = JSON.stringify(exportData, null, 2);
@@ -1557,6 +1528,7 @@ const importExcel = (file) => {
         }
 
         const numistaId = row['N#'] || row['Numista #'] || row['numistaId'] || '';
+        const serial = row['Serial'] || row['serial'] || getNextSerial();
 
         const itemToValidate = {
           metal,
@@ -1573,7 +1545,8 @@ const importExcel = (file) => {
           premiumPerOz,
           totalPremium,
           isCollectable,
-          numistaId
+          numistaId,
+          serial
         };
 
         const validation = validateInventoryItem(itemToValidate);
@@ -1602,6 +1575,10 @@ const importExcel = (file) => {
 
       if (confirm(msg)) {
         inventory = imported;
+        
+        // Synchronize all items with catalog manager
+        inventory = catalogManager.syncInventory(inventory);
+        
         saveInventory();
         renderTable();
         if (typeof updateStorageStats === "function") {
@@ -1772,3 +1749,24 @@ window.toggleCollectable = toggleCollectable;
 window.editItem = editItem;
 window.deleteItem = deleteItem;
 window.showNotes = showNotes;
+
+/**
+ * Phase 1C: Storage optimization and housekeeping
+ */
+function optimizeStoragePhase1C(){
+  try{
+    if (typeof catalogManager !== 'undefined' && catalogManager && typeof catalogManager.removeOrphanedMappings === 'function'){
+      catalogManager.removeOrphanedMappings();
+    }
+    if (typeof generateStorageReport === 'function'){
+      const report = generateStorageReport();
+      debugLog('Storage Optimization: Total localStorage ~', report.totalKB, 'KB');
+      if (typeof initializeStorageChart === 'function'){
+        try { initializeStorageChart(report); } catch (e) { debugWarn('Storage chart init failed', e); }
+      }
+    }
+  } catch(e){
+    debugWarn('optimizeStoragePhase1C error', e);
+  }
+}
+if (typeof window !== 'undefined'){ window.optimizeStoragePhase1C = optimizeStoragePhase1C; }
