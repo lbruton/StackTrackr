@@ -675,19 +675,6 @@ const clearApiKey = (provider) => {
 };
 
 /**
- * Updates cache duration setting
- * @param {number} hours
- */
-const setCacheDuration = (hours) => {
-  const config = loadApiConfig();
-  config.cacheHours = hours;
-  saveApiConfig(config);
-  if (hours === 0) {
-    clearApiCache();
-  }
-};
-
-/**
  * Refreshes display using cached data without making API calls
  * @returns {boolean} Success status
  */
@@ -1412,10 +1399,6 @@ const showApiModal = () => {
   if (formatSelect)
     formatSelect.value = currentConfig.customConfig?.format || "symbol";
 
-  const durationSelect = document.getElementById("apiCacheDuration");
-  if (durationSelect) {
-    durationSelect.value = String(currentConfig.cacheHours ?? 24);
-  }
   updateDefaultProviderButtons();
   updateProviderHistoryTables();
   modal.style.display = "flex";
@@ -1507,7 +1490,6 @@ window.handleProviderSync = handleProviderSync;
 window.clearApiKey = clearApiKey;
 window.clearApiCache = clearApiCache;
 window.setDefaultProvider = setDefaultProvider;
-window.setCacheDuration = setCacheDuration;
 window.showApiHistoryModal = showApiHistoryModal;
 window.hideApiHistoryModal = hideApiHistoryModal;
 window.clearApiHistory = clearApiHistory;

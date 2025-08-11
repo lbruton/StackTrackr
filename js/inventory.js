@@ -534,11 +534,11 @@ const getColor = (map, key) => {
   return `hsl(${map[key]}, 70%, ${lightness}%)`;
 };
 
-const filterLink = (field, value, color) => {
+const filterLink = (field, value, color, displayValue = value) => {
   const handler = `applyColumnFilter('${field}', ${JSON.stringify(value)})`;
   // Escape double quotes for safe inline handler usage
   const escaped = handler.replace(/"/g, '&quot;');
-  const safe = sanitizeHtml(value);
+  const safe = sanitizeHtml(String(displayValue));
   return `<span class="filter-text" style="color: ${color};" onclick="${escaped}" tabindex="0" role="button" onkeydown="if(event.key==='Enter'||event.key===' ')${escaped}" title="Filter by ${safe}">${safe}</span>`;
 };
 
@@ -579,18 +579,22 @@ const renderTable = () => {
     for (let i = startIndex; i < endIndex; i++) {
       const item = sortedInventory[i];
       const originalIdx = inventory.indexOf(item);
+      const spotDisplay = item.isCollectable ? 'N/A' : (item.spotPriceAtPurchase > 0 ? formatDollar(item.spotPriceAtPurchase) : 'N/A');
+      const spotValue = item.isCollectable ? 'N/A' : (item.spotPriceAtPurchase > 0 ? item.spotPriceAtPurchase : 'N/A');
+      const premiumDisplay = item.isCollectable ? 'N/A' : formatDollar(item.totalPremium);
+      const premiumValue = item.isCollectable ? 'N/A' : item.totalPremium;
 
       rows.push(`
       <tr>
-      <td class="shrink" data-column="date">${formatDisplayDate(item.date)}</td>
+      <td class="shrink" data-column="date">${filterLink('date', item.date, 'var(--text-primary)', formatDisplayDate(item.date))}</td>
       <td class="shrink" data-column="type">${filterLink('type', item.type, getTypeColor(item.type))}</td>
       <td class="shrink" data-column="composition">${filterLink('composition', getCompositionFirstWords(item.composition || item.metal || 'Silver'), METAL_COLORS[item.metal] || 'var(--primary)')}</td>
       <td class="expand" data-column="name" style="text-align: left;"><button type="button" class="edit-icon" onclick="editItem(${originalIdx})" aria-label="Edit ${sanitizeHtml(item.name)}" title="Edit ${sanitizeHtml(item.name)}" style="float: left; margin-right: 8px;">✎</button><span class="filter-text" onclick="applyColumnFilter('name', '${sanitizeHtml(item.name).replace(/'/g, "\'")}')"; style="cursor: pointer; color: var(--text-primary);" title="Filter by this name">${sanitizeHtml(item.name)}</span></td>
-      <td class="shrink" data-column="qty">${item.qty}</td>
-      <td class="shrink" data-column="weight">${parseFloat(item.weight).toFixed(2)}</td>
-      <td class="shrink" data-column="purchasePrice">${formatDollar(item.price)}</td>
-      <td class="shrink" data-column="spot">${item.isCollectable ? 'N/A' : (item.spotPriceAtPurchase > 0 ? formatDollar(item.spotPriceAtPurchase) : 'N/A')}</td>
-      <td class="shrink" data-column="premium" style="color: ${item.isCollectable ? 'var(--text-muted)' : (item.totalPremium > 0 ? 'var(--warning)' : 'inherit')}">${item.isCollectable ? 'N/A' : formatDollar(item.totalPremium)}</td>
+      <td class="shrink" data-column="qty">${filterLink('qty', item.qty, 'var(--text-primary)')}</td>
+      <td class="shrink" data-column="weight">${filterLink('weight', item.weight, 'var(--text-primary)', parseFloat(item.weight).toFixed(2))}</td>
+      <td class="shrink" data-column="purchasePrice">${filterLink('price', item.price, 'var(--text-primary)', formatDollar(item.price))}</td>
+      <td class="shrink" data-column="spot">${filterLink('spotPriceAtPurchase', spotValue, 'var(--text-primary)', spotDisplay)}</td>
+      <td class="shrink" data-column="premium" style="color: ${item.isCollectable ? 'var(--text-muted)' : (item.totalPremium > 0 ? 'var(--warning)' : 'inherit')}">${filterLink('totalPremium', premiumValue, 'var(--text-primary)', premiumDisplay)}</td>
       <td class="shrink" data-column="purchaseLocation">${item.purchaseLocation ? filterLink('purchaseLocation', item.purchaseLocation, getPurchaseLocationColor(item.purchaseLocation)) : ''}</td>
       <td class="shrink" data-column="storageLocation">${item.storageLocation ? filterLink('storageLocation', item.storageLocation, getStorageLocationColor(item.storageLocation)) : ''}</td>
       <td class="shrink" data-column="collectable"><button type="button" class="btn action-btn collectable-btn ${item.isCollectable ? 'success' : ''}" onclick="toggleCollectable(${originalIdx})" aria-label="Toggle collectable status for ${sanitizeHtml(item.name)}" title="Toggle collectable status">${item.isCollectable ? 'Yes' : 'No'}</button></td>

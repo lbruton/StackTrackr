@@ -1,11 +1,11 @@
 # Project Status - StackTrackr
 
 
-> **Latest release: v3.03.08n**
+> **Latest release: v3.04.00**
 
-## 🎯 Current State: **BETA v3.03.08n** ✅ MAINTAINED & OPTIMIZED
+## 🎯 Current State: **BETA v3.04.00** ✅ MAINTAINED & OPTIMIZED
 
-**StackTrackr v3.03.08n** is a fully-featured, client-side web application for tracking precious metal investments (Silver, Gold, Platinum, Palladium) with comprehensive inventory management, API integration, and complete backup capabilities. The 3.03.x series focuses on polish, maintenance, and optimization.
+**StackTrackr v3.04.00** is a fully-featured, client-side web application for tracking precious metal investments (Silver, Gold, Platinum, Palladium) with comprehensive inventory management, API integration, and complete backup capabilities. The 3.04.x series focuses on polish, maintenance, and optimization.
 
 
 ## 🏗️ Architecture Overview
@@ -25,6 +25,7 @@ The tool features a **modular JavaScript architecture** with separate files for 
 
 ## ✨ Latest Changes
 
+- **v3.04.00 - Inventory filter click & API cleanup**: Clickable table value filters and removed global API cache duration dropdown
 - **v3.03.08n - Inventory type filter**: Added type dropdown and dynamic metal options
 - **v3.03.08m - Inventory filter dropdown**: Added metal filter to inventory title bar for quick filtering
 - **v3.03.08l - Search fix & composition parsing**: Search input filters table in real time and Numista compositions truncate to two words
@@ -143,11 +144,11 @@ All data is stored locally in the browser using localStorage with:
 - ✅ Modern, responsive user interface
 - ✅ Complete documentation and error handling
 
-## 📚 Documentation Status (Updated: August 10, 2025)
+## 📚 Documentation Status (Updated: August 11, 2025)
 
 **All documentation files are current and synchronized:**
-  - ✅ **status.md** - Updated for v3.03.08n release
-  - ✅ **changelog.md** - Current through v3.03.08n
+  - ✅ **status.md** - Updated for v3.04.00 release
+  - ✅ **changelog.md** - Current through v3.04.00
 - ✅ **MULTI_AGENT_WORKFLOW.md** - Comprehensive AI assistant development guide
 - ✅ **structure.md** - Reflects streamlined project organization
 - ✅ **versioning.md** - Accurate version management documentation
@@ -195,6 +196,6 @@ StackTrackr/
 
 ---
 
-**Last Updated**: August 10, 2025
+**Last Updated**: August 11, 2025
 **Status**: ✅ COMPLETE - Stable release ready for production use
 **Documentation**: ✅ ALL FILES SYNCHRONIZED AND CURRENT

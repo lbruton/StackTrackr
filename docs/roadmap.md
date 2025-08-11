@@ -1,7 +1,8 @@
 # StackTrackr - Development Roadmap
 
-This roadmap outlines upcoming patch releases for the v3.03.x series.
+This roadmap outlines upcoming patch releases for the v3.04.x series.
 
+- **v3.04.00** – Inventory filter enhancements and API cleanup *(completed)*
 - **v3.03.07b** – Documentation normalization and reference cleanup *(completed)*
 - **v3.03.08a** – Version update changelog modal *(completed)*
 - **v3.03.08b** – Files modal storage breakdown removal *(completed)*
