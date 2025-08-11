@@ -335,7 +335,6 @@ document.addEventListener("DOMContentLoaded", () => {
       try {
         setupEventListeners();
         setupPagination();
-        setupSearch();
         setupThemeToggle();
         setupColumnResizing();
         debugLog("✓ All event listeners setup complete");
@@ -345,6 +344,9 @@ document.addEventListener("DOMContentLoaded", () => {
         // Try basic event setup as fallback
         setupBasicEventListeners();
       }
+
+      // Always set up search listeners
+      setupSearch();
     }, 200); // Increased delay for better compatibility
 
     // Phase 15: Completion

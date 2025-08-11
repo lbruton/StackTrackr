@@ -117,8 +117,21 @@ const addCompositionOption = (value) => {
  * @param {string} composition - Raw composition description
  * @returns {string} First word of the composition
  */
-const getCompositionFirstWord = (composition = "") => {
-  return composition.trim().split(/\s+/)[0].replace(/[(),]/g, "");
+/**
+ * Extracts up to the first two words from a composition string
+ * while removing parenthetical content and numeric values.
+ *
+ * @param {string} composition - Raw composition description
+ * @returns {string} First two cleaned words joined by a space
+ */
+const getCompositionFirstWords = (composition = "") => {
+  return composition
+    .replace(/\([^)]*\)/g, "") // remove parentheses and their contents
+    .replace(/\d+(\.\d+)?%?/g, "") // remove numbers and percentages
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .join(" ");
 };
 
 /**

@@ -1,11 +1,11 @@
 # Project Status - StackTrackr
 
 
-> **Latest release: v3.03.08k**
+> **Latest release: v3.03.08l**
 
-## 🎯 Current State: **BETA v3.03.08k** ✅ MAINTAINED & OPTIMIZED
+## 🎯 Current State: **BETA v3.03.08l** ✅ MAINTAINED & OPTIMIZED
 
-**StackTrackr v3.03.08k** is a fully-featured, client-side web application for tracking precious metal investments (Silver, Gold, Platinum, Palladium) with comprehensive inventory management, API integration, and complete backup capabilities. The 3.03.x series focuses on polish, maintenance, and optimization.
+**StackTrackr v3.03.08l** is a fully-featured, client-side web application for tracking precious metal investments (Silver, Gold, Platinum, Palladium) with comprehensive inventory management, API integration, and complete backup capabilities. The 3.03.x series focuses on polish, maintenance, and optimization.
 
 
 ## 🏗️ Architecture Overview
@@ -25,6 +25,7 @@ The tool features a **modular JavaScript architecture** with separate files for 
 
 ## ✨ Latest Changes
 
+- **v3.03.08l - Search fix & composition parsing**: Search input filters table in real time and Numista compositions truncate to two words
 - **v3.03.08k - Type dropdown and UI fixes**: Standardized type options, blank purchase locations, edit icon, and separate totals cards
 - **v3.03.08j - Composition display fix**: Composition column shows first word from imported data
 - **v3.03.08i - Numista import polish**: Unified changelog bullets, collectable default, weight rounding, N# notes, and beta warning
@@ -143,8 +144,8 @@ All data is stored locally in the browser using localStorage with:
 ## 📚 Documentation Status (Updated: August 10, 2025)
 
 **All documentation files are current and synchronized:**
- - ✅ **status.md** - Updated for v3.03.08k release
- - ✅ **changelog.md** - Current through v3.03.08k
+ - ✅ **status.md** - Updated for v3.03.08l release
+ - ✅ **changelog.md** - Current through v3.03.08l
 - ✅ **MULTI_AGENT_WORKFLOW.md** - Comprehensive AI assistant development guide
 - ✅ **structure.md** - Reflects streamlined project organization
 - ✅ **versioning.md** - Accurate version management documentation
@@ -153,8 +154,8 @@ All data is stored locally in the browser using localStorage with:
 
 If continuing development in a new chat session:
 
-1. **Current Version**: 3.03.08k (managed in `js/constants.js`)
-2. **Last Change**: Files modal storage breakdown removed
+1. **Current Version**: 3.03.08l (managed in `js/constants.js`)
+2. **Last Change**: Search filters inventory in real time; Numista composition parsing improved
 3. **Last Documentation Update**: August 10, 2025 - All docs synchronized
 4. **Architecture**: Fully modular with proper separation of concerns
 5. **Documentation**: Comprehensive JSDoc comments throughout codebase
