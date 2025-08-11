@@ -1,3 +1,21 @@
+# Implementation Summary: Name Sanitization
+
+> **Latest release: v3.04.06**
+
+## Version Update: 3.04.05 → 3.04.06
+
+## User Requirements Implemented
+
+- Strip HTML tags and excess whitespace from imported text fields to stabilize table search
+
+## Technical Changes Made
+
+### Files Modified:
+1. **`js/utils.js`**: Expanded `sanitizeImportedItem` to remove HTML tags, diacritics, and collapse whitespace
+2. **`js/inventory.js`**: Sanitizes loaded inventory records with `sanitizeImportedItem`
+3. **`js/constants.js`**: Bumped version to 3.04.06
+4. **Documentation**: Updated changelog, status, roadmap, structure, function table, and version references
+
 # Implementation Summary: Search Sanitization
 
 > **Latest release: v3.04.05**

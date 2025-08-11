@@ -1,12 +1,14 @@
 # StackTrackr — Changelog
 
-> **Latest release: v3.04.05**
+> **Latest release: v3.04.06**
 
 
 For upcoming work, see [roadmap](roadmap.md).
 
 ## 📋 Version History
 
+### Version 3.04.06 – Name sanitization (2025-08-11)
+- Strip HTML tags and excess whitespace from imported text fields to stabilize table search
 
 ### Version 3.04.05 – Search sanitization (2025-08-11)
 - Escaped table cell values and search input to prevent search corruption
