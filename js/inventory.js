@@ -547,10 +547,24 @@ const getColor = (map, key) => {
   return `hsl(${map[key]}, 70%, ${lightness}%)`;
 };
 
+/**
+ * Escapes special characters for safe inclusion in HTML attributes
+ * @param {string} text - Text to escape
+ * @returns {string} Escaped text safe for attribute usage
+ */
+const escapeAttribute = (text) =>
+  text
+    .toString()
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+
 const filterLink = (field, value, color, displayValue = value) => {
   const handler = `applyColumnFilter('${field}', ${JSON.stringify(value)})`;
-  // Escape double quotes for safe inline handler usage
-  const escaped = handler.replace(/"/g, '&quot;');
+  // Escape characters for safe inline handler usage
+  const escaped = escapeAttribute(handler);
   const safe = sanitizeHtml(String(displayValue));
   return `<span class="filter-text" style="color: ${color};" onclick="${escaped}" tabindex="0" role="button" onkeydown="if(event.key==='Enter'||event.key===' ')${escaped}" title="Filter by ${safe}">${safe}</span>`;
 };

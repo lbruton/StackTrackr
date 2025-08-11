@@ -67,7 +67,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const input = document.getElementById('searchInput');
   if (input) {
     input.addEventListener('input', (e) => {
-      searchQuery = e.target.value.trim();
+      searchQuery = e.target.value.replace(/[<>]/g, '').trim();
       currentPage = 1;
       renderTable();
     });

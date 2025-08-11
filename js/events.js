@@ -1359,7 +1359,7 @@ const setupSearch = () => {
         elements.searchInput,
         "input",
         function () {
-          searchQuery = this.value.trim();
+          searchQuery = this.value.replace(/[<>]/g, '').trim();
           currentPage = 1; // Reset to first page when search changes
           renderTable();
         },
