@@ -1,11 +1,14 @@
 # StackTrackr — Changelog
 
-> **Latest release: v3.04.06**
+> **Latest release: v3.04.07**
 
 
 For upcoming work, see [roadmap](roadmap.md).
 
 ## 📋 Version History
+
+### Version 3.04.07 – Data sanitization on load (2025-08-11)
+- Strip non-alphanumeric characters from inventory and Numista data during initialization
 
 ### Version 3.04.06 – Name sanitization (2025-08-11)
 - Strip HTML tags and excess whitespace from imported text fields to stabilize table search

@@ -402,6 +402,31 @@ const convertToUsd = (amount, currency = "USD") => {
 };
 
 /**
+ * Removes all non-alphanumeric characters from a string, preserving spaces.
+ *
+ * @param {string} str - Input string
+ * @returns {string} Cleaned string containing only letters, numbers, and spaces
+ */
+const stripNonAlphanumeric = (str = "") =>
+  str.toString().replace(/[^a-zA-Z0-9 ]/g, "");
+
+/**
+ * Sanitizes all string properties of an object by stripping non-alphanumeric characters.
+ *
+ * @param {Object} obj - Object whose string fields will be sanitized
+ * @returns {Object} New object with sanitized string fields
+ */
+const sanitizeObjectFields = (obj) => {
+  const cleaned = { ...obj };
+  for (const key of Object.keys(cleaned)) {
+    if (typeof cleaned[key] === "string") {
+      cleaned[key] = stripNonAlphanumeric(cleaned[key]);
+    }
+  }
+  return cleaned;
+};
+
+/**
  * Allowed inventory item types
  * @constant {string[]}
  */
@@ -593,7 +618,7 @@ const sanitizeImportedItem = (item) => {
     sanitized.totalPremium = 0;
   }
 
-  return sanitized;
+  return sanitizeObjectFields(sanitized);
 };
 
 /**

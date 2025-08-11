@@ -1,7 +1,7 @@
 # Function Reference
 
 
-> **Latest release: v3.04.06**
+> **Latest release: v3.04.07**
 
 
 | File | Function | Description |
@@ -94,6 +94,7 @@
 | inventory.js | generateBackupHtml | Generates HTML content for backup export |
 | inventory.js | generateReadmeContent | Generates README content for backup archive |
 | inventory.js | saveInventory | Saves current inventory to localStorage |
+| inventory.js | sanitizeTablesOnLoad | Removes non-alphanumeric characters from inventory records and cached Numista data |
 | inventory.js | loadInventory | Loads inventory from localStorage with comprehensive data migration |
 | inventory.js | getNextSerial | Generates a unique serial number for inventory items |
 | inventory.js | getColor |  |
@@ -155,6 +156,8 @@
 | utils.js | sanitizeHtml | Sanitizes text input for safe HTML display |
 | utils.js | gramsToOzt | Converts grams to troy ounces (ozt) |
 | utils.js | convertToUsd | Converts amount from specified currency to USD using static rates |
+| utils.js | stripNonAlphanumeric | Removes all characters except letters, numbers, and spaces |
+| utils.js | sanitizeObjectFields | Strips non-alphanumeric characters from all string properties in an object |
 | utils.js | normalizeType | Ensures item type matches predefined options (Coin, Bar, Round, Note, Aurum, Other) |
 | utils.js | mapNumistaType | Maps Numista type strings to internal categories (Coin, Bar, Round, Note, Aurum, Other) |
 | utils.js | parseNumistaMetal | Parses composition into Silver, Gold, Platinum, Palladium, Paper, or Alloy |
@@ -163,7 +166,7 @@
 | utils.js | loadData | Loads data from localStorage with error handling |
 | utils.js | sortInventoryByDateNewestFirst | Sorts inventory by date (newest first) |
 | utils.js | validateInventoryItem | Validates inventory item data |
-| utils.js | sanitizeImportedItem | Coerces invalid imported fields to safe defaults and strips HTML, diacritics, and unsafe characters |
+| utils.js | sanitizeImportedItem | Coerces invalid imported fields to safe defaults and strips HTML, diacritics, and non-alphanumeric characters |
 | utils.js | handleError | Handles errors with user-friendly messaging |
 | utils.js | getUserFriendlyMessage | Converts technical error messages to user-friendly ones |
 | utils.js | downloadFile | Downloads a file with the specified content and filename |

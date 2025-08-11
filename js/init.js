@@ -307,6 +307,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Load data
     loadInventory();
+    if (typeof sanitizeTablesOnLoad === "function") {
+      sanitizeTablesOnLoad();
+    }
     inventory.forEach((i) => addCompositionOption(i.composition || i.metal));
     refreshCompositionOptions();
     loadSpotHistory();

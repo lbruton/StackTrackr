@@ -435,6 +435,27 @@ const saveInventory = () => {
 };
 
 /**
+ * Removes non-alphanumeric characters from inventory records and cached Numista data.
+ *
+ * @returns {void}
+ */
+const sanitizeTablesOnLoad = () => {
+  inventory = inventory.map(item => sanitizeObjectFields(item));
+
+  const rawCsv = localStorage.getItem(NUMISTA_RAW_KEY);
+  if (rawCsv) {
+    try {
+      const parsed = Papa.parse(rawCsv, { header: true, skipEmptyLines: true });
+      const cleanedRows = parsed.data.map(row => sanitizeObjectFields(row));
+      const sanitizedCsv = Papa.unparse(cleanedRows);
+      localStorage.setItem(NUMISTA_RAW_KEY, sanitizedCsv);
+    } catch (err) {
+      console.warn('Failed to sanitize Numista table', err);
+    }
+  }
+};
+
+/**
  * Loads inventory from localStorage with comprehensive data migration
  * 
  * This function handles backwards compatibility by:
