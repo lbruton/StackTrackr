@@ -943,7 +943,7 @@ const setupEventListeners = () => {
         elements.numistaExportBtn,
         "click",
         exportNumistaCsv,
-        "Numista CSV export",
+        "Numista Export CSV",
       );
     }
     if (elements.cloudSyncBtn) {

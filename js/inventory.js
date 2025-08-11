@@ -1276,66 +1276,79 @@ const importNumistaCsv = (file) => {
 };
 
 /**
- * Exports inventory data to a Numista compatible CSV format
+ * Exports current inventory data to a Numista compatible CSV file.
+ *
+ * Numista expects a very specific column layout. This exporter generates the
+ * following columns in order:
+ * N# number, Title, Year, Metal, Quantity, Type, Weight (g), Buying price (USD),
+ * Acquisition place, Storage location, Acquisition date, Note.
+ *
+ * Weight values are converted from troy ounces (internal representation) to
+ * grams. Buying price pulls from `purchasePrice` when available and falls back
+ * to `price`.
+ *
+ * @returns {void} Triggers download of the generated CSV file
  */
 const exportNumistaCsv = () => {
-  const timestamp = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+  const timestamp = new Date().toISOString().slice(0, 10).replace(/-/g, "");
   const headers = [
-    'N# number',
-    'Title',
-    'Year',
-    'Metal',
-    'Quantity',
-    'Type',
-    'Weight (g)',
-    'Buying price (USD)',
-    'Acquisition place',
-    'Storage location',
-    'Acquisition date',
-    'Note'
+    "N# number",
+    "Title",
+    "Year",
+    "Metal",
+    "Quantity",
+    "Type",
+    "Weight (g)",
+    "Buying price (USD)",
+    "Acquisition place",
+    "Storage location",
+    "Acquisition date",
+    "Note",
   ];
 
   const sortedInventory = sortInventoryByDateNewestFirst();
   const rows = [];
 
   for (const item of sortedInventory) {
-    let title = item.name || '';
-    let year = item.issuedYear || '';
+    const year = item.issuedYear || "";
+    let title = item.name || "";
     if (year) {
       const yearRegex = new RegExp(`\\s*${year}\\b`);
-      title = title.replace(yearRegex, '').trim();
+      title = title.replace(yearRegex, "").trim();
     }
 
     const weightGrams = parseFloat(item.weight)
       ? parseFloat(item.weight) * 31.1034768
       : 0;
+    const purchasePrice = item.purchasePrice ?? item.price;
 
     rows.push([
-      item.numistaId || '',
+      item.numistaId || "",
       title,
       year,
-      item.metal || '',
-      item.qty || '',
-      item.type || '',
-      weightGrams ? weightGrams.toFixed(2) : '',
-      (item.purchasePrice ?? item.price) ? Number(item.purchasePrice ?? item.price).toFixed(2) : '',
-      item.purchaseLocation || '',
-      item.storageLocation || '',
-      item.date || '',
-      item.notes || ''
+      item.metal || "",
+      item.qty || "",
+      item.type || "",
+      weightGrams ? weightGrams.toFixed(2) : "",
+      purchasePrice != null ? Number(purchasePrice).toFixed(2) : "",
+      item.purchaseLocation || "",
+      item.storageLocation || "",
+      item.date || "",
+      item.notes || "",
     ]);
   }
 
   const csv = Papa.unparse([headers, ...rows]);
-  const blob = new Blob([csv], { type: 'text/csv' });
+  const blob = new Blob([csv], { type: "text/csv" });
   const url = URL.createObjectURL(blob);
 
-  const a = document.createElement('a');
+  const a = document.createElement("a");
   a.href = url;
   a.download = `numista_export_${timestamp}.csv`;
   document.body.appendChild(a);
   a.click();
-  a.remove();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 };
 
 /**
