@@ -1085,8 +1085,31 @@ input[type="submit"] {
   gap: var(--spacing);
 }
 
-#filesModal .settings-section {
-  margin-top: 0;
+
+.settings-card-grid {
+  display: grid;
+  gap: var(--spacing);
+}
+
+@media (min-width: 600px) {
+  .settings-card-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.settings-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing);
+}
+
+.settings-card:hover {
+  box-shadow: var(--shadow-lg);
 }
 
 /* Cloud Sync modal layout */
@@ -2362,7 +2385,6 @@ input:disabled + .slider {
    ============================================================================= */
 
 .boating-accident-section {
-  margin-top: var(--spacing-xl);
   text-align: center;
 }
 
