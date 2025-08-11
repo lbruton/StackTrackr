@@ -98,7 +98,7 @@ const createBackupZip = async () => {
         item.isCollectable ? 'N/A' : formatDollar(item.premiumPerOz),
         item.isCollectable ? 'N/A' : formatDollar(item.totalPremium),
         item.purchaseLocation,
-        item.storageLocation || 'Unknown',
+        item.storageLocation || '',
         item.notes || '',
         item.date,
         item.isCollectable ? 'Yes' : 'No'
@@ -124,7 +124,7 @@ const createBackupZip = async () => {
         item.isCollectable ? null : item.premiumPerOz,
         item.isCollectable ? null : item.totalPremium,
         item.purchaseLocation,
-        item.storageLocation || 'Unknown',
+        item.storageLocation || '',
         item.notes || '',
         item.date,
         item.isCollectable ? 'Yes' : 'No'
@@ -301,7 +301,7 @@ const generateBackupHtml = (sortedInventory, timeFormatted) => {
           <td>${parseFloat(item.weight).toFixed(2)}</td>
           <td>${formatDollar(item.price)}</td>
           <td>${item.purchaseLocation}</td>
-          <td>${item.storageLocation || 'Unknown'}</td>
+          <td>${item.storageLocation || ''}</td>
           <td>${item.notes || ''}</td>
           <td>${item.date}</td>
           <td>${item.isCollectable ? 'Yes' : 'No'}</td>
@@ -585,7 +585,7 @@ const renderTable = () => {
       <td class="shrink" data-column="spot">${item.isCollectable ? 'N/A' : (item.spotPriceAtPurchase > 0 ? formatDollar(item.spotPriceAtPurchase) : 'N/A')}</td>
       <td class="shrink" data-column="premium" style="color: ${item.isCollectable ? 'var(--text-muted)' : (item.totalPremium > 0 ? 'var(--warning)' : 'inherit')}">${item.isCollectable ? 'N/A' : formatDollar(item.totalPremium)}</td>
       <td class="shrink" data-column="purchaseLocation">${filterLink('purchaseLocation', item.purchaseLocation, getPurchaseLocationColor(item.purchaseLocation))}</td>
-      <td class="shrink" data-column="storageLocation">${filterLink('storageLocation', item.storageLocation || 'Unknown', getStorageLocationColor(item.storageLocation || 'Unknown'))}</td>
+      <td class="shrink" data-column="storageLocation">${item.storageLocation ? filterLink('storageLocation', item.storageLocation, getStorageLocationColor(item.storageLocation)) : ''}</td>
       <td class="shrink" data-column="collectable"><button type="button" class="btn action-btn collectable-btn ${item.isCollectable ? 'success' : ''}" onclick="toggleCollectable(${originalIdx})" aria-label="Toggle collectable status for ${sanitizeHtml(item.name)}" title="Toggle collectable status">${item.isCollectable ? 'Yes' : 'No'}</button></td>
       <td class="shrink" data-column="notes"><button type="button" class="btn action-btn notes-btn ${item.notes && item.notes.trim() ? 'success' : ''}" onclick="showNotes(${originalIdx})" aria-label="View notes" title="View notes">${item.notes && item.notes.trim() ? 'Yes' : 'No'}</button></td>
       <td class="shrink" data-column="delete"><button class="btn action-btn danger" onclick="deleteItem(${originalIdx})" aria-label="Delete item" title="Delete item">Delete</button></td>
@@ -881,7 +881,7 @@ const editItem = (idx, logIdx = null) => {
   elements.editName.value = item.name;
   elements.editQty.value = item.qty;
   elements.editType.value = item.type;
-  elements.editWeight.value = item.weight;
+  elements.editWeight.value = parseFloat(item.weight).toFixed(2);
   elements.editPrice.value = item.price;
   elements.editPurchaseLocation.value = item.purchaseLocation;
   elements.editStorageLocation.value = item.storageLocation || '';
@@ -997,6 +997,7 @@ const endImportProgress = () => {
  * - Spot Price ($/oz) for historical premium calculations
  * 
  * @param {File} file - CSV file selected by user through file input
+ * @param {boolean} [override=false] - Replace existing inventory instead of merging
  * @returns {void} Updates inventory array if import successful
  * 
  * @example
@@ -1008,7 +1009,7 @@ const endImportProgress = () => {
  *   }
  * });
  */
-const importCsv = (file) => {
+const importCsv = (file, override = false) => {
   try {
     Papa.parse(file, {
       header: true,
@@ -1033,7 +1034,7 @@ const importCsv = (file) => {
             : parseFloat(priceStr);
           if (price < 0) price = 0;
           const purchaseLocation = row['Purchase Location'] || 'Unknown';
-          const storageLocation = row['Storage Location'] || 'Unknown';
+          const storageLocation = row['Storage Location'] || '';
           const notes = row['Notes'] || '';
           const date = parseDate(row['Date']);
 
@@ -1057,6 +1058,8 @@ const importCsv = (file) => {
             premiumPerOz = pricePerOz - spotPriceAtPurchase;
             totalPremium = premiumPerOz * parseFloat(qty) * parseFloat(weight);
           }
+
+          addCompositionOption(metal);
 
           const item = sanitizeImportedItem({
             metal,
@@ -1084,7 +1087,6 @@ const importCsv = (file) => {
 
         if (imported.length === 0) return alert('No items to import.');
 
-        const override = confirm(`Import ${imported.length} items?\nOK = Override, Cancel = Merge`);
         if (override) {
           inventory = imported;
         } else {
@@ -1125,8 +1127,9 @@ const importCsv = (file) => {
  * - Notes appended with import source reference
  *
  * @param {File} file - CSV file from Numista
+ * @param {boolean} [override=false] - Replace existing inventory instead of merging
  */
-const importNumistaCsv = (file) => {
+const importNumistaCsv = (file, override = false) => {
   try {
     const reader = new FileReader();
     reader.onload = function(e) {
@@ -1159,10 +1162,15 @@ const importNumistaCsv = (file) => {
           const name = year.length >= 4 ? `${title} ${year}`.trim() : title;
           const issuedYear = year.length >= 4 ? year : '';
           const composition = getValue(row, ['Composition', 'Metal']) || '';
-          const metal = parseNumistaMetal(composition);
+          addCompositionOption(composition);
+          let metal = parseNumistaMetal(composition);
           const qty = parseInt(getValue(row, ['Quantity', 'Qty', 'Quantity owned']) || 1, 10);
 
-          const type = mapNumistaType(getValue(row, ['Type']) || '');
+          let type = mapNumistaType(getValue(row, ['Type']) || '');
+          if (metal === 'Paper' || composition.toLowerCase().startsWith('paper')) {
+            type = 'Note';
+            metal = 'Alloy';
+          }
 
           const weightCols = Object.keys(row).filter(k => { const key = k.toLowerCase(); return key.includes('weight') || key.includes('mass'); });
           let weightGrams = 0;
@@ -1170,7 +1178,7 @@ const importNumistaCsv = (file) => {
             const val = parseFloat(String(row[col]).replace(/[^0-9.]/g, ''));
             if (!isNaN(val)) weightGrams = Math.max(weightGrams, val);
           }
-          const weight = gramsToOzt(weightGrams);
+          const weight = parseFloat(gramsToOzt(weightGrams).toFixed(2));
 
           const priceKey = Object.keys(row).find(k => /^(buying price|purchase price|price paid)/i.test(k));
           let purchasePrice = 0;
@@ -1184,19 +1192,19 @@ const importNumistaCsv = (file) => {
           const purchaseLocRaw = getValue(row, ['Acquisition place', 'Acquired from', 'Purchase place']);
           const purchaseLocation = purchaseLocRaw && purchaseLocRaw.trim() ? purchaseLocRaw.trim() : 'unknown';
           const storageLocRaw = getValue(row, ['Storage location', 'Stored at', 'Storage place']);
-          const storageLocation = storageLocRaw && storageLocRaw.trim() ? storageLocRaw.trim() : 'unknown';
+          const storageLocation = storageLocRaw && storageLocRaw.trim() ? storageLocRaw.trim() : '';
 
           const dateStrRaw = getValue(row, ['Acquisition date', 'Date acquired', 'Date']);
           const dateStr = dateStrRaw && dateStrRaw.trim() ? dateStrRaw.trim() : todayStr();
           const date = parseDate(dateStr);
 
           const baseNote = (getValue(row, ['Note', 'Notes']) || '').trim();
-          const notes = `${baseNote ? baseNote + ' ' : ''}(Imported from Numista.com [${numistaId}])`;
+          const notes = `${baseNote ? baseNote + ' ' : ''}(Imported from Numista.com N#${numistaId})`;
 
-          const isCollectable = false;
-          const spotPriceAtPurchase = spotPrices[metal.toLowerCase()] || 0;
-          const premiumPerOz = weight ? purchasePrice / weight - spotPriceAtPurchase : 0;
-          const totalPremium = premiumPerOz * qty * weight;
+          const isCollectable = true;
+          const spotPriceAtPurchase = 0;
+          const premiumPerOz = 0;
+          const totalPremium = 0;
 
           const item = sanitizeImportedItem({
             metal,
@@ -1227,7 +1235,6 @@ const importNumistaCsv = (file) => {
 
         if (imported.length === 0) return alert('No items to import.');
 
-        const override = confirm(`Import ${imported.length} items?\nOK = Override, Cancel = Merge`);
         if (override) {
           inventory = imported;
         } else {
@@ -1285,7 +1292,7 @@ const exportCsv = () => {
       i.isCollectable ? 'N/A' : formatDollar(i.premiumPerOz),
       i.isCollectable ? 'N/A' : formatDollar(i.totalPremium),
       i.purchaseLocation,
-      i.storageLocation || 'Unknown',
+      i.storageLocation || '',
       i.notes || '',
       i.date,
       i.isCollectable ? 'Yes' : 'No'
@@ -1606,7 +1613,7 @@ const exportExcel = () => {
       i.isCollectable ? null : i.premiumPerOz,
       i.isCollectable ? null : i.totalPremium,
       i.purchaseLocation,
-      i.storageLocation || 'Unknown',
+      i.storageLocation || '',
       i.notes || '',
       i.date,
       i.isCollectable ? 'Yes' : 'No'
@@ -1654,7 +1661,7 @@ const exportPdf = () => {
     item.isCollectable ? 'N/A' : formatDollar(item.premiumPerOz),
     item.isCollectable ? 'N/A' : formatDollar(item.totalPremium),
     item.purchaseLocation,
-    item.storageLocation || 'Unknown',
+    item.storageLocation || '',
     item.notes || '',
     item.date,
     item.isCollectable ? 'Yes' : 'No'

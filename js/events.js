@@ -381,12 +381,13 @@ const setupEventListeners = () => {
           const name = elements.itemName.value.trim();
           const qty = parseInt(elements.itemQty.value, 10);
           const type = elements.itemType.value;
-          const weight = parseFloat(elements.itemWeight.value);
+          let weight = parseFloat(elements.itemWeight.value);
+          weight = isNaN(weight) ? 0 : parseFloat(weight.toFixed(2));
           const price = parseFloat(elements.itemPrice.value);
           const purchaseLocation =
             elements.purchaseLocation.value.trim() || "Unknown";
           const storageLocation =
-            elements.storageLocation.value.trim() || "Unknown";
+            elements.storageLocation.value.trim() || "";
           const notes = elements.itemNotes.value.trim() || "";
           const date = elements.itemDate.value || todayStr();
           const spotPriceInput = elements.itemSpotPrice.value.trim();
@@ -441,6 +442,8 @@ const setupEventListeners = () => {
             numistaId: "",
           });
 
+          addCompositionOption(metal);
+
           catalogMap[serial] = "";
           saveInventory();
           renderTable();
@@ -469,12 +472,13 @@ const setupEventListeners = () => {
           const name = elements.editName.value.trim();
           const qty = parseInt(elements.editQty.value, 10);
           const type = elements.editType.value;
-          const weight = parseFloat(elements.editWeight.value);
+          let weight = parseFloat(elements.editWeight.value);
+          weight = isNaN(weight) ? 0 : parseFloat(weight.toFixed(2));
           const price = parseFloat(elements.editPrice.value);
           const purchaseLocation =
             elements.editPurchaseLocation.value.trim() || "Unknown";
           const storageLocation =
-            elements.editStorageLocation.value.trim() || "Unknown";
+            elements.editStorageLocation.value.trim() || "";
           const notes = elements.editNotes.value.trim() || "";
           const date = elements.editDate.value;
 
@@ -540,6 +544,8 @@ const setupEventListeners = () => {
             isCollectable,
             numistaId: elements.editCatalog.value.trim(),
           };
+
+          addCompositionOption(metal);
 
           catalogMap[serial] = inventory[editingIndex].numistaId;
           saveInventory();
@@ -891,13 +897,51 @@ const setupEventListeners = () => {
     // IMPORT/EXPORT EVENT LISTENERS
     debugLog("Setting up import/export listeners...");
 
+    let csvImportOverride = false;
+    if (elements.importCsvBtn && elements.importCsvOptions) {
+      safeAttachListener(
+        elements.importCsvBtn,
+        "click",
+        () => elements.importCsvOptions.classList.toggle("show"),
+        "CSV import options toggle",
+      );
+    }
+    if (elements.importCsvOverride && elements.importCsvFile) {
+      safeAttachListener(
+        elements.importCsvOverride,
+        "click",
+        () => {
+          csvImportOverride = true;
+          elements.importCsvOptions.classList.remove("show");
+          elements.importCsvFile.click();
+        },
+        "CSV override option",
+      );
+    }
+    if (elements.importCsvMerge && elements.importCsvFile) {
+      safeAttachListener(
+        elements.importCsvMerge,
+        "click",
+        () => {
+          csvImportOverride = false;
+          elements.importCsvOptions.classList.remove("show");
+          elements.importCsvFile.click();
+        },
+        "CSV merge option",
+      );
+    }
     if (elements.importCsvFile) {
       safeAttachListener(
         elements.importCsvFile,
         "change",
         function (e) {
           if (e.target.files.length > 0) {
-            importCsv(e.target.files[0]);
+            const file = e.target.files[0];
+            if (!checkFileSize(file)) {
+              alert("File exceeds 2MB limit. Enable cloud backup for larger uploads.");
+            } else {
+              importCsv(file, csvImportOverride);
+            }
           }
           this.value = "";
         },
@@ -933,25 +977,55 @@ const setupEventListeners = () => {
       );
     }
 
+    let numistaOverride = false;
+    if (elements.numistaImportBtn && elements.numistaImportOptions) {
+      safeAttachListener(
+        elements.numistaImportBtn,
+        "click",
+        () => elements.numistaImportOptions.classList.toggle("show"),
+        "Numista import options toggle",
+      );
+    }
+    if (elements.numistaOverride && elements.numistaImportFile) {
+      safeAttachListener(
+        elements.numistaOverride,
+        "click",
+        () => {
+          numistaOverride = true;
+          elements.numistaImportOptions.classList.remove("show");
+          elements.numistaImportFile.click();
+        },
+        "Numista override option",
+      );
+    }
+    if (elements.numistaMerge && elements.numistaImportFile) {
+      safeAttachListener(
+        elements.numistaMerge,
+        "click",
+        () => {
+          numistaOverride = false;
+          elements.numistaImportOptions.classList.remove("show");
+          elements.numistaImportFile.click();
+        },
+        "Numista merge option",
+      );
+    }
     if (elements.numistaImportFile) {
       safeAttachListener(
         elements.numistaImportFile,
         "change",
         function (e) {
           if (e.target.files.length > 0) {
-            importNumistaCsv(e.target.files[0]);
+            const file = e.target.files[0];
+            if (!checkFileSize(file)) {
+              alert("File exceeds 2MB limit. Enable cloud backup for larger uploads.");
+            } else {
+              importNumistaCsv(file, numistaOverride);
+            }
           }
           this.value = "";
         },
         "Numista CSV import",
-      );
-    }
-    if (elements.numistaImportBtn && elements.numistaImportFile) {
-      safeAttachListener(
-        elements.numistaImportBtn,
-        "click",
-        () => elements.numistaImportFile.click(),
-        "Numista import trigger",
       );
     }
 
@@ -1053,6 +1127,39 @@ const setupEventListeners = () => {
         "click",
         () => (elements.cloudSyncModal.style.display = "none"),
         "Cloud Sync close",
+      );
+    }
+
+    // Remove Inventory Data Button
+    if (elements.removeInventoryDataBtn) {
+      safeAttachListener(
+        elements.removeInventoryDataBtn,
+        "click",
+        function () {
+          if (confirm("Remove all inventory items? This cannot be undone.")) {
+            localStorage.removeItem(LS_KEY);
+            loadInventory();
+            renderTable();
+            alert("Inventory data cleared.");
+          }
+        },
+        "Remove inventory data button",
+      );
+    }
+
+    // Clear Numista Cache Button
+    if (elements.clearNumistaCacheBtn) {
+      safeAttachListener(
+        elements.clearNumistaCacheBtn,
+        "click",
+        function () {
+          if (confirm("Clear Numista cache?")) {
+            localStorage.removeItem('numista-cache');
+            alert("Numista cache cleared.");
+            elements.clearNumistaCacheBtn.style.display = 'none';
+          }
+        },
+        "Clear Numista cache button",
       );
     }
 

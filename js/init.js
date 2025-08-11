@@ -85,13 +85,20 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Import/Export elements
     debugLog("Phase 3: Initializing import/export elements...");
+    elements.importCsvBtn = safeGetElement("importCsvBtn");
     elements.importCsvFile = safeGetElement("importCsvFile");
+    elements.importCsvOverride = safeGetElement("importCsvOverride");
+    elements.importCsvMerge = safeGetElement("importCsvMerge");
+    elements.importCsvOptions = safeGetElement("importCsvOptions");
     elements.importJsonFile = safeGetElement("importJsonFile");
     elements.importExcelFile = safeGetElement("importExcelFile");
     elements.importProgress = safeGetElement("importProgress");
     elements.importProgressText = safeGetElement("importProgressText");
     elements.numistaImportBtn = safeGetElement("numistaImportBtn");
     elements.numistaImportFile = safeGetElement("numistaImportFile");
+    elements.numistaOverride = safeGetElement("numistaOverride");
+    elements.numistaMerge = safeGetElement("numistaMerge");
+    elements.numistaImportOptions = safeGetElement("numistaImportOptions");
     elements.exportCsvBtn = safeGetElement("exportCsvBtn");
     elements.exportJsonBtn = safeGetElement("exportJsonBtn");
     elements.exportExcelBtn = safeGetElement("exportExcelBtn");
@@ -101,6 +108,8 @@ document.addEventListener("DOMContentLoaded", () => {
     elements.addMappingBtn = safeGetElement("addMappingBtn");
     elements.applyMappingsBtn = safeGetElement("applyMappingsBtn");
     elements.clearMappingsBtn = safeGetElement("clearMappingsBtn");
+    elements.removeInventoryDataBtn = safeGetElement("removeInventoryDataBtn");
+    elements.clearNumistaCacheBtn = safeGetElement("clearNumistaCacheBtn");
     elements.boatingAccidentBtn = safeGetElement("boatingAccidentBtn");
 
     // Modal elements
@@ -298,6 +307,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Load data
     loadInventory();
+    inventory.forEach((i) => addCompositionOption(i.metal));
+    refreshCompositionOptions();
     loadSpotHistory();
 
     // Initialize API system

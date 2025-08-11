@@ -32,6 +32,9 @@ let chartInstances = {
   apiHistoryChartPalladium: null,
 };
 
+/** @type {Set<string>} Available composition options */
+let compositionOptions = new Set(["Gold", "Silver", "Platinum", "Palladium", "Alloy"]);
+
 /** @type {Object} Cached DOM elements for performance */
 const elements = {
   // Spot price elements
@@ -63,13 +66,20 @@ const elements = {
   resetSpotBtnGold: null,
 
   // Import elements
+  importCsvBtn: null,
   importCsvFile: null,
+  importCsvOverride: null,
+  importCsvMerge: null,
+  importCsvOptions: null,
   importJsonFile: null,
   importExcelFile: null,
   importProgress: null,
   importProgressText: null,
   numistaImportBtn: null,
   numistaImportFile: null,
+  numistaOverride: null,
+  numistaMerge: null,
+  numistaImportOptions: null,
 
   // Export elements
   exportCsvBtn: null,
@@ -85,6 +95,8 @@ const elements = {
   clearMappingsBtn: null,
 
   // Emergency reset button
+  removeInventoryDataBtn: null,
+  clearNumistaCacheBtn: null,
   boatingAccidentBtn: null,
 
   // Edit modal elements

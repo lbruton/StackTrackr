@@ -412,7 +412,7 @@
             <tr>
               <th class="shrink" data-column="date">Date</th>
               <th class="shrink" data-column="type">Type</th>
-              <th class="shrink" data-column="metal">Metal</th>
+              <th class="shrink" data-column="metal">Composition</th>
               <th class="expand" data-column="name">Name</th>
               <th class="shrink" data-column="qty">Qty</th>
               <th class="shrink" data-column="weight">Weight<br />(oz)</th>
@@ -428,24 +428,27 @@
           </thead>
           <tbody></tbody>
         </table>
-          <div class="table-controls">
-            <span id="changeLogBtn" class="change-log-label">Change Log</span>
-            <span class="table-disclaimer"
-              >All data is stored locally. Back up often.</span
-            >
-            <div class="items-per-page">
-              <span class="items-label">Items:</span>
-              <select class="pagination-select" id="itemsPerPage">
-                <option selected value="10">10</option>
-                <option value="15">15</option>
-                <option value="25">25</option>
-                <option value="50">50</option>
-                <option value="100">100</option>
-              </select>
-            </div>
+      </section>
+      <section class="table-controls-section">
+        <div class="table-controls">
+          <span id="changeLogBtn" class="change-log-label">Change Log</span>
+          <span class="table-disclaimer"
+            >All data is stored locally. Back up often.</span
+          >
+          <div class="items-per-page">
+            <span class="items-label">Items:</span>
+            <select class="pagination-select" id="itemsPerPage">
+              <option selected value="10">10</option>
+              <option value="15">15</option>
+              <option value="25">25</option>
+              <option value="50">50</option>
+              <option value="100">100</option>
+            </select>
           </div>
-        <!-- Pagination Controls -->
-        <section class="pagination-section">
+        </div>
+      </section>
+      <!-- Pagination Controls -->
+      <section class="pagination-section">
           <div class="pagination-container">
             <div class="pagination-controls">
               <div class="pagination-buttons">
@@ -477,8 +480,6 @@
               </div>
             </div>
           </div>
-        </section>
-      </section>
       </section>
       <!-- =============================================================================
          TOTALS SECTION
@@ -753,7 +754,7 @@
           <form id="inventoryForm">
             <div class="grid grid-2">
               <div>
-                <label for="itemMetal">Metal</label>
+                <label for="itemMetal">Composition</label>
                 <select id="itemMetal">
                   <option value="Silver">Silver</option>
                   <option value="Gold">Gold</option>
@@ -875,7 +876,7 @@
           <!-- First row of edit form fields -->
           <div class="grid grid-2">
             <div>
-              <label for="editMetal">Metal</label>
+                <label for="editMetal">Composition</label>
               <select id="editMetal">
                 <option value="Silver">Silver</option>
                 <option value="Gold">Gold</option>
@@ -1337,7 +1338,7 @@
           <div class="about-info-grid">
             <div class="about-section">
               <div class="section-title">🚀 What's New</div>
-              <div id="versionChanges"></div>
+              <ul id="versionChanges" class="changelog-list"></ul>
             </div>
 
             <div class="about-section">
@@ -1433,10 +1434,16 @@
               <p class="settings-subtext">Import your data files.</p>
               <div class="import-block">
                 <div class="import-export-grid">
-                  <label class="btn" id="importCsvBtn">
-                    Import CSV <span class="import-icon">⬇️</span>
+                  <div class="import-dropdown-wrapper">
+                    <button class="btn" id="importCsvBtn">
+                      Import CSV <span class="import-icon">⬇️</span>
+                    </button>
+                    <div class="import-dropdown" id="importCsvOptions">
+                      <button class="btn" id="importCsvOverride">Override</button>
+                      <button class="btn" id="importCsvMerge">Merge</button>
+                    </div>
                     <input accept=".csv" hidden id="importCsvFile" type="file" />
-                  </label>
+                  </div>
                   <label class="btn" id="importJsonBtn">
                     Import JSON <span class="import-icon">⬇️</span>
                     <input accept=".json" hidden id="importJsonFile" type="file" />
@@ -1488,8 +1495,15 @@
               <p class="settings-subtext">Connect with external services like Numista.</p>
               <div class="third-party-block">
                 <div class="import-export-grid">
-                  <button class="btn" id="numistaImportBtn">Import from Numista</button>
+                  <div class="import-dropdown-wrapper">
+                    <button class="btn" id="numistaImportBtn">Import from Numista</button>
+                    <div class="import-dropdown" id="numistaImportOptions">
+                      <button class="btn" id="numistaOverride">Override</button>
+                    <button class="btn" id="numistaMerge">Merge</button>
+                  </div>
                   <input type="file" id="numistaImportFile" accept=".csv" hidden />
+                    <div class="beta-warning">⚠️ Numista import is a beta feature</div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1507,13 +1521,24 @@
             </div>
 
             <div class="settings-card boating-accident-section">
-              <h3>Clear All Data</h3>
-              <p class="settings-subtext">Clear all data from the app.</p>
+              <h3>Clear Data</h3>
+              <p class="settings-subtext">Manage local application data.</p>
               <div class="backup-buttons">
+                <button class="btn warning" id="removeInventoryDataBtn">
+                  Remove Inventory Data
+                </button>
+                <button class="btn warning" id="clearNumistaCacheBtn" style="display:none">
+                  Clear Numista Cache
+                </button>
                 <button class="btn danger" id="boatingAccidentBtn">
                   🏴‍☠️ So, you've been in a boating accident? 🏴‍☠️
                 </button>
               </div>
+            </div>
+
+            <div class="settings-card">
+              <h3>Backup/Restore</h3>
+              <p class="settings-subtext">Coming Soon</p>
             </div>
           </div>
         </div>

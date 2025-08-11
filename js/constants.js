@@ -98,7 +98,7 @@ const API_PROVIDERS = {
  * State codes: a=alpha, b=beta, rc=release candidate
  * Example: 3.03.02a → branch 3, release 03, patch 02, alpha
  */
-const APP_VERSION = "3.03.08g";
+const APP_VERSION = "3.03.08i";
 
 /**
  * Returns formatted version string
@@ -107,6 +107,12 @@ const APP_VERSION = "3.03.08g";
  * @returns {string} Formatted version string (e.g., "v3.03.07b")
  */
 const getVersionString = (prefix = "v") => `${prefix}${APP_VERSION}`;
+
+/** Maximum upload size in bytes for local imports (2MB) */
+const MAX_LOCAL_FILE_SIZE = 2 * 1024 * 1024;
+
+/** Flag indicating whether cloud backup is enabled */
+let cloudBackupEnabled = false;
 
 /**
  * Inserts formatted version string into a target element
