@@ -1321,10 +1321,45 @@ const setupPagination = () => {
 };
 
 /**
+ * Populates type and metal filter dropdowns based on current inventory
+ */
+const populateFilterOptions = () => {
+  if (elements.metalFilter) {
+    const selected = elements.metalFilter.value;
+    const metals = [
+      ...new Set(
+        inventory.map((i) =>
+          getCompositionFirstWords(i.composition || i.metal || ""),
+        ),
+      ),
+    ]
+      .filter(Boolean)
+      .sort();
+    elements.metalFilter.innerHTML =
+      '<option value="">All Metals</option>' +
+      metals.map((m) => `<option value="${m}">${m}</option>`).join("");
+    elements.metalFilter.value = selected;
+  }
+
+  if (elements.typeFilter) {
+    const selected = elements.typeFilter.value;
+    const types = [...new Set(inventory.map((i) => i.type))]
+      .filter(Boolean)
+      .sort();
+    elements.typeFilter.innerHTML =
+      '<option value="">All Types</option>' +
+      types.map((t) => `<option value="${t}">${t}</option>`).join("");
+    elements.typeFilter.value = selected;
+  }
+};
+
+/**
  * Sets up search event listeners
  */
 const setupSearch = () => {
   debugLog("Setting up search listeners...");
+
+  populateFilterOptions();
 
   try {
     if (elements.searchInput) {
@@ -1340,6 +1375,46 @@ const setupSearch = () => {
       );
     }
 
+    if (elements.typeFilter) {
+      safeAttachListener(
+        elements.typeFilter,
+        "change",
+        function () {
+          const value = this.value;
+          if (value) {
+            columnFilters.type = value;
+          } else {
+            delete columnFilters.type;
+          }
+          searchQuery = "";
+          if (elements.searchInput) elements.searchInput.value = "";
+          currentPage = 1;
+          renderTable();
+        },
+        "Type filter select",
+      );
+    }
+
+    if (elements.metalFilter) {
+      safeAttachListener(
+        elements.metalFilter,
+        "change",
+        function () {
+          const value = this.value;
+          if (value) {
+            columnFilters.composition = value;
+          } else {
+            delete columnFilters.composition;
+          }
+          searchQuery = "";
+          if (elements.searchInput) elements.searchInput.value = "";
+          currentPage = 1;
+          renderTable();
+        },
+        "Metal filter select",
+      );
+    }
+
     if (elements.clearSearchBtn) {
       safeAttachListener(
         elements.clearSearchBtn,
@@ -1347,6 +1422,12 @@ const setupSearch = () => {
         function () {
           if (elements.searchInput) {
             elements.searchInput.value = "";
+          }
+          if (elements.typeFilter) {
+            elements.typeFilter.value = "";
+          }
+          if (elements.metalFilter) {
+            elements.metalFilter.value = "";
           }
           searchQuery = "";
           columnFilters = {};

@@ -154,6 +154,8 @@ const elements = {
 
   // Search elements
   searchInput: null,
+  typeFilter: null,
+  metalFilter: null,
   clearSearchBtn: null,
   newItemBtn: null,
   searchResultsInfo: null,

@@ -1,7 +1,7 @@
 # Function Reference
 
 
-> **Latest release: v3.03.08l**
+ > **Latest release: v3.03.08n**
 
 
 | File | Function | Description |
@@ -79,6 +79,7 @@
 | events.js | setupEventListeners | Sets up all primary event listeners for the application |
 | events.js | updateThemeDisplay |  |
 | events.js | setupPagination | Sets up pagination event listeners |
+| events.js | populateFilterOptions | Populates type and metal filter dropdowns |
 | events.js | setupSearch | Sets up search event listeners |
 | events.js | setupThemeToggle | Sets up theme toggle event listeners |
 | events.js | setupApiEvents | Sets up API-related event listeners |
