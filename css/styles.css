@@ -1517,7 +1517,7 @@ th {
   color: var(--text-primary);
   font-weight: 600;
   padding: 0.375rem 0.25rem; /* Reduced padding for narrower rows */
-  text-align: left;
+  text-align: center;
   cursor: pointer;
   position: relative;
   border-bottom: 2px solid var(--border);
@@ -1617,6 +1617,22 @@ td .action-btn {
   margin: 1px auto;
   display: flex;
   justify-content: center;
+}
+
+td .action-icon {
+  width: 4.5rem;
+  margin: 1px auto;
+  display: flex;
+  justify-content: center;
+  cursor: pointer;
+}
+
+td .action-icon.danger {
+  color: var(--danger);
+}
+
+td .action-icon.success {
+  color: var(--success);
 }
 
 td .filter-text {
@@ -2831,6 +2847,9 @@ input:disabled + .slider {
     min-height: 1.5rem;
   }
   td .action-btn {
+    width: 4rem;
+  }
+  td .action-icon {
     width: 4rem;
   }
 

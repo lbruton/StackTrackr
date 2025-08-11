@@ -384,11 +384,12 @@ const setupEventListeners = () => {
           const type = elements.itemType.value;
           let weight = parseFloat(elements.itemWeight.value);
           weight = isNaN(weight) ? 0 : parseFloat(weight.toFixed(2));
-          const price = parseFloat(elements.itemPrice.value);
+          let price = parseFloat(elements.itemPrice.value);
+          price = isNaN(price) || price < 0 ? 0 : price;
           const purchaseLocation =
             elements.purchaseLocation.value.trim() || "";
           const storageLocation =
-            elements.storageLocation.value.trim() || "";
+            elements.storageLocation.value.trim() || "Unknown";
           const notes = elements.itemNotes.value.trim() || "";
           const date = elements.itemDate.value || todayStr();
           const spotPriceInput = elements.itemSpotPrice.value.trim();
@@ -399,9 +400,7 @@ const setupEventListeners = () => {
             qty < 1 ||
             !Number.isInteger(qty) ||
             isNaN(weight) ||
-            weight <= 0 ||
-            isNaN(price) ||
-            price < 0
+            weight <= 0
           ) {
             return alert("Please enter valid values for all fields.");
           }
@@ -478,11 +477,12 @@ const setupEventListeners = () => {
           const type = elements.editType.value;
           let weight = parseFloat(elements.editWeight.value);
           weight = isNaN(weight) ? 0 : parseFloat(weight.toFixed(2));
-          const price = parseFloat(elements.editPrice.value);
+          let price = parseFloat(elements.editPrice.value);
+          price = isNaN(price) || price < 0 ? 0 : price;
           const purchaseLocation =
             elements.editPurchaseLocation.value.trim() || "";
           const storageLocation =
-            elements.editStorageLocation.value.trim() || "";
+            elements.editStorageLocation.value.trim() || "Unknown";
           const notes = elements.editNotes.value.trim() || "";
           const date = elements.editDate.value;
 
@@ -508,8 +508,6 @@ const setupEventListeners = () => {
             !Number.isInteger(qty) ||
             isNaN(weight) ||
             weight <= 0 ||
-            isNaN(price) ||
-            price < 0 ||
             (!isCollectable &&
               (isNaN(spotPriceAtPurchase) || spotPriceAtPurchase <= 0))
           ) {
