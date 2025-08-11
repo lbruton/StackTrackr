@@ -66,13 +66,14 @@ const elements = {
   importExcelFile: null,
   importProgress: null,
   importProgressText: null,
+  numistaImportBtn: null,
+  numistaImportFile: null,
 
   // Export elements
   exportCsvBtn: null,
   exportJsonBtn: null,
   exportExcelBtn: null,
   exportPdfBtn: null,
-  numistaExportBtn: null,
   cloudSyncBtn: null,
   syncAllBtn: null,
 
