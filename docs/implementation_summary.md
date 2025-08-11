@@ -1,4 +1,4 @@
-# Implementation Summary: Table Controls & Import Options
+# Implementation Summary: Numista Import Polish
 
 > **Latest release: v3.03.08i**
 
@@ -27,6 +27,10 @@
 - Consistent bullet styling across modals
 - Numista imports clearly marked beta and treated as collectables
 - Weight fields display values rounded to two decimals
+
+# Implementation Summary: Table Controls & Import Options
+
+> **Latest release: v3.03.08h**
 
 ## Version Update: 3.03.08g → 3.03.08h
 

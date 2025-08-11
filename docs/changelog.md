@@ -11,7 +11,6 @@ For upcoming work, see [roadmap](roadmap.md).
 - Numista imports default to collectable with N# note
 - Weight inputs round to two decimals
 - Numista import button includes beta warning
-
 ### Version 3.03.08h – UI compactness & import options (2025-08-10)
 - Moved change log, disclaimer, and items selector into a compact section below the table
 - Pagination controls slimmed down with uniform buttons
