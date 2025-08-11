@@ -158,6 +158,22 @@ const getCompositionFirstWords = (composition = "") => {
 };
 
 /**
+ * Determines display-friendly composition text.
+ *
+ * Returns "Alloy" when the first word isn't one of the primary metals
+ * (Gold, Silver, Platinum, Palladium).
+ *
+ * @param {string} composition - Raw composition description
+ * @returns {string} Display text for the composition
+ */
+const getDisplayComposition = (composition = "") => {
+  const firstWords = getCompositionFirstWords(composition);
+  const first = firstWords.split(/\s+/)[0] || "";
+  const metals = ["gold", "silver", "platinum", "palladium"];
+  return metals.includes(first.toLowerCase()) ? firstWords : "Alloy";
+};
+
+/**
  * Builds two-line HTML showing source and last sync info for a metal
  *
  * @param {string} metalName - Metal name ('Silver', 'Gold', 'Platinum', 'Palladium')
