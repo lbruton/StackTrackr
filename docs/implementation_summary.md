@@ -1,3 +1,25 @@
+# Implementation Summary: CSV Import Field Sanitization
+
+> **Latest release: v3.03.08f**
+
+## Version Update: 3.03.08e → 3.03.08f
+
+## User Requirements Implemented
+
+- Leave invalid CSV fields blank instead of rejecting rows
+- Allow users to merge imported data or override existing inventory
+
+## Technical Changes Made
+
+### Files Modified:
+1. **`js/utils.js`**: Added `sanitizeImportedItem` helper and improved `formatDollar`
+2. **`js/inventory.js`**: CSV and Numista importers sanitize fields and support merge/override
+3. **`js/constants.js`**: Bumped version to 3.03.08f
+4. **Documentation**: Updated changelog, function table, implementation summary, status, roadmap, structure, and README
+
+### User Experience Improvements:
+- Imports no longer fail due to bad data; users choose how to integrate items
+
 # Implementation Summary: Numista CSV Storage
 
 > **Latest release: v3.03.08e**

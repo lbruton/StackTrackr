@@ -268,7 +268,11 @@ const formatDisplayDate = (dateStr) => {
  * @param {number|string} n - Number to format
  * @returns {string} Formatted dollar string (e.g., "$1,234.56")
  */
-const formatDollar = (n) => `$${parseFloat(n).toFixed(2)}`;
+const formatDollar = (n) => {
+  const num = parseFloat(n);
+  if (isNaN(num)) return "";
+  return `$${num.toFixed(2)}`;
+};
 
 /**
  * Formats a profit/loss value with color coding
@@ -447,6 +451,48 @@ const validateInventoryItem = (item) => {
     isValid: errors.length === 0,
     errors,
   };
+};
+
+/**
+ * Sanitizes imported inventory data, coercing invalid fields to safe defaults.
+ *
+ * String fields default to an empty string and numeric fields become null when
+ * parsing fails. This allows imports to proceed even when some fields are
+ * malformed.
+ *
+ * @param {Object} item - Raw item data from an import process
+ * @returns {Object} Sanitized item
+ */
+const sanitizeImportedItem = (item) => {
+  const sanitized = { ...item };
+
+  // Metal must be one of the supported types; otherwise blank
+  if (!['Silver', 'Gold', 'Platinum', 'Palladium'].includes(sanitized.metal)) {
+    sanitized.metal = '';
+  }
+
+  // Ensure numeric fields parse correctly
+  const numFields = ['qty', 'weight', 'price', 'spotPriceAtPurchase'];
+  for (const field of numFields) {
+    if (sanitized[field] !== undefined) {
+      const parsed = parseFloat(sanitized[field]);
+      sanitized[field] = isNaN(parsed) ? null : parsed;
+    }
+  }
+
+  // Normalize string fields
+  const strFields = ['name', 'type', 'purchaseLocation', 'storageLocation', 'notes'];
+  for (const field of strFields) {
+    if (typeof sanitized[field] !== 'string') sanitized[field] = '';
+  }
+
+  // Reset premium calculations if price or weight are missing
+  if (!sanitized.price || !sanitized.weight) {
+    sanitized.premiumPerOz = 0;
+    sanitized.totalPremium = 0;
+  }
+
+  return sanitized;
 };
 
 /**
