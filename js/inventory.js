@@ -1445,6 +1445,96 @@ const importNumistaCsv = (file, override = false) => {
 };
 
 /**
+ * Exports inventory using Numista-compatible column layout
+ */
+const exportNumistaCsv = () => {
+  const timestamp = new Date().toISOString().slice(0,10).replace(/-/g,'');
+  const headers = [
+    "N# number",
+    "Title",
+    "Year",
+    "Metal",
+    "Quantity",
+    "Type",
+    "Weight (g)",
+    "Buying price (USD)",
+    "Acquisition place",
+    "Storage location",
+    "Acquisition date",
+    "Note",
+    "Private comment",
+    "Public comment",
+    "Comment",
+  ];
+
+  const sortedInventory = sortInventoryByDateNewestFirst();
+  const rows = [];
+
+  for (const item of sortedInventory) {
+    const year = item.issuedYear || '';
+    let title = item.name || '';
+    if (year) {
+      const yearRegex = new RegExp(`\\s*${year}\\b`);
+      title = title.replace(yearRegex, '').trim();
+    }
+
+    const weightGrams = parseFloat(item.weight)
+      ? parseFloat(item.weight) * 31.1034768
+      : 0;
+    const purchasePrice = item.purchasePrice ?? item.price;
+
+    let baseNote = '';
+    let privateComment = '';
+    let publicComment = '';
+    let otherComment = '';
+    if (item.notes) {
+      const lines = String(item.notes).split(/\n/);
+      for (const line of lines) {
+        if (/^\s*Private Comment:/i.test(line)) {
+          privateComment = line.replace(/^\s*Private Comment:\s*/i, '').trim();
+        } else if (/^\s*Public Comment:/i.test(line)) {
+          publicComment = line.replace(/^\s*Public Comment:\s*/i, '').trim();
+        } else if (/^\s*Comment:/i.test(line)) {
+          otherComment = line.replace(/^\s*Comment:\s*/i, '').trim();
+        } else {
+          baseNote = baseNote ? `${baseNote}\n${line}` : line;
+        }
+      }
+    }
+
+    rows.push([
+      item.numistaId || '',
+      title,
+      year,
+      item.metal || '',
+      item.qty || '',
+      item.type || '',
+      weightGrams ? weightGrams.toFixed(2) : '',
+      purchasePrice != null ? Number(purchasePrice).toFixed(2) : '',
+      item.purchaseLocation || '',
+      item.storageLocation || '',
+      item.date || '',
+      baseNote,
+      privateComment,
+      publicComment,
+      otherComment,
+    ]);
+  }
+
+  const csv = Papa.unparse([headers, ...rows]);
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `numista_export_${timestamp}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+};
+
+/**
  * Exports current inventory to CSV format
  */
 const exportCsv = () => {
