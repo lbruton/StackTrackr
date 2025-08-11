@@ -1,10 +1,13 @@
 # StackTrackr — Changelog
 
-> **Latest release: v3.03.06a**
+> **Latest release: v3.03.07a**
 
 For upcoming work, see [ROADMAP](ROADMAP.md).
 
 ## 📋 Version History
+
+### Version 3.03.07a – Theme Toggle Improvements (2025-08-10)
+- Removed appearance modal and implemented three-state Dark/Light/System toggle with localStorage persistence
 
 ### Version 3.03.06a – Documentation Sweep & Archive Update (2025-08-10)
 - Synchronized version references and workflow docs for the 3.03.06a release
