@@ -1,11 +1,15 @@
 # StackTrackr — Changelog
 
-> **Latest release: v3.04.09**
+> **Latest release: v3.04.10**
 
 
 For upcoming work, see [roadmap](roadmap.md).
 
 ## 📋 Version History
+
+### Version 3.04.10 – Provider history usage display (2025-08-11)
+- Provider history sections now show API usage and quota only
+- Metal enablement managed solely through Provider Settings checkboxes
 
 ### Version 3.04.09 – Multi-select filters with exclusion (2025-08-11)
 - Filter modal supports multi-select dropdowns with per-field exclude toggles
