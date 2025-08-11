@@ -23,7 +23,7 @@ The repository is organized as follows:
 - **debug/** – Holds temporary debugging files.
 - **docs/** – Changelogs, workflow notes, roadmap, and future planning documentation.
 - **archive/** – Contains the last stable build for users needing a fallback.
-- **js/** – All JavaScript modules powering the application.
+- **js/** – All JavaScript modules powering the application, including `customMapping.js` for regex-based field mapping.
 - **index.html** – Entry point and user interface for the tool.
 - **structure.md** – More detailed explanation of the repository layout.
 

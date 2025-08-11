@@ -2,6 +2,8 @@
 
 This guide summarizes the typical tools and branch strategy for human contributors to StackTrackr.
 
+**Current Release:** v3.03.06a
+
 ## Tools
 
 ### Sublime Text & GitHub Desktop (macOS)

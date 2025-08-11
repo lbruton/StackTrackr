@@ -4,6 +4,15 @@ For upcoming work, see [ROADMAP](ROADMAP.md).
 
 ## 📋 Version History
 
+### Version 3.03.06a – Documentation Sweep & Archive Update (2025-08-10)
+- Synchronized version references and workflow docs for the 3.03.06a release
+- Updated roadmap and status documentation
+- Archived previous build with footer note linking back to the current version
+
+### Version 3.03.05a – Custom Mapping Rule Engine (2025-08-10)
+- Added prototype regex-based custom mapping module with in-memory rules
+- Settings card now includes Add, Apply, and Clear mapping controls
+
 ### Version 3.03.04a – Files Modal Storage Breakdown (2025-08-10)
 - Added progress bar in Files modal showing per-item storage distribution with hover tooltips and click-to-highlight
 - Footer now uses constants.js helper to display application version dynamically

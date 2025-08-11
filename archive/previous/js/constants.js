@@ -95,9 +95,31 @@ const API_PROVIDERS = {
 /**
  * @constant {string} APP_VERSION - Application version
  * Follows BRANCH.RELEASE.PATCH.state format
- * Example: 3.03.03a → branch 3, release 03, patch 02, alpha
+ * State codes: a=alpha, b=beta, rc=release candidate
+ * Example: 3.03.02a → branch 3, release 03, patch 02, alpha
  */
-const APP_VERSION = "3.03.03a";
+const APP_VERSION = "3.03.04a";
+
+/**
+ * Returns formatted version string
+ *
+ * @param {string} [prefix="v"] - Prefix to add before version
+ * @returns {string} Formatted version string (e.g., "v3.03.04a")
+ */
+const getVersionString = (prefix = "v") => `${prefix}${APP_VERSION}`;
+
+/**
+ * Inserts formatted version string into a target element
+ *
+ * @param {string} elementId - ID of the element to update
+ * @param {string} [prefix="v"] - Prefix to add before version
+ */
+const injectVersionString = (elementId, prefix = "v") => {
+  const el = document.getElementById(elementId);
+  if (el) {
+    el.textContent = getVersionString(prefix);
+  }
+};
 
 /** @constant {string} BRANDING_TITLE - Optional custom application title */
 const BRANDING_TITLE = "StackTrackr";
