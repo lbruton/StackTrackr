@@ -1645,6 +1645,11 @@ td .filter-text {
   font-weight: 600;
 }
 
+.na-value {
+  color: var(--text-muted);
+  font-style: italic;
+}
+
 td .inline-edit-icon,
 td .save-inline,
 td .cancel-inline {
