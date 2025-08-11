@@ -715,52 +715,43 @@ const updateSummary = () => {
 
     for (const item of inventory) {
       if (item.metal === metal) {
-        totalItems += Number(item.qty);
+        const qty = Number(item.qty) || 0;
+        const weight = parseFloat(item.weight) || 0;
+        const price = parseFloat(item.price) || 0;
+
+        totalItems += qty;
 
         // Total Weight calculation (for both regular and collectible items)
-        const itemWeight = Number(item.qty) * parseFloat(item.weight);
+        const itemWeight = qty * weight;
         totalWeight += itemWeight;
 
-        // Melt Value calculation
-        if (item.isCollectable) {
-          // For collectible items: Melt Value = Current spot price × weight
-          const currentSpot = spotPrices[item.metal.toLowerCase()];
-          currentSpotValue += currentSpot * itemWeight;
-
-          // Track collectable metrics
-          collectableWeight += itemWeight;
-          collectableValue += Number(item.qty) * parseFloat(item.price);
-        } else {
-          // For regular items: Melt Value = Weight × Current Spot Price
-          const currentSpot = spotPrices[item.metal.toLowerCase()];
-          currentSpotValue += currentSpot * itemWeight;
-
-          // Track non-collectable metrics
-          nonCollectableWeight += itemWeight;
-          nonCollectableValue += Number(item.qty) * parseFloat(item.price);
-        }
+        // Current spot value calculation (applies to all items)
+        const currentSpot = spotPrices[item.metal.toLowerCase()] || 0;
+        const currentValue = currentSpot * itemWeight;
+        currentSpotValue += currentValue;
 
         // Total Purchase Price calculation (for both regular and collectible items)
-        totalPurchased += Number(item.qty) * parseFloat(item.price);
+        totalPurchased += qty * price;
 
-        // Premium Paid calculation
-        if (!item.isCollectable) {
-          // For regular items: Premium Paid = (Purchase Price per oz - Spot Price at Purchase) × Weight
-          const pricePerOz = item.price / item.weight;
-          const premiumPerOz = pricePerOz - item.spotPriceAtPurchase;
+        if (item.isCollectable) {
+          // Track collectable metrics
+          collectableWeight += itemWeight;
+          collectableValue += qty * price;
+        } else {
+          // Track non-collectable metrics
+          nonCollectableWeight += itemWeight;
+          nonCollectableValue += qty * price;
+
+          // Premium Paid calculation
+          const pricePerOz = weight > 0 ? price / weight : 0;
+          const premiumPerOz = pricePerOz - (item.spotPriceAtPurchase || 0);
           totalPremium += premiumPerOz * itemWeight;
-        }
-        // For collectible items: Premium Paid = N/A
 
-        // Loss/Profit calculation
-        if (!item.isCollectable) {
-          // For regular items: Loss/Profit = Melt Value - Purchase Price
-          const currentSpot = spotPrices[item.metal.toLowerCase()];
-          const currentValue = currentSpot * itemWeight;
-          const purchaseValue = item.price * item.qty;
+          // Loss/Profit calculation
+          const purchaseValue = price * qty;
           lossProfit += currentValue - purchaseValue;
         }
-        // For collectible items: Loss/Profit = Omitted from calculation
+        // For collectible items: Premium Paid and Loss/Profit are omitted
       }
     }
 
@@ -803,15 +794,15 @@ const updateSummary = () => {
 
     elements.totals[metalKey].items.textContent = totals.totalItems;
     elements.totals[metalKey].weight.textContent = totals.totalWeight.toFixed(2);
-    elements.totals[metalKey].value.innerHTML = formatDollar(totals.currentSpotValue);
-    elements.totals[metalKey].purchased.innerHTML = formatDollar(totals.totalPurchased);
-    elements.totals[metalKey].premium.innerHTML = formatDollar(totals.totalPremium);
-    elements.totals[metalKey].lossProfit.innerHTML = formatLossProfit(totals.lossProfit);
-    elements.totals[metalKey].avgPrice.innerHTML = formatDollar(totals.avgPrice);
-    elements.totals[metalKey].avgPremium.innerHTML = formatDollar(totals.avgPremium);
+    elements.totals[metalKey].value.innerHTML = formatDollar(totals.currentSpotValue || 0);
+    elements.totals[metalKey].purchased.innerHTML = formatDollar(totals.totalPurchased || 0);
+    elements.totals[metalKey].premium.innerHTML = formatDollar(totals.totalPremium || 0);
+    elements.totals[metalKey].lossProfit.innerHTML = formatLossProfit(totals.lossProfit || 0);
+    elements.totals[metalKey].avgPrice.innerHTML = formatDollar(totals.avgPrice || 0);
+    elements.totals[metalKey].avgPremium.innerHTML = formatDollar(totals.avgPremium || 0);
     // Add the new collectable/non-collectable averages
-    elements.totals[metalKey].avgCollectablePrice.innerHTML = formatDollar(totals.avgCollectablePrice);
-    elements.totals[metalKey].avgNonCollectablePrice.innerHTML = formatDollar(totals.avgNonCollectablePrice);
+    elements.totals[metalKey].avgCollectablePrice.innerHTML = formatDollar(totals.avgCollectablePrice || 0);
+    elements.totals[metalKey].avgNonCollectablePrice.innerHTML = formatDollar(totals.avgNonCollectablePrice || 0);
   });
 
   // Calculate combined totals for all metals
@@ -851,14 +842,14 @@ const updateSummary = () => {
   if (elements.totals.all.items.textContent !== undefined) {
     elements.totals.all.items.textContent = allTotals.totalItems;
     elements.totals.all.weight.textContent = allTotals.totalWeight.toFixed(2);
-    elements.totals.all.value.innerHTML = formatDollar(allTotals.currentSpotValue);
-    elements.totals.all.purchased.innerHTML = formatDollar(allTotals.totalPurchased);
-    elements.totals.all.premium.innerHTML = formatDollar(allTotals.totalPremium);
-    elements.totals.all.lossProfit.innerHTML = formatLossProfit(allTotals.lossProfit);
+    elements.totals.all.value.innerHTML = formatDollar(allTotals.currentSpotValue || 0);
+    elements.totals.all.purchased.innerHTML = formatDollar(allTotals.totalPurchased || 0);
+    elements.totals.all.premium.innerHTML = formatDollar(allTotals.totalPremium || 0);
+    elements.totals.all.lossProfit.innerHTML = formatLossProfit(allTotals.lossProfit || 0);
     elements.totals.all.avgPrice.innerHTML = formatDollar(allTotals.totalPurchased / allTotals.totalWeight || 0);
     elements.totals.all.avgPremium.innerHTML = formatDollar(allTotals.totalPremium / allTotals.totalWeight || 0);
-    elements.totals.all.avgCollectablePrice.innerHTML = formatDollar(avgCollectablePriceAll);
-    elements.totals.all.avgNonCollectablePrice.innerHTML = formatDollar(avgNonCollectablePriceAll);
+    elements.totals.all.avgCollectablePrice.innerHTML = formatDollar(avgCollectablePriceAll || 0);
+    elements.totals.all.avgNonCollectablePrice.innerHTML = formatDollar(avgNonCollectablePriceAll || 0);
   }
 };
 
