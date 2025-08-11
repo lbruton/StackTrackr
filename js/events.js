@@ -383,6 +383,9 @@ const setupEventListeners = () => {
           const qty = parseInt(elements.itemQty.value, 10);
           const type = elements.itemType.value;
           let weight = parseFloat(elements.itemWeight.value);
+          if (elements.itemWeightUnit.value === "g") {
+            weight = gramsToOzt(weight);
+          }
           weight = isNaN(weight) ? 0 : parseFloat(weight.toFixed(2));
           let price = parseFloat(elements.itemPrice.value);
           price = isNaN(price) || price < 0 ? 0 : price;
@@ -450,6 +453,7 @@ const setupEventListeners = () => {
           saveInventory();
           renderTable();
           this.reset();
+          elements.itemWeightUnit.value = "oz";
           elements.itemDate.value = todayStr();
           if (elements.addModal) elements.addModal.style.display = "none";
         },
@@ -1408,6 +1412,7 @@ const setupSearch = () => {
         () => {
           if (elements.inventoryForm) {
             elements.inventoryForm.reset();
+            elements.itemWeightUnit.value = "oz";
             elements.itemDate.value = todayStr();
           }
           if (elements.addModal) elements.addModal.style.display = "flex";
