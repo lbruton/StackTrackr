@@ -1,3 +1,20 @@
+# Implementation Summary: Search Input Restore
+
+> **Latest release: v3.04.03**
+
+## Version Update: 3.04.02 → 3.04.03
+
+## User Requirements Implemented
+
+- Ensure search box filters inventory table as you type
+
+## Technical Changes Made
+
+### Files Modified:
+1. **`js/search.js`**: Added DOMContentLoaded listener to wire search input to `renderTable` and exposed `filterInventory` globally
+2. **`js/constants.js`**: Bumped version to 3.04.03
+3. **Documentation**: Updated changelog, status, roadmap, structure, and function table
+
 # Implementation Summary: Numista Header Trimming
 
 > **Latest release: v3.04.02**

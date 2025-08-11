@@ -1,11 +1,11 @@
 # Project Status - StackTrackr
 
 
-> **Latest release: v3.04.02**
+> **Latest release: v3.04.03**
 
-## 🎯 Current State: **BETA v3.04.02** ✅ MAINTAINED & OPTIMIZED
+## 🎯 Current State: **BETA v3.04.03** ✅ MAINTAINED & OPTIMIZED
 
-**StackTrackr v3.04.02** is a fully-featured, client-side web application for tracking precious metal investments (Silver, Gold, Platinum, Palladium) with comprehensive inventory management, API integration, and complete backup capabilities. The 3.04.x series focuses on polish, maintenance, and optimization.
+**StackTrackr v3.04.03** is a fully-featured, client-side web application for tracking precious metal investments (Silver, Gold, Platinum, Palladium) with comprehensive inventory management, API integration, and complete backup capabilities. The 3.04.x series focuses on polish, maintenance, and optimization.
 
 
 ## 🏗️ Architecture Overview
@@ -25,6 +25,7 @@ The tool features a **modular JavaScript architecture** with separate files for 
 
 ## ✨ Latest Changes
 
+- **v3.04.03 - Search input restore**: Search box reliably filters inventory table as you type
 - **v3.04.02 - Numista header trimming**: Imports accept Numista CSVs with trailing spaces in column headers
 - **v3.04.01 - Filter reset & Numista sanitization**: Clear search resets filters, sanitized Numista imports, batch API pulls
 - **v3.04.00 - Inventory filter click & API cleanup**: Clickable table value filters and removed global API cache duration dropdown
