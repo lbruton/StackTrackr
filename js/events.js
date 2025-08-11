@@ -179,7 +179,7 @@ const updateColumnVisibility = () => {
         "spot",
         "weight",
         "qty",
-        "metal",
+        "composition",
       ],
     },
     {
@@ -192,7 +192,7 @@ const updateColumnVisibility = () => {
         "spot",
         "weight",
         "qty",
-        "metal",
+        "composition",
         "type",
       ],
     },
@@ -205,7 +205,7 @@ const updateColumnVisibility = () => {
   const allColumns = [
     "date",
     "type",
-    "metal",
+    "composition",
     "name",
     "qty",
     "weight",
@@ -377,7 +377,8 @@ const setupEventListeners = () => {
         function (e) {
           e.preventDefault();
 
-          const metal = elements.itemMetal.value;
+          const composition = getCompositionFirstWord(elements.itemMetal.value);
+          const metal = parseNumistaMetal(composition);
           const name = elements.itemName.value.trim();
           const qty = parseInt(elements.itemQty.value, 10);
           const type = elements.itemType.value;
@@ -385,7 +386,7 @@ const setupEventListeners = () => {
           weight = isNaN(weight) ? 0 : parseFloat(weight.toFixed(2));
           const price = parseFloat(elements.itemPrice.value);
           const purchaseLocation =
-            elements.purchaseLocation.value.trim() || "Unknown";
+            elements.purchaseLocation.value.trim() || "";
           const storageLocation =
             elements.storageLocation.value.trim() || "";
           const notes = elements.itemNotes.value.trim() || "";
@@ -425,6 +426,7 @@ const setupEventListeners = () => {
           const serial = getNextSerial();
           inventory.push({
             metal,
+            composition,
             name,
             qty,
             type,
@@ -442,7 +444,7 @@ const setupEventListeners = () => {
             numistaId: "",
           });
 
-          addCompositionOption(metal);
+          addCompositionOption(composition);
 
           catalogMap[serial] = "";
           saveInventory();
@@ -468,7 +470,8 @@ const setupEventListeners = () => {
 
           if (editingIndex === null) return;
 
-          const metal = elements.editMetal.value;
+          const composition = getCompositionFirstWord(elements.editMetal.value);
+          const metal = parseNumistaMetal(composition);
           const name = elements.editName.value.trim();
           const qty = parseInt(elements.editQty.value, 10);
           const type = elements.editType.value;
@@ -476,7 +479,7 @@ const setupEventListeners = () => {
           weight = isNaN(weight) ? 0 : parseFloat(weight.toFixed(2));
           const price = parseFloat(elements.editPrice.value);
           const purchaseLocation =
-            elements.editPurchaseLocation.value.trim() || "Unknown";
+            elements.editPurchaseLocation.value.trim() || "";
           const storageLocation =
             elements.editStorageLocation.value.trim() || "";
           const notes = elements.editNotes.value.trim() || "";
@@ -529,6 +532,7 @@ const setupEventListeners = () => {
           inventory[editingIndex] = {
             ...oldItem,
             metal,
+            composition,
             name,
             qty,
             type,
@@ -545,7 +549,7 @@ const setupEventListeners = () => {
             numistaId: elements.editCatalog.value.trim(),
           };
 
-          addCompositionOption(metal);
+          addCompositionOption(composition);
 
           catalogMap[serial] = inventory[editingIndex].numistaId;
           saveInventory();

@@ -412,7 +412,7 @@
             <tr>
               <th class="shrink" data-column="date">Date</th>
               <th class="shrink" data-column="type">Type</th>
-              <th class="shrink" data-column="metal">Composition</th>
+              <th class="shrink" data-column="composition">Composition</th>
               <th class="expand" data-column="name">Name</th>
               <th class="shrink" data-column="qty">Qty</th>
               <th class="shrink" data-column="weight">Weight<br />(oz)</th>
@@ -766,9 +766,9 @@
               <div>
                 <label for="itemType">Type</label>
                 <select id="itemType">
-                  <option value="Round">Round</option>
-                  <option value="Bar">Bar</option>
                   <option value="Coin">Coin</option>
+                  <option value="Bar">Bar</option>
+                  <option value="Round">Round</option>
                   <option value="Note">Note</option>
                   <option value="Aurum">Aurum</option>
                   <option value="Other">Other</option>
@@ -790,7 +790,7 @@
               </div>
               <div>
                 <label for="purchaseLocation">Purchase Location</label>
-                <input id="purchaseLocation" required type="text" />
+                <input id="purchaseLocation" type="text" />
               </div>
               <div>
                 <label for="storageLocation">Storage Location</label>
@@ -888,9 +888,9 @@
             <div>
               <label for="editType">Type</label>
               <select id="editType">
-                <option value="Round">Round</option>
-                <option value="Bar">Bar</option>
                 <option value="Coin">Coin</option>
+                <option value="Bar">Bar</option>
+                <option value="Round">Round</option>
                 <option value="Note">Note</option>
                 <option value="Aurum">Aurum</option>
                 <option value="Other">Other</option>
@@ -919,7 +919,7 @@
             </div>
             <div>
               <label for="editPurchaseLocation">Purchase Location</label>
-              <input id="editPurchaseLocation" required="" type="text" />
+              <input id="editPurchaseLocation" type="text" />
             </div>
             <div>
               <label for="editStorageLocation">Storage Location</label>

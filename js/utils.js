@@ -112,6 +112,16 @@ const addCompositionOption = (value) => {
 };
 
 /**
+ * Extracts the first complete word from a composition string
+ *
+ * @param {string} composition - Raw composition description
+ * @returns {string} First word of the composition
+ */
+const getCompositionFirstWord = (composition = "") => {
+  return composition.trim().split(/\s+/)[0].replace(/[(),]/g, "");
+};
+
+/**
  * Builds two-line HTML showing source and last sync info for a metal
  *
  * @param {string} metalName - Metal name ('Silver', 'Gold', 'Platinum', 'Palladium')
@@ -376,14 +386,29 @@ const convertToUsd = (amount, currency = "USD") => {
  * @param {string} type - Numista type string
  * @returns {string} Mapped internal type
  */
-const mapNumistaType = (type = "") => {
+/**
+ * Normalizes item type strings to standard categories
+ *
+ * @param {string} type - Raw type string
+ * @returns {string} One of Coin, Bar, Round, Note, Aurum, or Other
+ */
+const normalizeType = (type = "") => {
   const t = type.toLowerCase();
+  if (t.includes("coin")) return "Coin";
+  if (t.includes("bar")) return "Bar";
+  if (t.includes("round")) return "Round";
+  if (t.includes("note")) return "Note";
   if (t.includes("aurum")) return "Aurum";
-  if (t.includes("note")) return "Notes";
-  if (t.includes("bar") || t.includes("round")) return "bars/rounds";
-  if (t.includes("coin")) return "coin";
-  return "other";
+  return "Other";
 };
+
+/**
+ * Maps Numista type strings to internal categories
+ *
+ * @param {string} type - Numista type string
+ * @returns {string} Standardized type
+ */
+const mapNumistaType = (type = "") => normalizeType(type);
 
 /**
  * Determines metal type from Numista composition string
@@ -512,9 +537,12 @@ const validateInventoryItem = (item) => {
 const sanitizeImportedItem = (item) => {
   const sanitized = { ...item };
 
-  // Ensure metal/composition is a string
+  // Ensure metal and composition are strings
   if (typeof sanitized.metal !== 'string') {
     sanitized.metal = '';
+  }
+  if (typeof sanitized.composition !== 'string') {
+    sanitized.composition = sanitized.metal;
   }
 
   // Ensure numeric fields parse correctly
@@ -530,6 +558,11 @@ const sanitizeImportedItem = (item) => {
   const strFields = ['name', 'type', 'purchaseLocation', 'storageLocation', 'notes'];
   for (const field of strFields) {
     if (typeof sanitized[field] !== 'string') sanitized[field] = '';
+  }
+
+  sanitized.type = normalizeType(sanitized.type);
+  if (sanitized.purchaseLocation.trim().toLowerCase() === 'unknown') {
+    sanitized.purchaseLocation = '';
   }
 
   // Reset premium calculations if price or weight are missing

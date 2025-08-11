@@ -40,6 +40,7 @@ const createBackupZip = async () => {
       exportDate: new Date().toISOString(),
       inventory: inventory.map(item => ({
         metal: item.metal,
+        composition: item.composition,
         name: item.name,
         qty: item.qty,
         type: item.type,
@@ -286,7 +287,7 @@ const generateBackupHtml = (sortedInventory, timeFormatted) => {
   <table>
     <thead>
       <tr>
-        <th>Metal</th><th>Name</th><th>Qty</th><th>Type</th><th>Weight(oz)</th>
+        <th>Composition</th><th>Name</th><th>Qty</th><th>Type</th><th>Weight(oz)</th>
         <th>Purchase Price</th><th>Purchase Location</th><th>Storage Location</th>
         <th>Notes</th><th>Date</th><th>Collectable</th>
       </tr>
@@ -294,7 +295,7 @@ const generateBackupHtml = (sortedInventory, timeFormatted) => {
     <tbody>
       ${sortedInventory.map(item => `
         <tr>
-          <td>${item.metal}</td>
+          <td>${getCompositionFirstWord(item.composition || item.metal)}</td>
           <td>${item.name}</td>
           <td>${item.qty}</td>
           <td>${item.type}</td>
@@ -452,21 +453,32 @@ const loadInventory = () => {
 
       return {
         ...item,
-        purchaseLocation: item.purchaseLocation || "Unknown",
+        purchaseLocation:
+          !item.purchaseLocation || item.purchaseLocation.toLowerCase() === "unknown"
+            ? ""
+            : item.purchaseLocation,
         storageLocation: item.storageLocation || "Unknown",
         notes: item.notes || "",
         spotPriceAtPurchase: spotPrice,
         premiumPerOz,
         totalPremium,
-        isCollectable: item.isCollectable !== undefined ? item.isCollectable : false
+        isCollectable: item.isCollectable !== undefined ? item.isCollectable : false,
+        composition: item.composition || item.metal || "",
+        type: normalizeType(item.type)
       };
     }
     // Ensure all items have required properties
     return {
       ...item,
+      purchaseLocation:
+        !item.purchaseLocation || item.purchaseLocation.toLowerCase() === "unknown"
+          ? ""
+          : item.purchaseLocation,
       storageLocation: item.storageLocation || "Unknown",
       notes: item.notes || "",
-      isCollectable: item.isCollectable !== undefined ? item.isCollectable : false
+      isCollectable: item.isCollectable !== undefined ? item.isCollectable : false,
+      composition: item.composition || item.metal || "",
+      type: normalizeType(item.type)
     };
   });
 
@@ -577,7 +589,7 @@ const renderTable = () => {
       <tr>
       <td class="shrink" data-column="date">${formatDisplayDate(item.date)}</td>
       <td class="shrink" data-column="type">${filterLink('type', item.type, getTypeColor(item.type))}</td>
-      <td class="shrink" data-column="metal">${filterLink('metal', item.metal || 'Silver', METAL_COLORS[item.metal] || 'var(--primary)')}</td>
+      <td class="shrink" data-column="composition">${filterLink('composition', getCompositionFirstWord(item.composition || item.metal || 'Silver'), METAL_COLORS[item.metal] || 'var(--primary)')}</td>
       <td class="clickable-name expand" data-column="name" onclick="editItem(${originalIdx})" title="Click to edit" tabindex="0" role="button" aria-label="Edit ${sanitizeHtml(item.name)}" onkeydown="if(event.key==='Enter'||event.key===' ')editItem(${originalIdx})">${sanitizeHtml(item.name)}</td>
       <td class="shrink" data-column="qty">${item.qty}</td>
       <td class="shrink" data-column="weight">${parseFloat(item.weight).toFixed(2)}</td>
@@ -877,7 +889,7 @@ const editItem = (idx, logIdx = null) => {
   const item = inventory[idx];
 
   // Populate edit form
-  elements.editMetal.value = item.metal;
+  elements.editMetal.value = item.composition || item.metal;
   elements.editName.value = item.name;
   elements.editQty.value = item.qty;
   elements.editType.value = item.type;
@@ -1023,18 +1035,20 @@ const importCsv = (file, override = false) => {
 
         for (const row of results.data) {
           processed++;
-          const metal = row['Metal'] || 'Silver';
+          const compositionRaw = row['Composition'] || row['Metal'] || 'Silver';
+          const composition = getCompositionFirstWord(compositionRaw);
+          const metal = parseNumistaMetal(composition);
           const name = row['Name'] || row['name'];
           const qty = row['Qty'] || row['qty'] || 1;
-          const type = row['Type'] || row['type'] || 'Other';
+          const type = normalizeType(row['Type'] || row['type'] || 'Other');
           const weight = row['Weight(oz)'] || row['weight'];
           const priceStr = row['Purchase Price'] || row['price'];
           let price = typeof priceStr === 'string'
             ? parseFloat(priceStr.replace(/[^\d.-]+/g, ''))
             : parseFloat(priceStr);
           if (price < 0) price = 0;
-          const purchaseLocation = row['Purchase Location'] || 'Unknown';
-          const storageLocation = row['Storage Location'] || '';
+          const purchaseLocation = (row['Purchase Location'] || '').trim();
+          const storageLocation = (row['Storage Location'] || '').trim();
           const notes = row['Notes'] || '';
           const date = parseDate(row['Date']);
 
@@ -1059,10 +1073,11 @@ const importCsv = (file, override = false) => {
             totalPremium = premiumPerOz * parseFloat(qty) * parseFloat(weight);
           }
 
-          addCompositionOption(metal);
+          addCompositionOption(composition);
 
           const item = sanitizeImportedItem({
             metal,
+            composition,
             name,
             qty,
             type,
@@ -1122,7 +1137,7 @@ const importCsv = (file, override = false) => {
  * - Weight columns → max value converted from grams to ozt
  * - Composition → metal detected via parseNumistaMetal(), defaults to Alloy
  * - Buying price (currency) → price in USD via convertToUsd()
- * - Storage location / Acquisition place → defaults to "unknown" if blank
+ * - Storage location / Acquisition place → left blank if missing
  * - Acquisition date → parsed YYYY-MM-DD or today if blank
  * - Notes appended with import source reference
  *
@@ -1161,7 +1176,8 @@ const importNumistaCsv = (file, override = false) => {
           const year = (getValue(row, ['Year', 'Date']) || '').trim();
           const name = year.length >= 4 ? `${title} ${year}`.trim() : title;
           const issuedYear = year.length >= 4 ? year : '';
-          const composition = getValue(row, ['Composition', 'Metal']) || '';
+          const compositionRaw = getValue(row, ['Composition', 'Metal']) || '';
+          const composition = getCompositionFirstWord(compositionRaw);
 
           addCompositionOption(composition);
 
@@ -1192,7 +1208,7 @@ const importNumistaCsv = (file, override = false) => {
           }
 
           const purchaseLocRaw = getValue(row, ['Acquisition place', 'Acquired from', 'Purchase place']);
-          const purchaseLocation = purchaseLocRaw && purchaseLocRaw.trim() ? purchaseLocRaw.trim() : 'unknown';
+          const purchaseLocation = purchaseLocRaw && purchaseLocRaw.trim() ? purchaseLocRaw.trim() : '';
           const storageLocRaw = getValue(row, ['Storage location', 'Stored at', 'Storage place']);
           const storageLocation = storageLocRaw && storageLocRaw.trim() ? storageLocRaw.trim() : '';
 
@@ -1203,13 +1219,14 @@ const importNumistaCsv = (file, override = false) => {
           const baseNote = (getValue(row, ['Note', 'Notes']) || '').trim();
           const notes = `${baseNote ? baseNote + ' ' : ''}(Imported from Numista.com N#${numistaId})`;
 
-          const isCollectable = true;
+          const isCollectable = !(type === 'Bar' || type === 'Round');
           const spotPriceAtPurchase = 0;
           const premiumPerOz = 0;
           const totalPremium = 0;
 
           const item = sanitizeImportedItem({
             metal,
+            composition,
             name,
             qty,
             type,
@@ -1345,20 +1362,20 @@ const importJson = (file) => {
         let price = parseFloat(item.price);
         if (price < 0) price = 0;
 
-        const processedItem = {
-          metal: item.metal || 'Silver',
-          name: item.name,
-          qty: parseInt(item.qty, 10),
-          type: item.type || 'Other',
-          weight: parseFloat(item.weight),
-          price,
-          date: parseDate(item.date || todayStr()),
-          purchaseLocation: item.purchaseLocation || "Unknown",
-          storageLocation: item.storageLocation || "Unknown",
-          notes: item.notes || "",
-          spotPriceAtPurchase: item.spotPriceAtPurchase || spotPrices[item.metal.toLowerCase()],
-          isCollectable: item.isCollectable === true,
-          premiumPerOz: item.premiumPerOz || 0,
+          const processedItem = {
+            metal: item.metal || 'Silver',
+            name: item.name,
+            qty: parseInt(item.qty, 10),
+            type: normalizeType(item.type || 'Other'),
+            weight: parseFloat(item.weight),
+            price,
+            date: parseDate(item.date || todayStr()),
+            purchaseLocation: item.purchaseLocation || '',
+            storageLocation: item.storageLocation || 'Unknown',
+            notes: item.notes || '',
+            spotPriceAtPurchase: item.spotPriceAtPurchase || spotPrices[item.metal.toLowerCase()],
+            isCollectable: item.isCollectable === true,
+            premiumPerOz: item.premiumPerOz || 0,
           totalPremium: item.totalPremium || 0
         };
 
@@ -1486,15 +1503,15 @@ const importExcel = (file) => {
         const metal = row['Metal'] || 'Silver';
         const name = row['Name'] || row['name'];
         const qty = parseInt(row['Qty'] || row['qty'] || 1, 10);
-        const type = row['Type'] || row['type'] || 'Other';
+        const type = normalizeType(row['Type'] || row['type'] || 'Other');
         const weight = parseFloat(row['Weight(oz)'] || row['weight']);
         const priceStr = row['Purchase Price'] || row['price'];
         let price = parseFloat(
           typeof priceStr === "string" ? priceStr.replace(/[^0-9.-]+/g, "") : priceStr
         );
         if (price < 0) price = 0;
-        const purchaseLocation = row['Purchase Location'] || "Unknown";
-        const storageLocation = row['Storage Location'] || "Unknown";
+        const purchaseLocation = (row['Purchase Location'] || '').trim();
+        const storageLocation = (row['Storage Location'] || '').trim();
         const notes = row['Notes'] || "";
         const date = parseDate(row['Date']); // Using the new date parser
 

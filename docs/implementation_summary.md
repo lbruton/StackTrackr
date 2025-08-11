@@ -1,4 +1,47 @@
 
+# Implementation Summary: Type Normalization & Import Fixes
+
+> **Latest release: v3.03.08k**
+
+## Version Update: 3.03.08j → 3.03.08k
+
+## User Requirements Implemented
+
+- Type dropdown lists Coin, Bar, Round, Note, Aurum, Other
+- Purchase location left blank instead of "Unknown"
+- Numista bars and rounds not marked collectable
+
+## Technical Changes Made
+
+### Files Modified:
+1. **`index.html`**: Reordered type options and made purchase location optional
+2. **`js/utils.js`**: Added `normalizeType`, updated `mapNumistaType`, cleaned purchase locations
+3. **`js/inventory.js`**: Normalized item types, blanked unknown purchase locations, adjusted Numista collectable logic
+4. **`js/events.js`**: Removed purchase location defaults
+5. **`js/constants.js` & Documentation**: Bumped version to 3.03.08k and updated references
+
+
+# Implementation Summary: Composition Display Fix
+
+> **Latest release: v3.03.08j**
+
+## Version Update: 3.03.08i → 3.03.08j
+
+## User Requirements Implemented
+
+- Composition column shows first word of imported composition instead of generic metal
+
+## Technical Changes Made
+
+### Files Modified:
+1. **`index.html`**: Column now keyed as `composition`
+2. **`js/utils.js`**: Added `getCompositionFirstWord` and composition handling
+3. **`js/inventory.js`**: Stores composition separately and renders first word
+4. **`js/events.js`, `js/init.js`, `js/search.js`, `js/sorting.js`**: Updated for composition support
+5. **`js/constants.js`**: Bumped version to 3.03.08j
+6. **Documentation**: Updated changelog, function table, implementation summary, status, roadmap, structure, and README
+
+
 # Implementation Summary: Numista Import Polish
 
 > **Latest release: v3.03.08i**

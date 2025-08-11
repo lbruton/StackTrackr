@@ -12,7 +12,7 @@ const filterInventory = () => {
   Object.entries(columnFilters).forEach(([field, value]) => {
     const lower = value.toLowerCase();
     result = result.filter((item) => {
-      const fieldVal = (item[field] || '').toString().toLowerCase();
+      const fieldVal = (item[field] || (field === 'composition' ? item.metal : '')).toString().toLowerCase();
       return fieldVal === lower;
     });
   });
@@ -38,6 +38,7 @@ const filterInventory = () => {
     const formattedDate = formatDisplayDate(item.date).toLowerCase();
     return (
       item.metal.toLowerCase().includes(query) ||
+      (item.composition && item.composition.toLowerCase().includes(query)) ||
       item.name.toLowerCase().includes(query) ||
       item.type.toLowerCase().includes(query) ||
       item.purchaseLocation.toLowerCase().includes(query) ||

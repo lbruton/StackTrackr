@@ -307,7 +307,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Load data
     loadInventory();
-    inventory.forEach((i) => addCompositionOption(i.metal));
+    inventory.forEach((i) => addCompositionOption(i.composition || i.metal));
     refreshCompositionOptions();
     loadSpotHistory();
 

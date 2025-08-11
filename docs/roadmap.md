@@ -12,6 +12,8 @@ This roadmap outlines upcoming patch releases for the v3.03.x series.
 - **v3.03.08g** – Change log table refinement and catalog mapping *(completed)*
 - **v3.03.08h** – Table control compactness and import options *(completed)*
 - **v3.03.08i** – Numista import polish and weight rounding *(completed)*
+- **v3.03.08j** – Composition display fix *(completed)*
+- **v3.03.08k** – Type normalization and import fixes *(completed)*
 - **v3.03.12a** – Advanced reporting and analytics features.
 - **v3.03.13a** – Mobile application companion.
 
