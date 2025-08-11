@@ -39,7 +39,7 @@
 ### Files Modified:
 1. **`js/constants.js`**: Bumped version to 3.03.06a
 2. **Documentation**: Updated `changelog.md`, `roadmap.md`, `status.md`, `versioning.md`, `structure.md`, `human_workflow.md`, `MULTI_AGENT_WORKFLOW.md`, and `README.md`
-3. **`archive/previous/index.html`**: Added archived build footer link
+3. **`archive/v_previous/index.html`**: Added archived build footer link
 
 ### User Experience Improvements:
 - Clear archived build messaging with link back to current version
@@ -47,7 +47,7 @@
 
 ## Testing Recommendations
 
-1. Open `archive/previous/index.html` and verify footer link returns to root
+1. Open `archive/v_previous/index.html` and verify footer link returns to root
 2. Check main app footer and About modal to confirm version displays `v3.03.06a`
 
 # Implementation Summary: Custom Mapping Rule Engine Prototype

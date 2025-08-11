@@ -151,7 +151,7 @@ Before starting any patch entry, read these files:
 - [ ] Mark the patch entry as complete in the roadmap
 - [ ] Document any findings that affect other patches
 - [ ] Note any changes to original requirements
-- [ ] Archive the previous build in `/archive/previous` and ensure its `index.html` footer links back to `/`
+- [ ] Archive the previous build in `/archive/v_previous` and ensure its `index.html` footer links back to `/`
 
 ---
 
@@ -236,7 +236,7 @@ Before starting any patch entry, read these files:
 - `index.html` - Main application
 - `js/constants.js` - Configuration and version
 - `css/styles.css` - All styling
-- `archive/previous/` - Snapshot of the last stable build for user rollback
+- `archive/v_previous/` - Snapshot of the last stable build for user rollback
 
 ### **Testing Workflow:**
 1. **Unit test** your specific change

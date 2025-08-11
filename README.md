@@ -168,7 +168,7 @@ The public hosted version of the app is available at [stackrtrackr.com](https://
 
 ## Version Management
 This application uses a dynamic version management system. The version is automatically updated throughout the application from `js/constants.js`. The HTML files now use this dynamic system instead of hardcoded version numbers. See [docs/versioning.md](docs/versioning.md) for details on how to update versions.
-The prior build is retained in `archive/previous` and linked from the footer so users can roll back if issues arise.
+The three most recent builds are retained under `archive/` as `v_previous`, `v_previous2`, and `v_previous3`, with the latest archive linked from the footer for easy rollback.
 
 ## Data Structure
 Each inventory item includes:
@@ -235,7 +235,7 @@ Each inventory item includes:
  - **[docs/functionstable.md](docs/functionstable.md)** - Function reference table.
  - **[docs/future/](docs/future/)** - Notes for future implementations and add-ons.
  - **[docs/versioning.md](docs/versioning.md)** - Version management.
- - **[archive/previous/](archive/previous/)** - Last stable build for rollback.
+ - **[archive/v_previous/](archive/v_previous/)** - Most recent previous build for rollback.
 
 ## Code Quality
 This project maintains high code quality standards with:
