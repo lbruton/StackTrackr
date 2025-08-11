@@ -934,15 +934,29 @@ const fetchSpotPricesFromApi = async (provider, apiKey) => {
   };
 
   // Get selected metals
-  const selectedMetals = Object.keys(selected).filter(metal => selected[metal] !== false);
-  
-  // Try batch request first if supported and multiple metals selected
-  if (providerConfig.batchSupported && selectedMetals.length > 1) {
+  const selectedMetals = Object.keys(selected).filter(
+    (metal) => selected[metal] !== false,
+  );
+
+  if (selectedMetals.length === 0) {
+    throw new Error("No metals selected for sync");
+  }
+
+  // Try batch request first if supported
+  if (providerConfig.batchSupported) {
     try {
       const historyDays = config.historyDays?.[provider] || 0;
-      return await fetchBatchSpotPrices(provider, apiKey, selectedMetals, historyDays);
+      return await fetchBatchSpotPrices(
+        provider,
+        apiKey,
+        selectedMetals,
+        historyDays,
+      );
     } catch (batchError) {
-      console.warn(`Batch request failed for ${provider}, falling back to individual requests:`, batchError.message);
+      console.warn(
+        `Batch request failed for ${provider}, falling back to individual requests:`,
+        batchError.message,
+      );
       // Fall through to individual requests
     }
   }

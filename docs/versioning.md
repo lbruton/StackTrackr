@@ -1,6 +1,6 @@
 # Dynamic Version Management System
 
-> **Latest release: v3.04.00**
+> **Latest release: v3.04.01**
 
 ## Overview 
 
@@ -9,7 +9,7 @@ The StackTrackr now uses a dynamic version management system that automatically 
 ## How It Works
 
 ### Single Source of Truth
-- Version is defined once in `js/constants.js` as `APP_VERSION = '3.04.00'`
+- Version is defined once in `js/constants.js` as `APP_VERSION = '3.04.01'`
   - This is the ONLY place you need to update the version number
 
 ### Automatic Propagation
@@ -19,7 +19,7 @@ The StackTrackr now uses a dynamic version management system that automatically 
 
 ### Utility Functions
 - `js/constants.js` provides:
-  - `getVersionString(prefix)`: Returns formatted version (e.g., "v3.04.00")
+  - `getVersionString(prefix)`: Returns formatted version (e.g., "v3.04.01")
   - `injectVersionString(elementId, prefix)`: Inserts formatted version into a target element
 - `js/utils.js` provides:
   - `getAppTitle(baseTitle)`: Returns full app title with version
@@ -31,13 +31,13 @@ To release a new version:
 1. **Update ONLY the constants file:**
    ```javascript
    // In js/constants.js
-   const APP_VERSION = '3.04.00';  // Change this line only
+     const APP_VERSION = '3.04.01';  // Change this line only
    ```
 
 2. **All these will automatically update:**
-   - Page title: "StackTrackr v3.04.00"
-   - Page heading: "StackTrackr v3.04.00"
-   - Browser tab title: "StackTrackr v3.04.00"
+  - Page title: "StackTrackr v3.04.01"
+  - Page heading: "StackTrackr v3.04.01"
+  - Browser tab title: "StackTrackr v3.04.01"
    - App header: "StackTrackr v3.03.07b"
 
 3. **Update changelog:** Add entry to `/docs/changelog.md` for documentation

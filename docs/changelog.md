@@ -1,13 +1,18 @@
 # StackTrackr — Changelog
 
 
- > **Latest release: v3.04.00**
+> **Latest release: v3.04.01**
 
 
 For upcoming work, see [roadmap](roadmap.md).
 
 ## 📋 Version History
 
+
+### Version 3.04.01 – Filter reset & Numista sanitization (2025-08-11)
+- Clear search button now resets all active filters including modal selections
+- Numista imports strip unsafe characters from fields to preserve table filtering
+- API providers craft batch requests for selected metals in a single pull
 
 ### Version 3.04.00 – Filter click & API cleanup (2025-08-11)
 - Table cells (except collectable, notes, delete) now toggle exact-match filters with multi-level stacking

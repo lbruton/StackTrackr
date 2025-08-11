@@ -1,7 +1,7 @@
 # Function Reference
 
 
- > **Latest release: v3.04.00**
+ > **Latest release: v3.04.01**
 
 
 | File | Function | Description |
@@ -162,7 +162,7 @@
 | utils.js | loadData | Loads data from localStorage with error handling |
 | utils.js | sortInventoryByDateNewestFirst | Sorts inventory by date (newest first) |
 | utils.js | validateInventoryItem | Validates inventory item data |
-| utils.js | sanitizeImportedItem | Coerces invalid imported fields to safe defaults |
+| utils.js | sanitizeImportedItem | Coerces invalid imported fields to safe defaults and strips unsafe characters |
 | utils.js | handleError | Handles errors with user-friendly messaging |
 | utils.js | getUserFriendlyMessage | Converts technical error messages to user-friendly ones |
 | utils.js | downloadFile | Downloads a file with the specified content and filename |
