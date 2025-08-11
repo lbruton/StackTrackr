@@ -1340,6 +1340,26 @@ const setupSearch = () => {
       );
     }
 
+    if (elements.metalFilter) {
+      safeAttachListener(
+        elements.metalFilter,
+        "change",
+        function () {
+          const value = this.value;
+          if (value) {
+            columnFilters.composition = value;
+          } else {
+            delete columnFilters.composition;
+          }
+          searchQuery = "";
+          if (elements.searchInput) elements.searchInput.value = "";
+          currentPage = 1;
+          renderTable();
+        },
+        "Metal filter select",
+      );
+    }
+
     if (elements.clearSearchBtn) {
       safeAttachListener(
         elements.clearSearchBtn,
@@ -1347,6 +1367,9 @@ const setupSearch = () => {
         function () {
           if (elements.searchInput) {
             elements.searchInput.value = "";
+          }
+          if (elements.metalFilter) {
+            elements.metalFilter.value = "";
           }
           searchQuery = "";
           columnFilters = {};

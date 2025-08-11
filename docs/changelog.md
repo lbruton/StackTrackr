@@ -1,13 +1,16 @@
 # StackTrackr — Changelog
 
 
-> **Latest release: v3.03.08l**
+> **Latest release: v3.03.08m**
 
 
 For upcoming work, see [roadmap](roadmap.md).
 
 ## 📋 Version History
 
+
+### Version 3.03.08m – Inventory filter dropdown (2025-08-10)
+- Added metal filter to inventory title bar for quick result filtering
 
 ### Version 3.03.08l – Search fix & composition parsing (2025-08-10)
 - Fixed search box to filter inventory as you type
