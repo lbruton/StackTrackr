@@ -1,6 +1,6 @@
 # Function Reference
 
-> **Latest release: v3.03.08f**
+> **Latest release: v3.03.08g**
 
 | File | Function | Description |
 |------|----------|-------------|
@@ -90,6 +90,7 @@
 | inventory.js | generateReadmeContent | Generates README content for backup archive |
 | inventory.js | saveInventory | Saves current inventory to localStorage |
 | inventory.js | loadInventory | Loads inventory from localStorage with comprehensive data migration |
+| inventory.js | getNextSerial | Generates a unique serial number for inventory items |
 | inventory.js | getColor |  |
 | inventory.js | filterLink |  |
 | inventory.js | renderTable |  |

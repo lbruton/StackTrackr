@@ -861,6 +861,17 @@
         </div>
         <div class="modal-body">
         <form id="editForm">
+          <div class="collectable-card">
+            <div style="display:flex;align-items:center;gap:var(--spacing);">
+              <label for="editCollectable" style="margin:0;">Collectable Item</label>
+              <label class="switch">
+                <input id="editCollectable" type="checkbox" />
+                <span class="slider"></span>
+              </label>
+            </div>
+            <p class="collectable-note">Collectable items may have additional numismatic value beyond their metal content</p>
+          </div>
+          <input type="hidden" id="editSerial" />
           <!-- First row of edit form fields -->
           <div class="grid grid-2">
             <div>
@@ -945,7 +956,7 @@
               <input id="editDate" required="" type="date" />
             </div>
           </div>
-          <!-- Spot price and collectable toggle -->
+          <!-- Spot price and catalog field -->
           <div class="grid grid-2">
             <div>
               <label for="editSpotPrice">Spot Price ($/oz)</label>
@@ -959,19 +970,14 @@
                 />
               </div>
             </div>
-            <div class="collectable-toggle">
-              <label for="editCollectable">Collectable Item</label>
-              <label class="switch">
-                <input id="editCollectable" type="checkbox" />
-                <span class="slider"></span>
-              </label>
-              <span class="collectable-note"
-                >Collectable items may have additional numismatic value beyond their metal content</span
-              >
+            <div>
+              <label for="editCatalog">Catalog (N#)</label>
+              <input id="editCatalog" type="text" placeholder="Numista catalog #" />
             </div>
           </div>
           <!-- Form action buttons -->
           <div style="margin-top: 1rem; text-align: right">
+            <button class="btn" id="undoChangeBtn" type="button" style="display:none">Undo</button>
             <button class="btn" id="cancelEdit" type="button">Cancel</button>
             <button class="btn premium" type="submit">Save Changes</button>
           </div>
@@ -1024,7 +1030,7 @@
                 <th>Field</th>
                 <th>Old Value</th>
                 <th>New Value</th>
-                <th>Action</th>
+                <th>Undo</th>
               </tr>
             </thead>
             <tbody></tbody>

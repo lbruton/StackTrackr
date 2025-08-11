@@ -1,10 +1,15 @@
 # StackTrackr — Changelog
 
-> **Latest release: v3.03.08f**
+> **Latest release: v3.03.08g**
 
 For upcoming work, see [roadmap](roadmap.md).
 
 ## 📋 Version History
+
+### Version 3.03.08g – Change log table & catalog indexing (2025-08-10)
+- Change log rows open edit modal and table is more compact
+- Edit modal gains catalog field and undo button
+- Items now receive unique serial numbers with catalog mapping
 
 ### Version 3.03.08f – CSV import field sanitization (2025-08-10)
 - CSV imports now leave invalid fields blank instead of skipping rows

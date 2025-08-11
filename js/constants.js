@@ -98,7 +98,7 @@ const API_PROVIDERS = {
  * State codes: a=alpha, b=beta, rc=release candidate
  * Example: 3.03.02a → branch 3, release 03, patch 02, alpha
  */
-const APP_VERSION = "3.03.08f";
+const APP_VERSION = "3.03.08g";
 
 /**
  * Returns formatted version string
@@ -168,6 +168,12 @@ const BRANDING_DOMAIN_OVERRIDE =
 
 /** @constant {string} LS_KEY - LocalStorage key for inventory data */
 const LS_KEY = "metalInventory";
+
+/** @constant {string} SERIAL_KEY - LocalStorage key for inventory serial counter */
+const SERIAL_KEY = "inventorySerial";
+
+/** @constant {string} CATALOG_MAP_KEY - LocalStorage key for S#/N# associations */
+const CATALOG_MAP_KEY = "catalogMap";
 
 /** @constant {string} NUMISTA_RAW_KEY - LocalStorage key for raw Numista CSV data */
 const NUMISTA_RAW_KEY = "numistaRawData";

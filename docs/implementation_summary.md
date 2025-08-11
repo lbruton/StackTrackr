@@ -1,3 +1,30 @@
+# Implementation Summary: Change Log Refinements & Catalog Indexing
+
+> **Latest release: v3.03.08g**
+
+## Version Update: 3.03.08f → 3.03.08g
+
+## User Requirements Implemented
+
+- Condensed change log with row-click editing and undo option in edit modal
+- Collectable toggle moved to themed card with added catalog field
+- Unique S# tracking mapped to Numista catalog numbers
+
+## Technical Changes Made
+
+### Files Modified:
+1. **`css/styles.css`**: Condensed change log table, themed edit modal, collectable card styling
+2. **`index.html`**: Added catalog field, undo button, and collectable card; renamed change log action column
+3. **`js/changeLog.js`**: Row click editing and undo button adjustments
+4. **`js/inventory.js`**: Serial generation and catalog mapping persisted
+5. **`js/events.js`**: Serial assignment and undo button logic
+6. **`js/init.js`, `js/state.js`, `js/constants.js`**: New elements and constants for catalog support
+7. **Documentation**: Updated changelog, function table, implementation summary, status, roadmap, and structure
+
+### User Experience Improvements:
+- Faster editing from change log and consistent modal styling
+- Catalog tracking enables grouping items by Numista number
+
 # Implementation Summary: CSV Import Field Sanitization
 
 > **Latest release: v3.03.08f**
@@ -7,7 +34,7 @@
 ## User Requirements Implemented
 
 - Leave invalid CSV fields blank instead of rejecting rows
-- Allow users to merge imported data or override existing inventory
+- Allow users to merge imported data with existing inventory or override it
 
 ## Technical Changes Made
 

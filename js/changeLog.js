@@ -68,13 +68,13 @@ const renderChangeLog = () => {
       const globalIndex = changeLog.length - 1 - i;
       const actionLabel = entry.undone ? 'Redo' : 'Undo';
       return `
-      <tr>
+      <tr onclick="editFromChangeLog(${entry.idx}, ${globalIndex})">
         <td title="${new Date(entry.timestamp).toLocaleString()}">${new Date(entry.timestamp).toLocaleString()}</td>
         <td title="${sanitizeHtml(entry.itemName)}">${sanitizeHtml(entry.itemName)}</td>
         <td title="${sanitizeHtml(entry.field)}">${sanitizeHtml(entry.field)}</td>
         <td title="${sanitizeHtml(String(entry.oldValue))}">${sanitizeHtml(String(entry.oldValue))}</td>
         <td title="${sanitizeHtml(String(entry.newValue))}">${sanitizeHtml(String(entry.newValue))}</td>
-        <td class="action-cell"><button class="btn action-btn" style="margin:1px;" onclick="editFromChangeLog(${entry.idx})">Edit</button><button class="btn action-btn" style="margin:1px;" onclick="toggleChange(${globalIndex})">${actionLabel}</button></td>
+        <td class="action-cell"><button class="btn action-btn" style="margin:1px;" onclick="event.stopPropagation(); toggleChange(${globalIndex})">${actionLabel}</button></td>
       </tr>`;
     });
 
@@ -90,11 +90,17 @@ const toggleChange = (logIdx) => {
   if (!entry) return;
   if (entry.field === 'Deleted') {
     if (entry.undone) {
-      inventory.splice(entry.idx, 1);
+      const removed = inventory.splice(entry.idx, 1)[0];
+      if (removed && removed.serial) {
+        delete catalogMap[removed.serial];
+      }
       entry.undone = false;
     } else {
       const restored = JSON.parse(entry.oldValue || '{}');
       inventory.splice(entry.idx, 0, restored);
+      if (restored.serial) {
+        catalogMap[restored.serial] = restored.numistaId || "";
+      }
       entry.undone = true;
     }
   } else {
@@ -107,6 +113,9 @@ const toggleChange = (logIdx) => {
       item[entry.field] = entry.oldValue;
       entry.undone = true;
     }
+    if (item.serial) {
+      catalogMap[item.serial] = item.numistaId || "";
+    }
   }
   saveInventory();
   renderTable();
@@ -118,11 +127,11 @@ window.logChange = logChange;
 window.logItemChanges = logItemChanges;
 window.renderChangeLog = renderChangeLog;
 window.toggleChange = toggleChange;
-window.editFromChangeLog = (idx) => {
+window.editFromChangeLog = (idx, logIdx) => {
   const modal = document.getElementById('changeLogModal');
   if (modal) {
     modal.style.display = 'none';
   }
   document.body.style.overflow = '';
-  editItem(idx);
+  editItem(idx, logIdx);
 };

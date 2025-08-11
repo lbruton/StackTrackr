@@ -1,10 +1,10 @@
 # Project Status - StackTrackr
 
-> **Latest release: v3.03.08f**
+> **Latest release: v3.03.08g**
 
-## 🎯 Current State: **BETA v3.03.08f** ✅ MAINTAINED & OPTIMIZED
+## 🎯 Current State: **BETA v3.03.08g** ✅ MAINTAINED & OPTIMIZED
 
-**StackTrackr v3.03.08f** is a fully-featured, client-side web application for tracking precious metal investments (Silver, Gold, Platinum, Palladium) with comprehensive inventory management, API integration, and complete backup capabilities. The 3.03.x series focuses on polish, maintenance, and optimization.
+**StackTrackr v3.03.08g** is a fully-featured, client-side web application for tracking precious metal investments (Silver, Gold, Platinum, Palladium) with comprehensive inventory management, API integration, and complete backup capabilities. The 3.03.x series focuses on polish, maintenance, and optimization.
 
 ## 🏗️ Architecture Overview
 
@@ -22,6 +22,7 @@ The tool features a **modular JavaScript architecture** with separate files for 
 - `utils.js` - Helper functions and formatters
 
 ## ✨ Latest Changes
+- **v3.03.08g - Change log & catalog improvements**: Condensed change log with row-click editing and catalog mapping
 - **v3.03.08f - CSV import field sanitization**: Invalid fields are blanked and users can merge or override during import
 - **v3.03.08e - Numista CSV storage**: Stores raw Numista CSV and classifies metals by composition
 - **v3.03.08d - Version Modal Centering**: Version change dialog now appears centered on the screen
@@ -135,8 +136,8 @@ All data is stored locally in the browser using localStorage with:
 ## 📚 Documentation Status (Updated: August 10, 2025)
 
 **All documentation files are current and synchronized:**
- - ✅ **status.md** - Updated for v3.03.08f release
- - ✅ **changelog.md** - Current through v3.03.08f
+ - ✅ **status.md** - Updated for v3.03.08g release
+ - ✅ **changelog.md** - Current through v3.03.08g
 - ✅ **MULTI_AGENT_WORKFLOW.md** - Comprehensive AI assistant development guide
 - ✅ **structure.md** - Reflects streamlined project organization
 - ✅ **versioning.md** - Accurate version management documentation
