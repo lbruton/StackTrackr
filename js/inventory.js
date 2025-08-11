@@ -770,28 +770,22 @@ const renderTable = () => {
       </td>
       <td class="shrink" data-column="numista">${item.numistaId ? `<a href="https://en.numista.com/catalogue/pieces${item.numistaId}.html" target="_blank" rel="noopener" title="View on Numista">${sanitizeHtml(item.numistaId)}</a>` : ''}</td>
       <td class="shrink" data-column="qty">
-        <span class="inline-edit-icon" role="button" tabindex="0" onclick="startCellEdit(${originalIdx}, 'qty', this)" aria-label="Edit quantity" title="Edit quantity">✎</span>
         ${filterLink('qty', item.qty, 'var(--text-primary)')}
       </td>
       <td class="shrink" data-column="weight">
-        <span class="inline-edit-icon" role="button" tabindex="0" onclick="startCellEdit(${originalIdx}, 'weight', this)" aria-label="Edit weight" title="Edit weight">✎</span>
         ${filterLink('weight', item.weight, 'var(--text-primary)', parseFloat(item.weight).toFixed(2) + ' (oz)', 'Troy ounces (ozt)')}
       </td>
       <td class="shrink" data-column="purchasePrice" title="USD">
-        <span class="inline-edit-icon" role="button" tabindex="0" onclick="startCellEdit(${originalIdx}, 'price', this)" aria-label="Edit purchase price" title="Edit purchase price">✎</span>
         ${item.price > 0 ? filterLink('price', item.price, 'var(--text-primary)', formatCurrency(item.price)) : ''}
       </td>
       <td class="shrink" data-column="spot" title="USD">
-        <span class="inline-edit-icon" role="button" tabindex="0" onclick="startCellEdit(${originalIdx}, 'spotPriceAtPurchase', this)" aria-label="Edit spot price" title="Edit spot price">✎</span>
         ${filterLink('spotPriceAtPurchase', spotValue, 'var(--text-primary)', spotDisplay)}
       </td>
       <td class="shrink" data-column="premium" style="color: ${item.isCollectable ? 'var(--text-muted)' : (item.totalPremium > 0 ? 'var(--warning)' : 'inherit')}">${filterLink('totalPremium', premiumValue, 'var(--text-primary)', premiumDisplay)}</td>
       <td class="shrink" data-column="purchaseLocation">
-        <span class="inline-edit-icon" role="button" tabindex="0" onclick="startCellEdit(${originalIdx}, 'purchaseLocation', this)" aria-label="Edit purchase location" title="Edit purchase location">✎</span>
         ${item.purchaseLocation ? filterLink('purchaseLocation', item.purchaseLocation, getPurchaseLocationColor(item.purchaseLocation)) : ''}
       </td>
       <td class="shrink" data-column="storageLocation">
-        <span class="inline-edit-icon" role="button" tabindex="0" onclick="startCellEdit(${originalIdx}, 'storageLocation', this)" aria-label="Edit storage location" title="Edit storage location">✎</span>
         ${item.storageLocation && item.storageLocation !== 'Unknown' ? filterLink('storageLocation', item.storageLocation, getStorageLocationColor(item.storageLocation)) : ''}
       </td>
       <td class="shrink" data-column="collectable"><span class="collectable-status" role="button" tabindex="0" onclick="toggleCollectable(${originalIdx})" onkeydown="if(event.key==='Enter'||event.key===' ') toggleCollectable(${originalIdx})" aria-label="Toggle collectable status for ${sanitizeHtml(item.name)}" title="Toggle collectable status" style="color: ${item.isCollectable ? 'var(--success)' : 'var(--text-muted)'}; cursor: pointer;">${item.isCollectable ? 'Yes' : 'No'}</span></td>
