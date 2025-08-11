@@ -1,3 +1,31 @@
+# Implementation Summary: Storage Report Modal
+
+## Version Update: 3.03.02a → 3.03.03a
+
+## User Requirements Implemented
+
+- Storage report opens in an in-app modal with iframe instead of a browser popup
+- Added dedicated modal markup with close controls and theme support
+
+## Technical Changes Made
+
+### Files Modified:
+1. **`index.html`**: Added `storageReportModal` with iframe
+2. **`js/events.js`**: Updated storage report link handler and close logic
+3. **`js/utils.js`**: Replaced popup logic with iframe injection
+4. **`js/constants.js`**: Bumped version to 3.03.03a
+5. **Documentation**: Updated `CHANGELOG.md`, `FUNCTIONSTABLE.md`, and `STATUS.md`
+
+### User Experience Improvements:
+- Consistent modal experience without relying on browser popups
+- Report respects current light/dark theme inside iframe
+
+## Testing Recommendations
+
+1. Open storage report from footer link and ensure modal displays report
+2. Verify modal closes via header button, outside click, and ESC key
+3. Toggle theme before opening to confirm iframe reflects current theme
+
 # Implementation Summary: Enhanced API Sync Caching
 
 ## Version Update: 3.1.0 → 3.1.1
@@ -62,7 +90,7 @@
 
 ### Files Modified:
 1. **`app/js/constants.js`**: Updated version to 3.1.1
-2. **`app/js/api.js`**: 
+2. **`app/js/api.js`**:
    - Enhanced `syncSpotPricesFromApi()` with cache checking
    - Added `clearApiCache()` and `refreshFromCache()` functions
    - Updated button state management and tooltips

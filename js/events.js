@@ -675,8 +675,8 @@ const setupEventListeners = () => {
           "click",
           (e) => {
             e.preventDefault();
-            if (typeof downloadStorageReport === "function") {
-              downloadStorageReport();
+            if (typeof openStorageReportPopup === "function") {
+              openStorageReportPopup();
             }
           },
           "Storage report link",
@@ -1628,6 +1628,7 @@ const setupApiEvents = () => {
           const notesModal = document.getElementById("notesModal");
           const detailsModal = document.getElementById("detailsModal");
           const changeLogModal = document.getElementById("changeLogModal");
+          const storageReportModal = document.getElementById("storageReportModal");
 
           if (
             filesModal &&
@@ -1669,6 +1670,9 @@ const setupApiEvents = () => {
           notesIndex = null;
         } else if (changeLogModal && changeLogModal.style.display === "flex") {
           changeLogModal.style.display = "none";
+          document.body.style.overflow = "";
+        } else if (storageReportModal && storageReportModal.style.display === "flex") {
+          storageReportModal.style.display = "none";
           document.body.style.overflow = "";
         } else if (
           detailsModal &&

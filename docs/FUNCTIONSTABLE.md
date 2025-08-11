@@ -153,3 +153,4 @@
 | utils.js | downloadFile | Downloads a file with the specified content and filename |
 | utils.js | updateStorageStats | Updates footer with localStorage usage statistics and progress bar |
 | utils.js | downloadStorageReport | Downloads a report of all localStorage data |
+| utils.js | openStorageReportPopup | Displays storage report HTML in a modal iframe |
