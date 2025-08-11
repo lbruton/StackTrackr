@@ -1,5 +1,7 @@
 # Multi-Agent Development Workflow - StackTrackr v3.03.06a
 
+> **Latest release: v3.03.06a**
+
 ## 🎯 Project Overview
 
 You are contributing to the **StackTrackr v3.03.06a**, a comprehensive client-side web application for tracking precious metal investments (Silver, Gold, Platinum, Palladium). The project uses a modular JavaScript architecture with local storage, responsive CSS theming, and advanced features like API integration, data visualization, and comprehensive import/export capabilities.
