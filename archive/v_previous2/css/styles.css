@@ -270,6 +270,7 @@ section {
   border-radius: var(--radius);
   overflow: hidden;
   background-color: var(--bg-tertiary);
+  position: relative;
 }
 
 .files-progress-segment {
@@ -280,7 +281,28 @@ section {
 
 .files-progress-segment.zoomed {
   transform: scaleY(1.5);
+  box-shadow: 0 0 0 2px var(--border);
   z-index: 1;
+}
+
+.files-progress-tooltip {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 0.75rem;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transform: translate(-50%, -0.25rem);
+  transition: var(--transition);
+}
+
+.files-progress-tooltip.show {
+  opacity: 1;
 }
 
 section:hover {
@@ -1013,7 +1035,6 @@ input[type="submit"] {
 }
 
 /* Settings-style modal layout */
-#appearanceModal .modal-content,
 #apiModal .modal-content,
 #filesModal .modal-content {
   max-width: 750px;
@@ -1024,7 +1045,6 @@ input[type="submit"] {
   overflow: hidden;
 }
 
-#appearanceModal .modal-header,
 #apiModal .modal-header,
 #filesModal .modal-header {
   background: linear-gradient(135deg, var(--primary), var(--primary-hover));
@@ -1035,7 +1055,6 @@ input[type="submit"] {
   box-shadow: var(--shadow);
 }
 
-#appearanceModal .modal-header h2,
 #apiModal .modal-header h2,
 #filesModal .modal-header h2 {
   margin: 0;
@@ -1043,7 +1062,6 @@ input[type="submit"] {
   text-align: center;
 }
 
-#appearanceModal .modal-body,
 #apiModal .modal-body,
 #filesModal .modal-body {
   padding: var(--spacing-xl);
@@ -1053,27 +1071,23 @@ input[type="submit"] {
   scrollbar-color: var(--primary) var(--bg-secondary);
 }
 
-#appearanceModal .modal-body::-webkit-scrollbar,
 #apiModal .modal-body::-webkit-scrollbar,
 #filesModal .modal-body::-webkit-scrollbar {
   width: 8px;
 }
 
-#appearanceModal .modal-body::-webkit-scrollbar-track,
 #apiModal .modal-body::-webkit-scrollbar-track,
 #filesModal .modal-body::-webkit-scrollbar-track {
   background: var(--bg-secondary);
   border-radius: var(--radius);
 }
 
-#appearanceModal .modal-body::-webkit-scrollbar-thumb,
 #apiModal .modal-body::-webkit-scrollbar-thumb,
 #filesModal .modal-body::-webkit-scrollbar-thumb {
   background-color: var(--primary);
   border-radius: var(--radius);
 }
 
-#appearanceModal .modal-body::-webkit-scrollbar-thumb:hover,
 #apiModal .modal-body::-webkit-scrollbar-thumb:hover,
 #filesModal .modal-body::-webkit-scrollbar-thumb:hover {
   background-color: var(--primary-hover);
@@ -1192,7 +1206,8 @@ input[type="submit"] {
 }
 
 #changeLogModal .modal-header,
-#detailsModal .modal-header {
+#detailsModal .modal-header,
+#storageReportModal .modal-header {
   background: linear-gradient(135deg, var(--primary), var(--primary-hover));
   color: white;
   padding: var(--spacing-xl);
@@ -1202,7 +1217,8 @@ input[type="submit"] {
 }
 
 #changeLogModal .modal-header h2,
-#detailsModal .modal-header h2 {
+#detailsModal .modal-header h2,
+#storageReportModal .modal-header h2 {
   margin: 0;
   color: white;
   text-align: center;
@@ -1220,6 +1236,11 @@ input[type="submit"] {
   overflow: hidden;
   display: flex;
   flex-direction: column;
+}
+
+#storageReportModal .modal-body {
+  height: 80vh;
+  padding: 0;
 }
 
 #changeLogTable {
@@ -2106,17 +2127,17 @@ td input:checked + .slider:before {
 
 .items-per-page {
   display: flex;
-  justify-content: flex-end;
   align-items: center;
   gap: var(--spacing-sm);
-  margin-left: auto;
 }
 
 .table-controls {
   display: flex;
   align-items: center;
-  margin-bottom: var(--spacing-sm);
+  justify-content: space-between;
   gap: var(--spacing-lg);
+  margin: var(--spacing-sm) 0;
+  flex-wrap: wrap;
 }
 
 .items-label {
@@ -2125,10 +2146,18 @@ td input:checked + .slider:before {
   color: var(--text-muted);
 }
 
+.change-log-label {
+  font-weight: 700;
+  color: var(--primary);
+  cursor: pointer;
+}
+
 .table-disclaimer {
   font-size: 0.75rem;
   color: var(--text-muted);
   font-style: italic;
+  flex: 1;
+  text-align: center;
 }
 
 .pagination-select {

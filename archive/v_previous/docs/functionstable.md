@@ -1,6 +1,6 @@
 # Function Reference
 
-> **Latest release: v3.03.08a**
+> **Latest release: v3.03.08c**
 
 | File | Function | Description |
 |------|----------|-------------|
@@ -13,6 +13,7 @@
 | about.js | populateAckModal | Populates the acknowledgment modal with version information |
 | about.js | loadChangelog | Loads changelog information from docs/changelog.md and populates the About modal |
 | about.js | extractChangelogItems | Extracts changelog items from content, filtering for meaningful changes |
+| about.js | loadRoadmap | Loads roadmap information and populates roadmap lists in modals |
 | about.js | showFullChangelog | Shows full changelog in a new window or navigates to documentation |
 | about.js | setupAboutModalEvents | Sets up event listeners for about modal elements |
 | about.js | setupAckModalEvents | Sets up event listeners for acknowledgment modal elements |
@@ -47,7 +48,7 @@
 | api.js | updateSyncButtonStates | Updates sync button states based on API availability |
 | api.js | showApiModal | Shows settings modal and populates API fields |
 | api.js | hideApiModal | Hides API modal |
-| api.js | showFilesModal |  |
+| api.js | showFilesModal | Opens the Files modal |
 | api.js | hideFilesModal |  |
 | api.js | showProviderInfo | Shows provider information modal |
 | api.js | hideProviderInfo | Hides provider information modal |
@@ -98,13 +99,11 @@
 | inventory.js | showNotes | Opens modal to view and edit an item's notes |
 | inventory.js | editItem | Prepares and displays edit modal for specified inventory item |
 | inventory.js | toggleCollectable | Toggles collectable status for inventory item |
-| inventory.js | renderFilesProgress | Renders per-item storage distribution bar in Files modal |
 | inventory.js | startImportProgress |  |
 | inventory.js | updateImportProgress |  |
 | inventory.js | endImportProgress |  |
 | inventory.js | importCsv | Imports inventory data from CSV file with comprehensive validation and error handling |
 | inventory.js | importNumistaCsv | Imports inventory data from a Numista CSV export |
-| inventory.js | exportNumistaCsv | Exports inventory data using Numista-compatible column layout |
 | inventory.js | exportCsv | Exports current inventory to CSV format |
 | inventory.js | importJson | Imports inventory data from JSON file |
 | inventory.js | exportJson | Exports current inventory to JSON format |

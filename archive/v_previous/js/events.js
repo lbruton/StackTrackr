@@ -905,6 +905,28 @@ const setupEventListeners = () => {
       );
     }
 
+    if (elements.numistaImportFile) {
+      safeAttachListener(
+        elements.numistaImportFile,
+        "change",
+        function (e) {
+          if (e.target.files.length > 0) {
+            importNumistaCsv(e.target.files[0]);
+          }
+          this.value = "";
+        },
+        "Numista CSV import",
+      );
+    }
+    if (elements.numistaImportBtn && elements.numistaImportFile) {
+      safeAttachListener(
+        elements.numistaImportBtn,
+        "click",
+        () => elements.numistaImportFile.click(),
+        "Numista import trigger",
+      );
+    }
+
     // Export buttons
     if (elements.exportCsvBtn) {
       safeAttachListener(
@@ -936,14 +958,6 @@ const setupEventListeners = () => {
         "click",
         exportPdf,
         "PDF export",
-      );
-    }
-    if (elements.numistaExportBtn) {
-      safeAttachListener(
-        elements.numistaExportBtn,
-        "click",
-        exportNumistaCsv,
-        "Numista Export CSV",
       );
     }
     if (elements.cloudSyncBtn) {

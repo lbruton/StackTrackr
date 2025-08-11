@@ -90,11 +90,12 @@ document.addEventListener("DOMContentLoaded", () => {
     elements.importExcelFile = safeGetElement("importExcelFile");
     elements.importProgress = safeGetElement("importProgress");
     elements.importProgressText = safeGetElement("importProgressText");
+    elements.numistaImportBtn = safeGetElement("numistaImportBtn");
+    elements.numistaImportFile = safeGetElement("numistaImportFile");
     elements.exportCsvBtn = safeGetElement("exportCsvBtn");
     elements.exportJsonBtn = safeGetElement("exportJsonBtn");
     elements.exportExcelBtn = safeGetElement("exportExcelBtn");
     elements.exportPdfBtn = safeGetElement("exportPdfBtn");
-    elements.numistaExportBtn = safeGetElement("numistaExportBtn");
     elements.cloudSyncBtn = safeGetElement("cloudSyncBtn");
     elements.syncAllBtn = safeGetElement("syncAllBtn");
     elements.addMappingBtn = safeGetElement("addMappingBtn");
@@ -137,9 +138,6 @@ document.addEventListener("DOMContentLoaded", () => {
     // Show acknowledgment modal immediately and set up modal events
     if (typeof setupAckModalEvents === "function") {
       setupAckModalEvents();
-    }
-    if (typeof showAckModal === "function") {
-      showAckModal();
     }
     if (typeof setupAboutModalEvents === "function") {
       setupAboutModalEvents();
