@@ -2,6 +2,7 @@
 
 This roadmap outlines upcoming patch releases for the v3.04.x series.
 
+- **v3.04.06** – Name sanitization *(completed)*
 - **v3.04.05** – Search sanitization *(completed)*
 - **v3.04.04** – Multi-term search *(completed)*
 - **v3.04.03** – Search input restore *(completed)*

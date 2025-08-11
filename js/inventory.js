@@ -451,6 +451,7 @@ const loadInventory = () => {
   const data = loadData(LS_KEY, []);
   // Migrate legacy data to include new fields
   inventory = data.map(item => {
+    let normalized;
     // Handle legacy data that might not have all fields
     if (item.premiumPerOz === undefined) {
       // For legacy items, calculate premium if possible
@@ -460,7 +461,7 @@ const loadInventory = () => {
       const premiumPerOz = spotPrice > 0 ? (item.price / item.weight) - spotPrice : 0;
       const totalPremium = premiumPerOz * item.qty * item.weight;
 
-      return {
+      normalized = {
         ...item,
         type: normalizeType(item.type),
         purchaseLocation: item.purchaseLocation || "",
@@ -472,17 +473,19 @@ const loadInventory = () => {
         isCollectable: item.isCollectable !== undefined ? item.isCollectable : false,
         composition: item.composition || item.metal || ""
       };
+    } else {
+      // Ensure all items have required properties
+      normalized = {
+        ...item,
+        type: normalizeType(item.type),
+        purchaseLocation: item.purchaseLocation || "",
+        storageLocation: item.storageLocation || "Unknown",
+        notes: item.notes || "",
+        isCollectable: item.isCollectable !== undefined ? item.isCollectable : false,
+        composition: item.composition || item.metal || ""
+      };
     }
-    // Ensure all items have required properties
-    return {
-      ...item,
-      type: normalizeType(item.type),
-      purchaseLocation: item.purchaseLocation || "",
-      storageLocation: item.storageLocation || "Unknown",
-      notes: item.notes || "",
-      isCollectable: item.isCollectable !== undefined ? item.isCollectable : false,
-      composition: item.composition || item.metal || ""
-    };
+    return sanitizeImportedItem(normalized);
   });
 
   let serialCounter = parseInt(localStorage.getItem(SERIAL_KEY) || '0', 10);

@@ -576,7 +576,11 @@ const sanitizeImportedItem = (item) => {
   const cleanString = (str = '') =>
     str
       .toString()
+      .replace(/<[^>]*>/g, '')
+      .normalize('NFD')
+      .replace(/\p{Diacritic}/gu, '')
       .replace(/[\u0000-\u001F\u007F'\"]/g, '')
+      .replace(/\s+/g, ' ')
       .trim();
   for (const field of strFields) {
     sanitized[field] = cleanString(sanitized[field]);
