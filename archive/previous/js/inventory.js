@@ -493,6 +493,7 @@ const METAL_COLORS = {
 const typeColors = {};
 const purchaseLocationColors = {};
 const storageLocationColors = {};
+const filesProgressColors = {};
 
 const getColor = (map, key) => {
   if (!map[key]) {
@@ -514,6 +515,36 @@ const filterLink = (field, value, color) => {
 const getTypeColor = type => getColor(typeColors, type);
 const getPurchaseLocationColor = loc => getColor(purchaseLocationColors, loc);
 const getStorageLocationColor = loc => getColor(storageLocationColors, loc);
+
+/**
+ * Renders inventory storage distribution progress bar
+ * showing each item's relative localStorage size
+ */
+const renderFilesProgress = () => {
+  const container = document.getElementById('filesProgress');
+  if (!container) return;
+  container.innerHTML = '';
+  if (inventory.length === 0) return;
+
+  const sizes = inventory.map(item => ({
+    item,
+    size: JSON.stringify(item).length * 2,
+  }));
+  const total = sizes.reduce((sum, s) => sum + s.size, 0);
+
+  sizes.forEach(({ item, size }) => {
+    const segment = document.createElement('div');
+    segment.className = 'files-progress-segment';
+    segment.style.width = `${(size / total) * 100}%`;
+    segment.style.backgroundColor = getColor(filesProgressColors, item.name);
+    segment.title = `${item.name}: ${(size / 1024).toFixed(1)} KB`;
+    segment.addEventListener('click', () => {
+      container.querySelectorAll('.files-progress-segment').forEach(seg => seg.classList.remove('zoomed'));
+      segment.classList.add('zoomed');
+    });
+    container.appendChild(segment);
+  });
+};
 
 const renderTable = () => {
   return monitorPerformance(() => {
@@ -549,20 +580,20 @@ const renderTable = () => {
 
       rows.push(`
       <tr>
-      <td class="shrink">${formatDisplayDate(item.date)}</td>
-      <td class="shrink">${filterLink('type', item.type, getTypeColor(item.type))}</td>
-      <td class="shrink">${filterLink('metal', item.metal || 'Silver', METAL_COLORS[item.metal] || 'var(--primary)')}</td>
-      <td class="clickable-name expand" onclick="editItem(${originalIdx})" title="Click to edit" tabindex="0" role="button" aria-label="Edit ${sanitizeHtml(item.name)}" onkeydown="if(event.key==='Enter'||event.key===' ')editItem(${originalIdx})">${sanitizeHtml(item.name)}</td>
-      <td class="shrink">${item.qty}</td>
-      <td class="shrink">${parseFloat(item.weight).toFixed(2)}</td>
-      <td class="shrink">${formatDollar(item.price)}</td>
-      <td class="shrink">${item.isCollectable ? 'N/A' : (item.spotPriceAtPurchase > 0 ? formatDollar(item.spotPriceAtPurchase) : 'N/A')}</td>
-      <td class="shrink" style="color: ${item.isCollectable ? 'var(--text-muted)' : (item.totalPremium > 0 ? 'var(--warning)' : 'inherit')}">${item.isCollectable ? 'N/A' : formatDollar(item.totalPremium)}</td>
-      <td class="shrink">${filterLink('purchaseLocation', item.purchaseLocation, getPurchaseLocationColor(item.purchaseLocation))}</td>
-      <td class="shrink">${filterLink('storageLocation', item.storageLocation || 'Unknown', getStorageLocationColor(item.storageLocation || 'Unknown'))}</td>
-      <td class="shrink"><button type="button" class="btn action-btn collectable-btn ${item.isCollectable ? 'success' : ''}" onclick="toggleCollectable(${originalIdx})" aria-label="Toggle collectable status for ${sanitizeHtml(item.name)}" title="Toggle collectable status">${item.isCollectable ? 'Yes' : 'No'}</button></td>
-      <td class="shrink"><button type="button" class="btn action-btn notes-btn ${item.notes && item.notes.trim() ? 'success' : ''}" onclick="showNotes(${originalIdx})" aria-label="View notes" title="View notes">${item.notes && item.notes.trim() ? 'Yes' : 'No'}</button></td>
-      <td class="shrink"><button class="btn action-btn danger" onclick="deleteItem(${originalIdx})" aria-label="Delete item" title="Delete item">Delete</button></td>
+      <td class="shrink" data-column="date">${formatDisplayDate(item.date)}</td>
+      <td class="shrink" data-column="type">${filterLink('type', item.type, getTypeColor(item.type))}</td>
+      <td class="shrink" data-column="metal">${filterLink('metal', item.metal || 'Silver', METAL_COLORS[item.metal] || 'var(--primary)')}</td>
+      <td class="clickable-name expand" data-column="name" onclick="editItem(${originalIdx})" title="Click to edit" tabindex="0" role="button" aria-label="Edit ${sanitizeHtml(item.name)}" onkeydown="if(event.key==='Enter'||event.key===' ')editItem(${originalIdx})">${sanitizeHtml(item.name)}</td>
+      <td class="shrink" data-column="qty">${item.qty}</td>
+      <td class="shrink" data-column="weight">${parseFloat(item.weight).toFixed(2)}</td>
+      <td class="shrink" data-column="purchasePrice">${formatDollar(item.price)}</td>
+      <td class="shrink" data-column="spot">${item.isCollectable ? 'N/A' : (item.spotPriceAtPurchase > 0 ? formatDollar(item.spotPriceAtPurchase) : 'N/A')}</td>
+      <td class="shrink" data-column="premium" style="color: ${item.isCollectable ? 'var(--text-muted)' : (item.totalPremium > 0 ? 'var(--warning)' : 'inherit')}">${item.isCollectable ? 'N/A' : formatDollar(item.totalPremium)}</td>
+      <td class="shrink" data-column="purchaseLocation">${filterLink('purchaseLocation', item.purchaseLocation, getPurchaseLocationColor(item.purchaseLocation))}</td>
+      <td class="shrink" data-column="storageLocation">${filterLink('storageLocation', item.storageLocation || 'Unknown', getStorageLocationColor(item.storageLocation || 'Unknown'))}</td>
+      <td class="shrink" data-column="collectable"><button type="button" class="btn action-btn collectable-btn ${item.isCollectable ? 'success' : ''}" onclick="toggleCollectable(${originalIdx})" aria-label="Toggle collectable status for ${sanitizeHtml(item.name)}" title="Toggle collectable status">${item.isCollectable ? 'Yes' : 'No'}</button></td>
+      <td class="shrink" data-column="notes"><button type="button" class="btn action-btn notes-btn ${item.notes && item.notes.trim() ? 'success' : ''}" onclick="showNotes(${originalIdx})" aria-label="View notes" title="View notes">${item.notes && item.notes.trim() ? 'Yes' : 'No'}</button></td>
+      <td class="shrink" data-column="delete"><button class="btn action-btn danger" onclick="deleteItem(${originalIdx})" aria-label="Delete item" title="Delete item">Delete</button></td>
       </tr>
       `);
     }
@@ -593,8 +624,9 @@ const renderTable = () => {
     renderPagination(sortedInventory);
     updateSummary();
     
-    // Re-setup column resizing after table re-render
+    // Re-setup column resizing and responsive visibility after table re-render
     setupColumnResizing();
+    updateColumnVisibility();
   }, 'renderTable');
 };
 
@@ -1151,12 +1183,12 @@ const importNumistaCsv = (file) => {
           const weight = gramsToOzt(weightGrams);
 
           const priceKey = Object.keys(row).find(k => k.startsWith('Buying price'));
-          let price = 0;
+          let purchasePrice = 0;
           if (priceKey) {
             const currencyMatch = priceKey.match(/\(([^)]+)\)/);
             const currency = currencyMatch ? currencyMatch[1] : 'USD';
             const amount = parseFloat(String(row[priceKey]).replace(/[^0-9.\-]/g, ''));
-            price = convertToUsd(amount, currency);
+            purchasePrice = convertToUsd(amount, currency);
           }
 
           const purchaseLocRaw = row['Acquisition place'];
@@ -1172,7 +1204,7 @@ const importNumistaCsv = (file) => {
 
           const isCollectable = false;
           const spotPriceAtPurchase = spotPrices[metal.toLowerCase()] || 0;
-          const premiumPerOz = weight ? price / weight - spotPriceAtPurchase : 0;
+          const premiumPerOz = weight ? purchasePrice / weight - spotPriceAtPurchase : 0;
           const totalPremium = premiumPerOz * qty * weight;
 
           const itemToValidate = {
@@ -1181,7 +1213,8 @@ const importNumistaCsv = (file) => {
             qty,
             type,
             weight,
-            price,
+            price: purchasePrice,
+            purchasePrice,
             date,
             purchaseLocation,
             storageLocation,
@@ -1243,66 +1276,79 @@ const importNumistaCsv = (file) => {
 };
 
 /**
- * Exports inventory data to a Numista compatible CSV format
+ * Exports current inventory data to a Numista compatible CSV file.
+ *
+ * Numista expects a very specific column layout. This exporter generates the
+ * following columns in order:
+ * N# number, Title, Year, Metal, Quantity, Type, Weight (g), Buying price (USD),
+ * Acquisition place, Storage location, Acquisition date, Note.
+ *
+ * Weight values are converted from troy ounces (internal representation) to
+ * grams. Buying price pulls from `purchasePrice` when available and falls back
+ * to `price`.
+ *
+ * @returns {void} Triggers download of the generated CSV file
  */
 const exportNumistaCsv = () => {
-  const timestamp = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+  const timestamp = new Date().toISOString().slice(0, 10).replace(/-/g, "");
   const headers = [
-    'N# number',
-    'Title',
-    'Year',
-    'Metal',
-    'Quantity',
-    'Type',
-    'Weight (g)',
-    'Buying price (USD)',
-    'Acquisition place',
-    'Storage location',
-    'Acquisition date',
-    'Note'
+    "N# number",
+    "Title",
+    "Year",
+    "Metal",
+    "Quantity",
+    "Type",
+    "Weight (g)",
+    "Buying price (USD)",
+    "Acquisition place",
+    "Storage location",
+    "Acquisition date",
+    "Note",
   ];
 
   const sortedInventory = sortInventoryByDateNewestFirst();
   const rows = [];
 
   for (const item of sortedInventory) {
-    let title = item.name || '';
-    let year = item.issuedYear || '';
+    const year = item.issuedYear || "";
+    let title = item.name || "";
     if (year) {
       const yearRegex = new RegExp(`\\s*${year}\\b`);
-      title = title.replace(yearRegex, '').trim();
+      title = title.replace(yearRegex, "").trim();
     }
 
     const weightGrams = parseFloat(item.weight)
       ? parseFloat(item.weight) * 31.1034768
       : 0;
+    const purchasePrice = item.purchasePrice ?? item.price;
 
     rows.push([
-      item.numistaId || '',
+      item.numistaId || "",
       title,
       year,
-      item.metal || '',
-      item.qty || '',
-      item.type || '',
-      weightGrams ? weightGrams.toFixed(2) : '',
-      item.price ? Number(item.price).toFixed(2) : '',
-      item.purchaseLocation || '',
-      item.storageLocation || '',
-      item.date || '',
-      item.notes || ''
+      item.metal || "",
+      item.qty || "",
+      item.type || "",
+      weightGrams ? weightGrams.toFixed(2) : "",
+      purchasePrice != null ? Number(purchasePrice).toFixed(2) : "",
+      item.purchaseLocation || "",
+      item.storageLocation || "",
+      item.date || "",
+      item.notes || "",
     ]);
   }
 
   const csv = Papa.unparse([headers, ...rows]);
-  const blob = new Blob([csv], { type: 'text/csv' });
+  const blob = new Blob([csv], { type: "text/csv" });
   const url = URL.createObjectURL(blob);
 
-  const a = document.createElement('a');
+  const a = document.createElement("a");
   a.href = url;
   a.download = `numista_export_${timestamp}.csv`;
   document.body.appendChild(a);
   a.click();
-  a.remove();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 };
 
 /**
@@ -1777,3 +1823,4 @@ window.toggleCollectable = toggleCollectable;
 window.editItem = editItem;
 window.deleteItem = deleteItem;
 window.showNotes = showNotes;
+window.renderFilesProgress = renderFilesProgress;

@@ -146,6 +146,99 @@ const setupColumnResizing = () => {
   );
 };
 
+// RESPONSIVE TABLE HANDLING
+// =============================================================================
+
+/**
+ * Updates column visibility based on current viewport width
+ */
+const updateColumnVisibility = () => {
+  const width = window.innerWidth;
+  const hidden = new Set();
+
+  const breakpoints = [
+    { width: 1200, hide: ["purchaseLocation", "storageLocation", "collectable"] },
+    {
+      width: 992,
+      hide: [
+        "purchaseLocation",
+        "storageLocation",
+        "collectable",
+        "premium",
+        "spot",
+        "weight",
+      ],
+    },
+    {
+      width: 768,
+      hide: [
+        "purchaseLocation",
+        "storageLocation",
+        "collectable",
+        "premium",
+        "spot",
+        "weight",
+        "qty",
+        "metal",
+      ],
+    },
+    {
+      width: 576,
+      hide: [
+        "purchaseLocation",
+        "storageLocation",
+        "collectable",
+        "premium",
+        "spot",
+        "weight",
+        "qty",
+        "metal",
+        "type",
+      ],
+    },
+  ];
+
+  breakpoints.forEach((bp) => {
+    if (width < bp.width) bp.hide.forEach((c) => hidden.add(c));
+  });
+
+  const allColumns = [
+    "date",
+    "type",
+    "metal",
+    "name",
+    "qty",
+    "weight",
+    "purchasePrice",
+    "spot",
+    "premium",
+    "purchaseLocation",
+    "storageLocation",
+    "collectable",
+    "notes",
+    "delete",
+  ];
+
+  allColumns.forEach((col) => {
+    document.querySelectorAll(`[data-column="${col}"]`).forEach((el) => {
+      el.classList.toggle("hidden", hidden.has(col));
+    });
+  });
+};
+
+/**
+ * Sets up responsive column visibility handling
+ */
+const setupResponsiveColumns = () => {
+  updateColumnVisibility();
+  safeAttachListener(
+    window,
+    "resize",
+    updateColumnVisibility,
+    "Window resize for column visibility",
+  );
+};
+
 // MAIN EVENT LISTENERS SETUP
 // =============================================================================
 
@@ -156,6 +249,9 @@ const setupEventListeners = () => {
   console.log(`Setting up event listeners (v${APP_VERSION})...`);
 
   try {
+    // Responsive column handling
+    setupResponsiveColumns();
+
     // CRITICAL HEADER BUTTONS
     debugLog("Setting up header buttons...");
 
@@ -207,63 +303,6 @@ const setupEventListeners = () => {
       );
     }
 
-    // Appearance Button
-    if (elements.appearanceBtn) {
-      safeAttachListener(
-        elements.appearanceBtn,
-        "click",
-        (e) => {
-          e.preventDefault();
-          if (typeof showAppearanceModal === "function") {
-            showAppearanceModal();
-          }
-        },
-        "Appearance Button",
-      );
-    }
-
-    // Theme buttons
-    const themeDisplay = document.getElementById("themeDisplay");
-    const updateThemeDisplay = (label) => {
-      if (themeDisplay) themeDisplay.textContent = label;
-    };
-
-    const darkBtn = document.getElementById("darkModeBtn");
-    if (darkBtn) {
-      safeAttachListener(
-        darkBtn,
-        "click",
-        () => {
-          if (typeof setTheme === "function") setTheme("dark");
-          updateThemeDisplay("Dark Mode");
-        },
-        "Dark mode button",
-      );
-    }
-    const lightBtn = document.getElementById("lightModeBtn");
-    if (lightBtn) {
-      safeAttachListener(
-        lightBtn,
-        "click",
-        () => {
-          if (typeof setTheme === "function") setTheme("light");
-          updateThemeDisplay("Light Mode");
-        },
-        "Light mode button",
-      );
-    }
-    const systemBtn = document.getElementById("systemModeBtn");
-    if (systemBtn) {
-      safeAttachListener(
-        systemBtn,
-        "click",
-        () => {
-          if (typeof setTheme === "function") setTheme("system");
-          updateThemeDisplay("System");
-        },
-        "System mode button",
-      );
-    }
 
     // Details modal triggers
     if (elements.totalTitles && elements.totalTitles.length) {
@@ -636,8 +675,8 @@ const setupEventListeners = () => {
           "click",
           (e) => {
             e.preventDefault();
-            if (typeof downloadStorageReport === "function") {
-              downloadStorageReport();
+            if (typeof openStorageReportPopup === "function") {
+              openStorageReportPopup();
             }
           },
           "Storage report link",
@@ -904,7 +943,7 @@ const setupEventListeners = () => {
         elements.numistaExportBtn,
         "click",
         exportNumistaCsv,
-        "Numista CSV export",
+        "Numista Export CSV",
       );
     }
     if (elements.cloudSyncBtn) {
@@ -940,8 +979,15 @@ const setupEventListeners = () => {
         elements.applyMappingsBtn,
         "click",
         () => {
-          console.log("Custom mappings:", CustomMapping.list());
-          alert("Mappings applied. Check console for details.");
+          const name = prompt("Enter field name to test:");
+          if (name) {
+            const mapped = CustomMapping.mapField(name);
+            alert(
+              mapped
+                ? `${name} → ${mapped}`
+                : `No mapping for '${name}'`,
+            );
+          }
         },
         "Apply custom mappings",
       );
@@ -1030,34 +1076,6 @@ const setupEventListeners = () => {
       );
     }
 
-    // Appearance modal close handlers
-    const appearanceModal = document.getElementById("appearanceModal");
-    const appearanceCloseBtn = document.getElementById("appearanceCloseBtn");
-    if (appearanceModal) {
-      safeAttachListener(
-        appearanceModal,
-        "click",
-        (e) => {
-          if (
-            e.target === appearanceModal &&
-            typeof hideAppearanceModal === "function"
-          ) {
-            hideAppearanceModal();
-          }
-        },
-        "Appearance modal background",
-      );
-    }
-    if (appearanceCloseBtn) {
-      safeAttachListener(
-        appearanceCloseBtn,
-        "click",
-        () => {
-          if (typeof hideAppearanceModal === "function") hideAppearanceModal();
-        },
-        "Appearance close button",
-      );
-    }
 
     // API MODAL EVENT LISTENERS
     debugLog("Setting up API modal listeners...");
@@ -1216,6 +1234,30 @@ const setupSearch = () => {
 /**
  * Sets up theme toggle event listeners
  */
+const updateThemeButton = () => {
+  const btn = elements.appearanceBtn;
+  if (!btn) return;
+  const savedTheme = localStorage.getItem(THEME_KEY);
+  const mode = savedTheme ? savedTheme : "system";
+  btn.classList.remove("dark", "light", "system");
+  btn.classList.add(mode);
+  if (mode === "dark") {
+    btn.textContent = "🌙";
+    btn.setAttribute("aria-label", "Dark mode");
+    btn.setAttribute("title", "Dark mode");
+  } else if (mode === "light") {
+    btn.textContent = "☀️";
+    btn.setAttribute("aria-label", "Light mode");
+    btn.setAttribute("title", "Light mode");
+  } else {
+    btn.textContent = "💻";
+    btn.setAttribute("aria-label", "System theme");
+    btn.setAttribute("title", "System theme");
+  }
+};
+
+window.updateThemeButton = updateThemeButton;
+
 const setupThemeToggle = () => {
   debugLog("Setting up theme toggle...");
 
@@ -1224,14 +1266,45 @@ const setupThemeToggle = () => {
     if (typeof initTheme === "function") {
       initTheme();
     } else {
-      // Fallback initialization
       const savedTheme = localStorage.getItem(THEME_KEY) || "light";
       setTheme(savedTheme);
     }
 
+    updateThemeButton();
+
     // Set up system theme change listener
     if (typeof setupSystemThemeListener === "function") {
       setupSystemThemeListener();
+    }
+
+    if (window.matchMedia) {
+      window
+        .matchMedia("(prefers-color-scheme: dark)")
+        .addEventListener("change", () => {
+          if (!localStorage.getItem(THEME_KEY)) {
+            updateThemeButton();
+          }
+        });
+    }
+
+    if (elements.appearanceBtn) {
+      safeAttachListener(
+        elements.appearanceBtn,
+        "click",
+        (e) => {
+          e.preventDefault();
+          const savedTheme = localStorage.getItem(THEME_KEY);
+          if (savedTheme === "dark") {
+            setTheme("light");
+          } else if (savedTheme === "light") {
+            setTheme("system");
+          } else {
+            setTheme("dark");
+          }
+          updateThemeButton();
+        },
+        "Theme toggle button",
+      );
     }
 
     debugLog("✓ Theme toggle setup complete");
@@ -1554,7 +1627,6 @@ const setupApiEvents = () => {
         if (e.key === "Escape") {
           const filesModal = document.getElementById("filesModal");
           const apiModal = document.getElementById("apiModal");
-          const appearanceModal = document.getElementById("appearanceModal");
           const infoModal = document.getElementById("apiInfoModal");
           const historyModal = document.getElementById("apiHistoryModal");
           const providersModal = document.getElementById("apiProvidersModal");
@@ -1563,6 +1635,7 @@ const setupApiEvents = () => {
           const notesModal = document.getElementById("notesModal");
           const detailsModal = document.getElementById("detailsModal");
           const changeLogModal = document.getElementById("changeLogModal");
+          const storageReportModal = document.getElementById("storageReportModal");
 
           if (
             filesModal &&
@@ -1576,12 +1649,6 @@ const setupApiEvents = () => {
             typeof hideApiModal === "function"
           ) {
             hideApiModal();
-          } else if (
-            appearanceModal &&
-            appearanceModal.style.display === "flex" &&
-            typeof hideAppearanceModal === "function"
-          ) {
-            hideAppearanceModal();
           } else if (
             infoModal &&
             infoModal.style.display === "flex" &&
@@ -1610,6 +1677,9 @@ const setupApiEvents = () => {
           notesIndex = null;
         } else if (changeLogModal && changeLogModal.style.display === "flex") {
           changeLogModal.style.display = "none";
+          document.body.style.overflow = "";
+        } else if (storageReportModal && storageReportModal.style.display === "flex") {
+          storageReportModal.style.display = "none";
           document.body.style.overflow = "";
         } else if (
           detailsModal &&

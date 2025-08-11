@@ -1,6 +1,6 @@
 # StackTrackr - Project Structure
 
-## Current Structure (Version 3.03.02a)
+## Current Structure (Version 3.03.06a)
 
 ```text
 ├── css/
@@ -24,6 +24,7 @@
 │   ├── constants.js
 │   ├── detailsModal.js
 │   ├── events.js
+│   ├── customMapping.js
 │   ├── init.js
 │   ├── inventory.js
 │   ├── pagination.js
@@ -65,6 +66,7 @@
 - **detailsModal.js**: Analytics modal with Chart.js pie charts
 - **charts.js**: Chart.js utilities and configuration
 - **events.js**: All DOM event listener setup
+- **customMapping.js**: Regex-based field mapping rule engine
 - **init.js**: Application bootstrap and initialization
 - **utils.js**: Shared utility functions, validation, and error handling
 

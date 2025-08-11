@@ -7,7 +7,7 @@ The StackTrackr now uses a dynamic version management system that automatically 
 ## How It Works
 
 ### Single Source of Truth
-- Version is defined once in `js/constants.js` as `APP_VERSION = '3.03.04a'`
+- Version is defined once in `js/constants.js` as `APP_VERSION = '3.03.06a'`
   - This is the ONLY place you need to update the version number
 
 ### Automatic Propagation
@@ -17,7 +17,7 @@ The StackTrackr now uses a dynamic version management system that automatically 
 
 ### Utility Functions
 - `js/constants.js` provides:
-  - `getVersionString(prefix)`: Returns formatted version (e.g., "v3.03.04a")
+  - `getVersionString(prefix)`: Returns formatted version (e.g., "v3.03.06a")
   - `injectVersionString(elementId, prefix)`: Inserts formatted version into a target element
 - `js/utils.js` provides:
   - `getAppTitle(baseTitle)`: Returns full app title with version
@@ -29,14 +29,14 @@ To release a new version:
 1. **Update ONLY the constants file:**
    ```javascript
    // In js/constants.js
-   const APP_VERSION = '3.03.04a';  // Change this line only
+   const APP_VERSION = '3.03.06a';  // Change this line only
    ```
 
 2. **All these will automatically update:**
-   - Page title: "StackTrackr v3.03.04a"
-   - Page heading: "StackTrackr v3.03.04a"
-   - Browser tab title: "StackTrackr v3.03.04a"
-   - App header: "StackTrackr v3.03.04a"
+   - Page title: "StackTrackr v3.03.06a"
+   - Page heading: "StackTrackr v3.03.06a"
+   - Browser tab title: "StackTrackr v3.03.06a"
+   - App header: "StackTrackr v3.03.06a"
 
 3. **Update changelog:** Add entry to `/docs/CHANGELOG.md` for documentation
 
@@ -71,7 +71,7 @@ state code is appended directly to the patch number:
   - `rc` = release candidate (final verification)
   - *(omit for stable builds)*
 
-Example: `3.03.04a` → branch 3, release 03, patch 04, alpha build
+Example: `3.03.06a` → branch 3, release 03, patch 06, alpha build
 
 ### Branching Policy
 - Each major **BRANCH** corresponds to a long-lived Git branch
@@ -83,15 +83,15 @@ Example: `3.03.04a` → branch 3, release 03, patch 04, alpha build
 ## Example Usage in Code
 ```javascript
 // Get just the version number
-const version = APP_VERSION; // "3.03.04a"
+const version = APP_VERSION; // "3.03.06a"
 
 // Get formatted version string
-const versionString = getVersionString(); // "v3.03.04a"
-const customVersion = getVersionString('version '); // "version 3.03.04a"
+const versionString = getVersionString(); // "v3.03.06a"
+const customVersion = getVersionString('version '); // "version 3.03.06a"
 
 // Get full app title
-const title = getAppTitle(); // "StackTrackr v3.03.04a"
-const customTitle = getAppTitle('My Custom Tool'); // "My Custom Tool v3.03.04a"
+const title = getAppTitle(); // "StackTrackr v3.03.06a"
+const customTitle = getAppTitle('My Custom Tool'); // "My Custom Tool v3.03.06a"
 ```
 
 This system ensures version consistency and makes maintenance much easier!

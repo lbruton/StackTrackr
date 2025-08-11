@@ -129,6 +129,10 @@
 | theme.js | setupSystemThemeListener | Sets up system theme change listener |
 | constants.js | getVersionString | Returns formatted version string |
 | constants.js | injectVersionString | Inserts formatted version string into a target element |
+| customMapping.js | addMapping | Adds a regex-based mapping rule |
+| customMapping.js | mapField | Maps an input field name using stored rules |
+| customMapping.js | clear | Removes all custom mapping rules |
+| customMapping.js | list | Lists current mapping rules |
 | utils.js | debugLog | Logs messages to console when DEBUG flag is enabled |
 | utils.js | getBrandingName | Gets the active branding name considering domain overrides |
 | utils.js | getAppTitle | Returns full application title with version when no branding is configured |
