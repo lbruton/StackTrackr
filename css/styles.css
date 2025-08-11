@@ -2679,6 +2679,14 @@ input:disabled + .slider {
   box-shadow: 0 0 0 3px rgb(234 179 8 / 0.1);
 }
 
+.exclude-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-top: 0.25rem;
+  font-size: 0.8rem;
+}
+
 .date-range-inputs {
   display: grid;
   grid-template-columns: 1fr 1fr;

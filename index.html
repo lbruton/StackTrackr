@@ -2169,35 +2169,55 @@
           <div class="filters-grid">
             <div class="filter-group">
               <label for="filterMetal">Metal/Composition</label>
-              <select id="filterMetal" class="filter-select">
+              <select id="filterMetal" class="filter-select" multiple>
                 <option value="">All Metals</option>
               </select>
+              <div class="exclude-toggle">
+                <input type="checkbox" id="filterMetalExclude" />
+                <label for="filterMetalExclude">Exclude</label>
+              </div>
             </div>
             <div class="filter-group">
               <label for="filterType">Type</label>
-              <select id="filterType" class="filter-select">
+              <select id="filterType" class="filter-select" multiple>
                 <option value="">All Types</option>
               </select>
+              <div class="exclude-toggle">
+                <input type="checkbox" id="filterTypeExclude" />
+                <label for="filterTypeExclude">Exclude</label>
+              </div>
             </div>
             <div class="filter-group">
               <label for="filterPurchaseLocation">Purchase Location</label>
-              <select id="filterPurchaseLocation" class="filter-select">
+              <select id="filterPurchaseLocation" class="filter-select" multiple>
                 <option value="">All Locations</option>
               </select>
+              <div class="exclude-toggle">
+                <input type="checkbox" id="filterPurchaseLocationExclude" />
+                <label for="filterPurchaseLocationExclude">Exclude</label>
+              </div>
             </div>
             <div class="filter-group">
               <label for="filterStorageLocation">Storage Location</label>
-              <select id="filterStorageLocation" class="filter-select">
+              <select id="filterStorageLocation" class="filter-select" multiple>
                 <option value="">All Storage Locations</option>
               </select>
+              <div class="exclude-toggle">
+                <input type="checkbox" id="filterStorageLocationExclude" />
+                <label for="filterStorageLocationExclude">Exclude</label>
+              </div>
             </div>
             <div class="filter-group">
               <label for="filterCollectable">Collectable</label>
-              <select id="filterCollectable" class="filter-select">
+              <select id="filterCollectable" class="filter-select" multiple>
                 <option value="">All Items</option>
                 <option value="yes">Collectable Only</option>
                 <option value="no">Non-Collectable Only</option>
               </select>
+              <div class="exclude-toggle">
+                <input type="checkbox" id="filterCollectableExclude" />
+                <label for="filterCollectableExclude">Exclude</label>
+              </div>
             </div>
             <div class="filter-group">
               <label for="filterDateRange">Date Range</label>

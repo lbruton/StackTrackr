@@ -1,3 +1,23 @@
+# Implementation Summary: Multi-select Filters
+
+> **Latest release: v3.04.09**
+
+## Version Update: 3.04.08 → 3.04.09
+
+## User Requirements Implemented
+
+- Enable multi-select filter dropdowns with exclusion toggles and updated filtering logic
+
+## Technical Changes Made
+
+### Files Modified:
+1. **`index.html`**: Added `multiple` filter selects and Exclude checkboxes
+2. **`css/styles.css`**: Styled exclude toggle controls
+3. **`js/events.js`**: `populateFilterOptions` preserves multi-select selections
+4. **`js/filters.js`**: Multi-select and exclusion support across dropdowns, application, chips, and filter logic
+5. **`js/constants.js`**: Bumped version to 3.04.09
+6. **Documentation**: Updated changelog, function table, roadmap, status, and structure
+
 # Implementation Summary: Debounced Search
 
 > **Latest release: v3.04.08**
