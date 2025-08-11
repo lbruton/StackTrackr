@@ -1,7 +1,7 @@
 # Function Reference
 
 
-> **Latest release: v3.04.07**
+> **Latest release: v3.04.08**
 
 
 | File | Function | Description |
@@ -145,6 +145,7 @@
 | utils.js | getAppTitle | Returns full application title with version when no branding is configured |
 | utils.js | getFooterDomain | Determines active domain for footer copyright |
 | utils.js | monitorPerformance | Performance monitoring utility |
+| utils.js | debounce | Creates a debounced version of a function |
 | utils.js | getLastUpdateTime | Builds two-line HTML showing source and last sync info for a metal |
 | utils.js | pad2 | Pads a number with leading zeros to ensure two-digit format |
 | utils.js | todayStr | Returns current date as ISO string (YYYY-MM-DD) |

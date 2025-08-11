@@ -75,6 +75,21 @@ const monitorPerformance = (fn, name, ...args) => {
 };
 
 /**
+ * Creates a debounced version of a function
+ *
+ * @param {Function} fn - Function to debounce
+ * @param {number} delay - Delay in milliseconds
+ * @returns {Function} Debounced function
+ */
+const debounce = (fn, delay = 300) => {
+  let timer;
+  return (...args) => {
+    clearTimeout(timer);
+    timer = setTimeout(() => fn(...args), delay);
+  };
+};
+
+/**
  * Checks if a file exceeds the local upload size limit
  *
  * @param {File} file - File to validate
