@@ -2055,7 +2055,7 @@ td input:checked + .slider:before {
 }
 
 .table-controls-section {
-  margin: var(--spacing) 0;
+  margin: var(--spacing-xs) 0;
 }
 
 .table-controls {
