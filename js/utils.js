@@ -338,19 +338,15 @@ function parseDate(dateStr) {
 }
 
 /**
- * Formats a date string into a user-friendly format
+ * Formats a date string into a compact ISO-like format
  *
  * @param {string} dateStr - Date in any parseable format
- * @returns {string} Formatted date like "Jan 1, 2024"
+ * @returns {string} Two-digit year ISO date (e.g., "24-05-05")
  */
 const formatDisplayDate = (dateStr) => {
   const d = new Date(dateStr);
   if (isNaN(d)) return dateStr;
-  return d.toLocaleDateString(undefined, {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
+  return d.toISOString().slice(2, 10);
 };
 
 /**
