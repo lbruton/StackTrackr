@@ -1338,7 +1338,7 @@
           <div class="about-info-grid">
             <div class="about-section">
               <div class="section-title">🚀 What's New</div>
-              <div id="versionChanges"></div>
+              <ul id="versionChanges" class="changelog-list"></ul>
             </div>
 
             <div class="about-section">
@@ -1499,10 +1499,12 @@
                     <button class="btn" id="numistaImportBtn">Import from Numista</button>
                     <div class="import-dropdown" id="numistaImportOptions">
                       <button class="btn" id="numistaOverride">Override</button>
-                      <button class="btn" id="numistaMerge">Merge</button>
-                    </div>
-                    <input type="file" id="numistaImportFile" accept=".csv" hidden />
+                    <button class="btn" id="numistaMerge">Merge</button>
                   </div>
+                  <input type="file" id="numistaImportFile" accept=".csv" hidden />
+                    <div class="beta-warning">⚠️ Numista import is a beta feature</div>
+
+   z              </div>
                 </div>
               </div>
             </div>

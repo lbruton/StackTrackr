@@ -881,7 +881,7 @@ const editItem = (idx, logIdx = null) => {
   elements.editName.value = item.name;
   elements.editQty.value = item.qty;
   elements.editType.value = item.type;
-  elements.editWeight.value = item.weight;
+  elements.editWeight.value = parseFloat(item.weight).toFixed(2);
   elements.editPrice.value = item.price;
   elements.editPurchaseLocation.value = item.purchaseLocation;
   elements.editStorageLocation.value = item.storageLocation || '';
@@ -1160,10 +1160,14 @@ const importNumistaCsv = (file, override = false) => {
           const name = year.length >= 4 ? `${title} ${year}`.trim() : title;
           const issuedYear = year.length >= 4 ? year : '';
           const composition = getValue(row, ['Composition', 'Metal']) || '';
-          const metal = parseNumistaMetal(composition);
+          let metal = parseNumistaMetal(composition);
           const qty = parseInt(getValue(row, ['Quantity', 'Qty', 'Quantity owned']) || 1, 10);
 
-          const type = mapNumistaType(getValue(row, ['Type']) || '');
+          let type = mapNumistaType(getValue(row, ['Type']) || '');
+          if (metal === 'Paper' || composition.toLowerCase().startsWith('paper')) {
+            type = 'Note';
+            metal = 'Alloy';
+          }
 
           const weightCols = Object.keys(row).filter(k => { const key = k.toLowerCase(); return key.includes('weight') || key.includes('mass'); });
           let weightGrams = 0;
@@ -1171,7 +1175,7 @@ const importNumistaCsv = (file, override = false) => {
             const val = parseFloat(String(row[col]).replace(/[^0-9.]/g, ''));
             if (!isNaN(val)) weightGrams = Math.max(weightGrams, val);
           }
-          const weight = gramsToOzt(weightGrams);
+          const weight = parseFloat(gramsToOzt(weightGrams).toFixed(2));
 
           const priceKey = Object.keys(row).find(k => /^(buying price|purchase price|price paid)/i.test(k));
           let purchasePrice = 0;
@@ -1192,12 +1196,12 @@ const importNumistaCsv = (file, override = false) => {
           const date = parseDate(dateStr);
 
           const baseNote = (getValue(row, ['Note', 'Notes']) || '').trim();
-          const notes = `${baseNote ? baseNote + ' ' : ''}(Imported from Numista.com [${numistaId}])`;
+          const notes = `${baseNote ? baseNote + ' ' : ''}(Imported from Numista.com N#${numistaId})`;
 
-          const isCollectable = false;
-          const spotPriceAtPurchase = spotPrices[metal.toLowerCase()] || 0;
-          const premiumPerOz = weight ? purchasePrice / weight - spotPriceAtPurchase : 0;
-          const totalPremium = premiumPerOz * qty * weight;
+          const isCollectable = true;
+          const spotPriceAtPurchase = 0;
+          const premiumPerOz = 0;
+          const totalPremium = 0;
 
           const item = sanitizeImportedItem({
             metal,

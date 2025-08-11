@@ -381,7 +381,8 @@ const setupEventListeners = () => {
           const name = elements.itemName.value.trim();
           const qty = parseInt(elements.itemQty.value, 10);
           const type = elements.itemType.value;
-          const weight = parseFloat(elements.itemWeight.value);
+          let weight = parseFloat(elements.itemWeight.value);
+          weight = isNaN(weight) ? 0 : parseFloat(weight.toFixed(2));
           const price = parseFloat(elements.itemPrice.value);
           const purchaseLocation =
             elements.purchaseLocation.value.trim() || "Unknown";
@@ -469,7 +470,8 @@ const setupEventListeners = () => {
           const name = elements.editName.value.trim();
           const qty = parseInt(elements.editQty.value, 10);
           const type = elements.editType.value;
-          const weight = parseFloat(elements.editWeight.value);
+          let weight = parseFloat(elements.editWeight.value);
+          weight = isNaN(weight) ? 0 : parseFloat(weight.toFixed(2));
           const price = parseFloat(elements.editPrice.value);
           const purchaseLocation =
             elements.editPurchaseLocation.value.trim() || "Unknown";

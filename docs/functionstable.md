@@ -1,6 +1,8 @@
 # Function Reference
 
-> **Latest release: v3.03.08h**
+
+> **Latest release: v3.03.08i**
+
 
 | File | Function | Description |
 |------|----------|-------------|
@@ -104,7 +106,7 @@
 | inventory.js | updateImportProgress |  |
 | inventory.js | endImportProgress |  |
 | inventory.js | importCsv | Imports inventory data from CSV file with comprehensive validation; supports override or merge modes |
-| inventory.js | importNumistaCsv | Imports inventory data from a Numista CSV export with override or merge modes |
+| inventory.js | importNumistaCsv | Imports Numista CSV data with override/merge options, defaulting items to collectable |
 | inventory.js | exportCsv | Exports current inventory to CSV format |
 | inventory.js | importJson | Imports inventory data from JSON file |
 | inventory.js | exportJson | Exports current inventory to JSON format |
@@ -150,7 +152,7 @@
 | utils.js | gramsToOzt | Converts grams to troy ounces (ozt) |
 | utils.js | convertToUsd | Converts amount from specified currency to USD using static rates |
 | utils.js | mapNumistaType | Maps Numista type strings to internal categories (coin, Aurum, Notes, bars/rounds, other) |
-| utils.js | parseNumistaMetal | Determines metal type from Numista composition string |
+| utils.js | parseNumistaMetal | Parses composition into Silver, Gold, Platinum, Palladium, Paper, or Alloy |
 | utils.js | saveData | Saves data to localStorage with JSON serialization |
 | utils.js | loadData | Loads data from localStorage with error handling |
 | utils.js | sortInventoryByDateNewestFirst | Sorts inventory by date (newest first) |

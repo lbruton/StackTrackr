@@ -1,3 +1,30 @@
+
+# Implementation Summary: Numista Import Polish
+
+> **Latest release: v3.03.08i**
+
+## Version Update: 3.03.08h → 3.03.08i
+
+## User Requirements Implemented
+
+- Unified changelog bullets in About and version modals
+- Numista imports default to collectable with N# note and paper-to-note mapping
+- Weight inputs rounded to two decimals for cleaner display
+- Added beta warning under Numista import button
+
+## Technical Changes Made
+
+### Files Modified:
+1. **`index.html`**: Styled version changelog list and added Numista beta warning
+2. **`css/styles.css`**: Added `.beta-warning` style
+3. **`js/versionCheck.js`**: Returned list items with shared bullet style
+4. **`js/utils.js`**: Enhanced `parseNumistaMetal` to detect paper composition
+5. **`js/inventory.js`**: Numista items now collectable by default, include N# note, and round weights
+6. **`js/events.js`**: Weight fields rounded to two decimals on input
+7. **`js/constants.js`**: Bumped version to 3.03.08i
+8. **Documentation**: Updated changelog, function table, implementation summary, status, roadmap, structure, and README
+
+
 # Implementation Summary: Table Controls & Import Options
 
 > **Latest release: v3.03.08h**
