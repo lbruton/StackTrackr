@@ -143,9 +143,9 @@
 | utils.js | formatDollar | Formats a number as a dollar amount with two decimal places |
 | utils.js | formatLossProfit | Formats a profit/loss value with color coding |
 | utils.js | sanitizeHtml | Sanitizes text input for safe HTML display |
-| utils.js | gramsToOzt | Converts grams to troy ounces |
+| utils.js | gramsToOzt | Converts grams to troy ounces (ozt) |
 | utils.js | convertToUsd | Converts amount from specified currency to USD using static rates |
-| utils.js | mapNumistaType | Maps Numista type strings to internal categories |
+| utils.js | mapNumistaType | Maps Numista type strings to internal categories (coin, Aurum, Notes, bars/rounds, other) |
 | utils.js | saveData | Saves data to localStorage with JSON serialization |
 | utils.js | loadData | Loads data from localStorage with error handling |
 | utils.js | sortInventoryByDateNewestFirst | Sorts inventory by date (newest first) |
