@@ -598,7 +598,7 @@ const filterLink = (field, value, color, displayValue = value, title) => {
   const safe = sanitizeHtml(displayStr);
   const titleStr = title ? String(title) : `Filter by ${displayStr}`;
   const safeTitle = sanitizeHtml(titleStr);
-  const isNA = displayStr === 'N/A';
+  const isNA = displayStr === 'N/A' || displayStr === 'Numista Import';
   const classNames = `filter-text${isNA ? ' na-value' : ''}`;
   const styleAttr = isNA ? '' : ` style="color: ${color};"`;
   return `<span class="${classNames}"${styleAttr} onclick="${escaped}" tabindex="0" role="button" onkeydown="if(event.key==='Enter'||event.key===' ')${escaped}" title="${safeTitle}">${safe}</span>`;
@@ -786,10 +786,10 @@ const renderTable = () => {
       </td>
       <td class="shrink" data-column="premium" style="color: ${item.isCollectable ? 'var(--text-muted)' : (item.totalPremium > 0 ? 'var(--warning)' : 'inherit')}">${filterLink('totalPremium', premiumValue, 'var(--text-primary)', premiumDisplay)}</td>
       <td class="shrink" data-column="purchaseLocation">
-        ${item.purchaseLocation ? filterLink('purchaseLocation', item.purchaseLocation, getPurchaseLocationColor(item.purchaseLocation)) : ''}
+        ${filterLink('purchaseLocation', item.purchaseLocation || 'Numista Import', getPurchaseLocationColor(item.purchaseLocation || 'Numista Import'))}
       </td>
       <td class="shrink" data-column="storageLocation">
-        ${item.storageLocation && item.storageLocation !== 'Unknown' ? filterLink('storageLocation', item.storageLocation, getStorageLocationColor(item.storageLocation)) : ''}
+        ${item.storageLocation === 'Unknown' ? '' : filterLink('storageLocation', item.storageLocation || 'Numista Import', getStorageLocationColor(item.storageLocation || 'Numista Import'))}
       </td>
       <td class="shrink" data-column="numista">${item.numistaId ? `<a href="https://en.numista.com/catalogue/pieces${item.numistaId}.html" target="_blank" rel="noopener" title="View on Numista">N# ${sanitizeHtml(item.numistaId)}</a>` : ''}</td>
       <td class="shrink" data-column="collectable"><span class="collectable-status" role="button" tabindex="0" onclick="toggleCollectable(${originalIdx})" onkeydown="if(event.key==='Enter'||event.key===' ') toggleCollectable(${originalIdx})" aria-label="Toggle collectable status for ${sanitizeHtml(item.name)}" title="Toggle collectable status" style="color: ${item.isCollectable ? 'var(--success)' : 'var(--text-muted)'}; cursor: pointer;">${item.isCollectable ? 'Yes' : 'No'}</span></td>
@@ -1364,9 +1364,9 @@ const importNumistaCsv = (file, override = false) => {
           }
 
           const purchaseLocRaw = getValue(row, ['Acquisition place', 'Acquired from', 'Purchase place']);
-          const purchaseLocation = purchaseLocRaw && purchaseLocRaw.trim() ? purchaseLocRaw.trim() : '';
+          const purchaseLocation = purchaseLocRaw && purchaseLocRaw.trim() ? purchaseLocRaw.trim() : 'Numista Import';
           const storageLocRaw = getValue(row, ['Storage location', 'Stored at', 'Storage place']);
-          const storageLocation = storageLocRaw && storageLocRaw.trim() ? storageLocRaw.trim() : '';
+          const storageLocation = storageLocRaw && storageLocRaw.trim() ? storageLocRaw.trim() : 'Numista Import';
 
           const dateStrRaw = getValue(row, ['Acquisition date', 'Date acquired', 'Date']);
           const dateStr = dateStrRaw && dateStrRaw.trim() ? dateStrRaw.trim() : todayStr();
