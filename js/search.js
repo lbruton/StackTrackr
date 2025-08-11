@@ -70,7 +70,13 @@ document.addEventListener('DOMContentLoaded', () => {
       searchQuery = e.target.value.replace(/[<>]/g, '').trim();
       currentPage = 1;
       renderTable();
+      if (typeof renderActiveFilters === 'function') {
+        renderActiveFilters();
+      }
     }, 300));
+  }
+  if (typeof renderActiveFilters === 'function') {
+    renderActiveFilters();
   }
 });
 
