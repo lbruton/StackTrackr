@@ -151,7 +151,7 @@
 | utils.js | todayStr | Returns current date as ISO string (YYYY-MM-DD) |
 | utils.js | currentMonthKey | Returns current month key in YYYY-MM format |
 | utils.js | parseDate | Parses various date formats into standard YYYY-MM-DD format |
-| utils.js | formatDisplayDate | Formats a date string into a user-friendly format |
+| utils.js | formatDisplayDate | Formats a date string into two-digit year ISO format (YY-MM-DD) |
 | utils.js | formatDollar | Formats a number as a dollar amount with two decimal places |
 | utils.js | formatLossProfit | Formats a profit/loss value with color coding |
 | utils.js | sanitizeHtml | Sanitizes text input for safe HTML display |
