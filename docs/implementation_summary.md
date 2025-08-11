@@ -210,7 +210,7 @@
 
 ### Files Modified:
 1. **`index.html`**: Reordered type dropdowns and separated totals section
-2. **`css/styles.css`**: Replaced clickable name styles with `.edit-icon`
+2. **`css/styles.css`**: Removed obsolete `.edit-icon` style after moving edit action to dedicated column
 3. **`js/utils.js`**: Added `VALID_TYPES`, `normalizeType`, and updated Numista mapping
 4. **`js/inventory.js`**: Normalized types, blank purchase locations, name edit icon, Numista collectable logic
 5. **`js/events.js`**: Purchase location defaults to blank

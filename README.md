@@ -115,7 +115,7 @@ The public hosted version of the app is available at [stackrtrackr.com](https://
 - Collectable checkbox replaced with status button and action buttons aligned in inventory table
 - Totals cards renamed with refined labels and font sizes
 - About modal title contrast improved in light mode
-- Notes button displays "Yes" in green when an item contains notes
+- Notes button uses a notebook icon and highlights green when an item contains notes
 
 ## 🆕 What's New in v3.2.05rc
 - Disclaimer splash hides permanently after you click "I Understand"
