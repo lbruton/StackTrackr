@@ -6,6 +6,14 @@
  * Compares stored version with current and shows changelog modal if needed
  */
 const checkVersionChange = () => {
+  const hasData = !!localStorage.getItem(LS_KEY);
+  if (!hasData) {
+    if (typeof showAckModal === "function") {
+      showAckModal();
+    }
+    return;
+  }
+
   const acknowledged = localStorage.getItem(VERSION_ACK_KEY);
   const current = localStorage.getItem(APP_VERSION_KEY) || APP_VERSION;
   if (acknowledged === current) return;
@@ -61,6 +69,9 @@ const populateVersionModal = (version, html) => {
   modal.style.display = "block";
   document.body.style.overflow = "hidden";
   setupVersionModalEvents(version);
+  if (typeof loadRoadmap === "function") {
+    loadRoadmap();
+  }
 };
 
 /**

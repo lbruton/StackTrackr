@@ -493,7 +493,6 @@ const METAL_COLORS = {
 const typeColors = {};
 const purchaseLocationColors = {};
 const storageLocationColors = {};
-const filesProgressColors = {};
 
 const getColor = (map, key) => {
   if (!map[key]) {
@@ -516,52 +515,6 @@ const getTypeColor = type => getColor(typeColors, type);
 const getPurchaseLocationColor = loc => getColor(purchaseLocationColors, loc);
 const getStorageLocationColor = loc => getColor(storageLocationColors, loc);
 
-/**
- * Renders inventory storage distribution progress bar
- * showing each item's relative localStorage size
- */
-const renderFilesProgress = () => {
-  const container = document.getElementById('filesProgress');
-  if (!container) return;
-  container.innerHTML = '';
-  if (inventory.length === 0) return;
-
-  const tooltip = document.createElement('div');
-  tooltip.className = 'files-progress-tooltip';
-  container.appendChild(tooltip);
-
-  const showTooltip = (segment, text) => {
-    tooltip.textContent = text;
-    const rect = segment.getBoundingClientRect();
-    const parentRect = container.getBoundingClientRect();
-    tooltip.style.left = `${rect.left - parentRect.left + rect.width / 2}px`;
-    tooltip.classList.add('show');
-  };
-
-  const hideTooltip = () => tooltip.classList.remove('show');
-
-  const sizes = inventory.map(item => ({
-    item,
-    size: JSON.stringify(item).length * 2,
-  }));
-  const total = sizes.reduce((sum, s) => sum + s.size, 0);
-
-  sizes.forEach(({ item, size }) => {
-    const segment = document.createElement('div');
-    segment.className = 'files-progress-segment';
-    segment.style.width = `${(size / total) * 100}%`;
-    segment.style.backgroundColor = getColor(filesProgressColors, item.name);
-    const text = `${item.name}: ${(size / 1024).toFixed(1)} KB`;
-    segment.title = text;
-    segment.addEventListener('mouseenter', () => showTooltip(segment, text));
-    segment.addEventListener('mouseleave', hideTooltip);
-    segment.addEventListener('click', () => {
-      container.querySelectorAll('.files-progress-segment').forEach(seg => seg.classList.remove('zoomed'));
-      segment.classList.add('zoomed');
-    });
-    container.appendChild(segment);
-  });
-};
 
 const renderTable = () => {
   return monitorPerformance(() => {
@@ -1178,20 +1131,28 @@ const importNumistaCsv = (file) => {
         let processed = 0;
         let importedCount = 0;
 
+        const getValue = (row, keys) => {
+          for (const key of keys) {
+            const foundKey = Object.keys(row).find(k => k.toLowerCase() === key.toLowerCase());
+            if (foundKey) return row[foundKey];
+          }
+          return "";
+        };
+
         for (const [index, row] of results.data.entries()) {
           processed++;
 
-          const numistaId = (row['N# number'] || '').toString().trim();
-          const title = (row['Title'] || '').trim();
-          const year = (row['Year'] || '').trim();
+          const numistaId = (getValue(row, ['N# number', 'Numista #', 'Numista number', 'Numista id']) || '').toString().trim();
+          const title = (getValue(row, ['Title', 'Name']) || '').trim();
+          const year = (getValue(row, ['Year', 'Date']) || '').trim();
           const name = year.length >= 4 ? `${title} ${year}`.trim() : title;
           const issuedYear = year.length >= 4 ? year : '';
-          const metal = (row['Metal'] || 'Silver').trim();
-          const qty = parseInt(row['Quantity'] || row['Qty'] || 1, 10);
+          const metal = (getValue(row, ['Metal', 'Composition']) || 'Silver').trim();
+          const qty = parseInt(getValue(row, ['Quantity', 'Qty', 'Quantity owned']) || 1, 10);
 
-          const type = mapNumistaType(row['Type'] || '');
+          const type = mapNumistaType(getValue(row, ['Type']) || '');
 
-          const weightCols = Object.keys(row).filter(k => k.toLowerCase().includes('weight'));
+          const weightCols = Object.keys(row).filter(k => { const key = k.toLowerCase(); return key.includes('weight') || key.includes('mass'); });
           let weightGrams = 0;
           for (const col of weightCols) {
             const val = parseFloat(String(row[col]).replace(/[^0-9.]/g, ''));
@@ -1199,7 +1160,7 @@ const importNumistaCsv = (file) => {
           }
           const weight = gramsToOzt(weightGrams);
 
-          const priceKey = Object.keys(row).find(k => k.startsWith('Buying price'));
+          const priceKey = Object.keys(row).find(k => /^(buying price|purchase price|price paid)/i.test(k));
           let purchasePrice = 0;
           if (priceKey) {
             const currencyMatch = priceKey.match(/\(([^)]+)\)/);
@@ -1208,15 +1169,16 @@ const importNumistaCsv = (file) => {
             purchasePrice = convertToUsd(amount, currency);
           }
 
-          const purchaseLocRaw = row['Acquisition place'];
+          const purchaseLocRaw = getValue(row, ['Acquisition place', 'Acquired from', 'Purchase place']);
           const purchaseLocation = purchaseLocRaw && purchaseLocRaw.trim() ? purchaseLocRaw.trim() : 'unknown';
-          const storageLocRaw = row['Storage location'];
+          const storageLocRaw = getValue(row, ['Storage location', 'Stored at', 'Storage place']);
           const storageLocation = storageLocRaw && storageLocRaw.trim() ? storageLocRaw.trim() : 'unknown';
 
-          const dateStr = row['Acquisition date'] && row['Acquisition date'].trim() ? row['Acquisition date'].trim() : todayStr();
+          const dateStrRaw = getValue(row, ['Acquisition date', 'Date acquired', 'Date']);
+          const dateStr = dateStrRaw && dateStrRaw.trim() ? dateStrRaw.trim() : todayStr();
           const date = parseDate(dateStr);
 
-          const baseNote = (row['Note'] || row['Notes'] || '').trim();
+          const baseNote = (getValue(row, ['Note', 'Notes']) || '').trim();
           const notes = `${baseNote ? baseNote + ' ' : ''}(Imported from Numista.com [${numistaId}])`;
 
           const isCollectable = false;
@@ -1290,82 +1252,6 @@ const importNumistaCsv = (file) => {
     endImportProgress();
     handleError(error, 'Numista CSV import initialization');
   }
-};
-
-/**
- * Exports current inventory data to a Numista compatible CSV file.
- *
- * Numista expects a very specific column layout. This exporter generates the
- * following columns in order:
- * N# number, Title, Year, Metal, Quantity, Type, Weight (g), Buying price (USD),
- * Acquisition place, Storage location, Acquisition date, Note.
- *
- * Weight values are converted from troy ounces (internal representation) to
- * grams. Buying price pulls from `purchasePrice` when available and falls back
- * to `price`.
- *
- * @returns {void} Triggers download of the generated CSV file
- */
-const exportNumistaCsv = () => {
-  const timestamp = new Date().toISOString().slice(0, 10).replace(/-/g, "");
-  const headers = [
-    "N# number",
-    "Title",
-    "Year",
-    "Metal",
-    "Quantity",
-    "Type",
-    "Weight (g)",
-    "Buying price (USD)",
-    "Acquisition place",
-    "Storage location",
-    "Acquisition date",
-    "Note",
-  ];
-
-  const sortedInventory = sortInventoryByDateNewestFirst();
-  const rows = [];
-
-  for (const item of sortedInventory) {
-    const year = item.issuedYear || "";
-    let title = item.name || "";
-    if (year) {
-      const yearRegex = new RegExp(`\\s*${year}\\b`);
-      title = title.replace(yearRegex, "").trim();
-    }
-
-    const weightGrams = parseFloat(item.weight)
-      ? parseFloat(item.weight) * 31.1034768
-      : 0;
-    const purchasePrice = item.purchasePrice ?? item.price;
-
-    rows.push([
-      item.numistaId || "",
-      title,
-      year,
-      item.metal || "",
-      item.qty || "",
-      item.type || "",
-      weightGrams ? weightGrams.toFixed(2) : "",
-      purchasePrice != null ? Number(purchasePrice).toFixed(2) : "",
-      item.purchaseLocation || "",
-      item.storageLocation || "",
-      item.date || "",
-      item.notes || "",
-    ]);
-  }
-
-  const csv = Papa.unparse([headers, ...rows]);
-  const blob = new Blob([csv], { type: "text/csv" });
-  const url = URL.createObjectURL(blob);
-
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `numista_export_${timestamp}.csv`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
 };
 
 /**
@@ -1840,4 +1726,3 @@ window.toggleCollectable = toggleCollectable;
 window.editItem = editItem;
 window.deleteItem = deleteItem;
 window.showNotes = showNotes;
-window.renderFilesProgress = renderFilesProgress;

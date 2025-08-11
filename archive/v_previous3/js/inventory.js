@@ -526,6 +526,20 @@ const renderFilesProgress = () => {
   container.innerHTML = '';
   if (inventory.length === 0) return;
 
+  const tooltip = document.createElement('div');
+  tooltip.className = 'files-progress-tooltip';
+  container.appendChild(tooltip);
+
+  const showTooltip = (segment, text) => {
+    tooltip.textContent = text;
+    const rect = segment.getBoundingClientRect();
+    const parentRect = container.getBoundingClientRect();
+    tooltip.style.left = `${rect.left - parentRect.left + rect.width / 2}px`;
+    tooltip.classList.add('show');
+  };
+
+  const hideTooltip = () => tooltip.classList.remove('show');
+
   const sizes = inventory.map(item => ({
     item,
     size: JSON.stringify(item).length * 2,
@@ -537,7 +551,10 @@ const renderFilesProgress = () => {
     segment.className = 'files-progress-segment';
     segment.style.width = `${(size / total) * 100}%`;
     segment.style.backgroundColor = getColor(filesProgressColors, item.name);
-    segment.title = `${item.name}: ${(size / 1024).toFixed(1)} KB`;
+    const text = `${item.name}: ${(size / 1024).toFixed(1)} KB`;
+    segment.title = text;
+    segment.addEventListener('mouseenter', () => showTooltip(segment, text));
+    segment.addEventListener('mouseleave', hideTooltip);
     segment.addEventListener('click', () => {
       container.querySelectorAll('.files-progress-segment').forEach(seg => seg.classList.remove('zoomed'));
       segment.classList.add('zoomed');

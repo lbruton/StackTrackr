@@ -1,10 +1,10 @@
 # Project Status - StackTrackr
 
-> **Latest release: v3.03.08c**
+> **Latest release: v3.03.08e**
 
-## 🎯 Current State: **BETA v3.03.08c** ✅ MAINTAINED & OPTIMIZED
+## 🎯 Current State: **BETA v3.03.08e** ✅ MAINTAINED & OPTIMIZED
 
-**StackTrackr v3.03.08c** is a fully-featured, client-side web application for tracking precious metal investments (Silver, Gold, Platinum, Palladium) with comprehensive inventory management, API integration, and complete backup capabilities. The 3.03.x series focuses on polish, maintenance, and optimization.
+**StackTrackr v3.03.08e** is a fully-featured, client-side web application for tracking precious metal investments (Silver, Gold, Platinum, Palladium) with comprehensive inventory management, API integration, and complete backup capabilities. The 3.03.x series focuses on polish, maintenance, and optimization.
 
 ## 🏗️ Architecture Overview
 
@@ -22,7 +22,8 @@ The tool features a **modular JavaScript architecture** with separate files for 
 - `utils.js` - Helper functions and formatters
 
 ## ✨ Latest Changes
-
+- **v3.03.08e - Numista CSV storage**: Stores raw Numista CSV and classifies metals by composition
+- **v3.03.08d - Version Modal Centering**: Version change dialog now appears centered on the screen
 - **v3.03.08c - Version Modal Enhancements**: Version change dialog now includes privacy notice, resources, and roadmap
 - **v3.03.08b - Files Modal Simplification**: Removed storage breakdown progress bar for streamlined file management
 - **v3.03.08a - Version Update Changelog Modal**: Notifies users of new releases with modal displaying latest changes
@@ -133,8 +134,8 @@ All data is stored locally in the browser using localStorage with:
 ## 📚 Documentation Status (Updated: August 10, 2025)
 
 **All documentation files are current and synchronized:**
- - ✅ **status.md** - Updated for v3.03.08b release
- - ✅ **changelog.md** - Current through v3.03.08b
+ - ✅ **status.md** - Updated for v3.03.08e release
+ - ✅ **changelog.md** - Current through v3.03.08e
 - ✅ **MULTI_AGENT_WORKFLOW.md** - Comprehensive AI assistant development guide
 - ✅ **structure.md** - Reflects streamlined project organization
 - ✅ **versioning.md** - Accurate version management documentation
@@ -143,7 +144,7 @@ All data is stored locally in the browser using localStorage with:
 
 If continuing development in a new chat session:
 
-1. **Current Version**: 3.03.08b (managed in `js/constants.js`)
+1. **Current Version**: 3.03.08e (managed in `js/constants.js`)
 2. **Last Change**: Files modal storage breakdown removed
 3. **Last Documentation Update**: August 10, 2025 - All docs synchronized
 4. **Architecture**: Fully modular with proper separation of concerns
@@ -160,7 +161,7 @@ If continuing development in a new chat session:
 ```
 StackTrackr/
 ├── js/                     # Modular JavaScript (cleaned structure)
-│   ├── constants.js        # Version 3.03.08b + metal configs
+│   ├── constants.js        # Version 3.03.08e + metal configs
 │   ├── state.js           # App state + DOM caching
 │   ├── inventory.js       # Core CRUD + notes handling
 │   ├── events.js          # UI event listeners
