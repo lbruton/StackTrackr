@@ -585,12 +585,15 @@ const escapeAttribute = (text) =>
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
 
-const filterLink = (field, value, color, displayValue = value) => {
+const filterLink = (field, value, color, displayValue = value, title) => {
   const handler = `applyColumnFilter('${field}', ${JSON.stringify(value)})`;
   // Escape characters for safe inline handler usage
   const escaped = escapeAttribute(handler);
-  const safe = sanitizeHtml(String(displayValue));
-  return `<span class="filter-text" style="color: ${color};" onclick="${escaped}" tabindex="0" role="button" onkeydown="if(event.key==='Enter'||event.key===' ')${escaped}" title="Filter by ${safe}">${safe}</span>`;
+  const displayStr = String(displayValue);
+  const safe = sanitizeHtml(displayStr);
+  const titleStr = title ? String(title) : `Filter by ${displayStr}`;
+  const safeTitle = sanitizeHtml(titleStr);
+  return `<span class="filter-text" style="color: ${color};" onclick="${escaped}" tabindex="0" role="button" onkeydown="if(event.key==='Enter'||event.key===' ')${escaped}" title="${safeTitle}">${safe}</span>`;
 };
 
 const getTypeColor = type => getColor(typeColors, type);
@@ -769,7 +772,7 @@ const renderTable = () => {
       </td>
       <td class="shrink" data-column="weight">
         <span class="inline-edit-icon" role="button" tabindex="0" onclick="startCellEdit(${originalIdx}, 'weight', this)" aria-label="Edit weight" title="Edit weight">✎</span>
-        ${filterLink('weight', item.weight, 'var(--text-primary)', parseFloat(item.weight).toFixed(2))}
+        ${filterLink('weight', item.weight, 'var(--text-primary)', parseFloat(item.weight).toFixed(2) + ' (oz)', 'Troy ounces (ozt)')}
       </td>
       <td class="shrink" data-column="purchasePrice">
         <span class="inline-edit-icon" role="button" tabindex="0" onclick="startCellEdit(${originalIdx}, 'price', this)" aria-label="Edit purchase price" title="Edit purchase price">✎</span>
