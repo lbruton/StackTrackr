@@ -421,6 +421,7 @@ const setupEventListeners = () => {
             totalPremium = premiumPerOz * qty * weight;
           }
 
+          const serial = getNextSerial();
           inventory.push({
             metal,
             name,
@@ -436,8 +437,11 @@ const setupEventListeners = () => {
             premiumPerOz,
             totalPremium,
             isCollectable,
+            serial,
+            numistaId: "",
           });
 
+          catalogMap[serial] = "";
           saveInventory();
           renderTable();
           this.reset();
@@ -515,9 +519,11 @@ const setupEventListeners = () => {
           }
 
           const oldItem = { ...inventory[editingIndex] };
+          const serial = oldItem.serial;
 
-          // Update the item
+          // Update the item preserving serial
           inventory[editingIndex] = {
+            ...oldItem,
             metal,
             name,
             qty,
@@ -532,8 +538,10 @@ const setupEventListeners = () => {
             premiumPerOz,
             totalPremium,
             isCollectable,
+            numistaId: elements.editCatalog.value.trim(),
           };
 
+          catalogMap[serial] = inventory[editingIndex].numistaId;
           saveInventory();
           renderTable();
           logItemChanges(oldItem, inventory[editingIndex]);
@@ -541,8 +549,26 @@ const setupEventListeners = () => {
           // Close modal
           elements.editModal.style.display = "none";
           editingIndex = null;
+          editingChangeLogIndex = null;
         },
         "Edit form",
+      );
+    }
+
+    if (elements.undoChangeBtn) {
+      safeAttachListener(
+        elements.undoChangeBtn,
+        "click",
+        () => {
+          if (editingChangeLogIndex !== null) {
+            toggleChange(editingChangeLogIndex);
+            elements.editModal.style.display = "none";
+            editingIndex = null;
+            editingChangeLogIndex = null;
+            renderChangeLog();
+          }
+        },
+        "Undo change button",
       );
     }
 
@@ -554,6 +580,7 @@ const setupEventListeners = () => {
         function () {
           elements.editModal.style.display = "none";
           editingIndex = null;
+          editingChangeLogIndex = null;
         },
         "Cancel edit button",
       );
@@ -566,6 +593,7 @@ const setupEventListeners = () => {
         () => {
           elements.editModal.style.display = "none";
           editingIndex = null;
+          editingChangeLogIndex = null;
         },
         "Edit modal close button",
       );

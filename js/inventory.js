@@ -401,10 +401,23 @@ Store this archive in a secure location for data protection.
 
 // =============================================================================
 
+let catalogMap = loadData(CATALOG_MAP_KEY, {});
+window.catalogMap = catalogMap;
+
+const getNextSerial = () => {
+  const next = (parseInt(localStorage.getItem(SERIAL_KEY) || '0', 10) + 1);
+  localStorage.setItem(SERIAL_KEY, next);
+  return next;
+};
+window.getNextSerial = getNextSerial;
+
 /**
  * Saves current inventory to localStorage
  */
-const saveInventory = () => saveData(LS_KEY, inventory);
+const saveInventory = () => {
+  saveData(LS_KEY, inventory);
+  saveData(CATALOG_MAP_KEY, catalogMap);
+};
 
 /**
  * Loads inventory from localStorage with comprehensive data migration
@@ -456,6 +469,18 @@ const loadInventory = () => {
       isCollectable: item.isCollectable !== undefined ? item.isCollectable : false
     };
   });
+
+  let serialCounter = parseInt(localStorage.getItem(SERIAL_KEY) || '0', 10);
+  inventory.forEach(item => {
+    if (!item.serial) {
+      serialCounter += 1;
+      item.serial = serialCounter;
+    }
+    item.numistaId = item.numistaId || catalogMap[item.serial] || "";
+    catalogMap[item.serial] = item.numistaId;
+  });
+  localStorage.setItem(SERIAL_KEY, serialCounter);
+  saveData(CATALOG_MAP_KEY, catalogMap);
 };
 
 /**
@@ -846,8 +871,9 @@ const showNotes = (idx) => {
  *
  * @param {number} idx - Index of item to edit
  */
-const editItem = (idx) => {
+const editItem = (idx, logIdx = null) => {
   editingIndex = idx;
+  editingChangeLogIndex = logIdx;
   const item = inventory[idx];
 
   // Populate edit form
@@ -868,7 +894,14 @@ const editItem = (idx) => {
   
   elements.editDate.value = item.date;
   elements.editSpotPrice.value = item.spotPriceAtPurchase;
+  elements.editCatalog.value = item.numistaId || "";
+  elements.editSerial.value = item.serial;
   document.getElementById("editCollectable").checked = item.isCollectable;
+
+  if (elements.undoChangeBtn) {
+    elements.undoChangeBtn.style.display =
+      logIdx !== null ? "inline-block" : "none";
+  }
 
   // Show modal
   elements.editModal.style.display = 'flex';

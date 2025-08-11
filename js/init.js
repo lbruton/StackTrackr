@@ -130,6 +130,9 @@ document.addEventListener("DOMContentLoaded", () => {
     elements.editNotes = safeGetElement("editNotes");
     elements.editDate = safeGetElement("editDate");
     elements.editSpotPrice = safeGetElement("editSpotPrice");
+    elements.editCatalog = safeGetElement("editCatalog");
+    elements.undoChangeBtn = safeGetElement("undoChangeBtn");
+    elements.editSerial = safeGetElement("editSerial");
 
     elements.addModal = safeGetElement("addModal");
     elements.addCloseBtn = safeGetElement("addCloseBtn");

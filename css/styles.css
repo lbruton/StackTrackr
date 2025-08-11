@@ -45,6 +45,7 @@
   /* Component Spacing */
   --radius: 8px;
   --radius-lg: 12px;
+  --spacing-xs: 0.2rem;
   --spacing-sm: 0.4rem;
   --spacing: 0.75rem;
   --spacing-lg: 1.25rem;
@@ -1148,7 +1149,8 @@ input[type="submit"] {
 /* Standardized modal layout for change log and details views */
 /* shared modal content structure */
 #changeLogModal .modal-content,
-#detailsModal .modal-content {
+#detailsModal .modal-content,
+#editModal .modal-content {
   display: flex;
   flex-direction: column;
   padding: 0;
@@ -1163,7 +1165,8 @@ input[type="submit"] {
 
 #changeLogModal .modal-header,
 #detailsModal .modal-header,
-#storageReportModal .modal-header {
+#storageReportModal .modal-header,
+#editModal .modal-header {
   background: linear-gradient(135deg, var(--primary), var(--primary-hover));
   color: white;
   padding: var(--spacing-xl);
@@ -1174,14 +1177,16 @@ input[type="submit"] {
 
 #changeLogModal .modal-header h2,
 #detailsModal .modal-header h2,
-#storageReportModal .modal-header h2 {
+#storageReportModal .modal-header h2,
+#editModal .modal-header h2 {
   margin: 0;
   color: white;
   text-align: center;
 }
 
-#changeLogModal .modal-body {
-  padding: var(--spacing-xl);
+#changeLogModal .modal-body,
+#editModal .modal-body {
+  padding: var(--spacing);
   overflow: auto;
   flex: 1;
 }
@@ -1207,8 +1212,9 @@ input[type="submit"] {
 
 #changeLogTable th,
 #changeLogTable td {
-  padding: var(--spacing-sm);
+  padding: var(--spacing-xs);
   text-align: left;
+  font-size: 0.75rem;
 }
 
 #changeLogTable td {
@@ -1219,11 +1225,18 @@ input[type="submit"] {
 
 #changeLogTable th:last-child,
 #changeLogTable td:last-child {
-  width: 8rem;
+  width: 5rem;
 }
 
 #changeLogTable td.action-cell {
   white-space: nowrap;
+}
+
+@media (max-width: 600px) {
+  #changeLogTable th,
+  #changeLogTable td {
+    font-size: 0.6rem;
+  }
 }
 
 #detailsModal {
@@ -2285,6 +2298,18 @@ input:disabled + .slider {
   margin-top: 0;
   text-align: left;
   font-style: italic;
+}
+
+.collectable-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: var(--spacing);
+  margin-bottom: var(--spacing);
+}
+
+.collectable-card .collectable-note {
+  margin-top: var(--spacing-xs);
 }
 
 /* =============================================================================
