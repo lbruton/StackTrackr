@@ -424,6 +424,7 @@ const setupEventListeners = () => {
           }
 
           const serial = getNextSerial();
+          const catalog = document.getElementById("itemCatalog").value.trim();
           inventory.push({
             metal,
             composition,
@@ -441,12 +442,12 @@ const setupEventListeners = () => {
             totalPremium,
             isCollectable,
             serial,
-            numistaId: "",
+            numistaId: catalog,
           });
 
           addCompositionOption(composition);
 
-          catalogMap[serial] = "";
+          catalogMap[serial] = catalog;
           saveInventory();
           renderTable();
           this.reset();
@@ -1011,7 +1012,6 @@ const setupEventListeners = () => {
             } else {
               importNumistaCsv(file, numistaOverride);
             }
-n
           }
           this.value = "";
         },

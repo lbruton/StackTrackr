@@ -417,6 +417,7 @@
               <th class="shrink" data-column="type">Type</th>
               <th class="shrink" data-column="composition">Composition</th>
               <th class="expand" data-column="name">Name</th>
+              <th class="shrink" data-column="numista">N#</th>
               <th class="shrink" data-column="qty">Qty</th>
               <th class="shrink" data-column="weight">Weight<br />(oz)</th>
               <th class="shrink" data-column="purchasePrice">Purchase<br />Price ($)</th>
@@ -830,7 +831,7 @@
                 <input id="itemDate" required type="date" />
               </div>
             </div>
-            <!-- Spot price field -->
+            <!-- Spot price and catalog field -->
             <div class="grid grid-2">
               <div>
                 <label for="itemSpotPrice">Spot Price ($/oz)</label>
@@ -839,7 +840,8 @@
                 </div>
               </div>
               <div>
-                <!-- Empty div for grid alignment -->
+                <label for="itemCatalog">Catalog (N#)</label>
+                <input id="itemCatalog" type="text" placeholder="Numista catalog #" />
               </div>
             </div>
             <!-- Form action buttons -->
