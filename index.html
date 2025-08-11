@@ -1435,14 +1435,9 @@
               <p class="settings-subtext">Import your data files.</p>
               <div class="import-block">
                 <div class="import-export-grid">
-                  <div class="import-dropdown-wrapper">
-                    <button class="btn" id="importCsvBtn">
-                      Import CSV <span class="import-icon">⬇️</span>
-                    </button>
-                    <div class="import-dropdown" id="importCsvOptions">
-                      <button class="btn" id="importCsvOverride">Override</button>
-                      <button class="btn" id="importCsvMerge">Merge</button>
-                    </div>
+                  <div class="import-csv-grid">
+                    <button class="btn" id="importCsvOverride">Import</button>
+                    <button class="btn" id="importCsvMerge">Merge</button>
                     <input accept=".csv" hidden id="importCsvFile" type="file" />
                   </div>
                   <label class="btn" id="importJsonBtn">

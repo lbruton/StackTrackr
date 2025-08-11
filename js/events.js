@@ -902,24 +902,15 @@ const setupEventListeners = () => {
     debugLog("Setting up import/export listeners...");
 
     let csvImportOverride = false;
-    if (elements.importCsvBtn && elements.importCsvOptions) {
-      safeAttachListener(
-        elements.importCsvBtn,
-        "click",
-        () => elements.importCsvOptions.classList.toggle("show"),
-        "CSV import options toggle",
-      );
-    }
     if (elements.importCsvOverride && elements.importCsvFile) {
       safeAttachListener(
         elements.importCsvOverride,
         "click",
         () => {
           csvImportOverride = true;
-          elements.importCsvOptions.classList.remove("show");
           elements.importCsvFile.click();
         },
-        "CSV override option",
+        "CSV override button",
       );
     }
     if (elements.importCsvMerge && elements.importCsvFile) {
@@ -928,10 +919,9 @@ const setupEventListeners = () => {
         "click",
         () => {
           csvImportOverride = false;
-          elements.importCsvOptions.classList.remove("show");
           elements.importCsvFile.click();
         },
-        "CSV merge option",
+        "CSV merge button",
       );
     }
     if (elements.importCsvFile) {
