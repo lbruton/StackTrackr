@@ -2152,11 +2152,13 @@ td input:checked + .slider:before {
   width: 100%;
   margin: 0;
 }
+
 .beta-warning {
   margin-top: var(--spacing-xs);
   font-size: 0.75rem;
   color: var(--warning);
 }
+
 
 /* =============================================================================
    SEARCH
