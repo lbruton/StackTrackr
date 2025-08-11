@@ -29,7 +29,7 @@ For upcoming work, see [roadmap](roadmap.md).
 - Storage report now opens within an in-app modal using an iframe, replacing the previous popup window
 
 ### Version 3.03.02a – Archive Workflow & Versioning Guide (2025-08-10)
-- Archived previous build to `archive/previous`
+- Archived previous build to `archive/v_previous`
 - Added archived footer link back to root and updated workflow checklist
 - Clarified BRANCH.RELEASE.PATCH.state version scheme
 - Documented pre-release state codes and branching policy
