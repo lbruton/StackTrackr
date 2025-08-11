@@ -1645,6 +1645,31 @@ td .filter-text {
   font-weight: 600;
 }
 
+td .inline-edit-icon,
+td .save-inline,
+td .cancel-inline {
+  cursor: pointer;
+}
+
+td .inline-edit-icon {
+  margin-right: 0.25rem;
+}
+
+td.editing {
+  display: flex;
+  align-items: center;
+}
+
+td.editing input.inline-input {
+  flex: 1;
+  min-width: 0;
+}
+
+td.editing .save-inline,
+td.editing .cancel-inline {
+  margin-left: 0.25rem;
+}
+
 td .filter-text:hover,
 td .filter-text:focus {
   text-decoration: underline;
