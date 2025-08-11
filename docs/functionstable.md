@@ -1,7 +1,7 @@
 # Function Reference
 
 
-> **Latest release: v3.04.03**
+> **Latest release: v3.04.04**
 
 
 | File | Function | Description |
@@ -60,7 +60,7 @@
 | api.js | downloadCompleteBackup | Downloads complete backup files including inventory and API configuration |
 | filters.js | applyQuickFilter | Adds or toggles a filter for a specific field value |
 | filters.js | clearAllFilters | Clears all active filters and search query |
-| filters.js | filterInventoryAdvanced | Applies advanced filtering with active filters |
+| filters.js | filterInventoryAdvanced | Applies advanced filtering with active filters and comma-separated search terms |
 | changeLog.js | logChange | Records a change to the change log and persists it |
 | changeLog.js | logItemChanges | Compares two item objects and logs any differences |
 | changeLog.js | renderChangeLog | Renders the change log table with all entries |
@@ -118,7 +118,7 @@
 | inventory.js | exportPdf | Exports current inventory to PDF format |
 | pagination.js | calculateTotalPages | Calculates total number of pages based on current data |
 | pagination.js | goToPage | Navigates to specified page number |
-| search.js | filterInventory | Filters inventory based on current search query |
+| search.js | filterInventory | Filters inventory based on search query and filters; supports comma-separated terms |
 | search.js | applyColumnFilter | Applies a column-specific filter and re-renders the table |
 | sorting.js | sortInventory | Sorts inventory based on current sort column and direction |
 | spot.js | saveSpotHistory | Saves spot history to localStorage |

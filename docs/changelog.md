@@ -1,13 +1,16 @@
 # StackTrackr — Changelog
 
 
-> **Latest release: v3.04.03**
+> **Latest release: v3.04.04**
 
 
 For upcoming work, see [roadmap](roadmap.md).
 
 ## 📋 Version History
 
+
+### Version 3.04.04 – Multi-term search (2025-08-11)
+- Search box supports comma-separated terms and filters inventory in real time
 
 ### Version 3.04.03 – Search input restore (2025-08-11)
 - Ensures search box filters inventory table in real time
