@@ -301,7 +301,7 @@ const updateProviderSettings = (provider) => {
     const times = timesInput.value
       .split(',')
       .map(t => t.trim())
-      .filter(t => t);
+      .filter(t => /^\d{2}:\d{2}$/.test(t));
     config.historyTimes[provider] = times;
   }
 
@@ -858,17 +858,12 @@ const fetchBatchSpotPrices = async (provider, apiKey, selectedMetals, historyDay
 
   try {
     let url = providerConfig.baseUrl + providerConfig.batchEndpoint;
-    
-    // Replace placeholders based on provider
+
+    // Replace placeholders based on provider specifics
     if (provider === 'METALS_DEV') {
       const metals = selectedMetals.join(',');
       url = url.replace('{API_KEY}', apiKey)
-              .replace('{METALS}', metals)
-              .replace('{DAYS}', historyDays);
-      if (Array.isArray(historyTimes) && historyTimes.length) {
-        const timesParam = historyTimes.map(t => encodeURIComponent(t)).join(',');
-        url += `&times=${timesParam}`;
-      }
+              .replace('{METALS}', metals);
     } else if (provider === 'METALS_API') {
       const symbolMap = { silver: 'XAG', gold: 'XAU', platinum: 'XPT', palladium: 'XPD' };
       const symbols = selectedMetals.map(metal => symbolMap[metal]).join(',');
@@ -879,6 +874,19 @@ const fetchBatchSpotPrices = async (provider, apiKey, selectedMetals, historyDay
       const currencies = selectedMetals.map(metal => symbolMap[metal]).join(',');
       url = url.replace('{API_KEY}', apiKey)
               .replace('{CURRENCIES}', currencies);
+    }
+
+    // Apply historical parameters if supported
+    if (url.includes('{DAYS}')) {
+      url = url.replace('{DAYS}', historyDays);
+      if (Array.isArray(historyTimes) && historyTimes.length) {
+        const timesParam = historyTimes.map(t => encodeURIComponent(t)).join(',');
+        if (url.includes('{TIMES}')) {
+          url = url.replace('{TIMES}', timesParam);
+        } else {
+          url += `&times=${timesParam}`;
+        }
+      }
     }
 
     const headers = {
