@@ -85,7 +85,12 @@ const createBackupZip = async () => {
     zip.file('spot_price_history.json', JSON.stringify(spotHistoryData, null, 2));
 
     // 4. Generate and add CSV export
-    const csvHeaders = ["Metal", "Name", "Qty", "Type", "Weight(oz)", "Purchase Price", "Spot Price ($/oz)", "Premium ($/oz)", "Total Premium", "Purchase Location", "Storage Location", "N#", "Notes", "Date", "Collectable"];
+    const csvHeaders = [
+      "Metal", "Name", "Qty", "Type", "Weight(oz)", "Purchase Price",
+      "Spot Price ($/oz)", "Premium ($/oz)", "Total Premium",
+      "Purchase Location", "Storage Location", "N#", "Collectable",
+      "Notes", "Date"
+    ];
     const sortedInventory = sortInventoryByDateNewestFirst();
     const csvRows = [];
     for (const item of sortedInventory) {
@@ -105,9 +110,9 @@ const createBackupZip = async () => {
         item.purchaseLocation,
         item.storageLocation || '',
         item.numistaId || '',
+        item.isCollectable ? 'Yes' : 'No',
         item.notes || '',
-        item.date,
-        item.isCollectable ? 'Yes' : 'No'
+        item.date
       ]);
     }
     const csvContent = Papa.unparse([csvHeaders, ...csvRows]);
@@ -132,9 +137,9 @@ const createBackupZip = async () => {
         item.purchaseLocation,
         item.storageLocation || '',
         item.numistaId || '',
+        item.isCollectable ? 'Yes' : 'No',
         item.notes || '',
-        item.date,
-        item.isCollectable ? 'Yes' : 'No'
+        item.date
       ]);
     }
     const ws = XLSX.utils.aoa_to_sheet(wsData);
@@ -1211,7 +1216,8 @@ const importCsv = (file, override = false) => {
             totalPremium = premiumPerOz * parseFloat(qty) * parseFloat(weight);
           }
 
-          const numistaMatch = (row['N#'] || row['Numista #'] || row['numistaId'] || '').toString().match(/\d+/);
+          const numistaRaw = (row['N#'] || row['Numista #'] || row['numistaId'] || '').toString();
+          const numistaMatch = numistaRaw.match(/\d+/);
           const numistaId = numistaMatch ? numistaMatch[0] : '';
           const serial = row['Serial'] || row['serial'] || getNextSerial();
 
@@ -1539,7 +1545,12 @@ const exportNumistaCsv = () => {
  */
 const exportCsv = () => {
   const timestamp = new Date().toISOString().slice(0,10).replace(/-/g,'');
-  const headers = ["Metal","Name","Qty","Type","Weight(oz)","Purchase Price","Spot Price ($/oz)","Premium ($/oz)","Total Premium","Purchase Location","Storage Location","N#","Notes","Date","Collectable"];
+  const headers = [
+    "Metal","Name","Qty","Type","Weight(oz)","Purchase Price",
+    "Spot Price ($/oz)","Premium ($/oz)","Total Premium",
+    "Purchase Location","Storage Location","N#","Collectable",
+    "Notes","Date"
+  ];
 
   // Sort inventory by date (newest first) for export
   const sortedInventory = sortInventoryByDateNewestFirst();
@@ -1566,9 +1577,9 @@ const exportCsv = () => {
       i.purchaseLocation,
       i.storageLocation || '',
       i.numistaId || '',
+      i.isCollectable ? 'Yes' : 'No',
       i.notes || '',
-      i.date,
-      i.isCollectable ? 'Yes' : 'No'
+      i.date
     ]);
   }
 
@@ -1804,7 +1815,8 @@ const importExcel = (file) => {
           totalPremium = premiumPerOz * qty * weight;
         }
 
-        const numistaMatch = (row['N#'] || row['Numista #'] || row['numistaId'] || '').toString().match(/\d+/);
+        const numistaRaw = (row['N#'] || row['Numista #'] || row['numistaId'] || '').toString();
+        const numistaMatch = numistaRaw.match(/\d+/);
         const numistaId = numistaMatch ? numistaMatch[0] : '';
         const serial = row['Serial'] || row['serial'] || getNextSerial();
 
@@ -1883,8 +1895,12 @@ const exportExcel = () => {
 
   // Create worksheet data
   const wsData = [
-    ["Metal", "Name", "Qty", "Type", "Weight(oz)", "Purchase Price", "Spot Price ($/oz)",
-     "Premium ($/oz)", "Total Premium", "Purchase Location", "Storage Location", "N#", "Notes", "Date", "Collectable"]
+    [
+      "Metal", "Name", "Qty", "Type", "Weight(oz)", "Purchase Price",
+      "Spot Price ($/oz)", "Premium ($/oz)", "Total Premium",
+      "Purchase Location", "Storage Location", "N#", "Collectable",
+      "Notes", "Date"
+    ]
   ];
 
   for (const i of sortedInventory) {
@@ -1906,9 +1922,9 @@ const exportExcel = () => {
       i.purchaseLocation,
       i.storageLocation || '',
       i.numistaId || '',
+      i.isCollectable ? 'Yes' : 'No',
       i.notes || '',
-      i.date,
-      i.isCollectable ? 'Yes' : 'No'
+      i.date
     ]);
   }
 
