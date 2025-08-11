@@ -1865,38 +1865,6 @@ td input:checked + .slider:before {
   margin-right: var(--spacing-sm);
 }
 
-.roadmap-content {
-  color: var(--text-secondary);
-  line-height: 1.6;
-}
-
-.roadmap-content p {
-  margin-bottom: var(--spacing);
-}
-
-.roadmap-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.roadmap-list li {
-  padding: var(--spacing-sm) 0;
-  border-bottom: 1px dashed var(--border);
-  color: var(--text-secondary);
-  line-height: 1.5;
-}
-
-.roadmap-list li:last-child {
-  border-bottom: none;
-}
-
-.roadmap-list li::before {
-  content: "→";
-  color: var(--primary);
-  font-weight: bold;
-  margin-right: var(--spacing-sm);
-}
 
 .resources-grid {
   display: grid;
