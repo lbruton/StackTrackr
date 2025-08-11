@@ -1206,7 +1206,8 @@ input[type="submit"] {
 }
 
 #changeLogModal .modal-header,
-#detailsModal .modal-header {
+#detailsModal .modal-header,
+#storageReportModal .modal-header {
   background: linear-gradient(135deg, var(--primary), var(--primary-hover));
   color: white;
   padding: var(--spacing-xl);
@@ -1216,7 +1217,8 @@ input[type="submit"] {
 }
 
 #changeLogModal .modal-header h2,
-#detailsModal .modal-header h2 {
+#detailsModal .modal-header h2,
+#storageReportModal .modal-header h2 {
   margin: 0;
   color: white;
   text-align: center;
@@ -1234,6 +1236,11 @@ input[type="submit"] {
   overflow: hidden;
   display: flex;
   flex-direction: column;
+}
+
+#storageReportModal .modal-body {
+  height: 80vh;
+  padding: 0;
 }
 
 #changeLogTable {
