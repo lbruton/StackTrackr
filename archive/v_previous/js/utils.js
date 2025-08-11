@@ -337,6 +337,21 @@ const mapNumistaType = (type = "") => {
 };
 
 /**
+ * Determines metal type from Numista composition string
+ *
+ * @param {string} composition - Composition description
+ * @returns {string} Recognized metal or 'Alloy' if not silver/gold/platinum/palladium
+ */
+const parseNumistaMetal = (composition = "") => {
+  const c = composition.toLowerCase();
+  if (c.includes("silver")) return "Silver";
+  if (c.includes("gold")) return "Gold";
+  if (c.includes("platinum")) return "Platinum";
+  if (c.includes("palladium")) return "Palladium";
+  return "Alloy";
+};
+
+/**
  * Saves data to localStorage with JSON serialization
  *
  * @param {string} key - Storage key

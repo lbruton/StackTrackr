@@ -1,10 +1,17 @@
 # StackTrackr — Changelog
 
-> **Latest release: v3.03.08c**
+> **Latest release: v3.03.08e**
 
 For upcoming work, see [roadmap](roadmap.md).
 
 ## 📋 Version History
+
+### Version 3.03.08e – Numista CSV storage (2025-08-10)
+- Stores imported Numista CSV in raw form within localStorage
+- Parses metal composition to classify into Silver, Gold, Platinum, Palladium, or Alloy
+
+### Version 3.03.08d – Version Modal Centering (2025-08-10)
+- Version change modal now centers on screen for better visibility
 
 ### Version 3.03.08c – Version Modal Enhancements (2025-08-10)
 - Added privacy notice, resources, and roadmap to version change modal

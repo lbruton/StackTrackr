@@ -66,7 +66,7 @@ const populateVersionModal = (version, html) => {
   if (ver) ver.textContent = `v${version}`;
   if (body) body.innerHTML = html;
   if (!modal) return;
-  modal.style.display = "block";
+  modal.style.display = "flex";
   document.body.style.overflow = "hidden";
   setupVersionModalEvents(version);
   if (typeof loadRoadmap === "function") {
