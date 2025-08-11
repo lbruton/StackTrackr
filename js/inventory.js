@@ -1364,6 +1364,11 @@ const importNumistaCsv = (file, override = false) => {
           }
           const weight = parseFloat(gramsToOzt(weightGrams).toFixed(2));
 
+          let isCollectable = true;
+          if ((metal === 'Silver' || metal === 'Gold') && weightGrams >= 3) {
+            isCollectable = false;
+          }
+
           const priceKey = Object.keys(row).find(k => /^(buying price|purchase price|price paid)/i.test(k));
           let purchasePrice = 0;
           if (priceKey) {
@@ -1401,7 +1406,9 @@ const importNumistaCsv = (file, override = false) => {
           if (otherComment) noteParts.push(`Comment: ${otherComment}`);
           const notes = noteParts.join('\n');
 
-          const isCollectable = !(type === 'Bar' || type === 'Round');
+          if (type === 'Bar' || type === 'Round') {
+            isCollectable = false;
+          }
           const spotPriceAtPurchase = 0;
           const premiumPerOz = 0;
           const totalPremium = 0;
