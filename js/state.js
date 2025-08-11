@@ -9,6 +9,8 @@ let sortDirection = "asc"; // 'asc' or 'desc' - current sort direction
 let editingIndex = null;
 /** @type {number|null} Index of item whose notes are being edited */
 let notesIndex = null;
+/** @type {number|null} Change log entry currently being edited */
+let editingChangeLogIndex = null;
 
 /** @type {Object} Pagination state */
 let currentPage = 1; // Current page number (1-based)
@@ -29,6 +31,9 @@ let chartInstances = {
   apiHistoryChartPlatinum: null,
   apiHistoryChartPalladium: null,
 };
+
+/** @type {Set<string>} Available composition options */
+let compositionOptions = new Set(["Gold", "Silver", "Platinum", "Palladium", "Alloy"]);
 
 /** @type {Object} Cached DOM elements for performance */
 const elements = {
@@ -62,10 +67,15 @@ const elements = {
 
   // Import elements
   importCsvFile: null,
+  importCsvOverride: null,
+  importCsvMerge: null,
   importJsonFile: null,
   importExcelFile: null,
   importProgress: null,
   importProgressText: null,
+  numistaImportFile: null,
+  numistaOverride: null,
+  numistaMerge: null,
 
   // Export elements
   exportCsvBtn: null,
@@ -74,8 +84,15 @@ const elements = {
   exportPdfBtn: null,
   cloudSyncBtn: null,
   syncAllBtn: null,
-  
+
+  // Custom mapping buttons
+  addMappingBtn: null,
+  applyMappingsBtn: null,
+  clearMappingsBtn: null,
+
   // Emergency reset button
+  removeInventoryDataBtn: null,
+  clearNumistaCacheBtn: null,
   boatingAccidentBtn: null,
 
   // Edit modal elements
@@ -93,6 +110,9 @@ const elements = {
   editNotes: null,
   editDate: null,
   editSpotPrice: null,
+  editCatalog: null,
+  undoChangeBtn: null,
+  editSerial: null,
   editCloseBtn: null,
 
   // Notes modal elements
@@ -132,6 +152,8 @@ const elements = {
 
   // Search elements
   searchInput: null,
+  typeFilter: null,
+  metalFilter: null,
   clearSearchBtn: null,
   newItemBtn: null,
   searchResultsInfo: null,
@@ -151,7 +173,6 @@ const elements = {
   appearanceBtn: null,
   apiBtn: null,
   filesBtn: null,
-  appearanceModal: null,
   apiModal: null,
   filesModal: null,
   apiInfoModal: null,

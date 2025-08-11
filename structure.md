@@ -1,6 +1,6 @@
 # StackTrackr - Project Structure
 
-## Current Structure (Version 3.3.00)
+## Current Structure (Version 3.03.08n)
 
 ```text
 ├── css/
@@ -9,19 +9,22 @@
 ├── docs/
 │   ├── archive/
 │   │   └── notes/
-│   ├── CHANGELOG.md
-│   ├── IMPLEMENTATION_SUMMARY.md
+│   ├── future/
+│   ├── changelog.md
+│   ├── functionstable.md
+│   ├── implementation_summary.md
 │   ├── MULTI_AGENT_WORKFLOW.md
-│   ├── ROADMAP.md
-│   ├── STATUS.md
-│   ├── STRUCTURE.md
-│   └── VERSIONING.md
+│   ├── roadmap.md
+│   ├── status.md
+│   ├── structure.md
+│   └── versioning.md
 ├── js/
 │   ├── api.js
 │   ├── charts.js
 │   ├── constants.js
 │   ├── detailsModal.js
 │   ├── events.js
+│   ├── customMapping.js
 │   ├── init.js
 │   ├── inventory.js
 │   ├── pagination.js
@@ -30,8 +33,10 @@
 │   ├── spot.js
 │   ├── state.js
 │   ├── theme.js
+│   ├── versionCheck.js
 │   └── utils.js
 ├── index.html
+├── archive/
 ├── LICENSE
 ├── README.md
 ├── sample.csv
@@ -62,7 +67,9 @@
 - **detailsModal.js**: Analytics modal with Chart.js pie charts
 - **charts.js**: Chart.js utilities and configuration
 - **events.js**: All DOM event listener setup
+- **customMapping.js**: Regex-based field mapping rule engine
 - **init.js**: Application bootstrap and initialization
+- **versionCheck.js**: Handles version comparison and changelog modal
 - **utils.js**: Shared utility functions, validation, and error handling
 
 ### Styling (`css/styles.css`)
@@ -71,5 +78,8 @@
 - Responsive design for all screen sizes
 - Component-based organization
 - Modern CSS features and animations
+
+### Archive (`archive/`)
+- Stores the previous build so users can revert if issues arise
 
 This structure provides better maintainability, clearer separation of concerns, and easier version management going forward.

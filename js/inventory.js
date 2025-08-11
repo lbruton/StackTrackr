@@ -40,6 +40,7 @@ const createBackupZip = async () => {
       exportDate: new Date().toISOString(),
       inventory: inventory.map(item => ({
         metal: item.metal,
+        composition: item.composition,
         name: item.name,
         qty: item.qty,
         type: item.type,
@@ -98,7 +99,7 @@ const createBackupZip = async () => {
         item.isCollectable ? 'N/A' : formatDollar(item.premiumPerOz),
         item.isCollectable ? 'N/A' : formatDollar(item.totalPremium),
         item.purchaseLocation,
-        item.storageLocation || 'Unknown',
+        item.storageLocation || '',
         item.notes || '',
         item.date,
         item.isCollectable ? 'Yes' : 'No'
@@ -124,7 +125,7 @@ const createBackupZip = async () => {
         item.isCollectable ? null : item.premiumPerOz,
         item.isCollectable ? null : item.totalPremium,
         item.purchaseLocation,
-        item.storageLocation || 'Unknown',
+        item.storageLocation || '',
         item.notes || '',
         item.date,
         item.isCollectable ? 'Yes' : 'No'
@@ -286,7 +287,7 @@ const generateBackupHtml = (sortedInventory, timeFormatted) => {
   <table>
     <thead>
       <tr>
-        <th>Metal</th><th>Name</th><th>Qty</th><th>Type</th><th>Weight(oz)</th>
+        <th>Composition</th><th>Name</th><th>Qty</th><th>Type</th><th>Weight(oz)</th>
         <th>Purchase Price</th><th>Purchase Location</th><th>Storage Location</th>
         <th>Notes</th><th>Date</th><th>Collectable</th>
       </tr>
@@ -294,14 +295,14 @@ const generateBackupHtml = (sortedInventory, timeFormatted) => {
     <tbody>
       ${sortedInventory.map(item => `
         <tr>
-          <td>${item.metal}</td>
+          <td>${getCompositionFirstWords(item.composition || item.metal)}</td>
           <td>${item.name}</td>
           <td>${item.qty}</td>
           <td>${item.type}</td>
           <td>${parseFloat(item.weight).toFixed(2)}</td>
           <td>${formatDollar(item.price)}</td>
           <td>${item.purchaseLocation}</td>
-          <td>${item.storageLocation || 'Unknown'}</td>
+          <td>${item.storageLocation || ''}</td>
           <td>${item.notes || ''}</td>
           <td>${item.date}</td>
           <td>${item.isCollectable ? 'Yes' : 'No'}</td>
@@ -401,10 +402,23 @@ Store this archive in a secure location for data protection.
 
 // =============================================================================
 
+let catalogMap = loadData(CATALOG_MAP_KEY, {});
+window.catalogMap = catalogMap;
+
+const getNextSerial = () => {
+  const next = (parseInt(localStorage.getItem(SERIAL_KEY) || '0', 10) + 1);
+  localStorage.setItem(SERIAL_KEY, next);
+  return next;
+};
+window.getNextSerial = getNextSerial;
+
 /**
  * Saves current inventory to localStorage
  */
-const saveInventory = () => saveData(LS_KEY, inventory);
+const saveInventory = () => {
+  saveData(LS_KEY, inventory);
+  saveData(CATALOG_MAP_KEY, catalogMap);
+};
 
 /**
  * Loads inventory from localStorage with comprehensive data migration
@@ -439,23 +453,40 @@ const loadInventory = () => {
 
       return {
         ...item,
-        purchaseLocation: item.purchaseLocation || "Unknown",
+        type: normalizeType(item.type),
+        purchaseLocation: item.purchaseLocation || "",
         storageLocation: item.storageLocation || "Unknown",
         notes: item.notes || "",
         spotPriceAtPurchase: spotPrice,
         premiumPerOz,
         totalPremium,
-        isCollectable: item.isCollectable !== undefined ? item.isCollectable : false
+        isCollectable: item.isCollectable !== undefined ? item.isCollectable : false,
+        composition: item.composition || item.metal || ""
       };
     }
     // Ensure all items have required properties
     return {
       ...item,
+      type: normalizeType(item.type),
+      purchaseLocation: item.purchaseLocation || "",
       storageLocation: item.storageLocation || "Unknown",
       notes: item.notes || "",
-      isCollectable: item.isCollectable !== undefined ? item.isCollectable : false
+      isCollectable: item.isCollectable !== undefined ? item.isCollectable : false,
+      composition: item.composition || item.metal || ""
     };
   });
+
+  let serialCounter = parseInt(localStorage.getItem(SERIAL_KEY) || '0', 10);
+  inventory.forEach(item => {
+    if (!item.serial) {
+      serialCounter += 1;
+      item.serial = serialCounter;
+    }
+    item.numistaId = item.numistaId || catalogMap[item.serial] || "";
+    catalogMap[item.serial] = item.numistaId;
+  });
+  localStorage.setItem(SERIAL_KEY, serialCounter);
+  saveData(CATALOG_MAP_KEY, catalogMap);
 };
 
 /**
@@ -503,11 +534,11 @@ const getColor = (map, key) => {
   return `hsl(${map[key]}, 70%, ${lightness}%)`;
 };
 
-const filterLink = (field, value, color) => {
+const filterLink = (field, value, color, displayValue = value) => {
   const handler = `applyColumnFilter('${field}', ${JSON.stringify(value)})`;
   // Escape double quotes for safe inline handler usage
   const escaped = handler.replace(/"/g, '&quot;');
-  const safe = sanitizeHtml(value);
+  const safe = sanitizeHtml(String(displayValue));
   return `<span class="filter-text" style="color: ${color};" onclick="${escaped}" tabindex="0" role="button" onkeydown="if(event.key==='Enter'||event.key===' ')${escaped}" title="Filter by ${safe}">${safe}</span>`;
 };
 
@@ -515,9 +546,29 @@ const getTypeColor = type => getColor(typeColors, type);
 const getPurchaseLocationColor = loc => getColor(purchaseLocationColors, loc);
 const getStorageLocationColor = loc => getColor(storageLocationColors, loc);
 
+
 const renderTable = () => {
   return monitorPerformance(() => {
+    populateFilterOptions();
     const filteredInventory = filterInventory();
+
+    // Automatically adjust items-per-page dropdown when filtered results
+    // are fewer than the currently selected page length. This ensures the
+    // table length always displays a sensible value (minimum of the smallest
+    // dropdown option) while still allowing larger result sets to use
+    // pagination.
+    if (filteredInventory.length < itemsPerPage && elements.itemsPerPage) {
+      const options = Array.from(elements.itemsPerPage.options).map(o => parseInt(o.value));
+      const minOption = Math.min(...options);
+      const target = Math.max(filteredInventory.length, minOption);
+      const newValue = options.find(opt => opt >= target) || options[options.length - 1];
+      if (newValue !== itemsPerPage) {
+        itemsPerPage = newValue;
+        elements.itemsPerPage.value = String(newValue);
+        currentPage = 1;
+      }
+    }
+
     const sortedInventory = sortInventory(filteredInventory);
     const totalPages = calculateTotalPages(sortedInventory);
     const startIndex = (currentPage - 1) * itemsPerPage;
@@ -528,23 +579,27 @@ const renderTable = () => {
     for (let i = startIndex; i < endIndex; i++) {
       const item = sortedInventory[i];
       const originalIdx = inventory.indexOf(item);
+      const spotDisplay = item.isCollectable ? 'N/A' : (item.spotPriceAtPurchase > 0 ? formatDollar(item.spotPriceAtPurchase) : 'N/A');
+      const spotValue = item.isCollectable ? 'N/A' : (item.spotPriceAtPurchase > 0 ? item.spotPriceAtPurchase : 'N/A');
+      const premiumDisplay = item.isCollectable ? 'N/A' : formatDollar(item.totalPremium);
+      const premiumValue = item.isCollectable ? 'N/A' : item.totalPremium;
 
       rows.push(`
       <tr>
-      <td class="shrink">${formatDisplayDate(item.date)}</td>
-      <td class="shrink">${filterLink('type', item.type, getTypeColor(item.type))}</td>
-      <td class="shrink">${filterLink('metal', item.metal || 'Silver', METAL_COLORS[item.metal] || 'var(--primary)')}</td>
-      <td class="clickable-name expand" onclick="editItem(${originalIdx})" title="Click to edit" tabindex="0" role="button" aria-label="Edit ${sanitizeHtml(item.name)}" onkeydown="if(event.key==='Enter'||event.key===' ')editItem(${originalIdx})">${sanitizeHtml(item.name)}</td>
-      <td class="shrink">${item.qty}</td>
-      <td class="shrink">${parseFloat(item.weight).toFixed(2)}</td>
-      <td class="shrink">${formatDollar(item.price)}</td>
-      <td class="shrink">${item.isCollectable ? 'N/A' : (item.spotPriceAtPurchase > 0 ? formatDollar(item.spotPriceAtPurchase) : 'N/A')}</td>
-      <td class="shrink" style="color: ${item.isCollectable ? 'var(--text-muted)' : (item.totalPremium > 0 ? 'var(--warning)' : 'inherit')}">${item.isCollectable ? 'N/A' : formatDollar(item.totalPremium)}</td>
-      <td class="shrink">${filterLink('purchaseLocation', item.purchaseLocation, getPurchaseLocationColor(item.purchaseLocation))}</td>
-      <td class="shrink">${filterLink('storageLocation', item.storageLocation || 'Unknown', getStorageLocationColor(item.storageLocation || 'Unknown'))}</td>
-      <td class="shrink"><button type="button" class="btn action-btn collectable-btn ${item.isCollectable ? 'success' : ''}" onclick="toggleCollectable(${originalIdx})" aria-label="Toggle collectable status for ${sanitizeHtml(item.name)}" title="Toggle collectable status">${item.isCollectable ? 'Yes' : 'No'}</button></td>
-      <td class="shrink"><button type="button" class="btn action-btn notes-btn ${item.notes && item.notes.trim() ? 'success' : ''}" onclick="showNotes(${originalIdx})" aria-label="View notes" title="View notes">${item.notes && item.notes.trim() ? 'Yes' : 'No'}</button></td>
-      <td class="shrink"><button class="btn action-btn danger" onclick="deleteItem(${originalIdx})" aria-label="Delete item" title="Delete item">Delete</button></td>
+      <td class="shrink" data-column="date">${filterLink('date', item.date, 'var(--text-primary)', formatDisplayDate(item.date))}</td>
+      <td class="shrink" data-column="type">${filterLink('type', item.type, getTypeColor(item.type))}</td>
+      <td class="shrink" data-column="composition">${filterLink('composition', getCompositionFirstWords(item.composition || item.metal || 'Silver'), METAL_COLORS[item.metal] || 'var(--primary)')}</td>
+      <td class="expand" data-column="name" style="text-align: left;"><button type="button" class="edit-icon" onclick="editItem(${originalIdx})" aria-label="Edit ${sanitizeHtml(item.name)}" title="Edit ${sanitizeHtml(item.name)}" style="float: left; margin-right: 8px;">✎</button><span class="filter-text" onclick="applyColumnFilter('name', '${sanitizeHtml(item.name).replace(/'/g, "\'")}')"; style="cursor: pointer; color: var(--text-primary);" title="Filter by this name">${sanitizeHtml(item.name)}</span></td>
+      <td class="shrink" data-column="qty">${filterLink('qty', item.qty, 'var(--text-primary)')}</td>
+      <td class="shrink" data-column="weight">${filterLink('weight', item.weight, 'var(--text-primary)', parseFloat(item.weight).toFixed(2))}</td>
+      <td class="shrink" data-column="purchasePrice">${filterLink('price', item.price, 'var(--text-primary)', formatDollar(item.price))}</td>
+      <td class="shrink" data-column="spot">${filterLink('spotPriceAtPurchase', spotValue, 'var(--text-primary)', spotDisplay)}</td>
+      <td class="shrink" data-column="premium" style="color: ${item.isCollectable ? 'var(--text-muted)' : (item.totalPremium > 0 ? 'var(--warning)' : 'inherit')}">${filterLink('totalPremium', premiumValue, 'var(--text-primary)', premiumDisplay)}</td>
+      <td class="shrink" data-column="purchaseLocation">${item.purchaseLocation ? filterLink('purchaseLocation', item.purchaseLocation, getPurchaseLocationColor(item.purchaseLocation)) : ''}</td>
+      <td class="shrink" data-column="storageLocation">${item.storageLocation ? filterLink('storageLocation', item.storageLocation, getStorageLocationColor(item.storageLocation)) : ''}</td>
+      <td class="shrink" data-column="collectable"><button type="button" class="btn action-btn collectable-btn ${item.isCollectable ? 'success' : ''}" onclick="toggleCollectable(${originalIdx})" aria-label="Toggle collectable status for ${sanitizeHtml(item.name)}" title="Toggle collectable status">${item.isCollectable ? 'Yes' : 'No'}</button></td>
+      <td class="shrink" data-column="notes"><button type="button" class="btn action-btn notes-btn ${item.notes && item.notes.trim() ? 'success' : ''}" onclick="showNotes(${originalIdx})" aria-label="View notes" title="View notes">${item.notes && item.notes.trim() ? 'Yes' : 'No'}</button></td>
+      <td class="shrink" data-column="delete"><button class="btn action-btn danger" onclick="deleteItem(${originalIdx})" aria-label="Delete item" title="Delete item">Delete</button></td>
       </tr>
       `);
     }
@@ -575,8 +630,9 @@ const renderTable = () => {
     renderPagination(sortedInventory);
     updateSummary();
     
-    // Re-setup column resizing after table re-render
+    // Re-setup column resizing and responsive visibility after table re-render
     setupColumnResizing();
+    updateColumnVisibility();
   }, 'renderTable');
 };
 
@@ -826,16 +882,17 @@ const showNotes = (idx) => {
  *
  * @param {number} idx - Index of item to edit
  */
-const editItem = (idx) => {
+const editItem = (idx, logIdx = null) => {
   editingIndex = idx;
+  editingChangeLogIndex = logIdx;
   const item = inventory[idx];
 
   // Populate edit form
-  elements.editMetal.value = item.metal;
+  elements.editMetal.value = item.composition || item.metal;
   elements.editName.value = item.name;
   elements.editQty.value = item.qty;
   elements.editType.value = item.type;
-  elements.editWeight.value = item.weight;
+  elements.editWeight.value = parseFloat(item.weight).toFixed(2);
   elements.editPrice.value = item.price;
   elements.editPurchaseLocation.value = item.purchaseLocation;
   elements.editStorageLocation.value = item.storageLocation || '';
@@ -848,7 +905,14 @@ const editItem = (idx) => {
   
   elements.editDate.value = item.date;
   elements.editSpotPrice.value = item.spotPriceAtPurchase;
+  elements.editCatalog.value = item.numistaId || "";
+  elements.editSerial.value = item.serial;
   document.getElementById("editCollectable").checked = item.isCollectable;
+
+  if (elements.undoChangeBtn) {
+    elements.undoChangeBtn.style.display =
+      logIdx !== null ? "inline-block" : "none";
+  }
 
   // Show modal
   elements.editModal.style.display = 'flex';
@@ -944,6 +1008,7 @@ const endImportProgress = () => {
  * - Spot Price ($/oz) for historical premium calculations
  * 
  * @param {File} file - CSV file selected by user through file input
+ * @param {boolean} [override=false] - Replace existing inventory instead of merging
  * @returns {void} Updates inventory array if import successful
  * 
  * @example
@@ -955,122 +1020,100 @@ const endImportProgress = () => {
  *   }
  * });
  */
-const importCsv = (file) => {
+const importCsv = (file, override = false) => {
   try {
     Papa.parse(file, {
       header: true,
       skipEmptyLines: true,
       complete: function(results) {
-      const imported = [];
-      const skippedDetails = [];
-      const totalRows = results.data.length;
-      startImportProgress(totalRows);
-      let processed = 0;
-      let importedCount = 0;
+        const imported = [];
+        const totalRows = results.data.length;
+        startImportProgress(totalRows);
+        let processed = 0;
+        let importedCount = 0;
 
-      for (const [index, row] of results.data.entries()) {
-        processed++;
-        const metal = row['Metal'] || 'Silver';
-        const name = row['Name'] || row['name'];
-        const qty = parseInt(row['Qty'] || row['qty'] || 1, 10);
-        const type = row['Type'] || row['type'] || 'Other';
-        const weight = parseFloat(row['Weight(oz)'] || row['weight']);
-        const priceStr = row['Purchase Price'] || row['price'];
-        let price = parseFloat(
-          typeof priceStr === "string"
-            ? priceStr.replace(/[^0-9.-]+/g, "")
-            : priceStr,
-        );
-        if (price < 0) price = 0;
-        const purchaseLocation = row['Purchase Location'] || "Unknown";
-        const storageLocation = row['Storage Location'] || "Unknown";
-        const notes = row['Notes'] || "";
-        const date = parseDate(row['Date']); // Using the new date parser
+        for (const row of results.data) {
+          processed++;
+          const compositionRaw = row['Composition'] || row['Metal'] || 'Silver';
+          const composition = getCompositionFirstWords(compositionRaw);
+          const metal = parseNumistaMetal(composition);
+          const name = row['Name'] || row['name'];
+          const qty = row['Qty'] || row['qty'] || 1;
+          const type = normalizeType(row['Type'] || row['type']);
+          const weight = row['Weight(oz)'] || row['weight'];
+          const priceStr = row['Purchase Price'] || row['price'];
+          let price = typeof priceStr === 'string'
+            ? parseFloat(priceStr.replace(/[^\d.-]+/g, ''))
+            : parseFloat(priceStr);
+          if (price < 0) price = 0;
+          const purchaseLocation = row['Purchase Location'] || '';
+          const storageLocation = row['Storage Location'] || '';
+          const notes = row['Notes'] || '';
+          const date = parseDate(row['Date']);
 
-        // Get collectable status
-        const isCollectable = row['Collectable'] === 'Yes' || row['Collectable'] === 'true' || row['isCollectable'] === 'true';
+          const isCollectable = row['Collectable'] === 'Yes' || row['Collectable'] === 'true' || row['isCollectable'] === 'true';
 
-        // Get spot price from CSV if available
-        let spotPriceAtPurchase;
-        if (row['Spot Price ($/oz)']) {
-          // Extract numeric value from formatted string like "$1,234.56"
-          const spotStr = row['Spot Price ($/oz)'].toString();
-          spotPriceAtPurchase = parseFloat(spotStr.replace(/[^0-9.-]+/g, ""));
-        } else if (row['spotPriceAtPurchase']) {
-          spotPriceAtPurchase = parseFloat(row['spotPriceAtPurchase']);
-        } else {
-          // Fall back to current spot price if not in CSV and not collectable
-          const metalKey = metal.toLowerCase();
-          spotPriceAtPurchase = isCollectable ? 0 : spotPrices[metalKey];
-        }
+          let spotPriceAtPurchase;
+          if (row['Spot Price ($/oz)']) {
+            const spotStr = row['Spot Price ($/oz)'].toString();
+            spotPriceAtPurchase = parseFloat(spotStr.replace(/[^0-9.-]+/g, ''));
+          } else if (row['spotPriceAtPurchase']) {
+            spotPriceAtPurchase = parseFloat(row['spotPriceAtPurchase']);
+          } else {
+            const metalKey = metal.toLowerCase();
+            spotPriceAtPurchase = isCollectable ? 0 : spotPrices[metalKey];
+          }
 
-        // Calculate premium per ounce (only for non-collectible items)
-        let premiumPerOz = 0;
-        let totalPremium = 0;
+          let premiumPerOz = 0;
+          let totalPremium = 0;
+          if (!isCollectable) {
+            const pricePerOz = price / parseFloat(weight);
+            premiumPerOz = pricePerOz - spotPriceAtPurchase;
+            totalPremium = premiumPerOz * parseFloat(qty) * parseFloat(weight);
+          }
 
-        if (!isCollectable) {
-          const pricePerOz = price / weight;
-          premiumPerOz = pricePerOz - spotPriceAtPurchase;
-          totalPremium = premiumPerOz * qty * weight;
-        }
+          addCompositionOption(composition);
 
-        // Create item object for validation
-        const itemToValidate = {
-          metal,
-          name,
-          qty,
-          type,
-          weight,
-          price,
-          date,
-          purchaseLocation,
-          storageLocation,
-          notes,
-          spotPriceAtPurchase,
-          premiumPerOz,
-          totalPremium,
-          isCollectable
-        };
+          const item = sanitizeImportedItem({
+            metal,
+            composition,
+            name,
+            qty,
+            type,
+            weight,
+            price,
+            date,
+            purchaseLocation,
+            storageLocation,
+            notes,
+            spotPriceAtPurchase,
+            premiumPerOz,
+            totalPremium,
+            isCollectable
+          });
 
-        // Validate the item
-        const validation = validateInventoryItem(itemToValidate);
-        if (!validation.isValid) {
-          const reason = validation.errors.join(', ');
-          skippedDetails.push(`Row ${index + 2}: ${reason}`);
+          imported.push(item);
+          importedCount++;
           updateImportProgress(processed, importedCount, totalRows);
-          continue;
         }
 
-        imported.push(itemToValidate);
-        importedCount++;
-        updateImportProgress(processed, importedCount, totalRows);
-      }
+        endImportProgress();
 
-      for (const err of results.errors) {
-        skippedDetails.push(`Row ${err.row + 1}: ${err.message}`);
-      }
+        if (imported.length === 0) return alert('No items to import.');
 
-      endImportProgress();
+        if (override) {
+          inventory = imported;
+        } else {
+          inventory = inventory.concat(imported);
+        }
 
-      if (skippedDetails.length > 0) {
-        alert('Skipped entries:\n' + skippedDetails.join('\n'));
-      }
-
-      if (imported.length === 0) return alert("No valid items to import.");
-
-      let msg = "Replace current inventory with imported file?";
-      if (skippedDetails.length > 0) msg += `\n(${skippedDetails.length} rows skipped)`;
-
-      if (confirm(msg)) {
-        inventory = imported;
         saveInventory();
         renderTable();
-        if (typeof updateStorageStats === "function") {
+        if (typeof updateStorageStats === 'function') {
           updateStorageStats();
         }
-      }
 
-        this.value = "";
+        this.value = '';
       },
       error: function(error) {
         endImportProgress();
@@ -1080,6 +1123,164 @@ const importCsv = (file) => {
   } catch (error) {
     endImportProgress();
     handleError(error, 'CSV import initialization');
+  }
+};
+
+/**
+ * Imports inventory data from a Numista CSV export
+ *
+ * Stores the raw Numista CSV in localStorage and maps fields to StackTrackr structure:
+ * - N# number → numistaId (hidden)
+ * - Title (+ Year) → name; also stores issuedYear
+ * - Type → mapped via mapNumistaType()
+ * - Weight columns → max value converted from grams to ozt
+ * - Composition → metal detected via parseNumistaMetal(), defaults to Alloy
+ * - Buying price (currency) → price in USD via convertToUsd()
+ * - Storage location / Acquisition place → left blank if missing
+ * - Acquisition date → parsed YYYY-MM-DD or today if blank
+ * - Notes appended with import source reference
+ *
+ * @param {File} file - CSV file from Numista
+ * @param {boolean} [override=false] - Replace existing inventory instead of merging
+ */
+const importNumistaCsv = (file, override = false) => {
+  try {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        const csvText = e.target.result;
+        localStorage.setItem(NUMISTA_RAW_KEY, csvText);
+        const storedCsv = localStorage.getItem(NUMISTA_RAW_KEY) || "";
+        const results = Papa.parse(storedCsv, {
+          header: true,
+          skipEmptyLines: true,
+          transformHeader: (h) => h.trim(), // Handle Numista headers with trailing spaces
+        });
+        const rawTable = results.data;
+        const imported = [];
+        const totalRows = rawTable.length;
+        startImportProgress(totalRows);
+        let processed = 0;
+        let importedCount = 0;
+
+        const getValue = (row, keys) => {
+          for (const key of keys) {
+            const foundKey = Object.keys(row).find(k => k.toLowerCase() === key.toLowerCase());
+            if (foundKey) return row[foundKey];
+          }
+          return "";
+        };
+
+        for (const row of rawTable) {
+          processed++;
+
+          const numistaId = (getValue(row, ['N# number', 'Numista #', 'Numista number', 'Numista id']) || '').toString().trim();
+          const title = (getValue(row, ['Title', 'Name']) || '').trim();
+          const year = (getValue(row, ['Year', 'Date']) || '').trim();
+          const name = year.length >= 4 ? `${title} ${year}`.trim() : title;
+          const issuedYear = year.length >= 4 ? year : '';
+          const compositionRaw = getValue(row, ['Composition', 'Metal']) || '';
+          const composition = getCompositionFirstWords(compositionRaw);
+
+          addCompositionOption(composition);
+
+          let metal = parseNumistaMetal(composition);
+          const qty = parseInt(getValue(row, ['Quantity', 'Qty', 'Quantity owned']) || 1, 10);
+
+          let type = normalizeType(mapNumistaType(getValue(row, ['Type']) || ''));
+          if (metal === 'Paper' || composition.toLowerCase().startsWith('paper')) {
+            type = 'Note';
+            metal = 'Alloy';
+          }
+
+          const weightCols = Object.keys(row).filter(k => { const key = k.toLowerCase(); return key.includes('weight') || key.includes('mass'); });
+          let weightGrams = 0;
+          for (const col of weightCols) {
+            const val = parseFloat(String(row[col]).replace(/[^0-9.]/g, ''));
+            if (!isNaN(val)) weightGrams = Math.max(weightGrams, val);
+          }
+          const weight = parseFloat(gramsToOzt(weightGrams).toFixed(2));
+
+          const priceKey = Object.keys(row).find(k => /^(buying price|purchase price|price paid)/i.test(k));
+          let purchasePrice = 0;
+          if (priceKey) {
+            const currencyMatch = priceKey.match(/\(([^)]+)\)/);
+            const currency = currencyMatch ? currencyMatch[1] : 'USD';
+            const amount = parseFloat(String(row[priceKey]).replace(/[^0-9.\-]/g, ''));
+            purchasePrice = convertToUsd(amount, currency);
+          }
+
+          const purchaseLocRaw = getValue(row, ['Acquisition place', 'Acquired from', 'Purchase place']);
+          const purchaseLocation = purchaseLocRaw && purchaseLocRaw.trim() ? purchaseLocRaw.trim() : '';
+          const storageLocRaw = getValue(row, ['Storage location', 'Stored at', 'Storage place']);
+          const storageLocation = storageLocRaw && storageLocRaw.trim() ? storageLocRaw.trim() : '';
+
+          const dateStrRaw = getValue(row, ['Acquisition date', 'Date acquired', 'Date']);
+          const dateStr = dateStrRaw && dateStrRaw.trim() ? dateStrRaw.trim() : todayStr();
+          const date = parseDate(dateStr);
+
+          const baseNote = (getValue(row, ['Note', 'Notes']) || '').trim();
+          const notes = `${baseNote ? baseNote + ' ' : ''}(Imported from Numista.com N#${numistaId})`;
+
+          const isCollectable = !(type === 'Bar' || type === 'Round');
+          const spotPriceAtPurchase = 0;
+          const premiumPerOz = 0;
+          const totalPremium = 0;
+
+          const item = sanitizeImportedItem({
+            metal,
+            composition,
+            name,
+            qty,
+            type,
+            weight,
+            price: purchasePrice,
+            purchasePrice,
+            date,
+            purchaseLocation,
+            storageLocation,
+            notes,
+            spotPriceAtPurchase,
+            premiumPerOz,
+            totalPremium,
+            isCollectable,
+            numistaId,
+            issuedYear
+          });
+
+          imported.push(item);
+          importedCount++;
+          updateImportProgress(processed, importedCount, totalRows);
+        }
+
+        endImportProgress();
+
+        if (imported.length === 0) return alert('No items to import.');
+
+        if (override) {
+          inventory = imported;
+        } else {
+          inventory = inventory.concat(imported);
+        }
+
+        saveInventory();
+        renderTable();
+        if (typeof updateStorageStats === 'function') {
+          updateStorageStats();
+        }
+      } catch (error) {
+        endImportProgress();
+        handleError(error, 'Numista CSV import');
+      }
+    };
+    reader.onerror = (error) => {
+      endImportProgress();
+      handleError(error, 'Numista CSV import');
+    };
+    reader.readAsText(file);
+  } catch (error) {
+    endImportProgress();
+    handleError(error, 'Numista CSV import initialization');
   }
 };
 
@@ -1113,7 +1314,7 @@ const exportCsv = () => {
       i.isCollectable ? 'N/A' : formatDollar(i.premiumPerOz),
       i.isCollectable ? 'N/A' : formatDollar(i.totalPremium),
       i.purchaseLocation,
-      i.storageLocation || 'Unknown',
+      i.storageLocation || '',
       i.notes || '',
       i.date,
       i.isCollectable ? 'Yes' : 'No'
@@ -1172,7 +1373,7 @@ const importJson = (file) => {
           weight: parseFloat(item.weight),
           price,
           date: parseDate(item.date || todayStr()),
-          purchaseLocation: item.purchaseLocation || "Unknown",
+          purchaseLocation: item.purchaseLocation || "",
           storageLocation: item.storageLocation || "Unknown",
           notes: item.notes || "",
           spotPriceAtPurchase: item.spotPriceAtPurchase || spotPrices[item.metal.toLowerCase()],
@@ -1305,14 +1506,14 @@ const importExcel = (file) => {
         const metal = row['Metal'] || 'Silver';
         const name = row['Name'] || row['name'];
         const qty = parseInt(row['Qty'] || row['qty'] || 1, 10);
-        const type = row['Type'] || row['type'] || 'Other';
+        const type = normalizeType(row['Type'] || row['type']);
         const weight = parseFloat(row['Weight(oz)'] || row['weight']);
         const priceStr = row['Purchase Price'] || row['price'];
         let price = parseFloat(
           typeof priceStr === "string" ? priceStr.replace(/[^0-9.-]+/g, "") : priceStr
         );
         if (price < 0) price = 0;
-        const purchaseLocation = row['Purchase Location'] || "Unknown";
+        const purchaseLocation = row['Purchase Location'] || "";
         const storageLocation = row['Storage Location'] || "Unknown";
         const notes = row['Notes'] || "";
         const date = parseDate(row['Date']); // Using the new date parser
@@ -1434,7 +1635,7 @@ const exportExcel = () => {
       i.isCollectable ? null : i.premiumPerOz,
       i.isCollectable ? null : i.totalPremium,
       i.purchaseLocation,
-      i.storageLocation || 'Unknown',
+      i.storageLocation || '',
       i.notes || '',
       i.date,
       i.isCollectable ? 'Yes' : 'No'
@@ -1482,7 +1683,7 @@ const exportPdf = () => {
     item.isCollectable ? 'N/A' : formatDollar(item.premiumPerOz),
     item.isCollectable ? 'N/A' : formatDollar(item.totalPremium),
     item.purchaseLocation,
-    item.storageLocation || 'Unknown',
+    item.storageLocation || '',
     item.notes || '',
     item.date,
     item.isCollectable ? 'Yes' : 'No'

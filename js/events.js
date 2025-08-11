@@ -146,6 +146,99 @@ const setupColumnResizing = () => {
   );
 };
 
+// RESPONSIVE TABLE HANDLING
+// =============================================================================
+
+/**
+ * Updates column visibility based on current viewport width
+ */
+const updateColumnVisibility = () => {
+  const width = window.innerWidth;
+  const hidden = new Set();
+
+  const breakpoints = [
+    { width: 1200, hide: ["purchaseLocation", "storageLocation", "collectable"] },
+    {
+      width: 992,
+      hide: [
+        "purchaseLocation",
+        "storageLocation",
+        "collectable",
+        "premium",
+        "spot",
+        "weight",
+      ],
+    },
+    {
+      width: 768,
+      hide: [
+        "purchaseLocation",
+        "storageLocation",
+        "collectable",
+        "premium",
+        "spot",
+        "weight",
+        "qty",
+        "composition",
+      ],
+    },
+    {
+      width: 576,
+      hide: [
+        "purchaseLocation",
+        "storageLocation",
+        "collectable",
+        "premium",
+        "spot",
+        "weight",
+        "qty",
+        "composition",
+        "type",
+      ],
+    },
+  ];
+
+  breakpoints.forEach((bp) => {
+    if (width < bp.width) bp.hide.forEach((c) => hidden.add(c));
+  });
+
+  const allColumns = [
+    "date",
+    "type",
+    "composition",
+    "name",
+    "qty",
+    "weight",
+    "purchasePrice",
+    "spot",
+    "premium",
+    "purchaseLocation",
+    "storageLocation",
+    "collectable",
+    "notes",
+    "delete",
+  ];
+
+  allColumns.forEach((col) => {
+    document.querySelectorAll(`[data-column="${col}"]`).forEach((el) => {
+      el.classList.toggle("hidden", hidden.has(col));
+    });
+  });
+};
+
+/**
+ * Sets up responsive column visibility handling
+ */
+const setupResponsiveColumns = () => {
+  updateColumnVisibility();
+  safeAttachListener(
+    window,
+    "resize",
+    updateColumnVisibility,
+    "Window resize for column visibility",
+  );
+};
+
 // MAIN EVENT LISTENERS SETUP
 // =============================================================================
 
@@ -156,6 +249,9 @@ const setupEventListeners = () => {
   console.log(`Setting up event listeners (v${APP_VERSION})...`);
 
   try {
+    // Responsive column handling
+    setupResponsiveColumns();
+
     // CRITICAL HEADER BUTTONS
     debugLog("Setting up header buttons...");
 
@@ -207,63 +303,6 @@ const setupEventListeners = () => {
       );
     }
 
-    // Appearance Button
-    if (elements.appearanceBtn) {
-      safeAttachListener(
-        elements.appearanceBtn,
-        "click",
-        (e) => {
-          e.preventDefault();
-          if (typeof showAppearanceModal === "function") {
-            showAppearanceModal();
-          }
-        },
-        "Appearance Button",
-      );
-    }
-
-    // Theme buttons
-    const themeDisplay = document.getElementById("themeDisplay");
-    const updateThemeDisplay = (label) => {
-      if (themeDisplay) themeDisplay.textContent = label;
-    };
-
-    const darkBtn = document.getElementById("darkModeBtn");
-    if (darkBtn) {
-      safeAttachListener(
-        darkBtn,
-        "click",
-        () => {
-          if (typeof setTheme === "function") setTheme("dark");
-          updateThemeDisplay("Dark Mode");
-        },
-        "Dark mode button",
-      );
-    }
-    const lightBtn = document.getElementById("lightModeBtn");
-    if (lightBtn) {
-      safeAttachListener(
-        lightBtn,
-        "click",
-        () => {
-          if (typeof setTheme === "function") setTheme("light");
-          updateThemeDisplay("Light Mode");
-        },
-        "Light mode button",
-      );
-    }
-    const systemBtn = document.getElementById("systemModeBtn");
-    if (systemBtn) {
-      safeAttachListener(
-        systemBtn,
-        "click",
-        () => {
-          if (typeof setTheme === "function") setTheme("system");
-          updateThemeDisplay("System");
-        },
-        "System mode button",
-      );
-    }
 
     // Details modal triggers
     if (elements.totalTitles && elements.totalTitles.length) {
@@ -338,16 +377,18 @@ const setupEventListeners = () => {
         function (e) {
           e.preventDefault();
 
-          const metal = elements.itemMetal.value;
+          const composition = getCompositionFirstWords(elements.itemMetal.value);
+          const metal = parseNumistaMetal(composition);
           const name = elements.itemName.value.trim();
           const qty = parseInt(elements.itemQty.value, 10);
           const type = elements.itemType.value;
-          const weight = parseFloat(elements.itemWeight.value);
+          let weight = parseFloat(elements.itemWeight.value);
+          weight = isNaN(weight) ? 0 : parseFloat(weight.toFixed(2));
           const price = parseFloat(elements.itemPrice.value);
           const purchaseLocation =
-            elements.purchaseLocation.value.trim() || "Unknown";
+            elements.purchaseLocation.value.trim() || "";
           const storageLocation =
-            elements.storageLocation.value.trim() || "Unknown";
+            elements.storageLocation.value.trim() || "";
           const notes = elements.itemNotes.value.trim() || "";
           const date = elements.itemDate.value || todayStr();
           const spotPriceInput = elements.itemSpotPrice.value.trim();
@@ -382,8 +423,10 @@ const setupEventListeners = () => {
             totalPremium = premiumPerOz * qty * weight;
           }
 
+          const serial = getNextSerial();
           inventory.push({
             metal,
+            composition,
             name,
             qty,
             type,
@@ -397,8 +440,13 @@ const setupEventListeners = () => {
             premiumPerOz,
             totalPremium,
             isCollectable,
+            serial,
+            numistaId: "",
           });
 
+          addCompositionOption(composition);
+
+          catalogMap[serial] = "";
           saveInventory();
           renderTable();
           this.reset();
@@ -422,16 +470,18 @@ const setupEventListeners = () => {
 
           if (editingIndex === null) return;
 
-          const metal = elements.editMetal.value;
+          const composition = getCompositionFirstWords(elements.editMetal.value);
+          const metal = parseNumistaMetal(composition);
           const name = elements.editName.value.trim();
           const qty = parseInt(elements.editQty.value, 10);
           const type = elements.editType.value;
-          const weight = parseFloat(elements.editWeight.value);
+          let weight = parseFloat(elements.editWeight.value);
+          weight = isNaN(weight) ? 0 : parseFloat(weight.toFixed(2));
           const price = parseFloat(elements.editPrice.value);
           const purchaseLocation =
-            elements.editPurchaseLocation.value.trim() || "Unknown";
+            elements.editPurchaseLocation.value.trim() || "";
           const storageLocation =
-            elements.editStorageLocation.value.trim() || "Unknown";
+            elements.editStorageLocation.value.trim() || "";
           const notes = elements.editNotes.value.trim() || "";
           const date = elements.editDate.value;
 
@@ -476,10 +526,13 @@ const setupEventListeners = () => {
           }
 
           const oldItem = { ...inventory[editingIndex] };
+          const serial = oldItem.serial;
 
-          // Update the item
+          // Update the item preserving serial
           inventory[editingIndex] = {
+            ...oldItem,
             metal,
+            composition,
             name,
             qty,
             type,
@@ -493,8 +546,12 @@ const setupEventListeners = () => {
             premiumPerOz,
             totalPremium,
             isCollectable,
+            numistaId: elements.editCatalog.value.trim(),
           };
 
+          addCompositionOption(composition);
+
+          catalogMap[serial] = inventory[editingIndex].numistaId;
           saveInventory();
           renderTable();
           logItemChanges(oldItem, inventory[editingIndex]);
@@ -502,8 +559,26 @@ const setupEventListeners = () => {
           // Close modal
           elements.editModal.style.display = "none";
           editingIndex = null;
+          editingChangeLogIndex = null;
         },
         "Edit form",
+      );
+    }
+
+    if (elements.undoChangeBtn) {
+      safeAttachListener(
+        elements.undoChangeBtn,
+        "click",
+        () => {
+          if (editingChangeLogIndex !== null) {
+            toggleChange(editingChangeLogIndex);
+            elements.editModal.style.display = "none";
+            editingIndex = null;
+            editingChangeLogIndex = null;
+            renderChangeLog();
+          }
+        },
+        "Undo change button",
       );
     }
 
@@ -515,6 +590,7 @@ const setupEventListeners = () => {
         function () {
           elements.editModal.style.display = "none";
           editingIndex = null;
+          editingChangeLogIndex = null;
         },
         "Cancel edit button",
       );
@@ -527,6 +603,7 @@ const setupEventListeners = () => {
         () => {
           elements.editModal.style.display = "none";
           editingIndex = null;
+          editingChangeLogIndex = null;
         },
         "Edit modal close button",
       );
@@ -636,8 +713,8 @@ const setupEventListeners = () => {
           "click",
           (e) => {
             e.preventDefault();
-            if (typeof downloadStorageReport === "function") {
-              downloadStorageReport();
+            if (typeof openStorageReportPopup === "function") {
+              openStorageReportPopup();
             }
           },
           "Storage report link",
@@ -824,13 +901,43 @@ const setupEventListeners = () => {
     // IMPORT/EXPORT EVENT LISTENERS
     debugLog("Setting up import/export listeners...");
 
+    let csvImportOverride = false;
+    if (elements.importCsvOverride && elements.importCsvFile) {
+      safeAttachListener(
+        elements.importCsvOverride,
+        "click",
+        () => {
+          csvImportOverride = true;
+          elements.importCsvFile.click();
+        },
+        "CSV override button",
+      );
+    }
+    if (elements.importCsvMerge && elements.importCsvFile) {
+      safeAttachListener(
+        elements.importCsvMerge,
+        "click",
+        () => {
+          csvImportOverride = false;
+          elements.importCsvFile.click();
+        },
+        "CSV merge button",
+      );
+    }
     if (elements.importCsvFile) {
       safeAttachListener(
         elements.importCsvFile,
         "change",
         function (e) {
           if (e.target.files.length > 0) {
-            importCsv(e.target.files[0]);
+
+            const file = e.target.files[0];
+            if (!checkFileSize(file)) {
+              alert("File exceeds 2MB limit. Enable cloud backup for larger uploads.");
+            } else {
+              importCsv(file, csvImportOverride);
+            }
+
           }
           this.value = "";
         },
@@ -863,6 +970,52 @@ const setupEventListeners = () => {
           this.value = "";
         },
         "Excel import",
+      );
+    }
+
+    let numistaOverride = false;
+    const importNumistaBtn = document.getElementById("importNumistaBtn");
+    const mergeNumistaBtn = document.getElementById("mergeNumistaBtn");
+    if (importNumistaBtn && elements.numistaImportFile) {
+      safeAttachListener(
+        importNumistaBtn,
+        "click",
+        () => {
+          numistaOverride = true;
+          elements.numistaImportFile.click();
+        },
+        "Import Numista button",
+      );
+    }
+    if (mergeNumistaBtn && elements.numistaImportFile) {
+      safeAttachListener(
+        mergeNumistaBtn,
+        "click",
+        () => {
+          numistaOverride = false;
+          elements.numistaImportFile.click();
+        },
+        "Merge Numista button",
+      );
+    }
+    if (elements.numistaImportFile) {
+      safeAttachListener(
+        elements.numistaImportFile,
+        "change",
+        function (e) {
+          if (e.target.files.length > 0) {
+
+            const file = e.target.files[0];
+            if (!checkFileSize(file)) {
+              alert("File exceeds 2MB limit. Enable cloud backup for larger uploads.");
+            } else {
+              importNumistaCsv(file, numistaOverride);
+            }
+n
+          }
+          this.value = "";
+        },
+        "Numista CSV import",
       );
     }
 
@@ -911,6 +1064,52 @@ const setupEventListeners = () => {
       );
     }
 
+    // Custom mapping buttons
+    if (elements.addMappingBtn) {
+      safeAttachListener(
+        elements.addMappingBtn,
+        "click",
+        () => {
+          const pattern = prompt("Enter regex pattern to match:");
+          const field = prompt("Enter field name to map to:");
+          if (pattern && field) {
+            CustomMapping.addMapping(pattern, field);
+            alert(`Mapping added: ${pattern} → ${field}`);
+          }
+        },
+        "Add custom mapping",
+      );
+    }
+    if (elements.applyMappingsBtn) {
+      safeAttachListener(
+        elements.applyMappingsBtn,
+        "click",
+        () => {
+          const name = prompt("Enter field name to test:");
+          if (name) {
+            const mapped = CustomMapping.mapField(name);
+            alert(
+              mapped
+                ? `${name} → ${mapped}`
+                : `No mapping for '${name}'`,
+            );
+          }
+        },
+        "Apply custom mappings",
+      );
+    }
+    if (elements.clearMappingsBtn) {
+      safeAttachListener(
+        elements.clearMappingsBtn,
+        "click",
+        () => {
+          CustomMapping.clear();
+          alert("Custom mappings cleared.");
+        },
+        "Clear custom mappings",
+      );
+    }
+
     const cloudSyncCloseBtn = document.getElementById("cloudSyncCloseBtn");
     if (cloudSyncCloseBtn && elements.cloudSyncModal) {
       safeAttachListener(
@@ -918,6 +1117,39 @@ const setupEventListeners = () => {
         "click",
         () => (elements.cloudSyncModal.style.display = "none"),
         "Cloud Sync close",
+      );
+    }
+
+    // Remove Inventory Data Button
+    if (elements.removeInventoryDataBtn) {
+      safeAttachListener(
+        elements.removeInventoryDataBtn,
+        "click",
+        function () {
+          if (confirm("Remove all inventory items? This cannot be undone.")) {
+            localStorage.removeItem(LS_KEY);
+            loadInventory();
+            renderTable();
+            alert("Inventory data cleared.");
+          }
+        },
+        "Remove inventory data button",
+      );
+    }
+
+    // Clear Numista Cache Button
+    if (elements.clearNumistaCacheBtn) {
+      safeAttachListener(
+        elements.clearNumistaCacheBtn,
+        "click",
+        function () {
+          if (confirm("Clear Numista cache?")) {
+            localStorage.removeItem('numista-cache');
+            alert("Numista cache cleared.");
+            elements.clearNumistaCacheBtn.style.display = 'none';
+          }
+        },
+        "Clear Numista cache button",
       );
     }
 
@@ -983,34 +1215,6 @@ const setupEventListeners = () => {
       );
     }
 
-    // Appearance modal close handlers
-    const appearanceModal = document.getElementById("appearanceModal");
-    const appearanceCloseBtn = document.getElementById("appearanceCloseBtn");
-    if (appearanceModal) {
-      safeAttachListener(
-        appearanceModal,
-        "click",
-        (e) => {
-          if (
-            e.target === appearanceModal &&
-            typeof hideAppearanceModal === "function"
-          ) {
-            hideAppearanceModal();
-          }
-        },
-        "Appearance modal background",
-      );
-    }
-    if (appearanceCloseBtn) {
-      safeAttachListener(
-        appearanceCloseBtn,
-        "click",
-        () => {
-          if (typeof hideAppearanceModal === "function") hideAppearanceModal();
-        },
-        "Appearance close button",
-      );
-    }
 
     // API MODAL EVENT LISTENERS
     debugLog("Setting up API modal listeners...");
@@ -1109,10 +1313,45 @@ const setupPagination = () => {
 };
 
 /**
+ * Populates type and metal filter dropdowns based on current inventory
+ */
+const populateFilterOptions = () => {
+  if (elements.metalFilter) {
+    const selected = elements.metalFilter.value;
+    const metals = [
+      ...new Set(
+        inventory.map((i) =>
+          getCompositionFirstWords(i.composition || i.metal || ""),
+        ),
+      ),
+    ]
+      .filter(Boolean)
+      .sort();
+    elements.metalFilter.innerHTML =
+      '<option value="">All Metals</option>' +
+      metals.map((m) => `<option value="${m}">${m}</option>`).join("");
+    elements.metalFilter.value = selected;
+  }
+
+  if (elements.typeFilter) {
+    const selected = elements.typeFilter.value;
+    const types = [...new Set(inventory.map((i) => i.type))]
+      .filter(Boolean)
+      .sort();
+    elements.typeFilter.innerHTML =
+      '<option value="">All Types</option>' +
+      types.map((t) => `<option value="${t}">${t}</option>`).join("");
+    elements.typeFilter.value = selected;
+  }
+};
+
+/**
  * Sets up search event listeners
  */
 const setupSearch = () => {
   debugLog("Setting up search listeners...");
+
+  populateFilterOptions();
 
   try {
     if (elements.searchInput) {
@@ -1120,11 +1359,51 @@ const setupSearch = () => {
         elements.searchInput,
         "input",
         function () {
-          searchQuery = this.value;
+          searchQuery = this.value.trim();
           currentPage = 1; // Reset to first page when search changes
           renderTable();
         },
         "Search input",
+      );
+    }
+
+    if (elements.typeFilter) {
+      safeAttachListener(
+        elements.typeFilter,
+        "change",
+        function () {
+          const value = this.value;
+          if (value) {
+            columnFilters.type = value;
+          } else {
+            delete columnFilters.type;
+          }
+          searchQuery = "";
+          if (elements.searchInput) elements.searchInput.value = "";
+          currentPage = 1;
+          renderTable();
+        },
+        "Type filter select",
+      );
+    }
+
+    if (elements.metalFilter) {
+      safeAttachListener(
+        elements.metalFilter,
+        "change",
+        function () {
+          const value = this.value;
+          if (value) {
+            columnFilters.composition = value;
+          } else {
+            delete columnFilters.composition;
+          }
+          searchQuery = "";
+          if (elements.searchInput) elements.searchInput.value = "";
+          currentPage = 1;
+          renderTable();
+        },
+        "Metal filter select",
       );
     }
 
@@ -1133,13 +1412,23 @@ const setupSearch = () => {
         elements.clearSearchBtn,
         "click",
         function () {
-          if (elements.searchInput) {
-            elements.searchInput.value = "";
+          if (typeof clearAllFilters === "function") {
+            clearAllFilters();
+          } else {
+            if (elements.searchInput) {
+              elements.searchInput.value = "";
+            }
+            searchQuery = "";
+            columnFilters = {};
+            currentPage = 1;
+            renderTable();
           }
-          searchQuery = "";
-          columnFilters = {};
-          currentPage = 1;
-          renderTable();
+          if (elements.typeFilter) {
+            elements.typeFilter.value = "";
+          }
+          if (elements.metalFilter) {
+            elements.metalFilter.value = "";
+          }
         },
         "Clear search button",
       );
@@ -1160,6 +1449,79 @@ const setupSearch = () => {
       );
     }
 
+    // Filters button
+    const filtersBtn = document.getElementById("filtersBtn");
+    if (filtersBtn) {
+      safeAttachListener(
+        filtersBtn,
+        "click",
+        () => {
+          if (typeof showFiltersModal === "function") {
+            showFiltersModal();
+          }
+        },
+        "Filters button",
+      );
+    }
+
+    // Filters modal event listeners
+    const filtersModal = document.getElementById("filtersModal");
+    const filtersCloseBtn = document.getElementById("filtersCloseBtn");
+    const applyFiltersBtn = document.getElementById("applyFiltersBtn");
+    const clearFiltersBtn = document.getElementById("clearFiltersBtn");
+
+    if (filtersModal) {
+      safeAttachListener(
+        filtersModal,
+        "click",
+        (e) => {
+          if (e.target === filtersModal && typeof hideFiltersModal === "function") {
+            hideFiltersModal();
+          }
+        },
+        "Filters modal background",
+      );
+    }
+
+    if (filtersCloseBtn) {
+      safeAttachListener(
+        filtersCloseBtn,
+        "click",
+        () => {
+          if (typeof hideFiltersModal === "function") {
+            hideFiltersModal();
+          }
+        },
+        "Filters close button",
+      );
+    }
+
+    if (applyFiltersBtn) {
+      safeAttachListener(
+        applyFiltersBtn,
+        "click",
+        () => {
+          if (typeof applyFilters === "function") {
+            applyFilters();
+          }
+        },
+        "Apply filters button",
+      );
+    }
+
+    if (clearFiltersBtn) {
+      safeAttachListener(
+        clearFiltersBtn,
+        "click",
+        () => {
+          if (typeof clearAllFilters === "function") {
+            clearAllFilters();
+          }
+        },
+        "Clear filters button",
+      );
+    }
+
     debugLog("✓ Search listeners setup complete");
   } catch (error) {
     console.error("❌ Error setting up search listeners:", error);
@@ -1169,6 +1531,30 @@ const setupSearch = () => {
 /**
  * Sets up theme toggle event listeners
  */
+const updateThemeButton = () => {
+  const btn = elements.appearanceBtn;
+  if (!btn) return;
+  const savedTheme = localStorage.getItem(THEME_KEY);
+  const mode = savedTheme ? savedTheme : "system";
+  btn.classList.remove("dark", "light", "system");
+  btn.classList.add(mode);
+  if (mode === "dark") {
+    btn.textContent = "🌙";
+    btn.setAttribute("aria-label", "Dark mode");
+    btn.setAttribute("title", "Dark mode");
+  } else if (mode === "light") {
+    btn.textContent = "☀️";
+    btn.setAttribute("aria-label", "Light mode");
+    btn.setAttribute("title", "Light mode");
+  } else {
+    btn.textContent = "💻";
+    btn.setAttribute("aria-label", "System theme");
+    btn.setAttribute("title", "System theme");
+  }
+};
+
+window.updateThemeButton = updateThemeButton;
+
 const setupThemeToggle = () => {
   debugLog("Setting up theme toggle...");
 
@@ -1177,14 +1563,45 @@ const setupThemeToggle = () => {
     if (typeof initTheme === "function") {
       initTheme();
     } else {
-      // Fallback initialization
       const savedTheme = localStorage.getItem(THEME_KEY) || "light";
       setTheme(savedTheme);
     }
 
+    updateThemeButton();
+
     // Set up system theme change listener
     if (typeof setupSystemThemeListener === "function") {
       setupSystemThemeListener();
+    }
+
+    if (window.matchMedia) {
+      window
+        .matchMedia("(prefers-color-scheme: dark)")
+        .addEventListener("change", () => {
+          if (!localStorage.getItem(THEME_KEY)) {
+            updateThemeButton();
+          }
+        });
+    }
+
+    if (elements.appearanceBtn) {
+      safeAttachListener(
+        elements.appearanceBtn,
+        "click",
+        (e) => {
+          e.preventDefault();
+          const savedTheme = localStorage.getItem(THEME_KEY);
+          if (savedTheme === "dark") {
+            setTheme("light");
+          } else if (savedTheme === "light") {
+            setTheme("system");
+          } else {
+            setTheme("dark");
+          }
+          updateThemeButton();
+        },
+        "Theme toggle button",
+      );
     }
 
     debugLog("✓ Theme toggle setup complete");
@@ -1326,20 +1743,6 @@ const setupApiEvents = () => {
         "API clear key button",
       );
     });
-
-    const cacheDuration = document.getElementById("apiCacheDuration");
-    if (cacheDuration) {
-      safeAttachListener(
-        cacheDuration,
-        "change",
-        () => {
-          if (typeof setCacheDuration === "function") {
-            setCacheDuration(parseInt(cacheDuration.value, 10));
-          }
-        },
-        "API cache duration select",
-      );
-    }
 
     document.querySelectorAll(".provider-default-btn").forEach((btn) => {
       const provider = btn.getAttribute("data-provider");
@@ -1507,7 +1910,6 @@ const setupApiEvents = () => {
         if (e.key === "Escape") {
           const filesModal = document.getElementById("filesModal");
           const apiModal = document.getElementById("apiModal");
-          const appearanceModal = document.getElementById("appearanceModal");
           const infoModal = document.getElementById("apiInfoModal");
           const historyModal = document.getElementById("apiHistoryModal");
           const providersModal = document.getElementById("apiProvidersModal");
@@ -1516,6 +1918,7 @@ const setupApiEvents = () => {
           const notesModal = document.getElementById("notesModal");
           const detailsModal = document.getElementById("detailsModal");
           const changeLogModal = document.getElementById("changeLogModal");
+          const storageReportModal = document.getElementById("storageReportModal");
 
           if (
             filesModal &&
@@ -1529,12 +1932,6 @@ const setupApiEvents = () => {
             typeof hideApiModal === "function"
           ) {
             hideApiModal();
-          } else if (
-            appearanceModal &&
-            appearanceModal.style.display === "flex" &&
-            typeof hideAppearanceModal === "function"
-          ) {
-            hideAppearanceModal();
           } else if (
             infoModal &&
             infoModal.style.display === "flex" &&
@@ -1563,6 +1960,9 @@ const setupApiEvents = () => {
           notesIndex = null;
         } else if (changeLogModal && changeLogModal.style.display === "flex") {
           changeLogModal.style.display = "none";
+          document.body.style.overflow = "";
+        } else if (storageReportModal && storageReportModal.style.display === "flex") {
+          storageReportModal.style.display = "none";
           document.body.style.overflow = "";
         } else if (
           detailsModal &&

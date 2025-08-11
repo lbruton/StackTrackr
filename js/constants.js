@@ -8,6 +8,9 @@
  * @property {Object} endpoints - API endpoints for different metals
  * @property {function} parseResponse - Function to parse API response into standard format
  * @property {string} documentation - URL to provider's API documentation
+ * @property {boolean} batchSupported - Whether provider supports batch requests
+ * @property {string} batchEndpoint - Batch request endpoint pattern
+ * @property {function} parseBatchResponse - Function to parse batch API response
  */
 const API_PROVIDERS = {
   METALS_DEV: {
@@ -21,6 +24,17 @@ const API_PROVIDERS = {
     },
     parseResponse: (data) => data.rate?.price || null,
     documentation: "https://www.metals.dev/docs",
+    batchSupported: true,
+    batchEndpoint: "/metals/spot?api_key={API_KEY}&metals={METALS}&days={DAYS}&currency=USD",
+    parseBatchResponse: (data) => {
+      const results = {};
+      if (data.data) {
+        Object.entries(data.data).forEach(([metal, info]) => {
+          results[metal] = info.price || info.rate?.price || null;
+        });
+      }
+      return results;
+    },
   },
   METALS_API: {
     name: "Metals-API.com",
@@ -45,6 +59,21 @@ const API_PROVIDERS = {
       return rate ? 1 / rate : null; // Convert from metal per USD to USD per ounce
     },
     documentation: "https://metals-api.com/documentation",
+    batchSupported: true,
+    batchEndpoint: "/latest?access_key={API_KEY}&base=USD&symbols={SYMBOLS}",
+    parseBatchResponse: (data) => {
+      const results = {};
+      const symbolMap = { XAG: 'silver', XAU: 'gold', XPT: 'platinum', XPD: 'palladium' };
+      if (data.rates) {
+        Object.entries(data.rates).forEach(([symbol, rate]) => {
+          const metal = symbolMap[symbol];
+          if (metal && rate) {
+            results[metal] = 1 / rate; // Convert from metal per USD to USD per ounce
+          }
+        });
+      }
+      return results;
+    },
   },
   METAL_PRICE_API: {
     name: "MetalPriceAPI.com",
@@ -69,6 +98,21 @@ const API_PROVIDERS = {
       return rate ? 1 / rate : null; // Convert from metal per USD to USD per ounce
     },
     documentation: "https://metalpriceapi.com/documentation",
+    batchSupported: true,
+    batchEndpoint: "/latest?api_key={API_KEY}&base=USD&currencies={CURRENCIES}",
+    parseBatchResponse: (data) => {
+      const results = {};
+      const symbolMap = { XAG: 'silver', XAU: 'gold', XPT: 'platinum', XPD: 'palladium' };
+      if (data.rates) {
+        Object.entries(data.rates).forEach(([symbol, rate]) => {
+          const metal = symbolMap[symbol];
+          if (metal && rate) {
+            results[metal] = 1 / rate; // Convert from metal per USD to USD per ounce
+          }
+        });
+      }
+      return results;
+    },
   },
   CUSTOM: {
     name: "Custom Provider",
@@ -87,13 +131,53 @@ const API_PROVIDERS = {
     },
     documentation: "",
     custom: true,
+    batchSupported: false, // Custom providers will use individual requests by default
+    batchEndpoint: "",
+    parseBatchResponse: (data) => {
+      // Custom batch parsing would depend on the provider's API format
+      return {};
+    },
   },
 };
 
 // =============================================================================
 
-/** @constant {string} APP_VERSION - Application version */
-const APP_VERSION = "3.3.00";
+/**
+ * @constant {string} APP_VERSION - Application version
+ * Follows BRANCH.RELEASE.PATCH.state format
+ * State codes: a=alpha, b=beta, rc=release candidate
+ * Example: 3.03.02a → branch 3, release 03, patch 02, alpha
+ */
+
+const APP_VERSION = "3.04.02";
+
+
+/**
+ * Returns formatted version string
+ *
+ * @param {string} [prefix="v"] - Prefix to add before version
+ * @returns {string} Formatted version string (e.g., "v3.03.07b")
+ */
+const getVersionString = (prefix = "v") => `${prefix}${APP_VERSION}`;
+
+/** Maximum upload size in bytes for local imports (2MB) */
+const MAX_LOCAL_FILE_SIZE = 2 * 1024 * 1024;
+
+/** Flag indicating whether cloud backup is enabled */
+let cloudBackupEnabled = false;
+
+/**
+ * Inserts formatted version string into a target element
+ *
+ * @param {string} elementId - ID of the element to update
+ * @param {string} [prefix="v"] - Prefix to add before version
+ */
+const injectVersionString = (elementId, prefix = "v") => {
+  const el = document.getElementById(elementId);
+  if (el) {
+    el.textContent = getVersionString(prefix);
+  }
+};
 
 /** @constant {string} BRANDING_TITLE - Optional custom application title */
 const BRANDING_TITLE = "StackTrackr";
@@ -143,6 +227,15 @@ const BRANDING_DOMAIN_OVERRIDE =
 /** @constant {string} LS_KEY - LocalStorage key for inventory data */
 const LS_KEY = "metalInventory";
 
+/** @constant {string} SERIAL_KEY - LocalStorage key for inventory serial counter */
+const SERIAL_KEY = "inventorySerial";
+
+/** @constant {string} CATALOG_MAP_KEY - LocalStorage key for S#/N# associations */
+const CATALOG_MAP_KEY = "catalogMap";
+
+/** @constant {string} NUMISTA_RAW_KEY - LocalStorage key for raw Numista CSV data */
+const NUMISTA_RAW_KEY = "numistaRawData";
+
 /** @constant {string} SPOT_HISTORY_KEY - LocalStorage key for spot price history */
 const SPOT_HISTORY_KEY = "metalSpotHistory";
 
@@ -157,6 +250,19 @@ const API_KEY_STORAGE_KEY = "metalApiConfig";
 
 /** @constant {string} API_CACHE_KEY - LocalStorage key for cached API data */
 const API_CACHE_KEY = "metalApiCache";
+
+/** @constant {string} APP_VERSION_KEY - LocalStorage key for current app version */
+const APP_VERSION_KEY = "currentAppVersion";
+
+/** @constant {string} VERSION_ACK_KEY - LocalStorage key for acknowledged app version */
+const VERSION_ACK_KEY = "ackVersion";
+
+// Persist current application version for comparison on future loads
+try {
+  localStorage.setItem(APP_VERSION_KEY, APP_VERSION);
+} catch (e) {
+  console.warn("Unable to store app version", e);
+}
 
 /**
  * @constant {number} DEFAULT_API_CACHE_DURATION - Default cache duration in milliseconds (24 hours)

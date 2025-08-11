@@ -1,11 +1,36 @@
-# StackTrackr v3.3.00
+
+# StackTrackr v3.04.02
+
 
 StackTrackr is a comprehensive client-side web application for tracking precious metal investments. It's designed to help users manage their silver, gold, platinum, and palladium holdings with detailed financial metrics and enhanced tracking capabilities.
 
 The public hosted version of the app is available at [stackrtrackr.com](https://stackrtrackr.com).
 
 ## Recent Updates
-- **v3.3.00 - Stable Release & Documentation Cleanup**: Finalized documentation and archived planning notes
+- **v3.04.02 - Numista header trimming**: Imports accept Numista CSVs with trailing spaces in column headers
+- **v3.04.01 - Filter reset & Numista sanitization**: Clear search resets filters, sanitized Numista imports, batch API pulls
+- **v3.04.00 - Inventory filter click & API cleanup**: Click any table value to filter and removed global API cache duration dropdown
+- **v3.03.08n - Inventory type filter**: Added type dropdown and dynamic metal options
+- **v3.03.08m - Inventory filter dropdown**: Added metal filter to inventory title bar for quick filtering
+- **v3.03.08l - Search fix & composition parsing**: Search box filters table as you type and Numista compositions truncate to two words
+- **v3.03.08k - Type dropdown and UI fixes**: Standardized type options, blank purchase locations, edit icon, and separate totals cards
+- **v3.03.08j - Composition display fix**: Composition column shows first word from imported data
+- **v3.03.08i - Numista import polish**: Uniform changelog bullets, default collectable flag, weight rounding, N# notes, and beta warning
+- **v3.03.08h - Table controls & import options**: Compact table controls, uniform pagination buttons, import Override/Merge menus, and Backup/Restore placeholder
+- **v3.03.08g - Change log & catalog improvements**: Condensed change log, undo from edit modal, and catalog mapping
+- **v3.03.08f - CSV import field sanitization**: Invalid fields are blanked and users can merge or override during import
+- **v3.03.08e - Numista CSV storage**: Stores raw Numista CSV and classifies metals by composition
+- **v3.03.08d - Version Modal Centering**: Version change dialog now properly centers in the viewport
+- **v3.03.08c - Version Modal Enhancements**: Version change dialog now includes privacy notice, resources, and roadmap
+- **v3.03.08b - Files Modal Simplification**: Removed storage breakdown progress bar for cleaner file management
+- **v3.03.08a - Version Update Changelog Modal**: Displays release notes when the app version changes
+- **v3.03.07b - Documentation Normalization**: Renamed documentation files to lowercase and updated all internal references
+- **v3.03.07a - Theme Toggle Improvements**: Removed appearance modal and added three-state Dark/Light/System toggle with localStorage persistence
+- **v3.03.06a - Documentation Sweep & Archive Update**: Version references synchronized and archived footer links back to current version
+- **v3.03.05a - Custom Mapping Rule Engine**: Added regex-based mapping module with Add/Apply/Clear controls
+- **v3.03.02a - Archive Workflow Update**: Archived previous build and added rollback footer link requirement; clarified BRANCH.RELEASE.PATCH.state naming and pre-release codes
+- **v3.03.01a - Comprehensive Storage Report System**: Redesigned storage reports with top-five pie chart visualization and scrollable legend
+- **v3.00.00 - Stable Release & Documentation Cleanup**: Finalized documentation and archived planning notes
 - **v3.2.07rc - Spot Timestamp Source Display**: Spot price cards now show the API provider or Manual entry along with the exact timestamp of the last update
 - **v3.2.06rc - UI Refinements & Auto Sync**: Adds modal-based item entry with stacked filters, pagination polish, collectable status button, notes button showing green "Yes" when notes exist, and automatic spot price refresh when cached data expires
 - **v3.2.05rc - Splash Opt-Out & Branding**: Disclaimer modal now hides after acknowledgment, header branding adapts to the hosting domain with an updated subtitle, and API providers store keys separately
@@ -22,8 +47,57 @@ The public hosted version of the app is available at [stackrtrackr.com](https://
 - **v3.1.8 - Backup System**: Full ZIP backup functionality with restoration guides
 - **v3.1.6 - Theme Toggle**: Fixed theme management with system preference detection
 
-## 🆕 What's New in v3.3.00
-- Official stable release with documentation finalized and planning notes archived
+## 🆕 What's New in v3.04.01
+- Clear search button resets all filters, including those set in the modal
+- Numista imports sanitize text fields to ensure filter links remain functional
+- API providers craft a single batch request using only selected metals
+
+## 🆕 What's New in v3.04.00
+- Clicking any non-action table cell adds a filter; repeat clicks toggle filters and support up to three stacked conditions
+- Removed global API cache duration dropdown in favor of per-provider cache settings
+
+## 🆕 What's New in v3.03.08g
+- Change log rows open the edit modal with an undo option
+- Items gain catalog field tied to unique S# values
+
+## 🆕 What's New in v3.03.08f
+- CSV import accepts rows with bad data and lets you merge or override existing inventory
+
+## 🆕 What's New in v3.03.08e
+- Imported Numista CSV preserved in localStorage with improved metal mapping
+
+## 🆕 What's New in v3.03.08d
+- Version change modal is centered on screen for improved visibility
+
+## 🆕 What's New in v3.03.08c
+- Version change dialog now includes privacy notice and upcoming roadmap
+- About modal no longer shows Key Features section
+- Version notice only appears for users with existing data
+
+## 🆕 What's New in v3.03.08b
+- Files modal no longer displays storage breakdown progress bar
+
+## 🆕 What's New in v3.03.08a
+- Version changelog modal alerts users of new releases
+
+## 🆕 What's New in v3.03.07b
+- Documentation files renamed to lowercase (except MULTI_AGENT_WORKFLOW.md) with reference cleanup
+
+## 🆕 What's New in v3.03.07a
+- Theme toggle cycles Dark/Light/System without modal and saves preference
+
+## 🆕 What's New in v3.03.06a
+- Documentation sweep across project and archived build footer update
+
+## 🆕 What's New in v3.03.05a
+- Prototype regex-based custom mapping rule engine with Add/Apply/Clear buttons
+
+## 🆕 What's New in v3.03.02a
+- Archived previous build and added rollback footer link requirement
+- Clarified version naming scheme and state codes
+
+## 🆕 What's New in v3.03.01a
+- Comprehensive storage report system featuring pie chart visualization and scrollable legend
 - Includes spot timestamp source display from v3.2.07rc
 
 ## 🆕 What's New in v3.2.07rc
@@ -78,7 +152,7 @@ The public hosted version of the app is available at [stackrtrackr.com](https://
   - Enhanced click-to-sort functionality for all table columns
   - Added dedicated Notes button for easy access to item notes
 - **Documentation Consolidation**: Improved AI assistant guidance and development workflow
-  - Removed redundant `docs/LLM.md` file (archived to `docs/archive/LLM.md`)
+  - Removed redundant `docs/llm.md` file (archived to `docs/archive/llm.md`)
   - Replaced with comprehensive `docs/MULTI_AGENT_WORKFLOW.md`
   - Enhanced multi-agent coordination protocols and quality standards
   - Streamlined documentation structure eliminates redundancy
@@ -145,7 +219,8 @@ The public hosted version of the app is available at [stackrtrackr.com](https://
 7. **View Analytics**: Click a totals title on summary cards for breakdowns.
 
 ## Version Management
-This application uses a dynamic version management system. The version is automatically updated throughout the application from `js/constants.js`. The HTML files now use this dynamic system instead of hardcoded version numbers. See [docs/VERSIONING.md](docs/VERSIONING.md) for details on how to update versions.
+This application uses a dynamic version management system. The version is automatically updated throughout the application from `js/constants.js`. The HTML files now use this dynamic system instead of hardcoded version numbers. See [docs/versioning.md](docs/versioning.md) for details on how to update versions.
+The three most recent builds are retained under `archive/` as `v_previous`, `v_previous2`, and `v_previous3`, with the latest archive linked from the footer for easy rollback.
 
 ## Data Structure
 Each inventory item includes:
@@ -162,14 +237,18 @@ Each inventory item includes:
 ├── css/
 │   └── styles.css                      # Complete theming and responsive styling
 ├── debug/                              # Development artifacts
+├── archive/                            # Previous build snapshots for fallback
 ├── docs/
-│   ├── CHANGELOG.md                    # Detailed history of application changes
-│   ├── IMPLEMENTATION_SUMMARY.md        # Summary of major development work
+│   ├── archive/                        # Archived notes and historical docs
+│   ├── future/                         # Planning notes for upcoming enhancements
+│   ├── changelog.md                    # Detailed history of application changes
+│   ├── implementation_summary.md       # Summary of major development work
 │   ├── MULTI_AGENT_WORKFLOW.md         # AI assistant development workflow and coordination
-│   ├── ROADMAP.md                      # Planned features and subtasks
-│   ├── STATUS.md                       # Project status and features overview
-│   ├── STRUCTURE.md                    # Documentation of folder and file organization
-│   └── VERSIONING.md                   # Version management notes
+│   ├── roadmap.md                      # Planned features and subtasks
+│   ├── status.md                       # Project status and features overview
+│   ├── structure.md                    # Documentation of folder and file organization
+│   ├── functionstable.md               # Function reference table
+│   └── versioning.md                   # Version management notes
 ├── js/
 │   ├── api.js
 │   ├── charts.js
@@ -196,16 +275,19 @@ Each inventory item includes:
 - The `css` and `js` directories contain the application's styling and modular JavaScript files.
 - JavaScript is split into specialized modules to promote maintainability and separation of concerns.
 - Styles use CSS custom properties supporting dark/light themes and responsive layouts.
-- Documentation files in the `docs` folder keep changelogs, versioning info, project status, and development guides.
+- Documentation files in the `docs` folder keep changelogs, versioning info, project status, development guides, and future planning notes.
 - The root `index.html` hosts the main application interface.
 
 ## Documentation
-- **[docs/README.md](docs/README.md)** - Detailed project information.
+- **[README.md](README.md)** - Detailed project information.
 - **[docs/MULTI_AGENT_WORKFLOW.md](docs/MULTI_AGENT_WORKFLOW.md)** - AI assistant development workflow.
-- **[docs/CHANGELOG.md](docs/CHANGELOG.md)** - Version history and features.
-- **[docs/STATUS.md](docs/STATUS.md)** - Current project status.
-- **[docs/STRUCTURE.md](docs/STRUCTURE.md)** - Project organization.
-- **[docs/VERSIONING.md](docs/VERSIONING.md)** - Version management.
+- **[docs/changelog.md](docs/changelog.md)** - Version history and features.
+- **[docs/status.md](docs/status.md)** - Current project status.
+ - **[docs/structure.md](docs/structure.md)** - Project organization.
+ - **[docs/functionstable.md](docs/functionstable.md)** - Function reference table.
+ - **[docs/future/](docs/future/)** - Notes for future implementations and add-ons.
+ - **[docs/versioning.md](docs/versioning.md)** - Version management.
+ - **[archive/v_previous/](archive/v_previous/)** - Most recent previous build for rollback.
 
 ## Code Quality
 This project maintains high code quality standards with:
@@ -238,7 +320,7 @@ Currently, no major issues are known.
 ## Contributing
 This project is designed to be maintainable and extensible. When making changes:
 1. Update the version in `js/constants.js`
-2. Document changes in `docs/CHANGELOG.md`
+2. Document changes in `docs/changelog.md`
 3. Update relevant documentation files
 4. Test backwards compatibility
 5. Ensure all exports include new fields
@@ -247,8 +329,8 @@ This project is designed to be maintainable and extensible. When making changes:
 This project is open source and available for personal use.
 
 ---
-**Current Version**: 3.3.00
-**Last Updated**: August 9, 2025
+**Current Version**: 3.03.08m
+**Last Updated**: August 10, 2025
 **Status**: Feature complete release candidate
 
 

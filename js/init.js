@@ -86,21 +86,32 @@ document.addEventListener("DOMContentLoaded", () => {
     // Import/Export elements
     debugLog("Phase 3: Initializing import/export elements...");
     elements.importCsvFile = safeGetElement("importCsvFile");
+    elements.importCsvOverride = safeGetElement("importCsvOverride");
+    elements.importCsvMerge = safeGetElement("importCsvMerge");
     elements.importJsonFile = safeGetElement("importJsonFile");
     elements.importExcelFile = safeGetElement("importExcelFile");
     elements.importProgress = safeGetElement("importProgress");
     elements.importProgressText = safeGetElement("importProgressText");
+    elements.numistaImportBtn = safeGetElement("numistaImportBtn");
+    elements.numistaImportFile = safeGetElement("numistaImportFile");
+    elements.numistaOverride = safeGetElement("numistaOverride");
+    elements.numistaMerge = safeGetElement("numistaMerge");
+    elements.numistaImportOptions = safeGetElement("numistaImportOptions");
     elements.exportCsvBtn = safeGetElement("exportCsvBtn");
     elements.exportJsonBtn = safeGetElement("exportJsonBtn");
     elements.exportExcelBtn = safeGetElement("exportExcelBtn");
     elements.exportPdfBtn = safeGetElement("exportPdfBtn");
     elements.cloudSyncBtn = safeGetElement("cloudSyncBtn");
     elements.syncAllBtn = safeGetElement("syncAllBtn");
+    elements.addMappingBtn = safeGetElement("addMappingBtn");
+    elements.applyMappingsBtn = safeGetElement("applyMappingsBtn");
+    elements.clearMappingsBtn = safeGetElement("clearMappingsBtn");
+    elements.removeInventoryDataBtn = safeGetElement("removeInventoryDataBtn");
+    elements.clearNumistaCacheBtn = safeGetElement("clearNumistaCacheBtn");
     elements.boatingAccidentBtn = safeGetElement("boatingAccidentBtn");
 
     // Modal elements
     debugLog("Phase 4: Initializing modal elements...");
-    elements.appearanceModal = safeGetElement("appearanceModal");
     elements.apiModal = safeGetElement("apiModal");
     elements.filesModal = safeGetElement("filesModal");
     elements.apiInfoModal = safeGetElement("apiInfoModal");
@@ -126,6 +137,9 @@ document.addEventListener("DOMContentLoaded", () => {
     elements.editNotes = safeGetElement("editNotes");
     elements.editDate = safeGetElement("editDate");
     elements.editSpotPrice = safeGetElement("editSpotPrice");
+    elements.editCatalog = safeGetElement("editCatalog");
+    elements.undoChangeBtn = safeGetElement("undoChangeBtn");
+    elements.editSerial = safeGetElement("editSerial");
 
     elements.addModal = safeGetElement("addModal");
     elements.addCloseBtn = safeGetElement("addCloseBtn");
@@ -134,9 +148,6 @@ document.addEventListener("DOMContentLoaded", () => {
     // Show acknowledgment modal immediately and set up modal events
     if (typeof setupAckModalEvents === "function") {
       setupAckModalEvents();
-    }
-    if (typeof showAckModal === "function") {
-      showAckModal();
     }
     if (typeof setupAboutModalEvents === "function") {
       setupAboutModalEvents();
@@ -168,6 +179,8 @@ document.addEventListener("DOMContentLoaded", () => {
     // Search elements
     debugLog("Phase 6: Initializing search elements...");
     elements.searchInput = safeGetElement("searchInput");
+    elements.typeFilter = safeGetElement("typeFilter");
+    elements.metalFilter = safeGetElement("metalFilter");
     elements.clearSearchBtn = safeGetElement("clearSearchBtn");
     elements.newItemBtn = safeGetElement("newItemBtn");
     elements.searchResultsInfo = safeGetElement("searchResultsInfo");
@@ -275,6 +288,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (aboutVersion) {
       aboutVersion.textContent = `v${APP_VERSION}`;
     }
+    injectVersionString("footerVersion");
     const footerDomainEl = document.getElementById("footerDomain");
     if (footerDomainEl) {
       footerDomainEl.textContent = getFooterDomain();
@@ -293,6 +307,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Load data
     loadInventory();
+    inventory.forEach((i) => addCompositionOption(i.composition || i.metal));
+    refreshCompositionOptions();
     loadSpotHistory();
 
     // Initialize API system
@@ -321,7 +337,6 @@ document.addEventListener("DOMContentLoaded", () => {
       try {
         setupEventListeners();
         setupPagination();
-        setupSearch();
         setupThemeToggle();
         setupColumnResizing();
         debugLog("✓ All event listeners setup complete");
@@ -331,6 +346,9 @@ document.addEventListener("DOMContentLoaded", () => {
         // Try basic event setup as fallback
         setupBasicEventListeners();
       }
+
+      // Always set up search listeners
+      setupSearch();
     }, 200); // Increased delay for better compatibility
 
     // Phase 15: Completion
@@ -372,12 +390,21 @@ function setupBasicEventListeners() {
     };
   }
 
-  // Appearance button
+  // Appearance button (three-state theme toggle)
   const appearanceBtn = document.getElementById("appearanceBtn");
   if (appearanceBtn) {
-    appearanceBtn.onclick = function () {
-      if (typeof showAppearanceModal === "function") {
-        showAppearanceModal();
+    appearanceBtn.onclick = function (e) {
+      e.preventDefault();
+      const savedTheme = localStorage.getItem(THEME_KEY);
+      if (savedTheme === "dark") {
+        setTheme("light");
+      } else if (savedTheme === "light") {
+        setTheme("system");
+      } else {
+        setTheme("dark");
+      }
+      if (typeof updateThemeButton === "function") {
+        updateThemeButton();
       }
     };
   }

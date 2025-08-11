@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<!--
+  StackTrackr Alpine.js Proof-of-Concept
+  
+  This demonstrates how Alpine.js would integrate with your existing StackTrackr
+  architecture while maintaining file:// protocol compatibility and existing functionality.
+  
+  Key improvements shown:
+  1. Reactive totals calculation (no manual DOM updates)
+  2. Simplified event handling (no complex event listener setup)
+  3. Component-like structure for repeated elements
+  4. Automatic form validation and binding
+  5. Reduced JavaScript complexity
+-->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>StackTrackr Alpine.js Proof-of-Concept</title>
+  
+  <!-- Alpine.js CDN - Works perfectly with file:// protocol -->
+  <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  
+  <!-- Your existing CSS (simplified for demo) -->
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
+    .container { max-width: 1200px; margin: 0 auto; }
+    .grid { display: grid; gap: 1rem; }
+    .grid-2 { grid-template-columns: 1fr 1fr; }
+    .grid-4 { grid-template-columns: repeat(4, 1fr); }
+    .total-card { background: white; padding: 1rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    .total-card.silver { border-left: 4px solid #c0c0c0; }
+    .total-card.gold { border-left: 4px solid #ffd700; }
+    .total-card.platinum { border-left: 4px solid #e5e4e2; }
+    .total-card.palladium { border-left: 4px solid #cdc7b3; }
+    .total-title { font-weight: bold; margin-bottom: 0.5rem; }
+    .total-item { display: flex; justify-content: space-between; margin: 0.25rem 0; }
+    .btn { padding: 0.5rem 1rem; border: none; border-radius: 4px; cursor: pointer; background: #007bff; color: white; }
+    .btn:hover { background: #0056b3; }
+    .form-section { background: white; padding: 1rem; border-radius: 8px; margin: 1rem 0; }
+    input, select { padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; width: 100%; }
+    table { width: 100%; border-collapse: collapse; background: white; }
+    th, td { padding: 0.5rem; border: 1px solid #ddd; text-align: left; }
+    th { background: #f8f9fa; }
+    .search-container { margin: 1rem 0; }
+    .error { border-color: #dc3545; background-color: #f8d7da; }
+    .loading { opacity: 0.5; pointer-events: none; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>StackTrackr Alpine.js Integration Demo</h1>
+    
+    <!-- 
+      ALPINE.JS TOTALS SECTION - REACTIVE CALCULATIONS
+      
+      This replaces your current manual DOM manipulation with reactive data.
+      Note how one component handles all metals instead of separate functions.
+    -->
+    <section x-data="totalsComponent()" class="totals-section">
+      <h2>Reactive Totals (Alpine.js)</h2>
+      <div class="grid grid-4">
+        <!-- Single template component for all metals -->
+        <template x-for="metal in metals" :key="metal.key">
+          <div class="total-card" :class="metal.key">
+            <div class="total-title" x-text="`${metal.name} Totals`"></div>
+            <div class="total-item">
+              <span>Total Items:</span>
+              <span x-text="getTotalItems(metal.key)"></span>
+            </div>
+            <div class="total-item">
+              <span>Total Weight:</span>
+              <span x-text="`${getTotalWeight(metal.key).toFixed(2)} oz`"></span>
+            </div>
+            <div class="total-item">
+              <span>Purchase Price:</span>
+              <span x-text="formatCurrency(getTotalPurchasePrice(metal.key))"></span>
+            </div>
+            <div class="total-item">
+              <span>Current Value:</span>
+              <span x-text="formatCurrency(getCurrentValue(metal.key))"></span>
+            </div>
+            <div class="total-item">
+              <span>Profit/Loss:</span>
+              <span x-text="formatCurrency(getProfitLoss(metal.key))" 
+                   :class="getProfitLoss(metal.key) >= 0 ? 'text-green' : 'text-red'"></span>
+            </div>
+          </div>
+        </template>
+      </div>
+    </section>
+
+    <!-- 
+      ALPINE.JS FORM HANDLING - AUTOMATIC VALIDATION
+      
+      This replaces your manual form validation and event handling.
+      Form data is automatically bound and validated.
+    -->
+    <section x-data="inventoryForm()" class="form-section">
+      <h2>Add New Item (Alpine.js Form)</h2>
+      <form @submit.prevent="addItem()" :class="{ loading: isSubmitting }">
+        <div class="grid grid-2">
+          <div>
+            <label for="metal">Metal</label>
+            <select x-model="form.metal" :class="{ error: errors.metal }">
+              <option value="">Select Metal</option>
+              <option value="silver">Silver</option>
+              <option value="gold">Gold</option>
+              <option value="platinum">Platinum</option>
+              <option value="palladium">Palladium</option>
+            </select>
+            <div x-show="errors.metal" x-text="errors.metal" class="error-text"></div>
+          </div>
+          
+          <div>
+            <label for="name">Item Name</label>
+            <input type="text" x-model="form.name" :class="{ error: errors.name }" 
+                   placeholder="Enter item name">
+            <div x-show="errors.name" x-text="errors.name" class="error-text"></div>
+          </div>
+          
+          <div>
+            <label for="weight">Weight (oz)</label>
+            <input type="number" x-model.number="form.weight" :class="{ error: errors.weight }" 
+                   step="0.0001" min="0.0001" placeholder="0.0000">
+            <div x-show="errors.weight" x-text="errors.weight" class="error-text"></div>
+          </div>
+          
+          <div>
+            <label for="price">Purchase Price ($)</label>
+            <input type="number" x-model.number="form.price" :class="{ error: errors.price }" 
+                   step="0.01" min="0" placeholder="0.00">
+            <div x-show="errors.price" x-text="errors.price" class="error-text"></div>
+          </div>
+        </div>
+        
+        <!-- Live calculation display -->
+        <div x-show="form.weight && form.price" class="calculation-preview">
+          <strong>Price per oz: </strong>
+          <span x-text="formatCurrency(form.price / form.weight)"></span>
+          <span x-show="form.metal">
+            | <strong>Premium over spot: </strong>
+            <span x-text="formatCurrency((form.price / form.weight) - getSpotPrice(form.metal))"></span>
+          </span>
+        </div>
+        
+        <button type="submit" class="btn" :disabled="!isFormValid || isSubmitting">
+          <span x-show="!isSubmitting">Add to Inventory</span>
+          <span x-show="isSubmitting">Adding...</span>
+        </button>
+      </form>
+    </section>
+
+    <!-- 
+      ALPINE.JS INVENTORY TABLE - REACTIVE FILTERING
+      
+      This replaces your manual table rendering with reactive data.
+      Search and pagination happen automatically.
+    -->
+    <section x-data="inventoryTable()" class="table-section">
+      <h2>Inventory (Alpine.js Reactive Table)</h2>
+      
+      <!-- Search with real-time filtering -->
+      <div class="search-container">
+        <input type="text" x-model="searchTerm" 
+               placeholder="Search inventory..." 
+               @input.debounce.300ms="updateSearch()">
+        <span x-show="searchTerm" 
+              x-text="`Showing ${filteredItems.length} of ${inventory.length} items`"></span>
+      </div>
+      
+      <table>
+        <thead>
+          <tr>
+            <th @click="sort('date')">Date</th>
+            <th @click="sort('metal')">Metal</th>
+            <th @click="sort('name')">Name</th>
+            <th @click="sort('weight')">Weight</th>
+            <th @click="sort('price')">Price</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <template x-for="item in paginatedItems" :key="item.id">
+            <tr>
+              <td x-text="formatDate(item.date)"></td>
+              <td x-text="item.metal" :class="item.metal"></td>
+              <td x-text="item.name"></td>
+              <td x-text="`${item.weight.toFixed(4)} oz`"></td>
+              <td x-text="formatCurrency(item.price)"></td>
+              <td>
+                <button @click="editItem(item)" class="btn">Edit</button>
+                <button @click="deleteItem(item.id)" class="btn">Delete</button>
+              </td>
+            </tr>
+          </template>
+        </tbody>
+      </table>
+      
+      <!-- Automatic pagination -->
+      <div x-show="totalPages > 1" class="pagination">
+        <button @click="currentPage = Math.max(1, currentPage - 1)" 
+                :disabled="currentPage === 1">Previous</button>
+        <span x-text="`Page ${currentPage} of ${totalPages}`"></span>
+        <button @click="currentPage = Math.min(totalPages, currentPage + 1)" 
+                :disabled="currentPage === totalPages">Next</button>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    // Alpine.js Component Definitions
+    // This replaces your current 15+ JavaScript files with clean, reactive components
+
+    // Totals Component - Replaces manual DOM manipulation in inventory.js
+    function totalsComponent() {
+      return {
+        metals: [
+          { key: 'silver', name: 'Silver', spotPrice: 25.00 },
+          { key: 'gold', name: 'Gold', spotPrice: 2500.00 },
+          { key: 'platinum', name: 'Platinum', spotPrice: 1000.00 },
+          { key: 'palladium', name: 'Palladium', spotPrice: 1000.00 }
+        ],
+        
+        // Get inventory from global state (or localStorage)
+        get inventory() {
+          return window.inventoryData || [];
+        },
+        
+        // Computed properties automatically update when inventory changes
+        getTotalItems(metal) {
+          return this.inventory.filter(item => item.metal === metal).length;
+        },
+        
+        getTotalWeight(metal) {
+          return this.inventory
+            .filter(item => item.metal === metal)
+            .reduce((sum, item) => sum + item.weight, 0);
+        },
+        
+        getTotalPurchasePrice(metal) {
+          return this.inventory
+            .filter(item => item.metal === metal)
+            .reduce((sum, item) => sum + item.price, 0);
+        },
+        
+        getCurrentValue(metal) {
+          const metalConfig = this.metals.find(m => m.key === metal);
+          return this.inventory
+            .filter(item => item.metal === metal)
+            .reduce((sum, item) => sum + (item.weight * metalConfig.spotPrice), 0);
+        },
+        
+        getProfitLoss(metal) {
+          return this.getCurrentValue(metal) - this.getTotalPurchasePrice(metal);
+        },
+        
+        formatCurrency(amount) {
+          return new Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency: 'USD'
+          }).format(amount);
+        }
+      };
+    }
+
+    // Form Component - Replaces complex form handling in events.js
+    function inventoryForm() {
+      return {
+        form: {
+          metal: '',
+          name: '',
+          weight: '',
+          price: '',
+          date: new Date().toISOString().split('T')[0]
+        },
+        errors: {},
+        isSubmitting: false,
+        
+        // Computed property for form validation
+        get isFormValid() {
+          return this.form.metal && this.form.name && 
+                 this.form.weight > 0 && this.form.price > 0;
+        },
+        
+        // Real-time validation
+        validateField(field) {
+          this.errors[field] = '';
+          
+          switch(field) {
+            case 'metal':
+              if (!this.form.metal) this.errors.metal = 'Metal is required';
+              break;
+            case 'name':
+              if (!this.form.name) this.errors.name = 'Name is required';
+              break;
+            case 'weight':
+              if (!this.form.weight || this.form.weight <= 0) {
+                this.errors.weight = 'Weight must be greater than 0';
+              }
+              break;
+            case 'price':
+              if (!this.form.price || this.form.price <= 0) {
+                this.errors.price = 'Price must be greater than 0';
+              }
+              break;
+          }
+        },
+        
+        async addItem() {
+          this.isSubmitting = true;
+          
+          // Validate all fields
+          Object.keys(this.form).forEach(field => this.validateField(field));
+          
+          if (this.isFormValid && Object.keys(this.errors).length === 0) {
+            // Add to inventory (this would integrate with your existing save logic)
+            const newItem = {
+              id: Date.now(),
+              ...this.form,
+              timestamp: new Date().toISOString()
+            };
+            
+            // Add to global inventory
+            if (!window.inventoryData) window.inventoryData = [];
+            window.inventoryData.push(newItem);
+            
+            // Save to localStorage (your existing logic)
+            localStorage.setItem('metalInventory', JSON.stringify(window.inventoryData));
+            
+            // Reset form
+            this.form = {
+              metal: '',
+              name: '',
+              weight: '',
+              price: '',
+              date: new Date().toISOString().split('T')[0]
+            };
+            
+            // Trigger refresh of other components
+            this.$dispatch('inventory-updated');
+          }
+          
+          this.isSubmitting = false;
+        },
+        
+        getSpotPrice(metal) {
+          const spotPrices = { silver: 25, gold: 2500, platinum: 1000, palladium: 1000 };
+          return spotPrices[metal] || 0;
+        },
+        
+        formatCurrency(amount) {
+          return new Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency: 'USD'
+          }).format(amount);
+        }
+      };
+    }
+
+    // Table Component - Replaces complex table rendering and pagination
+    function inventoryTable() {
+      return {
+        searchTerm: '',
+        sortBy: 'date',
+        sortDirection: 'desc',
+        currentPage: 1,
+        itemsPerPage: 25,
+        
+        // Initialize data from localStorage
+        init() {
+          this.inventory = JSON.parse(localStorage.getItem('metalInventory') || '[]');
+          
+          // Listen for inventory updates
+          this.$watch('inventory', () => {
+            this.currentPage = 1; // Reset pagination when data changes
+          });
+          
+          // Listen for inventory update events
+          window.addEventListener('inventory-updated', () => {
+            this.inventory = JSON.parse(localStorage.getItem('metalInventory') || '[]');
+          });
+        },
+        
+        inventory: [],
+        
+        // Computed properties for filtering and pagination
+        get filteredItems() {
+          if (!this.searchTerm) return this.inventory;
+          
+          const term = this.searchTerm.toLowerCase();
+          return this.inventory.filter(item => 
+            item.name.toLowerCase().includes(term) ||
+            item.metal.toLowerCase().includes(term) ||
+            item.type?.toLowerCase().includes(term)
+          );
+        },
+        
+        get sortedItems() {
+          return [...this.filteredItems].sort((a, b) => {
+            const aVal = a[this.sortBy];
+            const bVal = b[this.sortBy];
+            
+            if (this.sortDirection === 'asc') {
+              return aVal > bVal ? 1 : -1;
+            } else {
+              return aVal < bVal ? 1 : -1;
+            }
+          });
+        },
+        
+        get paginatedItems() {
+          const start = (this.currentPage - 1) * this.itemsPerPage;
+          const end = start + this.itemsPerPage;
+          return this.sortedItems.slice(start, end);
+        },
+        
+        get totalPages() {
+          return Math.ceil(this.filteredItems.length / this.itemsPerPage);
+        },
+        
+        // Methods
+        sort(field) {
+          if (this.sortBy === field) {
+            this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
+          } else {
+            this.sortBy = field;
+            this.sortDirection = 'asc';
+          }
+        },
+        
+        updateSearch() {
+          this.currentPage = 1; // Reset to first page when searching
+        },
+        
+        editItem(item) {
+          // This would open your edit modal
+          console.log('Edit item:', item);
+        },
+        
+        deleteItem(itemId) {
+          if (confirm('Are you sure you want to delete this item?')) {
+            this.inventory = this.inventory.filter(item => item.id !== itemId);
+            localStorage.setItem('metalInventory', JSON.stringify(this.inventory));
+          }
+        },
+        
+        formatDate(dateString) {
+          return new Date(dateString).toLocaleDateString();
+        },
+        
+        formatCurrency(amount) {
+          return new Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency: 'USD'
+          }).format(amount);
+        }
+      };
+    }
+
+    // Load sample data for demonstration
+    window.inventoryData = [
+      {
+        id: 1,
+        metal: 'silver',
+        name: 'American Eagle 1oz',
+        weight: 1.0,
+        price: 35.50,
+        date: '2025-01-15',
+        type: 'coin'
+      },
+      {
+        id: 2,
+        metal: 'gold',
+        name: 'Canadian Maple Leaf 1oz',
+        weight: 1.0,
+        price: 2650.00,
+        date: '2025-01-10',
+        type: 'coin'
+      },
+      {
+        id: 3,
+        metal: 'silver',
+        name: '10oz Generic Bar',
+        weight: 10.0,
+        price: 280.00,
+        date: '2025-01-05',
+        type: 'bar'
+      }
+    ];
+    
+    // Save to localStorage for demo
+    localStorage.setItem('metalInventory', JSON.stringify(window.inventoryData));
+  </script>
+</body>
+</html>

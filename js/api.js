@@ -233,6 +233,88 @@ const setProviderStatus = (provider, status) => {
 };
 
 /**
+ * Updates batch calculation display for a provider
+ * @param {string} provider - Provider key
+ */
+const updateBatchCalculation = (provider) => {
+  const config = loadApiConfig();
+  const providerConfig = API_PROVIDERS[provider];
+  const selected = config.metals?.[provider] || {};
+  const selectedMetals = Object.keys(selected).filter(metal => selected[metal] !== false);
+  const historyDays = parseInt(document.getElementById(`historyDays_${provider}`)?.value || 0);
+  
+  const batchInfoEl = document.getElementById(`batchInfo_${provider}`);
+  if (!batchInfoEl) return;
+  
+  if (providerConfig?.batchSupported && selectedMetals.length > 1) {
+    const usage = calculateApiUsage(selectedMetals, historyDays, true);
+    batchInfoEl.innerHTML = `📊 Batch Request: ${selectedMetals.length} metals + ${historyDays} days = 1 API call<br><span class="batch-savings">(saves ${usage.saved} calls vs individual requests)</span>`;
+  } else if (selectedMetals.length === 1) {
+    batchInfoEl.innerHTML = `📊 Single Request: 1 metal = 1 API call<br><span class="batch-savings">(no batch optimization needed)</span>`;
+  } else if (selectedMetals.length === 0) {
+    batchInfoEl.innerHTML = `⚠️ No metals selected<br><span class="batch-savings">(select metals to track)</span>`;
+  } else {
+    const usage = calculateApiUsage(selectedMetals, historyDays, false);
+    batchInfoEl.innerHTML = `📊 Individual Requests: ${selectedMetals.length} metals = ${usage.calls} API calls<br><span class="batch-savings">(batch requests not supported)</span>`;
+  }
+};
+
+/**
+ * Updates provider settings from form inputs
+ * @param {string} provider - Provider key
+ */
+const updateProviderSettings = (provider) => {
+  const config = loadApiConfig();
+  
+  // Update cache timeout
+  const cacheSelect = document.getElementById(`cacheTimeout_${provider}`);
+  if (cacheSelect) {
+    if (!config.cacheTimeouts) config.cacheTimeouts = {};
+    config.cacheTimeouts[provider] = parseInt(cacheSelect.value);
+  }
+  
+  // Update history days
+  const historyInput = document.getElementById(`historyDays_${provider}`);
+  if (historyInput) {
+    if (!config.historyDays) config.historyDays = {};
+    config.historyDays[provider] = parseInt(historyInput.value) || 0;
+  }
+  
+  saveApiConfig(config);
+  updateBatchCalculation(provider);
+};
+
+/**
+ * Sets up event listeners for provider settings
+ * @param {string} provider - Provider key
+ */
+const setupProviderSettingsListeners = (provider) => {
+  // Cache timeout change
+  const cacheSelect = document.getElementById(`cacheTimeout_${provider}`);
+  if (cacheSelect) {
+    cacheSelect.addEventListener('change', () => updateProviderSettings(provider));
+  }
+  
+  // History days change
+  const historyInput = document.getElementById(`historyDays_${provider}`);
+  if (historyInput) {
+    historyInput.addEventListener('input', () => updateProviderSettings(provider));
+  }
+  
+  // Metal selection changes
+  document.querySelectorAll(`.provider-metal[data-provider="${provider}"]`).forEach(checkbox => {
+    checkbox.addEventListener('change', (e) => {
+      const config = loadApiConfig();
+      const metalKey = e.target.dataset.metal;
+      if (!config.metals[provider]) config.metals[provider] = {};
+      config.metals[provider][metalKey] = e.target.checked;
+      saveApiConfig(config);
+      updateBatchCalculation(provider);
+    });
+  });
+};
+
+/**
  * Updates provider history tables with latest API values
  */
 const updateProviderHistoryTables = () => {
@@ -484,6 +566,41 @@ const showApiProvidersModal = () => {
   if (modal) {
     refreshProviderStatuses();
     updateProviderHistoryTables();
+    
+    // Initialize provider settings
+    Object.keys(API_PROVIDERS).forEach(provider => {
+      setupProviderSettingsListeners(provider);
+      
+      // Load current settings
+      const config = loadApiConfig();
+      
+      // Set cache timeout
+      const cacheSelect = document.getElementById(`cacheTimeout_${provider}`);
+      if (cacheSelect) {
+        const timeout = config.cacheTimeouts?.[provider] || 24;
+        cacheSelect.value = timeout;
+      }
+      
+      // Set history days
+      const historyInput = document.getElementById(`historyDays_${provider}`);
+      if (historyInput) {
+        const days = config.historyDays?.[provider] || 30;
+        historyInput.value = days;
+      }
+      
+      // Set metal selections
+      const metals = config.metals?.[provider] || {};
+      ['silver', 'gold', 'platinum', 'palladium'].forEach(metal => {
+        const checkbox = document.querySelector(`.provider-metal[data-provider="${provider}"][data-metal="${metal}"]`);
+        if (checkbox) {
+          checkbox.checked = metals[metal] !== false;
+        }
+      });
+      
+      // Update batch calculation
+      updateBatchCalculation(provider);
+    });
+    
     modal.style.display = "flex";
   }
 };
@@ -555,19 +672,6 @@ const clearApiKey = (provider) => {
   setProviderStatus(provider, "disconnected");
   updateDefaultProviderButtons();
   updateProviderHistoryTables();
-};
-
-/**
- * Updates cache duration setting
- * @param {number} hours
- */
-const setCacheDuration = (hours) => {
-  const config = loadApiConfig();
-  config.cacheHours = hours;
-  saveApiConfig(config);
-  if (hours === 0) {
-    clearApiCache();
-  }
 };
 
 /**
@@ -699,7 +803,119 @@ const autoSyncSpotPrices = async () => {
 };
 
 /**
- * Makes API request for spot prices
+ * Calculates API usage for batch vs individual requests
+ * @param {Array} selectedMetals - Array of metal keys
+ * @param {number} historyDays - Number of history days
+ * @param {boolean} batchSupported - Whether provider supports batch requests
+ * @returns {Object} Usage calculation result
+ */
+const calculateApiUsage = (selectedMetals, historyDays = 0, batchSupported = false) => {
+  if (batchSupported && selectedMetals.length > 1) {
+    return {
+      calls: 1,
+      type: 'batch',
+      metals: selectedMetals.length,
+      days: historyDays,
+      saved: selectedMetals.length - 1 + (historyDays > 0 ? selectedMetals.length * historyDays : 0)
+    };
+  } else {
+    const currentPriceCalls = selectedMetals.length;
+    const historicalCalls = historyDays > 0 ? selectedMetals.length * historyDays : 0;
+    return {
+      calls: currentPriceCalls + historicalCalls,
+      type: 'individual',
+      metals: selectedMetals.length,
+      days: historyDays,
+      saved: 0
+    };
+  }
+};
+
+/**
+ * Makes batch API request for multiple metals
+ * @param {string} provider - Provider key from API_PROVIDERS
+ * @param {string} apiKey - API key
+ * @param {Array} selectedMetals - Array of metal keys to fetch
+ * @param {number} historyDays - Number of historical days to fetch
+ * @returns {Promise<Object>} Promise resolving to spot prices data
+ */
+const fetchBatchSpotPrices = async (provider, apiKey, selectedMetals, historyDays = 0) => {
+  const providerConfig = API_PROVIDERS[provider];
+  if (!providerConfig || !providerConfig.batchSupported) {
+    throw new Error("Provider does not support batch requests");
+  }
+
+  const config = loadApiConfig();
+  const usage = config.usage?.[provider] || { quota: DEFAULT_API_QUOTA, used: 0 };
+
+  try {
+    let url = providerConfig.baseUrl + providerConfig.batchEndpoint;
+    
+    // Replace placeholders based on provider
+    if (provider === 'METALS_DEV') {
+      const metals = selectedMetals.join(',');
+      url = url.replace('{API_KEY}', apiKey)
+              .replace('{METALS}', metals)
+              .replace('{DAYS}', historyDays);
+    } else if (provider === 'METALS_API') {
+      const symbolMap = { silver: 'XAG', gold: 'XAU', platinum: 'XPT', palladium: 'XPD' };
+      const symbols = selectedMetals.map(metal => symbolMap[metal]).join(',');
+      url = url.replace('{API_KEY}', apiKey)
+              .replace('{SYMBOLS}', symbols);
+    } else if (provider === 'METAL_PRICE_API') {
+      const symbolMap = { silver: 'XAG', gold: 'XAU', platinum: 'XPT', palladium: 'XPD' };
+      const currencies = selectedMetals.map(metal => symbolMap[metal]).join(',');
+      url = url.replace('{API_KEY}', apiKey)
+              .replace('{CURRENCIES}', currencies);
+    }
+
+    const headers = {
+      "Content-Type": "application/json",
+    };
+
+    if (provider === "METALS_DEV" && apiKey) {
+      headers["Authorization"] = `Bearer ${apiKey}`;
+    }
+
+    const response = await fetch(url, {
+      method: "GET",
+      headers: headers,
+      mode: "cors",
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    usage.used++; // Only increment by 1 for batch request
+    
+    const results = providerConfig.parseBatchResponse(data);
+    
+    // Filter results to only include selected metals
+    const filteredResults = {};
+    selectedMetals.forEach(metal => {
+      if (results[metal] && results[metal] > 0) {
+        filteredResults[metal] = results[metal];
+      }
+    });
+
+    if (Object.keys(filteredResults).length === 0) {
+      throw new Error("No valid prices retrieved from batch request");
+    }
+
+    // Update usage
+    config.usage[provider] = usage;
+    saveApiConfig(config);
+    
+    return filteredResults;
+  } catch (error) {
+    throw new Error(`Batch request failed: ${error.message}`);
+  }
+};
+
+/**
+ * Makes API request for spot prices (individual or batch)
  * @param {string} provider - Provider key from API_PROVIDERS
  * @param {string} apiKey - API key
  * @returns {Promise<Object>} Promise resolving to spot prices data
@@ -716,6 +932,34 @@ const fetchSpotPricesFromApi = async (provider, apiKey) => {
     quota: DEFAULT_API_QUOTA,
     used: 0,
   };
+
+  // Get selected metals
+  const selectedMetals = Object.keys(selected).filter(
+    (metal) => selected[metal] !== false,
+  );
+
+  if (selectedMetals.length === 0) {
+    throw new Error("No metals selected for sync");
+  }
+
+  // Try batch request first if supported
+  if (providerConfig.batchSupported) {
+    try {
+      const historyDays = config.historyDays?.[provider] || 0;
+      return await fetchBatchSpotPrices(
+        provider,
+        apiKey,
+        selectedMetals,
+        historyDays,
+      );
+    } catch (batchError) {
+      console.warn(
+        `Batch request failed for ${provider}, falling back to individual requests:`,
+        batchError.message,
+      );
+      // Fall through to individual requests
+    }
+  }
 
   const results = {};
   const errors = [];
@@ -1169,10 +1413,6 @@ const showApiModal = () => {
   if (formatSelect)
     formatSelect.value = currentConfig.customConfig?.format || "symbol";
 
-  const durationSelect = document.getElementById("apiCacheDuration");
-  if (durationSelect) {
-    durationSelect.value = String(currentConfig.cacheHours ?? 24);
-  }
   updateDefaultProviderButtons();
   updateProviderHistoryTables();
   modal.style.display = "flex";
@@ -1191,6 +1431,10 @@ const hideApiModal = () => {
 const showFilesModal = () => {
   const modal = document.getElementById("filesModal");
   if (modal) {
+    const cacheBtn = document.getElementById("clearNumistaCacheBtn");
+    if (cacheBtn) {
+      cacheBtn.style.display = localStorage.getItem('numista-cache') ? 'block' : 'none';
+    }
     modal.style.display = "flex";
   }
 };
@@ -1202,29 +1446,6 @@ const hideFilesModal = () => {
   }
 };
 
-const showAppearanceModal = () => {
-  const modal = document.getElementById("appearanceModal");
-  if (!modal) return;
-  const savedTheme = localStorage.getItem(THEME_KEY);
-  const themeValue = savedTheme ? savedTheme : "system";
-  const themeDisplay = document.getElementById("themeDisplay");
-  if (themeDisplay) {
-    themeDisplay.textContent =
-      themeValue === "dark"
-        ? "Dark Mode"
-        : themeValue === "light"
-          ? "Light Mode"
-          : "System";
-  }
-  modal.style.display = "flex";
-};
-
-const hideAppearanceModal = () => {
-  const modal = document.getElementById("appearanceModal");
-  if (modal) {
-    modal.style.display = "none";
-  }
-};
 
 /**
  * Shows provider information modal
@@ -1272,20 +1493,17 @@ const hideProviderInfo = () => {
 };
 
 // Make modal controls available globally
-window.showApiModal = showApiModal;
-window.hideApiModal = hideApiModal;
-window.showFilesModal = showFilesModal;
-window.hideFilesModal = hideFilesModal;
-window.showAppearanceModal = showAppearanceModal;
-window.hideAppearanceModal = hideAppearanceModal;
-window.showProviderInfo = showProviderInfo;
-window.hideProviderInfo = hideProviderInfo;
+  window.showApiModal = showApiModal;
+  window.hideApiModal = hideApiModal;
+  window.showFilesModal = showFilesModal;
+  window.hideFilesModal = hideFilesModal;
+  window.showProviderInfo = showProviderInfo;
+  window.hideProviderInfo = hideProviderInfo;
 
 window.handleProviderSync = handleProviderSync;
 window.clearApiKey = clearApiKey;
 window.clearApiCache = clearApiCache;
 window.setDefaultProvider = setDefaultProvider;
-window.setCacheDuration = setCacheDuration;
 window.showApiHistoryModal = showApiHistoryModal;
 window.hideApiHistoryModal = hideApiHistoryModal;
 window.clearApiHistory = clearApiHistory;

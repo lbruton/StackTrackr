@@ -77,14 +77,7 @@
         <button class="btn" id="apiBtn" title="API" aria-label="API">
           API 🔌
         </button>
-        <button
-          class="btn"
-          id="appearanceBtn"
-          title="Appearance"
-          aria-label="Appearance"
-        >
-          Appearance 🎨
-        </button>
+        <!-- Community button commented out for revision
         <a
           class="btn"
           id="communityBtn"
@@ -101,9 +94,16 @@
           />
           Community
         </a>
+        -->
         <button class="btn" id="filesBtn" title="Files" aria-label="Files">
           Files 📁
         </button>
+        <button
+          class="btn theme-btn"
+          id="appearanceBtn"
+          title="Theme"
+          aria-label="Theme"
+        ></button>
       </div>
     </div>
     <div class="container">
@@ -385,6 +385,7 @@
            ============================================================================= -->
         <section class="search-section">
           <div class="search-container">
+            <button class="btn filters" id="filtersBtn">Filters</button>
             <input
               id="searchInput"
               placeholder="Search inventory by metal, name, type, purchase location, storage location, notes, date..."
@@ -409,10 +410,33 @@
          Pagination controls limit display to selected items per page
          ============================================================================= -->
         <section class="table-section">
-          <div class="table-controls">
-            <button id="changeLogBtn" class="btn">Change Log</button>
-            <span class="table-disclaimer"
-              >All data is stored locally. Back up often.</span
+          <table id="inventoryTable">
+          <thead>
+            <tr>
+              <th class="shrink" data-column="date">Date</th>
+              <th class="shrink" data-column="type">Type</th>
+              <th class="shrink" data-column="composition">Composition</th>
+              <th class="expand" data-column="name">Name</th>
+              <th class="shrink" data-column="qty">Qty</th>
+              <th class="shrink" data-column="weight">Weight<br />(oz)</th>
+              <th class="shrink" data-column="purchasePrice">Purchase<br />Price ($)</th>
+              <th class="shrink" data-column="spot">Spot at<br />Purchase ($)</th>
+              <th class="shrink" data-column="premium">Premium<br />($)</th>
+              <th class="shrink" data-column="purchaseLocation">Purchase<br />Location</th>
+              <th class="shrink" data-column="storageLocation">Storage<br />Location</th>
+              <th class="shrink" data-column="collectable">Collectable</th>
+              <th class="shrink" data-column="notes">Notes</th>
+              <th class="shrink" data-column="delete">Delete</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </section>
+      <section class="table-controls-section">
+        <div class="table-controls">
+          <span id="changeLogBtn" class="change-log-label">Change Log</span>
+          <span class="table-disclaimer"
+            >All data is stored locally. Back up often.</span
           >
           <div class="items-per-page">
             <span class="items-label">Items:</span>
@@ -424,30 +448,10 @@
               <option value="100">100</option>
             </select>
           </div>
-          </div>
-          <table id="inventoryTable">
-          <thead>
-            <tr>
-              <th class="shrink">Date</th>
-              <th class="shrink">Type</th>
-              <th class="shrink">Metal</th>
-              <th class="expand">Name</th>
-              <th class="shrink">Qty</th>
-              <th class="shrink">Weight<br />(oz)</th>
-              <th class="shrink">Purchase<br />Price ($)</th>
-              <th class="shrink">Spot at<br />Purchase ($)</th>
-              <th class="shrink">Premium<br />($)</th>
-              <th class="shrink">Purchase<br />Location</th>
-              <th class="shrink">Storage<br />Location</th>
-              <th class="shrink">Collectable</th>
-              <th class="shrink">Notes</th>
-              <th class="shrink">Delete</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-        <!-- Pagination Controls -->
-        <section class="pagination-section">
+        </div>
+      </section>
+      <!-- Pagination Controls -->
+      <section class="pagination-section">
           <div class="pagination-container">
             <div class="pagination-controls">
               <div class="pagination-buttons">
@@ -479,11 +483,10 @@
               </div>
             </div>
           </div>
-        </section>
       </section>
-      </section>
-      <!-- =============================================================================
-         TOTALS SECTION
+    </section>
+    <!-- =============================================================================
+       TOTALS SECTION
 
          Comprehensive financial summary cards for each metal type showing:
          - Total items and weight in inventory
@@ -753,9 +756,20 @@
         </div>
         <div class="modal-body">
           <form id="inventoryForm">
+            <div class="collectable-card">
+              <div style="display:flex;align-items:center;gap:var(--spacing);">
+                <label for="itemCollectable" style="margin:0;">Collectable Item</label>
+                <label class="switch">
+                  <input id="itemCollectable" type="checkbox" />
+                  <span class="slider"></span>
+                </label>
+              </div>
+              <p class="collectable-note">Collectable items may have additional numismatic value beyond their metal content</p>
+            </div>
+            <!-- First row of add form fields -->
             <div class="grid grid-2">
               <div>
-                <label for="itemMetal">Metal</label>
+                <label for="itemMetal">Composition</label>
                 <select id="itemMetal">
                   <option value="Silver">Silver</option>
                   <option value="Gold">Gold</option>
@@ -767,9 +781,9 @@
               <div>
                 <label for="itemType">Type</label>
                 <select id="itemType">
-                  <option value="Round">Round</option>
-                  <option value="Bar">Bar</option>
                   <option value="Coin">Coin</option>
+                  <option value="Bar">Bar</option>
+                  <option value="Round">Round</option>
                   <option value="Note">Note</option>
                   <option value="Aurum">Aurum</option>
                   <option value="Other">Other</option>
@@ -784,6 +798,7 @@
                 <input id="itemWeight" min="0.0001" required step="0.0001" type="number" />
               </div>
             </div>
+            <!-- Second row of add form fields -->
             <div class="grid grid-2">
               <div>
                 <label for="itemName">Name</label>
@@ -802,6 +817,7 @@
                 <input id="itemNotes" type="text" placeholder="Additional notes or comments..." />
               </div>
             </div>
+            <!-- Third row of add form fields -->
             <div class="grid grid-2">
               <div>
                 <label for="itemPrice">Purchase Price ($)</label>
@@ -814,6 +830,7 @@
                 <input id="itemDate" required type="date" />
               </div>
             </div>
+            <!-- Spot price field -->
             <div class="grid grid-2">
               <div>
                 <label for="itemSpotPrice">Spot Price ($/oz)</label>
@@ -821,17 +838,11 @@
                   <input id="itemSpotPrice" min="0" step="0.01" type="number" />
                 </div>
               </div>
-              <div class="collectable-toggle">
-                <label for="itemCollectable">Collectable Item</label>
-                <label class="switch">
-                  <input id="itemCollectable" type="checkbox" />
-                  <span class="slider"></span>
-                </label>
-                <span class="collectable-note"
-                  >Collectable items may have additional numismatic value beyond their metal content</span
-                >
+              <div>
+                <!-- Empty div for grid alignment -->
               </div>
             </div>
+            <!-- Form action buttons -->
             <div style="margin-top: 1rem; text-align: right">
               <button class="btn" id="cancelAdd" type="button">Cancel</button>
               <button class="btn premium" type="submit">Add to Inventory</button>
@@ -863,10 +874,21 @@
         </div>
         <div class="modal-body">
         <form id="editForm">
+          <div class="collectable-card">
+            <div style="display:flex;align-items:center;gap:var(--spacing);">
+              <label for="editCollectable" style="margin:0;">Collectable Item</label>
+              <label class="switch">
+                <input id="editCollectable" type="checkbox" />
+                <span class="slider"></span>
+              </label>
+            </div>
+            <p class="collectable-note">Collectable items may have additional numismatic value beyond their metal content</p>
+          </div>
+          <input type="hidden" id="editSerial" />
           <!-- First row of edit form fields -->
           <div class="grid grid-2">
             <div>
-              <label for="editMetal">Metal</label>
+                <label for="editMetal">Composition</label>
               <select id="editMetal">
                 <option value="Silver">Silver</option>
                 <option value="Gold">Gold</option>
@@ -878,9 +900,9 @@
             <div>
               <label for="editType">Type</label>
               <select id="editType">
-                <option value="Round">Round</option>
-                <option value="Bar">Bar</option>
                 <option value="Coin">Coin</option>
+                <option value="Bar">Bar</option>
+                <option value="Round">Round</option>
                 <option value="Note">Note</option>
                 <option value="Aurum">Aurum</option>
                 <option value="Other">Other</option>
@@ -947,7 +969,7 @@
               <input id="editDate" required="" type="date" />
             </div>
           </div>
-          <!-- Spot price and collectable toggle -->
+          <!-- Spot price and catalog field -->
           <div class="grid grid-2">
             <div>
               <label for="editSpotPrice">Spot Price ($/oz)</label>
@@ -961,19 +983,14 @@
                 />
               </div>
             </div>
-            <div class="collectable-toggle">
-              <label for="editCollectable">Collectable Item</label>
-              <label class="switch">
-                <input id="editCollectable" type="checkbox" />
-                <span class="slider"></span>
-              </label>
-              <span class="collectable-note"
-                >Collectable items may have additional numismatic value beyond their metal content</span
-              >
+            <div>
+              <label for="editCatalog">Catalog (N#)</label>
+              <input id="editCatalog" type="text" placeholder="Numista catalog #" />
             </div>
           </div>
           <!-- Form action buttons -->
           <div style="margin-top: 1rem; text-align: right">
+            <button class="btn" id="undoChangeBtn" type="button" style="display:none">Undo</button>
             <button class="btn" id="cancelEdit" type="button">Cancel</button>
             <button class="btn premium" type="submit">Save Changes</button>
           </div>
@@ -1026,11 +1043,37 @@
                 <th>Field</th>
                 <th>Old Value</th>
                 <th>New Value</th>
-                <th>Action</th>
+                <th>Undo</th>
               </tr>
             </thead>
             <tbody></tbody>
           </table>
+      </div>
+    </div>
+  </div>
+
+    <!-- =============================================================================
+       STORAGE REPORT MODAL
+
+       Displays the generated storage report inside an iframe for in-app viewing.
+       ============================================================================= -->
+    <div class="modal" id="storageReportModal" style="display: none">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Storage Report</h2>
+          <button
+            aria-label="Close modal"
+            class="modal-close"
+            id="storageReportCloseBtn"
+          >
+            ×
+          </button>
+        </div>
+        <div class="modal-body">
+          <iframe
+            id="storageReportFrame"
+            style="width: 100%; height: 100%; border: none"
+          ></iframe>
         </div>
       </div>
     </div>
@@ -1085,26 +1128,12 @@
       </div>
     </div>
     <footer class="app-footer">
-      © 2025 <span id="footerDomain">stacktrackr.com</span>. Open source project licensed
-      <a
-        href="https://www.gnu.org/licenses/gpl-3.0.en.html"
-        target="_blank"
-        rel="noopener"
-        >GPL-3.0</a
-      >.
-      <br />
-  Report issues or bugs here:
-  <a
-    href="https://github.com/lbruton/StackTrackr/issues"
-    target="_blank"
-    rel="noopener"
-    >https://github.com/lbruton/StackTrackr/issues</a
-  >
-  <div class="storage-line">
-    Storage: <span id="storageUsage"></span>
-    <a href="#" id="storageReportLink">Download storage report</a>
-  </div>
-</footer>
+      <div class="storage-line">Storage: <span id="storageUsage"></span> <progress id="storageUsageBar" max="5120" value="0"></progress> <a href="#" id="storageReportLink">Storage report</a></div>
+      <div class="footer-meta">
+        <span>Thank you for using StackTrackr (<span id="footerVersion"></span>). © 2025 <span id="footerDomain">stacktrackr.com</span>.</span>
+        <span class="footer-links"><a href="./archive/v_previous/index.html">Previous build</a> | <a href="https://github.com/lbruton/StackTrackr/issues" target="_blank" rel="noopener">Report issues</a></span>
+      </div>
+    </footer>
     <!-- =============================================================================
        ABOUT & DISCLAIMER MODAL
        Comprehensive application information and disclaimer modal similar to the
@@ -1243,45 +1272,16 @@
               </p>
             </div>
           </div>
-          <!-- Key Features -->
-          <div class="about-features">
-            <div class="features-title">✨ Key Features</div>
-            <div class="features-grid">
-              <div class="feature-item">📊 Live Spot Price Tracking</div>
-              <div class="feature-item">💰 Premium & Profit Calculations</div>
-              <div class="feature-item">📈 Advanced Analytics & Charts</div>
-              <div class="feature-item">📁 Multi-Format Import/Export</div>
-              <div class="feature-item">🔍 Real-time Search & Filtering</div>
-              <div class="feature-item">🏦 Storage Location Tracking</div>
-              <div class="feature-item">🎨 Dark/Light Theme Support</div>
-              <div class="feature-item">🔒 100% Local Storage</div>
-            </div>
-          </div>
-
           <!-- What's New and Roadmap -->
           <div class="about-info-grid">
             <div class="about-section">
-              <div class="section-title">
-                🚀 What's New in <span id="aboutCurrentVersion"></span>
-              </div>
+              <div class="section-title">🚀 What's New in <span id="aboutCurrentVersion"></span></div>
               <ul id="aboutChangelogLatest" class="changelog-list"></ul>
             </div>
 
             <div class="about-section" id="aboutRoadmapSection">
               <div class="section-title">🗺️ Development Roadmap</div>
-              <div class="roadmap-content">
-                <p>
-                  This project is actively maintained with regular updates and
-                  improvements. Future enhancements may include:
-                </p>
-                <ul class="roadmap-list">
-                  <li>Multi-currency support for international users</li>
-                  <li>Enhanced backup encryption for sensitive data</li>
-                  <li>Additional API provider integrations</li>
-                  <li>Advanced reporting and analytics features</li>
-                  <li>Mobile application companion</li>
-                </ul>
-              </div>
+              <ul id="aboutRoadmapList" class="changelog-list"></ul>
             </div>
           </div>
 
@@ -1308,37 +1308,83 @@
         </div>
       </div>
     </div>
-    <!-- =============================================================================
-       ============================================================================= -->
-
-    <div class="modal" id="appearanceModal" style="display: none">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h2>Appearance</h2>
-          <button
-            aria-label="Close modal"
-            class="modal-close"
-            id="appearanceCloseBtn"
-          >
-            ×
-          </button>
+    <div class="modal" id="versionModal" style="display: none">
+      <div class="modal-content about-modal-content">
+        <div class="modal-header about-modal-header">
+          <h1 class="about-title">What's New <span id="versionModalVersion"></span></h1>
+          <button aria-label="Close modal" class="modal-close" id="versionCloseBtn">×</button>
         </div>
-        <div class="modal-body">
-          <div class="settings-section">
-            <h3>Appearance</h3>
-            <p class="settings-subtext">Set your default preference.</p>
-            <div class="theme-buttons">
-              <button class="btn theme-btn dark" id="darkModeBtn">Dark Mode</button>
-              <button class="btn theme-btn light" id="lightModeBtn">Light Mode</button>
-              <button class="btn theme-btn system" id="systemModeBtn">
-                Follow System
-              </button>
-              <div class="theme-display" id="themeDisplay"></div>
+        <div class="modal-body about-modal-body">
+          <div class="about-alert">
+            <div class="alert-header">
+              <span class="alert-icon">⚠️</span>
+              <strong>Important Privacy &amp; Data Notice</strong>
             </div>
+            <div class="alert-content">
+              <p>
+                <strong>Your Privacy is Protected:</strong> All data is stored locally in your browser using localStorage and
+                <em>never transmitted to any server</em>. Your precious metals inventory information remains completely private
+                and under your control.
+              </p>
+
+              <p>
+                <strong>Data Backup Responsibility:</strong> Since data is stored locally, it will be lost if you clear browser
+                history, reset browser data, or use private browsing mode. Remember to export your data regularly to keep a
+                copy.
+              </p>
+
+              <p>
+                <strong>Use at Your Own Risk:</strong> This tool is provided for informational and organizational purposes only.
+                The developer assumes no responsibility for any financial decisions, investment choices, or data loss. Always
+                verify spot prices and calculations independently.
+              </p>
+
+              <p>
+                <strong>Spot Price Accuracy:</strong> Prices displayed are for reference only and may not reflect real-time
+                market conditions. Always confirm current pricing with your dealer or official market sources before making
+                transactions.
+              </p>
+            </div>
+          </div>
+
+          <div class="about-info-grid">
+            <div class="about-section">
+              <div class="section-title">🚀 What's New</div>
+              <ul id="versionChanges" class="changelog-list"></ul>
+            </div>
+
+            <div class="about-section">
+              <div class="section-title">🗺️ Development Roadmap</div>
+              <ul id="versionRoadmapList" class="changelog-list"></ul>
+            </div>
+          </div>
+
+          <div class="about-section">
+            <div class="section-title">📄 Resources &amp; Links</div>
+            <div class="resources-grid">
+              <a class="resource-btn" href="sample.csv" download="sample.csv">
+                📄 Download Sample Data
+              </a>
+              <a
+                class="resource-btn"
+                href="https://github.com/lbruton/Precious-Metals-Inventory"
+                target="_blank"
+                rel="noopener"
+              >
+                📁 View Source Code
+              </a>
+              <button class="resource-btn" id="versionShowChangelogBtn">📜 View Full Changelog</button>
+            </div>
+          </div>
+
+          <div class="alert-actions">
+            <button class="btn btn-primary" id="versionAcceptBtn">Accept and continue</button>
           </div>
         </div>
       </div>
     </div>
+    <!-- =============================================================================
+       ============================================================================= -->
 
     <div class="modal" id="apiModal" style="display: none">
       <div class="modal-content">
@@ -1353,16 +1399,7 @@
             <h3 style="margin-bottom: 1rem">API Configuration</h3>
             <p class="settings-subtext">Manage API cache, history, and providers.</p>
 
-            <div class="cache-duration-row">
-              <label for="apiCacheDuration">Cache Duration:</label>
-              <select id="apiCacheDuration">
-                <option value="0">No Cache</option>
-                <option value="1">1 hour</option>
-                <option value="6">6 hours</option>
-                <option value="12">12 hours</option>
-                <option value="24">24 hours</option>
-              </select>
-            </div>
+
 
             <div class="api-status-summary" id="apiStatusSummary"></div>
 
@@ -1394,16 +1431,17 @@
           </button>
         </div>
         <div class="modal-body">
-          <div class="settings-section">
-            <h3>Files</h3>
-            <p class="settings-subtext">Import or export your data files.</p>
-            <div class="file-blocks">
+          <div class="settings-card-grid">
+            <div class="settings-card">
+              <h3>Import</h3>
+              <p class="settings-subtext">Import your data files.</p>
               <div class="import-block">
                 <div class="import-export-grid">
-                  <label class="btn" id="importCsvBtn">
-                    Import CSV <span class="import-icon">⬇️</span>
+                  <div class="import-csv-grid">
+                    <button class="btn" id="importCsvOverride">Import</button>
+                    <button class="btn" id="importCsvMerge">Merge</button>
                     <input accept=".csv" hidden id="importCsvFile" type="file" />
-                  </label>
+                  </div>
                   <label class="btn" id="importJsonBtn">
                     Import JSON <span class="import-icon">⬇️</span>
                     <input accept=".json" hidden id="importJsonFile" type="file" />
@@ -1427,6 +1465,11 @@
                 ></progress>
                 <div class="import-progress-text" id="importProgressText"></div>
               </div>
+            </div>
+
+            <div class="settings-card">
+              <h3>Export</h3>
+              <p class="settings-subtext">Export your data files.</p>
               <div class="export-block">
                 <div class="import-export-grid">
                   <button class="btn" id="exportCsvBtn">
@@ -1444,14 +1487,51 @@
                 </div>
               </div>
             </div>
-          </div>
 
-          <div class="settings-section boating-accident-section">
-            <p class="settings-subtext">Clear all data from the app.</p>
-            <div class="backup-buttons">
-              <button class="btn danger" id="boatingAccidentBtn">
-                🏴‍☠️ So, you've been in a boating accident? 🏴‍☠️
-              </button>
+            <div class="settings-card">
+              <h3>Third-Party</h3>
+              <p class="settings-subtext">Import data from external services like Numista.</p>
+              <div class="third-party-block">
+                <div class="import-export-grid">
+                  <button class="btn" id="importNumistaBtn">Import Numista</button>
+                  <button class="btn" id="mergeNumistaBtn">Merge Numista</button>
+                  <input type="file" id="numistaImportFile" accept=".csv" hidden />
+                  <div class="beta-warning">⚠️ Numista import is a beta feature</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="settings-card">
+              <h3>Custom Mapping</h3>
+              <p class="settings-subtext">Define regex rules to map imported fields.</p>
+              <div class="third-party-block">
+                <div class="import-export-grid">
+                  <button class="btn" id="addMappingBtn">Add Mapping</button>
+                  <button class="btn" id="applyMappingsBtn">Apply Mappings</button>
+                  <button class="btn" id="clearMappingsBtn">Clear Mappings</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="settings-card boating-accident-section">
+              <h3>Clear Data</h3>
+              <p class="settings-subtext">Manage local application data.</p>
+              <div class="backup-buttons">
+                <button class="btn warning" id="removeInventoryDataBtn">
+                  Remove Inventory Data
+                </button>
+                <button class="btn warning" id="clearNumistaCacheBtn" style="display:none">
+                  Clear Numista Cache
+                </button>
+                <button class="btn danger" id="boatingAccidentBtn">
+                  🏴‍☠️ So, you've been in a boating accident? 🏴‍☠️
+                </button>
+              </div>
+            </div>
+
+            <div class="settings-card">
+              <h3>Backup/Restore</h3>
+              <p class="settings-subtext">Coming Soon</p>
             </div>
           </div>
         </div>
@@ -1472,26 +1552,80 @@
         </div>
         <div class="modal-body">
           <p class="settings-subtext">
-            Enter 1–4 API keys below, choose a default provider, and enable the
-            metals you want each service to update.
+            Configure API keys, select metals to track, set cache policies, and optimize with batch requests for significant API savings.
           </p>
           <div class="api-providers">
               <div class="api-provider" data-provider="METALS_DEV">
                 <div class="provider-header">
                   <span class="provider-name">Metals.dev</span>
                   <span class="provider-url">https://api.metals.dev/v1</span>
+                  <span class="provider-batch-badge">✨ Batch Optimized</span>
                 </div>
                 <a href="#" class="api-info-link" data-provider="METALS_DEV">
                   Provider Information
                 </a>
                 <div class="api-key-row">
-                  <label for="apiKey_METALS_DEV">Key:</label>
+                  <label for="apiKey_METALS_DEV">API Key:</label>
                   <input
                     type="password"
                     id="apiKey_METALS_DEV"
                     placeholder="Enter your API key"
                   />
                 </div>
+                
+                <!-- Provider Settings Section -->
+                <div class="provider-settings">
+                  <h4>Provider Settings</h4>
+                  
+                  <div class="provider-setting-row">
+                    <label for="cacheTimeout_METALS_DEV">Cache Timeout:</label>
+                    <select id="cacheTimeout_METALS_DEV" class="provider-cache-select">
+                      <option value="0">No Cache</option>
+                      <option value="1">1 hour</option>
+                      <option value="6">6 hours</option>
+                      <option value="12">12 hours</option>
+                      <option value="24" selected>24 hours</option>
+                    </select>
+                  </div>
+                  
+                  <div class="provider-setting-row">
+                    <label for="historyDays_METALS_DEV">History Days:</label>
+                    <input type="number" id="historyDays_METALS_DEV" class="provider-history-input" 
+                           min="1" max="365" value="30" placeholder="1-365">
+                  </div>
+                  
+                  <!-- Metal Selection -->
+                  <div class="metal-selection">
+                    <label>Select Metals to Track:</label>
+                    <div class="metal-checkboxes">
+                      <label class="metal-checkbox">
+                        <input type="checkbox" class="provider-metal" data-provider="METALS_DEV" data-metal="silver" checked>
+                        <span class="metal-name">Silver (AG)</span>
+                      </label>
+                      <label class="metal-checkbox">
+                        <input type="checkbox" class="provider-metal" data-provider="METALS_DEV" data-metal="gold" checked>
+                        <span class="metal-name">Gold (AU)</span>
+                      </label>
+                      <label class="metal-checkbox">
+                        <input type="checkbox" class="provider-metal" data-provider="METALS_DEV" data-metal="platinum" checked>
+                        <span class="metal-name">Platinum (PT)</span>
+                      </label>
+                      <label class="metal-checkbox">
+                        <input type="checkbox" class="provider-metal" data-provider="METALS_DEV" data-metal="palladium" checked>
+                        <span class="metal-name">Palladium (PD)</span>
+                      </label>
+                    </div>
+                  </div>
+                  
+                  <!-- Batch Optimization Display -->
+                  <div class="batch-optimization">
+                    <div class="batch-info" id="batchInfo_METALS_DEV">
+                      📊 Batch Request: 4 metals + 30 days = 1 API call<br>
+                      <span class="batch-savings">(saves 123 calls vs individual requests)</span>
+                    </div>
+                  </div>
+                </div>
+                
                 <div class="provider-footer">
                   <div class="provider-info">
                     <div class="api-key-note">
@@ -1541,18 +1675,73 @@
                 <div class="provider-header">
                   <span class="provider-name">Metals-API.com</span>
                   <span class="provider-url">https://metals-api.com/api</span>
+                  <span class="provider-batch-badge">✨ Batch Optimized</span>
                 </div>
                 <a href="#" class="api-info-link" data-provider="METALS_API">
                   Provider Information
                 </a>
                 <div class="api-key-row">
-                  <label for="apiKey_METALS_API">Key:</label>
+                  <label for="apiKey_METALS_API">API Key:</label>
                   <input
                     type="password"
                     id="apiKey_METALS_API"
                     placeholder="Enter your API key"
                   />
                 </div>
+                
+                <!-- Provider Settings Section -->
+                <div class="provider-settings">
+                  <h4>Provider Settings</h4>
+                  
+                  <div class="provider-setting-row">
+                    <label for="cacheTimeout_METALS_API">Cache Timeout:</label>
+                    <select id="cacheTimeout_METALS_API" class="provider-cache-select">
+                      <option value="0">No Cache</option>
+                      <option value="1">1 hour</option>
+                      <option value="6">6 hours</option>
+                      <option value="12">12 hours</option>
+                      <option value="24" selected>24 hours</option>
+                    </select>
+                  </div>
+                  
+                  <div class="provider-setting-row">
+                    <label for="historyDays_METALS_API">History Days:</label>
+                    <input type="number" id="historyDays_METALS_API" class="provider-history-input" 
+                           min="1" max="365" value="30" placeholder="1-365">
+                  </div>
+                  
+                  <!-- Metal Selection -->
+                  <div class="metal-selection">
+                    <label>Select Metals to Track:</label>
+                    <div class="metal-checkboxes">
+                      <label class="metal-checkbox">
+                        <input type="checkbox" class="provider-metal" data-provider="METALS_API" data-metal="silver" checked>
+                        <span class="metal-name">Silver (AG)</span>
+                      </label>
+                      <label class="metal-checkbox">
+                        <input type="checkbox" class="provider-metal" data-provider="METALS_API" data-metal="gold" checked>
+                        <span class="metal-name">Gold (AU)</span>
+                      </label>
+                      <label class="metal-checkbox">
+                        <input type="checkbox" class="provider-metal" data-provider="METALS_API" data-metal="platinum" checked>
+                        <span class="metal-name">Platinum (PT)</span>
+                      </label>
+                      <label class="metal-checkbox">
+                        <input type="checkbox" class="provider-metal" data-provider="METALS_API" data-metal="palladium" checked>
+                        <span class="metal-name">Palladium (PD)</span>
+                      </label>
+                    </div>
+                  </div>
+                  
+                  <!-- Batch Optimization Display -->
+                  <div class="batch-optimization">
+                    <div class="batch-info" id="batchInfo_METALS_API">
+                      📊 Batch Request: 4 metals + 30 days = 1 API call<br>
+                      <span class="batch-savings">(saves 123 calls vs individual requests)</span>
+                    </div>
+                  </div>
+                </div>
+                
                 <div class="provider-footer">
                   <div class="provider-info">
                     <div class="api-key-note">
@@ -1604,6 +1793,7 @@
                   <span class="provider-url">
                     https://api.metalpriceapi.com/v1
                   </span>
+                  <span class="provider-batch-badge">✨ Batch Optimized</span>
                 </div>
                 <a
                   href="#"
@@ -1613,12 +1803,65 @@
                   Provider Information
                 </a>
                 <div class="api-key-row">
-                  <label for="apiKey_METAL_PRICE_API">Key:</label>
+                  <label for="apiKey_METAL_PRICE_API">API Key:</label>
                   <input
                     type="password"
                     id="apiKey_METAL_PRICE_API"
                     placeholder="Enter your API key"
                   />
+                </div>
+                
+                <!-- Provider Settings Section -->
+                <div class="provider-settings">
+                  <h4>Provider Settings</h4>
+                  
+                  <div class="provider-setting-row">
+                    <label for="cacheTimeout_METAL_PRICE_API">Cache Timeout:</label>
+                    <select id="cacheTimeout_METAL_PRICE_API" class="provider-cache-select">
+                      <option value="0">No Cache</option>
+                      <option value="1">1 hour</option>
+                      <option value="6">6 hours</option>
+                      <option value="12">12 hours</option>
+                      <option value="24" selected>24 hours</option>
+                    </select>
+                  </div>
+                  
+                  <div class="provider-setting-row">
+                    <label for="historyDays_METAL_PRICE_API">History Days:</label>
+                    <input type="number" id="historyDays_METAL_PRICE_API" class="provider-history-input" 
+                           min="1" max="365" value="30" placeholder="1-365">
+                  </div>
+                  
+                  <!-- Metal Selection -->
+                  <div class="metal-selection">
+                    <label>Select Metals to Track:</label>
+                    <div class="metal-checkboxes">
+                      <label class="metal-checkbox">
+                        <input type="checkbox" class="provider-metal" data-provider="METAL_PRICE_API" data-metal="silver" checked>
+                        <span class="metal-name">Silver (AG)</span>
+                      </label>
+                      <label class="metal-checkbox">
+                        <input type="checkbox" class="provider-metal" data-provider="METAL_PRICE_API" data-metal="gold" checked>
+                        <span class="metal-name">Gold (AU)</span>
+                      </label>
+                      <label class="metal-checkbox">
+                        <input type="checkbox" class="provider-metal" data-provider="METAL_PRICE_API" data-metal="platinum" checked>
+                        <span class="metal-name">Platinum (PT)</span>
+                      </label>
+                      <label class="metal-checkbox">
+                        <input type="checkbox" class="provider-metal" data-provider="METAL_PRICE_API" data-metal="palladium" checked>
+                        <span class="metal-name">Palladium (PD)</span>
+                      </label>
+                    </div>
+                  </div>
+                  
+                  <!-- Batch Optimization Display -->
+                  <div class="batch-optimization">
+                    <div class="batch-info" id="batchInfo_METAL_PRICE_API">
+                      📊 Batch Request: 4 metals + 30 days = 1 API call<br>
+                      <span class="batch-savings">(saves 123 calls vs individual requests)</span>
+                    </div>
+                  </div>
                 </div>
                 <div class="provider-footer">
                   <div class="provider-info">
@@ -1693,12 +1936,65 @@
                   </select>
                 </div>
                 <div class="api-key-row">
-                  <label for="apiKey_CUSTOM">Key:</label>
+                  <label for="apiKey_CUSTOM">API Key:</label>
                   <input
                     type="password"
                     id="apiKey_CUSTOM"
                     placeholder="Enter your API key"
                   />
+                </div>
+                
+                <!-- Provider Settings Section -->
+                <div class="provider-settings">
+                  <h4>Provider Settings</h4>
+                  
+                  <div class="provider-setting-row">
+                    <label for="cacheTimeout_CUSTOM">Cache Timeout:</label>
+                    <select id="cacheTimeout_CUSTOM" class="provider-cache-select">
+                      <option value="0">No Cache</option>
+                      <option value="1">1 hour</option>
+                      <option value="6">6 hours</option>
+                      <option value="12">12 hours</option>
+                      <option value="24" selected>24 hours</option>
+                    </select>
+                  </div>
+                  
+                  <div class="provider-setting-row">
+                    <label for="historyDays_CUSTOM">History Days:</label>
+                    <input type="number" id="historyDays_CUSTOM" class="provider-history-input" 
+                           min="1" max="365" value="30" placeholder="1-365">
+                  </div>
+                  
+                  <!-- Metal Selection -->
+                  <div class="metal-selection">
+                    <label>Select Metals to Track:</label>
+                    <div class="metal-checkboxes">
+                      <label class="metal-checkbox">
+                        <input type="checkbox" class="provider-metal" data-provider="CUSTOM" data-metal="silver" checked>
+                        <span class="metal-name">Silver (AG)</span>
+                      </label>
+                      <label class="metal-checkbox">
+                        <input type="checkbox" class="provider-metal" data-provider="CUSTOM" data-metal="gold" checked>
+                        <span class="metal-name">Gold (AU)</span>
+                      </label>
+                      <label class="metal-checkbox">
+                        <input type="checkbox" class="provider-metal" data-provider="CUSTOM" data-metal="platinum" checked>
+                        <span class="metal-name">Platinum (PT)</span>
+                      </label>
+                      <label class="metal-checkbox">
+                        <input type="checkbox" class="provider-metal" data-provider="CUSTOM" data-metal="palladium" checked>
+                        <span class="metal-name">Palladium (PD)</span>
+                      </label>
+                    </div>
+                  </div>
+                  
+                  <!-- Batch Optimization Display -->
+                  <div class="batch-optimization">
+                    <div class="batch-info" id="batchInfo_CUSTOM">
+                      📊 Individual Requests: 4 metals = 4 API calls<br>
+                      <span class="batch-savings">(batch requests not supported)</span>
+                    </div>
+                  </div>
                 </div>
                 <div class="provider-footer">
                   <div class="provider-info">
@@ -1748,7 +2044,6 @@
           </div>
         </div>
       </div>
-    </div>
 
     <div class="modal" id="cloudSyncModal" style="display: none">
       <div class="modal-content">
@@ -1856,6 +2151,63 @@
         </div>
       </div>
     </div>
+    
+    <!-- FILTERS MODAL -->
+    <div class="modal" id="filtersModal" style="display: none">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Filters</h2>
+          <button aria-label="Close modal" class="modal-close" id="filtersCloseBtn">×</button>
+        </div>
+        <div class="modal-body">
+          <div class="filters-grid">
+            <div class="filter-group">
+              <label for="filterMetal">Metal/Composition</label>
+              <select id="filterMetal" class="filter-select">
+                <option value="">All Metals</option>
+              </select>
+            </div>
+            <div class="filter-group">
+              <label for="filterType">Type</label>
+              <select id="filterType" class="filter-select">
+                <option value="">All Types</option>
+              </select>
+            </div>
+            <div class="filter-group">
+              <label for="filterPurchaseLocation">Purchase Location</label>
+              <select id="filterPurchaseLocation" class="filter-select">
+                <option value="">All Locations</option>
+              </select>
+            </div>
+            <div class="filter-group">
+              <label for="filterStorageLocation">Storage Location</label>
+              <select id="filterStorageLocation" class="filter-select">
+                <option value="">All Storage Locations</option>
+              </select>
+            </div>
+            <div class="filter-group">
+              <label for="filterCollectable">Collectable</label>
+              <select id="filterCollectable" class="filter-select">
+                <option value="">All Items</option>
+                <option value="yes">Collectable Only</option>
+                <option value="no">Non-Collectable Only</option>
+              </select>
+            </div>
+            <div class="filter-group">
+              <label for="filterDateRange">Date Range</label>
+              <div class="date-range-inputs">
+                <input type="date" id="filterDateFrom" placeholder="From" />
+                <input type="date" id="filterDateTo" placeholder="To" />
+              </div>
+            </div>
+          </div>
+          <div class="filter-actions">
+            <button class="btn" id="clearFiltersBtn">Clear All</button>
+            <button class="btn premium" id="applyFiltersBtn">Apply Filters</button>
+          </div>
+        </div>
+      </div>
+    </div>
     <!-- =============================================================================
        JAVASCRIPT MODULE LOADING
        
@@ -1872,13 +2224,15 @@
        External libraries (Chart.js, jsPDF, PapaParse, XLSX) loaded via CDN
        ============================================================================= -->
 
-    <script defer src="./js/constants.js"></script>
-    <script defer src="./js/state.js"></script>
-    <script defer src="./js/utils.js"></script>
-    <script defer src="./js/changeLog.js"></script>
+<script defer src="./js/constants.js"></script>
+<script defer src="./js/state.js"></script>
+<script defer src="./js/utils.js"></script>
+<script defer src="./js/versionCheck.js"></script>
+<script defer src="./js/changeLog.js"></script>
     <script defer src="./js/charts.js"></script>
     <script defer src="./js/theme.js"></script>
     <script defer src="./js/search.js"></script>
+    <script defer src="./js/filters.js"></script>
     <script defer src="./js/sorting.js"></script>
     <script defer src="./js/pagination.js"></script>
     <script defer src="./js/detailsModal.js"></script>
@@ -1886,6 +2240,7 @@
     <script defer src="./js/api.js"></script>
     <script defer src="./js/inventory.js"></script>
     <script defer src="./js/about.js"></script>
+    <script defer src="./js/customMapping.js"></script>
     <script defer src="./js/events.js"></script>
     <script defer src="./js/init.js"></script>
   </body>

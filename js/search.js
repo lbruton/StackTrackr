@@ -2,17 +2,23 @@
 // =============================================================================
 
 /**
- * Filters inventory based on current search query
+ * Filters inventory based on current search query and active filters
  * 
- * @returns {Array} Filtered inventory items matching the search query
+ * @returns {Array} Filtered inventory items matching the search query and filters
  */
 const filterInventory = () => {
+  // Use the advanced filtering system if available, otherwise fall back to legacy
+  if (typeof filterInventoryAdvanced === 'function') {
+    return filterInventoryAdvanced();
+  }
+  
+  // Legacy filtering for compatibility
   let result = inventory;
 
   Object.entries(columnFilters).forEach(([field, value]) => {
     const lower = value.toLowerCase();
     result = result.filter((item) => {
-      const fieldVal = (item[field] || '').toString().toLowerCase();
+      const fieldVal = (item[field] || (field === 'composition' ? item.metal : '')).toString().toLowerCase();
       return fieldVal === lower;
     });
   });
@@ -38,6 +44,7 @@ const filterInventory = () => {
     const formattedDate = formatDisplayDate(item.date).toLowerCase();
     return (
       item.metal.toLowerCase().includes(query) ||
+      (item.composition && item.composition.toLowerCase().includes(query)) ||
       item.name.toLowerCase().includes(query) ||
       item.type.toLowerCase().includes(query) ||
       item.purchaseLocation.toLowerCase().includes(query) ||
@@ -53,21 +60,6 @@ const filterInventory = () => {
   });
 };
 
-/**
- * Applies a column-specific filter and re-renders the table
- * @param {string} field - Item property to filter by
- * @param {string} value - Value to match exactly
- */
-const applyColumnFilter = (field, value) => {
-  if (columnFilters[field] === value) {
-    delete columnFilters[field];
-  } else {
-    columnFilters[field] = value;
-  }
-  searchQuery = '';
-  if (elements.searchInput) elements.searchInput.value = '';
-  currentPage = 1;
-  renderTable();
-};
+// Note: applyColumnFilter function is now in filters.js for advanced filtering
 
 // =============================================================================
