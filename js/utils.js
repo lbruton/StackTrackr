@@ -381,6 +381,24 @@ const convertToUsd = (amount, currency = "USD") => {
 };
 
 /**
+ * Allowed inventory item types
+ * @constant {string[]}
+ */
+const VALID_TYPES = ["Coin", "Bar", "Round", "Note", "Aurum", "Other"];
+
+/**
+ * Normalizes item type to one of the predefined options
+ *
+ * @param {string} [type=""] - Raw type string
+ * @returns {string} Normalized type value
+ */
+const normalizeType = (type = "") => {
+  const t = type.toString().trim().toLowerCase();
+  const match = VALID_TYPES.find(v => v.toLowerCase() === t);
+  return match || "Other";
+};
+
+/**
  * Maps Numista type strings to internal StackTrackr categories
  *
  * @param {string} type - Numista type string
@@ -389,10 +407,11 @@ const convertToUsd = (amount, currency = "USD") => {
 const mapNumistaType = (type = "") => {
   const t = type.toLowerCase();
   if (t.includes("aurum")) return "Aurum";
-  if (t.includes("note")) return "Notes";
-  if (t.includes("bar") || t.includes("round")) return "bars/rounds";
-  if (t.includes("coin")) return "coin";
-  return "other";
+  if (t.includes("note")) return "Note";
+  if (t.includes("bar") || t.includes("ingot")) return "Bar";
+  if (t.includes("round") || t.includes("token") || t.includes("medal")) return "Round";
+  if (t.includes("coin")) return "Coin";
+  return "Other";
 };
 
 /**
@@ -544,6 +563,7 @@ const sanitizeImportedItem = (item) => {
   for (const field of strFields) {
     if (typeof sanitized[field] !== 'string') sanitized[field] = '';
   }
+  sanitized.type = normalizeType(sanitized.type);
 
   // Reset premium calculations if price or weight are missing
   if (!sanitized.price || !sanitized.weight) {

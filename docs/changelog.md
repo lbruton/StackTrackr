@@ -1,13 +1,18 @@
 # StackTrackr — Changelog
 
 
-> **Latest release: v3.03.08j**
+> **Latest release: v3.03.08k**
 
 
 For upcoming work, see [roadmap](roadmap.md).
 
 ## 📋 Version History
 
+
+### Version 3.03.08k – Type dropdown and UI fixes (2025-08-10)
+- Type dropdown standardized to Coin, Bar, Round, Note, Aurum, Other
+- Numista imports leave purchase location blank and avoid collectable tag for bars and rounds
+- Inventory name cells show a pencil icon for editing; totals cards restored to their own block
 
 ### Version 3.03.08j – Composition display fix (2025-08-10)
 - Composition column shows first word of imported composition instead of generic metal

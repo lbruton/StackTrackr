@@ -1,3 +1,27 @@
+# Implementation Summary: Type Dropdown & UI Fixes
+
+> **Latest release: v3.03.08k**
+
+## Version Update: 3.03.08j → 3.03.08k
+
+## User Requirements Implemented
+
+- Type dropdown options standardized and validated
+- Numista imports skip collectable tag for bars/rounds and leave purchase location blank
+- Inventory name cells use pencil icon for editing with totals cards in separate block
+- Purchase location defaults to blank instead of "Unknown"
+
+## Technical Changes Made
+
+### Files Modified:
+1. **`index.html`**: Reordered type dropdowns and separated totals section
+2. **`css/styles.css`**: Replaced clickable name styles with `.edit-icon`
+3. **`js/utils.js`**: Added `VALID_TYPES`, `normalizeType`, and updated Numista mapping
+4. **`js/inventory.js`**: Normalized types, blank purchase locations, name edit icon, Numista collectable logic
+5. **`js/events.js`**: Purchase location defaults to blank
+6. **`js/constants.js`**: Bumped version to 3.03.08k
+7. **Documentation**: Updated changelog, function table, implementation summary, status, roadmap, and structure
+
 
 # Implementation Summary: Composition Display Fix
 
