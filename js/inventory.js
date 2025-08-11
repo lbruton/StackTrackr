@@ -679,7 +679,15 @@ const startCellEdit = (idx, field, icon) => {
   } else {
     input.type = 'text';
   }
-  input.value = current;
+  if (field === 'weight' && item.weight < 1) {
+    input.value = oztToGrams(current).toFixed(2);
+    input.dataset.unit = 'g';
+  } else if (['weight', 'price', 'spotPriceAtPurchase'].includes(field)) {
+    input.value = parseFloat(current).toFixed(2);
+    if (field === 'weight') input.dataset.unit = 'oz';
+  } else {
+    input.value = current;
+  }
   input.className = 'inline-input';
   td.innerHTML = '';
   td.appendChild(input);
@@ -707,7 +715,11 @@ const startCellEdit = (idx, field, icon) => {
       : ['weight', 'price', 'spotPriceAtPurchase'].includes(field)
         ? parseFloat(value)
         : value.trim();
-    item[field] = parsed;
+    let finalValue = parsed;
+    if (field === 'weight' && input.dataset.unit === 'g') {
+      finalValue = gramsToOzt(parsed);
+    }
+    item[field] = finalValue;
     if (['qty', 'weight', 'price', 'spotPriceAtPurchase'].includes(field)) {
       recalcItem(item);
     }
@@ -776,7 +788,7 @@ const renderTable = () => {
         ${filterLink('qty', item.qty, 'var(--text-primary)')}
       </td>
       <td class="shrink" data-column="weight">
-        ${filterLink('weight', item.weight, 'var(--text-primary)', parseFloat(item.weight).toFixed(2) + ' (oz)', 'Troy ounces (ozt)')}
+        ${filterLink('weight', item.weight, 'var(--text-primary)', formatWeight(item.weight), item.weight < 1 ? 'Grams (g)' : 'Troy ounces (ozt)')}
       </td>
       <td class="shrink" data-column="purchasePrice" title="USD">
         ${item.price > 0 ? filterLink('price', item.price, 'var(--text-primary)', formatCurrency(item.price)) : ''}
@@ -1057,7 +1069,13 @@ const editItem = (idx, logIdx = null) => {
   elements.editName.value = item.name;
   elements.editQty.value = item.qty;
   elements.editType.value = item.type;
-  elements.editWeight.value = parseFloat(item.weight).toFixed(2);
+  if (item.weight < 1) {
+    elements.editWeight.value = oztToGrams(item.weight).toFixed(2);
+    elements.editWeight.dataset.unit = 'g';
+  } else {
+    elements.editWeight.value = parseFloat(item.weight).toFixed(2);
+    elements.editWeight.dataset.unit = 'oz';
+  }
   elements.editPrice.value = item.price > 0 ? item.price : '';
   elements.editPurchaseLocation.value = item.purchaseLocation;
   elements.editStorageLocation.value = item.storageLocation && item.storageLocation !== 'Unknown' ? item.storageLocation : '';

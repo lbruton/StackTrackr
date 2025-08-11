@@ -409,6 +409,28 @@ const sanitizeHtml = (text) => {
 const gramsToOzt = (grams) => grams / 31.1034768;
 
 /**
+ * Converts troy ounces to grams
+ *
+ * @param {number} ozt - Weight in troy ounces
+ * @returns {number} Weight in grams
+ */
+const oztToGrams = (ozt) => ozt * 31.1034768;
+
+/**
+ * Formats a weight in troy ounces to either grams or ounces
+ *
+ * @param {number} ozt - Weight in troy ounces
+ * @returns {string} Formatted weight string with unit
+ */
+const formatWeight = (ozt) => {
+  const weight = parseFloat(ozt);
+  if (weight < 1) {
+    return `${oztToGrams(weight).toFixed(2)} g`;
+  }
+  return `${weight.toFixed(2)} oz`;
+};
+
+/**
  * Converts amount from specified currency to USD using static rates
  *
  * @param {number} amount - Monetary amount

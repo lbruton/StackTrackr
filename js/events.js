@@ -476,6 +476,9 @@ const setupEventListeners = () => {
           const qty = parseInt(elements.editQty.value, 10);
           const type = elements.editType.value;
           let weight = parseFloat(elements.editWeight.value);
+          if (elements.editWeight.dataset.unit === 'g') {
+            weight = gramsToOzt(weight);
+          }
           weight = isNaN(weight) ? 0 : parseFloat(weight.toFixed(2));
           let price = parseFloat(elements.editPrice.value);
           price = isNaN(price) || price < 0 ? 0 : price;
