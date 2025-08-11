@@ -346,10 +346,9 @@ const setupProviderSettingsListeners = (provider) => {
 };
 
 /**
- * Updates provider history tables with latest API values
+ * Renders API usage/quota data for each provider
  */
 const updateProviderHistoryTables = () => {
-  loadSpotHistory();
   const config = loadApiConfig();
   Object.keys(API_PROVIDERS).forEach((prov) => {
     const container = document.querySelector(
