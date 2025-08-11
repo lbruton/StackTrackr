@@ -1,3 +1,60 @@
+# Implementation Summary: Numista Import Polish
+
+> **Latest release: v3.03.08i**
+
+## Version Update: 3.03.08h → 3.03.08i
+
+## User Requirements Implemented
+
+- Unified changelog bullets in About and version modals
+- Numista imports default to collectable with N# note and paper-to-note mapping
+- Weight inputs rounded to two decimals for cleaner display
+- Added beta warning under Numista import button
+
+## Technical Changes Made
+
+### Files Modified:
+1. **`index.html`**: Styled version changelog list and added Numista beta warning
+2. **`css/styles.css`**: Added `.beta-warning` style
+3. **`js/versionCheck.js`**: Returned list items with shared bullet style
+4. **`js/utils.js`**: Enhanced `parseNumistaMetal` to detect paper composition
+5. **`js/inventory.js`**: Numista items now collectable by default, include N# note, and round weights
+6. **`js/events.js`**: Weight fields rounded to two decimals on input
+7. **`js/constants.js`**: Bumped version to 3.03.08i
+8. **Documentation**: Updated changelog, function table, implementation summary, status, roadmap, structure, and README
+
+### User Experience Improvements:
+- Consistent bullet styling across modals
+- Numista imports clearly marked beta and treated as collectables
+- Weight fields display values rounded to two decimals
+# Implementation Summary: Table Controls & Import Options
+
+> **Latest release: v3.03.08h**
+
+## Version Update: 3.03.08g → 3.03.08h
+
+## User Requirements Implemented
+
+- Grouped change log label, disclaimer, and items selector into dedicated section below the table
+- Slimmed pagination controls with uniform buttons
+- CSV import buttons provide Override or Merge options via dropdown menus
+- Files page adds Backup/Restore placeholder card
+
+## Technical Changes Made
+
+### Files Modified:
+1. **`index.html`**: Reorganized table controls, added import dropdowns, and new Backup/Restore card
+2. **`css/styles.css`**: Compact control styling, pagination sizing, and dropdown menu styles
+3. **`js/state.js`, `js/init.js`, `js/events.js`**: New elements and listeners for import mode selection
+4. **`js/inventory.js`**: Importers accept override parameter instead of confirm prompt
+5. **`js/constants.js`**: Bumped version to 3.03.08h
+6. **Documentation**: Updated changelog, function table, implementation summary, status, roadmap, structure, and README
+
+### User Experience Improvements:
+- Cleaner layout with controls below the table
+- Clear import choice without a confusing confirm dialog
+- Backup/Restore section signals forthcoming features
+
 # Implementation Summary: Change Log Refinements & Catalog Indexing
 
 > **Latest release: v3.03.08g**

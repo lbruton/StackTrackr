@@ -2024,8 +2024,8 @@ td input:checked + .slider:before {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--spacing-sm);
-  padding: 0.25rem 0;
+  gap: var(--spacing-xs);
+  padding: 0.125rem 0;
 }
 
 .pagination-buttons {
@@ -2054,12 +2054,16 @@ td input:checked + .slider:before {
   gap: var(--spacing-sm);
 }
 
+.table-controls-section {
+  margin: var(--spacing-xs) 0;
+}
+
 .table-controls {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--spacing-lg);
-  margin: var(--spacing-sm) 0;
+  gap: var(--spacing);
+  margin: 0;
   flex-wrap: wrap;
 }
 
@@ -2085,12 +2089,12 @@ td input:checked + .slider:before {
 
 .pagination-select {
   width: 6rem;
-  height: 2.75rem;
+  height: 1.375rem;
 }
 
 .pagination-btn {
-  min-width: 2.5rem;
-  height: 2.5rem;
+  min-width: 2rem;
+  height: 1.25rem;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2102,6 +2106,7 @@ td input:checked + .slider:before {
   transition: var(--transition);
   cursor: pointer;
   padding: 0;
+  font-size: 0.75rem;
 }
 
 .pagination-btn.active {
@@ -2121,6 +2126,37 @@ td input:checked + .slider:before {
   cursor: not-allowed;
 }
 
+.import-dropdown-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.import-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  display: none;
+  flex-direction: column;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-top: var(--spacing-xs);
+  z-index: 20;
+}
+
+.import-dropdown.show {
+  display: flex;
+}
+
+.import-dropdown .btn {
+  width: 100%;
+  margin: 0;
+}
+.beta-warning {
+  margin-top: var(--spacing-xs);
+  font-size: 0.75rem;
+  color: var(--warning);
+}
 
 /* =============================================================================
    SEARCH
@@ -2545,7 +2581,7 @@ input:disabled + .slider {
   }
 
   .pagination-btn {
-    padding: 0.25rem 0.4rem;
+    padding: 0;
     font-size: 0.7rem;
   }
 }

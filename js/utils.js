@@ -347,11 +347,12 @@ const mapNumistaType = (type = "") => {
  * @returns {string} Recognized metal or 'Alloy' if not silver/gold/platinum/palladium
  */
 const parseNumistaMetal = (composition = "") => {
-  const c = composition.toLowerCase();
-  if (c.includes("silver")) return "Silver";
-  if (c.includes("gold")) return "Gold";
-  if (c.includes("platinum")) return "Platinum";
-  if (c.includes("palladium")) return "Palladium";
+  const c = composition.trim().toLowerCase();
+  if (c.startsWith("silver")) return "Silver";
+  if (c.startsWith("gold")) return "Gold";
+  if (c.startsWith("platinum")) return "Platinum";
+  if (c.startsWith("palladium")) return "Palladium";
+  if (c.startsWith("paper")) return "Paper";
   return "Alloy";
 };
 
