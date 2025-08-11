@@ -1,3 +1,31 @@
+# Implementation Summary: Table Controls & Import Options
+
+> **Latest release: v3.03.08h**
+
+## Version Update: 3.03.08g → 3.03.08h
+
+## User Requirements Implemented
+
+- Grouped change log label, disclaimer, and items selector into dedicated section below the table
+- Slimmed pagination controls with uniform buttons
+- CSV import buttons provide Override or Merge options via dropdown menus
+- Files page adds Backup/Restore placeholder card
+
+## Technical Changes Made
+
+### Files Modified:
+1. **`index.html`**: Reorganized table controls, added import dropdowns, and new Backup/Restore card
+2. **`css/styles.css`**: Compact control styling, pagination sizing, and dropdown menu styles
+3. **`js/state.js`, `js/init.js`, `js/events.js`**: New elements and listeners for import mode selection
+4. **`js/inventory.js`**: Importers accept override parameter instead of confirm prompt
+5. **`js/constants.js`**: Bumped version to 3.03.08h
+6. **Documentation**: Updated changelog, function table, implementation summary, status, roadmap, structure, and README
+
+### User Experience Improvements:
+- Cleaner layout with controls below the table
+- Clear import choice without a confusing confirm dialog
+- Backup/Restore section signals forthcoming features
+
 # Implementation Summary: Change Log Refinements & Catalog Indexing
 
 > **Latest release: v3.03.08g**
