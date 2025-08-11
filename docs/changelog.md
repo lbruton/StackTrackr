@@ -1,11 +1,14 @@
 # StackTrackr — Changelog
 
-> **Latest release: v3.04.10**
+> **Latest release: v3.04.11**
 
 
 For upcoming work, see [roadmap](roadmap.md).
 
 ## 📋 Version History
+
+### Version 3.04.11 – Collectable column icon (2025-08-11)
+- Replaced "Collectable" table header text with treasure chest icon and aria label
 
 ### Version 3.04.10 – Provider history usage display (2025-08-11)
 - Provider history sections now show API usage and quota only

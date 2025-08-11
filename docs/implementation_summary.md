@@ -1,3 +1,23 @@
+# Implementation Summary: Collectable Column Icon
+
+> **Latest release: v3.04.11**
+
+## Version Update: 3.04.10 → 3.04.11
+
+## User Requirements Implemented
+
+- Replaced "Collectable" table header text with a treasure chest icon and aria label
+- Added CSS to align the new icon and support theme colors
+- Updated documentation referencing the previous "Collectable" label
+
+## Technical Changes Made
+
+### Files Modified:
+1. **`index.html`**: Replaced header text with icon and accessibility attributes
+2. **`css/styles.css`**: Styled collectable header icon for alignment and theming
+3. **`js/constants.js`**: Bumped version to 3.04.11
+4. **Documentation**: Updated README, changelog, roadmap, status, structure, and function table
+
 # Implementation Summary: Provider History Usage Display
 
 > **Latest release: v3.04.10**
