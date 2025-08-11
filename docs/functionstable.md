@@ -1,6 +1,6 @@
 # Function Reference
 
-> **Latest release: v3.03.08a**
+> **Latest release: v3.03.08b**
 
 | File | Function | Description |
 |------|----------|-------------|
@@ -47,7 +47,7 @@
 | api.js | updateSyncButtonStates | Updates sync button states based on API availability |
 | api.js | showApiModal | Shows settings modal and populates API fields |
 | api.js | hideApiModal | Hides API modal |
-| api.js | showFilesModal |  |
+| api.js | showFilesModal | Opens the Files modal |
 | api.js | hideFilesModal |  |
 | api.js | showProviderInfo | Shows provider information modal |
 | api.js | hideProviderInfo | Hides provider information modal |
@@ -98,7 +98,6 @@
 | inventory.js | showNotes | Opens modal to view and edit an item's notes |
 | inventory.js | editItem | Prepares and displays edit modal for specified inventory item |
 | inventory.js | toggleCollectable | Toggles collectable status for inventory item |
-| inventory.js | renderFilesProgress | Renders per-item storage distribution bar in Files modal |
 | inventory.js | startImportProgress |  |
 | inventory.js | updateImportProgress |  |
 | inventory.js | endImportProgress |  |
