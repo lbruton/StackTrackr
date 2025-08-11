@@ -1,10 +1,14 @@
 # StackTrackr — Changelog
 
-> **Latest release: v3.03.07b**
+> **Latest release: v3.03.08a**
 
 For upcoming work, see [roadmap](roadmap.md).
 
 ## 📋 Version History
+
+### Version 3.03.08a – Version Update Changelog Modal (2025-08-10)
+- Stored app version in localStorage for version tracking
+- Displayed changelog modal on version changes with acknowledgment button
 
 ### Version 3.03.07b – Documentation Normalization (2025-08-10)
 - Renamed documentation files to lowercase (except MULTI_AGENT_WORKFLOW.md) and updated references

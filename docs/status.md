@@ -1,10 +1,10 @@
 # Project Status - StackTrackr
 
-> **Latest release: v3.03.07b**
+> **Latest release: v3.03.08a**
 
-## 🎯 Current State: **BETA v3.03.07b** ✅ MAINTAINED & OPTIMIZED
+## 🎯 Current State: **BETA v3.03.08a** ✅ MAINTAINED & OPTIMIZED
 
-**StackTrackr v3.03.07b** is a fully-featured, client-side web application for tracking precious metal investments (Silver, Gold, Platinum, Palladium) with comprehensive inventory management, API integration, and complete backup capabilities. The 3.03.x series focuses on polish, maintenance, and optimization.
+**StackTrackr v3.03.08a** is a fully-featured, client-side web application for tracking precious metal investments (Silver, Gold, Platinum, Palladium) with comprehensive inventory management, API integration, and complete backup capabilities. The 3.03.x series focuses on polish, maintenance, and optimization.
 
 ## 🏗️ Architecture Overview
 
@@ -18,10 +18,12 @@ The tool features a **modular JavaScript architecture** with separate files for 
 - `pagination.js` - Pagination controls
 - `charts.js` - Chart.js integration for analytics
 - `theme.js` - Dark/light theme management
+- `versionCheck.js` - Version comparison and changelog modal
 - `utils.js` - Helper functions and formatters
 
 ## ✨ Latest Changes
 
+- **v3.03.08a - Version Update Changelog Modal**: Notifies users of new releases with modal displaying latest changes
 - **v3.03.07b - Documentation Normalization**: Converted documentation filenames to lowercase and updated references
 - **v3.03.07a - Theme Toggle Improvements**: Replaced appearance modal with three-state Dark/Light/System toggle
 - **v3.03.06a - Documentation Sweep & Archive Update**: Version references synchronized across docs and archived build footer links back to current version

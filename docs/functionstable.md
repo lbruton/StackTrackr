@@ -1,6 +1,6 @@
 # Function Reference
 
-> **Latest release: v3.03.07b**
+> **Latest release: v3.03.08a**
 
 | File | Function | Description |
 |------|----------|-------------|
@@ -160,3 +160,7 @@
 | utils.js | updateStorageStats | Updates footer with localStorage usage statistics and progress bar |
 | utils.js | downloadStorageReport | Downloads a report of all localStorage data |
 | utils.js | openStorageReportPopup | Displays storage report HTML in a modal iframe |
+| versionCheck.js | checkVersionChange | Compares stored version with current and shows changelog modal |
+| versionCheck.js | getChangelogForVersion | Extracts changelog section for a specific version |
+| versionCheck.js | populateVersionModal | Inserts changelog text into modal and displays it |
+| versionCheck.js | setupVersionModalEvents | Handles modal interactions and version acknowledgment |

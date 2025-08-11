@@ -1,6 +1,6 @@
-# Multi-Agent Development Workflow - StackTrackr v3.03.07b
+# Multi-Agent Development Workflow - StackTrackr v3.03.08a
 
-> **Latest release: v3.03.07b**
+> **Latest release: v3.03.08a**
 
 ## 🎯 Project Overview
 
