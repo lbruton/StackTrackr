@@ -98,6 +98,7 @@
 | inventory.js | showNotes | Opens modal to view and edit an item's notes |
 | inventory.js | editItem | Prepares and displays edit modal for specified inventory item |
 | inventory.js | toggleCollectable | Toggles collectable status for inventory item |
+| inventory.js | renderFilesProgress | Renders per-item storage distribution bar in Files modal |
 | inventory.js | startImportProgress |  |
 | inventory.js | updateImportProgress |  |
 | inventory.js | endImportProgress |  |

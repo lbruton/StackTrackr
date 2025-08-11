@@ -493,6 +493,7 @@ const METAL_COLORS = {
 const typeColors = {};
 const purchaseLocationColors = {};
 const storageLocationColors = {};
+const filesProgressColors = {};
 
 const getColor = (map, key) => {
   if (!map[key]) {
@@ -514,6 +515,36 @@ const filterLink = (field, value, color) => {
 const getTypeColor = type => getColor(typeColors, type);
 const getPurchaseLocationColor = loc => getColor(purchaseLocationColors, loc);
 const getStorageLocationColor = loc => getColor(storageLocationColors, loc);
+
+/**
+ * Renders inventory storage distribution progress bar
+ * showing each item's relative localStorage size
+ */
+const renderFilesProgress = () => {
+  const container = document.getElementById('filesProgress');
+  if (!container) return;
+  container.innerHTML = '';
+  if (inventory.length === 0) return;
+
+  const sizes = inventory.map(item => ({
+    item,
+    size: JSON.stringify(item).length * 2,
+  }));
+  const total = sizes.reduce((sum, s) => sum + s.size, 0);
+
+  sizes.forEach(({ item, size }) => {
+    const segment = document.createElement('div');
+    segment.className = 'files-progress-segment';
+    segment.style.width = `${(size / total) * 100}%`;
+    segment.style.backgroundColor = getColor(filesProgressColors, item.name);
+    segment.title = `${item.name}: ${(size / 1024).toFixed(1)} KB`;
+    segment.addEventListener('click', () => {
+      container.querySelectorAll('.files-progress-segment').forEach(seg => seg.classList.remove('zoomed'));
+      segment.classList.add('zoomed');
+    });
+    container.appendChild(segment);
+  });
+};
 
 const renderTable = () => {
   return monitorPerformance(() => {
@@ -1778,3 +1809,4 @@ window.toggleCollectable = toggleCollectable;
 window.editItem = editItem;
 window.deleteItem = deleteItem;
 window.showNotes = showNotes;
+window.renderFilesProgress = renderFilesProgress;

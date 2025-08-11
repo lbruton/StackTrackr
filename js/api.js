@@ -1192,6 +1192,9 @@ const showFilesModal = () => {
   const modal = document.getElementById("filesModal");
   if (modal) {
     modal.style.display = "flex";
+    if (typeof renderFilesProgress === "function") {
+      renderFilesProgress();
+    }
   }
 };
 
