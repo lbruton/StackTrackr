@@ -98,13 +98,13 @@ const API_PROVIDERS = {
  * State codes: a=alpha, b=beta, rc=release candidate
  * Example: 3.03.02a → branch 3, release 03, patch 02, alpha
  */
-const APP_VERSION = "3.03.06a";
+const APP_VERSION = "3.03.08a";
 
 /**
  * Returns formatted version string
  *
  * @param {string} [prefix="v"] - Prefix to add before version
- * @returns {string} Formatted version string (e.g., "v3.03.06a")
+ * @returns {string} Formatted version string (e.g., "v3.03.07b")
  */
 const getVersionString = (prefix = "v") => `${prefix}${APP_VERSION}`;
 
@@ -183,6 +183,19 @@ const API_KEY_STORAGE_KEY = "metalApiConfig";
 
 /** @constant {string} API_CACHE_KEY - LocalStorage key for cached API data */
 const API_CACHE_KEY = "metalApiCache";
+
+/** @constant {string} APP_VERSION_KEY - LocalStorage key for current app version */
+const APP_VERSION_KEY = "currentAppVersion";
+
+/** @constant {string} VERSION_ACK_KEY - LocalStorage key for acknowledged app version */
+const VERSION_ACK_KEY = "ackVersion";
+
+// Persist current application version for comparison on future loads
+try {
+  localStorage.setItem(APP_VERSION_KEY, APP_VERSION);
+} catch (e) {
+  console.warn("Unable to store app version", e);
+}
 
 /**
  * @constant {number} DEFAULT_API_CACHE_DURATION - Default cache duration in milliseconds (24 hours)

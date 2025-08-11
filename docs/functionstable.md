@@ -1,6 +1,6 @@
 # Function Reference
 
-> **Latest release: v3.03.08c**
+> **Latest release: v3.03.08d**
 
 | File | Function | Description |
 |------|----------|-------------|

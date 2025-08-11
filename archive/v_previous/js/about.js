@@ -76,6 +76,7 @@ const populateAboutModal = () => {
 
   // Load changelog data
   loadChangelog();
+  loadRoadmap();
 };
 
 /**
@@ -176,6 +177,41 @@ const extractChangelogItems = (content) => {
 };
 
 /**
+ * Loads roadmap information and populates roadmap lists in modals
+ */
+const loadRoadmap = async () => {
+  const targets = [
+    document.getElementById("aboutRoadmapList"),
+    document.getElementById("versionRoadmapList"),
+  ].filter(Boolean);
+  if (!targets.length) return;
+
+  try {
+    const res = await fetch("docs/roadmap.md");
+    if (!res.ok) throw new Error("roadmap.md not found");
+    const text = await res.text();
+    const lines = text
+      .split("\n")
+      .filter((l) => l.trim().startsWith("-"))
+      .filter((l) => !l.toLowerCase().includes("completed"))
+      .slice(0, 3)
+      .map((l) => l.replace(/^[-*]\s*/, ""));
+    const items = lines
+      .map((l) => {
+        const safe = sanitizeHtml(l).replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
+        return `<li>${safe}</li>`;
+      })
+      .join("");
+    targets.forEach((el) => (el.innerHTML = items));
+  } catch (e) {
+    console.warn("Could not load roadmap", e);
+    targets.forEach(
+      (el) => (el.innerHTML = "<li>Roadmap information unavailable</li>")
+    );
+  }
+};
+
+/**
  * Shows full changelog in a new window or navigates to documentation
  */
 const showFullChangelog = () => {
@@ -198,6 +234,9 @@ const setupAboutModalEvents = () => {
   const aboutShowChangelogBtn = document.getElementById(
     "aboutShowChangelogBtn",
   );
+  const versionShowChangelogBtn = document.getElementById(
+    "versionShowChangelogBtn",
+  );
   const aboutModal = document.getElementById("aboutModal");
 
   // Close button
@@ -208,6 +247,10 @@ const setupAboutModalEvents = () => {
   // Show changelog button
   if (aboutShowChangelogBtn) {
     aboutShowChangelogBtn.addEventListener("click", showFullChangelog);
+  }
+
+  if (versionShowChangelogBtn) {
+    versionShowChangelogBtn.addEventListener("click", showFullChangelog);
   }
 
   // Click outside to close
@@ -274,4 +317,5 @@ if (typeof window !== "undefined") {
   window.setupAckModalEvents = setupAckModalEvents;
   window.populateAboutModal = populateAboutModal;
   window.populateAckModal = populateAckModal;
+  window.loadRoadmap = loadRoadmap;
 }

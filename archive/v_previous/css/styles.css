@@ -261,50 +261,6 @@ section {
   border-radius: var(--radius);
 }
 
-.files-progress {
-  margin-left: var(--spacing-sm);
-  display: flex;
-  width: 150px;
-  height: 0.75rem;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  overflow: hidden;
-  background-color: var(--bg-tertiary);
-  position: relative;
-}
-
-.files-progress-segment {
-  height: 100%;
-  cursor: pointer;
-  transition: var(--transition);
-}
-
-.files-progress-segment.zoomed {
-  transform: scaleY(1.5);
-  box-shadow: 0 0 0 2px var(--border);
-  z-index: 1;
-}
-
-.files-progress-tooltip {
-  position: absolute;
-  bottom: 100%;
-  left: 0;
-  padding: var(--spacing-xs) var(--spacing-sm);
-  background-color: var(--bg-primary);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  font-size: 0.75rem;
-  white-space: nowrap;
-  pointer-events: none;
-  opacity: 0;
-  transform: translate(-50%, -0.25rem);
-  transition: var(--transition);
-}
-
-.files-progress-tooltip.show {
-  opacity: 1;
-}
-
 section:hover {
   box-shadow: var(--shadow-lg);
 }
@@ -1738,48 +1694,6 @@ td input:checked + .slider:before {
   border: 1px solid var(--border);
 }
 
-.about-features {
-  margin-bottom: var(--spacing-xl);
-}
-
-.features-title {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: var(--primary);
-  margin-bottom: var(--spacing);
-  text-align: center;
-}
-
-.features-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: var(--spacing-sm);
-  margin-bottom: var(--spacing);
-}
-
-@media (max-width: 768px) {
-  .features-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-.feature-item {
-  background: var(--bg-secondary);
-  padding: var(--spacing);
-  border-radius: var(--radius);
-  border: 1px solid var(--border);
-  font-weight: 500;
-  color: var(--text-primary);
-  text-align: center;
-  transition: var(--transition);
-}
-
-.feature-item:hover {
-  background: var(--bg-tertiary);
-  border-color: var(--primary);
-  transform: translateY(-2px);
-  box-shadow: var(--shadow);
-}
 
 .about-alert {
   background: linear-gradient(135deg, #fef2f2, #fff8f8);
@@ -1959,10 +1873,6 @@ td input:checked + .slider:before {
 
   .about-title {
     font-size: 1.5rem;
-  }
-
-  .features-grid {
-    grid-template-columns: 1fr;
   }
 
   .resources-grid {

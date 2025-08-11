@@ -407,22 +407,6 @@
          Pagination controls limit display to selected items per page
          ============================================================================= -->
         <section class="table-section">
-          <div class="table-controls">
-            <button id="changeLogBtn" class="btn">Change Log</button>
-            <span class="table-disclaimer"
-              >All data is stored locally. Back up often.</span
-          >
-          <div class="items-per-page">
-            <span class="items-label">Items:</span>
-            <select class="pagination-select" id="itemsPerPage">
-              <option selected value="10">10</option>
-              <option value="15">15</option>
-              <option value="25">25</option>
-              <option value="50">50</option>
-              <option value="100">100</option>
-            </select>
-          </div>
-          </div>
           <table id="inventoryTable">
           <thead>
             <tr>
@@ -444,6 +428,22 @@
           </thead>
           <tbody></tbody>
         </table>
+          <div class="table-controls">
+            <span id="changeLogBtn" class="change-log-label">Change Log</span>
+            <span class="table-disclaimer"
+              >All data is stored locally. Back up often.</span
+            >
+            <div class="items-per-page">
+              <span class="items-label">Items:</span>
+              <select class="pagination-select" id="itemsPerPage">
+                <option selected value="10">10</option>
+                <option value="15">15</option>
+                <option value="25">25</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+              </select>
+            </div>
+          </div>
         <!-- Pagination Controls -->
         <section class="pagination-section">
           <div class="pagination-container">
@@ -1042,10 +1042,19 @@
       <div class="modal-content">
         <div class="modal-header">
           <h2>Storage Report</h2>
-          <button aria-label="Close modal" class="modal-close" id="storageReportCloseBtn">×</button>
+          <button
+            aria-label="Close modal"
+            class="modal-close"
+            id="storageReportCloseBtn"
+          >
+            ×
+          </button>
         </div>
-        <div class="modal-body" style="height: 80vh; padding: 0;">
-          <iframe id="storageReportFrame" style="width: 100%; height: 100%; border: none;"></iframe>
+        <div class="modal-body">
+          <iframe
+            id="storageReportFrame"
+            style="width: 100%; height: 100%; border: none"
+          ></iframe>
         </div>
       </div>
     </div>
@@ -1103,7 +1112,7 @@
       <div class="storage-line">Storage: <span id="storageUsage"></span> <progress id="storageUsageBar" max="5120" value="0"></progress> <a href="#" id="storageReportLink">Storage report</a></div>
       <div class="footer-meta">
         <span>Thank you for using StackTrackr (<span id="footerVersion"></span>). © 2025 <span id="footerDomain">stacktrackr.com</span>.</span>
-        <span class="footer-links"><a href="/">Current build</a> | <a href="../v_previous2/index.html">Older build</a></span>
+        <span class="footer-links"><a href="../../index.html">Current build</a> | <a href="https://github.com/lbruton/StackTrackr/issues" target="_blank" rel="noopener">Report issues</a></span>
       </div>
     </footer>
     <!-- =============================================================================
@@ -1272,7 +1281,7 @@
               <div class="section-title">🗺️ Development Roadmap</div>
               <p>
                 See the
-                <a href="../docs/roadmap.md" target="_blank" rel="noopener"
+                <a href="docs/roadmap.md" target="_blank" rel="noopener"
                   >project roadmap</a
                 >
                 for upcoming patch plans.
@@ -1299,6 +1308,22 @@
                 📜 View Full Changelog
               </button>
             </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal" id="versionModal" style="display: none">
+      <div class="modal-content about-modal-content">
+        <div class="modal-header about-modal-header">
+          <h1 class="about-title">
+            What's New <span id="versionModalVersion"></span>
+          </h1>
+          <button aria-label="Close modal" class="modal-close" id="versionCloseBtn">×</button>
+        </div>
+        <div class="modal-body about-modal-body">
+          <div id="versionChanges"></div>
+          <div class="alert-actions">
+            <button class="btn btn-primary" id="versionAcceptBtn">Accept and continue</button>
           </div>
         </div>
       </div>
@@ -1362,7 +1387,9 @@
         <div class="modal-body">
           <div class="storage-line">
             Storage Breakdown:
-            <div class="files-progress" id="filesProgress"></div>
+            <div class="files-progress" id="filesProgress">
+              <div class="files-progress-tooltip" id="filesProgressTooltip"></div>
+            </div>
           </div>
           <div class="settings-card-grid">
             <div class="settings-card">
@@ -1870,10 +1897,11 @@
        External libraries (Chart.js, jsPDF, PapaParse, XLSX) loaded via CDN
        ============================================================================= -->
 
-    <script defer src="./js/constants.js"></script>
-    <script defer src="./js/state.js"></script>
-    <script defer src="./js/utils.js"></script>
-    <script defer src="./js/changeLog.js"></script>
+<script defer src="./js/constants.js"></script>
+<script defer src="./js/state.js"></script>
+<script defer src="./js/utils.js"></script>
+<script defer src="./js/versionCheck.js"></script>
+<script defer src="./js/changeLog.js"></script>
     <script defer src="./js/charts.js"></script>
     <script defer src="./js/theme.js"></script>
     <script defer src="./js/search.js"></script>
