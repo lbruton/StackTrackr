@@ -1,13 +1,16 @@
 # StackTrackr — Changelog
 
 
-> **Latest release: v3.04.02**
+> **Latest release: v3.04.03**
 
 
 For upcoming work, see [roadmap](roadmap.md).
 
 ## 📋 Version History
 
+
+### Version 3.04.03 – Search input restore (2025-08-11)
+- Ensures search box filters inventory table in real time
 
 ### Version 3.04.02 – Numista header trimming (2025-08-11)
 - Accepts Numista CSV exports with trailing spaces in headers
