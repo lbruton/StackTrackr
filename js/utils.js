@@ -604,21 +604,39 @@ const downloadStorageReport = () => {
 };
 
 /**
- * Opens a popup window with the storage report HTML
+ * Displays the storage report HTML inside a modal iframe
  */
 const openStorageReportPopup = () => {
   const htmlContent = generateStorageReportHTML();
-  const width = 1000;
-  const height = 800;
-  const left = window.screenX + Math.max(0, (window.innerWidth - width) / 2);
-  const top = window.screenY + Math.max(0, (window.innerHeight - height) / 2);
-  const popup = window.open('', 'storageReport', `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes`);
-  if (popup) {
-    popup.document.write(htmlContent);
-    popup.document.close();
-  } else {
-    alert('Popup blocked. Please allow popups for this site.');
+  const modal = document.getElementById('storageReportModal');
+  const iframe = document.getElementById('storageReportFrame');
+
+  if (!modal || !iframe) {
+    alert('Storage report modal not found.');
+    return;
   }
+
+  iframe.srcdoc = htmlContent;
+
+  const closeBtn = document.getElementById('storageReportCloseBtn');
+
+  const closeModal = () => {
+    modal.style.display = 'none';
+    document.body.style.overflow = '';
+  };
+
+  if (!modal.dataset.initialized) {
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) closeModal();
+    });
+    if (closeBtn) {
+      closeBtn.addEventListener('click', closeModal);
+    }
+    modal.dataset.initialized = 'true';
+  }
+
+  modal.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
 };
 /**
  * Generates comprehensive HTML storage report with theme support
@@ -2051,3 +2069,4 @@ This archive contains a complete snapshot of your StackTrackr storage data.`;
 // Make storage report functions globally available
 window.updateStorageStats = updateStorageStats;
 window.downloadStorageReport = downloadStorageReport;
+window.openStorageReportPopup = openStorageReportPopup;

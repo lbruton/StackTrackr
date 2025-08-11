@@ -8,6 +8,9 @@
 
 ## 📋 Version History
 
+### Version 3.03.03a – Storage Report Modal (2025-08-10)
+- Storage report now opens within an in-app modal using an iframe, replacing the previous popup window
+
 ### Version 3.03.02a – Archive Workflow & Versioning Guide (2025-08-10)
 - Archived previous build to `archive/previous`
 - Added archived footer link back to root and updated workflow checklist
