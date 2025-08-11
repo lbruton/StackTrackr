@@ -644,15 +644,15 @@ const renderTable = () => {
       <td class="shrink" data-column="numista">${item.numistaId ? `<a href="https://en.numista.com/catalogue/pieces${item.numistaId}.html" target="_blank" rel="noopener" title="View on Numista">${sanitizeHtml(item.numistaId)}</a>` : ''}</td>
       <td class="shrink" data-column="qty">${filterLink('qty', item.qty, 'var(--text-primary)')}</td>
       <td class="shrink" data-column="weight">${filterLink('weight', item.weight, 'var(--text-primary)', parseFloat(item.weight).toFixed(2))}</td>
-      <td class="shrink" data-column="purchasePrice">${filterLink('price', item.price, 'var(--text-primary)', formatDollar(item.price))}</td>
+      <td class="shrink" data-column="purchasePrice">${item.price > 0 ? filterLink('price', item.price, 'var(--text-primary)', formatDollar(item.price)) : ''}</td>
       <td class="shrink" data-column="spot">${filterLink('spotPriceAtPurchase', spotValue, 'var(--text-primary)', spotDisplay)}</td>
       <td class="shrink" data-column="premium" style="color: ${item.isCollectable ? 'var(--text-muted)' : (item.totalPremium > 0 ? 'var(--warning)' : 'inherit')}">${filterLink('totalPremium', premiumValue, 'var(--text-primary)', premiumDisplay)}</td>
       <td class="shrink" data-column="purchaseLocation">${item.purchaseLocation ? filterLink('purchaseLocation', item.purchaseLocation, getPurchaseLocationColor(item.purchaseLocation)) : ''}</td>
-      <td class="shrink" data-column="storageLocation">${item.storageLocation ? filterLink('storageLocation', item.storageLocation, getStorageLocationColor(item.storageLocation)) : ''}</td>
+      <td class="shrink" data-column="storageLocation">${item.storageLocation && item.storageLocation !== 'Unknown' ? filterLink('storageLocation', item.storageLocation, getStorageLocationColor(item.storageLocation)) : ''}</td>
       <td class="shrink" data-column="collectable"><button type="button" class="btn action-btn collectable-btn ${item.isCollectable ? 'success' : ''}" onclick="toggleCollectable(${originalIdx})" aria-label="Toggle collectable status for ${sanitizeHtml(item.name)}" title="Toggle collectable status">${item.isCollectable ? 'Yes' : 'No'}</button></td>
-      <td class="shrink" data-column="edit"><button type="button" class="btn action-btn edit-btn" onclick="editItem(${originalIdx})" aria-label="Edit ${sanitizeHtml(item.name)}" title="Edit ${sanitizeHtml(item.name)}">✎</button></td>
-      <td class="shrink" data-column="notes"><button type="button" class="btn action-btn notes-btn ${item.notes && item.notes.trim() ? 'success' : ''}" onclick="showNotes(${originalIdx})" aria-label="View notes" title="View notes">📓</button></td>
-      <td class="shrink" data-column="delete"><button class="btn action-btn danger" onclick="deleteItem(${originalIdx})" aria-label="Delete item" title="Delete item">🗑️</button></td>
+      <td class="shrink" data-column="edit"><span class="action-icon" role="button" tabindex="0" onclick="editItem(${originalIdx})" aria-label="Edit ${sanitizeHtml(item.name)}" title="Edit ${sanitizeHtml(item.name)}">✎</span></td>
+      <td class="shrink" data-column="notes"><span class="action-icon ${item.notes && item.notes.trim() ? 'success' : ''}" role="button" tabindex="0" onclick="showNotes(${originalIdx})" aria-label="View notes" title="View notes">📓</span></td>
+      <td class="shrink" data-column="delete"><span class="action-icon danger" role="button" tabindex="0" onclick="deleteItem(${originalIdx})" aria-label="Delete item" title="Delete item">🗑️</span></td>
       </tr>
       `);
     }
@@ -924,9 +924,9 @@ const editItem = (idx, logIdx = null) => {
   elements.editQty.value = item.qty;
   elements.editType.value = item.type;
   elements.editWeight.value = parseFloat(item.weight).toFixed(2);
-  elements.editPrice.value = item.price;
+  elements.editPrice.value = item.price > 0 ? item.price : '';
   elements.editPurchaseLocation.value = item.purchaseLocation;
-  elements.editStorageLocation.value = item.storageLocation || '';
+  elements.editStorageLocation.value = item.storageLocation && item.storageLocation !== 'Unknown' ? item.storageLocation : '';
   
   // Add fallback for notes field
   const notesField = elements.editNotes || document.getElementById('editNotes');
