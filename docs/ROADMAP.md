@@ -4,6 +4,7 @@
 
 - **v3.03.05a - Column Visibility Refinement**: Fine-tune mobile column hiding rules for clarity.
 - **v3.03.06a - Responsive Inventory Table**: Implement a fully responsive inventory table that adapts layout to screen size.
+- **v3.03.06a - Files Modal Progress Bar**: Add progress bar and hover tooltips to the Files modal.
 
 ## 🎯 Milestone: Version 3.5.0
 **Target: Complete UI reorganization, enhanced data management, and multi-currency support**
