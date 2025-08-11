@@ -407,22 +407,6 @@
          Pagination controls limit display to selected items per page
          ============================================================================= -->
         <section class="table-section">
-          <div class="table-controls">
-            <button id="changeLogBtn" class="btn">Change Log</button>
-            <span class="table-disclaimer"
-              >All data is stored locally. Back up often.</span
-          >
-          <div class="items-per-page">
-            <span class="items-label">Items:</span>
-            <select class="pagination-select" id="itemsPerPage">
-              <option selected value="10">10</option>
-              <option value="15">15</option>
-              <option value="25">25</option>
-              <option value="50">50</option>
-              <option value="100">100</option>
-            </select>
-          </div>
-          </div>
           <table id="inventoryTable">
           <thead>
             <tr>
@@ -444,6 +428,22 @@
           </thead>
           <tbody></tbody>
         </table>
+          <div class="table-controls">
+            <span id="changeLogBtn" class="change-log-label">Change Log</span>
+            <span class="table-disclaimer"
+              >All data is stored locally. Back up often.</span
+            >
+            <div class="items-per-page">
+              <span class="items-label">Items:</span>
+              <select class="pagination-select" id="itemsPerPage">
+                <option selected value="10">10</option>
+                <option value="15">15</option>
+                <option value="25">25</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+              </select>
+            </div>
+          </div>
         <!-- Pagination Controls -->
         <section class="pagination-section">
           <div class="pagination-container">
