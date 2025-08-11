@@ -1,10 +1,14 @@
 # StackTrackr — Changelog
 
-> **Latest release: v3.03.08e**
+> **Latest release: v3.03.08f**
 
 For upcoming work, see [roadmap](roadmap.md).
 
 ## 📋 Version History
+
+### Version 3.03.08f – CSV import field sanitization (2025-08-10)
+- CSV imports now leave invalid fields blank instead of skipping rows
+- Users can choose to merge imported data with existing inventory or override it
 
 ### Version 3.03.08e – Numista CSV storage (2025-08-10)
 - Stores imported Numista CSV in raw form within localStorage

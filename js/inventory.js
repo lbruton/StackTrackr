@@ -981,116 +981,90 @@ const importCsv = (file) => {
       header: true,
       skipEmptyLines: true,
       complete: function(results) {
-      const imported = [];
-      const skippedDetails = [];
-      const totalRows = results.data.length;
-      startImportProgress(totalRows);
-      let processed = 0;
-      let importedCount = 0;
+        const imported = [];
+        const totalRows = results.data.length;
+        startImportProgress(totalRows);
+        let processed = 0;
+        let importedCount = 0;
 
-      for (const [index, row] of results.data.entries()) {
-        processed++;
-        const metal = row['Metal'] || 'Silver';
-        const name = row['Name'] || row['name'];
-        const qty = parseInt(row['Qty'] || row['qty'] || 1, 10);
-        const type = row['Type'] || row['type'] || 'Other';
-        const weight = parseFloat(row['Weight(oz)'] || row['weight']);
-        const priceStr = row['Purchase Price'] || row['price'];
-        let price = parseFloat(
-          typeof priceStr === "string"
-            ? priceStr.replace(/[^0-9.-]+/g, "")
-            : priceStr,
-        );
-        if (price < 0) price = 0;
-        const purchaseLocation = row['Purchase Location'] || "Unknown";
-        const storageLocation = row['Storage Location'] || "Unknown";
-        const notes = row['Notes'] || "";
-        const date = parseDate(row['Date']); // Using the new date parser
+        for (const row of results.data) {
+          processed++;
+          const metal = row['Metal'] || 'Silver';
+          const name = row['Name'] || row['name'];
+          const qty = row['Qty'] || row['qty'] || 1;
+          const type = row['Type'] || row['type'] || 'Other';
+          const weight = row['Weight(oz)'] || row['weight'];
+          const priceStr = row['Purchase Price'] || row['price'];
+          let price = typeof priceStr === 'string'
+            ? parseFloat(priceStr.replace(/[^\d.-]+/g, ''))
+            : parseFloat(priceStr);
+          if (price < 0) price = 0;
+          const purchaseLocation = row['Purchase Location'] || 'Unknown';
+          const storageLocation = row['Storage Location'] || 'Unknown';
+          const notes = row['Notes'] || '';
+          const date = parseDate(row['Date']);
 
-        // Get collectable status
-        const isCollectable = row['Collectable'] === 'Yes' || row['Collectable'] === 'true' || row['isCollectable'] === 'true';
+          const isCollectable = row['Collectable'] === 'Yes' || row['Collectable'] === 'true' || row['isCollectable'] === 'true';
 
-        // Get spot price from CSV if available
-        let spotPriceAtPurchase;
-        if (row['Spot Price ($/oz)']) {
-          // Extract numeric value from formatted string like "$1,234.56"
-          const spotStr = row['Spot Price ($/oz)'].toString();
-          spotPriceAtPurchase = parseFloat(spotStr.replace(/[^0-9.-]+/g, ""));
-        } else if (row['spotPriceAtPurchase']) {
-          spotPriceAtPurchase = parseFloat(row['spotPriceAtPurchase']);
-        } else {
-          // Fall back to current spot price if not in CSV and not collectable
-          const metalKey = metal.toLowerCase();
-          spotPriceAtPurchase = isCollectable ? 0 : spotPrices[metalKey];
-        }
+          let spotPriceAtPurchase;
+          if (row['Spot Price ($/oz)']) {
+            const spotStr = row['Spot Price ($/oz)'].toString();
+            spotPriceAtPurchase = parseFloat(spotStr.replace(/[^0-9.-]+/g, ''));
+          } else if (row['spotPriceAtPurchase']) {
+            spotPriceAtPurchase = parseFloat(row['spotPriceAtPurchase']);
+          } else {
+            const metalKey = metal.toLowerCase();
+            spotPriceAtPurchase = isCollectable ? 0 : spotPrices[metalKey];
+          }
 
-        // Calculate premium per ounce (only for non-collectible items)
-        let premiumPerOz = 0;
-        let totalPremium = 0;
+          let premiumPerOz = 0;
+          let totalPremium = 0;
+          if (!isCollectable) {
+            const pricePerOz = price / parseFloat(weight);
+            premiumPerOz = pricePerOz - spotPriceAtPurchase;
+            totalPremium = premiumPerOz * parseFloat(qty) * parseFloat(weight);
+          }
 
-        if (!isCollectable) {
-          const pricePerOz = price / weight;
-          premiumPerOz = pricePerOz - spotPriceAtPurchase;
-          totalPremium = premiumPerOz * qty * weight;
-        }
+          const item = sanitizeImportedItem({
+            metal,
+            name,
+            qty,
+            type,
+            weight,
+            price,
+            date,
+            purchaseLocation,
+            storageLocation,
+            notes,
+            spotPriceAtPurchase,
+            premiumPerOz,
+            totalPremium,
+            isCollectable
+          });
 
-        // Create item object for validation
-        const itemToValidate = {
-          metal,
-          name,
-          qty,
-          type,
-          weight,
-          price,
-          date,
-          purchaseLocation,
-          storageLocation,
-          notes,
-          spotPriceAtPurchase,
-          premiumPerOz,
-          totalPremium,
-          isCollectable
-        };
-
-        // Validate the item
-        const validation = validateInventoryItem(itemToValidate);
-        if (!validation.isValid) {
-          const reason = validation.errors.join(', ');
-          skippedDetails.push(`Row ${index + 2}: ${reason}`);
+          imported.push(item);
+          importedCount++;
           updateImportProgress(processed, importedCount, totalRows);
-          continue;
         }
 
-        imported.push(itemToValidate);
-        importedCount++;
-        updateImportProgress(processed, importedCount, totalRows);
-      }
+        endImportProgress();
 
-      for (const err of results.errors) {
-        skippedDetails.push(`Row ${err.row + 1}: ${err.message}`);
-      }
+        if (imported.length === 0) return alert('No items to import.');
 
-      endImportProgress();
+        const override = confirm(`Import ${imported.length} items?\nOK = Override, Cancel = Merge`);
+        if (override) {
+          inventory = imported;
+        } else {
+          inventory = inventory.concat(imported);
+        }
 
-      if (skippedDetails.length > 0) {
-        alert('Skipped entries:\n' + skippedDetails.join('\n'));
-      }
-
-      if (imported.length === 0) return alert("No valid items to import.");
-
-      let msg = "Replace current inventory with imported file?";
-      if (skippedDetails.length > 0) msg += `\n(${skippedDetails.length} rows skipped)`;
-
-      if (confirm(msg)) {
-        inventory = imported;
         saveInventory();
         renderTable();
-        if (typeof updateStorageStats === "function") {
+        if (typeof updateStorageStats === 'function') {
           updateStorageStats();
         }
-      }
 
-        this.value = "";
+        this.value = '';
       },
       error: function(error) {
         endImportProgress();
@@ -1130,7 +1104,6 @@ const importNumistaCsv = (file) => {
         const results = Papa.parse(storedCsv, { header: true, skipEmptyLines: true });
         const rawTable = results.data;
         const imported = [];
-        const skippedDetails = [];
         const totalRows = rawTable.length;
         startImportProgress(totalRows);
         let processed = 0;
@@ -1144,7 +1117,7 @@ const importNumistaCsv = (file) => {
           return "";
         };
 
-        for (const [index, row] of rawTable.entries()) {
+        for (const row of rawTable) {
           processed++;
 
           const numistaId = (getValue(row, ['N# number', 'Numista #', 'Numista number', 'Numista id']) || '').toString().trim();
@@ -1192,7 +1165,7 @@ const importNumistaCsv = (file) => {
           const premiumPerOz = weight ? purchasePrice / weight - spotPriceAtPurchase : 0;
           const totalPremium = premiumPerOz * qty * weight;
 
-          const itemToValidate = {
+          const item = sanitizeImportedItem({
             metal,
             name,
             qty,
@@ -1210,43 +1183,28 @@ const importNumistaCsv = (file) => {
             isCollectable,
             numistaId,
             issuedYear
-          };
+          });
 
-          const validation = validateInventoryItem(itemToValidate);
-          if (!validation.isValid) {
-            const reason = validation.errors.join(', ');
-            skippedDetails.push(`Row ${index + 2}: ${reason}`);
-            updateImportProgress(processed, importedCount, totalRows);
-            continue;
-          }
-
-          imported.push(itemToValidate);
+          imported.push(item);
           importedCount++;
           updateImportProgress(processed, importedCount, totalRows);
         }
 
-        for (const err of results.errors) {
-          skippedDetails.push(`Row ${err.row + 1}: ${err.message}`);
-        }
-
         endImportProgress();
 
-        if (skippedDetails.length > 0) {
-          alert('Skipped entries:\n' + skippedDetails.join('\n'));
+        if (imported.length === 0) return alert('No items to import.');
+
+        const override = confirm(`Import ${imported.length} items?\nOK = Override, Cancel = Merge`);
+        if (override) {
+          inventory = imported;
+        } else {
+          inventory = inventory.concat(imported);
         }
 
-        if (imported.length === 0) return alert('No valid items to import.');
-
-        let msg = 'Replace current inventory with imported file?';
-        if (skippedDetails.length > 0) msg += `\n(${skippedDetails.length} rows skipped)`;
-
-        if (confirm(msg)) {
-          inventory = imported;
-          saveInventory();
-          renderTable();
-          if (typeof updateStorageStats === 'function') {
-            updateStorageStats();
-          }
+        saveInventory();
+        renderTable();
+        if (typeof updateStorageStats === 'function') {
+          updateStorageStats();
         }
       } catch (error) {
         endImportProgress();
