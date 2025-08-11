@@ -414,7 +414,7 @@ const filterInventoryAdvanced = () => {
  */
 const applyQuickFilter = (field, value) => {
   // If this exact filter is already active, remove it (toggle behavior)
-  if (activeFilters[field] === value) {
+  if (activeFilters[field]?.values?.[0] === value) {
     delete activeFilters[field];
     // Clean up legacy filters too
     if (field === 'composition' || field === 'type') {
@@ -422,14 +422,14 @@ const applyQuickFilter = (field, value) => {
     }
   } else {
     // Add or replace the filter for this field
-    activeFilters[field] = value;
-    
+    activeFilters[field] = { values: [value], exclude: false };
+
     // Update legacy filters for compatibility
     if (field === 'composition' || field === 'type') {
       columnFilters[field] = value;
     }
   }
-  
+
   // Don't clear search query - allow search + filters to work together
   currentPage = 1;
   renderTable();

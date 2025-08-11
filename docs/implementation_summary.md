@@ -1,3 +1,20 @@
+# Implementation Summary: Quick Filter Object Storage
+
+> **Latest release: v3.04.12**
+
+## Version Update: 3.04.11 → 3.04.12
+
+## User Requirements Implemented
+
+- Quick filter now stores criteria as an object with exclude flag for consistency with advanced filters
+
+## Technical Changes Made
+
+### Files Modified:
+1. **`js/filters.js`**: Updated `applyQuickFilter` to use object criteria and sync legacy `columnFilters`
+2. **`js/constants.js`**: Bumped version to 3.04.12
+3. **Documentation**: Updated changelog, roadmap, status, structure, and function table
+
 # Implementation Summary: Collectable Column Icon
 
 > **Latest release: v3.04.11**
