@@ -149,7 +149,7 @@ const API_PROVIDERS = {
  * Example: 3.03.02a → branch 3, release 03, patch 02, alpha
  */
 
-const APP_VERSION = "3.04.11";
+const APP_VERSION = "3.04.12";
 
 /**
  * @constant {string} DEFAULT_CURRENCY - Default currency code for monetary formatting

@@ -1,11 +1,14 @@
 # StackTrackr — Changelog
 
-> **Latest release: v3.04.11**
+> **Latest release: v3.04.12**
 
 
 For upcoming work, see [roadmap](roadmap.md).
 
 ## 📋 Version History
+
+### Version 3.04.12 – Quick filter object storage (2025-08-11)
+- Quick filter stores criteria as object for exclude support
 
 ### Version 3.04.11 – Collectable column icon (2025-08-11)
 - Replaced "Collectable" table header text with treasure chest icon and aria label
