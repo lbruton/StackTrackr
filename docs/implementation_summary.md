@@ -1,3 +1,25 @@
+# Implementation Summary: Inventory Filter Dropdown
+
+> **Latest release: v3.03.08m**
+
+## Version Update: 3.03.08l → 3.03.08m
+
+## User Requirements Implemented
+
+- Added metal filter dropdown to inventory title bar
+
+## Technical Changes Made
+
+### Files Modified:
+1. **`index.html`**: Added metal filter dropdown
+2. **`css/styles.css`**: Styled metal filter select
+3. **`js/state.js`**: Cached metal filter element
+4. **`js/init.js`**: Initialized metal filter
+5. **`js/events.js`**: Added metal filter listener and reset
+6. **`js/search.js`**: Synced dropdown with column filters
+7. **`js/constants.js`**: Bumped version to 3.03.08m
+8. **Documentation**: Updated changelog, function table, implementation summary, roadmap, status, structure, and README
+
 # Implementation Summary: Search Fix & Composition Parsing
 
 > **Latest release: v3.03.08l**

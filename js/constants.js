@@ -99,7 +99,7 @@ const API_PROVIDERS = {
  * Example: 3.03.02a → branch 3, release 03, patch 02, alpha
  */
 
-const APP_VERSION = "3.03.08l";
+const APP_VERSION = "3.03.08m";
 
 
 /**

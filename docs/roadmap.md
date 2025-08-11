@@ -15,6 +15,7 @@ This roadmap outlines upcoming patch releases for the v3.03.x series.
 - **v3.03.08j** – Composition display fix *(completed)*
 - **v3.03.08k** – Type dropdown and UI fixes *(completed)*
 - **v3.03.08l** – Search box fix and composition parsing *(completed)*
+- **v3.03.08m** – Inventory filter dropdown *(completed)*
 - **v3.03.12a** – Advanced reporting and analytics features.
 - **v3.03.13a** – Mobile application companion.
 

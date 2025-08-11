@@ -65,6 +65,9 @@ const applyColumnFilter = (field, value) => {
   } else {
     columnFilters[field] = value;
   }
+  if (field === 'composition' && elements.metalFilter) {
+    elements.metalFilter.value = columnFilters[field] || '';
+  }
   searchQuery = '';
   if (elements.searchInput) elements.searchInput.value = '';
   currentPage = 1;
