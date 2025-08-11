@@ -110,6 +110,12 @@ const APP_VERSION = "3.03.08i";
  */
 const getVersionString = (prefix = "v") => `${prefix}${APP_VERSION}`;
 
+/** Maximum upload size in bytes for local imports (2MB) */
+const MAX_LOCAL_FILE_SIZE = 2 * 1024 * 1024;
+
+/** Flag indicating whether cloud backup is enabled */
+let cloudBackupEnabled = false;
+
 /**
  * Inserts formatted version string into a target element
  *

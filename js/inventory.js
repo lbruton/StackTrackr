@@ -98,7 +98,7 @@ const createBackupZip = async () => {
         item.isCollectable ? 'N/A' : formatDollar(item.premiumPerOz),
         item.isCollectable ? 'N/A' : formatDollar(item.totalPremium),
         item.purchaseLocation,
-        item.storageLocation || 'Unknown',
+        item.storageLocation || '',
         item.notes || '',
         item.date,
         item.isCollectable ? 'Yes' : 'No'
@@ -124,7 +124,7 @@ const createBackupZip = async () => {
         item.isCollectable ? null : item.premiumPerOz,
         item.isCollectable ? null : item.totalPremium,
         item.purchaseLocation,
-        item.storageLocation || 'Unknown',
+        item.storageLocation || '',
         item.notes || '',
         item.date,
         item.isCollectable ? 'Yes' : 'No'
@@ -301,7 +301,7 @@ const generateBackupHtml = (sortedInventory, timeFormatted) => {
           <td>${parseFloat(item.weight).toFixed(2)}</td>
           <td>${formatDollar(item.price)}</td>
           <td>${item.purchaseLocation}</td>
-          <td>${item.storageLocation || 'Unknown'}</td>
+          <td>${item.storageLocation || ''}</td>
           <td>${item.notes || ''}</td>
           <td>${item.date}</td>
           <td>${item.isCollectable ? 'Yes' : 'No'}</td>
@@ -585,7 +585,7 @@ const renderTable = () => {
       <td class="shrink" data-column="spot">${item.isCollectable ? 'N/A' : (item.spotPriceAtPurchase > 0 ? formatDollar(item.spotPriceAtPurchase) : 'N/A')}</td>
       <td class="shrink" data-column="premium" style="color: ${item.isCollectable ? 'var(--text-muted)' : (item.totalPremium > 0 ? 'var(--warning)' : 'inherit')}">${item.isCollectable ? 'N/A' : formatDollar(item.totalPremium)}</td>
       <td class="shrink" data-column="purchaseLocation">${filterLink('purchaseLocation', item.purchaseLocation, getPurchaseLocationColor(item.purchaseLocation))}</td>
-      <td class="shrink" data-column="storageLocation">${filterLink('storageLocation', item.storageLocation || 'Unknown', getStorageLocationColor(item.storageLocation || 'Unknown'))}</td>
+      <td class="shrink" data-column="storageLocation">${item.storageLocation ? filterLink('storageLocation', item.storageLocation, getStorageLocationColor(item.storageLocation)) : ''}</td>
       <td class="shrink" data-column="collectable"><button type="button" class="btn action-btn collectable-btn ${item.isCollectable ? 'success' : ''}" onclick="toggleCollectable(${originalIdx})" aria-label="Toggle collectable status for ${sanitizeHtml(item.name)}" title="Toggle collectable status">${item.isCollectable ? 'Yes' : 'No'}</button></td>
       <td class="shrink" data-column="notes"><button type="button" class="btn action-btn notes-btn ${item.notes && item.notes.trim() ? 'success' : ''}" onclick="showNotes(${originalIdx})" aria-label="View notes" title="View notes">${item.notes && item.notes.trim() ? 'Yes' : 'No'}</button></td>
       <td class="shrink" data-column="delete"><button class="btn action-btn danger" onclick="deleteItem(${originalIdx})" aria-label="Delete item" title="Delete item">Delete</button></td>
@@ -1034,7 +1034,7 @@ const importCsv = (file, override = false) => {
             : parseFloat(priceStr);
           if (price < 0) price = 0;
           const purchaseLocation = row['Purchase Location'] || 'Unknown';
-          const storageLocation = row['Storage Location'] || 'Unknown';
+          const storageLocation = row['Storage Location'] || '';
           const notes = row['Notes'] || '';
           const date = parseDate(row['Date']);
 
@@ -1058,6 +1058,8 @@ const importCsv = (file, override = false) => {
             premiumPerOz = pricePerOz - spotPriceAtPurchase;
             totalPremium = premiumPerOz * parseFloat(qty) * parseFloat(weight);
           }
+
+          addCompositionOption(metal);
 
           const item = sanitizeImportedItem({
             metal,
@@ -1160,6 +1162,9 @@ const importNumistaCsv = (file, override = false) => {
           const name = year.length >= 4 ? `${title} ${year}`.trim() : title;
           const issuedYear = year.length >= 4 ? year : '';
           const composition = getValue(row, ['Composition', 'Metal']) || '';
+
+          addCompositionOption(composition);
+
           let metal = parseNumistaMetal(composition);
           const qty = parseInt(getValue(row, ['Quantity', 'Qty', 'Quantity owned']) || 1, 10);
 
@@ -1189,7 +1194,7 @@ const importNumistaCsv = (file, override = false) => {
           const purchaseLocRaw = getValue(row, ['Acquisition place', 'Acquired from', 'Purchase place']);
           const purchaseLocation = purchaseLocRaw && purchaseLocRaw.trim() ? purchaseLocRaw.trim() : 'unknown';
           const storageLocRaw = getValue(row, ['Storage location', 'Stored at', 'Storage place']);
-          const storageLocation = storageLocRaw && storageLocRaw.trim() ? storageLocRaw.trim() : 'unknown';
+          const storageLocation = storageLocRaw && storageLocRaw.trim() ? storageLocRaw.trim() : '';
 
           const dateStrRaw = getValue(row, ['Acquisition date', 'Date acquired', 'Date']);
           const dateStr = dateStrRaw && dateStrRaw.trim() ? dateStrRaw.trim() : todayStr();
@@ -1289,7 +1294,7 @@ const exportCsv = () => {
       i.isCollectable ? 'N/A' : formatDollar(i.premiumPerOz),
       i.isCollectable ? 'N/A' : formatDollar(i.totalPremium),
       i.purchaseLocation,
-      i.storageLocation || 'Unknown',
+      i.storageLocation || '',
       i.notes || '',
       i.date,
       i.isCollectable ? 'Yes' : 'No'
@@ -1610,7 +1615,7 @@ const exportExcel = () => {
       i.isCollectable ? null : i.premiumPerOz,
       i.isCollectable ? null : i.totalPremium,
       i.purchaseLocation,
-      i.storageLocation || 'Unknown',
+      i.storageLocation || '',
       i.notes || '',
       i.date,
       i.isCollectable ? 'Yes' : 'No'
@@ -1658,7 +1663,7 @@ const exportPdf = () => {
     item.isCollectable ? 'N/A' : formatDollar(item.premiumPerOz),
     item.isCollectable ? 'N/A' : formatDollar(item.totalPremium),
     item.purchaseLocation,
-    item.storageLocation || 'Unknown',
+    item.storageLocation || '',
     item.notes || '',
     item.date,
     item.isCollectable ? 'Yes' : 'No'

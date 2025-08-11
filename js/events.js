@@ -387,7 +387,7 @@ const setupEventListeners = () => {
           const purchaseLocation =
             elements.purchaseLocation.value.trim() || "Unknown";
           const storageLocation =
-            elements.storageLocation.value.trim() || "Unknown";
+            elements.storageLocation.value.trim() || "";
           const notes = elements.itemNotes.value.trim() || "";
           const date = elements.itemDate.value || todayStr();
           const spotPriceInput = elements.itemSpotPrice.value.trim();
@@ -442,6 +442,8 @@ const setupEventListeners = () => {
             numistaId: "",
           });
 
+          addCompositionOption(metal);
+
           catalogMap[serial] = "";
           saveInventory();
           renderTable();
@@ -476,7 +478,7 @@ const setupEventListeners = () => {
           const purchaseLocation =
             elements.editPurchaseLocation.value.trim() || "Unknown";
           const storageLocation =
-            elements.editStorageLocation.value.trim() || "Unknown";
+            elements.editStorageLocation.value.trim() || "";
           const notes = elements.editNotes.value.trim() || "";
           const date = elements.editDate.value;
 
@@ -542,6 +544,8 @@ const setupEventListeners = () => {
             isCollectable,
             numistaId: elements.editCatalog.value.trim(),
           };
+
+          addCompositionOption(metal);
 
           catalogMap[serial] = inventory[editingIndex].numistaId;
           saveInventory();
@@ -932,7 +936,14 @@ const setupEventListeners = () => {
         "change",
         function (e) {
           if (e.target.files.length > 0) {
-            importCsv(e.target.files[0], csvImportOverride);
+
+            const file = e.target.files[0];
+            if (!checkFileSize(file)) {
+              alert("File exceeds 2MB limit. Enable cloud backup for larger uploads.");
+            } else {
+              importCsv(file, csvImportOverride);
+            }
+
           }
           this.value = "";
         },
@@ -1007,7 +1018,14 @@ const setupEventListeners = () => {
         "change",
         function (e) {
           if (e.target.files.length > 0) {
-            importNumistaCsv(e.target.files[0], numistaOverride);
+
+            const file = e.target.files[0];
+            if (!checkFileSize(file)) {
+              alert("File exceeds 2MB limit. Enable cloud backup for larger uploads.");
+            } else {
+              importNumistaCsv(file, numistaOverride);
+            }
+n
           }
           this.value = "";
         },
@@ -1113,6 +1131,39 @@ const setupEventListeners = () => {
         "click",
         () => (elements.cloudSyncModal.style.display = "none"),
         "Cloud Sync close",
+      );
+    }
+
+    // Remove Inventory Data Button
+    if (elements.removeInventoryDataBtn) {
+      safeAttachListener(
+        elements.removeInventoryDataBtn,
+        "click",
+        function () {
+          if (confirm("Remove all inventory items? This cannot be undone.")) {
+            localStorage.removeItem(LS_KEY);
+            loadInventory();
+            renderTable();
+            alert("Inventory data cleared.");
+          }
+        },
+        "Remove inventory data button",
+      );
+    }
+
+    // Clear Numista Cache Button
+    if (elements.clearNumistaCacheBtn) {
+      safeAttachListener(
+        elements.clearNumistaCacheBtn,
+        "click",
+        function () {
+          if (confirm("Clear Numista cache?")) {
+            localStorage.removeItem('numista-cache');
+            alert("Numista cache cleared.");
+            elements.clearNumistaCacheBtn.style.display = 'none';
+          }
+        },
+        "Clear Numista cache button",
       );
     }
 

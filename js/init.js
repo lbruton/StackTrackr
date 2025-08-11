@@ -108,6 +108,8 @@ document.addEventListener("DOMContentLoaded", () => {
     elements.addMappingBtn = safeGetElement("addMappingBtn");
     elements.applyMappingsBtn = safeGetElement("applyMappingsBtn");
     elements.clearMappingsBtn = safeGetElement("clearMappingsBtn");
+    elements.removeInventoryDataBtn = safeGetElement("removeInventoryDataBtn");
+    elements.clearNumistaCacheBtn = safeGetElement("clearNumistaCacheBtn");
     elements.boatingAccidentBtn = safeGetElement("boatingAccidentBtn");
 
     // Modal elements
@@ -305,6 +307,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Load data
     loadInventory();
+    inventory.forEach((i) => addCompositionOption(i.metal));
+    refreshCompositionOptions();
     loadSpotHistory();
 
     // Initialize API system

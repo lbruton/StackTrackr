@@ -32,6 +32,9 @@ let chartInstances = {
   apiHistoryChartPalladium: null,
 };
 
+/** @type {Set<string>} Available composition options */
+let compositionOptions = new Set(["Gold", "Silver", "Platinum", "Palladium", "Alloy"]);
+
 /** @type {Object} Cached DOM elements for performance */
 const elements = {
   // Spot price elements
@@ -92,6 +95,8 @@ const elements = {
   clearMappingsBtn: null,
 
   // Emergency reset button
+  removeInventoryDataBtn: null,
+  clearNumistaCacheBtn: null,
   boatingAccidentBtn: null,
 
   // Edit modal elements

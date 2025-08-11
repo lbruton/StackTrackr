@@ -67,6 +67,51 @@ const monitorPerformance = (fn, name, ...args) => {
 };
 
 /**
+ * Checks if a file exceeds the local upload size limit
+ *
+ * @param {File} file - File to validate
+ * @returns {boolean} True if file is within allowed size
+ */
+const checkFileSize = (file) => {
+  const limit = cloudBackupEnabled ? Infinity : MAX_LOCAL_FILE_SIZE;
+  return file.size <= limit;
+};
+
+/**
+ * Refreshes composition dropdown options in add/edit modals
+ */
+const refreshCompositionOptions = () => {
+  const priority = ["Gold", "Silver", "Platinum", "Palladium", "Alloy"];
+  const sorted = [...compositionOptions].sort((a, b) => {
+    const ai = priority.indexOf(a);
+    const bi = priority.indexOf(b);
+    if (ai !== -1 || bi !== -1) {
+      return (ai === -1 ? Infinity : ai) - (bi === -1 ? Infinity : bi);
+    }
+    return a.localeCompare(b);
+  });
+  [elements.itemMetal, elements.editMetal].forEach((sel) => {
+    if (!sel) return;
+    const current = sel.value;
+    sel.innerHTML = sorted
+      .map((opt) => `<option value="${opt}">${opt}</option>`)
+      .join("");
+    if (sorted.includes(current)) sel.value = current;
+  });
+};
+
+/**
+ * Adds a composition option and updates dropdowns
+ *
+ * @param {string} value - Composition to add
+ */
+const addCompositionOption = (value) => {
+  if (!value) return;
+  compositionOptions.add(value);
+  refreshCompositionOptions();
+};
+
+/**
  * Builds two-line HTML showing source and last sync info for a metal
  *
  * @param {string} metalName - Metal name ('Silver', 'Gold', 'Platinum', 'Palladium')
@@ -467,8 +512,8 @@ const validateInventoryItem = (item) => {
 const sanitizeImportedItem = (item) => {
   const sanitized = { ...item };
 
-  // Metal must be one of the supported types; otherwise blank
-  if (!['Silver', 'Gold', 'Platinum', 'Palladium'].includes(sanitized.metal)) {
+  // Ensure metal/composition is a string
+  if (typeof sanitized.metal !== 'string') {
     sanitized.metal = '';
   }
 

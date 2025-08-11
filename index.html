@@ -412,7 +412,7 @@
             <tr>
               <th class="shrink" data-column="date">Date</th>
               <th class="shrink" data-column="type">Type</th>
-              <th class="shrink" data-column="metal">Metal</th>
+              <th class="shrink" data-column="metal">Composition</th>
               <th class="expand" data-column="name">Name</th>
               <th class="shrink" data-column="qty">Qty</th>
               <th class="shrink" data-column="weight">Weight<br />(oz)</th>
@@ -754,7 +754,7 @@
           <form id="inventoryForm">
             <div class="grid grid-2">
               <div>
-                <label for="itemMetal">Metal</label>
+                <label for="itemMetal">Composition</label>
                 <select id="itemMetal">
                   <option value="Silver">Silver</option>
                   <option value="Gold">Gold</option>
@@ -876,7 +876,7 @@
           <!-- First row of edit form fields -->
           <div class="grid grid-2">
             <div>
-              <label for="editMetal">Metal</label>
+                <label for="editMetal">Composition</label>
               <select id="editMetal">
                 <option value="Silver">Silver</option>
                 <option value="Gold">Gold</option>
@@ -1499,12 +1499,13 @@
                     <button class="btn" id="numistaImportBtn">Import from Numista</button>
                     <div class="import-dropdown" id="numistaImportOptions">
                       <button class="btn" id="numistaOverride">Override</button>
-                    <button class="btn" id="numistaMerge">Merge</button>
-                  </div>
-                  <input type="file" id="numistaImportFile" accept=".csv" hidden />
-                    <div class="beta-warning">⚠️ Numista import is a beta feature</div>
 
-   z              </div>
+                      <button class="btn" id="numistaMerge">Merge</button>
+                    </div>
+                    <input type="file" id="numistaImportFile" accept=".csv" hidden />
+                    <div class="beta-warning">⚠️ Numista import is a beta feature</div>
+                  </div>
+
                 </div>
               </div>
             </div>
@@ -1522,9 +1523,15 @@
             </div>
 
             <div class="settings-card boating-accident-section">
-              <h3>Clear All Data</h3>
-              <p class="settings-subtext">Clear all data from the app.</p>
+              <h3>Clear Data</h3>
+              <p class="settings-subtext">Manage local application data.</p>
               <div class="backup-buttons">
+                <button class="btn warning" id="removeInventoryDataBtn">
+                  Remove Inventory Data
+                </button>
+                <button class="btn warning" id="clearNumistaCacheBtn" style="display:none">
+                  Clear Numista Cache
+                </button>
                 <button class="btn danger" id="boatingAccidentBtn">
                   🏴‍☠️ So, you've been in a boating accident? 🏴‍☠️
                 </button>

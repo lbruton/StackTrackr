@@ -2128,7 +2128,14 @@ td input:checked + .slider:before {
 
 .import-dropdown-wrapper {
   position: relative;
-  display: inline-block;
+
+  display: block;
+  width: 100%;
+}
+
+.import-dropdown-wrapper .btn {
+  width: 100%;
+
 }
 
 .import-dropdown {
@@ -2158,7 +2165,6 @@ td input:checked + .slider:before {
   font-size: 0.75rem;
   color: var(--warning);
 }
-
 
 /* =============================================================================
    SEARCH
@@ -2238,6 +2244,7 @@ td input:checked + .slider:before {
   text-align: center;
   margin: 0;
   line-height: 1;
+  width: 100%;
 }
 
 .import-export-grid label.btn {
