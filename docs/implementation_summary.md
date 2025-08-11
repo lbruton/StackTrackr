@@ -1,19 +1,20 @@
-# Implementation Summary: Multi-term Search
+# Implementation Summary: Search Sanitization
 
-> **Latest release: v3.04.04**
+> **Latest release: v3.04.05**
 
-## Version Update: 3.04.03 → 3.04.04
+## Version Update: 3.04.04 → 3.04.05
 
 ## User Requirements Implemented
 
-- Search box supports comma-separated queries and filters inventory as you type
+- Escape table cell values and sanitize search input to prevent search corruption
 
 ## Technical Changes Made
 
 ### Files Modified:
-1. **`js/search.js`** & **`js/filters.js`**: Enable comma-separated search terms and real-time filtering
-2. **`js/constants.js`**: Bumped version to 3.04.04
-3. **Documentation**: Updated changelog, status, roadmap, structure, function table, and version references
+1. **`js/inventory.js`**: Escape values used in filter links to block HTML injection
+2. **`js/search.js`, `js/events.js`**: Sanitize search input before filtering
+3. **`js/constants.js`**: Bumped version to 3.04.05
+4. **Documentation**: Updated changelog, status, roadmap, structure, function table, and version references
 
 # Implementation Summary: Search Input Restore
 

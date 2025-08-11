@@ -1,13 +1,15 @@
 # StackTrackr — Changelog
 
-
-> **Latest release: v3.04.04**
+> **Latest release: v3.04.05**
 
 
 For upcoming work, see [roadmap](roadmap.md).
 
 ## 📋 Version History
 
+
+### Version 3.04.05 – Search sanitization (2025-08-11)
+- Escaped table cell values and search input to prevent search corruption
 
 ### Version 3.04.04 – Multi-term search (2025-08-11)
 - Search box supports comma-separated terms and filters inventory in real time

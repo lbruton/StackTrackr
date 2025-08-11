@@ -1,7 +1,7 @@
 # Function Reference
 
 
-> **Latest release: v3.04.04**
+> **Latest release: v3.04.05**
 
 
 | File | Function | Description |
@@ -97,6 +97,7 @@
 | inventory.js | loadInventory | Loads inventory from localStorage with comprehensive data migration |
 | inventory.js | getNextSerial | Generates a unique serial number for inventory items |
 | inventory.js | getColor |  |
+| inventory.js | escapeAttribute | Escapes text for safe use in HTML attributes |
 | inventory.js | filterLink |  |
 | inventory.js | renderTable |  |
 | inventory.js | updateSummary | Calculates and updates all financial summary displays across the application |
