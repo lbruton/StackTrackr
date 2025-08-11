@@ -1,10 +1,13 @@
 # StackTrackr — Changelog
 
-> **Latest release: v3.03.08a**
+> **Latest release: v3.03.08b**
 
 For upcoming work, see [roadmap](roadmap.md).
 
 ## 📋 Version History
+
+### Version 3.03.08b – Files Modal Simplification (2025-08-10)
+- Removed storage breakdown progress bar from Files modal for a cleaner interface
 
 ### Version 3.03.08a – Version Update Changelog Modal (2025-08-10)
 - Stored app version in localStorage for version tracking
