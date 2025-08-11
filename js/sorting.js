@@ -21,8 +21,8 @@ const sortInventory = (data = inventory) => {
       case 3: valA = a.name; valB = b.name; break; // Name
       case 4: valA = a.qty; valB = b.qty; break; // Qty
       case 5: valA = a.weight; valB = b.weight; break; // Weight
-      case 6: valA = a.price; valB = b.price; break; // Purchase Price
-      case 7: valA = a.spotPriceAtPurchase; valB = b.spotPriceAtPurchase; break; // Spot at Purchase
+      case 6: valA = a.price; valB = b.price; break; // Price
+      case 7: valA = a.spotPriceAtPurchase; valB = b.spotPriceAtPurchase; break; // Spot
       case 8: valA = a.totalPremium; valB = b.totalPremium; break; // Premium
       case 9: valA = a.purchaseLocation; valB = b.purchaseLocation; break; // Purchase Location
       case 10: valA = a.storageLocation || 'Unknown'; valB = b.storageLocation || 'Unknown'; break; // Storage Location
