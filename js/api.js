@@ -58,6 +58,8 @@ const loadApiConfig = () => {
       }
       const usage = config.usage || {};
       const metals = config.metals || {};
+      const historyDays = config.historyDays || {};
+      const historyTimes = config.historyTimes || {};
       const currentMonth = currentMonthKey();
       const savedMonth = config.usageMonth;
       Object.keys(API_PROVIDERS).forEach((p) => {
@@ -74,6 +76,8 @@ const loadApiConfig = () => {
             if (typeof metals[p][m] === "undefined") metals[p][m] = true;
           });
         }
+        if (typeof historyDays[p] !== "number") historyDays[p] = 30;
+        if (!Array.isArray(historyTimes[p])) historyTimes[p] = [];
       });
       let needsSave = false;
       if (savedMonth !== currentMonth) {
@@ -93,6 +97,8 @@ const loadApiConfig = () => {
         },
         metals,
         usage,
+        historyDays,
+        historyTimes,
         usageMonth: currentMonth,
       };
       if (needsSave) {
@@ -105,9 +111,13 @@ const loadApiConfig = () => {
   }
   const usage = {};
   const metals = {};
+  const historyDays = {};
+  const historyTimes = {};
   Object.keys(API_PROVIDERS).forEach((p) => {
     usage[p] = { quota: DEFAULT_API_QUOTA, used: 0 };
     metals[p] = { silver: true, gold: true, platinum: true, palladium: true };
+    historyDays[p] = 30;
+    historyTimes[p] = [];
   });
   return {
     provider: "",
@@ -116,6 +126,8 @@ const loadApiConfig = () => {
     customConfig: { baseUrl: "", endpoint: "", format: "symbol" },
     metals,
     usage,
+    historyDays,
+    historyTimes,
     usageMonth: currentMonthKey(),
   };
 };
@@ -138,6 +150,8 @@ const saveApiConfig = (config) => {
       },
       metals: config.metals || {},
       usage: config.usage || {},
+      historyDays: config.historyDays || {},
+      historyTimes: config.historyTimes || {},
       usageMonth: config.usageMonth || currentMonthKey(),
     };
     Object.keys(config.keys || {}).forEach((p) => {
@@ -279,7 +293,18 @@ const updateProviderSettings = (provider) => {
     if (!config.historyDays) config.historyDays = {};
     config.historyDays[provider] = parseInt(historyInput.value) || 0;
   }
-  
+
+  // Update history times
+  const timesInput = document.getElementById(`historyTimes_${provider}`);
+  if (timesInput) {
+    if (!config.historyTimes) config.historyTimes = {};
+    const times = timesInput.value
+      .split(',')
+      .map(t => t.trim())
+      .filter(t => t);
+    config.historyTimes[provider] = times;
+  }
+
   saveApiConfig(config);
   updateBatchCalculation(provider);
 };
@@ -300,7 +325,13 @@ const setupProviderSettingsListeners = (provider) => {
   if (historyInput) {
     historyInput.addEventListener('input', () => updateProviderSettings(provider));
   }
-  
+
+  // History times change
+  const timesInput = document.getElementById(`historyTimes_${provider}`);
+  if (timesInput) {
+    timesInput.addEventListener('input', () => updateProviderSettings(provider));
+  }
+
   // Metal selection changes
   document.querySelectorAll(`.provider-metal[data-provider="${provider}"]`).forEach(checkbox => {
     checkbox.addEventListener('change', (e) => {
@@ -556,7 +587,14 @@ const showApiProvidersModal = () => {
         const days = config.historyDays?.[provider] || 30;
         historyInput.value = days;
       }
-      
+
+      // Set history times
+      const timesInput = document.getElementById(`historyTimes_${provider}`);
+      if (timesInput) {
+        const times = config.historyTimes?.[provider] || [];
+        timesInput.value = Array.isArray(times) ? times.join(',') : '';
+      }
+
       // Set metal selections
       const metals = config.metals?.[provider] || {};
       ['silver', 'gold', 'platinum', 'palladium'].forEach(metal => {
@@ -806,9 +844,10 @@ const calculateApiUsage = (selectedMetals, historyDays = 0, batchSupported = fal
  * @param {string} apiKey - API key
  * @param {Array} selectedMetals - Array of metal keys to fetch
  * @param {number} historyDays - Number of historical days to fetch
+ * @param {Array} historyTimes - Array of HH:MM times to fetch each day
  * @returns {Promise<Object>} Promise resolving to spot prices data
  */
-const fetchBatchSpotPrices = async (provider, apiKey, selectedMetals, historyDays = 0) => {
+const fetchBatchSpotPrices = async (provider, apiKey, selectedMetals, historyDays = 0, historyTimes = []) => {
   const providerConfig = API_PROVIDERS[provider];
   if (!providerConfig || !providerConfig.batchSupported) {
     throw new Error("Provider does not support batch requests");
@@ -826,6 +865,10 @@ const fetchBatchSpotPrices = async (provider, apiKey, selectedMetals, historyDay
       url = url.replace('{API_KEY}', apiKey)
               .replace('{METALS}', metals)
               .replace('{DAYS}', historyDays);
+      if (Array.isArray(historyTimes) && historyTimes.length) {
+        const timesParam = historyTimes.map(t => encodeURIComponent(t)).join(',');
+        url += `&times=${timesParam}`;
+      }
     } else if (provider === 'METALS_API') {
       const symbolMap = { silver: 'XAG', gold: 'XAU', platinum: 'XPT', palladium: 'XPD' };
       const symbols = selectedMetals.map(metal => symbolMap[metal]).join(',');
@@ -915,11 +958,13 @@ const fetchSpotPricesFromApi = async (provider, apiKey) => {
   if (providerConfig.batchSupported) {
     try {
       const historyDays = config.historyDays?.[provider] || 0;
+      const historyTimes = config.historyTimes?.[provider] || [];
       return await fetchBatchSpotPrices(
         provider,
         apiKey,
         selectedMetals,
         historyDays,
+        historyTimes,
       );
     } catch (batchError) {
       console.warn(
