@@ -1,13 +1,10 @@
 # StackTrackr - Development Roadmap
 
-## ✅ Completed Patch Releases
+This roadmap outlines upcoming patch releases for the v3.03.x series.
 
-- **v3.03.02a** – versioning scheme update, footer enhancement, Files modal restructuring, archive footer rule, documentation sweep, human workflow docs
-- **v3.03.03a** – Numista CSV import pipeline
-- **v3.03.04a** – Numista CSV export pipeline
-- **v3.03.05a** – Custom regex-based import/export mappings
-- **v3.03.06a** – Documentation sweep and archive update
+- **v3.03.07a** – Multi-currency support for international users.
+- **v3.03.08a** – Enhanced backup encryption for sensitive data.
+- **v3.03.09a** – Additional API provider integrations.
+- **v3.03.10a** – Advanced reporting and analytics features.
+- **v3.03.11a** – Mobile application companion.
 
-## 🔮 Future Patches
-
-- *TBD*
