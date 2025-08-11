@@ -1,7 +1,7 @@
 # Function Reference
 
 
-> **Latest release: v3.04.09**
+> **Latest release: v3.04.10**
 
 
 | File | Function | Description |
@@ -26,7 +26,7 @@
 | api.js | clearApiCache | Clears only the API cache, keeping the configuration |
 | api.js | getCacheDurationMs | Gets cache duration in milliseconds |
 | api.js | setProviderStatus | Sets connection status for a provider in the settings UI |
-| api.js | updateProviderHistoryTables | Updates provider history tables with latest API values |
+| api.js | updateProviderHistoryTables | Displays API usage/quota data for each provider |
 | api.js | refreshProviderStatuses | Refreshes provider statuses based on stored keys and cache age |
 | api.js | updateDefaultProviderButtons | Updates default provider button states |
 | api.js | renderApiHistoryTable | Renders API history table with filtering, sorting and pagination |

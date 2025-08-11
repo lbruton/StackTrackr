@@ -1,3 +1,21 @@
+# Implementation Summary: Provider History Usage Display
+
+> **Latest release: v3.04.10**
+
+## Version Update: 3.04.09 → 3.04.10
+
+## User Requirements Implemented
+
+- Remove provider history table and duplicate metal selectors
+- Show only API usage and quota in provider history sections
+
+## Technical Changes Made
+
+### Files Modified:
+1. **`js/api.js`**: Removed table creation and metal checkbox bindings; usage/quota display only
+2. **`js/constants.js`**: Bumped version to 3.04.10
+3. **Documentation**: Updated changelog, function table, roadmap, status, and structure
+
 # Implementation Summary: Multi-select Filters
 
 > **Latest release: v3.04.09**
