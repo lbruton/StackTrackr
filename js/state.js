@@ -66,11 +66,9 @@ const elements = {
   resetSpotBtnGold: null,
 
   // Import elements
-  importCsvBtn: null,
   importCsvFile: null,
   importCsvOverride: null,
   importCsvMerge: null,
-  importCsvOptions: null,
   importJsonFile: null,
   importExcelFile: null,
   importProgress: null,
