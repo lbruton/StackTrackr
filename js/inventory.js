@@ -1367,7 +1367,15 @@ const importNumistaCsv = (file, override = false) => {
           const date = parseDate(dateStr);
 
           const baseNote = (getValue(row, ['Note', 'Notes']) || '').trim();
-          const notes = `${baseNote ? baseNote + ' ' : ''}(Imported from Numista.com N#${numistaId})`;
+          const privateComment = (getValue(row, ['Private comment']) || '').trim();
+          const publicComment = (getValue(row, ['Public comment']) || '').trim();
+          const otherComment = (getValue(row, ['Comment']) || '').trim();
+          const noteParts = [];
+          if (baseNote) noteParts.push(baseNote);
+          if (privateComment) noteParts.push(`Private Comment: ${privateComment}`);
+          if (publicComment) noteParts.push(`Public Comment: ${publicComment}`);
+          if (otherComment) noteParts.push(`Comment: ${otherComment}`);
+          const notes = noteParts.join('\n');
 
           const isCollectable = !(type === 'Bar' || type === 'Round');
           const spotPriceAtPurchase = 0;

@@ -439,7 +439,7 @@ const stripNonAlphanumeric = (str = "") =>
 const sanitizeObjectFields = (obj) => {
   const cleaned = { ...obj };
   for (const key of Object.keys(cleaned)) {
-    if (typeof cleaned[key] === "string") {
+    if (typeof cleaned[key] === "string" && key !== 'notes') {
       cleaned[key] = stripNonAlphanumeric(cleaned[key]);
     }
   }
@@ -617,7 +617,7 @@ const sanitizeImportedItem = (item) => {
   }
 
   // Normalize and sanitize string fields
-  const strFields = ['name', 'type', 'purchaseLocation', 'storageLocation', 'notes'];
+  const basicFields = ['name', 'type', 'purchaseLocation', 'storageLocation'];
   const cleanString = (str = '') =>
     str
       .toString()
@@ -627,9 +627,21 @@ const sanitizeImportedItem = (item) => {
       .replace(/[\u0000-\u001F\u007F'\"]/g, '')
       .replace(/\s+/g, ' ')
       .trim();
-  for (const field of strFields) {
+  const cleanMultilineString = (str = '') =>
+    str
+      .toString()
+      .replace(/<[^>]*>/g, '')
+      .normalize('NFD')
+      .replace(/\p{Diacritic}/gu, '')
+      .replace(/[\u0000-\u0008\u000B-\u001F\u007F'\"]/g, '')
+      .replace(/\r\n?/g, '\n')
+      .replace(/[ \t]+/g, ' ')
+      .replace(/ *\n */g, '\n')
+      .trim();
+  for (const field of basicFields) {
     sanitized[field] = cleanString(sanitized[field]);
   }
+  sanitized.notes = cleanMultilineString(sanitized.notes);
   sanitized.type = normalizeType(sanitized.type);
 
   // Reset premium calculations if price or weight are missing
