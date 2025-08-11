@@ -148,6 +148,7 @@ const applyFilters = () => {
 
   // Update filters button to show active state
   updateFiltersButtonState();
+  renderActiveFilters();
 };
 
 /**
@@ -165,6 +166,7 @@ const clearAllFilters = () => {
   renderTable();
   populateFilterDropdowns();
   updateFiltersButtonState();
+  renderActiveFilters();
 };
 
 /**
@@ -183,6 +185,65 @@ const updateFiltersButtonState = () => {
     filtersBtn.textContent = 'Filters';
     filtersBtn.classList.remove('active');
   }
+};
+
+/**
+ * Renders active filter chips beneath the search bar
+ */
+const renderActiveFilters = () => {
+  const container = document.getElementById('activeFilters');
+  if (!container) return;
+
+  container.innerHTML = '';
+
+  const filters = [];
+  Object.entries(activeFilters).forEach(([field, value]) => {
+    filters.push({ field, value });
+  });
+  Object.entries(columnFilters).forEach(([field, value]) => {
+    if (!activeFilters[field]) filters.push({ field, value });
+  });
+  if (searchQuery) {
+    filters.push({ field: 'search', value: searchQuery });
+  }
+
+  const colors = ['var(--primary)', 'var(--secondary)', 'var(--success)', 'var(--warning)', 'var(--danger)', 'var(--info)'];
+  const labels = {
+    composition: 'Metal',
+    type: 'Type',
+    purchaseLocation: 'Purchase Location',
+    storageLocation: 'Storage Location',
+    collectable: 'Collectable',
+    dateFrom: 'From',
+    dateTo: 'To',
+    search: 'Search'
+  };
+
+  filters.forEach((f, i) => {
+    const chip = document.createElement('span');
+    chip.className = 'filter-chip';
+    chip.style.backgroundColor = colors[i % colors.length];
+    const label = f.field === 'search'
+      ? `${f.value}`
+      : `${labels[f.field] || f.field}: ${f.value}`;
+    chip.innerHTML = `${label} &times;`;
+    chip.title = 'Click to remove filter';
+    chip.onclick = () => {
+      if (f.field === 'search') {
+        searchQuery = '';
+        const input = document.getElementById('searchInput');
+        if (input) input.value = '';
+      } else {
+        delete activeFilters[f.field];
+        delete columnFilters[f.field];
+      }
+      currentPage = 1;
+      renderTable();
+      updateFiltersButtonState();
+      renderActiveFilters();
+    };
+    container.appendChild(chip);
+  });
 };
 
 /**
@@ -311,6 +372,7 @@ const applyQuickFilter = (field, value) => {
   currentPage = 1;
   renderTable();
   updateFiltersButtonState();
+  renderActiveFilters();
 };
 
 /**
@@ -331,5 +393,6 @@ window.applyQuickFilter = applyQuickFilter;
 window.applyColumnFilter = applyColumnFilter;
 window.filterInventoryAdvanced = filterInventoryAdvanced;
 window.updateFiltersButtonState = updateFiltersButtonState;
+window.renderActiveFilters = renderActiveFilters;
 
 // =============================================================================

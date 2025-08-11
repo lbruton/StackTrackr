@@ -1551,6 +1551,11 @@ td {
   display: none;
 }
 
+#inventoryTable th[data-column="numista"],
+#inventoryTable td[data-column="numista"] {
+  display: none;
+}
+
 tr:nth-child(even) {
   background: var(--bg-secondary);
 }
@@ -2340,14 +2345,45 @@ td input:checked + .slider:before {
   background: var(--secondary-hover);
 }
 
+.filter-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: var(--spacing-sm);
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+}
+
+.active-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-xs);
+}
+
+.filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  color: #fff;
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--radius);
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.filter-chip:hover {
+  opacity: 0.85;
+}
+
 .search-results-info {
   font-size: 0.875rem;
   color: var(--text-muted);
   text-align: right;
+  margin-left: auto;
 }
 
 .search-results-info:not(:empty) {
-  margin-top: var(--spacing-sm);
+  margin-top: 0;
 }
 
 /* =============================================================================
