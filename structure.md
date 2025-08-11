@@ -1,6 +1,6 @@
 # StackTrackr - Project Structure
 
-## Current Structure (Version 3.03.07b)
+## Current Structure (Version 3.03.08a)
 
 ```text
 ├── css/
@@ -33,6 +33,7 @@
 │   ├── spot.js
 │   ├── state.js
 │   ├── theme.js
+│   ├── versionCheck.js
 │   └── utils.js
 ├── index.html
 ├── archive/
@@ -68,6 +69,7 @@
 - **events.js**: All DOM event listener setup
 - **customMapping.js**: Regex-based field mapping rule engine
 - **init.js**: Application bootstrap and initialization
+- **versionCheck.js**: Handles version comparison and changelog modal
 - **utils.js**: Shared utility functions, validation, and error handling
 
 ### Styling (`css/styles.css`)

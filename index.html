@@ -1303,6 +1303,22 @@
         </div>
       </div>
     </div>
+    <div class="modal" id="versionModal" style="display: none">
+      <div class="modal-content about-modal-content">
+        <div class="modal-header about-modal-header">
+          <h1 class="about-title">
+            What's New <span id="versionModalVersion"></span>
+          </h1>
+          <button aria-label="Close modal" class="modal-close" id="versionCloseBtn">×</button>
+        </div>
+        <div class="modal-body about-modal-body">
+          <div id="versionChanges"></div>
+          <div class="alert-actions">
+            <button class="btn btn-primary" id="versionAcceptBtn">Accept and continue</button>
+          </div>
+        </div>
+      </div>
+    </div>
     <!-- =============================================================================
        ============================================================================= -->
 
@@ -1872,10 +1888,11 @@
        External libraries (Chart.js, jsPDF, PapaParse, XLSX) loaded via CDN
        ============================================================================= -->
 
-    <script defer src="./js/constants.js"></script>
-    <script defer src="./js/state.js"></script>
-    <script defer src="./js/utils.js"></script>
-    <script defer src="./js/changeLog.js"></script>
+<script defer src="./js/constants.js"></script>
+<script defer src="./js/state.js"></script>
+<script defer src="./js/utils.js"></script>
+<script defer src="./js/versionCheck.js"></script>
+<script defer src="./js/changeLog.js"></script>
     <script defer src="./js/charts.js"></script>
     <script defer src="./js/theme.js"></script>
     <script defer src="./js/search.js"></script>
