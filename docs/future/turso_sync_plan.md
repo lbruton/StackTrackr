@@ -776,10 +776,10 @@ const testSyncFunctionality = async () => {
 
 #### **Step 8.2: Update Documentation**
 Update documentation files:
-- Update `README.md` with Turso sync instructions
-- Add sync documentation to `docs/CLOUD_SYNC.md`
-- Update version in `constants.js`
-- Update `CHANGELOG.md` with new features
+ - Update `README.md` with Turso sync instructions
+ - Add sync documentation to `docs/cloud_sync.md`
+ - Update version in `constants.js`
+ - Update `changelog.md` with new features
 
 ---
 

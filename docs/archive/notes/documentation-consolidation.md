@@ -23,7 +23,7 @@ The original `docs/LLM.md` served as a general AI assistant guide but contained:
 
 ## File Location
 - **Removed**: `docs/LLM.md` 
-- **Archived**: `docs/archive/LLM.md` (for historical reference)
+- **Archived**: `docs/archive/llm.md` (for historical reference)
 - **Primary Guide**: `docs/MULTI_AGENT_WORKFLOW.md`
 
 ## Documentation Updates Needed
@@ -37,7 +37,7 @@ Use this single command for any AI agent:
 ```
 Please read docs/MULTI_AGENT_WORKFLOW.md for complete project context 
 and development workflow guidance, then select an available subtask 
-from docs/ROADMAP.md.
+from docs/roadmap.md.
 ```
 
 The consolidated approach eliminates documentation redundancy while providing more comprehensive and actionable guidance for AI assistants.

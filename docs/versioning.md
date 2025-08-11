@@ -1,6 +1,6 @@
 # Dynamic Version Management System
 
-> **Latest release: v3.03.07a**
+> **Latest release: v3.03.07b**
 
 ## Overview 
 
@@ -9,7 +9,7 @@ The StackTrackr now uses a dynamic version management system that automatically 
 ## How It Works
 
 ### Single Source of Truth
-- Version is defined once in `js/constants.js` as `APP_VERSION = '3.03.07a'`
+- Version is defined once in `js/constants.js` as `APP_VERSION = '3.03.07b'`
   - This is the ONLY place you need to update the version number
 
 ### Automatic Propagation
@@ -19,7 +19,7 @@ The StackTrackr now uses a dynamic version management system that automatically 
 
 ### Utility Functions
 - `js/constants.js` provides:
-  - `getVersionString(prefix)`: Returns formatted version (e.g., "v3.03.07a")
+  - `getVersionString(prefix)`: Returns formatted version (e.g., "v3.03.07b")
   - `injectVersionString(elementId, prefix)`: Inserts formatted version into a target element
 - `js/utils.js` provides:
   - `getAppTitle(baseTitle)`: Returns full app title with version
@@ -31,16 +31,16 @@ To release a new version:
 1. **Update ONLY the constants file:**
    ```javascript
    // In js/constants.js
-   const APP_VERSION = '3.03.07a';  // Change this line only
+   const APP_VERSION = '3.03.07b';  // Change this line only
    ```
 
 2. **All these will automatically update:**
-   - Page title: "StackTrackr v3.03.07a"
-   - Page heading: "StackTrackr v3.03.07a"
-   - Browser tab title: "StackTrackr v3.03.07a"
-   - App header: "StackTrackr v3.03.07a"
+   - Page title: "StackTrackr v3.03.07b"
+   - Page heading: "StackTrackr v3.03.07b"
+   - Browser tab title: "StackTrackr v3.03.07b"
+   - App header: "StackTrackr v3.03.07b"
 
-3. **Update changelog:** Add entry to `/docs/CHANGELOG.md` for documentation
+3. **Update changelog:** Add entry to `/docs/changelog.md` for documentation
 
 ## Technical Implementation
 
@@ -73,7 +73,7 @@ state code is appended directly to the patch number:
   - `rc` = release candidate (final verification)
   - *(omit for stable builds)*
 
-Example: `3.03.07a` → branch 3, release 03, patch 07, alpha build
+Example: `3.03.07b` → branch 3, release 03, patch 07, beta build
 
 ### Branching Policy
 - Each major **BRANCH** corresponds to a long-lived Git branch
@@ -85,15 +85,15 @@ Example: `3.03.07a` → branch 3, release 03, patch 07, alpha build
 ## Example Usage in Code
 ```javascript
 // Get just the version number
-const version = APP_VERSION; // "3.03.07a"
+const version = APP_VERSION; // "3.03.07b"
 
 // Get formatted version string
-const versionString = getVersionString(); // "v3.03.07a"
-const customVersion = getVersionString('version '); // "version 3.03.07a"
+const versionString = getVersionString(); // "v3.03.07b"
+const customVersion = getVersionString('version '); // "version 3.03.07b"
 
 // Get full app title
-const title = getAppTitle(); // "StackTrackr v3.03.07a"
-const customTitle = getAppTitle('My Custom Tool'); // "My Custom Tool v3.03.07a"
+const title = getAppTitle(); // "StackTrackr v3.03.07b"
+const customTitle = getAppTitle('My Custom Tool'); // "My Custom Tool v3.03.07b"
 ```
 
 This system ensures version consistency and makes maintenance much easier!

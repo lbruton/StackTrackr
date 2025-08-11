@@ -1,6 +1,6 @@
 # StackTrackr - Project Structure
 
-## Current Structure (Version 3.03.07a)
+## Current Structure (Version 3.03.07b)
 
 ```text
 ├── css/
@@ -10,14 +10,14 @@
 │   ├── archive/
 │   │   └── notes/
 │   ├── future/
-│   ├── CHANGELOG.md
-│   ├── FUNCTIONSTABLE.md
-│   ├── IMPLEMENTATION_SUMMARY.md
+│   ├── changelog.md
+│   ├── functionstable.md
+│   ├── implementation_summary.md
 │   ├── MULTI_AGENT_WORKFLOW.md
-│   ├── ROADMAP.md
-│   ├── STATUS.md
-│   ├── STRUCTURE.md
-│   └── VERSIONING.md
+│   ├── roadmap.md
+│   ├── status.md
+│   ├── structure.md
+│   └── versioning.md
 ├── js/
 │   ├── api.js
 │   ├── charts.js

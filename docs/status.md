@@ -1,10 +1,10 @@
 # Project Status - StackTrackr
 
-> **Latest release: v3.03.07a**
+> **Latest release: v3.03.07b**
 
-## 🎯 Current State: **ALPHA v3.03.07a** ✅ MAINTAINED & OPTIMIZED
+## 🎯 Current State: **BETA v3.03.07b** ✅ MAINTAINED & OPTIMIZED
 
-**StackTrackr v3.03.07a** is a fully-featured, client-side web application for tracking precious metal investments (Silver, Gold, Platinum, Palladium) with comprehensive inventory management, API integration, and complete backup capabilities. The 3.03.x series focuses on polish, maintenance, and optimization.
+**StackTrackr v3.03.07b** is a fully-featured, client-side web application for tracking precious metal investments (Silver, Gold, Platinum, Palladium) with comprehensive inventory management, API integration, and complete backup capabilities. The 3.03.x series focuses on polish, maintenance, and optimization.
 
 ## 🏗️ Architecture Overview
 
@@ -22,6 +22,7 @@ The tool features a **modular JavaScript architecture** with separate files for 
 
 ## ✨ Latest Changes
 
+- **v3.03.07b - Documentation Normalization**: Converted documentation filenames to lowercase and updated references
 - **v3.03.07a - Theme Toggle Improvements**: Replaced appearance modal with three-state Dark/Light/System toggle
 - **v3.03.06a - Documentation Sweep & Archive Update**: Version references synchronized across docs and archived build footer links back to current version
 - **v3.03.05a - Custom Mapping Rule Engine**: Prototype regex-based field mapping with Add/Apply/Clear controls in Settings
@@ -50,7 +51,7 @@ The tool features a **modular JavaScript architecture** with separate files for 
   - Color-coded table items for better visual organization
   - Enhanced click-to-sort functionality across all table columns
   - Added dedicated Notes button for quick access to item notes
-  - Removed redundant `docs/LLM.md` file (archived to `docs/archive/LLM.md`)
+  - Removed redundant `docs/LLM.md` file (archived to `docs/archive/llm.md`)
   - Replaced with comprehensive `docs/MULTI_AGENT_WORKFLOW.md`
   - Enhanced multi-agent coordination protocols and quality standards
   - Streamlined documentation structure eliminates redundancy
@@ -128,17 +129,17 @@ All data is stored locally in the browser using localStorage with:
 ## 📚 Documentation Status (Updated: August 10, 2025)
 
 **All documentation files are current and synchronized:**
-- ✅ **STATUS.md** - Updated for v3.03.07a release
-- ✅ **CHANGELOG.md** - Current through v3.03.07a
+- ✅ **status.md** - Updated for v3.03.07b release
+- ✅ **changelog.md** - Current through v3.03.07b
 - ✅ **MULTI_AGENT_WORKFLOW.md** - Comprehensive AI assistant development guide
-- ✅ **STRUCTURE.md** - Reflects streamlined project organization
-- ✅ **VERSIONING.md** - Accurate version management documentation
+- ✅ **structure.md** - Reflects streamlined project organization
+- ✅ **versioning.md** - Accurate version management documentation
 
 ## 🔄 Development Notes for Future Sessions
 
 If continuing development in a new chat session:
 
-1. **Current Version**: 3.03.07a (managed in `js/constants.js`)
+1. **Current Version**: 3.03.07b (managed in `js/constants.js`)
 2. **Last Change**: Documentation sweep and archive update
 3. **Last Documentation Update**: August 10, 2025 - All docs synchronized
 4. **Architecture**: Fully modular with proper separation of concerns
@@ -155,7 +156,7 @@ If continuing development in a new chat session:
 ```
 StackTrackr/
 ├── js/                     # Modular JavaScript (cleaned structure)
-│   ├── constants.js        # Version 3.03.07a + metal configs
+│   ├── constants.js        # Version 3.03.07b + metal configs
 │   ├── state.js           # App state + DOM caching
 │   ├── inventory.js       # Core CRUD + notes handling
 │   ├── events.js          # UI event listeners
@@ -164,12 +165,12 @@ StackTrackr/
 ├── css/styles.css          # Complete responsive styling
 ├── index.html             # Application entry point
 ├── docs/                   # Documentation (ALL UPDATED)
-│   ├── CHANGELOG.md        # Version history
+│   ├── changelog.md        # Version history
 │   ├── README.md          # Project overview
 │   ├── MULTI_AGENT_WORKFLOW.md  # Development guide
-│   ├── STATUS.md               # This file
-│   ├── STRUCTURE.md            # Project organization
-│   └── VERSIONING.md           # Version management
+│   ├── status.md               # This file
+│   ├── structure.md            # Project organization
+│   └── versioning.md           # Version management
 ├── index.html             # Version selector page
 ├── sample.csv             # Test data (with notes)
 └── README.md              # Root documentation

@@ -93,18 +93,18 @@ const populateAckModal = () => {
 };
 
 /**
- * Loads changelog information from docs/CHANGELOG.md and populates the About modal
+ * Loads changelog information from docs/changelog.md and populates the About modal
  */
 const loadChangelog = async () => {
   const latestList = document.getElementById("aboutChangelogLatest");
   if (!latestList) return;
 
   try {
-    // Try to fetch from docs/CHANGELOG.md first, then fallback to README.md
+    // Try to fetch from docs/changelog.md first, then fallback to README.md
     let res, text;
     try {
-      res = await fetch("docs/CHANGELOG.md");
-      if (!res.ok) throw new Error("CHANGELOG.md not found");
+      res = await fetch("docs/changelog.md");
+      if (!res.ok) throw new Error("changelog.md not found");
       text = await res.text();
     } catch (e) {
       res = await fetch("README.md");
@@ -181,8 +181,8 @@ const extractChangelogItems = (content) => {
 const showFullChangelog = () => {
   // Try to open changelog documentation
   const urls = [
-    "docs/CHANGELOG.md",
-    "https://github.com/lbruton/Precious-Metals-Inventory/blob/main/docs/CHANGELOG.md",
+    "docs/changelog.md",
+    "https://github.com/lbruton/Precious-Metals-Inventory/blob/main/docs/changelog.md",
     "README.md",
   ];
 
