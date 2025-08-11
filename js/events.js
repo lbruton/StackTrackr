@@ -1740,20 +1740,6 @@ const setupApiEvents = () => {
       );
     });
 
-    const cacheDuration = document.getElementById("apiCacheDuration");
-    if (cacheDuration) {
-      safeAttachListener(
-        cacheDuration,
-        "change",
-        () => {
-          if (typeof setCacheDuration === "function") {
-            setCacheDuration(parseInt(cacheDuration.value, 10));
-          }
-        },
-        "API cache duration select",
-      );
-    }
-
     document.querySelectorAll(".provider-default-btn").forEach((btn) => {
       const provider = btn.getAttribute("data-provider");
       safeAttachListener(

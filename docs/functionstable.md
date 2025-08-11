@@ -1,7 +1,7 @@
 # Function Reference
 
 
- > **Latest release: v3.03.08n**
+ > **Latest release: v3.04.00**
 
 
 | File | Function | Description |
@@ -38,7 +38,6 @@
 | api.js | clearApiHistory | Clears stored API price history |
 | api.js | setDefaultProvider | Updates default provider selection in config |
 | api.js | clearApiKey | Clears stored API key for a provider |
-| api.js | setCacheDuration | Updates cache duration setting |
 | api.js | refreshFromCache | Refreshes display using cached data without making API calls |
 | api.js | loadApiCache | Loads cached API data from localStorage |
 | api.js | saveApiCache | Saves API data to cache |
@@ -59,6 +58,9 @@
 | api.js | resetSpotPrice | Resets spot price to default or API cached value |
 | api.js | createBackupData | Exports backup data including API configuration |
 | api.js | downloadCompleteBackup | Downloads complete backup files including inventory and API configuration |
+| filters.js | applyQuickFilter | Adds or toggles a filter for a specific field value |
+| filters.js | clearAllFilters | Clears all active filters and search query |
+| filters.js | filterInventoryAdvanced | Applies advanced filtering with active filters |
 | changeLog.js | logChange | Records a change to the change log and persists it |
 | changeLog.js | logItemChanges | Compares two item objects and logs any differences |
 | changeLog.js | renderChangeLog | Renders the change log table with all entries |

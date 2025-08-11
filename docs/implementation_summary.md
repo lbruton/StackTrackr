@@ -1,4 +1,24 @@
-# Implementation Summary: Inventory Type Filter
+# Implementation Summary: Filter Click Enhancements
+
+> **Latest release: v3.04.00**
+
+## Version Update: 3.03.08n → 3.04.00
+
+## User Requirements Implemented
+
+- Enabled click-to-filter on all non-action table columns with toggle behavior and multi-level stacking
+- Removed global API cache duration dropdown in favor of per-provider settings
+
+## Technical Changes Made
+
+### Files Modified:
+1. **`js/inventory.js`**: Wrapped additional table cells with filter links
+2. **`js/filters.js`**: Added default filter case and N/A handling
+3. **`js/events.js`**: Removed listener for cache duration dropdown
+4. **`js/api.js`**: Removed cache duration dropdown code
+5. **Documentation**: Updated version, changelog, and function tables
+
+## Implementation Summary: Inventory Type Filter
 
 > **Latest release: v3.03.08n**
 

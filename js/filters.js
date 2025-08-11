@@ -223,6 +223,15 @@ const filterInventoryAdvanced = () => {
       case 'dateTo':
         result = result.filter(item => item.date <= value);
         break;
+      default:
+        result = result.filter(item => {
+          const itemVal = item[field];
+          if (value === 'N/A') {
+            return itemVal === undefined || itemVal === null || itemVal === '' || itemVal === 0;
+          }
+          return itemVal != null && itemVal.toString() === value.toString();
+        });
+        break;
     }
   });
 

@@ -1,13 +1,17 @@
 # StackTrackr — Changelog
 
 
- > **Latest release: v3.03.08n**
+ > **Latest release: v3.04.00**
 
 
 For upcoming work, see [roadmap](roadmap.md).
 
 ## 📋 Version History
 
+
+### Version 3.04.00 – Filter click & API cleanup (2025-08-11)
+- Table cells (except collectable, notes, delete) now toggle exact-match filters with multi-level stacking
+- Removed global API cache duration dropdown; each provider uses its own setting
 
 ### Version 3.03.08n – Inventory type filter (2025-08-10)
 - Added type filter dropdown before metal filter
