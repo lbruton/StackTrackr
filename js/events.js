@@ -386,7 +386,7 @@ const setupEventListeners = () => {
           weight = isNaN(weight) ? 0 : parseFloat(weight.toFixed(2));
           const price = parseFloat(elements.itemPrice.value);
           const purchaseLocation =
-            elements.purchaseLocation.value.trim() || "Unknown";
+            elements.purchaseLocation.value.trim() || "";
           const storageLocation =
             elements.storageLocation.value.trim() || "";
           const notes = elements.itemNotes.value.trim() || "";
@@ -479,7 +479,7 @@ const setupEventListeners = () => {
           weight = isNaN(weight) ? 0 : parseFloat(weight.toFixed(2));
           const price = parseFloat(elements.editPrice.value);
           const purchaseLocation =
-            elements.editPurchaseLocation.value.trim() || "Unknown";
+            elements.editPurchaseLocation.value.trim() || "";
           const storageLocation =
             elements.editStorageLocation.value.trim() || "";
           const notes = elements.editNotes.value.trim() || "";

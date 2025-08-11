@@ -453,7 +453,8 @@ const loadInventory = () => {
 
       return {
         ...item,
-        purchaseLocation: item.purchaseLocation || "Unknown",
+        type: normalizeType(item.type),
+        purchaseLocation: item.purchaseLocation || "",
         storageLocation: item.storageLocation || "Unknown",
         notes: item.notes || "",
         spotPriceAtPurchase: spotPrice,
@@ -466,6 +467,8 @@ const loadInventory = () => {
     // Ensure all items have required properties
     return {
       ...item,
+      type: normalizeType(item.type),
+      purchaseLocation: item.purchaseLocation || "",
       storageLocation: item.storageLocation || "Unknown",
       notes: item.notes || "",
       isCollectable: item.isCollectable !== undefined ? item.isCollectable : false,
@@ -581,13 +584,13 @@ const renderTable = () => {
       <td class="shrink" data-column="date">${formatDisplayDate(item.date)}</td>
       <td class="shrink" data-column="type">${filterLink('type', item.type, getTypeColor(item.type))}</td>
       <td class="shrink" data-column="composition">${filterLink('composition', getCompositionFirstWord(item.composition || item.metal || 'Silver'), METAL_COLORS[item.metal] || 'var(--primary)')}</td>
-      <td class="clickable-name expand" data-column="name" onclick="editItem(${originalIdx})" title="Click to edit" tabindex="0" role="button" aria-label="Edit ${sanitizeHtml(item.name)}" onkeydown="if(event.key==='Enter'||event.key===' ')editItem(${originalIdx})">${sanitizeHtml(item.name)}</td>
+      <td class="expand" data-column="name">${sanitizeHtml(item.name)} <button type="button" class="edit-icon" onclick="editItem(${originalIdx})" aria-label="Edit ${sanitizeHtml(item.name)}" title="Edit ${sanitizeHtml(item.name)}">✎</button></td>
       <td class="shrink" data-column="qty">${item.qty}</td>
       <td class="shrink" data-column="weight">${parseFloat(item.weight).toFixed(2)}</td>
       <td class="shrink" data-column="purchasePrice">${formatDollar(item.price)}</td>
       <td class="shrink" data-column="spot">${item.isCollectable ? 'N/A' : (item.spotPriceAtPurchase > 0 ? formatDollar(item.spotPriceAtPurchase) : 'N/A')}</td>
       <td class="shrink" data-column="premium" style="color: ${item.isCollectable ? 'var(--text-muted)' : (item.totalPremium > 0 ? 'var(--warning)' : 'inherit')}">${item.isCollectable ? 'N/A' : formatDollar(item.totalPremium)}</td>
-      <td class="shrink" data-column="purchaseLocation">${filterLink('purchaseLocation', item.purchaseLocation, getPurchaseLocationColor(item.purchaseLocation))}</td>
+      <td class="shrink" data-column="purchaseLocation">${item.purchaseLocation ? filterLink('purchaseLocation', item.purchaseLocation, getPurchaseLocationColor(item.purchaseLocation)) : ''}</td>
       <td class="shrink" data-column="storageLocation">${item.storageLocation ? filterLink('storageLocation', item.storageLocation, getStorageLocationColor(item.storageLocation)) : ''}</td>
       <td class="shrink" data-column="collectable"><button type="button" class="btn action-btn collectable-btn ${item.isCollectable ? 'success' : ''}" onclick="toggleCollectable(${originalIdx})" aria-label="Toggle collectable status for ${sanitizeHtml(item.name)}" title="Toggle collectable status">${item.isCollectable ? 'Yes' : 'No'}</button></td>
       <td class="shrink" data-column="notes"><button type="button" class="btn action-btn notes-btn ${item.notes && item.notes.trim() ? 'success' : ''}" onclick="showNotes(${originalIdx})" aria-label="View notes" title="View notes">${item.notes && item.notes.trim() ? 'Yes' : 'No'}</button></td>
@@ -1031,14 +1034,14 @@ const importCsv = (file, override = false) => {
           const metal = parseNumistaMetal(composition);
           const name = row['Name'] || row['name'];
           const qty = row['Qty'] || row['qty'] || 1;
-          const type = row['Type'] || row['type'] || 'Other';
+          const type = normalizeType(row['Type'] || row['type']);
           const weight = row['Weight(oz)'] || row['weight'];
           const priceStr = row['Purchase Price'] || row['price'];
           let price = typeof priceStr === 'string'
             ? parseFloat(priceStr.replace(/[^\d.-]+/g, ''))
             : parseFloat(priceStr);
           if (price < 0) price = 0;
-          const purchaseLocation = row['Purchase Location'] || 'Unknown';
+          const purchaseLocation = row['Purchase Location'] || '';
           const storageLocation = row['Storage Location'] || '';
           const notes = row['Notes'] || '';
           const date = parseDate(row['Date']);
@@ -1128,7 +1131,7 @@ const importCsv = (file, override = false) => {
  * - Weight columns → max value converted from grams to ozt
  * - Composition → metal detected via parseNumistaMetal(), defaults to Alloy
  * - Buying price (currency) → price in USD via convertToUsd()
- * - Storage location / Acquisition place → defaults to "unknown" if blank
+ * - Storage location / Acquisition place → left blank if missing
  * - Acquisition date → parsed YYYY-MM-DD or today if blank
  * - Notes appended with import source reference
  *
@@ -1175,7 +1178,7 @@ const importNumistaCsv = (file, override = false) => {
           let metal = parseNumistaMetal(composition);
           const qty = parseInt(getValue(row, ['Quantity', 'Qty', 'Quantity owned']) || 1, 10);
 
-          let type = mapNumistaType(getValue(row, ['Type']) || '');
+          let type = normalizeType(mapNumistaType(getValue(row, ['Type']) || ''));
           if (metal === 'Paper' || composition.toLowerCase().startsWith('paper')) {
             type = 'Note';
             metal = 'Alloy';
@@ -1199,7 +1202,7 @@ const importNumistaCsv = (file, override = false) => {
           }
 
           const purchaseLocRaw = getValue(row, ['Acquisition place', 'Acquired from', 'Purchase place']);
-          const purchaseLocation = purchaseLocRaw && purchaseLocRaw.trim() ? purchaseLocRaw.trim() : 'unknown';
+          const purchaseLocation = purchaseLocRaw && purchaseLocRaw.trim() ? purchaseLocRaw.trim() : '';
           const storageLocRaw = getValue(row, ['Storage location', 'Stored at', 'Storage place']);
           const storageLocation = storageLocRaw && storageLocRaw.trim() ? storageLocRaw.trim() : '';
 
@@ -1210,7 +1213,7 @@ const importNumistaCsv = (file, override = false) => {
           const baseNote = (getValue(row, ['Note', 'Notes']) || '').trim();
           const notes = `${baseNote ? baseNote + ' ' : ''}(Imported from Numista.com N#${numistaId})`;
 
-          const isCollectable = true;
+          const isCollectable = !(type === 'Bar' || type === 'Round');
           const spotPriceAtPurchase = 0;
           const premiumPerOz = 0;
           const totalPremium = 0;
@@ -1361,7 +1364,7 @@ const importJson = (file) => {
           weight: parseFloat(item.weight),
           price,
           date: parseDate(item.date || todayStr()),
-          purchaseLocation: item.purchaseLocation || "Unknown",
+          purchaseLocation: item.purchaseLocation || "",
           storageLocation: item.storageLocation || "Unknown",
           notes: item.notes || "",
           spotPriceAtPurchase: item.spotPriceAtPurchase || spotPrices[item.metal.toLowerCase()],
@@ -1494,14 +1497,14 @@ const importExcel = (file) => {
         const metal = row['Metal'] || 'Silver';
         const name = row['Name'] || row['name'];
         const qty = parseInt(row['Qty'] || row['qty'] || 1, 10);
-        const type = row['Type'] || row['type'] || 'Other';
+        const type = normalizeType(row['Type'] || row['type']);
         const weight = parseFloat(row['Weight(oz)'] || row['weight']);
         const priceStr = row['Purchase Price'] || row['price'];
         let price = parseFloat(
           typeof priceStr === "string" ? priceStr.replace(/[^0-9.-]+/g, "") : priceStr
         );
         if (price < 0) price = 0;
-        const purchaseLocation = row['Purchase Location'] || "Unknown";
+        const purchaseLocation = row['Purchase Location'] || "";
         const storageLocation = row['Storage Location'] || "Unknown";
         const notes = row['Notes'] || "";
         const date = parseDate(row['Date']); // Using the new date parser
