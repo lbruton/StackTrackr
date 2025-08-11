@@ -2,6 +2,7 @@
 
 This roadmap outlines upcoming patch releases for the v3.04.x series.
 
+- **v3.04.01** – Search reset, Numista sanitization, and batch API pulls *(completed)*
 - **v3.04.00** – Inventory filter enhancements and API cleanup *(completed)*
 - **v3.03.07b** – Documentation normalization and reference cleanup *(completed)*
 - **v3.03.08a** – Version update changelog modal *(completed)*

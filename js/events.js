@@ -1412,8 +1412,16 @@ const setupSearch = () => {
         elements.clearSearchBtn,
         "click",
         function () {
-          if (elements.searchInput) {
-            elements.searchInput.value = "";
+          if (typeof clearAllFilters === "function") {
+            clearAllFilters();
+          } else {
+            if (elements.searchInput) {
+              elements.searchInput.value = "";
+            }
+            searchQuery = "";
+            columnFilters = {};
+            currentPage = 1;
+            renderTable();
           }
           if (elements.typeFilter) {
             elements.typeFilter.value = "";
@@ -1421,10 +1429,6 @@ const setupSearch = () => {
           if (elements.metalFilter) {
             elements.metalFilter.value = "";
           }
-          searchQuery = "";
-          columnFilters = {};
-          currentPage = 1;
-          renderTable();
         },
         "Clear search button",
       );

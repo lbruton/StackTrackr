@@ -1,5 +1,5 @@
 
-# StackTrackr v3.04.00
+# StackTrackr v3.04.01
 
 
 StackTrackr is a comprehensive client-side web application for tracking precious metal investments. It's designed to help users manage their silver, gold, platinum, and palladium holdings with detailed financial metrics and enhanced tracking capabilities.
@@ -7,6 +7,7 @@ StackTrackr is a comprehensive client-side web application for tracking precious
 The public hosted version of the app is available at [stackrtrackr.com](https://stackrtrackr.com).
 
 ## Recent Updates
+- **v3.04.01 - Filter reset & Numista sanitization**: Clear search resets filters, sanitized Numista imports, batch API pulls
 - **v3.04.00 - Inventory filter click & API cleanup**: Click any table value to filter and removed global API cache duration dropdown
 - **v3.03.08n - Inventory type filter**: Added type dropdown and dynamic metal options
 - **v3.03.08m - Inventory filter dropdown**: Added metal filter to inventory title bar for quick filtering
@@ -44,6 +45,11 @@ The public hosted version of the app is available at [stackrtrackr.com](https://
 - **v3.1.9 - UI Consistency**: Clear Cache button styling improvements across themes
 - **v3.1.8 - Backup System**: Full ZIP backup functionality with restoration guides
 - **v3.1.6 - Theme Toggle**: Fixed theme management with system preference detection
+
+## 🆕 What's New in v3.04.01
+- Clear search button resets all filters, including those set in the modal
+- Numista imports sanitize text fields to ensure filter links remain functional
+- API providers craft a single batch request using only selected metals
 
 ## 🆕 What's New in v3.04.00
 - Clicking any non-action table cell adds a filter; repeat clicks toggle filters and support up to three stacked conditions

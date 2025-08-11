@@ -571,10 +571,15 @@ const sanitizeImportedItem = (item) => {
     }
   }
 
-  // Normalize string fields
+  // Normalize and sanitize string fields
   const strFields = ['name', 'type', 'purchaseLocation', 'storageLocation', 'notes'];
+  const cleanString = (str = '') =>
+    str
+      .toString()
+      .replace(/[\u0000-\u001F\u007F'\"]/g, '')
+      .trim();
   for (const field of strFields) {
-    if (typeof sanitized[field] !== 'string') sanitized[field] = '';
+    sanitized[field] = cleanString(sanitized[field]);
   }
   sanitized.type = normalizeType(sanitized.type);
 

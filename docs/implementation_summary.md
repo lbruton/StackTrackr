@@ -1,3 +1,24 @@
+# Implementation Summary: Filter Reset & Numista Sanitization
+
+> **Latest release: v3.04.01**
+
+## Version Update: 3.04.00 → 3.04.01
+
+## User Requirements Implemented
+
+- Clear search button resets all filters including modal selections
+- Numista imports sanitize text fields to preserve filtering
+- API providers issue single batch request for selected metals
+
+## Technical Changes Made
+
+### Files Modified:
+1. **`js/events.js`**: Clear search delegates to global filter reset
+2. **`js/utils.js`**: `sanitizeImportedItem` strips unsafe characters from string fields
+3. **`js/api.js`**: Batch requests attempted for all providers using selected metals
+4. **`js/constants.js`**: Bumped version to 3.04.01
+5. **Documentation**: Updated changelog, status, roadmap, structure, and function table
+
 # Implementation Summary: Filter Click Enhancements
 
 > **Latest release: v3.04.00**
