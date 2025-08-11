@@ -1315,7 +1315,9 @@ const setupPagination = () => {
  */
 const populateFilterOptions = () => {
   if (elements.metalFilter) {
-    const selected = elements.metalFilter.value;
+    const selected = Array.from(elements.metalFilter.selectedOptions).map(
+      (o) => o.value,
+    );
     const metals = [
       ...new Set(
         inventory.map((i) =>
@@ -1327,19 +1329,29 @@ const populateFilterOptions = () => {
       .sort();
     elements.metalFilter.innerHTML =
       '<option value="">All Metals</option>' +
-      metals.map((m) => `<option value="${m}">${m}</option>`).join("");
-    elements.metalFilter.value = selected;
+      metals
+        .map(
+          (m) =>
+            `<option value="${m}" ${selected.includes(m) ? "selected" : ""}>${m}</option>`,
+        )
+        .join("");
   }
 
   if (elements.typeFilter) {
-    const selected = elements.typeFilter.value;
+    const selected = Array.from(elements.typeFilter.selectedOptions).map(
+      (o) => o.value,
+    );
     const types = [...new Set(inventory.map((i) => i.type))]
       .filter(Boolean)
       .sort();
     elements.typeFilter.innerHTML =
       '<option value="">All Types</option>' +
-      types.map((t) => `<option value="${t}">${t}</option>`).join("");
-    elements.typeFilter.value = selected;
+      types
+        .map(
+          (t) =>
+            `<option value="${t}" ${selected.includes(t) ? "selected" : ""}>${t}</option>`,
+        )
+        .join("");
   }
 };
 
