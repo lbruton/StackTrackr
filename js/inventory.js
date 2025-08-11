@@ -1162,7 +1162,9 @@ const importNumistaCsv = (file, override = false) => {
           const name = year.length >= 4 ? `${title} ${year}`.trim() : title;
           const issuedYear = year.length >= 4 ? year : '';
           const composition = getValue(row, ['Composition', 'Metal']) || '';
+
           addCompositionOption(composition);
+
           let metal = parseNumistaMetal(composition);
           const qty = parseInt(getValue(row, ['Quantity', 'Qty', 'Quantity owned']) || 1, 10);
 

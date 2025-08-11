@@ -2128,12 +2128,14 @@ td input:checked + .slider:before {
 
 .import-dropdown-wrapper {
   position: relative;
+
   display: block;
   width: 100%;
 }
 
 .import-dropdown-wrapper .btn {
   width: 100%;
+
 }
 
 .import-dropdown {
@@ -2157,6 +2159,7 @@ td input:checked + .slider:before {
   width: 100%;
   margin: 0;
 }
+
 .beta-warning {
   margin-top: var(--spacing-xs);
   font-size: 0.75rem;

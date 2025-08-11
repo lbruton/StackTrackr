@@ -1,3 +1,4 @@
+
 # Implementation Summary: Numista Import Polish
 
 > **Latest release: v3.03.08i**
@@ -22,6 +23,7 @@
 6. **`js/events.js`**: Weight fields rounded to two decimals on input
 7. **`js/constants.js`**: Bumped version to 3.03.08i
 8. **Documentation**: Updated changelog, function table, implementation summary, status, roadmap, structure, and README
+
 
 # Implementation Summary: Table Controls & Import Options
 

@@ -936,12 +936,14 @@ const setupEventListeners = () => {
         "change",
         function (e) {
           if (e.target.files.length > 0) {
+
             const file = e.target.files[0];
             if (!checkFileSize(file)) {
               alert("File exceeds 2MB limit. Enable cloud backup for larger uploads.");
             } else {
               importCsv(file, csvImportOverride);
             }
+
           }
           this.value = "";
         },
@@ -1016,12 +1018,14 @@ const setupEventListeners = () => {
         "change",
         function (e) {
           if (e.target.files.length > 0) {
+
             const file = e.target.files[0];
             if (!checkFileSize(file)) {
               alert("File exceeds 2MB limit. Enable cloud backup for larger uploads.");
             } else {
               importNumistaCsv(file, numistaOverride);
             }
+n
           }
           this.value = "";
         },

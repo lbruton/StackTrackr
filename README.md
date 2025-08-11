@@ -1,4 +1,6 @@
+
 # StackTrackr v3.03.08i
+
 
 StackTrackr is a comprehensive client-side web application for tracking precious metal investments. It's designed to help users manage their silver, gold, platinum, and palladium holdings with detailed financial metrics and enhanced tracking capabilities.
 
