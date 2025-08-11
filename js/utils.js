@@ -112,6 +112,16 @@ const addCompositionOption = (value) => {
 };
 
 /**
+ * Extracts the first complete word from a composition string
+ *
+ * @param {string} composition - Raw composition description
+ * @returns {string} First word of the composition
+ */
+const getCompositionFirstWord = (composition = "") => {
+  return composition.trim().split(/\s+/)[0].replace(/[(),]/g, "");
+};
+
+/**
  * Builds two-line HTML showing source and last sync info for a metal
  *
  * @param {string} metalName - Metal name ('Silver', 'Gold', 'Platinum', 'Palladium')
@@ -512,9 +522,12 @@ const validateInventoryItem = (item) => {
 const sanitizeImportedItem = (item) => {
   const sanitized = { ...item };
 
-  // Ensure metal/composition is a string
+  // Ensure metal and composition are strings
   if (typeof sanitized.metal !== 'string') {
     sanitized.metal = '';
+  }
+  if (typeof sanitized.composition !== 'string') {
+    sanitized.composition = sanitized.metal;
   }
 
   // Ensure numeric fields parse correctly

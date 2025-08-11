@@ -40,6 +40,7 @@ const createBackupZip = async () => {
       exportDate: new Date().toISOString(),
       inventory: inventory.map(item => ({
         metal: item.metal,
+        composition: item.composition,
         name: item.name,
         qty: item.qty,
         type: item.type,
@@ -286,7 +287,7 @@ const generateBackupHtml = (sortedInventory, timeFormatted) => {
   <table>
     <thead>
       <tr>
-        <th>Metal</th><th>Name</th><th>Qty</th><th>Type</th><th>Weight(oz)</th>
+        <th>Composition</th><th>Name</th><th>Qty</th><th>Type</th><th>Weight(oz)</th>
         <th>Purchase Price</th><th>Purchase Location</th><th>Storage Location</th>
         <th>Notes</th><th>Date</th><th>Collectable</th>
       </tr>
@@ -294,7 +295,7 @@ const generateBackupHtml = (sortedInventory, timeFormatted) => {
     <tbody>
       ${sortedInventory.map(item => `
         <tr>
-          <td>${item.metal}</td>
+          <td>${getCompositionFirstWord(item.composition || item.metal)}</td>
           <td>${item.name}</td>
           <td>${item.qty}</td>
           <td>${item.type}</td>
@@ -458,7 +459,8 @@ const loadInventory = () => {
         spotPriceAtPurchase: spotPrice,
         premiumPerOz,
         totalPremium,
-        isCollectable: item.isCollectable !== undefined ? item.isCollectable : false
+        isCollectable: item.isCollectable !== undefined ? item.isCollectable : false,
+        composition: item.composition || item.metal || ""
       };
     }
     // Ensure all items have required properties
@@ -466,7 +468,8 @@ const loadInventory = () => {
       ...item,
       storageLocation: item.storageLocation || "Unknown",
       notes: item.notes || "",
-      isCollectable: item.isCollectable !== undefined ? item.isCollectable : false
+      isCollectable: item.isCollectable !== undefined ? item.isCollectable : false,
+      composition: item.composition || item.metal || ""
     };
   });
 
@@ -577,7 +580,7 @@ const renderTable = () => {
       <tr>
       <td class="shrink" data-column="date">${formatDisplayDate(item.date)}</td>
       <td class="shrink" data-column="type">${filterLink('type', item.type, getTypeColor(item.type))}</td>
-      <td class="shrink" data-column="metal">${filterLink('metal', item.metal || 'Silver', METAL_COLORS[item.metal] || 'var(--primary)')}</td>
+      <td class="shrink" data-column="composition">${filterLink('composition', getCompositionFirstWord(item.composition || item.metal || 'Silver'), METAL_COLORS[item.metal] || 'var(--primary)')}</td>
       <td class="clickable-name expand" data-column="name" onclick="editItem(${originalIdx})" title="Click to edit" tabindex="0" role="button" aria-label="Edit ${sanitizeHtml(item.name)}" onkeydown="if(event.key==='Enter'||event.key===' ')editItem(${originalIdx})">${sanitizeHtml(item.name)}</td>
       <td class="shrink" data-column="qty">${item.qty}</td>
       <td class="shrink" data-column="weight">${parseFloat(item.weight).toFixed(2)}</td>
@@ -877,7 +880,7 @@ const editItem = (idx, logIdx = null) => {
   const item = inventory[idx];
 
   // Populate edit form
-  elements.editMetal.value = item.metal;
+  elements.editMetal.value = item.composition || item.metal;
   elements.editName.value = item.name;
   elements.editQty.value = item.qty;
   elements.editType.value = item.type;
@@ -1023,7 +1026,9 @@ const importCsv = (file, override = false) => {
 
         for (const row of results.data) {
           processed++;
-          const metal = row['Metal'] || 'Silver';
+          const compositionRaw = row['Composition'] || row['Metal'] || 'Silver';
+          const composition = getCompositionFirstWord(compositionRaw);
+          const metal = parseNumistaMetal(composition);
           const name = row['Name'] || row['name'];
           const qty = row['Qty'] || row['qty'] || 1;
           const type = row['Type'] || row['type'] || 'Other';
@@ -1059,10 +1064,11 @@ const importCsv = (file, override = false) => {
             totalPremium = premiumPerOz * parseFloat(qty) * parseFloat(weight);
           }
 
-          addCompositionOption(metal);
+          addCompositionOption(composition);
 
           const item = sanitizeImportedItem({
             metal,
+            composition,
             name,
             qty,
             type,
@@ -1161,7 +1167,8 @@ const importNumistaCsv = (file, override = false) => {
           const year = (getValue(row, ['Year', 'Date']) || '').trim();
           const name = year.length >= 4 ? `${title} ${year}`.trim() : title;
           const issuedYear = year.length >= 4 ? year : '';
-          const composition = getValue(row, ['Composition', 'Metal']) || '';
+          const compositionRaw = getValue(row, ['Composition', 'Metal']) || '';
+          const composition = getCompositionFirstWord(compositionRaw);
 
           addCompositionOption(composition);
 
@@ -1210,6 +1217,7 @@ const importNumistaCsv = (file, override = false) => {
 
           const item = sanitizeImportedItem({
             metal,
+            composition,
             name,
             qty,
             type,

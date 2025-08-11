@@ -1,11 +1,11 @@
 # Project Status - StackTrackr
 
 
-> **Latest release: v3.03.08i**
+> **Latest release: v3.03.08j**
 
-## 🎯 Current State: **BETA v3.03.08i** ✅ MAINTAINED & OPTIMIZED
+## 🎯 Current State: **BETA v3.03.08j** ✅ MAINTAINED & OPTIMIZED
 
-**StackTrackr v3.03.08i** is a fully-featured, client-side web application for tracking precious metal investments (Silver, Gold, Platinum, Palladium) with comprehensive inventory management, API integration, and complete backup capabilities. The 3.03.x series focuses on polish, maintenance, and optimization.
+**StackTrackr v3.03.08j** is a fully-featured, client-side web application for tracking precious metal investments (Silver, Gold, Platinum, Palladium) with comprehensive inventory management, API integration, and complete backup capabilities. The 3.03.x series focuses on polish, maintenance, and optimization.
 
 
 ## 🏗️ Architecture Overview
@@ -25,6 +25,7 @@ The tool features a **modular JavaScript architecture** with separate files for 
 
 ## ✨ Latest Changes
 
+- **v3.03.08j - Composition display fix**: Composition column shows first word from imported data
 - **v3.03.08i - Numista import polish**: Unified changelog bullets, collectable default, weight rounding, N# notes, and beta warning
 - **v3.03.08h - Table controls & import options**: Grouped controls below the table, compact pagination, import Override/Merge menus, and Backup/Restore placeholder
 - **v3.03.08g - Change log & catalog improvements**: Condensed change log with row-click editing and catalog mapping
@@ -151,7 +152,7 @@ All data is stored locally in the browser using localStorage with:
 
 If continuing development in a new chat session:
 
-1. **Current Version**: 3.03.08e (managed in `js/constants.js`)
+1. **Current Version**: 3.03.08j (managed in `js/constants.js`)
 2. **Last Change**: Files modal storage breakdown removed
 3. **Last Documentation Update**: August 10, 2025 - All docs synchronized
 4. **Architecture**: Fully modular with proper separation of concerns
