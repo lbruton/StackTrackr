@@ -1253,39 +1253,16 @@
               </p>
             </div>
           </div>
-          <!-- Key Features -->
-          <div class="about-features">
-            <div class="features-title">✨ Key Features</div>
-            <div class="features-grid">
-              <div class="feature-item">📊 Live Spot Price Tracking</div>
-              <div class="feature-item">💰 Premium & Profit Calculations</div>
-              <div class="feature-item">📈 Advanced Analytics & Charts</div>
-              <div class="feature-item">📁 Multi-Format Import/Export</div>
-              <div class="feature-item">🔍 Real-time Search & Filtering</div>
-              <div class="feature-item">🏦 Storage Location Tracking</div>
-              <div class="feature-item">🎨 Dark/Light Theme Support</div>
-              <div class="feature-item">🔒 100% Local Storage</div>
-            </div>
-          </div>
-
           <!-- What's New and Roadmap -->
           <div class="about-info-grid">
             <div class="about-section">
-              <div class="section-title">
-                🚀 What's New in <span id="aboutCurrentVersion"></span>
-              </div>
+              <div class="section-title">🚀 What's New in <span id="aboutCurrentVersion"></span></div>
               <ul id="aboutChangelogLatest" class="changelog-list"></ul>
             </div>
 
             <div class="about-section" id="aboutRoadmapSection">
               <div class="section-title">🗺️ Development Roadmap</div>
-              <p>
-                See the
-                <a href="docs/roadmap.md" target="_blank" rel="noopener"
-                  >project roadmap</a
-                >
-                for upcoming patch plans.
-              </p>
+              <ul id="aboutRoadmapList" class="changelog-list"></ul>
             </div>
           </div>
 
@@ -1315,13 +1292,72 @@
     <div class="modal" id="versionModal" style="display: none">
       <div class="modal-content about-modal-content">
         <div class="modal-header about-modal-header">
-          <h1 class="about-title">
-            What's New <span id="versionModalVersion"></span>
-          </h1>
+          <h1 class="about-title">What's New <span id="versionModalVersion"></span></h1>
           <button aria-label="Close modal" class="modal-close" id="versionCloseBtn">×</button>
         </div>
         <div class="modal-body about-modal-body">
-          <div id="versionChanges"></div>
+          <div class="about-alert">
+            <div class="alert-header">
+              <span class="alert-icon">⚠️</span>
+              <strong>Important Privacy &amp; Data Notice</strong>
+            </div>
+            <div class="alert-content">
+              <p>
+                <strong>Your Privacy is Protected:</strong> All data is stored locally in your browser using localStorage and
+                <em>never transmitted to any server</em>. Your precious metals inventory information remains completely private
+                and under your control.
+              </p>
+
+              <p>
+                <strong>Data Backup Responsibility:</strong> Since data is stored locally, it will be lost if you clear browser
+                history, reset browser data, or use private browsing mode. Remember to export your data regularly to keep a
+                copy.
+              </p>
+
+              <p>
+                <strong>Use at Your Own Risk:</strong> This tool is provided for informational and organizational purposes only.
+                The developer assumes no responsibility for any financial decisions, investment choices, or data loss. Always
+                verify spot prices and calculations independently.
+              </p>
+
+              <p>
+                <strong>Spot Price Accuracy:</strong> Prices displayed are for reference only and may not reflect real-time
+                market conditions. Always confirm current pricing with your dealer or official market sources before making
+                transactions.
+              </p>
+            </div>
+          </div>
+
+          <div class="about-info-grid">
+            <div class="about-section">
+              <div class="section-title">🚀 What's New</div>
+              <div id="versionChanges"></div>
+            </div>
+
+            <div class="about-section">
+              <div class="section-title">🗺️ Development Roadmap</div>
+              <ul id="versionRoadmapList" class="changelog-list"></ul>
+            </div>
+          </div>
+
+          <div class="about-section">
+            <div class="section-title">📄 Resources &amp; Links</div>
+            <div class="resources-grid">
+              <a class="resource-btn" href="sample.csv" download="sample.csv">
+                📄 Download Sample Data
+              </a>
+              <a
+                class="resource-btn"
+                href="https://github.com/lbruton/Precious-Metals-Inventory"
+                target="_blank"
+                rel="noopener"
+              >
+                📁 View Source Code
+              </a>
+              <button class="resource-btn" id="versionShowChangelogBtn">📜 View Full Changelog</button>
+            </div>
+          </div>
+
           <div class="alert-actions">
             <button class="btn btn-primary" id="versionAcceptBtn">Accept and continue</button>
           </div>

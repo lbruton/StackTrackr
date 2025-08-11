@@ -138,9 +138,6 @@ document.addEventListener("DOMContentLoaded", () => {
     if (typeof setupAckModalEvents === "function") {
       setupAckModalEvents();
     }
-    if (typeof showAckModal === "function") {
-      showAckModal();
-    }
     if (typeof setupAboutModalEvents === "function") {
       setupAboutModalEvents();
     }
