@@ -997,6 +997,7 @@ const endImportProgress = () => {
  * - Spot Price ($/oz) for historical premium calculations
  * 
  * @param {File} file - CSV file selected by user through file input
+ * @param {boolean} [override=false] - Replace existing inventory instead of merging
  * @returns {void} Updates inventory array if import successful
  * 
  * @example
@@ -1008,7 +1009,7 @@ const endImportProgress = () => {
  *   }
  * });
  */
-const importCsv = (file) => {
+const importCsv = (file, override = false) => {
   try {
     Papa.parse(file, {
       header: true,
@@ -1084,7 +1085,6 @@ const importCsv = (file) => {
 
         if (imported.length === 0) return alert('No items to import.');
 
-        const override = confirm(`Import ${imported.length} items?\nOK = Override, Cancel = Merge`);
         if (override) {
           inventory = imported;
         } else {
@@ -1125,8 +1125,9 @@ const importCsv = (file) => {
  * - Notes appended with import source reference
  *
  * @param {File} file - CSV file from Numista
+ * @param {boolean} [override=false] - Replace existing inventory instead of merging
  */
-const importNumistaCsv = (file) => {
+const importNumistaCsv = (file, override = false) => {
   try {
     const reader = new FileReader();
     reader.onload = function(e) {
@@ -1227,7 +1228,6 @@ const importNumistaCsv = (file) => {
 
         if (imported.length === 0) return alert('No items to import.');
 
-        const override = confirm(`Import ${imported.length} items?\nOK = Override, Cancel = Merge`);
         if (override) {
           inventory = imported;
         } else {

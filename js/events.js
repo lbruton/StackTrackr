@@ -891,13 +891,46 @@ const setupEventListeners = () => {
     // IMPORT/EXPORT EVENT LISTENERS
     debugLog("Setting up import/export listeners...");
 
+    let csvImportOverride = false;
+    if (elements.importCsvBtn && elements.importCsvOptions) {
+      safeAttachListener(
+        elements.importCsvBtn,
+        "click",
+        () => elements.importCsvOptions.classList.toggle("show"),
+        "CSV import options toggle",
+      );
+    }
+    if (elements.importCsvOverride && elements.importCsvFile) {
+      safeAttachListener(
+        elements.importCsvOverride,
+        "click",
+        () => {
+          csvImportOverride = true;
+          elements.importCsvOptions.classList.remove("show");
+          elements.importCsvFile.click();
+        },
+        "CSV override option",
+      );
+    }
+    if (elements.importCsvMerge && elements.importCsvFile) {
+      safeAttachListener(
+        elements.importCsvMerge,
+        "click",
+        () => {
+          csvImportOverride = false;
+          elements.importCsvOptions.classList.remove("show");
+          elements.importCsvFile.click();
+        },
+        "CSV merge option",
+      );
+    }
     if (elements.importCsvFile) {
       safeAttachListener(
         elements.importCsvFile,
         "change",
         function (e) {
           if (e.target.files.length > 0) {
-            importCsv(e.target.files[0]);
+            importCsv(e.target.files[0], csvImportOverride);
           }
           this.value = "";
         },
@@ -933,25 +966,50 @@ const setupEventListeners = () => {
       );
     }
 
+    let numistaOverride = false;
+    if (elements.numistaImportBtn && elements.numistaImportOptions) {
+      safeAttachListener(
+        elements.numistaImportBtn,
+        "click",
+        () => elements.numistaImportOptions.classList.toggle("show"),
+        "Numista import options toggle",
+      );
+    }
+    if (elements.numistaOverride && elements.numistaImportFile) {
+      safeAttachListener(
+        elements.numistaOverride,
+        "click",
+        () => {
+          numistaOverride = true;
+          elements.numistaImportOptions.classList.remove("show");
+          elements.numistaImportFile.click();
+        },
+        "Numista override option",
+      );
+    }
+    if (elements.numistaMerge && elements.numistaImportFile) {
+      safeAttachListener(
+        elements.numistaMerge,
+        "click",
+        () => {
+          numistaOverride = false;
+          elements.numistaImportOptions.classList.remove("show");
+          elements.numistaImportFile.click();
+        },
+        "Numista merge option",
+      );
+    }
     if (elements.numistaImportFile) {
       safeAttachListener(
         elements.numistaImportFile,
         "change",
         function (e) {
           if (e.target.files.length > 0) {
-            importNumistaCsv(e.target.files[0]);
+            importNumistaCsv(e.target.files[0], numistaOverride);
           }
           this.value = "";
         },
         "Numista CSV import",
-      );
-    }
-    if (elements.numistaImportBtn && elements.numistaImportFile) {
-      safeAttachListener(
-        elements.numistaImportBtn,
-        "click",
-        () => elements.numistaImportFile.click(),
-        "Numista import trigger",
       );
     }
 

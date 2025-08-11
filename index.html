@@ -428,24 +428,27 @@
           </thead>
           <tbody></tbody>
         </table>
-          <div class="table-controls">
-            <span id="changeLogBtn" class="change-log-label">Change Log</span>
-            <span class="table-disclaimer"
-              >All data is stored locally. Back up often.</span
-            >
-            <div class="items-per-page">
-              <span class="items-label">Items:</span>
-              <select class="pagination-select" id="itemsPerPage">
-                <option selected value="10">10</option>
-                <option value="15">15</option>
-                <option value="25">25</option>
-                <option value="50">50</option>
-                <option value="100">100</option>
-              </select>
-            </div>
+      </section>
+      <section class="table-controls-section">
+        <div class="table-controls">
+          <span id="changeLogBtn" class="change-log-label">Change Log</span>
+          <span class="table-disclaimer"
+            >All data is stored locally. Back up often.</span
+          >
+          <div class="items-per-page">
+            <span class="items-label">Items:</span>
+            <select class="pagination-select" id="itemsPerPage">
+              <option selected value="10">10</option>
+              <option value="15">15</option>
+              <option value="25">25</option>
+              <option value="50">50</option>
+              <option value="100">100</option>
+            </select>
           </div>
-        <!-- Pagination Controls -->
-        <section class="pagination-section">
+        </div>
+      </section>
+      <!-- Pagination Controls -->
+      <section class="pagination-section">
           <div class="pagination-container">
             <div class="pagination-controls">
               <div class="pagination-buttons">
@@ -477,8 +480,6 @@
               </div>
             </div>
           </div>
-        </section>
-      </section>
       </section>
       <!-- =============================================================================
          TOTALS SECTION
@@ -1433,10 +1434,16 @@
               <p class="settings-subtext">Import your data files.</p>
               <div class="import-block">
                 <div class="import-export-grid">
-                  <label class="btn" id="importCsvBtn">
-                    Import CSV <span class="import-icon">⬇️</span>
+                  <div class="import-dropdown-wrapper">
+                    <button class="btn" id="importCsvBtn">
+                      Import CSV <span class="import-icon">⬇️</span>
+                    </button>
+                    <div class="import-dropdown" id="importCsvOptions">
+                      <button class="btn" id="importCsvOverride">Override</button>
+                      <button class="btn" id="importCsvMerge">Merge</button>
+                    </div>
                     <input accept=".csv" hidden id="importCsvFile" type="file" />
-                  </label>
+                  </div>
                   <label class="btn" id="importJsonBtn">
                     Import JSON <span class="import-icon">⬇️</span>
                     <input accept=".json" hidden id="importJsonFile" type="file" />
@@ -1488,8 +1495,14 @@
               <p class="settings-subtext">Connect with external services like Numista.</p>
               <div class="third-party-block">
                 <div class="import-export-grid">
-                  <button class="btn" id="numistaImportBtn">Import from Numista</button>
-                  <input type="file" id="numistaImportFile" accept=".csv" hidden />
+                  <div class="import-dropdown-wrapper">
+                    <button class="btn" id="numistaImportBtn">Import from Numista</button>
+                    <div class="import-dropdown" id="numistaImportOptions">
+                      <button class="btn" id="numistaOverride">Override</button>
+                      <button class="btn" id="numistaMerge">Merge</button>
+                    </div>
+                    <input type="file" id="numistaImportFile" accept=".csv" hidden />
+                  </div>
                 </div>
               </div>
             </div>
@@ -1514,6 +1527,11 @@
                   🏴‍☠️ So, you've been in a boating accident? 🏴‍☠️
                 </button>
               </div>
+            </div>
+
+            <div class="settings-card">
+              <h3>Backup/Restore</h3>
+              <p class="settings-subtext">Coming Soon</p>
             </div>
           </div>
         </div>
