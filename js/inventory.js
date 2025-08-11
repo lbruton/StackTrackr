@@ -598,7 +598,7 @@ const filterLink = (field, value, color, displayValue = value, title) => {
   const safe = sanitizeHtml(displayStr);
   const titleStr = title ? String(title) : `Filter by ${displayStr}`;
   const safeTitle = sanitizeHtml(titleStr);
-  const isNA = displayStr === 'N/A' || displayStr === 'Numista Import';
+  const isNA = displayStr === 'N/A' || displayStr === 'Numista Import' || displayStr === 'Unknown';
   const classNames = `filter-text${isNA ? ' na-value' : ''}`;
   const styleAttr = isNA ? '' : ` style="color: ${color};"`;
   return `<span class="${classNames}"${styleAttr} onclick="${escaped}" tabindex="0" role="button" onkeydown="if(event.key==='Enter'||event.key===' ')${escaped}" title="${safeTitle}">${safe}</span>`;
@@ -1392,7 +1392,7 @@ const importNumistaCsv = (file, override = false) => {
           const storageLocation = storageLocRaw && storageLocRaw.trim() ? storageLocRaw.trim() : 'Numista Import';
 
           const dateStrRaw = getValue(row, ['Acquisition date', 'Date acquired', 'Date']);
-          const dateStr = dateStrRaw && dateStrRaw.trim() ? dateStrRaw.trim() : todayStr();
+          const dateStr = dateStrRaw && dateStrRaw.trim() ? dateStrRaw.trim() : 'Unknown';
           const date = parseDate(dateStr);
 
           const baseNote = (getValue(row, ['Note', 'Notes']) || '').trim();
@@ -1659,7 +1659,7 @@ const importJson = (file) => {
           type: item.type || 'Other',
           weight: parseFloat(item.weight),
           price,
-          date: parseDate(item.date || todayStr()),
+          date: parseDate(item.date),
           purchaseLocation: item.purchaseLocation || "",
           storageLocation: item.storageLocation || "Unknown",
           notes: item.notes || "",
