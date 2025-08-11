@@ -418,7 +418,7 @@ const updateDefaultProviderButtons = () => {
     if (!btn) return;
     btn.classList.remove("default", "backup", "inactive");
     if (config.provider === prov && keys[prov]) {
-      btn.textContent = "";
+      btn.textContent = "Default";
       btn.classList.add("default");
     } else if (keys[prov]) {
       btn.textContent = "Backup";
