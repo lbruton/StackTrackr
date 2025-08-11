@@ -98,7 +98,7 @@ const API_PROVIDERS = {
  * State codes: a=alpha, b=beta, rc=release candidate
  * Example: 3.03.02a → branch 3, release 03, patch 02, alpha
  */
-const APP_VERSION = "3.03.08d";
+const APP_VERSION = "3.03.08e";
 
 /**
  * Returns formatted version string
@@ -168,6 +168,9 @@ const BRANDING_DOMAIN_OVERRIDE =
 
 /** @constant {string} LS_KEY - LocalStorage key for inventory data */
 const LS_KEY = "metalInventory";
+
+/** @constant {string} NUMISTA_RAW_KEY - LocalStorage key for raw Numista CSV data */
+const NUMISTA_RAW_KEY = "numistaRawData";
 
 /** @constant {string} SPOT_HISTORY_KEY - LocalStorage key for spot price history */
 const SPOT_HISTORY_KEY = "metalSpotHistory";

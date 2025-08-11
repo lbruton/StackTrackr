@@ -1,6 +1,6 @@
 # Function Reference
 
-> **Latest release: v3.03.08d**
+> **Latest release: v3.03.08e**
 
 | File | Function | Description |
 |------|----------|-------------|
@@ -149,6 +149,7 @@
 | utils.js | gramsToOzt | Converts grams to troy ounces (ozt) |
 | utils.js | convertToUsd | Converts amount from specified currency to USD using static rates |
 | utils.js | mapNumistaType | Maps Numista type strings to internal categories (coin, Aurum, Notes, bars/rounds, other) |
+| utils.js | parseNumistaMetal | Determines metal type from Numista composition string |
 | utils.js | saveData | Saves data to localStorage with JSON serialization |
 | utils.js | loadData | Loads data from localStorage with error handling |
 | utils.js | sortInventoryByDateNewestFirst | Sorts inventory by date (newest first) |

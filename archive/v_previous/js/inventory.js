@@ -1106,11 +1106,12 @@ const importCsv = (file) => {
 /**
  * Imports inventory data from a Numista CSV export
  *
- * Maps Numista fields to StackTrackr inventory structure:
+ * Stores the raw Numista CSV in localStorage and maps fields to StackTrackr structure:
  * - N# number → numistaId (hidden)
  * - Title (+ Year) → name; also stores issuedYear
  * - Type → mapped via mapNumistaType()
  * - Weight columns → max value converted from grams to ozt
+ * - Composition → metal detected via parseNumistaMetal(), defaults to Alloy
  * - Buying price (currency) → price in USD via convertToUsd()
  * - Storage location / Acquisition place → defaults to "unknown" if blank
  * - Acquisition date → parsed YYYY-MM-DD or today if blank
@@ -1120,13 +1121,17 @@ const importCsv = (file) => {
  */
 const importNumistaCsv = (file) => {
   try {
-    Papa.parse(file, {
-      header: true,
-      skipEmptyLines: true,
-      complete: function(results) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        const csvText = e.target.result;
+        localStorage.setItem(NUMISTA_RAW_KEY, csvText);
+        const storedCsv = localStorage.getItem(NUMISTA_RAW_KEY) || "";
+        const results = Papa.parse(storedCsv, { header: true, skipEmptyLines: true });
+        const rawTable = results.data;
         const imported = [];
         const skippedDetails = [];
-        const totalRows = results.data.length;
+        const totalRows = rawTable.length;
         startImportProgress(totalRows);
         let processed = 0;
         let importedCount = 0;
@@ -1139,7 +1144,7 @@ const importNumistaCsv = (file) => {
           return "";
         };
 
-        for (const [index, row] of results.data.entries()) {
+        for (const [index, row] of rawTable.entries()) {
           processed++;
 
           const numistaId = (getValue(row, ['N# number', 'Numista #', 'Numista number', 'Numista id']) || '').toString().trim();
@@ -1147,7 +1152,8 @@ const importNumistaCsv = (file) => {
           const year = (getValue(row, ['Year', 'Date']) || '').trim();
           const name = year.length >= 4 ? `${title} ${year}`.trim() : title;
           const issuedYear = year.length >= 4 ? year : '';
-          const metal = (getValue(row, ['Metal', 'Composition']) || 'Silver').trim();
+          const composition = getValue(row, ['Composition', 'Metal']) || '';
+          const metal = parseNumistaMetal(composition);
           const qty = parseInt(getValue(row, ['Quantity', 'Qty', 'Quantity owned']) || 1, 10);
 
           const type = mapNumistaType(getValue(row, ['Type']) || '');
@@ -1242,12 +1248,16 @@ const importNumistaCsv = (file) => {
             updateStorageStats();
           }
         }
-      },
-      error: function(error) {
+      } catch (error) {
         endImportProgress();
         handleError(error, 'Numista CSV import');
       }
-    });
+    };
+    reader.onerror = (error) => {
+      endImportProgress();
+      handleError(error, 'Numista CSV import');
+    };
+    reader.readAsText(file);
   } catch (error) {
     endImportProgress();
     handleError(error, 'Numista CSV import initialization');

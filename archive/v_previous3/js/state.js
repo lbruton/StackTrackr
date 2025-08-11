@@ -157,7 +157,6 @@ const elements = {
   appearanceBtn: null,
   apiBtn: null,
   filesBtn: null,
-  appearanceModal: null,
   apiModal: null,
   filesModal: null,
   apiInfoModal: null,
