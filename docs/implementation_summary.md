@@ -1,4 +1,25 @@
 
+# Implementation Summary: Composition Display Fix
+
+> **Latest release: v3.03.08j**
+
+## Version Update: 3.03.08i → 3.03.08j
+
+## User Requirements Implemented
+
+- Composition column shows first word of imported composition instead of generic metal
+
+## Technical Changes Made
+
+### Files Modified:
+1. **`index.html`**: Column now keyed as `composition`
+2. **`js/utils.js`**: Added `getCompositionFirstWord` and composition handling
+3. **`js/inventory.js`**: Stores composition separately and renders first word
+4. **`js/events.js`, `js/init.js`, `js/search.js`, `js/sorting.js`**: Updated for composition support
+5. **`js/constants.js`**: Bumped version to 3.03.08j
+6. **Documentation**: Updated changelog, function table, implementation summary, status, roadmap, structure, and README
+
+
 # Implementation Summary: Numista Import Polish
 
 > **Latest release: v3.03.08i**

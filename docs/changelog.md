@@ -1,13 +1,16 @@
 # StackTrackr — Changelog
 
 
-> **Latest release: v3.03.08i**
+> **Latest release: v3.03.08j**
 
 
 For upcoming work, see [roadmap](roadmap.md).
 
 ## 📋 Version History
 
+
+### Version 3.03.08j – Composition display fix (2025-08-10)
+- Composition column shows first word of imported composition instead of generic metal
 
 ### Version 3.03.08i – Numista import polish (2025-08-10)
 - Unified bullet styling for "What's New" lists
