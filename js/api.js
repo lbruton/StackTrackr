@@ -351,9 +351,9 @@ const setupProviderSettingsListeners = (provider) => {
 const updateProviderHistoryTables = () => {
   const config = loadApiConfig();
   Object.keys(API_PROVIDERS).forEach((prov) => {
-    const container = document.querySelector(
-      `.api-provider[data-provider="${prov}"] .provider-history`,
-    );
+      const container = document.querySelector(
+        `.api-provider[data-provider="${prov}"] .provider-settings .provider-history`,
+      );
     if (!container) return;
     const usage = config.usage?.[prov] || {
       quota: DEFAULT_API_QUOTA,
