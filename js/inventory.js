@@ -597,6 +597,124 @@ const getTypeColor = type => getColor(typeColors, type);
 const getPurchaseLocationColor = loc => getColor(purchaseLocationColors, loc);
 const getStorageLocationColor = loc => getColor(storageLocationColors, loc);
 
+/**
+ * Recalculates premium values for an inventory item
+ * @param {Object} item - Inventory item to update
+ */
+const recalcItem = (item) => {
+  if (item.isCollectable) {
+    item.premiumPerOz = 0;
+    item.totalPremium = 0;
+    return;
+  }
+  const qty = Number(item.qty) || 0;
+  const weight = parseFloat(item.weight) || 0;
+  const price = parseFloat(item.price) || 0;
+  const spot = parseFloat(item.spotPriceAtPurchase) || 0;
+  const pricePerOz = qty && weight ? price / (qty * weight) : 0;
+  item.premiumPerOz = pricePerOz - spot;
+  item.totalPremium = item.premiumPerOz * qty * weight;
+};
+
+/**
+ * Saves inventory and refreshes table display
+ */
+const persistInventoryAndRefresh = () => {
+  saveInventory();
+  renderTable();
+};
+
+/**
+ * Validates values for inline edits
+ * @param {string} field - Field being edited
+ * @param {string} value - Proposed value
+ * @returns {boolean} Whether value is valid
+ */
+const validateFieldValue = (field, value) => {
+  switch (field) {
+    case 'qty':
+      return /^\d+$/.test(value) && parseInt(value, 10) > 0;
+    case 'weight':
+    case 'price':
+    case 'spotPriceAtPurchase':
+      return !isNaN(value) && parseFloat(value) > 0;
+    case 'name':
+    case 'purchaseLocation':
+    case 'storageLocation':
+      return value.trim() !== '';
+    default:
+      return true;
+  }
+};
+
+/**
+ * Activates inline editing for a table cell
+ * @param {number} idx - Index of item to edit
+ * @param {string} field - Field name to update
+ * @param {HTMLElement} icon - Clicked pencil icon
+ */
+const startCellEdit = (idx, field, icon) => {
+  const td = icon.closest('td');
+  const item = inventory[idx];
+  const current = item[field] ?? '';
+  td.classList.add('editing');
+  const input = document.createElement('input');
+  if (field === 'qty') {
+    input.type = 'number';
+    input.step = '1';
+  } else if (['weight', 'price', 'spotPriceAtPurchase'].includes(field)) {
+    input.type = 'number';
+    input.step = '0.01';
+  } else {
+    input.type = 'text';
+  }
+  input.value = current;
+  input.className = 'inline-input';
+  td.innerHTML = '';
+  td.appendChild(input);
+
+  const saveIcon = document.createElement('span');
+  saveIcon.className = 'save-inline';
+  saveIcon.textContent = '✔️';
+  const cancelIcon = document.createElement('span');
+  cancelIcon.className = 'cancel-inline';
+  cancelIcon.textContent = '✖️';
+  td.appendChild(saveIcon);
+  td.appendChild(cancelIcon);
+
+  const cancelEdit = () => renderTable();
+
+  saveIcon.onclick = () => {
+    const value = input.value;
+    if (!validateFieldValue(field, value)) {
+      alert('Invalid value');
+      cancelEdit();
+      return;
+    }
+    const parsed = field === 'qty'
+      ? parseInt(value, 10)
+      : ['weight', 'price', 'spotPriceAtPurchase'].includes(field)
+        ? parseFloat(value)
+        : value.trim();
+    item[field] = parsed;
+    if (['qty', 'weight', 'price', 'spotPriceAtPurchase'].includes(field)) {
+      recalcItem(item);
+    }
+    persistInventoryAndRefresh();
+  };
+
+  cancelIcon.onclick = cancelEdit;
+
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') saveIcon.click();
+    if (e.key === 'Escape') cancelEdit();
+  });
+
+  input.focus();
+};
+
+window.startCellEdit = startCellEdit;
+
 
 const renderTable = () => {
   return monitorPerformance(() => {
@@ -640,17 +758,38 @@ const renderTable = () => {
       <td class="shrink" data-column="date">${filterLink('date', item.date, 'var(--text-primary)', formatDisplayDate(item.date))}</td>
       <td class="shrink" data-column="type">${filterLink('type', item.type, getTypeColor(item.type))}</td>
       <td class="shrink" data-column="composition">${filterLink('composition', getCompositionFirstWords(item.composition || item.metal || 'Silver'), METAL_COLORS[item.metal] || 'var(--primary)')}</td>
-      <td class="expand" data-column="name" style="text-align: left;"><span class="filter-text" onclick="applyColumnFilter('name', '${sanitizeHtml(item.name).replace(/'/g, "\'")}')"; style="cursor: pointer; color: var(--text-primary);" title="Filter by this name">${sanitizeHtml(item.name)}</span></td>
+      <td class="expand" data-column="name" style="text-align: left;">
+        <span class="inline-edit-icon" role="button" tabindex="0" onclick="startCellEdit(${originalIdx}, 'name', this)" aria-label="Edit name" title="Edit name">✎</span>
+        ${filterLink('name', item.name, 'var(--text-primary)')}
+      </td>
       <td class="shrink" data-column="numista">${item.numistaId ? `<a href="https://en.numista.com/catalogue/pieces${item.numistaId}.html" target="_blank" rel="noopener" title="View on Numista">${sanitizeHtml(item.numistaId)}</a>` : ''}</td>
-      <td class="shrink" data-column="qty">${filterLink('qty', item.qty, 'var(--text-primary)')}</td>
-      <td class="shrink" data-column="weight">${filterLink('weight', item.weight, 'var(--text-primary)', parseFloat(item.weight).toFixed(2))}</td>
-      <td class="shrink" data-column="purchasePrice">${item.price > 0 ? filterLink('price', item.price, 'var(--text-primary)', formatDollar(item.price)) : ''}</td>
-      <td class="shrink" data-column="spot">${filterLink('spotPriceAtPurchase', spotValue, 'var(--text-primary)', spotDisplay)}</td>
+      <td class="shrink" data-column="qty">
+        <span class="inline-edit-icon" role="button" tabindex="0" onclick="startCellEdit(${originalIdx}, 'qty', this)" aria-label="Edit quantity" title="Edit quantity">✎</span>
+        ${filterLink('qty', item.qty, 'var(--text-primary)')}
+      </td>
+      <td class="shrink" data-column="weight">
+        <span class="inline-edit-icon" role="button" tabindex="0" onclick="startCellEdit(${originalIdx}, 'weight', this)" aria-label="Edit weight" title="Edit weight">✎</span>
+        ${filterLink('weight', item.weight, 'var(--text-primary)', parseFloat(item.weight).toFixed(2))}
+      </td>
+      <td class="shrink" data-column="purchasePrice">
+        <span class="inline-edit-icon" role="button" tabindex="0" onclick="startCellEdit(${originalIdx}, 'price', this)" aria-label="Edit purchase price" title="Edit purchase price">✎</span>
+        ${item.price > 0 ? filterLink('price', item.price, 'var(--text-primary)', formatDollar(item.price)) : ''}
+      </td>
+      <td class="shrink" data-column="spot">
+        <span class="inline-edit-icon" role="button" tabindex="0" onclick="startCellEdit(${originalIdx}, 'spotPriceAtPurchase', this)" aria-label="Edit spot price" title="Edit spot price">✎</span>
+        ${filterLink('spotPriceAtPurchase', spotValue, 'var(--text-primary)', spotDisplay)}
+      </td>
       <td class="shrink" data-column="premium" style="color: ${item.isCollectable ? 'var(--text-muted)' : (item.totalPremium > 0 ? 'var(--warning)' : 'inherit')}">${filterLink('totalPremium', premiumValue, 'var(--text-primary)', premiumDisplay)}</td>
-      <td class="shrink" data-column="purchaseLocation">${item.purchaseLocation ? filterLink('purchaseLocation', item.purchaseLocation, getPurchaseLocationColor(item.purchaseLocation)) : ''}</td>
-      <td class="shrink" data-column="storageLocation">${item.storageLocation && item.storageLocation !== 'Unknown' ? filterLink('storageLocation', item.storageLocation, getStorageLocationColor(item.storageLocation)) : ''}</td>
+      <td class="shrink" data-column="purchaseLocation">
+        <span class="inline-edit-icon" role="button" tabindex="0" onclick="startCellEdit(${originalIdx}, 'purchaseLocation', this)" aria-label="Edit purchase location" title="Edit purchase location">✎</span>
+        ${item.purchaseLocation ? filterLink('purchaseLocation', item.purchaseLocation, getPurchaseLocationColor(item.purchaseLocation)) : ''}
+      </td>
+      <td class="shrink" data-column="storageLocation">
+        <span class="inline-edit-icon" role="button" tabindex="0" onclick="startCellEdit(${originalIdx}, 'storageLocation', this)" aria-label="Edit storage location" title="Edit storage location">✎</span>
+        ${item.storageLocation && item.storageLocation !== 'Unknown' ? filterLink('storageLocation', item.storageLocation, getStorageLocationColor(item.storageLocation)) : ''}
+      </td>
       <td class="shrink" data-column="collectable"><button type="button" class="btn action-btn collectable-btn ${item.isCollectable ? 'success' : ''}" onclick="toggleCollectable(${originalIdx})" aria-label="Toggle collectable status for ${sanitizeHtml(item.name)}" title="Toggle collectable status">${item.isCollectable ? 'Yes' : 'No'}</button></td>
-      <td class="shrink" data-column="edit"><span class="action-icon" role="button" tabindex="0" onclick="editItem(${originalIdx})" aria-label="Edit ${sanitizeHtml(item.name)}" title="Edit ${sanitizeHtml(item.name)}">✎</span></td>
+      <td class="shrink" data-column="edit"><span class="action-icon" role="button" tabindex="0" onclick="editItem(${originalIdx})" aria-label="Edit ${sanitizeHtml(item.name)}" title="Edit ${sanitizeHtml(item.name)}">⚙️</span></td>
       <td class="shrink" data-column="notes"><span class="action-icon ${item.notes && item.notes.trim() ? 'success' : ''}" role="button" tabindex="0" onclick="showNotes(${originalIdx})" aria-label="View notes" title="View notes">📓</span></td>
       <td class="shrink" data-column="delete"><span class="action-icon danger" role="button" tabindex="0" onclick="deleteItem(${originalIdx})" aria-label="Delete item" title="Delete item">🗑️</span></td>
       </tr>
