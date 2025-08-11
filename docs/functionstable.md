@@ -151,7 +151,7 @@
 | utils.js | pad2 | Pads a number with leading zeros to ensure two-digit format |
 | utils.js | todayStr | Returns current date as ISO string (YYYY-MM-DD) |
 | utils.js | currentMonthKey | Returns current month key in YYYY-MM format |
-| utils.js | parseDate | Parses various date formats into standard YYYY-MM-DD format |
+| utils.js | parseDate | Parses various date formats into standard YYYY-MM-DD format; returns 'Unknown' if invalid |
 | utils.js | formatDisplayDate | Formats a date string into two-digit year ISO format (YY-MM-DD) |
 | utils.js | formatCurrency | Formats a number as a currency string using the default currency |
 | utils.js | formatLossProfit | Formats a profit/loss value with color coding |

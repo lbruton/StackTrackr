@@ -266,10 +266,10 @@ const currentMonthKey = () => {
  * based on date values and context clues.
  *
  * @param {string} dateStr - Date string in any supported format
- * @returns {string} Date in YYYY-MM-DD format, or today's date if parsing fails
+ * @returns {string} Date in YYYY-MM-DD format, or 'Unknown' if parsing fails
  */
 function parseDate(dateStr) {
-  if (!dateStr) return todayStr();
+  if (!dateStr) return 'Unknown';
 
   // Clean the input string
   const cleanDateStr = dateStr.trim();
@@ -348,9 +348,9 @@ function parseDate(dateStr) {
     // Continue to fallback
   }
 
-  // If all parsing fails, return today's date
-  console.warn(`Could not parse date: "${dateStr}", using today's date`);
-  return todayStr();
+  // If all parsing fails, return 'Unknown'
+  console.warn(`Could not parse date: "${dateStr}", returning 'Unknown'`);
+  return 'Unknown';
 }
 
 /**
@@ -559,7 +559,9 @@ const sortInventoryByDateNewestFirst = (data = inventory) => {
   return [...data].sort((a, b) => {
     const dateA = new Date(a.date);
     const dateB = new Date(b.date);
-    return dateB - dateA; // Descending order (newest first)
+    const timeA = isNaN(dateA) ? 0 : dateA.getTime();
+    const timeB = isNaN(dateB) ? 0 : dateB.getTime();
+    return timeB - timeA; // Descending order (newest first)
   });
 };
 
