@@ -2,6 +2,7 @@
 
 This roadmap outlines upcoming patch releases for the v3.04.x series.
 
+- **v3.04.11** – Collectable column icon *(completed)*
 - **v3.04.10** – Provider history usage display *(completed)*
 - **v3.04.09** – Multi-select & exclusion filters *(completed)*
 - **v3.04.08** – Debounced search input *(completed)*

@@ -1553,7 +1553,15 @@ td {
 
 #inventoryTable th[data-column="numista"],
 #inventoryTable td[data-column="numista"] {
-  display: none;
+    display: none;
+}
+
+#inventoryTable th[data-column="collectable"] svg {
+    width: 1em;
+    height: 1em;
+    display: block;
+    margin: 0 auto;
+    fill: currentColor;
 }
 
 tr:nth-child(even) {
