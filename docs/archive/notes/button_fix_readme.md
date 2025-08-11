@@ -35,7 +35,7 @@ Fixed the non-functioning "Add" and "Reset" buttons for spot price management. A
 1. **`spot.js`** - Updated spot price management functions
 2. **`events.js`** - Fixed event listener setup and removed duplicates
 3. **`constants.js`** - Incremented version to 3.1.2
-4. **`docs/CHANGELOG.md`** - Documented all changes
+4. **`docs/changelog.md`** - Documented all changes
 
 ### Key Functions Fixed
 - `updateManualSpot(metalKey)` - Processes user input

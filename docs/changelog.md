@@ -1,10 +1,13 @@
 # StackTrackr — Changelog
 
-> **Latest release: v3.03.07a**
+> **Latest release: v3.03.07b**
 
-For upcoming work, see [ROADMAP](ROADMAP.md).
+For upcoming work, see [roadmap](roadmap.md).
 
 ## 📋 Version History
+
+### Version 3.03.07b – Documentation Normalization (2025-08-10)
+- Renamed documentation files to lowercase (except MULTI_AGENT_WORKFLOW.md) and updated references
 
 ### Version 3.03.07a – Theme Toggle Improvements (2025-08-10)
 - Removed appearance modal and implemented three-state Dark/Light/System toggle with localStorage persistence
@@ -146,7 +149,7 @@ For upcoming work, see [ROADMAP](ROADMAP.md).
   - Enhanced click-to-sort functionality across all table columns
   - Added dedicated Notes button for quick access to item notes
 - **Documentation Improvement**: Consolidated AI assistant guidance into comprehensive workflow system
-  - Removed redundant `docs/LLM.md` file (archived to `docs/archive/LLM.md`)
+  - Removed redundant `docs/LLM.md` file (archived to `docs/archive/llm.md`)
   - Replaced with enhanced `docs/MULTI_AGENT_WORKFLOW.md` providing complete project context
   - Improved multi-agent coordination protocols and quality standards
   - Updated workflow guidance with actionable step-by-step processes
@@ -270,11 +273,11 @@ For upcoming work, see [ROADMAP](ROADMAP.md).
 - **Code Quality Improvements**:  
   - JSDoc for new functions  
   - Modular architecture and separation of concerns  
-- **Documentation Updates**: Corrected version refs in LLM.md and STRUCTURE.md; removed stale links
+- **Documentation Updates**: Corrected version refs in LLM.md and structure.md; removed stale links
 
 ### Version 3.0.3 – Documentation Restructure (2025-08-06)
 - Moved docs to `/docs/`  
-- Updated `STRUCTURE.md` & `docs/README.md`  
+- Updated `structure.md` & `docs/README.md`
 - Fixed broken internal links  
 - No functional changes
 

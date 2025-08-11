@@ -1,6 +1,6 @@
 # Project Structure
 
-> **Latest release: v3.03.07a**
+> **Latest release: v3.03.07b**
 
 The repository is organized as follows:
 
@@ -23,7 +23,7 @@ The repository is organized as follows:
 
 - **css/** – Contains the global `styles.css` stylesheet.
 - **debug/** – Holds temporary debugging files.
-- **docs/** – Changelogs, workflow notes, roadmap, and future planning documentation. Includes the [UI Style Guide](UI_STYLE_GUIDE.md).
+- **docs/** – Changelogs, workflow notes, roadmap, and future planning documentation. Includes the [UI Style Guide](ui_style_guide.md).
 - **archive/** – Contains the last stable build for users needing a fallback.
 - **js/** – All JavaScript modules powering the application, including `customMapping.js` for regex-based field mapping.
 - **index.html** – Entry point and user interface for the tool.

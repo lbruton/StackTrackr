@@ -1,13 +1,13 @@
-# Implementation Summary: Theme Toggle Improvements
+# Implementation Summary: Documentation Normalization
 
-> **Latest release: v3.03.07a**
+> **Latest release: v3.03.07b**
 
-## Version Update: 3.03.06a → 3.03.07a
+## Version Update: 3.03.07a → 3.03.07b
 
 ## User Requirements Implemented
 
-- Removed appearance modal and added inline theme toggle cycling Dark → Light → System
-- Persisted theme preference in localStorage with immediate application
+- Renamed documentation files to lowercase for consistency
+- Updated internal references and links across project
 
 ## Technical Changes Made
 
@@ -16,8 +16,8 @@
 2. **`js/state.js`**: Dropped appearanceModal reference
 3. **`js/init.js`**: Added three-state toggle fallback
 4. **`css/styles.css`**: Removed appearance modal styles
-5. **`js/constants.js`**: Bumped version to 3.03.07a
-6. **Documentation**: Updated references in README and docs
+5. **`js/constants.js`**: Bumped version to 3.03.07b
+6. **Documentation**: Renamed and updated links across docs
 
 ### User Experience Improvements:
 - Theme button cycles through Dark, Light, and System modes
@@ -38,7 +38,7 @@
 
 ### Files Modified:
 1. **`js/constants.js`**: Bumped version to 3.03.06a
-2. **Documentation**: Updated `CHANGELOG.md`, `ROADMAP.md`, `STATUS.md`, `VERSIONING.md`, `STRUCTURE.md`, `HUMAN_WORKFLOW.md`, `MULTI_AGENT_WORKFLOW.md`, and `README.md`
+2. **Documentation**: Updated `changelog.md`, `roadmap.md`, `status.md`, `versioning.md`, `structure.md`, `human_workflow.md`, `MULTI_AGENT_WORKFLOW.md`, and `README.md`
 3. **`archive/previous/index.html`**: Added archived build footer link
 
 ### User Experience Improvements:
@@ -65,7 +65,7 @@
 1. **`index.html`**: Added Custom Mapping card with prototype buttons
 2. **`js/customMapping.js`**: New module implementing in-memory regex mappings
 3. **`js/events.js`**: Hooked Custom Mapping buttons to rule engine functions
-4. **Documentation**: Updated `CHANGELOG.md`, `FUNCTIONSTABLE.md`, and `STATUS.md`
+4. **Documentation**: Updated `changelog.md`, `functionstable.md`, and `status.md`
 
 ### User Experience Improvements:
 - Users can define temporary regex mappings to test import field alignment
@@ -91,7 +91,7 @@
 3. **`js/api.js`**: Render progress bar when Files modal opens
 4. **`css/styles.css`**: Added `.files-progress` styling
 5. **`js/constants.js`**: Bumped version to 3.03.04a
-6. **Documentation**: Updated `CHANGELOG.md`, `FUNCTIONSTABLE.md`, and `STATUS.md`
+6. **Documentation**: Updated `changelog.md`, `functionstable.md`, and `status.md`
 
 ### User Experience Improvements:
 - Visualizes per-item storage usage directly in Files modal
@@ -118,7 +118,7 @@
 2. **`js/events.js`**: Updated storage report link handler and close logic
 3. **`js/utils.js`**: Replaced popup logic with iframe injection
 4. **`js/constants.js`**: Bumped version to 3.03.03a
-5. **Documentation**: Updated `CHANGELOG.md`, `FUNCTIONSTABLE.md`, and `STATUS.md`
+5. **Documentation**: Updated `changelog.md`, `functionstable.md`, and `status.md`
 
 ### User Experience Improvements:
 - Consistent modal experience without relying on browser popups
@@ -200,8 +200,8 @@
    - Updated button state management and tooltips
 3. **`app/index.html`**: Added "Sync Now" and "Clear Cache" buttons to API modal
 4. **`app/js/events.js`**: Added event listeners for new buttons
-5. **`docs/CHANGELOG.md`**: Documented new features
-6. **`docs/LLM.md`**: Updated version and date references
+5. **`docs/changelog.md`**: Documented new features
+6. **`docs/archive/llm.md`**: Updated version and date references
 
 ### Key Functions Added:
 - `clearApiCache()` - Clears cached data only, preserves API config

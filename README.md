@@ -1,10 +1,11 @@
-# StackTrackr v3.03.07a
+# StackTrackr v3.03.07b
 
 StackTrackr is a comprehensive client-side web application for tracking precious metal investments. It's designed to help users manage their silver, gold, platinum, and palladium holdings with detailed financial metrics and enhanced tracking capabilities.
 
 The public hosted version of the app is available at [stackrtrackr.com](https://stackrtrackr.com).
 
 ## Recent Updates
+- **v3.03.07b - Documentation Normalization**: Renamed documentation files to lowercase and updated all internal references
 - **v3.03.07a - Theme Toggle Improvements**: Removed appearance modal and added three-state Dark/Light/System toggle with localStorage persistence
 - **v3.03.06a - Documentation Sweep & Archive Update**: Version references synchronized and archived footer links back to current version
 - **v3.03.05a - Custom Mapping Rule Engine**: Added regex-based mapping module with Add/Apply/Clear controls
@@ -26,6 +27,9 @@ The public hosted version of the app is available at [stackrtrackr.com](https://
 - **v3.1.9 - UI Consistency**: Clear Cache button styling improvements across themes
 - **v3.1.8 - Backup System**: Full ZIP backup functionality with restoration guides
 - **v3.1.6 - Theme Toggle**: Fixed theme management with system preference detection
+
+## 🆕 What's New in v3.03.07b
+- Documentation files renamed to lowercase (except MULTI_AGENT_WORKFLOW.md) with reference cleanup
 
 ## 🆕 What's New in v3.03.07a
 - Theme toggle cycles Dark/Light/System without modal and saves preference
@@ -96,7 +100,7 @@ The public hosted version of the app is available at [stackrtrackr.com](https://
   - Enhanced click-to-sort functionality for all table columns
   - Added dedicated Notes button for easy access to item notes
 - **Documentation Consolidation**: Improved AI assistant guidance and development workflow
-  - Removed redundant `docs/LLM.md` file (archived to `docs/archive/LLM.md`)
+  - Removed redundant `docs/LLM.md` file (archived to `docs/archive/llm.md`)
   - Replaced with comprehensive `docs/MULTI_AGENT_WORKFLOW.md`
   - Enhanced multi-agent coordination protocols and quality standards
   - Streamlined documentation structure eliminates redundancy
@@ -163,7 +167,7 @@ The public hosted version of the app is available at [stackrtrackr.com](https://
 7. **View Analytics**: Click a totals title on summary cards for breakdowns.
 
 ## Version Management
-This application uses a dynamic version management system. The version is automatically updated throughout the application from `js/constants.js`. The HTML files now use this dynamic system instead of hardcoded version numbers. See [docs/VERSIONING.md](docs/VERSIONING.md) for details on how to update versions.
+This application uses a dynamic version management system. The version is automatically updated throughout the application from `js/constants.js`. The HTML files now use this dynamic system instead of hardcoded version numbers. See [docs/versioning.md](docs/versioning.md) for details on how to update versions.
 The prior build is retained in `archive/previous` and linked from the footer so users can roll back if issues arise.
 
 ## Data Structure
@@ -185,14 +189,14 @@ Each inventory item includes:
 ├── docs/
 │   ├── archive/                        # Archived notes and historical docs
 │   ├── future/                         # Planning notes for upcoming enhancements
-│   ├── CHANGELOG.md                    # Detailed history of application changes
-│   ├── IMPLEMENTATION_SUMMARY.md       # Summary of major development work
+│   ├── changelog.md                    # Detailed history of application changes
+│   ├── implementation_summary.md       # Summary of major development work
 │   ├── MULTI_AGENT_WORKFLOW.md         # AI assistant development workflow and coordination
-│   ├── ROADMAP.md                      # Planned features and subtasks
-│   ├── STATUS.md                       # Project status and features overview
-│   ├── STRUCTURE.md                    # Documentation of folder and file organization
-│   ├── FUNCTIONSTABLE.md               # Function reference table
-│   └── VERSIONING.md                   # Version management notes
+│   ├── roadmap.md                      # Planned features and subtasks
+│   ├── status.md                       # Project status and features overview
+│   ├── structure.md                    # Documentation of folder and file organization
+│   ├── functionstable.md               # Function reference table
+│   └── versioning.md                   # Version management notes
 ├── js/
 │   ├── api.js
 │   ├── charts.js
@@ -225,13 +229,13 @@ Each inventory item includes:
 ## Documentation
 - **[docs/README.md](docs/README.md)** - Detailed project information.
 - **[docs/MULTI_AGENT_WORKFLOW.md](docs/MULTI_AGENT_WORKFLOW.md)** - AI assistant development workflow.
-- **[docs/CHANGELOG.md](docs/CHANGELOG.md)** - Version history and features.
-- **[docs/STATUS.md](docs/STATUS.md)** - Current project status.
- - **[docs/STRUCTURE.md](docs/STRUCTURE.md)** - Project organization.
- - **[docs/FUNCTIONSTABLE.md](docs/FUNCTIONSTABLE.md)** - Function reference table.
+- **[docs/changelog.md](docs/changelog.md)** - Version history and features.
+- **[docs/status.md](docs/status.md)** - Current project status.
+ - **[docs/structure.md](docs/structure.md)** - Project organization.
+ - **[docs/functionstable.md](docs/functionstable.md)** - Function reference table.
  - **[docs/future/](docs/future/)** - Notes for future implementations and add-ons.
- - **[docs/VERSIONING.md](docs/VERSIONING.md)** - Version management.
-- **[archive/previous/](archive/previous/)** - Last stable build for rollback.
+ - **[docs/versioning.md](docs/versioning.md)** - Version management.
+ - **[archive/previous/](archive/previous/)** - Last stable build for rollback.
 
 ## Code Quality
 This project maintains high code quality standards with:
@@ -264,7 +268,7 @@ Currently, no major issues are known.
 ## Contributing
 This project is designed to be maintainable and extensible. When making changes:
 1. Update the version in `js/constants.js`
-2. Document changes in `docs/CHANGELOG.md`
+2. Document changes in `docs/changelog.md`
 3. Update relevant documentation files
 4. Test backwards compatibility
 5. Ensure all exports include new fields
@@ -273,7 +277,7 @@ This project is designed to be maintainable and extensible. When making changes:
 This project is open source and available for personal use.
 
 ---
-**Current Version**: 3.03.07a
+**Current Version**: 3.03.07b
 **Last Updated**: August 9, 2025
 **Status**: Feature complete release candidate
 

@@ -5,11 +5,11 @@
 > **LLM INSTRUCTION**: After any code change, verify and update these files:
 > ```
 > docs/README.md               — User guidance, features, installation, contribution
-> docs/archive/LLM.md          — This AI assistant guide (you are here)
-> docs/CHANGELOG.md            — Version history with dates and notes
-> docs/STATUS.md               — Current status and feature coverage
-> docs/STRUCTURE.md            — Project folder and file organization
-> docs/VERSIONING.md           — Version management strategy
+> docs/archive/llm.md          — This AI assistant guide (you are here)
+> docs/changelog.md            — Version history with dates and notes
+> docs/status.md               — Current status and feature coverage
+> docs/structure.md            — Project folder and file organization
+> docs/versioning.md           — Version management strategy
 > index.html & js/about.js     — About modal version info and release notes
 > ```
 
@@ -54,14 +54,14 @@ StackTrackr/
 │       ├── detailsModal.js   # Analytics modal
 │       └── init.js           # Application initialization
 ├── docs/
-│   ├── CHANGELOG.md
-│   ├── IMPLEMENTATION_SUMMARY.md
+│   ├── changelog.md
+│   ├── implementation_summary.md
 │   ├── MULTI_AGENT_WORKFLOW.md
-│   ├── ROADMAP.md
-│   ├── STATUS.md
-│   ├── STRUCTURE.md
-│   ├── VERSIONING.md
-│   └── archive/LLM.md       # (this file)
+│   ├── roadmap.md
+│   ├── status.md
+│   ├── structure.md
+│   ├── versioning.md
+│   └── archive/llm.md       # (this file)
 └── sample.csv
 
 ## 4. Architecture & Design

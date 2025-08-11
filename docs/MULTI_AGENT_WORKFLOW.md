@@ -1,12 +1,12 @@
-# Multi-Agent Development Workflow - StackTrackr v3.03.07a
+# Multi-Agent Development Workflow - StackTrackr v3.03.07b
 
-> **Latest release: v3.03.07a**
+> **Latest release: v3.03.07b**
 
 ## 🎯 Project Overview
 
-You are contributing to the **StackTrackr v3.03.07a**, a comprehensive client-side web application for tracking precious metal investments (Silver, Gold, Platinum, Palladium). The project uses a modular JavaScript architecture with local storage, responsive CSS theming, and advanced features like API integration, data visualization, and comprehensive import/export capabilities.
+You are contributing to the **StackTrackr v3.03.07b**, a comprehensive client-side web application for tracking precious metal investments (Silver, Gold, Platinum, Palladium). The project uses a modular JavaScript architecture with local storage, responsive CSS theming, and advanced features like API integration, data visualization, and comprehensive import/export capabilities.
 
-**Current Status**: v3.03.07a (alpha)
+**Current Status**: v3.03.07b (beta)
 **Your Role**: Complete focused v3.03.x patch tasks as part of a coordinated multi-agent development effort
 
 ---
@@ -35,15 +35,15 @@ You are contributing to the **StackTrackr v3.03.07a**, a comprehensive client-si
 
 ### **Step 1: Read the Documentation**
 Before starting any patch entry, read these files:
-- `docs/ROADMAP.md` - Patch release roadmap (v3.03.x entries)
-- `docs/archive/notes/V3.2.0-PLANNING-NOTES.md` - Technical implementation details
-- `docs/STATUS.md` - Current project status
-- `docs/STRUCTURE.md` - Project architecture and file organization
-- `docs/UI_STYLE_GUIDE.md` - UI color, typography, and component conventions
-- `docs/FUNCTIONSTABLE.md` - Reference table of all JavaScript functions
+- `docs/roadmap.md` - Patch release roadmap (v3.03.x entries)
+- `docs/archive/notes/v3.2.0-planning-notes.md` - Technical implementation details
+- `docs/status.md` - Current project status
+- `docs/structure.md` - Project architecture and file organization
+- `docs/ui_style_guide.md` - UI color, typography, and component conventions
+- `docs/functionstable.md` - Reference table of all JavaScript functions
 
 ### **Step 2: Choose Your Patch Entry**
-1. **Review available patch entries** in `docs/ROADMAP.md`
+1. **Review available patch entries** in `docs/roadmap.md`
 2. **Check dependencies** – some patches require others to complete first
 3. **Verify file conflicts** – avoid working on high-conflict files simultaneously
 4. **Announce your choice** if coordinating with other agents
@@ -90,12 +90,12 @@ Before starting any patch entry, read these files:
 - Update planning notes if you discover issues
 - Document any architectural decisions
 - For every completed patch, **bump the version** and update:
-  - `docs/FUNCTIONSTABLE.md`
-  - `docs/CHANGELOG.md`
-  - `docs/IMPLEMENTATION_SUMMARY.md`
-  - `docs/ROADMAP.md`
-  - `docs/STATUS.md`
-  - `docs/STRUCTURE.md`
+  - `docs/functionstable.md`
+  - `docs/changelog.md`
+  - `docs/implementation_summary.md`
+  - `docs/roadmap.md`
+  - `docs/status.md`
+  - `docs/structure.md`
 
 ### **File Modification Guidelines**
 
@@ -230,9 +230,9 @@ Before starting any patch entry, read these files:
 ## ⚡ Quick Reference
 
 ### **Essential Files:**
-- `docs/ROADMAP.md` - Patch release list
-- `docs/archive/notes/V3.2.0-PLANNING-NOTES.md` - Implementation details
-- `docs/FUNCTIONSTABLE.md` - Lookup table for all functions
+- `docs/roadmap.md` - Patch release list
+- `docs/archive/notes/v3.2.0-planning-notes.md` - Implementation details
+- `docs/functionstable.md` - Lookup table for all functions
 - `index.html` - Main application
 - `js/constants.js` - Configuration and version
 - `css/styles.css` - All styling
@@ -250,15 +250,15 @@ Before starting any patch entry, read these files:
 
 ### Release Documentation Checklist
 - [ ] Bump `APP_VERSION` and version references
-- [ ] Update `docs/FUNCTIONSTABLE.md`
-- [ ] Update `docs/CHANGELOG.md`
-- [ ] Update `docs/IMPLEMENTATION_SUMMARY.md`
-- [ ] Update `docs/ROADMAP.md`
-- [ ] Update `docs/STATUS.md`
-- [ ] Update `docs/STRUCTURE.md`
+- [ ] Update `docs/functionstable.md`
+- [ ] Update `docs/changelog.md`
+- [ ] Update `docs/implementation_summary.md`
+- [ ] Update `docs/roadmap.md`
+- [ ] Update `docs/status.md`
+- [ ] Update `docs/structure.md`
 
 ---
 
-**Remember: Each patch entry is designed to be completed independently while contributing to the larger v3.03.07a vision. Focus on quality over speed, and don't hesitate to coordinate with other agents when working on shared components.**
+**Remember: Each patch entry is designed to be completed independently while contributing to the larger v3.03.07b vision. Focus on quality over speed, and don't hesitate to coordinate with other agents when working on shared components.**
 
 **Your contribution helps build a professional-grade inventory management system that serves users worldwide. Every patch matters!** 🚀
