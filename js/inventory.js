@@ -593,7 +593,10 @@ const filterLink = (field, value, color, displayValue = value, title) => {
   const safe = sanitizeHtml(displayStr);
   const titleStr = title ? String(title) : `Filter by ${displayStr}`;
   const safeTitle = sanitizeHtml(titleStr);
-  return `<span class="filter-text" style="color: ${color};" onclick="${escaped}" tabindex="0" role="button" onkeydown="if(event.key==='Enter'||event.key===' ')${escaped}" title="${safeTitle}">${safe}</span>`;
+  const isNA = displayStr === 'N/A';
+  const classNames = `filter-text${isNA ? ' na-value' : ''}`;
+  const styleAttr = isNA ? '' : ` style="color: ${color};"`;
+  return `<span class="${classNames}"${styleAttr} onclick="${escaped}" tabindex="0" role="button" onkeydown="if(event.key==='Enter'||event.key===' ')${escaped}" title="${safeTitle}">${safe}</span>`;
 };
 
 const getTypeColor = type => getColor(typeColors, type);
