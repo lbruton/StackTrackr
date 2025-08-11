@@ -295,7 +295,7 @@ const generateBackupHtml = (sortedInventory, timeFormatted) => {
     <tbody>
       ${sortedInventory.map(item => `
         <tr>
-          <td>${getCompositionFirstWord(item.composition || item.metal)}</td>
+          <td>${getCompositionFirstWords(item.composition || item.metal)}</td>
           <td>${item.name}</td>
           <td>${item.qty}</td>
           <td>${item.type}</td>
@@ -583,7 +583,7 @@ const renderTable = () => {
       <tr>
       <td class="shrink" data-column="date">${formatDisplayDate(item.date)}</td>
       <td class="shrink" data-column="type">${filterLink('type', item.type, getTypeColor(item.type))}</td>
-      <td class="shrink" data-column="composition">${filterLink('composition', getCompositionFirstWord(item.composition || item.metal || 'Silver'), METAL_COLORS[item.metal] || 'var(--primary)')}</td>
+      <td class="shrink" data-column="composition">${filterLink('composition', getCompositionFirstWords(item.composition || item.metal || 'Silver'), METAL_COLORS[item.metal] || 'var(--primary)')}</td>
       <td class="expand" data-column="name">${sanitizeHtml(item.name)} <button type="button" class="edit-icon" onclick="editItem(${originalIdx})" aria-label="Edit ${sanitizeHtml(item.name)}" title="Edit ${sanitizeHtml(item.name)}">✎</button></td>
       <td class="shrink" data-column="qty">${item.qty}</td>
       <td class="shrink" data-column="weight">${parseFloat(item.weight).toFixed(2)}</td>
@@ -1030,7 +1030,7 @@ const importCsv = (file, override = false) => {
         for (const row of results.data) {
           processed++;
           const compositionRaw = row['Composition'] || row['Metal'] || 'Silver';
-          const composition = getCompositionFirstWord(compositionRaw);
+          const composition = getCompositionFirstWords(compositionRaw);
           const metal = parseNumistaMetal(composition);
           const name = row['Name'] || row['name'];
           const qty = row['Qty'] || row['qty'] || 1;
@@ -1171,7 +1171,7 @@ const importNumistaCsv = (file, override = false) => {
           const name = year.length >= 4 ? `${title} ${year}`.trim() : title;
           const issuedYear = year.length >= 4 ? year : '';
           const compositionRaw = getValue(row, ['Composition', 'Metal']) || '';
-          const composition = getCompositionFirstWord(compositionRaw);
+          const composition = getCompositionFirstWords(compositionRaw);
 
           addCompositionOption(composition);
 

@@ -377,7 +377,7 @@ const setupEventListeners = () => {
         function (e) {
           e.preventDefault();
 
-          const composition = getCompositionFirstWord(elements.itemMetal.value);
+          const composition = getCompositionFirstWords(elements.itemMetal.value);
           const metal = parseNumistaMetal(composition);
           const name = elements.itemName.value.trim();
           const qty = parseInt(elements.itemQty.value, 10);
@@ -470,7 +470,7 @@ const setupEventListeners = () => {
 
           if (editingIndex === null) return;
 
-          const composition = getCompositionFirstWord(elements.editMetal.value);
+          const composition = getCompositionFirstWords(elements.editMetal.value);
           const metal = parseNumistaMetal(composition);
           const name = elements.editName.value.trim();
           const qty = parseInt(elements.editQty.value, 10);
@@ -1332,7 +1332,7 @@ const setupSearch = () => {
         elements.searchInput,
         "input",
         function () {
-          searchQuery = this.value;
+          searchQuery = this.value.trim();
           currentPage = 1; // Reset to first page when search changes
           renderTable();
         },

@@ -1,3 +1,24 @@
+# Implementation Summary: Search Fix & Composition Parsing
+
+> **Latest release: v3.03.08l**
+
+## Version Update: 3.03.08k → 3.03.08l
+
+## User Requirements Implemented
+
+- Search box now filters inventory table as you type
+- Numista compositions truncate to the first two words, ignoring parentheses and numbers
+
+## Technical Changes Made
+
+### Files Modified:
+1. **`js/init.js`**: Ensures search listeners initialize even if other setup fails
+2. **`js/utils.js`**: Added `getCompositionFirstWords` helper
+3. **`js/events.js`, `js/inventory.js`**: Updated composition handling and trimmed search input
+4. **`js/constants.js`**: Bumped version to 3.03.08l
+5. **Documentation**: Updated changelog, function table, implementation summary, roadmap, status, structure, and README
+
+
 # Implementation Summary: Type Dropdown & UI Fixes
 
 > **Latest release: v3.03.08k**
@@ -37,7 +58,7 @@
 
 ### Files Modified:
 1. **`index.html`**: Column now keyed as `composition`
-2. **`js/utils.js`**: Added `getCompositionFirstWord` and composition handling
+2. **`js/utils.js`**: Added `getCompositionFirstWords` and composition handling
 3. **`js/inventory.js`**: Stores composition separately and renders first word
 4. **`js/events.js`, `js/init.js`, `js/search.js`, `js/sorting.js`**: Updated for composition support
 5. **`js/constants.js`**: Bumped version to 3.03.08j

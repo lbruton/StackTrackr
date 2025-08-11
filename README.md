@@ -1,5 +1,5 @@
 
-# StackTrackr v3.03.08k
+# StackTrackr v3.03.08l
 
 
 StackTrackr is a comprehensive client-side web application for tracking precious metal investments. It's designed to help users manage their silver, gold, platinum, and palladium holdings with detailed financial metrics and enhanced tracking capabilities.
@@ -7,6 +7,7 @@ StackTrackr is a comprehensive client-side web application for tracking precious
 The public hosted version of the app is available at [stackrtrackr.com](https://stackrtrackr.com).
 
 ## Recent Updates
+- **v3.03.08l - Search fix & composition parsing**: Search box filters table as you type and Numista compositions truncate to two words
 - **v3.03.08k - Type dropdown and UI fixes**: Standardized type options, blank purchase locations, edit icon, and separate totals cards
 - **v3.03.08j - Composition display fix**: Composition column shows first word from imported data
 - **v3.03.08i - Numista import polish**: Uniform changelog bullets, default collectable flag, weight rounding, N# notes, and beta warning
@@ -314,7 +315,7 @@ This project is designed to be maintainable and extensible. When making changes:
 This project is open source and available for personal use.
 
 ---
-**Current Version**: 3.03.08k
+**Current Version**: 3.03.08l
 **Last Updated**: August 10, 2025
 **Status**: Feature complete release candidate
 

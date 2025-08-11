@@ -1,13 +1,17 @@
 # StackTrackr — Changelog
 
 
-> **Latest release: v3.03.08k**
+> **Latest release: v3.03.08l**
 
 
 For upcoming work, see [roadmap](roadmap.md).
 
 ## 📋 Version History
 
+
+### Version 3.03.08l – Search fix & composition parsing (2025-08-10)
+- Fixed search box to filter inventory as you type
+- Numista composition strings now truncate to first two words, ignoring parentheses and numbers
 
 ### Version 3.03.08k – Type dropdown and UI fixes (2025-08-10)
 - Type dropdown standardized to Coin, Bar, Round, Note, Aurum, Other

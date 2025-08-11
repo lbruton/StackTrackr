@@ -1,7 +1,7 @@
 # Function Reference
 
 
-> **Latest release: v3.03.08k**
+> **Latest release: v3.03.08l**
 
 
 | File | Function | Description |
@@ -154,7 +154,7 @@
 | utils.js | normalizeType | Ensures item type matches predefined options (Coin, Bar, Round, Note, Aurum, Other) |
 | utils.js | mapNumistaType | Maps Numista type strings to internal categories (Coin, Bar, Round, Note, Aurum, Other) |
 | utils.js | parseNumistaMetal | Parses composition into Silver, Gold, Platinum, Palladium, Paper, or Alloy |
-| utils.js | getCompositionFirstWord | Extracts the first word from a composition string |
+| utils.js | getCompositionFirstWords | Extracts first two words from a composition string, ignoring parentheses and numbers |
 | utils.js | saveData | Saves data to localStorage with JSON serialization |
 | utils.js | loadData | Loads data from localStorage with error handling |
 | utils.js | sortInventoryByDateNewestFirst | Sorts inventory by date (newest first) |
