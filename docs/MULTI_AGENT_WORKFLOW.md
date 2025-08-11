@@ -39,6 +39,7 @@ Before starting any patch entry, read these files:
 - `docs/archive/notes/V3.2.0-PLANNING-NOTES.md` - Technical implementation details
 - `docs/STATUS.md` - Current project status
 - `docs/STRUCTURE.md` - Project architecture and file organization
+- `docs/UI_STYLE_GUIDE.md` - UI color, typography, and component conventions
 - `docs/FUNCTIONSTABLE.md` - Reference table of all JavaScript functions
 
 ### **Step 2: Choose Your Patch Entry**
