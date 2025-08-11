@@ -668,6 +668,7 @@ const startCellEdit = (idx, field, icon) => {
   const td = icon.closest('td');
   const item = inventory[idx];
   const current = item[field] ?? '';
+  const originalContent = td.innerHTML;
   td.classList.add('editing');
   const input = document.createElement('input');
   if (field === 'qty') {
@@ -701,7 +702,39 @@ const startCellEdit = (idx, field, icon) => {
   td.appendChild(saveIcon);
   td.appendChild(cancelIcon);
 
-  const cancelEdit = () => renderTable();
+  const cancelEdit = () => {
+    td.classList.remove('editing');
+    td.innerHTML = originalContent;
+  };
+
+  const renderCell = () => {
+    td.classList.remove('editing');
+    const iconHtml = `<span class="inline-edit-icon" role="button" tabindex="0" onclick="startCellEdit(${idx}, '${field}', this)" aria-label="Edit ${field}" title="Edit ${field}">✎</span>`;
+    let content = '';
+    switch (field) {
+      case 'name':
+        content = filterLink('name', item.name, 'var(--text-primary)');
+        break;
+      case 'qty':
+        content = filterLink('qty', item.qty, 'var(--text-primary)');
+        break;
+      case 'weight':
+        content = filterLink('weight', item.weight, 'var(--text-primary)', formatWeight(item.weight), item.weight < 1 ? 'Grams (g)' : 'Troy ounces (ozt)');
+        break;
+      case 'price':
+        content = item.price > 0 ? filterLink('price', item.price, 'var(--text-primary)', formatCurrency(item.price)) : '';
+        break;
+      case 'spotPriceAtPurchase': {
+        const spotDisplay = item.isCollectable ? 'N/A' : (item.spotPriceAtPurchase > 0 ? formatCurrency(item.spotPriceAtPurchase) : 'N/A');
+        const spotValue = item.isCollectable ? 'N/A' : (item.spotPriceAtPurchase > 0 ? item.spotPriceAtPurchase : 'N/A');
+        content = filterLink('spotPriceAtPurchase', spotValue, 'var(--text-primary)', spotDisplay);
+        break;
+      }
+      default:
+        content = filterLink(field, item[field], 'var(--text-primary)');
+    }
+    td.innerHTML = `${iconHtml} ${content}`;
+  };
 
   saveIcon.onclick = () => {
     const value = input.value;
@@ -723,7 +756,8 @@ const startCellEdit = (idx, field, icon) => {
     if (['qty', 'weight', 'price', 'spotPriceAtPurchase'].includes(field)) {
       recalcItem(item);
     }
-    persistInventoryAndRefresh();
+    saveInventory();
+    renderCell();
   };
 
   cancelIcon.onclick = cancelEdit;
