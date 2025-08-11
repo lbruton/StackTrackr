@@ -166,6 +166,7 @@
 | utils.js | mapNumistaType | Maps Numista type strings to internal categories (Coin, Bar, Round, Note, Aurum, Other) |
 | utils.js | parseNumistaMetal | Parses composition into Silver, Gold, Platinum, Palladium, Paper, or Alloy |
 | utils.js | getCompositionFirstWords | Extracts first two words from a composition string, ignoring parentheses and numbers |
+| utils.js | getDisplayComposition | Returns "Alloy" when composition doesn't start with a primary metal |
 | utils.js | saveData | Saves data to localStorage with JSON serialization |
 | utils.js | loadData | Loads data from localStorage with error handling |
 | utils.js | sortInventoryByDateNewestFirst | Sorts inventory by date (newest first) |
