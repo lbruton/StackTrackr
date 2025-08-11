@@ -23,10 +23,6 @@
 7. **`js/constants.js`**: Bumped version to 3.03.08i
 8. **Documentation**: Updated changelog, function table, implementation summary, status, roadmap, structure, and README
 
-### User Experience Improvements:
-- Consistent bullet styling across modals
-- Numista imports clearly marked beta and treated as collectables
-- Weight fields display values rounded to two decimals
 # Implementation Summary: Table Controls & Import Options
 
 > **Latest release: v3.03.08h**
