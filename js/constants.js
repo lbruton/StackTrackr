@@ -8,6 +8,9 @@
  * @property {Object} endpoints - API endpoints for different metals
  * @property {function} parseResponse - Function to parse API response into standard format
  * @property {string} documentation - URL to provider's API documentation
+ * @property {boolean} batchSupported - Whether provider supports batch requests
+ * @property {string} batchEndpoint - Batch request endpoint pattern
+ * @property {function} parseBatchResponse - Function to parse batch API response
  */
 const API_PROVIDERS = {
   METALS_DEV: {
@@ -21,6 +24,17 @@ const API_PROVIDERS = {
     },
     parseResponse: (data) => data.rate?.price || null,
     documentation: "https://www.metals.dev/docs",
+    batchSupported: true,
+    batchEndpoint: "/metals/spot?api_key={API_KEY}&metals={METALS}&days={DAYS}&currency=USD",
+    parseBatchResponse: (data) => {
+      const results = {};
+      if (data.data) {
+        Object.entries(data.data).forEach(([metal, info]) => {
+          results[metal] = info.price || info.rate?.price || null;
+        });
+      }
+      return results;
+    },
   },
   METALS_API: {
     name: "Metals-API.com",
@@ -45,6 +59,21 @@ const API_PROVIDERS = {
       return rate ? 1 / rate : null; // Convert from metal per USD to USD per ounce
     },
     documentation: "https://metals-api.com/documentation",
+    batchSupported: true,
+    batchEndpoint: "/latest?access_key={API_KEY}&base=USD&symbols={SYMBOLS}",
+    parseBatchResponse: (data) => {
+      const results = {};
+      const symbolMap = { XAG: 'silver', XAU: 'gold', XPT: 'platinum', XPD: 'palladium' };
+      if (data.rates) {
+        Object.entries(data.rates).forEach(([symbol, rate]) => {
+          const metal = symbolMap[symbol];
+          if (metal && rate) {
+            results[metal] = 1 / rate; // Convert from metal per USD to USD per ounce
+          }
+        });
+      }
+      return results;
+    },
   },
   METAL_PRICE_API: {
     name: "MetalPriceAPI.com",
@@ -69,6 +98,21 @@ const API_PROVIDERS = {
       return rate ? 1 / rate : null; // Convert from metal per USD to USD per ounce
     },
     documentation: "https://metalpriceapi.com/documentation",
+    batchSupported: true,
+    batchEndpoint: "/latest?api_key={API_KEY}&base=USD&currencies={CURRENCIES}",
+    parseBatchResponse: (data) => {
+      const results = {};
+      const symbolMap = { XAG: 'silver', XAU: 'gold', XPT: 'platinum', XPD: 'palladium' };
+      if (data.rates) {
+        Object.entries(data.rates).forEach(([symbol, rate]) => {
+          const metal = symbolMap[symbol];
+          if (metal && rate) {
+            results[metal] = 1 / rate; // Convert from metal per USD to USD per ounce
+          }
+        });
+      }
+      return results;
+    },
   },
   CUSTOM: {
     name: "Custom Provider",
@@ -87,6 +131,12 @@ const API_PROVIDERS = {
     },
     documentation: "",
     custom: true,
+    batchSupported: false, // Custom providers will use individual requests by default
+    batchEndpoint: "",
+    parseBatchResponse: (data) => {
+      // Custom batch parsing would depend on the provider's API format
+      return {};
+    },
   },
 };
 
@@ -99,7 +149,7 @@ const API_PROVIDERS = {
  * Example: 3.03.02a → branch 3, release 03, patch 02, alpha
  */
 
-const APP_VERSION = "3.03.08n";
+const APP_VERSION = "3.04.00";
 
 
 /**

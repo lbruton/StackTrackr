@@ -174,10 +174,10 @@ const updateFiltersButtonState = () => {
   const filtersBtn = document.getElementById('filtersBtn');
   if (!filtersBtn) return;
 
-  const hasActiveFilters = Object.keys(activeFilters).length > 0;
+  const totalFilters = Object.keys(activeFilters).length + Object.keys(columnFilters).filter(key => !activeFilters[key]).length;
   
-  if (hasActiveFilters) {
-    filtersBtn.textContent = `Filters (${Object.keys(activeFilters).length})`;
+  if (totalFilters > 0) {
+    filtersBtn.textContent = `Filters (${totalFilters})`;
     filtersBtn.classList.add('active');
   } else {
     filtersBtn.textContent = 'Filters';
@@ -277,21 +277,29 @@ const filterInventoryAdvanced = () => {
 
 /**
  * Applies a quick filter for a specific field value (when clicking on table values)
+ * Supports 3-level deep filtering - clicking same filter removes it, clicking different filters stacks them
  * @param {string} field - The field to filter by
  * @param {string} value - The value to filter for
  */
 const applyQuickFilter = (field, value) => {
-  activeFilters[field] = value;
-  
-  // Update legacy filters for compatibility
-  if (field === 'composition' || field === 'type') {
-    columnFilters[field] = value;
+  // If this exact filter is already active, remove it (toggle behavior)
+  if (activeFilters[field] === value) {
+    delete activeFilters[field];
+    // Clean up legacy filters too
+    if (field === 'composition' || field === 'type') {
+      delete columnFilters[field];
+    }
+  } else {
+    // Add or replace the filter for this field
+    activeFilters[field] = value;
+    
+    // Update legacy filters for compatibility
+    if (field === 'composition' || field === 'type') {
+      columnFilters[field] = value;
+    }
   }
   
-  searchQuery = '';
-  const searchInput = document.getElementById('searchInput');
-  if (searchInput) searchInput.value = '';
-  
+  // Don't clear search query - allow search + filters to work together
   currentPage = 1;
   renderTable();
   updateFiltersButtonState();

@@ -612,6 +612,18 @@ input[type="submit"] {
   color: var(--text-muted);
 }
 
+.provider-batch-badge {
+  display: inline-block;
+  background: linear-gradient(135deg, var(--success), var(--success-hover));
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 500;
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--radius);
+  margin-top: 0.25rem;
+  box-shadow: var(--shadow-sm);
+}
+
 .api-info-link {
   display: inline-block;
   margin-bottom: 0.5rem;
@@ -754,6 +766,120 @@ input[type="submit"] {
   align-items: center;
   gap: 0.5rem;
   margin-top: 0.5rem;
+}
+
+/* Provider Settings Section */
+.provider-settings {
+  background: var(--bg-secondary);
+  border-radius: var(--radius);
+  padding: var(--spacing);
+  margin: var(--spacing) 0;
+  border: 1px solid var(--border);
+}
+
+.provider-settings h4 {
+  margin: 0 0 var(--spacing) 0;
+  color: var(--primary);
+  font-size: 0.875rem;
+  font-weight: 600;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: var(--spacing-sm);
+}
+
+.provider-setting-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-sm);
+}
+
+.provider-setting-row label {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.provider-cache-select,
+.provider-history-input {
+  width: 120px;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-size: 0.8rem;
+}
+
+/* Metal Selection */
+.metal-selection {
+  margin-top: var(--spacing);
+}
+
+.metal-selection > label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-sm);
+}
+
+.metal-checkboxes {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--spacing-sm);
+}
+
+.metal-checkbox {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-xs);
+  border-radius: var(--radius);
+  transition: var(--transition);
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.metal-checkbox:hover {
+  background: var(--bg-tertiary);
+}
+
+.metal-checkbox input[type="checkbox"] {
+  width: auto;
+  margin: 0;
+}
+
+.metal-name {
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+/* Batch Optimization Display */
+.batch-optimization {
+  margin-top: var(--spacing);
+  padding-top: var(--spacing);
+  border-top: 1px solid var(--border);
+}
+
+.batch-info {
+  background: linear-gradient(135deg, var(--bg-primary), var(--bg-tertiary));
+  border: 1px solid var(--primary);
+  border-left: 4px solid var(--primary);
+  border-radius: var(--radius);
+  padding: var(--spacing-sm) var(--spacing);
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  text-align: center;
+  box-shadow: var(--shadow-sm);
+}
+
+.batch-savings {
+  font-size: 0.7rem;
+  color: var(--success);
+  font-weight: 600;
 }
 
 .api-field-row {

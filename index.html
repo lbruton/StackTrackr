@@ -1399,16 +1399,7 @@
             <h3 style="margin-bottom: 1rem">API Configuration</h3>
             <p class="settings-subtext">Manage API cache, history, and providers.</p>
 
-            <div class="cache-duration-row">
-              <label for="apiCacheDuration">Cache Duration:</label>
-              <select id="apiCacheDuration">
-                <option value="0">No Cache</option>
-                <option value="1">1 hour</option>
-                <option value="6">6 hours</option>
-                <option value="12">12 hours</option>
-                <option value="24">24 hours</option>
-              </select>
-            </div>
+
 
             <div class="api-status-summary" id="apiStatusSummary"></div>
 
@@ -1561,26 +1552,80 @@
         </div>
         <div class="modal-body">
           <p class="settings-subtext">
-            Enter 1–4 API keys below, choose a default provider, and enable the
-            metals you want each service to update.
+            Configure API keys, select metals to track, set cache policies, and optimize with batch requests for significant API savings.
           </p>
           <div class="api-providers">
               <div class="api-provider" data-provider="METALS_DEV">
                 <div class="provider-header">
                   <span class="provider-name">Metals.dev</span>
                   <span class="provider-url">https://api.metals.dev/v1</span>
+                  <span class="provider-batch-badge">✨ Batch Optimized</span>
                 </div>
                 <a href="#" class="api-info-link" data-provider="METALS_DEV">
                   Provider Information
                 </a>
                 <div class="api-key-row">
-                  <label for="apiKey_METALS_DEV">Key:</label>
+                  <label for="apiKey_METALS_DEV">API Key:</label>
                   <input
                     type="password"
                     id="apiKey_METALS_DEV"
                     placeholder="Enter your API key"
                   />
                 </div>
+                
+                <!-- Provider Settings Section -->
+                <div class="provider-settings">
+                  <h4>Provider Settings</h4>
+                  
+                  <div class="provider-setting-row">
+                    <label for="cacheTimeout_METALS_DEV">Cache Timeout:</label>
+                    <select id="cacheTimeout_METALS_DEV" class="provider-cache-select">
+                      <option value="0">No Cache</option>
+                      <option value="1">1 hour</option>
+                      <option value="6">6 hours</option>
+                      <option value="12">12 hours</option>
+                      <option value="24" selected>24 hours</option>
+                    </select>
+                  </div>
+                  
+                  <div class="provider-setting-row">
+                    <label for="historyDays_METALS_DEV">History Days:</label>
+                    <input type="number" id="historyDays_METALS_DEV" class="provider-history-input" 
+                           min="1" max="365" value="30" placeholder="1-365">
+                  </div>
+                  
+                  <!-- Metal Selection -->
+                  <div class="metal-selection">
+                    <label>Select Metals to Track:</label>
+                    <div class="metal-checkboxes">
+                      <label class="metal-checkbox">
+                        <input type="checkbox" class="provider-metal" data-provider="METALS_DEV" data-metal="silver" checked>
+                        <span class="metal-name">Silver (AG)</span>
+                      </label>
+                      <label class="metal-checkbox">
+                        <input type="checkbox" class="provider-metal" data-provider="METALS_DEV" data-metal="gold" checked>
+                        <span class="metal-name">Gold (AU)</span>
+                      </label>
+                      <label class="metal-checkbox">
+                        <input type="checkbox" class="provider-metal" data-provider="METALS_DEV" data-metal="platinum" checked>
+                        <span class="metal-name">Platinum (PT)</span>
+                      </label>
+                      <label class="metal-checkbox">
+                        <input type="checkbox" class="provider-metal" data-provider="METALS_DEV" data-metal="palladium" checked>
+                        <span class="metal-name">Palladium (PD)</span>
+                      </label>
+                    </div>
+                  </div>
+                  
+                  <!-- Batch Optimization Display -->
+                  <div class="batch-optimization">
+                    <div class="batch-info" id="batchInfo_METALS_DEV">
+                      📊 Batch Request: 4 metals + 30 days = 1 API call<br>
+                      <span class="batch-savings">(saves 123 calls vs individual requests)</span>
+                    </div>
+                  </div>
+                </div>
+                
                 <div class="provider-footer">
                   <div class="provider-info">
                     <div class="api-key-note">
@@ -1630,18 +1675,73 @@
                 <div class="provider-header">
                   <span class="provider-name">Metals-API.com</span>
                   <span class="provider-url">https://metals-api.com/api</span>
+                  <span class="provider-batch-badge">✨ Batch Optimized</span>
                 </div>
                 <a href="#" class="api-info-link" data-provider="METALS_API">
                   Provider Information
                 </a>
                 <div class="api-key-row">
-                  <label for="apiKey_METALS_API">Key:</label>
+                  <label for="apiKey_METALS_API">API Key:</label>
                   <input
                     type="password"
                     id="apiKey_METALS_API"
                     placeholder="Enter your API key"
                   />
                 </div>
+                
+                <!-- Provider Settings Section -->
+                <div class="provider-settings">
+                  <h4>Provider Settings</h4>
+                  
+                  <div class="provider-setting-row">
+                    <label for="cacheTimeout_METALS_API">Cache Timeout:</label>
+                    <select id="cacheTimeout_METALS_API" class="provider-cache-select">
+                      <option value="0">No Cache</option>
+                      <option value="1">1 hour</option>
+                      <option value="6">6 hours</option>
+                      <option value="12">12 hours</option>
+                      <option value="24" selected>24 hours</option>
+                    </select>
+                  </div>
+                  
+                  <div class="provider-setting-row">
+                    <label for="historyDays_METALS_API">History Days:</label>
+                    <input type="number" id="historyDays_METALS_API" class="provider-history-input" 
+                           min="1" max="365" value="30" placeholder="1-365">
+                  </div>
+                  
+                  <!-- Metal Selection -->
+                  <div class="metal-selection">
+                    <label>Select Metals to Track:</label>
+                    <div class="metal-checkboxes">
+                      <label class="metal-checkbox">
+                        <input type="checkbox" class="provider-metal" data-provider="METALS_API" data-metal="silver" checked>
+                        <span class="metal-name">Silver (AG)</span>
+                      </label>
+                      <label class="metal-checkbox">
+                        <input type="checkbox" class="provider-metal" data-provider="METALS_API" data-metal="gold" checked>
+                        <span class="metal-name">Gold (AU)</span>
+                      </label>
+                      <label class="metal-checkbox">
+                        <input type="checkbox" class="provider-metal" data-provider="METALS_API" data-metal="platinum" checked>
+                        <span class="metal-name">Platinum (PT)</span>
+                      </label>
+                      <label class="metal-checkbox">
+                        <input type="checkbox" class="provider-metal" data-provider="METALS_API" data-metal="palladium" checked>
+                        <span class="metal-name">Palladium (PD)</span>
+                      </label>
+                    </div>
+                  </div>
+                  
+                  <!-- Batch Optimization Display -->
+                  <div class="batch-optimization">
+                    <div class="batch-info" id="batchInfo_METALS_API">
+                      📊 Batch Request: 4 metals + 30 days = 1 API call<br>
+                      <span class="batch-savings">(saves 123 calls vs individual requests)</span>
+                    </div>
+                  </div>
+                </div>
+                
                 <div class="provider-footer">
                   <div class="provider-info">
                     <div class="api-key-note">
@@ -1693,6 +1793,7 @@
                   <span class="provider-url">
                     https://api.metalpriceapi.com/v1
                   </span>
+                  <span class="provider-batch-badge">✨ Batch Optimized</span>
                 </div>
                 <a
                   href="#"
@@ -1702,12 +1803,65 @@
                   Provider Information
                 </a>
                 <div class="api-key-row">
-                  <label for="apiKey_METAL_PRICE_API">Key:</label>
+                  <label for="apiKey_METAL_PRICE_API">API Key:</label>
                   <input
                     type="password"
                     id="apiKey_METAL_PRICE_API"
                     placeholder="Enter your API key"
                   />
+                </div>
+                
+                <!-- Provider Settings Section -->
+                <div class="provider-settings">
+                  <h4>Provider Settings</h4>
+                  
+                  <div class="provider-setting-row">
+                    <label for="cacheTimeout_METAL_PRICE_API">Cache Timeout:</label>
+                    <select id="cacheTimeout_METAL_PRICE_API" class="provider-cache-select">
+                      <option value="0">No Cache</option>
+                      <option value="1">1 hour</option>
+                      <option value="6">6 hours</option>
+                      <option value="12">12 hours</option>
+                      <option value="24" selected>24 hours</option>
+                    </select>
+                  </div>
+                  
+                  <div class="provider-setting-row">
+                    <label for="historyDays_METAL_PRICE_API">History Days:</label>
+                    <input type="number" id="historyDays_METAL_PRICE_API" class="provider-history-input" 
+                           min="1" max="365" value="30" placeholder="1-365">
+                  </div>
+                  
+                  <!-- Metal Selection -->
+                  <div class="metal-selection">
+                    <label>Select Metals to Track:</label>
+                    <div class="metal-checkboxes">
+                      <label class="metal-checkbox">
+                        <input type="checkbox" class="provider-metal" data-provider="METAL_PRICE_API" data-metal="silver" checked>
+                        <span class="metal-name">Silver (AG)</span>
+                      </label>
+                      <label class="metal-checkbox">
+                        <input type="checkbox" class="provider-metal" data-provider="METAL_PRICE_API" data-metal="gold" checked>
+                        <span class="metal-name">Gold (AU)</span>
+                      </label>
+                      <label class="metal-checkbox">
+                        <input type="checkbox" class="provider-metal" data-provider="METAL_PRICE_API" data-metal="platinum" checked>
+                        <span class="metal-name">Platinum (PT)</span>
+                      </label>
+                      <label class="metal-checkbox">
+                        <input type="checkbox" class="provider-metal" data-provider="METAL_PRICE_API" data-metal="palladium" checked>
+                        <span class="metal-name">Palladium (PD)</span>
+                      </label>
+                    </div>
+                  </div>
+                  
+                  <!-- Batch Optimization Display -->
+                  <div class="batch-optimization">
+                    <div class="batch-info" id="batchInfo_METAL_PRICE_API">
+                      📊 Batch Request: 4 metals + 30 days = 1 API call<br>
+                      <span class="batch-savings">(saves 123 calls vs individual requests)</span>
+                    </div>
+                  </div>
                 </div>
                 <div class="provider-footer">
                   <div class="provider-info">
@@ -1782,12 +1936,65 @@
                   </select>
                 </div>
                 <div class="api-key-row">
-                  <label for="apiKey_CUSTOM">Key:</label>
+                  <label for="apiKey_CUSTOM">API Key:</label>
                   <input
                     type="password"
                     id="apiKey_CUSTOM"
                     placeholder="Enter your API key"
                   />
+                </div>
+                
+                <!-- Provider Settings Section -->
+                <div class="provider-settings">
+                  <h4>Provider Settings</h4>
+                  
+                  <div class="provider-setting-row">
+                    <label for="cacheTimeout_CUSTOM">Cache Timeout:</label>
+                    <select id="cacheTimeout_CUSTOM" class="provider-cache-select">
+                      <option value="0">No Cache</option>
+                      <option value="1">1 hour</option>
+                      <option value="6">6 hours</option>
+                      <option value="12">12 hours</option>
+                      <option value="24" selected>24 hours</option>
+                    </select>
+                  </div>
+                  
+                  <div class="provider-setting-row">
+                    <label for="historyDays_CUSTOM">History Days:</label>
+                    <input type="number" id="historyDays_CUSTOM" class="provider-history-input" 
+                           min="1" max="365" value="30" placeholder="1-365">
+                  </div>
+                  
+                  <!-- Metal Selection -->
+                  <div class="metal-selection">
+                    <label>Select Metals to Track:</label>
+                    <div class="metal-checkboxes">
+                      <label class="metal-checkbox">
+                        <input type="checkbox" class="provider-metal" data-provider="CUSTOM" data-metal="silver" checked>
+                        <span class="metal-name">Silver (AG)</span>
+                      </label>
+                      <label class="metal-checkbox">
+                        <input type="checkbox" class="provider-metal" data-provider="CUSTOM" data-metal="gold" checked>
+                        <span class="metal-name">Gold (AU)</span>
+                      </label>
+                      <label class="metal-checkbox">
+                        <input type="checkbox" class="provider-metal" data-provider="CUSTOM" data-metal="platinum" checked>
+                        <span class="metal-name">Platinum (PT)</span>
+                      </label>
+                      <label class="metal-checkbox">
+                        <input type="checkbox" class="provider-metal" data-provider="CUSTOM" data-metal="palladium" checked>
+                        <span class="metal-name">Palladium (PD)</span>
+                      </label>
+                    </div>
+                  </div>
+                  
+                  <!-- Batch Optimization Display -->
+                  <div class="batch-optimization">
+                    <div class="batch-info" id="batchInfo_CUSTOM">
+                      📊 Individual Requests: 4 metals = 4 API calls<br>
+                      <span class="batch-savings">(batch requests not supported)</span>
+                    </div>
+                  </div>
                 </div>
                 <div class="provider-footer">
                   <div class="provider-info">
