@@ -62,6 +62,7 @@ document.addEventListener("DOMContentLoaded", () => {
     elements.itemQty = safeGetElement("itemQty", true);
     elements.itemType = safeGetElement("itemType", true);
     elements.itemWeight = safeGetElement("itemWeight", true);
+    elements.itemWeightUnit = safeGetElement("itemWeightUnit", true);
     elements.itemPrice = safeGetElement("itemPrice", true);
     elements.purchaseLocation = safeGetElement("purchaseLocation", true);
     elements.storageLocation = safeGetElement("storageLocation");

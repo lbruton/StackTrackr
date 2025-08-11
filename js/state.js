@@ -51,6 +51,7 @@ const elements = {
   itemQty: null,
   itemType: null,
   itemWeight: null,
+  itemWeightUnit: null,
   itemPrice: null,
   purchaseLocation: null,
   storageLocation: null,
