@@ -49,7 +49,7 @@ const fetchSpotPrice = () => {
         elements.spotPriceDisplay[metalConfig.key] &&
         elements.spotPriceDisplay[metalConfig.key].textContent !== undefined
       ) {
-        elements.spotPriceDisplay[metalConfig.key].textContent = formatDollar(
+        elements.spotPriceDisplay[metalConfig.key].textContent = formatCurrency(
           spotPrices[metalConfig.key],
         );
       }
@@ -61,7 +61,7 @@ const fetchSpotPrice = () => {
         elements.spotPriceDisplay[metalConfig.key] &&
         elements.spotPriceDisplay[metalConfig.key].textContent !== undefined
       ) {
-        elements.spotPriceDisplay[metalConfig.key].textContent = formatDollar(
+        elements.spotPriceDisplay[metalConfig.key].textContent = formatCurrency(
           spotPrices[metalConfig.key],
         );
       }
@@ -105,7 +105,7 @@ const updateManualSpot = (metalKey) => {
     elements.spotPriceDisplay[metalKey] &&
     elements.spotPriceDisplay[metalKey].textContent !== undefined
   ) {
-    elements.spotPriceDisplay[metalKey].textContent = formatDollar(
+    elements.spotPriceDisplay[metalKey].textContent = formatCurrency(
       spotPrices[metalKey],
     );
   }
@@ -162,7 +162,7 @@ const resetSpot = (metalKey) => {
     elements.spotPriceDisplay[metalKey] &&
     elements.spotPriceDisplay[metalKey].textContent !== undefined
   ) {
-    elements.spotPriceDisplay[metalKey].textContent = formatDollar(
+    elements.spotPriceDisplay[metalKey].textContent = formatCurrency(
       spotPrices[metalKey],
     );
   }

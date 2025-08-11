@@ -103,7 +103,7 @@ const createPieChart = (canvas, data, title) => {
                   const percentage = ((value / total) * 100).toFixed(1);
 
                   return {
-                    text: `${label} (${formatDollar(value)} - ${percentage}%)`,
+                    text: `${label} (${formatCurrency(value)} - ${percentage}%)`,
                     fillStyle: data.datasets[0].backgroundColor[i],
                     strokeStyle: data.datasets[0].borderColor[i],
                     lineWidth: data.datasets[0].borderWidth,
@@ -135,7 +135,7 @@ const createPieChart = (canvas, data, title) => {
               const weight = breakdownItem ? breakdownItem.weight.toFixed(2) : '0.00';
 
               return [
-                `${label}: ${formatDollar(value)} (${percentage}%)`,
+                `${label}: ${formatCurrency(value)} (${percentage}%)`,
                 `Items: ${count}`,
                 `Weight: ${weight} oz`
               ];
