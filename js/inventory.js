@@ -1270,10 +1270,36 @@ const importCsv = (file, override = false) => {
 
         if (imported.length === 0) return alert('No items to import.');
 
+        const existingSerials = new Set(override ? [] : inventory.map(item => item.serial));
+        const existingKeys = new Set(
+          (override ? [] : inventory)
+            .filter(item => item.numistaId)
+            .map(item => `${item.numistaId}|${item.name}|${item.date}`)
+        );
+        const deduped = [];
+        let duplicateCount = 0;
+
+        for (const item of imported) {
+          const key = item.numistaId ? `${item.numistaId}|${item.name}|${item.date}` : null;
+          if (existingSerials.has(item.serial) || (key && existingKeys.has(key))) {
+            duplicateCount++;
+            continue;
+          }
+          existingSerials.add(item.serial);
+          if (key) existingKeys.add(key);
+          deduped.push(item);
+        }
+
+        if (duplicateCount > 0) {
+          console.info(`${duplicateCount} duplicate items skipped during import.`);
+        }
+
+        if (deduped.length === 0) return alert('No items to import.');
+
         if (override) {
-          inventory = imported;
+          inventory = deduped;
         } else {
-          inventory = inventory.concat(imported);
+          inventory = inventory.concat(deduped);
         }
         
         // Synchronize all items with catalog manager
@@ -1445,10 +1471,36 @@ const importNumistaCsv = (file, override = false) => {
 
         if (imported.length === 0) return alert('No items to import.');
 
+        const existingSerials = new Set(override ? [] : inventory.map(item => item.serial));
+        const existingKeys = new Set(
+          (override ? [] : inventory)
+            .filter(item => item.numistaId)
+            .map(item => `${item.numistaId}|${item.name}|${item.date}`)
+        );
+        const deduped = [];
+        let duplicateCount = 0;
+
+        for (const item of imported) {
+          const key = item.numistaId ? `${item.numistaId}|${item.name}|${item.date}` : null;
+          if (existingSerials.has(item.serial) || (key && existingKeys.has(key))) {
+            duplicateCount++;
+            continue;
+          }
+          existingSerials.add(item.serial);
+          if (key) existingKeys.add(key);
+          deduped.push(item);
+        }
+
+        if (duplicateCount > 0) {
+          console.info(`${duplicateCount} duplicate items skipped during import.`);
+        }
+
+        if (deduped.length === 0) return alert('No items to import.');
+
         if (override) {
-          inventory = imported;
+          inventory = deduped;
         } else {
-          inventory = inventory.concat(imported);
+          inventory = inventory.concat(deduped);
         }
 
         // Synchronize all items with catalog manager
