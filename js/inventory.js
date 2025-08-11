@@ -724,7 +724,6 @@ window.startCellEdit = startCellEdit;
 
 const renderTable = () => {
   return monitorPerformance(() => {
-    populateFilterOptions();
     const filteredInventory = filterInventory();
 
     // Automatically adjust items-per-page dropdown when filtered results

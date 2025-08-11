@@ -1311,57 +1311,10 @@ const setupPagination = () => {
 };
 
 /**
- * Populates type and metal filter dropdowns based on current inventory
- */
-const populateFilterOptions = () => {
-  if (elements.metalFilter) {
-    const selected = Array.from(elements.metalFilter.selectedOptions).map(
-      (o) => o.value,
-    );
-    const metals = [
-      ...new Set(
-        inventory.map((i) =>
-          getCompositionFirstWords(i.composition || i.metal || ""),
-        ),
-      ),
-    ]
-      .filter(Boolean)
-      .sort();
-    elements.metalFilter.innerHTML =
-      '<option value="">All Metals</option>' +
-      metals
-        .map(
-          (m) =>
-            `<option value="${m}" ${selected.includes(m) ? "selected" : ""}>${m}</option>`,
-        )
-        .join("");
-  }
-
-  if (elements.typeFilter) {
-    const selected = Array.from(elements.typeFilter.selectedOptions).map(
-      (o) => o.value,
-    );
-    const types = [...new Set(inventory.map((i) => i.type))]
-      .filter(Boolean)
-      .sort();
-    elements.typeFilter.innerHTML =
-      '<option value="">All Types</option>' +
-      types
-        .map(
-          (t) =>
-            `<option value="${t}" ${selected.includes(t) ? "selected" : ""}>${t}</option>`,
-        )
-        .join("");
-  }
-};
-
-/**
  * Sets up search event listeners
  */
 const setupSearch = () => {
   debugLog("Setting up search listeners...");
-
-  populateFilterOptions();
 
   try {
     if (elements.searchInput) {

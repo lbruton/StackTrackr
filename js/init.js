@@ -179,8 +179,6 @@ document.addEventListener("DOMContentLoaded", () => {
     // Search elements
     debugLog("Phase 6: Initializing search elements...");
     elements.searchInput = safeGetElement("searchInput");
-    elements.typeFilter = safeGetElement("typeFilter");
-    elements.metalFilter = safeGetElement("metalFilter");
     elements.clearSearchBtn = safeGetElement("clearSearchBtn");
     elements.newItemBtn = safeGetElement("newItemBtn");
     elements.searchResultsInfo = safeGetElement("searchResultsInfo");
