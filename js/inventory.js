@@ -1183,12 +1183,12 @@ const importNumistaCsv = (file) => {
           const weight = gramsToOzt(weightGrams);
 
           const priceKey = Object.keys(row).find(k => k.startsWith('Buying price'));
-          let price = 0;
+          let purchasePrice = 0;
           if (priceKey) {
             const currencyMatch = priceKey.match(/\(([^)]+)\)/);
             const currency = currencyMatch ? currencyMatch[1] : 'USD';
             const amount = parseFloat(String(row[priceKey]).replace(/[^0-9.\-]/g, ''));
-            price = convertToUsd(amount, currency);
+            purchasePrice = convertToUsd(amount, currency);
           }
 
           const purchaseLocRaw = row['Acquisition place'];
@@ -1204,7 +1204,7 @@ const importNumistaCsv = (file) => {
 
           const isCollectable = false;
           const spotPriceAtPurchase = spotPrices[metal.toLowerCase()] || 0;
-          const premiumPerOz = weight ? price / weight - spotPriceAtPurchase : 0;
+          const premiumPerOz = weight ? purchasePrice / weight - spotPriceAtPurchase : 0;
           const totalPremium = premiumPerOz * qty * weight;
 
           const itemToValidate = {
@@ -1213,7 +1213,8 @@ const importNumistaCsv = (file) => {
             qty,
             type,
             weight,
-            price,
+            price: purchasePrice,
+            purchasePrice,
             date,
             purchaseLocation,
             storageLocation,
@@ -1317,7 +1318,7 @@ const exportNumistaCsv = () => {
       item.qty || '',
       item.type || '',
       weightGrams ? weightGrams.toFixed(2) : '',
-      item.price ? Number(item.price).toFixed(2) : '',
+      (item.purchasePrice ?? item.price) ? Number(item.purchasePrice ?? item.price).toFixed(2) : '',
       item.purchaseLocation || '',
       item.storageLocation || '',
       item.date || '',
