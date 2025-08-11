@@ -157,6 +157,8 @@
 | utils.js | formatLossProfit | Formats a profit/loss value with color coding |
 | utils.js | sanitizeHtml | Sanitizes text input for safe HTML display |
 | utils.js | gramsToOzt | Converts grams to troy ounces (ozt) |
+| utils.js | oztToGrams | Converts troy ounces to grams |
+| utils.js | formatWeight | Formats a weight in ozt to grams or ounces |
 | utils.js | convertToUsd | Converts amount from specified currency to USD using static rates |
 | utils.js | stripNonAlphanumeric | Removes all characters except letters, numbers, and spaces |
 | utils.js | sanitizeObjectFields | Strips non-alphanumeric characters from all string properties in an object |
