@@ -1,3 +1,20 @@
+# Implementation Summary: Numista Header Trimming
+
+> **Latest release: v3.04.02**
+
+## Version Update: 3.04.01 → 3.04.02
+
+## User Requirements Implemented
+
+- Accept Numista CSV files with trailing spaces in column headers
+
+## Technical Changes Made
+
+### Files Modified:
+1. **`js/inventory.js`**: Trim CSV header names during Numista import to prevent field mismatches
+2. **`js/constants.js`**: Bumped version to 3.04.02
+3. **Documentation**: Updated README, changelog, status, roadmap, structure, and function table
+
 # Implementation Summary: Filter Reset & Numista Sanitization
 
 > **Latest release: v3.04.01**

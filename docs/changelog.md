@@ -1,13 +1,16 @@
 # StackTrackr — Changelog
 
 
-> **Latest release: v3.04.01**
+> **Latest release: v3.04.02**
 
 
 For upcoming work, see [roadmap](roadmap.md).
 
 ## 📋 Version History
 
+
+### Version 3.04.02 – Numista header trimming (2025-08-11)
+- Accepts Numista CSV exports with trailing spaces in headers
 
 ### Version 3.04.01 – Filter reset & Numista sanitization (2025-08-11)
 - Clear search button now resets all active filters including modal selections

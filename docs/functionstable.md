@@ -1,7 +1,7 @@
 # Function Reference
 
 
- > **Latest release: v3.04.01**
+> **Latest release: v3.04.02**
 
 
 | File | Function | Description |
@@ -109,7 +109,7 @@
 | inventory.js | updateImportProgress |  |
 | inventory.js | endImportProgress |  |
 | inventory.js | importCsv | Imports inventory data from CSV file with comprehensive validation; supports override or merge modes |
-| inventory.js | importNumistaCsv | Imports Numista CSV data with override/merge options, defaulting items to collectable |
+| inventory.js | importNumistaCsv | Imports Numista CSV data with header trimming and merge/override options |
 | inventory.js | exportCsv | Exports current inventory to CSV format |
 | inventory.js | importJson | Imports inventory data from JSON file |
 | inventory.js | exportJson | Exports current inventory to JSON format |

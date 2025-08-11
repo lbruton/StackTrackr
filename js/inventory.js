@@ -1151,7 +1151,11 @@ const importNumistaCsv = (file, override = false) => {
         const csvText = e.target.result;
         localStorage.setItem(NUMISTA_RAW_KEY, csvText);
         const storedCsv = localStorage.getItem(NUMISTA_RAW_KEY) || "";
-        const results = Papa.parse(storedCsv, { header: true, skipEmptyLines: true });
+        const results = Papa.parse(storedCsv, {
+          header: true,
+          skipEmptyLines: true,
+          transformHeader: (h) => h.trim(), // Handle Numista headers with trailing spaces
+        });
         const rawTable = results.data;
         const imported = [];
         const totalRows = rawTable.length;
