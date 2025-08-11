@@ -2,11 +2,17 @@
 // =============================================================================
 
 /**
- * Filters inventory based on current search query
+ * Filters inventory based on current search query and active filters
  * 
- * @returns {Array} Filtered inventory items matching the search query
+ * @returns {Array} Filtered inventory items matching the search query and filters
  */
 const filterInventory = () => {
+  // Use the advanced filtering system if available, otherwise fall back to legacy
+  if (typeof filterInventoryAdvanced === 'function') {
+    return filterInventoryAdvanced();
+  }
+  
+  // Legacy filtering for compatibility
   let result = inventory;
 
   Object.entries(columnFilters).forEach(([field, value]) => {
@@ -54,26 +60,6 @@ const filterInventory = () => {
   });
 };
 
-/**
- * Applies a column-specific filter and re-renders the table
- * @param {string} field - Item property to filter by
- * @param {string} value - Value to match exactly
- */
-const applyColumnFilter = (field, value) => {
-  if (columnFilters[field] === value) {
-    delete columnFilters[field];
-  } else {
-    columnFilters[field] = value;
-  }
-  if (field === 'composition' && elements.metalFilter) {
-    elements.metalFilter.value = columnFilters[field] || '';
-  } else if (field === 'type' && elements.typeFilter) {
-    elements.typeFilter.value = columnFilters[field] || '';
-  }
-  searchQuery = '';
-  if (elements.searchInput) elements.searchInput.value = '';
-  currentPage = 1;
-  renderTable();
-};
+// Note: applyColumnFilter function is now in filters.js for advanced filtering
 
 // =============================================================================

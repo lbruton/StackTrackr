@@ -974,36 +974,28 @@ const setupEventListeners = () => {
     }
 
     let numistaOverride = false;
-    if (elements.numistaImportBtn && elements.numistaImportOptions) {
+    const importNumistaBtn = document.getElementById("importNumistaBtn");
+    const mergeNumistaBtn = document.getElementById("mergeNumistaBtn");
+    if (importNumistaBtn && elements.numistaImportFile) {
       safeAttachListener(
-        elements.numistaImportBtn,
-        "click",
-        () => elements.numistaImportOptions.classList.toggle("show"),
-        "Numista import options toggle",
-      );
-    }
-    if (elements.numistaOverride && elements.numistaImportFile) {
-      safeAttachListener(
-        elements.numistaOverride,
+        importNumistaBtn,
         "click",
         () => {
           numistaOverride = true;
-          elements.numistaImportOptions.classList.remove("show");
           elements.numistaImportFile.click();
         },
-        "Numista override option",
+        "Import Numista button",
       );
     }
-    if (elements.numistaMerge && elements.numistaImportFile) {
+    if (mergeNumistaBtn && elements.numistaImportFile) {
       safeAttachListener(
-        elements.numistaMerge,
+        mergeNumistaBtn,
         "click",
         () => {
           numistaOverride = false;
-          elements.numistaImportOptions.classList.remove("show");
           elements.numistaImportFile.click();
         },
-        "Numista merge option",
+        "Merge Numista button",
       );
     }
     if (elements.numistaImportFile) {
@@ -1450,6 +1442,79 @@ const setupSearch = () => {
           if (elements.addModal) elements.addModal.style.display = "flex";
         },
         "New item button",
+      );
+    }
+
+    // Filters button
+    const filtersBtn = document.getElementById("filtersBtn");
+    if (filtersBtn) {
+      safeAttachListener(
+        filtersBtn,
+        "click",
+        () => {
+          if (typeof showFiltersModal === "function") {
+            showFiltersModal();
+          }
+        },
+        "Filters button",
+      );
+    }
+
+    // Filters modal event listeners
+    const filtersModal = document.getElementById("filtersModal");
+    const filtersCloseBtn = document.getElementById("filtersCloseBtn");
+    const applyFiltersBtn = document.getElementById("applyFiltersBtn");
+    const clearFiltersBtn = document.getElementById("clearFiltersBtn");
+
+    if (filtersModal) {
+      safeAttachListener(
+        filtersModal,
+        "click",
+        (e) => {
+          if (e.target === filtersModal && typeof hideFiltersModal === "function") {
+            hideFiltersModal();
+          }
+        },
+        "Filters modal background",
+      );
+    }
+
+    if (filtersCloseBtn) {
+      safeAttachListener(
+        filtersCloseBtn,
+        "click",
+        () => {
+          if (typeof hideFiltersModal === "function") {
+            hideFiltersModal();
+          }
+        },
+        "Filters close button",
+      );
+    }
+
+    if (applyFiltersBtn) {
+      safeAttachListener(
+        applyFiltersBtn,
+        "click",
+        () => {
+          if (typeof applyFilters === "function") {
+            applyFilters();
+          }
+        },
+        "Apply filters button",
+      );
+    }
+
+    if (clearFiltersBtn) {
+      safeAttachListener(
+        clearFiltersBtn,
+        "click",
+        () => {
+          if (typeof clearAllFilters === "function") {
+            clearAllFilters();
+          }
+        },
+        "Clear filters button",
       );
     }
 

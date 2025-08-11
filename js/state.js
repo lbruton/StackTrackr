@@ -73,11 +73,9 @@ const elements = {
   importExcelFile: null,
   importProgress: null,
   importProgressText: null,
-  numistaImportBtn: null,
   numistaImportFile: null,
   numistaOverride: null,
   numistaMerge: null,
-  numistaImportOptions: null,
 
   // Export elements
   exportCsvBtn: null,

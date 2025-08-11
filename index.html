@@ -77,6 +77,7 @@
         <button class="btn" id="apiBtn" title="API" aria-label="API">
           API 🔌
         </button>
+        <!-- Community button commented out for revision
         <a
           class="btn"
           id="communityBtn"
@@ -93,6 +94,7 @@
           />
           Community
         </a>
+        -->
         <button class="btn" id="filesBtn" title="Files" aria-label="Files">
           Files 📁
         </button>
@@ -383,17 +385,12 @@
            ============================================================================= -->
         <section class="search-section">
           <div class="search-container">
+            <button class="btn filters" id="filtersBtn">Filters</button>
             <input
               id="searchInput"
               placeholder="Search inventory by metal, name, type, purchase location, storage location, notes, date..."
               type="text"
             />
-            <select id="typeFilter" class="filter-select" title="Filter by type" aria-label="Filter by type">
-              <option value="">All Types</option>
-            </select>
-            <select id="metalFilter" class="filter-select" title="Filter by metal" aria-label="Filter by metal">
-              <option value="">All Metals</option>
-            </select>
             <button class="btn" id="clearSearchBtn">Clear</button>
             <button class="btn success" id="newItemBtn">New Item</button>
           </div>
@@ -759,6 +756,17 @@
         </div>
         <div class="modal-body">
           <form id="inventoryForm">
+            <div class="collectable-card">
+              <div style="display:flex;align-items:center;gap:var(--spacing);">
+                <label for="itemCollectable" style="margin:0;">Collectable Item</label>
+                <label class="switch">
+                  <input id="itemCollectable" type="checkbox" />
+                  <span class="slider"></span>
+                </label>
+              </div>
+              <p class="collectable-note">Collectable items may have additional numismatic value beyond their metal content</p>
+            </div>
+            <!-- First row of add form fields -->
             <div class="grid grid-2">
               <div>
                 <label for="itemMetal">Composition</label>
@@ -790,6 +798,7 @@
                 <input id="itemWeight" min="0.0001" required step="0.0001" type="number" />
               </div>
             </div>
+            <!-- Second row of add form fields -->
             <div class="grid grid-2">
               <div>
                 <label for="itemName">Name</label>
@@ -808,6 +817,7 @@
                 <input id="itemNotes" type="text" placeholder="Additional notes or comments..." />
               </div>
             </div>
+            <!-- Third row of add form fields -->
             <div class="grid grid-2">
               <div>
                 <label for="itemPrice">Purchase Price ($)</label>
@@ -820,6 +830,7 @@
                 <input id="itemDate" required type="date" />
               </div>
             </div>
+            <!-- Spot price field -->
             <div class="grid grid-2">
               <div>
                 <label for="itemSpotPrice">Spot Price ($/oz)</label>
@@ -827,17 +838,11 @@
                   <input id="itemSpotPrice" min="0" step="0.01" type="number" />
                 </div>
               </div>
-              <div class="collectable-toggle">
-                <label for="itemCollectable">Collectable Item</label>
-                <label class="switch">
-                  <input id="itemCollectable" type="checkbox" />
-                  <span class="slider"></span>
-                </label>
-                <span class="collectable-note"
-                  >Collectable items may have additional numismatic value beyond their metal content</span
-                >
+              <div>
+                <!-- Empty div for grid alignment -->
               </div>
             </div>
+            <!-- Form action buttons -->
             <div style="margin-top: 1rem; text-align: right">
               <button class="btn" id="cancelAdd" type="button">Cancel</button>
               <button class="btn premium" type="submit">Add to Inventory</button>
@@ -1494,20 +1499,13 @@
 
             <div class="settings-card">
               <h3>Third-Party</h3>
-              <p class="settings-subtext">Connect with external services like Numista.</p>
+              <p class="settings-subtext">Import data from external services like Numista.</p>
               <div class="third-party-block">
                 <div class="import-export-grid">
-                  <div class="import-dropdown-wrapper">
-                    <button class="btn" id="numistaImportBtn">Import from Numista</button>
-                    <div class="import-dropdown" id="numistaImportOptions">
-                      <button class="btn" id="numistaOverride">Override</button>
-
-                      <button class="btn" id="numistaMerge">Merge</button>
-                    </div>
-                    <input type="file" id="numistaImportFile" accept=".csv" hidden />
-                    <div class="beta-warning">⚠️ Numista import is a beta feature</div>
-                  </div>
-
+                  <button class="btn" id="importNumistaBtn">Import Numista</button>
+                  <button class="btn" id="mergeNumistaBtn">Merge Numista</button>
+                  <input type="file" id="numistaImportFile" accept=".csv" hidden />
+                  <div class="beta-warning">⚠️ Numista import is a beta feature</div>
                 </div>
               </div>
             </div>
@@ -1946,6 +1944,63 @@
         </div>
       </div>
     </div>
+    
+    <!-- FILTERS MODAL -->
+    <div class="modal" id="filtersModal" style="display: none">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Filters</h2>
+          <button aria-label="Close modal" class="modal-close" id="filtersCloseBtn">×</button>
+        </div>
+        <div class="modal-body">
+          <div class="filters-grid">
+            <div class="filter-group">
+              <label for="filterMetal">Metal/Composition</label>
+              <select id="filterMetal" class="filter-select">
+                <option value="">All Metals</option>
+              </select>
+            </div>
+            <div class="filter-group">
+              <label for="filterType">Type</label>
+              <select id="filterType" class="filter-select">
+                <option value="">All Types</option>
+              </select>
+            </div>
+            <div class="filter-group">
+              <label for="filterPurchaseLocation">Purchase Location</label>
+              <select id="filterPurchaseLocation" class="filter-select">
+                <option value="">All Locations</option>
+              </select>
+            </div>
+            <div class="filter-group">
+              <label for="filterStorageLocation">Storage Location</label>
+              <select id="filterStorageLocation" class="filter-select">
+                <option value="">All Storage Locations</option>
+              </select>
+            </div>
+            <div class="filter-group">
+              <label for="filterCollectable">Collectable</label>
+              <select id="filterCollectable" class="filter-select">
+                <option value="">All Items</option>
+                <option value="yes">Collectable Only</option>
+                <option value="no">Non-Collectable Only</option>
+              </select>
+            </div>
+            <div class="filter-group">
+              <label for="filterDateRange">Date Range</label>
+              <div class="date-range-inputs">
+                <input type="date" id="filterDateFrom" placeholder="From" />
+                <input type="date" id="filterDateTo" placeholder="To" />
+              </div>
+            </div>
+          </div>
+          <div class="filter-actions">
+            <button class="btn" id="clearFiltersBtn">Clear All</button>
+            <button class="btn premium" id="applyFiltersBtn">Apply Filters</button>
+          </div>
+        </div>
+      </div>
+    </div>
     <!-- =============================================================================
        JAVASCRIPT MODULE LOADING
        
@@ -1970,6 +2025,7 @@
     <script defer src="./js/charts.js"></script>
     <script defer src="./js/theme.js"></script>
     <script defer src="./js/search.js"></script>
+    <script defer src="./js/filters.js"></script>
     <script defer src="./js/sorting.js"></script>
     <script defer src="./js/pagination.js"></script>
     <script defer src="./js/detailsModal.js"></script>

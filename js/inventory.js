@@ -585,7 +585,7 @@ const renderTable = () => {
       <td class="shrink" data-column="date">${formatDisplayDate(item.date)}</td>
       <td class="shrink" data-column="type">${filterLink('type', item.type, getTypeColor(item.type))}</td>
       <td class="shrink" data-column="composition">${filterLink('composition', getCompositionFirstWords(item.composition || item.metal || 'Silver'), METAL_COLORS[item.metal] || 'var(--primary)')}</td>
-      <td class="expand" data-column="name">${sanitizeHtml(item.name)} <button type="button" class="edit-icon" onclick="editItem(${originalIdx})" aria-label="Edit ${sanitizeHtml(item.name)}" title="Edit ${sanitizeHtml(item.name)}">✎</button></td>
+      <td class="expand" data-column="name" style="text-align: left;"><button type="button" class="edit-icon" onclick="editItem(${originalIdx})" aria-label="Edit ${sanitizeHtml(item.name)}" title="Edit ${sanitizeHtml(item.name)}" style="float: left; margin-right: 8px;">✎</button><span class="filter-text" onclick="applyColumnFilter('name', '${sanitizeHtml(item.name).replace(/'/g, "\'")}')"; style="cursor: pointer; color: var(--text-primary);" title="Filter by this name">${sanitizeHtml(item.name)}</span></td>
       <td class="shrink" data-column="qty">${item.qty}</td>
       <td class="shrink" data-column="weight">${parseFloat(item.weight).toFixed(2)}</td>
       <td class="shrink" data-column="purchasePrice">${formatDollar(item.price)}</td>
