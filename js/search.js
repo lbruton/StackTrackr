@@ -66,11 +66,11 @@ const filterInventory = () => {
 document.addEventListener('DOMContentLoaded', () => {
   const input = document.getElementById('searchInput');
   if (input) {
-    input.addEventListener('input', (e) => {
+    input.addEventListener('input', debounce((e) => {
       searchQuery = e.target.value.replace(/[<>]/g, '').trim();
       currentPage = 1;
       renderTable();
-    });
+    }, 300));
   }
 });
 

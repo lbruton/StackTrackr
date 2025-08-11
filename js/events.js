@@ -1353,14 +1353,15 @@ const setupSearch = () => {
 
   try {
     if (elements.searchInput) {
+      const handleSearchInput = debounce(function () {
+        searchQuery = this.value.replace(/[<>]/g, '').trim();
+        currentPage = 1; // Reset to first page when search changes
+        renderTable();
+      }, 300);
       safeAttachListener(
         elements.searchInput,
         "input",
-        function () {
-          searchQuery = this.value.replace(/[<>]/g, '').trim();
-          currentPage = 1; // Reset to first page when search changes
-          renderTable();
-        },
+        handleSearchInput,
         "Search input",
       );
     }

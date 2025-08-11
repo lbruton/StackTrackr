@@ -1,11 +1,14 @@
 # StackTrackr — Changelog
 
-> **Latest release: v3.04.07**
+> **Latest release: v3.04.08**
 
 
 For upcoming work, see [roadmap](roadmap.md).
 
 ## 📋 Version History
+
+### Version 3.04.08 – Debounced search (2025-08-11)
+- Added debounce to search input to improve responsiveness with large Numista datasets
 
 ### Version 3.04.07 – Data sanitization on load (2025-08-11)
 - Strip non-alphanumeric characters from inventory and Numista data during initialization
