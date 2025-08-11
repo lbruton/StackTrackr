@@ -8,7 +8,8 @@ incoming field names to StackTrackr's internal schema.
 - **Approach:** Implement a lightweight module (`js/customMapping.js`) that stores
   rules in memory. Each rule contains a regex and the target field name.
 - **Usage:** Prototype buttons in the Settings → Custom Mapping card prompt the
-  user for a regex and field, store the rule, and log existing mappings.
+  user for a regex and field, store the rule, and let them test a mapping against
+  an arbitrary field name. Rules can also be cleared from this card.
 
 ## Research Notes
 - Evaluated client‑side rules frameworks such as
@@ -22,7 +23,7 @@ incoming field names to StackTrackr's internal schema.
 ## Limitations
 - Rules exist only in memory; they are not persisted to `localStorage` yet.
 - No validation UI for regex patterns—invalid expressions are caught and logged.
-- Mappings apply only when manually triggered via the prototype buttons.
+- Mapping tests must be triggered manually, one field at a time.
 - Conflicting or overlapping regex patterns are resolved by first match only.
 
 Future work may include persistent storage, UI for managing rule sets, and
