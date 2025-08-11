@@ -149,7 +149,7 @@ For upcoming work, see [roadmap](roadmap.md).
   - Enhanced click-to-sort functionality across all table columns
   - Added dedicated Notes button for quick access to item notes
 - **Documentation Improvement**: Consolidated AI assistant guidance into comprehensive workflow system
-  - Removed redundant `docs/LLM.md` file (archived to `docs/archive/llm.md`)
+  - Removed redundant `docs/llm.md` file (archived to `docs/archive/llm.md`)
   - Replaced with enhanced `docs/MULTI_AGENT_WORKFLOW.md` providing complete project context
   - Improved multi-agent coordination protocols and quality standards
   - Updated workflow guidance with actionable step-by-step processes
@@ -273,11 +273,11 @@ For upcoming work, see [roadmap](roadmap.md).
 - **Code Quality Improvements**:  
   - JSDoc for new functions  
   - Modular architecture and separation of concerns  
-- **Documentation Updates**: Corrected version refs in LLM.md and structure.md; removed stale links
+- **Documentation Updates**: Corrected version refs in llm.md and structure.md; removed stale links
 
 ### Version 3.0.3 – Documentation Restructure (2025-08-06)
 - Moved docs to `/docs/`  
-- Updated `structure.md` & `docs/README.md`
+- Updated `structure.md` & `README.md`
 - Fixed broken internal links  
 - No functional changes
 

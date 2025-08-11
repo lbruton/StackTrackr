@@ -100,7 +100,7 @@ The public hosted version of the app is available at [stackrtrackr.com](https://
   - Enhanced click-to-sort functionality for all table columns
   - Added dedicated Notes button for easy access to item notes
 - **Documentation Consolidation**: Improved AI assistant guidance and development workflow
-  - Removed redundant `docs/LLM.md` file (archived to `docs/archive/llm.md`)
+  - Removed redundant `docs/llm.md` file (archived to `docs/archive/llm.md`)
   - Replaced with comprehensive `docs/MULTI_AGENT_WORKFLOW.md`
   - Enhanced multi-agent coordination protocols and quality standards
   - Streamlined documentation structure eliminates redundancy
@@ -227,7 +227,7 @@ Each inventory item includes:
 - The root `index.html` hosts the main application interface.
 
 ## Documentation
-- **[docs/README.md](docs/README.md)** - Detailed project information.
+- **[README.md](README.md)** - Detailed project information.
 - **[docs/MULTI_AGENT_WORKFLOW.md](docs/MULTI_AGENT_WORKFLOW.md)** - AI assistant development workflow.
 - **[docs/changelog.md](docs/changelog.md)** - Version history and features.
 - **[docs/status.md](docs/status.md)** - Current project status.
