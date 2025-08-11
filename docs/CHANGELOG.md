@@ -1,10 +1,6 @@
 # StackTrackr — Changelog
 
-## 🚀 Roadmap (Future Versions)
-
-*All major planned features have been implemented! The tool now includes comprehensive inventory management with storage location tracking, multi-format import/export, advanced analytics, and a modern modular architecture.*
-
----
+For upcoming work, see [ROADMAP](ROADMAP.md).
 
 ## 📋 Version History
 
