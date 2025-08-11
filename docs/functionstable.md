@@ -1,7 +1,7 @@
 # Function Reference
 
 
-> **Latest release: v3.04.08**
+> **Latest release: v3.04.09**
 
 
 | File | Function | Description |
@@ -58,9 +58,11 @@
 | api.js | resetSpotPrice | Resets spot price to default or API cached value |
 | api.js | createBackupData | Exports backup data including API configuration |
 | api.js | downloadCompleteBackup | Downloads complete backup files including inventory and API configuration |
+| filters.js | populateFilterDropdowns | Populates filter modal dropdowns and exclude toggles |
+| filters.js | applyFilters | Applies modal filters with multi-select and exclusion options |
 | filters.js | applyQuickFilter | Adds or toggles a filter for a specific field value |
 | filters.js | clearAllFilters | Clears all active filters and search query |
-| filters.js | filterInventoryAdvanced | Applies advanced filtering with active filters and comma-separated search terms |
+| filters.js | filterInventoryAdvanced | Applies multi-value and exclusion filters with comma-separated search terms |
 | changeLog.js | logChange | Records a change to the change log and persists it |
 | changeLog.js | logItemChanges | Compares two item objects and logs any differences |
 | changeLog.js | renderChangeLog | Renders the change log table with all entries |
@@ -81,7 +83,7 @@
 | events.js | setupEventListeners | Sets up all primary event listeners for the application |
 | events.js | updateThemeDisplay |  |
 | events.js | setupPagination | Sets up pagination event listeners |
-| events.js | populateFilterOptions | Populates type and metal filter dropdowns |
+| events.js | populateFilterOptions | Populates type and metal filter dropdowns while preserving selections |
 | events.js | setupSearch | Sets up search event listeners |
 | events.js | setupThemeToggle | Sets up theme toggle event listeners |
 | events.js | setupApiEvents | Sets up API-related event listeners |

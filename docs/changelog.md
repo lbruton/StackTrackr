@@ -1,11 +1,15 @@
 # StackTrackr — Changelog
 
-> **Latest release: v3.04.08**
+> **Latest release: v3.04.09**
 
 
 For upcoming work, see [roadmap](roadmap.md).
 
 ## 📋 Version History
+
+### Version 3.04.09 – Multi-select filters with exclusion (2025-08-11)
+- Filter modal supports multi-select dropdowns with per-field exclude toggles
+- Filtering logic handles arrays and exclusion, and chips reflect selections
 
 ### Version 3.04.08 – Debounced search (2025-08-11)
 - Added debounce to search input to improve responsiveness with large Numista datasets

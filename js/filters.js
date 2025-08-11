@@ -37,53 +37,76 @@ const populateFilterDropdowns = () => {
   const metals = [...new Set(
     inventory.map(item => getCompositionFirstWords(item.composition || item.metal || ''))
   )].filter(Boolean).sort();
-  
+
   const types = [...new Set(inventory.map(item => item.type))].filter(Boolean).sort();
-  
+
   const purchaseLocations = [...new Set(
     inventory.map(item => item.purchaseLocation || '')
   )].filter(Boolean).sort();
-  
+
   const storageLocations = [...new Set(
     inventory.map(item => item.storageLocation || '')
   )].filter(Boolean).sort();
 
   // Populate metal filter
   const metalSelect = document.getElementById('filterMetal');
+  const metalExclude = document.getElementById('filterMetalExclude');
   if (metalSelect) {
-    const selected = activeFilters.composition || '';
+    const selected = activeFilters.composition?.values || [];
     metalSelect.innerHTML = '<option value="">All Metals</option>' +
-      metals.map(metal => `<option value="${metal}" ${selected === metal ? 'selected' : ''}>${metal}</option>`).join('');
+      metals.map(metal => `<option value="${metal}" ${selected.includes(metal) ? 'selected' : ''}>${metal}</option>`).join('');
+  }
+  if (metalExclude) {
+    metalExclude.checked = activeFilters.composition?.exclude || false;
   }
 
   // Populate type filter
   const typeSelect = document.getElementById('filterType');
+  const typeExclude = document.getElementById('filterTypeExclude');
   if (typeSelect) {
-    const selected = activeFilters.type || '';
+    const selected = activeFilters.type?.values || [];
     typeSelect.innerHTML = '<option value="">All Types</option>' +
-      types.map(type => `<option value="${type}" ${selected === type ? 'selected' : ''}>${type}</option>`).join('');
+      types.map(type => `<option value="${type}" ${selected.includes(type) ? 'selected' : ''}>${type}</option>`).join('');
+  }
+  if (typeExclude) {
+    typeExclude.checked = activeFilters.type?.exclude || false;
   }
 
   // Populate purchase location filter
   const purchaseSelect = document.getElementById('filterPurchaseLocation');
+  const purchaseExclude = document.getElementById('filterPurchaseLocationExclude');
   if (purchaseSelect) {
-    const selected = activeFilters.purchaseLocation || '';
+    const selected = activeFilters.purchaseLocation?.values || [];
     purchaseSelect.innerHTML = '<option value="">All Locations</option>' +
-      purchaseLocations.map(loc => `<option value="${loc}" ${selected === loc ? 'selected' : ''}>${loc}</option>`).join('');
+      purchaseLocations.map(loc => `<option value="${loc}" ${selected.includes(loc) ? 'selected' : ''}>${loc}</option>`).join('');
+  }
+  if (purchaseExclude) {
+    purchaseExclude.checked = activeFilters.purchaseLocation?.exclude || false;
   }
 
   // Populate storage location filter
   const storageSelect = document.getElementById('filterStorageLocation');
+  const storageExclude = document.getElementById('filterStorageLocationExclude');
   if (storageSelect) {
-    const selected = activeFilters.storageLocation || '';
+    const selected = activeFilters.storageLocation?.values || [];
     storageSelect.innerHTML = '<option value="">All Storage Locations</option>' +
-      storageLocations.map(loc => `<option value="${loc}" ${selected === loc ? 'selected' : ''}>${loc}</option>`).join('');
+      storageLocations.map(loc => `<option value="${loc}" ${selected.includes(loc) ? 'selected' : ''}>${loc}</option>`).join('');
+  }
+  if (storageExclude) {
+    storageExclude.checked = activeFilters.storageLocation?.exclude || false;
   }
 
   // Set collectable filter
   const collectableSelect = document.getElementById('filterCollectable');
+  const collectableExclude = document.getElementById('filterCollectableExclude');
   if (collectableSelect) {
-    collectableSelect.value = activeFilters.collectable || '';
+    const selected = activeFilters.collectable?.values || [];
+    Array.from(collectableSelect.options).forEach(opt => {
+      opt.selected = selected.includes(opt.value);
+    });
+  }
+  if (collectableExclude) {
+    collectableExclude.checked = activeFilters.collectable?.exclude || false;
   }
 
   // Set date range filters
@@ -98,10 +121,15 @@ const populateFilterDropdowns = () => {
  */
 const applyFilters = () => {
   const metalSelect = document.getElementById('filterMetal');
+  const metalExclude = document.getElementById('filterMetalExclude');
   const typeSelect = document.getElementById('filterType');
+  const typeExclude = document.getElementById('filterTypeExclude');
   const purchaseSelect = document.getElementById('filterPurchaseLocation');
+  const purchaseExclude = document.getElementById('filterPurchaseLocationExclude');
   const storageSelect = document.getElementById('filterStorageLocation');
+  const storageExclude = document.getElementById('filterStorageLocationExclude');
   const collectableSelect = document.getElementById('filterCollectable');
+  const collectableExclude = document.getElementById('filterCollectableExclude');
   const dateFromInput = document.getElementById('filterDateFrom');
   const dateToInput = document.getElementById('filterDateTo');
 
@@ -109,20 +137,35 @@ const applyFilters = () => {
   activeFilters = {};
 
   // Apply new filters
-  if (metalSelect && metalSelect.value) {
-    activeFilters.composition = metalSelect.value;
+  if (metalSelect) {
+    const values = Array.from(metalSelect.selectedOptions).map(o => o.value).filter(Boolean);
+    if (values.length) {
+      activeFilters.composition = { values, exclude: metalExclude?.checked || false };
+    }
   }
-  if (typeSelect && typeSelect.value) {
-    activeFilters.type = typeSelect.value;
+  if (typeSelect) {
+    const values = Array.from(typeSelect.selectedOptions).map(o => o.value).filter(Boolean);
+    if (values.length) {
+      activeFilters.type = { values, exclude: typeExclude?.checked || false };
+    }
   }
-  if (purchaseSelect && purchaseSelect.value) {
-    activeFilters.purchaseLocation = purchaseSelect.value;
+  if (purchaseSelect) {
+    const values = Array.from(purchaseSelect.selectedOptions).map(o => o.value).filter(Boolean);
+    if (values.length) {
+      activeFilters.purchaseLocation = { values, exclude: purchaseExclude?.checked || false };
+    }
   }
-  if (storageSelect && storageSelect.value) {
-    activeFilters.storageLocation = storageSelect.value;
+  if (storageSelect) {
+    const values = Array.from(storageSelect.selectedOptions).map(o => o.value).filter(Boolean);
+    if (values.length) {
+      activeFilters.storageLocation = { values, exclude: storageExclude?.checked || false };
+    }
   }
-  if (collectableSelect && collectableSelect.value) {
-    activeFilters.collectable = collectableSelect.value;
+  if (collectableSelect) {
+    const values = Array.from(collectableSelect.selectedOptions).map(o => o.value).filter(Boolean);
+    if (values.length) {
+      activeFilters.collectable = { values, exclude: collectableExclude?.checked || false };
+    }
   }
   if (dateFromInput && dateFromInput.value) {
     activeFilters.dateFrom = dateFromInput.value;
@@ -133,8 +176,12 @@ const applyFilters = () => {
 
   // Update the legacy columnFilters for compatibility
   columnFilters = {};
-  if (activeFilters.composition) columnFilters.composition = activeFilters.composition;
-  if (activeFilters.type) columnFilters.type = activeFilters.type;
+  if (activeFilters.composition && !activeFilters.composition.exclude && activeFilters.composition.values.length === 1) {
+    columnFilters.composition = activeFilters.composition.values[0];
+  }
+  if (activeFilters.type && !activeFilters.type.exclude && activeFilters.type.values.length === 1) {
+    columnFilters.type = activeFilters.type.values[0];
+  }
 
   // Clear search and reset pagination
   searchQuery = '';
@@ -197,8 +244,12 @@ const renderActiveFilters = () => {
   container.innerHTML = '';
 
   const filters = [];
-  Object.entries(activeFilters).forEach(([field, value]) => {
-    filters.push({ field, value });
+  Object.entries(activeFilters).forEach(([field, criteria]) => {
+    if (criteria && typeof criteria === 'object' && Array.isArray(criteria.values)) {
+      filters.push({ field, value: criteria.values.join(', '), exclude: criteria.exclude });
+    } else {
+      filters.push({ field, value: criteria });
+    }
   });
   Object.entries(columnFilters).forEach(([field, value]) => {
     if (!activeFilters[field]) filters.push({ field, value });
@@ -225,7 +276,7 @@ const renderActiveFilters = () => {
     chip.style.backgroundColor = colors[i % colors.length];
     const label = f.field === 'search'
       ? `${f.value}`
-      : `${labels[f.field] || f.field}: ${f.value}`;
+      : `${labels[f.field] || f.field}: ${f.value}${f.exclude ? ' (exclude)' : ''}`;
     chip.innerHTML = `${label} &times;`;
     chip.title = 'Click to remove filter';
     chip.onclick = () => {
@@ -254,51 +305,55 @@ const filterInventoryAdvanced = () => {
   let result = inventory;
 
   // Apply advanced filters
-  Object.entries(activeFilters).forEach(([field, value]) => {
-    switch (field) {
-      case 'composition':
-        result = result.filter(item => {
-          const itemMetal = getCompositionFirstWords(item.composition || item.metal || '');
-          return itemMetal.toLowerCase() === value.toLowerCase();
-        });
-        break;
-      case 'type':
-        result = result.filter(item => item.type === value);
-        break;
-      case 'purchaseLocation':
-        result = result.filter(item => item.purchaseLocation === value);
-        break;
-      case 'storageLocation':
-        result = result.filter(item => item.storageLocation === value);
-        break;
-      case 'collectable':
-        if (value === 'yes') {
-          result = result.filter(item => item.isCollectable === true);
-        } else if (value === 'no') {
-          result = result.filter(item => item.isCollectable === false);
+  Object.entries(activeFilters).forEach(([field, criteria]) => {
+    if (criteria && typeof criteria === 'object' && Array.isArray(criteria.values)) {
+      const { values, exclude } = criteria;
+      switch (field) {
+        case 'composition': {
+          const lowerVals = values.map(v => v.toLowerCase());
+          result = result.filter(item => {
+            const itemMetal = getCompositionFirstWords(item.composition || item.metal || '').toLowerCase();
+            const match = lowerVals.includes(itemMetal);
+            return exclude ? !match : match;
+          });
+          break;
         }
-        break;
-      case 'dateFrom':
-        result = result.filter(item => item.date >= value);
-        break;
-      case 'dateTo':
-        result = result.filter(item => item.date <= value);
-        break;
-      default:
-        result = result.filter(item => {
-          const itemVal = item[field];
-          if (value === 'N/A') {
-            return itemVal === undefined || itemVal === null || itemVal === '' || itemVal === 0;
-          }
-          if (itemVal == null) return false;
-          const itemNum = Number(itemVal);
-          const valueNum = Number(value);
-          if (Number.isFinite(itemNum) && Number.isFinite(valueNum)) {
-            return itemNum === valueNum;
-          }
-          return String(itemVal) === String(value ?? '');
-        });
-        break;
+        case 'type':
+          result = result.filter(item => {
+            const match = values.includes(item.type);
+            return exclude ? !match : match;
+          });
+          break;
+        case 'purchaseLocation':
+          result = result.filter(item => {
+            const match = values.includes(item.purchaseLocation);
+            return exclude ? !match : match;
+          });
+          break;
+        case 'storageLocation':
+          result = result.filter(item => {
+            const match = values.includes(item.storageLocation);
+            return exclude ? !match : match;
+          });
+          break;
+        case 'collectable':
+          result = result.filter(item => {
+            const val = item.isCollectable ? 'yes' : 'no';
+            const match = values.includes(val);
+            return exclude ? !match : match;
+          });
+          break;
+      }
+    } else {
+      const value = criteria;
+      switch (field) {
+        case 'dateFrom':
+          result = result.filter(item => item.date >= value);
+          break;
+        case 'dateTo':
+          result = result.filter(item => item.date <= value);
+          break;
+      }
     }
   });
 
