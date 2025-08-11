@@ -98,7 +98,7 @@ const API_PROVIDERS = {
  * State codes: a=alpha, b=beta, rc=release candidate
  * Example: 3.03.02a → branch 3, release 03, patch 02, alpha
  */
-const APP_VERSION = "3.03.08g";
+const APP_VERSION = "3.03.08i";
 
 /**
  * Returns formatted version string

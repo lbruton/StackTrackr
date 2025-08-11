@@ -85,13 +85,20 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Import/Export elements
     debugLog("Phase 3: Initializing import/export elements...");
+    elements.importCsvBtn = safeGetElement("importCsvBtn");
     elements.importCsvFile = safeGetElement("importCsvFile");
+    elements.importCsvOverride = safeGetElement("importCsvOverride");
+    elements.importCsvMerge = safeGetElement("importCsvMerge");
+    elements.importCsvOptions = safeGetElement("importCsvOptions");
     elements.importJsonFile = safeGetElement("importJsonFile");
     elements.importExcelFile = safeGetElement("importExcelFile");
     elements.importProgress = safeGetElement("importProgress");
     elements.importProgressText = safeGetElement("importProgressText");
     elements.numistaImportBtn = safeGetElement("numistaImportBtn");
     elements.numistaImportFile = safeGetElement("numistaImportFile");
+    elements.numistaOverride = safeGetElement("numistaOverride");
+    elements.numistaMerge = safeGetElement("numistaMerge");
+    elements.numistaImportOptions = safeGetElement("numistaImportOptions");
     elements.exportCsvBtn = safeGetElement("exportCsvBtn");
     elements.exportJsonBtn = safeGetElement("exportJsonBtn");
     elements.exportExcelBtn = safeGetElement("exportExcelBtn");
