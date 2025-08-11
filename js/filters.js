@@ -252,35 +252,34 @@ const filterInventoryAdvanced = () => {
   let query = searchQuery.toLowerCase();
   let filterCollectable = false;
 
-  if (query.includes('collectable')) {
+  // Handle collectable keyword and remove from terms
+  query = query.replace(/collectable|collectible/g, () => {
     filterCollectable = true;
-    query = query.replace(/collectable/g, '').trim();
-  }
-  if (query.includes('collectible')) {
-    filterCollectable = true;
-    query = query.replace(/collectible/g, '').trim();
-  }
+    return '';
+  }).trim();
+
+  const terms = query.split(',').map(t => t.trim()).filter(t => t);
 
   return result.filter(item => {
     if (filterCollectable && !item.isCollectable) return false;
-    if (!query) return true;
+    if (!terms.length) return true;
 
     const formattedDate = formatDisplayDate(item.date).toLowerCase();
-    return (
-      item.metal.toLowerCase().includes(query) ||
-      (item.composition && item.composition.toLowerCase().includes(query)) ||
-      item.name.toLowerCase().includes(query) ||
-      item.type.toLowerCase().includes(query) ||
-      item.purchaseLocation.toLowerCase().includes(query) ||
-      (item.storageLocation && item.storageLocation.toLowerCase().includes(query)) ||
-      (item.notes && item.notes.toLowerCase().includes(query)) ||
-      item.date.includes(query) ||
-      formattedDate.includes(query) ||
-      item.qty.toString().includes(query) ||
-      item.weight.toString().includes(query) ||
-      item.price.toString().includes(query) ||
-      (item.isCollectable ? 'yes' : 'no').includes(query)
-    );
+    return terms.some(q => (
+      item.metal.toLowerCase().includes(q) ||
+      (item.composition && item.composition.toLowerCase().includes(q)) ||
+      item.name.toLowerCase().includes(q) ||
+      item.type.toLowerCase().includes(q) ||
+      item.purchaseLocation.toLowerCase().includes(q) ||
+      (item.storageLocation && item.storageLocation.toLowerCase().includes(q)) ||
+      (item.notes && item.notes.toLowerCase().includes(q)) ||
+      item.date.includes(q) ||
+      formattedDate.includes(q) ||
+      item.qty.toString().includes(q) ||
+      item.weight.toString().includes(q) ||
+      item.price.toString().includes(q) ||
+      (item.isCollectable ? 'yes' : 'no').includes(q)
+    ));
   });
 };
 

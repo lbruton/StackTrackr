@@ -1,3 +1,20 @@
+# Implementation Summary: Multi-term Search
+
+> **Latest release: v3.04.04**
+
+## Version Update: 3.04.03 → 3.04.04
+
+## User Requirements Implemented
+
+- Search box supports comma-separated queries and filters inventory as you type
+
+## Technical Changes Made
+
+### Files Modified:
+1. **`js/search.js`** & **`js/filters.js`**: Enable comma-separated search terms and real-time filtering
+2. **`js/constants.js`**: Bumped version to 3.04.04
+3. **Documentation**: Updated changelog, status, roadmap, structure, function table, and version references
+
 # Implementation Summary: Search Input Restore
 
 > **Latest release: v3.04.03**

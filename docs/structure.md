@@ -1,7 +1,7 @@
 # Project Structure
 
 
-> **Latest release: v3.04.03**
+> **Latest release: v3.04.04**
 
 
 The repository is organized as follows:
