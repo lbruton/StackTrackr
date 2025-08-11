@@ -26,7 +26,7 @@ const checkVersionChange = () => {
     })
     .catch((err) => {
       console.error("Error loading changelog:", err);
-      populateVersionModal(current, "<p>Unable to load changelog.</p>");
+      populateVersionModal(current, "<li>Unable to load changelog.</li>");
     });
 };
 
@@ -43,15 +43,14 @@ const getChangelogForVersion = (text, version) => {
   );
   const match = text.match(regex);
   if (!match) {
-    return "<p>No changelog entry found.</p>";
+    return "<li>No changelog entry found.</li>";
   }
-  const items = match[1]
+  return match[1]
     .trim()
     .split("\n")
     .filter((line) => line.trim().startsWith("-"))
     .map((line) => `<li>${sanitizeHtml(line.replace(/^\-\s*/, ""))}</li>`)
     .join("");
-  return `<ul>${items}</ul>`;
 };
 
 /**

@@ -1,10 +1,22 @@
 # StackTrackr — Changelog
 
-> **Latest release: v3.03.08g**
+> **Latest release: v3.03.08i**
 
 For upcoming work, see [roadmap](roadmap.md).
 
 ## 📋 Version History
+
+### Version 3.03.08i – Numista import polish (2025-08-10)
+- Unified bullet styling for "What's New" lists
+- Numista imports default to collectable with N# note
+ - Weight inputs round to two decimals
+ - Numista import button includes beta warning
+
+### Version 3.03.08h – UI compactness & import options (2025-08-10)
+- Moved change log, disclaimer, and items selector into a compact section below the table
+- Pagination controls slimmed down with uniform buttons
+- CSV imports now choose Override or Merge from dropdown menus
+- Files modal gains Backup/Restore placeholder card
 
 ### Version 3.03.08g – Change log table & catalog indexing (2025-08-10)
 - Change log rows open edit modal and table is more compact
