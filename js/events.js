@@ -815,7 +815,7 @@ const setupEventListeners = () => {
               spotPrices[metalKey] = defaultPrice;
               if (elements.spotPriceDisplay[metalKey]) {
                 elements.spotPriceDisplay[metalKey].textContent =
-                  formatDollar(defaultPrice);
+                  formatCurrency(defaultPrice);
               }
               updateSummary();
             }

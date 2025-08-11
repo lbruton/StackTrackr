@@ -99,10 +99,10 @@ const createBackupZip = async () => {
         item.qty,
         item.type,
         parseFloat(item.weight).toFixed(4),
-        formatDollar(item.price),
-        exportSpotPrice > 0 ? formatDollar(exportSpotPrice) : 'N/A',
-        item.isCollectable ? 'N/A' : formatDollar(item.premiumPerOz),
-        item.isCollectable ? 'N/A' : formatDollar(item.totalPremium),
+        formatCurrency(item.price),
+        exportSpotPrice > 0 ? formatCurrency(exportSpotPrice) : 'N/A',
+        item.isCollectable ? 'N/A' : formatCurrency(item.premiumPerOz),
+        item.isCollectable ? 'N/A' : formatCurrency(item.totalPremium),
         item.purchaseLocation,
         item.storageLocation || '',
         item.notes || '',
@@ -314,7 +314,7 @@ const generateBackupHtml = (sortedInventory, timeFormatted) => {
           <td>${item.qty}</td>
           <td>${item.type}</td>
           <td>${parseFloat(item.weight).toFixed(2)}</td>
-          <td>${formatDollar(item.price)}</td>
+          <td>${formatCurrency(item.price)}</td>
           <td>${item.purchaseLocation}</td>
           <td>${item.storageLocation || ''}</td>
           <td>${item.notes || ''}</td>
@@ -754,9 +754,9 @@ const renderTable = () => {
     for (let i = startIndex; i < endIndex; i++) {
       const item = sortedInventory[i];
       const originalIdx = inventory.indexOf(item);
-      const spotDisplay = item.isCollectable ? 'N/A' : (item.spotPriceAtPurchase > 0 ? formatDollar(item.spotPriceAtPurchase) : 'N/A');
+      const spotDisplay = item.isCollectable ? 'N/A' : (item.spotPriceAtPurchase > 0 ? formatCurrency(item.spotPriceAtPurchase) : 'N/A');
       const spotValue = item.isCollectable ? 'N/A' : (item.spotPriceAtPurchase > 0 ? item.spotPriceAtPurchase : 'N/A');
-      const premiumDisplay = item.isCollectable ? 'N/A' : formatDollar(item.totalPremium);
+      const premiumDisplay = item.isCollectable ? 'N/A' : formatCurrency(item.totalPremium);
       const premiumValue = item.isCollectable ? 'N/A' : item.totalPremium;
 
       rows.push(`
@@ -779,7 +779,7 @@ const renderTable = () => {
       </td>
       <td class="shrink" data-column="purchasePrice" title="USD">
         <span class="inline-edit-icon" role="button" tabindex="0" onclick="startCellEdit(${originalIdx}, 'price', this)" aria-label="Edit purchase price" title="Edit purchase price">✎</span>
-        ${item.price > 0 ? filterLink('price', item.price, 'var(--text-primary)', formatDollar(item.price)) : ''}
+        ${item.price > 0 ? filterLink('price', item.price, 'var(--text-primary)', formatCurrency(item.price)) : ''}
       </td>
       <td class="shrink" data-column="spot" title="USD">
         <span class="inline-edit-icon" role="button" tabindex="0" onclick="startCellEdit(${originalIdx}, 'spotPriceAtPurchase', this)" aria-label="Edit spot price" title="Edit spot price">✎</span>
@@ -939,15 +939,15 @@ const updateSummary = () => {
 
     elements.totals[metalKey].items.textContent = totals.totalItems;
     elements.totals[metalKey].weight.textContent = totals.totalWeight.toFixed(2);
-    elements.totals[metalKey].value.innerHTML = formatDollar(totals.currentSpotValue || 0);
-    elements.totals[metalKey].purchased.innerHTML = formatDollar(totals.totalPurchased || 0);
-    elements.totals[metalKey].premium.innerHTML = formatDollar(totals.totalPremium || 0);
+    elements.totals[metalKey].value.innerHTML = formatCurrency(totals.currentSpotValue || 0);
+    elements.totals[metalKey].purchased.innerHTML = formatCurrency(totals.totalPurchased || 0);
+    elements.totals[metalKey].premium.innerHTML = formatCurrency(totals.totalPremium || 0);
     elements.totals[metalKey].lossProfit.innerHTML = formatLossProfit(totals.lossProfit || 0);
-    elements.totals[metalKey].avgPrice.innerHTML = formatDollar(totals.avgPrice || 0);
-    elements.totals[metalKey].avgPremium.innerHTML = formatDollar(totals.avgPremium || 0);
+    elements.totals[metalKey].avgPrice.innerHTML = formatCurrency(totals.avgPrice || 0);
+    elements.totals[metalKey].avgPremium.innerHTML = formatCurrency(totals.avgPremium || 0);
     // Add the new collectable/non-collectable averages
-    elements.totals[metalKey].avgCollectablePrice.innerHTML = formatDollar(totals.avgCollectablePrice || 0);
-    elements.totals[metalKey].avgNonCollectablePrice.innerHTML = formatDollar(totals.avgNonCollectablePrice || 0);
+    elements.totals[metalKey].avgCollectablePrice.innerHTML = formatCurrency(totals.avgCollectablePrice || 0);
+    elements.totals[metalKey].avgNonCollectablePrice.innerHTML = formatCurrency(totals.avgNonCollectablePrice || 0);
   });
 
   // Calculate combined totals for all metals
@@ -987,14 +987,14 @@ const updateSummary = () => {
   if (elements.totals.all.items.textContent !== undefined) {
     elements.totals.all.items.textContent = allTotals.totalItems;
     elements.totals.all.weight.textContent = allTotals.totalWeight.toFixed(2);
-    elements.totals.all.value.innerHTML = formatDollar(allTotals.currentSpotValue || 0);
-    elements.totals.all.purchased.innerHTML = formatDollar(allTotals.totalPurchased || 0);
-    elements.totals.all.premium.innerHTML = formatDollar(allTotals.totalPremium || 0);
+    elements.totals.all.value.innerHTML = formatCurrency(allTotals.currentSpotValue || 0);
+    elements.totals.all.purchased.innerHTML = formatCurrency(allTotals.totalPurchased || 0);
+    elements.totals.all.premium.innerHTML = formatCurrency(allTotals.totalPremium || 0);
     elements.totals.all.lossProfit.innerHTML = formatLossProfit(allTotals.lossProfit || 0);
-    elements.totals.all.avgPrice.innerHTML = formatDollar(allTotals.totalPurchased / allTotals.totalWeight || 0);
-    elements.totals.all.avgPremium.innerHTML = formatDollar(allTotals.totalPremium / allTotals.totalWeight || 0);
-    elements.totals.all.avgCollectablePrice.innerHTML = formatDollar(avgCollectablePriceAll || 0);
-    elements.totals.all.avgNonCollectablePrice.innerHTML = formatDollar(avgNonCollectablePriceAll || 0);
+    elements.totals.all.avgPrice.innerHTML = formatCurrency(allTotals.totalPurchased / allTotals.totalWeight || 0);
+    elements.totals.all.avgPremium.innerHTML = formatCurrency(allTotals.totalPremium / allTotals.totalWeight || 0);
+    elements.totals.all.avgCollectablePrice.innerHTML = formatCurrency(avgCollectablePriceAll || 0);
+    elements.totals.all.avgNonCollectablePrice.innerHTML = formatCurrency(avgNonCollectablePriceAll || 0);
   }
 };
 
@@ -1458,10 +1458,10 @@ const exportCsv = () => {
       i.qty,
       i.type,
       parseFloat(i.weight).toFixed(4),
-      formatDollar(i.price),
-      exportSpotPrice > 0 ? formatDollar(exportSpotPrice) : 'N/A',
-      i.isCollectable ? 'N/A' : formatDollar(i.premiumPerOz),
-      i.isCollectable ? 'N/A' : formatDollar(i.totalPremium),
+      formatCurrency(i.price),
+      exportSpotPrice > 0 ? formatCurrency(exportSpotPrice) : 'N/A',
+      i.isCollectable ? 'N/A' : formatCurrency(i.premiumPerOz),
+      i.isCollectable ? 'N/A' : formatCurrency(i.totalPremium),
       i.purchaseLocation,
       i.storageLocation || '',
       i.notes || '',
@@ -1846,10 +1846,10 @@ const exportPdf = () => {
     item.qty,
     item.type,
     parseFloat(item.weight).toFixed(2),
-    formatDollar(item.price),
-    item.isCollectable ? 'N/A' : formatDollar(item.spotPriceAtPurchase),
-    item.isCollectable ? 'N/A' : formatDollar(item.premiumPerOz),
-    item.isCollectable ? 'N/A' : formatDollar(item.totalPremium),
+    formatCurrency(item.price),
+    item.isCollectable ? 'N/A' : formatCurrency(item.spotPriceAtPurchase),
+    item.isCollectable ? 'N/A' : formatCurrency(item.premiumPerOz),
+    item.isCollectable ? 'N/A' : formatCurrency(item.totalPremium),
     item.purchaseLocation,
     item.storageLocation || '',
     item.notes || '',

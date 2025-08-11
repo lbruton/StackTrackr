@@ -337,7 +337,7 @@ const updateProviderHistoryTables = () => {
         (e) => e.provider === providerName && e.metal === metal,
       );
       const last = entries.length
-        ? formatDollar(entries[entries.length - 1].spot)
+        ? formatCurrency(entries[entries.length - 1].spot)
         : "-";
       const key = metal.toLowerCase();
       const checked = selections[key] !== false ? "checked" : "";
@@ -459,7 +459,7 @@ const renderApiHistoryTable = () => {
   let html =
     "<tr><th data-column=\"timestamp\">Time</th><th data-column=\"metal\">Metal</th><th data-column=\"spot\">Price</th><th data-column=\"provider\">API</th></tr>";
   data.forEach((e) => {
-    html += `<tr><td>${e.timestamp}</td><td>${e.metal}</td><td>${formatDollar(
+    html += `<tr><td>${e.timestamp}</td><td>${e.metal}</td><td>${formatCurrency(
       e.spot,
     )}</td><td>${e.provider || ""}</td></tr>`;
   });
@@ -693,7 +693,7 @@ const refreshFromCache = () => {
       spotPrices[metal] = price;
 
       // Update display
-      elements.spotPriceDisplay[metal].textContent = formatDollar(price);
+      elements.spotPriceDisplay[metal].textContent = formatCurrency(price);
 
       // Record in history as 'cached' to distinguish from fresh API calls
       recordSpot(
@@ -1126,7 +1126,7 @@ const syncSpotPricesFromApi = async (
         spotPrices[metal] = price;
 
         // Update display
-        elements.spotPriceDisplay[metal].textContent = formatDollar(price);
+        elements.spotPriceDisplay[metal].textContent = formatCurrency(price);
 
         // Record in history
         recordSpot(
@@ -1287,7 +1287,7 @@ const handleProviderSync = async (provider) => {
       if (metalConfig && price > 0) {
         localStorage.setItem(metalConfig.spotKey, price.toString());
         spotPrices[metal] = price;
-        elements.spotPriceDisplay[metal].textContent = formatDollar(price);
+        elements.spotPriceDisplay[metal].textContent = formatCurrency(price);
         recordSpot(
           price,
           "api",
@@ -1569,7 +1569,7 @@ const resetSpotPrice = (metal) => {
 
   // Update display
   elements.spotPriceDisplay[metalConfig.key].textContent =
-    formatDollar(resetPrice);
+    formatCurrency(resetPrice);
 
   // Record in history
   recordSpot(resetPrice, source, metalConfig.name, providerName);
@@ -1649,10 +1649,10 @@ const downloadCompleteBackup = async () => {
         item.qty,
         item.type,
         parseFloat(item.weight).toFixed(4),
-        formatDollar(item.price),
-        item.isCollectable ? "N/A" : formatDollar(item.spotPriceAtPurchase),
-        item.isCollectable ? "N/A" : formatDollar(item.premiumPerOz),
-        item.isCollectable ? "N/A" : formatDollar(item.totalPremium),
+        formatCurrency(item.price),
+        item.isCollectable ? "N/A" : formatCurrency(item.spotPriceAtPurchase),
+        item.isCollectable ? "N/A" : formatCurrency(item.premiumPerOz),
+        item.isCollectable ? "N/A" : formatCurrency(item.totalPremium),
         item.purchaseLocation,
         item.storageLocation || "Unknown",
         item.notes || "",

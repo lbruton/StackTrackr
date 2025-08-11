@@ -350,15 +350,24 @@ const formatDisplayDate = (dateStr) => {
 };
 
 /**
- * Formats a number as a dollar amount with two decimal places
+ * Formats a number as a currency string using the default currency
  *
- * @param {number|string} n - Number to format
- * @returns {string} Formatted dollar string (e.g., "$1,234.56")
+ * @param {number|string} value - Number to format
+ * @param {string} [currency=DEFAULT_CURRENCY] - ISO currency code
+ * @returns {string} Formatted currency string (e.g., "$1,234.56")
  */
-const formatDollar = (n) => {
-  const num = parseFloat(n);
+const formatCurrency = (value, currency = DEFAULT_CURRENCY) => {
+  const num = parseFloat(value);
   if (isNaN(num)) return "";
-  return `$${num.toFixed(2)}`;
+  try {
+    return new Intl.NumberFormat(undefined, {
+      style: "currency",
+      currency,
+    }).format(num);
+  } catch (e) {
+    // Fallback for environments without Intl support
+    return `${currency} ${num.toFixed(2)}`;
+  }
 };
 
 /**
@@ -368,7 +377,7 @@ const formatDollar = (n) => {
  * @returns {string} HTML string with appropriate color styling
  */
 const formatLossProfit = (value) => {
-  const formatted = formatDollar(value);
+  const formatted = formatCurrency(value);
   if (value > 0) {
     return `<span style="color: var(--success);">${formatted}</span>`;
   } else if (value < 0) {

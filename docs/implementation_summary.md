@@ -353,7 +353,7 @@
 ## Technical Changes Made
 
 ### Files Modified:
-1. **`js/utils.js`**: Added `sanitizeImportedItem` helper and improved `formatDollar`
+1. **`js/utils.js`**: Added `sanitizeImportedItem` helper and improved currency formatting
 2. **`js/inventory.js`**: CSV and Numista importers sanitize fields and support merge/override
 3. **`js/constants.js`**: Bumped version to 3.03.08f
 4. **Documentation**: Updated changelog, function table, implementation summary, status, roadmap, structure, and README

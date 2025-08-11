@@ -151,6 +151,11 @@ const API_PROVIDERS = {
 
 const APP_VERSION = "3.04.08";
 
+/**
+ * @constant {string} DEFAULT_CURRENCY - Default currency code for monetary formatting
+ */
+const DEFAULT_CURRENCY = "USD";
+
 
 /**
  * Returns formatted version string
@@ -354,6 +359,7 @@ if (typeof window !== "undefined") {
   window.API_PROVIDERS = API_PROVIDERS;
   window.METALS = METALS;
   window.DEBUG = DEBUG;
+  window.DEFAULT_CURRENCY = DEFAULT_CURRENCY;
   window.BRANDING_DOMAIN_OPTIONS = BRANDING_DOMAIN_OPTIONS;
   window.BRANDING_DOMAIN_OVERRIDE = BRANDING_DOMAIN_OVERRIDE;
 }
