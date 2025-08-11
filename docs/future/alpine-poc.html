@@ -73,7 +73,7 @@
               <span x-text="`${getTotalWeight(metal.key).toFixed(2)} oz`"></span>
             </div>
             <div class="total-item">
-              <span>Purchase Price:</span>
+              <span>Price:</span>
               <span x-text="formatCurrency(getTotalPurchasePrice(metal.key))"></span>
             </div>
             <div class="total-item">
@@ -127,7 +127,7 @@
           </div>
           
           <div>
-            <label for="price">Purchase Price ($)</label>
+            <label for="price">Price ($)</label>
             <input type="number" x-model.number="form.price" :class="{ error: errors.price }" 
                    step="0.01" min="0" placeholder="0.00">
             <div x-show="errors.price" x-text="errors.price" class="error-text"></div>

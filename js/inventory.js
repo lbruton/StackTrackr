@@ -774,11 +774,11 @@ const renderTable = () => {
         <span class="inline-edit-icon" role="button" tabindex="0" onclick="startCellEdit(${originalIdx}, 'weight', this)" aria-label="Edit weight" title="Edit weight">✎</span>
         ${filterLink('weight', item.weight, 'var(--text-primary)', parseFloat(item.weight).toFixed(2) + ' (oz)', 'Troy ounces (ozt)')}
       </td>
-      <td class="shrink" data-column="purchasePrice">
+      <td class="shrink" data-column="purchasePrice" title="USD">
         <span class="inline-edit-icon" role="button" tabindex="0" onclick="startCellEdit(${originalIdx}, 'price', this)" aria-label="Edit purchase price" title="Edit purchase price">✎</span>
         ${item.price > 0 ? filterLink('price', item.price, 'var(--text-primary)', formatDollar(item.price)) : ''}
       </td>
-      <td class="shrink" data-column="spot">
+      <td class="shrink" data-column="spot" title="USD">
         <span class="inline-edit-icon" role="button" tabindex="0" onclick="startCellEdit(${originalIdx}, 'spotPriceAtPurchase', this)" aria-label="Edit spot price" title="Edit spot price">✎</span>
         ${filterLink('spotPriceAtPurchase', spotValue, 'var(--text-primary)', spotDisplay)}
       </td>
