@@ -127,8 +127,9 @@
 | theme.js | initTheme | Initializes theme based on user preference and system settings |
 | theme.js | toggleTheme | Toggles between dark and light themes |
 | theme.js | setupSystemThemeListener | Sets up system theme change listener |
+| constants.js | getVersionString | Returns formatted version string |
+| constants.js | injectVersionString | Inserts formatted version string into a target element |
 | utils.js | debugLog | Logs messages to console when DEBUG flag is enabled |
-| utils.js | getVersionString | Returns formatted version string |
 | utils.js | getBrandingName | Gets the active branding name considering domain overrides |
 | utils.js | getAppTitle | Returns full application title with version when no branding is configured |
 | utils.js | getFooterDomain | Determines active domain for footer copyright |

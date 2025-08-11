@@ -11,14 +11,6 @@ const debugLog = (...args) => {
   }
 };
 /**
- * Returns formatted version string
- *
- * @param {string} [prefix='v'] - Prefix to add before version
- * @returns {string} Formatted version string (e.g., "v3.03.02a")
- */
-const getVersionString = (prefix = "v") => `${prefix}${APP_VERSION}`;
-
-/**
  * Gets the active branding name considering domain overrides
  *
  * @returns {string} Active branding name

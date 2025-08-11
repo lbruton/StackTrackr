@@ -10,6 +10,7 @@
 
 ### Version 3.03.04a – Files Modal Storage Breakdown (2025-08-10)
 - Added progress bar in Files modal showing per-item storage distribution with hover tooltips and click-to-highlight
+- Footer now uses constants.js helper to display application version dynamically
 
 ### Version 3.03.03a – Storage Report Modal (2025-08-10)
 - Storage report now opens within an in-app modal using an iframe, replacing the previous popup window
@@ -283,7 +284,7 @@
 - **Import/Export**: CSV, JSON, Excel, PDF, HTML include storage location  
 - **Backwards compatibility**: default “Unknown” for existing items  
 - **Dynamic version loading**: version auto-loads from `APP_VERSION` in `constants.js`  
-- **Utility functions**: `getVersionString()`, `getAppTitle()` in `utils.js`
+- **Utility functions**: `getVersionString()` in `constants.js`, `getAppTitle()` in `utils.js`
 
 ### Version 3.0 – UI Streamlining
 - Removed “Show Spot History” & “Clear Spot History” buttons  
