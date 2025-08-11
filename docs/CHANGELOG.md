@@ -8,6 +8,9 @@
 
 ## 📋 Version History
 
+### Version 3.03.04a – Files Modal Storage Breakdown (2025-08-10)
+- Added progress bar in Files modal showing per-item storage distribution with hover tooltips and click-to-highlight
+
 ### Version 3.03.03a – Storage Report Modal (2025-08-10)
 - Storage report now opens within an in-app modal using an iframe, replacing the previous popup window
 

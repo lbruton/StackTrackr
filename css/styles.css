@@ -261,6 +261,28 @@ section {
   border-radius: var(--radius);
 }
 
+.files-progress {
+  margin-left: var(--spacing-sm);
+  display: flex;
+  width: 150px;
+  height: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background-color: var(--bg-tertiary);
+}
+
+.files-progress-segment {
+  height: 100%;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.files-progress-segment.zoomed {
+  transform: scaleY(1.5);
+  z-index: 1;
+}
+
 section:hover {
   box-shadow: var(--shadow-lg);
 }
