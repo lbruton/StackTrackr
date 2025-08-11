@@ -1,5 +1,7 @@
 # Implementation Summary: Documentation Sweep & Archive Update
 
+> **Latest release: v3.03.06a**
+
 ## Version Update: 3.03.05a → 3.03.06a
 
 ## User Requirements Implemented

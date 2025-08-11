@@ -1,5 +1,7 @@
 # StackTrackr — Changelog
 
+> **Latest release: v3.03.06a**
+
 For upcoming work, see [ROADMAP](ROADMAP.md).
 
 ## 📋 Version History

@@ -1,5 +1,7 @@
 # Project Structure
 
+> **Latest release: v3.03.06a**
+
 The repository is organized as follows:
 
 ```text

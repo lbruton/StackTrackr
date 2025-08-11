@@ -1,5 +1,7 @@
 # Dynamic Version Management System
 
+> **Latest release: v3.03.06a**
+
 ## Overview 
 
 The StackTrackr now uses a dynamic version management system that automatically updates version numbers throughout the application from a single source of truth.

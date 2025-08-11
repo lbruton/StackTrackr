@@ -1,5 +1,7 @@
 # Function Reference
 
+> **Latest release: v3.03.06a**
+
 | File | Function | Description |
 |------|----------|-------------|
 | about.js | showAboutModal | Shows the About modal and populates it with current data |

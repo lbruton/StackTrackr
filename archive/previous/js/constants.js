@@ -98,13 +98,13 @@ const API_PROVIDERS = {
  * State codes: a=alpha, b=beta, rc=release candidate
  * Example: 3.03.02a → branch 3, release 03, patch 02, alpha
  */
-const APP_VERSION = "3.03.04a";
+const APP_VERSION = "3.03.06a";
 
 /**
  * Returns formatted version string
  *
  * @param {string} [prefix="v"] - Prefix to add before version
- * @returns {string} Formatted version string (e.g., "v3.03.04a")
+ * @returns {string} Formatted version string (e.g., "v3.03.06a")
  */
 const getVersionString = (prefix = "v") => `${prefix}${APP_VERSION}`;
 
