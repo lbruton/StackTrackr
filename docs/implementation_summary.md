@@ -1,3 +1,22 @@
+# Implementation Summary: Data Sanitization on Load
+
+> **Latest release: v3.04.07**
+
+## Version Update: 3.04.06 → 3.04.07
+
+## User Requirements Implemented
+
+- Remove non-alphanumeric characters from inventory and Numista tables on load
+
+## Technical Changes Made
+
+### Files Modified:
+1. **`js/utils.js`**: Added `stripNonAlphanumeric` and `sanitizeObjectFields`; updated `sanitizeImportedItem`
+2. **`js/inventory.js`**: Introduced `sanitizeTablesOnLoad` to clean inventory and cached Numista data
+3. **`js/init.js`**: Executes table sanitization during initialization
+4. **`js/constants.js`**: Bumped version to 3.04.07
+5. **Documentation**: Updated changelog, status, function table, and README
+
 # Implementation Summary: Name Sanitization
 
 > **Latest release: v3.04.06**
