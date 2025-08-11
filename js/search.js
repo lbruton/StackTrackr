@@ -18,7 +18,8 @@ const filterInventory = () => {
   Object.entries(columnFilters).forEach(([field, value]) => {
     const lower = value.toLowerCase();
     result = result.filter((item) => {
-      const fieldVal = (item[field] || (field === 'composition' ? item.metal : '')).toString().toLowerCase();
+      const rawVal = item[field] ?? (field === 'composition' ? item.metal : '');
+      const fieldVal = String(rawVal ?? '').toLowerCase();
       return fieldVal === lower;
     });
   });
@@ -52,9 +53,9 @@ const filterInventory = () => {
       (item.notes && item.notes.toLowerCase().includes(q)) ||
       item.date.includes(q) ||
       formattedDate.includes(q) ||
-      item.qty.toString().includes(q) ||
-      item.weight.toString().includes(q) ||
-      item.price.toString().includes(q) ||
+      String(Number.isFinite(Number(item.qty)) ? Number(item.qty) : '').includes(q) ||
+      String(Number.isFinite(Number(item.weight)) ? Number(item.weight) : '').includes(q) ||
+      String(Number.isFinite(Number(item.price)) ? Number(item.price) : '').includes(q) ||
       (item.isCollectable ? 'yes' : 'no').includes(q)
     ));
   });

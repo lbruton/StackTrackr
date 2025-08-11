@@ -290,7 +290,13 @@ const filterInventoryAdvanced = () => {
           if (value === 'N/A') {
             return itemVal === undefined || itemVal === null || itemVal === '' || itemVal === 0;
           }
-          return itemVal != null && itemVal.toString() === value.toString();
+          if (itemVal == null) return false;
+          const itemNum = Number(itemVal);
+          const valueNum = Number(value);
+          if (Number.isFinite(itemNum) && Number.isFinite(valueNum)) {
+            return itemNum === valueNum;
+          }
+          return String(itemVal) === String(value ?? '');
         });
         break;
     }
@@ -301,7 +307,8 @@ const filterInventoryAdvanced = () => {
     if (!activeFilters[field]) { // Don't double-filter
       const lower = value.toLowerCase();
       result = result.filter(item => {
-        const fieldVal = (item[field] || (field === 'composition' ? item.metal : '')).toString().toLowerCase();
+        const rawVal = item[field] ?? (field === 'composition' ? item.metal : '');
+        const fieldVal = String(rawVal ?? '').toLowerCase();
         return fieldVal === lower;
       });
     }
@@ -336,9 +343,9 @@ const filterInventoryAdvanced = () => {
       (item.notes && item.notes.toLowerCase().includes(q)) ||
       item.date.includes(q) ||
       formattedDate.includes(q) ||
-      item.qty.toString().includes(q) ||
-      item.weight.toString().includes(q) ||
-      item.price.toString().includes(q) ||
+      String(Number.isFinite(Number(item.qty)) ? Number(item.qty) : '').includes(q) ||
+      String(Number.isFinite(Number(item.weight)) ? Number(item.weight) : '').includes(q) ||
+      String(Number.isFinite(Number(item.price)) ? Number(item.price) : '').includes(q) ||
       (item.isCollectable ? 'yes' : 'no').includes(q)
     ));
   });
