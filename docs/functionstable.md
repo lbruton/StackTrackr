@@ -1,6 +1,6 @@
 # Function Reference
 
-> **Latest release: v3.03.08b**
+> **Latest release: v3.03.08c**
 
 | File | Function | Description |
 |------|----------|-------------|
@@ -13,6 +13,7 @@
 | about.js | populateAckModal | Populates the acknowledgment modal with version information |
 | about.js | loadChangelog | Loads changelog information from docs/changelog.md and populates the About modal |
 | about.js | extractChangelogItems | Extracts changelog items from content, filtering for meaningful changes |
+| about.js | loadRoadmap | Loads roadmap information and populates roadmap lists in modals |
 | about.js | showFullChangelog | Shows full changelog in a new window or navigates to documentation |
 | about.js | setupAboutModalEvents | Sets up event listeners for about modal elements |
 | about.js | setupAckModalEvents | Sets up event listeners for acknowledgment modal elements |
