@@ -1205,29 +1205,6 @@ const hideFilesModal = () => {
   }
 };
 
-const showAppearanceModal = () => {
-  const modal = document.getElementById("appearanceModal");
-  if (!modal) return;
-  const savedTheme = localStorage.getItem(THEME_KEY);
-  const themeValue = savedTheme ? savedTheme : "system";
-  const themeDisplay = document.getElementById("themeDisplay");
-  if (themeDisplay) {
-    themeDisplay.textContent =
-      themeValue === "dark"
-        ? "Dark Mode"
-        : themeValue === "light"
-          ? "Light Mode"
-          : "System";
-  }
-  modal.style.display = "flex";
-};
-
-const hideAppearanceModal = () => {
-  const modal = document.getElementById("appearanceModal");
-  if (modal) {
-    modal.style.display = "none";
-  }
-};
 
 /**
  * Shows provider information modal
@@ -1275,14 +1252,12 @@ const hideProviderInfo = () => {
 };
 
 // Make modal controls available globally
-window.showApiModal = showApiModal;
-window.hideApiModal = hideApiModal;
-window.showFilesModal = showFilesModal;
-window.hideFilesModal = hideFilesModal;
-window.showAppearanceModal = showAppearanceModal;
-window.hideAppearanceModal = hideAppearanceModal;
-window.showProviderInfo = showProviderInfo;
-window.hideProviderInfo = hideProviderInfo;
+  window.showApiModal = showApiModal;
+  window.hideApiModal = hideApiModal;
+  window.showFilesModal = showFilesModal;
+  window.hideFilesModal = hideFilesModal;
+  window.showProviderInfo = showProviderInfo;
+  window.hideProviderInfo = hideProviderInfo;
 
 window.handleProviderSync = handleProviderSync;
 window.clearApiKey = clearApiKey;

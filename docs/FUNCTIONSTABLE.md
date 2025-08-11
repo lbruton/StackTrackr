@@ -1,6 +1,6 @@
 # Function Reference
 
-> **Latest release: v3.03.06a**
+> **Latest release: v3.03.07a**
 
 | File | Function | Description |
 |------|----------|-------------|
@@ -49,8 +49,6 @@
 | api.js | hideApiModal | Hides API modal |
 | api.js | showFilesModal |  |
 | api.js | hideFilesModal |  |
-| api.js | showAppearanceModal |  |
-| api.js | hideAppearanceModal |  |
 | api.js | showProviderInfo | Shows provider information modal |
 | api.js | hideProviderInfo | Hides provider information modal |
 | api.js | showManualInput | Shows manual price input for a specific metal |

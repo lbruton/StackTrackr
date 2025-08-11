@@ -1,10 +1,11 @@
-# StackTrackr v3.03.06a
+# StackTrackr v3.03.07a
 
 StackTrackr is a comprehensive client-side web application for tracking precious metal investments. It's designed to help users manage their silver, gold, platinum, and palladium holdings with detailed financial metrics and enhanced tracking capabilities.
 
 The public hosted version of the app is available at [stackrtrackr.com](https://stackrtrackr.com).
 
 ## Recent Updates
+- **v3.03.07a - Theme Toggle Improvements**: Removed appearance modal and added three-state Dark/Light/System toggle with localStorage persistence
 - **v3.03.06a - Documentation Sweep & Archive Update**: Version references synchronized and archived footer links back to current version
 - **v3.03.05a - Custom Mapping Rule Engine**: Added regex-based mapping module with Add/Apply/Clear controls
 - **v3.03.02a - Archive Workflow Update**: Archived previous build and added rollback footer link requirement; clarified BRANCH.RELEASE.PATCH.state naming and pre-release codes
@@ -25,6 +26,9 @@ The public hosted version of the app is available at [stackrtrackr.com](https://
 - **v3.1.9 - UI Consistency**: Clear Cache button styling improvements across themes
 - **v3.1.8 - Backup System**: Full ZIP backup functionality with restoration guides
 - **v3.1.6 - Theme Toggle**: Fixed theme management with system preference detection
+
+## 🆕 What's New in v3.03.07a
+- Theme toggle cycles Dark/Light/System without modal and saves preference
 
 ## 🆕 What's New in v3.03.06a
 - Documentation sweep across project and archived build footer update
@@ -269,7 +273,7 @@ This project is designed to be maintainable and extensible. When making changes:
 This project is open source and available for personal use.
 
 ---
-**Current Version**: 3.03.06a
+**Current Version**: 3.03.07a
 **Last Updated**: August 9, 2025
 **Status**: Feature complete release candidate
 

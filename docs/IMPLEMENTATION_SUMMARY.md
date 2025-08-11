@@ -1,3 +1,28 @@
+# Implementation Summary: Theme Toggle Improvements
+
+> **Latest release: v3.03.07a**
+
+## Version Update: 3.03.06a → 3.03.07a
+
+## User Requirements Implemented
+
+- Removed appearance modal and added inline theme toggle cycling Dark → Light → System
+- Persisted theme preference in localStorage with immediate application
+
+## Technical Changes Made
+
+### Files Modified:
+1. **`js/api.js`**: Removed appearance modal handlers
+2. **`js/state.js`**: Dropped appearanceModal reference
+3. **`js/init.js`**: Added three-state toggle fallback
+4. **`css/styles.css`**: Removed appearance modal styles
+5. **`js/constants.js`**: Bumped version to 3.03.07a
+6. **Documentation**: Updated references in README and docs
+
+### User Experience Improvements:
+- Theme button cycles through Dark, Light, and System modes
+- Selection persists via localStorage and applies instantly
+
 # Implementation Summary: Documentation Sweep & Archive Update
 
 > **Latest release: v3.03.06a**

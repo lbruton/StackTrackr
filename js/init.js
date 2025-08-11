@@ -104,7 +104,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Modal elements
     debugLog("Phase 4: Initializing modal elements...");
-    elements.appearanceModal = safeGetElement("appearanceModal");
     elements.apiModal = safeGetElement("apiModal");
     elements.filesModal = safeGetElement("filesModal");
     elements.apiInfoModal = safeGetElement("apiInfoModal");
@@ -377,12 +376,21 @@ function setupBasicEventListeners() {
     };
   }
 
-  // Appearance button
+  // Appearance button (three-state theme toggle)
   const appearanceBtn = document.getElementById("appearanceBtn");
   if (appearanceBtn) {
-    appearanceBtn.onclick = function () {
-      if (typeof showAppearanceModal === "function") {
-        showAppearanceModal();
+    appearanceBtn.onclick = function (e) {
+      e.preventDefault();
+      const savedTheme = localStorage.getItem(THEME_KEY);
+      if (savedTheme === "dark") {
+        setTheme("light");
+      } else if (savedTheme === "light") {
+        setTheme("system");
+      } else {
+        setTheme("dark");
+      }
+      if (typeof updateThemeButton === "function") {
+        updateThemeButton();
       }
     };
   }
