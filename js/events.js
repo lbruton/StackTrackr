@@ -979,8 +979,15 @@ const setupEventListeners = () => {
         elements.applyMappingsBtn,
         "click",
         () => {
-          console.log("Custom mappings:", CustomMapping.list());
-          alert("Mappings applied. Check console for details.");
+          const name = prompt("Enter field name to test:");
+          if (name) {
+            const mapped = CustomMapping.mapField(name);
+            alert(
+              mapped
+                ? `${name} → ${mapped}`
+                : `No mapping for '${name}'`,
+            );
+          }
         },
         "Apply custom mappings",
       );
