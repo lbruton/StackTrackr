@@ -51,7 +51,7 @@ The tool features a **modular JavaScript architecture** with separate files for 
   - Color-coded table items for better visual organization
   - Enhanced click-to-sort functionality across all table columns
   - Added dedicated Notes button for quick access to item notes
-  - Removed redundant `docs/LLM.md` file (archived to `docs/archive/llm.md`)
+  - Removed redundant `docs/llm.md` file (archived to `docs/archive/llm.md`)
   - Replaced with comprehensive `docs/MULTI_AGENT_WORKFLOW.md`
   - Enhanced multi-agent coordination protocols and quality standards
   - Streamlined documentation structure eliminates redundancy

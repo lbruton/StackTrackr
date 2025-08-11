@@ -4,7 +4,7 @@
 >  
 > **LLM INSTRUCTION**: After any code change, verify and update these files:
 > ```
-> docs/README.md               — User guidance, features, installation, contribution
+> README.md                     — User guidance, features, installation, contribution
 > docs/archive/llm.md          — This AI assistant guide (you are here)
 > docs/changelog.md            — Version history with dates and notes
 > docs/status.md               — Current status and feature coverage
