@@ -1349,6 +1349,14 @@ const importNumistaCsv = (file, override = false) => {
             purchasePrice = convertToUsd(amount, currency);
           }
 
+          if (!priceKey && purchasePrice === 0) {
+            const estimateRaw = getValue(row, ['Estimate (USD)']);
+            if (estimateRaw) {
+              const estimateAmount = parseFloat(String(estimateRaw).replace(/[^0-9.\-]/g, ''));
+              if (!isNaN(estimateAmount)) purchasePrice = convertToUsd(estimateAmount, 'USD');
+            }
+          }
+
           const purchaseLocRaw = getValue(row, ['Acquisition place', 'Acquired from', 'Purchase place']);
           const purchaseLocation = purchaseLocRaw && purchaseLocRaw.trim() ? purchaseLocRaw.trim() : '';
           const storageLocRaw = getValue(row, ['Storage location', 'Stored at', 'Storage place']);
