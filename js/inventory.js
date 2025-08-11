@@ -85,7 +85,7 @@ const createBackupZip = async () => {
     zip.file('spot_price_history.json', JSON.stringify(spotHistoryData, null, 2));
 
     // 4. Generate and add CSV export
-    const csvHeaders = ["Metal", "Name", "N#", "Qty", "Type", "Weight(oz)", "Purchase Price", "Spot Price ($/oz)", "Premium ($/oz)", "Total Premium", "Purchase Location", "Storage Location", "Notes", "Date", "Collectable"];
+    const csvHeaders = ["Metal", "Name", "Qty", "Type", "Weight(oz)", "Purchase Price", "Spot Price ($/oz)", "Premium ($/oz)", "Total Premium", "Purchase Location", "Storage Location", "N#", "Notes", "Date", "Collectable"];
     const sortedInventory = sortInventoryByDateNewestFirst();
     const csvRows = [];
     for (const item of sortedInventory) {
@@ -95,7 +95,6 @@ const createBackupZip = async () => {
       csvRows.push([
         item.metal || 'Silver',
         item.name,
-        item.numistaId || '',
         item.qty,
         item.type,
         parseFloat(item.weight).toFixed(4),
@@ -105,6 +104,7 @@ const createBackupZip = async () => {
         item.isCollectable ? 'N/A' : formatCurrency(item.totalPremium),
         item.purchaseLocation,
         item.storageLocation || '',
+        item.numistaId || '',
         item.notes || '',
         item.date,
         item.isCollectable ? 'Yes' : 'No'
@@ -116,13 +116,12 @@ const createBackupZip = async () => {
     // 5. Generate and add Excel export
     const wsData = [csvHeaders];
     for (const item of sortedInventory) {
-      const exportSpotPrice = item.isCollectable ? 
-        spotPrices[item.metal.toLowerCase()] : 
+      const exportSpotPrice = item.isCollectable ?
+        spotPrices[item.metal.toLowerCase()] :
         item.spotPriceAtPurchase;
       wsData.push([
         item.metal || 'Silver',
         item.name,
-        item.numistaId || '',
         item.qty,
         item.type,
         parseFloat(item.weight).toFixed(4),
@@ -132,6 +131,7 @@ const createBackupZip = async () => {
         item.isCollectable ? null : item.totalPremium,
         item.purchaseLocation,
         item.storageLocation || '',
+        item.numistaId || '',
         item.notes || '',
         item.date,
         item.isCollectable ? 'Yes' : 'No'
@@ -767,7 +767,6 @@ const renderTable = () => {
         <span class="inline-edit-icon" role="button" tabindex="0" onclick="startCellEdit(${originalIdx}, 'name', this)" aria-label="Edit name" title="Edit name">✎</span>
         ${filterLink('name', item.name, 'var(--text-primary)')}
       </td>
-      <td class="shrink" data-column="numista">${item.numistaId ? `<a href="https://en.numista.com/catalogue/pieces${item.numistaId}.html" target="_blank" rel="noopener" title="View on Numista">${sanitizeHtml(item.numistaId)}</a>` : ''}</td>
       <td class="shrink" data-column="qty">
         ${filterLink('qty', item.qty, 'var(--text-primary)')}
       </td>
@@ -787,6 +786,7 @@ const renderTable = () => {
       <td class="shrink" data-column="storageLocation">
         ${item.storageLocation && item.storageLocation !== 'Unknown' ? filterLink('storageLocation', item.storageLocation, getStorageLocationColor(item.storageLocation)) : ''}
       </td>
+      <td class="shrink" data-column="numista">${item.numistaId ? `<a href="https://en.numista.com/catalogue/pieces${item.numistaId}.html" target="_blank" rel="noopener" title="View on Numista">N# ${sanitizeHtml(item.numistaId)}</a>` : ''}</td>
       <td class="shrink" data-column="collectable"><span class="collectable-status" role="button" tabindex="0" onclick="toggleCollectable(${originalIdx})" onkeydown="if(event.key==='Enter'||event.key===' ') toggleCollectable(${originalIdx})" aria-label="Toggle collectable status for ${sanitizeHtml(item.name)}" title="Toggle collectable status" style="color: ${item.isCollectable ? 'var(--success)' : 'var(--text-muted)'}; cursor: pointer;">${item.isCollectable ? 'Yes' : 'No'}</span></td>
       <td class="shrink" data-column="edit"><span class="action-icon" role="button" tabindex="0" onclick="editItem(${originalIdx})" aria-label="Edit ${sanitizeHtml(item.name)}" title="Edit ${sanitizeHtml(item.name)}">⚙️</span></td>
       <td class="shrink" data-column="notes"><span class="action-icon ${item.notes && item.notes.trim() ? 'success' : ''}" role="button" tabindex="0" onclick="showNotes(${originalIdx})" aria-label="View notes" title="View notes">📓</span></td>
@@ -798,7 +798,7 @@ const renderTable = () => {
     const visibleCount = endIndex - startIndex;
     const placeholders = Array.from(
       { length: Math.max(0, itemsPerPage - visibleCount) },
-      () => '<tr><td class="shrink" colspan="15">&nbsp;</td></tr>'
+      () => '<tr><td class="shrink" colspan="16">&nbsp;</td></tr>'
     );
 
     elements.inventoryTable.innerHTML = rows.concat(placeholders).join('');
@@ -1211,7 +1211,8 @@ const importCsv = (file, override = false) => {
             totalPremium = premiumPerOz * parseFloat(qty) * parseFloat(weight);
           }
 
-          const numistaId = row['N#'] || row['Numista #'] || row['numistaId'] || '';
+          const numistaMatch = (row['N#'] || row['Numista #'] || row['numistaId'] || '').toString().match(/\d+/);
+          const numistaId = numistaMatch ? numistaMatch[0] : '';
           const serial = row['Serial'] || row['serial'] || getNextSerial();
 
           addCompositionOption(composition);
@@ -1310,7 +1311,9 @@ const importNumistaCsv = (file, override = false) => {
         for (const row of rawTable) {
           processed++;
 
-          const numistaId = (getValue(row, ['N# number', 'Numista #', 'Numista number', 'Numista id']) || '').toString().trim();
+          const numistaRaw = (getValue(row, ['N# number', 'N# number (with link)', 'Numista #', 'Numista number', 'Numista id']) || '').toString();
+          const numistaMatch = numistaRaw.match(/\d+/);
+          const numistaId = numistaMatch ? numistaMatch[0] : '';
           const title = (getValue(row, ['Title', 'Name']) || '').trim();
           const year = (getValue(row, ['Year', 'Date']) || '').trim();
           const name = year.length >= 4 ? `${title} ${year}`.trim() : title;
@@ -1430,7 +1433,7 @@ const importNumistaCsv = (file, override = false) => {
  */
 const exportCsv = () => {
   const timestamp = new Date().toISOString().slice(0,10).replace(/-/g,'');
-  const headers = ["Metal","Name","N#","Qty","Type","Weight(oz)","Purchase Price","Spot Price ($/oz)","Premium ($/oz)","Total Premium","Purchase Location","Storage Location","Notes","Date","Collectable"];
+  const headers = ["Metal","Name","Qty","Type","Weight(oz)","Purchase Price","Spot Price ($/oz)","Premium ($/oz)","Total Premium","Purchase Location","Storage Location","N#","Notes","Date","Collectable"];
 
   // Sort inventory by date (newest first) for export
   const sortedInventory = sortInventoryByDateNewestFirst();
@@ -1447,7 +1450,6 @@ const exportCsv = () => {
     rows.push([
       i.metal || 'Silver',
       i.name,
-      i.numistaId || '',
       i.qty,
       i.type,
       parseFloat(i.weight).toFixed(4),
@@ -1457,6 +1459,7 @@ const exportCsv = () => {
       i.isCollectable ? 'N/A' : formatCurrency(i.totalPremium),
       i.purchaseLocation,
       i.storageLocation || '',
+      i.numistaId || '',
       i.notes || '',
       i.date,
       i.isCollectable ? 'Yes' : 'No'
@@ -1695,7 +1698,8 @@ const importExcel = (file) => {
           totalPremium = premiumPerOz * qty * weight;
         }
 
-        const numistaId = row['N#'] || row['Numista #'] || row['numistaId'] || '';
+        const numistaMatch = (row['N#'] || row['Numista #'] || row['numistaId'] || '').toString().match(/\d+/);
+        const numistaId = numistaMatch ? numistaMatch[0] : '';
         const serial = row['Serial'] || row['serial'] || getNextSerial();
 
         const itemToValidate = {
@@ -1773,8 +1777,8 @@ const exportExcel = () => {
 
   // Create worksheet data
   const wsData = [
-    ["Metal", "Name", "N#", "Qty", "Type", "Weight(oz)", "Purchase Price", "Spot Price ($/oz)", 
-     "Premium ($/oz)", "Total Premium", "Purchase Location", "Storage Location", "Notes", "Date", "Collectable"]
+    ["Metal", "Name", "Qty", "Type", "Weight(oz)", "Purchase Price", "Spot Price ($/oz)",
+     "Premium ($/oz)", "Total Premium", "Purchase Location", "Storage Location", "N#", "Notes", "Date", "Collectable"]
   ];
 
   for (const i of sortedInventory) {
@@ -1786,7 +1790,6 @@ const exportExcel = () => {
     wsData.push([
       i.metal || 'Silver',
       i.name,
-      i.numistaId || '',
       i.qty,
       i.type,
       parseFloat(i.weight).toFixed(4),
@@ -1796,6 +1799,7 @@ const exportExcel = () => {
       i.isCollectable ? null : i.totalPremium,
       i.purchaseLocation,
       i.storageLocation || '',
+      i.numistaId || '',
       i.notes || '',
       i.date,
       i.isCollectable ? 'Yes' : 'No'
@@ -1835,7 +1839,6 @@ const exportPdf = () => {
   const tableData = sortedInventory.map(item => [
     item.metal,
     item.name,
-    item.numistaId || '',
     item.qty,
     item.type,
     parseFloat(item.weight).toFixed(2),
@@ -1845,6 +1848,7 @@ const exportPdf = () => {
     item.isCollectable ? 'N/A' : formatCurrency(item.totalPremium),
     item.purchaseLocation,
     item.storageLocation || '',
+    item.numistaId || '',
     item.notes || '',
     item.date,
     item.isCollectable ? 'Yes' : 'No'
@@ -1852,9 +1856,9 @@ const exportPdf = () => {
 
   // Add table
   doc.autoTable({
-    head: [['Metal', 'Name', 'N#', 'Qty', 'Type', 'Weight(oz)', 'Purchase Price', 
-            'Spot Price ($/oz)', 'Premium ($/oz)', 'Total Premium', 
-            'Purchase Location', 'Storage Location', 'Notes', 'Date', 'Collectable']],
+    head: [['Metal', 'Name', 'Qty', 'Type', 'Weight(oz)', 'Purchase Price',
+            'Spot Price ($/oz)', 'Premium ($/oz)', 'Total Premium',
+            'Purchase Location', 'Storage Location', 'N#', 'Notes', 'Date', 'Collectable']],
     body: tableData,
     startY: 30,
     theme: 'striped',
