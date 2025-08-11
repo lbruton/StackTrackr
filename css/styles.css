@@ -1603,21 +1603,6 @@ tr:hover {
   text-decoration: underline;
 }
 
-.edit-icon {
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: var(--text-muted);
-  font-size: 0.8rem;
-  padding: 2px;
-  transition: color var(--transition);
-  flex-shrink: 0;
-}
-
-.edit-icon:hover,
-.edit-icon:focus {
-  color: var(--primary);
-}
 /* Make buttons in table cells smaller */
 td .btn {
   padding: 0.25rem 0.5rem;

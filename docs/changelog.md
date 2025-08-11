@@ -182,7 +182,7 @@ For upcoming work, see [roadmap](roadmap.md).
 - Collectable checkbox replaced with status button and aligned action buttons
 - Totals cards renamed with refined labels and font sizing
 - Improved About modal title contrast in light mode
-- Notes button displays a green "Yes" when items have saved notes
+- Notes button uses a notebook icon and highlights green when items have saved notes
 
 ### Version 3.2.05rc – Splash Opt-Out (2025-08-09)
 - Disclaimer splash now hides permanently after the acknowledgment button is clicked, removing the previous checkbox

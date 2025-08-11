@@ -68,8 +68,8 @@ const setupColumnResizing = () => {
   // Add resize handles to table headers
   const headers = table.querySelectorAll("th");
   headers.forEach((header, index) => {
-    // Skip the last column (delete button)
-    if (index === headers.length - 1) return;
+    // Skip action columns (edit/notes/delete)
+    if (index >= headers.length - 3) return;
 
     const resizeHandle = document.createElement("div");
     resizeHandle.className = "resize-handle";
@@ -340,8 +340,8 @@ const setupEventListeners = () => {
     if (inventoryTable) {
       const headers = inventoryTable.querySelectorAll("th");
       headers.forEach((header, index) => {
-        // Skip Notes/Delete columns (last two)
-        if (index >= headers.length - 2) {
+        // Skip action columns (edit/notes/delete)
+        if (index >= headers.length - 3) {
           return;
         }
 
