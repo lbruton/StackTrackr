@@ -86,3 +86,16 @@ assert.strictEqual(
 
 console.log('Estimate import test passed');
 
+// Test preservation of comment fields in notes
+const csv2 = 'Numista #,Title,Year,Composition,Type,Weight,Note,Private comment,Public comment,Comment\n' +
+  '123,Test Coin,2024,Silver 0.999,Coin,31.103,Base note,Private text,Public text,Other text';
+const file2 = { content: csv2 };
+global.inventory = [];
+importNumistaCsv(file2);
+assert.strictEqual(
+  inventory[0].notes,
+  'Base note\nPrivate Comment: Private text\nPublic Comment: Public text\nComment: Other text',
+  'all comment fields should appear in notes'
+);
+console.log('Numista comment import test passed');
+
