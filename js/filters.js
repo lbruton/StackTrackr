@@ -273,7 +273,30 @@ const renderActiveFilters = () => {
   filters.forEach((f, i) => {
     const chip = document.createElement('span');
     chip.className = 'filter-chip';
-    chip.style.backgroundColor = colors[i % colors.length];
+    const firstValue = String(f.value).split(', ')[0];
+    let color;
+    switch (f.field) {
+      case 'type':
+        color = getTypeColor(firstValue);
+        break;
+      case 'composition': {
+        let key = firstValue;
+        if (!METAL_COLORS[key]) {
+          key = getCompositionFirstWords(key);
+        }
+        color = METAL_COLORS[key];
+        break;
+      }
+      case 'purchaseLocation':
+        color = getPurchaseLocationColor(firstValue);
+        break;
+      case 'storageLocation':
+        color = getStorageLocationColor(firstValue);
+        break;
+      default:
+        color = colors[i % colors.length];
+    }
+    chip.style.backgroundColor = color || colors[i % colors.length];
     const label = f.field === 'search'
       ? `${f.value}`
       : `${labels[f.field] || f.field}: ${f.value}${f.exclude ? ' (exclude)' : ''}`;
