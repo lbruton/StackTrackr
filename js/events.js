@@ -989,7 +989,7 @@ const setupEventListeners = () => {
           numistaOverride = true;
           elements.numistaImportFile.click();
         },
-        "Import Numista button",
+        "Import Numista CSV button",
       );
     }
     if (mergeNumistaBtn && elements.numistaImportFile) {
@@ -1000,7 +1000,7 @@ const setupEventListeners = () => {
           numistaOverride = false;
           elements.numistaImportFile.click();
         },
-        "Merge Numista button",
+        "Merge Numista CSV button",
       );
     }
       if (elements.numistaImportFile) {
