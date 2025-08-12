@@ -2452,6 +2452,7 @@ td input:checked + .slider:before {
   width: 100%;
   align-items: center;
   justify-content: space-between;
+  padding: 0 var(--spacing-xs);
 }
 
 .pagination-left,

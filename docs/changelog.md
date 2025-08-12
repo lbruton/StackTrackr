@@ -1,11 +1,15 @@
 # StackrTrackr — Changelog
 
-> **Latest release: v3.04.39**
+> **Latest release: v3.04.40**
 
 
 For upcoming work, see [announcements](announcements.md).
 
 ## 📋 Version History
+
+### Version 3.04.40 – Pagination Section Reorder (2025-08-12)
+- **UI Layout**: Moved pagination controls above table controls with Change Log button
+- **Styling**: Added horizontal padding so pagination buttons no longer touch container edges
 
 ### Version 3.04.39 – Template Variable Fix (2025-08-12)
 - **Template Resolution**: Fixed unreplaced template variables in documentation files

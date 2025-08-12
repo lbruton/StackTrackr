@@ -6,6 +6,7 @@ This roadmap tracks upcoming goals without committing to specific patch numbers.
 - _No active patch goals at this time._
 
 ## Completed Patch Goals (v3.04.xx)
+- ✅ **Pagination section reorder** - Moved pagination above Change Log with edge padding (v3.04.40)
 - ✅ **Template Variable Resolution** - Fixed unreplaced template variables in documentation (v3.04.39)
 - Align inventory action buttons and theme controls
 - Enforce Metals.dev 30-day history limit and record daily price history
@@ -22,7 +23,7 @@ This roadmap tracks upcoming goals without committing to specific patch numbers.
 - Added standalone fuzzy search engine module (v3.04.37)
 - ✅ **Documentation Template System** - Created comprehensive template replacement system for version management (v3.04.38)
   - Audited all .md files and identified 16 files with hardcoded version references
-  - Implemented template variables: {{VERSION}}, {{VERSION_WITH_V}}, {{VERSION_TITLE}}, {{VERSION_BRANCH}}, {{BRANDING_NAME}}
+  - Implemented template variables: 3.04.40, v3.04.40, StackrTrackr v3.04.40, 3.04.x, StackrTrackr
   - Created automated build script for template processing
   - Replaced hardcoded versions across documentation with template variables
   - Established single-source-of-truth version management system

@@ -2,7 +2,7 @@
 
 This guide summarizes the typical tools and branch strategy for human contributors to StackrTrackr.
 
-**Current Release:** {{VERSION_WITH_V}}
+**Current Release:** v3.04.40
 
 ## Tools
 
