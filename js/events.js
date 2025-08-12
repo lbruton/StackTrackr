@@ -1004,12 +1004,12 @@ const setupEventListeners = () => {
         "Merge Numista button",
       );
     }
-    if (elements.numistaImportFile) {
-      safeAttachListener(
-        elements.numistaImportFile,
-        "change",
-        function (e) {
-          if (e.target.files.length > 0) {
+      if (elements.numistaImportFile) {
+        safeAttachListener(
+          elements.numistaImportFile,
+          "change",
+          function (e) {
+            if (e.target.files.length > 0) {
 
             const file = e.target.files[0];
             if (!checkFileSize(file)) {
@@ -1020,13 +1020,37 @@ const setupEventListeners = () => {
           }
           this.value = "";
         },
-        "Numista CSV import",
-      );
-    }
+          "Numista CSV import",
+        );
+      }
 
-    // Export buttons
-    if (elements.exportCsvBtn) {
-      safeAttachListener(
+      // Clear Numista Inventory button
+      if (elements.clearNumistaInventoryBtn) {
+        safeAttachListener(
+          elements.clearNumistaInventoryBtn,
+          "click",
+          function () {
+            if (
+              confirm(
+                "Remove all items with Numista IDs? This cannot be undone.",
+              )
+            ) {
+              inventory = inventory.filter(item => !item.numistaId);
+              if (typeof catalogManager?.cleanupOrphans === "function") {
+                catalogManager.cleanupOrphans(inventory);
+              }
+              saveInventory();
+              renderTable();
+              alert("Numista inventory cleared.");
+            }
+          },
+          "Clear Numista inventory button",
+        );
+      }
+
+      // Export buttons
+      if (elements.exportCsvBtn) {
+        safeAttachListener(
         elements.exportCsvBtn,
         "click",
         exportCsv,
