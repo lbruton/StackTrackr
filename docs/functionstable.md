@@ -1,7 +1,7 @@
 # Function Reference
 
 
-> **Latest release: v3.04.36**
+> **Latest release: v3.04.37**
 
 
 | File | Function | Description |
@@ -84,6 +84,13 @@
 | events.js | setupThemeToggle | Sets up theme toggle event listeners |
 | events.js | setupApiEvents | Sets up API-related event listeners |
 | file-protocol-fix.js | safeDebug |  |
+| fuzzy-search.js | fuzzyMatch | Calculates fuzzy similarity between query and target strings |
+| fuzzy-search.js | fuzzySearch | Performs fuzzy search across an array of strings |
+| fuzzy-search.js | calculateLevenshteinDistance | Calculates edit distance between two strings |
+| fuzzy-search.js | generateNGrams | Generates character n-grams from a string |
+| fuzzy-search.js | tokenizeWords | Splits a string into words |
+| fuzzy-search.js | normalizeString | Normalizes strings by stripping special characters |
+| fuzzy-search.js | benchmarkSearch | Benchmarks fuzzy search performance |
 | init.js | createDummyElement | Helper function to create dummy DOM elements to prevent null reference errors |
 | init.js | safeGetElement | Safely retrieves a DOM element by ID with fallback to dummy element |
 | init.js | setupBasicEventListeners | Basic event listener setup as fallback |
