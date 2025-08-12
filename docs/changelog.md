@@ -1,11 +1,14 @@
 # StackrTrackr — Changelog
 
-> **Latest release: v3.04.36**
+> **Latest release: v3.04.37**
 
 
 For upcoming work, see [announcements](announcements.md).
 
 ## 📋 Version History
+
+### Version 3.04.37 – Fuzzy Search Engine Module (2025-08-15)
+- Added standalone fuzzy search engine with Levenshtein, n-gram, and word-order independent matching.
 
 ### Version 3.04.36 – Dynamic Summary Bubbles & Link Colors (2025-08-14)
 - **Expanded summary**: Type, Metal, Purchase Location, and Storage Location now show dynamic counts with color-coded bubbles.

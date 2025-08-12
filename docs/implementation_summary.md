@@ -1,6 +1,6 @@
 # Implementation Summary: Dynamic Summary Bubbles
 
-> **Latest release: v3.04.36**
+> **Latest release: v3.04.37**
 
 ## Version Update: 3.04.35 → 3.04.36
 
