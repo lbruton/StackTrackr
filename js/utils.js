@@ -490,7 +490,7 @@ const stripNonAlphanumeric = (str = "") =>
 const sanitizeObjectFields = (obj) => {
   const cleaned = { ...obj };
   for (const key of Object.keys(cleaned)) {
-    if (typeof cleaned[key] === "string" && key !== 'notes') {
+    if (typeof cleaned[key] === "string" && key !== 'notes' && key !== 'date') {
       cleaned[key] = stripNonAlphanumeric(cleaned[key]);
     }
   }

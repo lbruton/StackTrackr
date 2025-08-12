@@ -709,7 +709,9 @@ const startCellEdit = (idx, field, icon) => {
 
   const renderCell = () => {
     td.classList.remove('editing');
-    const iconHtml = `<span class="inline-edit-icon" role="button" tabindex="0" onclick="startCellEdit(${idx}, '${field}', this)" aria-label="Edit ${field}" title="Edit ${field}">✎</span>`;
+    const iconHtml = field === 'name'
+      ? `<span class="inline-edit-icon" role="button" tabindex="0" onclick="startCellEdit(${idx}, '${field}', this)" aria-label="Edit ${field}" title="Edit ${field}">✎</span>`
+      : '';
     let content = '';
     switch (field) {
       case 'name':
@@ -733,7 +735,7 @@ const startCellEdit = (idx, field, icon) => {
       default:
         content = filterLink(field, item[field], 'var(--text-primary)');
     }
-    td.innerHTML = `${iconHtml} ${content}`;
+    td.innerHTML = iconHtml ? `${iconHtml} ${content}` : content;
   };
 
   saveIcon.onclick = () => {
@@ -808,18 +810,23 @@ const renderTable = () => {
       const spotValue = item.isCollectable ? 'N/A' : (item.spotPriceAtPurchase > 0 ? item.spotPriceAtPurchase : 'N/A');
       const premiumDisplay = item.isCollectable ? 'N/A' : formatCurrency(item.totalPremium);
       const premiumValue = item.isCollectable ? 'N/A' : item.totalPremium;
+      const safeSvg = '<svg class="collectable-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M2 8V6a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v2H2zm0 2h20v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-9zm9 3v4h2v-4h-2z"/></svg>';
+      const coinSvg = '<svg class="collectable-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="currentColor"/></svg>';
+      const barSvg = '<svg class="collectable-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="7" width="16" height="10" rx="2" ry="2" fill="currentColor"/></svg>';
+      const collectableIcon = item.isCollectable ? (item.type === 'Bar' ? barSvg : coinSvg) : safeSvg;
+      const collectableColor = item.isCollectable ? 'var(--success)' : 'var(--text-muted)';
 
       rows.push(`
       <tr>
-      <td class="shrink" data-column="date">${filterLink('date', item.date, 'var(--text-primary)', formatDisplayDate(item.date))}</td>
+      <td class="shrink" data-column="date">${sanitizeHtml(formatDisplayDate(item.date))}</td>
       <td class="shrink" data-column="type">${filterLink('type', item.type, getTypeColor(item.type))}</td>
       <td class="shrink" data-column="composition" data-composition="${escapeAttribute(item.composition || item.metal || '')}">${filterLink('composition', item.composition || item.metal || 'Silver', METAL_COLORS[item.metal] || 'var(--primary)', getDisplayComposition(item.composition || item.metal || 'Silver'))}</td>
+      <td class="shrink" data-column="qty">
+        ${filterLink('qty', item.qty, 'var(--text-primary)')}
+      </td>
       <td class="expand" data-column="name" style="text-align: left;">
         <span class="inline-edit-icon" role="button" tabindex="0" onclick="startCellEdit(${originalIdx}, 'name', this)" aria-label="Edit name" title="Edit name">✎</span>
         ${filterLink('name', item.name, 'var(--text-primary)')}
-      </td>
-      <td class="shrink" data-column="qty">
-        ${filterLink('qty', item.qty, 'var(--text-primary)')}
       </td>
       <td class="shrink" data-column="weight">
         ${filterLink('weight', item.weight, 'var(--text-primary)', formatWeight(item.weight), item.weight < 1 ? 'Grams (g)' : 'Troy ounces (ozt)')}
@@ -838,7 +845,7 @@ const renderTable = () => {
         ${item.storageLocation === 'Unknown' ? '' : filterLink('storageLocation', item.storageLocation || 'Numista Import', getStorageLocationColor(item.storageLocation || 'Numista Import'))}
       </td>
       <td class="shrink" data-column="numista">${item.numistaId ? `<a href="https://en.numista.com/catalogue/pieces${item.numistaId}.html" target="_blank" rel="noopener" title="View on Numista">N# ${sanitizeHtml(item.numistaId)}</a>` : ''}</td>
-      <td class="shrink" data-column="collectable"><span class="collectable-status" role="button" tabindex="0" onclick="toggleCollectable(${originalIdx})" onkeydown="if(event.key==='Enter'||event.key===' ') toggleCollectable(${originalIdx})" aria-label="Toggle collectable status for ${sanitizeHtml(item.name)}" title="Toggle collectable status" style="color: ${item.isCollectable ? 'var(--success)' : 'var(--text-muted)'}; cursor: pointer;">${item.isCollectable ? 'Yes' : 'No'}</span></td>
+      <td class="shrink" data-column="collectable"><span class="collectable-status" role="button" tabindex="0" onclick="toggleCollectable(${originalIdx})" onkeydown="if(event.key==='Enter'||event.key===' ') toggleCollectable(${originalIdx})" aria-label="Toggle collectable status for ${sanitizeHtml(item.name)}" title="Toggle collectable status" style="color: ${collectableColor}; cursor: pointer;">${collectableIcon}</span></td>
       <td class="shrink" data-column="edit"><span class="action-icon" role="button" tabindex="0" onclick="editItem(${originalIdx})" aria-label="Edit ${sanitizeHtml(item.name)}" title="Edit ${sanitizeHtml(item.name)}">⚙️</span></td>
       <td class="shrink" data-column="notes"><span class="action-icon ${item.notes && item.notes.trim() ? 'success' : ''}" role="button" tabindex="0" onclick="showNotes(${originalIdx})" aria-label="View notes" title="View notes">📓</span></td>
       <td class="shrink" data-column="delete"><span class="action-icon danger" role="button" tabindex="0" onclick="deleteItem(${originalIdx})" aria-label="Delete item" title="Delete item">🗑️</span></td>
@@ -871,6 +878,7 @@ const renderTable = () => {
 
     renderPagination(sortedInventory);
     updateSummary();
+    updateTypeSummary();
     
     // Re-setup column resizing and responsive visibility after table re-render
     setupColumnResizing();
@@ -1087,6 +1095,22 @@ const showNotes = (idx) => {
   }
 };
 
+/**
+ * Updates summary counts of inventory items by type
+ */
+const updateTypeSummary = () => {
+  const el = document.getElementById('typeSummary');
+  if (!el) return;
+  const counts = inventory.reduce((acc, item) => {
+    acc[item.type] = (acc[item.type] || 0) + 1;
+    return acc;
+  }, {});
+  const parts = Object.entries(counts).map(([type, count]) => {
+    const color = getTypeColor(type);
+    return `<span style="color: ${color};">${sanitizeHtml(type)}: ${count}</span>`;
+  });
+  el.innerHTML = parts.join(' | ');
+};
 
 /**
  * Prepares and displays edit modal for specified inventory item

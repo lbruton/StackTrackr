@@ -434,9 +434,9 @@
             <tr>
               <th class="shrink" data-column="date">Date</th>
               <th class="shrink" data-column="type">Type</th>
-              <th class="shrink" data-column="composition">Composition</th>
-              <th class="expand" data-column="name">Name</th>
+              <th class="shrink" data-column="composition">Metal</th>
               <th class="shrink" data-column="qty">Qty</th>
+              <th class="expand" data-column="name">Name</th>
               <th class="shrink" data-column="weight">Weight</th>
               <th class="shrink" data-column="purchasePrice" title="USD">Price ($)</th>
               <th class="shrink" data-column="spot" title="USD">Spot ($)</th>
@@ -460,10 +460,11 @@
       </section>
       <section class="table-controls-section">
         <div class="table-controls">
-          <span id="changeLogBtn" class="change-log-label">Change Log</span>
+          <button id="changeLogBtn" class="btn silver">Change Log</button>
           <span class="table-disclaimer"
             >All data is stored locally. Back up often.</span
           >
+          <div id="typeSummary"></div>
           <div class="items-per-page">
             <span class="items-label">Items:</span>
             <select class="pagination-select" id="itemsPerPage">
@@ -1163,8 +1164,7 @@
     <footer class="app-footer">
       <div class="storage-line">Storage: <span id="storageUsage"></span> <progress id="storageUsageBar" max="5120" value="0"></progress> <a href="#" id="storageReportLink">Storage report</a></div>
       <div class="footer-meta">
-        <span>Thank you for using StackTrackr (<span id="footerVersion">v3.04.13</span>). © 2025 <span id="footerDomain">stacktrackr.com</span>.</span>
-        <span class="footer-links"><a href="./archive/v_previous/index.html">Previous build</a> | <a href="https://github.com/lbruton/StackTrackr/issues" target="_blank" rel="noopener">Report issues</a></span>
+        Thank you for using StackTrackr (<span id="footerVersion">v3.04.12</span>). © 2025 <span id="footerDomain">stacktrackr.com</span> | Created with love on Apple Silicon | If you are having trouble try the <a href="./archive/v_previous/index.html">previous build</a>, and report the issue on our <a href="https://www.reddit.com/r/StackTrackr" target="_blank" rel="noopener">subreddit</a> or on our <a href="https://github.com/lbruton/StackTrackr/issues" target="_blank" rel="noopener">GitHub Issues Page</a>.
       </div>
     </footer>
     <!-- =============================================================================

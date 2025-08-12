@@ -205,6 +205,11 @@ section {
   text-align: center;
   font-size: 0.9rem;
   color: var(--text-secondary);
+  padding: var(--spacing);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
 }
 
 .app-footer a {
@@ -432,6 +437,15 @@ input[type="submit"] {
 
 .btn.warning:hover {
   background: var(--warning-hover);
+}
+
+.btn.silver {
+  background: var(--silver);
+  color: var(--bg-primary);
+}
+
+.btn.silver:hover {
+  filter: brightness(0.9);
 }
 
 .btn.premium {
@@ -1543,17 +1557,19 @@ td {
   display: none;
 }
 
-#inventoryTable th[data-column="numista"],
-#inventoryTable td[data-column="numista"] {
-    display: none;
-}
-
 #inventoryTable th[data-column="collectable"] svg {
     width: 1em;
     height: 1em;
     display: block;
     margin: 0 auto;
     fill: currentColor;
+}
+
+.collectable-icon {
+  width: 1em;
+  height: 1em;
+  display: inline-block;
+  fill: currentColor;
 }
 
 tr:nth-child(even) {
@@ -1584,6 +1600,27 @@ tr:hover {
   white-space: normal;
   overflow: visible;
   text-overflow: clip;
+}
+
+#inventoryTable td[data-column="purchaseLocation"],
+#inventoryTable td[data-column="storageLocation"] {
+  max-width: 20ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#inventoryTable th[data-column="numista"],
+#inventoryTable td[data-column="numista"],
+#inventoryTable th[data-column="collectable"],
+#inventoryTable td[data-column="collectable"],
+#inventoryTable th[data-column="edit"],
+#inventoryTable td[data-column="edit"],
+#inventoryTable th[data-column="notes"],
+#inventoryTable td[data-column="notes"],
+#inventoryTable th[data-column="delete"],
+#inventoryTable td[data-column="delete"] {
+  width: 2.5rem;
 }
 
 /* Clickable name cell styling */
@@ -2263,7 +2300,7 @@ td input:checked + .slider:before {
 }
 
 .table-controls-section {
-  margin: var(--spacing-xs) 0;
+  margin: var(--spacing) 0;
 }
 
 .table-controls {
@@ -2279,12 +2316,6 @@ td input:checked + .slider:before {
   font-size: 0.875rem;
   font-weight: 500;
   color: var(--text-muted);
-}
-
-.change-log-label {
-  font-weight: 700;
-  color: var(--primary);
-  cursor: pointer;
 }
 
 .table-disclaimer {
