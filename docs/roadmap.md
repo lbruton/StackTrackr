@@ -21,3 +21,13 @@ This roadmap tracks upcoming goals without committing to specific patch numbers.
 
 ## Version Goals (v4.x)
 - Remove file:// protocol support and adopt a framework.
+
+## Major Milestone Roadmap
+- **Encrypted Backup Export** — Provide a secure backup flow that encrypts user data and produces a downloadable archive ready for cloud storage (e.g., Google Drive).
+- **Fuzzy Search Across All Data** — Enable typo-tolerant, context-aware search functionality spanning every stored field to improve discoverability.
+- **Numista API Integration** — Support direct item and collectible price lookups through Numista, letting users supply their own API credentials for seamless valuation.
+- **Turso Sync and SQLite Support** — Offer optional Turso integration so users can connect API credentials and synchronize their data with a remote SQLite-compatible database.
+- **Lightweight Storage Options** — Expand supported storage back ends to accommodate constrained devices and alternate persistence layers.
+- **Enhanced CSV Conversion Tools** — Improve import/export utilities for cleaner conversions, broader compatibility, and error handling.
+- **Batch Editing with API-Aided Corrections** — Introduce bulk editing workflows that leverage external APIs to validate and auto-correct item attributes at scale.
+- **Comprehensive Charts and Graphs** — Deliver robust visual analytics—trend lines, distribution charts, and comparative dashboards—to help users explore their collections.
