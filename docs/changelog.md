@@ -1,11 +1,26 @@
 # StackrTrackr — Changelog
 
-> **Latest release: v3.04.31**
+> **Latest release: v3.04.35**
 
 
-For upcoming work, see [roadmap](roadmap.md).
+For upcoming work, see [announcements](announcements.md).
 
 ## 📋 Version History
+
+### Version 3.04.35 – JSON Import Options & Excel Removal (2025-08-13)
+- **JSON import flexibility**: Added separate Import and Merge buttons with overwrite warnings.
+- **Simplified formats**: Removed Excel import/export support and related buttons.
+
+### Version 3.04.34 – Streamlined Numista Imports (2025-08-12)
+- **Removed Numista cache**: Eliminated stored Numista CSV cache in favor of direct import.
+- **UI cleanup**: Removed Clear Numista Cache option from Files menu.
+
+### Version 3.04.33 – Import Overwrite Confirmation (2025-08-12)
+- **Overwrite warnings**: Import CSV and Numista CSV now require confirmation before replacing existing data.
+- **Numista button styling**: Import Numista CSV button uses red danger styling to indicate overwrite.
+
+### Version 3.04.32 – Header Buttons Theming (2025-08-12)
+- **Unified header styling**: Header buttons now match theme selector with icon-only layout and larger icons.
 
 ### Version 3.04.31 – API History Charts Removed (2025-08-12)
 - **Streamlined API History**: Removed canvas-based charts and expanded table to fill modal.

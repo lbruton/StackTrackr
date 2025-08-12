@@ -36,10 +36,6 @@
     <!-- External libraries for data import/export functionality -->
     <script
       defer=""
-      src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"
-    ></script>
-    <script
-      defer=""
       src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"
     ></script>
     <script
@@ -183,12 +179,8 @@
         </h1>
       </div>
       <div style="margin-left: auto; display: flex; gap: 0.5rem">
-        <button class="btn" id="aboutBtn" title="About" aria-label="About">
-          About 📖
-        </button>
-        <button class="btn" id="apiBtn" title="API" aria-label="API">
-          API 🔌
-        </button>
+        <button class="btn theme-btn" id="aboutBtn" title="About" aria-label="About">📖</button>
+        <button class="btn theme-btn" id="apiBtn" title="API" aria-label="API">🔌</button>
         <!-- Community button commented out for revision
         <a
           class="btn"
@@ -207,15 +199,8 @@
           Community
         </a>
         -->
-        <button class="btn" id="filesBtn" title="Files" aria-label="Files">
-          Files 📁
-        </button>
-        <button
-          class="btn theme-btn"
-          id="appearanceBtn"
-          title="Theme"
-          aria-label="Theme"
-        ></button>
+        <button class="btn theme-btn" id="filesBtn" title="Files" aria-label="Files">📁</button>
+        <button class="btn theme-btn" id="appearanceBtn" title="Theme" aria-label="Theme"></button>
       </div>
     </div>
     <div class="container">
@@ -961,12 +946,10 @@
          IMPORT OPTIONS:
          - CSV: Standard comma-separated values with automatic field mapping
          - JSON: Native application format preserving all data
-         - Excel: .xlsx and .xls files with robust parsing
          
          EXPORT OPTIONS:
          - CSV: Compatible with spreadsheet applications
          - JSON: Full data backup with metadata
-         - Excel: Formatted spreadsheet with proper column types
          - PDF: Print-ready report with totals and formatting
          - HTML: Standalone web page with embedded styles
          
@@ -1466,7 +1449,7 @@
             tracking, premium calculations, and detailed reporting. Add items to
             your inventory, monitor current values across Silver, Gold,
             Platinum, and Palladium, and export your data in multiple formats
-            including CSV, JSON, Excel, PDF, and HTML.
+            including CSV, JSON, PDF, and HTML.
           </div>
 
           <!-- Important Notice -->
@@ -1542,7 +1525,7 @@
             tracking, premium calculations, and detailed reporting. Add items to
             your inventory, monitor current values across Silver, Gold,
             Platinum, and Palladium, and export your data in multiple formats
-            including CSV, JSON, Excel, PDF, and HTML.
+            including CSV, JSON, PDF, and HTML.
           </div>
 
           <div class="about-alert">
@@ -1752,19 +1735,11 @@
                     <button class="btn success" id="importCsvMerge">Merge CSV</button>
                     <input accept=".csv" hidden id="importCsvFile" type="file" />
                   </div>
-                  <label class="btn success" id="importJsonBtn">
-                    Import JSON
+                  <div class="import-json-grid">
+                    <button class="btn danger" id="importJsonOverride">Import JSON</button>
+                    <button class="btn success" id="importJsonMerge">Merge JSON</button>
                     <input accept=".json" hidden id="importJsonFile" type="file" />
-                  </label>
-                  <label class="btn success" id="importExcelBtn">
-                    Import Excel
-                    <input
-                      accept=".xlsx,.xls"
-                      hidden
-                      id="importExcelFile"
-                      type="file"
-                    />
-                  </label>
+                  </div>
                   <button class="btn secondary" id="cloudSyncBtn">Cloud Sync ☁️</button>
                 </div>
                 <progress
@@ -1788,9 +1763,6 @@
                   <button class="btn info" id="exportJsonBtn">
                     Export JSON
                   </button>
-                  <button class="btn info" id="exportExcelBtn">
-                    Export Excel
-                  </button>
                   <button class="btn info" id="exportPdfBtn">
                     Export PDF
                   </button>
@@ -1804,10 +1776,9 @@
                 <div class="third-party-block">
                   <div class="import-export-grid">
                     <div class="grid grid-2">
-                      <button class="btn success" id="importNumistaBtn">Import Numista CSV</button>
+                      <button class="btn danger" id="importNumistaBtn">Import Numista CSV</button>
                       <button class="btn secondary" id="mergeNumistaBtn">Merge Numista CSV</button>
                     </div>
-                    <button class="btn warning" id="clearNumistaInventoryBtn">Clear Numista Cache</button>
                     <input type="file" id="numistaImportFile" accept=".csv" hidden />
                     <div class="beta-warning">⚠️ Numista import is a beta feature</div>
                   </div>
@@ -1820,9 +1791,6 @@
               <div class="backup-buttons">
                 <button class="btn warning" id="removeInventoryDataBtn">
                   Remove Inventory Data
-                </button>
-                <button class="btn warning" id="clearNumistaCacheBtn" style="display:none">
-                  Clear Numista Cache
                 </button>
                 <button class="btn danger" id="boatingAccidentBtn">
                   Boating Accident?
@@ -2543,7 +2511,7 @@
        7. init.js - Application initialization and startup
        
        All scripts use 'defer' to ensure DOM is ready before execution
-       External libraries (Chart.js, jsPDF, PapaParse, XLSX) loaded via CDN
+       External libraries (Chart.js, jsPDF, PapaParse, JSZip) loaded via CDN
        ============================================================================= -->
 
   <script defer src="js/debug-log.js"></script>

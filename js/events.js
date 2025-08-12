@@ -912,8 +912,14 @@ const setupEventListeners = () => {
         elements.importCsvOverride,
         "click",
         () => {
-          csvImportOverride = true;
-          elements.importCsvFile.click();
+          if (
+            confirm(
+              "Importing CSV will overwrite all existing data. To combine data, choose Merge instead. Press OK to continue.",
+            )
+          ) {
+            csvImportOverride = true;
+            elements.importCsvFile.click();
+          }
         },
         "CSV override button",
       );
@@ -950,31 +956,53 @@ const setupEventListeners = () => {
       );
     }
 
+    let jsonImportOverride = false;
+    if (elements.importJsonOverride && elements.importJsonFile) {
+      safeAttachListener(
+        elements.importJsonOverride,
+        "click",
+        () => {
+          if (
+            confirm(
+              "Importing JSON will overwrite all existing data. To combine data, choose Merge instead. Press OK to continue.",
+            )
+          ) {
+            jsonImportOverride = true;
+            elements.importJsonFile.click();
+          }
+        },
+        "JSON override button",
+      );
+    }
+    if (elements.importJsonMerge && elements.importJsonFile) {
+      safeAttachListener(
+        elements.importJsonMerge,
+        "click",
+        () => {
+          jsonImportOverride = false;
+          elements.importJsonFile.click();
+        },
+        "JSON merge button",
+      );
+    }
     if (elements.importJsonFile) {
       safeAttachListener(
         elements.importJsonFile,
         "change",
         function (e) {
           if (e.target.files.length > 0) {
-            importJson(e.target.files[0]);
+
+            const file = e.target.files[0];
+            if (!checkFileSize(file)) {
+              alert("File exceeds 2MB limit. Enable cloud backup for larger uploads.");
+            } else {
+              importJson(file, jsonImportOverride);
+            }
+
           }
           this.value = "";
         },
         "JSON import",
-      );
-    }
-
-    if (elements.importExcelFile) {
-      safeAttachListener(
-        elements.importExcelFile,
-        "change",
-        function (e) {
-          if (e.target.files.length > 0) {
-            importExcel(e.target.files[0]);
-          }
-          this.value = "";
-        },
-        "Excel import",
       );
     }
 
@@ -986,8 +1014,14 @@ const setupEventListeners = () => {
         importNumistaBtn,
         "click",
         () => {
-          numistaOverride = true;
-          elements.numistaImportFile.click();
+          if (
+            confirm(
+              "Importing Numista CSV will overwrite all existing data. To combine data, choose Merge instead. Press OK to continue.",
+            )
+          ) {
+            numistaOverride = true;
+            elements.numistaImportFile.click();
+          }
         },
         "Import Numista CSV button",
       );
@@ -1023,30 +1057,6 @@ const setupEventListeners = () => {
         );
       }
 
-      // Clear Numista Inventory button
-      if (elements.clearNumistaInventoryBtn) {
-        safeAttachListener(
-          elements.clearNumistaInventoryBtn,
-          "click",
-          function () {
-            if (
-              confirm(
-                "Remove all items with Numista IDs? This cannot be undone.",
-              )
-            ) {
-              inventory = inventory.filter(item => !item.numistaId);
-              if (typeof catalogManager?.cleanupOrphans === "function") {
-                catalogManager.cleanupOrphans(inventory);
-              }
-              saveInventory();
-              renderTable();
-              alert("Numista inventory cleared.");
-            }
-          },
-          "Clear Numista inventory button",
-        );
-      }
-
       // Export buttons
       if (elements.exportCsvBtn) {
         safeAttachListener(
@@ -1062,14 +1072,6 @@ const setupEventListeners = () => {
         "click",
         exportJson,
         "JSON export",
-      );
-    }
-    if (elements.exportExcelBtn) {
-      safeAttachListener(
-        elements.exportExcelBtn,
-        "click",
-        exportExcel,
-        "Excel export",
       );
     }
     if (elements.exportPdfBtn) {
@@ -1115,26 +1117,6 @@ const setupEventListeners = () => {
           }
         },
         "Remove inventory data button",
-      );
-    }
-
-    // Clear Numista Cache Button
-    if (elements.clearNumistaCacheBtn) {
-      safeAttachListener(
-        elements.clearNumistaCacheBtn,
-        "click",
-        function () {
-          if (
-            confirm(
-              "This will remove all cached Numista data from the lookup tables.",
-            )
-          ) {
-            localStorage.removeItem('numista-cache');
-            alert("Numista cache cleared.");
-            elements.clearNumistaCacheBtn.style.display = 'none';
-          }
-        },
-        "Clear Numista cache button",
       );
     }
 
@@ -1484,23 +1466,24 @@ const setupSearch = () => {
  * Sets up theme toggle event listeners
  */
 const updateThemeButton = () => {
+  const savedTheme = localStorage.getItem(THEME_KEY) || "light";
+
+  // Apply theme classes to all theme buttons
+  document.querySelectorAll(".theme-btn").forEach((btn) => {
+    btn.classList.remove("dark", "light", "sepia");
+    btn.classList.add(savedTheme);
+  });
+
   const btn = elements.appearanceBtn;
   if (!btn) return;
-  const savedTheme = localStorage.getItem(THEME_KEY) || "light";
-  
-  // Remove all theme classes
-  btn.classList.remove("dark", "light", "sepia");
-  
-  // Add current theme class for styling
-  btn.classList.add(savedTheme);
-  
-  // Show current theme icon and color
+
+  // Show current theme icon and color on selector button
   const themeConfig = {
     dark: { icon: "🌙", label: "Dark mode", color: "#1e293b" },
     light: { icon: "☀️", label: "Light mode", color: "#f8fafc" },
     sepia: { icon: "📜", label: "Sepia mode", color: "#f2e7d5" }
   };
-  
+
   const config = themeConfig[savedTheme] || themeConfig.light;
   btn.textContent = config.icon;
   btn.style.backgroundColor = config.color;

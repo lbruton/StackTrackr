@@ -90,7 +90,8 @@ document.addEventListener("DOMContentLoaded", () => {
     elements.importCsvOverride = safeGetElement("importCsvOverride");
     elements.importCsvMerge = safeGetElement("importCsvMerge");
     elements.importJsonFile = safeGetElement("importJsonFile");
-    elements.importExcelFile = safeGetElement("importExcelFile");
+    elements.importJsonOverride = safeGetElement("importJsonOverride");
+    elements.importJsonMerge = safeGetElement("importJsonMerge");
     elements.importProgress = safeGetElement("importProgress");
     elements.importProgressText = safeGetElement("importProgressText");
     elements.numistaImportBtn = safeGetElement("numistaImportBtn");
@@ -98,15 +99,12 @@ document.addEventListener("DOMContentLoaded", () => {
     elements.numistaOverride = safeGetElement("numistaOverride");
     elements.numistaMerge = safeGetElement("numistaMerge");
       elements.numistaImportOptions = safeGetElement("numistaImportOptions");
-      elements.clearNumistaInventoryBtn = safeGetElement("clearNumistaInventoryBtn");
       elements.exportCsvBtn = safeGetElement("exportCsvBtn");
     elements.exportJsonBtn = safeGetElement("exportJsonBtn");
-    elements.exportExcelBtn = safeGetElement("exportExcelBtn");
     elements.exportPdfBtn = safeGetElement("exportPdfBtn");
     elements.cloudSyncBtn = safeGetElement("cloudSyncBtn");
     elements.syncAllBtn = safeGetElement("syncAllBtn");
     elements.removeInventoryDataBtn = safeGetElement("removeInventoryDataBtn");
-    elements.clearNumistaCacheBtn = safeGetElement("clearNumistaCacheBtn");
     elements.boatingAccidentBtn = safeGetElement("boatingAccidentBtn");
 
     // Modal elements
@@ -293,8 +291,8 @@ document.addEventListener("DOMContentLoaded", () => {
     if (footerDomainEl) {
       footerDomainEl.textContent = getFooterDomain();
     }
-    if (typeof loadChangelog === "function") {
-      loadChangelog();
+    if (typeof loadAnnouncements === "function") {
+      loadAnnouncements();
     }
 
     // Phase 12: Data Initialization

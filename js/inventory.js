@@ -4,7 +4,7 @@
  * 
  * This function generates a complete backup archive including:
  * - Current inventory data in JSON format
- * - All export formats (CSV, Excel, HTML)
+ * - All export formats (CSV, HTML)
  * - Application settings and configuration
  * - Spot price history
  * - README file explaining backup contents
@@ -118,37 +118,7 @@ const createBackupZip = async () => {
     const csvContent = Papa.unparse([csvHeaders, ...csvRows]);
     zip.file('inventory_export.csv', csvContent);
 
-    // 5. Generate and add Excel export
-    const wsData = [csvHeaders];
-    for (const item of sortedInventory) {
-      const exportSpotPrice = item.isCollectable ?
-        spotPrices[item.metal.toLowerCase()] :
-        item.spotPriceAtPurchase;
-      wsData.push([
-        item.metal || 'Silver',
-        item.name,
-        item.qty,
-        item.type,
-        parseFloat(item.weight).toFixed(4),
-        item.price,
-        exportSpotPrice,
-        item.isCollectable ? null : item.premiumPerOz,
-        item.isCollectable ? null : item.totalPremium,
-        item.purchaseLocation,
-        item.storageLocation || '',
-        item.numistaId || '',
-        item.isCollectable ? 'Yes' : 'No',
-        item.notes || '',
-        item.date
-      ]);
-    }
-    const ws = XLSX.utils.aoa_to_sheet(wsData);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Inventory");
-    const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-    zip.file('inventory_export.xlsx', excelBuffer);
-
-    // 6. Generate and add HTML export (simplified version)
+    // 5. Generate and add HTML export (simplified version)
     const htmlContent = generateBackupHtml(sortedInventory, timeFormatted);
     zip.file('inventory_report.html', htmlContent);
 
@@ -368,24 +338,18 @@ FILE CONTENTS:
 4. inventory_export.csv
    - Spreadsheet-compatible export
    - Human-readable format for external use
-   - Compatible with Excel, Google Sheets
 
-5. inventory_export.xlsx
-   - Excel format export with proper formatting
-   - Preserves data types and calculations
-   - Professional presentation ready
-
-6. inventory_report.html
+5. inventory_report.html
    - Self-contained web page report
    - No external dependencies required
    - Print-friendly format
 
-7. sample_data.json (if applicable)
+6. sample_data.json (if applicable)
    - Sample of inventory items for reference
    - Useful for testing import functionality
    - Demonstrates data structure
 
-8. README.txt (this file)
+7. README.txt (this file)
    - Backup contents explanation
    - Restoration instructions
 
@@ -398,7 +362,6 @@ RESTORATION INSTRUCTIONS:
 
 2. For partial restoration:
    - Use inventory_export.csv for spreadsheet applications
-   - Use inventory_export.xlsx for Excel compatibility
    - View inventory_report.html in any web browser
 
 3. For data analysis:
@@ -440,24 +403,13 @@ const saveInventory = () => {
 };
 
 /**
- * Removes non-alphanumeric characters from inventory records and cached Numista data.
+ * Removes non-alphanumeric characters from inventory records.
  *
  * @returns {void}
  */
 const sanitizeTablesOnLoad = () => {
   inventory = inventory.map(item => sanitizeObjectFields(item));
 
-  const rawCsv = localStorage.getItem(NUMISTA_RAW_KEY);
-  if (rawCsv) {
-    try {
-      const parsed = Papa.parse(rawCsv, { header: true, skipEmptyLines: true });
-      const cleanedRows = parsed.data.map(row => sanitizeObjectFields(row));
-      const sanitizedCsv = Papa.unparse(cleanedRows);
-      localStorage.setItem(NUMISTA_RAW_KEY, sanitizedCsv);
-    } catch (err) {
-      console.warn('Failed to sanitize Numista table', err);
-    }
-  }
 };
 
 /**
@@ -1419,9 +1371,7 @@ const importNumistaCsv = (file, override = false) => {
     reader.onload = function(e) {
       try {
         const csvText = e.target.result;
-        localStorage.setItem(NUMISTA_RAW_KEY, csvText);
-        const storedCsv = localStorage.getItem(NUMISTA_RAW_KEY) || "";
-        const results = Papa.parse(storedCsv, {
+        const results = Papa.parse(csvText, {
           header: true,
           skipEmptyLines: true,
           transformHeader: (h) => h.trim(), // Handle Numista headers with trailing spaces
@@ -1755,10 +1705,11 @@ const exportCsv = () => {
 
 /**
  * Imports inventory data from JSON file
- * 
+ *
  * @param {File} file - JSON file to import
+ * @param {boolean} [override=false] - Replace existing inventory instead of merging
  */
-const importJson = (file) => {
+const importJson = (file, override = false) => {
   const reader = new FileReader();
 
   reader.onload = function(e) {
@@ -1866,22 +1817,47 @@ const importJson = (file) => {
         return alert("No valid items found in JSON file.");
       }
 
-      let msg = `Import ${imported.length} items?`;
-      if (skippedDetails.length > 0) {
-        msg += `\n(${skippedDetails.length} invalid items skipped)`;
+      const existingSerials = new Set(override ? [] : inventory.map(item => item.serial));
+      const existingKeys = new Set(
+        (override ? [] : inventory)
+          .filter(item => item.numistaId)
+          .map(item => `${item.numistaId}|${item.name}|${item.date}`)
+      );
+      const deduped = [];
+      let duplicateCount = 0;
+
+      for (const item of imported) {
+        const key = item.numistaId ? `${item.numistaId}|${item.name}|${item.date}` : null;
+        if (existingSerials.has(item.serial) || (key && existingKeys.has(key))) {
+          duplicateCount++;
+          continue;
+        }
+        existingSerials.add(item.serial);
+        if (key) existingKeys.add(key);
+        deduped.push(item);
       }
 
-      if (confirm(msg)) {
-        inventory = imported;
-        
-        // Synchronize all items with catalog manager
-        inventory = catalogManager.syncInventory(inventory);
-        
-        saveInventory();
-        renderTable();
-        if (typeof updateStorageStats === "function") {
-          updateStorageStats();
-        }
+      if (duplicateCount > 0) {
+        console.info(`${duplicateCount} duplicate items skipped during import.`);
+      }
+
+      if (deduped.length === 0) {
+        return alert('No items to import.');
+      }
+
+      if (override) {
+        inventory = deduped;
+      } else {
+        inventory = inventory.concat(deduped);
+      }
+
+      // Synchronize all items with catalog manager
+      inventory = catalogManager.syncInventory(inventory);
+
+      saveInventory();
+      renderTable();
+      if (typeof updateStorageStats === "function") {
+        updateStorageStats();
       }
     } catch (error) {
       endImportProgress();
@@ -1930,202 +1906,6 @@ const exportJson = () => {
   document.body.appendChild(a);
   a.click();
   a.remove();
-};
-
-/**
- * Imports inventory data from Excel file
- * 
- * @param {File} file - Excel file to import
- */
-const importExcel = (file) => {
-  const reader = new FileReader();
-
-  reader.onload = function(e) {
-    try {
-      const data = new Uint8Array(e.target.result);
-      const workbook = XLSX.read(data, { type: 'array' });
-
-      // Get first sheet
-      const firstSheetName = workbook.SheetNames[0];
-      const worksheet = workbook.Sheets[firstSheetName];
-
-      // Convert to JSON
-      const jsonData = XLSX.utils.sheet_to_json(worksheet);
-
-      // Process data
-      const imported = [];
-      const skippedDetails = [];
-      const totalRows = jsonData.length;
-      startImportProgress(totalRows);
-      let processed = 0;
-      let importedCount = 0;
-
-      for (const [index, row] of jsonData.entries()) {
-        processed++;
-        const metal = row['Metal'] || 'Silver';
-        const name = row['Name'] || row['name'];
-        const qty = parseInt(row['Qty'] || row['qty'] || 1, 10);
-        const type = normalizeType(row['Type'] || row['type']);
-        const weight = parseFloat(row['Weight(oz)'] || row['weight']);
-        const priceStr = row['Purchase Price'] || row['price'];
-        let price = parseFloat(
-          typeof priceStr === "string" ? priceStr.replace(/[^0-9.-]+/g, "") : priceStr
-        );
-        if (price < 0) price = 0;
-        const purchaseLocation = row['Purchase Location'] || "";
-        const storageLocation = row['Storage Location'] || "Unknown";
-        const notes = row['Notes'] || "";
-        const date = parseDate(row['Date']); // Using the new date parser
-
-        // Get collectable status
-        const isCollectable = row['Collectable'] === 'Yes' || row['Collectable'] === 'true' || row['isCollectable'] === 'true';
-
-        // Get spot price from Excel if available
-        let spotPriceAtPurchase;
-        if (row['Spot Price ($/oz)']) {
-          // Extract numeric value from formatted string like "$1,234.56"
-          const spotStr = row['Spot Price ($/oz)'].toString();
-          spotPriceAtPurchase = parseFloat(spotStr.replace(/[^0-9.-]+/g, ""));
-        } else if (row['spotPriceAtPurchase']) {
-          spotPriceAtPurchase = parseFloat(row['spotPriceAtPurchase']);
-        } else {
-          // Fall back to current spot price if not in Excel and not collectable
-          const metalKey = metal.toLowerCase();
-          spotPriceAtPurchase = isCollectable ? 0 : spotPrices[metalKey];
-        }
-
-        // Calculate premium per ounce (only for non-collectible items)
-        let premiumPerOz = 0;
-        let totalPremium = 0;
-
-        if (!isCollectable) {
-          const pricePerOz = price / weight;
-          premiumPerOz = pricePerOz - spotPriceAtPurchase;
-          totalPremium = premiumPerOz * qty * weight;
-        }
-
-        const numistaRaw = (row['N#'] || row['Numista #'] || row['numistaId'] || '').toString();
-        const numistaMatch = numistaRaw.match(/\d+/);
-        const numistaId = numistaMatch ? numistaMatch[0] : '';
-        const serial = row['Serial'] || row['serial'] || getNextSerial();
-
-        const itemToValidate = {
-          metal,
-          name,
-          qty,
-          type,
-          weight,
-          price,
-          date,
-          purchaseLocation,
-          storageLocation,
-          notes,
-          spotPriceAtPurchase,
-          premiumPerOz,
-          totalPremium,
-          isCollectable,
-          numistaId,
-          serial
-        };
-
-        const validation = validateInventoryItem(itemToValidate);
-        if (!validation.isValid) {
-          const reason = validation.errors.join(', ');
-          skippedDetails.push(`Row ${index + 2}: ${reason}`);
-          updateImportProgress(processed, importedCount, totalRows);
-          continue;
-        }
-
-        imported.push(itemToValidate);
-        importedCount++;
-        updateImportProgress(processed, importedCount, totalRows);
-      }
-
-      endImportProgress();
-
-      if (skippedDetails.length > 0) {
-        alert('Skipped entries:\n' + skippedDetails.join('\n'));
-      }
-
-      if (imported.length === 0) return alert("No valid items to import.");
-
-      let msg = "Replace current inventory with imported file?";
-      if (skippedDetails.length > 0) msg += `\n(${skippedDetails.length} rows skipped)`;
-
-      if (confirm(msg)) {
-        inventory = imported;
-        
-        // Synchronize all items with catalog manager
-        inventory = catalogManager.syncInventory(inventory);
-        
-        saveInventory();
-        renderTable();
-        if (typeof updateStorageStats === "function") {
-          updateStorageStats();
-        }
-      }
-    } catch (error) {
-      endImportProgress();
-      alert("Error importing Excel file: " + error.message);
-    }
-  };
-
-  reader.readAsArrayBuffer(file);
-};
-
-/**
- * Exports current inventory to Excel format
- */
-const exportExcel = () => {
-  const timestamp = new Date().toISOString().slice(0,10).replace(/-/g,'');
-
-  // Sort inventory by date (newest first) for export
-  const sortedInventory = sortInventoryByDateNewestFirst();
-
-  // Create worksheet data
-  const wsData = [
-    [
-      "Metal", "Name", "Qty", "Type", "Weight(oz)", "Purchase Price",
-      "Spot Price ($/oz)", "Premium ($/oz)", "Total Premium",
-      "Purchase Location", "Storage Location", "N#", "Collectable",
-      "Notes", "Date"
-    ]
-  ];
-
-  for (const i of sortedInventory) {
-    // For collectable items, use current spot price (at time of export)
-    const exportSpotPrice = i.isCollectable ? 
-      spotPrices[i.metal.toLowerCase()] : 
-      i.spotPriceAtPurchase;
-
-    wsData.push([
-      i.metal || 'Silver',
-      i.name,
-      i.qty,
-      i.type,
-      parseFloat(i.weight).toFixed(4),
-      i.price,
-      exportSpotPrice,
-      i.isCollectable ? null : i.premiumPerOz,
-      i.isCollectable ? null : i.totalPremium,
-      i.purchaseLocation,
-      i.storageLocation || '',
-      i.numistaId || '',
-      i.isCollectable ? 'Yes' : 'No',
-      i.notes || '',
-      i.date
-    ]);
-  }
-
-  // Create worksheet
-  const ws = XLSX.utils.aoa_to_sheet(wsData);
-
-  // Create workbook
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "Inventory");
-
-  // Export
-  XLSX.writeFile(wb, `metal_inventory_${timestamp}.xlsx`);
 };
 
 /**

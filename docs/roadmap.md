@@ -3,16 +3,31 @@
 This roadmap tracks upcoming goals without committing to specific patch numbers.
 
 ## Patch Goals (v3.04.xx)
-- [x] Align inventory action buttons and theme controls
-- [x] Enforce Metals.dev 30-day history limit and record daily price history
-- [x] Center type summary under backup warning with clickable Files link
-- [x] Adopt unified logo across all themes
-- [x] Implement new StackrTrackr logo with triple theme support
-- [x] Enhanced light theme with light/middle grays and light blues (v3.04.28)
-- [x] Rename "Clear Data" settings card to "Backup, Restore, Clear" (v3.04.29)
-- [x] Allow URL purchase locations to render as hyperlinks (v3.04.30)
-- [x] Remove API history charts and expand API history table (v3.04.31)
+- _No active patch goals at this time._
+
+## Completed Patch Goals (v3.04.xx)
+- Align inventory action buttons and theme controls
+- Enforce Metals.dev 30-day history limit and record daily price history
+- Remove stored Numista CSV cache and clear-cache button
+- Center type summary under backup warning with clickable Files link
+- Adopt unified logo across all themes
+- Implement new StackrTrackr logo with triple theme support
+- Enhanced light theme with light/middle grays and light blues (v3.04.28)
+- Rename "Clear Data" settings card to "Backup, Restore, Clear" (v3.04.29)
+- Allow URL purchase locations to render as hyperlinks (v3.04.30)
+- Remove API history charts and expand API history table (v3.04.31)
+- Header buttons match theme selector styling with enlarged icons (v3.04.32)
 - Update milestone process and documentation.
 
 ## Version Goals (v4.x)
 - Remove file:// protocol support and adopt a framework.
+
+## Major Milestone Roadmap
+- **Encrypted Backup Export** — Provide a secure backup flow that encrypts user data and produces a downloadable archive ready for cloud storage (e.g., Google Drive).
+- **Fuzzy Search Across All Data** — Enable typo-tolerant, context-aware search functionality spanning every stored field to improve discoverability.
+- **Numista API Integration** — Support direct item and collectible price lookups through Numista, letting users supply their own API credentials for seamless valuation.
+- **Turso Sync and SQLite Support** — Offer optional Turso integration so users can connect API credentials and synchronize their data with a remote SQLite-compatible database.
+- **Lightweight Storage Options** — Expand supported storage back ends to accommodate constrained devices and alternate persistence layers.
+- **Enhanced CSV Conversion Tools** — Improve import/export utilities for cleaner conversions, broader compatibility, and error handling.
+- **Batch Editing with API-Aided Corrections** — Introduce bulk editing workflows that leverage external APIs to validate and auto-correct item attributes at scale.
+- **Comprehensive Charts and Graphs** — Deliver robust visual analytics—trend lines, distribution charts, and comparative dashboards—to help users explore their collections.

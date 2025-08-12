@@ -257,7 +257,7 @@ const API_PROVIDERS = {
  * Example: 3.03.02a → branch 3, release 03, patch 02, alpha
  */
 
-const APP_VERSION = "3.04.31";
+const APP_VERSION = "3.04.35";
 
 /**
  * @constant {string} DEFAULT_CURRENCY - Default currency code for monetary formatting
@@ -344,9 +344,6 @@ const SERIAL_KEY = "inventorySerial";
 
 /** @constant {string} CATALOG_MAP_KEY - LocalStorage key for S#/N# associations */
 const CATALOG_MAP_KEY = "catalogMap";
-
-/** @constant {string} NUMISTA_RAW_KEY - LocalStorage key for raw Numista CSV data */
-const NUMISTA_RAW_KEY = "numistaRawData";
 
 /** @constant {string} SPOT_HISTORY_KEY - LocalStorage key for spot price history */
 const SPOT_HISTORY_KEY = "metalSpotHistory";

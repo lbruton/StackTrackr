@@ -99,7 +99,7 @@ const FEATURE_FLAGS = {
   
   // Local-only features (always available)
   BASIC_INVENTORY: { requiresCloudSync: false, description: 'Core inventory management' },
-  STANDARD_IMPORT_EXPORT: { requiresCloudSync: false, description: 'CSV, JSON, Excel formats' },
+  STANDARD_IMPORT_EXPORT: { requiresCloudSync: false, description: 'CSV, JSON formats' },
   SIMPLE_CHARTS: { requiresCloudSync: false, description: 'Basic pie charts and summaries' },
   THEME_CUSTOMIZATION: { requiresCloudSync: false, description: 'UI personalization' },
   OFFLINE_FUNCTIONALITY: { requiresCloudSync: false, description: 'Full functionality without internet' },
@@ -795,7 +795,7 @@ Update documentation files:
 
 ### **Local-Only Features:**
 1. **Basic Inventory Management** - Core functionality remains free
-2. **Standard Import/Export** - CSV, JSON, Excel formats
+2. **Standard Import/Export** - CSV, JSON formats
 3. **Simple Charts** - Basic pie charts and summaries
 4. **Theme Customization** - UI personalization
 5. **Offline Functionality** - Full functionality without internet

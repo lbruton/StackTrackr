@@ -1,7 +1,7 @@
 # Function Reference
 
 
-> **Latest release: v3.04.31**
+> **Latest release: v3.04.35**
 
 
 | File | Function | Description |
@@ -13,9 +13,7 @@
 | about.js | acceptAck | Accepts the acknowledgment and hides the modal |
 | about.js | populateAboutModal | Populates the about modal with current version and changelog information |
 | about.js | populateAckModal | Populates the acknowledgment modal with version information |
-| about.js | loadChangelog | Loads changelog information from docs/changelog.md and populates the About modal |
-| about.js | extractChangelogItems | Extracts changelog items from content, filtering for meaningful changes |
-| about.js | loadRoadmap | Loads roadmap information and populates roadmap lists in modals |
+| about.js | loadAnnouncements | Loads latest release notes and roadmap from docs/announcements.md |
 | about.js | showFullChangelog | Shows full changelog in a new window or navigates to documentation |
 | about.js | setupAboutModalEvents | Sets up event listeners for about modal elements |
 | about.js | setupAckModalEvents | Sets up event listeners for acknowledgment modal elements |
@@ -94,7 +92,7 @@
 | inventory.js | generateBackupHtml | Generates HTML content for backup export |
 | inventory.js | generateReadmeContent | Generates README content for backup archive |
 | inventory.js | saveInventory | Saves current inventory to localStorage |
-| inventory.js | sanitizeTablesOnLoad | Removes non-alphanumeric characters from inventory records and cached Numista data |
+| inventory.js | sanitizeTablesOnLoad | Removes non-alphanumeric characters from inventory records |
 | inventory.js | loadInventory | Loads inventory from localStorage with comprehensive data migration |
 | inventory.js | getNextSerial | Generates a unique serial number for inventory items |
 | inventory.js | getColor |  |
@@ -115,10 +113,8 @@
 | inventory.js | importCsv | Imports inventory data from CSV file with comprehensive validation; supports override or merge modes |
 | inventory.js | importNumistaCsv | Imports Numista CSV data with header trimming and merge/override options |
 | inventory.js | exportCsv | Exports current inventory to CSV format |
-| inventory.js | importJson | Imports inventory data from JSON file |
+| inventory.js | importJson | Imports inventory data from JSON file with override or merge modes |
 | inventory.js | exportJson | Exports current inventory to JSON format |
-| inventory.js | importExcel | Imports inventory data from Excel file |
-| inventory.js | exportExcel | Exports current inventory to Excel format |
 | inventory.js | exportPdf | Exports current inventory to PDF format |
 | pagination.js | calculateTotalPages | Calculates total number of pages based on current data |
 | pagination.js | goToPage | Navigates to specified page number |

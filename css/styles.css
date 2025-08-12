@@ -1150,6 +1150,11 @@ input[type="submit"] {
   align-items: center;
 }
 
+/* Larger icons for header theme buttons */
+.app-header .theme-btn {
+  font-size: 1.5rem;
+}
+
 /* Theme button styling - shows current theme */
 .theme-btn {
   border: 2px solid var(--border);
@@ -2694,7 +2699,8 @@ td input:checked + .slider:before {
   cursor: pointer;
 }
 
-.import-csv-grid {
+.import-csv-grid,
+.import-json-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: var(--spacing-sm);

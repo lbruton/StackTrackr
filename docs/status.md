@@ -2,11 +2,13 @@
 
 
 
-> **Latest release: v3.04.31**
+> **Latest release: v3.04.35**
 
-## 🎯 Current State: **BETA v3.04.31** ✅ MAINTAINED & OPTIMIZED
+See [announcements](announcements.md) for recent changes and upcoming milestones.
 
-**StackrTrackr v3.04.31** is a fully-featured, client-side web application for tracking precious metal investments (Silver, Gold, Platinum, Palladium) with comprehensive inventory management, API integration, and complete backup capabilities. The 3.04.x series focuses on polish, maintenance, and optimization.
+## 🎯 Current State: **BETA v3.04.35** ✅ MAINTAINED & OPTIMIZED
+
+**StackrTrackr v3.04.35** is a fully-featured, client-side web application for tracking precious metal investments (Silver, Gold, Platinum, Palladium) with comprehensive inventory management, API integration, and complete backup capabilities. The 3.04.x series focuses on polish, maintenance, and optimization.
 
 
 ## 🏗️ Architecture Overview
@@ -61,7 +63,7 @@ The tool features a **modular JavaScript architecture** with separate files for 
 - **v3.03.08f - CSV import field sanitization**: Invalid fields are blanked and users can merge or override during import
 - **v3.03.08e - Numista CSV storage**: Stores raw Numista CSV and classifies metals by composition
 - **v3.03.08d - Version Modal Centering**: Version change dialog now appears centered on the screen
-- **v3.03.08c - Version Modal Enhancements**: Version change dialog now includes privacy notice, resources, and roadmap
+- **v3.03.08c - Version Modal Enhancements**: Version change dialog now includes privacy notice, resources, and announcements link
 - **v3.03.08b - Files Modal Simplification**: Removed storage breakdown progress bar for streamlined file management
 - **v3.03.08a - Version Update Changelog Modal**: Notifies users of new releases with modal displaying latest changes
 - **v3.03.07b - Documentation Normalization**: Converted documentation filenames to lowercase and updated references
@@ -123,7 +125,7 @@ The tool features a **modular JavaScript architecture** with separate files for 
 - ✅ Real-time search across all fields **including notes**
 
 ### **Data Management**
-- ✅ Complete import/export functionality (CSV, JSON, Excel, PDF)
+- ✅ Complete import/export functionality (CSV, JSON, PDF)
 - ✅ **Comprehensive backup ZIP system** with all data formats
 - ✅ **Professional HTML storage reports** with interactive modals and print optimization
 - ✅ **Notes field included in all export formats**
@@ -168,7 +170,7 @@ All data is stored locally in the browser using localStorage with:
 - ✅ Modern, responsive user interface
 - ✅ Complete documentation and error handling
 
-## 📚 Documentation Status (Updated: August 11, 2025)
+## 📚 Documentation Status (Updated: August 13, 2025)
 
 **All documentation files are current and synchronized:**
   - ✅ **status.md** - Updated for v3.04.02 release
@@ -220,6 +222,6 @@ StackrTrackr/
 
 ---
 
-**Last Updated**: August 12, 2025
+**Last Updated**: August 13, 2025
 **Status**: ✅ COMPLETE - Stable release ready for production use
 **Documentation**: ✅ ALL FILES SYNCHRONIZED AND CURRENT
