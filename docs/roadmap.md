@@ -9,6 +9,7 @@ This roadmap tracks upcoming goals without committing to specific patch numbers.
 - [x] Adopt unified logo across all themes
 - [x] Implement new StackrTrackr logo with triple theme support
 - [x] Enhanced light theme with light/middle grays and light blues (v3.04.28)
+- [x] Rename "Clear Data" settings card to "Backup, Restore, Clear" (v3.04.29)
 - Update milestone process and documentation.
 
 ## Version Goals (v4.x)
