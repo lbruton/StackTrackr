@@ -1,4 +1,4 @@
-# StackTrackr — Changelog
+# StackrTrackr — Changelog
 
 > **Latest release: v3.04.18**
 
@@ -202,7 +202,7 @@ For upcoming work, see [roadmap](roadmap.md).
 ### Version 3.2.07rc – Spot Timestamp Source Display (2025-08-09)
 - Spot price cards now show API provider or Manual entry along with exact timestamp of the last update
 - Manual spot price entries now display the entry time as "Time entered" with date and timestamp
-- Footer dynamically displays the active StackTrackr domain and links to issue reporting
+- Footer dynamically displays the active StackrTrackr domain and links to issue reporting
 - Inventory change log records every edit and the modal displays the complete history with scrolling
 - Change Log and metal totals details modals now share the site's standard header style
 - Quantity column repositioned after item name for improved readability
@@ -241,7 +241,7 @@ For upcoming work, see [roadmap](roadmap.md).
 - Added warning prompt before clearing API cache and history
 
 ### Version 3.2.02rc – Feature Complete Release Candidate (2025-08-09)
-- Rebranded application to StackTrackr
+- Rebranded application to StackrTrackr
 - Marked as feature complete release candidate for the 3.2.x series
 
 ### Version 3.2.01 – Cloud Sync Modal Fix (2025-08-08)

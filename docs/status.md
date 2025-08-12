@@ -1,11 +1,11 @@
-# Project Status - StackTrackr
+# Project Status - StackrTrackr
 
 
 > **Latest release: v3.04.18**
 
 ## 🎯 Current State: **BETA v3.04.18** ✅ MAINTAINED & OPTIMIZED
 
-**StackTrackr v3.04.18** is a fully-featured, client-side web application for tracking precious metal investments (Silver, Gold, Platinum, Palladium) with comprehensive inventory management, API integration, and complete backup capabilities. The 3.04.x series focuses on polish, maintenance, and optimization.
+**StackrTrackr v3.04.18** is a fully-featured, client-side web application for tracking precious metal investments (Silver, Gold, Platinum, Palladium) with comprehensive inventory management, API integration, and complete backup capabilities. The 3.04.x series focuses on polish, maintenance, and optimization.
 
 
 ## 🏗️ Architecture Overview
@@ -78,7 +78,7 @@ The tool features a **modular JavaScript architecture** with separate files for 
 - **v3.2.06rc - UI Refinements & Auto Sync**: Modal-based item entry with stacked filters, pagination polish with repositioned items-per-page selector, collectable status button, totals card label updates, improved About modal contrast, and automatic spot price refresh at startup
 - **v3.2.05rc - Splash Opt-Out & Branding**: Disclaimer modal can be hidden permanently, header adapts to hosting domain with updated subtitle, and each API provider stores its own key
 - **v3.2.03rc - Cache Flush Confirmation**: Added warning before clearing API cache and history
-- **v3.2.02rc - Feature Complete Release Candidate**: Application rebranded to StackTrackr and prepared for final release
+- **v3.2.02rc - Feature Complete Release Candidate**: Application rebranded to StackrTrackr and prepared for final release
 - **v3.2.01 - Cloud Sync Modal Fix**: Coming soon modal now follows themed styling with internal close button
 - **v3.2.0 - Settings & History Polish**: Appearance section moved up, sync confirmation dialog, and API history modal redesign
 - **v3.1.13 - Cloud Sync & API Quotas**: Cloud Sync placeholder modal, API usage tracking with quotas and monthly reset, Sync All provider button, reorganized file tools, and interface polish
@@ -190,7 +190,7 @@ If continuing development in a new chat session:
 ## 📁 Project Structure
 
 ```
-StackTrackr/
+StackrTrackr/
 ├── js/                     # Modular JavaScript (cleaned structure)
 │   ├── constants.js        # Version 3.04.15 + metal configs
 │   ├── state.js           # App state + DOM caching

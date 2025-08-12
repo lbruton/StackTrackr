@@ -3,12 +3,12 @@
   'use strict';
   if (typeof global.debugLog === 'function') return;
   function isEnabled() {
-    try { return !!localStorage.getItem('stacktrackr.debug'); } catch (_) { return true; }
+    try { return !!localStorage.getItem('stackrtrackr.debug'); } catch (_) { return true; }
   }
   function log(level,args){
     if(!isEnabled()) return;
     try{
-      const a = ['[StackTrackr]', new Date().toISOString(), level+':'].concat([].slice.call(args));
+      const a = ['[StackrTrackr]', new Date().toISOString(), level+':'].concat([].slice.call(args));
       if(level==='WARN') console.warn.apply(console,a);
       else if(level==='ERROR') console.error.apply(console,a);
       else console.log.apply(console,a);

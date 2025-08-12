@@ -1,6 +1,6 @@
 # Turso Cloud Sync Implementation Plan
 
-**StackTrackr v3.2.05rc → v3.03.02a**
+**StackrTrackr v3.2.05rc → v3.03.02a**
 **Date**: August 10, 2025  
 **Scope**: Provider-agnostic cloud sync system with Turso as first implementation
 
@@ -8,7 +8,7 @@
 
 ## **Overview**
 
-This document outlines the implementation plan for adding cloud sync capabilities to StackTrackr using a provider-agnostic architecture. Turso will be the first provider, but the system is designed to easily support additional providers (Supabase, Firebase, PlanetScale, etc.) in the future.
+This document outlines the implementation plan for adding cloud sync capabilities to StackrTrackr using a provider-agnostic architecture. Turso will be the first provider, but the system is designed to easily support additional providers (Supabase, Firebase, PlanetScale, etc.) in the future.
 
 ### **Key Design Principles**
 - **Provider-agnostic**: Easy to add new cloud providers

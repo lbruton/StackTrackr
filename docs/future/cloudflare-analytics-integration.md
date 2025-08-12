@@ -2,7 +2,7 @@
 
 ## Overview
 
-Integration plan for adding Cloudflare website analytics to StackTrackr, allowing users to view their website statistics alongside their precious metals tracking data.
+Integration plan for adding Cloudflare website analytics to StackrTrackr, allowing users to view their website statistics alongside their precious metals tracking data.
 
 **Target Version:** v3.4.0+  
 **Complexity:** Medium  
@@ -11,7 +11,7 @@ Integration plan for adding Cloudflare website analytics to StackTrackr, allowin
 
 ## Background
 
-StackTrackr is hosted on Cloudflare Free tier, which provides access to comprehensive analytics APIs. This integration would extend the existing multi-provider API system to include website performance metrics, fitting seamlessly into the current architecture.
+StackrTrackr is hosted on Cloudflare Free tier, which provides access to comprehensive analytics APIs. This integration would extend the existing multi-provider API system to include website performance metrics, fitting seamlessly into the current architecture.
 
 ## Available Metrics (Cloudflare Free Tier)
 
