@@ -1685,11 +1685,6 @@ td {
   display: none;
 }
 
-#inventoryTable th[data-column="numista"],
-#inventoryTable td[data-column="numista"] {
-    display: none;
-}
-
 #inventoryTable th[data-column="collectable"] svg {
     display: block;
     margin: 0 auto;
