@@ -1642,16 +1642,16 @@
               <div class="import-block">
                 <div class="import-export-grid">
                   <div class="import-csv-grid">
-                    <button class="btn" id="importCsvOverride">Import</button>
-                    <button class="btn" id="importCsvMerge">Merge</button>
+                    <button class="btn danger" id="importCsvOverride">Import</button>
+                    <button class="btn success" id="importCsvMerge">Merge</button>
                     <input accept=".csv" hidden id="importCsvFile" type="file" />
                   </div>
-                  <label class="btn" id="importJsonBtn">
-                    Import JSON <span class="import-icon">⬇️</span>
+                  <label class="btn success" id="importJsonBtn">
+                    Import JSON
                     <input accept=".json" hidden id="importJsonFile" type="file" />
                   </label>
-                  <label class="btn" id="importExcelBtn">
-                    Import Excel <span class="import-icon">⬇️</span>
+                  <label class="btn success" id="importExcelBtn">
+                    Import Excel
                     <input
                       accept=".xlsx,.xls"
                       hidden
@@ -1676,17 +1676,17 @@
               <p class="settings-subtext">Export your data files.</p>
               <div class="export-block">
                 <div class="import-export-grid">
-                  <button class="btn" id="exportCsvBtn">
-                    Export CSV <span class="export-icon">⬆️</span>
+                  <button class="btn info" id="exportCsvBtn">
+                    Export CSV
                   </button>
-                  <button class="btn" id="exportJsonBtn">
-                    Export JSON <span class="export-icon">⬆️</span>
+                  <button class="btn info" id="exportJsonBtn">
+                    Export JSON
                   </button>
-                  <button class="btn" id="exportExcelBtn">
-                    Export Excel <span class="export-icon">⬆️</span>
+                  <button class="btn info" id="exportExcelBtn">
+                    Export Excel
                   </button>
-                  <button class="btn" id="exportPdfBtn">
-                    Export PDF <span class="export-icon">⬆️</span>
+                  <button class="btn info" id="exportPdfBtn">
+                    Export PDF
                   </button>
                 </div>
               </div>
@@ -1698,8 +1698,8 @@
                 <div class="third-party-block">
                   <div class="import-export-grid">
                     <div class="grid grid-2">
-                      <button class="btn" id="importNumistaBtn">Import Numista</button>
-                      <button class="btn" id="mergeNumistaBtn">Merge Numista</button>
+                      <button class="btn success" id="importNumistaBtn">Import Numista</button>
+                      <button class="btn secondary" id="mergeNumistaBtn">Merge Numista</button>
                     </div>
                     <button class="btn warning" id="clearNumistaInventoryBtn">Clear Numista Cache</button>
                     <input type="file" id="numistaImportFile" accept=".csv" hidden />
@@ -1713,9 +1713,9 @@
               <p class="settings-subtext">Define regex rules to map imported fields.</p>
               <div class="third-party-block">
                 <div class="import-export-grid">
-                  <button class="btn" id="addMappingBtn">Add Mapping</button>
-                  <button class="btn" id="applyMappingsBtn">Apply Mappings</button>
-                  <button class="btn" id="clearMappingsBtn">Clear Mappings</button>
+                  <button class="btn secondary" id="addMappingBtn">Add Mapping</button>
+                  <button class="btn success" id="applyMappingsBtn">Apply Mappings</button>
+                  <button class="btn danger" id="clearMappingsBtn">Clear Mappings</button>
                 </div>
                 <div class="beta-warning">⚠️ Custom mapping is a beta feature</div>
               </div>
