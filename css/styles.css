@@ -24,7 +24,7 @@
   --bg-primary: #f8fafc;
   --bg-secondary: #f1f5f9;
   --bg-tertiary: #cbd5e1; /* Darker for better logo contrast */
-  --bg-card: #ffffff;
+  --bg-card: #f9fafb;
 
   /* Text Colors */
   --text-primary: #1e293b;
@@ -47,15 +47,15 @@
 
   /* Inventory Type Colors */
   --type-coin-bg: #d97706;
-  --type-coin-text: #ffffff;
+  --type-coin-text: #f8fafc;
   --type-round-bg: #6b7280;
-  --type-round-text: #ffffff;
+  --type-round-text: #f8fafc;
   --type-bar-bg: #eab308;
   --type-bar-text: #000000;
   --type-note-bg: #059669;
-  --type-note-text: #ffffff;
+  --type-note-text: #f8fafc;
   --type-other-bg: #7c3aed;
-  --type-other-text: #ffffff;
+  --type-other-text: #f8fafc;
 
   /* Component Spacing */
   --radius: 8px;
@@ -270,13 +270,14 @@ label {
 }
 
 .logo-box {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   margin-right: auto;
   padding: var(--spacing-sm);
-  background: var(--bg-tertiary);
+  background: #94a3b8;
   border: 1px solid var(--border);
   border-radius: var(--radius);
+  width: fit-content;
 }
 
 [data-theme="dark"] .logo-box {
@@ -285,10 +286,9 @@ label {
 
 /* StackrTrackr Logo Styles */
 .stackr-logo {
-  max-width: 600px;
-  width: 100%;
+  display: block;
   height: auto;
-  max-height: 120px;
+  max-width: 100%;
 }
 
 /* Theme switching for logo */
@@ -520,7 +520,7 @@ input[type="submit"] {
   overflow: hidden;
   min-height: 2.75rem;
   background: var(--primary);
-  color: white;
+  color: #f8fafc;
 }
 
 .btn:hover {
@@ -543,7 +543,7 @@ input[type="submit"] {
   background: linear-gradient(
     90deg,
     transparent,
-    rgba(255, 255, 255, 0.2),
+    rgba(248, 250, 252, 0.2),
     transparent
   );
   transition: left 0.5s;
@@ -771,7 +771,7 @@ input[type="submit"] {
 .provider-batch-badge {
   display: inline-block;
   background: linear-gradient(135deg, var(--success), var(--success-hover));
-  color: white;
+  color: #f8fafc;
   font-size: 0.75rem;
   font-weight: 500;
   padding: 0.25rem 0.5rem;
@@ -1123,11 +1123,11 @@ input[type="submit"] {
 
 .theme-btn.dark {
   background: #000;
-  color: #fff;
+  color: #f8fafc;
 }
 
 .theme-btn.light {
-  background: #fff;
+  background: var(--bg-card);
   color: #000;
   border: 1px solid var(--border);
 }
@@ -1185,7 +1185,7 @@ input[type="submit"] {
 
 #apiHistoryModal .modal-header {
   background: linear-gradient(135deg, var(--primary), var(--primary-hover));
-  color: white;
+  color: #f8fafc;
   padding: var(--spacing-xl);
   position: relative;
   border-radius: var(--radius-lg) var(--radius-lg) 0 0;
@@ -1194,7 +1194,7 @@ input[type="submit"] {
 
 #apiHistoryModal .modal-header h2 {
   margin: 0;
-  color: white;
+  color: #f8fafc;
   text-align: center;
 }
 
@@ -1297,7 +1297,7 @@ input[type="submit"] {
 #apiModal .modal-header,
 #filesModal .modal-header {
   background: linear-gradient(135deg, var(--primary), var(--primary-hover));
-  color: white;
+  color: #f8fafc;
   padding: var(--spacing-xl);
   position: relative;
   border-radius: var(--radius-lg) var(--radius-lg) 0 0;
@@ -1307,7 +1307,7 @@ input[type="submit"] {
 #apiModal .modal-header h2,
 #filesModal .modal-header h2 {
   margin: 0;
-  color: white;
+  color: #f8fafc;
   text-align: center;
 }
 
@@ -1387,7 +1387,7 @@ input[type="submit"] {
 
 #cloudSyncModal .modal-header {
   background: linear-gradient(135deg, var(--primary), var(--primary-hover));
-  color: white;
+  color: #f8fafc;
   padding: var(--spacing-xl);
   position: relative;
   border-radius: var(--radius-lg) var(--radius-lg) 0 0;
@@ -1396,7 +1396,7 @@ input[type="submit"] {
 
 #cloudSyncModal .modal-header h2 {
   margin: 0;
-  color: white;
+  color: #f8fafc;
   text-align: center;
 }
 
@@ -1418,7 +1418,7 @@ input[type="submit"] {
 
 #apiProvidersModal .modal-header {
   background: linear-gradient(135deg, var(--primary), var(--primary-hover));
-  color: white;
+  color: #f8fafc;
   padding: var(--spacing-xl);
   position: sticky;
   top: 0;
@@ -1428,7 +1428,7 @@ input[type="submit"] {
 
 #apiProvidersModal .modal-header h2 {
   margin: 0;
-  color: white;
+  color: #f8fafc;
   text-align: center;
 }
 
@@ -1460,7 +1460,7 @@ input[type="submit"] {
 #storageReportModal .modal-header,
 #editModal .modal-header {
   background: linear-gradient(135deg, var(--primary), var(--primary-hover));
-  color: white;
+  color: #f8fafc;
   padding: var(--spacing-xl);
   position: relative;
   border-radius: var(--radius-lg) var(--radius-lg) 0 0;
@@ -1472,7 +1472,7 @@ input[type="submit"] {
 #storageReportModal .modal-header h2,
 #editModal .modal-header h2 {
   margin: 0;
-  color: white;
+  color: #f8fafc;
   text-align: center;
 }
 
@@ -1931,10 +1931,10 @@ td input:checked + .slider:before {
 }
 
 .modal-content {
-  background: rgba(255, 255, 255, 0.95);
+  background: rgba(248, 250, 252, 0.95);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(248, 250, 252, 0.2);
   border-radius: var(--radius-lg);
   padding: var(--spacing-xl);
   max-width: 1200px;
@@ -1943,8 +1943,8 @@ td input:checked + .slider:before {
   overflow-y: auto;
   box-shadow: 
     0 25px 50px -12px rgba(0, 0, 0, 0.25),
-    0 0 0 1px rgba(255, 255, 255, 0.05),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    0 0 0 1px rgba(248, 250, 252, 0.05),
+    inset 0 1px 0 rgba(248, 250, 252, 0.1);
   animation: modalSlideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
 }
@@ -1985,7 +1985,7 @@ td input:checked + .slider:before {
 
 .about-modal-header {
   background: linear-gradient(135deg, var(--primary), var(--primary-hover));
-  color: white;
+  color: #f8fafc;
   padding: var(--spacing-xl);
   position: relative;
   border-radius: var(--radius-lg) var(--radius-lg) 0 0;
@@ -1994,7 +1994,7 @@ td input:checked + .slider:before {
 
 .about-modal-header h1 {
   margin: 0;
-  color: white;
+  color: #f8fafc;
   text-align: center;
 }
 
@@ -2021,7 +2021,7 @@ td input:checked + .slider:before {
   background: none;
   border: none;
   font-size: 1.5rem;
-  color: rgba(255, 255, 255, 0.8);
+  color: rgba(248, 250, 252, 0.8);
   cursor: pointer;
   padding: var(--spacing-sm);
   border-radius: var(--radius);
@@ -2034,8 +2034,8 @@ td input:checked + .slider:before {
 }
 
 .modal-close:hover {
-  color: white;
-  background: rgba(255, 255, 255, 0.1);
+  color: #f8fafc;
+  background: rgba(248, 250, 252, 0.1);
 }
 
 .about-modal-body {
@@ -2079,7 +2079,7 @@ td input:checked + .slider:before {
 
 
 .about-alert {
-  background: linear-gradient(135deg, #fef2f2, #fff8f8);
+  background: linear-gradient(135deg, #fef2f2, #f5f5f5);
   border: 1px solid #fecaca;
   border-left: 4px solid var(--danger);
   border-radius: var(--radius);
@@ -2229,7 +2229,7 @@ td input:checked + .slider:before {
 
 .about-accept-btn {
   background: linear-gradient(135deg, var(--success), #047857);
-  color: white;
+  color: #f8fafc;
   font-size: 1.125rem;
   padding: var(--spacing) var(--spacing-xl);
   border: none;
@@ -2502,7 +2502,7 @@ td input:checked + .slider:before {
 
 .pagination-btn.active {
   background: var(--primary);
-  color: white;
+  color: #f8fafc;
   border-color: var(--primary);
   font-weight: 600;
 }
@@ -2551,7 +2551,7 @@ td input:checked + .slider:before {
   width: auto;
   padding: 0.75rem 1.5rem;
   background: var(--secondary);
-  color: white;
+  color: #f8fafc;
 }
 
 #clearSearchBtn:hover {
@@ -2577,7 +2577,7 @@ td input:checked + .slider:before {
   display: inline-flex;
   align-items: center;
   gap: var(--spacing-xs);
-  color: #fff;
+  color: #f8fafc;
   padding: 0.25rem 0.5rem;
   border-radius: var(--radius);
   font-size: 0.75rem;
@@ -2711,7 +2711,7 @@ td input:checked + .slider:before {
   width: 18px;
   left: 3px;
   bottom: 3px;
-  background-color: white;
+  background-color: #f8fafc;
   transition: var(--transition);
   border-radius: 50%;
   box-shadow: var(--shadow-sm);

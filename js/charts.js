@@ -41,7 +41,7 @@ const generateColors = (count) => {
  */
 const getChartBackgroundColor = () => {
   const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-  return isDark ? '#1e293b' : '#ffffff';
+  return isDark ? '#1e293b' : '#f8fafc';
 };
 
 /**
