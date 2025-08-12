@@ -750,7 +750,7 @@ const setupEventListeners = () => {
 
       // Main spot price action buttons
         const addBtn = document.getElementById(`addBtn${metalName}`);
-        const resetBtn = document.getElementById(`resetBtn${metalName}`);
+        const historyBtn = document.getElementById(`historyBtn${metalName}`);
         const syncBtn = document.getElementById(`syncBtn${metalName}`);
         const spotCard = document.querySelector(
           `.spot-input.${metalKey} .spot-card`,
@@ -804,31 +804,15 @@ const setupEventListeners = () => {
         );
       }
 
-      // Reset button
-      if (resetBtn) {
+      // History button (placeholder)
+      if (historyBtn) {
         safeAttachListener(
-          resetBtn,
+          historyBtn,
           "click",
           () => {
-            debugLog(`Reset button clicked for ${metalName}`);
-            if (typeof resetSpotPrice === "function") {
-              resetSpotPrice(metalName);
-            } else {
-              // Fallback reset functionality
-              const defaultPrice = metalConfig.defaultPrice;
-              localStorage.setItem(
-                metalConfig.localStorageKey,
-                defaultPrice.toString(),
-              );
-              spotPrices[metalKey] = defaultPrice;
-              if (elements.spotPriceDisplay[metalKey]) {
-                elements.spotPriceDisplay[metalKey].textContent =
-                  formatCurrency(defaultPrice);
-              }
-              updateSummary();
-            }
+            debugLog(`History button clicked for ${metalName}`);
           },
-          `Reset spot price for ${metalName}`,
+          `Spot history for ${metalName}`,
         );
       }
 
