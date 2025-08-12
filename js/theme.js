@@ -27,6 +27,9 @@ const setTheme = (theme) => {
       document.documentElement.removeAttribute("data-theme");
     }
   }
+  if (typeof updateHeaderLogo === "function") {
+    updateHeaderLogo();
+  }
   if (typeof renderTable === "function") {
     renderTable();
   }
@@ -65,6 +68,21 @@ const toggleTheme = () => {
 };
 
 /**
+ * Updates header logo based on current theme
+ */
+const updateHeaderLogo = () => {
+  const logo = document.getElementById("appLogo");
+  if (!logo) return;
+  const currentTheme = document.documentElement.getAttribute("data-theme");
+  if (currentTheme === "dark") {
+    logo.innerHTML =
+      '<img src="./stackrtrackr_text.svg" alt="StackrTrackr logo" class="stackr-logo">';
+  } else {
+    logo.textContent = "StackrTrackr";
+  }
+};
+
+/**
  * Sets up system theme change listener
  */
 const setupSystemThemeListener = () => {
@@ -84,5 +102,6 @@ const setupSystemThemeListener = () => {
 window.setTheme = setTheme;
 window.toggleTheme = toggleTheme;
 window.initTheme = initTheme;
+window.updateHeaderLogo = updateHeaderLogo;
 
 // =============================================================================
