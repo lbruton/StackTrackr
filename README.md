@@ -6,6 +6,8 @@ StackrTrackr is a comprehensive client-side web application for tracking preciou
 
 The public hosted version of the app is available at [stackrtrackr.com](https://stackrtrackr.com).
 
+See [docs/announcements.md](docs/announcements.md) for the latest release notes and upcoming milestones.
+
 ## Recent Updates
 - **v3.04.31 - Streamlined API history**: Removed charts and expanded API history table to fill modal
 - **v3.04.30 - URL-friendly purchase locations**: Purchase Location field accepts web addresses and renders them as clickable links
@@ -266,7 +268,8 @@ Each inventory item includes:
 │   ├── changelog.md                    # Detailed history of application changes
 │   ├── implementation_summary.md       # Summary of major development work
 │   ├── MULTI_AGENT_WORKFLOW.md         # AI assistant development workflow and coordination
-│   ├── roadmap.md                      # Planned features and subtasks
+│   ├── announcements.md                # Latest release notes and upcoming milestones
+│   ├── roadmap.md                      # Detailed planning and task tracking
 │   ├── status.md                       # Project status and features overview
 │   ├── structure.md                    # Documentation of folder and file organization
 │   ├── functionstable.md               # Function reference table

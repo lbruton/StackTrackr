@@ -4,6 +4,8 @@
 
 > **Latest release: v3.04.31**
 
+See [announcements](announcements.md) for recent changes and upcoming milestones.
+
 ## 🎯 Current State: **BETA v3.04.31** ✅ MAINTAINED & OPTIMIZED
 
 **StackrTrackr v3.04.31** is a fully-featured, client-side web application for tracking precious metal investments (Silver, Gold, Platinum, Palladium) with comprehensive inventory management, API integration, and complete backup capabilities. The 3.04.x series focuses on polish, maintenance, and optimization.
@@ -61,7 +63,7 @@ The tool features a **modular JavaScript architecture** with separate files for 
 - **v3.03.08f - CSV import field sanitization**: Invalid fields are blanked and users can merge or override during import
 - **v3.03.08e - Numista CSV storage**: Stores raw Numista CSV and classifies metals by composition
 - **v3.03.08d - Version Modal Centering**: Version change dialog now appears centered on the screen
-- **v3.03.08c - Version Modal Enhancements**: Version change dialog now includes privacy notice, resources, and roadmap
+- **v3.03.08c - Version Modal Enhancements**: Version change dialog now includes privacy notice, resources, and announcements link
 - **v3.03.08b - Files Modal Simplification**: Removed storage breakdown progress bar for streamlined file management
 - **v3.03.08a - Version Update Changelog Modal**: Notifies users of new releases with modal displaying latest changes
 - **v3.03.07b - Documentation Normalization**: Converted documentation filenames to lowercase and updated references
