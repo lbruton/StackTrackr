@@ -173,26 +173,17 @@ label {
   box-shadow: var(--shadow-sm);
 }
 
-.app-title {
+.app-logo {
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  margin-right: auto;
 }
 
-.app-title h1 {
-  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-  font-weight: 700;
-  font-size: 2rem;
-  margin: 0;
-  background: linear-gradient(135deg, var(--primary), var(--primary-hover));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.app-subtitle {
-  font-size: 0.9rem;
-  color: var(--text-secondary);
-  margin-top: 0.25rem;
+.app-logo svg {
+  height: 2.5rem;
+  width: auto;
+  max-width: 100%;
+  display: block;
 }
 
 .container {
@@ -2794,7 +2785,7 @@ input:disabled + .slider {
     gap: var(--spacing);
   }
 
-  .app-header h1 {
+  .app-logo {
     margin: 0;
   }
 

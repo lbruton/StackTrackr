@@ -66,10 +66,26 @@
   <body>
     <!-- Application Header -->
     <div class="app-header">
-      <div class="app-title">
-        <h1>StackTrackr</h1>
-        <p class="app-subtitle">The open source precious metals tracking tool.</p>
-      </div>
+      <h1 class="app-logo" aria-label="StackTrackr">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 40" role="img">
+          <defs>
+            <linearGradient id="logo-light" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="#2563eb" />
+              <stop offset="100%" stop-color="#1d4ed8" />
+            </linearGradient>
+            <linearGradient id="logo-dark" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="#93c5fd" />
+              <stop offset="100%" stop-color="#3b82f6" />
+            </linearGradient>
+          </defs>
+          <g class="light-mode">
+            <text x="0" y="30" font-size="32" font-family="Segoe UI, Tahoma, Geneva, Verdana, sans-serif" fill="url(#logo-light)">StackTrackr</text>
+          </g>
+          <g class="dark-mode" style="display: none">
+            <text x="0" y="30" font-size="32" font-family="Segoe UI, Tahoma, Geneva, Verdana, sans-serif" fill="url(#logo-dark)">StackTrackr</text>
+          </g>
+        </svg>
+      </h1>
       <div style="margin-left: auto; display: flex; gap: 0.5rem">
         <button class="btn" id="aboutBtn" title="About" aria-label="About">
           About 📖
