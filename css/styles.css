@@ -18,15 +18,15 @@
   --danger-hover: #b91c1c;
 
   /* Background Colors */
-  --bg-primary: #ffffff;
-  --bg-secondary: #f8fafc;
-  --bg-tertiary: #f1f5f9;
-  --bg-card: #ffffff;
+  --bg-primary: #e5e7eb;
+  --bg-secondary: #d1d5db;
+  --bg-tertiary: #cbd5e1;
+  --bg-card: #e5e7eb;
 
   /* Text Colors */
-  --text-primary: #1e293b;
-  --text-secondary: #64748b;
-  --text-muted: #94a3b8;
+  --text-primary: #141c29;
+  --text-secondary: #455161;
+  --text-muted: #425063;
 
   /* Border & Shadow */
   --border: #e2e8f0;
@@ -116,19 +116,19 @@
   --palladium: #a58b6f;
 
   /* Background Colors - Sepia Mode */
-  --bg-primary: #f4ecd8;
-  --bg-secondary: #ede3ce;
-  --bg-tertiary: #e1d5bf;
-  --bg-card: #f4ecd8;
+  --bg-primary: #f2e7d5;
+  --bg-secondary: #e9ddc8;
+  --bg-tertiary: #deceb4;
+  --bg-card: #f2e7d5;
 
   /* Text Colors - Sepia Mode */
-  --text-primary: #4b3f2f;
-  --text-secondary: #6d5e4b;
-  --text-muted: #9c8d7b;
+  --text-primary: #3e2f1e;
+  --text-secondary: #5a4a36;
+  --text-muted: #6f604e;
 
   /* Border & Shadow - Sepia Mode */
-  --border: #d3c4a8;
-  --border-hover: #c2b396;
+  --border: #d1c2a5;
+  --border-hover: #c0b198;
   --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
   --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
   --shadow-lg:
