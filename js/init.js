@@ -98,7 +98,6 @@ document.addEventListener("DOMContentLoaded", () => {
     elements.numistaOverride = safeGetElement("numistaOverride");
     elements.numistaMerge = safeGetElement("numistaMerge");
       elements.numistaImportOptions = safeGetElement("numistaImportOptions");
-      elements.clearNumistaInventoryBtn = safeGetElement("clearNumistaInventoryBtn");
       elements.exportCsvBtn = safeGetElement("exportCsvBtn");
     elements.exportJsonBtn = safeGetElement("exportJsonBtn");
     elements.exportExcelBtn = safeGetElement("exportExcelBtn");
@@ -106,7 +105,6 @@ document.addEventListener("DOMContentLoaded", () => {
     elements.cloudSyncBtn = safeGetElement("cloudSyncBtn");
     elements.syncAllBtn = safeGetElement("syncAllBtn");
     elements.removeInventoryDataBtn = safeGetElement("removeInventoryDataBtn");
-    elements.clearNumistaCacheBtn = safeGetElement("clearNumistaCacheBtn");
     elements.boatingAccidentBtn = safeGetElement("boatingAccidentBtn");
 
     // Modal elements

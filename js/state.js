@@ -73,7 +73,6 @@ const elements = {
   numistaImportFile: null,
   numistaOverride: null,
   numistaMerge: null,
-  clearNumistaInventoryBtn: null,
 
   // Export elements
   exportCsvBtn: null,
@@ -84,7 +83,6 @@ const elements = {
   syncAllBtn: null,
   // Emergency reset button
   removeInventoryDataBtn: null,
-  clearNumistaCacheBtn: null,
   boatingAccidentBtn: null,
 
   // Edit modal elements

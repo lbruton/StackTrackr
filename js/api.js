@@ -1444,10 +1444,6 @@ const hideApiModal = () => {
 const showFilesModal = () => {
   const modal = document.getElementById("filesModal");
   if (modal) {
-    const cacheBtn = document.getElementById("clearNumistaCacheBtn");
-    if (cacheBtn) {
-      cacheBtn.style.display = localStorage.getItem('numista-cache') ? 'block' : 'none';
-    }
     modal.style.display = "flex";
   }
 };

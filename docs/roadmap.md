@@ -8,6 +8,7 @@ This roadmap tracks upcoming goals without committing to specific patch numbers.
 ## Completed Patch Goals (v3.04.xx)
 - Align inventory action buttons and theme controls
 - Enforce Metals.dev 30-day history limit and record daily price history
+- Remove stored Numista CSV cache and clear-cache button
 - Center type summary under backup warning with clickable Files link
 - Adopt unified logo across all themes
 - Implement new StackrTrackr logo with triple theme support
