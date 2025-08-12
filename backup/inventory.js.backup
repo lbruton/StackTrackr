@@ -1,0 +1,21 @@
+// INVENTORY FUNCTIONS
+/**
+ * Creates a comprehensive backup ZIP file containing all application data
+ * 
+ * This function generates a complete backup archive including:
+ * - Current inventory data in JSON format
+ * - All export formats (CSV, Excel, HTML)
+ * - Application settings and configuration
+ * - Spot price history
+ * - README file explaining backup contents
+ * 
+ * The backup is packaged as a ZIP file for easy storage and portability.
+ * All data is exported in multiple formats to ensure compatibility and
+ * provide redundancy for data recovery scenarios.
+ * 
+ * @returns {void} Downloads a ZIP file containing complete backup
+ * 
+ * @example
+ * // Called to generate a complete backup archive
+ * await createBackupZip();
+ */

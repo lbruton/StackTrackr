@@ -366,15 +366,19 @@ function parseDate(dateStr) {
 }
 
 /**
- * Formats a date string into a compact ISO-like format
+ * Formats a date string into Month Day, Year format
  *
  * @param {string} dateStr - Date in any parseable format
- * @returns {string} Two-digit year ISO date (e.g., "24-05-05")
+ * @returns {string} Formatted date (e.g., "Jan 1, 1969")
  */
 const formatDisplayDate = (dateStr) => {
   const d = new Date(dateStr);
   if (isNaN(d)) return dateStr;
-  return d.toISOString().slice(2, 10);
+  
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  
+  return `${months[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
 };
 
 /**

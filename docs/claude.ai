@@ -43,10 +43,30 @@ Load sample.csv, test CRUD, verify import/export, check responsive, confirm loca
 `index.html` `events.js` `styles.css`
 
 ## NOTES
-- Current version: 3.04.08 (debounced search)
+- Current version: 3.04.20 (column order and theme fixes)
 - Search functionality working properly
 - N# catalog integration complete
 - CatalogManager class implemented
 - localStorage persistence working
 - All import/export formats support N#
 - Multi-agent workflow established
+- LOGO AND HEADER FIXES:
+  * Fixed logo display by removing conflicting inline max-width style
+  * Added proper header text styling for Notes, Edit, Delete, Collect columns
+  * Implemented collection icon theming for enabled/disabled states
+  * Added responsive header text sizing for mobile devices
+  * Improved icon column width and alignment
+  * Added theme-specific icon color adjustments for day/night/sepia modes
+  * FIXED: Commented out branding routine that was overriding SVG logo in header
+  * TEMP: Commented out filter button in search container (incomplete feature)
+- COLUMN ORDER AND THEMING FIXES (v3.04.20):
+  * FIXED: Column header order now matches table body (Collect, Notes, Edit, Delete)
+  * FIXED: Collection icons properly themed for dark mode (no longer black)
+  * IMPROVED: Light mode contrast with better background colors and shadows
+  * ENHANCED: Better visual hierarchy with improved text and border contrast
+- THEME AND COLOR UPDATES (latest):
+  * IMPROVED: Headers in sepia and light mode darker for better logo contrast
+  * ENHANCED: Type counter colors now unique and far apart on color wheel
+    - Coin: Orange (#d97706), Round: Gray (#6b7280), Bar: Yellow (#eab308)
+    - Note: Green (#059669), Other: Purple (#7c3aed)
+  * REORDERED: Table columns - Notes now appears before Edit column

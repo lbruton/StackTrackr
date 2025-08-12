@@ -68,7 +68,7 @@
     <!-- Application Header -->
     <div class="app-header">
       <h1 class="app-logo" aria-label="StackrTrackr">
-        <svg class="stackr-logo" viewBox="0 0 800 200" xmlns="http://www.w3.org/2000/svg" width="100%" height="auto" style="max-width: 800px;">
+        <svg class="stackr-logo" viewBox="0 0 800 200" xmlns="http://www.w3.org/2000/svg" width="100%" height="auto">
           <defs>
             <!-- Light Mode Gradients -->
             <linearGradient id="goldLight" x1="0%" y1="0%" x2="0%" y2="100%">
@@ -454,7 +454,7 @@
            ============================================================================= -->
         <section class="search-section">
           <div class="search-container">
-            <button class="btn filters" id="filtersBtn">Filters</button>
+            <!-- <button class="btn filters" id="filtersBtn">Filters</button> -->
             <input
               id="searchInput"
               placeholder="Search inventory by metal, name, type, purchase location, storage location, notes, date..."
@@ -485,27 +485,132 @@
           <table id="inventoryTable">
           <thead>
             <tr>
-              <th class="shrink" data-column="date">Date</th>
-              <th class="shrink" data-column="type">Type</th>
-              <th class="shrink" data-column="metal">Metal</th>
-              <th class="shrink" data-column="qty">Qty</th>
-              <th class="expand" data-column="name">Name</th>
-              <th class="shrink" data-column="weight">Weight</th>
-              <th class="shrink" data-column="purchasePrice" title="USD">Price ($)</th>
-              <th class="shrink" data-column="spot" title="USD">Spot ($)</th>
-              <th class="shrink" data-column="premium">Premium<br />($)</th>
-              <th class="shrink" data-column="purchaseLocation">Purchase<br />Location</th>
-              <th class="shrink" data-column="storageLocation">Storage<br />Location</th>
-              <!-- Numista column moved before Collectable -->
-              <th class="shrink" data-column="numista">N#</th>
-              <th class="icon-col" data-column="collectable" aria-label="Collectable" title="Collectable">
-                <svg class="collectable-icon icon-copper" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true">
-                  <circle cx="12" cy="12" r="10"/>
+              <th class="shrink" data-column="date">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="header-icon">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                  <line x1="16" y1="2" x2="16" y2="6"/>
+                  <line x1="8" y1="2" x2="8" y2="6"/>
+                  <line x1="3" y1="10" x2="21" y2="10"/>
                 </svg>
+                Date
               </th>
-              <th class="icon-col" data-column="edit" aria-label="Edit" title="Edit">⚙️</th>
-              <th class="icon-col" data-column="notes" aria-label="Notes" title="Notes">📓</th>
-              <th class="icon-col" data-column="delete" aria-label="Delete" title="Delete">🗑️</th>
+              <th class="shrink" data-column="type">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="header-icon">
+                  <polygon points="12,2 22,8.5 22,15.5 12,22 2,15.5 2,8.5"/>
+                </svg>
+                Type
+              </th>
+              <th class="shrink" data-column="metal">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="header-icon">
+                  <circle cx="12" cy="12" r="10"/>
+                  <circle cx="12" cy="12" r="6"/>
+                  <circle cx="12" cy="12" r="2"/>
+                </svg>
+                Metal
+              </th>
+              <th class="shrink center-align" data-column="qty">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="header-icon">
+                  <line x1="8" y1="6" x2="21" y2="6"/>
+                  <line x1="8" y1="12" x2="21" y2="12"/>
+                  <line x1="8" y1="18" x2="21" y2="18"/>
+                  <line x1="3" y1="6" x2="3.01" y2="6"/>
+                  <line x1="3" y1="12" x2="3.01" y2="12"/>
+                  <line x1="3" y1="18" x2="3.01" y2="18"/>
+                </svg>
+                Qty
+              </th>
+              <th class="expand" data-column="name">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="header-icon">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                  <circle cx="12" cy="7" r="4"/>
+                </svg>
+                Name
+              </th>
+              <th class="shrink" data-column="weight">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="header-icon">
+                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                </svg>
+                Weight
+              </th>
+              <th class="shrink" data-column="purchasePrice" title="USD">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="header-icon">
+                  <line x1="12" y1="1" x2="12" y2="23"/>
+                  <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                </svg>
+                Price
+              </th>
+              <th class="shrink" data-column="spot" title="USD">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="header-icon">
+                  <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                  <circle cx="18" cy="6" r="2"/>
+                </svg>
+                Spot
+              </th>
+              <th class="shrink" data-column="premium">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="header-icon">
+                  <line x1="12" y1="2" x2="12" y2="22"/>
+                  <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                  <path d="M8 12l2 2 4-4"/>
+                </svg>
+                Premium
+              </th>
+              <th class="shrink" data-column="purchaseLocation">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="header-icon">
+                  <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                  <polyline points="9,22 9,12 15,12 15,22"/>
+                </svg>
+                Purchase
+              </th>
+              <th class="shrink" data-column="storageLocation">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="header-icon">
+                  <path d="M6 2h12l2 7H4l2-7z"/>
+                  <path d="M4 9v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9"/>
+                  <rect x="10" y="13" width="4" height="4"/>
+                </svg>
+                Storage
+              </th>
+              <th class="shrink" data-column="numista">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="header-icon">
+                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                  <path d="m8 12 2 2 4-4"/>
+                </svg>
+                N#
+              </th>
+              <th class="icon-col" data-column="collectable" aria-label="Collectable" title="Collectable">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="header-icon">
+                  <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2" fill="none"/>
+                  <circle cx="12" cy="12" r="6" stroke="currentColor" stroke-width="1" fill="none"/>
+                  <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1" fill="none"/>
+                  <circle cx="12" cy="12" r="1" fill="currentColor"/>
+                </svg>
+                <span class="header-text">Collect</span>
+              </th>
+              <th class="icon-col" data-column="notes" aria-label="Notes" title="Notes">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="header-icon">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                  <polyline points="14,2 14,8 20,8"/>
+                  <line x1="16" y1="13" x2="8" y2="13"/>
+                  <line x1="16" y1="17" x2="8" y2="17"/>
+                  <polyline points="10,9 9,9 8,9"/>
+                </svg>
+                <span class="header-text">Notes</span>
+              </th>
+              <th class="icon-col" data-column="edit" aria-label="Edit" title="Edit">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="header-icon">
+                  <circle cx="12" cy="12" r="3"/>
+                  <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                </svg>
+                <span class="header-text">Edit</span>
+              </th>
+              <th class="icon-col" data-column="delete" aria-label="Delete" title="Delete">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="header-icon">
+                  <polyline points="3,6 5,6 21,6"/>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                  <line x1="10" y1="11" x2="10" y2="17"/>
+                  <line x1="14" y1="11" x2="14" y2="17"/>
+                </svg>
+                <span class="header-text">Delete</span>
+              </th>
             </tr>
           </thead>
           <tbody></tbody>
@@ -1164,7 +1269,84 @@
         </div>
       </div>
     </div>
-
+    
+    <!-- FILTERS MODAL -->
+    <div class="modal" id="filtersModal" style="display: none">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Advanced Filters</h2>
+          <button aria-label="Close modal" class="modal-close" id="filtersCloseBtn">×</button>
+        </div>
+        <div class="modal-body">
+          <div class="filters-grid">
+            <div class="filter-group">
+              <label for="filterMetal">Metal</label>
+              <select id="filterMetal" class="filter-select" multiple>
+                <option value="">All Metals</option>
+              </select>
+              <div class="exclude-toggle">
+                <input type="checkbox" id="filterMetalExclude" />
+                <label for="filterMetalExclude">Exclude</label>
+              </div>
+            </div>
+            <div class="filter-group">
+              <label for="filterType">Type</label>
+              <select id="filterType" class="filter-select" multiple>
+                <option value="">All Types</option>
+              </select>
+              <div class="exclude-toggle">
+                <input type="checkbox" id="filterTypeExclude" />
+                <label for="filterTypeExclude">Exclude</label>
+              </div>
+            </div>
+            <div class="filter-group">
+              <label for="filterPurchaseLocation">Purchase Location</label>
+              <select id="filterPurchaseLocation" class="filter-select" multiple>
+                <option value="">All Locations</option>
+              </select>
+              <div class="exclude-toggle">
+                <input type="checkbox" id="filterPurchaseLocationExclude" />
+                <label for="filterPurchaseLocationExclude">Exclude</label>
+              </div>
+            </div>
+            <div class="filter-group">
+              <label for="filterStorageLocation">Storage Location</label>
+              <select id="filterStorageLocation" class="filter-select" multiple>
+                <option value="">All Storage Locations</option>
+              </select>
+              <div class="exclude-toggle">
+                <input type="checkbox" id="filterStorageLocationExclude" />
+                <label for="filterStorageLocationExclude">Exclude</label>
+              </div>
+            </div>
+            <div class="filter-group">
+              <label for="filterCollectable">Collectable</label>
+              <select id="filterCollectable" class="filter-select" multiple>
+                <option value="">All Items</option>
+                <option value="yes">Collectable Only</option>
+                <option value="no">Non-Collectable Only</option>
+              </select>
+              <div class="exclude-toggle">
+                <input type="checkbox" id="filterCollectableExclude" />
+                <label for="filterCollectableExclude">Exclude</label>
+              </div>
+            </div>
+            <div class="filter-group">
+              <label for="filterDateRange">Date Range</label>
+              <div class="date-range-inputs">
+                <input type="date" id="filterDateFrom" placeholder="From" />
+                <input type="date" id="filterDateTo" placeholder="To" />
+              </div>
+            </div>
+          </div>
+          <div class="filter-actions">
+            <button class="btn secondary" id="clearFiltersBtn">Clear All</button>
+            <button class="btn success" id="applyFiltersBtn">Apply Filters</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    
     <!-- =============================================================================
        DETAILS MODAL WITH PIE CHARTS
        
@@ -1583,7 +1765,7 @@
                       <button class="btn" id="importNumistaBtn">Import Numista</button>
                       <button class="btn" id="mergeNumistaBtn">Merge Numista</button>
                     </div>
-                    <button class="btn warning" id="clearNumistaInventoryBtn">Clear Numista Inventory</button>
+                    <button class="btn warning" id="clearNumistaInventoryBtn">Clear Numista Cache</button>
                     <input type="file" id="numistaImportFile" accept=".csv" hidden />
                     <div class="beta-warning">⚠️ Numista import is a beta feature</div>
                   </div>
