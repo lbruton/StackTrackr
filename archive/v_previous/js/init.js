@@ -172,6 +172,7 @@ document.addEventListener("DOMContentLoaded", () => {
     elements.pageNumbers = safeGetElement("pageNumbers");
 
       elements.changeLogBtn = safeGetElement("changeLogBtn");
+      elements.typeSummary = safeGetElement("typeSummary");
       elements.changeLogModal = safeGetElement("changeLogModal");
       elements.changeLogCloseBtn = safeGetElement("changeLogCloseBtn");
       elements.changeLogTable = safeGetElement("changeLogTable");

@@ -146,6 +146,7 @@ const elements = {
 
   // Change log elements
   changeLogBtn: null,
+  typeSummary: null,
   changeLogModal: null,
   changeLogCloseBtn: null,
   changeLogTable: null,
