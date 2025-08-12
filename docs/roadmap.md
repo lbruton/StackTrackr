@@ -6,6 +6,7 @@ This roadmap tracks upcoming goals without committing to specific patch numbers.
 - _No active patch goals at this time._
 
 ## Completed Patch Goals (v3.04.xx)
+- ✅ **Section titles for main UI** - Added centered titles to Spot Prices, Inventory, Filters, and Information Cards (v3.04.41)
 - ✅ **Pagination section reorder** - Moved pagination above Change Log with edge padding (v3.04.40)
 - ✅ **Template Variable Resolution** - Fixed unreplaced template variables in documentation (v3.04.39)
 - Align inventory action buttons and theme controls

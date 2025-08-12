@@ -236,6 +236,22 @@ h2 {
   margin-bottom: var(--spacing-sm);
 }
 
+.section-title {
+  text-align: center;
+  font-family:
+    "Inter",
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    sans-serif;
+  margin: var(--spacing-lg) 0;
+}
+
+.modal-header .section-title {
+  margin: 0;
+}
+
 label {
   display: block;
   font-weight: 500;
@@ -2851,12 +2867,6 @@ input:disabled + .slider {
   position: relative;
   border-radius: var(--radius-lg) var(--radius-lg) 0 0;
   box-shadow: var(--shadow);
-}
-
-#filtersModal .modal-header h2 {
-  margin: 0;
-  color: var(--text-primary);
-  text-align: center;
 }
 
 #filtersModal .modal-body {
