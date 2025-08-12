@@ -714,6 +714,20 @@ const setupEventListeners = () => {
         );
       }
 
+      if (elements.backupReminder) {
+        safeAttachListener(
+          elements.backupReminder,
+          "click",
+          (e) => {
+            e.preventDefault();
+            if (typeof showFilesModal === "function") {
+              showFilesModal();
+            }
+          },
+          "Backup reminder link",
+        );
+      }
+
       if (elements.storageReportLink) {
         safeAttachListener(
           elements.storageReportLink,

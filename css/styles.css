@@ -17,6 +17,9 @@
   --danger: #dc2626;
   --danger-hover: #b91c1c;
 
+    /* Disclaimer warning color */
+    --disclaimer-color: var(--warning);
+
   /* Background Colors - Better contrast for light mode */
   --bg-primary: #f8fafc;
   --bg-secondary: #f1f5f9;
@@ -80,6 +83,9 @@
   --warning-hover: #d97706;
   --danger: #ef4444;
   --danger-hover: #dc2626;
+
+  /* Disclaimer warning color */
+  --disclaimer-color: var(--danger);
 
   /* Metal-specific Colors - dark mode */
   --silver: #d1d5db;
@@ -2440,12 +2446,23 @@ td input:checked + .slider:before {
   background: #9ca3af;
 }
 
+.disclaimer-wrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
 .table-disclaimer {
   font-size: 0.75rem;
-  color: var(--text-muted);
+  color: var(--disclaimer-color);
   font-style: italic;
-  flex: 1;
   text-align: center;
+}
+
+.backup-link {
+  text-decoration: underline;
+  cursor: pointer;
 }
 
 .pagination-select {
@@ -3202,6 +3219,7 @@ input:disabled + .slider {
   flex-wrap: wrap;
   gap: var(--spacing-xs);
   justify-content: center;
+  margin-top: var(--spacing-xs);
 }
 
 /* Header Icons */

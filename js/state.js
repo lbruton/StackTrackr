@@ -145,8 +145,9 @@ const elements = {
   pageNumbers: null,
 
   // Change log elements
-  changeLogBtn: null,
-  typeSummary: null,
+    changeLogBtn: null,
+    backupReminder: null,
+    typeSummary: null,
   changeLogModal: null,
   changeLogCloseBtn: null,
   changeLogTable: null,
