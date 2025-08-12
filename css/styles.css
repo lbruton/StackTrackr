@@ -95,6 +95,48 @@
     0 10px 15px -3px rgb(0 0 0 / 0.3), 0 4px 6px -4px rgb(0 0 0 / 0.3);
 }
 
+[data-theme="sepia"] {
+  /* Primary Colors - Sepia Mode */
+  --primary: #b35c1f;
+  --primary-hover: #934a17;
+  --secondary: #8b7355;
+  --secondary-hover: #6d5c3f;
+  --success: #698f3f;
+  --success-hover: #577a34;
+  --info: #0ea5e9;
+  --warning: #d97706;
+  --warning-hover: #b45309;
+  --danger: #dc2626;
+  --danger-hover: #b91c1c;
+
+  /* Metal-specific Colors - Sepia tone */
+  --silver: #a8a29e;
+  --gold: #b58900;
+  --platinum: #8d8d8d;
+  --palladium: #a58b6f;
+
+  /* Background Colors - Sepia Mode */
+  --bg-primary: #f4ecd8;
+  --bg-secondary: #ede3ce;
+  --bg-tertiary: #e1d5bf;
+  --bg-card: #f4ecd8;
+
+  /* Text Colors - Sepia Mode */
+  --text-primary: #4b3f2f;
+  --text-secondary: #6d5e4b;
+  --text-muted: #9c8d7b;
+
+  /* Border & Shadow - Sepia Mode */
+  --border: #d3c4a8;
+  --border-hover: #c2b396;
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg:
+    0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+
+  filter: sepia(30%);
+}
+
 /* =============================================================================
    BASE STYLES & RESET
    ============================================================================= */
