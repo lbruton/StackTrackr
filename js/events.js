@@ -1528,14 +1528,8 @@ const setupSearch = () => {
  * Updates logo groups to match current theme
  */
 const updateLogoTheme = () => {
-  const isDark = document.documentElement.getAttribute("data-theme") === "dark";
-  const logo = document.querySelector(".app-logo");
-  if (!logo) return;
-  const light = logo.querySelector(".light-mode");
-  const dark = logo.querySelector(".dark-mode");
-  if (light && dark) {
-    light.style.display = isDark ? "none" : "";
-    dark.style.display = isDark ? "" : "none";
+  if (typeof updateHeaderLogo === "function") {
+    updateHeaderLogo();
   }
 };
 
