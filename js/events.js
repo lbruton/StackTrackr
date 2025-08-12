@@ -714,6 +714,20 @@ const setupEventListeners = () => {
         );
       }
 
+      if (elements.backupReminder) {
+        safeAttachListener(
+          elements.backupReminder,
+          "click",
+          (e) => {
+            e.preventDefault();
+            if (typeof showFilesModal === "function") {
+              showFilesModal();
+            }
+          },
+          "Backup reminder link",
+        );
+      }
+
       if (elements.storageReportLink) {
         safeAttachListener(
           elements.storageReportLink,
@@ -975,7 +989,7 @@ const setupEventListeners = () => {
           numistaOverride = true;
           elements.numistaImportFile.click();
         },
-        "Import Numista button",
+        "Import Numista CSV button",
       );
     }
     if (mergeNumistaBtn && elements.numistaImportFile) {
@@ -986,7 +1000,7 @@ const setupEventListeners = () => {
           numistaOverride = false;
           elements.numistaImportFile.click();
         },
-        "Merge Numista button",
+        "Merge Numista CSV button",
       );
     }
       if (elements.numistaImportFile) {
@@ -1077,53 +1091,6 @@ const setupEventListeners = () => {
         "Cloud Sync button",
       );
     }
-
-    // Custom mapping buttons
-    if (elements.addMappingBtn) {
-      safeAttachListener(
-        elements.addMappingBtn,
-        "click",
-        () => {
-          const pattern = prompt("Enter regex pattern to match:");
-          const field = prompt("Enter field name to map to:");
-          if (pattern && field) {
-            CustomMapping.addMapping(pattern, field);
-            alert(`Mapping added: ${pattern} → ${field}`);
-          }
-        },
-        "Add custom mapping",
-      );
-    }
-    if (elements.applyMappingsBtn) {
-      safeAttachListener(
-        elements.applyMappingsBtn,
-        "click",
-        () => {
-          const name = prompt("Enter field name to test:");
-          if (name) {
-            const mapped = CustomMapping.mapField(name);
-            alert(
-              mapped
-                ? `${name} → ${mapped}`
-                : `No mapping for '${name}'`,
-            );
-          }
-        },
-        "Apply custom mappings",
-      );
-    }
-    if (elements.clearMappingsBtn) {
-      safeAttachListener(
-        elements.clearMappingsBtn,
-        "click",
-        () => {
-          CustomMapping.clear();
-          alert("Custom mappings cleared.");
-        },
-        "Clear custom mappings",
-      );
-    }
-
     const cloudSyncCloseBtn = document.getElementById("cloudSyncCloseBtn");
     if (cloudSyncCloseBtn && elements.cloudSyncModal) {
       safeAttachListener(
@@ -1510,38 +1477,32 @@ const setupSearch = () => {
 };
 
 /**
- * Updates logo groups to match current theme
- */
-const updateLogoTheme = () => {
-  if (typeof updateHeaderLogo === "function") {
-    updateHeaderLogo();
-  }
-};
-
-/**
  * Sets up theme toggle event listeners
  */
 const updateThemeButton = () => {
   const btn = elements.appearanceBtn;
   if (!btn) return;
-  const savedTheme = localStorage.getItem(THEME_KEY);
-  const mode = savedTheme ? savedTheme : "system";
-  btn.classList.remove("dark", "light", "sepia", "system");
-
-  const nextMap = { dark: "light", light: "sepia", sepia: "system", system: "dark" };
-  const iconMap = { dark: "🌙", light: "☀️", sepia: "📜", system: "💻" };
-  const labelMap = {
-    dark: "Dark mode",
-    light: "Light mode",
-    sepia: "Sepia mode",
-    system: "System theme",
+  const savedTheme = localStorage.getItem(THEME_KEY) || "light";
+  
+  // Remove all theme classes
+  btn.classList.remove("dark", "light", "sepia");
+  
+  // Add current theme class for styling
+  btn.classList.add(savedTheme);
+  
+  // Show current theme icon and color
+  const themeConfig = {
+    dark: { icon: "🌙", label: "Dark mode", color: "#1e293b" },
+    light: { icon: "☀️", label: "Light mode", color: "#f8fafc" },
+    sepia: { icon: "📜", label: "Sepia mode", color: "#f2e7d5" }
   };
-  const next = nextMap[mode];
-  btn.textContent = iconMap[next];
-  btn.setAttribute("aria-label", `Switch to ${labelMap[next]}`);
-  btn.setAttribute("title", `Switch to ${labelMap[next]}`);
-
-  updateLogoTheme();
+  
+  const config = themeConfig[savedTheme] || themeConfig.light;
+  btn.textContent = config.icon;
+  btn.style.backgroundColor = config.color;
+  btn.style.color = savedTheme === "light" ? "#1e293b" : "#f8fafc";
+  btn.setAttribute("aria-label", config.label);
+  btn.setAttribute("title", config.label);
 };
 
 window.updateThemeButton = updateThemeButton;
@@ -1569,7 +1530,8 @@ const setupThemeToggle = () => {
       window
         .matchMedia("(prefers-color-scheme: dark)")
         .addEventListener("change", () => {
-          if (localStorage.getItem(THEME_KEY) === "system") {
+          // Update button if no explicit theme is set
+          if (!localStorage.getItem(THEME_KEY)) {
             updateThemeButton();
           }
         });
@@ -1581,15 +1543,20 @@ const setupThemeToggle = () => {
         "click",
         (e) => {
           e.preventDefault();
-          const savedTheme = localStorage.getItem(THEME_KEY) || "system";
-          if (savedTheme === "dark") {
-            setTheme("light");
-          } else if (savedTheme === "light") {
-            setTheme("sepia");
-          } else if (savedTheme === "sepia") {
-            setTheme("system");
+          if (typeof toggleTheme === "function") {
+            toggleTheme();
           } else {
-            setTheme("dark");
+            // Fallback theme cycling: dark → light → sepia → dark
+            const savedTheme = localStorage.getItem(THEME_KEY) || "light";
+            if (savedTheme === "dark") {
+              setTheme("light");
+            } else if (savedTheme === "light") {
+              setTheme("sepia");
+            } else if (savedTheme === "sepia") {
+              setTheme("dark");
+            } else {
+              setTheme("light");
+            }
           }
           updateThemeButton();
         },

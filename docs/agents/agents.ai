@@ -1,21 +1,26 @@
 # StackTrackr Project Instructions
 
 ## CONTEXT
-Precious metals inventory app (v3.04.05+). Client-side: JS modules + localStorage + CSS. Tracks Au/Ag/Pt/Pd.
+Precious metals inventory app (v3.04.26+). Client-side: JS modules + localStorage + CSS. Tracks Au/Ag/Pt/Pd.
 
 ## FILES
 - `index.html` - main UI
 - `js/inventory.js` - CRUD/data  
 - `js/events.js` - handlers
+- `js/theme.js` - dark/light/sepia toggle
+- `js/constants.js` - APP_VERSION, config
 - `css/styles.css` - theming
-- `docs/claude.ai` - session state
-- `backup/` - safety
+- `docs/agents/agents.ai` - session state
+- `docs/roadmap.md` - available tasks
+- `docs/functionstable.md` - function reference
+
+## QUICK START
+1. Read `agents/agents.ai` → pick `roadmap.md` task → check `functionstable.md` → edit relevant files → update version + docs
 
 ## VERSIONING
-FORMAT: BRANCH.RELEASE.PATCH[state] (3.04.08)
-STATES: a=alpha,b=beta,rc=candidate
+FORMAT: BRANCH.RELEASE.PATCH[state] (3.04.26)
 BUMP_AFTER: task_completion + USER_CONFIRMATION
-FILES_UPDATE: constants.js(APP_VERSION),roadmap.md(mark_complete),changelog.md(add_entry),functionstable.md,implementation_summary.md,status.md,structure.md
+UPDATE: `js/constants.js` APP_VERSION, `docs/changelog.md`, `docs/roadmap.md` (mark complete)
 
 ## TOKEN EFFICIENCY RULES
 - NO descriptive/informative messages
@@ -26,24 +31,39 @@ FILES_UPDATE: constants.js(APP_VERSION),roadmap.md(mark_complete),changelog.md(a
 - Minimal confirmation text
 
 ## MESSAGE_TRACKER
-COUNT: 15
+COUNT: 18
 WARN_AT: 150,200,230
-AUTO_WARN: "⚠️ Chat approaching limit. Start new conversation soon and reference docs/claude.ai"
+AUTO_WARN: "⚠️ Chat approaching limit. Start new conversation soon and reference docs/agents.ai"
+
+## WORKFLOW (CONDENSED)
+**PICK TASK**: `docs/roadmap.md` → find unassigned patch
+**CHECK FILES**: High-conflict = `index.html` `events.js` `styles.css` (coordinate)
+**TEST**: Load sample.csv, CRUD, themes (dark/light/sepia), responsive
+**UPDATE**: Version in constants.js, changelog.md, roadmap.md (mark done)
 
 ## KEY FUNCTIONS
-`renderTable()` `filterInventory()` `addInventoryItem()` `editInventoryItem()` `loadInventory()` `saveInventory()`
+`renderTable()` `filterInventory()` `addInventoryItem()` `editInventoryItem()` `loadInventory()` `saveInventory()` `toggleTheme()` `setTheme()` `updateThemeButton()`
 
-## TEST
-Load sample.csv, test CRUD, verify import/export, check responsive, confirm localStorage.
+## CURRENT THEMES
+- **Dark**: data-theme="dark" 
+- **Light**: default (no attribute)
+- **Sepia**: data-theme="sepia"
+- **Toggle order**: dark → light → sepia → dark
 
-## POST-TASK DOCS
-`functionstable.md` `changelog.md` `roadmap.md` `status.md`
+## CRITICAL PATTERNS
+- All user input: sanitize with `replace(/[<>]/g, '')`
+- LocalStorage keys: Use constants from `js/constants.js`
+- Event listeners: Use `safeAttachListener()` from `events.js`
+- Theme changes: Call `updateThemeButton()` after `setTheme()`
 
-## HIGH-CONFLICT
-`index.html` `events.js` `styles.css`
+## HIGH-CONFLICT FILES
+`index.html` `events.js` `styles.css` - coordinate changes, minimal edits
 
 ## NOTES
-- Current version: 3.04.20 (column order and theme fixes)
+- Current version: 3.04.26 (theme toggle improvements)
+- **THEME TOGGLE FIXED**: Button now shows current theme color/icon, removed system mode
+- **THEME ROTATION**: dark → light → sepia → dark (no system mode)
+- **BUTTON STYLING**: Shows current theme with matching background color
 - Search functionality working properly
 - N# catalog integration complete
 - CatalogManager class implemented

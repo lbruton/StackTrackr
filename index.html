@@ -67,7 +67,121 @@
   <body>
     <!-- Application Header -->
     <div class="app-header">
-      <h1 class="app-logo" id="appLogo">StackrTrackr</h1>
+      <div>
+        <h1 class="app-logo" id="appLogo" aria-label="StackrTrackr">
+          <svg class="stackr-logo" viewBox="0 0 800 200" xmlns="http://www.w3.org/2000/svg" width="100%" height="auto" style="max-width: 800px;">
+            <defs>
+              <!-- Light Mode Gradients -->
+              <linearGradient id="goldLight" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stop-color="#FFD700"/>
+                <stop offset="30%" stop-color="#FFA500"/>
+                <stop offset="70%" stop-color="#B8860B"/>
+                <stop offset="100%" stop-color="#8B6914"/>
+              </linearGradient>
+              
+              <linearGradient id="silverLight" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stop-color="#F8F8FF"/>
+                <stop offset="30%" stop-color="#E5E5E5"/>
+                <stop offset="70%" stop-color="#C0C0C0"/>
+                <stop offset="100%" stop-color="#A0A0A0"/>
+              </linearGradient>
+              
+              <!-- Dark Mode Gradients -->
+              <linearGradient id="goldDark" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stop-color="#FFED4E"/>
+                <stop offset="30%" stop-color="#FFD700"/>
+                <stop offset="70%" stop-color="#FFA500"/>
+                <stop offset="100%" stop-color="#CC8400"/>
+              </linearGradient>
+              
+              <linearGradient id="silverDark" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stop-color="#FFFFFF"/>
+                <stop offset="30%" stop-color="#F5F5F5"/>
+                <stop offset="70%" stop-color="#E0E0E0"/>
+                <stop offset="100%" stop-color="#C0C0C0"/>
+              </linearGradient>
+              
+              <!-- Sepia Mode Gradients -->
+              <linearGradient id="goldSepia" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stop-color="#D4A574"/>
+                <stop offset="30%" stop-color="#B58900"/>
+                <stop offset="70%" stop-color="#8B6914"/>
+                <stop offset="100%" stop-color="#6B5416"/>
+              </linearGradient>
+              
+              <linearGradient id="silverSepia" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stop-color="#F2E7D5"/>
+                <stop offset="30%" stop-color="#D1C2A5"/>
+                <stop offset="70%" stop-color="#A8A29E"/>
+                <stop offset="100%" stop-color="#8D8D8D"/>
+              </linearGradient>
+            </defs>
+            
+            <!-- Light Mode Group -->
+            <g class="light-mode">
+              <!-- Shadow layer for light mode -->
+              <text x="53" y="83" font-family="Arial, sans-serif" font-size="72" font-weight="bold" fill="rgba(0,0,0,0.3)">
+                <tspan>Stackr</tspan><tspan>Trackr</tspan>
+              </text>
+              <!-- Main title -->
+              <text x="50" y="80" font-family="Arial, sans-serif" font-size="72" font-weight="bold">
+                <tspan fill="url(#silverLight)">Stackr</tspan><tspan fill="url(#goldLight)">Trackr</tspan>
+              </text>
+              
+              <!-- Tagline shadow -->
+              <text x="52" y="132" font-family="Arial, sans-serif" font-size="32" fill="rgba(0,0,0,0.2)">
+                Track Your Stack. Your Way.
+              </text>
+              <!-- Tagline -->
+              <text x="50" y="130" font-family="Arial, sans-serif" font-size="32" fill="#666666">
+                Track Your Stack. Your Way.
+              </text>
+            </g>
+            
+            <!-- Dark Mode Group -->
+            <g class="dark-mode">
+              <!-- Shadow layer for dark mode -->
+              <text x="53" y="83" font-family="Arial, sans-serif" font-size="72" font-weight="bold" fill="rgba(0,0,0,0.5)">
+                <tspan>Stackr</tspan><tspan>Trackr</tspan>
+              </text>
+              <!-- Main title -->
+              <text x="50" y="80" font-family="Arial, sans-serif" font-size="72" font-weight="bold">
+                <tspan fill="url(#silverDark)">Stackr</tspan><tspan fill="url(#goldDark)">Trackr</tspan>
+              </text>
+              
+              <!-- Tagline shadow -->
+              <text x="52" y="132" font-family="Arial, sans-serif" font-size="32" fill="rgba(0,0,0,0.3)">
+                Track Your Stack. Your Way.
+              </text>
+              <!-- Tagline -->
+              <text x="50" y="130" font-family="Arial, sans-serif" font-size="32" fill="#E0E0E0">
+                Track Your Stack. Your Way.
+              </text>
+            </g>
+            
+            <!-- Sepia Mode Group -->
+            <g class="sepia-mode">
+              <!-- Shadow layer for sepia mode -->
+              <text x="53" y="83" font-family="Arial, sans-serif" font-size="72" font-weight="bold" fill="rgba(62,47,30,0.4)">
+                <tspan>Stackr</tspan><tspan>Trackr</tspan>
+              </text>
+              <!-- Main title -->
+              <text x="50" y="80" font-family="Arial, sans-serif" font-size="72" font-weight="bold">
+                <tspan fill="url(#silverSepia)">Stackr</tspan><tspan fill="url(#goldSepia)">Trackr</tspan>
+              </text>
+              
+              <!-- Tagline shadow -->
+              <text x="52" y="132" font-family="Arial, sans-serif" font-size="32" fill="rgba(62,47,30,0.3)">
+                Track Your Stack. Your Way.
+              </text>
+              <!-- Tagline -->
+              <text x="50" y="130" font-family="Arial, sans-serif" font-size="32" fill="#6F604E">
+                Track Your Stack. Your Way.
+              </text>
+            </g>
+          </svg>
+        </h1>
+      </div>
       <div style="margin-left: auto; display: flex; gap: 0.5rem">
         <button class="btn" id="aboutBtn" title="About" aria-label="About">
           About 📖
@@ -176,8 +290,8 @@
                 <button class="btn" id="saveSpotBtnSilver">Save</button>
                 <button class="btn" id="cancelSpotBtnSilver">Cancel</button>
               </div>
-            </div>
           </div>
+        </div>
           <!-- Gold spot price controls -->
           <div class="spot-input gold">
             <div class="spot-card">
@@ -544,10 +658,13 @@
       <section class="table-controls-section">
         <div class="table-controls">
           <button type="button" id="changeLogBtn" class="btn">Change Log</button>
-          <span class="table-disclaimer"
-            >All data is stored locally. Back up often.</span
-          >
-          <div id="typeSummary"></div>
+          <div class="disclaimer-wrapper">
+            <span class="table-disclaimer">
+              All data is stored locally.
+              <span id="backupReminder" class="backup-link">Back up often.</span>
+            </span>
+            <div id="typeSummary"></div>
+          </div>
           <div class="items-per-page">
             <span class="items-label">Items:</span>
             <select class="pagination-select" id="itemsPerPage">
@@ -1631,16 +1748,16 @@
               <div class="import-block">
                 <div class="import-export-grid">
                   <div class="import-csv-grid">
-                    <button class="btn" id="importCsvOverride">Import</button>
-                    <button class="btn" id="importCsvMerge">Merge</button>
+                    <button class="btn danger" id="importCsvOverride">Import CSV</button>
+                    <button class="btn success" id="importCsvMerge">Merge CSV</button>
                     <input accept=".csv" hidden id="importCsvFile" type="file" />
                   </div>
-                  <label class="btn" id="importJsonBtn">
-                    Import JSON <span class="import-icon">⬇️</span>
+                  <label class="btn success" id="importJsonBtn">
+                    Import JSON
                     <input accept=".json" hidden id="importJsonFile" type="file" />
                   </label>
-                  <label class="btn" id="importExcelBtn">
-                    Import Excel <span class="import-icon">⬇️</span>
+                  <label class="btn success" id="importExcelBtn">
+                    Import Excel
                     <input
                       accept=".xlsx,.xls"
                       hidden
@@ -1665,17 +1782,17 @@
               <p class="settings-subtext">Export your data files.</p>
               <div class="export-block">
                 <div class="import-export-grid">
-                  <button class="btn" id="exportCsvBtn">
-                    Export CSV <span class="export-icon">⬆️</span>
+                  <button class="btn info" id="exportCsvBtn">
+                    Export CSV
                   </button>
-                  <button class="btn" id="exportJsonBtn">
-                    Export JSON <span class="export-icon">⬆️</span>
+                  <button class="btn info" id="exportJsonBtn">
+                    Export JSON
                   </button>
-                  <button class="btn" id="exportExcelBtn">
-                    Export Excel <span class="export-icon">⬆️</span>
+                  <button class="btn info" id="exportExcelBtn">
+                    Export Excel
                   </button>
-                  <button class="btn" id="exportPdfBtn">
-                    Export PDF <span class="export-icon">⬆️</span>
+                  <button class="btn info" id="exportPdfBtn">
+                    Export PDF
                   </button>
                 </div>
               </div>
@@ -1687,8 +1804,8 @@
                 <div class="third-party-block">
                   <div class="import-export-grid">
                     <div class="grid grid-2">
-                      <button class="btn" id="importNumistaBtn">Import Numista</button>
-                      <button class="btn" id="mergeNumistaBtn">Merge Numista</button>
+                      <button class="btn success" id="importNumistaBtn">Import Numista CSV</button>
+                      <button class="btn secondary" id="mergeNumistaBtn">Merge Numista CSV</button>
                     </div>
                     <button class="btn warning" id="clearNumistaInventoryBtn">Clear Numista Cache</button>
                     <input type="file" id="numistaImportFile" accept=".csv" hidden />
@@ -1696,19 +1813,6 @@
                   </div>
                 </div>
               </div>
-
-            <div class="settings-card">
-              <h3>Custom Mapping</h3>
-              <p class="settings-subtext">Define regex rules to map imported fields.</p>
-              <div class="third-party-block">
-                <div class="import-export-grid">
-                  <button class="btn" id="addMappingBtn">Add Mapping</button>
-                  <button class="btn" id="applyMappingsBtn">Apply Mappings</button>
-                  <button class="btn" id="clearMappingsBtn">Clear Mappings</button>
-                </div>
-                <div class="beta-warning">⚠️ Custom mapping is a beta feature</div>
-              </div>
-            </div>
 
             <div class="settings-card boating-accident-section">
               <h3>Clear Data</h3>
@@ -1724,11 +1828,6 @@
                   Boating Accident?
                 </button>
               </div>
-            </div>
-
-            <div class="settings-card">
-              <h3>Backup/Restore</h3>
-              <p class="settings-subtext">Coming Soon</p>
             </div>
           </div>
         </div>

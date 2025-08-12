@@ -1,5 +1,5 @@
 
-# StackrTrackr v3.04.23
+# StackrTrackr v3.04.25
 
 
 StackrTrackr is a comprehensive client-side web application for tracking precious metal investments. It's designed to help users manage their silver, gold, platinum, and palladium holdings with detailed financial metrics and enhanced tracking capabilities.
@@ -7,6 +7,8 @@ StackrTrackr is a comprehensive client-side web application for tracking preciou
 The public hosted version of the app is available at [stackrtrackr.com](https://stackrtrackr.com).
 
 ## Recent Updates
+- **v3.04.25 - Unified logo**: single SVG logo for all themes, removed theme-specific assets
+- **v3.04.24 - Backup warning theming**: local storage warning uses theme colors with centered type summary and backup link
 - **v3.04.23 - Inventory actions alignment**: row icons match header order and theme-aware controls
 - **v3.04.22 - Metals.dev history limit**: limits Metals.dev API to 30-day history and logs daily prices
 - **v3.04.21 - Header height and type color theming**: consistent header sizing and themed type chips
@@ -253,10 +255,9 @@ Each inventory item includes:
 ## Project Structure
 
 ```
-├── css/
-│   └── styles.css                      # Complete theming and responsive styling
-├── debug/                              # Development artifacts
 ├── archive/                            # Previous build snapshots for fallback
+├── backup/                             # Backup copies of key files
+├── css/                                # Complete theming and responsive styling
 ├── docs/
 │   ├── archive/                        # Archived notes and historical docs
 │   ├── future/                         # Planning notes for upcoming enhancements
@@ -268,6 +269,7 @@ Each inventory item includes:
 │   ├── structure.md                    # Documentation of folder and file organization
 │   ├── functionstable.md               # Function reference table
 │   └── versioning.md                   # Version management notes
+├── images/                             # Project icons and favicons
 ├── js/
 │   ├── api.js
 │   ├── charts.js
@@ -283,9 +285,10 @@ Each inventory item includes:
 │   ├── state.js
 │   ├── theme.js
 │   └── utils.js
+├── scripts/                            # Utility scripts
+├── tests/                              # Automated tests
 ├── index.html                         # Main application interface
 ├── sample.csv                         # Sample inventory data with notes for import testing
-├── structure.md                       # Detailed project structure reference
 └── README.md                          # Root project summary and documentation
 ```
 
@@ -299,7 +302,7 @@ Each inventory item includes:
 
 ## Documentation
 - **[README.md](README.md)** - Detailed project information.
-- **[docs/MULTI_AGENT_WORKFLOW.md](docs/MULTI_AGENT_WORKFLOW.md)** - AI assistant development workflow.
+- **[docs/agents/multi_agent_workflow.md](docs/agents/multi_agent_workflow.md)** - AI assistant development workflow.
 - **[docs/changelog.md](docs/changelog.md)** - Version history and features.
 - **[docs/status.md](docs/status.md)** - Current project status.
  - **[docs/structure.md](docs/structure.md)** - Project organization.

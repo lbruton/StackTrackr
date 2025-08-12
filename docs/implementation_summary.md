@@ -1,6 +1,41 @@
-# Implementation Summary: Gold & Silver Logo
+# Implementation Summary: Unified Logo
 
-> **Latest release: v3.04.23**
+> **Latest release: v3.04.25**
+
+## Version Update: 3.04.24 → 3.04.25
+
+## User Requirements Implemented
+
+- Adopted single SVG logo across all themes
+- Removed theme-specific logo switching logic and assets
+
+## Technical Changes Made
+
+### Files Modified:
+1. **`images/stackrtrackr-logo.svg`**: Added unified logo asset
+2. **`index.html`**: Replaced header logo reference
+3. **`js/theme.js`**: Removed logo-switching function
+4. **`js/events.js`**: Dropped logo update helper
+5. **`js/constants.js`**: Bumped version to 3.04.25
+6. **Documentation**: Updated README, changelog, roadmap, status, structure, function table, versioning, and workflow
+
+## Version Update: 3.04.23 → 3.04.24
+
+## User Requirements Implemented
+
+- Local data warning now uses yellow/red theme colors
+- Clicking "Back up often" opens Files modal
+- Type summary chips centered beneath warning
+
+## Technical Changes Made
+
+### Files Modified:
+1. **`index.html`**: Added centered disclaimer with clickable backup link and repositioned type summary
+2. **`css/styles.css`**: Introduced theme-aware disclaimer colors and layout styles
+3. **`js/events.js`**: Linked backup reminder to Files modal
+4. **`js/init.js`**, **`js/state.js`**: Registered backup reminder element
+5. **`js/constants.js`**: Bumped version to 3.04.24
+6. **Documentation**: Updated changelog, function table, roadmap, status, and structure
 
 ## Version Update: 3.04.22 → 3.04.23
 
@@ -466,7 +501,7 @@
 - Unified changelog bullets in About and version modals
 - Numista imports default to collectable with N# note and paper-to-note mapping
 - Weight inputs rounded to two decimals for cleaner display
-- Added beta warning under Numista import button
+- Added beta warning under Numista CSV import button
 
 ## Technical Changes Made
 

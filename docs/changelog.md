@@ -1,11 +1,43 @@
 # StackrTrackr — Changelog
 
-> **Latest release: v3.04.23**
+> **Latest release: v3.04.28**
 
 
 For upcoming work, see [roadmap](roadmap.md).
 
 ## 📋 Version History
+
+### Version 3.04.28 – Enhanced Light Theme Styling (2025-08-12)
+- **Improved Light Theme**: Updated light theme to use light/middle grays and light blues for better visual appeal
+- **Background Updates**: Modified primary, secondary, and tertiary backgrounds with light blue-gray tones
+- **Color Harmony**: Enhanced color scheme with light blues for primary colors and coordinated gray palette
+- **Visual Consistency**: Maintained excellent contrast while creating a more modern, softer appearance
+
+### Version 3.04.27 – New StackrTrackr Logo Implementation (2025-08-12)
+- **Enhanced Logo**: Implemented new premium StackrTrackr logo with comprehensive theme support
+- **Triple Theme Support**: Added dedicated sepia mode with warm-toned gradients alongside light and dark modes
+- **file:// Protocol Compatibility**: Removed SVG filters that can fail in local file mode, using manual shadow effects instead
+- **Clean Integration**: Removed logo background box for seamless header integration
+- **Automatic Theme Detection**: Logo automatically switches between all three modes based on system preferences and manual selection
+- **Responsive Design**: Logo scales perfectly from desktop to mobile with optimized typography
+- **Premium Styling**: Theme-specific gold and silver gradients with manual drop shadows for depth
+- **Cross-Theme Support**: Works seamlessly with dark, light, and sepia themes using dedicated gradient sets
+- **Safe SVG Implementation**: Replaced static image with filter-free inline SVG for maximum compatibility
+- **Fixed CSS Specificity**: Corrected theme switching logic to properly handle all three modes
+
+### Version 3.04.26 – Enhanced Theme Toggle (2025-08-13)
+- **Improved theme toggle**: Button now displays current theme's color and icon instead of next theme
+- **Simplified theme rotation**: Removed system mode from rotation (dark → light → sepia → dark)
+- **Enhanced styling**: Theme button shows appropriate background color matching current theme
+- **Better UX**: Clear visual indication of active theme with themed button styling
+
+### Version 3.04.25 – Unified logo across themes (2025-08-13)
+- Adopted single SVG logo for all themes
+- Removed legacy theme-specific logo files and logic
+
+### Version 3.04.24 – Backup warning and type summary alignment (2025-08-13)
+- Local data warning now uses theme-aware yellow/red styling with clickable backup link
+- Type summary chips centered beneath the warning message
 
 ### Version 3.04.23 – Inventory actions alignment (2025-08-13)
 - Fixed inventory row action order to Collect, Notes, Edit, Delete
@@ -112,7 +144,7 @@ For upcoming work, see [roadmap](roadmap.md).
 - Unified bullet styling for "What's New" lists
 - Numista imports default to collectable with N# note
 - Weight inputs round to two decimals
-- Numista import button includes beta warning
+- Numista CSV import button includes beta warning
 
 
 ### Version 3.03.08h – UI compactness & import options (2025-08-10)

@@ -105,9 +105,6 @@ document.addEventListener("DOMContentLoaded", () => {
     elements.exportPdfBtn = safeGetElement("exportPdfBtn");
     elements.cloudSyncBtn = safeGetElement("cloudSyncBtn");
     elements.syncAllBtn = safeGetElement("syncAllBtn");
-    elements.addMappingBtn = safeGetElement("addMappingBtn");
-    elements.applyMappingsBtn = safeGetElement("applyMappingsBtn");
-    elements.clearMappingsBtn = safeGetElement("clearMappingsBtn");
     elements.removeInventoryDataBtn = safeGetElement("removeInventoryDataBtn");
     elements.clearNumistaCacheBtn = safeGetElement("clearNumistaCacheBtn");
     elements.boatingAccidentBtn = safeGetElement("boatingAccidentBtn");
@@ -172,6 +169,7 @@ document.addEventListener("DOMContentLoaded", () => {
     elements.pageNumbers = safeGetElement("pageNumbers");
 
       elements.changeLogBtn = safeGetElement("changeLogBtn");
+      elements.backupReminder = safeGetElement("backupReminder");
       elements.typeSummary = safeGetElement("typeSummary");
       elements.changeLogModal = safeGetElement("changeLogModal");
       elements.changeLogCloseBtn = safeGetElement("changeLogCloseBtn");

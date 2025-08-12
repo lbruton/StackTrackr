@@ -1278,7 +1278,7 @@ const getStorageReportCSS = () => {
         --info: #17a2b8;
         --light: #f8f9fa;
         --dark: #343a40;
-        --bg-primary: #ffffff;
+        --bg-primary: #f9fafb;
         --bg-secondary: #f8f9fa;
         --text-primary: #333333;
         --text-secondary: #666666;
@@ -1288,7 +1288,7 @@ const getStorageReportCSS = () => {
     [data-theme="dark"] {
         --bg-primary: #1a1a1a;
         --bg-secondary: #2d2d2d;
-        --text-primary: #ffffff;
+        --text-primary: #f8fafc;
         --text-secondary: #cccccc;
         --border: #404040;
         --light: #2d2d2d;
@@ -1495,19 +1495,19 @@ const getStorageReportCSS = () => {
     
     .btn.premium {
         background: var(--primary);
-        color: white;
+        color: #f8fafc;
         border-color: var(--primary);
     }
     
     .btn.success {
         background: var(--success);
-        color: white;
+        color: #f8fafc;
         border-color: var(--success);
     }
     
     .btn.secondary {
         background: var(--text-secondary);
-        color: white;
+        color: #f8fafc;
         border-color: var(--text-secondary);
     }
     
@@ -1688,7 +1688,7 @@ const getStorageReportCSS = () => {
     
     .print-btn {
         background: var(--primary);
-        color: white;
+        color: #f8fafc;
         border: none;
         padding: 0.75rem 1.5rem;
         border-radius: 0.5rem;
@@ -1789,7 +1789,7 @@ const getStorageReportCSS = () => {
     
     .item-percentage {
         background: var(--primary);
-        color: white;
+        color: #f8fafc;
         padding: 0.25rem 0.5rem;
         border-radius: 1rem;
         font-size: 0.8rem;
@@ -1817,7 +1817,7 @@ const getStorageReportCSS = () => {
     
     .view-details-btn {
         background: var(--success);
-        color: white;
+        color: #f8fafc;
         border: none;
         padding: 0.5rem 1rem;
         border-radius: 0.25rem;
@@ -1844,7 +1844,7 @@ const getStorageReportCSS = () => {
     }
     
     .modal-content-large {
-        background: white;
+        background: #f9fafb;
         border-radius: 0.5rem;
         width: 90%;
         max-width: 800px;
@@ -1856,7 +1856,7 @@ const getStorageReportCSS = () => {
     
     .modal-header {
         background: var(--primary);
-        color: white;
+        color: #f8fafc;
         padding: 1rem;
         display: flex;
         justify-content: space-between;
@@ -1866,7 +1866,7 @@ const getStorageReportCSS = () => {
     .modal-close {
         background: none;
         border: none;
-        color: white;
+        color: #f8fafc;
         font-size: 1.5rem;
         cursor: pointer;
         padding: 0;
@@ -1979,7 +1979,7 @@ const getStorageReportCSS = () => {
     
     @media print {
         body {
-            background: white;
+            background: #f9fafb;
         }
         
         .print-controls {
@@ -2076,7 +2076,7 @@ const getStorageReportJS = () => {
             datasets: [{
                 data: currentChartItems.map(item => item.size),
                 backgroundColor: currentChartItems.map((_, index) => getChartColor(index)),
-                borderColor: isDark ? '#404040' : '#ffffff',
+                borderColor: isDark ? '#404040' : '#f8fafc',
                 borderWidth: 2,
                 hoverBorderWidth: 3,
                 hoverOffset: 10
@@ -2091,9 +2091,9 @@ const getStorageReportJS = () => {
                     display: false
                 },
                 tooltip: {
-                    backgroundColor: isDark ? '#343a40' : '#ffffff',
-                    titleColor: isDark ? '#ffffff' : '#000000',
-                    bodyColor: isDark ? '#ffffff' : '#000000',
+                    backgroundColor: isDark ? '#343a40' : '#f8fafc',
+                    titleColor: isDark ? '#f8fafc' : '#000000',
+                    bodyColor: isDark ? '#f8fafc' : '#000000',
                     borderColor: isDark ? '#6c757d' : '#dee2e6',
                     borderWidth: 1,
                     callbacks: {
