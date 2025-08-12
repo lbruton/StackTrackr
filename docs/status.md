@@ -2,13 +2,13 @@
 
 
 
-> **Latest release: v3.04.41**
+> **Latest release: v3.04.42**
 
 See [announcements](announcements.md) for recent changes and upcoming milestones.
 
-## 🎯 Current State: **BETA v3.04.41** ✅ MAINTAINED & OPTIMIZED
+## 🎯 Current State: **BETA v3.04.42** ✅ MAINTAINED & OPTIMIZED
 
-**StackrTrackr v3.04.41** is a fully-featured, client-side web application for tracking precious metal investments (Silver, Gold, Platinum, Palladium) with comprehensive inventory management, API integration, and complete backup capabilities. The 3.04.x series focuses on polish, maintenance, and optimization.
+**StackrTrackr v3.04.42** is a fully-featured, client-side web application for tracking precious metal investments (Silver, Gold, Platinum, Palladium) with comprehensive inventory management, API integration, and complete backup capabilities. The 3.04.x series focuses on polish, maintenance, and optimization.
 
 
 ## 🏗️ Architecture Overview
@@ -28,6 +28,7 @@ The tool features a **modular JavaScript architecture** with separate files for 
 
 ## ✨ Latest Changes
 
+- **v3.04.42 - Expanded filter chips**: replaced backup reminder with Filters subtitle and added Name/Date chips with dynamic filtering and counts
 - **v3.04.41 - Section titles**: added centered titles for Spot Prices, Inventory, Filters, and Information Cards
 - **v3.04.40 - Pagination controls reposition**: moved pagination above Change Log and added edge padding
 - **v3.04.25 - Unified logo**: single SVG logo across themes, removed theme-specific assets
@@ -185,7 +186,7 @@ All data is stored locally in the browser using localStorage with:
 
 If continuing development in a new chat session:
 
-1. **Current Version**: 3.04.41 (managed in `js/constants.js`)
+1. **Current Version**: 3.04.42 (managed in `js/constants.js`)
 2. **Last Change**: Simplified archive workflow
 3. **Last Documentation Update**: August 11, 2025 - All docs synchronized
 4. **Architecture**: Fully modular with proper separation of concerns

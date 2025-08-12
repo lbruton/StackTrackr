@@ -524,6 +524,8 @@ const typeColors = {
 };
 const purchaseLocationColors = {};
 const storageLocationColors = {};
+const nameColors = {};
+const dateColors = {};
 
 const getColor = (map, key) => {
   if (!(key in map)) {
@@ -755,7 +757,8 @@ const startCellEdit = (idx, field, icon) => {
 
 window.startCellEdit = startCellEdit;
 
-const updateTypeSummary = () => {
+
+const updateTypeSummary = (items = inventory) => {
   const el = elements.typeSummary || document.getElementById('typeSummary');
   if (!el) return;
 
@@ -782,24 +785,42 @@ const updateTypeSummary = () => {
     {
       field: 'storageLocation',
       getColors: (val) => ({ bg: getStorageLocationColor(val), text: textColor })
+    },
+    {
+      field: 'name',
+      getColors: (val) => ({ bg: getColor(nameColors, val), text: textColor })
+    },
+    {
+      field: 'date',
+      getColors: (val) => ({ bg: getColor(dateColors, val), text: textColor }),
+      format: (val) => formatDisplayDate(val)
     }
   ];
 
-  const html = categories
-    .map(cat => {
-      const counts = inventory.reduce((acc, item) => {
-        const key = item[cat.field] || (cat.field === 'purchaseLocation' ? 'Numista Import' : 'Unknown');
-        acc[key] = (acc[key] || 0) + 1;
-        return acc;
-      }, {});
-      return Object.entries(counts)
-        .map(([val, count]) => {
-          const safeVal = sanitizeHtml(val);
-          const colors = cat.getColors(val);
-          const cls = cat.getClass ? ` ${cat.getClass(val)}` : '';
-          return `<span class="summary-chip${cls}" style="background-color: ${colors.bg}; color: ${colors.text};">${safeVal}: ${count}</span>`;
-        })
-        .join('');
+  const chips = [];
+  categories.forEach(cat => {
+    const counts = items.reduce((acc, item) => {
+      const key = item[cat.field] || (cat.field === 'purchaseLocation' ? 'Numista Import' : 'Unknown');
+      acc[key] = (acc[key] || 0) + 1;
+      return acc;
+    }, {});
+
+    Object.entries(counts).forEach(([val, count]) => {
+      const colors = cat.getColors(val);
+      const cls = cat.getClass ? ` ${cat.getClass(val)}` : '';
+      const display = cat.format ? cat.format(val) : val;
+      chips.push({ field: cat.field, value: val, display, count, colors, cls });
+    });
+  });
+
+  chips.sort((a, b) => b.count - a.count);
+
+  const html = chips
+    .map(chip => {
+      const safeVal = sanitizeHtml(String(chip.display));
+      const handler = `applyQuickFilter('${chip.field}', ${JSON.stringify(chip.value)})`;
+      const escaped = escapeAttribute(handler);
+      return `<span class="summary-chip${chip.cls}" style="background-color: ${chip.colors.bg}; color: ${chip.colors.text};" onclick="${escaped}" tabindex="0" role="button" onkeydown="if(event.key==='Enter'||event.key===' ')${escaped}">${safeVal}: ${chip.count}</span>`;
     })
     .join('');
 
@@ -888,7 +909,7 @@ const renderTable = () => {
     );
 
     elements.inventoryTable.innerHTML = rows.concat(placeholders).join('');
-    updateTypeSummary();
+    updateTypeSummary(filteredInventory);
 
     // Update sort indicators
     const headers = document.querySelectorAll('#inventoryTable th');
