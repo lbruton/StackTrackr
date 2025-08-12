@@ -1524,15 +1524,18 @@
             <div class="settings-card">
               <h3>Third-Party</h3>
               <p class="settings-subtext">Import data from external services like Numista.</p>
-              <div class="third-party-block">
-                <div class="import-export-grid">
-                  <button class="btn" id="importNumistaBtn">Import Numista</button>
-                  <button class="btn" id="mergeNumistaBtn">Merge Numista</button>
-                  <input type="file" id="numistaImportFile" accept=".csv" hidden />
-                  <div class="beta-warning">⚠️ Numista import is a beta feature</div>
+                <div class="third-party-block">
+                  <div class="import-export-grid">
+                    <div class="grid grid-2">
+                      <button class="btn" id="importNumistaBtn">Import Numista</button>
+                      <button class="btn" id="mergeNumistaBtn">Merge Numista</button>
+                    </div>
+                    <button class="btn warning" id="clearNumistaInventoryBtn">Clear Numista Inventory</button>
+                    <input type="file" id="numistaImportFile" accept=".csv" hidden />
+                    <div class="beta-warning">⚠️ Numista import is a beta feature</div>
+                  </div>
                 </div>
               </div>
-            </div>
 
             <div class="settings-card">
               <h3>Custom Mapping</h3>
