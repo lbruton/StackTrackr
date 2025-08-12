@@ -1,11 +1,17 @@
 # StackTrackr — Changelog
 
-> **Latest release: v3.04.13**
+> **Latest release: v3.04.14**
 
 
 For upcoming work, see [roadmap](roadmap.md).
 
 ## 📋 Version History
+
+### Version 3.04.14 – UI and filter enhancements (2025-08-12)
+- Preserved date hyphenation and gram weight conversion
+- Quick-filter entries respected by advanced filtering
+- Type summary with colored chips and collectable icons
+- Layout tweaks: truncated locations, silver Change Log button, footer card
 
 ### Version 3.04.13 – Simplified archive workflow (2025-08-11)
 - Archive script maintains a single previous build snapshot

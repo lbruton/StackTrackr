@@ -2,6 +2,7 @@
 
 This roadmap outlines upcoming patch releases for the v3.04.x series.
 
+- **v3.04.13** – Simplified archive workflow *(completed)*
 - **v3.04.12** – Quick filter object storage *(completed)*
 - **v3.04.11** – Collectable column icon *(completed)*
 - **v3.04.10** – Provider history usage display *(completed)*

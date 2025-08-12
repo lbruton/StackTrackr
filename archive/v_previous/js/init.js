@@ -97,8 +97,9 @@ document.addEventListener("DOMContentLoaded", () => {
     elements.numistaImportFile = safeGetElement("numistaImportFile");
     elements.numistaOverride = safeGetElement("numistaOverride");
     elements.numistaMerge = safeGetElement("numistaMerge");
-    elements.numistaImportOptions = safeGetElement("numistaImportOptions");
-    elements.exportCsvBtn = safeGetElement("exportCsvBtn");
+      elements.numistaImportOptions = safeGetElement("numistaImportOptions");
+      elements.clearNumistaInventoryBtn = safeGetElement("clearNumistaInventoryBtn");
+      elements.exportCsvBtn = safeGetElement("exportCsvBtn");
     elements.exportJsonBtn = safeGetElement("exportJsonBtn");
     elements.exportExcelBtn = safeGetElement("exportExcelBtn");
     elements.exportPdfBtn = safeGetElement("exportPdfBtn");
@@ -280,7 +281,7 @@ document.addEventListener("DOMContentLoaded", () => {
     document.title = getAppTitle();
     const appHeader = document.querySelector(".app-header h1");
     if (appHeader) {
-      const headerBrand = BRANDING_DOMAIN_OVERRIDE || getBrandingName();
+      const headerBrand = getBrandingName();
       appHeader.textContent = headerBrand;
     }
     const aboutVersion = document.getElementById("aboutVersion");
@@ -395,15 +396,17 @@ function setupBasicEventListeners() {
     };
   }
 
-  // Appearance button (three-state theme toggle)
+  // Appearance button (four-state theme toggle)
   const appearanceBtn = document.getElementById("appearanceBtn");
   if (appearanceBtn) {
     appearanceBtn.onclick = function (e) {
       e.preventDefault();
-      const savedTheme = localStorage.getItem(THEME_KEY);
+      const savedTheme = localStorage.getItem(THEME_KEY) || "system";
       if (savedTheme === "dark") {
         setTheme("light");
       } else if (savedTheme === "light") {
+        setTheme("sepia");
+      } else if (savedTheme === "sepia") {
         setTheme("system");
       } else {
         setTheme("dark");

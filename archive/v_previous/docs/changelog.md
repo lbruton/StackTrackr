@@ -1,11 +1,15 @@
 # StackTrackr — Changelog
 
-> **Latest release: v3.04.12**
+> **Latest release: v3.04.13**
 
 
 For upcoming work, see [roadmap](roadmap.md).
 
 ## 📋 Version History
+
+### Version 3.04.13 – Simplified archive workflow (2025-08-11)
+- Archive script maintains a single previous build snapshot
+- Version references updated across documentation
 
 ### Version 3.04.12 – Quick filter object storage (2025-08-11)
 - Quick filter stores criteria as object for exclude support

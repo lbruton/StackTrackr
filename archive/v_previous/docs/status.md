@@ -1,11 +1,11 @@
 # Project Status - StackTrackr
 
 
-> **Latest release: v3.04.12**
+> **Latest release: v3.04.13**
 
-## 🎯 Current State: **BETA v3.04.12** ✅ MAINTAINED & OPTIMIZED
+## 🎯 Current State: **BETA v3.04.13** ✅ MAINTAINED & OPTIMIZED
 
-**StackTrackr v3.04.12** is a fully-featured, client-side web application for tracking precious metal investments (Silver, Gold, Platinum, Palladium) with comprehensive inventory management, API integration, and complete backup capabilities. The 3.04.x series focuses on polish, maintenance, and optimization.
+**StackTrackr v3.04.13** is a fully-featured, client-side web application for tracking precious metal investments (Silver, Gold, Platinum, Palladium) with comprehensive inventory management, API integration, and complete backup capabilities. The 3.04.x series focuses on polish, maintenance, and optimization.
 
 
 ## 🏗️ Architecture Overview
@@ -25,6 +25,7 @@ The tool features a **modular JavaScript architecture** with separate files for 
 
 ## ✨ Latest Changes
 
+ - **v3.04.13 - Simplified archive workflow**: Update-archive script keeps only the latest previous build
  - **v3.04.12 - Quick filter object storage**: Quick filter stores criteria as objects for exclude support
  - **v3.04.11 - Collectable column icon**: Table header uses a treasure chest icon with accessible label
  - **v3.04.10 - Provider history usage display**: Provider history sections show API usage/quota only, with metal toggles managed in Provider Settings
@@ -169,8 +170,8 @@ All data is stored locally in the browser using localStorage with:
 
 If continuing development in a new chat session:
 
-1. **Current Version**: 3.04.02 (managed in `js/constants.js`)
-2. **Last Change**: Numista header trimming
+1. **Current Version**: 3.04.13 (managed in `js/constants.js`)
+2. **Last Change**: Simplified archive workflow
 3. **Last Documentation Update**: August 11, 2025 - All docs synchronized
 4. **Architecture**: Fully modular with proper separation of concerns
 5. **Documentation**: Comprehensive JSDoc comments throughout codebase
@@ -186,7 +187,7 @@ If continuing development in a new chat session:
 ```
 StackTrackr/
 ├── js/                     # Modular JavaScript (cleaned structure)
-│   ├── constants.js        # Version 3.03.08e + metal configs
+│   ├── constants.js        # Version 3.04.13 + metal configs
 │   ├── state.js           # App state + DOM caching
 │   ├── inventory.js       # Core CRUD + notes handling
 │   ├── events.js          # UI event listeners

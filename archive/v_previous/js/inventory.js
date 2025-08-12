@@ -722,7 +722,7 @@ const startCellEdit = (idx, field, icon) => {
         content = filterLink('weight', item.weight, 'var(--text-primary)', formatWeight(item.weight), item.weight < 1 ? 'Grams (g)' : 'Troy ounces (ozt)');
         break;
       case 'price':
-        content = item.price > 0 ? filterLink('price', item.price, 'var(--text-primary)', formatCurrency(item.price)) : '';
+        content = filterLink('price', item.price, 'var(--text-primary)', formatCurrency(item.price));
         break;
       case 'spotPriceAtPurchase': {
         const spotDisplay = item.isCollectable ? 'N/A' : (item.spotPriceAtPurchase > 0 ? formatCurrency(item.spotPriceAtPurchase) : 'N/A');
@@ -813,19 +813,19 @@ const renderTable = () => {
       <tr>
       <td class="shrink" data-column="date">${filterLink('date', item.date, 'var(--text-primary)', formatDisplayDate(item.date))}</td>
       <td class="shrink" data-column="type">${filterLink('type', item.type, getTypeColor(item.type))}</td>
-      <td class="shrink" data-column="composition" data-composition="${escapeAttribute(item.composition || item.metal || '')}">${filterLink('composition', item.composition || item.metal || 'Silver', METAL_COLORS[item.metal] || 'var(--primary)', getDisplayComposition(item.composition || item.metal || 'Silver'))}</td>
+      <td class="shrink" data-column="metal" data-metal="${escapeAttribute(item.composition || item.metal || '')}">${filterLink('metal', item.composition || item.metal || 'Silver', METAL_COLORS[item.metal] || 'var(--primary)', getDisplayComposition(item.composition || item.metal || 'Silver'))}</td>
+      <td class="shrink" data-column="qty">
+        ${filterLink('qty', item.qty, 'var(--text-primary)')}
+      </td>
       <td class="expand" data-column="name" style="text-align: left;">
         <span class="inline-edit-icon" role="button" tabindex="0" onclick="startCellEdit(${originalIdx}, 'name', this)" aria-label="Edit name" title="Edit name">✎</span>
         ${filterLink('name', item.name, 'var(--text-primary)')}
-      </td>
-      <td class="shrink" data-column="qty">
-        ${filterLink('qty', item.qty, 'var(--text-primary)')}
       </td>
       <td class="shrink" data-column="weight">
         ${filterLink('weight', item.weight, 'var(--text-primary)', formatWeight(item.weight), item.weight < 1 ? 'Grams (g)' : 'Troy ounces (ozt)')}
       </td>
       <td class="shrink" data-column="purchasePrice" title="USD">
-        ${item.price > 0 ? filterLink('price', item.price, 'var(--text-primary)', formatCurrency(item.price)) : ''}
+        ${filterLink('price', item.price, 'var(--text-primary)', formatCurrency(item.price))}
       </td>
       <td class="shrink" data-column="spot" title="USD">
         ${filterLink('spotPriceAtPurchase', spotValue, 'var(--text-primary)', spotDisplay)}
@@ -838,7 +838,7 @@ const renderTable = () => {
         ${item.storageLocation === 'Unknown' ? '' : filterLink('storageLocation', item.storageLocation || 'Numista Import', getStorageLocationColor(item.storageLocation || 'Numista Import'))}
       </td>
       <td class="shrink" data-column="numista">${item.numistaId ? `<a href="https://en.numista.com/catalogue/pieces${item.numistaId}.html" target="_blank" rel="noopener" title="View on Numista">N# ${sanitizeHtml(item.numistaId)}</a>` : ''}</td>
-      <td class="shrink" data-column="collectable"><span class="collectable-status" role="button" tabindex="0" onclick="toggleCollectable(${originalIdx})" onkeydown="if(event.key==='Enter'||event.key===' ') toggleCollectable(${originalIdx})" aria-label="Toggle collectable status for ${sanitizeHtml(item.name)}" title="Toggle collectable status" style="color: ${item.isCollectable ? 'var(--success)' : 'var(--text-muted)'}; cursor: pointer;">${item.isCollectable ? 'Yes' : 'No'}</span></td>
+      <td class="shrink" data-column="collectable"><span class="collectable-status" role="button" tabindex="0" onclick="toggleCollectable(${originalIdx})" onkeydown="if(event.key==='Enter'||event.key===' ') toggleCollectable(${originalIdx})" aria-label="Toggle collectable status for ${sanitizeHtml(item.name)}" title="Toggle collectable status">${item.isCollectable ? '<svg class=\"collectable-icon icon-copper\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\"><circle cx=\"12\" cy=\"12\" r=\"10\"/></svg>' : '<svg class=\"collectable-icon icon-gold\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\"><path d=\"M2 17h20l-5-10h-10l-5 10z\"/></svg>'}</span></td>
       <td class="shrink" data-column="edit"><span class="action-icon" role="button" tabindex="0" onclick="editItem(${originalIdx})" aria-label="Edit ${sanitizeHtml(item.name)}" title="Edit ${sanitizeHtml(item.name)}">⚙️</span></td>
       <td class="shrink" data-column="notes"><span class="action-icon ${item.notes && item.notes.trim() ? 'success' : ''}" role="button" tabindex="0" onclick="showNotes(${originalIdx})" aria-label="View notes" title="View notes">📓</span></td>
       <td class="shrink" data-column="delete"><span class="action-icon danger" role="button" tabindex="0" onclick="deleteItem(${originalIdx})" aria-label="Delete item" title="Delete item">🗑️</span></td>
@@ -1438,14 +1438,6 @@ const importNumistaCsv = (file, override = false) => {
             purchasePrice = convertToUsd(amount, currency);
           }
 
-          if (!priceKey && purchasePrice === 0) {
-            const estimateRaw = getValue(row, ['Estimate (USD)']);
-            if (estimateRaw) {
-              const estimateAmount = parseFloat(String(estimateRaw).replace(/[^0-9.\-]/g, ''));
-              if (!isNaN(estimateAmount)) purchasePrice = convertToUsd(estimateAmount, 'USD');
-            }
-          }
-
           const purchaseLocRaw = getValue(row, ['Acquisition place', 'Acquired from', 'Purchase place']);
           const purchaseLocation = purchaseLocRaw && purchaseLocRaw.trim() ? purchaseLocRaw.trim() : 'Numista Import';
           const storageLocRaw = getValue(row, ['Storage location', 'Stored at', 'Storage place']);
@@ -1731,40 +1723,70 @@ const importJson = (file) => {
       let processed = 0;
       let importedCount = 0;
 
-      for (const [index, item] of data.entries()) {
+      for (const [index, raw] of data.entries()) {
         processed++;
 
-        // Ensure required fields with defaults
-        let price = parseFloat(item.price);
+        const compositionRaw = raw.composition || raw.metal || 'Silver';
+        const composition = getCompositionFirstWords(compositionRaw);
+        const metal = parseNumistaMetal(composition);
+        const name = raw.name || '';
+        const qty = parseInt(raw.qty ?? raw.quantity ?? 1, 10);
+        const type = normalizeType(raw.type || raw.itemType || 'Other');
+        const weight = parseFloat(raw.weight ?? raw.weightOz ?? 0);
+        const priceStr = raw.price ?? raw.purchasePrice ?? 0;
+        let price = typeof priceStr === 'string'
+          ? parseFloat(priceStr.replace(/[^\d.-]+/g, ''))
+          : parseFloat(priceStr);
         if (price < 0) price = 0;
+        const purchaseLocation = raw.purchaseLocation || '';
+        const storageLocation = raw.storageLocation || 'Unknown';
+        const notes = raw.notes || '';
+        const date = parseDate(raw.date);
+        const isCollectable = raw.isCollectable === true || raw.collectable === true || raw.isCollectable === 'true' || raw.collectable === 'true';
 
-        const processedItem = {
-          metal: item.metal || 'Silver',
-          name: item.name,
-          qty: parseInt(item.qty, 10),
-          type: item.type || 'Other',
-          weight: parseFloat(item.weight),
-          price,
-          date: parseDate(item.date),
-          purchaseLocation: item.purchaseLocation || "",
-          storageLocation: item.storageLocation || "Unknown",
-          notes: item.notes || "",
-          spotPriceAtPurchase: item.spotPriceAtPurchase || spotPrices[item.metal.toLowerCase()],
-          isCollectable: item.isCollectable === true,
-          premiumPerOz: item.premiumPerOz || 0,
-          totalPremium: item.totalPremium || 0,
-          numistaId: item.numistaId || '',
-          serial: item.serial || getNextSerial()
-        };
-
-        // Recalculate premium if needed
-        if (!processedItem.isCollectable && processedItem.spotPriceAtPurchase > 0) {
-          const pricePerOz = processedItem.price / processedItem.weight;
-          processedItem.premiumPerOz = pricePerOz - processedItem.spotPriceAtPurchase;
-          processedItem.totalPremium = processedItem.premiumPerOz * processedItem.qty * processedItem.weight;
+        let spotPriceAtPurchase;
+        if (raw.spotPriceAtPurchase) {
+          spotPriceAtPurchase = parseFloat(raw.spotPriceAtPurchase);
+        } else if (raw.spotPrice || raw.spot) {
+          spotPriceAtPurchase = parseFloat(raw.spotPrice || raw.spot);
+        } else {
+          const metalKey = metal.toLowerCase();
+          spotPriceAtPurchase = isCollectable ? 0 : spotPrices[metalKey];
         }
 
-        // Validate the item
+        let premiumPerOz = 0;
+        let totalPremium = 0;
+        if (!isCollectable && spotPriceAtPurchase > 0) {
+          const pricePerOz = price / (weight || 1);
+          premiumPerOz = pricePerOz - spotPriceAtPurchase;
+          totalPremium = premiumPerOz * qty * weight;
+        }
+
+        const numistaRaw = (raw.numistaId || raw.numista || raw['N#'] || '').toString();
+        const numistaMatch = numistaRaw.match(/\d+/);
+        const numistaId = numistaMatch ? numistaMatch[0] : '';
+        const serial = raw.serial || getNextSerial();
+
+        const processedItem = sanitizeImportedItem({
+          metal,
+          composition,
+          name,
+          qty,
+          type,
+          weight,
+          price,
+          date,
+          purchaseLocation,
+          storageLocation,
+          notes,
+          spotPriceAtPurchase,
+          premiumPerOz,
+          totalPremium,
+          isCollectable,
+          numistaId,
+          serial
+        });
+
         const validation = validateInventoryItem(processedItem);
         if (!validation.isValid) {
           const reason = validation.errors.join(', ');
@@ -1773,6 +1795,7 @@ const importJson = (file) => {
           continue;
         }
 
+        addCompositionOption(composition);
         imported.push(processedItem);
         importedCount++;
         updateImportProgress(processed, importedCount, totalItems);
