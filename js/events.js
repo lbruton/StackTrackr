@@ -1124,7 +1124,11 @@ const setupEventListeners = () => {
         elements.clearNumistaCacheBtn,
         "click",
         function () {
-          if (confirm("Clear Numista cache?")) {
+          if (
+            confirm(
+              "This will remove all cached Numista data from the lookup tables.",
+            )
+          ) {
             localStorage.removeItem('numista-cache');
             alert("Numista cache cleared.");
             elements.clearNumistaCacheBtn.style.display = 'none';
