@@ -1,11 +1,19 @@
 # StackrTrackr — Changelog
 
-> **Latest release: v3.04.37**
+> **Latest release: v3.04.39**
 
 
 For upcoming work, see [announcements](announcements.md).
 
 ## 📋 Version History
+
+### Version 3.04.39 – Template Variable Fix (2025-08-12)
+- **Template Resolution**: Fixed unreplaced template variables in documentation files
+  - Resolved {{VERSION_WITH_V}} and {{VERSION}} placeholders in `docs/agents/agents.ai`
+  - Applied proper template replacement to show "v3.04.39" instead of placeholder text
+  - Ensured version displays correctly in about/accept modals and documentation
+- **Quality Assurance**: Verified all template variables are properly replaced across documentation
+- **User Experience**: About and accept pages now show correct version information
 
 ### Version 3.04.38 – Documentation Template System (2025-08-15)
 - **Template System**: Created comprehensive documentation templating system
