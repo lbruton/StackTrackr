@@ -434,9 +434,9 @@
             <tr>
               <th class="shrink" data-column="date">Date</th>
               <th class="shrink" data-column="type">Type</th>
-              <th class="shrink" data-column="composition">Composition</th>
-              <th class="expand" data-column="name">Name</th>
+              <th class="shrink" data-column="metal">Metal</th>
               <th class="shrink" data-column="qty">Qty</th>
+              <th class="expand" data-column="name">Name</th>
               <th class="shrink" data-column="weight">Weight</th>
               <th class="shrink" data-column="purchasePrice" title="USD">Price ($)</th>
               <th class="shrink" data-column="spot" title="USD">Spot ($)</th>
@@ -446,8 +446,8 @@
               <!-- Numista column moved before Collectable -->
               <th class="shrink" data-column="numista">N#</th>
               <th class="shrink" data-column="collectable" aria-label="Collectable" title="Collectable">
-                <svg class="collectable-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true">
-                  <path fill="currentColor" d="M2 8V6a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v2H2zm0 2h20v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-9zm9 3v4h2v-4h-2z"/>
+                <svg class="collectable-icon icon-gold" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true">
+                  <path fill="currentColor" d="M2 17h20l-5-10h-10l-5 10z"/>
                 </svg>
               </th>
               <th class="shrink" data-column="edit" aria-label="Edit" title="Edit">⚙️</th>
@@ -795,7 +795,7 @@
             <!-- First row of add form fields -->
             <div class="grid grid-2">
               <div>
-                <label for="itemMetal">Composition</label>
+                <label for="itemMetal">Metal</label>
                 <select id="itemMetal">
                   <option value="Silver">Silver</option>
                   <option value="Gold">Gold</option>
@@ -921,7 +921,7 @@
           <!-- First row of edit form fields -->
           <div class="grid grid-2">
             <div>
-                <label for="editMetal">Composition</label>
+                <label for="editMetal">Metal</label>
               <select id="editMetal">
                 <option value="Silver">Silver</option>
                 <option value="Gold">Gold</option>
@@ -2222,7 +2222,7 @@
         <div class="modal-body">
           <div class="filters-grid">
             <div class="filter-group">
-              <label for="filterMetal">Metal/Composition</label>
+              <label for="filterMetal">Metal</label>
               <select id="filterMetal" class="filter-select" multiple>
                 <option value="">All Metals</option>
               </select>

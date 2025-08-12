@@ -179,7 +179,7 @@ const updateColumnVisibility = () => {
         "spot",
         "weight",
         "qty",
-        "composition",
+        "metal",
       ],
     },
     {
@@ -192,7 +192,7 @@ const updateColumnVisibility = () => {
         "spot",
         "weight",
         "qty",
-        "composition",
+        "metal",
         "type",
       ],
     },
@@ -205,9 +205,9 @@ const updateColumnVisibility = () => {
   const allColumns = [
     "date",
     "type",
-    "composition",
-    "name",
+    "metal",
     "qty",
+    "name",
     "weight",
     "purchasePrice",
     "spot",
@@ -1389,9 +1389,9 @@ const setupSearch = () => {
         function () {
           const value = this.value;
           if (value) {
-            columnFilters.composition = value;
+            columnFilters.metal = value;
           } else {
-            delete columnFilters.composition;
+            delete columnFilters.metal;
           }
           searchQuery = "";
           if (elements.searchInput) elements.searchInput.value = "";
