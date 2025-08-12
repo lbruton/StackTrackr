@@ -1,11 +1,15 @@
 # StackrTrackr — Changelog
 
-> **Latest release: v3.04.34**
+> **Latest release: v3.04.35**
 
 
 For upcoming work, see [announcements](announcements.md).
 
 ## 📋 Version History
+
+### Version 3.04.35 – JSON Import Options & Excel Removal (2025-08-13)
+- **JSON import flexibility**: Added separate Import and Merge buttons with overwrite warnings.
+- **Simplified formats**: Removed Excel import/export support and related buttons.
 
 ### Version 3.04.34 – Streamlined Numista Imports (2025-08-12)
 - **Removed Numista cache**: Eliminated stored Numista CSV cache in favor of direct import.

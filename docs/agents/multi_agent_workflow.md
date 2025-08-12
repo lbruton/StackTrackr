@@ -1,14 +1,14 @@
-# Multi-Agent Development Workflow - StackrTrackr v3.04.34
+# Multi-Agent Development Workflow - StackrTrackr v3.04.35
 
 > **⚠️ NOTICE: `docs/agents/agents.ai` is the primary development reference for token efficiency. This file is maintained for consistency only.**
 
-> **Latest release: v3.04.34**
+> **Latest release: v3.04.35**
 
 ## 🎯 Project Overview
 
-You are contributing to **StackrTrackr v3.04.33**, a comprehensive client-side web application for tracking precious metal investments (Silver, Gold, Platinum, Palladium). The project uses a modular JavaScript architecture with local storage, responsive CSS theming, and advanced features like API integration, data visualization, and comprehensive import/export capabilities.
+You are contributing to **StackrTrackr v3.04.35**, a comprehensive client-side web application for tracking precious metal investments (Silver, Gold, Platinum, Palladium). The project uses a modular JavaScript architecture with local storage, responsive CSS theming, and advanced features like API integration, data visualization, and comprehensive import/export capabilities.
 
-**Current Status**: v3.04.34 (stable)
+**Current Status**: v3.04.35 (stable)
 **Your Role**: Complete focused v3.04.x patch tasks as part of a coordinated multi-agent development effort
 
 ---
@@ -177,7 +177,7 @@ Before starting any patch entry, read these files:
 - **Modular JavaScript** - Separate files for different concerns
 - **Local storage** - All data persisted locally using localStorage
 - **Responsive CSS** - Mobile-first design with 3 themes (dark/light/sepia)
-- **External libraries** - Chart.js, Papa Parse, XLSX, jsPDF, JSZip loaded from CDN
+- **External libraries** - Chart.js, Papa Parse, jsPDF, JSZip loaded from CDN
 
 ### **Key Data Structures:**
 - **`inventory`** - Array of inventory items with all metadata
@@ -197,7 +197,7 @@ Before starting any patch entry, read these files:
 ### **Supported Features:**
 - **Multi-metal tracking** - Silver, Gold, Platinum, Palladium
 - **Spot price management** - Manual entry and API sync
-- **Import/Export** - CSV, JSON, Excel, PDF formats
+- **Import/Export** - CSV, JSON, PDF formats
 - **Data visualization** - Pie charts and analytics
 - **Theme support** - Dark, light, and sepia modes
 - **Mobile responsive** - Touch-friendly interface
@@ -336,7 +336,6 @@ Before starting any patch entry, read these files:
 ### **External Dependencies:**
 - Chart.js v3.9.1 - Data visualization
 - Papa Parse v5.4.1 - CSV parsing
-- XLSX v0.18.5 - Excel file handling
 - jsPDF v2.5.1 - PDF generation
 - JSZip v3.10.1 - Archive creation
 

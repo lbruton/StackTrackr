@@ -956,31 +956,53 @@ const setupEventListeners = () => {
       );
     }
 
+    let jsonImportOverride = false;
+    if (elements.importJsonOverride && elements.importJsonFile) {
+      safeAttachListener(
+        elements.importJsonOverride,
+        "click",
+        () => {
+          if (
+            confirm(
+              "Importing JSON will overwrite all existing data. To combine data, choose Merge instead. Press OK to continue.",
+            )
+          ) {
+            jsonImportOverride = true;
+            elements.importJsonFile.click();
+          }
+        },
+        "JSON override button",
+      );
+    }
+    if (elements.importJsonMerge && elements.importJsonFile) {
+      safeAttachListener(
+        elements.importJsonMerge,
+        "click",
+        () => {
+          jsonImportOverride = false;
+          elements.importJsonFile.click();
+        },
+        "JSON merge button",
+      );
+    }
     if (elements.importJsonFile) {
       safeAttachListener(
         elements.importJsonFile,
         "change",
         function (e) {
           if (e.target.files.length > 0) {
-            importJson(e.target.files[0]);
+
+            const file = e.target.files[0];
+            if (!checkFileSize(file)) {
+              alert("File exceeds 2MB limit. Enable cloud backup for larger uploads.");
+            } else {
+              importJson(file, jsonImportOverride);
+            }
+
           }
           this.value = "";
         },
         "JSON import",
-      );
-    }
-
-    if (elements.importExcelFile) {
-      safeAttachListener(
-        elements.importExcelFile,
-        "change",
-        function (e) {
-          if (e.target.files.length > 0) {
-            importExcel(e.target.files[0]);
-          }
-          this.value = "";
-        },
-        "Excel import",
       );
     }
 
@@ -1050,14 +1072,6 @@ const setupEventListeners = () => {
         "click",
         exportJson,
         "JSON export",
-      );
-    }
-    if (elements.exportExcelBtn) {
-      safeAttachListener(
-        elements.exportExcelBtn,
-        "click",
-        exportExcel,
-        "Excel export",
       );
     }
     if (elements.exportPdfBtn) {

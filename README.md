@@ -185,7 +185,7 @@ See [docs/announcements.md](docs/announcements.md) for the latest release notes 
 
 ## What's New in v3.1.8
 - **Full Backup System**: "Backup All Data" button creates a timestamped ZIP archive of the entire application state.
-- **Comprehensive Archive**: Includes inventory JSON, settings, spot price history, and exports (CSV, Excel) with restoration instructions.
+- **Comprehensive Archive**: Includes inventory JSON, settings, spot price history, and exports (CSV) with restoration instructions.
 - **Client-Side Processing**: Uses JSZip to generate archives locally so your data never leaves the device.
 
 ## What's New in v3.1.6
@@ -213,7 +213,7 @@ See [docs/announcements.md](docs/announcements.md) for the latest release notes 
 ## 🆕 What's New in Previous Version v3.0.5
 - **Notes Field**: Added optional notes field for detailed item documentation.
 - **Enhanced Search**: Search now includes notes content along with all other fields.
-- **Complete Export Support**: Notes field included in all export formats (CSV, JSON, Excel, PDF).
+- **Complete Export Support**: Notes field included in all export formats (CSV, JSON, PDF).
 - **Improved Sample Data**: Updated sample.csv with realistic notes examples.
 - **Backwards Compatibility**: Existing data automatically upgraded with empty notes field.
 
@@ -224,7 +224,7 @@ See [docs/announcements.md](docs/announcements.md) for the latest release notes 
 - **Collectable Item Support**: Special handling for collectible items with numismatic value.
 - **Advanced Search**: Search and filter inventory by any field including notes.
 - **Dark/Light Theme**: Toggle between dark and light themes for optimal viewing.
-- **Import/Export**: Support for CSV, JSON, Excel, and PDF formats.
+- **Import/Export**: Support for CSV, JSON, and PDF formats.
 - **Data Visualization**: Interactive pie charts for inventory breakdown analysis.
 - **Responsive Design**: Optimized for desktop and mobile devices.
 - **Local Storage**: All data stored locally in browser - no server required.
