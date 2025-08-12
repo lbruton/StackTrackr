@@ -29,7 +29,28 @@ const API_PROVIDERS = {
     parseBatchResponse: (data) => {
       const current = {};
       const history = {};
-      if (data.data) {
+      if (Array.isArray(data?.data)) {
+        data.data.forEach((entry) => {
+          const ts =
+            entry.timestamp || entry.datetime || entry.date || entry.time || entry[0];
+          const metalsData = entry.metals || entry.prices || entry;
+          Object.entries(metalsData).forEach(([metal, val]) => {
+            if (["timestamp", "datetime", "date", "time"].includes(metal)) return;
+            const hPrice =
+              val.price || val.rate?.price || val.value || val;
+            if (hPrice) {
+              const key = metal.toLowerCase();
+              if (!history[key]) history[key] = [];
+              const tsNorm =
+                typeof ts === "string" && /^\d{4}-\d{2}-\d{2}$/.test(ts)
+                  ? `${ts} 00:00:00`
+                  : ts;
+              history[key].push({ timestamp: tsNorm, price: hPrice });
+              current[key] = hPrice;
+            }
+          });
+        });
+      } else if (data?.data) {
         Object.entries(data.data).forEach(([metal, info]) => {
           const price = info.price || info.rate?.price || null;
           if (price) current[metal] = price;
@@ -40,7 +61,13 @@ const API_PROVIDERS = {
                 const hPrice = h.price || h.rate?.price || h.value;
                 const ts =
                   h.timestamp || h.datetime || h.date || h.time || h[0];
-                if (hPrice && ts) entries.push({ timestamp: ts, price: hPrice });
+                if (hPrice && ts) {
+                  const tsNorm =
+                    typeof ts === "string" && /^\d{4}-\d{2}-\d{2}$/.test(ts)
+                      ? `${ts} 00:00:00`
+                      : ts;
+                  entries.push({ timestamp: tsNorm, price: hPrice });
+                }
               });
             } else if (typeof info.history === "object") {
               Object.entries(info.history).forEach(([ts, val]) => {
@@ -48,7 +75,13 @@ const API_PROVIDERS = {
                   typeof val === "object"
                     ? val.price || val.rate?.price || val.value
                     : val;
-                if (hPrice) entries.push({ timestamp: ts, price: hPrice });
+                if (hPrice) {
+                  const tsNorm =
+                    typeof ts === "string" && /^\d{4}-\d{2}-\d{2}$/.test(ts)
+                      ? `${ts} 00:00:00`
+                      : ts;
+                  entries.push({ timestamp: tsNorm, price: hPrice });
+                }
               });
             }
             if (entries.length) history[metal] = entries;
@@ -224,7 +257,7 @@ const API_PROVIDERS = {
  * Example: 3.03.02a → branch 3, release 03, patch 02, alpha
  */
 
-const APP_VERSION = "3.04.21";
+const APP_VERSION = "3.04.22";
 
 /**
  * @constant {string} DEFAULT_CURRENCY - Default currency code for monetary formatting

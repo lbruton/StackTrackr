@@ -76,7 +76,11 @@ const loadApiConfig = () => {
             if (typeof metals[p][m] === "undefined") metals[p][m] = true;
           });
         }
-        if (typeof historyDays[p] !== "number") historyDays[p] = 30;
+        if (typeof historyDays[p] !== "number") {
+          historyDays[p] = p === "METALS_DEV" ? 29 : 30;
+        } else if (p === "METALS_DEV" && historyDays[p] > 30) {
+          historyDays[p] = 30;
+        }
         if (!Array.isArray(historyTimes[p])) historyTimes[p] = [];
       });
       let needsSave = false;
@@ -116,7 +120,7 @@ const loadApiConfig = () => {
   Object.keys(API_PROVIDERS).forEach((p) => {
     usage[p] = { quota: DEFAULT_API_QUOTA, used: 0 };
     metals[p] = { silver: true, gold: true, platinum: true, palladium: true };
-    historyDays[p] = 30;
+    historyDays[p] = p === "METALS_DEV" ? 29 : 30;
     historyTimes[p] = [];
   });
   return {
@@ -255,7 +259,8 @@ const updateBatchCalculation = (provider) => {
   const providerConfig = API_PROVIDERS[provider];
   const selected = config.metals?.[provider] || {};
   const selectedMetals = Object.keys(selected).filter(metal => selected[metal] !== false);
-  const historyDays = parseInt(document.getElementById(`historyDays_${provider}`)?.value || 0);
+  let historyDays = parseInt(document.getElementById(`historyDays_${provider}`)?.value || 0);
+  if (provider === "METALS_DEV" && historyDays > 30) historyDays = 30;
   
   const batchInfoEl = document.getElementById(`batchInfo_${provider}`);
   if (!batchInfoEl) return;
@@ -291,7 +296,9 @@ const updateProviderSettings = (provider) => {
   const historyInput = document.getElementById(`historyDays_${provider}`);
   if (historyInput) {
     if (!config.historyDays) config.historyDays = {};
-    config.historyDays[provider] = parseInt(historyInput.value) || 0;
+    let days = parseInt(historyInput.value) || 0;
+    if (provider === "METALS_DEV" && days > 30) days = 30;
+    config.historyDays[provider] = days;
   }
 
   // Update history times
@@ -583,7 +590,10 @@ const showApiProvidersModal = () => {
       // Set history days
       const historyInput = document.getElementById(`historyDays_${provider}`);
       if (historyInput) {
-        const days = config.historyDays?.[provider] || 30;
+        const defaultDays = provider === "METALS_DEV" ? 29 : 30;
+        let days = config.historyDays?.[provider];
+        if (typeof days !== "number" || isNaN(days)) days = defaultDays;
+        if (provider === "METALS_DEV" && days > 30) days = 30;
         historyInput.value = days;
       }
 
@@ -854,6 +864,8 @@ const fetchBatchSpotPrices = async (provider, apiKey, selectedMetals, historyDay
     throw new Error("Provider does not support batch requests");
   }
 
+  if (provider === "METALS_DEV" && historyDays > 30) historyDays = 30;
+
   const config = loadApiConfig();
   const usage = config.usage?.[provider] || { quota: DEFAULT_API_QUOTA, used: 0 };
 
@@ -979,7 +991,8 @@ const fetchSpotPricesFromApi = async (provider, apiKey) => {
   // Try batch request first if supported
   if (providerConfig.batchSupported) {
     try {
-      const historyDays = config.historyDays?.[provider] || 0;
+      let historyDays = config.historyDays?.[provider] || 0;
+      if (provider === "METALS_DEV" && historyDays > 30) historyDays = 30;
       const historyTimes = config.historyTimes?.[provider] || [];
       return await fetchBatchSpotPrices(
         provider,
