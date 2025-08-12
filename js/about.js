@@ -74,9 +74,8 @@ const populateAboutModal = () => {
     aboutAppName.textContent = getBrandingName();
   }
 
-  // Load changelog data
-  loadChangelog();
-  loadRoadmap();
+  // Load announcements for latest changes and roadmap
+  loadAnnouncements();
 };
 
 /**
@@ -94,118 +93,64 @@ const populateAckModal = () => {
 };
 
 /**
- * Loads changelog information from docs/changelog.md and populates the About modal
+ * Loads announcements and populates changelog and roadmap sections
  */
-const loadChangelog = async () => {
+const loadAnnouncements = async () => {
   const latestList = document.getElementById("aboutChangelogLatest");
-  if (!latestList) return;
-
-  try {
-    // Try to fetch from docs/changelog.md first, then fallback to README.md
-    let res, text;
-    try {
-      res = await fetch("docs/changelog.md");
-      if (!res.ok) throw new Error("changelog.md not found");
-      text = await res.text();
-    } catch (e) {
-      res = await fetch("README.md");
-      if (!res.ok) throw new Error("README.md not found");
-      text = await res.text();
-    }
-
-    // Parse changelog sections - look for version headers
-    const versionPattern =
-      /###\s+Version\s+([\d.]+)[^\n]*\n([\s\S]*?)(?=###\s+Version|$)/g;
-    const matches = [...text.matchAll(versionPattern)];
-
-    if (matches.length > 0) {
-      // Get the latest version changes
-      const [, latestVersion, latestContent] = matches[0];
-      const latestItems = extractChangelogItems(latestContent);
-
-      if (latestItems.length > 0) {
-        latestList.innerHTML = latestItems
-          .slice(0, 5) // Show max 5 latest items
-          .map((item) => `<li>${item}</li>`)
-          .join("");
-      } else {
-        latestList.innerHTML =
-          "<li>Enhanced about modal and user interface improvements</li>";
-      }
-    } else {
-      // Fallback content if no versions found
-      latestList.innerHTML = `
-        <li>Comprehensive precious metals inventory tracking</li>
-        <li>Multi-format import/export capabilities</li>
-        <li>Advanced analytics with interactive charts</li>
-        <li>Enhanced user interface and theming</li>
-        <li>Improved data backup and security features</li>
-      `;
-    }
-  } catch (e) {
-    console.warn("Could not load changelog", e);
-    // Provide fallback content
-    latestList.innerHTML = `
-      <li>Enhanced about modal with comprehensive information</li>
-      <li>Improved user interface and documentation</li>
-      <li>Better data backup and security features</li>
-      <li>See documentation for complete feature list</li>
-    `;
-  }
-};
-
-/**
- * Extracts changelog items from content, filtering for meaningful changes
- */
-const extractChangelogItems = (content) => {
-  const lines = content
-    .split("\n")
-    .map((line) => line.trim())
-    .filter((line) => line.startsWith("-") || line.startsWith("*"))
-    .map((line) => line.replace(/^[-*]\s*/, ""))
-    .filter((line) => line.length > 10) // Filter out very short items
-    .map((line) => {
-      const safe = sanitizeHtml(line);
-      // Clean up markdown formatting
-      return safe
-        .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>") // Bold
-        .replace(/`(.*?)`/g, "<code>$1</code>") // Code
-        .replace(/\[(.*?)\]\(.*?\)/g, "$1"); // Remove links but keep text
-    });
-
-  return lines;
-};
-
-/**
- * Loads roadmap information and populates roadmap lists in modals
- */
-const loadRoadmap = async () => {
-  const targets = [
+  const roadmapTargets = [
     document.getElementById("aboutRoadmapList"),
     document.getElementById("versionRoadmapList"),
   ].filter(Boolean);
-  if (!targets.length) return;
+
+  if (!latestList && !roadmapTargets.length) return;
 
   try {
-    const res = await fetch("docs/roadmap.md");
-    if (!res.ok) throw new Error("roadmap.md not found");
+    const res = await fetch("docs/announcements.md");
+    if (!res.ok) throw new Error("announcements.md not found");
     const text = await res.text();
-    const lines = text
-      .split("\n")
-      .filter((l) => l.trim().startsWith("-"))
-      .filter((l) => !l.toLowerCase().includes("completed"))
-      .slice(0, 3)
-      .map((l) => l.replace(/^[-*]\s*/, ""));
-    const items = lines
-      .map((l) => {
-        const safe = sanitizeHtml(l).replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
-        return `<li>${safe}</li>`;
-      })
-      .join("");
-    targets.forEach((el) => (el.innerHTML = items));
+
+    const section = (name) => {
+      const regex = new RegExp(`##\\s+${name}\\n([\\s\\S]*?)(?=##|$)`, "i");
+      const match = text.match(regex);
+      return match ? match[1] : "";
+    };
+
+    const parseList = (content) =>
+      content
+        .split("\n")
+        .filter((l) => l.trim().startsWith("-"))
+        .map((l) => sanitizeHtml(l.replace(/^[-*]\s*/, ""))
+          .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>"));
+
+    const whatsNewItems = parseList(section("What's New"));
+    if (latestList) {
+      latestList.innerHTML =
+        whatsNewItems.length > 0
+          ? whatsNewItems
+              .slice(0, 5)
+              .map((i) => `<li>${i}</li>`)
+              .join("")
+          : "<li>No recent announcements</li>";
+    }
+
+    const roadmapItems = parseList(section("Development Roadmap"));
+    if (roadmapTargets.length) {
+      const html =
+        roadmapItems.length > 0
+          ? roadmapItems
+              .slice(0, 3)
+              .map((i) => `<li>${i}</li>`)
+              .join("")
+          : "<li>Roadmap information unavailable</li>";
+      roadmapTargets.forEach((el) => (el.innerHTML = html));
+    }
   } catch (e) {
-    console.warn("Could not load roadmap", e);
-    targets.forEach(
+    console.warn("Could not load announcements", e);
+    if (latestList) {
+      latestList.innerHTML =
+        "<li>Enhanced about modal with comprehensive information</li>";
+    }
+    roadmapTargets.forEach(
       (el) => (el.innerHTML = "<li>Roadmap information unavailable</li>")
     );
   }
@@ -312,10 +257,9 @@ if (typeof window !== "undefined") {
   window.showAckModal = showAckModal;
   window.hideAckModal = hideAckModal;
   window.acceptAck = acceptAck;
-  window.loadChangelog = loadChangelog;
+  window.loadAnnouncements = loadAnnouncements;
   window.setupAboutModalEvents = setupAboutModalEvents;
   window.setupAckModalEvents = setupAckModalEvents;
   window.populateAboutModal = populateAboutModal;
   window.populateAckModal = populateAckModal;
-  window.loadRoadmap = loadRoadmap;
 }

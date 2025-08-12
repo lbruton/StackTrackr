@@ -68,8 +68,8 @@ const populateVersionModal = (version, html) => {
   modal.style.display = "flex";
   document.body.style.overflow = "hidden";
   setupVersionModalEvents(version);
-  if (typeof loadRoadmap === "function") {
-    loadRoadmap();
+  if (typeof loadAnnouncements === "function") {
+    loadAnnouncements();
   }
 };
 

@@ -13,9 +13,7 @@
 | about.js | acceptAck | Accepts the acknowledgment and hides the modal |
 | about.js | populateAboutModal | Populates the about modal with current version and changelog information |
 | about.js | populateAckModal | Populates the acknowledgment modal with version information |
-| about.js | loadChangelog | Loads changelog information from docs/changelog.md and populates the About modal |
-| about.js | extractChangelogItems | Extracts changelog items from content, filtering for meaningful changes |
-| about.js | loadRoadmap | Loads roadmap information and populates roadmap lists in modals |
+| about.js | loadAnnouncements | Loads latest release notes and roadmap from docs/announcements.md |
 | about.js | showFullChangelog | Shows full changelog in a new window or navigates to documentation |
 | about.js | setupAboutModalEvents | Sets up event listeners for about modal elements |
 | about.js | setupAckModalEvents | Sets up event listeners for acknowledgment modal elements |

@@ -293,8 +293,8 @@ document.addEventListener("DOMContentLoaded", () => {
     if (footerDomainEl) {
       footerDomainEl.textContent = getFooterDomain();
     }
-    if (typeof loadChangelog === "function") {
-      loadChangelog();
+    if (typeof loadAnnouncements === "function") {
+      loadAnnouncements();
     }
 
     // Phase 12: Data Initialization
