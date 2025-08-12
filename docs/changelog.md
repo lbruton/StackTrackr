@@ -1,11 +1,17 @@
 # StackrTrackr — Changelog
 
-> **Latest release: v3.04.25**
+> **Latest release: v3.04.26**
 
 
 For upcoming work, see [roadmap](roadmap.md).
 
 ## 📋 Version History
+
+### Version 3.04.26 – Enhanced Theme Toggle (2025-08-13)
+- **Improved theme toggle**: Button now displays current theme's color and icon instead of next theme
+- **Simplified theme rotation**: Removed system mode from rotation (dark → light → sepia → dark)
+- **Enhanced styling**: Theme button shows appropriate background color matching current theme
+- **Better UX**: Clear visual indication of active theme with themed button styling
 
 ### Version 3.04.25 – Unified logo across themes (2025-08-13)
 - Adopted single SVG logo for all themes

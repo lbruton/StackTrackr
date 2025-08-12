@@ -302,7 +302,7 @@ Each inventory item includes:
 
 ## Documentation
 - **[README.md](README.md)** - Detailed project information.
-- **[docs/MULTI_AGENT_WORKFLOW.md](docs/MULTI_AGENT_WORKFLOW.md)** - AI assistant development workflow.
+- **[docs/agents/multi_agent_workflow.md](docs/agents/multi_agent_workflow.md)** - AI assistant development workflow.
 - **[docs/changelog.md](docs/changelog.md)** - Version history and features.
 - **[docs/status.md](docs/status.md)** - Current project status.
  - **[docs/structure.md](docs/structure.md)** - Project organization.

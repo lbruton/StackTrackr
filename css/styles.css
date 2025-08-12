@@ -1132,20 +1132,42 @@ input[type="submit"] {
   align-items: center;
 }
 
+/* Theme button styling - shows current theme */
+.theme-btn {
+  border: 2px solid var(--border);
+  transition: var(--transition);
+  font-size: 1.2rem;
+  min-width: 3rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.theme-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow);
+  border-color: var(--primary);
+}
+
 .theme-btn.dark {
-  background: #000;
+  background: #1e293b;
   color: #f8fafc;
+  border-color: #334155;
 }
 
 .theme-btn.light {
-  background: var(--bg-card);
-  color: #000;
-  border: 1px solid var(--border);
+  background: #f8fafc;
+  color: #1e293b;
+  border-color: #cbd5e1;
 }
 
-.theme-btn.system {
-  background: #888;
-  color: var(--text-primary);
+.theme-btn.sepia {
+  background: #f2e7d5;
+  color: #3e2f1e;
+  border-color: #d1c2a5;
+}
+
+.theme-btn:hover::before {
+  left: 100%;
 }
 
 .theme-display {
@@ -1153,6 +1175,9 @@ input[type="submit"] {
   border: 1px solid var(--border);
   min-width: 120px;
   text-align: center;
+  border-radius: var(--radius);
+  background: var(--bg-primary);
+  color: var(--text-primary);
 }
 
 /* Info modal sizing */

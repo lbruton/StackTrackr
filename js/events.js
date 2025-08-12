@@ -1482,22 +1482,27 @@ const setupSearch = () => {
 const updateThemeButton = () => {
   const btn = elements.appearanceBtn;
   if (!btn) return;
-  const savedTheme = localStorage.getItem(THEME_KEY);
-  const mode = savedTheme ? savedTheme : "system";
-  btn.classList.remove("dark", "light", "sepia", "system");
-
-  const nextMap = { dark: "light", light: "sepia", sepia: "system", system: "dark" };
-  const iconMap = { dark: "🌙", light: "☀️", sepia: "📜", system: "💻" };
-  const labelMap = {
-    dark: "Dark mode",
-    light: "Light mode",
-    sepia: "Sepia mode",
-    system: "System theme",
+  const savedTheme = localStorage.getItem(THEME_KEY) || "light";
+  
+  // Remove all theme classes
+  btn.classList.remove("dark", "light", "sepia");
+  
+  // Add current theme class for styling
+  btn.classList.add(savedTheme);
+  
+  // Show current theme icon and color
+  const themeConfig = {
+    dark: { icon: "🌙", label: "Dark mode", color: "#1e293b" },
+    light: { icon: "☀️", label: "Light mode", color: "#f8fafc" },
+    sepia: { icon: "📜", label: "Sepia mode", color: "#f2e7d5" }
   };
-  const next = nextMap[mode];
-  btn.textContent = iconMap[next];
-  btn.setAttribute("aria-label", `Switch to ${labelMap[next]}`);
-  btn.setAttribute("title", `Switch to ${labelMap[next]}`);
+  
+  const config = themeConfig[savedTheme] || themeConfig.light;
+  btn.textContent = config.icon;
+  btn.style.backgroundColor = config.color;
+  btn.style.color = savedTheme === "light" ? "#1e293b" : "#f8fafc";
+  btn.setAttribute("aria-label", config.label);
+  btn.setAttribute("title", config.label);
 };
 
 window.updateThemeButton = updateThemeButton;
@@ -1525,7 +1530,8 @@ const setupThemeToggle = () => {
       window
         .matchMedia("(prefers-color-scheme: dark)")
         .addEventListener("change", () => {
-          if (localStorage.getItem(THEME_KEY) === "system") {
+          // Update button if no explicit theme is set
+          if (!localStorage.getItem(THEME_KEY)) {
             updateThemeButton();
           }
         });
@@ -1537,15 +1543,20 @@ const setupThemeToggle = () => {
         "click",
         (e) => {
           e.preventDefault();
-          const savedTheme = localStorage.getItem(THEME_KEY) || "system";
-          if (savedTheme === "dark") {
-            setTheme("light");
-          } else if (savedTheme === "light") {
-            setTheme("sepia");
-          } else if (savedTheme === "sepia") {
-            setTheme("system");
+          if (typeof toggleTheme === "function") {
+            toggleTheme();
           } else {
-            setTheme("dark");
+            // Fallback theme cycling: dark → light → sepia → dark
+            const savedTheme = localStorage.getItem(THEME_KEY) || "light";
+            if (savedTheme === "dark") {
+              setTheme("light");
+            } else if (savedTheme === "light") {
+              setTheme("sepia");
+            } else if (savedTheme === "sepia") {
+              setTheme("dark");
+            } else {
+              setTheme("light");
+            }
           }
           updateThemeButton();
         },

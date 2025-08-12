@@ -4,8 +4,8 @@
 /**
  * Sets application theme and updates localStorage
  *
- * @param {string} theme - 'dark', 'light', 'sepia', or 'system'
-*/
+ * @param {string} theme - 'dark', 'light', or 'sepia'
+ */
 const setTheme = (theme) => {
   if (theme === "dark") {
     document.documentElement.setAttribute("data-theme", "dark");
@@ -17,15 +17,9 @@ const setTheme = (theme) => {
     document.documentElement.setAttribute("data-theme", "sepia");
     localStorage.setItem(THEME_KEY, "sepia");
   } else {
-    localStorage.setItem(THEME_KEY, "system");
-    const systemPrefersDark =
-      window.matchMedia &&
-      window.matchMedia("(prefers-color-scheme: dark)").matches;
-    if (systemPrefersDark) {
-      document.documentElement.setAttribute("data-theme", "dark");
-    } else {
-      document.documentElement.removeAttribute("data-theme");
-    }
+    // Default to light if invalid theme
+    document.documentElement.removeAttribute("data-theme");
+    localStorage.setItem(THEME_KEY, "light");
   }
   if (typeof renderTable === "function") {
     renderTable();
@@ -41,26 +35,28 @@ const initTheme = () => {
     window.matchMedia &&
     window.matchMedia("(prefers-color-scheme: dark)").matches;
 
-  if (savedTheme) {
+  if (savedTheme && ["dark", "light", "sepia"].includes(savedTheme)) {
     setTheme(savedTheme);
   } else {
+    // Default to system preference on first load, but store explicit theme
     setTheme(systemPrefersDark ? "dark" : "light");
   }
 };
 
 /**
- * Cycles through available themes
+ * Cycles through available themes: dark → light → sepia → dark
  */
 const toggleTheme = () => {
-  const current = localStorage.getItem(THEME_KEY) || "system";
+  const current = localStorage.getItem(THEME_KEY) || "light";
   if (current === "dark") {
     setTheme("light");
   } else if (current === "light") {
     setTheme("sepia");
   } else if (current === "sepia") {
-    setTheme("system");
-  } else {
     setTheme("dark");
+  } else {
+    // Default fallback
+    setTheme("light");
   }
 };
 
@@ -72,8 +68,8 @@ const setupSystemThemeListener = () => {
     window
       .matchMedia("(prefers-color-scheme: dark)")
       .addEventListener("change", (e) => {
-        // Only auto-switch if user preference is system
-        if (localStorage.getItem(THEME_KEY) === "system") {
+        // Only auto-switch if no user preference is set
+        if (!localStorage.getItem(THEME_KEY)) {
           setTheme(e.matches ? "dark" : "light");
         }
       });

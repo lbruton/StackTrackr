@@ -1,7 +1,7 @@
 # Project Structure
 
 
-> **Latest release: v3.04.25**
+> **Latest release: v3.04.26**
 
 
 The repository is organized as follows:
@@ -11,6 +11,7 @@ The repository is organized as follows:
 ├── backup/           # Backup copies of key files
 ├── css/              # Styling for the application
 ├── docs/             # Project documentation and planning
+│   ├── agents/       # AI assistant development files
 │   ├── archive/      # Archived notes and historical docs
 │   └── future/       # Notes for upcoming features and enhancements
 ├── images/           # Project icons and favicons
@@ -28,7 +29,7 @@ The repository is organized as follows:
 - **archive/** – Previous build snapshots for rollback.
 - **backup/** – Backup copies of key files.
 - **css/** – Contains the global `styles.css` stylesheet.
-- **docs/** – Changelogs, workflow notes, roadmap, and future planning documentation. Includes the [UI Style Guide](ui_style_guide.md).
+- **docs/** – Changelogs, workflow notes, roadmap, and future planning documentation. Includes the [UI Style Guide](ui_style_guide.md) and [agents/](agents/) directory for AI assistant development files.
 - **images/** – Project icons and favicons.
 - **js/** – All JavaScript modules powering the application, including `customMapping.js` for regex-based field mapping.
 - **scripts/** – Utility scripts.
