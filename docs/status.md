@@ -2,11 +2,11 @@
 
 
 
-> **Latest release: v3.04.24**
+> **Latest release: v3.04.25**
 
-## 🎯 Current State: **BETA v3.04.24** ✅ MAINTAINED & OPTIMIZED
+## 🎯 Current State: **BETA v3.04.25** ✅ MAINTAINED & OPTIMIZED
 
-**StackrTrackr v3.04.24** is a fully-featured, client-side web application for tracking precious metal investments (Silver, Gold, Platinum, Palladium) with comprehensive inventory management, API integration, and complete backup capabilities. The 3.04.x series focuses on polish, maintenance, and optimization.
+**StackrTrackr v3.04.25** is a fully-featured, client-side web application for tracking precious metal investments (Silver, Gold, Platinum, Palladium) with comprehensive inventory management, API integration, and complete backup capabilities. The 3.04.x series focuses on polish, maintenance, and optimization.
 
 
 ## 🏗️ Architecture Overview
@@ -26,6 +26,7 @@ The tool features a **modular JavaScript architecture** with separate files for 
 
 ## ✨ Latest Changes
 
+- **v3.04.25 - Unified logo**: single SVG logo across themes, removed theme-specific assets
 - **v3.04.24 - Backup warning theming**: local storage warning uses theme colors with centered type summary and backup link
 - **v3.04.23 - Inventory actions alignment**: row icons reordered and theme-aware controls
 - **v3.04.22 - Metals.dev history limit**: restricts Metals.dev history requests to 30 days and records daily prices

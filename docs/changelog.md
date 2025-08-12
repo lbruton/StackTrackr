@@ -1,11 +1,15 @@
 # StackrTrackr — Changelog
 
-> **Latest release: v3.04.24**
+> **Latest release: v3.04.25**
 
 
 For upcoming work, see [roadmap](roadmap.md).
 
 ## 📋 Version History
+
+### Version 3.04.25 – Unified logo across themes (2025-08-13)
+- Adopted single SVG logo for all themes
+- Removed legacy theme-specific logo files and logic
 
 ### Version 3.04.24 – Backup warning and type summary alignment (2025-08-13)
 - Local data warning now uses theme-aware yellow/red styling with clickable backup link
