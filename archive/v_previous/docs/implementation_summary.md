@@ -1,18 +1,38 @@
-# Implementation Summary: Footer Version Injection
+# Implementation Summary: Gold & Silver Logo
 
-> **Latest release: v3.04.15**
+> **Latest release: v3.04.17**
 
-## Version Update: 3.04.14 → 3.04.15
+## Version Update: 3.04.16 → 3.04.17
 
 ## User Requirements Implemented
 
-- Footer displays current application version without manual HTML edits
+- Introduced gold/silver SVG logo with tagline
+- Enabled automatic light/dark theme switching and responsive scaling
 
 ## Technical Changes Made
 
 ### Files Modified:
-1. **`js/constants.js`**: Bumped version to 3.04.15
-2. **Documentation**: Updated changelog, roadmap, status, structure, function table, implementation summary, README, and workflow
+1. **`index.html`**: Replaced logo with theme-aware gold/silver SVG and tagline
+2. **`css/styles.css`**: Added logo styles, theme rules, and responsive typography
+3. **`js/constants.js`**: Bumped version to 3.04.17
+4. **Documentation**: Updated changelog, roadmap, status, structure, function table, implementation summary, README, and workflow
+
+## Version Update: 3.04.15 → 3.04.16
+
+## User Requirements Implemented
+
+- Restored Change Log trigger to silver button
+- Added spacing between inventory table and Change Log controls
+- Updated footer with friendly version message and helpful links
+- Added safe favicon
+
+## Technical Changes Made
+
+### Files Modified:
+1. **`index.html`**: Added favicon link, converted Change Log trigger to button, updated footer text
+2. **`css/styles.css`**: Increased spacing above Change Log controls
+3. **`js/constants.js`**: Bumped version to 3.04.16
+4. **Documentation**: Updated changelog, roadmap, status, structure, function table, implementation summary, README, and workflow
 
 ## Version Update: 3.04.13 → 3.04.14
 

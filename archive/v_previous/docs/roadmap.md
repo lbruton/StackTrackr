@@ -2,6 +2,8 @@
 
 This roadmap outlines upcoming patch releases for the v3.04.x series.
 
+- **v3.04.17** – Gold & silver responsive logo *(completed)*
+- **v3.04.16** – Layout and footer refinements *(completed)*
 - **v3.04.15** – Footer version injection *(completed)*
 - **v3.04.14** – UI and filter enhancements *(completed)*
 - **v3.04.13** – Simplified archive workflow *(completed)*
