@@ -1,11 +1,15 @@
 # StackrTrackr — Changelog
 
-> **Latest release: v3.04.21**
+> **Latest release: v3.04.22**
 
 
 For upcoming work, see [roadmap](roadmap.md).
 
 ## 📋 Version History
+
+### Version 3.04.22 – Metals.dev history limit (2025-08-12)
+- Enforced 30-day history limit for Metals.dev API with default 29 days
+- Recorded daily metals.dev price history with normalized timestamps
 
 ### Version 3.04.21 – Header height and type color theming (2025-08-12)
 - Unified application header height across themes

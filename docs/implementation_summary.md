@@ -1,23 +1,23 @@
 # Implementation Summary: Gold & Silver Logo
 
-> **Latest release: v3.04.21**
+> **Latest release: v3.04.22**
 
-## Version Update: 3.04.20 → 3.04.21
+## Version Update: 3.04.21 → 3.04.22
 
 ## User Requirements Implemented
 
-- Standardized header height across themes
-- Static, contrasting type colors with light, dark, and sepia support
+- Enforced 30-day history limit for Metals.dev API with default 29 days
+- Recorded each Metals.dev historical price in API history table
 
 ## Technical Changes Made
 
 ### Files Modified:
-1. **`css/styles.css`**: Enforced header height and added theme-aware type color variables
-2. **`js/inventory.js`**: Switched to static type color mapping and updated type summary
-3. **`js/constants.js`**: Bumped version to 3.04.21
-4. **Documentation**: Updated changelog and status entries
+1. **`index.html`**: Restricted Metals.dev history input to max 30 days and default 29
+2. **`js/api.js`**: Clamped Metals.dev history days and saved entries with correct timestamps
+3. **`js/constants.js`**: Improved Metals.dev batch response parsing and bumped version to 3.04.22
+4. **Documentation**: Updated changelog and status references
 
-## Version Update: 3.04.17 → 3.04.18
+## Version Update: 3.04.20 → 3.04.21
 
 ## User Requirements Implemented
 
