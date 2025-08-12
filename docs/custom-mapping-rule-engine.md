@@ -1,7 +1,7 @@
 # Custom Mapping Rule Engine Prototype
 
 This document outlines the initial design for a client‑side rule engine that maps
-incoming field names to StackTrackr's internal schema.
+incoming field names to StackrTrackr's internal schema.
 
 ## Design Overview
 - **Goal:** Allow users to define mapping rules using regular expressions.

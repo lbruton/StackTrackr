@@ -185,7 +185,7 @@ const injectVersionString = (elementId, prefix = "v") => {
 };
 
 /** @constant {string} BRANDING_TITLE - Optional custom application title */
-const BRANDING_TITLE = "StackTrackr";
+const BRANDING_TITLE = "StackrTrackr";
 
 /**
  * Domain-based branding configuration
@@ -201,7 +201,6 @@ const BRANDING_TITLE = "StackTrackr";
 const BRANDING_DOMAIN_OPTIONS = {
   domainMap: {
     stackertracker: "Stacker Tracker",
-    stacktrackr: "Stack Trackr",
     stackrtrackr: "StackrTrackr",
   },
   removeExtension: true,

@@ -1,4 +1,4 @@
-# StackTrackr Repair Checklist - v3.04.05
+# StackrTrackr Repair Checklist - v3.04.05
 
 ## 🚨 **Critical Issues to Fix**
 
@@ -260,7 +260,7 @@
 
 **For use if work gets interrupted:**
 
-"You are working on StackTrackr v3.04.04, a precious metals inventory tracking application. The following issues have been identified and partially addressed:
+"You are working on StackrTrackr v3.04.04, a precious metals inventory tracking application. The following issues have been identified and partially addressed:
 
 1. **FIXED**: Search functionality was broken due to malformed JavaScript in events.js line 738
 2. **FIXED**: Adding N# (Numista catalog) column to inventory table with clickable links

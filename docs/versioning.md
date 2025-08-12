@@ -4,7 +4,7 @@
 
 ## Overview 
 
-The StackTrackr now uses a dynamic version management system that automatically updates version numbers throughout the application from a single source of truth.
+The StackrTrackr now uses a dynamic version management system that automatically updates version numbers throughout the application from a single source of truth.
 
 ## How It Works
 
@@ -35,10 +35,10 @@ To release a new version:
    ```
 
 2. **All these will automatically update:**
-  - Page title: "StackTrackr v3.04.04"
-  - Page heading: "StackTrackr v3.04.04"
-  - Browser tab title: "StackTrackr v3.04.04"
-   - App header: "StackTrackr v3.03.07b"
+  - Page title: "StackrTrackr v3.04.04"
+  - Page heading: "StackrTrackr v3.04.04"
+  - Browser tab title: "StackrTrackr v3.04.04"
+   - App header: "StackrTrackr v3.03.07b"
 
 3. **Update changelog:** Add entry to `/docs/changelog.md` for documentation
 
@@ -61,7 +61,7 @@ appHeader.textContent = getAppTitle();
 - **Future-proof** - any new features can easily access current version
 
 ## Version Format
-StackTrackr versions follow the `BRANCH.RELEASE.PATCH.state` pattern where the
+StackrTrackr versions follow the `BRANCH.RELEASE.PATCH.state` pattern where the
 state code is appended directly to the patch number:
 
 - **BRANCH** – Major development branch (e.g., `3`)
@@ -92,7 +92,7 @@ const versionString = getVersionString(); // "v3.03.07b"
 const customVersion = getVersionString('version '); // "version 3.03.07b"
 
 // Get full app title
-const title = getAppTitle(); // "StackTrackr v3.03.07b"
+const title = getAppTitle(); // "StackrTrackr v3.03.07b"
 const customTitle = getAppTitle('My Custom Tool'); // "My Custom Tool v3.03.07b"
 ```
 

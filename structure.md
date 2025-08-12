@@ -1,4 +1,4 @@
-# StackTrackr - Project Structure
+# StackrTrackr - Project Structure
 
 ## Current Structure (Version 3.03.08n)
 

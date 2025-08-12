@@ -1,4 +1,4 @@
-# StackTrackr – debugLog Fix Patch (2025‑08‑11)
+# StackrTrackr – debugLog Fix Patch (2025‑08‑11)
 
 ## What this fixes
 Prevents the startup error:
@@ -10,7 +10,7 @@ by ensuring a global `debugLog` exists **before** any other scripts run.
 ## What’s included
 - `js/debug-log.js` — a tiny, standalone bootstrap that defines:
   - `debugLog`, `debugInfo`, `debugWarn`, `debugError`
-  - A 500‑entry in‑memory log buffer for diagnostics (`window.__stacktrackr__logBuffer`)
+  - A 500‑entry in‑memory log buffer for diagnostics (`window.__stackrtrackr__logBuffer`)
   - `exportDebugBuffer()` helper to download recent logs as JSON
 
 ## How to apply
@@ -23,11 +23,11 @@ by ensuring a global `debugLog` exists **before** any other scripts run.
 ```
 3) (Optional) Enable verbose console output during testing:
 ```js
-localStorage.setItem('stacktrackr.debug', '1');
+localStorage.setItem('stackrtrackr.debug', '1');
 ```
 To disable:
 ```js
-localStorage.removeItem('stacktrackr.debug');
+localStorage.removeItem('stackrtrackr.debug');
 ```
 
 ## Why this is safe

@@ -1,6 +1,6 @@
 # Human Developer Workflow
 
-This guide summarizes the typical tools and branch strategy for human contributors to StackTrackr.
+This guide summarizes the typical tools and branch strategy for human contributors to StackrTrackr.
 
 **Current Release:** v3.03.07b
 
@@ -24,8 +24,8 @@ This guide summarizes the typical tools and branch strategy for human contributo
 
 ## Hosting URLs
 
-- **Production**: [https://stacktrackr.com](https://stacktrackr.com)
-- **Cloudflare Preview**: [https://stacktrackr.pages.dev](https://stacktrackr.pages.dev) *(used for Cloudflare deployments)*
+- **Production**: [https://stackrtrackr.com](https://stackrtrackr.com)
+- **Cloudflare Preview**: [https://stackrtrackr.pages.dev](https://stackrtrackr.pages.dev) *(used for Cloudflare deployments)*
 - **Source Repository**: [https://github.com/lbruton/StackTrackr](https://github.com/lbruton/StackTrackr)
 
 For overall development workflow, see [docs/MULTI_AGENT_WORKFLOW.md](MULTI_AGENT_WORKFLOW.md).

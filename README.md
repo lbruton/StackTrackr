@@ -1,8 +1,8 @@
 
-# StackTrackr v3.04.18
+# StackrTrackr v3.04.18
 
 
-StackTrackr is a comprehensive client-side web application for tracking precious metal investments. It's designed to help users manage their silver, gold, platinum, and palladium holdings with detailed financial metrics and enhanced tracking capabilities.
+StackrTrackr is a comprehensive client-side web application for tracking precious metal investments. It's designed to help users manage their silver, gold, platinum, and palladium holdings with detailed financial metrics and enhanced tracking capabilities.
 
 The public hosted version of the app is available at [stackrtrackr.com](https://stackrtrackr.com).
 
@@ -52,7 +52,7 @@ The public hosted version of the app is available at [stackrtrackr.com](https://
 - **v3.2.05rc - Splash Opt-Out & Branding**: Disclaimer modal now hides after acknowledgment, header branding adapts to the hosting domain with an updated subtitle, and API providers store keys separately
 - **v3.2.04rc - Import Negative Price Handling**: Negative prices default to $0 during imports
 - **v3.2.03rc - Cache Flush Confirmation**: Added warning before clearing API cache and history
-- **v3.2.02rc - Feature Complete Release Candidate**: Rebranded to StackTrackr and prepared for final release
+- **v3.2.02rc - Feature Complete Release Candidate**: Rebranded to StackrTrackr and prepared for final release
 - **v3.2.01 - Cloud Sync Modal Fix**: Coming soon modal now matches themed styling with internal close button
 - **v3.2.0 - Settings & History Polish**: Appearance section moved up, sync confirmation dialog, and redesigned API history modal with clear filter
 - **v3.1.13 - Cloud Sync & API Quotas**: CSV import fix, Cloud Sync placeholder, and API usage tracking with monthly reset
@@ -140,7 +140,7 @@ The public hosted version of the app is available at [stackrtrackr.com](https://
 - Added confirmation prompt before flushing API cache and history
 
 ## 🆕 What's New in v3.2.02rc
-- Application renamed to **StackTrackr**
+- Application renamed to **StackrTrackr**
 - Marked as **feature complete** for the 3.2.x series
 
 ## 🆕 What's New in v3.2.0
