@@ -6,6 +6,7 @@ This roadmap tracks upcoming goals without committing to specific patch numbers.
 - _No active patch goals at this time._
 
 ## Completed Patch Goals (v3.04.xx)
+- ✅ **Pagination Controls Placement** - Temporarily relocated pagination controls into table controls section (v3.04.40)
 - ✅ **Template Variable Resolution** - Fixed unreplaced template variables in documentation (v3.04.39)
 - Align inventory action buttons and theme controls
 - Enforce Metals.dev 30-day history limit and record daily price history
