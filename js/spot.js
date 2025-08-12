@@ -12,14 +12,38 @@ const saveSpotHistory = () => saveData(SPOT_HISTORY_KEY, spotHistory);
 const loadSpotHistory = () => (spotHistory = loadData(SPOT_HISTORY_KEY, []));
 
 /**
+ * Removes spot history entries older than the specified number of days
+ *
+ * @param {number} days - Number of days to retain
+ */
+const purgeSpotHistory = (days = 180) => {
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - days);
+  spotHistory = spotHistory.filter(
+    (entry) => new Date(entry.timestamp) >= cutoff,
+  );
+};
+
+/**
  * Records a new spot price entry in history
  *
  * @param {number} newSpot - New spot price value
  * @param {string} source - Source of spot price ('manual', 'api', etc.)
  * @param {string} metal - Metal type ('Silver', 'Gold', 'Platinum', or 'Palladium')
  * @param {string|null} provider - Provider name if source is API-based
+ * @param {string|null} timestamp - Optional ISO timestamp for historical entries
  */
-const recordSpot = (newSpot, source, metal, provider = null) => {
+const recordSpot = (
+  newSpot,
+  source,
+  metal,
+  provider = null,
+  timestamp = null,
+) => {
+  purgeSpotHistory();
+  const entryTimestamp = timestamp
+    ? new Date(timestamp).toISOString().replace("T", " ").slice(0, 19)
+    : new Date().toISOString().replace("T", " ").slice(0, 19);
   if (
     !spotHistory.length ||
     spotHistory[spotHistory.length - 1].spot !== newSpot ||
@@ -30,9 +54,42 @@ const recordSpot = (newSpot, source, metal, provider = null) => {
       metal,
       source,
       provider,
-      timestamp: new Date().toISOString().replace("T", " ").slice(0, 19),
+      timestamp: entryTimestamp,
     });
-    saveSpotHistory();
+  }
+  saveSpotHistory();
+};
+
+/**
+ * Updates spot card color based on price movement compared to last history entry
+ *
+ * @param {string} metalKey - Metal key ('silver', 'gold', etc.)
+ * @param {number} newPrice - Newly set spot price
+ */
+const updateSpotCardColor = (metalKey, newPrice) => {
+  const metalConfig = Object.values(METALS).find((m) => m.key === metalKey);
+  if (!metalConfig) return;
+
+  const el = elements.spotPriceDisplay[metalKey];
+  if (!el) return;
+
+  const lastEntry = [...spotHistory]
+    .reverse()
+    .find((e) => e.metal === metalConfig.name);
+
+  if (!lastEntry) {
+    el.classList.remove("spot-up", "spot-down");
+    return;
+  }
+
+  if (newPrice > lastEntry.spot) {
+    el.classList.add("spot-up");
+    el.classList.remove("spot-down");
+  } else if (newPrice < lastEntry.spot) {
+    el.classList.add("spot-down");
+    el.classList.remove("spot-up");
+  } else {
+    el.classList.remove("spot-up", "spot-down");
   }
 };
 
@@ -75,6 +132,9 @@ const fetchSpotPrice = () => {
     if (timestampElement) {
       timestampElement.innerHTML = getLastUpdateTime(metalConfig.name);
     }
+
+    // Update card color based on price movement
+    updateSpotCardColor(metalConfig.key, spotPrices[metalConfig.key]);
   });
 
   updateSummary();
@@ -109,6 +169,8 @@ const updateManualSpot = (metalKey) => {
       spotPrices[metalKey],
     );
   }
+
+  updateSpotCardColor(metalKey, num);
   recordSpot(num, "manual", metalConfig.name);
 
   // Update timestamp display
@@ -167,6 +229,8 @@ const resetSpot = (metalKey) => {
     );
   }
 
+  updateSpotCardColor(metalKey, resetPrice);
+
   // Record in history
   recordSpot(resetPrice, source, metalConfig.name, providerName);
 
@@ -204,3 +268,4 @@ const resetSpotByName = (metalName) => {
 
 // Ensure global availability
 window.fetchSpotPrice = fetchSpotPrice;
+window.updateSpotCardColor = updateSpotCardColor;

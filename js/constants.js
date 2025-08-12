@@ -27,13 +27,68 @@ const API_PROVIDERS = {
     batchSupported: true,
     batchEndpoint: "/metals/spot?api_key={API_KEY}&metals={METALS}&days={DAYS}&currency=USD",
     parseBatchResponse: (data) => {
-      const results = {};
-      if (data.data) {
+      const current = {};
+      const history = {};
+      if (Array.isArray(data?.data)) {
+        data.data.forEach((entry) => {
+          const ts =
+            entry.timestamp || entry.datetime || entry.date || entry.time || entry[0];
+          const metalsData = entry.metals || entry.prices || entry;
+          Object.entries(metalsData).forEach(([metal, val]) => {
+            if (["timestamp", "datetime", "date", "time"].includes(metal)) return;
+            const hPrice =
+              val.price || val.rate?.price || val.value || val;
+            if (hPrice) {
+              const key = metal.toLowerCase();
+              if (!history[key]) history[key] = [];
+              const tsNorm =
+                typeof ts === "string" && /^\d{4}-\d{2}-\d{2}$/.test(ts)
+                  ? `${ts} 00:00:00`
+                  : ts;
+              history[key].push({ timestamp: tsNorm, price: hPrice });
+              current[key] = hPrice;
+            }
+          });
+        });
+      } else if (data?.data) {
         Object.entries(data.data).forEach(([metal, info]) => {
-          results[metal] = info.price || info.rate?.price || null;
+          const price = info.price || info.rate?.price || null;
+          if (price) current[metal] = price;
+          if (info.history) {
+            const entries = [];
+            if (Array.isArray(info.history)) {
+              info.history.forEach((h) => {
+                const hPrice = h.price || h.rate?.price || h.value;
+                const ts =
+                  h.timestamp || h.datetime || h.date || h.time || h[0];
+                if (hPrice && ts) {
+                  const tsNorm =
+                    typeof ts === "string" && /^\d{4}-\d{2}-\d{2}$/.test(ts)
+                      ? `${ts} 00:00:00`
+                      : ts;
+                  entries.push({ timestamp: tsNorm, price: hPrice });
+                }
+              });
+            } else if (typeof info.history === "object") {
+              Object.entries(info.history).forEach(([ts, val]) => {
+                const hPrice =
+                  typeof val === "object"
+                    ? val.price || val.rate?.price || val.value
+                    : val;
+                if (hPrice) {
+                  const tsNorm =
+                    typeof ts === "string" && /^\d{4}-\d{2}-\d{2}$/.test(ts)
+                      ? `${ts} 00:00:00`
+                      : ts;
+                  entries.push({ timestamp: tsNorm, price: hPrice });
+                }
+              });
+            }
+            if (entries.length) history[metal] = entries;
+          }
         });
       }
-      return results;
+      return { current, history };
     },
   },
   METALS_API: {
@@ -62,17 +117,44 @@ const API_PROVIDERS = {
     batchSupported: true,
     batchEndpoint: "/latest?access_key={API_KEY}&base=USD&symbols={SYMBOLS}",
     parseBatchResponse: (data) => {
-      const results = {};
-      const symbolMap = { XAG: 'silver', XAU: 'gold', XPT: 'platinum', XPD: 'palladium' };
+      const current = {};
+      const history = {};
+      const symbolMap = {
+        XAG: "silver",
+        XAU: "gold",
+        XPT: "platinum",
+        XPD: "palladium",
+      };
       if (data.rates) {
-        Object.entries(data.rates).forEach(([symbol, rate]) => {
-          const metal = symbolMap[symbol];
-          if (metal && rate) {
-            results[metal] = 1 / rate; // Convert from metal per USD to USD per ounce
-          }
-        });
+        const firstKey = Object.keys(data.rates)[0];
+        if (
+          firstKey &&
+          typeof data.rates[firstKey] === "object" &&
+          /^\d{4}-\d{2}-\d{2}$/.test(firstKey)
+        ) {
+          // Timeseries format: { date: { symbol: rate } }
+          Object.entries(data.rates).forEach(([date, symbols]) => {
+            Object.entries(symbols).forEach(([symbol, rate]) => {
+              const metal = symbolMap[symbol];
+              if (metal && rate) {
+                const price = 1 / rate;
+                if (!history[metal]) history[metal] = [];
+                history[metal].push({
+                  timestamp: `${date} 00:00:00`,
+                  price,
+                });
+                current[metal] = price;
+              }
+            });
+          });
+        } else {
+          Object.entries(data.rates).forEach(([symbol, rate]) => {
+            const metal = symbolMap[symbol];
+            if (metal && rate) current[metal] = 1 / rate;
+          });
+        }
       }
-      return results;
+      return { current, history };
     },
   },
   METAL_PRICE_API: {
@@ -101,17 +183,43 @@ const API_PROVIDERS = {
     batchSupported: true,
     batchEndpoint: "/latest?api_key={API_KEY}&base=USD&currencies={CURRENCIES}",
     parseBatchResponse: (data) => {
-      const results = {};
-      const symbolMap = { XAG: 'silver', XAU: 'gold', XPT: 'platinum', XPD: 'palladium' };
+      const current = {};
+      const history = {};
+      const symbolMap = {
+        XAG: "silver",
+        XAU: "gold",
+        XPT: "platinum",
+        XPD: "palladium",
+      };
       if (data.rates) {
-        Object.entries(data.rates).forEach(([symbol, rate]) => {
-          const metal = symbolMap[symbol];
-          if (metal && rate) {
-            results[metal] = 1 / rate; // Convert from metal per USD to USD per ounce
-          }
-        });
+        const firstKey = Object.keys(data.rates)[0];
+        if (
+          firstKey &&
+          typeof data.rates[firstKey] === "object" &&
+          /^\d{4}-\d{2}-\d{2}$/.test(firstKey)
+        ) {
+          Object.entries(data.rates).forEach(([date, symbols]) => {
+            Object.entries(symbols).forEach(([symbol, rate]) => {
+              const metal = symbolMap[symbol];
+              if (metal && rate) {
+                const price = 1 / rate;
+                if (!history[metal]) history[metal] = [];
+                history[metal].push({
+                  timestamp: `${date} 00:00:00`,
+                  price,
+                });
+                current[metal] = price;
+              }
+            });
+          });
+        } else {
+          Object.entries(data.rates).forEach(([symbol, rate]) => {
+            const metal = symbolMap[symbol];
+            if (metal && rate) current[metal] = 1 / rate;
+          });
+        }
       }
-      return results;
+      return { current, history };
     },
   },
   CUSTOM: {
@@ -135,7 +243,7 @@ const API_PROVIDERS = {
     batchEndpoint: "",
     parseBatchResponse: (data) => {
       // Custom batch parsing would depend on the provider's API format
-      return {};
+      return { current: {}, history: {} };
     },
   },
 };
@@ -149,7 +257,7 @@ const API_PROVIDERS = {
  * Example: 3.03.02a → branch 3, release 03, patch 02, alpha
  */
 
-const APP_VERSION = "3.04.21";
+const APP_VERSION = "3.04.22";
 
 /**
  * @constant {string} DEFAULT_CURRENCY - Default currency code for monetary formatting

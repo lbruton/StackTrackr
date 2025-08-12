@@ -1,7 +1,7 @@
 # Function Reference
 
 
-> **Latest release: v3.04.21**
+> **Latest release: v3.04.22**
 
 
 | File | Function | Description |
@@ -127,7 +127,8 @@
 | sorting.js | sortInventory | Sorts inventory based on current sort column and direction |
 | spot.js | saveSpotHistory | Saves spot history to localStorage |
 | spot.js | loadSpotHistory | Loads spot history from localStorage |
-| spot.js | recordSpot | Records a new spot price entry in history |
+| spot.js | purgeSpotHistory | Removes spot history entries older than a set number of days |
+| spot.js | recordSpot | Records a new spot price entry in history with optional timestamp |
 | spot.js | fetchSpotPrice | Fetches and displays current spot prices from localStorage or defaults |
 | spot.js | updateManualSpot | Updates spot price for specified metal from user input |
 | spot.js | resetSpot | Resets spot price for specified metal to default or API cached value |
