@@ -1,6 +1,6 @@
 # StackrTrackr Development Prompt
 
-You're working on **StackrTrackr v3.04.41+**, a client-side precious metals inventory web app. Your job is to pick up a development task and implement it efficiently.
+You're working on **StackrTrackr v3.04.43+**, a client-side precious metals inventory web app. Your job is to pick up a development task and implement it efficiently.
 
 ## Quick Orientation (3 steps)
 

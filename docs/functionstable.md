@@ -1,7 +1,7 @@
 # Function Reference
 
 
-> **Latest release: v3.04.41**
+> **Latest release: v3.04.43**
 
 
 | File | Function | Description |
@@ -107,7 +107,7 @@
 | inventory.js | filterLink | Builds clickable filter span with optional HTML content |
 | inventory.js | formatPurchaseLocation | Detects URLs and wraps Purchase Location in a hyperlink |
 | inventory.js | renderTable |  |
-| inventory.js | updateTypeSummary | Shows color-coded counts for type, metal, purchase location, and storage location |
+| inventory.js | updateTypeSummary | Renders clickable summary chips for type, metal, purchase location, storage location, name, and date when count > 2 |
 | inventory.js | updateSummary | Calculates and updates all financial summary displays across the application |
 | inventory.js | calculateTotals | Calculates financial metrics for specified metal type |
 | inventory.js | deleteItem | Deletes inventory item at specified index after confirmation |

@@ -6,6 +6,8 @@ This roadmap tracks upcoming goals without committing to specific patch numbers.
 - _No active patch goals at this time._
 
 ## Completed Patch Goals (v3.04.xx)
+- ✅ **Filter chip threshold** - Summary chips only show values with more than two items (v3.04.43)
+- ✅ **Expanded filter chips** - Added Name/Date chips with dynamic filtering and counts, replaced backup notice with Filters subtitle (v3.04.42)
 - ✅ **Section titles for main UI** - Added centered titles to Spot Prices, Inventory, Filters, and Information Cards (v3.04.41)
 - ✅ **Pagination section reorder** - Moved pagination above Change Log with edge padding (v3.04.40)
 - ✅ **Template Variable Resolution** - Fixed unreplaced template variables in documentation (v3.04.39)

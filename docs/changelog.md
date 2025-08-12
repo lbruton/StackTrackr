@@ -1,11 +1,17 @@
 # StackrTrackr — Changelog
 
-> **Latest release: v3.04.41**
+> **Latest release: v3.04.43**
 
 
 For upcoming work, see [announcements](announcements.md).
 
 ## 📋 Version History
+
+### Version 3.04.43 – Filter Chip Threshold (2025-08-19)
+- **Filters**: Summary chips only render for values with more than two items.
+
+### Version 3.04.42 – Filter Chip Expansion (2025-08-18)
+- **Filters**: Added Filters subtitle and summary chips for Name and Date with dynamic counts and clickable filtering.
 
 ### Version 3.04.41 – Section Titles Enhancement (2025-08-17)
 - **UI**: Added centered section titles for Spot Prices, Inventory, Filters, and Information Cards using modern fonts.
