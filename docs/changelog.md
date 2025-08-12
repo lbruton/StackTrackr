@@ -1,11 +1,14 @@
 # StackrTrackr — Changelog
 
-> **Latest release: v3.04.29**
+> **Latest release: v3.04.30**
 
 
 For upcoming work, see [roadmap](roadmap.md).
 
 ## 📋 Version History
+
+### Version 3.04.30 – URL Purchase Location Links (2025-08-12)
+- **Clickable Purchase Locations**: Purchase Location accepts web addresses and renders them as hyperlinks.
 
 ### Version 3.04.29 – Backup, Restore, Clear Heading (2025-08-12)
 - **Unified Backup Section**: Renamed "Clear Data" settings card to "Backup, Restore, Clear" for clearer data management.

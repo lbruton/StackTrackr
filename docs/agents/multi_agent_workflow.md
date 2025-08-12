@@ -1,14 +1,14 @@
-# Multi-Agent Development Workflow - StackrTrackr v3.04.29
+# Multi-Agent Development Workflow - StackrTrackr v3.04.30
 
 > **⚠️ NOTICE: `docs/agents/agents.ai` is the primary development reference for token efficiency. This file is maintained for consistency only.**
 
-> **Latest release: v3.04.29**
+> **Latest release: v3.04.30**
 
 ## 🎯 Project Overview
 
-You are contributing to **StackrTrackr v3.04.29**, a comprehensive client-side web application for tracking precious metal investments (Silver, Gold, Platinum, Palladium). The project uses a modular JavaScript architecture with local storage, responsive CSS theming, and advanced features like API integration, data visualization, and comprehensive import/export capabilities.
+You are contributing to **StackrTrackr v3.04.30**, a comprehensive client-side web application for tracking precious metal investments (Silver, Gold, Platinum, Palladium). The project uses a modular JavaScript architecture with local storage, responsive CSS theming, and advanced features like API integration, data visualization, and comprehensive import/export capabilities.
 
-**Current Status**: v3.04.29 (stable)
+**Current Status**: v3.04.30 (stable)
 **Your Role**: Complete focused v3.04.x patch tasks as part of a coordinated multi-agent development effort
 
 ---

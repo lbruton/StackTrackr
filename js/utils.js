@@ -485,6 +485,23 @@ const stripNonAlphanumeric = (str = "", allowHyphen = false) =>
   str.toString().replace(allowHyphen ? /[^a-zA-Z0-9 -]/g : /[^a-zA-Z0-9 ]/g, "");
 
 /**
+ * Cleans a string by stripping HTML tags and control characters while
+ * preserving punctuation. Normalizes whitespace and removes diacritics.
+ *
+ * @param {string} str - Input string
+ * @returns {string} Cleaned string
+ */
+const cleanString = (str = "") =>
+  str
+    .toString()
+    .replace(/<[^>]*>/g, "")
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .replace(/[\u0000-\u001F\u007F'\"]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+/**
  * Sanitizes all string properties of an object by stripping non-alphanumeric characters.
  *
  * @param {Object} obj - Object whose string fields will be sanitized
@@ -495,7 +512,10 @@ const sanitizeObjectFields = (obj) => {
   for (const key of Object.keys(cleaned)) {
     if (typeof cleaned[key] === "string" && key !== 'notes') {
       const allowHyphen = key === 'date';
-      cleaned[key] = stripNonAlphanumeric(cleaned[key], allowHyphen);
+      cleaned[key] =
+        key === 'purchaseLocation'
+          ? cleanString(cleaned[key])
+          : stripNonAlphanumeric(cleaned[key], allowHyphen);
     }
   }
   return cleaned;
@@ -675,15 +695,6 @@ const sanitizeImportedItem = (item) => {
 
   // Normalize and sanitize string fields
   const basicFields = ['name', 'type', 'purchaseLocation', 'storageLocation'];
-  const cleanString = (str = '') =>
-    str
-      .toString()
-      .replace(/<[^>]*>/g, '')
-      .normalize('NFD')
-      .replace(/\p{Diacritic}/gu, '')
-      .replace(/[\u0000-\u001F\u007F'\"]/g, '')
-      .replace(/\s+/g, ' ')
-      .trim();
   const cleanMultilineString = (str = '') =>
     str
       .toString()

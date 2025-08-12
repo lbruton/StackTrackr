@@ -1,6 +1,6 @@
 # Implementation Summary: Unified Logo
 
-> **Latest release: v3.04.25**
+> **Latest release: v3.04.30**
 
 ## Version Update: 3.04.24 → 3.04.25
 
