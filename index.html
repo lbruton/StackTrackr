@@ -67,13 +67,119 @@
   <body>
     <!-- Application Header -->
     <div class="app-header">
-      <div class="logo-box">
+      <div>
         <h1 class="app-logo" id="appLogo" aria-label="StackrTrackr">
-          <img
-            src="./images/stackrtrackr-logo.svg"
-            alt="StackrTrackr logo"
-            class="stackr-logo"
-          />
+          <svg class="stackr-logo" viewBox="0 0 800 200" xmlns="http://www.w3.org/2000/svg" width="100%" height="auto" style="max-width: 800px;">
+            <defs>
+              <!-- Light Mode Gradients -->
+              <linearGradient id="goldLight" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stop-color="#FFD700"/>
+                <stop offset="30%" stop-color="#FFA500"/>
+                <stop offset="70%" stop-color="#B8860B"/>
+                <stop offset="100%" stop-color="#8B6914"/>
+              </linearGradient>
+              
+              <linearGradient id="silverLight" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stop-color="#F8F8FF"/>
+                <stop offset="30%" stop-color="#E5E5E5"/>
+                <stop offset="70%" stop-color="#C0C0C0"/>
+                <stop offset="100%" stop-color="#A0A0A0"/>
+              </linearGradient>
+              
+              <!-- Dark Mode Gradients -->
+              <linearGradient id="goldDark" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stop-color="#FFED4E"/>
+                <stop offset="30%" stop-color="#FFD700"/>
+                <stop offset="70%" stop-color="#FFA500"/>
+                <stop offset="100%" stop-color="#CC8400"/>
+              </linearGradient>
+              
+              <linearGradient id="silverDark" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stop-color="#FFFFFF"/>
+                <stop offset="30%" stop-color="#F5F5F5"/>
+                <stop offset="70%" stop-color="#E0E0E0"/>
+                <stop offset="100%" stop-color="#C0C0C0"/>
+              </linearGradient>
+              
+              <!-- Sepia Mode Gradients -->
+              <linearGradient id="goldSepia" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stop-color="#D4A574"/>
+                <stop offset="30%" stop-color="#B58900"/>
+                <stop offset="70%" stop-color="#8B6914"/>
+                <stop offset="100%" stop-color="#6B5416"/>
+              </linearGradient>
+              
+              <linearGradient id="silverSepia" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stop-color="#F2E7D5"/>
+                <stop offset="30%" stop-color="#D1C2A5"/>
+                <stop offset="70%" stop-color="#A8A29E"/>
+                <stop offset="100%" stop-color="#8D8D8D"/>
+              </linearGradient>
+            </defs>
+            
+            <!-- Light Mode Group -->
+            <g class="light-mode">
+              <!-- Shadow layer for light mode -->
+              <text x="53" y="83" font-family="Arial, sans-serif" font-size="72" font-weight="bold" fill="rgba(0,0,0,0.3)">
+                <tspan>Stackr</tspan><tspan>Trackr</tspan>
+              </text>
+              <!-- Main title -->
+              <text x="50" y="80" font-family="Arial, sans-serif" font-size="72" font-weight="bold">
+                <tspan fill="url(#silverLight)">Stackr</tspan><tspan fill="url(#goldLight)">Trackr</tspan>
+              </text>
+              
+              <!-- Tagline shadow -->
+              <text x="52" y="132" font-family="Arial, sans-serif" font-size="32" fill="rgba(0,0,0,0.2)">
+                Track Your Stack. Your Way.
+              </text>
+              <!-- Tagline -->
+              <text x="50" y="130" font-family="Arial, sans-serif" font-size="32" fill="#666666">
+                Track Your Stack. Your Way.
+              </text>
+            </g>
+            
+            <!-- Dark Mode Group -->
+            <g class="dark-mode">
+              <!-- Shadow layer for dark mode -->
+              <text x="53" y="83" font-family="Arial, sans-serif" font-size="72" font-weight="bold" fill="rgba(0,0,0,0.5)">
+                <tspan>Stackr</tspan><tspan>Trackr</tspan>
+              </text>
+              <!-- Main title -->
+              <text x="50" y="80" font-family="Arial, sans-serif" font-size="72" font-weight="bold">
+                <tspan fill="url(#silverDark)">Stackr</tspan><tspan fill="url(#goldDark)">Trackr</tspan>
+              </text>
+              
+              <!-- Tagline shadow -->
+              <text x="52" y="132" font-family="Arial, sans-serif" font-size="32" fill="rgba(0,0,0,0.3)">
+                Track Your Stack. Your Way.
+              </text>
+              <!-- Tagline -->
+              <text x="50" y="130" font-family="Arial, sans-serif" font-size="32" fill="#E0E0E0">
+                Track Your Stack. Your Way.
+              </text>
+            </g>
+            
+            <!-- Sepia Mode Group -->
+            <g class="sepia-mode">
+              <!-- Shadow layer for sepia mode -->
+              <text x="53" y="83" font-family="Arial, sans-serif" font-size="72" font-weight="bold" fill="rgba(62,47,30,0.4)">
+                <tspan>Stackr</tspan><tspan>Trackr</tspan>
+              </text>
+              <!-- Main title -->
+              <text x="50" y="80" font-family="Arial, sans-serif" font-size="72" font-weight="bold">
+                <tspan fill="url(#silverSepia)">Stackr</tspan><tspan fill="url(#goldSepia)">Trackr</tspan>
+              </text>
+              
+              <!-- Tagline shadow -->
+              <text x="52" y="132" font-family="Arial, sans-serif" font-size="32" fill="rgba(62,47,30,0.3)">
+                Track Your Stack. Your Way.
+              </text>
+              <!-- Tagline -->
+              <text x="50" y="130" font-family="Arial, sans-serif" font-size="32" fill="#6F604E">
+                Track Your Stack. Your Way.
+              </text>
+            </g>
+          </svg>
         </h1>
       </div>
       <div style="margin-left: auto; display: flex; gap: 0.5rem">

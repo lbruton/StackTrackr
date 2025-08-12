@@ -4,11 +4,11 @@
    ============================================================================= */
 
 :root {
-  /* Primary Colors */
-  --primary: #2563eb;
-  --primary-hover: #1d4ed8;
-  --secondary: #64748b;
-  --secondary-hover: #475569;
+  /* Primary Colors - Light blues theme */
+  --primary: #3b82f6;
+  --primary-hover: #2563eb;
+  --secondary: #8b93a6;
+  --secondary-hover: #6b7280;
   --success: #059669;
   --success-hover: #047857;
   --info: #0ea5e9;
@@ -21,18 +21,18 @@
     /* Disclaimer warning color */
     --disclaimer-color: var(--warning);
 
-  /* Background Colors - Better contrast for light mode */
-  --bg-primary: #f8fafc;
-  --bg-secondary: #f1f5f9;
-  --bg-tertiary: #cbd5e1; /* Darker for better logo contrast */
-  --bg-card: #f9fafb;
+  /* Background Colors - Light grays and light blues */
+  --bg-primary: #f1f5f9;
+  --bg-secondary: #e2e8f0;
+  --bg-tertiary: #b2c5d4; /* Middle gray-blue for better contrast */
+  --bg-card: #f8fafc;
 
   /* Text Colors */
   --text-primary: #1e293b;
   --text-secondary: #475569;
   --text-muted: #64748b;
 
-  /* Border & Shadow - Enhanced contrast */
+  /* Border & Shadow - Light grays */
   --border: #cbd5e1;
   --border-hover: #94a3b8;
   --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.1);
@@ -272,67 +272,85 @@ label {
   display: block;
 }
 
-.logo-box {
-  display: inline-flex;
-  align-items: center;
-  margin-right: auto;
-  padding: var(--spacing-sm);
-  background: #94a3b8;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  width: fit-content;
-}
-
-[data-theme="dark"] .logo-box {
-  background: var(--bg-primary);
-}
-
 /* StackrTrackr Logo Styles */
 .stackr-logo {
-  display: block;
+  max-width: 800px;
+  width: 100%;
   height: auto;
-  max-width: 100%;
 }
 
-/* Theme switching for logo */
-[data-theme="light"] .stackr-logo .light-mode,
-:root .stackr-logo .light-mode {
-  display: block;
+/* Default state - show light mode */
+.stackr-logo .light-mode { 
+  display: block; 
 }
 
-[data-theme="light"] .stackr-logo .dark-mode,
-:root .stackr-logo .dark-mode {
-  display: none;
+.stackr-logo .dark-mode { 
+  display: none; 
 }
 
-[data-theme="dark"] .stackr-logo .light-mode {
-  display: none;
+.stackr-logo .sepia-mode { 
+  display: none; 
 }
 
-[data-theme="dark"] .stackr-logo .dark-mode {
-  display: block;
+/* Dark theme */
+[data-theme="dark"] .stackr-logo .light-mode { 
+  display: none; 
 }
 
-[data-theme="sepia"] .stackr-logo .light-mode {
-  display: block;
+[data-theme="dark"] .stackr-logo .dark-mode { 
+  display: block; 
 }
 
-[data-theme="sepia"] .stackr-logo .dark-mode {
-  display: none;
+[data-theme="dark"] .stackr-logo .sepia-mode { 
+  display: none; 
+}
+
+/* Light theme (explicit) */
+[data-theme="light"] .stackr-logo .light-mode { 
+  display: block; 
+}
+
+[data-theme="light"] .stackr-logo .dark-mode { 
+  display: none; 
+}
+
+[data-theme="light"] .stackr-logo .sepia-mode { 
+  display: none; 
+}
+
+/* Sepia theme */
+[data-theme="sepia"] .stackr-logo .light-mode { 
+  display: none; 
+}
+
+[data-theme="sepia"] .stackr-logo .dark-mode { 
+  display: none; 
+}
+
+[data-theme="sepia"] .stackr-logo .sepia-mode { 
+  display: block; 
+}
+
+/* System preference detection (only when no manual theme is set) */
+@media (prefers-color-scheme: dark) {
+  body:not([data-theme]) .stackr-logo .light-mode { 
+    display: none; 
+  }
+  body:not([data-theme]) .stackr-logo .dark-mode { 
+    display: block; 
+  }
 }
 
 /* Responsive scaling */
 @media (max-width: 768px) {
-  .stackr-logo {
-    max-width: 400px;
-    max-height: 80px;
+  .stackr-logo text { 
+    font-size: 0.8em; 
   }
 }
 
 @media (max-width: 480px) {
-  .stackr-logo {
-    max-width: 300px;
-    max-height: 60px;
+  .stackr-logo text { 
+    font-size: 0.6em; 
   }
 }
 

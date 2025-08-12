@@ -1,11 +1,29 @@
 # StackrTrackr — Changelog
 
-> **Latest release: v3.04.26**
+> **Latest release: v3.04.28**
 
 
 For upcoming work, see [roadmap](roadmap.md).
 
 ## 📋 Version History
+
+### Version 3.04.28 – Enhanced Light Theme Styling (2025-08-12)
+- **Improved Light Theme**: Updated light theme to use light/middle grays and light blues for better visual appeal
+- **Background Updates**: Modified primary, secondary, and tertiary backgrounds with light blue-gray tones
+- **Color Harmony**: Enhanced color scheme with light blues for primary colors and coordinated gray palette
+- **Visual Consistency**: Maintained excellent contrast while creating a more modern, softer appearance
+
+### Version 3.04.27 – New StackrTrackr Logo Implementation (2025-08-12)
+- **Enhanced Logo**: Implemented new premium StackrTrackr logo with comprehensive theme support
+- **Triple Theme Support**: Added dedicated sepia mode with warm-toned gradients alongside light and dark modes
+- **file:// Protocol Compatibility**: Removed SVG filters that can fail in local file mode, using manual shadow effects instead
+- **Clean Integration**: Removed logo background box for seamless header integration
+- **Automatic Theme Detection**: Logo automatically switches between all three modes based on system preferences and manual selection
+- **Responsive Design**: Logo scales perfectly from desktop to mobile with optimized typography
+- **Premium Styling**: Theme-specific gold and silver gradients with manual drop shadows for depth
+- **Cross-Theme Support**: Works seamlessly with dark, light, and sepia themes using dedicated gradient sets
+- **Safe SVG Implementation**: Replaced static image with filter-free inline SVG for maximum compatibility
+- **Fixed CSS Specificity**: Corrected theme switching logic to properly handle all three modes
 
 ### Version 3.04.26 – Enhanced Theme Toggle (2025-08-13)
 - **Improved theme toggle**: Button now displays current theme's color and icon instead of next theme
