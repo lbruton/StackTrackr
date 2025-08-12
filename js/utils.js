@@ -23,9 +23,22 @@ const debugLog = (...args) => {
  *
  * @returns {string} Active branding name
  */
-const getBrandingName = () =>
-  (BRANDING_DOMAIN_OPTIONS.alwaysOverride && BRANDING_DOMAIN_OVERRIDE) ||
-  BRANDING_TITLE;
+let brandingWarned = false;
+const getBrandingName = () => {
+  if (
+    !BRANDING_DOMAIN_OVERRIDE &&
+    !brandingWarned &&
+    typeof window !== "undefined" &&
+    window.location &&
+    window.location.hostname
+  ) {
+    console.warn(
+      `No branding mapping found for domain: ${window.location.hostname}`
+    );
+    brandingWarned = true;
+  }
+  return BRANDING_DOMAIN_OVERRIDE || BRANDING_TITLE;
+};
 
 /**
  * Returns full application title with version when no branding is configured
