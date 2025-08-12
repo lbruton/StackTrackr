@@ -1524,15 +1524,6 @@ const setupSearch = () => {
 };
 
 /**
- * Updates logo groups to match current theme
- */
-const updateLogoTheme = () => {
-  if (typeof updateHeaderLogo === "function") {
-    updateHeaderLogo();
-  }
-};
-
-/**
  * Sets up theme toggle event listeners
  */
 const updateThemeButton = () => {
@@ -1554,8 +1545,6 @@ const updateThemeButton = () => {
   btn.textContent = iconMap[next];
   btn.setAttribute("aria-label", `Switch to ${labelMap[next]}`);
   btn.setAttribute("title", `Switch to ${labelMap[next]}`);
-
-  updateLogoTheme();
 };
 
 window.updateThemeButton = updateThemeButton;

@@ -27,9 +27,6 @@ const setTheme = (theme) => {
       document.documentElement.removeAttribute("data-theme");
     }
   }
-  if (typeof updateHeaderLogo === "function") {
-    updateHeaderLogo();
-  }
   if (typeof renderTable === "function") {
     renderTable();
   }
@@ -68,20 +65,6 @@ const toggleTheme = () => {
 };
 
 /**
- * Updates header logo based on current theme
- */
-const updateHeaderLogo = () => {
-  const logo = document.getElementById("appLogo");
-  if (!logo) return;
-  const theme = document.documentElement.getAttribute("data-theme");
-  let file = "stackrtrackr-logo-light.svg";
-  if (theme === "dark") file = "stackrtrackr-logo-dark.svg";
-  else if (theme === "sepia") file = "stackrtrackr-logo-sepia.svg";
-  logo.innerHTML =
-    `<img src="./images/${file}" alt="StackrTrackr logo" class="stackr-logo">`;
-};
-
-/**
  * Sets up system theme change listener
  */
 const setupSystemThemeListener = () => {
@@ -101,6 +84,5 @@ const setupSystemThemeListener = () => {
 window.setTheme = setTheme;
 window.toggleTheme = toggleTheme;
 window.initTheme = initTheme;
-window.updateHeaderLogo = updateHeaderLogo;
 
 // =============================================================================
