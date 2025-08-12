@@ -214,6 +214,7 @@ const updateColumnVisibility = () => {
     "premium",
     "purchaseLocation",
     "storageLocation",
+    "numista",
     "collectable",
     "notes",
     "delete",
