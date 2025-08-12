@@ -1,7 +1,7 @@
 # Project Structure
 
 
-> **Latest release: v3.04.23**
+> **Latest release: v3.04.24**
 
 
 The repository is organized as follows:

@@ -1,6 +1,6 @@
 # Dynamic Version Management System
 
-> **Latest release: v3.04.23**
+> **Latest release: v3.04.24**
 
 ## Overview 
 
@@ -19,7 +19,7 @@ The StackrTrackr now uses a dynamic version management system that automatically
 
 ### Utility Functions
 - `js/constants.js` provides:
-- `getVersionString(prefix)`: Returns formatted version (e.g., "v3.04.23")
+- `getVersionString(prefix)`: Returns formatted version (e.g., "v3.04.24")
   - `injectVersionString(elementId, prefix)`: Inserts formatted version into a target element
 - `js/utils.js` provides:
   - `getAppTitle(baseTitle)`: Returns full app title with version
@@ -35,9 +35,9 @@ To release a new version:
    ```
 
 2. **All these will automatically update:**
-  - Page title: "StackrTrackr v3.04.23"
-  - Page heading: "StackrTrackr v3.04.23"
-  - Browser tab title: "StackrTrackr v3.04.23"
+  - Page title: "StackrTrackr v3.04.24"
+  - Page heading: "StackrTrackr v3.04.24"
+  - Browser tab title: "StackrTrackr v3.04.24"
    - App header: "StackrTrackr v3.03.07b"
 
 3. **Update changelog:** Add entry to `/docs/changelog.md` for documentation

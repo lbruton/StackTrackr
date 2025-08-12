@@ -1,11 +1,15 @@
 # StackrTrackr — Changelog
 
-> **Latest release: v3.04.23**
+> **Latest release: v3.04.24**
 
 
 For upcoming work, see [roadmap](roadmap.md).
 
 ## 📋 Version History
+
+### Version 3.04.24 – Backup warning and type summary alignment (2025-08-13)
+- Local data warning now uses theme-aware yellow/red styling with clickable backup link
+- Type summary chips centered beneath the warning message
 
 ### Version 3.04.23 – Inventory actions alignment (2025-08-13)
 - Fixed inventory row action order to Collect, Notes, Edit, Delete
