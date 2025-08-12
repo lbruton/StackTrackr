@@ -1856,6 +1856,11 @@ td .filter-text {
   font-style: italic;
 }
 
+td .filter-text a,
+td .filter-text a:visited {
+  color: inherit;
+}
+
 td .inline-edit-icon,
 td .save-inline,
 td .cancel-inline {
@@ -3330,7 +3335,7 @@ th {
 .type-note { color: var(--type-note-bg); }
 .type-other { color: var(--type-other-bg); }
 
-#typeSummary .type-chip {
+#typeSummary .summary-chip {
   padding: 0.15rem 0.5rem;
   border-radius: var(--radius);
   font-size: 0.75rem;

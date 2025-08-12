@@ -1,11 +1,15 @@
 # StackrTrackr — Changelog
 
-> **Latest release: v3.04.35**
+> **Latest release: v3.04.36**
 
 
 For upcoming work, see [announcements](announcements.md).
 
 ## 📋 Version History
+
+### Version 3.04.36 – Dynamic Summary Bubbles & Link Colors (2025-08-14)
+- **Expanded summary**: Type, Metal, Purchase Location, and Storage Location now show dynamic counts with color-coded bubbles.
+- **Consistent link colors**: Purchase location URLs inherit their bubble colors.
 
 ### Version 3.04.35 – JSON Import Options & Excel Removal (2025-08-13)
 - **JSON import flexibility**: Added separate Import and Merge buttons with overwrite warnings.

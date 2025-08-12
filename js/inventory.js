@@ -758,17 +758,52 @@ window.startCellEdit = startCellEdit;
 const updateTypeSummary = () => {
   const el = elements.typeSummary || document.getElementById('typeSummary');
   if (!el) return;
-  const counts = inventory.reduce((acc, item) => {
-    acc[item.type] = (acc[item.type] || 0) + 1;
-    return acc;
-  }, {});
-  el.innerHTML = Object.entries(counts)
-    .map(([type, count]) => {
-      const safeType = sanitizeHtml(type);
-      const cls = type.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-      return `<span class="type-chip ${cls}">${safeType}: ${count}</span>`;
+
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  const textColor = isDark ? '#000' : '#fff';
+
+  const categories = [
+    {
+      field: 'type',
+      getColors: (val) => ({
+        bg: getTypeColor(val),
+        text: `var(--type-${val.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-text)`
+      }),
+      getClass: (val) => `type-chip ${val.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`
+    },
+    {
+      field: 'metal',
+      getColors: (val) => ({ bg: METAL_COLORS[val] || 'var(--primary)', text: textColor })
+    },
+    {
+      field: 'purchaseLocation',
+      getColors: (val) => ({ bg: getPurchaseLocationColor(val), text: textColor })
+    },
+    {
+      field: 'storageLocation',
+      getColors: (val) => ({ bg: getStorageLocationColor(val), text: textColor })
+    }
+  ];
+
+  const html = categories
+    .map(cat => {
+      const counts = inventory.reduce((acc, item) => {
+        const key = item[cat.field] || (cat.field === 'purchaseLocation' ? 'Numista Import' : 'Unknown');
+        acc[key] = (acc[key] || 0) + 1;
+        return acc;
+      }, {});
+      return Object.entries(counts)
+        .map(([val, count]) => {
+          const safeVal = sanitizeHtml(val);
+          const colors = cat.getColors(val);
+          const cls = cat.getClass ? ` ${cat.getClass(val)}` : '';
+          return `<span class="summary-chip${cls}" style="background-color: ${colors.bg}; color: ${colors.text};">${safeVal}: ${count}</span>`;
+        })
+        .join('');
     })
     .join('');
+
+  el.innerHTML = html;
 };
 window.updateTypeSummary = updateTypeSummary;
 
