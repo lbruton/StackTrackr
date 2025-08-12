@@ -1,11 +1,15 @@
 # StackrTrackr — Changelog
 
-> **Latest release: v3.04.32**
+> **Latest release: v3.04.33**
 
 
 For upcoming work, see [announcements](announcements.md).
 
 ## 📋 Version History
+
+### Version 3.04.33 – Import Overwrite Confirmation (2025-08-12)
+- **Overwrite warnings**: Import CSV and Numista CSV now require confirmation before replacing existing data.
+- **Numista button styling**: Import Numista CSV button uses red danger styling to indicate overwrite.
 
 ### Version 3.04.32 – Header Buttons Theming (2025-08-12)
 - **Unified header styling**: Header buttons now match theme selector with icon-only layout and larger icons.
