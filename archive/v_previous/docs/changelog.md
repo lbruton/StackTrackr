@@ -1,11 +1,14 @@
 # StackTrackr — Changelog
 
-> **Latest release: v3.04.14**
+> **Latest release: v3.04.15**
 
 
 For upcoming work, see [roadmap](roadmap.md).
 
 ## 📋 Version History
+
+### Version 3.04.15 – Footer version injection (2025-08-12)
+- Footer displays current `APP_VERSION` dynamically
 
 ### Version 3.04.14 – UI and filter enhancements (2025-08-12)
 - Preserved date hyphenation and gram weight conversion

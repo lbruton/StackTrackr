@@ -2,6 +2,7 @@
 
 This roadmap outlines upcoming patch releases for the v3.04.x series.
 
+- **v3.04.15** – Footer version injection *(completed)*
 - **v3.04.14** – UI and filter enhancements *(completed)*
 - **v3.04.13** – Simplified archive workflow *(completed)*
 - **v3.04.12** – Quick filter object storage *(completed)*
