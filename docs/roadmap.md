@@ -2,6 +2,7 @@
 
 This roadmap outlines upcoming patch releases for the v3.04.x series.
 
+- **v3.04.18** – Name and price quick-filter fix *(completed)*
 - **v3.04.17** – Gold & silver responsive logo *(completed)*
 - **v3.04.16** – Layout and footer refinements *(completed)*
 - **v3.04.15** – Footer version injection *(completed)*

@@ -1,6 +1,20 @@
 # Implementation Summary: Gold & Silver Logo
 
-> **Latest release: v3.04.17**
+> **Latest release: v3.04.18**
+
+## Version Update: 3.04.17 → 3.04.18
+
+## User Requirements Implemented
+
+- Fixed quick-filter so clicking name or price cells applies filters
+
+## Technical Changes Made
+
+### Files Modified:
+1. **`js/filters.js`**: Added generic field support for quick filters
+2. **`js/constants.js`**: Bumped version to 3.04.18
+3. **`README.md`** and **docs/**: Updated documentation and changelog entries
+4. **`tests/quick-filter-generic.test.js`**: Ensures name and price filtering works
 
 ## Version Update: 3.04.16 → 3.04.17
 

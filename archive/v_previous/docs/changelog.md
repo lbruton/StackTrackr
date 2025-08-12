@@ -1,11 +1,14 @@
 # StackTrackr — Changelog
 
-> **Latest release: v3.04.17**
+> **Latest release: v3.04.18**
 
 
 For upcoming work, see [roadmap](roadmap.md).
 
 ## 📋 Version History
+
+### Version 3.04.18 – Name and price quick-filter fix (2025-08-12)
+- Clicking name or price cells now applies table filters correctly
 
 ### Version 3.04.17 – Gold & silver responsive logo (2025-08-12)
 - Introduced gold/silver SVG logo with automatic light/dark mode and tagline

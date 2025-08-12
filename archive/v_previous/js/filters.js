@@ -366,6 +366,15 @@ const filterInventoryAdvanced = () => {
             return exclude ? !match : match;
           });
           break;
+        default: {
+          const lowerVals = values.map(v => String(v).toLowerCase());
+          result = result.filter(item => {
+            const fieldVal = String(item[field] ?? '').toLowerCase();
+            const match = lowerVals.includes(fieldVal);
+            return exclude ? !match : match;
+          });
+          break;
+        }
       }
     } else {
       const value = criteria;
