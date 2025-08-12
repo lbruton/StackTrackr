@@ -62,6 +62,7 @@ document.addEventListener("DOMContentLoaded", () => {
     elements.itemQty = safeGetElement("itemQty", true);
     elements.itemType = safeGetElement("itemType", true);
     elements.itemWeight = safeGetElement("itemWeight", true);
+    elements.itemWeightUnit = safeGetElement("itemWeightUnit", true);
     elements.itemPrice = safeGetElement("itemPrice", true);
     elements.purchaseLocation = safeGetElement("purchaseLocation", true);
     elements.storageLocation = safeGetElement("storageLocation");
@@ -96,8 +97,9 @@ document.addEventListener("DOMContentLoaded", () => {
     elements.numistaImportFile = safeGetElement("numistaImportFile");
     elements.numistaOverride = safeGetElement("numistaOverride");
     elements.numistaMerge = safeGetElement("numistaMerge");
-    elements.numistaImportOptions = safeGetElement("numistaImportOptions");
-    elements.exportCsvBtn = safeGetElement("exportCsvBtn");
+      elements.numistaImportOptions = safeGetElement("numistaImportOptions");
+      elements.clearNumistaInventoryBtn = safeGetElement("clearNumistaInventoryBtn");
+      elements.exportCsvBtn = safeGetElement("exportCsvBtn");
     elements.exportJsonBtn = safeGetElement("exportJsonBtn");
     elements.exportExcelBtn = safeGetElement("exportExcelBtn");
     elements.exportPdfBtn = safeGetElement("exportPdfBtn");
@@ -170,6 +172,7 @@ document.addEventListener("DOMContentLoaded", () => {
     elements.pageNumbers = safeGetElement("pageNumbers");
 
       elements.changeLogBtn = safeGetElement("changeLogBtn");
+      elements.typeSummary = safeGetElement("typeSummary");
       elements.changeLogModal = safeGetElement("changeLogModal");
       elements.changeLogCloseBtn = safeGetElement("changeLogCloseBtn");
       elements.changeLogTable = safeGetElement("changeLogTable");
@@ -179,8 +182,6 @@ document.addEventListener("DOMContentLoaded", () => {
     // Search elements
     debugLog("Phase 6: Initializing search elements...");
     elements.searchInput = safeGetElement("searchInput");
-    elements.typeFilter = safeGetElement("typeFilter");
-    elements.metalFilter = safeGetElement("metalFilter");
     elements.clearSearchBtn = safeGetElement("clearSearchBtn");
     elements.newItemBtn = safeGetElement("newItemBtn");
     elements.searchResultsInfo = safeGetElement("searchResultsInfo");
@@ -281,7 +282,7 @@ document.addEventListener("DOMContentLoaded", () => {
     document.title = getAppTitle();
     const appHeader = document.querySelector(".app-header h1");
     if (appHeader) {
-      const headerBrand = BRANDING_DOMAIN_OVERRIDE || getBrandingName();
+      const headerBrand = getBrandingName();
       appHeader.textContent = headerBrand;
     }
     const aboutVersion = document.getElementById("aboutVersion");
@@ -307,6 +308,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Load data
     loadInventory();
+    if (typeof sanitizeTablesOnLoad === "function") {
+      sanitizeTablesOnLoad();
+    }
     inventory.forEach((i) => addCompositionOption(i.composition || i.metal));
     refreshCompositionOptions();
     loadSpotHistory();
@@ -360,6 +364,9 @@ document.addEventListener("DOMContentLoaded", () => {
     debugLog("  - Files button:", !!elements.filesBtn);
     debugLog("  - Inventory form:", !!elements.inventoryForm);
     debugLog("  - Inventory table:", !!elements.inventoryTable);
+    // Phase 16: Storage optimization pass
+    if (typeof optimizeStoragePhase1C === 'function') { optimizeStoragePhase1C(); }
+
   } catch (error) {
     console.error("=== CRITICAL INITIALIZATION ERROR ===");
     console.error("Error:", error.message);
@@ -390,15 +397,17 @@ function setupBasicEventListeners() {
     };
   }
 
-  // Appearance button (three-state theme toggle)
+  // Appearance button (four-state theme toggle)
   const appearanceBtn = document.getElementById("appearanceBtn");
   if (appearanceBtn) {
     appearanceBtn.onclick = function (e) {
       e.preventDefault();
-      const savedTheme = localStorage.getItem(THEME_KEY);
+      const savedTheme = localStorage.getItem(THEME_KEY) || "system";
       if (savedTheme === "dark") {
         setTheme("light");
       } else if (savedTheme === "light") {
+        setTheme("sepia");
+      } else if (savedTheme === "sepia") {
         setTheme("system");
       } else {
         setTheme("dark");

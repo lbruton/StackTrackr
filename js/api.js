@@ -58,6 +58,8 @@ const loadApiConfig = () => {
       }
       const usage = config.usage || {};
       const metals = config.metals || {};
+      const historyDays = config.historyDays || {};
+      const historyTimes = config.historyTimes || {};
       const currentMonth = currentMonthKey();
       const savedMonth = config.usageMonth;
       Object.keys(API_PROVIDERS).forEach((p) => {
@@ -74,6 +76,8 @@ const loadApiConfig = () => {
             if (typeof metals[p][m] === "undefined") metals[p][m] = true;
           });
         }
+        if (typeof historyDays[p] !== "number") historyDays[p] = 30;
+        if (!Array.isArray(historyTimes[p])) historyTimes[p] = [];
       });
       let needsSave = false;
       if (savedMonth !== currentMonth) {
@@ -93,6 +97,8 @@ const loadApiConfig = () => {
         },
         metals,
         usage,
+        historyDays,
+        historyTimes,
         usageMonth: currentMonth,
       };
       if (needsSave) {
@@ -105,9 +111,13 @@ const loadApiConfig = () => {
   }
   const usage = {};
   const metals = {};
+  const historyDays = {};
+  const historyTimes = {};
   Object.keys(API_PROVIDERS).forEach((p) => {
     usage[p] = { quota: DEFAULT_API_QUOTA, used: 0 };
     metals[p] = { silver: true, gold: true, platinum: true, palladium: true };
+    historyDays[p] = 30;
+    historyTimes[p] = [];
   });
   return {
     provider: "",
@@ -116,6 +126,8 @@ const loadApiConfig = () => {
     customConfig: { baseUrl: "", endpoint: "", format: "symbol" },
     metals,
     usage,
+    historyDays,
+    historyTimes,
     usageMonth: currentMonthKey(),
   };
 };
@@ -138,6 +150,8 @@ const saveApiConfig = (config) => {
       },
       metals: config.metals || {},
       usage: config.usage || {},
+      historyDays: config.historyDays || {},
+      historyTimes: config.historyTimes || {},
       usageMonth: config.usageMonth || currentMonthKey(),
     };
     Object.keys(config.keys || {}).forEach((p) => {
@@ -279,7 +293,18 @@ const updateProviderSettings = (provider) => {
     if (!config.historyDays) config.historyDays = {};
     config.historyDays[provider] = parseInt(historyInput.value) || 0;
   }
-  
+
+  // Update history times
+  const timesInput = document.getElementById(`historyTimes_${provider}`);
+  if (timesInput) {
+    if (!config.historyTimes) config.historyTimes = {};
+    const times = timesInput.value
+      .split(',')
+      .map(t => t.trim())
+      .filter(t => /^\d{2}:\d{2}$/.test(t));
+    config.historyTimes[provider] = times;
+  }
+
   saveApiConfig(config);
   updateBatchCalculation(provider);
 };
@@ -300,7 +325,13 @@ const setupProviderSettingsListeners = (provider) => {
   if (historyInput) {
     historyInput.addEventListener('input', () => updateProviderSettings(provider));
   }
-  
+
+  // History times change
+  const timesInput = document.getElementById(`historyTimes_${provider}`);
+  if (timesInput) {
+    timesInput.addEventListener('input', () => updateProviderSettings(provider));
+  }
+
   // Metal selection changes
   document.querySelectorAll(`.provider-metal[data-provider="${provider}"]`).forEach(checkbox => {
     checkbox.addEventListener('change', (e) => {
@@ -315,37 +346,15 @@ const setupProviderSettingsListeners = (provider) => {
 };
 
 /**
- * Updates provider history tables with latest API values
+ * Renders API usage/quota data for each provider
  */
 const updateProviderHistoryTables = () => {
-  loadSpotHistory();
-  const history = spotHistory.filter((e) => e.source === "api");
   const config = loadApiConfig();
   Object.keys(API_PROVIDERS).forEach((prov) => {
-    const container = document.querySelector(
-      `.api-provider[data-provider="${prov}"] .provider-history`,
-    );
-    if (!container) return;
-    const providerName = API_PROVIDERS[prov].name;
-    const metals = ["Silver", "Gold", "Platinum", "Palladium"];
-    const selections = config.metals?.[prov] || {};
-    let table = '<table class="provider-table"><tr class="provider-price-row"><th class="provider-label">Last Price:</th>';
-    let checkboxRow =
-      '<tr class="provider-checkbox-row"><th class="provider-label">Enable:</th>';
-    metals.forEach((metal) => {
-      const entries = history.filter(
-        (e) => e.provider === providerName && e.metal === metal,
+      const container = document.querySelector(
+        `.api-provider[data-provider="${prov}"] .provider-settings .provider-history`,
       );
-      const last = entries.length
-        ? formatDollar(entries[entries.length - 1].spot)
-        : "-";
-      const key = metal.toLowerCase();
-      const checked = selections[key] !== false ? "checked" : "";
-      table += `<td>${last}</td>`;
-      checkboxRow += `<td><label><input type="checkbox" class="provider-metal" data-provider="${prov}" data-metal="${key}" ${checked}/><span class="provider-metal-name">${metal}</span></label></td>`;
-    });
-    table += '</tr>';
-    checkboxRow += '</tr></table>';
+    if (!container) return;
     const usage = config.usage?.[prov] || {
       quota: DEFAULT_API_QUOTA,
       used: 0,
@@ -354,17 +363,7 @@ const updateProviderHistoryTables = () => {
     const remainingPercent = 100 - usedPercent;
     const warning = usage.used / usage.quota >= 0.9;
     const usageHtml = `<div class="api-usage"><div class="usage-bar"><div class="used" style="width:${usedPercent}%"></div><div class="remaining" style="width:${remainingPercent}%"></div></div><div class="usage-text">${usage.used}/${usage.quota} calls${warning ? " 🚩" : ""}</div></div>`;
-    container.innerHTML = table + checkboxRow + usageHtml;
-    container.querySelectorAll(".provider-metal").forEach((cb) => {
-      cb.addEventListener("change", (e) => {
-        const provId = e.target.dataset.provider;
-        const metalKey = e.target.dataset.metal;
-        const cfg = loadApiConfig();
-        if (!cfg.metals[provId]) cfg.metals[provId] = {};
-        cfg.metals[provId][metalKey] = e.target.checked;
-        saveApiConfig(cfg);
-      });
-    });
+    container.innerHTML = usageHtml;
   });
 };
 
@@ -418,7 +417,7 @@ const updateDefaultProviderButtons = () => {
     if (!btn) return;
     btn.classList.remove("default", "backup", "inactive");
     if (config.provider === prov && keys[prov]) {
-      btn.textContent = "";
+      btn.textContent = "Default";
       btn.classList.add("default");
     } else if (keys[prov]) {
       btn.textContent = "Backup";
@@ -459,7 +458,7 @@ const renderApiHistoryTable = () => {
   let html =
     "<tr><th data-column=\"timestamp\">Time</th><th data-column=\"metal\">Metal</th><th data-column=\"spot\">Price</th><th data-column=\"provider\">API</th></tr>";
   data.forEach((e) => {
-    html += `<tr><td>${e.timestamp}</td><td>${e.metal}</td><td>${formatDollar(
+    html += `<tr><td>${e.timestamp}</td><td>${e.metal}</td><td>${formatCurrency(
       e.spot,
     )}</td><td>${e.provider || ""}</td></tr>`;
   });
@@ -587,7 +586,14 @@ const showApiProvidersModal = () => {
         const days = config.historyDays?.[provider] || 30;
         historyInput.value = days;
       }
-      
+
+      // Set history times
+      const timesInput = document.getElementById(`historyTimes_${provider}`);
+      if (timesInput) {
+        const times = config.historyTimes?.[provider] || [];
+        timesInput.value = Array.isArray(times) ? times.join(',') : '';
+      }
+
       // Set metal selections
       const metals = config.metals?.[provider] || {};
       ['silver', 'gold', 'platinum', 'palladium'].forEach(metal => {
@@ -693,7 +699,7 @@ const refreshFromCache = () => {
       spotPrices[metal] = price;
 
       // Update display
-      elements.spotPriceDisplay[metal].textContent = formatDollar(price);
+      elements.spotPriceDisplay[metal].textContent = formatCurrency(price);
 
       // Record in history as 'cached' to distinguish from fresh API calls
       recordSpot(
@@ -837,9 +843,10 @@ const calculateApiUsage = (selectedMetals, historyDays = 0, batchSupported = fal
  * @param {string} apiKey - API key
  * @param {Array} selectedMetals - Array of metal keys to fetch
  * @param {number} historyDays - Number of historical days to fetch
+ * @param {Array} historyTimes - Array of HH:MM times to fetch each day
  * @returns {Promise<Object>} Promise resolving to spot prices data
  */
-const fetchBatchSpotPrices = async (provider, apiKey, selectedMetals, historyDays = 0) => {
+const fetchBatchSpotPrices = async (provider, apiKey, selectedMetals, historyDays = 0, historyTimes = []) => {
   const providerConfig = API_PROVIDERS[provider];
   if (!providerConfig || !providerConfig.batchSupported) {
     throw new Error("Provider does not support batch requests");
@@ -850,13 +857,12 @@ const fetchBatchSpotPrices = async (provider, apiKey, selectedMetals, historyDay
 
   try {
     let url = providerConfig.baseUrl + providerConfig.batchEndpoint;
-    
-    // Replace placeholders based on provider
+
+    // Replace placeholders based on provider specifics
     if (provider === 'METALS_DEV') {
       const metals = selectedMetals.join(',');
       url = url.replace('{API_KEY}', apiKey)
-              .replace('{METALS}', metals)
-              .replace('{DAYS}', historyDays);
+              .replace('{METALS}', metals);
     } else if (provider === 'METALS_API') {
       const symbolMap = { silver: 'XAG', gold: 'XAU', platinum: 'XPT', palladium: 'XPD' };
       const symbols = selectedMetals.map(metal => symbolMap[metal]).join(',');
@@ -867,6 +873,19 @@ const fetchBatchSpotPrices = async (provider, apiKey, selectedMetals, historyDay
       const currencies = selectedMetals.map(metal => symbolMap[metal]).join(',');
       url = url.replace('{API_KEY}', apiKey)
               .replace('{CURRENCIES}', currencies);
+    }
+
+    // Apply historical parameters if supported
+    if (url.includes('{DAYS}')) {
+      url = url.replace('{DAYS}', historyDays);
+      if (Array.isArray(historyTimes) && historyTimes.length) {
+        const timesParam = historyTimes.map(t => encodeURIComponent(t)).join(',');
+        if (url.includes('{TIMES}')) {
+          url = url.replace('{TIMES}', timesParam);
+        } else {
+          url += `&times=${timesParam}`;
+        }
+      }
     }
 
     const headers = {
@@ -946,11 +965,13 @@ const fetchSpotPricesFromApi = async (provider, apiKey) => {
   if (providerConfig.batchSupported) {
     try {
       const historyDays = config.historyDays?.[provider] || 0;
+      const historyTimes = config.historyTimes?.[provider] || [];
       return await fetchBatchSpotPrices(
         provider,
         apiKey,
         selectedMetals,
         historyDays,
+        historyTimes,
       );
     } catch (batchError) {
       console.warn(
@@ -1126,7 +1147,7 @@ const syncSpotPricesFromApi = async (
         spotPrices[metal] = price;
 
         // Update display
-        elements.spotPriceDisplay[metal].textContent = formatDollar(price);
+        elements.spotPriceDisplay[metal].textContent = formatCurrency(price);
 
         // Record in history
         recordSpot(
@@ -1287,7 +1308,7 @@ const handleProviderSync = async (provider) => {
       if (metalConfig && price > 0) {
         localStorage.setItem(metalConfig.spotKey, price.toString());
         spotPrices[metal] = price;
-        elements.spotPriceDisplay[metal].textContent = formatDollar(price);
+        elements.spotPriceDisplay[metal].textContent = formatCurrency(price);
         recordSpot(
           price,
           "api",
@@ -1569,7 +1590,7 @@ const resetSpotPrice = (metal) => {
 
   // Update display
   elements.spotPriceDisplay[metalConfig.key].textContent =
-    formatDollar(resetPrice);
+    formatCurrency(resetPrice);
 
   // Record in history
   recordSpot(resetPrice, source, metalConfig.name, providerName);
@@ -1649,10 +1670,10 @@ const downloadCompleteBackup = async () => {
         item.qty,
         item.type,
         parseFloat(item.weight).toFixed(4),
-        formatDollar(item.price),
-        item.isCollectable ? "N/A" : formatDollar(item.spotPriceAtPurchase),
-        item.isCollectable ? "N/A" : formatDollar(item.premiumPerOz),
-        item.isCollectable ? "N/A" : formatDollar(item.totalPremium),
+        formatCurrency(item.price),
+        item.isCollectable ? "N/A" : formatCurrency(item.spotPriceAtPurchase),
+        item.isCollectable ? "N/A" : formatCurrency(item.premiumPerOz),
+        item.isCollectable ? "N/A" : formatCurrency(item.totalPremium),
         item.purchaseLocation,
         item.storageLocation || "Unknown",
         item.notes || "",
@@ -1722,7 +1743,7 @@ const downloadCompleteBackup = async () => {
 
     // 4. Create API documentation and restoration guide
     const backupData = createBackupData();
-    const apiInfo = `# StackTrackr - Complete Backup
+    const apiInfo = `# StackrTrackr - Complete Backup
 
 Generated: ${new Date().toLocaleString()}
 Application Version: ${APP_VERSION}
@@ -1774,7 +1795,7 @@ ${
 2. Reconfigure API settings if needed (keys not backed up for security)
 3. Use **complete-backup-${timestamp}.json** for full data restoration if needed
 
-*This backup was created by StackTrackr v${APP_VERSION}*
+*This backup was created by StackrTrackr v${APP_VERSION}*
 `;
 
     downloadFile(`backup-info-${timestamp}.md`, apiInfo, "text/markdown");

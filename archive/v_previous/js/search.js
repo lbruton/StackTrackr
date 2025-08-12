@@ -2,17 +2,24 @@
 // =============================================================================
 
 /**
- * Filters inventory based on current search query
+ * Filters inventory based on current search query and active filters
  * 
- * @returns {Array} Filtered inventory items matching the search query
+ * @returns {Array} Filtered inventory items matching the search query and filters
  */
 const filterInventory = () => {
+  // Use the advanced filtering system if available, otherwise fall back to legacy
+  if (typeof filterInventoryAdvanced === 'function') {
+    return filterInventoryAdvanced();
+  }
+  
+  // Legacy filtering for compatibility
   let result = inventory;
 
   Object.entries(columnFilters).forEach(([field, value]) => {
     const lower = value.toLowerCase();
     result = result.filter((item) => {
-      const fieldVal = (item[field] || '').toString().toLowerCase();
+      const rawVal = item[field] ?? (field === 'metal' ? item.metal : '');
+      const fieldVal = String(rawVal ?? '').toLowerCase();
       return fieldVal === lower;
     });
   });
@@ -22,52 +29,59 @@ const filterInventory = () => {
   let query = searchQuery.toLowerCase();
   let filterCollectable = false;
 
-  if (query.includes('collectable')) {
+  // Handle collectable keyword separately and remove from query
+  query = query.replace(/collectable|collectible/g, () => {
     filterCollectable = true;
-    query = query.replace(/collectable/g, '').trim();
-  }
-  if (query.includes('collectible')) {
-    filterCollectable = true;
-    query = query.replace(/collectible/g, '').trim();
-  }
+    return '';
+  }).trim();
+
+  // Support comma-separated terms for multi-value search
+  const terms = query.split(',').map(t => t.trim()).filter(t => t);
 
   return result.filter(item => {
     if (filterCollectable && !item.isCollectable) return false;
-    if (!query) return true;
+    if (!terms.length) return true;
 
     const formattedDate = formatDisplayDate(item.date).toLowerCase();
-    return (
-      item.metal.toLowerCase().includes(query) ||
-      item.name.toLowerCase().includes(query) ||
-      item.type.toLowerCase().includes(query) ||
-      item.purchaseLocation.toLowerCase().includes(query) ||
-      (item.storageLocation && item.storageLocation.toLowerCase().includes(query)) ||
-      (item.notes && item.notes.toLowerCase().includes(query)) ||
-      item.date.includes(query) ||
-      formattedDate.includes(query) ||
-      item.qty.toString().includes(query) ||
-      item.weight.toString().includes(query) ||
-      item.price.toString().includes(query) ||
-      (item.isCollectable ? 'yes' : 'no').includes(query)
-    );
+    return terms.some(q => (
+      item.metal.toLowerCase().includes(q) ||
+      (item.composition && item.composition.toLowerCase().includes(q)) ||
+      item.name.toLowerCase().includes(q) ||
+      item.type.toLowerCase().includes(q) ||
+      item.purchaseLocation.toLowerCase().includes(q) ||
+      (item.storageLocation && item.storageLocation.toLowerCase().includes(q)) ||
+      (item.notes && item.notes.toLowerCase().includes(q)) ||
+      item.date.includes(q) ||
+      formattedDate.includes(q) ||
+      String(Number.isFinite(Number(item.qty)) ? Number(item.qty) : '').includes(q) ||
+      String(Number.isFinite(Number(item.weight)) ? Number(item.weight) : '').includes(q) ||
+      String(Number.isFinite(Number(item.price)) ? Number(item.price) : '').includes(q) ||
+      (item.isCollectable ? 'yes' : 'no').includes(q)
+    ));
   });
 };
 
-/**
- * Applies a column-specific filter and re-renders the table
- * @param {string} field - Item property to filter by
- * @param {string} value - Value to match exactly
- */
-const applyColumnFilter = (field, value) => {
-  if (columnFilters[field] === value) {
-    delete columnFilters[field];
-  } else {
-    columnFilters[field] = value;
+// Note: applyColumnFilter function is now in filters.js for advanced filtering
+
+// Ensure search input filters inventory in case global event setup fails
+document.addEventListener('DOMContentLoaded', () => {
+  const input = document.getElementById('searchInput');
+  if (input) {
+    input.addEventListener('input', debounce((e) => {
+      searchQuery = e.target.value.replace(/[<>]/g, '').trim();
+      currentPage = 1;
+      renderTable();
+      if (typeof renderActiveFilters === 'function') {
+        renderActiveFilters();
+      }
+    }, 300));
   }
-  searchQuery = '';
-  if (elements.searchInput) elements.searchInput.value = '';
-  currentPage = 1;
-  renderTable();
-};
+  if (typeof renderActiveFilters === 'function') {
+    renderActiveFilters();
+  }
+});
+
+// Expose for global access
+window.filterInventory = filterInventory;
 
 // =============================================================================

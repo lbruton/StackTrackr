@@ -1,13 +1,69 @@
-# StackTrackr — Changelog
+# StackrTrackr — Changelog
 
-
-> **Latest release: v3.04.02**
+> **Latest release: v3.04.18**
 
 
 For upcoming work, see [roadmap](roadmap.md).
 
 ## 📋 Version History
 
+### Version 3.04.18 – Name and price quick-filter fix (2025-08-12)
+- Clicking name or price cells now applies table filters correctly
+
+### Version 3.04.17 – Gold & silver responsive logo (2025-08-12)
+- Introduced gold/silver SVG logo with automatic light/dark mode and tagline
+- Added responsive CSS for logo sizing
+
+### Version 3.04.16 – Layout and footer refinements (2025-08-12)
+- Change Log access restored to silver button
+- Added spacing between inventory table and controls
+- Footer updated with friendly message and links
+- Added safe favicon
+
+### Version 3.04.15 – Footer version injection (2025-08-12)
+- Footer displays current `APP_VERSION` dynamically
+
+### Version 3.04.14 – UI and filter enhancements (2025-08-12)
+- Preserved date hyphenation and gram weight conversion
+- Quick-filter entries respected by advanced filtering
+- Type summary with colored chips and collectable icons
+- Layout tweaks: truncated locations, silver Change Log button, footer card
+
+### Version 3.04.13 – Simplified archive workflow (2025-08-11)
+- Archive script maintains a single previous build snapshot
+- Version references updated across documentation
+
+### Version 3.04.12 – Quick filter object storage (2025-08-11)
+- Quick filter stores criteria as object for exclude support
+
+### Version 3.04.11 – Collectable column icon (2025-08-11)
+- Replaced "Collectable" table header text with treasure chest icon and aria label
+
+### Version 3.04.10 – Provider history usage display (2025-08-11)
+- Provider history sections now show API usage and quota only
+- Metal enablement managed solely through Provider Settings checkboxes
+
+### Version 3.04.09 – Multi-select filters with exclusion (2025-08-11)
+- Filter modal supports multi-select dropdowns with per-field exclude toggles
+- Filtering logic handles arrays and exclusion, and chips reflect selections
+
+### Version 3.04.08 – Debounced search (2025-08-11)
+- Added debounce to search input to improve responsiveness with large Numista datasets
+
+### Version 3.04.07 – Data sanitization on load (2025-08-11)
+- Strip non-alphanumeric characters from inventory and Numista data during initialization
+
+### Version 3.04.06 – Name sanitization (2025-08-11)
+- Strip HTML tags and excess whitespace from imported text fields to stabilize table search
+
+### Version 3.04.05 – Search sanitization (2025-08-11)
+- Escaped table cell values and search input to prevent search corruption
+
+### Version 3.04.04 – Multi-term search (2025-08-11)
+- Search box supports comma-separated terms and filters inventory in real time
+
+### Version 3.04.03 – Search input restore (2025-08-11)
+- Ensures search box filters inventory table in real time
 
 ### Version 3.04.02 – Numista header trimming (2025-08-11)
 - Accepts Numista CSV exports with trailing spaces in headers
@@ -146,7 +202,7 @@ For upcoming work, see [roadmap](roadmap.md).
 ### Version 3.2.07rc – Spot Timestamp Source Display (2025-08-09)
 - Spot price cards now show API provider or Manual entry along with exact timestamp of the last update
 - Manual spot price entries now display the entry time as "Time entered" with date and timestamp
-- Footer dynamically displays the active StackTrackr domain and links to issue reporting
+- Footer dynamically displays the active StackrTrackr domain and links to issue reporting
 - Inventory change log records every edit and the modal displays the complete history with scrolling
 - Change Log and metal totals details modals now share the site's standard header style
 - Quantity column repositioned after item name for improved readability
@@ -169,7 +225,7 @@ For upcoming work, see [roadmap](roadmap.md).
 - Collectable checkbox replaced with status button and aligned action buttons
 - Totals cards renamed with refined labels and font sizing
 - Improved About modal title contrast in light mode
-- Notes button displays a green "Yes" when items have saved notes
+- Notes button uses a notebook icon and highlights green when items have saved notes
 
 ### Version 3.2.05rc – Splash Opt-Out (2025-08-09)
 - Disclaimer splash now hides permanently after the acknowledgment button is clicked, removing the previous checkbox
@@ -185,7 +241,7 @@ For upcoming work, see [roadmap](roadmap.md).
 - Added warning prompt before clearing API cache and history
 
 ### Version 3.2.02rc – Feature Complete Release Candidate (2025-08-09)
-- Rebranded application to StackTrackr
+- Rebranded application to StackrTrackr
 - Marked as feature complete release candidate for the 3.2.x series
 
 ### Version 3.2.01 – Cloud Sync Modal Fix (2025-08-08)

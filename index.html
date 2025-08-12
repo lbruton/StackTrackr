@@ -1,6 +1,6 @@
 <!doctype html>
 <!--
-  StackTrackr - Main Application Interface
+  StackrTrackr - Main Application Interface
   
   A comprehensive client-side web application for tracking precious metal investments
   including silver, gold, platinum, and palladium. Features include spot price management,
@@ -29,7 +29,7 @@
     />
 
     <!-- Title is dynamically updated by init.js using APP_VERSION constant -->
-    <title>StackTrackr</title>
+    <title>StackrTrackr</title>
     <!-- FILE PROTOCOL COMPATIBILITY - MUST LOAD FIRST -->
     <script src="./js/file-protocol-fix.js"></script>
 
@@ -62,14 +62,83 @@
     ></script>
 
     <link rel="stylesheet" href="./css/styles.css" />
+    <link rel="icon" type="image/svg+xml" href="./images/safe-favicon.svg" />
   </head>
   <body>
     <!-- Application Header -->
     <div class="app-header">
-      <div class="app-title">
-        <h1>StackTrackr</h1>
-        <p class="app-subtitle">The open source precious metals tracking tool.</p>
-      </div>
+      <h1 class="app-logo" aria-label="StackrTrackr">
+        <svg class="stackr-logo" viewBox="0 0 800 200" xmlns="http://www.w3.org/2000/svg" width="100%" height="auto" style="max-width: 800px;">
+          <defs>
+            <!-- Light Mode Gradients -->
+            <linearGradient id="goldLight" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stop-color="#FFD700"/>
+              <stop offset="30%" stop-color="#FFA500"/>
+              <stop offset="70%" stop-color="#B8860B"/>
+              <stop offset="100%" stop-color="#8B6914"/>
+            </linearGradient>
+            <linearGradient id="silverLight" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stop-color="#F8F8FF"/>
+              <stop offset="30%" stop-color="#E5E5E5"/>
+              <stop offset="70%" stop-color="#C0C0C0"/>
+              <stop offset="100%" stop-color="#A0A0A0"/>
+            </linearGradient>
+            <!-- Dark Mode Gradients -->
+            <linearGradient id="goldDark" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stop-color="#FFED4E"/>
+              <stop offset="30%" stop-color="#FFD700"/>
+              <stop offset="70%" stop-color="#FFA500"/>
+              <stop offset="100%" stop-color="#CC8400"/>
+            </linearGradient>
+            <linearGradient id="silverDark" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stop-color="#FFFFFF"/>
+              <stop offset="30%" stop-color="#F5F5F5"/>
+              <stop offset="70%" stop-color="#E0E0E0"/>
+              <stop offset="100%" stop-color="#C0C0C0"/>
+            </linearGradient>
+            <!-- Drop Shadow Filter -->
+            <filter id="dropShadow">
+              <feDropShadow dx="3" dy="3" stdDeviation="2" flood-color="#000000" flood-opacity="0.3"/>
+            </filter>
+            <!-- Gold Glow Filter -->
+            <filter id="goldGlow">
+              <feGaussianBlur stdDeviation="2" result="blur"/>
+              <feMerge>
+                <feMergeNode in="blur"/>
+                <feMergeNode in="SourceGraphic"/>
+              </feMerge>
+            </filter>
+          </defs>
+          <!-- Light Mode Group -->
+          <g class="light-mode">
+            <!-- Main title -->
+            <g filter="url(#dropShadow)">
+              <text x="50" y="80" font-family="Arial, sans-serif" font-size="72" font-weight="bold">
+                <tspan fill="url(#silverLight)">Stackr</tspan><tspan fill="url(#goldLight)">Trackr</tspan>
+              </text>
+            </g>
+            <!-- Tagline with glow -->
+            <g filter="url(#goldGlow)">
+              <text x="50" y="130" font-family="Arial, sans-serif" font-size="32" fill="#FFD700" opacity="0.6">Track Your Stack. Your Way.</text>
+              <text x="50" y="130" font-family="Arial, sans-serif" font-size="32" fill="url(#silverLight)">Track Your Stack. Your Way.</text>
+            </g>
+          </g>
+          <!-- Dark Mode Group -->
+          <g class="dark-mode" style="display: none;">
+            <!-- Main title -->
+            <g filter="url(#dropShadow)">
+              <text x="50" y="80" font-family="Arial, sans-serif" font-size="72" font-weight="bold">
+                <tspan fill="url(#silverDark)">Stackr</tspan><tspan fill="url(#goldDark)">Trackr</tspan>
+              </text>
+            </g>
+            <!-- Tagline with glow -->
+            <g filter="url(#goldGlow)">
+              <text x="50" y="130" font-family="Arial, sans-serif" font-size="32" fill="#FFED4E" opacity="0.7">Track Your Stack. Your Way.</text>
+              <text x="50" y="130" font-family="Arial, sans-serif" font-size="32" fill="url(#silverDark)">Track Your Stack. Your Way.</text>
+            </g>
+          </g>
+        </svg>
+      </h1>
       <div style="margin-left: auto; display: flex; gap: 0.5rem">
         <button class="btn" id="aboutBtn" title="About" aria-label="About">
           About 📖
@@ -394,7 +463,10 @@
             <button class="btn" id="clearSearchBtn">Clear</button>
             <button class="btn success" id="newItemBtn">New Item</button>
           </div>
-          <div class="search-results-info" id="searchResultsInfo"></div>
+          <div class="filter-info">
+            <div class="active-filters" id="activeFilters"></div>
+            <div class="search-results-info" id="searchResultsInfo"></div>
+          </div>
         </section>
         <!-- =============================================================================
            INVENTORY TABLE SECTION
@@ -415,18 +487,25 @@
             <tr>
               <th class="shrink" data-column="date">Date</th>
               <th class="shrink" data-column="type">Type</th>
-              <th class="shrink" data-column="composition">Composition</th>
-              <th class="expand" data-column="name">Name</th>
+              <th class="shrink" data-column="metal">Metal</th>
               <th class="shrink" data-column="qty">Qty</th>
-              <th class="shrink" data-column="weight">Weight<br />(oz)</th>
-              <th class="shrink" data-column="purchasePrice">Purchase<br />Price ($)</th>
-              <th class="shrink" data-column="spot">Spot at<br />Purchase ($)</th>
+              <th class="expand" data-column="name">Name</th>
+              <th class="shrink" data-column="weight">Weight</th>
+              <th class="shrink" data-column="purchasePrice" title="USD">Price ($)</th>
+              <th class="shrink" data-column="spot" title="USD">Spot ($)</th>
               <th class="shrink" data-column="premium">Premium<br />($)</th>
               <th class="shrink" data-column="purchaseLocation">Purchase<br />Location</th>
               <th class="shrink" data-column="storageLocation">Storage<br />Location</th>
-              <th class="shrink" data-column="collectable">Collectable</th>
-              <th class="shrink" data-column="notes">Notes</th>
-              <th class="shrink" data-column="delete">Delete</th>
+              <!-- Numista column moved before Collectable -->
+              <th class="shrink" data-column="numista">N#</th>
+              <th class="icon-col" data-column="collectable" aria-label="Collectable" title="Collectable">
+                <svg class="collectable-icon icon-copper" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true">
+                  <circle cx="12" cy="12" r="10"/>
+                </svg>
+              </th>
+              <th class="icon-col" data-column="edit" aria-label="Edit" title="Edit">⚙️</th>
+              <th class="icon-col" data-column="notes" aria-label="Notes" title="Notes">📓</th>
+              <th class="icon-col" data-column="delete" aria-label="Delete" title="Delete">🗑️</th>
             </tr>
           </thead>
           <tbody></tbody>
@@ -434,10 +513,11 @@
       </section>
       <section class="table-controls-section">
         <div class="table-controls">
-          <span id="changeLogBtn" class="change-log-label">Change Log</span>
+          <button type="button" id="changeLogBtn" class="btn silver">Change Log</button>
           <span class="table-disclaimer"
             >All data is stored locally. Back up often.</span
           >
+          <div id="typeSummary"></div>
           <div class="items-per-page">
             <span class="items-label">Items:</span>
             <select class="pagination-select" id="itemsPerPage">
@@ -769,7 +849,7 @@
             <!-- First row of add form fields -->
             <div class="grid grid-2">
               <div>
-                <label for="itemMetal">Composition</label>
+                <label for="itemMetal">Metal</label>
                 <select id="itemMetal">
                   <option value="Silver">Silver</option>
                   <option value="Gold">Gold</option>
@@ -794,8 +874,14 @@
                 <input id="itemQty" min="1" required step="1" type="number" />
               </div>
               <div>
-                <label for="itemWeight">Weight (oz)</label>
-                <input id="itemWeight" min="0.0001" required step="0.0001" type="number" />
+                <label for="itemWeight">Weight</label>
+                <div style="display:flex;align-items:center;gap:var(--spacing);">
+                  <input id="itemWeight" min="0.0001" required step="0.0001" type="number" />
+                  <select id="itemWeightUnit">
+                    <option value="oz">oz</option>
+                    <option value="g">g</option>
+                  </select>
+                </div>
               </div>
             </div>
             <!-- Second row of add form fields -->
@@ -830,7 +916,7 @@
                 <input id="itemDate" required type="date" />
               </div>
             </div>
-            <!-- Spot price field -->
+            <!-- Spot price and catalog field -->
             <div class="grid grid-2">
               <div>
                 <label for="itemSpotPrice">Spot Price ($/oz)</label>
@@ -839,7 +925,8 @@
                 </div>
               </div>
               <div>
-                <!-- Empty div for grid alignment -->
+                <label for="itemCatalog">Catalog (N#)</label>
+                <input id="itemCatalog" type="text" placeholder="Numista catalog #" />
               </div>
             </div>
             <!-- Form action buttons -->
@@ -888,7 +975,7 @@
           <!-- First row of edit form fields -->
           <div class="grid grid-2">
             <div>
-                <label for="editMetal">Composition</label>
+                <label for="editMetal">Metal</label>
               <select id="editMetal">
                 <option value="Silver">Silver</option>
                 <option value="Gold">Gold</option>
@@ -1130,8 +1217,7 @@
     <footer class="app-footer">
       <div class="storage-line">Storage: <span id="storageUsage"></span> <progress id="storageUsageBar" max="5120" value="0"></progress> <a href="#" id="storageReportLink">Storage report</a></div>
       <div class="footer-meta">
-        <span>Thank you for using StackTrackr (<span id="footerVersion"></span>). © 2025 <span id="footerDomain">stacktrackr.com</span>.</span>
-        <span class="footer-links"><a href="./archive/v_previous/index.html">Previous build</a> | <a href="https://github.com/lbruton/StackTrackr/issues" target="_blank" rel="noopener">Report issues</a></span>
+        <span>Thank you for using StackrTrackr (<span id="footerVersion"></span>). © 2025 <span id="footerDomain">stackrtrackr.com</span> | Created with love on Apple Silicon | If you are having trouble try the <a href="./archive/v_previous/index.html">previous build</a>, and report the issue on our <a href="https://www.reddit.com/r/stackrtrackr" target="_blank" rel="noopener">subreddit</a> or on our <a href="https://github.com/lbruton/StackTrackr/issues" target="_blank" rel="noopener">GitHub Issues Page</a>.</span>
       </div>
     </footer>
     <!-- =============================================================================
@@ -1143,7 +1229,7 @@
       <div class="modal-content about-modal-content">
         <div class="modal-header about-modal-header">
           <h1 class="about-title">
-            <span id="ackAppName">StackTrackr</span> <span id="ackVersion"></span>
+            <span id="ackAppName">StackrTrackr</span> <span id="ackVersion"></span>
           </h1>
           <button aria-label="Close modal" class="modal-close" id="ackCloseBtn">
             ×
@@ -1224,7 +1310,7 @@
         </div>
         <div class="modal-body about-modal-body">
           <h2 class="about-title" id="aboutTitle">
-            <span id="aboutAppName">StackTrackr</span>
+            <span id="aboutAppName">StackrTrackr</span>
             <span id="aboutVersion"></span>
           </h2>
           <div class="about-description">
@@ -1491,15 +1577,18 @@
             <div class="settings-card">
               <h3>Third-Party</h3>
               <p class="settings-subtext">Import data from external services like Numista.</p>
-              <div class="third-party-block">
-                <div class="import-export-grid">
-                  <button class="btn" id="importNumistaBtn">Import Numista</button>
-                  <button class="btn" id="mergeNumistaBtn">Merge Numista</button>
-                  <input type="file" id="numistaImportFile" accept=".csv" hidden />
-                  <div class="beta-warning">⚠️ Numista import is a beta feature</div>
+                <div class="third-party-block">
+                  <div class="import-export-grid">
+                    <div class="grid grid-2">
+                      <button class="btn" id="importNumistaBtn">Import Numista</button>
+                      <button class="btn" id="mergeNumistaBtn">Merge Numista</button>
+                    </div>
+                    <button class="btn warning" id="clearNumistaInventoryBtn">Clear Numista Inventory</button>
+                    <input type="file" id="numistaImportFile" accept=".csv" hidden />
+                    <div class="beta-warning">⚠️ Numista import is a beta feature</div>
+                  </div>
                 </div>
               </div>
-            </div>
 
             <div class="settings-card">
               <h3>Custom Mapping</h3>
@@ -1510,6 +1599,7 @@
                   <button class="btn" id="applyMappingsBtn">Apply Mappings</button>
                   <button class="btn" id="clearMappingsBtn">Clear Mappings</button>
                 </div>
+                <div class="beta-warning">⚠️ Custom mapping is a beta feature</div>
               </div>
             </div>
 
@@ -1524,7 +1614,7 @@
                   Clear Numista Cache
                 </button>
                 <button class="btn danger" id="boatingAccidentBtn">
-                  🏴‍☠️ So, you've been in a boating accident? 🏴‍☠️
+                  Boating Accident?
                 </button>
               </div>
             </div>
@@ -1590,10 +1680,16 @@
                   
                   <div class="provider-setting-row">
                     <label for="historyDays_METALS_DEV">History Days:</label>
-                    <input type="number" id="historyDays_METALS_DEV" class="provider-history-input" 
+                    <input type="number" id="historyDays_METALS_DEV" class="provider-history-input"
                            min="1" max="365" value="30" placeholder="1-365">
                   </div>
-                  
+
+                  <div class="provider-setting-row">
+                    <label for="historyTimes_METALS_DEV">Times per Day:</label>
+                    <input type="text" id="historyTimes_METALS_DEV" class="provider-history-input"
+                           placeholder="08:00,20:00">
+                  </div>
+
                   <!-- Metal Selection -->
                   <div class="metal-selection">
                     <label>Select Metals to Track:</label>
@@ -1617,32 +1713,32 @@
                     </div>
                   </div>
                   
-                  <!-- Batch Optimization Display -->
-                  <div class="batch-optimization">
-                    <div class="batch-info" id="batchInfo_METALS_DEV">
-                      📊 Batch Request: 4 metals + 30 days = 1 API call<br>
-                      <span class="batch-savings">(saves 123 calls vs individual requests)</span>
-                    </div>
+                <!-- Batch Optimization Display -->
+                <div class="batch-optimization">
+                  <div class="batch-info" id="batchInfo_METALS_DEV">
+                    📊 Batch Request: 4 metals + 30 days = 1 API call<br>
+                    <span class="batch-savings">(saves 123 calls vs individual requests)</span>
                   </div>
                 </div>
-                
-                <div class="provider-footer">
-                  <div class="provider-info">
-                    <div class="api-key-note">
-                      Your API key is stored locally and never shared.
-                    </div>
-                    <div class="provider-status">
-                      <span class="status-dot"></span>
-                      <span class="status-text">Disconnected</span>
-                    </div>
-                    <div class="provider-history"></div>
+                <div class="provider-info">
+                  <div class="api-key-note">
+                    Your API key is stored locally and never shared.
                   </div>
-                  <div class="provider-actions">
-                    <button
-                      type="button"
-                      class="btn provider-default-btn"
-                      data-provider="METALS_DEV"
-                    >
+                  <div class="provider-status">
+                    <span class="status-dot"></span>
+                    <span class="status-text">Disconnected</span>
+                  </div>
+                  <div class="provider-history"></div>
+                </div>
+              </div>
+
+              <div class="provider-footer">
+                <div class="provider-actions">
+                  <button
+                    type="button"
+                    class="btn provider-default-btn"
+                    data-provider="METALS_DEV"
+                  >
                     </button>
                     <div class="provider-actions-right">
                       <button
@@ -1706,10 +1802,16 @@
                   
                   <div class="provider-setting-row">
                     <label for="historyDays_METALS_API">History Days:</label>
-                    <input type="number" id="historyDays_METALS_API" class="provider-history-input" 
+                    <input type="number" id="historyDays_METALS_API" class="provider-history-input"
                            min="1" max="365" value="30" placeholder="1-365">
                   </div>
-                  
+
+                  <div class="provider-setting-row">
+                    <label for="historyTimes_METALS_API">Times per Day:</label>
+                    <input type="text" id="historyTimes_METALS_API" class="provider-history-input"
+                           placeholder="08:00,20:00">
+                  </div>
+
                   <!-- Metal Selection -->
                   <div class="metal-selection">
                     <label>Select Metals to Track:</label>
@@ -1733,32 +1835,32 @@
                     </div>
                   </div>
                   
-                  <!-- Batch Optimization Display -->
-                  <div class="batch-optimization">
-                    <div class="batch-info" id="batchInfo_METALS_API">
-                      📊 Batch Request: 4 metals + 30 days = 1 API call<br>
-                      <span class="batch-savings">(saves 123 calls vs individual requests)</span>
-                    </div>
+                <!-- Batch Optimization Display -->
+                <div class="batch-optimization">
+                  <div class="batch-info" id="batchInfo_METALS_API">
+                    📊 Batch Request: 4 metals + 30 days = 1 API call<br>
+                    <span class="batch-savings">(saves 123 calls vs individual requests)</span>
                   </div>
                 </div>
-                
-                <div class="provider-footer">
-                  <div class="provider-info">
-                    <div class="api-key-note">
-                      Your API key is stored locally and never shared.
-                    </div>
-                    <div class="provider-status">
-                      <span class="status-dot"></span>
-                      <span class="status-text">Disconnected</span>
-                    </div>
-                    <div class="provider-history"></div>
+                <div class="provider-info">
+                  <div class="api-key-note">
+                    Your API key is stored locally and never shared.
                   </div>
-                  <div class="provider-actions">
-                    <button
-                      type="button"
-                      class="btn provider-default-btn"
-                      data-provider="METALS_API"
-                    >
+                  <div class="provider-status">
+                    <span class="status-dot"></span>
+                    <span class="status-text">Disconnected</span>
+                  </div>
+                  <div class="provider-history"></div>
+                </div>
+              </div>
+
+              <div class="provider-footer">
+                <div class="provider-actions">
+                  <button
+                    type="button"
+                    class="btn provider-default-btn"
+                    data-provider="METALS_API"
+                  >
                     </button>
                     <div class="provider-actions-right">
                       <button
@@ -1828,10 +1930,16 @@
                   
                   <div class="provider-setting-row">
                     <label for="historyDays_METAL_PRICE_API">History Days:</label>
-                    <input type="number" id="historyDays_METAL_PRICE_API" class="provider-history-input" 
+                    <input type="number" id="historyDays_METAL_PRICE_API" class="provider-history-input"
                            min="1" max="365" value="30" placeholder="1-365">
                   </div>
-                  
+
+                  <div class="provider-setting-row">
+                    <label for="historyTimes_METAL_PRICE_API">Times per Day:</label>
+                    <input type="text" id="historyTimes_METAL_PRICE_API" class="provider-history-input"
+                           placeholder="08:00,20:00">
+                  </div>
+
                   <!-- Metal Selection -->
                   <div class="metal-selection">
                     <label>Select Metals to Track:</label>
@@ -1855,31 +1963,31 @@
                     </div>
                   </div>
                   
-                  <!-- Batch Optimization Display -->
-                  <div class="batch-optimization">
-                    <div class="batch-info" id="batchInfo_METAL_PRICE_API">
-                      📊 Batch Request: 4 metals + 30 days = 1 API call<br>
-                      <span class="batch-savings">(saves 123 calls vs individual requests)</span>
-                    </div>
+                <!-- Batch Optimization Display -->
+                <div class="batch-optimization">
+                  <div class="batch-info" id="batchInfo_METAL_PRICE_API">
+                    📊 Batch Request: 4 metals + 30 days = 1 API call<br>
+                    <span class="batch-savings">(saves 123 calls vs individual requests)</span>
                   </div>
                 </div>
-                <div class="provider-footer">
-                  <div class="provider-info">
-                    <div class="api-key-note">
-                      Your API key is stored locally and never shared.
-                    </div>
-                    <div class="provider-status">
-                      <span class="status-dot"></span>
-                      <span class="status-text">Disconnected</span>
-                    </div>
-                    <div class="provider-history"></div>
+                <div class="provider-info">
+                  <div class="api-key-note">
+                    Your API key is stored locally and never shared.
                   </div>
-                  <div class="provider-actions">
-                    <button
-                      type="button"
-                      class="btn provider-default-btn"
-                      data-provider="METAL_PRICE_API"
-                    >
+                  <div class="provider-status">
+                    <span class="status-dot"></span>
+                    <span class="status-text">Disconnected</span>
+                  </div>
+                  <div class="provider-history"></div>
+                </div>
+              </div>
+              <div class="provider-footer">
+                <div class="provider-actions">
+                  <button
+                    type="button"
+                    class="btn provider-default-btn"
+                    data-provider="METAL_PRICE_API"
+                  >
                     </button>
                     <div class="provider-actions-right">
                       <button
@@ -1961,10 +2069,16 @@
                   
                   <div class="provider-setting-row">
                     <label for="historyDays_CUSTOM">History Days:</label>
-                    <input type="number" id="historyDays_CUSTOM" class="provider-history-input" 
+                    <input type="number" id="historyDays_CUSTOM" class="provider-history-input"
                            min="1" max="365" value="30" placeholder="1-365">
                   </div>
-                  
+
+                  <div class="provider-setting-row">
+                    <label for="historyTimes_CUSTOM">Times per Day:</label>
+                    <input type="text" id="historyTimes_CUSTOM" class="provider-history-input"
+                           placeholder="08:00,20:00">
+                  </div>
+
                   <!-- Metal Selection -->
                   <div class="metal-selection">
                     <label>Select Metals to Track:</label>
@@ -1988,31 +2102,31 @@
                     </div>
                   </div>
                   
-                  <!-- Batch Optimization Display -->
-                  <div class="batch-optimization">
-                    <div class="batch-info" id="batchInfo_CUSTOM">
-                      📊 Individual Requests: 4 metals = 4 API calls<br>
-                      <span class="batch-savings">(batch requests not supported)</span>
-                    </div>
+                <!-- Batch Optimization Display -->
+                <div class="batch-optimization">
+                  <div class="batch-info" id="batchInfo_CUSTOM">
+                    📊 Individual Requests: 4 metals = 4 API calls<br>
+                    <span class="batch-savings">(batch requests not supported)</span>
                   </div>
                 </div>
-                <div class="provider-footer">
-                  <div class="provider-info">
-                    <div class="api-key-note">
-                      Your API key is stored locally and never shared.
-                    </div>
-                    <div class="provider-status">
-                      <span class="status-dot"></span>
-                      <span class="status-text">Disconnected</span>
-                    </div>
-                    <div class="provider-history"></div>
+                <div class="provider-info">
+                  <div class="api-key-note">
+                    Your API key is stored locally and never shared.
                   </div>
-                  <div class="provider-actions">
-                    <button
-                      type="button"
-                      class="btn provider-default-btn"
-                      data-provider="CUSTOM"
-                    >
+                  <div class="provider-status">
+                    <span class="status-dot"></span>
+                    <span class="status-text">Disconnected</span>
+                  </div>
+                  <div class="provider-history"></div>
+                </div>
+              </div>
+              <div class="provider-footer">
+                <div class="provider-actions">
+                  <button
+                    type="button"
+                    class="btn provider-default-btn"
+                    data-provider="CUSTOM"
+                  >
                     </button>
                     <div class="provider-actions-right">
                       <button
@@ -2162,36 +2276,56 @@
         <div class="modal-body">
           <div class="filters-grid">
             <div class="filter-group">
-              <label for="filterMetal">Metal/Composition</label>
-              <select id="filterMetal" class="filter-select">
+              <label for="filterMetal">Metal</label>
+              <select id="filterMetal" class="filter-select" multiple>
                 <option value="">All Metals</option>
               </select>
+              <div class="exclude-toggle">
+                <input type="checkbox" id="filterMetalExclude" />
+                <label for="filterMetalExclude">Exclude</label>
+              </div>
             </div>
             <div class="filter-group">
               <label for="filterType">Type</label>
-              <select id="filterType" class="filter-select">
+              <select id="filterType" class="filter-select" multiple>
                 <option value="">All Types</option>
               </select>
+              <div class="exclude-toggle">
+                <input type="checkbox" id="filterTypeExclude" />
+                <label for="filterTypeExclude">Exclude</label>
+              </div>
             </div>
             <div class="filter-group">
               <label for="filterPurchaseLocation">Purchase Location</label>
-              <select id="filterPurchaseLocation" class="filter-select">
+              <select id="filterPurchaseLocation" class="filter-select" multiple>
                 <option value="">All Locations</option>
               </select>
+              <div class="exclude-toggle">
+                <input type="checkbox" id="filterPurchaseLocationExclude" />
+                <label for="filterPurchaseLocationExclude">Exclude</label>
+              </div>
             </div>
             <div class="filter-group">
               <label for="filterStorageLocation">Storage Location</label>
-              <select id="filterStorageLocation" class="filter-select">
+              <select id="filterStorageLocation" class="filter-select" multiple>
                 <option value="">All Storage Locations</option>
               </select>
+              <div class="exclude-toggle">
+                <input type="checkbox" id="filterStorageLocationExclude" />
+                <label for="filterStorageLocationExclude">Exclude</label>
+              </div>
             </div>
             <div class="filter-group">
               <label for="filterCollectable">Collectable</label>
-              <select id="filterCollectable" class="filter-select">
+              <select id="filterCollectable" class="filter-select" multiple>
                 <option value="">All Items</option>
                 <option value="yes">Collectable Only</option>
                 <option value="no">Non-Collectable Only</option>
               </select>
+              <div class="exclude-toggle">
+                <input type="checkbox" id="filterCollectableExclude" />
+                <label for="filterCollectableExclude">Exclude</label>
+              </div>
             </div>
             <div class="filter-group">
               <label for="filterDateRange">Date Range</label>
@@ -2224,11 +2358,12 @@
        External libraries (Chart.js, jsPDF, PapaParse, XLSX) loaded via CDN
        ============================================================================= -->
 
-<script defer src="./js/constants.js"></script>
-<script defer src="./js/state.js"></script>
-<script defer src="./js/utils.js"></script>
-<script defer src="./js/versionCheck.js"></script>
-<script defer src="./js/changeLog.js"></script>
+  <script defer src="js/debug-log.js"></script>
+  <script defer src="./js/constants.js"></script>
+  <script defer src="./js/state.js"></script>
+  <script defer src="./js/utils.js"></script>
+  <script defer src="./js/versionCheck.js"></script>
+  <script defer src="./js/changeLog.js"></script>
     <script defer src="./js/charts.js"></script>
     <script defer src="./js/theme.js"></script>
     <script defer src="./js/search.js"></script>
@@ -2238,6 +2373,8 @@
     <script defer src="./js/detailsModal.js"></script>
     <script defer src="./js/spot.js"></script>
     <script defer src="./js/api.js"></script>
+    <script defer src="./js/catalog-providers.js"></script>
+    <script defer src="./js/catalog-manager.js"></script>
     <script defer src="./js/inventory.js"></script>
     <script defer src="./js/about.js"></script>
     <script defer src="./js/customMapping.js"></script>

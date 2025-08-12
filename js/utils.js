@@ -1,3 +1,11 @@
+// Minimal LZString subset placeholder providing UTF16 compression helpers.
+// Original implementation removed due to parse issues; these functions act as no-ops
+// but maintain the same API for compression helpers used elsewhere.
+const LZString = {
+  compressToUTF16: (input) => input,
+  decompressFromUTF16: (input) => input
+};
+
 // UTILITY FUNCTIONS
 
 /**
@@ -15,17 +23,30 @@ const debugLog = (...args) => {
  *
  * @returns {string} Active branding name
  */
-const getBrandingName = () =>
-  (BRANDING_DOMAIN_OPTIONS.alwaysOverride && BRANDING_DOMAIN_OVERRIDE) ||
-  BRANDING_TITLE;
+let brandingWarned = false;
+const getBrandingName = () => {
+  if (
+    !BRANDING_DOMAIN_OVERRIDE &&
+    !brandingWarned &&
+    typeof window !== "undefined" &&
+    window.location &&
+    window.location.hostname
+  ) {
+    console.warn(
+      `No branding mapping found for domain: ${window.location.hostname}`
+    );
+    brandingWarned = true;
+  }
+  return BRANDING_DOMAIN_OVERRIDE || BRANDING_TITLE;
+};
 
 /**
  * Returns full application title with version when no branding is configured
  *
- * @param {string} [baseTitle='StackTrackr'] - Base application title
+ * @param {string} [baseTitle='StackrTrackr'] - Base application title
  * @returns {string} Full title with version or branding name
  */
-const getAppTitle = (baseTitle = "StackTrackr") => {
+const getAppTitle = (baseTitle = "StackrTrackr") => {
   const brand = getBrandingName();
   return brand && brand.trim() ? brand : `${baseTitle} ${getVersionString()}`;
 };
@@ -38,9 +59,8 @@ const getAppTitle = (baseTitle = "StackTrackr") => {
 const getFooterDomain = () => {
   const host = window.location.hostname.toLowerCase();
   if (host.includes("stackrtrackr.com")) return "stackrtrackr.com";
-  if (host.includes("stacktrackr.com")) return "stacktrackr.com";
   if (host.includes("stackertrackr.com")) return "stackertrackr.com";
-  return "stacktrackr.com";
+  return "stackrtrackr.com";
 };
 
 /**
@@ -64,6 +84,21 @@ const monitorPerformance = (fn, name, ...args) => {
   }
 
   return result;
+};
+
+/**
+ * Creates a debounced version of a function
+ *
+ * @param {Function} fn - Function to debounce
+ * @param {number} delay - Delay in milliseconds
+ * @returns {Function} Debounced function
+ */
+const debounce = (fn, delay = 300) => {
+  let timer;
+  return (...args) => {
+    clearTimeout(timer);
+    timer = setTimeout(() => fn(...args), delay);
+  };
 };
 
 /**
@@ -132,6 +167,22 @@ const getCompositionFirstWords = (composition = "") => {
     .split(/\s+/)
     .slice(0, 2)
     .join(" ");
+};
+
+/**
+ * Determines display-friendly composition text.
+ *
+ * Returns "Alloy" when the first word isn't one of the primary metals
+ * (Gold, Silver, Platinum, Palladium).
+ *
+ * @param {string} composition - Raw composition description
+ * @returns {string} Display text for the composition
+ */
+const getDisplayComposition = (composition = "") => {
+  const firstWords = getCompositionFirstWords(composition);
+  const first = firstWords.split(/\s+/)[0] || "";
+  const metals = ["gold", "silver", "platinum", "palladium"];
+  return metals.includes(first.toLowerCase()) ? firstWords : "Alloy";
 };
 
 /**
@@ -227,10 +278,10 @@ const currentMonthKey = () => {
  * based on date values and context clues.
  *
  * @param {string} dateStr - Date string in any supported format
- * @returns {string} Date in YYYY-MM-DD format, or today's date if parsing fails
+ * @returns {string} Date in YYYY-MM-DD format, or 'Unknown' if parsing fails
  */
 function parseDate(dateStr) {
-  if (!dateStr) return todayStr();
+  if (!dateStr) return 'Unknown';
 
   // Clean the input string
   const cleanDateStr = dateStr.trim();
@@ -309,37 +360,42 @@ function parseDate(dateStr) {
     // Continue to fallback
   }
 
-  // If all parsing fails, return today's date
-  console.warn(`Could not parse date: "${dateStr}", using today's date`);
-  return todayStr();
+  // If all parsing fails, return 'Unknown'
+  console.warn(`Could not parse date: "${dateStr}", returning 'Unknown'`);
+  return 'Unknown';
 }
 
 /**
- * Formats a date string into a user-friendly format
+ * Formats a date string into a compact ISO-like format
  *
  * @param {string} dateStr - Date in any parseable format
- * @returns {string} Formatted date like "Jan 1, 2024"
+ * @returns {string} Two-digit year ISO date (e.g., "24-05-05")
  */
 const formatDisplayDate = (dateStr) => {
   const d = new Date(dateStr);
   if (isNaN(d)) return dateStr;
-  return d.toLocaleDateString(undefined, {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
+  return d.toISOString().slice(2, 10);
 };
 
 /**
- * Formats a number as a dollar amount with two decimal places
+ * Formats a number as a currency string using the default currency
  *
- * @param {number|string} n - Number to format
- * @returns {string} Formatted dollar string (e.g., "$1,234.56")
+ * @param {number|string} value - Number to format
+ * @param {string} [currency=DEFAULT_CURRENCY] - ISO currency code
+ * @returns {string} Formatted currency string (e.g., "$1,234.56")
  */
-const formatDollar = (n) => {
-  const num = parseFloat(n);
+const formatCurrency = (value, currency = DEFAULT_CURRENCY) => {
+  const num = parseFloat(value);
   if (isNaN(num)) return "";
-  return `$${num.toFixed(2)}`;
+  try {
+    return new Intl.NumberFormat(undefined, {
+      style: "currency",
+      currency,
+    }).format(num);
+  } catch (e) {
+    // Fallback for environments without Intl support
+    return `${currency} ${num.toFixed(2)}`;
+  }
 };
 
 /**
@@ -349,7 +405,7 @@ const formatDollar = (n) => {
  * @returns {string} HTML string with appropriate color styling
  */
 const formatLossProfit = (value) => {
-  const formatted = formatDollar(value);
+  const formatted = formatCurrency(value);
   if (value > 0) {
     return `<span style="color: var(--success);">${formatted}</span>`;
   } else if (value < 0) {
@@ -381,6 +437,28 @@ const sanitizeHtml = (text) => {
 const gramsToOzt = (grams) => grams / 31.1034768;
 
 /**
+ * Converts troy ounces to grams
+ *
+ * @param {number} ozt - Weight in troy ounces
+ * @returns {number} Weight in grams
+ */
+const oztToGrams = (ozt) => ozt * 31.1034768;
+
+/**
+ * Formats a weight in troy ounces to either grams or ounces
+ *
+ * @param {number} ozt - Weight in troy ounces
+ * @returns {string} Formatted weight string with unit
+ */
+const formatWeight = (ozt) => {
+  const weight = parseFloat(ozt);
+  if (weight < 1) {
+    return `${oztToGrams(weight).toFixed(2)} g`;
+  }
+  return `${weight.toFixed(2)} oz`;
+};
+
+/**
  * Converts amount from specified currency to USD using static rates
  *
  * @param {number} amount - Monetary amount
@@ -391,6 +469,32 @@ const convertToUsd = (amount, currency = "USD") => {
   const rates = { USD: 1, EUR: 1.08, GBP: 1.27, CAD: 0.74 };
   const rate = rates[currency.toUpperCase()] || 1;
   return amount * rate;
+};
+
+/**
+ * Removes all non-alphanumeric characters from a string, preserving spaces.
+ *
+ * @param {string} str - Input string
+ * @returns {string} Cleaned string containing only letters, numbers, and spaces
+ */
+const stripNonAlphanumeric = (str = "", allowHyphen = false) =>
+  str.toString().replace(allowHyphen ? /[^a-zA-Z0-9 -]/g : /[^a-zA-Z0-9 ]/g, "");
+
+/**
+ * Sanitizes all string properties of an object by stripping non-alphanumeric characters.
+ *
+ * @param {Object} obj - Object whose string fields will be sanitized
+ * @returns {Object} New object with sanitized string fields
+ */
+const sanitizeObjectFields = (obj) => {
+  const cleaned = { ...obj };
+  for (const key of Object.keys(cleaned)) {
+    if (typeof cleaned[key] === "string" && key !== 'notes') {
+      const allowHyphen = key === 'date';
+      cleaned[key] = stripNonAlphanumeric(cleaned[key], allowHyphen);
+    }
+  }
+  return cleaned;
 };
 
 /**
@@ -412,7 +516,7 @@ const normalizeType = (type = "") => {
 };
 
 /**
- * Maps Numista type strings to internal StackTrackr categories
+ * Maps Numista type strings to internal StackrTrackr categories
  *
  * @param {string} type - Numista type string
  * @returns {string} Mapped internal type
@@ -449,22 +553,14 @@ const parseNumistaMetal = (composition = "") => {
  * @param {string} key - Storage key
  * @param {any} data - Data to store
  */
-const saveData = (key, data) => localStorage.setItem(key, JSON.stringify(data));
-
-/**
+const saveData = (key, data) => { try { const raw = JSON.stringify(data); const out = __compressIfNeeded(raw); localStorage.setItem(key, out); } catch(e) { console.error('saveData failed', e); } };/**
  * Loads data from localStorage with error handling
  *
  * @param {string} key - Storage key
  * @param {any} [defaultValue=[]] - Default value if no data found
  * @returns {any} Parsed data or default value
  */
-const loadData = (key, defaultValue = []) => {
-  try {
-    return JSON.parse(localStorage.getItem(key)) || defaultValue;
-  } catch (e) {
-    return defaultValue;
-  }
-};
+const loadData = (key, defaultValue = []) => { try { const raw = localStorage.getItem(key); if(raw == null) return defaultValue; const str = __decompressIfNeeded(raw); return JSON.parse(str); } catch(e) { return defaultValue; } };
 
 /**
  * Sorts inventory by date (newest first)
@@ -476,7 +572,9 @@ const sortInventoryByDateNewestFirst = (data = inventory) => {
   return [...data].sort((a, b) => {
     const dateA = new Date(a.date);
     const dateB = new Date(b.date);
-    return dateB - dateA; // Descending order (newest first)
+    const timeA = isNaN(dateA) ? 0 : dateA.getTime();
+    const timeB = isNaN(dateB) ? 0 : dateB.getTime();
+    return timeB - timeA; // Descending order (newest first)
   });
 };
 
@@ -572,15 +670,31 @@ const sanitizeImportedItem = (item) => {
   }
 
   // Normalize and sanitize string fields
-  const strFields = ['name', 'type', 'purchaseLocation', 'storageLocation', 'notes'];
+  const basicFields = ['name', 'type', 'purchaseLocation', 'storageLocation'];
   const cleanString = (str = '') =>
     str
       .toString()
+      .replace(/<[^>]*>/g, '')
+      .normalize('NFD')
+      .replace(/\p{Diacritic}/gu, '')
       .replace(/[\u0000-\u001F\u007F'\"]/g, '')
+      .replace(/\s+/g, ' ')
       .trim();
-  for (const field of strFields) {
+  const cleanMultilineString = (str = '') =>
+    str
+      .toString()
+      .replace(/<[^>]*>/g, '')
+      .normalize('NFD')
+      .replace(/\p{Diacritic}/gu, '')
+      .replace(/[\u0000-\u0008\u000B-\u001F\u007F'\"]/g, '')
+      .replace(/\r\n?/g, '\n')
+      .replace(/[ \t]+/g, ' ')
+      .replace(/ *\n */g, '\n')
+      .trim();
+  for (const field of basicFields) {
     sanitized[field] = cleanString(sanitized[field]);
   }
+  sanitized.notes = cleanMultilineString(sanitized.notes);
   sanitized.type = normalizeType(sanitized.type);
 
   // Reset premium calculations if price or weight are missing
@@ -589,7 +703,7 @@ const sanitizeImportedItem = (item) => {
     sanitized.totalPremium = 0;
   }
 
-  return sanitized;
+  return sanitizeObjectFields(sanitized);
 };
 
 /**
@@ -801,7 +915,7 @@ const generateStorageReportHTML = () => {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>StackTrackr Storage Report</title>
+    <title>StackrTrackr Storage Report</title>
     <style>
         ${getStorageReportCSS()}
     </style>
@@ -811,7 +925,7 @@ const generateStorageReportHTML = () => {
     <div class="report-container">
         <header class="report-header">
             <div class="header-content">
-                <h1>📊 StackTrackr Storage Report</h1>
+                <h1>📊 StackrTrackr Storage Report</h1>
                 <div class="header-controls">
                     <button onclick="toggleTheme()" class="theme-toggle-btn">🌓</button>
                     <button onclick="window.close(); return false;" class="close-btn" aria-label="Close report">×</button>
@@ -892,7 +1006,7 @@ const generateStorageReportHTML = () => {
         </section>
         
         <footer class="report-footer">
-            <p>Generated by StackTrackr v${APP_VERSION} • ${new Date().getFullYear()}</p>
+            <p>Generated by StackrTrackr v${APP_VERSION} • ${new Date().getFullYear()}</p>
             <p>This report contains a snapshot of your local browser storage data.</p>
         </footer>
     </div>
@@ -2189,7 +2303,7 @@ const generateStorageReportTar = async () => {
   }
   
   // Add README
-  const readme = `StackTrackr Storage Report Archive
+  const readme = `StackrTrackr Storage Report Archive
 =================================
 
 Generated: ${new Date().toLocaleString()}
@@ -2207,7 +2321,7 @@ To view the report:
 2. Use the theme toggle to switch between light/dark modes
 3. Click on chart segments or table items for detailed views
 
-This archive contains a complete snapshot of your StackTrackr storage data.`;
+This archive contains a complete snapshot of your StackrTrackr storage data.`;
   
   zip.file('README.txt', readme);
   
@@ -2220,3 +2334,40 @@ This archive contains a complete snapshot of your StackTrackr storage data.`;
 window.updateStorageStats = updateStorageStats;
 window.downloadStorageReport = downloadStorageReport;
 window.openStorageReportPopup = openStorageReportPopup;
+
+
+/** Storage compression helpers (Phase 1C) */
+const __ST_COMP_PREFIX = 'CMP1:';
+function __compressIfNeeded(str){
+  try{
+    if(!str || str.length < 4096) return str;
+    const comp = LZString.compressToUTF16(str);
+    return __ST_COMP_PREFIX + comp;
+  }catch(e){ return str; }
+}
+function __decompressIfNeeded(stored){
+  try{
+    if(typeof stored !== 'string') return stored;
+    if(stored.startsWith(__ST_COMP_PREFIX)){
+      const raw = LZString.decompressFromUTF16(stored.slice(__ST_COMP_PREFIX.length));
+      return raw;
+    }
+    return stored;
+  }catch(e){ return stored; }
+}
+/** Generates a storage utilization report */
+function generateStorageReport(){
+  try{
+    const items = [];
+    for(let i=0;i<localStorage.length;i++){
+      const k = localStorage.key(i);
+      const v = localStorage.getItem(k) || '';
+      const sizeBytes = (k.length + v.length) * 2; // rough UTF-16 bytes
+      items.push({ key:k, sizeBytes, sizeKB: +(sizeBytes/1024).toFixed(2) });
+    }
+    items.sort((a,b)=>b.sizeBytes - a.sizeBytes);
+    const totalBytes = items.reduce((s,x)=>s+x.sizeBytes,0);
+    return { totalKB: +(totalBytes/1024).toFixed(2), items };
+  }catch(e){ return { totalKB:0, items:[] }; }
+}
+if (typeof window !== 'undefined') { window.generateStorageReport = generateStorageReport; }

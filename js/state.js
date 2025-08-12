@@ -51,6 +51,7 @@ const elements = {
   itemQty: null,
   itemType: null,
   itemWeight: null,
+  itemWeightUnit: null,
   itemPrice: null,
   purchaseLocation: null,
   storageLocation: null,
@@ -76,6 +77,7 @@ const elements = {
   numistaImportFile: null,
   numistaOverride: null,
   numistaMerge: null,
+  clearNumistaInventoryBtn: null,
 
   // Export elements
   exportCsvBtn: null,
@@ -144,6 +146,7 @@ const elements = {
 
   // Change log elements
   changeLogBtn: null,
+  typeSummary: null,
   changeLogModal: null,
   changeLogCloseBtn: null,
   changeLogTable: null,

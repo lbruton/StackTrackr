@@ -17,16 +17,17 @@ const sortInventory = (data = inventory) => {
     switch(sortColumn) {
       case 0: valA = a.date; valB = b.date; break; // Date
       case 1: valA = a.type; valB = b.type; break; // Type
-      case 2: valA = a.metal; valB = b.metal; break; // Metal
-      case 3: valA = a.name; valB = b.name; break; // Name
-      case 4: valA = a.qty; valB = b.qty; break; // Qty
+      case 2: valA = a.composition || a.metal; valB = b.composition || b.metal; break; // Metal
+      case 3: valA = a.qty; valB = b.qty; break; // Qty
+      case 4: valA = a.name; valB = b.name; break; // Name
       case 5: valA = a.weight; valB = b.weight; break; // Weight
-      case 6: valA = a.price; valB = b.price; break; // Purchase Price
-      case 7: valA = a.spotPriceAtPurchase; valB = b.spotPriceAtPurchase; break; // Spot at Purchase
+      case 6: valA = a.price; valB = b.price; break; // Price
+      case 7: valA = a.spotPriceAtPurchase; valB = b.spotPriceAtPurchase; break; // Spot
       case 8: valA = a.totalPremium; valB = b.totalPremium; break; // Premium
       case 9: valA = a.purchaseLocation; valB = b.purchaseLocation; break; // Purchase Location
       case 10: valA = a.storageLocation || 'Unknown'; valB = b.storageLocation || 'Unknown'; break; // Storage Location
-      case 11: valA = a.isCollectable; valB = b.isCollectable; break; // Collectable
+      case 11: valA = parseInt(a.numistaId || '0', 10); valB = parseInt(b.numistaId || '0', 10); break; // N#
+      case 12: valA = a.isCollectable; valB = b.isCollectable; break; // Collectable
       default: return 0;
     }
 

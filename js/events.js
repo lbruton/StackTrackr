@@ -68,8 +68,8 @@ const setupColumnResizing = () => {
   // Add resize handles to table headers
   const headers = table.querySelectorAll("th");
   headers.forEach((header, index) => {
-    // Skip the last column (delete button)
-    if (index === headers.length - 1) return;
+    // Skip action columns (edit/notes/delete)
+    if (index >= headers.length - 3) return;
 
     const resizeHandle = document.createElement("div");
     resizeHandle.className = "resize-handle";
@@ -179,7 +179,7 @@ const updateColumnVisibility = () => {
         "spot",
         "weight",
         "qty",
-        "composition",
+        "metal",
       ],
     },
     {
@@ -192,7 +192,7 @@ const updateColumnVisibility = () => {
         "spot",
         "weight",
         "qty",
-        "composition",
+        "metal",
         "type",
       ],
     },
@@ -205,9 +205,9 @@ const updateColumnVisibility = () => {
   const allColumns = [
     "date",
     "type",
-    "composition",
-    "name",
+    "metal",
     "qty",
+    "name",
     "weight",
     "purchasePrice",
     "spot",
@@ -340,8 +340,8 @@ const setupEventListeners = () => {
     if (inventoryTable) {
       const headers = inventoryTable.querySelectorAll("th");
       headers.forEach((header, index) => {
-        // Skip Notes/Delete columns (last two)
-        if (index >= headers.length - 2) {
+        // Skip action columns (edit/notes/delete)
+        if (index >= headers.length - 3) {
           return;
         }
 
@@ -383,12 +383,16 @@ const setupEventListeners = () => {
           const qty = parseInt(elements.itemQty.value, 10);
           const type = elements.itemType.value;
           let weight = parseFloat(elements.itemWeight.value);
+          if (elements.itemWeightUnit.value === "g") {
+            weight = gramsToOzt(weight);
+          }
           weight = isNaN(weight) ? 0 : parseFloat(weight.toFixed(2));
-          const price = parseFloat(elements.itemPrice.value);
+          let price = parseFloat(elements.itemPrice.value);
+          price = isNaN(price) || price < 0 ? 0 : price;
           const purchaseLocation =
             elements.purchaseLocation.value.trim() || "";
           const storageLocation =
-            elements.storageLocation.value.trim() || "";
+            elements.storageLocation.value.trim() || "Unknown";
           const notes = elements.itemNotes.value.trim() || "";
           const date = elements.itemDate.value || todayStr();
           const spotPriceInput = elements.itemSpotPrice.value.trim();
@@ -399,9 +403,7 @@ const setupEventListeners = () => {
             qty < 1 ||
             !Number.isInteger(qty) ||
             isNaN(weight) ||
-            weight <= 0 ||
-            isNaN(price) ||
-            price < 0
+            weight <= 0
           ) {
             return alert("Please enter valid values for all fields.");
           }
@@ -424,6 +426,7 @@ const setupEventListeners = () => {
           }
 
           const serial = getNextSerial();
+          const catalog = document.getElementById("itemCatalog").value.trim();
           inventory.push({
             metal,
             composition,
@@ -441,15 +444,16 @@ const setupEventListeners = () => {
             totalPremium,
             isCollectable,
             serial,
-            numistaId: "",
+            numistaId: catalog,
           });
 
           addCompositionOption(composition);
 
-          catalogMap[serial] = "";
+          catalogMap[serial] = catalog;
           saveInventory();
           renderTable();
           this.reset();
+          elements.itemWeightUnit.value = "oz";
           elements.itemDate.value = todayStr();
           if (elements.addModal) elements.addModal.style.display = "none";
         },
@@ -476,12 +480,16 @@ const setupEventListeners = () => {
           const qty = parseInt(elements.editQty.value, 10);
           const type = elements.editType.value;
           let weight = parseFloat(elements.editWeight.value);
+          if (elements.editWeight.dataset.unit === 'g') {
+            weight = gramsToOzt(weight);
+          }
           weight = isNaN(weight) ? 0 : parseFloat(weight.toFixed(2));
-          const price = parseFloat(elements.editPrice.value);
+          let price = parseFloat(elements.editPrice.value);
+          price = isNaN(price) || price < 0 ? 0 : price;
           const purchaseLocation =
             elements.editPurchaseLocation.value.trim() || "";
           const storageLocation =
-            elements.editStorageLocation.value.trim() || "";
+            elements.editStorageLocation.value.trim() || "Unknown";
           const notes = elements.editNotes.value.trim() || "";
           const date = elements.editDate.value;
 
@@ -507,8 +515,6 @@ const setupEventListeners = () => {
             !Number.isInteger(qty) ||
             isNaN(weight) ||
             weight <= 0 ||
-            isNaN(price) ||
-            price < 0 ||
             (!isCollectable &&
               (isNaN(spotPriceAtPurchase) || spotPriceAtPurchase <= 0))
           ) {
@@ -816,7 +822,7 @@ const setupEventListeners = () => {
               spotPrices[metalKey] = defaultPrice;
               if (elements.spotPriceDisplay[metalKey]) {
                 elements.spotPriceDisplay[metalKey].textContent =
-                  formatDollar(defaultPrice);
+                  formatCurrency(defaultPrice);
               }
               updateSummary();
             }
@@ -998,12 +1004,12 @@ const setupEventListeners = () => {
         "Merge Numista button",
       );
     }
-    if (elements.numistaImportFile) {
-      safeAttachListener(
-        elements.numistaImportFile,
-        "change",
-        function (e) {
-          if (e.target.files.length > 0) {
+      if (elements.numistaImportFile) {
+        safeAttachListener(
+          elements.numistaImportFile,
+          "change",
+          function (e) {
+            if (e.target.files.length > 0) {
 
             const file = e.target.files[0];
             if (!checkFileSize(file)) {
@@ -1011,17 +1017,40 @@ const setupEventListeners = () => {
             } else {
               importNumistaCsv(file, numistaOverride);
             }
-n
           }
           this.value = "";
         },
-        "Numista CSV import",
-      );
-    }
+          "Numista CSV import",
+        );
+      }
 
-    // Export buttons
-    if (elements.exportCsvBtn) {
-      safeAttachListener(
+      // Clear Numista Inventory button
+      if (elements.clearNumistaInventoryBtn) {
+        safeAttachListener(
+          elements.clearNumistaInventoryBtn,
+          "click",
+          function () {
+            if (
+              confirm(
+                "Remove all items with Numista IDs? This cannot be undone.",
+              )
+            ) {
+              inventory = inventory.filter(item => !item.numistaId);
+              if (typeof catalogManager?.cleanupOrphans === "function") {
+                catalogManager.cleanupOrphans(inventory);
+              }
+              saveInventory();
+              renderTable();
+              alert("Numista inventory cleared.");
+            }
+          },
+          "Clear Numista inventory button",
+        );
+      }
+
+      // Export buttons
+      if (elements.exportCsvBtn) {
+        safeAttachListener(
         elements.exportCsvBtn,
         "click",
         exportCsv,
@@ -1313,56 +1342,22 @@ const setupPagination = () => {
 };
 
 /**
- * Populates type and metal filter dropdowns based on current inventory
- */
-const populateFilterOptions = () => {
-  if (elements.metalFilter) {
-    const selected = elements.metalFilter.value;
-    const metals = [
-      ...new Set(
-        inventory.map((i) =>
-          getCompositionFirstWords(i.composition || i.metal || ""),
-        ),
-      ),
-    ]
-      .filter(Boolean)
-      .sort();
-    elements.metalFilter.innerHTML =
-      '<option value="">All Metals</option>' +
-      metals.map((m) => `<option value="${m}">${m}</option>`).join("");
-    elements.metalFilter.value = selected;
-  }
-
-  if (elements.typeFilter) {
-    const selected = elements.typeFilter.value;
-    const types = [...new Set(inventory.map((i) => i.type))]
-      .filter(Boolean)
-      .sort();
-    elements.typeFilter.innerHTML =
-      '<option value="">All Types</option>' +
-      types.map((t) => `<option value="${t}">${t}</option>`).join("");
-    elements.typeFilter.value = selected;
-  }
-};
-
-/**
  * Sets up search event listeners
  */
 const setupSearch = () => {
   debugLog("Setting up search listeners...");
 
-  populateFilterOptions();
-
   try {
     if (elements.searchInput) {
+      const handleSearchInput = debounce(function () {
+        searchQuery = this.value.replace(/[<>]/g, '').trim();
+        currentPage = 1; // Reset to first page when search changes
+        renderTable();
+      }, 300);
       safeAttachListener(
         elements.searchInput,
         "input",
-        function () {
-          searchQuery = this.value.trim();
-          currentPage = 1; // Reset to first page when search changes
-          renderTable();
-        },
+        handleSearchInput,
         "Search input",
       );
     }
@@ -1394,9 +1389,9 @@ const setupSearch = () => {
         function () {
           const value = this.value;
           if (value) {
-            columnFilters.composition = value;
+            columnFilters.metal = value;
           } else {
-            delete columnFilters.composition;
+            delete columnFilters.metal;
           }
           searchQuery = "";
           if (elements.searchInput) elements.searchInput.value = "";
@@ -1441,6 +1436,7 @@ const setupSearch = () => {
         () => {
           if (elements.inventoryForm) {
             elements.inventoryForm.reset();
+            elements.itemWeightUnit.value = "oz";
             elements.itemDate.value = todayStr();
           }
           if (elements.addModal) elements.addModal.style.display = "flex";
@@ -1529,6 +1525,21 @@ const setupSearch = () => {
 };
 
 /**
+ * Updates logo groups to match current theme
+ */
+const updateLogoTheme = () => {
+  const isDark = document.documentElement.getAttribute("data-theme") === "dark";
+  const logo = document.querySelector(".app-logo");
+  if (!logo) return;
+  const light = logo.querySelector(".light-mode");
+  const dark = logo.querySelector(".dark-mode");
+  if (light && dark) {
+    light.style.display = isDark ? "none" : "";
+    dark.style.display = isDark ? "" : "none";
+  }
+};
+
+/**
  * Sets up theme toggle event listeners
  */
 const updateThemeButton = () => {
@@ -1536,7 +1547,7 @@ const updateThemeButton = () => {
   if (!btn) return;
   const savedTheme = localStorage.getItem(THEME_KEY);
   const mode = savedTheme ? savedTheme : "system";
-  btn.classList.remove("dark", "light", "system");
+  btn.classList.remove("dark", "light", "sepia", "system");
   btn.classList.add(mode);
   if (mode === "dark") {
     btn.textContent = "🌙";
@@ -1546,11 +1557,17 @@ const updateThemeButton = () => {
     btn.textContent = "☀️";
     btn.setAttribute("aria-label", "Light mode");
     btn.setAttribute("title", "Light mode");
+  } else if (mode === "sepia") {
+    btn.textContent = "📜";
+    btn.setAttribute("aria-label", "Sepia mode");
+    btn.setAttribute("title", "Sepia mode");
   } else {
     btn.textContent = "💻";
     btn.setAttribute("aria-label", "System theme");
     btn.setAttribute("title", "System theme");
   }
+
+  updateLogoTheme();
 };
 
 window.updateThemeButton = updateThemeButton;
@@ -1563,7 +1580,7 @@ const setupThemeToggle = () => {
     if (typeof initTheme === "function") {
       initTheme();
     } else {
-      const savedTheme = localStorage.getItem(THEME_KEY) || "light";
+      const savedTheme = localStorage.getItem(THEME_KEY) || "system";
       setTheme(savedTheme);
     }
 
@@ -1578,7 +1595,7 @@ const setupThemeToggle = () => {
       window
         .matchMedia("(prefers-color-scheme: dark)")
         .addEventListener("change", () => {
-          if (!localStorage.getItem(THEME_KEY)) {
+          if (localStorage.getItem(THEME_KEY) === "system") {
             updateThemeButton();
           }
         });
@@ -1590,10 +1607,12 @@ const setupThemeToggle = () => {
         "click",
         (e) => {
           e.preventDefault();
-          const savedTheme = localStorage.getItem(THEME_KEY);
+          const savedTheme = localStorage.getItem(THEME_KEY) || "system";
           if (savedTheme === "dark") {
             setTheme("light");
           } else if (savedTheme === "light") {
+            setTheme("sepia");
+          } else if (savedTheme === "sepia") {
             setTheme("system");
           } else {
             setTheme("dark");

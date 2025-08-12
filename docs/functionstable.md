@@ -1,7 +1,7 @@
 # Function Reference
 
 
-> **Latest release: v3.04.02**
+> **Latest release: v3.04.18**
 
 
 | File | Function | Description |
@@ -26,7 +26,7 @@
 | api.js | clearApiCache | Clears only the API cache, keeping the configuration |
 | api.js | getCacheDurationMs | Gets cache duration in milliseconds |
 | api.js | setProviderStatus | Sets connection status for a provider in the settings UI |
-| api.js | updateProviderHistoryTables | Updates provider history tables with latest API values |
+| api.js | updateProviderHistoryTables | Displays API usage/quota data for each provider |
 | api.js | refreshProviderStatuses | Refreshes provider statuses based on stored keys and cache age |
 | api.js | updateDefaultProviderButtons | Updates default provider button states |
 | api.js | renderApiHistoryTable | Renders API history table with filtering, sorting and pagination |
@@ -58,9 +58,11 @@
 | api.js | resetSpotPrice | Resets spot price to default or API cached value |
 | api.js | createBackupData | Exports backup data including API configuration |
 | api.js | downloadCompleteBackup | Downloads complete backup files including inventory and API configuration |
+| filters.js | populateFilterDropdowns | Populates filter modal dropdowns and exclude toggles |
+| filters.js | applyFilters | Applies modal filters with multi-select and exclusion options |
 | filters.js | applyQuickFilter | Adds or toggles a filter for a specific field value |
 | filters.js | clearAllFilters | Clears all active filters and search query |
-| filters.js | filterInventoryAdvanced | Applies advanced filtering with active filters |
+| filters.js | filterInventoryAdvanced | Applies multi-value and exclusion filters with comma-separated search terms |
 | changeLog.js | logChange | Records a change to the change log and persists it |
 | changeLog.js | logItemChanges | Compares two item objects and logs any differences |
 | changeLog.js | renderChangeLog | Renders the change log table with all entries |
@@ -81,7 +83,6 @@
 | events.js | setupEventListeners | Sets up all primary event listeners for the application |
 | events.js | updateThemeDisplay |  |
 | events.js | setupPagination | Sets up pagination event listeners |
-| events.js | populateFilterOptions | Populates type and metal filter dropdowns |
 | events.js | setupSearch | Sets up search event listeners |
 | events.js | setupThemeToggle | Sets up theme toggle event listeners |
 | events.js | setupApiEvents | Sets up API-related event listeners |
@@ -94,11 +95,14 @@
 | inventory.js | generateBackupHtml | Generates HTML content for backup export |
 | inventory.js | generateReadmeContent | Generates README content for backup archive |
 | inventory.js | saveInventory | Saves current inventory to localStorage |
+| inventory.js | sanitizeTablesOnLoad | Removes non-alphanumeric characters from inventory records and cached Numista data |
 | inventory.js | loadInventory | Loads inventory from localStorage with comprehensive data migration |
 | inventory.js | getNextSerial | Generates a unique serial number for inventory items |
 | inventory.js | getColor |  |
+| inventory.js | escapeAttribute | Escapes text for safe use in HTML attributes |
 | inventory.js | filterLink |  |
 | inventory.js | renderTable |  |
+| inventory.js | updateTypeSummary | Displays colored counts of items by type |
 | inventory.js | updateSummary | Calculates and updates all financial summary displays across the application |
 | inventory.js | calculateTotals | Calculates financial metrics for specified metal type |
 | inventory.js | deleteItem | Deletes inventory item at specified index after confirmation |
@@ -118,7 +122,7 @@
 | inventory.js | exportPdf | Exports current inventory to PDF format |
 | pagination.js | calculateTotalPages | Calculates total number of pages based on current data |
 | pagination.js | goToPage | Navigates to specified page number |
-| search.js | filterInventory | Filters inventory based on current search query |
+| search.js | filterInventory | Filters inventory based on search query and filters; supports comma-separated terms |
 | search.js | applyColumnFilter | Applies a column-specific filter and re-renders the table |
 | sorting.js | sortInventory | Sorts inventory based on current sort column and direction |
 | spot.js | saveSpotHistory | Saves spot history to localStorage |
@@ -128,9 +132,9 @@
 | spot.js | updateManualSpot | Updates spot price for specified metal from user input |
 | spot.js | resetSpot | Resets spot price for specified metal to default or API cached value |
 | spot.js | resetSpotByName | Alternative reset function that works with metal name instead of key |
-| theme.js | setTheme | Sets application theme and updates localStorage |
+| theme.js | setTheme | Sets application theme (dark, light, sepia, or system) and updates localStorage |
 | theme.js | initTheme | Initializes theme based on user preference and system settings |
-| theme.js | toggleTheme | Toggles between dark and light themes |
+| theme.js | toggleTheme | Cycles through dark, light, sepia, and system themes |
 | theme.js | setupSystemThemeListener | Sets up system theme change listener |
 | constants.js | getVersionString | Returns formatted version string |
 | constants.js | injectVersionString | Inserts formatted version string into a target element |
@@ -143,26 +147,32 @@
 | utils.js | getAppTitle | Returns full application title with version when no branding is configured |
 | utils.js | getFooterDomain | Determines active domain for footer copyright |
 | utils.js | monitorPerformance | Performance monitoring utility |
+| utils.js | debounce | Creates a debounced version of a function |
 | utils.js | getLastUpdateTime | Builds two-line HTML showing source and last sync info for a metal |
 | utils.js | pad2 | Pads a number with leading zeros to ensure two-digit format |
 | utils.js | todayStr | Returns current date as ISO string (YYYY-MM-DD) |
 | utils.js | currentMonthKey | Returns current month key in YYYY-MM format |
-| utils.js | parseDate | Parses various date formats into standard YYYY-MM-DD format |
-| utils.js | formatDisplayDate | Formats a date string into a user-friendly format |
-| utils.js | formatDollar | Formats a number as a dollar amount with two decimal places |
+| utils.js | parseDate | Parses various date formats into standard YYYY-MM-DD format; returns 'Unknown' if invalid |
+| utils.js | formatDisplayDate | Formats a date string into two-digit year ISO format (YY-MM-DD) |
+| utils.js | formatCurrency | Formats a number as a currency string using the default currency |
 | utils.js | formatLossProfit | Formats a profit/loss value with color coding |
 | utils.js | sanitizeHtml | Sanitizes text input for safe HTML display |
 | utils.js | gramsToOzt | Converts grams to troy ounces (ozt) |
+| utils.js | oztToGrams | Converts troy ounces to grams |
+| utils.js | formatWeight | Formats a weight in ozt to grams or ounces |
 | utils.js | convertToUsd | Converts amount from specified currency to USD using static rates |
+| utils.js | stripNonAlphanumeric | Removes all characters except letters, numbers, and spaces |
+| utils.js | sanitizeObjectFields | Strips non-alphanumeric characters from all string properties in an object |
 | utils.js | normalizeType | Ensures item type matches predefined options (Coin, Bar, Round, Note, Aurum, Other) |
 | utils.js | mapNumistaType | Maps Numista type strings to internal categories (Coin, Bar, Round, Note, Aurum, Other) |
 | utils.js | parseNumistaMetal | Parses composition into Silver, Gold, Platinum, Palladium, Paper, or Alloy |
 | utils.js | getCompositionFirstWords | Extracts first two words from a composition string, ignoring parentheses and numbers |
+| utils.js | getDisplayComposition | Returns "Alloy" when composition doesn't start with a primary metal |
 | utils.js | saveData | Saves data to localStorage with JSON serialization |
 | utils.js | loadData | Loads data from localStorage with error handling |
 | utils.js | sortInventoryByDateNewestFirst | Sorts inventory by date (newest first) |
 | utils.js | validateInventoryItem | Validates inventory item data |
-| utils.js | sanitizeImportedItem | Coerces invalid imported fields to safe defaults and strips unsafe characters |
+| utils.js | sanitizeImportedItem | Coerces invalid imported fields to safe defaults and strips HTML, diacritics, and non-alphanumeric characters |
 | utils.js | handleError | Handles errors with user-friendly messaging |
 | utils.js | getUserFriendlyMessage | Converts technical error messages to user-friendly ones |
 | utils.js | downloadFile | Downloads a file with the specified content and filename |

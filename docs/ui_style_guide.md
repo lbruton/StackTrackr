@@ -1,10 +1,10 @@
 # UI Style Guide
 
-This guide summarizes the visual design conventions used throughout StackTrackr. It references existing CSS variables from [`css/styles.css`](../css/styles.css) and component patterns in `index.html`.
+This guide summarizes the visual design conventions used throughout StackrTrackr. It references existing CSS variables from [`css/styles.css`](../css/styles.css) and component patterns in `index.html`.
 
 ## Color Palette
 
-StackTrackr uses CSS custom properties to centralize theming:
+StackrTrackr uses CSS custom properties to centralize theming:
 
 - **Primary:** `var(--primary)` / hover `var(--primary-hover)`
 - **Secondary:** `var(--secondary)` / hover `var(--secondary-hover)`
@@ -40,10 +40,9 @@ The main application header uses the `.app-header` container with a gradient tit
 
 ```html
 <div class="app-header">
-  <div class="app-title">
-    <h1>StackTrackr</h1>
-    <p class="app-subtitle">The open source precious metals tracking tool.</p>
-  </div>
+  <h1 class="app-logo" aria-label="StackrTrackr">
+    <!-- inline SVG logo -->
+  </h1>
   <!-- action buttons -->
 </div>
 ```

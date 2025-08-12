@@ -1,13 +1,41 @@
 # StackTrackr - Development Roadmap
 
-This roadmap outlines upcoming patch releases for the v3.03.x series.
+This roadmap outlines upcoming patch releases for the v3.04.x series.
 
+- **v3.04.18** – Name and price quick-filter fix *(completed)*
+- **v3.04.17** – Gold & silver responsive logo *(completed)*
+- **v3.04.16** – Layout and footer refinements *(completed)*
+- **v3.04.15** – Footer version injection *(completed)*
+- **v3.04.14** – UI and filter enhancements *(completed)*
+- **v3.04.13** – Simplified archive workflow *(completed)*
+- **v3.04.12** – Quick filter object storage *(completed)*
+- **v3.04.11** – Collectable column icon *(completed)*
+- **v3.04.10** – Provider history usage display *(completed)*
+- **v3.04.09** – Multi-select & exclusion filters *(completed)*
+- **v3.04.08** – Debounced search input *(completed)*
+- **v3.04.07** – Data sanitization on load *(completed)*
+- **v3.04.06** – Name sanitization *(completed)*
+- **v3.04.05** – Search sanitization *(completed)*
+- **v3.04.04** – Multi-term search *(completed)*
+- **v3.04.03** – Search input restore *(completed)*
+- **v3.04.02** – Numista header trimming *(completed)*
+- **v3.04.01** – Search reset, Numista sanitization, and batch API pulls *(completed)*
+- **v3.04.00** – Inventory filter enhancements and API cleanup *(completed)*
 - **v3.03.07b** – Documentation normalization and reference cleanup *(completed)*
 - **v3.03.08a** – Version update changelog modal *(completed)*
 - **v3.03.08b** – Files modal storage breakdown removal *(completed)*
 - **v3.03.08d** – Version modal centering *(completed)*
 - **v3.03.08c** – Version modal enhancements *(completed)*
 - **v3.03.08e** – Numista CSV storage and metal classification *(completed)*
-- **v3.03.12a** – Advanced reporting and analytics features.
-- **v3.03.13a** – Mobile application companion.
+- **v3.03.08f** – CSV import field sanitization and merge option *(completed)*
+- **v3.03.08g** – Change log table refinement and catalog mapping *(completed)*
+- **v3.03.08h** – Table control compactness and import options *(completed)*
+- **v3.03.08i** – Numista import polish and weight rounding *(completed)*
+- **v3.03.08j** – Composition display fix *(completed)*
+- **v3.03.08k** – Type dropdown and UI fixes *(completed)*
+  - **v3.03.08l** – Search box fix and composition parsing *(completed)*
+  - **v3.03.08m** – Inventory filter dropdown *(completed)*
+  - **v3.03.08n** – Inventory type filter and dynamic metals *(completed)*
+  - **v3.03.12a** – Advanced reporting and analytics features.
+  - **v3.03.13a** – Mobile application companion.
 

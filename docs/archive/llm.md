@@ -1,4 +1,4 @@
-# LLM Development Guide — StackTrackr
+# LLM Development Guide — StackrTrackr
 
 > **CRITICAL**: Keep all documentation in sync with code updates.  
 >  
@@ -17,7 +17,7 @@
 
 ## 1. Purpose
 
-Provide AI assistants (LLMs) a concise, up-to-date overview of the **StackTrackr v3.2.05rc** to guide development, documentation, and QA tasks.
+Provide AI assistants (LLMs) a concise, up-to-date overview of the **StackrTrackr v3.2.05rc** to guide development, documentation, and QA tasks.
 
 ## 2. Project Snapshot
 
@@ -35,7 +35,7 @@ Provide AI assistants (LLMs) a concise, up-to-date overview of the **StackTrackr
 
 ## 3. Project Structure
 
-StackTrackr/
+StackrTrackr/
 ├── app/
 │   ├── index.html
 │   ├── css/styles.css

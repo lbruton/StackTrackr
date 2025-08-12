@@ -1,3 +1,260 @@
+# Implementation Summary: Gold & Silver Logo
+
+> **Latest release: v3.04.18**
+
+## Version Update: 3.04.17 → 3.04.18
+
+## User Requirements Implemented
+
+- Fixed quick-filter so clicking name or price cells applies filters
+
+## Technical Changes Made
+
+### Files Modified:
+1. **`js/filters.js`**: Added generic field support for quick filters
+2. **`js/constants.js`**: Bumped version to 3.04.18
+3. **`README.md`** and **docs/**: Updated documentation and changelog entries
+4. **`tests/quick-filter-generic.test.js`**: Ensures name and price filtering works
+
+## Version Update: 3.04.16 → 3.04.17
+
+## User Requirements Implemented
+
+- Introduced gold/silver SVG logo with tagline
+- Enabled automatic light/dark theme switching and responsive scaling
+
+## Technical Changes Made
+
+### Files Modified:
+1. **`index.html`**: Replaced logo with theme-aware gold/silver SVG and tagline
+2. **`css/styles.css`**: Added logo styles, theme rules, and responsive typography
+3. **`js/constants.js`**: Bumped version to 3.04.17
+4. **Documentation**: Updated changelog, roadmap, status, structure, function table, implementation summary, README, and workflow
+
+## Version Update: 3.04.15 → 3.04.16
+
+## User Requirements Implemented
+
+- Restored Change Log trigger to silver button
+- Added spacing between inventory table and Change Log controls
+- Updated footer with friendly version message and helpful links
+- Added safe favicon
+
+## Technical Changes Made
+
+### Files Modified:
+1. **`index.html`**: Added favicon link, converted Change Log trigger to button, updated footer text
+2. **`css/styles.css`**: Increased spacing above Change Log controls
+3. **`js/constants.js`**: Bumped version to 3.04.16
+4. **Documentation**: Updated changelog, roadmap, status, structure, function table, implementation summary, README, and workflow
+
+## Version Update: 3.04.13 → 3.04.14
+
+## User Requirements Implemented
+
+- Preserved ISO date formatting during sanitization
+- Quick-filter entries respected by advanced filtering
+- Weight unit selection supports grams conversion
+- Duplicate rows skipped during CSV merges
+- Added type summary display and colored filter chips
+- Row-scoped inline editing for table cells
+- Collectable status uses coin/safe icons
+- Layout tweaks: truncated locations, silver Change Log button, footer card
+
+## Technical Changes Made
+
+### Files Modified:
+1. **`js/utils.js`**: Allow hyphens for date sanitization
+2. **`js/inventory.js`**: Type summary, icon adjustments, safe coin toggles
+3. **`index.html`**: Inject type summary, button and footer updates, icon column tweaks
+4. **`css/styles.css`**: Styling for new elements, location truncation, footer card, button
+5. **`js/constants.js`**: Bumped version to 3.04.14
+6. **Documentation**: Updated changelog, roadmap, status, structure, and function table
+
+# Implementation Summary: Archive Workflow Simplification
+
+> **Latest release: v3.04.13**
+
+## Version Update: 3.04.12 → 3.04.13
+
+## User Requirements Implemented
+
+- Simplified archive script to maintain a single previous build snapshot
+- Updated version across constants, documentation, and footer
+
+## Technical Changes Made
+
+### Files Modified:
+1. **`scripts/update-archive.sh`**: Replaced multi-archive rotation with single snapshot and footer link fix
+2. **`js/constants.js`**: Bumped version to 3.04.13
+3. **`index.html`**: Footer displays current version
+4. **Documentation**: Updated changelog, roadmap, status, structure, function table, implementation summary, and README
+
+# Implementation Summary: Quick Filter Object Storage
+
+> **Latest release: v3.04.12**
+
+## Version Update: 3.04.11 → 3.04.12
+
+## User Requirements Implemented
+
+- Quick filter now stores criteria as an object with exclude flag for consistency with advanced filters
+
+## Technical Changes Made
+
+### Files Modified:
+1. **`js/filters.js`**: Updated `applyQuickFilter` to use object criteria and sync legacy `columnFilters`
+2. **`js/constants.js`**: Bumped version to 3.04.12
+3. **Documentation**: Updated changelog, roadmap, status, structure, and function table
+
+# Implementation Summary: Collectable Column Icon
+
+> **Latest release: v3.04.11**
+
+## Version Update: 3.04.10 → 3.04.11
+
+## User Requirements Implemented
+
+- Replaced "Collectable" table header text with a treasure chest icon and aria label
+- Added CSS to align the new icon and support theme colors
+- Updated documentation referencing the previous "Collectable" label
+
+## Technical Changes Made
+
+### Files Modified:
+1. **`index.html`**: Replaced header text with icon and accessibility attributes
+2. **`css/styles.css`**: Styled collectable header icon for alignment and theming
+3. **`js/constants.js`**: Bumped version to 3.04.11
+4. **Documentation**: Updated README, changelog, roadmap, status, structure, and function table
+
+# Implementation Summary: Provider History Usage Display
+
+> **Latest release: v3.04.10**
+
+## Version Update: 3.04.09 → 3.04.10
+
+## User Requirements Implemented
+
+- Remove provider history table and duplicate metal selectors
+- Show only API usage and quota in provider history sections
+
+## Technical Changes Made
+
+### Files Modified:
+1. **`js/api.js`**: Removed table creation and metal checkbox bindings; usage/quota display only
+2. **`js/constants.js`**: Bumped version to 3.04.10
+3. **Documentation**: Updated changelog, function table, roadmap, status, and structure
+
+# Implementation Summary: Multi-select Filters
+
+> **Latest release: v3.04.09**
+
+## Version Update: 3.04.08 → 3.04.09
+
+## User Requirements Implemented
+
+- Enable multi-select filter dropdowns with exclusion toggles and updated filtering logic
+
+## Technical Changes Made
+
+### Files Modified:
+1. **`index.html`**: Added `multiple` filter selects and Exclude checkboxes
+2. **`css/styles.css`**: Styled exclude toggle controls
+3. **`js/filters.js`**: Multi-select and exclusion support across dropdowns, application, chips, and filter logic
+4. **`js/constants.js`**: Bumped version to 3.04.09
+5. **Documentation**: Updated changelog, function table, roadmap, status, and structure
+
+# Implementation Summary: Debounced Search
+
+> **Latest release: v3.04.08**
+
+## Version Update: 3.04.07 → 3.04.08
+
+## User Requirements Implemented
+
+- Debounce search input to handle large Numista datasets without truncating queries
+
+## Technical Changes Made
+
+### Files Modified:
+1. **`js/utils.js`**: Added `debounce` helper
+2. **`js/events.js`**: Applied debounced handler to search input
+3. **`js/search.js`**: Fallback search listener uses debounce
+4. **`js/constants.js`**: Bumped version to 3.04.08
+5. **Documentation**: Updated changelog, status, roadmap, structure, and function table
+
+# Implementation Summary: Data Sanitization on Load
+
+> **Latest release: v3.04.07**
+
+## Version Update: 3.04.06 → 3.04.07
+
+## User Requirements Implemented
+
+- Remove non-alphanumeric characters from inventory and Numista tables on load
+
+## Technical Changes Made
+
+### Files Modified:
+1. **`js/utils.js`**: Added `stripNonAlphanumeric` and `sanitizeObjectFields`; updated `sanitizeImportedItem`
+2. **`js/inventory.js`**: Introduced `sanitizeTablesOnLoad` to clean inventory and cached Numista data
+3. **`js/init.js`**: Executes table sanitization during initialization
+4. **`js/constants.js`**: Bumped version to 3.04.07
+5. **Documentation**: Updated changelog, status, function table, and README
+
+# Implementation Summary: Name Sanitization
+
+> **Latest release: v3.04.06**
+
+## Version Update: 3.04.05 → 3.04.06
+
+## User Requirements Implemented
+
+- Strip HTML tags and excess whitespace from imported text fields to stabilize table search
+
+## Technical Changes Made
+
+### Files Modified:
+1. **`js/utils.js`**: Expanded `sanitizeImportedItem` to remove HTML tags, diacritics, and collapse whitespace
+2. **`js/inventory.js`**: Sanitizes loaded inventory records with `sanitizeImportedItem`
+3. **`js/constants.js`**: Bumped version to 3.04.06
+4. **Documentation**: Updated changelog, status, roadmap, structure, function table, and version references
+
+# Implementation Summary: Search Sanitization
+
+> **Latest release: v3.04.05**
+
+## Version Update: 3.04.04 → 3.04.05
+
+## User Requirements Implemented
+
+- Escape table cell values and sanitize search input to prevent search corruption
+
+## Technical Changes Made
+
+### Files Modified:
+1. **`js/inventory.js`**: Escape values used in filter links to block HTML injection
+2. **`js/search.js`, `js/events.js`**: Sanitize search input before filtering
+3. **`js/constants.js`**: Bumped version to 3.04.05
+4. **Documentation**: Updated changelog, status, roadmap, structure, function table, and version references
+
+# Implementation Summary: Search Input Restore
+
+> **Latest release: v3.04.03**
+
+## Version Update: 3.04.02 → 3.04.03
+
+## User Requirements Implemented
+
+- Ensure search box filters inventory table as you type
+
+## Technical Changes Made
+
+### Files Modified:
+1. **`js/search.js`**: Added DOMContentLoaded listener to wire search input to `renderTable` and exposed `filterInventory` globally
+2. **`js/constants.js`**: Bumped version to 3.04.03
+3. **Documentation**: Updated changelog, status, roadmap, structure, and function table
+
 # Implementation Summary: Numista Header Trimming
 
 > **Latest release: v3.04.02**
@@ -138,7 +395,7 @@
 
 ### Files Modified:
 1. **`index.html`**: Reordered type dropdowns and separated totals section
-2. **`css/styles.css`**: Replaced clickable name styles with `.edit-icon`
+2. **`css/styles.css`**: Removed obsolete `.edit-icon` style after moving edit action to dedicated column
 3. **`js/utils.js`**: Added `VALID_TYPES`, `normalizeType`, and updated Numista mapping
 4. **`js/inventory.js`**: Normalized types, blank purchase locations, name edit icon, Numista collectable logic
 5. **`js/events.js`**: Purchase location defaults to blank
@@ -262,7 +519,7 @@
 ## Technical Changes Made
 
 ### Files Modified:
-1. **`js/utils.js`**: Added `sanitizeImportedItem` helper and improved `formatDollar`
+1. **`js/utils.js`**: Added `sanitizeImportedItem` helper and improved currency formatting
 2. **`js/inventory.js`**: CSV and Numista importers sanitize fields and support merge/override
 3. **`js/constants.js`**: Bumped version to 3.03.08f
 4. **Documentation**: Updated changelog, function table, implementation summary, status, roadmap, structure, and README

@@ -1,15 +1,15 @@
 # Dynamic Version Management System
 
-> **Latest release: v3.04.02**
+> **Latest release: v3.04.04**
 
 ## Overview 
 
-The StackTrackr now uses a dynamic version management system that automatically updates version numbers throughout the application from a single source of truth.
+The StackrTrackr now uses a dynamic version management system that automatically updates version numbers throughout the application from a single source of truth.
 
 ## How It Works
 
 ### Single Source of Truth
-- Version is defined once in `js/constants.js` as `APP_VERSION = '3.04.02'`
+- Version is defined once in `js/constants.js` as `APP_VERSION = '3.04.04'`
   - This is the ONLY place you need to update the version number
 
 ### Automatic Propagation
@@ -19,7 +19,7 @@ The StackTrackr now uses a dynamic version management system that automatically 
 
 ### Utility Functions
 - `js/constants.js` provides:
-  - `getVersionString(prefix)`: Returns formatted version (e.g., "v3.04.02")
+- `getVersionString(prefix)`: Returns formatted version (e.g., "v3.04.04")
   - `injectVersionString(elementId, prefix)`: Inserts formatted version into a target element
 - `js/utils.js` provides:
   - `getAppTitle(baseTitle)`: Returns full app title with version
@@ -31,14 +31,14 @@ To release a new version:
 1. **Update ONLY the constants file:**
    ```javascript
    // In js/constants.js
-    const APP_VERSION = '3.04.02';  // Change this line only
+    const APP_VERSION = '3.04.04';  // Change this line only
    ```
 
 2. **All these will automatically update:**
-  - Page title: "StackTrackr v3.04.02"
-  - Page heading: "StackTrackr v3.04.02"
-  - Browser tab title: "StackTrackr v3.04.02"
-   - App header: "StackTrackr v3.03.07b"
+  - Page title: "StackrTrackr v3.04.04"
+  - Page heading: "StackrTrackr v3.04.04"
+  - Browser tab title: "StackrTrackr v3.04.04"
+   - App header: "StackrTrackr v3.03.07b"
 
 3. **Update changelog:** Add entry to `/docs/changelog.md` for documentation
 
@@ -61,7 +61,7 @@ appHeader.textContent = getAppTitle();
 - **Future-proof** - any new features can easily access current version
 
 ## Version Format
-StackTrackr versions follow the `BRANCH.RELEASE.PATCH.state` pattern where the
+StackrTrackr versions follow the `BRANCH.RELEASE.PATCH.state` pattern where the
 state code is appended directly to the patch number:
 
 - **BRANCH** – Major development branch (e.g., `3`)
@@ -92,7 +92,7 @@ const versionString = getVersionString(); // "v3.03.07b"
 const customVersion = getVersionString('version '); // "version 3.03.07b"
 
 // Get full app title
-const title = getAppTitle(); // "StackTrackr v3.03.07b"
+const title = getAppTitle(); // "StackrTrackr v3.03.07b"
 const customTitle = getAppTitle('My Custom Tool'); // "My Custom Tool v3.03.07b"
 ```
 

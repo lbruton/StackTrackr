@@ -9,6 +9,8 @@ let sortDirection = "asc"; // 'asc' or 'desc' - current sort direction
 let editingIndex = null;
 /** @type {number|null} Index of item whose notes are being edited */
 let notesIndex = null;
+/** @type {number|null} Change log entry currently being edited */
+let editingChangeLogIndex = null;
 
 /** @type {Object} Pagination state */
 let currentPage = 1; // Current page number (1-based)
@@ -30,6 +32,9 @@ let chartInstances = {
   apiHistoryChartPalladium: null,
 };
 
+/** @type {Set<string>} Available composition options */
+let compositionOptions = new Set(["Gold", "Silver", "Platinum", "Palladium", "Alloy"]);
+
 /** @type {Object} Cached DOM elements for performance */
 const elements = {
   // Spot price elements
@@ -46,6 +51,7 @@ const elements = {
   itemQty: null,
   itemType: null,
   itemWeight: null,
+  itemWeightUnit: null,
   itemPrice: null,
   purchaseLocation: null,
   storageLocation: null,
@@ -62,12 +68,16 @@ const elements = {
 
   // Import elements
   importCsvFile: null,
+  importCsvOverride: null,
+  importCsvMerge: null,
   importJsonFile: null,
   importExcelFile: null,
   importProgress: null,
   importProgressText: null,
-  numistaImportBtn: null,
   numistaImportFile: null,
+  numistaOverride: null,
+  numistaMerge: null,
+  clearNumistaInventoryBtn: null,
 
   // Export elements
   exportCsvBtn: null,
@@ -83,6 +93,8 @@ const elements = {
   clearMappingsBtn: null,
 
   // Emergency reset button
+  removeInventoryDataBtn: null,
+  clearNumistaCacheBtn: null,
   boatingAccidentBtn: null,
 
   // Edit modal elements
@@ -100,6 +112,9 @@ const elements = {
   editNotes: null,
   editDate: null,
   editSpotPrice: null,
+  editCatalog: null,
+  undoChangeBtn: null,
+  editSerial: null,
   editCloseBtn: null,
 
   // Notes modal elements
@@ -131,6 +146,7 @@ const elements = {
 
   // Change log elements
   changeLogBtn: null,
+  typeSummary: null,
   changeLogModal: null,
   changeLogCloseBtn: null,
   changeLogTable: null,
@@ -139,6 +155,8 @@ const elements = {
 
   // Search elements
   searchInput: null,
+  typeFilter: null,
+  metalFilter: null,
   clearSearchBtn: null,
   newItemBtn: null,
   searchResultsInfo: null,

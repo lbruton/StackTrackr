@@ -1,11 +1,11 @@
-# Project Status - StackTrackr
+# Project Status - StackrTrackr
 
 
-> **Latest release: v3.04.02**
+> **Latest release: v3.04.18**
 
-## 🎯 Current State: **BETA v3.04.02** ✅ MAINTAINED & OPTIMIZED
+## 🎯 Current State: **BETA v3.04.18** ✅ MAINTAINED & OPTIMIZED
 
-**StackTrackr v3.04.02** is a fully-featured, client-side web application for tracking precious metal investments (Silver, Gold, Platinum, Palladium) with comprehensive inventory management, API integration, and complete backup capabilities. The 3.04.x series focuses on polish, maintenance, and optimization.
+**StackrTrackr v3.04.18** is a fully-featured, client-side web application for tracking precious metal investments (Silver, Gold, Platinum, Palladium) with comprehensive inventory management, API integration, and complete backup capabilities. The 3.04.x series focuses on polish, maintenance, and optimization.
 
 
 ## 🏗️ Architecture Overview
@@ -25,6 +25,22 @@ The tool features a **modular JavaScript architecture** with separate files for 
 
 ## ✨ Latest Changes
 
+- **v3.04.18 - Name and price quick-filter fix**: clicking name or price cells now filters inventory
+- **v3.04.17 - Gold & silver responsive logo**: theme-aware SVG branding and tagline
+ - **v3.04.16 - Layout and footer refinements**: silver Change Log button restored, extra spacing, footer message, safe favicon
+ - **v3.04.15 - Dynamic footer version**: footer displays `APP_VERSION` automatically
+ - **v3.04.14 - UI and filter enhancements**: date sanitization, type summary, icon polish
+ - **v3.04.13 - Simplified archive workflow**: Update-archive script keeps only the latest previous build
+ - **v3.04.12 - Quick filter object storage**: Quick filter stores criteria as objects for exclude support
+ - **v3.04.11 - Collectable column icon**: Table header uses a treasure chest icon with accessible label
+ - **v3.04.10 - Provider history usage display**: Provider history sections show API usage/quota only, with metal toggles managed in Provider Settings
+ - **v3.04.09 - Multi-select & exclusion filters**: Filter modal supports multi-select dropdowns with exclude toggles and chips reflect selections
+ - **v3.04.08 - Debounced search**: Search box waits for typing to pause before filtering large datasets
+ - **v3.04.07 - Data sanitization on load**: Removes non-alphanumeric characters from inventory and Numista data during initialization
+- **v3.04.06 - Name sanitization**: Cleaned imported text fields for reliable table searching
+- **v3.04.05 - Search sanitization**: Escaped table values and sanitized search input to prevent corruption
+- **v3.04.04 - Multi-term search**: Search box accepts comma-separated terms to filter multiple values at once
+- **v3.04.03 - Search input restore**: Search box reliably filters inventory table as you type
 - **v3.04.02 - Numista header trimming**: Imports accept Numista CSVs with trailing spaces in column headers
 - **v3.04.01 - Filter reset & Numista sanitization**: Clear search resets filters, sanitized Numista imports, batch API pulls
 - **v3.04.00 - Inventory filter click & API cleanup**: Clickable table value filters and removed global API cache duration dropdown
@@ -62,7 +78,7 @@ The tool features a **modular JavaScript architecture** with separate files for 
 - **v3.2.06rc - UI Refinements & Auto Sync**: Modal-based item entry with stacked filters, pagination polish with repositioned items-per-page selector, collectable status button, totals card label updates, improved About modal contrast, and automatic spot price refresh at startup
 - **v3.2.05rc - Splash Opt-Out & Branding**: Disclaimer modal can be hidden permanently, header adapts to hosting domain with updated subtitle, and each API provider stores its own key
 - **v3.2.03rc - Cache Flush Confirmation**: Added warning before clearing API cache and history
-- **v3.2.02rc - Feature Complete Release Candidate**: Application rebranded to StackTrackr and prepared for final release
+- **v3.2.02rc - Feature Complete Release Candidate**: Application rebranded to StackrTrackr and prepared for final release
 - **v3.2.01 - Cloud Sync Modal Fix**: Coming soon modal now follows themed styling with internal close button
 - **v3.2.0 - Settings & History Polish**: Appearance section moved up, sync confirmation dialog, and API history modal redesign
 - **v3.1.13 - Cloud Sync & API Quotas**: Cloud Sync placeholder modal, API usage tracking with quotas and monthly reset, Sync All provider button, reorganized file tools, and interface polish
@@ -159,8 +175,8 @@ All data is stored locally in the browser using localStorage with:
 
 If continuing development in a new chat session:
 
-1. **Current Version**: 3.04.02 (managed in `js/constants.js`)
-2. **Last Change**: Numista header trimming
+1. **Current Version**: 3.04.13 (managed in `js/constants.js`)
+2. **Last Change**: Simplified archive workflow
 3. **Last Documentation Update**: August 11, 2025 - All docs synchronized
 4. **Architecture**: Fully modular with proper separation of concerns
 5. **Documentation**: Comprehensive JSDoc comments throughout codebase
@@ -174,9 +190,9 @@ If continuing development in a new chat session:
 ## 📁 Project Structure
 
 ```
-StackTrackr/
+StackrTrackr/
 ├── js/                     # Modular JavaScript (cleaned structure)
-│   ├── constants.js        # Version 3.03.08e + metal configs
+│   ├── constants.js        # Version 3.04.15 + metal configs
 │   ├── state.js           # App state + DOM caching
 │   ├── inventory.js       # Core CRUD + notes handling
 │   ├── events.js          # UI event listeners
@@ -198,6 +214,6 @@ StackTrackr/
 
 ---
 
-**Last Updated**: August 11, 2025
+**Last Updated**: August 12, 2025
 **Status**: ✅ COMPLETE - Stable release ready for production use
 **Documentation**: ✅ ALL FILES SYNCHRONIZED AND CURRENT

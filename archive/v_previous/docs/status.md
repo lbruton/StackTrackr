@@ -1,10 +1,12 @@
 # Project Status - StackTrackr
 
-> **Latest release: v3.03.08e**
 
-## 🎯 Current State: **BETA v3.03.08e** ✅ MAINTAINED & OPTIMIZED
+> **Latest release: v3.04.18**
 
-**StackTrackr v3.03.08e** is a fully-featured, client-side web application for tracking precious metal investments (Silver, Gold, Platinum, Palladium) with comprehensive inventory management, API integration, and complete backup capabilities. The 3.03.x series focuses on polish, maintenance, and optimization.
+## 🎯 Current State: **BETA v3.04.18** ✅ MAINTAINED & OPTIMIZED
+
+**StackTrackr v3.04.17** is a fully-featured, client-side web application for tracking precious metal investments (Silver, Gold, Platinum, Palladium) with comprehensive inventory management, API integration, and complete backup capabilities. The 3.04.x series focuses on polish, maintenance, and optimization.
+
 
 ## 🏗️ Architecture Overview
 
@@ -22,6 +24,35 @@ The tool features a **modular JavaScript architecture** with separate files for 
 - `utils.js` - Helper functions and formatters
 
 ## ✨ Latest Changes
+
+- **v3.04.18 - Name and price quick-filter fix**: clicking name or price cells now filters inventory
+- **v3.04.17 - Gold & silver responsive logo**: theme-aware SVG branding and tagline
+ - **v3.04.16 - Layout and footer refinements**: silver Change Log button restored, extra spacing, footer message, safe favicon
+ - **v3.04.15 - Dynamic footer version**: footer displays `APP_VERSION` automatically
+ - **v3.04.14 - UI and filter enhancements**: date sanitization, type summary, icon polish
+ - **v3.04.13 - Simplified archive workflow**: Update-archive script keeps only the latest previous build
+ - **v3.04.12 - Quick filter object storage**: Quick filter stores criteria as objects for exclude support
+ - **v3.04.11 - Collectable column icon**: Table header uses a treasure chest icon with accessible label
+ - **v3.04.10 - Provider history usage display**: Provider history sections show API usage/quota only, with metal toggles managed in Provider Settings
+ - **v3.04.09 - Multi-select & exclusion filters**: Filter modal supports multi-select dropdowns with exclude toggles and chips reflect selections
+ - **v3.04.08 - Debounced search**: Search box waits for typing to pause before filtering large datasets
+ - **v3.04.07 - Data sanitization on load**: Removes non-alphanumeric characters from inventory and Numista data during initialization
+- **v3.04.06 - Name sanitization**: Cleaned imported text fields for reliable table searching
+- **v3.04.05 - Search sanitization**: Escaped table values and sanitized search input to prevent corruption
+- **v3.04.04 - Multi-term search**: Search box accepts comma-separated terms to filter multiple values at once
+- **v3.04.03 - Search input restore**: Search box reliably filters inventory table as you type
+- **v3.04.02 - Numista header trimming**: Imports accept Numista CSVs with trailing spaces in column headers
+- **v3.04.01 - Filter reset & Numista sanitization**: Clear search resets filters, sanitized Numista imports, batch API pulls
+- **v3.04.00 - Inventory filter click & API cleanup**: Clickable table value filters and removed global API cache duration dropdown
+- **v3.03.08n - Inventory type filter**: Added type dropdown and dynamic metal options
+- **v3.03.08m - Inventory filter dropdown**: Added metal filter to inventory title bar for quick filtering
+- **v3.03.08l - Search fix & composition parsing**: Search input filters table in real time and Numista compositions truncate to two words
+- **v3.03.08k - Type dropdown and UI fixes**: Standardized type options, blank purchase locations, edit icon, and separate totals cards
+- **v3.03.08j - Composition display fix**: Composition column shows first word from imported data
+- **v3.03.08i - Numista import polish**: Unified changelog bullets, collectable default, weight rounding, N# notes, and beta warning
+- **v3.03.08h - Table controls & import options**: Grouped controls below the table, compact pagination, import Override/Merge menus, and Backup/Restore placeholder
+- **v3.03.08g - Change log & catalog improvements**: Condensed change log with row-click editing and catalog mapping
+- **v3.03.08f - CSV import field sanitization**: Invalid fields are blanked and users can merge or override during import
 - **v3.03.08e - Numista CSV storage**: Stores raw Numista CSV and classifies metals by composition
 - **v3.03.08d - Version Modal Centering**: Version change dialog now appears centered on the screen
 - **v3.03.08c - Version Modal Enhancements**: Version change dialog now includes privacy notice, resources, and roadmap
@@ -131,11 +162,11 @@ All data is stored locally in the browser using localStorage with:
 - ✅ Modern, responsive user interface
 - ✅ Complete documentation and error handling
 
-## 📚 Documentation Status (Updated: August 10, 2025)
+## 📚 Documentation Status (Updated: August 11, 2025)
 
 **All documentation files are current and synchronized:**
- - ✅ **status.md** - Updated for v3.03.08e release
- - ✅ **changelog.md** - Current through v3.03.08e
+  - ✅ **status.md** - Updated for v3.04.02 release
+  - ✅ **changelog.md** - Current through v3.04.02
 - ✅ **MULTI_AGENT_WORKFLOW.md** - Comprehensive AI assistant development guide
 - ✅ **structure.md** - Reflects streamlined project organization
 - ✅ **versioning.md** - Accurate version management documentation
@@ -144,9 +175,9 @@ All data is stored locally in the browser using localStorage with:
 
 If continuing development in a new chat session:
 
-1. **Current Version**: 3.03.08e (managed in `js/constants.js`)
-2. **Last Change**: Files modal storage breakdown removed
-3. **Last Documentation Update**: August 10, 2025 - All docs synchronized
+1. **Current Version**: 3.04.13 (managed in `js/constants.js`)
+2. **Last Change**: Simplified archive workflow
+3. **Last Documentation Update**: August 11, 2025 - All docs synchronized
 4. **Architecture**: Fully modular with proper separation of concerns
 5. **Documentation**: Comprehensive JSDoc comments throughout codebase
 6. **Data Structure**: Includes all fields (metal, name, qty, type, weight, price, date, purchaseLocation, storageLocation, **notes**, spotPriceAtPurchase, premiumPerOz, totalPremium, isCollectable)
@@ -161,7 +192,7 @@ If continuing development in a new chat session:
 ```
 StackTrackr/
 ├── js/                     # Modular JavaScript (cleaned structure)
-│   ├── constants.js        # Version 3.03.08e + metal configs
+│   ├── constants.js        # Version 3.04.15 + metal configs
 │   ├── state.js           # App state + DOM caching
 │   ├── inventory.js       # Core CRUD + notes handling
 │   ├── events.js          # UI event listeners
@@ -183,6 +214,6 @@ StackTrackr/
 
 ---
 
-**Last Updated**: August 10, 2025
+**Last Updated**: August 12, 2025
 **Status**: ✅ COMPLETE - Stable release ready for production use
 **Documentation**: ✅ ALL FILES SYNCHRONIZED AND CURRENT

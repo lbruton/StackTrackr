@@ -1,0 +1,52 @@
+# StackTrackr Project Instructions
+
+## CONTEXT
+Precious metals inventory app (v3.04.05+). Client-side: JS modules + localStorage + CSS. Tracks Au/Ag/Pt/Pd.
+
+## FILES
+- `index.html` - main UI
+- `js/inventory.js` - CRUD/data  
+- `js/events.js` - handlers
+- `css/styles.css` - theming
+- `docs/claude.ai` - session state
+- `backup/` - safety
+
+## VERSIONING
+FORMAT: BRANCH.RELEASE.PATCH[state] (3.04.08)
+STATES: a=alpha,b=beta,rc=candidate
+BUMP_AFTER: task_completion + USER_CONFIRMATION
+FILES_UPDATE: constants.js(APP_VERSION),roadmap.md(mark_complete),changelog.md(add_entry),functionstable.md,implementation_summary.md,status.md,structure.md
+
+## TOKEN EFFICIENCY RULES
+- NO descriptive/informative messages
+- NO explanations unless critical
+- NO chit-chat or pleasantries
+- PRIORITIZE code writing/editing tokens
+- Direct implementation only
+- Minimal confirmation text
+
+## MESSAGE_TRACKER
+COUNT: 15
+WARN_AT: 150,200,230
+AUTO_WARN: "⚠️ Chat approaching limit. Start new conversation soon and reference docs/claude.ai"
+
+## KEY FUNCTIONS
+`renderTable()` `filterInventory()` `addInventoryItem()` `editInventoryItem()` `loadInventory()` `saveInventory()`
+
+## TEST
+Load sample.csv, test CRUD, verify import/export, check responsive, confirm localStorage.
+
+## POST-TASK DOCS
+`functionstable.md` `changelog.md` `roadmap.md` `status.md`
+
+## HIGH-CONFLICT
+`index.html` `events.js` `styles.css`
+
+## NOTES
+- Current version: 3.04.08 (debounced search)
+- Search functionality working properly
+- N# catalog integration complete
+- CatalogManager class implemented
+- localStorage persistence working
+- All import/export formats support N#
+- Multi-agent workflow established

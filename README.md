@@ -1,12 +1,28 @@
 
-# StackTrackr v3.04.02
+# StackrTrackr v3.04.18
 
 
-StackTrackr is a comprehensive client-side web application for tracking precious metal investments. It's designed to help users manage their silver, gold, platinum, and palladium holdings with detailed financial metrics and enhanced tracking capabilities.
+StackrTrackr is a comprehensive client-side web application for tracking precious metal investments. It's designed to help users manage their silver, gold, platinum, and palladium holdings with detailed financial metrics and enhanced tracking capabilities.
 
 The public hosted version of the app is available at [stackrtrackr.com](https://stackrtrackr.com).
 
 ## Recent Updates
+- **v3.04.18 - Name and price quick-filter fix**: clicking name or price cells now applies filters correctly
+- **v3.04.17 - Gold & silver responsive logo**: theme-aware SVG with premium gradients and tagline
+- **v3.04.16 - Layout and footer refinements**: silver Change Log button, added spacing, new footer message, safe favicon
+- **v3.04.15 - Footer version injection**: footer displays current `APP_VERSION`
+- **v3.04.14 - UI and filter enhancements**: date sanitization, type summary, icon polish
+- **v3.04.13 - Simplified archive workflow**: update-archive script maintains a single previous build snapshot
+- **v3.04.12 - Quick filter object storage**: Quick filter now stores criteria as objects for exclude support
+- **v3.04.11 - Collectable column icon**: Collectable table header now uses a treasure chest icon with an accessible label
+- **v3.04.10 - Provider history usage display**: Provider history sections show API usage/quota only, with metal toggles managed in Provider Settings
+- **v3.04.09 - Multi-select & exclusion filters**: Filter modal supports multi-select dropdowns with exclude toggles and chips reflect selections
+- **v3.04.08 - Debounced search**: Search box waits for typing to pause before filtering large datasets
+- **v3.04.07 - Data sanitization on load**: Removes non-alphanumeric characters from inventory and Numista tables when the app loads
+- **v3.04.06 - Name sanitization**: Strip HTML tags and excess whitespace from imported text fields to stabilize table search
+- **v3.04.05 - Search sanitization**: Escaped table values and sanitized search input to prevent corruption
+- **v3.04.04 - Multi-term search**: Search box accepts comma-separated values to match multiple terms at once
+- **v3.04.03 - Search input restore**: Search box reliably filters inventory table as you type
 - **v3.04.02 - Numista header trimming**: Imports accept Numista CSVs with trailing spaces in column headers
 - **v3.04.01 - Filter reset & Numista sanitization**: Clear search resets filters, sanitized Numista imports, batch API pulls
 - **v3.04.00 - Inventory filter click & API cleanup**: Click any table value to filter and removed global API cache duration dropdown
@@ -36,7 +52,7 @@ The public hosted version of the app is available at [stackrtrackr.com](https://
 - **v3.2.05rc - Splash Opt-Out & Branding**: Disclaimer modal now hides after acknowledgment, header branding adapts to the hosting domain with an updated subtitle, and API providers store keys separately
 - **v3.2.04rc - Import Negative Price Handling**: Negative prices default to $0 during imports
 - **v3.2.03rc - Cache Flush Confirmation**: Added warning before clearing API cache and history
-- **v3.2.02rc - Feature Complete Release Candidate**: Rebranded to StackTrackr and prepared for final release
+- **v3.2.02rc - Feature Complete Release Candidate**: Rebranded to StackrTrackr and prepared for final release
 - **v3.2.01 - Cloud Sync Modal Fix**: Coming soon modal now matches themed styling with internal close button
 - **v3.2.0 - Settings & History Polish**: Appearance section moved up, sync confirmation dialog, and redesigned API history modal with clear filter
 - **v3.1.13 - Cloud Sync & API Quotas**: CSV import fix, Cloud Sync placeholder, and API usage tracking with monthly reset
@@ -110,7 +126,7 @@ The public hosted version of the app is available at [stackrtrackr.com](https://
 - Collectable checkbox replaced with status button and action buttons aligned in inventory table
 - Totals cards renamed with refined labels and font sizes
 - About modal title contrast improved in light mode
-- Notes button displays "Yes" in green when an item contains notes
+- Notes button uses a notebook icon and highlights green when an item contains notes
 
 ## 🆕 What's New in v3.2.05rc
 - Disclaimer splash hides permanently after you click "I Understand"
@@ -124,7 +140,7 @@ The public hosted version of the app is available at [stackrtrackr.com](https://
 - Added confirmation prompt before flushing API cache and history
 
 ## 🆕 What's New in v3.2.02rc
-- Application renamed to **StackTrackr**
+- Application renamed to **StackrTrackr**
 - Marked as **feature complete** for the 3.2.x series
 
 ## 🆕 What's New in v3.2.0
@@ -220,7 +236,7 @@ The public hosted version of the app is available at [stackrtrackr.com](https://
 
 ## Version Management
 This application uses a dynamic version management system. The version is automatically updated throughout the application from `js/constants.js`. The HTML files now use this dynamic system instead of hardcoded version numbers. See [docs/versioning.md](docs/versioning.md) for details on how to update versions.
-The three most recent builds are retained under `archive/` as `v_previous`, `v_previous2`, and `v_previous3`, with the latest archive linked from the footer for easy rollback.
+The most recent build is retained under `archive/v_previous`, with the archive linked from the footer for easy rollback.
 
 ## Data Structure
 Each inventory item includes:
@@ -329,8 +345,8 @@ This project is designed to be maintainable and extensible. When making changes:
 This project is open source and available for personal use.
 
 ---
-**Current Version**: 3.03.08m
-**Last Updated**: August 10, 2025
+**Current Version**: 3.04.15
+**Last Updated**: August 12, 2025
 **Status**: Feature complete release candidate
 
 

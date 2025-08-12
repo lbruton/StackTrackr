@@ -149,7 +149,12 @@ const API_PROVIDERS = {
  * Example: 3.03.02a → branch 3, release 03, patch 02, alpha
  */
 
-const APP_VERSION = "3.04.02";
+const APP_VERSION = "3.04.18";
+
+/**
+ * @constant {string} DEFAULT_CURRENCY - Default currency code for monetary formatting
+ */
+const DEFAULT_CURRENCY = "USD";
 
 
 /**
@@ -180,7 +185,7 @@ const injectVersionString = (elementId, prefix = "v") => {
 };
 
 /** @constant {string} BRANDING_TITLE - Optional custom application title */
-const BRANDING_TITLE = "StackTrackr";
+const BRANDING_TITLE = "StackrTrackr";
 
 /**
  * Domain-based branding configuration
@@ -196,7 +201,6 @@ const BRANDING_TITLE = "StackTrackr";
 const BRANDING_DOMAIN_OPTIONS = {
   domainMap: {
     stackertracker: "Stacker Tracker",
-    stacktrackr: "Stack Trackr",
     stackrtrackr: "StackrTrackr",
   },
   removeExtension: true,
@@ -354,6 +358,7 @@ if (typeof window !== "undefined") {
   window.API_PROVIDERS = API_PROVIDERS;
   window.METALS = METALS;
   window.DEBUG = DEBUG;
+  window.DEFAULT_CURRENCY = DEFAULT_CURRENCY;
   window.BRANDING_DOMAIN_OPTIONS = BRANDING_DOMAIN_OPTIONS;
   window.BRANDING_DOMAIN_OVERRIDE = BRANDING_DOMAIN_OVERRIDE;
 }
