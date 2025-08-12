@@ -1,6 +1,6 @@
 # Dynamic Version Management System
 
-> **Latest release: v3.04.04**
+> **Latest release: v3.04.21**
 
 ## Overview 
 

@@ -1,6 +1,21 @@
 # Implementation Summary: Gold & Silver Logo
 
-> **Latest release: v3.04.18**
+> **Latest release: v3.04.21**
+
+## Version Update: 3.04.20 → 3.04.21
+
+## User Requirements Implemented
+
+- Standardized header height across themes
+- Static, contrasting type colors with light, dark, and sepia support
+
+## Technical Changes Made
+
+### Files Modified:
+1. **`css/styles.css`**: Enforced header height and added theme-aware type color variables
+2. **`js/inventory.js`**: Switched to static type color mapping and updated type summary
+3. **`js/constants.js`**: Bumped version to 3.04.21
+4. **Documentation**: Updated changelog and status entries
 
 ## Version Update: 3.04.17 → 3.04.18
 

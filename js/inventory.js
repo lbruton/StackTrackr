@@ -563,12 +563,18 @@ const METAL_COLORS = {
   Palladium: 'var(--palladium)'
 };
 
-const typeColors = {};
+const typeColors = {
+  Coin: 'var(--type-coin-bg)',
+  Round: 'var(--type-round-bg)',
+  Bar: 'var(--type-bar-bg)',
+  Note: 'var(--type-note-bg)',
+  Other: 'var(--type-other-bg)'
+};
 const purchaseLocationColors = {};
 const storageLocationColors = {};
 
 const getColor = (map, key) => {
-  if (!map[key]) {
+  if (!(key in map)) {
     map[key] = (Object.keys(map).length * 137) % 360; // distribute hues using golden angle
   }
   const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
@@ -604,7 +610,7 @@ const filterLink = (field, value, color, displayValue = value, title) => {
   return `<span class="${classNames}"${styleAttr} onclick="${escaped}" tabindex="0" role="button" onkeydown="if(event.key==='Enter'||event.key===' ')${escaped}" title="${safeTitle}">${safe}</span>`;
 };
 
-const getTypeColor = type => getColor(typeColors, type);
+const getTypeColor = type => typeColors[type] || 'var(--type-other-bg)';
 const getPurchaseLocationColor = loc => getColor(purchaseLocationColors, loc);
 const getStorageLocationColor = loc => getColor(storageLocationColors, loc);
 
@@ -780,7 +786,11 @@ const updateTypeSummary = () => {
     return acc;
   }, {});
   el.innerHTML = Object.entries(counts)
-    .map(([type, count]) => `<span class="type-chip" style="background-color:${getTypeColor(type)}">${sanitizeHtml(type)}: ${count}</span>`)
+    .map(([type, count]) => {
+      const safeType = sanitizeHtml(type);
+      const cls = type.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+      return `<span class="type-chip ${cls}">${safeType}: ${count}</span>`;
+    })
     .join('');
 };
 window.updateTypeSummary = updateTypeSummary;
