@@ -120,7 +120,7 @@ For upcoming work, see [roadmap](roadmap.md).
 - Unified bullet styling for "What's New" lists
 - Numista imports default to collectable with N# note
 - Weight inputs round to two decimals
-- Numista import button includes beta warning
+- Numista CSV import button includes beta warning
 
 
 ### Version 3.03.08h – UI compactness & import options (2025-08-10)

@@ -501,7 +501,7 @@
 - Unified changelog bullets in About and version modals
 - Numista imports default to collectable with N# note and paper-to-note mapping
 - Weight inputs rounded to two decimals for cleaner display
-- Added beta warning under Numista import button
+- Added beta warning under Numista CSV import button
 
 ## Technical Changes Made
 
