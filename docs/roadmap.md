@@ -19,6 +19,7 @@ This roadmap tracks upcoming goals without committing to specific patch numbers.
 - Header buttons match theme selector styling with enlarged icons (v3.04.32)
 - Update milestone process and documentation.
 - Added standalone fuzzy search engine module (v3.04.37)
+- Sorted summary chips in table controls and repositioned backup warning (v3.04.38)
 
 ## Version Goals (v4.x)
 - Remove file:// protocol support and adopt a framework.

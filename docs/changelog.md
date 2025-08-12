@@ -1,11 +1,15 @@
 # StackrTrackr — Changelog
 
-> **Latest release: v3.04.37**
+> **Latest release: v3.04.38**
 
 
 For upcoming work, see [announcements](announcements.md).
 
 ## 📋 Version History
+
+### Version 3.04.38 – Sorted Summary Chips (2025-08-16)
+- Summary chips now appear in a dedicated container sorted by count.
+- Backup warning moved directly beneath the inventory table.
 
 ### Version 3.04.37 – Fuzzy Search Engine Module (2025-08-15)
 - Added standalone fuzzy search engine with Levenshtein, n-gram, and word-order independent matching.

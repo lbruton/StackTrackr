@@ -2515,6 +2515,12 @@ td input:checked + .slider:before {
   align-items: center;
 }
 
+.summary-wrapper {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+}
+
 .table-disclaimer {
   font-size: 0.75rem;
   color: var(--disclaimer-color);
