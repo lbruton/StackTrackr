@@ -1,7 +1,7 @@
 # Function Reference
 
 
-> **Latest release: v3.04.34**
+> **Latest release: v3.04.35**
 
 
 | File | Function | Description |
@@ -113,10 +113,8 @@
 | inventory.js | importCsv | Imports inventory data from CSV file with comprehensive validation; supports override or merge modes |
 | inventory.js | importNumistaCsv | Imports Numista CSV data with header trimming and merge/override options |
 | inventory.js | exportCsv | Exports current inventory to CSV format |
-| inventory.js | importJson | Imports inventory data from JSON file |
+| inventory.js | importJson | Imports inventory data from JSON file with override or merge modes |
 | inventory.js | exportJson | Exports current inventory to JSON format |
-| inventory.js | importExcel | Imports inventory data from Excel file |
-| inventory.js | exportExcel | Exports current inventory to Excel format |
 | inventory.js | exportPdf | Exports current inventory to PDF format |
 | pagination.js | calculateTotalPages | Calculates total number of pages based on current data |
 | pagination.js | goToPage | Navigates to specified page number |

@@ -2,13 +2,13 @@
 
 
 
-> **Latest release: v3.04.34**
+> **Latest release: v3.04.35**
 
 See [announcements](announcements.md) for recent changes and upcoming milestones.
 
-## 🎯 Current State: **BETA v3.04.34** ✅ MAINTAINED & OPTIMIZED
+## 🎯 Current State: **BETA v3.04.35** ✅ MAINTAINED & OPTIMIZED
 
-**StackrTrackr v3.04.33** is a fully-featured, client-side web application for tracking precious metal investments (Silver, Gold, Platinum, Palladium) with comprehensive inventory management, API integration, and complete backup capabilities. The 3.04.x series focuses on polish, maintenance, and optimization.
+**StackrTrackr v3.04.35** is a fully-featured, client-side web application for tracking precious metal investments (Silver, Gold, Platinum, Palladium) with comprehensive inventory management, API integration, and complete backup capabilities. The 3.04.x series focuses on polish, maintenance, and optimization.
 
 
 ## 🏗️ Architecture Overview
@@ -125,7 +125,7 @@ The tool features a **modular JavaScript architecture** with separate files for 
 - ✅ Real-time search across all fields **including notes**
 
 ### **Data Management**
-- ✅ Complete import/export functionality (CSV, JSON, Excel, PDF)
+- ✅ Complete import/export functionality (CSV, JSON, PDF)
 - ✅ **Comprehensive backup ZIP system** with all data formats
 - ✅ **Professional HTML storage reports** with interactive modals and print optimization
 - ✅ **Notes field included in all export formats**
@@ -170,7 +170,7 @@ All data is stored locally in the browser using localStorage with:
 - ✅ Modern, responsive user interface
 - ✅ Complete documentation and error handling
 
-## 📚 Documentation Status (Updated: August 11, 2025)
+## 📚 Documentation Status (Updated: August 13, 2025)
 
 **All documentation files are current and synchronized:**
   - ✅ **status.md** - Updated for v3.04.02 release
@@ -222,6 +222,6 @@ StackrTrackr/
 
 ---
 
-**Last Updated**: August 12, 2025
+**Last Updated**: August 13, 2025
 **Status**: ✅ COMPLETE - Stable release ready for production use
 **Documentation**: ✅ ALL FILES SYNCHRONIZED AND CURRENT

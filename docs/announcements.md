@@ -1,6 +1,7 @@
 # StackrTrackr Announcements
 
 ## What's New
+- **v3.04.35 – JSON import options**: Split JSON import into Import and Merge buttons and removed Excel support.
 - **v3.04.34 – Streamlined Numista imports**: Removed stored Numista CSV cache and associated clear-cache button.
 - **v3.04.33 – Import overwrite warnings**: Import CSV and Numista CSV now confirm before replacing existing data.
 - **v3.04.32 – Header button icons**: Header buttons now match theme selector with icon-only design.

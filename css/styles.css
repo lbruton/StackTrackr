@@ -2699,7 +2699,8 @@ td input:checked + .slider:before {
   cursor: pointer;
 }
 
-.import-csv-grid {
+.import-csv-grid,
+.import-json-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: var(--spacing-sm);

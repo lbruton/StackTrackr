@@ -1,6 +1,6 @@
 # Implementation Summary: Streamlined Numista Imports
 
-> **Latest release: v3.04.34**
+> **Latest release: v3.04.35**
 
 ## Version Update: 3.04.33 → 3.04.34
 

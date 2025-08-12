@@ -67,7 +67,8 @@ const elements = {
   importCsvOverride: null,
   importCsvMerge: null,
   importJsonFile: null,
-  importExcelFile: null,
+  importJsonOverride: null,
+  importJsonMerge: null,
   importProgress: null,
   importProgressText: null,
   numistaImportFile: null,
@@ -77,7 +78,6 @@ const elements = {
   // Export elements
   exportCsvBtn: null,
   exportJsonBtn: null,
-  exportExcelBtn: null,
   exportPdfBtn: null,
   cloudSyncBtn: null,
   syncAllBtn: null,
