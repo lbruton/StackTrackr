@@ -1484,23 +1484,24 @@ const setupSearch = () => {
  * Sets up theme toggle event listeners
  */
 const updateThemeButton = () => {
+  const savedTheme = localStorage.getItem(THEME_KEY) || "light";
+
+  // Apply theme classes to all theme buttons
+  document.querySelectorAll(".theme-btn").forEach((btn) => {
+    btn.classList.remove("dark", "light", "sepia");
+    btn.classList.add(savedTheme);
+  });
+
   const btn = elements.appearanceBtn;
   if (!btn) return;
-  const savedTheme = localStorage.getItem(THEME_KEY) || "light";
-  
-  // Remove all theme classes
-  btn.classList.remove("dark", "light", "sepia");
-  
-  // Add current theme class for styling
-  btn.classList.add(savedTheme);
-  
-  // Show current theme icon and color
+
+  // Show current theme icon and color on selector button
   const themeConfig = {
     dark: { icon: "🌙", label: "Dark mode", color: "#1e293b" },
     light: { icon: "☀️", label: "Light mode", color: "#f8fafc" },
     sepia: { icon: "📜", label: "Sepia mode", color: "#f2e7d5" }
   };
-  
+
   const config = themeConfig[savedTheme] || themeConfig.light;
   btn.textContent = config.icon;
   btn.style.backgroundColor = config.color;
