@@ -1281,7 +1281,8 @@ input[type="submit"] {
 }
 
 .api-history-table-wrapper {
-  max-height: 20rem;
+  height: 70vh;
+  width: 100%;
   overflow-y: auto;
 }
 
@@ -1294,22 +1295,6 @@ input[type="submit"] {
   cursor: pointer;
 }
 
-.api-history-charts {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 1rem;
-  margin-top: 1rem;
-}
-
-.api-history-charts .chart-panel {
-  display: flex;
-  flex-direction: column;
-}
-
-.api-history-charts canvas {
-  flex: 1;
-  height: 200px;
-}
 
 .api-info-body {
   margin-bottom: 1rem;

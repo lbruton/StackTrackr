@@ -1,11 +1,14 @@
 # StackrTrackr — Changelog
 
-> **Latest release: v3.04.30**
+> **Latest release: v3.04.31**
 
 
 For upcoming work, see [roadmap](roadmap.md).
 
 ## 📋 Version History
+
+### Version 3.04.31 – API History Charts Removed (2025-08-12)
+- **Streamlined API History**: Removed canvas-based charts and expanded table to fill modal.
 
 ### Version 3.04.30 – URL Purchase Location Links (2025-08-12)
 - **Clickable Purchase Locations**: Purchase Location accepts web addresses and renders them as hyperlinks.

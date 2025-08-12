@@ -1,7 +1,7 @@
 # Function Reference
 
 
-> **Latest release: v3.04.30**
+> **Latest release: v3.04.31**
 
 
 | File | Function | Description |
@@ -30,7 +30,6 @@
 | api.js | refreshProviderStatuses | Refreshes provider statuses based on stored keys and cache age |
 | api.js | updateDefaultProviderButtons | Updates default provider button states |
 | api.js | renderApiHistoryTable | Renders API history table with filtering, sorting and pagination |
-| api.js | renderApiHistoryCharts | Renders API history chart |
 | api.js | showApiHistoryModal | Shows API history modal with table and chart |
 | api.js | hideApiHistoryModal | Hides API history modal |
 | api.js | showApiProvidersModal | Shows API providers modal |
