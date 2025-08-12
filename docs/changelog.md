@@ -1,11 +1,17 @@
 # StackTrackr — Changelog
 
-> **Latest release: v3.04.15**
+> **Latest release: v3.04.16**
 
 
 For upcoming work, see [roadmap](roadmap.md).
 
 ## 📋 Version History
+
+### Version 3.04.16 – Layout and footer refinements (2025-08-12)
+- Change Log access restored to silver button
+- Added spacing between inventory table and controls
+- Footer updated with friendly message and links
+- Added safe favicon
 
 ### Version 3.04.15 – Footer version injection (2025-08-12)
 - Footer displays current `APP_VERSION` dynamically

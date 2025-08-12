@@ -1,7 +1,7 @@
 # Project Structure
 
 
-> **Latest release: v3.04.15**
+> **Latest release: v3.04.16**
 
 
 The repository is organized as follows:
@@ -13,6 +13,7 @@ The repository is organized as follows:
 │   ├── archive/      # Archived notes and historical docs
 │   └── future/       # Notes for upcoming features and enhancements
 ├── archive/          # Previous build snapshots for rollback
+├── images/           # Project icons and favicons
 ├── js/               # Modular JavaScript source files
 ├── index.html        # Main application interface
 ├── LICENSE           # License information
@@ -27,6 +28,7 @@ The repository is organized as follows:
 - **debug/** – Holds temporary debugging files.
 - **docs/** – Changelogs, workflow notes, roadmap, and future planning documentation. Includes the [UI Style Guide](ui_style_guide.md).
 - **archive/** – Contains the last stable build for users needing a fallback.
+- **images/** – Project icons and favicons.
 - **js/** – All JavaScript modules powering the application, including `customMapping.js` for regex-based field mapping.
 - **index.html** – Entry point and user interface for the tool.
 - **structure.md** – More detailed explanation of the repository layout.
