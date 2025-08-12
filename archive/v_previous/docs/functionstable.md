@@ -1,7 +1,7 @@
 # Function Reference
 
 
-> **Latest release: v3.04.13**
+> **Latest release: v3.04.14**
 
 
 | File | Function | Description |
@@ -102,6 +102,7 @@
 | inventory.js | escapeAttribute | Escapes text for safe use in HTML attributes |
 | inventory.js | filterLink |  |
 | inventory.js | renderTable |  |
+| inventory.js | updateTypeSummary | Displays colored counts of items by type |
 | inventory.js | updateSummary | Calculates and updates all financial summary displays across the application |
 | inventory.js | calculateTotals | Calculates financial metrics for specified metal type |
 | inventory.js | deleteItem | Deletes inventory item at specified index after confirmation |

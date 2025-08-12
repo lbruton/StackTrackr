@@ -1,3 +1,30 @@
+# Implementation Summary: UI and Filter Enhancements
+
+> **Latest release: v3.04.14**
+
+## Version Update: 3.04.13 → 3.04.14
+
+## User Requirements Implemented
+
+- Preserved ISO date formatting during sanitization
+- Quick-filter entries respected by advanced filtering
+- Weight unit selection supports grams conversion
+- Duplicate rows skipped during CSV merges
+- Added type summary display and colored filter chips
+- Row-scoped inline editing for table cells
+- Collectable status uses coin/safe icons
+- Layout tweaks: truncated locations, silver Change Log button, footer card
+
+## Technical Changes Made
+
+### Files Modified:
+1. **`js/utils.js`**: Allow hyphens for date sanitization
+2. **`js/inventory.js`**: Type summary, icon adjustments, safe coin toggles
+3. **`index.html`**: Inject type summary, button and footer updates, icon column tweaks
+4. **`css/styles.css`**: Styling for new elements, location truncation, footer card, button
+5. **`js/constants.js`**: Bumped version to 3.04.14
+6. **Documentation**: Updated changelog, roadmap, status, structure, and function table
+
 # Implementation Summary: Archive Workflow Simplification
 
 > **Latest release: v3.04.13**
