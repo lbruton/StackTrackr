@@ -596,12 +596,12 @@ const escapeAttribute = (text) =>
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
 
-const filterLink = (field, value, color, displayValue = value, title) => {
+const filterLink = (field, value, color, displayValue = value, title, allowHtml = false) => {
   const handler = `applyColumnFilter('${field}', ${JSON.stringify(value)})`;
   // Escape characters for safe inline handler usage
   const escaped = escapeAttribute(handler);
   const displayStr = String(displayValue);
-  const safe = sanitizeHtml(displayStr);
+  const safe = allowHtml ? displayStr : sanitizeHtml(displayStr);
   const titleStr = title ? String(title) : `Filter by ${displayStr}`;
   const safeTitle = sanitizeHtml(titleStr);
   const isNA = displayStr === 'N/A' || displayStr === 'Numista Import' || displayStr === 'Unknown';
@@ -613,6 +613,31 @@ const filterLink = (field, value, color, displayValue = value, title) => {
 const getTypeColor = type => typeColors[type] || 'var(--type-other-bg)';
 const getPurchaseLocationColor = loc => getColor(purchaseLocationColors, loc);
 const getStorageLocationColor = loc => getColor(storageLocationColors, loc);
+
+/**
+ * Formats Purchase Location for table display, wrapping URLs in hyperlinks
+ * while preserving filter behavior.
+ *
+ * @param {string} loc - Purchase location value
+ * @returns {string} HTML string for table cell
+ */
+const formatPurchaseLocation = (loc) => {
+  const value = loc || 'Numista Import';
+  const color = getPurchaseLocationColor(value);
+  const urlPattern = /^(https?:\/\/)?[\w.-]+\.[A-Za-z]{2,}(\S*)?$/;
+  if (urlPattern.test(value)) {
+    let href = value;
+    if (!/^https?:\/\//i.test(href)) {
+      href = `https://${href}`;
+    }
+    const safeHref = escapeAttribute(href);
+    const safeText = sanitizeHtml(value);
+    const link = `<a href="${safeHref}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${safeText}</a>`;
+    return filterLink('purchaseLocation', value, color, link, undefined, true);
+  }
+  return filterLink('purchaseLocation', value, color);
+};
+window.formatPurchaseLocation = formatPurchaseLocation;
 
 /**
  * Recalculates premium values for an inventory item
@@ -855,7 +880,7 @@ const renderTable = () => {
       </td>
       <td class="shrink" data-column="premium" style="color: ${item.isCollectable ? 'var(--text-muted)' : (item.totalPremium > 0 ? 'var(--warning)' : 'inherit')}">${filterLink('totalPremium', premiumValue, 'var(--text-primary)', premiumDisplay)}</td>
       <td class="shrink" data-column="purchaseLocation">
-        ${filterLink('purchaseLocation', item.purchaseLocation || 'Numista Import', getPurchaseLocationColor(item.purchaseLocation || 'Numista Import'))}
+        ${formatPurchaseLocation(item.purchaseLocation)}
       </td>
       <td class="shrink" data-column="storageLocation">
         ${item.storageLocation === 'Unknown' ? '' : filterLink('storageLocation', item.storageLocation || 'Numista Import', getStorageLocationColor(item.storageLocation || 'Numista Import'))}

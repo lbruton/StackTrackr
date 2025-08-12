@@ -10,6 +10,8 @@ This roadmap tracks upcoming goals without committing to specific patch numbers.
 - [x] Implement new StackrTrackr logo with triple theme support
 - [x] Enhanced light theme with light/middle grays and light blues (v3.04.28)
 - [x] Rename "Clear Data" settings card to "Backup, Restore, Clear" (v3.04.29)
+- [x] Allow URL purchase locations to render as hyperlinks (v3.04.30)
+- [x] Remove API history charts and expand API history table (v3.04.31)
 - Update milestone process and documentation.
 
 ## Version Goals (v4.x)

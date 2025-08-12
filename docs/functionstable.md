@@ -1,7 +1,7 @@
 # Function Reference
 
 
-> **Latest release: v3.04.25**
+> **Latest release: v3.04.31**
 
 
 | File | Function | Description |
@@ -30,7 +30,6 @@
 | api.js | refreshProviderStatuses | Refreshes provider statuses based on stored keys and cache age |
 | api.js | updateDefaultProviderButtons | Updates default provider button states |
 | api.js | renderApiHistoryTable | Renders API history table with filtering, sorting and pagination |
-| api.js | renderApiHistoryCharts | Renders API history chart |
 | api.js | showApiHistoryModal | Shows API history modal with table and chart |
 | api.js | hideApiHistoryModal | Hides API history modal |
 | api.js | showApiProvidersModal | Shows API providers modal |
@@ -100,7 +99,8 @@
 | inventory.js | getNextSerial | Generates a unique serial number for inventory items |
 | inventory.js | getColor |  |
 | inventory.js | escapeAttribute | Escapes text for safe use in HTML attributes |
-| inventory.js | filterLink |  |
+| inventory.js | filterLink | Builds clickable filter span with optional HTML content |
+| inventory.js | formatPurchaseLocation | Detects URLs and wraps Purchase Location in a hyperlink |
 | inventory.js | renderTable |  |
 | inventory.js | updateTypeSummary | Displays colored counts of items by type |
 | inventory.js | updateSummary | Calculates and updates all financial summary displays across the application |
@@ -163,7 +163,8 @@
 | utils.js | formatWeight | Formats a weight in ozt to grams or ounces |
 | utils.js | convertToUsd | Converts amount from specified currency to USD using static rates |
 | utils.js | stripNonAlphanumeric | Removes all characters except letters, numbers, and spaces |
-| utils.js | sanitizeObjectFields | Strips non-alphanumeric characters from all string properties in an object |
+| utils.js | cleanString | Removes HTML tags and control characters while preserving punctuation |
+| utils.js | sanitizeObjectFields | Strips non-alphanumeric characters from string fields except purchaseLocation, which uses cleanString |
 | utils.js | normalizeType | Ensures item type matches predefined options (Coin, Bar, Round, Note, Aurum, Other) |
 | utils.js | mapNumistaType | Maps Numista type strings to internal categories (Coin, Bar, Round, Note, Aurum, Other) |
 | utils.js | parseNumistaMetal | Parses composition into Silver, Gold, Platinum, Palladium, Paper, or Alloy |

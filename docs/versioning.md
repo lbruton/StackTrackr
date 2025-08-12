@@ -1,6 +1,6 @@
 # Dynamic Version Management System
 
-> **Latest release: v3.04.25**
+> **Latest release: v3.04.31**
 
 ## Overview 
 
@@ -9,7 +9,7 @@ The StackrTrackr now uses a dynamic version management system that automatically
 ## How It Works
 
 ### Single Source of Truth
-- Version is defined once in `js/constants.js` as `APP_VERSION = '3.04.25'`
+- Version is defined once in `js/constants.js` as `APP_VERSION = '3.04.31'`
   - This is the ONLY place you need to update the version number
 
 ### Automatic Propagation
