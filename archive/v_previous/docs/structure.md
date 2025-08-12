@@ -1,6 +1,8 @@
 # Project Structure
 
-> **Latest release: v3.03.08e**
+
+> **Latest release: v3.04.12**
+
 
 The repository is organized as follows:
 
@@ -29,3 +31,6 @@ The repository is organized as follows:
 - **index.html** – Entry point and user interface for the tool.
 - **structure.md** – More detailed explanation of the repository layout.
 
+
+- `docs/catalog_architecture.md` — catalog data model notes
+- `docs/migration_roadmap.md` — steps to provider-agnostic model

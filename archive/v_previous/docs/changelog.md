@@ -1,10 +1,96 @@
 # StackTrackr — Changelog
 
-> **Latest release: v3.03.08e**
+> **Latest release: v3.04.12**
+
 
 For upcoming work, see [roadmap](roadmap.md).
 
 ## 📋 Version History
+
+### Version 3.04.12 – Quick filter object storage (2025-08-11)
+- Quick filter stores criteria as object for exclude support
+
+### Version 3.04.11 – Collectable column icon (2025-08-11)
+- Replaced "Collectable" table header text with treasure chest icon and aria label
+
+### Version 3.04.10 – Provider history usage display (2025-08-11)
+- Provider history sections now show API usage and quota only
+- Metal enablement managed solely through Provider Settings checkboxes
+
+### Version 3.04.09 – Multi-select filters with exclusion (2025-08-11)
+- Filter modal supports multi-select dropdowns with per-field exclude toggles
+- Filtering logic handles arrays and exclusion, and chips reflect selections
+
+### Version 3.04.08 – Debounced search (2025-08-11)
+- Added debounce to search input to improve responsiveness with large Numista datasets
+
+### Version 3.04.07 – Data sanitization on load (2025-08-11)
+- Strip non-alphanumeric characters from inventory and Numista data during initialization
+
+### Version 3.04.06 – Name sanitization (2025-08-11)
+- Strip HTML tags and excess whitespace from imported text fields to stabilize table search
+
+### Version 3.04.05 – Search sanitization (2025-08-11)
+- Escaped table cell values and search input to prevent search corruption
+
+### Version 3.04.04 – Multi-term search (2025-08-11)
+- Search box supports comma-separated terms and filters inventory in real time
+
+### Version 3.04.03 – Search input restore (2025-08-11)
+- Ensures search box filters inventory table in real time
+
+### Version 3.04.02 – Numista header trimming (2025-08-11)
+- Accepts Numista CSV exports with trailing spaces in headers
+
+### Version 3.04.01 – Filter reset & Numista sanitization (2025-08-11)
+- Clear search button now resets all active filters including modal selections
+- Numista imports strip unsafe characters from fields to preserve table filtering
+- API providers craft batch requests for selected metals in a single pull
+
+### Version 3.04.00 – Filter click & API cleanup (2025-08-11)
+- Table cells (except collectable, notes, delete) now toggle exact-match filters with multi-level stacking
+- Removed global API cache duration dropdown; each provider uses its own setting
+
+### Version 3.03.08n – Inventory type filter (2025-08-10)
+- Added type filter dropdown before metal filter
+- Metal filter options now derive from truncated composition values
+
+### Version 3.03.08m – Inventory filter dropdown (2025-08-10)
+- Added metal filter to inventory title bar for quick result filtering
+
+### Version 3.03.08l – Search fix & composition parsing (2025-08-10)
+- Fixed search box to filter inventory as you type
+- Numista composition strings now truncate to first two words, ignoring parentheses and numbers
+
+### Version 3.03.08k – Type dropdown and UI fixes (2025-08-10)
+- Type dropdown standardized to Coin, Bar, Round, Note, Aurum, Other
+- Numista imports leave purchase location blank and avoid collectable tag for bars and rounds
+- Inventory name cells show a pencil icon for editing; totals cards restored to their own block
+
+### Version 3.03.08j – Composition display fix (2025-08-10)
+- Composition column shows first word of imported composition instead of generic metal
+
+### Version 3.03.08i – Numista import polish (2025-08-10)
+- Unified bullet styling for "What's New" lists
+- Numista imports default to collectable with N# note
+- Weight inputs round to two decimals
+- Numista import button includes beta warning
+
+
+### Version 3.03.08h – UI compactness & import options (2025-08-10)
+- Moved change log, disclaimer, and items selector into a compact section below the table
+- Pagination controls slimmed down with uniform buttons
+- CSV imports now choose Override or Merge from dropdown menus
+- Files modal gains Backup/Restore placeholder card
+
+### Version 3.03.08g – Change log table & catalog indexing (2025-08-10)
+- Change log rows open edit modal and table is more compact
+- Edit modal gains catalog field and undo button
+- Items now receive unique serial numbers with catalog mapping
+
+### Version 3.03.08f – CSV import field sanitization (2025-08-10)
+- CSV imports now leave invalid fields blank instead of skipping rows
+- Users can choose to merge imported data with existing inventory or override it
 
 ### Version 3.03.08e – Numista CSV storage (2025-08-10)
 - Stores imported Numista CSV in raw form within localStorage
@@ -113,7 +199,7 @@ For upcoming work, see [roadmap](roadmap.md).
 - Collectable checkbox replaced with status button and aligned action buttons
 - Totals cards renamed with refined labels and font sizing
 - Improved About modal title contrast in light mode
-- Notes button displays a green "Yes" when items have saved notes
+- Notes button uses a notebook icon and highlights green when items have saved notes
 
 ### Version 3.2.05rc – Splash Opt-Out (2025-08-09)
 - Disclaimer splash now hides permanently after the acknowledgment button is clicked, removing the previous checkbox

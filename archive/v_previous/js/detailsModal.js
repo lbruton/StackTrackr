@@ -93,7 +93,7 @@ const createBreakdownElements = (breakdown) => {
 
     const value = document.createElement('div');
     value.className = 'breakdown-value';
-    value.textContent = formatDollar(data.value);
+    value.textContent = formatCurrency(data.value);
 
     values.appendChild(count);
     values.appendChild(weight);

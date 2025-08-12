@@ -1,7 +1,7 @@
 # Function Reference
 
 
-> **Latest release: v3.04.12**
+> **Latest release: v3.04.13**
 
 
 | File | Function | Description |

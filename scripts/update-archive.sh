@@ -1,26 +1,18 @@
 #!/usr/bin/env bash
 set -e
 
-# Maintains the last three archived builds of the project.
-# Archives are stored under archive/ as v_previous, v_previous2, and v_previous3.
-
 ARCHIVE_DIR="archive"
+TARGET="$ARCHIVE_DIR/v_previous"
 
-# Remove oldest archive if it exists
-if [ -d "$ARCHIVE_DIR/v_previous3" ]; then
-  rm -rf "$ARCHIVE_DIR/v_previous3"
+# Remove existing archive directory
+rm -rf "$TARGET"
+mkdir -p "$TARGET"
+
+# Copy current build excluding archives and git data
+rsync -a --exclude "$ARCHIVE_DIR/" --exclude ".git/" ./ "$TARGET"
+
+# Ensure archived footer links back to current build
+if [ -f "$TARGET/index.html" ]; then
+  sed -i 's|./archive/v_previous/index.html|../index.html|' "$TARGET/index.html"
+  sed -i 's|Previous build|Current build|' "$TARGET/index.html"
 fi
-
-# Shift existing archives
-if [ -d "$ARCHIVE_DIR/v_previous2" ]; then
-  mv "$ARCHIVE_DIR/v_previous2" "$ARCHIVE_DIR/v_previous3"
-fi
-if [ -d "$ARCHIVE_DIR/v_previous" ]; then
-  mv "$ARCHIVE_DIR/v_previous" "$ARCHIVE_DIR/v_previous2"
-fi
-
-# Create new archive directory
-mkdir -p "$ARCHIVE_DIR/v_previous"
-
-# Copy current build excluding version archives and git data
-rsync -a --exclude "$ARCHIVE_DIR/" --exclude ".git/" ./ "$ARCHIVE_DIR/v_previous"

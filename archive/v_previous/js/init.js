@@ -62,6 +62,7 @@ document.addEventListener("DOMContentLoaded", () => {
     elements.itemQty = safeGetElement("itemQty", true);
     elements.itemType = safeGetElement("itemType", true);
     elements.itemWeight = safeGetElement("itemWeight", true);
+    elements.itemWeightUnit = safeGetElement("itemWeightUnit", true);
     elements.itemPrice = safeGetElement("itemPrice", true);
     elements.purchaseLocation = safeGetElement("purchaseLocation", true);
     elements.storageLocation = safeGetElement("storageLocation");
@@ -86,12 +87,17 @@ document.addEventListener("DOMContentLoaded", () => {
     // Import/Export elements
     debugLog("Phase 3: Initializing import/export elements...");
     elements.importCsvFile = safeGetElement("importCsvFile");
+    elements.importCsvOverride = safeGetElement("importCsvOverride");
+    elements.importCsvMerge = safeGetElement("importCsvMerge");
     elements.importJsonFile = safeGetElement("importJsonFile");
     elements.importExcelFile = safeGetElement("importExcelFile");
     elements.importProgress = safeGetElement("importProgress");
     elements.importProgressText = safeGetElement("importProgressText");
     elements.numistaImportBtn = safeGetElement("numistaImportBtn");
     elements.numistaImportFile = safeGetElement("numistaImportFile");
+    elements.numistaOverride = safeGetElement("numistaOverride");
+    elements.numistaMerge = safeGetElement("numistaMerge");
+    elements.numistaImportOptions = safeGetElement("numistaImportOptions");
     elements.exportCsvBtn = safeGetElement("exportCsvBtn");
     elements.exportJsonBtn = safeGetElement("exportJsonBtn");
     elements.exportExcelBtn = safeGetElement("exportExcelBtn");
@@ -101,6 +107,8 @@ document.addEventListener("DOMContentLoaded", () => {
     elements.addMappingBtn = safeGetElement("addMappingBtn");
     elements.applyMappingsBtn = safeGetElement("applyMappingsBtn");
     elements.clearMappingsBtn = safeGetElement("clearMappingsBtn");
+    elements.removeInventoryDataBtn = safeGetElement("removeInventoryDataBtn");
+    elements.clearNumistaCacheBtn = safeGetElement("clearNumistaCacheBtn");
     elements.boatingAccidentBtn = safeGetElement("boatingAccidentBtn");
 
     // Modal elements
@@ -130,6 +138,9 @@ document.addEventListener("DOMContentLoaded", () => {
     elements.editNotes = safeGetElement("editNotes");
     elements.editDate = safeGetElement("editDate");
     elements.editSpotPrice = safeGetElement("editSpotPrice");
+    elements.editCatalog = safeGetElement("editCatalog");
+    elements.undoChangeBtn = safeGetElement("undoChangeBtn");
+    elements.editSerial = safeGetElement("editSerial");
 
     elements.addModal = safeGetElement("addModal");
     elements.addCloseBtn = safeGetElement("addCloseBtn");
@@ -295,6 +306,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Load data
     loadInventory();
+    if (typeof sanitizeTablesOnLoad === "function") {
+      sanitizeTablesOnLoad();
+    }
+    inventory.forEach((i) => addCompositionOption(i.composition || i.metal));
+    refreshCompositionOptions();
     loadSpotHistory();
 
     // Initialize API system
@@ -323,7 +339,6 @@ document.addEventListener("DOMContentLoaded", () => {
       try {
         setupEventListeners();
         setupPagination();
-        setupSearch();
         setupThemeToggle();
         setupColumnResizing();
         debugLog("✓ All event listeners setup complete");
@@ -333,6 +348,9 @@ document.addEventListener("DOMContentLoaded", () => {
         // Try basic event setup as fallback
         setupBasicEventListeners();
       }
+
+      // Always set up search listeners
+      setupSearch();
     }, 200); // Increased delay for better compatibility
 
     // Phase 15: Completion
@@ -344,6 +362,9 @@ document.addEventListener("DOMContentLoaded", () => {
     debugLog("  - Files button:", !!elements.filesBtn);
     debugLog("  - Inventory form:", !!elements.inventoryForm);
     debugLog("  - Inventory table:", !!elements.inventoryTable);
+    // Phase 16: Storage optimization pass
+    if (typeof optimizeStoragePhase1C === 'function') { optimizeStoragePhase1C(); }
+
   } catch (error) {
     console.error("=== CRITICAL INITIALIZATION ERROR ===");
     console.error("Error:", error.message);
