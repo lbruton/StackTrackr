@@ -1,11 +1,14 @@
 # StackrTrackr — Changelog
 
-> **Latest release: v3.04.31**
+> **Latest release: v3.04.32**
 
 
 For upcoming work, see [announcements](announcements.md).
 
 ## 📋 Version History
+
+### Version 3.04.32 – Header Buttons Theming (2025-08-12)
+- **Unified header styling**: Header buttons now match theme selector with icon-only layout and larger icons.
 
 ### Version 3.04.31 – API History Charts Removed (2025-08-12)
 - **Streamlined API History**: Removed canvas-based charts and expanded table to fill modal.

@@ -15,6 +15,7 @@ This roadmap tracks upcoming goals without committing to specific patch numbers.
 - Rename "Clear Data" settings card to "Backup, Restore, Clear" (v3.04.29)
 - Allow URL purchase locations to render as hyperlinks (v3.04.30)
 - Remove API history charts and expand API history table (v3.04.31)
+- Header buttons match theme selector styling with enlarged icons (v3.04.32)
 - Update milestone process and documentation.
 
 ## Version Goals (v4.x)
