@@ -1,11 +1,14 @@
 # StackrTrackr — Changelog
 
-> **Latest release: v3.04.40**
+> **Latest release: v3.04.41**
 
 
 For upcoming work, see [announcements](announcements.md).
 
 ## 📋 Version History
+
+### Version 3.04.41 – Section Titles Enhancement (2025-08-17)
+- **UI**: Added centered section titles for Spot Prices, Inventory, Filters, and Information Cards using modern fonts.
 
 ### Version 3.04.40 – Pagination Section Reorder (2025-08-12)
 - **UI Layout**: Moved pagination controls above table controls with Change Log button

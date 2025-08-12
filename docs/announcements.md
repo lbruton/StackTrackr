@@ -1,6 +1,7 @@
 # StackrTrackr Announcements
 
 ## What's New
+- **v3.04.41 – Section titles**: Added centered titles for Spot Prices, Inventory, Filters, and Information Cards.
 - **v3.04.40 – Fuzzy search engine**: Introduced standalone fuzzy search module with typo-tolerant matching.
 - **v3.04.36 – Dynamic summary bubbles**: Added color-coded counts for type, metal, purchase location, and storage location, and preserved link colors for URL purchases.
 - **v3.04.35 – JSON import options**: Split JSON import into Import and Merge buttons and removed Excel support.
