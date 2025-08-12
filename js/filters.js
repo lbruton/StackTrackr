@@ -52,12 +52,12 @@ const populateFilterDropdowns = () => {
   const metalSelect = document.getElementById('filterMetal');
   const metalExclude = document.getElementById('filterMetalExclude');
   if (metalSelect) {
-    const selected = activeFilters.composition?.values || [];
+    const selected = activeFilters.metal?.values || [];
     metalSelect.innerHTML = '<option value="">All Metals</option>' +
       metals.map(metal => `<option value="${metal}" ${selected.includes(metal) ? 'selected' : ''}>${metal}</option>`).join('');
   }
   if (metalExclude) {
-    metalExclude.checked = activeFilters.composition?.exclude || false;
+    metalExclude.checked = activeFilters.metal?.exclude || false;
   }
 
   // Populate type filter
@@ -140,7 +140,7 @@ const applyFilters = () => {
   if (metalSelect) {
     const values = Array.from(metalSelect.selectedOptions).map(o => o.value).filter(Boolean);
     if (values.length) {
-      activeFilters.composition = { values, exclude: metalExclude?.checked || false };
+      activeFilters.metal = { values, exclude: metalExclude?.checked || false };
     }
   }
   if (typeSelect) {
@@ -176,8 +176,8 @@ const applyFilters = () => {
 
   // Update the legacy columnFilters for compatibility
   columnFilters = {};
-  if (activeFilters.composition && !activeFilters.composition.exclude && activeFilters.composition.values.length === 1) {
-    columnFilters.composition = activeFilters.composition.values[0];
+  if (activeFilters.metal && !activeFilters.metal.exclude && activeFilters.metal.values.length === 1) {
+    columnFilters.metal = activeFilters.metal.values[0];
   }
   if (activeFilters.type && !activeFilters.type.exclude && activeFilters.type.values.length === 1) {
     columnFilters.type = activeFilters.type.values[0];
@@ -260,7 +260,7 @@ const renderActiveFilters = () => {
 
   const colors = ['var(--primary)', 'var(--secondary)', 'var(--success)', 'var(--warning)', 'var(--danger)', 'var(--info)'];
   const labels = {
-    composition: 'Metal',
+    metal: 'Metal',
     type: 'Type',
     purchaseLocation: 'Purchase Location',
     storageLocation: 'Storage Location',
@@ -279,7 +279,7 @@ const renderActiveFilters = () => {
       case 'type':
         color = getTypeColor(firstValue);
         break;
-      case 'composition': {
+      case 'metal': {
         let key = firstValue;
         if (!METAL_COLORS[key]) {
           key = getCompositionFirstWords(key);
@@ -332,7 +332,7 @@ const filterInventoryAdvanced = () => {
     if (criteria && typeof criteria === 'object' && Array.isArray(criteria.values)) {
       const { values, exclude } = criteria;
       switch (field) {
-        case 'composition': {
+        case 'metal': {
           const lowerVals = values.map(v => v.toLowerCase());
           result = result.filter(item => {
             const itemMetal = getCompositionFirstWords(item.composition || item.metal || '').toLowerCase();
@@ -385,7 +385,7 @@ const filterInventoryAdvanced = () => {
     if (!activeFilters[field]) { // Don't double-filter
       const lower = value.toLowerCase();
       result = result.filter(item => {
-        const rawVal = item[field] ?? (field === 'composition' ? item.metal : '');
+        const rawVal = item[field] ?? (field === 'metal' ? item.metal : '');
         const fieldVal = String(rawVal ?? '').toLowerCase();
         return fieldVal === lower;
       });
@@ -440,7 +440,7 @@ const applyQuickFilter = (field, value) => {
   if (activeFilters[field]?.values?.[0] === value) {
     delete activeFilters[field];
     // Clean up legacy filters too
-    if (field === 'composition' || field === 'type') {
+    if (field === 'metal' || field === 'type') {
       delete columnFilters[field];
     }
   } else {
@@ -448,7 +448,7 @@ const applyQuickFilter = (field, value) => {
     activeFilters[field] = { values: [value], exclude: false };
 
     // Update legacy filters for compatibility
-    if (field === 'composition' || field === 'type') {
+    if (field === 'metal' || field === 'type') {
       columnFilters[field] = value;
     }
   }

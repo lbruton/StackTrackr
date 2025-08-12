@@ -1549,8 +1549,6 @@ td {
 }
 
 #inventoryTable th[data-column="collectable"] svg {
-    width: 1em;
-    height: 1em;
     display: block;
     margin: 0 auto;
     fill: currentColor;
@@ -1618,16 +1616,20 @@ td .btn {
 }
 
 td .action-btn {
-  width: 4.5rem;
-  margin: 1px auto;
+  width: 2rem;
+  height: 2rem;
+  margin: 0 auto;
   display: flex;
+  align-items: center;
   justify-content: center;
 }
 
 td .action-icon {
-  width: 4.5rem;
-  margin: 1px auto;
+  width: 1.25rem;
+  height: 1.25rem;
+  margin: 0 auto;
   display: flex;
+  align-items: center;
   justify-content: center;
   cursor: pointer;
 }
@@ -2942,3 +2944,33 @@ input:disabled + .slider {
     grid-template-columns: repeat(2, 1fr);
   }
 }
+#inventoryTable th[data-column="collectable"],
+#inventoryTable th[data-column="edit"],
+#inventoryTable th[data-column="notes"],
+#inventoryTable th[data-column="delete"],
+#inventoryTable td[data-column="collectable"],
+#inventoryTable td[data-column="edit"],
+#inventoryTable td[data-column="notes"],
+#inventoryTable td[data-column="delete"] {
+  width: 2rem;
+  height: 2rem;
+  padding: 0.25rem;
+  text-align: center;
+}
+
+.collectable-status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.collectable-status svg,
+#inventoryTable th[data-column="collectable"] svg,
+td .action-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.icon-gold { color: #d4af37; }
+.icon-copper { color: #b87333; }
