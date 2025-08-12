@@ -625,6 +625,15 @@ input[type="submit"] {
   color: var(--primary);
 }
 
+/* Spot price change indicators */
+.spot-up {
+  color: var(--success);
+}
+
+.spot-down {
+  color: var(--danger);
+}
+
 .spot-card-timestamp {
   font-size: 0.7rem;
   color: var(--text-muted);

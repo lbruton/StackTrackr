@@ -701,6 +701,8 @@ const refreshFromCache = () => {
       // Update display
       elements.spotPriceDisplay[metal].textContent = formatCurrency(price);
 
+      updateSpotCardColor(metal, price);
+
       // Record in history as 'cached' to distinguish from fresh API calls
       recordSpot(
         price,
@@ -1149,6 +1151,8 @@ const syncSpotPricesFromApi = async (
         // Update display
         elements.spotPriceDisplay[metal].textContent = formatCurrency(price);
 
+        updateSpotCardColor(metal, price);
+
         // Record in history
         recordSpot(
           price,
@@ -1309,6 +1313,7 @@ const handleProviderSync = async (provider) => {
         localStorage.setItem(metalConfig.spotKey, price.toString());
         spotPrices[metal] = price;
         elements.spotPriceDisplay[metal].textContent = formatCurrency(price);
+        updateSpotCardColor(metal, price);
         recordSpot(
           price,
           "api",
@@ -1591,6 +1596,8 @@ const resetSpotPrice = (metal) => {
   // Update display
   elements.spotPriceDisplay[metalConfig.key].textContent =
     formatCurrency(resetPrice);
+
+  updateSpotCardColor(metalConfig.key, resetPrice);
 
   // Record in history
   recordSpot(resetPrice, source, metalConfig.name, providerName);
