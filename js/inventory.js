@@ -722,7 +722,7 @@ const startCellEdit = (idx, field, icon) => {
         content = filterLink('weight', item.weight, 'var(--text-primary)', formatWeight(item.weight), item.weight < 1 ? 'Grams (g)' : 'Troy ounces (ozt)');
         break;
       case 'price':
-        content = item.price > 0 ? filterLink('price', item.price, 'var(--text-primary)', formatCurrency(item.price)) : '';
+        content = filterLink('price', item.price, 'var(--text-primary)', formatCurrency(item.price));
         break;
       case 'spotPriceAtPurchase': {
         const spotDisplay = item.isCollectable ? 'N/A' : (item.spotPriceAtPurchase > 0 ? formatCurrency(item.spotPriceAtPurchase) : 'N/A');
@@ -825,7 +825,7 @@ const renderTable = () => {
         ${filterLink('weight', item.weight, 'var(--text-primary)', formatWeight(item.weight), item.weight < 1 ? 'Grams (g)' : 'Troy ounces (ozt)')}
       </td>
       <td class="shrink" data-column="purchasePrice" title="USD">
-        ${item.price > 0 ? filterLink('price', item.price, 'var(--text-primary)', formatCurrency(item.price)) : ''}
+        ${filterLink('price', item.price, 'var(--text-primary)', formatCurrency(item.price))}
       </td>
       <td class="shrink" data-column="spot" title="USD">
         ${filterLink('spotPriceAtPurchase', spotValue, 'var(--text-primary)', spotDisplay)}
@@ -1436,14 +1436,6 @@ const importNumistaCsv = (file, override = false) => {
             const currency = currencyMatch ? currencyMatch[1] : 'USD';
             const amount = parseFloat(String(row[priceKey]).replace(/[^0-9.\-]/g, ''));
             purchasePrice = convertToUsd(amount, currency);
-          }
-
-          if (!priceKey && purchasePrice === 0) {
-            const estimateRaw = getValue(row, ['Estimate (USD)']);
-            if (estimateRaw) {
-              const estimateAmount = parseFloat(String(estimateRaw).replace(/[^0-9.\-]/g, ''));
-              if (!isNaN(estimateAmount)) purchasePrice = convertToUsd(estimateAmount, 'USD');
-            }
           }
 
           const purchaseLocRaw = getValue(row, ['Acquisition place', 'Acquired from', 'Purchase place']);
