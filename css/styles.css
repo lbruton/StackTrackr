@@ -12,6 +12,7 @@
   --success: #059669;
   --success-hover: #047857;
   --info: #0ea5e9;
+  --info-hover: #0284c7;
   --warning: #d97706;
   --warning-hover: #b45309;
   --danger: #dc2626;
@@ -79,6 +80,7 @@
   --success: #10b981;
   --success-hover: #059669;
   --info: #38bdf8;
+  --info-hover: #0ea5e9;
   --warning: #f59e0b;
   --warning-hover: #d97706;
   --danger: #ef4444;
@@ -134,6 +136,7 @@
   --success: #698f3f;
   --success-hover: #577a34;
   --info: #0ea5e9;
+  --info-hover: #0284c7;
   --warning: #d97706;
   --warning-hover: #b45309;
   --danger: #dc2626;
@@ -567,6 +570,14 @@ input[type="submit"] {
 
 .btn.success:hover {
   background: var(--success-hover);
+}
+
+.btn.info {
+  background: var(--info);
+}
+
+.btn.info:hover {
+  background: var(--info-hover);
 }
 
 .btn.secondary {
@@ -2779,18 +2790,6 @@ input:disabled + .slider {
   padding: var(--spacing) var(--spacing-lg);
 }
 
-.import-icon,
-.export-icon {
-  margin-left: 0.25rem;
-}
-
-.import-icon {
-  color: var(--success);
-}
-
-.export-icon {
-  color: var(--info);
-}
 
 /* =============================================================================
    FILTERS MODAL
