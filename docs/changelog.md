@@ -1,11 +1,15 @@
 # StackTrackr — Changelog
 
-> **Latest release: v3.04.16**
+> **Latest release: v3.04.17**
 
 
 For upcoming work, see [roadmap](roadmap.md).
 
 ## 📋 Version History
+
+### Version 3.04.17 – Gold & silver responsive logo (2025-08-12)
+- Introduced gold/silver SVG logo with automatic light/dark mode and tagline
+- Added responsive CSS for logo sizing
 
 ### Version 3.04.16 – Layout and footer refinements (2025-08-12)
 - Change Log access restored to silver button

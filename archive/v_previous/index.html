@@ -62,27 +62,80 @@
     ></script>
 
     <link rel="stylesheet" href="./css/styles.css" />
+    <link rel="icon" type="image/svg+xml" href="./images/safe-favicon.svg" />
   </head>
   <body>
     <!-- Application Header -->
     <div class="app-header">
       <h1 class="app-logo" aria-label="StackTrackr">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 40" role="img">
+        <svg class="stackr-logo" viewBox="0 0 800 200" xmlns="http://www.w3.org/2000/svg" width="100%" height="auto" style="max-width: 800px;">
           <defs>
-            <linearGradient id="logo-light" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stop-color="#2563eb" />
-              <stop offset="100%" stop-color="#1d4ed8" />
+            <!-- Light Mode Gradients -->
+            <linearGradient id="goldLight" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stop-color="#FFD700"/>
+              <stop offset="30%" stop-color="#FFA500"/>
+              <stop offset="70%" stop-color="#B8860B"/>
+              <stop offset="100%" stop-color="#8B6914"/>
             </linearGradient>
-            <linearGradient id="logo-dark" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stop-color="#93c5fd" />
-              <stop offset="100%" stop-color="#3b82f6" />
+            <linearGradient id="silverLight" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stop-color="#F8F8FF"/>
+              <stop offset="30%" stop-color="#E5E5E5"/>
+              <stop offset="70%" stop-color="#C0C0C0"/>
+              <stop offset="100%" stop-color="#A0A0A0"/>
             </linearGradient>
+            <!-- Dark Mode Gradients -->
+            <linearGradient id="goldDark" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stop-color="#FFED4E"/>
+              <stop offset="30%" stop-color="#FFD700"/>
+              <stop offset="70%" stop-color="#FFA500"/>
+              <stop offset="100%" stop-color="#CC8400"/>
+            </linearGradient>
+            <linearGradient id="silverDark" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stop-color="#FFFFFF"/>
+              <stop offset="30%" stop-color="#F5F5F5"/>
+              <stop offset="70%" stop-color="#E0E0E0"/>
+              <stop offset="100%" stop-color="#C0C0C0"/>
+            </linearGradient>
+            <!-- Drop Shadow Filter -->
+            <filter id="dropShadow">
+              <feDropShadow dx="3" dy="3" stdDeviation="2" flood-color="#000000" flood-opacity="0.3"/>
+            </filter>
+            <!-- Gold Glow Filter -->
+            <filter id="goldGlow">
+              <feGaussianBlur stdDeviation="2" result="blur"/>
+              <feMerge>
+                <feMergeNode in="blur"/>
+                <feMergeNode in="SourceGraphic"/>
+              </feMerge>
+            </filter>
           </defs>
+          <!-- Light Mode Group -->
           <g class="light-mode">
-            <text x="0" y="30" font-size="32" font-family="Segoe UI, Tahoma, Geneva, Verdana, sans-serif" fill="url(#logo-light)">StackTrackr</text>
+            <!-- Main title -->
+            <g filter="url(#dropShadow)">
+              <text x="50" y="80" font-family="Arial, sans-serif" font-size="72" font-weight="bold">
+                <tspan fill="url(#silverLight)">Stackr</tspan><tspan fill="url(#goldLight)">Trackr</tspan>
+              </text>
+            </g>
+            <!-- Tagline with glow -->
+            <g filter="url(#goldGlow)">
+              <text x="50" y="130" font-family="Arial, sans-serif" font-size="32" fill="#FFD700" opacity="0.6">Track Your Stack. Your Way.</text>
+              <text x="50" y="130" font-family="Arial, sans-serif" font-size="32" fill="url(#silverLight)">Track Your Stack. Your Way.</text>
+            </g>
           </g>
-          <g class="dark-mode" style="display: none">
-            <text x="0" y="30" font-size="32" font-family="Segoe UI, Tahoma, Geneva, Verdana, sans-serif" fill="url(#logo-dark)">StackTrackr</text>
+          <!-- Dark Mode Group -->
+          <g class="dark-mode" style="display: none;">
+            <!-- Main title -->
+            <g filter="url(#dropShadow)">
+              <text x="50" y="80" font-family="Arial, sans-serif" font-size="72" font-weight="bold">
+                <tspan fill="url(#silverDark)">Stackr</tspan><tspan fill="url(#goldDark)">Trackr</tspan>
+              </text>
+            </g>
+            <!-- Tagline with glow -->
+            <g filter="url(#goldGlow)">
+              <text x="50" y="130" font-family="Arial, sans-serif" font-size="32" fill="#FFED4E" opacity="0.7">Track Your Stack. Your Way.</text>
+              <text x="50" y="130" font-family="Arial, sans-serif" font-size="32" fill="url(#silverDark)">Track Your Stack. Your Way.</text>
+            </g>
           </g>
         </svg>
       </h1>
@@ -460,7 +513,7 @@
       </section>
       <section class="table-controls-section">
         <div class="table-controls">
-          <button id="changeLogBtn" class="btn silver">Change Log</button>
+          <button type="button" id="changeLogBtn" class="btn silver">Change Log</button>
           <span class="table-disclaimer"
             >All data is stored locally. Back up often.</span
           >
@@ -1164,8 +1217,7 @@
     <footer class="app-footer">
       <div class="storage-line">Storage: <span id="storageUsage"></span> <progress id="storageUsageBar" max="5120" value="0"></progress> <a href="#" id="storageReportLink">Storage report</a></div>
       <div class="footer-meta">
-        <span>StackTrackr <span id="footerVersion"></span> • All data stored locally. © 2025 <span id="footerDomain">stacktrackr.com</span>.</span>
-        <span class="footer-links"><a href="../index.html">Current build</a> | <a href="https://github.com/lbruton/StackTrackr/issues" target="_blank" rel="noopener">Report issues</a></span>
+        <span>Thank you for using StackTrackr (<span id="footerVersion"></span>). © 2025 <span id="footerDomain">stacktrackr.com</span> | Created with love on Apple Silicon | If you are having trouble try the <a href="../index.html">previous build</a>, and report the issue on our <a href="https://www.reddit.com/r/StackTrackr" target="_blank" rel="noopener">subreddit</a> or on our <a href="https://github.com/lbruton/StackTrackr/issues" target="_blank" rel="noopener">GitHub Issues Page</a>.</span>
       </div>
     </footer>
     <!-- =============================================================================

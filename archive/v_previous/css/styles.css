@@ -222,10 +222,63 @@ label {
 }
 
 .app-logo svg {
-  height: 2.5rem;
-  width: auto;
-  max-width: 100%;
   display: block;
+}
+
+/* StackrTrackr Logo Styles */
+.stackr-logo {
+  max-width: 800px;
+  width: 100%;
+  height: auto;
+}
+
+/* Theme switching */
+.light-mode {
+  display: block;
+}
+
+.dark-mode {
+  display: none;
+}
+
+/* Automatic dark mode detection */
+@media (prefers-color-scheme: dark) {
+  .light-mode {
+    display: none;
+  }
+  .dark-mode {
+    display: block;
+  }
+}
+
+/* Manual theme control */
+[data-theme="dark"] .light-mode {
+  display: none;
+}
+
+[data-theme="dark"] .dark-mode {
+  display: block;
+}
+
+[data-theme="light"] .light-mode {
+  display: block;
+}
+
+[data-theme="light"] .dark-mode {
+  display: none;
+}
+
+/* Responsive scaling */
+@media (max-width: 768px) {
+  .stackr-logo text {
+    font-size: 0.8em;
+  }
+}
+
+@media (max-width: 480px) {
+  .stackr-logo text {
+    font-size: 0.6em;
+  }
 }
 
 .container {
@@ -2312,7 +2365,8 @@ td input:checked + .slider:before {
 }
 
 .table-controls-section {
-  margin: var(--spacing) 0;
+  margin-top: var(--spacing-lg);
+  margin-bottom: var(--spacing);
 }
 
 .table-controls {
