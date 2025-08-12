@@ -1,5 +1,5 @@
 
-# StackrTrackr v3.04.18
+# StackrTrackr v3.04.21
 
 
 StackrTrackr is a comprehensive client-side web application for tracking precious metal investments. It's designed to help users manage their silver, gold, platinum, and palladium holdings with detailed financial metrics and enhanced tracking capabilities.
@@ -7,6 +7,7 @@ StackrTrackr is a comprehensive client-side web application for tracking preciou
 The public hosted version of the app is available at [stackrtrackr.com](https://stackrtrackr.com).
 
 ## Recent Updates
+- **v3.04.21 - Header height and type color theming**: consistent header sizing and themed type chips
 - **v3.04.18 - Name and price quick-filter fix**: clicking name or price cells now applies filters correctly
 - **v3.04.17 - Gold & silver responsive logo**: theme-aware SVG with premium gradients and tagline
 - **v3.04.16 - Layout and footer refinements**: silver Change Log button, added spacing, new footer message, safe favicon

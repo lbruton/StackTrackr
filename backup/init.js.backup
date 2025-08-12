@@ -280,12 +280,11 @@ document.addEventListener("DOMContentLoaded", () => {
     // Phase 11: Version Management
     debugLog("Phase 11: Updating version information...");
     document.title = getAppTitle();
-    // COMMENTED OUT: This was overriding the SVG logo in the header
-    // const appHeader = document.querySelector(".app-header h1");
-    // if (appHeader) {
-    //   const headerBrand = getBrandingName();
-    //   appHeader.textContent = headerBrand;
-    // }
+    const appHeader = document.querySelector(".app-header h1");
+    if (appHeader) {
+      const headerBrand = getBrandingName();
+      appHeader.textContent = headerBrand;
+    }
     const aboutVersion = document.getElementById("aboutVersion");
     if (aboutVersion) {
       aboutVersion.textContent = `v${APP_VERSION}`;
