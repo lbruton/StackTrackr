@@ -254,10 +254,9 @@ Each inventory item includes:
 ## Project Structure
 
 ```
-├── css/
-│   └── styles.css                      # Complete theming and responsive styling
-├── debug/                              # Development artifacts
 ├── archive/                            # Previous build snapshots for fallback
+├── backup/                             # Backup copies of key files
+├── css/                                # Complete theming and responsive styling
 ├── docs/
 │   ├── archive/                        # Archived notes and historical docs
 │   ├── future/                         # Planning notes for upcoming enhancements
@@ -269,6 +268,7 @@ Each inventory item includes:
 │   ├── structure.md                    # Documentation of folder and file organization
 │   ├── functionstable.md               # Function reference table
 │   └── versioning.md                   # Version management notes
+├── images/                             # Project icons and favicons
 ├── js/
 │   ├── api.js
 │   ├── charts.js
@@ -284,9 +284,10 @@ Each inventory item includes:
 │   ├── state.js
 │   ├── theme.js
 │   └── utils.js
+├── scripts/                            # Utility scripts
+├── tests/                              # Automated tests
 ├── index.html                         # Main application interface
 ├── sample.csv                         # Sample inventory data with notes for import testing
-├── structure.md                       # Detailed project structure reference
 └── README.md                          # Root project summary and documentation
 ```
 

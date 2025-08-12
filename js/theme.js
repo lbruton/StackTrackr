@@ -73,8 +73,12 @@ const toggleTheme = () => {
 const updateHeaderLogo = () => {
   const logo = document.getElementById("appLogo");
   if (!logo) return;
+  const theme = document.documentElement.getAttribute("data-theme");
+  let file = "stackrtrackr-logo-light.svg";
+  if (theme === "dark") file = "stackrtrackr-logo-dark.svg";
+  else if (theme === "sepia") file = "stackrtrackr-logo-sepia.svg";
   logo.innerHTML =
-    '<img src="./stackrtrackr_text.svg" alt="StackrTrackr logo" class="stackr-logo">';
+    `<img src="./images/${file}" alt="StackrTrackr logo" class="stackr-logo">`;
 };
 
 /**
