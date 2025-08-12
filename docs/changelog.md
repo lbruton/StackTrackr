@@ -1,11 +1,15 @@
 # StackrTrackr — Changelog
 
-> **Latest release: v3.04.38**
+> **Latest release: v3.04.39**
 
 
 For upcoming work, see [announcements](announcements.md).
 
 ## 📋 Version History
+
+### Version 3.04.39 – Pagination Controls Reposition (2025-08-17)
+- Pagination controls moved directly beneath the inventory table with added spacing.
+- Backup warning styled per theme: gray with red link on dark, green on light, and green link on sepia.
 
 ### Version 3.04.38 – Sorted Summary Chips (2025-08-16)
 - Summary chips now appear in a dedicated container sorted by count.

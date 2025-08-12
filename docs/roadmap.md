@@ -20,6 +20,7 @@ This roadmap tracks upcoming goals without committing to specific patch numbers.
 - Update milestone process and documentation.
 - Added standalone fuzzy search engine module (v3.04.37)
 - Sorted summary chips in table controls and repositioned backup warning (v3.04.38)
+- Repositioned pagination below inventory table with theme-specific warning styling (v3.04.39)
 
 ## Version Goals (v4.x)
 - Remove file:// protocol support and adopt a framework.

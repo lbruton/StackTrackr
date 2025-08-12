@@ -18,8 +18,8 @@
   --danger: #dc2626;
   --danger-hover: #b91c1c;
 
-    /* Disclaimer warning color */
-    --disclaimer-color: var(--warning);
+  /* Disclaimer warning color */
+  --disclaimer-color: var(--success);
 
   /* Background Colors - Light grays and light blues */
   --bg-primary: #f1f5f9;
@@ -87,7 +87,7 @@
   --danger-hover: #dc2626;
 
   /* Disclaimer warning color */
-  --disclaimer-color: var(--danger);
+  --disclaimer-color: var(--text-muted);
 
   /* Metal-specific Colors - dark mode */
   --silver: #d1d5db;
@@ -141,6 +141,9 @@
   --warning-hover: #b45309;
   --danger: #dc2626;
   --danger-hover: #b91c1c;
+
+  /* Disclaimer warning color */
+  --disclaimer-color: var(--warning);
 
   /* Metal-specific Colors - Sepia tone */
   --silver: #a8a29e;
@@ -2436,7 +2439,8 @@ td input:checked + .slider:before {
    ============================================================================= */
 
 .pagination-section {
-  margin: var(--spacing) 0;
+  margin-top: var(--spacing);
+  margin-bottom: 0;
 }
 
 .pagination-controls {
@@ -2509,6 +2513,7 @@ td input:checked + .slider:before {
 }
 
 .disclaimer-wrapper {
+  margin-top: var(--spacing);
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -2531,6 +2536,14 @@ td input:checked + .slider:before {
 .backup-link {
   text-decoration: underline;
   cursor: pointer;
+}
+
+[data-theme="dark"] .backup-link {
+  color: var(--danger);
+}
+
+[data-theme="sepia"] .backup-link {
+  color: var(--success);
 }
 
 .pagination-select {
