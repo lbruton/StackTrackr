@@ -26,10 +26,6 @@ let columnFilters = {};
 let chartInstances = {
   typeChart: null,
   locationChart: null,
-  apiHistoryChartSilver: null,
-  apiHistoryChartGold: null,
-  apiHistoryChartPlatinum: null,
-  apiHistoryChartPalladium: null,
 };
 
 /** @type {Set<string>} Available composition options */

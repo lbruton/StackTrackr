@@ -487,45 +487,7 @@ const renderApiHistoryTable = () => {
 };
 
 /**
- * Renders API history chart
- */
-const renderApiHistoryCharts = () => {
-  const metals = ["Silver", "Gold", "Platinum", "Palladium"];
-  metals.forEach((metal) => {
-    const ctx = document.getElementById(`apiHistoryChart${metal}`);
-    if (!ctx) return;
-    const data = apiHistoryEntries
-      .filter((e) => e.metal === metal)
-      .slice(-30)
-      .map((e) => e.spot);
-    const labels = data.map((_, i) => i + 1);
-    const color = getComputedStyle(document.documentElement).getPropertyValue(
-      `--${metal.toLowerCase()}`,
-    );
-    const key = `apiHistoryChart${metal}`;
-    if (chartInstances[key]) {
-      chartInstances[key].destroy();
-    }
-    chartInstances[key] = new Chart(ctx, {
-      type: "line",
-      data: {
-        labels,
-        datasets: [
-          {
-            label: metal,
-            data,
-            borderColor: color,
-            tension: 0.2,
-          },
-        ],
-      },
-      options: { responsive: true, maintainAspectRatio: false },
-    });
-  });
-};
-
-/**
- * Shows API history modal with table and chart
+ * Shows API history modal with table
  */
 const showApiHistoryModal = () => {
   const modal = document.getElementById("apiHistoryModal");
@@ -552,7 +514,6 @@ const showApiHistoryModal = () => {
     };
   }
   renderApiHistoryTable();
-  renderApiHistoryCharts();
   modal.style.display = "flex";
 };
 
