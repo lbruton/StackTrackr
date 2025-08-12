@@ -1547,7 +1547,7 @@ const updateThemeButton = () => {
   if (!btn) return;
   const savedTheme = localStorage.getItem(THEME_KEY);
   const mode = savedTheme ? savedTheme : "system";
-  btn.classList.remove("dark", "light", "system");
+  btn.classList.remove("dark", "light", "sepia", "system");
   btn.classList.add(mode);
   if (mode === "dark") {
     btn.textContent = "🌙";
@@ -1557,6 +1557,10 @@ const updateThemeButton = () => {
     btn.textContent = "☀️";
     btn.setAttribute("aria-label", "Light mode");
     btn.setAttribute("title", "Light mode");
+  } else if (mode === "sepia") {
+    btn.textContent = "📜";
+    btn.setAttribute("aria-label", "Sepia mode");
+    btn.setAttribute("title", "Sepia mode");
   } else {
     btn.textContent = "💻";
     btn.setAttribute("aria-label", "System theme");
@@ -1576,7 +1580,7 @@ const setupThemeToggle = () => {
     if (typeof initTheme === "function") {
       initTheme();
     } else {
-      const savedTheme = localStorage.getItem(THEME_KEY) || "light";
+      const savedTheme = localStorage.getItem(THEME_KEY) || "system";
       setTheme(savedTheme);
     }
 
@@ -1591,7 +1595,7 @@ const setupThemeToggle = () => {
       window
         .matchMedia("(prefers-color-scheme: dark)")
         .addEventListener("change", () => {
-          if (!localStorage.getItem(THEME_KEY)) {
+          if (localStorage.getItem(THEME_KEY) === "system") {
             updateThemeButton();
           }
         });
@@ -1603,10 +1607,12 @@ const setupThemeToggle = () => {
         "click",
         (e) => {
           e.preventDefault();
-          const savedTheme = localStorage.getItem(THEME_KEY);
+          const savedTheme = localStorage.getItem(THEME_KEY) || "system";
           if (savedTheme === "dark") {
             setTheme("light");
           } else if (savedTheme === "light") {
+            setTheme("sepia");
+          } else if (savedTheme === "sepia") {
             setTheme("system");
           } else {
             setTheme("dark");

@@ -396,15 +396,17 @@ function setupBasicEventListeners() {
     };
   }
 
-  // Appearance button (three-state theme toggle)
+  // Appearance button (four-state theme toggle)
   const appearanceBtn = document.getElementById("appearanceBtn");
   if (appearanceBtn) {
     appearanceBtn.onclick = function (e) {
       e.preventDefault();
-      const savedTheme = localStorage.getItem(THEME_KEY);
+      const savedTheme = localStorage.getItem(THEME_KEY) || "system";
       if (savedTheme === "dark") {
         setTheme("light");
       } else if (savedTheme === "light") {
+        setTheme("sepia");
+      } else if (savedTheme === "sepia") {
         setTheme("system");
       } else {
         setTheme("dark");
