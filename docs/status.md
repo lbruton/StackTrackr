@@ -2,13 +2,13 @@
 
 
 
-> **Latest release: v3.04.42**
+> **Latest release: v3.04.43**
 
 See [announcements](announcements.md) for recent changes and upcoming milestones.
 
-## 🎯 Current State: **BETA v3.04.42** ✅ MAINTAINED & OPTIMIZED
+## 🎯 Current State: **BETA v3.04.43** ✅ MAINTAINED & OPTIMIZED
 
-**StackrTrackr v3.04.42** is a fully-featured, client-side web application for tracking precious metal investments (Silver, Gold, Platinum, Palladium) with comprehensive inventory management, API integration, and complete backup capabilities. The 3.04.x series focuses on polish, maintenance, and optimization.
+**StackrTrackr v3.04.43** is a fully-featured, client-side web application for tracking precious metal investments (Silver, Gold, Platinum, Palladium) with comprehensive inventory management, API integration, and complete backup capabilities. The 3.04.x series focuses on polish, maintenance, and optimization.
 
 
 ## 🏗️ Architecture Overview
@@ -28,6 +28,7 @@ The tool features a **modular JavaScript architecture** with separate files for 
 
 ## ✨ Latest Changes
 
+- **v3.04.43 - Filter chip totals and purchase link tooltips**: summary chips show filtered/total counts, purchase locations include informational links, and table cells are centered
 - **v3.04.42 - Expanded filter chips**: replaced backup reminder with Filters subtitle and added Name/Date chips with dynamic filtering and counts
 - **v3.04.41 - Section titles**: added centered titles for Spot Prices, Inventory, Filters, and Information Cards
 - **v3.04.40 - Pagination controls reposition**: moved pagination above Change Log and added edge padding

@@ -32,7 +32,8 @@ assert.strictEqual(cleaned.purchaseLocation, 'example.com/shop/item', 'URL punct
 
 // Format purchase location for table display
 const html = formatPurchaseLocation(cleaned.purchaseLocation);
-assert(html.includes('<a href="https://example.com/shop/item"'), 'URL should be wrapped in hyperlink');
-assert(html.includes('example.com/shop/item'), 'Link text should retain punctuation');
+assert(html.includes('>example.com/shop/item</span>'), 'Link text should remain filterable');
+assert(html.includes('<a href="https://example.com/shop/item"'), 'Info link should be appended');
+assert(html.includes('(i)</a>'), 'Info icon should be present');
 
 console.log('Purchase location URL tests passed');

@@ -3283,12 +3283,28 @@ input:disabled + .slider {
   white-space: nowrap;
 }
 
+#inventoryTable th,
+#inventoryTable td {
+  text-align: center;
+}
+
+#inventoryTable th[data-column="name"],
+#inventoryTable td[data-column="name"] {
+  text-align: left;
+}
+
+.info-link {
+  margin-left: 0.25rem;
+  font-size: 0.75rem;
+}
+
 #typeSummary {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: var(--spacing-xs);
   justify-content: center;
   margin-top: var(--spacing-xs);
+  overflow-x: auto;
 }
 
 /* Header Icons */
