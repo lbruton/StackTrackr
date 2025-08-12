@@ -1,5 +1,5 @@
 
-# StackTrackr v3.04.12
+# StackTrackr v3.04.13
 
 
 StackTrackr is a comprehensive client-side web application for tracking precious metal investments. It's designed to help users manage their silver, gold, platinum, and palladium holdings with detailed financial metrics and enhanced tracking capabilities.
@@ -7,6 +7,7 @@ StackTrackr is a comprehensive client-side web application for tracking precious
 The public hosted version of the app is available at [stackrtrackr.com](https://stackrtrackr.com).
 
 ## Recent Updates
+- **v3.04.13 - Simplified archive workflow**: update-archive script maintains a single previous build snapshot
 - **v3.04.12 - Quick filter object storage**: Quick filter now stores criteria as objects for exclude support
 - **v3.04.11 - Collectable column icon**: Collectable table header now uses a treasure chest icon with an accessible label
 - **v3.04.10 - Provider history usage display**: Provider history sections show API usage/quota only, with metal toggles managed in Provider Settings
@@ -230,7 +231,7 @@ The public hosted version of the app is available at [stackrtrackr.com](https://
 
 ## Version Management
 This application uses a dynamic version management system. The version is automatically updated throughout the application from `js/constants.js`. The HTML files now use this dynamic system instead of hardcoded version numbers. See [docs/versioning.md](docs/versioning.md) for details on how to update versions.
-The three most recent builds are retained under `archive/` as `v_previous`, `v_previous2`, and `v_previous3`, with the latest archive linked from the footer for easy rollback.
+The most recent build is retained under `archive/v_previous`, with the archive linked from the footer for easy rollback.
 
 ## Data Structure
 Each inventory item includes:
@@ -339,7 +340,7 @@ This project is designed to be maintainable and extensible. When making changes:
 This project is open source and available for personal use.
 
 ---
-**Current Version**: 3.03.08m
+**Current Version**: 3.04.13
 **Last Updated**: August 10, 2025
 **Status**: Feature complete release candidate
 

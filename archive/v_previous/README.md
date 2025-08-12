@@ -1,10 +1,34 @@
-# StackTrackr v3.03.08e
+
+# StackTrackr v3.04.12
+
 
 StackTrackr is a comprehensive client-side web application for tracking precious metal investments. It's designed to help users manage their silver, gold, platinum, and palladium holdings with detailed financial metrics and enhanced tracking capabilities.
 
 The public hosted version of the app is available at [stackrtrackr.com](https://stackrtrackr.com).
 
 ## Recent Updates
+- **v3.04.12 - Quick filter object storage**: Quick filter now stores criteria as objects for exclude support
+- **v3.04.11 - Collectable column icon**: Collectable table header now uses a treasure chest icon with an accessible label
+- **v3.04.10 - Provider history usage display**: Provider history sections show API usage/quota only, with metal toggles managed in Provider Settings
+- **v3.04.09 - Multi-select & exclusion filters**: Filter modal supports multi-select dropdowns with exclude toggles and chips reflect selections
+- **v3.04.08 - Debounced search**: Search box waits for typing to pause before filtering large datasets
+- **v3.04.07 - Data sanitization on load**: Removes non-alphanumeric characters from inventory and Numista tables when the app loads
+- **v3.04.06 - Name sanitization**: Strip HTML tags and excess whitespace from imported text fields to stabilize table search
+- **v3.04.05 - Search sanitization**: Escaped table values and sanitized search input to prevent corruption
+- **v3.04.04 - Multi-term search**: Search box accepts comma-separated values to match multiple terms at once
+- **v3.04.03 - Search input restore**: Search box reliably filters inventory table as you type
+- **v3.04.02 - Numista header trimming**: Imports accept Numista CSVs with trailing spaces in column headers
+- **v3.04.01 - Filter reset & Numista sanitization**: Clear search resets filters, sanitized Numista imports, batch API pulls
+- **v3.04.00 - Inventory filter click & API cleanup**: Click any table value to filter and removed global API cache duration dropdown
+- **v3.03.08n - Inventory type filter**: Added type dropdown and dynamic metal options
+- **v3.03.08m - Inventory filter dropdown**: Added metal filter to inventory title bar for quick filtering
+- **v3.03.08l - Search fix & composition parsing**: Search box filters table as you type and Numista compositions truncate to two words
+- **v3.03.08k - Type dropdown and UI fixes**: Standardized type options, blank purchase locations, edit icon, and separate totals cards
+- **v3.03.08j - Composition display fix**: Composition column shows first word from imported data
+- **v3.03.08i - Numista import polish**: Uniform changelog bullets, default collectable flag, weight rounding, N# notes, and beta warning
+- **v3.03.08h - Table controls & import options**: Compact table controls, uniform pagination buttons, import Override/Merge menus, and Backup/Restore placeholder
+- **v3.03.08g - Change log & catalog improvements**: Condensed change log, undo from edit modal, and catalog mapping
+- **v3.03.08f - CSV import field sanitization**: Invalid fields are blanked and users can merge or override during import
 - **v3.03.08e - Numista CSV storage**: Stores raw Numista CSV and classifies metals by composition
 - **v3.03.08d - Version Modal Centering**: Version change dialog now properly centers in the viewport
 - **v3.03.08c - Version Modal Enhancements**: Version change dialog now includes privacy notice, resources, and roadmap
@@ -32,6 +56,22 @@ The public hosted version of the app is available at [stackrtrackr.com](https://
 - **v3.1.9 - UI Consistency**: Clear Cache button styling improvements across themes
 - **v3.1.8 - Backup System**: Full ZIP backup functionality with restoration guides
 - **v3.1.6 - Theme Toggle**: Fixed theme management with system preference detection
+
+## 🆕 What's New in v3.04.01
+- Clear search button resets all filters, including those set in the modal
+- Numista imports sanitize text fields to ensure filter links remain functional
+- API providers craft a single batch request using only selected metals
+
+## 🆕 What's New in v3.04.00
+- Clicking any non-action table cell adds a filter; repeat clicks toggle filters and support up to three stacked conditions
+- Removed global API cache duration dropdown in favor of per-provider cache settings
+
+## 🆕 What's New in v3.03.08g
+- Change log rows open the edit modal with an undo option
+- Items gain catalog field tied to unique S# values
+
+## 🆕 What's New in v3.03.08f
+- CSV import accepts rows with bad data and lets you merge or override existing inventory
 
 ## 🆕 What's New in v3.03.08e
 - Imported Numista CSV preserved in localStorage with improved metal mapping
@@ -80,7 +120,7 @@ The public hosted version of the app is available at [stackrtrackr.com](https://
 - Collectable checkbox replaced with status button and action buttons aligned in inventory table
 - Totals cards renamed with refined labels and font sizes
 - About modal title contrast improved in light mode
-- Notes button displays "Yes" in green when an item contains notes
+- Notes button uses a notebook icon and highlights green when an item contains notes
 
 ## 🆕 What's New in v3.2.05rc
 - Disclaimer splash hides permanently after you click "I Understand"
@@ -299,7 +339,7 @@ This project is designed to be maintainable and extensible. When making changes:
 This project is open source and available for personal use.
 
 ---
-**Current Version**: 3.03.08d
+**Current Version**: 3.03.08m
 **Last Updated**: August 10, 2025
 **Status**: Feature complete release candidate
 

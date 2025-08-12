@@ -68,8 +68,8 @@ const setupColumnResizing = () => {
   // Add resize handles to table headers
   const headers = table.querySelectorAll("th");
   headers.forEach((header, index) => {
-    // Skip the last column (delete button)
-    if (index === headers.length - 1) return;
+    // Skip action columns (edit/notes/delete)
+    if (index >= headers.length - 3) return;
 
     const resizeHandle = document.createElement("div");
     resizeHandle.className = "resize-handle";
@@ -179,7 +179,7 @@ const updateColumnVisibility = () => {
         "spot",
         "weight",
         "qty",
-        "metal",
+        "composition",
       ],
     },
     {
@@ -192,7 +192,7 @@ const updateColumnVisibility = () => {
         "spot",
         "weight",
         "qty",
-        "metal",
+        "composition",
         "type",
       ],
     },
@@ -205,7 +205,7 @@ const updateColumnVisibility = () => {
   const allColumns = [
     "date",
     "type",
-    "metal",
+    "composition",
     "name",
     "qty",
     "weight",
@@ -340,8 +340,8 @@ const setupEventListeners = () => {
     if (inventoryTable) {
       const headers = inventoryTable.querySelectorAll("th");
       headers.forEach((header, index) => {
-        // Skip Notes/Delete columns (last two)
-        if (index >= headers.length - 2) {
+        // Skip action columns (edit/notes/delete)
+        if (index >= headers.length - 3) {
           return;
         }
 
@@ -377,14 +377,20 @@ const setupEventListeners = () => {
         function (e) {
           e.preventDefault();
 
-          const metal = elements.itemMetal.value;
+          const composition = getCompositionFirstWords(elements.itemMetal.value);
+          const metal = parseNumistaMetal(composition);
           const name = elements.itemName.value.trim();
           const qty = parseInt(elements.itemQty.value, 10);
           const type = elements.itemType.value;
-          const weight = parseFloat(elements.itemWeight.value);
-          const price = parseFloat(elements.itemPrice.value);
+          let weight = parseFloat(elements.itemWeight.value);
+          if (elements.itemWeightUnit.value === "g") {
+            weight = gramsToOzt(weight);
+          }
+          weight = isNaN(weight) ? 0 : parseFloat(weight.toFixed(2));
+          let price = parseFloat(elements.itemPrice.value);
+          price = isNaN(price) || price < 0 ? 0 : price;
           const purchaseLocation =
-            elements.purchaseLocation.value.trim() || "Unknown";
+            elements.purchaseLocation.value.trim() || "";
           const storageLocation =
             elements.storageLocation.value.trim() || "Unknown";
           const notes = elements.itemNotes.value.trim() || "";
@@ -397,9 +403,7 @@ const setupEventListeners = () => {
             qty < 1 ||
             !Number.isInteger(qty) ||
             isNaN(weight) ||
-            weight <= 0 ||
-            isNaN(price) ||
-            price < 0
+            weight <= 0
           ) {
             return alert("Please enter valid values for all fields.");
           }
@@ -421,8 +425,11 @@ const setupEventListeners = () => {
             totalPremium = premiumPerOz * qty * weight;
           }
 
+          const serial = getNextSerial();
+          const catalog = document.getElementById("itemCatalog").value.trim();
           inventory.push({
             metal,
+            composition,
             name,
             qty,
             type,
@@ -436,11 +443,17 @@ const setupEventListeners = () => {
             premiumPerOz,
             totalPremium,
             isCollectable,
+            serial,
+            numistaId: catalog,
           });
 
+          addCompositionOption(composition);
+
+          catalogMap[serial] = catalog;
           saveInventory();
           renderTable();
           this.reset();
+          elements.itemWeightUnit.value = "oz";
           elements.itemDate.value = todayStr();
           if (elements.addModal) elements.addModal.style.display = "none";
         },
@@ -461,14 +474,20 @@ const setupEventListeners = () => {
 
           if (editingIndex === null) return;
 
-          const metal = elements.editMetal.value;
+          const composition = getCompositionFirstWords(elements.editMetal.value);
+          const metal = parseNumistaMetal(composition);
           const name = elements.editName.value.trim();
           const qty = parseInt(elements.editQty.value, 10);
           const type = elements.editType.value;
-          const weight = parseFloat(elements.editWeight.value);
-          const price = parseFloat(elements.editPrice.value);
+          let weight = parseFloat(elements.editWeight.value);
+          if (elements.editWeight.dataset.unit === 'g') {
+            weight = gramsToOzt(weight);
+          }
+          weight = isNaN(weight) ? 0 : parseFloat(weight.toFixed(2));
+          let price = parseFloat(elements.editPrice.value);
+          price = isNaN(price) || price < 0 ? 0 : price;
           const purchaseLocation =
-            elements.editPurchaseLocation.value.trim() || "Unknown";
+            elements.editPurchaseLocation.value.trim() || "";
           const storageLocation =
             elements.editStorageLocation.value.trim() || "Unknown";
           const notes = elements.editNotes.value.trim() || "";
@@ -496,8 +515,6 @@ const setupEventListeners = () => {
             !Number.isInteger(qty) ||
             isNaN(weight) ||
             weight <= 0 ||
-            isNaN(price) ||
-            price < 0 ||
             (!isCollectable &&
               (isNaN(spotPriceAtPurchase) || spotPriceAtPurchase <= 0))
           ) {
@@ -515,10 +532,13 @@ const setupEventListeners = () => {
           }
 
           const oldItem = { ...inventory[editingIndex] };
+          const serial = oldItem.serial;
 
-          // Update the item
+          // Update the item preserving serial
           inventory[editingIndex] = {
+            ...oldItem,
             metal,
+            composition,
             name,
             qty,
             type,
@@ -532,8 +552,12 @@ const setupEventListeners = () => {
             premiumPerOz,
             totalPremium,
             isCollectable,
+            numistaId: elements.editCatalog.value.trim(),
           };
 
+          addCompositionOption(composition);
+
+          catalogMap[serial] = inventory[editingIndex].numistaId;
           saveInventory();
           renderTable();
           logItemChanges(oldItem, inventory[editingIndex]);
@@ -541,8 +565,26 @@ const setupEventListeners = () => {
           // Close modal
           elements.editModal.style.display = "none";
           editingIndex = null;
+          editingChangeLogIndex = null;
         },
         "Edit form",
+      );
+    }
+
+    if (elements.undoChangeBtn) {
+      safeAttachListener(
+        elements.undoChangeBtn,
+        "click",
+        () => {
+          if (editingChangeLogIndex !== null) {
+            toggleChange(editingChangeLogIndex);
+            elements.editModal.style.display = "none";
+            editingIndex = null;
+            editingChangeLogIndex = null;
+            renderChangeLog();
+          }
+        },
+        "Undo change button",
       );
     }
 
@@ -554,6 +596,7 @@ const setupEventListeners = () => {
         function () {
           elements.editModal.style.display = "none";
           editingIndex = null;
+          editingChangeLogIndex = null;
         },
         "Cancel edit button",
       );
@@ -566,6 +609,7 @@ const setupEventListeners = () => {
         () => {
           elements.editModal.style.display = "none";
           editingIndex = null;
+          editingChangeLogIndex = null;
         },
         "Edit modal close button",
       );
@@ -778,7 +822,7 @@ const setupEventListeners = () => {
               spotPrices[metalKey] = defaultPrice;
               if (elements.spotPriceDisplay[metalKey]) {
                 elements.spotPriceDisplay[metalKey].textContent =
-                  formatDollar(defaultPrice);
+                  formatCurrency(defaultPrice);
               }
               updateSummary();
             }
@@ -863,13 +907,43 @@ const setupEventListeners = () => {
     // IMPORT/EXPORT EVENT LISTENERS
     debugLog("Setting up import/export listeners...");
 
+    let csvImportOverride = false;
+    if (elements.importCsvOverride && elements.importCsvFile) {
+      safeAttachListener(
+        elements.importCsvOverride,
+        "click",
+        () => {
+          csvImportOverride = true;
+          elements.importCsvFile.click();
+        },
+        "CSV override button",
+      );
+    }
+    if (elements.importCsvMerge && elements.importCsvFile) {
+      safeAttachListener(
+        elements.importCsvMerge,
+        "click",
+        () => {
+          csvImportOverride = false;
+          elements.importCsvFile.click();
+        },
+        "CSV merge button",
+      );
+    }
     if (elements.importCsvFile) {
       safeAttachListener(
         elements.importCsvFile,
         "change",
         function (e) {
           if (e.target.files.length > 0) {
-            importCsv(e.target.files[0]);
+
+            const file = e.target.files[0];
+            if (!checkFileSize(file)) {
+              alert("File exceeds 2MB limit. Enable cloud backup for larger uploads.");
+            } else {
+              importCsv(file, csvImportOverride);
+            }
+
           }
           this.value = "";
         },
@@ -905,25 +979,48 @@ const setupEventListeners = () => {
       );
     }
 
+    let numistaOverride = false;
+    const importNumistaBtn = document.getElementById("importNumistaBtn");
+    const mergeNumistaBtn = document.getElementById("mergeNumistaBtn");
+    if (importNumistaBtn && elements.numistaImportFile) {
+      safeAttachListener(
+        importNumistaBtn,
+        "click",
+        () => {
+          numistaOverride = true;
+          elements.numistaImportFile.click();
+        },
+        "Import Numista button",
+      );
+    }
+    if (mergeNumistaBtn && elements.numistaImportFile) {
+      safeAttachListener(
+        mergeNumistaBtn,
+        "click",
+        () => {
+          numistaOverride = false;
+          elements.numistaImportFile.click();
+        },
+        "Merge Numista button",
+      );
+    }
     if (elements.numistaImportFile) {
       safeAttachListener(
         elements.numistaImportFile,
         "change",
         function (e) {
           if (e.target.files.length > 0) {
-            importNumistaCsv(e.target.files[0]);
+
+            const file = e.target.files[0];
+            if (!checkFileSize(file)) {
+              alert("File exceeds 2MB limit. Enable cloud backup for larger uploads.");
+            } else {
+              importNumistaCsv(file, numistaOverride);
+            }
           }
           this.value = "";
         },
         "Numista CSV import",
-      );
-    }
-    if (elements.numistaImportBtn && elements.numistaImportFile) {
-      safeAttachListener(
-        elements.numistaImportBtn,
-        "click",
-        () => elements.numistaImportFile.click(),
-        "Numista import trigger",
       );
     }
 
@@ -1025,6 +1122,39 @@ const setupEventListeners = () => {
         "click",
         () => (elements.cloudSyncModal.style.display = "none"),
         "Cloud Sync close",
+      );
+    }
+
+    // Remove Inventory Data Button
+    if (elements.removeInventoryDataBtn) {
+      safeAttachListener(
+        elements.removeInventoryDataBtn,
+        "click",
+        function () {
+          if (confirm("Remove all inventory items? This cannot be undone.")) {
+            localStorage.removeItem(LS_KEY);
+            loadInventory();
+            renderTable();
+            alert("Inventory data cleared.");
+          }
+        },
+        "Remove inventory data button",
+      );
+    }
+
+    // Clear Numista Cache Button
+    if (elements.clearNumistaCacheBtn) {
+      safeAttachListener(
+        elements.clearNumistaCacheBtn,
+        "click",
+        function () {
+          if (confirm("Clear Numista cache?")) {
+            localStorage.removeItem('numista-cache');
+            alert("Numista cache cleared.");
+            elements.clearNumistaCacheBtn.style.display = 'none';
+          }
+        },
+        "Clear Numista cache button",
       );
     }
 
@@ -1195,15 +1325,56 @@ const setupSearch = () => {
 
   try {
     if (elements.searchInput) {
+      const handleSearchInput = debounce(function () {
+        searchQuery = this.value.replace(/[<>]/g, '').trim();
+        currentPage = 1; // Reset to first page when search changes
+        renderTable();
+      }, 300);
       safeAttachListener(
         elements.searchInput,
         "input",
+        handleSearchInput,
+        "Search input",
+      );
+    }
+
+    if (elements.typeFilter) {
+      safeAttachListener(
+        elements.typeFilter,
+        "change",
         function () {
-          searchQuery = this.value;
-          currentPage = 1; // Reset to first page when search changes
+          const value = this.value;
+          if (value) {
+            columnFilters.type = value;
+          } else {
+            delete columnFilters.type;
+          }
+          searchQuery = "";
+          if (elements.searchInput) elements.searchInput.value = "";
+          currentPage = 1;
           renderTable();
         },
-        "Search input",
+        "Type filter select",
+      );
+    }
+
+    if (elements.metalFilter) {
+      safeAttachListener(
+        elements.metalFilter,
+        "change",
+        function () {
+          const value = this.value;
+          if (value) {
+            columnFilters.composition = value;
+          } else {
+            delete columnFilters.composition;
+          }
+          searchQuery = "";
+          if (elements.searchInput) elements.searchInput.value = "";
+          currentPage = 1;
+          renderTable();
+        },
+        "Metal filter select",
       );
     }
 
@@ -1212,13 +1383,23 @@ const setupSearch = () => {
         elements.clearSearchBtn,
         "click",
         function () {
-          if (elements.searchInput) {
-            elements.searchInput.value = "";
+          if (typeof clearAllFilters === "function") {
+            clearAllFilters();
+          } else {
+            if (elements.searchInput) {
+              elements.searchInput.value = "";
+            }
+            searchQuery = "";
+            columnFilters = {};
+            currentPage = 1;
+            renderTable();
           }
-          searchQuery = "";
-          columnFilters = {};
-          currentPage = 1;
-          renderTable();
+          if (elements.typeFilter) {
+            elements.typeFilter.value = "";
+          }
+          if (elements.metalFilter) {
+            elements.metalFilter.value = "";
+          }
         },
         "Clear search button",
       );
@@ -1231,11 +1412,85 @@ const setupSearch = () => {
         () => {
           if (elements.inventoryForm) {
             elements.inventoryForm.reset();
+            elements.itemWeightUnit.value = "oz";
             elements.itemDate.value = todayStr();
           }
           if (elements.addModal) elements.addModal.style.display = "flex";
         },
         "New item button",
+      );
+    }
+
+    // Filters button
+    const filtersBtn = document.getElementById("filtersBtn");
+    if (filtersBtn) {
+      safeAttachListener(
+        filtersBtn,
+        "click",
+        () => {
+          if (typeof showFiltersModal === "function") {
+            showFiltersModal();
+          }
+        },
+        "Filters button",
+      );
+    }
+
+    // Filters modal event listeners
+    const filtersModal = document.getElementById("filtersModal");
+    const filtersCloseBtn = document.getElementById("filtersCloseBtn");
+    const applyFiltersBtn = document.getElementById("applyFiltersBtn");
+    const clearFiltersBtn = document.getElementById("clearFiltersBtn");
+
+    if (filtersModal) {
+      safeAttachListener(
+        filtersModal,
+        "click",
+        (e) => {
+          if (e.target === filtersModal && typeof hideFiltersModal === "function") {
+            hideFiltersModal();
+          }
+        },
+        "Filters modal background",
+      );
+    }
+
+    if (filtersCloseBtn) {
+      safeAttachListener(
+        filtersCloseBtn,
+        "click",
+        () => {
+          if (typeof hideFiltersModal === "function") {
+            hideFiltersModal();
+          }
+        },
+        "Filters close button",
+      );
+    }
+
+    if (applyFiltersBtn) {
+      safeAttachListener(
+        applyFiltersBtn,
+        "click",
+        () => {
+          if (typeof applyFilters === "function") {
+            applyFilters();
+          }
+        },
+        "Apply filters button",
+      );
+    }
+
+    if (clearFiltersBtn) {
+      safeAttachListener(
+        clearFiltersBtn,
+        "click",
+        () => {
+          if (typeof clearAllFilters === "function") {
+            clearAllFilters();
+          }
+        },
+        "Clear filters button",
       );
     }
 
@@ -1460,20 +1715,6 @@ const setupApiEvents = () => {
         "API clear key button",
       );
     });
-
-    const cacheDuration = document.getElementById("apiCacheDuration");
-    if (cacheDuration) {
-      safeAttachListener(
-        cacheDuration,
-        "change",
-        () => {
-          if (typeof setCacheDuration === "function") {
-            setCacheDuration(parseInt(cacheDuration.value, 10));
-          }
-        },
-        "API cache duration select",
-      );
-    }
 
     document.querySelectorAll(".provider-default-btn").forEach((btn) => {
       const provider = btn.getAttribute("data-provider");
