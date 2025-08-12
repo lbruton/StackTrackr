@@ -1,11 +1,14 @@
 # StackrTrackr — Changelog
 
-> **Latest release: v3.04.28**
+> **Latest release: v3.04.29**
 
 
 For upcoming work, see [roadmap](roadmap.md).
 
 ## 📋 Version History
+
+### Version 3.04.29 – Backup, Restore, Clear Heading (2025-08-12)
+- **Unified Backup Section**: Renamed "Clear Data" settings card to "Backup, Restore, Clear" for clearer data management.
 
 ### Version 3.04.28 – Enhanced Light Theme Styling (2025-08-12)
 - **Improved Light Theme**: Updated light theme to use light/middle grays and light blues for better visual appeal
