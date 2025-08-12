@@ -261,13 +261,26 @@ label {
 .app-logo {
   display: flex;
   align-items: center;
-  margin-right: auto;
   margin: 0;
   height: 100%;
 }
 
 .app-logo svg {
   display: block;
+}
+
+.logo-box {
+  display: flex;
+  align-items: center;
+  margin-right: auto;
+  padding: var(--spacing-sm);
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+[data-theme="dark"] .logo-box {
+  background: var(--bg-primary);
 }
 
 /* StackrTrackr Logo Styles */
