@@ -42,6 +42,18 @@
   --platinum: #4b5563;
   --palladium: #7c3aed;
 
+  /* Inventory Type Colors */
+  --type-coin-bg: #d97706;
+  --type-coin-text: #ffffff;
+  --type-round-bg: #6b7280;
+  --type-round-text: #ffffff;
+  --type-bar-bg: #eab308;
+  --type-bar-text: #000000;
+  --type-note-bg: #059669;
+  --type-note-text: #ffffff;
+  --type-other-bg: #7c3aed;
+  --type-other-text: #ffffff;
+
   /* Component Spacing */
   --radius: 8px;
   --radius-lg: 12px;
@@ -74,6 +86,18 @@
   --gold: #fbbf24;
   --platinum: #f3f4f6;
   --palladium: #d8b4fe;
+
+  /* Inventory Type Colors */
+  --type-coin-bg: #b45309;
+  --type-coin-text: #ffffff;
+  --type-round-bg: #9ca3af;
+  --type-round-text: #1e293b;
+  --type-bar-bg: #fde047;
+  --type-bar-text: #1e293b;
+  --type-note-bg: #047857;
+  --type-note-text: #ffffff;
+  --type-other-bg: #8b5cf6;
+  --type-other-text: #ffffff;
 
   /* Background Colors - Dark Mode */
   --bg-primary: #0f172a;
@@ -114,6 +138,18 @@
   --gold: #b58900;
   --platinum: #8d8d8d;
   --palladium: #a58b6f;
+
+  /* Inventory Type Colors */
+  --type-coin-bg: #c4650e;
+  --type-coin-text: #ffffff;
+  --type-round-bg: #807363;
+  --type-round-text: #ffffff;
+  --type-bar-bg: #d8a500;
+  --type-bar-text: #3e2f1e;
+  --type-note-bg: #0b7d61;
+  --type-note-text: #ffffff;
+  --type-other-bg: #7b4dbf;
+  --type-other-text: #ffffff;
 
   /* Background Colors - Sepia Mode */
   --bg-primary: #f2e7d5;
@@ -213,6 +249,7 @@ label {
   border-radius: var(--radius-lg);
   border: 1px solid var(--border);
   box-shadow: var(--shadow-sm);
+  min-height: 120px; /* match dark mode banner height */
 }
 
 .app-logo {
@@ -220,6 +257,7 @@ label {
   align-items: center;
   margin-right: auto;
   margin: 0;
+  height: 100%;
 }
 
 .app-logo svg {
@@ -3213,23 +3251,37 @@ th {
   text-align: center !important;
 }
 
-/* Type-specific colors - Unique colors far apart on color wheel */
-.type-coin { background-color: #d97706; color: white; } /* Orange */
-.type-round { background-color: #6b7280; color: white; } /* Gray */
-.type-bar { background-color: #eab308; color: black; } /* Yellow */
-.type-note { background-color: #059669; color: white; } /* Green */
-.type-other { background-color: #7c3aed; color: white; } /* Purple */
+/* Type-specific color helpers */
+.type-coin { color: var(--type-coin-bg); }
+.type-round { color: var(--type-round-bg); }
+.type-bar { color: var(--type-bar-bg); }
+.type-note { color: var(--type-note-bg); }
+.type-other { color: var(--type-other-bg); }
 
 #typeSummary .type-chip {
   padding: 0.15rem 0.5rem;
   border-radius: var(--radius);
   font-size: 0.75rem;
-  color: #fff;
   font-weight: 500;
 }
 
-.type-chip.coin { background-color: #d97706; } /* Orange */
-.type-chip.round { background-color: #6b7280; } /* Gray */
-.type-chip.bar { background-color: #eab308; color: black; } /* Yellow */
-.type-chip.note { background-color: #059669; } /* Green */
-.type-chip.other { background-color: #7c3aed; } /* Purple */
+.type-chip.coin {
+  background-color: var(--type-coin-bg);
+  color: var(--type-coin-text);
+}
+.type-chip.round {
+  background-color: var(--type-round-bg);
+  color: var(--type-round-text);
+}
+.type-chip.bar {
+  background-color: var(--type-bar-bg);
+  color: var(--type-bar-text);
+}
+.type-chip.note {
+  background-color: var(--type-note-bg);
+  color: var(--type-note-text);
+}
+.type-chip.other {
+  background-color: var(--type-other-bg);
+  color: var(--type-other-text);
+}

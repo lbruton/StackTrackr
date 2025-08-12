@@ -1,11 +1,15 @@
 # StackrTrackr — Changelog
 
-> **Latest release: v3.04.18**
+> **Latest release: v3.04.21**
 
 
 For upcoming work, see [roadmap](roadmap.md).
 
 ## 📋 Version History
+
+### Version 3.04.21 – Header height and type color theming (2025-08-12)
+- Unified application header height across themes
+- Type summary chips now use static contrasting colors with light, dark, and sepia support
 
 ### Version 3.04.18 – Name and price quick-filter fix (2025-08-12)
 - Clicking name or price cells now applies table filters correctly
