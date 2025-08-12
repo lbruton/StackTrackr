@@ -910,14 +910,15 @@ const fetchBatchSpotPrices = async (provider, apiKey, selectedMetals, historyDay
 
     const data = await response.json();
     usage.used++; // Only increment by 1 for batch request
-    
-    const results = providerConfig.parseBatchResponse(data);
-    
+
+    const { current = {}, history = {} } =
+      providerConfig.parseBatchResponse(data) || {};
+
     // Filter results to only include selected metals
     const filteredResults = {};
-    selectedMetals.forEach(metal => {
-      if (results[metal] && results[metal] > 0) {
-        filteredResults[metal] = results[metal];
+    selectedMetals.forEach((metal) => {
+      if (current[metal] && current[metal] > 0) {
+        filteredResults[metal] = current[metal];
       }
     });
 
@@ -925,10 +926,22 @@ const fetchBatchSpotPrices = async (provider, apiKey, selectedMetals, historyDay
       throw new Error("No valid prices retrieved from batch request");
     }
 
+    // Record historical data if provided
+    const providerName = providerConfig.name;
+    Object.entries(history).forEach(([metal, entries]) => {
+      const metalName = METALS[metal]?.name || metal;
+      entries.forEach(({ timestamp, price }) => {
+        recordSpot(price, "api", metalName, providerName, timestamp);
+      });
+    });
+    if (Object.keys(history).length) {
+      renderApiHistoryTable();
+    }
+
     // Update usage
     config.usage[provider] = usage;
     saveApiConfig(config);
-    
+
     return filteredResults;
   } catch (error) {
     throw new Error(`Batch request failed: ${error.message}`);

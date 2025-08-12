@@ -12,14 +12,38 @@ const saveSpotHistory = () => saveData(SPOT_HISTORY_KEY, spotHistory);
 const loadSpotHistory = () => (spotHistory = loadData(SPOT_HISTORY_KEY, []));
 
 /**
+ * Removes spot history entries older than the specified number of days
+ *
+ * @param {number} days - Number of days to retain
+ */
+const purgeSpotHistory = (days = 180) => {
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - days);
+  spotHistory = spotHistory.filter(
+    (entry) => new Date(entry.timestamp) >= cutoff,
+  );
+};
+
+/**
  * Records a new spot price entry in history
  *
  * @param {number} newSpot - New spot price value
  * @param {string} source - Source of spot price ('manual', 'api', etc.)
  * @param {string} metal - Metal type ('Silver', 'Gold', 'Platinum', or 'Palladium')
  * @param {string|null} provider - Provider name if source is API-based
+ * @param {string|null} timestamp - Optional ISO timestamp for historical entries
  */
-const recordSpot = (newSpot, source, metal, provider = null) => {
+const recordSpot = (
+  newSpot,
+  source,
+  metal,
+  provider = null,
+  timestamp = null,
+) => {
+  purgeSpotHistory();
+  const entryTimestamp = timestamp
+    ? new Date(timestamp).toISOString().replace("T", " ").slice(0, 19)
+    : new Date().toISOString().replace("T", " ").slice(0, 19);
   if (
     !spotHistory.length ||
     spotHistory[spotHistory.length - 1].spot !== newSpot ||
@@ -30,10 +54,10 @@ const recordSpot = (newSpot, source, metal, provider = null) => {
       metal,
       source,
       provider,
-      timestamp: new Date().toISOString().replace("T", " ").slice(0, 19),
+      timestamp: entryTimestamp,
     });
-    saveSpotHistory();
   }
+  saveSpotHistory();
 };
 
 /**
