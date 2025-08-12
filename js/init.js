@@ -207,7 +207,7 @@ document.addEventListener("DOMContentLoaded", () => {
     elements.spotPriceDisplay = {};
     elements.userSpotPriceInput = {};
     elements.saveSpotBtn = {};
-    elements.resetSpotBtn = {};
+    elements.historyBtn = {};
 
     Object.values(METALS).forEach((metalConfig) => {
       const metalKey = metalConfig.key;
@@ -225,8 +225,8 @@ document.addEventListener("DOMContentLoaded", () => {
       elements.saveSpotBtn[metalKey] = safeGetElement(
         `saveSpotBtn${metalName}`,
       );
-      elements.resetSpotBtn[metalKey] = safeGetElement(
-        `resetSpotBtn${metalName}`,
+      elements.historyBtn[metalKey] = safeGetElement(
+        `historyBtn${metalName}`,
       );
 
       // Debug log for each metal

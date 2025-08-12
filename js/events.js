@@ -214,6 +214,7 @@ const updateColumnVisibility = () => {
     "premium",
     "purchaseLocation",
     "storageLocation",
+    "numista",
     "collectable",
     "notes",
     "delete",
@@ -749,7 +750,7 @@ const setupEventListeners = () => {
 
       // Main spot price action buttons
         const addBtn = document.getElementById(`addBtn${metalName}`);
-        const resetBtn = document.getElementById(`resetBtn${metalName}`);
+        const historyBtn = document.getElementById(`historyBtn${metalName}`);
         const syncBtn = document.getElementById(`syncBtn${metalName}`);
         const spotCard = document.querySelector(
           `.spot-input.${metalKey} .spot-card`,
@@ -803,31 +804,15 @@ const setupEventListeners = () => {
         );
       }
 
-      // Reset button
-      if (resetBtn) {
+      // History button (placeholder)
+      if (historyBtn) {
         safeAttachListener(
-          resetBtn,
+          historyBtn,
           "click",
           () => {
-            debugLog(`Reset button clicked for ${metalName}`);
-            if (typeof resetSpotPrice === "function") {
-              resetSpotPrice(metalName);
-            } else {
-              // Fallback reset functionality
-              const defaultPrice = metalConfig.defaultPrice;
-              localStorage.setItem(
-                metalConfig.localStorageKey,
-                defaultPrice.toString(),
-              );
-              spotPrices[metalKey] = defaultPrice;
-              if (elements.spotPriceDisplay[metalKey]) {
-                elements.spotPriceDisplay[metalKey].textContent =
-                  formatCurrency(defaultPrice);
-              }
-              updateSummary();
-            }
+            debugLog(`History button clicked for ${metalName}`);
           },
-          `Reset spot price for ${metalName}`,
+          `Spot history for ${metalName}`,
         );
       }
 
@@ -1542,24 +1527,19 @@ const updateThemeButton = () => {
   const savedTheme = localStorage.getItem(THEME_KEY);
   const mode = savedTheme ? savedTheme : "system";
   btn.classList.remove("dark", "light", "sepia", "system");
-  btn.classList.add(mode);
-  if (mode === "dark") {
-    btn.textContent = "🌙";
-    btn.setAttribute("aria-label", "Dark mode");
-    btn.setAttribute("title", "Dark mode");
-  } else if (mode === "light") {
-    btn.textContent = "☀️";
-    btn.setAttribute("aria-label", "Light mode");
-    btn.setAttribute("title", "Light mode");
-  } else if (mode === "sepia") {
-    btn.textContent = "📜";
-    btn.setAttribute("aria-label", "Sepia mode");
-    btn.setAttribute("title", "Sepia mode");
-  } else {
-    btn.textContent = "💻";
-    btn.setAttribute("aria-label", "System theme");
-    btn.setAttribute("title", "System theme");
-  }
+
+  const nextMap = { dark: "light", light: "sepia", sepia: "system", system: "dark" };
+  const iconMap = { dark: "🌙", light: "☀️", sepia: "📜", system: "💻" };
+  const labelMap = {
+    dark: "Dark mode",
+    light: "Light mode",
+    sepia: "Sepia mode",
+    system: "System theme",
+  };
+  const next = nextMap[mode];
+  btn.textContent = iconMap[next];
+  btn.setAttribute("aria-label", `Switch to ${labelMap[next]}`);
+  btn.setAttribute("title", `Switch to ${labelMap[next]}`);
 
   updateLogoTheme();
 };

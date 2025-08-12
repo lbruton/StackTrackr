@@ -1,11 +1,15 @@
 # StackrTrackr — Changelog
 
-> **Latest release: v3.04.22**
+> **Latest release: v3.04.23**
 
 
 For upcoming work, see [roadmap](roadmap.md).
 
 ## 📋 Version History
+
+### Version 3.04.23 – Inventory actions alignment (2025-08-13)
+- Fixed inventory row action order to Collect, Notes, Edit, Delete
+- Change Log and theme picker buttons now match active theme with next-mode icons
 
 ### Version 3.04.22 – Metals.dev history limit (2025-08-12)
 - Enforced 30-day history limit for Metals.dev API with default 29 days

@@ -77,20 +77,32 @@ const updateSpotCardColor = (metalKey, newPrice) => {
     .reverse()
     .find((e) => e.metal === metalConfig.name);
 
+  let arrow = "";
+  const formatted = typeof formatCurrency === "function"
+    ? formatCurrency(newPrice)
+    : newPrice.toFixed(2);
+
   if (!lastEntry) {
-    el.classList.remove("spot-up", "spot-down");
+    el.classList.remove("spot-up", "spot-down", "spot-unchanged");
+    el.textContent = formatted;
     return;
   }
 
   if (newPrice > lastEntry.spot) {
     el.classList.add("spot-up");
-    el.classList.remove("spot-down");
+    el.classList.remove("spot-down", "spot-unchanged");
+    arrow = "\u25B2"; // Up arrow
   } else if (newPrice < lastEntry.spot) {
     el.classList.add("spot-down");
-    el.classList.remove("spot-up");
+    el.classList.remove("spot-up", "spot-unchanged");
+    arrow = "\u25BC"; // Down arrow
   } else {
+    el.classList.add("spot-unchanged");
     el.classList.remove("spot-up", "spot-down");
+    arrow = "=";
   }
+
+  el.textContent = `${arrow} ${formatted}`.trim();
 };
 
 /**

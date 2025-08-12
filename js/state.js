@@ -41,7 +41,7 @@ const elements = {
   spotPriceDisplay: {},
   userSpotPriceInput: {},
   saveSpotBtn: {},
-  resetSpotBtn: {},
+  historyBtn: {},
 
   // Form elements
   inventoryForm: null,
@@ -63,8 +63,8 @@ const elements = {
   // Spot price buttons
   saveSpotBtnSilver: null,
   saveSpotBtnGold: null,
-  resetSpotBtnSilver: null,
-  resetSpotBtnGold: null,
+  historyBtnSilver: null,
+  historyBtnGold: null,
 
   // Import elements
   importCsvFile: null,
