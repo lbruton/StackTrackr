@@ -86,12 +86,6 @@ const elements = {
   exportPdfBtn: null,
   cloudSyncBtn: null,
   syncAllBtn: null,
-
-  // Custom mapping buttons
-  addMappingBtn: null,
-  applyMappingsBtn: null,
-  clearMappingsBtn: null,
-
   // Emergency reset button
   removeInventoryDataBtn: null,
   clearNumistaCacheBtn: null,
