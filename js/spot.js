@@ -37,6 +37,39 @@ const recordSpot = (newSpot, source, metal, provider = null) => {
 };
 
 /**
+ * Updates spot card color based on price movement compared to last history entry
+ *
+ * @param {string} metalKey - Metal key ('silver', 'gold', etc.)
+ * @param {number} newPrice - Newly set spot price
+ */
+const updateSpotCardColor = (metalKey, newPrice) => {
+  const metalConfig = Object.values(METALS).find((m) => m.key === metalKey);
+  if (!metalConfig) return;
+
+  const el = elements.spotPriceDisplay[metalKey];
+  if (!el) return;
+
+  const lastEntry = [...spotHistory]
+    .reverse()
+    .find((e) => e.metal === metalConfig.name);
+
+  if (!lastEntry) {
+    el.classList.remove("spot-up", "spot-down");
+    return;
+  }
+
+  if (newPrice > lastEntry.spot) {
+    el.classList.add("spot-up");
+    el.classList.remove("spot-down");
+  } else if (newPrice < lastEntry.spot) {
+    el.classList.add("spot-down");
+    el.classList.remove("spot-up");
+  } else {
+    el.classList.remove("spot-up", "spot-down");
+  }
+};
+
+/**
  * Fetches and displays current spot prices from localStorage or defaults
  */
 const fetchSpotPrice = () => {
@@ -75,6 +108,9 @@ const fetchSpotPrice = () => {
     if (timestampElement) {
       timestampElement.innerHTML = getLastUpdateTime(metalConfig.name);
     }
+
+    // Update card color based on price movement
+    updateSpotCardColor(metalConfig.key, spotPrices[metalConfig.key]);
   });
 
   updateSummary();
@@ -109,6 +145,8 @@ const updateManualSpot = (metalKey) => {
       spotPrices[metalKey],
     );
   }
+
+  updateSpotCardColor(metalKey, num);
   recordSpot(num, "manual", metalConfig.name);
 
   // Update timestamp display
@@ -167,6 +205,8 @@ const resetSpot = (metalKey) => {
     );
   }
 
+  updateSpotCardColor(metalKey, resetPrice);
+
   // Record in history
   recordSpot(resetPrice, source, metalConfig.name, providerName);
 
@@ -204,3 +244,4 @@ const resetSpotByName = (metalName) => {
 
 // Ensure global availability
 window.fetchSpotPrice = fetchSpotPrice;
+window.updateSpotCardColor = updateSpotCardColor;
