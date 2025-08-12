@@ -1501,6 +1501,21 @@ const setupSearch = () => {
 };
 
 /**
+ * Updates logo groups to match current theme
+ */
+const updateLogoTheme = () => {
+  const isDark = document.documentElement.getAttribute("data-theme") === "dark";
+  const logo = document.querySelector(".app-logo");
+  if (!logo) return;
+  const light = logo.querySelector(".light-mode");
+  const dark = logo.querySelector(".dark-mode");
+  if (light && dark) {
+    light.style.display = isDark ? "none" : "";
+    dark.style.display = isDark ? "" : "none";
+  }
+};
+
+/**
  * Sets up theme toggle event listeners
  */
 const updateThemeButton = () => {
@@ -1523,6 +1538,8 @@ const updateThemeButton = () => {
     btn.setAttribute("aria-label", "System theme");
     btn.setAttribute("title", "System theme");
   }
+
+  updateLogoTheme();
 };
 
 window.updateThemeButton = updateThemeButton;
