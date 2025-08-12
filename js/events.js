@@ -1091,53 +1091,6 @@ const setupEventListeners = () => {
         "Cloud Sync button",
       );
     }
-
-    // Custom mapping buttons
-    if (elements.addMappingBtn) {
-      safeAttachListener(
-        elements.addMappingBtn,
-        "click",
-        () => {
-          const pattern = prompt("Enter regex pattern to match:");
-          const field = prompt("Enter field name to map to:");
-          if (pattern && field) {
-            CustomMapping.addMapping(pattern, field);
-            alert(`Mapping added: ${pattern} → ${field}`);
-          }
-        },
-        "Add custom mapping",
-      );
-    }
-    if (elements.applyMappingsBtn) {
-      safeAttachListener(
-        elements.applyMappingsBtn,
-        "click",
-        () => {
-          const name = prompt("Enter field name to test:");
-          if (name) {
-            const mapped = CustomMapping.mapField(name);
-            alert(
-              mapped
-                ? `${name} → ${mapped}`
-                : `No mapping for '${name}'`,
-            );
-          }
-        },
-        "Apply custom mappings",
-      );
-    }
-    if (elements.clearMappingsBtn) {
-      safeAttachListener(
-        elements.clearMappingsBtn,
-        "click",
-        () => {
-          CustomMapping.clear();
-          alert("Custom mappings cleared.");
-        },
-        "Clear custom mappings",
-      );
-    }
-
     const cloudSyncCloseBtn = document.getElementById("cloudSyncCloseBtn");
     if (cloudSyncCloseBtn && elements.cloudSyncModal) {
       safeAttachListener(
