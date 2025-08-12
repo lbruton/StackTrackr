@@ -1,7 +1,7 @@
 # Function Reference
 
 
-> **Latest release: v3.04.33**
+> **Latest release: v3.04.34**
 
 
 | File | Function | Description |
@@ -92,7 +92,7 @@
 | inventory.js | generateBackupHtml | Generates HTML content for backup export |
 | inventory.js | generateReadmeContent | Generates README content for backup archive |
 | inventory.js | saveInventory | Saves current inventory to localStorage |
-| inventory.js | sanitizeTablesOnLoad | Removes non-alphanumeric characters from inventory records and cached Numista data |
+| inventory.js | sanitizeTablesOnLoad | Removes non-alphanumeric characters from inventory records |
 | inventory.js | loadInventory | Loads inventory from localStorage with comprehensive data migration |
 | inventory.js | getNextSerial | Generates a unique serial number for inventory items |
 | inventory.js | getColor |  |

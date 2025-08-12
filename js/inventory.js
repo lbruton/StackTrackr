@@ -440,24 +440,13 @@ const saveInventory = () => {
 };
 
 /**
- * Removes non-alphanumeric characters from inventory records and cached Numista data.
+ * Removes non-alphanumeric characters from inventory records.
  *
  * @returns {void}
  */
 const sanitizeTablesOnLoad = () => {
   inventory = inventory.map(item => sanitizeObjectFields(item));
 
-  const rawCsv = localStorage.getItem(NUMISTA_RAW_KEY);
-  if (rawCsv) {
-    try {
-      const parsed = Papa.parse(rawCsv, { header: true, skipEmptyLines: true });
-      const cleanedRows = parsed.data.map(row => sanitizeObjectFields(row));
-      const sanitizedCsv = Papa.unparse(cleanedRows);
-      localStorage.setItem(NUMISTA_RAW_KEY, sanitizedCsv);
-    } catch (err) {
-      console.warn('Failed to sanitize Numista table', err);
-    }
-  }
 };
 
 /**
@@ -1419,9 +1408,7 @@ const importNumistaCsv = (file, override = false) => {
     reader.onload = function(e) {
       try {
         const csvText = e.target.result;
-        localStorage.setItem(NUMISTA_RAW_KEY, csvText);
-        const storedCsv = localStorage.getItem(NUMISTA_RAW_KEY) || "";
-        const results = Papa.parse(storedCsv, {
+        const results = Papa.parse(csvText, {
           header: true,
           skipEmptyLines: true,
           transformHeader: (h) => h.trim(), // Handle Numista headers with trailing spaces

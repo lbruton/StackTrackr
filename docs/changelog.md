@@ -1,11 +1,15 @@
 # StackrTrackr — Changelog
 
-> **Latest release: v3.04.33**
+> **Latest release: v3.04.34**
 
 
 For upcoming work, see [announcements](announcements.md).
 
 ## 📋 Version History
+
+### Version 3.04.34 – Streamlined Numista Imports (2025-08-12)
+- **Removed Numista cache**: Eliminated stored Numista CSV cache in favor of direct import.
+- **UI cleanup**: Removed Clear Numista Cache option from Files menu.
 
 ### Version 3.04.33 – Import Overwrite Confirmation (2025-08-12)
 - **Overwrite warnings**: Import CSV and Numista CSV now require confirmation before replacing existing data.

@@ -1035,30 +1035,6 @@ const setupEventListeners = () => {
         );
       }
 
-      // Clear Numista Inventory button
-      if (elements.clearNumistaInventoryBtn) {
-        safeAttachListener(
-          elements.clearNumistaInventoryBtn,
-          "click",
-          function () {
-            if (
-              confirm(
-                "Remove all items with Numista IDs? This cannot be undone.",
-              )
-            ) {
-              inventory = inventory.filter(item => !item.numistaId);
-              if (typeof catalogManager?.cleanupOrphans === "function") {
-                catalogManager.cleanupOrphans(inventory);
-              }
-              saveInventory();
-              renderTable();
-              alert("Numista inventory cleared.");
-            }
-          },
-          "Clear Numista inventory button",
-        );
-      }
-
       // Export buttons
       if (elements.exportCsvBtn) {
         safeAttachListener(
@@ -1127,26 +1103,6 @@ const setupEventListeners = () => {
           }
         },
         "Remove inventory data button",
-      );
-    }
-
-    // Clear Numista Cache Button
-    if (elements.clearNumistaCacheBtn) {
-      safeAttachListener(
-        elements.clearNumistaCacheBtn,
-        "click",
-        function () {
-          if (
-            confirm(
-              "This will remove all cached Numista data from the lookup tables.",
-            )
-          ) {
-            localStorage.removeItem('numista-cache');
-            alert("Numista cache cleared.");
-            elements.clearNumistaCacheBtn.style.display = 'none';
-          }
-        },
-        "Clear Numista cache button",
       );
     }
 

@@ -1,3 +1,23 @@
+# Implementation Summary: Streamlined Numista Imports
+
+> **Latest release: v3.04.34**
+
+## Version Update: 3.04.33 → 3.04.34
+
+## User Requirements Implemented
+
+- Removed storage of raw Numista CSV data.
+- Dropped Clear Numista Cache button from Files menu.
+
+## Technical Changes Made
+
+### Files Modified:
+1. **`index.html`**: Removed Clear Numista Cache buttons.
+2. **`js/inventory.js`**: Imported Numista CSV directly without caching.
+3. **`js/constants.js`**: Removed `NUMISTA_RAW_KEY` and bumped version.
+4. **`js/events.js`** & **`js/api.js`**: Removed handlers for deleted buttons.
+5. **Documentation**: Updated announcements, changelog, roadmap, status, version references, and function table.
+
 # Implementation Summary: Import Overwrite Confirmation
 
 > **Latest release: v3.04.33**
