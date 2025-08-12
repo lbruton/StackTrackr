@@ -1543,24 +1543,19 @@ const updateThemeButton = () => {
   const savedTheme = localStorage.getItem(THEME_KEY);
   const mode = savedTheme ? savedTheme : "system";
   btn.classList.remove("dark", "light", "sepia", "system");
-  btn.classList.add(mode);
-  if (mode === "dark") {
-    btn.textContent = "🌙";
-    btn.setAttribute("aria-label", "Dark mode");
-    btn.setAttribute("title", "Dark mode");
-  } else if (mode === "light") {
-    btn.textContent = "☀️";
-    btn.setAttribute("aria-label", "Light mode");
-    btn.setAttribute("title", "Light mode");
-  } else if (mode === "sepia") {
-    btn.textContent = "📜";
-    btn.setAttribute("aria-label", "Sepia mode");
-    btn.setAttribute("title", "Sepia mode");
-  } else {
-    btn.textContent = "💻";
-    btn.setAttribute("aria-label", "System theme");
-    btn.setAttribute("title", "System theme");
-  }
+
+  const nextMap = { dark: "light", light: "sepia", sepia: "system", system: "dark" };
+  const iconMap = { dark: "🌙", light: "☀️", sepia: "📜", system: "💻" };
+  const labelMap = {
+    dark: "Dark mode",
+    light: "Light mode",
+    sepia: "Sepia mode",
+    system: "System theme",
+  };
+  const next = nextMap[mode];
+  btn.textContent = iconMap[next];
+  btn.setAttribute("aria-label", `Switch to ${labelMap[next]}`);
+  btn.setAttribute("title", `Switch to ${labelMap[next]}`);
 
   updateLogoTheme();
 };
