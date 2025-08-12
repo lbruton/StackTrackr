@@ -785,26 +785,25 @@ const updateTypeSummary = () => {
     }
   ];
 
-  const chips = [];
-  categories.forEach(cat => {
-    const counts = inventory.reduce((acc, item) => {
-      const key = item[cat.field] || (cat.field === 'purchaseLocation' ? 'Numista Import' : 'Unknown');
-      acc[key] = (acc[key] || 0) + 1;
-      return acc;
-    }, {});
-    Object.entries(counts).forEach(([val, count]) => {
-      const safeVal = sanitizeHtml(val);
-      const colors = cat.getColors(val);
-      const cls = cat.getClass ? ` ${cat.getClass(val)}` : '';
-      chips.push({
-        count,
-        html: `<span class="summary-chip${cls}" style="background-color: ${colors.bg}; color: ${colors.text};">${safeVal}: ${count}</span>`
-      });
-    });
-  });
+  const html = categories
+    .map(cat => {
+      const counts = inventory.reduce((acc, item) => {
+        const key = item[cat.field] || (cat.field === 'purchaseLocation' ? 'Numista Import' : 'Unknown');
+        acc[key] = (acc[key] || 0) + 1;
+        return acc;
+      }, {});
+      return Object.entries(counts)
+        .map(([val, count]) => {
+          const safeVal = sanitizeHtml(val);
+          const colors = cat.getColors(val);
+          const cls = cat.getClass ? ` ${cat.getClass(val)}` : '';
+          return `<span class="summary-chip${cls}" style="background-color: ${colors.bg}; color: ${colors.text};">${safeVal}: ${count}</span>`;
+        })
+        .join('');
+    })
+    .join('');
 
-  chips.sort((a, b) => b.count - a.count);
-  el.innerHTML = chips.map(c => c.html).join('');
+  el.innerHTML = html;
 };
 window.updateTypeSummary = updateTypeSummary;
 

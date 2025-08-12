@@ -1,7 +1,7 @@
 # Function Reference
 
 
-> **Latest release: v3.04.38**
+> **Latest release: {{VERSION_WITH_V}}**
 
 
 | File | Function | Description |
@@ -142,6 +142,8 @@
 | theme.js | setupSystemThemeListener | Sets up system theme change listener |
 | constants.js | getVersionString | Returns formatted version string |
 | constants.js | injectVersionString | Inserts formatted version string into a target element |
+| constants.js | getTemplateVariables | Returns object with all template variables for documentation replacement |
+| constants.js | replaceTemplateVariables | Replaces {{VARIABLE}} placeholders in text with actual values |
 | customMapping.js | addMapping | Adds a regex-based mapping rule |
 | customMapping.js | mapField | Maps an input field name using stored rules |
 | customMapping.js | clear | Removes all custom mapping rules |

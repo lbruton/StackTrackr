@@ -273,6 +273,30 @@ const DEFAULT_CURRENCY = "USD";
  */
 const getVersionString = (prefix = "v") => `${prefix}${APP_VERSION}`;
 
+/**
+ * Template replacement functions for documentation
+ * Used by build process to replace {{TEMPLATE}} variables
+ */
+const getTemplateVariables = () => ({
+  VERSION: APP_VERSION,
+  VERSION_WITH_V: `v${APP_VERSION}`,
+  VERSION_TITLE: `StackrTrackr v${APP_VERSION}`,
+  VERSION_BRANCH: APP_VERSION.split('.').slice(0, 2).join('.') + '.x',
+  BRANDING_NAME: BRANDING_TITLE
+});
+
+/**
+ * Replaces template variables in text
+ * @param {string} text - Text containing {{VARIABLE}} placeholders
+ * @returns {string} Text with variables replaced
+ */
+const replaceTemplateVariables = (text) => {
+  const variables = getTemplateVariables();
+  return text.replace(/\{\{(\w+)\}\}/g, (match, key) => {
+    return variables[key] || match;
+  });
+};
+
 /** Maximum upload size in bytes for local imports (2MB) */
 const MAX_LOCAL_FILE_SIZE = 2 * 1024 * 1024;
 
@@ -466,4 +490,6 @@ if (typeof window !== "undefined") {
   window.DEFAULT_CURRENCY = DEFAULT_CURRENCY;
   window.BRANDING_DOMAIN_OPTIONS = BRANDING_DOMAIN_OPTIONS;
   window.BRANDING_DOMAIN_OVERRIDE = BRANDING_DOMAIN_OVERRIDE;
+  window.getTemplateVariables = getTemplateVariables;
+  window.replaceTemplateVariables = replaceTemplateVariables;
 }

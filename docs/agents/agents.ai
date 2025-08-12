@@ -1,7 +1,7 @@
 # StackTrackr Project Instructions
 
 ## CONTEXT
-Precious metals inventory app (v3.04.38+). Client-side: JS modules + localStorage + CSS. Tracks Au/Ag/Pt/Pd.
+Precious metals inventory app ({{VERSION_WITH_V}}+). Client-side: JS modules + localStorage + CSS. Tracks Au/Ag/Pt/Pd.
 
 ## FILES
 - `index.html` - main UI
@@ -94,7 +94,7 @@ AUTO_WARN: "⚠️ Chat approaching limit. Start new conversation soon and refer
 `index.html` `events.js` `styles.css` - coordinate changes, minimal edits
 
 ## NOTES
-- Current version: 3.04.33 (import overwrite warnings & red Numista button)
+- Current version: {{VERSION}} (import overwrite warnings & red Numista button)
 - **THEME TOGGLE FIXED**: Button now shows current theme color/icon, removed system mode
 - **THEME ROTATION**: dark → light → sepia → dark (no system mode)
 - **BUTTON STYLING**: Shows current theme with matching background color

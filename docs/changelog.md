@@ -1,15 +1,25 @@
 # StackrTrackr — Changelog
 
-> **Latest release: v3.04.38**
+> **Latest release: v3.04.37**
 
 
 For upcoming work, see [announcements](announcements.md).
 
 ## 📋 Version History
 
-### Version 3.04.38 – Sorted Summary Chips (2025-08-16)
-- Summary chips now appear in a dedicated container sorted by count.
-- Backup warning moved directly beneath the inventory table.
+### Version 3.04.38 – Documentation Template System (2025-08-15)
+- **Template System**: Created comprehensive documentation templating system
+  - Added template variable functions to `js/constants.js` for dynamic version replacement
+  - Implemented `getTemplateVariables()` and `replaceTemplateVariables()` functions
+  - Created Node.js build script `scripts/update-templates.js` for processing documentation
+  - Template variables: `{{VERSION}}`, `{{VERSION_WITH_V}}`, `{{VERSION_TITLE}}`, `{{VERSION_BRANCH}}`, `{{BRANDING_NAME}}`
+- **Documentation Standardization**: Replaced hardcoded version references with template variables
+  - Updated 16 documentation files across `/docs/` directory and subdirectories
+  - Excluded `docs/changelog.md` which must maintain specific version history
+  - Prioritized high-impact files: README.md, status.md, structure.md, announcements.md, versioning.md
+- **Maintenance Reduction**: Single-source version management eliminates manual updates across documentation
+- **Build Process**: Automated template replacement ensures consistency and reduces human error
+- **Future-Proof**: Easy version updates by changing only `APP_VERSION` in constants.js
 
 ### Version 3.04.37 – Fuzzy Search Engine Module (2025-08-15)
 - Added standalone fuzzy search engine with Levenshtein, n-gram, and word-order independent matching.

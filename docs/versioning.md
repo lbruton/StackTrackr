@@ -1,6 +1,6 @@
 # Dynamic Version Management System
 
-> **Latest release: v3.04.38**
+> **Latest release: {{VERSION_WITH_V}}**
 
 ## Overview 
 
@@ -9,7 +9,7 @@ The StackrTrackr now uses a dynamic version management system that automatically
 ## How It Works
 
 ### Single Source of Truth
- - Version is defined once in `js/constants.js` as `APP_VERSION = '3.04.38'`
+ - Version is defined once in `js/constants.js` as `APP_VERSION = '{{VERSION}}'`
   - This is the ONLY place you need to update the version number
 
 ### Automatic Propagation
@@ -19,7 +19,7 @@ The StackrTrackr now uses a dynamic version management system that automatically
 
 ### Utility Functions
 - `js/constants.js` provides:
-- `getVersionString(prefix)`: Returns formatted version (e.g., "v3.04.25")
+- `getVersionString(prefix)`: Returns formatted version (e.g., "{{VERSION_WITH_V}}")
   - `injectVersionString(elementId, prefix)`: Inserts formatted version into a target element
 - `js/utils.js` provides:
   - `getAppTitle(baseTitle)`: Returns full app title with version
@@ -31,14 +31,14 @@ To release a new version:
 1. **Update ONLY the constants file:**
    ```javascript
    // In js/constants.js
-    const APP_VERSION = '3.04.25';  // Change this line only
+    const APP_VERSION = '{{VERSION}}';  // Change this line only
    ```
 
 2. **All these will automatically update:**
-  - Page title: "StackrTrackr v3.04.25"
-  - Page heading: "StackrTrackr v3.04.25"
-  - Browser tab title: "StackrTrackr v3.04.25"
-   - App header: "StackrTrackr v3.03.07b"
+  - Page title: "{{VERSION_TITLE}}"
+  - Page heading: "{{VERSION_TITLE}}"
+  - Browser tab title: "{{VERSION_TITLE}}"
+   - App header: "{{VERSION_TITLE}}"
 
 3. **Update changelog:** Add entry to `/docs/changelog.md` for documentation
 
