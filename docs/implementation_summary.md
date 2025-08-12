@@ -1,6 +1,25 @@
+# Implementation Summary: Import Overwrite Confirmation
+
+> **Latest release: v3.04.33**
+
+## Version Update: 3.04.32 → 3.04.33
+
+## User Requirements Implemented
+
+- Import Numista CSV button uses red danger styling.
+- Import CSV and Numista CSV buttons warn before overwriting data.
+
+## Technical Changes Made
+
+### Files Modified:
+1. **`index.html`**: Updated Numista import button to danger styling.
+2. **`js/events.js`**: Added overwrite confirmation prompts for CSV and Numista imports.
+3. **`js/constants.js`**: Bumped version to 3.04.33.
+4. **Documentation**: Updated announcements, changelog, status, versioning, function table, workflow, and summary.
+
 # Implementation Summary: Unified Logo
 
-> **Latest release: v3.04.32**
+> **Latest release: v3.04.33**
 
 ## Version Update: 3.04.24 → 3.04.25
 

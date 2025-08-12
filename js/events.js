@@ -912,8 +912,14 @@ const setupEventListeners = () => {
         elements.importCsvOverride,
         "click",
         () => {
-          csvImportOverride = true;
-          elements.importCsvFile.click();
+          if (
+            confirm(
+              "Importing CSV will overwrite all existing data. To combine data, choose Merge instead. Press OK to continue.",
+            )
+          ) {
+            csvImportOverride = true;
+            elements.importCsvFile.click();
+          }
         },
         "CSV override button",
       );
@@ -986,8 +992,14 @@ const setupEventListeners = () => {
         importNumistaBtn,
         "click",
         () => {
-          numistaOverride = true;
-          elements.numistaImportFile.click();
+          if (
+            confirm(
+              "Importing Numista CSV will overwrite all existing data. To combine data, choose Merge instead. Press OK to continue.",
+            )
+          ) {
+            numistaOverride = true;
+            elements.numistaImportFile.click();
+          }
         },
         "Import Numista CSV button",
       );
