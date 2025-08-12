@@ -634,6 +634,10 @@ input[type="submit"] {
   color: var(--danger);
 }
 
+.spot-unchanged {
+  color: var(--warning);
+}
+
 .spot-card-timestamp {
   font-size: 0.7rem;
   color: var(--text-muted);
