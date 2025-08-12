@@ -18,15 +18,15 @@
   --danger-hover: #b91c1c;
 
   /* Background Colors */
-  --bg-primary: #ffffff;
-  --bg-secondary: #f8fafc;
-  --bg-tertiary: #f1f5f9;
-  --bg-card: #ffffff;
+  --bg-primary: #e5e7eb;
+  --bg-secondary: #d1d5db;
+  --bg-tertiary: #cbd5e1;
+  --bg-card: #e5e7eb;
 
   /* Text Colors */
-  --text-primary: #1e293b;
-  --text-secondary: #64748b;
-  --text-muted: #94a3b8;
+  --text-primary: #141c29;
+  --text-secondary: #455161;
+  --text-muted: #425063;
 
   /* Border & Shadow */
   --border: #e2e8f0;
@@ -93,6 +93,48 @@
   --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.3), 0 2px 4px -2px rgb(0 0 0 / 0.3);
   --shadow-lg:
     0 10px 15px -3px rgb(0 0 0 / 0.3), 0 4px 6px -4px rgb(0 0 0 / 0.3);
+}
+
+[data-theme="sepia"] {
+  /* Primary Colors - Sepia Mode */
+  --primary: #b35c1f;
+  --primary-hover: #934a17;
+  --secondary: #8b7355;
+  --secondary-hover: #6d5c3f;
+  --success: #698f3f;
+  --success-hover: #577a34;
+  --info: #0ea5e9;
+  --warning: #d97706;
+  --warning-hover: #b45309;
+  --danger: #dc2626;
+  --danger-hover: #b91c1c;
+
+  /* Metal-specific Colors - Sepia tone */
+  --silver: #a8a29e;
+  --gold: #b58900;
+  --platinum: #8d8d8d;
+  --palladium: #a58b6f;
+
+  /* Background Colors - Sepia Mode */
+  --bg-primary: #f2e7d5;
+  --bg-secondary: #e9ddc8;
+  --bg-tertiary: #deceb4;
+  --bg-card: #f2e7d5;
+
+  /* Text Colors - Sepia Mode */
+  --text-primary: #3e2f1e;
+  --text-secondary: #5a4a36;
+  --text-muted: #6f604e;
+
+  /* Border & Shadow - Sepia Mode */
+  --border: #d1c2a5;
+  --border-hover: #c0b198;
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg:
+    0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+
+  filter: sepia(30%);
 }
 
 /* =============================================================================
@@ -173,26 +215,17 @@ label {
   box-shadow: var(--shadow-sm);
 }
 
-.app-title {
+.app-logo {
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  margin-right: auto;
 }
 
-.app-title h1 {
-  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-  font-weight: 700;
-  font-size: 2rem;
-  margin: 0;
-  background: linear-gradient(135deg, var(--primary), var(--primary-hover));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.app-subtitle {
-  font-size: 0.9rem;
-  color: var(--text-secondary);
-  margin-top: 0.25rem;
+.app-logo svg {
+  height: 2.5rem;
+  width: auto;
+  max-width: 100%;
+  display: block;
 }
 
 .container {
@@ -1558,8 +1591,6 @@ td {
 }
 
 #inventoryTable th[data-column="collectable"] svg {
-    width: 1em;
-    height: 1em;
     display: block;
     margin: 0 auto;
     fill: currentColor;
@@ -1627,16 +1658,20 @@ td .btn {
 }
 
 td .action-btn {
-  width: 4.5rem;
-  margin: 1px auto;
+  width: 2rem;
+  height: 2rem;
+  margin: 0 auto;
   display: flex;
+  align-items: center;
   justify-content: center;
 }
 
 td .action-icon {
-  width: 4.5rem;
-  margin: 1px auto;
+  width: 1.25rem;
+  height: 1.25rem;
+  margin: 0 auto;
   display: flex;
+  align-items: center;
   justify-content: center;
   cursor: pointer;
 }
@@ -2794,7 +2829,7 @@ input:disabled + .slider {
     gap: var(--spacing);
   }
 
-  .app-header h1 {
+  .app-logo {
     margin: 0;
   }
 
@@ -2951,3 +2986,33 @@ input:disabled + .slider {
     grid-template-columns: repeat(2, 1fr);
   }
 }
+#inventoryTable th[data-column="collectable"],
+#inventoryTable th[data-column="edit"],
+#inventoryTable th[data-column="notes"],
+#inventoryTable th[data-column="delete"],
+#inventoryTable td[data-column="collectable"],
+#inventoryTable td[data-column="edit"],
+#inventoryTable td[data-column="notes"],
+#inventoryTable td[data-column="delete"] {
+  width: 2rem;
+  height: 2rem;
+  padding: 0.25rem;
+  text-align: center;
+}
+
+.collectable-status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.collectable-status svg,
+#inventoryTable th[data-column="collectable"] svg,
+td .action-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.icon-gold { color: #d4af37; }
+.icon-copper { color: #b87333; }

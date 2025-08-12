@@ -4,26 +4,27 @@
 /**
  * Sets application theme and updates localStorage
  *
- * @param {string} theme - 'dark', 'light', or 'system'
- */
+ * @param {string} theme - 'dark', 'light', 'sepia', or 'system'
+*/
 const setTheme = (theme) => {
   if (theme === "dark") {
     document.documentElement.setAttribute("data-theme", "dark");
     localStorage.setItem(THEME_KEY, "dark");
+  } else if (theme === "light") {
+    document.documentElement.removeAttribute("data-theme");
+    localStorage.setItem(THEME_KEY, "light");
+  } else if (theme === "sepia") {
+    document.documentElement.setAttribute("data-theme", "sepia");
+    localStorage.setItem(THEME_KEY, "sepia");
   } else {
-    if (theme === "light") {
-      document.documentElement.removeAttribute("data-theme");
-      localStorage.setItem(THEME_KEY, "light");
+    localStorage.setItem(THEME_KEY, "system");
+    const systemPrefersDark =
+      window.matchMedia &&
+      window.matchMedia("(prefers-color-scheme: dark)").matches;
+    if (systemPrefersDark) {
+      document.documentElement.setAttribute("data-theme", "dark");
     } else {
-      localStorage.removeItem(THEME_KEY);
-      const systemPrefersDark =
-        window.matchMedia &&
-        window.matchMedia("(prefers-color-scheme: dark)").matches;
-      if (systemPrefersDark) {
-        document.documentElement.setAttribute("data-theme", "dark");
-      } else {
-        document.documentElement.removeAttribute("data-theme");
-      }
+      document.documentElement.removeAttribute("data-theme");
     }
   }
   if (typeof renderTable === "function") {
@@ -48,11 +49,19 @@ const initTheme = () => {
 };
 
 /**
- * Toggles between dark and light themes
+ * Cycles through available themes
  */
 const toggleTheme = () => {
-  const currentTheme = document.documentElement.getAttribute("data-theme");
-  setTheme(currentTheme === "dark" ? "light" : "dark");
+  const current = localStorage.getItem(THEME_KEY) || "system";
+  if (current === "dark") {
+    setTheme("light");
+  } else if (current === "light") {
+    setTheme("sepia");
+  } else if (current === "sepia") {
+    setTheme("system");
+  } else {
+    setTheme("dark");
+  }
 };
 
 /**
@@ -63,8 +72,8 @@ const setupSystemThemeListener = () => {
     window
       .matchMedia("(prefers-color-scheme: dark)")
       .addEventListener("change", (e) => {
-        // Only auto-switch if user hasn't set a preference
-        if (!localStorage.getItem(THEME_KEY)) {
+        // Only auto-switch if user preference is system
+        if (localStorage.getItem(THEME_KEY) === "system") {
           setTheme(e.matches ? "dark" : "light");
         }
       });

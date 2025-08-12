@@ -66,10 +66,26 @@
   <body>
     <!-- Application Header -->
     <div class="app-header">
-      <div class="app-title">
-        <h1>StackTrackr</h1>
-        <p class="app-subtitle">The open source precious metals tracking tool.</p>
-      </div>
+      <h1 class="app-logo" aria-label="StackTrackr">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 40" role="img">
+          <defs>
+            <linearGradient id="logo-light" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="#2563eb" />
+              <stop offset="100%" stop-color="#1d4ed8" />
+            </linearGradient>
+            <linearGradient id="logo-dark" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="#93c5fd" />
+              <stop offset="100%" stop-color="#3b82f6" />
+            </linearGradient>
+          </defs>
+          <g class="light-mode">
+            <text x="0" y="30" font-size="32" font-family="Segoe UI, Tahoma, Geneva, Verdana, sans-serif" fill="url(#logo-light)">StackTrackr</text>
+          </g>
+          <g class="dark-mode" style="display: none">
+            <text x="0" y="30" font-size="32" font-family="Segoe UI, Tahoma, Geneva, Verdana, sans-serif" fill="url(#logo-dark)">StackTrackr</text>
+          </g>
+        </svg>
+      </h1>
       <div style="margin-left: auto; display: flex; gap: 0.5rem">
         <button class="btn" id="aboutBtn" title="About" aria-label="About">
           About 📖
@@ -418,9 +434,9 @@
             <tr>
               <th class="shrink" data-column="date">Date</th>
               <th class="shrink" data-column="type">Type</th>
-              <th class="shrink" data-column="composition">Composition</th>
-              <th class="expand" data-column="name">Name</th>
+              <th class="shrink" data-column="metal">Metal</th>
               <th class="shrink" data-column="qty">Qty</th>
+              <th class="expand" data-column="name">Name</th>
               <th class="shrink" data-column="weight">Weight</th>
               <th class="shrink" data-column="purchasePrice" title="USD">Price ($)</th>
               <th class="shrink" data-column="spot" title="USD">Spot ($)</th>
@@ -430,8 +446,8 @@
               <!-- Numista column moved before Collectable -->
               <th class="shrink" data-column="numista">N#</th>
               <th class="shrink" data-column="collectable" aria-label="Collectable" title="Collectable">
-                <svg class="collectable-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true">
-                  <path fill="currentColor" d="M2 8V6a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v2H2zm0 2h20v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-9zm9 3v4h2v-4h-2z"/>
+                <svg class="collectable-icon icon-gold" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true">
+                  <path fill="currentColor" d="M2 17h20l-5-10h-10l-5 10z"/>
                 </svg>
               </th>
               <th class="shrink" data-column="edit" aria-label="Edit" title="Edit">⚙️</th>
@@ -779,7 +795,7 @@
             <!-- First row of add form fields -->
             <div class="grid grid-2">
               <div>
-                <label for="itemMetal">Composition</label>
+                <label for="itemMetal">Metal</label>
                 <select id="itemMetal">
                   <option value="Silver">Silver</option>
                   <option value="Gold">Gold</option>
@@ -905,7 +921,7 @@
           <!-- First row of edit form fields -->
           <div class="grid grid-2">
             <div>
-                <label for="editMetal">Composition</label>
+                <label for="editMetal">Metal</label>
               <select id="editMetal">
                 <option value="Silver">Silver</option>
                 <option value="Gold">Gold</option>
@@ -1147,7 +1163,7 @@
     <footer class="app-footer">
       <div class="storage-line">Storage: <span id="storageUsage"></span> <progress id="storageUsageBar" max="5120" value="0"></progress> <a href="#" id="storageReportLink">Storage report</a></div>
       <div class="footer-meta">
-        <span>Thank you for using StackTrackr (<span id="footerVersion"></span>). © 2025 <span id="footerDomain">stacktrackr.com</span>.</span>
+        <span>Thank you for using StackTrackr (<span id="footerVersion">v3.04.13</span>). © 2025 <span id="footerDomain">stacktrackr.com</span>.</span>
         <span class="footer-links"><a href="../index.html">Current build</a> | <a href="https://github.com/lbruton/StackTrackr/issues" target="_blank" rel="noopener">Report issues</a></span>
       </div>
     </footer>
@@ -1508,15 +1524,18 @@
             <div class="settings-card">
               <h3>Third-Party</h3>
               <p class="settings-subtext">Import data from external services like Numista.</p>
-              <div class="third-party-block">
-                <div class="import-export-grid">
-                  <button class="btn" id="importNumistaBtn">Import Numista</button>
-                  <button class="btn" id="mergeNumistaBtn">Merge Numista</button>
-                  <input type="file" id="numistaImportFile" accept=".csv" hidden />
-                  <div class="beta-warning">⚠️ Numista import is a beta feature</div>
+                <div class="third-party-block">
+                  <div class="import-export-grid">
+                    <div class="grid grid-2">
+                      <button class="btn" id="importNumistaBtn">Import Numista</button>
+                      <button class="btn" id="mergeNumistaBtn">Merge Numista</button>
+                    </div>
+                    <button class="btn warning" id="clearNumistaInventoryBtn">Clear Numista Inventory</button>
+                    <input type="file" id="numistaImportFile" accept=".csv" hidden />
+                    <div class="beta-warning">⚠️ Numista import is a beta feature</div>
+                  </div>
                 </div>
               </div>
-            </div>
 
             <div class="settings-card">
               <h3>Custom Mapping</h3>
@@ -1527,6 +1546,7 @@
                   <button class="btn" id="applyMappingsBtn">Apply Mappings</button>
                   <button class="btn" id="clearMappingsBtn">Clear Mappings</button>
                 </div>
+                <div class="beta-warning">⚠️ Custom mapping is a beta feature</div>
               </div>
             </div>
 
@@ -1541,7 +1561,7 @@
                   Clear Numista Cache
                 </button>
                 <button class="btn danger" id="boatingAccidentBtn">
-                  🏴‍☠️ So, you've been in a boating accident? 🏴‍☠️
+                  Boating Accident?
                 </button>
               </div>
             </div>
@@ -2203,7 +2223,7 @@
         <div class="modal-body">
           <div class="filters-grid">
             <div class="filter-group">
-              <label for="filterMetal">Metal/Composition</label>
+              <label for="filterMetal">Metal</label>
               <select id="filterMetal" class="filter-select" multiple>
                 <option value="">All Metals</option>
               </select>

@@ -1,11 +1,11 @@
 # Project Status - StackTrackr
 
 
-> **Latest release: v3.04.13**
+> **Latest release: v3.04.14**
 
-## 🎯 Current State: **BETA v3.04.13** ✅ MAINTAINED & OPTIMIZED
+## 🎯 Current State: **BETA v3.04.14** ✅ MAINTAINED & OPTIMIZED
 
-**StackTrackr v3.04.13** is a fully-featured, client-side web application for tracking precious metal investments (Silver, Gold, Platinum, Palladium) with comprehensive inventory management, API integration, and complete backup capabilities. The 3.04.x series focuses on polish, maintenance, and optimization.
+**StackTrackr v3.04.14** is a fully-featured, client-side web application for tracking precious metal investments (Silver, Gold, Platinum, Palladium) with comprehensive inventory management, API integration, and complete backup capabilities. The 3.04.x series focuses on polish, maintenance, and optimization.
 
 
 ## 🏗️ Architecture Overview
@@ -25,6 +25,7 @@ The tool features a **modular JavaScript architecture** with separate files for 
 
 ## ✨ Latest Changes
 
+ - **v3.04.14 - UI and filter enhancements**: date sanitization, type summary, icon polish
  - **v3.04.13 - Simplified archive workflow**: Update-archive script keeps only the latest previous build
  - **v3.04.12 - Quick filter object storage**: Quick filter stores criteria as objects for exclude support
  - **v3.04.11 - Collectable column icon**: Table header uses a treasure chest icon with accessible label
@@ -187,7 +188,7 @@ If continuing development in a new chat session:
 ```
 StackTrackr/
 ├── js/                     # Modular JavaScript (cleaned structure)
-│   ├── constants.js        # Version 3.04.13 + metal configs
+│   ├── constants.js        # Version 3.04.14 + metal configs
 │   ├── state.js           # App state + DOM caching
 │   ├── inventory.js       # Core CRUD + notes handling
 │   ├── events.js          # UI event listeners
@@ -209,6 +210,6 @@ StackTrackr/
 
 ---
 
-**Last Updated**: August 11, 2025
+**Last Updated**: August 12, 2025
 **Status**: ✅ COMPLETE - Stable release ready for production use
 **Documentation**: ✅ ALL FILES SYNCHRONIZED AND CURRENT

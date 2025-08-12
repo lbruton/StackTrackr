@@ -18,7 +18,7 @@ const filterInventory = () => {
   Object.entries(columnFilters).forEach(([field, value]) => {
     const lower = value.toLowerCase();
     result = result.filter((item) => {
-      const rawVal = item[field] ?? (field === 'composition' ? item.metal : '');
+      const rawVal = item[field] ?? (field === 'metal' ? item.metal : '');
       const fieldVal = String(rawVal ?? '').toLowerCase();
       return fieldVal === lower;
     });

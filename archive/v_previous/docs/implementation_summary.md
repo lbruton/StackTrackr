@@ -1,3 +1,22 @@
+# Implementation Summary: Archive Workflow Simplification
+
+> **Latest release: v3.04.13**
+
+## Version Update: 3.04.12 → 3.04.13
+
+## User Requirements Implemented
+
+- Simplified archive script to maintain a single previous build snapshot
+- Updated version across constants, documentation, and footer
+
+## Technical Changes Made
+
+### Files Modified:
+1. **`scripts/update-archive.sh`**: Replaced multi-archive rotation with single snapshot and footer link fix
+2. **`js/constants.js`**: Bumped version to 3.04.13
+3. **`index.html`**: Footer displays current version
+4. **Documentation**: Updated changelog, roadmap, status, structure, function table, implementation summary, and README
+
 # Implementation Summary: Quick Filter Object Storage
 
 > **Latest release: v3.04.12**

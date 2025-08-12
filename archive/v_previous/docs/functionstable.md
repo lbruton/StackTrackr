@@ -1,7 +1,7 @@
 # Function Reference
 
 
-> **Latest release: v3.04.12**
+> **Latest release: v3.04.13**
 
 
 | File | Function | Description |
@@ -131,9 +131,9 @@
 | spot.js | updateManualSpot | Updates spot price for specified metal from user input |
 | spot.js | resetSpot | Resets spot price for specified metal to default or API cached value |
 | spot.js | resetSpotByName | Alternative reset function that works with metal name instead of key |
-| theme.js | setTheme | Sets application theme and updates localStorage |
+| theme.js | setTheme | Sets application theme (dark, light, sepia, or system) and updates localStorage |
 | theme.js | initTheme | Initializes theme based on user preference and system settings |
-| theme.js | toggleTheme | Toggles between dark and light themes |
+| theme.js | toggleTheme | Cycles through dark, light, sepia, and system themes |
 | theme.js | setupSystemThemeListener | Sets up system theme change listener |
 | constants.js | getVersionString | Returns formatted version string |
 | constants.js | injectVersionString | Inserts formatted version string into a target element |

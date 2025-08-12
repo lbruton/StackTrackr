@@ -77,6 +77,7 @@ const elements = {
   numistaImportFile: null,
   numistaOverride: null,
   numistaMerge: null,
+  clearNumistaInventoryBtn: null,
 
   // Export elements
   exportCsvBtn: null,

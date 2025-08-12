@@ -247,6 +247,11 @@ section {
   text-align: center;
   font-size: 0.9rem;
   color: var(--text-secondary);
+  padding: var(--spacing);
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
 }
 
 .app-footer a {
@@ -2307,7 +2312,7 @@ td input:checked + .slider:before {
 }
 
 .table-controls-section {
-  margin: var(--spacing-xs) 0;
+  margin: var(--spacing) 0;
 }
 
 .table-controls {
@@ -2329,6 +2334,15 @@ td input:checked + .slider:before {
   font-weight: 700;
   color: var(--primary);
   cursor: pointer;
+}
+
+.btn.silver {
+  background: var(--silver);
+  color: var(--text-primary);
+}
+
+.btn.silver:hover {
+  background: #9ca3af;
 }
 
 .table-disclaimer {
@@ -2986,16 +3000,9 @@ input:disabled + .slider {
     grid-template-columns: repeat(2, 1fr);
   }
 }
-#inventoryTable th[data-column="collectable"],
-#inventoryTable th[data-column="edit"],
-#inventoryTable th[data-column="notes"],
-#inventoryTable th[data-column="delete"],
-#inventoryTable td[data-column="collectable"],
-#inventoryTable td[data-column="edit"],
-#inventoryTable td[data-column="notes"],
-#inventoryTable td[data-column="delete"] {
-  width: 2rem;
-  height: 2rem;
+#inventoryTable th.icon-col,
+#inventoryTable td.icon-col {
+  width: 1.75rem;
   padding: 0.25rem;
   text-align: center;
 }
@@ -3007,12 +3014,34 @@ input:disabled + .slider {
   cursor: pointer;
 }
 
-.collectable-status svg,
-#inventoryTable th[data-column="collectable"] svg,
-td .action-icon {
-  width: 1.25rem;
-  height: 1.25rem;
+#inventoryTable td.icon-col .collectable-status svg,
+#inventoryTable th.icon-col svg,
+#inventoryTable td.icon-col .action-icon {
+  width: 1rem;
+  height: 1rem;
 }
 
 .icon-gold { color: #d4af37; }
 .icon-copper { color: #b87333; }
+
+#inventoryTable td[data-column="purchaseLocation"],
+#inventoryTable td[data-column="storageLocation"] {
+  max-width: 20ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#typeSummary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-xs);
+  justify-content: center;
+}
+
+#typeSummary .type-chip {
+  padding: 0.15rem 0.5rem;
+  border-radius: var(--radius);
+  font-size: 0.75rem;
+  color: #fff;
+}

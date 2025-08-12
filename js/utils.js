@@ -478,8 +478,8 @@ const convertToUsd = (amount, currency = "USD") => {
  * @param {string} str - Input string
  * @returns {string} Cleaned string containing only letters, numbers, and spaces
  */
-const stripNonAlphanumeric = (str = "") =>
-  str.toString().replace(/[^a-zA-Z0-9 ]/g, "");
+const stripNonAlphanumeric = (str = "", allowHyphen = false) =>
+  str.toString().replace(allowHyphen ? /[^a-zA-Z0-9 -]/g : /[^a-zA-Z0-9 ]/g, "");
 
 /**
  * Sanitizes all string properties of an object by stripping non-alphanumeric characters.
@@ -491,7 +491,8 @@ const sanitizeObjectFields = (obj) => {
   const cleaned = { ...obj };
   for (const key of Object.keys(cleaned)) {
     if (typeof cleaned[key] === "string" && key !== 'notes') {
-      cleaned[key] = stripNonAlphanumeric(cleaned[key]);
+      const allowHyphen = key === 'date';
+      cleaned[key] = stripNonAlphanumeric(cleaned[key], allowHyphen);
     }
   }
   return cleaned;

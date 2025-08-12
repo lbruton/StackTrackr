@@ -179,7 +179,7 @@ const updateColumnVisibility = () => {
         "spot",
         "weight",
         "qty",
-        "composition",
+        "metal",
       ],
     },
     {
@@ -192,7 +192,7 @@ const updateColumnVisibility = () => {
         "spot",
         "weight",
         "qty",
-        "composition",
+        "metal",
         "type",
       ],
     },
@@ -205,9 +205,9 @@ const updateColumnVisibility = () => {
   const allColumns = [
     "date",
     "type",
-    "composition",
-    "name",
+    "metal",
     "qty",
+    "name",
     "weight",
     "purchasePrice",
     "spot",
@@ -1004,12 +1004,12 @@ const setupEventListeners = () => {
         "Merge Numista button",
       );
     }
-    if (elements.numistaImportFile) {
-      safeAttachListener(
-        elements.numistaImportFile,
-        "change",
-        function (e) {
-          if (e.target.files.length > 0) {
+      if (elements.numistaImportFile) {
+        safeAttachListener(
+          elements.numistaImportFile,
+          "change",
+          function (e) {
+            if (e.target.files.length > 0) {
 
             const file = e.target.files[0];
             if (!checkFileSize(file)) {
@@ -1020,13 +1020,37 @@ const setupEventListeners = () => {
           }
           this.value = "";
         },
-        "Numista CSV import",
-      );
-    }
+          "Numista CSV import",
+        );
+      }
 
-    // Export buttons
-    if (elements.exportCsvBtn) {
-      safeAttachListener(
+      // Clear Numista Inventory button
+      if (elements.clearNumistaInventoryBtn) {
+        safeAttachListener(
+          elements.clearNumistaInventoryBtn,
+          "click",
+          function () {
+            if (
+              confirm(
+                "Remove all items with Numista IDs? This cannot be undone.",
+              )
+            ) {
+              inventory = inventory.filter(item => !item.numistaId);
+              if (typeof catalogManager?.cleanupOrphans === "function") {
+                catalogManager.cleanupOrphans(inventory);
+              }
+              saveInventory();
+              renderTable();
+              alert("Numista inventory cleared.");
+            }
+          },
+          "Clear Numista inventory button",
+        );
+      }
+
+      // Export buttons
+      if (elements.exportCsvBtn) {
+        safeAttachListener(
         elements.exportCsvBtn,
         "click",
         exportCsv,
@@ -1365,9 +1389,9 @@ const setupSearch = () => {
         function () {
           const value = this.value;
           if (value) {
-            columnFilters.composition = value;
+            columnFilters.metal = value;
           } else {
-            delete columnFilters.composition;
+            delete columnFilters.metal;
           }
           searchQuery = "";
           if (elements.searchInput) elements.searchInput.value = "";
@@ -1501,6 +1525,21 @@ const setupSearch = () => {
 };
 
 /**
+ * Updates logo groups to match current theme
+ */
+const updateLogoTheme = () => {
+  const isDark = document.documentElement.getAttribute("data-theme") === "dark";
+  const logo = document.querySelector(".app-logo");
+  if (!logo) return;
+  const light = logo.querySelector(".light-mode");
+  const dark = logo.querySelector(".dark-mode");
+  if (light && dark) {
+    light.style.display = isDark ? "none" : "";
+    dark.style.display = isDark ? "" : "none";
+  }
+};
+
+/**
  * Sets up theme toggle event listeners
  */
 const updateThemeButton = () => {
@@ -1508,7 +1547,7 @@ const updateThemeButton = () => {
   if (!btn) return;
   const savedTheme = localStorage.getItem(THEME_KEY);
   const mode = savedTheme ? savedTheme : "system";
-  btn.classList.remove("dark", "light", "system");
+  btn.classList.remove("dark", "light", "sepia", "system");
   btn.classList.add(mode);
   if (mode === "dark") {
     btn.textContent = "🌙";
@@ -1518,11 +1557,17 @@ const updateThemeButton = () => {
     btn.textContent = "☀️";
     btn.setAttribute("aria-label", "Light mode");
     btn.setAttribute("title", "Light mode");
+  } else if (mode === "sepia") {
+    btn.textContent = "📜";
+    btn.setAttribute("aria-label", "Sepia mode");
+    btn.setAttribute("title", "Sepia mode");
   } else {
     btn.textContent = "💻";
     btn.setAttribute("aria-label", "System theme");
     btn.setAttribute("title", "System theme");
   }
+
+  updateLogoTheme();
 };
 
 window.updateThemeButton = updateThemeButton;
@@ -1535,7 +1580,7 @@ const setupThemeToggle = () => {
     if (typeof initTheme === "function") {
       initTheme();
     } else {
-      const savedTheme = localStorage.getItem(THEME_KEY) || "light";
+      const savedTheme = localStorage.getItem(THEME_KEY) || "system";
       setTheme(savedTheme);
     }
 
@@ -1550,7 +1595,7 @@ const setupThemeToggle = () => {
       window
         .matchMedia("(prefers-color-scheme: dark)")
         .addEventListener("change", () => {
-          if (!localStorage.getItem(THEME_KEY)) {
+          if (localStorage.getItem(THEME_KEY) === "system") {
             updateThemeButton();
           }
         });
@@ -1562,10 +1607,12 @@ const setupThemeToggle = () => {
         "click",
         (e) => {
           e.preventDefault();
-          const savedTheme = localStorage.getItem(THEME_KEY);
+          const savedTheme = localStorage.getItem(THEME_KEY) || "system";
           if (savedTheme === "dark") {
             setTheme("light");
           } else if (savedTheme === "light") {
+            setTheme("sepia");
+          } else if (savedTheme === "sepia") {
             setTheme("system");
           } else {
             setTheme("dark");

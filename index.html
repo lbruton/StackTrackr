@@ -445,14 +445,14 @@
               <th class="shrink" data-column="storageLocation">Storage<br />Location</th>
               <!-- Numista column moved before Collectable -->
               <th class="shrink" data-column="numista">N#</th>
-              <th class="shrink" data-column="collectable" aria-label="Collectable" title="Collectable">
-                <svg class="collectable-icon icon-gold" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true">
-                  <path fill="currentColor" d="M2 17h20l-5-10h-10l-5 10z"/>
+              <th class="icon-col" data-column="collectable" aria-label="Collectable" title="Collectable">
+                <svg class="collectable-icon icon-copper" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true">
+                  <circle cx="12" cy="12" r="10"/>
                 </svg>
               </th>
-              <th class="shrink" data-column="edit" aria-label="Edit" title="Edit">⚙️</th>
-              <th class="shrink" data-column="notes" aria-label="Notes" title="Notes">📓</th>
-              <th class="shrink" data-column="delete" aria-label="Delete" title="Delete">🗑️</th>
+              <th class="icon-col" data-column="edit" aria-label="Edit" title="Edit">⚙️</th>
+              <th class="icon-col" data-column="notes" aria-label="Notes" title="Notes">📓</th>
+              <th class="icon-col" data-column="delete" aria-label="Delete" title="Delete">🗑️</th>
             </tr>
           </thead>
           <tbody></tbody>
@@ -460,10 +460,11 @@
       </section>
       <section class="table-controls-section">
         <div class="table-controls">
-          <span id="changeLogBtn" class="change-log-label">Change Log</span>
+          <button id="changeLogBtn" class="btn silver">Change Log</button>
           <span class="table-disclaimer"
             >All data is stored locally. Back up often.</span
           >
+          <div id="typeSummary"></div>
           <div class="items-per-page">
             <span class="items-label">Items:</span>
             <select class="pagination-select" id="itemsPerPage">
@@ -1163,7 +1164,7 @@
     <footer class="app-footer">
       <div class="storage-line">Storage: <span id="storageUsage"></span> <progress id="storageUsageBar" max="5120" value="0"></progress> <a href="#" id="storageReportLink">Storage report</a></div>
       <div class="footer-meta">
-        <span>Thank you for using StackTrackr (<span id="footerVersion">v3.04.13</span>). © 2025 <span id="footerDomain">stacktrackr.com</span>.</span>
+        <span>StackTrackr <span id="footerVersion"></span> • All data stored locally. © 2025 <span id="footerDomain">stacktrackr.com</span>.</span>
         <span class="footer-links"><a href="./archive/v_previous/index.html">Previous build</a> | <a href="https://github.com/lbruton/StackTrackr/issues" target="_blank" rel="noopener">Report issues</a></span>
       </div>
     </footer>
