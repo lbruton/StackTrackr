@@ -505,6 +505,21 @@ const convertToUsd = (amount, currency = "USD") => {
 };
 
 /**
+ * Detects currency code from a value string containing symbols or codes
+ *
+ * @param {string} str - Value containing currency information
+ * @returns {string|null} Detected currency code or null if not found
+ */
+const detectCurrency = (str = "") => {
+  const s = str.toUpperCase();
+  if (/[€]|EUR/.test(s)) return "EUR";
+  if (/[£]|GBP/.test(s)) return "GBP";
+  if (/CAD|C\$|CA\$/.test(s)) return "CAD";
+  if (/USD|US\$/.test(s)) return "USD";
+  return null;
+};
+
+/**
  * Removes all non-alphanumeric characters from a string, preserving spaces.
  *
  * @param {string} str - Input string
@@ -713,8 +728,12 @@ const sanitizeImportedItem = (item) => {
     sanitized.composition = sanitized.metal;
   }
 
-  // Ensure numeric fields parse correctly
-  const numFields = ['qty', 'weight', 'price', 'spotPriceAtPurchase'];
+  // Ensure price always has a numeric value
+  const parsedPrice = parseFloat(sanitized.price);
+  sanitized.price = isNaN(parsedPrice) ? 0 : parsedPrice;
+
+  // Ensure other numeric fields parse correctly
+  const numFields = ['qty', 'weight', 'spotPriceAtPurchase'];
   for (const field of numFields) {
     if (sanitized[field] !== undefined) {
       const parsed = parseFloat(sanitized[field]);

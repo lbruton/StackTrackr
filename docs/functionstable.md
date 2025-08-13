@@ -1,7 +1,7 @@
 # Function Reference
 
 
-> **Latest release: v3.04.63**
+> **Latest release: v3.04.65**
 
 
 | File | Function | Description |
@@ -184,6 +184,7 @@
 | utils.js | oztToGrams | Converts troy ounces to grams |
 | utils.js | formatWeight | Formats a weight in ozt to grams or ounces |
 | utils.js | convertToUsd | Converts amount from specified currency to USD using static rates |
+| utils.js | detectCurrency | Detects currency code from a value string |
 | utils.js | stripNonAlphanumeric | Removes all characters except letters, numbers, and spaces |
 | utils.js | cleanString | Removes HTML tags and control characters while preserving punctuation |
 | utils.js | sanitizeObjectFields | Strips non-alphanumeric characters from string fields except purchaseLocation, which uses cleanString |
@@ -196,7 +197,7 @@
 | utils.js | loadData | Loads data from localStorage with error handling |
 | utils.js | sortInventoryByDateNewestFirst | Sorts inventory by date (newest first) |
 | utils.js | validateInventoryItem | Validates inventory item data |
-| utils.js | sanitizeImportedItem | Coerces invalid imported fields to safe defaults and strips HTML, diacritics, and non-alphanumeric characters |
+| utils.js | sanitizeImportedItem | Coerces invalid imported fields to safe defaults (price defaults to 0) and strips HTML, diacritics, and non-alphanumeric characters |
 | utils.js | handleError | Handles errors with user-friendly messaging |
 | utils.js | getUserFriendlyMessage | Converts technical error messages to user-friendly ones |
 | utils.js | downloadFile | Downloads a file with the specified content and filename |

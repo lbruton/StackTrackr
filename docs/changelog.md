@@ -1,11 +1,17 @@
 # StackrTrackr — Changelog
 
-> **Latest release: v3.04.64**
+> **Latest release: v3.04.65**
 
 
 For upcoming work, see [announcements](announcements.md).
 
 ## 📋 Version History
+
+### Version 3.04.65 – Import Price Defaults & Numista Markdown (2025-08-13)
+- **Data Integrity**: Missing price fields now default to 0 during all import types.
+- **Numista Enhancements**:
+  - Buying price and Estimate columns detect currency in values and convert to USD.
+  - Full Numista row data appended to item notes as a concise Markdown list.
 
 ### Version 3.04.64 – Feature Flag System (2025-08-13)
 - **Feature Development**: Completed Task 2A - Feature Flag System for Phase 2 of fuzzy autocomplete

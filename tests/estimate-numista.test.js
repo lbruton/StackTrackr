@@ -92,10 +92,32 @@ const csv2 = 'Numista #,Title,Year,Composition,Type,Weight,Note,Private comment,
 const file2 = { content: csv2 };
 global.inventory = [];
 importNumistaCsv(file2);
-assert.strictEqual(
-  inventory[0].notes,
-  'Base note\nPrivate Comment: Private text\nPublic Comment: Public text\nComment: Other text',
-  'all comment fields should appear in notes'
+const expectedPrefix = 'Base note\nPrivate Comment: Private text\nPublic Comment: Public text\nComment: Other text';
+assert.ok(
+  inventory[0].notes.startsWith(expectedPrefix),
+  'all comment fields should appear at start of notes'
+);
+assert.ok(
+  inventory[0].notes.includes('### Numista Import Data'),
+  'notes should include markdown representation'
 );
 console.log('Numista comment import test passed');
+
+// Test currency detection from value string
+const csv3 = 'Numista #,Title,Year,Composition,Type,Weight,Buying price (USD)\n' +
+  '123,Test Coin,2024,Silver 0.999,Coin,31.103,10 EUR';
+const file3 = { content: csv3 };
+global.inventory = [];
+importNumistaCsv(file3);
+assert.strictEqual(
+  inventory[0].purchasePrice,
+  convertToUsd(10, 'EUR'),
+  'should detect EUR currency in value and convert to USD'
+);
+console.log('Numista currency detection test passed');
+
+// Test default price when missing
+const sanitized = sanitizeImportedItem({});
+assert.strictEqual(sanitized.price, 0, 'missing price should default to 0');
+console.log('Price default test passed');
 
