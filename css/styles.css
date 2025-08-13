@@ -2640,6 +2640,31 @@ td input:checked + .slider:before {
   flex: 1;
 }
 
+.autocomplete-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow);
+  z-index: 1000;
+  max-height: 12rem;
+  overflow-y: auto;
+}
+
+.autocomplete-item {
+  padding: var(--spacing-sm) var(--spacing);
+  cursor: pointer;
+}
+
+.autocomplete-item.active,
+.autocomplete-item:hover {
+  background: var(--bg-secondary);
+}
+
+
 .filter-select {
   width: 8rem;
   height: 1.375rem;

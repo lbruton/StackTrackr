@@ -1564,6 +1564,12 @@ const importCsv = (file, override = false) => {
 
         if (deduped.length === 0) return alert('No items to import.');
 
+        for (const item of deduped) {
+          if (typeof registerName === "function") {
+            registerName(item.name);
+          }
+        }
+
         if (override) {
           inventory = deduped;
         } else {
@@ -1760,6 +1766,12 @@ const importNumistaCsv = (file, override = false) => {
         }
 
         if (deduped.length === 0) return alert('No items to import.');
+
+        for (const item of deduped) {
+          if (typeof registerName === "function") {
+            registerName(item.name);
+          }
+        }
 
         if (override) {
           inventory = deduped;
@@ -2076,6 +2088,12 @@ const importJson = (file, override = false) => {
 
       if (deduped.length === 0) {
         return alert('No items to import.');
+      }
+
+      for (const item of deduped) {
+        if (typeof registerName === "function") {
+          registerName(item.name);
+        }
       }
 
       if (override) {

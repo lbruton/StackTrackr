@@ -1,7 +1,7 @@
 # Function Reference
 
 
-> **Latest release: v3.04.60**
+> **Latest release: v3.04.61**
 
 
 | File | Function | Description |
@@ -17,6 +17,8 @@
 | about.js | showFullChangelog | Shows full changelog in a new window or navigates to documentation |
 | about.js | setupAboutModalEvents | Sets up event listeners for about modal elements |
 | about.js | setupAckModalEvents | Sets up event listeners for acknowledgment modal elements |
+| autocomplete.js | registerName | Adds a new name to the autocomplete store |
+| autocomplete.js | getSuggestions | Returns name suggestions using fuzzy or substring matching |
 | api.js | renderApiStatusSummary |  |
 | api.js | loadApiConfig | Loads Metals API configuration from localStorage |
 | api.js | saveApiConfig | Saves Metals API configuration to localStorage |
