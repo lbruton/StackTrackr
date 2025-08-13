@@ -7,6 +7,7 @@ This roadmap tracks upcoming goals without committing to specific patch numbers.
 
 ## Completed Patch Goals (v3.04.xx)
 - ✅ **Expanded filter chips** - Added Name/Date chips with dynamic filtering and counts, replaced backup notice with Filters subtitle (v3.04.42)
+- ✅ **Filter chip totals and purchase tooltips** - Chips show filtered/total counts, purchase links moved to info icons, table cells centered (v3.04.43)
 - ✅ **Section titles for main UI** - Added centered titles to Spot Prices, Inventory, Filters, and Information Cards (v3.04.41)
 - ✅ **Pagination section reorder** - Moved pagination above Change Log with edge padding (v3.04.40)
 - ✅ **Template Variable Resolution** - Fixed unreplaced template variables in documentation (v3.04.39)

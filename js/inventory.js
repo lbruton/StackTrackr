@@ -579,17 +579,16 @@ const formatPurchaseLocation = (loc) => {
   const value = loc || 'Numista Import';
   const color = getPurchaseLocationColor(value);
   const urlPattern = /^(https?:\/\/)?[\w.-]+\.[A-Za-z]{2,}(\S*)?$/;
+  const filterSpan = filterLink('purchaseLocation', value, color);
   if (urlPattern.test(value)) {
     let href = value;
     if (!/^https?:\/\//i.test(href)) {
       href = `https://${href}`;
     }
     const safeHref = escapeAttribute(href);
-    const safeText = sanitizeHtml(value);
-    const link = `<a href="${safeHref}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${safeText}</a>`;
-    return filterLink('purchaseLocation', value, color, link, undefined, true);
+    return `${filterSpan}<a href="${safeHref}" target="_blank" rel="noopener" onclick="event.stopPropagation()" class="info-link" title="${safeHref}">(i)</a>`;
   }
-  return filterLink('purchaseLocation', value, color);
+  return filterSpan;
 };
 window.formatPurchaseLocation = formatPurchaseLocation;
 
@@ -785,42 +784,55 @@ const updateTypeSummary = (items = inventory) => {
     {
       field: 'storageLocation',
       getColors: (val) => ({ bg: getStorageLocationColor(val), text: textColor })
-    },
-    {
-      field: 'name',
-      getColors: (val) => ({ bg: getColor(nameColors, val), text: textColor })
-    },
-    {
-      field: 'date',
-      getColors: (val) => ({ bg: getColor(dateColors, val), text: textColor }),
-      format: (val) => formatDisplayDate(val)
     }
   ];
 
+  const activeFieldKeys = typeof activeFilters === 'object' ? Object.keys(activeFilters) : [];
+  const columnFieldKeys = typeof columnFilters === 'object' ? Object.keys(columnFilters) : [];
+  const activeFields = new Set([...activeFieldKeys, ...columnFieldKeys]);
+  const fieldsToShow = activeFields.size
+    ? categories.filter(c => activeFields.has(c.field))
+    : categories;
+
   const chips = [];
-  categories.forEach(cat => {
-    const counts = items.reduce((acc, item) => {
+  const unknownChips = [];
+
+  fieldsToShow.forEach(cat => {
+    const totalCounts = inventory.reduce((acc, item) => {
       const key = item[cat.field] || (cat.field === 'purchaseLocation' ? 'Numista Import' : 'Unknown');
       acc[key] = (acc[key] || 0) + 1;
       return acc;
     }, {});
 
-    Object.entries(counts).forEach(([val, count]) => {
+    const filteredCounts = items.reduce((acc, item) => {
+      const key = item[cat.field] || (cat.field === 'purchaseLocation' ? 'Numista Import' : 'Unknown');
+      acc[key] = (acc[key] || 0) + 1;
+      return acc;
+    }, {});
+
+    const values = Object.keys(totalCounts).sort((a, b) => totalCounts[b] - totalCounts[a]);
+    values.forEach(val => {
+      const total = totalCounts[val];
+      const filtered = filteredCounts[val] || 0;
+      if (activeFields.size && filtered === 0) return;
       const colors = cat.getColors(val);
       const cls = cat.getClass ? ` ${cat.getClass(val)}` : '';
-      const display = cat.format ? cat.format(val) : val;
-      chips.push({ field: cat.field, value: val, display, count, colors, cls });
+      const display = val;
+      const chip = { field: cat.field, value: val, display, filtered, total, colors, cls };
+      if (val === 'Unknown' || val === 'Numista Import') {
+        unknownChips.push(chip);
+      } else {
+        chips.push(chip);
+      }
     });
   });
 
-  chips.sort((a, b) => b.count - a.count);
-
-  const html = chips
+  const html = [...chips, ...unknownChips]
     .map(chip => {
       const safeVal = sanitizeHtml(String(chip.display));
       const handler = `applyQuickFilter('${chip.field}', ${JSON.stringify(chip.value)})`;
       const escaped = escapeAttribute(handler);
-      return `<span class="summary-chip${chip.cls}" style="background-color: ${chip.colors.bg}; color: ${chip.colors.text};" onclick="${escaped}" tabindex="0" role="button" onkeydown="if(event.key==='Enter'||event.key===' ')${escaped}">${safeVal}: ${chip.count}</span>`;
+      return `<span class="summary-chip${chip.cls}" style="background-color: ${chip.colors.bg}; color: ${chip.colors.text};" onclick="${escaped}" tabindex="0" role="button" onkeydown="if(event.key==='Enter'||event.key===' ')${escaped}">${safeVal}: ${chip.filtered}/${chip.total}</span>`;
     })
     .join('');
 

@@ -1,11 +1,15 @@
 # StackrTrackr — Changelog
 
-> **Latest release: v3.04.42**
+> **Latest release: v3.04.43**
 
 
 For upcoming work, see [announcements](announcements.md).
 
 ## 📋 Version History
+
+### Version 3.04.43 – Filter Chip Totals & Tooltip Links (2025-08-19)
+- **Filters**: Summary chips show filtered/total counts and display only active categories.
+- **UI**: Purchase location URLs moved to info tooltip links; table cells (except Name) center-aligned.
 
 ### Version 3.04.42 – Filter Chip Expansion (2025-08-18)
 - **Filters**: Added Filters subtitle and summary chips for Name and Date with dynamic counts and clickable filtering.
