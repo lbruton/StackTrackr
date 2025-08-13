@@ -1,11 +1,14 @@
 # StackrTrackr — Changelog
 
-> **Latest release: v3.04.52**
+> **Latest release: v3.04.53**
 
 
 For upcoming work, see [announcements](announcements.md).
 
 ## 📋 Version History
+
+### Version 3.04.53 – Clickable Logo Reload (2025-08-14)
+- App logo now reloads the page when clicked
 
 ### Version 3.04.52 – Layout Refinements (2025-08-13)
 - Removed section titles from Spot Prices, Inventory, and Information Cards

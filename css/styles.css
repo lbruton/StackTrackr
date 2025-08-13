@@ -282,6 +282,7 @@ label {
   align-items: center;
   margin: 0;
   height: 100%;
+  cursor: pointer;
 }
 
 .app-logo svg {

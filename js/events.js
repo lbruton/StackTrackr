@@ -256,6 +256,16 @@ const setupEventListeners = () => {
     // CRITICAL HEADER BUTTONS
     debugLog("Setting up header buttons...");
 
+    // App Logo
+    if (elements.appLogo) {
+      safeAttachListener(
+        elements.appLogo,
+        "click",
+        () => window.location.reload(),
+        "App Logo",
+      );
+    }
+
     // Files Button
     if (elements.filesBtn) {
       safeAttachListener(
