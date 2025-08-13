@@ -1,7 +1,7 @@
 # Function Reference
 
 
-> **Latest release: v3.04.57**
+> **Latest release: v3.04.58**
 
 
 | File | Function | Description |
@@ -130,6 +130,7 @@
 | spot.js | saveSpotHistory | Saves spot history to localStorage |
 | spot.js | loadSpotHistory | Loads spot history from localStorage |
 | spot.js | purgeSpotHistory | Removes spot history entries older than a set number of days |
+| spot.js | updateLastTimestamps | Stores last cache refresh and API sync timestamps |
 | spot.js | recordSpot | Records a new spot price entry in history with optional timestamp |
 | spot.js | fetchSpotPrice | Fetches and displays current spot prices from localStorage or defaults |
 | spot.js | updateManualSpot | Updates spot price for specified metal from user input |
@@ -153,7 +154,8 @@
 | utils.js | getFooterDomain | Determines active domain for footer copyright |
 | utils.js | monitorPerformance | Performance monitoring utility |
 | utils.js | debounce | Creates a debounced version of a function |
-| utils.js | getLastUpdateTime | Builds two-line HTML showing source and last sync info for a metal |
+| utils.js | getLastUpdateTime | Builds two-line HTML showing source and last cache refresh or API sync info for a metal |
+| utils.js | updateSpotTimestamp | Updates timestamp element with toggle between cache refresh and API sync times |
 | utils.js | pad2 | Pads a number with leading zeros to ensure two-digit format |
 | utils.js | todayStr | Returns current date as ISO string (YYYY-MM-DD) |
 | utils.js | currentMonthKey | Returns current month key in YYYY-MM format |

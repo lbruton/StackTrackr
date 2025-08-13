@@ -1,11 +1,15 @@
 # StackrTrackr — Changelog
 
-> **Latest release: v3.04.57**
+> **Latest release: v3.04.58**
 
 
 For upcoming work, see [announcements](announcements.md).
 
 ## 📋 Version History
+
+### Version 3.04.58 – Cache Refresh Timestamp Toggle (2025-08-19)
+- Renamed “Last sync” to “Last Cache Refresh”
+- Stored separate cache-refresh and API-sync timestamps with UI toggle
 
 ### Version 3.04.57 – Filters Card Edge Alignment (2025-08-18)
 - Removed left margin from Filters card for alignment with spot price card

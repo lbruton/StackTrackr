@@ -6,6 +6,7 @@ This roadmap tracks upcoming goals without committing to specific patch numbers.
 - _No active patch goals at this time._
 
 ## Completed Patch Goals (v3.04.xx)
+- ✅ **Cache refresh timestamp toggle** - Display togglable cache refresh and API sync times (v3.04.58)
 - ✅ **Filters card edge alignment** - Filters card extends left to align with spot price card (v3.04.57)
 - ✅ **Filters modal removal** - Eliminated legacy filters modal and cleanup (v3.04.56)
 - ✅ **Change log clearing option** - Added Clear Log button with confirmation in Change Log modal (v3.04.55)
