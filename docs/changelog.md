@@ -1,11 +1,74 @@
 # StackrTrackr — Changelog
 
-> **Latest release: v3.04.58**
+> **Latest release: v3.04.65**
 
 
 For upcoming work, see [announcements](announcements.md).
 
 ## 📋 Version History
+
+### Version 3.04.65 – Import Price Defaults & Numista Markdown (2025-08-13)
+- **Data Integrity**: Missing price fields now default to 0 during all import types.
+- **Numista Enhancements**:
+  - Buying price and Estimate columns detect currency in values and convert to USD.
+  - Full Numista row data appended to item notes as a concise Markdown list.
+
+### Version 3.04.64 – Feature Flag System (2025-08-13)
+- **Feature Development**: Completed Task 2A - Feature Flag System for Phase 2 of fuzzy autocomplete
+- **New Infrastructure**: Comprehensive feature flag management system in `js/constants.js`:
+  - FeatureFlags class with URL parameter detection (`?autocomplete=true`)
+  - LocalStorage persistence for flag states across sessions
+  - Runtime toggle capabilities with user permission controls
+  - Debug logging for feature state changes (debug mode only)
+  - Graceful degradation handlers for production safety
+  - Event listener system for feature state change notifications
+- **Configuration Management**: 
+  - FUZZY_AUTOCOMPLETE flag (disabled by default, URL override + user toggle enabled)
+  - DEBUG_UI flag (disabled by default, URL override only, development phase)
+  - Configurable phases: dev/testing/beta/stable
+- **Global API**: Exported convenience functions (`isFeatureEnabled`, `enableFeature`, `disableFeature`, `toggleFeature`)
+- **Developer Tools**: Debug information access with `featureFlags.getDebugInfo()`
+- **Progress**: Phase 2 foundation established - fuzzy autocomplete now 50% complete (4/8 Phase 1+2 tasks)
+- **Next**: Task 2B - Autocomplete UI Module for hidden implementation testing
+
+### Version 3.04.63 – Pre-built Lookup Database Integration (2025-08-13)
+- **Major Enhancement**: Integrated comprehensive 500+ item pre-built lookup database
+- **Seed Data**: Added extensive precious metals database covering:
+  - Government mint coins (Eagles, Maples, Britannias, Krugerrands, etc.)
+  - Fractional coins (1/10, 1/4, 1/2 oz variations)
+  - Lunar series and collectible coins
+  - International and regional coins from 20+ countries
+  - Wildlife and nature series (RCM, Perth Mint, Somalia, etc.)
+  - Private mint rounds (Buffalo, Walking Liberty, Morgan designs)
+  - Precious metals bars from major refiners (PAMP, Credit Suisse, Valcambi, etc.)
+  - Various weights and sizes from 1g to 1kg
+- **Enhanced Autocomplete**: New users get immediate autocomplete suggestions
+- **Smart Combination**: Seed data combines with user inventory for comprehensive suggestions
+- **Task Completion**: Effectively completed Task 4A (Pre-built Lookup Database) ahead of schedule
+- **Progress**: Advanced fuzzy autocomplete development significantly
+
+### Version 3.04.62 – Fuzzy Autocomplete Phase 1B: Lookup Table Generation (2025-08-13)
+- **Feature Development**: Completed Task 1B of fuzzy autocomplete implementation
+- **New Module**: Created `js/autocomplete.js` with comprehensive lookup table generation system
+  - Extraction of unique values from all inventory fields (names, locations, types)
+  - Built searchable indices with variants and common abbreviations
+  - LocalStorage caching with TTL for performance optimization
+  - Memory-optimized data structures for large datasets
+  - Comprehensive error handling and data validation
+  - Support for 25+ common precious metals abbreviations (ASE, CML, etc.)
+- **Progress**: Phase 1 of fuzzy autocomplete now 25% complete (2/8 tasks done)
+- **Next**: Task 2A - Feature Flag System for parallel testing phase
+
+### Version 3.04.61 – Autocomplete Suggestions (2025-08-22)
+- Added localStorage-backed autocomplete with 100 bullion names
+- Suggestions integrate fuzzy search and persist new entries
+
+### Version 3.04.60 – Responsive Column Priority (2025-08-21)
+- Columns hide by priority for small viewports with horizontal scrolling
+- Enlarged pencil icon opens edit modal directly
+
+### Version 3.04.59 – Hidden Empty Columns (2025-08-20)
+- Columns with no data after filtering are automatically hidden
 
 ### Version 3.04.58 – Cache Refresh Timestamp Toggle (2025-08-19)
 - Renamed “Last sync” to “Last Cache Refresh”

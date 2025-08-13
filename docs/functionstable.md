@@ -1,7 +1,7 @@
 # Function Reference
 
 
-> **Latest release: v3.04.58**
+> **Latest release: v3.04.65**
 
 
 | File | Function | Description |
@@ -17,6 +17,21 @@
 | about.js | showFullChangelog | Shows full changelog in a new window or navigates to documentation |
 | about.js | setupAboutModalEvents | Sets up event listeners for about modal elements |
 | about.js | setupAckModalEvents | Sets up event listeners for acknowledgment modal elements |
+| autocomplete.js | buildSearchIndices | Builds searchable indices with variants for all lookup data |
+| autocomplete.js | cacheLookupTable | Caches lookup table to localStorage with Map serialization |
+| autocomplete.js | clearLookupCache | Clears cached lookup table from localStorage |
+| autocomplete.js | createEmptyLookupTable | Creates an empty lookup table structure with default values |
+| autocomplete.js | extractUniqueValues | Extracts unique values from inventory for a specific field |
+| autocomplete.js | generateLookupTable | Generates lookup table from current inventory data |
+| autocomplete.js | generateVariations | Generates searchable variations for a given term including abbreviations |
+| autocomplete.js | getCachedLookupTable | Retrieves cached lookup table if valid and not expired |
+| autocomplete.js | getCurrentLookupTable | Returns the current lookup table instance |
+| autocomplete.js | getLookupStats | Gets current lookup table statistics and cache status |
+| autocomplete.js | getSuggestions | Returns name suggestions using fuzzy or substring matching |
+| autocomplete.js | initializeAutocomplete | Initializes autocomplete system with inventory data |
+| autocomplete.js | loadLookupTable | Loads lookup table from cache or generates new one |
+| autocomplete.js | refreshLookupTable | Refreshes lookup table from current inventory |
+| autocomplete.js | registerName | Adds a new name to the autocomplete store |
 | api.js | renderApiStatusSummary |  |
 | api.js | loadApiConfig | Loads Metals API configuration from localStorage |
 | api.js | saveApiConfig | Saves Metals API configuration to localStorage |
@@ -105,6 +120,7 @@
 | inventory.js | escapeAttribute | Escapes text for safe use in HTML attributes |
 | inventory.js | filterLink | Builds clickable filter span with optional HTML content |
 | inventory.js | formatPurchaseLocation | Detects URLs and appends info tooltip link while keeping text filterable |
+| inventory.js | hideEmptyColumns | Hides table columns that contain no data after filtering |
 | inventory.js | renderTable |  |
 | inventory.js | updateTypeSummary | Renders single-row chips for type, metal, purchase location, storage location with filtered/total counts |
 | inventory.js | updateSummary | Calculates and updates all financial summary displays across the application |
@@ -168,6 +184,7 @@
 | utils.js | oztToGrams | Converts troy ounces to grams |
 | utils.js | formatWeight | Formats a weight in ozt to grams or ounces |
 | utils.js | convertToUsd | Converts amount from specified currency to USD using static rates |
+| utils.js | detectCurrency | Detects currency code from a value string |
 | utils.js | stripNonAlphanumeric | Removes all characters except letters, numbers, and spaces |
 | utils.js | cleanString | Removes HTML tags and control characters while preserving punctuation |
 | utils.js | sanitizeObjectFields | Strips non-alphanumeric characters from string fields except purchaseLocation, which uses cleanString |
@@ -180,7 +197,7 @@
 | utils.js | loadData | Loads data from localStorage with error handling |
 | utils.js | sortInventoryByDateNewestFirst | Sorts inventory by date (newest first) |
 | utils.js | validateInventoryItem | Validates inventory item data |
-| utils.js | sanitizeImportedItem | Coerces invalid imported fields to safe defaults and strips HTML, diacritics, and non-alphanumeric characters |
+| utils.js | sanitizeImportedItem | Coerces invalid imported fields to safe defaults (price defaults to 0) and strips HTML, diacritics, and non-alphanumeric characters |
 | utils.js | handleError | Handles errors with user-friendly messaging |
 | utils.js | getUserFriendlyMessage | Converts technical error messages to user-friendly ones |
 | utils.js | downloadFile | Downloads a file with the specified content and filename |

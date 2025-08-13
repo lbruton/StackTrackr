@@ -514,31 +514,33 @@
             <div class="top-controls">
               <div class="filters-card" id="filtersCard">
                 <h3 class="table-subtitle">Filters</h3>
-                <div class="filter-controls">
-                  <label for="chipMinCount" class="chip-min-label">Min items for chip:</label>
-                  <select id="chipMinCount" class="chip-min-select" title="Minimum number of items before showing a chip">
-                    <option value="1">1+</option>
-                    <option value="2">2+</option>
-                    <option value="3">3+</option>
-                    <option value="5">5+</option>
-                    <option value="10">10+</option>
-                  </select>
-                </div>
                 <div id="typeSummary"></div>
                 <div class="filter-info">
                   <div class="active-filters" id="activeFilters"></div>
                   <div class="search-results-info" id="searchResultsInfo"></div>
                 </div>
-              </div>
-              <div class="items-per-page">
-                <span class="items-label">Items:</span>
-                <select class="pagination-select" id="itemsPerPage">
-                  <option value="10">10</option>
-                  <option value="15">15</option>
-                  <option selected value="25">25</option>
-                  <option value="50">50</option>
-                  <option value="100">100</option>
-                </select>
+                <div class="control-settings">
+                  <div class="chip-control">
+                    <label for="chipMinCount" class="chip-label">Filter Chips:</label>
+                    <select id="chipMinCount" class="chip-select" title="Minimum number of items before showing a filter chip">
+                      <option value="1">1+</option>
+                      <option value="2">2+</option>
+                      <option value="3" selected>3+</option>
+                      <option value="5">5+</option>
+                      <option value="10">10+</option>
+                    </select>
+                  </div>
+                  <div class="items-control">
+                    <label for="itemsPerPage" class="items-label">Table Rows:</label>
+                    <select class="table-select" id="itemsPerPage">
+                      <option value="10" selected>10</option>
+                      <option value="15">15</option>
+                      <option value="25">25</option>
+                      <option value="50">50</option>
+                      <option value="100">100</option>
+                    </select>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -669,13 +671,6 @@
                   <polyline points="10,9 9,9 8,9"/>
                 </svg>
                 <span class="header-text">Notes</span>
-              </th>
-              <th class="icon-col" data-column="edit" aria-label="Edit" title="Edit">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="header-icon">
-                  <circle cx="12" cy="12" r="3"/>
-                  <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-                </svg>
-                <span class="header-text">Edit</span>
               </th>
               <th class="icon-col" data-column="delete" aria-label="Delete" title="Delete">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="header-icon">
@@ -2418,6 +2413,8 @@
   <script defer src="./js/constants.js"></script>
   <script defer src="./js/state.js"></script>
   <script defer src="./js/utils.js"></script>
+  <script defer src="./js/fuzzy-search.js"></script>
+  <script defer src="./js/autocomplete.js"></script>
   <script defer src="./js/versionCheck.js"></script>
   <script defer src="./js/changeLog.js"></script>
     <script defer src="./js/charts.js"></script>

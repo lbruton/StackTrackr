@@ -1007,6 +1007,21 @@ const updateTypeSummary = (items = inventory) => {
 };
 window.updateTypeSummary = updateTypeSummary;
 
+/**
+ * Hides table columns that contain no data after filtering.
+ */
+const hideEmptyColumns = () => {
+  if (typeof document === 'undefined') return;
+  const headers = document.querySelectorAll('#inventoryTable thead th[data-column]');
+  headers.forEach(header => {
+    const col = header.getAttribute('data-column');
+    const cells = document.querySelectorAll(`#inventoryTable tbody [data-column="${col}"]`);
+    const allEmpty = cells.length > 0 && Array.from(cells).every(cell => cell.textContent.trim() === '');
+    document.querySelectorAll(`#inventoryTable [data-column="${col}"]`).forEach(el => {
+      el.classList.toggle('hidden-empty', allEmpty);
+    });
+  });
+};
 
 const renderTable = () => {
   return monitorPerformance(() => {
@@ -1036,7 +1051,7 @@ const renderTable = () => {
         ${filterLink('qty', item.qty, 'var(--text-primary)')}
       </td>
       <td class="expand" data-column="name" style="text-align: left;">
-        <span class="inline-edit-icon" role="button" tabindex="0" onclick="startCellEdit(${originalIdx}, 'name', this)" aria-label="Edit name" title="Edit name">✎</span>
+        <span class="inline-edit-icon" role="button" tabindex="0" onclick="editItem(${originalIdx})" aria-label="Edit ${sanitizeHtml(item.name)}" title="Edit ${sanitizeHtml(item.name)}">✎</span>
         ${filterLink('name', item.name, 'var(--text-primary)')}
       </td>
       <td class="shrink" data-column="weight">
@@ -1058,7 +1073,6 @@ const renderTable = () => {
       <td class="shrink" data-column="numista">${item.numistaId ? `<a href="https://en.numista.com/catalogue/pieces${item.numistaId}.html" target="_blank" rel="noopener" title="View on Numista">N# ${sanitizeHtml(item.numistaId)}</a>` : ''}</td>
       <td class="icon-col" data-column="collectable"><span class="collectable-status" role="button" tabindex="0" onclick="toggleCollectable(${originalIdx})" onkeydown="if(event.key==='Enter'||event.key===' ') toggleCollectable(${originalIdx})" aria-label="Toggle collectable status for ${sanitizeHtml(item.name)}" title="Toggle collectable status">${item.isCollectable ? '<svg class=\"collectable-icon icon-copper\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\"><circle cx=\"12\" cy=\"12\" r=\"10\"/></svg>' : '<svg class=\"collectable-icon icon-gold\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\"><path d=\"M3 3h18v18H3V3zm2 2v14h14V5H5zm5 10h6v2H10v-2zm2-8a2 2 0 100 4 2 2 0 000-4z\"/></svg>'}</span></td>
       <td class="icon-col" data-column="notes"><span class="action-icon ${item.notes && item.notes.trim() ? 'success' : ''}" role="button" tabindex="0" onclick="showNotes(${originalIdx})" aria-label="View notes" title="View notes">📓</span></td>
-      <td class="icon-col" data-column="edit"><span class="action-icon" role="button" tabindex="0" onclick="editItem(${originalIdx})" aria-label="Edit ${sanitizeHtml(item.name)}" title="Edit ${sanitizeHtml(item.name)}">⚙️</span></td>
       <td class="icon-col" data-column="delete"><span class="action-icon danger" role="button" tabindex="0" onclick="deleteItem(${originalIdx})" aria-label="Delete item" title="Delete item">🗑️</span></td>
       </tr>
       `);
@@ -1067,10 +1081,11 @@ const renderTable = () => {
     const visibleCount = endIndex - startIndex;
     const placeholders = Array.from(
       { length: Math.max(0, itemsPerPage - visibleCount) },
-      () => '<tr><td class="shrink" colspan="16">&nbsp;</td></tr>'
+      () => '<tr><td class="shrink" colspan="15">&nbsp;</td></tr>'
     );
 
     elements.inventoryTable.innerHTML = rows.concat(placeholders).join('');
+    hideEmptyColumns();
     updateTypeSummary(filteredInventory);
 
     // Update sort indicators
@@ -1505,7 +1520,7 @@ const importCsv = (file, override = false) => {
             date,
             purchaseLocation,
             storageLocation,
-            notes,
+            notes: finalNotes,
             spotPriceAtPurchase,
             premiumPerOz,
             totalPremium,
@@ -1548,6 +1563,12 @@ const importCsv = (file, override = false) => {
         }
 
         if (deduped.length === 0) return alert('No items to import.');
+
+        for (const item of deduped) {
+          if (typeof registerName === "function") {
+            registerName(item.name);
+          }
+        }
 
         if (override) {
           inventory = deduped;
@@ -1648,17 +1669,20 @@ const importNumistaCsv = (file, override = false) => {
 
           const priceKey = Object.keys(row).find(k => /^(buying price|purchase price|price paid)/i.test(k));
           const estimateKey = Object.keys(row).find(k => /^estimate/i.test(k));
+          const parsePriceField = (key) => {
+            const rawVal = String(row[key] ?? '').trim();
+            const valueCurrency = detectCurrency(rawVal);
+            const headerCurrencyMatch = key.match(/\(([^)]+)\)/);
+            const headerCurrency = headerCurrencyMatch ? headerCurrencyMatch[1] : 'USD';
+            const currency = valueCurrency || headerCurrency;
+            const amount = parseFloat(rawVal.replace(/[^0-9.\-]/g, ''));
+            return isNaN(amount) ? 0 : convertToUsd(amount, currency);
+          };
           let purchasePrice = 0;
           if (priceKey) {
-            const currencyMatch = priceKey.match(/\(([^)]+)\)/);
-            const currency = currencyMatch ? currencyMatch[1] : 'USD';
-            const amount = parseFloat(String(row[priceKey]).replace(/[^0-9.\-]/g, ''));
-            purchasePrice = convertToUsd(amount, currency);
+            purchasePrice = parsePriceField(priceKey);
           } else if (estimateKey) {
-            const currencyMatch = estimateKey.match(/\(([^)]+)\)/);
-            const currency = currencyMatch ? currencyMatch[1] : 'USD';
-            const amount = parseFloat(String(row[estimateKey]).replace(/[^0-9.\-]/g, ''));
-            purchasePrice = convertToUsd(amount, currency);
+            purchasePrice = parsePriceField(estimateKey);
           }
 
           const purchaseLocRaw = getValue(row, ['Acquisition place', 'Acquired from', 'Purchase place']);
@@ -1681,6 +1705,16 @@ const importNumistaCsv = (file, override = false) => {
           if (otherComment) noteParts.push(`Comment: ${otherComment}`);
           const notes = noteParts.join('\n');
 
+          const markdownLines = Object.entries(row)
+            .filter(([, v]) => v && String(v).trim())
+            .map(([k, v]) => `- **${k.trim()}**: ${String(v).trim()}`);
+          const markdownNote = markdownLines.length
+            ? `### Numista Import Data\n${markdownLines.join('\n')}`
+            : '';
+          const finalNotes = markdownNote
+            ? notes ? `${notes}\n\n${markdownNote}` : markdownNote
+            : notes;
+
           if (type === 'Bar' || type === 'Round') {
             isCollectable = false;
           }
@@ -1701,7 +1735,7 @@ const importNumistaCsv = (file, override = false) => {
             date,
             purchaseLocation,
             storageLocation,
-            notes,
+            notes: finalNotes,
             spotPriceAtPurchase,
             premiumPerOz,
             totalPremium,
@@ -1745,6 +1779,12 @@ const importNumistaCsv = (file, override = false) => {
         }
 
         if (deduped.length === 0) return alert('No items to import.');
+
+        for (const item of deduped) {
+          if (typeof registerName === "function") {
+            registerName(item.name);
+          }
+        }
 
         if (override) {
           inventory = deduped;
@@ -2061,6 +2101,12 @@ const importJson = (file, override = false) => {
 
       if (deduped.length === 0) {
         return alert('No items to import.');
+      }
+
+      for (const item of deduped) {
+        if (typeof registerName === "function") {
+          registerName(item.name);
+        }
       }
 
       if (override) {

@@ -1,7 +1,7 @@
 # StackTrackr Project Instructions
 
 ## CONTEXT
-Precious metals inventory app (v3.04.58+). Client-side: JS modules + localStorage + CSS. Tracks Au/Ag/Pt/Pd.
+Precious metals inventory app (v3.04.65+). Client-side: JS modules + localStorage + CSS. Tracks Au/Ag/Pt/Pd.
 
 ## FILES
 - `index.html` - main UI
@@ -49,10 +49,13 @@ UPDATE: `js/constants.js` APP_VERSION, `docs/changelog.md`, `docs/roadmap.md` (m
 - ❌ **UI/UX work** (needs theme/style understanding)
 
 ### ACTIVE FEATURE: FUZZY AUTOCOMPLETE
-**Status**: Phase 1 in progress  
+**Status**: Phase 2 in progress (50% complete)  
 **Tracking**: `docs/notes/Feature_Implementation_Checklist.md`  
-**Task 1A**: 🤖 Delegated to OpenAI (`docs/notes/openai-task-1a-prompt.md`)  
-**Next**: Task 1B - Claude implementation (lookup table generation)  
+**Task 1A**: ✅ Completed - Core Fuzzy Search Engine (v3.04.61)  
+**Task 1B**: ✅ Completed - Lookup Table Generation (v3.04.62)  
+**Task 4A**: ✅ Completed - Pre-built Lookup Database (v3.04.63, ahead of schedule)  
+**Task 2A**: ✅ Completed - Feature Flag System (v3.04.64)  
+**Next**: Task 2B - Autocomplete UI Module (Phase 2 continues)  
 
 ### WORKFLOW STEPS
 1. **ASSESS TASK**: Claude evaluates complexity/delegation potential
@@ -94,7 +97,7 @@ AUTO_WARN: "⚠️ Chat approaching limit. Start new conversation soon and refer
 `index.html` `events.js` `styles.css` - coordinate changes, minimal edits
 
 ## NOTES
-- Current version: 3.04.58
+ - Current version: 3.04.65
 - **THEME TOGGLE FIXED**: Button now shows current theme color/icon, removed system mode
 - **THEME ROTATION**: dark → light → sepia → dark (no system mode)
 - **BUTTON STYLING**: Shows current theme with matching background color

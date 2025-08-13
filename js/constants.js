@@ -257,7 +257,7 @@ const API_PROVIDERS = {
  * Example: 3.03.02a → branch 3, release 03, patch 02, alpha
  */
 
-const APP_VERSION = "3.04.58";
+const APP_VERSION = "3.04.65";
 
 /**
  * @constant {string} DEFAULT_CURRENCY - Default currency code for monetary formatting
@@ -396,6 +396,9 @@ const APP_VERSION_KEY = "currentAppVersion";
 /** @constant {string} VERSION_ACK_KEY - LocalStorage key for acknowledged app version */
 const VERSION_ACK_KEY = "ackVersion";
 
+/** @constant {string} FEATURE_FLAGS_KEY - LocalStorage key for feature flags */
+const FEATURE_FLAGS_KEY = "featureFlags";
+
 // Persist current application version for comparison on future loads
 try {
   localStorage.setItem(APP_VERSION_KEY, APP_VERSION);
@@ -426,6 +429,333 @@ if (typeof window !== "undefined") {
     const value = params.get("debug");
     DEBUG = value === null || value === "" || value === "1" || value === "true";
   }
+}
+
+// =============================================================================
+// FEATURE FLAGS SYSTEM
+// =============================================================================
+
+/**
+ * Feature flags configuration
+ * Controls experimental features and gradual rollouts
+ * 
+ * Each feature flag contains:
+ * @property {boolean} enabled - Default enabled state
+ * @property {boolean} urlOverride - Allow URL parameter override
+ * @property {boolean} userToggle - Allow user preference toggle
+ * @property {string} description - Human-readable description
+ * @property {string} phase - Development phase (dev/testing/beta/stable)
+ */
+const FEATURE_FLAGS = {
+  FUZZY_AUTOCOMPLETE: {
+    enabled: false,
+    urlOverride: true,
+    userToggle: true,
+    description: "Fuzzy search autocomplete for item names and locations",
+    phase: "testing"
+  },
+  DEBUG_UI: {
+    enabled: false,
+    urlOverride: true,
+    userToggle: false,
+    description: "Debug UI indicators and development tools",
+    phase: "dev"
+  }
+};
+
+/**
+ * Feature state management class
+ * Handles URL parameters, localStorage persistence, and runtime toggles
+ */
+class FeatureFlags {
+  constructor() {
+    this.state = this.loadFeatureState();
+    this.listeners = new Map();
+    this.initializeFromUrl();
+  }
+
+  /**
+   * Load feature state from localStorage with defaults
+   * @returns {Object} Current feature state
+   */
+  loadFeatureState() {
+    try {
+      const stored = localStorage.getItem(FEATURE_FLAGS_KEY);
+      const parsed = stored ? JSON.parse(stored) : {};
+      
+      // Merge with defaults
+      const state = {};
+      for (const [key, config] of Object.entries(FEATURE_FLAGS)) {
+        state[key] = parsed[key] !== undefined ? parsed[key] : config.enabled;
+      }
+      
+      return state;
+    } catch (e) {
+      console.warn('Failed to load feature flags from localStorage:', e);
+      return this.getDefaultState();
+    }
+  }
+
+  /**
+   * Get default feature state from configuration
+   * @returns {Object} Default feature state
+   */
+  getDefaultState() {
+    const state = {};
+    for (const [key, config] of Object.entries(FEATURE_FLAGS)) {
+      state[key] = config.enabled;
+    }
+    return state;
+  }
+
+  /**
+   * Initialize feature flags from URL parameters
+   */
+  initializeFromUrl() {
+    if (typeof window === "undefined") return;
+    
+    const params = new URLSearchParams(window.location.search);
+    let changed = false;
+    
+    for (const [key, config] of Object.entries(FEATURE_FLAGS)) {
+      if (!config.urlOverride) continue;
+      
+      const paramName = key.toLowerCase();
+      if (params.has(paramName)) {
+        const value = params.get(paramName);
+        const enabled = value === null || value === "" || value === "1" || value === "true";
+        
+        if (this.state[key] !== enabled) {
+          this.state[key] = enabled;
+          changed = true;
+          
+          if (DEBUG) {
+            console.log(`Feature flag ${key} set to ${enabled} via URL parameter`);
+          }
+        }
+      }
+    }
+    
+    if (changed) {
+      this.saveFeatureState();
+      this.notifyListeners();
+    }
+  }
+
+  /**
+   * Save current feature state to localStorage
+   */
+  saveFeatureState() {
+    try {
+      localStorage.setItem(FEATURE_FLAGS_KEY, JSON.stringify(this.state));
+    } catch (e) {
+      console.warn('Failed to save feature flags to localStorage:', e);
+    }
+  }
+
+  /**
+   * Check if a feature is enabled
+   * @param {string} feature - Feature flag key
+   * @returns {boolean} Whether the feature is enabled
+   */
+  isEnabled(feature) {
+    return this.state[feature] === true;
+  }
+
+  /**
+   * Enable a feature
+   * @param {string} feature - Feature flag key
+   * @param {boolean} [persist=true] - Whether to save to localStorage
+   */
+  enable(feature, persist = true) {
+    if (this.state[feature] !== true) {
+      this.state[feature] = true;
+      if (persist) this.saveFeatureState();
+      this.notifyListeners(feature);
+      
+      if (DEBUG) {
+        console.log(`Feature ${feature} enabled`);
+      }
+    }
+  }
+
+  /**
+   * Disable a feature
+   * @param {string} feature - Feature flag key
+   * @param {boolean} [persist=true] - Whether to save to localStorage
+   */
+  disable(feature, persist = true) {
+    if (this.state[feature] !== false) {
+      this.state[feature] = false;
+      if (persist) this.saveFeatureState();
+      this.notifyListeners(feature);
+      
+      if (DEBUG) {
+        console.log(`Feature ${feature} disabled`);
+      }
+    }
+  }
+
+  /**
+   * Toggle a feature on/off
+   * @param {string} feature - Feature flag key
+   * @param {boolean} [persist=true] - Whether to save to localStorage
+   * @returns {boolean} New state after toggle
+   */
+  toggle(feature, persist = true) {
+    const config = FEATURE_FLAGS[feature];
+    if (!config || !config.userToggle) {
+      console.warn(`Feature ${feature} cannot be toggled by user`);
+      return this.state[feature];
+    }
+    
+    if (this.state[feature]) {
+      this.disable(feature, persist);
+    } else {
+      this.enable(feature, persist);
+    }
+    
+    return this.state[feature];
+  }
+
+  /**
+   * Reset all features to default state
+   */
+  reset() {
+    this.state = this.getDefaultState();
+    this.saveFeatureState();
+    this.notifyListeners();
+    
+    if (DEBUG) {
+      console.log('All feature flags reset to defaults');
+    }
+  }
+
+  /**
+   * Get current state of all features
+   * @returns {Object} Current feature state
+   */
+  getState() {
+    return { ...this.state };
+  }
+
+  /**
+   * Get feature configuration
+   * @param {string} feature - Feature flag key
+   * @returns {Object|null} Feature configuration or null if not found
+   */
+  getConfig(feature) {
+    return FEATURE_FLAGS[feature] || null;
+  }
+
+  /**
+   * Get all feature configurations
+   * @returns {Object} All feature configurations
+   */
+  getAllConfigs() {
+    return { ...FEATURE_FLAGS };
+  }
+
+  /**
+   * Add a listener for feature state changes
+   * @param {string} feature - Feature to listen for (or 'all' for all changes)
+   * @param {Function} callback - Callback function (feature, enabled, oldEnabled)
+   */
+  addListener(feature, callback) {
+    if (!this.listeners.has(feature)) {
+      this.listeners.set(feature, new Set());
+    }
+    this.listeners.get(feature).add(callback);
+  }
+
+  /**
+   * Remove a listener for feature state changes
+   * @param {string} feature - Feature to stop listening for
+   * @param {Function} callback - Callback function to remove
+   */
+  removeListener(feature, callback) {
+    const featureListeners = this.listeners.get(feature);
+    if (featureListeners) {
+      featureListeners.delete(callback);
+      if (featureListeners.size === 0) {
+        this.listeners.delete(feature);
+      }
+    }
+  }
+
+  /**
+   * Notify listeners of feature state changes
+   * @param {string} [changedFeature] - Specific feature that changed (optional)
+   */
+  notifyListeners(changedFeature = null) {
+    // Notify 'all' listeners
+    const allListeners = this.listeners.get('all');
+    if (allListeners) {
+      allListeners.forEach(callback => {
+        try {
+          callback(changedFeature, this.state);
+        } catch (e) {
+          console.error('Error in feature flag listener:', e);
+        }
+      });
+    }
+    
+    // Notify specific feature listeners
+    if (changedFeature) {
+      const featureListeners = this.listeners.get(changedFeature);
+      if (featureListeners) {
+        const enabled = this.state[changedFeature];
+        featureListeners.forEach(callback => {
+          try {
+            callback(changedFeature, enabled);
+          } catch (e) {
+            console.error('Error in feature flag listener:', e);
+          }
+        });
+      }
+    }
+  }
+
+  /**
+   * Get debug information about feature flags
+   * @returns {Object} Debug information
+   */
+  getDebugInfo() {
+    return {
+      state: this.getState(),
+      configs: this.getAllConfigs(),
+      urlParams: typeof window !== "undefined" ? 
+        Object.fromEntries(new URLSearchParams(window.location.search)) : {},
+      localStorage: (() => {
+        try {
+          return JSON.parse(localStorage.getItem(FEATURE_FLAGS_KEY) || '{}');
+        } catch (e) {
+          return null;
+        }
+      })()
+    };
+  }
+}
+
+/**
+ * Global feature flags instance
+ * @constant {FeatureFlags}
+ */
+const featureFlags = new FeatureFlags();
+
+/**
+ * Convenience functions for common feature flag operations
+ */
+const isFeatureEnabled = (feature) => featureFlags.isEnabled(feature);
+const enableFeature = (feature, persist = true) => featureFlags.enable(feature, persist);
+const disableFeature = (feature, persist = true) => featureFlags.disable(feature, persist);
+const toggleFeature = (feature, persist = true) => featureFlags.toggle(feature, persist);
+
+/**
+ * Log feature flag state on initialization (debug mode only)
+ */
+if (DEBUG && typeof window !== "undefined") {
+  console.log('Feature Flags initialized:', featureFlags.getDebugInfo());
 }
 
 /**
@@ -498,4 +828,12 @@ if (typeof window !== "undefined") {
   window.BRANDING_DOMAIN_OVERRIDE = BRANDING_DOMAIN_OVERRIDE;
   window.getTemplateVariables = getTemplateVariables;
   window.replaceTemplateVariables = replaceTemplateVariables;
+  
+  // Feature flags system
+  window.FEATURE_FLAGS = FEATURE_FLAGS;
+  window.featureFlags = featureFlags;
+  window.isFeatureEnabled = isFeatureEnabled;
+  window.enableFeature = enableFeature;
+  window.disableFeature = disableFeature;
+  window.toggleFeature = toggleFeature;
 }

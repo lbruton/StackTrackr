@@ -157,43 +157,28 @@ const updateColumnVisibility = () => {
   const hidden = new Set();
 
   const breakpoints = [
-    { width: 1200, hide: ["purchaseLocation", "storageLocation", "collectable"] },
+    { width: 1400, hide: ["collectable"] },
+    { width: 1200, hide: ["collectable", "notes"] },
+    { width: 992, hide: ["collectable", "notes", "premium"] },
+    { width: 768, hide: ["collectable", "notes", "premium", "spot"] },
     {
-      width: 992,
-      hide: [
-        "purchaseLocation",
-        "storageLocation",
-        "collectable",
-        "premium",
-        "spot",
-        "weight",
-      ],
-    },
-    {
-      width: 768,
-      hide: [
-        "purchaseLocation",
-        "storageLocation",
-        "collectable",
-        "premium",
-        "spot",
-        "weight",
-        "qty",
-        "metal",
-      ],
+      width: 640,
+      hide: ["collectable", "notes", "premium", "spot", "weight"],
     },
     {
       width: 576,
       hide: [
-        "purchaseLocation",
-        "storageLocation",
         "collectable",
+        "notes",
         "premium",
         "spot",
         "weight",
-        "qty",
-        "metal",
+        "purchaseLocation",
+        "storageLocation",
+        "numista",
         "type",
+        "metal",
+        "delete",
       ],
     },
   ];
@@ -475,6 +460,7 @@ const setupEventListeners = () => {
             numistaId: catalog,
           });
 
+          typeof registerName === "function" && registerName(name);
           addCompositionOption(composition);
 
           catalogMap[serial] = catalog;

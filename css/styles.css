@@ -1737,6 +1737,16 @@ table {
   table-layout: auto; /* Allow columns to size based on content */
 }
 
+.table-section {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+#inventoryTable {
+  width: max-content;
+  min-width: 100%;
+}
+
 #inventoryTable tbody {
   min-height: calc(10 * 2.2rem);
 }
@@ -1776,7 +1786,8 @@ td {
   vertical-align: middle;
 }
 
-[data-column].hidden {
+[data-column].hidden,
+[data-column].hidden-empty {
   display: none;
 }
 
@@ -1897,6 +1908,8 @@ td .cancel-inline {
 
 td .inline-edit-icon {
   margin-right: 0.25rem;
+  font-size: 1.1rem;
+  display: inline-block;
 }
 
 td.editing {
@@ -2627,6 +2640,31 @@ td input:checked + .slider:before {
   flex: 1;
 }
 
+.autocomplete-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow);
+  z-index: 1000;
+  max-height: 12rem;
+  overflow-y: auto;
+}
+
+.autocomplete-item {
+  padding: var(--spacing-sm) var(--spacing);
+  cursor: pointer;
+}
+
+.autocomplete-item.active,
+.autocomplete-item:hover {
+  background: var(--bg-secondary);
+}
+
+
 .filter-select {
   width: 8rem;
   height: 1.375rem;
@@ -2645,11 +2683,12 @@ td input:checked + .slider:before {
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow);
   padding: var(--spacing);
-  flex: 1;
+  width: 100%;
   margin: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
+  position: relative;
 }
 
 .filter-controls {
@@ -3523,4 +3562,101 @@ th {
 .type-chip.other {
   background-color: var(--type-other-bg);
   color: var(--type-other-text);
+}
+
+/* =============================================================================
+   CONTROL SETTINGS - NEW LAYOUT
+   Positioned at bottom right of filters card
+   ============================================================================= */
+
+.control-settings {
+  position: absolute;
+  bottom: var(--spacing);
+  right: var(--spacing);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: var(--spacing-sm);
+  box-shadow: var(--shadow-sm);
+  z-index: 10;
+}
+
+.chip-control,
+.items-control {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  white-space: nowrap;
+}
+
+.chip-label,
+.items-label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin: 0;
+  min-width: fit-content;
+}
+
+.chip-select,
+.table-select {
+  padding: 0.2rem 0.4rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-size: 0.75rem;
+  min-width: 50px;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.chip-select:focus,
+.table-select:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+.chip-select:hover,
+.table-select:hover {
+  border-color: var(--primary);
+}
+
+/* Responsive adjustments for control settings */
+@media (max-width: 768px) {
+  .control-settings {
+    position: static;
+    margin-top: var(--spacing);
+    align-self: stretch;
+    background: var(--bg-primary);
+  }
+  
+  .chip-control,
+  .items-control {
+    justify-content: space-between;
+  }
+}
+
+@media (max-width: 480px) {
+  .control-settings {
+    flex-direction: row;
+    justify-content: space-around;
+    gap: var(--spacing);
+  }
+  
+  .chip-control,
+  .items-control {
+    flex-direction: column;
+    gap: var(--spacing-xs);
+    text-align: center;
+  }
+  
+  .chip-label,
+  .items-label {
+    font-size: 0.7rem;
+  }
 }
