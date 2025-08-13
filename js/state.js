@@ -138,6 +138,7 @@ const elements = {
     typeSummary: null,
   changeLogModal: null,
   changeLogCloseBtn: null,
+  changeLogClearBtn: null,
   changeLogTable: null,
   storageUsage: null,
   storageReportLink: null,

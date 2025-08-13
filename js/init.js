@@ -173,6 +173,7 @@ document.addEventListener("DOMContentLoaded", () => {
       elements.typeSummary = safeGetElement("typeSummary");
       elements.changeLogModal = safeGetElement("changeLogModal");
       elements.changeLogCloseBtn = safeGetElement("changeLogCloseBtn");
+      elements.changeLogClearBtn = safeGetElement("changeLogClearBtn");
       elements.changeLogTable = safeGetElement("changeLogTable");
       elements.storageUsage = safeGetElement("storageUsage");
       elements.storageReportLink = safeGetElement("storageReportLink");

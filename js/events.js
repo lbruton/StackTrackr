@@ -783,6 +783,19 @@ const setupEventListeners = () => {
       );
     }
 
+    if (elements.changeLogClearBtn) {
+      safeAttachListener(
+        elements.changeLogClearBtn,
+        "click",
+        () => {
+          if (typeof clearChangeLog === "function") {
+            clearChangeLog();
+          }
+        },
+        "Change log clear button",
+      );
+    }
+
     // SPOT PRICE EVENT LISTENERS
     debugLog("Setting up spot price listeners...");
     Object.values(METALS).forEach((metalConfig) => {
