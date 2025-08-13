@@ -257,7 +257,7 @@ const API_PROVIDERS = {
  * Example: 3.03.02a → branch 3, release 03, patch 02, alpha
  */
 
-const APP_VERSION = "3.04.57";
+const APP_VERSION = "3.04.58";
 
 /**
  * @constant {string} DEFAULT_CURRENCY - Default currency code for monetary formatting
@@ -383,6 +383,12 @@ const API_KEY_STORAGE_KEY = "metalApiConfig";
 
 /** @constant {string} API_CACHE_KEY - LocalStorage key for cached API data */
 const API_CACHE_KEY = "metalApiCache";
+
+/** @constant {string} LAST_CACHE_REFRESH_KEY - LocalStorage key for last cache refresh timestamp */
+const LAST_CACHE_REFRESH_KEY = "lastCacheRefresh";
+
+/** @constant {string} LAST_API_SYNC_KEY - LocalStorage key for last API sync timestamp */
+const LAST_API_SYNC_KEY = "lastApiSync";
 
 /** @constant {string} APP_VERSION_KEY - LocalStorage key for current app version */
 const APP_VERSION_KEY = "currentAppVersion";
