@@ -16,7 +16,11 @@ vm.runInThisContext(fs.readFileSync('js/autocomplete.js', 'utf8'));
 
 // Test base list loads
 const base = JSON.parse(localStore.autocompleteNames);
-assert.strictEqual(base.length, 100, 'should load 100 default names');
+assert.strictEqual(
+  base.length,
+  DEFAULT_AUTOCOMPLETE_NAMES.length,
+  `should load ${DEFAULT_AUTOCOMPLETE_NAMES.length} default names`
+);
 
 // Test registerName persistence
 registerName('Test Coin');
