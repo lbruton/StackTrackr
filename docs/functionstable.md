@@ -1,7 +1,7 @@
 # Function Reference
 
 
-> **Latest release: v3.04.42**
+> **Latest release: v3.04.55**
 
 
 | File | Function | Description |
@@ -64,6 +64,7 @@
 | changeLog.js | logItemChanges | Compares two item objects and logs any differences |
 | changeLog.js | renderChangeLog | Renders the change log table with all entries |
 | changeLog.js | toggleChange | Toggles a logged change between undone and redone states |
+| changeLog.js | clearChangeLog | Clears all change log entries after confirmation |
 | charts.js | generateColors | Generates a color palette for pie chart segments |
 | charts.js | getChartBackgroundColor | Gets appropriate background color for charts based on current theme |
 | charts.js | getChartTextColor | Gets appropriate text color for charts based on current theme |

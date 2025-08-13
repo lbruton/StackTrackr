@@ -1544,6 +1544,17 @@ input[type="submit"] {
   flex: 1;
 }
 
+#changeLogModal .modal-footer {
+  padding: var(--spacing);
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: flex-end;
+}
+
+#changeLogClearBtn {
+  font-size: 1.25rem;
+}
+
 #detailsModal .modal-body {
   padding: var(--spacing-xl);
   flex: 1;

@@ -123,10 +123,21 @@ const toggleChange = (logIdx) => {
   localStorage.setItem('changeLog', JSON.stringify(changeLog));
 };
 
+/**
+ * Clears all change log entries after confirmation
+ */
+const clearChangeLog = () => {
+  if (!confirm('Clear change log?')) return;
+  changeLog = [];
+  localStorage.setItem('changeLog', JSON.stringify(changeLog));
+  renderChangeLog();
+};
+
 window.logChange = logChange;
 window.logItemChanges = logItemChanges;
 window.renderChangeLog = renderChangeLog;
 window.toggleChange = toggleChange;
+window.clearChangeLog = clearChangeLog;
 window.editFromChangeLog = (idx, logIdx) => {
   const modal = document.getElementById('changeLogModal');
   if (modal) {

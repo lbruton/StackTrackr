@@ -1,11 +1,14 @@
 # StackrTrackr — Changelog
 
-> **Latest release: v3.04.54**
+> **Latest release: v3.04.55**
 
 
 For upcoming work, see [announcements](announcements.md).
 
 ## 📋 Version History
+
+### Version 3.04.55 – Change Log Clearing (2025-08-16)
+- Added Clear Log button with confirmation to Change Log modal
 
 ### Version 3.04.54 – Search Controls Rework (2025-08-15)
 - Reordered search controls with icon buttons and integrated Change Log
