@@ -384,6 +384,8 @@ label {
 .container {
   display: grid;
   gap: var(--spacing-xl);
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 section {
@@ -393,6 +395,8 @@ section {
   border: 1px solid var(--border);
   box-shadow: var(--shadow);
   transition: var(--transition);
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 .app-footer {
@@ -1750,6 +1754,8 @@ table {
 .table-section {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
+  width: 100%;
+  max-width: 100%;
 }
 
 #inventoryTable {
