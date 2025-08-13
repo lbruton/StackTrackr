@@ -1,11 +1,14 @@
 # StackrTrackr — Changelog
 
-> **Latest release: v3.04.58**
+> **Latest release: v3.04.59**
 
 
 For upcoming work, see [announcements](announcements.md).
 
 ## 📋 Version History
+
+### Version 3.04.59 – Hidden Empty Columns (2025-08-20)
+- Columns with no data after filtering are automatically hidden
 
 ### Version 3.04.58 – Cache Refresh Timestamp Toggle (2025-08-19)
 - Renamed “Last sync” to “Last Cache Refresh”

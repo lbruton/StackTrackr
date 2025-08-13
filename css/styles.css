@@ -1776,7 +1776,8 @@ td {
   vertical-align: middle;
 }
 
-[data-column].hidden {
+[data-column].hidden,
+[data-column].hidden-empty {
   display: none;
 }
 

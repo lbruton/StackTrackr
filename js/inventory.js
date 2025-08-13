@@ -1007,6 +1007,21 @@ const updateTypeSummary = (items = inventory) => {
 };
 window.updateTypeSummary = updateTypeSummary;
 
+/**
+ * Hides table columns that contain no data after filtering.
+ */
+const hideEmptyColumns = () => {
+  if (typeof document === 'undefined') return;
+  const headers = document.querySelectorAll('#inventoryTable thead th[data-column]');
+  headers.forEach(header => {
+    const col = header.getAttribute('data-column');
+    const cells = document.querySelectorAll(`#inventoryTable tbody [data-column="${col}"]`);
+    const allEmpty = cells.length > 0 && Array.from(cells).every(cell => cell.textContent.trim() === '');
+    document.querySelectorAll(`#inventoryTable [data-column="${col}"]`).forEach(el => {
+      el.classList.toggle('hidden-empty', allEmpty);
+    });
+  });
+};
 
 const renderTable = () => {
   return monitorPerformance(() => {
@@ -1071,6 +1086,7 @@ const renderTable = () => {
     );
 
     elements.inventoryTable.innerHTML = rows.concat(placeholders).join('');
+    hideEmptyColumns();
     updateTypeSummary(filteredInventory);
 
     // Update sort indicators
