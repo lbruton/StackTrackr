@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Light Theme Test - StackTrackr</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <!-- Test light theme immediately -->
+    <script>
+        // Force light theme for testing
+        document.documentElement.removeAttribute('data-theme');
+    </script>
+    
+    <div class="app-header">
+        <div class="app-logo">
+            <h1>StackTrackr Light Theme Test</h1>
+        </div>
+    </div>
+
+    <section>
+        <h2>Light Theme Color Testing</h2>
+        
+        <div class="grid grid-2">
+            <div style="background: var(--bg-primary); padding: 1rem; border: 1px solid var(--border); border-radius: var(--radius);">
+                <h3>Primary Background</h3>
+                <p style="color: var(--text-primary);">Primary text on primary background</p>
+                <p style="color: var(--text-secondary);">Secondary text on primary background</p>
+                <p style="color: var(--text-muted);">Muted text on primary background</p>
+            </div>
+            
+            <div style="background: var(--bg-secondary); padding: 1rem; border: 1px solid var(--border); border-radius: var(--radius);">
+                <h3>Secondary Background</h3>
+                <p style="color: var(--text-primary);">Primary text on secondary background</p>
+                <p style="color: var(--text-secondary);">Secondary text on secondary background</p>
+                <p style="color: var(--text-muted);">Muted text on secondary background</p>
+            </div>
+            
+            <div style="background: var(--bg-tertiary); padding: 1rem; border: 1px solid var(--border); border-radius: var(--radius);">
+                <h3>Tertiary Background</h3>
+                <p style="color: var(--text-primary);">Primary text on tertiary background</p>
+                <p style="color: var(--text-secondary);">Secondary text on tertiary background</p>
+                <p style="color: var(--text-muted);">Muted text on tertiary background</p>
+            </div>
+            
+            <div style="background: var(--bg-card); padding: 1rem; border: 1px solid var(--border); border-radius: var(--radius);">
+                <h3>Card Background</h3>
+                <p style="color: var(--text-primary);">Primary text on card background</p>
+                <p style="color: var(--text-secondary);">Secondary text on card background</p>
+                <p style="color: var(--text-muted);">Muted text on card background</p>
+            </div>
+        </div>
+
+        <div style="margin-top: 2rem;">
+            <h3>Button Colors</h3>
+            <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                <button class="btn">Primary Button</button>
+                <button class="btn secondary">Secondary Button</button>
+                <button class="btn success">Success Button</button>
+                <button class="btn info">Info Button</button>
+                <button class="btn warning">Warning Button</button>
+                <button class="btn danger">Danger Button</button>
+            </div>
+        </div>
+
+        <div style="margin-top: 2rem;">
+            <h3>Form Elements</h3>
+            <form style="max-width: 400px;">
+                <label for="test-input">Test Input</label>
+                <input type="text" id="test-input" placeholder="Type something here...">
+                
+                <label for="test-select">Test Select</label>
+                <select id="test-select">
+                    <option>Option 1</option>
+                    <option>Option 2</option>
+                    <option>Option 3</option>
+                </select>
+            </form>
+        </div>
+
+        <div style="margin-top: 2rem;">
+            <h3>Sample Table</h3>
+            <table style="width: 100%;">
+                <thead>
+                    <tr>
+                        <th>Header 1</th>
+                        <th>Header 2</th>
+                        <th>Header 3</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Data 1</td>
+                        <td>Data 2</td>
+                        <td>Data 3</td>
+                    </tr>
+                    <tr>
+                        <td>Data 4</td>
+                        <td>Data 5</td>
+                        <td>Data 6</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <div style="margin-top: 2rem; text-align: center;">
+        <p><strong>Testing Light Theme v3.04.31</strong></p>
+        <p>Colors: Light/middle grays and light blues</p>
+        <p><a href="index.html">← Back to Main App</a></p>
+    </div>
+</body>
+</html>

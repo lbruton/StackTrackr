@@ -1,0 +1,96 @@
+/* =============================================================================
+   CSS CUSTOM PROPERTIES - THEME SYSTEM
+   Modern color system with comprehensive dark/light mode support
+   ============================================================================= */
+
+:root {
+  /* Primary Colors */
+  --primary: #2563eb;
+  --primary-hover: #1d4ed8;
+  --secondary: #64748b;
+  --secondary-hover: #475569;
+  --success: #059669;
+  --success-hover: #047857;
+  --info: #0ea5e9;
+  --warning: #d97706;
+  --warning-hover: #b45309;
+  --danger: #dc2626;
+  --danger-hover: #b91c1c;
+
+  /* Background Colors */
+  --bg-primary: #e5e7eb;
+  --bg-secondary: #d1d5db;
+  --bg-tertiary: #cbd5e1;
+  --bg-card: #e5e7eb;
+
+  /* Text Colors */
+  --text-primary: #141c29;
+  --text-secondary: #455161;
+  --text-muted: #425063;
+
+  /* Border & Shadow */
+  --border: #e2e8f0;
+  --border-hover: #cbd5e1;
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg:
+    0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+
+  /* Metal-specific Colors - tuned for light mode */
+  --silver: #6b7280;
+  --gold: #b45309;
+  --platinum: #4b5563;
+  --palladium: #7c3aed;
+
+  /* Component Spacing */
+  --radius: 8px;
+  --radius-lg: 12px;
+  --spacing-xs: 0.2rem;
+  --spacing-sm: 0.4rem;
+  --spacing: 0.75rem;
+  --spacing-lg: 1.25rem;
+  --spacing-xl: 1.5rem;
+
+  /* Transitions */
+  --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+[data-theme="dark"] {
+  /* Primary Colors - Dark Mode */
+  --primary: #3b82f6;
+  --primary-hover: #2563eb;
+  --secondary: #6b7280;
+  --secondary-hover: #9ca3af;
+  --success: #10b981;
+  --success-hover: #059669;
+  --info: #38bdf8;
+  --warning: #f59e0b;
+  --warning-hover: #d97706;
+  --danger: #ef4444;
+  --danger-hover: #dc2626;
+
+  /* Metal-specific Colors - dark mode */
+  --silver: #d1d5db;
+  --gold: #fbbf24;
+  --platinum: #f3f4f6;
+  --palladium: #d8b4fe;
+
+  /* Background Colors - Dark Mode */
+  --bg-primary: #0f172a;
+  --bg-secondary: #1e293b;
+  --bg-tertiary: #334155;
+  --bg-card: #1e293b;
+
+  /* Text Colors - Dark Mode */
+  --text-primary: #f8fafc;
+  --text-secondary: #cbd5e1;
+  --text-muted: #94a3b8;
+
+  /* Border & Shadow - Dark Mode */
+  --border: #334155;
+  --border-hover: #475569;
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
+  --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.3), 0 2px 4px -2px rgb(0 0 0 / 0.3);
+  --shadow-lg:
+    0 10px 15px -3px rgb(0 0 0 / 0.3), 0 4px 6px -4px rgb(0 0 0 / 0.3);
+}
