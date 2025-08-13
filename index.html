@@ -675,6 +675,15 @@
       <section class="table-controls-section">
         <div class="table-controls">
           <div class="top-controls">
+            <button type="button" id="changeLogBtn" class="btn">Change Log</button>
+            <div class="filters-card" id="filtersCard">
+              <h3 class="table-subtitle">Filters</h3>
+              <div id="typeSummary"></div>
+              <div class="filter-info">
+                <div class="active-filters" id="activeFilters"></div>
+                <div class="search-results-info" id="searchResultsInfo"></div>
+              </div>
+            </div>
             <div class="items-per-page">
               <span class="items-label">Items:</span>
               <select class="pagination-select" id="itemsPerPage">
@@ -684,15 +693,6 @@
                 <option value="50">50</option>
                 <option value="100">100</option>
               </select>
-            </div>
-            <button type="button" id="changeLogBtn" class="btn">Change Log</button>
-          </div>
-          <div class="filters-card" id="filtersCard">
-            <h3 class="table-subtitle">Filters</h3>
-            <div id="typeSummary"></div>
-            <div class="filter-info">
-              <div class="active-filters" id="activeFilters"></div>
-              <div class="search-results-info" id="searchResultsInfo"></div>
             </div>
           </div>
         </div>

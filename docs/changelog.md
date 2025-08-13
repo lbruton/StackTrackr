@@ -1,11 +1,15 @@
 # StackrTrackr — Changelog
 
-> **Latest release: v3.04.46**
+> **Latest release: v3.04.47**
 
 
 For upcoming work, see [announcements](announcements.md).
 
 ## 📋 Version History
+
+### Version 3.04.47 – Filter Controls Reorder (2025-08-20)
+- **UI**: Filters card moved between Change Log and Items dropdown with controls repositioned.
+- **Filters**: Active filter chips stay on a single line with horizontal scrolling.
 
 ### Version 3.04.46 – Filter Card Layout Stabilization (2025-08-20)
 - **Filters**: Ensured active chips hide when no filters and enforced single-line height.
