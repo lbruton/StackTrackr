@@ -1,11 +1,15 @@
 # StackrTrackr — Changelog
 
-> **Latest release: v3.04.50**
+> **Latest release: v3.04.51**
 
 
 For upcoming work, see [announcements](announcements.md).
 
 ## 📋 Version History
+
+### Version 3.04.51 – File Menu Color Updates (2025-08-13)
+- **File menu clarity**: Import buttons are now orange, merge buttons green, and export buttons remain blue
+- **Data wipe warning**: “Boating Accident?” button renamed to “Wipe All Data” with a cautionary notice
 
 ### Version 3.04.50 – Standardized Filter Chip Sizing (2025-08-12)
 - **Filter Chip Standardization**: Unified chip sizing across all filter types for consistent appearance
