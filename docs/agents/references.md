@@ -1,0 +1,394 @@
+# StackTrackr Agent Trigger Phrases & Workflow References
+**Version**: 2.0  
+**Created**: August 13, 2025  
+**Location**: `/docs/agents/references.md`
+
+---
+
+## 🎯 **PRIMARY WORKFLOW TRIGGERS**
+
+### **Task Management**
+```
+"Create a multi-agent task for [TASK_NAME]"
+```
+→ Generates complete task delegation system with individual agent assignments, coordination documents, and progress tracking
+
+```
+"Review current task progress"
+```
+→ Reads checklist.md and provides comprehensive status update on all active tasks
+
+```
+"Assign task [PHASE] to [AGENT]"
+```
+→ Extracts specific assignment prompt for immediate delegation to GPT/Gemini/Claude
+
+---
+
+## 🔧 **DEVELOPMENT WORKFLOW TRIGGERS**
+
+### **Performance & Quality**
+```
+"Optimize performance for [FEATURE/MODULE]"
+```
+→ Analyzes bottlenecks and creates performance improvement tasks with agent assignments
+
+```
+"Refactor [MODULE] for maintainability"
+```
+→ Creates architectural improvement plan with complexity-based agent delegation
+
+```
+"Security audit [FEATURE]"
+```
+→ Generates security review checklist and assigns to appropriate agent (typically Gemini)
+
+### **Feature Development**
+```
+"Plan new feature: [FEATURE_NAME]"
+```
+→ Creates feature implementation roadmap with phases and agent assignments
+
+```
+"Add [COMPONENT_TYPE] to StackTrackr"
+```
+→ Generates component implementation plan (e.g., "Add modal component", "Add data visualization")
+
+```
+"Migrate [CURRENT] to [TARGET]"
+```
+→ Creates migration strategy (e.g., "Migrate jQuery to vanilla JS", "Migrate to TypeScript")
+
+### **Bug Management**
+```
+"Debug issue: [DESCRIPTION]"
+```
+→ Creates systematic debugging approach with testing phases and agent coordination
+
+```
+"Fix regression in [FEATURE]"
+```
+→ Generates rollback analysis and targeted fix strategy with validation steps
+
+```
+"Validate fix for [ISSUE]"
+```
+→ Creates comprehensive testing protocol for specific issue verification
+
+---
+
+## 🚀 **STACKTRACKR-SPECIFIC TRIGGERS**
+
+### **Inventory Management**
+```
+"Optimize inventory table performance"
+```
+→ Focus on large dataset handling, rendering improvements, and memory optimization
+
+```
+"Enhance search functionality"
+```
+→ Targets search UX, performance improvements, and filtering capabilities
+
+```
+"Improve data import/export"
+```
+→ Streamlines CSV/JSON/Numista data handling with validation and error handling
+
+### **API & Integration**
+```
+"Optimize spot price fetching"
+```
+→ Improves API performance, caching strategies, and rate limiting
+
+```
+"Add new metals API provider"
+```
+→ Creates provider integration workflow with testing and validation
+
+```
+"Enhance backup/restore system"
+```
+→ Improves data persistence, recovery mechanisms, and data integrity
+
+### **UI/UX Improvements**
+```
+"Modernize UI components"
+```
+→ Creates component upgrade and styling tasks with accessibility considerations
+
+```
+"Improve mobile responsiveness"
+```
+→ Targets mobile-specific UX improvements and touch interactions
+
+```
+"Enhance accessibility features"
+```
+→ Creates WCAG compliance improvement plan with testing protocols
+
+---
+
+## 📊 **PROJECT MANAGEMENT TRIGGERS**
+
+### **Documentation & Analysis**
+```
+"Document [MODULE/FEATURE]"
+```
+→ Assigns documentation tasks to appropriate agents based on complexity
+
+```
+"Analyze codebase structure"
+```
+→ Generates architectural analysis and improvement recommendations
+
+```
+"Create deployment checklist"
+```
+→ Builds release preparation and validation procedures
+
+### **Maintenance & Cleanup**
+```
+"Clean up legacy code in [MODULE]"
+```
+→ Creates systematic code modernization plan with risk assessment
+
+```
+"Update dependencies for [COMPONENT]"
+```
+→ Generates dependency upgrade strategy with compatibility testing
+
+```
+"Optimize bundle size"
+```
+→ Creates asset optimization and code splitting tasks
+
+---
+
+## 🎨 **THEME & DESIGN TRIGGERS**
+
+```
+"Update [THEME] theme styling"
+```
+→ Targets specific theme improvements (dark/light/sepia) with consistency checks
+
+```
+"Standardize component styling"
+```
+→ Creates design system consistency tasks and style guide updates
+
+```
+"Optimize CSS performance"
+```
+→ Targets stylesheet optimization, cleanup, and loading improvements
+
+---
+
+## 🧪 **TESTING & QUALITY TRIGGERS**
+
+```
+"Create test suite for [FEATURE]"
+```
+→ Generates comprehensive testing strategy with unit, integration, and E2E tests
+
+```
+"Add performance benchmarks"
+```
+→ Creates performance monitoring and measurement tasks with baselines
+
+```
+"Validate browser compatibility"
+```
+→ Creates cross-browser testing protocols and compatibility matrices
+
+---
+
+## 📱 **PLATFORM-SPECIFIC TRIGGERS**
+
+```
+"Optimize for file:// protocol"
+```
+→ Addresses local file hosting requirements and security considerations
+
+```
+"Enhance localStorage management"
+```
+→ Improves client-side data handling, quotas, and cleanup strategies
+
+```
+"Add PWA capabilities"
+```
+→ Creates progressive web app implementation plan with offline functionality
+
+---
+
+## 🔄 **INTEGRATION & MIGRATION TRIGGERS**
+
+```
+"Integrate with [SERVICE/API]"
+```
+→ Creates third-party integration workflow with authentication and error handling
+
+```
+"Convert to [FRAMEWORK/PATTERN]"
+```
+→ Major architectural migration planning with rollback strategies
+
+```
+"Implement [DESIGN_PATTERN]"
+```
+→ Architectural pattern implementation strategy (MVC, Observer, etc.)
+
+---
+
+## 📈 **ADVANCED WORKFLOW TRIGGERS**
+
+### **AI-Assisted Development**
+```
+"Generate component from description: [DESCRIPTION]"
+```
+→ AI-driven component creation with testing and documentation
+
+```
+"Analyze user workflow for [FEATURE]"
+```
+→ UX analysis and improvement recommendations with user journey mapping
+
+```
+"Suggest architecture improvements"
+```
+→ AI-driven architectural analysis and recommendations with impact assessment
+
+### **Automated Workflows**
+```
+"Set up automated [PROCESS]"
+```
+→ Creates automation implementation plan with monitoring and alerts
+
+```
+"Create monitoring for [METRIC]"
+```
+→ Implements performance/error monitoring with dashboards and alerting
+
+```
+"Generate release notes from commits"
+```
+→ Automates documentation generation with categorization and formatting
+
+---
+
+## 🤖 **AGENT SPECIALIZATION QUICK REFERENCE**
+
+### **GPT-4 - The Builder**
+**Best for**: Simple utilities, event handling, straightforward implementations  
+**Time Range**: 10-25 minutes  
+**Risk Level**: Low  
+**Typical Tasks**: Debouncing, form validation, basic optimizations
+
+### **Gemini - The Tester & Manager**
+**Best for**: Testing, QA, memory management, systematic validation  
+**Time Range**: 15-30 minutes  
+**Risk Level**: Low-Medium  
+**Typical Tasks**: Security audits, performance testing, cleanup tasks
+
+### **Claude - The Architect**
+**Best for**: Complex refactoring, architectural changes, performance optimization  
+**Time Range**: 30-90 minutes  
+**Risk Level**: Medium-High  
+**Typical Tasks**: Event delegation, DOM optimization, major refactoring
+
+---
+
+## 📋 **TASK COORDINATION PATTERNS**
+
+### **Sequential Dependencies**
+- Phase 1 (GPT) → Phase 2 (Claude) → Phase 3 (GPT) → Phase 4 (Claude) → Phase 5 (Gemini)
+
+### **Parallel Execution**
+- Independent phases can run simultaneously (e.g., Chart cleanup while search optimization)
+
+### **Critical Path**
+- Identify blocking phases that prevent other work from starting
+
+---
+
+## 📁 **FILE STRUCTURE REFERENCES**
+
+### **Current Task Location**
+```
+/docs/agents/tasks/
+├── checklist.md              # Progress tracking
+├── agent-prompts.md          # Ready-to-use prompts
+├── gpt-task-*.ai            # GPT assignments
+├── gemini-task-*.ai         # Gemini assignments
+├── claude-task-*.ai         # Claude assignments
+└── coordination.ai          # Strategy docs
+```
+
+### **Workflow Documentation**
+```
+/docs/agents/
+├── references.md            # This file
+├── multi-agent-workflow-v2.ai  # Complete workflow guide
+├── QUICK-REFERENCE.md       # Instant access guide
+└── workflow.ai             # Original workflow (updated)
+```
+
+---
+
+## 🎯 **USAGE EXAMPLES**
+
+### **Simple Task**
+```
+Human: "Optimize performance for search functionality"
+Agent: Creates search optimization task with debouncing, indexing, and testing phases
+```
+
+### **Complex Feature**
+```
+Human: "Plan new feature: Real-time price alerts"
+Agent: Creates multi-phase feature plan with API integration, UI components, and notification system
+```
+
+### **Bug Fix**
+```
+Human: "Debug issue: Table sorting breaks with large datasets"
+Agent: Creates systematic debugging approach with performance analysis and fix validation
+```
+
+---
+
+## 🚨 **IMPORTANT WORKFLOW RULES**
+
+### **Always Include**
+- Clear time estimates for each phase
+- Risk assessment and mitigation strategies
+- Testing requirements and success criteria
+- Rollback procedures for each change
+
+### **Agent Handoff Protocol**
+1. Complete assigned phase
+2. Update checklist.md with status
+3. Document any issues or deviations
+4. Verify next phase dependencies are met
+
+### **Quality Gates**
+- Test after each phase before proceeding
+- Validate no regressions introduced
+- Ensure all existing functionality preserved
+- Document performance improvements
+
+---
+
+## 📞 **QUICK COMMAND REFERENCE**
+
+**Start New Task**: `"Create a multi-agent task for [TASK_NAME]"`  
+**Check Progress**: `"Review current task progress"`  
+**Emergency Stop**: Use rollback procedures in individual task files  
+**Get Help**: Reference `/docs/agents/multi-agent-workflow-v2.ai`
+
+---
+
+**Last Updated**: August 13, 2025  
+**Next Review**: After performance optimization task completion  
+**Status**: Active workflow system ready for use

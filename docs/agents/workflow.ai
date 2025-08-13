@@ -1,6 +1,30 @@
 # Agent Task Delegation Guide
 
+This guide helps delegate tasks to the most suitable AI agent for the job, based on the roles we've defined for the StackrTrackr project. By following this model, you can create a powerful assembly line for development: **Plan with Gemini, Build with GPT, and Refine with Claude.**
+
+## 🆕 **UNIFIED WORKFLOW SYSTEM**
+**For all task delegation (simple or complex), use:**
+```
+"Assign this task to [AGENT]: [DESCRIPTION]" - Direct assignment
+"Create a multi-agent task for [TASK_NAME]" - Smart breakdown
+```
+**Complete system**: See `unified-workflow.ai` for full token-efficient workflow
+
+## ⚡ **QUICK AGENT ASSIGNMENT**
+- **GPT**: Simple utilities, event handling, basic features (15-25 min)
+- **Gemini**: Testing, QA, security audits, memory management (15-30 min)  
+- **Claude**: Complex refactoring, architecture, performance optimization (30-90 min)
+
+--- Delegation Guide
+
 This guide helps delegate tasks to the most suitable AI agent for the job, based on the roles we've defined for the StackTrackr project. By following this model, you can create a powerful assembly line for development: **Plan with Gemini, Build with GPT, and Refine with Claude.**
+
+## 🆕 NEW: Multi-Agent Task System
+**For complex tasks requiring multiple agents, use the trigger phrase:**
+```
+"Create a multi-agent task for [TASK_NAME]"
+```
+This will generate a complete task delegation system with individual assignments, coordination documents, and progress tracking. See `multi-agent-workflow-v2.ai` for full details.
 
 ---
 

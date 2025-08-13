@@ -1,0 +1,295 @@
+# StackTrackr Multi-Agent Development Workflow
+**Version**: 3.0 - Unified Task Delegation & Project Context  
+**Created**: August 13, 2025  
+**Current Version**: v3.04.70
+
+---
+
+## 🎯 **CORE WORKFLOW CAPABILITIES**
+
+### **Option 1: Direct Task Assignment**
+```
+"Assign this task to [GPT/Gemini/Claude]: [TASK_DESCRIPTION]"
+```
+→ Agent receives task and executes immediately based on their specialization
+
+### **Option 2: Smart Task Breakdown**
+```
+"Create a multi-agent task for [TASK_NAME]"
+```
+→ Agent analyzes complexity, breaks down into phases, and creates delegation system
+
+---
+
+## 🤖 **AGENT SPECIALIZATIONS & ASSIGNMENT RULES**
+
+### **GPT-4 - The Builder** (15-25 min tasks)
+**Auto-assign for**:
+- Utility functions and helpers
+- Event handling and basic optimizations
+- Form validation and input processing
+- Simple API integrations
+- Straightforward feature implementations
+
+**Example assignments**:
+- "Add debounced search functionality"
+- "Create form validation for inventory items" 
+- "Implement localStorage batching"
+
+### **Gemini - The Tester & Quality Manager** (15-30 min tasks)
+**Auto-assign for**:
+- Testing and validation protocols
+- Security audits and input sanitization
+- Memory management and cleanup
+- Performance measurements
+- Browser compatibility testing
+
+**Example assignments**:
+- "Create test suite for search functionality"
+- "Audit data import security"
+- "Implement Chart.js cleanup procedures"
+
+### **Claude - The Architect** (30-90 min tasks)
+**Auto-assign for**:
+- Complex refactoring and architectural changes
+- Performance optimization strategies
+- Large-scale code reorganization
+- Integration of multiple systems
+- Technical analysis and recommendations
+
+**Example assignments**:
+- "Refactor table rendering for performance"
+- "Implement event delegation system"
+- "Analyze and optimize DOM manipulation"
+
+---
+
+## 📋 **MCP-POWERED WORKFLOW**
+
+### **Context Commands**
+```
+@workspace - Full project context via MCP server
+```
+→ Gives agents real-time, comprehensive understanding
+
+### **Handoff Protocol**
+```
+"Prepare handoff"
+```
+→ Agent summarizes current state and provides continuation prompt for seamless transitions
+
+---
+
+## 🚀 **STACKTRACKR PROJECT CONTEXT**
+
+### **Technical Architecture**
+- **Client-side only**: Works from file:// protocol
+- **Modular JavaScript**: Separate files for different concerns  
+- **Local storage**: All data persisted locally (5-10MB limits)
+- **Responsive CSS**: 3 themes (dark/light/sepia)
+- **External libraries**: Chart.js, Papa Parse, jsPDF, JSZip
+
+### **Key Data Structures**
+- `inventory[]` - Array of inventory items
+- `spotPrices{}` - Current metal prices
+- `elements{}` - Cached DOM elements
+- `apiConfig{}` - API provider settings
+
+### **Critical Files & Conflict Management**
+**HIGH RISK** ⚠️ (coordinate before editing):
+- `index.html` - Main structure
+- `js/events.js` - Event handling
+- `css/styles.css` - Shared styling
+
+**MEDIUM RISK** ⚠️:
+- `js/api.js`, `js/inventory.js`, `js/theme.js`
+
+**LOW RISK** ✅ (safe for parallel work):
+- Documentation, utilities, new modules
+
+---
+
+## 📊 **TASK DELEGATION DECISION MATRIX**
+
+| Task Complexity | Time Estimate | Risk Level | Auto-Assign To |
+|-----------------|---------------|------------|----------------|
+| Simple utilities | <20 min | Low | GPT |
+| Testing/QA | 15-30 min | Low | Gemini |
+| Refactoring | 20-60 min | Medium | Claude |
+| Architecture | 30-90 min | High | Claude |
+
+### **Smart Assignment Logic**
+```javascript
+// Auto-assignment rules:
+if (task.includes("test" || "validate" || "audit")) → Gemini
+if (task.includes("refactor" || "optimize" || "architecture")) → Claude  
+if (task.includes("add" || "create" || "implement") && estimated_time < 25min) → GPT
+if (estimated_time > 30min || risk === "high") → Claude
+```
+
+---
+
+## 🎯 **QUALITY STANDARDS (ALL AGENTS)**
+
+### **Required Testing Protocol**
+✅ **Functional**: Works as intended  
+✅ **Integration**: No breaking changes  
+✅ **Themes**: All 3 themes (dark/light/sepia)  
+✅ **Browsers**: Chrome, Firefox, Safari, Edge  
+✅ **Mobile**: Responsive design maintained  
+✅ **File Protocol**: Works via file:// opening
+
+### **Code Quality Requirements**
+- Follow existing patterns and conventions
+- Add JSDoc comments for new functions
+- Use consistent naming (camelCase)
+- Sanitize all user inputs (XSS prevention)
+- Maintain accessibility features
+
+### **Version Management**
+After completion, update:
+- `js/constants.js` - Bump APP_VERSION
+- `docs/changelog.md` - Document changes
+- `docs/functionstable.md` - Add new functions
+
+---
+
+## 📁 **TASK FILE STRUCTURE**
+
+### **For Complex Tasks** (using trigger phrase):
+```
+/docs/agents/tasks/[task-name]/
+├── checklist.md              # Progress tracking
+├── agent-prompts.md          # Ready-to-copy assignments
+├── gpt-task-[phase].ai       # GPT-specific work
+├── gemini-task-[phase].ai    # Gemini-specific work
+├── claude-task-[phase].ai    # Claude-specific work
+└── coordination.ai           # Execution strategy
+```
+
+### **For Simple Tasks** (direct assignment):
+Agent reads this workflow file and executes immediately.
+
+---
+
+## 🔄 **WORKFLOW EXECUTION PATTERNS**
+
+### **Pattern 1: Simple Direct Assignment**
+```
+Human: "Assign this task to GPT: Add debounced search"
+GPT: Reads workflow → Sees it's utility/optimization → Executes immediately
+```
+
+### **Pattern 2: Smart Breakdown**
+```
+Human: "Create a multi-agent task for performance optimization"
+Claude: Analyzes → Creates phase breakdown → Generates task files for each agent
+```
+
+### **Pattern 3: Auto-Routing**
+```
+Human: "Implement Chart.js memory cleanup"
+Any Agent: Sees "cleanup" + "memory" → Routes to Gemini specialization
+```
+
+---
+
+## 🚨 **CRITICAL EFFICIENCY RULES**
+
+### **Token Conservation**
+- Use `@workspace` for context instead of large static files
+- Break complex tasks into focused phases
+- Agents only read task files relevant to their assignment
+- Use handoff protocol for long conversations
+
+### **Right Task, Right Agent**
+- **Simple & Fast** → GPT (reduces Claude context usage)
+- **Testing & QA** → Gemini (specialized strengths)
+- **Complex & Architectural** → Claude (best for deep analysis)
+
+### **Parallel Execution**
+- Independent phases run simultaneously
+- Dependency chains clearly defined
+- Progress tracked in shared checklist
+
+---
+
+## 📞 **TRIGGER PHRASE LIBRARY**
+
+### **Task Management**
+```
+"Create a multi-agent task for [TASK_NAME]"
+"Assign this task to [AGENT]: [DESCRIPTION]"
+"Review current task progress"
+```
+
+### **StackTrackr-Specific**
+```
+"Optimize performance for [FEATURE]"
+"Add [COMPONENT] to StackTrackr"
+"Debug issue: [DESCRIPTION]"
+"Enhance [MODULE] functionality"
+```
+
+### **Quality & Testing**
+```
+"Create test suite for [FEATURE]"
+"Security audit [MODULE]"
+"Validate browser compatibility"
+```
+
+---
+
+## 🎯 **USAGE EXAMPLES**
+
+### **Simple Task** (Direct Assignment):
+```
+Human: "Assign this task to GPT: Add localStorage batching for rapid edits"
+GPT: Reads specialization → Sees utility/optimization → Implements immediately
+```
+
+### **Complex Task** (Smart Breakdown):
+```
+Human: "Create a multi-agent task for migrating to TypeScript"
+Claude: Analyzes complexity → Creates 6-phase plan → Generates individual assignments
+```
+
+### **Auto-Routing**:
+```
+Human: "Need comprehensive testing for the new search feature"
+Any Agent: Sees "testing" → Routes to Gemini → Creates test protocols
+```
+
+---
+
+## 📊 **SUCCESS METRICS**
+
+### **Efficiency Gains**
+- ✅ Reduced token usage through smart routing
+- ✅ Faster task completion via specialization
+- ✅ Better quality through agent strengths
+- ✅ Seamless coordination via MCP
+
+### **Quality Assurance**
+- ✅ All changes tested across 3 themes
+- ✅ Browser compatibility maintained
+- ✅ No breaking changes introduced
+- ✅ Performance improvements measured
+
+---
+
+## 🔧 **QUICK REFERENCE**
+
+**Start Simple Task**: `"Assign this task to [AGENT]: [DESCRIPTION]"`  
+**Start Complex Task**: `"Create a multi-agent task for [TASK_NAME]"`  
+**Check Progress**: `"Review current task progress"`  
+**Get Context**: Use `@workspace` command  
+**Emergency Stop**: Refer to rollback procedures in task files
+
+---
+
+**This unified workflow optimizes for:**
+✅ **Token Efficiency** - Right agent, right task, minimal context  
+✅ **Quality Delivery** - Specialized strengths, proper testing  
+✅ **Seamless Coordination** - MCP integration, clear handoffs  
+✅ **Project Success** - StackTrackr-specific requirements met
