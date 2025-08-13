@@ -1,11 +1,15 @@
 # StackrTrackr — Changelog
 
-> **Latest release: v3.04.43**
+> **Latest release: v3.04.44**
 
 
 For upcoming work, see [announcements](announcements.md).
 
 ## 📋 Version History
+
+-### Version 3.04.44 – Filters Card & Anchored Controls (2025-08-20)
+- **Filters**: Active filter chips hidden when no filters applied and moved into centered card.
+- **UI**: Change Log button and items dropdown anchored to top of Filters block.
 
 ### Version 3.04.43 – Filter Chip Totals & Tooltip Links (2025-08-19)
 - **Filters**: Summary chips show filtered/total counts and display only active categories.

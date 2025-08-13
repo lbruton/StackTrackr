@@ -258,6 +258,12 @@ const renderActiveFilters = () => {
     filters.push({ field: 'search', value: searchQuery });
   }
 
+  if (filters.length === 0) {
+    container.style.display = 'none';
+    return;
+  }
+  container.style.display = '';
+
   const colors = ['var(--primary)', 'var(--secondary)', 'var(--success)', 'var(--warning)', 'var(--danger)', 'var(--info)'];
   const labels = {
     metal: 'Metal',
