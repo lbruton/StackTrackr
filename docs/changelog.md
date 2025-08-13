@@ -1,11 +1,15 @@
 # StackrTrackr — Changelog
 
-> **Latest release: v3.04.55**
+> **Latest release: v3.04.56**
 
 
 For upcoming work, see [announcements](announcements.md).
 
 ## 📋 Version History
+
+### Version 3.04.56 – Filters Modal Removal (2025-08-17)
+- Removed legacy Filters modal, button, and related code
+- Cleaned up unused filter utilities
 
 ### Version 3.04.55 – Change Log Clearing (2025-08-16)
 - Added Clear Log button with confirmation to Change Log modal

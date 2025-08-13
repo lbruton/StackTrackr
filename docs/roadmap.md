@@ -6,6 +6,7 @@ This roadmap tracks upcoming goals without committing to specific patch numbers.
 - _No active patch goals at this time._
 
 ## Completed Patch Goals (v3.04.xx)
+- ✅ **Filters modal removal** - Eliminated legacy filters modal and cleanup (v3.04.56)
 - ✅ **Change log clearing option** - Added Clear Log button with confirmation in Change Log modal (v3.04.55)
 - ✅ **Search control consolidation** - New item icon, Change Log in search bar, and clear button redesign (v3.04.54)
 - ✅ **Clickable logo reloads application** - App logo refreshes the page when clicked (v3.04.53)

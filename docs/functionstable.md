@@ -1,7 +1,7 @@
 # Function Reference
 
 
-> **Latest release: v3.04.55**
+> **Latest release: v3.04.56**
 
 
 | File | Function | Description |
@@ -55,8 +55,6 @@
 | api.js | resetSpotPrice | Resets spot price to default or API cached value |
 | api.js | createBackupData | Exports backup data including Metals API configuration |
 | api.js | downloadCompleteBackup | Downloads complete backup files including inventory and Metals API configuration |
-| filters.js | populateFilterDropdowns | Populates filter modal dropdowns and exclude toggles |
-| filters.js | applyFilters | Applies modal filters with multi-select and exclusion options |
 | filters.js | applyQuickFilter | Adds or toggles a filter for a specific field value |
 | filters.js | clearAllFilters | Clears all active filters and search query |
 | filters.js | filterInventoryAdvanced | Applies multi-value and exclusion filters with comma-separated search terms |

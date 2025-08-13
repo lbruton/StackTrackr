@@ -8,7 +8,6 @@ global.searchQuery = '';
 global.currentPage = 1;
 global.columnFilters = {};
 global.renderTable = () => {};
-global.updateFiltersButtonState = () => {};
 global.renderActiveFilters = () => {};
 global.getCompositionFirstWords = str => str.split(' ')[0];
 global.window = global;
