@@ -74,7 +74,7 @@ const CF_ANALYTICS_CACHE_DURATION = 30 * 60 * 1000; // 30 minutes
 /**
  * Fetches analytics data from Cloudflare API
  * @param {string} endpoint - Analytics endpoint to call
- * @param {Object} config - API configuration
+ * @param {Object} config - Metals API configuration
  * @returns {Promise<Object|null>} Analytics data or null
  */
 const fetchCloudflareAnalytics = async (endpoint, config) => {
@@ -229,7 +229,7 @@ const refreshWebsiteStats = async () => {
     if (stats) {
       updateStatsDisplay(stats);
     } else {
-      alert('Failed to fetch website statistics. Check your API configuration.');
+      alert('Failed to fetch website statistics. Check your Metals API configuration.');
     }
   } catch (error) {
     console.error('Error refreshing stats:', error);
@@ -408,7 +408,7 @@ Add to existing settings modal in `index.html`:
 - [ ] Add Cloudflare provider to API_PROVIDERS
 - [ ] Create cloudflare-analytics.js module
 - [ ] Basic UI for page views and visitors
-- [ ] Settings integration for API configuration
+- [ ] Settings integration for Metals API configuration
 - [ ] Cache management
 
 ### Phase 2: Enhanced Metrics (v3.4.1)

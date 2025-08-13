@@ -262,7 +262,7 @@ let spotPrices = {
 /** @type {Array} Historical spot price records */
 let spotHistory = [];
 
-/** @type {Object|null} Current API configuration */
+/** @type {Object|null} Current Metals API configuration */
 let apiConfig = null;
 
 /** @type {Object|null} Cached API data with timestamp */

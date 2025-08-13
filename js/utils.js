@@ -1152,7 +1152,7 @@ const getStorageItemDisplayName = (key) => {
   const names = {
     'precious-metals-inventory': 'Inventory Data',
     'spot-price-history': 'Spot Price History',
-    'api-config': 'API Configuration',
+    'api-config': 'Metals API Configuration',
     'api-cache': 'API Cache',
     'spotPriceSilver': 'Silver Spot Price',
     'spotPriceGold': 'Gold Spot Price',
@@ -1172,7 +1172,7 @@ const getStorageItemDescription = (key) => {
   const descriptions = {
     'precious-metals-inventory': 'Your complete inventory of precious metals items with all details',
     'spot-price-history': 'Historical spot price data from API providers and manual entries',
-    'api-config': 'API provider configurations and usage statistics',
+    'api-config': 'Metals API provider configurations and usage statistics',
     'api-cache': 'Cached spot price data to reduce API calls',
     'spotPriceSilver': 'Current spot price setting for silver',
     'spotPriceGold': 'Current spot price setting for gold', 
@@ -2231,7 +2231,7 @@ const getStorageReportJS = () => {
         const names = {
             'precious-metals-inventory': 'Inventory Data',
             'spot-price-history': 'Spot Price History',
-            'api-config': 'API Configuration',
+            'api-config': 'Metals API Configuration',
             'api-cache': 'API Cache',
             'spotPriceSilver': 'Silver Spot Price',
             'spotPriceGold': 'Gold Spot Price',

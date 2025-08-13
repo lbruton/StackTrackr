@@ -858,7 +858,7 @@ const setupEventListeners = () => {
               syncSpotPricesFromApi(true);
             } else {
               alert(
-                "API sync functionality requires API configuration. Please configure an API provider first.",
+                "API sync functionality requires Metals API configuration. Please configure an API provider first.",
               );
             }
           },

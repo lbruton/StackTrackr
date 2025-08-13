@@ -157,7 +157,7 @@ See [docs/announcements.md](docs/announcements.md) for the latest release notes 
 - Marked as **feature complete** for the 3.2.x series
 
 ## 🆕 What's New in v3.2.0
-- Appearance settings now appear before API configuration for quicker access
+- Appearance settings now appear before Metals API configuration for quicker access
 - Sync All displays a confirmation dialog showing how many records were updated
 - API price history modal matches other modals and includes a Clear Filter button
 
@@ -208,7 +208,7 @@ See [docs/announcements.md](docs/announcements.md) for the latest release notes 
   - Clicking "Reset" restores the price to default or API cached value.
   - Price history updates accordingly with source tracking.
 - **API Integration**:
-  - Sync buttons are enabled/disabled based on API configuration.
+  - Sync buttons are enabled/disabled based on Metals API configuration.
   - All metal prices sync simultaneously from configured provider.
   - Button states show loading status during syncing.
 - **Backwards Compatibility and Stability**: Maintained all existing workflows and data integrity during fixes.

@@ -18,9 +18,9 @@
 | about.js | setupAboutModalEvents | Sets up event listeners for about modal elements |
 | about.js | setupAckModalEvents | Sets up event listeners for acknowledgment modal elements |
 | api.js | renderApiStatusSummary |  |
-| api.js | loadApiConfig | Loads API configuration from localStorage |
-| api.js | saveApiConfig | Saves API configuration to localStorage |
-| api.js | clearApiConfig | Clears API configuration |
+| api.js | loadApiConfig | Loads Metals API configuration from localStorage |
+| api.js | saveApiConfig | Saves Metals API configuration to localStorage |
+| api.js | clearApiConfig | Clears Metals API configuration |
 | api.js | clearApiCache | Clears only the API cache, keeping the configuration |
 | api.js | getCacheDurationMs | Gets cache duration in milliseconds |
 | api.js | setProviderStatus | Sets connection status for a provider in the settings UI |
@@ -53,8 +53,8 @@
 | api.js | showManualInput | Shows manual price input for a specific metal |
 | api.js | hideManualInput | Hides manual price input for a specific metal |
 | api.js | resetSpotPrice | Resets spot price to default or API cached value |
-| api.js | createBackupData | Exports backup data including API configuration |
-| api.js | downloadCompleteBackup | Downloads complete backup files including inventory and API configuration |
+| api.js | createBackupData | Exports backup data including Metals API configuration |
+| api.js | downloadCompleteBackup | Downloads complete backup files including inventory and Metals API configuration |
 | filters.js | populateFilterDropdowns | Populates filter modal dropdowns and exclude toggles |
 | filters.js | applyFilters | Applies modal filters with multi-select and exclusion options |
 | filters.js | applyQuickFilter | Adds or toggles a filter for a specific field value |
