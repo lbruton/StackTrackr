@@ -98,18 +98,18 @@ importNumistaCsv(file);
 capturedCsv = '';
 exportNumistaCsv();
 
-const lines = capturedCsv.trim().split(/\r?\n/);
-const headers = lines[0].split(',');
-const row = lines[1].split(',');
-
+const [headerLine] = capturedCsv.split(/\r?\n/);
+const headers = headerLine.split(',');
 assert.deepStrictEqual(
   headers.slice(11),
   ['Note','Private comment','Public comment','Comment'],
   'header columns should include note and comment fields'
 );
-assert.strictEqual(row[11], 'Base note');
-assert.strictEqual(row[12], 'Private text');
-assert.strictEqual(row[13], 'Public text');
-assert.strictEqual(row[14], 'Other text');
+const noteMatch = capturedCsv.match(/"([^"]*)",Private text/);
+assert.ok(noteMatch && noteMatch[1].startsWith('Base note'), 'note column should start with original base note');
+assert.ok(noteMatch && noteMatch[1].includes('Numista Import Data'), 'note column should include markdown data');
+assert.ok(capturedCsv.includes(',Private text,'));
+assert.ok(capturedCsv.includes(',Public text,'));
+assert.ok(capturedCsv.includes(',Other text')); // last field may not have trailing comma
 
 console.log('Numista comment export test passed');

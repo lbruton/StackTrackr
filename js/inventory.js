@@ -1520,7 +1520,7 @@ const importCsv = (file, override = false) => {
             date,
             purchaseLocation,
             storageLocation,
-            notes,
+            notes: finalNotes,
             spotPriceAtPurchase,
             premiumPerOz,
             totalPremium,
@@ -1669,17 +1669,20 @@ const importNumistaCsv = (file, override = false) => {
 
           const priceKey = Object.keys(row).find(k => /^(buying price|purchase price|price paid)/i.test(k));
           const estimateKey = Object.keys(row).find(k => /^estimate/i.test(k));
+          const parsePriceField = (key) => {
+            const rawVal = String(row[key] ?? '').trim();
+            const valueCurrency = detectCurrency(rawVal);
+            const headerCurrencyMatch = key.match(/\(([^)]+)\)/);
+            const headerCurrency = headerCurrencyMatch ? headerCurrencyMatch[1] : 'USD';
+            const currency = valueCurrency || headerCurrency;
+            const amount = parseFloat(rawVal.replace(/[^0-9.\-]/g, ''));
+            return isNaN(amount) ? 0 : convertToUsd(amount, currency);
+          };
           let purchasePrice = 0;
           if (priceKey) {
-            const currencyMatch = priceKey.match(/\(([^)]+)\)/);
-            const currency = currencyMatch ? currencyMatch[1] : 'USD';
-            const amount = parseFloat(String(row[priceKey]).replace(/[^0-9.\-]/g, ''));
-            purchasePrice = convertToUsd(amount, currency);
+            purchasePrice = parsePriceField(priceKey);
           } else if (estimateKey) {
-            const currencyMatch = estimateKey.match(/\(([^)]+)\)/);
-            const currency = currencyMatch ? currencyMatch[1] : 'USD';
-            const amount = parseFloat(String(row[estimateKey]).replace(/[^0-9.\-]/g, ''));
-            purchasePrice = convertToUsd(amount, currency);
+            purchasePrice = parsePriceField(estimateKey);
           }
 
           const purchaseLocRaw = getValue(row, ['Acquisition place', 'Acquired from', 'Purchase place']);
@@ -1702,6 +1705,16 @@ const importNumistaCsv = (file, override = false) => {
           if (otherComment) noteParts.push(`Comment: ${otherComment}`);
           const notes = noteParts.join('\n');
 
+          const markdownLines = Object.entries(row)
+            .filter(([, v]) => v && String(v).trim())
+            .map(([k, v]) => `- **${k.trim()}**: ${String(v).trim()}`);
+          const markdownNote = markdownLines.length
+            ? `### Numista Import Data\n${markdownLines.join('\n')}`
+            : '';
+          const finalNotes = markdownNote
+            ? notes ? `${notes}\n\n${markdownNote}` : markdownNote
+            : notes;
+
           if (type === 'Bar' || type === 'Round') {
             isCollectable = false;
           }
@@ -1722,7 +1735,7 @@ const importNumistaCsv = (file, override = false) => {
             date,
             purchaseLocation,
             storageLocation,
-            notes,
+            notes: finalNotes,
             spotPriceAtPurchase,
             premiumPerOz,
             totalPremium,
