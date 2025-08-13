@@ -104,6 +104,7 @@ document.addEventListener("DOMContentLoaded", () => {
     elements.exportPdfBtn = safeGetElement("exportPdfBtn");
     elements.cloudSyncBtn = safeGetElement("cloudSyncBtn");
     elements.syncAllBtn = safeGetElement("syncAllBtn");
+    elements.numistaApiKey = safeGetElement("numistaApiKey");
     elements.removeInventoryDataBtn = safeGetElement("removeInventoryDataBtn");
     elements.boatingAccidentBtn = safeGetElement("boatingAccidentBtn");
 
