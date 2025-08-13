@@ -1,6 +1,6 @@
 # Implementation Summary: Filter Chip Expansion
 
-> **Latest release: v3.04.56**
+> **Latest release: v3.04.57**
 
 ## Version Update: 3.04.41 → 3.04.42
 
