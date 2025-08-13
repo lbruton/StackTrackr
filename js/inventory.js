@@ -621,30 +621,62 @@ const persistInventoryAndRefresh = () => {
 };
 
 /**
- * Validates values for inline edits
+ * Enhanced validation for inline edits with comprehensive field support
  * @param {string} field - Field being edited
  * @param {string} value - Proposed value
  * @returns {boolean} Whether value is valid
  */
 const validateFieldValue = (field, value) => {
+  const trimmedValue = typeof value === 'string' ? value.trim() : String(value).trim();
+  
   switch (field) {
     case 'qty':
-      return /^\d+$/.test(value) && parseInt(value, 10) > 0;
+      const qty = parseInt(value, 10);
+      return /^\d+$/.test(value) && qty > 0 && qty <= 999999;
+      
     case 'weight':
+      const weight = parseFloat(value);
+      return !isNaN(weight) && weight > 0 && weight <= 999999;
+      
     case 'price':
     case 'spotPriceAtPurchase':
-      return !isNaN(value) && parseFloat(value) > 0;
+      const price = parseFloat(value);
+      return !isNaN(price) && price >= 0 && price <= 999999999;
+      
     case 'name':
+      return trimmedValue.length > 0 && trimmedValue.length <= 200;
+      
     case 'purchaseLocation':
     case 'storageLocation':
-      return value.trim() !== '';
+      return trimmedValue.length <= 100; // Allow empty for optional fields
+      
+    case 'notes':
+      return trimmedValue.length <= 1000; // Allow long notes but with limit
+      
+    case 'date':
+      if (!trimmedValue) return false;
+      const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+      if (!dateRegex.test(trimmedValue)) return false;
+      const date = new Date(trimmedValue);
+      const today = new Date();
+      const minDate = new Date('1900-01-01');
+      return date >= minDate && date <= today;
+      
+    case 'type':
+      const validTypes = ['Coin', 'Bar', 'Round', 'Note', 'Aurum', 'Other'];
+      return validTypes.includes(trimmedValue);
+      
+    case 'metal':
+      const validMetals = ['Silver', 'Gold', 'Platinum', 'Palladium', 'Alloy/Other'];
+      return validMetals.includes(trimmedValue);
+      
     default:
       return true;
   }
 };
 
 /**
- * Activates inline editing for a table cell
+ * Enhanced inline editing for table cells with support for multiple field types
  * @param {number} idx - Index of item to edit
  * @param {string} field - Field name to update
  * @param {HTMLElement} icon - Clicked pencil icon
@@ -655,35 +687,76 @@ const startCellEdit = (idx, field, icon) => {
   const current = item[field] ?? '';
   const originalContent = td.innerHTML;
   td.classList.add('editing');
-  const input = document.createElement('input');
-  if (field === 'qty') {
-    input.type = 'number';
-    input.step = '1';
-  } else if (['weight', 'price', 'spotPriceAtPurchase'].includes(field)) {
-    input.type = 'number';
-    input.step = '0.01';
+  
+  let input;
+  
+  // Create appropriate input type based on field
+  if (['type', 'metal'].includes(field)) {
+    input = document.createElement('select');
+    input.className = 'inline-select';
+    
+    if (field === 'type') {
+      const types = ['Coin', 'Bar', 'Round', 'Note', 'Aurum', 'Other'];
+      types.forEach(type => {
+        const option = document.createElement('option');
+        option.value = type;
+        option.textContent = type;
+        if (type === current) option.selected = true;
+        input.appendChild(option);
+      });
+    } else if (field === 'metal') {
+      const metals = ['Silver', 'Gold', 'Platinum', 'Palladium', 'Alloy/Other'];
+      metals.forEach(metal => {
+        const option = document.createElement('option');
+        option.value = metal;
+        option.textContent = metal;
+        if (metal === current) option.selected = true;
+        input.appendChild(option);
+      });
+    }
   } else {
-    input.type = 'text';
+    input = document.createElement('input');
+    input.className = 'inline-input';
+    
+    if (field === 'qty') {
+      input.type = 'number';
+      input.step = '1';
+      input.min = '1';
+    } else if (['weight', 'price', 'spotPriceAtPurchase'].includes(field)) {
+      input.type = 'number';
+      input.step = '0.01';
+      input.min = '0';
+    } else if (field === 'date') {
+      input.type = 'date';
+    } else {
+      input.type = 'text';
+    }
+    
+    // Set input value based on field type
+    if (field === 'weight' && item.weight < 1) {
+      input.value = oztToGrams(current).toFixed(2);
+      input.dataset.unit = 'g';
+    } else if (['weight', 'price', 'spotPriceAtPurchase'].includes(field)) {
+      input.value = parseFloat(current || 0).toFixed(2);
+      if (field === 'weight') input.dataset.unit = 'oz';
+    } else {
+      input.value = current;
+    }
   }
-  if (field === 'weight' && item.weight < 1) {
-    input.value = oztToGrams(current).toFixed(2);
-    input.dataset.unit = 'g';
-  } else if (['weight', 'price', 'spotPriceAtPurchase'].includes(field)) {
-    input.value = parseFloat(current).toFixed(2);
-    if (field === 'weight') input.dataset.unit = 'oz';
-  } else {
-    input.value = current;
-  }
-  input.className = 'inline-input';
+  
   td.innerHTML = '';
   td.appendChild(input);
 
   const saveIcon = document.createElement('span');
   saveIcon.className = 'save-inline';
   saveIcon.textContent = '✔️';
+  saveIcon.title = 'Save changes';
+  
   const cancelIcon = document.createElement('span');
   cancelIcon.className = 'cancel-inline';
   cancelIcon.textContent = '✖️';
+  cancelIcon.title = 'Cancel edit';
+  
   td.appendChild(saveIcon);
   td.appendChild(cancelIcon);
 
@@ -696,6 +769,7 @@ const startCellEdit = (idx, field, icon) => {
     td.classList.remove('editing');
     const iconHtml = `<span class="inline-edit-icon" role="button" tabindex="0" onclick="startCellEdit(${idx}, '${field}', this)" aria-label="Edit ${field}" title="Edit ${field}">✎</span>`;
     let content = '';
+    
     switch (field) {
       case 'name':
         content = filterLink('name', item.name, 'var(--text-primary)');
@@ -715,44 +789,119 @@ const startCellEdit = (idx, field, icon) => {
         content = filterLink('spotPriceAtPurchase', spotValue, 'var(--text-primary)', spotDisplay);
         break;
       }
+      case 'type':
+        content = filterLink('type', item.type, getTypeColor(item.type));
+        break;
+      case 'metal':
+        content = filterLink('metal', item.composition || item.metal || 'Silver', METAL_COLORS[item.metal] || 'var(--primary)', getDisplayComposition(item.composition || item.metal || 'Silver'));
+        break;
+      case 'date':
+        content = filterLink('date', item.date, 'var(--text-primary)', formatDisplayDate(item.date));
+        break;
+      case 'purchaseLocation':
+        content = formatPurchaseLocation(item.purchaseLocation);
+        break;
+      case 'storageLocation':
+        content = filterLink('storageLocation', item.storageLocation || 'Unknown', getStorageLocationColor(item.storageLocation || 'Unknown'));
+        break;
+      case 'notes':
+        const hasNotes = item.notes && item.notes.trim();
+        content = `<span class="action-icon ${hasNotes ? 'success' : ''}" title="${hasNotes ? 'Has notes' : 'No notes'}">📓</span>`;
+        break;
       default:
         content = filterLink(field, item[field], 'var(--text-primary)');
     }
     td.innerHTML = `${iconHtml} ${content}`;
+    updateSummary(); // Update totals after edit
   };
 
   saveIcon.onclick = () => {
     const value = input.value;
     if (!validateFieldValue(field, value)) {
-      alert('Invalid value');
+      alert(`Invalid value for ${field}`);
       cancelEdit();
       return;
     }
-    const parsed = field === 'qty'
-      ? parseInt(value, 10)
-      : ['weight', 'price', 'spotPriceAtPurchase'].includes(field)
-        ? parseFloat(value)
-        : value.trim();
-    let finalValue = parsed;
-    if (field === 'weight' && input.dataset.unit === 'g') {
-      finalValue = gramsToOzt(parsed);
+    
+    let finalValue;
+    if (field === 'qty') {
+      finalValue = parseInt(value, 10);
+    } else if (['weight', 'price', 'spotPriceAtPurchase'].includes(field)) {
+      finalValue = parseFloat(value);
+      if (field === 'weight' && input.dataset.unit === 'g') {
+        finalValue = gramsToOzt(finalValue);
+      }
+    } else {
+      finalValue = value.trim();
     }
+    
+    // Store the old value for change logging
+    const oldValue = item[field];
     item[field] = finalValue;
+    
+    // Recalculate premiums if needed
     if (['qty', 'weight', 'price', 'spotPriceAtPurchase'].includes(field)) {
       recalcItem(item);
     }
+    
+    // Log the change
+    if (typeof logChange === 'function') {
+      logChange(item.name || `Item ${idx + 1}`, field, oldValue, finalValue, idx);
+    }
+    
     saveInventory();
     renderCell();
   };
 
   cancelIcon.onclick = cancelEdit;
 
+  // Enhanced keyboard navigation
   input.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') saveIcon.click();
-    if (e.key === 'Escape') cancelEdit();
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      saveIcon.click();
+    }
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      cancelEdit();
+    }
+    if (e.key === 'Tab') {
+      // Allow tab to move to save/cancel buttons
+      if (e.shiftKey) {
+        e.preventDefault();
+        cancelIcon.focus();
+      } else {
+        e.preventDefault();
+        saveIcon.focus();
+      }
+    }
+  });
+  
+  // Handle save/cancel button keyboard navigation
+  saveIcon.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      saveIcon.click();
+    }
+    if (e.key === 'Tab' && !e.shiftKey) {
+      e.preventDefault();
+      cancelIcon.focus();
+    }
+  });
+  
+  cancelIcon.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      cancelIcon.click();
+    }
+    if (e.key === 'Tab' && e.shiftKey) {
+      e.preventDefault();
+      saveIcon.focus();
+    }
   });
 
   input.focus();
+  if (input.select) input.select();
 };
 
 window.startCellEdit = startCellEdit;
@@ -1047,22 +1196,11 @@ const renderTable = () => {
       <td class="shrink" data-column="date">${filterLink('date', item.date, 'var(--text-primary)', formatDisplayDate(item.date))}</td>
       <td class="shrink" data-column="type">${filterLink('type', item.type, getTypeColor(item.type))}</td>
       <td class="shrink" data-column="metal" data-metal="${escapeAttribute(item.composition || item.metal || '')}">${filterLink('metal', item.composition || item.metal || 'Silver', METAL_COLORS[item.metal] || 'var(--primary)', getDisplayComposition(item.composition || item.metal || 'Silver'))}</td>
-      <td class="shrink" data-column="qty">
-        ${filterLink('qty', item.qty, 'var(--text-primary)')}
-      </td>
-      <td class="expand" data-column="name" style="text-align: left;">
-        <span class="inline-edit-icon" role="button" tabindex="0" onclick="editItem(${originalIdx})" aria-label="Edit ${sanitizeHtml(item.name)}" title="Edit ${sanitizeHtml(item.name)}">✎</span>
-        ${filterLink('name', item.name, 'var(--text-primary)')}
-      </td>
-      <td class="shrink" data-column="weight">
-        ${filterLink('weight', item.weight, 'var(--text-primary)', formatWeight(item.weight), item.weight < 1 ? 'Grams (g)' : 'Troy ounces (ozt)')}
-      </td>
-      <td class="shrink" data-column="purchasePrice" title="USD">
-        ${filterLink('price', item.price, 'var(--text-primary)', formatCurrency(item.price))}
-      </td>
-      <td class="shrink" data-column="spot" title="USD">
-        ${filterLink('spotPriceAtPurchase', spotValue, 'var(--text-primary)', spotDisplay)}
-      </td>
+      <td class="shrink" data-column="qty">${filterLink('qty', item.qty, 'var(--text-primary)')}</td>
+      <td class="expand" data-column="name" style="text-align: left;">${filterLink('name', item.name, 'var(--text-primary)')}</td>
+      <td class="shrink" data-column="weight">${filterLink('weight', item.weight, 'var(--text-primary)', formatWeight(item.weight), item.weight < 1 ? 'Grams (g)' : 'Troy ounces (ozt)')}</td>
+      <td class="shrink" data-column="purchasePrice" title="USD">${filterLink('price', item.price, 'var(--text-primary)', formatCurrency(item.price))}</td>
+      <td class="shrink" data-column="spot" title="USD">${filterLink('spotPriceAtPurchase', spotValue, 'var(--text-primary)', spotDisplay)}</td>
       <td class="shrink" data-column="premium" style="color: ${item.isCollectable ? 'var(--text-muted)' : (item.totalPremium > 0 ? 'var(--warning)' : 'inherit')}">${filterLink('totalPremium', premiumValue, 'var(--text-primary)', premiumDisplay)}</td>
       <td class="shrink" data-column="purchaseLocation">
         ${formatPurchaseLocation(item.purchaseLocation)}
@@ -1070,9 +1208,10 @@ const renderTable = () => {
       <td class="shrink" data-column="storageLocation">
         ${filterLink('storageLocation', item.storageLocation || 'Unknown', getStorageLocationColor(item.storageLocation || 'Unknown'))}
       </td>
-      <td class="shrink" data-column="numista">${item.numistaId ? `<a href="https://en.numista.com/catalogue/pieces${item.numistaId}.html" target="_blank" rel="noopener" title="View on Numista">N# ${sanitizeHtml(item.numistaId)}</a>` : ''}</td>
+      <td class="shrink" data-column="numista">${item.numistaId ? `<a href="https://en.numista.com/catalogue/pieces${item.numistaId}.html" target="_blank" rel="noopener" title="View ${sanitizeHtml(item.name)} on Numista Database" class="catalog-link"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="catalog-icon"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><path d="M22 6l-10 7L2 6"/><circle cx="12" cy="11" r="2"/><path d="m8 14 4-2 4 2"/></svg>${sanitizeHtml(item.numistaId)}</a>` : '<span class="numista-empty">—</span>'}</td>
       <td class="icon-col" data-column="collectable"><span class="collectable-status" role="button" tabindex="0" onclick="toggleCollectable(${originalIdx})" onkeydown="if(event.key==='Enter'||event.key===' ') toggleCollectable(${originalIdx})" aria-label="Toggle collectable status for ${sanitizeHtml(item.name)}" title="Toggle collectable status">${item.isCollectable ? '<svg class=\"collectable-icon icon-copper\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\"><circle cx=\"12\" cy=\"12\" r=\"10\"/></svg>' : '<svg class=\"collectable-icon icon-gold\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\"><path d=\"M3 3h18v18H3V3zm2 2v14h14V5H5zm5 10h6v2H10v-2zm2-8a2 2 0 100 4 2 2 0 000-4z\"/></svg>'}</span></td>
       <td class="icon-col" data-column="notes"><span class="action-icon ${item.notes && item.notes.trim() ? 'success' : ''}" role="button" tabindex="0" onclick="showNotes(${originalIdx})" aria-label="View notes" title="View notes">📓</span></td>
+      <td class="icon-col" data-column="edit"><span class="action-icon edit-icon" role="button" tabindex="0" onclick="editItem(${originalIdx})" aria-label="Edit ${sanitizeHtml(item.name)}" title="Edit item">✏️</span></td>
       <td class="icon-col" data-column="delete"><span class="action-icon danger" role="button" tabindex="0" onclick="deleteItem(${originalIdx})" aria-label="Delete item" title="Delete item">🗑️</span></td>
       </tr>
       `);
@@ -1081,7 +1220,7 @@ const renderTable = () => {
     const visibleCount = endIndex - startIndex;
     const placeholders = Array.from(
       { length: Math.max(0, itemsPerPage - visibleCount) },
-      () => '<tr><td class="shrink" colspan="15">&nbsp;</td></tr>'
+      () => '<tr><td class="shrink" colspan="16">&nbsp;</td></tr>'
     );
 
     elements.inventoryTable.innerHTML = rows.concat(placeholders).join('');
