@@ -1,11 +1,14 @@
 # StackrTrackr — Changelog
 
-> **Latest release: v3.04.46**
+> **Latest release: v3.04.47**
 
 
 For upcoming work, see [announcements](announcements.md).
 
 ## 📋 Version History
+
+### Version 3.04.47 – Inventory Width Correction (2025-08-20)
+- **Layout**: Constrained inventory section width and enabled horizontal scroll to prevent table overflow.
 
 ### Version 3.04.46 – Filter Card Layout Stabilization (2025-08-20)
 - **Filters**: Ensured active chips hide when no filters and enforced single-line height.
