@@ -1743,12 +1743,12 @@
               <div class="import-block">
                 <div class="import-export-grid">
                   <div class="import-csv-grid">
-                    <button class="btn danger" id="importCsvOverride">Import CSV</button>
+                    <button class="btn warning" id="importCsvOverride">Import CSV</button>
                     <button class="btn success" id="importCsvMerge">Merge CSV</button>
                     <input accept=".csv" hidden id="importCsvFile" type="file" />
                   </div>
                   <div class="import-json-grid">
-                    <button class="btn danger" id="importJsonOverride">Import JSON</button>
+                    <button class="btn warning" id="importJsonOverride">Import JSON</button>
                     <button class="btn success" id="importJsonMerge">Merge JSON</button>
                     <input accept=".json" hidden id="importJsonFile" type="file" />
                   </div>
@@ -1788,8 +1788,8 @@
                 <div class="third-party-block">
                   <div class="import-export-grid">
                     <div class="grid grid-2">
-                      <button class="btn danger" id="importNumistaBtn">Import Numista CSV</button>
-                      <button class="btn secondary" id="mergeNumistaBtn">Merge Numista CSV</button>
+                      <button class="btn warning" id="importNumistaBtn">Import Numista CSV</button>
+                      <button class="btn success" id="mergeNumistaBtn">Merge Numista CSV</button>
                     </div>
                     <input type="file" id="numistaImportFile" accept=".csv" hidden />
                     <div class="beta-warning">⚠️ Numista import is a beta feature</div>
@@ -1805,8 +1805,9 @@
                   Remove Inventory Data
                 </button>
                 <button class="btn danger" id="boatingAccidentBtn">
-                  Boating Accident?
+                  Wipe All Data
                 </button>
+                <div class="beta-warning">⚠️ have you or someone you know been involved in a 🚤 accident?</div>
               </div>
             </div>
           </div>
