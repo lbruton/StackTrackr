@@ -2,201 +2,9 @@
 // =============================================================================
 
 /**
- * Advanced filtering system with modal interface
+ * Advanced filtering system
  */
 let activeFilters = {};
-
-/**
- * Shows the filters modal and populates filter options
- */
-const showFiltersModal = () => {
-  const modal = document.getElementById('filtersModal');
-  if (!modal) return;
-
-  populateFilterDropdowns();
-  modal.style.display = 'flex';
-  document.body.style.overflow = 'hidden';
-};
-
-/**
- * Hides the filters modal
- */
-const hideFiltersModal = () => {
-  const modal = document.getElementById('filtersModal');
-  if (!modal) return;
-
-  modal.style.display = 'none';
-  document.body.style.overflow = '';
-};
-
-/**
- * Populates all filter dropdowns with unique values from inventory
- */
-const populateFilterDropdowns = () => {
-  // Get unique values for each filterable field
-  const metals = [...new Set(
-    inventory.map(item => getCompositionFirstWords(item.composition || item.metal || ''))
-  )].filter(Boolean).sort();
-
-  const types = [...new Set(inventory.map(item => item.type))].filter(Boolean).sort();
-
-  const purchaseLocations = [...new Set(
-    inventory.map(item => item.purchaseLocation || '')
-  )].filter(Boolean).sort();
-
-  const storageLocations = [...new Set(
-    inventory.map(item => item.storageLocation || '')
-  )].filter(Boolean).sort();
-
-  // Populate metal filter
-  const metalSelect = document.getElementById('filterMetal');
-  const metalExclude = document.getElementById('filterMetalExclude');
-  if (metalSelect) {
-    const selected = activeFilters.metal?.values || [];
-    metalSelect.innerHTML = '<option value="">All Metals</option>' +
-      metals.map(metal => `<option value="${metal}" ${selected.includes(metal) ? 'selected' : ''}>${metal}</option>`).join('');
-  }
-  if (metalExclude) {
-    metalExclude.checked = activeFilters.metal?.exclude || false;
-  }
-
-  // Populate type filter
-  const typeSelect = document.getElementById('filterType');
-  const typeExclude = document.getElementById('filterTypeExclude');
-  if (typeSelect) {
-    const selected = activeFilters.type?.values || [];
-    typeSelect.innerHTML = '<option value="">All Types</option>' +
-      types.map(type => `<option value="${type}" ${selected.includes(type) ? 'selected' : ''}>${type}</option>`).join('');
-  }
-  if (typeExclude) {
-    typeExclude.checked = activeFilters.type?.exclude || false;
-  }
-
-  // Populate purchase location filter
-  const purchaseSelect = document.getElementById('filterPurchaseLocation');
-  const purchaseExclude = document.getElementById('filterPurchaseLocationExclude');
-  if (purchaseSelect) {
-    const selected = activeFilters.purchaseLocation?.values || [];
-    purchaseSelect.innerHTML = '<option value="">All Locations</option>' +
-      purchaseLocations.map(loc => `<option value="${loc}" ${selected.includes(loc) ? 'selected' : ''}>${loc}</option>`).join('');
-  }
-  if (purchaseExclude) {
-    purchaseExclude.checked = activeFilters.purchaseLocation?.exclude || false;
-  }
-
-  // Populate storage location filter
-  const storageSelect = document.getElementById('filterStorageLocation');
-  const storageExclude = document.getElementById('filterStorageLocationExclude');
-  if (storageSelect) {
-    const selected = activeFilters.storageLocation?.values || [];
-    storageSelect.innerHTML = '<option value="">All Storage Locations</option>' +
-      storageLocations.map(loc => `<option value="${loc}" ${selected.includes(loc) ? 'selected' : ''}>${loc}</option>`).join('');
-  }
-  if (storageExclude) {
-    storageExclude.checked = activeFilters.storageLocation?.exclude || false;
-  }
-
-  // Set collectable filter
-  const collectableSelect = document.getElementById('filterCollectable');
-  const collectableExclude = document.getElementById('filterCollectableExclude');
-  if (collectableSelect) {
-    const selected = activeFilters.collectable?.values || [];
-    Array.from(collectableSelect.options).forEach(opt => {
-      opt.selected = selected.includes(opt.value);
-    });
-  }
-  if (collectableExclude) {
-    collectableExclude.checked = activeFilters.collectable?.exclude || false;
-  }
-
-  // Set date range filters
-  const dateFromInput = document.getElementById('filterDateFrom');
-  const dateToInput = document.getElementById('filterDateTo');
-  if (dateFromInput) dateFromInput.value = activeFilters.dateFrom || '';
-  if (dateToInput) dateToInput.value = activeFilters.dateTo || '';
-};
-
-/**
- * Applies the filters from the modal
- */
-const applyFilters = () => {
-  const metalSelect = document.getElementById('filterMetal');
-  const metalExclude = document.getElementById('filterMetalExclude');
-  const typeSelect = document.getElementById('filterType');
-  const typeExclude = document.getElementById('filterTypeExclude');
-  const purchaseSelect = document.getElementById('filterPurchaseLocation');
-  const purchaseExclude = document.getElementById('filterPurchaseLocationExclude');
-  const storageSelect = document.getElementById('filterStorageLocation');
-  const storageExclude = document.getElementById('filterStorageLocationExclude');
-  const collectableSelect = document.getElementById('filterCollectable');
-  const collectableExclude = document.getElementById('filterCollectableExclude');
-  const dateFromInput = document.getElementById('filterDateFrom');
-  const dateToInput = document.getElementById('filterDateTo');
-
-  // Clear previous filters
-  activeFilters = {};
-
-  // Apply new filters
-  if (metalSelect) {
-    const values = Array.from(metalSelect.selectedOptions).map(o => o.value).filter(Boolean);
-    if (values.length) {
-      activeFilters.metal = { values, exclude: metalExclude?.checked || false };
-    }
-  }
-  if (typeSelect) {
-    const values = Array.from(typeSelect.selectedOptions).map(o => o.value).filter(Boolean);
-    if (values.length) {
-      activeFilters.type = { values, exclude: typeExclude?.checked || false };
-    }
-  }
-  if (purchaseSelect) {
-    const values = Array.from(purchaseSelect.selectedOptions).map(o => o.value).filter(Boolean);
-    if (values.length) {
-      activeFilters.purchaseLocation = { values, exclude: purchaseExclude?.checked || false };
-    }
-  }
-  if (storageSelect) {
-    const values = Array.from(storageSelect.selectedOptions).map(o => o.value).filter(Boolean);
-    if (values.length) {
-      activeFilters.storageLocation = { values, exclude: storageExclude?.checked || false };
-    }
-  }
-  if (collectableSelect) {
-    const values = Array.from(collectableSelect.selectedOptions).map(o => o.value).filter(Boolean);
-    if (values.length) {
-      activeFilters.collectable = { values, exclude: collectableExclude?.checked || false };
-    }
-  }
-  if (dateFromInput && dateFromInput.value) {
-    activeFilters.dateFrom = dateFromInput.value;
-  }
-  if (dateToInput && dateToInput.value) {
-    activeFilters.dateTo = dateToInput.value;
-  }
-
-  // Update the legacy columnFilters for compatibility
-  columnFilters = {};
-  if (activeFilters.metal && !activeFilters.metal.exclude && activeFilters.metal.values.length === 1) {
-    columnFilters.metal = activeFilters.metal.values[0];
-  }
-  if (activeFilters.type && !activeFilters.type.exclude && activeFilters.type.values.length === 1) {
-    columnFilters.type = activeFilters.type.values[0];
-  }
-
-  // Clear search and reset pagination
-  searchQuery = '';
-  const searchInput = document.getElementById('searchInput');
-  if (searchInput) searchInput.value = '';
-  currentPage = 1;
-
-  // Re-render table and close modal
-  renderTable();
-  hideFiltersModal();
-
-  // Update filters button to show active state
-  updateFiltersButtonState();
-  renderActiveFilters();
-};
 
 /**
  * Clears all active filters
@@ -211,27 +19,7 @@ const clearAllFilters = () => {
   
   currentPage = 1;
   renderTable();
-  populateFilterDropdowns();
-  updateFiltersButtonState();
   renderActiveFilters();
-};
-
-/**
- * Updates the filters button appearance based on active filters
- */
-const updateFiltersButtonState = () => {
-  const filtersBtn = document.getElementById('filtersBtn');
-  if (!filtersBtn) return;
-
-  const totalFilters = Object.keys(activeFilters).length + Object.keys(columnFilters).filter(key => !activeFilters[key]).length;
-  
-  if (totalFilters > 0) {
-    filtersBtn.textContent = `Filters (${totalFilters})`;
-    filtersBtn.classList.add('active');
-  } else {
-    filtersBtn.textContent = 'Filters';
-    filtersBtn.classList.remove('active');
-  }
 };
 
 /**
@@ -257,6 +45,12 @@ const renderActiveFilters = () => {
   if (searchQuery) {
     filters.push({ field: 'search', value: searchQuery });
   }
+
+  if (filters.length === 0) {
+    container.style.display = 'none';
+    return;
+  }
+  container.style.display = '';
 
   const colors = ['var(--primary)', 'var(--secondary)', 'var(--success)', 'var(--warning)', 'var(--danger)', 'var(--info)'];
   const labels = {
@@ -313,7 +107,6 @@ const renderActiveFilters = () => {
       }
       currentPage = 1;
       renderTable();
-      updateFiltersButtonState();
       renderActiveFilters();
     };
     container.appendChild(chip);
@@ -465,7 +258,6 @@ const applyQuickFilter = (field, value) => {
   // Don't clear search query - allow search + filters to work together
   currentPage = 1;
   renderTable();
-  updateFiltersButtonState();
   renderActiveFilters();
 };
 
@@ -479,14 +271,10 @@ const applyColumnFilter = (field, value) => {
 };
 
 // Export functions for global access
-window.showFiltersModal = showFiltersModal;
-window.hideFiltersModal = hideFiltersModal;
-window.applyFilters = applyFilters;
 window.clearAllFilters = clearAllFilters;
 window.applyQuickFilter = applyQuickFilter;
 window.applyColumnFilter = applyColumnFilter;
 window.filterInventoryAdvanced = filterInventoryAdvanced;
-window.updateFiltersButtonState = updateFiltersButtonState;
 window.renderActiveFilters = renderActiveFilters;
 
 // =============================================================================

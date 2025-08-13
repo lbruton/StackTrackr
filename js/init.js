@@ -73,6 +73,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Header buttons - CRITICAL
     debugLog("Phase 2: Initializing header buttons...");
+    elements.appLogo = safeGetElement("appLogo");
     elements.appearanceBtn = safeGetElement("appearanceBtn");
     elements.apiBtn = safeGetElement("apiBtn");
     elements.filesBtn = safeGetElement("filesBtn", true);
@@ -90,7 +91,8 @@ document.addEventListener("DOMContentLoaded", () => {
     elements.importCsvOverride = safeGetElement("importCsvOverride");
     elements.importCsvMerge = safeGetElement("importCsvMerge");
     elements.importJsonFile = safeGetElement("importJsonFile");
-    elements.importExcelFile = safeGetElement("importExcelFile");
+    elements.importJsonOverride = safeGetElement("importJsonOverride");
+    elements.importJsonMerge = safeGetElement("importJsonMerge");
     elements.importProgress = safeGetElement("importProgress");
     elements.importProgressText = safeGetElement("importProgressText");
     elements.numistaImportBtn = safeGetElement("numistaImportBtn");
@@ -98,15 +100,13 @@ document.addEventListener("DOMContentLoaded", () => {
     elements.numistaOverride = safeGetElement("numistaOverride");
     elements.numistaMerge = safeGetElement("numistaMerge");
       elements.numistaImportOptions = safeGetElement("numistaImportOptions");
-      elements.clearNumistaInventoryBtn = safeGetElement("clearNumistaInventoryBtn");
       elements.exportCsvBtn = safeGetElement("exportCsvBtn");
     elements.exportJsonBtn = safeGetElement("exportJsonBtn");
-    elements.exportExcelBtn = safeGetElement("exportExcelBtn");
     elements.exportPdfBtn = safeGetElement("exportPdfBtn");
     elements.cloudSyncBtn = safeGetElement("cloudSyncBtn");
     elements.syncAllBtn = safeGetElement("syncAllBtn");
+    elements.numistaApiKey = safeGetElement("numistaApiKey");
     elements.removeInventoryDataBtn = safeGetElement("removeInventoryDataBtn");
-    elements.clearNumistaCacheBtn = safeGetElement("clearNumistaCacheBtn");
     elements.boatingAccidentBtn = safeGetElement("boatingAccidentBtn");
 
     // Modal elements
@@ -173,6 +173,7 @@ document.addEventListener("DOMContentLoaded", () => {
       elements.typeSummary = safeGetElement("typeSummary");
       elements.changeLogModal = safeGetElement("changeLogModal");
       elements.changeLogCloseBtn = safeGetElement("changeLogCloseBtn");
+      elements.changeLogClearBtn = safeGetElement("changeLogClearBtn");
       elements.changeLogTable = safeGetElement("changeLogTable");
       elements.storageUsage = safeGetElement("storageUsage");
       elements.storageReportLink = safeGetElement("storageReportLink");
@@ -180,7 +181,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // Search elements
     debugLog("Phase 6: Initializing search elements...");
     elements.searchInput = safeGetElement("searchInput");
-    elements.clearSearchBtn = safeGetElement("clearSearchBtn");
+    elements.clearBtn = safeGetElement("clearBtn");
     elements.newItemBtn = safeGetElement("newItemBtn");
     elements.searchResultsInfo = safeGetElement("searchResultsInfo");
 
@@ -293,8 +294,8 @@ document.addEventListener("DOMContentLoaded", () => {
     if (footerDomainEl) {
       footerDomainEl.textContent = getFooterDomain();
     }
-    if (typeof loadChangelog === "function") {
-      loadChangelog();
+    if (typeof loadAnnouncements === "function") {
+      loadAnnouncements();
     }
 
     // Phase 12: Data Initialization

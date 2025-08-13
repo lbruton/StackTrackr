@@ -53,3 +53,4 @@ temp/
 # Build outputs (for future use)
 dist/
 build/
+.aider*

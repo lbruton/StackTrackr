@@ -256,6 +256,16 @@ const setupEventListeners = () => {
     // CRITICAL HEADER BUTTONS
     debugLog("Setting up header buttons...");
 
+    // App Logo
+    if (elements.appLogo) {
+      safeAttachListener(
+        elements.appLogo,
+        "click",
+        () => window.location.reload(),
+        "App Logo",
+      );
+    }
+
     // Files Button
     if (elements.filesBtn) {
       safeAttachListener(
@@ -320,6 +330,23 @@ const setupEventListeners = () => {
           `Totals title (${title.dataset.metal})`,
         );
       });
+    }
+
+    // Chip minimum count dropdown
+    const chipMinCountEl = document.getElementById('chipMinCount');
+    if (chipMinCountEl) {
+      safeAttachListener(
+        chipMinCountEl,
+        'change',
+        (e) => {
+          const minCount = parseInt(e.target.value, 10);
+          localStorage.setItem('chipMinCount', minCount.toString());
+          if (typeof updateTypeSummary === 'function') {
+            updateTypeSummary();
+          }
+        },
+        'Chip minimum count dropdown'
+      );
     }
 
     if (elements.detailsCloseBtn) {
@@ -756,6 +783,19 @@ const setupEventListeners = () => {
       );
     }
 
+    if (elements.changeLogClearBtn) {
+      safeAttachListener(
+        elements.changeLogClearBtn,
+        "click",
+        () => {
+          if (typeof clearChangeLog === "function") {
+            clearChangeLog();
+          }
+        },
+        "Change log clear button",
+      );
+    }
+
     // SPOT PRICE EVENT LISTENERS
     debugLog("Setting up spot price listeners...");
     Object.values(METALS).forEach((metalConfig) => {
@@ -841,7 +881,7 @@ const setupEventListeners = () => {
               syncSpotPricesFromApi(true);
             } else {
               alert(
-                "API sync functionality requires API configuration. Please configure an API provider first.",
+                "API sync functionality requires Metals API configuration. Please configure an API provider first.",
               );
             }
           },
@@ -912,8 +952,14 @@ const setupEventListeners = () => {
         elements.importCsvOverride,
         "click",
         () => {
-          csvImportOverride = true;
-          elements.importCsvFile.click();
+          if (
+            confirm(
+              "Importing CSV will overwrite all existing data. To combine data, choose Merge instead. Press OK to continue.",
+            )
+          ) {
+            csvImportOverride = true;
+            elements.importCsvFile.click();
+          }
         },
         "CSV override button",
       );
@@ -950,31 +996,53 @@ const setupEventListeners = () => {
       );
     }
 
+    let jsonImportOverride = false;
+    if (elements.importJsonOverride && elements.importJsonFile) {
+      safeAttachListener(
+        elements.importJsonOverride,
+        "click",
+        () => {
+          if (
+            confirm(
+              "Importing JSON will overwrite all existing data. To combine data, choose Merge instead. Press OK to continue.",
+            )
+          ) {
+            jsonImportOverride = true;
+            elements.importJsonFile.click();
+          }
+        },
+        "JSON override button",
+      );
+    }
+    if (elements.importJsonMerge && elements.importJsonFile) {
+      safeAttachListener(
+        elements.importJsonMerge,
+        "click",
+        () => {
+          jsonImportOverride = false;
+          elements.importJsonFile.click();
+        },
+        "JSON merge button",
+      );
+    }
     if (elements.importJsonFile) {
       safeAttachListener(
         elements.importJsonFile,
         "change",
         function (e) {
           if (e.target.files.length > 0) {
-            importJson(e.target.files[0]);
+
+            const file = e.target.files[0];
+            if (!checkFileSize(file)) {
+              alert("File exceeds 2MB limit. Enable cloud backup for larger uploads.");
+            } else {
+              importJson(file, jsonImportOverride);
+            }
+
           }
           this.value = "";
         },
         "JSON import",
-      );
-    }
-
-    if (elements.importExcelFile) {
-      safeAttachListener(
-        elements.importExcelFile,
-        "change",
-        function (e) {
-          if (e.target.files.length > 0) {
-            importExcel(e.target.files[0]);
-          }
-          this.value = "";
-        },
-        "Excel import",
       );
     }
 
@@ -986,8 +1054,14 @@ const setupEventListeners = () => {
         importNumistaBtn,
         "click",
         () => {
-          numistaOverride = true;
-          elements.numistaImportFile.click();
+          if (
+            confirm(
+              "Importing Numista CSV will overwrite all existing data. To combine data, choose Merge instead. Press OK to continue.",
+            )
+          ) {
+            numistaOverride = true;
+            elements.numistaImportFile.click();
+          }
         },
         "Import Numista CSV button",
       );
@@ -1023,30 +1097,6 @@ const setupEventListeners = () => {
         );
       }
 
-      // Clear Numista Inventory button
-      if (elements.clearNumistaInventoryBtn) {
-        safeAttachListener(
-          elements.clearNumistaInventoryBtn,
-          "click",
-          function () {
-            if (
-              confirm(
-                "Remove all items with Numista IDs? This cannot be undone.",
-              )
-            ) {
-              inventory = inventory.filter(item => !item.numistaId);
-              if (typeof catalogManager?.cleanupOrphans === "function") {
-                catalogManager.cleanupOrphans(inventory);
-              }
-              saveInventory();
-              renderTable();
-              alert("Numista inventory cleared.");
-            }
-          },
-          "Clear Numista inventory button",
-        );
-      }
-
       // Export buttons
       if (elements.exportCsvBtn) {
         safeAttachListener(
@@ -1062,14 +1112,6 @@ const setupEventListeners = () => {
         "click",
         exportJson,
         "JSON export",
-      );
-    }
-    if (elements.exportExcelBtn) {
-      safeAttachListener(
-        elements.exportExcelBtn,
-        "click",
-        exportExcel,
-        "Excel export",
       );
     }
     if (elements.exportPdfBtn) {
@@ -1115,22 +1157,6 @@ const setupEventListeners = () => {
           }
         },
         "Remove inventory data button",
-      );
-    }
-
-    // Clear Numista Cache Button
-    if (elements.clearNumistaCacheBtn) {
-      safeAttachListener(
-        elements.clearNumistaCacheBtn,
-        "click",
-        function () {
-          if (confirm("Clear Numista cache?")) {
-            localStorage.removeItem('numista-cache');
-            alert("Numista cache cleared.");
-            elements.clearNumistaCacheBtn.style.display = 'none';
-          }
-        },
-        "Clear Numista cache button",
       );
     }
 
@@ -1354,9 +1380,9 @@ const setupSearch = () => {
       );
     }
 
-    if (elements.clearSearchBtn) {
+    if (elements.clearBtn) {
       safeAttachListener(
-        elements.clearSearchBtn,
+        elements.clearBtn,
         "click",
         function () {
           if (typeof clearAllFilters === "function") {
@@ -1397,76 +1423,19 @@ const setupSearch = () => {
       );
     }
 
-    // Filters button
-    const filtersBtn = document.getElementById("filtersBtn");
-    if (filtersBtn) {
+    // Chip minimum count control
+    const chipMinCountEl = document.getElementById('chipMinCount');
+    if (chipMinCountEl) {
       safeAttachListener(
-        filtersBtn,
-        "click",
-        () => {
-          if (typeof showFiltersModal === "function") {
-            showFiltersModal();
+        chipMinCountEl,
+        "change",
+        function() {
+          localStorage.setItem('chipMinCount', this.value);
+          if (typeof updateTypeSummary === "function") {
+            updateTypeSummary(filterInventory());
           }
         },
-        "Filters button",
-      );
-    }
-
-    // Filters modal event listeners
-    const filtersModal = document.getElementById("filtersModal");
-    const filtersCloseBtn = document.getElementById("filtersCloseBtn");
-    const applyFiltersBtn = document.getElementById("applyFiltersBtn");
-    const clearFiltersBtn = document.getElementById("clearFiltersBtn");
-
-    if (filtersModal) {
-      safeAttachListener(
-        filtersModal,
-        "click",
-        (e) => {
-          if (e.target === filtersModal && typeof hideFiltersModal === "function") {
-            hideFiltersModal();
-          }
-        },
-        "Filters modal background",
-      );
-    }
-
-    if (filtersCloseBtn) {
-      safeAttachListener(
-        filtersCloseBtn,
-        "click",
-        () => {
-          if (typeof hideFiltersModal === "function") {
-            hideFiltersModal();
-          }
-        },
-        "Filters close button",
-      );
-    }
-
-    if (applyFiltersBtn) {
-      safeAttachListener(
-        applyFiltersBtn,
-        "click",
-        () => {
-          if (typeof applyFilters === "function") {
-            applyFilters();
-          }
-        },
-        "Apply filters button",
-      );
-    }
-
-    if (clearFiltersBtn) {
-      safeAttachListener(
-        clearFiltersBtn,
-        "click",
-        () => {
-          if (typeof clearAllFilters === "function") {
-            clearAllFilters();
-          }
-        },
-        "Clear filters button",
+        "Chip minimum count select",
       );
     }
 
@@ -1480,23 +1449,24 @@ const setupSearch = () => {
  * Sets up theme toggle event listeners
  */
 const updateThemeButton = () => {
+  const savedTheme = localStorage.getItem(THEME_KEY) || "light";
+
+  // Apply theme classes to all theme buttons
+  document.querySelectorAll(".theme-btn").forEach((btn) => {
+    btn.classList.remove("dark", "light", "sepia");
+    btn.classList.add(savedTheme);
+  });
+
   const btn = elements.appearanceBtn;
   if (!btn) return;
-  const savedTheme = localStorage.getItem(THEME_KEY) || "light";
-  
-  // Remove all theme classes
-  btn.classList.remove("dark", "light", "sepia");
-  
-  // Add current theme class for styling
-  btn.classList.add(savedTheme);
-  
-  // Show current theme icon and color
+
+  // Show current theme icon and color on selector button
   const themeConfig = {
     dark: { icon: "🌙", label: "Dark mode", color: "#1e293b" },
     light: { icon: "☀️", label: "Light mode", color: "#f8fafc" },
     sepia: { icon: "📜", label: "Sepia mode", color: "#f2e7d5" }
   };
-  
+
   const config = themeConfig[savedTheme] || themeConfig.light;
   btn.textContent = config.icon;
   btn.style.backgroundColor = config.color;

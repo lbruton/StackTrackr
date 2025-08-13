@@ -1,11 +1,151 @@
 # StackrTrackr — Changelog
 
-> **Latest release: v3.04.28**
+> **Latest release: v3.04.58**
 
 
-For upcoming work, see [roadmap](roadmap.md).
+For upcoming work, see [announcements](announcements.md).
 
 ## 📋 Version History
+
+### Version 3.04.58 – Cache Refresh Timestamp Toggle (2025-08-19)
+- Renamed “Last sync” to “Last Cache Refresh”
+- Stored separate cache-refresh and API-sync timestamps with UI toggle
+
+### Version 3.04.57 – Filters Card Edge Alignment (2025-08-18)
+- Removed left margin from Filters card for alignment with spot price card
+
+### Version 3.04.56 – Filters Modal Removal (2025-08-17)
+- Removed legacy Filters modal, button, and related code
+- Cleaned up unused filter utilities
+
+### Version 3.04.55 – Change Log Clearing (2025-08-16)
+- Added Clear Log button with confirmation to Change Log modal
+
+### Version 3.04.54 – Search Controls Rework (2025-08-15)
+- Reordered search controls with icon buttons and integrated Change Log
+
+### Version 3.04.53 – Clickable Logo Reload (2025-08-14)
+- App logo now reloads the page when clicked
+
+### Version 3.04.52 – Layout Refinements (2025-08-13)
+- Removed section titles from Spot Prices, Inventory, and Information Cards
+- Moved filter controls and Change Log button above the inventory table
+
+### Version 3.04.51 – File Menu Color Updates (2025-08-13)
+- **File menu clarity**: Import buttons are now orange, merge buttons green, and export buttons remain blue
+- **Data wipe warning**: “Boating Accident?” button renamed to “Wipe All Data” with a cautionary notice
+
+### Version 3.04.50 – Standardized Filter Chip Sizing (2025-08-12)
+- **Filter Chip Standardization**: Unified chip sizing across all filter types for consistent appearance
+  - Reduced padding from `0.2rem 0.6rem` to `0.15rem 0.4rem` for thinner profile
+  - Decreased min-height from `1.5rem` to `1.25rem` for more compact appearance
+  - Tightened line-height from `1.2` to `1.1` for better text fitting
+  - Reduced margin from `0.1rem` to `0.05rem` for tighter grouping
+  - Added `max-width: fit-content` to ensure chips expand to fit labels without font scaling
+- **Enhanced Summary Chips**: Applied same standardization to type summary chips
+  - Added explicit `font-size: 0.75rem` for consistency
+  - Unified padding and sizing with filter chips
+  - Maintained font weight differences for visual hierarchy
+- **Improved Layout**: Chips now appear more uniform and professional with better space utilization
+
+### Version 3.04.49 – Enhanced Filter Chip System (2025-08-12)
+- **Word Cloud Filter UI**: Redesigned filter chips to create a visual word cloud-like interface
+  - Default chip types always visible: Coin, Bar, Round, Note, Gold, Silver, Platinum, Palladium
+  - Dynamic chips automatically appear for Purchase Location, Storage Location, and Name fields when filters are active
+  - Enhanced visual hierarchy with varying font sizes, padding, and opacity based on item counts
+  - Field-specific styling: Type/Metal chips use bold fonts and solid borders, dynamic chips use italic text and dashed borders
+- **Configurable Minimum Count**: Added dropdown control to set minimum items threshold (1+, 2+, 3+, 5+, 10+) before chips appear
+- **Enhanced Chip Information**: Each chip displays Field, Item name, and current/total counts (e.g., "Purchase: Apmex.com (5/12)")
+- **Improved Accessibility**: Added hover effects, keyboard navigation, detailed tooltips, and smooth transitions
+- **Better Visual Design**: Chips now have proper shadows, scale animations on hover, and theme-aware styling
+- **Responsive Layout**: Filter area supports wrap and scroll for large inventories with many unique values
+- **Smart Truncation**: Long item names automatically truncate with ellipsis to maintain clean layout
+
+### Version 3.04.48 – Filter Display and Layout Updates (2025-08-12)
+- **UI Improvements**: Enhanced filter card layout and chip positioning for better visual organization
+
+### Version 3.04.47 – Filter Controls Reorder (2025-08-20)
+- **UI**: Filters card moved between Change Log and Items dropdown with controls repositioned.
+- **Filters**: Active filter chips stay on a single line with horizontal scrolling.
+
+### Version 3.04.46 – Filter Card Layout Stabilization (2025-08-20)
+- **Filters**: Ensured active chips hide when no filters and enforced single-line height.
+- **UI**: Reanchored Items dropdown and Change Log button atop centered filters card.
+
+### Version 3.04.45 – Centered Filters Card Refinements (2025-08-20)
+- **UI**: Filters card centered with top-anchored items dropdown and Change Log button.
+- **Filters**: Active filter chips reduced to single-line height.
+
+### Version 3.04.44 – Filters Card & Anchored Controls (2025-08-20)
+- **Filters**: Active filter chips hidden when no filters applied and moved into centered card.
+- **UI**: Change Log button and items dropdown anchored to top of Filters block.
+
+### Version 3.04.43 – Filter Chip Totals & Tooltip Links (2025-08-19)
+- **Filters**: Summary chips show filtered/total counts and display only active categories.
+- **UI**: Purchase location URLs moved to info tooltip links; table cells (except Name) center-aligned.
+
+### Version 3.04.42 – Filter Chip Expansion (2025-08-18)
+- **Filters**: Added Filters subtitle and summary chips for Name and Date with dynamic counts and clickable filtering.
+
+### Version 3.04.41 – Section Titles Enhancement (2025-08-17)
+- **UI**: Added centered section titles for Spot Prices, Inventory, Filters, and Information Cards using modern fonts.
+
+### Version 3.04.40 – Pagination Section Reorder (2025-08-12)
+- **UI Layout**: Moved pagination controls above table controls with Change Log button
+- **Styling**: Added horizontal padding so pagination buttons no longer touch container edges
+
+### Version 3.04.39 – Template Variable Fix (2025-08-12)
+- **Template Resolution**: Fixed unreplaced template variables in documentation files
+  - Resolved {{VERSION_WITH_V}} and {{VERSION}} placeholders in `docs/agents/agents.ai`
+  - Applied proper template replacement to show "v3.04.39" instead of placeholder text
+  - Ensured version displays correctly in about/accept modals and documentation
+- **Quality Assurance**: Verified all template variables are properly replaced across documentation
+- **User Experience**: About and accept pages now show correct version information
+
+### Version 3.04.38 – Documentation Template System (2025-08-15)
+- **Template System**: Created comprehensive documentation templating system
+  - Added template variable functions to `js/constants.js` for dynamic version replacement
+  - Implemented `getTemplateVariables()` and `replaceTemplateVariables()` functions
+  - Created Node.js build script `scripts/update-templates.js` for processing documentation
+  - Template variables: `{{VERSION}}`, `{{VERSION_WITH_V}}`, `{{VERSION_TITLE}}`, `{{VERSION_BRANCH}}`, `{{BRANDING_NAME}}`
+- **Documentation Standardization**: Replaced hardcoded version references with template variables
+  - Updated 16 documentation files across `/docs/` directory and subdirectories
+  - Excluded `docs/changelog.md` which must maintain specific version history
+  - Prioritized high-impact files: README.md, status.md, structure.md, announcements.md, versioning.md
+- **Maintenance Reduction**: Single-source version management eliminates manual updates across documentation
+- **Build Process**: Automated template replacement ensures consistency and reduces human error
+- **Future-Proof**: Easy version updates by changing only `APP_VERSION` in constants.js
+
+### Version 3.04.37 – Fuzzy Search Engine Module (2025-08-15)
+- Added standalone fuzzy search engine with Levenshtein, n-gram, and word-order independent matching.
+
+### Version 3.04.36 – Dynamic Summary Bubbles & Link Colors (2025-08-14)
+- **Expanded summary**: Type, Metal, Purchase Location, and Storage Location now show dynamic counts with color-coded bubbles.
+- **Consistent link colors**: Purchase location URLs inherit their bubble colors.
+
+### Version 3.04.35 – JSON Import Options & Excel Removal (2025-08-13)
+- **JSON import flexibility**: Added separate Import and Merge buttons with overwrite warnings.
+- **Simplified formats**: Removed Excel import/export support and related buttons.
+
+### Version 3.04.34 – Streamlined Numista Imports (2025-08-12)
+- **Removed Numista cache**: Eliminated stored Numista CSV cache in favor of direct import.
+- **UI cleanup**: Removed Clear Numista Cache option from Files menu.
+
+### Version 3.04.33 – Import Overwrite Confirmation (2025-08-12)
+- **Overwrite warnings**: Import CSV and Numista CSV now require confirmation before replacing existing data.
+- **Numista button styling**: Import Numista CSV button uses red danger styling to indicate overwrite.
+
+### Version 3.04.32 – Header Buttons Theming (2025-08-12)
+- **Unified header styling**: Header buttons now match theme selector with icon-only layout and larger icons.
+
+### Version 3.04.31 – API History Charts Removed (2025-08-12)
+- **Streamlined API History**: Removed canvas-based charts and expanded table to fill modal.
+
+### Version 3.04.30 – URL Purchase Location Links (2025-08-12)
+- **Clickable Purchase Locations**: Purchase Location accepts web addresses and renders them as hyperlinks.
+
+### Version 3.04.29 – Backup, Restore, Clear Heading (2025-08-12)
+- **Unified Backup Section**: Renamed "Clear Data" settings card to "Backup, Restore, Clear" for clearer data management.
 
 ### Version 3.04.28 – Enhanced Light Theme Styling (2025-08-12)
 - **Improved Light Theme**: Updated light theme to use light/middle grays and light blues for better visual appeal
@@ -292,7 +432,7 @@ For upcoming work, see [roadmap](roadmap.md).
 - Cloud Sync placeholder modal now uses standard themed header with internal close button
 
 ### Version 3.2.0 – Settings & History Polish (2025-08-08)
-- Appearance section moved above API configuration in Settings
+- Appearance section moved above Metals API configuration in Settings
 - Sync All displays confirmation with records updated
 - API price history modal restyled with Clear Filter button and header close
 

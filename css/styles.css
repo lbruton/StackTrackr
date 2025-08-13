@@ -236,6 +236,22 @@ h2 {
   margin-bottom: var(--spacing-sm);
 }
 
+.section-title {
+  text-align: center;
+  font-family:
+    "Inter",
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    sans-serif;
+  margin: var(--spacing-lg) 0;
+}
+
+.modal-header .section-title {
+  margin: 0;
+}
+
 label {
   display: block;
   font-weight: 500;
@@ -266,6 +282,7 @@ label {
   align-items: center;
   margin: 0;
   height: 100%;
+  cursor: pointer;
 }
 
 .app-logo svg {
@@ -1150,6 +1167,11 @@ input[type="submit"] {
   align-items: center;
 }
 
+/* Larger icons for header theme buttons */
+.app-header .theme-btn {
+  font-size: 1.5rem;
+}
+
 /* Theme button styling - shows current theme */
 .theme-btn {
   border: 2px solid var(--border);
@@ -1281,7 +1303,8 @@ input[type="submit"] {
 }
 
 .api-history-table-wrapper {
-  max-height: 20rem;
+  height: 70vh;
+  width: 100%;
   overflow-y: auto;
 }
 
@@ -1294,22 +1317,6 @@ input[type="submit"] {
   cursor: pointer;
 }
 
-.api-history-charts {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 1rem;
-  margin-top: 1rem;
-}
-
-.api-history-charts .chart-panel {
-  display: flex;
-  flex-direction: column;
-}
-
-.api-history-charts canvas {
-  flex: 1;
-  height: 200px;
-}
 
 .api-info-body {
   margin-bottom: 1rem;
@@ -1535,6 +1542,17 @@ input[type="submit"] {
   padding: var(--spacing);
   overflow: auto;
   flex: 1;
+}
+
+#changeLogModal .modal-footer {
+  padding: var(--spacing);
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: flex-end;
+}
+
+#changeLogClearBtn {
+  font-size: 1.25rem;
 }
 
 #detailsModal .modal-body {
@@ -1864,6 +1882,11 @@ td .filter-text {
 .na-value {
   color: var(--text-muted);
   font-style: italic;
+}
+
+td .filter-text a,
+td .filter-text a:visited {
+  color: inherit;
 }
 
 td .inline-edit-icon,
@@ -2457,6 +2480,7 @@ td input:checked + .slider:before {
   width: 100%;
   align-items: center;
   justify-content: space-between;
+  padding: 0 var(--spacing-xs);
 }
 
 .pagination-left,
@@ -2485,11 +2509,18 @@ td input:checked + .slider:before {
 
 .table-controls {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: space-between;
   gap: var(--spacing);
   margin: 0;
-  flex-wrap: wrap;
+}
+
+.top-controls {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--spacing);
 }
 
 .items-label {
@@ -2513,18 +2544,18 @@ td input:checked + .slider:before {
   background: #9ca3af;
 }
 
-.disclaimer-wrapper {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
 .table-disclaimer {
   font-size: 0.75rem;
   color: var(--disclaimer-color);
   font-style: italic;
   text-align: center;
+}
+
+.table-subtitle {
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-align: center;
+  margin-bottom: 0.25rem;
 }
 
 .backup-link {
@@ -2601,20 +2632,53 @@ td input:checked + .slider:before {
   height: 1.375rem;
 }
 
-#clearSearchBtn {
-  width: auto;
-  padding: 0.75rem 1.5rem;
-  background: var(--secondary);
-  color: #f8fafc;
+.icon-btn {
+  width: 2.75rem;
+  height: 2.75rem;
+  padding: 0;
+  min-width: 2.75rem;
 }
 
-#clearSearchBtn:hover {
-  background: var(--secondary-hover);
+.filters-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  padding: var(--spacing);
+  flex: 1;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.filter-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-sm);
+}
+
+.chip-min-label {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.chip-min-select {
+  padding: 0.25rem 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-size: 0.8rem;
+  min-width: 60px;
 }
 
 .filter-info {
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
   margin-top: var(--spacing-sm);
   flex-wrap: wrap;
@@ -2625,6 +2689,9 @@ td input:checked + .slider:before {
   display: flex;
   flex-wrap: wrap;
   gap: var(--spacing-xs);
+  justify-content: center;
+  max-width: 100%;
+  overflow-x: auto;
 }
 
 .filter-chip {
@@ -2632,14 +2699,30 @@ td input:checked + .slider:before {
   align-items: center;
   gap: var(--spacing-xs);
   color: #f8fafc;
-  padding: 0.25rem 0.5rem;
+  padding: 0.15rem 0.4rem;
   border-radius: var(--radius);
   font-size: 0.75rem;
+  min-height: 1.25rem;
+  line-height: 1.1;
   cursor: pointer;
+  transition: var(--transition);
+  box-shadow: var(--shadow-sm);
+  font-weight: 500;
+  text-align: center;
+  white-space: nowrap;
+  user-select: none;
+  margin: 0.05rem;
+  max-width: fit-content;
 }
 
 .filter-chip:hover {
-  opacity: 0.85;
+  opacity: 0.9;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow);
+}
+
+.filter-chip:active {
+  transform: translateY(0);
 }
 
 .search-results-info {
@@ -2709,7 +2792,8 @@ td input:checked + .slider:before {
   cursor: pointer;
 }
 
-.import-csv-grid {
+.import-csv-grid,
+.import-json-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: var(--spacing-sm);
@@ -2854,12 +2938,6 @@ input:disabled + .slider {
   position: relative;
   border-radius: var(--radius-lg) var(--radius-lg) 0 0;
   box-shadow: var(--shadow);
-}
-
-#filtersModal .modal-header h2 {
-  margin: 0;
-  color: var(--text-primary);
-  text-align: center;
 }
 
 #filtersModal .modal-body {
@@ -3050,7 +3128,7 @@ input:disabled + .slider {
     align-items: stretch;
   }
 
-  #clearSearchBtn {
+  .search-container .btn {
     width: 100%;
   }
 
@@ -3269,12 +3347,53 @@ input:disabled + .slider {
   white-space: nowrap;
 }
 
+#inventoryTable th,
+#inventoryTable td {
+  text-align: center;
+}
+
+#inventoryTable th[data-column="name"],
+#inventoryTable td[data-column="name"] {
+  text-align: left;
+}
+
+.info-link {
+  margin-left: 0.25rem;
+  font-size: 0.75rem;
+}
+
 #typeSummary {
   display: flex;
   flex-wrap: wrap;
   gap: var(--spacing-xs);
   justify-content: center;
-  margin-top: var(--spacing-xs);
+  align-items: center;
+  margin-top: var(--spacing-sm);
+  padding: var(--spacing-sm);
+  min-height: 2rem;
+  max-height: 8rem;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--primary) var(--bg-secondary);
+}
+
+#typeSummary::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+#typeSummary::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+  border-radius: var(--radius);
+}
+
+#typeSummary::-webkit-scrollbar-thumb {
+  background-color: var(--primary);
+  border-radius: var(--radius);
+}
+
+#typeSummary::-webkit-scrollbar-thumb:hover {
+  background-color: var(--primary-hover);
 }
 
 /* Header Icons */
@@ -3339,11 +3458,50 @@ th {
 .type-note { color: var(--type-note-bg); }
 .type-other { color: var(--type-other-bg); }
 
-#typeSummary .type-chip {
-  padding: 0.15rem 0.5rem;
+#typeSummary .summary-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.15rem 0.4rem;
+  min-height: 1.25rem;
   border-radius: var(--radius);
   font-size: 0.75rem;
+  font-weight: 600;
+  text-align: center;
+  cursor: pointer;
+  transition: var(--transition);
+  user-select: none;
+  white-space: nowrap;
+  box-shadow: var(--shadow-sm);
+  margin: 0.05rem;
+  line-height: 1.1;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  max-width: fit-content;
+}
+
+#typeSummary .summary-chip:hover {
+  transform: translateY(-1px) scale(1.05);
+  box-shadow: var(--shadow);
+  filter: brightness(1.1);
+}
+
+#typeSummary .summary-chip:active {
+  transform: translateY(0) scale(1.02);
+}
+
+/* Enhanced chip styling for better visual hierarchy */
+#typeSummary .type-chip,
+#typeSummary .metal-chip {
+  font-weight: 700;
+  border-width: 2px;
+}
+
+#typeSummary .purchase-chip,
+#typeSummary .storage-chip,
+#typeSummary .name-chip {
   font-weight: 500;
+  font-style: italic;
+  border-style: dashed;
 }
 
 .type-chip.coin {

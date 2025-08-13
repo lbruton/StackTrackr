@@ -2,11 +2,13 @@
 
 
 
-> **Latest release: v3.04.25**
+> **Latest release: v3.04.58**
 
-## 🎯 Current State: **BETA v3.04.25** ✅ MAINTAINED & OPTIMIZED
+See [announcements](announcements.md) for recent changes and upcoming milestones.
 
-**StackrTrackr v3.04.25** is a fully-featured, client-side web application for tracking precious metal investments (Silver, Gold, Platinum, Palladium) with comprehensive inventory management, API integration, and complete backup capabilities. The 3.04.x series focuses on polish, maintenance, and optimization.
+## 🎯 Current State: **BETA v3.04.58** ✅ MAINTAINED & OPTIMIZED
+
+**StackrTrackr v3.04.58** is a fully-featured, client-side web application for tracking precious metal investments (Silver, Gold, Platinum, Palladium) with comprehensive inventory management, API integration, and complete backup capabilities. The 3.04.x series focuses on polish, maintenance, and optimization.
 
 
 ## 🏗️ Architecture Overview
@@ -26,6 +28,14 @@ The tool features a **modular JavaScript architecture** with separate files for 
 
 ## ✨ Latest Changes
 
+- **v3.04.47 - Filter controls reorder**: filters card positioned between Change Log and Items dropdown with single-line chips
+- **v3.04.46 - Filter card layout stabilization**: controls anchored top-left, chips hidden when none, single-line chip height
+- **v3.04.45 - Centered filters card refinements**: Items dropdown anchored left, chips single-line height, filters card centered
+- **v3.04.44 - Filters card and anchored controls**: centered card for filters, chips hidden when none, controls pinned to top
+- **v3.04.43 - Filter chip totals and purchase link tooltips**: summary chips show filtered/total counts, purchase locations include informational links, and table cells are centered
+- **v3.04.42 - Expanded filter chips**: replaced backup reminder with Filters subtitle and added Name/Date chips with dynamic filtering and counts
+- **v3.04.41 - Section titles**: added centered titles for Spot Prices, Inventory, Filters, and Information Cards
+- **v3.04.40 - Pagination controls reposition**: moved pagination above Change Log and added edge padding
 - **v3.04.25 - Unified logo**: single SVG logo across themes, removed theme-specific assets
 - **v3.04.24 - Backup warning theming**: local storage warning uses theme colors with centered type summary and backup link
 - **v3.04.23 - Inventory actions alignment**: row icons reordered and theme-aware controls
@@ -61,7 +71,7 @@ The tool features a **modular JavaScript architecture** with separate files for 
 - **v3.03.08f - CSV import field sanitization**: Invalid fields are blanked and users can merge or override during import
 - **v3.03.08e - Numista CSV storage**: Stores raw Numista CSV and classifies metals by composition
 - **v3.03.08d - Version Modal Centering**: Version change dialog now appears centered on the screen
-- **v3.03.08c - Version Modal Enhancements**: Version change dialog now includes privacy notice, resources, and roadmap
+- **v3.03.08c - Version Modal Enhancements**: Version change dialog now includes privacy notice, resources, and announcements link
 - **v3.03.08b - Files Modal Simplification**: Removed storage breakdown progress bar for streamlined file management
 - **v3.03.08a - Version Update Changelog Modal**: Notifies users of new releases with modal displaying latest changes
 - **v3.03.07b - Documentation Normalization**: Converted documentation filenames to lowercase and updated references
@@ -123,7 +133,7 @@ The tool features a **modular JavaScript architecture** with separate files for 
 - ✅ Real-time search across all fields **including notes**
 
 ### **Data Management**
-- ✅ Complete import/export functionality (CSV, JSON, Excel, PDF)
+- ✅ Complete import/export functionality (CSV, JSON, PDF)
 - ✅ **Comprehensive backup ZIP system** with all data formats
 - ✅ **Professional HTML storage reports** with interactive modals and print optimization
 - ✅ **Notes field included in all export formats**
@@ -168,7 +178,7 @@ All data is stored locally in the browser using localStorage with:
 - ✅ Modern, responsive user interface
 - ✅ Complete documentation and error handling
 
-## 📚 Documentation Status (Updated: August 11, 2025)
+## 📚 Documentation Status (Updated: August 13, 2025)
 
 **All documentation files are current and synchronized:**
   - ✅ **status.md** - Updated for v3.04.02 release
@@ -181,7 +191,7 @@ All data is stored locally in the browser using localStorage with:
 
 If continuing development in a new chat session:
 
-1. **Current Version**: 3.04.13 (managed in `js/constants.js`)
+1. **Current Version**: 3.04.58 (managed in `js/constants.js`)
 2. **Last Change**: Simplified archive workflow
 3. **Last Documentation Update**: August 11, 2025 - All docs synchronized
 4. **Architecture**: Fully modular with proper separation of concerns
@@ -191,7 +201,7 @@ If continuing development in a new chat session:
 8. **Key Files**: Focus on `inventory.js`, `events.js`, and `state.js` for major modifications
 9. **Testing**: Use `sample.csv` for import testing (includes notes examples)
 10. **Version Updates**: Only update `APP_VERSION` in `constants.js` - propagates automatically
-11. **Timestamp Display**: Two-line source with last sync or time entered via `getLastUpdateTime()` utility function
+11. **Timestamp Display**: Two-line source with last cache refresh or time entered via `getLastUpdateTime()` utility function
 
 ## 📁 Project Structure
 
@@ -220,6 +230,6 @@ StackrTrackr/
 
 ---
 
-**Last Updated**: August 12, 2025
+**Last Updated**: August 13, 2025
 **Status**: ✅ COMPLETE - Stable release ready for production use
 **Documentation**: ✅ ALL FILES SYNCHRONIZED AND CURRENT

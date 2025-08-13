@@ -257,7 +257,7 @@ const API_PROVIDERS = {
  * Example: 3.03.02a → branch 3, release 03, patch 02, alpha
  */
 
-const APP_VERSION = "3.04.28";
+const APP_VERSION = "3.04.58";
 
 /**
  * @constant {string} DEFAULT_CURRENCY - Default currency code for monetary formatting
@@ -272,6 +272,30 @@ const DEFAULT_CURRENCY = "USD";
  * @returns {string} Formatted version string (e.g., "v3.03.07b")
  */
 const getVersionString = (prefix = "v") => `${prefix}${APP_VERSION}`;
+
+/**
+ * Template replacement functions for documentation
+ * Used by build process to replace {{TEMPLATE}} variables
+ */
+const getTemplateVariables = () => ({
+  VERSION: APP_VERSION,
+  VERSION_WITH_V: `v${APP_VERSION}`,
+  VERSION_TITLE: `StackrTrackr v${APP_VERSION}`,
+  VERSION_BRANCH: APP_VERSION.split('.').slice(0, 2).join('.') + '.x',
+  BRANDING_NAME: BRANDING_TITLE
+});
+
+/**
+ * Replaces template variables in text
+ * @param {string} text - Text containing {{VARIABLE}} placeholders
+ * @returns {string} Text with variables replaced
+ */
+const replaceTemplateVariables = (text) => {
+  const variables = getTemplateVariables();
+  return text.replace(/\{\{(\w+)\}\}/g, (match, key) => {
+    return variables[key] || match;
+  });
+};
 
 /** Maximum upload size in bytes for local imports (2MB) */
 const MAX_LOCAL_FILE_SIZE = 2 * 1024 * 1024;
@@ -345,9 +369,6 @@ const SERIAL_KEY = "inventorySerial";
 /** @constant {string} CATALOG_MAP_KEY - LocalStorage key for S#/N# associations */
 const CATALOG_MAP_KEY = "catalogMap";
 
-/** @constant {string} NUMISTA_RAW_KEY - LocalStorage key for raw Numista CSV data */
-const NUMISTA_RAW_KEY = "numistaRawData";
-
 /** @constant {string} SPOT_HISTORY_KEY - LocalStorage key for spot price history */
 const SPOT_HISTORY_KEY = "metalSpotHistory";
 
@@ -362,6 +383,12 @@ const API_KEY_STORAGE_KEY = "metalApiConfig";
 
 /** @constant {string} API_CACHE_KEY - LocalStorage key for cached API data */
 const API_CACHE_KEY = "metalApiCache";
+
+/** @constant {string} LAST_CACHE_REFRESH_KEY - LocalStorage key for last cache refresh timestamp */
+const LAST_CACHE_REFRESH_KEY = "lastCacheRefresh";
+
+/** @constant {string} LAST_API_SYNC_KEY - LocalStorage key for last API sync timestamp */
+const LAST_API_SYNC_KEY = "lastApiSync";
 
 /** @constant {string} APP_VERSION_KEY - LocalStorage key for current app version */
 const APP_VERSION_KEY = "currentAppVersion";
@@ -469,4 +496,6 @@ if (typeof window !== "undefined") {
   window.DEFAULT_CURRENCY = DEFAULT_CURRENCY;
   window.BRANDING_DOMAIN_OPTIONS = BRANDING_DOMAIN_OPTIONS;
   window.BRANDING_DOMAIN_OVERRIDE = BRANDING_DOMAIN_OVERRIDE;
+  window.getTemplateVariables = getTemplateVariables;
+  window.replaceTemplateVariables = replaceTemplateVariables;
 }

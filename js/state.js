@@ -14,7 +14,7 @@ let editingChangeLogIndex = null;
 
 /** @type {Object} Pagination state */
 let currentPage = 1; // Current page number (1-based)
-let itemsPerPage = 10; // Number of items to display per page
+let itemsPerPage = 25; // Number of items to display per page
 
 /** @type {string} Current search query */
 let searchQuery = "";
@@ -26,10 +26,6 @@ let columnFilters = {};
 let chartInstances = {
   typeChart: null,
   locationChart: null,
-  apiHistoryChartSilver: null,
-  apiHistoryChartGold: null,
-  apiHistoryChartPlatinum: null,
-  apiHistoryChartPalladium: null,
 };
 
 /** @type {Set<string>} Available composition options */
@@ -71,24 +67,22 @@ const elements = {
   importCsvOverride: null,
   importCsvMerge: null,
   importJsonFile: null,
-  importExcelFile: null,
+  importJsonOverride: null,
+  importJsonMerge: null,
   importProgress: null,
   importProgressText: null,
   numistaImportFile: null,
   numistaOverride: null,
   numistaMerge: null,
-  clearNumistaInventoryBtn: null,
 
   // Export elements
   exportCsvBtn: null,
   exportJsonBtn: null,
-  exportExcelBtn: null,
   exportPdfBtn: null,
   cloudSyncBtn: null,
   syncAllBtn: null,
   // Emergency reset button
   removeInventoryDataBtn: null,
-  clearNumistaCacheBtn: null,
   boatingAccidentBtn: null,
 
   // Edit modal elements
@@ -144,6 +138,7 @@ const elements = {
     typeSummary: null,
   changeLogModal: null,
   changeLogCloseBtn: null,
+  changeLogClearBtn: null,
   changeLogTable: null,
   storageUsage: null,
   storageReportLink: null,
@@ -152,7 +147,7 @@ const elements = {
   searchInput: null,
   typeFilter: null,
   metalFilter: null,
-  clearSearchBtn: null,
+  clearBtn: null,
   newItemBtn: null,
   searchResultsInfo: null,
 
@@ -268,7 +263,7 @@ let spotPrices = {
 /** @type {Array} Historical spot price records */
 let spotHistory = [];
 
-/** @type {Object|null} Current API configuration */
+/** @type {Object|null} Current Metals API configuration */
 let apiConfig = null;
 
 /** @type {Object|null} Cached API data with timestamp */

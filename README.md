@@ -1,12 +1,22 @@
 
-# StackrTrackr v3.04.25
+# StackrTrackr v3.04.58
 
 
 StackrTrackr is a comprehensive client-side web application for tracking precious metal investments. It's designed to help users manage their silver, gold, platinum, and palladium holdings with detailed financial metrics and enhanced tracking capabilities.
 
 The public hosted version of the app is available at [stackrtrackr.com](https://stackrtrackr.com).
 
+See [docs/announcements.md](docs/announcements.md) for the latest release notes and upcoming milestones.
+
 ## Recent Updates
+- **v3.04.58 - Cache refresh timestamp toggle**: display togglable cache refresh and API sync times
+- **v3.04.57 - Filters card edge alignment**: filters card extends left to align with spot price card
+- **v3.04.42 - Filter chip expansion**: added Filters subtitle and dynamic Name/Date chips that filter the table and update counts
+- **v3.04.41 - Section titles**: added centered titles for Spot Prices, Inventory, Filters, and Information Cards
+- **v3.04.40 - Pagination reposition & padding**: pagination controls now appear above the Change Log section with added edge spacing
+- **v3.04.34 - Streamlined Numista imports**: Removed stored Numista CSV cache and clear-cache button
+- **v3.04.31 - Streamlined API history**: Removed charts and expanded API history table to fill modal
+- **v3.04.30 - URL-friendly purchase locations**: Purchase Location field accepts web addresses and renders them as clickable links
 - **v3.04.25 - Unified logo**: single SVG logo for all themes, removed theme-specific assets
 - **v3.04.24 - Backup warning theming**: local storage warning uses theme colors with centered type summary and backup link
 - **v3.04.23 - Inventory actions alignment**: row icons match header order and theme-aware controls
@@ -149,7 +159,7 @@ The public hosted version of the app is available at [stackrtrackr.com](https://
 - Marked as **feature complete** for the 3.2.x series
 
 ## 🆕 What's New in v3.2.0
-- Appearance settings now appear before API configuration for quicker access
+- Appearance settings now appear before Metals API configuration for quicker access
 - Sync All displays a confirmation dialog showing how many records were updated
 - API price history modal matches other modals and includes a Clear Filter button
 
@@ -180,7 +190,7 @@ The public hosted version of the app is available at [stackrtrackr.com](https://
 
 ## What's New in v3.1.8
 - **Full Backup System**: "Backup All Data" button creates a timestamped ZIP archive of the entire application state.
-- **Comprehensive Archive**: Includes inventory JSON, settings, spot price history, and exports (CSV, Excel) with restoration instructions.
+- **Comprehensive Archive**: Includes inventory JSON, settings, spot price history, and exports (CSV) with restoration instructions.
 - **Client-Side Processing**: Uses JSZip to generate archives locally so your data never leaves the device.
 
 ## What's New in v3.1.6
@@ -200,7 +210,7 @@ The public hosted version of the app is available at [stackrtrackr.com](https://
   - Clicking "Reset" restores the price to default or API cached value.
   - Price history updates accordingly with source tracking.
 - **API Integration**:
-  - Sync buttons are enabled/disabled based on API configuration.
+  - Sync buttons are enabled/disabled based on Metals API configuration.
   - All metal prices sync simultaneously from configured provider.
   - Button states show loading status during syncing.
 - **Backwards Compatibility and Stability**: Maintained all existing workflows and data integrity during fixes.
@@ -208,7 +218,7 @@ The public hosted version of the app is available at [stackrtrackr.com](https://
 ## 🆕 What's New in Previous Version v3.0.5
 - **Notes Field**: Added optional notes field for detailed item documentation.
 - **Enhanced Search**: Search now includes notes content along with all other fields.
-- **Complete Export Support**: Notes field included in all export formats (CSV, JSON, Excel, PDF).
+- **Complete Export Support**: Notes field included in all export formats (CSV, JSON, PDF).
 - **Improved Sample Data**: Updated sample.csv with realistic notes examples.
 - **Backwards Compatibility**: Existing data automatically upgraded with empty notes field.
 
@@ -219,7 +229,7 @@ The public hosted version of the app is available at [stackrtrackr.com](https://
 - **Collectable Item Support**: Special handling for collectible items with numismatic value.
 - **Advanced Search**: Search and filter inventory by any field including notes.
 - **Dark/Light Theme**: Toggle between dark and light themes for optimal viewing.
-- **Import/Export**: Support for CSV, JSON, Excel, and PDF formats.
+- **Import/Export**: Support for CSV, JSON, and PDF formats.
 - **Data Visualization**: Interactive pie charts for inventory breakdown analysis.
 - **Responsive Design**: Optimized for desktop and mobile devices.
 - **Local Storage**: All data stored locally in browser - no server required.
@@ -264,7 +274,8 @@ Each inventory item includes:
 │   ├── changelog.md                    # Detailed history of application changes
 │   ├── implementation_summary.md       # Summary of major development work
 │   ├── MULTI_AGENT_WORKFLOW.md         # AI assistant development workflow and coordination
-│   ├── roadmap.md                      # Planned features and subtasks
+│   ├── announcements.md                # Latest release notes and upcoming milestones
+│   ├── roadmap.md                      # Detailed planning and task tracking
 │   ├── status.md                       # Project status and features overview
 │   ├── structure.md                    # Documentation of folder and file organization
 │   ├── functionstable.md               # Function reference table
@@ -351,8 +362,8 @@ This project is designed to be maintainable and extensible. When making changes:
 This project is open source and available for personal use.
 
 ---
-**Current Version**: 3.04.15
-**Last Updated**: August 12, 2025
+**Current Version**: v3.04.58
+**Last Updated**: August 13, 2025
 **Status**: Feature complete release candidate
 
 

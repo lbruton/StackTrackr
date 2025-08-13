@@ -36,10 +36,6 @@
     <!-- External libraries for data import/export functionality -->
     <script
       defer=""
-      src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"
-    ></script>
-    <script
-      defer=""
       src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"
     ></script>
     <script
@@ -69,7 +65,7 @@
     <div class="app-header">
       <div>
         <h1 class="app-logo" id="appLogo" aria-label="StackrTrackr">
-          <svg class="stackr-logo" viewBox="0 0 800 200" xmlns="http://www.w3.org/2000/svg" width="100%" height="auto" style="max-width: 800px;">
+          <svg class="stackr-logo" viewBox="0 0 480 200" xmlns="http://www.w3.org/2000/svg" width="100%" height="auto" style="max-width: 666px;">
             <defs>
               <!-- Light Mode Gradients -->
               <linearGradient id="goldLight" x1="0%" y1="0%" x2="0%" y2="100%">
@@ -183,12 +179,8 @@
         </h1>
       </div>
       <div style="margin-left: auto; display: flex; gap: 0.5rem">
-        <button class="btn" id="aboutBtn" title="About" aria-label="About">
-          About 📖
-        </button>
-        <button class="btn" id="apiBtn" title="API" aria-label="API">
-          API 🔌
-        </button>
+        <button class="btn theme-btn" id="aboutBtn" title="About" aria-label="About">📖</button>
+        <button class="btn theme-btn" id="apiBtn" title="API" aria-label="API">🔌</button>
         <!-- Community button commented out for revision
         <a
           class="btn"
@@ -207,15 +199,8 @@
           Community
         </a>
         -->
-        <button class="btn" id="filesBtn" title="Files" aria-label="Files">
-          Files 📁
-        </button>
-        <button
-          class="btn theme-btn"
-          id="appearanceBtn"
-          title="Theme"
-          aria-label="Theme"
-        ></button>
+        <button class="btn theme-btn" id="filesBtn" title="Files" aria-label="Files">📁</button>
+        <button class="btn theme-btn" id="appearanceBtn" title="Theme" aria-label="Theme"></button>
       </div>
     </div>
     <div class="container">
@@ -493,18 +478,69 @@
            ============================================================================= -->
         <section class="search-section">
           <div class="search-container">
-            <!-- <button class="btn filters" id="filtersBtn">Filters</button> -->
+            <button
+              class="btn success icon-btn"
+              id="newItemBtn"
+              title="Add new item"
+              aria-label="Add new item"
+            >
+              ➕
+            </button>
             <input
               id="searchInput"
               placeholder="Search inventory by metal, name, type, purchase location, storage location, notes, date..."
               type="text"
             />
-            <button class="btn" id="clearSearchBtn">Clear</button>
-            <button class="btn success" id="newItemBtn">New Item</button>
+            <button
+              class="btn"
+              id="changeLogBtn"
+              title="Change log"
+              aria-label="Change log"
+            >
+              Change Log
+            </button>
+            <button
+              class="btn secondary icon-btn"
+              id="clearBtn"
+              title="Clear search"
+              aria-label="Clear search"
+            >
+              ×
+            </button>
           </div>
-          <div class="filter-info">
-            <div class="active-filters" id="activeFilters"></div>
-            <div class="search-results-info" id="searchResultsInfo"></div>
+        </section>
+        <section class="table-controls-section">
+          <div class="table-controls">
+            <div class="top-controls">
+              <div class="filters-card" id="filtersCard">
+                <h3 class="table-subtitle">Filters</h3>
+                <div class="filter-controls">
+                  <label for="chipMinCount" class="chip-min-label">Min items for chip:</label>
+                  <select id="chipMinCount" class="chip-min-select" title="Minimum number of items before showing a chip">
+                    <option value="1">1+</option>
+                    <option value="2">2+</option>
+                    <option value="3">3+</option>
+                    <option value="5">5+</option>
+                    <option value="10">10+</option>
+                  </select>
+                </div>
+                <div id="typeSummary"></div>
+                <div class="filter-info">
+                  <div class="active-filters" id="activeFilters"></div>
+                  <div class="search-results-info" id="searchResultsInfo"></div>
+                </div>
+              </div>
+              <div class="items-per-page">
+                <span class="items-label">Items:</span>
+                <select class="pagination-select" id="itemsPerPage">
+                  <option value="10">10</option>
+                  <option value="15">15</option>
+                  <option selected value="25">25</option>
+                  <option value="50">50</option>
+                  <option value="100">100</option>
+                </select>
+              </div>
+            </div>
           </div>
         </section>
         <!-- =============================================================================
@@ -654,28 +690,6 @@
           </thead>
           <tbody></tbody>
         </table>
-      </section>
-      <section class="table-controls-section">
-        <div class="table-controls">
-          <button type="button" id="changeLogBtn" class="btn">Change Log</button>
-          <div class="disclaimer-wrapper">
-            <span class="table-disclaimer">
-              All data is stored locally.
-              <span id="backupReminder" class="backup-link">Back up often.</span>
-            </span>
-            <div id="typeSummary"></div>
-          </div>
-          <div class="items-per-page">
-            <span class="items-label">Items:</span>
-            <select class="pagination-select" id="itemsPerPage">
-              <option selected value="10">10</option>
-              <option value="15">15</option>
-              <option value="25">25</option>
-              <option value="50">50</option>
-              <option value="100">100</option>
-            </select>
-          </div>
-        </div>
       </section>
       <!-- Pagination Controls -->
       <section class="pagination-section">
@@ -961,12 +975,10 @@
          IMPORT OPTIONS:
          - CSV: Standard comma-separated values with automatic field mapping
          - JSON: Native application format preserving all data
-         - Excel: .xlsx and .xls files with robust parsing
          
          EXPORT OPTIONS:
          - CSV: Compatible with spreadsheet applications
          - JSON: Full data backup with metadata
-         - Excel: Formatted spreadsheet with proper column types
          - PDF: Print-ready report with totals and formatting
          - HTML: Standalone web page with embedded styles
          
@@ -1282,6 +1294,15 @@
             </thead>
             <tbody></tbody>
           </table>
+        </div>
+        <div class="modal-footer">
+          <button
+            class="btn secondary icon-btn"
+            id="changeLogClearBtn"
+            title="Clear log"
+            aria-label="Clear log"
+          >↺</button>
+        </div>
       </div>
     </div>
   </div>
@@ -1312,82 +1333,6 @@
       </div>
     </div>
     
-    <!-- FILTERS MODAL -->
-    <div class="modal" id="filtersModal" style="display: none">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h2>Advanced Filters</h2>
-          <button aria-label="Close modal" class="modal-close" id="filtersCloseBtn">×</button>
-        </div>
-        <div class="modal-body">
-          <div class="filters-grid">
-            <div class="filter-group">
-              <label for="filterMetal">Metal</label>
-              <select id="filterMetal" class="filter-select" multiple>
-                <option value="">All Metals</option>
-              </select>
-              <div class="exclude-toggle">
-                <input type="checkbox" id="filterMetalExclude" />
-                <label for="filterMetalExclude">Exclude</label>
-              </div>
-            </div>
-            <div class="filter-group">
-              <label for="filterType">Type</label>
-              <select id="filterType" class="filter-select" multiple>
-                <option value="">All Types</option>
-              </select>
-              <div class="exclude-toggle">
-                <input type="checkbox" id="filterTypeExclude" />
-                <label for="filterTypeExclude">Exclude</label>
-              </div>
-            </div>
-            <div class="filter-group">
-              <label for="filterPurchaseLocation">Purchase Location</label>
-              <select id="filterPurchaseLocation" class="filter-select" multiple>
-                <option value="">All Locations</option>
-              </select>
-              <div class="exclude-toggle">
-                <input type="checkbox" id="filterPurchaseLocationExclude" />
-                <label for="filterPurchaseLocationExclude">Exclude</label>
-              </div>
-            </div>
-            <div class="filter-group">
-              <label for="filterStorageLocation">Storage Location</label>
-              <select id="filterStorageLocation" class="filter-select" multiple>
-                <option value="">All Storage Locations</option>
-              </select>
-              <div class="exclude-toggle">
-                <input type="checkbox" id="filterStorageLocationExclude" />
-                <label for="filterStorageLocationExclude">Exclude</label>
-              </div>
-            </div>
-            <div class="filter-group">
-              <label for="filterCollectable">Collectable</label>
-              <select id="filterCollectable" class="filter-select" multiple>
-                <option value="">All Items</option>
-                <option value="yes">Collectable Only</option>
-                <option value="no">Non-Collectable Only</option>
-              </select>
-              <div class="exclude-toggle">
-                <input type="checkbox" id="filterCollectableExclude" />
-                <label for="filterCollectableExclude">Exclude</label>
-              </div>
-            </div>
-            <div class="filter-group">
-              <label for="filterDateRange">Date Range</label>
-              <div class="date-range-inputs">
-                <input type="date" id="filterDateFrom" placeholder="From" />
-                <input type="date" id="filterDateTo" placeholder="To" />
-              </div>
-            </div>
-          </div>
-          <div class="filter-actions">
-            <button class="btn secondary" id="clearFiltersBtn">Clear All</button>
-            <button class="btn success" id="applyFiltersBtn">Apply Filters</button>
-          </div>
-        </div>
-      </div>
-    </div>
     
     <!-- =============================================================================
        DETAILS MODAL WITH PIE CHARTS
@@ -1441,7 +1386,7 @@
     <footer class="app-footer">
       <div class="storage-line">Storage: <span id="storageUsage"></span> <progress id="storageUsageBar" max="5120" value="0"></progress> <a href="#" id="storageReportLink">Storage report</a></div>
       <div class="footer-meta">
-        <span>Thank you for using StackrTrackr (<span id="footerVersion"></span>). © 2025 <span id="footerDomain">stackrtrackr.com</span> | Created with love on Apple Silicon | If you are having trouble try the <a href="./archive/v_previous/index.html">previous build</a>, and report the issue on our <a href="https://www.reddit.com/r/stackrtrackr" target="_blank" rel="noopener">subreddit</a> or on our <a href="https://github.com/lbruton/StackTrackr/issues" target="_blank" rel="noopener">GitHub Issues Page</a>.</span>
+        <span>Thank you for using StackrTrackr (<span id="footerVersion"></span>). © 2025 <span id="footerDomain">stackrtrackr.com</span> | Created with love on Apple Silicon |<br>If you are having trouble try the <a href="./archive/v_previous/index.html">previous build</a>, and report the issue on our <a href="https://www.reddit.com/r/stackrtrackr" target="_blank" rel="noopener">subreddit</a> or on our <a href="https://github.com/lbruton/StackTrackr/issues" target="_blank" rel="noopener">GitHub Issues Page</a>. You can also try the <a href="https://alpha.stackrtrackr.com" target="_blank" rel="noopener">alpha release here</a>.</span>
       </div>
     </footer>
     <!-- =============================================================================
@@ -1466,7 +1411,7 @@
             tracking, premium calculations, and detailed reporting. Add items to
             your inventory, monitor current values across Silver, Gold,
             Platinum, and Palladium, and export your data in multiple formats
-            including CSV, JSON, Excel, PDF, and HTML.
+            including CSV, JSON, PDF, and HTML.
           </div>
 
           <!-- Important Notice -->
@@ -1542,7 +1487,7 @@
             tracking, premium calculations, and detailed reporting. Add items to
             your inventory, monitor current values across Silver, Gold,
             Platinum, and Palladium, and export your data in multiple formats
-            including CSV, JSON, Excel, PDF, and HTML.
+            including CSV, JSON, PDF, and HTML.
           </div>
 
           <div class="about-alert">
@@ -1706,7 +1651,7 @@
         </div>
         <div class="modal-body">
           <div class="settings-section">
-            <h3 style="margin-bottom: 1rem">API Configuration</h3>
+            <h3 style="margin-bottom: 1rem">Metals API Configuration</h3>
             <p class="settings-subtext">Manage API cache, history, and providers.</p>
 
 
@@ -1728,6 +1673,19 @@
               </button>
             </div>
           </div>
+          <div class="settings-section">
+            <h3 style="margin-bottom: 1rem">Numista API</h3>
+            <div class="api-key-row">
+              <label for="numistaApiKey">API Key:</label>
+              <input
+                type="password"
+                id="numistaApiKey"
+                placeholder="Coming soon"
+                disabled
+              />
+            </div>
+            <div class="api-key-note">Numista API integration coming soon.</div>
+          </div>
         </div>
       </div>
     </div>
@@ -1748,23 +1706,15 @@
               <div class="import-block">
                 <div class="import-export-grid">
                   <div class="import-csv-grid">
-                    <button class="btn danger" id="importCsvOverride">Import CSV</button>
+                    <button class="btn warning" id="importCsvOverride">Import CSV</button>
                     <button class="btn success" id="importCsvMerge">Merge CSV</button>
                     <input accept=".csv" hidden id="importCsvFile" type="file" />
                   </div>
-                  <label class="btn success" id="importJsonBtn">
-                    Import JSON
+                  <div class="import-json-grid">
+                    <button class="btn warning" id="importJsonOverride">Import JSON</button>
+                    <button class="btn success" id="importJsonMerge">Merge JSON</button>
                     <input accept=".json" hidden id="importJsonFile" type="file" />
-                  </label>
-                  <label class="btn success" id="importExcelBtn">
-                    Import Excel
-                    <input
-                      accept=".xlsx,.xls"
-                      hidden
-                      id="importExcelFile"
-                      type="file"
-                    />
-                  </label>
+                  </div>
                   <button class="btn secondary" id="cloudSyncBtn">Cloud Sync ☁️</button>
                 </div>
                 <progress
@@ -1788,9 +1738,6 @@
                   <button class="btn info" id="exportJsonBtn">
                     Export JSON
                   </button>
-                  <button class="btn info" id="exportExcelBtn">
-                    Export Excel
-                  </button>
                   <button class="btn info" id="exportPdfBtn">
                     Export PDF
                   </button>
@@ -1804,10 +1751,9 @@
                 <div class="third-party-block">
                   <div class="import-export-grid">
                     <div class="grid grid-2">
-                      <button class="btn success" id="importNumistaBtn">Import Numista CSV</button>
-                      <button class="btn secondary" id="mergeNumistaBtn">Merge Numista CSV</button>
+                      <button class="btn warning" id="importNumistaBtn">Import Numista CSV</button>
+                      <button class="btn success" id="mergeNumistaBtn">Merge Numista CSV</button>
                     </div>
-                    <button class="btn warning" id="clearNumistaInventoryBtn">Clear Numista Cache</button>
                     <input type="file" id="numistaImportFile" accept=".csv" hidden />
                     <div class="beta-warning">⚠️ Numista import is a beta feature</div>
                   </div>
@@ -1815,18 +1761,16 @@
               </div>
 
             <div class="settings-card boating-accident-section">
-              <h3>Clear Data</h3>
+              <h3>Backup, Restore, Clear</h3>
               <p class="settings-subtext">Manage local application data.</p>
               <div class="backup-buttons">
                 <button class="btn warning" id="removeInventoryDataBtn">
                   Remove Inventory Data
                 </button>
-                <button class="btn warning" id="clearNumistaCacheBtn" style="display:none">
-                  Clear Numista Cache
-                </button>
                 <button class="btn danger" id="boatingAccidentBtn">
-                  Boating Accident?
+                  Wipe All Data
                 </button>
+                <div class="beta-warning">⚠️ have you or someone you know been involved in a 🚤 accident?</div>
               </div>
             </div>
           </div>
@@ -2449,105 +2393,11 @@
                 <table id="apiHistoryTable"></table>
               </div>
             </div>
-            <div class="api-history-charts">
-              <div class="chart-panel">
-                <h3>Silver</h3>
-                <canvas id="apiHistoryChartSilver"></canvas>
-              </div>
-              <div class="chart-panel">
-                <h3>Gold</h3>
-                <canvas id="apiHistoryChartGold"></canvas>
-              </div>
-              <div class="chart-panel">
-                <h3>Platinum</h3>
-                <canvas id="apiHistoryChartPlatinum"></canvas>
-              </div>
-              <div class="chart-panel">
-                <h3>Palladium</h3>
-                <canvas id="apiHistoryChartPalladium"></canvas>
-              </div>
-            </div>
           </div>
         </div>
       </div>
     </div>
     
-    <!-- FILTERS MODAL -->
-    <div class="modal" id="filtersModal" style="display: none">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h2>Filters</h2>
-          <button aria-label="Close modal" class="modal-close" id="filtersCloseBtn">×</button>
-        </div>
-        <div class="modal-body">
-          <div class="filters-grid">
-            <div class="filter-group">
-              <label for="filterMetal">Metal</label>
-              <select id="filterMetal" class="filter-select" multiple>
-                <option value="">All Metals</option>
-              </select>
-              <div class="exclude-toggle">
-                <input type="checkbox" id="filterMetalExclude" />
-                <label for="filterMetalExclude">Exclude</label>
-              </div>
-            </div>
-            <div class="filter-group">
-              <label for="filterType">Type</label>
-              <select id="filterType" class="filter-select" multiple>
-                <option value="">All Types</option>
-              </select>
-              <div class="exclude-toggle">
-                <input type="checkbox" id="filterTypeExclude" />
-                <label for="filterTypeExclude">Exclude</label>
-              </div>
-            </div>
-            <div class="filter-group">
-              <label for="filterPurchaseLocation">Purchase Location</label>
-              <select id="filterPurchaseLocation" class="filter-select" multiple>
-                <option value="">All Locations</option>
-              </select>
-              <div class="exclude-toggle">
-                <input type="checkbox" id="filterPurchaseLocationExclude" />
-                <label for="filterPurchaseLocationExclude">Exclude</label>
-              </div>
-            </div>
-            <div class="filter-group">
-              <label for="filterStorageLocation">Storage Location</label>
-              <select id="filterStorageLocation" class="filter-select" multiple>
-                <option value="">All Storage Locations</option>
-              </select>
-              <div class="exclude-toggle">
-                <input type="checkbox" id="filterStorageLocationExclude" />
-                <label for="filterStorageLocationExclude">Exclude</label>
-              </div>
-            </div>
-            <div class="filter-group">
-              <label for="filterCollectable">Collectable</label>
-              <select id="filterCollectable" class="filter-select" multiple>
-                <option value="">All Items</option>
-                <option value="yes">Collectable Only</option>
-                <option value="no">Non-Collectable Only</option>
-              </select>
-              <div class="exclude-toggle">
-                <input type="checkbox" id="filterCollectableExclude" />
-                <label for="filterCollectableExclude">Exclude</label>
-              </div>
-            </div>
-            <div class="filter-group">
-              <label for="filterDateRange">Date Range</label>
-              <div class="date-range-inputs">
-                <input type="date" id="filterDateFrom" placeholder="From" />
-                <input type="date" id="filterDateTo" placeholder="To" />
-              </div>
-            </div>
-          </div>
-          <div class="filter-actions">
-            <button class="btn" id="clearFiltersBtn">Clear All</button>
-            <button class="btn premium" id="applyFiltersBtn">Apply Filters</button>
-          </div>
-        </div>
-      </div>
-    </div>
     <!-- =============================================================================
        JAVASCRIPT MODULE LOADING
        
@@ -2561,7 +2411,7 @@
        7. init.js - Application initialization and startup
        
        All scripts use 'defer' to ensure DOM is ready before execution
-       External libraries (Chart.js, jsPDF, PapaParse, XLSX) loaded via CDN
+       External libraries (Chart.js, jsPDF, PapaParse, JSZip) loaded via CDN
        ============================================================================= -->
 
   <script defer src="js/debug-log.js"></script>

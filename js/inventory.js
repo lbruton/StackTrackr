@@ -4,7 +4,7 @@
  * 
  * This function generates a complete backup archive including:
  * - Current inventory data in JSON format
- * - All export formats (CSV, Excel, HTML)
+ * - All export formats (CSV, HTML)
  * - Application settings and configuration
  * - Spot price history
  * - README file explaining backup contents
@@ -118,37 +118,7 @@ const createBackupZip = async () => {
     const csvContent = Papa.unparse([csvHeaders, ...csvRows]);
     zip.file('inventory_export.csv', csvContent);
 
-    // 5. Generate and add Excel export
-    const wsData = [csvHeaders];
-    for (const item of sortedInventory) {
-      const exportSpotPrice = item.isCollectable ?
-        spotPrices[item.metal.toLowerCase()] :
-        item.spotPriceAtPurchase;
-      wsData.push([
-        item.metal || 'Silver',
-        item.name,
-        item.qty,
-        item.type,
-        parseFloat(item.weight).toFixed(4),
-        item.price,
-        exportSpotPrice,
-        item.isCollectable ? null : item.premiumPerOz,
-        item.isCollectable ? null : item.totalPremium,
-        item.purchaseLocation,
-        item.storageLocation || '',
-        item.numistaId || '',
-        item.isCollectable ? 'Yes' : 'No',
-        item.notes || '',
-        item.date
-      ]);
-    }
-    const ws = XLSX.utils.aoa_to_sheet(wsData);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Inventory");
-    const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-    zip.file('inventory_export.xlsx', excelBuffer);
-
-    // 6. Generate and add HTML export (simplified version)
+    // 5. Generate and add HTML export (simplified version)
     const htmlContent = generateBackupHtml(sortedInventory, timeFormatted);
     zip.file('inventory_report.html', htmlContent);
 
@@ -368,24 +338,18 @@ FILE CONTENTS:
 4. inventory_export.csv
    - Spreadsheet-compatible export
    - Human-readable format for external use
-   - Compatible with Excel, Google Sheets
 
-5. inventory_export.xlsx
-   - Excel format export with proper formatting
-   - Preserves data types and calculations
-   - Professional presentation ready
-
-6. inventory_report.html
+5. inventory_report.html
    - Self-contained web page report
    - No external dependencies required
    - Print-friendly format
 
-7. sample_data.json (if applicable)
+6. sample_data.json (if applicable)
    - Sample of inventory items for reference
    - Useful for testing import functionality
    - Demonstrates data structure
 
-8. README.txt (this file)
+7. README.txt (this file)
    - Backup contents explanation
    - Restoration instructions
 
@@ -398,7 +362,6 @@ RESTORATION INSTRUCTIONS:
 
 2. For partial restoration:
    - Use inventory_export.csv for spreadsheet applications
-   - Use inventory_export.xlsx for Excel compatibility
    - View inventory_report.html in any web browser
 
 3. For data analysis:
@@ -440,24 +403,13 @@ const saveInventory = () => {
 };
 
 /**
- * Removes non-alphanumeric characters from inventory records and cached Numista data.
+ * Removes non-alphanumeric characters from inventory records.
  *
  * @returns {void}
  */
 const sanitizeTablesOnLoad = () => {
   inventory = inventory.map(item => sanitizeObjectFields(item));
 
-  const rawCsv = localStorage.getItem(NUMISTA_RAW_KEY);
-  if (rawCsv) {
-    try {
-      const parsed = Papa.parse(rawCsv, { header: true, skipEmptyLines: true });
-      const cleanedRows = parsed.data.map(row => sanitizeObjectFields(row));
-      const sanitizedCsv = Papa.unparse(cleanedRows);
-      localStorage.setItem(NUMISTA_RAW_KEY, sanitizedCsv);
-    } catch (err) {
-      console.warn('Failed to sanitize Numista table', err);
-    }
-  }
 };
 
 /**
@@ -572,6 +524,8 @@ const typeColors = {
 };
 const purchaseLocationColors = {};
 const storageLocationColors = {};
+const nameColors = {};
+const dateColors = {};
 
 const getColor = (map, key) => {
   if (!(key in map)) {
@@ -596,12 +550,12 @@ const escapeAttribute = (text) =>
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
 
-const filterLink = (field, value, color, displayValue = value, title) => {
+const filterLink = (field, value, color, displayValue = value, title, allowHtml = false) => {
   const handler = `applyColumnFilter('${field}', ${JSON.stringify(value)})`;
   // Escape characters for safe inline handler usage
   const escaped = escapeAttribute(handler);
   const displayStr = String(displayValue);
-  const safe = sanitizeHtml(displayStr);
+  const safe = allowHtml ? displayStr : sanitizeHtml(displayStr);
   const titleStr = title ? String(title) : `Filter by ${displayStr}`;
   const safeTitle = sanitizeHtml(titleStr);
   const isNA = displayStr === 'N/A' || displayStr === 'Numista Import' || displayStr === 'Unknown';
@@ -612,7 +566,32 @@ const filterLink = (field, value, color, displayValue = value, title) => {
 
 const getTypeColor = type => typeColors[type] || 'var(--type-other-bg)';
 const getPurchaseLocationColor = loc => getColor(purchaseLocationColors, loc);
-const getStorageLocationColor = loc => getColor(storageLocationColors, loc);
+const getStorageLocationColor = loc =>
+  loc === 'Unknown' ? 'var(--text-muted)' : getColor(storageLocationColors, loc);
+
+/**
+ * Formats Purchase Location for table display, wrapping URLs in hyperlinks
+ * while preserving filter behavior.
+ *
+ * @param {string} loc - Purchase location value
+ * @returns {string} HTML string for table cell
+ */
+const formatPurchaseLocation = (loc) => {
+  const value = loc || 'Numista Import';
+  const color = getPurchaseLocationColor(value);
+  const urlPattern = /^(https?:\/\/)?[\w.-]+\.[A-Za-z]{2,}(\S*)?$/;
+  const filterSpan = filterLink('purchaseLocation', value, color);
+  if (urlPattern.test(value)) {
+    let href = value;
+    if (!/^https?:\/\//i.test(href)) {
+      href = `https://${href}`;
+    }
+    const safeHref = escapeAttribute(href);
+    return `${filterSpan}<a href="${safeHref}" target="_blank" rel="noopener" onclick="event.stopPropagation()" class="info-link" title="${safeHref}">(i)</a>`;
+  }
+  return filterSpan;
+};
+window.formatPurchaseLocation = formatPurchaseLocation;
 
 /**
  * Recalculates premium values for an inventory item
@@ -778,20 +757,253 @@ const startCellEdit = (idx, field, icon) => {
 
 window.startCellEdit = startCellEdit;
 
-const updateTypeSummary = () => {
+
+/**
+ * Enhanced chip-type filter system with default chips and dynamic filtering
+ * Creates a word cloud-like UI showing inventory breakdown by type, metal, and filtered values
+ */
+const updateTypeSummary = (items = inventory) => {
   const el = elements.typeSummary || document.getElementById('typeSummary');
   if (!el) return;
-  const counts = inventory.reduce((acc, item) => {
-    acc[item.type] = (acc[item.type] || 0) + 1;
-    return acc;
-  }, {});
-  el.innerHTML = Object.entries(counts)
-    .map(([type, count]) => {
-      const safeType = sanitizeHtml(type);
-      const cls = type.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-      return `<span class="type-chip ${cls}">${safeType}: ${count}</span>`;
-    })
-    .join('');
+
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  const textColor = isDark ? '#000' : '#fff';
+
+  // Get minimum count setting from dropdown control or localStorage
+  const chipMinCountEl = document.getElementById('chipMinCount');
+  let minCount = 1;
+  if (chipMinCountEl && chipMinCountEl.value) {
+    minCount = parseInt(chipMinCountEl.value, 10);
+    localStorage.setItem('chipMinCount', minCount.toString());
+  } else {
+    minCount = parseInt(localStorage.getItem('chipMinCount') || '1', 10);
+    if (chipMinCountEl) chipMinCountEl.value = minCount.toString();
+  }
+  
+  // Define default chip types that always show (if they exist in inventory)
+  const defaultChipTypes = [
+    { field: 'type', value: 'Coin' },
+    { field: 'type', value: 'Bar' },
+    { field: 'type', value: 'Round' },
+    { field: 'type', value: 'Note' },
+    { field: 'metal', value: 'Gold' },
+    { field: 'metal', value: 'Silver' },
+    { field: 'metal', value: 'Platinum' },
+    { field: 'metal', value: 'Palladium' }
+  ];
+
+  // Check if any filters are active
+  const activeFieldKeys = typeof activeFilters === 'object' ? Object.keys(activeFilters) : [];
+  const columnFieldKeys = typeof columnFilters === 'object' ? Object.keys(columnFilters) : [];
+  const hasActiveFilters = activeFieldKeys.length > 0 || columnFieldKeys.length > 0 || searchQuery.trim().length > 0;
+
+  const chips = [];
+  const unknownChips = [];
+  const addedChips = new Set(); // Track to avoid duplicates
+
+  // Field name mappings for better display
+  const fieldDisplayNames = {
+    type: 'Type',
+    metal: 'Metal',
+    purchaseLocation: 'Purchase',
+    storageLocation: 'Storage',
+    name: 'Name'
+  };
+
+  // Helper function to create chip data with enhanced formatting
+  const createChip = (field, value, totalCount, filteredCount) => {
+    let colors, cls = '';
+    
+    switch (field) {
+      case 'type':
+        colors = {
+          bg: getTypeColor(value),
+          text: `var(--type-${value.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-text)`
+        };
+        cls = ` type-chip ${value.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
+        break;
+      case 'metal':
+        colors = { bg: METAL_COLORS[value] || 'var(--primary)', text: textColor };
+        cls = ` metal-chip ${value.toLowerCase()}`;
+        break;
+      case 'purchaseLocation':
+        colors = { bg: getPurchaseLocationColor(value), text: textColor };
+        cls = ' purchase-chip';
+        break;
+      case 'storageLocation':
+        colors = { bg: getStorageLocationColor(value), text: textColor };
+        cls = ' storage-chip';
+        break;
+      case 'name':
+        colors = { bg: getColor(nameColors, value), text: textColor };
+        cls = ' name-chip';
+        break;
+      default:
+        colors = { bg: 'var(--primary)', text: textColor };
+        cls = ' generic-chip';
+    }
+    
+    return {
+      field,
+      fieldDisplay: fieldDisplayNames[field] || field,
+      value,
+      display: value,
+      filtered: filteredCount,
+      total: totalCount,
+      colors,
+      cls
+    };
+  };
+
+  // Add default chips first (always visible if they exist)
+  defaultChipTypes.forEach(({ field, value }) => {
+    const chipKey = `${field}:${value}`;
+    if (addedChips.has(chipKey)) return;
+    
+    // Count total occurrences in full inventory
+    const totalCount = inventory.filter(item => {
+      const itemValue = field === 'metal' ? (item.composition || item.metal) : item[field];
+      return itemValue === value;
+    }).length;
+    
+    // Count filtered occurrences
+    const filteredCount = items.filter(item => {
+      const itemValue = field === 'metal' ? (item.composition || item.metal) : item[field];
+      return itemValue === value;
+    }).length;
+    
+    if (totalCount > 0) {
+      chips.push(createChip(field, value, totalCount, filteredCount));
+      addedChips.add(chipKey);
+    }
+  });
+
+  // If filters are active, add dynamic chips from filtered results
+  if (hasActiveFilters) {
+    const dynamicFields = ['purchaseLocation', 'storageLocation', 'name'];
+    
+    dynamicFields.forEach(field => {
+      // Count occurrences in filtered items
+      const filteredCounts = items.reduce((acc, item) => {
+        let key = item[field];
+        if (!key) {
+          key = field === 'purchaseLocation' ? 'Numista Import' : 'Unknown';
+        }
+        acc[key] = (acc[key] || 0) + 1;
+        return acc;
+      }, {});
+      
+      // Count occurrences in total inventory
+      const totalCounts = inventory.reduce((acc, item) => {
+        let key = item[field];
+        if (!key) {
+          key = field === 'purchaseLocation' ? 'Numista Import' : 'Unknown';
+        }
+        acc[key] = (acc[key] || 0) + 1;
+        return acc;
+      }, {});
+      
+      // Add chips for values that meet minimum count
+      Object.keys(filteredCounts).forEach(value => {
+        const chipKey = `${field}:${value}`;
+        if (addedChips.has(chipKey)) return;
+        
+        const filteredCount = filteredCounts[value];
+        const totalCount = totalCounts[value];
+        
+        if (filteredCount >= minCount) {
+          const chip = createChip(field, value, totalCount, filteredCount);
+          if (value === 'Unknown' || value === 'Numista Import') {
+            unknownChips.push(chip);
+          } else {
+            chips.push(chip);
+          }
+          addedChips.add(chipKey);
+        }
+      });
+    });
+    
+    // Also add any type/metal chips that weren't in defaults but appear in filtered results
+    ['type', 'metal'].forEach(field => {
+      const filteredValues = items.reduce((acc, item) => {
+        const key = field === 'metal' ? (item.composition || item.metal) : item[field];
+        if (key) acc[key] = (acc[key] || 0) + 1;
+        return acc;
+      }, {});
+      
+      Object.keys(filteredValues).forEach(value => {
+        const chipKey = `${field}:${value}`;
+        if (addedChips.has(chipKey)) return;
+        
+        const filteredCount = filteredValues[value];
+        const totalCount = inventory.filter(item => {
+          const itemValue = field === 'metal' ? (item.composition || item.metal) : item[field];
+          return itemValue === value;
+        }).length;
+        
+        if (filteredCount >= minCount) {
+          chips.push(createChip(field, value, totalCount, filteredCount));
+          addedChips.add(chipKey);
+        }
+      });
+    });
+  }
+
+  // Sort chips: default types first, then by filtered count (descending)
+  const isDefaultType = (chip) => {
+    return defaultChipTypes.some(dt => dt.field === chip.field && dt.value === chip.value);
+  };
+  
+  chips.sort((a, b) => {
+    const aIsDefault = isDefaultType(a);
+    const bIsDefault = isDefaultType(b);
+    
+    if (aIsDefault && !bIsDefault) return -1;
+    if (!aIsDefault && bIsDefault) return 1;
+    
+    // Both default or both dynamic - sort by filtered count
+    return b.filtered - a.filtered;
+  });
+  
+  unknownChips.sort((a, b) => b.filtered - a.filtered);
+
+  // Generate HTML for chips with enhanced formatting
+  const generateChipHtml = (chip) => {
+    const safeVal = sanitizeHtml(String(chip.display));
+    const handler = `applyQuickFilter('${chip.field}', ${JSON.stringify(chip.value)})`;
+    const escaped = escapeAttribute(handler);
+    
+    // Calculate relative size based on count (for word cloud effect)
+    const maxCount = Math.max(...[...chips, ...unknownChips].map(c => c.filtered), 1);
+    const relativeSize = Math.max(0.8, Math.min(1.6, (chip.filtered / maxCount) * 0.8 + 0.8));
+    const isFiltered = hasActiveFilters && chip.filtered > 0;
+    const opacity = hasActiveFilters ? (isFiltered ? 1 : 0.3) : 1;
+    
+    // Enhanced styling with better contrast and readability
+    const fontSize = `${0.65 + (relativeSize - 0.8) * 0.4}rem`;
+    const padding = relativeSize > 1.2 ? '0.3rem 0.8rem' : '0.2rem 0.6rem';
+    const style = `background-color: ${chip.colors.bg}; color: ${chip.colors.text}; font-size: ${fontSize}; padding: ${padding}; opacity: ${opacity};`;
+    
+    // Enhanced tooltip with field name
+    const title = `${chip.fieldDisplay}: ${chip.display}\nShowing ${chip.filtered} of ${chip.total} total items${chip.filtered !== chip.total ? ' - Click to filter' : ''}`;
+    
+    // Enhanced chip content with field prefix for dynamic chips
+    let chipContent;
+    if (hasActiveFilters && !isDefaultType(chip) && (chip.field === 'purchaseLocation' || chip.field === 'storageLocation' || chip.field === 'name')) {
+      // For dynamic chips, show field abbreviation and truncated value
+      const fieldAbbrev = chip.fieldDisplay;
+      const displayValue = chip.display.length > 15 ? chip.display.substring(0, 12) + '...' : chip.display;
+      chipContent = `${fieldAbbrev}: ${displayValue} (${chip.filtered})`;
+    } else {
+      // For default chips, show value and count
+      chipContent = `${safeVal} ${chip.filtered}${chip.filtered !== chip.total ? `/${chip.total}` : ''}`;
+    }
+    
+    return `<span class="filter-chip summary-chip${chip.cls}" style="${style}" onclick="${escaped}" tabindex="0" role="button" onkeydown="if(event.key==='Enter'||event.key===' ')${escaped}" title="${sanitizeHtml(title)}">${chipContent}</span>`;
+  };
+
+  const html = [...chips, ...unknownChips].map(generateChipHtml).join('');
+  el.innerHTML = html;
 };
 window.updateTypeSummary = updateTypeSummary;
 
@@ -799,23 +1011,6 @@ window.updateTypeSummary = updateTypeSummary;
 const renderTable = () => {
   return monitorPerformance(() => {
     const filteredInventory = filterInventory();
-
-    // Automatically adjust items-per-page dropdown when filtered results
-    // are fewer than the currently selected page length. This ensures the
-    // table length always displays a sensible value (minimum of the smallest
-    // dropdown option) while still allowing larger result sets to use
-    // pagination.
-    if (filteredInventory.length < itemsPerPage && elements.itemsPerPage) {
-      const options = Array.from(elements.itemsPerPage.options).map(o => parseInt(o.value));
-      const minOption = Math.min(...options);
-      const target = Math.max(filteredInventory.length, minOption);
-      const newValue = options.find(opt => opt >= target) || options[options.length - 1];
-      if (newValue !== itemsPerPage) {
-        itemsPerPage = newValue;
-        elements.itemsPerPage.value = String(newValue);
-        currentPage = 1;
-      }
-    }
 
     const sortedInventory = sortInventory(filteredInventory);
     const totalPages = calculateTotalPages(sortedInventory);
@@ -855,10 +1050,10 @@ const renderTable = () => {
       </td>
       <td class="shrink" data-column="premium" style="color: ${item.isCollectable ? 'var(--text-muted)' : (item.totalPremium > 0 ? 'var(--warning)' : 'inherit')}">${filterLink('totalPremium', premiumValue, 'var(--text-primary)', premiumDisplay)}</td>
       <td class="shrink" data-column="purchaseLocation">
-        ${filterLink('purchaseLocation', item.purchaseLocation || 'Numista Import', getPurchaseLocationColor(item.purchaseLocation || 'Numista Import'))}
+        ${formatPurchaseLocation(item.purchaseLocation)}
       </td>
       <td class="shrink" data-column="storageLocation">
-        ${item.storageLocation === 'Unknown' ? '' : filterLink('storageLocation', item.storageLocation || 'Numista Import', getStorageLocationColor(item.storageLocation || 'Numista Import'))}
+        ${filterLink('storageLocation', item.storageLocation || 'Unknown', getStorageLocationColor(item.storageLocation || 'Unknown'))}
       </td>
       <td class="shrink" data-column="numista">${item.numistaId ? `<a href="https://en.numista.com/catalogue/pieces${item.numistaId}.html" target="_blank" rel="noopener" title="View on Numista">N# ${sanitizeHtml(item.numistaId)}</a>` : ''}</td>
       <td class="icon-col" data-column="collectable"><span class="collectable-status" role="button" tabindex="0" onclick="toggleCollectable(${originalIdx})" onkeydown="if(event.key==='Enter'||event.key===' ') toggleCollectable(${originalIdx})" aria-label="Toggle collectable status for ${sanitizeHtml(item.name)}" title="Toggle collectable status">${item.isCollectable ? '<svg class=\"collectable-icon icon-copper\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\"><circle cx=\"12\" cy=\"12\" r=\"10\"/></svg>' : '<svg class=\"collectable-icon icon-gold\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\"><path d=\"M3 3h18v18H3V3zm2 2v14h14V5H5zm5 10h6v2H10v-2zm2-8a2 2 0 100 4 2 2 0 000-4z\"/></svg>'}</span></td>
@@ -876,7 +1071,7 @@ const renderTable = () => {
     );
 
     elements.inventoryTable.innerHTML = rows.concat(placeholders).join('');
-    updateTypeSummary();
+    updateTypeSummary(filteredInventory);
 
     // Update sort indicators
     const headers = document.querySelectorAll('#inventoryTable th');
@@ -1394,9 +1589,7 @@ const importNumistaCsv = (file, override = false) => {
     reader.onload = function(e) {
       try {
         const csvText = e.target.result;
-        localStorage.setItem(NUMISTA_RAW_KEY, csvText);
-        const storedCsv = localStorage.getItem(NUMISTA_RAW_KEY) || "";
-        const results = Papa.parse(storedCsv, {
+        const results = Papa.parse(csvText, {
           header: true,
           skipEmptyLines: true,
           transformHeader: (h) => h.trim(), // Handle Numista headers with trailing spaces
@@ -1730,10 +1923,11 @@ const exportCsv = () => {
 
 /**
  * Imports inventory data from JSON file
- * 
+ *
  * @param {File} file - JSON file to import
+ * @param {boolean} [override=false] - Replace existing inventory instead of merging
  */
-const importJson = (file) => {
+const importJson = (file, override = false) => {
   const reader = new FileReader();
 
   reader.onload = function(e) {
@@ -1841,22 +2035,47 @@ const importJson = (file) => {
         return alert("No valid items found in JSON file.");
       }
 
-      let msg = `Import ${imported.length} items?`;
-      if (skippedDetails.length > 0) {
-        msg += `\n(${skippedDetails.length} invalid items skipped)`;
+      const existingSerials = new Set(override ? [] : inventory.map(item => item.serial));
+      const existingKeys = new Set(
+        (override ? [] : inventory)
+          .filter(item => item.numistaId)
+          .map(item => `${item.numistaId}|${item.name}|${item.date}`)
+      );
+      const deduped = [];
+      let duplicateCount = 0;
+
+      for (const item of imported) {
+        const key = item.numistaId ? `${item.numistaId}|${item.name}|${item.date}` : null;
+        if (existingSerials.has(item.serial) || (key && existingKeys.has(key))) {
+          duplicateCount++;
+          continue;
+        }
+        existingSerials.add(item.serial);
+        if (key) existingKeys.add(key);
+        deduped.push(item);
       }
 
-      if (confirm(msg)) {
-        inventory = imported;
-        
-        // Synchronize all items with catalog manager
-        inventory = catalogManager.syncInventory(inventory);
-        
-        saveInventory();
-        renderTable();
-        if (typeof updateStorageStats === "function") {
-          updateStorageStats();
-        }
+      if (duplicateCount > 0) {
+        console.info(`${duplicateCount} duplicate items skipped during import.`);
+      }
+
+      if (deduped.length === 0) {
+        return alert('No items to import.');
+      }
+
+      if (override) {
+        inventory = deduped;
+      } else {
+        inventory = inventory.concat(deduped);
+      }
+
+      // Synchronize all items with catalog manager
+      inventory = catalogManager.syncInventory(inventory);
+
+      saveInventory();
+      renderTable();
+      if (typeof updateStorageStats === "function") {
+        updateStorageStats();
       }
     } catch (error) {
       endImportProgress();
@@ -1905,202 +2124,6 @@ const exportJson = () => {
   document.body.appendChild(a);
   a.click();
   a.remove();
-};
-
-/**
- * Imports inventory data from Excel file
- * 
- * @param {File} file - Excel file to import
- */
-const importExcel = (file) => {
-  const reader = new FileReader();
-
-  reader.onload = function(e) {
-    try {
-      const data = new Uint8Array(e.target.result);
-      const workbook = XLSX.read(data, { type: 'array' });
-
-      // Get first sheet
-      const firstSheetName = workbook.SheetNames[0];
-      const worksheet = workbook.Sheets[firstSheetName];
-
-      // Convert to JSON
-      const jsonData = XLSX.utils.sheet_to_json(worksheet);
-
-      // Process data
-      const imported = [];
-      const skippedDetails = [];
-      const totalRows = jsonData.length;
-      startImportProgress(totalRows);
-      let processed = 0;
-      let importedCount = 0;
-
-      for (const [index, row] of jsonData.entries()) {
-        processed++;
-        const metal = row['Metal'] || 'Silver';
-        const name = row['Name'] || row['name'];
-        const qty = parseInt(row['Qty'] || row['qty'] || 1, 10);
-        const type = normalizeType(row['Type'] || row['type']);
-        const weight = parseFloat(row['Weight(oz)'] || row['weight']);
-        const priceStr = row['Purchase Price'] || row['price'];
-        let price = parseFloat(
-          typeof priceStr === "string" ? priceStr.replace(/[^0-9.-]+/g, "") : priceStr
-        );
-        if (price < 0) price = 0;
-        const purchaseLocation = row['Purchase Location'] || "";
-        const storageLocation = row['Storage Location'] || "Unknown";
-        const notes = row['Notes'] || "";
-        const date = parseDate(row['Date']); // Using the new date parser
-
-        // Get collectable status
-        const isCollectable = row['Collectable'] === 'Yes' || row['Collectable'] === 'true' || row['isCollectable'] === 'true';
-
-        // Get spot price from Excel if available
-        let spotPriceAtPurchase;
-        if (row['Spot Price ($/oz)']) {
-          // Extract numeric value from formatted string like "$1,234.56"
-          const spotStr = row['Spot Price ($/oz)'].toString();
-          spotPriceAtPurchase = parseFloat(spotStr.replace(/[^0-9.-]+/g, ""));
-        } else if (row['spotPriceAtPurchase']) {
-          spotPriceAtPurchase = parseFloat(row['spotPriceAtPurchase']);
-        } else {
-          // Fall back to current spot price if not in Excel and not collectable
-          const metalKey = metal.toLowerCase();
-          spotPriceAtPurchase = isCollectable ? 0 : spotPrices[metalKey];
-        }
-
-        // Calculate premium per ounce (only for non-collectible items)
-        let premiumPerOz = 0;
-        let totalPremium = 0;
-
-        if (!isCollectable) {
-          const pricePerOz = price / weight;
-          premiumPerOz = pricePerOz - spotPriceAtPurchase;
-          totalPremium = premiumPerOz * qty * weight;
-        }
-
-        const numistaRaw = (row['N#'] || row['Numista #'] || row['numistaId'] || '').toString();
-        const numistaMatch = numistaRaw.match(/\d+/);
-        const numistaId = numistaMatch ? numistaMatch[0] : '';
-        const serial = row['Serial'] || row['serial'] || getNextSerial();
-
-        const itemToValidate = {
-          metal,
-          name,
-          qty,
-          type,
-          weight,
-          price,
-          date,
-          purchaseLocation,
-          storageLocation,
-          notes,
-          spotPriceAtPurchase,
-          premiumPerOz,
-          totalPremium,
-          isCollectable,
-          numistaId,
-          serial
-        };
-
-        const validation = validateInventoryItem(itemToValidate);
-        if (!validation.isValid) {
-          const reason = validation.errors.join(', ');
-          skippedDetails.push(`Row ${index + 2}: ${reason}`);
-          updateImportProgress(processed, importedCount, totalRows);
-          continue;
-        }
-
-        imported.push(itemToValidate);
-        importedCount++;
-        updateImportProgress(processed, importedCount, totalRows);
-      }
-
-      endImportProgress();
-
-      if (skippedDetails.length > 0) {
-        alert('Skipped entries:\n' + skippedDetails.join('\n'));
-      }
-
-      if (imported.length === 0) return alert("No valid items to import.");
-
-      let msg = "Replace current inventory with imported file?";
-      if (skippedDetails.length > 0) msg += `\n(${skippedDetails.length} rows skipped)`;
-
-      if (confirm(msg)) {
-        inventory = imported;
-        
-        // Synchronize all items with catalog manager
-        inventory = catalogManager.syncInventory(inventory);
-        
-        saveInventory();
-        renderTable();
-        if (typeof updateStorageStats === "function") {
-          updateStorageStats();
-        }
-      }
-    } catch (error) {
-      endImportProgress();
-      alert("Error importing Excel file: " + error.message);
-    }
-  };
-
-  reader.readAsArrayBuffer(file);
-};
-
-/**
- * Exports current inventory to Excel format
- */
-const exportExcel = () => {
-  const timestamp = new Date().toISOString().slice(0,10).replace(/-/g,'');
-
-  // Sort inventory by date (newest first) for export
-  const sortedInventory = sortInventoryByDateNewestFirst();
-
-  // Create worksheet data
-  const wsData = [
-    [
-      "Metal", "Name", "Qty", "Type", "Weight(oz)", "Purchase Price",
-      "Spot Price ($/oz)", "Premium ($/oz)", "Total Premium",
-      "Purchase Location", "Storage Location", "N#", "Collectable",
-      "Notes", "Date"
-    ]
-  ];
-
-  for (const i of sortedInventory) {
-    // For collectable items, use current spot price (at time of export)
-    const exportSpotPrice = i.isCollectable ? 
-      spotPrices[i.metal.toLowerCase()] : 
-      i.spotPriceAtPurchase;
-
-    wsData.push([
-      i.metal || 'Silver',
-      i.name,
-      i.qty,
-      i.type,
-      parseFloat(i.weight).toFixed(4),
-      i.price,
-      exportSpotPrice,
-      i.isCollectable ? null : i.premiumPerOz,
-      i.isCollectable ? null : i.totalPremium,
-      i.purchaseLocation,
-      i.storageLocation || '',
-      i.numistaId || '',
-      i.isCollectable ? 'Yes' : 'No',
-      i.notes || '',
-      i.date
-    ]);
-  }
-
-  // Create worksheet
-  const ws = XLSX.utils.aoa_to_sheet(wsData);
-
-  // Create workbook
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "Inventory");
-
-  // Export
-  XLSX.writeFile(wb, `metal_inventory_${timestamp}.xlsx`);
 };
 
 /**

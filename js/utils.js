@@ -186,21 +186,40 @@ const getDisplayComposition = (composition = "") => {
 };
 
 /**
- * Builds two-line HTML showing source and last sync info for a metal
+ * Builds two-line HTML showing source and last cache refresh or API sync info for a metal
  *
  * @param {string} metalName - Metal name ('Silver', 'Gold', 'Platinum', 'Palladium')
+ * @param {string} [mode="cache"] - "cache" or "api" to select timestamp
  * @returns {string} HTML string with source line and time line
  */
-const getLastUpdateTime = (metalName) => {
+const getLastUpdateTime = (metalName, mode = "cache") => {
   if (!spotHistory || spotHistory.length === 0) return "";
 
-  // Find the most recent entry for this metal
   const metalEntries = spotHistory.filter((entry) => entry.metal === metalName);
   if (metalEntries.length === 0) return "";
 
   const latestEntry = metalEntries[metalEntries.length - 1];
-  const timestamp = new Date(latestEntry.timestamp);
 
+  if (latestEntry.source === "manual") {
+    const timestamp = new Date(latestEntry.timestamp);
+    const dateText = `${timestamp.getFullYear()}-${pad2(
+      timestamp.getMonth() + 1,
+    )}-${pad2(timestamp.getDate())}`;
+    const timeText = `${pad2(timestamp.getHours())}:${pad2(
+      timestamp.getMinutes(),
+    )}:${pad2(timestamp.getSeconds())}`;
+    return `Manual<br>Time entered ${dateText} ${timeText}`;
+  }
+
+  if (latestEntry.source === "default") return "";
+
+  const info = loadData(
+    mode === "api" ? LAST_API_SYNC_KEY : LAST_CACHE_REFRESH_KEY,
+    null,
+  );
+  if (!info || !info.timestamp) return "";
+
+  const timestamp = new Date(info.timestamp);
   const dateText = `${timestamp.getFullYear()}-${pad2(
     timestamp.getMonth() + 1,
   )}-${pad2(timestamp.getDate())}`;
@@ -208,30 +227,40 @@ const getLastUpdateTime = (metalName) => {
     timestamp.getMinutes(),
   )}:${pad2(timestamp.getSeconds())}`;
 
-  let sourceLine = "";
-  let timeLine = "";
-
-  if (latestEntry.source === "api") {
-    sourceLine = latestEntry.provider || "API";
-    timeLine = `Last sync ${dateText} ${timeText}`;
-  } else if (latestEntry.source === "cached") {
-    sourceLine = latestEntry.provider
-      ? `${latestEntry.provider} (cached)`
-      : "Cached";
-    timeLine = `Last sync ${dateText} ${timeText}`;
-  } else if (latestEntry.source === "manual") {
-    sourceLine = "Manual";
-    timeLine = `Time entered ${dateText} ${timeText}`;
-  } else if (latestEntry.source === "default") {
-    sourceLine = "";
-    timeLine = "";
-  } else {
-    sourceLine = "Stored";
-    timeLine = `Last sync ${dateText} ${timeText}`;
-  }
+  const label = mode === "api" ? "Last API Sync" : "Last Cache Refresh";
+  const sourceLine = info.provider || "";
+  const timeLine = `${label} ${dateText} ${timeText}`;
 
   if (!sourceLine && !timeLine) return "";
   return `${sourceLine}<br>${timeLine}`;
+};
+
+/**
+ * Updates spot timestamp element with toggle between cache refresh and API sync times
+ *
+ * @param {string} metalName - Metal name ('Silver', 'Gold', 'Platinum', 'Palladium')
+ */
+const updateSpotTimestamp = (metalName) => {
+  const el = document.getElementById(`spotTimestamp${metalName}`);
+  if (!el) return;
+
+  const cacheHtml = getLastUpdateTime(metalName, "cache");
+  const apiHtml = getLastUpdateTime(metalName, "api");
+
+  el.dataset.mode = "cache";
+  el.dataset.cache = cacheHtml;
+  el.dataset.api = apiHtml;
+  el.innerHTML = cacheHtml;
+
+  el.onclick = () => {
+    if (el.dataset.mode === "cache") {
+      el.dataset.mode = "api";
+      el.innerHTML = apiHtml;
+    } else {
+      el.dataset.mode = "cache";
+      el.innerHTML = cacheHtml;
+    }
+  };
 };
 
 // =============================================================================
@@ -485,6 +514,23 @@ const stripNonAlphanumeric = (str = "", allowHyphen = false) =>
   str.toString().replace(allowHyphen ? /[^a-zA-Z0-9 -]/g : /[^a-zA-Z0-9 ]/g, "");
 
 /**
+ * Cleans a string by stripping HTML tags and control characters while
+ * preserving punctuation. Normalizes whitespace and removes diacritics.
+ *
+ * @param {string} str - Input string
+ * @returns {string} Cleaned string
+ */
+const cleanString = (str = "") =>
+  str
+    .toString()
+    .replace(/<[^>]*>/g, "")
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .replace(/[\u0000-\u001F\u007F'\"]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+/**
  * Sanitizes all string properties of an object by stripping non-alphanumeric characters.
  *
  * @param {Object} obj - Object whose string fields will be sanitized
@@ -495,7 +541,10 @@ const sanitizeObjectFields = (obj) => {
   for (const key of Object.keys(cleaned)) {
     if (typeof cleaned[key] === "string" && key !== 'notes') {
       const allowHyphen = key === 'date';
-      cleaned[key] = stripNonAlphanumeric(cleaned[key], allowHyphen);
+      cleaned[key] =
+        key === 'purchaseLocation'
+          ? cleanString(cleaned[key])
+          : stripNonAlphanumeric(cleaned[key], allowHyphen);
     }
   }
   return cleaned;
@@ -675,15 +724,6 @@ const sanitizeImportedItem = (item) => {
 
   // Normalize and sanitize string fields
   const basicFields = ['name', 'type', 'purchaseLocation', 'storageLocation'];
-  const cleanString = (str = '') =>
-    str
-      .toString()
-      .replace(/<[^>]*>/g, '')
-      .normalize('NFD')
-      .replace(/\p{Diacritic}/gu, '')
-      .replace(/[\u0000-\u001F\u007F'\"]/g, '')
-      .replace(/\s+/g, ' ')
-      .trim();
   const cleanMultilineString = (str = '') =>
     str
       .toString()
@@ -1141,7 +1181,7 @@ const getStorageItemDisplayName = (key) => {
   const names = {
     'precious-metals-inventory': 'Inventory Data',
     'spot-price-history': 'Spot Price History',
-    'api-config': 'API Configuration',
+    'api-config': 'Metals API Configuration',
     'api-cache': 'API Cache',
     'spotPriceSilver': 'Silver Spot Price',
     'spotPriceGold': 'Gold Spot Price',
@@ -1161,7 +1201,7 @@ const getStorageItemDescription = (key) => {
   const descriptions = {
     'precious-metals-inventory': 'Your complete inventory of precious metals items with all details',
     'spot-price-history': 'Historical spot price data from API providers and manual entries',
-    'api-config': 'API provider configurations and usage statistics',
+    'api-config': 'Metals API provider configurations and usage statistics',
     'api-cache': 'Cached spot price data to reduce API calls',
     'spotPriceSilver': 'Current spot price setting for silver',
     'spotPriceGold': 'Current spot price setting for gold', 
@@ -2220,7 +2260,7 @@ const getStorageReportJS = () => {
         const names = {
             'precious-metals-inventory': 'Inventory Data',
             'spot-price-history': 'Spot Price History',
-            'api-config': 'API Configuration',
+            'api-config': 'Metals API Configuration',
             'api-cache': 'API Cache',
             'spotPriceSilver': 'Silver Spot Price',
             'spotPriceGold': 'Gold Spot Price',
@@ -2374,4 +2414,7 @@ function generateStorageReport(){
     return { totalKB: +(totalBytes/1024).toFixed(2), items };
   }catch(e){ return { totalKB:0, items:[] }; }
 }
-if (typeof window !== 'undefined') { window.generateStorageReport = generateStorageReport; }
+if (typeof window !== 'undefined') {
+  window.generateStorageReport = generateStorageReport;
+  window.updateSpotTimestamp = updateSpotTimestamp;
+}

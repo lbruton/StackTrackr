@@ -38,8 +38,8 @@ let apiHistorySortAsc = true;
 let apiHistoryFilterText = "";
 
 /**
- * Loads API configuration from localStorage
- * @returns {Object|null} API configuration or null if not set
+ * Loads Metals API configuration from localStorage
+ * @returns {Object|null} Metals API configuration or null if not set
  */
 const loadApiConfig = () => {
   try {
@@ -137,8 +137,8 @@ const loadApiConfig = () => {
 };
 
 /**
- * Saves API configuration to localStorage
- * @param {Object} config - API configuration object
+ * Saves Metals API configuration to localStorage
+ * @param {Object} config - Metals API configuration object
  */
 const saveApiConfig = (config) => {
   try {
@@ -177,7 +177,7 @@ const saveApiConfig = (config) => {
 };
 
 /**
- * Clears API configuration
+ * Clears Metals API configuration
  */
 const clearApiConfig = () => {
   localStorage.removeItem(API_KEY_STORAGE_KEY);
@@ -487,45 +487,7 @@ const renderApiHistoryTable = () => {
 };
 
 /**
- * Renders API history chart
- */
-const renderApiHistoryCharts = () => {
-  const metals = ["Silver", "Gold", "Platinum", "Palladium"];
-  metals.forEach((metal) => {
-    const ctx = document.getElementById(`apiHistoryChart${metal}`);
-    if (!ctx) return;
-    const data = apiHistoryEntries
-      .filter((e) => e.metal === metal)
-      .slice(-30)
-      .map((e) => e.spot);
-    const labels = data.map((_, i) => i + 1);
-    const color = getComputedStyle(document.documentElement).getPropertyValue(
-      `--${metal.toLowerCase()}`,
-    );
-    const key = `apiHistoryChart${metal}`;
-    if (chartInstances[key]) {
-      chartInstances[key].destroy();
-    }
-    chartInstances[key] = new Chart(ctx, {
-      type: "line",
-      data: {
-        labels,
-        datasets: [
-          {
-            label: metal,
-            data,
-            borderColor: color,
-            tension: 0.2,
-          },
-        ],
-      },
-      options: { responsive: true, maintainAspectRatio: false },
-    });
-  });
-};
-
-/**
- * Shows API history modal with table and chart
+ * Shows API history modal with table
  */
 const showApiHistoryModal = () => {
   const modal = document.getElementById("apiHistoryModal");
@@ -552,7 +514,6 @@ const showApiHistoryModal = () => {
     };
   }
   renderApiHistoryTable();
-  renderApiHistoryCharts();
   modal.style.display = "flex";
 };
 
@@ -723,7 +684,7 @@ const refreshFromCache = () => {
 
       const ts = document.getElementById(`spotTimestamp${metalConfig.name}`);
       if (ts) {
-        ts.innerHTML = getLastUpdateTime(metalConfig.name);
+        updateSpotTimestamp(metalConfig.name);
       }
 
       updatedCount++;
@@ -1122,7 +1083,7 @@ const syncSpotPricesFromApi = async (
     !apiConfig.keys[apiConfig.provider]
   ) {
     alert(
-      "No API configuration found. Please configure an API provider first.",
+      "No Metals API configuration found. Please configure an API provider first.",
     );
     return false;
   }
@@ -1145,7 +1106,7 @@ const syncSpotPricesFromApi = async (
               : `${minutesAgo} minutes ago`;
 
           alert(
-            `Using cached prices from ${timeText}. To pull fresh data from the API, go to the API configuration and clear the cache first.`,
+            `Using cached prices from ${timeText}. To pull fresh data from the API, go to the Metals API configuration and clear the cache first.`,
           );
         }
 
@@ -1189,7 +1150,7 @@ const syncSpotPricesFromApi = async (
 
         const ts = document.getElementById(`spotTimestamp${metalConfig.name}`);
         if (ts) {
-          ts.innerHTML = getLastUpdateTime(metalConfig.name);
+          updateSpotTimestamp(metalConfig.name);
         }
 
         updatedCount++;
@@ -1348,7 +1309,7 @@ const handleProviderSync = async (provider) => {
         );
         const ts = document.getElementById(`spotTimestamp${metalConfig.name}`);
         if (ts) {
-          ts.innerHTML = getLastUpdateTime(metalConfig.name);
+          updateSpotTimestamp(metalConfig.name);
         }
         updatedCount++;
       }
@@ -1483,10 +1444,6 @@ const hideApiModal = () => {
 const showFilesModal = () => {
   const modal = document.getElementById("filesModal");
   if (modal) {
-    const cacheBtn = document.getElementById("clearNumistaCacheBtn");
-    if (cacheBtn) {
-      cacheBtn.style.display = localStorage.getItem('numista-cache') ? 'block' : 'none';
-    }
     modal.style.display = "flex";
   }
 };
@@ -1636,7 +1593,7 @@ const resetSpotPrice = (metal) => {
 };
 
 /**
- * Exports backup data including API configuration
+ * Exports backup data including Metals API configuration
  * @returns {Object} Complete backup data object
  */
 const createBackupData = () => {
@@ -1664,7 +1621,7 @@ const createBackupData = () => {
 };
 
 /**
- * Downloads complete backup files including inventory and API configuration
+ * Downloads complete backup files including inventory and Metals API configuration
  */
 const downloadCompleteBackup = async () => {
   try {
@@ -1788,7 +1745,7 @@ Application Version: ${APP_VERSION}
 3. **complete-backup-${timestamp}.json** - Full application backup
 4. **backup-info-${timestamp}.md** - This documentation file
 
-## API Configuration
+## Metals API Configuration
 ${
   backupData.apiConfig
     ? `
@@ -1811,7 +1768,7 @@ ${
     : ""
 }
 `
-    : "No API configuration found."
+    : "No Metals API configuration found."
 }
 
 ## Current Data Summary

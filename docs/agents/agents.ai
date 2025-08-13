@@ -1,7 +1,7 @@
 # StackTrackr Project Instructions
 
 ## CONTEXT
-Precious metals inventory app (v3.04.26+). Client-side: JS modules + localStorage + CSS. Tracks Au/Ag/Pt/Pd.
+Precious metals inventory app (v3.04.58+). Client-side: JS modules + localStorage + CSS. Tracks Au/Ag/Pt/Pd.
 
 ## FILES
 - `index.html` - main UI
@@ -29,6 +29,40 @@ UPDATE: `js/constants.js` APP_VERSION, `docs/changelog.md`, `docs/roadmap.md` (m
 - PRIORITIZE code writing/editing tokens
 - Direct implementation only
 - Minimal confirmation text
+
+## HYBRID AI WORKFLOW (NEW)
+**FOR COMPLEX FEATURES**: Claude (planning/design/testing) + OpenAI (implementation)
+
+### CLAUDE RESPONSIBILITIES
+- **PLANNING**: Feature breakdown, phase design, risk assessment
+- **PROMPTING**: Create detailed implementation prompts for OpenAI
+- **INTEGRATION**: Review, test, and integrate OpenAI-delivered code
+- **TESTING**: Comprehensive testing across browsers/themes/scenarios
+- **DOCUMENTATION**: Update tracking, changelogs, roadmap status
+
+### OPENAI DELEGATION CRITERIA
+- ✅ **Standalone modules** (no StackTrackr dependencies)
+- ✅ **Algorithm-heavy tasks** (fuzzy search, data processing)
+- ✅ **Pure implementation** (well-defined inputs/outputs)
+- ✅ **Foundation components** (other tasks depend on it)
+- ❌ **Integration tasks** (require StackTrackr knowledge)
+- ❌ **UI/UX work** (needs theme/style understanding)
+
+### ACTIVE FEATURE: FUZZY AUTOCOMPLETE
+**Status**: Phase 1 in progress  
+**Tracking**: `docs/notes/Feature_Implementation_Checklist.md`  
+**Task 1A**: 🤖 Delegated to OpenAI (`docs/notes/openai-task-1a-prompt.md`)  
+**Next**: Task 1B - Claude implementation (lookup table generation)  
+
+### WORKFLOW STEPS
+1. **ASSESS TASK**: Claude evaluates complexity/delegation potential
+2. **CREATE PROMPT**: Detailed requirements + StackTrackr patterns + API specs
+3. **DELEGATE**: OpenAI implements standalone components
+4. **INTEGRATE**: Claude reviews code + tests + integrates with StackTrackr
+5. **VALIDATE**: Comprehensive testing across all scenarios
+6. **ITERATE**: Refine based on integration results
+
+---
 
 ## MESSAGE_TRACKER
 COUNT: 18
@@ -60,7 +94,7 @@ AUTO_WARN: "⚠️ Chat approaching limit. Start new conversation soon and refer
 `index.html` `events.js` `styles.css` - coordinate changes, minimal edits
 
 ## NOTES
-- Current version: 3.04.26 (theme toggle improvements)
+- Current version: 3.04.58
 - **THEME TOGGLE FIXED**: Button now shows current theme color/icon, removed system mode
 - **THEME ROTATION**: dark → light → sepia → dark (no system mode)
 - **BUTTON STYLING**: Shows current theme with matching background color
