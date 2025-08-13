@@ -330,7 +330,7 @@
 /docs/agents/
 ├── references.md            # This file
 ├── multi-agent-workflow-v2.ai  # Complete workflow guide
-├── QUICK-REFERENCE.md       # Instant access guide
+├── quick-reference.md       # Instant access guide
 └── workflow.ai             # Original workflow (updated)
 ```
 
