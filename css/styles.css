@@ -1737,6 +1737,16 @@ table {
   table-layout: auto; /* Allow columns to size based on content */
 }
 
+.table-section {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+#inventoryTable {
+  width: max-content;
+  min-width: 100%;
+}
+
 #inventoryTable tbody {
   min-height: calc(10 * 2.2rem);
 }
@@ -1898,6 +1908,8 @@ td .cancel-inline {
 
 td .inline-edit-icon {
   margin-right: 0.25rem;
+  font-size: 1.1rem;
+  display: inline-block;
 }
 
 td.editing {

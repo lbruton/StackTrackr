@@ -1,11 +1,15 @@
 # StackrTrackr — Changelog
 
-> **Latest release: v3.04.59**
+> **Latest release: v3.04.60**
 
 
 For upcoming work, see [announcements](announcements.md).
 
 ## 📋 Version History
+
+### Version 3.04.60 – Responsive Column Priority (2025-08-21)
+- Columns hide by priority for small viewports with horizontal scrolling
+- Enlarged pencil icon opens edit modal directly
 
 ### Version 3.04.59 – Hidden Empty Columns (2025-08-20)
 - Columns with no data after filtering are automatically hidden
