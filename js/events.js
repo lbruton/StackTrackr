@@ -235,8 +235,22 @@ const setupEventListeners = () => {
   console.log(`Setting up event listeners (v${APP_VERSION})...`);
 
   try {
+    // Search Input
+    if (elements.searchInput) {
+      const debouncedSearch = debounce(() => {
+        searchQuery = elements.searchInput.value.replace(/[<>]/g, "").trim();
+        currentPage = 1;
+        renderTable();
+        if (typeof renderActiveFilters === "function") {
+          renderActiveFilters();
+        }
+      }, 300);
+      safeAttachListener(elements.searchInput, "input", debouncedSearch, "Search Input");
+    }
+
     // Responsive column handling
     setupResponsiveColumns();
+
 
     // CRITICAL HEADER BUTTONS
     debugLog("Setting up header buttons...");

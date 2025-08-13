@@ -87,18 +87,48 @@ const monitorPerformance = (fn, name, ...args) => {
 };
 
 /**
- * Creates a debounced version of a function
+ * Creates a debounced function that delays invoking `func` until after `wait`
+ * milliseconds have elapsed since the last time the debounced function was
+ * invoked. The debounced function comes with a `cancel` method to cancel
+ * delayed `func` invocations and a `flush` method to immediately invoke them.
  *
- * @param {Function} fn - Function to debounce
- * @param {number} delay - Delay in milliseconds
- * @returns {Function} Debounced function
+ * @param {Function} func The function to debounce.
+ * @param {number} wait The number of milliseconds to delay.
+ * @returns {Function} Returns the new debounced function.
  */
-const debounce = (fn, delay = 300) => {
-  let timer;
-  return (...args) => {
-    clearTimeout(timer);
-    timer = setTimeout(() => fn(...args), delay);
+const debounce = (func, wait) => {
+  let timeout;
+  let result;
+
+  const later = (context, args) => {
+    timeout = null;
+    if (args) {
+      result = func.apply(context, args);
+    }
   };
+
+  const debounced = function(...args) {
+    const context = this;
+    if (timeout) {
+      clearTimeout(timeout);
+    }
+    timeout = setTimeout(() => later(context, args), wait);
+    return result;
+  };
+
+  debounced.cancel = () => {
+    clearTimeout(timeout);
+    timeout = null;
+  };
+
+  debounced.flush = () => {
+    if (timeout) {
+      debounced.cancel();
+      later(this, []);
+    }
+  };
+
+  return debounced;
 };
 
 /**

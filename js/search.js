@@ -63,25 +63,8 @@ const filterInventory = () => {
 
 // Note: applyColumnFilter function is now in filters.js for advanced filtering
 
-// Ensure search input filters inventory in case global event setup fails
-document.addEventListener('DOMContentLoaded', () => {
-  const input = document.getElementById('searchInput');
-  if (input) {
-    input.addEventListener('input', debounce((e) => {
-      searchQuery = e.target.value.replace(/[<>]/g, '').trim();
-      currentPage = 1;
-      renderTable();
-      if (typeof renderActiveFilters === 'function') {
-        renderActiveFilters();
-      }
-    }, 300));
-  }
-  if (typeof renderActiveFilters === 'function') {
-    renderActiveFilters();
-  }
-});
-
 // Expose for global access
 window.filterInventory = filterInventory;
 
 // =============================================================================
+
