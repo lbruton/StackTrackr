@@ -289,7 +289,6 @@ document.addEventListener("DOMContentLoaded", () => {
     if (aboutVersion) {
       aboutVersion.textContent = `v${APP_VERSION}`;
     }
-    injectVersionString("footerVersion");
     const footerDomainEl = document.getElementById("footerDomain");
     if (footerDomainEl) {
       footerDomainEl.textContent = getFooterDomain();
