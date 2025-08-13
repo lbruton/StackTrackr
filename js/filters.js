@@ -93,9 +93,12 @@ const renderActiveFilters = () => {
     chip.style.backgroundColor = color || colors[i % colors.length];
     const label = f.field === 'search'
       ? `${f.value}`
-      : `${labels[f.field] || f.field}: ${f.value}${f.exclude ? ' (exclude)' : ''}`;
+      : `${f.value}${f.exclude ? ' (exclude)' : ''}`;
     chip.innerHTML = `${label} &times;`;
-    chip.title = 'Click to remove filter';
+    const tooltipText = f.field === 'search' 
+      ? 'Click to remove search filter'
+      : `${labels[f.field] || f.field} filter - Click to remove`;
+    chip.title = tooltipText;
     chip.onclick = () => {
       if (f.field === 'search') {
         searchQuery = '';
