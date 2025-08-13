@@ -38,8 +38,8 @@ let apiHistorySortAsc = true;
 let apiHistoryFilterText = "";
 
 /**
- * Loads API configuration from localStorage
- * @returns {Object|null} API configuration or null if not set
+ * Loads Metals API configuration from localStorage
+ * @returns {Object|null} Metals API configuration or null if not set
  */
 const loadApiConfig = () => {
   try {
@@ -137,8 +137,8 @@ const loadApiConfig = () => {
 };
 
 /**
- * Saves API configuration to localStorage
- * @param {Object} config - API configuration object
+ * Saves Metals API configuration to localStorage
+ * @param {Object} config - Metals API configuration object
  */
 const saveApiConfig = (config) => {
   try {
@@ -177,7 +177,7 @@ const saveApiConfig = (config) => {
 };
 
 /**
- * Clears API configuration
+ * Clears Metals API configuration
  */
 const clearApiConfig = () => {
   localStorage.removeItem(API_KEY_STORAGE_KEY);
@@ -1083,7 +1083,7 @@ const syncSpotPricesFromApi = async (
     !apiConfig.keys[apiConfig.provider]
   ) {
     alert(
-      "No API configuration found. Please configure an API provider first.",
+      "No Metals API configuration found. Please configure an API provider first.",
     );
     return false;
   }
@@ -1106,7 +1106,7 @@ const syncSpotPricesFromApi = async (
               : `${minutesAgo} minutes ago`;
 
           alert(
-            `Using cached prices from ${timeText}. To pull fresh data from the API, go to the API configuration and clear the cache first.`,
+            `Using cached prices from ${timeText}. To pull fresh data from the API, go to the Metals API configuration and clear the cache first.`,
           );
         }
 
@@ -1593,7 +1593,7 @@ const resetSpotPrice = (metal) => {
 };
 
 /**
- * Exports backup data including API configuration
+ * Exports backup data including Metals API configuration
  * @returns {Object} Complete backup data object
  */
 const createBackupData = () => {
@@ -1621,7 +1621,7 @@ const createBackupData = () => {
 };
 
 /**
- * Downloads complete backup files including inventory and API configuration
+ * Downloads complete backup files including inventory and Metals API configuration
  */
 const downloadCompleteBackup = async () => {
   try {
@@ -1745,7 +1745,7 @@ Application Version: ${APP_VERSION}
 3. **complete-backup-${timestamp}.json** - Full application backup
 4. **backup-info-${timestamp}.md** - This documentation file
 
-## API Configuration
+## Metals API Configuration
 ${
   backupData.apiConfig
     ? `
@@ -1768,7 +1768,7 @@ ${
     : ""
 }
 `
-    : "No API configuration found."
+    : "No Metals API configuration found."
 }
 
 ## Current Data Summary

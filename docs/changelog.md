@@ -412,7 +412,7 @@ For upcoming work, see [announcements](announcements.md).
 - Cloud Sync placeholder modal now uses standard themed header with internal close button
 
 ### Version 3.2.0 – Settings & History Polish (2025-08-08)
-- Appearance section moved above API configuration in Settings
+- Appearance section moved above Metals API configuration in Settings
 - Sync All displays confirmation with records updated
 - API price history modal restyled with Clear Filter button and header close
 
