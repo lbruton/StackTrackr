@@ -73,6 +73,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Header buttons - CRITICAL
     debugLog("Phase 2: Initializing header buttons...");
+    elements.appLogo = safeGetElement("appLogo");
     elements.appearanceBtn = safeGetElement("appearanceBtn");
     elements.apiBtn = safeGetElement("apiBtn");
     elements.filesBtn = safeGetElement("filesBtn", true);
