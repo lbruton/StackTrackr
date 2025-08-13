@@ -1011,23 +1011,6 @@ const renderTable = () => {
   return monitorPerformance(() => {
     const filteredInventory = filterInventory();
 
-    // Automatically adjust items-per-page dropdown when filtered results
-    // are fewer than the currently selected page length. This ensures the
-    // table length always displays a sensible value (minimum of the smallest
-    // dropdown option) while still allowing larger result sets to use
-    // pagination.
-    if (filteredInventory.length < itemsPerPage && elements.itemsPerPage) {
-      const options = Array.from(elements.itemsPerPage.options).map(o => parseInt(o.value));
-      const minOption = Math.min(...options);
-      const target = Math.max(filteredInventory.length, minOption);
-      const newValue = options.find(opt => opt >= target) || options[options.length - 1];
-      if (newValue !== itemsPerPage) {
-        itemsPerPage = newValue;
-        elements.itemsPerPage.value = String(newValue);
-        currentPage = 1;
-      }
-    }
-
     const sortedInventory = sortInventory(filteredInventory);
     const totalPages = calculateTotalPages(sortedInventory);
     const startIndex = (currentPage - 1) * itemsPerPage;
