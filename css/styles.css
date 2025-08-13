@@ -3053,8 +3053,7 @@ td input:checked + .slider:before {
   flex-wrap: wrap;
   gap: var(--spacing-xs);
   justify-content: center;
-  max-width: 100%;
-  overflow-x: auto;
+  padding: 0 var(--spacing-sm);
 }
 
 .filter-chip {
