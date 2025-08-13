@@ -117,3 +117,9 @@ const FEATURES = {
 **Created**: August 12, 2025  
 **Status**: Planning Phase  
 **Next**: Create feature checklist and begin Phase 1 implementation
+
+## Phase 2 Update (v3.04.61)
+- Added `js/autocomplete.js` with 100 predefined bullion names.
+- Names stored in a Set persisted to `localStorage` (`autocompleteNames`).
+- Implemented `registerName()` to add new entries and `getSuggestions()` to surface matches using `fuzzySearch` when available.
+- Integrated module with item form, search box, and import workflows.

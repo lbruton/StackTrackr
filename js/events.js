@@ -460,6 +460,7 @@ const setupEventListeners = () => {
             numistaId: catalog,
           });
 
+          typeof registerName === "function" && registerName(name);
           addCompositionOption(composition);
 
           catalogMap[serial] = catalog;

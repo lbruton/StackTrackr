@@ -1,11 +1,15 @@
 # StackrTrackr — Changelog
 
-> **Latest release: v3.04.60**
+> **Latest release: v3.04.61**
 
 
 For upcoming work, see [announcements](announcements.md).
 
 ## 📋 Version History
+
+### Version 3.04.61 – Autocomplete Suggestions (2025-08-22)
+- Added localStorage-backed autocomplete with 100 bullion names
+- Suggestions integrate fuzzy search and persist new entries
 
 ### Version 3.04.60 – Responsive Column Priority (2025-08-21)
 - Columns hide by priority for small viewports with horizontal scrolling
