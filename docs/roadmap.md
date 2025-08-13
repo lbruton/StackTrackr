@@ -6,6 +6,7 @@ This roadmap tracks upcoming goals without committing to specific patch numbers.
 - _No active patch goals at this time._
 
 ## Completed Patch Goals (v3.04.xx)
+- ✅ **Filters card and anchored controls** - Filters moved to centered card; controls anchored top; chips hidden when none (v3.04.44)
 - ✅ **Expanded filter chips** - Added Name/Date chips with dynamic filtering and counts, replaced backup notice with Filters subtitle (v3.04.42)
 - ✅ **Filter chip totals and purchase tooltips** - Chips show filtered/total counts, purchase links moved to info icons, table cells centered (v3.04.43)
 - ✅ **Section titles for main UI** - Added centered titles to Spot Prices, Inventory, Filters, and Information Cards (v3.04.41)

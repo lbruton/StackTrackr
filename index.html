@@ -489,10 +489,6 @@
             <button class="btn" id="clearSearchBtn">Clear</button>
             <button class="btn success" id="newItemBtn">New Item</button>
           </div>
-          <div class="filter-info">
-            <div class="active-filters" id="activeFilters"></div>
-            <div class="search-results-info" id="searchResultsInfo"></div>
-          </div>
         </section>
         <!-- =============================================================================
            INVENTORY TABLE SECTION
@@ -679,13 +675,13 @@
       <section class="table-controls-section">
         <div class="table-controls">
           <button type="button" id="changeLogBtn" class="btn">Change Log</button>
-          <div class="disclaimer-wrapper">
-            <!-- <span class="table-disclaimer">
-              All data is stored locally.
-              <span id="backupReminder" class="backup-link">Back up often.</span>
-            </span> -->
+          <div class="filters-card" id="filtersCard">
             <h3 class="table-subtitle">Filters</h3>
             <div id="typeSummary"></div>
+            <div class="filter-info">
+              <div class="active-filters" id="activeFilters"></div>
+              <div class="search-results-info" id="searchResultsInfo"></div>
+            </div>
           </div>
           <div class="items-per-page">
             <span class="items-label">Items:</span>
