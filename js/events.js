@@ -1899,3 +1899,6 @@ const setupApiEvents = () => {
 };
 
 // =============================================================================
+
+// Early cleanup of stray localStorage entries before application initialization
+document.addEventListener('DOMContentLoaded', cleanupStorage);
