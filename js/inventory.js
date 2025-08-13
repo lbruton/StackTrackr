@@ -757,6 +757,10 @@ const startCellEdit = (idx, field, icon) => {
 window.startCellEdit = startCellEdit;
 
 
+/**
+ * Enhanced chip-type filter system with default chips and dynamic filtering
+ * Creates a word cloud-like UI showing inventory breakdown by type, metal, and filtered values
+ */
 const updateTypeSummary = (items = inventory) => {
   const el = elements.typeSummary || document.getElementById('typeSummary');
   if (!el) return;
@@ -764,78 +768,240 @@ const updateTypeSummary = (items = inventory) => {
   const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
   const textColor = isDark ? '#000' : '#fff';
 
-  const categories = [
-    {
-      field: 'type',
-      getColors: (val) => ({
-        bg: getTypeColor(val),
-        text: `var(--type-${val.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-text)`
-      }),
-      getClass: (val) => `type-chip ${val.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`
-    },
-    {
-      field: 'metal',
-      getColors: (val) => ({ bg: METAL_COLORS[val] || 'var(--primary)', text: textColor })
-    },
-    {
-      field: 'purchaseLocation',
-      getColors: (val) => ({ bg: getPurchaseLocationColor(val), text: textColor })
-    },
-    {
-      field: 'storageLocation',
-      getColors: (val) => ({ bg: getStorageLocationColor(val), text: textColor })
-    }
+  // Get minimum count setting from dropdown control or localStorage
+  const chipMinCountEl = document.getElementById('chipMinCount');
+  let minCount = 1;
+  if (chipMinCountEl && chipMinCountEl.value) {
+    minCount = parseInt(chipMinCountEl.value, 10);
+    localStorage.setItem('chipMinCount', minCount.toString());
+  } else {
+    minCount = parseInt(localStorage.getItem('chipMinCount') || '1', 10);
+    if (chipMinCountEl) chipMinCountEl.value = minCount.toString();
+  }
+  
+  // Define default chip types that always show (if they exist in inventory)
+  const defaultChipTypes = [
+    { field: 'type', value: 'Coin' },
+    { field: 'type', value: 'Bar' },
+    { field: 'type', value: 'Round' },
+    { field: 'type', value: 'Note' },
+    { field: 'metal', value: 'Gold' },
+    { field: 'metal', value: 'Silver' },
+    { field: 'metal', value: 'Platinum' },
+    { field: 'metal', value: 'Palladium' }
   ];
 
+  // Check if any filters are active
   const activeFieldKeys = typeof activeFilters === 'object' ? Object.keys(activeFilters) : [];
   const columnFieldKeys = typeof columnFilters === 'object' ? Object.keys(columnFilters) : [];
-  const activeFields = new Set([...activeFieldKeys, ...columnFieldKeys]);
-  const fieldsToShow = activeFields.size
-    ? categories.filter(c => activeFields.has(c.field))
-    : categories;
+  const hasActiveFilters = activeFieldKeys.length > 0 || columnFieldKeys.length > 0 || searchQuery.trim().length > 0;
 
   const chips = [];
   const unknownChips = [];
+  const addedChips = new Set(); // Track to avoid duplicates
 
-  fieldsToShow.forEach(cat => {
-    const totalCounts = inventory.reduce((acc, item) => {
-      const key = item[cat.field] || (cat.field === 'purchaseLocation' ? 'Numista Import' : 'Unknown');
-      acc[key] = (acc[key] || 0) + 1;
-      return acc;
-    }, {});
+  // Field name mappings for better display
+  const fieldDisplayNames = {
+    type: 'Type',
+    metal: 'Metal',
+    purchaseLocation: 'Purchase',
+    storageLocation: 'Storage',
+    name: 'Name'
+  };
 
-    const filteredCounts = items.reduce((acc, item) => {
-      const key = item[cat.field] || (cat.field === 'purchaseLocation' ? 'Numista Import' : 'Unknown');
-      acc[key] = (acc[key] || 0) + 1;
-      return acc;
-    }, {});
+  // Helper function to create chip data with enhanced formatting
+  const createChip = (field, value, totalCount, filteredCount) => {
+    let colors, cls = '';
+    
+    switch (field) {
+      case 'type':
+        colors = {
+          bg: getTypeColor(value),
+          text: `var(--type-${value.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-text)`
+        };
+        cls = ` type-chip ${value.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
+        break;
+      case 'metal':
+        colors = { bg: METAL_COLORS[value] || 'var(--primary)', text: textColor };
+        cls = ` metal-chip ${value.toLowerCase()}`;
+        break;
+      case 'purchaseLocation':
+        colors = { bg: getPurchaseLocationColor(value), text: textColor };
+        cls = ' purchase-chip';
+        break;
+      case 'storageLocation':
+        colors = { bg: getStorageLocationColor(value), text: textColor };
+        cls = ' storage-chip';
+        break;
+      case 'name':
+        colors = { bg: getColor(nameColors, value), text: textColor };
+        cls = ' name-chip';
+        break;
+      default:
+        colors = { bg: 'var(--primary)', text: textColor };
+        cls = ' generic-chip';
+    }
+    
+    return {
+      field,
+      fieldDisplay: fieldDisplayNames[field] || field,
+      value,
+      display: value,
+      filtered: filteredCount,
+      total: totalCount,
+      colors,
+      cls
+    };
+  };
 
-    const values = Object.keys(totalCounts).sort((a, b) => totalCounts[b] - totalCounts[a]);
-    values.forEach(val => {
-      const total = totalCounts[val];
-      const filtered = filteredCounts[val] || 0;
-      if (activeFields.size && filtered === 0) return;
-      const colors = cat.getColors(val);
-      const cls = cat.getClass ? ` ${cat.getClass(val)}` : '';
-      const display = val;
-      const chip = { field: cat.field, value: val, display, filtered, total, colors, cls };
-      if (val === 'Unknown' || val === 'Numista Import') {
-        unknownChips.push(chip);
-      } else {
-        chips.push(chip);
-      }
-    });
+  // Add default chips first (always visible if they exist)
+  defaultChipTypes.forEach(({ field, value }) => {
+    const chipKey = `${field}:${value}`;
+    if (addedChips.has(chipKey)) return;
+    
+    // Count total occurrences in full inventory
+    const totalCount = inventory.filter(item => {
+      const itemValue = field === 'metal' ? (item.composition || item.metal) : item[field];
+      return itemValue === value;
+    }).length;
+    
+    // Count filtered occurrences
+    const filteredCount = items.filter(item => {
+      const itemValue = field === 'metal' ? (item.composition || item.metal) : item[field];
+      return itemValue === value;
+    }).length;
+    
+    if (totalCount > 0) {
+      chips.push(createChip(field, value, totalCount, filteredCount));
+      addedChips.add(chipKey);
+    }
   });
 
-  const html = [...chips, ...unknownChips]
-    .map(chip => {
-      const safeVal = sanitizeHtml(String(chip.display));
-      const handler = `applyQuickFilter('${chip.field}', ${JSON.stringify(chip.value)})`;
-      const escaped = escapeAttribute(handler);
-      return `<span class="summary-chip${chip.cls}" style="background-color: ${chip.colors.bg}; color: ${chip.colors.text};" onclick="${escaped}" tabindex="0" role="button" onkeydown="if(event.key==='Enter'||event.key===' ')${escaped}">${safeVal}: ${chip.filtered}/${chip.total}</span>`;
-    })
-    .join('');
+  // If filters are active, add dynamic chips from filtered results
+  if (hasActiveFilters) {
+    const dynamicFields = ['purchaseLocation', 'storageLocation', 'name'];
+    
+    dynamicFields.forEach(field => {
+      // Count occurrences in filtered items
+      const filteredCounts = items.reduce((acc, item) => {
+        let key = item[field];
+        if (!key) {
+          key = field === 'purchaseLocation' ? 'Numista Import' : 'Unknown';
+        }
+        acc[key] = (acc[key] || 0) + 1;
+        return acc;
+      }, {});
+      
+      // Count occurrences in total inventory
+      const totalCounts = inventory.reduce((acc, item) => {
+        let key = item[field];
+        if (!key) {
+          key = field === 'purchaseLocation' ? 'Numista Import' : 'Unknown';
+        }
+        acc[key] = (acc[key] || 0) + 1;
+        return acc;
+      }, {});
+      
+      // Add chips for values that meet minimum count
+      Object.keys(filteredCounts).forEach(value => {
+        const chipKey = `${field}:${value}`;
+        if (addedChips.has(chipKey)) return;
+        
+        const filteredCount = filteredCounts[value];
+        const totalCount = totalCounts[value];
+        
+        if (filteredCount >= minCount) {
+          const chip = createChip(field, value, totalCount, filteredCount);
+          if (value === 'Unknown' || value === 'Numista Import') {
+            unknownChips.push(chip);
+          } else {
+            chips.push(chip);
+          }
+          addedChips.add(chipKey);
+        }
+      });
+    });
+    
+    // Also add any type/metal chips that weren't in defaults but appear in filtered results
+    ['type', 'metal'].forEach(field => {
+      const filteredValues = items.reduce((acc, item) => {
+        const key = field === 'metal' ? (item.composition || item.metal) : item[field];
+        if (key) acc[key] = (acc[key] || 0) + 1;
+        return acc;
+      }, {});
+      
+      Object.keys(filteredValues).forEach(value => {
+        const chipKey = `${field}:${value}`;
+        if (addedChips.has(chipKey)) return;
+        
+        const filteredCount = filteredValues[value];
+        const totalCount = inventory.filter(item => {
+          const itemValue = field === 'metal' ? (item.composition || item.metal) : item[field];
+          return itemValue === value;
+        }).length;
+        
+        if (filteredCount >= minCount) {
+          chips.push(createChip(field, value, totalCount, filteredCount));
+          addedChips.add(chipKey);
+        }
+      });
+    });
+  }
 
+  // Sort chips: default types first, then by filtered count (descending)
+  const isDefaultType = (chip) => {
+    return defaultChipTypes.some(dt => dt.field === chip.field && dt.value === chip.value);
+  };
+  
+  chips.sort((a, b) => {
+    const aIsDefault = isDefaultType(a);
+    const bIsDefault = isDefaultType(b);
+    
+    if (aIsDefault && !bIsDefault) return -1;
+    if (!aIsDefault && bIsDefault) return 1;
+    
+    // Both default or both dynamic - sort by filtered count
+    return b.filtered - a.filtered;
+  });
+  
+  unknownChips.sort((a, b) => b.filtered - a.filtered);
+
+  // Generate HTML for chips with enhanced formatting
+  const generateChipHtml = (chip) => {
+    const safeVal = sanitizeHtml(String(chip.display));
+    const handler = `applyQuickFilter('${chip.field}', ${JSON.stringify(chip.value)})`;
+    const escaped = escapeAttribute(handler);
+    
+    // Calculate relative size based on count (for word cloud effect)
+    const maxCount = Math.max(...[...chips, ...unknownChips].map(c => c.filtered), 1);
+    const relativeSize = Math.max(0.8, Math.min(1.6, (chip.filtered / maxCount) * 0.8 + 0.8));
+    const isFiltered = hasActiveFilters && chip.filtered > 0;
+    const opacity = hasActiveFilters ? (isFiltered ? 1 : 0.3) : 1;
+    
+    // Enhanced styling with better contrast and readability
+    const fontSize = `${0.65 + (relativeSize - 0.8) * 0.4}rem`;
+    const padding = relativeSize > 1.2 ? '0.3rem 0.8rem' : '0.2rem 0.6rem';
+    const style = `background-color: ${chip.colors.bg}; color: ${chip.colors.text}; font-size: ${fontSize}; padding: ${padding}; opacity: ${opacity};`;
+    
+    // Enhanced tooltip with field name
+    const title = `${chip.fieldDisplay}: ${chip.display}\nShowing ${chip.filtered} of ${chip.total} total items${chip.filtered !== chip.total ? ' - Click to filter' : ''}`;
+    
+    // Enhanced chip content with field prefix for dynamic chips
+    let chipContent;
+    if (hasActiveFilters && !isDefaultType(chip) && (chip.field === 'purchaseLocation' || chip.field === 'storageLocation' || chip.field === 'name')) {
+      // For dynamic chips, show field abbreviation and truncated value
+      const fieldAbbrev = chip.fieldDisplay;
+      const displayValue = chip.display.length > 15 ? chip.display.substring(0, 12) + '...' : chip.display;
+      chipContent = `${fieldAbbrev}: ${displayValue} (${chip.filtered})`;
+    } else {
+      // For default chips, show value and count
+      chipContent = `${safeVal} ${chip.filtered}${chip.filtered !== chip.total ? `/${chip.total}` : ''}`;
+    }
+    
+    return `<span class="filter-chip summary-chip${chip.cls}" style="${style}" onclick="${escaped}" tabindex="0" role="button" onkeydown="if(event.key==='Enter'||event.key===' ')${escaped}" title="${sanitizeHtml(title)}">${chipContent}</span>`;
+  };
+
+  const html = [...chips, ...unknownChips].map(generateChipHtml).join('');
   el.innerHTML = html;
 };
 window.updateTypeSummary = updateTypeSummary;

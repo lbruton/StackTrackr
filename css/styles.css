@@ -2644,6 +2644,30 @@ td input:checked + .slider:before {
   align-items: center;
 }
 
+.filter-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-sm);
+}
+
+.chip-min-label {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.chip-min-select {
+  padding: 0.25rem 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-size: 0.8rem;
+  min-width: 60px;
+}
+
 .filter-info {
   display: flex;
   justify-content: center;
@@ -2655,8 +2679,10 @@ td input:checked + .slider:before {
 
 .active-filters {
   display: flex;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   gap: var(--spacing-xs);
+  justify-content: center;
+  max-width: 100%;
   overflow-x: auto;
 }
 
@@ -2665,16 +2691,30 @@ td input:checked + .slider:before {
   align-items: center;
   gap: var(--spacing-xs);
   color: #f8fafc;
-  padding: 0 0.5rem;
+  padding: 0.15rem 0.4rem;
   border-radius: var(--radius);
   font-size: 0.75rem;
-  height: 1rem;
-  line-height: 1rem;
+  min-height: 1.25rem;
+  line-height: 1.1;
   cursor: pointer;
+  transition: var(--transition);
+  box-shadow: var(--shadow-sm);
+  font-weight: 500;
+  text-align: center;
+  white-space: nowrap;
+  user-select: none;
+  margin: 0.05rem;
+  max-width: fit-content;
 }
 
 .filter-chip:hover {
-  opacity: 0.85;
+  opacity: 0.9;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow);
+}
+
+.filter-chip:active {
+  transform: translateY(0);
 }
 
 .search-results-info {
@@ -3316,11 +3356,36 @@ input:disabled + .slider {
 
 #typeSummary {
   display: flex;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   gap: var(--spacing-xs);
   justify-content: center;
-  margin-top: var(--spacing-xs);
-  overflow-x: auto;
+  align-items: center;
+  margin-top: var(--spacing-sm);
+  padding: var(--spacing-sm);
+  min-height: 2rem;
+  max-height: 8rem;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--primary) var(--bg-secondary);
+}
+
+#typeSummary::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+#typeSummary::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+  border-radius: var(--radius);
+}
+
+#typeSummary::-webkit-scrollbar-thumb {
+  background-color: var(--primary);
+  border-radius: var(--radius);
+}
+
+#typeSummary::-webkit-scrollbar-thumb:hover {
+  background-color: var(--primary-hover);
 }
 
 /* Header Icons */
@@ -3386,10 +3451,49 @@ th {
 .type-other { color: var(--type-other-bg); }
 
 #typeSummary .summary-chip {
-  padding: 0.15rem 0.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.15rem 0.4rem;
+  min-height: 1.25rem;
   border-radius: var(--radius);
   font-size: 0.75rem;
+  font-weight: 600;
+  text-align: center;
+  cursor: pointer;
+  transition: var(--transition);
+  user-select: none;
+  white-space: nowrap;
+  box-shadow: var(--shadow-sm);
+  margin: 0.05rem;
+  line-height: 1.1;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  max-width: fit-content;
+}
+
+#typeSummary .summary-chip:hover {
+  transform: translateY(-1px) scale(1.05);
+  box-shadow: var(--shadow);
+  filter: brightness(1.1);
+}
+
+#typeSummary .summary-chip:active {
+  transform: translateY(0) scale(1.02);
+}
+
+/* Enhanced chip styling for better visual hierarchy */
+#typeSummary .type-chip,
+#typeSummary .metal-chip {
+  font-weight: 700;
+  border-width: 2px;
+}
+
+#typeSummary .purchase-chip,
+#typeSummary .storage-chip,
+#typeSummary .name-chip {
   font-weight: 500;
+  font-style: italic;
+  border-style: dashed;
 }
 
 .type-chip.coin {

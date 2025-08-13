@@ -322,6 +322,23 @@ const setupEventListeners = () => {
       });
     }
 
+    // Chip minimum count dropdown
+    const chipMinCountEl = document.getElementById('chipMinCount');
+    if (chipMinCountEl) {
+      safeAttachListener(
+        chipMinCountEl,
+        'change',
+        (e) => {
+          const minCount = parseInt(e.target.value, 10);
+          localStorage.setItem('chipMinCount', minCount.toString());
+          if (typeof updateTypeSummary === 'function') {
+            updateTypeSummary();
+          }
+        },
+        'Chip minimum count dropdown'
+      );
+    }
+
     if (elements.detailsCloseBtn) {
       safeAttachListener(
         elements.detailsCloseBtn,
@@ -1453,6 +1470,22 @@ const setupSearch = () => {
           }
         },
         "Clear filters button",
+      );
+    }
+
+    // Chip minimum count control
+    const chipMinCountEl = document.getElementById('chipMinCount');
+    if (chipMinCountEl) {
+      safeAttachListener(
+        chipMinCountEl,
+        "change",
+        function() {
+          localStorage.setItem('chipMinCount', this.value);
+          if (typeof updateTypeSummary === "function") {
+            updateTypeSummary(filterInventory());
+          }
+        },
+        "Chip minimum count select",
       );
     }
 

@@ -1,11 +1,40 @@
 # StackrTrackr — Changelog
 
-> **Latest release: v3.04.47**
+> **Latest release: v3.04.50**
 
 
 For upcoming work, see [announcements](announcements.md).
 
 ## 📋 Version History
+
+### Version 3.04.50 – Standardized Filter Chip Sizing (2025-08-12)
+- **Filter Chip Standardization**: Unified chip sizing across all filter types for consistent appearance
+  - Reduced padding from `0.2rem 0.6rem` to `0.15rem 0.4rem` for thinner profile
+  - Decreased min-height from `1.5rem` to `1.25rem` for more compact appearance
+  - Tightened line-height from `1.2` to `1.1` for better text fitting
+  - Reduced margin from `0.1rem` to `0.05rem` for tighter grouping
+  - Added `max-width: fit-content` to ensure chips expand to fit labels without font scaling
+- **Enhanced Summary Chips**: Applied same standardization to type summary chips
+  - Added explicit `font-size: 0.75rem` for consistency
+  - Unified padding and sizing with filter chips
+  - Maintained font weight differences for visual hierarchy
+- **Improved Layout**: Chips now appear more uniform and professional with better space utilization
+
+### Version 3.04.49 – Enhanced Filter Chip System (2025-08-12)
+- **Word Cloud Filter UI**: Redesigned filter chips to create a visual word cloud-like interface
+  - Default chip types always visible: Coin, Bar, Round, Note, Gold, Silver, Platinum, Palladium
+  - Dynamic chips automatically appear for Purchase Location, Storage Location, and Name fields when filters are active
+  - Enhanced visual hierarchy with varying font sizes, padding, and opacity based on item counts
+  - Field-specific styling: Type/Metal chips use bold fonts and solid borders, dynamic chips use italic text and dashed borders
+- **Configurable Minimum Count**: Added dropdown control to set minimum items threshold (1+, 2+, 3+, 5+, 10+) before chips appear
+- **Enhanced Chip Information**: Each chip displays Field, Item name, and current/total counts (e.g., "Purchase: Apmex.com (5/12)")
+- **Improved Accessibility**: Added hover effects, keyboard navigation, detailed tooltips, and smooth transitions
+- **Better Visual Design**: Chips now have proper shadows, scale animations on hover, and theme-aware styling
+- **Responsive Layout**: Filter area supports wrap and scroll for large inventories with many unique values
+- **Smart Truncation**: Long item names automatically truncate with ellipsis to maintain clean layout
+
+### Version 3.04.48 – Filter Display and Layout Updates (2025-08-12)
+- **UI Improvements**: Enhanced filter card layout and chip positioning for better visual organization
 
 ### Version 3.04.47 – Filter Controls Reorder (2025-08-20)
 - **UI**: Filters card moved between Change Log and Items dropdown with controls repositioned.
