@@ -2646,7 +2646,7 @@ td input:checked + .slider:before {
   box-shadow: var(--shadow);
   padding: var(--spacing);
   flex: 1;
-  margin: 0 var(--spacing);
+  margin: 0;
   display: flex;
   flex-direction: column;
   align-items: center;

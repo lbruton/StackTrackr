@@ -1,11 +1,14 @@
 # StackrTrackr — Changelog
 
-> **Latest release: v3.04.56**
+> **Latest release: v3.04.57**
 
 
 For upcoming work, see [announcements](announcements.md).
 
 ## 📋 Version History
+
+### Version 3.04.57 – Filters Card Edge Alignment (2025-08-18)
+- Removed left margin from Filters card for alignment with spot price card
 
 ### Version 3.04.56 – Filters Modal Removal (2025-08-17)
 - Removed legacy Filters modal, button, and related code
