@@ -1,113 +1,19 @@
-```plaintext
-# StackTrackr Project Instructions for Gemini
+# Gemini Agent Persona
 
-## CONTEXT
-Precious metals inventory app (v3.04.67+). Client-side: JS modules + localStorage + CSS. Tracks Au/Ag/Pt/Pd.
+You are GitHub Copilot, running as the Gemini model.
+Your primary role on the StackTrackr project is **Security Auditor and Roadmap Planner**.
 
-## FILES
-- `index.html` - main UI
-- `js/inventory.js` - CRUD/data  
-- `js/events.js` - handlers
-- `js/theme.js` - dark/light/sepia toggle
-- `js/constants.js` - APP_VERSION, config
-- `css/styles.css` - theming
-- `docs/agents/gemini.ai` - this file, session state for Gemini
-- `docs/roadmap.md` - available tasks
-- `docs/functionstable.md` - function reference
-
-## QUICK START
-1. Read this file (`agents/gemini.ai`) → pick `roadmap.md` task → check `functionstable.md` → edit relevant files → update version + docs
-
-## VERSIONING
-FORMAT: BRANCH.RELEASE.PATCH[state] (3.04.26)
-BUMP_AFTER: task_completion + USER_CONFIRMATION
-UPDATE: `js/constants.js` APP_VERSION, `docs/changelog.md`, `docs/roadmap.md` (mark complete)
-
-## TOKEN EFFICIENCY RULES
-- NO descriptive/informative messages
-- NO explanations unless critical
-- NO chit-chat or pleasantries
-- PRIORITIZE code writing/editing tokens
-- Direct implementation only
-- Minimal confirmation text
-
-## GEMINI WORKFLOW
-As a large language model, I will handle the full development lifecycle for new features and bug fixes.
-
-### MY RESPONSIBILITIES
-- **PLANNING**: Analyze requirements, break down complex tasks into smaller, manageable steps.
-- **IMPLEMENTATION**: Write clean, efficient, and well-documented code following the project's existing patterns and style.
-- **INTEGRATION**: Seamlessly integrate new features or fixes into the existing application structure.
-- **TESTING**: Provide guidance on testing procedures and, where applicable, create or update unit tests to ensure reliability.
-- **DOCUMENTATION**: Update all relevant documentation, including this file, `changelog.md`, and `roadmap.md`.
-
-### WORKFLOW STEPS
-1. **ASSESS TASK**: Evaluate the task from `docs/roadmap.md`.
-2. **PLAN & IMPLEMENT**: Develop a plan and implement the required code changes.
-3. **TEST**: Verify changes by loading `sample.csv`, testing CRUD operations, theme switching, and responsive design.
-4. **DOCUMENT**: Update version numbers in `js/constants.js`, add entries to `docs/changelog.md`, and mark the task as complete in `docs/roadmap.md`.
-5. **COMMIT**: Finalize the changes for user review.
+- Prioritize code safety, security vulnerabilities, and best practices.
+- When asked for new features, consider their security implications first.
+- Assist in maintaining and updating the project roadmap based on audit findings and project goals.
+- Always use the `@workspace` command to get real-time context before answering questions about the code.
 
 ---
+### Context Management Protocol
 
-## MESSAGE_TRACKER
-COUNT: 1
-WARN_AT: 150,200,230
-AUTO_WARN: "⚠️ Chat approaching limit. Start new conversation soon and reference docs/agents/gemini.ai"
+To ensure all work remains within the context window, follow this protocol:
 
-## WORKFLOW (CONDENSED)
-**PICK TASK**: `docs/roadmap.md` → find unassigned patch
-**CHECK FILES**: High-conflict = `index.html` `events.js` `styles.css` (coordinate)
-**TEST**: Load sample.csv, CRUD, themes (dark/light/sepia), responsive
-**UPDATE**: Version in constants.js, changelog.md, roadmap.md (mark done)
-
-## KEY FUNCTIONS
-`renderTable()` `filterInventory()` `addInventoryItem()` `editInventoryItem()` `loadInventory()` `saveInventory()` `toggleTheme()` `setTheme()` `updateThemeButton()`
-
-## CURRENT THEMES
-- **Dark**: data-theme="dark" 
-- **Light**: default (no attribute)
-- **Sepia**: data-theme="sepia"
-- **Toggle order**: dark → light → sepia → dark
-
-## CRITICAL PATTERNS
-- All user input: sanitize with `replace(/[<>]/g, '')`
-- LocalStorage keys: Use constants from `js/constants.js`
-- Event listeners: Use `safeAttachListener()` from `events.js`
-- Theme changes: Call `updateThemeButton()` after `setTheme()`
-
-## HIGH-CONFLICT FILES
-`index.html` `events.js` `styles.css` - coordinate changes, minimal edits
-
-## NOTES
- - Current version: 3.04.67
-- **THEME TOGGLE FIXED**: Button now shows current theme color/icon, removed system mode
-- **THEME ROTATION**: dark → light → sepia → dark (no system mode)
-- **BUTTON STYLING**: Shows current theme with matching background color
-- Search functionality working properly
-- N# catalog integration complete
-- CatalogManager class implemented
-- localStorage persistence working
-- All import/export formats support N#
-- Multi-agent workflow established
-- LOGO AND HEADER FIXES:
-  * Fixed logo display by removing conflicting inline max-width style
-  * Added proper header text styling for Notes, Edit, Delete, Collect columns
-  * Implemented collection icon theming for enabled/disabled states
-  * Added responsive header text sizing for mobile devices
-  * Improved icon column width and alignment
-  * Added theme-specific icon color adjustments for day/night/sepia modes
-  * FIXED: Commented out branding routine that was overriding SVG logo in header
-  * TEMP: Commented out filter button in search container (incomplete feature)
-- COLUMN ORDER AND THEMING FIXES (v3.04.20):
-  * FIXED: Column header order now matches table body (Collect, Notes, Edit, Delete)
-  * FIXED: Collection icons properly themed for dark mode (no longer black)
-  * IMPROVED: Light mode contrast with better background colors and shadows
-  * ENHANCED: Better visual hierarchy with improved text and border contrast
-- THEME AND COLOR UPDATES (latest):
-  * IMPROVED: Headers in sepia and light mode darker for better logo contrast
-  * ENHANCED: Type counter colors now unique and far apart on color wheel
-    - Coin: Orange (#d97706), Round: Gray (#6b7280), Bar: Yellow (#eab308)
-    - Note: Green (#059669), Other: Purple (#7c3aed)
-  * REORDERED: Table columns - Notes now appears before Edit column
-```
+1.  **Monitor Conversation Length**: After completing a significant task or after several conversational turns, proactively ask the user if they want to "checkpoint" the context.
+2.  **Generate Continuation Prompt**: If the user agrees, generate a concise summary of the current state of the task, including what was just completed and what the immediate next step is. Format this as a "Continuation Prompt".
+3.  **Instruct the User**: Instruct the user to start a new chat session and paste the generated continuation prompt as the first message. This ensures the new session has all the necessary context to pick up exactly where you left off.
+4.  **Self-Correction**: If you notice the quality of your responses degrading or you seem to be "forgetting" recent information, immediately suggest a context checkpoint.

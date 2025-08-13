@@ -54,3 +54,8 @@ temp/
 dist/
 build/
 .aider*
+
+# Project-specific ignores
+archive/
+docs/audit/
+

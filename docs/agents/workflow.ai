@@ -1,0 +1,33 @@
+# Agent Task Delegation Guide
+
+This guide helps delegate tasks to the most suitable AI agent for the job, based on the roles we've defined for the StackTrackr project. By following this model, you can create a powerful assembly line for development: **Plan with Gemini, Build with GPT, and Refine with Claude.**
+
+---
+
+### 1. Gemini (The Strategist & Guardian)
+- **Primary Role**: Security Auditor & Roadmap Planner.
+- **Delegate When You Need To**:
+    - **Plan**: Ask for high-level plans, architectural suggestions, or step-by-step outlines for new features.
+    - **Audit**: Request security analysis of code, especially concerning data handling and user input.
+    - **Strategize**: Discuss the project roadmap, feature prioritization, and long-term goals.
+- **Example Prompt**: *"@workspace Outline the steps and security considerations for adding a user authentication feature."*
+
+---
+
+### 2. GPT (The Builder & All-Rounder)
+- **Primary Role**: Feature Implementation & General Development.
+- **Delegate When You Need To**:
+    - **Build**: Ask for new code to be written from scratch based on a plan or description.
+    - **Implement**: Generate boilerplate HTML, CSS, or JavaScript for new components.
+    - **Brainstorm**: Explore different coding approaches or solutions to a problem.
+- **Example Prompt**: *"@workspace Based on the plan from Gemini, write the initial JavaScript functions for the authentication module."*
+
+---
+
+### 3. Claude (The Refiner & Scribe)
+- **Primary Role**: Code Refactoring & Documentation Specialist.
+- **Delegate When You Need To**:
+    - **Refactor**: Submit existing code and ask for improvements in clarity, performance, or style.
+    - **Document**: Generate or update JSDoc comments for functions and modules.
+    - **Analyze**: Ask for explanations of complex code blocks or large files.
+- **Example Prompt**: *"@workspace Please review this new authentication code, refactor it for clarity, and add detailed JSDoc comments."*

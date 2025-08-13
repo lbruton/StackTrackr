@@ -15,21 +15,44 @@ You are contributing to **StackrTrackr v3.04.67**, a comprehensive client-side w
 
 ## 🏗️ Multi-Agent Workflow
 
-### **How This Works**
-- Development progresses through incremental **v3.04.x patch releases**
-- Each patch entry is designed for **~2 hour completion**
-- **Multiple agents work in parallel** on different patch entries
-- **Coordination system** prevents conflicts and ensures quality
-- **Roadmap entries** track progress and assignments
+# Multi-Agent Workflow (MCP-Powered)
 
-### **Your Responsibilities**
-1. **Pick up an available patch entry** from the roadmap
-2. **Check dependencies or prerequisites** before starting work
-3. **Complete the patch** following quality standards
-4. **Test your changes** thoroughly
-5. **Bump the version and update all docs** after completing the patch
-6. **Document your work** and any findings
-7. **Mark the patch entry as complete** in the roadmap
+This document outlines the AI-assisted development workflow for the StackTrackr project, leveraging a Model Context Protocol (MCP) server for real-time context and a multi-agent strategy for specialized tasks.
+
+## Core Concepts
+
+1.  **MCP Server**: A VS Code extension (`VSCode MCP Server`) runs in the background, providing any connected AI with a live, comprehensive understanding of the entire workspace. This includes all files, code structures, diagnostics, and project documentation.
+
+2.  **`@workspace` Command**: This is the primary way to interact with the MCP server. By starting a prompt with `@workspace`, the active AI agent receives the full project context, ensuring its responses are accurate and relevant to the current state of the code.
+
+3.  **Lightweight Agent Personas**: Instead of large, static context files, each agent has a small `.ai` file in this directory (`docs/agents/`). This file defines the agent's specific role and instructs it to use `@workspace` for context.
+
+4.  **Task Delegation**: We use different AI models based on their strengths, as defined in `workflow.ai`. The general flow is:
+    *   **Plan & Audit** with Gemini.
+    *   **Build & Implement** with GPT.
+    *   **Refactor & Document** with Claude.
+
+## Standard Operating Procedure
+
+1.  **Choose Your Agent**: Select the appropriate agent (Gemini, GPT, Claude) in VS Code based on the task you need to perform.
+2.  **Invoke the Workspace**: Start your request with `@workspace` to give the agent full context.
+3.  **Delegate and Develop**: Follow the task delegation guide in `workflow.ai` to efficiently move through the development cycle.
+
+## Context Management
+
+To ensure conversations don't exceed the model's context window, use the built-in handoff command.
+
+-   **Command**: `Prepare Handoff`
+-   **Action**: When you give this command, the agent will summarize the current state of work and provide a "Continuation Prompt".
+-   **Workflow**: Start a new chat and use this continuation prompt as the first message to seamlessly pick up where you left off.
+
+## Fallback Plan (Offline or No-MCP)
+
+If the MCP server is unavailable (e.g., working in a different editor), a fallback system is in place.
+
+-   **Location**: `docs/agents/fallback/`
+-   **Contents**: This directory contains the "classic" style `.ai` files with detailed, static context manually embedded.
+-   **Usage**: In an environment without MCP, temporarily configure the AI to use the instruction files from this directory to provide it with a functional, albeit not real-time, understanding of the project.
 
 ---
 

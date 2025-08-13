@@ -28,7 +28,7 @@ searchQuery = '100';
 assert.strictEqual(filterInventory().length, 1, 'search for numeric value should work with missing/invalid numbers');
 
 // Load Numista CSV and verify search
-const csvLines = fs.readFileSync('docs/numista.csv', 'utf8').trim().split(/\r?\n/).slice(1);
+const csvLines = fs.readFileSync('tests/data/numista.csv', 'utf8').trim().split(/\r?\n/).slice(1);
 inventory = csvLines.map(line => {
   const parts = line.split(',');
   return {

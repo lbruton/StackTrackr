@@ -48,7 +48,7 @@ global.spotPrices = {
 };
 
 // Import inventory from Numista CSV
-const csvLines = fs.readFileSync('docs/numista.csv', 'utf8').trim().split(/\r?\n/).slice(1);
+const csvLines = fs.readFileSync('tests/data/numista.csv', 'utf8').trim().split(/\r?\n/).slice(1);
 global.inventory = csvLines.map(line => {
   const parts = line.split(',');
   return {

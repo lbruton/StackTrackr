@@ -52,11 +52,17 @@ This roadmap tracks upcoming goals without committing to specific patch numbers.
 - Remove file:// protocol support and adopt a framework.
 
 ## Major Milestone Roadmap
+- **Privacy-First Connected Services** — All features that require external connectivity will be strictly opt-in, ensuring user privacy is the default. We will never gather personal data or store user data without explicit consent.
+- **Hosted API Cache & Data Worker** — Develop a cloud worker to build a historical price database by polling APIs daily and monthly. This will provide a robust data source for the hosted version of the application.
 - **Encrypted Backup Export** — Provide a secure backup flow that encrypts user data and produces a downloadable archive ready for cloud storage (e.g., Google Drive).
-- **Fuzzy Search Across All Data** — Enable typo-tolerant, context-aware search functionality spanning every stored field to improve discoverability.
-- **Numista API Integration** — Support direct item and collectible price lookups through Numista, letting users supply their own API credentials for seamless valuation.
+- **Fuzzy Search Across All Data** — Complete the fuzzy search integration to enable typo-tolerant, context-aware search functionality spanning every stored field, improving data discoverability.
+- **Numista API Integration** — Finalize the Numista API integration to support direct item and collectible price lookups. This includes building a cached search worker for the public site to power autocomplete features and an opt-in system for users to pull data.
 - **Turso Sync and SQLite Support** — Offer optional Turso integration so users can connect API credentials and synchronize their data with a remote SQLite-compatible database.
 - **Lightweight Storage Options** — Expand supported storage back ends to accommodate constrained devices and alternate persistence layers.
 - **Enhanced CSV Conversion Tools** — Improve import/export utilities for cleaner conversions, broader compatibility, and error handling.
-- **Batch Editing with API-Aided Corrections** — Introduce bulk editing workflows that leverage external APIs to validate and auto-correct item attributes at scale.
+- **Advanced In-line and Batch Editing** — Introduce powerful editing workflows:
+  - Full-featured edit panel to query the Numista database cache and correct item attributes.
+  - Find and replace functionality.
+  - In-line editing for all values in the table.
+  - An algorithm to identify and suggest structural improvements for item names based on common patterns.
 - **Comprehensive Charts and Graphs** — Deliver robust visual analytics—trend lines, distribution charts, and comparative dashboards—to help users explore their collections.
