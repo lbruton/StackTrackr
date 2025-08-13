@@ -2621,15 +2621,11 @@ td input:checked + .slider:before {
   height: 1.375rem;
 }
 
-#clearSearchBtn {
-  width: auto;
-  padding: 0.75rem 1.5rem;
-  background: var(--secondary);
-  color: #f8fafc;
-}
-
-#clearSearchBtn:hover {
-  background: var(--secondary-hover);
+.icon-btn {
+  width: 2.75rem;
+  height: 2.75rem;
+  padding: 0;
+  min-width: 2.75rem;
 }
 
 .filters-card {
@@ -3121,7 +3117,7 @@ input:disabled + .slider {
     align-items: stretch;
   }
 
-  #clearSearchBtn {
+  .search-container .btn {
     width: 100%;
   }
 

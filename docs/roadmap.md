@@ -6,6 +6,7 @@ This roadmap tracks upcoming goals without committing to specific patch numbers.
 - _No active patch goals at this time._
 
 ## Completed Patch Goals (v3.04.xx)
+- ✅ **Search control consolidation** - New item icon, Change Log in search bar, and clear button redesign (v3.04.54)
 - ✅ **Clickable logo reloads application** - App logo refreshes the page when clicked (v3.04.53)
 - ✅ **Titleless sections with repositioned controls** - Removed Spot Prices/Inventory/Information Cards headers and moved filter card with Change Log above table (v3.04.52)
 - ✅ **File menu color coding and data wipe notice** - Import buttons orange, merge buttons green, Boating Accident renamed (v3.04.51)

@@ -1,7 +1,7 @@
 # StackTrackr Project Instructions
 
 ## CONTEXT
-Precious metals inventory app (v3.04.53+). Client-side: JS modules + localStorage + CSS. Tracks Au/Ag/Pt/Pd.
+Precious metals inventory app (v3.04.54+). Client-side: JS modules + localStorage + CSS. Tracks Au/Ag/Pt/Pd.
 
 ## FILES
 - `index.html` - main UI

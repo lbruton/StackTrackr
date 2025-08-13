@@ -146,7 +146,7 @@ const elements = {
   searchInput: null,
   typeFilter: null,
   metalFilter: null,
-  clearSearchBtn: null,
+  clearBtn: null,
   newItemBtn: null,
   searchResultsInfo: null,
 
