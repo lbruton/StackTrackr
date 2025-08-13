@@ -5,6 +5,12 @@
 
 ---
 
+## 🎯 **PROJECT MISSION**
+
+**StackrTrackr is a client-side precious metals inventory management web app. It runs entirely in the browser with no server dependencies, using localStorage for data persistence. Our goal is to provide a fast, private, and feature-rich experience for collectors and investors.**
+
+---
+
 ## 🔄 **AUTO-INITIALIZATION PROTOCOL**
 
 ### **Trigger: "Hello" or New Chat Session**
@@ -56,6 +62,41 @@ Would you like me to prepare a handoff prompt for [OTHER_AGENT]?
   
 Which memory approach would you prefer for this agent?
 ```
+
+---
+
+## 💾 **GIT CHECKPOINT PROTOCOL**
+
+**This protocol MUST be followed before any agent begins a task.** This ensures that any changes can be safely rolled back if they cause issues.
+
+### **Step 1: Create a Git Checkpoint**
+Before starting any agent-driven or major change, execute the following commands in the terminal:
+
+```sh
+git add -A
+git commit -m "Checkpoint before [brief description of change]"
+```
+*This creates a safe restore point.*
+
+### **Step 2: Execute the Task**
+Proceed with the assigned task, allowing the agent to modify files as needed.
+
+### **Step 3: Commit the Work**
+Once the task is successfully completed, commit the changes:
+
+```sh
+git add -A
+git commit -m "feat: [brief description of feature]"
+```
+*Use a conventional commit message if possible (e.g., `feat:`, `fix:`, `docs:`).*
+
+### **Step 4: Roll Back if Necessary**
+If the agent's changes break the application or are not desired, roll back to the pre-task checkpoint:
+
+```sh
+git reset --hard HEAD~1
+```
+*This will discard all changes since the checkpoint was created.*
 
 ---
 

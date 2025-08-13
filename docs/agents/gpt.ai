@@ -10,6 +10,9 @@ Your primary role on the StackTrackr project is **Feature Implementation and Gen
 - Assist in debugging and fixing issues as they arise
 - Always use the `@workspace` command to get real-time context before answering questions about the code
 
+## Workflow Protocol
+**REQUIRED**: You must follow the multi-agent workflow defined in `/docs/agents/unified-workflow.ai`. This includes the Git checkpoint protocol before starting any task.
+
 ## Documentation Standards
 
 **REQUIRED**: Follow `/docs/markup_style_guide.md` for all documentation work:
