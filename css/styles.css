@@ -21,16 +21,26 @@
     /* Disclaimer warning color */
     --disclaimer-color: var(--warning);
 
-  /* Background Colors - Light grays and light blues */
-  --bg-primary: #f1f5f9;
-  --bg-secondary: #e2e8f0;
-  --bg-tertiary: #b2c5d4; /* Middle gray-blue for better contrast */
-  --bg-card: #f8fafc;
+  /* Background Tokens - Darker Light Mode */
+  --bg: #e7edf2;
+  --bg-elev-1: #d7dfe6;
+  --bg-elev-2: #bec7cf;
+  --surface: #d7dfe6;
+  --surface-alt: #bec7cf;
 
-  /* Text Colors */
-  --text-primary: #1e293b;
-  --text-secondary: #475569;
-  --text-muted: #64748b;
+  /* Map existing background variables */
+  --bg-primary: var(--bg);
+  --bg-secondary: var(--bg-elev-1);
+  --bg-tertiary: var(--bg-elev-2); /* Middle gray-blue for better contrast */
+  --bg-card: var(--surface);
+
+  /* Text Tokens */
+  --text: #1b232c;
+  --text-muted: #344351;
+
+  /* Map existing text variables */
+  --text-primary: var(--text);
+  --text-secondary: var(--text-muted);
 
   /* Border & Shadow - Light grays */
   --border: #cbd5e1;
@@ -1825,6 +1835,27 @@ tr:hover {
   white-space: normal;
   overflow: visible;
   text-overflow: clip;
+}
+
+/* Mobile table scaling */
+@media (max-width: 600px) {
+  #inventoryTable {
+    width: 100%;
+    min-width: 0;
+    table-layout: fixed;
+  }
+
+  #inventoryTable th,
+  #inventoryTable td {
+    white-space: normal;
+    overflow: hidden;
+    text-overflow: clip;
+    word-break: break-word;
+  }
+
+  .shrink {
+    width: auto;
+  }
 }
 
 /* Clickable name cell styling */

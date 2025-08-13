@@ -1,11 +1,15 @@
 # StackrTrackr — Changelog
 
-> **Latest release: v3.04.66**
+> **Latest release: v3.04.67**
 
 
 For upcoming work, see [announcements](announcements.md).
 
 ## 📋 Version History
+
+### Version 3.04.67 – Darker Light Mode & Mobile Tables (2025-08-13)
+- **Styling**: Light theme retuned with darker grays for improved contrast.
+- **Responsiveness**: Tables scale gracefully on mobile with wrapped cells.
 
 ### Version 3.04.66 – Storage Cleanup (2025-08-13)
 - **Data Hygiene**: Startup routine now purges unrecognized localStorage keys while preserving valid data.
