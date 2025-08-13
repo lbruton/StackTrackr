@@ -1,11 +1,15 @@
 # StackrTrackr — Changelog
 
-> **Latest release: v3.04.65**
+> **Latest release: v3.04.66**
 
 
 For upcoming work, see [announcements](announcements.md).
 
 ## 📋 Version History
+
+### Version 3.04.66 – Storage Cleanup (2025-08-13)
+- **Data Hygiene**: Startup routine now purges unrecognized localStorage keys while preserving valid data.
+- **Maintenance**: Introduced centralized list of allowed localStorage keys.
 
 ### Version 3.04.65 – Import Price Defaults & Numista Markdown (2025-08-13)
 - **Data Integrity**: Missing price fields now default to 0 during all import types.

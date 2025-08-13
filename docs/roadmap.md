@@ -6,6 +6,7 @@ This roadmap tracks upcoming goals without committing to specific patch numbers.
 - _No active patch goals at this time._
 
 ## Completed Patch Goals (v3.04.xx)
+- ✅ **LocalStorage cleanup** - Startup routine removes unknown keys (v3.04.66)
 - ✅ **Autocomplete for item names** - LocalStorage-backed suggestions with fuzzy matching (v3.04.61)
 - ✅ **Responsive column prioritization** - Progressive column hiding with scroll and modal edit icon (v3.04.60)
 - ✅ **Hidden empty columns after filtering** - Automatically hide columns with no data after filtering (v3.04.59)

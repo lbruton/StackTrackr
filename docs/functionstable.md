@@ -1,7 +1,7 @@
 # Function Reference
 
 
-> **Latest release: v3.04.65**
+> **Latest release: v3.04.66**
 
 
 | File | Function | Description |
@@ -195,6 +195,7 @@
 | utils.js | getDisplayComposition | Returns "Alloy" when composition doesn't start with a primary metal |
 | utils.js | saveData | Saves data to localStorage with JSON serialization |
 | utils.js | loadData | Loads data from localStorage with error handling |
+| utils.js | cleanupStorage | Removes unknown localStorage keys to maintain a clean storage state |
 | utils.js | sortInventoryByDateNewestFirst | Sorts inventory by date (newest first) |
 | utils.js | validateInventoryItem | Validates inventory item data |
 | utils.js | sanitizeImportedItem | Coerces invalid imported fields to safe defaults (price defaults to 0) and strips HTML, diacritics, and non-alphanumeric characters |

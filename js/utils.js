@@ -631,6 +631,23 @@ const saveData = (key, data) => { try { const raw = JSON.stringify(data); const 
 const loadData = (key, defaultValue = []) => { try { const raw = localStorage.getItem(key); if(raw == null) return defaultValue; const str = __decompressIfNeeded(raw); return JSON.parse(str); } catch(e) { return defaultValue; } };
 
 /**
+ * Removes unknown localStorage keys to maintain a clean storage state
+ *
+ * Iterates over all localStorage entries and deletes any keys not present in
+ * ALLOWED_STORAGE_KEYS.
+ */
+const cleanupStorage = () => {
+  if (typeof localStorage === 'undefined') return;
+  const allowed = new Set(ALLOWED_STORAGE_KEYS);
+  for (let i = localStorage.length - 1; i >= 0; i--) {
+    const key = localStorage.key(i);
+    if (!allowed.has(key)) {
+      localStorage.removeItem(key);
+    }
+  }
+};
+
+/**
  * Sorts inventory by date (newest first)
  *
  * @param {Array} [data=inventory] - Data to sort
@@ -2436,4 +2453,5 @@ function generateStorageReport(){
 if (typeof window !== 'undefined') {
   window.generateStorageReport = generateStorageReport;
   window.updateSpotTimestamp = updateSpotTimestamp;
+  window.cleanupStorage = cleanupStorage;
 }
