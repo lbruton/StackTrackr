@@ -1,7 +1,7 @@
 # Function Reference
 
 
-> **Latest release: v3.04.58**
+> **Latest release: v3.04.59**
 
 
 | File | Function | Description |
@@ -105,6 +105,7 @@
 | inventory.js | escapeAttribute | Escapes text for safe use in HTML attributes |
 | inventory.js | filterLink | Builds clickable filter span with optional HTML content |
 | inventory.js | formatPurchaseLocation | Detects URLs and appends info tooltip link while keeping text filterable |
+| inventory.js | hideEmptyColumns | Hides table columns that contain no data after filtering |
 | inventory.js | renderTable |  |
 | inventory.js | updateTypeSummary | Renders single-row chips for type, metal, purchase location, storage location with filtered/total counts |
 | inventory.js | updateSummary | Calculates and updates all financial summary displays across the application |
