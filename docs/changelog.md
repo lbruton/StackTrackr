@@ -1,11 +1,39 @@
 # StackrTrackr — Changelog
 
-> **Latest release: v3.04.61**
+> **Latest release: v3.04.63**
 
 
 For upcoming work, see [announcements](announcements.md).
 
 ## 📋 Version History
+
+### Version 3.04.63 – Pre-built Lookup Database Integration (2025-08-13)
+- **Major Enhancement**: Integrated comprehensive 500+ item pre-built lookup database
+- **Seed Data**: Added extensive precious metals database covering:
+  - Government mint coins (Eagles, Maples, Britannias, Krugerrands, etc.)
+  - Fractional coins (1/10, 1/4, 1/2 oz variations)
+  - Lunar series and collectible coins
+  - International and regional coins from 20+ countries
+  - Wildlife and nature series (RCM, Perth Mint, Somalia, etc.)
+  - Private mint rounds (Buffalo, Walking Liberty, Morgan designs)
+  - Precious metals bars from major refiners (PAMP, Credit Suisse, Valcambi, etc.)
+  - Various weights and sizes from 1g to 1kg
+- **Enhanced Autocomplete**: New users get immediate autocomplete suggestions
+- **Smart Combination**: Seed data combines with user inventory for comprehensive suggestions
+- **Task Completion**: Effectively completed Task 4A (Pre-built Lookup Database) ahead of schedule
+- **Progress**: Advanced fuzzy autocomplete development significantly
+
+### Version 3.04.62 – Fuzzy Autocomplete Phase 1B: Lookup Table Generation (2025-08-13)
+- **Feature Development**: Completed Task 1B of fuzzy autocomplete implementation
+- **New Module**: Created `js/autocomplete.js` with comprehensive lookup table generation system
+  - Extraction of unique values from all inventory fields (names, locations, types)
+  - Built searchable indices with variants and common abbreviations
+  - LocalStorage caching with TTL for performance optimization
+  - Memory-optimized data structures for large datasets
+  - Comprehensive error handling and data validation
+  - Support for 25+ common precious metals abbreviations (ASE, CML, etc.)
+- **Progress**: Phase 1 of fuzzy autocomplete now 25% complete (2/8 tasks done)
+- **Next**: Task 2A - Feature Flag System for parallel testing phase
 
 ### Version 3.04.61 – Autocomplete Suggestions (2025-08-22)
 - Added localStorage-backed autocomplete with 100 bullion names

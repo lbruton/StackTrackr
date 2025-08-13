@@ -1,7 +1,7 @@
 # Function Reference
 
 
-> **Latest release: v3.04.61**
+> **Latest release: v3.04.63**
 
 
 | File | Function | Description |
@@ -17,8 +17,21 @@
 | about.js | showFullChangelog | Shows full changelog in a new window or navigates to documentation |
 | about.js | setupAboutModalEvents | Sets up event listeners for about modal elements |
 | about.js | setupAckModalEvents | Sets up event listeners for acknowledgment modal elements |
-| autocomplete.js | registerName | Adds a new name to the autocomplete store |
+| autocomplete.js | buildSearchIndices | Builds searchable indices with variants for all lookup data |
+| autocomplete.js | cacheLookupTable | Caches lookup table to localStorage with Map serialization |
+| autocomplete.js | clearLookupCache | Clears cached lookup table from localStorage |
+| autocomplete.js | createEmptyLookupTable | Creates an empty lookup table structure with default values |
+| autocomplete.js | extractUniqueValues | Extracts unique values from inventory for a specific field |
+| autocomplete.js | generateLookupTable | Generates lookup table from current inventory data |
+| autocomplete.js | generateVariations | Generates searchable variations for a given term including abbreviations |
+| autocomplete.js | getCachedLookupTable | Retrieves cached lookup table if valid and not expired |
+| autocomplete.js | getCurrentLookupTable | Returns the current lookup table instance |
+| autocomplete.js | getLookupStats | Gets current lookup table statistics and cache status |
 | autocomplete.js | getSuggestions | Returns name suggestions using fuzzy or substring matching |
+| autocomplete.js | initializeAutocomplete | Initializes autocomplete system with inventory data |
+| autocomplete.js | loadLookupTable | Loads lookup table from cache or generates new one |
+| autocomplete.js | refreshLookupTable | Refreshes lookup table from current inventory |
+| autocomplete.js | registerName | Adds a new name to the autocomplete store |
 | api.js | renderApiStatusSummary |  |
 | api.js | loadApiConfig | Loads Metals API configuration from localStorage |
 | api.js | saveApiConfig | Saves Metals API configuration to localStorage |
