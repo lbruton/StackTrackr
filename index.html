@@ -216,7 +216,6 @@
          Spot prices are used for premium calculations and profit/loss analysis
          ============================================================================= -->
       <section class="spot-prices">
-        <h2 class="section-title">Spot Prices</h2>
         <div
           class="grid"
           style="
@@ -465,7 +464,6 @@
          Wrapper containing search and inventory table
          ============================================================================= -->
       <section class="inventory-section">
-        <h2 class="section-title">Inventory</h2>
         <!-- =============================================================================
            SEARCH FUNCTIONALITY
 
@@ -488,6 +486,41 @@
             />
             <button class="btn" id="clearSearchBtn">Clear</button>
             <button class="btn success" id="newItemBtn">New Item</button>
+          </div>
+        </section>
+        <section class="table-controls-section">
+          <div class="table-controls">
+            <div class="top-controls">
+              <button type="button" id="changeLogBtn" class="btn">Change Log</button>
+              <div class="filters-card" id="filtersCard">
+                <h3 class="table-subtitle">Filters</h3>
+                <div class="filter-controls">
+                  <label for="chipMinCount" class="chip-min-label">Min items for chip:</label>
+                  <select id="chipMinCount" class="chip-min-select" title="Minimum number of items before showing a chip">
+                    <option value="1">1+</option>
+                    <option value="2">2+</option>
+                    <option value="3">3+</option>
+                    <option value="5">5+</option>
+                    <option value="10">10+</option>
+                  </select>
+                </div>
+                <div id="typeSummary"></div>
+                <div class="filter-info">
+                  <div class="active-filters" id="activeFilters"></div>
+                  <div class="search-results-info" id="searchResultsInfo"></div>
+                </div>
+              </div>
+              <div class="items-per-page">
+                <span class="items-label">Items:</span>
+                <select class="pagination-select" id="itemsPerPage">
+                  <option vaue="10">10</option>
+                  <option value="15">15</option>
+                  <option selected value="25">25</option>
+                  <option value="50">50</option>
+                  <option value="100">100</option>
+                </select>
+              </div>
+            </div>
           </div>
         </section>
         <!-- =============================================================================
@@ -672,41 +705,6 @@
             </div>
           </div>
       </section>
-      <section class="table-controls-section">
-        <div class="table-controls">
-          <div class="top-controls">
-            <button type="button" id="changeLogBtn" class="btn">Change Log</button>
-            <div class="filters-card" id="filtersCard">
-              <h3 class="table-subtitle">Filters</h3>
-              <div class="filter-controls">
-                <label for="chipMinCount" class="chip-min-label">Min items for chip:</label>
-                <select id="chipMinCount" class="chip-min-select" title="Minimum number of items before showing a chip">
-                  <option value="1">1+</option>
-                  <option value="2">2+</option>
-                  <option value="3">3+</option>
-                  <option value="5">5+</option>
-                  <option value="10">10+</option>
-                </select>
-              </div>
-              <div id="typeSummary"></div>
-              <div class="filter-info">
-                <div class="active-filters" id="activeFilters"></div>
-                <div class="search-results-info" id="searchResultsInfo"></div>
-              </div>
-            </div>
-            <div class="items-per-page">
-              <span class="items-label">Items:</span>
-              <select class="pagination-select" id="itemsPerPage">
-                <option vaue="10">10</option>
-                <option value="15">15</option>
-                <option selected value="25">25</option>
-                <option value="50">50</option>
-                <option value="100">100</option>
-              </select>
-            </div>
-          </div>
-        </div>
-      </section>
     </section>
     <!-- =============================================================================
        TOTALS SECTION
@@ -722,7 +720,6 @@
          Values are updated automatically when inventory changes
          ============================================================================= -->
       <section class="totals-section">
-        <h2 class="section-title">Information Cards</h2>
         <div class="totals">
           <!-- Silver totals card -->
           <div class="total-card silver">

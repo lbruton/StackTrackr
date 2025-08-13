@@ -1,11 +1,15 @@
 # StackrTrackr — Changelog
 
-> **Latest release: v3.04.51**
+> **Latest release: v3.04.52**
 
 
 For upcoming work, see [announcements](announcements.md).
 
 ## 📋 Version History
+
+### Version 3.04.52 – Layout Refinements (2025-08-13)
+- Removed section titles from Spot Prices, Inventory, and Information Cards
+- Moved filter controls and Change Log button above the inventory table
 
 ### Version 3.04.51 – File Menu Color Updates (2025-08-13)
 - **File menu clarity**: Import buttons are now orange, merge buttons green, and export buttons remain blue
