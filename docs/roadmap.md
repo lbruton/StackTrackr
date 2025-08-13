@@ -10,6 +10,7 @@ This roadmap tracks upcoming goals without committing to specific patch numbers.
 - [ ] Correct issue with readme date inconsistencies
 
 ## 🐛 **BUG FIXES** (Non-critical)
+- [ ] Fuzzy search filter shows American Gold Eagle when typing "Eagle" or "Silver Eagle" - needs refinement
 - [ ] Error recovery procedures missing for critical failures
 - [ ] Data corruption detection and recovery mechanisms
 - [ ] Agent coordination timeout mechanisms
@@ -87,6 +88,8 @@ This roadmap tracks upcoming goals without committing to specific patch numbers.
 ## ✅ **COMPLETED ITEMS** (Archive)
 
 ### Completed Patch Goals (v3.04.xx)
+- ✅ **Search precision fix** - Fixed search logic where multi-word queries incorrectly matched partial terms (v3.04.71)
+- ✅ **Grouped filter chips implementation** - Added grouped name chips feature with toggle for consolidating similar items (v3.04.70)
 - ✅ **Mobile table scaling and darker light theme** - Improved responsive tables and updated light mode palette (v3.04.67)
 - ✅ **LocalStorage cleanup** - Startup routine removes unknown keys (v3.04.66)
 - ✅ **Autocomplete for item names** - LocalStorage-backed suggestions with fuzzy matching (v3.04.61)

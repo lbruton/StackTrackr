@@ -2859,6 +2859,7 @@ td input:checked + .slider:before {
   align-items: center;
   gap: var(--spacing);
   margin: 0;
+  position: relative;
 }
 
 .top-controls {
@@ -4075,11 +4076,21 @@ th {
 }
 
 .chip-control,
-.items-control {
+.items-control,
+.group-names-control {
   display: flex;
   align-items: center;
   gap: var(--spacing-xs);
   white-space: nowrap;
+}
+
+/* Anchor dropdown controls to lower right */
+.control-settings {
+  display: flex;
+  gap: var(--spacing);
+  justify-content: flex-end;
+  align-items: flex-end;
+  flex-wrap: wrap;
 }
 
 .chip-label,

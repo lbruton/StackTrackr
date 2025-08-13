@@ -348,6 +348,32 @@ const setupEventListeners = () => {
       );
     }
 
+    // Grouped name chips toggle
+    const groupNameChipsEl = document.getElementById('groupNameChips');
+    if (groupNameChipsEl && window.featureFlags) {
+      // Set initial state from feature flag
+      groupNameChipsEl.value = window.featureFlags.isEnabled('GROUPED_NAME_CHIPS') ? 'yes' : 'no';
+      
+      safeAttachListener(
+        groupNameChipsEl,
+        'change',
+        (e) => {
+          const isEnabled = e.target.value === 'yes';
+          // Update feature flag setting
+          if (isEnabled) {
+            window.featureFlags.enable('GROUPED_NAME_CHIPS');
+          } else {
+            window.featureFlags.disable('GROUPED_NAME_CHIPS');
+          }
+          // Refresh the chips display
+          if (typeof updateTypeSummary === 'function') {
+            updateTypeSummary();
+          }
+        },
+        'Grouped name chips toggle'
+      );
+    }
+
     if (elements.detailsCloseBtn) {
       safeAttachListener(
         elements.detailsCloseBtn,

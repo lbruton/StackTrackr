@@ -531,6 +531,13 @@
                     <option value="10">10+</option>
                   </select>
                 </div>
+                <div class="group-names-control">
+                  <label for="groupNameChips" class="chip-label">Group:</label>
+                  <select class="chip-select" id="groupNameChips" title="Group similar item names (e.g., 'American Silver Eagle (3)' instead of separate year chips)">
+                    <option value="yes" selected>Yes</option>
+                    <option value="no">No</option>
+                  </select>
+                </div>
                 <div class="items-control">
                   <label for="itemsPerPage" class="items-label">Table Rows:</label>
                   <select class="table-select" id="itemsPerPage">
@@ -2439,6 +2446,10 @@
     <script defer src="./js/about.js"></script>
     <script defer src="./js/customMapping.js"></script>
     <script defer src="./js/events.js"></script>
+    
+    <!-- Test Scripts (Development) -->
+    <script defer src="./tests/grouped-name-chips.test.js"></script>
+    
     <script defer src="./js/init.js"></script>
   </body>
 </html>
