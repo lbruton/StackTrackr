@@ -1,11 +1,14 @@
 # StackrTrackr — Changelog
 
-> **Latest release: v3.04.53**
+> **Latest release: v3.04.54**
 
 
 For upcoming work, see [announcements](announcements.md).
 
 ## 📋 Version History
+
+### Version 3.04.54 – Search Controls Rework (2025-08-15)
+- Reordered search controls with icon buttons and integrated Change Log
 
 ### Version 3.04.53 – Clickable Logo Reload (2025-08-14)
 - App logo now reloads the page when clicked

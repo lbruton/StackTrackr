@@ -180,7 +180,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // Search elements
     debugLog("Phase 6: Initializing search elements...");
     elements.searchInput = safeGetElement("searchInput");
-    elements.clearSearchBtn = safeGetElement("clearSearchBtn");
+    elements.clearBtn = safeGetElement("clearBtn");
     elements.newItemBtn = safeGetElement("newItemBtn");
     elements.searchResultsInfo = safeGetElement("searchResultsInfo");
 

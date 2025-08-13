@@ -1367,9 +1367,9 @@ const setupSearch = () => {
       );
     }
 
-    if (elements.clearSearchBtn) {
+    if (elements.clearBtn) {
       safeAttachListener(
-        elements.clearSearchBtn,
+        elements.clearBtn,
         "click",
         function () {
           if (typeof clearAllFilters === "function") {

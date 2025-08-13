@@ -478,20 +478,40 @@
            ============================================================================= -->
         <section class="search-section">
           <div class="search-container">
-            <!-- <button class="btn filters" id="filtersBtn">Filters</button> -->
+            <button
+              class="btn success icon-btn"
+              id="newItemBtn"
+              title="Add new item"
+              aria-label="Add new item"
+            >
+              ➕
+            </button>
             <input
               id="searchInput"
               placeholder="Search inventory by metal, name, type, purchase location, storage location, notes, date..."
               type="text"
             />
-            <button class="btn" id="clearSearchBtn">Clear</button>
-            <button class="btn success" id="newItemBtn">New Item</button>
+            <button
+              class="btn"
+              id="changeLogBtn"
+              title="Change log"
+              aria-label="Change log"
+            >
+              Change Log
+            </button>
+            <button
+              class="btn secondary icon-btn"
+              id="clearBtn"
+              title="Clear search"
+              aria-label="Clear search"
+            >
+              ×
+            </button>
           </div>
         </section>
         <section class="table-controls-section">
           <div class="table-controls">
             <div class="top-controls">
-              <button type="button" id="changeLogBtn" class="btn">Change Log</button>
               <div class="filters-card" id="filtersCard">
                 <h3 class="table-subtitle">Filters</h3>
                 <div class="filter-controls">
