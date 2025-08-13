@@ -6,6 +6,7 @@ This roadmap tracks upcoming goals without committing to specific patch numbers.
 - _No active patch goals at this time._
 
 ## Completed Patch Goals (v3.04.xx)
+- ✅ **Filter controls reorder** - Filters card nested between Change Log and items dropdown with chips constrained to one line (v3.04.47)
 - ✅ **Filter card layout stabilization** - Reapplied centered filters card with top-anchored controls and hidden chips when inactive (v3.04.46)
 - ✅ **Centered filters card refinements** - Items dropdown anchored left, chips single-line height, filters card centered (v3.04.45)
 - ✅ **Filters card and anchored controls** - Filters moved to centered card; controls anchored top; chips hidden when none (v3.04.44)
