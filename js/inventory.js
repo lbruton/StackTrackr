@@ -566,7 +566,8 @@ const filterLink = (field, value, color, displayValue = value, title, allowHtml 
 
 const getTypeColor = type => typeColors[type] || 'var(--type-other-bg)';
 const getPurchaseLocationColor = loc => getColor(purchaseLocationColors, loc);
-const getStorageLocationColor = loc => getColor(storageLocationColors, loc);
+const getStorageLocationColor = loc =>
+  loc === 'Unknown' ? 'var(--text-muted)' : getColor(storageLocationColors, loc);
 
 /**
  * Formats Purchase Location for table display, wrapping URLs in hyperlinks
@@ -1052,7 +1053,7 @@ const renderTable = () => {
         ${formatPurchaseLocation(item.purchaseLocation)}
       </td>
       <td class="shrink" data-column="storageLocation">
-        ${item.storageLocation === 'Unknown' ? '' : filterLink('storageLocation', item.storageLocation || 'Numista Import', getStorageLocationColor(item.storageLocation || 'Numista Import'))}
+        ${filterLink('storageLocation', item.storageLocation || 'Unknown', getStorageLocationColor(item.storageLocation || 'Unknown'))}
       </td>
       <td class="shrink" data-column="numista">${item.numistaId ? `<a href="https://en.numista.com/catalogue/pieces${item.numistaId}.html" target="_blank" rel="noopener" title="View on Numista">N# ${sanitizeHtml(item.numistaId)}</a>` : ''}</td>
       <td class="icon-col" data-column="collectable"><span class="collectable-status" role="button" tabindex="0" onclick="toggleCollectable(${originalIdx})" onkeydown="if(event.key==='Enter'||event.key===' ') toggleCollectable(${originalIdx})" aria-label="Toggle collectable status for ${sanitizeHtml(item.name)}" title="Toggle collectable status">${item.isCollectable ? '<svg class=\"collectable-icon icon-copper\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\"><circle cx=\"12\" cy=\"12\" r=\"10\"/></svg>' : '<svg class=\"collectable-icon icon-gold\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\"><path d=\"M3 3h18v18H3V3zm2 2v14h14V5H5zm5 10h6v2H10v-2zm2-8a2 2 0 100 4 2 2 0 000-4z\"/></svg>'}</span></td>
