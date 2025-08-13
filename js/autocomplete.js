@@ -1,8 +1,11 @@
 // Autocomplete module for StackrTrackr
 // Maintains a set of known bullion/coin names persisted to localStorage
 
-/** Predefined bullion and coin names */
-const DEFAULT_AUTOCOMPLETE_NAMES = [
+/**
+ * Predefined bullion and coin names
+ * Base list pulled from popular bullion series
+ */
+const BASE_AUTOCOMPLETE_NAMES = [
   "Silver American Eagle",
   "Gold American Eagle",
   "Platinum American Eagle",
@@ -102,8 +105,44 @@ const DEFAULT_AUTOCOMPLETE_NAMES = [
   "Silver Johnson Matthey Bar",
   "Gold Johnson Matthey Bar",
   "Platinum Johnson Matthey Bar",
-  "Palladium Johnson Matthey Bar"
+  "Palladium Johnson Matthey Bar",
 ];
+
+/** Additional autocomplete seeds derived from sample data */
+const NEW_AUTOCOMPLETE_ITEMS = [
+  "2024 1/20 oz Perth Mint Lunar Dragon",
+  "2022 1oz Tuvalu Black Flag The Rising Sun",
+  "2017 American Palladium Eagle 1 oz",
+  "2024 American Gold Eagle 1 oz",
+  "2024 American Platinum Eagle 1 oz",
+  "2024 American Silver Eagle",
+  "2023 Australia Kangaroo 1 oz",
+  "2023 Australia Kookaburra",
+  "2021 Australia Platypus",
+  "2022 Fiji Coca-Cola Bottle Cap",
+  "2024 2 oz Niue Star Wars Mandalorian",
+  "2021 10 oz Royal Canadian Mint Bar",
+  "2024 Canada Maple Leaf",
+  "2023 Canada Maple Leaf 1 oz",
+  "2024 Canadian Maple Leaf 1 oz",
+  "2024 Canada Maple Leaf 1/10 oz",
+  "2021 Niue Sonic the Hedgehog",
+  "2024 Germania Round",
+  "1 Gram PAMP Suisse Bar",
+  "1 oz PAMP Suisse Bar",
+  "2022 PAMP Suisse Bar 1 oz",
+  "2023 1/10 oz Valcambi Bar",
+  "2023 1/2 oz Baird & Co. Bar",
+  "2023 Lunar Dragon Bar",
+  "2022 South Africa Krugerrand 1/4 oz",
+  "2023 Silver Buffalo Round",
+  "2022 UK Britannia",
+];
+
+// Merge base list with new items, remove duplicates and sort for readability
+const DEFAULT_AUTOCOMPLETE_NAMES = [
+  ...new Set([...BASE_AUTOCOMPLETE_NAMES, ...NEW_AUTOCOMPLETE_ITEMS]),
+].sort();
 
 const AUTOCOMPLETE_KEY = "autocompleteNames";
 
