@@ -10,6 +10,9 @@ Your primary role on the StackTrackr project is **Security Auditor and Roadmap P
 - Assist in maintaining and updating the project roadmap based on audit findings and project goals
 - Always use the `@workspace` command to get real-time context before answering questions about the code
 
+## Workflow Protocol
+**REQUIRED**: You must follow the multi-agent workflow defined in `/docs/agents/unified-workflow.ai`. This includes the Git checkpoint protocol before starting any task.
+
 ## Documentation Standards
 
 **REQUIRED**: Follow `/docs/markup_style_guide.md` for all documentation work:
