@@ -971,6 +971,156 @@ const hideEmptyColumns = () => {
   });
 };
 
+/**
+ * Creates a table cell element with specified content and attributes
+ * @param {string} className - CSS class for the cell
+ * @param {string} dataColumn - data-column attribute value
+ * @param {string|HTMLElement} content - Cell content (text or HTML element)
+ * @param {Object} attributes - Additional attributes to set
+ * @returns {HTMLTableCellElement} The created cell element
+ */
+const createTableCell = (className, dataColumn, content, attributes = {}) => {
+  const cell = document.createElement('td');
+  cell.className = className;
+  cell.setAttribute('data-column', dataColumn);
+  
+  // Set additional attributes
+  Object.entries(attributes).forEach(([key, value]) => {
+    if (value !== null && value !== undefined) {
+      cell.setAttribute(key, value);
+    }
+  });
+  
+  // Set content
+  if (typeof content === 'string') {
+    cell.innerHTML = content;
+  } else if (content instanceof HTMLElement) {
+    cell.appendChild(content);
+  } else {
+    cell.textContent = content || '';
+  }
+  
+  return cell;
+};
+
+/**
+ * Creates a table row using DocumentFragment for optimal performance
+ * @param {Object} item - Inventory item data
+ * @param {number} originalIdx - Original index in inventory array
+ * @returns {HTMLTableRowElement} The created row element
+ */
+const createTableRowFragment = (item, originalIdx) => {
+  const row = document.createElement('tr');
+  row.setAttribute('data-index', originalIdx);
+  
+  // Calculate display values
+  const spotDisplay = item.isCollectable ? '—' : (item.spotPriceAtPurchase > 0 ? formatCurrency(item.spotPriceAtPurchase) : '—');
+  const spotValue = item.isCollectable ? '—' : (item.spotPriceAtPurchase > 0 ? item.spotPriceAtPurchase : '');
+  const premiumDisplay = item.isCollectable ? '—' : formatCurrency(item.totalPremium);
+  const premiumValue = item.isCollectable ? '—' : item.totalPremium;
+  
+  // Create cells using DocumentFragment
+  const fragment = document.createDocumentFragment();
+  
+  // Date cell
+  fragment.appendChild(createTableCell('shrink', 'date', 
+    filterLink('date', item.date, 'var(--text-primary)', item.date ? formatDisplayDate(item.date) : '—')
+  ));
+  
+  // Type cell
+  fragment.appendChild(createTableCell('shrink', 'type', 
+    filterLink('type', item.type, getTypeColor(item.type))
+  ));
+  
+  // Metal cell
+  fragment.appendChild(createTableCell('shrink', 'metal', 
+    filterLink('metal', item.composition || item.metal || 'Silver', METAL_COLORS[item.metal] || 'var(--primary)', getDisplayComposition(item.composition || item.metal || 'Silver')),
+    { 'data-metal': escapeAttribute(item.composition || item.metal || '') }
+  ));
+  
+  // Quantity cell
+  fragment.appendChild(createTableCell('shrink', 'qty', 
+    filterLink('qty', item.qty, 'var(--text-primary)')
+  ));
+  
+  // Name cell
+  fragment.appendChild(createTableCell('expand', 'name', 
+    filterLink('name', item.name, 'var(--text-primary)'),
+    { style: 'text-align: left;' }
+  ));
+  
+  // Weight cell
+  fragment.appendChild(createTableCell('shrink', 'weight', 
+    filterLink('weight', item.weight, 'var(--text-primary)', formatWeight(item.weight), item.weight < 1 ? 'Grams (g)' : 'Troy ounces (ozt)')
+  ));
+  
+  // Purchase Price cell
+  fragment.appendChild(createTableCell('shrink', 'purchasePrice', 
+    filterLink('price', item.price, 'var(--text-primary)', (item.price && item.price > 0) ? formatCurrency(item.price) : '—'),
+    { title: 'USD' }
+  ));
+  
+  // Spot Price cell
+  fragment.appendChild(createTableCell('shrink', 'spot', 
+    filterLink('spotPriceAtPurchase', spotValue, 'var(--text-primary)', spotDisplay),
+    { title: 'USD' }
+  ));
+  
+  // Premium cell
+  fragment.appendChild(createTableCell('shrink', 'premium', 
+    filterLink('totalPremium', premiumValue, 'var(--text-primary)', premiumDisplay),
+    { 
+      style: `color: ${item.isCollectable ? 'var(--text-muted)' : (item.totalPremium > 0 ? 'var(--warning)' : 'inherit')}`
+    }
+  ));
+  
+  // Purchase Location cell
+  fragment.appendChild(createTableCell('shrink', 'purchaseLocation', 
+    formatPurchaseLocation(item.purchaseLocation)
+  ));
+  
+  // Storage Location cell
+  fragment.appendChild(createTableCell('shrink', 'storageLocation', 
+    formatStorageLocation(item.storageLocation)
+  ));
+  
+  // Numista cell
+  const numistaContent = item.numistaId ? 
+    `<a href="#" onclick="openNumistaModal('${sanitizeHtml(item.numistaId)}', '${sanitizeHtml(item.name)}'); return false;" title="N#${sanitizeHtml(item.numistaId)} - open numista.com" class="catalog-link">N#</a>` :
+    '<span class="numista-empty">—</span>';
+  fragment.appendChild(createTableCell('shrink', 'numista', numistaContent));
+  
+  // Collectable status cell
+  const collectableIcon = item.isCollectable ? 
+    '<svg class="collectable-icon vault-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><circle cx="17" cy="11" r="2"/><rect x="6" y="8" width="6" height="8" rx="1"/></svg>' :
+    '<svg class="collectable-icon bar-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><rect x="3" y="8" width="18" height="8" rx="1"/><path d="M5 6h14l-2-2H7z"/></svg>';
+  
+  const collectableButton = `<span class="collectable-status" role="button" tabindex="0" data-index="${originalIdx}" aria-label="Toggle collectable status for ${sanitizeHtml(item.name)}" title="Toggle collectable status">${collectableIcon}</span>`;
+  fragment.appendChild(createTableCell('icon-col', 'collectable', collectableButton));
+  
+  // Notes cell
+  const notesButton = `<button class="icon-btn action-icon ${item.notes && item.notes.trim() ? 'has-notes' : ''}" role="button" tabindex="0" data-index="${originalIdx}" aria-label="View notes" title="View notes">
+    <svg class="icon-svg notes-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15V5a2 2 0 0 0-2-2H7L3 7v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2z"/></svg>
+  </button>`;
+  fragment.appendChild(createTableCell('icon-col', 'notes', notesButton));
+  
+  // Edit cell
+  const editButton = `<button class="icon-btn action-icon edit-icon" role="button" tabindex="0" data-index="${originalIdx}" aria-label="Edit ${sanitizeHtml(item.name)}" title="Edit item">
+    <svg class="icon-svg edit-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1.003 1.003 0 0 0 0-1.42l-2.34-2.34a1.003 1.003 0 0 0-1.42 0l-1.83 1.83 3.75 3.75 1.84-1.82z"/></svg>
+  </button>`;
+  fragment.appendChild(createTableCell('icon-col', 'edit', editButton));
+  
+  // Delete cell
+  const deleteButton = `<button class="icon-btn action-icon danger" role="button" tabindex="0" data-index="${originalIdx}" aria-label="Delete item" title="Delete item">
+    <svg class="icon-svg delete-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 7h12v13a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V7zm3-4h6l1 1h4v2H3V4h4l1-1z"/></svg>
+  </button>`;
+  fragment.appendChild(createTableCell('icon-col', 'delete', deleteButton));
+  
+  // Append all cells to row
+  row.appendChild(fragment);
+  return row;
+};
+
 const renderTable = () => {
   return monitorPerformance(() => {
     const filteredInventory = filterInventory();
@@ -980,66 +1130,101 @@ const renderTable = () => {
     const startIndex = (currentPage - 1) * itemsPerPage;
     const endIndex = Math.min(startIndex + itemsPerPage, sortedInventory.length);
 
-    const rows = [];
-
-    for (let i = startIndex; i < endIndex; i++) {
-      const item = sortedInventory[i];
-      const originalIdx = inventory.indexOf(item);
-  const spotDisplay = item.isCollectable ? '—' : (item.spotPriceAtPurchase > 0 ? formatCurrency(item.spotPriceAtPurchase) : '—');
-  const spotValue = item.isCollectable ? '—' : (item.spotPriceAtPurchase > 0 ? item.spotPriceAtPurchase : '');
-      const premiumDisplay = item.isCollectable ? '—' : formatCurrency(item.totalPremium);
-      const premiumValue = item.isCollectable ? '—' : item.totalPremium;
-
-  rows.push(`
-      <tr data-index="${originalIdx}">
-  <td class="shrink" data-column="date">${filterLink('date', item.date, 'var(--text-primary)', item.date ? formatDisplayDate(item.date) : '—')}</td>
-      <td class="shrink" data-column="type">${filterLink('type', item.type, getTypeColor(item.type))}</td>
-      <td class="shrink" data-column="metal" data-metal="${escapeAttribute(item.composition || item.metal || '')}">${filterLink('metal', item.composition || item.metal || 'Silver', METAL_COLORS[item.metal] || 'var(--primary)', getDisplayComposition(item.composition || item.metal || 'Silver'))}</td>
-      <td class="shrink" data-column="qty">${filterLink('qty', item.qty, 'var(--text-primary)')}</td>
-      <td class="expand" data-column="name" style="text-align: left;">${filterLink('name', item.name, 'var(--text-primary)')}</td>
-      <td class="shrink" data-column="weight">${filterLink('weight', item.weight, 'var(--text-primary)', formatWeight(item.weight), item.weight < 1 ? 'Grams (g)' : 'Troy ounces (ozt)')}</td>
-  <td class="shrink" data-column="purchasePrice" title="USD">${filterLink('price', item.price, 'var(--text-primary)', (item.price && item.price > 0) ? formatCurrency(item.price) : '—')}</td>
-      <td class="shrink" data-column="spot" title="USD">${filterLink('spotPriceAtPurchase', spotValue, 'var(--text-primary)', spotDisplay)}</td>
-      <td class="shrink" data-column="premium" style="color: ${item.isCollectable ? 'var(--text-muted)' : (item.totalPremium > 0 ? 'var(--warning)' : 'inherit')}">${filterLink('totalPremium', premiumValue, 'var(--text-primary)', premiumDisplay)}</td>
-      <td class="shrink" data-column="purchaseLocation">
-        ${formatPurchaseLocation(item.purchaseLocation)}
-      </td>
-      <td class="shrink" data-column="storageLocation">
-        ${formatStorageLocation(item.storageLocation)}
-      </td>
-      <td class="shrink" data-column="numista">${item.numistaId ? `
-        <a href="#" onclick="openNumistaModal('${sanitizeHtml(item.numistaId)}', '${sanitizeHtml(item.name)}'); return false;" title="N#${sanitizeHtml(item.numistaId)} - open numista.com" class="catalog-link">
-          N#
-        </a>
-      ` : '<span class="numista-empty">—</span>'}</td>
-  <td class="icon-col" data-column="collectable"><span class="collectable-status" role="button" tabindex="0" data-index="${originalIdx}" aria-label="Toggle collectable status for ${sanitizeHtml(item.name)}" title="Toggle collectable status">${item.isCollectable ? '<svg class=\"collectable-icon vault-icon\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\"><rect x=\"2\" y=\"4\" width=\"20\" height=\"16\" rx=\"2\"/><circle cx=\"17\" cy=\"11\" r=\"2\"/><rect x=\"6\" y=\"8\" width=\"6\" height=\"8\" rx=\"1\"/></svg>' : '<svg class=\"collectable-icon bar-icon\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\"><rect x=\"3\" y=\"8\" width=\"18\" height=\"8\" rx=\"1\"/><path d=\"M5 6h14l-2-2H7z\"/></svg>'}</span></td>
-      <td class="icon-col" data-column="notes"><button class="icon-btn action-icon ${item.notes && item.notes.trim() ? 'has-notes' : ''}" role="button" tabindex="0" data-index="${originalIdx}" aria-label="View notes" title="View notes">
-        <svg class="icon-svg notes-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15V5a2 2 0 0 0-2-2H7L3 7v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2z"/></svg>
-      </button></td>
-      <td class="icon-col" data-column="edit"><button class="icon-btn action-icon edit-icon" role="button" tabindex="0" data-index="${originalIdx}" aria-label="Edit ${sanitizeHtml(item.name)}" title="Edit item">
-        <svg class="icon-svg edit-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1.003 1.003 0 0 0 0-1.42l-2.34-2.34a1.003 1.003 0 0 0-1.42 0l-1.83 1.83 3.75 3.75 1.84-1.82z"/></svg>
-      </button></td>
-      <td class="icon-col" data-column="delete"><button class="icon-btn action-icon danger" role="button" tabindex="0" data-index="${originalIdx}" aria-label="Delete item" title="Delete item">
-        <svg class="icon-svg delete-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 7h12v13a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V7zm3-4h6l1 1h4v2H3V4h4l1-1z"/></svg>
-      </button></td>
-      </tr>
-      `);
-    }
-
-    const visibleCount = endIndex - startIndex;
-    const placeholders = Array.from(
-      { length: Math.max(0, itemsPerPage - visibleCount) },
-      () => '<tr><td class="shrink" colspan="16">&nbsp;</td></tr>'
-    );
-
     // Find tbody element directly if cached version fails
     const tbody = elements.inventoryTable || document.querySelector('#inventoryTable tbody');
     if (!tbody) {
       console.error('Could not find table tbody element');
       return;
     }
+
+    // Choose rendering method based on feature flag
+    const useDOMFragments = typeof isFeatureEnabled !== 'undefined' && isFeatureEnabled('DOM_FRAGMENT_RENDERING');
     
-    tbody.innerHTML = rows.concat(placeholders).join('');
+    if (useDOMFragments) {
+      // DOM Fragment approach for better performance
+      const fragment = document.createDocumentFragment();
+      
+      // Add data rows
+      for (let i = startIndex; i < endIndex; i++) {
+        const item = sortedInventory[i];
+        const originalIdx = inventory.indexOf(item);
+        fragment.appendChild(createTableRowFragment(item, originalIdx));
+      }
+      
+      // Add placeholder rows
+      const visibleCount = endIndex - startIndex;
+      const placeholderCount = Math.max(0, itemsPerPage - visibleCount);
+      for (let i = 0; i < placeholderCount; i++) {
+        const placeholderRow = document.createElement('tr');
+        const placeholderCell = document.createElement('td');
+        placeholderCell.className = 'shrink';
+        placeholderCell.setAttribute('colspan', '16');
+        placeholderCell.innerHTML = '&nbsp;';
+        placeholderRow.appendChild(placeholderCell);
+        fragment.appendChild(placeholderRow);
+      }
+      
+      // Clear and append all at once
+      tbody.innerHTML = '';
+      tbody.appendChild(fragment);
+      
+    } else {
+      // Legacy string concatenation approach (fallback)
+      const rows = [];
+
+      for (let i = startIndex; i < endIndex; i++) {
+        const item = sortedInventory[i];
+        const originalIdx = inventory.indexOf(item);
+        const spotDisplay = item.isCollectable ? '—' : (item.spotPriceAtPurchase > 0 ? formatCurrency(item.spotPriceAtPurchase) : '—');
+        const spotValue = item.isCollectable ? '—' : (item.spotPriceAtPurchase > 0 ? item.spotPriceAtPurchase : '');
+        const premiumDisplay = item.isCollectable ? '—' : formatCurrency(item.totalPremium);
+        const premiumValue = item.isCollectable ? '—' : item.totalPremium;
+
+        rows.push(`
+        <tr data-index="${originalIdx}">
+          <td class="shrink" data-column="date">${filterLink('date', item.date, 'var(--text-primary)', item.date ? formatDisplayDate(item.date) : '—')}</td>
+          <td class="shrink" data-column="type">${filterLink('type', item.type, getTypeColor(item.type))}</td>
+          <td class="shrink" data-column="metal" data-metal="${escapeAttribute(item.composition || item.metal || '')}">${filterLink('metal', item.composition || item.metal || 'Silver', METAL_COLORS[item.metal] || 'var(--primary)', getDisplayComposition(item.composition || item.metal || 'Silver'))}</td>
+          <td class="shrink" data-column="qty">${filterLink('qty', item.qty, 'var(--text-primary)')}</td>
+          <td class="expand" data-column="name" style="text-align: left;">${filterLink('name', item.name, 'var(--text-primary)')}</td>
+          <td class="shrink" data-column="weight">${filterLink('weight', item.weight, 'var(--text-primary)', formatWeight(item.weight), item.weight < 1 ? 'Grams (g)' : 'Troy ounces (ozt)')}</td>
+          <td class="shrink" data-column="purchasePrice" title="USD">${filterLink('price', item.price, 'var(--text-primary)', (item.price && item.price > 0) ? formatCurrency(item.price) : '—')}</td>
+          <td class="shrink" data-column="spot" title="USD">${filterLink('spotPriceAtPurchase', spotValue, 'var(--text-primary)', spotDisplay)}</td>
+          <td class="shrink" data-column="premium" style="color: ${item.isCollectable ? 'var(--text-muted)' : (item.totalPremium > 0 ? 'var(--warning)' : 'inherit')}">${filterLink('totalPremium', premiumValue, 'var(--text-primary)', premiumDisplay)}</td>
+          <td class="shrink" data-column="purchaseLocation">
+            ${formatPurchaseLocation(item.purchaseLocation)}
+          </td>
+          <td class="shrink" data-column="storageLocation">
+            ${formatStorageLocation(item.storageLocation)}
+          </td>
+          <td class="shrink" data-column="numista">${item.numistaId ? `
+            <a href="#" onclick="openNumistaModal('${sanitizeHtml(item.numistaId)}', '${sanitizeHtml(item.name)}'); return false;" title="N#${sanitizeHtml(item.numistaId)} - open numista.com" class="catalog-link">
+              N#
+            </a>
+          ` : '<span class="numista-empty">—</span>'}</td>
+          <td class="icon-col" data-column="collectable"><span class="collectable-status" role="button" tabindex="0" data-index="${originalIdx}" aria-label="Toggle collectable status for ${sanitizeHtml(item.name)}" title="Toggle collectable status">${item.isCollectable ? '<svg class=\"collectable-icon vault-icon\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\"><rect x=\"2\" y=\"4\" width=\"20\" height=\"16\" rx=\"2\"/><circle cx=\"17\" cy=\"11\" r=\"2\"/><rect x=\"6\" y=\"8\" width=\"6\" height=\"8\" rx=\"1\"/></svg>' : '<svg class=\"collectable-icon bar-icon\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\"><rect x=\"3\" y=\"8\" width=\"18\" height=\"8\" rx=\"1\"/><path d=\"M5 6h14l-2-2H7z\"/></svg>'}</span></td>
+          <td class="icon-col" data-column="notes"><button class="icon-btn action-icon ${item.notes && item.notes.trim() ? 'has-notes' : ''}" role="button" tabindex="0" data-index="${originalIdx}" aria-label="View notes" title="View notes">
+            <svg class="icon-svg notes-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15V5a2 2 0 0 0-2-2H7L3 7v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2z"/></svg>
+          </button></td>
+          <td class="icon-col" data-column="edit"><button class="icon-btn action-icon edit-icon" role="button" tabindex="0" data-index="${originalIdx}" aria-label="Edit ${sanitizeHtml(item.name)}" title="Edit item">
+            <svg class="icon-svg edit-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1.003 1.003 0 0 0 0-1.42l-2.34-2.34a1.003 1.003 0 0 0-1.42 0l-1.83 1.83 3.75 3.75 1.84-1.82z"/></svg>
+          </button></td>
+          <td class="icon-col" data-column="delete"><button class="icon-btn action-icon danger" role="button" tabindex="0" data-index="${originalIdx}" aria-label="Delete item" title="Delete item">
+            <svg class="icon-svg delete-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 7h12v13a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V7zm3-4h6l1 1h4v2H3V4h4l1-1z"/></svg>
+          </button></td>
+        </tr>
+        `);
+      }
+
+      const visibleCount = endIndex - startIndex;
+      const placeholders = Array.from(
+        { length: Math.max(0, itemsPerPage - visibleCount) },
+        () => '<tr><td class="shrink" colspan="16">&nbsp;</td></tr>'
+      );
+      
+      tbody.innerHTML = rows.concat(placeholders).join('');
+    }
+    
     hideEmptyColumns();
     updateTypeSummary(filteredInventory);
 
