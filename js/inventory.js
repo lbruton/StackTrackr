@@ -2439,3 +2439,32 @@ function optimizeStoragePhase1C(){
   }
 }
 if (typeof window !== 'undefined'){ window.optimizeStoragePhase1C = optimizeStoragePhase1C; }
+
+// Event delegation for keyboard navigation and button interactions
+document.addEventListener('keydown', (e) => {
+  const target = e.target;
+
+  if (target.matches('input') && (e.key === 'Enter' || e.key === 'Escape' || e.key === 'Tab')) {
+    e.preventDefault();
+    if (e.key === 'Enter') {
+      target.closest('.row').querySelector('.save-icon').click();
+    } else if (e.key === 'Escape') {
+      target.closest('.row').querySelector('.cancel-icon').click();
+    } else if (e.key === 'Tab') {
+      const nextFocus = e.shiftKey
+        ? target.closest('.row').querySelector('.cancel-icon')
+        : target.closest('.row').querySelector('.save-icon');
+      nextFocus.focus();
+    }
+  }
+
+  if (target.matches('.save-icon') && (e.key === 'Enter' || e.key === ' ')) {
+    e.preventDefault();
+    target.click();
+  }
+
+  if (target.matches('.cancel-icon') && (e.key === 'Enter' || e.key === ' ')) {
+    e.preventDefault();
+    target.click();
+  }
+});

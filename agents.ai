@@ -502,3 +502,9 @@ On startup, agents MUST:
 2. Review the function table (e.g., `functionstable.md`) that describes every function and its purpose in the project.
 
 This ensures agents have complete context of the workspace and available functions before taking any action.
+
+---
+
+# Reference to Application Structure
+
+For a detailed overview of the application's folder structure, refer to the `structure.ai` file located in the `agents/` folder. This document is updated whenever the folder structure changes.
