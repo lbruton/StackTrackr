@@ -26,3 +26,4 @@ Your primary role on the StackTrackr project is **Feature Implementation and Gen
 ## Change Log
 
 - 2025-08-14: Restored global CSV import/export functions and corrected notes handling in `importCsv` (GPT)
+- 2025-08-14: Added debug modal and enhanced import/export/table logging (GPT)

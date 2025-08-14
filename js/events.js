@@ -824,6 +824,19 @@ const setupEventListeners = () => {
       );
     }
 
+    if (elements.debugCloseBtn) {
+      safeAttachListener(
+        elements.debugCloseBtn,
+        "click",
+        () => {
+          if (typeof hideDebugModal === "function") {
+            hideDebugModal();
+          }
+        },
+        "Debug modal close button",
+      );
+    }
+
       if (elements.changeLogBtn) {
         safeAttachListener(
           elements.changeLogBtn,

@@ -974,8 +974,8 @@ const hideEmptyColumns = () => {
 const renderTable = () => {
   return monitorPerformance(() => {
     const filteredInventory = filterInventory();
-
     const sortedInventory = sortInventory(filteredInventory);
+    debugLog('renderTable start', sortedInventory.length, 'items');
     const totalPages = calculateTotalPages(sortedInventory);
     const startIndex = (currentPage - 1) * itemsPerPage;
     const endIndex = Math.min(startIndex + itemsPerPage, sortedInventory.length);
@@ -985,6 +985,7 @@ const renderTable = () => {
     for (let i = startIndex; i < endIndex; i++) {
       const item = sortedInventory[i];
       const originalIdx = inventory.indexOf(item);
+      debugLog('renderTable row', i, item.name);
   const spotDisplay = item.isCollectable ? '—' : (item.spotPriceAtPurchase > 0 ? formatCurrency(item.spotPriceAtPurchase) : '—');
   const spotValue = item.isCollectable ? '—' : (item.spotPriceAtPurchase > 0 ? item.spotPriceAtPurchase : '');
       const premiumDisplay = item.isCollectable ? '—' : formatCurrency(item.totalPremium);
@@ -1042,6 +1043,8 @@ const renderTable = () => {
     tbody.innerHTML = rows.concat(placeholders).join('');
     hideEmptyColumns();
     updateTypeSummary(filteredInventory);
+
+    debugLog('renderTable complete');
 
     // Update sort indicators
     const headers = document.querySelectorAll('#inventoryTable th');
@@ -1409,6 +1412,7 @@ const endImportProgress = () => {
  */
 const importCsv = (file, override = false) => {
   try {
+    debugLog('importCsv start', file.name);
     Papa.parse(file, {
       header: true,
       skipEmptyLines: true,
@@ -1421,6 +1425,7 @@ const importCsv = (file, override = false) => {
 
         for (const row of results.data) {
           processed++;
+          debugLog('importCsv row', processed, JSON.stringify(row));
           const compositionRaw = row['Composition'] || row['Metal'] || 'Silver';
           const composition = getCompositionFirstWords(compositionRaw);
           const metal = parseNumistaMetal(composition);
@@ -1540,6 +1545,10 @@ const importCsv = (file, override = false) => {
         renderTable();
         if (typeof updateStorageStats === 'function') {
           updateStorageStats();
+        }
+        debugLog('importCsv complete', deduped.length, 'items added');
+        if (localStorage.getItem('stackrtrackr.debug') && typeof window.showDebugModal === 'function') {
+          showDebugModal();
         }
       },
       error: function(error) {
@@ -1865,6 +1874,7 @@ const exportNumistaCsv = () => {
  * Exports current inventory to CSV format
  */
 const exportCsv = () => {
+  debugLog('exportCsv start', inventory.length, 'items');
   const timestamp = new Date().toISOString().slice(0,10).replace(/-/g,'');
   const headers = [
     "Metal","Name","Qty","Type","Weight(oz)","Purchase Price",
@@ -1915,6 +1925,10 @@ const exportCsv = () => {
   a.click();
   a.remove();
   URL.revokeObjectURL(url);
+  debugLog('exportCsv complete');
+  if (localStorage.getItem('stackrtrackr.debug') && typeof window.showDebugModal === 'function') {
+    showDebugModal();
+  }
 };
 
 /**
@@ -1925,6 +1939,7 @@ const exportCsv = () => {
  */
 const importJson = (file, override = false) => {
   const reader = new FileReader();
+  debugLog('importJson start', file.name);
 
   reader.onload = function(e) {
     try {
@@ -1945,6 +1960,7 @@ const importJson = (file, override = false) => {
 
       for (const [index, raw] of data.entries()) {
         processed++;
+        debugLog('importJson item', index + 1, JSON.stringify(raw));
 
         const compositionRaw = raw.composition || raw.metal || 'Silver';
         const composition = getCompositionFirstWords(compositionRaw);
@@ -2079,6 +2095,10 @@ const importJson = (file, override = false) => {
       if (typeof updateStorageStats === "function") {
         updateStorageStats();
       }
+      debugLog('importJson complete', deduped.length, 'items added');
+      if (localStorage.getItem('stackrtrackr.debug') && typeof window.showDebugModal === 'function') {
+        showDebugModal();
+      }
     } catch (error) {
       endImportProgress();
       alert("Error parsing JSON file: " + error.message);
@@ -2092,6 +2112,7 @@ const importJson = (file, override = false) => {
  * Exports current inventory to JSON format
  */
 const exportJson = () => {
+  debugLog('exportJson start', inventory.length, 'items');
   const timestamp = new Date().toISOString().slice(0,10).replace(/-/g,'');
 
   // Sort inventory by date (newest first) for export
@@ -2126,6 +2147,10 @@ const exportJson = () => {
   document.body.appendChild(a);
   a.click();
   a.remove();
+  debugLog('exportJson complete');
+  if (localStorage.getItem('stackrtrackr.debug') && typeof window.showDebugModal === 'function') {
+    showDebugModal();
+  }
 };
 
 /**

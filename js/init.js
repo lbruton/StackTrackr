@@ -161,6 +161,10 @@ document.addEventListener("DOMContentLoaded", () => {
     elements.cancelNotesBtn = safeGetElement("cancelNotes");
     elements.notesCloseBtn = safeGetElement("notesCloseBtn");
 
+    // Debug modal elements
+    elements.debugModal = safeGetElement("debugModal");
+    elements.debugCloseBtn = safeGetElement("debugCloseBtn");
+
     // Pagination elements
     debugLog("Phase 5: Initializing pagination elements...");
     elements.itemsPerPage = safeGetElement("itemsPerPage");

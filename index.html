@@ -2418,7 +2418,24 @@
         </div>
       </div>
     </div>
-    
+
+    <!-- =============================================================================
+       DEBUG LOG MODAL
+
+       Displays collected debug output when debug mode is enabled.
+       ============================================================================= -->
+    <div class="modal" id="debugModal" style="display: none">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Debug Log</h2>
+          <button aria-label="Close modal" class="modal-close" id="debugCloseBtn">×</button>
+        </div>
+        <div class="modal-body">
+          <pre id="debugModalContent"></pre>
+        </div>
+      </div>
+    </div>
+
     <!-- =============================================================================
        JAVASCRIPT MODULE LOADING
        
@@ -2450,6 +2467,7 @@
     <script defer src="./js/sorting.js"></script>
     <script defer src="./js/pagination.js"></script>
     <script defer src="./js/detailsModal.js"></script>
+    <script defer src="./js/debugModal.js"></script>
     <script defer src="./js/numista-modal.js"></script>
     <script defer src="./js/spot.js"></script>
     <script defer src="./js/api.js"></script>
