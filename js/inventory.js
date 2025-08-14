@@ -4,6 +4,10 @@
 // or when loaded via file:// protocol
 const LS_KEY = window.LS_KEY || "metalInventory";
 
+// Ensure inventory variable is accessible
+// Reference the global inventory variable or create one if needed
+let inventory = window.inventory || [];
+
 // Utility functions for localStorage access
 // These are duplicated here to ensure file:// protocol compatibility
 // even when script loading order is altered
@@ -2475,11 +2479,23 @@ function loadInventory() {
   try {
     // Use the loadData utility function which handles errors and fallbacks
     inventory = loadData(LS_KEY, []);
+    
+    // Update the global window.inventory reference
+    if (typeof window !== 'undefined') {
+      window.inventory = inventory;
+    }
+    
     console.log('Inventory loaded:', inventory);
     return inventory;
   } catch (error) {
     console.error('Failed to load inventory data:', error);
     inventory = []; // Reset to empty array on error
+    
+    // Update the global window.inventory reference
+    if (typeof window !== 'undefined') {
+      window.inventory = inventory;
+    }
+    
     return inventory;
   }
 }
