@@ -6,46 +6,50 @@
     el.addEventListener(type, handler);
   };
 
-  // App logo reloads page
-  attachOnce(get('appLogo'), 'click', () => window.location.reload());
+  const initButtons = () => {
+    // App logo reloads page
+    attachOnce(get('appLogo'), 'click', () => window.location.reload());
 
-  // Files modal
-  attachOnce(get('filesBtn'), 'click', (e) => {
-    e.preventDefault();
-    if (typeof showFilesModal === 'function') {
-      showFilesModal();
-    }
-  });
+    // Files modal
+    attachOnce(get('filesBtn'), 'click', (e) => {
+      e.preventDefault();
+      if (typeof showFilesModal === 'function') {
+        showFilesModal();
+      }
+    });
 
-  // About modal
-  attachOnce(get('aboutBtn'), 'click', (e) => {
-    e.preventDefault();
-    if (typeof showAboutModal === 'function') {
-      showAboutModal();
-    }
-  });
+    // About modal
+    attachOnce(get('aboutBtn'), 'click', (e) => {
+      e.preventDefault();
+      if (typeof showAboutModal === 'function') {
+        showAboutModal();
+      }
+    });
 
-  // API modal
-  attachOnce(get('apiBtn'), 'click', (e) => {
-    e.preventDefault();
-    if (typeof showApiModal === 'function') {
-      showApiModal();
-    }
-  });
+    // API modal
+    attachOnce(get('apiBtn'), 'click', (e) => {
+      e.preventDefault();
+      if (typeof showApiModal === 'function') {
+        showApiModal();
+      }
+    });
 
-  // Theme toggle
-  attachOnce(get('appearanceBtn'), 'click', (e) => {
-    e.preventDefault();
-    if (typeof toggleTheme === 'function') {
-      toggleTheme();
-    }
+    // Theme toggle
+    attachOnce(get('appearanceBtn'), 'click', (e) => {
+      e.preventDefault();
+      if (typeof toggleTheme === 'function') {
+        toggleTheme();
+      }
+      if (typeof updateThemeButton === 'function') {
+        updateThemeButton();
+      }
+    });
+
+    // Initial theme button appearance
     if (typeof updateThemeButton === 'function') {
       updateThemeButton();
     }
-  });
+  };
 
-  // Initial theme button appearance
-  if (typeof updateThemeButton === 'function') {
-    updateThemeButton();
-  }
+  document.addEventListener('DOMContentLoaded', initButtons);
 })();
