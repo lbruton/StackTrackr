@@ -32,6 +32,14 @@
 **Impact**: Eliminated memory leaks, centralized event handling
 
 ## 📋 Session Change Log
+**2025-08-14 06:50**:
+- 📁 **REORGANIZATION**: Moved agent-related folders into docs/agents/
+- ✅ Moved docs/patch/ → docs/agents/patch/
+- ✅ Moved docs/fixes/ → docs/agents/fixes/  
+- ✅ Moved docs/workflow/ → docs/agents/workflow/
+- ✅ Cleaner docs/ structure with logical agent content grouping
+- ✅ Updated all PATCH and HOTFIX documentation locations
+
 **2025-08-14 06:45**:
 - 🚨 **HOTFIX**: Fixed critical `filterValue` undefined error
 - ✅ Application now initializes properly without console errors

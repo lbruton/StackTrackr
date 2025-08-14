@@ -11,8 +11,8 @@
 
 **Every agent MUST execute on startup:**
 
-1. ✅ Read this file (`/docs/agents/agents.ai`) completely
-2. ✅ Check assigned tasks in `/docs/agents/tasks/`
+1. ✅ Read this file (`/agents.ai`) completely
+2. ✅ Check assigned tasks in `/agents/tasks/`
 3. ✅ Review current git status and create checkpoint if needed
 4. ✅ Report status using standard format
 5. ✅ Reference script loading order before any file modifications
@@ -143,7 +143,7 @@ METALS_DEV: {
 - `/css/`: Theme and component styles  
 - `/docs/`: Implementation guides and roadmap
 - `/tests/`: Browser-based test files
-- `/docs/agents/`: Agent workflows and memory
+- `/agents/`: Agent workflows and memory
 
 ---
 
@@ -171,9 +171,9 @@ METALS_DEV: {
 ## 🔗 **AGENT COORDINATION**
 
 ### Task Management
-- Check `/docs/agents/tasks/` for assignments
+- Check `/agents/tasks/` for assignments
 - Use git checkpoints before major changes
-- Reference `/docs/agents/unified-workflow.ai` for protocols
+- Reference `/agents/unified-workflow.ai` for protocols
 - Cross-reference `/docs/SCRIPT_LOADING_ORDER.md` for technical details
 
 ### Communication
@@ -186,8 +186,8 @@ METALS_DEV: {
 ## Workflow File Integration
 
 Agents MUST always check and follow the latest protocols in:
-- `/docs/agents/unified-workflow.ai` (primary source for task assignment, agent specialization, coordination, and efficiency rules)
-- `/docs/agents/workflow.ai` (quick delegation and agent role guide)
+- `/agents/unified-workflow.ai` (primary source for task assignment, agent specialization, coordination, and efficiency rules)
+- `/agents/workflow.ai` (quick delegation and agent role guide)
 
 ### Key Requirements:
 - Follow auto-initialization, git checkpoint, and dependency management protocols from unified-workflow.ai
@@ -319,9 +319,9 @@ See `docs/table-preservation-guide.md` for a full breakdown of table dependencie
 
 **📚 See also:**
 - `/docs/COMPLETE_FUNCTION_REFERENCE.md` - **COMPLETE FUNCTION INVENTORY & ARCHITECTURE MAP**
-- `/docs/agents/unified-workflow.ai` - Multi-agent coordination
+- `/agents/unified-workflow.ai` - Multi-agent coordination
 - `/docs/SCRIPT_LOADING_ORDER.md` - Detailed technical reference
-- `/docs/agents/tasks/` - Current task assignments
+- `/agents/tasks/` - Current task assignments
 
 ---
 
@@ -404,7 +404,7 @@ All MCP agents can now reference:
 
 ## Agent Memory & Status Files
 
-Each agent model MUST maintain its own individual memory/status file in `/docs/agents/`:
+Each agent model MUST maintain its own individual memory/status file in `/agents/`:
 - `gpt.ai`, `gpt-4o.ai`, `gpt-4-1.ai`, `gpt-5.ai` for GPT models
 - `claude.ai`, `claude-haiku.ai`, `claude-sonnet.ai`, `claude-opus.ai` for Claude models
 - `gemini.ai`, `gemini-pro.ai` for Gemini models
