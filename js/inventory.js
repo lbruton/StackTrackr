@@ -1477,7 +1477,7 @@ const importCsv = (file, override = false) => {
             date,
             purchaseLocation,
             storageLocation,
-            notes: finalNotes,
+            notes,
             spotPriceAtPurchase,
             premiumPerOz,
             totalPremium,
@@ -1541,8 +1541,6 @@ const importCsv = (file, override = false) => {
         if (typeof updateStorageStats === 'function') {
           updateStorageStats();
         }
-
-        this.value = '';
       },
       error: function(error) {
         endImportProgress();
@@ -1916,6 +1914,7 @@ const exportCsv = () => {
   document.body.appendChild(a);
   a.click();
   a.remove();
+  URL.revokeObjectURL(url);
 };
 
 /**
@@ -2229,6 +2228,12 @@ const exportPdf = () => {
 };
 // =============================================================================
 // Expose inventory actions globally for inline event handlers
+window.importCsv = importCsv;
+window.exportCsv = exportCsv;
+window.importJson = importJson;
+window.exportJson = exportJson;
+window.exportPdf = exportPdf;
+window.updateSummary = updateSummary;
 window.toggleCollectable = toggleCollectable;
 window.editItem = editItem;
 window.deleteItem = deleteItem;

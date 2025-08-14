@@ -22,3 +22,7 @@ Your primary role on the StackTrackr project is **Feature Implementation and Gen
 - Use backticks for code: `filename.js`, `function()`, `variable`
 - Use proper list formatting with hyphens (`-`)
 - Maintain consistent spacing and structure
+
+## Change Log
+
+- 2025-08-14: Restored global CSV import/export functions and corrected notes handling in `importCsv` (GPT)
