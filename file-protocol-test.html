@@ -2,170 +2,154 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta content="width=device-width, initial-scale=1, minimum-scale=1, user-scalable=yes" name="viewport">
-  <title>StackrTrackr - File Protocol Test</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>StackTrackr File Protocol Test</title>
+  
+  <!-- This test page verifies compatibility with the file:// protocol -->
+  <script>
+    // Track if we're using the file protocol
+    const isFileProtocol = window.location.protocol === 'file:';
+    
+    // Function to log test results
+    function logResult(testName, passed, details = '') {
+      const resultsList = document.getElementById('results');
+      const item = document.createElement('li');
+      item.className = passed ? 'pass' : 'fail';
+      item.innerHTML = `${passed ? '✅' : '❌'} ${testName}${details ? ': ' + details : ''}`;
+      resultsList.appendChild(item);
+      console.log(`${testName}: ${passed ? 'PASSED' : 'FAILED'}${details ? ' - ' + details : ''}`);
+    }
+    
+    // Run tests when page loads
+    window.addEventListener('DOMContentLoaded', function() {
+      // Update protocol info
+      document.getElementById('protocol').textContent = window.location.protocol;
+      document.getElementById('protocolStatus').className = isFileProtocol ? 'file' : 'http';
+      
+      // Test 1: localStorage access
+      try {
+        localStorage.setItem('test_key', 'test_value');
+        const value = localStorage.getItem('test_key');
+        localStorage.removeItem('test_key');
+        logResult('localStorage access', value === 'test_value');
+      } catch (e) {
+        logResult('localStorage access', false, e.message);
+      }
+      
+      // Test 2: LS_KEY constant is accessible
+      try {
+        // This should be defined in constants.js or have a fallback
+        logResult('LS_KEY constant', typeof LS_KEY !== 'undefined', typeof LS_KEY !== 'undefined' ? `Value: ${LS_KEY}` : 'Not defined');
+      } catch (e) {
+        logResult('LS_KEY constant', false, e.message);
+      }
+      
+      // Test 3: loadInventory function
+      try {
+        logResult('loadInventory function', typeof loadInventory === 'function');
+        if (typeof loadInventory === 'function') {
+          const result = loadInventory();
+          logResult('loadInventory execution', true, `Returned ${Array.isArray(result) ? 'array with ' + result.length + ' items' : typeof result}`);
+        }
+      } catch (e) {
+        logResult('loadInventory execution', false, e.message);
+      }
+    });
+  </script>
   <style>
     body {
-      font-family: Arial, sans-serif;
-      margin: 2rem;
-      line-height: 1.6;
-      color: #333;
-    }
-    h1 { color: #1a5fb4; }
-    .container {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
       max-width: 800px;
       margin: 0 auto;
-      background: #f5f5f5;
-      padding: 2rem;
-      border-radius: 8px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      padding: 20px;
+      line-height: 1.5;
     }
-    .success { color: green; }
-    .error { color: red; }
-    .warning { color: orange; }
-    button {
-      background: #1a5fb4;
+    h1 { margin-bottom: 5px; }
+    .subtitle { 
+      margin-top: 0; 
+      color: #666;
+      font-weight: normal;
+    }
+    .info-box {
+      background: #f5f5f5;
+      border-left: 4px solid #007bff;
+      padding: 10px 15px;
+      margin: 20px 0;
+    }
+    .protocol {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 3px;
+      font-weight: bold;
+    }
+    .file {
+      background: #ffc107;
+      color: #000;
+    }
+    .http {
+      background: #28a745;
+      color: #fff;
+    }
+    #results {
+      list-style: none;
+      padding: 0;
+    }
+    #results li {
+      padding: 8px 12px;
+      margin-bottom: 8px;
+      border-radius: 4px;
+    }
+    .pass {
+      background: #d4edda;
+      color: #155724;
+    }
+    .fail {
+      background: #f8d7da;
+      color: #721c24;
+    }
+    .test-btn {
+      background: #007bff;
       color: white;
       border: none;
-      padding: 10px 20px;
+      padding: 8px 16px;
       border-radius: 4px;
       cursor: pointer;
       font-size: 16px;
-      margin-top: 1rem;
     }
-    button:hover {
-      background: #15478f;
+    .test-btn:hover {
+      background: #0069d9;
     }
     code {
-      background: #eee;
-      padding: 2px 5px;
+      background: #f0f0f0;
+      padding: 2px 4px;
       border-radius: 3px;
-    }
-    .results {
-      margin-top: 1rem;
-      padding: 1rem;
-      background: #fff;
-      border-radius: 4px;
-      border: 1px solid #ddd;
-      max-height: 300px;
-      overflow: auto;
+      font-family: monospace;
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>StackrTrackr - File Protocol Test</h1>
-    <p>This page will help verify if StackrTrackr can run properly using the <code>file://</code> protocol.</p>
-    
-    <h2>File Protocol Status</h2>
-    <div id="protocolStatus"></div>
-    
-    <h2>LocalStorage Status</h2>
-    <div id="storageStatus"></div>
-    
-    <h2>Function Availability</h2>
-    <div id="functionStatus"></div>
-    
-    <button id="runMainApp">Run StackrTrackr Application</button>
-    
-    <h3>Test Results</h3>
-    <div class="results" id="results"></div>
+  <h1>StackTrackr File Protocol Test</h1>
+  <p class="subtitle">Testing compatibility with file:// protocol</p>
+  
+  <div class="info-box">
+    <p><strong>Current Protocol:</strong> <span class="protocol" id="protocolStatus"><span id="protocol">unknown</span></span></p>
+    <p><strong>Instructions:</strong> 
+      Open this file directly in your browser using the file:// protocol to verify compatibility.
+      You can also compare with http:// by using a local server.
+    </p>
   </div>
   
-  <script>
-    // Helper function for logging
-    function log(message, type = 'info') {
-      const results = document.getElementById('results');
-      const line = document.createElement('div');
-      line.textContent = message;
-      line.className = type;
-      results.appendChild(line);
-      console.log(`[${type.toUpperCase()}] ${message}`);
-    }
-    
-    // Check protocol
-    function checkProtocol() {
-      const protocolStatus = document.getElementById('protocolStatus');
-      const protocol = window.location.protocol;
-      
-      if (protocol === 'file:') {
-        protocolStatus.innerHTML = '<span class="success">✓ Running with file:// protocol</span>';
-        log('File protocol detected: ' + protocol);
-      } else {
-        protocolStatus.innerHTML = '<span class="warning">⚠ Running with ' + protocol + ' protocol</span>';
-        log('Non-file protocol detected: ' + protocol, 'warning');
-      }
-    }
-    
-    // Check localStorage
-    function checkStorage() {
-      const storageStatus = document.getElementById('storageStatus');
-      
-      try {
-        localStorage.setItem('test', 'test');
-        const value = localStorage.getItem('test');
-        localStorage.removeItem('test');
-        
-        if (value === 'test') {
-          storageStatus.innerHTML = '<span class="success">✓ LocalStorage is working properly</span>';
-          log('LocalStorage test passed');
-        } else {
-          storageStatus.innerHTML = '<span class="error">✗ LocalStorage not working correctly</span>';
-          log('LocalStorage test failed: values not matching', 'error');
-        }
-      } catch (e) {
-        storageStatus.innerHTML = '<span class="error">✗ LocalStorage error: ' + e.message + '</span>';
-        log('LocalStorage error: ' + e.message, 'error');
-      }
-    }
-    
-    // Check core functions
-    function checkFunctions() {
-      const functionStatus = document.getElementById('functionStatus');
-      const requiredFunctions = [
-        'loadInventory',
-        'renderTable',
-        'showDetailsModal',
-        'toggleCollectable'
-      ];
-      
-      let allAvailable = true;
-      let html = '<ul>';
-      
-      for (const func of requiredFunctions) {
-        if (typeof window[func] === 'function') {
-          html += `<li><span class="success">✓ ${func}</span></li>`;
-          log(`Function ${func} is available`);
-        } else {
-          html += `<li><span class="error">✗ ${func}</span></li>`;
-          log(`Function ${func} is NOT available`, 'error');
-          allAvailable = false;
-        }
-      }
-      
-      html += '</ul>';
-      functionStatus.innerHTML = html;
-      
-      if (!allAvailable) {
-        log('Not all functions are available. Try running the application to load them.', 'warning');
-      }
-    }
-    
-    // Run all tests
-    function runTests() {
-      checkProtocol();
-      checkStorage();
-      checkFunctions();
-    }
-    
-    // Run main application
-    document.getElementById('runMainApp').addEventListener('click', function() {
-      log('Opening main application...');
-      window.location.href = 'index.html';
-    });
-    
-    // Run tests when page loads
-    window.addEventListener('DOMContentLoaded', runTests);
-  </script>
+  <h2>Test Results</h2>
+  <ul id="results">
+    <!-- Results will be added here via JavaScript -->
+  </ul>
+  
+  <div>
+    <h2>Required Scripts</h2>
+    <p>Load the following scripts to run all tests:</p>
+    <script src="./js/file-protocol-fix.js"></script>
+    <script src="./js/constants.js"></script>
+    <script src="./js/inventory.js"></script>
+  </div>
 </body>
 </html>

@@ -1,7 +1,34 @@
 // INVENTORY FUNCTIONS
 
-// Constants for localStorage keys
-const LS_KEY = "stackrtrackr_inventory"; // Primary inventory storage key
+// Ensure LS_KEY is defined even when script loading order is altered
+// or when loaded via file:// protocol
+const LS_KEY = window.LS_KEY || "metalInventory";
+
+// Utility functions for localStorage access
+// These are duplicated here to ensure file:// protocol compatibility
+// even when script loading order is altered
+const saveData = (key, data) => {
+  try {
+    const jsonData = JSON.stringify(data);
+    localStorage.setItem(key, jsonData);
+    return true;
+  } catch (e) {
+    console.error('Error saving data:', e);
+    return false;
+  }
+};
+
+const loadData = (key, defaultValue = []) => {
+  try {
+    const raw = localStorage.getItem(key);
+    if (raw == null) return defaultValue;
+    return JSON.parse(raw);
+  } catch (e) {
+    console.error('Error loading data:', e);
+    return defaultValue;
+  }
+};
+
 /**
  * Creates a comprehensive backup ZIP file containing all application data
  * 
@@ -2445,43 +2472,18 @@ if (typeof window !== 'undefined'){ window.optimizeStoragePhase1C = optimizeStor
 
 // Define loadInventory function
 function loadInventory() {
-  const inventoryData = localStorage.getItem(LS_KEY);
-  if (inventoryData) {
-    try {
-      // Update the global inventory variable
-      inventory = JSON.parse(inventoryData);
-      console.log('Inventory loaded:', inventory);
-      return inventory;
-    } catch (error) {
-      console.error('Failed to parse inventory data:', error);
-      inventory = []; // Reset to empty array on error
-    }
-  } else {
-    console.warn('No inventory data found in localStorage.');
-    inventory = []; // Initialize as empty array if no data
+  try {
+    // Use the loadData utility function which handles errors and fallbacks
+    inventory = loadData(LS_KEY, []);
+    console.log('Inventory loaded:', inventory);
+    return inventory;
+  } catch (error) {
+    console.error('Failed to load inventory data:', error);
+    inventory = []; // Reset to empty array on error
+    return inventory;
   }
-  return inventory;
 }
 
 // Expose loadInventory globally
-// Expose critical functions globally
 window.loadInventory = loadInventory;
 window.renderTable = renderTable;
-
-// Register with module system for file:// protocol compatibility
-if (window.registerModule) {
-  window.registerModule('inventory', {
-    loadInventory,
-    renderTable,
-    toggleCollectable,
-    editItem,
-    deleteItem,
-    showNotes,
-    LS_KEY
-  });
-  
-  if (window.moduleLoadStatus) {
-    window.moduleLoadStatus.total++;
-    window.moduleLoadStatus.reportLoaded('inventory');
-  }
-}
