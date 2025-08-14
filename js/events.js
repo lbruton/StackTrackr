@@ -383,7 +383,7 @@ const setupEventListeners = () => {
         if (typeof renderActiveFilters === "function") {
           renderActiveFilters();
         }
-      }, 300);
+      }, SEARCH_DEBOUNCE_DELAY);
       safeAttachListener(elements.searchInput, "input", debouncedSearch, "Search Input");
     }
 

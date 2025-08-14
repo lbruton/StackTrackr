@@ -881,3 +881,13 @@ if (typeof window !== "undefined") {
   window.toggleFeature = toggleFeature;
   window.ALLOWED_STORAGE_KEYS = ALLOWED_STORAGE_KEYS;
 }
+
+// =============================================================================
+// SEARCH CONFIGURATION
+// =============================================================================
+
+/**
+ * Default debounce delay for search input (in milliseconds)
+ * @constant {number}
+ */
+const SEARCH_DEBOUNCE_DELAY = 300;
