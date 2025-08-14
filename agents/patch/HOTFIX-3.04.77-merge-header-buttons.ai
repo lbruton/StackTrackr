@@ -1,0 +1,4 @@
+Version: 3.04.77
+Date: 2025-08-14
+Agent: GPT
+Summary: Resolved merge conflicts with main branch, restoring header button initializer with modal fallbacks and removing orphaned export file.

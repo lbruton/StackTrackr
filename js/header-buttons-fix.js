@@ -16,8 +16,10 @@
   };
 
   const initButtons = () => {
+    // App logo reloads page
     attachOnce(get('appLogo'), 'click', () => window.location.reload());
 
+    // Files modal
     attachOnce(get('filesBtn'), 'click', (e) => {
       e.preventDefault();
       if (typeof showFilesModal === 'function') {
@@ -27,6 +29,7 @@
       }
     });
 
+    // About modal
     attachOnce(get('aboutBtn'), 'click', (e) => {
       e.preventDefault();
       if (typeof showAboutModal === 'function') {
@@ -36,6 +39,7 @@
       }
     });
 
+    // API modal
     attachOnce(get('apiBtn'), 'click', (e) => {
       e.preventDefault();
       if (typeof showApiModal === 'function') {
@@ -45,6 +49,7 @@
       }
     });
 
+    // Theme toggle
     attachOnce(get('appearanceBtn'), 'click', (e) => {
       e.preventDefault();
       if (typeof toggleTheme === 'function') {
@@ -55,6 +60,7 @@
       }
     });
 
+    // Initial theme button appearance
     if (typeof updateThemeButton === 'function') {
       updateThemeButton();
     }

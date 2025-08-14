@@ -38,3 +38,4 @@ To ensure all work remains within the context window, follow this protocol:
 
 - 2025-08-14: Ensured header button handlers initialize even if DOMContentLoaded has already fired so About/API modals open.
 - 2025-08-14: Added fallback modal handlers to header buttons for reliability.
+- 2025-08-14: Resolved merge conflicts with main branch for header button script and agent log.
