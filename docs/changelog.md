@@ -1,11 +1,17 @@
 # StackrTrackr — Changelog
 
-> **Latest release: v3.04.73**
+> **Latest release: v3.04.74**
 
 
 For upcoming work, see [announcements](announcements.md).
 
 ## 📋 Version History
+
+### Version 3.04.74 – CSV Import/Export Fixes (2025-08-14)
+- **Import Reliability**: Fixed undefined notes reference and removed unnecessary file input reset in `importCsv`
+- **Export Cleanup**: Released object URLs after CSV download to free resources
+- **Global Access**: Restored global exports for import/export functions and summary utilities
+- **Files Updated**: `js/inventory.js`, `js/constants.js`
 
 ### Version 3.04.73 – Changelog Loading Fix (2025-08-13)
 - **Hotfix**: Resolved "Unable to load changelog" error in version modal and about dialog
