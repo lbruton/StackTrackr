@@ -954,7 +954,7 @@ window.updateTypeSummary = updateTypeSummary;
 const hideEmptyColumns = () => {
   if (typeof document === 'undefined') return;
   const headers = document.querySelectorAll('#inventoryTable thead th[data-column]');
-  headers.forEach(header => {
+  headers.forEach((header) => {
     const col = header.getAttribute('data-column');
     const cells = document.querySelectorAll(`#inventoryTable tbody [data-column="${col}"]`);
     const allEmpty = cells.length > 0 && Array.from(cells).every(cell => {
@@ -2440,31 +2440,20 @@ function optimizeStoragePhase1C(){
 }
 if (typeof window !== 'undefined'){ window.optimizeStoragePhase1C = optimizeStoragePhase1C; }
 
-// Event delegation for keyboard navigation and button interactions
-document.addEventListener('keydown', (e) => {
-  const target = e.target;
-
-  if (target.matches('input') && (e.key === 'Enter' || e.key === 'Escape' || e.key === 'Tab')) {
-    e.preventDefault();
-    if (e.key === 'Enter') {
-      target.closest('.row').querySelector('.save-icon').click();
-    } else if (e.key === 'Escape') {
-      target.closest('.row').querySelector('.cancel-icon').click();
-    } else if (e.key === 'Tab') {
-      const nextFocus = e.shiftKey
-        ? target.closest('.row').querySelector('.cancel-icon')
-        : target.closest('.row').querySelector('.save-icon');
-      nextFocus.focus();
+// Define loadInventory function
+function loadInventory() {
+  const inventoryData = localStorage.getItem(LS_KEY);
+  if (inventoryData) {
+    try {
+      const inventory = JSON.parse(inventoryData);
+      console.log('Inventory loaded:', inventory);
+    } catch (error) {
+      console.error('Failed to parse inventory data:', error);
     }
+  } else {
+    console.warn('No inventory data found in localStorage.');
   }
+}
 
-  if (target.matches('.save-icon') && (e.key === 'Enter' || e.key === ' ')) {
-    e.preventDefault();
-    target.click();
-  }
-
-  if (target.matches('.cancel-icon') && (e.key === 'Enter' || e.key === ' ')) {
-    e.preventDefault();
-    target.click();
-  }
-});
+// Expose loadInventory globally
+window.loadInventory = loadInventory;

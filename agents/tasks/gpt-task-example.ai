@@ -1,0 +1,111 @@
+# Search Optimization Task for GPT
+**Version**: 1.0  
+**Created**: August 14, 2025  
+**Status**: Example Task Template
+
+---
+
+## 🎯 **TASK OVERVIEW**
+
+**Implement search debouncing and optimization to improve performance with large inventories.**
+
+### Objectives:
+1. Add debounce functionality to prevent excessive rendering during typing
+2. Optimize the search algorithm for better performance with 1000+ items
+3. Ensure backward compatibility with existing search features
+4. Update relevant event handlers to use the new implementation
+
+### Success Criteria:
+- Search feels responsive even with 5000+ inventory items
+- No visible lag during typing
+- All existing search features continue to work
+- Code is well-documented and follows project patterns
+
+---
+
+## 🛠️ **IMPLEMENTATION STEPS**
+
+### Phase 1: Create Debounce Utility (15 min)
+1. Add `debounce` function to `utils.js`
+2. Test with different timeouts to find optimal delay (300ms recommended)
+3. Document the utility function with JSDoc
+
+### Phase 2: Update Search Event Handlers (10 min)
+1. Modify `events.js` to use debounced search
+2. Ensure search still triggers immediately on Enter key
+3. Add visual feedback during search (optional)
+
+### Phase 3: Testing and Validation (5 min)
+1. Test with large datasets (1000+ items)
+2. Verify all search functionality still works
+3. Check for edge cases (empty search, special characters)
+
+---
+
+## 📁 **FILE LOCATIONS**
+
+- `js/utils.js`: Add debounce utility function
+- `js/events.js`: Update search event handlers
+- `js/search.js`: Optimize search algorithm if needed
+
+---
+
+## 📚 **TECHNICAL CONTEXT**
+
+### Current Search Implementation:
+```javascript
+// In events.js
+searchInput.addEventListener("input", function(e) {
+  filterInventory(e.target.value);
+  renderTable();
+});
+```
+
+### Desired Implementation:
+```javascript
+// In events.js
+const debouncedSearch = debounce(function(value) {
+  filterInventory(value);
+  renderTable();
+}, 300);
+
+searchInput.addEventListener("input", function(e) {
+  debouncedSearch(e.target.value);
+});
+
+// Handle Enter key separately for immediate search
+searchInput.addEventListener("keydown", function(e) {
+  if (e.key === "Enter") {
+    // Cancel any pending debounced search
+    debouncedSearch.cancel();
+    // Execute search immediately
+    filterInventory(e.target.value);
+    renderTable();
+  }
+});
+```
+
+---
+
+## 🔗 **DEPENDENCIES**
+
+- None - This task can be completed independently
+
+---
+
+## ✅ **COMPLETION CHECKLIST**
+
+Before considering this task complete:
+1. Create git checkpoint before starting implementation
+2. Implement debounce utility in `utils.js`
+3. Update search event handlers in `events.js`
+4. Test with large datasets
+5. Document changes and update any affected code
+6. Create git checkpoint after completion
+7. Update task status in `checklist.md`
+
+---
+
+**Assigned to**: GPT  
+**Priority**: High  
+**Due Date**: August 15, 2025

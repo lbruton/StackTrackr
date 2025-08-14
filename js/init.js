@@ -447,6 +447,27 @@ function setupBasicEventListeners() {
   debugLog("Basic event listeners setup complete");
 }
 
+// Define toggleCollectable function
+function toggleCollectable(itemId) {
+  const item = document.getElementById(itemId);
+  if (item) {
+    item.classList.toggle('collectable');
+  } else {
+    console.warn(`Item with ID ${itemId} not found.`);
+  }
+}
+
+// Define showDetailsModal function
+function showDetailsModal(itemId) {
+  const modal = document.getElementById('detailsModal');
+  if (modal) {
+    modal.style.display = 'block';
+    modal.querySelector('.modal-content').textContent = `Details for item: ${itemId}`;
+  } else {
+    console.warn('Details modal not found.');
+  }
+}
+
 // Make functions available globally for inline event handlers
 window.toggleCollectable = toggleCollectable;
 window.showDetailsModal = showDetailsModal;

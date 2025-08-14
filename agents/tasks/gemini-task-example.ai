@@ -1,0 +1,135 @@
+# Chart Optimization Task for Gemini
+**Version**: 1.0  
+**Created**: August 14, 2025  
+**Status**: Example Task Template
+
+---
+
+## 🎯 **TASK OVERVIEW**
+
+**Optimize chart rendering and add responsive behavior for better performance on all devices.**
+
+### Objectives:
+1. Optimize Chart.js configuration for better performance with large datasets
+2. Add responsive resizing behavior for charts in different viewports
+3. Implement lazy loading for charts to improve initial page load time
+4. Create consistent color theme across all chart types
+
+### Success Criteria:
+- Charts render in under 500ms with 1000+ data points
+- Charts properly resize on window resize events
+- Charts only load when visible in viewport
+- All charts maintain visual consistency with app theme
+
+---
+
+## 🛠️ **IMPLEMENTATION STEPS**
+
+### Phase 1: Chart Configuration Optimization (15 min)
+1. Update chart options in `charts.js` to use decimation for large datasets
+2. Optimize animation settings for better performance
+3. Add chart destruction before recreation to prevent memory leaks
+
+### Phase 2: Responsive Behavior (10 min)
+1. Add ResizeObserver to monitor container size changes
+2. Implement throttled resize handler for performance
+3. Set appropriate responsive options in Chart.js config
+
+### Phase 3: Lazy Loading Implementation (10 min)
+1. Create IntersectionObserver for chart containers
+2. Only initialize charts when they enter the viewport
+3. Add placeholder styling for unloaded charts
+
+### Phase 4: Testing and Validation (5 min)
+1. Test across multiple devices and screen sizes
+2. Verify memory usage doesn't increase with chart redraws
+3. Confirm charts maintain visual quality at all sizes
+
+---
+
+## 📁 **FILE LOCATIONS**
+
+- `js/charts.js`: Main file for chart implementation
+- `js/utils.js`: Add throttle utility function if needed
+- `js/theme.js`: Update chart colors to match theme system
+
+---
+
+## 📚 **TECHNICAL CONTEXT**
+
+### Current Chart Implementation:
+```javascript
+// In charts.js
+function createValueChart(container, data) {
+  const ctx = container.getContext('2d');
+  return new Chart(ctx, {
+    type: 'bar',
+    data: chartData,
+    options: {
+      // Basic options
+      responsive: true,
+      maintainAspectRatio: false
+    }
+  });
+}
+```
+
+### Desired Implementation:
+```javascript
+// In charts.js
+function createValueChart(container, data) {
+  // Clear any existing chart to prevent memory leaks
+  if (container.chart) {
+    container.chart.destroy();
+  }
+  
+  const ctx = container.getContext('2d');
+  const chart = new Chart(ctx, {
+    type: 'bar',
+    data: chartData,
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: {
+        duration: window.innerWidth < 768 ? 0 : 400 // Disable animations on mobile
+      },
+      plugins: {
+        decimation: {
+          enabled: data.datasets[0].data.length > 50,
+          algorithm: 'min-max'
+        }
+      }
+    }
+  });
+  
+  // Store chart instance for future reference
+  container.chart = chart;
+  return chart;
+}
+```
+
+---
+
+## 🔗 **DEPENDENCIES**
+
+- None - This task can be completed independently
+
+---
+
+## ✅ **COMPLETION CHECKLIST**
+
+Before considering this task complete:
+1. Create git checkpoint before starting implementation
+2. Optimize chart configuration in `charts.js`
+3. Add responsive resize handling
+4. Implement lazy loading with IntersectionObserver
+5. Update chart colors to match theme system
+6. Test across multiple viewport sizes
+7. Create git checkpoint after completion
+8. Update task status in `checklist.md`
+
+---
+
+**Assigned to**: Gemini  
+**Priority**: High  
+**Due Date**: August 15, 2025

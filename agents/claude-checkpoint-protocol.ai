@@ -1,0 +1,95 @@
+# Claude Git Checkpoint Protocol
+**Version**: 1.0  
+**Created**: August 14, 2025
+
+This document provides explicit instructions for Claude to follow when creating git checkpoints during the StackTrackr project workflow.
+
+## When to Create Checkpoints
+
+1. **BEFORE starting implementation** of any task
+2. **AFTER completing implementation** of any task
+3. When reaching a significant milestone in a multi-phase task
+4. Before any potentially risky changes
+
+## Checkpoint Format
+
+### Before Starting Implementation
+
+```bash
+git add -A
+git commit -m "Create checkpoint before [task name]
+
+- Current state: [brief description of current functionality]
+- About to implement: [what you're about to change]
+- Purpose: [why this change is needed]"
+```
+
+**Example:**
+```bash
+git add -A
+git commit -m "Create checkpoint before event delegation implementation
+
+- Current state: Using individual event listeners for each table row
+- About to implement: Event delegation pattern for table interactions
+- Purpose: Improve performance and simplify handler management"
+```
+
+### After Completing Implementation
+
+```bash
+git add -A
+git commit -m "Complete [task name]
+
+- Implemented: [summary of changes made]
+- Files modified: [list key files changed]
+- Testing: [verification steps performed]
+- Performance: [improvements if applicable]"
+```
+
+**Example:**
+```bash
+git add -A
+git commit -m "Complete event delegation implementation
+
+- Implemented: Event delegation for inventory table interactions
+- Files modified: js/events.js, js/init.js
+- Testing: Verified all table interactions work with dynamic content
+- Performance: Reduced memory usage by 40% with large inventories"
+```
+
+### For Milestone Completions
+
+```bash
+git add -A
+git commit -m "Milestone: [milestone name] in [task name]
+
+- Completed: [what was accomplished]
+- Next steps: [what's coming next]
+- Current status: [any issues or notes]"
+```
+
+## Common Mistakes to Avoid
+
+1. ❌ **DO NOT** use generic commit messages like "Update code" or "Fix issues"
+2. ❌ **DO NOT** skip creating checkpoints before starting tasks
+3. ❌ **DO NOT** combine multiple unrelated changes in one commit
+4. ❌ **DO NOT** omit explanations of changes made
+
+## Proper Documentation
+
+Always include:
+
+1. ✅ What was changed/implemented
+2. ✅ Why it was changed (purpose/goal)
+3. ✅ How it was verified/tested
+4. ✅ Any performance impacts or improvements
+5. ✅ Related files that were modified
+
+## Task Completion Process
+
+1. Create final checkpoint with comprehensive documentation
+2. Update task status in appropriate files (checklist.md)
+3. Create or update patch documentation if applicable
+4. Notify in the conversation that the task is complete
+
+Following this checkpoint protocol ensures consistent version control practices and makes it easier for all agents to understand the project's evolution.

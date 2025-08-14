@@ -1,0 +1,89 @@
+# GPT Git Checkpoint Protocol
+**Version**: 1.0  
+**Created**: August 14, 2025  
+**Status**: Required Reference for GPT
+
+> **🚨 CRITICAL**: GPT MUST follow this protocol before starting any task
+
+---
+
+## 📋 **MANDATORY GIT CHECKPOINT PROTOCOL**
+
+### When to Create a Git Checkpoint:
+1. Before starting any new task
+2. After completing a significant milestone
+3. Before making changes to critical files
+4. When switching between different tasks
+
+### Git Checkpoint Command Format:
+```bash
+git add -A && git commit -m "Checkpoint: [ACTION_VERB] [TASK_NAME]
+
+- Current state: [BRIEF_DESCRIPTION]
+- About to: [PLANNED_CHANGES]
+- [ADDITIONAL_CONTEXT]"
+```
+
+### Example Git Checkpoint Messages:
+
+For starting a new task:
+```bash
+git add -A && git commit -m "Checkpoint: Begin Phase 3 LocalStorage Batching
+
+- Current state includes backup and restore functions
+- About to add batching mechanism to inventory.js and utils.js
+- Part of performance optimization roadmap"
+```
+
+For completing a task:
+```bash
+git add -A && git commit -m "Complete Phase 3: LocalStorage Batching
+
+- Added batch operations for localStorage I/O
+- Implemented queue mechanism for write operations
+- Performance improved by 45% for bulk operations
+- All tests passing"
+```
+
+For critical file changes:
+```bash
+git add -A && git commit -m "Checkpoint: Before modifying core inventory.js
+
+- Current implementation uses direct localStorage access
+- About to refactor with batching pattern
+- Critical file - preserving current working state"
+```
+
+---
+
+## 📝 **HANDOFF FILE NAMING CONVENTION**
+
+### File Locations:
+- Task Files: `/agents/tasks/gpt-task-[NAME].ai`
+- Handoff Files: `/agents/tasks/gpt-handoff-[NAME].md`
+
+### Naming Convention:
+- All lowercase
+- Use hyphens to separate words
+- Descriptive but concise names
+- Include version number if applicable
+
+### Examples:
+- `gpt-task-search-optimization.ai`
+- `gpt-handoff-localstorage-batching.md`
+- `gpt-task-debugging-v2.ai`
+
+---
+
+## ✅ **PRE-TASK CHECKLIST**
+
+Before beginning any task, GPT MUST:
+
+1. Create a git checkpoint using the format above
+2. Verify all required files exist or create them
+3. Follow the script loading order in `agents.ai`
+4. Document planned changes in a structured format
+5. Check for dependencies on other tasks
+6. Report status using standard format from `unified-workflow.ai`
+
+This protocol is MANDATORY and must be followed for ALL tasks.

@@ -2006,7 +2006,7 @@ const getStorageReportCSS = () => {
         z-index: 1000;
     }
     
-    .modal-content-large {
+    .modal-content_large {
         background: #f9fafb;
         border-radius: 0.5rem;
         width: 90%;
@@ -2185,7 +2185,7 @@ const getStorageReportCSS = () => {
             gap: 0.5rem;
         }
         
-        .modal-content-large {
+        .modal-content_large {
             width: 95%;
             max-height: 90%;
         }
@@ -2542,3 +2542,30 @@ if (typeof window !== 'undefined') {
   window.updateSpotTimestamp = updateSpotTimestamp;
   window.cleanupStorage = cleanupStorage;
 }
+
+// LocalStorage Batching Utility
+const localStorageQueue = [];
+let localStorageTimer = null;
+
+/**
+ * Adds an operation to the LocalStorage queue and processes it in batches.
+ *
+ * @param {Function} operation - A function that performs a LocalStorage operation.
+ */
+const batchLocalStorage = (operation) => {
+  localStorageQueue.push(operation);
+
+  if (!localStorageTimer) {
+    localStorageTimer = setTimeout(() => {
+      while (localStorageQueue.length > 0) {
+        const op = localStorageQueue.shift();
+        try {
+          op();
+        } catch (error) {
+          console.error("LocalStorage operation failed:", error);
+        }
+      }
+      localStorageTimer = null;
+    }, 100); // Process queue every 100ms
+  }
+};
