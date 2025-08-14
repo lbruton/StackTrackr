@@ -395,7 +395,8 @@ const setupEventListeners = () => {
     debugLog("Setting up header buttons...");
 
     // App Logo
-    if (elements.appLogo) {
+    if (elements.appLogo && !elements.appLogo.dataset.initialized) {
+      elements.appLogo.dataset.initialized = "true";
       safeAttachListener(
         elements.appLogo,
         "click",
@@ -405,7 +406,8 @@ const setupEventListeners = () => {
     }
 
     // Files Button
-    if (elements.filesBtn) {
+    if (elements.filesBtn && !elements.filesBtn.dataset.initialized) {
+      elements.filesBtn.dataset.initialized = "true";
       safeAttachListener(
         elements.filesBtn,
         "click",
@@ -418,12 +420,13 @@ const setupEventListeners = () => {
         },
         "Files Button",
       );
-    } else {
+    } else if (!elements.filesBtn) {
       console.error("Files button element not found!");
     }
 
     // About Button
-    if (elements.aboutBtn) {
+    if (elements.aboutBtn && !elements.aboutBtn.dataset.initialized) {
+      elements.aboutBtn.dataset.initialized = "true";
       safeAttachListener(
         elements.aboutBtn,
         "click",
@@ -438,7 +441,8 @@ const setupEventListeners = () => {
     }
 
     // API Button
-    if (elements.apiBtn) {
+    if (elements.apiBtn && !elements.apiBtn.dataset.initialized) {
+      elements.apiBtn.dataset.initialized = "true";
       safeAttachListener(
         elements.apiBtn,
         "click",
@@ -1823,7 +1827,8 @@ const setupThemeToggle = () => {
         });
     }
 
-    if (elements.appearanceBtn) {
+    if (elements.appearanceBtn && !elements.appearanceBtn.dataset.initialized) {
+      elements.appearanceBtn.dataset.initialized = "true";
       safeAttachListener(
         elements.appearanceBtn,
         "click",

@@ -1,0 +1,3 @@
+# GPT Codex
+
+- 2025-08-14: Added modal fallback logic in `header-buttons-fix.js` to ensure header buttons open reliably.

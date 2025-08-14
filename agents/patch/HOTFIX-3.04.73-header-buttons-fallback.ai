@@ -1,0 +1,4 @@
+Version: 3.04.73
+Date: 2025-08-14
+Agent: GPT
+Summary: Added fallback modal handling in header button initializer so Files, About, and API buttons open even without global handlers.
