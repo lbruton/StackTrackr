@@ -2461,5 +2461,24 @@ function loadInventory() {
 }
 
 // Expose loadInventory globally
+// Expose critical functions globally
 window.loadInventory = loadInventory;
 window.renderTable = renderTable;
+
+// Register with module system for file:// protocol compatibility
+if (window.registerModule) {
+  window.registerModule('inventory', {
+    loadInventory,
+    renderTable,
+    toggleCollectable,
+    editItem,
+    deleteItem,
+    showNotes,
+    LS_KEY
+  });
+  
+  if (window.moduleLoadStatus) {
+    window.moduleLoadStatus.total++;
+    window.moduleLoadStatus.reportLoaded('inventory');
+  }
+}

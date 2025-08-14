@@ -322,14 +322,48 @@ document.addEventListener("DOMContentLoaded", () => {
       elements.itemDate.value = todayStr();
     }
 
-    // Load data
-    loadInventory();
-    if (typeof sanitizeTablesOnLoad === "function") {
-      sanitizeTablesOnLoad();
+    // Load data - with file protocol safety
+    try {
+      if (typeof loadInventory !== "function") {
+        console.error("loadInventory function not found");
+        throw new Error("Can't find variable: loadInventory");
+      }
+      
+      // Try loading inventory with enhanced error handling
+      loadInventory();
+      console.log("Inventory loaded successfully:", inventory ? inventory.length : 0, "items");
+      
+      if (typeof sanitizeTablesOnLoad === "function") {
+        sanitizeTablesOnLoad();
+      }
+      
+      if (Array.isArray(inventory)) {
+        inventory.forEach((i) => {
+          if (i && (i.composition || i.metal)) {
+            addCompositionOption(i.composition || i.metal);
+          }
+        });
+      } else {
+        console.warn("Inventory is not an array");
+      }
+      
+      refreshCompositionOptions();
+      loadSpotHistory();
+    } catch (error) {
+      console.error("Error loading inventory:", error);
+      
+      // Attempt recovery for file:// protocol
+      if (window.location.protocol === 'file:') {
+        console.warn("Attempting recovery for file:// protocol");
+        setTimeout(() => {
+          console.log("Retrying loadInventory");
+          if (typeof loadInventory === "function") {
+            loadInventory();
+            renderTable();
+          }
+        }, 1000);
+      }
     }
-    inventory.forEach((i) => addCompositionOption(i.composition || i.metal));
-    refreshCompositionOptions();
-    loadSpotHistory();
 
     // Initialize API system
     apiConfig = loadApiConfig();
