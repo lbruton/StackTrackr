@@ -7,11 +7,13 @@
 
 ### 1. Script Loading Order
 - **Problem**: Scripts were being loaded in an incorrect order, causing dependency issues
-- **Solution**: Reorganized script tags in index.html to follow proper dependency chain:
-  1. Core constants and configuration (constants.js, state.js, utils.js)
-  2. Feature modules (theme.js, search.js, etc.)
-  3. Core modules (api.js, spot.js, inventory.js)
-  4. Event handlers and initialization (events.js, init.js)
+- **Solution**: Restored the original working script loading order in index.html:
+  1. debug-log.js - For early logging capabilities
+  2. constants.js, state.js, utils.js - Core configuration
+  3. Feature modules - fuzzy-search.js, autocomplete.js, etc.
+  4. Core modules - spot.js, api.js, inventory.js
+  5. events.js - Event handlers
+  6. init.js - Application initialization (must be loaded last)
 
 ### 2. File Protocol (file://) Compatibility
 - **Problem**: Application failed when opened directly from filesystem using file:// protocol
@@ -71,6 +73,16 @@
 4. **js/init.js**
    - Removed duplicate function implementations
    - Added clarifying comments
+
+## Critical Learning: Script Loading Order
+
+The most important lesson from these fixes is the critical importance of script loading order. Despite using `defer` attributes (which should load in order), the specific sequence is vital:
+
+1. **init.js must load last** - This ensures all other functions and variables are defined before initialization
+2. **debug-log.js should load early** - For proper error logging during the loading process
+3. **constants.js, state.js, utils.js must load before dependent modules** - These define core variables and functions
+
+Even minor changes to this order can cause cascading failures, especially when loading via file:// protocol where timing is less predictable. Always maintain the exact loading sequence that's known to work.
 
 ## Future Recommendations
 
