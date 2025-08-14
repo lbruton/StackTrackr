@@ -1445,6 +1445,7 @@ const showFilesModal = () => {
   const modal = document.getElementById("filesModal");
   if (modal) {
     modal.style.display = "flex";
+    document.body.style.overflow = "hidden";
   }
 };
 
@@ -1452,6 +1453,7 @@ const hideFilesModal = () => {
   const modal = document.getElementById("filesModal");
   if (modal) {
     modal.style.display = "none";
+    document.body.style.overflow = "";
   }
 };
 

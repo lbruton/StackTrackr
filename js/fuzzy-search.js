@@ -187,13 +187,16 @@ const fuzzySearch = (query, targets, options = {}) => {
   return results.slice(0, maxResults);
 };
 
-// Exporting functions for external use
-module.exports = {
-  normalizeString,
-  tokenizeWords,
-  generateNGrams,
-  calculateLevenshteinDistance,
-  fuzzyMatch,
-  fuzzySearch,
-};
+// Make functions available globally instead of using Node.js exports
+// This fixes "Can't find variable: module" when running in browsers
+if (typeof window !== 'undefined') {
+  window.fuzzySearch = {
+    normalizeString,
+    tokenizeWords,
+    generateNGrams,
+    calculateLevenshteinDistance,
+    fuzzyMatch,
+    fuzzySearch
+  };
+}
 

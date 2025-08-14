@@ -5,33 +5,47 @@
 const LS_KEY = window.LS_KEY || "metalInventory";
 
 // Ensure inventory variable is accessible
-// Reference the global inventory variable or create one if needed
-let inventory = window.inventory || [];
+// Reference the global inventory variable (declared in state.js)
+// Don't redeclare - just ensure we have access to it
+if (typeof inventory === 'undefined') {
+  window.inventory = [];
+}
 
-// Utility functions for localStorage access
-// These are duplicated here to ensure file:// protocol compatibility
-// even when script loading order is altered
-const saveData = (key, data) => {
-  try {
-    const jsonData = JSON.stringify(data);
-    localStorage.setItem(key, jsonData);
-    return true;
-  } catch (e) {
-    console.error('Error saving data:', e);
-    return false;
-  }
-};
+// Ensure window.inventory is synchronized 
+window.inventory = window.inventory || inventory || [];
 
-const loadData = (key, defaultValue = []) => {
-  try {
-    const raw = localStorage.getItem(key);
-    if (raw == null) return defaultValue;
-    return JSON.parse(raw);
-  } catch (e) {
-    console.error('Error loading data:', e);
-    return defaultValue;
-  }
-};
+// Get references to utility functions without overriding existing implementations
+// Only create fallbacks if the functions don't already exist
+// This prevents conflicts between utils.js and inventory.js
+if (typeof window.saveData !== 'function') {
+  window.saveData = (key, data) => {
+    try {
+      const jsonData = JSON.stringify(data);
+      localStorage.setItem(key, jsonData);
+      return true;
+    } catch (e) {
+      console.error('Error saving data:', e);
+      return false;
+    }
+  };
+}
+
+if (typeof window.loadData !== 'function') {
+  window.loadData = (key, defaultValue = []) => {
+    try {
+      const raw = localStorage.getItem(key);
+      if (raw == null) return defaultValue;
+      return JSON.parse(raw);
+    } catch (e) {
+      console.error('Error loading data:', e);
+      return defaultValue;
+    }
+  };
+}
+
+// Use the global function references
+const saveData = window.saveData;
+const loadData = window.loadData;
 
 /**
  * Creates a comprehensive backup ZIP file containing all application data
@@ -436,6 +450,11 @@ const saveInventory = () => {
   // CatalogManager handles its own saving, no need to explicitly save catalogMap
 };
 
+// Make saveInventory globally accessible
+if (typeof window !== 'undefined') {
+  window.saveInventory = saveInventory;
+}
+
 /**
  * Removes non-alphanumeric characters from inventory records.
  *
@@ -443,7 +462,11 @@ const saveInventory = () => {
  */
 const sanitizeTablesOnLoad = () => {
   inventory = inventory.map(item => sanitizeObjectFields(item));
+};
 
+// Make sanitizeTablesOnLoad globally accessible
+if (typeof window !== 'undefined') {
+  window.sanitizeTablesOnLoad = sanitizeTablesOnLoad;
 };
 
 /**
@@ -460,7 +483,19 @@ const sanitizeTablesOnLoad = () => {
  * @throws {Error} Logs errors to console if localStorage access fails
  */
 const loadInventory = () => {
+  // Log that the real implementation is being called
+  if (typeof debugLog === 'function') {
+    debugLog('Real loadInventory implementation called');
+  } else {
+    console.log('[DEBUG] Real loadInventory implementation called');
+  }
+  
   const data = loadData(LS_KEY, []);
+  
+  // Expose the function globally as early as possible
+  if (typeof window !== 'undefined') {
+    window.loadInventory = loadInventory;
+  }
   // Migrate legacy data to include new fields
   inventory = data.map(item => {
     let normalized;
@@ -1290,6 +1325,11 @@ const renderTable = () => {
  * Calculates and updates all financial summary displays across the application
  */
 const updateSummary = () => {
+  // Expose globally to ensure it's available to other modules
+  if (typeof window !== 'undefined') {
+    window.updateSummary = updateSummary;
+  }
+  
   /**
    * Calculates financial metrics for specified metal type
    * 
@@ -1555,6 +1595,11 @@ const toggleCollectable = (idx) => {
   const oldItem = { ...item };
   const wasCollectable = item.isCollectable;
   const isCollectable = !wasCollectable;
+  
+  // Expose globally so it's available to inline event handlers
+  if (typeof window !== 'undefined') {
+    window.toggleCollectable = toggleCollectable;
+  }
 
   // If toggling from collectable to non-collectable
   if (wasCollectable && !isCollectable) {
@@ -2474,32 +2519,51 @@ function optimizeStoragePhase1C(){
 }
 if (typeof window !== 'undefined'){ window.optimizeStoragePhase1C = optimizeStoragePhase1C; }
 
-// Define loadInventory function
-function loadInventory() {
-  try {
-    // Use the loadData utility function which handles errors and fallbacks
-    inventory = loadData(LS_KEY, []);
-    
-    // Update the global window.inventory reference
-    if (typeof window !== 'undefined') {
+// This duplicate loadInventory function was causing conflicts
+// Removing it and relying on the existing implementation above
+// The original implementation includes data migration which this one lacks
+if (typeof window !== 'undefined' && !window.loadInventory) { 
+  window.loadInventory = function fallbackLoadInventory() {
+    try {
+      // Use the loadData utility function which handles errors and fallbacks
+      inventory = loadData(LS_KEY, []);
+      
+      // Update the global window.inventory reference
       window.inventory = inventory;
+      
+      console.log('Inventory loaded:', inventory);
+      return inventory;
+    } catch (error) {
+      console.error('Failed to load inventory data:', error);
+      inventory = []; // Reset to empty array on error
+      
+      // Update the global window.inventory reference
+      if (typeof window !== 'undefined') {
+        window.inventory = inventory;
+      }
+      
+      return inventory;
     }
-    
-    console.log('Inventory loaded:', inventory);
-    return inventory;
-  } catch (error) {
-    console.error('Failed to load inventory data:', error);
-    inventory = []; // Reset to empty array on error
-    
-    // Update the global window.inventory reference
-    if (typeof window !== 'undefined') {
-      window.inventory = inventory;
-    }
-    
-    return inventory;
-  }
+  };
 }
-
-// Expose loadInventory globally
-window.loadInventory = loadInventory;
 window.renderTable = renderTable;
+
+// =============================================================================
+// GLOBAL FUNCTION EXPOSURE
+// =============================================================================
+
+// Expose import/export functions globally
+window.importCsv = importCsv;
+window.importJson = importJson;
+window.importNumistaCsv = importNumistaCsv;
+window.exportCsv = exportCsv;
+window.exportJson = exportJson;
+window.exportNumistaCsv = exportNumistaCsv;
+window.exportPdf = exportPdf;
+
+// Expose utility functions globally
+window.startImportProgress = startImportProgress;
+window.updateImportProgress = updateImportProgress;
+window.endImportProgress = endImportProgress;
+
+console.log("✓ All import/export functions exposed globally");

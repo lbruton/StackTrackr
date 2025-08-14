@@ -177,7 +177,23 @@ const fetchSpotPrice = () => {
     updateSpotCardColor(metalConfig.key, spotPrices[metalConfig.key]);
   });
 
-  updateSummary();
+  // Call updateSummary if it exists, otherwise wait for it
+  if (typeof updateSummary === 'function') {
+    updateSummary();
+  } else {
+    console.warn('updateSummary not available, will update later');
+    // Try again after a short delay
+    setTimeout(() => {
+      if (typeof updateSummary === 'function') {
+        updateSummary();
+      }
+    }, 100);
+  }
+  
+  // Make function globally available
+  if (typeof window !== 'undefined') {
+    window.fetchSpotPrice = fetchSpotPrice;
+  }
 };
 
 /**

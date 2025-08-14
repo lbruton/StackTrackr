@@ -128,6 +128,11 @@ const debounce = (func, wait) => {
     }
   };
 
+  // Expose globally to prevent duplicate implementations
+  if (typeof window !== 'undefined') {
+    window.debounce = debounce;
+  }
+  
   return debounced;
 };
 

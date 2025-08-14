@@ -116,10 +116,21 @@ const loadAnnouncements = async () => {
 
   if (!latestList && !roadmapTargets.length) return;
 
+  // Check if running via file:// protocol
+  const isFileProtocol = window.location.protocol === 'file:';
+  
   try {
-    const res = await fetch("docs/announcements.md");
-    if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
-    const text = await res.text();
+    // Use hardcoded fallback for file:// protocol
+    let text;
+    
+    if (isFileProtocol) {
+      console.log('Using fallback announcements for file:// protocol');
+      text = getHardcodedAnnouncements();
+    } else {
+      const res = await fetch("docs/announcements.md");
+      if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+      text = await res.text();
+    }
 
     const section = (name) => {
       const regex = new RegExp(`##\\s+${name}\\n([\\s\\S]*?)(?=##|$)`, "i");

@@ -314,22 +314,52 @@ document.addEventListener("DOMContentLoaded", () => {
       loadAnnouncements();
     }
 
-    // Phase 12: Data Initialization
-    debugLog("Phase 12: Loading application data...");
-
-    // Set default date
-    if (elements.itemDate && elements.itemDate.value !== undefined) {
-      elements.itemDate.value = todayStr();
+        // Phase 12: Data Loading
+    debugLog("Phase 12: Loading data...");
+    
+    // Load data with fallbacks for file:// protocol loading issues
+    try {
+      // Check if loadInventory is available
+      if (typeof loadInventory === "function") {
+        debugLog("Calling loadInventory()...");
+        loadInventory();
+      } else {
+        // If not available now, try again after a short delay
+        debugWarn("loadInventory not found, will retry in 50ms");
+        setTimeout(() => {
+          if (typeof loadInventory === "function") {
+            debugLog("Delayed loadInventory call succeeded");
+            loadInventory();
+          } else {
+            debugError("loadInventory function not available after delay");
+          }
+        }, 50);
+      }
+    
+      if (typeof sanitizeTablesOnLoad === "function") {
+        sanitizeTablesOnLoad();
+      } else {
+        debugWarn("sanitizeTablesOnLoad not found");
+      }
+      
+      if (Array.isArray(inventory)) {
+        inventory.forEach((i) => {
+          if (typeof addCompositionOption === "function") {
+            addCompositionOption(i.composition || i.metal);
+          }
+        });
+      }
+      
+      if (typeof refreshCompositionOptions === "function") {
+        refreshCompositionOptions();
+      }
+      
+      if (typeof loadSpotHistory === "function") {
+        loadSpotHistory();
+      }
+    } catch (e) {
+      debugError("Error during data loading:", e);
     }
-
-    // Load data
-    loadInventory();
-    if (typeof sanitizeTablesOnLoad === "function") {
-      sanitizeTablesOnLoad();
-    }
-    inventory.forEach((i) => addCompositionOption(i.composition || i.metal));
-    refreshCompositionOptions();
-    loadSpotHistory();
 
     // Initialize API system
     apiConfig = loadApiConfig();
@@ -472,17 +502,38 @@ function setupBasicEventListeners() {
   debugLog("Basic event listeners setup complete");
 }
 
-// Note: toggleCollectable function is now defined in inventory.js
-// and exposed globally via window.toggleCollectable
+// Note: These functions are now defined in their respective modules
+// and should be exposed globally via window.functionName in those modules
 
-// Note: showDetailsModal function is now defined in detailsModal.js
-// and exposed globally via window.showDetailsModal
-
-// Make functions available globally for inline event handlers
-window.toggleCollectable = toggleCollectable;
-window.showDetailsModal = showDetailsModal;
-window.closeDetailsModal = closeDetailsModal;
-window.editItem = editItem;
-window.deleteItem = deleteItem;
-window.showNotes = showNotes;
-window.applyColumnFilter = applyColumnFilter;
+// Check for functions and only assign globals if not already defined
+// This prevents reference errors when functions aren't yet loaded
+if (typeof window !== 'undefined') {
+  // Each function gets a safety check to prevent reference errors
+  if (!window.toggleCollectable && typeof toggleCollectable !== 'undefined') {
+    window.toggleCollectable = toggleCollectable;
+  }
+  
+  if (!window.showDetailsModal && typeof showDetailsModal !== 'undefined') {
+    window.showDetailsModal = showDetailsModal;
+  }
+  
+  if (!window.closeDetailsModal && typeof closeDetailsModal !== 'undefined') {
+    window.closeDetailsModal = closeDetailsModal;
+  }
+  
+  if (!window.editItem && typeof editItem !== 'undefined') {
+    window.editItem = editItem;
+  }
+  
+  if (!window.deleteItem && typeof deleteItem !== 'undefined') {
+    window.deleteItem = deleteItem;
+  }
+  
+  if (!window.showNotes && typeof showNotes !== 'undefined') {
+    window.showNotes = showNotes;
+  }
+  
+  if (!window.applyColumnFilter && typeof applyColumnFilter !== 'undefined') {
+    window.applyColumnFilter = applyColumnFilter;
+  }
+}

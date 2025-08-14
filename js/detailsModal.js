@@ -184,6 +184,5 @@ const closeDetailsModal = () => {
 
 // Expose details modal functions globally for inline handlers
 window.showDetailsModal = showDetailsModal;
-console.log("Details modal functions exposed globally");
-window.showDetailsModal = showDetailsModal;
 window.closeDetailsModal = closeDetailsModal;
+console.log("Details modal functions exposed globally");
