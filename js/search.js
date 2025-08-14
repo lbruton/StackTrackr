@@ -262,5 +262,25 @@ const filterInventory = () => {
 // Expose for global access
 window.filterInventory = filterInventory;
 
+// Utility function for debouncing
+function debounce(func, delay) {
+  let timeout;
+  return function (...args) {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => func.apply(this, args), delay);
+  };
+}
+
+// Attach debounced search handler to input
+const searchInput = document.getElementById('searchInput'); // Assuming the search input has this ID
+if (searchInput) {
+  const debouncedSearch = debounce(() => {
+    filterInventory(); // Call the search function
+    // Optionally, update the UI or results here
+  }, 300); // 300ms debounce delay
+
+  searchInput.addEventListener('input', debouncedSearch);
+}
+
 // =============================================================================
 
