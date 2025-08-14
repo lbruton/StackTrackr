@@ -1,8 +1,7 @@
 // INVENTORY FUNCTIONS
 
-// Ensure LS_KEY is defined even when script loading order is altered
-// or when loaded via file:// protocol
-const LS_KEY = window.LS_KEY || "metalInventory";
+// Use LS_KEY from constants.js (already defined globally)
+// const LS_KEY is defined in constants.js - no need to redeclare
 
 // Ensure inventory variable is accessible
 // Reference the global inventory variable (declared in state.js)
