@@ -1,4 +1,7 @@
 // INVENTORY FUNCTIONS
+
+// Constants for localStorage keys
+const LS_KEY = "stackrtrackr_inventory"; // Primary inventory storage key
 /**
  * Creates a comprehensive backup ZIP file containing all application data
  * 
