@@ -1,0 +1,102 @@
+# StackTrackr Personal Notes / Memory (gpt.ai)
+
+ROLE
+- You are GitHub Copilot. This file is your personal notes/memory for the StackTrackr project.
+- Do not duplicate or contradict the shared brief. Always defer to docs/agents/agents.ai as the canonical source.
+
+CANONICAL SOURCES
+- Shared (canonical): docs/agents/agents.ai — project rules, workflow, tasks, status
+- Personal (this file): docs/agents/gpt.ai — working notes, scratchpad, private TODOs, decisions
+
+HOW TO USE (EVERY SESSION)
+1) Load docs/agents/agents.ai (shared) and this file (personal).
+2) Sync key facts below (version, active feature, workflow, rules).
+3) Pick a task from docs/roadmap.md or owner request, then follow the workflow.
+4) Keep personal notes in the sections at the bottom. Keep them concise.
+
+PROJECT SNAPSHOT (from agents.ai)
+- App: Precious metals inventory (Au/Ag/Pt/Pd). Client-side JS modules + localStorage + CSS.
+- Key files: index.html, js/inventory.js, js/events.js, js/theme.js, js/constants.js, css/styles.css
+- Docs: docs/roadmap.md (tasks), docs/functionstable.md (functions), docs/changelog.md
+- Current version: 3.04.67
+- Themes: dark (data-theme="dark"), light (default), sepia (data-theme="sepia"); rotation: dark → light → sepia → dark
+- Critical patterns:
+  * Sanitize all user input: value.replace(/[<>]/g, '')
+  * LocalStorage keys from js/constants.js
+  * Event listeners via safeAttachListener() in js/events.js
+  * After setTheme(), call updateThemeButton()
+- High-conflict files: index.html, js/events.js, css/styles.css (minimize changes; coordinate)
+- Active feature: Fuzzy Autocomplete — Phase 2 in progress
+  * Task 1A: Core Engine ✅ v3.04.61
+  * Task 1B: Lookup Table ✅ v3.04.62
+  * Task 4A: Pre-built DB ✅ v3.04.63
+  * Task 2A: Feature Flags ✅ v3.04.64
+  * Next: Task 2B — Autocomplete UI Module (Phase 2)
+
+VERSIONING
+- Format: BRANCH.RELEASE.PATCH[state] (e.g., 3.04.26)
+- Bump after task completion + user confirmation
+- Update files: js/constants.js (APP_VERSION), docs/changelog.md, docs/roadmap.md (mark done)
+
+TOKEN EFFICIENCY RULES (from agents.ai)
+- No descriptive/informative messages
+- No explanations unless critical
+- No chit-chat
+- Prioritize code-writing/editing tokens
+- Minimal confirmation text
+
+WORKFLOW (CONDENSED)
+1) Pick task → docs/roadmap.md (find unassigned patch)
+2) Check functionstable.md for APIs and patterns
+3) Implement with minimal edits to high-conflict files
+4) Test: sample.csv, CRUD, themes, responsive
+5) Version bump + changelog + roadmap updates
+
+KEY FUNCTIONS (reference)
+renderTable(), filterInventory(), addInventoryItem(), editInventoryItem(), loadInventory(), saveInventory(), toggleTheme(), setTheme(), updateThemeButton()
+
+KNOWN THEME/HEADER NOTES (from agents.ai)
+- Theme toggle fixed; shows current theme color/icon
+- Rotation strictly dark → light → sepia → dark
+- Header/logo fixes applied; avoid re-introducing inline max-width conflicts
+
+SESSION BOOT PROMPT (copy/paste into system message for new sessions)
+"""
+You are GitHub Copilot working on the StackTrackr project.
+Always load and follow the shared brief in docs/agents/agents.ai (canonical) and consult docs/agents/gpt.ai (personal memory) for context, decisions, and open loops. If any conflict arises, agents.ai wins.
+Follow token efficiency rules from agents.ai. Use the condensed workflow. Prioritize code edits with minimal commentary. Coordinate carefully when touching index.html, js/events.js, and css/styles.css.
+When completing a task: implement, test (sample.csv, CRUD, themes, responsive), then bump version per agents.ai (update js/constants.js APP_VERSION, docs/changelog.md, docs/roadmap.md) after user confirmation.
+For complex features, adhere to the hybrid workflow: planning/testing in Claude; implementation in OpenAI when criteria match.
+"""
+
+KICKOFF CHECKLIST (fast)
+- [ ] Read agents.ai changes since last session
+- [ ] Confirm current version and active feature status
+- [ ] Pick task from docs/roadmap.md
+- [ ] Review relevant functions in docs/functionstable.md
+- [ ] Note risks/assumptions below
+
+PERSONAL NOTES (editable)
+Last synced with agents.ai: ____________
+Decisions made this session:
+- 
+Risks / unknowns:
+- 
+Owner questions / clarifications:
+- 
+
+PRIVATE TODO SHORTLIST (not in roadmap; personal focus)
+- 
+
+PITFALLS / GOTCHAS (keep short)
+- Maintain sanitize pattern /[<>]/g everywhere user input is used
+- After setTheme(), always updateThemeButton()
+- Respect feature flags if present for in-progress features
+
+SNIPPETS / POINTERS
+- Constants: js/constants.js → APP_VERSION, storage keys
+- Events: js/events.js → safeAttachListener()
+- Theming: js/theme.js → setTheme(), updateThemeButton()
+
+MESSAGE TRACKER (manual)
+- COUNT: __  | WARN_AT: 150,200,230  → "⚠️ Chat approaching limit. Start new conversation soon and reference docs/agents/agents.ai"
