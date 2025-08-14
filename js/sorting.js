@@ -33,8 +33,8 @@ const sortInventory = (data = inventory) => {
 
     // Special handling for date: empty/unknown dates should always sort to the bottom
     if (sortColumn === 0) {
-      const emptyA = !valA || String(valA).trim() === '';
-      const emptyB = !valB || String(valB).trim() === '';
+      const emptyA = !valA || String(valA).trim() === '' || String(valA).trim() === '—';
+      const emptyB = !valB || String(valB).trim() === '' || String(valB).trim() === '—';
       if (emptyA && emptyB) return 0;
       if (emptyA) return 1; // push A down
       if (emptyB) return -1; // push B down

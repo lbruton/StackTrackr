@@ -104,9 +104,9 @@ const createBackupZip = async () => {
         item.type,
         parseFloat(item.weight).toFixed(4),
         formatCurrency(item.price),
-        exportSpotPrice > 0 ? formatCurrency(exportSpotPrice) : 'N/A',
-        item.isCollectable ? 'N/A' : formatCurrency(item.premiumPerOz),
-        item.isCollectable ? 'N/A' : formatCurrency(item.totalPremium),
+        exportSpotPrice > 0 ? formatCurrency(exportSpotPrice) : '—',
+        item.isCollectable ? '—' : formatCurrency(item.premiumPerOz),
+        item.isCollectable ? '—' : formatCurrency(item.totalPremium),
         item.purchaseLocation,
         item.storageLocation || '',
         item.numistaId || '',
@@ -558,7 +558,7 @@ const filterLink = (field, value, color, displayValue = value, title, allowHtml 
   const safe = allowHtml ? displayStr : sanitizeHtml(displayStr);
   const titleStr = title ? String(title) : `Filter by ${displayStr}`;
   const safeTitle = sanitizeHtml(titleStr);
-  const isNA = displayStr === 'N/A' || displayStr === 'Numista Import' || displayStr === 'Unknown';
+  const isNA = displayStr === 'N/A' || displayStr === 'Numista Import' || displayStr === 'Unknown' || displayStr === '—';
   const classNames = `filter-text${isNA ? ' na-value' : ''}`;
   const styleAttr = isNA ? '' : ` style="color: ${color};"`;
   return `<span class="${classNames}"${styleAttr} onclick="${escaped}" tabindex="0" role="button" onkeydown="if(event.key==='Enter'||event.key===' ')${escaped}" title="${safeTitle}">${safe}</span>`;
@@ -567,7 +567,7 @@ const filterLink = (field, value, color, displayValue = value, title, allowHtml 
 const getTypeColor = type => typeColors[type] || 'var(--type-other-bg)';
 const getPurchaseLocationColor = loc => getColor(purchaseLocationColors, loc);
 const getStorageLocationColor = loc =>
-  loc === 'Unknown' ? 'var(--text-muted)' : getColor(storageLocationColors, loc);
+  (loc === 'Unknown' || loc === '—') ? 'var(--text-muted)' : getColor(storageLocationColors, loc);
 
 /**
  * Formats Purchase Location for table display, wrapping URLs in hyperlinks
@@ -577,7 +577,7 @@ const getStorageLocationColor = loc =>
  * @returns {string} HTML string for table cell
  */
 const formatPurchaseLocation = (loc) => {
-  const value = loc || 'Numista Import';
+  const value = loc || '—';
   const color = getPurchaseLocationColor(value);
   const urlPattern = /^(https?:\/\/)?[\w.-]+\.[A-Za-z]{2,}(\S*)?$/;
   const filterSpan = filterLink('purchaseLocation', value, color);
@@ -784,8 +784,8 @@ const startCellEdit = (idx, field, icon) => {
         content = filterLink('price', item.price, 'var(--text-primary)', formatCurrency(item.price));
         break;
       case 'spotPriceAtPurchase': {
-        const spotDisplay = item.isCollectable ? 'N/A' : (item.spotPriceAtPurchase > 0 ? formatCurrency(item.spotPriceAtPurchase) : 'N/A');
-        const spotValue = item.isCollectable ? 'N/A' : (item.spotPriceAtPurchase > 0 ? item.spotPriceAtPurchase : 'N/A');
+        const spotDisplay = item.isCollectable ? '—' : (item.spotPriceAtPurchase > 0 ? formatCurrency(item.spotPriceAtPurchase) : '—');
+        const spotValue = item.isCollectable ? '—' : (item.spotPriceAtPurchase > 0 ? item.spotPriceAtPurchase : '—');
         content = filterLink('spotPriceAtPurchase', spotValue, 'var(--text-primary)', spotDisplay);
         break;
       }
@@ -802,7 +802,7 @@ const startCellEdit = (idx, field, icon) => {
         content = formatPurchaseLocation(item.purchaseLocation);
         break;
       case 'storageLocation':
-        content = filterLink('storageLocation', item.storageLocation || 'Unknown', getStorageLocationColor(item.storageLocation || 'Unknown'));
+        content = filterLink('storageLocation', item.storageLocation || '—', getStorageLocationColor(item.storageLocation || '—'));
         break;
       case 'notes':
         const hasNotes = item.notes && item.notes.trim();
@@ -957,10 +957,10 @@ const renderTable = () => {
     for (let i = startIndex; i < endIndex; i++) {
       const item = sortedInventory[i];
       const originalIdx = inventory.indexOf(item);
-  const spotDisplay = item.isCollectable ? 'N/A' : (item.spotPriceAtPurchase > 0 ? formatCurrency(item.spotPriceAtPurchase) : '—');
-  const spotValue = item.isCollectable ? 'N/A' : (item.spotPriceAtPurchase > 0 ? item.spotPriceAtPurchase : '');
-      const premiumDisplay = item.isCollectable ? 'N/A' : formatCurrency(item.totalPremium);
-      const premiumValue = item.isCollectable ? 'N/A' : item.totalPremium;
+  const spotDisplay = item.isCollectable ? '—' : (item.spotPriceAtPurchase > 0 ? formatCurrency(item.spotPriceAtPurchase) : '—');
+  const spotValue = item.isCollectable ? '—' : (item.spotPriceAtPurchase > 0 ? item.spotPriceAtPurchase : '');
+      const premiumDisplay = item.isCollectable ? '—' : formatCurrency(item.totalPremium);
+      const premiumValue = item.isCollectable ? '—' : item.totalPremium;
 
   rows.push(`
       <tr>
@@ -977,15 +977,11 @@ const renderTable = () => {
         ${formatPurchaseLocation(item.purchaseLocation)}
       </td>
       <td class="shrink" data-column="storageLocation">
-        ${filterLink('storageLocation', item.storageLocation || 'Unknown', getStorageLocationColor(item.storageLocation || 'Unknown'))}
+        ${filterLink('storageLocation', item.storageLocation || '—', getStorageLocationColor(item.storageLocation || '—'))}
       </td>
       <td class="shrink" data-column="numista">${item.numistaId ? `
-        <a href="https://en.numista.com/catalogue/pieces${item.numistaId}.html" target="_blank" rel="noopener" title="N#: ${sanitizeHtml(item.numistaId)} — View on Numista" class="catalog-link catalog-numista" data-catalog="numista" data-catalog-id="${sanitizeHtml(item.numistaId)}">
-          <!-- Clean square N# icon for catalog (styled via CSS for themes) -->
-          <svg class="catalog-icon numista-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true" width="20" height="20">
-            <rect x="3" y="3" width="18" height="18" rx="3" ry="3" />
-            <text x="12" y="15" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="11" font-weight="700">N#</text>
-          </svg>
+        <a href="https://en.numista.com/catalogue/pieces${item.numistaId}.html" target="_blank" rel="noopener" title="View ${sanitizeHtml(item.name)} on Numista Database" class="catalog-link">
+          <span class="numista-text">N#${sanitizeHtml(item.numistaId)}</span>
         </a>
       ` : '<span class="numista-empty">—</span>'}</td>
   <td class="icon-col" data-column="collectable"><span class="collectable-status" role="button" tabindex="0" onclick="toggleCollectable(${originalIdx})" onkeydown="if(event.key==='Enter'||event.key===' ') toggleCollectable(${originalIdx})" aria-label="Toggle collectable status for ${sanitizeHtml(item.name)}" title="Toggle collectable status">${item.isCollectable ? '<svg class=\"collectable-icon vault-icon\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\"><rect x=\"2\" y=\"4\" width=\"20\" height=\"16\" rx=\"2\"/><circle cx=\"17\" cy=\"11\" r=\"2\"/><rect x=\"6\" y=\"8\" width=\"6\" height=\"8\" rx=\"1\"/></svg>' : '<svg class=\"collectable-icon bar-icon\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\"><rect x=\"3\" y=\"8\" width=\"18\" height=\"8\" rx=\"1\"/><path d=\"M5 6h14l-2-2H7z\"/></svg>'}</span></td>
@@ -1619,12 +1615,12 @@ const importNumistaCsv = (file, override = false) => {
           }
 
           const purchaseLocRaw = getValue(row, ['Acquisition place', 'Acquired from', 'Purchase place']);
-          const purchaseLocation = purchaseLocRaw && purchaseLocRaw.trim() ? purchaseLocRaw.trim() : 'Numista Import';
+          const purchaseLocation = purchaseLocRaw && purchaseLocRaw.trim() ? purchaseLocRaw.trim() : '—';
           const storageLocRaw = getValue(row, ['Storage location', 'Stored at', 'Storage place']);
-          const storageLocation = storageLocRaw && storageLocRaw.trim() ? storageLocRaw.trim() : 'Numista Import';
+          const storageLocation = storageLocRaw && storageLocRaw.trim() ? storageLocRaw.trim() : '—';
 
           const dateStrRaw = getValue(row, ['Acquisition date', 'Date acquired', 'Date']);
-          const dateStr = dateStrRaw && dateStrRaw.trim() ? dateStrRaw.trim() : 'Unknown';
+          const dateStr = dateStrRaw && dateStrRaw.trim() ? dateStrRaw.trim() : '—';
           const date = parseDate(dateStr);
 
           const baseNote = (getValue(row, ['Note', 'Notes']) || '').trim();
@@ -2131,9 +2127,9 @@ const exportPdf = () => {
     item.type,
     parseFloat(item.weight).toFixed(2),
     formatCurrency(item.price),
-    item.isCollectable ? 'N/A' : formatCurrency(item.spotPriceAtPurchase),
-    item.isCollectable ? 'N/A' : formatCurrency(item.premiumPerOz),
-    item.isCollectable ? 'N/A' : formatCurrency(item.totalPremium),
+    item.isCollectable ? '—' : formatCurrency(item.spotPriceAtPurchase),
+    item.isCollectable ? '—' : formatCurrency(item.premiumPerOz),
+    item.isCollectable ? '—' : formatCurrency(item.totalPremium),
     item.purchaseLocation,
     item.storageLocation || '',
     item.numistaId || '',

@@ -433,14 +433,16 @@ const setupEventListeners = () => {
           const composition = getCompositionFirstWords(elements.itemMetal.value);
           const metal = parseNumistaMetal(composition);
           const name = elements.itemName.value.trim();
-          const qty = parseInt(elements.itemQty.value, 10);
+          const qtyInput = elements.itemQty.value.trim();
+          const qty = qtyInput === "" ? 1 : parseInt(qtyInput, 10);
           const type = elements.itemType.value;
           let weight = parseFloat(elements.itemWeight.value);
           if (elements.itemWeightUnit.value === "g") {
             weight = gramsToOzt(weight);
           }
           weight = isNaN(weight) ? 0 : parseFloat(weight.toFixed(2));
-          let price = parseFloat(elements.itemPrice.value);
+          const priceInput = elements.itemPrice.value.trim();
+          let price = priceInput === "" ? 0 : parseFloat(priceInput);
           price = isNaN(price) || price < 0 ? 0 : price;
           const purchaseLocation =
             elements.purchaseLocation.value.trim() || "";
@@ -449,16 +451,21 @@ const setupEventListeners = () => {
           const notes = elements.itemNotes.value.trim() || "";
           const date = elements.itemDate.value || todayStr();
           const spotPriceInput = elements.itemSpotPrice.value.trim();
-          const isCollectable = document.getElementById("itemCollectable").checked;
+          const isCollectable = elements.itemCollectable ? elements.itemCollectable.checked : false;
 
+          // Validate the mandatory fields: Name, Date, Type, Metal, Weight, and Quantity
           if (
+            !name ||
+            !date ||
+            !type ||
+            !metal ||
+            isNaN(weight) ||
+            weight <= 0 ||
             isNaN(qty) ||
             qty < 1 ||
-            !Number.isInteger(qty) ||
-            isNaN(weight) ||
-            weight <= 0
+            !Number.isInteger(qty)
           ) {
-            return alert("Please enter valid values for all fields.");
+            return alert("Please enter valid values for Name, Date, Type, Metal, Weight, and Quantity.");
           }
 
           // Determine spot price at purchase
@@ -479,7 +486,7 @@ const setupEventListeners = () => {
           }
 
           const serial = getNextSerial();
-          const catalog = document.getElementById("itemCatalog").value.trim();
+          const catalog = elements.itemCatalog ? elements.itemCatalog.value.trim() : "";
           inventory.push({
             metal,
             composition,
@@ -503,7 +510,9 @@ const setupEventListeners = () => {
           typeof registerName === "function" && registerName(name);
           addCompositionOption(composition);
 
-          catalogMap[serial] = catalog;
+          if (window.catalogManager && catalog) {
+            catalogManager.setCatalogId(serial, catalog);
+          }
           saveInventory();
           renderTable();
           this.reset();
@@ -595,16 +604,20 @@ const setupEventListeners = () => {
             }
           }
 
+          // Validate the mandatory fields: Name, Date, Type, Metal, Weight, and Quantity
           if (
-            isNaN(qty) ||
-            qty < 1 ||
-            !Number.isInteger(qty) ||
+            !name ||
+            !date ||
+            !type ||
+            !metal ||
             isNaN(weight) ||
             weight <= 0 ||
-            (!isCollectable && (isNaN(spotPriceAtPurchase) || spotPriceAtPurchase <= 0))
+            isNaN(qty) ||
+            qty < 1 ||
+            !Number.isInteger(qty)
           ) {
-            try { console.debug('Edit validation failed', { qty, weight, isCollectable, spotPriceAtPurchase, elementsEditSpot: elements.editSpotPrice.value }); } catch (e) {}
-            return alert("Please enter valid values for all fields.");
+            try { console.debug('Edit validation failed', { name, date, type, metal, weight, qty }); } catch (e) {}
+            return alert("Please enter valid values for Name, Date, Type, Metal, Weight, and Quantity.");
           }
 
           // Calculate premium per ounce (only for non-collectible items)
@@ -643,7 +656,14 @@ const setupEventListeners = () => {
 
           addCompositionOption(composition);
 
-          catalogMap[serial] = inventory[editingIndex].numistaId;
+          try {
+            if (window.catalogManager && inventory[editingIndex].numistaId) {
+              catalogManager.setCatalogId(serial, inventory[editingIndex].numistaId);
+            }
+          } catch (e) {
+            console.warn('Failed to update catalog mapping:', e);
+          }
+          
           saveInventory();
           renderTable();
           logItemChanges(oldItem, inventory[editingIndex]);
@@ -651,11 +671,20 @@ const setupEventListeners = () => {
           // Debug trace to confirm save reached the close path
           try { console.debug('Edit form saved for index', editingIndex); } catch (e) {}
 
-          // Use centralized modal close helper to ensure consistent cleanup
-          try { if (typeof closeModalById === 'function') closeModalById('editModal'); } catch(e) {}
-
+          // Close the modal
           editingIndex = null;
           editingChangeLogIndex = null;
+          
+          try { 
+            if (typeof closeModalById === 'function') {
+              closeModalById('editModal'); 
+            } else if (elements.editModal) {
+              elements.editModal.style.display = 'none';
+              document.body.style.overflow = '';
+            }
+          } catch(e) {
+            console.warn('Failed to close edit modal:', e);
+          }
         },
         "Edit form",
       );

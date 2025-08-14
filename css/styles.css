@@ -81,44 +81,12 @@
   --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Catalog icon (N#) styling - theme aware */
-.catalog-icon {
-  display: inline-block;
-  vertical-align: middle;
-  width: 20px;
-  height: 20px;
-}
-.catalog-icon rect {
-  fill: var(--bg-secondary);
-  stroke: var(--border);
-  stroke-width: 1px;
-}
-.catalog-icon text {
-  fill: var(--text-primary);
-  font-size: 11px;
-  font-weight: 700;
-  dominant-baseline: middle;
-}
-
-/* Slightly stronger contrast for compact icon when inside table cells */
-.catalog-link .catalog-icon rect {
-  fill: var(--surface-alt);
-}
-
-/* Numista-specific tint (keeps subtle brand color but respects theme) */
-.catalog-icon.numista-icon rect {
-  /* use CSS mix to nudge towards primary while staying theme-aware */
-  background-color: transparent;
-  fill: color-mix(in srgb, var(--primary) 12%, var(--surface-alt) 88%);
-}
-.catalog-icon.numista-icon text {
-  fill: var(--text-primary);
-}
-
-/* Ensure the empty placeholder remains aligned when missing */
+/* Empty N# column styling */
 .numista-empty {
   display: inline-block;
   color: var(--text-muted);
+  font-style: italic;
+  font-size: 0.8rem;
 }
 
 [data-theme="dark"] {
@@ -265,6 +233,8 @@ body {
   margin: var(--spacing-lg) auto;
   padding: var(--spacing);
   transition: var(--transition);
+  overflow-x: hidden; /* Prevent horizontal overflow on body */
+  box-sizing: border-box;
 }
 
 /* =============================================================================
@@ -425,7 +395,8 @@ label {
   display: grid;
   gap: var(--spacing-xl);
   max-width: 100%;
-  overflow-x: hidden;
+  overflow: hidden; /* Prevent container overflow */
+  box-sizing: border-box;
 }
 
 section {
@@ -436,7 +407,8 @@ section {
   box-shadow: var(--shadow);
   transition: var(--transition);
   max-width: 100%;
-  overflow-x: hidden;
+  overflow: hidden; /* Ensure no content overflows the section */
+  box-sizing: border-box;
 }
 
 .app-footer {
@@ -1791,6 +1763,7 @@ table {
   width: 100%;
   max-width: 100%;
   min-height: auto;
+  box-sizing: border-box;
 }
 
 #inventoryTable {
@@ -1798,7 +1771,6 @@ table {
      to prevent right-side columns being clipped. Horizontal scrolling
      remains available via .table-section when necessary. */
   width: 100%;
-  min-width: 0;
   table-layout: auto;
 }
 
@@ -1840,6 +1812,26 @@ td {
   text-overflow: ellipsis;
   white-space: nowrap;
   vertical-align: middle;
+  max-width: 20ch; /* Limit to approximately 20 characters */
+}
+
+/* Allow certain columns to be wider */
+td[data-column="name"] {
+  max-width: 25ch; /* Name column can be slightly wider */
+}
+
+td[data-column="purchaseLocation"],
+td[data-column="storageLocation"] {
+  max-width: 18ch; /* Location columns slightly narrower */
+}
+
+/* Keep icon columns compact */
+td[data-column="collectable"],
+td[data-column="notes"],
+td[data-column="edit"],
+td[data-column="delete"] {
+  max-width: 3rem; /* Icon columns stay small */
+  white-space: normal; /* Allow icons to display normally */
 }
 
 [data-column].hidden,
@@ -4221,61 +4213,31 @@ th {
    ============================================================================= */
 
 .catalog-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-  padding: 0.25rem 0.5rem;
-  background: linear-gradient(135deg, var(--info), var(--info-hover));
-  color: #f8fafc;
+  display: inline;
   text-decoration: none;
-  border-radius: var(--radius);
   font-size: 0.8rem;
-  font-weight: 600;
-  transition: var(--transition);
-  box-shadow: var(--shadow-sm);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  position: relative;
-  overflow: hidden;
+  font-weight: 700;
+  transition: opacity 0.2s ease;
 }
 
-.catalog-link::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-  transition: left 0.5s;
+/* Light mode - bold blue */
+:root .catalog-link {
+  color: #1d4ed8;
 }
 
 .catalog-link:hover {
-  background: linear-gradient(135deg, var(--info-hover), var(--primary));
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-lg);
-  color: #f8fafc;
-  text-decoration: none;
-  border-color: rgba(255, 255, 255, 0.5);
+  text-decoration: underline;
+  opacity: 0.8;
 }
 
-.catalog-link:hover::before {
-  left: 100%;
+/* Dark mode - light blue */
+[data-theme="dark"] .catalog-link {
+  color: #60a5fa;
 }
 
-.catalog-link:active {
-  transform: translateY(-1px);
-}
-
-.catalog-icon {
-  width: 1rem;
-  height: 1rem;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 2.5;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  flex-shrink: 0;
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2));
+/* Sepia mode - bold blue */
+[data-theme="sepia"] .catalog-link {
+  color: #1d4ed8;
 }
 
 /* Empty N# column styling */
@@ -4290,42 +4252,18 @@ th {
 @media (max-width: 768px) {
   .catalog-link {
     font-size: 0.7rem;
-    padding: 0.2rem 0.35rem;
-    gap: 0.2rem;
-  }
-  
-  .catalog-icon {
-    width: 0.85rem;
-    height: 0.85rem;
-    stroke-width: 2;
   }
 }
 
 @media (max-width: 600px) {
   .catalog-link {
     font-size: 0.65rem;
-    padding: 0.15rem 0.3rem;
-    gap: 0.15rem;
-  }
-  
-  .catalog-icon {
-    width: 0.8rem;
-    height: 0.8rem;
   }
 }
 
 @media (max-width: 480px) {
   .catalog-link {
     font-size: 0.6rem;
-    padding: 0.1rem 0.25rem;
-    gap: 0.1rem;
-    border-radius: calc(var(--radius) * 0.8);
-  }
-  
-  .catalog-icon {
-    width: 0.75rem;
-    height: 0.75rem;
-    stroke-width: 2.5;
   }
   
   .numista-empty {

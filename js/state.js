@@ -55,6 +55,7 @@ const elements = {
   itemDate: null,
   itemSpotPrice: null,
   itemCollectable: null,
+  itemCatalog: null,
 
   // Spot price buttons
   saveSpotBtnSilver: null,
@@ -269,5 +270,29 @@ let apiConfig = null;
 
 /** @type {Object|null} Cached API data with timestamp */
 let apiCache = null;
+
+/** @type {Object} Backward compatibility for catalogMap - now managed by catalogManager */
+let catalogMap = new Proxy({}, {
+  get(target, prop) {
+    if (window.catalogManager) {
+      return catalogManager.getCatalogId(prop) || '';
+    }
+    return target[prop];
+  },
+  set(target, prop, value) {
+    if (window.catalogManager) {
+      catalogManager.setCatalogId(prop, value);
+    }
+    target[prop] = value;
+    return true;
+  },
+  deleteProperty(target, prop) {
+    if (window.catalogManager) {
+      catalogManager.setCatalogId(prop, '');
+    }
+    delete target[prop];
+    return true;
+  }
+});
 
 // =============================================================================

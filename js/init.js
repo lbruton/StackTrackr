@@ -71,6 +71,7 @@ document.addEventListener("DOMContentLoaded", () => {
     elements.itemDate = safeGetElement("itemDate", true);
     elements.itemSpotPrice = safeGetElement("itemSpotPrice");
     elements.itemCollectable = safeGetElement("itemCollectable");
+    elements.itemCatalog = safeGetElement("itemCatalog");
 
     // Header buttons - CRITICAL
     debugLog("Phase 2: Initializing header buttons...");

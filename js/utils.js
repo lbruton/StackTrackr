@@ -340,7 +340,7 @@ const currentMonthKey = () => {
  * @returns {string} Date in YYYY-MM-DD format, or 'Unknown' if parsing fails
  */
 function parseDate(dateStr) {
-  if (!dateStr) return 'Unknown';
+  if (!dateStr) return '—';
 
   // Clean the input string
   const cleanDateStr = dateStr.trim();
@@ -419,9 +419,9 @@ function parseDate(dateStr) {
     // Continue to fallback
   }
 
-  // If all parsing fails, return 'Unknown'
-  console.warn(`Could not parse date: "${dateStr}", returning 'Unknown'`);
-  return 'Unknown';
+  // If all parsing fails, return '—'
+  console.warn(`Could not parse date: "${dateStr}", returning '—'`);
+  return '—';
 }
 
 /**
@@ -431,8 +431,10 @@ function parseDate(dateStr) {
  * @returns {string} Formatted date (e.g., "Jan 1, 1969")
  */
 const formatDisplayDate = (dateStr) => {
+  if (!dateStr || dateStr === '—' || dateStr === 'Unknown') return '—';
+  
   const d = new Date(dateStr);
-  if (isNaN(d)) return dateStr;
+  if (isNaN(d)) return '—';
   
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
                   'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -685,6 +687,15 @@ const cleanupStorage = () => {
  */
 const sortInventoryByDateNewestFirst = (data = inventory) => {
   return [...data].sort((a, b) => {
+    // Handle unknown dates (—, empty, or Unknown) - they should sort to the bottom (oldest)
+    const isUnknownA = !a.date || a.date.trim() === '' || a.date.trim() === '—' || a.date.trim() === 'Unknown';
+    const isUnknownB = !b.date || b.date.trim() === '' || b.date.trim() === '—' || b.date.trim() === 'Unknown';
+    
+    if (isUnknownA && isUnknownB) return 0; // Both unknown, equal
+    if (isUnknownA) return 1; // A is unknown, put it after B (older)
+    if (isUnknownB) return -1; // B is unknown, put it after A (older)
+    
+    // Both have dates, compare normally
     const dateA = new Date(a.date);
     const dateB = new Date(b.date);
     const timeA = isNaN(dateA) ? 0 : dateA.getTime();
