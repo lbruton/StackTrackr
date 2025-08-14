@@ -1,7 +1,0 @@
-Code flows like water,
-Debugging through the silence—
-Stack traces whisper.
-
-Variables dance through
-Memory's vast digital stage,
-Functions call their names.
