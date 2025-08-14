@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>StackTrackr Diagnostics</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+    h1 {
+      color: #333;
+    }
+    .diagnostic-section {
+      margin-bottom: 20px;
+      padding: 15px;
+      background-color: #f5f5f5;
+      border-radius: 5px;
+    }
+    .error {
+      color: red;
+    }
+    .success {
+      color: green;
+    }
+    button {
+      padding: 8px 16px;
+      margin: 5px;
+      cursor: pointer;
+    }
+    #results {
+      margin-top: 20px;
+      white-space: pre-wrap;
+      border: 1px solid #ddd;
+      padding: 10px;
+      max-height: 400px;
+      overflow: auto;
+    }
+  </style>
+</head>
+<body>
+  <h1>StackTrackr Diagnostics</h1>
+  
+  <div class="diagnostic-section">
+    <h2>Core Function Availability Check</h2>
+    <button onclick="checkCoreFunctions()">Check Core Functions</button>
+    <div id="functionResults"></div>
+  </div>
+  
+  <div class="diagnostic-section">
+    <h2>Local Storage Data Check</h2>
+    <button onclick="checkLocalStorage()">Check Local Storage</button>
+    <div id="storageResults"></div>
+  </div>
+  
+  <div class="diagnostic-section">
+    <h2>Script Loading Order Check</h2>
+    <button onclick="checkScriptLoading()">Check Script Loading</button>
+    <div id="scriptResults"></div>
+  </div>
+
+  <div class="diagnostic-section">
+    <h2>Results</h2>
+    <pre id="results"></pre>
+  </div>
+
+  <script>
+    // Function to log to results area
+    function log(message, isError = false) {
+      const results = document.getElementById('results');
+      const line = document.createElement('div');
+      line.textContent = message;
+      if (isError) line.classList.add('error');
+      results.appendChild(line);
+      console.log(message);
+    }
+
+    // Function to check if core functions are available
+    function checkCoreFunctions() {
+      const functionResults = document.getElementById('functionResults');
+      functionResults.innerHTML = '';
+      
+      const functionsToCheck = [
+        'loadInventory',
+        'saveInventory',
+        'renderTable',
+        'showDetailsModal',
+        'updateSpotPrices',
+        'filterInventory',
+        'sortInventory',
+        'calculateTotals'
+      ];
+      
+      let allFunctionsAvailable = true;
+      
+      functionsToCheck.forEach(func => {
+        const result = document.createElement('div');
+        if (typeof window[func] === 'function') {
+          result.textContent = `✅ ${func} is available`;
+          result.className = 'success';
+        } else {
+          result.textContent = `❌ ${func} is NOT available`;
+          result.className = 'error';
+          allFunctionsAvailable = false;
+          log(`Missing function: ${func}`, true);
+        }
+        functionResults.appendChild(result);
+      });
+      
+      if (allFunctionsAvailable) {
+        log('All core functions are available');
+      } else {
+        log('Some core functions are missing!', true);
+      }
+    }
+    
+    // Function to check localStorage data
+    function checkLocalStorage() {
+      const storageResults = document.getElementById('storageResults');
+      storageResults.innerHTML = '';
+      
+      const keysToCheck = [
+        'stackrtrackr_inventory',
+        'stackrtrackr_settings',
+        'stackrtrackr_spotPrices'
+      ];
+      
+      keysToCheck.forEach(key => {
+        const result = document.createElement('div');
+        const data = localStorage.getItem(key);
+        
+        if (data) {
+          try {
+            const parsed = JSON.parse(data);
+            const size = new Blob([data]).size;
+            result.textContent = `✅ ${key}: ${size} bytes, ${typeof parsed === 'object' && parsed !== null ? Array.isArray(parsed) ? parsed.length + ' items' : Object.keys(parsed).length + ' keys' : 'non-object'}`;
+            result.className = 'success';
+            log(`${key}: ${size} bytes, valid JSON`);
+            
+            // Check inventory data for issues
+            if (key === 'stackrtrackr_inventory' && Array.isArray(parsed)) {
+              const issues = [];
+              parsed.forEach((item, index) => {
+                if (!item.name) issues.push(`Item #${index+1} missing name`);
+                if (!item.metal) issues.push(`Item #${index+1} missing metal`);
+                if (!item.type) issues.push(`Item #${index+1} missing type`);
+                if (!item.weight || isNaN(parseFloat(item.weight))) issues.push(`Item #${index+1} has invalid weight`);
+              });
+              
+              if (issues.length > 0) {
+                const issuesDiv = document.createElement('div');
+                issuesDiv.className = 'error';
+                issuesDiv.textContent = `Found ${issues.length} issues with inventory data`;
+                storageResults.appendChild(issuesDiv);
+                issues.slice(0, 5).forEach(issue => {
+                  log(`Inventory issue: ${issue}`, true);
+                });
+                if (issues.length > 5) {
+                  log(`And ${issues.length - 5} more issues...`, true);
+                }
+              }
+            }
+          } catch (e) {
+            result.textContent = `❌ ${key}: Invalid JSON - ${e.message}`;
+            result.className = 'error';
+            log(`${key}: Invalid JSON - ${e.message}`, true);
+          }
+        } else {
+          result.textContent = `❌ ${key}: Not found`;
+          result.className = 'error';
+          log(`${key}: Not found in localStorage`, true);
+        }
+        
+        storageResults.appendChild(result);
+      });
+    }
+    
+    // Function to check script loading order
+    function checkScriptLoading() {
+      const scriptResults = document.getElementById('scriptResults');
+      scriptResults.innerHTML = '';
+      
+      const scripts = document.querySelectorAll('script[src*="js/"]');
+      const result = document.createElement('div');
+      
+      if (scripts.length > 0) {
+        result.textContent = `Found ${scripts.length} script tags`;
+        scriptResults.appendChild(result);
+        
+        scripts.forEach(script => {
+          const scriptInfo = document.createElement('div');
+          scriptInfo.textContent = script.src;
+          scriptResults.appendChild(scriptInfo);
+          log(`Script: ${script.src}`);
+        });
+      } else {
+        result.textContent = 'No scripts found. This diagnostic must be run from the main page.';
+        result.className = 'error';
+        scriptResults.appendChild(result);
+        log('No scripts found. Run this from main page.', true);
+      }
+    }
+    
+    // Log browser information
+    log(`Browser: ${navigator.userAgent}`);
+    log(`Window size: ${window.innerWidth}x${window.innerHeight}`);
+    log(`localStorage available: ${typeof localStorage !== 'undefined'}`);
+    
+    // Check for any console errors that happened
+    const originalConsoleError = console.error;
+    console.error = function() {
+      log(`ERROR: ${Array.from(arguments).join(' ')}`, true);
+      originalConsoleError.apply(console, arguments);
+    };
+  </script>
+</body>
+</html>

@@ -457,16 +457,8 @@ function toggleCollectable(itemId) {
   }
 }
 
-// Define showDetailsModal function
-function showDetailsModal(itemId) {
-  const modal = document.getElementById('detailsModal');
-  if (modal) {
-    modal.style.display = 'block';
-    modal.querySelector('.modal-content').textContent = `Details for item: ${itemId}`;
-  } else {
-    console.warn('Details modal not found.');
-  }
-}
+// Note: showDetailsModal function is now defined in detailsModal.js
+// and exposed globally via window.showDetailsModal
 
 // Make functions available globally for inline event handlers
 window.toggleCollectable = toggleCollectable;

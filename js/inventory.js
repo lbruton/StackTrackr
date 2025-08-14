@@ -2445,14 +2445,19 @@ function loadInventory() {
   const inventoryData = localStorage.getItem(LS_KEY);
   if (inventoryData) {
     try {
-      const inventory = JSON.parse(inventoryData);
+      // Update the global inventory variable
+      inventory = JSON.parse(inventoryData);
       console.log('Inventory loaded:', inventory);
+      return inventory;
     } catch (error) {
       console.error('Failed to parse inventory data:', error);
+      inventory = []; // Reset to empty array on error
     }
   } else {
     console.warn('No inventory data found in localStorage.');
+    inventory = []; // Initialize as empty array if no data
   }
+  return inventory;
 }
 
 // Expose loadInventory globally

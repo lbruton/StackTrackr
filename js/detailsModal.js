@@ -121,6 +121,9 @@ const showDetailsModal = (metal) => {
   // Clear existing content
   elements.typeBreakdown.textContent = '';
   elements.locationBreakdown.textContent = '';
+  
+  // Log for debugging
+  console.log(`Showing details modal for ${metal}`);
 
   // Destroy existing charts
   destroyCharts();
@@ -180,5 +183,7 @@ const closeDetailsModal = () => {
 // =============================================================================
 
 // Expose details modal functions globally for inline handlers
+window.showDetailsModal = showDetailsModal;
+console.log("Details modal functions exposed globally");
 window.showDetailsModal = showDetailsModal;
 window.closeDetailsModal = closeDetailsModal;
