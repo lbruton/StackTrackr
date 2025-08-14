@@ -1,3 +1,6 @@
+// Ensure pad2 is defined at the top of the file for global accessibility
+const pad2 = (n) => n.toString().padStart(2, "0");
+
 // Minimal LZString subset placeholder providing UTF16 compression helpers.
 // Original implementation removed due to parse issues; these functions act as no-ops
 // but maintain the same API for compression helpers used elsewhere.
@@ -17,6 +20,161 @@ const debugLog = (...args) => {
   if (DEBUG) {
     console.log(...args);
   }
+};
+
+/**
+ * Converts grams to troy ounces
+ * @param {number} grams - Weight in grams
+ * @returns {number} Weight in troy ounces
+ */
+const gramsToOzt = (grams) => {
+  if (typeof grams !== 'number' || isNaN(grams)) return 0;
+  return grams / 31.1034768;
+};
+
+/**
+ * Converts troy ounces to grams
+ * @param {number} ozt - Weight in troy ounces
+ * @returns {number} Weight in grams
+ */
+const oztToGrams = (ozt) => {
+  if (typeof ozt !== 'number' || isNaN(ozt)) return 0;
+  return ozt * 31.1034768;
+};
+
+/**
+ * Formats weight values for display with appropriate precision
+ * Weight is always stored internally as troy ounces
+ * @param {number} weight - Weight value in troy ounces
+ * @returns {string} Formatted weight string
+ */
+const formatWeight = (weight) => {
+  if (typeof weight !== "number" || isNaN(weight)) {
+    return "—";
+  }
+  
+  // Format with appropriate precision based on size
+  if (weight < 0.01) {
+    return weight.toFixed(4);
+  } else if (weight < 1) {
+    return weight.toFixed(3);
+  } else {
+    return weight.toFixed(2);
+  }
+};
+
+const normalizeType = (type) => {
+  if (!type || typeof type !== 'string') return 'Other';
+  
+  const cleanType = type.trim().toLowerCase();
+  
+  // Map common variations to standard types
+  if (cleanType.includes('coin')) return 'Coin';
+  if (cleanType.includes('bar')) return 'Bar';
+  if (cleanType.includes('round')) return 'Round';
+  if (cleanType.includes('note')) return 'Note';
+  if (cleanType.includes('bullion')) return 'Bar';
+  if (cleanType.includes('ingot')) return 'Bar';
+  if (cleanType.includes('medal')) return 'Medal';
+  if (cleanType.includes('jewelry')) return 'Jewelry';
+  
+  // Return capitalized version if no specific match
+  return type.charAt(0).toUpperCase() + type.slice(1).toLowerCase();
+};
+
+const mapNumistaType = (numistaType) => {
+  if (!numistaType || typeof numistaType !== 'string') return 'Other';
+  
+  const cleanType = numistaType.trim().toLowerCase();
+  
+  // Map Numista specific types to our standard types
+  if (cleanType.includes('coin')) return 'Coin';
+  if (cleanType.includes('token')) return 'Coin';
+  if (cleanType.includes('medal')) return 'Medal';
+  if (cleanType.includes('medallion')) return 'Medal';
+  if (cleanType.includes('bar')) return 'Bar';
+  if (cleanType.includes('ingot')) return 'Bar';
+  if (cleanType.includes('bullion')) return 'Bar';
+  if (cleanType.includes('round')) return 'Round';
+  if (cleanType.includes('note')) return 'Note';
+  if (cleanType.includes('paper')) return 'Note';
+  if (cleanType.includes('banknote')) return 'Note';
+  if (cleanType.includes('bill')) return 'Note';
+  
+  // Return normalized version
+  return normalizeType(numistaType);
+};
+
+/**
+ * Sanitizes an imported inventory item to ensure data integrity
+ *
+ * @param {Object} item - Raw imported item data
+ * @returns {Object} Sanitized inventory item
+ */
+const sanitizeImportedItem = (item) => {
+  const sanitized = {};
+  
+  // Ensure all required fields exist with safe defaults
+  sanitized.metal = item.metal || 'Silver';
+  sanitized.composition = item.composition || item.metal || 'Silver';
+  sanitized.name = (item.name || '').toString().trim();
+  sanitized.qty = Math.max(1, parseFloat(item.qty) || 1);
+  sanitized.type = (item.type || 'Other').toString().trim();
+  // Handle weight with fraction support
+  let weightValue = item.weight;
+  if (typeof weightValue === 'string' && weightValue.includes('/')) {
+    const fractionParts = weightValue.split('/');
+    if (fractionParts.length === 2) {
+      const numerator = parseFloat(fractionParts[0]);
+      const denominator = parseFloat(fractionParts[1]);
+      if (!isNaN(numerator) && !isNaN(denominator) && denominator !== 0) {
+        weightValue = numerator / denominator;
+      }
+    }
+  }
+  sanitized.weight = parseFloat(weightValue) || 0; // Allow zero weight for paper money
+  
+  // Handle price with fraction support and currency symbols
+  let priceValue = item.price;
+  if (typeof priceValue === 'string') {
+    // Remove currency symbols first
+    priceValue = priceValue.replace(/[\$,\s]/g, '');
+    if (priceValue.includes('/')) {
+      const fractionParts = priceValue.split('/');
+      if (fractionParts.length === 2) {
+        const numerator = parseFloat(fractionParts[0]);
+        const denominator = parseFloat(fractionParts[1]);
+        if (!isNaN(numerator) && !isNaN(denominator) && denominator !== 0) {
+          priceValue = numerator / denominator;
+        }
+      }
+    }
+  }
+  sanitized.price = Math.max(0, parseFloat(priceValue) || 0);
+  sanitized.date = item.date || '—';
+  sanitized.purchaseLocation = (item.purchaseLocation || '').toString().trim();
+  sanitized.storageLocation = (item.storageLocation || '').toString().trim();
+  sanitized.notes = (item.notes || '').toString().trim();
+  sanitized.spotPriceAtPurchase = Math.max(0, parseFloat(item.spotPriceAtPurchase) || 0);
+  sanitized.premiumPerOz = parseFloat(item.premiumPerOz) || 0;
+  sanitized.totalPremium = parseFloat(item.totalPremium) || 0;
+  sanitized.isCollectable = Boolean(item.isCollectable);
+  sanitized.numistaId = (item.numistaId || '').toString().trim();
+  sanitized.serial = parseInt(item.serial) || getNextSerial();
+  sanitized.issuedYear = (item.issuedYear || '').toString().trim();
+
+  // Remove any HTML tags and excess whitespace from text fields
+  const textFields = ['name', 'purchaseLocation', 'storageLocation', 'notes'];
+  textFields.forEach(field => {
+    if (sanitized[field]) {
+      sanitized[field] = sanitized[field]
+        .replace(/<[^>]*>/g, '') // Remove HTML tags
+        .replace(/\s+/g, ' ')    // Normalize whitespace
+        .trim();
+    }
+  });
+
+  return sanitized;
 };
 /**
  * Gets the active branding name considering domain overrides
@@ -217,7 +375,15 @@ const getDisplayComposition = (composition = "") => {
   const firstWords = getCompositionFirstWords(composition);
   const first = firstWords.split(/\s+/)[0] || "";
   const metals = ["gold", "silver", "platinum", "palladium"];
-  return metals.includes(first.toLowerCase()) ? firstWords : "Alloy";
+  
+  if (metals.includes(first.toLowerCase())) {
+    return firstWords;
+  } else {
+    // For non-bullion metals, show "Alloy" or "Other" with tooltip
+    const displayText = composition.toLowerCase().includes('alloy') ? 'Alloy' : 'Other';
+    const actualComposition = composition || 'Unknown composition';
+    return `<span title="${actualComposition}" style="cursor: help; text-decoration: underline dotted;">${displayText}</span>`;
+  }
 };
 
 /**
@@ -301,15 +467,6 @@ const updateSpotTimestamp = (metalName) => {
 // =============================================================================
 
 /**
- * Pads a number with leading zeros to ensure two-digit format
- *
- * @param {number} n - Number to pad
- * @returns {string} Two-digit string representation
- * @example pad2(5) returns "05", pad2(12) returns "12"
- */
-const pad2 = (n) => n.toString().padStart(2, "0");
-
-/**
  * Returns current date as ISO string (YYYY-MM-DD)
  *
  * @returns {string} Current date in ISO format
@@ -345,23 +502,22 @@ const currentMonthKey = () => {
  * @returns {string} Date in YYYY-MM-DD format, or 'Unknown' if parsing fails
  */
 function parseDate(dateStr) {
-  if (!dateStr) return '—';
+  if (!dateStr || typeof dateStr !== 'string') return dateStr;
 
-  // Clean the input string
   const cleanDateStr = dateStr.trim();
 
-  // Try ISO format (YYYY-MM-DD) first - most reliable
+  if (!cleanDateStr || cleanDateStr === '-' || cleanDateStr === '--') {
+    return dateStr;
+  }
+
   if (/^\d{4}-\d{2}-\d{2}$/.test(cleanDateStr)) {
-    const date = new Date(cleanDateStr);
+    const date = new Date(cleanDateStr + 'T00:00:00');
     if (!isNaN(date) && date.toString() !== "Invalid Date") {
       return cleanDateStr;
     }
   }
 
-  // Try YYYY/MM/DD format (unambiguous)
-  const ymdMatch = cleanDateStr.match(
-    /^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})$/,
-  );
+  const ymdMatch = cleanDateStr.match(/^\d{4}[\/\-]\d{1,2}[\/\-]\d{1,2}$/);
   if (ymdMatch) {
     const year = parseInt(ymdMatch[1], 10);
     const month = parseInt(ymdMatch[2], 10) - 1;
@@ -375,38 +531,28 @@ function parseDate(dateStr) {
     }
   }
 
-  // Handle ambiguous MM/DD/YYYY vs DD/MM/YYYY formats
-  const ambiguousMatch = cleanDateStr.match(
-    /^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/,
-  );
+  const ambiguousMatch = cleanDateStr.match(/^\d{1,2}[\/\-]\d{1,2}[\/\-]\d{4}$/);
   if (ambiguousMatch) {
     const first = parseInt(ambiguousMatch[1], 10);
     const second = parseInt(ambiguousMatch[2], 10);
     const year = parseInt(ambiguousMatch[3], 10);
 
-    // If first number > 12, it must be DD/MM/YYYY (European)
     if (first > 12 && second <= 12) {
       const date = new Date(year, second - 1, first);
       if (!isNaN(date) && date.toString() !== "Invalid Date") {
         return date.toISOString().split("T")[0];
       }
-    }
-    // If second number > 12, it must be MM/DD/YYYY (US)
-    else if (second > 12 && first <= 12) {
+    } else if (second > 12 && first <= 12) {
       const date = new Date(year, first - 1, second);
       if (!isNaN(date) && date.toString() !== "Invalid Date") {
         return date.toISOString().split("T")[0];
       }
-    }
-    // Both numbers <= 12, ambiguous - default to US format (MM/DD/YYYY)
-    else if (first <= 12 && second <= 12) {
-      // Try US format first
+    } else if (first <= 12 && second <= 12) {
       let date = new Date(year, first - 1, second);
       if (!isNaN(date) && date.toString() !== "Invalid Date") {
         return date.toISOString().split("T")[0];
       }
 
-      // Fallback to European format
       date = new Date(year, second - 1, first);
       if (!isNaN(date) && date.toString() !== "Invalid Date") {
         return date.toISOString().split("T")[0];
@@ -414,460 +560,52 @@ function parseDate(dateStr) {
     }
   }
 
-  // Try parsing as a general date string (fallback)
   try {
     const date = new Date(cleanDateStr);
     if (!isNaN(date) && date.toString() !== "Invalid Date") {
-      return date.toISOString().split("T")[0];
+      const year = date.getFullYear();
+      const currentYear = new Date().getFullYear();
+      if (year >= 1900 && year <= currentYear + 1) {
+        return date.toISOString().split("T")[0];
+      }
     }
-  } catch (e) {
-    // Continue to fallback
-  }
+  } catch (e) {}
 
-  // If all parsing fails, return '—'
-  console.warn(`Could not parse date: "${dateStr}", returning '—'`);
-  return '—';
+  return dateStr;
 }
 
 /**
- * Formats a date string into Month Day, Year format
+ * Formats a date string for display in the report
  *
- * @param {string} dateStr - Date in any parseable format
- * @returns {string} Formatted date (e.g., "Jan 1, 1969")
+ * @param {string} dateStr - Date string in YYYY-MM-DD format
+ * @returns {string} Formatted date string (e.g., "Jan 1, 2023")
  */
 const formatDisplayDate = (dateStr) => {
-  if (!dateStr || dateStr === '—' || dateStr === 'Unknown') return '—';
-  
-  const d = new Date(dateStr);
-  if (isNaN(d)) return '—';
-  
+  if (!dateStr || typeof dateStr !== 'string') return dateStr;
+
+  const cleanStr = dateStr.trim();
+  if (!cleanStr || cleanStr === 'Unknown' || cleanStr === '-' || cleanStr === '--') {
+    return dateStr;
+  }
+
+  let dateToFormat = cleanStr;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(cleanStr)) {
+    dateToFormat = cleanStr + 'T00:00:00';
+  }
+
+  const d = new Date(dateToFormat);
+  if (isNaN(d) || d.toString() === 'Invalid Date') return dateStr;
+
+  const year = d.getFullYear();
+  const currentYear = new Date().getFullYear();
+  if (year < 1900 || year > currentYear + 1) {
+    return dateStr;
+  }
+
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
                   'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  
+
   return `${months[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
-};
-
-/**
- * Formats a number as a currency string using the default currency
- *
- * @param {number|string} value - Number to format
- * @param {string} [currency=DEFAULT_CURRENCY] - ISO currency code
- * @returns {string} Formatted currency string (e.g., "$1,234.56")
- */
-const formatCurrency = (value, currency = DEFAULT_CURRENCY) => {
-  const num = parseFloat(value);
-  if (isNaN(num)) return "";
-  try {
-    return new Intl.NumberFormat(undefined, {
-      style: "currency",
-      currency,
-    }).format(num);
-  } catch (e) {
-    // Fallback for environments without Intl support
-    return `${currency} ${num.toFixed(2)}`;
-  }
-};
-
-/**
- * Formats a profit/loss value with color coding
- *
- * @param {number} value - Profit/loss value
- * @returns {string} HTML string with appropriate color styling
- */
-const formatLossProfit = (value) => {
-  const formatted = formatCurrency(value);
-  if (value > 0) {
-    return `<span style="color: var(--success);">${formatted}</span>`;
-  } else if (value < 0) {
-    return `<span style="color: var(--danger);">${formatted}</span>`;
-  }
-  return formatted;
-};
-
-/**
- * Sanitizes text input for safe HTML display
- * Prevents XSS attacks by encoding HTML special characters
- *
- * @param {string} text - Text to sanitize
- * @returns {string} Sanitized text safe for HTML insertion
- */
-const sanitizeHtml = (text) => {
-  if (!text) return "";
-  const div = document.createElement("div");
-  div.textContent = text.toString();
-  return div.innerHTML;
-};
-
-/**
- * Converts grams to troy ounces
- *
- * @param {number} grams - Weight in grams
- * @returns {number} Weight in troy ounces
- */
-const gramsToOzt = (grams) => grams / 31.1034768;
-
-/**
- * Converts troy ounces to grams
- *
- * @param {number} ozt - Weight in troy ounces
- * @returns {number} Weight in grams
- */
-const oztToGrams = (ozt) => ozt * 31.1034768;
-
-/**
- * Formats a weight in troy ounces to either grams or ounces
- *
- * @param {number} ozt - Weight in troy ounces
- * @returns {string} Formatted weight string with unit
- */
-const formatWeight = (ozt) => {
-  const weight = parseFloat(ozt);
-  if (weight < 1) {
-    return `${oztToGrams(weight).toFixed(2)} g`;
-  }
-  return `${weight.toFixed(2)} oz`;
-};
-
-/**
- * Converts amount from specified currency to USD using static rates
- *
- * @param {number} amount - Monetary amount
- * @param {string} [currency="USD"] - Currency code of amount
- * @returns {number} Amount converted to USD
- */
-const convertToUsd = (amount, currency = "USD") => {
-  const rates = { USD: 1, EUR: 1.08, GBP: 1.27, CAD: 0.74 };
-  const rate = rates[currency.toUpperCase()] || 1;
-  return amount * rate;
-};
-
-/**
- * Detects currency code from a value string containing symbols or codes
- *
- * @param {string} str - Value containing currency information
- * @returns {string|null} Detected currency code or null if not found
- */
-const detectCurrency = (str = "") => {
-  const s = str.toUpperCase();
-  if (/[€]|EUR/.test(s)) return "EUR";
-  if (/[£]|GBP/.test(s)) return "GBP";
-  if (/CAD|C\$|CA\$/.test(s)) return "CAD";
-  if (/USD|US\$/.test(s)) return "USD";
-  return null;
-};
-
-/**
- * Removes all non-alphanumeric characters from a string, preserving spaces.
- *
- * @param {string} str - Input string
- * @returns {string} Cleaned string containing only letters, numbers, and spaces
- */
-const stripNonAlphanumeric = (str = "", allowHyphen = false) =>
-  str.toString().replace(allowHyphen ? /[^a-zA-Z0-9 -]/g : /[^a-zA-Z0-9 ]/g, "");
-
-/**
- * Cleans a string by stripping HTML tags and control characters while
- * preserving punctuation. Normalizes whitespace and removes diacritics.
- *
- * @param {string} str - Input string
- * @returns {string} Cleaned string
- */
-const cleanString = (str = "") =>
-  str
-    .toString()
-    .replace(/<[^>]*>/g, "")
-    .normalize("NFD")
-    .replace(/\p{Diacritic}/gu, "")
-    .replace(/[\u0000-\u001F\u007F'\"]/g, "")
-    .replace(/\s+/g, " ")
-    .trim();
-
-/**
- * Sanitizes all string properties of an object by stripping non-alphanumeric characters.
- *
- * @param {Object} obj - Object whose string fields will be sanitized
- * @returns {Object} New object with sanitized string fields
- */
-const sanitizeObjectFields = (obj) => {
-  const cleaned = { ...obj };
-  for (const key of Object.keys(cleaned)) {
-    if (typeof cleaned[key] === "string" && key !== 'notes') {
-      const allowHyphen = key === 'date';
-      cleaned[key] =
-        key === 'purchaseLocation'
-          ? cleanString(cleaned[key])
-          : stripNonAlphanumeric(cleaned[key], allowHyphen);
-    }
-  }
-  return cleaned;
-};
-
-/**
- * Allowed inventory item types
- * @constant {string[]}
- */
-const VALID_TYPES = ["Coin", "Bar", "Round", "Note", "Aurum", "Other"];
-
-/**
- * Normalizes item type to one of the predefined options
- *
- * @param {string} [type=""] - Raw type string
- * @returns {string} Normalized type value
- */
-const normalizeType = (type = "") => {
-  const t = type.toString().trim().toLowerCase();
-  const match = VALID_TYPES.find(v => v.toLowerCase() === t);
-  return match || "Other";
-};
-
-/**
- * Maps Numista type strings to internal StackrTrackr categories
- *
- * @param {string} type - Numista type string
- * @returns {string} Mapped internal type
- */
-const mapNumistaType = (type = "") => {
-  const t = type.toLowerCase();
-  if (t.includes("aurum")) return "Aurum";
-  if (t.includes("note")) return "Note";
-  if (t.includes("bar") || t.includes("ingot")) return "Bar";
-  if (t.includes("round") || t.includes("token") || t.includes("medal")) return "Round";
-  if (t.includes("coin")) return "Coin";
-  return "Other";
-};
-
-/**
- * Determines metal type from Numista composition string
- *
- * @param {string} composition - Composition description
- * @returns {string} Recognized metal or 'Alloy' if not silver/gold/platinum/palladium
- */
-const parseNumistaMetal = (composition = "") => {
-  const c = composition.trim().toLowerCase();
-  if (c.startsWith("silver")) return "Silver";
-  if (c.startsWith("gold")) return "Gold";
-  if (c.startsWith("platinum")) return "Platinum";
-  if (c.startsWith("palladium")) return "Palladium";
-  if (c.startsWith("paper")) return "Paper";
-  return "Alloy";
-};
-
-/**
- * Saves data to localStorage with JSON serialization
- *
- * @param {string} key - Storage key
- * @param {any} data - Data to store
- */
-const saveData = (key, data) => { try { const raw = JSON.stringify(data); const out = __compressIfNeeded(raw); localStorage.setItem(key, out); } catch(e) { console.error('saveData failed', e); } };/**
- * Loads data from localStorage with error handling
- *
- * @param {string} key - Storage key
- * @param {any} [defaultValue=[]] - Default value if no data found
- * @returns {any} Parsed data or default value
- */
-const loadData = (key, defaultValue = []) => { try { const raw = localStorage.getItem(key); if(raw == null) return defaultValue; const str = __decompressIfNeeded(raw); return JSON.parse(str); } catch(e) { return defaultValue; } };
-
-/**
- * Removes unknown localStorage keys to maintain a clean storage state
- *
- * Iterates over all localStorage entries and deletes any keys not present in
- * ALLOWED_STORAGE_KEYS.
- */
-const cleanupStorage = () => {
-  if (typeof localStorage === 'undefined') return;
-  const allowed = new Set(ALLOWED_STORAGE_KEYS);
-  for (let i = localStorage.length - 1; i >= 0; i--) {
-    const key = localStorage.key(i);
-    if (!allowed.has(key)) {
-      localStorage.removeItem(key);
-    }
-  }
-};
-
-/**
- * Sorts inventory by date (newest first)
- *
- * @param {Array} [data=inventory] - Data to sort
- * @returns {Array} Sorted inventory data
- */
-const sortInventoryByDateNewestFirst = (data = inventory) => {
-  return [...data].sort((a, b) => {
-    // Handle unknown dates (—, empty, or Unknown) - they should sort to the bottom (oldest)
-    const isUnknownA = !a.date || a.date.trim() === '' || a.date.trim() === '—' || a.date.trim() === 'Unknown';
-    const isUnknownB = !b.date || b.date.trim() === '' || b.date.trim() === '—' || b.date.trim() === 'Unknown';
-    
-    if (isUnknownA && isUnknownB) return 0; // Both unknown, equal
-    if (isUnknownA) return 1; // A is unknown, put it after B (older)
-    if (isUnknownB) return -1; // B is unknown, put it after A (older)
-    
-    // Both have dates, compare normally
-    const dateA = new Date(a.date);
-    const dateB = new Date(b.date);
-    const timeA = isNaN(dateA) ? 0 : dateA.getTime();
-    const timeB = isNaN(dateB) ? 0 : dateB.getTime();
-    return timeB - timeA; // Descending order (newest first)
-  });
-};
-
-/**
- * Validates inventory item data
- *
- * @param {Object} item - Inventory item to validate
- * @returns {Object} Validation result with isValid flag and errors array
- */
-const validateInventoryItem = (item) => {
-  const errors = [];
-
-  // Required fields
-  if (
-    !item.name ||
-    typeof item.name !== "string" ||
-    item.name.trim().length === 0
-  ) {
-    errors.push("Name is required");
-  } else if (item.name.length > 100) {
-    errors.push("Name must be 100 characters or less");
-  }
-
-  if (
-    !item.metal ||
-    !["Silver", "Gold", "Platinum", "Palladium"].includes(item.metal)
-  ) {
-    errors.push("Valid metal type is required");
-  }
-
-  // Numeric validations
-  if (
-    !item.qty ||
-    !Number.isInteger(Number(item.qty)) ||
-    Number(item.qty) < 1
-  ) {
-    errors.push("Quantity must be a positive integer");
-  }
-
-  if (!item.weight || isNaN(Number(item.weight)) || Number(item.weight) <= 0) {
-    errors.push("Weight must be a positive number");
-  }
-
-  if (item.price === undefined || item.price === null || isNaN(Number(item.price))) {
-    errors.push("Price must be a number");
-  } else if (Number(item.price) < 0) {
-    errors.push("Price cannot be negative");
-  }
-
-  // Optional field validations
-  if (item.storageLocation && item.storageLocation.length > 50) {
-    errors.push("Storage location must be 50 characters or less");
-  }
-
-  if (item.purchaseLocation && item.purchaseLocation.length > 100) {
-    errors.push("Purchase location must be 100 characters or less");
-  }
-
-  return {
-    isValid: errors.length === 0,
-    errors,
-  };
-};
-
-/**
- * Sanitizes imported inventory data, coercing invalid fields to safe defaults.
- *
- * String fields default to an empty string and numeric fields become null when
- * parsing fails. This allows imports to proceed even when some fields are
- * malformed.
- *
- * @param {Object} item - Raw item data from an import process
- * @returns {Object} Sanitized item
- */
-const sanitizeImportedItem = (item) => {
-  const sanitized = { ...item };
-
-  // Ensure metal and composition are strings
-  if (typeof sanitized.metal !== 'string') {
-    sanitized.metal = '';
-  }
-  if (typeof sanitized.composition !== 'string') {
-    sanitized.composition = sanitized.metal;
-  }
-
-  // Ensure price always has a numeric value
-  const parsedPrice = parseFloat(sanitized.price);
-  sanitized.price = isNaN(parsedPrice) ? 0 : parsedPrice;
-
-  // Ensure other numeric fields parse correctly
-  const numFields = ['qty', 'weight', 'spotPriceAtPurchase'];
-  for (const field of numFields) {
-    if (sanitized[field] !== undefined) {
-      const parsed = parseFloat(sanitized[field]);
-      sanitized[field] = isNaN(parsed) ? null : parsed;
-    }
-  }
-
-  // Normalize and sanitize string fields
-  const basicFields = ['name', 'type', 'purchaseLocation', 'storageLocation'];
-  const cleanMultilineString = (str = '') =>
-    str
-      .toString()
-      .replace(/<[^>]*>/g, '')
-      .normalize('NFD')
-      .replace(/\p{Diacritic}/gu, '')
-      .replace(/[\u0000-\u0008\u000B-\u001F\u007F'\"]/g, '')
-      .replace(/\r\n?/g, '\n')
-      .replace(/[ \t]+/g, ' ')
-      .replace(/ *\n */g, '\n')
-      .trim();
-  for (const field of basicFields) {
-    sanitized[field] = cleanString(sanitized[field]);
-  }
-  sanitized.notes = cleanMultilineString(sanitized.notes);
-  sanitized.type = normalizeType(sanitized.type);
-
-  // Reset premium calculations if price or weight are missing
-  if (!sanitized.price || !sanitized.weight) {
-    sanitized.premiumPerOz = 0;
-    sanitized.totalPremium = 0;
-  }
-
-  return sanitizeObjectFields(sanitized);
-};
-
-/**
- * Handles errors with user-friendly messaging
- *
- * @param {Error|string} error - Error to handle
- * @param {string} context - Context where error occurred
- */
-const handleError = (error, context = "") => {
-  const errorMessage =
-    error instanceof Error ? error.message : error.toString();
-
-  console.error(`Error in ${context}:`, error);
-
-  // Show user-friendly message
-  const userMessage = getUserFriendlyMessage(errorMessage);
-  alert(`Error: ${userMessage}`);
-};
-
-/**
- * Converts technical error messages to user-friendly ones
- *
- * @param {string} errorMessage - Technical error message
- * @returns {string} User-friendly error message
- */
-const getUserFriendlyMessage = (errorMessage) => {
-  if (errorMessage.includes("localStorage")) {
-    return "Unable to save data. Please check your browser settings.";
-  }
-  if (errorMessage.includes("parse") || errorMessage.includes("JSON")) {
-    return "The file format is not supported or corrupted.";
-  }
-  if (errorMessage.includes("network") || errorMessage.includes("fetch")) {
-    return "Network connection issue. Please check your internet connection.";
-  }
-
-  // Default fallback
-  return errorMessage || "An unexpected error occurred.";
 };
 
 /**
@@ -1254,1323 +992,383 @@ const analyzeStorageData = () => {
       size,
       value,
       type: analysis.type,
-      recordCount: analysis.recordCount,
-      parsedData: analysis.parsedData
+      recordCount: analysis.recordCount
     });
   }
-  
-  // Calculate percentages and sort by size
-  items.forEach(item => {
-    item.percentage = (item.size / totalSize) * 100;
-  });
-  
-  items.sort((a, b) => b.size - a.size);
-  
+
   return {
     items,
     totalSize,
-    largestItem: items[0] || { name: 'None', size: 0 }
+    largestItem: items.reduce((max, item) => item.size > max.size ? item : max, { size: 0 })
   };
 };
 
 /**
- * Analyzes a storage item to determine its type and content
+ * Analyzes a single storage item to determine its type and other characteristics
  */
 const analyzeStorageItem = (key, value) => {
-  let type = 'String';
-  let recordCount = 1;
-  let parsedData = null;
-  
-  try {
-    parsedData = JSON.parse(value);
-    
-    if (Array.isArray(parsedData)) {
-      type = 'Array';
-      recordCount = parsedData.length;
-    } else if (typeof parsedData === 'object' && parsedData !== null) {
-      type = 'Object';
-      recordCount = Object.keys(parsedData).length;
-    } else {
-      type = 'JSON Value';
-    }
-  } catch (e) {
-    // Not JSON, treat as string
-    type = 'String';
-    recordCount = 1;
+  let type = 'Unknown';
+  let recordCount = 0;
+
+  if (key.startsWith('report_')) {
+    type = 'Report';
+  } else if (key.startsWith('api_config_')) {
+    type = 'API Configuration';
+  } else if (key.startsWith('user_prefs_')) {
+    type = 'User Preferences';
+  } else if (key.startsWith('session_')) {
+    type = 'Session Data';
+  } else if (key.startsWith('temp_')) {
+    type = 'Temporary Data';
   }
-  
-  return { type, recordCount, parsedData };
-};
 
-/**
- * Gets display name for storage keys
- */
-const getStorageItemDisplayName = (key) => {
-  const names = {
-    'precious-metals-inventory': 'Inventory Data',
-    'spot-price-history': 'Spot Price History',
-    'api-config': 'Metals API Configuration',
-    'api-cache': 'API Cache',
-    'spotPriceSilver': 'Silver Spot Price',
-    'spotPriceGold': 'Gold Spot Price',
-    'spotPricePlatinum': 'Platinum Spot Price',
-    'spotPricePalladium': 'Palladium Spot Price',
-    'theme': 'Theme Setting',
-    'disclaimer-accepted': 'Disclaimer Acceptance'
-  };
-  
-  return names[key] || key;
-};
-
-/**
- * Gets description for storage items
- */
-const getStorageItemDescription = (key) => {
-  const descriptions = {
-    'precious-metals-inventory': 'Your complete inventory of precious metals items with all details',
-    'spot-price-history': 'Historical spot price data from API providers and manual entries',
-    'api-config': 'Metals API provider configurations and usage statistics',
-    'api-cache': 'Cached spot price data to reduce API calls',
-    'spotPriceSilver': 'Current spot price setting for silver',
-    'spotPriceGold': 'Current spot price setting for gold', 
-    'spotPricePlatinum': 'Current spot price setting for platinum',
-    'spotPricePalladium': 'Current spot price setting for palladium',
-    'theme': 'User interface theme preference (dark/light/system)',
-    'disclaimer-accepted': 'Record of user accepting the application disclaimer'
-  };
-  
-  return descriptions[key] || 'Application data stored in browser localStorage';
-};
-
-/**
- * Creates modal HTML for detailed item view
- */
-const createStorageItemModal = (item) => {
-  const modalId = `modal-${item.key}`;
-  
-  return `
-    <div id="${modalId}" class="storage-modal" style="display: none;">
-        <div class="modal-content-large">
-            <div class="modal-header">
-                <h3>${getStorageItemDisplayName(item.key)} Details</h3>
-                <button class="modal-close" onclick="toggleModal('${item.key}')">&times;</button>
-            </div>
-            <div class="modal-body">
-                <div class="modal-stats">
-                    <div class="stat-item">
-                        <span class="stat-label">Size:</span>
-                        <span class="stat-value">${item.size.toFixed(2)} KB</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">Type:</span>
-                        <span class="stat-value">${item.type}</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">Records:</span>
-                        <span class="stat-value">${item.recordCount}</span>
-                    </div>
-                </div>
-                
-                ${generateItemDataTable(item)}
-            </div>
-        </div>
-    </div>
-  `;
-};
-
-/**
- * Generates data table for storage item
- */
-const generateItemDataTable = (item) => {
-  if (!item.parsedData) {
-    return `<div class="data-preview"><strong>Raw Data:</strong><pre>${item.value}</pre></div>`;
+  // Estimate record count for certain types
+  if (type === 'Report' || type === 'API Configuration') {
+    try {
+      const json = JSON.parse(value);
+      recordCount = Array.isArray(json) ? json.length : 1;
+    } catch (e) {
+      recordCount = 1; // Unable to parse, treat as single record
+    }
   }
-  
-  if (Array.isArray(item.parsedData)) {
-    if (item.parsedData.length === 0) {
-      return '<p class="no-data">No records found</p>';
-    }
-    
-    // For inventory data, create a proper table
-    if (item.key === 'precious-metals-inventory') {
-      const headers = Object.keys(item.parsedData[0] || {});
-      return `
-        <div class="data-table-container">
-          <table class="data-table">
-            <thead>
-              <tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr>
-            </thead>
-            <tbody>
-              ${item.parsedData.slice(0, 50).map(record => 
-                `<tr>${headers.map(h => `<td>${sanitizeHtml(record[h]?.toString() || '')}</td>`).join('')}</tr>`
-              ).join('')}
-            </tbody>
-          </table>
-          ${item.parsedData.length > 50 ? `<p class="truncated">Showing first 50 of ${item.parsedData.length} records</p>` : ''}
-        </div>
-      `;
-    }
-    
-    // For other arrays, show a summary
-    return `
-      <div class="array-summary">
-        <p><strong>Array with ${item.parsedData.length} items</strong></p>
-        <div class="data-preview"><pre>${JSON.stringify(item.parsedData.slice(0, 3), null, 2)}${item.parsedData.length > 3 ? '\n...and ' + (item.parsedData.length - 3) + ' more items' : ''}</pre></div>
-      </div>
-    `;
-  }
-  
-  if (typeof item.parsedData === 'object') {
-    const keys = Object.keys(item.parsedData);
-    return `
-      <div class="object-summary">
-        <p><strong>Object with ${keys.length} properties</strong></p>
-        <div class="data-preview"><pre>${JSON.stringify(item.parsedData, null, 2)}</pre></div>
-      </div>
-    `;
-  }
-  
-  return `<div class="data-preview"><pre>${JSON.stringify(item.parsedData, null, 2)}</pre></div>`;
+
+  return { type, recordCount };
 };
 
 /**
- * Gets enhanced CSS styles for the storage report with theme support
- */
-const getStorageReportCSS = () => {
-  return `
-    :root {
-        --primary: #007bff;
-        --success: #28a745;
-        --warning: #ffc107;
-        --danger: #dc3545;
-        --info: #17a2b8;
-        --light: #f8f9fa;
-        --dark: #343a40;
-        --bg-primary: #f9fafb;
-        --bg-secondary: #f8f9fa;
-        --text-primary: #333333;
-        --text-secondary: #666666;
-        --border: #dee2e6;
-    }
-    
-    [data-theme="dark"] {
-        --bg-primary: #1a1a1a;
-        --bg-secondary: #2d2d2d;
-        --text-primary: #f8fafc;
-        --text-secondary: #cccccc;
-        --border: #404040;
-        --light: #2d2d2d;
-        --dark: #f8f9fa;
-    }
-    
-    * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-    }
-    
-    body {
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-        line-height: 1.6;
-        color: var(--text-primary);
-        background: var(--bg-secondary);
-        transition: all 0.3s ease;
-    }
-    
-    .storage-report-modal-content {
-        width: 95vw;
-        max-width: 1200px;
-        height: 90vh;
-        max-height: 900px;
-    }
-    
-    .storage-report-controls {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-    
-    .theme-btn {
-        background: none;
-        border: 1px solid var(--border);
-        padding: 0.5rem;
-        border-radius: 0.25rem;
-        cursor: pointer;
-        font-size: 1rem;
-        transition: all 0.2s ease;
-    }
-    
-    .theme-btn:hover {
-        background: var(--bg-secondary);
-        transform: scale(1.05);
-    }
-    
-    .storage-report-body {
-        padding: 1rem;
-        overflow-y: auto;
-        height: calc(90vh - 80px);
-    }
-    
-    .storage-report-header {
-        margin-bottom: 1.5rem;
-    }
-    
-    .storage-summary-stats {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-        gap: 1rem;
-        margin-bottom: 1.5rem;
-    }
-    
-    .stat-card {
-        background: var(--bg-primary);
-        border: 1px solid var(--border);
-        border-radius: 0.5rem;
-        padding: 1rem;
-        text-align: center;
-        transition: all 0.2s ease;
-    }
-    
-    .stat-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    }
-    
-    .stat-label {
-        display: block;
-        font-size: 0.875rem;
-        color: var(--text-secondary);
-        margin-bottom: 0.25rem;
-    }
-    
-    .stat-value {
-        display: block;
-        font-size: 1.5rem;
-        font-weight: 700;
-        color: var(--primary);
-    }
-    
-    
-    .storage-report-actions {
-        display: flex;
-        justify-content: center;
-        gap: 1rem;
-        margin-top: 2rem;
-        padding-top: 1rem;
-        border-top: 1px solid var(--border);
-    }
-    
-    .storage-detail-modal .modal-content {
-        width: 90%;
-        max-width: 800px;
-        max-height: 80%;
-    }
-    
-    .detail-stats {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-        gap: 1rem;
-        margin-bottom: 1.5rem;
-    }
-    
-    .detail-stat {
-        display: flex;
-        justify-content: space-between;
-        padding: 0.75rem;
-        background: var(--bg-secondary);
-        border-radius: 0.25rem;
-    }
-    
-    .inventory-table-container {
-        margin-top: 1rem;
-    }
-    
-    .inventory-detail-table {
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 0.875rem;
-    }
-    
-    .inventory-detail-table th,
-    .inventory-detail-table td {
-        border: 1px solid var(--border);
-        padding: 0.5rem;
-        text-align: left;
-    }
-    
-    .inventory-detail-table th {
-        background: var(--bg-secondary);
-        font-weight: 600;
-        position: sticky;
-        top: 0;
-    }
-    
-    .data-preview {
-        background: var(--bg-secondary);
-        border: 1px solid var(--border);
-        border-radius: 0.25rem;
-        padding: 1rem;
-        margin-top: 1rem;
-    }
-    
-    .data-preview h4 {
-        margin-bottom: 0.5rem;
-        color: var(--text-primary);
-    }
-    
-    .data-preview pre {
-        font-size: 0.75rem;
-        white-space: pre-wrap;
-        word-wrap: break-word;
-        max-height: 300px;
-        overflow-y: auto;
-        color: var(--text-primary);
-    }
-    
-    /* Dark theme for storage modals */
-    .storage-dark-theme {
-        background: var(--bg-primary);
-        color: var(--text-primary);
-    }
-    
-    .storage-dark-theme .modal-content {
-        background: var(--bg-primary);
-        border: 1px solid var(--border);
-    }
-    
-    .storage-dark-theme .modal-header {
-        background: var(--dark);
-        color: var(--text-primary);
-        border-bottom: 1px solid var(--border);
-    }
-    
-    .btn {
-        padding: 0.5rem 1rem;
-        border: 1px solid var(--border);
-        border-radius: 0.25rem;
-        background: var(--bg-primary);
-        color: var(--text-primary);
-        text-decoration: none;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        font-size: 0.875rem;
-    }
-    
-    .btn:hover {
-        background: var(--bg-secondary);
-        transform: translateY(-1px);
-    }
-    
-    .btn.premium {
-        background: var(--primary);
-        color: #f8fafc;
-        border-color: var(--primary);
-    }
-    
-    .btn.success {
-        background: var(--success);
-        color: #f8fafc;
-        border-color: var(--success);
-    }
-    
-    .btn.secondary {
-        background: var(--text-secondary);
-        color: #f8fafc;
-        border-color: var(--text-secondary);
-    }
-    
-    /* Enhanced responsive design */
-    @media (max-width: 768px) {
-        .storage-report-modal-content {
-            width: 98vw;
-            height: 95vh;
-        }
-        
-        .storage-summary-stats {
-            grid-template-columns: 1fr;
-        }
-        
-        .storage-report-actions {
-            flex-direction: column;
-        }
-        
-        .detail-stats {
-            grid-template-columns: 1fr;
-        }
-    }
-    
-    .report-container {
-        max-width: 8.5in;
-        margin: 0 auto;
-        background: var(--bg-primary);
-        padding: 1in;
-        min-height: 11in;
-    }
-    
-    .header-content {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 0.5rem;
-    }
-    
-    .header-controls {
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-    }
-
-    .theme-toggle-btn,
-    .close-btn {
-        background: none;
-        border: 1px solid var(--border);
-        padding: 0.5rem;
-        border-radius: 0.25rem;
-        cursor: pointer;
-        font-size: 1rem;
-        transition: all 0.2s ease;
-    }
-
-    .theme-toggle-btn:hover,
-    .close-btn:hover {
-        background: var(--bg-secondary);
-    }
-    
-    .storage-visualization {
-        margin-bottom: 2rem;
-    }
-    
-    .chart-section {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 2rem;
-        align-items: stretch;
-    }
-    
-    @media (max-width: 768px) {
-        .chart-section {
-            grid-template-columns: 1fr;
-        }
-    }
-    
-    .chart-container {
-        background: var(--bg-primary);
-        border: 1px solid var(--border);
-        border-radius: 0.5rem;
-        padding: 1rem;
-        text-align: center;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        height: 100%;
-    }
-
-    .chart-container canvas {
-        max-width: 100%;
-        height: 100% !important;
-        max-height: 400px;
-    }
-
-    .chart-legend {
-        background: var(--bg-primary);
-        border: 1px solid var(--border);
-        border-radius: 0.5rem;
-        padding: 1rem;
-        display: flex;
-        flex-direction: column;
-        height: 100%;
-        overflow: hidden;
-    }
-
-    .legend-items {
-        overflow-y: auto;
-        flex: 1;
-        max-height: 400px;
-    }
-    
-    .chart-legend h3 {
-        margin-bottom: 1rem;
-        color: var(--text-primary);
-        font-size: 1rem;
-    }
-    
-    .legend-item {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        padding: 0.5rem;
-        margin-bottom: 0.5rem;
-        border-radius: 0.25rem;
-        cursor: pointer;
-        transition: all 0.2s ease;
-    }
-    
-    .legend-item:hover {
-        background: var(--bg-secondary);
-        transform: translateX(5px);
-    }
-    
-    .legend-color {
-        width: 16px;
-        height: 16px;
-        border-radius: 50%;
-        flex-shrink: 0;
-    }
-    
-    .legend-label {
-        flex: 1;
-        font-weight: 500;
-        color: var(--text-primary);
-    }
-    
-    .legend-value {
-        font-size: 0.875rem;
-        color: var(--text-secondary);
-        font-weight: 600;
-    }
-    
-    .report-header {
-        text-align: center;
-        border-bottom: 3px solid var(--primary);
-        padding-bottom: 1rem;
-        margin-bottom: 2rem;
-    }
-
-    .report-header h1 {
-        color: var(--primary);
-        font-size: 2.5rem;
-        margin-bottom: 0.5rem;
-    }
-
-    .report-meta {
-        display: flex;
-        justify-content: space-between;
-        font-size: 0.9rem;
-        color: var(--text-secondary);
-    }
-    
-    .print-controls {
-        text-align: center;
-        margin-bottom: 2rem;
-    }
-    
-    .print-btn {
-        background: var(--primary);
-        color: #f8fafc;
-        border: none;
-        padding: 0.75rem 1.5rem;
-        border-radius: 0.5rem;
-        font-size: 1rem;
-        cursor: pointer;
-        transition: background 0.2s;
-    }
-
-    .print-btn:hover {
-        background: var(--primary-hover);
-    }
-    
-    .storage-summary {
-        margin-bottom: 2rem;
-    }
-    
-    .storage-summary h2 {
-        color: var(--text-primary);
-        margin-bottom: 1rem;
-        font-size: 1.5rem;
-    }
-    
-    .summary-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 1rem;
-        margin-bottom: 1rem;
-    }
-    
-    .summary-item {
-        background: var(--bg-primary);
-        padding: 1rem;
-        border-radius: 0.5rem;
-        border: 1px solid var(--border);
-        border-left: 4px solid var(--primary);
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-
-    .summary-label {
-        font-weight: 600;
-        color: var(--text-secondary);
-    }
-
-    .summary-value {
-        font-weight: 700;
-        color: var(--primary);
-        font-size: 1.1rem;
-    }
-    
-    .storage-breakdown h2 {
-        color: var(--text-primary);
-        margin-bottom: 1rem;
-        font-size: 1.5rem;
-    }
-    
-    .items-grid {
-        display: grid;
-        gap: 1rem;
-    }
-    
-    .storage-item {
-        border: 1px solid var(--border);
-        border-radius: 0.5rem;
-        padding: 1rem;
-        background: var(--bg-primary);
-        transition: box-shadow 0.2s;
-    }
-    
-    .storage-item:hover {
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    }
-    
-    .item-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 0.5rem;
-        cursor: pointer;
-    }
-    
-    .item-header h3 {
-        color: var(--primary);
-        font-size: 1.2rem;
-    }
-    
-    .item-meta {
-        display: flex;
-        gap: 1rem;
-        align-items: center;
-    }
-    
-    .item-size {
-        font-weight: 600;
-        color: var(--success);
-    }
-    
-    .item-percentage {
-        background: var(--primary);
-        color: #f8fafc;
-        padding: 0.25rem 0.5rem;
-        border-radius: 1rem;
-        font-size: 0.8rem;
-    }
-    
-    .item-description {
-        color: var(--text-secondary);
-        margin-bottom: 0.5rem;
-        font-size: 0.9rem;
-    }
-    
-    .item-details {
-        display: flex;
-        gap: 1rem;
-        margin-bottom: 0.5rem;
-    }
-    
-    .detail-item {
-        background: var(--bg-secondary);
-        padding: 0.25rem 0.5rem;
-        border-radius: 0.25rem;
-        font-size: 0.8rem;
-        color: var(--text-secondary);
-    }
-    
-    .view-details-btn {
-        background: var(--success);
-        color: #f8fafc;
-        border: none;
-        padding: 0.5rem 1rem;
-        border-radius: 0.25rem;
-        cursor: pointer;
-        font-size: 0.9rem;
-        transition: filter 0.2s;
-    }
-
-    .view-details-btn:hover {
-        filter: brightness(0.9);
-    }
-    
-    .storage-modal {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0,0,0,0.5);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 1000;
-    }
-    
-    .modal-content_large {
-        background: #f9fafb;
-        border-radius: 0.5rem;
-        width: 90%;
-        max-width: 800px;
-        max-height: 80%;
-        overflow: hidden;
-        display: flex;
-        flex-direction: column;
-    }
-    
-    .modal-header {
-        background: var(--primary);
-        color: #f8fafc;
-        padding: 1rem;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-    
-    .modal-close {
-        background: none;
-        border: none;
-        color: #f8fafc;
-        font-size: 1.5rem;
-        cursor: pointer;
-        padding: 0;
-        width: 2rem;
-        height: 2rem;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-    
-    .modal-body {
-        padding: 1rem;
-        overflow-y: auto;
-        flex: 1;
-    }
-    
-    .modal-stats {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-        gap: 1rem;
-        margin-bottom: 1rem;
-    }
-    
-    .stat-item {
-        background: var(--bg-secondary);
-        padding: 0.75rem;
-        border-radius: 0.25rem;
-        display: flex;
-        justify-content: space-between;
-    }
-
-    .stat-label {
-        font-weight: 600;
-        color: var(--text-secondary);
-    }
-
-    .stat-value {
-        font-weight: 700;
-        color: var(--primary);
-    }
-    
-    .data-table-container {
-        overflow-x: auto;
-        margin-top: 1rem;
-    }
-    
-    .data-table {
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 0.8rem;
-    }
-    
-    .data-table th,
-    .data-table td {
-        border: 1px solid var(--border);
-        padding: 0.5rem;
-        text-align: left;
-    }
-
-    .data-table th {
-        background: var(--bg-secondary);
-        font-weight: 600;
-        position: sticky;
-        top: 0;
-    }
-    
-    .data-table td {
-        max-width: 150px;
-        word-wrap: break-word;
-        overflow-wrap: break-word;
-    }
-    
-    .data-preview {
-        background: var(--bg-secondary);
-        padding: 1rem;
-        border-radius: 0.25rem;
-        margin-top: 1rem;
-    }
-    
-    .data-preview pre {
-        font-size: 0.8rem;
-        white-space: pre-wrap;
-        word-wrap: break-word;
-        max-height: 300px;
-        overflow-y: auto;
-    }
-    
-    .truncated {
-        text-align: center;
-        color: var(--text-secondary);
-        font-style: italic;
-        margin-top: 0.5rem;
-    }
-
-    .no-data {
-        text-align: center;
-        color: var(--text-secondary);
-        font-style: italic;
-        padding: 2rem;
-    }
-
-    .report-footer {
-        margin-top: 3rem;
-        padding-top: 1rem;
-        border-top: 1px solid var(--border);
-        text-align: center;
-        color: var(--text-secondary);
-        font-size: 0.9rem;
-    }
-    
-    @media print {
-        body {
-            background: #f9fafb;
-        }
-        
-        .print-controls {
-            display: none;
-        }
-        
-        .storage-modal {
-            display: none !important;
-        }
-        
-        .view-details-btn {
-            display: none;
-        }
-        
-        .report-container {
-            margin: 0;
-            padding: 0.5in;
-            max-width: none;
-            min-height: auto;
-        }
-        
-        .storage-item {
-            break-inside: avoid;
-            margin-bottom: 0.5rem;
-        }
-    }
-    
-    @media (max-width: 768px) {
-        .report-container {
-            padding: 1rem;
-        }
-        
-        .summary-grid {
-            grid-template-columns: 1fr;
-        }
-        
-        .item-meta {
-            flex-direction: column;
-            align-items: flex-end;
-            gap: 0.5rem;
-        }
-        
-        .modal-content_large {
-            width: 95%;
-            max-height: 90%;
-        }
-    }
-  `;
-};
-
-/**
- * Gets enhanced JavaScript for the storage report with theme and chart support
- */
-const getStorageReportJS = () => {
-  return `
-    let currentChart = null;
-    let currentReportData = null;
-
-    function getChartColor(index) {
-        const colors = [
-            '#007bff', '#28a745', '#ffc107', '#dc3545', '#6f42c1',
-            '#fd7e14', '#20c997', '#e83e8c', '#6c757d', '#17a2b8'
-        ];
-        return colors[index % colors.length];
-    }
-
-    function toggleTheme() {
-        const html = document.documentElement;
-        const currentTheme = html.getAttribute('data-theme');
-        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-        html.setAttribute('data-theme', newTheme);
-        
-        // Recreate chart with new theme
-        if (currentChart && currentReportData) {
-            currentChart.destroy();
-            initializeStorageChart(currentReportData);
-        }
-    }
-    
-    function initializeStorageChart(reportData) {
-        currentReportData = reportData;
-        const currentChartItems = reportData.items.slice(0, 5);
-        const canvas = document.getElementById('storageChart');
-        if (!canvas || typeof Chart === 'undefined') {
-            console.warn('Chart.js not available or canvas not found');
-            return;
-        }
-
-        const ctx = canvas.getContext('2d');
-        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-
-        const data = {
-            labels: currentChartItems.map(item => getStorageItemDisplayName(item.key)),
-            datasets: [{
-                data: currentChartItems.map(item => item.size),
-                backgroundColor: currentChartItems.map((_, index) => getChartColor(index)),
-                borderColor: isDark ? '#404040' : '#f8fafc',
-                borderWidth: 2,
-                hoverBorderWidth: 3,
-                hoverOffset: 10
-            }]
-        };
-        
-        const options = {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    display: false
-                },
-                tooltip: {
-                    backgroundColor: isDark ? '#343a40' : '#f8fafc',
-                    titleColor: isDark ? '#f8fafc' : '#000000',
-                    bodyColor: isDark ? '#f8fafc' : '#000000',
-                    borderColor: isDark ? '#6c757d' : '#dee2e6',
-                    borderWidth: 1,
-                    callbacks: {
-                        label: (context) => {
-                            const item = currentChartItems[context.dataIndex];
-                            return [
-                                \`\${context.label}: \${item.size.toFixed(2)} KB\`,
-                                \`\${item.percentage.toFixed(1)}% of total\`,
-                                \`\${item.recordCount} records\`
-                            ];
-                        }
-                    }
-                }
-            },
-            onClick: (event, elements) => {
-                if (elements.length > 0) {
-                    const index = elements[0].index;
-                    showItemDetail(currentChartItems[index].key);
-                }
-            },
-            animation: {
-                animateRotate: true,
-                animateScale: true
-            }
-        };
-        
-        if (currentChart) {
-            currentChart.destroy();
-        }
-        
-        currentChart = new Chart(ctx, {
-            type: 'pie',
-            data: data,
-            options: options
-        });
-    }
-    
-    function showItemDetail(key) {
-        const item = currentReportData.items.find(i => i.key === key);
-        if (!item) return;
-        
-        const modal = document.getElementById('itemDetailModal');
-        const title = document.getElementById('modalTitle');
-        const content = document.getElementById('modalContent');
-        
-        if (!modal || !title || !content) return;
-        
-        title.textContent = \`\${getStorageItemDisplayName(item.key)} Details\`;
-        content.innerHTML = generateDetailContent(item);
-        
-        modal.style.display = 'flex';
-        document.body.style.overflow = 'hidden';
-    }
-    
-    function closeItemDetail() {
-        const modal = document.getElementById('itemDetailModal');
-        if (modal) {
-            modal.style.display = 'none';
-            document.body.style.overflow = '';
-        }
-    }
-    
-    function generateDetailContent(item) {
-        let content = \`
-            <div class="detail-stats">
-                <div class="detail-stat">
-                    <span class="stat-label">Size:</span>
-                    <span class="stat-value">\${item.size.toFixed(2)} KB</span>
-                </div>
-                <div class="detail-stat">
-                    <span class="stat-label">Type:</span>
-                    <span class="stat-value">\${item.type}</span>
-                </div>
-                <div class="detail-stat">
-                    <span class="stat-label">Records:</span>
-                    <span class="stat-value">\${item.recordCount}</span>
-                </div>
-                <div class="detail-stat">
-                    <span class="stat-label">Percentage:</span>
-                    <span class="stat-value">\${item.percentage.toFixed(1)}%</span>
-                </div>
-            </div>
-        \`;
-        
-        if (item.parsedData && Array.isArray(item.parsedData) && item.parsedData.length > 0) {
-            if (item.key === 'precious-metals-inventory') {
-                content += generateInventoryTable(item.parsedData);
-            } else {
-                content += \`<div class="data-preview"><h4>Sample Data:</h4><pre>\${JSON.stringify(item.parsedData.slice(0, 3), null, 2)}\${item.parsedData.length > 3 ? '\\n...and ' + (item.parsedData.length - 3) + ' more items' : ''}</pre></div>\`;
-            }
-        } else if (item.parsedData) {
-            content += \`<div class="data-preview"><h4>Data:</h4><pre>\${JSON.stringify(item.parsedData, null, 2)}</pre></div>\`;
-        } else {
-            content += \`<div class="data-preview"><h4>Raw Data:</h4><pre>\${item.value}</pre></div>\`;
-        }
-        
-        return content;
-    }
-    
-    function generateInventoryTable(data) {
-        if (!data || data.length === 0) return '<p>No inventory data found</p>';
-        
-        const headers = Object.keys(data[0]);
-        const displayLimit = 20;
-        
-        return \`
-            <div class="inventory-table-container">
-                <h4>Inventory Data (showing first \${Math.min(displayLimit, data.length)} of \${data.length} items)</h4>
-                <table class="inventory-detail-table">
-                    <thead>
-                        <tr>\${headers.map(h => \`<th>\${h}</th>\`).join('')}</tr>
-                    </thead>
-                    <tbody>
-                        \${data.slice(0, displayLimit).map(record => 
-                            \`<tr>\${headers.map(h => \`<td>\${String(record[h] || '')}</td>\`).join('')}</tr>\`
-                        ).join('')}
-                    </tbody>
-                </table>
-            </div>
-        \`;
-    }
-    
-    function getStorageItemDisplayName(key) {
-        const names = {
-            'precious-metals-inventory': 'Inventory Data',
-            'spot-price-history': 'Spot Price History',
-            'api-config': 'Metals API Configuration',
-            'api-cache': 'API Cache',
-            'spotPriceSilver': 'Silver Spot Price',
-            'spotPriceGold': 'Gold Spot Price',
-            'spotPricePlatinum': 'Platinum Spot Price',
-            'spotPricePalladium': 'Palladium Spot Price',
-            'theme': 'Theme Setting',
-            'disclaimer-accepted': 'Disclaimer Acceptance'
-        };
-        return names[key] || key;
-    }
-    
-    // Close modal when clicking outside
-    document.addEventListener('click', function(e) {
-        if (e.target.classList.contains('storage-modal')) {
-            e.target.style.display = 'none';
-            document.body.style.overflow = '';
-        }
-    });
-    
-    // Close modal with ESC key
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') {
-            const openModal = document.querySelector('.storage-modal[style*="flex"]');
-            if (openModal) {
-                openModal.style.display = 'none';
-                document.body.style.overflow = '';
-            }
-        }
-    });
-    
-    // Export functions to global scope
-    window.toggleTheme = toggleTheme;
-    window.showItemDetail = showItemDetail;
-    window.closeItemDetail = closeItemDetail;
-    window.initializeStorageChart = initializeStorageChart;
-  `;
-};
-
-/**
- * Generates a comprehensive ZIP file with storage report and data
+ * Generates a TAR archive containing the storage report data
  */
 const generateStorageReportTar = async () => {
-  if (typeof JSZip === 'undefined') {
-    throw new Error('JSZip library not available for compressed reports');
-  }
-  
-  const zip = new JSZip();
-  const timestamp = new Date().toISOString().split('T')[0];
-  
-  // Add themed HTML report
-  const htmlContent = generateStorageReportHTML();
-  zip.file(`storage-report-${timestamp}.html`, htmlContent);
-  
-  // Add JSON data for each storage item
   const reportData = analyzeStorageData();
-  const jsonReport = {
-    metadata: {
-      generated: new Date().toISOString(),
-      version: APP_VERSION,
-      totalSize: reportData.totalSize,
-      itemCount: reportData.items.length,
-      theme: document.documentElement.getAttribute('data-theme') || 'light'
-    },
-    items: reportData.items.map(item => ({
-      key: item.key,
-      displayName: getStorageItemDisplayName(item.key),
-      description: getStorageItemDescription(item.key),
-      size: item.size,
-      percentage: item.percentage,
-      type: item.type,
-      recordCount: item.recordCount,
-      data: item.parsedData || item.value
-    }))
-  };
-  
-  zip.file(`storage-data-${timestamp}.json`, JSON.stringify(jsonReport, null, 2));
-  
-  // Add individual data files for large items
+  const tarWriter = new TarWriter();
+  const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+
+  // Add metadata file
+  const metadata = `{
+    "generated": "${new Date().toISOString()}",
+    "version": "${APP_VERSION}",
+    "itemCount": ${reportData.items.length},
+    "totalSizeKB": ${reportData.totalSize.toFixed(2)}
+  }`;
+  tarWriter.addFile('report-metadata.json', metadata);
+
+  // Add each storage item as a separate file
   for (const item of reportData.items) {
-    if (item.size > 10 && item.parsedData) { // Items larger than 10KB
-      const filename = `${item.key}-${timestamp}.json`;
-      zip.file(filename, JSON.stringify(item.parsedData, null, 2));
-    }
+    const fileName = `item-${item.key.replace(/[\/\\]/g, '_')}.json`;
+    tarWriter.addFile(fileName, item.value);
   }
-  
-  // Add README
-  const readme = `StackrTrackr Storage Report Archive
-=================================
 
-Generated: ${new Date().toLocaleString()}
-Version: ${APP_VERSION}
-Total Storage: ${reportData.totalSize.toFixed(2)} KB
-Items: ${reportData.items.length}
-
-Files Included:
-- storage-report-${timestamp}.html: Interactive HTML report
-- storage-data-${timestamp}.json: Complete storage analysis
-- Individual JSON files for large storage items
-
-To view the report:
-1. Open storage-report-${timestamp}.html in any web browser
-2. Use the theme toggle to switch between light/dark modes
-3. Click on chart segments or table items for detailed views
-
-This archive contains a complete snapshot of your StackrTrackr storage data.`;
-  
-  zip.file('README.txt', readme);
-  
-  // Generate the ZIP file
-  const content = await zip.generateAsync({ type: 'blob' });
-  return content;
+  return tarWriter.finish();
 };
-
-// Make storage report functions globally available
-window.updateStorageStats = updateStorageStats;
-window.downloadStorageReport = downloadStorageReport;
-window.openStorageReportPopup = openStorageReportPopup;
-
-
-/** Storage compression helpers (Phase 1C) */
-const __ST_COMP_PREFIX = 'CMP1:';
-function __compressIfNeeded(str){
-  try{
-    if(!str || str.length < 4096) return str;
-    const comp = LZString.compressToUTF16(str);
-    return __ST_COMP_PREFIX + comp;
-  }catch(e){ return str; }
-}
-function __decompressIfNeeded(stored){
-  try{
-    if(typeof stored !== 'string') return stored;
-    if(stored.startsWith(__ST_COMP_PREFIX)){
-      const raw = LZString.decompressFromUTF16(stored.slice(__ST_COMP_PREFIX.length));
-      return raw;
-    }
-    return stored;
-  }catch(e){ return stored; }
-}
-/** Generates a storage utilization report */
-function generateStorageReport(){
-  try{
-    const items = [];
-    for(let i=0;i<localStorage.length;i++){
-      const k = localStorage.key(i);
-      const v = localStorage.getItem(k) || '';
-      const sizeBytes = (k.length + v.length) * 2; // rough UTF-16 bytes
-      items.push({ key:k, sizeBytes, sizeKB: +(sizeBytes/1024).toFixed(2) });
-    }
-    items.sort((a,b)=>b.sizeBytes - a.sizeBytes);
-    const totalBytes = items.reduce((s,x)=>s+x.sizeBytes,0);
-    return { totalKB: +(totalBytes/1024).toFixed(2), items };
-  }catch(e){ return { totalKB:0, items:[] }; }
-}
-if (typeof window !== 'undefined') {
-  window.generateStorageReport = generateStorageReport;
-  window.updateSpotTimestamp = updateSpotTimestamp;
-  window.cleanupStorage = cleanupStorage;
-}
-
-// LocalStorage Batching Utility
-const localStorageQueue = [];
-let localStorageTimer = null;
 
 /**
- * Adds an operation to the LocalStorage queue and processes it in batches.
- *
- * @param {Function} operation - A function that performs a LocalStorage operation.
+ * TarWriter class to create TAR archives in JavaScript
  */
-const batchLocalStorage = (operation) => {
-  localStorageQueue.push(operation);
+class TarWriter {
+  constructor() {
+    this.files = [];
+  }
 
-  if (!localStorageTimer) {
-    localStorageTimer = setTimeout(() => {
-      while (localStorageQueue.length > 0) {
-        const op = localStorageQueue.shift();
-        try {
-          op();
-        } catch (error) {
-          console.error("LocalStorage operation failed:", error);
+  /**
+   * Adds a file to the TAR archive
+   * @param {string} fileName - Name of the file
+   * @param {string} content - Content of the file
+   */
+  addFile(fileName, content) {
+    const fileSize = content.length;
+    const header = this._createHeader(fileName, fileSize);
+    this.files.push({ header, content });
+  }
+
+  /**
+   * Finishes the TAR archive and returns the binary data
+   * @returns {Uint8Array} - TAR archive data
+   */
+  finish() {
+    const tarData = [];
+    for (const file of this.files) {
+      tarData.push(...file.header, ...file.content);
+    }
+    return new Uint8Array(tarData);
+  }
+
+  /**
+   * Creates a TAR header for a file
+   * @param {string} fileName - Name of the file
+   * @param {number} fileSize - Size of the file
+   * @returns {Array} - TAR header byte array
+   */
+  _createHeader(fileName, fileSize) {
+    const header = new Uint8Array(512);
+    const encoder = new TextEncoder();
+
+    // File name
+    const nameBytes = encoder.encode(fileName);
+    header.set(nameBytes, 0);
+
+    // File mode (default: 644)
+    header.set([0x30, 0x38, 0x38, 0x38, 0x38, 0x38, 0x34, 0x34], 100);
+
+    // Owner and group ID (default: 0)
+    header.set([0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30], 108);
+    header.set([0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30], 116);
+
+    // File size
+    const sizeOctal = fileSize.toString(8);
+    const sizeBytes = encoder.encode(sizeOctal);
+    header.set(sizeBytes, 124);
+
+    // Checksum (will be filled in later)
+    header.set([0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20], 148);
+
+    // Type flag (regular file)
+    header[156] = 0x30; // '0'
+
+    // Link name (not used)
+    header.fill(0, 157, 257);
+
+    // Magic number and version (ustar)
+    header.set([0x75, 0x73, 0x74, 0x61, 0x72, 0x00, 0x30, 0x30], 257);
+
+    // Owner and group name (not used)
+    header.fill(0, 265, 297);
+
+    // Device major and minor (not used)
+    header.fill(0, 297, 321);
+
+    // File modification time (Unix timestamp)
+    const mtime = Math.floor(Date.now() / 1000);
+    const mtimeOctal = mtime.toString(8);
+    const mtimeBytes = encoder.encode(mtimeOctal);
+    header.set(mtimeBytes, 345);
+
+    // Checksum (recalculate after header is complete)
+    const checksum = this._calculateChecksum(header);
+    const checksumOctal = checksum.toString(8);
+    const checksumBytes = encoder.encode(checksumOctal);
+    header.set(checksumBytes, 148);
+
+    return header;
+  }
+
+  /**
+   * Calculates the checksum for a TAR header
+   * @param {Uint8Array} header - TAR header
+   * @returns {number} - Checksum value
+   */
+  _calculateChecksum(header) {
+    let sum = 0;
+    for (let i = 0; i < header.length; i++) {
+      sum += header[i];
+    }
+    return sum;
+  }
+}
+
+// Formats a number as currency using the specified or default currency
+const formatCurrency = (value, currency = DEFAULT_CURRENCY) => {
+  if (typeof value !== "number" || isNaN(value)) {
+    console.warn("Invalid value for currency formatting:", value);
+    return "—";
+  }
+
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(value);
+};
+
+/**
+ * Parses Numista composition data to determine primary metal type
+ *
+ * @param {string} composition - Metal composition string from Numista
+ * @returns {string} Primary metal type (Silver, Gold, Platinum, Palladium, Paper, Alloy)
+ */
+const parseNumistaMetal = (composition = "") => {
+  const c = composition.trim().toLowerCase();
+  if (c.startsWith("silver")) return "Silver";
+  if (c.startsWith("gold")) return "Gold";
+  if (c.startsWith("platinum")) return "Platinum";
+  if (c.startsWith("palladium")) return "Palladium";
+  if (c.startsWith("paper")) return "Paper";
+  return "Alloy";
+};
+
+/**
+ * Formats loss/profit values with appropriate color styling
+ *
+ * @param {number} value - Loss/profit value
+ * @returns {string} Formatted HTML with color styling
+ */
+const formatLossProfit = (value) => {
+  const formatted = formatCurrency(value);
+  if (value > 0) {
+    return `<span style="color: var(--success);">${formatted}</span>`;
+  } else if (value < 0) {
+    return `<span style="color: var(--danger);">${formatted}</span>`;
+  }
+  return formatted;
+};
+
+/**
+ * Sanitizes HTML by escaping potentially dangerous characters
+ *
+ * @param {string} text - Text to sanitize
+ * @returns {string} Sanitized text safe for HTML
+ */
+const sanitizeHtml = (text) => {
+  if (!text) return "";
+  const div = document.createElement("div");
+  div.textContent = text.toString();
+  return div.innerHTML;
+};
+
+/**
+ * Sorts inventory by date (newest first)
+ *
+ * @param {Array} [data=inventory] - Data to sort
+ * @returns {Array} Sorted inventory data
+ */
+const sortInventoryByDateNewestFirst = (data = inventory) => {
+  return [...data].sort((a, b) => {
+    // Handle unknown dates (—, empty, or Unknown) - they should sort to the bottom (oldest)
+    const isUnknownA = !a.date || a.date.trim() === '' || a.date.trim() === '—' || a.date.trim() === 'Unknown';
+    const isUnknownB = !b.date || b.date.trim() === '' || b.date.trim() === '—' || b.date.trim() === 'Unknown';
+
+    if (isUnknownA && isUnknownB) return 0; // Both unknown, equal
+    if (isUnknownA) return 1; // A is unknown, put it after B (older)
+    if (isUnknownB) return -1; // B is unknown, put it after A (older)
+
+    // Both have dates, compare normally
+    const dateA = new Date(a.date);
+    const dateB = new Date(b.date);
+    const timeA = isNaN(dateA) ? 0 : dateA.getTime();
+    const timeB = isNaN(dateB) ? 0 : dateB.getTime();
+    return timeB - timeA; // Descending order (newest first)
+  });
+};
+
+/**
+ * Validates inventory item data
+ *
+ * @param {Object} item - Inventory item to validate
+ * @returns {Object} Validation result with isValid flag and errors array
+ */
+const validateInventoryItem = (item) => {
+  const errors = [];
+
+  // Very lenient validation - accept most data and let sanitization handle it
+  
+  // Name validation - only reject if completely missing
+  if (!item.name || (typeof item.name === "string" && item.name.trim().length === 0)) {
+    errors.push("Name is required");
+  }
+
+  // Metal validation - accept common variants and let parsing handle it
+  if (!item.metal || (typeof item.metal === "string" && item.metal.trim().length === 0)) {
+    errors.push("Metal type is required");
+  }
+
+  // Quantity validation - very lenient, allow fractional quantities
+  let qtyValue = item.qty;
+  if (qtyValue === undefined || qtyValue === null) {
+    // Default to 1 if missing
+    qtyValue = 1;
+  }
+  if (typeof qtyValue === 'string') {
+    qtyValue = qtyValue.trim();
+    if (qtyValue === '' || qtyValue === 'N/A' || qtyValue === '—' || qtyValue === '-') {
+      qtyValue = 1; // Default to 1
+    }
+  }
+  
+  const numQty = Number(qtyValue);
+  if (isNaN(numQty) || numQty <= 0) {
+    errors.push("Quantity must be a positive number");
+  }
+
+  // Weight validation - very lenient, allow zero weight for paper money/collectibles
+  let weightValue = item.weight;
+  if (weightValue === undefined || weightValue === null) {
+    // Default to 0 for items without weight (paper money, etc.)
+    weightValue = 0;
+  } else {
+    if (typeof weightValue === 'string') {
+      weightValue = weightValue.trim();
+      if (weightValue === '' || weightValue === 'N/A' || weightValue === '—' || weightValue === '-') {
+        weightValue = 0; // Default to 0 instead of error
+      } else if (weightValue.includes('/')) {
+        // Handle fractions like "1/2", "3/4", etc.
+        const fractionParts = weightValue.split('/');
+        if (fractionParts.length === 2) {
+          const numerator = parseFloat(fractionParts[0]);
+          const denominator = parseFloat(fractionParts[1]);
+          if (!isNaN(numerator) && !isNaN(denominator) && denominator !== 0) {
+            weightValue = numerator / denominator;
+          }
         }
       }
-      localStorageTimer = null;
-    }, 100); // Process queue every 100ms
+    }
+    
+    const numWeight = Number(weightValue);
+    if (isNaN(numWeight) || numWeight < 0) {
+      errors.push("Weight must be a positive number, fraction, or zero");
+    }
   }
+
+  // Price validation - accept 0 and negative (for tracking purposes)
+  let priceValue = item.price;
+  if (typeof priceValue === 'string') {
+    // Follow established pattern: remove currency symbols and whitespace but keep fractions
+    priceValue = priceValue.replace(/[\$,\s]/g, '');
+    // Handle N/A, empty, or dash values as 0
+    if (priceValue === '' || priceValue === 'N/A' || priceValue === '—' || priceValue === '-') {
+      priceValue = 0;
+    } else if (priceValue.includes('/')) {
+      // Handle fractions like "1/2", "3/4", etc.
+      const fractionParts = priceValue.split('/');
+      if (fractionParts.length === 2) {
+        const numerator = parseFloat(fractionParts[0]);
+        const denominator = parseFloat(fractionParts[1]);
+        if (!isNaN(numerator) && !isNaN(denominator) && denominator !== 0) {
+          priceValue = numerator / denominator;
+        }
+      }
+    }
+  }
+  
+  if (priceValue !== undefined && priceValue !== null && isNaN(Number(priceValue))) {
+    errors.push("Price must be a valid number or fraction");
+  }
+
+  // Optional field validations
+  if (item.storageLocation && item.storageLocation.length > 50) {
+    errors.push("Storage location must be 50 characters or less");
+  }
+
+  if (item.purchaseLocation && item.purchaseLocation.length > 100) {
+    errors.push("Purchase location must be 100 characters or less");
+  }
+
+  return {
+    isValid: errors.length === 0,
+    errors,
+  };
 };
+
+// Expose utility functions globally for import/export modules
+if (typeof window !== 'undefined') {
+  window.normalizeType = normalizeType;
+  window.mapNumistaType = mapNumistaType;
+  window.sanitizeImportedItem = sanitizeImportedItem;
+  window.sortInventoryByDateNewestFirst = sortInventoryByDateNewestFirst;
+  window.gramsToOzt = gramsToOzt;
+  window.oztToGrams = oztToGrams;
+  window.formatWeight = formatWeight;
+  window.validateInventoryItem = validateInventoryItem;
+  window.parseNumistaMetal = parseNumistaMetal;
+  window.formatLossProfit = formatLossProfit;
+  window.sanitizeHtml = sanitizeHtml;
+}

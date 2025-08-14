@@ -303,16 +303,16 @@ const renderActiveFilters = () => {
   // Generate category summary chips from filtered inventory
   const categorySummary = generateCategorySummary(filteredInventory);
   
-  // Add metal chips for metals that exist in the filtered results (ONLY if count > 0)
+  // Add metal chips for metals that exist in the filtered results (ONLY if count >= 10)
   Object.entries(categorySummary.metals).forEach(([metal, count]) => {
-    if (count > 0) {
+    if (count >= 10) {
       chips.push({ field: 'metal', value: metal, count, total: categorySummary.totalItems });
     }
   });
   
-  // Add type chips for types that exist in the filtered results (ONLY if count > 0)
+  // Add type chips for types that exist in the filtered results (ONLY if count >= 10)
   Object.entries(categorySummary.types).forEach(([type, count]) => {
-    if (count > 0) {
+    if (count >= 10) {
       chips.push({ field: 'type', value: type, count, total: categorySummary.totalItems });
     }
   });

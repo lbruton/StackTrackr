@@ -61,6 +61,89 @@ Single geographic terms now blocked to prevent noise:
 4. **Fraction/Weight Handling**: Special handling for fractional weights
 5. **Broad Term Filtering**: Blocks overly generic geographic terms
 
+---
+
+## Fuzzy Search Implementation
+
+### Purpose
+- Enables users to quickly find inventory items using partial, multi-word, or misspelled queries.
+- Improves search precision and user experience, especially with large inventories.
+
+### Main Module
+- `js/fuzzy-search.js`
+
+### Key Functions
+- `fuzzySearch(query, items)`
+	- Accepts a search query and an array of items.
+	- Returns ranked matches based on similarity.
+	- Supports multi-word queries; all words must match for a result.
+	- Uses string normalization and scoring algorithms (e.g., Levenshtein distance, substring matching).
+- Integration:
+	- Called by `search.js` and inventory table rendering logic.
+	- Used in search bar and quick filter chips.
+
+### Usage
+- Search box in UI triggers fuzzy search on input debounce.
+- Results update table rows in real time.
+- Handles edge cases: empty queries, special characters, long item names.
+
+### Testing
+- Validate with common misspellings, multi-word queries, and edge cases.
+- Ensure search results are ranked by relevance.
+
+---
+
+## Filter Chips Implementation
+
+### Purpose
+- Allow users to filter inventory by key attributes (metal, type, vendor, date, name, etc.) using clickable chips.
+- Support multi-select and exclusion filters for advanced filtering.
+
+### Main Modules
+- `js/filters.js`: Filter logic
+- `js/catalog-manager.js`: Chip rendering and metadata
+- `js/events.js`: Chip click handling
+
+### Key Functions
+- `applyFilters(filters)` (in `filters.js`)
+	- Applies selected filters to inventory items.
+	- Supports AND/OR logic for multi-select chips.
+	- Exclusion toggles for NOT filters.
+- `renderChips(item)` (in `catalog-manager.js`)
+	- Renders chips for each item attribute.
+	- Chips are styled and themed (dark/light/sepia).
+- Event handlers (in `events.js`)
+	- Listen for chip clicks, toggle selection/exclusion, update filters.
+
+### UI Integration
+- Chips appear above or within the inventory table.
+- Clicking a chip applies the filter and updates the table.
+- Multi-select chips show counts (e.g., "American Silver Eagle (3)").
+- Exclusion chips toggle to filter out selected values.
+
+### CSS & Styling
+- `.chip`, `.chip-selected`, `.chip-exclude`: Core chip styles
+- Responsive and theme-aware
+- Chips use inline-block or flex inside table cells
+
+### Testing
+- Validate chip selection, exclusion, and multi-select logic
+- Test with large inventories and edge cases
+- Ensure chips update table and summary counts correctly
+
+---
+
+## References
+- Fuzzy search logic: `js/fuzzy-search.js`, `js/search.js`
+- Filter chip logic: `js/filters.js`, `js/catalog-manager.js`, `js/events.js`
+- Chip styles: `css/styles.css`
+
+---
+
+## For Future Agents
+- Reference this document before modifying search or filter chip logic
+- Test with various query types and filter combinations
+- Update documentation if new chip types or search algorithms are added
 ### Key Functions Modified:
 - `filterInventoryAdvanced()` in `filters.js`
 - `filterInventory()` in `search.js`

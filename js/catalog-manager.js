@@ -341,6 +341,17 @@ class CatalogManager {
   }
 }
 
+// Utility function to load data from localStorage
+const loadData = (key, defaultValue = {}) => {
+  try {
+    const data = localStorage.getItem(key);
+    return data ? JSON.parse(data) : defaultValue;
+  } catch (error) {
+    console.error(`Error loading data for key: ${key}`, error);
+    return defaultValue;
+  }
+};
+
 // Initialize global CatalogManager instance to replace the global catalogMap
 const catalogManager = new CatalogManager({
   storageKey: CATALOG_MAP_KEY,

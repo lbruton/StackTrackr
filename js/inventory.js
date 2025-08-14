@@ -285,145 +285,6 @@ const restoreBackupZip = async (file) => {
 
 window.restoreBackupZip = restoreBackupZip;
 
-/**
- * Generates HTML content for backup export
- * 
- * @param {Array} sortedInventory - Sorted inventory data
- * @param {string} timeFormatted - Formatted timestamp
- * @returns {string} HTML content
- */
-const generateBackupHtml = (sortedInventory, timeFormatted) => {
-  return `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>StackrTrackr Backup</title>
-  <style>
-    body { font-family: Arial, sans-serif; margin: 20px; }
-    h1 { color: #2563eb; }
-    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-    th { background-color: #f2f2f2; }
-    .backup-info { background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
-  </style>
-</head>
-<body>
-  <h1>StackrTrackr Backup</h1>
-  <div class="backup-info">
-    <strong>Backup Created:</strong> ${timeFormatted}<br>
-    <strong>Application Version:</strong> ${APP_VERSION}<br>
-    <strong>Total Items:</strong> ${sortedInventory.length}<br>
-    <strong>Archive Contents:</strong> Complete inventory data, settings, and spot price history
-  </div>
-  <table>
-    <thead>
-      <tr>
-        <th>Composition</th><th>Name</th><th>Qty</th><th>Type</th><th>Weight(oz)</th>
-        <th>Purchase Price</th><th>Purchase Location</th><th>Storage Location</th>
-        <th>Notes</th><th>Date</th><th>Collectable</th>
-      </tr>
-    </thead>
-    <tbody>
-      ${sortedInventory.map(item => `
-        <tr>
-          <td>${getCompositionFirstWords(item.composition || item.metal)}</td>
-          <td>${item.name}</td>
-          <td>${item.qty}</td>
-          <td>${item.type}</td>
-          <td>${parseFloat(item.weight).toFixed(2)}</td>
-          <td>${formatCurrency(item.price)}</td>
-          <td>${item.purchaseLocation}</td>
-          <td>${item.storageLocation || ''}</td>
-          <td>${item.notes || ''}</td>
-          <td>${item.date}</td>
-          <td>${item.isCollectable ? 'Yes' : 'No'}</td>
-        </tr>
-      `).join('')}
-    </tbody>
-  </table>
-</body>
-</html>`;
-};
-
-/**
- * Generates README content for backup archive
- * 
- * @param {string} timeFormatted - Formatted timestamp
- * @returns {string} README content
- */
-const generateReadmeContent = (timeFormatted) => {
-  return `PRECIOUS METALS INVENTORY TOOL - BACKUP ARCHIVE
-===============================================
-
-Backup Created: ${timeFormatted}
-Application Version: ${APP_VERSION}
-Total Items: ${inventory.length}
-
-FILE CONTENTS:
---------------
-
-1. inventory_data.json
-   - Complete inventory data in JSON format
-   - Includes all item details, notes, and metadata
-   - Primary data file for restoration
-
-2. settings.json
-   - Application configuration and preferences
-   - Current spot prices and user settings
-   - UI state (pagination, search, sorting)
-
-3. spot_price_history.json
-   - Historical spot price data and tracking
-   - API sync records and manual overrides
-   - Price trend information
-
-4. inventory_export.csv
-   - Spreadsheet-compatible export
-   - Human-readable format for external use
-
-5. inventory_report.html
-   - Self-contained web page report
-   - No external dependencies required
-   - Print-friendly format
-
-6. sample_data.json (if applicable)
-   - Sample of inventory items for reference
-   - Useful for testing import functionality
-   - Demonstrates data structure
-
-7. README.txt (this file)
-   - Backup contents explanation
-   - Restoration instructions
-
-RESTORATION INSTRUCTIONS:
-------------------------
-
-1. For complete restoration:
-   - Import inventory_data.json using the application's JSON import feature
-   - Manually configure spot prices from settings.json if needed
-
-2. For partial restoration:
-   - Use inventory_export.csv for spreadsheet applications
-   - View inventory_report.html in any web browser
-
-3. For data analysis:
-   - All files contain the same core data in different formats
-   - Choose the format best suited for your analysis tools
-
-SUPPORT:
---------
-
-For questions about this backup or the StackrTrackr application:
-- Check the application documentation
-- Verify file integrity before restoration
-- Test imports with sample data first
-
-This backup contains your complete precious metals inventory as of ${timeFormatted}.
-Store this archive in a secure location for data protection.
-
---- End of README ---`;
-};
 
 // =============================================================================
 
@@ -606,8 +467,7 @@ const getColor = (map, key) => {
  * @returns {string} Escaped text safe for attribute usage
  */
 const escapeAttribute = (text) =>
-  text
-    .toString()
+  (text == null ? '' : text.toString())
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
@@ -1088,7 +948,7 @@ const createTableRowFragment = (item, originalIdx) => {
   
   // Date cell
   fragment.appendChild(createTableCell('shrink', 'date', 
-    filterLink('date', item.date, 'var(--text-primary)', item.date ? formatDisplayDate(item.date) : '—')
+    filterLink('date', item.date, 'var(--text-primary)', formatDisplayDate(item.date))
   ));
   
   // Type cell
@@ -1246,7 +1106,7 @@ const renderTable = () => {
 
         rows.push(`
         <tr data-index="${originalIdx}">
-          <td class="shrink" data-column="date">${filterLink('date', item.date, 'var(--text-primary)', item.date ? formatDisplayDate(item.date) : '—')}</td>
+          <td class="shrink" data-column="date">${filterLink('date', item.date, 'var(--text-primary)', formatDisplayDate(item.date))}</td>
           <td class="shrink" data-column="type">${filterLink('type', item.type, getTypeColor(item.type))}</td>
           <td class="shrink" data-column="metal" data-metal="${escapeAttribute(item.composition || item.metal || '')}">${filterLink('metal', item.composition || item.metal || 'Silver', METAL_COLORS[item.metal] || 'var(--primary)', getDisplayComposition(item.composition || item.metal || 'Silver'))}</td>
           <td class="shrink" data-column="qty">${filterLink('qty', item.qty, 'var(--text-primary)')}</td>
@@ -1313,6 +1173,11 @@ const renderTable = () => {
     // Re-setup column resizing and responsive visibility after table re-render
     setupColumnResizing();
     updateColumnVisibility();
+    
+    // Update filter chips after table render
+    if (typeof renderActiveFilters === 'function') {
+      renderActiveFilters();
+    }
   }, 'renderTable');
 };
 
@@ -1345,6 +1210,12 @@ const updateSummary = () => {
     let nonCollectableWeight = 0;
     let nonCollectableValue = 0;
 
+    // Special silver tracking for 90% silver and quarter proofs
+    let silverQuarterProofCount = 0;
+    let silverQuarterProofMelt = 0;
+    let ninetyPercentSilverWeight = 0;
+    let ninetyPercentSilverMelt = 0;
+
     for (const item of inventory) {
       if (item.metal === metal) {
         const qty = Number(item.qty) || 0;
@@ -1357,20 +1228,55 @@ const updateSummary = () => {
         const itemWeight = qty * weight;
         totalWeight += itemWeight;
 
-        // Current spot value calculation (applies to all items)
+        // Current spot value calculation (ONLY for non-collectibles with weight)
         const currentSpot = spotPrices[item.metal.toLowerCase()] || 0;
-        const currentValue = currentSpot * itemWeight;
-        currentSpotValue += currentValue;
+        let currentValue = 0;
+        
+        // Only calculate melt value for non-collectible items with actual weight
+        if (!item.isCollectable && itemWeight > 0 && currentSpot > 0) {
+          currentValue = currentSpot * itemWeight;
+          currentSpotValue += currentValue;
+        }
+        
+        // For collectibles, current value equals purchase price (no melt value)
+        if (item.isCollectable) {
+          currentValue = qty * price; // Collectible value = what you paid
+        }
+
+        // Special silver calculations for 90% silver content and quarter proofs
+        if (metal === 'Silver' && itemWeight > 0) {
+          const itemName = (item.name || '').toLowerCase();
+          const composition = (item.composition || '').toLowerCase();
+          
+          // Check for silver quarter proofs
+          if (itemName.includes('quarter') && itemName.includes('proof')) {
+            silverQuarterProofCount += qty;
+            // Quarter proofs: assume 90% silver, ~6.25g per quarter
+            const quarterSilverWeight = qty * 6.25 * 0.9; // grams of pure silver
+            silverQuarterProofMelt += (quarterSilverWeight / 31.1034768) * currentSpot;
+          }
+          
+          // Check for 90% silver content items
+          if (composition.includes('90%') || composition.includes('0.9') || 
+              itemName.includes('90%') || itemName.includes('dime') || 
+              itemName.includes('quarter') || itemName.includes('half dollar') ||
+              itemName.includes('morgan') || itemName.includes('peace')) {
+            const pureSilverWeight = itemWeight * 0.9; // 90% of total weight
+            ninetyPercentSilverWeight += pureSilverWeight;
+            ninetyPercentSilverMelt += (pureSilverWeight / 31.1034768) * currentSpot;
+          }
+        }
 
         // Total Purchase Price calculation (for both regular and collectible items)
         totalPurchased += qty * price;
 
+        // Track collectable metrics
         if (item.isCollectable) {
-          // Track collectable metrics
           collectableWeight += itemWeight;
           collectableValue += qty * price;
-        } else {
-          // Track non-collectable metrics
+        }
+        // Track non-collectable metrics and calculations
+        if (!item.isCollectable) {
           nonCollectableWeight += itemWeight;
           nonCollectableValue += qty * price;
 
@@ -1409,7 +1315,11 @@ const updateSummary = () => {
       collectableWeight,      // Needed for proper weighted averaging
       nonCollectableWeight,   // Needed for proper weighted averaging
       collectableValue,       // CRITICAL: Now returning these values
-      nonCollectableValue     // CRITICAL: Now returning these values
+      nonCollectableValue,    // CRITICAL: Now returning these values
+      silverQuarterProofCount, // Special silver quarter proof tracking
+      silverQuarterProofMelt,  // Melt value of quarter proofs
+      ninetyPercentSilverWeight, // Pure silver weight in 90% items
+      ninetyPercentSilverMelt   // Melt value of 90% silver items
     };
   };
 
@@ -1469,6 +1379,22 @@ const updateSummary = () => {
     allTotals.collectableValue / allTotals.collectableWeight : 0;
   const avgNonCollectablePriceAll = allTotals.nonCollectableWeight > 0 ? 
     allTotals.nonCollectableValue / allTotals.nonCollectableWeight : 0;
+
+  // Log special silver calculations
+  if (metalTotals.Silver) {
+    const silverTotals = metalTotals.Silver;
+    if (silverTotals.silverQuarterProofCount > 0 || silverTotals.ninetyPercentSilverWeight > 0) {
+      console.log('🥈 Special Silver Calculations:');
+      if (silverTotals.silverQuarterProofCount > 0) {
+        console.log(`   Quarter Proofs: ${silverTotals.silverQuarterProofCount} pieces`);
+        console.log(`   Quarter Proof Melt Value: ${formatCurrency(silverTotals.silverQuarterProofMelt)}`);
+      }
+      if (silverTotals.ninetyPercentSilverWeight > 0) {
+        console.log(`   90% Silver Content Weight: ${(silverTotals.ninetyPercentSilverWeight / 31.1034768).toFixed(2)} oz`);
+        console.log(`   90% Silver Melt Value: ${formatCurrency(silverTotals.ninetyPercentSilverMelt)}`);
+      }
+    }
+  }
 
   // Update "All" totals display if elements exist
   if (elements.totals.all.items.textContent !== undefined) {
@@ -1635,857 +1561,9 @@ const toggleCollectable = (idx) => {
 };
 
 // =============================================================================
-// IMPORT/EXPORT FUNCTIONS
+// The import/export functions have been moved to js/import-export.js
 // =============================================================================
 
-// Import progress utilities
-const startImportProgress = (total) => {
-  if (!elements.importProgress || !elements.importProgressText) return;
-  elements.importProgress.max = total;
-  elements.importProgress.value = 0;
-  elements.importProgress.style.display = 'block';
-  elements.importProgressText.style.display = 'block';
-  elements.importProgressText.textContent = `0 / ${total} items imported`;
-};
-
-const updateImportProgress = (processed, imported, total) => {
-  if (!elements.importProgress || !elements.importProgressText) return;
-  elements.importProgress.value = processed;
-  elements.importProgressText.textContent = `${imported} / ${total} items imported`;
-};
-
-const endImportProgress = () => {
-  if (!elements.importProgress || !elements.importProgressText) return;
-  elements.importProgress.style.display = 'none';
-  elements.importProgressText.style.display = 'none';
-};
-
-/**
- * Imports inventory data from CSV file with comprehensive validation and error handling
- * 
- * @param {File} file - CSV file selected by user through file input
- * @param {boolean} [override=false] - Replace existing inventory instead of merging
- */
-const importCsv = (file, override = false) => {
-  try {
-    Papa.parse(file, {
-      header: true,
-      skipEmptyLines: true,
-      complete: function(results) {
-        const imported = [];
-        const totalRows = results.data.length;
-        startImportProgress(totalRows);
-        let processed = 0;
-        let importedCount = 0;
-
-        for (const row of results.data) {
-          processed++;
-          const compositionRaw = row['Composition'] || row['Metal'] || 'Silver';
-          const composition = getCompositionFirstWords(compositionRaw);
-          const metal = parseNumistaMetal(composition);
-          const name = row['Name'] || row['name'];
-          const qty = row['Qty'] || row['qty'] || 1;
-          const type = normalizeType(row['Type'] || row['type']);
-          const weight = row['Weight(oz)'] || row['weight'];
-          const priceStr = row['Purchase Price'] || row['price'];
-          let price = typeof priceStr === 'string'
-            ? parseFloat(priceStr.replace(/[^\d.-]+/g, ''))
-            : parseFloat(priceStr);
-          if (price < 0) price = 0;
-          const purchaseLocation = row['Purchase Location'] || '';
-          const storageLocation = row['Storage Location'] || '';
-          const notes = row['Notes'] || '';
-          const date = parseDate(row['Date']);
-
-          const isCollectable = row['Collectable'] === 'Yes' || row['Collectable'] === 'true' || row['isCollectable'] === 'true';
-
-          let spotPriceAtPurchase;
-          if (row['Spot Price ($/oz)']) {
-            const spotStr = row['Spot Price ($/oz)'].toString();
-            spotPriceAtPurchase = parseFloat(spotStr.replace(/[^0-9.-]+/g, ''));
-          } else if (row['spotPriceAtPurchase']) {
-            spotPriceAtPurchase = parseFloat(row['spotPriceAtPurchase']);
-          } else {
-            const metalKey = metal.toLowerCase();
-            spotPriceAtPurchase = isCollectable ? 0 : spotPrices[metalKey];
-          }
-
-          let premiumPerOz = 0;
-          let totalPremium = 0;
-          if (!isCollectable) {
-            const pricePerOz = price / parseFloat(weight);
-            premiumPerOz = pricePerOz - spotPriceAtPurchase;
-            totalPremium = premiumPerOz * parseFloat(qty) * parseFloat(weight);
-          }
-
-          const numistaRaw = (row['N#'] || row['Numista #'] || row['numistaId'] || '').toString();
-          const numistaMatch = numistaRaw.match(/\d+/);
-          const numistaId = numistaMatch ? numistaMatch[0] : '';
-          const serial = row['Serial'] || row['serial'] || getNextSerial();
-
-          addCompositionOption(composition);
-
-          const item = sanitizeImportedItem({
-            metal,
-            composition,
-            name,
-            qty,
-            type,
-            weight,
-            price,
-            date,
-            purchaseLocation,
-            storageLocation,
-            notes: finalNotes,
-            spotPriceAtPurchase,
-            premiumPerOz,
-            totalPremium,
-            isCollectable,
-            numistaId,
-            serial
-          });
-
-          imported.push(item);
-          importedCount++;
-          updateImportProgress(processed, importedCount, totalRows);
-        }
-
-        endImportProgress();
-
-        if (imported.length === 0) return alert('No items to import.');
-
-        const existingSerials = new Set(override ? [] : inventory.map(item => item.serial));
-        const existingKeys = new Set(
-          (override ? [] : inventory)
-            .filter(item => item.numistaId)
-            .map(item => `${item.numistaId}|${item.name}|${item.date}`)
-        );
-        const deduped = [];
-        let duplicateCount = 0;
-
-        for (const item of imported) {
-          const key = item.numistaId ? `${item.numistaId}|${item.name}|${item.date}` : null;
-          if (existingSerials.has(item.serial) || (key && existingKeys.has(key))) {
-            duplicateCount++;
-            continue;
-          }
-          existingSerials.add(item.serial);
-          if (key) existingKeys.add(key);
-          deduped.push(item);
-        }
-
-        if (duplicateCount > 0) {
-          console.info(`${duplicateCount} duplicate items skipped during import.`);
-        }
-
-        if (deduped.length === 0) return alert('No items to import.');
-
-        for (const item of deduped) {
-          if (typeof registerName === "function") {
-            registerName(item.name);
-          }
-        }
-
-        if (override) {
-          inventory = deduped;
-        } else {
-          inventory = inventory.concat(deduped);
-        }
-        
-        // Synchronize all items with catalog manager
-        inventory = catalogManager.syncInventory(inventory);
-
-        saveInventory();
-        renderTable();
-        if (typeof updateStorageStats === 'function') {
-          updateStorageStats();
-        }
-
-        this.value = '';
-      },
-      error: function(error) {
-        endImportProgress();
-        handleError(error, 'CSV import');
-      }
-    });
-  } catch (error) {
-    endImportProgress();
-    handleError(error, 'CSV import initialization');
-  }
-};
-
-/**
- * Imports inventory data from a Numista CSV export
- *
- * @param {File} file - CSV file from Numista
- * @param {boolean} [override=false] - Replace existing inventory instead of merging
- */
-const importNumistaCsv = (file, override = false) => {
-  try {
-    const reader = new FileReader();
-    reader.onload = function(e) {
-      try {
-        const csvText = e.target.result;
-        const results = Papa.parse(csvText, {
-          header: true,
-          skipEmptyLines: true,
-          transformHeader: (h) => h.trim(), // Handle Numista headers with trailing spaces
-        });
-        const rawTable = results.data;
-        const imported = [];
-        const totalRows = rawTable.length;
-        startImportProgress(totalRows);
-        let processed = 0;
-        let importedCount = 0;
-
-        const getValue = (row, keys) => {
-          for (const key of keys) {
-            const foundKey = Object.keys(row).find(k => k.toLowerCase() === key.toLowerCase());
-            if (foundKey) return row[foundKey];
-          }
-          return "";
-        };
-
-        for (const row of rawTable) {
-          processed++;
-
-          const numistaRaw = (getValue(row, ['N# number', 'N# number (with link)', 'Numista #', 'Numista number', 'Numista id']) || '').toString();
-          const numistaMatch = numistaRaw.match(/\d+/);
-          const numistaId = numistaMatch ? numistaMatch[0] : '';
-          const title = (getValue(row, ['Title', 'Name']) || '').trim();
-          const year = (getValue(row, ['Year', 'Date']) || '').trim();
-          const name = year.length >= 4 ? `${title} ${year}`.trim() : title;
-          const issuedYear = year.length >= 4 ? year : '';
-          const compositionRaw = getValue(row, ['Composition', 'Metal']) || '';
-          const composition = getCompositionFirstWords(compositionRaw);
-
-          addCompositionOption(composition);
-
-          let metal = parseNumistaMetal(composition);
-          const qty = parseInt(getValue(row, ['Quantity', 'Qty', 'Quantity owned']) || 1, 10);
-
-          let type = normalizeType(mapNumistaType(getValue(row, ['Type']) || ''));
-          if (metal === 'Paper' || composition.toLowerCase().startsWith('paper')) {
-            type = 'Note';
-            metal = 'Alloy';
-          }
-
-          const weightCols = Object.keys(row).filter(k => { const key = k.toLowerCase(); return key.includes('weight') || key.includes('mass'); });
-          let weightGrams = 0;
-          for (const col of weightCols) {
-            const val = parseFloat(String(row[col]).replace(/[^0-9.]/g, ''));
-            if (!isNaN(val)) weightGrams = Math.max(weightGrams, val);
-          }
-          const weight = parseFloat(gramsToOzt(weightGrams).toFixed(2));
-
-          let isCollectable = true;
-          if ((metal === 'Silver' || metal === 'Gold') && weightGrams >= 3) {
-            isCollectable = false;
-          }
-
-          const priceKey = Object.keys(row).find(k => /^(buying price|purchase price|price paid)/i.test(k));
-          const estimateKey = Object.keys(row).find(k => /^estimate/i.test(k));
-          const parsePriceField = (key) => {
-            const rawVal = String(row[key] ?? '').trim();
-            const valueCurrency = detectCurrency(rawVal);
-            const headerCurrencyMatch = key.match(/\(([^)]+)\)/);
-            const headerCurrency = headerCurrencyMatch ? headerCurrencyMatch[1] : 'USD';
-            const currency = valueCurrency || headerCurrency;
-            const amount = parseFloat(rawVal.replace(/[^0-9.\-]/g, ''));
-            return isNaN(amount) ? 0 : convertToUsd(amount, currency);
-          };
-          let purchasePrice = 0;
-          if (priceKey) {
-            purchasePrice = parsePriceField(priceKey);
-          } else if (estimateKey) {
-            purchasePrice = parsePriceField(estimateKey);
-          }
-
-          const purchaseLocRaw = getValue(row, ['Acquisition place', 'Acquired from', 'Purchase place']);
-          const purchaseLocation = purchaseLocRaw && purchaseLocRaw.trim() ? purchaseLocRaw.trim() : '—';
-          const storageLocRaw = getValue(row, ['Storage location', 'Stored at', 'Storage place']);
-          const storageLocation = storageLocRaw && storageLocRaw.trim() ? storageLocRaw.trim() : '—';
-
-          const dateStrRaw = getValue(row, ['Acquisition date', 'Date acquired', 'Date']);
-          const dateStr = dateStrRaw && dateStrRaw.trim() ? dateStrRaw.trim() : '—';
-          const date = parseDate(dateStr);
-
-          const baseNote = (getValue(row, ['Note', 'Notes']) || '').trim();
-          const privateComment = (getValue(row, ['Private comment']) || '').trim();
-          const publicComment = (getValue(row, ['Public comment']) || '').trim();
-          const otherComment = (getValue(row, ['Comment']) || '').trim();
-          const noteParts = [];
-          if (baseNote) noteParts.push(baseNote);
-          if (privateComment) noteParts.push(`Private Comment: ${privateComment}`);
-          if (publicComment) noteParts.push(`Public Comment: ${publicComment}`);
-          if (otherComment) noteParts.push(`Comment: ${otherComment}`);
-          const notes = noteParts.join('\n');
-
-          const markdownLines = Object.entries(row)
-            .filter(([, v]) => v && String(v).trim())
-            .map(([k, v]) => `- **${k.trim()}**: ${String(v).trim()}`);
-          const markdownNote = markdownLines.length
-            ? `### Numista Import Data\n${markdownLines.join('\n')}`
-            : '';
-          const finalNotes = markdownNote
-            ? notes ? `${notes}\n\n${markdownNote}` : markdownNote
-            : notes;
-
-          if (type === 'Bar' || type === 'Round') {
-            isCollectable = false;
-          }
-          const spotPriceAtPurchase = 0;
-          const premiumPerOz = 0;
-          const totalPremium = 0;
-          const serial = getNextSerial();
-
-          const item = sanitizeImportedItem({
-            metal,
-            composition,
-            name,
-            qty,
-            type,
-            weight,
-            price: purchasePrice,
-            purchasePrice,
-            date,
-            purchaseLocation,
-            storageLocation,
-            notes: finalNotes,
-            spotPriceAtPurchase,
-            premiumPerOz,
-            totalPremium,
-            isCollectable,
-            numistaId,
-            issuedYear,
-            serial
-          });
-
-          imported.push(item);
-          importedCount++;
-          updateImportProgress(processed, importedCount, totalRows);
-        }
-
-        endImportProgress();
-
-        if (imported.length === 0) return alert('No items to import.');
-
-        const existingSerials = new Set(override ? [] : inventory.map(item => item.serial));
-        const existingKeys = new Set(
-          (override ? [] : inventory)
-            .filter(item => item.numistaId)
-            .map(item => `${item.numistaId}|${item.name}|${item.date}`)
-        );
-        const deduped = [];
-        let duplicateCount = 0;
-
-        for (const item of imported) {
-          const key = item.numistaId ? `${item.numistaId}|${item.name}|${item.date}` : null;
-          if (existingSerials.has(item.serial) || (key && existingKeys.has(key))) {
-            duplicateCount++;
-            continue;
-          }
-          existingSerials.add(item.serial);
-          if (key) existingKeys.add(key);
-          deduped.push(item);
-        }
-
-        if (duplicateCount > 0) {
-          console.info(`${duplicateCount} duplicate items skipped during import.`);
-        }
-
-        if (deduped.length === 0) return alert('No items to import.');
-
-        for (const item of deduped) {
-          if (typeof registerName === "function") {
-            registerName(item.name);
-          }
-        }
-
-        if (override) {
-          inventory = deduped;
-        } else {
-          inventory = inventory.concat(deduped);
-        }
-
-        // Synchronize all items with catalog manager
-        inventory = catalogManager.syncInventory(inventory);
-
-        saveInventory();
-        renderTable();
-        if (typeof updateStorageStats === 'function') {
-          updateStorageStats();
-        }
-      } catch (error) {
-        endImportProgress();
-        handleError(error, 'Numista CSV import');
-      }
-    };
-    reader.onerror = (error) => {
-      endImportProgress();
-      handleError(error, 'Numista CSV import');
-    };
-    reader.readAsText(file);
-  } catch (error) {
-    endImportProgress();
-    handleError(error, 'Numista CSV import initialization');
-  }
-};
-
-/**
- * Exports inventory using Numista-compatible column layout
- */
-const exportNumistaCsv = () => {
-  const timestamp = new Date().toISOString().slice(0,10).replace(/-/g,'');
-  const headers = [
-    "N# number",
-    "Title",
-    "Year",
-    "Metal",
-    "Quantity",
-    "Type",
-    "Weight (g)",
-    "Buying price (USD)",
-    "Acquisition place",
-    "Storage location",
-    "Acquisition date",
-    "Note",
-    "Private comment",
-    "Public comment",
-    "Comment",
-  ];
-
-  const sortedInventory = sortInventoryByDateNewestFirst();
-  const rows = [];
-
-  for (const item of sortedInventory) {
-    const year = item.issuedYear || '';
-    let title = item.name || '';
-    if (year) {
-      const yearRegex = new RegExp(`\\s*${year}\\b`);
-      title = title.replace(yearRegex, '').trim();
-    }
-
-    const weightGrams = parseFloat(item.weight)
-      ? parseFloat(item.weight) * 31.1034768
-      : 0;
-    const purchasePrice = item.purchasePrice ?? item.price;
-
-    let baseNote = '';
-    let privateComment = '';
-    let publicComment = '';
-    let otherComment = '';
-    if (item.notes) {
-      const lines = String(item.notes).split(/\n/);
-      for (const line of lines) {
-        if (/^\s*Private Comment:/i.test(line)) {
-          privateComment = line.replace(/^\s*Private Comment:\s*/i, '').trim();
-        } else if (/^\s*Public Comment:/i.test(line)) {
-          publicComment = line.replace(/^\s*Public Comment:\s*/i, '').trim();
-        } else if (/^\s*Comment:/i.test(line)) {
-          otherComment = line.replace(/^\s*Comment:\s*/i, '').trim();
-        } else {
-          baseNote = baseNote ? `${baseNote}\n${line}` : line;
-        }
-      }
-    }
-
-    rows.push([
-      item.numistaId || '',
-      title,
-      year,
-      item.metal || '',
-      item.qty || '',
-      item.type || '',
-      weightGrams ? weightGrams.toFixed(2) : '',
-      purchasePrice != null ? Number(purchasePrice).toFixed(2) : '',
-      item.purchaseLocation || '',
-      item.storageLocation || '',
-      item.date || '',
-      baseNote,
-      privateComment,
-      publicComment,
-      otherComment,
-    ]);
-  }
-
-  const csv = Papa.unparse([headers, ...rows]);
-  const blob = new Blob([csv], { type: 'text/csv' });
-  const url = URL.createObjectURL(blob);
-
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `numista_export_${timestamp}.csv`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-};
-
-/**
- * Exports current inventory to CSV format
- */
-const exportCsv = () => {
-  const timestamp = new Date().toISOString().slice(0,10).replace(/-/g,'');
-  const headers = [
-    "Metal","Name","Qty","Type","Weight(oz)","Purchase Price",
-    "Spot Price ($/oz)","Premium ($/oz)","Total Premium",
-    "Purchase Location","Storage Location","N#","Collectable",
-    "Notes","Date"
-  ];
-
-  // Sort inventory by date (newest first) for export
-  const sortedInventory = sortInventoryByDateNewestFirst();
-
-  const rows = [];
-
-  for (const i of sortedInventory) {
-    // For collectable items, use current spot price (at time of export)
-    // This ensures the value is preserved if the item is later changed back to standard
-    const exportSpotPrice = i.isCollectable ? 
-      spotPrices[i.metal.toLowerCase()] : 
-      i.spotPriceAtPurchase;
-
-    rows.push([
-      i.metal || 'Silver',
-      i.name,
-      i.qty,
-      i.type,
-      parseFloat(i.weight).toFixed(4),
-      formatCurrency(i.price),
-      exportSpotPrice > 0 ? formatCurrency(exportSpotPrice) : 'N/A',
-      i.isCollectable ? 'N/A' : formatCurrency(i.premiumPerOz),
-      i.isCollectable ? 'N/A' : formatCurrency(i.totalPremium),
-      i.purchaseLocation,
-      i.storageLocation || '',
-      i.numistaId || '',
-      i.isCollectable ? 'Yes' : 'No',
-      i.notes || '',
-      i.date
-    ]);
-  }
-
-  const csv = Papa.unparse([headers, ...rows]);
-  const blob = new Blob([csv], { type: "text/csv" });
-  const url = URL.createObjectURL(blob);
-
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `metal_inventory_${timestamp}.csv`;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-};
-
-/**
- * Imports inventory data from JSON file
- *
- * @param {File} file - JSON file to import
- * @param {boolean} [override=false] - Replace existing inventory instead of merging
- */
-const importJson = (file, override = false) => {
-  const reader = new FileReader();
-
-  reader.onload = function(e) {
-    try {
-      const data = JSON.parse(e.target.result);
-
-      // Validate data structure
-      if (!Array.isArray(data)) {
-        return alert("Invalid JSON format. Expected an array of inventory items.");
-      }
-
-      // Process each item
-      const imported = [];
-      const skippedDetails = [];
-      const totalItems = data.length;
-      startImportProgress(totalItems);
-      let processed = 0;
-      let importedCount = 0;
-
-      for (const [index, raw] of data.entries()) {
-        processed++;
-
-        const compositionRaw = raw.composition || raw.metal || 'Silver';
-        const composition = getCompositionFirstWords(compositionRaw);
-        const metal = parseNumistaMetal(composition);
-        const name = raw.name || '';
-        const qty = parseInt(raw.qty ?? raw.quantity ?? 1, 10);
-        const type = normalizeType(raw.type || raw.itemType || 'Other');
-        const weight = parseFloat(raw.weight ?? raw.weightOz ?? 0);
-        const priceStr = raw.price ?? raw.purchasePrice ?? 0;
-        let price = typeof priceStr === 'string'
-          ? parseFloat(priceStr.replace(/[^\d.-]+/g, ''))
-          : parseFloat(priceStr);
-        if (price < 0) price = 0;
-        const purchaseLocation = raw.purchaseLocation || '';
-        const storageLocation = raw.storageLocation || 'Unknown';
-        const notes = raw.notes || '';
-        const date = parseDate(raw.date);
-        const isCollectable = raw.isCollectable === true || raw.collectable === true || raw.isCollectable === 'true' || raw.collectable === 'true';
-
-        let spotPriceAtPurchase;
-        if (raw.spotPriceAtPurchase) {
-          spotPriceAtPurchase = parseFloat(raw.spotPriceAtPurchase);
-        } else if (raw.spotPrice || raw.spot) {
-          spotPriceAtPurchase = parseFloat(raw.spotPrice || raw.spot);
-        } else {
-          const metalKey = metal.toLowerCase();
-          spotPriceAtPurchase = isCollectable ? 0 : spotPrices[metalKey];
-        }
-
-        let premiumPerOz = 0;
-        let totalPremium = 0;
-        if (!isCollectable && spotPriceAtPurchase > 0) {
-          const pricePerOz = price / (weight || 1);
-          premiumPerOz = pricePerOz - spotPriceAtPurchase;
-          totalPremium = premiumPerOz * qty * weight;
-        }
-
-        const numistaRaw = (raw.numistaId || raw.numista || raw['N#'] || '').toString();
-        const numistaMatch = numistaRaw.match(/\d+/);
-        const numistaId = numistaMatch ? numistaMatch[0] : '';
-        const serial = raw.serial || getNextSerial();
-
-        const processedItem = sanitizeImportedItem({
-          metal,
-          composition,
-          name,
-          qty,
-          type,
-          weight,
-          price,
-          date,
-          purchaseLocation,
-          storageLocation,
-          notes,
-          spotPriceAtPurchase,
-          premiumPerOz,
-          totalPremium,
-          isCollectable,
-          numistaId,
-          serial
-        });
-
-        const validation = validateInventoryItem(processedItem);
-        if (!validation.isValid) {
-          const reason = validation.errors.join(', ');
-          skippedDetails.push(`Item ${index + 1}: ${reason}`);
-          updateImportProgress(processed, importedCount, totalItems);
-          continue;
-        }
-
-        addCompositionOption(composition);
-        imported.push(processedItem);
-        importedCount++;
-        updateImportProgress(processed, importedCount, totalItems);
-      }
-
-      endImportProgress();
-
-      if (skippedDetails.length > 0) {
-        alert('Skipped entries:\n' + skippedDetails.join('\n'));
-      }
-
-      if (imported.length === 0) {
-        return alert("No valid items found in JSON file.");
-      }
-
-      const existingSerials = new Set(override ? [] : inventory.map(item => item.serial));
-      const existingKeys = new Set(
-        (override ? [] : inventory)
-          .filter(item => item.numistaId)
-          .map(item => `${item.numistaId}|${item.name}|${item.date}`)
-      );
-      const deduped = [];
-      let duplicateCount = 0;
-
-      for (const item of imported) {
-        const key = item.numistaId ? `${item.numistaId}|${item.name}|${item.date}` : null;
-        if (existingSerials.has(item.serial) || (key && existingKeys.has(key))) {
-          duplicateCount++;
-          continue;
-        }
-        existingSerials.add(item.serial);
-        if (key) existingKeys.add(key);
-        deduped.push(item);
-      }
-
-      if (duplicateCount > 0) {
-        console.info(`${duplicateCount} duplicate items skipped during import.`);
-      }
-
-      if (deduped.length === 0) {
-        return alert('No items to import.');
-      }
-
-      for (const item of deduped) {
-        if (typeof registerName === "function") {
-          registerName(item.name);
-        }
-      }
-
-      if (override) {
-        inventory = deduped;
-      } else {
-        inventory = inventory.concat(deduped);
-      }
-
-      // Synchronize all items with catalog manager
-      inventory = catalogManager.syncInventory(inventory);
-
-      saveInventory();
-      renderTable();
-      if (typeof updateStorageStats === "function") {
-        updateStorageStats();
-      }
-    } catch (error) {
-      endImportProgress();
-      alert("Error parsing JSON file: " + error.message);
-    }
-  };
-
-  reader.readAsText(file);
-};
-
-/**
- * Exports current inventory to JSON format
- */
-const exportJson = () => {
-  const timestamp = new Date().toISOString().slice(0,10).replace(/-/g,'');
-
-  // Sort inventory by date (newest first) for export
-  const sortedInventory = sortInventoryByDateNewestFirst();
-
-  const exportData = sortedInventory.map(item => ({
-    metal: item.metal,
-    name: item.name,
-    numistaId: item.numistaId,
-    qty: item.qty,
-    type: item.type,
-    weight: item.weight,
-    price: item.price,
-    date: item.date,
-    purchaseLocation: item.purchaseLocation,
-    storageLocation: item.storageLocation,
-    notes: item.notes,
-    spotPriceAtPurchase: item.spotPriceAtPurchase,
-    isCollectable: item.isCollectable,
-    premiumPerOz: item.premiumPerOz,
-    totalPremium: item.totalPremium,
-    serial: item.serial
-  }));
-
-  const json = JSON.stringify(exportData, null, 2);
-  const blob = new Blob([json], { type: "application/json" });
-  const url = URL.createObjectURL(blob);
-
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `metal_inventory_${timestamp}.json`;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-};
-
-/**
- * Exports current inventory to PDF format
- */
-const exportPdf = () => {
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF();
-
-  // Sort inventory by date (newest first) for export
-  const sortedInventory = sortInventoryByDateNewestFirst();
-
-  // Add title
-  doc.setFontSize(16);
-  doc.text("StackrTrackr", 14, 15);
-
-  // Add date
-  doc.setFontSize(10);
-  doc.text(`Exported: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}`, 14, 22);
-
-  // Prepare table data
-  const tableData = sortedInventory.map(item => [
-    item.metal,
-    item.name,
-    item.qty,
-    item.type,
-    parseFloat(item.weight).toFixed(2),
-    formatCurrency(item.price),
-    item.isCollectable ? '—' : formatCurrency(item.spotPriceAtPurchase),
-    item.isCollectable ? '—' : formatCurrency(item.premiumPerOz),
-    item.isCollectable ? '—' : formatCurrency(item.totalPremium),
-    item.purchaseLocation,
-    item.storageLocation || '',
-    item.numistaId || '',
-    item.notes || '',
-    item.date,
-    item.isCollectable ? 'Yes' : 'No'
-  ]);
-
-  // Add table
-  doc.autoTable({
-    head: [['Metal', 'Name', 'Qty', 'Type', 'Weight(oz)', 'Purchase Price',
-            'Spot Price ($/oz)', 'Premium ($/oz)', 'Total Premium',
-            'Purchase Location', 'Storage Location', 'N#', 'Notes', 'Date', 'Collectable']],
-    body: tableData,
-    startY: 30,
-    theme: 'striped',
-    styles: { fontSize: 8 },
-    headStyles: { fillColor: [25, 118, 210] }
-  });
-
-  // Add totals
-  const finalY = doc.lastAutoTable.finalY || 30;
-
-  // Add totals section
-  doc.setFontSize(12);
-  doc.text("Totals", 14, finalY + 10);
-
-  // Silver Totals
-  doc.setFontSize(10);
-  doc.text("Silver:", 14, finalY + 16);
-  doc.text(`Total Items: ${elements.totals.silver.items.textContent}`, 25, finalY + 22);
-  doc.text(`Total Weight: ${elements.totals.silver.weight.textContent} oz`, 25, finalY + 28);
-  doc.text(`Purchase Price: ${elements.totals.silver.purchased.textContent}`, 25, finalY + 34);
-  doc.text(`Melt Value: ${elements.totals.silver.value.textContent}`, 25, finalY + 40);
-
-  // Gold Totals
-  doc.text("Gold:", 100, finalY + 16);
-  doc.text(`Total Items: ${elements.totals.gold.items.textContent}`, 111, finalY + 22);
-  doc.text(`Total Weight: ${elements.totals.gold.weight.textContent} oz`, 111, finalY + 28);
-  doc.text(`Purchase Price: ${elements.totals.gold.purchased.textContent}`, 111, finalY + 34);
-  doc.text(`Melt Value: ${elements.totals.gold.value.textContent}`, 111, finalY + 40);
-
-  // Platinum Totals
-  doc.text("Platinum:", 14, finalY + 46);
-  doc.text(`Total Items: ${elements.totals.platinum.items.textContent}`, 25, finalY + 52);
-  doc.text(`Total Weight: ${elements.totals.platinum.weight.textContent} oz`, 25, finalY + 58);
-  doc.text(`Purchase Price: ${elements.totals.platinum.purchased.textContent}`, 25, finalY + 64);
-  doc.text(`Melt Value: ${elements.totals.platinum.value.textContent}`, 25, finalY + 70);
-
-  // Palladium Totals
-  doc.text("Palladium:", 100, finalY + 46);
-  doc.text(`Total Items: ${elements.totals.palladium.items.textContent}`, 111, finalY + 52);
-  doc.text(`Total Weight: ${elements.totals.palladium.weight.textContent} oz`, 111, finalY + 58);
-  doc.text(`Purchase Price: ${elements.totals.palladium.purchased.textContent}`, 111, finalY + 64);
-  doc.text(`Melt Value: ${elements.totals.palladium.value.textContent}`, 111, finalY + 70);
-
-  // All Totals (only if elements exist)
-  if (elements.totals.all.items.textContent !== undefined) {
-    doc.setFontSize(11);
-    doc.text("All Metals:", 14, finalY + 76);
-    doc.text(`Total Items: ${elements.totals.all.items.textContent}`, 25, finalY + 82);
-    doc.text(`Total Weight: ${elements.totals.all.weight.textContent} oz`, 25, finalY + 88);
-    doc.text(`Purchase Price: ${elements.totals.all.purchased.textContent}`, 25, finalY + 94);
-    doc.text(`Melt Value: ${elements.totals.all.value.textContent}`, 25, finalY + 100);
-  }
-
-  // Save PDF
-  doc.save(`metal_inventory_${new Date().toISOString().slice(0,10).replace(/-/g,'')}.pdf`);
-};
 // =============================================================================
 // Expose inventory actions globally for inline event handlers
 window.toggleCollectable = toggleCollectable;
@@ -2546,19 +1624,5 @@ window.renderTable = renderTable;
 // =============================================================================
 // GLOBAL FUNCTION EXPOSURE
 // =============================================================================
-
-// Expose import/export functions globally
-window.importCsv = importCsv;
-window.importJson = importJson;
-window.importNumistaCsv = importNumistaCsv;
-window.exportCsv = exportCsv;
-window.exportJson = exportJson;
-window.exportNumistaCsv = exportNumistaCsv;
-window.exportPdf = exportPdf;
-
-// Expose utility functions globally
-window.startImportProgress = startImportProgress;
-window.updateImportProgress = updateImportProgress;
-window.endImportProgress = endImportProgress;
 
 console.log("✓ All import/export functions exposed globally");

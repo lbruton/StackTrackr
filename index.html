@@ -1020,80 +1020,63 @@
               </div>
               <div>
                 <label for="itemType">Type</label>
-                <select id="itemType">
-                  <option value="Coin">Coin</option>
-                  <option value="Bar">Bar</option>
-                  <option value="Round">Round</option>
-                  <option value="Note">Note</option>
-                  <option value="Aurum">Aurum</option>
-                  <option value="Other">Other</option>
-                </select>
-              </div>
-              <div>
-                <label for="itemQty">Quantity</label>
-                <input id="itemQty" min="1" required step="1" type="number" />
-              </div>
-              <div>
-                <label for="itemWeight">Weight</label>
-                <div style="display:flex;align-items:center;gap:var(--spacing);">
-                  <input id="itemWeight" min="0.0001" required step="0.0001" type="number" />
-                  <select id="itemWeightUnit">
-                    <option value="oz">oz</option>
-                    <option value="g">g</option>
-                  </select>
+                <div class="settings-card-grid">
+                  <div class="settings-card">
+                    <h3 style="text-align:center;">Import</h3>
+                    <p class="settings-subtext" style="text-align:center;">Import your data files.</p>
+                    <div class="import-block">
+                      <div class="import-export-grid" style="justify-content:center;">
+                        <div class="import-csv-grid" style="text-align:center;">
+                          <button class="btn warning" id="importCsvOverride">Import CSV</button>
+                          <button class="btn success" id="importCsvMerge">Merge CSV</button>
+                          <input accept=".csv" hidden id="importCsvFile" type="file" />
+                        </div>
+                        <div class="import-json-grid" style="text-align:center;">
+                          <button class="btn warning" id="importJsonOverride">Import JSON</button>
+                          <button class="btn success" id="importJsonMerge">Merge JSON</button>
+                          <input accept=".json" hidden id="importJsonFile" type="file" />
+                        </div>
+                      </div>
+                      <progress
+                        class="import-progress"
+                        id="importProgress"
+                        value="0"
+                        max="0"
+                      ></progress>
+                      <div class="import-progress-text" id="importProgressText"></div>
+                    </div>
+                  </div>
+
+                  <div class="settings-card">
+                    <h3 style="text-align:center;">Export</h3>
+                    <p class="settings-subtext" style="text-align:center;">Export your data files.</p>
+                    <div class="export-block" style="text-align:center;">
+                      <div class="import-export-grid" style="justify-content:center;">
+                        <button class="btn info" id="exportCsvBtn">Export CSV</button>
+                        <button class="btn info" id="exportJsonBtn">Export JSON</button>
+                        <button class="btn info" id="exportPdfBtn">Export PDF</button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="settings-card boating-accident-section">
+                    <h3 style="text-align:center;">Backup, Restore, Clear</h3>
+                    <p class="settings-subtext" style="text-align:center;">Manage local application data.</p>
+                    <div class="backup-buttons" style="text-align:center;">
+                      <button class="btn warning" id="removeInventoryDataBtn">Remove Inventory Data</button>
+                      <button class="btn danger" id="boatingAccidentBtn">Wipe All Data</button>
+                      <div class="beta-warning">⚠️ have you or someone you know been involved in a 🚤 accident?</div>
+                    </div>
+                  </div>
+
+                  <div class="settings-card">
+                    <h3 style="text-align:center;">Cloud Sync</h3>
+                    <p class="settings-subtext" style="text-align:center;">Sync your data to the cloud.</p>
+                    <div class="cloud-block" style="text-align:center;">
+                      <button class="btn secondary" id="cloudSyncBtn">Cloud Sync ☁️</button>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
-            <!-- Second row of add form fields -->
-            <div class="grid grid-2">
-              <div>
-                <label for="itemName">Name</label>
-                <input id="itemName" required type="text" />
-              </div>
-              <div>
-                <label for="purchaseLocation">Purchase Location</label>
-                <input id="purchaseLocation" type="text" />
-              </div>
-              <div>
-                <label for="storageLocation">Storage Location</label>
-                <input id="storageLocation" type="text" placeholder="Vault A, Safe B, etc..." />
-              </div>
-              <div>
-                <label for="itemNotes">Notes</label>
-                <input id="itemNotes" type="text" placeholder="Additional notes or comments..." />
-              </div>
-            </div>
-            <!-- Third row of add form fields -->
-            <div class="grid grid-2">
-              <div>
-                <label for="itemPrice">Purchase Price ($)</label>
-                <div class="currency-input">
-                  <input id="itemPrice" min="0" step="0.01" type="number" />
-                </div>
-              </div>
-              <div>
-                <label for="itemDate">Purchase Date</label>
-                <input id="itemDate" required type="date" />
-              </div>
-            </div>
-            <!-- Spot price and catalog field -->
-            <div class="grid grid-2">
-              <div>
-                <label for="itemSpotPrice">Spot Price ($/oz)</label>
-                <div class="currency-input">
-                  <input id="itemSpotPrice" min="0" step="0.01" type="number" />
-                </div>
-              </div>
-              <div>
-                <label for="itemCatalog">Catalog (N#)</label>
-                <input id="itemCatalog" type="text" placeholder="Numista catalog #" />
-              </div>
-            </div>
-            <!-- Form action buttons -->
-            <div style="margin-top: 1rem; text-align: right">
-              <button class="btn" id="cancelAdd" type="button">Cancel</button>
-              <button class="btn premium" type="submit">Add to Inventory</button>
-            </div>
           </form>
         </div>
       </div>
@@ -2437,30 +2420,32 @@
 
   <!-- Following the original working script order -->
   <script defer src="js/debug-log.js"></script>
-  <script defer src="./js/constants.js"></script>
-  <script defer src="./js/state.js"></script>
-  <script defer src="./js/utils.js"></script>
-  <script defer src="./js/fuzzy-search.js"></script>
-  <script defer src="./js/autocomplete.js"></script>
-  <script defer src="./js/versionCheck.js"></script>
-  <script defer src="./js/changeLog.js"></script>
-  <script defer src="./js/charts.js"></script>
-  <script defer src="./js/theme.js"></script>
-  <script defer src="./js/search.js"></script>
-  <script defer src="./js/filters.js"></script>
-  <script defer src="./js/sorting.js"></script>
-  <script defer src="./js/pagination.js"></script>
-  <script defer src="./js/detailsModal.js"></script>
-  <script defer src="./js/numista-modal.js"></script>
-  <script defer src="./js/spot.js"></script>
-  <script defer src="./js/api.js"></script>
-  <script defer src="./js/catalog-providers.js"></script>
-  <script defer src="./js/catalog-manager.js"></script>
-  <script defer src="./js/inventory.js"></script>
-  <script defer src="./js/about.js"></script>
-  <script defer src="./js/customMapping.js"></script>
-  <script defer src="./js/events.js"></script>
-  
+  <script defer src="js/error-handler.js"></script>
+  <script defer src="js/data-processor.js"></script>
+  <script defer src="js/constants.js"></script>
+  <script defer src="js/state.js"></script>
+  <script defer src="js/utils.js"></script>
+  <script defer src="js/fuzzy-search.js"></script>
+  <script defer src="js/import-export-helpers.js"></script>
+  <script defer src="js/import-export.js"></script>
+  <script defer src="js/autocomplete.js"></script>
+  <script defer src="js/charts.js"></script>
+  <script defer src="js/theme.js"></script>
+  <script defer src="js/search.js"></script>
+  <script defer src="js/filters.js"></script>
+  <script defer src="js/sorting.js"></script>
+  <script defer src="js/pagination.js"></script>
+  <script defer src="js/detailsModal.js"></script>
+  <script defer src="js/numista-modal.js"></script>
+  <script defer src="js/spot.js"></script>
+  <script defer src="js/api.js"></script>
+  <script defer src="js/catalog-providers.js"></script>
+  <script defer src="js/catalog-manager.js"></script>
+  <script defer src="js/inventory.js"></script>
+  <script defer src="js/about.js"></script>
+  <script defer src="js/customMapping.js"></script>
+  <script defer src="js/events.js"></script>
+  <script defer src="js/header-buttons-fix.js"></script>
   <!-- Tests (only load during development) -->
   <!-- Script './tests/grouped-name-chips.test.js' not found, disabled for production -->
   <!-- <script defer src="./tests/grouped-name-chips.test.js"></script> -->

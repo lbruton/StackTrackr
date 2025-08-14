@@ -579,21 +579,13 @@ const setupEventListeners = () => {
           const qtyInput = elements.itemQty.value.trim();
           const qty = qtyInput === "" ? 1 : parseInt(qtyInput, 10);
           const type = elements.itemType.value;
-          let weight = parseFloat(elements.itemWeight.value);
-          if (elements.itemWeightUnit.value === "g") {
-            weight = gramsToOzt(weight);
-          }
-          weight = isNaN(weight) ? 0 : parseFloat(weight.toFixed(2));
-          const priceInput = elements.itemPrice.value.trim();
-          let price = priceInput === "" ? 0 : parseFloat(priceInput);
-          price = isNaN(price) || price < 0 ? 0 : price;
-          const purchaseLocation =
-            elements.purchaseLocation.value.trim() || "";
-          const storageLocation =
-            elements.storageLocation.value.trim() || "Unknown";
-          const notes = elements.itemNotes.value.trim() || "";
-          const date = elements.itemDate.value || todayStr();
-          const spotPriceInput = elements.itemSpotPrice.value.trim();
+          const weight = parseFloat(elements.itemWeight.value);
+          const price = parseFloat(elements.itemPrice.value);
+          const date = elements.itemDate.value;
+          const purchaseLocation = elements.itemPurchaseLocation ? elements.itemPurchaseLocation.value.trim() : "";
+          const storageLocation = elements.itemStorageLocation ? elements.itemStorageLocation.value.trim() : "";
+          const notes = elements.itemNotes ? elements.itemNotes.value.trim() : "";
+          const spotPriceInput = elements.itemSpotPrice ? elements.itemSpotPrice.value.trim() : "";
           const isCollectable = elements.itemCollectable ? elements.itemCollectable.checked : false;
 
           // Validate the mandatory fields: Name, Date, Type, Metal, Weight, and Quantity
@@ -973,13 +965,27 @@ const setupEventListeners = () => {
           "click",
           (e) => {
             e.preventDefault();
-            renderChangeLog();
-            if (elements.changeLogModal) {
-              if (window.openModalById) openModalById('changeLogModal');
-              else {
-                elements.changeLogModal.style.display = "flex";
-                document.body.style.overflow = "hidden";
+            console.log('📜 Change log button clicked');
+            
+            try {
+              renderChangeLog();
+              console.log('✅ renderChangeLog() completed');
+              
+              if (elements.changeLogModal) {
+                console.log('📋 changeLogModal element found, opening modal...');
+                if (window.openModalById) {
+                  openModalById('changeLogModal');
+                  console.log('✅ Modal opened via openModalById');
+                } else {
+                  elements.changeLogModal.style.display = "flex";
+                  document.body.style.overflow = "hidden";
+                  console.log('✅ Modal opened via direct style manipulation');
+                }
+              } else {
+                console.error('❌ changeLogModal element not found');
               }
+            } catch (error) {
+              console.error('❌ Error in change log button handler:', error);
             }
           },
           "Change log button",
@@ -1228,17 +1234,32 @@ const setupEventListeners = () => {
         elements.importCsvFile,
         "change",
         function (e) {
-          if (e.target.files.length > 0) {
+          console.log('📁 CSV file input change event triggered:', {
+            filesLength: e.target.files.length,
+            override: csvImportOverride
+          });
 
+          if (e.target.files.length > 0) {
             const file = e.target.files[0];
+            console.log('📄 File selected:', {
+              name: file.name,
+              size: file.size,
+              type: file.type,
+              override: csvImportOverride
+            });
+
             if (!checkFileSize(file)) {
+              console.warn('⚠️ File size exceeds limit');
               alert("File exceeds 2MB limit. Enable cloud backup for larger uploads.");
             } else {
+              console.log('✅ Starting importCsv with override:', csvImportOverride);
               importCsv(file, csvImportOverride);
             }
-
+          } else {
+            console.warn('⚠️ No files selected');
           }
-          this.value = "";
+          // Clear the input so the same file can be selected again
+          this.value = '';
         },
         "CSV import",
       );
@@ -1383,6 +1404,32 @@ const setupEventListeners = () => {
         "Cloud Sync button",
       );
     }
+  // Removed backupAllBtn and restoreBackupBtn event listeners to fix duplicate variable errors and menu button issues
+    if (elements.backupAllBtn) {
+      safeAttachListener(
+        elements.backupAllBtn,
+        "click",
+        createBackupZip,
+        "Full backup creation",
+      );
+    }
+    if (elements.restoreBackupBtn) {
+      safeAttachListener(
+        elements.restoreBackupBtn,
+        "click",
+        () => {
+          const input = document.createElement('input');
+          input.type = 'file';
+          input.accept = '.zip';
+          input.onchange = (e) => {
+            const file = e.target.files[0];
+            if (file) restoreBackupZip(file);
+          };
+          input.click();
+        },
+        "Full backup restore",
+      );
+    }
     const cloudSyncCloseBtn = document.getElementById("cloudSyncCloseBtn");
     if (cloudSyncCloseBtn && elements.cloudSyncModal) {
       safeAttachListener(
@@ -1472,6 +1519,19 @@ const setupEventListeners = () => {
           if (typeof hideFilesModal === "function") hideFilesModal();
         },
         "Files close button",
+      );
+    }
+    
+    // Footer close button
+    const filesCloseBtnFooter = document.getElementById("filesCloseBtnFooter");
+    if (filesCloseBtnFooter) {
+      safeAttachListener(
+        filesCloseBtnFooter,
+        "click",
+        () => {
+          if (typeof hideFilesModal === "function") hideFilesModal();
+        },
+        "Files footer close button",
       );
     }
 
@@ -2171,5 +2231,23 @@ const setupApiEvents = () => {
 
 // =============================================================================
 
+// Utility function to clean up stray localStorage entries
+const cleanupStorage = () => {
+  try {
+    const keysToRemove = Object.keys(localStorage).filter((key) => key.startsWith('temp_'));
+    keysToRemove.forEach((key) => localStorage.removeItem(key));
+    console.log(`Cleaned up ${keysToRemove.length} temporary entries from localStorage.`);
+  } catch (error) {
+    console.error('Error during localStorage cleanup:', error);
+  }
+};
+
 // Early cleanup of stray localStorage entries before application initialization
 document.addEventListener('DOMContentLoaded', cleanupStorage);
+
+// exportCsv function moved to js/import-export.js to avoid duplicates
+
+// Make setupEventListeners globally accessible
+if (typeof window !== 'undefined') {
+  window.setupEventListeners = setupEventListeners;
+}

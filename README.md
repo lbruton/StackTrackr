@@ -4,6 +4,22 @@
 
 StackrTrackr is a comprehensive client-side web application for tracking precious metal investments. It's designed to help users manage their silver, gold, platinum, and palladium holdings with detailed financial metrics and enhanced tracking capabilities.
 
+# Agent Onboarding & Instructions
+
+All agents working in the StackTrackr workspace must review the following instruction files before making any changes:
+
+- `agents.ai`: Core agent workflow, architecture, and MCP workspace references
+- `COPILOT_INSTRUCTIONS.md`: Quick reference for agent conventions and project overview
+- `/docs/js_module_reference.md`: Detailed JS module documentation
+- `/docs/js_module_quick_reference.md`: Quick JS module summary
+- `/docs/table_structure_and_styling.md`: Table structure, scripts, CSS pitfalls
+- `/docs/modal_and_button_reference.md`: Modal and button design, functions
+- `/docs/inventory_import_export_design.md`: Import/export, calculation, mapping logic
+
+These files are located at the project root or in the `/docs` folder. Always consult them for onboarding, architecture, and maintenance guidance.
+
+For new features, bug fixes, or refactoring, update documentation as needed and validate changes against these guides.
+
 The public hosted version of the app is available at [stackrtrackr.com](https://stackrtrackr.com).
 
 See [docs/announcements.md](docs/announcements.md) for the latest release notes and upcoming milestones.

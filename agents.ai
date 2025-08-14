@@ -6,13 +6,7 @@
 > **🚨 CRITICAL**: All agents MUST check this file on initialization and before making any script/module changes
 
 ---
-
-## 📋 **MANDATORY INITIALIZATION CHECKLIST**
-
-**Every agent MUST execute on startup:**
-
 1. ✅ Read this file (`/agents.ai`) completely
-2. ✅ Check assigned tasks in `/agents/tasks/`
 3. ✅ Review current git status and create checkpoint if needed
 4. ✅ Report status using standard format
 5. ✅ Reference script loading order before any file modifications
@@ -27,13 +21,7 @@
 - **Libraries**: Chart.js, PapaParse, jsPDF, JSZip (CDN)
 - **Styling**: CSS custom properties, responsive design
 - **Version**: v3.04.73 (semantic: BRANCH.RELEASE.PATCH.state)
-
----
-
-## 🔧 **CRITICAL SCRIPT LOADING ORDER**
-
 **⚠️ NEVER modify this order without updating ALL dependent files ⚠️**
-
 ### Script Loading Sequence (from index.html):
 1. **External Dependencies (CDN)**
    - `file-protocol-fix.js` ⚠️ MUST BE FIRST
@@ -56,10 +44,6 @@
    spot.js → api.js → catalog-*.js → bulk-edit.js
    inventory.js → about.js → customMapping.js
    ```
-
-5. **Event System** (Line 2613)
-   ```
-   events.js ← REQUIRES ALL ABOVE
    ```
 
 6. **Application Startup** (Line 2616)
@@ -69,32 +53,29 @@
 
 ### Function Export Requirements
 **Critical functions that MUST be exported to global scope:**
-
 - **inventory.js**: `importCsv`, `importJson`, `exportCsv`, `exportJson`, `exportPdf`, `updateSummary`, `toggleCollectable`
 - **api.js**: `showFilesModal`, `hideFilesModal`, `fetchSpotPrice`
 - **utils.js**: `checkFileSize`, `MAX_LOCAL_FILE_SIZE`
 - **All modal handlers**: `show*Modal`, `hide*Modal`
 
 ### Export Pattern
-```js
-// At end of each module:
-if (typeof window !== 'undefined') {
   window.functionName = functionName;
 }
-```
-
----
-
-## 🏗️ **ARCHITECTURE PATTERNS**
 
 ### DOM Element Caching
 ```js
-// Use state.js elements object, initialized in init.js
-elements.spotPriceDisplay[metalKey] = safeGetElement(`spotPriceDisplay${metalName}`);
-```
-
-### API Provider System
 ```js
+## Documentation References (2025-08-14)
+
+For all agents working in the StackTrackr workspace, the following documentation is required reading and should be referenced before any code changes:
+
+- `/docs/js_module_reference.md`: Detailed JS module documentation
+- `/docs/js_module_quick_reference.md`: Quick JS module summary
+- `/docs/table_structure_and_styling.md`: Table structure, scripts, CSS pitfalls
+- `/docs/modal_and_button_reference.md`: Modal and button design, functions
+- `/docs/inventory_import_export_design.md`: Import/export, calculation, mapping logic
+
+These documents are part of the MCP workspace context and must be kept up to date. Agents should validate all changes against these guides and update them as needed.
 // Add new providers in constants.js
 METALS_DEV: {
   name: "Metals.dev",
@@ -158,6 +139,9 @@ METALS_DEV: {
 6. ✅ Initialize in init.js sequence
 7. ✅ Export required functions to global scope
 8. ✅ Update documentation
+
+### Snapshot Requirement
+**Before starting any project or making major changes, agents MUST create a workspace snapshot in the `/snapshots` folder.** This ensures a safe rollback point and preserves project history for debugging and audits.
 
 ### Testing Guidelines
 - Test via file:// protocol or local server
@@ -325,9 +309,14 @@ See `docs/table-preservation-guide.md` for a full breakdown of table dependencie
 
 ---
 
-## 📋 **MCP WORKSPACE REFERENCES**
+## � **MCP WORKSPACE REFERENCES**
 
 The MCP workspace now contains complete project knowledge:
+
+### 🗂️ **Critical Objects Reference** (`/agents/critical_objects_reference.md`)
+- **MUST READ**: A complete inventory of all critical global variables, functions, and constants.
+- **Prevents common errors** like duplicate declarations and load order issues.
+- **Outlines dependencies** and architectural patterns.
 
 ### 🗂️ **Function Inventory** (`/docs/COMPLETE_FUNCTION_REFERENCE.md`)
 - **Complete function table** with parameters, returns, exports
@@ -352,6 +341,7 @@ All MCP agents can now reference:
 - Complete file organization and structure
 
 ---
+
 
 ## Multi-Agent Development Workflow (Sync from MULTI_AGENT_WORKFLOW.md.backup)
 
