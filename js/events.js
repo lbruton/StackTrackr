@@ -225,6 +225,145 @@ const setupResponsiveColumns = () => {
   );
 };
 
+/**
+ * Centralized table event delegation handler
+ * Replaces all inline onclick handlers for better memory management
+ * Eliminates memory leaks from table re-renders
+ */
+const setupTableEventDelegation = () => {
+  const inventoryTable = document.getElementById("inventoryTable");
+  
+  if (!inventoryTable) {
+    console.warn("Inventory table not found for event delegation");
+    return;
+  }
+
+  // Remove any existing listeners to prevent duplicates
+  inventoryTable.removeEventListener('click', handleTableClick);
+  
+  // Add single delegated event listener
+  inventoryTable.addEventListener('click', handleTableClick);
+  
+  // Handle keyboard navigation for accessibility
+  inventoryTable.addEventListener('keydown', handleTableKeydown);
+  
+  debugLog("✓ Table event delegation setup complete");
+};
+
+/**
+ * Handles all table click events through delegation
+ * @param {Event} e - Click event
+ */
+const handleTableClick = (e) => {
+  const target = e.target;
+  const row = target.closest('tr');
+  
+  if (!row || !row.dataset.index) return;
+  
+  const idx = parseInt(row.dataset.index, 10);
+  
+  // Event delegation based on CSS classes and elements
+  if (target.matches('.collectable-status, .collectable-status *')) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (typeof toggleCollectable === 'function') {
+      toggleCollectable(idx);
+    }
+  } else if (target.matches('.edit-icon, .edit-icon *, button.edit-icon')) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (typeof editItem === 'function') {
+      editItem(idx);
+    }
+  } else if (target.matches('.danger, .danger *, button.danger')) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (typeof deleteItem === 'function') {
+      deleteItem(idx);
+    }
+  } else if (target.matches('.action-icon:not(.edit-icon):not(.danger), .action-icon:not(.edit-icon):not(.danger) *')) {
+    // Notes button (action-icon that's not edit or delete)
+    e.preventDefault();
+    e.stopPropagation();
+    if (typeof showNotes === 'function') {
+      showNotes(idx);
+    }
+  } else if (target.matches('.filter-text')) {
+    // Handle filter clicks
+    const field = target.dataset.field;
+    const value = target.dataset.value;
+    if (field && value !== undefined && typeof applyColumnFilter === 'function') {
+      applyColumnFilter(field, value);
+    }
+  } else if (target.matches('.catalog-link')) {
+    // Let Numista links handle themselves - they have their own onclick
+    return;
+  } else if (target.matches('.inline-edit-icon')) {
+    // Handle inline editing
+    const field = target.dataset.field;
+    const idx = parseInt(target.dataset.index, 10);
+    if (field && !isNaN(idx) && typeof startCellEdit === 'function') {
+      e.preventDefault();
+      e.stopPropagation();
+      startCellEdit(idx, field, target);
+    }
+  }
+};
+
+/**
+ * Handles keyboard navigation in the table
+ * @param {KeyboardEvent} e - Keyboard event
+ */
+const handleTableKeydown = (e) => {
+  if (e.key !== 'Enter' && e.key !== ' ') return;
+  
+  const target = e.target;
+  const row = target.closest('tr');
+  
+  if (!row || !row.dataset.index) return;
+  
+  const idx = parseInt(row.dataset.index, 10);
+  
+  // Handle keyboard activation for interactive elements
+  if (target.matches('.collectable-status')) {
+    e.preventDefault();
+    if (typeof toggleCollectable === 'function') {
+      toggleCollectable(idx);
+    }
+  } else if (target.matches('.edit-icon')) {
+    e.preventDefault();
+    if (typeof editItem === 'function') {
+      editItem(idx);
+    }
+  } else if (target.matches('.danger')) {
+    e.preventDefault();
+    if (typeof deleteItem === 'function') {
+      deleteItem(idx);
+    }
+  } else if (target.matches('.action-icon:not(.edit-icon):not(.danger)')) {
+    e.preventDefault();
+    if (typeof showNotes === 'function') {
+      showNotes(idx);
+    }
+  } else if (target.matches('.filter-text')) {
+    // Handle filter links with keyboard
+    e.preventDefault();
+    const field = target.dataset.field;
+    const value = target.dataset.value;
+    if (field && value !== undefined && typeof applyColumnFilter === 'function') {
+      applyColumnFilter(field, value);
+    }
+  } else if (target.matches('.inline-edit-icon')) {
+    // Handle inline editing with keyboard
+    e.preventDefault();
+    const field = target.dataset.field;
+    const editIdx = parseInt(target.dataset.index, 10);
+    if (field && !isNaN(editIdx) && typeof startCellEdit === 'function') {
+      startCellEdit(editIdx, field, target);
+    }
+  }
+};
+
 // MAIN EVENT LISTENERS SETUP
 // =============================================================================
 
@@ -386,6 +525,10 @@ const setupEventListeners = () => {
         "Close details modal",
       );
     }
+
+    // TABLE EVENT DELEGATION - Centralized handling for all table interactions
+    debugLog("Setting up table event delegation...");
+    setupTableEventDelegation();
 
     // TABLE HEADER SORTING
     debugLog("Setting up table sorting...");
