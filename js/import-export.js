@@ -83,7 +83,7 @@
  *
  * @param {File} file - ZIP file created by createBackupZip
  */
-const restoreBackupZip = async (file) => {
+async function restoreBackupZip(file) {
   try {
     const zip = await JSZip.loadAsync(file);
 
@@ -138,7 +138,7 @@ const restoreBackupZip = async (file) => {
     console.error("Restore failed", err);
     errorHandler.showError("Restore failed: " + err.message);
   }
-};
+}
 
 window.restoreBackupZip = restoreBackupZip;
 
