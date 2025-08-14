@@ -2462,3 +2462,4 @@ function loadInventory() {
 
 // Expose loadInventory globally
 window.loadInventory = loadInventory;
+window.renderTable = renderTable;

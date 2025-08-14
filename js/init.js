@@ -447,15 +447,8 @@ function setupBasicEventListeners() {
   debugLog("Basic event listeners setup complete");
 }
 
-// Define toggleCollectable function
-function toggleCollectable(itemId) {
-  const item = document.getElementById(itemId);
-  if (item) {
-    item.classList.toggle('collectable');
-  } else {
-    console.warn(`Item with ID ${itemId} not found.`);
-  }
-}
+// Note: toggleCollectable function is now defined in inventory.js
+// and exposed globally via window.toggleCollectable
 
 // Note: showDetailsModal function is now defined in detailsModal.js
 // and exposed globally via window.showDetailsModal
