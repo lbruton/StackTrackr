@@ -577,10 +577,19 @@ const getStorageLocationColor = loc =>
  * @returns {string} HTML string for table cell
  */
 const formatPurchaseLocation = (loc) => {
-  const value = loc || '—';
+  let value = loc || '—';
+  
+  // Convert "Numista Import" and "Unknown" to "—"
+  if (value === 'Numista Import' || value === 'Unknown') {
+    value = '—';
+  }
+  
+  // Truncate at 24 characters
+  const truncated = value.length > 24 ? value.substring(0, 24) + '…' : value;
   const color = getPurchaseLocationColor(value);
   const urlPattern = /^(https?:\/\/)?[\w.-]+\.[A-Za-z]{2,}(\S*)?$/;
-  const filterSpan = filterLink('purchaseLocation', value, color);
+  const filterSpan = filterLink('purchaseLocation', value, color, truncated, value !== truncated ? value : undefined);
+  
   if (urlPattern.test(value)) {
     let href = value;
     if (!/^https?:\/\//i.test(href)) {
@@ -592,6 +601,25 @@ const formatPurchaseLocation = (loc) => {
   return filterSpan;
 };
 window.formatPurchaseLocation = formatPurchaseLocation;
+
+/**
+ * Formats Storage Location for table display with truncation
+ * @param {string} loc - Storage location value
+ * @returns {string} HTML string for table cell
+ */
+const formatStorageLocation = (loc) => {
+  let value = loc || '—';
+  
+  // Convert "Numista Import" and "Unknown" to "—"
+  if (value === 'Numista Import' || value === 'Unknown') {
+    value = '—';
+  }
+  
+  // Truncate at 24 characters
+  const truncated = value.length > 24 ? value.substring(0, 24) + '…' : value;
+  const color = getStorageLocationColor(value);
+  return filterLink('storageLocation', value, color, truncated, value !== truncated ? value : undefined);
+};
 
 /**
  * Recalculates premium values for an inventory item
@@ -802,7 +830,7 @@ const startCellEdit = (idx, field, icon) => {
         content = formatPurchaseLocation(item.purchaseLocation);
         break;
       case 'storageLocation':
-        content = filterLink('storageLocation', item.storageLocation || '—', getStorageLocationColor(item.storageLocation || '—'));
+        content = formatStorageLocation(item.storageLocation);
         break;
       case 'notes':
         const hasNotes = item.notes && item.notes.trim();
@@ -977,11 +1005,11 @@ const renderTable = () => {
         ${formatPurchaseLocation(item.purchaseLocation)}
       </td>
       <td class="shrink" data-column="storageLocation">
-        ${filterLink('storageLocation', item.storageLocation || '—', getStorageLocationColor(item.storageLocation || '—'))}
+        ${formatStorageLocation(item.storageLocation)}
       </td>
       <td class="shrink" data-column="numista">${item.numistaId ? `
-        <a href="https://en.numista.com/catalogue/pieces${item.numistaId}.html" target="_blank" rel="noopener" title="View ${sanitizeHtml(item.name)} on Numista Database" class="catalog-link">
-          <span class="numista-text">N#${sanitizeHtml(item.numistaId)}</span>
+        <a href="#" onclick="openNumistaModal('${sanitizeHtml(item.numistaId)}', '${sanitizeHtml(item.name)}'); return false;" title="N#${sanitizeHtml(item.numistaId)} - open numista.com" class="catalog-link">
+          N#
         </a>
       ` : '<span class="numista-empty">—</span>'}</td>
   <td class="icon-col" data-column="collectable"><span class="collectable-status" role="button" tabindex="0" onclick="toggleCollectable(${originalIdx})" onkeydown="if(event.key==='Enter'||event.key===' ') toggleCollectable(${originalIdx})" aria-label="Toggle collectable status for ${sanitizeHtml(item.name)}" title="Toggle collectable status">${item.isCollectable ? '<svg class=\"collectable-icon vault-icon\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\"><rect x=\"2\" y=\"4\" width=\"20\" height=\"16\" rx=\"2\"/><circle cx=\"17\" cy=\"11\" r=\"2\"/><rect x=\"6\" y=\"8\" width=\"6\" height=\"8\" rx=\"1\"/></svg>' : '<svg class=\"collectable-icon bar-icon\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\"><rect x=\"3\" y=\"8\" width=\"18\" height=\"8\" rx=\"1\"/><path d=\"M5 6h14l-2-2H7z\"/></svg>'}</span></td>

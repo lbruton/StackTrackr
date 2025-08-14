@@ -2398,6 +2398,28 @@
     </div>
     
     <!-- =============================================================================
+       NUMISTA MODAL
+       
+       Modal for viewing Numista coin database pages in an embedded iframe.
+       Features navigation controls and responsive 90% width display.
+       ============================================================================= -->
+    <div class="modal" id="numistaModal" style="display: none">
+      <div class="modal-content numista-modal-content">
+        <div class="modal-header">
+          <div class="numista-nav-controls">
+            <button id="numistaBackBtn" class="nav-btn" title="Go Back">‹</button>
+            <button id="numistaForwardBtn" class="nav-btn" title="Go Forward">›</button>
+          </div>
+          <h2 id="numistaModalTitle">Numista Database</h2>
+          <button aria-label="Close modal" class="modal-close" id="numistaCloseBtn">×</button>
+        </div>
+        <div class="modal-body numista-modal-body">
+          <iframe id="numistaIframe" src="" frameborder="0" style="width: 100%; height: 100%; border-radius: var(--radius);"></iframe>
+        </div>
+      </div>
+    </div>
+    
+    <!-- =============================================================================
        JAVASCRIPT MODULE LOADING
        
        Modular architecture with proper dependency order:
@@ -2428,6 +2450,7 @@
     <script defer src="./js/sorting.js"></script>
     <script defer src="./js/pagination.js"></script>
     <script defer src="./js/detailsModal.js"></script>
+    <script defer src="./js/numista-modal.js"></script>
     <script defer src="./js/spot.js"></script>
     <script defer src="./js/api.js"></script>
     <script defer src="./js/catalog-providers.js"></script>
