@@ -561,7 +561,7 @@ const filterLink = (field, value, color, displayValue = value, title, allowHtml 
   const isNA = displayStr === 'N/A' || displayStr === 'Numista Import' || displayStr === 'Unknown' || displayStr === '—';
   const classNames = `filter-text${isNA ? ' na-value' : ''}`;
   const styleAttr = isNA ? '' : ` style="color: ${color};"`;
-  return `<span class="${classNames}"${styleAttr} data-field="${field}" data-value="${escapeAttribute(filterValue)}" tabindex="0" role="button" title="${safeTitle}">${safe}</span>`;
+  return `<span class="${classNames}"${styleAttr} data-field="${field}" data-value="${escapeAttribute(value)}" tabindex="0" role="button" title="${safeTitle}">${safe}</span>`;
 };
 
 const getTypeColor = type => typeColors[type] || 'var(--type-other-bg)';
