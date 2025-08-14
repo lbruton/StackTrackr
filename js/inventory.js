@@ -43,10 +43,6 @@ if (typeof window.loadData !== 'function') {
   };
 }
 
-// Use the global function references
-const saveData = window.saveData;
-const loadData = window.loadData;
-
 /**
  * Creates a comprehensive backup ZIP file containing all application data
  * 
