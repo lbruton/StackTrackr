@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Theme Button Test</title>
+</head>
+<body>
+    <h1>Theme Button Test</h1>
+    <button class="btn theme-btn" id="appearanceBtn" title="Theme" aria-label="Theme"></button>
+    
+    <script>
+        // Test theme button functionality
+        console.log("Testing theme button...");
+        
+        // Mock the THEME_KEY constant
+        const THEME_KEY = 'stackrtrackr-theme';
+        
+        const updateThemeButton = () => {
+          const savedTheme = localStorage.getItem(THEME_KEY) || "light";
+          console.log("Current theme:", savedTheme);
+
+          // Apply theme classes to all theme buttons
+          document.querySelectorAll(".theme-btn").forEach((btn) => {
+            btn.classList.remove("dark", "light", "sepia");
+            btn.classList.add(savedTheme);
+          });
+
+          const btn = document.getElementById("appearanceBtn");
+          if (!btn) {
+            console.error("Theme button not found!");
+            return;
+          }
+
+          // Show current theme icon and color on selector button
+          const themeConfig = {
+            dark: { icon: "🌙", label: "Dark mode", color: "#1e293b" },
+            light: { icon: "☀️", label: "Light mode", color: "#f8fafc" },
+            sepia: { icon: "📜", label: "Sepia mode", color: "#f2e7d5" }
+          };
+
+          const config = themeConfig[savedTheme] || themeConfig.light;
+          btn.textContent = config.icon;
+          btn.style.backgroundColor = config.color;
+          btn.style.color = savedTheme === "light" ? "#1e293b" : "#f8fafc";
+          btn.setAttribute("aria-label", config.label);
+          btn.setAttribute("title", config.label);
+          
+          console.log("Theme button updated:", btn.textContent);
+        };
+
+        // Test immediately
+        setTimeout(() => {
+            updateThemeButton();
+        }, 100);
+    </script>
+</body>
+</html>
