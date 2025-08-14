@@ -1,0 +1,6 @@
+---
+Version: 3.04.73
+Date: 2025-08-14
+Agent: GPT
+Summary: Ensure header button handlers initialize even when DOMContentLoaded has already fired so About and API modals open correctly.
+---

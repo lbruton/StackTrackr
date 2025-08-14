@@ -51,5 +51,9 @@
     }
   };
 
-  document.addEventListener('DOMContentLoaded', initButtons);
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initButtons);
+  } else {
+    initButtons();
+  }
 })();
