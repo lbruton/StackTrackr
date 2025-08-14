@@ -13,6 +13,14 @@
   3. Core modules (api.js, spot.js, inventory.js)
   4. Event handlers and initialization (events.js, init.js)
 
+### 2. File Protocol (file://) Compatibility
+- **Problem**: Application failed when opened directly from filesystem using file:// protocol
+- **Solution**: 
+  - Added redundant definition of LS_KEY constant in inventory.js
+  - Duplicated essential utility functions (saveData, loadData) for self-contained operation
+  - Created resilient localStorage access pattern with proper error handling
+  - Included file-protocol-test.html for testing file:// compatibility
+
 ### 2. loadInventory Function
 - **Problem**: The loadInventory function was loading data from localStorage but not updating the global inventory variable
 - **Solution**: Modified the function to properly update the global inventory variable and return it
