@@ -81,6 +81,46 @@
   --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* Catalog icon (N#) styling - theme aware */
+.catalog-icon {
+  display: inline-block;
+  vertical-align: middle;
+  width: 20px;
+  height: 20px;
+}
+.catalog-icon rect {
+  fill: var(--bg-secondary);
+  stroke: var(--border);
+  stroke-width: 1px;
+}
+.catalog-icon text {
+  fill: var(--text-primary);
+  font-size: 11px;
+  font-weight: 700;
+  dominant-baseline: middle;
+}
+
+/* Slightly stronger contrast for compact icon when inside table cells */
+.catalog-link .catalog-icon rect {
+  fill: var(--surface-alt);
+}
+
+/* Numista-specific tint (keeps subtle brand color but respects theme) */
+.catalog-icon.numista-icon rect {
+  /* use CSS mix to nudge towards primary while staying theme-aware */
+  background-color: transparent;
+  fill: color-mix(in srgb, var(--primary) 12%, var(--surface-alt) 88%);
+}
+.catalog-icon.numista-icon text {
+  fill: var(--text-primary);
+}
+
+/* Ensure the empty placeholder remains aligned when missing */
+.numista-empty {
+  display: inline-block;
+  color: var(--text-muted);
+}
+
 [data-theme="dark"] {
   /* Primary Colors - Dark Mode */
   --primary: #3b82f6;
@@ -1718,14 +1758,7 @@ input[type="submit"] {
   border-bottom: 4px solid var(--palladium);
 }
 /* Metal-specific colors */
-.silver .total-title {
-}
-.gold .total-title {
-}
-.platinum .total-title {
-}
-.palladium .total-title {
-}
+/* (removed empty duplicate metal-specific rules) */
 
 /* =============================================================================
    TABLES - Main inventory table with interactive features
@@ -1761,8 +1794,12 @@ table {
 }
 
 #inventoryTable {
-  width: max-content;
-  min-width: 100%;
+  /* Use the available container width and allow responsive scaling
+     to prevent right-side columns being clipped. Horizontal scrolling
+     remains available via .table-section when necessary. */
+  width: 100%;
+  min-width: 0;
+  table-layout: auto;
 }
 
 #inventoryTable tbody {
@@ -1838,13 +1875,16 @@ tr:hover {
   white-space: nowrap;
   min-width: 0;
 }
-
-.expand {
-  width: auto;
-  white-space: normal;
-  overflow: visible;
-  text-overflow: clip;
+/* Ensure the Name header is visually centered while cell contents can be left-aligned */
+#inventoryTable th[data-column="name"] {
+  text-align: center;
 }
+
+#inventoryTable td[data-column="name"] {
+  /* Cells remain left aligned for readability (set inline in renderTable) */
+  text-align: left;
+}
+
 
 /* Enhanced Mobile Responsive Design with Auto-Scaling */
 @media (max-width: 1024px) {
@@ -2848,28 +2888,6 @@ td input:checked + .slider:before {
   gap: var(--spacing-sm);
 }
 
-.table-controls-section {
-  margin-top: var(--spacing-lg);
-  margin-bottom: var(--spacing);
-}
-
-.table-controls {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--spacing);
-  margin: 0;
-  position: relative;
-}
-
-.top-controls {
-  width: 100%;
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: var(--spacing);
-}
-
 .items-label {
   font-size: 0.875rem;
   font-weight: 500;
@@ -3011,25 +3029,91 @@ td input:checked + .slider:before {
   min-width: 2.75rem;
 }
 
-.filters-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow);
-  padding: var(--spacing);
-  flex: 1;
-  margin: 0;
+/* =============================================================================
+   SEARCH FILTERS (INTEGRATED)
+   ============================================================================= */
+
+.search-filters {
+  margin-top: var(--spacing);
+  padding-top: var(--spacing);
+  border-top: 1px solid var(--border);
+}
+
+.filter-row {
   display: flex;
-  flex-direction: column;
+  justify-content: center;
   align-items: center;
-  position: relative;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-sm);
 }
 
 .filter-controls {
   display: flex;
+  justify-content: center;
   align-items: center;
-  gap: var(--spacing-sm);
-  margin-bottom: var(--spacing-sm);
+  flex-wrap: wrap;
+  gap: var(--spacing);
+}
+
+.control-group {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.control-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.control-select {
+  padding: 0.375rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  min-width: 80px;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.control-select:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px var(--primary-alpha);
+}
+
+.control-select:hover {
+  border-color: var(--border-hover);
+}
+
+/* =============================================================================
+  ORIGINAL FILTER STYLES
+  ============================================================================= */
+
+.active-filters {
+  display: flex;
+  flex: 1 1 100%; /* allow the filters area to take full row so chips can center */
+  flex-wrap: wrap;
+  gap: var(--spacing-xs);
+  justify-content: center; /* center chips within available width */
+  padding: 0 var(--spacing-sm);
+  order: 1;
+}
+
+.control-settings {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--spacing);
+  margin-top: var(--spacing-sm);
+  padding-top: var(--spacing-sm);
+  border-top: 1px solid var(--border);
 }
 
 .chip-min-label {
@@ -3047,15 +3131,6 @@ td input:checked + .slider:before {
   color: var(--text-primary);
   font-size: 0.8rem;
   min-width: 60px;
-}
-
-.filter-info {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin-top: var(--spacing-sm);
-  flex-wrap: wrap;
-  gap: var(--spacing-sm);
 }
 
 .active-filters {
@@ -3096,6 +3171,13 @@ td input:checked + .slider:before {
   box-shadow: var(--shadow);
 }
 
+.chip-close {
+  margin-left: 0.35rem;
+  font-weight: 700;
+  opacity: 0.95;
+  cursor: pointer;
+}
+
 .filter-chip:active {
   transform: translateY(0);
 }
@@ -3104,7 +3186,7 @@ td input:checked + .slider:before {
   font-size: 0.875rem;
   color: var(--text-muted);
   text-align: right;
-  margin-left: auto;
+  margin-left: 0; /* remove auto margin which can push chips out of center */
 }
 
 .search-results-info:not(:empty) {
@@ -3818,7 +3900,7 @@ input:disabled + .slider {
   display: block;
   fill: none;
   stroke: currentColor;
-  stroke-width: 2;
+  stroke-width: 1.5;
   stroke-linecap: round;
   stroke-linejoin: round;
 }
@@ -3851,11 +3933,272 @@ input:disabled + .slider {
   margin: 0 auto 0.25rem;
 }
 
+/* Sticky action columns: keep notes/edit/delete visible when horizontally scrolling.
+  Collectable column intentionally left non-sticky so it remains adjacent to N#. */
+/* Header cells remain visually consistent with other headers; body cells inherit the row background
+  so striping and hover highlights apply naturally even when cells are sticky. */
+#inventoryTable th.icon-col:not([data-column="collectable"]) {
+  position: sticky;
+  right: 0; /* default for the right-most action column (delete) */
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  z-index: 7; /* keep headers above body cells */
+}
+
+#inventoryTable td.icon-col:not([data-column="collectable"]) {
+  position: sticky;
+  right: 0;
+  /* Keep body cells transparent so they inherit the TR background (striping & hover)
+    while remaining on top for clickability */
+  background: transparent;
+  color: inherit; /* inherit text color from the row */
+  z-index: 6;
+}
+
+/* Layered right offsets (values chosen to match approximate icon widths). */
+#inventoryTable th[data-column="delete"],
+#inventoryTable td[data-column="delete"] {
+  right: 0;
+}
+
+#inventoryTable th[data-column="edit"],
+#inventoryTable td[data-column="edit"] {
+  right: 3.6rem;
+}
+
+#inventoryTable th[data-column="notes"],
+#inventoryTable td[data-column="notes"] {
+  right: 7.2rem;
+}
+
+/* Collectable column should remain in DOM order (right after N#) and not be sticky. */
+#inventoryTable th[data-column="collectable"],
+#inventoryTable td[data-column="collectable"] {
+  position: static;
+}
+
+/* Collectable icon specific styles */
+.collectable-icon.vault-icon {
+  width: 1.1rem;
+  height: 1.1rem;
+  fill: var(--text-muted);
+  stroke: none;
+}
+
+.collectable-icon.bar-icon {
+  width: 1.1rem;
+  height: 1.1rem;
+  fill: var(--silver);
+  stroke: none;
+}
+
+/* Ensure the clickable collectable cell centers its icon */
+#inventoryTable td[data-column="collectable"] .collectable-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Icon button base for action cells */
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.4rem;
+  height: 2.4rem;
+  padding: 0.25rem;
+  background: transparent;
+  border: 0;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.08s ease;
+}
+
+.icon-btn:focus {
+  outline: 2px solid rgba(59,130,246,0.25);
+  outline-offset: 2px;
+}
+
+.icon-btn:hover {
+  background: rgba(0,0,0,0.04);
+  transform: translateY(-1px);
+}
+
+.icon-svg { width: 1.05rem; height: 1.05rem; display: block; fill: currentColor; color: inherit; }
+.notes-svg { color: inherit; }
+.edit-svg { color: inherit; }
+.delete-svg { color: inherit; }
+
+/* Has-notes indicator */
+.has-notes .icon-svg { color: var(--info); }
+
+/* Theme fills for collectable icons */
+.collectable-icon.vault-icon { color: var(--text-muted); }
+.collectable-icon.bar-icon { color: var(--silver); }
+
+/* MOBILE PRIORITY RULES
+   Keep Qty, Name, Price, Edit visible on tight screens. Deprioritize Spot, Premium, Storage, Metal. */
+@media (max-width: 768px) {
+  /* Hide low-priority columns first */
+  #inventoryTable th[data-column="spot"],
+  #inventoryTable td[data-column="spot"],
+  #inventoryTable th[data-column="premium"],
+  #inventoryTable td[data-column="premium"],
+  #inventoryTable th[data-column="storageLocation"],
+  #inventoryTable td[data-column="storageLocation"],
+  #inventoryTable th[data-column="metal"],
+  #inventoryTable td[data-column="metal"] {
+    display: none;
+  }
+
+  /* Keep Name, Qty, Price, Edit visible and allocate space */
+  #inventoryTable th[data-column="name"],
+  #inventoryTable td[data-column="name"] { width: 45%; }
+  #inventoryTable th[data-column="qty"],
+  #inventoryTable td[data-column="qty"] { width: 8%; }
+  #inventoryTable th[data-column="purchasePrice"],
+  #inventoryTable td[data-column="purchasePrice"] { width: 18%; }
+  #inventoryTable th[data-column="edit"],
+  #inventoryTable td[data-column="edit"] { width: 6%; }
+
+  /* Slightly reduce padding to fit more */
+  #inventoryTable th, #inventoryTable td { padding: 0.2rem 0.15rem; }
+}
+
+@media (max-width: 480px) {
+  /* On very small screens, hide even more and keep essentials */
+  #inventoryTable th[data-column="purchaseLocation"],
+  #inventoryTable td[data-column="purchaseLocation"],
+  #inventoryTable th[data-column="numista"],
+  #inventoryTable td[data-column="numista"],
+  #inventoryTable th[data-column="weight"],
+  #inventoryTable td[data-column="weight"] {
+    display: none;
+  }
+
+  #inventoryTable th[data-column="name"],
+  #inventoryTable td[data-column="name"] { width: 60%; }
+  #inventoryTable th[data-column="qty"],
+  #inventoryTable td[data-column="qty"] { width: 10%; }
+  #inventoryTable th[data-column="purchasePrice"],
+  #inventoryTable td[data-column="purchasePrice"] { width: 20%; }
+}
+
+/* Make sure sticky cells have a solid background so they sit above the scrolled content */
+#inventoryTable th.icon-col,
+#inventoryTable td.icon-col {
+  /* Match the table header/row theme so icons blend in */
+  background: transparent;
+  border-left: none;
+}
+
 th {
   text-align: center;
   vertical-align: middle;
   white-space: nowrap;
 }
+
+/* Make header icons/text use muted header color so they don't pop */
+#inventoryTable thead th {
+  color: var(--text-secondary);
+  background: var(--bg-tertiary);
+}
+
+#inventoryTable thead th .header-icon,
+#inventoryTable thead th .header-text {
+  color: var(--text-secondary);
+}
+
+/* Icon column header should visually match other headers */
+#inventoryTable thead th.icon-col {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  padding: 0.35rem 0.4rem;
+}
+
+/* Icon cells in the body: inherit color so they match the row's text color and striping */
+#inventoryTable tbody td.icon-col {
+  color: inherit;
+  padding: 0.25rem 0.35rem;
+}
+
+/* Icon button visual blending */
+.icon-btn {
+  background: transparent; /* keep inline with row */
+  color: var(--text-secondary);
+  box-shadow: none;
+}
+
+.icon-btn:hover {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+.icon-btn:active { transform: translateY(0); }
+
+/* Slightly smaller icon size in cells to reduce visual weight */
+.icon-svg { width: 0.95rem; height: 0.95rem; }
+
+/* Ensure collectable icon visually matches muted style until active */
+.collectable-icon { color: var(--text-secondary); }
+.collectable-icon.bar-icon { color: var(--silver); }
+
+/* Active collectable highlight: vault icon shows filled gold with subtle glow */
+.collectable-icon.vault-icon {
+  color: var(--gold);
+  fill: var(--gold);
+  stroke: none;
+  transform-origin: center;
+  transition: transform 0.12s ease, filter 0.12s ease;
+  filter: drop-shadow(0 1px 3px rgba(0,0,0,0.35));
+}
+
+.collectable-icon.vault-icon:hover {
+  transform: scale(1.08);
+  filter: drop-shadow(0 4px 8px rgba(255, 190, 60, 0.18));
+}
+
+/* When the item is not collectable show a subtle gold-outline bar */
+.collectable-icon.bar-icon {
+  opacity: 0.95;
+  transition: opacity 0.12s ease, transform 0.12s ease;
+}
+
+.collectable-icon.bar-icon:hover {
+  transform: translateY(-1px);
+  opacity: 1;
+}
+
+/* Dense table mode: reduce paddings, font-size and icon sizes for a compact view */
+#inventoryTable {
+  font-size: 0.86rem; /* slightly smaller overall */
+}
+
+#inventoryTable th,
+#inventoryTable td {
+  padding: 0.18rem 0.28rem; /* tighter padding */
+}
+
+/* Reduce header height slightly */
+#inventoryTable thead th {
+  padding-top: 0.32rem;
+  padding-bottom: 0.32rem;
+}
+
+.icon-btn { width: 2rem; height: 2rem; }
+.icon-svg { width: 0.9rem; height: 0.9rem; }
+
+/* Tighter row height */
+#inventoryTable tbody tr { min-height: 2rem; }
+
+/* Keep visual clarity on very small screens */
+@media (max-width: 480px) {
+  #inventoryTable { font-size: 0.78rem; }
+  #inventoryTable th, #inventoryTable td { padding: 0.14rem 0.12rem; }
+  .icon-btn { width: 1.8rem; height: 1.8rem; }
+  .icon-svg { width: 0.8rem; height: 0.8rem; }
+}
+
 
 .center-align {
   text-align: center !important;
@@ -4129,35 +4472,33 @@ th {
 
 /* Responsive adjustments for control settings */
 @media (max-width: 768px) {
-  .control-settings {
-    position: static;
-    margin-top: var(--spacing);
-    align-self: stretch;
-    background: var(--bg-primary);
+  .filter-controls {
+    flex-direction: column;
+    gap: var(--spacing-sm);
   }
   
-  .chip-control,
-  .items-control {
+  .control-group {
     justify-content: space-between;
+    width: 100%;
   }
 }
 
 @media (max-width: 480px) {
-  .control-settings {
-    flex-direction: row;
-    justify-content: space-around;
-    gap: var(--spacing);
+  .filter-controls {
+    gap: var(--spacing-xs);
   }
   
-  .chip-control,
-  .items-control {
+  .control-group {
     flex-direction: column;
     gap: var(--spacing-xs);
     text-align: center;
   }
   
-  .chip-label,
-  .items-label {
-    font-size: 0.7rem;
+  .control-label {
+    font-size: 0.75rem;
+  }
+  
+  .control-select {
+    width: 100%;
   }
 }

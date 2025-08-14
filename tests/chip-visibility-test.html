@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chip Visibility Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .test-section { margin: 20px 0; border: 1px solid #ccc; padding: 15px; }
+        .pass { color: green; }
+        .fail { color: red; }
+        .filter-chip { 
+            display: inline-block; 
+            background: #007acc; 
+            color: white; 
+            padding: 5px 10px; 
+            margin: 2px; 
+            border-radius: 15px; 
+            font-size: 12px;
+        }
+        #activeFilters { margin: 10px 0; min-height: 30px; border: 1px dashed #ccc; padding: 10px; }
+        #searchInput { width: 300px; padding: 8px; margin: 10px 0; }
+        .scenario { margin: 15px 0; padding: 10px; background: #f5f5f5; }
+    </style>
+</head>
+<body>
+    <h1>Chip Visibility Test</h1>
+    
+    <div class="test-section">
+        <h3>Test Scenarios</h3>
+        <button onclick="testScenario1()">Scenario 1: Search "Silver Eagle" (should only show Silver and Coin chips)</button><br>
+        <button onclick="testScenario2()">Scenario 2: Search "nonexistent" (should show no chips)</button><br>
+        <button onclick="testScenario3()">Scenario 3: No search (should show all chips with data)</button><br>
+        <button onclick="testScenario4()">Scenario 4: Search "Gold" (should show Gold and relevant types)</button><br>
+        
+        <div class="scenario">
+            <strong>Current Test:</strong> <span id="currentScenario">None</span><br>
+            <strong>Search Query:</strong> <input type="text" id="searchInput" placeholder="Search terms..."><br>
+            <strong>Visible Chips:</strong>
+            <div id="activeFilters"></div>
+            <strong>Filtered Items:</strong> <span id="itemCount">0</span><br>
+            <div id="filteredItems"></div>
+        </div>
+    </div>
+
+    <script>
+        // Mock inventory with diverse data
+        let inventory = [
+            { name: '2021 American Silver Eagle Type 1', metal: 'Silver', type: 'Coin', composition: 'Silver', purchaseLocation: 'APMEX', storageLocation: 'Safe 1', isCollectable: false, date: '2021-01-01' },
+            { name: '2021 American Silver Eagle Type 2', metal: 'Silver', type: 'Coin', composition: 'Silver', purchaseLocation: 'APMEX', storageLocation: 'Safe 1', isCollectable: false, date: '2021-01-01' },
+            { name: '2021 American Gold Eagle', metal: 'Gold', type: 'Coin', composition: 'Gold', purchaseLocation: 'JM Bullion', storageLocation: 'Safe 2', isCollectable: false, date: '2021-01-01' },
+            { name: 'Silver Buffalo Round', metal: 'Silver', type: 'Round', composition: 'Silver', purchaseLocation: 'Local Shop', storageLocation: 'Safe 1', isCollectable: false, date: '2021-01-01' },
+            { name: 'Gold Maple Leaf Bar', metal: 'Gold', type: 'Bar', composition: 'Gold', purchaseLocation: 'Online', storageLocation: 'Safe 2', isCollectable: true, date: '2021-01-01' }
+        ];
+        
+        let searchQuery = '';
+        let activeFilters = {};
+        let columnFilters = {};
+        
+        const formatDisplayDate = (date) => date;
+        const getCompositionFirstWords = (str) => str.split(' ')[0];
+        
+        // Mock DOM elements
+        const searchInput = document.getElementById('searchInput');
+        const activeFiltersContainer = document.getElementById('activeFilters');
+        const itemCountElement = document.getElementById('itemCount');
+        const filteredItemsElement = document.getElementById('filteredItems');
+        const currentScenarioElement = document.getElementById('currentScenario');
+        
+        const renderTable = () => {
+            const filtered = filterInventoryAdvanced();
+            itemCountElement.textContent = filtered.length;
+            filteredItemsElement.innerHTML = filtered.map(item => `• ${item.name} (${item.metal} ${item.type})`).join('<br>');
+        };
+        
+        // Load the actual filter functions
+    </script>
+    <script src="../js/filters.js"></script>
+    <script>
+        // Test scenarios
+        function testScenario1() {
+            currentScenarioElement.textContent = "Search 'Silver Eagle'";
+            searchQuery = 'Silver Eagle';
+            searchInput.value = searchQuery;
+            activeFilters = {};
+            renderTable();
+            renderActiveFilters();
+        }
+        
+        function testScenario2() {
+            currentScenarioElement.textContent = "Search 'nonexistent'";
+            searchQuery = 'nonexistent';
+            searchInput.value = searchQuery;
+            activeFilters = {};
+            renderTable();
+            renderActiveFilters();
+        }
+        
+        function testScenario3() {
+            currentScenarioElement.textContent = "No search query";
+            searchQuery = '';
+            searchInput.value = '';
+            activeFilters = {};
+            renderTable();
+            renderActiveFilters();
+        }
+        
+        function testScenario4() {
+            currentScenarioElement.textContent = "Search 'Gold'";
+            searchQuery = 'Gold';
+            searchInput.value = searchQuery;
+            activeFilters = {};
+            renderTable();
+            renderActiveFilters();
+        }
+        
+        // Wire up search input
+        searchInput.addEventListener('input', (e) => {
+            searchQuery = e.target.value;
+            renderTable();
+            renderActiveFilters();
+        });
+        
+        // Initialize
+        window.addEventListener('load', () => {
+            testScenario3(); // Start with no search
+        });
+    </script>
+</body>
+</html>

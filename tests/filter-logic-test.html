@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Filter Logic Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .test-section { margin: 20px 0; border: 1px solid #ccc; padding: 15px; }
+        .pass { color: green; }
+        .fail { color: red; }
+        .filter-chip { 
+            display: inline-block; 
+            background: #007acc; 
+            color: white; 
+            padding: 5px 10px; 
+            margin: 2px; 
+            border-radius: 15px; 
+            font-size: 12px;
+        }
+        #activeFilters { margin: 10px 0; }
+        #searchInput { width: 300px; padding: 8px; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <h1>Filter Logic Test</h1>
+    
+    <div class="test-section">
+        <h3>Search Test</h3>
+        <input type="text" id="searchInput" placeholder="Type search terms...">
+        <div id="activeFilters"></div>
+        <div id="searchResults"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>Test Results</h3>
+        <div id="testResults"></div>
+    </div>
+
+    <script>
+        // Mock global environment
+        let inventory = [
+            { name: '2021 American Silver Eagle Type 1', metal: 'Silver', type: 'Coin', composition: 'Silver', date: '2021-07-28', purchaseLocation: 'herobullion.com', storageLocation: 'Unknown', qty: 1, weight: 1.00, price: 46.28, isCollectable: false },
+            { name: '2021 American Silver Eagle Type 2', metal: 'Silver', type: 'Coin', composition: 'Silver', date: '2021-07-28', purchaseLocation: 'herobullion.com', storageLocation: 'Unknown', qty: 1, weight: 1.00, price: 48.28, isCollectable: false },
+            { name: '1999 Silver Eagle Colorized', metal: 'Silver', type: 'Coin', composition: 'Silver', date: '2025-04-08', purchaseLocation: 'ebay.com', storageLocation: 'Unknown', qty: 1, weight: 1.00, price: 39.99, isCollectable: false },
+            { name: '2024 P Star Privy 1 oz Silver American Eagle PCGS MS 70', metal: 'Silver', type: 'Coin', composition: 'Silver', date: '2025-03-24', purchaseLocation: 'bullionexchanges.com', storageLocation: 'Unknown', qty: 1, weight: 1.00, price: 97.28, isCollectable: false },
+            { name: '1 Dollar American Silver Eagle Bullion Coin 1999', metal: 'Silver', type: 'Coin', composition: 'Silver', date: 'Unknown', purchaseLocation: 'Numista Import', storageLocation: 'Dansco 7181', qty: 1, weight: 1.00, price: 0.00, isCollectable: false },
+            { name: '1 Dollar American Gold Eagle Bullion Coin 2015', metal: 'Gold', type: 'Coin', composition: 'Gold', date: 'Unknown', purchaseLocation: 'Numista Import', storageLocation: 'Dansco 7181', qty: 1, weight: 1.00, price: 0.00, isCollectable: false },
+            { name: '1 Dollar American Gold Eagle Bullion Coin 2020', metal: 'Gold', type: 'Coin', composition: 'Gold', date: 'Unknown', purchaseLocation: 'Apmex', storageLocation: 'Dansco 7181', qty: 1, weight: 1.00, price: 37.00, isCollectable: false },
+            { name: '1 Dollar American Gold Eagle Bullion Coin 2021', metal: 'Gold', type: 'Coin', composition: 'Gold', date: 'Unknown', purchaseLocation: 'Numista Import', storageLocation: 'Dansco 7181', qty: 1, weight: 1.00, price: 0.00, isCollectable: false }
+        ];
+        
+        let searchQuery = '';
+        let activeFilters = {};
+        let columnFilters = {};
+        let currentPage = 1;
+        
+        const formatDisplayDate = (date) => date;
+        const getCompositionFirstWords = (str) => str.split(' ')[0];
+        
+        // Mock DOM elements
+        const searchInput = document.getElementById('searchInput');
+        const activeFiltersContainer = document.getElementById('activeFilters');
+        const searchResults = document.getElementById('searchResults');
+        const testResults = document.getElementById('testResults');
+        
+        const renderTable = () => {
+            const filtered = filterInventoryAdvanced();
+            searchResults.innerHTML = `<strong>Found ${filtered.length} items:</strong><br>` + 
+                filtered.map(item => `• ${item.name}`).join('<br>');
+        };
+        
+        const renderActiveFilters = () => {
+            activeFiltersContainer.innerHTML = '';
+            
+            const filters = [];
+            Object.entries(activeFilters).forEach(([field, criteria]) => {
+                if (criteria && typeof criteria === 'object' && Array.isArray(criteria.values)) {
+                    criteria.values.forEach(value => {
+                        if (value && value.toString().trim()) {
+                            filters.push({ field, value, exclude: criteria.exclude });
+                        }
+                    });
+                } else {
+                    if (criteria && criteria.toString().trim()) {
+                        filters.push({ field, value: criteria });
+                    }
+                }
+            });
+            
+            if (searchQuery && searchQuery.trim()) {
+                filters.push({ field: 'search', value: searchQuery });
+            }
+
+            // Metal and Type filters should always be displayed, others only when relevant to search
+            const queryTerms = searchQuery.toLowerCase().split(/\s+/).filter(term => term);
+            const alwaysShowFields = ['metal', 'type'];
+            
+            const relevantFilters = filters.filter(f => {
+                // Always show metal and type filters
+                if (alwaysShowFields.includes(f.field)) {
+                    return true;
+                }
+                
+                // Show other filters only if they match search terms or if there's no search query
+                if (!searchQuery.trim()) {
+                    return true;
+                }
+                
+                const chipValue = f.value.toLowerCase();
+                return queryTerms.some(term => chipValue.includes(term));
+            });
+
+            if (relevantFilters.length === 0) {
+                activeFiltersContainer.style.display = 'none';
+                return;
+            }
+            activeFiltersContainer.style.display = '';
+
+            relevantFilters.forEach((f, i) => {
+                const chip = document.createElement('span');
+                chip.className = 'filter-chip';
+                
+                // Only display the simplified content, not "Field: value" format
+                const displayValue = f.value;
+                const label = f.field === 'search'
+                    ? `${displayValue}`
+                    : `${displayValue}${f.exclude ? ' (exclude)' : ''}`;
+                chip.innerHTML = `${label} &times;`;
+                chip.title = f.field === 'search'
+                    ? `Search term: ${displayValue}`
+                    : `Filter by ${f.field}: ${displayValue}`;
+                    
+                activeFiltersContainer.appendChild(chip);
+            });
+        };
+    </script>
+
+    <script src="../js/filters.js"></script>
+
+    <script>
+        // Test functions
+        function runTests() {
+            const results = [];
+            
+            // Test 1: Search "American Eagle" should not match "American Gold Eagle"
+            searchQuery = 'American Eagle';
+            const americanEagleResults = filterInventoryAdvanced();
+            const shouldExcludeGoldEagle = !americanEagleResults.some(item => item.name.includes('Gold Eagle'));
+            const shouldExcludeSilverEagle = !americanEagleResults.some(item => item.name.includes('Silver Eagle'));
+            results.push({
+                test: 'Search "American Eagle" should not match "American Gold Eagle" or "American Silver Eagle"',
+                pass: shouldExcludeGoldEagle && shouldExcludeSilverEagle,
+                details: `Found ${americanEagleResults.length} items, excludes Gold: ${shouldExcludeGoldEagle}, excludes Silver: ${shouldExcludeSilverEagle}`
+            });
+            
+            // Test 2: Search for "Silver Eagle"
+            searchQuery = 'Silver Eagle';
+            const silverEagleResults = filterInventoryAdvanced();
+            const onlySilverEagles = silverEagleResults.every(item => 
+                item.name.toLowerCase().includes('silver') && item.name.toLowerCase().includes('eagle')
+            );
+            results.push({
+                test: 'Search "Silver Eagle" should only match Silver Eagles',
+                pass: onlySilverEagles,
+                details: `Found ${silverEagleResults.length} items, all silver eagles: ${onlySilverEagles}`
+            });
+            
+            // Test 3: Metal and Type filters always show
+            searchQuery = 'random text that matches nothing';
+            activeFilters = {
+                metal: { values: ['Silver'], exclude: false },
+                type: { values: ['Coin'], exclude: false }
+            };
+            renderActiveFilters();
+            const hasMetalChip = activeFiltersContainer.innerHTML.includes('Silver');
+            const hasTypeChip = activeFiltersContainer.innerHTML.includes('Coin');
+            results.push({
+                test: 'Metal and Type chips should always show even with non-matching search',
+                pass: hasMetalChip && hasTypeChip,
+                details: `Metal chip visible: ${hasMetalChip}, Type chip visible: ${hasTypeChip}`
+            });
+            
+            // Reset for display
+            searchQuery = '';
+            activeFilters = {};
+            
+            // Display results
+            testResults.innerHTML = results.map(r => 
+                `<div class="${r.pass ? 'pass' : 'fail'}">
+                    ${r.pass ? '✓' : '✗'} ${r.test}<br>
+                    <small>${r.details}</small>
+                </div>`
+            ).join('<br>');
+        }
+        
+        // Wire up search input
+        searchInput.addEventListener('input', (e) => {
+            searchQuery = e.target.value;
+            renderTable();
+            renderActiveFilters();
+        });
+        
+        // Setup quick filter function for clicks
+        const applyQuickFilter = (field, value) => {
+            activeFilters[field] = { values: [value], exclude: false };
+            renderTable();
+            renderActiveFilters();
+        };
+        
+        // Run tests on load
+        window.addEventListener('load', () => {
+            runTests();
+            renderTable();
+            renderActiveFilters();
+        });
+    </script>
+</body>
+</html>

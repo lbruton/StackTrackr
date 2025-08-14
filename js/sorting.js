@@ -15,7 +15,7 @@ const sortInventory = (data = inventory) => {
 
     // Map column index to data property
     switch(sortColumn) {
-      case 0: valA = a.date; valB = b.date; break; // Date
+  case 0: valA = a.date; valB = b.date; break; // Date
       case 1: valA = a.type; valB = b.type; break; // Type
       case 2: valA = a.composition || a.metal; valB = b.composition || b.metal; break; // Metal
       case 3: valA = a.qty; valB = b.qty; break; // Qty
@@ -29,6 +29,23 @@ const sortInventory = (data = inventory) => {
       case 11: valA = parseInt(a.numistaId || '0', 10); valB = parseInt(b.numistaId || '0', 10); break; // N#
       case 12: valA = a.isCollectable; valB = b.isCollectable; break; // Collectable
       default: return 0;
+    }
+
+    // Special handling for date: empty/unknown dates should always sort to the bottom
+    if (sortColumn === 0) {
+      const emptyA = !valA || String(valA).trim() === '';
+      const emptyB = !valB || String(valB).trim() === '';
+      if (emptyA && emptyB) return 0;
+      if (emptyA) return 1; // push A down
+      if (emptyB) return -1; // push B down
+
+      // compare as ISO date strings (or fallback to string compare)
+      const dateA = new Date(valA);
+      const dateB = new Date(valB);
+      if (!isNaN(dateA) && !isNaN(dateB)) {
+        return sortDirection === 'asc' ? dateA - dateB : dateB - dateA;
+      }
+      return sortDirection === 'asc' ? String(valA).localeCompare(String(valB)) : String(valB).localeCompare(String(valA));
     }
 
     // Numeric comparison for numbers

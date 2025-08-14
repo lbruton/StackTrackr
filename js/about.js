@@ -7,8 +7,11 @@
 const showAboutModal = () => {
   if (elements.aboutModal) {
     populateAboutModal();
-    elements.aboutModal.style.display = "flex";
-    document.body.style.overflow = "hidden";
+    if (window.openModalById) openModalById('aboutModal');
+    else {
+      elements.aboutModal.style.display = "flex";
+      document.body.style.overflow = "hidden";
+    }
   }
 };
 
@@ -17,8 +20,11 @@ const showAboutModal = () => {
  */
 const hideAboutModal = () => {
   if (elements.aboutModal) {
-    elements.aboutModal.style.display = "none";
-    document.body.style.overflow = "";
+    if (window.closeModalById) closeModalById('aboutModal');
+    else {
+      elements.aboutModal.style.display = "none";
+      document.body.style.overflow = "";
+    }
   }
 };
 
@@ -29,8 +35,11 @@ const showAckModal = () => {
   const ackModal = document.getElementById("ackModal");
   if (ackModal && !localStorage.getItem(ACK_DISMISSED_KEY)) {
     populateAckModal();
-    ackModal.style.display = "flex";
-    document.body.style.overflow = "hidden";
+    if (window.openModalById) openModalById('ackModal');
+    else {
+      ackModal.style.display = "flex";
+      document.body.style.overflow = "hidden";
+    }
   }
 };
 
@@ -40,8 +49,11 @@ const showAckModal = () => {
 const hideAckModal = () => {
   const ackModal = document.getElementById("ackModal");
   if (ackModal) {
-    ackModal.style.display = "none";
-    document.body.style.overflow = "";
+    if (window.closeModalById) closeModalById('ackModal');
+    else {
+      ackModal.style.display = "none";
+      document.body.style.overflow = "";
+    }
   }
 };
 
@@ -106,7 +118,7 @@ const loadAnnouncements = async () => {
 
   try {
     const res = await fetch("docs/announcements.md");
-    if (!res.ok) throw new Error("announcements.md not found");
+    if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
     const text = await res.text();
 
     const section = (name) => {
@@ -145,14 +157,16 @@ const loadAnnouncements = async () => {
       roadmapTargets.forEach((el) => (el.innerHTML = html));
     }
   } catch (e) {
-    console.warn("Could not load announcements", e);
+    console.warn("Could not load announcements, using embedded data:", e);
+    
+    // Fallback to embedded announcements data
+    const embeddedWhatsNew = getEmbeddedWhatsNew();
+    const embeddedRoadmap = getEmbeddedRoadmap();
+    
     if (latestList) {
-      latestList.innerHTML =
-        "<li>Enhanced about modal with comprehensive information</li>";
+      latestList.innerHTML = embeddedWhatsNew;
     }
-    roadmapTargets.forEach(
-      (el) => (el.innerHTML = "<li>Roadmap information unavailable</li>")
-    );
+    roadmapTargets.forEach((el) => (el.innerHTML = embeddedRoadmap));
   }
 };
 
@@ -250,6 +264,32 @@ const setupAckModalEvents = () => {
   });
 };
 
+/**
+ * Provides embedded "What's New" data as fallback when file fetch fails
+ * @returns {string} HTML string of recent announcements
+ */
+const getEmbeddedWhatsNew = () => {
+  return `
+    <li><strong>v3.04.73 – Changelog loading fix</strong>: Resolved "Unable to load changelog" error by adding embedded fallback data for version notifications and about modal content.</li>
+    <li><strong>v3.04.72 – Complete filter logic overhaul</strong>: Fixed dual chip system conflicts, implemented fully clickable filter chips, resolved search precision issues, and eliminated duplicate displays. Filter system now works exactly as intended.</li>
+    <li><strong>v3.04.71 – Search precision fix</strong>: Fixed search logic where "Silver Eagle" was incorrectly matching "Gold Eagle" items. Multi-word searches now require ALL words to match.</li>
+    <li><strong>v3.04.70 – Grouped filter chips</strong>: Added grouped name chips feature with toggle - consolidates similar items like "American Silver Eagle (3)" instead of separate year variants.</li>
+    <li><strong>v3.04.67 – Enhanced mobile tables</strong>: Improved responsive table design with darker light theme and better mobile cell wrapping.</li>
+  `;
+};
+
+/**
+ * Provides embedded roadmap data as fallback when file fetch fails
+ * @returns {string} HTML string of development roadmap
+ */
+const getEmbeddedRoadmap = () => {
+  return `
+    <li><strong>Phase 3</strong>: Advanced filtering system with date ranges and multi-criteria support</li>
+    <li><strong>Enhanced mobile experience</strong>: Touch-optimized interfaces and better small screen layouts</li>
+    <li><strong>Data visualization</strong>: Interactive charts for portfolio analysis and performance tracking</li>
+  `;
+};
+
 // Expose globally for access from other modules
 if (typeof window !== "undefined") {
   window.showAboutModal = showAboutModal;
@@ -262,4 +302,6 @@ if (typeof window !== "undefined") {
   window.setupAckModalEvents = setupAckModalEvents;
   window.populateAboutModal = populateAboutModal;
   window.populateAckModal = populateAckModal;
+  window.getEmbeddedWhatsNew = getEmbeddedWhatsNew;
+  window.getEmbeddedRoadmap = getEmbeddedRoadmap;
 }

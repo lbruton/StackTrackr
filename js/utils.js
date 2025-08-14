@@ -1013,6 +1013,52 @@ const openStorageReportPopup = () => {
   document.body.style.overflow = 'hidden';
 };
 /**
+ * Globally close a modal by id and clear body overflow safely.
+ * @param {string} id
+ */
+const closeModalById = (id) => {
+  try {
+    const modal = document.getElementById(id);
+    if (modal) modal.style.display = 'none';
+  } catch (e) {
+    /* ignore */
+  }
+  try { if (document && document.body) document.body.style.overflow = ''; } catch (e) {}
+};
+
+window.closeModalById = closeModalById;
+/**
+ * Opens a modal by id and sets body overflow to hidden.
+ * Also initializes a click-outside-to-close handler once.
+ * @param {string} id
+ */
+const openModalById = (id) => {
+  try {
+    const modal = document.getElementById(id);
+    if (!modal) return;
+
+    // initialize click-outside handler once per modal
+    if (!modal.dataset.initialized) {
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeModalById(id);
+      });
+      modal.dataset.initialized = 'true';
+    }
+
+    modal.style.display = 'flex';
+    try { if (document && document.body) document.body.style.overflow = 'hidden'; } catch (e) {}
+    // focus first focusable element for a11y
+    try {
+      const focusable = modal.querySelector('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+      if (focusable && focusable.focus) focusable.focus();
+    } catch (e) {}
+  } catch (e) {
+    /* ignore */
+  }
+};
+
+window.openModalById = openModalById;
+/**
  * Generates comprehensive HTML storage report with theme support
  */
 const generateStorageReportHTML = () => {

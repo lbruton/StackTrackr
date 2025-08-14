@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clickable Chips Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .chip-containers {
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .filter-chip {
+            display: inline-block;
+            background: #007acc;
+            color: white;
+            padding: 4px 8px;
+            margin: 2px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            cursor: pointer;
+            user-select: none;
+        }
+        .filter-chip:hover {
+            background: #005999;
+        }
+        .test-status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .pass { background: #d4edda; color: #155724; }
+        .fail { background: #f8d7da; color: #721c24; }
+        .info { background: #d1ecf1; color: #0c5460; }
+        .filters-display {
+            background: #f8f9fa;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>Clickable Chips Test</h1>
+        <p>Testing that chips are clickable and properly add/remove filters</p>
+        
+        <div class="chip-containers">
+            <h3>Filter Chips (should be clickable):</h3>
+            <div id="activeFilters"></div>
+        </div>
+
+        <div class="filters-display">
+            <h4>Current Filters:</h4>
+            <div id="filtersState">No filters active</div>
+        </div>
+
+        <div class="test-status info">
+            <strong>Instructions:</strong><br>
+            1. Click on category chips (with counts) to ADD filters<br>
+            2. Click on active filter chips to REMOVE filters<br>
+            3. Watch the filters state change below
+        </div>
+
+        <div id="testResults"></div>
+    </div>
+
+    <!-- Mock required elements -->
+    <div style="display: none;">
+        <input id="searchInput" type="text" />
+        <div id="searchResultsInfo"></div>
+        <table id="inventoryTable"><tbody></tbody></table>
+    </div>
+
+    <script>
+        // Load file protocol fix for imports
+        const script = document.createElement('script');
+        script.src = '../js/file-protocol-fix.js';
+        document.head.appendChild(script);
+
+        script.onload = () => {
+            Promise.all([
+                import('../js/constants.js'),
+                import('../js/state.js'),
+                import('../js/filters.js'),
+                import('../js/inventory.js')
+            ]).then(() => runTests());
+        };
+
+        // Mock global variables and functions
+        window.inventory = [
+            { name: 'American Silver Eagle Type 1', metal: 'Silver', type: 'Coin', composition: 'Silver' },
+            { name: 'American Silver Eagle Type 2', metal: 'Silver', type: 'Coin', composition: 'Silver' },
+            { name: 'American Gold Eagle', metal: 'Gold', type: 'Coin', composition: 'Gold' },
+            { name: 'Silver Bar', metal: 'Silver', type: 'Bar', composition: 'Silver' },
+            { name: 'Gold Round', metal: 'Gold', type: 'Round', composition: 'Gold' }
+        ];
+
+        window.activeFilters = {};
+        window.columnFilters = {};
+        window.searchQuery = '';
+        window.currentPage = 1;
+        
+        // Mock elements
+        window.elements = {
+            typeSummary: document.getElementById('typeSummary'),
+            activeFilters: document.getElementById('activeFilters'),
+            searchInput: document.getElementById('searchInput'),
+            searchResultsInfo: document.getElementById('searchResultsInfo')
+        };
+
+        // Mock utility functions
+        window.sanitizeHtml = (str) => str.replace(/[<>&"']/g, '');
+        window.escapeAttribute = (str) => str.replace(/"/g, '&quot;');
+        window.getTypeColor = () => '#007acc';
+        window.getPurchaseLocationColor = () => '#28a745';
+        window.getStorageLocationColor = () => '#17a2b8';
+        window.getColor = () => '#6c757d';
+        window.METAL_COLORS = { Silver: '#c0c0c0', Gold: '#ffd700' };
+        window.getCompositionFirstWords = (composition) => composition;
+        window.renderTable = () => {
+            console.log('renderTable called');
+            updateFiltersDisplay();
+        };
+
+        function updateFiltersDisplay() {
+            const filtersDiv = document.getElementById('filtersState');
+            const activeFiltersCount = Object.keys(window.activeFilters).length;
+            const columnFiltersCount = Object.keys(window.columnFilters).length;
+            
+            if (activeFiltersCount === 0 && columnFiltersCount === 0 && !window.searchQuery) {
+                filtersDiv.innerHTML = 'No filters active';
+            } else {
+                let html = '';
+                if (window.searchQuery) {
+                    html += `<div>Search: "${window.searchQuery}"</div>`;
+                }
+                Object.entries(window.activeFilters).forEach(([field, criteria]) => {
+                    html += `<div>activeFilters.${field}: ${JSON.stringify(criteria)}</div>`;
+                });
+                Object.entries(window.columnFilters).forEach(([field, value]) => {
+                    html += `<div>columnFilters.${field}: "${value}"</div>`;
+                });
+                filtersDiv.innerHTML = html;
+            }
+        }
+
+        function runTests() {
+            const resultsDiv = document.getElementById('testResults');
+            console.log('Testing clickable chips...');
+
+            // Initial render
+            if (window.renderActiveFilters) {
+                window.renderActiveFilters();
+                updateFiltersDisplay();
+                
+                const chipsHTML = document.getElementById('activeFilters').innerHTML;
+                console.log('Initial chips HTML:', chipsHTML);
+                
+                const hasClickableChips = chipsHTML.includes('filter-chip');
+                addTestResult(resultsDiv, 'Chips are rendered', hasClickableChips);
+                
+                // Test chip click functionality
+                const chips = document.querySelectorAll('.filter-chip');
+                console.log('Found chips:', chips.length);
+                
+                addTestResult(resultsDiv, `Found ${chips.length} clickable chips`, chips.length > 0);
+                
+                // Add event listeners test
+                let hasClickHandlers = true;
+                chips.forEach(chip => {
+                    if (!chip.onclick) {
+                        hasClickHandlers = false;
+                    }
+                });
+                
+                addTestResult(resultsDiv, 'All chips have click handlers', hasClickHandlers);
+            }
+
+            // Final result
+            const finalDiv = document.createElement('div');
+            finalDiv.className = 'test-status pass';
+            finalDiv.innerHTML = '✓ Test complete! Try clicking the chips above to see filter behavior.';
+            resultsDiv.appendChild(finalDiv);
+        }
+
+        function addTestResult(container, testName, passed) {
+            const resultDiv = document.createElement('div');
+            resultDiv.className = `test-status ${passed ? 'pass' : 'fail'}`;
+            resultDiv.innerHTML = `<span>${passed ? '✓' : '❌'} ${testName}</span>`;
+            container.appendChild(resultDiv);
+        }
+    </script>
+</body>
+</html>

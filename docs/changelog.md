@@ -1,11 +1,49 @@
 # StackrTrackr — Changelog
 
-> **Latest release: v3.04.67**
+> **Latest release: v3.04.73**
 
 
 For upcoming work, see [announcements](announcements.md).
 
 ## 📋 Version History
+
+### Version 3.04.73 – Changelog Loading Fix (2025-08-13)
+- **Hotfix**: Resolved "Unable to load changelog" error in version modal and about dialog
+- **Enhanced Error Handling**: Added embedded fallback data for changelog and announcements when file:// protocol blocks fetch requests
+- **Improved Reliability**: Version change notifications now work consistently regardless of file access restrictions
+- **Better User Experience**: About modal and version dialogs display proper content even when offline or in restricted environments
+- **Files Updated**: `js/versionCheck.js`, `js/about.js`
+- **Impact**: Users now see proper changelog content instead of "Unable to load changelog" errors
+
+### Version 3.04.72 – Complete Filter Logic Overhaul (2025-08-13)
+- **Major Fix**: Resolved dual chip system conflicts causing duplicate filter displays
+- **System Consolidation**: 
+  - Eliminated competing chip rendering systems (`updateTypeSummary` vs `renderActiveFilters`)
+  - Unified all filter chip functionality under single `renderActiveFilters` system
+  - Fixed 0-count chips always showing (removed hardcoded "default chips" logic)
+- **Enhanced Click Functionality**:
+  - **Category chips** (with counts): Click to ADD filters using `applyQuickFilter`
+  - **Active filter chips**: Click to REMOVE filters using new `removeFilter` function
+  - **Context-aware tooltips**: Clear indication of what clicking will do
+- **Search Precision**: 
+  - Enhanced word boundary matching with exact phrase requirements
+  - Fixed "Silver Eagle" incorrectly matching "American Gold Eagle"
+  - Added comprehensive coin series pattern recognition
+- **Data-Driven Display**: Only show filter chips for items that actually exist in filtered inventory
+- **Clean Formatting**: Chips display content without "Title:" prefixes
+- **Files Updated**: `js/filters.js`, `js/inventory.js`, `js/events.js`
+- **Impact**: Complete filter system now works as expected - no duplicates, accurate counts, fully interactive
+
+### Version 3.04.71 – Search Logic Fix (2025-08-13)
+- **Critical Fix**: Resolved search precision issue where queries like "Silver Eagle" incorrectly matched "Gold Eagle" items
+- **Search Enhancement**: 
+  - Modified search logic to use AND logic for words within search terms (previously used OR logic)
+  - Multi-word searches now require ALL words to match somewhere in the item
+  - Comma-separated terms still use OR logic between different terms
+  - Example: "Silver Eagle" now only matches items containing both "silver" AND "eagle"
+  - Example: "Silver Eagle, Gold Coin" matches items with ("silver" AND "eagle") OR ("gold" AND "coin")
+- **Files Updated**: `js/filters.js` and `js/search.js` for consistent behavior across search functions
+- **Impact**: Significantly improved search precision, eliminating false positive matches in grouped chip filters
 
 ### Version 3.04.67 – Darker Light Mode & Mobile Tables (2025-08-13)
 - **Styling**: Light theme retuned with darker grays for improved contrast.

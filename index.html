@@ -492,62 +492,54 @@
               type="text"
             />
             <button
-              class="btn"
-              id="changeLogBtn"
-              title="Change log"
-              aria-label="Change log"
-            >
-              Change Log
-            </button>
-            <button
               class="btn secondary icon-btn"
               id="clearBtn"
               title="Clear search"
               aria-label="Clear search"
             >
-              ×
+              🗑️
+            </button>
+            <button
+              class="btn square icon-btn" id="changeLogBtn" title="Change log" aria-label="Change log">
+              📜
             </button>
           </div>
-        </section>
-        <section class="table-controls-section">
-          <div class="table-controls">
-            <div class="top-controls">
-              <div class="filters-card" id="filtersCard">
-                <h3 class="table-subtitle">Filters</h3>
-                <div id="typeSummary"></div>
-                <div class="filter-info">
-                  <div class="active-filters" id="activeFilters"></div>
-                  <div class="search-results-info" id="searchResultsInfo"></div>
-                </div>
+          
+          <!-- Integrated Filters -->
+          <div class="search-filters">
+            <div id="typeSummary"></div>
+            <div class="filter-row">
+              <div class="active-filters" id="activeFilters"></div>
+              <div class="search-results-info" id="searchResultsInfo"></div>
+            </div>
+            <div class="filter-controls">
+              <div class="control-group">
+                <label for="chipMinCount" class="control-label">Filter Chips:</label>
+                <select id="chipMinCount" class="control-select" title="Minimum number of items before showing a filter chip">
+                  <option value="1">1+</option>
+                  <option value="2">2+</option>
+                  <option value="3">3+</option>
+                  <option value="5">5+</option>
+                  <option value="10">10+</option>
+                  <option value="100" selected>100+</option>
+                </select>
               </div>
-              <div class="control-settings">
-                <div class="chip-control">
-                  <label for="chipMinCount" class="chip-label">Filter Chips:</label>
-                  <select id="chipMinCount" class="chip-select" title="Minimum number of items before showing a filter chip">
-                    <option value="1">1+</option>
-                    <option value="2">2+</option>
-                    <option value="3" selected>3+</option>
-                    <option value="5">5+</option>
-                    <option value="10">10+</option>
-                  </select>
-                </div>
-                <div class="group-names-control">
-                  <label for="groupNameChips" class="chip-label">Group:</label>
-                  <select class="chip-select" id="groupNameChips" title="Group similar item names (e.g., 'American Silver Eagle (3)' instead of separate year chips)">
-                    <option value="yes" selected>Yes</option>
-                    <option value="no">No</option>
-                  </select>
-                </div>
-                <div class="items-control">
-                  <label for="itemsPerPage" class="items-label">Table Rows:</label>
-                  <select class="table-select" id="itemsPerPage">
-                    <option value="10" selected>10</option>
-                    <option value="15">15</option>
-                    <option value="25">25</option>
-                    <option value="50">50</option>
-                    <option value="100">100</option>
-                  </select>
-                </div>
+              <div class="control-group">
+                <label for="groupNameChips" class="control-label">Group Chips:</label>
+                <select class="control-select" id="groupNameChips" title="Group similar item names (e.g., 'American Silver Eagle (3)' instead of separate year chips)">
+                  <option value="yes" selected>Yes</option>
+                  <option value="no">No</option>
+                </select>
+              </div>
+              <div class="control-group">
+                <label for="itemsPerPage" class="control-label">Table Rows:</label>
+                <select class="control-select" id="itemsPerPage">
+                  <option value="10" selected>10</option>
+                  <option value="15">15</option>
+                  <option value="25">25</option>
+                  <option value="50">50</option>
+                  <option value="100">100</option>
+                </select>
               </div>
             </div>
           </div>
@@ -1213,7 +1205,6 @@
                 <input
                   id="editPrice"
                   min="0"
-                  required=""
                   step="0.01"
                   type="number"
                 />
@@ -1221,7 +1212,7 @@
             </div>
             <div>
               <label for="editDate">Purchase Date</label>
-              <input id="editDate" required="" type="date" />
+              <input id="editDate" type="date" />
             </div>
           </div>
           <!-- Spot price and catalog field -->

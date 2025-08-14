@@ -150,6 +150,7 @@ const elements = {
   clearBtn: null,
   newItemBtn: null,
   searchResultsInfo: null,
+  activeFilters: null,
 
   // Add item modal elements
   addModal: null,

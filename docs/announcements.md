@@ -1,15 +1,19 @@
 # StackrTrackr Announcements
 
 ## What's New
-- **v3.04.42 – Filter chip expansion**: Added Filters subtitle and summary chips for Name and Date with dynamic counts and filtering.
-- **v3.04.41 – Section titles**: Added centered titles for Spot Prices, Inventory, Filters, and Information Cards.
-- **v3.04.40 – Fuzzy search engine**: Introduced standalone fuzzy search module with typo-tolerant matching.
-- **v3.04.36 – Dynamic summary bubbles**: Added color-coded counts for type, metal, purchase location, and storage location, and preserved link colors for URL purchases.
-- **v3.04.35 – JSON import options**: Split JSON import into Import and Merge buttons and removed Excel support.
-- **v3.04.34 – Streamlined Numista imports**: Removed stored Numista CSV cache and associated clear-cache button.
-- **v3.04.33 – Import overwrite warnings**: Import CSV and Numista CSV now confirm before replacing existing data.
-- **v3.04.32 – Header button icons**: Header buttons now match theme selector with icon-only design.
-- **v3.04.31 – Streamlined API History**: Removed canvas-based charts and expanded API history table.
+- **v3.04.73 – Changelog loading fix**: Resolved "Unable to load changelog" error by adding embedded fallback data for version notifications and about modal content.
+- **v3.04.72 – Complete filter logic overhaul**: Fixed dual chip system conflicts, implemented fully clickable filter chips, resolved search precision issues, and eliminated duplicate displays. Filter system now works exactly as intended.
+- **v3.04.71 – Search precision fix**: Fixed search logic where "Silver Eagle" was incorrectly matching "Gold Eagle" items. Multi-word searches now require ALL words to match.
+- **v3.04.70 – Grouped filter chips**: Added grouped name chips feature with toggle - consolidates similar items like "American Silver Eagle (3)" instead of separate year variants.
+- **v3.04.67 – Enhanced mobile tables**: Improved responsive table design with darker light theme and better mobile cell wrapping.
+- **v3.04.66 – Storage cleanup**: Added automatic cleanup of unrecognized localStorage keys to maintain data hygiene.
+- **v3.04.65 – Import enhancements**: Price field defaults and Numista markdown formatting for better data integrity.
+- **v3.04.64 – Feature flag system**: Comprehensive feature management system with URL overrides and user toggles.
+- **v3.04.63 – Pre-built lookup database**: Integrated 500+ item database covering government mints, fractionals, and collectibles.
 
 ## Development Roadmap
-- Remove file:// protocol support and adopt a framework.
+- **Phase 3**: Advanced filtering system with date ranges and multi-criteria support
+- **Enhanced mobile experience**: Touch-optimized interfaces and better small screen layouts  
+- **Data visualization**: Interactive charts for portfolio analysis and performance tracking
+- **Export improvements**: PDF reports and enhanced CSV formatting options
+- **Framework migration**: Evaluate moving from file:// protocol to modern web framework

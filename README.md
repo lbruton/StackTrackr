@@ -1,5 +1,5 @@
 
-# StackrTrackr v3.04.61
+# StackrTrackr v3.04.71
 
 
 StackrTrackr is a comprehensive client-side web application for tracking precious metal investments. It's designed to help users manage their silver, gold, platinum, and palladium holdings with detailed financial metrics and enhanced tracking capabilities.
@@ -9,6 +9,8 @@ The public hosted version of the app is available at [stackrtrackr.com](https://
 See [docs/announcements.md](docs/announcements.md) for the latest release notes and upcoming milestones.
 
 ## Recent Updates
+- **v3.04.71 - Search precision fix**: Fixed search logic where "Silver Eagle" incorrectly matched "Gold Eagle" items - multi-word searches now require ALL words to match
+- **v3.04.70 - Grouped filter chips**: Added grouped name chips feature with toggle to consolidate similar items like "American Silver Eagle (3)"
 - **v3.04.61 - Autocomplete for item names**: localStorage-backed suggestions with fuzzy matching
 - **v3.04.60 - Responsive column prioritization**: hides lower-priority columns and enlarges edit pencil
 - **v3.04.59 - Hidden empty columns**: automatically hide columns with no data after filtering

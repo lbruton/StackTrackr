@@ -23,6 +23,40 @@ const clearAllFilters = () => {
 };
 
 /**
+ * Removes a specific filter
+ * @param {string} field - The field to remove filter from
+ * @param {string} value - The value to remove from filter
+ */
+const removeFilter = (field, value) => {
+  if (field === 'search') {
+    // Clear search query
+    searchQuery = '';
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) searchInput.value = '';
+  } else if (activeFilters[field]) {
+    if (activeFilters[field].values && Array.isArray(activeFilters[field].values)) {
+      // Remove specific value from array
+      activeFilters[field].values = activeFilters[field].values.filter(v => v !== value);
+      // If no values left, remove the entire filter
+      if (activeFilters[field].values.length === 0) {
+        delete activeFilters[field];
+      }
+    } else {
+      // Remove entire filter
+      delete activeFilters[field];
+    }
+    
+    // Also remove from legacy column filters
+    if (field === 'metal' || field === 'type') {
+      delete columnFilters[field];
+    }
+  }
+  
+  currentPage = 1;
+  renderTable();
+};
+
+/**
  * Simplifies common coin names for display in filter chips
  * @param {string} value - The original value (may contain comma-separated values)
  * @param {string} field - The field type (e.g., 'name', 'type', etc.)
@@ -163,6 +197,85 @@ const simplifyChipValue = (value, field) => {
 };
 
 /**
+ * Generates category summary from filtered inventory
+ * @param {Array} inventory - The filtered inventory
+ * @returns {Object} Summary of metals, types, and counts
+ */
+const generateCategorySummary = (inventory) => {
+  // Get minimum count setting from dropdown control or localStorage
+  const chipMinCountEl = document.getElementById('chipMinCount');
+  let minCount = 100;
+  if (chipMinCountEl && chipMinCountEl.value) {
+    minCount = parseInt(chipMinCountEl.value, 10);
+  } else {
+    minCount = parseInt(localStorage.getItem('chipMinCount') || '100', 10);
+  }
+
+  const metals = {};
+  const types = {};
+  
+  inventory.forEach(item => {
+    // Count metals
+    const metal = getCompositionFirstWords(item.composition || item.metal || '');
+    if (metal) {
+      metals[metal] = (metals[metal] || 0) + 1;
+    }
+    
+    // Count types
+    if (item.type) {
+      types[item.type] = (types[item.type] || 0) + 1;
+    }
+  });
+  
+  // Filter out categories below minimum count
+  const filteredMetals = Object.fromEntries(
+    Object.entries(metals).filter(([key, count]) => count >= minCount)
+  );
+  const filteredTypes = Object.fromEntries(
+    Object.entries(types).filter(([key, count]) => count >= minCount)
+  );
+  
+  return {
+    metals: filteredMetals,
+    types: filteredTypes,
+    totalItems: inventory.length
+  };
+};
+
+/**
+ * Checks if a filter field/value combination has matching data in the given inventory
+ * @param {string} field - The field name (e.g., 'metal', 'type', 'name')
+ * @param {string} value - The filter value
+ * @param {Array} inventory - The inventory to check against
+ * @returns {boolean} True if there are items matching this filter
+ */
+const hasMatchingData = (field, value, inventory) => {
+  if (!inventory || inventory.length === 0) return false;
+  
+  return inventory.some(item => {
+    switch (field) {
+      case 'metal':
+        const itemMetal = getCompositionFirstWords(item.composition || item.metal || '').toLowerCase();
+        return itemMetal === value.toLowerCase();
+      case 'type':
+        return item.type === value;
+      case 'name':
+        return item.name === value;
+      case 'purchaseLocation':
+        return item.purchaseLocation === value;
+      case 'storageLocation':
+        return item.storageLocation === value;
+      case 'collectable':
+        const val = item.isCollectable ? 'yes' : 'no';
+        return val === value;
+      default:
+        const fieldVal = String(item[field] ?? '').toLowerCase();
+        return fieldVal === value.toLowerCase();
+    }
+  });
+};
+
+/**
  * Renders active filter chips beneath the search bar
  */
 const renderActiveFilters = () => {
@@ -171,39 +284,75 @@ const renderActiveFilters = () => {
 
   container.innerHTML = '';
 
-  const filters = [];
-  Object.entries(activeFilters).forEach(([field, criteria]) => {
-    if (criteria && typeof criteria === 'object' && Array.isArray(criteria.values)) {
-      // Auto-hide empty chips
-      if (criteria.values.length > 0 && criteria.values.some(v => v && v.toString().trim())) {
-        filters.push({ field, value: criteria.values.join(', '), exclude: criteria.exclude });
-      }
-    } else {
-      // Auto-hide empty chips
-      if (criteria && criteria.toString().trim()) {
-        filters.push({ field, value: criteria });
-      }
-    }
-  });
-  Object.entries(columnFilters).forEach(([field, value]) => {
-    // Auto-hide empty chips and avoid duplicates
-    if (!activeFilters[field] && value && value.toString().trim()) {
-      filters.push({ field, value });
-    }
-  });
-  if (searchQuery && searchQuery.trim()) {
-    filters.push({ field: 'search', value: searchQuery });
-  }
-
-  if (filters.length === 0) {
+  // Get the current filtered inventory first
+  const filteredInventory = filterInventoryAdvanced();
+  
+  if (filteredInventory.length === 0) {
     container.style.display = 'none';
     return;
   }
+
+  // Build chips based on what's actually in the filtered inventory
+  const chips = [];
+  
+  // Add search term chip if there's a search query
+  if (searchQuery && searchQuery.trim()) {
+    chips.push({ field: 'search', value: searchQuery });
+  }
+  
+  // Generate category summary chips from filtered inventory
+  const categorySummary = generateCategorySummary(filteredInventory);
+  
+  // Add metal chips for metals that exist in the filtered results (ONLY if count > 0)
+  Object.entries(categorySummary.metals).forEach(([metal, count]) => {
+    if (count > 0) {
+      chips.push({ field: 'metal', value: metal, count, total: categorySummary.totalItems });
+    }
+  });
+  
+  // Add type chips for types that exist in the filtered results (ONLY if count > 0)
+  Object.entries(categorySummary.types).forEach(([type, count]) => {
+    if (count > 0) {
+      chips.push({ field: 'type', value: type, count, total: categorySummary.totalItems });
+    }
+  });
+
+  // Add any explicitly applied filter chips (but not if they duplicate category chips)
+  Object.entries(activeFilters).forEach(([field, criteria]) => {
+    // Skip metal and type filters as they're handled by category summary
+    if (field === 'metal' || field === 'type') return;
+    
+    if (criteria && typeof criteria === 'object' && Array.isArray(criteria.values)) {
+      criteria.values.forEach(value => {
+        if (value && value.toString().trim()) {
+          chips.push({ field, value, exclude: criteria.exclude });
+        }
+      });
+    } else {
+      if (criteria && criteria.toString().trim()) {
+        chips.push({ field, value: criteria });
+      }
+    }
+  });
+  
+  // Add legacy column filter chips (but not metal/type which are handled above)
+  Object.entries(columnFilters).forEach(([field, value]) => {
+    if (field === 'metal' || field === 'type') return; // Skip, handled by category summary
+    if (!activeFilters[field] && value && value.toString().trim()) {
+      chips.push({ field, value });
+    }
+  });
+
+  if (chips.length === 0) {
+    container.style.display = 'none';
+    return;
+  }
+  
   container.style.display = '';
 
   const colors = ['var(--primary)', 'var(--secondary)', 'var(--success)', 'var(--warning)', 'var(--danger)', 'var(--info)'];
 
-  filters.forEach((f, i) => {
+  chips.forEach((f, i) => {
     const chip = document.createElement('span');
     chip.className = 'filter-chip';
     const firstValue = String(f.value).split(', ')[0];
@@ -230,30 +379,69 @@ const renderActiveFilters = () => {
         color = colors[i % colors.length];
     }
     chip.style.backgroundColor = color || colors[i % colors.length];
-    
-    // Simplify the display value and remove all field prefixes
+
+    // Only display the simplified content, with counts for category chips
     const displayValue = simplifyChipValue(f.value, f.field);
-    const label = f.field === 'search'
-      ? `${displayValue}`
-      : `${displayValue}${f.exclude ? ' (exclude)' : ''}`;
-    chip.innerHTML = `${label} &times;`;
-    const tooltipText = f.field === 'search' 
-      ? 'Click to remove search filter'
-      : 'Click to remove filter';
-    chip.title = tooltipText;
-    chip.onclick = () => {
-      if (f.field === 'search') {
-        searchQuery = '';
-        const input = document.getElementById('searchInput');
-        if (input) input.value = '';
-      } else {
-        delete activeFilters[f.field];
-        delete columnFilters[f.field];
-      }
-      currentPage = 1;
-      renderTable();
+    let label;
+    
+    if (f.field === 'search') {
+      label = displayValue;
+    } else if (f.count !== undefined && f.total !== undefined) {
+      // For category summary chips (metal/type), show count
+      label = `${displayValue} ${f.count}/${f.total}`;
+    } else {
+      label = `${displayValue}${f.exclude ? ' (exclude)' : ''}`;
+    }
+    
+    // Use safe textContent and a separate close marker span to avoid HTML injection
+    chip.textContent = label + ' ';
+    const close = document.createElement('span');
+    close.className = 'chip-close';
+    close.textContent = '×';
+    close.setAttribute('aria-hidden', 'true');
+    chip.appendChild(close);
+
+    // Debug logging (opt-in)
+    if (window.DEBUG_FILTERS) {
+      // eslint-disable-next-line no-console
+      console.debug('renderActiveFilters: adding chip', { field: f.field, value: f.value, label });
+    }
+    
+    // Different tooltip and click behavior for different chip types
+    if (f.count !== undefined && f.total !== undefined) {
+      // Category summary chips - clicking adds filter
+      chip.title = `Click to filter by ${f.field}: ${displayValue} (${f.count} items)`;
+      chip.onclick = () => {
+        applyQuickFilter(f.field, f.value);
+      };
+    } else {
+      // Active filter chips - clicking removes filter
+      chip.title = f.field === 'search'
+        ? `Search term: ${displayValue} (click to remove)`
+        : `Active filter: ${f.field} = ${displayValue} (click to remove)`;
+      chip.onclick = () => {
+        removeFilter(f.field, f.value);
+        renderActiveFilters();
+      };
+    }
+    // Make the close glyph interactive and keyboard accessible (removes the filter)
+    close.setAttribute('role', 'button');
+    close.setAttribute('tabindex', '0');
+    close.setAttribute('aria-label', `Remove filter ${displayValue}`);
+    close.onclick = (e) => {
+      e.stopPropagation();
+      removeFilter(f.field, f.value);
       renderActiveFilters();
     };
+    close.onkeydown = (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        e.stopPropagation();
+        removeFilter(f.field, f.value);
+        renderActiveFilters();
+      }
+    };
+
     container.appendChild(chip);
   });
 };
@@ -364,22 +552,210 @@ const filterInventoryAdvanced = () => {
       // Split each comma term into individual words for AND logic
       const words = q.split(/\s+/).filter(w => w.length > 0);
       
-      // All words in this term must match somewhere in the item (AND logic)
-      return words.every(word => (
-        item.metal.toLowerCase().includes(word) ||
-        (item.composition && item.composition.toLowerCase().includes(word)) ||
-        item.name.toLowerCase().includes(word) ||
-        item.type.toLowerCase().includes(word) ||
-        item.purchaseLocation.toLowerCase().includes(word) ||
-        (item.storageLocation && item.storageLocation.toLowerCase().includes(word)) ||
-        (item.notes && item.notes.toLowerCase().includes(word)) ||
-        item.date.includes(word) ||
-        formattedDate.includes(word) ||
-        String(Number.isFinite(Number(item.qty)) ? Number(item.qty) : '').includes(word) ||
-        String(Number.isFinite(Number(item.weight)) ? Number(item.weight) : '').includes(word) ||
-        String(Number.isFinite(Number(item.price)) ? Number(item.price) : '').includes(word) ||
-        (item.isCollectable ? 'yes' : 'no').includes(word)
-      ));
+      // Special handling for multi-word searches to prevent partial matches
+      // If searching for "American Eagle", it should only match items that have both words
+      // but NOT match "American Gold Eagle" (which has an extra word in between)
+      if (words.length >= 2) {
+        // For multi-word searches, check if the exact phrase exists or 
+        // if all words exist as separate word boundaries without conflicting words
+        const exactPhrase = q.toLowerCase();
+        const itemText = [
+          item.metal,
+          item.composition || '',
+          item.name,
+          item.type,
+          item.purchaseLocation,
+          item.storageLocation || '',
+          item.notes || ''
+        ].join(' ').toLowerCase();
+        
+        // Check for exact phrase match first
+        if (itemText.includes(exactPhrase)) {
+          return true;
+        }
+        
+        // For phrase searches like "American Eagle", be more restrictive
+        // Check that all words are present as word boundaries
+        const allWordsPresent = words.every(word => {
+          const wordRegex = new RegExp(`\\b${word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
+          return wordRegex.test(itemText);
+        });
+        
+        if (!allWordsPresent) {
+          return false;
+        }
+        
+        // Additional check: prevent cross-metal matching for common coin series
+        // "Silver Eagle" should not match "American Gold Eagle"
+        // "Gold Maple" should not match "Silver Maple Leaf"
+        // etc.
+        if (words.length === 2) {
+          const searchMetal = words[0];
+          const coinType = words[1];
+          
+          // Handle Eagle series
+          if (coinType === 'eagle') {
+            if (searchMetal === 'american') {
+              // "American Eagle" should not match "American [Metal] Eagle"
+              const metalWords = ['gold', 'silver', 'platinum', 'palladium'];
+              const hasMetalBetween = metalWords.some(metal => 
+                itemText.includes(`american ${metal} eagle`) && !exactPhrase.includes(metal)
+              );
+              return !hasMetalBetween;
+            } else if (['silver', 'gold', 'platinum', 'palladium'].includes(searchMetal)) {
+              // Metal-specific eagle searches must match exact phrase
+              return itemText.includes(exactPhrase);
+            }
+          }
+          
+          // Handle Maple series (Canadian Maple Leaf)
+          else if (coinType === 'maple') {
+            if (['silver', 'gold', 'platinum', 'palladium'].includes(searchMetal)) {
+              // "Silver Maple" should only match items with "silver maple"
+              return itemText.includes(exactPhrase) || itemText.includes(`${searchMetal} maple leaf`);
+            } else if (searchMetal === 'canadian') {
+              // "Canadian Maple" should not match specific metal maples unless no metal specified
+              const metalWords = ['gold', 'silver', 'platinum', 'palladium'];
+              const hasMetalBetween = metalWords.some(metal => 
+                itemText.includes(`canadian ${metal} maple`) && !exactPhrase.includes(metal)
+              );
+              return !hasMetalBetween;
+            }
+          }
+          
+          // Handle Britannia series (British Britannia)
+          else if (coinType === 'britannia') {
+            if (['silver', 'gold', 'platinum', 'palladium'].includes(searchMetal)) {
+              // "Silver Britannia" should only match items with "silver britannia"
+              return itemText.includes(exactPhrase);
+            } else if (searchMetal === 'british') {
+              // "British Britannia" should not match specific metal britannias
+              const metalWords = ['gold', 'silver', 'platinum', 'palladium'];
+              const hasMetalBetween = metalWords.some(metal => 
+                itemText.includes(`british ${metal} britannia`) && !exactPhrase.includes(metal)
+              );
+              return !hasMetalBetween;
+            }
+          }
+          
+          // Handle Krugerrand series
+          else if (coinType === 'krugerrand') {
+            if (['silver', 'gold', 'platinum', 'palladium'].includes(searchMetal)) {
+              // "Gold Krugerrand" should only match gold krugerrands
+              return itemText.includes(exactPhrase);
+            } else if (searchMetal === 'south' || searchMetal === 'african') {
+              // Handle "South African Krugerrand" - don't match if metal specified
+              const metalWords = ['gold', 'silver', 'platinum', 'palladium'];
+              const hasMetalBetween = metalWords.some(metal => 
+                (itemText.includes(`south african ${metal} krugerrand`) || 
+                 itemText.includes(`${metal} krugerrand`)) && !exactPhrase.includes(metal)
+              );
+              return !hasMetalBetween;
+            }
+          }
+          
+          // Handle Buffalo series
+          else if (coinType === 'buffalo') {
+            if (['silver', 'gold', 'platinum', 'palladium'].includes(searchMetal)) {
+              // "Gold Buffalo" should only match gold buffalos
+              return itemText.includes(exactPhrase);
+            } else if (searchMetal === 'american') {
+              // "American Buffalo" should not match if metal specified
+              const metalWords = ['gold', 'silver', 'platinum', 'palladium'];
+              const hasMetalBetween = metalWords.some(metal => 
+                itemText.includes(`american ${metal} buffalo`) && !exactPhrase.includes(metal)
+              );
+              return !hasMetalBetween;
+            }
+          }
+          
+          // Handle Panda series
+          else if (coinType === 'panda') {
+            if (['silver', 'gold', 'platinum', 'palladium'].includes(searchMetal)) {
+              // "Silver Panda" should only match silver pandas
+              return itemText.includes(exactPhrase);
+            } else if (searchMetal === 'chinese') {
+              // "Chinese Panda" should not match if metal specified
+              const metalWords = ['gold', 'silver', 'platinum', 'palladium'];
+              const hasMetalBetween = metalWords.some(metal => 
+                itemText.includes(`chinese ${metal} panda`) && !exactPhrase.includes(metal)
+              );
+              return !hasMetalBetween;
+            }
+          }
+          
+          // Handle Kangaroo series
+          else if (coinType === 'kangaroo') {
+            if (['silver', 'gold', 'platinum', 'palladium'].includes(searchMetal)) {
+              return itemText.includes(exactPhrase);
+            } else if (searchMetal === 'australian') {
+              const metalWords = ['gold', 'silver', 'platinum', 'palladium'];
+              const hasMetalBetween = metalWords.some(metal => 
+                itemText.includes(`australian ${metal} kangaroo`) && !exactPhrase.includes(metal)
+              );
+              return !hasMetalBetween;
+            }
+          }
+        }
+        
+        // Handle three-word searches with special patterns
+        if (words.length === 3) {
+          // Handle "American Gold Eagle" type searches - these should be exact
+          const firstWord = words[0];
+          const middleWord = words[1];
+          const lastWord = words[2];
+          
+          if (['american', 'canadian', 'british', 'chinese', 'australian', 'south'].includes(firstWord) &&
+              ['gold', 'silver', 'platinum', 'palladium'].includes(middleWord) &&
+              ['eagle', 'maple', 'britannia', 'krugerrand', 'buffalo', 'panda', 'kangaroo'].includes(lastWord)) {
+            // For "American Gold Eagle" type searches, require exact phrase or very close match
+            return itemText.includes(exactPhrase) || 
+                   (lastWord === 'maple' && itemText.includes(`${firstWord} ${middleWord} maple leaf`));
+          }
+        }
+        
+        // Handle fractional weight searches to be more specific
+        // "1/4 oz" should be distinct from "1/2 oz" and "1 oz"
+        if (words.length >= 2) {
+          const hasFraction = words.some(word => word.includes('/'));
+          const hasOz = words.some(word => word === 'oz' || word === 'ounce');
+          
+          if (hasFraction && hasOz) {
+            // For fractional searches, require exact phrase match
+            return itemText.includes(exactPhrase);
+          }
+        }
+        
+        // Prevent overly broad country/origin searches
+        const broadTerms = ['american', 'canadian', 'australian', 'british', 'chinese', 'south', 'mexican'];
+        if (words.length === 1 && broadTerms.includes(words[0])) {
+          // Single broad geographic terms should require additional context
+          // Return false to prevent matching everything from that country
+          return false;
+        }
+        
+        return true;
+      }
+      
+      // For single words, use word boundary matching
+      return words.every(word => {
+        const wordRegex = new RegExp(`\\b${word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`, 'i');
+        return (
+          wordRegex.test(item.metal) ||
+          (item.composition && wordRegex.test(item.composition)) ||
+          wordRegex.test(item.name) ||
+          wordRegex.test(item.type) ||
+          wordRegex.test(item.purchaseLocation) ||
+          (item.storageLocation && wordRegex.test(item.storageLocation)) ||
+          (item.notes && wordRegex.test(item.notes)) ||
+          item.date.includes(word) ||
+          formattedDate.includes(word) ||
+          String(Number.isFinite(Number(item.qty)) ? Number(item.qty) : '').includes(word) ||
+          String(Number.isFinite(Number(item.weight)) ? Number(item.weight) : '').includes(word) ||
+          String(Number.isFinite(Number(item.price)) ? Number(item.price) : '').includes(word) ||
+          (item.isCollectable ? 'yes' : 'no').includes(word)
+        );
+      });
     });
   });
 };

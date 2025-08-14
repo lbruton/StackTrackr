@@ -257,7 +257,7 @@ const API_PROVIDERS = {
  * Example: 3.03.02a → branch 3, release 03, patch 02, alpha
  */
 
-const APP_VERSION = "3.04.70";
+const APP_VERSION = "3.04.73";
 
 /**
  * @constant {string} DEFAULT_CURRENCY - Default currency code for monetary formatting
@@ -489,6 +489,13 @@ const FEATURE_FLAGS = {
     userToggle: false,
     description: "Debug UI indicators and development tools",
     phase: "dev"
+  },
+  GROUPED_NAME_CHIPS: {
+    enabled: true,
+    urlOverride: true,
+    userToggle: true,
+    description: "Group item names by base name (e.g., 'American Silver Eagle (3)' instead of separate year chips)",
+    phase: "beta"
   }
 };
 

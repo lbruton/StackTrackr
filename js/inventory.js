@@ -908,251 +908,15 @@ window.startCellEdit = startCellEdit;
 
 
 /**
- * Enhanced chip-type filter system with default chips and dynamic filtering
- * Creates a word cloud-like UI showing inventory breakdown by type, metal, and filtered values
+ * Legacy chip-type filter system - now disabled in favor of renderActiveFilters
+ * This function now just clears the typeSummary container to avoid conflicts
  */
 const updateTypeSummary = (items = inventory) => {
   const el = elements.typeSummary || document.getElementById('typeSummary');
   if (!el) return;
-
-  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-  const textColor = isDark ? '#000' : '#fff';
-
-  // Get minimum count setting from dropdown control or localStorage
-  const chipMinCountEl = document.getElementById('chipMinCount');
-  let minCount = 1;
-  if (chipMinCountEl && chipMinCountEl.value) {
-    minCount = parseInt(chipMinCountEl.value, 10);
-    localStorage.setItem('chipMinCount', minCount.toString());
-  } else {
-    minCount = parseInt(localStorage.getItem('chipMinCount') || '1', 10);
-    if (chipMinCountEl) chipMinCountEl.value = minCount.toString();
-  }
   
-  // Define default chip types that always show (if they exist in inventory)
-  const defaultChipTypes = [
-    { field: 'type', value: 'Coin' },
-    { field: 'type', value: 'Bar' },
-    { field: 'type', value: 'Round' },
-    { field: 'type', value: 'Note' },
-    { field: 'metal', value: 'Gold' },
-    { field: 'metal', value: 'Silver' },
-    { field: 'metal', value: 'Platinum' },
-    { field: 'metal', value: 'Palladium' }
-  ];
-
-  // Check if any filters are active
-  const activeFieldKeys = typeof activeFilters === 'object' ? Object.keys(activeFilters) : [];
-  const columnFieldKeys = typeof columnFilters === 'object' ? Object.keys(columnFilters) : [];
-  const hasActiveFilters = activeFieldKeys.length > 0 || columnFieldKeys.length > 0 || searchQuery.trim().length > 0;
-
-  const chips = [];
-  const unknownChips = [];
-  const addedChips = new Set(); // Track to avoid duplicates
-
-  // Field name mappings for better display
-  const fieldDisplayNames = {
-    type: 'Type',
-    metal: 'Metal',
-    purchaseLocation: 'Purchase',
-    storageLocation: 'Storage',
-    name: 'Name'
-  };
-
-  // Helper function to create chip data with enhanced formatting
-  const createChip = (field, value, totalCount, filteredCount) => {
-    let colors, cls = '';
-    
-    switch (field) {
-      case 'type':
-        colors = {
-          bg: getTypeColor(value),
-          text: `var(--type-${value.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-text)`
-        };
-        cls = ` type-chip ${value.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
-        break;
-      case 'metal':
-        colors = { bg: METAL_COLORS[value] || 'var(--primary)', text: textColor };
-        cls = ` metal-chip ${value.toLowerCase()}`;
-        break;
-      case 'purchaseLocation':
-        colors = { bg: getPurchaseLocationColor(value), text: textColor };
-        cls = ' purchase-chip';
-        break;
-      case 'storageLocation':
-        colors = { bg: getStorageLocationColor(value), text: textColor };
-        cls = ' storage-chip';
-        break;
-      case 'name':
-        colors = { bg: getColor(nameColors, value), text: textColor };
-        cls = ' name-chip';
-        break;
-      default:
-        colors = { bg: 'var(--primary)', text: textColor };
-        cls = ' generic-chip';
-    }
-    
-    return {
-      field,
-      fieldDisplay: fieldDisplayNames[field] || field,
-      value,
-      display: value,
-      filtered: filteredCount,
-      total: totalCount,
-      colors,
-      cls
-    };
-  };
-
-  // Add default chips first (always visible if they exist)
-  defaultChipTypes.forEach(({ field, value }) => {
-    const chipKey = `${field}:${value}`;
-    if (addedChips.has(chipKey)) return;
-    
-    // Count total occurrences in full inventory
-    const totalCount = inventory.filter(item => {
-      const itemValue = field === 'metal' ? (item.composition || item.metal) : item[field];
-      return itemValue === value;
-    }).length;
-    
-    // Count filtered occurrences
-    const filteredCount = items.filter(item => {
-      const itemValue = field === 'metal' ? (item.composition || item.metal) : item[field];
-      return itemValue === value;
-    }).length;
-    
-    if (totalCount > 0) {
-      chips.push(createChip(field, value, totalCount, filteredCount));
-      addedChips.add(chipKey);
-    }
-  });
-
-  // If filters are active, add dynamic chips from filtered results
-  if (hasActiveFilters) {
-    const dynamicFields = ['purchaseLocation', 'storageLocation', 'name'];
-    
-    dynamicFields.forEach(field => {
-      // Count occurrences in filtered items
-      const filteredCounts = items.reduce((acc, item) => {
-        let key = item[field];
-        if (!key) {
-          key = field === 'purchaseLocation' ? 'Numista Import' : 'Unknown';
-        }
-        acc[key] = (acc[key] || 0) + 1;
-        return acc;
-      }, {});
-      
-      // Count occurrences in total inventory
-      const totalCounts = inventory.reduce((acc, item) => {
-        let key = item[field];
-        if (!key) {
-          key = field === 'purchaseLocation' ? 'Numista Import' : 'Unknown';
-        }
-        acc[key] = (acc[key] || 0) + 1;
-        return acc;
-      }, {});
-      
-      // Add chips for values that meet minimum count
-      Object.keys(filteredCounts).forEach(value => {
-        const chipKey = `${field}:${value}`;
-        if (addedChips.has(chipKey)) return;
-        
-        const filteredCount = filteredCounts[value];
-        const totalCount = totalCounts[value];
-        
-        if (filteredCount >= minCount) {
-          const chip = createChip(field, value, totalCount, filteredCount);
-          if (value === 'Unknown' || value === 'Numista Import') {
-            unknownChips.push(chip);
-          } else {
-            chips.push(chip);
-          }
-          addedChips.add(chipKey);
-        }
-      });
-    });
-    
-    // Also add any type/metal chips that weren't in defaults but appear in filtered results
-    ['type', 'metal'].forEach(field => {
-      const filteredValues = items.reduce((acc, item) => {
-        const key = field === 'metal' ? (item.composition || item.metal) : item[field];
-        if (key) acc[key] = (acc[key] || 0) + 1;
-        return acc;
-      }, {});
-      
-      Object.keys(filteredValues).forEach(value => {
-        const chipKey = `${field}:${value}`;
-        if (addedChips.has(chipKey)) return;
-        
-        const filteredCount = filteredValues[value];
-        const totalCount = inventory.filter(item => {
-          const itemValue = field === 'metal' ? (item.composition || item.metal) : item[field];
-          return itemValue === value;
-        }).length;
-        
-        if (filteredCount >= minCount) {
-          chips.push(createChip(field, value, totalCount, filteredCount));
-          addedChips.add(chipKey);
-        }
-      });
-    });
-  }
-
-  // Sort chips: default types first, then by filtered count (descending)
-  const isDefaultType = (chip) => {
-    return defaultChipTypes.some(dt => dt.field === chip.field && dt.value === chip.value);
-  };
-  
-  chips.sort((a, b) => {
-    const aIsDefault = isDefaultType(a);
-    const bIsDefault = isDefaultType(b);
-    
-    if (aIsDefault && !bIsDefault) return -1;
-    if (!aIsDefault && bIsDefault) return 1;
-    
-    // Both default or both dynamic - sort by filtered count
-    return b.filtered - a.filtered;
-  });
-  
-  unknownChips.sort((a, b) => b.filtered - a.filtered);
-
-  // Generate HTML for chips with enhanced formatting
-  const generateChipHtml = (chip) => {
-    const safeVal = sanitizeHtml(String(chip.display));
-    const handler = `applyQuickFilter('${chip.field}', ${JSON.stringify(chip.value)})`;
-    const escaped = escapeAttribute(handler);
-    
-    // Calculate relative size based on count (for word cloud effect)
-    const maxCount = Math.max(...[...chips, ...unknownChips].map(c => c.filtered), 1);
-    const relativeSize = Math.max(0.8, Math.min(1.6, (chip.filtered / maxCount) * 0.8 + 0.8));
-    const isFiltered = hasActiveFilters && chip.filtered > 0;
-    const opacity = hasActiveFilters ? (isFiltered ? 1 : 0.3) : 1;
-    
-    // Enhanced styling with better contrast and readability
-    const fontSize = `${0.65 + (relativeSize - 0.8) * 0.4}rem`;
-    const padding = relativeSize > 1.2 ? '0.3rem 0.8rem' : '0.2rem 0.6rem';
-    const style = `background-color: ${chip.colors.bg}; color: ${chip.colors.text}; font-size: ${fontSize}; padding: ${padding}; opacity: ${opacity};`;
-    
-    // Enhanced tooltip with field name
-    const title = `${chip.fieldDisplay}: ${chip.display}\nShowing ${chip.filtered} of ${chip.total} total items${chip.filtered !== chip.total ? ' - Click to filter' : ''}`;
-    
-    // Enhanced chip content with field prefix for dynamic chips
-    let chipContent;
-    if (hasActiveFilters && !isDefaultType(chip) && (chip.field === 'purchaseLocation' || chip.field === 'storageLocation' || chip.field === 'name')) {
-      // For dynamic chips, show field abbreviation and truncated value
-      const fieldAbbrev = chip.fieldDisplay;
-      const displayValue = chip.display.length > 15 ? chip.display.substring(0, 12) + '...' : chip.display;
-      chipContent = `${fieldAbbrev}: ${displayValue} (${chip.filtered})`;
-    } else {
-      // For default chips, show value and count
-      chipContent = `${safeVal} ${chip.filtered}${chip.filtered !== chip.total ? `/${chip.total}` : ''}`;
-    }
-    
-    return `<span class="filter-chip summary-chip${chip.cls}" style="${style}" onclick="${escaped}" tabindex="0" role="button" onkeydown="if(event.key==='Enter'||event.key===' ')${escaped}" title="${sanitizeHtml(title)}">${chipContent}</span>`;
-  };
-
-  const html = [...chips, ...unknownChips].map(generateChipHtml).join('');
-  el.innerHTML = html;
+  // Clear the container to avoid conflicts with the new renderActiveFilters system
+  el.innerHTML = '';
 };
 window.updateTypeSummary = updateTypeSummary;
 
@@ -1165,7 +929,14 @@ const hideEmptyColumns = () => {
   headers.forEach(header => {
     const col = header.getAttribute('data-column');
     const cells = document.querySelectorAll(`#inventoryTable tbody [data-column="${col}"]`);
-    const allEmpty = cells.length > 0 && Array.from(cells).every(cell => cell.textContent.trim() === '');
+    const allEmpty = cells.length > 0 && Array.from(cells).every(cell => {
+      // If the cell contains interactive or icon elements, consider it non-empty
+      if (cell.querySelector && (cell.querySelector('svg') || cell.querySelector('button') || cell.querySelector('.action-icon') || cell.querySelector('.collectable-status'))) {
+        return false;
+      }
+      return cell.textContent.trim() === '';
+    });
+
     document.querySelectorAll(`#inventoryTable [data-column="${col}"]`).forEach(el => {
       el.classList.toggle('hidden-empty', allEmpty);
     });
@@ -1186,20 +957,20 @@ const renderTable = () => {
     for (let i = startIndex; i < endIndex; i++) {
       const item = sortedInventory[i];
       const originalIdx = inventory.indexOf(item);
-      const spotDisplay = item.isCollectable ? 'N/A' : (item.spotPriceAtPurchase > 0 ? formatCurrency(item.spotPriceAtPurchase) : 'N/A');
-      const spotValue = item.isCollectable ? 'N/A' : (item.spotPriceAtPurchase > 0 ? item.spotPriceAtPurchase : 'N/A');
+  const spotDisplay = item.isCollectable ? 'N/A' : (item.spotPriceAtPurchase > 0 ? formatCurrency(item.spotPriceAtPurchase) : '—');
+  const spotValue = item.isCollectable ? 'N/A' : (item.spotPriceAtPurchase > 0 ? item.spotPriceAtPurchase : '');
       const premiumDisplay = item.isCollectable ? 'N/A' : formatCurrency(item.totalPremium);
       const premiumValue = item.isCollectable ? 'N/A' : item.totalPremium;
 
-      rows.push(`
+  rows.push(`
       <tr>
-      <td class="shrink" data-column="date">${filterLink('date', item.date, 'var(--text-primary)', formatDisplayDate(item.date))}</td>
+  <td class="shrink" data-column="date">${filterLink('date', item.date, 'var(--text-primary)', item.date ? formatDisplayDate(item.date) : '—')}</td>
       <td class="shrink" data-column="type">${filterLink('type', item.type, getTypeColor(item.type))}</td>
       <td class="shrink" data-column="metal" data-metal="${escapeAttribute(item.composition || item.metal || '')}">${filterLink('metal', item.composition || item.metal || 'Silver', METAL_COLORS[item.metal] || 'var(--primary)', getDisplayComposition(item.composition || item.metal || 'Silver'))}</td>
       <td class="shrink" data-column="qty">${filterLink('qty', item.qty, 'var(--text-primary)')}</td>
       <td class="expand" data-column="name" style="text-align: left;">${filterLink('name', item.name, 'var(--text-primary)')}</td>
       <td class="shrink" data-column="weight">${filterLink('weight', item.weight, 'var(--text-primary)', formatWeight(item.weight), item.weight < 1 ? 'Grams (g)' : 'Troy ounces (ozt)')}</td>
-      <td class="shrink" data-column="purchasePrice" title="USD">${filterLink('price', item.price, 'var(--text-primary)', formatCurrency(item.price))}</td>
+  <td class="shrink" data-column="purchasePrice" title="USD">${filterLink('price', item.price, 'var(--text-primary)', (item.price && item.price > 0) ? formatCurrency(item.price) : '—')}</td>
       <td class="shrink" data-column="spot" title="USD">${filterLink('spotPriceAtPurchase', spotValue, 'var(--text-primary)', spotDisplay)}</td>
       <td class="shrink" data-column="premium" style="color: ${item.isCollectable ? 'var(--text-muted)' : (item.totalPremium > 0 ? 'var(--warning)' : 'inherit')}">${filterLink('totalPremium', premiumValue, 'var(--text-primary)', premiumDisplay)}</td>
       <td class="shrink" data-column="purchaseLocation">
@@ -1208,11 +979,25 @@ const renderTable = () => {
       <td class="shrink" data-column="storageLocation">
         ${filterLink('storageLocation', item.storageLocation || 'Unknown', getStorageLocationColor(item.storageLocation || 'Unknown'))}
       </td>
-      <td class="shrink" data-column="numista">${item.numistaId ? `<a href="https://en.numista.com/catalogue/pieces${item.numistaId}.html" target="_blank" rel="noopener" title="View ${sanitizeHtml(item.name)} on Numista Database" class="catalog-link"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="catalog-icon"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><path d="M22 6l-10 7L2 6"/><circle cx="12" cy="11" r="2"/><path d="m8 14 4-2 4 2"/></svg>${sanitizeHtml(item.numistaId)}</a>` : '<span class="numista-empty">—</span>'}</td>
-      <td class="icon-col" data-column="collectable"><span class="collectable-status" role="button" tabindex="0" onclick="toggleCollectable(${originalIdx})" onkeydown="if(event.key==='Enter'||event.key===' ') toggleCollectable(${originalIdx})" aria-label="Toggle collectable status for ${sanitizeHtml(item.name)}" title="Toggle collectable status">${item.isCollectable ? '<svg class=\"collectable-icon icon-copper\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\"><circle cx=\"12\" cy=\"12\" r=\"10\"/></svg>' : '<svg class=\"collectable-icon icon-gold\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\"><path d=\"M3 3h18v18H3V3zm2 2v14h14V5H5zm5 10h6v2H10v-2zm2-8a2 2 0 100 4 2 2 0 000-4z\"/></svg>'}</span></td>
-      <td class="icon-col" data-column="notes"><span class="action-icon ${item.notes && item.notes.trim() ? 'success' : ''}" role="button" tabindex="0" onclick="showNotes(${originalIdx})" aria-label="View notes" title="View notes">📓</span></td>
-      <td class="icon-col" data-column="edit"><span class="action-icon edit-icon" role="button" tabindex="0" onclick="editItem(${originalIdx})" aria-label="Edit ${sanitizeHtml(item.name)}" title="Edit item">✏️</span></td>
-      <td class="icon-col" data-column="delete"><span class="action-icon danger" role="button" tabindex="0" onclick="deleteItem(${originalIdx})" aria-label="Delete item" title="Delete item">🗑️</span></td>
+      <td class="shrink" data-column="numista">${item.numistaId ? `
+        <a href="https://en.numista.com/catalogue/pieces${item.numistaId}.html" target="_blank" rel="noopener" title="N#: ${sanitizeHtml(item.numistaId)} — View on Numista" class="catalog-link catalog-numista" data-catalog="numista" data-catalog-id="${sanitizeHtml(item.numistaId)}">
+          <!-- Clean square N# icon for catalog (styled via CSS for themes) -->
+          <svg class="catalog-icon numista-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true" width="20" height="20">
+            <rect x="3" y="3" width="18" height="18" rx="3" ry="3" />
+            <text x="12" y="15" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="11" font-weight="700">N#</text>
+          </svg>
+        </a>
+      ` : '<span class="numista-empty">—</span>'}</td>
+  <td class="icon-col" data-column="collectable"><span class="collectable-status" role="button" tabindex="0" onclick="toggleCollectable(${originalIdx})" onkeydown="if(event.key==='Enter'||event.key===' ') toggleCollectable(${originalIdx})" aria-label="Toggle collectable status for ${sanitizeHtml(item.name)}" title="Toggle collectable status">${item.isCollectable ? '<svg class=\"collectable-icon vault-icon\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\"><rect x=\"2\" y=\"4\" width=\"20\" height=\"16\" rx=\"2\"/><circle cx=\"17\" cy=\"11\" r=\"2\"/><rect x=\"6\" y=\"8\" width=\"6\" height=\"8\" rx=\"1\"/></svg>' : '<svg class=\"collectable-icon bar-icon\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\"><rect x=\"3\" y=\"8\" width=\"18\" height=\"8\" rx=\"1\"/><path d=\"M5 6h14l-2-2H7z\"/></svg>'}</span></td>
+      <td class="icon-col" data-column="notes"><button class="icon-btn action-icon ${item.notes && item.notes.trim() ? 'has-notes' : ''}" role="button" tabindex="0" onclick="showNotes(${originalIdx})" aria-label="View notes" title="View notes">
+        <svg class="icon-svg notes-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15V5a2 2 0 0 0-2-2H7L3 7v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2z"/></svg>
+      </button></td>
+      <td class="icon-col" data-column="edit"><button class="icon-btn action-icon edit-icon" role="button" tabindex="0" onclick="editItem(${originalIdx})" aria-label="Edit ${sanitizeHtml(item.name)}" title="Edit item">
+        <svg class="icon-svg edit-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1.003 1.003 0 0 0 0-1.42l-2.34-2.34a1.003 1.003 0 0 0-1.42 0l-1.83 1.83 3.75 3.75 1.84-1.82z"/></svg>
+      </button></td>
+      <td class="icon-col" data-column="delete"><button class="icon-btn action-icon danger" role="button" tabindex="0" onclick="deleteItem(${originalIdx})" aria-label="Delete item" title="Delete item">
+        <svg class="icon-svg delete-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 7h12v13a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V7zm3-4h6l1 1h4v2H3V4h4l1-1z"/></svg>
+      </button></td>
       </tr>
       `);
     }
@@ -1223,7 +1008,14 @@ const renderTable = () => {
       () => '<tr><td class="shrink" colspan="16">&nbsp;</td></tr>'
     );
 
-    elements.inventoryTable.innerHTML = rows.concat(placeholders).join('');
+    // Find tbody element directly if cached version fails
+    const tbody = elements.inventoryTable || document.querySelector('#inventoryTable tbody');
+    if (!tbody) {
+      console.error('Could not find table tbody element');
+      return;
+    }
+    
+    tbody.innerHTML = rows.concat(placeholders).join('');
     hideEmptyColumns();
     updateTypeSummary(filteredInventory);
 
@@ -1450,7 +1242,8 @@ const showNotes = (idx) => {
   }
   
   if (modalElement) {
-    modalElement.style.display = 'flex';
+  if (window.openModalById) openModalById('notesModal');
+  else modalElement.style.display = 'flex';
   } else {
     console.error('Notes modal element not found');
   }
@@ -1505,7 +1298,8 @@ const editItem = (idx, logIdx = null) => {
   }
 
   // Show modal
-  elements.editModal.style.display = 'flex';
+  if (window.openModalById) openModalById('editModal');
+  else elements.editModal.style.display = 'flex';
 };
 
 /**

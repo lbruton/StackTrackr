@@ -147,8 +147,11 @@ const showDetailsModal = (metal) => {
   elements.locationBreakdown.appendChild(createBreakdownElements(breakdownData.locationBreakdown));
 
   // Show modal
-  elements.detailsModal.style.display = 'flex';
-  document.body.style.overflow = 'hidden';
+  if (window.openModalById) openModalById('detailsModal');
+  else {
+    elements.detailsModal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+  }
 
   // Add chart resize handling
   const resizeObserver = new ResizeObserver(() => {
@@ -166,8 +169,11 @@ const showDetailsModal = (metal) => {
  * Closes the details modal and cleans up charts
  */
 const closeDetailsModal = () => {
-  elements.detailsModal.style.display = 'none';
-  document.body.style.overflow = '';
+  if (window.closeModalById) closeModalById('detailsModal');
+  else {
+    elements.detailsModal.style.display = 'none';
+    try { document.body.style.overflow = ''; } catch (e) {}
+  }
   destroyCharts();
 };
 
