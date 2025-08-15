@@ -31,3 +31,6 @@ main{max-width:1000px;margin:0 auto}
 .history-table{width:100%;border-collapse:collapse}
 .history-table th,.history-table td{border:1px solid #e6e6e6;padding:6px;text-align:left}
 .history-table th{background:#fafafa}
+
+.warnings{margin-top:8px}
+.warn{background:#fff7e6;border:1px solid #ffd39b;padding:8px;border-radius:4px;color:#663c00}

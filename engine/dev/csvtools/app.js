@@ -189,19 +189,66 @@ document.querySelectorAll('.panel-apply').forEach(btn => {
 
 // Bulk run across files in csvhistory
 document.getElementById('bulkRun').addEventListener('click', async () => {
+  // ensure we have a sample uploaded to define header and filename conventions
+  const warningsEl = document.getElementById('bulkWarnings');
+  warningsEl.innerHTML = '';
+  if (!headers || headers.length === 0) {
+    warningsEl.innerHTML = '<div class="warn">Upload a sample CSV first to establish header and filename conventions.</div>';
+    return;
+  }
+
+  // build filename regex from uploaded filename (digit sequences -> \d+)
+  const fnameSample = document.getElementById('filename').textContent || '';
+  function filenamePatternFrom(name) {
+    if (!name) return null;
+    // escape regex chars, then replace digit groups with \d+
+    const escaped = name.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
+    const pattern = escaped.replace(/\\\d\+/g, '\\d+');
+    // fallback: replace any digit sequences with \d+
+    const pat2 = pattern.replace(/\\d\{1,\}/g, '\\d+');
+    // simpler approach: replace contiguous digits with \d+
+    const simple = escaped.replace(/\d+/g, '\\d+');
+    return new RegExp('^' + simple + '$');
+  }
+
+  const namePattern = filenamePatternFrom(fnameSample);
+  if (!namePattern) {
+    warningsEl.innerHTML = '<div class="warn">Unable to determine filename pattern from uploaded file name.</div>';
+    return;
+  }
+
   // fetch index.json
   const idx = await fetch('csvhistory/index.json').then(r=>r.json());
   const panelFormulas = [];
   for (let i=1;i<=5;i++) panelFormulas.push(document.getElementById(`formula-${i}`).value || '');
 
   const histories = [[],[],[],[],[]];
-  const labels = [];
+  const processedLabels = [];
+  const skipped = [];
+
+  // canonical headers (from uploaded sample)
+  const canonHeaders = headers.map(h => String(h).trim());
 
   for (const fname of idx) {
-    labels.push(fname);
+    // filename must match pattern
+    if (!namePattern.test(fname)) {
+      skipped.push({file: fname, reason: 'filename pattern mismatch'});
+      continue;
+    }
+
     const text = await fetch(`csvhistory/${fname}`).then(r=>r.text());
     const data = Papa.parse(text).data.filter(r=>r.length>0);
+    if (data.length === 0) { skipped.push({file: fname, reason: 'empty file'}); continue; }
     const h = data.shift(); // headers
+
+    // header match check (simple exact match case-insensitive)
+    const hdrs = h.map(x => String(x).trim());
+    const headersEqual = hdrs.length === canonHeaders.length && hdrs.every((v,i)=> v.toLowerCase() === canonHeaders[i].toLowerCase());
+    if (!headersEqual) { skipped.push({file: fname, reason: 'header mismatch'}); continue; }
+
+    // accepted file
+    processedLabels.push(fname);
+
     // set temporary parsedData and headers for translation
     const backupParsed = parsedData;
     const backupHeaders = headers;
@@ -229,14 +276,19 @@ document.getElementById('bulkRun').addEventListener('click', async () => {
     headers = backupHeaders;
   }
 
-  // render charts for each panel
+  // show warnings for skipped files
+  if (skipped.length) {
+    warningsEl.innerHTML = '<div class="warn"><strong>Skipped files:</strong><ul>' + skipped.map(s=>`<li>${s.file}: ${s.reason}</li>`).join('') + '</ul></div>';
+  }
+
+  // render charts for each panel using only processedLabels
   for (let p=0;p<5;p++){
     const ctx = document.getElementById(`histchart-${p+1}`).getContext('2d');
     if (window[`_hist_${p+1}`]) window[`_hist_${p+1}`].destroy();
     const points = histories[p].map(pt => pt? pt.value : null);
     window[`_hist_${p+1}`] = new Chart(ctx,{
       type:'line',
-      data:{labels, datasets:[{label:`Panel ${p+1} Mean`, data:points}]},
+      data:{labels:processedLabels, datasets:[{label:`Panel ${p+1} Mean`, data:points}]},
       options:{responsive:true,maintainAspectRatio:false}
     });
 
