@@ -15,3 +15,7 @@
 - 2025-08-17: Enabled slash preservation in item names by extending sanitization helper and adding unit test (gpt-4-1)
 - 2025-08-17: Centered Name header text by wrapping with `.header-text` and removing special CSS (GPT)
 - 2025-08-17: Repositioned rows-per-page selector below inventory table and paired with item count in new flex container (gpt-4o)
+
+- 2025-08-18: Begin styling enhancement for table item counter with bold background accent (gpt-4o)
+- 2025-08-18: Added item counter styling with background and bold, updated HTML and documentation (gpt-4o)
+- 2025-08-18: Shrunk rows-per-page dropdown with button styling and aligned it opposite the item counter (gpt-4o)
