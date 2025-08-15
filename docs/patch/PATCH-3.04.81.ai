@@ -1,0 +1,4 @@
+Version: 3.04.81
+Date: 2025-08-15
+Agent: GPT
+Summary: Removed obsolete composition helper comment and synced documentation with getCompositionFirstWords.

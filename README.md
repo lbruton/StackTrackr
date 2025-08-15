@@ -50,7 +50,7 @@ See [docs/announcements.md](docs/announcements.md) for the latest release notes 
 - **v3.03.08m - Inventory filter dropdown**: Added metal filter to inventory title bar for quick filtering
 - **v3.03.08l - Search fix & composition parsing**: Search box filters table as you type and Numista compositions truncate to two words
 - **v3.03.08k - Type dropdown and UI fixes**: Standardized type options, blank purchase locations, edit icon, and separate totals cards
-- **v3.03.08j - Composition display fix**: Composition column shows first word from imported data
+- **v3.03.08j - Composition display fix**: Composition column shows first two words from imported data
 - **v3.03.08i - Numista import polish**: Uniform changelog bullets, default collectable flag, weight rounding, N# notes, and beta warning
 - **v3.03.08h - Table controls & import options**: Compact table controls, uniform pagination buttons, import Override/Merge menus, and Backup/Restore placeholder
 - **v3.03.08g - Change log & catalog improvements**: Condensed change log, undo from edit modal, and catalog mapping
