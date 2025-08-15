@@ -10,6 +10,7 @@ This roadmap tracks upcoming goals without committing to specific patch numbers.
 - [ ] Correct issue with readme date inconsistencies
 
 ## 🐛 **BUG FIXES** (Non-critical)
+- [ ] **Filter Chips Initial Styling Bug** - Chips display wrong styling on page load, correct after filter interaction (BUG-006)
 - [ ] Fuzzy search filter shows American Gold Eagle when typing "Eagle" or "Silver Eagle" - needs refinement
 - [ ] Error recovery procedures missing for critical failures
 - [ ] Data corruption detection and recovery mechanisms

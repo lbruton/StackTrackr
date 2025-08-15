@@ -223,11 +223,75 @@ git reset --hard HEAD~1
 ```
 → Gives agents real-time, comprehensive understanding
 
-### **Handoff Protocol**
+### **MANDATORY MCP Tool Usage Protocol**
+
+#### **Before Starting Any Task**
+1. **Memory Check**: `mcp_memory_search_nodes` - Query for related context
+2. **Documentation**: `mcp_context7_resolve-library-id` - Get library docs if needed
+3. **Past Solutions**: Check memory for similar issues or patterns
+
+#### **During Implementation**
+1. **Incremental Learning**: `mcp_memory_add_observations` - Document patterns
+2. **Library Research**: `mcp_context7_get-library-docs` - Get specific guidance
+3. **Testing**: `mcp_playwright_browser_*` - Validate functionality
+
+#### **After Completion**
+1. **Document Discovery**: `mcp_memory_create_entities` - Record new knowledge
+2. **Validate Results**: `mcp_playwright_browser_snapshot` - Capture final state
+3. **Share Insights**: Update memory with lessons learned
+
+### **MCP Tool Selection Guidelines**
+
+| Scenario | Primary Tool | Secondary Tool | Purpose |
+|----------|-------------|----------------|---------|
+| Bug Investigation | `mcp_memory_search_nodes` | `mcp_memory_open_nodes` | Find past solutions |
+| Library Integration | `mcp_context7_resolve-library-id` | `mcp_context7_get-library-docs` | Get implementation guidance |
+| Feature Testing | `mcp_playwright_browser_navigate` | `mcp_playwright_browser_snapshot` | Validate functionality |
+| Knowledge Capture | `mcp_memory_create_entities` | `mcp_memory_add_observations` | Document discoveries |
+| Code Review | `mcp_memory_search_nodes` | `mcp_memory_add_observations` | Apply past learnings |
+
+### **Enhanced Handoff Protocol**
 ```
 "Prepare handoff"
 ```
-→ Agent summarizes current state and provides continuation prompt for seamless transitions
+→ Agent summarizes current state AND commits knowledge to MCP memory for seamless transitions
+
+---
+
+## 🔧 **ENHANCED GIT + MCP INTEGRATION**
+
+### **Git + Memory Sync Protocol**
+```bash
+# 1. Check memory for relevant context
+# Use: mcp_memory_search_nodes with task description
+
+# 2. Create checkpoint with memory reference
+git add -A
+git commit -m "Checkpoint: [task] - Memory entities: [relevant-nodes]"
+
+# 3. Work with continuous memory updates
+# During work: mcp_memory_add_observations for key insights
+
+# 4. Final commit with complete context
+git add -A  
+git commit -m "feat: [complete description] - Documented in memory: [new-entities]"
+
+# 5. Update memory with git reference
+# Use: mcp_memory_create_entities to link git commits to solutions
+```
+
+### **Rollback + Memory Recovery**
+```bash
+# If rollback needed, preserve memory insights
+# 1. Export current memory state
+# Use: mcp_memory_read_graph
+
+# 2. Perform git rollback
+git reset --hard [commit-hash]
+
+# 3. Re-apply relevant memory insights
+# Use: mcp_memory_create_entities to restore valuable discoveries
+```
 
 ---
 

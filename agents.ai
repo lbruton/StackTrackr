@@ -1,15 +1,222 @@
 # StackTrackr Canonical Agent Instructions
-**Version**: 4.0 - Script Loading & Architecture Reference  
+**Version**: 4.1 - Enhanced Git, Documentation & MCP Tools Protocol  
 **Created**: August 14, 2025  
+**Updated**: August 15, 2025  
 **Status**: Master Reference for All Agents
 
 > **🚨 CRITICAL**: All agents MUST check this file on initialization and before making any script/module changes
 
 ---
-1. ✅ Read this file (`/agents.ai`) completely
-3. ✅ Review current git status and create checkpoint if needed
-4. ✅ Report status using standard format
-5. ✅ Reference script loading order before any file modifications
+
+## 🔄 **MANDATORY INITIALIZATION CHECKLIST**
+
+**Every agent MUST execute this complete checklist before any work:**
+
+1. ✅ **Git Status Check**: Run `git status` and report any uncommitted changes
+2. ✅ **Create Git Checkpoint**: Always create checkpoint before starting work
+3. ✅ **Read Complete Instructions**: Review this file (`/agents.ai`) completely  
+4. ✅ **Check MCP Memory**: Query memory for relevant context and past solutions
+5. ✅ **Review Roadmap**: Check `/docs/roadmap.md` for assigned tasks and priorities
+6. ✅ **Document Starting Point**: Log initial status in your agent memory file
+7. ✅ **Validate Dependencies**: Reference script loading order before any file modifications
+
+---
+
+## 🛠️ **ENHANCED GIT PROTOCOL**
+
+### **Pre-Work Requirements**
+```bash
+# 1. ALWAYS check status first
+git status
+
+# 2. MANDATORY checkpoint before any changes
+git add -A
+git commit -m "Checkpoint before [task description]"
+
+# 3. Note current commit hash for rollback reference
+git log --oneline -1
+```
+
+### **During Work Requirements**
+- **Incremental Commits**: For tasks >30 minutes, commit progress every 15-20 minutes
+- **Descriptive Messages**: Use conventional commits (feat:, fix:, docs:, refactor:)
+- **Atomic Changes**: Each commit should represent one logical change
+
+### **Post-Work Requirements**
+```bash
+# 1. Final commit with clear description
+git add -A
+git commit -m "feat: [complete description of changes]"
+
+# 2. Update version and document changes
+# (handled by agent workflow)
+
+# 3. Create completion tag if major feature
+git tag -a "v[version]" -m "[description]"
+```
+
+### **Emergency Rollback Protocol**
+```bash
+# Rollback to last checkpoint
+git reset --hard HEAD~1
+
+# Rollback to specific commit
+git reset --hard [commit-hash]
+
+# Create recovery branch if needed
+git checkout -b recovery-[timestamp]
+```
+
+---
+
+## 📚 **ENHANCED DOCUMENTATION PROTOCOL**
+
+### **MANDATORY Documentation for ALL Changes**
+
+#### **1. Agent Memory Updates** (Required for every session)
+- **Start of session**: Log current task, phase, dependencies
+- **During work**: Document decisions, challenges, solutions discovered
+- **End of session**: Record completion status, handoff notes
+
+#### **2. Code Documentation** (Required for all code changes)
+- **Function Changes**: Update JSDoc comments for modified functions
+- **New Features**: Add comprehensive comments explaining logic
+- **Complex Logic**: Include inline comments for future maintainers
+- **Dependencies**: Document any new requirements or breaking changes
+
+#### **3. Project Documentation** (Required for significant changes)
+- **Patch Files**: Create in `/docs/patch/` for every version bump
+- **Fix Documentation**: Add to `/docs/fixes/` for all bug resolutions  
+- **Architecture Changes**: Update relevant guides in `/docs/`
+- **Breaking Changes**: Document in changelog and upgrade notes
+
+#### **4. Decision Documentation** (Required for architectural decisions)
+- **Why**: Record reasoning behind implementation choices
+- **Alternatives**: Note other options considered and why rejected
+- **Trade-offs**: Document performance, maintainability, or complexity impacts
+- **Future Considerations**: Note potential improvements or known limitations
+
+---
+
+## 🧠 **ENHANCED MCP TOOLS UTILIZATION**
+
+### **Memory Tools - Use for Context & Learning**
+
+#### **mcp_memory_search_nodes** - Always check first
+```
+Query memory for:
+- Similar bugs/issues encountered before
+- Past solutions to related problems  
+- Known limitations or workarounds
+- Previous architectural decisions
+```
+
+#### **mcp_memory_create_entities** - Document discoveries
+```
+Create memory entries for:
+- New bugs discovered and their solutions
+- Performance bottlenecks and optimizations
+- Successful patterns and approaches
+- Critical dependencies or requirements
+```
+
+#### **mcp_memory_add_observations** - Continuous learning
+```
+Add observations for:
+- Code patterns that work well
+- Common pitfalls to avoid
+- User feedback or requirements
+- Testing results and edge cases
+```
+
+### **Context7 Tools - Use for Documentation**
+
+#### **mcp_context7_resolve-library-id** - Before using external libraries
+```
+Always resolve library documentation for:
+- Chart.js features and best practices
+- Papa Parse CSV handling
+- jsPDF generation techniques
+- JSZip compression methods
+```
+
+#### **mcp_context7_get-library-docs** - Implementation guidance
+```
+Get specific documentation for:
+- Complex API usage patterns
+- Performance optimization techniques
+- Browser compatibility requirements
+- Security best practices
+```
+
+### **Playwright Tools - Use for Testing**
+
+#### **mcp_playwright_browser_navigate** - Test workflows
+```
+Test critical user paths:
+- File import/export workflows
+- Search and filtering functionality
+- Theme switching and responsiveness
+- Modal interactions and forms
+```
+
+#### **mcp_playwright_browser_snapshot** - Validate UI
+```
+Capture accessibility snapshots for:
+- New feature implementations
+- Layout changes and responsiveness
+- Cross-browser compatibility
+- Theme consistency validation
+```
+
+### **MCP Tool Decision Matrix**
+
+| Task Type | Primary MCP Tools | Purpose |
+|-----------|------------------|---------|
+| Bug Investigation | memory_search_nodes | Find previous solutions |
+| New Feature | context7_get-library-docs | Implementation guidance |
+| Code Review | memory_add_observations | Document patterns |
+| Testing | playwright_browser_* | Validate functionality |
+| Architecture | memory_create_entities | Document decisions |
+
+---
+
+## 📋 **ENHANCED TASK EXECUTION CHECKLIST**
+
+### **Phase 1: Preparation** (MANDATORY)
+- [ ] Git status check and checkpoint creation
+- [ ] MCP memory query for relevant context
+- [ ] Review related documentation and past solutions
+- [ ] Validate understanding of requirements
+- [ ] Document starting point in agent memory
+
+### **Phase 2: Implementation** (MANDATORY)
+- [ ] Follow existing code patterns and conventions
+- [ ] Make incremental commits with descriptive messages
+- [ ] Document decisions and reasoning inline
+- [ ] Test changes incrementally
+- [ ] Update relevant documentation as you go
+
+### **Phase 3: Validation** (MANDATORY)
+- [ ] Use Playwright tools for functional testing
+- [ ] Verify compatibility with file:// protocol
+- [ ] Test all three themes (dark/light/sepia)
+- [ ] Validate mobile responsiveness
+- [ ] Check browser compatibility
+
+### **Phase 4: Documentation** (MANDATORY)
+- [ ] Update JSDoc comments for modified functions
+- [ ] Create patch file in `/docs/patch/`
+- [ ] Document any fixes in `/docs/fixes/`
+- [ ] Update agent memory with lessons learned
+- [ ] Add MCP memory observations for future reference
+
+### **Phase 5: Completion** (MANDATORY)
+- [ ] Final git commit with complete description
+- [ ] Bump version in `js/constants.js`
+- [ ] Update `docs/changelog.md`
+- [ ] Update `docs/functionstable.md` if applicable
+- [ ] Create handoff notes for next agent if needed
 
 ---
 
@@ -389,6 +596,84 @@ All MCP agents can now reference:
 
 ### Quick Reference
 - docs/roadmap.md, docs/archive/notes/v3.2.0-planning-notes.md, docs/functionstable.md
+
+---
+
+## 🧠 **ENHANCED BUG PREVENTION & MEMORY INTEGRATION**
+
+### **MANDATORY Bug Prevention Protocol**
+
+#### **Before Making ANY Changes**
+1. **Memory Search**: `mcp_memory_search_nodes` - Query for related bugs, issues, or patterns
+2. **Fix Database Check**: Review `/docs/fixes/` for similar problems and solutions  
+3. **Pattern Recognition**: Look for recurring issues in memory observations
+4. **Solution Validation**: Ensure approach doesn't repeat documented mistakes
+
+#### **When Bug Discovered**
+1. **Immediate Memory Documentation**:
+   ```
+   Use: mcp_memory_create_entities
+   Entity Type: "Bug"
+   Name: "[Component]-[Issue-Type]-[Date]"
+   Observations: [
+     "Root Cause: [detailed cause analysis]",
+     "Symptoms: [how bug manifests]", 
+     "Solution: [step-by-step fix]",
+     "Prevention: [how to avoid in future]",
+     "Related Files: [affected components]"
+   ]
+   ```
+
+2. **Local Backup**: Sync with `local_memory.json` using `json_memory_sync.py`
+
+3. **Fix Documentation**: Create detailed fix file in `/docs/fixes/BUG-[number].md`
+
+4. **Roadmap Integration**: Add to roadmap if user-facing or critical
+
+#### **Testing Against Known Issues**
+1. **Comprehensive Memory Query**:
+   ```
+   Patterns to search:
+   - "[component-name] bug OR [component-name] issue"
+   - "[error-message]" (exact error text)
+   - "[technology] problem OR [technology] pitfall" 
+   - "file protocol issue OR localhost issue"
+   ```
+
+2. **Apply Historical Solutions**: Use `mcp_memory_open_nodes` to get full context
+
+3. **Validate Root Cause Fix**: Ensure solution addresses cause, not just symptoms
+
+### **Continuous Learning Protocol**
+
+#### **During Development**
+```
+Use: mcp_memory_add_observations regularly for:
+- Code patterns that work reliably
+- Common pitfalls and how to avoid them  
+- Performance considerations and trade-offs
+- Browser compatibility discoveries
+- File protocol specific requirements
+```
+
+#### **Knowledge Sharing Between Agents**
+```
+Memory entities should include:
+- "Agent": [which agent discovered this]
+- "Context": [what task they were working on]
+- "Confidence": [how reliable is this solution]
+- "Last Tested": [when was this last validated]
+```
+
+### **Quality Assurance Through Memory**
+
+Before completing any task, agents MUST:
+1. **Search for Quality Issues**: `mcp_memory_search_nodes` with component names
+2. **Apply Lessons Learned**: Review observations from past agents  
+3. **Document New Discoveries**: `mcp_memory_add_observations` for future reference
+4. **Cross-Reference Fix Database**: Ensure solution doesn't conflict with known fixes
+
+This creates a self-improving system where each agent builds on the knowledge of previous agents, preventing repeated mistakes and continuously improving code quality.
 
 ---
 
