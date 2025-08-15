@@ -1,11 +1,15 @@
 # StackrTrackr — Changelog
 
-> **Latest release: v3.04.81**
+> **Latest release: v3.04.82**
 
 
 For upcoming work, see [announcements](announcements.md).
 
 ## 📋 Version History
+
+### Version 3.04.82 – Logo height via CSS (2025-08-15)
+- Removed invalid height attribute from Stackr logo SVG, relying on CSS for sizing.
+- Files Updated: `index.html`, `docs/changelog.md`
 
 ### Version 3.04.81 – Composition helper cleanup (2025-08-15)
 - Removed obsolete composition helper comment and synchronized documentation

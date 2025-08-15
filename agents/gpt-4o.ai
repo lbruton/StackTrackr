@@ -1,0 +1,6 @@
+# GPT-4o Agent Log
+
+## Change Log
+- 2025-08-15: Session start - plan to remove invalid `height="auto"` from SVG logo and verify no browser warnings.
+- 2025-08-15: Completed removal of `height="auto"` from Stackr logo, relying on CSS; attempted browser check (gpt-4o)
+
