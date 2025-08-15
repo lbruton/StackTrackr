@@ -551,8 +551,19 @@ const detectCurrency = (str = "") => {
  * @param {string} str - Input string
  * @returns {string} Cleaned string containing only letters, numbers, and spaces
  */
-const stripNonAlphanumeric = (str = "", allowHyphen = false) =>
-  str.toString().replace(allowHyphen ? /[^a-zA-Z0-9 -]/g : /[^a-zA-Z0-9 ]/g, "");
+const stripNonAlphanumeric = (str = "", { allowHyphen = false, allowSlash = false } = {}) =>
+  str
+    .toString()
+    .replace(
+      allowHyphen && allowSlash
+        ? /[^a-zA-Z0-9 \\/-]/g
+        : allowHyphen
+        ? /[^a-zA-Z0-9 -]/g
+        : allowSlash
+        ? /[^a-zA-Z0-9 \\/]/g
+        : /[^a-zA-Z0-9 ]/g,
+      ""
+    );
 
 /**
  * Cleans a string by stripping HTML tags and control characters while
@@ -582,10 +593,11 @@ const sanitizeObjectFields = (obj) => {
   for (const key of Object.keys(cleaned)) {
     if (typeof cleaned[key] === "string" && key !== 'notes') {
       const allowHyphen = key === 'date';
+      const allowSlash = key === 'name';
       cleaned[key] =
         key === 'purchaseLocation'
           ? cleanString(cleaned[key])
-          : stripNonAlphanumeric(cleaned[key], allowHyphen);
+          : stripNonAlphanumeric(cleaned[key], { allowHyphen, allowSlash });
     }
   }
   return cleaned;
@@ -1030,8 +1042,6 @@ const closeModalById = (id) => {
   }
   try { if (document && document.body) document.body.style.overflow = ''; } catch (e) {}
 };
-
-window.closeModalById = closeModalById;
 /**
  * Opens a modal by id and sets body overflow to hidden.
  * Also initializes a click-outside-to-close handler once.
@@ -1061,8 +1071,6 @@ const openModalById = (id) => {
     /* ignore */
   }
 };
-
-window.openModalById = openModalById;
 /**
  * Generates comprehensive HTML storage report with theme support
  */
@@ -2491,12 +2499,6 @@ This archive contains a complete snapshot of your StackrTrackr storage data.`;
   return content;
 };
 
-// Make storage report functions globally available
-window.updateStorageStats = updateStorageStats;
-window.downloadStorageReport = downloadStorageReport;
-window.openStorageReportPopup = openStorageReportPopup;
-
-
 /** Storage compression helpers (Phase 1C) */
 const __ST_COMP_PREFIX = 'CMP1:';
 function __compressIfNeeded(str){
@@ -2537,4 +2539,17 @@ if (typeof window !== 'undefined') {
   window.cleanupStorage = cleanupStorage;
   window.checkFileSize = checkFileSize;
   window.MAX_LOCAL_FILE_SIZE = MAX_LOCAL_FILE_SIZE;
+  window.closeModalById = closeModalById;
+  window.openModalById = openModalById;
+  window.updateStorageStats = updateStorageStats;
+  window.downloadStorageReport = downloadStorageReport;
+  window.openStorageReportPopup = openStorageReportPopup;
+}
+
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = {
+    stripNonAlphanumeric,
+    sanitizeObjectFields,
+    sanitizeImportedItem,
+  };
 }

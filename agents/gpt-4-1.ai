@@ -1,0 +1,5 @@
+# GPT-4-1 Agent Log
+
+## Change Log
+- 2025-08-17: Session start - plan to allow slash in item name sanitization (gpt-4-1)
+- 2025-08-17: Added allowSlash option to sanitizeObjectFields and created test to preserve '/' in names (gpt-4-1)
