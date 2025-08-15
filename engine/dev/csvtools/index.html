@@ -15,6 +15,8 @@
     <section id="upload">
       <label for="csvfile">Upload CSV:</label>
       <input id="csvfile" type="file" accept=".csv" />
+      <button id="viewTable" disabled>View Table</button>
+      <div id="filename" style="display:inline-block;margin-left:12px;color:#444;font-weight:600"></div>
     </section>
 
     <section id="formula">
@@ -31,5 +33,17 @@
   </main>
 
   <script src="app.js"></script>
+  <!-- Table Viewer Modal -->
+  <div id="tableModal" class="modal" aria-hidden="true">
+    <div class="modal-content">
+      <header class="modal-header">
+        <h3 id="modalFilename">CSV Table</h3>
+        <button id="closeModal" aria-label="Close">✕</button>
+      </header>
+      <div class="modal-body">
+        <div class="table-wrap" id="modalTableWrap"></div>
+      </div>
+    </div>
+  </div>
 </body>
 </html>

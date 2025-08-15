@@ -3,3 +3,14 @@ main{max-width:1000px;margin:0 auto}
 #table table{width:100%;border-collapse:collapse}
 #table th, #table td{padding:6px;border:1px solid #ddd;text-align:left}
 #chart{margin-top:12px}
+
+/* Modal styles */
+.modal{position:fixed;inset:0;background:rgba(0,0,0,0.45);display:none;align-items:center;justify-content:center;z-index:40}
+.modal.open{display:flex}
+.modal-content{background:#fff;border-radius:6px;max-width:95%;max-height:90%;width:95%;overflow:hidden;display:flex;flex-direction:column}
+.modal-header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid #eee}
+.modal-body{padding:12px;overflow:auto}
+.modal-body .table-wrap{min-width:800px}
+.wide-table{border-collapse:collapse;width:100%}
+.wide-table th,.wide-table td{padding:6px;border:1px solid #ddd}
+.table-wrap{overflow:auto}

@@ -108,6 +108,10 @@ document.getElementById('csvfile').addEventListener('change', (e) => {
       parsedData = res.data.filter(r => r.length > 0);
       headers = parsedData.shift();
       alert(`Loaded ${parsedData.length} rows, ${headers.length} columns`);
+  // enable view table button and show filename
+  document.getElementById('viewTable').disabled = false;
+  document.getElementById('filename').textContent = file.name;
+  document.getElementById('viewTable').dataset.filename = file.name;
     }
   });
 });
@@ -120,3 +124,41 @@ document.getElementById('apply').addEventListener('click', () => {
   renderTable(results);
   renderChart(results);
 });
+
+// Modal table viewer
+const modal = document.getElementById('tableModal');
+const modalWrap = document.getElementById('modalTableWrap');
+const modalFilename = document.getElementById('modalFilename');
+
+function buildModalTable() {
+  modalWrap.innerHTML = '';
+  const tbl = document.createElement('table');
+  tbl.className = 'wide-table';
+  const thead = document.createElement('tr');
+  headers.forEach(h => {
+    const th = document.createElement('th'); th.textContent = h; thead.appendChild(th);
+  });
+  tbl.appendChild(thead);
+  parsedData.forEach(row => {
+    const tr = document.createElement('tr');
+    row.forEach(c => { const td = document.createElement('td'); td.textContent = c; tr.appendChild(td); });
+    tbl.appendChild(tr);
+  });
+  modalWrap.appendChild(tbl);
+}
+
+document.getElementById('viewTable').addEventListener('click', () => {
+  if (!parsedData) return;
+  modalFilename.textContent = document.getElementById('viewTable').dataset.filename || 'CSV Table';
+  buildModalTable();
+  modal.classList.add('open');
+  modal.setAttribute('aria-hidden', 'false');
+});
+
+document.getElementById('closeModal').addEventListener('click', () => {
+  modal.classList.remove('open');
+  modal.setAttribute('aria-hidden', 'true');
+});
+
+// Click outside to close
+modal.addEventListener('click', (e) => { if (e.target === modal) { modal.classList.remove('open'); modal.setAttribute('aria-hidden','true'); } });
