@@ -1,0 +1,4 @@
+Version: 3.04.88
+Date: 2025-08-17
+Agent: gpt-4o
+Summary: Constrained items-per-page dropdown width and reversed footer control order so the compact selector sits beside the item count.
