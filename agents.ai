@@ -1,5 +1,5 @@
 # StackTrackr Canonical Agent Instructions
-**Version**: 4.1 - Enhanced Git, Documentation & MCP Tools Protocol  
+**Version**: 4.2 - Comprehensive MCP Memory System Documentation  
 **Created**: August 14, 2025  
 **Updated**: August 15, 2025  
 **Status**: Master Reference for All Agents
@@ -98,45 +98,413 @@ git checkout -b recovery-[timestamp]
 
 ---
 
-## 🧠 **ENHANCED MCP TOOLS UTILIZATION**
+## 🧠 **COMPREHENSIVE MCP MEMORY SYSTEM**
 
-### **Memory Tools - Use for Context & Learning**
+### **🔍 Memory System Overview**
+StackTrackr uses a sophisticated multi-layer memory system for agent coordination:
 
-#### **mcp_memory_search_nodes** - Always check first
-```
-Query memory for:
-- Similar bugs/issues encountered before
-- Past solutions to related problems  
-- Known limitations or workarounds
-- Previous architectural decisions
+1. **MCP Memory Graph** - Live, shared memory across all agents and projects
+2. **Local Memory JSON** - Project-specific tasks, bugs, and context
+3. **Agent Memory Files** - Individual agent status and learnings
+4. **GitHub Memory Sync** - Cross-project coordination with rEngine ecosystem
 
-# Quick Roadmap Access:
-- "critical-bugs" - Urgent application-breaking issues
-- "bug-fixes-non-critical" - Non-critical UX improvements
-- "feature-enhancements" - Existing functionality improvements  
-- "new-features" - Brand new functionality to add
-- "current-sprint" - Active work items assigned to agents
-- "backend-architecture" - Infrastructure and system work
-- "testing-qa" - Quality assurance and testing tasks
-```
+### **🚀 MANDATORY Memory Protocol - ALL AGENTS MUST FOLLOW**
 
-#### **mcp_memory_create_entities** - Document discoveries
-```
-Create memory entries for:
-- New bugs discovered and their solutions
-- Performance bottlenecks and optimizations
-- Successful patterns and approaches
-- Critical dependencies or requirements
+#### **Session Initialization (REQUIRED)**
+```bash
+# 1. ALWAYS start by reading the memory graph
+mcp_memory_read_graph
+
+# 2. Search for relevant context
+mcp_memory_search_nodes "StackTrackr bugs"
+mcp_memory_search_nodes "current task"
+mcp_memory_search_nodes "[your specific task area]"
+
+# 3. Check local memory for detailed context
+# Read local_memory.json for tasks, bugs, features
 ```
 
-#### **mcp_memory_add_observations** - Continuous learning
+#### **During Work (REQUIRED)**
+```bash
+# Document new discoveries immediately
+mcp_memory_add_observations
+- entityName: "StackTrackr"
+- contents: ["New bug found: [description]", "Solution: [approach]"]
+
+# Create new entities for major discoveries
+mcp_memory_create_entities
+- name: "Bug-[ID]" 
+- entityType: "Bug Report"
+- observations: ["Description", "Root cause", "Solution"]
 ```
-Add observations for:
+
+#### **Session Completion (REQUIRED)**
+```bash
+# Update your progress and learnings
+mcp_memory_add_observations
+- entityName: "Central Memory Manager"
+- contents: ["Agent [name] completed [task]", "Key learnings: [details]"]
+
+# Document handoff information
+mcp_memory_create_entities
+- name: "Handoff-[timestamp]"
+- entityType: "Agent Coordination" 
+- observations: ["Status", "Next steps", "Blockers"]
+```
+
+### **🔧 Memory Tools - Complete Reference**
+
+#### **mcp_memory_read_graph** - START HERE ALWAYS
+```
+Purpose: Get complete project memory state
+Usage: Run at session start to understand full context
+Returns: All entities, relations, and project knowledge
+```
+
+#### **mcp_memory_search_nodes** - Find Relevant Context
+```
+Critical searches for StackTrackr work:
+- "StackTrackr critical bugs" - Current critical issues
+- "filter chips bug" - Known UI filtering issues  
+- "fuzzy search" - Search algorithm problems
+- "Numista integration" - API integration context
+- "localStorage quota" - Storage limitation issues
+- "mobile responsiveness" - Mobile UI problems
+- "theme switching" - Theme system bugs
+- "CSV import" - File processing issues
+
+Example:
+mcp_memory_search_nodes "filter chips styling bug"
+```
+
+#### **mcp_memory_create_entities** - Document New Discoveries
+```
+Required for:
+- New bugs discovered
+- Successful solutions implemented  
+- Performance optimizations
+- Integration patterns that work
+- Critical dependencies identified
+
+Example:
+mcp_memory_create_entities([{
+  "name": "Filter-Chips-Load-Bug",
+  "entityType": "Bug Report", 
+  "observations": [
+    "Filter chips display wrong styling on page load",
+    "Correct after user interaction with filters",
+    "Root cause: CSS classes not applied during initial render",
+    "Solution: Force filter chip refresh after DOM load"
+  ]
+}])
+```
+
+#### **mcp_memory_add_observations** - Continuous Learning
+```
+Add to existing entities:
 - Code patterns that work well
-- Common pitfalls to avoid
-- User feedback or requirements
-- Testing results and edge cases
+- Common pitfalls encountered
+- User feedback received
+- Performance test results
+- Browser compatibility notes
+
+Example:
+mcp_memory_add_observations([{
+  "entityName": "StackTrackr",
+  "contents": [
+    "Mobile table rows need 2x height when width < 768px",
+    "localStorage has 5-10MB limit, track usage carefully",
+    "file:// protocol requires specific CSV parsing approach"
+  ]
+}])
 ```
+
+#### **mcp_memory_open_nodes** - Deep Dive on Specific Items
+```
+Get complete details on:
+- Specific bug reports
+- Implementation patterns
+- Previous solutions
+- Architecture decisions
+
+Example:
+mcp_memory_open_nodes(["Filter-Chips-Load-Bug", "Fuzzy-Search-Algorithm"])
+```
+
+### **🎯 Memory Search Strategies**
+
+#### **Before Starting Any Task**
+```bash
+# 1. Check for similar past work
+mcp_memory_search_nodes "[task description]"
+
+# 2. Look for related bugs  
+mcp_memory_search_nodes "[component] bug"
+
+# 3. Find implementation patterns
+mcp_memory_search_nodes "[technology] implementation" 
+
+# 4. Check for known limitations
+mcp_memory_search_nodes "[area] limitations"
+```
+
+#### **When Encountering Bugs**
+```bash
+# 1. Check if bug is known
+mcp_memory_search_nodes "[bug symptoms]"
+
+# 2. Look for similar issues
+mcp_memory_search_nodes "[component] similar problems"
+
+# 3. Find past solutions
+mcp_memory_search_nodes "[technology] fixes"
+```
+
+#### **For Feature Implementation**
+```bash
+# 1. Check existing patterns
+mcp_memory_search_nodes "[feature type] implementation"
+
+# 2. Find integration examples  
+mcp_memory_search_nodes "[library] integration"
+
+# 3. Look for performance considerations
+mcp_memory_search_nodes "[feature] performance"
+```
+
+### **📊 Local Memory Integration**
+
+#### **local_memory.json Structure**
+```json
+{
+  "tasks": {
+    "Critical Bugs": ["Sync time recording", "Sorting issues"],
+    "Bug Fixes": ["Filter chips styling", "Fuzzy search precision"],
+    "Feature Enhancements": ["Numista integration", "Mobile responsive"]
+  },
+  "bugs": [/* Detailed bug reports */],
+  "solutions": [/* Implemented fixes */],
+  "performance": [/* Optimization notes */]
+}
+```
+
+#### **Sync with MCP Memory**
+```bash
+# Before major changes, sync local findings to MCP
+# After implementing fixes, update both systems
+# Document learnings in both local and MCP memory
+```
+
+### **🤝 Agent Coordination Protocol**
+
+#### **GPT Agents - Memory Access Issues**
+If GPT agents report memory access problems:
+
+1. **Check MCP Tools Availability**
+   ```bash
+   # Verify MCP memory tools are active
+   mcp_memory_read_graph  # Should return full graph
+   ```
+
+2. **Fallback to Local Memory**
+   ```bash
+   # Read local_memory.json directly
+   # Reference agents/memory file for backup
+   # Use manual memory sync scripts
+   ```
+
+3. **Document Memory Access**
+   ```bash
+   # Always document which memory tools work
+   # Report any access limitations found
+   # Update agent coordination notes
+   ```
+
+#### **Cross-Agent Memory Sharing**
+```bash
+# When handing off between agents:
+1. Update MCP memory with current status
+2. Document specific blockers or learnings  
+3. Note which tools/approaches worked
+4. Identify any compatibility issues found
+```
+
+### **⚠️ CRITICAL: GPT AGENT MEMORY ACCESS PROTOCOL**
+
+#### **For GPT Agents Unable to Access MCP Memory:**
+
+**STEP 1: Verify Memory Tool Access**
+```bash
+# Test if MCP memory tools are available:
+# Try: mcp_memory_read_graph
+# If this fails, follow backup protocol below
+```
+
+**STEP 2: Use Local Memory Fallback**
+```bash
+# Read the local backup memory file:
+# File: /agents/memory 
+# Contains: Complete MCP memory graph in JSON format
+# Parse for relevant entities and relations
+
+# Also read local_memory.json for:
+# - Current tasks and priorities
+# - Known bugs and their status
+# - Recent discoveries and solutions
+```
+
+**STEP 3: Document Memory Limitations**
+```bash
+# ALWAYS document in your agent file:
+# - Which memory tools work/don't work
+# - How you're accessing project context
+# - Any coordination challenges faced
+# 
+# This helps other agents understand limitations
+```
+
+**STEP 4: Manual Memory Updates**
+```bash
+# If you can't use MCP tools:
+# 1. Update local_memory.json directly
+# 2. Add findings to your individual agent file  
+# 3. Use Git commits to share discoveries
+# 4. Leave clear handoff notes for next agent
+```
+
+**EXAMPLE: Reading Backup Memory**
+```bash
+# The /agents/memory file contains JSON lines like:
+# {"type":"entity","name":"StackTrackr","observations":[...]}
+# {"type":"entity","name":"Filter-Chips-Bug","observations":[...]}
+# {"type":"relation","from":"StackTrackr","to":"Filter-Chips-Bug",...}
+#
+# Parse these to understand:
+# - Current project state
+# - Known issues and solutions  
+# - Agent coordination status
+```
+
+**EXAMPLE: Updating Local Memory**
+```json
+// Add to local_memory.json:
+{
+  "agent_notes": {
+    "gpt_limitations": "Cannot access MCP memory tools",
+    "workaround": "Using local backup files",
+    "last_sync": "2025-08-15",
+    "coordination_method": "Git commits and agent files"
+  }
+}
+```
+
+#### **Memory Access Troubleshooting**
+
+**If MCP Tools Fail:**
+1. Check tool availability in current environment
+2. Fall back to local_memory.json and agents/memory
+3. Document the limitation clearly
+4. Use Git for coordination with other agents
+
+**If Local Files Missing:**
+1. Check backups/ directory for recent exports
+2. Look for .json files in scripts/ directory  
+3. Check Git history for memory file changes
+4. Create new memory entries manually if needed
+
+**Essential Memory Items for StackTrackr:**
+- Critical bugs: sync timing, sorting, filter chips
+- Current features: Numista integration, mobile responsive
+- Performance notes: localStorage limits, file:// protocol
+- Architecture: script loading order, dependency chain
+- Testing: browser compatibility, theme switching
+
+### **🎯 STACKTRACKR-SPECIFIC MEMORY USAGE**
+
+#### **Common Memory Queries for StackTrackr Work:**
+
+**Bug Investigation:**
+```bash
+mcp_memory_search_nodes "filter chips display bug"
+mcp_memory_search_nodes "fuzzy search Eagle results"  
+mcp_memory_search_nodes "localStorage quota handling"
+mcp_memory_search_nodes "sync time recording issue"
+mcp_memory_search_nodes "unknown items sorting"
+```
+
+**Feature Development:**
+```bash
+mcp_memory_search_nodes "Numista modal integration"
+mcp_memory_search_nodes "mobile table responsiveness"
+mcp_memory_search_nodes "CSV import processing" 
+mcp_memory_search_nodes "theme switching implementation"
+mcp_memory_search_nodes "exponential backoff pattern"
+```
+
+**Performance Optimization:**
+```bash
+mcp_memory_search_nodes "localStorage performance"
+mcp_memory_search_nodes "large dataset handling"
+mcp_memory_search_nodes "Chart.js optimization"
+mcp_memory_search_nodes "file protocol compatibility"
+```
+
+#### **Critical Memory Entities to Always Check:**
+
+1. **StackTrackr** - Main project entity with core context
+2. **Filter-Chips-Load-Bug** - Known styling issue on page load
+3. **Fuzzy-Search-Algorithm** - Search precision improvements needed
+4. **Mobile-Responsiveness** - Current mobile UI requirements
+5. **LocalStorage-Management** - Storage quota and cleanup patterns
+6. **Numista-Integration** - API integration status and patterns
+7. **Theme-System** - Current theme implementation and issues
+
+#### **Memory Update Templates:**
+
+**For Bug Fixes:**
+```bash
+mcp_memory_create_entities([{
+  "name": "Bug-[Short-Description]",
+  "entityType": "Bug Report",
+  "observations": [
+    "Symptoms: [what user sees]",
+    "Root cause: [technical cause]", 
+    "Solution: [implementation approach]",
+    "Files modified: [list of files]",
+    "Testing: [how to verify fix]"
+  ]
+}])
+```
+
+**For Features:**
+```bash
+mcp_memory_create_entities([{
+  "name": "Feature-[Name]",
+  "entityType": "Feature Implementation",
+  "observations": [
+    "Requirements: [user needs]",
+    "Approach: [technical solution]",
+    "Dependencies: [libraries/files affected]", 
+    "Performance impact: [considerations]",
+    "Future improvements: [enhancement opportunities]"
+  ]
+}])
+```
+
+**For Performance Optimizations:**
+```bash
+mcp_memory_add_observations([{
+  "entityName": "StackTrackr",
+  "contents": [
+    "Performance improvement: [description]",
+    "Measurement: [before/after metrics]",
+    "Implementation: [code changes made]",
+    "Monitoring: [how to track ongoing performance]"
+  ]
+}])
+```
+
+---
 
 ### **Context7 Tools - Use for Documentation**
 

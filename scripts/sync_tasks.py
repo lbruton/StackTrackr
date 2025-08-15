@@ -5,6 +5,7 @@ from datetime import datetime
 # File paths
 ROADMAP_FILE = "docs/roadmap.md"
 MEMORY_EXPORT_FILE = "memory_export.json"
+RENGINE_TASKS_FILE = "../rEngine/tasks/centralized_tasks.json"
 
 # Function to read tasks from MCP memory (mocked for now)
 def fetch_tasks_from_memory():
@@ -40,6 +41,35 @@ def sync_tasks_to_memory():
     except FileNotFoundError:
         print(f"{ROADMAP_FILE} not found.")
 
+# Function to send tasks to rEngine
+def send_tasks_to_rengine(tasks):
+    if not tasks:
+        print("No tasks to send to rEngine.")
+        return
+
+    try:
+        # Ensure the rEngine tasks file exists
+        os.makedirs(os.path.dirname(RENGINE_TASKS_FILE), exist_ok=True)
+
+        # Load existing tasks from rEngine
+        if os.path.exists(RENGINE_TASKS_FILE):
+            with open(RENGINE_TASKS_FILE, "r") as file:
+                existing_tasks = json.load(file)
+        else:
+            existing_tasks = []
+
+        # Append new tasks
+        existing_tasks.extend(tasks)
+
+        # Save updated tasks to rEngine
+        with open(RENGINE_TASKS_FILE, "w") as file:
+            json.dump(existing_tasks, file, indent=2)
+
+        print(f"Sent {len(tasks)} tasks to rEngine.")
+    except Exception as e:
+        print(f"Error sending tasks to rEngine: {e}")
+
+# Update main execution flow
 if __name__ == "__main__":
     print("1. Fetching tasks from memory...")
     tasks = fetch_tasks_from_memory()
@@ -49,5 +79,8 @@ if __name__ == "__main__":
 
     print("3. Syncing tasks to memory...")
     sync_tasks_to_memory()
+
+    print("4. Sending tasks to rEngine...")
+    send_tasks_to_rengine(tasks)
 
     print("Task synchronization complete.")
