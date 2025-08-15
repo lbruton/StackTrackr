@@ -1780,8 +1780,13 @@ table {
 }
 
   .table-item-count {
-    font-size: 0.875rem;
+    font-size: 0.95rem;
+    font-weight: 600;
     color: var(--text-muted);
+    background: var(--bg-tertiary);
+    padding: 0.125rem 0.375rem;
+    border-radius: var(--radius);
+    display: inline-block;
   }
 
   .table-footer-controls {

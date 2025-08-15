@@ -9,3 +9,6 @@
 
 - 2025-08-17: Session start - plan to wrap #itemCount and itemsPerPage in table-footer-controls and remove old control-group (gpt-4o)
 - 2025-08-17: Wrapped #itemCount with itemsPerPage in table-footer-controls and updated styles for flex layout (gpt-4o)
+
+- 2025-08-18: Session start - plan to emphasize table item count with bold styling and background (gpt-4o)
+- 2025-08-18: Enhanced table item count with heavier font, larger size, and background; updated docs (gpt-4o)
