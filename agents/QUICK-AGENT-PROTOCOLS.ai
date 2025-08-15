@@ -19,6 +19,14 @@ git log --oneline -1         # Note commit hash
 Use: mcp_memory_search_nodes
 Query: "[task description] OR [technology] OR [similar issue]"
 Purpose: Find past solutions, patterns, known issues
+
+# Quick Roadmap Queries:
+- "critical-bugs" - Get urgent issues to fix
+- "bug-fixes-non-critical" - Get UX improvements 
+- "feature-enhancements" - Get existing feature improvements
+- "new-features" - Get brand new functionality
+- "current-sprint" - Get active work items
+- "testing-qa" - Get quality assurance tasks
 ```
 
 ### **3. Documentation Check** (MANDATORY)

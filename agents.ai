@@ -109,6 +109,15 @@ Query memory for:
 - Past solutions to related problems  
 - Known limitations or workarounds
 - Previous architectural decisions
+
+# Quick Roadmap Access:
+- "critical-bugs" - Urgent application-breaking issues
+- "bug-fixes-non-critical" - Non-critical UX improvements
+- "feature-enhancements" - Existing functionality improvements  
+- "new-features" - Brand new functionality to add
+- "current-sprint" - Active work items assigned to agents
+- "backend-architecture" - Infrastructure and system work
+- "testing-qa" - Quality assurance and testing tasks
 ```
 
 #### **mcp_memory_create_entities** - Document discoveries
