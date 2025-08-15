@@ -161,10 +161,6 @@ document.addEventListener("DOMContentLoaded", () => {
     elements.cancelNotesBtn = safeGetElement("cancelNotes");
     elements.notesCloseBtn = safeGetElement("notesCloseBtn");
 
-    // Debug modal elements
-    elements.debugModal = safeGetElement("debugModal");
-    elements.debugCloseBtn = safeGetElement("debugCloseBtn");
-
     // Pagination elements
     debugLog("Phase 5: Initializing pagination elements...");
     elements.itemsPerPage = safeGetElement("itemsPerPage");
@@ -173,7 +169,6 @@ document.addEventListener("DOMContentLoaded", () => {
     elements.firstPage = safeGetElement("firstPage");
     elements.lastPage = safeGetElement("lastPage");
     elements.pageNumbers = safeGetElement("pageNumbers");
-    elements.itemCount = safeGetElement("itemCount");
 
       elements.changeLogBtn = safeGetElement("changeLogBtn");
       elements.backupReminder = safeGetElement("backupReminder");
@@ -343,9 +338,6 @@ document.addEventListener("DOMContentLoaded", () => {
     // Phase 13: Initial Rendering
     debugLog("Phase 13: Rendering initial display...");
       renderTable();
-      if (typeof renderActiveFilters === 'function') {
-        renderActiveFilters();
-      }
       fetchSpotPrice();
       updateSyncButtonStates();
       if (typeof updateStorageStats === "function") {

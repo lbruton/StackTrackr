@@ -65,7 +65,7 @@
     <div class="app-header">
       <div>
         <h1 class="app-logo" id="appLogo" aria-label="StackrTrackr">
-          <svg class="stackr-logo" viewBox="0 0 480 200" xmlns="http://www.w3.org/2000/svg" width="100%" style="max-width: 666px;">
+          <svg class="stackr-logo" viewBox="0 0 480 200" xmlns="http://www.w3.org/2000/svg" width="100%" height="auto" style="max-width: 666px;">
             <defs>
               <!-- Light Mode Gradients -->
               <linearGradient id="goldLight" x1="0%" y1="0%" x2="0%" y2="100%">
@@ -492,7 +492,7 @@
               type="text"
             />
             <button
-              class="btn success icon-btn"
+              class="btn secondary icon-btn"
               id="clearBtn"
               title="Clear search"
               aria-label="Clear search"
@@ -500,7 +500,7 @@
               🗑️
             </button>
             <button
-              class="btn success icon-btn" id="changeLogBtn" title="Change log" aria-label="Change log">
+              class="btn square icon-btn" id="changeLogBtn" title="Change log" aria-label="Change log">
               📜
             </button>
           </div>
@@ -508,6 +508,10 @@
           <!-- Integrated Filters -->
           <div class="search-filters">
             <div id="typeSummary"></div>
+            <div class="filter-row">
+              <div class="active-filters" id="activeFilters"></div>
+              <div class="search-results-info" id="searchResultsInfo"></div>
+            </div>
             <div class="filter-controls">
               <div class="control-group">
                 <label for="chipMinCount" class="control-label">Filter Chips:</label>
@@ -527,10 +531,16 @@
                   <option value="no">No</option>
                 </select>
               </div>
-            </div>
-            <div class="filter-row">
-              <div class="active-filters" id="activeFilters"></div>
-              <div class="search-results-info" id="searchResultsInfo"></div>
+              <div class="control-group">
+                <label for="itemsPerPage" class="control-label">Table Rows:</label>
+                <select class="control-select" id="itemsPerPage">
+                  <option value="10" selected>10</option>
+                  <option value="15">15</option>
+                  <option value="25">25</option>
+                  <option value="50">50</option>
+                  <option value="100">100</option>
+                </select>
+              </div>
             </div>
           </div>
         </section>
@@ -590,7 +600,7 @@
                   <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
                   <circle cx="12" cy="7" r="4"/>
                 </svg>
-                <span class="header-text">Name</span>
+                Name
               </th>
               <th class="shrink" data-column="weight">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="header-icon">
@@ -680,20 +690,10 @@
             </tr>
           </thead>
           <tbody></tbody>
-          </table>
-          <div class="table-footer-controls">
-            <div class="table-item-count"><strong id="itemCount"></strong></div>
-            <select id="itemsPerPage" class="control-select" title="Rows per page">
-              <option value="10" selected>10</option>
-              <option value="15">15</option>
-              <option value="25">25</option>
-              <option value="50">50</option>
-              <option value="100">100</option>
-            </select>
-          </div>
-        </section>
-        <!-- Pagination Controls -->
-        <section class="pagination-section">
+        </table>
+      </section>
+      <!-- Pagination Controls -->
+      <section class="pagination-section">
           <div class="pagination-container">
             <div class="pagination-controls">
               <div class="pagination-buttons">
@@ -2418,24 +2418,7 @@
         </div>
       </div>
     </div>
-
-    <!-- =============================================================================
-       DEBUG LOG MODAL
-
-       Displays collected debug output when debug mode is enabled.
-       ============================================================================= -->
-    <div class="modal" id="debugModal" style="display: none">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h2>Debug Log</h2>
-          <button aria-label="Close modal" class="modal-close" id="debugCloseBtn">×</button>
-        </div>
-        <div class="modal-body">
-          <pre id="debugModalContent"></pre>
-        </div>
-      </div>
-    </div>
-
+    
     <!-- =============================================================================
        JAVASCRIPT MODULE LOADING
        
@@ -2467,7 +2450,6 @@
     <script defer src="./js/sorting.js"></script>
     <script defer src="./js/pagination.js"></script>
     <script defer src="./js/detailsModal.js"></script>
-    <script defer src="./js/debugModal.js"></script>
     <script defer src="./js/numista-modal.js"></script>
     <script defer src="./js/spot.js"></script>
     <script defer src="./js/api.js"></script>
@@ -2479,15 +2461,8 @@
     <script defer src="./js/events.js"></script>
     
     <!-- Test Scripts (Development) -->
-    <script>
-      if (window.location.hostname === 'localhost') {
-        const testScript = document.createElement('script');
-        testScript.defer = true;
-        testScript.src = './tests/grouped-name-chips.test.js';
-        document.head.appendChild(testScript);
-      }
-    </script>
-
+    <script defer src="./tests/grouped-name-chips.test.js"></script>
+    
     <script defer src="./js/init.js"></script>
   </body>
 </html>

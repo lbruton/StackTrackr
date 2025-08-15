@@ -41,7 +41,6 @@
   /* Map existing text variables */
   --text-primary: var(--text);
   --text-secondary: var(--text-muted);
-  --chip-text: #1b232c;
 
   /* Border & Shadow - Light grays */
   --border: #cbd5e1;
@@ -136,7 +135,6 @@
   --text-primary: #f8fafc;
   --text-secondary: #cbd5e1;
   --text-muted: #94a3b8;
-  --chip-text: #f8fafc;
 
   /* Border & Shadow - Dark Mode */
   --border: #334155;
@@ -190,7 +188,6 @@
   --text-primary: #3e2f1e;
   --text-secondary: #5a4a36;
   --text-muted: #6f604e;
-  --chip-text: #3e2f1e;
 
   /* Border & Shadow - Sepia Mode */
   --border: #d1c2a5;
@@ -1782,24 +1779,6 @@ table {
   height: auto;
 }
 
-  .table-item-count {
-    font-size: 0.95rem;
-    font-weight: 600;
-    color: var(--text-muted);
-    background: var(--bg-tertiary);
-    padding: 0.125rem 0.375rem;
-    border-radius: var(--radius);
-    display: inline-block;
-  }
-
-  .table-footer-controls {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-top: 0.25rem;
-    width: 100%;
-  }
-
 th {
   background: var(--bg-tertiary);
   color: var(--text-primary);
@@ -1888,8 +1867,13 @@ tr:hover {
   white-space: nowrap;
   min-width: 0;
 }
-/* Name column cells remain left aligned for readability */
+/* Ensure the Name header is visually centered while cell contents can be left-aligned */
+#inventoryTable th[data-column="name"] {
+  text-align: center;
+}
+
 #inventoryTable td[data-column="name"] {
+  /* Cells remain left aligned for readability (set inline in renderTable) */
   text-align: left;
 }
 
@@ -3146,9 +3130,6 @@ td input:checked + .slider:before {
   margin-top: var(--spacing);
   padding-top: var(--spacing);
   border-top: 1px solid var(--border);
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-sm);
 }
 
 .filter-row {
@@ -3181,22 +3162,14 @@ td input:checked + .slider:before {
   white-space: nowrap;
 }
 
-
 .control-select {
-  appearance: none;
-  padding: 0.25rem 1.5rem 0.25rem 0.5rem;
+  padding: 0.375rem 0.75rem;
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  background: var(--bg-tertiary);
+  background: var(--bg-primary);
   color: var(--text-primary);
   font-size: 0.875rem;
-  width: 4rem;
-  min-width: 0;
-  text-align: center;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6' fill='none' stroke='currentColor' stroke-width='1.5'%3E%3Cpath d='M1 1l4 4 4-4'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 0.35rem center;
-  background-size: 0.65rem;
+  min-width: 80px;
   cursor: pointer;
   transition: var(--transition);
 }
@@ -3266,7 +3239,7 @@ td input:checked + .slider:before {
   align-items: center;
   justify-content: center;
   gap: var(--spacing-xs);
-  color: var(--chip-text);
+  color: #f8fafc;
   padding: 0.25rem 0.5rem;
   border-radius: var(--radius);
   font-size: 0.75rem;
@@ -3427,7 +3400,7 @@ td input:checked + .slider:before {
 }
 
 /* Icon button base for action cells */
-#inventoryTable .icon-btn {
+.icon-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -3441,17 +3414,17 @@ td input:checked + .slider:before {
   transition: background 0.15s ease, transform 0.08s ease;
 }
 
-#inventoryTable .icon-btn:focus {
+.icon-btn:focus {
   outline: 2px solid rgba(59,130,246,0.25);
   outline-offset: 2px;
 }
 
-#inventoryTable .icon-btn:hover {
+.icon-btn:hover {
   background: rgba(0,0,0,0.04);
   transform: translateY(-1px);
 }
 
-#inventoryTable .icon-svg { width: 1.05rem; height: 1.05rem; display: block; fill: currentColor; color: inherit; }
+.icon-svg { width: 1.05rem; height: 1.05rem; display: block; fill: currentColor; color: inherit; }
 .notes-svg { color: inherit; }
 .edit-svg { color: inherit; }
 .delete-svg { color: inherit; }
@@ -3544,27 +3517,27 @@ th {
 }
 
 /* Icon cells in the body: inherit color so they match the row's text color and striping */
- #inventoryTable tbody td.icon-col {
+#inventoryTable tbody td.icon-col {
   color: inherit;
   padding: 0.25rem 0.35rem;
 }
 
 /* Icon button visual blending */
-#inventoryTable .icon-btn {
+.icon-btn {
   background: transparent; /* keep inline with row */
   color: var(--text-secondary);
   box-shadow: none;
 }
 
-#inventoryTable .icon-btn:hover {
+.icon-btn:hover {
   background: var(--bg-secondary);
   color: var(--text-primary);
 }
 
-#inventoryTable .icon-btn:active { transform: translateY(0); }
+.icon-btn:active { transform: translateY(0); }
 
 /* Slightly smaller icon size in cells to reduce visual weight */
-#inventoryTable .icon-svg { width: 0.95rem; height: 0.95rem; }
+.icon-svg { width: 0.95rem; height: 0.95rem; }
 
 /* Ensure collectable icon visually matches muted style until active */
 .collectable-icon { color: var(--text-secondary); }
@@ -3612,8 +3585,8 @@ th {
   padding-bottom: 0.32rem;
 }
 
-#inventoryTable .icon-btn { width: 2rem; height: 2rem; }
-#inventoryTable .icon-svg { width: 0.9rem; height: 0.9rem; }
+.icon-btn { width: 2rem; height: 2rem; }
+.icon-svg { width: 0.9rem; height: 0.9rem; }
 
 /* Tighter row height */
 #inventoryTable tbody tr { min-height: 2rem; }
@@ -3622,8 +3595,8 @@ th {
 @media (max-width: 480px) {
   #inventoryTable { font-size: 0.78rem; }
   #inventoryTable th, #inventoryTable td { padding: 0.14rem 0.12rem; }
-  #inventoryTable .icon-btn { width: 1.8rem; height: 1.8rem; }
-  #inventoryTable .icon-svg { width: 0.8rem; height: 0.8rem; }
+  .icon-btn { width: 1.8rem; height: 1.8rem; }
+  .icon-svg { width: 0.8rem; height: 0.8rem; }
 }
 
 
@@ -3850,12 +3823,4 @@ th {
 
 #inventoryTable td.icon-col .collectable-status svg {
   display: none;
-}
-
-/* Debug modal styling */
-#debugModalContent {
-  max-height: 60vh;
-  overflow-y: auto;
-  font-family: monospace;
-  white-space: pre-wrap;
 }

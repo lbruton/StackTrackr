@@ -177,6 +177,12 @@ const addCompositionOption = (value) => {
 };
 
 /**
+ * Extracts the first complete word from a composition string
+ *
+ * @param {string} composition - Raw composition description
+ * @returns {string} First word of the composition
+ */
+/**
  * Extracts up to the first two words from a composition string
  * while removing parenthetical content and numeric values.
  *
@@ -551,19 +557,8 @@ const detectCurrency = (str = "") => {
  * @param {string} str - Input string
  * @returns {string} Cleaned string containing only letters, numbers, and spaces
  */
-const stripNonAlphanumeric = (str = "", { allowHyphen = false, allowSlash = false } = {}) =>
-  str
-    .toString()
-    .replace(
-      allowHyphen && allowSlash
-        ? /[^a-zA-Z0-9 \\/-]/g
-        : allowHyphen
-        ? /[^a-zA-Z0-9 -]/g
-        : allowSlash
-        ? /[^a-zA-Z0-9 \\/]/g
-        : /[^a-zA-Z0-9 ]/g,
-      ""
-    );
+const stripNonAlphanumeric = (str = "", allowHyphen = false) =>
+  str.toString().replace(allowHyphen ? /[^a-zA-Z0-9 -]/g : /[^a-zA-Z0-9 ]/g, "");
 
 /**
  * Cleans a string by stripping HTML tags and control characters while
@@ -593,11 +588,10 @@ const sanitizeObjectFields = (obj) => {
   for (const key of Object.keys(cleaned)) {
     if (typeof cleaned[key] === "string" && key !== 'notes') {
       const allowHyphen = key === 'date';
-      const allowSlash = key === 'name';
       cleaned[key] =
         key === 'purchaseLocation'
           ? cleanString(cleaned[key])
-          : stripNonAlphanumeric(cleaned[key], { allowHyphen, allowSlash });
+          : stripNonAlphanumeric(cleaned[key], allowHyphen);
     }
   }
   return cleaned;
@@ -1042,6 +1036,8 @@ const closeModalById = (id) => {
   }
   try { if (document && document.body) document.body.style.overflow = ''; } catch (e) {}
 };
+
+window.closeModalById = closeModalById;
 /**
  * Opens a modal by id and sets body overflow to hidden.
  * Also initializes a click-outside-to-close handler once.
@@ -1071,6 +1067,8 @@ const openModalById = (id) => {
     /* ignore */
   }
 };
+
+window.openModalById = openModalById;
 /**
  * Generates comprehensive HTML storage report with theme support
  */
@@ -2499,6 +2497,12 @@ This archive contains a complete snapshot of your StackrTrackr storage data.`;
   return content;
 };
 
+// Make storage report functions globally available
+window.updateStorageStats = updateStorageStats;
+window.downloadStorageReport = downloadStorageReport;
+window.openStorageReportPopup = openStorageReportPopup;
+
+
 /** Storage compression helpers (Phase 1C) */
 const __ST_COMP_PREFIX = 'CMP1:';
 function __compressIfNeeded(str){
@@ -2518,35 +2522,6 @@ function __decompressIfNeeded(stored){
     return stored;
   }catch(e){ return stored; }
 }
-/**
- * Returns black or white contrast color for a given background.
- * Supports hex strings and CSS variables.
- * @param {string} bg - Background color in hex or CSS var format
- * @returns {string} '#000000' or '#ffffff'
- */
-function getContrastColor(bg) {
-  if (!bg) return '#000000';
-  let hex = bg.trim();
-  if (hex.startsWith('var(')) {
-    const varName = hex.slice(4, -1).trim();
-    hex = getComputedStyle(document.documentElement)
-      .getPropertyValue(varName)
-      .trim();
-  }
-  if (hex.startsWith('#')) {
-    hex = hex.slice(1);
-  }
-  if (hex.length === 3) {
-    hex = hex.split('').map(c => c + c).join('');
-  }
-  if (hex.length !== 6) return '#000000';
-  const r = parseInt(hex.slice(0, 2), 16);
-  const g = parseInt(hex.slice(2, 4), 16);
-  const b = parseInt(hex.slice(4, 6), 16);
-  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-  return luminance > 0.5 ? '#000000' : '#ffffff';
-}
-
 /** Generates a storage utilization report */
 function generateStorageReport(){
   try{
@@ -2563,24 +2538,7 @@ function generateStorageReport(){
   }catch(e){ return { totalKB:0, items:[] }; }
 }
 if (typeof window !== 'undefined') {
-  window.getContrastColor = getContrastColor;
   window.generateStorageReport = generateStorageReport;
   window.updateSpotTimestamp = updateSpotTimestamp;
   window.cleanupStorage = cleanupStorage;
-  window.checkFileSize = checkFileSize;
-  window.MAX_LOCAL_FILE_SIZE = MAX_LOCAL_FILE_SIZE;
-  window.closeModalById = closeModalById;
-  window.openModalById = openModalById;
-  window.updateStorageStats = updateStorageStats;
-  window.downloadStorageReport = downloadStorageReport;
-  window.openStorageReportPopup = openStorageReportPopup;
-}
-
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports = {
-    stripNonAlphanumeric,
-    sanitizeObjectFields,
-    sanitizeImportedItem,
-    getContrastColor,
-  };
 }

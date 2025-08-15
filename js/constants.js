@@ -257,7 +257,7 @@ const API_PROVIDERS = {
  * Example: 3.03.02a → branch 3, release 03, patch 02, alpha
  */
 
-const APP_VERSION = "3.04.82";
+const APP_VERSION = "3.04.74";
 
 /**
  * @constant {string} DEFAULT_CURRENCY - Default currency code for monetary formatting
@@ -869,7 +869,6 @@ if (typeof window !== "undefined") {
   window.METALS = METALS;
   window.DEBUG = DEBUG;
   window.DEFAULT_CURRENCY = DEFAULT_CURRENCY;
-  window.MAX_LOCAL_FILE_SIZE = MAX_LOCAL_FILE_SIZE;
   window.BRANDING_DOMAIN_OPTIONS = BRANDING_DOMAIN_OPTIONS;
   window.BRANDING_DOMAIN_OVERRIDE = BRANDING_DOMAIN_OVERRIDE;
   window.getTemplateVariables = getTemplateVariables;

@@ -113,10 +113,6 @@ const elements = {
   cancelNotesBtn: null,
   notesCloseBtn: null,
 
-  // Debug modal elements
-  debugModal: null,
-  debugCloseBtn: null,
-
   // Details modal elements
   detailsModal: null,
   detailsModalTitle: null,
@@ -136,7 +132,6 @@ const elements = {
   firstPage: null,
   lastPage: null,
   pageNumbers: null,
-  itemCount: null,
 
   // Change log elements
     changeLogBtn: null,
