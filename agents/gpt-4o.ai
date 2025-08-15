@@ -7,3 +7,5 @@
 - 2025-08-16: Session start - plan to render active filter chips on initial load by calling renderActiveFilters after renderTable.
 - 2025-08-16: Added renderActiveFilters call post-renderTable; filter chips now display on initial load (gpt-4o)
 
+- 2025-08-17: Session start - plan to wrap #itemCount and itemsPerPage in table-footer-controls and remove old control-group (gpt-4o)
+- 2025-08-17: Wrapped #itemCount with itemsPerPage in table-footer-controls and updated styles for flex layout (gpt-4o)

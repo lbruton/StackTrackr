@@ -531,16 +531,6 @@
                   <option value="no">No</option>
                 </select>
               </div>
-              <div class="control-group">
-                <label for="itemsPerPage" class="control-label">Table Rows:</label>
-                <select class="control-select" id="itemsPerPage">
-                  <option value="10" selected>10</option>
-                  <option value="15">15</option>
-                  <option value="25">25</option>
-                  <option value="50">50</option>
-                  <option value="100">100</option>
-                </select>
-              </div>
             </div>
           </div>
         </section>
@@ -690,11 +680,20 @@
             </tr>
           </thead>
           <tbody></tbody>
-        </table>
-        <div id="itemCount" class="table-item-count"></div>
-      </section>
-      <!-- Pagination Controls -->
-      <section class="pagination-section">
+          </table>
+          <div class="table-footer-controls">
+            <div id="itemCount" class="table-item-count"></div>
+            <select id="itemsPerPage" class="control-select" title="Rows per page">
+              <option value="10" selected>10</option>
+              <option value="15">15</option>
+              <option value="25">25</option>
+              <option value="50">50</option>
+              <option value="100">100</option>
+            </select>
+          </div>
+        </section>
+        <!-- Pagination Controls -->
+        <section class="pagination-section">
           <div class="pagination-container">
             <div class="pagination-controls">
               <div class="pagination-buttons">
