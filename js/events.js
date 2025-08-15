@@ -1508,23 +1508,7 @@ const setupSearch = () => {
         elements.clearBtn,
         "click",
         function () {
-          if (typeof clearAllFilters === "function") {
-            clearAllFilters();
-          } else {
-            if (elements.searchInput) {
-              elements.searchInput.value = "";
-            }
-            searchQuery = "";
-            columnFilters = {};
-            currentPage = 1;
-            renderTable();
-          }
-          if (elements.typeFilter) {
-            elements.typeFilter.value = "";
-          }
-          if (elements.metalFilter) {
-            elements.metalFilter.value = "";
-          }
+          clearAllFilters();
         },
         "Clear search button",
       );

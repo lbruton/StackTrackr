@@ -13,10 +13,16 @@ const clearAllFilters = () => {
   activeFilters = {};
   columnFilters = {};
   searchQuery = '';
-  
+
   const searchInput = document.getElementById('searchInput');
   if (searchInput) searchInput.value = '';
-  
+
+  const typeFilter = document.getElementById('typeFilter');
+  if (typeFilter) typeFilter.value = '';
+
+  const metalFilter = document.getElementById('metalFilter');
+  if (metalFilter) metalFilter.value = '';
+
   currentPage = 1;
   renderTable();
   renderActiveFilters();
