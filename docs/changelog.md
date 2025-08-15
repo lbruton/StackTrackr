@@ -1,11 +1,16 @@
 # StackrTrackr — Changelog
 
-> **Latest release: v3.04.82**
+> **Latest release: v3.04.86**
 
 
 For upcoming work, see [announcements](announcements.md).
 
 ## 📋 Version History
+
+### Version 3.04.86 – Centered Name header (2025-08-17)
+- Wrapped “Name” header text with `.header-text` span for consistent alignment.
+- Removed obsolete `#inventoryTable th[data-column="name"]` centering rule.
+- **Files Updated**: `index.html`, `css/styles.css`, `docs/changelog.md`
 
 ### Version 3.04.82 – Logo height via CSS (2025-08-15)
 - Removed invalid height attribute from Stackr logo SVG, relying on CSS for sizing.
