@@ -31,3 +31,4 @@ Your primary role on the StackTrackr project is **Feature Implementation and Gen
 - 2025-08-15: Cached pagination item count element in state and init for global access (GPT)
 - 2025-08-15: Started dynamic item counter implementation (GPT)
 - 2025-08-15: Implemented dynamic item count refresh in renderTable (GPT)
+- 2025-08-15: Added browser-safe exports for fuzzy-search utilities (GPT)

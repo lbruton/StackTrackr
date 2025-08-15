@@ -187,13 +187,25 @@ const fuzzySearch = (query, targets, options = {}) => {
   return results.slice(0, maxResults);
 };
 
-// Exporting functions for external use
-module.exports = {
-  normalizeString,
-  tokenizeWords,
-  generateNGrams,
-  calculateLevenshteinDistance,
-  fuzzyMatch,
-  fuzzySearch,
-};
+// Exporting functions for external use in Node.js
+if (typeof module !== "undefined" && module.exports) {
+  module.exports = {
+    normalizeString,
+    tokenizeWords,
+    generateNGrams,
+    calculateLevenshteinDistance,
+    fuzzyMatch,
+    fuzzySearch,
+  };
+}
+
+// Expose functions to the browser global scope
+if (typeof window !== "undefined") {
+  window.normalizeString = normalizeString;
+  window.tokenizeWords = tokenizeWords;
+  window.generateNGrams = generateNGrams;
+  window.calculateLevenshteinDistance = calculateLevenshteinDistance;
+  window.fuzzyMatch = fuzzyMatch;
+  window.fuzzySearch = fuzzySearch;
+}
 
