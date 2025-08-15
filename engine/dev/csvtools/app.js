@@ -162,3 +162,27 @@ document.getElementById('closeModal').addEventListener('click', () => {
 
 // Click outside to close
 modal.addEventListener('click', (e) => { if (e.target === modal) { modal.classList.remove('open'); modal.setAttribute('aria-hidden','true'); } });
+
+// Calculation panels
+function computeAggregates(results) {
+  const vals = results.filter(v => typeof v === 'number');
+  const sum = vals.reduce((a,b)=>a+b,0);
+  const count = vals.length;
+  const mean = count? sum/count : 0;
+  const min = count? Math.min(...vals) : 0;
+  const max = count? Math.max(...vals) : 0;
+  return {count, sum, mean, min, max};
+}
+
+document.querySelectorAll('.panel-apply').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const id = btn.dataset.panel;
+    const formula = document.getElementById(`formula-${id}`).value;
+    if (!parsedData) { alert('Load a CSV first'); return; }
+    const jsExpr = translateFormula(formula);
+    const results = applyFormulaToData(jsExpr);
+    const agg = computeAggregates(results);
+    const out = document.getElementById(`output-${id}`);
+    out.innerHTML = `<div>Count: ${agg.count}</div><div>Sum: ${agg.sum.toFixed(2)}</div><div>Mean: ${agg.mean.toFixed(2)}</div><div>Min: ${agg.min}</div><div>Max: ${agg.max}</div>`;
+  });
+});
