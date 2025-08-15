@@ -6,11 +6,20 @@
 > **🚨 CRITICAL**: All agents MUST check this file on initialization and before making any script/module changes
 
 ---
+## 🔄 **MANDATORY INITIALIZATION PROTOCOL**
+
 1. ✅ Read this file (`/agents.ai`) completely
-2. ✅ **Unless given a specific task, start with items from `/docs/roadmap.md`** - prioritize Critical Bugs, then Bug Fixes, then Feature Enhancements
-3. ✅ Review current git status and create checkpoint if needed
-4. ✅ Report status using standard format
-5. ✅ Reference script loading order before any file modifications
+2. ✅ **🚨 CRITICAL: ALWAYS check `/docs/roadmap.md` FIRST** - Review current bugs, priorities, and project status before ANY work
+3. ✅ **Unless given a specific task, start with items from `/docs/roadmap.md`** - prioritize Critical Bugs, then Bug Fixes, then Feature Enhancements
+4. ✅ Review current git status and create checkpoint if needed
+5. ✅ Report status using standard format
+6. ✅ Reference script loading order before any file modifications
+
+**🎯 Roadmap Protocol**: 
+- Check `/docs/roadmap.md` for active BUG-### items and pending features
+- Align any new work with existing roadmap priorities
+- Update roadmap when discovering new issues or completing items
+- Prevents duplicate work and ensures project coherence
 
 ---
 

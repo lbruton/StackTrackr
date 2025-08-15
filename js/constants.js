@@ -255,9 +255,10 @@ const API_PROVIDERS = {
  * Follows BRANCH.RELEASE.PATCH.state format
  * State codes: a=alpha, b=beta, rc=release candidate
  * Example: 3.03.02a → branch 3, release 03, patch 02, alpha
+ * Updated: 2025-08-15 - Price column styling consistency fixes
  */
 
-const APP_VERSION = "3.04.86";
+const APP_VERSION = "3.04.87";
 
 /**
  * @constant {string} DEFAULT_CURRENCY - Default currency code for monetary formatting

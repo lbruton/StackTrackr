@@ -619,7 +619,13 @@
                   <line x1="12" y1="1" x2="12" y2="23"/>
                   <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
                 </svg>
-                Price
+                Purchase Price
+              </th>
+              <th class="shrink" data-column="marketValue" title="USD">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="header-icon">
+                  <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+                </svg>
+                Market Value
               </th>
               <th class="shrink" data-column="spot" title="USD">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="header-icon">
@@ -1232,7 +1238,7 @@
                 />
               </div>
             </div>
-            <div id="editMarketValueField" style="display: none;">
+            <div id="editMarketValueField">
               <label for="editMarketValue">Market Value ($)</label>
               <div class="currency-input">
                 <input

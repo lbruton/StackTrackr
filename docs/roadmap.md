@@ -8,6 +8,36 @@
 
 - [ ] **Filter Chips Initial Styling Bug** - Chips display wrong styling on page load, correct after filter interaction (BUG-006)
 
+- [ ] **Filter Chip Color Consistency Bug** - Filter chips lose color consistency when filters change, colors shift after add/remove operations despite hash-based color generation fix (BUG-007)
+
+- [ ] **Filter Chips Dropdown Inverse Filtering Bug** - Filter chips dropdown is filtering inversely, expected behavior unclear, may affect core filtering functionality (BUG-008)
+
+- [ ] **CSV Import Price Data Loss Bug** - CSV imports no longer pulling estimated price and purchase prices from Numista import data, causing data loss during import process (BUG-009) ✅ **FIXED**
+
+- [ ] **Edit Button Hover Background Bug** - Edit action buttons still show background highlight on hover despite animation removal request, should have clean hover state (BUG-010) ✅ **FIXED**
+
+## ✅ **Recently Fixed**
+
+- [x] **Fraction Display Bug** - CSV imports converting "1/2" to "12" in name fields, resolved by re-importing data with corrected CSV processing (BUG-011 - FIXED via re-import)
+
+- [x] **Default Filter Pagination** - Changed default items per page from 25 to 10 for better initial user experience (IMPROVEMENT-001 - COMPLETED)
+
+- [x] **Numerical Value Consistency** - Standardized font sizes and added subtle color coding for all numerical columns (qty, weight, prices, premiums) (IMPROVEMENT-002 - COMPLETED)
+
+## 🎨 **Design Language & UI Modernization**
+
+- [ ] **Establish Multi-Tool Design Language** - Create unified design system across StackTrackr, VulnTrackr, and Network Inventory Tool based on excellent table design from Network Inventory Tool (DESIGN-001)
+
+- [ ] **Redesign Totals Cards** - Redesign totals cards popups to match VulnTrackr style with stats grid layout and better visual hierarchy (DESIGN-002)
+
+- [ ] **Clean Up Spot Price Section** - Remove dropdown buttons under spot prices, simplify interface to match VulnTrackr clean design approach (DESIGN-003)
+
+- [ ] **Task Organization and Delegation System** - Review all tasks/todo lists across projects, organize by priority and complexity, assign delegates/ownership to each task (MGMT-001)
+
+- [ ] **Weekly Memory Gap Analysis** - Systematic weekly review of memory coverage, identify and fill weak points in context preservation, ensure agent handoff continuity (MGMT-002)
+
+- [ ] **Monthly Roadmap Review and Update** - Comprehensive monthly review of roadmap items, update priorities, archive completed tasks, add new requirements (MGMT-003)
+
 - [ ] Fuzzy search filter shows American Gold Eagle when typing "Eagle" or "Silver Eagle" - needs refinement
 
 - [ ] Error recovery procedures missing for critical failures
