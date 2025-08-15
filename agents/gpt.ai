@@ -36,3 +36,4 @@ Your primary role on the StackTrackr project is **Feature Implementation and Gen
 - 2025-08-15: Exported `checkFileSize` and `MAX_LOCAL_FILE_SIZE` to window and verified availability (GPT)
 - 2025-08-17: Wrapped Name header text with span and removed obsolete centering CSS (GPT)
 
+- 2025-08-19: Introduced contrast-aware chip text colors with helper and CSS variable (GPT)

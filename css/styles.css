@@ -41,6 +41,7 @@
   /* Map existing text variables */
   --text-primary: var(--text);
   --text-secondary: var(--text-muted);
+  --chip-text: #1b232c;
 
   /* Border & Shadow - Light grays */
   --border: #cbd5e1;
@@ -135,6 +136,7 @@
   --text-primary: #f8fafc;
   --text-secondary: #cbd5e1;
   --text-muted: #94a3b8;
+  --chip-text: #f8fafc;
 
   /* Border & Shadow - Dark Mode */
   --border: #334155;
@@ -188,6 +190,7 @@
   --text-primary: #3e2f1e;
   --text-secondary: #5a4a36;
   --text-muted: #6f604e;
+  --chip-text: #3e2f1e;
 
   /* Border & Shadow - Sepia Mode */
   --border: #d1c2a5;
@@ -3263,7 +3266,7 @@ td input:checked + .slider:before {
   align-items: center;
   justify-content: center;
   gap: var(--spacing-xs);
-  color: #f8fafc;
+  color: var(--chip-text);
   padding: 0.25rem 0.5rem;
   border-radius: var(--radius);
   font-size: 0.75rem;

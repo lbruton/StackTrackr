@@ -2518,6 +2518,35 @@ function __decompressIfNeeded(stored){
     return stored;
   }catch(e){ return stored; }
 }
+/**
+ * Returns black or white contrast color for a given background.
+ * Supports hex strings and CSS variables.
+ * @param {string} bg - Background color in hex or CSS var format
+ * @returns {string} '#000000' or '#ffffff'
+ */
+function getContrastColor(bg) {
+  if (!bg) return '#000000';
+  let hex = bg.trim();
+  if (hex.startsWith('var(')) {
+    const varName = hex.slice(4, -1).trim();
+    hex = getComputedStyle(document.documentElement)
+      .getPropertyValue(varName)
+      .trim();
+  }
+  if (hex.startsWith('#')) {
+    hex = hex.slice(1);
+  }
+  if (hex.length === 3) {
+    hex = hex.split('').map(c => c + c).join('');
+  }
+  if (hex.length !== 6) return '#000000';
+  const r = parseInt(hex.slice(0, 2), 16);
+  const g = parseInt(hex.slice(2, 4), 16);
+  const b = parseInt(hex.slice(4, 6), 16);
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  return luminance > 0.5 ? '#000000' : '#ffffff';
+}
+
 /** Generates a storage utilization report */
 function generateStorageReport(){
   try{
@@ -2534,6 +2563,7 @@ function generateStorageReport(){
   }catch(e){ return { totalKB:0, items:[] }; }
 }
 if (typeof window !== 'undefined') {
+  window.getContrastColor = getContrastColor;
   window.generateStorageReport = generateStorageReport;
   window.updateSpotTimestamp = updateSpotTimestamp;
   window.cleanupStorage = cleanupStorage;
@@ -2551,5 +2581,6 @@ if (typeof module !== 'undefined' && module.exports) {
     stripNonAlphanumeric,
     sanitizeObjectFields,
     sanitizeImportedItem,
+    getContrastColor,
   };
 }
