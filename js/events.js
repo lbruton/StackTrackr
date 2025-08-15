@@ -2107,9 +2107,14 @@ const handleTableClick = (e) => {
   } else if (target.matches('.filter-text')) {
     // Handle filter clicks
     const field = target.dataset.field;
-    const value = target.dataset.value;
-    if (field && value !== undefined && typeof applyColumnFilter === 'function') {
-      applyColumnFilter(field, value);
+    const valueStr = target.dataset.value;
+    if (field && valueStr !== undefined && typeof applyColumnFilter === 'function') {
+      try {
+        const value = JSON.parse(valueStr);
+        applyColumnFilter(field, value);
+      } catch (e) {
+        console.warn('Failed to parse filter value:', valueStr);
+      }
     }
   } else if (target.matches('.catalog-link')) {
     // Handle Numista modal clicks
@@ -2119,6 +2124,9 @@ const handleTableClick = (e) => {
     if (typeof openNumistaModal === 'function' && numistaId && coinName) {
       openNumistaModal(numistaId, coinName);
     }
+  } else if (target.matches('.info-link')) {
+    // Allow info links to open normally but stop propagation
+    e.stopPropagation();
   }
 };
 
@@ -2162,6 +2170,18 @@ const handleTableKeydown = (e) => {
     const field = target.dataset.field;
     if (typeof startCellEdit === 'function' && field) {
       startCellEdit(idx, field, target);
+    }
+  } else if (target.matches('.filter-text')) {
+    e.preventDefault();
+    const field = target.dataset.field;
+    const valueStr = target.dataset.value;
+    if (field && valueStr !== undefined && typeof applyColumnFilter === 'function') {
+      try {
+        const value = JSON.parse(valueStr);
+        applyColumnFilter(field, value);
+      } catch (e) {
+        console.warn('Failed to parse filter value:', valueStr);
+      }
     }
   }
 };
