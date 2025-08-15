@@ -270,11 +270,11 @@ const setupAckModalEvents = () => {
  */
 const getEmbeddedWhatsNew = () => {
   return `
-    <li><strong>v3.04.73 – Changelog loading fix</strong>: Resolved "Unable to load changelog" error by adding embedded fallback data for version notifications and about modal content.</li>
-    <li><strong>v3.04.72 – Complete filter logic overhaul</strong>: Fixed dual chip system conflicts, implemented fully clickable filter chips, resolved search precision issues, and eliminated duplicate displays. Filter system now works exactly as intended.</li>
-    <li><strong>v3.04.71 – Search precision fix</strong>: Fixed search logic where "Silver Eagle" was incorrectly matching "Gold Eagle" items. Multi-word searches now require ALL words to match.</li>
-    <li><strong>v3.04.70 – Grouped filter chips</strong>: Added grouped name chips feature with toggle - consolidates similar items like "American Silver Eagle (3)" instead of separate year variants.</li>
-    <li><strong>v3.04.67 – Enhanced mobile tables</strong>: Improved responsive table design with darker light theme and better mobile cell wrapping.</li>
+    <li><strong>v3.04.86 – Centered Name header</strong>: Wrapped "Name" header text with .header-text span for consistent alignment and removed obsolete centering rules.</li>
+    <li><strong>v3.04.82 – Logo height via CSS</strong>: Removed invalid height attribute from Stackr logo SVG, relying on CSS for proper sizing.</li>
+    <li><strong>v3.04.81 – Composition helper cleanup</strong>: Removed obsolete composition helper comment and synchronized documentation.</li>
+    <li><strong>v3.04.76 – Table Item Counter</strong>: Added dynamic item counter below the inventory table displaying the number of visible items with muted, right-aligned styling.</li>
+    <li><strong>v3.04.74 – CSV Import/Export Fixes</strong>: Fixed undefined notes reference in imports, improved CSV export cleanup, and restored global access for import/export functions.</li>
   `;
 };
 

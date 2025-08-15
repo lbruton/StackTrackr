@@ -3088,7 +3088,7 @@ td input:checked + .slider:before {
    ============================================================================= */
 
 .search-section {
-  margin-bottom: var(--spacing-lg);
+  margin-bottom: var(--spacing);
 }
 
 .search-container {
@@ -3099,6 +3099,68 @@ td input:checked + .slider:before {
 
 #searchInput {
   flex: 1;
+}
+
+.modern-icon-btn {
+  width: 2.75rem;
+  height: 2.75rem;
+  padding: 0.5rem;
+  min-width: 2.75rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  border-radius: var(--radius);
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.modern-icon-btn:hover {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.modern-icon-btn:active {
+  transform: translateY(0);
+}
+
+.modern-icon-btn:focus {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.modern-icon-btn svg {
+  width: 1.25rem;
+  height: 1.25rem;
+  transition: transform 0.2s ease;
+}
+
+.modern-icon-btn:hover svg {
+  transform: scale(1.1);
+}
+
+/* Theme-specific adjustments */
+[data-theme="dark"] .modern-icon-btn {
+  background: var(--bg-tertiary);
+  border-color: var(--border);
+}
+
+[data-theme="dark"] .modern-icon-btn:hover {
+  background: var(--primary);
+  box-shadow: 0 2px 12px rgba(59, 130, 246, 0.3);
+}
+
+[data-theme="sepia"] .modern-icon-btn {
+  background: var(--bg-tertiary);
+  border-color: var(--border);
+}
+
+[data-theme="sepia"] .modern-icon-btn:hover {
+  background: var(--primary);
+  box-shadow: 0 2px 8px rgba(139, 69, 19, 0.2);
 }
 
 .autocomplete-dropdown {
@@ -3143,8 +3205,8 @@ td input:checked + .slider:before {
    ============================================================================= */
 
 .search-filters {
-  margin-top: var(--spacing);
-  padding-top: var(--spacing);
+  margin-top: var(--spacing-sm);
+  padding-top: var(--spacing-sm);
   border-top: 1px solid var(--border);
   display: flex;
   flex-direction: column;
@@ -3705,8 +3767,27 @@ input:disabled + .slider {
     align-items: stretch;
   }
 
-  .search-container .btn {
+  .search-container .btn:not(.modern-icon-btn) {
     width: 100%;
+  }
+
+  .search-container .modern-icon-btn {
+    width: 2.75rem;
+    height: 2.75rem;
+    align-self: center;
+  }
+
+  .search-container {
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--spacing-xs);
+  }
+
+  .search-container #searchInput {
+    flex: 1;
+    min-width: 200px;
   }
 
   .totals {

@@ -87,8 +87,34 @@ const populateVersionModal = (version, html) => {
  */
 const getEmbeddedChangelog = (version) => {
   const changelogs = {
+    "3.04.86": `
+      <li><strong>Centered Name header</strong>: Wrapped "Name" header text with .header-text span for consistent alignment</li>
+      <li><strong>Cleanup</strong>: Removed obsolete #inventoryTable th[data-column="name"] centering rule</li>
+      <li><strong>Files Updated</strong>: index.html, css/styles.css, docs/changelog.md</li>
+    `,
+    "3.04.82": `
+      <li><strong>Logo height via CSS</strong>: Removed invalid height attribute from Stackr logo SVG</li>
+      <li><strong>Improved Styling</strong>: Now relying on CSS for proper logo sizing</li>
+      <li><strong>Files Updated</strong>: index.html, docs/changelog.md</li>
+    `,
+    "3.04.81": `
+      <li><strong>Composition helper cleanup</strong>: Removed obsolete composition helper comment</li>
+      <li><strong>Documentation sync</strong>: Synchronized documentation across files</li>
+      <li><strong>Files Updated</strong>: js/utils.js, README.md, docs/changelog.md</li>
+    `,
+    "3.04.76": `
+      <li><strong>Inventory Insight</strong>: Added dynamic item counter below the inventory table displaying the number of visible items</li>
+      <li><strong>Styling</strong>: Muted text, right-aligned using .table-item-count for a subtle appearance</li>
+      <li><strong>Files Updated</strong>: index.html, css/styles.css, js/state.js, js/inventory.js</li>
+    `,
+    "3.04.74": `
+      <li><strong>Import Reliability</strong>: Fixed undefined notes reference and removed unnecessary file input reset in importCsv</li>
+      <li><strong>Export Cleanup</strong>: Released object URLs after CSV download to free resources</li>
+      <li><strong>Global Access</strong>: Restored global exports for import/export functions and summary utilities</li>
+      <li><strong>Files Updated</strong>: js/inventory.js, js/constants.js</li>
+    `,
     "3.04.73": `
-      <li><strong>Hotfix</strong>: Resolved "Unable to load changelog" error in version modal</li>
+      <li><strong>Hotfix</strong>: Resolved "Unable to load changelog" error in version modal and about dialog</li>
       <li><strong>Enhanced Error Handling</strong>: Added embedded fallback data for changelog and announcements when file:// protocol blocks fetch requests</li>
       <li><strong>Improved Reliability</strong>: Version change notifications now work consistently regardless of file access restrictions</li>
       <li><strong>Better User Experience</strong>: About modal and version dialogs display proper content even when offline or in restricted environments</li>
