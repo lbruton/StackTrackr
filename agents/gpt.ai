@@ -29,3 +29,5 @@ Your primary role on the StackTrackr project is **Feature Implementation and Gen
 - 2025-08-14: Added debug modal and enhanced import/export/table logging (GPT)
 - 2025-08-15: Inserted item count placeholder below inventory table and added styling (GPT)
 - 2025-08-15: Cached pagination item count element in state and init for global access (GPT)
+- 2025-08-15: Started dynamic item counter implementation (GPT)
+- 2025-08-15: Implemented dynamic item count refresh in renderTable (GPT)
