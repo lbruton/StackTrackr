@@ -12,3 +12,4 @@
 
 - 2025-08-16: Inserted renderActiveFilters call after renderTable in init.js to show filter chips on initial load (gpt-4o)
 
+- 2025-08-17: Enabled slash preservation in item names by extending sanitization helper and adding unit test (gpt-4-1)
