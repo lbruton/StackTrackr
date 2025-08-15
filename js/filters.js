@@ -24,8 +24,9 @@ const clearAllFilters = () => {
   if (metalFilter) metalFilter.value = '';
 
   currentPage = 1;
-  renderTable();
+  // Update chip UI before rerendering the table
   renderActiveFilters();
+  renderTable();
 };
 
 /**
