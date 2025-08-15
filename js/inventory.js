@@ -994,7 +994,8 @@ const hideEmptyColumns = () => {
 
 const renderTable = () => {
   return monitorPerformance(() => {
-    const filteredInventory = filterInventory();
+    // Ensure filterInventory is available (search.js may still be loading)
+    const filteredInventory = typeof filterInventory === 'function' ? filterInventory() : inventory;
     updateItemCount(filteredInventory.length, inventory.length);
     const sortedInventory = sortInventory(filteredInventory);
     debugLog('renderTable start', sortedInventory.length, 'items');

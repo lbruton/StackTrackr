@@ -2574,6 +2574,7 @@ if (typeof window !== 'undefined') {
   window.updateStorageStats = updateStorageStats;
   window.downloadStorageReport = downloadStorageReport;
   window.openStorageReportPopup = openStorageReportPopup;
+  window.debounce = debounce;
 }
 
 if (typeof module !== 'undefined' && module.exports) {
@@ -2582,5 +2583,6 @@ if (typeof module !== 'undefined' && module.exports) {
     sanitizeObjectFields,
     sanitizeImportedItem,
     getContrastColor,
+    debounce,
   };
 }
