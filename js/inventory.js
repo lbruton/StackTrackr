@@ -1565,6 +1565,12 @@ const importCsv = (file, override = false) => {
 
         saveInventory();
         renderTable();
+        if (typeof renderActiveFilters === 'function') {
+          renderActiveFilters();
+        }
+        if (typeof updateTypeSummary === 'function') {
+          updateTypeSummary();
+        }
         if (typeof updateStorageStats === 'function') {
           updateStorageStats();
         }
@@ -1783,6 +1789,12 @@ const importNumistaCsv = (file, override = false) => {
 
         saveInventory();
         renderTable();
+        if (typeof renderActiveFilters === 'function') {
+          renderActiveFilters();
+        }
+        if (typeof updateTypeSummary === 'function') {
+          updateTypeSummary();
+        }
         if (typeof updateStorageStats === 'function') {
           updateStorageStats();
         }
@@ -2114,6 +2126,12 @@ const importJson = (file, override = false) => {
 
       saveInventory();
       renderTable();
+      if (typeof renderActiveFilters === 'function') {
+        renderActiveFilters();
+      }
+      if (typeof updateTypeSummary === 'function') {
+        updateTypeSummary();
+      }
       if (typeof updateStorageStats === "function") {
         updateStorageStats();
       }
