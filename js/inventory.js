@@ -426,9 +426,20 @@ const sanitizeTablesOnLoad = () => {
  * @throws {Error} Logs errors to console if localStorage access fails
  */
 const loadInventory = () => {
-  const data = loadData(LS_KEY, []);
-  // Migrate legacy data to include new fields
-  inventory = data.map(item => {
+  try {
+    // For now, use synchronous loading to maintain compatibility
+    // TODO: Convert to async when updating all callers
+    const data = loadDataSync(LS_KEY, []);
+    
+    // Ensure data is an array
+    if (!Array.isArray(data)) {
+      console.warn('Inventory data is not an array, resetting to empty array');
+      inventory = [];
+      return;
+    }
+    
+    // Migrate legacy data to include new fields
+    inventory = data.map(item => {
     let normalized;
     // Handle legacy data that might not have all fields
     if (item.premiumPerOz === undefined) {
@@ -459,6 +470,7 @@ const loadInventory = () => {
         purchaseLocation: item.purchaseLocation || "",
         storageLocation: item.storageLocation || "Unknown",
         notes: item.notes || "",
+        marketValue: item.marketValue || 0,
         isCollectable: item.isCollectable !== undefined ? item.isCollectable : false,
         composition: item.composition || item.metal || ""
       };
@@ -489,6 +501,10 @@ const loadInventory = () => {
     if (removed > 0 && DEBUG) {
       console.log(`Removed ${removed} orphaned catalog mappings`);
     }
+  }
+  } catch (error) {
+    console.error('Error loading inventory:', error);
+    inventory = [];
   }
 };
 
@@ -536,7 +552,14 @@ const dateColors = {};
 
 const getColor = (map, key) => {
   if (!(key in map)) {
-    map[key] = (Object.keys(map).length * 137) % 360; // distribute hues using golden angle
+    // Use a simple hash function based on the key itself to ensure consistent colors
+    let hash = 0;
+    for (let i = 0; i < key.length; i++) {
+      const char = key.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash; // Convert to 32-bit integer
+    }
+    map[key] = Math.abs(hash) % 360; // Use hash for hue distribution
   }
   const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
   const lightness = isDark ? 65 : 35;
@@ -1022,7 +1045,21 @@ const renderTable = () => {
       <td class="shrink" data-column="qty">${filterLink('qty', item.qty, 'var(--text-primary)')}</td>
       <td class="expand" data-column="name" style="text-align: left;">${filterLink('name', item.name, 'var(--text-primary)')}</td>
       <td class="shrink" data-column="weight">${filterLink('weight', item.weight, 'var(--text-primary)', formatWeight(item.weight), item.weight < 1 ? 'Grams (g)' : 'Troy ounces (ozt)')}</td>
-  <td class="shrink" data-column="purchasePrice" title="USD">${filterLink('price', item.price, 'var(--text-primary)', (item.price && item.price > 0) ? formatCurrency(item.price) : '—')}</td>
+      <td class="shrink" data-column="purchasePrice" title="USD">
+        <span class="price-toggle" onclick="togglePriceView(${originalIdx})" tabindex="0" role="button" 
+              onkeydown="if(event.key==='Enter'||event.key===' ')togglePriceView(${originalIdx})" 
+              title="Click to toggle between purchase price and market value" 
+              style="color: var(--text-primary); cursor: pointer;">
+          ${(() => {
+            const showingMarketValue = marketValueViewItems.has(originalIdx);
+            if (showingMarketValue && item.marketValue && item.marketValue > 0) {
+              return formatCurrency(item.marketValue) + ' 📊';
+            } else {
+              return (item.price && item.price > 0) ? formatCurrency(item.price) : '—';
+            }
+          })()}
+        </span>
+      </td>
       <td class="shrink" data-column="spot" title="USD">${filterLink('spotPriceAtPurchase', spotValue, 'var(--text-primary)', spotDisplay)}</td>
       <td class="shrink" data-column="premium" style="color: ${item.isCollectable ? 'var(--text-muted)' : (item.totalPremium > 0 ? 'var(--warning)' : 'inherit')}">${filterLink('totalPremium', premiumValue, 'var(--text-primary)', premiumDisplay)}</td>
       <td class="shrink" data-column="purchaseLocation">
@@ -1327,6 +1364,7 @@ const editItem = (idx, logIdx = null) => {
     elements.editWeight.dataset.unit = 'oz';
   }
   elements.editPrice.value = item.price > 0 ? item.price : '';
+  elements.editMarketValue.value = item.marketValue > 0 ? item.marketValue : '';
   elements.editPurchaseLocation.value = item.purchaseLocation;
   elements.editStorageLocation.value = item.storageLocation && item.storageLocation !== 'Unknown' ? item.storageLocation : '';
   
@@ -1341,6 +1379,14 @@ const editItem = (idx, logIdx = null) => {
   elements.editCatalog.value = item.numistaId || "";
   elements.editSerial.value = item.serial;
   document.getElementById("editCollectable").checked = item.isCollectable;
+  
+  // Show/hide market value field based on collectable status
+  if (elements.editMarketValueField) {
+    elements.editMarketValueField.style.display = item.isCollectable ? 'block' : 'none';
+  }
+  if (elements.editDateField) {
+    elements.editDateField.style.display = item.isCollectable ? 'none' : 'block';
+  }
 
   if (elements.undoChangeBtn) {
     elements.undoChangeBtn.style.display =
@@ -1399,6 +1445,22 @@ const toggleCollectable = (idx) => {
   saveInventory();
   renderTable();
   logItemChanges(oldItem, item);
+};
+
+/**
+ * Toggles price display between purchase price and market value
+ * 
+ * @param {number} idx - Index of item to toggle price view for
+ */
+const togglePriceView = (idx) => {
+  if (marketValueViewItems.has(idx)) {
+    marketValueViewItems.delete(idx);
+  } else {
+    marketValueViewItems.add(idx);
+  }
+  
+  // Re-render the table to update the price display
+  renderTable();
 };
 
 // =============================================================================
@@ -2301,6 +2363,7 @@ window.exportJson = exportJson;
 window.exportPdf = exportPdf;
 window.updateSummary = updateSummary;
 window.toggleCollectable = toggleCollectable;
+window.togglePriceView = togglePriceView;
 window.editItem = editItem;
 window.deleteItem = deleteItem;
 window.showNotes = showNotes;

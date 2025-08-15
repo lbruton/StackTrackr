@@ -31,6 +31,9 @@ let chartInstances = {
 /** @type {Set<string>} Available composition options */
 let compositionOptions = new Set(["Gold", "Silver", "Platinum", "Palladium", "Alloy"]);
 
+/** @type {Set<number>} Items currently showing market value instead of purchase price */
+let marketValueViewItems = new Set();
+
 /** @type {Object} Cached DOM elements for performance */
 const elements = {
   // Spot price elements
@@ -49,6 +52,9 @@ const elements = {
   itemWeight: null,
   itemWeightUnit: null,
   itemPrice: null,
+  itemMarketValue: null,
+  marketValueField: null,
+  dateField: null,
   purchaseLocation: null,
   storageLocation: null,
   itemNotes: null,
@@ -96,6 +102,9 @@ const elements = {
   editType: null,
   editWeight: null,
   editPrice: null,
+  editMarketValue: null,
+  editMarketValueField: null,
+  editDateField: null,
   editPurchaseLocation: null,
   editStorageLocation: null,
   editNotes: null,

@@ -479,7 +479,7 @@
         <section class="search-section">
           <div class="search-container">
             <button
-              class="btn modern-icon-btn"
+              class="btn search-action-btn add-btn"
               id="newItemBtn"
               title="Add new item"
               aria-label="Add new item"
@@ -489,6 +489,7 @@
                 <line x1="12" y1="8" x2="12" y2="16"/>
                 <line x1="8" y1="12" x2="16" y2="12"/>
               </svg>
+              <span>Add Item</span>
             </button>
             <input
               id="searchInput"
@@ -496,20 +497,19 @@
               type="text"
             />
             <button
-              class="btn modern-icon-btn"
+              class="btn search-action-btn clear-btn"
               id="clearBtn"
               title="Clear search"
               aria-label="Clear search"
             >
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="3,6 5,6 21,6"/>
-                <path d="m19,6v14a2,2 0 0,1 -2,2H7a2,2 0 0,1 -2,-2V6m3,0V4a2,2 0 0,1 2,-2h4a2,2 0 0,1 2,2v2"/>
-                <line x1="10" y1="11" x2="10" y2="17"/>
-                <line x1="14" y1="11" x2="14" y2="17"/>
+                <line x1="18" y1="6" x2="6" y2="18"/>
+                <line x1="6" y1="6" x2="18" y2="18"/>
               </svg>
+              <span>Clear</span>
             </button>
             <button
-              class="btn modern-icon-btn" id="changeLogBtn" title="Change log" aria-label="Change log">
+              class="btn search-action-btn log-btn" id="changeLogBtn" title="Change log" aria-label="Change log">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
                 <polyline points="14,2 14,8 20,8"/>
@@ -517,6 +517,7 @@
                 <line x1="16" y1="17" x2="8" y2="17"/>
                 <polyline points="10,9 9,9 8,9"/>
               </svg>
+              <span>Log</span>
             </button>
           </div>
           
@@ -536,7 +537,7 @@
                 </select>
               </div>
               <div class="control-group">
-                <label for="groupNameChips" class="control-label">Group Chips:</label>
+                <label for="groupNameChips" class="control-label">Smart Grouping:</label>
                 <select class="control-select" id="groupNameChips" title="Group similar item names (e.g., 'American Silver Eagle (3)' instead of separate year chips)">
                   <option value="yes" selected>Yes</option>
                   <option value="no">No</option>
@@ -1086,7 +1087,13 @@
                   <input id="itemPrice" min="0" step="0.01" type="number" />
                 </div>
               </div>
-              <div>
+              <div id="marketValueField" style="display: none;">
+                <label for="itemMarketValue">Market Value ($)</label>
+                <div class="currency-input">
+                  <input id="itemMarketValue" min="0" step="0.01" type="number" placeholder="Estimated market value" />
+                </div>
+              </div>
+              <div id="dateField">
                 <label for="itemDate">Purchase Date</label>
                 <input id="itemDate" required type="date" />
               </div>
@@ -1225,7 +1232,19 @@
                 />
               </div>
             </div>
-            <div>
+            <div id="editMarketValueField" style="display: none;">
+              <label for="editMarketValue">Market Value ($)</label>
+              <div class="currency-input">
+                <input
+                  id="editMarketValue"
+                  min="0"
+                  step="0.01"
+                  type="number"
+                  placeholder="Estimated market value"
+                />
+              </div>
+            </div>
+            <div id="editDateField">
               <label for="editDate">Purchase Date</label>
               <input id="editDate" type="date" />
             </div>
@@ -1664,6 +1683,82 @@
           </button>
         </div>
         <div class="modal-body">
+          <!-- MASTER ENCRYPTION PASSWORD -->
+          <div class="settings-section encryption-section" style="border: 2px solid var(--color-primary); border-radius: var(--radius); padding: 1rem; margin-bottom: 1.5rem;">
+            <h3 style="margin-bottom: 1rem">🔐 Master Encryption Password</h3>
+            <p class="settings-subtext">Encrypts all your data including inventory, API keys, and settings. Leave blank to use unencrypted storage.</p>
+            
+            <div id="encryptionStatus" class="encryption-status">
+              <div class="status-indicator" id="encryptionStatusIndicator">
+                <span class="status-dot"></span>
+                <span class="status-text" id="encryptionStatusText">Checking...</span>
+              </div>
+            </div>
+
+            <div id="encryptionSetup" class="encryption-setup" style="display: none;">
+              <div class="form-row">
+                <label for="masterPassword">Set Master Password:</label>
+                <input type="password" id="masterPassword" placeholder="Enter a strong master password" />
+              </div>
+              <div class="form-row">
+                <label for="confirmMasterPassword">Confirm Password:</label>
+                <input type="password" id="confirmMasterPassword" placeholder="Confirm your master password" />
+              </div>
+              <div class="encryption-actions">
+                <button class="btn success" id="setupEncryptionBtn">🔐 Enable Encryption</button>
+              </div>
+            </div>
+
+            <div id="encryptionUnlock" class="encryption-unlock" style="display: none;">
+              <div class="form-row">
+                <label for="unlockPassword">Master Password:</label>
+                <input type="password" id="unlockPassword" placeholder="Enter your master password" />
+              </div>
+              <div class="encryption-actions">
+                <button class="btn success" id="unlockEncryptionBtn">🔓 Unlock</button>
+                <button class="btn secondary" id="changePasswordBtn">🔄 Change Password</button>
+                <button class="btn warning" id="migrateDataBtn" style="display: none;">📦 Migrate Data</button>
+              </div>
+            </div>
+
+            <div id="encryptionManagement" class="encryption-management" style="display: none;">
+              <div class="encryption-info">
+                <p><strong>Status:</strong> <span id="encryptionInfo">Unlocked and ready</span></p>
+                <div class="data-status" id="dataStatus"></div>
+              </div>
+              <div class="encryption-actions">
+                <button class="btn secondary" id="lockEncryptionBtn">🔒 Lock</button>
+                <button class="btn primary" id="showChangePasswordBtn">🔄 Change Password</button>
+                <button class="btn warning" id="migrateAllDataBtn" style="display: none;">📦 Migrate All Data</button>
+                <button class="btn danger" id="emergencyDisableBtn">🚨 Emergency Disable</button>
+              </div>
+            </div>
+
+            <div id="changePasswordSection" class="change-password-section" style="display: none;">
+              <h4>Change Master Password</h4>
+              <div class="form-row">
+                <label for="currentPassword">Current Password:</label>
+                <input type="password" id="currentPassword" placeholder="Enter current password" />
+              </div>
+              <div class="form-row">
+                <label for="newPassword">New Password:</label>
+                <input type="password" id="newPassword" placeholder="Enter new password" />
+              </div>
+              <div class="form-row">
+                <label for="confirmNewPassword">Confirm New Password:</label>
+                <input type="password" id="confirmNewPassword" placeholder="Confirm new password" />
+              </div>
+              <div class="encryption-actions">
+                <button class="btn success" id="changePasswordConfirmBtn">🔄 Change Password</button>
+                <button class="btn secondary" id="cancelChangePasswordBtn">Cancel</button>
+              </div>
+            </div>
+
+            <div class="encryption-warning">
+              <p><strong>⚠️ Important:</strong> Without your master password, your encrypted data cannot be recovered. Store it safely!</p>
+            </div>
+          </div>
+
           <div class="settings-section">
             <h3 style="margin-bottom: 1rem">Metals API Configuration</h3>
             <p class="settings-subtext">Manage API cache, history, and providers.</p>
@@ -1694,11 +1789,24 @@
               <input
                 type="password"
                 id="numistaApiKey"
-                placeholder="Coming soon"
-                disabled
+                placeholder="Enter your Numista API key"
               />
             </div>
-            <div class="api-key-note">Numista API integration coming soon.</div>
+            <div class="api-key-row">
+              <label for="numistaPassword">Encryption Password:</label>
+              <input
+                type="password"
+                id="numistaPassword"
+                placeholder="Password to encrypt your API key"
+              />
+            </div>
+            <div class="api-key-note">
+              <p>Your API key will be encrypted with your password and stored locally. You'll need to enter your password each session to access Numista features.</p>
+              <button class="btn success" id="saveNumistaBtn" style="margin-top: 0.5rem;">Save & Encrypt</button>
+              <button class="btn info" id="testNumistaBtn" style="margin-top: 0.5rem;">Test Connection</button>
+              <button class="btn secondary" id="clearNumistaBtn" style="margin-top: 0.5rem;">Clear Key</button>
+            </div>
+            <div id="numistaStatus" class="api-status" style="margin-top: 0.5rem;"></div>
           </div>
         </div>
       </div>
@@ -2470,6 +2578,7 @@
   <script defer src="js/debug-log.js"></script>
   <script defer src="./js/constants.js"></script>
   <script defer src="./js/state.js"></script>
+  <script defer src="./js/encryption.js"></script>
   <script defer src="./js/utils.js"></script>
   <script defer src="./js/fuzzy-search.js"></script>
   <script defer src="./js/autocomplete.js"></script>
@@ -2486,6 +2595,7 @@
     <script defer src="./js/numista-modal.js"></script>
     <script defer src="./js/spot.js"></script>
     <script defer src="./js/api.js"></script>
+    <script defer src="./js/catalog-api.js"></script>
     <script defer src="./js/catalog-providers.js"></script>
     <script defer src="./js/catalog-manager.js"></script>
     <script defer src="./js/inventory.js"></script>

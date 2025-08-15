@@ -4,12 +4,27 @@
 /**
  * Saves spot history to localStorage
  */
-const saveSpotHistory = () => saveData(SPOT_HISTORY_KEY, spotHistory);
+const saveSpotHistory = () => {
+  try {
+    saveDataSync(SPOT_HISTORY_KEY, spotHistory);
+  } catch (error) {
+    console.error('Error saving spot history:', error);
+  }
+};
 
 /**
  * Loads spot history from localStorage
  */
-const loadSpotHistory = () => (spotHistory = loadData(SPOT_HISTORY_KEY, []));
+const loadSpotHistory = () => {
+  try {
+    const data = loadDataSync(SPOT_HISTORY_KEY, []);
+    // Ensure data is an array
+    spotHistory = Array.isArray(data) ? data : [];
+  } catch (error) {
+    console.error('Error loading spot history:', error);
+    spotHistory = [];
+  }
+};
 
 /**
  * Removes spot history entries older than the specified number of days

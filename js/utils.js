@@ -237,7 +237,7 @@ const getLastUpdateTime = (metalName, mode = "cache") => {
 
   if (latestEntry.source === "default") return "";
 
-  const info = loadData(
+  const info = loadDataSync(
     mode === "api" ? LAST_API_SYNC_KEY : LAST_CACHE_REFRESH_KEY,
     null,
   );
@@ -654,19 +654,65 @@ const parseNumistaMetal = (composition = "") => {
 };
 
 /**
- * Saves data to localStorage with JSON serialization
- *
+ * BACKWARD COMPATIBLE: Save data with optional encryption
  * @param {string} key - Storage key
  * @param {any} data - Data to store
  */
-const saveData = (key, data) => { try { const raw = JSON.stringify(data); const out = __compressIfNeeded(raw); localStorage.setItem(key, out); } catch(e) { console.error('saveData failed', e); } };/**
- * Loads data from localStorage with error handling
- *
+const saveData = async (key, data) => { 
+  try {
+    // Check if encryption is available and unlocked
+    if (typeof StackrTrackrEncryption !== 'undefined') {
+      const encryption = new StackrTrackrEncryption();
+      if (encryption.isUnlocked()) {
+        // Use secure encrypted storage
+        await encryption.secureStore(key, data);
+        return;
+      }
+    }
+    
+    // Fall back to traditional storage (backward compatibility)
+    const raw = JSON.stringify(data); 
+    const out = __compressIfNeeded(raw); 
+    localStorage.setItem(key, out);
+  } catch(e) { 
+    console.error('saveData failed', e); 
+  } 
+};
+
+/**
+ * BACKWARD COMPATIBLE: Load data with optional decryption
  * @param {string} key - Storage key
  * @param {any} [defaultValue=[]] - Default value if no data found
  * @returns {any} Parsed data or default value
  */
-const loadData = (key, defaultValue = []) => { try { const raw = localStorage.getItem(key); if(raw == null) return defaultValue; const str = __decompressIfNeeded(raw); return JSON.parse(str); } catch(e) { return defaultValue; } };
+const loadData = async (key, defaultValue = []) => { 
+  try {
+    // Check if encryption is available and unlocked
+    if (typeof StackrTrackrEncryption !== 'undefined') {
+      const encryption = new StackrTrackrEncryption();
+      if (encryption.isUnlocked()) {
+        // Try to load encrypted data first
+        const encryptedData = await encryption.secureRetrieve(key, null);
+        if (encryptedData !== null) {
+          return encryptedData;
+        }
+      }
+    }
+    
+    // Fall back to traditional storage (backward compatibility)
+    const raw = localStorage.getItem(key); 
+    if(raw == null) return defaultValue; 
+    const str = __decompressIfNeeded(raw); 
+    return JSON.parse(str); 
+  } catch(e) { 
+    console.warn(`loadData failed for ${key}, returning default:`, e);
+    return defaultValue; 
+  } 
+};
+
+// Synchronous versions for backward compatibility where async isn't supported
+const saveDataSync = (key, data) => { try { const raw = JSON.stringify(data); const out = __compressIfNeeded(raw); localStorage.setItem(key, out); } catch(e) { console.error('saveDataSync failed', e); } };
+const loadDataSync = (key, defaultValue = []) => { try { const raw = localStorage.getItem(key); if(raw == null) return defaultValue; const str = __decompressIfNeeded(raw); return JSON.parse(str); } catch(e) { return defaultValue; } };
 
 /**
  * Removes unknown localStorage keys to maintain a clean storage state
