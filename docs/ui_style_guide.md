@@ -83,4 +83,5 @@ Use these guidelines to keep new UI elements consistent with the existing design
 ## Inventory Table Counter
 
 - The `#itemCount` element displays the number of visible inventory items.
-- Styled with `.table-item-count` using muted text (`var(--text-muted)`), `0.95rem` font size, `font-weight: 600`, subtle `var(--bg-tertiary)` background with `var(--radius)` corners, right alignment, and a small top margin.
+- Styled with `.table-item-count` using muted text (`var(--text-muted)`), `0.95rem` font size, `font-weight: 600`, subtle `var(--bg-tertiary)` background with `var(--radius)` corners, left alignment, and a small top margin.
+- Rows-per-page control uses `.control-select`, a compact button-style dropdown (`width: 4rem`, custom arrow) aligned to the right side of the table footer.
