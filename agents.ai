@@ -7,6 +7,7 @@
 
 ---
 1. ✅ Read this file (`/agents.ai`) completely
+2. ✅ **Unless given a specific task, start with items from `/docs/roadmap.md`** - prioritize Critical Bugs, then Bug Fixes, then Feature Enhancements
 3. ✅ Review current git status and create checkpoint if needed
 4. ✅ Report status using standard format
 5. ✅ Reference script loading order before any file modifications

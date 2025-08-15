@@ -10,6 +10,7 @@ This roadmap tracks upcoming goals without committing to specific patch numbers.
 - [ ] Correct issue with readme date inconsistencies
 
 ## 🐛 **BUG FIXES** (Non-critical)
+- [ ] Reset button and change log button need redesigned - current styling/positioning needs improvement
 - [ ] Calculations on the Totals card appear to be incorrect, possibly omitting the collectable weight from melt price calculations?
 - [ ] Fuzzy search filter shows American Gold Eagle when typing "Eagle" or "Silver Eagle" - needs refinement
 - [ ] Error recovery procedures missing for critical failures
