@@ -4120,7 +4120,7 @@ input:disabled + .slider {
 }
 
 /* Icon button base for action cells */
-.icon-btn {
+#inventoryTable .icon-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -4134,17 +4134,17 @@ input:disabled + .slider {
   transition: background 0.15s ease, transform 0.08s ease;
 }
 
-.icon-btn:focus {
+#inventoryTable .icon-btn:focus {
   outline: 2px solid rgba(59,130,246,0.25);
   outline-offset: 2px;
 }
 
-.icon-btn:hover {
+#inventoryTable .icon-btn:hover {
   background: rgba(0,0,0,0.04);
   transform: translateY(-1px);
 }
 
-.icon-svg { width: 1.05rem; height: 1.05rem; display: block; fill: currentColor; color: inherit; }
+#inventoryTable .icon-svg { width: 1.05rem; height: 1.05rem; display: block; fill: currentColor; color: inherit; }
 .notes-svg { color: inherit; }
 .edit-svg { color: inherit; }
 .delete-svg { color: inherit; }
@@ -4237,27 +4237,27 @@ th {
 }
 
 /* Icon cells in the body: inherit color so they match the row's text color and striping */
-#inventoryTable tbody td.icon-col {
+ #inventoryTable tbody td.icon-col {
   color: inherit;
   padding: 0.25rem 0.35rem;
 }
 
 /* Icon button visual blending */
-.icon-btn {
+#inventoryTable .icon-btn {
   background: transparent; /* keep inline with row */
   color: var(--text-secondary);
   box-shadow: none;
 }
 
-.icon-btn:hover {
+#inventoryTable .icon-btn:hover {
   background: var(--bg-secondary);
   color: var(--text-primary);
 }
 
-.icon-btn:active { transform: translateY(0); }
+#inventoryTable .icon-btn:active { transform: translateY(0); }
 
 /* Slightly smaller icon size in cells to reduce visual weight */
-.icon-svg { width: 0.95rem; height: 0.95rem; }
+#inventoryTable .icon-svg { width: 0.95rem; height: 0.95rem; }
 
 /* Ensure collectable icon visually matches muted style until active */
 .collectable-icon { color: var(--text-secondary); }
@@ -4305,8 +4305,8 @@ th {
   padding-bottom: 0.32rem;
 }
 
-.icon-btn { width: 2rem; height: 2rem; }
-.icon-svg { width: 0.9rem; height: 0.9rem; }
+#inventoryTable .icon-btn { width: 2rem; height: 2rem; }
+#inventoryTable .icon-svg { width: 0.9rem; height: 0.9rem; }
 
 /* Tighter row height */
 #inventoryTable tbody tr { min-height: 2rem; }
@@ -4315,8 +4315,8 @@ th {
 @media (max-width: 480px) {
   #inventoryTable { font-size: 0.78rem; }
   #inventoryTable th, #inventoryTable td { padding: 0.14rem 0.12rem; }
-  .icon-btn { width: 1.8rem; height: 1.8rem; }
-  .icon-svg { width: 0.8rem; height: 0.8rem; }
+  #inventoryTable .icon-btn { width: 1.8rem; height: 1.8rem; }
+  #inventoryTable .icon-svg { width: 0.8rem; height: 0.8rem; }
 }
 
 

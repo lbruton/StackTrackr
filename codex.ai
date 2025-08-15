@@ -24,3 +24,6 @@
 - 2025-08-18: Reordered filter controls above chip row, adjusted spacing, verified selectors and tests (gpt-4-1)
 - 2025-08-19: Start session to improve chip contrast and dynamic text colors (GPT)
 - 2025-08-19: Completed chip contrast helper and text color mapping, ran theme tests (GPT)
+
+- 2025-08-19: Start session to align search control buttons and refine icon sizing (gpt-4o)
+- 2025-08-19: Unified search control buttons under .btn.success and scoped table icon styles to keep sizes consistent (gpt-4o)
