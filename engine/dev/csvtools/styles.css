@@ -22,3 +22,7 @@ main{max-width:1000px;margin:0 auto}
 .panel-output{min-height:60px;padding:8px;background:#fff;border:1px solid #eee;margin-bottom:8px;overflow:auto}
 .panel-formula{width:100%;padding:6px;margin-bottom:6px}
 .panel-apply{width:100%}
+
+.history-charts{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-top:12px}
+.hist{background:#fff;border:1px solid #eee;padding:8px;border-radius:6px;min-height:120px}
+.hist canvas{width:100%!important;height:100px!important}

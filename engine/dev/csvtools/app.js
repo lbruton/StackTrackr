@@ -186,3 +186,49 @@ document.querySelectorAll('.panel-apply').forEach(btn => {
     out.innerHTML = `<div>Count: ${agg.count}</div><div>Sum: ${agg.sum.toFixed(2)}</div><div>Mean: ${agg.mean.toFixed(2)}</div><div>Min: ${agg.min}</div><div>Max: ${agg.max}</div>`;
   });
 });
+
+// Bulk run across files in csvhistory
+document.getElementById('bulkRun').addEventListener('click', async () => {
+  // fetch index.json
+  const idx = await fetch('csvhistory/index.json').then(r=>r.json());
+  const panelFormulas = [];
+  for (let i=1;i<=5;i++) panelFormulas.push(document.getElementById(`formula-${i}`).value || '');
+
+  const histories = [[],[],[],[],[]];
+  const labels = [];
+
+  for (const fname of idx) {
+    labels.push(fname);
+    const text = await fetch(`csvhistory/${fname}`).then(r=>r.text());
+    const data = Papa.parse(text).data.filter(r=>r.length>0);
+    const h = data.shift(); // headers
+    // set temporary parsedData and headers for translation
+    const backupParsed = parsedData;
+    const backupHeaders = headers;
+    parsedData = data;
+    headers = h;
+
+    for (let p=0;p<5;p++){
+      const formula = panelFormulas[p] || '';
+      if (!formula) { histories[p].push(null); continue; }
+      const jsExpr = translateFormula(formula);
+      const results = applyFormulaToData(jsExpr);
+      const agg = computeAggregates(results);
+      histories[p].push(agg.mean);
+    }
+
+    parsedData = backupParsed;
+    headers = backupHeaders;
+  }
+
+  // render charts for each panel
+  for (let p=0;p<5;p++){
+    const ctx = document.getElementById(`histchart-${p+1}`).getContext('2d');
+    if (window[`_hist_${p+1}`]) window[`_hist_${p+1}`].destroy();
+    window[`_hist_${p+1}`] = new Chart(ctx,{
+      type:'line',
+      data:{labels, datasets:[{label:`Panel ${p+1} Mean`, data:histories[p]}]},
+      options:{responsive:true,maintainAspectRatio:false}
+    });
+  }
+});
