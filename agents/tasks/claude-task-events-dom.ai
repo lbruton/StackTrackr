@@ -1,0 +1,300 @@
+# Claude Task Assignment: Event Delegation & DOM Fragment Optimization
+## Agent: Claude (Self-Assignment) | Estimated Time: 50 minutes | Risk: Medium
+
+**Parent Task**: StackTrackr Performance Optimization  
+**Claude Specialization**: Complex refactoring and architectural improvements  
+**Assigned Phases**: Phase 2 + Phase 4
+
+---
+
+## 🎯 PHASE 2: EVENT DELEGATION (20 minutes)
+**Priority**: HIGH - Memory leak elimination
+
+### **Objective**
+Replace inline onclick handlers with centralized event delegation to eliminate memory leaks from table re-renders and create cleaner, more maintainable code.
+
+### **Current Implementation Analysis**
+The current codebase uses inline onclick handlers throughout the table rendering:
+```javascript
+// Current problematic pattern:
+onclick="editItem(${originalIdx})"
+onclick="deleteItem(${originalIdx})" 
+onclick="showNotes(${originalIdx})"
+onclick="toggleCollectable(${originalIdx})"
+```
+
+This creates memory leaks because:
+- Event listeners aren't properly cleaned up on table re-renders
+- Multiple references to functions are created
+- DOM elements hold onto function references
+
+### **Required Refactoring**
+
+**1. Remove inline handlers from `js/inventory.js`:**
+- Replace all onclick attributes with data attributes
+- Add CSS classes for event targeting
+- Maintain semantic HTML structure
+
+**2. Implement centralized delegation in `js/events.js`:**
+```javascript
+/**
+ * Centralized table event delegation handler
+ * Replaces all inline onclick handlers for better memory management
+ */
+const setupTableEventDelegation = () => {
+  // Remove any existing listeners to prevent duplicates
+  elements.inventoryTable.removeEventListener('click', handleTableClick);
+  
+  // Add single delegated event listener
+  elements.inventoryTable.addEventListener('click', handleTableClick);
+  
+  // Handle keyboard navigation for accessibility
+  elements.inventoryTable.addEventListener('keydown', handleTableKeydown);
+};
+
+const handleTableClick = (e) => {
+  const target = e.target;
+  const row = target.closest('tr');
+  
+  if (!row || !row.dataset.index) return;
+  
+  const idx = parseInt(row.dataset.index, 10);
+  
+  // Event delegation based on CSS classes
+  if (target.matches('.edit-icon, .edit-action')) {
+    e.preventDefault();
+    editItem(idx);
+  } else if (target.matches('.delete-icon, .delete-action')) {
+    e.preventDefault();
+    deleteItem(idx);
+  } else if (target.matches('.notes-icon, .notes-action')) {
+    e.preventDefault();
+    showNotes(idx);
+  } else if (target.matches('.collectable-toggle')) {
+    e.preventDefault();
+    toggleCollectable(idx);
+  } else if (target.matches('.filter-text')) {
+    // Handle filter clicks
+    const field = target.dataset.field;
+    const value = target.dataset.value;
+    if (field && value !== undefined) {
+      applyColumnFilter(field, value);
+    }
+  }
+};
+```
+
+**3. Update table row generation:**
+- Replace onclick attributes with CSS classes and data attributes
+- Ensure proper accessibility (ARIA labels, tabindex)
+- Maintain existing functionality
+
+### **Testing Requirements:**
+- ✅ All table actions work identically to before
+- ✅ No console errors on table interactions
+- ✅ Memory usage stable on repeated table re-renders
+- ✅ Keyboard navigation still works
+- ✅ Accessibility features preserved
+
+---
+
+## 🎯 PHASE 4: DOM FRAGMENT OPTIMIZATION (30 minutes)
+**Priority**: MEDIUM-HIGH - Major performance gain
+
+### **Objective**
+Replace innerHTML-based table generation with DocumentFragment approach to significantly improve rendering performance, especially for large inventories.
+
+### **Current Implementation Analysis**
+Current table rendering uses string concatenation and innerHTML:
+```javascript
+// Current approach (performance bottleneck):
+const rows = filteredItems.map(item => `<tr>...</tr>`).join('');
+tableBody.innerHTML = rows;
+```
+
+Problems with current approach:
+- Forces browser to parse HTML strings
+- Triggers layout recalculation on every assignment
+- Inefficient for large datasets (>100 items)
+- No reuse of DOM elements
+
+### **Required Optimization**
+
+**1. Create DOM-based row generation in `js/inventory.js`:**
+```javascript
+/**
+ * Creates a single table row using DOM methods instead of HTML strings
+ * @param {Object} item - Inventory item data
+ * @param {number} originalIdx - Original array index
+ * @param {number} displayIdx - Display index for current page
+ * @returns {HTMLTableRowElement} Complete table row element
+ */
+const createTableRowElement = (item, originalIdx, displayIdx) => {
+  const row = document.createElement('tr');
+  row.dataset.index = originalIdx;
+  row.dataset.displayIndex = displayIdx;
+  
+  // Add cells using helper function
+  appendTableCell(row, 'text', item.name, 'name', item.name);
+  appendTableCell(row, 'number', item.qty, 'qty', item.qty);
+  appendTableCell(row, 'weight', formatWeight(item.weight), 'weight', item.weight);
+  // ... continue for all columns
+  
+  return row;
+};
+
+/**
+ * Helper function to create and append table cells
+ * @param {HTMLTableRowElement} row - Row to append to
+ * @param {string} type - Cell type for styling
+ * @param {string} display - Display value
+ * @param {string} field - Field name for filtering
+ * @param {any} value - Raw value for data attributes
+ */
+const appendTableCell = (row, type, display, field, value) => {
+  const cell = document.createElement('td');
+  cell.className = `${type}-col`;
+  cell.dataset.column = field;
+  
+  // Create filter-enabled content
+  const content = document.createElement('span');
+  content.className = 'filter-text';
+  content.dataset.field = field;
+  content.dataset.value = value;
+  content.textContent = display;
+  content.title = `Filter by ${display}`;
+  
+  cell.appendChild(content);
+  row.appendChild(cell);
+};
+```
+
+**2. Implement fragment-based rendering:**
+```javascript
+/**
+ * Optimized table rendering using DocumentFragment
+ * Replaces innerHTML approach for better performance
+ */
+const renderTableOptimized = () => {
+  const startTime = performance.now();
+  
+  // Filter and sort data
+  const filteredItems = getFilteredAndSortedItems();
+  
+  // Calculate pagination
+  const totalPages = calculateTotalPages(filteredItems);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = Math.min(startIndex + itemsPerPage, filteredItems.length);
+  const pageItems = filteredItems.slice(startIndex, endIndex);
+  
+  // Create document fragment for efficient DOM manipulation
+  const fragment = document.createDocumentFragment();
+  const tbody = document.createElement('tbody');
+  
+  // Generate rows using DOM methods
+  pageItems.forEach((item, pageIndex) => {
+    const originalIdx = inventory.indexOf(item);
+    const row = createTableRowElement(item, originalIdx, pageIndex);
+    tbody.appendChild(row);
+  });
+  
+  // Add empty rows for consistent table height
+  const emptyRowsNeeded = Math.max(0, itemsPerPage - pageItems.length);
+  for (let i = 0; i < emptyRowsNeeded; i++) {
+    const emptyRow = createEmptyTableRow();
+    tbody.appendChild(emptyRow);
+  }
+  
+  fragment.appendChild(tbody);
+  
+  // Single DOM update - replace entire tbody
+  const existingTbody = elements.inventoryTable.querySelector('tbody');
+  if (existingTbody) {
+    elements.inventoryTable.replaceChild(tbody, existingTbody);
+  } else {
+    elements.inventoryTable.appendChild(tbody);
+  }
+  
+  // Update related UI components
+  updateSummary();
+  renderPagination(totalPages);
+  updateColumnVisibility();
+  
+  const endTime = performance.now();
+  debugLog(`Table render time: ${(endTime - startTime).toFixed(2)}ms`);
+};
+```
+
+**3. Maintain backward compatibility:**
+- Keep original renderTable function as fallback
+- Implement feature flag for easy rollback
+- Ensure all existing features work identically
+
+### **Testing Requirements:**
+- ✅ Table renders correctly with all data
+- ✅ Sorting functionality works on all columns
+- ✅ Filtering works for all filter types
+- ✅ Pagination displays correctly
+- ✅ Performance improved measurably (30%+ faster)
+- ✅ Large datasets (500+ items) render smoothly
+- ✅ Memory usage optimized
+
+---
+
+## 📋 IMPLEMENTATION STRATEGY
+
+### **Phase 2 First (Event Delegation):**
+1. **Analysis**: Map all current inline handlers
+2. **Refactor**: Replace with CSS classes and data attributes
+3. **Delegate**: Implement centralized event handling
+4. **Test**: Verify all interactions work identically
+
+### **Phase 4 Second (DOM Optimization):**
+1. **Measure**: Baseline current table render performance
+2. **Refactor**: Replace innerHTML with DOM methods
+3. **Optimize**: Implement fragment-based rendering
+4. **Validate**: Ensure 30%+ performance improvement
+
+### **Risk Mitigation:**
+- Keep original functions commented out until testing complete
+- Implement feature flags for easy rollback
+- Test with progressively larger datasets
+- Validate accessibility isn't compromised
+
+---
+
+## 🚨 CRITICAL CONSIDERATIONS
+
+### **Memory Management:**
+- Ensure proper cleanup of event listeners
+- Avoid circular references in DOM elements
+- Test for memory leaks over extended use
+
+### **Performance Targets:**
+- Table render time: 30%+ improvement on large datasets
+- Memory usage: Stable over multiple re-renders
+- User interactions: No perceived delay
+
+### **Accessibility:**
+- Maintain ARIA labels and semantic HTML
+- Preserve keyboard navigation
+- Ensure screen reader compatibility
+
+---
+
+## 📊 SUCCESS METRICS
+
+### **Phase 2 (Event Delegation):**
+- ✅ Zero memory leaks on table re-renders
+- ✅ All click/keyboard interactions preserved
+- ✅ Cleaner, more maintainable code structure
+
+### **Phase 4 (DOM Optimization):**
+- ✅ 30%+ faster table rendering
+- ✅ Smooth handling of 1000+ item inventories
+- ✅ Reduced memory footprint
+- ✅ Maintained feature parity
+
+---
+
+**Next Steps**: Begin with Phase 2 after GPT completes the search debouncing. Phase 4 should be implemented after all other optimizations are complete and tested, as it's the most complex change.

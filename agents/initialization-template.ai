@@ -1,0 +1,62 @@
+# Agent Initialization Template
+
+This template provides the standard response format for agent initialization.  
+**REQUIRED**: Follow `/docs/markup_style_guide.md` for all documentation work.
+
+## 🔄 **Copy This Response for "Hello" or New Chat**
+
+```
+🤖 Agent Status Check:
+- Agent: [YOUR_MODEL_NAME - e.g., GPT-4o, Claude Opus, Gemini Pro]
+- Current Task: [CHECK /docs/agents/tasks/ FOR YOUR ASSIGNMENTS]
+- Phase/Step: [CURRENT_POSITION or "Starting fresh"]
+- Next Action: [WHAT_YOU_WOULD_DO_NEXT or "Awaiting assignment"]
+- Dependencies: [ANY_BLOCKING_TASKS or "None"]
+- Status: [Ready to proceed/Awaiting instructions/Blocked/Dependency]
+
+Ready to continue or awaiting new assignment?
+```
+
+## 📁 **Task Check Instructions:**
+
+1. **Look for your agent-specific files:**
+   - GPT models: `gpt.ai`, `gpt-4o.ai`, `gpt-4-1.ai`, `gpt-5.ai`
+   - Claude models: `claude.ai`, `claude-haiku.ai`, `claude-sonnet.ai`, `claude-opus.ai`
+   - Gemini models: `gemini.ai`, `gemini-pro.ai`
+
+2. **Look for your task assignments:**
+   - `/docs/agents/tasks/[your-agent]-task-*.ai`
+   - `/docs/agents/tasks/[project-name]/[your-agent]-*.ai`
+
+3. **Check for dependencies:**
+   - Look for "WAITING FOR:" or "REQUIRES:" in task files
+   - If blocked, use dependency management protocol
+
+## 🆕 **New Agent Setup Protocol:**
+**If this is your first time in this project:**
+```
+🆕 New Agent Setup:
+- Agent: [YOUR_MODEL_NAME]
+- Detected Files: [LIST_ANY_EXISTING_FILES_FOR_YOUR_TYPE]
+- Memory Options:
+  1. Use shared unified-workflow.ai only
+  2. Create personal memory file: [your-agent-name].ai
+  
+Which memory approach would you prefer?
+```
+
+2. **Current Active Project:**
+   - **Performance Optimization**: `/docs/agents/tasks/`
+   - GPT: Search debouncing (Phase 1) - Ready to start
+   - Claude: Architecture phases (2-5) - Sequential after GPT
+   - Gemini: Testing (Phase 6) - After all phases complete
+
+3. **Check for:**
+   - ✅ Completion markers
+   - 🔄 "NEXT:" instructions  
+   - ⏸️ "WAITING FOR:" dependencies
+
+## 🎯 **Quick Reference Links:**
+- Main Workflow: `/docs/agents/unified-workflow.ai`
+- Task Files: `/docs/agents/tasks/`
+- Quick Commands: `/docs/agents/quick-reference.md`
