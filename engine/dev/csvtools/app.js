@@ -187,6 +187,25 @@ document.querySelectorAll('.panel-apply').forEach(btn => {
   });
 });
 
+// Track changes
+function setTrackedPanel(id) {
+  localStorage.setItem('trackedPanel', String(id));
+  document.querySelectorAll('.panel-track').forEach(b=>b.textContent='Track Changes');
+  document.querySelector(`.panel-track[data-panel="${id}"]`).textContent = 'Tracking';
+  document.getElementById('trackedCard').textContent = `Tracking panel ${id}`;
+}
+
+document.querySelectorAll('.panel-track').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const id = btn.dataset.panel;
+    setTrackedPanel(id);
+  });
+});
+
+// init tracked panel from storage
+const initialTracked = localStorage.getItem('trackedPanel');
+if (initialTracked) setTrackedPanel(initialTracked);
+
 // Bulk run across files in csvhistory
 document.getElementById('bulkRun').addEventListener('click', async () => {
   // ensure we have a sample uploaded to define header and filename conventions

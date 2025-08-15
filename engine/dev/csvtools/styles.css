@@ -23,6 +23,11 @@ main{max-width:1000px;margin:0 auto}
 .panel-formula{width:100%;padding:6px;margin-bottom:6px}
 .panel-apply{width:100%}
 
+.panel-track{margin-top:6px;background:#eef6ff;border:1px solid #c6e0ff;padding:6px;border-radius:4px}
+.panel-track[disabled]{opacity:0.6}
+#tracked-summary{margin-top:12px}
+#trackedCard{padding:10px;border:1px dashed #ddd;background:#fff}
+
 .history-charts{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-top:12px}
 .hist{background:#fff;border:1px solid #eee;padding:8px;border-radius:6px;min-height:120px}
 .hist canvas{width:100%!important;height:100px!important}
