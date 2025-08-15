@@ -79,3 +79,8 @@ The `.btn` class provides the base button style with variant modifiers:
 - Buttons include a subtle shine effect via the `::before` pseudo-element and use `var(--radius)` for rounded corners.
 
 Use these guidelines to keep new UI elements consistent with the existing design system.
+
+## Inventory Table Counter
+
+- The `#itemCount` element displays the number of visible inventory items.
+- Styled with `.table-item-count` using muted text (`var(--text-muted)`), `0.875rem` font size, right alignment, and a small top margin.
