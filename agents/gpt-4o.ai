@@ -1,0 +1,19 @@
+# GPT-4o Agent Log
+
+## Change Log
+- 2025-08-15: Session start - plan to remove invalid `height="auto"` from SVG logo and verify no browser warnings.
+- 2025-08-15: Completed removal of `height="auto"` from Stackr logo, relying on CSS; attempted browser check (gpt-4o)
+
+- 2025-08-16: Session start - plan to render active filter chips on initial load by calling renderActiveFilters after renderTable.
+- 2025-08-16: Added renderActiveFilters call post-renderTable; filter chips now display on initial load (gpt-4o)
+
+- 2025-08-17: Session start - plan to wrap #itemCount and itemsPerPage in table-footer-controls and remove old control-group (gpt-4o)
+- 2025-08-17: Wrapped #itemCount with itemsPerPage in table-footer-controls and updated styles for flex layout (gpt-4o)
+
+- 2025-08-18: Session start - plan to emphasize table item count with bold styling and background (gpt-4o)
+- 2025-08-18: Enhanced table item count with heavier font, larger size, and background; updated docs (gpt-4o)
+- 2025-08-18: Session start - plan to modernize rows-per-page dropdown and align controls for symmetry (gpt-4o)
+- 2025-08-18: Styled rows-per-page dropdown as compact button and positioned it on the right, leaving item counter on the left (gpt-4o)
+
+- 2025-08-19: Session start - plan to unify search control buttons and remove obsolete square class; scope table icon styles (gpt-4o)
+- 2025-08-19: Unified search control buttons under .btn.success, removed square class, and scoped inventory table icon styles (gpt-4o)

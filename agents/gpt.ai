@@ -26,3 +26,14 @@ Your primary role on the StackTrackr project is **Feature Implementation and Gen
 ## Change Log
 
 - 2025-08-14: Restored global CSV import/export functions and corrected notes handling in `importCsv` (GPT)
+- 2025-08-14: Added debug modal and enhanced import/export/table logging (GPT)
+- 2025-08-15: Inserted item count placeholder below inventory table and added styling (GPT)
+- 2025-08-15: Cached pagination item count element in state and init for global access (GPT)
+- 2025-08-15: Started dynamic item counter implementation (GPT)
+- 2025-08-15: Implemented dynamic item count refresh in renderTable (GPT)
+- 2025-08-15: Added browser-safe exports for fuzzy-search utilities (GPT)
+- 2025-08-15: Standardized fuzzy-search threshold defaults and documentation (GPT)
+- 2025-08-15: Exported `checkFileSize` and `MAX_LOCAL_FILE_SIZE` to window and verified availability (GPT)
+- 2025-08-17: Wrapped Name header text with span and removed obsolete centering CSS (GPT)
+
+- 2025-08-19: Introduced contrast-aware chip text colors with helper and CSS variable (GPT)
