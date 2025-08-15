@@ -3143,6 +3143,9 @@ td input:checked + .slider:before {
   margin-top: var(--spacing);
   padding-top: var(--spacing);
   border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
 }
 
 .filter-row {
