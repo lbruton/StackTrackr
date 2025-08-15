@@ -30,3 +30,4 @@
 - 2025-08-20: Centralized filter resets in clearAllFilters and simplified clear button to rely on it (gpt-4o)
 - 2025-08-20: Confirmed filter reset sync and streamlined clear button handler (GPT)
 - 2025-08-20: Trigger renderActiveFilters after CSV/JSON imports to show chips immediately (GPT)
+- 2025-08-21: Synced README version heading and release date with latest changelog (gpt-4o)
