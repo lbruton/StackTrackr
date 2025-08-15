@@ -136,6 +136,7 @@ const elements = {
   firstPage: null,
   lastPage: null,
   pageNumbers: null,
+  itemCount: null,
 
   // Change log elements
     changeLogBtn: null,

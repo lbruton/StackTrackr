@@ -173,6 +173,7 @@ document.addEventListener("DOMContentLoaded", () => {
     elements.firstPage = safeGetElement("firstPage");
     elements.lastPage = safeGetElement("lastPage");
     elements.pageNumbers = safeGetElement("pageNumbers");
+    elements.itemCount = safeGetElement("itemCount");
 
       elements.changeLogBtn = safeGetElement("changeLogBtn");
       elements.backupReminder = safeGetElement("backupReminder");
