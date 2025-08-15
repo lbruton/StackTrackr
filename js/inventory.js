@@ -1024,6 +1024,259 @@ const renderTable = () => {
       `);
     }
 
+/**
+ * Creates a table cell element using DOM methods
+ * @param {string} tagName - 'td' or 'th'
+ * @param {string} className - CSS class name
+ * @param {string} dataColumn - data-column attribute value
+ * @param {string} innerHTML - Cell content
+ * @param {Object} attributes - Additional attributes
+ * @returns {HTMLElement} Table cell element
+ */
+const createTableCell = (tagName = 'td', className = '', dataColumn = '', innerHTML = '', attributes = {}) => {
+  const cell = document.createElement(tagName);
+  if (className) cell.className = className;
+  if (dataColumn) cell.setAttribute('data-column', dataColumn);
+  if (innerHTML) cell.innerHTML = innerHTML;
+  
+  // Apply additional attributes
+  Object.entries(attributes).forEach(([key, value]) => {
+    if (value !== null && value !== undefined) {
+      cell.setAttribute(key, value);
+    }
+  });
+  
+  return cell;
+};
+
+/**
+ * Creates a single table row using DOM methods instead of HTML strings
+ * @param {Object} item - Inventory item data
+ * @param {number} originalIdx - Original array index
+ * @param {number} displayIdx - Display index for current page
+ * @returns {HTMLTableRowElement} Complete table row element
+ */
+const createTableRowElement = (item, originalIdx, displayIdx) => {
+  const row = document.createElement('tr');
+  row.setAttribute('data-index', originalIdx);
+  row.setAttribute('data-display-index', displayIdx);
+  
+  // Calculate derived values
+  const spotValue = spotPrices[item.metal] || 0;
+  const spotDisplay = item.spotPriceAtPurchase > 0 ? formatCurrency(item.spotPriceAtPurchase) : '—';
+  const premiumValue = item.isCollectable ? 0 : item.totalPremium;
+  const premiumDisplay = item.isCollectable ? '—' : (item.totalPremium > 0 ? formatCurrency(item.totalPremium) : '—');
+
+  // Create cells using helper function
+  row.appendChild(createTableCell('td', 'shrink', 'name', filterLink('name', item.name, 'var(--text-primary)')));
+  row.appendChild(createTableCell('td', 'shrink', 'qty', filterLink('qty', item.qty, 'var(--text-primary)')));
+  row.appendChild(createTableCell('td', 'shrink', 'metal', filterLink('metal', item.metal, 'var(--text-primary)')));
+  row.appendChild(createTableCell('td', 'icon-col hidden', 'coinType', filterLink('coinType', item.coinType, getTypeColor(item.coinType))));
+  row.appendChild(createTableCell('td', 'icon-col hidden', 'denomination', filterLink('denomination', item.denomination, 'var(--text-primary)')));
+  row.appendChild(createTableCell('td', 'icon-col hidden', 'year', filterLink('year', item.year, 'var(--text-primary)')));
+  row.appendChild(createTableCell('td', 'shrink hidden', 'composition', filterLink('composition', item.composition, 'var(--text-primary)')));
+  row.appendChild(createTableCell('td', 'icon-col hidden', 'grading', filterLink('grading', item.grading, 'var(--text-primary)')));
+  row.appendChild(createTableCell('td', 'icon-col hidden', 'condition', filterLink('condition', item.condition, 'var(--text-primary)')));
+  row.appendChild(createTableCell('td', 'shrink', 'weight', filterLink('weight', item.weight, 'var(--text-primary)', formatWeight(item.weight), item.weight < 1 ? 'Grams (g)' : 'Troy ounces (ozt)')));
+  row.appendChild(createTableCell('td', 'shrink', 'purchasePrice', filterLink('price', item.price, 'var(--text-primary)', (item.price && item.price > 0) ? formatCurrency(item.price) : '—'), { title: 'USD' }));
+  row.appendChild(createTableCell('td', 'shrink', 'spot', filterLink('spotPriceAtPurchase', spotValue, 'var(--text-primary)', spotDisplay), { title: 'USD' }));
+  row.appendChild(createTableCell('td', 'shrink', 'premium', filterLink('totalPremium', premiumValue, 'var(--text-primary)', premiumDisplay), { 
+    style: `color: ${item.isCollectable ? 'var(--text-muted)' : (item.totalPremium > 0 ? 'var(--warning)' : 'inherit')}` 
+  }));
+  row.appendChild(createTableCell('td', 'shrink', 'purchaseLocation', formatPurchaseLocation(item.purchaseLocation)));
+  row.appendChild(createTableCell('td', 'shrink', 'storageLocation', formatStorageLocation(item.storageLocation)));
+  
+  // Numista cell
+  const numistaContent = item.numistaId ? 
+    `<a href="#" class="catalog-link" data-numista-id="${sanitizeHtml(item.numistaId)}" data-coin-name="${sanitizeHtml(item.name)}" title="N#${sanitizeHtml(item.numistaId)} - open numista.com">N#</a>` :
+    '<span class="numista-empty">—</span>';
+  row.appendChild(createTableCell('td', 'shrink', 'numista', numistaContent));
+  
+  // Collectable cell  
+  const collectableIcon = item.isCollectable ? 
+    '<svg class="collectable-icon vault-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><circle cx="17" cy="11" r="2"/><rect x="6" y="8" width="6" height="8" rx="1"/></svg>' :
+    '<svg class="collectable-icon bar-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><rect x="3" y="8" width="18" height="8" rx="1"/><path d="M5 6h14l-2-2H7z"/></svg>';
+  row.appendChild(createTableCell('td', 'icon-col', 'collectable', 
+    `<span class="collectable-status collectable-toggle" role="button" tabindex="0" aria-label="Toggle collectable status for ${sanitizeHtml(item.name)}" title="Toggle collectable status">${collectableIcon}</span>`
+  ));
+  
+  // Notes cell
+  row.appendChild(createTableCell('td', 'icon-col', 'notes', 
+    `<button class="icon-btn action-icon notes-icon ${item.notes && item.notes.trim() ? 'has-notes' : ''}" role="button" tabindex="0" aria-label="View notes" title="View notes">
+      <svg class="icon-svg notes-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15V5a2 2 0 0 0-2-2H7L3 7v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2z"/></svg>
+    </button>`
+  ));
+  
+  // Edit cell
+  row.appendChild(createTableCell('td', 'icon-col', 'edit', 
+    `<button class="icon-btn action-icon edit-icon" role="button" tabindex="0" aria-label="Edit ${sanitizeHtml(item.name)}" title="Edit item">
+      <svg class="icon-svg edit-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1.003 1.003 0 0 0 0-1.42l-2.34-2.34a1.003 1.003 0 0 0-1.42 0l-1.83 1.83 3.75 3.75 1.84-1.82z"/></svg>
+    </button>`
+  ));
+  
+  // Delete cell
+  row.appendChild(createTableCell('td', 'icon-col', 'delete', 
+    `<button class="icon-btn action-icon delete-icon danger" role="button" tabindex="0" aria-label="Delete item" title="Delete item">
+      <svg class="icon-svg delete-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 7h12v13a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V7zm3-4h6l1 1h4v2H3V4h4l1-1z"/></svg>
+    </button>`
+  ));
+  
+  return row;
+};
+
+/**
+ * Creates placeholder rows for pagination using DOM methods
+ * @param {number} count - Number of placeholder rows needed
+ * @returns {DocumentFragment} Fragment containing placeholder rows
+ */
+const createPlaceholderRows = (count) => {
+  const fragment = document.createDocumentFragment();
+  for (let i = 0; i < count; i++) {
+    const row = document.createElement('tr');
+    const cell = document.createElement('td');
+    cell.className = 'shrink';
+    cell.setAttribute('colspan', '16');
+    cell.innerHTML = '&nbsp;';
+    row.appendChild(cell);
+    fragment.appendChild(row);
+  }
+  return fragment;
+};
+
+/**
+ * Optimized table rendering using DocumentFragment and DOM methods
+ * Significantly faster than innerHTML approach for large datasets
+ */
+const renderTableOptimized = () => {
+  try {
+    performance.mark('renderTable-start');
+    
+    // Create document fragment for efficient DOM manipulation
+    const fragment = document.createDocumentFragment();
+    
+    // Calculate pagination
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = Math.min(startIndex + itemsPerPage, filteredInventory.length);
+    const itemsToShow = filteredInventory.slice(startIndex, endIndex);
+    
+    // Create rows using DOM methods
+    itemsToShow.forEach((item, displayIdx) => {
+      const originalIdx = inventory.indexOf(item);
+      const row = createTableRowElement(item, originalIdx, displayIdx);
+      fragment.appendChild(row);
+    });
+    
+    // Add placeholder rows if needed
+    const visibleCount = endIndex - startIndex;
+    const placeholdersNeeded = Math.max(0, itemsPerPage - visibleCount);
+    if (placeholdersNeeded > 0) {
+      const placeholders = createPlaceholderRows(placeholdersNeeded);
+      fragment.appendChild(placeholders);
+    }
+    
+    // Find tbody and replace content efficiently
+    const tbody = elements.inventoryTable?.querySelector('tbody') || document.querySelector('#inventoryTable tbody');
+    if (!tbody) {
+      console.error('Could not find table tbody element');
+      return;
+    }
+    
+    // Clear existing content and append new fragment (single DOM update)
+    tbody.innerHTML = '';
+    tbody.appendChild(fragment);
+    
+    // Post-render operations
+    hideEmptyColumns();
+    updateTypeSummary(filteredInventory);
+    
+    // Update sort indicators
+    const headers = document.querySelectorAll('#inventoryTable th');
+    headers.forEach(header => {
+      const indicator = header.querySelector('.sort-indicator');
+      if (indicator) header.removeChild(indicator);
+    });
+    
+    if (sortColumn) {
+      const th = document.querySelector(`#inventoryTable th[data-column="${sortColumn}"]`);
+      if (th) {
+        const indicator = document.createElement('span');
+        indicator.className = 'sort-indicator';
+        indicator.textContent = sortDirection === 'asc' ? ' ↑' : ' ↓';
+        th.appendChild(indicator);
+      }
+    }
+    
+    performance.mark('renderTable-end');
+    performance.measure('renderTable', 'renderTable-start', 'renderTable-end');
+    
+    const measure = performance.getEntriesByName('renderTable')[0];
+    debugLog(`✓ Table rendered (DOM optimized): ${measure.duration.toFixed(2)}ms`);
+    
+  } catch (error) {
+    console.error('❌ Error in optimized table rendering:', error);
+    // Fallback to original method
+    renderTableFallback();
+  }
+};
+
+/**
+ * Original table rendering method as fallback
+ * Kept for backward compatibility and error recovery
+ */
+const renderTableFallback = () => {
+  performance.mark('renderTable-fallback-start');
+  
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = Math.min(startIndex + itemsPerPage, filteredInventory.length);
+  const itemsToShow = filteredInventory.slice(startIndex, endIndex);
+
+  const rows = itemsToShow.map((item, displayIdx) => {
+    const originalIdx = inventory.indexOf(item);
+    const spotValue = spotPrices[item.metal] || 0;
+    const spotDisplay = item.spotPriceAtPurchase > 0 ? formatCurrency(item.spotPriceAtPurchase) : '—';
+    const premiumValue = item.isCollectable ? 0 : item.totalPremium;
+    const premiumDisplay = item.isCollectable ? '—' : (item.totalPremium > 0 ? formatCurrency(item.totalPremium) : '—');
+
+    return `
+      <tr data-index="${originalIdx}" data-display-index="${displayIdx}">
+      <td class="shrink" data-column="name">${filterLink('name', item.name, 'var(--text-primary)')}</td>
+      <td class="shrink" data-column="qty">${filterLink('qty', item.qty, 'var(--text-primary)')}</td>
+      <td class="shrink" data-column="metal">${filterLink('metal', item.metal, 'var(--text-primary)')}</td>
+      <td class="icon-col hidden" data-column="coinType">${filterLink('coinType', item.coinType, getTypeColor(item.coinType))}</td>
+      <td class="icon-col hidden" data-column="denomination">${filterLink('denomination', item.denomination, 'var(--text-primary)')}</td>
+      <td class="icon-col hidden" data-column="year">${filterLink('year', item.year, 'var(--text-primary)')}</td>
+      <td class="shrink hidden" data-column="composition">${filterLink('composition', item.composition, 'var(--text-primary)')}</td>
+      <td class="icon-col hidden" data-column="grading">${filterLink('grading', item.grading, 'var(--text-primary)')}</td>
+      <td class="icon-col hidden" data-column="condition">${filterLink('condition', item.condition, 'var(--text-primary)')}</td>
+      <td class="shrink" data-column="weight">${filterLink('weight', item.weight, 'var(--text-primary)', formatWeight(item.weight), item.weight < 1 ? 'Grams (g)' : 'Troy ounces (oxt)')}</td>
+  <td class="shrink" data-column="purchasePrice" title="USD">${filterLink('price', item.price, 'var(--text-primary)', (item.price && item.price > 0) ? formatCurrency(item.price) : '—')}</td>
+      <td class="shrink" data-column="spot" title="USD">${filterLink('spotPriceAtPurchase', spotValue, 'var(--text-primary)', spotDisplay)}</td>
+      <td class="shrink" data-column="premium" style="color: ${item.isCollectable ? 'var(--text-muted)' : (item.totalPremium > 0 ? 'var(--warning)' : 'inherit')}">${filterLink('totalPremium', premiumValue, 'var(--text-primary)', premiumDisplay)}</td>
+      <td class="shrink" data-column="purchaseLocation">
+        ${formatPurchaseLocation(item.purchaseLocation)}
+      </td>
+      <td class="shrink" data-column="storageLocation">
+        ${formatStorageLocation(item.storageLocation)}
+      </td>
+      <td class="shrink" data-column="numista">${item.numistaId ? `
+        <a href="#" class="catalog-link" data-numista-id="${sanitizeHtml(item.numistaId)}" data-coin-name="${sanitizeHtml(item.name)}" title="N#${sanitizeHtml(item.numistaId)} - open numista.com">
+          N#
+        </a>
+      ` : '<span class="numista-empty">—</span>'}</td>
+  <td class="icon-col" data-column="collectable"><span class="collectable-status collectable-toggle" role="button" tabindex="0" aria-label="Toggle collectable status for ${sanitizeHtml(item.name)}" title="Toggle collectable status">${item.isCollectable ? '<svg class=\"collectable-icon vault-icon\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\"><rect x=\"2\" y=\"4\" width=\"20\" height=\"16\" rx=\"2\"/><circle cx=\"17\" cy=\"11\" r=\"2\"/><rect x=\"6\" y=\"8\" width=\"6\" height=\"8\" rx=\"1\"/></svg>' : '<svg class=\"collectable-icon bar-icon\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\"><rect x=\"3\" y=\"8\" width=\"18\" height=\"8\" rx=\"1\"/><path d=\"M5 6h14l-2-2H7z\"/></svg>'}</span></td>
+      <td class="icon-col" data-column="notes"><button class="icon-btn action-icon notes-icon ${item.notes && item.notes.trim() ? 'has-notes' : ''}" role="button" tabindex="0" aria-label="View notes" title="View notes">
+        <svg class="icon-svg notes-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15V5a2 2 0 0 0-2-2H7L3 7v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2z"/></svg>
+      </button></td>
+      <td class="icon-col" data-column="edit"><button class="icon-btn action-icon edit-icon" role="button" tabindex="0" aria-label="Edit ${sanitizeHtml(item.name)}" title="Edit item">
+        <svg class="icon-svg edit-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1.003 1.003 0 0 0 0-1.42l-2.34-2.34a1.003 1.003 0 0 0-1.42 0l-1.83 1.83 3.75 3.75 1.84-1.82z"/></svg>
+      </button></td>
+      <td class="icon-col" data-column="delete"><button class="icon-btn action-icon delete-icon danger" role="button" tabindex="0" aria-label="Delete item" title="Delete item">
+        <svg class="icon-svg delete-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 7h12v13a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V7zm3-4h6l1 1h4v2H3V4h4l1-1z"/></svg>
+      </button></td>
+      </tr>
+      `;
+    });
+
     const visibleCount = endIndex - startIndex;
     const placeholders = Array.from(
       { length: Math.max(0, itemsPerPage - visibleCount) },
@@ -1055,14 +1308,38 @@ const renderTable = () => {
       indicator.textContent = sortDirection === 'asc' ? '↑' : '↓';
       header.appendChild(indicator);
     }
+    
+    performance.mark('renderTable-fallback-end');
+    performance.measure('renderTable-fallback', 'renderTable-fallback-start', 'renderTable-fallback-end');
+    
+    const measure = performance.getEntriesByName('renderTable-fallback')[0];
+    debugLog(`✓ Table rendered (fallback): ${measure.duration.toFixed(2)}ms`);
+};
 
+/**
+ * Main table rendering function with feature flag support
+ * Uses optimized DOM method by default, falls back to string method if needed
+ */
+const renderTable = () => {
+  try {
+    // Use optimized DOM rendering by default
+    if (window.featureFlags?.isEnabled('DOM_FRAGMENT_OPTIMIZATION') !== false) {
+      renderTableOptimized();
+    } else {
+      renderTableFallback();
+    }
+    
     renderPagination(sortedInventory);
     updateSummary();
     
     // Re-setup column resizing and responsive visibility after table re-render
     setupColumnResizing();
     updateColumnVisibility();
-  }, 'renderTable');
+  } catch (error) {
+    console.error('❌ Error in table rendering:', error);
+    // Ultimate fallback
+    renderTableFallback();
+  }
 };
 
 /**
@@ -2256,4 +2533,10 @@ function optimizeStoragePhase1C(){
     debugWarn('optimizeStoragePhase1C error', e);
   }
 }
-if (typeof window !== 'undefined'){ window.optimizeStoragePhase1C = optimizeStoragePhase1C; }
+if (typeof window !== 'undefined'){ 
+  window.optimizeStoragePhase1C = optimizeStoragePhase1C; 
+  window.createTableRowElement = createTableRowElement;
+  window.createTableCell = createTableCell;
+  window.renderTableOptimized = renderTableOptimized;
+  window.renderTableFallback = renderTableFallback;
+}
