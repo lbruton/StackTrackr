@@ -1507,9 +1507,7 @@ const setupSearch = () => {
       safeAttachListener(
         elements.clearBtn,
         "click",
-        function () {
-          clearAllFilters();
-        },
+        clearAllFilters,
         "Clear search button",
       );
     }
