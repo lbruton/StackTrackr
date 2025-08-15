@@ -1874,13 +1874,8 @@ tr:hover {
   white-space: nowrap;
   min-width: 0;
 }
-/* Ensure the Name header is visually centered while cell contents can be left-aligned */
-#inventoryTable th[data-column="name"] {
-  text-align: center;
-}
-
+/* Name column cells remain left aligned for readability */
 #inventoryTable td[data-column="name"] {
-  /* Cells remain left aligned for readability (set inline in renderTable) */
   text-align: left;
 }
 
