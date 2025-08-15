@@ -152,6 +152,9 @@ function renderChart(results) {
   });
 }
 
+// Import modules (note: in a pure browser context, we'd use a bundler for this)
+// For now, we'll define modules inline as we can't use ES modules without a build step
+
 // Events
 document.getElementById('csvfile').addEventListener('change', (e) => {
   const file = e.target.files[0];
@@ -160,19 +163,77 @@ document.getElementById('csvfile').addEventListener('change', (e) => {
     complete: (res) => {
       parsedData = res.data.filter(r => r.length > 0);
       headers = parsedData.shift();
-      alert(`Loaded ${parsedData.length} rows, ${headers.length} columns`);
-  // show filename
-  document.getElementById('filename').textContent = file.name;
-  // populate the fixed inline preview table immediately
-  try {
-    const sel = document.getElementById('previewRowsSelect');
-    const rows = parseInt(localStorage.getItem('previewRows') || sel.value || '10', 10);
-    sel.value = String(rows);
-    renderTable(null, {previewRows: rows});
-  } catch (e) { console.warn('renderTable failed on upload', e); }
+      
+      // show filename
+      document.getElementById('filename').textContent = file.name;
+      
+      // populate the fixed inline preview table immediately
+      try {
+        const sel = document.getElementById('previewRowsSelect');
+        const rows = parseInt(localStorage.getItem('previewRows') || sel.value || '10', 10);
+        sel.value = String(rows);
+        renderTable(null, {previewRows: rows});
+        
+        // Auto-calculate severity sums
+        autoCalculatePanels();
+        
+        // Store results in history
+        storeCurrentResults(file.name);
+      } catch (e) { 
+        console.warn('renderTable failed on upload', e); 
+      }
     }
   });
 });
+
+// Store current calculation results to history
+function storeCurrentResults(filename) {
+  const timestamp = new Date().toISOString();
+  const results = {};
+  
+  // Get values for each severity level
+  for (let i = 1; i <= 5; i++) {
+    const panel = document.getElementById(`output-${i}`);
+    if (!panel) continue;
+    
+    // Parse values from the panel display
+    const sumMatch = panel.innerHTML.match(/Sum:<\/span> <span class="stat-value">(\d+\.\d+)/);
+    const countMatch = panel.innerHTML.match(/Count:<\/span> <span class="stat-value">(\d+)/);
+    const meanMatch = panel.innerHTML.match(/Mean:<\/span> <span class="stat-value">(\d+\.\d+)/);
+    const minMatch = panel.innerHTML.match(/Min:<\/span> <span class="stat-value">(\d+)/);
+    const maxMatch = panel.innerHTML.match(/Max:<\/span> <span class="stat-value">(\d+)/);
+    
+    const sum = sumMatch ? parseFloat(sumMatch[1]) : 0;
+    const count = countMatch ? parseInt(countMatch[1]) : 0;
+    const mean = meanMatch ? parseFloat(meanMatch[1]) : 0;
+    const min = minMatch ? parseFloat(minMatch[1]) : 0;
+    const max = maxMatch ? parseFloat(maxMatch[1]) : 0;
+    
+    const severity = i === 1 ? 'low' : 
+                    i === 2 ? 'medium' : 
+                    i === 3 ? 'high' : 
+                    i === 4 ? 'critical' : 'total';
+                    
+    results[severity] = { sum, count, mean, min, max };
+  }
+  
+  // Add to history in localStorage
+  let history = JSON.parse(localStorage.getItem('vprHistory') || '[]');
+  history.push({
+    filename,
+    date: timestamp,
+    data: results
+  });
+  
+  // Sort history by date
+  history.sort((a, b) => new Date(a.date) - new Date(b.date));
+  
+  // Store back in localStorage
+  localStorage.setItem('vprHistory', JSON.stringify(history));
+  
+  // Update charts
+  updateHistoryCharts();
+}
 
 document.getElementById('apply').addEventListener('click', () => {
   const formula = document.getElementById('formulaInput').value;
@@ -232,17 +293,283 @@ function generateSampleData(cols = 8, rows = 50) {
 // If no CSV is uploaded, populate with sample data for testing
 if (!parsedData || parsedData.length === 0) {
   generateSampleData(12, 149);
+  autoCalculatePanels();
 }
 
+// Setup bulk upload button
+document.getElementById('bulkUploadBtn').addEventListener('click', () => {
+  document.getElementById('bulkUploadInput').click();
+});
+
+// Handle bulk file upload
+document.getElementById('bulkUploadInput').addEventListener('change', async (e) => {
+  const files = e.target.files;
+  if (!files || files.length === 0) return;
+  
+  const warningsEl = document.getElementById('bulkWarnings');
+  warningsEl.innerHTML = `<div>Processing ${files.length} files...</div>`;
+  
+  let successCount = 0;
+  let errorCount = 0;
+  let history = JSON.parse(localStorage.getItem('vprHistory') || '[]');
+  
+  for (let i = 0; i < files.length; i++) {
+    const file = files[i];
+    try {
+      // Parse the file
+      const result = await new Promise((resolve, reject) => {
+        Papa.parse(file, {
+          complete: (res) => {
+            const data = res.data.filter(r => r.length > 0);
+            if (data.length < 2) {
+              reject(new Error(`No valid data in ${file.name}`));
+              return;
+            }
+            resolve(data);
+          },
+          error: reject
+        });
+      });
+      
+      // Process the file data
+      const fileHeaders = result.shift();
+      const fileRows = result;
+      
+      // Find severity and score columns
+      const colSeverity = fileHeaders.findIndex(h => h.trim().toLowerCase() === 'definition.vpr.severity');
+      const colScore = fileHeaders.findIndex(h => h.trim().toLowerCase() === 'definition.vpr.score');
+      
+      if (colSeverity === -1 || colScore === -1) {
+        throw new Error(`Missing required columns in ${file.name}`);
+      }
+      
+      // Calculate stats for each severity
+      const severities = ['low', 'medium', 'high', 'critical'];
+      const stats = {};
+      
+      severities.forEach(sev => {
+        let sum = 0, count = 0, min = null, max = null;
+        
+        for (const row of fileRows) {
+          if (row[colSeverity] && String(row[colSeverity]).trim().toLowerCase() === sev) {
+            const score = parseFloat(String(row[colScore]).replace(/,/g, ''));
+            if (!isNaN(score)) {
+              sum += score;
+              count++;
+              if (min === null || score < min) min = score;
+              if (max === null || score > max) max = score;
+            }
+          }
+        }
+        
+        stats[sev] = { sum, count, mean: count ? sum / count : 0, min: min ?? 0, max: max ?? 0 };
+      });
+      
+      // Calculate total
+      let totalSum = 0, totalCount = 0, totalMin = null, totalMax = null;
+      
+      for (const row of fileRows) {
+        const score = parseFloat(String(row[colScore]).replace(/,/g, ''));
+        if (!isNaN(score)) {
+          totalSum += score;
+          totalCount++;
+          if (totalMin === null || score < totalMin) totalMin = score;
+          if (totalMax === null || score > totalMax) totalMax = score;
+        }
+      }
+      
+      stats.total = {
+        sum: totalSum, 
+        count: totalCount, 
+        mean: totalCount ? totalSum / totalCount : 0,
+        min: totalMin ?? 0,
+        max: totalMax ?? 0
+      };
+      
+      // Add to history
+      history.push({
+        filename: file.name,
+        date: new Date().toISOString(),
+        data: stats
+      });
+      
+      successCount++;
+    } catch (error) {
+      console.error(`Error processing ${file.name}:`, error);
+      errorCount++;
+    }
+  }
+  
+  // Sort history by date
+  history.sort((a, b) => new Date(a.date) - new Date(b.date));
+  
+  // Save to storage
+  localStorage.setItem('vprHistory', JSON.stringify(history));
+  
+  // Update history charts
+  updateHistoryCharts();
+  
+  // Show results summary
+  warningsEl.innerHTML = `
+    <div>Processed ${successCount + errorCount} files:</div>
+    <div>- ${successCount} successful</div>
+    ${errorCount > 0 ? `<div>- ${errorCount} failed (check console for details)</div>` : ''}
+  `;
+  
+  // If we have at least one successful file, display the most recent data
+  if (successCount > 0 && history.length > 0) {
+    displayLatestResults(history[history.length - 1]);
+  }
+});
+
+// Generate HTML report
+document.getElementById('generateReport').addEventListener('click', () => {
+  const history = JSON.parse(localStorage.getItem('vprHistory') || '[]');
+  
+  if (!history || history.length === 0) {
+    alert('No history data available to generate a report');
+    return;
+  }
+  
+  // Generate HTML report
+  const html = generateHTMLReport(history);
+  
+  // Create blob and download
+  const blob = new Blob([html], { type: 'text/html' });
+  const url = URL.createObjectURL(blob);
+  
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `vpr-report-${new Date().toISOString().slice(0, 10)}.html`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+});
+
 // Calculation panels
-function computeAggregates(results) {
-  const vals = results.filter(v => typeof v === 'number');
-  const sum = vals.reduce((a,b)=>a+b,0);
-  const count = vals.length;
-  const mean = count? sum/count : 0;
-  const min = count? Math.min(...vals) : 0;
-  const max = count? Math.max(...vals) : 0;
-  return {count, sum, mean, min, max};
+// Store previous values to calculate trends
+let previousValues = JSON.parse(localStorage.getItem('previousValues') || '{}');
+let currentValues = {};
+
+// Calculate trend indicators
+function getTrendIndicator(current, previous) {
+  if (previous === undefined || previous === null) return '';
+  
+  if (current > previous) {
+    return '<span class="trend-indicator trends-up">▲</span>';
+  } else if (current < previous) {
+    return '<span class="trend-indicator trends-down">▼</span>';
+  } else {
+    return '<span class="trend-indicator trends-equal">=</span>';
+  }
+}
+
+function updateProgressBar(id, value, max) {
+  const percentage = max > 0 ? (value / max) * 100 : 0;
+  const progressBar = document.getElementById(`progress-${id}`);
+  if (progressBar) {
+    progressBar.style.width = `${Math.min(100, percentage)}%`;
+  }
+}
+
+function autoCalculatePanels() {
+  // Find severity and score columns
+  const colSeverity = headers.findIndex(h => h.trim().toLowerCase() === 'definition.vpr.severity');
+  const colScore = headers.findIndex(h => h.trim().toLowerCase() === 'definition.vpr.score');
+  const severities = ['low', 'medium', 'high', 'critical'];
+  let totalSum = 0, totalCount = 0, totalMin = null, totalMax = null;
+  let highestSum = 0; // Track the highest sum for progress bars
+  
+  // First pass to get highest sum for progress bars
+  severities.forEach((sev, idx) => {
+    let sum = 0;
+    for (const row of parsedData) {
+      if (colSeverity !== -1 && colScore !== -1 && String(row[colSeverity]).trim().toLowerCase() === sev) {
+        sum += toNumber(row[colScore]);
+      }
+    }
+    highestSum = Math.max(highestSum, sum);
+  });
+  
+  // Second pass to calculate and display stats
+  severities.forEach((sev, idx) => {
+    let sum = 0, count = 0, min = null, max = null;
+    for (const row of parsedData) {
+      if (colSeverity !== -1 && colScore !== -1 && String(row[colSeverity]).trim().toLowerCase() === sev) {
+        const score = toNumber(row[colScore]);
+        sum += score;
+        count++;
+        if (min === null || score < min) min = score;
+        if (max === null || score > max) max = score;
+      }
+    }
+    
+    const mean = count ? sum/count : 0;
+    
+    // Store current value for trend comparison
+    currentValues[`sum_${idx+1}`] = sum;
+    
+    // Get trend indicator
+    const trendIndicator = getTrendIndicator(sum, previousValues[`sum_${idx+1}`]);
+    document.getElementById(`trend-${idx+1}`).innerHTML = trendIndicator;
+    
+    // Format output with styled rows
+    let output = `
+      <div class="stat-row"><span class="stat-label">Count:</span> <span class="stat-value">${count}</span></div>
+      <div class="stat-row"><span class="stat-label">Sum:</span> <span class="stat-value">${sum.toFixed(2)}</span></div>
+      <div class="stat-row"><span class="stat-label">Mean:</span> <span class="stat-value">${mean.toFixed(2)}</span></div>
+      <div class="stat-row"><span class="stat-label">Min:</span> <span class="stat-value">${min ?? 0}</span></div>
+      <div class="stat-row"><span class="stat-label">Max:</span> <span class="stat-value">${max ?? 0}</span></div>
+    `;
+    
+    if (count === 0) {
+      output += `<div style='color:#ffd39b;margin-top:8px;'>No matches for '${sev.charAt(0).toUpperCase()+sev.slice(1)}' severity.</div>`;
+    }
+    
+    document.getElementById(`output-${idx+1}`).innerHTML = output;
+    updateProgressBar(idx+1, sum, highestSum);
+    
+    totalSum += sum;
+    totalCount += count;
+    if (min !== null && (totalMin === null || min < totalMin)) totalMin = min;
+    if (max !== null && (totalMax === null || max > totalMax)) totalMax = max;
+  });
+  
+  // Total sum for all scores
+  if (colScore !== -1) {
+    let sum = 0, count = 0, min = null, max = null;
+    for (const row of parsedData) {
+      const score = toNumber(row[colScore]);
+      sum += score;
+      count++;
+      if (min === null || score < min) min = score;
+      if (max === null || score > max) max = score;
+    }
+    
+    const mean = count ? sum/count : 0;
+    
+    // Store current value for trend comparison
+    currentValues[`sum_5`] = sum;
+    
+    // Get trend indicator
+    const trendIndicator = getTrendIndicator(sum, previousValues[`sum_5`]);
+    document.getElementById(`trend-5`).innerHTML = trendIndicator;
+    
+    let output = `
+      <div class="stat-row"><span class="stat-label">Count:</span> <span class="stat-value">${count}</span></div>
+      <div class="stat-row"><span class="stat-label">Sum:</span> <span class="stat-value">${sum.toFixed(2)}</span></div>
+      <div class="stat-row"><span class="stat-label">Mean:</span> <span class="stat-value">${mean.toFixed(2)}</span></div>
+      <div class="stat-row"><span class="stat-label">Min:</span> <span class="stat-value">${min ?? 0}</span></div>
+      <div class="stat-row"><span class="stat-label">Max:</span> <span class="stat-value">${max ?? 0}</span></div>
+    `;
+    
+    document.getElementById('output-5').innerHTML = output;
+    updateProgressBar(5, sum, sum); // Total progress is 100%
+  }
+  
+  // Save current values for future trend comparison
+  localStorage.setItem('previousValues', JSON.stringify(currentValues));
 }
 
 document.querySelectorAll('.panel-apply').forEach(btn => {
@@ -250,11 +577,48 @@ document.querySelectorAll('.panel-apply').forEach(btn => {
     const id = btn.dataset.panel;
     const formula = document.getElementById(`formula-${id}`).value;
     if (!parsedData) { alert('Load a CSV first'); return; }
-    const jsExpr = translateFormula(formula);
-    const results = applyFormulaToData(jsExpr);
-    const agg = computeAggregates(results);
-    const out = document.getElementById(`output-${id}`);
-    out.innerHTML = `<div>Count: ${agg.count}</div><div>Sum: ${agg.sum.toFixed(2)}</div><div>Mean: ${agg.mean.toFixed(2)}</div><div>Min: ${agg.min}</div><div>Max: ${agg.max}</div>`;
+
+      let result = null;
+      // SUMIF logic for panels 1-4 using real headers
+      if (formula.match(/^=SUMIF\(definition\.vpr\.severity:definition\.vpr\.severity,"(Low|Medium|High|Critical)",definition\.vpr\.score:definition\.vpr\.score\)$/i)) {
+        const colSeverity = headers.findIndex(h => h.trim() === 'definition.vpr.severity');
+        const colScore = headers.findIndex(h => h.trim() === 'definition.vpr.score');
+        const matchVal = formula.match(/SUMIF\(definition\.vpr\.severity:definition\.vpr\.severity,"(Low|Medium|High|Critical)",definition\.vpr\.score:definition\.vpr\.score\)/i)[1];
+        let sum = 0, count = 0, min = null, max = null;
+        for (const row of parsedData) {
+          if (colSeverity !== -1 && colScore !== -1 && String(row[colSeverity]).toLowerCase() === matchVal.toLowerCase()) {
+            const score = toNumber(row[colScore]);
+            sum += score;
+            count++;
+            if (min === null || score < min) min = score;
+            if (max === null || score > max) max = score;
+          }
+        }
+        result = {count, sum, mean: count ? sum/count : 0, min: min ?? 0, max: max ?? 0};
+      }
+      // SUM logic for panel 5: sum all definition.vpr.score values
+      else if (formula.match(/^=SUM\(definition\.vpr\.score:definition\.vpr\.score\)$/i)) {
+        const colScore = headers.findIndex(h => h.trim() === 'definition.vpr.score');
+        let sum = 0, count = 0, min = null, max = null;
+        for (const row of parsedData) {
+          if (colScore !== -1) {
+            const score = toNumber(row[colScore]);
+            sum += score;
+            count++;
+            if (min === null || score < min) min = score;
+            if (max === null || score > max) max = score;
+          }
+        }
+        result = {count, sum, mean: count ? sum/count : 0, min: min ?? 0, max: max ?? 0};
+      }
+      // fallback: use generic formula translation
+      else {
+        const jsExpr = translateFormula(formula);
+        const results = applyFormulaToData(jsExpr);
+        result = computeAggregates(results);
+      }
+      const out = document.getElementById(`output-${id}`);
+      out.innerHTML = `<div>Count: ${result.count}</div><div>Sum: ${result.sum.toFixed(2)}</div><div>Mean: ${result.mean.toFixed(2)}</div><div>Min: ${result.min}</div><div>Max: ${result.max}</div>`;
   });
 });
 

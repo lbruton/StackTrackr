@@ -1,0 +1,16 @@
+{
+  "backup_timestamp": "2025-08-15T20:30:00.000Z",
+  "bugs": {
+    "filter-chips-initial-styling-bug": [
+      "Root Cause: Filter chips load with incorrect styling on page initialization, styles only apply correctly after filter interaction",
+      "Symptoms: Chips appear with wrong visual styling (colors, borders, etc.) when page first loads, but display correctly after user changes filter settings",
+      "Component: Filter chips display system",
+      "Affected Files: Likely css/styles.css, js/filters.js, js/init.js",
+      "Browser Impact: Visual inconsistency on initial page load",
+      "User Impact: Poor first impression, inconsistent UI appearance",
+      "Date Discovered: 2025-08-15",
+      "Status: Documented, needs investigation",
+      "Priority: Medium - Visual bug affecting UX but not functionality"
+    ]
+  }
+}

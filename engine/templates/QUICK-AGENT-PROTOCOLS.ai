@@ -27,11 +27,6 @@ Purpose: Find past solutions, patterns, known issues
 - "new-features" - Get brand new functionality
 - "current-sprint" - Get active work items
 - "testing-qa" - Get quality assurance tasks
-
-# FALLBACK: If MCP unavailable, use backup files:
-- /backups/mcp_memory/roadmap_backup.json
-- /backups/mcp_memory/bugs_backup.json  
-- /local_memory.json
 ```
 
 ### **3. Documentation Check** (MANDATORY)
