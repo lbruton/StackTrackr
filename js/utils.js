@@ -2541,4 +2541,6 @@ if (typeof window !== 'undefined') {
   window.generateStorageReport = generateStorageReport;
   window.updateSpotTimestamp = updateSpotTimestamp;
   window.cleanupStorage = cleanupStorage;
+  window.checkFileSize = checkFileSize;
+  window.MAX_LOCAL_FILE_SIZE = MAX_LOCAL_FILE_SIZE;
 }

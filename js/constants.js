@@ -860,6 +860,7 @@ if (typeof window !== "undefined") {
   window.METALS = METALS;
   window.DEBUG = DEBUG;
   window.DEFAULT_CURRENCY = DEFAULT_CURRENCY;
+  window.MAX_LOCAL_FILE_SIZE = MAX_LOCAL_FILE_SIZE;
   window.BRANDING_DOMAIN_OPTIONS = BRANDING_DOMAIN_OPTIONS;
   window.BRANDING_DOMAIN_OVERRIDE = BRANDING_DOMAIN_OVERRIDE;
   window.getTemplateVariables = getTemplateVariables;
