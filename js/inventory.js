@@ -551,9 +551,6 @@ const escapeAttribute = (text) =>
     .replace(/'/g, '&#39;');
 
 const filterLink = (field, value, color, displayValue = value, title, allowHtml = false) => {
-  const handler = `applyColumnFilter('${field}', ${JSON.stringify(value)})`;
-  // Escape characters for safe inline handler usage
-  const escaped = escapeAttribute(handler);
   const displayStr = String(displayValue);
   const safe = allowHtml ? displayStr : sanitizeHtml(displayStr);
   const titleStr = title ? String(title) : `Filter by ${displayStr}`;
@@ -561,7 +558,8 @@ const filterLink = (field, value, color, displayValue = value, title, allowHtml 
   const isNA = displayStr === 'N/A' || displayStr === 'Numista Import' || displayStr === 'Unknown' || displayStr === '—';
   const classNames = `filter-text${isNA ? ' na-value' : ''}`;
   const styleAttr = isNA ? '' : ` style="color: ${color};"`;
-  return `<span class="${classNames}"${styleAttr} onclick="${escaped}" tabindex="0" role="button" onkeydown="if(event.key==='Enter'||event.key===' ')${escaped}" title="${safeTitle}">${safe}</span>`;
+  const valueAttr = `data-field="${field}" data-value="${escapeAttribute(JSON.stringify(value))}"`;
+  return `<span class="${classNames}"${styleAttr} ${valueAttr} tabindex="0" role="button" title="${safeTitle}">${safe}</span>`;
 };
 
 const getTypeColor = type => typeColors[type] || 'var(--type-other-bg)';
@@ -596,7 +594,7 @@ const formatPurchaseLocation = (loc) => {
       href = `https://${href}`;
     }
     const safeHref = escapeAttribute(href);
-    return `${filterSpan}<a href="${safeHref}" target="_blank" rel="noopener" onclick="event.stopPropagation()" class="info-link" title="${safeHref}">(i)</a>`;
+    return `${filterSpan}<a href="${safeHref}" target="_blank" rel="noopener" class="info-link" title="${safeHref}">(i)</a>`;
   }
   return filterSpan;
 };
@@ -795,7 +793,7 @@ const startCellEdit = (idx, field, icon) => {
 
   const renderCell = () => {
     td.classList.remove('editing');
-    const iconHtml = `<span class="inline-edit-icon" role="button" tabindex="0" onclick="startCellEdit(${idx}, '${field}', this)" aria-label="Edit ${field}" title="Edit ${field}">✎</span>`;
+    const iconHtml = `<span class="inline-edit-icon" role="button" tabindex="0" data-field="${field}" aria-label="Edit ${field}" title="Edit ${field}">✎</span>`;
     let content = '';
     
     switch (field) {
@@ -1008,18 +1006,18 @@ const renderTable = () => {
         ${formatStorageLocation(item.storageLocation)}
       </td>
       <td class="shrink" data-column="numista">${item.numistaId ? `
-        <a href="#" onclick="openNumistaModal('${sanitizeHtml(item.numistaId)}', '${sanitizeHtml(item.name)}'); return false;" title="N#${sanitizeHtml(item.numistaId)} - open numista.com" class="catalog-link">
+        <a href="#" class="catalog-link" data-numista-id="${sanitizeHtml(item.numistaId)}" data-coin-name="${sanitizeHtml(item.name)}" title="N#${sanitizeHtml(item.numistaId)} - open numista.com">
           N#
         </a>
       ` : '<span class="numista-empty">—</span>'}</td>
-  <td class="icon-col" data-column="collectable"><span class="collectable-status" role="button" tabindex="0" onclick="toggleCollectable(${originalIdx})" onkeydown="if(event.key==='Enter'||event.key===' ') toggleCollectable(${originalIdx})" aria-label="Toggle collectable status for ${sanitizeHtml(item.name)}" title="Toggle collectable status">${item.isCollectable ? '<svg class=\"collectable-icon vault-icon\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\"><rect x=\"2\" y=\"4\" width=\"20\" height=\"16\" rx=\"2\"/><circle cx=\"17\" cy=\"11\" r=\"2\"/><rect x=\"6\" y=\"8\" width=\"6\" height=\"8\" rx=\"1\"/></svg>' : '<svg class=\"collectable-icon bar-icon\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\"><rect x=\"3\" y=\"8\" width=\"18\" height=\"8\" rx=\"1\"/><path d=\"M5 6h14l-2-2H7z\"/></svg>'}</span></td>
-      <td class="icon-col" data-column="notes"><button class="icon-btn action-icon ${item.notes && item.notes.trim() ? 'has-notes' : ''}" role="button" tabindex="0" onclick="showNotes(${originalIdx})" aria-label="View notes" title="View notes">
+  <td class="icon-col" data-column="collectable"><span class="collectable-status collectable-toggle" role="button" tabindex="0" aria-label="Toggle collectable status for ${sanitizeHtml(item.name)}" title="Toggle collectable status">${item.isCollectable ? '<svg class=\"collectable-icon vault-icon\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\"><rect x=\"2\" y=\"4\" width=\"20\" height=\"16\" rx=\"2\"/><circle cx=\"17\" cy=\"11\" r=\"2\"/><rect x=\"6\" y=\"8\" width=\"6\" height=\"8\" rx=\"1\"/></svg>' : '<svg class=\"collectable-icon bar-icon\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\"><rect x=\"3\" y=\"8\" width=\"18\" height=\"8\" rx=\"1\"/><path d=\"M5 6h14l-2-2H7z\"/></svg>'}</span></td>
+      <td class="icon-col" data-column="notes"><button class="icon-btn action-icon notes-icon ${item.notes && item.notes.trim() ? 'has-notes' : ''}" role="button" tabindex="0" aria-label="View notes" title="View notes">
         <svg class="icon-svg notes-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15V5a2 2 0 0 0-2-2H7L3 7v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2z"/></svg>
       </button></td>
-      <td class="icon-col" data-column="edit"><button class="icon-btn action-icon edit-icon" role="button" tabindex="0" onclick="editItem(${originalIdx})" aria-label="Edit ${sanitizeHtml(item.name)}" title="Edit item">
+      <td class="icon-col" data-column="edit"><button class="icon-btn action-icon edit-icon" role="button" tabindex="0" aria-label="Edit ${sanitizeHtml(item.name)}" title="Edit item">
         <svg class="icon-svg edit-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1.003 1.003 0 0 0 0-1.42l-2.34-2.34a1.003 1.003 0 0 0-1.42 0l-1.83 1.83 3.75 3.75 1.84-1.82z"/></svg>
       </button></td>
-      <td class="icon-col" data-column="delete"><button class="icon-btn action-icon danger" role="button" tabindex="0" onclick="deleteItem(${originalIdx})" aria-label="Delete item" title="Delete item">
+      <td class="icon-col" data-column="delete"><button class="icon-btn action-icon delete-icon danger" role="button" tabindex="0" aria-label="Delete item" title="Delete item">
         <svg class="icon-svg delete-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 7h12v13a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V7zm3-4h6l1 1h4v2H3V4h4l1-1z"/></svg>
       </button></td>
       </tr>

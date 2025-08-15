@@ -1343,6 +1343,10 @@ const setupEventListeners = () => {
       setupAboutModalEvents();
     }
 
+    // TABLE EVENT DELEGATION
+    debugLog("Setting up table event delegation...");
+    setupTableEventDelegation();
+
     debugLog("✓ All event listeners setup complete");
   } catch (error) {
     console.error("❌ Error setting up event listeners:", error);
@@ -2025,6 +2029,147 @@ const setupApiEvents = () => {
     console.error("❌ Error setting up API events:", error);
   }
 };
+
+// =============================================================================
+
+// TABLE EVENT DELEGATION SYSTEM
+// =============================================================================
+
+/**
+ * Centralized table event delegation handler
+ * Replaces all inline onclick handlers for better memory management
+ */
+const setupTableEventDelegation = () => {
+  const inventoryTable = elements.inventoryTable;
+  if (!inventoryTable) {
+    console.warn('Inventory table not found for event delegation setup');
+    return false;
+  }
+
+  // Remove any existing listeners to prevent duplicates
+  inventoryTable.removeEventListener('click', handleTableClick);
+  inventoryTable.removeEventListener('keydown', handleTableKeydown);
+  
+  // Add single delegated event listener
+  inventoryTable.addEventListener('click', handleTableClick);
+  
+  // Handle keyboard navigation for accessibility
+  inventoryTable.addEventListener('keydown', handleTableKeydown);
+  
+  debugLog('✓ Table event delegation setup complete');
+  return true;
+};
+
+/**
+ * Handles all click events on the inventory table via delegation
+ * @param {Event} e - Click event
+ */
+const handleTableClick = (e) => {
+  const target = e.target;
+  const row = target.closest('tr');
+  
+  if (!row || !row.dataset.index) return;
+  
+  const idx = parseInt(row.dataset.index, 10);
+  
+  // Event delegation based on CSS classes and data attributes
+  if (target.matches('.edit-icon, .edit-action')) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (typeof editItem === 'function') {
+      editItem(idx);
+    }
+  } else if (target.matches('.delete-icon, .delete-action, .danger')) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (typeof deleteItem === 'function') {
+      deleteItem(idx);
+    }
+  } else if (target.matches('.notes-icon, .notes-action, .has-notes')) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (typeof showNotes === 'function') {
+      showNotes(idx);
+    }
+  } else if (target.matches('.collectable-toggle, .collectable-status')) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (typeof toggleCollectable === 'function') {
+      toggleCollectable(idx);
+    }
+  } else if (target.matches('.inline-edit-icon')) {
+    e.preventDefault();
+    e.stopPropagation();
+    const field = target.dataset.field;
+    if (typeof startCellEdit === 'function' && field) {
+      startCellEdit(idx, field, target);
+    }
+  } else if (target.matches('.filter-text')) {
+    // Handle filter clicks
+    const field = target.dataset.field;
+    const value = target.dataset.value;
+    if (field && value !== undefined && typeof applyColumnFilter === 'function') {
+      applyColumnFilter(field, value);
+    }
+  } else if (target.matches('.catalog-link')) {
+    // Handle Numista modal clicks
+    e.preventDefault();
+    const numistaId = target.dataset.numistaId;
+    const coinName = target.dataset.coinName;
+    if (typeof openNumistaModal === 'function' && numistaId && coinName) {
+      openNumistaModal(numistaId, coinName);
+    }
+  }
+};
+
+/**
+ * Handles keyboard events on the inventory table for accessibility
+ * @param {Event} e - Keyboard event
+ */
+const handleTableKeydown = (e) => {
+  const target = e.target;
+  const row = target.closest('tr');
+  
+  if (!row || !row.dataset.index) return;
+  
+  // Only handle Enter and Space for actionable elements
+  if (e.key !== 'Enter' && e.key !== ' ') return;
+  
+  const idx = parseInt(row.dataset.index, 10);
+  
+  if (target.matches('.edit-icon, .edit-action')) {
+    e.preventDefault();
+    if (typeof editItem === 'function') {
+      editItem(idx);
+    }
+  } else if (target.matches('.delete-icon, .delete-action, .danger')) {
+    e.preventDefault();
+    if (typeof deleteItem === 'function') {
+      deleteItem(idx);
+    }
+  } else if (target.matches('.notes-icon, .notes-action, .has-notes')) {
+    e.preventDefault();
+    if (typeof showNotes === 'function') {
+      showNotes(idx);
+    }
+  } else if (target.matches('.collectable-toggle, .collectable-status')) {
+    e.preventDefault();
+    if (typeof toggleCollectable === 'function') {
+      toggleCollectable(idx);
+    }
+  } else if (target.matches('.inline-edit-icon')) {
+    e.preventDefault();
+    const field = target.dataset.field;
+    if (typeof startCellEdit === 'function' && field) {
+      startCellEdit(idx, field, target);
+    }
+  }
+};
+
+// Export table event delegation functions to global scope
+window.setupTableEventDelegation = setupTableEventDelegation;
+window.handleTableClick = handleTableClick;
+window.handleTableKeydown = handleTableKeydown;
 
 // =============================================================================
 
