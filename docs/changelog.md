@@ -1,11 +1,16 @@
 # StackrTrackr — Changelog
 
-> **Latest release: v3.04.74**
+> **Latest release: v3.04.76**
 
 
 For upcoming work, see [announcements](announcements.md).
 
 ## 📋 Version History
+
+### Version 3.04.76 – Table Item Counter (2025-08-15)
+- **Inventory Insight**: Added dynamic item counter below the inventory table displaying the number of visible items.
+- **Styling**: Muted text, right-aligned using `.table-item-count` for a subtle appearance.
+- **Files Updated**: `index.html`, `css/styles.css`, `js/state.js`, `js/inventory.js`
 
 ### Version 3.04.74 – CSV Import/Export Fixes (2025-08-14)
 - **Import Reliability**: Fixed undefined notes reference and removed unnecessary file input reset in `importCsv`
