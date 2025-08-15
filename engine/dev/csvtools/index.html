@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CSV Tools - Formula Prototype</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <main>
+    <h1>CSV Tools - Formula Prototype</h1>
+
+    <section id="upload">
+      <label for="csvfile">Upload CSV:</label>
+      <input id="csvfile" type="file" accept=".csv" />
+    </section>
+
+    <section id="formula">
+      <label for="formulaInput">Excel Formula (example: =A*B + C):</label>
+      <input id="formulaInput" type="text" placeholder="e.g. =A*B+C" style="width:60%" />
+      <button id="apply">Apply</button>
+    </section>
+
+    <section id="results">
+      <h2>Results</h2>
+      <canvas id="chart" width="800" height="300"></canvas>
+      <div id="table"></div>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

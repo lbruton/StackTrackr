@@ -1,0 +1,5 @@
+body{font-family:Inter, Arial, sans-serif;padding:20px}
+main{max-width:1000px;margin:0 auto}
+#table table{width:100%;border-collapse:collapse}
+#table th, #table td{padding:6px;border:1px solid #ddd;text-align:left}
+#chart{margin-top:12px}
