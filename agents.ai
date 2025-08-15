@@ -118,13 +118,6 @@ Query memory for:
 - "current-sprint" - Active work items assigned to agents
 - "backend-architecture" - Infrastructure and system work
 - "testing-qa" - Quality assurance and testing tasks
-
-# FALLBACK SYSTEM: If MCP Memory Unavailable
-When MCP tools fail, use these backup files:
-- /backups/mcp_memory/roadmap_backup.json (all roadmap categories)
-- /backups/mcp_memory/bugs_backup.json (documented bugs)
-- /backups/mcp_memory/workflows_backup.json (workflow protocols)
-- /local_memory.json (local backup with tasks and recent changes)
 ```
 
 #### **mcp_memory_create_entities** - Document discoveries
