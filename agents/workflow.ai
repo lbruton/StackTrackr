@@ -55,3 +55,25 @@ This will generate a complete task delegation system with individual assignments
     - **Document**: Generate or update JSDoc comments for functions and modules.
     - **Analyze**: Ask for explanations of complex code blocks or large files.
 - **Example Prompt**: *"@workspace Please review this new authentication code, refactor it for clarity, and add detailed JSDoc comments."*
+
+---
+
+## 🧠 **AI Model Selection Logic**
+To conserve usage limits and ensure efficiency, tasks are delegated to the most appropriate AI model based on the following criteria:
+
+1. **Complexity**:
+   - Low: Use GPT-4.1 or Claude 3.7.
+   - Medium: Use GPT-4 or Claude 4.
+   - High: Use GPT-5.
+
+2. **Cost**:
+   - Prioritize lower-cost models when task complexity allows.
+
+3. **Quota**:
+   - Ensure the selected model has sufficient quota remaining.
+
+### Example Usage
+```
+"Assign this task to the best model: Implement fuzzy search algorithm"
+```
+This will automatically select the most suitable model based on the above criteria.

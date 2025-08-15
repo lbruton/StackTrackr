@@ -75,15 +75,10 @@ For all agents working in the StackTrackr workspace, the following documentation
 - `/docs/table_structure_and_styling.md`: Table structure, scripts, CSS pitfalls
 - `/docs/modal_and_button_reference.md`: Modal and button design, functions
 - `/docs/inventory_import_export_design.md`: Import/export, calculation, mapping logic
+- `/docs/release_process.md`: Step-by-step guide for versioning and release management
 
-These documents are part of the MCP workspace context and must be kept up to date. Agents should validate all changes against these guides and update them as needed.
-// Add new providers in constants.js
-METALS_DEV: {
-  name: "Metals.dev",
-  baseUrl: "https://api.metals.dev/v1",
-  endpoints: { ... },
-  parseResponse: (data) => data.result,
-}
+### Memory Usage
+Agents must commit tasks to memory before starting and after completing them. This ensures continuity across models and allows other agents to pick up where the previous agent left off. For example, if Claude runs out of usage halfway through editing a file, GPT can access memory to know what Claude was working on.
 ```
 
 ### Modal Management
@@ -531,3 +526,51 @@ This file is the authoritative document for development priorities and progress 
 ### Implementation
 - Agents must refer to `/docs/roadmap.md` for their assigned tasks.
 - Updates to task progress should be appended to the checklist in the roadmap file.
+
+---
+
+# Updated archive directory
+# All agents must now use the /archive/ directory for archived files.
+
+## 📁 **DIRECTORY USAGE GUIDELINES**
+
+- **Patches**: Always store and retrieve patch files from `/docs/patch/`.
+- **Fixes**: Always store and retrieve fix documentation from `/docs/fixes/`.
+
+Agents must adhere to these directory conventions to ensure consistency and organization across the project.
+
+## 📁 **UPDATED DOCUMENT STRUCTURE**
+
+Agents must adhere to the following document structure:
+
+- **Fixes**: `/docs/fixes/` - All fix-related documentation.
+- **Guides**: `/docs/guides/` - All guide files.
+- **Patches**: `/docs/patch/` - All patch files.
+- **Workflows**: `/docs/workflow/` - All workflow-related documentation.
+- **Roadmap**: `/docs/roadmap.md` - The single source of truth for development priorities.
+- **Versioning**: `/docs/versioning.md` - Versioning guidelines and protocols.
+
+Agents must ensure all new documentation is placed in the appropriate directory to maintain organization and consistency.
+
+---
+
+## Memory Commitment Reminder
+
+Agents should frequently ask the user if any important items should be committed to memory. This ensures that critical information is not lost and remains accessible for future reference.
+
+---
+
+## Bug Tracking and Resolution
+
+Agents must commit details about any bugs they encounter to memory, including the cause of the bug and the steps taken to resolve it. When troubleshooting, agents should always consult memory to determine if the issue is a recurring one and leverage past resolutions to address it efficiently.
+
+---
+
+## Task Synchronization
+
+Agents are responsible for ensuring tasks are synchronized between MCP memory and `/docs/roadmap.md`. This includes:
+
+1. Fetching tasks from MCP memory and updating `/docs/roadmap.md`.
+2. Syncing tasks from `/docs/roadmap.md` back to MCP memory.
+
+Agents should use the `scripts/sync_tasks.py` script to automate this process and ensure consistency.

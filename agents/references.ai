@@ -1,7 +1,7 @@
 # StackTrackr Agent Trigger Phrases & Workflow References
 **Version**: 2.0  
 **Created**: August 13, 2025  
-**Location**: `/docs/agents/references.md`
+**Location**: `/docs/agents/references.ai`
 
 ---
 
@@ -16,7 +16,7 @@
 ```
 "Review current task progress"
 ```
-→ Reads checklist.md and provides comprehensive status update on all active tasks
+→ Reads checklist.ai and provides comprehensive status update on all active tasks
 
 ```
 "Assign task [PHASE] to [AGENT]"
@@ -317,7 +317,7 @@
 ### **Current Task Location**
 ```
 /docs/agents/tasks/
-├── checklist.md              # Progress tracking
+├── checklist.ai              # Progress tracking
 ├── agent-prompts.md          # Ready-to-use prompts
 ├── gpt-task-*.ai            # GPT assignments
 ├── gemini-task-*.ai         # Gemini assignments
@@ -328,9 +328,9 @@
 ### **Workflow Documentation**
 ```
 /docs/agents/
-├── references.md            # This file
+├── references.ai            # This file
 ├── multi-agent-workflow-v2.ai  # Complete workflow guide
-├── quick-reference.md       # Instant access guide
+├── quick-reference.ai       # Instant access guide
 └── workflow.ai             # Original workflow (updated)
 ```
 
@@ -368,7 +368,7 @@ Agent: Creates systematic debugging approach with performance analysis and fix v
 
 ### **Agent Handoff Protocol**
 1. Complete assigned phase
-2. Update checklist.md with status
+2. Update checklist.ai with status
 3. Document any issues or deviations
 4. Verify next phase dependencies are met
 

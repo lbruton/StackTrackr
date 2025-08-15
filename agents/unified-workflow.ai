@@ -374,7 +374,7 @@ After completion, update:
 ### **For Complex Tasks** (using trigger phrase):
 ```
 /docs/agents/tasks/[task-name]/
-├── checklist.md              # Progress tracking (human readable)
+├── checklist.ai              # Progress tracking (human readable)
 ├── agent-prompts.md          # Ready-to-copy assignments (human readable)
 ├── gpt-task-[phase].ai       # GPT-specific work (agent instructions)
 ├── gemini-task-[phase].ai    # Gemini-specific work (agent instructions)
@@ -568,22 +568,3 @@ Any Agent: Sees "testing" → Routes to Gemini → Creates test protocols
 ✅ **Seamless Coordination** - MCP integration, clear handoffs  
 ✅ **Project Success** - StackTrackr-specific requirements met
 ✅ **Enhanced Roadmap Management** - Categorized task tracking with simple commands
-
-## 📋 **NEW: Enhanced Roadmap System**
-
-**All project tasks now organized in `/docs/roadmap.md` with categories:**
-- 🚨 Critical Bugs (fix ASAP)
-- 🐛 Bug Fixes (non-critical) 
-- 🔧 Feature Enhancements (improve existing)
-- ⭐ New Features (add functionality)
-- 🏗️ Backend & Architecture (infrastructure)
-- 🧪 Testing & QA (quality assurance)
-- 🎯 Current Sprint (active work)
-
-**Simple commands for any agent:**
-- `"Add X to Roadmap"` - Auto-categorizes item
-- `"Add Y to Buglist"` - Adds to bug sections
-- `"Move X to Current Sprint"` - Makes item active
-- `"Complete X"` - Archives completed item
-
-**Replaces old backlog.md system with structured, agent-friendly task management.**

@@ -211,7 +211,7 @@ For upcoming work, see [announcements](announcements.md).
 
 ### Version 3.04.39 – Template Variable Fix (2025-08-12)
 - **Template Resolution**: Fixed unreplaced template variables in documentation files
-  - Resolved {{VERSION_WITH_V}} and {{VERSION}} placeholders in `docs/agents/agents.ai`
+  - Resolved {{VERSION_WITH_V}} and {{VERSION}} placeholders in `agents/agents.ai`
   - Applied proper template replacement to show "v3.04.39" instead of placeholder text
   - Ensured version displays correctly in about/accept modals and documentation
 - **Quality Assurance**: Verified all template variables are properly replaced across documentation

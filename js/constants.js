@@ -854,6 +854,15 @@ const METALS = {
 
 // =============================================================================
 
+// AI Model Configurations
+const AI_MODELS = {
+  GPT_4: { name: "GPT-4", cost: 0.02, complexity: "medium", quota: 1000 },
+  GPT_4_1: { name: "GPT-4.1", cost: 0.015, complexity: "low", quota: 2000 },
+  GPT_5: { name: "GPT-5", cost: 0.05, complexity: "high", quota: 500 },
+  CLAUDE_3_7: { name: "Claude 3.7", cost: 0.01, complexity: "low", quota: 3000 },
+  CLAUDE_4: { name: "Claude 4", cost: 0.03, complexity: "medium", quota: 1000 },
+};
+
 // Expose globals
 if (typeof window !== "undefined") {
   window.API_PROVIDERS = API_PROVIDERS;
@@ -873,4 +882,5 @@ if (typeof window !== "undefined") {
   window.disableFeature = disableFeature;
   window.toggleFeature = toggleFeature;
   window.ALLOWED_STORAGE_KEYS = ALLOWED_STORAGE_KEYS;
+  window.AI_MODELS = AI_MODELS;
 }

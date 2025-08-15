@@ -14,7 +14,7 @@ The agent will then determine the next version number based on the current versi
 
 **Example:**
 - If the current version is `v3.4.2` and the command is to bump a **patch** release, the new version will be `v3.4.3`.
-- If the current version is `v3.4.2` and the command is to bump a **minor** release, the new version will be `v3.5.0`.
+- If the current version is `v3.4.2` and the command is to bump a **minor** release, the new version will be `v3.4.A` (where `A` represents the new lettering system for minor patches).
 - If the current version is `v3.4.2` and the command is to bump a **major** release, the new version will be `v4.0.0`.
 
 ## 2. Release Procedure

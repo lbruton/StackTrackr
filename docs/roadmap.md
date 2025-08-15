@@ -19,6 +19,7 @@ This roadmap tracks upcoming goals without committing to specific patch numbers.
 - [ ] Memory leak detection for long-running sessions
 - [ ] Cross-browser compatibility edge cases
 - [ ] localStorage quota limit handling
+- [ ] The "Name" column in the table is aligned to the left, but it should be centered for consistency with other columns.
 
 ## 🔧 **FEATURE ENHANCEMENTS** (Improve existing)
 - [ ] Add a total item counter at the lower right corner of the table
@@ -79,6 +80,7 @@ This roadmap tracks upcoming goals without committing to specific patch numbers.
 - [ ] Browser compatibility automation
 - [ ] Performance benchmark automation
 - [ ] Data integrity validation during upgrades
+- [ ] Add framework testing for third-party libraries (e.g., FontAwesome, Chart.js) to ensure compatibility and performance.
 
 ## 🎯 **CURRENT SPRINT** (Active work)
 - [ ] Performance Optimization Quick Wins (100 min total)
@@ -172,6 +174,63 @@ This roadmap tracks upcoming goals without committing to specific patch numbers.
 
 ---
 
+## 📈 **BUSINESS ROADMAP**
+
+### Vision Statement
+Transform StackTrackr from a specialized precious metals inventory tool into a universal, privacy-first inventory management platform that serves collectors, hobbyists, and businesses across multiple verticals.
+
+### Mission
+Empower users to track, analyze, and manage their valuable collections with industry-specific intelligence while maintaining complete data ownership and privacy control.
+
+### Core Value Propositions
+- **Privacy-First Architecture** - User data ownership without vendor lock-in
+- **Industry-Specific Intelligence** - Market values, trends, and insights
+- **Universal Platform** - One tool for all collection types
+- **Community-Driven** - Collectors helping collectors with shared knowledge
+- **Offline-Capable** - Full functionality without internet dependency
+
+---
+
+## 🛠️ **PROPOSED ROADMAP**
+
+### Phase 1: Foundational Improvements (Near-Term)
+
+*Objective: Modernize the development workflow, strengthen the codebase, and establish a solid foundation for future features. This phase is critical for long-term maintainability and security.*
+
+#### **1.1. Adopt Modern Development Tooling**
+*   **Description:** Introduce a lightweight build tool like **Vite** and a package manager like **npm** or **yarn**.
+*   **Benefit:** This will provide a local development server (eliminating `file://` issues), enable code minification, manage third-party libraries effectively, and unlock modern JavaScript features.
+
+#### **1.2. Migrate to Modular CSS**
+*   **Description:** Transition from global CSS to modular, component-level CSS using tools like **CSS Modules** or **Styled Components**.
+*   **Benefit:** This will encapsulate styles within components, preventing global scope pollution and simplifying maintenance.
+
+#### **1.3. Implement TypeScript**
+*   **Description:** Introduce **TypeScript** for static typing and improved developer tooling.
+*   **Benefit:** This will catch type-related errors at compile time, improve code quality, and enhance the development experience with better autocompletion and navigation.
+
+#### **1.4. Strengthen Code Review Practices**
+*   **Description:** Enforce stricter code review requirements, including mandatory reviews for all changes and the use of pull requests.
+*   **Benefit:** This will improve code quality, facilitate knowledge sharing, and ensure adherence to best practices.
+
+#### **1.5. Enhance Documentation**
+*   **Description:** Improve inline code documentation and update external documentation to reflect the latest changes and best practices.
+*   **Benefit:** This will make the codebase more accessible to new developers and serve as a valuable reference for existing developers.
+
+---
+
+## Roadmap Tasks
+
+### Critical Tasks
+- Perform a full technical walkthrough of every script, function, object, and variable in the codebase.
+- Create a comprehensive technical glossary documenting the architecture, functionality, and relationships between components.
+
+### Bug Fixes
+- Address any issues identified during the walkthrough.
+
+### Feature Enhancements
+- Use insights from the walkthrough to propose optimizations and improvements.
+
 ## 📝 **ROADMAP MANAGEMENT**
 
 ### Quick Commands for Agents
@@ -194,3 +253,21 @@ This roadmap tracks upcoming goals without committing to specific patch numbers.
 - 🔥 High (next sprint)
 - 📈 Medium (planned)
 - 💡 Low (future consideration)
+
+---
+
+## 🔄 **VERSION TRANSITIONING NOTICE**
+
+- [ ] Maintain offline `file://` compatibility for all 3.x.x versions. Starting with version 3.6+, server support will be required, and offline compatibility will no longer be guaranteed.
+
+---
+
+# Spot Price Card Updates
+
+- [ ] Remove the sync, add, and history button drawer from the spot price cards. Add a small sync icon to the upper right corner following the current style. The sync button should only appear if an API is configured. Retain the logic for the dropdown as it will be re-enabled later when charts are implemented.
+
+---
+
+# Patch System and Versioning Updates
+
+- [ ] After version 3.04.99, adopt a lettered patch system for minor changes (e.g., 3.04.99a, 3.04.99b). Consolidate all lettered patches into the next version (e.g., 3.04.100) when instructed, focusing on critical features.

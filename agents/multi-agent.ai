@@ -531,3 +531,28 @@ This file is the authoritative document for development priorities and progress 
 ### Implementation
 - Agents must refer to `/docs/roadmap.md` for their assigned tasks.
 - Updates to task progress should be appended to the checklist in the roadmap file.
+
+---
+
+# Updated archive directory
+# All agents must now use the /archive/ directory for archived files.
+
+## 📁 **DIRECTORY USAGE GUIDELINES**
+
+- **Patches**: Always store and retrieve patch files from `/docs/patch/`.
+- **Fixes**: Always store and retrieve fix documentation from `/docs/fixes/`.
+
+Agents must adhere to these directory conventions to ensure consistency and organization across the project.
+
+## 📁 **UPDATED DOCUMENT STRUCTURE**
+
+Agents must adhere to the following document structure:
+
+- **Fixes**: `/docs/fixes/` - All fix-related documentation.
+- **Guides**: `/docs/guides/` - All guide files.
+- **Patches**: `/docs/patch/` - All patch files.
+- **Workflows**: `/docs/workflow/` - All workflow-related documentation.
+- **Roadmap**: `/docs/roadmap.md` - The single source of truth for development priorities.
+- **Versioning**: `/docs/versioning.md` - Versioning guidelines and protocols.
+
+Agents must ensure all new documentation is placed in the appropriate directory to maintain organization and consistency.

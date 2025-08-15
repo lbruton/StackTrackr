@@ -1,7 +1,7 @@
 # StackrTrackr Copilot Instructions
 
 > **Note**: This file is a quick reference. For detailed agent-specific workflows, see:
-> - `/docs/agents/agents.ai`: Shared canonical source
+> - `agents/agents.ai`: Shared canonical source
 > - `/docs/agents/gpt.ai`: GPT-specific workflow
 > - `/docs/agents/claude.ai`: Claude-specific workflow
 
