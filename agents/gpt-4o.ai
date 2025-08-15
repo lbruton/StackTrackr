@@ -7,3 +7,6 @@
 - 2025-08-16: Session start - plan to render active filter chips on initial load by calling renderActiveFilters after renderTable.
 - 2025-08-16: Added renderActiveFilters call post-renderTable; filter chips now display on initial load (gpt-4o)
 
+- 2025-08-18: Session start - plan to override itemsPerPage dropdown width to stay compact (gpt-4o)
+- 2025-08-18: Added targeted CSS rule for items-per-page select to width auto, ensuring compact dropdown (gpt-4o)
+

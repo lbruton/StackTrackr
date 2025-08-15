@@ -14,3 +14,4 @@
 
 - 2025-08-17: Enabled slash preservation in item names by extending sanitization helper and adding unit test (gpt-4-1)
 - 2025-08-17: Centered Name header text by wrapping with `.header-text` and removing special CSS (GPT)
+- 2025-08-18: Added targeted CSS to keep items-per-page dropdown compact and aligned in table footer (gpt-4o)

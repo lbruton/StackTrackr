@@ -3186,6 +3186,11 @@ td input:checked + .slider:before {
   border-color: var(--border-hover);
 }
 
+.table-footer-controls #itemsPerPage {
+  width: auto;
+  min-width: 80px;
+}
+
 /* =============================================================================
   ORIGINAL FILTER STYLES
   ============================================================================= */

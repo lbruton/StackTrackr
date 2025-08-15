@@ -1,0 +1,4 @@
+Version: 3.04.87
+Date: 2025-08-18
+Agent: GPT
+Summary: Added specific CSS rule so items-per-page dropdown uses auto width with minimum 80px, overriding global select width.
