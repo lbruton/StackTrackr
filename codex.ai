@@ -5,4 +5,5 @@
 - 2025-08-15: Added changelog entry and style guide notes for inventory table item counter (GPT)
 - 2025-08-15: Documented fuzzy-search global export safeguard (GPT)
 - 2025-08-15: Aligned fuzzy-search threshold defaults and documentation (GPT)
-- 2025-08-15: Removed obsolete composition comment and aligned composition docs (GPT)
+- 2025-08-15: Exposed `checkFileSize` and `MAX_LOCAL_FILE_SIZE` to global window and added validation test (GPT)
+
