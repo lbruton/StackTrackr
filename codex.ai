@@ -19,3 +19,6 @@
 - 2025-08-18: Begin styling enhancement for table item counter with bold background accent (gpt-4o)
 - 2025-08-18: Added item counter styling with background and bold, updated HTML and documentation (gpt-4o)
 - 2025-08-18: Shrunk rows-per-page dropdown with button styling and aligned it opposite the item counter (gpt-4o)
+
+- 2025-08-18: Start session to reposition filter controls above chip row and tweak spacing (gpt-4-1)
+- 2025-08-18: Reordered filter controls above chip row, adjusted spacing, verified selectors and tests (gpt-4-1)
