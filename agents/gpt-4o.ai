@@ -4,3 +4,6 @@
 - 2025-08-15: Session start - plan to remove invalid `height="auto"` from SVG logo and verify no browser warnings.
 - 2025-08-15: Completed removal of `height="auto"` from Stackr logo, relying on CSS; attempted browser check (gpt-4o)
 
+- 2025-08-16: Session start - plan to render active filter chips on initial load by calling renderActiveFilters after renderTable.
+- 2025-08-16: Added renderActiveFilters call post-renderTable; filter chips now display on initial load (gpt-4o)
+

@@ -343,6 +343,9 @@ document.addEventListener("DOMContentLoaded", () => {
     // Phase 13: Initial Rendering
     debugLog("Phase 13: Rendering initial display...");
       renderTable();
+      if (typeof renderActiveFilters === 'function') {
+        renderActiveFilters();
+      }
       fetchSpotPrice();
       updateSyncButtonStates();
       if (typeof updateStorageStats === "function") {
