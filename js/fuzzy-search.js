@@ -88,7 +88,7 @@ const calculateLevenshteinDistance = (str1, str2) => {
  * @param {string} query - User search input
  * @param {string} target - Inventory item name to match against
  * @param {Object} [options={}] - Configuration options
- * @param {number} [options.threshold=0.3] - Minimum similarity score
+ * @param {number} [options.threshold=0.5] - Minimum similarity score
  * @param {boolean} [options.caseSensitive=false] - Case sensitive matching
  * @returns {number} Similarity score between 0 and 1
  *
@@ -165,7 +165,7 @@ const fuzzyMatch = (query, target, options = {}) => {
  * @param {string} query - Search query
  * @param {string[]} targets - Array of strings to search
  * @param {Object} [options={}] - Configuration options
- * @param {number} [options.threshold=0.3] - Minimum similarity score
+ * @param {number} [options.threshold=0.5] - Minimum similarity score
  * @param {number} [options.maxResults=Infinity] - Maximum results to return
  * @param {boolean} [options.caseSensitive=false] - Case sensitive matching
  * @returns {{text: string, score: number}[]} Array of results
@@ -175,10 +175,10 @@ const fuzzySearch = (query, targets, options = {}) => {
     console.warn("fuzzySearch: targets must be an array");
     return [];
   }
-  const { maxResults = Infinity } = options;
+  const { threshold = 0.5, maxResults = Infinity, caseSensitive = false } = options;
   const results = [];
   targets.forEach((t) => {
-    const score = fuzzyMatch(query, t, options);
+    const score = fuzzyMatch(query, t, { threshold, caseSensitive });
     if (score > 0) {
       results.push({ text: t, score });
     }
