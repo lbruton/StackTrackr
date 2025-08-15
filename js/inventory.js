@@ -104,9 +104,9 @@ const createBackupZip = async () => {
         item.type,
         parseFloat(item.weight).toFixed(4),
         formatCurrency(item.price),
-        exportSpotPrice > 0 ? formatCurrency(exportSpotPrice) : 'N/A',
-        item.isCollectable ? 'N/A' : formatCurrency(item.premiumPerOz),
-        item.isCollectable ? 'N/A' : formatCurrency(item.totalPremium),
+        exportSpotPrice > 0 ? formatCurrency(exportSpotPrice) : '—',
+        item.isCollectable ? '—' : formatCurrency(item.premiumPerOz),
+        item.isCollectable ? '—' : formatCurrency(item.totalPremium),
         item.purchaseLocation,
         item.storageLocation || '',
         item.numistaId || '',
@@ -515,6 +515,13 @@ const METAL_COLORS = {
   Palladium: 'var(--palladium)'
 };
 
+const METAL_TEXT_COLORS = {
+  Silver: () => getContrastColor(getComputedStyle(document.documentElement).getPropertyValue('--silver').trim()),
+  Gold: () => getContrastColor(getComputedStyle(document.documentElement).getPropertyValue('--gold').trim()),
+  Platinum: () => getContrastColor(getComputedStyle(document.documentElement).getPropertyValue('--platinum').trim()),
+  Palladium: () => getContrastColor(getComputedStyle(document.documentElement).getPropertyValue('--palladium').trim())
+};
+
 const typeColors = {
   Coin: 'var(--type-coin-bg)',
   Round: 'var(--type-round-bg)',
@@ -558,7 +565,7 @@ const filterLink = (field, value, color, displayValue = value, title, allowHtml 
   const safe = allowHtml ? displayStr : sanitizeHtml(displayStr);
   const titleStr = title ? String(title) : `Filter by ${displayStr}`;
   const safeTitle = sanitizeHtml(titleStr);
-  const isNA = displayStr === 'N/A' || displayStr === 'Numista Import' || displayStr === 'Unknown';
+  const isNA = displayStr === 'N/A' || displayStr === 'Numista Import' || displayStr === 'Unknown' || displayStr === '—';
   const classNames = `filter-text${isNA ? ' na-value' : ''}`;
   const styleAttr = isNA ? '' : ` style="color: ${color};"`;
   return `<span class="${classNames}"${styleAttr} onclick="${escaped}" tabindex="0" role="button" onkeydown="if(event.key==='Enter'||event.key===' ')${escaped}" title="${safeTitle}">${safe}</span>`;
@@ -567,7 +574,7 @@ const filterLink = (field, value, color, displayValue = value, title, allowHtml 
 const getTypeColor = type => typeColors[type] || 'var(--type-other-bg)';
 const getPurchaseLocationColor = loc => getColor(purchaseLocationColors, loc);
 const getStorageLocationColor = loc =>
-  loc === 'Unknown' ? 'var(--text-muted)' : getColor(storageLocationColors, loc);
+  (loc === 'Unknown' || loc === '—') ? 'var(--text-muted)' : getColor(storageLocationColors, loc);
 
 /**
  * Formats Purchase Location for table display, wrapping URLs in hyperlinks
@@ -577,10 +584,19 @@ const getStorageLocationColor = loc =>
  * @returns {string} HTML string for table cell
  */
 const formatPurchaseLocation = (loc) => {
-  const value = loc || 'Numista Import';
+  let value = loc || '—';
+  
+  // Convert "Numista Import" and "Unknown" to "—"
+  if (value === 'Numista Import' || value === 'Unknown') {
+    value = '—';
+  }
+  
+  // Truncate at 24 characters
+  const truncated = value.length > 24 ? value.substring(0, 24) + '…' : value;
   const color = getPurchaseLocationColor(value);
   const urlPattern = /^(https?:\/\/)?[\w.-]+\.[A-Za-z]{2,}(\S*)?$/;
-  const filterSpan = filterLink('purchaseLocation', value, color);
+  const filterSpan = filterLink('purchaseLocation', value, color, truncated, value !== truncated ? value : undefined);
+  
   if (urlPattern.test(value)) {
     let href = value;
     if (!/^https?:\/\//i.test(href)) {
@@ -592,6 +608,25 @@ const formatPurchaseLocation = (loc) => {
   return filterSpan;
 };
 window.formatPurchaseLocation = formatPurchaseLocation;
+
+/**
+ * Formats Storage Location for table display with truncation
+ * @param {string} loc - Storage location value
+ * @returns {string} HTML string for table cell
+ */
+const formatStorageLocation = (loc) => {
+  let value = loc || '—';
+  
+  // Convert "Numista Import" and "Unknown" to "—"
+  if (value === 'Numista Import' || value === 'Unknown') {
+    value = '—';
+  }
+  
+  // Truncate at 24 characters
+  const truncated = value.length > 24 ? value.substring(0, 24) + '…' : value;
+  const color = getStorageLocationColor(value);
+  return filterLink('storageLocation', value, color, truncated, value !== truncated ? value : undefined);
+};
 
 /**
  * Recalculates premium values for an inventory item
@@ -621,30 +656,76 @@ const persistInventoryAndRefresh = () => {
 };
 
 /**
- * Validates values for inline edits
+ * Updates the displayed inventory item count based on active filters
+ *
+ * @param {number} filteredCount - Items matching current filters
+ * @param {number} totalCount - Total items in inventory
+ */
+const updateItemCount = (filteredCount, totalCount) => {
+  if (!elements.itemCount) return;
+  elements.itemCount.textContent =
+    filteredCount === totalCount
+      ? `${totalCount} items`
+      : `${filteredCount} of ${totalCount} items`;
+};
+
+/**
+ * Enhanced validation for inline edits with comprehensive field support
  * @param {string} field - Field being edited
  * @param {string} value - Proposed value
  * @returns {boolean} Whether value is valid
  */
 const validateFieldValue = (field, value) => {
+  const trimmedValue = typeof value === 'string' ? value.trim() : String(value).trim();
+  
   switch (field) {
     case 'qty':
-      return /^\d+$/.test(value) && parseInt(value, 10) > 0;
+      const qty = parseInt(value, 10);
+      return /^\d+$/.test(value) && qty > 0 && qty <= 999999;
+      
     case 'weight':
+      const weight = parseFloat(value);
+      return !isNaN(weight) && weight > 0 && weight <= 999999;
+      
     case 'price':
     case 'spotPriceAtPurchase':
-      return !isNaN(value) && parseFloat(value) > 0;
+      const price = parseFloat(value);
+      return !isNaN(price) && price >= 0 && price <= 999999999;
+      
     case 'name':
+      return trimmedValue.length > 0 && trimmedValue.length <= 200;
+      
     case 'purchaseLocation':
     case 'storageLocation':
-      return value.trim() !== '';
+      return trimmedValue.length <= 100; // Allow empty for optional fields
+      
+    case 'notes':
+      return trimmedValue.length <= 1000; // Allow long notes but with limit
+      
+    case 'date':
+      if (!trimmedValue) return false;
+      const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+      if (!dateRegex.test(trimmedValue)) return false;
+      const date = new Date(trimmedValue);
+      const today = new Date();
+      const minDate = new Date('1900-01-01');
+      return date >= minDate && date <= today;
+      
+    case 'type':
+      const validTypes = ['Coin', 'Bar', 'Round', 'Note', 'Aurum', 'Other'];
+      return validTypes.includes(trimmedValue);
+      
+    case 'metal':
+      const validMetals = ['Silver', 'Gold', 'Platinum', 'Palladium', 'Alloy/Other'];
+      return validMetals.includes(trimmedValue);
+      
     default:
       return true;
   }
 };
 
 /**
- * Activates inline editing for a table cell
+ * Enhanced inline editing for table cells with support for multiple field types
  * @param {number} idx - Index of item to edit
  * @param {string} field - Field name to update
  * @param {HTMLElement} icon - Clicked pencil icon
@@ -655,35 +736,76 @@ const startCellEdit = (idx, field, icon) => {
   const current = item[field] ?? '';
   const originalContent = td.innerHTML;
   td.classList.add('editing');
-  const input = document.createElement('input');
-  if (field === 'qty') {
-    input.type = 'number';
-    input.step = '1';
-  } else if (['weight', 'price', 'spotPriceAtPurchase'].includes(field)) {
-    input.type = 'number';
-    input.step = '0.01';
+  
+  let input;
+  
+  // Create appropriate input type based on field
+  if (['type', 'metal'].includes(field)) {
+    input = document.createElement('select');
+    input.className = 'inline-select';
+    
+    if (field === 'type') {
+      const types = ['Coin', 'Bar', 'Round', 'Note', 'Aurum', 'Other'];
+      types.forEach(type => {
+        const option = document.createElement('option');
+        option.value = type;
+        option.textContent = type;
+        if (type === current) option.selected = true;
+        input.appendChild(option);
+      });
+    } else if (field === 'metal') {
+      const metals = ['Silver', 'Gold', 'Platinum', 'Palladium', 'Alloy/Other'];
+      metals.forEach(metal => {
+        const option = document.createElement('option');
+        option.value = metal;
+        option.textContent = metal;
+        if (metal === current) option.selected = true;
+        input.appendChild(option);
+      });
+    }
   } else {
-    input.type = 'text';
+    input = document.createElement('input');
+    input.className = 'inline-input';
+    
+    if (field === 'qty') {
+      input.type = 'number';
+      input.step = '1';
+      input.min = '1';
+    } else if (['weight', 'price', 'spotPriceAtPurchase'].includes(field)) {
+      input.type = 'number';
+      input.step = '0.01';
+      input.min = '0';
+    } else if (field === 'date') {
+      input.type = 'date';
+    } else {
+      input.type = 'text';
+    }
+    
+    // Set input value based on field type
+    if (field === 'weight' && item.weight < 1) {
+      input.value = oztToGrams(current).toFixed(2);
+      input.dataset.unit = 'g';
+    } else if (['weight', 'price', 'spotPriceAtPurchase'].includes(field)) {
+      input.value = parseFloat(current || 0).toFixed(2);
+      if (field === 'weight') input.dataset.unit = 'oz';
+    } else {
+      input.value = current;
+    }
   }
-  if (field === 'weight' && item.weight < 1) {
-    input.value = oztToGrams(current).toFixed(2);
-    input.dataset.unit = 'g';
-  } else if (['weight', 'price', 'spotPriceAtPurchase'].includes(field)) {
-    input.value = parseFloat(current).toFixed(2);
-    if (field === 'weight') input.dataset.unit = 'oz';
-  } else {
-    input.value = current;
-  }
-  input.className = 'inline-input';
+  
   td.innerHTML = '';
   td.appendChild(input);
 
   const saveIcon = document.createElement('span');
   saveIcon.className = 'save-inline';
   saveIcon.textContent = '✔️';
+  saveIcon.title = 'Save changes';
+  
   const cancelIcon = document.createElement('span');
   cancelIcon.className = 'cancel-inline';
   cancelIcon.textContent = '✖️';
+  cancelIcon.title = 'Cancel edit';
+  
   td.appendChild(saveIcon);
   td.appendChild(cancelIcon);
 
@@ -696,6 +818,7 @@ const startCellEdit = (idx, field, icon) => {
     td.classList.remove('editing');
     const iconHtml = `<span class="inline-edit-icon" role="button" tabindex="0" onclick="startCellEdit(${idx}, '${field}', this)" aria-label="Edit ${field}" title="Edit ${field}">✎</span>`;
     let content = '';
+    
     switch (field) {
       case 'name':
         content = filterLink('name', item.name, 'var(--text-primary)');
@@ -710,300 +833,139 @@ const startCellEdit = (idx, field, icon) => {
         content = filterLink('price', item.price, 'var(--text-primary)', formatCurrency(item.price));
         break;
       case 'spotPriceAtPurchase': {
-        const spotDisplay = item.isCollectable ? 'N/A' : (item.spotPriceAtPurchase > 0 ? formatCurrency(item.spotPriceAtPurchase) : 'N/A');
-        const spotValue = item.isCollectable ? 'N/A' : (item.spotPriceAtPurchase > 0 ? item.spotPriceAtPurchase : 'N/A');
+        const spotDisplay = item.isCollectable ? '—' : (item.spotPriceAtPurchase > 0 ? formatCurrency(item.spotPriceAtPurchase) : '—');
+        const spotValue = item.isCollectable ? '—' : (item.spotPriceAtPurchase > 0 ? item.spotPriceAtPurchase : '—');
         content = filterLink('spotPriceAtPurchase', spotValue, 'var(--text-primary)', spotDisplay);
         break;
       }
+      case 'type':
+        content = filterLink('type', item.type, getTypeColor(item.type));
+        break;
+      case 'metal':
+        content = filterLink('metal', item.composition || item.metal || 'Silver', METAL_COLORS[item.metal] || 'var(--primary)', getDisplayComposition(item.composition || item.metal || 'Silver'));
+        break;
+      case 'date':
+        content = filterLink('date', item.date, 'var(--text-primary)', formatDisplayDate(item.date));
+        break;
+      case 'purchaseLocation':
+        content = formatPurchaseLocation(item.purchaseLocation);
+        break;
+      case 'storageLocation':
+        content = formatStorageLocation(item.storageLocation);
+        break;
+      case 'notes':
+        const hasNotes = item.notes && item.notes.trim();
+        content = `<span class="action-icon ${hasNotes ? 'success' : ''}" title="${hasNotes ? 'Has notes' : 'No notes'}">📓</span>`;
+        break;
       default:
         content = filterLink(field, item[field], 'var(--text-primary)');
     }
     td.innerHTML = `${iconHtml} ${content}`;
+    updateSummary(); // Update totals after edit
   };
 
   saveIcon.onclick = () => {
     const value = input.value;
     if (!validateFieldValue(field, value)) {
-      alert('Invalid value');
+      alert(`Invalid value for ${field}`);
       cancelEdit();
       return;
     }
-    const parsed = field === 'qty'
-      ? parseInt(value, 10)
-      : ['weight', 'price', 'spotPriceAtPurchase'].includes(field)
-        ? parseFloat(value)
-        : value.trim();
-    let finalValue = parsed;
-    if (field === 'weight' && input.dataset.unit === 'g') {
-      finalValue = gramsToOzt(parsed);
+    
+    let finalValue;
+    if (field === 'qty') {
+      finalValue = parseInt(value, 10);
+    } else if (['weight', 'price', 'spotPriceAtPurchase'].includes(field)) {
+      finalValue = parseFloat(value);
+      if (field === 'weight' && input.dataset.unit === 'g') {
+        finalValue = gramsToOzt(finalValue);
+      }
+    } else {
+      finalValue = value.trim();
     }
+    
+    // Store the old value for change logging
+    const oldValue = item[field];
     item[field] = finalValue;
+    
+    // Recalculate premiums if needed
     if (['qty', 'weight', 'price', 'spotPriceAtPurchase'].includes(field)) {
       recalcItem(item);
     }
+    
+    // Log the change
+    if (typeof logChange === 'function') {
+      logChange(item.name || `Item ${idx + 1}`, field, oldValue, finalValue, idx);
+    }
+    
     saveInventory();
     renderCell();
   };
 
   cancelIcon.onclick = cancelEdit;
 
+  // Enhanced keyboard navigation
   input.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') saveIcon.click();
-    if (e.key === 'Escape') cancelEdit();
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      saveIcon.click();
+    }
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      cancelEdit();
+    }
+    if (e.key === 'Tab') {
+      // Allow tab to move to save/cancel buttons
+      if (e.shiftKey) {
+        e.preventDefault();
+        cancelIcon.focus();
+      } else {
+        e.preventDefault();
+        saveIcon.focus();
+      }
+    }
+  });
+  
+  // Handle save/cancel button keyboard navigation
+  saveIcon.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      saveIcon.click();
+    }
+    if (e.key === 'Tab' && !e.shiftKey) {
+      e.preventDefault();
+      cancelIcon.focus();
+    }
+  });
+  
+  cancelIcon.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      cancelIcon.click();
+    }
+    if (e.key === 'Tab' && e.shiftKey) {
+      e.preventDefault();
+      saveIcon.focus();
+    }
   });
 
   input.focus();
+  if (input.select) input.select();
 };
 
 window.startCellEdit = startCellEdit;
 
 
 /**
- * Enhanced chip-type filter system with default chips and dynamic filtering
- * Creates a word cloud-like UI showing inventory breakdown by type, metal, and filtered values
+ * Legacy chip-type filter system - now disabled in favor of renderActiveFilters
+ * This function now just clears the typeSummary container to avoid conflicts
  */
 const updateTypeSummary = (items = inventory) => {
   const el = elements.typeSummary || document.getElementById('typeSummary');
   if (!el) return;
-
-  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-  const textColor = isDark ? '#000' : '#fff';
-
-  // Get minimum count setting from dropdown control or localStorage
-  const chipMinCountEl = document.getElementById('chipMinCount');
-  let minCount = 1;
-  if (chipMinCountEl && chipMinCountEl.value) {
-    minCount = parseInt(chipMinCountEl.value, 10);
-    localStorage.setItem('chipMinCount', minCount.toString());
-  } else {
-    minCount = parseInt(localStorage.getItem('chipMinCount') || '1', 10);
-    if (chipMinCountEl) chipMinCountEl.value = minCount.toString();
-  }
   
-  // Define default chip types that always show (if they exist in inventory)
-  const defaultChipTypes = [
-    { field: 'type', value: 'Coin' },
-    { field: 'type', value: 'Bar' },
-    { field: 'type', value: 'Round' },
-    { field: 'type', value: 'Note' },
-    { field: 'metal', value: 'Gold' },
-    { field: 'metal', value: 'Silver' },
-    { field: 'metal', value: 'Platinum' },
-    { field: 'metal', value: 'Palladium' }
-  ];
-
-  // Check if any filters are active
-  const activeFieldKeys = typeof activeFilters === 'object' ? Object.keys(activeFilters) : [];
-  const columnFieldKeys = typeof columnFilters === 'object' ? Object.keys(columnFilters) : [];
-  const hasActiveFilters = activeFieldKeys.length > 0 || columnFieldKeys.length > 0 || searchQuery.trim().length > 0;
-
-  const chips = [];
-  const unknownChips = [];
-  const addedChips = new Set(); // Track to avoid duplicates
-
-  // Field name mappings for better display
-  const fieldDisplayNames = {
-    type: 'Type',
-    metal: 'Metal',
-    purchaseLocation: 'Purchase',
-    storageLocation: 'Storage',
-    name: 'Name'
-  };
-
-  // Helper function to create chip data with enhanced formatting
-  const createChip = (field, value, totalCount, filteredCount) => {
-    let colors, cls = '';
-    
-    switch (field) {
-      case 'type':
-        colors = {
-          bg: getTypeColor(value),
-          text: `var(--type-${value.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-text)`
-        };
-        cls = ` type-chip ${value.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
-        break;
-      case 'metal':
-        colors = { bg: METAL_COLORS[value] || 'var(--primary)', text: textColor };
-        cls = ` metal-chip ${value.toLowerCase()}`;
-        break;
-      case 'purchaseLocation':
-        colors = { bg: getPurchaseLocationColor(value), text: textColor };
-        cls = ' purchase-chip';
-        break;
-      case 'storageLocation':
-        colors = { bg: getStorageLocationColor(value), text: textColor };
-        cls = ' storage-chip';
-        break;
-      case 'name':
-        colors = { bg: getColor(nameColors, value), text: textColor };
-        cls = ' name-chip';
-        break;
-      default:
-        colors = { bg: 'var(--primary)', text: textColor };
-        cls = ' generic-chip';
-    }
-    
-    return {
-      field,
-      fieldDisplay: fieldDisplayNames[field] || field,
-      value,
-      display: value,
-      filtered: filteredCount,
-      total: totalCount,
-      colors,
-      cls
-    };
-  };
-
-  // Add default chips first (always visible if they exist)
-  defaultChipTypes.forEach(({ field, value }) => {
-    const chipKey = `${field}:${value}`;
-    if (addedChips.has(chipKey)) return;
-    
-    // Count total occurrences in full inventory
-    const totalCount = inventory.filter(item => {
-      const itemValue = field === 'metal' ? (item.composition || item.metal) : item[field];
-      return itemValue === value;
-    }).length;
-    
-    // Count filtered occurrences
-    const filteredCount = items.filter(item => {
-      const itemValue = field === 'metal' ? (item.composition || item.metal) : item[field];
-      return itemValue === value;
-    }).length;
-    
-    if (totalCount > 0) {
-      chips.push(createChip(field, value, totalCount, filteredCount));
-      addedChips.add(chipKey);
-    }
-  });
-
-  // If filters are active, add dynamic chips from filtered results
-  if (hasActiveFilters) {
-    const dynamicFields = ['purchaseLocation', 'storageLocation', 'name'];
-    
-    dynamicFields.forEach(field => {
-      // Count occurrences in filtered items
-      const filteredCounts = items.reduce((acc, item) => {
-        let key = item[field];
-        if (!key) {
-          key = field === 'purchaseLocation' ? 'Numista Import' : 'Unknown';
-        }
-        acc[key] = (acc[key] || 0) + 1;
-        return acc;
-      }, {});
-      
-      // Count occurrences in total inventory
-      const totalCounts = inventory.reduce((acc, item) => {
-        let key = item[field];
-        if (!key) {
-          key = field === 'purchaseLocation' ? 'Numista Import' : 'Unknown';
-        }
-        acc[key] = (acc[key] || 0) + 1;
-        return acc;
-      }, {});
-      
-      // Add chips for values that meet minimum count
-      Object.keys(filteredCounts).forEach(value => {
-        const chipKey = `${field}:${value}`;
-        if (addedChips.has(chipKey)) return;
-        
-        const filteredCount = filteredCounts[value];
-        const totalCount = totalCounts[value];
-        
-        if (filteredCount >= minCount) {
-          const chip = createChip(field, value, totalCount, filteredCount);
-          if (value === 'Unknown' || value === 'Numista Import') {
-            unknownChips.push(chip);
-          } else {
-            chips.push(chip);
-          }
-          addedChips.add(chipKey);
-        }
-      });
-    });
-    
-    // Also add any type/metal chips that weren't in defaults but appear in filtered results
-    ['type', 'metal'].forEach(field => {
-      const filteredValues = items.reduce((acc, item) => {
-        const key = field === 'metal' ? (item.composition || item.metal) : item[field];
-        if (key) acc[key] = (acc[key] || 0) + 1;
-        return acc;
-      }, {});
-      
-      Object.keys(filteredValues).forEach(value => {
-        const chipKey = `${field}:${value}`;
-        if (addedChips.has(chipKey)) return;
-        
-        const filteredCount = filteredValues[value];
-        const totalCount = inventory.filter(item => {
-          const itemValue = field === 'metal' ? (item.composition || item.metal) : item[field];
-          return itemValue === value;
-        }).length;
-        
-        if (filteredCount >= minCount) {
-          chips.push(createChip(field, value, totalCount, filteredCount));
-          addedChips.add(chipKey);
-        }
-      });
-    });
-  }
-
-  // Sort chips: default types first, then by filtered count (descending)
-  const isDefaultType = (chip) => {
-    return defaultChipTypes.some(dt => dt.field === chip.field && dt.value === chip.value);
-  };
-  
-  chips.sort((a, b) => {
-    const aIsDefault = isDefaultType(a);
-    const bIsDefault = isDefaultType(b);
-    
-    if (aIsDefault && !bIsDefault) return -1;
-    if (!aIsDefault && bIsDefault) return 1;
-    
-    // Both default or both dynamic - sort by filtered count
-    return b.filtered - a.filtered;
-  });
-  
-  unknownChips.sort((a, b) => b.filtered - a.filtered);
-
-  // Generate HTML for chips with enhanced formatting
-  const generateChipHtml = (chip) => {
-    const safeVal = sanitizeHtml(String(chip.display));
-    const handler = `applyQuickFilter('${chip.field}', ${JSON.stringify(chip.value)})`;
-    const escaped = escapeAttribute(handler);
-    
-    // Calculate relative size based on count (for word cloud effect)
-    const maxCount = Math.max(...[...chips, ...unknownChips].map(c => c.filtered), 1);
-    const relativeSize = Math.max(0.8, Math.min(1.6, (chip.filtered / maxCount) * 0.8 + 0.8));
-    const isFiltered = hasActiveFilters && chip.filtered > 0;
-    const opacity = hasActiveFilters ? (isFiltered ? 1 : 0.3) : 1;
-    
-    // Enhanced styling with better contrast and readability
-    const fontSize = `${0.65 + (relativeSize - 0.8) * 0.4}rem`;
-    const padding = relativeSize > 1.2 ? '0.3rem 0.8rem' : '0.2rem 0.6rem';
-    const style = `background-color: ${chip.colors.bg}; color: ${chip.colors.text}; font-size: ${fontSize}; padding: ${padding}; opacity: ${opacity};`;
-    
-    // Enhanced tooltip with field name
-    const title = `${chip.fieldDisplay}: ${chip.display}\nShowing ${chip.filtered} of ${chip.total} total items${chip.filtered !== chip.total ? ' - Click to filter' : ''}`;
-    
-    // Enhanced chip content with field prefix for dynamic chips
-    let chipContent;
-    if (hasActiveFilters && !isDefaultType(chip) && (chip.field === 'purchaseLocation' || chip.field === 'storageLocation' || chip.field === 'name')) {
-      // For dynamic chips, show field abbreviation and truncated value
-      const fieldAbbrev = chip.fieldDisplay;
-      const displayValue = chip.display.length > 15 ? chip.display.substring(0, 12) + '...' : chip.display;
-      chipContent = `${fieldAbbrev}: ${displayValue} (${chip.filtered})`;
-    } else {
-      // For default chips, show value and count
-      chipContent = `${safeVal} ${chip.filtered}${chip.filtered !== chip.total ? `/${chip.total}` : ''}`;
-    }
-    
-    return `<span class="filter-chip summary-chip${chip.cls}" style="${style}" onclick="${escaped}" tabindex="0" role="button" onkeydown="if(event.key==='Enter'||event.key===' ')${escaped}" title="${sanitizeHtml(title)}">${chipContent}</span>`;
-  };
-
-  const html = [...chips, ...unknownChips].map(generateChipHtml).join('');
-  el.innerHTML = html;
+  // Clear the container to avoid conflicts with the new renderActiveFilters system
+  el.innerHTML = '';
 };
 window.updateTypeSummary = updateTypeSummary;
 
@@ -1016,7 +978,14 @@ const hideEmptyColumns = () => {
   headers.forEach(header => {
     const col = header.getAttribute('data-column');
     const cells = document.querySelectorAll(`#inventoryTable tbody [data-column="${col}"]`);
-    const allEmpty = cells.length > 0 && Array.from(cells).every(cell => cell.textContent.trim() === '');
+    const allEmpty = cells.length > 0 && Array.from(cells).every(cell => {
+      // If the cell contains interactive or icon elements, consider it non-empty
+      if (cell.querySelector && (cell.querySelector('svg') || cell.querySelector('button') || cell.querySelector('.action-icon') || cell.querySelector('.collectable-status'))) {
+        return false;
+      }
+      return cell.textContent.trim() === '';
+    });
+
     document.querySelectorAll(`#inventoryTable [data-column="${col}"]`).forEach(el => {
       el.classList.toggle('hidden-empty', allEmpty);
     });
@@ -1026,8 +995,9 @@ const hideEmptyColumns = () => {
 const renderTable = () => {
   return monitorPerformance(() => {
     const filteredInventory = filterInventory();
-
+    updateItemCount(filteredInventory.length, inventory.length);
     const sortedInventory = sortInventory(filteredInventory);
+    debugLog('renderTable start', sortedInventory.length, 'items');
     const totalPages = calculateTotalPages(sortedInventory);
     const startIndex = (currentPage - 1) * itemsPerPage;
     const endIndex = Math.min(startIndex + itemsPerPage, sortedInventory.length);
@@ -1037,43 +1007,44 @@ const renderTable = () => {
     for (let i = startIndex; i < endIndex; i++) {
       const item = sortedInventory[i];
       const originalIdx = inventory.indexOf(item);
-      const spotDisplay = item.isCollectable ? 'N/A' : (item.spotPriceAtPurchase > 0 ? formatCurrency(item.spotPriceAtPurchase) : 'N/A');
-      const spotValue = item.isCollectable ? 'N/A' : (item.spotPriceAtPurchase > 0 ? item.spotPriceAtPurchase : 'N/A');
-      const premiumDisplay = item.isCollectable ? 'N/A' : formatCurrency(item.totalPremium);
-      const premiumValue = item.isCollectable ? 'N/A' : item.totalPremium;
+      debugLog('renderTable row', i, item.name);
+  const spotDisplay = item.isCollectable ? '—' : (item.spotPriceAtPurchase > 0 ? formatCurrency(item.spotPriceAtPurchase) : '—');
+  const spotValue = item.isCollectable ? '—' : (item.spotPriceAtPurchase > 0 ? item.spotPriceAtPurchase : '');
+      const premiumDisplay = item.isCollectable ? '—' : formatCurrency(item.totalPremium);
+      const premiumValue = item.isCollectable ? '—' : item.totalPremium;
 
-      rows.push(`
+  rows.push(`
       <tr>
-      <td class="shrink" data-column="date">${filterLink('date', item.date, 'var(--text-primary)', formatDisplayDate(item.date))}</td>
+  <td class="shrink" data-column="date">${filterLink('date', item.date, 'var(--text-primary)', item.date ? formatDisplayDate(item.date) : '—')}</td>
       <td class="shrink" data-column="type">${filterLink('type', item.type, getTypeColor(item.type))}</td>
       <td class="shrink" data-column="metal" data-metal="${escapeAttribute(item.composition || item.metal || '')}">${filterLink('metal', item.composition || item.metal || 'Silver', METAL_COLORS[item.metal] || 'var(--primary)', getDisplayComposition(item.composition || item.metal || 'Silver'))}</td>
-      <td class="shrink" data-column="qty">
-        ${filterLink('qty', item.qty, 'var(--text-primary)')}
-      </td>
-      <td class="expand" data-column="name" style="text-align: left;">
-        <span class="inline-edit-icon" role="button" tabindex="0" onclick="editItem(${originalIdx})" aria-label="Edit ${sanitizeHtml(item.name)}" title="Edit ${sanitizeHtml(item.name)}">✎</span>
-        ${filterLink('name', item.name, 'var(--text-primary)')}
-      </td>
-      <td class="shrink" data-column="weight">
-        ${filterLink('weight', item.weight, 'var(--text-primary)', formatWeight(item.weight), item.weight < 1 ? 'Grams (g)' : 'Troy ounces (ozt)')}
-      </td>
-      <td class="shrink" data-column="purchasePrice" title="USD">
-        ${filterLink('price', item.price, 'var(--text-primary)', formatCurrency(item.price))}
-      </td>
-      <td class="shrink" data-column="spot" title="USD">
-        ${filterLink('spotPriceAtPurchase', spotValue, 'var(--text-primary)', spotDisplay)}
-      </td>
+      <td class="shrink" data-column="qty">${filterLink('qty', item.qty, 'var(--text-primary)')}</td>
+      <td class="expand" data-column="name" style="text-align: left;">${filterLink('name', item.name, 'var(--text-primary)')}</td>
+      <td class="shrink" data-column="weight">${filterLink('weight', item.weight, 'var(--text-primary)', formatWeight(item.weight), item.weight < 1 ? 'Grams (g)' : 'Troy ounces (ozt)')}</td>
+  <td class="shrink" data-column="purchasePrice" title="USD">${filterLink('price', item.price, 'var(--text-primary)', (item.price && item.price > 0) ? formatCurrency(item.price) : '—')}</td>
+      <td class="shrink" data-column="spot" title="USD">${filterLink('spotPriceAtPurchase', spotValue, 'var(--text-primary)', spotDisplay)}</td>
       <td class="shrink" data-column="premium" style="color: ${item.isCollectable ? 'var(--text-muted)' : (item.totalPremium > 0 ? 'var(--warning)' : 'inherit')}">${filterLink('totalPremium', premiumValue, 'var(--text-primary)', premiumDisplay)}</td>
       <td class="shrink" data-column="purchaseLocation">
         ${formatPurchaseLocation(item.purchaseLocation)}
       </td>
       <td class="shrink" data-column="storageLocation">
-        ${filterLink('storageLocation', item.storageLocation || 'Unknown', getStorageLocationColor(item.storageLocation || 'Unknown'))}
+        ${formatStorageLocation(item.storageLocation)}
       </td>
-      <td class="shrink" data-column="numista">${item.numistaId ? `<a href="https://en.numista.com/catalogue/pieces${item.numistaId}.html" target="_blank" rel="noopener" title="View on Numista">N# ${sanitizeHtml(item.numistaId)}</a>` : ''}</td>
-      <td class="icon-col" data-column="collectable"><span class="collectable-status" role="button" tabindex="0" onclick="toggleCollectable(${originalIdx})" onkeydown="if(event.key==='Enter'||event.key===' ') toggleCollectable(${originalIdx})" aria-label="Toggle collectable status for ${sanitizeHtml(item.name)}" title="Toggle collectable status">${item.isCollectable ? '<svg class=\"collectable-icon icon-copper\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\"><circle cx=\"12\" cy=\"12\" r=\"10\"/></svg>' : '<svg class=\"collectable-icon icon-gold\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\"><path d=\"M3 3h18v18H3V3zm2 2v14h14V5H5zm5 10h6v2H10v-2zm2-8a2 2 0 100 4 2 2 0 000-4z\"/></svg>'}</span></td>
-      <td class="icon-col" data-column="notes"><span class="action-icon ${item.notes && item.notes.trim() ? 'success' : ''}" role="button" tabindex="0" onclick="showNotes(${originalIdx})" aria-label="View notes" title="View notes">📓</span></td>
-      <td class="icon-col" data-column="delete"><span class="action-icon danger" role="button" tabindex="0" onclick="deleteItem(${originalIdx})" aria-label="Delete item" title="Delete item">🗑️</span></td>
+      <td class="shrink" data-column="numista">${item.numistaId ? `
+        <a href="#" onclick="openNumistaModal('${sanitizeHtml(item.numistaId)}', '${sanitizeHtml(item.name)}'); return false;" title="N#${sanitizeHtml(item.numistaId)} - open numista.com" class="catalog-link">
+          N#
+        </a>
+      ` : '<span class="numista-empty">—</span>'}</td>
+  <td class="icon-col" data-column="collectable"><span class="collectable-status" role="button" tabindex="0" onclick="toggleCollectable(${originalIdx})" onkeydown="if(event.key==='Enter'||event.key===' ') toggleCollectable(${originalIdx})" aria-label="Toggle collectable status for ${sanitizeHtml(item.name)}" title="Toggle collectable status">${item.isCollectable ? '<svg class=\"collectable-icon vault-icon\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\"><rect x=\"2\" y=\"4\" width=\"20\" height=\"16\" rx=\"2\"/><circle cx=\"17\" cy=\"11\" r=\"2\"/><rect x=\"6\" y=\"8\" width=\"6\" height=\"8\" rx=\"1\"/></svg>' : '<svg class=\"collectable-icon bar-icon\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\"><rect x=\"3\" y=\"8\" width=\"18\" height=\"8\" rx=\"1\"/><path d=\"M5 6h14l-2-2H7z\"/></svg>'}</span></td>
+      <td class="icon-col" data-column="notes"><button class="icon-btn action-icon ${item.notes && item.notes.trim() ? 'has-notes' : ''}" role="button" tabindex="0" onclick="showNotes(${originalIdx})" aria-label="View notes" title="View notes">
+        <svg class="icon-svg notes-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15V5a2 2 0 0 0-2-2H7L3 7v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2z"/></svg>
+      </button></td>
+      <td class="icon-col" data-column="edit"><button class="icon-btn action-icon edit-icon" role="button" tabindex="0" onclick="editItem(${originalIdx})" aria-label="Edit ${sanitizeHtml(item.name)}" title="Edit item">
+        <svg class="icon-svg edit-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1.003 1.003 0 0 0 0-1.42l-2.34-2.34a1.003 1.003 0 0 0-1.42 0l-1.83 1.83 3.75 3.75 1.84-1.82z"/></svg>
+      </button></td>
+      <td class="icon-col" data-column="delete"><button class="icon-btn action-icon danger" role="button" tabindex="0" onclick="deleteItem(${originalIdx})" aria-label="Delete item" title="Delete item">
+        <svg class="icon-svg delete-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 7h12v13a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V7zm3-4h6l1 1h4v2H3V4h4l1-1z"/></svg>
+      </button></td>
       </tr>
       `);
     }
@@ -1081,12 +1052,21 @@ const renderTable = () => {
     const visibleCount = endIndex - startIndex;
     const placeholders = Array.from(
       { length: Math.max(0, itemsPerPage - visibleCount) },
-      () => '<tr><td class="shrink" colspan="15">&nbsp;</td></tr>'
+      () => '<tr><td class="shrink" colspan="16">&nbsp;</td></tr>'
     );
 
-    elements.inventoryTable.innerHTML = rows.concat(placeholders).join('');
+    // Find tbody element directly if cached version fails
+    const tbody = elements.inventoryTable || document.querySelector('#inventoryTable tbody');
+    if (!tbody) {
+      console.error('Could not find table tbody element');
+      return;
+    }
+    
+    tbody.innerHTML = rows.concat(placeholders).join('');
     hideEmptyColumns();
     updateTypeSummary(filteredInventory);
+
+    debugLog('renderTable complete');
 
     // Update sort indicators
     const headers = document.querySelectorAll('#inventoryTable th');
@@ -1311,7 +1291,8 @@ const showNotes = (idx) => {
   }
   
   if (modalElement) {
-    modalElement.style.display = 'flex';
+  if (window.openModalById) openModalById('notesModal');
+  else modalElement.style.display = 'flex';
   } else {
     console.error('Notes modal element not found');
   }
@@ -1366,7 +1347,8 @@ const editItem = (idx, logIdx = null) => {
   }
 
   // Show modal
-  elements.editModal.style.display = 'flex';
+  if (window.openModalById) openModalById('editModal');
+  else elements.editModal.style.display = 'flex';
 };
 
 /**
@@ -1452,6 +1434,7 @@ const endImportProgress = () => {
  */
 const importCsv = (file, override = false) => {
   try {
+    debugLog('importCsv start', file.name);
     Papa.parse(file, {
       header: true,
       skipEmptyLines: true,
@@ -1464,6 +1447,7 @@ const importCsv = (file, override = false) => {
 
         for (const row of results.data) {
           processed++;
+          debugLog('importCsv row', processed, JSON.stringify(row));
           const compositionRaw = row['Composition'] || row['Metal'] || 'Silver';
           const composition = getCompositionFirstWords(compositionRaw);
           const metal = parseNumistaMetal(composition);
@@ -1520,7 +1504,7 @@ const importCsv = (file, override = false) => {
             date,
             purchaseLocation,
             storageLocation,
-            notes: finalNotes,
+            notes,
             spotPriceAtPurchase,
             premiumPerOz,
             totalPremium,
@@ -1584,8 +1568,10 @@ const importCsv = (file, override = false) => {
         if (typeof updateStorageStats === 'function') {
           updateStorageStats();
         }
-
-        this.value = '';
+        debugLog('importCsv complete', deduped.length, 'items added');
+        if (localStorage.getItem('stackrtrackr.debug') && typeof window.showDebugModal === 'function') {
+          showDebugModal();
+        }
       },
       error: function(error) {
         endImportProgress();
@@ -1686,12 +1672,12 @@ const importNumistaCsv = (file, override = false) => {
           }
 
           const purchaseLocRaw = getValue(row, ['Acquisition place', 'Acquired from', 'Purchase place']);
-          const purchaseLocation = purchaseLocRaw && purchaseLocRaw.trim() ? purchaseLocRaw.trim() : 'Numista Import';
+          const purchaseLocation = purchaseLocRaw && purchaseLocRaw.trim() ? purchaseLocRaw.trim() : '—';
           const storageLocRaw = getValue(row, ['Storage location', 'Stored at', 'Storage place']);
-          const storageLocation = storageLocRaw && storageLocRaw.trim() ? storageLocRaw.trim() : 'Numista Import';
+          const storageLocation = storageLocRaw && storageLocRaw.trim() ? storageLocRaw.trim() : '—';
 
           const dateStrRaw = getValue(row, ['Acquisition date', 'Date acquired', 'Date']);
-          const dateStr = dateStrRaw && dateStrRaw.trim() ? dateStrRaw.trim() : 'Unknown';
+          const dateStr = dateStrRaw && dateStrRaw.trim() ? dateStrRaw.trim() : '—';
           const date = parseDate(dateStr);
 
           const baseNote = (getValue(row, ['Note', 'Notes']) || '').trim();
@@ -1910,6 +1896,7 @@ const exportNumistaCsv = () => {
  * Exports current inventory to CSV format
  */
 const exportCsv = () => {
+  debugLog('exportCsv start', inventory.length, 'items');
   const timestamp = new Date().toISOString().slice(0,10).replace(/-/g,'');
   const headers = [
     "Metal","Name","Qty","Type","Weight(oz)","Purchase Price",
@@ -1959,6 +1946,11 @@ const exportCsv = () => {
   document.body.appendChild(a);
   a.click();
   a.remove();
+  URL.revokeObjectURL(url);
+  debugLog('exportCsv complete');
+  if (localStorage.getItem('stackrtrackr.debug') && typeof window.showDebugModal === 'function') {
+    showDebugModal();
+  }
 };
 
 /**
@@ -1969,6 +1961,7 @@ const exportCsv = () => {
  */
 const importJson = (file, override = false) => {
   const reader = new FileReader();
+  debugLog('importJson start', file.name);
 
   reader.onload = function(e) {
     try {
@@ -1989,6 +1982,7 @@ const importJson = (file, override = false) => {
 
       for (const [index, raw] of data.entries()) {
         processed++;
+        debugLog('importJson item', index + 1, JSON.stringify(raw));
 
         const compositionRaw = raw.composition || raw.metal || 'Silver';
         const composition = getCompositionFirstWords(compositionRaw);
@@ -2123,6 +2117,10 @@ const importJson = (file, override = false) => {
       if (typeof updateStorageStats === "function") {
         updateStorageStats();
       }
+      debugLog('importJson complete', deduped.length, 'items added');
+      if (localStorage.getItem('stackrtrackr.debug') && typeof window.showDebugModal === 'function') {
+        showDebugModal();
+      }
     } catch (error) {
       endImportProgress();
       alert("Error parsing JSON file: " + error.message);
@@ -2136,6 +2134,7 @@ const importJson = (file, override = false) => {
  * Exports current inventory to JSON format
  */
 const exportJson = () => {
+  debugLog('exportJson start', inventory.length, 'items');
   const timestamp = new Date().toISOString().slice(0,10).replace(/-/g,'');
 
   // Sort inventory by date (newest first) for export
@@ -2170,6 +2169,10 @@ const exportJson = () => {
   document.body.appendChild(a);
   a.click();
   a.remove();
+  debugLog('exportJson complete');
+  if (localStorage.getItem('stackrtrackr.debug') && typeof window.showDebugModal === 'function') {
+    showDebugModal();
+  }
 };
 
 /**
@@ -2198,9 +2201,9 @@ const exportPdf = () => {
     item.type,
     parseFloat(item.weight).toFixed(2),
     formatCurrency(item.price),
-    item.isCollectable ? 'N/A' : formatCurrency(item.spotPriceAtPurchase),
-    item.isCollectable ? 'N/A' : formatCurrency(item.premiumPerOz),
-    item.isCollectable ? 'N/A' : formatCurrency(item.totalPremium),
+    item.isCollectable ? '—' : formatCurrency(item.spotPriceAtPurchase),
+    item.isCollectable ? '—' : formatCurrency(item.premiumPerOz),
+    item.isCollectable ? '—' : formatCurrency(item.totalPremium),
     item.purchaseLocation,
     item.storageLocation || '',
     item.numistaId || '',
@@ -2272,6 +2275,12 @@ const exportPdf = () => {
 };
 // =============================================================================
 // Expose inventory actions globally for inline event handlers
+window.importCsv = importCsv;
+window.exportCsv = exportCsv;
+window.importJson = importJson;
+window.exportJson = exportJson;
+window.exportPdf = exportPdf;
+window.updateSummary = updateSummary;
 window.toggleCollectable = toggleCollectable;
 window.editItem = editItem;
 window.deleteItem = deleteItem;

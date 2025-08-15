@@ -65,7 +65,7 @@
     <div class="app-header">
       <div>
         <h1 class="app-logo" id="appLogo" aria-label="StackrTrackr">
-          <svg class="stackr-logo" viewBox="0 0 480 200" xmlns="http://www.w3.org/2000/svg" width="100%" height="auto" style="max-width: 666px;">
+          <svg class="stackr-logo" viewBox="0 0 480 200" xmlns="http://www.w3.org/2000/svg" width="100%" style="max-width: 666px;">
             <defs>
               <!-- Light Mode Gradients -->
               <linearGradient id="goldLight" x1="0%" y1="0%" x2="0%" y2="100%">
@@ -479,12 +479,16 @@
         <section class="search-section">
           <div class="search-container">
             <button
-              class="btn success icon-btn"
+              class="btn modern-icon-btn"
               id="newItemBtn"
               title="Add new item"
               aria-label="Add new item"
             >
-              ➕
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="8" x2="12" y2="16"/>
+                <line x1="8" y1="12" x2="16" y2="12"/>
+              </svg>
             </button>
             <input
               id="searchInput"
@@ -492,56 +496,56 @@
               type="text"
             />
             <button
-              class="btn"
-              id="changeLogBtn"
-              title="Change log"
-              aria-label="Change log"
-            >
-              Change Log
-            </button>
-            <button
-              class="btn secondary icon-btn"
+              class="btn modern-icon-btn"
               id="clearBtn"
               title="Clear search"
               aria-label="Clear search"
             >
-              ×
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="3,6 5,6 21,6"/>
+                <path d="m19,6v14a2,2 0 0,1 -2,2H7a2,2 0 0,1 -2,-2V6m3,0V4a2,2 0 0,1 2,-2h4a2,2 0 0,1 2,2v2"/>
+                <line x1="10" y1="11" x2="10" y2="17"/>
+                <line x1="14" y1="11" x2="14" y2="17"/>
+              </svg>
+            </button>
+            <button
+              class="btn modern-icon-btn" id="changeLogBtn" title="Change log" aria-label="Change log">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14,2 14,8 20,8"/>
+                <line x1="16" y1="13" x2="8" y2="13"/>
+                <line x1="16" y1="17" x2="8" y2="17"/>
+                <polyline points="10,9 9,9 8,9"/>
+              </svg>
             </button>
           </div>
-        </section>
-        <section class="table-controls-section">
-          <div class="table-controls">
-            <div class="top-controls">
-              <div class="filters-card" id="filtersCard">
-                <h3 class="table-subtitle">Filters</h3>
-                <div id="typeSummary"></div>
-                <div class="filter-info">
-                  <div class="active-filters" id="activeFilters"></div>
-                  <div class="search-results-info" id="searchResultsInfo"></div>
-                </div>
-                <div class="control-settings">
-                  <div class="chip-control">
-                    <label for="chipMinCount" class="chip-label">Filter Chips:</label>
-                    <select id="chipMinCount" class="chip-select" title="Minimum number of items before showing a filter chip">
-                      <option value="1">1+</option>
-                      <option value="2">2+</option>
-                      <option value="3" selected>3+</option>
-                      <option value="5">5+</option>
-                      <option value="10">10+</option>
-                    </select>
-                  </div>
-                  <div class="items-control">
-                    <label for="itemsPerPage" class="items-label">Table Rows:</label>
-                    <select class="table-select" id="itemsPerPage">
-                      <option value="10" selected>10</option>
-                      <option value="15">15</option>
-                      <option value="25">25</option>
-                      <option value="50">50</option>
-                      <option value="100">100</option>
-                    </select>
-                  </div>
-                </div>
+          
+          <!-- Integrated Filters -->
+          <div class="search-filters">
+            <div id="typeSummary"></div>
+            <div class="filter-controls">
+              <div class="control-group">
+                <label for="chipMinCount" class="control-label">Filter Chips:</label>
+                <select id="chipMinCount" class="control-select" title="Minimum number of items before showing a filter chip">
+                  <option value="1">1+</option>
+                  <option value="2">2+</option>
+                  <option value="3">3+</option>
+                  <option value="5">5+</option>
+                  <option value="10">10+</option>
+                  <option value="100" selected>100+</option>
+                </select>
               </div>
+              <div class="control-group">
+                <label for="groupNameChips" class="control-label">Group Chips:</label>
+                <select class="control-select" id="groupNameChips" title="Group similar item names (e.g., 'American Silver Eagle (3)' instead of separate year chips)">
+                  <option value="yes" selected>Yes</option>
+                  <option value="no">No</option>
+                </select>
+              </div>
+            </div>
+            <div class="filter-row">
+              <div class="active-filters" id="activeFilters"></div>
+              <div class="search-results-info" id="searchResultsInfo"></div>
             </div>
           </div>
         </section>
@@ -601,7 +605,7 @@
                   <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
                   <circle cx="12" cy="7" r="4"/>
                 </svg>
-                Name
+                <span class="header-text">Name</span>
               </th>
               <th class="shrink" data-column="weight">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="header-icon">
@@ -672,6 +676,13 @@
                 </svg>
                 <span class="header-text">Notes</span>
               </th>
+              <th class="icon-col" data-column="edit" aria-label="Edit" title="Edit">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="header-icon">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                </svg>
+                <span class="header-text">Edit</span>
+              </th>
               <th class="icon-col" data-column="delete" aria-label="Delete" title="Delete">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="header-icon">
                   <polyline points="3,6 5,6 21,6"/>
@@ -684,10 +695,20 @@
             </tr>
           </thead>
           <tbody></tbody>
-        </table>
-      </section>
-      <!-- Pagination Controls -->
-      <section class="pagination-section">
+          </table>
+          <div class="table-footer-controls">
+            <div class="table-item-count"><strong id="itemCount"></strong></div>
+            <select id="itemsPerPage" class="control-select" title="Rows per page">
+              <option value="10" selected>10</option>
+              <option value="15">15</option>
+              <option value="25">25</option>
+              <option value="50">50</option>
+              <option value="100">100</option>
+            </select>
+          </div>
+        </section>
+        <!-- Pagination Controls -->
+        <section class="pagination-section">
           <div class="pagination-container">
             <div class="pagination-controls">
               <div class="pagination-buttons">
@@ -1046,7 +1067,7 @@
               </div>
               <div>
                 <label for="purchaseLocation">Purchase Location</label>
-                <input id="purchaseLocation" required type="text" />
+                <input id="purchaseLocation" type="text" />
               </div>
               <div>
                 <label for="storageLocation">Storage Location</label>
@@ -1062,7 +1083,7 @@
               <div>
                 <label for="itemPrice">Purchase Price ($)</label>
                 <div class="currency-input">
-                  <input id="itemPrice" min="0" required step="0.01" type="number" />
+                  <input id="itemPrice" min="0" step="0.01" type="number" />
                 </div>
               </div>
               <div>
@@ -1151,7 +1172,7 @@
             </div>
             <div>
               <label for="editQty">Quantity</label>
-              <input id="editQty" min="1" required="" step="1" type="number" />
+              <input id="editQty" min="1" required step="1" type="number" />
             </div>
             <div>
               <label for="editWeight">Weight (oz)</label>
@@ -1172,7 +1193,7 @@
             </div>
             <div>
               <label for="editPurchaseLocation">Purchase Location</label>
-              <input id="editPurchaseLocation" required="" type="text" />
+              <input id="editPurchaseLocation" type="text" />
             </div>
             <div>
               <label for="editStorageLocation">Storage Location</label>
@@ -1199,7 +1220,6 @@
                 <input
                   id="editPrice"
                   min="0"
-                  required=""
                   step="0.01"
                   type="number"
                 />
@@ -1207,7 +1227,7 @@
             </div>
             <div>
               <label for="editDate">Purchase Date</label>
-              <input id="editDate" required="" type="date" />
+              <input id="editDate" type="date" />
             </div>
           </div>
           <!-- Spot price and catalog field -->
@@ -1218,7 +1238,6 @@
                 <input
                   id="editSpotPrice"
                   min="0"
-                  required
                   step="0.01"
                   type="number"
                 />
@@ -1381,7 +1400,7 @@
     <footer class="app-footer">
       <div class="storage-line">Storage: <span id="storageUsage"></span> <progress id="storageUsageBar" max="5120" value="0"></progress> <a href="#" id="storageReportLink">Storage report</a></div>
       <div class="footer-meta">
-        <span>Thank you for using StackrTrackr (<span id="footerVersion"></span>). © 2025 <span id="footerDomain">stackrtrackr.com</span> | Created with love on Apple Silicon |<br>If you are having trouble try the <a href="./archive/v_previous/index.html">previous build</a>, and report the issue on our <a href="https://www.reddit.com/r/stackrtrackr" target="_blank" rel="noopener">subreddit</a> or on our <a href="https://github.com/lbruton/StackTrackr/issues" target="_blank" rel="noopener">GitHub Issues Page</a>. You can also try the <a href="https://alpha.stackrtrackr.com" target="_blank" rel="noopener">alpha release here</a>.</span>
+        <span>Thank you for using StackrTrackr (<span id="footerVersion"></span>). © 2025 <span id="footerDomain">stackrtrackr.com</span> Created with love on Apple Silicon<br>If you are having trouble try the <a href="./archive/v_previous/index.html">previous build</a>, and report the issue on our <a href="https://www.reddit.com/r/stackrtrackr" target="_blank" rel="noopener">subreddit</a> or on our <a href="https://github.com/lbruton/StackTrackr/issues" target="_blank" rel="noopener">GitHub Issues Page</a>. You can also try the <a href="https://alpha.stackrtrackr.com" target="_blank" rel="noopener">alpha release here</a>.</span>
       </div>
     </footer>
     <!-- =============================================================================
@@ -2394,6 +2413,45 @@
     </div>
     
     <!-- =============================================================================
+       NUMISTA MODAL
+       
+       Modal for viewing Numista coin database pages in an embedded iframe.
+       Features navigation controls and responsive 90% width display.
+       ============================================================================= -->
+    <div class="modal" id="numistaModal" style="display: none">
+      <div class="modal-content numista-modal-content">
+        <div class="modal-header">
+          <div class="numista-nav-controls">
+            <button id="numistaBackBtn" class="nav-btn" title="Go Back">‹</button>
+            <button id="numistaForwardBtn" class="nav-btn" title="Go Forward">›</button>
+          </div>
+          <h2 id="numistaModalTitle">Numista Database</h2>
+          <button aria-label="Close modal" class="modal-close" id="numistaCloseBtn">×</button>
+        </div>
+        <div class="modal-body numista-modal-body">
+          <iframe id="numistaIframe" src="" frameborder="0" style="width: 100%; height: 100%; border-radius: var(--radius);"></iframe>
+        </div>
+      </div>
+    </div>
+
+    <!-- =============================================================================
+       DEBUG LOG MODAL
+
+       Displays collected debug output when debug mode is enabled.
+       ============================================================================= -->
+    <div class="modal" id="debugModal" style="display: none">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Debug Log</h2>
+          <button aria-label="Close modal" class="modal-close" id="debugCloseBtn">×</button>
+        </div>
+        <div class="modal-body">
+          <pre id="debugModalContent"></pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- =============================================================================
        JAVASCRIPT MODULE LOADING
        
        Modular architecture with proper dependency order:
@@ -2424,6 +2482,8 @@
     <script defer src="./js/sorting.js"></script>
     <script defer src="./js/pagination.js"></script>
     <script defer src="./js/detailsModal.js"></script>
+    <script defer src="./js/debugModal.js"></script>
+    <script defer src="./js/numista-modal.js"></script>
     <script defer src="./js/spot.js"></script>
     <script defer src="./js/api.js"></script>
     <script defer src="./js/catalog-providers.js"></script>
@@ -2432,6 +2492,17 @@
     <script defer src="./js/about.js"></script>
     <script defer src="./js/customMapping.js"></script>
     <script defer src="./js/events.js"></script>
+    
+    <!-- Test Scripts (Development) -->
+    <script>
+      if (window.location.hostname === 'localhost') {
+        const testScript = document.createElement('script');
+        testScript.defer = true;
+        testScript.src = './tests/grouped-name-chips.test.js';
+        document.head.appendChild(testScript);
+      }
+    </script>
+
     <script defer src="./js/init.js"></script>
   </body>
 </html>

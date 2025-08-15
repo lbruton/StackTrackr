@@ -88,7 +88,7 @@ const calculateLevenshteinDistance = (str1, str2) => {
  * @param {string} query - User search input
  * @param {string} target - Inventory item name to match against
  * @param {Object} [options={}] - Configuration options
- * @param {number} [options.threshold=0.3] - Minimum similarity score
+ * @param {number} [options.threshold=0.5] - Minimum similarity score
  * @param {boolean} [options.caseSensitive=false] - Case sensitive matching
  * @returns {number} Similarity score between 0 and 1
  *
@@ -103,7 +103,7 @@ const fuzzyMatch = (query, target, options = {}) => {
       return 0;
     }
 
-    const { threshold = 0.3, caseSensitive = false } = options;
+    const { threshold = 0.5, caseSensitive = false } = options; // Increased threshold to 0.5
     const q = normalizeString(query, caseSensitive);
     const t = normalizeString(target, caseSensitive);
     if (!q || !t) return 0;
@@ -147,11 +147,11 @@ const fuzzyMatch = (query, target, options = {}) => {
         const s = l ? 1 - d / l : 0;
         if (s > best) best = s;
       });
-      if (best > 0.3) matched++;
+      if (best > 0.5) matched++; // Increased word match threshold to 0.5
     });
     const wordScore = qWords.length ? matched / qWords.length : 0;
 
-    const score = 0.3 * levScore + 0.3 * ngramScore + 0.4 * wordScore;
+    const score = 0.4 * levScore + 0.4 * ngramScore + 0.2 * wordScore; // Adjusted weights
     return score >= threshold ? score : 0;
   } catch (error) {
     console.error("fuzzyMatch error:", error);
@@ -165,7 +165,7 @@ const fuzzyMatch = (query, target, options = {}) => {
  * @param {string} query - Search query
  * @param {string[]} targets - Array of strings to search
  * @param {Object} [options={}] - Configuration options
- * @param {number} [options.threshold=0.3] - Minimum similarity score
+ * @param {number} [options.threshold=0.5] - Minimum similarity score
  * @param {number} [options.maxResults=Infinity] - Maximum results to return
  * @param {boolean} [options.caseSensitive=false] - Case sensitive matching
  * @returns {{text: string, score: number}[]} Array of results
@@ -175,90 +175,37 @@ const fuzzySearch = (query, targets, options = {}) => {
     console.warn("fuzzySearch: targets must be an array");
     return [];
   }
-  const { maxResults = Infinity } = options;
+  const { threshold = 0.5, maxResults = Infinity, caseSensitive = false } = options;
   const results = [];
   targets.forEach((t) => {
-    const score = fuzzyMatch(query, t, options);
-    if (score > 0) results.push({ text: t, score });
+    const score = fuzzyMatch(query, t, { threshold, caseSensitive });
+    if (score > 0) {
+      results.push({ text: t, score });
+    }
   });
   results.sort((a, b) => b.score - a.score);
   return results.slice(0, maxResults);
 };
 
-/**
- * Benchmark fuzzy search performance
- *
- * @param {string} query - Search query
- * @param {string[]} targets - Array of strings to search
- * @param {number} [iterations=100] - Number of iterations
- * @returns {{totalTime:number, avgTime:number}} Timing results in milliseconds
- */
-const benchmarkSearch = (query, targets, iterations = 100) => {
-  const timer = typeof performance !== "undefined" ? performance : Date;
-  const start = timer.now();
-  for (let i = 0; i < iterations; i++) {
-    fuzzySearch(query, targets);
-  }
-  const end = timer.now();
-  const total = end - start;
-  return { totalTime: total, avgTime: total / iterations };
-};
-
-// Unit Tests (run with console.log)
-const runTests = () => {
-  console.log("🧪 Running Fuzzy Search Tests...");
-
-  // Test 1: Basic matching
-  const test1 = fuzzyMatch("Ame", "American Silver Eagle");
-  console.log(`✓ Basic match: ${test1 > 0.5 ? "PASS" : "FAIL"} (${test1})`);
-
-  // Test 2: Word order independence
-  const test2 = fuzzyMatch("Eagle Silver", "American Silver Eagle");
-  console.log(`✓ Word order: ${test2 > 0.7 ? "PASS" : "FAIL"} (${test2})`);
-
-  // Test 3: Partial matching
-  const test3 = fuzzyMatch("Amer", "American Silver Eagle");
-  console.log(`✓ Partial: ${test3 > 0.4 ? "PASS" : "FAIL"} (${test3})`);
-
-  // Test 4: Batch search
-  const inventory = ["American Silver Eagle", "Canadian Maple Leaf"];
-  const results = fuzzySearch("American", inventory);
-  console.log(`✓ Batch search: ${results.length > 0 ? "PASS" : "FAIL"}`);
-
-  // Test 5: Performance benchmark
-  const perfResult = benchmarkSearch("test", inventory, 1000);
-  console.log(`✓ Performance: ${perfResult.avgTime < 1 ? "PASS" : "FAIL"} (${perfResult.avgTime}ms avg)`);
-
-  console.log("✅ Fuzzy Search Tests Complete");
-};
-
-// Auto-run tests when loaded (comment out for production)
-if (typeof window !== "undefined" && window.location.search.includes("test")) {
-  runTests();
-}
-
-// Export all functions
-if (typeof window !== "undefined") {
-  window.fuzzySearch = {
-    fuzzyMatch,
-    fuzzySearch,
-    calculateLevenshteinDistance,
-    generateNGrams,
-    tokenizeWords,
-    normalizeString,
-    benchmarkSearch,
-  };
-}
-
+// Exporting functions for external use in Node.js
 if (typeof module !== "undefined" && module.exports) {
   module.exports = {
+    normalizeString,
+    tokenizeWords,
+    generateNGrams,
+    calculateLevenshteinDistance,
     fuzzyMatch,
     fuzzySearch,
-    calculateLevenshteinDistance,
-    generateNGrams,
-    tokenizeWords,
-    normalizeString,
-    benchmarkSearch,
   };
+}
+
+// Expose functions to the browser global scope
+if (typeof window !== "undefined") {
+  window.normalizeString = normalizeString;
+  window.tokenizeWords = tokenizeWords;
+  window.generateNGrams = generateNGrams;
+  window.calculateLevenshteinDistance = calculateLevenshteinDistance;
+  window.fuzzyMatch = fuzzyMatch;
+  window.fuzzySearch = fuzzySearch;
 }
 

@@ -21,16 +21,27 @@
     /* Disclaimer warning color */
     --disclaimer-color: var(--warning);
 
-  /* Background Colors - Light grays and light blues */
-  --bg-primary: #f1f5f9;
-  --bg-secondary: #e2e8f0;
-  --bg-tertiary: #b2c5d4; /* Middle gray-blue for better contrast */
-  --bg-card: #f8fafc;
+  /* Background Tokens - Darker Light Mode */
+  --bg: #e7edf2;
+  --bg-elev-1: #d7dfe6;
+  --bg-elev-2: #bec7cf;
+  --surface: #d7dfe6;
+  --surface-alt: #bec7cf;
 
-  /* Text Colors */
-  --text-primary: #1e293b;
-  --text-secondary: #475569;
-  --text-muted: #64748b;
+  /* Map existing background variables */
+  --bg-primary: var(--bg);
+  --bg-secondary: var(--bg-elev-1);
+  --bg-tertiary: var(--bg-elev-2); /* Middle gray-blue for better contrast */
+  --bg-card: var(--surface);
+
+  /* Text Tokens */
+  --text: #1b232c;
+  --text-muted: #344351;
+
+  /* Map existing text variables */
+  --text-primary: var(--text);
+  --text-secondary: var(--text-muted);
+  --chip-text: #1b232c;
 
   /* Border & Shadow - Light grays */
   --border: #cbd5e1;
@@ -69,6 +80,14 @@
 
   /* Transitions */
   --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Empty N# column styling */
+.numista-empty {
+  display: inline-block;
+  color: var(--text-muted);
+  font-style: italic;
+  font-size: 0.8rem;
 }
 
 [data-theme="dark"] {
@@ -117,6 +136,7 @@
   --text-primary: #f8fafc;
   --text-secondary: #cbd5e1;
   --text-muted: #94a3b8;
+  --chip-text: #f8fafc;
 
   /* Border & Shadow - Dark Mode */
   --border: #334155;
@@ -170,6 +190,7 @@
   --text-primary: #3e2f1e;
   --text-secondary: #5a4a36;
   --text-muted: #6f604e;
+  --chip-text: #3e2f1e;
 
   /* Border & Shadow - Sepia Mode */
   --border: #d1c2a5;
@@ -215,6 +236,8 @@ body {
   margin: var(--spacing-lg) auto;
   padding: var(--spacing);
   transition: var(--transition);
+  overflow-x: hidden; /* Prevent horizontal overflow on body */
+  box-sizing: border-box;
 }
 
 /* =============================================================================
@@ -374,6 +397,9 @@ label {
 .container {
   display: grid;
   gap: var(--spacing-xl);
+  max-width: 100%;
+  overflow: hidden; /* Prevent container overflow */
+  box-sizing: border-box;
 }
 
 section {
@@ -383,6 +409,9 @@ section {
   border: 1px solid var(--border);
   box-shadow: var(--shadow);
   transition: var(--transition);
+  max-width: 100%;
+  overflow: hidden; /* Ensure no content overflows the section */
+  box-sizing: border-box;
 }
 
 .app-footer {
@@ -1704,14 +1733,7 @@ input[type="submit"] {
   border-bottom: 4px solid var(--palladium);
 }
 /* Metal-specific colors */
-.silver .total-title {
-}
-.gold .total-title {
-}
-.platinum .total-title {
-}
-.palladium .total-title {
-}
+/* (removed empty duplicate metal-specific rules) */
 
 /* =============================================================================
    TABLES - Main inventory table with interactive features
@@ -1739,17 +1761,44 @@ table {
 
 .table-section {
   overflow-x: auto;
+  overflow-y: visible;
   -webkit-overflow-scrolling: touch;
+  width: 100%;
+  max-width: 100%;
+  min-height: auto;
+  box-sizing: border-box;
 }
 
 #inventoryTable {
-  width: max-content;
-  min-width: 100%;
+  /* Use the available container width and allow responsive scaling
+     to prevent right-side columns being clipped. Horizontal scrolling
+     remains available via .table-section when necessary. */
+  width: 100%;
+  table-layout: auto;
 }
 
 #inventoryTable tbody {
   min-height: calc(10 * 2.2rem);
+  height: auto;
 }
+
+  .table-item-count {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    background: var(--bg-tertiary);
+    padding: 0.125rem 0.375rem;
+    border-radius: var(--radius);
+    display: inline-block;
+  }
+
+  .table-footer-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 0.25rem;
+    width: 100%;
+  }
 
 th {
   background: var(--bg-tertiary);
@@ -1784,6 +1833,26 @@ td {
   text-overflow: ellipsis;
   white-space: nowrap;
   vertical-align: middle;
+  max-width: 20ch; /* Limit to approximately 20 characters */
+}
+
+/* Allow certain columns to be wider */
+td[data-column="name"] {
+  max-width: 25ch; /* Name column can be slightly wider */
+}
+
+td[data-column="purchaseLocation"],
+td[data-column="storageLocation"] {
+  max-width: 18ch; /* Location columns slightly narrower */
+}
+
+/* Keep icon columns compact */
+td[data-column="collectable"],
+td[data-column="notes"],
+td[data-column="edit"],
+td[data-column="delete"] {
+  max-width: 3rem; /* Icon columns stay small */
+  white-space: normal; /* Allow icons to display normally */
 }
 
 [data-column].hidden,
@@ -1819,12 +1888,196 @@ tr:hover {
   white-space: nowrap;
   min-width: 0;
 }
+/* Name column cells remain left aligned for readability */
+#inventoryTable td[data-column="name"] {
+  text-align: left;
+}
 
-.expand {
-  width: auto;
-  white-space: normal;
-  overflow: visible;
-  text-overflow: clip;
+
+/* Enhanced Mobile Responsive Design with Auto-Scaling */
+@media (max-width: 1024px) {
+  #inventoryTable {
+    font-size: 0.8rem;
+  }
+  
+  #inventoryTable th,
+  #inventoryTable td {
+    padding: 0.3rem 0.2rem;
+  }
+}
+
+@media (max-width: 768px) {
+  #inventoryTable {
+    width: 100%;
+    min-width: 0;
+    table-layout: fixed;
+    font-size: 0.75rem;
+  }
+
+  #inventoryTable th,
+  #inventoryTable td {
+    padding: 0.25rem 0.15rem;
+    white-space: normal;
+    overflow: hidden;
+    text-overflow: clip;
+    word-break: break-word;
+    line-height: 1.2;
+  }
+  
+  /* Auto-scale column widths for mobile with improved distribution */
+  #inventoryTable th[data-column="date"],
+  #inventoryTable td[data-column="date"] {
+    width: 10%;
+    font-size: 0.7rem;
+  }
+  
+  #inventoryTable th[data-column="metal"],
+  #inventoryTable td[data-column="metal"] {
+    width: 8%;
+    font-size: 0.7rem;
+  }
+  
+  #inventoryTable th[data-column="name"],
+  #inventoryTable td[data-column="name"] {
+    width: 30%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  
+  #inventoryTable th[data-column="qty"],
+  #inventoryTable td[data-column="qty"] {
+    width: 6%;
+  }
+  
+  #inventoryTable th[data-column="weight"],
+  #inventoryTable td[data-column="weight"] {
+    width: 10%;
+  }
+  
+  #inventoryTable th[data-column="purchasePrice"],
+  #inventoryTable td[data-column="purchasePrice"] {
+    width: 12%;
+  }
+  
+  /* Icon columns get minimal width but remain functional */
+  #inventoryTable th.icon-col,
+  #inventoryTable td.icon-col {
+    width: 6%;
+    min-width: 2.5rem;
+    padding: 0.2rem 0.1rem;
+  }
+
+  /* Enhanced responsive text handling */
+  .shrink {
+    width: auto;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  
+  .expand {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    white-space: normal;
+  }
+}
+
+@media (max-width: 600px) {
+  #inventoryTable {
+    font-size: 0.7rem;
+  }
+  
+  #inventoryTable th,
+  #inventoryTable td {
+    padding: 0.2rem 0.1rem;
+  }
+  
+  /* Progressive column hiding for better mobile experience */
+  #inventoryTable th[data-column="spot"],
+  #inventoryTable td[data-column="spot"],
+  #inventoryTable th[data-column="premium"],
+  #inventoryTable td[data-column="premium"],
+  #inventoryTable th[data-column="purchaseLocation"],
+  #inventoryTable td[data-column="purchaseLocation"],
+  #inventoryTable th[data-column="storageLocation"],
+  #inventoryTable td[data-column="storageLocation"] {
+    display: none;
+  }
+  
+  /* Redistribute space for remaining columns */
+  #inventoryTable th[data-column="name"],
+  #inventoryTable td[data-column="name"] {
+    width: 40%;
+  }
+  
+  #inventoryTable th[data-column="weight"],
+  #inventoryTable td[data-column="weight"] {
+    width: 12%;
+  }
+  
+  #inventoryTable th[data-column="purchasePrice"],
+  #inventoryTable td[data-column="purchasePrice"] {
+    width: 15%;
+  }
+  
+  #inventoryTable th[data-column="qty"],
+  #inventoryTable td[data-column="qty"] {
+    width: 8%;
+  }
+}
+
+@media (max-width: 480px) {
+  #inventoryTable {
+    font-size: 0.65rem;
+  }
+  
+  #inventoryTable th,
+  #inventoryTable td {
+    padding: 0.15rem 0.05rem;
+  }
+  
+  /* Further column hiding for very small screens */
+  #inventoryTable th[data-column="type"],
+  #inventoryTable td[data-column="type"],
+  #inventoryTable th[data-column="numista"],
+  #inventoryTable td[data-column="numista"],
+  #inventoryTable th[data-column="metal"],
+  #inventoryTable td[data-column="metal"] {
+    display: none;
+  }
+  
+  /* Maximize space for essential columns */
+  #inventoryTable th[data-column="name"],
+  #inventoryTable td[data-column="name"] {
+    width: 50%;
+  }
+  
+  #inventoryTable th[data-column="weight"],
+  #inventoryTable td[data-column="weight"] {
+    width: 15%;
+  }
+  
+  #inventoryTable th[data-column="purchasePrice"],
+  #inventoryTable td[data-column="purchasePrice"] {
+    width: 15%;
+  }
+  
+  /* Icon columns remain functional but compact */
+  #inventoryTable th.icon-col,
+  #inventoryTable td.icon-col {
+    width: 8%;
+    min-width: 1.8rem;
+    padding: 0.1rem;
+  }
+  
+  /* Reduce icon sizes for mobile */
+  #inventoryTable td.icon-col .action-icon,
+  #inventoryTable td.icon-col .collectable-status svg,
+  #inventoryTable th.icon-col svg {
+    width: 0.9rem;
+    height: 0.9rem;
+  }
 }
 
 /* Clickable name cell styling */
@@ -1900,36 +2153,147 @@ td .filter-text a:visited {
   color: inherit;
 }
 
+/* Enhanced Inline Editing Styles */
 td .inline-edit-icon,
 td .save-inline,
 td .cancel-inline {
   cursor: pointer;
+  transition: var(--transition);
+  user-select: none;
 }
 
 td .inline-edit-icon {
   margin-right: 0.25rem;
   font-size: 1.1rem;
   display: inline-block;
+  color: var(--text-muted);
+  padding: 0.1rem;
+  border-radius: var(--radius);
+}
+
+td .inline-edit-icon:hover {
+  color: var(--primary);
+  background: var(--bg-secondary);
+  transform: scale(1.1);
 }
 
 td.editing {
-  display: flex;
-  align-items: center;
+  position: relative;
+  background: var(--bg-tertiary) !important;
+  border: 2px solid var(--primary) !important;
+  border-radius: var(--radius);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
-td.editing input.inline-input {
-  flex: 1;
+td.editing .inline-input {
+  width: 100%;
   min-width: 0;
+  border: none;
+  background: transparent;
+  color: var(--text-primary);
+  font-size: inherit;
+  font-weight: 500;
+  padding: 0.2rem;
+  margin: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+td.editing .inline-input:focus {
+  outline: none;
+  background: var(--bg-primary);
+  border-radius: var(--radius);
 }
 
 td.editing .save-inline,
 td.editing .cancel-inline {
-  margin-left: 0.25rem;
+  position: absolute;
+  right: 0.2rem;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 10;
+  font-size: 0.9rem;
+  padding: 0.2rem;
+  margin: 0;
+  cursor: pointer;
+  border-radius: var(--radius);
+  transition: var(--transition);
+}
+
+td.editing .save-inline {
+  right: 1.5rem;
+  color: var(--success);
+}
+
+td.editing .save-inline:hover {
+  background: var(--success);
+  color: #f8fafc;
+  transform: translateY(-50%) scale(1.2);
+}
+
+td.editing .cancel-inline {
+  right: 0.2rem;
+  color: var(--danger);
+}
+
+td.editing .cancel-inline:hover {
+  background: var(--danger);
+  color: #f8fafc;
+  transform: translateY(-50%) scale(1.2);
+}
+
+/* Mobile inline editing adjustments */
+@media (max-width: 768px) {
+  td .inline-edit-icon {
+    font-size: 1rem;
+    margin-right: 0.15rem;
+  }
+  
+  td.editing .inline-input {
+    font-size: 0.75rem;
+  }
+  
+  td.editing .save-inline,
+  td.editing .cancel-inline {
+    font-size: 0.8rem;
+    padding: 0.15rem;
+  }
+  
+  td.editing .save-inline {
+    right: 1.2rem;
+  }
+}
+
+@media (max-width: 480px) {
+  td .inline-edit-icon {
+    font-size: 0.9rem;
+    margin-right: 0.1rem;
+  }
+  
+  td.editing {
+    border-width: 1px;
+  }
+  
+  td.editing .inline-input {
+    font-size: 0.7rem;
+    padding: 0.15rem;
+  }
+  
+  td.editing .save-inline,
+  td.editing .cancel-inline {
+    font-size: 0.75rem;
+    padding: 0.1rem;
+  }
 }
 
 td .filter-text:hover,
 td .filter-text:focus {
   text-decoration: underline;
+  background: var(--bg-secondary);
+  border-radius: var(--radius);
+  padding: 0.1rem 0.2rem;
+  margin: -0.1rem -0.2rem;
+  transition: var(--transition);
 }
 
 /* Make toggle switches smaller */
@@ -1953,26 +2317,43 @@ td input:checked + .slider:before {
   transform: translateX(14px);
 }
 
-/* Resize handle styling */
+/* Enhanced Resize handle styling */
 .resize-handle {
   position: absolute;
   right: 0;
   top: 0;
-  width: 6px;
+  width: 8px;
   height: 100%;
   background: transparent;
   cursor: col-resize;
   z-index: 10;
-  transition: background-color 0.2s;
+  transition: all 0.2s;
+  border-right: 2px solid transparent;
 }
+
 .resize-handle:hover {
-  background: var(--primary) !important;
-  opacity: 0.7;
+  background: rgba(59, 130, 246, 0.1);
+  border-right-color: var(--primary);
+  opacity: 0.8;
 }
 
 .resize-handle:active {
-  background: var(--primary) !important;
+  background: rgba(59, 130, 246, 0.2);
+  border-right-color: var(--primary-hover);
   opacity: 1;
+  width: 10px;
+}
+
+/* Mobile resize handle adjustments */
+@media (max-width: 768px) {
+  .resize-handle {
+    width: 10px;
+    border-right-width: 3px;
+  }
+  
+  .resize-handle:active {
+    width: 12px;
+  }
 }
 
 /* =============================================================================
@@ -2473,6 +2854,107 @@ td input:checked + .slider:before {
 }
 
 /* =============================================================================
+   NUMISTA MODAL - Embedded iframe viewer with navigation controls
+   ============================================================================= */
+
+/* Numista modal sizing - 90% width as requested */
+.numista-modal-content {
+  width: 90vw;
+  max-width: 90vw;
+  height: 90vh;
+  max-height: 90vh;
+  padding: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.numista-modal-content .modal-header {
+  padding: var(--spacing-lg);
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  flex-shrink: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.numista-nav-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing);
+}
+
+.nav-btn {
+  background: var(--primary);
+  color: white;
+  border: none;
+  border-radius: var(--radius);
+  width: 2.5rem;
+  height: 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.nav-btn:hover {
+  background: var(--primary-hover);
+  transform: translateY(-1px);
+}
+
+.nav-btn:disabled {
+  background: var(--text-muted);
+  cursor: not-allowed;
+  transform: none;
+}
+
+#numistaModalTitle {
+  margin: 0;
+  text-align: center;
+  flex: 1;
+  font-size: 1.25rem;
+  padding: 0 var(--spacing-lg);
+}
+
+.numista-modal-body {
+  flex: 1;
+  padding: 0;
+  overflow: hidden;
+}
+
+/* Responsive adjustments for smaller screens */
+@media (max-width: 768px) {
+  .numista-modal-content {
+    width: 95vw;
+    height: 95vh;
+  }
+  
+  .numista-modal-content .modal-header {
+    padding: var(--spacing);
+  }
+  
+  .numista-nav-controls {
+    gap: var(--spacing-sm);
+  }
+  
+  #numistaModalTitle {
+    font-size: 1rem;
+    padding: 0 var(--spacing);
+  }
+  
+  .nav-btn {
+    width: 2rem;
+    height: 2rem;
+    font-size: 1rem;
+  }
+}
+
+/* =============================================================================
    PAGINATION
    ============================================================================= */
 
@@ -2513,27 +2995,6 @@ td input:checked + .slider:before {
   display: flex;
   align-items: center;
   gap: var(--spacing-sm);
-}
-
-.table-controls-section {
-  margin-top: var(--spacing-lg);
-  margin-bottom: var(--spacing);
-}
-
-.table-controls {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--spacing);
-  margin: 0;
-}
-
-.top-controls {
-  width: 100%;
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: var(--spacing);
 }
 
 .items-label {
@@ -2627,7 +3088,7 @@ td input:checked + .slider:before {
    ============================================================================= */
 
 .search-section {
-  margin-bottom: var(--spacing-lg);
+  margin-bottom: var(--spacing);
 }
 
 .search-container {
@@ -2638,6 +3099,68 @@ td input:checked + .slider:before {
 
 #searchInput {
   flex: 1;
+}
+
+.modern-icon-btn {
+  width: 2.75rem;
+  height: 2.75rem;
+  padding: 0.5rem;
+  min-width: 2.75rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  border-radius: var(--radius);
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.modern-icon-btn:hover {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.modern-icon-btn:active {
+  transform: translateY(0);
+}
+
+.modern-icon-btn:focus {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.modern-icon-btn svg {
+  width: 1.25rem;
+  height: 1.25rem;
+  transition: transform 0.2s ease;
+}
+
+.modern-icon-btn:hover svg {
+  transform: scale(1.1);
+}
+
+/* Theme-specific adjustments */
+[data-theme="dark"] .modern-icon-btn {
+  background: var(--bg-tertiary);
+  border-color: var(--border);
+}
+
+[data-theme="dark"] .modern-icon-btn:hover {
+  background: var(--primary);
+  box-shadow: 0 2px 12px rgba(59, 130, 246, 0.3);
+}
+
+[data-theme="sepia"] .modern-icon-btn {
+  background: var(--bg-tertiary);
+  border-color: var(--border);
+}
+
+[data-theme="sepia"] .modern-icon-btn:hover {
+  background: var(--primary);
+  box-shadow: 0 2px 8px rgba(139, 69, 19, 0.2);
 }
 
 .autocomplete-dropdown {
@@ -2677,25 +3200,102 @@ td input:checked + .slider:before {
   min-width: 2.75rem;
 }
 
-.filters-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow);
-  padding: var(--spacing);
-  width: 100%;
-  margin: 0;
+/* =============================================================================
+   SEARCH FILTERS (INTEGRATED)
+   ============================================================================= */
+
+.search-filters {
+  margin-top: var(--spacing-sm);
+  padding-top: var(--spacing-sm);
+  border-top: 1px solid var(--border);
   display: flex;
   flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.filter-row {
+  display: flex;
+  justify-content: center;
   align-items: center;
-  position: relative;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-sm);
 }
 
 .filter-controls {
   display: flex;
+  justify-content: center;
   align-items: center;
-  gap: var(--spacing-sm);
-  margin-bottom: var(--spacing-sm);
+  flex-wrap: wrap;
+  gap: var(--spacing);
+}
+
+.control-group {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.control-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+
+.control-select {
+  appearance: none;
+  padding: 0.25rem 1.5rem 0.25rem 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  width: 4rem;
+  min-width: 0;
+  text-align: center;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6' fill='none' stroke='currentColor' stroke-width='1.5'%3E%3Cpath d='M1 1l4 4 4-4'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.35rem center;
+  background-size: 0.65rem;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.control-select:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px var(--primary-alpha);
+}
+
+.control-select:hover {
+  border-color: var(--border-hover);
+}
+
+/* =============================================================================
+  ORIGINAL FILTER STYLES
+  ============================================================================= */
+
+.active-filters {
+  display: flex;
+  flex: 1 1 100%; /* allow the filters area to take full row so chips can center */
+  flex-wrap: wrap;
+  gap: var(--spacing-xs);
+  justify-content: center; /* center chips within available width */
+  padding: 0 var(--spacing-sm);
+  order: 1;
+}
+
+.control-settings {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--spacing);
+  margin-top: var(--spacing-sm);
+  padding-top: var(--spacing-sm);
+  border-top: 1px solid var(--border);
 }
 
 .chip-min-label {
@@ -2715,49 +3315,49 @@ td input:checked + .slider:before {
   min-width: 60px;
 }
 
-.filter-info {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin-top: var(--spacing-sm);
-  flex-wrap: wrap;
-  gap: var(--spacing-sm);
-}
-
 .active-filters {
   display: flex;
   flex-wrap: wrap;
   gap: var(--spacing-xs);
   justify-content: center;
-  max-width: 100%;
-  overflow-x: auto;
+  padding: 0 var(--spacing-sm);
 }
 
 .filter-chip {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: var(--spacing-xs);
-  color: #f8fafc;
-  padding: 0.15rem 0.4rem;
+  color: var(--chip-text);
+  padding: 0.25rem 0.5rem;
   border-radius: var(--radius);
   font-size: 0.75rem;
-  min-height: 1.25rem;
-  line-height: 1.1;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-weight: 500;
+  height: 1.5rem;
+  line-height: 1;
   cursor: pointer;
   transition: var(--transition);
   box-shadow: var(--shadow-sm);
-  font-weight: 500;
   text-align: center;
   white-space: nowrap;
   user-select: none;
   margin: 0.05rem;
   max-width: fit-content;
+  box-sizing: border-box;
 }
 
 .filter-chip:hover {
   opacity: 0.9;
   transform: translateY(-1px);
   box-shadow: var(--shadow);
+}
+
+.chip-close {
+  margin-left: 0.35rem;
+  font-weight: 700;
+  opacity: 0.95;
+  cursor: pointer;
 }
 
 .filter-chip:active {
@@ -2768,7 +3368,7 @@ td input:checked + .slider:before {
   font-size: 0.875rem;
   color: var(--text-muted);
   text-align: right;
-  margin-left: auto;
+  margin-left: 0; /* remove auto margin which can push chips out of center */
 }
 
 .search-results-info:not(:empty) {
@@ -3167,8 +3767,27 @@ input:disabled + .slider {
     align-items: stretch;
   }
 
-  .search-container .btn {
+  .search-container .btn:not(.modern-icon-btn) {
     width: 100%;
+  }
+
+  .search-container .modern-icon-btn {
+    width: 2.75rem;
+    height: 2.75rem;
+    align-self: center;
+  }
+
+  .search-container {
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--spacing-xs);
+  }
+
+  .search-container #searchInput {
+    flex: 1;
+    min-width: 200px;
   }
 
   .totals {
@@ -3299,6 +3918,45 @@ input:disabled + .slider {
   padding: 0.25rem;
   text-align: center;
   vertical-align: middle;
+  position: relative;
+}
+
+/* Enhanced action icons with hover effects */
+#inventoryTable td.icon-col .action-icon {
+  transition: var(--transition);
+  border-radius: var(--radius);
+  padding: 0.2rem;
+  cursor: pointer;
+}
+
+#inventoryTable td.icon-col .action-icon:hover {
+  background: var(--bg-tertiary);
+  transform: scale(1.2);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Enhanced styling for edit icons */
+#inventoryTable td.icon-col .action-icon.edit-icon {
+  color: var(--primary);
+  font-weight: bold;
+  transition: var(--transition);
+}
+
+#inventoryTable td.icon-col .action-icon.edit-icon:hover {
+  background: var(--primary);
+  color: #f8fafc;
+  transform: scale(1.3);
+  box-shadow: var(--shadow);
+}
+
+#inventoryTable td.icon-col .action-icon.danger:hover {
+  background: var(--danger);
+  color: #f8fafc;
+}
+
+#inventoryTable td.icon-col .action-icon.success:hover {
+  background: var(--success);
+  color: #f8fafc;
 }
 
 #inventoryTable th.icon-col {
@@ -3443,7 +4101,7 @@ input:disabled + .slider {
   display: block;
   fill: none;
   stroke: currentColor;
-  stroke-width: 2;
+  stroke-width: 1.5;
   stroke-linecap: round;
   stroke-linejoin: round;
 }
@@ -3476,11 +4134,272 @@ input:disabled + .slider {
   margin: 0 auto 0.25rem;
 }
 
+/* Sticky action columns: keep notes/edit/delete visible when horizontally scrolling.
+  Collectable column intentionally left non-sticky so it remains adjacent to N#. */
+/* Header cells remain visually consistent with other headers; body cells inherit the row background
+  so striping and hover highlights apply naturally even when cells are sticky. */
+#inventoryTable th.icon-col:not([data-column="collectable"]) {
+  position: sticky;
+  right: 0; /* default for the right-most action column (delete) */
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  z-index: 7; /* keep headers above body cells */
+}
+
+#inventoryTable td.icon-col:not([data-column="collectable"]) {
+  position: sticky;
+  right: 0;
+  /* Keep body cells transparent so they inherit the TR background (striping & hover)
+    while remaining on top for clickability */
+  background: transparent;
+  color: inherit; /* inherit text color from the row */
+  z-index: 6;
+}
+
+/* Layered right offsets (values chosen to match approximate icon widths). */
+#inventoryTable th[data-column="delete"],
+#inventoryTable td[data-column="delete"] {
+  right: 0;
+}
+
+#inventoryTable th[data-column="edit"],
+#inventoryTable td[data-column="edit"] {
+  right: 3.6rem;
+}
+
+#inventoryTable th[data-column="notes"],
+#inventoryTable td[data-column="notes"] {
+  right: 7.2rem;
+}
+
+/* Collectable column should remain in DOM order (right after N#) and not be sticky. */
+#inventoryTable th[data-column="collectable"],
+#inventoryTable td[data-column="collectable"] {
+  position: static;
+}
+
+/* Collectable icon specific styles */
+.collectable-icon.vault-icon {
+  width: 1.1rem;
+  height: 1.1rem;
+  fill: var(--text-muted);
+  stroke: none;
+}
+
+.collectable-icon.bar-icon {
+  width: 1.1rem;
+  height: 1.1rem;
+  fill: var(--silver);
+  stroke: none;
+}
+
+/* Ensure the clickable collectable cell centers its icon */
+#inventoryTable td[data-column="collectable"] .collectable-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Icon button base for action cells */
+#inventoryTable .icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.4rem;
+  height: 2.4rem;
+  padding: 0.25rem;
+  background: transparent;
+  border: 0;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.08s ease;
+}
+
+#inventoryTable .icon-btn:focus {
+  outline: 2px solid rgba(59,130,246,0.25);
+  outline-offset: 2px;
+}
+
+#inventoryTable .icon-btn:hover {
+  background: rgba(0,0,0,0.04);
+  transform: translateY(-1px);
+}
+
+#inventoryTable .icon-svg { width: 1.05rem; height: 1.05rem; display: block; fill: currentColor; color: inherit; }
+.notes-svg { color: inherit; }
+.edit-svg { color: inherit; }
+.delete-svg { color: inherit; }
+
+/* Has-notes indicator */
+.has-notes .icon-svg { color: var(--info); }
+
+/* Theme fills for collectable icons */
+.collectable-icon.vault-icon { color: var(--text-muted); }
+.collectable-icon.bar-icon { color: var(--silver); }
+
+/* MOBILE PRIORITY RULES
+   Keep Qty, Name, Price, Edit visible on tight screens. Deprioritize Spot, Premium, Storage, Metal. */
+@media (max-width: 768px) {
+  /* Hide low-priority columns first */
+  #inventoryTable th[data-column="spot"],
+  #inventoryTable td[data-column="spot"],
+  #inventoryTable th[data-column="premium"],
+  #inventoryTable td[data-column="premium"],
+  #inventoryTable th[data-column="storageLocation"],
+  #inventoryTable td[data-column="storageLocation"],
+  #inventoryTable th[data-column="metal"],
+  #inventoryTable td[data-column="metal"] {
+    display: none;
+  }
+
+  /* Keep Name, Qty, Price, Edit visible and allocate space */
+  #inventoryTable th[data-column="name"],
+  #inventoryTable td[data-column="name"] { width: 45%; }
+  #inventoryTable th[data-column="qty"],
+  #inventoryTable td[data-column="qty"] { width: 8%; }
+  #inventoryTable th[data-column="purchasePrice"],
+  #inventoryTable td[data-column="purchasePrice"] { width: 18%; }
+  #inventoryTable th[data-column="edit"],
+  #inventoryTable td[data-column="edit"] { width: 6%; }
+
+  /* Slightly reduce padding to fit more */
+  #inventoryTable th, #inventoryTable td { padding: 0.2rem 0.15rem; }
+}
+
+@media (max-width: 480px) {
+  /* On very small screens, hide even more and keep essentials */
+  #inventoryTable th[data-column="purchaseLocation"],
+  #inventoryTable td[data-column="purchaseLocation"],
+  #inventoryTable th[data-column="numista"],
+  #inventoryTable td[data-column="numista"],
+  #inventoryTable th[data-column="weight"],
+  #inventoryTable td[data-column="weight"] {
+    display: none;
+  }
+
+  #inventoryTable th[data-column="name"],
+  #inventoryTable td[data-column="name"] { width: 60%; }
+  #inventoryTable th[data-column="qty"],
+  #inventoryTable td[data-column="qty"] { width: 10%; }
+  #inventoryTable th[data-column="purchasePrice"],
+  #inventoryTable td[data-column="purchasePrice"] { width: 20%; }
+}
+
+/* Make sure sticky cells have a solid background so they sit above the scrolled content */
+#inventoryTable th.icon-col,
+#inventoryTable td.icon-col {
+  /* Match the table header/row theme so icons blend in */
+  background: transparent;
+  border-left: none;
+}
+
 th {
   text-align: center;
   vertical-align: middle;
   white-space: nowrap;
 }
+
+/* Make header icons/text use muted header color so they don't pop */
+#inventoryTable thead th {
+  color: var(--text-secondary);
+  background: var(--bg-tertiary);
+}
+
+#inventoryTable thead th .header-icon,
+#inventoryTable thead th .header-text {
+  color: var(--text-secondary);
+}
+
+/* Icon column header should visually match other headers */
+#inventoryTable thead th.icon-col {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  padding: 0.35rem 0.4rem;
+}
+
+/* Icon cells in the body: inherit color so they match the row's text color and striping */
+ #inventoryTable tbody td.icon-col {
+  color: inherit;
+  padding: 0.25rem 0.35rem;
+}
+
+/* Icon button visual blending */
+#inventoryTable .icon-btn {
+  background: transparent; /* keep inline with row */
+  color: var(--text-secondary);
+  box-shadow: none;
+}
+
+#inventoryTable .icon-btn:hover {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+#inventoryTable .icon-btn:active { transform: translateY(0); }
+
+/* Slightly smaller icon size in cells to reduce visual weight */
+#inventoryTable .icon-svg { width: 0.95rem; height: 0.95rem; }
+
+/* Ensure collectable icon visually matches muted style until active */
+.collectable-icon { color: var(--text-secondary); }
+.collectable-icon.bar-icon { color: var(--silver); }
+
+/* Active collectable highlight: vault icon shows filled gold with subtle glow */
+.collectable-icon.vault-icon {
+  color: var(--gold);
+  fill: var(--gold);
+  stroke: none;
+  transform-origin: center;
+  transition: transform 0.12s ease, filter 0.12s ease;
+  filter: drop-shadow(0 1px 3px rgba(0,0,0,0.35));
+}
+
+.collectable-icon.vault-icon:hover {
+  transform: scale(1.08);
+  filter: drop-shadow(0 4px 8px rgba(255, 190, 60, 0.18));
+}
+
+/* When the item is not collectable show a subtle gold-outline bar */
+.collectable-icon.bar-icon {
+  opacity: 0.95;
+  transition: opacity 0.12s ease, transform 0.12s ease;
+}
+
+.collectable-icon.bar-icon:hover {
+  transform: translateY(-1px);
+  opacity: 1;
+}
+
+/* Dense table mode: reduce paddings, font-size and icon sizes for a compact view */
+#inventoryTable {
+  font-size: 0.86rem; /* slightly smaller overall */
+}
+
+#inventoryTable th,
+#inventoryTable td {
+  padding: 0.18rem 0.28rem; /* tighter padding */
+}
+
+/* Reduce header height slightly */
+#inventoryTable thead th {
+  padding-top: 0.32rem;
+  padding-bottom: 0.32rem;
+}
+
+#inventoryTable .icon-btn { width: 2rem; height: 2rem; }
+#inventoryTable .icon-svg { width: 0.9rem; height: 0.9rem; }
+
+/* Tighter row height */
+#inventoryTable tbody tr { min-height: 2rem; }
+
+/* Keep visual clarity on very small screens */
+@media (max-width: 480px) {
+  #inventoryTable { font-size: 0.78rem; }
+  #inventoryTable th, #inventoryTable td { padding: 0.14rem 0.12rem; }
+  #inventoryTable .icon-btn { width: 1.8rem; height: 1.8rem; }
+  #inventoryTable .icon-svg { width: 0.8rem; height: 0.8rem; }
+}
+
 
 .center-align {
   text-align: center !important;
@@ -3496,6 +4415,70 @@ th {
 .type-bar { color: var(--type-bar-bg); }
 .type-note { color: var(--type-note-bg); }
 .type-other { color: var(--type-other-bg); }
+
+/* =============================================================================
+   CATALOG LINK STYLING
+   Enhanced N# column with database/catalog icons representing external database
+   ============================================================================= */
+
+.catalog-link {
+  display: inline;
+  text-decoration: none;
+  font-size: 0.8rem;
+  font-weight: 700;
+  transition: opacity 0.2s ease;
+}
+
+/* Light mode - bold blue */
+:root .catalog-link {
+  color: #1d4ed8;
+}
+
+.catalog-link:hover {
+  text-decoration: underline;
+  opacity: 0.8;
+}
+
+/* Dark mode - light blue */
+[data-theme="dark"] .catalog-link {
+  color: #60a5fa;
+}
+
+/* Sepia mode - bold blue */
+[data-theme="sepia"] .catalog-link {
+  color: #1d4ed8;
+}
+
+/* Empty N# column styling */
+.numista-empty {
+  color: var(--text-muted);
+  font-style: italic;
+  font-size: 0.7rem;
+  text-align: center;
+}
+
+/* Responsive catalog link with improved mobile experience */
+@media (max-width: 768px) {
+  .catalog-link {
+    font-size: 0.7rem;
+  }
+}
+
+@media (max-width: 600px) {
+  .catalog-link {
+    font-size: 0.65rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .catalog-link {
+    font-size: 0.6rem;
+  }
+  
+  .numista-empty {
+    font-size: 0.6rem;
+  }
+}
 
 #typeSummary .summary-chip {
   display: inline-flex;
@@ -3570,9 +4553,6 @@ th {
    ============================================================================= */
 
 .control-settings {
-  position: absolute;
-  bottom: var(--spacing);
-  right: var(--spacing);
   display: flex;
   flex-direction: column;
   gap: var(--spacing-sm);
@@ -3581,15 +4561,26 @@ th {
   border-radius: var(--radius);
   padding: var(--spacing-sm);
   box-shadow: var(--shadow-sm);
-  z-index: 10;
+  min-width: fit-content;
+  align-self: flex-start;
 }
 
 .chip-control,
-.items-control {
+.items-control,
+.group-names-control {
   display: flex;
   align-items: center;
   gap: var(--spacing-xs);
   white-space: nowrap;
+}
+
+/* Anchor dropdown controls to lower right */
+.control-settings {
+  display: flex;
+  gap: var(--spacing);
+  justify-content: flex-end;
+  align-items: flex-end;
+  flex-wrap: wrap;
 }
 
 .chip-label,
@@ -3628,35 +4619,41 @@ th {
 
 /* Responsive adjustments for control settings */
 @media (max-width: 768px) {
-  .control-settings {
-    position: static;
-    margin-top: var(--spacing);
-    align-self: stretch;
-    background: var(--bg-primary);
+  .filter-controls {
+    flex-direction: column;
+    gap: var(--spacing-sm);
   }
   
-  .chip-control,
-  .items-control {
+  .control-group {
     justify-content: space-between;
+    width: 100%;
   }
 }
 
 @media (max-width: 480px) {
-  .control-settings {
-    flex-direction: row;
-    justify-content: space-around;
-    gap: var(--spacing);
+  .filter-controls {
+    gap: var(--spacing-xs);
   }
   
-  .chip-control,
-  .items-control {
+  .control-group {
     flex-direction: column;
     gap: var(--spacing-xs);
     text-align: center;
   }
   
-  .chip-label,
-  .items-label {
-    font-size: 0.7rem;
+  .control-label {
+    font-size: 0.75rem;
   }
+  
+  .control-select {
+    width: 100%;
+  }
+}
+
+/* Debug modal styling */
+#debugModalContent {
+  max-height: 60vh;
+  overflow-y: auto;
+  font-family: monospace;
+  white-space: pre-wrap;
 }

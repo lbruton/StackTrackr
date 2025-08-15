@@ -257,7 +257,7 @@ const API_PROVIDERS = {
  * Example: 3.03.02a → branch 3, release 03, patch 02, alpha
  */
 
-const APP_VERSION = "3.04.65";
+const APP_VERSION = "3.04.86";
 
 /**
  * @constant {string} DEFAULT_CURRENCY - Default currency code for monetary formatting
@@ -399,6 +399,35 @@ const VERSION_ACK_KEY = "ackVersion";
 /** @constant {string} FEATURE_FLAGS_KEY - LocalStorage key for feature flags */
 const FEATURE_FLAGS_KEY = "featureFlags";
 
+/**
+ * List of recognized localStorage keys for cleanup validation
+ * @constant {string[]}
+ */
+const ALLOWED_STORAGE_KEYS = [
+  LS_KEY,
+  SERIAL_KEY,
+  CATALOG_MAP_KEY,
+  SPOT_HISTORY_KEY,
+  THEME_KEY,
+  ACK_DISMISSED_KEY,
+  API_KEY_STORAGE_KEY,
+  API_CACHE_KEY,
+  LAST_CACHE_REFRESH_KEY,
+  LAST_API_SYNC_KEY,
+  APP_VERSION_KEY,
+  VERSION_ACK_KEY,
+  FEATURE_FLAGS_KEY,
+  "spotSilver",
+  "spotGold",
+  "spotPlatinum",
+  "spotPalladium",
+  "chipMinCount",
+  "changeLog",
+  "autocomplete_lookup_cache",
+  "autocomplete_cache_timestamp",
+  "stackrtrackr.debug",
+];
+
 // Persist current application version for comparison on future loads
 try {
   localStorage.setItem(APP_VERSION_KEY, APP_VERSION);
@@ -460,6 +489,13 @@ const FEATURE_FLAGS = {
     userToggle: false,
     description: "Debug UI indicators and development tools",
     phase: "dev"
+  },
+  GROUPED_NAME_CHIPS: {
+    enabled: true,
+    urlOverride: true,
+    userToggle: true,
+    description: "Group item names by base name (e.g., 'American Silver Eagle (3)' instead of separate year chips)",
+    phase: "beta"
   }
 };
 
@@ -824,6 +860,7 @@ if (typeof window !== "undefined") {
   window.METALS = METALS;
   window.DEBUG = DEBUG;
   window.DEFAULT_CURRENCY = DEFAULT_CURRENCY;
+  window.MAX_LOCAL_FILE_SIZE = MAX_LOCAL_FILE_SIZE;
   window.BRANDING_DOMAIN_OPTIONS = BRANDING_DOMAIN_OPTIONS;
   window.BRANDING_DOMAIN_OVERRIDE = BRANDING_DOMAIN_OVERRIDE;
   window.getTemplateVariables = getTemplateVariables;
@@ -836,4 +873,5 @@ if (typeof window !== "undefined") {
   window.enableFeature = enableFeature;
   window.disableFeature = disableFeature;
   window.toggleFeature = toggleFeature;
+  window.ALLOWED_STORAGE_KEYS = ALLOWED_STORAGE_KEYS;
 }

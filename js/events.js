@@ -235,8 +235,22 @@ const setupEventListeners = () => {
   console.log(`Setting up event listeners (v${APP_VERSION})...`);
 
   try {
+    // Search Input
+    if (elements.searchInput) {
+      const debouncedSearch = debounce(() => {
+        searchQuery = elements.searchInput.value.replace(/[<>]/g, "").trim();
+        currentPage = 1;
+        renderTable();
+        if (typeof renderActiveFilters === "function") {
+          renderActiveFilters();
+        }
+      }, 300);
+      safeAttachListener(elements.searchInput, "input", debouncedSearch, "Search Input");
+    }
+
     // Responsive column handling
     setupResponsiveColumns();
+
 
     // CRITICAL HEADER BUTTONS
     debugLog("Setting up header buttons...");
@@ -326,11 +340,37 @@ const setupEventListeners = () => {
         (e) => {
           const minCount = parseInt(e.target.value, 10);
           localStorage.setItem('chipMinCount', minCount.toString());
-          if (typeof updateTypeSummary === 'function') {
-            updateTypeSummary();
+          if (typeof renderActiveFilters === 'function') {
+            renderActiveFilters();
           }
         },
         'Chip minimum count dropdown'
+      );
+    }
+
+    // Grouped name chips toggle
+    const groupNameChipsEl = document.getElementById('groupNameChips');
+    if (groupNameChipsEl && window.featureFlags) {
+      // Set initial state from feature flag
+      groupNameChipsEl.value = window.featureFlags.isEnabled('GROUPED_NAME_CHIPS') ? 'yes' : 'no';
+      
+      safeAttachListener(
+        groupNameChipsEl,
+        'change',
+        (e) => {
+          const isEnabled = e.target.value === 'yes';
+          // Update feature flag setting
+          if (isEnabled) {
+            window.featureFlags.enable('GROUPED_NAME_CHIPS');
+          } else {
+            window.featureFlags.disable('GROUPED_NAME_CHIPS');
+          }
+          // Refresh the chips display
+          if (typeof renderActiveFilters === 'function') {
+            renderActiveFilters();
+          }
+        },
+        'Grouped name chips toggle'
       );
     }
 
@@ -393,14 +433,16 @@ const setupEventListeners = () => {
           const composition = getCompositionFirstWords(elements.itemMetal.value);
           const metal = parseNumistaMetal(composition);
           const name = elements.itemName.value.trim();
-          const qty = parseInt(elements.itemQty.value, 10);
+          const qtyInput = elements.itemQty.value.trim();
+          const qty = qtyInput === "" ? 1 : parseInt(qtyInput, 10);
           const type = elements.itemType.value;
           let weight = parseFloat(elements.itemWeight.value);
           if (elements.itemWeightUnit.value === "g") {
             weight = gramsToOzt(weight);
           }
           weight = isNaN(weight) ? 0 : parseFloat(weight.toFixed(2));
-          let price = parseFloat(elements.itemPrice.value);
+          const priceInput = elements.itemPrice.value.trim();
+          let price = priceInput === "" ? 0 : parseFloat(priceInput);
           price = isNaN(price) || price < 0 ? 0 : price;
           const purchaseLocation =
             elements.purchaseLocation.value.trim() || "";
@@ -409,16 +451,21 @@ const setupEventListeners = () => {
           const notes = elements.itemNotes.value.trim() || "";
           const date = elements.itemDate.value || todayStr();
           const spotPriceInput = elements.itemSpotPrice.value.trim();
-          const isCollectable = document.getElementById("itemCollectable").checked;
+          const isCollectable = elements.itemCollectable ? elements.itemCollectable.checked : false;
 
+          // Validate the mandatory fields: Name, Date, Type, Metal, Weight, and Quantity
           if (
+            !name ||
+            !date ||
+            !type ||
+            !metal ||
+            isNaN(weight) ||
+            weight <= 0 ||
             isNaN(qty) ||
             qty < 1 ||
-            !Number.isInteger(qty) ||
-            isNaN(weight) ||
-            weight <= 0
+            !Number.isInteger(qty)
           ) {
-            return alert("Please enter valid values for all fields.");
+            return alert("Please enter valid values for Name, Date, Type, Metal, Weight, and Quantity.");
           }
 
           // Determine spot price at purchase
@@ -439,7 +486,7 @@ const setupEventListeners = () => {
           }
 
           const serial = getNextSerial();
-          const catalog = document.getElementById("itemCatalog").value.trim();
+          const catalog = elements.itemCatalog ? elements.itemCatalog.value.trim() : "";
           inventory.push({
             metal,
             composition,
@@ -463,13 +510,18 @@ const setupEventListeners = () => {
           typeof registerName === "function" && registerName(name);
           addCompositionOption(composition);
 
-          catalogMap[serial] = catalog;
+          if (window.catalogManager && catalog) {
+            catalogManager.setCatalogId(serial, catalog);
+          }
           saveInventory();
           renderTable();
           this.reset();
           elements.itemWeightUnit.value = "oz";
           elements.itemDate.value = todayStr();
-          if (elements.addModal) elements.addModal.style.display = "none";
+          if (elements.addModal) {
+            if (window.closeModalById) closeModalById('addModal');
+            else elements.addModal.style.display = "none";
+          }
         },
         "Main inventory form",
       );
@@ -488,51 +540,84 @@ const setupEventListeners = () => {
 
           if (editingIndex === null) return;
 
-          const composition = getCompositionFirstWords(elements.editMetal.value);
-          const metal = parseNumistaMetal(composition);
-          const name = elements.editName.value.trim();
-          const qty = parseInt(elements.editQty.value, 10);
-          const type = elements.editType.value;
-          let weight = parseFloat(elements.editWeight.value);
-          if (elements.editWeight.dataset.unit === 'g') {
-            weight = gramsToOzt(weight);
-          }
-          weight = isNaN(weight) ? 0 : parseFloat(weight.toFixed(2));
-          let price = parseFloat(elements.editPrice.value);
-          price = isNaN(price) || price < 0 ? 0 : price;
-          const purchaseLocation =
-            elements.editPurchaseLocation.value.trim() || "";
-          const storageLocation =
-            elements.editStorageLocation.value.trim() || "Unknown";
-          const notes = elements.editNotes.value.trim() || "";
-          const date = elements.editDate.value;
+          // Preserve old item values; only override with inputs that are present
+          const existingItem = inventory[editingIndex] ? { ...inventory[editingIndex] } : {};
 
-          // Use the checkbox state the user just set
-          const isCollectable =
-            document.getElementById("editCollectable").checked;
+          const compositionInput = (elements.editMetal && elements.editMetal.value) ? elements.editMetal.value.trim() : '';
+          const composition = compositionInput ? getCompositionFirstWords(compositionInput) : (existingItem.composition || existingItem.metal || 'Silver');
+          const metal = parseNumistaMetal(composition);
+
+          const nameInput = elements.editName && elements.editName.value ? elements.editName.value.trim() : '';
+          const name = nameInput || existingItem.name || '';
+
+          const qtyInput = elements.editQty && elements.editQty.value ? elements.editQty.value.trim() : '';
+          const qty = qtyInput === '' ? (existingItem.qty || 1) : parseInt(qtyInput, 10);
+
+          const type = (elements.editType && elements.editType.value) ? elements.editType.value : (existingItem.type || '');
+
+          const weightRaw = elements.editWeight && elements.editWeight.value ? elements.editWeight.value : '';
+          let weight;
+          if (weightRaw === '') {
+            weight = typeof existingItem.weight !== 'undefined' ? existingItem.weight : 0;
+          } else {
+            weight = parseFloat(weightRaw);
+            if (elements.editWeight && elements.editWeight.dataset.unit === 'g') {
+              weight = gramsToOzt(weight);
+            }
+            weight = isNaN(weight) ? 0 : parseFloat(weight.toFixed(2));
+          }
+
+          const priceRaw = elements.editPrice && elements.editPrice.value ? elements.editPrice.value : '';
+          let price;
+          if (priceRaw === '') {
+            price = typeof existingItem.price !== 'undefined' ? existingItem.price : 0;
+          } else {
+            price = parseFloat(priceRaw);
+            price = isNaN(price) || price < 0 ? 0 : price;
+          }
+
+          const purchaseLocation = (elements.editPurchaseLocation && elements.editPurchaseLocation.value && elements.editPurchaseLocation.value.trim()) ? elements.editPurchaseLocation.value.trim() : (existingItem.purchaseLocation || '');
+          const storageLocation = (elements.editStorageLocation && elements.editStorageLocation.value && elements.editStorageLocation.value.trim()) ? elements.editStorageLocation.value.trim() : (existingItem.storageLocation || 'Unknown');
+          const notes = (elements.editNotes && elements.editNotes.value) ? elements.editNotes.value.trim() : (existingItem.notes || '');
+          // Preserve existing date if the edit field is left blank. Do not default to today.
+          const date = (elements.editDate && elements.editDate.value) ? elements.editDate.value : (existingItem.date || '');
+
+          // Use the checkbox state the user just set (if unchanged it will equal old value)
+          const isCollectable = document.getElementById("editCollectable") ? document.getElementById("editCollectable").checked : !!existingItem.isCollectable;
 
           // Get spot price input value
           const spotPriceInput = elements.editSpotPrice.value.trim();
 
-          // If spot price is empty and item is not collectable, use current spot price
+          // Preserve previous item data as a fallback when spot prices are missing
+          const oldItemFallback = (inventory[editingIndex] && { ...inventory[editingIndex] }) || {};
+          const metalKey = metal.toLowerCase();
+
+          // If spot price is empty and item is not collectable, prefer current spot price,
+          // then fallback to previously stored spotPriceAtPurchase on the item.
           let spotPriceAtPurchase;
           if (!isCollectable && spotPriceInput === "") {
-            const metalKey = metal.toLowerCase();
-            spotPriceAtPurchase = spotPrices[metalKey] ?? 0;
+            spotPriceAtPurchase = spotPrices[metalKey] ?? oldItemFallback.spotPriceAtPurchase ?? 0;
           } else {
             spotPriceAtPurchase = parseFloat(spotPriceInput);
+            if (isNaN(spotPriceAtPurchase) || spotPriceAtPurchase <= 0) {
+              spotPriceAtPurchase = oldItemFallback.spotPriceAtPurchase ?? 0;
+            }
           }
 
+          // Validate the mandatory fields: Name, Date, Type, Metal, Weight, and Quantity
           if (
-            isNaN(qty) ||
-            qty < 1 ||
-            !Number.isInteger(qty) ||
+            !name ||
+            !date ||
+            !type ||
+            !metal ||
             isNaN(weight) ||
             weight <= 0 ||
-            (!isCollectable &&
-              (isNaN(spotPriceAtPurchase) || spotPriceAtPurchase <= 0))
+            isNaN(qty) ||
+            qty < 1 ||
+            !Number.isInteger(qty)
           ) {
-            return alert("Please enter valid values for all fields.");
+            try { console.debug('Edit validation failed', { name, date, type, metal, weight, qty }); } catch (e) {}
+            return alert("Please enter valid values for Name, Date, Type, Metal, Weight, and Quantity.");
           }
 
           // Calculate premium per ounce (only for non-collectible items)
@@ -571,15 +656,35 @@ const setupEventListeners = () => {
 
           addCompositionOption(composition);
 
-          catalogMap[serial] = inventory[editingIndex].numistaId;
+          try {
+            if (window.catalogManager && inventory[editingIndex].numistaId) {
+              catalogManager.setCatalogId(serial, inventory[editingIndex].numistaId);
+            }
+          } catch (e) {
+            console.warn('Failed to update catalog mapping:', e);
+          }
+          
           saveInventory();
           renderTable();
           logItemChanges(oldItem, inventory[editingIndex]);
 
-          // Close modal
-          elements.editModal.style.display = "none";
+          // Debug trace to confirm save reached the close path
+          try { console.debug('Edit form saved for index', editingIndex); } catch (e) {}
+
+          // Close the modal
           editingIndex = null;
           editingChangeLogIndex = null;
+          
+          try { 
+            if (typeof closeModalById === 'function') {
+              closeModalById('editModal'); 
+            } else if (elements.editModal) {
+              elements.editModal.style.display = 'none';
+              document.body.style.overflow = '';
+            }
+          } catch(e) {
+            console.warn('Failed to close edit modal:', e);
+          }
         },
         "Edit form",
       );
@@ -589,10 +694,11 @@ const setupEventListeners = () => {
       safeAttachListener(
         elements.undoChangeBtn,
         "click",
-        () => {
+        (e) => {
+          if (e && typeof e.preventDefault === 'function') e.preventDefault();
           if (editingChangeLogIndex !== null) {
             toggleChange(editingChangeLogIndex);
-            elements.editModal.style.display = "none";
+            try { if (typeof closeModalById === 'function') closeModalById('editModal'); } catch(e) {}
             editingIndex = null;
             editingChangeLogIndex = null;
             renderChangeLog();
@@ -607,8 +713,13 @@ const setupEventListeners = () => {
       safeAttachListener(
         elements.cancelEditBtn,
         "click",
-        function () {
-          elements.editModal.style.display = "none";
+        function (e) {
+          // Prevent any accidental form submission or event propagation
+          if (e && typeof e.preventDefault === 'function') e.preventDefault();
+          if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
+
+          // Close modal and clear editing state without saving
+          try { if (typeof closeModalById === 'function') closeModalById('editModal'); } catch(e) {}
           editingIndex = null;
           editingChangeLogIndex = null;
         },
@@ -620,8 +731,10 @@ const setupEventListeners = () => {
       safeAttachListener(
         elements.editCloseBtn,
         "click",
-        () => {
-          elements.editModal.style.display = "none";
+        (e) => {
+          if (e && typeof e.preventDefault === 'function') e.preventDefault();
+          if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
+          try { if (typeof closeModalById === 'function') closeModalById('editModal'); } catch(e) {}
           editingIndex = null;
           editingChangeLogIndex = null;
         },
@@ -711,6 +824,19 @@ const setupEventListeners = () => {
       );
     }
 
+    if (elements.debugCloseBtn) {
+      safeAttachListener(
+        elements.debugCloseBtn,
+        "click",
+        () => {
+          if (typeof hideDebugModal === "function") {
+            hideDebugModal();
+          }
+        },
+        "Debug modal close button",
+      );
+    }
+
       if (elements.changeLogBtn) {
         safeAttachListener(
           elements.changeLogBtn,
@@ -719,8 +845,11 @@ const setupEventListeners = () => {
             e.preventDefault();
             renderChangeLog();
             if (elements.changeLogModal) {
-              elements.changeLogModal.style.display = "flex";
-              document.body.style.overflow = "hidden";
+              if (window.openModalById) openModalById('changeLogModal');
+              else {
+                elements.changeLogModal.style.display = "flex";
+                document.body.style.overflow = "hidden";
+              }
             }
           },
           "Change log button",
@@ -761,8 +890,11 @@ const setupEventListeners = () => {
         "click",
         () => {
           if (elements.changeLogModal) {
-            elements.changeLogModal.style.display = "none";
-            document.body.style.overflow = "";
+            if (window.closeModalById) closeModalById('changeLogModal');
+            else {
+              elements.changeLogModal.style.display = "none";
+              document.body.style.overflow = "";
+            }
           }
         },
         "Change log close button",
@@ -1113,8 +1245,10 @@ const setupEventListeners = () => {
         elements.cloudSyncBtn,
         "click",
         () => {
-          if (elements.cloudSyncModal)
-            elements.cloudSyncModal.style.display = "flex";
+          if (elements.cloudSyncModal) {
+            if (window.openModalById) openModalById('cloudSyncModal');
+            else elements.cloudSyncModal.style.display = "flex";
+          }
         },
         "Cloud Sync button",
       );
@@ -1124,7 +1258,10 @@ const setupEventListeners = () => {
       safeAttachListener(
         cloudSyncCloseBtn,
         "click",
-        () => (elements.cloudSyncModal.style.display = "none"),
+        () => {
+          if (window.closeModalById) closeModalById('cloudSyncModal');
+          else elements.cloudSyncModal.style.display = "none";
+        },
         "Cloud Sync close",
       );
     }
@@ -1371,23 +1508,7 @@ const setupSearch = () => {
         elements.clearBtn,
         "click",
         function () {
-          if (typeof clearAllFilters === "function") {
-            clearAllFilters();
-          } else {
-            if (elements.searchInput) {
-              elements.searchInput.value = "";
-            }
-            searchQuery = "";
-            columnFilters = {};
-            currentPage = 1;
-            renderTable();
-          }
-          if (elements.typeFilter) {
-            elements.typeFilter.value = "";
-          }
-          if (elements.metalFilter) {
-            elements.metalFilter.value = "";
-          }
+          clearAllFilters();
         },
         "Clear search button",
       );
@@ -1403,7 +1524,10 @@ const setupSearch = () => {
             elements.itemWeightUnit.value = "oz";
             elements.itemDate.value = todayStr();
           }
-          if (elements.addModal) elements.addModal.style.display = "flex";
+          if (elements.addModal) {
+            if (window.openModalById) openModalById('addModal');
+            else elements.addModal.style.display = "flex";
+          }
         },
         "New item button",
       );
@@ -1417,8 +1541,8 @@ const setupSearch = () => {
         "change",
         function() {
           localStorage.setItem('chipMinCount', this.value);
-          if (typeof updateTypeSummary === "function") {
-            updateTypeSummary(filterInventory());
+          if (typeof renderActiveFilters === "function") {
+            renderActiveFilters();
           }
         },
         "Chip minimum count select",
@@ -1639,7 +1763,8 @@ const setupApiEvents = () => {
               used: 0,
             };
             input.value = usage.quota;
-            modal.style.display = "flex";
+            if (window.openModalById) openModalById('apiQuotaModal');
+            else modal.style.display = "flex";
           }
         },
         "API quota button",
@@ -1899,3 +2024,6 @@ const setupApiEvents = () => {
 };
 
 // =============================================================================
+
+// Early cleanup of stray localStorage entries before application initialization
+document.addEventListener('DOMContentLoaded', cleanupStorage);

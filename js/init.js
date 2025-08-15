@@ -17,6 +17,8 @@ function createDummyElement() {
     removeEventListener: () => {},
     focus: () => {},
     click: () => {},
+    querySelector: () => null,
+    querySelectorAll: () => [],
   };
 }
 
@@ -53,9 +55,8 @@ document.addEventListener("DOMContentLoaded", () => {
     elements.inventoryForm = safeGetElement("inventoryForm", true);
 
     const inventoryTableEl = safeGetElement("inventoryTable", true);
-    elements.inventoryTable = inventoryTableEl
-      ? inventoryTableEl.querySelector("tbody")
-      : null;
+    const tbody = inventoryTableEl && inventoryTableEl.querySelector ? inventoryTableEl.querySelector("tbody") : null;
+    elements.inventoryTable = tbody;
 
     elements.itemMetal = safeGetElement("itemMetal", true);
     elements.itemName = safeGetElement("itemName", true);
@@ -70,6 +71,7 @@ document.addEventListener("DOMContentLoaded", () => {
     elements.itemDate = safeGetElement("itemDate", true);
     elements.itemSpotPrice = safeGetElement("itemSpotPrice");
     elements.itemCollectable = safeGetElement("itemCollectable");
+    elements.itemCatalog = safeGetElement("itemCatalog");
 
     // Header buttons - CRITICAL
     debugLog("Phase 2: Initializing header buttons...");
@@ -159,6 +161,10 @@ document.addEventListener("DOMContentLoaded", () => {
     elements.cancelNotesBtn = safeGetElement("cancelNotes");
     elements.notesCloseBtn = safeGetElement("notesCloseBtn");
 
+    // Debug modal elements
+    elements.debugModal = safeGetElement("debugModal");
+    elements.debugCloseBtn = safeGetElement("debugCloseBtn");
+
     // Pagination elements
     debugLog("Phase 5: Initializing pagination elements...");
     elements.itemsPerPage = safeGetElement("itemsPerPage");
@@ -167,6 +173,7 @@ document.addEventListener("DOMContentLoaded", () => {
     elements.firstPage = safeGetElement("firstPage");
     elements.lastPage = safeGetElement("lastPage");
     elements.pageNumbers = safeGetElement("pageNumbers");
+    elements.itemCount = safeGetElement("itemCount");
 
       elements.changeLogBtn = safeGetElement("changeLogBtn");
       elements.backupReminder = safeGetElement("backupReminder");
@@ -184,6 +191,21 @@ document.addEventListener("DOMContentLoaded", () => {
     elements.clearBtn = safeGetElement("clearBtn");
     elements.newItemBtn = safeGetElement("newItemBtn");
     elements.searchResultsInfo = safeGetElement("searchResultsInfo");
+    elements.activeFilters = safeGetElement("activeFilters");
+
+    // Ensure chipMinCount has a sensible default for new installs
+    try {
+      const chipMinEl = document.getElementById('chipMinCount');
+      const saved = localStorage.getItem('chipMinCount');
+      if (!saved) {
+        localStorage.setItem('chipMinCount', '100');
+      }
+      if (chipMinEl) {
+        chipMinEl.value = localStorage.getItem('chipMinCount') || '100';
+      }
+    } catch (e) {
+      // ignore storage errors
+    }
 
     // Details modal elements
     debugLog("Phase 7: Initializing details modal elements...");
@@ -289,7 +311,6 @@ document.addEventListener("DOMContentLoaded", () => {
     if (aboutVersion) {
       aboutVersion.textContent = `v${APP_VERSION}`;
     }
-    injectVersionString("footerVersion");
     const footerDomainEl = document.getElementById("footerDomain");
     if (footerDomainEl) {
       footerDomainEl.textContent = getFooterDomain();
@@ -322,6 +343,9 @@ document.addEventListener("DOMContentLoaded", () => {
     // Phase 13: Initial Rendering
     debugLog("Phase 13: Rendering initial display...");
       renderTable();
+      if (typeof renderActiveFilters === 'function') {
+        renderActiveFilters();
+      }
       fetchSpotPrice();
       updateSyncButtonStates();
       if (typeof updateStorageStats === "function") {

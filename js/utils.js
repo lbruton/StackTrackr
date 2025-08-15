@@ -87,18 +87,48 @@ const monitorPerformance = (fn, name, ...args) => {
 };
 
 /**
- * Creates a debounced version of a function
+ * Creates a debounced function that delays invoking `func` until after `wait`
+ * milliseconds have elapsed since the last time the debounced function was
+ * invoked. The debounced function comes with a `cancel` method to cancel
+ * delayed `func` invocations and a `flush` method to immediately invoke them.
  *
- * @param {Function} fn - Function to debounce
- * @param {number} delay - Delay in milliseconds
- * @returns {Function} Debounced function
+ * @param {Function} func The function to debounce.
+ * @param {number} wait The number of milliseconds to delay.
+ * @returns {Function} Returns the new debounced function.
  */
-const debounce = (fn, delay = 300) => {
-  let timer;
-  return (...args) => {
-    clearTimeout(timer);
-    timer = setTimeout(() => fn(...args), delay);
+const debounce = (func, wait) => {
+  let timeout;
+  let result;
+
+  const later = (context, args) => {
+    timeout = null;
+    if (args) {
+      result = func.apply(context, args);
+    }
   };
+
+  const debounced = function(...args) {
+    const context = this;
+    if (timeout) {
+      clearTimeout(timeout);
+    }
+    timeout = setTimeout(() => later(context, args), wait);
+    return result;
+  };
+
+  debounced.cancel = () => {
+    clearTimeout(timeout);
+    timeout = null;
+  };
+
+  debounced.flush = () => {
+    if (timeout) {
+      debounced.cancel();
+      later(this, []);
+    }
+  };
+
+  return debounced;
 };
 
 /**
@@ -146,12 +176,6 @@ const addCompositionOption = (value) => {
   refreshCompositionOptions();
 };
 
-/**
- * Extracts the first complete word from a composition string
- *
- * @param {string} composition - Raw composition description
- * @returns {string} First word of the composition
- */
 /**
  * Extracts up to the first two words from a composition string
  * while removing parenthetical content and numeric values.
@@ -310,7 +334,7 @@ const currentMonthKey = () => {
  * @returns {string} Date in YYYY-MM-DD format, or 'Unknown' if parsing fails
  */
 function parseDate(dateStr) {
-  if (!dateStr) return 'Unknown';
+  if (!dateStr) return '—';
 
   // Clean the input string
   const cleanDateStr = dateStr.trim();
@@ -389,9 +413,9 @@ function parseDate(dateStr) {
     // Continue to fallback
   }
 
-  // If all parsing fails, return 'Unknown'
-  console.warn(`Could not parse date: "${dateStr}", returning 'Unknown'`);
-  return 'Unknown';
+  // If all parsing fails, return '—'
+  console.warn(`Could not parse date: "${dateStr}", returning '—'`);
+  return '—';
 }
 
 /**
@@ -401,8 +425,10 @@ function parseDate(dateStr) {
  * @returns {string} Formatted date (e.g., "Jan 1, 1969")
  */
 const formatDisplayDate = (dateStr) => {
+  if (!dateStr || dateStr === '—' || dateStr === 'Unknown') return '—';
+  
   const d = new Date(dateStr);
-  if (isNaN(d)) return dateStr;
+  if (isNaN(d)) return '—';
   
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
                   'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -525,8 +551,19 @@ const detectCurrency = (str = "") => {
  * @param {string} str - Input string
  * @returns {string} Cleaned string containing only letters, numbers, and spaces
  */
-const stripNonAlphanumeric = (str = "", allowHyphen = false) =>
-  str.toString().replace(allowHyphen ? /[^a-zA-Z0-9 -]/g : /[^a-zA-Z0-9 ]/g, "");
+const stripNonAlphanumeric = (str = "", { allowHyphen = false, allowSlash = false } = {}) =>
+  str
+    .toString()
+    .replace(
+      allowHyphen && allowSlash
+        ? /[^a-zA-Z0-9 \\/-]/g
+        : allowHyphen
+        ? /[^a-zA-Z0-9 -]/g
+        : allowSlash
+        ? /[^a-zA-Z0-9 \\/]/g
+        : /[^a-zA-Z0-9 ]/g,
+      ""
+    );
 
 /**
  * Cleans a string by stripping HTML tags and control characters while
@@ -556,10 +593,11 @@ const sanitizeObjectFields = (obj) => {
   for (const key of Object.keys(cleaned)) {
     if (typeof cleaned[key] === "string" && key !== 'notes') {
       const allowHyphen = key === 'date';
+      const allowSlash = key === 'name';
       cleaned[key] =
         key === 'purchaseLocation'
           ? cleanString(cleaned[key])
-          : stripNonAlphanumeric(cleaned[key], allowHyphen);
+          : stripNonAlphanumeric(cleaned[key], { allowHyphen, allowSlash });
     }
   }
   return cleaned;
@@ -631,6 +669,23 @@ const saveData = (key, data) => { try { const raw = JSON.stringify(data); const 
 const loadData = (key, defaultValue = []) => { try { const raw = localStorage.getItem(key); if(raw == null) return defaultValue; const str = __decompressIfNeeded(raw); return JSON.parse(str); } catch(e) { return defaultValue; } };
 
 /**
+ * Removes unknown localStorage keys to maintain a clean storage state
+ *
+ * Iterates over all localStorage entries and deletes any keys not present in
+ * ALLOWED_STORAGE_KEYS.
+ */
+const cleanupStorage = () => {
+  if (typeof localStorage === 'undefined') return;
+  const allowed = new Set(ALLOWED_STORAGE_KEYS);
+  for (let i = localStorage.length - 1; i >= 0; i--) {
+    const key = localStorage.key(i);
+    if (!allowed.has(key)) {
+      localStorage.removeItem(key);
+    }
+  }
+};
+
+/**
  * Sorts inventory by date (newest first)
  *
  * @param {Array} [data=inventory] - Data to sort
@@ -638,6 +693,15 @@ const loadData = (key, defaultValue = []) => { try { const raw = localStorage.ge
  */
 const sortInventoryByDateNewestFirst = (data = inventory) => {
   return [...data].sort((a, b) => {
+    // Handle unknown dates (—, empty, or Unknown) - they should sort to the bottom (oldest)
+    const isUnknownA = !a.date || a.date.trim() === '' || a.date.trim() === '—' || a.date.trim() === 'Unknown';
+    const isUnknownB = !b.date || b.date.trim() === '' || b.date.trim() === '—' || b.date.trim() === 'Unknown';
+    
+    if (isUnknownA && isUnknownB) return 0; // Both unknown, equal
+    if (isUnknownA) return 1; // A is unknown, put it after B (older)
+    if (isUnknownB) return -1; // B is unknown, put it after A (older)
+    
+    // Both have dates, compare normally
     const dateA = new Date(a.date);
     const dateB = new Date(b.date);
     const timeA = isNaN(dateA) ? 0 : dateA.getTime();
@@ -964,6 +1028,48 @@ const openStorageReportPopup = () => {
 
   modal.style.display = 'flex';
   document.body.style.overflow = 'hidden';
+};
+/**
+ * Globally close a modal by id and clear body overflow safely.
+ * @param {string} id
+ */
+const closeModalById = (id) => {
+  try {
+    const modal = document.getElementById(id);
+    if (modal) modal.style.display = 'none';
+  } catch (e) {
+    /* ignore */
+  }
+  try { if (document && document.body) document.body.style.overflow = ''; } catch (e) {}
+};
+/**
+ * Opens a modal by id and sets body overflow to hidden.
+ * Also initializes a click-outside-to-close handler once.
+ * @param {string} id
+ */
+const openModalById = (id) => {
+  try {
+    const modal = document.getElementById(id);
+    if (!modal) return;
+
+    // initialize click-outside handler once per modal
+    if (!modal.dataset.initialized) {
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeModalById(id);
+      });
+      modal.dataset.initialized = 'true';
+    }
+
+    modal.style.display = 'flex';
+    try { if (document && document.body) document.body.style.overflow = 'hidden'; } catch (e) {}
+    // focus first focusable element for a11y
+    try {
+      const focusable = modal.querySelector('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+      if (focusable && focusable.focus) focusable.focus();
+    } catch (e) {}
+  } catch (e) {
+    /* ignore */
+  }
 };
 /**
  * Generates comprehensive HTML storage report with theme support
@@ -2393,12 +2499,6 @@ This archive contains a complete snapshot of your StackrTrackr storage data.`;
   return content;
 };
 
-// Make storage report functions globally available
-window.updateStorageStats = updateStorageStats;
-window.downloadStorageReport = downloadStorageReport;
-window.openStorageReportPopup = openStorageReportPopup;
-
-
 /** Storage compression helpers (Phase 1C) */
 const __ST_COMP_PREFIX = 'CMP1:';
 function __compressIfNeeded(str){
@@ -2418,6 +2518,35 @@ function __decompressIfNeeded(stored){
     return stored;
   }catch(e){ return stored; }
 }
+/**
+ * Returns black or white contrast color for a given background.
+ * Supports hex strings and CSS variables.
+ * @param {string} bg - Background color in hex or CSS var format
+ * @returns {string} '#000000' or '#ffffff'
+ */
+function getContrastColor(bg) {
+  if (!bg) return '#000000';
+  let hex = bg.trim();
+  if (hex.startsWith('var(')) {
+    const varName = hex.slice(4, -1).trim();
+    hex = getComputedStyle(document.documentElement)
+      .getPropertyValue(varName)
+      .trim();
+  }
+  if (hex.startsWith('#')) {
+    hex = hex.slice(1);
+  }
+  if (hex.length === 3) {
+    hex = hex.split('').map(c => c + c).join('');
+  }
+  if (hex.length !== 6) return '#000000';
+  const r = parseInt(hex.slice(0, 2), 16);
+  const g = parseInt(hex.slice(2, 4), 16);
+  const b = parseInt(hex.slice(4, 6), 16);
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  return luminance > 0.5 ? '#000000' : '#ffffff';
+}
+
 /** Generates a storage utilization report */
 function generateStorageReport(){
   try{
@@ -2434,6 +2563,24 @@ function generateStorageReport(){
   }catch(e){ return { totalKB:0, items:[] }; }
 }
 if (typeof window !== 'undefined') {
+  window.getContrastColor = getContrastColor;
   window.generateStorageReport = generateStorageReport;
   window.updateSpotTimestamp = updateSpotTimestamp;
+  window.cleanupStorage = cleanupStorage;
+  window.checkFileSize = checkFileSize;
+  window.MAX_LOCAL_FILE_SIZE = MAX_LOCAL_FILE_SIZE;
+  window.closeModalById = closeModalById;
+  window.openModalById = openModalById;
+  window.updateStorageStats = updateStorageStats;
+  window.downloadStorageReport = downloadStorageReport;
+  window.openStorageReportPopup = openStorageReportPopup;
+}
+
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = {
+    stripNonAlphanumeric,
+    sanitizeObjectFields,
+    sanitizeImportedItem,
+    getContrastColor,
+  };
 }
