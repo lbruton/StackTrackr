@@ -5,6 +5,8 @@
 
 let parsedData = null;
 let headers = [];
+// histories will hold per-panel arrays of {file,date,value}
+let histories = [[],[],[],[],[]];
 
 function colLetterToIndex(letter) {
   return letter.toUpperCase().charCodeAt(0) - 65;
@@ -53,35 +55,86 @@ function applyFormulaToData(jsExpr) {
   return results;
 }
 
-function renderTable(results) {
+function renderTable(results, opts = {previewRows:10}) {
   const table = document.getElementById('table');
   table.innerHTML = '';
+  const wrap = document.createElement('div');
+  wrap.className = 'table-preview-wrap';
   const tbl = document.createElement('table');
-  tbl.border = 1;
-  const thead = document.createElement('tr');
+  tbl.className = 'preview-table';
+  // helper: 0 -> A, 25 -> Z, 26 -> AA
+  function colIndexToLetter(index) {
+    let s = '';
+    let n = index + 1;
+    while (n > 0) {
+      const rem = (n - 1) % 26;
+      s = String.fromCharCode(65 + rem) + s;
+      n = Math.floor((n - 1) / 26);
+    }
+    return s;
+  }
+
+  // Top row: column letters (plus top-left corner)
+  const topRow = document.createElement('tr');
+  const corner = document.createElement('th');
+  corner.className = 'rownum top-left sticky-top';
+  corner.textContent = '';
+  topRow.appendChild(corner);
+  for (let j = 0; j < headers.length; j++) {
+    const th = document.createElement('th');
+    th.className = 'col-letter sticky-top';
+    th.textContent = colIndexToLetter(j);
+    topRow.appendChild(th);
+  }
+  const resTop = document.createElement('th');
+  resTop.className = 'sticky-top';
+  resTop.textContent = '';
+  topRow.appendChild(resTop);
+  tbl.appendChild(topRow);
+
+  // Header row: actual header names
+  const headerRow = document.createElement('tr');
+  const headerCorner = document.createElement('th');
+  headerCorner.className = 'rownum';
+  headerCorner.textContent = 'Header';
+  headerRow.appendChild(headerCorner);
   headers.forEach(h => {
     const th = document.createElement('th');
     th.textContent = h;
-    thead.appendChild(th);
+    headerRow.appendChild(th);
   });
-  const th = document.createElement('th');
-  th.textContent = 'FormulaResult';
-  thead.appendChild(th);
-  tbl.appendChild(thead);
+  const resHead = document.createElement('th');
+  resHead.textContent = 'FormulaResult';
+  headerRow.appendChild(resHead);
+  tbl.appendChild(headerRow);
 
-  parsedData.forEach((r, i) => {
+  const rowsToShow = Math.min(opts.previewRows || 10, parsedData.length);
+  for (let i = 0; i < rowsToShow; i++) {
+    const r = parsedData[i];
     const tr = document.createElement('tr');
-    r.forEach(c => {
+    const rowNumTd = document.createElement('td');
+    rowNumTd.className = 'rownum';
+    rowNumTd.textContent = String(i + 1);
+    tr.appendChild(rowNumTd);
+    for (let j = 0; j < r.length; j++) {
       const td = document.createElement('td');
-      td.textContent = c;
+      td.textContent = r[j];
       tr.appendChild(td);
-    });
+    }
     const td = document.createElement('td');
-    td.textContent = results[i];
+    td.textContent = results && results[i] !== undefined ? results[i] : '';
     tr.appendChild(td);
     tbl.appendChild(tr);
-  });
-  table.appendChild(tbl);
+  }
+
+  wrap.appendChild(tbl);
+  table.appendChild(wrap);
+
+  // add small footer note
+  const note = document.createElement('div');
+  note.className = 'table-note';
+  note.textContent = `Showing ${rowsToShow} of ${parsedData.length} rows. Use CSV history for more.`;
+  table.appendChild(note);
 }
 
 function renderChart(results) {
@@ -108,10 +161,15 @@ document.getElementById('csvfile').addEventListener('change', (e) => {
       parsedData = res.data.filter(r => r.length > 0);
       headers = parsedData.shift();
       alert(`Loaded ${parsedData.length} rows, ${headers.length} columns`);
-  // enable view table button and show filename
-  document.getElementById('viewTable').disabled = false;
+  // show filename
   document.getElementById('filename').textContent = file.name;
-  document.getElementById('viewTable').dataset.filename = file.name;
+  // populate the fixed inline preview table immediately
+  try {
+    const sel = document.getElementById('previewRowsSelect');
+    const rows = parseInt(localStorage.getItem('previewRows') || sel.value || '10', 10);
+    sel.value = String(rows);
+    renderTable(null, {previewRows: rows});
+  } catch (e) { console.warn('renderTable failed on upload', e); }
     }
   });
 });
@@ -121,47 +179,60 @@ document.getElementById('apply').addEventListener('click', () => {
   if (!parsedData) { alert('Load a CSV first'); return; }
   const jsExpr = translateFormula(formula);
   const results = applyFormulaToData(jsExpr);
-  renderTable(results);
+  const rows = parseInt(localStorage.getItem('previewRows') || document.getElementById('previewRowsSelect').value || '10',10);
+  renderTable(results, {previewRows: rows});
   renderChart(results);
 });
 
-// Modal table viewer
-const modal = document.getElementById('tableModal');
-const modalWrap = document.getElementById('modalTableWrap');
-const modalFilename = document.getElementById('modalFilename');
+// preview rows selector handling
+const previewSel = document.getElementById('previewRowsSelect');
+previewSel.addEventListener('change', () => {
+  const v = parseInt(previewSel.value,10) || 10;
+  localStorage.setItem('previewRows', String(v));
+  if (parsedData) renderTable(null, {previewRows: v});
+});
+// initialize selector from storage
+const storedPreview = parseInt(localStorage.getItem('previewRows') || '10',10);
+if (document.getElementById('previewRowsSelect')) document.getElementById('previewRowsSelect').value = String(storedPreview);
 
-function buildModalTable() {
-  modalWrap.innerHTML = '';
-  const tbl = document.createElement('table');
-  tbl.className = 'wide-table';
-  const thead = document.createElement('tr');
-  headers.forEach(h => {
-    const th = document.createElement('th'); th.textContent = h; thead.appendChild(th);
-  });
-  tbl.appendChild(thead);
-  parsedData.forEach(row => {
-    const tr = document.createElement('tr');
-    row.forEach(c => { const td = document.createElement('td'); td.textContent = c; tr.appendChild(td); });
-    tbl.appendChild(tr);
-  });
-  modalWrap.appendChild(tbl);
+// Sample data generator for testing before any upload
+function generateSampleData(cols = 8, rows = 50) {
+  // headers as single letters A..Z, AA.. etc.
+  function colIndexToLetter(index) {
+    let s = '';
+    let n = index + 1;
+    while (n > 0) {
+      const rem = (n - 1) % 26;
+      s = String.fromCharCode(65 + rem) + s;
+      n = Math.floor((n - 1) / 26);
+    }
+    return s;
+  }
+  headers = [];
+  for (let c = 0; c < cols; c++) headers.push(colIndexToLetter(c));
+  parsedData = [];
+  for (let r = 0; r < rows; r++) {
+    const row = [];
+    for (let c = 0; c < cols; c++) {
+      // random numbers with small variance
+      const val = (Math.random() * 100).toFixed(2);
+      row.push(val);
+    }
+    parsedData.push(row);
+  }
+  document.getElementById('filename').textContent = 'sample-data';
+  try {
+    const sel = document.getElementById('previewRowsSelect');
+    const p = parseInt(localStorage.getItem('previewRows') || sel.value || '10', 10);
+    sel.value = String(p);
+    renderTable(null, {previewRows: p});
+  } catch (e) { console.warn('renderTable failed on sample data', e); }
 }
 
-document.getElementById('viewTable').addEventListener('click', () => {
-  if (!parsedData) return;
-  modalFilename.textContent = document.getElementById('viewTable').dataset.filename || 'CSV Table';
-  buildModalTable();
-  modal.classList.add('open');
-  modal.setAttribute('aria-hidden', 'false');
-});
-
-document.getElementById('closeModal').addEventListener('click', () => {
-  modal.classList.remove('open');
-  modal.setAttribute('aria-hidden', 'true');
-});
-
-// Click outside to close
-modal.addEventListener('click', (e) => { if (e.target === modal) { modal.classList.remove('open'); modal.setAttribute('aria-hidden','true'); } });
+// If no CSV is uploaded, populate with sample data for testing
+if (!parsedData || parsedData.length === 0) {
+  generateSampleData(12, 149);
+}
 
 // Calculation panels
 function computeAggregates(results) {
@@ -241,7 +312,8 @@ document.getElementById('bulkRun').addEventListener('click', async () => {
   const panelFormulas = [];
   for (let i=1;i<=5;i++) panelFormulas.push(document.getElementById(`formula-${i}`).value || '');
 
-  const histories = [[],[],[],[],[]];
+  // reset histories
+  histories = [[],[],[],[],[]];
   const processedLabels = [];
   const skipped = [];
 
@@ -288,7 +360,7 @@ document.getElementById('bulkRun').addEventListener('click', async () => {
         // pick first row date as file-level date if present
         dateVal = data[0][dateIdx];
       }
-      histories[p].push({file: fname, date: dateVal, value: agg.mean});
+  histories[p].push({file: fname, date: dateVal, value: agg.mean});
     }
 
     parsedData = backupParsed;
@@ -339,3 +411,48 @@ document.getElementById('bulkRun').addEventListener('click', async () => {
     tableDiv.appendChild(tbl);
   }
 });
+
+  // Render histories (used for import/export to rebuild charts and tables)
+  function renderHistories() {
+    const processedLabels = histories[0].map(h=>h? h.file : '');
+    for (let p=0;p<5;p++){
+      const ctx = document.getElementById(`histchart-${p+1}`).getContext('2d');
+      if (window[`_hist_${p+1}`]) window[`_hist_${p+1}`].destroy();
+      const points = histories[p].map(pt => pt? pt.value : null);
+      window[`_hist_${p+1}`] = new Chart(ctx,{type:'line',data:{labels:processedLabels,datasets:[{label:`Panel ${p+1} Mean`,data:points}]},options:{responsive:true,maintainAspectRatio:false}});
+
+      const tableDiv = document.getElementById(`histtable-${p+1}`);
+      tableDiv.innerHTML = '';
+      const tbl = document.createElement('table'); tbl.className = 'history-table';
+      const thead = document.createElement('tr'); ['File','Date','Value'].forEach(hh => { const th = document.createElement('th'); th.textContent = hh; thead.appendChild(th); }); tbl.appendChild(thead);
+      const rows = histories[p].map(pt=> ({file:pt?pt.file:'', dateRaw: pt? pt.date:'', value:pt?pt.value:null}));
+      rows.forEach(r=>{ const tr=document.createElement('tr'); const td1=document.createElement('td'); td1.textContent=r.file; tr.appendChild(td1); const td2=document.createElement('td'); td2.textContent=r.dateRaw; tr.appendChild(td2); const td3=document.createElement('td'); td3.textContent=r.value!==null? r.value.toFixed(2):''; tr.appendChild(td3); tbl.appendChild(tr); });
+      tableDiv.appendChild(tbl);
+    }
+  }
+
+  // Export histories to JSON
+  document.getElementById('exportHistory').addEventListener('click', () => {
+    const payload = { exportedAt: new Date().toISOString(), histories };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `csvtools-history-${Date.now()}.json`; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+  });
+
+  // Import histories from JSON
+  document.getElementById('importHistory').addEventListener('click', () => {
+    document.getElementById('importHistoryFile').click();
+  });
+  document.getElementById('importHistoryFile').addEventListener('change', (e) => {
+    const f = e.target.files[0]; if (!f) return; const reader = new FileReader(); reader.onload = (ev) => {
+      try {
+        const data = JSON.parse(ev.target.result);
+        if (data && data.histories) {
+          histories = data.histories;
+          renderHistories();
+          alert('Imported history JSON and rebuilt charts.');
+        } else alert('Invalid history JSON file');
+      } catch (err) { alert('Failed to parse JSON: ' + err.message); }
+    }; reader.readAsText(f);
+  });

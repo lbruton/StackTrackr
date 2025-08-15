@@ -3,19 +3,24 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>CSV Tools - Formula Prototype</title>
+  <title>Lonnie's CISA-Army Knife</title>
   <link rel="stylesheet" href="styles.css">
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
 <body>
   <main>
-    <h1>CSV Tools - Formula Prototype</h1>
+  <h1>Lonnie's CISA-Army Knife</h1>
 
     <section id="upload">
       <label for="csvfile">Upload CSV:</label>
       <input id="csvfile" type="file" accept=".csv" />
-      <button id="viewTable" disabled>View Table</button>
+      <label for="previewRowsSelect" style="margin-left:12px">Preview rows:</label>
+      <select id="previewRowsSelect">
+        <option value="5">5</option>
+        <option value="10" selected>10</option>
+        <option value="20">20</option>
+      </select>
       <div id="filename" style="display:inline-block;margin-left:12px;color:#444;font-weight:600"></div>
     </section>
 
@@ -27,43 +32,54 @@
 
     <section id="results">
       <h2>Results</h2>
-      <canvas id="chart" width="800" height="300"></canvas>
+      <!-- Inline preview table (shows first N rows) -->
       <div id="table"></div>
+      <canvas id="chart" width="800" height="300"></canvas>
     </section>
 
     <section id="calc-windows">
-      <h2>Calculation Windows</h2>
+      <div class="history-toolbar" style="display:flex;justify-content:space-between;align-items:center">
+        <h2 style="margin:0">Calculation Windows</h2>
+        <div>
+          <button id="exportHistory">Export History (JSON)</button>
+          <input id="importHistoryFile" type="file" accept=".json" style="display:none" />
+          <button id="importHistory">Import History (JSON)</button>
+        </div>
+      </div>
       <div class="panels" id="calcPanels">
         <!-- Five calculation panels will be generated here -->
         <div class="panel" id="panel-1">
           <h3>Window 1</h3>
           <div class="panel-output" id="output-1">No formula applied</div>
-          <input class="panel-formula" id="formula-1" placeholder="=A*B+C" />
+          <input class="panel-formula" id="formula-1" placeholder="=A*B+C" value="=A" />
           <button class="panel-apply" data-panel="1">Apply Formula</button>
           <button class="panel-track" data-panel="1">Track Changes</button>
         </div>
         <div class="panel" id="panel-2">
           <h3>Window 2</h3>
           <div class="panel-output" id="output-2">No formula applied</div>
-          <input class="panel-formula" id="formula-2" placeholder="=A*B+C" />
+          <input class="panel-formula" id="formula-2" placeholder="=A*B+C" value="=B" />
           <button class="panel-apply" data-panel="2">Apply Formula</button>
+          <button class="panel-track" data-panel="2">Track Changes</button>
         </div>
         <div class="panel" id="panel-3">
           <h3>Window 3</h3>
           <div class="panel-output" id="output-3">No formula applied</div>
-          <input class="panel-formula" id="formula-3" placeholder="=A*B+C" />
+          <input class="panel-formula" id="formula-3" placeholder="=A*B+C" value="=C" />
           <button class="panel-apply" data-panel="3">Apply Formula</button>
+          <button class="panel-track" data-panel="3">Track Changes</button>
         </div>
         <div class="panel" id="panel-4">
           <h3>Window 4</h3>
           <div class="panel-output" id="output-4">No formula applied</div>
-          <input class="panel-formula" id="formula-4" placeholder="=A*B+C" />
+          <input class="panel-formula" id="formula-4" placeholder="=A*B+C" value="=D" />
           <button class="panel-apply" data-panel="4">Apply Formula</button>
+          <button class="panel-track" data-panel="4">Track Changes</button>
         </div>
         <div class="panel" id="panel-5">
           <h3>Window 5</h3>
           <div class="panel-output" id="output-5">No formula applied</div>
-          <input class="panel-formula" id="formula-5" placeholder="=A*B+C" />
+          <input class="panel-formula" id="formula-5" placeholder="=A*B+C" value="=E" />
           <button class="panel-apply" data-panel="5">Apply Formula</button>
           <button class="panel-track" data-panel="5">Track Changes</button>
         </div>
@@ -101,17 +117,5 @@
   </main>
 
   <script src="app.js"></script>
-  <!-- Table Viewer Modal -->
-  <div id="tableModal" class="modal" aria-hidden="true">
-    <div class="modal-content">
-      <header class="modal-header">
-        <h3 id="modalFilename">CSV Table</h3>
-        <button id="closeModal" aria-label="Close">✕</button>
-      </header>
-      <div class="modal-body">
-        <div class="table-wrap" id="modalTableWrap"></div>
-      </div>
-    </div>
-  </div>
 </body>
 </html>
