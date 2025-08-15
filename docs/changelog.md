@@ -1,11 +1,15 @@
 # StackrTrackr — Changelog
 
-> **Latest release: v3.04.76**
+> **Latest release: v3.04.81**
 
 
 For upcoming work, see [announcements](announcements.md).
 
 ## 📋 Version History
+
+### Version 3.04.81 – Composition helper cleanup (2025-08-15)
+- Removed obsolete composition helper comment and synchronized documentation
+- Files Updated: `js/utils.js`, `README.md`, `docs/changelog.md`
 
 ### Version 3.04.76 – Table Item Counter (2025-08-15)
 - **Inventory Insight**: Added dynamic item counter below the inventory table displaying the number of visible items.
@@ -398,7 +402,7 @@ For upcoming work, see [announcements](announcements.md).
 - Inventory name cells show a pencil icon for editing; totals cards restored to their own block
 
 ### Version 3.03.08j – Composition display fix (2025-08-10)
-- Composition column shows first word of imported composition instead of generic metal
+- Composition column shows first two words of imported composition instead of generic metal
 
 ### Version 3.03.08i – Numista import polish (2025-08-10)
 - Unified bullet styling for "What's New" lists
