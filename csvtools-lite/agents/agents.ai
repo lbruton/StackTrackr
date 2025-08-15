@@ -1,0 +1,582 @@
+# StackTrackr Canonical Agent Instructions
+**Version**: 4.0 - Script Loading & Architecture Reference  
+**Created**: August 14, 2025  
+**Status**: Master Reference for All Agents
+
+> **🚨 CRITICAL**: All agents MUST check this file on initialization and before making any script/module changes
+
+---
+1. ✅ Read this file (`/agents.ai`) completely
+2. ✅ **Unless given a specific task, start with items from `/docs/roadmap.md`** - prioritize Critical Bugs, then Bug Fixes, then Feature Enhancements
+3. ✅ Review current git status and create checkpoint if needed
+4. ✅ Report status using standard format
+5. ✅ Reference script loading order before any file modifications
+
+---
+
+## 🎯 **PROJECT OVERVIEW**
+
+**StackrTrackr** is a client-side precious metals inventory management web application:
+- **Architecture**: Pure frontend, no server dependencies
+- **Storage**: localStorage (5-10MB limit)
+- **Libraries**: Chart.js, PapaParse, jsPDF, JSZip (CDN)
+- **Styling**: CSS custom properties, responsive design
+- **Version**: v3.04.73 (semantic: BRANCH.RELEASE.PATCH.state)
+**⚠️ NEVER modify this order without updating ALL dependent files ⚠️**
+### Script Loading Sequence (from index.html):
+1. **External Dependencies (CDN)**
+   - `file-protocol-fix.js` ⚠️ MUST BE FIRST
+   - PapaParse, jsPDF, Chart.js, JSZip
+
+2. **Core Foundation** (Lines 2585-2590)
+   ```
+   debug-log.js → constants.js → state.js → utils.js
+   ```
+
+3. **Feature Modules** (Lines 2591-2604)
+   ```
+   import-enhancements.js → fuzzy-search.js → autocomplete.js
+   charts.js → theme.js → search.js → filters.js → sorting.js
+   pagination.js → detailsModal.js → modals...
+   ```
+
+4. **Core Business Logic** (Lines 2605-2612)
+   ```
+   spot.js → api.js → catalog-*.js → bulk-edit.js
+   inventory.js → about.js → customMapping.js
+   ```
+   ```
+
+6. **Application Startup** (Line 2616)
+   ```
+   init.js ← FINAL INITIALIZATION
+   ```
+
+### Function Export Requirements
+**Critical functions that MUST be exported to global scope:**
+- **inventory.js**: `importCsv`, `importJson`, `exportCsv`, `exportJson`, `exportPdf`, `updateSummary`, `toggleCollectable`
+- **api.js**: `showFilesModal`, `hideFilesModal`, `fetchSpotPrice`
+- **utils.js**: `checkFileSize`, `MAX_LOCAL_FILE_SIZE`
+- **All modal handlers**: `show*Modal`, `hide*Modal`
+
+### Export Pattern
+  window.functionName = functionName;
+}
+
+### DOM Element Caching
+```js
+```js
+## Documentation References (2025-08-14)
+
+For all agents working in the StackTrackr workspace, the following documentation is required reading and should be referenced before any code changes:
+
+- `/docs/js_module_reference.md`: Detailed JS module documentation
+- `/docs/js_module_quick_reference.md`: Quick JS module summary
+- `/docs/table_structure_and_styling.md`: Table structure, scripts, CSS pitfalls
+- `/docs/modal_and_button_reference.md`: Modal and button design, functions
+- `/docs/inventory_import_export_design.md`: Import/export, calculation, mapping logic
+- `/docs/release_process.md`: Step-by-step guide for versioning and release management
+
+### Memory Usage
+Agents must commit tasks to memory before starting and after completing them. This ensures continuity across models and allows other agents to pick up where the previous agent left off. For example, if Claude runs out of usage halfway through editing a file, GPT can access memory to know what Claude was working on.
+```
+
+### Modal Management
+- Use standard open/close patterns from detailsModal.js
+- Manage scrolling: `document.body.style.overflow = 'hidden'/'';`
+- Clean up charts with ResizeObserver
+
+---
+
+## 🚨 **CRITICAL DEPENDENCY RULES**
+
+1. **events.js depends on ALL modules above it**
+2. **Functions must be available before events.js runs**
+3. **Use `function` declarations for event handler functions (not `const`)**
+4. **All modal functions must be exported before events.js**
+5. **init.js must validate all dependencies before proceeding**
+
+---
+
+## 🔍 **DEBUGGING PROTOCOL**
+
+### Before Making Changes
+1. Check console for "inventory.js loaded completely"
+2. Verify function exports: `typeof window.importCsv`
+3. Confirm init.js dependency validation passes
+4. Review existing error patterns
+
+### Common Issues
+- **Temporal Dead Zone**: `const` functions not available to event handlers
+- **Missing Exports**: Functions not in global scope
+- **Load Order**: Script dependencies not met
+- **Modal Conflicts**: Multiple event listeners on same element
+
+---
+
+## 📁 **FILE ORGANIZATION**
+
+- `/js/`: Core application modules
+- `/css/`: Theme and component styles  
+- `/docs/`: Implementation guides and roadmap
+- `/tests/`: Browser-based test files
+- `/agents/`: Agent workflows and memory
+
+---
+
+## 🛠️ **DEVELOPMENT WORKFLOW**
+
+### Adding New Features
+1. ✅ Check this file for loading order requirements
+2. ✅ Update constants.js for feature flags
+3. ✅ Create modular JS file in `/js/`
+4. ✅ Register DOM elements in state.js
+5. ✅ Wire up events in events.js (AFTER all dependencies)
+6. ✅ Initialize in init.js sequence
+7. ✅ Export required functions to global scope
+8. ✅ Update documentation
+
+### Snapshot Requirement
+**Before starting any project or making major changes, agents MUST create a workspace snapshot in the `/snapshots` folder.** This ensures a safe rollback point and preserves project history for debugging and audits.
+
+### Testing Guidelines
+- Test via file:// protocol or local server
+- Verify localStorage quota (~5-10MB limit)
+- Test all three themes (dark/light/sepia)
+- Validate mobile responsive layouts
+- Check function availability in console
+
+---
+
+## 🔗 **AGENT COORDINATION**
+
+### Task Management
+- Use git checkpoints before major changes
+- Reference `/agents/unified-workflow.ai` for protocols
+- Cross-reference `/docs/SCRIPT_LOADING_ORDER.md` for technical details
+
+### Communication
+- Report status using standard format from `unified-workflow.ai`
+- Create handoff prompts for agent transitions
+- Document changes in appropriate agent memory files
+
+---
+
+## Workflow File Integration
+
+Agents MUST always check and follow the latest protocols in:
+- `/agents/unified-workflow.ai` (primary source for task assignment, agent specialization, coordination, and efficiency rules)
+- `/agents/workflow.ai` (quick delegation and agent role guide)
+
+### Key Requirements:
+- Follow auto-initialization, git checkpoint, and dependency management protocols from unified-workflow.ai
+- Use trigger phrases and task assignment logic as defined
+- Apply agent specialization and smart assignment rules
+- Use the enhanced roadmap system for all task tracking
+- Reference unified-workflow.ai for handoff, status reporting, and file naming conventions
+- Always check for updates in these files before starting any new patch or task
+
+**Agents should treat unified-workflow.ai as the canonical workflow reference for all StackTrackr development.**
+
+---
+
+## ⚡ **QUICK REFERENCE**
+
+**Before ANY script changes:**
+1. ✅ Reference script loading order above
+2. ✅ Check function export requirements  
+3. ✅ Verify dependencies are met
+4. ✅ Test function availability in global scope
+5. ✅ Use `function` declarations for event handlers
+
+**Emergency Recovery:**
+```sh
+git reset --hard HEAD~1  # Rollback to last checkpoint
+```
+
+---
+
+## File:// Compatibility Requirement
+
+### Critical Requirement
+All themes and features must maintain compatibility with the `file://` protocol. This includes:
+- Ensuring SVGs render correctly without HTTP.
+- Avoiding cross-origin issues with local file access.
+- Testing all themes (dark, light, sepia) under `file://`.
+
+### Implementation Guidelines
+1. Use relative paths for assets.
+2. Avoid Fetch API for local files; use alternative methods.
+3. Explicitly set attributes like `fill`, `stroke`, and `height` for SVGs.
+4. Validate compatibility during development and testing phases.
+
+### Testing Checklist
+- Verify SVG rendering in all themes.
+- Test localStorage functionality under `file://`.
+- Ensure no console errors related to cross-origin or access control.
+
+### Documentation Update
+Include this requirement in all relevant documentation and workflows.
+
+---
+
+## Inventory Table Application Map
+
+### 1. Function Walkthrough
+- **renderTable**: Main function for populating the table. Depends on:
+  - formatPurchaseLocation
+  - formatStorageLocation
+  - filterLink
+  - openNumistaModal
+  - sanitizeHtml
+  - getStorageLocationColor
+  - getPurchaseLocationColor
+  - escapeAttribute
+- **formatPurchaseLocation / formatStorageLocation**: Format and truncate location fields, convert 'Numista Import'/'Unknown' to '—'.
+- **filterLink**: Generates clickable filter chips for location columns.
+- **openNumistaModal**: Handles modal/popup for Numista links, protocol-aware (file:// vs http(s)).
+- **toggleCollectable**: Toggles collectable status, updates table and localStorage.
+- **editItem / deleteItem**: Edit and delete inventory items, update table and localStorage.
+- **sanitizeHtml / escapeAttribute**: Prevent XSS and attribute injection in table cells.
+- **getStorageLocationColor / getPurchaseLocationColor**: Returns color for location chips.
+- **updateSummary**: Updates summary table below inventory table.
+
+### 2. CSS Class Map
+- `.responsive-table`: Main table styling, width, border-collapse, font-size.
+- `.icon-col`: Used for columns with icons (denomination, coinType, grading, condition).
+- `.hidden`: Used for columns that are conditionally hidden (metadata columns).
+- `.hover-effect`: Row hover styling.
+- `.numista-modal-content`, `.modal-header`, `.nav-btn`, `.numista-nav-controls`: Modal and navigation controls styling.
+- `.collectable-icon`, `.vault-icon`, `.bar-icon`: SVG icon styling for collectable status.
+- `.catalog-link`, `.numista-text`, `.numista-empty`: Numista column styling.
+
+### 3. DOM Handles & Elements
+- `#inventoryTable`: Main table element.
+- `#numistaModal`, `#numistaIframe`, `#numistaModalTitle`, `#numistaBackBtn`, `#numistaForwardBtn`, `#numistaCloseBtn`: Modal elements for Numista database.
+- Table `<thead>` and `<tbody>`: Must not be removed or renamed.
+- All `<td>` and `<th>` elements: Data-column attributes used for logic and styling.
+- `.collectable-status`: Button for toggling collectable status.
+
+### 4. Load Order Requirements
+- **Critical**: JS modules must be loaded in the following order for table to function:
+  1. file-protocol-fix.js
+  2. constants.js
+  3. utils.js
+  4. state.js
+  5. inventory.js
+  6. numista-modal.js
+  7. All other modules (detailsModal.js, sorting.js, pagination.js, etc.)
+- **CSS**: styles.css must be loaded before any table rendering occurs.
+- **HTML**: Table and modal elements must exist in DOM before JS runs renderTable or modal functions.
+
+### 5. External Dependencies
+- **Chart.js**: For summary and spot price charts (must be loaded after table).
+- **PapaParse**: For CSV import/export (used by importCsv, importNumistaCsv).
+
+### 6. File:// Protocol Compatibility
+- All features, especially modals and SVGs, must work under file://. Avoid Fetch API for local files. Use relative paths for assets.
+- Numista modal must open in a popup window under file://, not iframe.
+
+### 7. Common Pitfalls
+- Breaking load order will cause missing functions, undefined errors, or broken table rendering.
+- Removing or renaming table/column IDs or classes will break JS and CSS logic.
+- Changing CSS class names or removing required classes will break layout and design.
+- Failing to test under file:// can cause modal and SVG issues.
+
+### 8. Preservation Checklist
+- [ ] JS load order validated
+- [ ] CSS classes present and unchanged
+- [ ] Table and modal DOM elements present
+- [ ] All required functions available on window
+- [ ] File:// compatibility tested
+- [ ] Responsive design verified
+
+### 9. Reference
+See `docs/table-preservation-guide.md` for a full breakdown of table dependencies, preservation steps, and best practices.
+
+---
+
+**📚 See also:**
+- `/docs/COMPLETE_FUNCTION_REFERENCE.md` - **COMPLETE FUNCTION INVENTORY & ARCHITECTURE MAP**
+- `/agents/unified-workflow.ai` - Multi-agent coordination
+- `/docs/SCRIPT_LOADING_ORDER.md` - Detailed technical reference
+- `/agents/tasks/` - Current task assignments
+
+---
+
+## � **MCP WORKSPACE REFERENCES**
+
+The MCP workspace now contains complete project knowledge:
+
+### 🗂️ **Critical Objects Reference** (`/agents/critical_objects_reference.md`)
+- **MUST READ**: A complete inventory of all critical global variables, functions, and constants.
+- **Prevents common errors** like duplicate declarations and load order issues.
+- **Outlines dependencies** and architectural patterns.
+
+### 🗂️ **Function Inventory** (`/docs/COMPLETE_FUNCTION_REFERENCE.md`)
+- **Complete function table** with parameters, returns, exports
+- **Module dependency tree** showing relationships
+- **Data flow architecture** diagrams
+- **File structure map** with descriptions
+- **Critical interaction patterns** and examples
+
+### 🏗️ **Architecture References**
+- **Script loading order** (this file + detailed reference)
+- **Global variable requirements** and localStorage keys
+- **External dependency list** with purposes
+- **Event handler patterns** and modal management
+- **Data processing pipelines** and validation flows
+
+### 📖 **Usage for Agents**
+All MCP agents can now reference:
+- Exact function signatures and purposes
+- Module relationships and dependencies  
+- Data flow patterns and architecture
+- Critical global variables and storage keys
+- Complete file organization and structure
+
+---
+
+
+## Multi-Agent Development Workflow (Sync from MULTI_AGENT_WORKFLOW.md.backup)
+
+### Patch Workflow & Coordination
+- Development proceeds via incremental v3.04.x patch releases, each designed for ~2 hour completion.
+- Multiple agents work in parallel; coordination system prevents conflicts.
+- Roadmap entries track assignments and progress.
+- Before starting, pick a patch from roadmap, check dependencies, and announce your choice if coordinating.
+- Always check for file conflicts, especially on high-risk files (index.html, events.js, css/styles.css).
+
+### Patch Execution & Quality Standards
+- Complete patch following quality standards:
+  - Functional testing: empty/populated data, all user scenarios, mobile/desktop.
+  - Integration testing: spot price, inventory, search, import/export, theme switching, modals.
+  - Code quality: follow patterns, consistent naming, JSDoc for new functions, modular code.
+  - Browser compatibility: Chrome, Firefox, Safari, Edge, file:// protocol, mobile browsers.
+  - Documentation: update code comments, constants.js, planning notes, architectural decisions.
+  - After patch: bump version, update all docs (functionstable.md, changelog.md, roadmap.md, status.md, structure.md).
+
+### File Modification Guidelines
+- High conflict risk: index.html, events.js, css/styles.css (coordinate carefully, minimal changes, document exactly what changed).
+- Medium risk: api.js, inventory.js.
+- Low risk: docs, modal HTML/CSS, utility functions, new modules.
+
+### Patch Completion Checklist
+- Before: read docs, understand patch, check dependencies, verify no conflicts, review code.
+- During: follow patterns, minimal changes, incremental testing, document issues, keep changes organized.
+- Before submit: functional/integration/code/browser/documentation/file cleanup.
+- After: bump version, mark patch complete, document findings, note requirement changes, archive previous build and link back to root.
+
+### Technical Context
+- Client-side only, modular JS, localStorage, responsive CSS, external libs (Chart.js, PapaParse, XLSX, jsPDF, JSZip).
+- Key data: inventory, spotPrices, spotHistory, apiConfig, elements.
+- Constants: APP_VERSION, METALS, storage keys, API providers.
+
+### Debugging & Testing
+- Open index.html directly (file://), import sample.csv, test workflows, edge cases, responsive design, theme switching.
+- Watch for: localStorage quota, date parsing, XSS, mobile compatibility, file protocol differences.
+- Performance: pagination, chart rendering, ZIP processing, search filtering.
+
+### Communication Protocols
+- Coordinate on high-risk files, bugs, shared components, architectural changes.
+- Document deviations, performance/browser/security issues, dependencies, suggestions.
+- Report issues in planning notes, document workarounds, flag breaking/API changes.
+
+### Quick Reference
+- docs/roadmap.md, docs/archive/notes/v3.2.0-planning-notes.md, docs/functionstable.md
+
+---
+
+## Agent Memory & Status Files
+
+Each agent model MUST maintain its own individual memory/status file in `/agents/`:
+- `gpt.ai`, `gpt-4o.ai`, `gpt-4-1.ai`, `gpt-5.ai` for GPT models
+- `claude.ai`, `claude-haiku.ai`, `claude-sonnet.ai`, `claude-opus.ai` for Claude models
+- `gemini.ai`, `gemini-pro.ai` for Gemini models
+
+### Usage Instructions:
+- Update your personal file at the start and end of each session.
+- Record current status, last task, phase, dependencies, and handoff context.
+- Reference your personal file for resuming work or reporting status.
+- Main `agents.ai` should reference these files for model-specific coordination and status tracking.
+
+**This allows multiple models to work on different tasks in parallel, with clear separation and coordination.**
+
+---
+
+## Basic Trigger Words for Agent Actions
+
+After reading the ai file, agents should listen for these trigger words to initiate common actions:
+
+- **"status"**: Report current status and last task, and update your individual .ai file with the latest status information
+- **"start"**: Begin assigned task
+- **"next"**: Move to the next step or phase
+- **"pause"**: Pause work and await further instructions
+- **"handoff"**: Prepare context for another agent
+- **"rollback"**: Revert to last git checkpoint
+- **"summary"**: Provide a summary of work completed
+- **"dependencies"**: List current dependencies or blocking issues
+- **"update"**: Refresh status or memory file
+- **"complete"**: Mark task as finished and update docs
+- **"checkpoint"**: Create a git checkpoint (commit current changes with a descriptive message)
+- **"cleanup"**: Move all documentation files to the `docs` folder, all test files to the `tests` folder, and remove any unused or obsolete files from the workspace
+
+Agents should respond to these trigger words with the appropriate action or prompt for further clarification if needed.
+
+---
+
+## Agent Change Log Requirement
+For every major change that touches a script or DOM object, agents MUST write a short, concise entry to a running change log in their individual `.ai` file. Each entry should include:
+- What was changed
+- Why the change was made
+- Any relevant context or reasoning
+
+This log supports traceability, debugging, and review of agent decisions and logic.
+
+## PATCH File Requirement
+For every major change, agents MUST create a PATCH file in the docs/patch/ directory. The PATCH file must:
+1. Use the semantic version that was bumped (e.g., PATCH-3.04.74.ai)
+2. Include a summary of what was changed
+3. Clearly attribute the change to the agent (use initials or a unique identifier)
+4. Be committed alongside the code change
+
+Example PATCH file format:
+---
+Version: 3.04.74
+Date: 2025-08-14
+Agent: GPT
+Summary: Fixed table alignment and updated SVG rendering for file:// compatibility.
+---
+
+This ensures every change is traceable, versioned, and attributed to the responsible agent.
+
+## Documentation File Naming Convention
+All documentation intended for agent use must use the `.ai` extension (e.g., `agents.ai`, `references.ai`).
+All documentation intended for human (owner/maintainer) use must use the `.md` extension (e.g., `README.md`, `roadmap.md`).
+This ensures clear separation and easy identification of agent vs. human documentation throughout the project.
+
+## Fix Documentation Protocol
+Anytime a fix is found and implemented, agents MUST:
+1. Before attempting a new fix, check the `docs/fixes/` folder for similar issues and solutions.
+2. Document the fix in their change log and in a dedicated fix file.
+3. Add a fix file to the `docs/fixes/` folder, describing the problem, solution, and any relevant code or context.
+4. Reference the fix file in future work to avoid redundant solutions.
+
+This creates a searchable database of fixes and ensures solutions are not reinvented repeatedly.
+
+---
+
+## Agent Initialization Confirmation Protocol
+On startup, every agent MUST:
+1. Confirm (in chat or log) that they have read and understood the latest agents.ai file.
+2. Prompt the user: "I have loaded the latest agent protocols. What would you like to do next?"
+3. Await explicit user instruction before proceeding with any initialization or actions.
+
+This ensures agents are always up-to-date and user-driven before taking any action.
+
+---
+
+## Agent Handoff Prompts
+The `prompts` folder will contain any handoff prompts for special jobs between agents that may not be otherwise defined in the main workflow or task files. Agents should check this folder for custom instructions or coordination details when transitioning work or handling unique scenarios.
+
+---
+
+## Workspace Schema & Function Table Protocol
+On startup, agents MUST:
+1. Read the workspace schema/manifest file (e.g., `workspace-schema.json` or `file-manifest.md`) to understand the full file structure and dependencies.
+2. Review the function table (e.g., `functionstable.md`) that describes every function and its purpose in the project.
+
+This ensures agents have complete context of the workspace and available functions before taking any action.
+
+---
+
+## 📋 **ROADMAP REFERENCE**
+
+The single source of truth for the StackTrackr roadmap is located at:
+
+**`/docs/roadmap.md`**
+
+All agents must refer to this file for:
+- Critical bugs
+- Feature enhancements
+- New features
+- Backend architecture tasks
+- Testing/QA plans
+- Long-term vision items
+
+This file is the authoritative document for development priorities and progress tracking.
+
+---
+
+## 🛠️ **WORKFLOW UPDATE**
+
+### Task Management
+
+- **Previous Process**: Individual agent task files were created for each task.
+- **New Process**: All tasks will now be appended to the checklist format in `/docs/roadmap.md`.
+  - Each task will include the name of the agent it is delegated to.
+  - Progress tracking and updates will be managed directly in the roadmap file.
+
+### Benefits
+- Centralized task management for better visibility.
+- Simplified workflow with fewer files to maintain.
+- Clear delegation and progress tracking in a single source of truth.
+
+### Implementation
+- Agents must refer to `/docs/roadmap.md` for their assigned tasks.
+- Updates to task progress should be appended to the checklist in the roadmap file.
+
+---
+
+# Updated archive directory
+# All agents must now use the /archive/ directory for archived files.
+
+## 📁 **DIRECTORY USAGE GUIDELINES**
+
+- **Patches**: Always store and retrieve patch files from `/docs/patch/`.
+- **Fixes**: Always store and retrieve fix documentation from `/docs/fixes/`.
+
+Agents must adhere to these directory conventions to ensure consistency and organization across the project.
+
+## 📁 **UPDATED DOCUMENT STRUCTURE**
+
+Agents must adhere to the following document structure:
+
+- **Fixes**: `/docs/fixes/` - All fix-related documentation.
+- **Guides**: `/docs/guides/` - All guide files.
+- **Patches**: `/docs/patch/` - All patch files.
+- **Workflows**: `/docs/workflow/` - All workflow-related documentation.
+- **Roadmap**: `/docs/roadmap.md` - The single source of truth for development priorities.
+- **Versioning**: `/docs/versioning.md` - Versioning guidelines and protocols.
+
+Agents must ensure all new documentation is placed in the appropriate directory to maintain organization and consistency.
+
+---
+
+## Memory Commitment Reminder
+
+Agents should frequently ask the user if any important items should be committed to memory. This ensures that critical information is not lost and remains accessible for future reference.
+
+---
+
+## Bug Tracking and Resolution
+
+Agents must commit details about any bugs they encounter to memory, including the cause of the bug and the steps taken to resolve it. When troubleshooting, agents should always consult memory to determine if the issue is a recurring one and leverage past resolutions to address it efficiently.
+
+---
+
+## Bug Tracking and Memory Integration
+
+Agents must document bugs they encounter or notice in the `local_memory.json` file using the `bug_resolution_template.md` as a guide. If the user requests a bug to be added to the roadmap, agents should track it in both the roadmap and the memory file.
+
+When encountering errors, agents must always reference their memory of bugs to identify recurring issues and leverage past resolutions.
+
+### Bug Prevention and Learning
+
+Agents must ensure that site-breaking bugs are not repeated. When a bug is documented in `local_memory.json`, agents should reference it before implementing changes to avoid introducing similar issues. This process ensures continuous learning and improvement.
+
+---
+
+## Workflow Reference
+
+Agents MUST also consult `/agents/unified-workflow.ai` for detailed task delegation, auto-initialization protocols, and response formats.

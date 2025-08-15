@@ -2,7 +2,7 @@
 
 **You seem to be lost!**
 
-Please refer to the main agent instructions file located at `agents/multi-agent.ai` for guidance and proper workflows.
+Please refer to the main agent instructions file located at `agents.ai` for guidance and proper workflows.
 
 ---
 

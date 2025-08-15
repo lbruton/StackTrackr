@@ -266,5 +266,32 @@ const filterInventory = () => {
 // Expose for global access
 window.filterInventory = filterInventory;
 
+// Add debounce utility function
+const debounce = (func, wait) => {
+  let timeout;
+  return function executedFunction(...args) {
+    const later = () => {
+      clearTimeout(timeout);
+      func(...args);
+    };
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+  };
+};
+
+// Apply debounce to search input
+const searchInput = document.getElementById('searchInput');
+if (searchInput) {
+  const debouncedSearch = debounce((query) => {
+    searchQuery = query;
+    currentPage = 1;
+    filterInventory();
+  }, 300);
+
+  searchInput.addEventListener('input', (e) => {
+    debouncedSearch(e.target.value);
+  });
+}
+
 // =============================================================================
 

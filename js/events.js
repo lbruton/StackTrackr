@@ -248,6 +248,24 @@ const setupEventListeners = () => {
       safeAttachListener(elements.searchInput, "input", debouncedSearch, "Search Input");
     }
 
+    // Ensure debounce utility is used for search input events
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) {
+      const debouncedSearchHandler = debounce((event) => {
+        const query = event.target.value;
+        searchQuery = query;
+        currentPage = 1;
+        filterInventory();
+      }, 300);
+
+      safeAttachListener(
+        searchInput,
+        'input',
+        debouncedSearchHandler,
+        'Debounced search input handler'
+      );
+    }
+
     // Responsive column handling
     setupResponsiveColumns();
 
