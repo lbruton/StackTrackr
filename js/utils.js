@@ -177,12 +177,6 @@ const addCompositionOption = (value) => {
 };
 
 /**
- * Extracts the first complete word from a composition string
- *
- * @param {string} composition - Raw composition description
- * @returns {string} First word of the composition
- */
-/**
  * Extracts up to the first two words from a composition string
  * while removing parenthetical content and numeric values.
  *
