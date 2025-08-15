@@ -16,7 +16,6 @@ Ready to continue or awaiting new assignment?
 ## 📁 **Task Check Instructions:**
 
 1. **Look for your files:**
-   - `/docs/agents/tasks/[your-agent]-task-*.ai`
    - `/docs/agents/tasks/[project-name]/[your-agent]-*.ai`
 
 2. **Current Active Project:**

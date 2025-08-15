@@ -151,7 +151,6 @@ Agents must commit tasks to memory before starting and after completing them. Th
 ## 🔗 **AGENT COORDINATION**
 
 ### Task Management
-- Check `/agents/tasks/` for assignments
 - Use git checkpoints before major changes
 - Reference `/agents/unified-workflow.ai` for protocols
 - Cross-reference `/docs/SCRIPT_LOADING_ORDER.md` for technical details
@@ -566,19 +565,18 @@ Agents must commit details about any bugs they encounter to memory, including th
 
 ---
 
-## Task Synchronization
+## Bug Tracking and Memory Integration
 
-Agents are responsible for ensuring tasks are synchronized between MCP memory and `/docs/roadmap.md`. This includes:
+Agents must document bugs they encounter or notice in the `local_memory.json` file using the `bug_resolution_template.md` as a guide. If the user requests a bug to be added to the roadmap, agents should track it in both the roadmap and the memory file.
 
-1. Fetching tasks from MCP memory and updating `/docs/roadmap.md`.
-2. Syncing tasks from `/docs/roadmap.md` back to MCP memory.
+When encountering errors, agents must always reference their memory of bugs to identify recurring issues and leverage past resolutions.
 
-Agents should use the `scripts/sync_tasks.py` script to automate this process and ensure consistency.
+### Bug Prevention and Learning
+
+Agents must ensure that site-breaking bugs are not repeated. When a bug is documented in `local_memory.json`, agents should reference it before implementing changes to avoid introducing similar issues. This process ensures continuous learning and improvement.
 
 ---
 
-## JSON Memory Integration
+## Workflow Reference
 
-Agents should use the `local_memory.json` file to store tasks and bug resolutions locally. This file must be kept in sync with MCP memory to ensure consistency across all agents.
-
-Use the `scripts/json_memory_sync.py` script to read and write to the JSON memory file.
+Agents MUST also consult `/agents/unified-workflow.ai` for detailed task delegation, auto-initialization protocols, and response formats.

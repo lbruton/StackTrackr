@@ -12,13 +12,3 @@ Your primary role on the StackTrackr project is **Code Refactoring and Documenta
 
 ## Workflow Protocol
 **REQUIRED**: You must follow the multi-agent workflow defined in `/docs/agents/unified-workflow.ai`. This includes the Git checkpoint protocol before starting any task.
-
-## Documentation Standards
-
-**REQUIRED**: Follow `/docs/markup_style_guide.md` for all documentation work:
-
-- Use ATX-style headings (`#`, `##`, `###`)
-- Leave blank lines after headings
-- Use backticks for code: `filename.js`, `function()`, `variable`
-- Use proper list formatting with hyphens (`-`)
-- Maintain consistent spacing and structure

@@ -462,6 +462,15 @@ const filterInventoryAdvanced = () => {
     if (criteria && typeof criteria === 'object' && Array.isArray(criteria.values)) {
       const { values, exclude } = criteria;
       switch (field) {
+        case 'name': {
+          const simplifiedValues = values.map(v => simplifyChipValue(v, field));
+          result = result.filter(item => {
+            const itemName = simplifyChipValue(item.name || '', field);
+            const match = simplifiedValues.includes(itemName);
+            return exclude ? !match : match;
+          });
+          break;
+        }
         case 'metal': {
           const lowerVals = values.map(v => v.toLowerCase());
           result = result.filter(item => {
