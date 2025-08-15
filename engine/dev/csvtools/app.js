@@ -214,7 +214,15 @@ document.getElementById('bulkRun').addEventListener('click', async () => {
       const jsExpr = translateFormula(formula);
       const results = applyFormulaToData(jsExpr);
       const agg = computeAggregates(results);
-      histories[p].push(agg.mean);
+      // attempt to extract a date from the CSV - look for common date column names
+      const dateColCandidates = ['date','Date','timestamp','Timestamp','time','Time'];
+      let dateVal = null;
+      const dateIdx = h.findIndex(col => dateColCandidates.includes(col));
+      if (dateIdx !== -1 && data[0] && data[0][dateIdx]) {
+        // pick first row date as file-level date if present
+        dateVal = data[0][dateIdx];
+      }
+      histories[p].push({file: fname, date: dateVal, value: agg.mean});
     }
 
     parsedData = backupParsed;
@@ -225,10 +233,38 @@ document.getElementById('bulkRun').addEventListener('click', async () => {
   for (let p=0;p<5;p++){
     const ctx = document.getElementById(`histchart-${p+1}`).getContext('2d');
     if (window[`_hist_${p+1}`]) window[`_hist_${p+1}`].destroy();
+    const points = histories[p].map(pt => pt? pt.value : null);
     window[`_hist_${p+1}`] = new Chart(ctx,{
       type:'line',
-      data:{labels, datasets:[{label:`Panel ${p+1} Mean`, data:histories[p]}]},
+      data:{labels, datasets:[{label:`Panel ${p+1} Mean`, data:points}]},
       options:{responsive:true,maintainAspectRatio:false}
     });
+
+    // build history table for panel
+    const tableDiv = document.getElementById(`histtable-${p+1}`);
+    tableDiv.innerHTML = '';
+    const tbl = document.createElement('table'); tbl.className = 'history-table';
+    const thead = document.createElement('tr');
+    ['File','Date','Value'].forEach(hh => { const th = document.createElement('th'); th.textContent = hh; thead.appendChild(th); });
+    tbl.appendChild(thead);
+    // parse date strings into Date objects for sorting
+    const rows = histories[p].map(pt => {
+      let parsedDate = null;
+      if (pt && pt.date) {
+        const d = new Date(pt.date);
+        if (!isNaN(d.getTime())) parsedDate = d;
+      }
+      return {file: pt?pt.file:'', date: parsedDate, dateRaw: pt?pt.date:'', value: pt?pt.value:null};
+    }).sort((a,b) => (a.date? a.date.getTime():0) - (b.date? b.date.getTime():0));
+
+    rows.forEach(r => {
+      const tr = document.createElement('tr');
+      const tdFile = document.createElement('td'); tdFile.textContent = r.file; tr.appendChild(tdFile);
+      const tdDate = document.createElement('td'); tdDate.textContent = r.date? r.date.toISOString().slice(0,10): r.dateRaw; tr.appendChild(tdDate);
+      const tdVal = document.createElement('td'); tdVal.textContent = r.value !== null? r.value.toFixed(2): ''; tr.appendChild(tdVal);
+      tbl.appendChild(tr);
+    });
+
+    tableDiv.appendChild(tbl);
   }
 });

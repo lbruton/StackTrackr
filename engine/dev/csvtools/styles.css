@@ -26,3 +26,8 @@ main{max-width:1000px;margin:0 auto}
 .history-charts{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-top:12px}
 .hist{background:#fff;border:1px solid #eee;padding:8px;border-radius:6px;min-height:120px}
 .hist canvas{width:100%!important;height:100px!important}
+
+.history-tables-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-top:12px}
+.history-table{width:100%;border-collapse:collapse}
+.history-table th,.history-table td{border:1px solid #e6e6e6;padding:6px;text-align:left}
+.history-table th{background:#fafafa}
