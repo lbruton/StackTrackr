@@ -77,7 +77,7 @@ elements.inventoryTable.addEventListener('click', (e) => {
   const target = e.target;
   const row = target.closest('tr');
   const idx = row?.dataset.index;
-  
+
   if (target.matches('.edit-icon')) {
     editItem(parseInt(idx));
   } else if (target.matches('.delete-icon')) {
@@ -96,7 +96,44 @@ elements.inventoryTable.addEventListener('click', (e) => {
 
 ---
 
-### **PHASE 3: LOCALSTORAGE BATCHING** ⏱️ 10 minutes
+### **PHASE 3: DOM FRAGMENT OPTIMIZATION** ⏱️ 30 minutes
+**Priority**: MEDIUM-HIGH
+
+**Goals**:
+- Use DocumentFragment for table row generation
+- Reduce DOM manipulation overhead
+- Faster table rendering for large inventories
+
+**Files to Modify**:
+- `js/inventory.js`
+
+**Implementation**:
+```javascript
+const renderTableOptimized = () => {
+  const fragment = document.createDocumentFragment();
+  const tbody = document.createElement('tbody');
+
+  filteredAndSortedItems.forEach((item, index) => {
+    const row = createTableRow(item, index); // DOM methods only
+    tbody.appendChild(row);
+  });
+
+  fragment.appendChild(tbody);
+
+  // Single DOM update instead of innerHTML
+  const oldTbody = elements.inventoryTable.querySelector('tbody');
+  elements.inventoryTable.replaceChild(tbody, oldTbody);
+};
+```
+
+**Testing**:
+- ✅ Table renders correctly
+- ✅ All features work (sorting, filtering, etc.)
+- ✅ Performance improved on large datasets
+
+---
+
+### **PHASE 4: LOCALSTORAGE BATCHING** ⏱️ 10 minutes
 **Priority**: MEDIUM
 
 **Goals**:
@@ -114,7 +151,7 @@ let saveScheduled = false;
 
 const batchedSave = () => {
   if (saveScheduled) return;
-  
+
   saveScheduled = true;
   requestAnimationFrame(() => {
     saveData(LS_KEY, inventory);
@@ -129,43 +166,6 @@ const batchedSave = () => {
 - ✅ Data still persists correctly
 - ✅ Rapid edits don't cause lag
 - ✅ No data loss
-
----
-
-### **PHASE 4: DOM FRAGMENT OPTIMIZATION** ⏱️ 30 minutes
-**Priority**: MEDIUM-HIGH
-
-**Goals**:
-- Use DocumentFragment for table row generation
-- Reduce DOM manipulation overhead
-- Faster table rendering for large inventories
-
-**Files to Modify**:
-- `js/inventory.js`
-
-**Implementation**:
-```javascript
-const renderTableOptimized = () => {
-  const fragment = document.createDocumentFragment();
-  const tbody = document.createElement('tbody');
-  
-  filteredAndSortedItems.forEach((item, index) => {
-    const row = createTableRow(item, index); // DOM methods only
-    tbody.appendChild(row);
-  });
-  
-  fragment.appendChild(tbody);
-  
-  // Single DOM update instead of innerHTML
-  const oldTbody = elements.inventoryTable.querySelector('tbody');
-  elements.inventoryTable.replaceChild(tbody, oldTbody);
-};
-```
-
-**Testing**:
-- ✅ Table renders correctly
-- ✅ All features work (sorting, filtering, etc.)
-- ✅ Performance improved on large datasets
 
 ---
 
