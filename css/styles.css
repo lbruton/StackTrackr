@@ -1779,12 +1779,17 @@ table {
   height: auto;
 }
 
-.table-item-count {
-  font-size: 0.875rem;
-  color: var(--text-muted);
-  text-align: right;
-  margin-top: 0.25rem;
-}
+  .table-item-count {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+  }
+
+  .table-footer-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 0.25rem;
+  }
 
 th {
   background: var(--bg-tertiary);
