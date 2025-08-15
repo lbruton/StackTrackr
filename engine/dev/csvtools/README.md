@@ -65,11 +65,122 @@ The severity column should contain values like:
 - Uses bridge network for container communication
 - Traefik labels included for reverse proxy setup
 
-## Data Storage
+## Data Storage & Security
 
+### Current Storage Methods
 - **Local Mode**: Uses browser localStorage
 - **Docker Mode**: Data persists in mounted volume
 - **Export/Import**: JSON format for portability
+
+### Secure Storage Options
+
+1. **Enhanced Local Storage with Encryption**
+   ```javascript
+   // Add crypto-js to your project
+   <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+
+   // Implement encrypted storage
+   const secureStorage = {
+     storeData(data, password) {
+       const encrypted = CryptoJS.AES.encrypt(JSON.stringify(data), password);
+       localStorage.setItem('vprHistory', encrypted);
+     },
+     
+     retrieveData(password) {
+       const encrypted = localStorage.getItem('vprHistory');
+       if (!encrypted) return null;
+       const decrypted = CryptoJS.AES.decrypt(encrypted, password);
+       return JSON.parse(decrypted.toString(CryptoJS.enc.Utf8));
+     }
+   };
+   ```
+
+2. **Git Repository with git-crypt**
+   - Install git-crypt: `brew install git-crypt` (macOS)
+   - Initialize: `git-crypt init`
+   - Create `.gitattributes`:
+     ```
+     data/*.json filter=git-crypt diff=git-crypt
+     *.key filter=git-crypt diff=git-crypt
+     ```
+   - Export key for team members: `git-crypt export-key ./team-key`
+   - Share key securely with team
+
+3. **Cloud Storage Options**
+   - **AWS S3 + KMS**
+     - Create encrypted S3 bucket
+     - Use AWS KMS for key management
+     - Enable versioning for audit trail
+   
+   - **Azure Storage**
+     - Enable encryption at rest
+     - Use Azure Key Vault
+     - Implement RBAC
+
+4. **Self-Hosted Backend**
+   - Set up private server with HTTPS
+   - Implement authentication
+   - Use database encryption
+   - Regular backups
+   - Access logging
+
+### Security Best Practices
+
+1. **Data Protection**
+   - Use strong encryption (AES-256)
+   - Implement key rotation
+   - Regular security audits
+   - Secure key storage
+
+2. **Access Control**
+   - Role-based permissions
+   - Multi-factor authentication
+   - Session management
+   - IP whitelisting
+
+3. **Compliance**
+   - Document security measures
+   - Regular compliance reviews
+   - Data retention policies
+   - Incident response plan
+
+### Implementation Examples
+
+#### Encrypted Export
+```javascript
+async function secureExport(data, password) {
+  // Generate a random salt
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  
+  // Derive key using PBKDF2
+  const key = await crypto.subtle.deriveBits(
+    {
+      name: 'PBKDF2',
+      salt: salt,
+      iterations: 100000,
+      hash: 'SHA-256'
+    },
+    password,
+    256
+  );
+  
+  // Encrypt the data
+  const encrypted = await crypto.subtle.encrypt(
+    {
+      name: 'AES-GCM',
+      iv: crypto.getRandomValues(new Uint8Array(12))
+    },
+    key,
+    new TextEncoder().encode(JSON.stringify(data))
+  );
+  
+  return {
+    salt: Array.from(salt),
+    iv: Array.from(iv),
+    data: Array.from(new Uint8Array(encrypted))
+  };
+}
+```
 
 ## Browser Compatibility
 
