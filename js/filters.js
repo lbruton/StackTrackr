@@ -357,6 +357,7 @@ const renderActiveFilters = () => {
     chip.className = 'filter-chip';
     const firstValue = String(f.value).split(', ')[0];
     let color;
+    let textColor;
     switch (f.field) {
       case 'type':
         color = getTypeColor(firstValue);
@@ -367,6 +368,7 @@ const renderActiveFilters = () => {
           key = getCompositionFirstWords(key);
         }
         color = METAL_COLORS[key];
+        textColor = METAL_TEXT_COLORS[key] ? METAL_TEXT_COLORS[key]() : undefined;
         break;
       }
       case 'purchaseLocation':
@@ -378,7 +380,9 @@ const renderActiveFilters = () => {
       default:
         color = colors[i % colors.length];
     }
-    chip.style.backgroundColor = color || colors[i % colors.length];
+    const bg = color || colors[i % colors.length];
+    chip.style.backgroundColor = bg;
+    chip.style.color = textColor || getContrastColor(bg);
 
     // Only display the simplified content, with counts for category chips
     const displayValue = simplifyChipValue(f.value, f.field);

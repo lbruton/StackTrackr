@@ -515,6 +515,13 @@ const METAL_COLORS = {
   Palladium: 'var(--palladium)'
 };
 
+const METAL_TEXT_COLORS = {
+  Silver: () => getContrastColor(getComputedStyle(document.documentElement).getPropertyValue('--silver').trim()),
+  Gold: () => getContrastColor(getComputedStyle(document.documentElement).getPropertyValue('--gold').trim()),
+  Platinum: () => getContrastColor(getComputedStyle(document.documentElement).getPropertyValue('--platinum').trim()),
+  Palladium: () => getContrastColor(getComputedStyle(document.documentElement).getPropertyValue('--palladium').trim())
+};
+
 const typeColors = {
   Coin: 'var(--type-coin-bg)',
   Round: 'var(--type-round-bg)',
