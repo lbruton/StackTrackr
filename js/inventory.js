@@ -649,6 +649,20 @@ const persistInventoryAndRefresh = () => {
 };
 
 /**
+ * Updates the displayed inventory item count based on active filters
+ *
+ * @param {number} filteredCount - Items matching current filters
+ * @param {number} totalCount - Total items in inventory
+ */
+const updateItemCount = (filteredCount, totalCount) => {
+  if (!elements.itemCount) return;
+  elements.itemCount.textContent =
+    filteredCount === totalCount
+      ? `${totalCount} items`
+      : `${filteredCount} of ${totalCount} items`;
+};
+
+/**
  * Enhanced validation for inline edits with comprehensive field support
  * @param {string} field - Field being edited
  * @param {string} value - Proposed value
@@ -974,6 +988,7 @@ const hideEmptyColumns = () => {
 const renderTable = () => {
   return monitorPerformance(() => {
     const filteredInventory = filterInventory();
+    updateItemCount(filteredInventory.length, inventory.length);
     const sortedInventory = sortInventory(filteredInventory);
     debugLog('renderTable start', sortedInventory.length, 'items');
     const totalPages = calculateTotalPages(sortedInventory);
