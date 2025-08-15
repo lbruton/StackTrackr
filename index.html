@@ -2480,8 +2480,15 @@
     <script defer src="./js/events.js"></script>
     
     <!-- Test Scripts (Development) -->
-    <script defer src="./tests/grouped-name-chips.test.js"></script>
-    
+    <script>
+      if (window.location.hostname === 'localhost') {
+        const testScript = document.createElement('script');
+        testScript.defer = true;
+        testScript.src = './tests/grouped-name-chips.test.js';
+        document.head.appendChild(testScript);
+      }
+    </script>
+
     <script defer src="./js/init.js"></script>
   </body>
 </html>

@@ -8,4 +8,5 @@
 - 2025-08-15: Exposed `checkFileSize` and `MAX_LOCAL_FILE_SIZE` to global window and added validation test (GPT)
 
 - 2025-08-15: Removed invalid height attribute from Stackr logo and attempted headless check for warnings (gpt-4o)
+- 2025-08-16: Added dev-only loader for grouped-name-chips test script and created dev server for proper MIME types (gpt-4o)
 
