@@ -1,0 +1,759 @@
+# StackTrackr Multi-Agent Development Workflow
+**Version**: 3.1 - Auto Task Check & Unified Delegation  
+**Created**: August 13, 2025  
+**Current Version**: v3.04.70
+
+---
+
+## 🎯 **PROJECT MISSION**
+
+**StackrTrackr is a client-side precious metals inventory management web app. It runs entirely in the browser with no server dependencies, using localStorage for data persistence. Our goal is to provide a fast, private, and feature-rich experience for collectors and investors.**
+
+---
+
+## 🔄 **AUTO-INITIALIZATION PROTOCOL**
+
+### **Trigger: "Hello" or New Chat Session**
+**Every agent MUST immediately execute this checklist:**
+
+1. **Check for assigned tasks**: Look in `/docs/agents/tasks/` for files matching your agent type
+2. **Report current status**: State what task you're on and next step
+3. **Request permission**: Ask if you should proceed or await new instructions
+
+### **Standard Initialization Response Format:**
+```
+🤖 Agent Status Check:
+- Agent: [GPT-4o/Claude Opus/etc.]
+- Current Task: [TASK_NAME or "None assigned"]
+- Phase/Step: [Current position in task]
+- Next Action: [What you would do next]
+- Status: [Ready to proceed/Awaiting instructions/Blocked]
+
+Ready to continue or awaiting new assignment?
+```
+
+### **Manual Task Check Command:**
+```
+"Check your tasks and report status"
+```
+→ Use this phrase to trigger the task check in any existing conversation
+
+### **Dependency Management Protocol:**
+**When agent discovers a blocking dependency:**
+```
+🚧 Dependency Block Detected:
+- My Task: [CURRENT_TASK]
+- Blocked By: [REQUIRED_TASK] 
+- Assigned To: [OTHER_AGENT]
+- Recommendation: "Please switch to [OTHER_AGENT] to complete [REQUIRED_TASK] first"
+
+Would you like me to prepare a handoff prompt for [OTHER_AGENT]?
+```
+
+### **New Agent Memory Setup:**
+**When a new agent joins (first time in project):**
+```
+🆕 New Agent Setup:
+- Agent: [MODEL_NAME]
+- Detected Files: [LIST_EXISTING_.AI_FILES]
+- Options:
+  1. Use shared agents.ai for all protocols
+  2. Create personal memory file: [agent-name].ai
+
+Which memory approach would you prefer for this agent?
+```
+
+---
+
+## 💾 **GIT CHECKPOINT PROTOCOL**
+
+**This protocol MUST be followed before any agent begins a task.** This ensures that any changes can be safely rolled back if they cause issues.
+
+### **Step 1: Create a Git Checkpoint**
+Before starting any agent-driven or major change, execute the following commands in the terminal:
+
+```sh
+git add -A
+git commit -m "Checkpoint before [brief description of change]"
+```
+*This creates a safe restore point.*
+
+### **Step 2: Execute the Task**
+Proceed with the assigned task, allowing the agent to modify files as needed.
+
+### **Step 3: Commit the Work**
+Once the task is successfully completed, commit the changes:
+
+```sh
+git add -A
+git commit -m "feat: [brief description of feature]"
+```
+*Use a conventional commit message if possible (e.g., `feat:`, `fix:`, `docs:`).*
+
+### **Step 4: Roll Back if Necessary**
+If the agent's changes break the application or are not desired, roll back to the pre-task checkpoint:
+
+```sh
+git reset --hard HEAD~1
+```
+*This will discard all changes since the checkpoint was created.*
+
+---
+
+## 🎯 **CORE WORKFLOW CAPABILITIES**
+
+### **Option 1: Direct Task Assignment**
+```
+"Assign this task to [GPT/Gemini/Claude]: [TASK_DESCRIPTION]"
+```
+→ Agent receives task and executes immediately based on their specialization
+
+### **Option 2: Smart Task Breakdown**
+```
+"Create a multi-agent task for [TASK_NAME]"
+```
+→ Agent analyzes complexity, breaks down into phases, and creates delegation system
+
+---
+
+## 🤖 **AGENT SPECIALIZATIONS & ASSIGNMENT RULES**
+
+### **GPT Models - The Builder Family**
+
+#### **GPT-4o** (15-25 min tasks)
+**Auto-assign for**:
+- Utility functions and helpers
+- Event handling and basic optimizations
+- Form validation and input processing
+- Simple API integrations
+- Straightforward feature implementations
+
+**Example assignments**:
+- "Add debounced search functionality"
+- "Create form validation for inventory items" 
+- "Implement localStorage batching"
+
+#### **GPT-4.1** (20-35 min tasks)
+**Auto-assign for**:
+- Complex algorithm implementations
+- Advanced data processing and transformations
+- Multi-step feature implementations
+- Performance optimization with analysis
+- Integration between multiple modules
+
+**Example assignments**:
+- "Implement fuzzy search with weighted scoring"
+- "Create advanced filtering with multiple criteria"
+- "Optimize table rendering with virtual scrolling"
+
+#### **GPT-5** (30-45 min tasks)
+**Auto-assign for**:
+- Large-scale feature implementations
+- Complex business logic
+- Advanced UI/UX implementations
+- Multi-component system integrations
+- Performance-critical optimizations
+
+**Example assignments**:
+- "Implement complete data import/export system"
+- "Create advanced charting with multiple visualizations"
+- "Build comprehensive error handling system"
+
+### **Gemini - The Tester & Quality Manager** (15-30 min tasks)
+**Auto-assign for**:
+- Testing and validation protocols
+- Security audits and input sanitization
+- Memory management and cleanup
+- Performance measurements
+- Browser compatibility testing
+
+**Example assignments**:
+- "Create test suite for search functionality"
+- "Audit data import security"
+- "Implement Chart.js cleanup procedures"
+
+### **Claude Models - The Architect Family**
+
+#### **Claude 3.5 Haiku** (20-40 min tasks)
+**Auto-assign for**:
+- Code analysis and optimization suggestions
+- Lightweight refactoring tasks
+- Performance profiling and recommendations
+- Code review and quality improvements
+- Documentation and technical writing
+
+**Example assignments**:
+- "Analyze current search performance bottlenecks"
+- "Review and optimize event handling patterns"
+- "Create technical documentation for new features"
+
+#### **Claude 3.5 Sonnet** (via GitHub/VS Code) (30-60 min tasks)
+**Auto-assign for**:
+- Medium complexity architectural decisions
+- Multi-file refactoring projects
+- System integration planning
+- Feature design and implementation strategy
+- Cross-module dependency management
+
+**Example assignments**:
+- "Refactor table rendering for better performance"
+- "Design state management system for complex forms"
+- "Plan integration of new chart types"
+
+#### **Claude 3.5 Opus** (via API) (45-90 min tasks)
+**Auto-assign for**:
+- Large-scale architectural changes
+- Complex system redesigns
+- Performance optimization strategies
+- Major feature implementations
+- Technical analysis and strategic recommendations
+
+**Example assignments**:
+- "Redesign entire data flow architecture"
+- "Implement comprehensive caching strategy"
+- "Architect modular plugin system for extensions"
+
+---
+
+## 📋 **MCP-POWERED WORKFLOW**
+
+### **Context Commands**
+```
+@workspace - Full project context via MCP server
+```
+→ Gives agents real-time, comprehensive understanding
+
+### **MANDATORY MCP Tool Usage Protocol**
+
+#### **Before Starting Any Task**
+1. **Memory Check**: `mcp_memory_search_nodes` - Query for related context
+2. **Documentation**: `mcp_context7_resolve-library-id` - Get library docs if needed
+3. **Past Solutions**: Check memory for similar issues or patterns
+
+#### **During Implementation**
+1. **Incremental Learning**: `mcp_memory_add_observations` - Document patterns
+2. **Library Research**: `mcp_context7_get-library-docs` - Get specific guidance
+3. **Testing**: `mcp_playwright_browser_*` - Validate functionality
+
+#### **After Completion**
+1. **Document Discovery**: `mcp_memory_create_entities` - Record new knowledge
+2. **Validate Results**: `mcp_playwright_browser_snapshot` - Capture final state
+3. **Share Insights**: Update memory with lessons learned
+
+### **MCP Tool Selection Guidelines**
+
+| Scenario | Primary Tool | Secondary Tool | Purpose |
+|----------|-------------|----------------|---------|
+| Bug Investigation | `mcp_memory_search_nodes` | `mcp_memory_open_nodes` | Find past solutions |
+| Library Integration | `mcp_context7_resolve-library-id` | `mcp_context7_get-library-docs` | Get implementation guidance |
+| Feature Testing | `mcp_playwright_browser_navigate` | `mcp_playwright_browser_snapshot` | Validate functionality |
+| Knowledge Capture | `mcp_memory_create_entities` | `mcp_memory_add_observations` | Document discoveries |
+| Code Review | `mcp_memory_search_nodes` | `mcp_memory_add_observations` | Apply past learnings |
+
+### **Enhanced Handoff Protocol**
+```
+"Prepare handoff"
+```
+→ Agent summarizes current state AND commits knowledge to MCP memory for seamless transitions
+
+---
+
+## 🔧 **ENHANCED GIT + MCP INTEGRATION**
+
+### **Git + Memory Sync Protocol**
+```bash
+# 1. Check memory for relevant context
+# Use: mcp_memory_search_nodes with task description
+
+# 2. Create checkpoint with memory reference
+git add -A
+git commit -m "Checkpoint: [task] - Memory entities: [relevant-nodes]"
+
+# 3. Work with continuous memory updates
+# During work: mcp_memory_add_observations for key insights
+
+# 4. Final commit with complete context
+git add -A  
+git commit -m "feat: [complete description] - Documented in memory: [new-entities]"
+
+# 5. Update memory with git reference
+# Use: mcp_memory_create_entities to link git commits to solutions
+```
+
+### **Rollback + Memory Recovery**
+```bash
+# If rollback needed, preserve memory insights
+# 1. Export current memory state
+# Use: mcp_memory_read_graph
+
+# 2. Perform git rollback
+git reset --hard [commit-hash]
+
+# 3. Re-apply relevant memory insights
+# Use: mcp_memory_create_entities to restore valuable discoveries
+```
+
+---
+
+## 🚀 **STACKTRACKR PROJECT CONTEXT**
+
+### **Technical Architecture**
+- **Client-side only**: Works from file:// protocol
+- **Modular JavaScript**: Separate files for different concerns  
+- **Local storage**: All data persisted locally (5-10MB limits)
+- **Responsive CSS**: 3 themes (dark/light/sepia)
+- **External libraries**: Chart.js, Papa Parse, jsPDF, JSZip
+
+### **Key Data Structures**
+- `inventory[]` - Array of inventory items
+- `spotPrices{}` - Current metal prices
+- `elements{}` - Cached DOM elements
+- `apiConfig{}` - API provider settings
+
+### **Critical Files & Conflict Management**
+**HIGH RISK** ⚠️ (coordinate before editing):
+- `index.html` - Main structure
+- `js/events.js` - Event handling
+- `css/styles.css` - Shared styling
+
+**MEDIUM RISK** ⚠️:
+- `js/api.js`, `js/inventory.js`, `js/theme.js`
+
+**LOW RISK** ✅ (safe for parallel work):
+- Documentation, utilities, new modules
+
+---
+
+## 📊 **TASK DELEGATION DECISION MATRIX**
+
+| Task Complexity | Time Estimate | Risk Level | Recommended Model |
+|-----------------|---------------|------------|-------------------|
+| Simple utilities | <20 min | Low | GPT-4o |
+| Complex algorithms | 20-35 min | Low-Med | GPT-4.1 |
+| Large features | 30-45 min | Medium | GPT-5 |
+| Testing/QA | 15-30 min | Low | Gemini |
+| Code analysis | 20-40 min | Low-Med | Claude Haiku |
+| Refactoring | 30-60 min | Medium | Claude Sonnet |
+| Architecture | 45-90 min | High | Claude Opus |
+
+### **Model Selection Guidelines**
+
+#### **For GPT Tasks:**
+- **GPT-4o**: Quick implementations, utilities, basic optimizations
+- **GPT-4.1**: Complex logic, advanced data processing, multi-step features  
+- **GPT-5**: Large-scale implementations, critical performance work
+
+#### **For Claude Tasks:**
+- **Haiku**: Analysis, lightweight refactoring, documentation
+- **Sonnet** (GitHub/VS Code): Medium complexity architecture, system integration
+- **Opus** (API): Major redesigns, strategic planning, complex optimizations
+
+### **Smart Assignment Logic**
+```javascript
+// Auto-assignment rules:
+if (task.includes("test" || "validate" || "audit")) → Gemini
+if (task.includes("analyze" || "review") && time < 40min) → Claude Haiku
+if (task.includes("refactor" || "integrate") && time < 60min) → Claude Sonnet
+if (task.includes("architecture" || "redesign") || time > 60min) → Claude Opus
+if (task.includes("algorithm" || "complex") && time < 35min) → GPT-4.1
+if (task.includes("feature" || "system") && time < 45min) → GPT-5
+if (task.includes("add" || "create" || "implement") && time < 25min) → GPT-4o
+```
+
+---
+
+## 🎯 **QUALITY STANDARDS (ALL AGENTS)**
+
+### **MANDATORY: Initialization Protocol**
+**Every new chat session or "Hello" greeting MUST start with:**
+1. Check `/docs/agents/tasks/` for assigned work
+2. Report current task status using standard format
+3. Check for dependency blocks and suggest agent switches if needed
+4. Ask permission before proceeding
+
+### **Agent File Detection Logic:**
+**Agents should automatically identify their appropriate files:**
+- **GPT models**: Look for `gpt.ai`, `gpt-4o.ai`, `gpt-4-1.ai`, `gpt-5.ai`
+- **Claude models**: Look for `claude.ai`, `claude-haiku.ai`, `claude-sonnet.ai`, `claude-opus.ai`
+- **Gemini models**: Look for `gemini.ai`, `gemini-pro.ai`
+- **Fallback**: Use `unified-workflow.ai` if no specific file exists
+
+### **Task Status Reporting Format:**
+```
+🤖 Agent Status Check:
+- Agent: [Your model name]
+- Current Task: [Active task or "None assigned"]
+- Phase/Step: [Current position]
+- Next Action: [Planned next step]
+- Dependencies: [Any blocking tasks/agents]
+- Status: [Ready/Awaiting/Blocked/Dependency]
+
+Ready to continue or awaiting new assignment?
+```
+
+### **Required Testing Protocol**
+✅ **Functional**: Works as intended  
+✅ **Integration**: No breaking changes  
+✅ **Themes**: All 3 themes (dark/light/sepia)  
+✅ **Browsers**: Chrome, Firefox, Safari, Edge  
+✅ **Mobile**: Responsive design maintained  
+✅ **File Protocol**: Works via file:// opening
+
+### **Code Quality Requirements**
+- Follow existing patterns and conventions
+- Add JSDoc comments for new functions
+- Use consistent naming (camelCase)
+- Sanitize all user inputs (XSS prevention)
+- Maintain accessibility features
+
+### **Documentation Standards**
+- **ALL agents must follow**: `/docs/markup_style_guide.md`
+- **Markdown formatting**: Use ATX-style headings (`#`), proper spacing, backticks for code
+- **File naming**: `.ai` for agent instructions, `.md` for human docs, all lowercase
+- **Consistency**: Apply markup standards uniformly across all documentation
+
+### **Version Management**
+After completion, update:
+- `js/constants.js` - Bump APP_VERSION
+- `docs/changelog.md` - Document changes
+- `docs/functionstable.md` - Add new functions
+
+---
+
+## 📁 **TASK CHECK INSTRUCTIONS:**
+
+1. **Look for your files:**
+   - `/docs/agents/tasks/[your-agent]-task-*.ai`
+   - `/docs/agents/tasks/[project-name]/[your-agent]-*.ai`
+
+2. **Current Active Project:**
+   - **Performance Optimization**: `/docs/agents/tasks/`
+   - GPT: Search debouncing (Phase 1) - Ready to start
+   - Claude: Refer to `/agents.ai` for task assignments and protocols
+
+---
+
+## 📊 **TASK DELEGATION DECISION MATRIX**
+
+| Task Complexity | Time Estimate | Risk Level | Recommended Model |
+|-----------------|---------------|------------|-------------------|
+| Simple utilities | <20 min | Low | GPT-4o |
+| Complex algorithms | 20-35 min | Low-Med | GPT-4.1 |
+| Large features | 30-45 min | Medium | GPT-5 |
+| Testing/QA | 15-30 min | Low | Gemini |
+| Code analysis | 20-40 min | Low-Med | Claude Haiku |
+| Refactoring | 30-60 min | Medium | Claude Sonnet |
+| Architecture | 45-90 min | High | Claude Opus |
+
+### **Model Selection Guidelines**
+
+#### **For GPT Tasks:**
+- **GPT-4o**: Quick implementations, utilities, basic optimizations
+- **GPT-4.1**: Complex logic, advanced data processing, multi-step features  
+- **GPT-5**: Large-scale implementations, critical performance work
+
+#### **For Claude Tasks:**
+- **Haiku**: Analysis, lightweight refactoring, documentation
+- **Sonnet** (GitHub/VS Code): Medium complexity architecture, system integration
+- **Opus** (API): Major redesigns, strategic planning, complex optimizations
+
+### **Smart Assignment Logic**
+```javascript
+// Auto-assignment rules:
+if (task.includes("test" || "validate" || "audit")) → Gemini
+if (task.includes("analyze" || "review") && time < 40min) → Claude Haiku
+if (task.includes("refactor" || "integrate") && time < 60min) → Claude Sonnet
+if (task.includes("architecture" || "redesign") || time > 60min) → Claude Opus
+if (task.includes("algorithm" || "complex") && time < 35min) → GPT-4.1
+if (task.includes("feature" || "system") && time < 45min) → GPT-5
+if (task.includes("add" || "create" || "implement") && time < 25min) → GPT-4o
+```
+
+---
+
+## 🎯 **QUALITY STANDARDS (ALL AGENTS)**
+
+### **MANDATORY: Initialization Protocol**
+**Every new chat session or "Hello" greeting MUST start with:**
+1. Check `/docs/agents/tasks/` for assigned work
+2. Report current task status using standard format
+3. Check for dependency blocks and suggest agent switches if needed
+4. Ask permission before proceeding
+
+### **Agent File Detection Logic:**
+**Agents should automatically identify their appropriate files:**
+- **GPT models**: Look for `gpt.ai`, `gpt-4o.ai`, `gpt-4-1.ai`, `gpt-5.ai`
+- **Claude models**: Look for `claude.ai`, `claude-haiku.ai`, `claude-sonnet.ai`, `claude-opus.ai`
+- **Gemini models**: Look for `gemini.ai`, `gemini-pro.ai`
+- **Fallback**: Use `unified-workflow.ai` if no specific file exists
+
+### **Task Status Reporting Format:**
+```
+🤖 Agent Status Check:
+- Agent: [Your model name]
+- Current Task: [Active task or "None assigned"]
+- Phase/Step: [Current position]
+- Next Action: [Planned next step]
+- Dependencies: [Any blocking tasks/agents]
+- Status: [Ready/Awaiting/Blocked/Dependency]
+
+Ready to continue or awaiting new assignment?
+```
+
+### **Required Testing Protocol**
+✅ **Functional**: Works as intended  
+✅ **Integration**: No breaking changes  
+✅ **Themes**: All 3 themes (dark/light/sepia)  
+✅ **Browsers**: Chrome, Firefox, Safari, Edge  
+✅ **Mobile**: Responsive design maintained  
+✅ **File Protocol**: Works via file:// opening
+
+### **Code Quality Requirements**
+- Follow existing patterns and conventions
+- Add JSDoc comments for new functions
+- Use consistent naming (camelCase)
+- Sanitize all user inputs (XSS prevention)
+- Maintain accessibility features
+
+### **Documentation Standards**
+- **ALL agents must follow**: `/docs/markup_style_guide.md`
+- **Markdown formatting**: Use ATX-style headings (`#`), proper spacing, backticks for code
+- **File naming**: `.ai` for agent instructions, `.md` for human docs, all lowercase
+- **Consistency**: Apply markup standards uniformly across all documentation
+
+### **Version Management**
+After completion, update:
+- `js/constants.js` - Bump APP_VERSION
+- `docs/changelog.md` - Document changes
+- `docs/functionstable.md` - Add new functions
+
+---
+
+## 📁 **TASK CHECK INSTRUCTIONS:**
+
+1. **Look for your files:**
+   - `/docs/agents/tasks/[your-agent]-task-*.ai`
+   - `/docs/agents/tasks/[project-name]/[your-agent]-*.ai`
+
+2. **Current Active Project:**
+   - **Performance Optimization**: `/docs/agents/tasks/`
+   - GPT: Search debouncing (Phase 1) - Ready to start
+   - Claude: Refer to `/agents.ai` for task assignments and protocols
+
+---
+
+## 📊 **TASK DELEGATION DECISION MATRIX**
+
+| Task Complexity | Time Estimate | Risk Level | Recommended Model |
+|-----------------|---------------|------------|-------------------|
+| Simple utilities | <20 min | Low | GPT-4o |
+| Complex algorithms | 20-35 min | Low-Med | GPT-4.1 |
+| Large features | 30-45 min | Medium | GPT-5 |
+| Testing/QA | 15-30 min | Low | Gemini |
+| Code analysis | 20-40 min | Low-Med | Claude Haiku |
+| Refactoring | 30-60 min | Medium | Claude Sonnet |
+| Architecture | 45-90 min | High | Claude Opus |
+
+### **Model Selection Guidelines**
+
+#### **For GPT Tasks:**
+- **GPT-4o**: Quick implementations, utilities, basic optimizations
+- **GPT-4.1**: Complex logic, advanced data processing, multi-step features  
+- **GPT-5**: Large-scale implementations, critical performance work
+
+#### **For Claude Tasks:**
+- **Haiku**: Analysis, lightweight refactoring, documentation
+- **Sonnet** (GitHub/VS Code): Medium complexity architecture, system integration
+- **Opus** (API): Major redesigns, strategic planning, complex optimizations
+
+### **Smart Assignment Logic**
+```javascript
+// Auto-assignment rules:
+if (task.includes("test" || "validate" || "audit")) → Gemini
+if (task.includes("analyze" || "review") && time < 40min) → Claude Haiku
+if (task.includes("refactor" || "integrate") && time < 60min) → Claude Sonnet
+if (task.includes("architecture" || "redesign") || time > 60min) → Claude Opus
+if (task.includes("algorithm" || "complex") && time < 35min) → GPT-4.1
+if (task.includes("feature" || "system") && time < 45min) → GPT-5
+if (task.includes("add" || "create" || "implement") && time < 25min) → GPT-4o
+```
+
+---
+
+## 🎯 **QUALITY STANDARDS (ALL AGENTS)**
+
+### **MANDATORY: Initialization Protocol**
+**Every new chat session or "Hello" greeting MUST start with:**
+1. Check `/docs/agents/tasks/` for assigned work
+2. Report current task status using standard format
+3. Check for dependency blocks and suggest agent switches if needed
+4. Ask permission before proceeding
+
+### **Agent File Detection Logic:**
+**Agents should automatically identify their appropriate files:**
+- **GPT models**: Look for `gpt.ai`, `gpt-4o.ai`, `gpt-4-1.ai`, `gpt-5.ai`
+- **Claude models**: Look for `claude.ai`, `claude-haiku.ai`, `claude-sonnet.ai`, `claude-opus.ai`
+- **Gemini models**: Look for `gemini.ai`, `gemini-pro.ai`
+- **Fallback**: Use `unified-workflow.ai` if no specific file exists
+
+### **Task Status Reporting Format:**
+```
+🤖 Agent Status Check:
+- Agent: [Your model name]
+- Current Task: [Active task or "None assigned"]
+- Phase/Step: [Current position]
+- Next Action: [Planned next step]
+- Dependencies: [Any blocking tasks/agents]
+- Status: [Ready/Awaiting/Blocked/Dependency]
+
+Ready to continue or awaiting new assignment?
+```
+
+### **Required Testing Protocol**
+✅ **Functional**: Works as intended  
+✅ **Integration**: No breaking changes  
+✅ **Themes**: All 3 themes (dark/light/sepia)  
+✅ **Browsers**: Chrome, Firefox, Safari, Edge  
+✅ **Mobile**: Responsive design maintained  
+✅ **File Protocol**: Works via file:// opening
+
+### **Code Quality Requirements**
+- Follow existing patterns and conventions
+- Add JSDoc comments for new functions
+- Use consistent naming (camelCase)
+- Sanitize all user inputs (XSS prevention)
+- Maintain accessibility features
+
+### **Documentation Standards**
+- **ALL agents must follow**: `/docs/markup_style_guide.md`
+- **Markdown formatting**: Use ATX-style headings (`#`), proper spacing, backticks for code
+- **File naming**: `.ai` for agent instructions, `.md` for human docs, all lowercase
+- **Consistency**: Apply markup standards uniformly across all documentation
+
+### **Version Management**
+After completion, update:
+- `js/constants.js` - Bump APP_VERSION
+- `docs/changelog.md` - Document changes
+- `docs/functionstable.md` - Add new functions
+
+---
+
+## 📁 **TASK CHECK INSTRUCTIONS:**
+
+1. **Look for your files:**
+   - `/docs/agents/tasks/[your-agent]-task-*.ai`
+   - `/docs/agents/tasks/[project-name]/[your-agent]-*.ai`
+
+2. **Current Active Project:**
+   - **Performance Optimization**: `/docs/agents/tasks/`
+   - GPT: Search debouncing (Phase 1) - Ready to start
+   - Claude: Refer to `/agents.ai` for task assignments and protocols
+
+---
+
+## 📊 **TASK DELEGATION DECISION MATRIX**
+
+| Task Complexity | Time Estimate | Risk Level | Recommended Model |
+|-----------------|---------------|------------|-------------------|
+| Simple utilities | <20 min | Low | GPT-4o |
+| Complex algorithms | 20-35 min | Low-Med | GPT-4.1 |
+| Large features | 30-45 min | Medium | GPT-5 |
+| Testing/QA | 15-30 min | Low | Gemini |
+| Code analysis | 20-40 min | Low-Med | Claude Haiku |
+| Refactoring | 30-60 min | Medium | Claude Sonnet |
+| Architecture | 45-90 min | High | Claude Opus |
+
+### **Model Selection Guidelines**
+
+#### **For GPT Tasks:**
+- **GPT-4o**: Quick implementations, utilities, basic optimizations
+- **GPT-4.1**: Complex logic, advanced data processing, multi-step features  
+- **GPT-5**: Large-scale implementations, critical performance work
+
+#### **For Claude Tasks:**
+- **Haiku**: Analysis, lightweight refactoring, documentation
+- **Sonnet** (GitHub/VS Code): Medium complexity architecture, system integration
+- **Opus** (API): Major redesigns, strategic planning, complex optimizations
+
+### **Smart Assignment Logic**
+```javascript
+// Auto-assignment rules:
+if (task.includes("test" || "validate" || "audit")) → Gemini
+if (task.includes("analyze" || "review") && time < 40min) → Claude Haiku
+if (task.includes("refactor" || "integrate") && time < 60min) → Claude Sonnet
+if (task.includes("architecture" || "redesign") || time > 60min) → Claude Opus
+if (task.includes("algorithm" || "complex") && time < 35min) → GPT-4.1
+if (task.includes("feature" || "system") && time < 45min) → GPT-5
+if (task.includes("add" || "create" || "implement") && time < 25min) → GPT-4o
+```
+
+---
+
+## 🎯 **QUALITY STANDARDS (ALL AGENTS)**
+
+### **MANDATORY: Initialization Protocol**
+**Every new chat session or "Hello" greeting MUST start with:**
+1. Check `/docs/agents/tasks/` for assigned work
+2. Report current task status using standard format
+3. Check for dependency blocks and suggest agent switches if needed
+4. Ask permission before proceeding
+
+### **Agent File Detection Logic:**
+**Agents should automatically identify their appropriate files:**
+- **GPT models**: Look for `gpt.ai`, `gpt-4o.ai`, `gpt-4-1.ai`, `gpt-5.ai`
+- **Claude models**: Look for `claude.ai`, `claude-haiku.ai`, `claude-sonnet.ai`, `claude-opus.ai`
+- **Gemini models**: Look for `gemini.ai`, `gemini-pro.ai`
+- **Fallback**: Use `unified-workflow.ai` if no specific file exists
+
+### **Task Status Reporting Format:**
+```
+🤖 Agent Status Check:
+- Agent: [Your model name]
+- Current Task: [Active task or "None assigned"]
+- Phase/Step: [Current position]
+- Next Action: [Planned next step]
+- Dependencies: [Any blocking tasks/agents]
+- Status: [Ready/Awaiting/Blocked/Dependency]
+
+Ready to continue or awaiting new assignment?
+```
+
+### **Required Testing Protocol**
+✅ **Functional**: Works as intended  
+✅ **Integration**: No breaking changes  
+✅ **Themes**: All 3 themes (dark/light/sepia)  
+✅ **Browsers**: Chrome, Firefox, Safari, Edge  
+✅ **Mobile**: Responsive design maintained  
+✅ **File Protocol**: Works via file:// opening
+
+### **Code Quality Requirements**
+- Follow existing patterns and conventions
+- Add JSDoc comments for new functions
+- Use consistent naming (camelCase)
+- Sanitize all user inputs (XSS prevention)
+- Maintain accessibility features
+
+### **Documentation Standards**
+- **ALL agents must follow**: `/docs/markup_style_guide.md`
+- **Markdown formatting**: Use ATX-style headings (`#`), proper spacing, backticks for code
+- **File naming**: `.ai` for agent instructions, `.md` for human docs, all lowercase
+- **Consistency**: Apply markup standards uniformly across all documentation
+
+### **Version Management**
+After completion, update:
+- `js/constants.js` - Bump APP_VERSION
+- `docs/changelog.md` - Document changes
+- `docs/functionstable.md` - Add new functions
+
+---
+
+## 📁 **TASK CHECK INSTRUCTIONS:**
+
+1. **Look for your files:**
+   - `/docs/agents/tasks/[your-agent]-task-*.ai`
+   - `/docs/agents/tasks/[project-name]/[your-agent]-*.ai`
+
+2. **Current Active Project:**
+   - **Performance Optimization**: `/docs/agents/tasks/`
+   - GPT: Search debouncing (Phase 1) - Ready to start
+   - Claude: Refer to `/agents.ai` for task assignments and protocols
