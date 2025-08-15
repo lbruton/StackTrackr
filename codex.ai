@@ -29,3 +29,4 @@
 - 2025-08-19: Unified search control buttons under .btn.success and scoped table icon styles to keep sizes consistent (gpt-4o)
 - 2025-08-20: Centralized filter resets in clearAllFilters and simplified clear button to rely on it (gpt-4o)
 - 2025-08-20: Confirmed filter reset sync and streamlined clear button handler (GPT)
+- 2025-08-20: Trigger renderActiveFilters after CSV/JSON imports to show chips immediately (GPT)
