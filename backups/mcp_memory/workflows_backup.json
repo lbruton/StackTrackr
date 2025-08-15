@@ -1,0 +1,17 @@
+{
+  "backup_timestamp": "2025-08-15T20:30:00.000Z",
+  "workflows": {
+    "evening-work-session": [
+      "Purpose: Streamlined approach for productive evening development sessions",
+      "Phase 1: Human Input & Context (5 min) - Report bugs, add features, set session goals, provide domain knowledge",
+      "Phase 2: Agent Context Retrieval (2-3 min) - Search MCP memory, check git status, review documentation",
+      "Phase 3: Intelligent Work Selection (3-5 min) - Analyze session time, priorities, specialization, dependencies, risk level",
+      "Phase 4: Progress Tracking (Throughout) - Git checkpoints, memory updates, documentation, status updates",
+      "Session Benefits: Quick context setting, intelligent prioritization, predictable time investment, measurable progress",
+      "Success Metrics: Complete at least one item, document all work, update memory, create handoff notes",
+      "Example Session: 2 hours = Primary task (60min) + Secondary task (45min) + Backup task (15min)",
+      "Agent Response Format: Available work analysis, recommended tasks with estimates, session goals, success criteria",
+      "Documentation Location: /docs/evening-work-session-protocol.md"
+    ]
+  }
+}
