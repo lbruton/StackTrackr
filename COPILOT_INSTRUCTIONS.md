@@ -54,3 +54,10 @@ How to validate
 
 If unsure
 - Summarize relevant files first, propose minimal change, then wait for approval.
+
+## Documentation Standards
+- All agents must use JSDoc comments for all new and updated JavaScript functions
+- Follow `/docs/markup_style_guide.md` for markdown formatting
+- Use ATX-style headings (`#`), proper spacing, and code blocks
+- File naming: `.ai` for agent instructions, `.md` for human docs, all lowercase
+- Consistency: Apply markup standards uniformly across all documentation

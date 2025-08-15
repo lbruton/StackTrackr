@@ -9,7 +9,10 @@ let numistaHistory = [];
 let numistaCurrentIndex = -1;
 
 /**
- * Opens the Numista modal with the specified coin ID
+ * Opens the Numista modal with the specified coin ID and coin name.
+ * Handles file:// protocol by opening a popup, otherwise uses iframe modal.
+ * Updates navigation history and traps focus for accessibility.
+ *
  * @param {string} numistaId - The Numista catalog ID
  * @param {string} coinName - The name of the coin for the title
  */
@@ -89,7 +92,7 @@ function openNumistaModal(numistaId, coinName) {
 }
 
 /**
- * Closes the Numista modal
+ * Closes the Numista modal and resets the iframe source/content.
  */
 function closeNumistaModal() {
   const modal = document.getElementById('numistaModal');
@@ -109,7 +112,7 @@ function closeNumistaModal() {
 }
 
 /**
- * Navigate back in Numista history
+ * Navigates back in Numista modal history (iframe mode only).
  */
 function numistaGoBack() {
   // Only works for iframe mode (HTTP/HTTPS)
@@ -129,7 +132,7 @@ function numistaGoBack() {
 }
 
 /**
- * Navigate forward in Numista history
+ * Navigates forward in Numista modal history (iframe mode only).
  */
 function numistaGoForward() {
   // Only works for iframe mode (HTTP/HTTPS)
@@ -149,7 +152,7 @@ function numistaGoForward() {
 }
 
 /**
- * Update the state of navigation buttons
+ * Updates the state and visibility of navigation buttons in the Numista modal.
  */
 function updateNavButtons() {
   const backBtn = document.getElementById('numistaBackBtn');
@@ -175,7 +178,9 @@ function updateNavButtons() {
 }
 
 /**
- * Simple focus trap for accessibility
+ * Traps focus within the given modal element for accessibility.
+ *
+ * @param {HTMLElement} element - The modal element to trap focus in
  */
 function trapFocus(element) {
   const focusableElements = element.querySelectorAll(

@@ -2,9 +2,13 @@
 // =============================================================================
 
 /**
- * Filters inventory based on current search query and active filters
- * 
- * @returns {Array} Filtered inventory items matching the search query and filters
+ * Filters inventory based on the current search query and active column filters.
+ * Handles advanced multi-term, phrase, and series-specific logic for coins and metals.
+ *
+ * @returns {Array<Object>} Filtered inventory items matching the search query and filters
+ *
+ * @example
+ * filterInventory();
  */
 const filterInventory = () => {
   // Use the advanced filtering system if available, otherwise fall back to legacy

@@ -2,10 +2,14 @@
 // =============================================================================
 
 /**
- * Sorts inventory based on current sort column and direction
- * 
- * @param {Array} [data=inventory] - Data to sort (defaults to main inventory)
- * @returns {Array} Sorted inventory data
+ * Sorts inventory based on the current sort column and direction.
+ * Handles special cases for date, numeric, boolean, and string columns.
+ *
+ * @param {Array<Object>} [data=inventory] - Array of inventory items to sort (defaults to main inventory)
+ * @returns {Array<Object>} Sorted inventory data
+ *
+ * @example
+ * sortInventory([{name: 'A'}, {name: 'B'}]);
  */
 const sortInventory = (data = inventory) => {
   if (sortColumn === null) return data;

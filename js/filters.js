@@ -7,7 +7,7 @@
 let activeFilters = {};
 
 /**
- * Clears all active filters
+ * Clears all active filters and resets search input and pagination.
  */
 const clearAllFilters = () => {
   activeFilters = {};
@@ -23,7 +23,8 @@ const clearAllFilters = () => {
 };
 
 /**
- * Removes a specific filter
+ * Removes a specific filter from active filters or search.
+ *
  * @param {string} field - The field to remove filter from
  * @param {string} value - The value to remove from filter
  */
@@ -57,7 +58,9 @@ const removeFilter = (field, value) => {
 };
 
 /**
- * Simplifies common coin names for display in filter chips
+ * Simplifies common coin names for display in filter chips.
+ * Handles comma-separated values and pattern-based simplifications.
+ *
  * @param {string} value - The original value (may contain comma-separated values)
  * @param {string} field - The field type (e.g., 'name', 'type', etc.)
  * @returns {string} Simplified display value
@@ -197,8 +200,10 @@ const simplifyChipValue = (value, field) => {
 };
 
 /**
- * Generates category summary from filtered inventory
- * @param {Array} inventory - The filtered inventory
+ * Generates category summary from filtered inventory.
+ * Returns summary of metals, types, and item counts above minimum threshold.
+ *
+ * @param {Array<Object>} inventory - The filtered inventory
  * @returns {Object} Summary of metals, types, and counts
  */
 const generateCategorySummary = (inventory) => {
@@ -243,10 +248,11 @@ const generateCategorySummary = (inventory) => {
 };
 
 /**
- * Checks if a filter field/value combination has matching data in the given inventory
+ * Checks if a filter field/value combination has matching data in the given inventory.
+ *
  * @param {string} field - The field name (e.g., 'metal', 'type', 'name')
  * @param {string} value - The filter value
- * @param {Array} inventory - The inventory to check against
+ * @param {Array<Object>} inventory - The inventory to check against
  * @returns {boolean} True if there are items matching this filter
  */
 const hasMatchingData = (field, value, inventory) => {
@@ -276,7 +282,8 @@ const hasMatchingData = (field, value, inventory) => {
 };
 
 /**
- * Renders active filter chips beneath the search bar
+ * Renders active filter chips beneath the search bar.
+ * Updates the filter chip container based on current filters and inventory.
  */
 const renderActiveFilters = () => {
   const container = document.getElementById('activeFilters');
