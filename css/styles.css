@@ -4195,31 +4195,34 @@ input:disabled + .slider {
   font-weight: bold;
 }
 
-/* Dual edit buttons in edit column */
+/* Edit column styling for single toggle button */
 #inventoryTable td[data-column="edit"] {
-  display: flex;
-  gap: 0.2rem;
-  align-items: center;
-  justify-content: center;
+  text-align: center;
   padding: 0.2rem;
 }
 
 #inventoryTable td[data-column="edit"] .icon-btn {
-  flex: 0 0 auto;
   margin: 0;
 }
 
-/* Style the two different edit buttons */
-#inventoryTable td[data-column="edit"] .inline-edit {
+/* Style the edit toggle button based on mode */
+#inventoryTable td[data-column="edit"] .edit-toggle {
   color: var(--primary);
+  transition: color 0.2s ease;
 }
 
-#inventoryTable td[data-column="edit"] .modal-edit {
-  color: var(--text-secondary);
+#inventoryTable td[data-column="edit"] .edit-toggle:hover {
+  color: var(--primary-dark);
 }
 
-#inventoryTable td[data-column="edit"] .modal-edit:hover {
-  color: var(--text-primary);
+/* Edit header styling */
+#inventoryTable th[data-column="edit"] {
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+#inventoryTable th[data-column="edit"]:hover {
+  background-color: var(--bg-hover);
 }
 
 /* Row editing styles */

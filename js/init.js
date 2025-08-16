@@ -373,6 +373,19 @@ document.addEventListener("DOMContentLoaded", () => {
         setupPagination();
         setupThemeToggle();
         setupColumnResizing();
+        
+        // Setup Edit header toggle functionality
+        const editHeader = document.querySelector('th[data-column="edit"]');
+        if (editHeader) {
+          editHeader.style.cursor = 'pointer';
+          editHeader.addEventListener('click', () => {
+            if (typeof toggleEditMode === 'function') {
+              toggleEditMode();
+            }
+          });
+          debugLog("✓ Edit header toggle initialized");
+        }
+        
         debugLog("✓ All event listeners setup complete");
       } catch (eventError) {
         console.error("❌ Error setting up event listeners:", eventError);
