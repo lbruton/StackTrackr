@@ -1,0 +1,35 @@
+{
+  "name": "StackTrackr",
+  "rAgentsRepo": "https://github.com/lbruton/rAgents.git",
+  "agentPath": "agents/stacktrackr/",
+  "memoryPath": "memory/stacktrackr/",
+  "docsPath": "docs/roadmaps/stacktrackr.md",
+  "protocols": {
+    "initialization": "agents/universal/onboarding.md",
+    "projectSpecific": "agents/stacktrackr/protocols.md",
+    "memory": "memory/stacktrackr/latest.json",
+    "roadmap": "docs/roadmaps/stacktrackr.md"
+  },
+  "memoryPriority": {
+    "primary": "StackTrackr",
+    "secondary": ["VulnTrackr", "rEngine"],
+    "contextFilter": {
+      "relevanceThreshold": 0.7,
+      "projectFocus": "precious_metals_inventory", 
+      "allowCrossProject": true,
+      "priorityKeywords": ["precious_metals", "inventory", "gold", "silver", "platinum", "collectibles", "pricing"],
+      "excludeKeywords": ["vulnerability", "security", "CVE", "VPR", "vulntrackr_specific"]
+    },
+    "memoryRanking": {
+      "local": 1.0,
+      "crossProject": 0.6, 
+      "universal": 0.8
+    }
+  },
+  "syncCommands": {
+    "push": "./scripts/sync_to_ragents.sh",
+    "pull": "./scripts/sync_from_ragents.sh"
+  },
+  "lastSync": "20250816_023520",
+  "version": "1.1.0"
+}

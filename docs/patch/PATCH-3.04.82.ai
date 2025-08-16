@@ -1,5 +1,0 @@
-Version: 3.04.82
-Date: 2025-08-15
-Agent: GPT-4o
-Summary: Removed height attribute from Stackr logo SVG to rely on CSS sizing and prevent HTML warnings.
-

@@ -32,7 +32,7 @@ const sortInventory = (data = inventory) => {
       case 10: valA = a.purchaseLocation; valB = b.purchaseLocation; break; // Purchase Location
       case 11: valA = a.storageLocation || 'Unknown'; valB = b.storageLocation || 'Unknown'; break; // Storage Location
       case 12: valA = parseInt(a.numistaId || '0', 10); valB = parseInt(b.numistaId || '0', 10); break; // N#
-      case 13: valA = a.isCollectable; valB = b.isCollectable; break; // Collectable
+      // case 13: valA = a.isCollectable; valB = b.isCollectable; break; // Collectable - This column is not sortable. Removing this logic is intentional to prevent conflicts with toggle functionality.
       // Notes (14), Edit (15), Delete (16) columns are not sortable - skip
       default: return 0;
     }

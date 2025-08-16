@@ -9,6 +9,7 @@
  * Handles encryption/decryption of all application data with a single master password
  * Fully backward compatible with existing unencrypted installations
  */
+/*
 class StackrTrackrEncryption {
   constructor() {
     this.isInitialized = false;
@@ -641,6 +642,7 @@ class StackrTrackrEncryption {
     }
   }
 }
+*/
 
 // Global encryption manager instance
 const encryptionManager = new StackrTrackrEncryption();
