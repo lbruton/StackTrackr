@@ -1,0 +1,117 @@
+# Codex Agent Bootstrap - StackTrackr Project
+
+## Agent Identity
+- **Agent**: Codex
+- **Project**: StackTrackr (Precious Metals Inventory Management)
+- **Role**: Code generation, debugging, and technical assistance
+- **Access Level**: Sanitized technical information (🟡 FILTERED CONTENT)
+
+## Quick Project Overview
+StackTrackr is a precious metals inventory management system with:
+- **Frontend**: HTML5, CSS3, JavaScript ES6+
+- **Storage**: LocalStorage with CSV import/export
+- **API**: Numista integration for real-time pricing
+- **Features**: Advanced filtering, responsive design, multi-currency support
+
+## Key Files to Know
+```
+StackTrackr/
+├── index.html              # Main application
+├── css/styles.css          # Styling and themes
+├── js/
+│   ├── app.js             # Core application logic
+│   ├── api-handler.js     # Numista API integration
+│   ├── data-manager.js    # LocalStorage management
+│   └── ui-components.js   # UI interactions
+└── agents/
+    ├── agents.ai          # Multi-agent coordination protocols
+    └── codex.ai           # This file - your bootstrap
+```
+
+## rAgents Memory Access
+Since you cannot access MCP shared memory, use the centralized memory system:
+
+### 1. Memory Location
+- **File**: `/Volumes/DATA/GitHub/rAgents/memory/codex_encrypted_memory.json`
+- **Format**: Standard JSON (no encryption/decryption needed)
+- **Content**: Sanitized technical information across all projects
+
+### 2. Access Instructions
+```javascript
+// Read the memory file directly
+const memoryPath = "/Volumes/DATA/GitHub/rAgents/memory/codex_encrypted_memory.json";
+// Parse JSON content for project-specific information
+// Filter by project: "StackTrackr" for this project's context
+```
+
+### 3. Memory Structure
+```json
+{
+  "projects": {
+    "StackTrackr": {
+      "type": "Precious Metals Inventory Management",
+      "core_files": [...],
+      "key_features": [...],
+      "known_issues": [...],
+      "technical_stack": "..."
+    }
+  },
+  "agent_ecosystem": {...},
+  "development_protocols": {...}
+}
+```
+
+## Privacy Protection Protocol
+⚠️ **IMPORTANT**: You have access to sanitized technical information only.
+
+### ❌ You CANNOT Access:
+- MCP memory conversations between other agents
+- Development strategy discussions
+- Personal/sensitive project details
+- Private repository URLs or credentials
+- User personal information
+
+### ✅ You CAN Access:
+- Technical documentation and code examples
+- Public API information and coding patterns
+- General project structure and functionality
+- Sanitized bug reports and feature requirements
+
+## Current Project Status
+- **Status**: Production Ready
+- **Recent Changes**: Project cleanup completed, documentation moved to rAgents
+- **Known Issues**: Filter chips styling bug, fuzzy search refinement needed
+- **Next Priorities**: Performance optimization, mobile view improvements
+
+## Working with Other Agents
+- **Coordination**: Through agents.ai protocols in this folder
+- **Handoff**: Follow multi-agent coordination procedures
+- **Memory Sharing**: Use sanitized Codex memory file, not MCP system
+- **Communication**: Update agents.ai with progress and findings
+
+## Development Guidelines
+1. **Focus**: Technical implementation and code quality
+2. **Scope**: StackTrackr project files only (not cross-project strategy)
+3. **Memory**: Reference Codex memory file for broader context
+4. **Updates**: Log significant changes in agents.ai for other agents
+
+## Quick Start Checklist
+- [ ] Review codex_encrypted_memory.json for full project context
+- [ ] Examine current StackTrackr codebase structure
+- [ ] Check agents.ai for any pending coordination tasks
+- [ ] Identify specific task or question to work on
+- [ ] Follow privacy protection protocols
+
+## Emergency Contacts
+If you encounter issues:
+1. Check agents.ai for coordination protocols
+2. Review rAgents memory for updated information
+3. Follow established handoff procedures for complex tasks
+
+---
+**File Type**: Agent Bootstrap Configuration  
+**Classification**: 🟡 FILTERED CONTENT  
+**Last Updated**: 2025-08-16  
+**Version**: 1.0.0
+
+*This file provides Codex with project context while maintaining privacy protection for sensitive conversations and development discussions.*

@@ -8,11 +8,17 @@ StackTrackr is a client-side precious metals investment tracker.
 - Full documentation: rAgents repository
 - Memory sync: ./scripts/sync_to_ragents.sh
 - Configuration: .ragents file
+- Codex bootstrap: ./agents/codex.ai
+
+## Agent-Specific Files
+- **codex.ai**: Bootstrap for Codex agent (memory access, privacy protocols)
+- **agents.ai**: This file - general coordination protocols
 
 ## Quick Start
 1. Run sync script to access full documentation
 2. Follow protocols in rAgents/agents/stacktrackr/
 3. Use memory prioritization for focused context
+4. Codex: Use codex.ai bootstrap and centralized memory file
 
 ## Essential Commands
 - Start development: Open index.html
