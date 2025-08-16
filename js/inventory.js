@@ -580,6 +580,11 @@ const escapeAttribute = (text) =>
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
 
+// Make escapeAttribute available globally
+if (typeof window !== 'undefined') {
+  window.escapeAttribute = escapeAttribute;
+}
+
 const filterLink = (field, value, color, displayValue = value, title, allowHtml = false) => {
   const handler = `applyColumnFilter('${field}', ${JSON.stringify(value)})`;
   // Escape characters for safe inline handler usage
@@ -1002,14 +1007,18 @@ const startRowEdit = (idx) => {
   // Define editable fields and their input types
   const editableFields = [
     { field: 'date', type: 'date', label: 'Date' },
-    { field: 'metal', type: 'select', label: 'Metal', options: ['Silver', 'Gold', 'Platinum', 'Palladium', 'Copper'] },
+    { field: 'type', type: 'select', label: 'Type', options: ['Coin', 'Round', 'Bar', 'Junk', 'Other'] },
+    { field: 'metal', type: 'select', label: 'Metal', options: ['Silver', 'Gold', 'Platinum', 'Palladium', 'Copper', 'Alloy/Other'] },
     { field: 'qty', type: 'number', label: 'Quantity', min: 1 },
     { field: 'name', type: 'text', label: 'Name' },
     { field: 'weight', type: 'number', label: 'Weight', step: 0.001, min: 0 },
     { field: 'price', type: 'number', label: 'Purchase Price', step: 0.01, min: 0 },
     { field: 'marketValue', type: 'number', label: 'Market Value', step: 0.01, min: 0 },
+    { field: 'spotPriceAtPurchase', type: 'number', label: 'Spot Price', step: 0.01, min: 0 },
+    { field: 'totalPremium', type: 'number', label: 'Premium', step: 0.01, min: 0 },
     { field: 'purchaseLocation', type: 'text', label: 'Purchase Location' },
-    { field: 'storageLocation', type: 'text', label: 'Storage Location' }
+    { field: 'storageLocation', type: 'text', label: 'Storage Location' },
+    { field: 'numistaId', type: 'text', label: 'Numista ID' }
   ];
   
   // Convert each editable cell to input
@@ -1248,24 +1257,32 @@ const renderTable = () => {
       <tr data-id="${originalIdx}">
   <td class="shrink" data-column="date">${filterLink('date', item.date, 'var(--text-primary)', item.date ? formatDisplayDate(item.date) : '—')}</td>
       <td class="shrink" data-column="type">${filterLink('type', item.type, getTypeColor(item.type))}</td>
-      <td class="shrink" data-column="metal" data-metal="${escapeAttribute(item.composition || item.metal || '')}">${filterLink('metal', item.composition || item.metal || 'Silver', METAL_COLORS[item.metal] || 'var(--primary)', getDisplayComposition(item.composition || item.metal || 'Silver'))}</td>
+      <td class="shrink" data-column="metal" data-metal="${escapeAttribute(item.composition || item.metal || '')}">
+        ${(typeof window.renderAtomicSymbol === 'function' && window.localStorage.getItem('useAtomicSymbols') !== 'false')
+          ? window.renderAtomicSymbol(item.composition || item.metal || 'Silver')
+          : filterLink('metal', item.composition || item.metal || 'Silver', METAL_COLORS[item.metal] || 'var(--primary)', getDisplayComposition(item.composition || item.metal || 'Silver'))}
+      </td>
       <td class="shrink" data-column="qty">${filterLink('qty', item.qty, 'var(--text-primary)')}</td>
       <td class="expand" data-column="name" style="text-align: left;">
         ${filterLink('name', item.name, 'var(--text-primary)')}
       </td>
       <td class="shrink" data-column="weight">${filterLink('weight', item.weight, 'var(--text-primary)', formatWeight(item.weight), item.weight < 1 ? 'Grams (g)' : 'Troy ounces (ozt)')}</td>
       <td class="shrink" data-column="purchasePrice" title="Purchase Price (USD)" style="color: var(--text-primary);">
-        ${(item.price && item.price > 0) ? formatCurrency(item.price) : '—'}
+        <span class="price-indicator purchase" title="Purchase Price"></span>${(item.price && item.price > 0) ? `<span class="price-value">${formatCurrency(item.price)}</span>` : '—'}
       </td>
       <td class="shrink" data-column="marketValue" title="Current Market Value (USD)" style="color: var(--text-primary);">
-        ${(item.marketValue && item.marketValue > 0) ? 
-          formatCurrency(item.marketValue) + ' <a href="#" onclick="openEbaySearch(\'' + 
-          (item.name ? item.name.replace(/'/g, "\\'") : '') + ' ' + 
-          (item.metal ? item.metal.replace(/'/g, "\\'") : '') + 
-          '\')" title="Search eBay sold listings" style="text-decoration: none; color: #3b82f6;">📊</a>' : '—'}
+        <span class="price-indicator market" title="Market Value"></span>${(item.marketValue && item.marketValue > 0) ? 
+          `<span class="price-value">${formatCurrency(item.marketValue)}</span> <a href="#" onclick="openEbaySearchPopup('${
+          (item.name ? item.name.replace(/'/g, "\\'") : '')} ${
+          (item.metal ? item.metal.replace(/'/g, "\\'") : '')}'); return false;" 
+          title="Search eBay sold listings" class="chart-link">📊</a>` : '—'}
       </td>
-      <td class="shrink" data-column="spot" title="USD">${filterLink('spotPriceAtPurchase', spotValue, 'var(--text-primary)', spotDisplay)}</td>
-      <td class="shrink" data-column="premium" style="color: ${item.isCollectable ? 'var(--text-muted)' : (item.totalPremium > 0 ? 'var(--warning)' : 'inherit')}">${filterLink('totalPremium', premiumValue, 'var(--text-primary)', premiumDisplay)}</td>
+      <td class="shrink" data-column="spot" title="Spot Price (USD)">
+        <span class="price-indicator spot" title="Spot Price"></span><span class="price-value">${filterLink('spotPriceAtPurchase', spotValue, 'var(--text-primary)', spotDisplay)}</span>
+      </td>
+      <td class="shrink" data-column="premium" style="color: ${item.isCollectable ? 'var(--text-muted)' : (item.totalPremium > 0 ? 'var(--warning)' : 'inherit')}">
+        <span class="price-indicator premium" title="Premium"></span><span class="price-value">${filterLink('totalPremium', premiumValue, 'var(--text-primary)', premiumDisplay)}</span>
+      </td>
       <td class="shrink" data-column="purchaseLocation">
         ${formatPurchaseLocation(item.purchaseLocation)}
       </td>
@@ -1273,7 +1290,7 @@ const renderTable = () => {
         ${formatStorageLocation(item.storageLocation)}
       </td>
       <td class="shrink" data-column="numista">${item.numistaId ? `
-        <a href="#" onclick="openNumistaModal('${sanitizeHtml(item.numistaId)}', '${sanitizeHtml(item.name)}'); return false;" title="N#${sanitizeHtml(item.numistaId)} - open numista.com" class="catalog-link">
+        <a href="#" onclick="openNumistaPopup('${sanitizeHtml(item.numistaId)}'); return false;" title="N#${sanitizeHtml(item.numistaId)} - open numista.com" class="catalog-link">
           N#
         </a>
       ` : '<span class="numista-empty">—</span>'}</td>
@@ -1316,21 +1333,6 @@ const renderTable = () => {
     updateTypeSummary(filteredInventory);
 
     debugLog('renderTable complete');
-
-    // Update sort indicators
-    const headers = document.querySelectorAll('#inventoryTable th');
-    headers.forEach(header => {
-      const indicator = header.querySelector('.sort-indicator');
-      if (indicator) header.removeChild(indicator);
-    });
-
-    if (sortColumn !== null && sortColumn < headers.length) {
-      const header = headers[sortColumn];
-      const indicator = document.createElement('span');
-      indicator.className = 'sort-indicator';
-      indicator.textContent = sortDirection === 'asc' ? '↑' : '↓';
-      header.appendChild(indicator);
-    }
 
     renderPagination(sortedInventory);
     updateSummary();

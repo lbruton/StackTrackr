@@ -1,0 +1,243 @@
+/* Atomic symbol icons for metals */
+.atomic-symbol {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  font-weight: bold;
+  font-size: 0.8rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.atomic-symbol:hover, .atomic-symbol:focus {
+  transform: scale(1.1);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+/* Light theme */
+:root {
+  --silver-light: linear-gradient(135deg, #c0c0c0, #e0e0e0);
+  --gold-light: linear-gradient(135deg, #d4af37, #f8df92);
+  --platinum-light: linear-gradient(135deg, #e5e4e2, #f5f5f5);
+  --palladium-light: linear-gradient(135deg, #8c8c8c, #bbbbbb);
+  --copper-light: linear-gradient(135deg, #b87333, #e07a5f);
+  --other-light: linear-gradient(135deg, #a0a0a0, #c0c0c0);
+  
+  --symbol-text-light: #222;
+}
+
+/* Dark theme */
+[data-theme="dark"] {
+  --silver-light: linear-gradient(135deg, #6e6e6e, #a0a0a0);
+  --gold-light: linear-gradient(135deg, #9a7e29, #c9a842);
+  --platinum-light: linear-gradient(135deg, #757575, #aaaaaa);
+  --palladium-light: linear-gradient(135deg, #5a5a5a, #888888);
+  --copper-light: linear-gradient(135deg, #854c1f, #b36a43);
+  --other-light: linear-gradient(135deg, #555555, #777777);
+  
+  --symbol-text-light: #eee;
+}
+
+/* Sepia theme */
+[data-theme="sepia"] {
+  --silver-light: linear-gradient(135deg, #bfb8a5, #d7d0bd);
+  --gold-light: linear-gradient(135deg, #c19e46, #e8cb83);
+  --platinum-light: linear-gradient(135deg, #c5beb0, #e7e0d1);
+  --palladium-light: linear-gradient(135deg, #a8a294, #cac2b4);
+  --copper-light: linear-gradient(135deg, #b78057, #d4a07d);
+  --other-light: linear-gradient(135deg, #a89e88, #c4b9a3);
+  
+  --symbol-text-light: #433422;
+}
+
+.atomic-symbol {
+  color: var(--symbol-text-light);
+}
+
+.atomic-symbol.silver {
+  background: var(--silver-light);
+}
+
+.atomic-symbol.gold {
+  background: var(--gold-light);
+}
+
+.atomic-symbol.platinum {
+  background: var(--platinum-light);
+}
+
+.atomic-symbol.palladium {
+  background: var(--palladium-light);
+}
+
+.atomic-symbol.copper {
+  background: var(--copper-light);
+}
+
+.atomic-symbol.alloy, .atomic-symbol.other {
+  background: var(--other-light);
+}
+
+/* Special indicators for price fields */
+.price-indicator {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+  margin-right: 6px;
+  vertical-align: middle;
+  position: relative;
+  top: -1px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+}
+
+.price-indicator.purchase {
+  background-color: #38bdf8; /* light blue */
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.price-indicator.market {
+  background-color: #10b981; /* green */
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.price-indicator.spot {
+  background-color: #f59e0b; /* amber */
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.price-indicator.premium {
+  background-color: #8b5cf6; /* violet */
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+/* Add a header class for price column headers */
+th .price-indicator {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+  margin-right: 6px;
+  vertical-align: middle;
+  position: relative;
+  top: -1px;
+  opacity: 0.9;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.3);
+  border: 1px solid rgba(0, 0, 0, 0.15);
+}
+
+/* Price columns styling */
+td[data-column="purchasePrice"],
+td[data-column="marketValue"],
+td[data-column="spot"],
+td[data-column="premium"] {
+  position: relative;
+  text-align: left !important;
+  padding-left: 8px !important;
+}
+
+/* Ensure currency values are properly aligned */
+td[data-column="purchasePrice"] .filter-text,
+td[data-column="marketValue"] .filter-text,
+td[data-column="spot"] .filter-text,
+td[data-column="premium"] .filter-text {
+  display: inline-block;
+  min-width: 60px;
+  text-align: left;
+}
+
+/* Ensure date column has minimum width */
+td[data-column="date"] {
+  min-width: 85px !important;
+  white-space: nowrap;
+}
+
+/* Price value and chart link styling */
+.price-value {
+  display: inline-block;
+  min-width: 60px;
+}
+
+/* Header text alignment */
+th[data-column="purchasePrice"] .header-text,
+th[data-column="marketValue"] .header-text,
+th[data-column="spot"] .header-text,
+th[data-column="premium"] .header-text {
+  text-align: left;
+}
+
+.chart-link {
+  display: inline-block;
+  margin-left: 4px;
+  color: var(--link-color) !important;
+  text-decoration: none !important;
+  vertical-align: middle;
+}
+
+.chart-link:hover {
+  transform: scale(1.2);
+}
+
+/* Header styling for all columns */
+th .header-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding-top: 4px;
+  min-height: 40px;
+}
+
+th .header-icon {
+  margin-bottom: 2px;
+}
+
+th .header-label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  line-height: 1;
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* Hide old header price indicators */
+th .price-indicator {
+  display: none;
+}
+
+/* Add label tooltips on hover */
+td[data-column="purchasePrice"] .price-indicator:after,
+td[data-column="marketValue"] .price-indicator:after,
+td[data-column="spot"] .price-indicator:after,
+td[data-column="premium"] .price-indicator:after {
+  position: absolute;
+  top: -24px;
+  left: -20px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 3px;
+  padding: 2px 5px;
+  font-size: 0.7rem;
+  opacity: 0;
+  transition: opacity 0.2s;
+  pointer-events: none;
+  white-space: nowrap;
+  z-index: 10;
+}
+
+td[data-column="purchasePrice"] .price-indicator:after { content: "Purchase"; }
+td[data-column="marketValue"] .price-indicator:after { content: "Market"; }
+td[data-column="spot"] .price-indicator:after { content: "Spot"; }
+td[data-column="premium"] .price-indicator:after { content: "Premium"; }
+
+td[data-column="purchasePrice"] .price-indicator:hover:after,
+td[data-column="marketValue"] .price-indicator:hover:after,
+td[data-column="spot"] .price-indicator:hover:after,
+td[data-column="premium"] .price-indicator:hover:after {
+  opacity: 1;
+}
