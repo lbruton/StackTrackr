@@ -4521,6 +4521,12 @@ th {
 #inventoryTable thead th {
   color: var(--text-secondary);
   background: var(--bg-secondary);
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+/* Ensure uniform font family for entire table */
+#inventoryTable {
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
 #inventoryTable thead th .header-icon,
@@ -4595,10 +4601,10 @@ th {
   padding: 0.18rem 0.28rem; /* tighter padding */
 }
 
-/* Reduce header height slightly */
+/* Increase header height to accommodate sort arrows */
 #inventoryTable thead th {
-  padding-top: 0.32rem;
-  padding-bottom: 0.32rem;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
 }
 
 #inventoryTable .icon-btn { width: 2rem; height: 2rem; }
@@ -5355,6 +5361,15 @@ th {
 
 #inventoryTable td[data-column="premium"] {
   font-weight: 500;
+}
+
+/* Text columns use main font family */
+#inventoryTable td[data-column="name"],
+#inventoryTable td[data-column="metal"],
+#inventoryTable td[data-column="purchaseLocation"],
+#inventoryTable td[data-column="storageLocation"],
+#inventoryTable td[data-column="date"] {
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
 /* Numerical value consistency across all numeric columns */
