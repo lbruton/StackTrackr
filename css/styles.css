@@ -1801,7 +1801,7 @@ table {
   }
 
 th {
-  background: var(--bg-tertiary);
+  background: var(--bg-secondary);
   color: var(--text-primary);
   font-weight: 600;
   padding: 0.375rem 0.25rem; /* Reduced padding for narrower rows */
@@ -4513,7 +4513,7 @@ th {
 /* Make header icons/text use muted header color so they don't pop */
 #inventoryTable thead th {
   color: var(--text-secondary);
-  background: var(--bg-tertiary);
+  background: var(--bg-secondary);
 }
 
 #inventoryTable thead th .header-icon,
@@ -4523,7 +4523,7 @@ th {
 
 /* Icon column header should visually match other headers */
 #inventoryTable thead th.icon-col {
-  background: var(--bg-tertiary);
+  background: var(--bg-secondary);
   color: var(--text-primary);
   padding: 0.35rem 0.4rem;
 }
@@ -5226,8 +5226,16 @@ th {
   transition: background-color 0.2s ease;
 }
 
-#inventoryTable tr:hover td {
+#inventoryTable tr:hover td:not(:empty):not([data-empty="true"]):not(.na-value):not(.empty-cell) {
   background-color: var(--bg-secondary);
+}
+
+/* Prevent hover effects on empty cells and cells with dashes */
+#inventoryTable tr:hover td:empty,
+#inventoryTable tr:hover td[data-empty="true"],
+#inventoryTable tr:hover td.na-value,
+#inventoryTable tr:hover td.empty-cell {
+  background-color: transparent !important;
 }
 
 /* Legacy price column styling - consolidated above */
