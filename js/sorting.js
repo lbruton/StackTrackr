@@ -19,21 +19,19 @@ const sortInventory = (data = inventory) => {
 
     // Map column index to data property
     switch(sortColumn) {
-      case 0: valA = a.date; valB = b.date; break; // Date
+  case 0: valA = a.date; valB = b.date; break; // Date
       case 1: valA = a.type; valB = b.type; break; // Type
       case 2: valA = a.composition || a.metal; valB = b.composition || b.metal; break; // Metal
       case 3: valA = a.qty; valB = b.qty; break; // Qty
       case 4: valA = a.name; valB = b.name; break; // Name
       case 5: valA = a.weight; valB = b.weight; break; // Weight
-      case 6: valA = a.price; valB = b.price; break; // Purchase Price
-      case 7: valA = a.marketValue; valB = b.marketValue; break; // Market Value
-      case 8: valA = a.spotPriceAtPurchase; valB = b.spotPriceAtPurchase; break; // Spot
-      case 9: valA = a.totalPremium; valB = b.totalPremium; break; // Premium
-      case 10: valA = a.purchaseLocation; valB = b.purchaseLocation; break; // Purchase Location
-      case 11: valA = a.storageLocation || 'Unknown'; valB = b.storageLocation || 'Unknown'; break; // Storage Location
-      case 12: valA = parseInt(a.numistaId || '0', 10); valB = parseInt(b.numistaId || '0', 10); break; // N#
-      case 13: valA = a.isCollectable; valB = b.isCollectable; break; // Collectable
-      // Notes (14), Edit (15), Delete (16) columns are not sortable - skip
+      case 6: valA = a.price; valB = b.price; break; // Price
+      case 7: valA = a.spotPriceAtPurchase; valB = b.spotPriceAtPurchase; break; // Spot
+      case 8: valA = a.totalPremium; valB = b.totalPremium; break; // Premium
+      case 9: valA = a.purchaseLocation; valB = b.purchaseLocation; break; // Purchase Location
+      case 10: valA = a.storageLocation || 'Unknown'; valB = b.storageLocation || 'Unknown'; break; // Storage Location
+      case 11: valA = parseInt(a.numistaId || '0', 10); valB = parseInt(b.numistaId || '0', 10); break; // N#
+      case 12: valA = a.isCollectable; valB = b.isCollectable; break; // Collectable
       default: return 0;
     }
 
@@ -60,12 +58,7 @@ const sortInventory = (data = inventory) => {
     } 
     // Boolean comparison for collectable
     else if (typeof valA === 'boolean' && typeof valB === 'boolean') {
-      // Adjusted to correctly sort boolean values
-      if (sortDirection === 'asc') {
-        return valA === valB ? 0 : valA ? 1 : -1;
-      } else {
-        return valA === valB ? 0 : valA ? -1 : 1;
-      }
+      return sortDirection === 'asc' ? (valA - valB) : (valB - valA);
     }
     // String comparison for everything else
     else {

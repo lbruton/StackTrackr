@@ -430,12 +430,10 @@ const formatDisplayDate = (dateStr) => {
   const d = new Date(dateStr);
   if (isNaN(d)) return '—';
   
-  // Format as YY-MM-DD
-  const year = d.getFullYear().toString().slice(2); // Get last 2 digits of year
-  const month = (d.getMonth() + 1).toString().padStart(2, '0'); // Month is 0-indexed
-  const day = d.getDate().toString().padStart(2, '0');
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   
-  return `${year}-${month}-${day}`;
+  return `${months[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
 };
 
 /**
