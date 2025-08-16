@@ -19,3 +19,6 @@
 - 2025-08-19: Unified search control buttons under .btn.success, removed square class, and scoped inventory table icon styles (gpt-4o)
 - 2025-08-20: Session start - plan to centralize filter resets and simplify clear button (gpt-4o)
 - 2025-08-20: Centralized type/metal filter resets in clearAllFilters and simplified clear button to call it (gpt-4o)
+
+- 2025-08-22: Session start - plan to fix Date header span markup and verify other headers for typos (gpt-4o)
+- 2025-08-22: Replaced stray Date header span markup and confirmed no other header typos (gpt-4o)
