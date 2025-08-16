@@ -8,7 +8,8 @@
     "initialization": "agents/universal/onboarding.md",
     "projectSpecific": "agents/stacktrackr/protocols.md",
     "memory": "memory/stacktrackr/latest.json",
-    "roadmap": "docs/roadmaps/stacktrackr.md"
+    "roadmap": "docs/roadmaps/stacktrackr.md",
+    "codex_memory": "memory/codex_encrypted_memory.json"
   },
   "memoryPriority": {
     "primary": "StackTrackr",
