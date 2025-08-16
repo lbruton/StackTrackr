@@ -1,0 +1,21 @@
+Date,Type,Metal,Qty,Name,Weight,Price,Spot,Premium,Purchase,Storage,Notes
+2024-12-15,Coin,Silver,5,American Silver Eagle,1.00,38.50,32.15,6.35,APMEX,Home Safe,2024 BU condition
+2024-12-10,Coin,Gold,1,American Gold Eagle,1.00,2580.00,2520.00,60.00,Local Coin Shop,Bank Vault,1oz 2024 mint
+2024-12-08,Bar,Silver,1,PAMP Suisse Silver Bar,10.00,350.00,32.00,3.00,JM Bullion,Home Safe,Sealed in assay
+2024-12-05,Coin,Silver,20,Canadian Maple Leaf,1.00,35.75,31.85,3.90,Provident Metals,Safety Deposit Box,Mixed years 2020-2024
+2024-11-28,Bar,Gold,1,Credit Suisse Gold Bar,1.00,2545.00,2515.00,30.00,BOLD Precious Metals,Bank Vault,999.9 fine gold
+2024-11-25,Coin,Platinum,2,American Platinum Eagle,1.00,1045.00,985.00,60.00,APMEX,Home Safe,2024 proof condition
+2024-11-20,Round,Silver,10,Buffalo Silver Round,1.00,34.20,31.75,2.45,SD Bullion,Home Safe,Generic rounds
+2024-11-15,Bar,Silver,2,Engelhard Silver Bar,100.00,3280.00,31.60,1.20,Estate Sale,Safety Deposit Box,Vintage 100oz bars
+2024-11-10,Coin,Gold,1,Canadian Gold Maple Leaf,1.00,2535.00,2510.00,25.00,Local Dealer,Bank Vault,999.9 fine 2023
+2024-11-05,Coin,Palladium,1,Canadian Palladium Maple Leaf,1.00,1025.00,980.00,45.00,APMEX,Bank Vault,2024 mint condition
+2024-10-30,Bar,Silver,1,Johnson Matthey Silver Bar,10.00,342.50,31.85,2.65,Online Dealer,Home Safe,Serialized bar
+2024-10-25,Coin,Silver,1,Morgan Silver Dollar,0.77,185.00,31.50,158.44,Coin Show,Display Case,1921 AU condition
+2024-10-20,Coin,Gold,1/2,American Gold Eagle,0.50,1305.00,2505.00,55.00,Local Coin Shop,Bank Vault,Half ounce 2024
+2024-10-15,Round,Silver,25,Generic Silver Round,1.00,33.85,31.40,2.45,LCS Bulk Purchase,Home Safe,Mixed manufacturers
+2024-10-10,Bar,Platinum,1,PAMP Suisse Platinum Bar,1.00,1015.00,975.00,40.00,JM Bullion,Bank Vault,Sealed in assay
+2024-10-05,Coin,Silver,1,Peace Silver Dollar,0.77,125.00,31.25,130.84,Estate Sale,Display Case,1922 XF condition
+2024-09-28,Bar,Gold,1/10,Credit Suisse Gold Bar,0.10,285.00,2480.00,35.00,APMEX,Home Safe,Fractional gold
+2024-09-25,Coin,Silver,10,Mexican Libertad,1.00,42.50,30.95,11.55,Provident Metals,Safety Deposit Box,2024 brilliant uncirculated
+2024-09-20,Bar,Silver,1,Sunshine Mint Silver Bar,1.00,35.25,30.85,4.40,SD Bullion,Home Safe,MintMark SI security
+2024-09-15,Coin,Gold,1/4,Canadian Gold Maple Leaf,0.25,665.00,2475.00,40.00,Local Dealer,Bank Vault,Quarter ounce 2024

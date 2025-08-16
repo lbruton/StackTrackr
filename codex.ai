@@ -1,0 +1,33 @@
+# Codex Agent Memory
+
+## Change Log
+- 2025-08-15: Started session to document table item counter and update documentation (GPT)
+- 2025-08-15: Added changelog entry and style guide notes for inventory table item counter (GPT)
+- 2025-08-15: Documented fuzzy-search global export safeguard (GPT)
+- 2025-08-15: Aligned fuzzy-search threshold defaults and documentation (GPT)
+- 2025-08-15: Exposed `checkFileSize` and `MAX_LOCAL_FILE_SIZE` to global window and added validation test (GPT)
+
+- 2025-08-15: Removed invalid height attribute from Stackr logo and attempted headless check for warnings (gpt-4o)
+- 2025-08-16: Added dev-only loader for grouped-name-chips test script and created dev server for proper MIME types (gpt-4o)
+
+- 2025-08-16: Inserted renderActiveFilters call after renderTable in init.js to show filter chips on initial load (gpt-4o)
+
+- 2025-08-17: Enabled slash preservation in item names by extending sanitization helper and adding unit test (gpt-4-1)
+- 2025-08-17: Centered Name header text by wrapping with `.header-text` and removing special CSS (GPT)
+- 2025-08-17: Repositioned rows-per-page selector below inventory table and paired with item count in new flex container (gpt-4o)
+
+- 2025-08-18: Begin styling enhancement for table item counter with bold background accent (gpt-4o)
+- 2025-08-18: Added item counter styling with background and bold, updated HTML and documentation (gpt-4o)
+- 2025-08-18: Shrunk rows-per-page dropdown with button styling and aligned it opposite the item counter (gpt-4o)
+
+- 2025-08-18: Start session to reposition filter controls above chip row and tweak spacing (gpt-4-1)
+- 2025-08-18: Reordered filter controls above chip row, adjusted spacing, verified selectors and tests (gpt-4-1)
+- 2025-08-19: Start session to improve chip contrast and dynamic text colors (GPT)
+- 2025-08-19: Completed chip contrast helper and text color mapping, ran theme tests (GPT)
+
+- 2025-08-19: Start session to align search control buttons and refine icon sizing (gpt-4o)
+- 2025-08-19: Unified search control buttons under .btn.success and scoped table icon styles to keep sizes consistent (gpt-4o)
+- 2025-08-20: Centralized filter resets in clearAllFilters and simplified clear button to rely on it (gpt-4o)
+- 2025-08-20: Confirmed filter reset sync and streamlined clear button handler (GPT)
+- 2025-08-20: Trigger renderActiveFilters after CSV/JSON imports to show chips immediately (GPT)
+- 2025-08-21: Synced README version heading and release date with latest changelog (gpt-4o)

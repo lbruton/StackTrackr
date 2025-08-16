@@ -1,0 +1,8 @@
+# Codex AI Instructions
+
+Codex AI is responsible for assisting agents with advanced problem-solving and task management. Ensure that all updates to this file are stored in the `agents/` folder for consistency.
+
+## 2025-08-15 GPT Update
+- Refined fuzzyMatch token comparison with prefix penalties.
+- Increased default threshold to 0.6 and rebalanced weights toward token accuracy.
+- Added regression test to ensure "Silver Eagle" searches exclude "American Gold Eagle".

@@ -1,0 +1,168 @@
+{
+  "tasks": [
+    {
+      "category": "Critical Bugs",
+      "items": [
+        "The Last Sync time/date is incorrectly recording the last time the user pressed the sync button; this should be the last API pull",
+        "Unknown items and 'Imported by *' items should always sort after items with valid values",
+        "Correct issue with readme date inconsistencies"
+      ]
+    },
+    {
+      "category": "Bug Fixes",
+      "items": [
+        "Filter chips display wrong styling on page load, correct after filter interaction (BUG-006)",
+        "Fuzzy search filter shows American Gold Eagle when typing 'Eagle' or 'Silver Eagle' - needs refinement",
+        "Error recovery procedures missing for critical failures",
+        "Data corruption detection and recovery mechanisms",
+        "Agent coordination timeout mechanisms",
+        "Memory leak detection for long-running sessions",
+        "Cross-browser compatibility edge cases",
+        "localStorage quota limit handling"
+      ]
+    },
+    {
+      "category": "Feature Enhancements",
+      "items": [
+        "When importing data, if no value is present, check other Numista price values. If none, set the price to 0.00",
+        "When opening Numista links, open them in a new, appropriately sized window with close, back, and forward controls",
+        "'Change Log' should have a square recycle bin icon instead of text",
+        "In the table, when filtered, dynamically remove empty columns",
+        "When the width narrows to mobile sizes, double the height of the table rows",
+        "Re-theme the light mode with the new 'Darker Light' palette",
+        "Add exponential backoff and a user-visible retry banner for API rate limits",
+        "Move the 'Minimum Chip Items' dropdown under the 'Items' dropdown",
+        "Add a checkbox under the 'Minimum Chip Items' dropdown to include date and price values for all cells",
+        "Add a toggle to enable/disable weight in the filters tool",
+        "Provide a toggle to switch between a condensed, scrolling view and an auto-expanding view",
+        "Group all control toggles into a card under the 'Items' dropdown",
+        "The 'Title/Name' column should allow fractions",
+        "Center the titles and subtitles on the cards in the files modal",
+        "Add 'You may be entitled to compensation' to the boating accident joke, scaled to fit under the button",
+        "Add 'Purchase' and 'Issue' year filters",
+        "Performance monitoring and baseline measurements",
+        "Integration testing framework for multi-agent workflows",
+        "Automated testing for localStorage quota limits"
+      ]
+    }
+  ],
+  "bugs": [
+    {
+      "id": "BUG-001",
+      "description": "Filter chips for specific coin types (e.g., '2022 American Silver Eagle Special Proof BU') only apply exact matches instead of showing all variations of the coin type.",
+      "stepsToReproduce": [
+        "Click on a specific coin type chip (e.g., '2022 American Silver Eagle Special Proof BU').",
+        "Observe that the filter only applies to the exact match and does not include other variations of the coin type."
+      ],
+      "impact": "Users cannot view all variations of a coin type when clicking on a filter chip, leading to incomplete search results.",
+      "status": "pending"
+    },
+    {
+      "id": "BUG-006",
+      "description": "Filter chips display incorrect styling on initial page load, but show correct styling after user interaction with filters.",
+      "stepsToReproduce": [
+        "Load the page (refresh browser or open for first time).",
+        "Observe filter chips have wrong visual styling (colors, borders, etc.).",
+        "Change any filter setting or interaction.",
+        "Observe chips now display with correct styling."
+      ],
+      "impact": "Poor first impression for users due to visual inconsistency on page load. Affects user experience but not functionality.",
+      "status": "documented",
+      "component": "Filter chips display system",
+      "dateDiscovered": "2025-08-15",
+      "priority": "medium",
+      "fixFile": "/docs/fixes/filter-chips-initial-styling-bug.md"
+    }
+  ],
+  "recentChanges": [
+    {
+      "description": "Redirected Claude to reference agents.ai and added unified-workflow.ai reference in agents.ai.",
+      "date": "August 15, 2025"
+    },
+    {
+      "description": "Added task to clean up extra space below the search bar and above the filter chips.",
+      "date": "August 15, 2025"
+    },
+    {
+      "description": "Enhanced simplifyChipValue and filterInventoryAdvanced functions in filters.js to fix filter chip generalization issue.",
+      "date": "August 15, 2025"
+    },
+    {
+      "description": "Moved detailed fix for BUG-001 to docs/fixes/BUG-001.md and updated references.",
+      "date": "August 15, 2025"
+    },
+    {
+      "description": "Archived agents/tasks folder and removed redundant references.",
+      "date": "August 15, 2025"
+    }
+  ],
+  "recentMessages": [
+    {
+      "role": "user",
+      "message": "can you review our workflow and give me an outline"
+    },
+    {
+      "role": "assistant",
+      "message": "I'll analyze the project's workflow based on the available documentation and structure. Let me gather the relevant information first."
+    },
+    {
+      "role": "user",
+      "message": "Can you generate a template file/script that i can use based ont his project to start a new project, like an onboarding prompt or something?"
+    },
+    {
+      "role": "assistant",
+      "message": "I've created a comprehensive project initialization template at /templates/project-initialization.md. This template incorporates best practices and patterns from StackTrackr while providing a generic structure that can be adapted for new projects."
+    },
+    {
+      "role": "user",
+      "message": "If i wanted to start a new project and keep the overal visual style of this project, is that easy? for example could I ask you to make me a simple web page with a table and csv import, but use our existing theme, then we build a different back end on it?"
+    },
+    {
+      "role": "assistant",
+      "message": "Yes, absolutely! I can help you create a simplified version using StackTrackr's visual style and core components. We can extract the essential styling and functionality for a table-based interface with CSV import capabilities. Let me help you set that up."
+    },
+    {
+      "role": "user",
+      "message": "Can you evaluate our site, and come up a theme template we can work from to eventually plan a user based theme feature?"
+    },
+    {
+      "role": "assistant",
+      "message": "I've created a comprehensive theme template at /templates/theme-template.md that builds upon StackTrackr's current theme system while providing a foundation for user-customizable themes."
+    },
+    {
+      "role": "user",
+      "message": "so this template is currently wired into the site if we edit the md or is it just a reference?"
+    },
+    {
+      "role": "assistant",
+      "message": "This is currently just a reference template - it's not wired into the site. The current site uses a simpler theme implementation in js/theme.js and css/styles.css with the three built-in themes (light, dark, sepia)."
+    },
+    {
+      "role": "user",
+      "message": "Let's add it to our roadmap and use this template for planning on it's implementation"
+    },
+    {
+      "role": "assistant",
+      "message": "I've added the user-customizable theme system to the roadmap under 'NEW FEATURES' with a detailed breakdown of the implementation phases."
+    },
+    {
+      "role": "user",
+      "message": "That's wonderful thank you. "
+    },
+    {
+      "role": "assistant",
+      "message": "You're welcome! The theme system is now properly planned and documented with both the technical template and roadmap in place."
+    }
+  ],
+  "memoryConfig": {
+    "recentMessagesLimit": 15,
+    "dynamicAdjustment": true,
+    "notes": "Default to 15 recent messages. Agents may increase limit for complex or long-running tasks. Archive older messages if needed."
+  },
+  "lastAgentChange": {
+    "agent": "",
+    "timestamp": "",
+    "file": "",
+    "summary": ""
+  }
+}

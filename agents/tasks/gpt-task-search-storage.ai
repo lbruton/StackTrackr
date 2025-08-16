@@ -1,0 +1,149 @@
+# GPT Task Assignment: Search Debouncing & LocalStorage Batching
+## Agent: GPT-4 | Estimated Time: 25 minutes | Risk: Very Low
+
+**Parent Task**: StackTrackr Performance Optimization  
+**GPT Specialization**: Event handling and utility functions  
+**Assigned Phases**: Phase 1 + Phase 3
+
+---
+
+## 🎯 PHASE 1: SEARCH DEBOUNCING (15 minutes)
+**Priority**: HIGHEST - Start with this
+
+### **Objective**
+Add debounced search to prevent excessive filtering and improve UX for users with large inventories.
+
+### **Current Implementation**
+Search currently triggers on every keystroke, causing performance issues with large datasets.
+
+### **Required Changes**
+
+**1. Add debounce utility to `js/utils.js`:**
+```javascript
+/**
+ * Debounces function calls to prevent excessive execution
+ * @param {Function} func - Function to debounce
+ * @param {number} wait - Delay in milliseconds
+ * @returns {Function} Debounced function
+ */
+const debounce = (func, wait) => {
+  let timeout;
+  return function executedFunction(...args) {
+    const later = () => {
+      clearTimeout(timeout);
+      func(...args);
+    };
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+  };
+};
+```
+
+**2. Update search event listener in `js/events.js`:**
+- Find the search input event listener
+- Replace immediate search execution with debounced version
+- Use 300ms delay for optimal UX
+
+**3. Testing Requirements:**
+- ✅ Search still works correctly
+- ✅ No lag when typing quickly in search
+- ✅ Results update after 300ms pause
+- ✅ Large inventory (100+ items) searches smoothly
+
+---
+
+## 🎯 PHASE 3: LOCALSTORAGE BATCHING (10 minutes)
+**Priority**: MEDIUM - Implement after Phase 1 is tested
+
+### **Objective**
+Batch localStorage writes using requestAnimationFrame to reduce I/O operations during rapid changes.
+
+### **Current Implementation**
+`saveInventory()` is called immediately on every change, causing potential lag during rapid edits.
+
+### **Required Changes**
+
+**1. Add batching mechanism to `js/utils.js`:**
+```javascript
+/**
+ * Batched localStorage save mechanism
+ */
+let saveScheduled = false;
+
+const batchedSaveInventory = () => {
+  if (saveScheduled) return;
+  
+  saveScheduled = true;
+  requestAnimationFrame(() => {
+    saveData(LS_KEY, inventory);
+    saveScheduled = false;
+    debugLog('Batched inventory save completed');
+  });
+};
+
+// Export for global use
+window.batchedSaveInventory = batchedSaveInventory;
+```
+
+**2. Update `js/inventory.js`:**
+- Replace direct `saveInventory()` calls with `batchedSaveInventory()`
+- Focus on rapid-fire operations like:
+  - Inline editing
+  - Bulk imports
+  - Quick successive adds/deletes
+
+**3. Testing Requirements:**
+- ✅ Data still persists correctly after edits
+- ✅ Rapid edits don't cause UI lag
+- ✅ No data loss during rapid changes
+- ✅ Import operations feel smoother
+
+---
+
+## 📋 IMPLEMENTATION GUIDELINES
+
+### **Code Style**
+- Follow existing StackTrackr patterns
+- Add JSDoc comments for all new functions
+- Use consistent variable naming (camelCase)
+- Maintain error handling patterns
+
+### **Testing Strategy**
+- Test Phase 1 completely before starting Phase 3
+- Use large inventory datasets (100+ items) for testing
+- Verify mobile functionality still works
+- Check both Chrome and Safari browsers
+
+### **Files to Modify**
+- `js/utils.js` (add debounce and batching utilities)
+- `js/events.js` (update search event listener)
+- `js/inventory.js` (replace saveInventory calls)
+
+### **Success Criteria**
+- Search responds instantly without lag
+- Rapid editing feels smooth and responsive
+- No functionality regressions
+- Performance measurably improved
+
+---
+
+## 🚨 IMPORTANT NOTES
+
+1. **Conservative Approach**: Keep original code commented out until testing complete
+2. **Error Handling**: Ensure all new functions have proper error handling
+3. **Global Exposure**: Make utilities available globally for other modules
+4. **Performance Logging**: Add debug logs to measure improvements
+
+---
+
+## 📊 DELIVERABLES
+
+When complete, provide:
+1. **Modified files** with changes clearly documented
+2. **Testing results** confirming no regressions
+3. **Performance measurements** (before/after timing)
+4. **Any issues encountered** and how they were resolved
+
+---
+
+**Next Steps**: Implement Phase 1 first, test thoroughly, then proceed to Phase 3. These are the safest, highest-impact changes that will provide immediate user benefits.
