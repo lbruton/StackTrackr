@@ -2608,6 +2608,25 @@ function generateStorageReport(){
     return { totalKB: +(totalBytes/1024).toFixed(2), items };
   }catch(e){ return { totalKB:0, items:[] }; }
 }
+
+/**
+ * Opens eBay sold listings search for the given item name and metal
+ * @param {string} searchTerm - The item name and metal to search for
+ */
+function openEbaySearch(searchTerm) {
+  if (!searchTerm) return;
+  
+  // Clean and format the search term
+  const cleanTerm = searchTerm.trim().replace(/\s+/g, ' ');
+  const encodedTerm = encodeURIComponent(cleanTerm);
+  
+  // eBay sold listings URL with search term
+  const ebayUrl = `https://www.ebay.com/sch/i.html?_from=R40&_nkw=${encodedTerm}&_sacat=0&LH_Sold=1&LH_Complete=1&_sop=13`;
+  
+  // Open in new tab
+  window.open(ebayUrl, '_blank', 'noopener,noreferrer');
+}
+
 if (typeof window !== 'undefined') {
   window.getContrastColor = getContrastColor;
   window.generateStorageReport = generateStorageReport;
@@ -2621,6 +2640,7 @@ if (typeof window !== 'undefined') {
   window.downloadStorageReport = downloadStorageReport;
   window.openStorageReportPopup = openStorageReportPopup;
   window.debounce = debounce;
+  window.openEbaySearch = openEbaySearch;
 }
 
 if (typeof module !== 'undefined' && module.exports) {

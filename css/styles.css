@@ -4409,10 +4409,14 @@ input:disabled + .slider {
 }
 
 /* Collectable column should remain in DOM order (right after N#) and not be sticky. */
-#inventoryTable th[data-column="collectable"],
+#inventoryTable th[data-column="collectable"] {
+  position: static;
+  background: var(--bg-secondary); /* Match other headers */
+}
+
 #inventoryTable td[data-column="collectable"] {
   position: static;
-  background: inherit !important; /* Ensure it inherits row background */
+  background: inherit !important; /* Ensure cells inherit row background for striping */
 }
 
 /* Collectable icon specific styles */

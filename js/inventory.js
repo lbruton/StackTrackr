@@ -1058,7 +1058,11 @@ const renderTable = () => {
         ${(item.price && item.price > 0) ? formatCurrency(item.price) : '—'}
       </td>
       <td class="shrink" data-column="marketValue" title="Current Market Value (USD)" style="color: var(--text-primary);">
-        ${(item.marketValue && item.marketValue > 0) ? formatCurrency(item.marketValue) + ' 📊' : '—'}
+        ${(item.marketValue && item.marketValue > 0) ? 
+          formatCurrency(item.marketValue) + ' <a href="#" onclick="openEbaySearch(\'' + 
+          (item.name ? item.name.replace(/'/g, "\\'") : '') + ' ' + 
+          (item.metal ? item.metal.replace(/'/g, "\\'") : '') + 
+          '\')" title="Search eBay sold listings" style="text-decoration: none; color: #3b82f6;">📊</a>' : '—'}
       </td>
       <td class="shrink" data-column="spot" title="USD">${filterLink('spotPriceAtPurchase', spotValue, 'var(--text-primary)', spotDisplay)}</td>
       <td class="shrink" data-column="premium" style="color: ${item.isCollectable ? 'var(--text-muted)' : (item.totalPremium > 0 ? 'var(--warning)' : 'inherit')}">${filterLink('totalPremium', premiumValue, 'var(--text-primary)', premiumDisplay)}</td>
