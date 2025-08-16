@@ -1846,13 +1846,67 @@ td[data-column="storageLocation"] {
   max-width: 18ch; /* Location columns slightly narrower */
 }
 
-/* Keep icon columns compact */
+/* Keep icon columns compact and always visible */
 td[data-column="collectable"],
 td[data-column="notes"],
 td[data-column="edit"],
 td[data-column="delete"] {
   max-width: 3rem; /* Icon columns stay small */
   white-space: normal; /* Allow icons to display normally */
+  position: sticky;
+  background: inherit;
+  z-index: 2;
+}
+
+/* Sticky positioning for action columns */
+#inventoryTable td[data-column="collectable"] {
+  right: 9rem; /* Rightmost position */
+}
+
+#inventoryTable td[data-column="notes"] {
+  right: 6rem;
+}
+
+#inventoryTable td[data-column="edit"] {
+  right: 3rem;
+}
+
+#inventoryTable td[data-column="delete"] {
+  right: 0; /* Stays at far right */
+}
+
+/* Metal column with toggle capability and max width */
+#inventoryTable th[data-column="metal"],
+#inventoryTable td[data-column="metal"] {
+  max-width: 15ch; /* Limit metal column to 15 characters */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+#inventoryTable th[data-column="metal"]:hover,
+#inventoryTable td[data-column="metal"]:hover {
+  max-width: none;
+  white-space: normal;
+  word-wrap: break-word;
+  background: var(--bg-tertiary);
+}
+
+/* Price column toggle styling */
+#inventoryTable th[data-column="purchasePrice"] {
+  cursor: pointer;
+  position: relative;
+}
+
+#inventoryTable th[data-column="purchasePrice"]:after {
+  content: "⇄";
+  position: absolute;
+  right: 0.25rem;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.8rem;
+  opacity: 0.6;
 }
 
 [data-column].hidden,
@@ -1895,7 +1949,27 @@ tr:hover {
 
 
 /* Enhanced Mobile Responsive Design with Auto-Scaling */
+
+/* Progressive column hiding for responsive design */
+@media (max-width: 1200px) {
+  /* Hide less critical columns on medium screens */
+  #inventoryTable th[data-column="spot"],
+  #inventoryTable td[data-column="spot"],
+  #inventoryTable th[data-column="premium"],
+  #inventoryTable td[data-column="premium"] {
+    display: none;
+  }
+}
+
 @media (max-width: 1024px) {
+  /* Hide purchase and storage columns on smaller screens */
+  #inventoryTable th[data-column="purchaseLocation"],
+  #inventoryTable td[data-column="purchaseLocation"],
+  #inventoryTable th[data-column="storageLocation"],
+  #inventoryTable td[data-column="storageLocation"] {
+    display: none;
+  }
+  
   #inventoryTable {
     font-size: 0.8rem;
   }
@@ -2134,6 +2208,16 @@ td .action-icon.danger {
   color: var(--danger);
 }
 
+/* Enhanced delete button styling */
+td .action-icon.delete-btn {
+  color: var(--danger);
+  border-radius: var(--radius);
+  padding: 0.25rem;
+  /* Removed transition: all 0.2s ease; */
+}
+
+/* Removed hover effect to prevent flooding into other cells */
+
 td .action-icon.success {
   color: var(--success);
 }
@@ -2175,6 +2259,18 @@ td .inline-edit-icon:hover {
   color: var(--primary);
   background: var(--bg-secondary);
   transform: scale(1.1);
+}
+
+/* Name cell inline edit icons */
+td[data-column="name"] .inline-edit-icon {
+  border-radius: 50%;
+  padding: 2px;
+}
+
+td[data-column="name"] .inline-edit-icon:hover {
+  opacity: 1 !important;
+  background: var(--bg-elev-1);
+  transform: translateY(-50%) scale(1.2);
 }
 
 td.editing {
@@ -3163,6 +3259,111 @@ td input:checked + .slider:before {
   box-shadow: 0 2px 8px rgba(139, 69, 19, 0.2);
 }
 
+/* Enhanced search action buttons with text labels */
+.search-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  height: 2.75rem;
+  padding: 0.5rem 0.75rem;
+  min-width: auto;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  border-radius: var(--radius);
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+  font-size: 0.875rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.search-action-btn:hover {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.search-action-btn:active {
+  transform: translateY(0);
+}
+
+.search-action-btn:focus {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.search-action-btn svg {
+  width: 1rem;
+  height: 1rem;
+  transition: transform 0.2s ease;
+  flex-shrink: 0;
+}
+
+.search-action-btn:hover svg {
+  transform: scale(1.1);
+}
+
+/* Specific button color variations */
+.search-action-btn.add-btn:hover {
+  background: var(--success);
+  border-color: var(--success);
+}
+
+.search-action-btn.clear-btn:hover {
+  background: var(--warning);
+  border-color: var(--warning);
+}
+
+.search-action-btn.log-btn:hover {
+  background: var(--info);
+  border-color: var(--info);
+}
+
+/* Theme-specific adjustments for search action buttons */
+[data-theme="dark"] .search-action-btn {
+  background: var(--bg-tertiary);
+  border-color: var(--border);
+}
+
+[data-theme="dark"] .search-action-btn.add-btn:hover {
+  background: var(--success);
+  box-shadow: 0 2px 12px rgba(34, 197, 94, 0.3);
+}
+
+[data-theme="dark"] .search-action-btn.clear-btn:hover {
+  background: var(--warning);
+  box-shadow: 0 2px 12px rgba(245, 158, 11, 0.3);
+}
+
+[data-theme="dark"] .search-action-btn.log-btn:hover {
+  background: var(--info);
+  box-shadow: 0 2px 12px rgba(59, 130, 246, 0.3);
+}
+
+[data-theme="sepia"] .search-action-btn {
+  background: var(--bg-tertiary);
+  border-color: var(--border);
+}
+
+[data-theme="sepia"] .search-action-btn.add-btn:hover {
+  background: var(--success);
+  box-shadow: 0 2px 8px rgba(34, 197, 94, 0.2);
+}
+
+[data-theme="sepia"] .search-action-btn.clear-btn:hover {
+  background: var(--warning);
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.2);
+}
+
+[data-theme="sepia"] .search-action-btn.log-btn:hover {
+  background: var(--info);
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
+}
+
 .autocomplete-dropdown {
   position: absolute;
   top: 100%;
@@ -3373,6 +3574,43 @@ td input:checked + .slider:before {
 
 .search-results-info:not(:empty) {
   margin-top: 0;
+}
+
+/* Clear all filters button */
+.filter-clear-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-xs);
+  background: var(--error);
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border: none;
+  border-radius: var(--radius);
+  font-size: 0.75rem;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-weight: 600;
+  height: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: var(--transition);
+  box-shadow: var(--shadow-sm);
+  text-align: center;
+  white-space: nowrap;
+  user-select: none;
+  margin: 0.05rem 0 0.05rem 0.5rem;
+  max-width: fit-content;
+  box-sizing: border-box;
+}
+
+.filter-clear-btn:hover {
+  background: var(--error-dark);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow);
+}
+
+.filter-clear-btn:active {
+  transform: translateY(0);
 }
 
 /* =============================================================================
@@ -3921,42 +4159,18 @@ input:disabled + .slider {
   position: relative;
 }
 
-/* Enhanced action icons with hover effects */
+/* Enhanced action icons without hover animations */
 #inventoryTable td.icon-col .action-icon {
-  transition: var(--transition);
+  /* Removed transition animation */
   border-radius: var(--radius);
   padding: 0.2rem;
   cursor: pointer;
 }
 
-#inventoryTable td.icon-col .action-icon:hover {
-  background: var(--bg-tertiary);
-  transform: scale(1.2);
-  box-shadow: var(--shadow-sm);
-}
-
-/* Enhanced styling for edit icons */
+/* Enhanced styling for edit icons - no hover effects for clean interface */
 #inventoryTable td.icon-col .action-icon.edit-icon {
   color: var(--primary);
   font-weight: bold;
-  transition: var(--transition);
-}
-
-#inventoryTable td.icon-col .action-icon.edit-icon:hover {
-  background: var(--primary);
-  color: #f8fafc;
-  transform: scale(1.3);
-  box-shadow: var(--shadow);
-}
-
-#inventoryTable td.icon-col .action-icon.danger:hover {
-  background: var(--danger);
-  color: #f8fafc;
-}
-
-#inventoryTable td.icon-col .action-icon.success:hover {
-  background: var(--success);
-  color: #f8fafc;
 }
 
 #inventoryTable th.icon-col {
@@ -4220,10 +4434,7 @@ input:disabled + .slider {
   outline-offset: 2px;
 }
 
-#inventoryTable .icon-btn:hover {
-  background: rgba(0,0,0,0.04);
-  transform: translateY(-1px);
-}
+/* Removed hover effect to prevent cell flooding */
 
 #inventoryTable .icon-svg { width: 1.05rem; height: 1.05rem; display: block; fill: currentColor; color: inherit; }
 .notes-svg { color: inherit; }
@@ -4330,10 +4541,7 @@ th {
   box-shadow: none;
 }
 
-#inventoryTable .icon-btn:hover {
-  background: var(--bg-secondary);
-  color: var(--text-primary);
-}
+/* Removed hover effect to prevent cell flooding */
 
 #inventoryTable .icon-btn:active { transform: translateY(0); }
 
@@ -4656,4 +4864,530 @@ th {
   overflow-y: auto;
   font-family: monospace;
   white-space: pre-wrap;
+}
+
+/* =============================================================================
+   ENCRYPTION UI STYLES
+   Master password and encryption management interface
+   ============================================================================= */
+
+.encryption-section {
+  background: var(--bg-card);
+  border: 2px solid var(--primary) !important;
+  border-radius: var(--radius);
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.encryption-status {
+  margin-bottom: 1rem;
+}
+
+.status-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  border-radius: var(--radius);
+  background: var(--bg-secondary);
+}
+
+.status-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.status-indicator.status-success .status-dot {
+  background: var(--success);
+  animation: pulse-success 2s infinite;
+}
+
+.status-indicator.status-warning .status-dot {
+  background: var(--warning);
+}
+
+.status-indicator.status-error .status-dot {
+  background: var(--danger);
+  animation: pulse-error 2s infinite;
+}
+
+.status-indicator.status-info .status-dot {
+  background: var(--info);
+}
+
+@keyframes pulse-success {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+@keyframes pulse-error {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.status-text {
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.form-row {
+  margin-bottom: 1rem;
+}
+
+.form-row label {
+  display: block;
+  margin-bottom: 0.25rem;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.form-row input[type="password"] {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg);
+  color: var(--text-primary);
+  font-size: 0.875rem;
+}
+
+.form-row input[type="password"]:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px var(--primary)20;
+}
+
+.encryption-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  flex-wrap: wrap;
+}
+
+.encryption-actions .btn {
+  flex: 0 0 auto;
+}
+
+.encryption-info {
+  background: var(--bg-secondary);
+  padding: 0.75rem;
+  border-radius: var(--radius);
+  margin-bottom: 1rem;
+}
+
+.encryption-info strong {
+  color: var(--text-primary);
+}
+
+.data-status-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.status-item {
+  padding: 0.5rem;
+  border-radius: var(--radius);
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.status-item.status-success {
+  background: var(--success)20;
+  color: var(--success);
+  border: 1px solid var(--success)40;
+}
+
+.status-item.status-warning {
+  background: var(--warning)20;
+  color: var(--warning);
+  border: 1px solid var(--warning)40;
+}
+
+.status-item.status-info {
+  background: var(--info)20;
+  color: var(--info);
+  border: 1px solid var(--info)40;
+}
+
+.encryption-warning {
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background: var(--warning)15;
+  border: 1px solid var(--warning)40;
+  border-radius: var(--radius);
+  color: var(--text-primary);
+}
+
+.encryption-warning strong {
+  color: var(--warning);
+}
+
+.change-password-section {
+  background: var(--bg-secondary);
+  padding: 1rem;
+  border-radius: var(--radius);
+  margin-top: 1rem;
+  border: 1px solid var(--border);
+}
+
+.change-password-section h4 {
+  margin: 0 0 1rem 0;
+  color: var(--text-primary);
+}
+
+/* Dark mode encryption styles */
+[data-theme="dark"] .encryption-section {
+  background: var(--bg-card);
+  border-color: var(--primary) !important;
+}
+
+[data-theme="dark"] .status-indicator {
+  background: var(--bg-secondary);
+}
+
+[data-theme="dark"] .form-row input[type="password"] {
+  background: var(--bg-secondary);
+  border-color: var(--border);
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] .encryption-info {
+  background: var(--bg-secondary);
+}
+
+[data-theme="dark"] .change-password-section {
+  background: var(--bg-secondary);
+  border-color: var(--border);
+}
+
+/* Sepia mode encryption styles */
+[data-theme="sepia"] .encryption-section {
+  background: var(--bg-card);
+  border-color: var(--primary) !important;
+}
+
+[data-theme="sepia"] .status-indicator {
+  background: var(--bg-secondary);
+}
+
+[data-theme="sepia"] .form-row input[type="password"] {
+  background: var(--bg-secondary);
+  border-color: var(--border);
+  color: var(--text-primary);
+}
+
+[data-theme="sepia"] .encryption-info {
+  background: var(--bg-secondary);
+}
+
+[data-theme="sepia"] .change-password-section {
+  background: var(--bg-secondary);
+  border-color: var(--border);
+}
+
+/* =============================================================================
+   MODERN RESPONSIVE TABLE REDESIGN
+   ============================================================================= */
+
+/* Fix storage location width to 25 characters max */
+#inventoryTable td[data-column="storageLocation"] {
+  max-width: 25ch !important;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Metal column toggle with max width */
+#inventoryTable td[data-column="metal"] {
+  max-width: 15ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+  position: relative;
+}
+
+#inventoryTable td[data-column="metal"]:hover {
+  text-overflow: clip;
+  white-space: normal;
+  word-break: break-word;
+  z-index: 10;
+  background: var(--bg-primary);
+  box-shadow: var(--shadow);
+  border-radius: var(--radius-sm);
+  padding: 0.5rem;
+}
+
+/* Remove ellipsis from action buttons - clean look */
+#inventoryTable td.icon-col {
+  text-overflow: none !important;
+  overflow: visible !important;
+}
+
+/* Enhanced delete button styling - restore red */
+#inventoryTable td.icon-col .action-icon.danger {
+  color: var(--error) !important;
+  border-radius: var(--radius-sm);
+  padding: 0.25rem;
+  /* Removed transition: all 0.2s ease; */
+}
+
+/* Removed hover effect to prevent cell flooding */
+
+/* Fixed action columns styling */
+#inventoryTable th[data-column="collectable"],
+#inventoryTable th[data-column="notes"], 
+#inventoryTable th[data-column="edit"],
+#inventoryTable th[data-column="delete"],
+#inventoryTable td[data-column="collectable"],
+#inventoryTable td[data-column="notes"], 
+#inventoryTable td[data-column="edit"],
+#inventoryTable td[data-column="delete"] {
+  position: sticky;
+  right: 0;
+  background: var(--bg-primary);
+  z-index: 5;
+  min-width: 50px;
+  width: 50px;
+}
+
+/* Responsive column hiding */
+@media (max-width: 1200px) {
+  #inventoryTable th[data-column="spot"],
+  #inventoryTable td[data-column="spot"] {
+    display: none;
+  }
+}
+
+@media (max-width: 1100px) {
+  #inventoryTable th[data-column="marketValue"],
+  #inventoryTable td[data-column="marketValue"] {
+    display: none;
+  }
+}
+
+@media (max-width: 1000px) {
+  #inventoryTable th[data-column="premium"],
+  #inventoryTable td[data-column="premium"] {
+    display: none;
+  }
+}
+
+@media (max-width: 900px) {
+  #inventoryTable th[data-column="purchaseLocation"],
+  #inventoryTable td[data-column="purchaseLocation"] {
+    display: none;
+  }
+}
+
+@media (max-width: 800px) {
+  #inventoryTable th[data-column="storageLocation"],
+  #inventoryTable td[data-column="storageLocation"] {
+    display: none;
+  }
+}
+
+@media (max-width: 700px) {
+  #inventoryTable th[data-column="weight"],
+  #inventoryTable td[data-column="weight"] {
+    display: none;
+  }
+}
+
+@media (max-width: 600px) {
+  #inventoryTable th[data-column="date"],
+  #inventoryTable td[data-column="date"],
+  #inventoryTable th[data-column="type"],
+  #inventoryTable td[data-column="type"] {
+    display: none;
+  }
+  
+  /* Make action buttons smaller on mobile */
+  #inventoryTable td.icon-col .action-icon {
+    width: 1rem;
+    height: 1rem;
+  }
+}
+
+/* Smooth table scrolling */
+#inventoryTable {
+  scroll-behavior: smooth;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+/* Modern table cell styling */
+#inventoryTable td {
+  border-bottom: 1px solid var(--border);
+  transition: background-color 0.2s ease;
+}
+
+#inventoryTable tr:hover td {
+  background-color: var(--bg-secondary);
+}
+
+/* Legacy price column styling - consolidated above */
+
+/* Legacy price toggle styling - no longer used but kept for compatibility */
+.price-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--radius-sm);
+  transition: all 0.2s ease;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.price-toggle:hover {
+  background: var(--primary);
+  color: white !important;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Purchase location styling and column width */
+#inventoryTable th[data-column="purchaseLocation"],
+#inventoryTable td[data-column="purchaseLocation"] {
+  max-width: 140px !important; /* Reduced from default ~200px to 2/3 size */
+  width: 140px !important;
+}
+
+.purchase-link {
+  color: var(--primary);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  margin-right: 4px;
+  vertical-align: middle;
+}
+
+.purchase-link:hover {
+  color: var(--primary-hover);
+}
+
+.purchase-link-icon {
+  flex-shrink: 0;
+}
+
+/* All Price columns - uniform width and styling */
+#inventoryTable th[data-column="purchasePrice"],
+#inventoryTable td[data-column="purchasePrice"],
+#inventoryTable th[data-column="marketValue"],
+#inventoryTable td[data-column="marketValue"],
+#inventoryTable th[data-column="spot"],
+#inventoryTable td[data-column="spot"],
+#inventoryTable th[data-column="premium"],
+#inventoryTable td[data-column="premium"] {
+  max-width: 85px !important;
+  width: 85px !important;
+  min-width: 85px !important;
+  font-family: var(--font-mono, 'Courier New', monospace);
+  font-size: 0.85rem;
+  text-align: right;
+  padding: 0.5rem 0.75rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Header styling for price columns */
+#inventoryTable th[data-column="purchasePrice"],
+#inventoryTable th[data-column="marketValue"],
+#inventoryTable th[data-column="spot"],
+#inventoryTable th[data-column="premium"] {
+  font-weight: 600;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+/* Market value and price columns - subtle background variations */
+#inventoryTable td[data-column="marketValue"] {
+  background: rgba(59, 130, 246, 0.03);
+  font-weight: 500;
+}
+
+#inventoryTable td[data-column="purchasePrice"] {
+  background: rgba(34, 197, 94, 0.03);
+  font-weight: 500;
+}
+
+#inventoryTable td[data-column="spot"] {
+  background: rgba(245, 158, 11, 0.03);
+  font-weight: 500;
+}
+
+#inventoryTable td[data-column="premium"] {
+  background: rgba(239, 68, 68, 0.03);
+  font-weight: 500;
+}
+
+/* Numerical value consistency across all numeric columns */
+#inventoryTable td[data-column="qty"],
+#inventoryTable td[data-column="weight"],
+#inventoryTable td[data-column="purchasePrice"],
+#inventoryTable td[data-column="marketValue"],
+#inventoryTable td[data-column="spot"],
+#inventoryTable td[data-column="premium"] {
+  font-family: var(--font-mono, 'Courier New', monospace) !important;
+  font-size: 0.85rem !important;
+  font-weight: 500 !important;
+  text-align: right !important;
+}
+
+/* Completely disable ALL hover effects on action icons to prevent cell flooding */
+#inventoryTable .icon-btn:hover,
+#inventoryTable .action-icon:hover,
+#inventoryTable .icon-btn:focus,
+#inventoryTable .action-icon:focus {
+  background: transparent !important;
+  transform: none !important;
+  color: inherit !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+/* Allow inline edit icons to remain functional with subtle hover */
+#inventoryTable .inline-edit-icon:hover {
+  opacity: 1 !important;
+  background: rgba(59, 130, 246, 0.1) !important;
+  border-radius: 50% !important;
+}
+
+/* Subtle color variations for different numeric types */
+#inventoryTable td[data-column="qty"] {
+  color: rgba(59, 130, 246, 0.9); /* Soft blue for quantities */
+}
+
+#inventoryTable td[data-column="weight"] {
+  color: rgba(107, 114, 128, 0.95); /* Muted gray for weights */
+}
+
+#inventoryTable td[data-column="purchasePrice"] {
+  color: rgba(34, 197, 94, 0.9); /* Soft green for purchase prices */
+}
+
+#inventoryTable td[data-column="marketValue"] {
+  color: rgba(59, 130, 246, 0.95); /* Primary blue for market values */
+}
+
+#inventoryTable td[data-column="spot"] {
+  color: rgba(245, 158, 11, 0.9); /* Soft amber for spot prices */
+}
+
+#inventoryTable td[data-column="premium"] {
+  color: rgba(239, 68, 68, 0.9); /* Soft red for premiums */
 }

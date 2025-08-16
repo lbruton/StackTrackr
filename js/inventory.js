@@ -426,9 +426,20 @@ const sanitizeTablesOnLoad = () => {
  * @throws {Error} Logs errors to console if localStorage access fails
  */
 const loadInventory = () => {
-  const data = loadData(LS_KEY, []);
-  // Migrate legacy data to include new fields
-  inventory = data.map(item => {
+  try {
+    // For now, use synchronous loading to maintain compatibility
+    // TODO: Convert to async when updating all callers
+    const data = loadDataSync(LS_KEY, []);
+    
+    // Ensure data is an array
+    if (!Array.isArray(data)) {
+      console.warn('Inventory data is not an array, resetting to empty array');
+      inventory = [];
+      return;
+    }
+    
+    // Migrate legacy data to include new fields
+    inventory = data.map(item => {
     let normalized;
     // Handle legacy data that might not have all fields
     if (item.premiumPerOz === undefined) {
@@ -459,6 +470,7 @@ const loadInventory = () => {
         purchaseLocation: item.purchaseLocation || "",
         storageLocation: item.storageLocation || "Unknown",
         notes: item.notes || "",
+        marketValue: item.marketValue || 0,
         isCollectable: item.isCollectable !== undefined ? item.isCollectable : false,
         composition: item.composition || item.metal || ""
       };
@@ -489,6 +501,10 @@ const loadInventory = () => {
     if (removed > 0 && DEBUG) {
       console.log(`Removed ${removed} orphaned catalog mappings`);
     }
+  }
+  } catch (error) {
+    console.error('Error loading inventory:', error);
+    inventory = [];
   }
 };
 
@@ -536,7 +552,14 @@ const dateColors = {};
 
 const getColor = (map, key) => {
   if (!(key in map)) {
-    map[key] = (Object.keys(map).length * 137) % 360; // distribute hues using golden angle
+    // Use a simple hash function based on the key itself to ensure consistent colors
+    let hash = 0;
+    for (let i = 0; i < key.length; i++) {
+      const char = key.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash; // Convert to 32-bit integer
+    }
+    map[key] = Math.abs(hash) % 360; // Use hash for hue distribution
   }
   const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
   const lightness = isDark ? 65 : 35;
@@ -591,8 +614,8 @@ const formatPurchaseLocation = (loc) => {
     value = '—';
   }
   
-  // Truncate at 24 characters
-  const truncated = value.length > 24 ? value.substring(0, 24) + '…' : value;
+  // Truncate at 18 characters (reduced from 24)
+  const truncated = value.length > 18 ? value.substring(0, 18) + '…' : value;
   const color = getPurchaseLocationColor(value);
   const urlPattern = /^(https?:\/\/)?[\w.-]+\.[A-Za-z]{2,}(\S*)?$/;
   const filterSpan = filterLink('purchaseLocation', value, color, truncated, value !== truncated ? value : undefined);
@@ -603,7 +626,11 @@ const formatPurchaseLocation = (loc) => {
       href = `https://${href}`;
     }
     const safeHref = escapeAttribute(href);
-    return `${filterSpan}<a href="${safeHref}" target="_blank" rel="noopener" onclick="event.stopPropagation()" class="info-link" title="${safeHref}">(i)</a>`;
+    return `<a href="${safeHref}" target="_blank" rel="noopener" onclick="event.stopPropagation()" class="purchase-link" title="${safeHref}">
+      <svg class="purchase-link-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" style="width: 12px; height: 12px; fill: currentColor; margin-right: 4px;" aria-hidden="true">
+        <path d="M14,3V5H17.59L7.76,14.83L9.17,16.24L19,6.41V10H21V3M19,19H5V5H12V3H5C3.89,3 3,3.9 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V12H19V19Z"/>
+      </svg>
+    </a>${filterSpan}`;
   }
   return filterSpan;
 };
@@ -622,8 +649,8 @@ const formatStorageLocation = (loc) => {
     value = '—';
   }
   
-  // Truncate at 24 characters
-  const truncated = value.length > 24 ? value.substring(0, 24) + '…' : value;
+  // Truncate at 25 characters
+  const truncated = value.length > 25 ? value.substring(0, 25) + '…' : value;
   const color = getStorageLocationColor(value);
   return filterLink('storageLocation', value, color, truncated, value !== truncated ? value : undefined);
 };
@@ -994,7 +1021,8 @@ const hideEmptyColumns = () => {
 
 const renderTable = () => {
   return monitorPerformance(() => {
-    const filteredInventory = filterInventory();
+    // Ensure filterInventory is available (search.js may still be loading)
+    const filteredInventory = typeof filterInventory === 'function' ? filterInventory() : inventory;
     updateItemCount(filteredInventory.length, inventory.length);
     const sortedInventory = sortInventory(filteredInventory);
     debugLog('renderTable start', sortedInventory.length, 'items');
@@ -1019,9 +1047,19 @@ const renderTable = () => {
       <td class="shrink" data-column="type">${filterLink('type', item.type, getTypeColor(item.type))}</td>
       <td class="shrink" data-column="metal" data-metal="${escapeAttribute(item.composition || item.metal || '')}">${filterLink('metal', item.composition || item.metal || 'Silver', METAL_COLORS[item.metal] || 'var(--primary)', getDisplayComposition(item.composition || item.metal || 'Silver'))}</td>
       <td class="shrink" data-column="qty">${filterLink('qty', item.qty, 'var(--text-primary)')}</td>
-      <td class="expand" data-column="name" style="text-align: left;">${filterLink('name', item.name, 'var(--text-primary)')}</td>
+      <td class="expand" data-column="name" style="text-align: left; position: relative; padding-right: 30px;">
+        ${filterLink('name', item.name, 'var(--text-primary)')}
+        <span class="inline-edit-icon" onclick="event.stopPropagation(); console.log('Pencil clicked:', ${originalIdx}, 'name', this); startCellEdit(${originalIdx}, 'name', this)" title="Quick edit name" tabindex="0" role="button" onkeydown="if(event.key==='Enter'||event.key===' '){event.stopPropagation(); console.log('Pencil key:', ${originalIdx}, 'name', this); startCellEdit(${originalIdx}, 'name', this)}" style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); opacity: 0.6; cursor: pointer; font-size: 14px; transition: opacity 0.2s; z-index: 1;">
+          <svg class="icon-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" style="width: 14px; height: 14px; fill: currentColor;" aria-hidden="true"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1.003 1.003 0 0 0 0-1.42l-2.34-2.34a1.003 1.003 0 0 0-1.42 0l-1.83 1.83 3.75 3.75 1.84-1.82z"/></svg>
+        </span>
+      </td>
       <td class="shrink" data-column="weight">${filterLink('weight', item.weight, 'var(--text-primary)', formatWeight(item.weight), item.weight < 1 ? 'Grams (g)' : 'Troy ounces (ozt)')}</td>
-  <td class="shrink" data-column="purchasePrice" title="USD">${filterLink('price', item.price, 'var(--text-primary)', (item.price && item.price > 0) ? formatCurrency(item.price) : '—')}</td>
+      <td class="shrink" data-column="purchasePrice" title="Purchase Price (USD)" style="color: var(--text-primary);">
+        ${(item.price && item.price > 0) ? formatCurrency(item.price) : '—'}
+      </td>
+      <td class="shrink" data-column="marketValue" title="Current Market Value (USD)" style="color: var(--text-primary);">
+        ${(item.marketValue && item.marketValue > 0) ? formatCurrency(item.marketValue) + ' 📊' : '—'}
+      </td>
       <td class="shrink" data-column="spot" title="USD">${filterLink('spotPriceAtPurchase', spotValue, 'var(--text-primary)', spotDisplay)}</td>
       <td class="shrink" data-column="premium" style="color: ${item.isCollectable ? 'var(--text-muted)' : (item.totalPremium > 0 ? 'var(--warning)' : 'inherit')}">${filterLink('totalPremium', premiumValue, 'var(--text-primary)', premiumDisplay)}</td>
       <td class="shrink" data-column="purchaseLocation">
@@ -1040,7 +1078,7 @@ const renderTable = () => {
         <svg class="icon-svg notes-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15V5a2 2 0 0 0-2-2H7L3 7v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2z"/></svg>
       </button></td>
       <td class="icon-col" data-column="edit"><button class="icon-btn action-icon edit-icon" role="button" tabindex="0" onclick="editItem(${originalIdx})" aria-label="Edit ${sanitizeHtml(item.name)}" title="Edit item">
-        <svg class="icon-svg edit-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1.003 1.003 0 0 0 0-1.42l-2.34-2.34a1.003 1.003 0 0 0-1.42 0l-1.83 1.83 3.75 3.75 1.84-1.82z"/></svg>
+        <svg class="icon-svg edit-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5M19.43,12.97C19.47,12.65 19.5,12.33 19.5,12C19.5,11.67 19.47,11.34 19.43,11L21.54,9.37C21.73,9.22 21.78,8.95 21.66,8.73L19.66,5.27C19.54,5.05 19.27,4.96 19.05,5.05L16.56,6.05C16.04,5.66 15.5,5.32 14.87,5.07L14.5,2.42C14.46,2.18 14.25,2 14,2H10C9.75,2 9.54,2.18 9.5,2.42L9.13,5.07C8.5,5.32 7.96,5.66 7.44,6.05L4.95,5.05C4.73,4.96 4.46,5.05 4.34,5.27L2.34,8.73C2.22,8.95 2.27,9.22 2.46,9.37L4.57,11C4.53,11.34 4.5,11.67 4.5,12C4.5,12.33 4.53,12.65 4.57,12.97L2.46,14.63C2.27,14.78 2.22,15.05 2.34,15.27L4.34,18.73C4.46,18.95 4.73,19.03 4.95,18.95L7.44,17.94C7.96,18.34 8.5,18.68 9.13,18.93L9.5,21.58C9.54,21.82 9.75,22 10,22H14C14.25,22 14.46,21.82 14.5,21.58L14.87,18.93C15.5,18.67 16.04,18.34 16.56,17.94L19.05,18.95C19.27,19.03 19.54,18.95 19.66,18.73L21.66,15.27C21.78,15.05 21.73,14.78 21.54,14.63L19.43,12.97Z"/></svg>
       </button></td>
       <td class="icon-col" data-column="delete"><button class="icon-btn action-icon danger" role="button" tabindex="0" onclick="deleteItem(${originalIdx})" aria-label="Delete item" title="Delete item">
         <svg class="icon-svg delete-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 7h12v13a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V7zm3-4h6l1 1h4v2H3V4h4l1-1z"/></svg>
@@ -1052,7 +1090,7 @@ const renderTable = () => {
     const visibleCount = endIndex - startIndex;
     const placeholders = Array.from(
       { length: Math.max(0, itemsPerPage - visibleCount) },
-      () => '<tr><td class="shrink" colspan="16">&nbsp;</td></tr>'
+      () => '<tr><td class="shrink" colspan="17">&nbsp;</td></tr>'
     );
 
     // Find tbody element directly if cached version fails
@@ -1326,6 +1364,7 @@ const editItem = (idx, logIdx = null) => {
     elements.editWeight.dataset.unit = 'oz';
   }
   elements.editPrice.value = item.price > 0 ? item.price : '';
+  elements.editMarketValue.value = item.marketValue > 0 ? item.marketValue : '';
   elements.editPurchaseLocation.value = item.purchaseLocation;
   elements.editStorageLocation.value = item.storageLocation && item.storageLocation !== 'Unknown' ? item.storageLocation : '';
   
@@ -1340,6 +1379,14 @@ const editItem = (idx, logIdx = null) => {
   elements.editCatalog.value = item.numistaId || "";
   elements.editSerial.value = item.serial;
   document.getElementById("editCollectable").checked = item.isCollectable;
+  
+  // Show/hide market value field based on collectable status
+  if (elements.editMarketValueField) {
+    elements.editMarketValueField.style.display = item.isCollectable ? 'block' : 'none';
+  }
+  if (elements.editDateField) {
+    elements.editDateField.style.display = item.isCollectable ? 'none' : 'block';
+  }
 
   if (elements.undoChangeBtn) {
     elements.undoChangeBtn.style.display =
@@ -1398,6 +1445,29 @@ const toggleCollectable = (idx) => {
   saveInventory();
   renderTable();
   logItemChanges(oldItem, item);
+};
+
+/**
+ * Toggles price display between purchase price and market value
+ * 
+ * @param {number} idx - Index of item to toggle price view for
+ */
+/**
+ * Legacy function kept for compatibility - no longer used
+ * Market value now has its own dedicated column
+ */
+const togglePriceView = (idx) => {
+  // Function kept for compatibility but no longer used
+  console.warn('togglePriceView is deprecated - using separate columns now');
+};
+
+/**
+ * Legacy function kept for compatibility - no longer used  
+ * Market value now has its own dedicated column
+ */
+const toggleGlobalPriceView = () => {
+  // Function kept for compatibility but no longer used
+  console.warn('toggleGlobalPriceView is deprecated - using separate columns now');
 };
 
 // =============================================================================
@@ -1565,6 +1635,12 @@ const importCsv = (file, override = false) => {
 
         saveInventory();
         renderTable();
+        if (typeof renderActiveFilters === 'function') {
+          renderActiveFilters();
+        }
+        if (typeof updateTypeSummary === 'function') {
+          updateTypeSummary();
+        }
         if (typeof updateStorageStats === 'function') {
           updateStorageStats();
         }
@@ -1664,11 +1740,28 @@ const importNumistaCsv = (file, override = false) => {
             const amount = parseFloat(rawVal.replace(/[^0-9.\-]/g, ''));
             return isNaN(amount) ? 0 : convertToUsd(amount, currency);
           };
+          
           let purchasePrice = 0;
+          let marketValue = 0;
+          
+          // Set purchase price from buying price
           if (priceKey) {
             purchasePrice = parsePriceField(priceKey);
-          } else if (estimateKey) {
-            purchasePrice = parsePriceField(estimateKey);
+          }
+          
+          // Set market value from estimate price
+          if (estimateKey) {
+            marketValue = parsePriceField(estimateKey);
+          }
+          
+          // If no market value but we have buying price, use buying price for both
+          if (marketValue === 0 && purchasePrice > 0) {
+            marketValue = purchasePrice;
+          }
+          
+          // If no purchase price but we have estimate, use estimate for both
+          if (purchasePrice === 0 && marketValue > 0) {
+            purchasePrice = marketValue;
           }
 
           const purchaseLocRaw = getValue(row, ['Acquisition place', 'Acquired from', 'Purchase place']);
@@ -1718,6 +1811,7 @@ const importNumistaCsv = (file, override = false) => {
             weight,
             price: purchasePrice,
             purchasePrice,
+            marketValue,
             date,
             purchaseLocation,
             storageLocation,
@@ -1783,6 +1877,12 @@ const importNumistaCsv = (file, override = false) => {
 
         saveInventory();
         renderTable();
+        if (typeof renderActiveFilters === 'function') {
+          renderActiveFilters();
+        }
+        if (typeof updateTypeSummary === 'function') {
+          updateTypeSummary();
+        }
         if (typeof updateStorageStats === 'function') {
           updateStorageStats();
         }
@@ -2114,6 +2214,12 @@ const importJson = (file, override = false) => {
 
       saveInventory();
       renderTable();
+      if (typeof renderActiveFilters === 'function') {
+        renderActiveFilters();
+      }
+      if (typeof updateTypeSummary === 'function') {
+        updateTypeSummary();
+      }
       if (typeof updateStorageStats === "function") {
         updateStorageStats();
       }
@@ -2282,6 +2388,8 @@ window.exportJson = exportJson;
 window.exportPdf = exportPdf;
 window.updateSummary = updateSummary;
 window.toggleCollectable = toggleCollectable;
+window.togglePriceView = togglePriceView;
+window.toggleGlobalPriceView = toggleGlobalPriceView;
 window.editItem = editItem;
 window.deleteItem = deleteItem;
 window.showNotes = showNotes;

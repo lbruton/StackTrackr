@@ -65,6 +65,9 @@ document.addEventListener("DOMContentLoaded", () => {
     elements.itemWeight = safeGetElement("itemWeight", true);
     elements.itemWeightUnit = safeGetElement("itemWeightUnit", true);
     elements.itemPrice = safeGetElement("itemPrice", true);
+    elements.itemMarketValue = safeGetElement("itemMarketValue");
+    elements.marketValueField = safeGetElement("marketValueField");
+    elements.dateField = safeGetElement("dateField");
     elements.purchaseLocation = safeGetElement("purchaseLocation", true);
     elements.storageLocation = safeGetElement("storageLocation");
     elements.itemNotes = safeGetElement("itemNotes");
@@ -133,6 +136,9 @@ document.addEventListener("DOMContentLoaded", () => {
     elements.editType = safeGetElement("editType");
     elements.editWeight = safeGetElement("editWeight");
     elements.editPrice = safeGetElement("editPrice");
+    elements.editMarketValue = safeGetElement("editMarketValue");
+    elements.editMarketValueField = safeGetElement("editMarketValueField");
+    elements.editDateField = safeGetElement("editDateField");
     elements.editPurchaseLocation = safeGetElement("editPurchaseLocation");
     elements.editStorageLocation = safeGetElement("editStorageLocation");
     elements.editNotes = safeGetElement("editNotes");
@@ -379,7 +385,20 @@ document.addEventListener("DOMContentLoaded", () => {
       setupSearch();
     }, 200); // Increased delay for better compatibility
 
-    // Phase 15: Completion
+    // Phase 15: Initialize encryption UI
+    debugLog("Setting up encryption UI...");
+    setTimeout(() => {
+      if (typeof updateEncryptionUI === 'function') {
+        try {
+          updateEncryptionUI();
+          debugLog("✓ Encryption UI initialized");
+        } catch (error) {
+          console.warn("Encryption UI setup failed:", error);
+        }
+      }
+    }, 100);
+
+    // Phase 16: Completion
     debugLog("=== INITIALIZATION COMPLETE ===");
     debugLog("✓ Version:", APP_VERSION);
     debugLog("✓ API configured:", !!apiConfig);

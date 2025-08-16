@@ -59,3 +59,10 @@ build/
 archive/
 docs/audit/
 
+# Ideas and internal planning (keep private)
+ideas/
+internal/
+planning/
+strategy/
+roadmap/
+

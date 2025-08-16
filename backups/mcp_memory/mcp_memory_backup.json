@@ -1,0 +1,173 @@
+{
+  "backup_timestamp": "2025-08-15T20:30:00.000Z",
+  "backup_version": "1.0",
+  "source": "MCP Memory Graph",
+  "entities": [
+    {
+      "entityType": "Project",
+      "name": "StackTrackr",
+      "observations": [
+        "StackTrackr is a client-side precious metals inventory management web app.",
+        "It runs entirely in the browser with no server dependencies, using localStorage for data persistence.",
+        "The project uses Chart.js for visualizations and follows a modular JavaScript architecture.",
+        "The documentation and workflows are centralized in the `/docs` folder.",
+        "The project adheres to a semantic versioning system: BRANCH.RELEASE.PATCH.state.",
+        "The project uses libraries such as PapaParse, jsPDF, and JSZip in addition to Chart.js.",
+        "The styling relies on CSS custom properties and is designed to be responsive.",
+        "The current version is v3.04.73, following semantic versioning.",
+        "The script loading sequence is critical and must follow the defined order in `index.html`."
+      ]
+    },
+    {
+      "entityType": "Bug",
+      "name": "filter-chips-initial-styling-bug",
+      "observations": [
+        "Root Cause: Filter chips load with incorrect styling on page initialization, styles only apply correctly after filter interaction",
+        "Symptoms: Chips appear with wrong visual styling (colors, borders, etc.) when page first loads, but display correctly after user changes filter settings",
+        "Component: Filter chips display system",
+        "Affected Files: Likely css/styles.css, js/filters.js, js/init.js",
+        "Browser Impact: Visual inconsistency on initial page load",
+        "User Impact: Poor first impression, inconsistent UI appearance",
+        "Date Discovered: 2025-08-15",
+        "Status: Documented, needs investigation",
+        "Priority: Medium - Visual bug affecting UX but not functionality"
+      ]
+    },
+    {
+      "entityType": "RoadmapCategory",
+      "name": "critical-bugs",
+      "observations": [
+        "Priority: Fix ASAP",
+        "The Last Sync time/date is incorrectly recording the last time the user pressed the sync button; this should be the last API pull",
+        "Unknown items and 'Imported by *' items should always sort after items with valid values",
+        "Correct issue with readme date inconsistencies"
+      ]
+    },
+    {
+      "entityType": "RoadmapCategory", 
+      "name": "bug-fixes-non-critical",
+      "observations": [
+        "Priority: Non-critical user experience issues",
+        "Filter Chips Initial Styling Bug - Chips display wrong styling on page load, correct after filter interaction (BUG-006)",
+        "Fuzzy search filter shows American Gold Eagle when typing 'Eagle' or 'Silver Eagle' - needs refinement",
+        "Error recovery procedures missing for critical failures",
+        "Data corruption detection and recovery mechanisms",
+        "Agent coordination timeout mechanisms",
+        "Memory leak detection for long-running sessions",
+        "Cross-browser compatibility edge cases",
+        "localStorage quota limit handling"
+      ]
+    },
+    {
+      "entityType": "RoadmapCategory",
+      "name": "feature-enhancements", 
+      "observations": [
+        "Priority: Improve existing functionality",
+        "When importing data, if no value is present, check other Numista price values. If none, set the price to 0.00",
+        "When opening Numista links, open them in a new, appropriately sized window with close, back, and forward controls",
+        "Change Log should have a square recycle bin icon instead of text",
+        "In the table, when filtered, dynamically remove empty columns",
+        "When the width narrows to mobile sizes, double the height of the table rows",
+        "Re-theme the light mode with the new 'Darker Light' palette",
+        "Add exponential backoff and a user-visible retry banner for API rate limits",
+        "Move the Minimum Chip Items dropdown under the Items dropdown",
+        "Add a checkbox under the Minimum Chip Items dropdown to include date and price values for all cells",
+        "Add a toggle to enable/disable weight in the filters tool",
+        "Provide a toggle to switch between a condensed, scrolling view and an auto-expanding view",
+        "Group all control toggles into a card under the Items dropdown",
+        "The Title/Name column should allow fractions",
+        "Center the titles and subtitles on the cards in the files modal",
+        "Add You may be entitled to compensation to the boating accident joke, scaled to fit under the button",
+        "Add Purchase and Issue year filters",
+        "Performance monitoring and baseline measurements",
+        "Integration testing framework for multi-agent workflows",
+        "Automated testing for localStorage quota limits",
+        "Security audit automation and scheduling"
+      ]
+    },
+    {
+      "entityType": "RoadmapCategory",
+      "name": "new-features",
+      "observations": [
+        "Priority: Add brand new functionality",
+        "User-Customizable Theme System - Phase 1: Theme Management Infrastructure (Implement ThemeManager class, Add theme validation system, Create theme storage and persistence, Migrate existing themes to new format)",
+        "User-Customizable Theme System - Phase 2: Theme Builder UI (Create theme customization interface, Add color picker and preview components, Implement theme export/import functionality, Add theme sharing capabilities)",
+        "User-Customizable Theme System - Phase 3: Enhanced Theme Features (Add component-specific theming, Implement theme transitions, Create theme presets library, Add accessibility validation)",
+        "User-Customizable Theme System - Phase 4: Theme Documentation (Create theme development guide, Document theme API, Add theme migration guide, Create theme testing procedures)",
+        "Create a Debug API Button that opens a modal showing the API response in text/JSON and a table",
+        "Comprehensive error recovery strategy with rollback procedures",
+        "Data migration system with schema versioning",
+        "Agent coordination recovery mechanisms",
+        "Automated performance regression testing",
+        "Real-time collaboration features for agents",
+        "Predictive failure detection system",
+        "Advanced dependency resolution for agent tasks",
+        "User experience metrics collection",
+        "Automated CI/CD pipeline integration"
+      ]
+    },
+    {
+      "entityType": "RoadmapCategory",
+      "name": "current-sprint",
+      "observations": [
+        "Priority: Active work items being developed now",
+        "Performance Optimization Quick Wins (100 min total)",
+        "Phase 1: Search Debouncing (GPT - 15 min)",
+        "Phase 2: Event Delegation (Claude - 20 min)",
+        "Phase 3: LocalStorage Batching (GPT - 10 min)",
+        "Phase 4: DOM Fragment Optimization (30 min)",
+        "Phase 5: Chart.js Cleanup (10 min)",
+        "Phase 6: Testing & Validation (Gemini - 15 min)"
+      ]
+    },
+    {
+      "entityType": "RoadmapCategory",
+      "name": "backend-architecture",
+      "observations": [
+        "Priority: Infrastructure and system improvements",
+        "Data schema versioning system implementation",
+        "localStorage corruption detection utilities",
+        "Automated migration scripts for breaking changes",
+        "Performance baseline and monitoring infrastructure",
+        "Security threat model documentation",
+        "Dependency vulnerability tracking system",
+        "Agent task coordination database",
+        "Distributed task management system",
+        "Emergency procedures documentation (/docs/emergency-procedures.md)",
+        "Advanced agent handoff validation system"
+      ]
+    },
+    {
+      "entityType": "RoadmapCategory",
+      "name": "testing-qa",
+      "observations": [
+        "Priority: Quality assurance and validation",
+        "Integration test suite for core workflows",
+        "Cross-theme compatibility verification automation",
+        "Regression testing pipeline for major changes",
+        "Agent coordination failure simulation",
+        "XSS/injection attack simulation testing",
+        "Browser compatibility automation",
+        "Performance benchmark automation",
+        "Data integrity validation during upgrades"
+      ]
+    },
+    {
+      "entityType": "WorkflowProtocol",
+      "name": "evening-work-session",
+      "observations": [
+        "Purpose: Streamlined approach for productive evening development sessions",
+        "Phase 1: Human Input & Context (5 min) - Report bugs, add features, set session goals, provide domain knowledge",
+        "Phase 2: Agent Context Retrieval (2-3 min) - Search MCP memory, check git status, review documentation",
+        "Phase 3: Intelligent Work Selection (3-5 min) - Analyze session time, priorities, specialization, dependencies, risk level",
+        "Phase 4: Progress Tracking (Throughout) - Git checkpoints, memory updates, documentation, status updates",
+        "Session Benefits: Quick context setting, intelligent prioritization, predictable time investment, measurable progress",
+        "Success Metrics: Complete at least one item, document all work, update memory, create handoff notes",
+        "Example Session: 2 hours = Primary task (60min) + Secondary task (45min) + Backup task (15min)",
+        "Agent Response Format: Available work analysis, recommended tasks with estimates, session goals, success criteria",
+        "Documentation Location: /docs/evening-work-session-protocol.md"
+      ]
+    }
+  ],
+  "relations": []
+}

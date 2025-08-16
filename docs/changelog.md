@@ -1,11 +1,23 @@
 # StackrTrackr — Changelog
 
-> **Latest release: v3.04.86**
+> **Latest release: v3.04.87**
 
 
 For upcoming work, see [announcements](announcements.md).
 
 ## 📋 Version History
+
+### Version 3.04.87 – Price Column Styling Consistency (2025-08-15)
+- **Table Uniformity**: All price columns (Purchase Price, Market Value, Spot Price, Premium) now have consistent sizing and styling
+- **Column Sizing**: Standardized all price columns to 85px width with proper min/max constraints
+- **Font Consistency**: Applied uniform monospace font styling (Courier New, 0.85rem, weight 500) across all price columns
+- **Visual Enhancement**: Added subtle background colors to differentiate price types while maintaining consistency
+- **Header Styling**: Improved price column headers with consistent formatting and alignment
+- **CSV Import Fix**: Enhanced Numista import to properly map buying price → purchase price and estimate price → market value
+- **Hover Effects**: Removed all unwanted hover animations from action buttons for cleaner interface
+- **Default Pagination**: Changed default items per page from 5 to 10 for better user experience
+- **Inline Edit Fix**: Restored inline edit functionality by correcting parameter order in startCellEdit calls
+- **Files Updated**: `css/styles.css`, `js/inventory.js`, `docs/roadmap.md`, `docs/changelog.md`
 
 ### Version 3.04.86 – Centered Name header (2025-08-17)
 - Wrapped “Name” header text with `.header-text` span for consistent alignment.

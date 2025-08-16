@@ -88,7 +88,7 @@ const calculateLevenshteinDistance = (str1, str2) => {
  * @param {string} query - User search input
  * @param {string} target - Inventory item name to match against
  * @param {Object} [options={}] - Configuration options
- * @param {number} [options.threshold=0.5] - Minimum similarity score
+ * @param {number} [options.threshold=0.6] - Minimum similarity score
  * @param {boolean} [options.caseSensitive=false] - Case sensitive matching
  * @returns {number} Similarity score between 0 and 1
  *
@@ -103,7 +103,7 @@ const fuzzyMatch = (query, target, options = {}) => {
       return 0;
     }
 
-    const { threshold = 0.5, caseSensitive = false } = options; // Increased threshold to 0.5
+    const { threshold = 0.6, caseSensitive = false } = options; // Default threshold favoring precision
     const q = normalizeString(query, caseSensitive);
     const t = normalizeString(target, caseSensitive);
     if (!q || !t) return 0;
@@ -138,20 +138,26 @@ const fuzzyMatch = (query, target, options = {}) => {
     // Word-based similarity
     const qWords = tokenizeWords(q, true);
     const tWords = tokenizeWords(t, true);
-    let matched = 0;
-    qWords.forEach((qw) => {
+    const tokenScores = qWords.map((qw) => {
       let best = 0;
       tWords.forEach((tw) => {
         const d = calculateLevenshteinDistance(qw, tw);
         const l = Math.max(qw.length, tw.length);
-        const s = l ? 1 - d / l : 0;
+        let s = l ? 1 - d / l : 0;
+        if (tw[0] !== qw[0]) {
+          s -= 0.3; // heavy penalty for mismatched first letter
+        } else if (tw.slice(0, Math.min(2, tw.length, qw.length)) !== qw.slice(0, Math.min(2, tw.length, qw.length))) {
+          s -= 0.1; // lighter penalty for differing prefix
+        }
         if (s > best) best = s;
       });
-      if (best > 0.5) matched++; // Increased word match threshold to 0.5
+      return Math.max(0, best);
     });
-    const wordScore = qWords.length ? matched / qWords.length : 0;
+    const wordScore = tokenScores.length
+      ? tokenScores.reduce((sum, s) => sum + s, 0) / tokenScores.length
+      : 0;
 
-    const score = 0.4 * levScore + 0.4 * ngramScore + 0.2 * wordScore; // Adjusted weights
+    const score = 0.3 * levScore + 0.3 * ngramScore + 0.4 * wordScore; // prioritize token accuracy
     return score >= threshold ? score : 0;
   } catch (error) {
     console.error("fuzzyMatch error:", error);
@@ -165,7 +171,7 @@ const fuzzyMatch = (query, target, options = {}) => {
  * @param {string} query - Search query
  * @param {string[]} targets - Array of strings to search
  * @param {Object} [options={}] - Configuration options
- * @param {number} [options.threshold=0.5] - Minimum similarity score
+ * @param {number} [options.threshold=0.6] - Minimum similarity score
  * @param {number} [options.maxResults=Infinity] - Maximum results to return
  * @param {boolean} [options.caseSensitive=false] - Case sensitive matching
  * @returns {{text: string, score: number}[]} Array of results
@@ -175,7 +181,7 @@ const fuzzySearch = (query, targets, options = {}) => {
     console.warn("fuzzySearch: targets must be an array");
     return [];
   }
-  const { threshold = 0.5, maxResults = Infinity, caseSensitive = false } = options;
+  const { threshold = 0.6, maxResults = Infinity, caseSensitive = false } = options;
   const results = [];
   targets.forEach((t) => {
     const score = fuzzyMatch(query, t, { threshold, caseSensitive });

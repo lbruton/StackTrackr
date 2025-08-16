@@ -248,6 +248,24 @@ const setupEventListeners = () => {
       safeAttachListener(elements.searchInput, "input", debouncedSearch, "Search Input");
     }
 
+    // Ensure debounce utility is used for search input events
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) {
+      const debouncedSearchHandler = debounce((event) => {
+        const query = event.target.value;
+        searchQuery = query;
+        currentPage = 1;
+        filterInventory();
+      }, 300);
+
+      safeAttachListener(
+        searchInput,
+        'input',
+        debouncedSearchHandler,
+        'Debounced search input handler'
+      );
+    }
+
     // Responsive column handling
     setupResponsiveColumns();
 
@@ -487,6 +505,9 @@ const setupEventListeners = () => {
 
           const serial = getNextSerial();
           const catalog = elements.itemCatalog ? elements.itemCatalog.value.trim() : "";
+          const marketValueInput = elements.itemMarketValue ? elements.itemMarketValue.value.trim() : "";
+          const marketValue = marketValueInput && !isNaN(parseFloat(marketValueInput)) ? parseFloat(marketValueInput) : 0;
+          
           inventory.push({
             metal,
             composition,
@@ -495,6 +516,7 @@ const setupEventListeners = () => {
             type,
             weight,
             price,
+            marketValue,
             date,
             purchaseLocation,
             storageLocation,
@@ -632,6 +654,8 @@ const setupEventListeners = () => {
 
           const oldItem = { ...inventory[editingIndex] };
           const serial = oldItem.serial;
+          const marketValueInput = elements.editMarketValue ? elements.editMarketValue.value.trim() : "";
+          const marketValue = marketValueInput && !isNaN(parseFloat(marketValueInput)) ? parseFloat(marketValueInput) : (oldItem.marketValue || 0);
 
           // Update the item preserving serial
           inventory[editingIndex] = {
@@ -643,6 +667,7 @@ const setupEventListeners = () => {
             type,
             weight,
             price,
+            marketValue,
             date,
             purchaseLocation,
             storageLocation,
@@ -1350,6 +1375,10 @@ const setupEventListeners = () => {
     debugLog("Setting up API modal listeners...");
     setupApiEvents();
 
+    // ENCRYPTION EVENT LISTENERS  
+    debugLog("Setting up encryption listeners...");
+    setupEncryptionEvents();
+
     // ABOUT MODAL EVENT LISTENERS
     debugLog("Setting up about modal listeners...");
     if (typeof setupAboutModalEvents === "function") {
@@ -1507,9 +1536,7 @@ const setupSearch = () => {
       safeAttachListener(
         elements.clearBtn,
         "click",
-        function () {
-          clearAllFilters();
-        },
+        clearAllFilters,
         "Clear search button",
       );
     }
@@ -2017,9 +2044,314 @@ const setupApiEvents = () => {
       "ESC key modal close",
     );
 
+    // Setup collectable toggle listeners for market value field visibility
+    if (elements.itemCollectable) {
+      safeAttachListener(
+        elements.itemCollectable,
+        "change",
+        function() {
+          const isCollectable = this.checked;
+          if (elements.marketValueField) {
+            elements.marketValueField.style.display = isCollectable ? 'block' : 'none';
+          }
+          if (elements.dateField) {
+            elements.dateField.style.display = isCollectable ? 'none' : 'block';
+          }
+        },
+        "Add form collectable toggle"
+      );
+    }
+
+    // Setup edit form collectable toggle
+    const editCollectable = document.getElementById('editCollectable');
+    if (editCollectable) {
+      safeAttachListener(
+        editCollectable,
+        "change",
+        function() {
+          const isCollectable = this.checked;
+          if (elements.editMarketValueField) {
+            elements.editMarketValueField.style.display = isCollectable ? 'block' : 'none';
+          }
+          if (elements.editDateField) {
+            elements.editDateField.style.display = isCollectable ? 'none' : 'block';
+          }
+        },
+        "Edit form collectable toggle"
+      );
+    }
+
     debugLog("✓ API events setup complete");
   } catch (error) {
     console.error("❌ Error setting up API events:", error);
+  }
+};
+
+// =============================================================================
+
+// ENCRYPTION EVENT HANDLERS
+// =============================================================================
+
+/**
+ * Sets up encryption-related event handlers
+ */
+const setupEncryptionEvents = () => {
+  debugLog("Setting up encryption events...");
+
+  try {
+    // Master password setup button
+    const setupPasswordBtn = document.getElementById('setupMasterPasswordBtn');
+    if (setupPasswordBtn) {
+      safeAttachListener(
+        setupPasswordBtn,
+        'click',
+        async () => {
+          const passwordInput = document.getElementById('masterPasswordInput');
+          const confirmInput = document.getElementById('confirmMasterPasswordInput');
+          
+          if (!passwordInput || !confirmInput) {
+            alert('Password input fields not found');
+            return;
+          }
+
+          const password = passwordInput.value.trim();
+          const confirm = confirmInput.value.trim();
+
+          if (!password) {
+            alert('Please enter a master password');
+            return;
+          }
+
+          if (password !== confirm) {
+            alert('Passwords do not match');
+            return;
+          }
+
+          if (password.length < 8) {
+            alert('Password must be at least 8 characters long');
+            return;
+          }
+
+          try {
+            const encryption = new StackrTrackrEncryption();
+            const success = await encryption.setupMasterPassword(password);
+            
+            if (success) {
+              alert('Master password set successfully! All your data is now encrypted.');
+              passwordInput.value = '';
+              confirmInput.value = '';
+              updateEncryptionUI();
+            } else {
+              alert('Failed to set up encryption. Please try again.');
+            }
+          } catch (error) {
+            console.error('Encryption setup error:', error);
+            alert('Error setting up encryption: ' + error.message);
+          }
+        },
+        'Setup master password button'
+      );
+    }
+
+    // Unlock with password button  
+    const unlockBtn = document.getElementById('unlockWithPasswordBtn');
+    if (unlockBtn) {
+      safeAttachListener(
+        unlockBtn,
+        'click',
+        async () => {
+          const passwordInput = document.getElementById('unlockPasswordInput');
+          
+          if (!passwordInput) {
+            alert('Password input field not found');
+            return;
+          }
+
+          const password = passwordInput.value.trim();
+          if (!password) {
+            alert('Please enter your master password');
+            return;
+          }
+
+          try {
+            const encryption = new StackrTrackrEncryption();
+            const success = await encryption.unlockWithPassword(password);
+            
+            if (success) {
+              passwordInput.value = '';
+              updateEncryptionUI();
+              // Refresh the current view to show decrypted data
+              if (typeof loadAndDisplayData === 'function') {
+                await loadAndDisplayData();
+              }
+            } else {
+              alert('Incorrect password');
+            }
+          } catch (error) {
+            console.error('Unlock error:', error);
+            alert('Error unlocking: ' + error.message);
+          }
+        },
+        'Unlock with password button'
+      );
+    }
+
+    // Change password button
+    const changePasswordBtn = document.getElementById('changePasswordBtn');
+    if (changePasswordBtn) {
+      safeAttachListener(
+        changePasswordBtn,
+        'click',
+        async () => {
+          const currentInput = document.getElementById('currentPasswordInput');
+          const newInput = document.getElementById('newPasswordInput');
+          const confirmInput = document.getElementById('confirmNewPasswordInput');
+          
+          if (!currentInput || !newInput || !confirmInput) {
+            alert('Password input fields not found');
+            return;
+          }
+
+          const currentPassword = currentInput.value.trim();
+          const newPassword = newInput.value.trim();
+          const confirmPassword = confirmInput.value.trim();
+
+          if (!currentPassword) {
+            alert('Please enter your current password');
+            return;
+          }
+
+          if (!newPassword) {
+            alert('Please enter a new password');
+            return;
+          }
+
+          if (newPassword !== confirmPassword) {
+            alert('New passwords do not match');
+            return;
+          }
+
+          if (newPassword.length < 8) {
+            alert('New password must be at least 8 characters long');
+            return;
+          }
+
+          try {
+            const encryption = new StackrTrackrEncryption();
+            const success = await encryption.changePassword(currentPassword, newPassword);
+            
+            if (success) {
+              alert('Password changed successfully!');
+              currentInput.value = '';
+              newInput.value = '';
+              confirmInput.value = '';
+            } else {
+              alert('Current password is incorrect');
+            }
+          } catch (error) {
+            console.error('Change password error:', error);
+            alert('Error changing password: ' + error.message);
+          }
+        },
+        'Change password button'
+      );
+    }
+
+    // Disable encryption button
+    const disableEncryptionBtn = document.getElementById('disableEncryptionBtn');
+    if (disableEncryptionBtn) {
+      safeAttachListener(
+        disableEncryptionBtn,
+        'click',
+        async () => {
+          const passwordInput = document.getElementById('disableEncryptionPasswordInput');
+          
+          if (!passwordInput) {
+            alert('Password input field not found');
+            return;
+          }
+
+          const password = passwordInput.value.trim();
+          if (!password) {
+            alert('Please enter your master password to disable encryption');
+            return;
+          }
+
+          if (!confirm('Are you sure you want to disable encryption? Your data will be stored unencrypted.')) {
+            return;
+          }
+
+          try {
+            const encryption = new StackrTrackrEncryption();
+            const success = await encryption.disableEncryption(password);
+            
+            if (success) {
+              alert('Encryption disabled. Your data is now stored unencrypted.');
+              passwordInput.value = '';
+              updateEncryptionUI();
+              // Refresh the current view to show unencrypted data
+              if (typeof loadAndDisplayData === 'function') {
+                await loadAndDisplayData();
+              }
+            } else {
+              alert('Incorrect password');
+            }
+          } catch (error) {
+            console.error('Disable encryption error:', error);
+            alert('Error disabling encryption: ' + error.message);
+          }
+        },
+        'Disable encryption button'
+      );
+    }
+
+    debugLog("✓ Encryption events setup complete");
+  } catch (error) {
+    console.error("❌ Error setting up encryption events:", error);
+  }
+};
+
+/**
+ * Updates the encryption UI based on current encryption status
+ */
+const updateEncryptionUI = () => {
+  try {
+    const encryption = new StackrTrackrEncryption();
+    const isSetup = encryption.isEncryptionSetup();
+    const isUnlocked = encryption.isUnlocked();
+
+    // Update status indicators
+    const setupSection = document.getElementById('encryptionSetupSection');
+    const unlockSection = document.getElementById('encryptionUnlockSection');
+    const managementSection = document.getElementById('encryptionManagementSection');
+    const statusIndicator = document.getElementById('encryptionStatus');
+
+    if (setupSection) {
+      setupSection.style.display = isSetup ? 'none' : 'block';
+    }
+
+    if (unlockSection) {
+      unlockSection.style.display = (isSetup && !isUnlocked) ? 'block' : 'none';
+    }
+
+    if (managementSection) {
+      managementSection.style.display = (isSetup && isUnlocked) ? 'block' : 'none';
+    }
+
+    if (statusIndicator) {
+      if (!isSetup) {
+        statusIndicator.textContent = 'Not Set Up';
+        statusIndicator.className = 'encryption-status not-setup';
+      } else if (!isUnlocked) {
+        statusIndicator.textContent = 'Locked';
+        statusIndicator.className = 'encryption-status locked';
+      } else {
+        statusIndicator.textContent = 'Unlocked';
+        statusIndicator.className = 'encryption-status unlocked';
+      }
+    }
+  } catch (error) {
+    console.error('Error updating encryption UI:', error);
   }
 };
 

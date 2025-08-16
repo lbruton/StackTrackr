@@ -24,8 +24,9 @@ const clearAllFilters = () => {
   if (metalFilter) metalFilter.value = '';
 
   currentPage = 1;
-  renderTable();
+  // Update chip UI before rerendering the table
   renderActiveFilters();
+  renderTable();
 };
 
 /**
@@ -224,6 +225,9 @@ const generateCategorySummary = (inventory) => {
 
   const metals = {};
   const types = {};
+  const dates = {};
+  const purchaseLocations = {};
+  const storageLocations = {};
   
   inventory.forEach(item => {
     // Count metals
@@ -236,6 +240,21 @@ const generateCategorySummary = (inventory) => {
     if (item.type) {
       types[item.type] = (types[item.type] || 0) + 1;
     }
+    
+    // Count dates (use >10 threshold instead of minCount)
+    if (item.date) {
+      dates[item.date] = (dates[item.date] || 0) + 1;
+    }
+    
+    // Count purchase locations (always show regardless of count)
+    if (item.purchaseLocation && item.purchaseLocation.trim()) {
+      purchaseLocations[item.purchaseLocation] = (purchaseLocations[item.purchaseLocation] || 0) + 1;
+    }
+    
+    // Count storage locations (always show regardless of count)
+    if (item.storageLocation && item.storageLocation.trim()) {
+      storageLocations[item.storageLocation] = (storageLocations[item.storageLocation] || 0) + 1;
+    }
   });
   
   // Filter out categories below minimum count
@@ -246,9 +265,21 @@ const generateCategorySummary = (inventory) => {
     Object.entries(types).filter(([key, count]) => count >= minCount)
   );
   
+  // Filter dates with >10 matches
+  const filteredDates = Object.fromEntries(
+    Object.entries(dates).filter(([key, count]) => count > 10)
+  );
+  
+  // Include ALL purchase and storage locations (no minimum threshold)
+  const filteredPurchaseLocations = { ...purchaseLocations };
+  const filteredStorageLocations = { ...storageLocations };
+  
   return {
     metals: filteredMetals,
     types: filteredTypes,
+    dates: filteredDates,
+    purchaseLocations: filteredPurchaseLocations,
+    storageLocations: filteredStorageLocations,
     totalItems: inventory.length
   };
 };
@@ -329,6 +360,27 @@ const renderActiveFilters = () => {
       chips.push({ field: 'type', value: type, count, total: categorySummary.totalItems });
     }
   });
+  
+  // Add date chips for dates with >10 matches
+  Object.entries(categorySummary.dates).forEach(([date, count]) => {
+    if (count > 10) {
+      chips.push({ field: 'date', value: date, count, total: categorySummary.totalItems });
+    }
+  });
+  
+  // Add purchase location chips (all locations, regardless of count)
+  Object.entries(categorySummary.purchaseLocations).forEach(([location, count]) => {
+    if (count > 0) {
+      chips.push({ field: 'purchaseLocation', value: location, count, total: categorySummary.totalItems });
+    }
+  });
+  
+  // Add storage location chips (all locations, regardless of count)
+  Object.entries(categorySummary.storageLocations).forEach(([location, count]) => {
+    if (count > 0) {
+      chips.push({ field: 'storageLocation', value: location, count, total: categorySummary.totalItems });
+    }
+  });
 
   // Add any explicitly applied filter chips (but not if they duplicate category chips)
   Object.entries(activeFilters).forEach(([field, criteria]) => {
@@ -384,6 +436,9 @@ const renderActiveFilters = () => {
         textColor = METAL_TEXT_COLORS[key] ? METAL_TEXT_COLORS[key]() : undefined;
         break;
       }
+      case 'date':
+        color = 'var(--info)'; // Use info color for dates
+        break;
       case 'purchaseLocation':
         color = getPurchaseLocationColor(firstValue);
         break;
@@ -461,6 +516,18 @@ const renderActiveFilters = () => {
 
     container.appendChild(chip);
   });
+
+  // Add clear button if there are any chips (check for both active and summary chips)
+  if (chips.length > 0) {
+    const clearButton = document.createElement('button');
+    clearButton.className = 'filter-clear-btn';
+    clearButton.innerHTML = 'Clear All';
+    clearButton.title = 'Clear all active filters';
+    clearButton.onclick = () => {
+      clearAllFilters();
+    };
+    container.appendChild(clearButton);
+  }
 };
 
 /**

@@ -390,18 +390,19 @@ const refreshProviderStatuses = () => {
   const duration = getCacheDurationMs();
   Object.keys(API_PROVIDERS).forEach((prov) => {
     if (config.keys[prov]) {
+      // API key is stored
       if (cache && cache.provider === prov && cache.timestamp) {
         const age = now - cache.timestamp;
         if (age <= duration) {
-          setProviderStatus(prov, "connected");
+          setProviderStatus(prov, "connected");  // Recently used with fresh data
         } else {
-          setProviderStatus(prov, "cached");
+          setProviderStatus(prov, "cached");     // Key stored but data is old
         }
       } else {
-        setProviderStatus(prov, "connected");
+        setProviderStatus(prov, "cached");       // Key stored but no recent usage
       }
     } else {
-      setProviderStatus(prov, "disconnected");
+      setProviderStatus(prov, "disconnected");   // No API key stored
     }
   });
 };
@@ -1631,7 +1632,7 @@ const downloadCompleteBackup = async () => {
       .replace(/[T:]/g, "-");
 
     // 1. Create inventory CSV using existing export logic
-    const inventory = loadData(LS_KEY, []);
+    const inventory = loadDataSync(LS_KEY, []);
     if (inventory.length > 0) {
       // Create CSV manually for backup instead of calling exportCsv()
       const headers = [
@@ -1680,7 +1681,7 @@ const downloadCompleteBackup = async () => {
     }
 
     // 2. Create spot history CSV
-    const spotHistory = loadData(SPOT_HISTORY_KEY, []);
+    const spotHistory = loadDataSync(SPOT_HISTORY_KEY, []);
     if (spotHistory.length > 0) {
       const historyData = [
         ["Timestamp", "Metal", "Price", "Source"],

@@ -105,7 +105,7 @@ class CatalogManager {
   _load() {
     try {
       // Load legacy data
-      const legacyData = loadData(this.storageKey, {});
+      const legacyData = loadDataSync(this.storageKey, {});
       
       // Initialize with legacy format for backward compatibility
       this._mappings = { ...legacyData };

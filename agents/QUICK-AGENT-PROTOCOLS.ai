@@ -1,0 +1,193 @@
+# Quick Agent Protocols Reference
+**Version**: 1.0 - Essential Checklist for All Agents  
+**Created**: August 15, 2025  
+**Purpose**: Fast reference for mandatory protocols
+
+---
+
+## 🚨 **EVERY TASK STARTS WITH THIS**
+
+### **1. Git Protocol** (MANDATORY)
+```bash
+git status                    # Check current state
+git add -A && git commit -m "Checkpoint before [task]"  # Create checkpoint
+git log --oneline -1         # Note commit hash
+```
+
+### **2. MCP Memory Check** (MANDATORY)
+```
+Use: mcp_memory_search_nodes
+Query: "[task description] OR [technology] OR [similar issue]"
+Purpose: Find past solutions, patterns, known issues
+
+# Quick Roadmap Queries:
+- "critical-bugs" - Get urgent issues to fix
+- "bug-fixes-non-critical" - Get UX improvements 
+- "feature-enhancements" - Get existing feature improvements
+- "new-features" - Get brand new functionality
+- "current-sprint" - Get active work items
+- "testing-qa" - Get quality assurance tasks
+```
+
+### **3. Documentation Check** (MANDATORY)
+- Read `/docs/roadmap.md` for current priorities
+- Check `/docs/fixes/` for related solutions
+- Review script loading order in `/agents.ai`
+
+---
+
+## 🛠️ **DURING WORK**
+
+### **Every 15-20 Minutes**
+```bash
+git add -A && git commit -m "Progress: [what was completed]"  # Incremental commit
+```
+
+### **When You Discover Something Important**
+```
+Use: mcp_memory_add_observations
+Add: Code patterns, workarounds, pitfalls, solutions
+Purpose: Build knowledge for future tasks
+```
+
+### **When You Need Library Help**
+```
+Use: mcp_context7_resolve-library-id → mcp_context7_get-library-docs
+Purpose: Get specific implementation guidance
+```
+
+---
+
+## ✅ **EVERY TASK ENDS WITH THIS**
+
+### **1. Final Git Commit**
+```bash
+git add -A && git commit -m "feat: [complete description of changes]"
+```
+
+### **2. Document in Memory**
+```
+Use: mcp_memory_create_entities
+Create: New solution patterns, architectural decisions, bug fixes
+Purpose: Share knowledge with future agents
+```
+
+### **3. Test with Playwright** (For UI changes)
+```
+Use: mcp_playwright_browser_navigate → mcp_playwright_browser_snapshot
+Purpose: Validate functionality and capture state
+```
+
+### **4. Update Documentation**
+- Create patch file in `/docs/patch/` if version bumped
+- Add fix file in `/docs/fixes/` if bug resolved
+- Update agent memory file with session summary
+
+---
+
+## 🚫 **NEVER SKIP THESE**
+
+❌ **Git checkpoint before changes**  
+❌ **Memory search for existing solutions**  
+❌ **Documentation of decisions and discoveries**  
+❌ **Testing critical user workflows**  
+❌ **Incremental commits for long tasks**
+
+---
+
+## 🔧 **Emergency Procedures**
+
+### **If Something Breaks**
+```bash
+git reset --hard HEAD~1      # Quick rollback to checkpoint
+```
+
+### **If You Need Help**
+```
+Use: mcp_memory_search_nodes 
+Query: "error [error-message] OR debugging [component]"
+Purpose: Find solutions from past agents
+```
+
+### **If You Discover a Bug**
+1. Document in memory: `mcp_memory_create_entities`
+2. Create fix file: `/docs/fixes/BUG-[number].md`
+3. Test thoroughly before committing
+
+---
+
+## 📞 **Agent Coordination**
+
+### **Before Working on High-Risk Files**
+- `index.html`, `events.js`, `css/styles.css`
+- Check if other agents are working on same files
+- Coordinate through memory system or direct communication
+
+### **When Handing Off**
+1. Commit all work: `git add -A && git commit`
+2. Update memory: Document current state and next steps
+3. Create handoff notes in agent memory file
+
+---
+
+## 🎯 **Quality Gates** 
+
+Every change must pass:
+- ✅ **Functional**: Works as intended
+- ✅ **Integration**: No breaking changes  
+- ✅ **Themes**: All 3 themes work (dark/light/sepia)
+- ✅ **Browsers**: Chrome, Firefox, Safari, Edge
+- ✅ **Mobile**: Responsive design maintained
+- ✅ **File Protocol**: Works via file:// opening
+- ✅ **Memory**: Knowledge captured for future agents
+- ✅ **Documentation**: Changes properly documented
+
+---
+
+**Remember**: We're building a knowledge base through MCP memory. Every discovery you make helps future agents work more efficiently!
+
+---
+
+## 🌙 **EVENING SESSION PROTOCOL**
+
+### **When Human Says: "I have X hours, what can we work on?"**
+
+**Step 1: Complete Context Retrieval** (2-3 minutes)
+```
+mcp_memory_read_graph                     # Get complete project state
+mcp_memory_search_nodes: "critical-bugs" # Check urgent items
+mcp_memory_search_nodes: "current-sprint" # Check active work
+git status                               # Check current state
+```
+
+**Step 2: Intelligent Analysis** (3-5 minutes)
+- Session time available
+- Human priorities mentioned  
+- Agent specialization match
+- Dependencies and blockers
+- Risk level for session length
+
+**Step 3: Structured Response**
+```
+🤖 Evening Session Analysis:
+
+📋 Available Work (from memory):
+• Critical: [X urgent items]
+• Current Sprint: [active work with time estimates]
+• Bug Fixes: [non-critical issues]
+• Features: [enhancement opportunities]
+
+🎯 Recommended for [X]-hour session:
+PRIMARY: [Main task with 60% of time]
+SECONDARY: [Backup task with 30% of time]  
+BACKUP: [Quick win with 10% of time]
+
+🚀 Session Goals:
+1. [Primary objective]
+2. [Secondary objective]
+3. [Learning/documentation goal]
+
+Ready to proceed with [primary task]?
+```
+
+**See**: `/docs/evening-work-session-protocol.md` for complete workflow details.

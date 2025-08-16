@@ -1,0 +1,1429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lonnie's Vulnerability Toolset</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #1e1e2e 0%, #2d2d44 100%);
+      color: #e0e0e0;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 2rem;
+      padding: 2rem;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 15px;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      position: relative;
+    }
+
+    .header h1 {
+      font-size: 2.5rem;
+      font-weight: 700;
+      background: linear-gradient(45deg, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4);
+      background-size: 300% 300%;
+      background-clip: text;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: gradientShift 6s ease infinite;
+      margin-bottom: 0.5rem;
+    }
+
+    .help-button {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      padding: 0.5rem 1rem;
+      background: rgba(78, 205, 196, 0.2);
+      border: 1px solid #4ecdc4;
+      color: #4ecdc4;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 1rem;
+      transition: all 0.3s ease;
+    }
+
+    .help-button:hover {
+      background: rgba(78, 205, 196, 0.3);
+      transform: translateY(-2px);
+    }
+
+    /* Modal Styles */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.7);
+    }
+
+    .modal-content {
+      background: #2d2d44;
+      margin: 5% auto;
+      padding: 2rem;
+      border: 1px solid #4ecdc4;
+      border-radius: 15px;
+      width: 80%;
+      max-width: 800px;
+      max-height: 90vh;
+      overflow-y: auto;
+      position: relative;
+    }
+
+    .modal-content h2 {
+      color: #4ecdc4;
+      margin-bottom: 1.5rem;
+    }
+
+    .modal-content h3 {
+      color: #ff6b6b;
+      margin: 1.5rem 0 0.5rem 0;
+    }
+
+    .modal-content ul, .modal-content ol {
+      margin-left: 1.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .modal-content li {
+      margin: 0.5rem 0;
+    }
+
+    .close {
+      position: absolute;
+      right: 1rem;
+      top: 1rem;
+      color: #4ecdc4;
+      font-size: 1.5rem;
+      cursor: pointer;
+    }
+
+    .close:hover {
+      color: #ff6b6b;
+    }
+
+    .chart-modal-content {
+      width: 95%;
+      height: 90vh;
+      max-width: 1400px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .fullscreen-chart-container {
+      flex: 1;
+      min-height: 0;
+      position: relative;
+      margin-top: 1rem;
+    }
+
+    .expand-button {
+      background: none;
+      border: none;
+      color: #4ecdc4;
+      font-size: 1.2rem;
+      cursor: pointer;
+      padding: 0.2rem 0.5rem;
+      margin-left: 0.5rem;
+      transition: transform 0.3s ease;
+    }
+
+    .expand-button:hover {
+      transform: scale(1.1);
+      color: #ff6b6b;
+    }
+
+    .header p {
+      opacity: 0.8;
+      font-size: 1.1rem;
+    }
+
+    @keyframes gradientShift {
+      0%, 100% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+    }
+
+    .upload-section {
+      background: rgba(255, 255, 255, 0.05);
+      padding: 2rem;
+      border-radius: 15px;
+      margin-bottom: 2rem;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .upload-area {
+      border: 2px dashed #4ecdc4;
+      border-radius: 10px;
+      padding: 2rem;
+      text-align: center;
+      background: rgba(78, 205, 196, 0.1);
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+
+    .upload-area:hover {
+      border-color: #45b7d1;
+      background: rgba(69, 183, 209, 0.15);
+    }
+
+    .upload-area.dragover {
+      border-color: #ff6b6b;
+      background: rgba(255, 107, 107, 0.15);
+    }
+
+    .file-input {
+      display: none;
+    }
+
+    .upload-btn {
+      background: linear-gradient(45deg, #4ecdc4, #45b7d1);
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin: 10px;
+    }
+
+    .upload-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(78, 205, 196, 0.4);
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .stat-card {
+      background: rgba(255, 255, 255, 0.05);
+      padding: 1.5rem;
+      border-radius: 15px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: var(--card-color);
+    }
+
+    .stat-card.critical { --card-color: #ff4757; }
+    .stat-card.high { --card-color: #ff7675; }
+    .stat-card.medium { --card-color: #fdcb6e; }
+    .stat-card.low { --card-color: #6c5ce7; }
+
+    .stat-value {
+      font-size: 2.5rem;
+      font-weight: bold;
+      color: var(--card-color);
+      margin-bottom: 0.5rem;
+    }
+
+    .stat-label {
+      font-size: 1rem;
+      opacity: 0.8;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .trend-indicator {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      font-size: 1.2rem;
+    }
+
+    .trend-up { color: #ff4757; }
+    .trend-down { color: #00b894; }
+
+    .charts-section {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+      gap: 2rem;
+      margin-bottom: 2rem;
+    }
+
+    .chart-container {
+      background: rgba(255, 255, 255, 0.05);
+      padding: 2rem;
+      border-radius: 15px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .chart-title {
+      text-align: center;
+      margin-bottom: 1rem;
+      font-size: 1.2rem;
+      color: #4ecdc4;
+    }
+
+    .controls {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      background: rgba(255, 255, 255, 0.1);
+      color: #e0e0e0;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      padding: 10px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .btn:hover {
+      background: rgba(255, 255, 255, 0.2);
+      transform: translateY(-2px);
+    }
+
+    .history-section {
+      background: rgba(255, 255, 255, 0.05);
+      padding: 2rem;
+      border-radius: 15px;
+      margin-bottom: 2rem;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .history-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem;
+      margin: 0.5rem 0;
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: 8px;
+      border-left: 4px solid #4ecdc4;
+    }
+
+    .timestamp {
+      font-size: 0.9rem;
+      opacity: 0.7;
+    }
+
+    @media (max-width: 768px) {
+      .charts-section {
+        grid-template-columns: 1fr;
+      }
+      
+      .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      
+      .header h1 {
+        font-size: 2rem;
+      }
+    }
+
+    .docker-info {
+      background: rgba(255, 255, 255, 0.05);
+      padding: 2rem;
+      border-radius: 15px;
+      margin-bottom: 2rem;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .code-block {
+      background: rgba(0, 0, 0, 0.3);
+      padding: 1rem;
+      border-radius: 8px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.9rem;
+      margin: 1rem 0;
+      overflow-x: auto;
+    }
+
+    .help-btn {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      width: 60px;
+      height: 60px;
+      background: linear-gradient(45deg, #4ecdc4, #45b7d1);
+      border: none;
+      border-radius: 50%;
+      color: white;
+      font-size: 24px;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(78, 205, 196, 0.4);
+      transition: all 0.3s ease;
+      z-index: 1000;
+    }
+
+    .help-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(78, 205, 196, 0.6);
+    }
+
+    .help-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      z-index: 1001;
+      backdrop-filter: blur(5px);
+    }
+
+    .help-content {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: linear-gradient(135deg, #1e1e2e 0%, #2d2d44 100%);
+      padding: 2rem;
+      border-radius: 15px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      max-width: 600px;
+      max-height: 80vh;
+      overflow-y: auto;
+      color: #e0e0e0;
+    }
+
+    .help-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      padding-bottom: 1rem;
+    }
+
+    .help-close {
+      background: none;
+      border: none;
+      color: #e0e0e0;
+      font-size: 24px;
+      cursor: pointer;
+      padding: 0;
+      width: 30px;
+      height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      transition: background 0.3s ease;
+    }
+
+    .help-close:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .help-section {
+      margin-bottom: 1.5rem;
+    }
+
+    .help-section h3 {
+      color: #4ecdc4;
+      margin-bottom: 0.5rem;
+      font-size: 1.1rem;
+    }
+
+    .help-section p {
+      margin-bottom: 0.5rem;
+      line-height: 1.5;
+    }
+
+    .help-section ul {
+      padding-left: 1.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .help-section li {
+      margin-bottom: 0.25rem;
+    }
+
+    .copyright {
+      text-align: center;
+      margin-top: 2rem;
+      padding-top: 1rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      font-size: 0.9rem;
+      opacity: 0.7;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+        <div class="header">
+      <h1>Lonnie's Vulnerability Toolset</h1>
+      <p>Upload and analyze vulnerability scan data with VPR scoring</p>
+      <button id="helpButton" class="help-button">❔ Help Guide</button>
+    </div>
+
+    <!-- Help Modal -->
+    <div id="helpModal" class="modal">
+      <div class="modal-content">
+        <span class="close">&times;</span>
+        <h2>📘 Help Guide</h2>
+        
+        <h3>Quick Start</h3>
+        <ol>
+          <li>Click "Choose File" to upload your vulnerability scan CSV file</li>
+          <li>Select your preferred date source:
+            <ul>
+              <li><strong>Upload Date:</strong> Uses today's date for tracking</li>
+              <li><strong>CSV Date:</strong> Extracts the date from your CSV file</li>
+            </ul>
+          </li>
+          <li>View your vulnerability metrics and VPR scores</li>
+        </ol>
+
+        <h3>Features</h3>
+        <ul>
+          <li>Automatic VPR score calculation and categorization</li>
+          <li>Severity level breakdown</li>
+          <li>Date tracking for trend analysis</li>
+          <li>Data persistence in browser storage</li>
+        </ul>
+
+        <h3>Tips</h3>
+        <ul>
+          <li>Regular uploads help track vulnerability trends over time</li>
+          <li>Use consistent CSV formats for best results</li>
+          <li>Check the date source setting before each upload</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Upload Section -->
+    <div class="upload-section">
+      <h2>Upload Vulnerability Data</h2>
+      
+      <!-- Date Source Configuration -->
+      <div style="margin-bottom: 1rem; padding: 1rem; background: rgba(255, 255, 255, 0.05); border-radius: 8px;">
+        <h3 style="margin: 0 0 0.5rem 0; color: #4ecdc4;">📅 Date Tracking Options</h3>
+        <div style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: center;">
+          <label style="display: flex; align-items: center; gap: 0.5rem;">
+            <input type="radio" name="dateSource" value="csv" checked>
+            <span>Extract Date from CSV</span>
+          </label>
+          <label style="display: flex; align-items: center; gap: 0.5rem;">
+            <input type="radio" name="dateSource" value="upload">
+            <span>Use Upload Date</span>
+          </label>
+          <input type="text" id="dateColumnName" placeholder="Date column name (e.g., 'report_date', 'scan_date')" 
+                 style="padding: 0.5rem; border-radius: 4px; border: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); color: #e0e0e0; flex: 1; min-width: 250px;" disabled>
+        </div>
+        <small style="opacity: 0.7; display: block; margin-top: 0.5rem;">
+          💡 CSV date extraction will use the most recent date found in the specified column
+        </small>
+      </div>
+      
+      <div class="upload-area" id="uploadArea">
+        <p>Drop CSV files here or click to select</p>
+        <input type="file" id="fileInput" class="file-input" accept=".csv" multiple>
+        <button class="upload-btn" onclick="document.getElementById('fileInput').click()">
+          Choose Files
+        </button>
+      </div>
+    </div>
+
+    <!-- Current Statistics -->
+    <div class="stats-grid" id="statsGrid">
+      <div class="stat-card critical">
+        <div class="trend-indicator" id="criticalTrend"></div>
+        <div class="stat-value" id="criticalValue">0</div>
+        <div class="stat-label">Critical VPR</div>
+      </div>
+      <div class="stat-card high">
+        <div class="trend-indicator" id="highTrend"></div>
+        <div class="stat-value" id="highValue">0</div>
+        <div class="stat-label">High VPR</div>
+      </div>
+      <div class="stat-card medium">
+        <div class="trend-indicator" id="mediumTrend"></div>
+        <div class="stat-value" id="mediumValue">0</div>
+        <div class="stat-label">Medium VPR</div>
+      </div>
+      <div class="stat-card low">
+        <div class="trend-indicator" id="lowTrend"></div>
+        <div class="stat-value" id="lowValue">0</div>
+        <div class="stat-label">Low VPR</div>
+      </div>
+    </div>
+
+    <!-- Charts Section -->
+    <div class="charts-section">
+      <div class="chart-container">
+        <div class="chart-title">Current VPR Distribution</div>
+        <canvas id="currentChart"></canvas>
+      </div>
+      <div class="chart-container">
+        <div class="chart-title">
+          VPR History Trends
+          <button id="expandChart" class="expand-button" title="View Full Screen">⛶</button>
+        </div>
+        <canvas id="historyChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Fullscreen Chart Modal -->
+    <div id="chartModal" class="modal">
+      <div class="modal-content chart-modal-content">
+        <span class="close">&times;</span>
+        <h2>Historical Vulnerability Trends</h2>
+        <div class="fullscreen-chart-container">
+          <canvas id="fullscreenChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="controls">
+      <button class="btn" onclick="exportHistory()">📥 Export History (JSON)</button>
+      <button class="btn" onclick="importHistory()">📤 Import History (JSON)</button>
+      <button class="btn" onclick="clearHistory()">🗑️ Clear History</button>
+      <input type="file" id="importInput" accept=".json" style="display: none;">
+    </div>
+
+    <!-- History Section -->
+    <div class="history-section">
+      <h2>Upload History</h2>
+      <div id="historyList">
+        <p style="opacity: 0.6; text-align: center;">No upload history yet</p>
+      </div>
+    </div>
+
+    <!-- Docker Setup Information -->
+    <div class="docker-info">
+      <h2>🐳 Docker Setup (Optional)</h2>
+      <p>For team deployment, you can containerize this application:</p>
+      
+      <h3>Dockerfile</h3>
+      <div class="code-block">FROM nginx:alpine
+COPY . /usr/share/nginx/html
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]</div>
+
+      <h3>Build and Run</h3>
+      <div class="code-block">docker build -t vulnerability-toolset .
+docker run -p 8080:80 vulnerability-toolset</div>
+
+      <h3>Docker Compose</h3>
+      <div class="code-block">version: '3.8'
+services:
+  vulnerability-toolset:
+    build: .
+    ports:
+      - "8080:80"
+    volumes:
+      - ./data:/usr/share/nginx/html/data</div>
+    </div>
+
+    <!-- Copyright Footer -->
+    <div class="copyright">
+      <p style="font-size: 1.1em; margin-bottom: 0.5rem;">Lonnie's Vulnerability Toolset</p>
+      <p style="font-weight: bold;">Copyright © 2025 Lonnie Bruton</p>
+      <p>This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.</p>
+      <p style="margin-top: 0.5rem;"><a href="LICENSE" style="color: #4ecdc4; text-decoration: none;">View Full License</a></p>
+    </div>
+  </div>
+
+  <!-- Help Button -->
+  <button class="help-btn" onclick="showHelp()" title="Help & Instructions">
+    ❓
+  </button>
+
+  <!-- Help Modal -->
+  <div class="help-modal" id="helpModal" onclick="hideHelp(event)">
+    <div class="help-content" onclick="event.stopPropagation()">
+      <div class="help-header">
+        <h2>📚 How to Use Lonnie's Vulnerability Toolset</h2>
+        <button class="help-close" onclick="hideHelp()">&times;</button>
+      </div>
+
+      <div class="help-section">
+        <h3>🚀 Quick Start</h3>
+        <p>1. Choose your date tracking method (upload date or CSV date)</p>
+        <p>2. Upload one or more CSV files with vulnerability data</p>
+        <p>3. View your VPR totals and charts automatically</p>
+        <p>4. Track history and export data as needed</p>
+      </div>
+
+      <div class="help-section">
+        <h3>📊 CSV File Requirements</h3>
+        <p>Your CSV files should contain these columns:</p>
+        <ul>
+          <li><strong>VPR Column:</strong> Named <code>vpr</code>, <code>vpr_score</code>, or <code>score</code></li>
+          <li><strong>Severity Column:</strong> Named <code>severity</code>, <code>risk</code>, <code>priority</code>, or <code>level</code></li>
+          <li><strong>Date Column (optional):</strong> Any column with dates if using CSV date extraction</li>
+        </ul>
+        <p>Severity values should be: <code>Critical</code>, <code>High</code>, <code>Medium</code>, or <code>Low</code></p>
+      </div>
+
+      <div class="help-section">
+        <h3>📅 Date Tracking</h3>
+        <p><strong>Upload Date:</strong> Uses the time when you upload files (default)</p>
+        <p><strong>CSV Date:</strong> Extracts dates from your CSV files</p>
+        <ul>
+          <li>Enter the column name containing dates</li>
+          <li>Supports formats: YYYY-MM-DD, MM/DD/YYYY, MM-DD-YYYY</li>
+          <li>Uses the most recent date found across all files</li>
+        </ul>
+      </div>
+
+      <div class="help-section">
+        <h3>📈 Features</h3>
+        <ul>
+          <li><strong>VPR Totals:</strong> Automatically calculates sum of VPR scores by severity</li>
+          <li><strong>Trend Indicators:</strong> Shows ↗️ for increases, ↘️ for decreases</li>
+          <li><strong>Visual Charts:</strong> Doughnut chart for current data, line chart for trends</li>
+          <li><strong>History:</strong> Keeps track of all uploads with timestamps</li>
+          <li><strong>Export/Import:</strong> Save and restore your data in JSON format</li>
+        </ul>
+      </div>
+
+      <div class="help-section">
+        <h3>🐳 Docker Deployment</h3>
+        <p>For team use, deploy with Docker:</p>
+        <ul>
+          <li><code>docker build -t vpr-tracker .</code></li>
+          <li><code>docker run -p 8080:80 vpr-tracker</code></li>
+          <li>Or use <code>./deploy.sh</code> for guided setup</li>
+        </ul>
+      </div>
+
+      <div class="help-section">
+        <h3>💾 Data Storage</h3>
+        <ul>
+          <li><strong>Local:</strong> Data stored in browser localStorage</li>
+          <li><strong>Docker:</strong> Data persists in mounted volumes</li>
+          <li><strong>Export:</strong> Download JSON backups anytime</li>
+        </ul>
+      </div>
+
+      <div class="help-section">
+        <h3>🆘 Troubleshooting</h3>
+        <ul>
+          <li><strong>No data shown:</strong> Check column names match requirements</li>
+          <li><strong>Date not working:</strong> Verify date column name and format</li>
+          <li><strong>Charts not updating:</strong> Try refreshing the page</li>
+          <li><strong>History missing:</strong> Check if browser cleared localStorage</li>
+        </ul>
+      </div>
+
+      <div class="copyright">
+        <p><strong>Lonnie's Vulnerability Toolset</strong></p>
+        <p>Copyright © 2025 Lonnie Bruton</p>
+        <p>Licensed under GNU General Public License v3.0</p>
+        <p>Free and open source software for vulnerability management</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Application state
+    let currentData = { critical: 0, high: 0, medium: 0, low: 0 };
+    let history = JSON.parse(localStorage.getItem('vprHistory') || '[]');
+    let charts = {};
+
+    // Initialize the application
+    document.addEventListener('DOMContentLoaded', function() {
+      initializeCharts();
+      updateDisplay();
+      setupFileHandling();
+      updateHistoryDisplay();
+      setupDateSourceHandling();
+    });
+
+    // Setup date source radio button handling
+    function setupDateSourceHandling() {
+      const dateSourceRadios = document.querySelectorAll('input[name="dateSource"]');
+      const dateColumnInput = document.getElementById('dateColumnName');
+      
+      dateSourceRadios.forEach(radio => {
+        radio.addEventListener('change', function() {
+          if (this.value === 'csv') {
+            dateColumnInput.disabled = false;
+            dateColumnInput.focus();
+          } else {
+            dateColumnInput.disabled = true;
+            dateColumnInput.value = '';
+          }
+        });
+      });
+    }
+
+    // File handling setup
+    function setupFileHandling() {
+      const uploadArea = document.getElementById('uploadArea');
+      const fileInput = document.getElementById('fileInput');
+
+      // Drag and drop handlers
+      uploadArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        uploadArea.classList.add('dragover');
+      });
+
+      uploadArea.addEventListener('dragleave', () => {
+        uploadArea.classList.remove('dragover');
+      });
+
+      uploadArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        uploadArea.classList.remove('dragover');
+        const files = Array.from(e.dataTransfer.files).filter(f => f.name.endsWith('.csv'));
+        if (files.length > 0) {
+          processFiles(files);
+        }
+      });
+
+      // File input handler
+      fileInput.addEventListener('change', (e) => {
+        const files = Array.from(e.target.files);
+        if (files.length > 0) {
+          processFiles(files);
+        }
+      });
+    }
+
+    // Process uploaded CSV files
+    function processFiles(files) {
+      let totalCritical = 0, totalHigh = 0, totalMedium = 0, totalLow = 0;
+      let processedCount = 0;
+      let extractedDates = [];
+
+      files.forEach(file => {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const csv = e.target.result;
+          const data = parseCSV(csv);
+          const vprTotals = calculateVPRTotals(data);
+          
+          // Extract date if CSV date source is selected
+          const dateSource = document.querySelector('input[name="dateSource"]:checked').value;
+          if (dateSource === 'csv') {
+            const extractedDate = extractDateFromCSV(data);
+            if (extractedDate) {
+              extractedDates.push(extractedDate);
+            }
+          }
+          
+          totalCritical += vprTotals.critical;
+          totalHigh += vprTotals.high;
+          totalMedium += vprTotals.medium;
+          totalLow += vprTotals.low;
+          
+          processedCount++;
+          
+          // When all files are processed
+          if (processedCount === files.length) {
+            // Determine the timestamp to use
+            let timestamp;
+            if (dateSource === 'csv' && extractedDates.length > 0) {
+              // Use the most recent date from CSV files
+              const mostRecentDate = new Date(Math.max(...extractedDates.map(d => new Date(d))));
+              timestamp = mostRecentDate.toISOString();
+            } else {
+              // Use upload date
+              timestamp = new Date().toISOString();
+            }
+            
+            updateCurrentData({
+              critical: totalCritical,
+              high: totalHigh,
+              medium: totalMedium,
+              low: totalLow
+            });
+            
+            // Add to history
+            addToHistory({
+              timestamp: timestamp,
+              critical: totalCritical,
+              high: totalHigh,
+              medium: totalMedium,
+              low: totalLow,
+              files: files.map(f => f.name),
+              dateSource: dateSource,
+              extractedDates: extractedDates.length > 0 ? extractedDates : null
+            });
+          }
+        };
+        reader.readAsText(file);
+      });
+    }
+
+    // Extract date from CSV data
+    function extractDateFromCSV(data) {
+      const dateColumnName = document.getElementById('dateColumnName').value.toLowerCase().trim();
+      if (!dateColumnName || data.length === 0) return null;
+      
+      // Find the date column
+      const dateColumn = findColumn(data, [dateColumnName, 'date', 'created', 'timestamp', 'report_date', 'scan_date']);
+      if (!dateColumn) {
+        console.warn(`Date column '${dateColumnName}' not found`);
+        return null;
+      }
+      
+      // Extract all valid dates and return the most recent
+      const dates = data
+        .map(row => {
+          const dateStr = row[dateColumn];
+          if (!dateStr) return null;
+          
+          // Try to parse various date formats
+          const parsedDate = parseFlexibleDate(dateStr);
+          return parsedDate && !isNaN(parsedDate) ? parsedDate : null;
+        })
+        .filter(date => date !== null);
+      
+      if (dates.length === 0) {
+        console.warn(`No valid dates found in column '${dateColumn}'`);
+        return null;
+      }
+      
+      // Return the most recent date
+      return new Date(Math.max(...dates));
+    }
+
+    // Parse various date formats flexibly
+    function parseFlexibleDate(dateStr) {
+      if (!dateStr) return null;
+      
+      // Clean the date string
+      const cleaned = dateStr.toString().trim();
+      
+      // Try standard Date parsing first
+      let date = new Date(cleaned);
+      if (!isNaN(date)) return date;
+      
+      // Try common formats
+      const formats = [
+        /(\d{4})-(\d{1,2})-(\d{1,2})/, // YYYY-MM-DD
+        /(\d{1,2})\/(\d{1,2})\/(\d{4})/, // MM/DD/YYYY
+        /(\d{1,2})-(\d{1,2})-(\d{4})/, // MM-DD-YYYY
+        /(\d{4})\/(\d{1,2})\/(\d{1,2})/, // YYYY/MM/DD
+      ];
+      
+      for (const format of formats) {
+        const match = cleaned.match(format);
+        if (match) {
+          if (format.toString().includes('(\\d{4})')) {
+            // Year first format
+            date = new Date(match[1], match[2] - 1, match[3]);
+          } else {
+            // Month first format
+            date = new Date(match[3], match[1] - 1, match[2]);
+          }
+          if (!isNaN(date)) return date;
+        }
+      }
+      
+      return null;
+    }
+
+    // Parse CSV data
+    function parseCSV(csv) {
+      const lines = csv.split('\n').filter(line => line.trim());
+      if (lines.length < 2) return [];
+      
+      const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+      const data = [];
+      
+      for (let i = 1; i < lines.length; i++) {
+        const values = lines[i].split(',');
+        const row = {};
+        headers.forEach((header, index) => {
+          row[header] = values[index] ? values[index].trim() : '';
+        });
+        data.push(row);
+      }
+      
+      return data;
+    }
+
+    // Calculate VPR totals by severity
+    function calculateVPRTotals(data) {
+      const totals = { critical: 0, high: 0, medium: 0, low: 0 };
+      
+      // Find VPR and severity columns
+      const vprColumn = findColumn(data, ['vpr', 'vpr_score', 'score']);
+      const severityColumn = findColumn(data, ['severity', 'risk', 'priority', 'level']);
+      
+      if (!vprColumn || !severityColumn) {
+        console.warn('Could not find VPR or severity columns');
+        return totals;
+      }
+      
+      data.forEach(row => {
+        const vpr = parseFloat(row[vprColumn]) || 0;
+        const severity = (row[severityColumn] || '').toLowerCase();
+        
+        if (severity.includes('critical')) {
+          totals.critical += vpr;
+        } else if (severity.includes('high')) {
+          totals.high += vpr;
+        } else if (severity.includes('medium')) {
+          totals.medium += vpr;
+        } else if (severity.includes('low')) {
+          totals.low += vpr;
+        }
+      });
+      
+      return totals;
+    }
+
+    // Find column by possible names
+    function findColumn(data, possibleNames) {
+      if (data.length === 0) return null;
+      
+      const headers = Object.keys(data[0]);
+      for (const name of possibleNames) {
+        const found = headers.find(h => h.toLowerCase().includes(name));
+        if (found) return found;
+      }
+      return null;
+    }
+
+    // Update current data and display
+    function updateCurrentData(newData) {
+      const previousData = { ...currentData };
+      currentData = newData;
+      
+      updateDisplay();
+      updateTrendIndicators(previousData);
+      updateCharts();
+    }
+
+    // Update the display with current data
+    function updateDisplay() {
+      document.getElementById('criticalValue').textContent = Math.round(currentData.critical);
+      document.getElementById('highValue').textContent = Math.round(currentData.high);
+      document.getElementById('mediumValue').textContent = Math.round(currentData.medium);
+      document.getElementById('lowValue').textContent = Math.round(currentData.low);
+    }
+
+    // Update trend indicators
+    function updateTrendIndicators(previousData) {
+      updateTrend('criticalTrend', currentData.critical, previousData.critical);
+      updateTrend('highTrend', currentData.high, previousData.high);
+      updateTrend('mediumTrend', currentData.medium, previousData.medium);
+      updateTrend('lowTrend', currentData.low, previousData.low);
+    }
+
+    function updateTrend(elementId, current, previous) {
+      const element = document.getElementById(elementId);
+      if (current > previous) {
+        element.innerHTML = '↗️';
+        element.className = 'trend-indicator trend-up';
+      } else if (current < previous) {
+        element.innerHTML = '↘️';
+        element.className = 'trend-indicator trend-down';
+      } else {
+        element.innerHTML = '';
+      }
+    }
+
+    // Initialize charts
+    let fullscreenChart = null;
+
+    // Initialize fullscreen chart modal handlers
+    const chartModal = document.getElementById('chartModal');
+    const expandChartBtn = document.getElementById('expandChart');
+    const chartCloseBtn = chartModal.querySelector('.close');
+
+    expandChartBtn.onclick = function() {
+      chartModal.style.display = 'block';
+      document.body.style.overflow = 'hidden';
+      initializeFullscreenChart();
+    }
+
+    chartCloseBtn.onclick = function() {
+      chartModal.style.display = 'none';
+      document.body.style.overflow = 'auto';
+      if (fullscreenChart) {
+        fullscreenChart.destroy();
+        fullscreenChart = null;
+      }
+    }
+
+    window.onclick = function(event) {
+      if (event.target == chartModal) {
+        chartModal.style.display = 'none';
+        document.body.style.overflow = 'auto';
+        if (fullscreenChart) {
+          fullscreenChart.destroy();
+          fullscreenChart = null;
+        }
+      }
+    }
+
+    function initializeFullscreenChart() {
+      const ctx = document.getElementById('fullscreenChart').getContext('2d');
+      
+      // Sort history by date
+      const sortedHistory = [...history].sort((a, b) => {
+        const dateA = a.dateSource === 'csv' && a.extractedDates && a.extractedDates.length > 0 
+          ? new Date(a.extractedDates[0]) 
+          : new Date(a.timestamp);
+        const dateB = b.dateSource === 'csv' && b.extractedDates && b.extractedDates.length > 0 
+          ? new Date(b.extractedDates[0]) 
+          : new Date(b.timestamp);
+        return dateA - dateB;
+      });
+
+      const labels = sortedHistory.map(entry => {
+        const displayDate = entry.dateSource === 'csv' && entry.extractedDates && entry.extractedDates.length > 0
+          ? new Date(entry.extractedDates[0]).toLocaleDateString()
+          : new Date(entry.timestamp).toLocaleDateString();
+        return displayDate;
+      });
+
+      if (fullscreenChart) {
+        fullscreenChart.destroy();
+      }
+
+      fullscreenChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [
+            {
+              label: 'Critical',
+              data: sortedHistory.map(entry => entry.critical),
+              borderColor: '#ff4757',
+              backgroundColor: 'rgba(255, 71, 87, 0.1)',
+              fill: true,
+              tension: 0.1
+            },
+            {
+              label: 'High',
+              data: sortedHistory.map(entry => entry.high),
+              borderColor: '#ff7675',
+              backgroundColor: 'rgba(255, 118, 117, 0.1)',
+              fill: true,
+              tension: 0.1
+            },
+            {
+              label: 'Medium',
+              data: sortedHistory.map(entry => entry.medium),
+              borderColor: '#fdcb6e',
+              backgroundColor: 'rgba(253, 203, 110, 0.1)',
+              fill: true,
+              tension: 0.1
+            },
+            {
+              label: 'Low',
+              data: sortedHistory.map(entry => entry.low),
+              borderColor: '#6c5ce7',
+              backgroundColor: 'rgba(108, 92, 231, 0.1)',
+              fill: true,
+              tension: 0.1
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'top',
+              labels: {
+                color: '#e0e0e0',
+                font: {
+                  size: 14
+                }
+              }
+            },
+            tooltip: {
+              mode: 'index',
+              intersect: false
+            }
+          },
+          scales: {
+            x: {
+              grid: {
+                color: 'rgba(255, 255, 255, 0.1)'
+              },
+              ticks: {
+                color: '#e0e0e0'
+              }
+            },
+            y: {
+              grid: {
+                color: 'rgba(255, 255, 255, 0.1)'
+              },
+              ticks: {
+                color: '#e0e0e0'
+              }
+            }
+          }
+        }
+      });
+    }
+
+    function initializeCharts() {
+      // Current distribution chart
+      const currentCtx = document.getElementById('currentChart').getContext('2d');
+      charts.current = new Chart(currentCtx, {
+        type: 'doughnut',
+        data: {
+          labels: ['Critical', 'High', 'Medium', 'Low'],
+          datasets: [{
+            data: [0, 0, 0, 0],
+            backgroundColor: ['#ff4757', '#ff7675', '#fdcb6e', '#6c5ce7'],
+            borderWidth: 2,
+            borderColor: '#2d2d44'
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: {
+              labels: { color: '#e0e0e0' }
+            }
+          }
+        }
+      });
+
+      // History trend chart
+      const historyCtx = document.getElementById('historyChart').getContext('2d');
+      charts.history = new Chart(historyCtx, {
+        type: 'line',
+        data: {
+          labels: [],
+          datasets: [
+            {
+              label: 'Critical',
+              data: [],
+              borderColor: '#ff4757',
+              backgroundColor: 'rgba(255, 71, 87, 0.1)',
+              tension: 0.4
+            },
+            {
+              label: 'High',
+              data: [],
+              borderColor: '#ff7675',
+              backgroundColor: 'rgba(255, 118, 117, 0.1)',
+              tension: 0.4
+            },
+            {
+              label: 'Medium',
+              data: [],
+              borderColor: '#fdcb6e',
+              backgroundColor: 'rgba(253, 203, 110, 0.1)',
+              tension: 0.4
+            },
+            {
+              label: 'Low',
+              data: [],
+              borderColor: '#6c5ce7',
+              backgroundColor: 'rgba(108, 92, 231, 0.1)',
+              tension: 0.4
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            y: {
+              ticks: { color: '#e0e0e0' }
+            },
+            x: {
+              ticks: { color: '#e0e0e0' }
+            }
+          },
+          plugins: {
+            legend: {
+              labels: { color: '#e0e0e0' }
+            }
+          }
+        }
+      });
+    }
+
+    // Update charts with current data
+    function updateCharts() {
+      // Update current distribution chart
+      charts.current.data.datasets[0].data = [
+        currentData.critical,
+        currentData.high,
+        currentData.medium,
+        currentData.low
+      ];
+      charts.current.update();
+
+      // Update history chart with all entries, sorted by date
+      const sortedHistory = [...history].sort((a, b) => {
+        const dateA = a.dateSource === 'csv' && a.extractedDates && a.extractedDates.length > 0 
+          ? new Date(a.extractedDates[0]) 
+          : new Date(a.timestamp);
+        const dateB = b.dateSource === 'csv' && b.extractedDates && b.extractedDates.length > 0 
+          ? new Date(b.extractedDates[0]) 
+          : new Date(b.timestamp);
+        return dateA - dateB;
+      });
+
+      charts.history.data.labels = sortedHistory.map(entry => {
+        const displayDate = entry.dateSource === 'csv' && entry.extractedDates && entry.extractedDates.length > 0
+          ? new Date(entry.extractedDates[0]).toLocaleDateString()
+          : new Date(entry.timestamp).toLocaleDateString();
+        return displayDate;
+      });
+      
+      charts.history.data.datasets[0].data = sortedHistory.map(entry => entry.critical);
+      charts.history.data.datasets[1].data = sortedHistory.map(entry => entry.high);
+      charts.history.data.datasets[2].data = sortedHistory.map(entry => entry.medium);
+      charts.history.data.datasets[3].data = sortedHistory.map(entry => entry.low);
+      charts.history.update();
+    }
+
+    // Add entry to history
+    function addToHistory(entry) {
+      history.push(entry);
+      localStorage.setItem('vprHistory', JSON.stringify(history));
+      updateHistoryDisplay();
+      updateCharts();
+    }
+
+    // Update history display
+    function updateHistoryDisplay() {
+      const historyList = document.getElementById('historyList');
+      
+      if (history.length === 0) {
+        historyList.innerHTML = '<p style="opacity: 0.6; text-align: center;">No upload history yet</p>';
+        return;
+      }
+
+      historyList.innerHTML = history.slice(-5).reverse().map(entry => {
+        const dateIcon = entry.dateSource === 'csv' ? '📊' : '⬆️';
+        const dateTooltip = entry.dateSource === 'csv' ? 'Date from CSV' : 'Upload date';
+        
+        return `
+        <div class="history-item">
+          <div>
+            <strong>C:${Math.round(entry.critical)} H:${Math.round(entry.high)} M:${Math.round(entry.medium)} L:${Math.round(entry.low)}</strong>
+            ${entry.files ? `<br><small>${entry.files.join(', ')}</small>` : ''}
+            ${entry.extractedDates && entry.extractedDates.length > 0 ? 
+              `<br><small style="opacity: 0.8;">📅 CSV dates: ${entry.extractedDates.map(d => new Date(d).toLocaleDateString()).join(', ')}</small>` : ''}
+          </div>
+          <div class="timestamp">
+            <span title="${dateTooltip}">${dateIcon}</span>
+            ${new Date(entry.timestamp).toLocaleString()}
+          </div>
+        </div>
+      `;
+      }).join('');
+    }
+
+    // Export history as JSON
+    function exportHistory() {
+      const data = JSON.stringify(history, null, 2);
+      const blob = new Blob([data], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `vpr-history-${new Date().toISOString().split('T')[0]}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    // Import history from JSON
+    function importHistory() {
+      document.getElementById('importInput').click();
+    }
+
+    document.getElementById('importInput').addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          try {
+            const importedHistory = JSON.parse(e.target.result);
+            history = importedHistory;
+            localStorage.setItem('vprHistory', JSON.stringify(history));
+            updateHistoryDisplay();
+            updateCharts();
+            alert('History imported successfully!');
+          } catch (error) {
+            alert('Error importing history: ' + error.message);
+          }
+        };
+        reader.readAsText(file);
+      }
+    });
+
+    // Clear history
+    function clearHistory() {
+      if (confirm('Are you sure you want to clear all history?')) {
+        history = [];
+        localStorage.setItem('vprHistory', JSON.stringify(history));
+        updateHistoryDisplay();
+        updateCharts();
+      }
+    }
+
+    // Help modal functions
+    const modal = document.getElementById('helpModal');
+    const helpBtn = document.getElementById('helpButton');
+    const closeBtn = document.querySelector('.close');
+
+    helpBtn.onclick = function() {
+      modal.style.display = 'block';
+      document.body.style.overflow = 'hidden'; // Prevent background scrolling
+    }
+
+    closeBtn.onclick = function() {
+      modal.style.display = 'none';
+      document.body.style.overflow = 'auto'; // Restore scrolling
+    }
+
+    // Close modal when clicking outside
+    window.onclick = function(event) {
+      if (event.target == modal) {
+        modal.style.display = 'none';
+        document.body.style.overflow = 'auto'; // Restore scrolling
+      }
+    }
+
+    // Close help modal with Escape key
+    document.addEventListener('keydown', function(event) {
+      if (event.key === 'Escape' && modal.style.display === 'block') {
+        modal.style.display = 'none';
+        document.body.style.overflow = 'auto'; // Restore scrolling
+      }
+    });
+  </script>
+</body>
+</html>
