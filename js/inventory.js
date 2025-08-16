@@ -1091,9 +1091,73 @@ const startRowEdit = (idx) => {
         saveInventory();
       }
       
-      // Exit edit mode and re-render
+      // Exit edit mode for this row only and re-render just this row
       row.classList.remove('editing-row');
-      renderTable();
+      
+      // Re-render only this specific row to preserve other editing sessions
+      const originalIdx = inventory.indexOf(item);
+      const spotDisplay = item.isCollectable ? '—' : (item.spotPriceAtPurchase > 0 ? formatCurrency(item.spotPriceAtPurchase) : '—');
+      const spotValue = item.isCollectable ? '—' : (item.spotPriceAtPurchase > 0 ? item.spotPriceAtPurchase : '');
+      const premiumDisplay = item.isCollectable ? '—' : formatCurrency(item.totalPremium);
+      const premiumValue = item.isCollectable ? '—' : item.totalPremium;
+
+      const updatedRowHTML = `
+        <td class="shrink" data-column="date">${filterLink('date', item.date, 'var(--text-primary)', item.date ? formatDisplayDate(item.date) : '—')}</td>
+        <td class="shrink" data-column="type">${filterLink('type', item.type, getTypeColor(item.type))}</td>
+        <td class="shrink" data-column="metal" data-metal="${escapeAttribute(item.composition || item.metal || '')}">${filterLink('metal', item.composition || item.metal || 'Silver', METAL_COLORS[item.metal] || 'var(--primary)', getDisplayComposition(item.composition || item.metal || 'Silver'))}</td>
+        <td class="shrink" data-column="qty">${filterLink('qty', item.qty, 'var(--text-primary)')}</td>
+        <td class="expand" data-column="name" style="text-align: left;">
+          ${filterLink('name', item.name, 'var(--text-primary)')}
+        </td>
+        <td class="shrink" data-column="weight">${filterLink('weight', item.weight, 'var(--text-primary)', formatWeight(item.weight), item.weight < 1 ? 'Grams (g)' : 'Troy ounces (ozt)')}</td>
+        <td class="shrink" data-column="purchasePrice" title="Purchase Price (USD)" style="color: var(--text-primary);">
+          ${(item.price && item.price > 0) ? formatCurrency(item.price) : '—'}
+        </td>
+        <td class="shrink" data-column="marketValue" title="Current Market Value (USD)" style="color: var(--text-primary);">
+          ${(item.marketValue && item.marketValue > 0) ? 
+            formatCurrency(item.marketValue) + ' <a href="#" onclick="openEbaySearch(\'' + 
+            (item.name ? item.name.replace(/'/g, "\\'") : '') + ' ' + 
+            (item.metal ? item.metal.replace(/'/g, "\\'") : '') + 
+            '\')" title="Search eBay sold listings" style="text-decoration: none; color: #3b82f6;">📊</a>' : '—'}
+        </td>
+        <td class="shrink" data-column="spot" title="USD">${filterLink('spotPriceAtPurchase', spotValue, 'var(--text-primary)', spotDisplay)}</td>
+        <td class="shrink" data-column="premium" style="color: ${item.isCollectable ? 'var(--text-muted)' : (item.totalPremium > 0 ? 'var(--warning)' : 'inherit')}">${filterLink('totalPremium', premiumValue, 'var(--text-primary)', premiumDisplay)}</td>
+        <td class="shrink" data-column="purchaseLocation">
+          ${formatPurchaseLocation(item.purchaseLocation)}
+        </td>
+        <td class="shrink" data-column="storageLocation">
+          ${formatStorageLocation(item.storageLocation)}
+        </td>
+        <td class="shrink" data-column="numista">${item.numistaId ? `
+          <a href="#" onclick="openNumistaModal('${sanitizeHtml(item.numistaId)}', '${sanitizeHtml(item.name)}'); return false;" title="N#${sanitizeHtml(item.numistaId)} - open numista.com" class="catalog-link">
+            N#
+          </a>
+        ` : '<span class="numista-empty">—</span>'}</td>
+        <td class="icon-col" data-column="collectable"><span class="collectable-status" role="button" tabindex="0" onclick="toggleCollectable(${originalIdx})" onkeydown="if(event.key==='Enter'||event.key===' ') toggleCollectable(${originalIdx})" aria-label="Toggle collectable status for ${sanitizeHtml(item.name)}" title="Toggle collectable status">${item.isCollectable ? '<svg class=\"collectable-icon vault-icon\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\"><rect x=\"2\" y=\"4\" width=\"20\" height=\"16\" rx=\"2\"/><circle cx=\"17\" cy=\"11\" r=\"2\"/><rect x=\"6\" y=\"8\" width=\"6\" height=\"8\" rx=\"1\"/></svg>' : '<svg class=\"collectable-icon bar-icon\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\"><rect x=\"3\" y=\"8\" width=\"18\" height=\"8\" rx=\"1\"/><path d=\"M5 6h14l-2-2H7z\"/></svg>'}</span></td>
+        <td class="icon-col" data-column="notes"><button class="icon-btn action-icon ${item.notes && item.notes.trim() ? 'has-notes' : ''}" role="button" tabindex="0" onclick="showNotes(${originalIdx})" aria-label="View notes" title="View notes">
+          <svg class="icon-svg notes-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15V5a2 2 0 0 0-2-2H7L3 7v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2z"/></svg>
+        </button></td>
+        <td class="icon-col" data-column="edit">
+          <button class="icon-btn action-icon edit-icon edit-toggle" role="button" tabindex="0" onclick="handleEditAction(${originalIdx})" aria-label="Edit ${sanitizeHtml(item.name)}" title="Click to edit (Mode: ${window.editMode || 'quick'})">
+            <svg class="icon-svg edit-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true">
+              ${(window.editMode === 'modal') ? 
+                '<path d="M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5M19.43,12.97C19.47,12.65 19.5,12.33 19.5,12C19.5,11.67 19.47,11.34 19.43,11L21.54,9.37C21.73,9.22 21.78,8.95 21.66,8.73L19.66,5.27C19.54,5.05 19.27,4.96 19.05,5.05L16.56,6.05C16.04,5.66 15.5,5.32 14.87,5.07L14.5,2.42C14.46,2.18 14.25,2 14,2H10C9.75,2 9.54,2.18 9.5,2.42L9.13,5.07C8.5,5.32 7.96,5.66 7.44,6.05L4.95,5.05C4.73,4.96 4.46,5.05 4.34,5.27L2.34,8.73C2.22,8.95 2.27,9.22 2.46,9.37L4.57,11C4.53,11.34 4.5,11.67 4.5,12C4.5,12.33 4.53,12.65 4.57,12.97L2.46,14.63C2.27,14.78 2.22,15.05 2.34,15.27L4.34,18.73C4.46,18.95 4.73,19.03 4.95,18.95L7.44,17.94C7.96,18.34 8.5,18.68 9.13,18.93L9.5,21.58C9.54,21.82 9.75,22 10,22H14C14.25,22 14.46,21.82 14.5,21.58L14.87,18.93C15.5,18.68 16.04,18.34 16.56,17.94L19.05,18.95C19.27,19.03 19.54,18.95 19.66,18.73L21.66,15.27C21.78,15.05 21.73,14.78 21.54,14.63L19.43,12.97Z"/>' : 
+                '<path d="M14.06,9L15,9.94L5.92,19H5V18.08L14.06,9M17.66,3C17.41,3 17.15,3.1 16.96,3.29L15.13,5.12L18.88,8.87L20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18.17,3.09 17.92,3 17.66,3M14.06,6.19L3,17.25V21H6.75L17.81,9.94L14.06,6.19Z"/>'
+              }
+            </svg>
+          </button>
+        </td>
+        <td class="icon-col" data-column="delete"><button class="icon-btn action-icon danger" role="button" tabindex="0" onclick="deleteItem(${originalIdx})" aria-label="Delete item" title="Delete item">
+          <svg class="icon-svg delete-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 7h12v13a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V7zm3-4h6l1 1h4v2H3V4h4l1-1z"/></svg>
+        </button></td>
+      `;
+      
+      row.innerHTML = updatedRowHTML;
+      
+      // Update summary stats without full re-render
+      if (typeof updateSummary === 'function') {
+        updateSummary();
+      }
     };
     
     // Add cancel functionality
@@ -2591,7 +2655,57 @@ function toggleEditMode() {
   console.log(`Edit mode changed to: ${window.editMode}`);
 }
 
+// Toggle all items into or out of edit mode
+function toggleAllItemsEdit() {
+  const tableBody = document.querySelector('#inventoryTable tbody');
+  if (!tableBody) return;
+  
+  const allRows = Array.from(tableBody.querySelectorAll('tr')).filter(row => 
+    row.cells && row.cells.length > 1 && !row.querySelector('.no-results')
+  );
+  
+  if (allRows.length === 0) return;
+  
+  // Check if any rows are currently in edit mode
+  const editingRows = allRows.filter(row => row.classList.contains('editing-row'));
+  const shouldEnterEditMode = editingRows.length === 0;
+  
+  if (shouldEnterEditMode) {
+    // Enter edit mode for all rows
+    allRows.forEach((row, index) => {
+      if (!row.classList.contains('editing-row')) {
+        const editButton = row.querySelector('.edit-toggle');
+        if (editButton) {
+          const itemIndex = editButton.onclick.toString().match(/\d+/);
+          if (itemIndex) {
+            const idx = parseInt(itemIndex[0]);
+            if (window.editMode === 'quick') {
+              startRowEdit(row, idx);
+            } else {
+              editItem(idx);
+            }
+          }
+        }
+      }
+    });
+    console.log(`Entered edit mode for ${allRows.length} items`);
+  } else {
+    // Exit edit mode for all rows that are currently editing
+    editingRows.forEach(row => {
+      const saveButton = row.querySelector('.save-edit');
+      if (saveButton) {
+        saveButton.click(); // This will save and exit edit mode for each row
+      } else {
+        // Fallback: just remove edit mode class
+        row.classList.remove('editing-row');
+      }
+    });
+    console.log(`Exited edit mode for ${editingRows.length} items`);
+  }
+}
+
 // Global functions
 window.handleEditAction = handleEditAction;
 window.toggleEditMode = toggleEditMode;
+window.toggleAllItemsEdit = toggleAllItemsEdit;
 if (typeof window !== 'undefined'){ window.optimizeStoragePhase1C = optimizeStoragePhase1C; }
