@@ -85,9 +85,28 @@ const memoryPath = "/Volumes/DATA/GitHub/rAgents/memory/codex_encrypted_memory.j
 
 ## Working with Other Agents
 - **Coordination**: Through agents.ai protocols in this folder
+- **Communication**: Use agents/communication.json for bidirectional updates
 - **Handoff**: Follow multi-agent coordination procedures
 - **Memory Sharing**: Use sanitized Codex memory file, not MCP system
-- **Communication**: Update agents.ai with progress and findings
+- **Updates**: Log progress, findings, and requests in communication.json
+
+## Communication System
+### Updating Other Agents
+```json
+// Add to codex_updates.messages array in communication.json
+{
+  "timestamp": "2025-08-16T08:30:00Z",
+  "type": "finding",
+  "from": "codex",
+  "message": "Discovered performance issue in data loading",
+  "priority": "high"
+}
+```
+
+### Reading Messages from Other Agents
+- Check `agent_responses.messages_for_codex` in communication.json
+- Review `agent_responses.task_assignments` for new work
+- Monitor `coordination` section for handoff requests
 
 ## Development Guidelines
 1. **Focus**: Technical implementation and code quality

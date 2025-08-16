@@ -1,0 +1,81 @@
+{
+  "communication_system": {
+    "version": "1.0.0",
+    "last_updated": "2025-08-16T08:15:00Z",
+    "purpose": "Bidirectional communication between Codex and MCP agents"
+  },
+  "codex_updates": {
+    "session_info": {
+      "last_active": null,
+      "current_task": null,
+      "status": "awaiting_first_session"
+    },
+    "messages": [
+      {
+        "timestamp": "2025-08-16T08:15:00Z",
+        "type": "system",
+        "from": "bootstrap",
+        "message": "Communication system initialized. Codex can now leave updates for other agents.",
+        "priority": "info"
+      }
+    ],
+    "findings": [],
+    "requests_for_other_agents": [],
+    "work_completed": [],
+    "issues_encountered": []
+  },
+  "agent_responses": {
+    "messages_for_codex": [
+      {
+        "timestamp": "2025-08-16T08:15:00Z",
+        "type": "welcome",
+        "from": "claude",
+        "message": "Welcome to StackTrackr! Your bootstrap file is ready in agents/codex.ai. Use this communication file to coordinate with us.",
+        "priority": "info"
+      }
+    ],
+    "task_assignments": [],
+    "feedback": [],
+    "clarifications": []
+  },
+  "coordination": {
+    "handoff_status": "none_pending",
+    "active_collaboration": false,
+    "next_agent": null,
+    "shared_context": {
+      "current_focus": "StackTrackr precious metals inventory management",
+      "recent_changes": "Project cleanup completed, documentation centralized",
+      "known_issues": ["Filter chips styling bug", "Fuzzy search refinement needed"],
+      "priority_tasks": ["Performance optimization", "Mobile view improvements"]
+    }
+  },
+  "usage_instructions": {
+    "for_codex": {
+      "updating_status": "Add entries to codex_updates sections with timestamp and relevant details",
+      "requesting_help": "Use requests_for_other_agents array to ask for assistance",
+      "reporting_findings": "Document discoveries, bugs, or improvements in findings array",
+      "session_management": "Update session_info when starting/ending work sessions"
+    },
+    "for_other_agents": {
+      "responding_to_codex": "Add messages to agent_responses.messages_for_codex",
+      "assigning_tasks": "Use task_assignments to give Codex specific work items",
+      "providing_feedback": "Use feedback array to comment on Codex's work",
+      "coordination": "Update coordination section for handoffs and collaboration"
+    },
+    "message_format": {
+      "required_fields": ["timestamp", "type", "from", "message"],
+      "optional_fields": ["priority", "task_id", "status", "reference"],
+      "timestamp_format": "ISO 8601 (YYYY-MM-DDTHH:MM:SSZ)",
+      "types": ["info", "task", "question", "finding", "error", "completed", "handoff"]
+    }
+  },
+  "message_types": {
+    "info": "General information or status updates",
+    "task": "Task assignments or work requests", 
+    "question": "Questions needing answers from other agents",
+    "finding": "Discoveries, bugs found, or important observations",
+    "error": "Issues encountered that need assistance",
+    "completed": "Work finished, ready for review or handoff",
+    "handoff": "Formal handoff to another agent with context"
+  }
+}
