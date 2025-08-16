@@ -68,7 +68,41 @@ const setupColumnResizing = () => {
   // Add resize handles to table headers
   const headers = table.querySelectorAll("th");
   headers.forEach((header, index) => {
-    // Skip action columns (edit/notes/delete)
+    // Ensure header text is wrapped in .header-text span
+    let headerTextSpan = header.querySelector('.header-text');
+    if (!headerTextSpan) {
+      // Create new header-text span
+      headerTextSpan = document.createElement('span');
+      headerTextSpan.className = 'header-text';
+    }
+    
+    // Check if the span is empty or needs text
+    if (!headerTextSpan.textContent.trim()) {
+      // Find the text content (excluding SVG and existing elements)
+      const textNodes = Array.from(header.childNodes).filter(node => 
+        node.nodeType === Node.TEXT_NODE && node.textContent.trim()
+      );
+      
+      if (textNodes.length > 0) {
+        // Move text content into the span
+        headerTextSpan.textContent = textNodes.map(node => node.textContent.trim()).join(' ');
+        
+        // Remove original text nodes
+        textNodes.forEach(node => node.remove());
+        
+        // Insert the span after the SVG icon (if present) if it's not already in the DOM
+        if (!header.contains(headerTextSpan)) {
+          const svg = header.querySelector('svg');
+          if (svg) {
+            svg.insertAdjacentElement('afterend', headerTextSpan);
+          } else {
+            header.insertBefore(headerTextSpan, header.firstChild);
+          }
+        }
+      }
+    }
+
+    // Skip adding resize handles to action columns (edit/notes/delete)
     if (index >= headers.length - 3) return;
 
     const resizeHandle = document.createElement("div");

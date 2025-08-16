@@ -1818,9 +1818,7 @@ th {
   white-space: normal;
 }
 
-th:hover {
-  background: var(--border);
-}
+/* Removed annoying th:hover animation effect */
 
 td {
   padding: 0.25rem; /* Much smaller padding for narrower rows */
@@ -1875,10 +1873,10 @@ td[data-column="delete"] {
   right: 0; /* Stays at far right */
 }
 
-/* Metal column with toggle capability and max width */
+/* Metal column with toggle capability and increased width */
 #inventoryTable th[data-column="metal"],
 #inventoryTable td[data-column="metal"] {
-  max-width: 15ch; /* Limit metal column to 15 characters */
+  max-width: 25ch; /* Increased metal column to prevent wrapping */
   overflow: hidden;
   text-overflow: ellipsis;
   cursor: pointer;
@@ -5101,9 +5099,9 @@ th {
   white-space: nowrap;
 }
 
-/* Metal column toggle with max width */
+/* Metal column toggle with increased width */
 #inventoryTable td[data-column="metal"] {
-  max-width: 15ch;
+  max-width: 25ch;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -5149,10 +5147,18 @@ th {
 #inventoryTable td[data-column="delete"] {
   position: sticky;
   right: 0;
-  background: var(--bg-primary);
+  background: var(--bg-secondary);
   z-index: 5;
   min-width: 50px;
   width: 50px;
+}
+
+/* Ensure header styling consistency for action columns */
+#inventoryTable th[data-column="notes"], 
+#inventoryTable th[data-column="edit"],
+#inventoryTable th[data-column="delete"] {
+  background: var(--bg-secondary) !important;
+  color: var(--text-secondary) !important;
 }
 
 /* Responsive column hiding */
@@ -5291,7 +5297,7 @@ th {
   flex-shrink: 0;
 }
 
-/* All Price columns - uniform width and styling */
+/* All Price columns - increased width to prevent ellipsis */
 #inventoryTable th[data-column="purchasePrice"],
 #inventoryTable td[data-column="purchasePrice"],
 #inventoryTable th[data-column="marketValue"],
@@ -5300,9 +5306,9 @@ th {
 #inventoryTable td[data-column="spot"],
 #inventoryTable th[data-column="premium"],
 #inventoryTable td[data-column="premium"] {
-  max-width: 85px !important;
-  width: 85px !important;
-  min-width: 85px !important;
+  max-width: 110px !important;
+  width: 110px !important;
+  min-width: 110px !important;
   font-family: var(--font-mono, 'Courier New', monospace);
   font-size: 0.85rem;
   text-align: right;
@@ -5319,27 +5325,23 @@ th {
 #inventoryTable th[data-column="premium"] {
   font-weight: 600;
   background: var(--bg-secondary);
-  color: var(--text-primary);
+  color: var(--text-secondary);
 }
 
-/* Market value and price columns - subtle background variations */
+/* Market value and price columns - remove background variations for consistent header appearance */
 #inventoryTable td[data-column="marketValue"] {
-  background: rgba(59, 130, 246, 0.03);
   font-weight: 500;
 }
 
 #inventoryTable td[data-column="purchasePrice"] {
-  background: rgba(34, 197, 94, 0.03);
   font-weight: 500;
 }
 
 #inventoryTable td[data-column="spot"] {
-  background: rgba(245, 158, 11, 0.03);
   font-weight: 500;
 }
 
 #inventoryTable td[data-column="premium"] {
-  background: rgba(239, 68, 68, 0.03);
   font-weight: 500;
 }
 
@@ -5396,6 +5398,4 @@ th {
   color: rgba(245, 158, 11, 0.9); /* Soft amber for spot prices */
 }
 
-#inventoryTable td[data-column="premium"] {
-  color: rgba(239, 68, 68, 0.9); /* Soft red for premiums */
-}
+/* Premium column styling removed - treat like other calculation columns */
