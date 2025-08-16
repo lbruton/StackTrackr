@@ -4195,6 +4195,64 @@ input:disabled + .slider {
   font-weight: bold;
 }
 
+/* Dual edit buttons in edit column */
+#inventoryTable td[data-column="edit"] {
+  display: flex;
+  gap: 0.2rem;
+  align-items: center;
+  justify-content: center;
+  padding: 0.2rem;
+}
+
+#inventoryTable td[data-column="edit"] .icon-btn {
+  flex: 0 0 auto;
+  margin: 0;
+}
+
+/* Style the two different edit buttons */
+#inventoryTable td[data-column="edit"] .inline-edit {
+  color: var(--primary);
+}
+
+#inventoryTable td[data-column="edit"] .modal-edit {
+  color: var(--text-secondary);
+}
+
+#inventoryTable td[data-column="edit"] .modal-edit:hover {
+  color: var(--text-primary);
+}
+
+/* Row editing styles */
+#inventoryTable tbody tr.editing-row {
+  background: var(--bg-secondary) !important;
+  border: 2px solid var(--primary);
+  outline: none;
+}
+
+#inventoryTable tbody tr.editing-row .inline-edit-input {
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  padding: 0.25rem;
+  border-radius: 3px;
+  font-size: 0.85rem;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+#inventoryTable tbody tr.editing-row .inline-edit-input:focus {
+  outline: 2px solid var(--primary);
+  outline-offset: -1px;
+}
+
+#inventoryTable tbody tr.editing-row .save-row {
+  color: var(--success);
+}
+
+#inventoryTable tbody tr.editing-row .cancel-row {
+  color: var(--danger);
+}
+
 #inventoryTable th.icon-col {
   font-size: 0.7rem;
   line-height: 1.1;
@@ -4374,12 +4432,21 @@ input:disabled + .slider {
   Collectable column intentionally left non-sticky so it remains adjacent to N#. */
 /* Header cells remain visually consistent with other headers; body cells inherit the row background
   so striping and hover highlights apply naturally even when cells are sticky. */
+#inventoryTable th.icon-col {
+  background: var(--bg-secondary); /* Match all other headers consistently */
+  color: var(--text-primary);
+  z-index: 7; /* keep headers above body cells */
+}
+
+/* Most icon columns are sticky positioned on the right */
 #inventoryTable th.icon-col:not([data-column="collectable"]) {
   position: sticky;
   right: 0; /* default for the right-most action column (delete) */
-  background: var(--bg-tertiary);
-  color: var(--text-primary);
-  z-index: 7; /* keep headers above body cells */
+}
+
+/* Collectable column stays in normal document flow (not sticky) */
+#inventoryTable th[data-column="collectable"] {
+  position: static;
 }
 
 #inventoryTable td.icon-col:not([data-column="collectable"]) {

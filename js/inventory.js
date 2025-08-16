@@ -980,7 +980,136 @@ const startCellEdit = (idx, field, icon) => {
   if (input.select) input.select();
 };
 
+/**
+ * Start inline editing for an entire row
+ * @param {number} idx - Index of the item to edit
+ */
+const startRowEdit = (idx) => {
+  const item = inventory[idx];
+  if (!item) return;
+  
+  const row = document.querySelector(`#inventoryTable tbody tr[data-idx="${idx}"]`);
+  if (!row) return;
+  
+  // Prevent multiple edit sessions
+  if (row.classList.contains('editing-row')) return;
+  
+  row.classList.add('editing-row');
+  
+  // Store original row content for cancel functionality
+  const originalRowHTML = row.innerHTML;
+  
+  // Define editable fields and their input types
+  const editableFields = [
+    { field: 'date', type: 'date', label: 'Date' },
+    { field: 'metal', type: 'select', label: 'Metal', options: ['Silver', 'Gold', 'Platinum', 'Palladium', 'Copper'] },
+    { field: 'qty', type: 'number', label: 'Quantity', min: 1 },
+    { field: 'name', type: 'text', label: 'Name' },
+    { field: 'weight', type: 'number', label: 'Weight', step: 0.001, min: 0 },
+    { field: 'price', type: 'number', label: 'Purchase Price', step: 0.01, min: 0 },
+    { field: 'marketValue', type: 'number', label: 'Market Value', step: 0.01, min: 0 },
+    { field: 'purchaseLocation', type: 'text', label: 'Purchase Location' },
+    { field: 'storageLocation', type: 'text', label: 'Storage Location' }
+  ];
+  
+  // Convert each editable cell to input
+  editableFields.forEach(fieldConfig => {
+    const cell = row.querySelector(`td[data-column="${fieldConfig.field}"]`);
+    if (cell) {
+      const currentValue = item[fieldConfig.field] || '';
+      let inputHTML = '';
+      
+      if (fieldConfig.type === 'select') {
+        inputHTML = `<select class="inline-edit-input" data-field="${fieldConfig.field}">`;
+        fieldConfig.options.forEach(option => {
+          const selected = currentValue === option ? 'selected' : '';
+          inputHTML += `<option value="${option}" ${selected}>${option}</option>`;
+        });
+        inputHTML += '</select>';
+      } else {
+        const attributes = [];
+        if (fieldConfig.min !== undefined) attributes.push(`min="${fieldConfig.min}"`);
+        if (fieldConfig.max !== undefined) attributes.push(`max="${fieldConfig.max}"`);
+        if (fieldConfig.step !== undefined) attributes.push(`step="${fieldConfig.step}"`);
+        
+        inputHTML = `<input class="inline-edit-input" type="${fieldConfig.type}" 
+                     data-field="${fieldConfig.field}" value="${sanitizeHtml(currentValue)}" 
+                     ${attributes.join(' ')} placeholder="${fieldConfig.label}">`;
+      }
+      
+      cell.innerHTML = inputHTML;
+    }
+  });
+  
+  // Replace edit buttons with save/cancel
+  const editCell = row.querySelector('td[data-column="edit"]');
+  if (editCell) {
+    editCell.innerHTML = `
+      <button class="icon-btn action-icon save-row" title="Save changes">
+        <svg class="icon-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"/></svg>
+      </button>
+      <button class="icon-btn action-icon cancel-row" title="Cancel editing">
+        <svg class="icon-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z"/></svg>
+      </button>
+    `;
+    
+    // Add save functionality
+    editCell.querySelector('.save-row').onclick = () => {
+      const inputs = row.querySelectorAll('.inline-edit-input');
+      const updates = {};
+      let hasChanges = false;
+      
+      inputs.forEach(input => {
+        const field = input.dataset.field;
+        let value = input.value.trim();
+        
+        // Type conversion
+        if (['qty'].includes(field)) {
+          value = parseInt(value, 10) || 0;
+        } else if (['weight', 'price', 'marketValue'].includes(field)) {
+          value = parseFloat(value) || 0;
+        }
+        
+        if (item[field] !== value) {
+          hasChanges = true;
+          updates[field] = { old: item[field], new: value };
+          item[field] = value;
+        }
+      });
+      
+      if (hasChanges) {
+        // Recalculate derived values
+        recalcItem(item);
+        
+        // Log changes
+        if (typeof logChange === 'function') {
+          Object.entries(updates).forEach(([field, change]) => {
+            logChange(item.name || `Item ${idx + 1}`, field, change.old, change.new, idx);
+          });
+        }
+        
+        saveInventory();
+      }
+      
+      // Exit edit mode and re-render
+      row.classList.remove('editing-row');
+      renderTable();
+    };
+    
+    // Add cancel functionality
+    editCell.querySelector('.cancel-row').onclick = () => {
+      row.classList.remove('editing-row');
+      row.innerHTML = originalRowHTML;
+    };
+  }
+  
+  // Focus first input
+  const firstInput = row.querySelector('.inline-edit-input');
+  if (firstInput) firstInput.focus();
+};
+
 window.startCellEdit = startCellEdit;
+window.startRowEdit = startRowEdit;
 
 
 /**
@@ -1042,16 +1171,13 @@ const renderTable = () => {
       const premiumValue = item.isCollectable ? '—' : item.totalPremium;
 
   rows.push(`
-      <tr>
+      <tr data-id="${originalIdx}">
   <td class="shrink" data-column="date">${filterLink('date', item.date, 'var(--text-primary)', item.date ? formatDisplayDate(item.date) : '—')}</td>
       <td class="shrink" data-column="type">${filterLink('type', item.type, getTypeColor(item.type))}</td>
       <td class="shrink" data-column="metal" data-metal="${escapeAttribute(item.composition || item.metal || '')}">${filterLink('metal', item.composition || item.metal || 'Silver', METAL_COLORS[item.metal] || 'var(--primary)', getDisplayComposition(item.composition || item.metal || 'Silver'))}</td>
       <td class="shrink" data-column="qty">${filterLink('qty', item.qty, 'var(--text-primary)')}</td>
-      <td class="expand" data-column="name" style="text-align: left; position: relative; padding-right: 30px;">
+      <td class="expand" data-column="name" style="text-align: left;">
         ${filterLink('name', item.name, 'var(--text-primary)')}
-        <span class="inline-edit-icon" onclick="event.stopPropagation(); console.log('Pencil clicked:', ${originalIdx}, 'name', this); startCellEdit(${originalIdx}, 'name', this)" title="Quick edit name" tabindex="0" role="button" onkeydown="if(event.key==='Enter'||event.key===' '){event.stopPropagation(); console.log('Pencil key:', ${originalIdx}, 'name', this); startCellEdit(${originalIdx}, 'name', this)}" style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); opacity: 0.6; cursor: pointer; font-size: 14px; transition: opacity 0.2s; z-index: 1;">
-          <svg class="icon-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" style="width: 14px; height: 14px; fill: currentColor;" aria-hidden="true"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1.003 1.003 0 0 0 0-1.42l-2.34-2.34a1.003 1.003 0 0 0-1.42 0l-1.83 1.83 3.75 3.75 1.84-1.82z"/></svg>
-        </span>
       </td>
       <td class="shrink" data-column="weight">${filterLink('weight', item.weight, 'var(--text-primary)', formatWeight(item.weight), item.weight < 1 ? 'Grams (g)' : 'Troy ounces (ozt)')}</td>
       <td class="shrink" data-column="purchasePrice" title="Purchase Price (USD)" style="color: var(--text-primary);">
@@ -1081,9 +1207,14 @@ const renderTable = () => {
       <td class="icon-col" data-column="notes"><button class="icon-btn action-icon ${item.notes && item.notes.trim() ? 'has-notes' : ''}" role="button" tabindex="0" onclick="showNotes(${originalIdx})" aria-label="View notes" title="View notes">
         <svg class="icon-svg notes-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15V5a2 2 0 0 0-2-2H7L3 7v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2z"/></svg>
       </button></td>
-      <td class="icon-col" data-column="edit"><button class="icon-btn action-icon edit-icon" role="button" tabindex="0" onclick="editItem(${originalIdx})" aria-label="Edit ${sanitizeHtml(item.name)}" title="Edit item">
-        <svg class="icon-svg edit-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5M19.43,12.97C19.47,12.65 19.5,12.33 19.5,12C19.5,11.67 19.47,11.34 19.43,11L21.54,9.37C21.73,9.22 21.78,8.95 21.66,8.73L19.66,5.27C19.54,5.05 19.27,4.96 19.05,5.05L16.56,6.05C16.04,5.66 15.5,5.32 14.87,5.07L14.5,2.42C14.46,2.18 14.25,2 14,2H10C9.75,2 9.54,2.18 9.5,2.42L9.13,5.07C8.5,5.32 7.96,5.66 7.44,6.05L4.95,5.05C4.73,4.96 4.46,5.05 4.34,5.27L2.34,8.73C2.22,8.95 2.27,9.22 2.46,9.37L4.57,11C4.53,11.34 4.5,11.67 4.5,12C4.5,12.33 4.53,12.65 4.57,12.97L2.46,14.63C2.27,14.78 2.22,15.05 2.34,15.27L4.34,18.73C4.46,18.95 4.73,19.03 4.95,18.95L7.44,17.94C7.96,18.34 8.5,18.68 9.13,18.93L9.5,21.58C9.54,21.82 9.75,22 10,22H14C14.25,22 14.46,21.82 14.5,21.58L14.87,18.93C15.5,18.67 16.04,18.34 16.56,17.94L19.05,18.95C19.27,19.03 19.54,18.95 19.66,18.73L21.66,15.27C21.78,15.05 21.73,14.78 21.54,14.63L19.43,12.97Z"/></svg>
-      </button></td>
+      <td class="icon-col" data-column="edit">
+        <button class="icon-btn action-icon edit-icon inline-edit" role="button" tabindex="0" onclick="startRowEdit(${originalIdx})" aria-label="Quick edit ${sanitizeHtml(item.name)}" title="Quick edit inline">
+          <svg class="icon-svg edit-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M14.06,9L15,9.94L5.92,19H5V18.08L14.06,9M17.66,3C17.41,3 17.15,3.1 16.96,3.29L15.13,5.12L18.88,8.87L20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18.17,3.09 17.92,3 17.66,3M14.06,6.19L3,17.25V21H6.75L17.81,9.94L14.06,6.19Z"/></svg>
+        </button>
+        <button class="icon-btn action-icon edit-icon modal-edit" role="button" tabindex="0" onclick="editItem(${originalIdx})" aria-label="Full edit ${sanitizeHtml(item.name)}" title="Full edit modal">
+          <svg class="icon-svg settings-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5M19.43,12.97C19.47,12.65 19.5,12.33 19.5,12C19.5,11.67 19.47,11.34 19.43,11L21.54,9.37C21.73,9.22 21.78,8.95 21.66,8.73L19.66,5.27C19.54,5.05 19.27,4.96 19.05,5.05L16.56,6.05C16.04,5.66 15.5,5.32 14.87,5.07L14.5,2.42C14.46,2.18 14.25,2 14,2H10C9.75,2 9.54,2.18 9.5,2.42L9.13,5.07C8.5,5.32 7.96,5.66 7.44,6.05L4.95,5.05C4.73,4.96 4.46,5.05 4.34,5.27L2.34,8.73C2.22,8.95 2.27,9.22 2.46,9.37L4.57,11C4.53,11.34 4.5,11.67 4.5,12C4.5,12.33 4.53,12.65 4.57,12.97L2.46,14.63C2.27,14.78 2.22,15.05 2.34,15.27L4.34,18.73C4.46,18.95 4.73,19.03 4.95,18.95L7.44,17.94C7.96,18.34 8.5,18.68 9.13,18.93L9.5,21.58C9.54,21.82 9.75,22 10,22H14C14.25,22 14.46,21.82 14.5,21.58L14.87,18.93C15.5,18.68 16.04,18.34 16.56,17.94L19.05,18.95C19.27,19.03 19.54,18.95 19.66,18.73L21.66,15.27C21.78,15.05 21.73,14.78 21.54,14.63L19.43,12.97Z"/></svg>
+        </button>
+      </td>
       <td class="icon-col" data-column="delete"><button class="icon-btn action-icon danger" role="button" tabindex="0" onclick="deleteItem(${originalIdx})" aria-label="Delete item" title="Delete item">
         <svg class="icon-svg delete-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 7h12v13a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V7zm3-4h6l1 1h4v2H3V4h4l1-1z"/></svg>
       </button></td>
