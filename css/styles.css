@@ -4508,10 +4508,10 @@ th {
   white-space: nowrap;
 }
 
-/* Make header icons/text use improved contrast for better visibility */
+/* Make header icons/text use muted header color so they don't pop */
 #inventoryTable thead th {
-  color: var(--text-primary);
-  background: rgb(44, 55, 74); /* Lighter than var(--bg-secondary) for better contrast */
+  color: var(--text-secondary);
+  background: var(--bg-secondary);
 }
 
 #inventoryTable thead th .header-icon,
@@ -4521,7 +4521,7 @@ th {
 
 /* Icon column header should visually match other headers */
 #inventoryTable thead th.icon-col {
-  background: rgb(44, 55, 74); /* Match new header background */
+  background: var(--bg-secondary);
   color: var(--text-primary);
   padding: 0.35rem 0.4rem;
 }
@@ -5157,8 +5157,8 @@ th {
 #inventoryTable th[data-column="notes"], 
 #inventoryTable th[data-column="edit"],
 #inventoryTable th[data-column="delete"] {
-  background: rgb(44, 55, 74) !important; /* Match new header background */
-  color: var(--text-primary) !important;
+  background: var(--bg-secondary) !important;
+  color: var(--text-secondary) !important;
 }
 
 /* Responsive column hiding */
