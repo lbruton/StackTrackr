@@ -2,8 +2,8 @@
 // =============================================================================
 
 /** @type {Object} Sorting state tracking */
-let sortColumn = null; // Currently sorted column index (null = unsorted)
-let sortDirection = "asc"; // 'asc' or 'desc' - current sort direction
+let sortColumn = 0; // Default to date column (index 0) - most recent first
+let sortDirection = "desc"; // 'asc' or 'desc' - default to descending for recent dates first
 
 /** @type {number|null} Index of item being edited (null = no edit in progress) */
 let editingIndex = null;
