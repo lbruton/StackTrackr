@@ -1506,6 +1506,64 @@ const setupPagination = () => {
 };
 
 /**
+ * Sets up bulk edit control panel event listeners
+ */
+const setupBulkEditControls = () => {
+  debugLog("Setting up bulk edit control listeners...");
+
+  try {
+    // Bulk toggle all edit mode
+    const bulkToggleAll = document.getElementById('bulkToggleAll');
+    if (bulkToggleAll) {
+      safeAttachListener(
+        bulkToggleAll,
+        "click",
+        function () {
+          if (typeof window.toggleAllItemsEdit === 'function') {
+            window.toggleAllItemsEdit();
+          }
+        },
+        "Bulk toggle all edit mode",
+      );
+    }
+
+    // Bulk save all changes
+    const bulkSaveAll = document.getElementById('bulkSaveAll');
+    if (bulkSaveAll) {
+      safeAttachListener(
+        bulkSaveAll,
+        "click",
+        function () {
+          if (typeof window.saveAllEdits === 'function') {
+            window.saveAllEdits();
+          }
+        },
+        "Bulk save all changes",
+      );
+    }
+
+    // Bulk cancel all changes
+    const bulkCancelAll = document.getElementById('bulkCancelAll');
+    if (bulkCancelAll) {
+      safeAttachListener(
+        bulkCancelAll,
+        "click",
+        function () {
+          if (typeof window.cancelAllEdits === 'function') {
+            window.cancelAllEdits();
+          }
+        },
+        "Bulk cancel all changes",
+      );
+    }
+
+    debugLog("✓ Bulk edit control listeners setup complete");
+  } catch (error) {
+    console.error("❌ Error setting up bulk edit control listeners:", error);
+  }
+};
+
+/**
  * Sets up search event listeners
  */
 const setupSearch = () => {

@@ -1158,12 +1158,22 @@ const startRowEdit = (idx) => {
       if (typeof updateSummary === 'function') {
         updateSummary();
       }
+      
+      // Update bulk edit panel visibility
+      if (typeof updateBulkEditPanel === 'function') {
+        updateBulkEditPanel();
+      }
     };
     
     // Add cancel functionality
     editCell.querySelector('.cancel-row').onclick = () => {
       row.classList.remove('editing-row');
       row.innerHTML = originalRowHTML;
+      
+      // Update bulk edit panel visibility
+      if (typeof updateBulkEditPanel === 'function') {
+        updateBulkEditPanel();
+      }
     };
   }
   
@@ -2702,10 +2712,70 @@ function toggleAllItemsEdit() {
     });
     console.log(`Exited edit mode for ${editingRows.length} items`);
   }
+  
+  // Update bulk edit panel visibility
+  updateBulkEditPanel();
+}
+
+// Save all items currently in edit mode
+function saveAllEdits() {
+  const editingRows = document.querySelectorAll('#inventoryTable tbody tr.editing-row');
+  let savedCount = 0;
+  
+  editingRows.forEach(row => {
+    const saveButton = row.querySelector('.save-edit');
+    if (saveButton) {
+      saveButton.click();
+      savedCount++;
+    }
+  });
+  
+  console.log(`Saved ${savedCount} items`);
+  updateBulkEditPanel();
+}
+
+// Cancel all editing sessions without saving
+function cancelAllEdits() {
+  const editingRows = document.querySelectorAll('#inventoryTable tbody tr.editing-row');
+  let cancelledCount = 0;
+  
+  editingRows.forEach(row => {
+    const cancelButton = row.querySelector('.cancel-edit');
+    if (cancelButton) {
+      cancelButton.click();
+      cancelledCount++;
+    } else {
+      // Fallback: restore original content and remove edit class
+      row.classList.remove('editing-row');
+      // Re-render the table to restore original state
+      renderTable();
+      return;
+    }
+  });
+  
+  console.log(`Cancelled ${cancelledCount} edit sessions`);
+  updateBulkEditPanel();
+}
+
+// Update bulk edit panel visibility and state
+function updateBulkEditPanel() {
+  const panel = document.getElementById('bulkEditPanel');
+  const editingRows = document.querySelectorAll('#inventoryTable tbody tr.editing-row');
+  
+  if (!panel) return;
+  
+  if (editingRows.length > 0) {
+    panel.style.display = 'flex';
+  } else {
+    panel.style.display = 'none';
+  }
 }
 
 // Global functions
 window.handleEditAction = handleEditAction;
 window.toggleEditMode = toggleEditMode;
 window.toggleAllItemsEdit = toggleAllItemsEdit;
+window.saveAllEdits = saveAllEdits;
+window.cancelAllEdits = cancelAllEdits;
+window.updateBulkEditPanel = updateBulkEditPanel;
 if (typeof window !== 'undefined'){ window.optimizeStoragePhase1C = optimizeStoragePhase1C; }

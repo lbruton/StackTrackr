@@ -371,6 +371,7 @@ document.addEventListener("DOMContentLoaded", () => {
       try {
         setupEventListeners();
         setupPagination();
+        setupBulkEditControls();
         setupThemeToggle();
         setupColumnResizing();
         
