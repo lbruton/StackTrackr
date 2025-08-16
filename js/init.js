@@ -371,8 +371,31 @@ document.addEventListener("DOMContentLoaded", () => {
       try {
         setupEventListeners();
         setupPagination();
+        setupBulkEditControls();
         setupThemeToggle();
         setupColumnResizing();
+        
+        // Setup Edit header toggle functionality
+        const editHeader = document.querySelector('th[data-column="edit"]');
+        if (editHeader) {
+          editHeader.style.cursor = 'pointer';
+          editHeader.addEventListener('click', (event) => {
+            if (event.shiftKey) {
+              // Shift + Click = Toggle all items edit mode
+              if (typeof toggleAllItemsEdit === 'function') {
+                toggleAllItemsEdit();
+              }
+            } else {
+              // Regular Click = Toggle edit mode (quick/modal)
+              if (typeof toggleEditMode === 'function') {
+                toggleEditMode();
+              }
+            }
+          });
+          editHeader.title = 'Click to toggle edit mode • Shift+Click to toggle all items edit';
+          debugLog("✓ Edit header toggle initialized");
+        }
+        
         debugLog("✓ All event listeners setup complete");
       } catch (eventError) {
         console.error("❌ Error setting up event listeners:", eventError);

@@ -68,7 +68,41 @@ const setupColumnResizing = () => {
   // Add resize handles to table headers
   const headers = table.querySelectorAll("th");
   headers.forEach((header, index) => {
-    // Skip action columns (edit/notes/delete)
+    // Ensure header text is wrapped in .header-text span
+    let headerTextSpan = header.querySelector('.header-text');
+    if (!headerTextSpan) {
+      // Create new header-text span
+      headerTextSpan = document.createElement('span');
+      headerTextSpan.className = 'header-text';
+    }
+    
+    // Check if the span is empty or needs text
+    if (!headerTextSpan.textContent.trim()) {
+      // Find the text content (excluding SVG and existing elements)
+      const textNodes = Array.from(header.childNodes).filter(node => 
+        node.nodeType === Node.TEXT_NODE && node.textContent.trim()
+      );
+      
+      if (textNodes.length > 0) {
+        // Move text content into the span
+        headerTextSpan.textContent = textNodes.map(node => node.textContent.trim()).join(' ');
+        
+        // Remove original text nodes
+        textNodes.forEach(node => node.remove());
+        
+        // Insert the span after the SVG icon (if present) if it's not already in the DOM
+        if (!header.contains(headerTextSpan)) {
+          const svg = header.querySelector('svg');
+          if (svg) {
+            svg.insertAdjacentElement('afterend', headerTextSpan);
+          } else {
+            header.insertBefore(headerTextSpan, header.firstChild);
+          }
+        }
+      }
+    }
+
+    // Skip adding resize handles to action columns (edit/notes/delete)
     if (index >= headers.length - 3) return;
 
     const resizeHandle = document.createElement("div");
@@ -1468,6 +1502,64 @@ const setupPagination = () => {
     debugLog("✓ Pagination listeners setup complete");
   } catch (error) {
     console.error("❌ Error setting up pagination listeners:", error);
+  }
+};
+
+/**
+ * Sets up bulk edit control panel event listeners
+ */
+const setupBulkEditControls = () => {
+  debugLog("Setting up bulk edit control listeners...");
+
+  try {
+    // Bulk toggle all edit mode
+    const bulkToggleAll = document.getElementById('bulkToggleAll');
+    if (bulkToggleAll) {
+      safeAttachListener(
+        bulkToggleAll,
+        "click",
+        function () {
+          if (typeof window.toggleAllItemsEdit === 'function') {
+            window.toggleAllItemsEdit();
+          }
+        },
+        "Bulk toggle all edit mode",
+      );
+    }
+
+    // Bulk save all changes
+    const bulkSaveAll = document.getElementById('bulkSaveAll');
+    if (bulkSaveAll) {
+      safeAttachListener(
+        bulkSaveAll,
+        "click",
+        function () {
+          if (typeof window.saveAllEdits === 'function') {
+            window.saveAllEdits();
+          }
+        },
+        "Bulk save all changes",
+      );
+    }
+
+    // Bulk cancel all changes
+    const bulkCancelAll = document.getElementById('bulkCancelAll');
+    if (bulkCancelAll) {
+      safeAttachListener(
+        bulkCancelAll,
+        "click",
+        function () {
+          if (typeof window.cancelAllEdits === 'function') {
+            window.cancelAllEdits();
+          }
+        },
+        "Bulk cancel all changes",
+      );
+    }
+
+    debugLog("✓ Bulk edit control listeners setup complete");
+  } catch (error) {
+    console.error("❌ Error setting up bulk edit control listeners:", error);
   }
 };
 
