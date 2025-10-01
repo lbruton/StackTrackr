@@ -1,0 +1,41 @@
+# Development files
+.git/
+.github/
+.githooks/
+.husky/
+node_modules/
+.codacy/
+
+# IDE and editor files
+.vscode/
+.idea/
+.cursor/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Documentation and development artifacts
+ROADMAP.md
+AGENTS.md
+SPRINT-*.md
+.prompts/
+.playwright-mcp/
+
+# Testing and linting
+.eslintrc*
+.eslintignore
+eslint.config.js*
+test-*.csv
+*.test.js
+*.spec.js
+
+# Build artifacts
+dist/
+build/
+*.log
+
+# Docker files (already in context)
+Dockerfile
+.dockerignore
+docker-compose.yml

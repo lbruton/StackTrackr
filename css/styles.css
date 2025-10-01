@@ -1,0 +1,5654 @@
+/* =============================================================================
+   CSS CUSTOM PROPERTIES - THEME SYSTEM
+   Modern color system with comprehensive dark/light mode support
+   ============================================================================= */
+
+:root {
+  /* Primary Colors - Light blues theme */
+  --primary: #3b82f6;
+  --primary-hover: #2563eb;
+  --secondary: #8b93a6;
+  --secondary-hover: #6b7280;
+  --success: #059669;
+  --success-hover: #047857;
+  --info: #0ea5e9;
+  --info-hover: #0284c7;
+  --warning: #d97706;
+  --warning-hover: #b45309;
+  --danger: #dc2626;
+  --danger-hover: #b91c1c;
+
+    /* Disclaimer warning color */
+    --disclaimer-color: var(--warning);
+
+  /* Background Tokens - Darker Light Mode */
+  --bg: #e7edf2;
+  --bg-elev-1: #d7dfe6;
+  --bg-elev-2: #bec7cf;
+  --surface: #d7dfe6;
+  --surface-alt: #bec7cf;
+
+  /* Map existing background variables */
+  --bg-primary: var(--bg);
+  --bg-secondary: var(--bg-elev-1);
+  --bg-tertiary: var(--bg-elev-2); /* Middle gray-blue for better contrast */
+  --bg-card: var(--surface);
+
+  /* Text Tokens */
+  --text: #1b232c;
+  --text-muted: #344351;
+
+  /* Map existing text variables */
+  --text-primary: var(--text);
+  --text-secondary: var(--text-muted);
+  --chip-text: #1b232c;
+
+  /* Border & Shadow - Light grays */
+  --border: #cbd5e1;
+  --border-hover: #94a3b8;
+  --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+  --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.15), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg:
+    0 10px 15px -3px rgb(0 0 0 / 0.15), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+
+  /* Metal-specific Colors - tuned for light mode */
+  --silver: #6b7280;
+  --gold: #b45309;
+  --platinum: #4b5563;
+  --palladium: #7c3aed;
+
+  /* Inventory Type Colors */
+  --type-coin-bg: #d97706;
+  --type-coin-text: #f8fafc;
+  --type-round-bg: #6b7280;
+  --type-round-text: #f8fafc;
+  --type-bar-bg: #eab308;
+  --type-bar-text: #000000;
+  --type-note-bg: #059669;
+  --type-note-text: #f8fafc;
+  --type-other-bg: #7c3aed;
+  --type-other-text: #f8fafc;
+
+  /* Component Spacing */
+  --radius: 8px;
+  --radius-lg: 12px;
+  --spacing-xs: 0.2rem;
+  --spacing-sm: 0.4rem;
+  --spacing: 0.75rem;
+  --spacing-lg: 1.25rem;
+  --spacing-xl: 1.5rem;
+
+  /* Transitions */
+  --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Empty N# column styling */
+.numista-empty {
+  display: inline-block;
+  color: var(--text-muted);
+  font-style: italic;
+  font-size: 0.8rem;
+}
+
+[data-theme="dark"] {
+  /* Primary Colors - Dark Mode */
+  --primary: #3b82f6;
+  --primary-hover: #2563eb;
+  --secondary: #6b7280;
+  --secondary-hover: #9ca3af;
+  --success: #10b981;
+  --success-hover: #059669;
+  --info: #38bdf8;
+  --info-hover: #0ea5e9;
+  --warning: #f59e0b;
+  --warning-hover: #d97706;
+  --danger: #ef4444;
+  --danger-hover: #dc2626;
+
+  /* Disclaimer warning color */
+  --disclaimer-color: var(--danger);
+
+  /* Metal-specific Colors - dark mode */
+  --silver: #d1d5db;
+  --gold: #fbbf24;
+  --platinum: #f3f4f6;
+  --palladium: #d8b4fe;
+
+  /* Inventory Type Colors */
+  --type-coin-bg: #b45309;
+  --type-coin-text: #ffffff;
+  --type-round-bg: #9ca3af;
+  --type-round-text: #1e293b;
+  --type-bar-bg: #fde047;
+  --type-bar-text: #1e293b;
+  --type-note-bg: #047857;
+  --type-note-text: #ffffff;
+  --type-other-bg: #8b5cf6;
+  --type-other-text: #ffffff;
+
+  /* Background Colors - Dark Mode */
+  --bg-primary: #0f172a;
+  --bg-secondary: #1e293b;
+  --bg-tertiary: #334155;
+  --bg-card: #1e293b;
+
+  /* Text Colors - Dark Mode */
+  --text-primary: #f8fafc;
+  --text-secondary: #cbd5e1;
+  --text-muted: #94a3b8;
+  --chip-text: #f8fafc;
+
+  /* Border & Shadow - Dark Mode */
+  --border: #334155;
+  --border-hover: #475569;
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
+  --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.3), 0 2px 4px -2px rgb(0 0 0 / 0.3);
+  --shadow-lg:
+    0 10px 15px -3px rgb(0 0 0 / 0.3), 0 4px 6px -4px rgb(0 0 0 / 0.3);
+}
+
+[data-theme="sepia"] {
+  /* Primary Colors - Sepia Mode */
+  --primary: #b35c1f;
+  --primary-hover: #934a17;
+  --secondary: #8b7355;
+  --secondary-hover: #6d5c3f;
+  --success: #698f3f;
+  --success-hover: #577a34;
+  --info: #0ea5e9;
+  --info-hover: #0284c7;
+  --warning: #d97706;
+  --warning-hover: #b45309;
+  --danger: #dc2626;
+  --danger-hover: #b91c1c;
+
+  /* Metal-specific Colors - Sepia tone */
+  --silver: #a8a29e;
+  --gold: #b58900;
+  --platinum: #8d8d8d;
+  --palladium: #a58b6f;
+
+  /* Inventory Type Colors */
+  --type-coin-bg: #c4650e;
+  --type-coin-text: #ffffff;
+  --type-round-bg: #807363;
+  --type-round-text: #ffffff;
+  --type-bar-bg: #d8a500;
+  --type-bar-text: #3e2f1e;
+  --type-note-bg: #0b7d61;
+  --type-note-text: #ffffff;
+  --type-other-bg: #7b4dbf;
+  --type-other-text: #ffffff;
+
+  /* Background Colors - Sepia Mode */
+  --bg-primary: #f2e7d5;
+  --bg-secondary: #e9ddc8;
+  --bg-tertiary: #c0b198; /* Darker for better logo contrast */
+  --bg-card: #f2e7d5;
+
+  /* Text Colors - Sepia Mode */
+  --text-primary: #3e2f1e;
+  --text-secondary: #5a4a36;
+  --text-muted: #6f604e;
+  --chip-text: #3e2f1e;
+
+  /* Border & Shadow - Sepia Mode */
+  --border: #d1c2a5;
+  --border-hover: #c0b198;
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg:
+    0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+
+  filter: sepia(30%);
+}
+
+/* =============================================================================
+   BASE STYLES & RESET
+   ============================================================================= */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-family:
+    "Inter",
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    sans-serif;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  line-height: 1.6;
+}
+
+body {
+  max-width: 2000px; /* Increased from 1600px for wider screens */
+  width: 100%;
+  margin: var(--spacing-lg) auto;
+  padding: var(--spacing);
+  transition: var(--transition);
+  overflow-x: hidden; /* Prevent horizontal overflow on body */
+  box-sizing: border-box;
+}
+
+/* =============================================================================
+   TYPOGRAPHY
+   ============================================================================= */
+
+h1 {
+  font-size: 1.875rem;
+  font-weight: 700;
+  color: var(--primary);
+  margin-bottom: var(--spacing);
+  letter-spacing: -0.025em;
+}
+
+h2 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-sm);
+}
+
+.section-title {
+  text-align: center;
+  font-family:
+    "Inter",
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    sans-serif;
+  margin: var(--spacing-lg) 0;
+}
+
+.modal-header .section-title {
+  margin: 0;
+}
+
+label {
+  display: block;
+  font-weight: 500;
+  margin-bottom: 0.25rem;
+  color: var(--text-primary);
+  font-size: 0.875rem;
+}
+
+/* =============================================================================
+   LAYOUT COMPONENTS
+   ============================================================================= */
+
+.app-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: var(--spacing-xl);
+  width: 100%;
+  padding: var(--spacing);
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+  min-height: 120px; /* match dark mode banner height */
+}
+
+.app-logo {
+  display: flex;
+  align-items: center;
+  margin: 0;
+  height: 100%;
+  cursor: pointer;
+}
+
+.app-logo svg {
+  display: block;
+}
+
+/* StackrTrackr Logo Styles */
+.stackr-logo {
+  max-width: 800px;
+  width: 100%;
+  height: auto;
+}
+
+/* Default state - show light mode */
+.stackr-logo .light-mode { 
+  display: block; 
+}
+
+.stackr-logo .dark-mode { 
+  display: none; 
+}
+
+.stackr-logo .sepia-mode { 
+  display: none; 
+}
+
+/* Dark theme */
+[data-theme="dark"] .stackr-logo .light-mode { 
+  display: none; 
+}
+
+[data-theme="dark"] .stackr-logo .dark-mode { 
+  display: block; 
+}
+
+[data-theme="dark"] .stackr-logo .sepia-mode { 
+  display: none; 
+}
+
+/* Light theme (explicit) */
+[data-theme="light"] .stackr-logo .light-mode { 
+  display: block; 
+}
+
+[data-theme="light"] .stackr-logo .dark-mode { 
+  display: none; 
+}
+
+[data-theme="light"] .stackr-logo .sepia-mode { 
+  display: none; 
+}
+
+/* Sepia theme */
+[data-theme="sepia"] .stackr-logo .light-mode { 
+  display: none; 
+}
+
+[data-theme="sepia"] .stackr-logo .dark-mode { 
+  display: none; 
+}
+
+[data-theme="sepia"] .stackr-logo .sepia-mode { 
+  display: block; 
+}
+
+/* System preference detection (only when no manual theme is set) */
+@media (prefers-color-scheme: dark) {
+  body:not([data-theme]) .stackr-logo .light-mode { 
+    display: none; 
+  }
+  body:not([data-theme]) .stackr-logo .dark-mode { 
+    display: block; 
+  }
+}
+
+/* Responsive scaling */
+@media (max-width: 768px) {
+  .stackr-logo text { 
+    font-size: 0.8em; 
+  }
+}
+
+@media (max-width: 480px) {
+  .stackr-logo text { 
+    font-size: 0.6em; 
+  }
+}
+
+.container {
+  display: grid;
+  gap: var(--spacing-xl);
+  max-width: 100%;
+  overflow: hidden; /* Prevent container overflow */
+  box-sizing: border-box;
+}
+
+section {
+  background: var(--bg-card);
+  padding: var(--spacing-xl);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  transition: var(--transition);
+  max-width: 100%;
+  overflow: hidden; /* Ensure no content overflows the section */
+  box-sizing: border-box;
+}
+
+.app-footer {
+  margin-top: var(--spacing-xl);
+  text-align: center;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  padding: var(--spacing);
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+}
+
+.app-footer a {
+  color: var(--primary);
+}
+
+.storage-line {
+  margin-bottom: var(--spacing-sm);
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.footer-meta {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.storage-line a {
+  margin-left: var(--spacing-sm);
+}
+
+.storage-line progress {
+  margin-left: var(--spacing-sm);
+  vertical-align: middle;
+  width: 150px;
+  height: 0.75rem;
+  appearance: none;
+  -webkit-appearance: none;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background-color: var(--bg-tertiary);
+}
+
+.storage-line progress::-webkit-progress-bar {
+  background-color: var(--bg-tertiary);
+  border-radius: var(--radius);
+}
+
+.storage-line progress::-webkit-progress-value {
+  background-color: var(--primary);
+  border-radius: var(--radius);
+}
+
+.storage-line progress::-moz-progress-bar {
+  background-color: var(--primary);
+  border-radius: var(--radius);
+}
+
+section:hover {
+  box-shadow: var(--shadow-lg);
+}
+
+.grid {
+  display: grid;
+  gap: var(--spacing);
+}
+
+.grid-2 {
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+
+/* =============================================================================
+   FORM ELEMENTS
+   ============================================================================= */
+
+form {
+  display: grid;
+  gap: var(--spacing);
+}
+
+input,
+select,
+button {
+  font-family: inherit;
+  font-size: 1rem;
+  transition: var(--transition);
+}
+
+input,
+select {
+  width: 100%;
+  padding: 0.75rem;
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+input:focus,
+select:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgb(59 130 246 / 0.1);
+}
+
+.currency-input {
+  position: relative;
+}
+
+.currency-input input {
+  padding-left: 2rem;
+}
+
+.currency-input::before {
+  content: "$";
+  position: absolute;
+  left: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  font-weight: 500;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* =============================================================================
+   BUTTONS - Enhanced for file:// protocol compatibility
+   ============================================================================= */
+
+/* File protocol compatibility fixes */
+.btn {
+  /* Force clickability for file:// protocol */
+  pointer-events: auto !important;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+/* Ensure header buttons are always clickable */
+.app-header .btn {
+  position: relative;
+  z-index: 100;
+  pointer-events: auto !important;
+}
+
+/* Force cursor pointer for all buttons */
+button,
+.btn,
+input[type="button"],
+input[type="submit"] {
+  cursor: pointer !important;
+}
+
+/* Main button styles */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: var(--radius);
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-decoration: none;
+  cursor: pointer;
+  transition: var(--transition);
+  position: relative;
+  overflow: hidden;
+  min-height: 2.75rem;
+  background: var(--primary);
+  color: #f8fafc;
+}
+
+.btn:hover {
+  background: var(--primary-hover);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow);
+}
+
+.btn:active {
+  transform: translateY(0);
+}
+
+.btn::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(248, 250, 252, 0.2),
+    transparent
+  );
+  transition: left 0.5s;
+}
+
+.btn:hover::before {
+  left: 100%;
+}
+
+.btn.danger {
+  background: var(--danger);
+}
+
+.btn.danger:hover {
+  background: var(--danger-hover);
+}
+
+.btn.success {
+  background: var(--success);
+}
+
+.btn.success:hover {
+  background: var(--success-hover);
+}
+
+.btn.info {
+  background: var(--info);
+}
+
+.btn.info:hover {
+  background: var(--info-hover);
+}
+
+.btn.secondary {
+  background: var(--secondary);
+}
+
+.btn.secondary:hover {
+  background: var(--secondary-hover);
+}
+
+.btn.warning {
+  background: var(--warning);
+  color: var(--text-primary);
+}
+
+.btn.warning:hover {
+  background: var(--warning-hover);
+}
+
+.btn.premium {
+  background: var(--warning);
+  color: var(--text-primary);
+}
+
+.btn.premium:hover {
+  background: #b45309;
+}
+
+.btn.filters {
+  background: #eab308;
+  color: var(--text-primary);
+}
+
+.btn.filters:hover {
+  background: #ca8a04;
+}
+
+/* =============================================================================
+   SPOT PRICE CARDS
+   ============================================================================= */
+.spot-input .grid.grid-2 {
+  margin-top: var(--spacing-sm);
+}
+
+.spot-input {
+  background: var(--bg-secondary);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+  border: 1px solid var(--border);
+}
+
+.spot-card {
+  background: var(--bg-primary);
+  border-radius: var(--radius);
+  padding: var(--spacing);
+  text-align: center;
+  margin-bottom: var(--spacing);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+}
+
+.spot-card-label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-bottom: 0.25rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 500;
+}
+
+.spot-card-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+/* Spot price change indicators */
+.spot-up {
+  color: var(--success);
+}
+
+.spot-down {
+  color: var(--danger);
+}
+
+.spot-unchanged {
+  color: var(--warning);
+}
+
+.spot-card-timestamp {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  margin-top: 0.25rem;
+  font-weight: 400;
+  line-height: 1.2;
+}
+
+/* Spot Price Action Buttons */
+.spot-actions {
+  display: none;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing);
+  justify-content: center;
+}
+
+.spot-action-btn {
+  flex: 1;
+  padding: var(--spacing-sm) var(--spacing);
+  font-size: 0.75rem;
+  font-weight: 500;
+  min-height: 2rem;
+  border-radius: var(--radius);
+  transition: var(--transition);
+}
+
+.spot-action-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: var(--text-muted);
+}
+
+.spot-action-btn:not(:disabled):hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow);
+}
+
+/* Manual input section (hidden by default) */
+.manual-input {
+  background: var(--bg-primary);
+  border-radius: var(--radius);
+  padding: var(--spacing);
+  border: 1px solid var(--border);
+  margin-top: var(--spacing-sm);
+  animation: slideDown 0.2s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.manual-input label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  margin-bottom: var(--spacing-sm);
+}
+
+/* Settings Modal - API Provider Blocks */
+.settings-section {
+  margin-top: 1rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1rem;
+}
+
+.api-providers {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.api-provider {
+  padding: 0.75rem;
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.api-provider input[type="password"] {
+  width: 100%;
+}
+
+.api-key-note {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 0.25rem;
+}
+
+.provider-header {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  margin-bottom: 0.25rem;
+  font-weight: 600;
+  gap: 0.25rem;
+}
+
+.provider-url {
+  font-weight: normal;
+  font-size: 0.875rem;
+  color: var(--text-muted);
+}
+
+.provider-batch-badge {
+  display: inline-block;
+  background: linear-gradient(135deg, var(--success), var(--success-hover));
+  color: #f8fafc;
+  font-size: 0.75rem;
+  font-weight: 500;
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--radius);
+  margin-top: 0.25rem;
+  box-shadow: var(--shadow-sm);
+}
+
+.api-info-link {
+  display: inline-block;
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+  color: var(--primary);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+
+.provider-footer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin-top: 0.5rem;
+  gap: 1rem;
+}
+
+.provider-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  align-items: center;
+  text-align: center;
+  margin-top: var(--spacing);
+}
+
+.provider-history {
+  font-size: 0.75rem;
+  margin-top: 0.25rem;
+  text-align: center;
+}
+
+.provider-history table {
+  margin: 0 auto;
+  border-collapse: collapse;
+}
+
+.provider-history th,
+.provider-history td {
+  padding: 0 0.5rem;
+  text-align: center;
+}
+
+.provider-history th.provider-label {
+  font-weight: 600;
+  text-align: right;
+}
+
+.provider-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+  justify-content: center;
+}
+
+.provider-actions-right {
+  display: flex;
+  gap: var(--spacing-sm);
+  justify-content: center;
+}
+
+.provider-checkbox-row label {
+  font-size: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.provider-checkbox-row .provider-metal-name {
+  margin-top: 0.25rem;
+}
+
+.api-usage {
+  margin: var(--spacing) auto 0;
+}
+
+.api-usage .usage-bar {
+  display: flex;
+  width: 100%;
+  height: 8px;
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--secondary);
+}
+
+.api-usage .usage-bar .used {
+  background: var(--danger);
+}
+
+.api-usage .usage-bar .remaining {
+  background: var(--success);
+}
+
+.api-usage .usage-text {
+  font-size: 0.75rem;
+  text-align: center;
+  margin-top: 0.25rem;
+}
+
+.provider-default-btn {
+  min-width: 80px;
+}
+
+.provider-default-btn.default {
+  background: var(--success);
+}
+
+.provider-default-btn.default:hover {
+  background: var(--success-hover);
+}
+
+.provider-default-btn.backup {
+  background: var(--warning);
+  color: var(--text-primary);
+}
+
+.provider-default-btn.backup:hover {
+  background: var(--warning-hover);
+}
+
+.provider-default-btn.inactive {
+  background: var(--secondary);
+}
+
+.provider-default-btn.inactive:hover {
+  background: var(--secondary-hover);
+}
+
+.cache-duration-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.api-key-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+/* Provider Settings Section */
+.provider-settings {
+  background: var(--bg-secondary);
+  border-radius: var(--radius);
+  padding: var(--spacing);
+  margin: var(--spacing) 0;
+  border: 1px solid var(--border);
+}
+
+.provider-settings h4 {
+  margin: 0 0 var(--spacing) 0;
+  color: var(--primary);
+  font-size: 0.875rem;
+  font-weight: 600;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: var(--spacing-sm);
+}
+
+.provider-setting-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-sm);
+}
+
+.provider-setting-row label {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.provider-cache-select,
+.provider-history-input {
+  width: 120px;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-size: 0.8rem;
+}
+
+/* Metal Selection */
+.metal-selection {
+  margin-top: var(--spacing);
+}
+
+.metal-selection > label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-sm);
+}
+
+.metal-checkboxes {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--spacing-sm);
+}
+
+.metal-checkbox {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-xs);
+  border-radius: var(--radius);
+  transition: var(--transition);
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.metal-checkbox:hover {
+  background: var(--bg-tertiary);
+}
+
+.metal-checkbox input[type="checkbox"] {
+  width: auto;
+  margin: 0;
+}
+
+.metal-name {
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+/* Batch Optimization Display */
+.batch-optimization {
+  margin-top: var(--spacing);
+  padding-top: var(--spacing);
+  border-top: 1px solid var(--border);
+}
+
+.batch-info {
+  background: linear-gradient(135deg, var(--bg-primary), var(--bg-tertiary));
+  border: 1px solid var(--primary);
+  border-left: 4px solid var(--primary);
+  border-radius: var(--radius);
+  padding: var(--spacing-sm) var(--spacing);
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  text-align: center;
+  box-shadow: var(--shadow-sm);
+}
+
+.batch-savings {
+  font-size: 0.7rem;
+  color: var(--success);
+  font-weight: 600;
+}
+
+.api-field-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.provider-status {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.875rem;
+}
+
+.provider-status .status-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: var(--warning);
+}
+
+.provider-status .status-text {
+  color: var(--warning);
+}
+
+.provider-status.status-connected .status-dot {
+  background: var(--success);
+}
+
+.provider-status.status-connected .status-text {
+  color: var(--success);
+}
+
+.provider-status.status-error .status-dot {
+  background: var(--danger);
+}
+
+.provider-status.status-error .status-text {
+  color: var(--danger);
+}
+
+.settings-actions {
+  margin-top: 1rem;
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: nowrap;
+}
+
+.api-status-summary {
+  margin-top: 0.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: center;
+  font-size: 0.875rem;
+}
+
+.api-status-summary .status-item.connected {
+  color: var(--success);
+}
+
+.api-status-summary .status-item.disconnected {
+  color: var(--text-secondary);
+}
+
+.api-status-summary .status-item.error {
+  color: var(--danger);
+}
+
+.settings-subtext {
+  margin: 0.5rem 0;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.theme-buttons {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+/* Larger icons for header theme buttons */
+.app-header .theme-btn {
+  font-size: 1.5rem;
+}
+
+/* Theme button styling - shows current theme */
+.theme-btn {
+  border: 2px solid var(--border);
+  transition: var(--transition);
+  font-size: 1.2rem;
+  min-width: 3rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.theme-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow);
+  border-color: var(--primary);
+}
+
+.theme-btn.dark {
+  background: #1e293b;
+  color: #f8fafc;
+  border-color: #334155;
+}
+
+.theme-btn.light {
+  background: #f8fafc;
+  color: #1e293b;
+  border-color: #cbd5e1;
+}
+
+.theme-btn.sepia {
+  background: #f2e7d5;
+  color: #3e2f1e;
+  border-color: #d1c2a5;
+}
+
+.theme-btn:hover::before {
+  left: 100%;
+}
+
+.theme-display {
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--border);
+  min-width: 120px;
+  text-align: center;
+  border-radius: var(--radius);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+/* Info modal sizing */
+#apiInfoModal .modal-content {
+  max-width: 500px;
+}
+
+#apiInfoModal h3 {
+  margin-bottom: 1rem;
+}
+
+#apiInfoModal .modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 1.5rem;
+}
+
+/* API history modal sizing */
+#apiHistoryModal .modal-content {
+  width: 60vw;
+  height: 60vh;
+  max-width: none;
+  max-height: none;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Storage report options modal */
+#storageOptionsModal .modal-content {
+  max-width: 400px;
+  text-align: center;
+}
+#storageOptionsModal .options-buttons {
+  display: flex;
+  gap: var(--spacing);
+  justify-content: center;
+}
+#storageOptionsModal .options-buttons .btn {
+  flex: 1;
+}
+
+#apiHistoryModal .modal-header {
+  background: linear-gradient(135deg, var(--primary), var(--primary-hover));
+  color: #f8fafc;
+  padding: var(--spacing-xl);
+  position: relative;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  box-shadow: var(--shadow);
+}
+
+#apiHistoryModal .modal-header h2 {
+  margin: 0;
+  color: #f8fafc;
+  text-align: center;
+}
+
+#apiHistoryModal .modal-body {
+  padding: var(--spacing-xl);
+  overflow: auto;
+  flex: 1;
+}
+
+.api-history-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.api-history-table {
+  display: flex;
+  flex-direction: column;
+}
+
+.api-history-filter {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.api-history-filter input {
+  flex: 1;
+}
+
+.api-history-table-wrapper {
+  height: 70vh;
+  width: 100%;
+  overflow-y: auto;
+}
+
+#apiHistoryTable {
+  width: 100%;
+  min-width: 100%;
+}
+
+#apiHistoryTable th {
+  cursor: pointer;
+}
+
+
+.api-info-body {
+  margin-bottom: 1rem;
+  font-size: 0.875rem;
+  background: var(--bg-tertiary);
+  padding: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.api-info-body .info-provider-name {
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.api-info-body ul {
+  margin: 0.5rem 0 0 1.25rem;
+}
+
+.api-info-body li + li {
+  margin-top: 0.25rem;
+}
+
+.api-info-body .info-docs-btn {
+  margin-top: 0.75rem;
+}
+
+/* Settings-style modal layout */
+#apiModal .modal-content,
+#filesModal .modal-content {
+  max-width: 750px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  overflow: hidden;
+}
+
+#apiModal .modal-header,
+#filesModal .modal-header {
+  background: linear-gradient(135deg, var(--primary), var(--primary-hover));
+  color: #f8fafc;
+  padding: var(--spacing-xl);
+  position: relative;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  box-shadow: var(--shadow);
+}
+
+#apiModal .modal-header h2,
+#filesModal .modal-header h2 {
+  margin: 0;
+  color: #f8fafc;
+  text-align: center;
+}
+
+#apiModal .modal-body,
+#filesModal .modal-body {
+  padding: var(--spacing-xl);
+  overflow-y: auto;
+  flex: 1;
+  scrollbar-width: thin;
+  scrollbar-color: var(--primary) var(--bg-secondary);
+}
+
+#apiModal .modal-body::-webkit-scrollbar,
+#filesModal .modal-body::-webkit-scrollbar {
+  width: 8px;
+}
+
+#apiModal .modal-body::-webkit-scrollbar-track,
+#filesModal .modal-body::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+  border-radius: var(--radius);
+}
+
+#apiModal .modal-body::-webkit-scrollbar-thumb,
+#filesModal .modal-body::-webkit-scrollbar-thumb {
+  background-color: var(--primary);
+  border-radius: var(--radius);
+}
+
+#apiModal .modal-body::-webkit-scrollbar-thumb:hover,
+#filesModal .modal-body::-webkit-scrollbar-thumb:hover {
+  background-color: var(--primary-hover);
+}
+
+#filesModal .modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing);
+}
+
+
+.settings-card-grid {
+  display: grid;
+  gap: var(--spacing);
+}
+
+@media (min-width: 600px) {
+  .settings-card-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.settings-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing);
+}
+
+.settings-card:hover {
+  box-shadow: var(--shadow-lg);
+}
+
+/* Cloud Sync modal layout */
+#cloudSyncModal .modal-content {
+  max-width: 400px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  overflow: hidden;
+}
+
+#cloudSyncModal .modal-header {
+  background: linear-gradient(135deg, var(--primary), var(--primary-hover));
+  color: #f8fafc;
+  padding: var(--spacing-xl);
+  position: relative;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  box-shadow: var(--shadow);
+}
+
+#cloudSyncModal .modal-header h2 {
+  margin: 0;
+  color: #f8fafc;
+  text-align: center;
+}
+
+#cloudSyncModal .modal-body {
+  padding: var(--spacing-xl);
+  text-align: center;
+}
+
+/* API Providers modal layout */
+#apiProvidersModal .modal-content {
+  width: 90vw;
+  max-width: 800px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  overflow: hidden;
+}
+
+#apiProvidersModal .modal-header {
+  background: linear-gradient(135deg, var(--primary), var(--primary-hover));
+  color: #f8fafc;
+  padding: var(--spacing-xl);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+}
+
+#apiProvidersModal .modal-header h2 {
+  margin: 0;
+  color: #f8fafc;
+  text-align: center;
+}
+
+#apiProvidersModal .modal-body {
+  padding: var(--spacing-xl);
+  overflow-y: auto;
+  flex: 1;
+}
+
+/* Standardized modal layout for change log and details views */
+/* shared modal content structure */
+#changeLogModal .modal-content,
+#detailsModal .modal-content,
+#editModal .modal-content {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  overflow: hidden;
+  width: 90%;
+}
+
+#changeLogModal .modal-content {
+  max-width: 1200px;
+  max-height: 80vh;
+}
+
+#changeLogModal .modal-header,
+#detailsModal .modal-header,
+#storageReportModal .modal-header,
+#editModal .modal-header {
+  background: linear-gradient(135deg, var(--primary), var(--primary-hover));
+  color: #f8fafc;
+  padding: var(--spacing-xl);
+  position: relative;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  box-shadow: var(--shadow);
+}
+
+#changeLogModal .modal-header h2,
+#detailsModal .modal-header h2,
+#storageReportModal .modal-header h2,
+#editModal .modal-header h2 {
+  margin: 0;
+  color: #f8fafc;
+  text-align: center;
+}
+
+#changeLogModal .modal-body,
+#editModal .modal-body {
+  padding: var(--spacing);
+  overflow: auto;
+  flex: 1;
+}
+
+#changeLogModal .modal-footer {
+  padding: var(--spacing);
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: flex-end;
+}
+
+#changeLogClearBtn {
+  font-size: 1.25rem;
+}
+
+#detailsModal .modal-body {
+  padding: var(--spacing-xl);
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+#storageReportModal .modal-body {
+  height: 80vh;
+  padding: 0;
+}
+
+#changeLogTable {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+}
+
+#changeLogTable th,
+#changeLogTable td {
+  padding: var(--spacing-xs);
+  text-align: left;
+  font-size: 0.75rem;
+}
+
+#changeLogTable td {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#changeLogTable th:last-child,
+#changeLogTable td:last-child {
+  width: 5rem;
+}
+
+#changeLogTable td.action-cell {
+  white-space: nowrap;
+}
+
+@media (max-width: 600px) {
+  #changeLogTable th,
+  #changeLogTable td {
+    font-size: 0.6rem;
+  }
+}
+
+#detailsModal {
+  font-size: clamp(0.8rem, 1vw + 0.5rem, 1rem);
+}
+
+/* =============================================================================
+   TOTALS CARDS
+   ============================================================================= */
+
+.totals {
+  display: grid;
+  gap: var(--spacing-lg);
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+.total-card {
+  background: var(--bg-secondary);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  transition: var(--transition);
+}
+
+.total-card:hover {
+  box-shadow: var(--shadow-lg);
+}
+
+.total-title {
+  font-size: 1.0625rem;
+  font-weight: 700;
+  margin-bottom: var(--spacing);
+  color: var(--primary);
+  text-align: center;
+  padding-bottom: var(--spacing-sm);
+  border-bottom: 2px solid var(--border);
+}
+
+.total-group {
+  background: var(--bg-primary);
+  border-radius: var(--radius);
+  padding: var(--spacing);
+  margin: var(--spacing-sm) 0;
+  border: 1px solid var(--border);
+}
+
+.total-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.375rem 0;
+  border-bottom: 1px dashed var(--border);
+}
+
+.total-item:last-child {
+  border-bottom: none;
+}
+
+.total-label {
+  font-weight: 500;
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+}
+
+.total-value {
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 0.9375rem;
+}
+
+
+.total-title {
+  font-size: 1.0625rem;
+  font-weight: 700;
+  margin-bottom: var(--spacing);
+  color: var(--text-primary);
+  text-align: center;
+  padding-bottom: var(--spacing-sm);
+  border-bottom: 4px solid var(--border); /* fallback, will be overridden below */
+  transition: border-color 0.2s, color 0.2s;
+  cursor: pointer;
+  user-select: none;
+}
+
+.total-title:hover {
+  color: var(--primary);
+}
+
+/* Metal-specific underline accent */
+.silver .total-title {
+  border-bottom: 4px solid var(--silver);
+}
+.gold .total-title {
+  border-bottom: 4px solid var(--gold);
+}
+.platinum .total-title {
+  border-bottom: 4px solid var(--platinum);
+}
+.palladium .total-title {
+  border-bottom: 4px solid var(--palladium);
+}
+/* Metal-specific colors */
+/* (removed empty duplicate metal-specific rules) */
+
+/* =============================================================================
+   TABLES - Main inventory table with interactive features
+   
+   Features implemented:
+   - Fixed table layout for precise column control
+   - Sortable headers with visual indicators
+   - Clickable item names for editing
+   - Collectable status checkboxes
+   - Delete buttons with hover effects
+   - Column resizing with drag handles
+   - Responsive design with mobile optimizations
+   - Hover effects and zebra striping for readability
+   ============================================================================= */
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--bg-primary);
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  table-layout: auto; /* Allow columns to size based on content */
+}
+
+.table-section {
+  overflow-x: auto;
+  overflow-y: visible;
+  -webkit-overflow-scrolling: touch;
+  width: 100%;
+  max-width: 100%;
+  min-height: auto;
+  box-sizing: border-box;
+}
+
+#inventoryTable {
+  /* Use the available container width and allow responsive scaling
+     to prevent right-side columns being clipped. Horizontal scrolling
+     remains available via .table-section when necessary. */
+  width: 100%;
+  table-layout: auto;
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-primary);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+#inventoryTable tbody {
+  min-height: calc(10 * 2.2rem);
+  height: auto;
+}
+
+  .table-item-count {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    background: var(--bg-tertiary);
+    padding: 0.125rem 0.375rem;
+    border-radius: var(--radius);
+    display: inline-block;
+  }
+
+  .table-footer-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 0.25rem;
+    width: 100%;
+  }
+
+/* Bulk Edit Control Panel */
+.bulk-edit-panel {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0.5rem 0;
+  margin-top: 0.5rem;
+  border-top: 1px solid var(--border);
+  background: var(--bg-secondary);
+  border-radius: var(--radius);
+}
+
+.bulk-edit-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.bulk-edit-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.bulk-edit-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+  fill: currentColor;
+}
+
+.toggle-all-btn {
+  background: var(--primary);
+  color: white;
+}
+
+.toggle-all-btn:hover {
+  background: var(--primary-dark);
+  transform: translateY(-1px);
+}
+
+.save-all-btn {
+  background: #28a745;
+  color: white;
+}
+
+.save-all-btn:hover {
+  background: #218838;
+  transform: translateY(-1px);
+}
+
+.cancel-all-btn {
+  background: #dc3545;
+  color: white;
+}
+
+.cancel-all-btn:hover {
+  background: #c82333;
+  transform: translateY(-1px);
+}
+
+.bulk-edit-btn:active {
+  transform: translateY(0);
+}
+
+th {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-weight: 600;
+  padding: 0.375rem 0.25rem; /* Reduced padding for narrower rows */
+  text-align: center;
+  cursor: pointer;
+  position: relative;
+  border-bottom: 2px solid var(--border);
+  border-right: 1px solid var(--border);
+  transition: var(--transition);
+  font-size: 0.8rem; /* Reduced from 0.95rem for more space */
+  line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: normal;
+}
+
+/* Removed annoying th:hover animation effect */
+
+td {
+  padding: 0.2rem; /* Reduced padding for better density */
+  border-bottom: 1px solid rgba(51, 65, 85, 0.5); /* Softer border for cell separation */
+  border-right: 1px solid rgba(51, 65, 85, 0.3); /* Lighter right border */
+  color: var(--text-primary);
+  font-size: 0.75rem; /* Reduced from 0.875rem for inline editing */
+  line-height: 1.2; /* Tighter line height */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: middle;
+  max-width: 20ch; /* Limit to approximately 20 characters */
+}
+
+/* Allow certain columns to be wider */
+td[data-column="name"] {
+  max-width: 25ch; /* Name column can be slightly wider */
+}
+
+td[data-column="purchaseLocation"],
+td[data-column="storageLocation"] {
+  max-width: 9ch; /* Reduced from 18ch - compact location columns */
+  width: 9ch;
+  min-width: 9ch;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Fixed date column with proper width for full dates */
+td[data-column="date"],
+th[data-column="date"] {
+  max-width: 12ch; /* Increased from 8ch to fit full dates like "Feb 28, 2024" */
+  width: 12ch;
+  min-width: 12ch;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Keep icon columns compact and always visible */
+td[data-column="collectable"],
+td[data-column="notes"],
+td[data-column="edit"],
+td[data-column="delete"] {
+  max-width: 3rem; /* Icon columns stay small */
+  white-space: normal; /* Allow icons to display normally */
+  position: sticky;
+  background: inherit;
+  z-index: 2;
+}
+
+/* Sticky positioning for action columns */
+#inventoryTable td[data-column="collectable"] {
+  right: 9rem; /* Rightmost position */
+}
+
+#inventoryTable td[data-column="notes"] {
+  right: 6rem;
+}
+
+#inventoryTable td[data-column="edit"] {
+  right: 3rem;
+}
+
+#inventoryTable td[data-column="delete"] {
+  right: 0; /* Stays at far right */
+}
+
+/* Metal column with toggle capability and increased width */
+#inventoryTable th[data-column="metal"],
+#inventoryTable td[data-column="metal"] {
+  max-width: 25ch; /* Increased metal column to prevent wrapping */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+/* Metal column expansion on hover - CELLS ONLY */
+#inventoryTable td[data-column="metal"]:hover {
+  max-width: none;
+  white-space: normal;
+  word-wrap: break-word;
+  z-index: 10;
+  background: var(--bg-primary);
+  box-shadow: var(--shadow);
+  border-radius: var(--radius-sm);
+  padding: 0.5rem;
+}
+
+/* Price column toggle styling */
+#inventoryTable th[data-column="purchasePrice"] {
+  cursor: pointer;
+  position: relative;
+}
+
+#inventoryTable th[data-column="purchasePrice"]:after {
+  content: "⇄";
+  position: absolute;
+  right: 0.25rem;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.8rem;
+  opacity: 0.6;
+}
+
+[data-column].hidden,
+[data-column].hidden-empty {
+  display: none;
+}
+
+#inventoryTable th[data-column="collectable"] svg {
+    display: block;
+    margin: 0 auto;
+    fill: currentColor;
+}
+
+/* Base row styling */
+tr {
+  background: var(--bg-primary);
+  transition: filter 0.2s ease-in-out;
+}
+
+/* Zebra striping */
+tr:nth-child(even) {
+  background: var(--bg-secondary);
+}
+
+/* Hover effect using a filter instead of background color */
+tr:hover {
+  filter: brightness(0.95);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  position: relative;
+  z-index: 1;
+}
+
+.sort-indicator {
+  margin-left: 0.25rem;
+  font-weight: bold;
+  color: var(--primary);
+  font-size: 0.7rem;
+}
+
+/* Utility column width classes */
+.shrink {
+  width: 1%;
+  white-space: nowrap;
+  min-width: 0;
+}
+/* Name column cells remain left aligned for readability */
+#inventoryTable td[data-column="name"] {
+  text-align: left;
+}
+
+
+/* Enhanced Mobile Responsive Design with Auto-Scaling */
+
+/* Progressive column hiding for responsive design */
+@media (max-width: 1200px) {
+  /* Hide less critical columns on medium screens */
+  #inventoryTable th[data-column="spot"],
+  #inventoryTable td[data-column="spot"],
+  #inventoryTable th[data-column="premium"],
+  #inventoryTable td[data-column="premium"] {
+    display: none;
+  }
+}
+
+@media (max-width: 1024px) {
+  /* Hide purchase and storage columns on smaller screens */
+  #inventoryTable th[data-column="purchaseLocation"],
+  #inventoryTable td[data-column="purchaseLocation"],
+  #inventoryTable th[data-column="storageLocation"],
+  #inventoryTable td[data-column="storageLocation"] {
+    display: none;
+  }
+  
+  #inventoryTable {
+    font-size: 0.8rem;
+  }
+  
+  #inventoryTable th,
+  #inventoryTable td {
+    padding: 0.3rem 0.2rem;
+  }
+}
+
+@media (max-width: 768px) {
+  #inventoryTable {
+    width: 100%;
+    min-width: 0;
+    table-layout: fixed;
+    font-size: 0.75rem;
+  }
+
+  #inventoryTable th,
+  #inventoryTable td {
+    padding: 0.25rem 0.15rem;
+    white-space: normal;
+    overflow: hidden;
+    text-overflow: clip;
+    word-break: break-word;
+    line-height: 1.2;
+  }
+  
+  /* Auto-scale column widths for mobile with improved distribution */
+  #inventoryTable th[data-column="date"],
+  #inventoryTable td[data-column="date"] {
+    width: 10%;
+    font-size: 0.7rem;
+  }
+  
+  #inventoryTable th[data-column="metal"],
+  #inventoryTable td[data-column="metal"] {
+    width: 8%;
+    font-size: 0.7rem;
+  }
+  
+  #inventoryTable th[data-column="name"],
+  #inventoryTable td[data-column="name"] {
+    width: 30%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  
+  #inventoryTable th[data-column="qty"],
+  #inventoryTable td[data-column="qty"] {
+    width: 6%;
+  }
+  
+  #inventoryTable th[data-column="weight"],
+  #inventoryTable td[data-column="weight"] {
+    width: 10%;
+  }
+  
+  #inventoryTable th[data-column="purchasePrice"],
+  #inventoryTable td[data-column="purchasePrice"] {
+    width: 12%;
+  }
+  
+  /* Icon columns get minimal width but remain functional */
+  #inventoryTable th.icon-col,
+  #inventoryTable td.icon-col {
+    width: 6%;
+    min-width: 2.5rem;
+    padding: 0.2rem 0.1rem;
+  }
+
+  /* Enhanced responsive text handling */
+  .shrink {
+    width: auto;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  
+  .expand {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    white-space: normal;
+  }
+}
+
+@media (max-width: 600px) {
+  #inventoryTable {
+    font-size: 0.7rem;
+  }
+  
+  #inventoryTable th,
+  #inventoryTable td {
+    padding: 0.2rem 0.1rem;
+  }
+  
+  /* Progressive column hiding for better mobile experience */
+  #inventoryTable th[data-column="spot"],
+  #inventoryTable td[data-column="spot"],
+  #inventoryTable th[data-column="premium"],
+  #inventoryTable td[data-column="premium"],
+  #inventoryTable th[data-column="purchaseLocation"],
+  #inventoryTable td[data-column="purchaseLocation"],
+  #inventoryTable th[data-column="storageLocation"],
+  #inventoryTable td[data-column="storageLocation"] {
+    display: none;
+  }
+  
+  /* Redistribute space for remaining columns */
+  #inventoryTable th[data-column="name"],
+  #inventoryTable td[data-column="name"] {
+    width: 40%;
+  }
+  
+  #inventoryTable th[data-column="weight"],
+  #inventoryTable td[data-column="weight"] {
+    width: 12%;
+  }
+  
+  #inventoryTable th[data-column="purchasePrice"],
+  #inventoryTable td[data-column="purchasePrice"] {
+    width: 15%;
+  }
+  
+  #inventoryTable th[data-column="qty"],
+  #inventoryTable td[data-column="qty"] {
+    width: 8%;
+  }
+}
+
+@media (max-width: 480px) {
+  #inventoryTable {
+    font-size: 0.65rem;
+  }
+  
+  #inventoryTable th,
+  #inventoryTable td {
+    padding: 0.15rem 0.05rem;
+  }
+  
+  /* Further column hiding for very small screens */
+  #inventoryTable th[data-column="type"],
+  #inventoryTable td[data-column="type"],
+  #inventoryTable th[data-column="numista"],
+  #inventoryTable td[data-column="numista"],
+  #inventoryTable th[data-column="metal"],
+  #inventoryTable td[data-column="metal"] {
+    display: none;
+  }
+  
+  /* Maximize space for essential columns */
+  #inventoryTable th[data-column="name"],
+  #inventoryTable td[data-column="name"] {
+    width: 50%;
+  }
+  
+  #inventoryTable th[data-column="weight"],
+  #inventoryTable td[data-column="weight"] {
+    width: 15%;
+  }
+  
+  #inventoryTable th[data-column="purchasePrice"],
+  #inventoryTable td[data-column="purchasePrice"] {
+    width: 15%;
+  }
+  
+  /* Icon columns remain functional but compact */
+  #inventoryTable th.icon-col,
+  #inventoryTable td.icon-col {
+    width: 8%;
+    min-width: 1.8rem;
+    padding: 0.1rem;
+  }
+  
+  /* Reduce icon sizes for mobile */
+  #inventoryTable td.icon-col .action-icon,
+  #inventoryTable td.icon-col .collectable-status svg,
+  #inventoryTable th.icon-col svg {
+    width: 0.9rem;
+    height: 0.9rem;
+  }
+}
+
+/* Clickable name cell styling */
+.name-cell {
+  text-align: left !important;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  cursor: pointer;
+  padding: var(--spacing-sm);
+}
+
+.name-text {
+  flex: 1;
+  text-align: left;
+  font-weight: 500;
+  transition: var(--transition);
+}
+
+.name-text:hover {
+  color: var(--primary);
+  text-decoration: underline;
+}
+
+/* Make buttons in table cells smaller */
+td .btn {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.7rem;
+  min-height: 1.8rem;
+  line-height: 1;
+  margin: 1px;
+}
+
+td .action-btn {
+  width: 2rem;
+  height: 2rem;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+td .action-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+td .action-icon.danger {
+  color: var(--danger);
+}
+
+/* Enhanced delete button styling */
+td .action-icon.delete-btn {
+  color: var(--danger);
+  border-radius: var(--radius);
+  padding: 0.25rem;
+  /* Removed transition: all 0.2s ease; */
+}
+
+/* Removed hover effect to prevent flooding into other cells */
+
+td .action-icon.success {
+  color: var(--success);
+}
+
+td .filter-text {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.na-value {
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+td .filter-text a,
+td .filter-text a:visited {
+  color: inherit;
+}
+
+/* Enhanced Inline Editing Styles */
+td .inline-edit-icon,
+td .save-inline,
+td .cancel-inline {
+  cursor: pointer;
+  transition: var(--transition);
+  user-select: none;
+}
+
+td .inline-edit-icon {
+  margin-right: 0.25rem;
+  font-size: 1.1rem;
+  display: inline-block;
+  color: var(--text-muted);
+  padding: 0.1rem;
+  border-radius: var(--radius);
+}
+
+td .inline-edit-icon:hover {
+  color: var(--primary);
+  background: var(--bg-secondary);
+  transform: scale(1.1);
+}
+
+/* Name cell inline edit icons */
+td[data-column="name"] .inline-edit-icon {
+  border-radius: 50%;
+  padding: 2px;
+}
+
+td[data-column="name"] .inline-edit-icon:hover {
+  opacity: 1 !important;
+  background: var(--bg-elev-1);
+  transform: translateY(-50%) scale(1.2);
+}
+
+td.editing {
+  position: relative;
+  background: var(--bg-tertiary) !important;
+  border: 2px solid var(--primary) !important;
+  border-radius: var(--radius);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+td.editing .inline-input {
+  width: 100%;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  color: var(--text-primary);
+  font-size: inherit;
+  font-weight: 500;
+  padding: 0.2rem;
+  margin: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+td.editing .inline-input:focus {
+  outline: none;
+  background: var(--bg-primary);
+  border-radius: var(--radius);
+}
+
+td.editing .save-inline,
+td.editing .cancel-inline {
+  position: absolute;
+  right: 0.2rem;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 10;
+  font-size: 0.9rem;
+  padding: 0.2rem;
+  margin: 0;
+  cursor: pointer;
+  border-radius: var(--radius);
+  transition: var(--transition);
+}
+
+td.editing .save-inline {
+  right: 1.5rem;
+  color: var(--success);
+}
+
+td.editing .save-inline:hover {
+  background: var(--success);
+  color: #f8fafc;
+  transform: translateY(-50%) scale(1.2);
+}
+
+td.editing .cancel-inline {
+  right: 0.2rem;
+  color: var(--danger);
+}
+
+td.editing .cancel-inline:hover {
+  background: var(--danger);
+  color: #f8fafc;
+  transform: translateY(-50%) scale(1.2);
+}
+
+/* Mobile inline editing adjustments */
+@media (max-width: 768px) {
+  td .inline-edit-icon {
+    font-size: 1rem;
+    margin-right: 0.15rem;
+  }
+  
+  td.editing .inline-input {
+    font-size: 0.75rem;
+  }
+  
+  td.editing .save-inline,
+  td.editing .cancel-inline {
+    font-size: 0.8rem;
+    padding: 0.15rem;
+  }
+  
+  td.editing .save-inline {
+    right: 1.2rem;
+  }
+}
+
+@media (max-width: 480px) {
+  td .inline-edit-icon {
+    font-size: 0.9rem;
+    margin-right: 0.1rem;
+  }
+  
+  td.editing {
+    border-width: 1px;
+  }
+  
+  td.editing .inline-input {
+    font-size: 0.7rem;
+    padding: 0.15rem;
+  }
+  
+  td.editing .save-inline,
+  td.editing .cancel-inline {
+    font-size: 0.75rem;
+    padding: 0.1rem;
+  }
+}
+
+td .filter-text:hover,
+td .filter-text:focus {
+  text-decoration: underline;
+  background: var(--bg-secondary);
+  border-radius: var(--radius);
+  padding: 0.1rem 0.2rem;
+  margin: -0.1rem -0.2rem;
+  transition: var(--transition);
+}
+
+/* Make toggle switches smaller */
+td .switch {
+  width: 32px;
+  height: 18px;
+}
+
+td .slider {
+  border-radius: 18px;
+}
+
+td .slider:before {
+  height: 14px;
+  width: 14px;
+  left: 2px;
+  bottom: 2px;
+}
+
+td input:checked + .slider:before {
+  transform: translateX(14px);
+}
+
+/* Enhanced Resize handle styling */
+.resize-handle {
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 8px;
+  height: 100%;
+  background: transparent;
+  cursor: col-resize;
+  z-index: 10;
+  transition: all 0.2s;
+  border-right: 2px solid transparent;
+}
+
+.resize-handle:hover {
+  background: rgba(59, 130, 246, 0.1);
+  border-right-color: var(--primary);
+  opacity: 0.8;
+}
+
+.resize-handle:active {
+  background: rgba(59, 130, 246, 0.2);
+  border-right-color: var(--primary-hover);
+  opacity: 1;
+  width: 10px;
+}
+
+/* Mobile resize handle adjustments */
+@media (max-width: 768px) {
+  .resize-handle {
+    width: 10px;
+    border-right-width: 3px;
+  }
+  
+  .resize-handle:active {
+    width: 12px;
+  }
+}
+
+/* =============================================================================
+   MODALS - Edit modal and analytics modal with charts
+   
+   Two modal types:
+   1. Edit Modal: Item editing form with validation and collectable toggle
+   2. Details Modal: Analytics with pie charts and data breakdowns
+   
+   Features:
+   - Backdrop blur and overlay effects
+   - Smooth slide-in animation
+   - Responsive sizing for all screen sizes
+   - Keyboard navigation support
+   - Auto-scrolling for content overflow
+   ============================================================================= */
+
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  padding: var(--spacing);
+  animation: modalFadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+    backdrop-filter: blur(0px);
+    -webkit-backdrop-filter: blur(0px);
+  }
+  to {
+    opacity: 1;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+}
+
+.modal-content {
+  background: rgba(248, 250, 252, 0.95);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(248, 250, 252, 0.2);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-xl);
+  max-width: 1200px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 
+    0 25px 50px -12px rgba(0, 0, 0, 0.25),
+    0 0 0 1px rgba(248, 250, 252, 0.05),
+    inset 0 1px 0 rgba(248, 250, 252, 0.1);
+  animation: modalSlideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+}
+
+[data-theme="dark"] .modal-content {
+  background: rgba(30, 41, 59, 0.95);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  box-shadow: 
+    0 25px 50px -12px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(148, 163, 184, 0.05),
+    inset 0 1px 0 rgba(148, 163, 184, 0.1);
+}
+
+.modal-content::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--primary), transparent);
+  opacity: 0.6;
+}
+
+/* =============================================================================
+   ABOUT MODAL STYLING - Enhanced splash page design
+   ============================================================================= */
+
+.about-modal-content {
+  width: 75vw;
+  max-width: 1200px;
+  padding: 0;
+  overflow: hidden;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.about-modal-header {
+  background: linear-gradient(135deg, var(--primary), var(--primary-hover));
+  color: #f8fafc;
+  padding: var(--spacing-xl);
+  position: relative;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  box-shadow: var(--shadow);
+}
+
+.about-modal-header h1 {
+  margin: 0;
+  color: #f8fafc;
+  text-align: center;
+}
+
+.about-title {
+  font-size: 1.875rem;
+  font-weight: 700;
+  margin: 0;
+  text-align: center;
+  color: var(--text-primary);
+}
+
+.about-title #aboutAppName {
+  color: var(--primary);
+}
+
+.about-title #aboutVersion {
+  color: var(--text-secondary);
+}
+
+.modal-close {
+  position: absolute;
+  top: var(--spacing);
+  right: var(--spacing);
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: rgba(248, 250, 252, 0.8);
+  cursor: pointer;
+  padding: var(--spacing-sm);
+  border-radius: var(--radius);
+  transition: var(--transition);
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-close:hover {
+  color: #f8fafc;
+  background: rgba(248, 250, 252, 0.1);
+}
+
+.about-modal-body {
+  padding: var(--spacing-xl);
+  overflow-y: auto;
+  flex: 1;
+  scrollbar-width: thin;
+  scrollbar-color: var(--primary) var(--bg-secondary);
+}
+
+
+.about-modal-body::-webkit-scrollbar {
+  width: 8px;
+}
+
+.about-modal-body::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+  border-radius: var(--radius);
+}
+
+.about-modal-body::-webkit-scrollbar-thumb {
+  background-color: var(--primary);
+  border-radius: var(--radius);
+}
+
+.about-modal-body::-webkit-scrollbar-thumb:hover {
+  background-color: var(--primary-hover);
+}
+
+.about-description {
+  font-size: 1.125rem;
+  line-height: 1.7;
+  color: var(--text-secondary);
+  margin: var(--spacing-xl) 0;
+  text-align: center;
+  padding: var(--spacing-lg);
+  background: var(--bg-secondary);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+}
+
+
+.about-alert {
+  background: linear-gradient(135deg, #fef2f2, #f5f5f5);
+  border: 1px solid #fecaca;
+  border-left: 4px solid var(--danger);
+  border-radius: var(--radius);
+  padding: var(--spacing-lg);
+  margin: var(--spacing-xl) 0;
+  position: relative;
+  overflow: hidden;
+}
+
+[data-theme="dark"] .about-alert {
+  background: linear-gradient(135deg, #2d1b1b, #1f1717);
+  border-color: #991b1b;
+}
+
+.alert-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: var(--spacing);
+  font-weight: 600;
+  color: var(--danger);
+}
+
+.alert-icon {
+  font-size: 1.2rem;
+  margin-right: var(--spacing-sm);
+}
+
+.about-alert .alert-content {
+  column-count: 2;
+  column-gap: var(--spacing-lg);
+}
+
+.about-alert .alert-content p {
+  margin: 0 0 var(--spacing);
+  line-height: 1.6;
+  color: var(--text-primary);
+  break-inside: avoid;
+}
+
+.alert-actions {
+  margin-top: var(--spacing-lg);
+  text-align: center;
+}
+
+.about-info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-lg);
+  margin-bottom: var(--spacing-xl);
+}
+
+@media (max-width: 768px) {
+  .about-info-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.about-info-grid .about-section {
+  margin-bottom: 0;
+}
+
+.about-section {
+  margin-bottom: var(--spacing-xl);
+  background: var(--bg-secondary);
+  border-radius: var(--radius);
+  padding: var(--spacing-lg);
+  border: 1px solid var(--border);
+}
+
+.about-section .section-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--primary);
+  margin-bottom: var(--spacing);
+  padding-bottom: var(--spacing-sm);
+  border-bottom: 2px solid var(--border);
+}
+
+.changelog-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.changelog-list li {
+  padding: var(--spacing-sm) 0;
+  border-bottom: 1px dashed var(--border);
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.changelog-list li:last-child {
+  border-bottom: none;
+}
+
+.changelog-list li::before {
+  content: "•";
+  color: var(--primary);
+  font-weight: bold;
+  font-size: 1.2em;
+  margin-right: var(--spacing-sm);
+}
+
+
+.resources-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--spacing);
+}
+
+.resource-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing) var(--spacing-lg);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  text-decoration: none;
+  font-weight: 500;
+  transition: var(--transition);
+  cursor: pointer;
+  font-size: 0.875rem;
+}
+
+.resource-btn:hover {
+  background: var(--bg-tertiary);
+  border-color: var(--primary);
+  color: var(--primary);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow);
+}
+
+.acceptance-text {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  margin-top: var(--spacing-lg);
+  margin-bottom: var(--spacing-lg);
+  line-height: 1.5;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+  text-align: center;
+}
+
+.about-accept-btn {
+  background: linear-gradient(135deg, var(--success), #047857);
+  color: #f8fafc;
+  font-size: 1.125rem;
+  padding: var(--spacing) var(--spacing-xl);
+  border: none;
+  border-radius: var(--radius);
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+  box-shadow: var(--shadow);
+}
+
+.about-accept-btn:hover {
+  background: linear-gradient(135deg, #047857, #065f46);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+/* Responsive adjustments for about modal */
+@media (max-width: 768px) {
+  .about-modal-content {
+    width: 95vw;
+    margin: var(--spacing-sm);
+    max-height: 95vh;
+  }
+
+  .about-title {
+    font-size: 1.5rem;
+  }
+
+  .resources-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .about-modal-body {
+    padding: var(--spacing);
+  }
+
+  .about-alert .alert-content {
+    column-count: 1;
+  }
+}
+
+@media (max-width: 480px) {
+  .about-title {
+    font-size: 1.25rem;
+  }
+
+  .about-description {
+    font-size: 1rem;
+    padding: var(--spacing);
+  }
+
+  .about-modal-header {
+    padding: var(--spacing);
+  }
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.details-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-xl);
+  margin-bottom: var(--spacing-lg);
+  flex: 1;
+  overflow: hidden;
+}
+
+.details-panel {
+  background: var(--bg-secondary);
+  border-radius: var(--radius);
+  padding: var(--spacing-lg);
+  border: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+  overflow: hidden;
+}
+
+.details-breakdown {
+  flex: 1;
+  overflow: auto;
+  padding-right: var(--spacing-sm);
+}
+
+.details-panel-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--primary);
+  margin: 0;
+  text-align: center;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: var(--spacing-sm);
+}
+
+.breakdown-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-sm) 0;
+  border-bottom: 1px dashed var(--border);
+}
+
+.breakdown-item:last-child {
+  border-bottom: none;
+}
+
+.breakdown-label {
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.breakdown-values {
+  text-align: right;
+  font-size: 0.875rem;
+}
+
+.breakdown-count {
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.breakdown-weight {
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.breakdown-value {
+  color: var(--success);
+  font-weight: 600;
+}
+
+.chart-canvas-container {
+  position: relative;
+  height: 300px;
+  width: 100%;
+  margin: 0 auto;
+  flex: 0 0 300px;
+}
+
+.chart-canvas {
+  max-height: 300px !important;
+}
+
+/* =============================================================================
+   NUMISTA MODAL - Embedded iframe viewer with navigation controls
+   ============================================================================= */
+
+/* Numista modal sizing - 90% width as requested */
+.numista-modal-content {
+  width: 90vw;
+  max-width: 90vw;
+  height: 90vh;
+  max-height: 90vh;
+  padding: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.numista-modal-content .modal-header {
+  padding: var(--spacing-lg);
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  flex-shrink: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.numista-nav-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing);
+}
+
+.nav-btn {
+  background: var(--primary);
+  color: white;
+  border: none;
+  border-radius: var(--radius);
+  width: 2.5rem;
+  height: 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.nav-btn:hover {
+  background: var(--primary-hover);
+  transform: translateY(-1px);
+}
+
+.nav-btn:disabled {
+  background: var(--text-muted);
+  cursor: not-allowed;
+  transform: none;
+}
+
+#numistaModalTitle {
+  margin: 0;
+  text-align: center;
+  flex: 1;
+  font-size: 1.25rem;
+  padding: 0 var(--spacing-lg);
+}
+
+.numista-modal-body {
+  flex: 1;
+  padding: 0;
+  overflow: hidden;
+}
+
+/* Responsive adjustments for smaller screens */
+@media (max-width: 768px) {
+  .numista-modal-content {
+    width: 95vw;
+    height: 95vh;
+  }
+  
+  .numista-modal-content .modal-header {
+    padding: var(--spacing);
+  }
+  
+  .numista-nav-controls {
+    gap: var(--spacing-sm);
+  }
+  
+  #numistaModalTitle {
+    font-size: 1rem;
+    padding: 0 var(--spacing);
+  }
+  
+  .nav-btn {
+    width: 2rem;
+    height: 2rem;
+    font-size: 1rem;
+  }
+}
+
+/* =============================================================================
+   PAGINATION
+   ============================================================================= */
+
+.pagination-section {
+  margin: var(--spacing) 0;
+}
+
+.pagination-controls {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: 0.125rem 0;
+}
+
+.pagination-buttons {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--spacing-xs);
+}
+
+.pagination-left,
+.pagination-right {
+  display: flex;
+  gap: var(--spacing-sm);
+}
+
+.pagination-center {
+  display: flex;
+  gap: var(--spacing-sm);
+  justify-content: center;
+  flex-grow: 1;
+}
+
+.items-per-page {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.items-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.change-log-label {
+  font-weight: 700;
+  color: var(--primary);
+  cursor: pointer;
+}
+
+.btn.silver {
+  background: var(--silver);
+  color: var(--text-primary);
+}
+
+.btn.silver:hover {
+  background: #9ca3af;
+}
+
+.table-disclaimer {
+  font-size: 0.75rem;
+  color: var(--disclaimer-color);
+  font-style: italic;
+  text-align: center;
+}
+
+.table-subtitle {
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-align: center;
+  margin-bottom: 0.25rem;
+}
+
+.backup-link {
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.pagination-select {
+  width: 6rem;
+  height: 1.375rem;
+}
+
+.pagination-btn {
+  min-width: 2rem;
+  height: 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-weight: 500;
+  transition: var(--transition);
+  cursor: pointer;
+  padding: 0;
+  font-size: 0.75rem;
+}
+
+.pagination-btn.active {
+  background: var(--primary);
+  color: #f8fafc;
+  border-color: var(--primary);
+  font-weight: 600;
+}
+
+.pagination-btn:hover:not(:disabled) {
+  background: var(--bg-secondary);
+  border-color: var(--border-hover);
+}
+
+.pagination-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.beta-warning {
+  margin-top: var(--spacing-xs);
+  font-size: 0.75rem;
+  color: var(--warning);
+  text-align: center;
+}
+
+/* =============================================================================
+   SEARCH
+   ============================================================================= */
+
+.search-section {
+  margin-bottom: var(--spacing);
+}
+
+.search-container {
+  display: flex;
+  gap: var(--spacing-sm);
+  align-items: center;
+}
+
+#searchInput {
+  flex: 1;
+}
+
+.modern-icon-btn {
+  width: 2.75rem;
+  height: 2.75rem;
+  padding: 0.5rem;
+  min-width: 2.75rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  border-radius: var(--radius);
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.modern-icon-btn:hover {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.modern-icon-btn:active {
+  transform: translateY(0);
+}
+
+.modern-icon-btn:focus {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.modern-icon-btn svg {
+  width: 1.25rem;
+  height: 1.25rem;
+  transition: transform 0.2s ease;
+}
+
+.modern-icon-btn:hover svg {
+  transform: scale(1.1);
+}
+
+/* Theme-specific adjustments */
+[data-theme="dark"] .modern-icon-btn {
+  background: var(--bg-tertiary);
+  border-color: var(--border);
+}
+
+[data-theme="dark"] .modern-icon-btn:hover {
+  background: var(--primary);
+  box-shadow: 0 2px 12px rgba(59, 130, 246, 0.3);
+}
+
+[data-theme="sepia"] .modern-icon-btn {
+  background: var(--bg-tertiary);
+  border-color: var(--border);
+}
+
+[data-theme="sepia"] .modern-icon-btn:hover {
+  background: var(--primary);
+  box-shadow: 0 2px 8px rgba(139, 69, 19, 0.2);
+}
+
+/* Enhanced search action buttons with text labels */
+.search-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  height: 2.75rem;
+  padding: 0.5rem 0.75rem;
+  min-width: auto;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  border-radius: var(--radius);
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+  font-size: 0.875rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.search-action-btn:hover {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.search-action-btn:active {
+  transform: translateY(0);
+}
+
+.search-action-btn:focus {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.search-action-btn svg {
+  width: 1rem;
+  height: 1rem;
+  transition: transform 0.2s ease;
+  flex-shrink: 0;
+}
+
+.search-action-btn:hover svg {
+  transform: scale(1.1);
+}
+
+/* Specific button color variations */
+.search-action-btn.add-btn:hover {
+  background: var(--success);
+  border-color: var(--success);
+}
+
+.search-action-btn.clear-btn:hover {
+  background: var(--warning);
+  border-color: var(--warning);
+}
+
+.search-action-btn.log-btn:hover {
+  background: var(--info);
+  border-color: var(--info);
+}
+
+/* Theme-specific adjustments for search action buttons */
+[data-theme="dark"] .search-action-btn {
+  background: var(--bg-tertiary);
+  border-color: var(--border);
+}
+
+[data-theme="dark"] .search-action-btn.add-btn:hover {
+  background: var(--success);
+  box-shadow: 0 2px 12px rgba(34, 197, 94, 0.3);
+}
+
+[data-theme="dark"] .search-action-btn.clear-btn:hover {
+  background: var(--warning);
+  box-shadow: 0 2px 12px rgba(245, 158, 11, 0.3);
+}
+
+[data-theme="dark"] .search-action-btn.log-btn:hover {
+  background: var(--info);
+  box-shadow: 0 2px 12px rgba(59, 130, 246, 0.3);
+}
+
+[data-theme="sepia"] .search-action-btn {
+  background: var(--bg-tertiary);
+  border-color: var(--border);
+}
+
+[data-theme="sepia"] .search-action-btn.add-btn:hover {
+  background: var(--success);
+  box-shadow: 0 2px 8px rgba(34, 197, 94, 0.2);
+}
+
+[data-theme="sepia"] .search-action-btn.clear-btn:hover {
+  background: var(--warning);
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.2);
+}
+
+[data-theme="sepia"] .search-action-btn.log-btn:hover {
+  background: var(--info);
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
+}
+
+.autocomplete-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow);
+  z-index: 1000;
+  max-height: 12rem;
+  overflow-y: auto;
+}
+
+.autocomplete-item {
+  padding: var(--spacing-sm) var(--spacing);
+  cursor: pointer;
+}
+
+.autocomplete-item.active,
+.autocomplete-item:hover {
+  background: var(--bg-secondary);
+}
+
+
+.filter-select {
+  width: 8rem;
+  height: 1.375rem;
+}
+
+.icon-btn {
+  width: 2.75rem;
+  height: 2.75rem;
+  padding: 0;
+  min-width: 2.75rem;
+}
+
+/* =============================================================================
+   SEARCH FILTERS (INTEGRATED)
+   ============================================================================= */
+
+.search-filters {
+  margin-top: var(--spacing-sm);
+  padding-top: var(--spacing-sm);
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.filter-row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-sm);
+}
+
+.filter-controls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--spacing);
+}
+
+.control-group {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.control-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+
+.control-select {
+  appearance: none;
+  padding: 0.25rem 1.5rem 0.25rem 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  width: 4rem;
+  min-width: 0;
+  text-align: center;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6' fill='none' stroke='currentColor' stroke-width='1.5'%3E%3Cpath d='M1 1l4 4 4-4'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.35rem center;
+  background-size: 0.65rem;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.control-select:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px var(--primary-alpha);
+}
+
+.control-select:hover {
+  border-color: var(--border-hover);
+}
+
+/* =============================================================================
+  ORIGINAL FILTER STYLES
+  ============================================================================= */
+
+.active-filters {
+  display: flex;
+  flex: 1 1 100%; /* allow the filters area to take full row so chips can center */
+  flex-wrap: wrap;
+  gap: var(--spacing-xs);
+  justify-content: center; /* center chips within available width */
+  padding: 0 var(--spacing-sm);
+  order: 1;
+}
+
+.control-settings {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--spacing);
+  margin-top: var(--spacing-sm);
+  padding-top: var(--spacing-sm);
+  border-top: 1px solid var(--border);
+}
+
+.chip-min-label {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.chip-min-select {
+  padding: 0.25rem 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-size: 0.8rem;
+  min-width: 60px;
+}
+
+.active-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-xs);
+  justify-content: center;
+  padding: 0 var(--spacing-sm);
+}
+
+.filter-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-xs);
+  color: var(--chip-text);
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--radius);
+  font-size: 0.75rem;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-weight: 500;
+  height: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: var(--transition);
+  box-shadow: var(--shadow-sm);
+  text-align: center;
+  white-space: nowrap;
+  user-select: none;
+  margin: 0.05rem;
+  max-width: fit-content;
+  box-sizing: border-box;
+}
+
+.filter-chip:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow);
+}
+
+.chip-close {
+  margin-left: 0.35rem;
+  font-weight: 700;
+  opacity: 0.95;
+  cursor: pointer;
+}
+
+.filter-chip:active {
+  transform: translateY(0);
+}
+
+.search-results-info {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  text-align: right;
+  margin-left: 0; /* remove auto margin which can push chips out of center */
+}
+
+.search-results-info:not(:empty) {
+  margin-top: 0;
+}
+
+/* Clear all filters button */
+.filter-clear-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-xs);
+  background: var(--error);
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border: none;
+  border-radius: var(--radius);
+  font-size: 0.75rem;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-weight: 600;
+  height: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: var(--transition);
+  box-shadow: var(--shadow-sm);
+  text-align: center;
+  white-space: nowrap;
+  user-select: none;
+  margin: 0.05rem 0 0.05rem 0.5rem;
+  max-width: fit-content;
+  box-sizing: border-box;
+}
+
+.filter-clear-btn:hover {
+  background: var(--error-dark);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow);
+}
+
+.filter-clear-btn:active {
+  transform: translateY(0);
+}
+
+/* =============================================================================
+   IMPORT/EXPORT SECTION
+   ============================================================================= */
+
+.import-export-section h2 {
+  text-align: center;
+  font-weight: 600;
+  margin-bottom: var(--spacing);
+  color: var(--primary);
+  font-size: 1.125rem;
+}
+
+.file-blocks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing);
+}
+
+.import-block,
+.export-block {
+  flex: 1;
+}
+
+.import-export-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--spacing-sm);
+}
+
+.import-export-grid .btn,
+.import-export-grid label.btn {
+  height: 2.75rem;
+  padding: var(--spacing-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  margin: 0;
+  line-height: 1;
+  width: 100%;
+}
+
+.import-export-grid label.btn {
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+.import-export-grid label.btn input {
+  position: absolute;
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+}
+
+.import-csv-grid,
+.import-json-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-sm);
+}
+
+.import-progress {
+  width: 100%;
+  margin-top: var(--spacing-sm);
+  display: none;
+}
+
+.import-progress-text {
+  text-align: center;
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  margin-top: var(--spacing-sm);
+  display: none;
+}
+
+/* =============================================================================
+   TOGGLE SWITCHES
+   ============================================================================= */
+
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--border);
+  transition: var(--transition);
+  border-radius: 24px;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: #f8fafc;
+  transition: var(--transition);
+  border-radius: 50%;
+  box-shadow: var(--shadow-sm);
+}
+
+input:checked + .slider {
+  background-color: var(--primary);
+}
+
+input:checked + .slider:before {
+  transform: translateX(20px);
+}
+
+input:disabled + .slider {
+  background-color: var(--text-muted);
+  opacity: 0.6;
+}
+
+.collectable-toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.collectable-note,
+.collectable-explanation {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 0;
+  text-align: left;
+  font-style: italic;
+}
+
+.collectable-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: var(--spacing);
+  margin-bottom: var(--spacing);
+}
+
+.collectable-card .collectable-note {
+  margin-top: var(--spacing-xs);
+}
+
+/* =============================================================================
+   BOATING ACCIDENT SECTION
+   ============================================================================= */
+
+.boating-accident-section {
+  text-align: center;
+}
+
+.backup-buttons {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--spacing);
+  margin-top: var(--spacing);
+}
+
+.backup-buttons .btn {
+  width: 100%;
+  min-height: 2.75rem;
+  font-size: 0.9rem;
+  padding: var(--spacing) var(--spacing-lg);
+}
+
+
+/* =============================================================================
+   FILTERS MODAL
+   ============================================================================= */
+
+#filtersModal .modal-content {
+  max-width: 600px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  overflow: hidden;
+}
+
+#filtersModal .modal-header {
+  background: linear-gradient(135deg, #eab308, #ca8a04);
+  color: var(--text-primary);
+  padding: var(--spacing-xl);
+  position: relative;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  box-shadow: var(--shadow);
+}
+
+#filtersModal .modal-body {
+  padding: var(--spacing-xl);
+  overflow-y: auto;
+  flex: 1;
+}
+
+.filters-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: var(--spacing-lg);
+  margin-bottom: var(--spacing-xl);
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.filter-group label {
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 0.9rem;
+}
+
+.filter-select {
+  width: 100%;
+  padding: var(--spacing-sm) var(--spacing);
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  transition: var(--transition);
+}
+
+.filter-select:focus {
+  outline: none;
+  border-color: #eab308;
+  box-shadow: 0 0 0 3px rgb(234 179 8 / 0.1);
+}
+
+.exclude-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-top: 0.25rem;
+  font-size: 0.8rem;
+}
+
+.date-range-inputs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-sm);
+}
+
+.date-range-inputs input {
+  padding: var(--spacing-sm) var(--spacing);
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  transition: var(--transition);
+}
+
+.date-range-inputs input:focus {
+  outline: none;
+  border-color: #eab308;
+  box-shadow: 0 0 0 3px rgb(234 179 8 / 0.1);
+}
+
+.filter-actions {
+  display: flex;
+  gap: var(--spacing);
+  justify-content: flex-end;
+  padding-top: var(--spacing);
+  border-top: 1px solid var(--border);
+}
+
+.filter-actions .btn {
+  min-width: 120px;
+}
+
+/* =============================================================================
+   ACTION BUTTON GRIDS
+   ============================================================================= */
+
+.action-buttons {
+  display: grid;
+  gap: var(--spacing-sm);
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+}
+
+/* =============================================================================
+   RESPONSIVE DESIGN - Consolidated Media Queries
+   
+   Breakpoint strategy:
+   - 1200px: Large desktop - reduce chart complexity, stack some elements
+   - 992px: Desktop - simplify totals grid, reduce modal sizes
+   - 768px: Tablet - stack most elements, smaller fonts, compact controls
+   - 480px: Mobile - single column layout, minimal spacing, touch-friendly
+   
+   Key responsive features:
+   - Flexible grid layouts that adapt to screen size
+   - Progressive enhancement from mobile-first approach
+   - Touch-friendly button and input sizing
+   - Readable font sizes across all devices
+   - Optimized table display with column adjustments
+   ============================================================================= */
+
+@media (max-width: 1200px) {
+  .totals {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  #detailsModal .modal-content {
+    max-width: 900px;
+  }
+
+  .details-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 992px) {
+  .totals {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  #detailsModal .modal-content {
+    max-width: 700px;
+  }
+}
+
+@media (max-width: 768px) {
+  body {
+    max-width: 100%;
+    margin: var(--spacing) auto;
+    padding: var(--spacing-sm);
+  }
+
+  .app-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing);
+  }
+
+  .app-logo {
+    margin: 0;
+  }
+
+  section {
+    padding: var(--spacing);
+  }
+
+  .pagination-controls {
+    grid-template-columns: 1fr;
+    text-align: center;
+  }
+
+  .pagination-left,
+  .pagination-right {
+    justify-content: center;
+    margin-bottom: var(--spacing-sm);
+  }
+
+    .pagination-center {
+      flex-direction: row;
+      flex-wrap: wrap;
+      gap: var(--spacing-sm);
+    }
+
+    .items-per-page {
+      justify-content: center;
+    }
+
+    .table-controls {
+      flex-direction: column;
+      align-items: stretch;
+      gap: var(--spacing-sm);
+    }
+
+  .search-container {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .search-container .btn:not(.modern-icon-btn) {
+    width: 100%;
+  }
+
+  .search-container .modern-icon-btn {
+    width: 2.75rem;
+    height: 2.75rem;
+    align-self: center;
+  }
+
+  .search-container {
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--spacing-xs);
+  }
+
+  .search-container #searchInput {
+    flex: 1;
+    min-width: 200px;
+  }
+
+  .totals {
+    grid-template-columns: 1fr;
+  }
+
+  .import-export-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .details-grid {
+    grid-template-columns: 1fr;
+    gap: var(--spacing);
+  }
+
+  #detailsModal .modal-content {
+    max-width: 95%;
+    padding: var(--spacing);
+  }
+
+  .grid-2 {
+    grid-template-columns: 1fr;
+  }
+
+  .action-buttons {
+    grid-template-columns: 1fr;
+  }
+
+  .chart-canvas-container {
+    height: 250px;
+  }
+
+  .chart-canvas {
+    max-height: 250px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  h1 {
+    font-size: 1.5rem;
+  }
+
+  .modal-content {
+    margin: var(--spacing-sm);
+    padding: var(--spacing);
+  }
+
+  .total-card {
+    padding: var(--spacing);
+  }
+
+  .spot-input {
+    padding: var(--spacing);
+  }
+
+  .chart-canvas-container {
+    height: 200px;
+  }
+
+  .chart-canvas {
+    max-height: 200px !important;
+  }
+}
+
+/* Additional mobile table adjustments */
+@media (max-width: 768px) {
+  th {
+    font-size: 0.7rem;
+    padding: 0.25rem 0.125rem;
+  }
+
+  td {
+    font-size: 0.7rem;
+    padding: 0.2rem;
+  }
+}
+
+@media (max-width: 480px) {
+  th {
+    font-size: 0.65rem;
+    padding: 0.2rem 0.1rem;
+  }
+
+  .header-text {
+    font-size: 0.6rem;
+    margin-top: 0.1rem;
+  }
+
+  .icon-col {
+    min-width: 3rem;
+  }
+
+  td {
+    font-size: 0.65rem;
+    padding: 0.15rem;
+  }
+
+  td .btn {
+    padding: 0.2rem 0.3rem;
+    font-size: 0.65rem;
+    min-height: 1.5rem;
+  }
+  td .action-btn {
+    width: 4rem;
+  }
+  td .action-icon {
+    width: 4rem;
+  }
+
+  .pagination-btn {
+    padding: 0;
+    font-size: 0.7rem;
+  }
+}
+
+@media (min-width: 600px) {
+  .grid-2 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .action-buttons {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+#inventoryTable th.icon-col,
+#inventoryTable td.icon-col {
+  width: 3.5rem;
+  padding: 0.25rem;
+  text-align: center;
+  vertical-align: middle;
+  position: relative;
+}
+
+/* Enhanced action icons without hover animations */
+#inventoryTable td.icon-col .action-icon {
+  /* Removed transition animation */
+  border-radius: var(--radius);
+  padding: 0.2rem;
+  cursor: pointer;
+}
+
+/* Enhanced styling for edit icons - no hover effects for clean interface */
+#inventoryTable td.icon-col .action-icon.edit-icon {
+  color: var(--primary);
+  font-weight: bold;
+}
+
+/* Edit column styling for single toggle button */
+#inventoryTable td[data-column="edit"] {
+  text-align: center;
+  padding: 0.2rem;
+}
+
+#inventoryTable td[data-column="edit"] .icon-btn {
+  margin: 0;
+}
+
+/* Style the edit toggle button based on mode */
+#inventoryTable td[data-column="edit"] .edit-toggle {
+  color: var(--primary);
+  transition: color 0.2s ease;
+}
+
+#inventoryTable td[data-column="edit"] .edit-toggle:hover {
+  color: var(--primary-dark);
+}
+
+/* Edit header styling */
+#inventoryTable th[data-column="edit"] {
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+#inventoryTable th[data-column="edit"]:hover {
+  background-color: var(--bg-hover);
+}
+
+/* Row editing styles */
+#inventoryTable tbody tr.editing-row {
+  background: var(--bg-secondary) !important;
+  border: 2px solid var(--primary);
+  outline: none;
+}
+
+#inventoryTable tbody tr.editing-row .inline-edit-input {
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  padding: 0.15rem; /* Reduced padding for better fit */
+  border-radius: 3px;
+  font-size: 0.7rem; /* Smaller font for better fit */
+  width: 100%;
+  box-sizing: border-box;
+  min-width: 60px; /* Ensure minimum usable width */
+}
+
+#inventoryTable tbody tr.editing-row .inline-edit-input:focus {
+  outline: 2px solid var(--primary);
+  outline-offset: -1px;
+}
+
+#inventoryTable tbody tr.editing-row .save-row {
+  color: var(--success);
+}
+
+#inventoryTable tbody tr.editing-row .cancel-row {
+  color: var(--danger);
+}
+
+#inventoryTable th.icon-col {
+  font-size: 0.7rem;
+  line-height: 1.1;
+}
+
+#inventoryTable td.icon-col {
+  font-size: 0.75rem;
+}
+
+.collectable-status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+#inventoryTable td.icon-col .collectable-status svg,
+#inventoryTable th.icon-col svg,
+#inventoryTable td.icon-col .action-icon {
+  width: 1rem;
+  height: 1rem;
+}
+
+/* Collectable icon theming - Fixed for all themes */
+.collectable-icon {
+  width: 1rem;
+  height: 1rem;
+  transition: var(--transition);
+}
+
+/* Collection status theming */
+.collectable-icon.icon-gold {
+  color: var(--gold);
+  fill: var(--gold);
+}
+
+.collectable-icon.icon-copper {
+  color: var(--text-muted);
+  fill: none;
+  stroke: var(--text-muted);
+  stroke-width: 1.5;
+}
+
+/* Enhanced icon colors for all themes */
+.icon-gold { color: var(--gold) !important; }
+.icon-silver { color: var(--silver) !important; }
+.icon-platinum { color: var(--platinum) !important; }
+.icon-palladium { color: var(--palladium) !important; }
+.icon-copper { 
+  color: var(--text-muted) !important;
+  stroke: var(--text-muted) !important;
+}
+
+/* Theme-specific icon adjustments */
+[data-theme="dark"] .header-icon {
+  color: var(--text-primary);
+}
+
+[data-theme="sepia"] .header-icon {
+  color: var(--text-primary);
+}
+
+[data-theme="light"] .header-icon {
+  color: var(--text-primary);
+}
+
+/* Ensure collectable icons are properly themed in dark mode */
+[data-theme="dark"] .collectable-icon.icon-copper {
+  color: var(--text-muted) !important;
+  stroke: var(--text-muted) !important;
+}
+
+[data-theme="dark"] .collectable-icon.icon-gold {
+  color: var(--gold) !important;
+  fill: var(--gold) !important;
+}
+
+#inventoryTable td[data-column="purchaseLocation"],
+#inventoryTable td[data-column="storageLocation"] {
+  max-width: 20ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#inventoryTable th,
+#inventoryTable td {
+  text-align: center;
+}
+
+#inventoryTable th[data-column="name"],
+#inventoryTable td[data-column="name"] {
+  text-align: left;
+}
+
+.info-link {
+  margin-left: 0.25rem;
+  font-size: 0.75rem;
+}
+
+#typeSummary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-xs);
+  justify-content: center;
+  align-items: center;
+  margin-top: var(--spacing-sm);
+  padding: var(--spacing-sm);
+  min-height: 2rem;
+  max-height: 8rem;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--primary) var(--bg-secondary);
+}
+
+#typeSummary::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+#typeSummary::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+  border-radius: var(--radius);
+}
+
+#typeSummary::-webkit-scrollbar-thumb {
+  background-color: var(--primary);
+  border-radius: var(--radius);
+}
+
+#typeSummary::-webkit-scrollbar-thumb:hover {
+  background-color: var(--primary-hover);
+}
+
+/* Header Icons */
+.header-icon {
+  width: 1rem;
+  height: 1rem;
+  margin: 0 auto 0.25rem;
+  display: block;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.header-icon.vault-icon {
+  fill: currentColor;
+  stroke: none;
+}
+
+/* Header Text Styling */
+.header-text {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  text-align: center;
+  margin-top: 0.15rem;
+  line-height: 1;
+}
+
+/* Icon column styling */
+.icon-col {
+  text-align: center;
+  vertical-align: middle;
+  white-space: nowrap;
+  min-width: 3.5rem;
+}
+
+.icon-col .header-icon {
+  margin: 0 auto 0.25rem;
+}
+
+/* Sticky action columns: keep notes/edit/delete visible when horizontally scrolling.
+  Collectable column intentionally left non-sticky so it remains adjacent to N#. */
+/* Header cells remain visually consistent with other headers; body cells inherit the row background
+  so striping and hover highlights apply naturally even when cells are sticky. */
+#inventoryTable th.icon-col {
+  background: var(--bg-secondary); /* Match all other headers consistently */
+  color: var(--text-primary);
+  z-index: 7; /* keep headers above body cells */
+}
+
+/* Most icon columns are sticky positioned on the right */
+#inventoryTable th.icon-col:not([data-column="collectable"]) {
+  position: sticky;
+  right: 0; /* default for the right-most action column (delete) */
+}
+
+/* Collectable column stays in normal document flow (not sticky) */
+#inventoryTable th[data-column="collectable"] {
+  position: static;
+}
+
+#inventoryTable td.icon-col:not([data-column="collectable"]) {
+  position: sticky;
+  right: 0;
+  /* Keep body cells transparent so they inherit the TR background (striping & hover)
+    while remaining on top for clickability */
+  background: transparent;
+  color: inherit; /* inherit text color from the row */
+  z-index: 6;
+}
+
+/* Layered right offsets (values chosen to match approximate icon widths). */
+#inventoryTable th[data-column="delete"],
+#inventoryTable td[data-column="delete"] {
+  right: 0;
+}
+
+#inventoryTable th[data-column="edit"],
+#inventoryTable td[data-column="edit"] {
+  right: 3.6rem;
+}
+
+#inventoryTable th[data-column="notes"],
+#inventoryTable td[data-column="notes"] {
+  right: 7.2rem;
+}
+
+/* Collectable column should remain in DOM order (right after N#) and not be sticky. */
+#inventoryTable th[data-column="collectable"] {
+  position: static;
+  background: var(--bg-secondary); /* Match other headers */
+}
+
+#inventoryTable td[data-column="collectable"] {
+  position: static;
+  background: inherit !important; /* CORRECT - Ensures proper zebra striping */
+}
+
+/* Collectable icon specific styles */
+.collectable-icon.vault-icon {
+  width: 1.1rem;
+  height: 1.1rem;
+  fill: var(--text-muted);
+  stroke: none;
+}
+
+.collectable-icon.bar-icon {
+  width: 1.1rem;
+  height: 1.1rem;
+  fill: var(--silver);
+  stroke: none;
+}
+
+/* Ensure the clickable collectable cell centers its icon */
+#inventoryTable td[data-column="collectable"] .collectable-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Icon button base for action cells */
+#inventoryTable .icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.4rem;
+  height: 2.4rem;
+  padding: 0.25rem;
+  background: transparent;
+  border: 0;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.08s ease;
+}
+
+#inventoryTable .icon-btn:focus {
+  outline: 2px solid rgba(59,130,246,0.25);
+  outline-offset: 2px;
+}
+
+/* Removed hover effect to prevent cell flooding */
+
+#inventoryTable .icon-svg { width: 1.05rem; height: 1.05rem; display: block; fill: currentColor; color: inherit; }
+.notes-svg { color: inherit; }
+.edit-svg { color: inherit; }
+.delete-svg { color: inherit; }
+
+/* Has-notes indicator */
+.has-notes .icon-svg { color: var(--info); }
+
+/* Theme fills for collectable icons */
+.collectable-icon.vault-icon { color: var(--text-muted); }
+.collectable-icon.bar-icon { color: var(--silver); }
+
+/* MOBILE PRIORITY RULES
+   Keep Qty, Name, Price, Edit visible on tight screens. Deprioritize Spot, Premium, Storage, Metal. */
+@media (max-width: 768px) {
+  /* Hide low-priority columns first */
+  #inventoryTable th[data-column="spot"],
+  #inventoryTable td[data-column="spot"],
+  #inventoryTable th[data-column="premium"],
+  #inventoryTable td[data-column="premium"],
+  #inventoryTable th[data-column="storageLocation"],
+  #inventoryTable td[data-column="storageLocation"],
+  #inventoryTable th[data-column="metal"],
+  #inventoryTable td[data-column="metal"] {
+    display: none;
+  }
+
+  /* Keep Name, Qty, Price, Edit visible and allocate space */
+  #inventoryTable th[data-column="name"],
+  #inventoryTable td[data-column="name"] { width: 45%; }
+  #inventoryTable th[data-column="qty"],
+  #inventoryTable td[data-column="qty"] { width: 8%; }
+  #inventoryTable th[data-column="purchasePrice"],
+  #inventoryTable td[data-column="purchasePrice"] { width: 18%; }
+  #inventoryTable th[data-column="edit"],
+  #inventoryTable td[data-column="edit"] { width: 6%; }
+
+  /* Slightly reduce padding to fit more */
+  #inventoryTable th, #inventoryTable td { padding: 0.2rem 0.15rem; }
+}
+
+@media (max-width: 480px) {
+  /* On very small screens, hide even more and keep essentials */
+  #inventoryTable th[data-column="purchaseLocation"],
+  #inventoryTable td[data-column="purchaseLocation"],
+  #inventoryTable th[data-column="numista"],
+  #inventoryTable td[data-column="numista"],
+  #inventoryTable th[data-column="weight"],
+  #inventoryTable td[data-column="weight"] {
+    display: none;
+  }
+
+  #inventoryTable th[data-column="name"],
+  #inventoryTable td[data-column="name"] { width: 60%; }
+  #inventoryTable th[data-column="qty"],
+  #inventoryTable td[data-column="qty"] { width: 10%; }
+  #inventoryTable th[data-column="purchasePrice"],
+  #inventoryTable td[data-column="purchasePrice"] { width: 20%; }
+}
+
+/* Make sure sticky cells have a solid background so they sit above the scrolled content */
+#inventoryTable th.icon-col,
+#inventoryTable td.icon-col {
+  /* Match the table header/row theme so icons blend in */
+  background: transparent;
+  border-left: none;
+}
+
+th {
+  text-align: center;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+/* Make header icons/text use muted header color so they don't pop */
+#inventoryTable thead th {
+  color: var(--text-secondary);
+  background: var(--bg-secondary);
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+/* Ensure uniform font family for entire table */
+#inventoryTable {
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+#inventoryTable thead th .header-icon,
+#inventoryTable thead th .header-text {
+  color: var(--text-secondary);
+}
+
+/* Icon column header should visually match other headers */
+#inventoryTable thead th.icon-col {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  padding: 0.35rem 0.4rem;
+}
+
+/* Icon cells in the body: inherit color so they match the row's text color and striping */
+ #inventoryTable tbody td.icon-col {
+  color: inherit;
+  padding: 0.25rem 0.35rem;
+}
+
+/* Icon button visual blending */
+#inventoryTable .icon-btn {
+  background: transparent; /* keep inline with row */
+  color: var(--text-secondary);
+  box-shadow: none;
+}
+
+/* Removed hover effect to prevent cell flooding */
+
+#inventoryTable .icon-btn:active { transform: translateY(0); }
+
+/* Slightly smaller icon size in cells to reduce visual weight */
+#inventoryTable .icon-svg { width: 0.95rem; height: 0.95rem; }
+
+/* Ensure collectable icon visually matches muted style until active */
+.collectable-icon { color: var(--text-secondary); }
+.collectable-icon.bar-icon { color: var(--silver); }
+
+/* Active collectable highlight: vault icon shows filled gold with subtle glow */
+.collectable-icon.vault-icon {
+  color: var(--gold);
+  fill: var(--gold);
+  stroke: none;
+  transform-origin: center;
+  transition: transform 0.12s ease, filter 0.12s ease;
+  filter: drop-shadow(0 1px 3px rgba(0,0,0,0.35));
+}
+
+.collectable-icon.vault-icon:hover {
+  transform: scale(1.08);
+  filter: drop-shadow(0 4px 8px rgba(255, 190, 60, 0.18));
+}
+
+/* When the item is not collectable show a subtle gold-outline bar */
+.collectable-icon.bar-icon {
+  opacity: 0.95;
+  transition: opacity 0.12s ease, transform 0.12s ease;
+}
+
+.collectable-icon.bar-icon:hover {
+  transform: translateY(-1px);
+  opacity: 1;
+}
+
+/* Dense table mode: reduce paddings, font-size and icon sizes for a compact view */
+#inventoryTable {
+  font-size: 0.86rem; /* slightly smaller overall */
+}
+
+#inventoryTable th,
+#inventoryTable td {
+  padding: 0.18rem 0.28rem; /* tighter padding */
+}
+
+/* Increase header height to accommodate sort arrows */
+#inventoryTable thead th {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+
+#inventoryTable .icon-btn { width: 2rem; height: 2rem; }
+#inventoryTable .icon-svg { width: 0.9rem; height: 0.9rem; }
+
+/* Tighter row height with improved visual separation */
+#inventoryTable tbody tr { 
+  min-height: 2rem;
+  background: var(--bg-primary);
+  border-bottom: 2px solid var(--bg-secondary);
+}
+
+/* Subtle alternating row background for better separation */
+#inventoryTable tbody tr:nth-child(even) {
+  background: rgba(30, 41, 59, 0.3);
+}
+
+/* Hover state for row interaction */
+#inventoryTable tbody tr:hover {
+  background: rgba(30, 41, 59, 0.5);
+}
+
+/* Keep visual clarity on very small screens */
+@media (max-width: 480px) {
+  #inventoryTable { font-size: 0.78rem; }
+  #inventoryTable th, #inventoryTable td { padding: 0.14rem 0.12rem; }
+  #inventoryTable .icon-btn { width: 1.8rem; height: 1.8rem; }
+  #inventoryTable .icon-svg { width: 0.8rem; height: 0.8rem; }
+}
+
+
+.center-align {
+  text-align: center !important;
+}
+
+.center-align td {
+  text-align: center !important;
+}
+
+/* Type-specific color helpers */
+.type-coin { color: var(--type-coin-bg); }
+.type-round { color: var(--type-round-bg); }
+.type-bar { color: var(--type-bar-bg); }
+.type-note { color: var(--type-note-bg); }
+.type-other { color: var(--type-other-bg); }
+
+/* =============================================================================
+   CATALOG LINK STYLING
+   Enhanced N# column with database/catalog icons representing external database
+   ============================================================================= */
+
+.catalog-link {
+  display: inline;
+  text-decoration: none;
+  font-size: 0.8rem;
+  font-weight: 700;
+  transition: opacity 0.2s ease;
+}
+
+/* Light mode - bold blue */
+:root .catalog-link {
+  color: #1d4ed8;
+}
+
+.catalog-link:hover {
+  text-decoration: underline;
+  opacity: 0.8;
+}
+
+/* Dark mode - light blue */
+[data-theme="dark"] .catalog-link {
+  color: #60a5fa;
+}
+
+/* Sepia mode - bold blue */
+[data-theme="sepia"] .catalog-link {
+  color: #1d4ed8;
+}
+
+/* Numista badge - improved visibility */
+.numista-badge {
+  display: inline-block;
+  padding: 0.2rem 0.4rem;
+  background-color: #1d4ed8;
+  color: white;
+  border-radius: 0.3rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+[data-theme="dark"] .numista-badge {
+  background-color: #3b82f6;
+  color: #111827;
+}
+
+.numista-badge:hover {
+  transform: scale(1.05);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+/* eBay price link styling */
+.ebay-price-link {
+  text-decoration: none;
+  color: inherit;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  transition: all 0.2s ease;
+}
+
+.ebay-price-link:hover {
+  opacity: 0.8;
+}
+
+.ebay-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #e53e2f;
+  color: white;
+  border-radius: 50%;
+  width: 16px;
+  height: 16px;
+  font-size: 10px;
+  line-height: 1;
+}
+
+[data-theme="dark"] .ebay-icon {
+  background-color: #f05545;
+}
+
+/* Empty N# column styling */
+.numista-empty {
+  color: var(--text-muted);
+  font-style: italic;
+  font-size: 0.7rem;
+  text-align: center;
+}
+
+/* Responsive catalog link with improved mobile experience */
+@media (max-width: 768px) {
+  .catalog-link {
+    font-size: 0.7rem;
+  }
+}
+
+@media (max-width: 600px) {
+  .catalog-link {
+    font-size: 0.65rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .catalog-link {
+    font-size: 0.6rem;
+  }
+  
+  .numista-empty {
+    font-size: 0.6rem;
+  }
+}
+
+#typeSummary .summary-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.15rem 0.4rem;
+  min-height: 1.25rem;
+  border-radius: var(--radius);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-align: center;
+  cursor: pointer;
+  transition: var(--transition);
+  user-select: none;
+  white-space: nowrap;
+  box-shadow: var(--shadow-sm);
+  margin: 0.05rem;
+  line-height: 1.1;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  max-width: fit-content;
+}
+
+#typeSummary .summary-chip:hover {
+  transform: translateY(-1px) scale(1.05);
+  box-shadow: var(--shadow);
+  filter: brightness(1.1);
+}
+
+#typeSummary .summary-chip:active {
+  transform: translateY(0) scale(1.02);
+}
+
+/* Enhanced chip styling for better visual hierarchy */
+#typeSummary .type-chip,
+#typeSummary .metal-chip {
+  font-weight: 700;
+  border-width: 2px;
+}
+
+#typeSummary .purchase-chip,
+#typeSummary .storage-chip,
+#typeSummary .name-chip {
+  font-weight: 500;
+  font-style: italic;
+  border-style: dashed;
+}
+
+.type-chip.coin {
+  background-color: var(--type-coin-bg);
+  color: var(--type-coin-text);
+}
+.type-chip.round {
+  background-color: var(--type-round-bg);
+  color: var(--type-round-text);
+}
+.type-chip.bar {
+  background-color: var(--type-bar-bg);
+  color: var(--type-bar-text);
+}
+.type-chip.note {
+  background-color: var(--type-note-bg);
+  color: var(--type-note-text);
+}
+.type-chip.other {
+  background-color: var(--type-other-bg);
+  color: var(--type-other-text);
+}
+
+/* =============================================================================
+   CONTROL SETTINGS - NEW LAYOUT
+   Positioned at bottom right of filters card
+   ============================================================================= */
+
+.control-settings {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: var(--spacing-sm);
+  box-shadow: var(--shadow-sm);
+  min-width: fit-content;
+  align-self: flex-start;
+}
+
+.chip-control,
+.items-control,
+.group-names-control {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  white-space: nowrap;
+}
+
+/* Anchor dropdown controls to lower right */
+.control-settings {
+  display: flex;
+  gap: var(--spacing);
+  justify-content: flex-end;
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+
+.chip-label,
+.items-label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin: 0;
+  min-width: fit-content;
+}
+
+.chip-select,
+.table-select {
+  padding: 0.2rem 0.4rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-size: 0.75rem;
+  min-width: 50px;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.chip-select:focus,
+.table-select:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+.chip-select:hover,
+.table-select:hover {
+  border-color: var(--primary);
+}
+
+/* Responsive adjustments for control settings */
+@media (max-width: 768px) {
+  .filter-controls {
+    flex-direction: column;
+    gap: var(--spacing-sm);
+  }
+  
+  .control-group {
+    justify-content: space-between;
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .filter-controls {
+    gap: var(--spacing-xs);
+  }
+  
+  .control-group {
+    flex-direction: column;
+    gap: var(--spacing-xs);
+    text-align: center;
+  }
+  
+  .control-label {
+    font-size: 0.75rem;
+  }
+  
+  .control-select {
+    width: 100%;
+  }
+}
+
+/* Debug modal styling */
+#debugModalContent {
+  max-height: 60vh;
+  overflow-y: auto;
+  font-family: monospace;
+  white-space: pre-wrap;
+}
+
+/* =============================================================================
+   ENCRYPTION UI STYLES
+   Master password and encryption management interface
+   ============================================================================= */
+
+.encryption-section {
+  background: var(--bg-card);
+  border: 2px solid var(--primary) !important;
+  border-radius: var(--radius);
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.encryption-status {
+  margin-bottom: 1rem;
+}
+
+.status-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  border-radius: var(--radius);
+  background: var(--bg-secondary);
+}
+
+.status-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.status-indicator.status-success .status-dot {
+  background: var(--success);
+  animation: pulse-success 2s infinite;
+}
+
+.status-indicator.status-warning .status-dot {
+  background: var(--warning);
+}
+
+.status-indicator.status-error .status-dot {
+  background: var(--danger);
+  animation: pulse-error 2s infinite;
+}
+
+.status-indicator.status-info .status-dot {
+  background: var(--info);
+}
+
+@keyframes pulse-success {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+@keyframes pulse-error {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.status-text {
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.form-row {
+  margin-bottom: 1rem;
+}
+
+.form-row label {
+  display: block;
+  margin-bottom: 0.25rem;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.form-row input[type="password"] {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg);
+  color: var(--text-primary);
+  font-size: 0.875rem;
+}
+
+.form-row input[type="password"]:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px var(--primary)20;
+}
+
+.encryption-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  flex-wrap: wrap;
+}
+
+.encryption-actions .btn {
+  flex: 0 0 auto;
+}
+
+.encryption-info {
+  background: var(--bg-secondary);
+  padding: 0.75rem;
+  border-radius: var(--radius);
+  margin-bottom: 1rem;
+}
+
+.encryption-info strong {
+  color: var(--text-primary);
+}
+
+.data-status-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.status-item {
+  padding: 0.5rem;
+  border-radius: var(--radius);
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.status-item.status-success {
+  background: var(--success)20;
+  color: var(--success);
+  border: 1px solid var(--success)40;
+}
+
+.status-item.status-warning {
+  background: var(--warning)20;
+  color: var(--warning);
+  border: 1px solid var(--warning)40;
+}
+
+.status-item.status-info {
+  background: var(--info)20;
+  color: var(--info);
+  border: 1px solid var(--info)40;
+}
+
+.encryption-warning {
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background: var(--warning)15;
+  border: 1px solid var(--warning)40;
+  border-radius: var(--radius);
+  color: var(--text-primary);
+}
+
+.encryption-warning strong {
+  color: var(--warning);
+}
+
+.change-password-section {
+  background: var(--bg-secondary);
+  padding: 1rem;
+  border-radius: var(--radius);
+  margin-top: 1rem;
+  border: 1px solid var(--border);
+}
+
+.change-password-section h4 {
+  margin: 0 0 1rem 0;
+  color: var(--text-primary);
+}
+
+/* Dark mode encryption styles */
+[data-theme="dark"] .encryption-section {
+  background: var(--bg-card);
+  border-color: var(--primary) !important;
+}
+
+[data-theme="dark"] .status-indicator {
+  background: var(--bg-secondary);
+}
+
+[data-theme="dark"] .form-row input[type="password"] {
+  background: var(--bg-secondary);
+  border-color: var(--border);
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] .encryption-info {
+  background: var(--bg-secondary);
+}
+
+[data-theme="dark"] .change-password-section {
+  background: var(--bg-secondary);
+  border-color: var(--border);
+}
+
+/* Sepia mode encryption styles */
+[data-theme="sepia"] .encryption-section {
+  background: var(--bg-card);
+  border-color: var(--primary) !important;
+}
+
+[data-theme="sepia"] .status-indicator {
+  background: var(--bg-secondary);
+}
+
+[data-theme="sepia"] .form-row input[type="password"] {
+  background: var(--bg-secondary);
+  border-color: var(--border);
+  color: var(--text-primary);
+}
+
+[data-theme="sepia"] .encryption-info {
+  background: var(--bg-secondary);
+}
+
+[data-theme="sepia"] .change-password-section {
+  background: var(--bg-secondary);
+  border-color: var(--border);
+}
+
+/* =============================================================================
+   MODERN RESPONSIVE TABLE REDESIGN
+   ============================================================================= */
+
+/* Fix storage location width to 25 characters max */
+#inventoryTable td[data-column="storageLocation"] {
+  max-width: 25ch !important;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Metal column toggle with increased width */
+#inventoryTable td[data-column="metal"] {
+  max-width: 25ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+  position: relative;
+}
+
+/* Remove ellipsis from action buttons - clean look */
+#inventoryTable td.icon-col {
+  text-overflow: none !important;
+  overflow: visible !important;
+}
+
+/* Enhanced delete button styling - restore red */
+#inventoryTable td.icon-col .action-icon.danger {
+  color: var(--error) !important;
+  border-radius: var(--radius-sm);
+  padding: 0.25rem;
+  /* Removed transition: all 0.2s ease; */
+}
+
+/* Removed hover effect to prevent cell flooding */
+
+/* Fixed action columns styling */
+#inventoryTable th[data-column="collectable"],
+#inventoryTable th[data-column="notes"], 
+#inventoryTable th[data-column="edit"],
+#inventoryTable th[data-column="delete"],
+#inventoryTable td[data-column="collectable"],
+#inventoryTable td[data-column="notes"], 
+#inventoryTable td[data-column="edit"],
+#inventoryTable td[data-column="delete"] {
+  position: sticky;
+  right: 0;
+  background: var(--bg-secondary);
+  z-index: 5;
+  min-width: 50px;
+  width: 50px;
+}
+
+/* Ensure header styling consistency for action columns */
+#inventoryTable th[data-column="notes"], 
+#inventoryTable th[data-column="edit"],
+#inventoryTable th[data-column="delete"] {
+  background: var(--bg-secondary) !important;
+  color: var(--text-secondary) !important;
+}
+
+/* Responsive column hiding */
+@media (max-width: 1200px) {
+  #inventoryTable th[data-column="spot"],
+  #inventoryTable td[data-column="spot"] {
+    display: none;
+  }
+}
+
+@media (max-width: 1100px) {
+  #inventoryTable th[data-column="marketValue"],
+  #inventoryTable td[data-column="marketValue"] {
+    display: none;
+  }
+}
+
+@media (max-width: 1000px) {
+  #inventoryTable th[data-column="premium"],
+  #inventoryTable td[data-column="premium"] {
+    display: none;
+  }
+}
+
+@media (max-width: 900px) {
+  #inventoryTable th[data-column="purchaseLocation"],
+  #inventoryTable td[data-column="purchaseLocation"] {
+    display: none;
+  }
+}
+
+@media (max-width: 800px) {
+  #inventoryTable th[data-column="storageLocation"],
+  #inventoryTable td[data-column="storageLocation"] {
+    display: none;
+  }
+}
+
+@media (max-width: 700px) {
+  #inventoryTable th[data-column="weight"],
+  #inventoryTable td[data-column="weight"] {
+    display: none;
+  }
+}
+
+@media (max-width: 600px) {
+  #inventoryTable th[data-column="date"],
+  #inventoryTable td[data-column="date"],
+  #inventoryTable th[data-column="type"],
+  #inventoryTable td[data-column="type"] {
+    display: none;
+  }
+  
+  /* Make action buttons smaller on mobile */
+  #inventoryTable td.icon-col .action-icon {
+    width: 1rem;
+    height: 1rem;
+  }
+}
+
+/* Smooth table scrolling */
+#inventoryTable {
+  scroll-behavior: smooth;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+/* Modern table cell styling */
+#inventoryTable td {
+  border-bottom: 1px solid var(--border);
+  transition: background-color 0.2s ease;
+}
+
+#inventoryTable tr:hover td:not(:empty):not([data-empty="true"]):not(.na-value):not(.empty-cell) {
+  background-color: var(--bg-secondary);
+}
+
+/* Prevent hover effects on empty cells and cells with dashes */
+#inventoryTable tr:hover td:empty,
+#inventoryTable tr:hover td[data-empty="true"],
+#inventoryTable tr:hover td.na-value,
+#inventoryTable tr:hover td.empty-cell {
+  background-color: transparent !important;
+}
+
+/* Legacy price column styling - consolidated above */
+
+/* Legacy price toggle styling - no longer used but kept for compatibility */
+.price-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--radius-sm);
+  transition: all 0.2s ease;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.price-toggle:hover {
+  background: var(--primary);
+  color: white !important;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Purchase location styling and column width */
+#inventoryTable th[data-column="purchaseLocation"],
+#inventoryTable td[data-column="purchaseLocation"] {
+  max-width: 140px !important; /* Reduced from default ~200px to 2/3 size */
+  width: 140px !important;
+}
+
+.purchase-link {
+  color: var(--primary);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  margin-right: 4px;
+  vertical-align: middle;
+}
+
+.purchase-link:hover {
+  color: var(--primary-hover);
+}
+
+.purchase-link-icon {
+  flex-shrink: 0;
+}
+
+/* All Price columns - increased width to prevent ellipsis */
+#inventoryTable th[data-column="purchasePrice"],
+#inventoryTable td[data-column="purchasePrice"],
+#inventoryTable th[data-column="marketValue"],
+#inventoryTable td[data-column="marketValue"],
+#inventoryTable th[data-column="spot"],
+#inventoryTable td[data-column="spot"],
+#inventoryTable th[data-column="premium"],
+#inventoryTable td[data-column="premium"] {
+  max-width: 110px !important;
+  width: 110px !important;
+  min-width: 110px !important;
+  font-family: var(--font-mono, 'Courier New', monospace);
+  font-size: 0.85rem;
+  text-align: right;
+  padding: 0.5rem 0.75rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Header styling for price columns */
+#inventoryTable th[data-column="purchasePrice"],
+#inventoryTable th[data-column="marketValue"],
+#inventoryTable th[data-column="spot"],
+#inventoryTable th[data-column="premium"] {
+  font-weight: 600;
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+}
+
+/* Market value and price columns - remove background variations for consistent header appearance */
+#inventoryTable td[data-column="marketValue"] {
+  font-weight: 500;
+}
+
+#inventoryTable td[data-column="purchasePrice"] {
+  font-weight: 500;
+}
+
+#inventoryTable td[data-column="spot"] {
+  font-weight: 500;
+}
+
+#inventoryTable td[data-column="premium"] {
+  font-weight: 500;
+}
+
+/* Text columns use main font family */
+#inventoryTable td[data-column="name"],
+#inventoryTable td[data-column="metal"],
+#inventoryTable td[data-column="purchaseLocation"],
+#inventoryTable td[data-column="storageLocation"],
+#inventoryTable td[data-column="date"] {
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+/* Numerical value consistency across all numeric columns */
+#inventoryTable td[data-column="qty"],
+#inventoryTable td[data-column="weight"],
+#inventoryTable td[data-column="purchasePrice"],
+#inventoryTable td[data-column="marketValue"],
+#inventoryTable td[data-column="spot"],
+#inventoryTable td[data-column="premium"] {
+  font-family: var(--font-mono, 'Courier New', monospace) !important;
+  font-size: 0.85rem !important;
+  font-weight: 500 !important;
+  text-align: right !important;
+}
+
+/* Completely disable ALL hover effects on action icons to prevent cell flooding */
+#inventoryTable .icon-btn:hover,
+#inventoryTable .action-icon:hover,
+#inventoryTable .icon-btn:focus,
+#inventoryTable .action-icon:focus {
+  background: transparent !important;
+  transform: none !important;
+  color: inherit !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+/* Allow inline edit icons to remain functional with subtle hover */
+#inventoryTable .inline-edit-icon:hover {
+  opacity: 1 !important;
+  background: rgba(59, 130, 246, 0.1) !important;
+  border-radius: 50% !important;
+}
+
+/* Subtle color variations for different numeric types */
+#inventoryTable td[data-column="qty"] {
+  color: rgba(59, 130, 246, 0.9); /* Soft blue for quantities */
+}
+
+#inventoryTable td[data-column="weight"] {
+  color: rgba(107, 114, 128, 0.95); /* Muted gray for weights */
+}
+
+#inventoryTable td[data-column="purchasePrice"] {
+  color: rgba(34, 197, 94, 0.9); /* Soft green for purchase prices */
+}
+
+#inventoryTable td[data-column="marketValue"] {
+  color: rgba(59, 130, 246, 0.95); /* Primary blue for market values */
+}
+
+#inventoryTable td[data-column="spot"] {
+  color: rgba(245, 158, 11, 0.9); /* Soft amber for spot prices */
+}
+
+/* Premium column styling removed - treat like other calculation columns */
