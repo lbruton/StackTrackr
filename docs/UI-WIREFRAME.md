@@ -1,5 +1,7 @@
 # StackrTrackr UI Wireframe & Component Map
 
+> ✨ **Migrated to Linear**: [STACK-8 - UI Component Reference & Wireframes](https://linear.app/hextrackr/issue/STACK-8)
+
 **Last Updated:** 2025-10-01
 
 ---

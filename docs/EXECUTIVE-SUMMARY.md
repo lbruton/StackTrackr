@@ -1,5 +1,7 @@
 # StackrTrackr - Executive Summary
 
+> ✨ **Migrated to Linear**: [STACK-7 - Architecture Overview & Executive Summary](https://linear.app/hextrackr/issue/STACK-7)
+
 **Last Updated:** 2025-10-01
 **Version:** 3.04.87 (Branch 3, Release 04, Patch 87)
 **Repository:** Personal deployment at 192.168.1.81:8080

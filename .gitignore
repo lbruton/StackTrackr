@@ -5,6 +5,7 @@
 
 # Claude Code local config
 .claude/
+.mcp.json
 
 # Node modules (if added in future)
 node_modules/

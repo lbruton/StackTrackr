@@ -1,5 +1,7 @@
 # StackrTrackr Architecture Documentation
 
+> ✨ **Migrated to Linear**: [STACK-9 - Documentation Index & Quick Reference](https://linear.app/hextrackr/issue/STACK-9)
+
 **Generated:** 2025-10-01
 **Version:** 3.04.87
 **Purpose:** Complete architectural deep dive after months away from development
