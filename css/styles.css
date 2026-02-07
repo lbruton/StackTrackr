@@ -223,7 +223,7 @@ html {
 }
 
 body {
-  max-width: 2000px; /* Increased from 1600px for wider screens */
+  max-width: 1200px;
   width: 100%;
   margin: var(--spacing-lg) auto;
   padding: var(--spacing);
