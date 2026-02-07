@@ -1072,12 +1072,12 @@ const renderTable = () => {
         </a>
       </td>
       <td class="shrink" data-column="meltValue" title="Melt Value (USD)" style="color: var(--text-primary);">${meltDisplay}</td>
-      <td class="shrink" data-column="retailPrice" title="${isManualRetail ? 'Manual retail price' : 'Defaults to melt value'} - Click to search eBay sold listings" style="color: var(--text-primary);">
+      <td class="shrink ${isManualRetail ? 'retail-confirmed' : 'retail-estimated'}" data-column="retailPrice" title="${isManualRetail ? 'Manual retail price (confirmed)' : 'Estimated — defaults to melt value'} - Click to search eBay sold listings">
         <a href="#" class="ebay-sold-link ebay-price-link" data-search="${sanitizeHtml(item.metal + ' ' + item.name)}" title="Search eBay sold listings for ${sanitizeHtml(item.metal)} ${sanitizeHtml(item.name)}">
-          ${retailDisplay}${isManualRetail ? ' <span style="opacity:0.5;font-size:0.8em;" title="Manually set retail price">*</span>' : ''} <svg class="ebay-search-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6" fill="none" stroke="currentColor" stroke-width="2.5"/><line x1="15" y1="15" x2="21" y2="21" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
+          ${retailDisplay} <svg class="ebay-search-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6" fill="none" stroke="currentColor" stroke-width="2.5"/><line x1="15" y1="15" x2="21" y2="21" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
         </a>
       </td>
-      <td class="shrink" data-column="gainLoss" title="Gain/Loss (USD)" style="color: ${gainLossColor}; font-weight: ${gainLoss !== null && gainLoss !== 0 ? '600' : 'normal'};">${gainLoss !== null && gainLossDisplay !== '—' ? gainLossPrefix + gainLossDisplay : '—'}</td>
+      <td class="shrink ${!isManualRetail && gainLoss !== null ? 'gainloss-estimated' : ''}" data-column="gainLoss" title="${isManualRetail ? 'Gain/Loss (confirmed retail)' : 'Gain/Loss (estimated — based on melt value)'}" style="color: ${gainLossColor}; font-weight: ${gainLoss !== null && gainLoss !== 0 && isManualRetail ? '600' : 'normal'};">${gainLoss !== null && gainLossDisplay !== '—' ? gainLossPrefix + gainLossDisplay : '—'}</td>
       <td class="shrink" data-column="purchaseLocation">
         ${formatPurchaseLocation(item.purchaseLocation)}
       </td>
@@ -1213,6 +1213,10 @@ const updateSummary = () => {
     if (els.purchased) els.purchased.innerHTML = formatCurrency(totals.totalPurchased || 0);
     if (els.retailValue) els.retailValue.innerHTML = formatCurrency(totals.totalRetailValue || 0);
     if (els.lossProfit) els.lossProfit.innerHTML = formatLossProfit(totals.totalGainLoss || 0);
+    if (els.avgCostPerOz) {
+      const avgCost = totals.totalWeight > 0 ? totals.totalPurchased / totals.totalWeight : 0;
+      els.avgCostPerOz.innerHTML = formatCurrency(avgCost);
+    }
   });
 
   // Calculate combined totals for all metals
@@ -1242,6 +1246,10 @@ const updateSummary = () => {
     if (elements.totals.all.purchased) elements.totals.all.purchased.innerHTML = formatCurrency(allTotals.totalPurchased || 0);
     if (elements.totals.all.retailValue) elements.totals.all.retailValue.innerHTML = formatCurrency(allTotals.totalRetailValue || 0);
     if (elements.totals.all.lossProfit) elements.totals.all.lossProfit.innerHTML = formatLossProfit(allTotals.totalGainLoss || 0);
+    if (elements.totals.all.avgCostPerOz) {
+      const avgCost = allTotals.totalWeight > 0 ? allTotals.totalPurchased / allTotals.totalWeight : 0;
+      elements.totals.all.avgCostPerOz.innerHTML = formatCurrency(avgCost);
+    }
   }
 };
 

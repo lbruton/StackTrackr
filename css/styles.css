@@ -1724,8 +1724,27 @@ input[type="submit"] {
 .palladium .total-title {
   border-bottom: 4px solid var(--palladium);
 }
-/* Metal-specific colors */
-/* (removed empty duplicate metal-specific rules) */
+
+/* All Metals combined card — uses primary accent */
+.total-card-all .total-title {
+  border-bottom: 4px solid var(--primary);
+}
+
+/* Gain/Loss bottom-line emphasis — the "bottom line" of each card */
+.total-item-bottom-line {
+  border-bottom: none;
+  border-top: 2px solid var(--border);
+  margin-top: 0.25rem;
+  padding-top: 0.5rem;
+}
+.total-item-bottom-line .total-label {
+  font-weight: 700;
+  font-size: 0.875rem;
+}
+.total-item-bottom-line .total-value {
+  font-weight: 700;
+  font-size: 1rem;
+}
 
 /* =============================================================================
    TABLES - Main inventory table with interactive features
@@ -4672,6 +4691,19 @@ th {
 
 .ebay-price-link:hover .ebay-search-svg {
   color: var(--text-primary);
+}
+
+/* Retail/Gain-Loss confidence styling — estimated (melt fallback) vs confirmed (manual) */
+.retail-estimated {
+  font-style: italic;
+  opacity: 0.65;
+}
+.retail-confirmed {
+  font-weight: 600;
+}
+.gainloss-estimated {
+  font-style: italic;
+  opacity: 0.65;
 }
 
 /* Responsive catalog link with improved mobile experience */

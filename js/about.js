@@ -267,6 +267,7 @@ const setupAckModalEvents = () => {
  */
 const getEmbeddedWhatsNew = () => {
   return `
+    <li><strong>v3.07.00 – Confidence styling + summary refresh</strong>: Retail/Gain-Loss columns show estimated vs confirmed values. New All Metals totals card with Avg Cost/oz. Gain/Loss bottom-line emphasis.</li>
     <li><strong>v3.06.02 – eBay search split</strong>: Purchase column searches active listings (what's for sale), Retail column searches sold listings (what items sold for).</li>
     <li><strong>v3.06.01 – CSS cleanup &amp; icon polish</strong>: Removed 125+ lines of dead CSS, replaced eBay emoji icon with clean SVG, overhauled About modal with live site and project links.</li>
     <li><strong>v3.06.00 – Rebrand to StakTrakr</strong>: New canonical brand with multi-domain auto-branding — staktrakr.com, stackrtrackr.com, and stackertrackr.com each show their own name.</li>

@@ -1,5 +1,6 @@
 ## What's New
 
+- **Confidence styling + summary refresh (v3.07.00)**: Retail and Gain/Loss columns now show italic/muted for estimated values (melt fallback) vs bold for confirmed (manual retail). New "All Metals" totals card, Avg Cost/oz per metal, and Gain/Loss bottom-line emphasis in summary cards
 - **eBay search split (v3.06.02)**: Purchase column search icon now opens active eBay listings (what's for sale), Retail column search icon opens sold listings (what items actually sold for) — research buying price and resale value from the right columns
 - **CSS cleanup & icon polish (v3.06.01)**: Removed 125+ lines of dead CSS, replaced eBay emoji icon with clean SVG, overhauled About modal with project links and MIT License
 - **Rebrand to StakTrakr (v3.06.00)**: New canonical brand with multi-domain auto-branding — `staktrakr.com`, `stackrtrackr.com`, and `stackertrackr.com` each display their own brand name automatically
