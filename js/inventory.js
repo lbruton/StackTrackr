@@ -1066,13 +1066,17 @@ const renderTable = () => {
       </td>
       <td class="shrink" data-column="qty">${filterLink('qty', item.qty, 'var(--text-primary)')}</td>
       <td class="shrink" data-column="weight">${filterLink('weight', item.weight, 'var(--text-primary)', formatWeight(item.weight), item.weight < 1 ? 'Grams (g)' : 'Troy ounces (ozt)')}</td>
-      <td class="shrink" data-column="purchasePrice" title="Purchase Price (USD) - Click to search eBay sold listings" style="color: var(--text-primary);">
-        <a href="#" onclick="event.stopPropagation(); openEbaySearch('${sanitizeHtml(item.metal)} ${sanitizeHtml(item.name)}'); return false;" class="ebay-price-link" title="Search eBay sold listings for ${sanitizeHtml(item.metal)} ${sanitizeHtml(item.name)}">
+      <td class="shrink" data-column="purchasePrice" title="Purchase Price (USD) - Click to search eBay active listings" style="color: var(--text-primary);">
+        <a href="#" class="ebay-buy-link ebay-price-link" data-search="${sanitizeHtml(item.metal + ' ' + item.name)}" title="Search eBay active listings for ${sanitizeHtml(item.metal)} ${sanitizeHtml(item.name)}">
           ${formatCurrency(purchasePrice)} <svg class="ebay-search-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6" fill="none" stroke="currentColor" stroke-width="2.5"/><line x1="15" y1="15" x2="21" y2="21" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
         </a>
       </td>
       <td class="shrink" data-column="meltValue" title="Melt Value (USD)" style="color: var(--text-primary);">${meltDisplay}</td>
-      <td class="shrink" data-column="retailPrice" title="${isManualRetail ? 'Manual retail price' : 'Defaults to melt value'}" style="color: var(--text-primary);">${retailDisplay}${isManualRetail ? ' <span style="opacity:0.5;font-size:0.8em;" title="Manually set retail price">*</span>' : ''}</td>
+      <td class="shrink" data-column="retailPrice" title="${isManualRetail ? 'Manual retail price' : 'Defaults to melt value'} - Click to search eBay sold listings" style="color: var(--text-primary);">
+        <a href="#" class="ebay-sold-link ebay-price-link" data-search="${sanitizeHtml(item.metal + ' ' + item.name)}" title="Search eBay sold listings for ${sanitizeHtml(item.metal)} ${sanitizeHtml(item.name)}">
+          ${retailDisplay}${isManualRetail ? ' <span style="opacity:0.5;font-size:0.8em;" title="Manually set retail price">*</span>' : ''} <svg class="ebay-search-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6" fill="none" stroke="currentColor" stroke-width="2.5"/><line x1="15" y1="15" x2="21" y2="21" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
+        </a>
+      </td>
       <td class="shrink" data-column="gainLoss" title="Gain/Loss (USD)" style="color: ${gainLossColor}; font-weight: ${gainLoss !== null && gainLoss !== 0 ? '600' : 'normal'};">${gainLoss !== null && gainLossDisplay !== '—' ? gainLossPrefix + gainLossDisplay : '—'}</td>
       <td class="shrink" data-column="purchaseLocation">
         ${formatPurchaseLocation(item.purchaseLocation)}
@@ -2387,6 +2391,28 @@ window.editItem = editItem;
 window.duplicateItem = duplicateItem;
 window.deleteItem = deleteItem;
 window.showNotes = showNotes;
+
+/**
+ * Delegated click handler for eBay search links.
+ * Uses data-search attribute instead of inline onclick to prevent XSS
+ * when item names contain quotes or special characters.
+ */
+document.addEventListener('click', (e) => {
+  const buyLink = e.target.closest('.ebay-buy-link');
+  if (buyLink) {
+    e.preventDefault();
+    e.stopPropagation();
+    openEbayBuySearch(buyLink.dataset.search);
+    return;
+  }
+  const soldLink = e.target.closest('.ebay-sold-link');
+  if (soldLink) {
+    e.preventDefault();
+    e.stopPropagation();
+    openEbaySoldSearch(soldLink.dataset.search);
+    return;
+  }
+});
 
 /**
  * Phase 1C: Storage optimization and housekeeping

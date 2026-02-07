@@ -5,6 +5,16 @@ All notable changes to StakTrakr will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.06.02] - 2026-02-07
+
+### Patch — eBay Search Split (Buy vs Sold)
+
+#### Changed
+
+- **eBay search split**: Purchase column search icon now opens eBay **active listings** (items for sale), Retail column search icon opens eBay **sold listings** (completed sales for price research)
+- **New functions**: Split `openEbaySearch()` into `openEbayBuySearch()` (active, Buy It Now, best match) and `openEbaySoldSearch()` (completed, most recent) in `js/utils.js`
+- **Retail column search icon**: Added magnifying glass SVG icon to the Retail column, matching the Purchase column icon style
+
 ## [3.06.01] - 2026-02-07
 
 ### Patch — CSS Cleanup, Icon Polish, About Modal Overhaul

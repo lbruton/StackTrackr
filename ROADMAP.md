@@ -108,7 +108,7 @@ These items focus on visual polish and usability improvements that require no ba
   - **Font contrast audit**: ensure all text colors meet WCAG AA (4.5:1 for body text, 3:1 for large text) against their respective backgrounds in both themes. Pay attention to table cell text, header labels, placeholder text, and muted/secondary text
   - **Action column theming**: the Edit/Copy/Delete icon columns at the end of table rows use a disconnected gray background that doesn't match the row theme. These sticky columns need to inherit the same background as their row (including alternating row stripes and hover state)
   - **Scope**: `css/styles.css` theme sections (`[data-theme="light"]`, `[data-theme="sepia"]`), sticky column rules, table row/hover rules
-- **eBay search icon redesign** — the `🔍` emoji inside a red circle (`span.ebay-icon`, 16×16px, `background-color: #e53e2f`) in the Purchase column looks oversized and out of place next to the clean monoline icons used elsewhere (location external-link icons, action column icons). Replace with a subtle, theme-aware icon that matches the design language — e.g., a small SVG or CSS-only external-link style indicator. The icon triggers `openEbaySearch()` for sold-listing lookups. Current code: `js/inventory.js:1070-1072`, CSS: `css/styles.css:4744-4772`
+- ~~**eBay search icon redesign**~~ — **DONE (v3.06.01 + v3.06.02)**: Replaced emoji-in-red-circle with clean 12px SVG magnifying glass using `currentColor`. Split into two search functions: Purchase column → active listings (buy), Retail column → sold listings (price research)
 - **Table CSS hardening** — audit responsive breakpoints, test mobile layout, ensure all 14 columns degrade gracefully
 - **Summary cards visual refresh** — update card layout to better surface the portfolio model (total purchase cost, total melt value, total retail, net gain/loss)
 - **Spot price manual input UX** — improve the experience for manually entering spot prices when API is unavailable
@@ -118,7 +118,7 @@ These items focus on visual polish and usability improvements that require no ba
   - **Library audit**: evaluate whether Chart.js (already integrated) is sufficient for these richer visualizations, or whether a more dashboard-oriented library offers better interactivity (tooltips, drill-down, responsive legends). Candidates: Chart.js (current), ApexCharts, Tabler.io (full UI kit). Preference is to stay with Chart.js if it handles the use case cleanly to avoid adding a framework dependency
 - **Chart.js dashboard improvements** — add spot price trend visualization, portfolio value over time
 - **Custom tagging system** — replace the removed `isCollectable` boolean with a flexible tagging system (e.g., "IRA", "stack", "numismatic", "gift")
-- **Dead CSS cleanup pass** — remove orphaned selectors from the collectable/legacy column removals
+- ~~**Dead CSS cleanup pass**~~ — **DONE (v3.06.01)**: Removed ~125 lines of orphaned `.collectable-*` selectors and unused icon utility classes
 
 ---
 
