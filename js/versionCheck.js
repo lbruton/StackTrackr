@@ -91,6 +91,12 @@ const populateVersionModal = (version, html) => {
  */
 const getEmbeddedChangelog = (version) => {
   const changelogs = {
+    "3.05.03": `
+      <li><strong>Date display fix</strong>: Table dates no longer show one day earlier than entered — fixed UTC midnight timezone bug</li>
+      <li><strong>Numista API key storage</strong>: Key now persists across sessions — removed broken encryption, simplified to base64 encoding</li>
+      <li><strong>Storage whitelist fix</strong>: Added catalog_api_config to allowed keys so Numista config survives page reload</li>
+      <li><strong>Numista settings UI</strong>: Removed password field, added API signup link with free tier info</li>
+    `,
     "3.05.01": `
       <li><strong>What's New modal fix</strong>: Changelog and roadmap now populate correctly from CHANGELOG.md and docs/announcements.md</li>
       <li><strong>GitHub URLs updated</strong>: All repository links now point to the correct StackTrackr repository</li>

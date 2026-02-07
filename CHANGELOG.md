@@ -5,6 +5,20 @@ All notable changes to StackTrackr will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.05.03] - 2026-02-07
+
+### Increment 4 — Date Bug Fix + Numista API Key Simplification
+
+#### Fixed
+
+- **Date display off by one day**: `formatDisplayDate()` used `new Date("YYYY-MM-DD")` which parses as UTC midnight — in US timezones this rolled back to the previous day. Now parses the date string directly via `split('-')` with no `Date` constructor, eliminating timezone ambiguity entirely
+- **Numista API key never persisted**: `catalog_api_config` was missing from `ALLOWED_STORAGE_KEYS`, so `cleanupStorage()` deleted the saved config on every page load
+
+#### Changed
+
+- **Numista API key storage simplified**: Removed the non-functional AES-256-GCM encryption system (~115 lines of `CryptoUtils` class) that required a per-session password. Replaced with base64 encoding matching the metals API key pattern — one input, no password, persists across sessions
+- **Numista settings UI**: Removed encryption password field and session-unlock flow. Added Numista API signup link with free tier info
+
 ## [3.05.02] - 2026-02-07
 
 ### Changed

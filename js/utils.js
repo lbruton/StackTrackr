@@ -426,14 +426,19 @@ function parseDate(dateStr) {
  */
 const formatDisplayDate = (dateStr) => {
   if (!dateStr || dateStr === '—' || dateStr === 'Unknown') return '—';
-  
-  const d = new Date(dateStr);
-  if (isNaN(d)) return '—';
-  
+
+  const parts = dateStr.split('-');
+  if (parts.length !== 3) return '—';
+
+  const year = parseInt(parts[0], 10);
+  const month = parseInt(parts[1], 10) - 1;
+  const day = parseInt(parts[2], 10);
+
+  if (isNaN(year) || isNaN(month) || isNaN(day) || month < 0 || month > 11) return '—';
+
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
                   'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  
-  return `${months[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
+  return `${months[month]} ${day}, ${year}`;
 };
 
 /**

@@ -1,5 +1,7 @@
 ## What's New
 
+- **Date bug fix (v3.05.03)**: Table dates no longer display one day earlier than entered — fixed UTC midnight parsing that shifted dates back in US timezones
+- **Numista API key fix (v3.05.03)**: API key now saves and persists across sessions — removed broken encryption system, simplified to match the metals API key pattern
 - **Unified Add/Edit Modal (v3.05.00)**: Merged two separate modals into one — fixes weight unit selector, price preservation, and sub-gram weight precision for Goldbacks and Aurum notes
 - **Qty-adjusted financials**: Retail, Gain/Loss, and summary totals now correctly multiply by quantity for multi-qty line items
 - **Spot price indicators**: Direction arrows (green/red) now persist across page refreshes instead of always resetting to unchanged

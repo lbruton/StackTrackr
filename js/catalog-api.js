@@ -4,135 +4,12 @@
 // Designed for easy swapping between Numista and rSynk APIs
 
 /**
- * Simple encryption utilities for API key storage
- */
-class CryptoUtils {
-  /**
-   * Encrypt text using a password
-   * @param {string} text - Text to encrypt
-   * @param {string} password - Password for encryption
-   * @returns {string} Encrypted text
-   */
-  static async encrypt(text, password) {
-    try {
-      // Create a key from the password
-      const encoder = new TextEncoder();
-      const keyMaterial = await crypto.subtle.importKey(
-        'raw',
-        encoder.encode(password),
-        { name: 'PBKDF2' },
-        false,
-        ['deriveKey']
-      );
-
-      // Generate a salt
-      const salt = crypto.getRandomValues(new Uint8Array(16));
-      
-      // Derive encryption key
-      const key = await crypto.subtle.deriveKey(
-        {
-          name: 'PBKDF2',
-          salt: salt,
-          iterations: 100000,
-          hash: 'SHA-256'
-        },
-        keyMaterial,
-        { name: 'AES-GCM', length: 256 },
-        false,
-        ['encrypt']
-      );
-
-      // Generate IV
-      const iv = crypto.getRandomValues(new Uint8Array(12));
-      
-      // Encrypt the text
-      const encrypted = await crypto.subtle.encrypt(
-        { name: 'AES-GCM', iv: iv },
-        key,
-        encoder.encode(text)
-      );
-
-      // Combine salt + iv + encrypted data
-      const combined = new Uint8Array(salt.length + iv.length + encrypted.byteLength);
-      combined.set(salt, 0);
-      combined.set(iv, salt.length);
-      combined.set(new Uint8Array(encrypted), salt.length + iv.length);
-
-      // Return as base64
-      return btoa(String.fromCharCode(...combined));
-    } catch (error) {
-      console.error('Encryption failed:', error);
-      throw new Error('Failed to encrypt API key');
-    }
-  }
-
-  /**
-   * Decrypt text using a password
-   * @param {string} encryptedText - Base64 encrypted text
-   * @param {string} password - Password for decryption
-   * @returns {string} Decrypted text
-   */
-  static async decrypt(encryptedText, password) {
-    try {
-      // Decode from base64
-      const combined = new Uint8Array(
-        atob(encryptedText).split('').map(char => char.charCodeAt(0))
-      );
-
-      // Extract components
-      const salt = combined.slice(0, 16);
-      const iv = combined.slice(16, 28);
-      const encrypted = combined.slice(28);
-
-      // Create key from password
-      const encoder = new TextEncoder();
-      const keyMaterial = await crypto.subtle.importKey(
-        'raw',
-        encoder.encode(password),
-        { name: 'PBKDF2' },
-        false,
-        ['deriveKey']
-      );
-
-      // Derive decryption key
-      const key = await crypto.subtle.deriveKey(
-        {
-          name: 'PBKDF2',
-          salt: salt,
-          iterations: 100000,
-          hash: 'SHA-256'
-        },
-        keyMaterial,
-        { name: 'AES-GCM', length: 256 },
-        false,
-        ['decrypt']
-      );
-
-      // Decrypt
-      const decrypted = await crypto.subtle.decrypt(
-        { name: 'AES-GCM', iv: iv },
-        key,
-        encrypted
-      );
-
-      return new TextDecoder().decode(decrypted);
-    } catch (error) {
-      console.error('Decryption failed:', error);
-      throw new Error('Failed to decrypt API key - check your password');
-    }
-  }
-}
-
-/**
- * Catalog API Configuration with encrypted storage
- */
-/**
- * Catalog API Configuration with encrypted storage
+ * Catalog API Configuration with base64-encoded key storage
+ * Matches the metals API key pattern in js/api.js
  */
 class CatalogConfig {
   constructor() {
     this.storageKey = 'catalog_api_config';
-    this.sessionKey = 'catalog_session_keys'; // Runtime storage for decrypted keys
     this.load();
   }
 
@@ -140,32 +17,33 @@ class CatalogConfig {
     try {
       const stored = localStorage.getItem(this.storageKey);
       if (stored) {
-        this.config = JSON.parse(stored);
+        const parsed = JSON.parse(stored);
+        // Decode base64 keys on load
+        if (parsed.numista && parsed.numista.apiKey) {
+          try {
+            parsed.numista.apiKey = atob(parsed.numista.apiKey);
+          } catch (e) {
+            // Key wasn't base64 encoded (legacy or plain text) — keep as-is
+          }
+        }
+        this.config = parsed;
       } else {
         this.config = this.getDefaultConfig();
       }
-      
-      // Initialize session storage for decrypted keys
-      this.sessionKeys = {};
     } catch (error) {
       console.warn('Failed to load catalog config:', error);
       this.config = this.getDefaultConfig();
-      this.sessionKeys = {};
     }
   }
 
   getDefaultConfig() {
     return {
       numista: {
-        encryptedApiKey: '', // Encrypted API key
-        clientName: '',
-        clientId: '',
-        quota: 2000,
-        hasKey: false // Flag to show if encrypted key exists
+        apiKey: '',
+        quota: 2000
       },
       rsynk: {
-        encryptedApiKey: '',
-        hasKey: false
+        apiKey: ''
       },
       local: {
         enabled: true
@@ -175,64 +53,29 @@ class CatalogConfig {
 
   save() {
     try {
-      localStorage.setItem(this.storageKey, JSON.stringify(this.config));
+      // Encode keys as base64 before writing to localStorage
+      const toStore = JSON.parse(JSON.stringify(this.config));
+      if (toStore.numista && toStore.numista.apiKey) {
+        toStore.numista.apiKey = btoa(toStore.numista.apiKey);
+      }
+      localStorage.setItem(this.storageKey, JSON.stringify(toStore));
     } catch (error) {
       console.error('Failed to save catalog config:', error);
     }
   }
 
   /**
-   * Set and encrypt Numista API key
+   * Set Numista API key
    * @param {string} apiKey - Plain text API key
-   * @param {string} password - Encryption password
-   * @param {string} clientName - Client name (optional)
-   * @param {string} clientId - Client ID (optional)
-   * @param {number} quota - API quota (optional)
+   * @param {number} quota - API quota (default 2000)
    */
-  async setNumistaConfig(apiKey, password, clientName = '', clientId = '', quota = 2000) {
-    try {
-      if (!apiKey || !password) {
-        throw new Error('API key and password are required');
-      }
-
-      const encryptedApiKey = await CryptoUtils.encrypt(apiKey, password);
-      
-      this.config.numista = {
-        encryptedApiKey,
-        clientName,
-        clientId,
-        quota,
-        hasKey: true
-      };
-      
-      // Store decrypted key in session for immediate use
-      this.sessionKeys.numista = apiKey;
-      
-      this.save();
-      return true;
-    } catch (error) {
-      console.error('Failed to encrypt API key:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Decrypt and load Numista API key for session
-   * @param {string} password - Decryption password
-   */
-  async unlockNumistaKey(password) {
-    try {
-      if (!this.config.numista.encryptedApiKey) {
-        throw new Error('No encrypted API key found');
-      }
-
-      const decryptedKey = await CryptoUtils.decrypt(this.config.numista.encryptedApiKey, password);
-      this.sessionKeys.numista = decryptedKey;
-      return true;
-    } catch (error) {
-      console.error('Failed to decrypt API key:', error);
-      throw error;
-    }
+  setNumistaConfig(apiKey, quota = 2000) {
+    this.config.numista = {
+      apiKey: apiKey || '',
+      quota
+    };
+    this.save();
+    return true;
   }
 
   /**
@@ -241,45 +84,33 @@ class CatalogConfig {
   getNumistaConfig() {
     return {
       ...this.config.numista,
-      apiKey: this.sessionKeys.numista || '', // Include decrypted key if available
-      isUnlocked: !!this.sessionKeys.numista
+      apiKey: this.config.numista.apiKey || ''
     };
   }
 
   /**
-   * Check if Numista is properly configured and unlocked
+   * Check if Numista is configured with a valid key
    */
   isNumistaEnabled() {
-    return this.config.numista.hasKey && !!this.sessionKeys.numista;
+    return !!this.config.numista.apiKey;
   }
 
   /**
-   * Clear all session keys (lock the API)
-   */
-  lockKeys() {
-    this.sessionKeys = {};
-  }
-
-  /**
-   * Clear stored encrypted key
+   * Clear stored Numista key
    */
   clearNumistaKey() {
     this.config.numista = {
-      encryptedApiKey: '',
-      clientName: '',
-      clientId: '',
-      quota: 2000,
-      hasKey: false
+      apiKey: '',
+      quota: 2000
     };
-    delete this.sessionKeys.numista;
     this.save();
   }
 
   /**
-   * Check if user has stored an encrypted key
+   * Check if user has stored a key
    */
   hasNumistaKey() {
-    return this.config.numista.hasKey && !!this.config.numista.encryptedApiKey;
+    return !!this.config.numista.apiKey;
   }
 }
 
@@ -862,6 +693,7 @@ if (typeof window !== 'undefined') {
 document.addEventListener('DOMContentLoaded', function() {
   // Numista API key input handler
   const numistaApiKeyInput = document.getElementById('numistaApiKey');
+  const saveNumistaBtn = document.getElementById('saveNumistaBtn');
   const testNumistaBtn = document.getElementById('testNumistaBtn');
   const clearNumistaBtn = document.getElementById('clearNumistaBtn');
 
@@ -876,10 +708,24 @@ document.addEventListener('DOMContentLoaded', function() {
     numistaApiKeyInput.addEventListener('change', function() {
       const apiKey = this.value.trim();
       if (apiKey) {
-        catalogConfig.setNumistaConfig(apiKey, '', '', 2000);
-        catalogAPI.initializeProviders(); // Reinitialize providers
+        catalogConfig.setNumistaConfig(apiKey, 2000);
+        catalogAPI.initializeProviders();
         console.log('✅ Numista API key saved');
       }
+    });
+  }
+
+  // Save key button
+  if (saveNumistaBtn) {
+    saveNumistaBtn.addEventListener('click', function() {
+      const apiKey = numistaApiKeyInput?.value.trim();
+      if (!apiKey) {
+        alert('Please enter your Numista API key first');
+        return;
+      }
+      catalogConfig.setNumistaConfig(apiKey, 2000);
+      catalogAPI.initializeProviders();
+      alert('Numista API key saved.');
     });
   }
 
@@ -893,7 +739,7 @@ document.addEventListener('DOMContentLoaded', function() {
       }
 
       // Save the key first
-      catalogConfig.setNumistaConfig(apiKey, '', '', 2000);
+      catalogConfig.setNumistaConfig(apiKey, 2000);
       catalogAPI.initializeProviders();
 
       // Test the connection
@@ -920,7 +766,7 @@ document.addEventListener('DOMContentLoaded', function() {
   if (clearNumistaBtn) {
     clearNumistaBtn.addEventListener('click', function() {
       if (confirm('Are you sure you want to clear your Numista API key?')) {
-        catalogConfig.setNumistaConfig('', '', '', 2000);
+        catalogConfig.clearNumistaKey();
         if (numistaApiKeyInput) {
           numistaApiKeyInput.value = '';
         }

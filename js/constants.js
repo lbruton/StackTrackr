@@ -258,7 +258,7 @@ const API_PROVIDERS = {
  * Updated: 2025-08-15 - Price column styling consistency fixes
  */
 
-const APP_VERSION = "3.05.02";
+const APP_VERSION = "3.05.03";
 
 /**
  * @constant {string} DEFAULT_CURRENCY - Default currency code for monetary formatting
@@ -427,6 +427,7 @@ const ALLOWED_STORAGE_KEYS = [
   "autocomplete_lookup_cache",
   "autocomplete_cache_timestamp",
   "stackrtrackr.debug",
+  "catalog_api_config",
 ];
 
 // Persist current application version for comparison on future loads

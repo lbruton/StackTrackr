@@ -34,13 +34,22 @@ Project direction and planned work for the StackTrackr precious metals inventory
 - Fixed gain/loss sort order: `js/sorting.js` cases 8 (Retail) and 9 (Gain/Loss) now use qty-adjusted totals matching the display
 - Fixed spot price card colors: `updateSpotCardColor()` in `js/spot.js` now compares against the last API/manual entry with a different price, so direction arrows (green ▲ / red ▼) persist across page refreshes instead of always resetting to orange =
 
+### Increment 4 — Date Bug Fix + Numista API Key Simplification
+- Fixed `formatDisplayDate()` UTC midnight bug — dates entered as "2024-01-15" no longer display as "Jan 14, 2024" in US timezones. Parses `YYYY-MM-DD` string directly via `split('-')` instead of using `new Date()`
+- Removed non-functional `CryptoUtils` AES-256-GCM encryption class (~115 lines) from `js/catalog-api.js` — replaced with base64 encoding matching the metals API key pattern
+- Added `catalog_api_config` to `ALLOWED_STORAGE_KEYS` in `js/constants.js` — the missing whitelist entry was causing `cleanupStorage()` to delete saved Numista config on every page load
+- Removed encryption password field from Numista settings UI, added Numista API signup link
+- Files: `js/utils.js`, `js/catalog-api.js`, `js/constants.js`, `index.html`
+
 ---
 
 ## Next Session (Priority)
 
+- ~~**BUG: Table dates off by one day**~~ — **DONE (Increment 4)**: `formatDisplayDate()` now parses the `YYYY-MM-DD` string directly via `split('-')` — no `Date` constructor, no timezone ambiguity
 - **About modal overhaul** — update GitHub repository URLs to match new location, review and clean up the version/changelog display process, ensure all links are functional and information is current
 - **Full UI review walkthrough** — hands-on walk-through of the entire application UI after Increments 1 and 2, cataloging visual issues, layout inconsistencies, and UX friction before proceeding with further feature work
 - ~~**Fix spot price change indicator**~~ — **DONE (Increment 3)**: `updateSpotCardColor()` now compares against the most recent API/manual entry with a *different* price, so direction arrows persist across page refreshes instead of always resetting to orange
+- ~~**Numista API key storage broken**~~ — **DONE (Increment 4)**: Removed non-functional AES-256-GCM encryption (`CryptoUtils` class), simplified to base64 encoding matching the metals API key pattern. Added `catalog_api_config` to `ALLOWED_STORAGE_KEYS` so the key persists across page loads. Removed password field from settings UI
 - **CRITICAL: Fix Numista API client** — the `NumistaProvider` class in `js/catalog-api.js` has never worked due to three implementation bugs against the real Numista v3 API:
   1. **Wrong endpoints**: uses `/items/search` and `/items/{id}` → should be `/types` and `/types/{type_id}`
   2. **Wrong auth**: passes `apikey` as query parameter → should use `Numista-API-Key` HTTP header
@@ -56,12 +65,20 @@ These items focus on visual polish and usability improvements that require no ba
 
 - **Filter chips overhaul** — comprehensive review and rebuild of the filter chip system (`filters.js`, `events.js`, `inventory.js`):
   - **Core problem**: name chips are never generated as summary chips — `generateCategorySummary()` only produces metal, type, date, and location chips. The "Smart Grouping" toggle only affects how name *filters* behave on click, not chip generation. The normalizer (`normalizeItemName()`) works but has no code path to produce chips like "American Silver Eagle (6)"
+  - **Confirmed**: with 8+ American Silver Eagles visible and threshold set to 5+, no name chip appears regardless of Smart Grouping toggle state. The feature simply doesn't exist yet — it's not a threshold or grouping bug, it's a missing code path in `generateCategorySummary()`
+  - **Duplicate chip bug**: clicking a location value (e.g., "herobullion.com") to filter produces both a summary chip ("herobullion.com 25/25") AND an active filter chip ("herobullion.com ×") — two independent systems rendering the same filter. Summary chips should either hide when an active filter matches, or the two systems need to merge into one
+  - **Threshold ignored**: with dropdown set to 5+, chips with counts as low as 2/159 still display. One of the two competing systems doesn't check the threshold setting
+  - **Initial load styling bug**: Silver chip renders with white text on first page load (unreadable), switches to correct black text after any click interaction. The legacy system renders first with wrong CSS classes, then the active system overwrites on interaction
   - **New distribution model**: replace flat threshold with a **"top N per category"** approach — show the top entries from each selected column instead of flooding with everything above count X. This ensures useful chips from each category without visual noise
   - Remove date chips entirely (purchase dates aren't useful as filter categories) and suppress "Unknown" value chips
   - Change default minimum count from 100+ to **5+** as baseline (current default hides nearly all chips)
-  - **Add normalized name chips** to `generateCategorySummary()` using `autocomplete.normalizeItemName()` — this is the missing feature that would group "2021 American Silver Eagle", "2022 American Silver Eagle", etc. into one "American Silver Eagle" chip
+  - **Add normalized name chips** to `generateCategorySummary()` — this is the missing feature that would group "2021 American Silver Eagle", "2022 American Silver Eagle", etc. into one "American Silver Eagle" chip. Two-layer approach:
+    - **Automatic normalizer**: strip leading years, trailing "Type 1/2", mint marks, edition text. Existing `autocomplete.normalizeItemName()` does some of this already — extend and wire into chip generation. Covers standard bullion (ASEs, Maples, Britannias, Krugerrands, etc.)
+    - **User-defined grouping rules**: for edge cases where auto-stripping isn't enough (e.g., grouping "Canada Majestic Polar Bear" with "Canadian Polar Bear 2024"). Reuse the regex rule engine pattern from `js/customMapping.js`. Store rules in localStorage, let users add/edit via a settings UI
+    - **Baseline pattern development**: use a CSV export of real inventory data to discover common name patterns and build the initial normalizer rules. Analysis of 152-item dataset identified 8 naming patterns, a 10-step regex pipeline covering ~85% of cases, and data quality issues (typos: "Flordia"×3, "Diety", "NCG"; concatenated eBay titles). Edge case: APMEX Lunar Year bars where the year IS the identity — normalizer needs a pre-check to skip year stripping for series where year is semantically meaningful
+  - **Batch rename/normalize tool**: reuse the normalizer pipeline to offer a "Clean Up Names" feature — button opens a confirmation modal showing a preview table (Current Name → Proposed Name) for every item that would change. User can check/uncheck individual rows and tweak proposed names before applying. All renames logged in change log for undo. Same engine powers both filter chips and batch cleanup
   - Replace inline dropdowns with a **chip settings modal** allowing users to select which columns produce chips (metal, type, normalized name, purchase location, storage location) and configure the top-N limit per category
-  - Consolidate the legacy `updateTypeSummary()` / `#typeSummary` div (now a no-op) with the active `renderActiveFilters()` system
+  - Consolidate the legacy `updateTypeSummary()` / `#typeSummary` div (now a no-op) with the active `renderActiveFilters()` system — this is the root cause of the duplicate chip bug
   - Future-proof: design chip settings to accommodate **tags** as a chip source when the custom tagging system is implemented
 - **Notes column removal + N# column restoration + hover tooltip** — remove the Notes icon column from the table (14 → 13 columns) to reclaim width, then re-add the N# column (back to 14). Notes remain in the unified add/edit modal as a multi-line textarea. Add a **row hover tooltip** that displays notes content when the user hovers over any row — this tooltip system can later be expanded to show additional metrics (trending data, price history) as backend features are built out
   - **N# column behavior**: clicking the N# value **filters the table** to show all items sharing that catalog number (same pattern as metal/type filter links). A small external-link icon next to the N# opens the Numista catalog page in the existing iframe modal (same icon pattern as purchase location external links). This replaces the previous standalone "N# grouping view" idea — grouping is now just a filter click away
@@ -81,6 +98,10 @@ These items focus on visual polish and usability improvements that require no ba
 - **Table CSS hardening** — audit responsive breakpoints, test mobile layout, ensure all 14 columns degrade gracefully
 - **Summary cards visual refresh** — update card layout to better surface the portfolio model (total purchase cost, total melt value, total retail, net gain/loss)
 - **Spot price manual input UX** — improve the experience for manually entering spot prices when API is unavailable
+- **Metal stats modal overhaul** — enhance the per-metal detail modals (opened by clicking a metal stats card) with full portfolio breakdown:
+  - **Breakdown tables**: replace single "total value" column with the full quartet — Purchase Cost, Melt Value, Est. Retail, Gain/Loss — for each category row (type, name, etc.)
+  - **Pie chart toggle**: add a toggle or tab bar letting users switch the pie chart between Purchase / Melt / Retail / Gain-Loss views, so the chart slices reflect whichever value set the user cares about
+  - **Library audit**: evaluate whether Chart.js (already integrated) is sufficient for these richer visualizations, or whether a more dashboard-oriented library offers better interactivity (tooltips, drill-down, responsive legends). Candidates: Chart.js (current), ApexCharts, Tabler.io (full UI kit). Preference is to stay with Chart.js if it handles the use case cleanly to avoid adding a framework dependency
 - **Chart.js dashboard improvements** — add spot price trend visualization, portfolio value over time
 - **Custom tagging system** — replace the removed `isCollectable` boolean with a flexible tagging system (e.g., "IRA", "stack", "numismatic", "gift")
 - **Dead CSS cleanup pass** — remove orphaned selectors from the collectable/legacy column removals

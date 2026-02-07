@@ -267,6 +267,8 @@ const setupAckModalEvents = () => {
  */
 const getEmbeddedWhatsNew = () => {
   return `
+    <li><strong>v3.05.03 – Date display fix</strong>: Table dates no longer show one day earlier than entered — fixed UTC midnight timezone bug.</li>
+    <li><strong>v3.05.03 – Numista API key fix</strong>: Key now saves and persists across sessions — removed broken encryption, simplified to base64 encoding.</li>
     <li><strong>v3.05.00 – Unified Add/Edit Modal</strong>: Merged two separate modals into one, fixing weight unit selector, price preservation, and sub-gram weight precision.</li>
     <li><strong>v3.05.00 – Qty-adjusted financials</strong>: Retail, Gain/Loss, and summary totals now correctly multiply by quantity for multi-qty items.</li>
     <li><strong>v3.05.00 – Spot price indicators</strong>: Direction arrows (green/red) now persist across page refreshes instead of resetting.</li>
