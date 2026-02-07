@@ -74,6 +74,12 @@ document.addEventListener("DOMContentLoaded", () => {
     if (appLogo) appLogo.setAttribute('aria-label', brandName);
     const footerBrand = document.getElementById('footerBrand');
     if (footerBrand) footerBrand.textContent = brandName;
+    // Update About modal site link to match current domain
+    const siteDomain = typeof getFooterDomain === 'function' ? getFooterDomain() : 'staktrakr.com';
+    const aboutSiteLink = document.getElementById('aboutSiteLink');
+    const aboutSiteDomain = document.getElementById('aboutSiteDomain');
+    if (aboutSiteLink) aboutSiteLink.href = `https://www.${siteDomain}`;
+    if (aboutSiteDomain) aboutSiteDomain.textContent = siteDomain;
 
     // Phase 1: Initialize Core DOM Elements
     debugLog("Phase 1: Initializing core DOM elements...");
