@@ -53,7 +53,7 @@ Project direction and planned work for the StakTrakr precious metals inventory t
 ## Next Session (Priority)
 
 - ~~**BUG: Table dates off by one day**~~ — **DONE (Increment 4)**: `formatDisplayDate()` now parses the `YYYY-MM-DD` string directly via `split('-')` — no `Date` constructor, no timezone ambiguity
-- **About modal overhaul** — update GitHub repository URLs to match new location, review and clean up the version/changelog display process, ensure all links are functional and information is current
+- ~~**About modal overhaul**~~ — **DONE (v3.06.01)**: Rewrote description with project links, added badge-style links (site/GitHub/community/MIT License) with dynamic domain-aware site URL, removed duplicated privacy notice from version modal
 - **Full UI review walkthrough** — hands-on walk-through of the entire application UI after Increments 1 and 2, cataloging visual issues, layout inconsistencies, and UX friction before proceeding with further feature work
 - ~~**Fix spot price change indicator**~~ — **DONE (Increment 3)**: `updateSpotCardColor()` now compares against the most recent API/manual entry with a *different* price, so direction arrows persist across page refreshes instead of always resetting to orange
 - ~~**Numista API key storage broken**~~ — **DONE (Increment 4)**: Removed non-functional AES-256-GCM encryption (`CryptoUtils` class), simplified to base64 encoding matching the metals API key pattern. Added `catalog_api_config` to `ALLOWED_STORAGE_KEYS` so the key persists across page loads. Removed password field from settings UI
@@ -90,9 +90,9 @@ These items focus on visual polish and usability improvements that require no ba
 - **Notes column removal** ~~+ N# column restoration + hover tooltip~~ — ~~remove~~ **DONE (Increment 5)**: Notes icon column removed from table (15 → 14 columns with new duplicate column). Notes remain in the add/edit modal. Remaining: re-add N# column, add row hover tooltip for notes content
   - **N# column behavior**: clicking the N# value **filters the table** to show all items sharing that catalog number (same pattern as metal/type filter links). A small external-link icon next to the N# opens the Numista catalog page in the existing iframe modal (same icon pattern as purchase location external links). This replaces the previous standalone "N# grouping view" idea — grouping is now just a filter click away
   - Items without a N# show "—" in the column (no filter link, no icon)
-- **Retail column UX bundle** — ship together as one increment:
+- **Retail column UX bundle**:
   - **Inline retail editing**: add pencil icon to the Retail column (mirroring the existing Name column inline edit) so users can click to set/update retail price without opening the full edit modal. Gain/Loss should recalculate immediately on save
-  - **Confidence styling**: visually differentiate manual vs auto-computed retail prices. Auto (melt fallback): muted/gray + italic to signal "estimated". Manual (user-set): standard weight + color to signal "confirmed". Carry styling through to Gain/Loss column so estimated gains are also visually distinct from confirmed ones
+  - ~~**Confidence styling**~~ — **DONE (v3.07.00)**: Retail and Gain/Loss columns now visually differentiate estimated (melt fallback — italic, muted) vs confirmed (manual retail — bold). Removed asterisk indicator in favor of CSS classes
 - ~~**Duplicate item button**~~ — **DONE (Increment 5)**: Copy icon in action column opens `#itemModal` in add mode pre-filled from source item. Date defaults to today, qty resets to 1, serial clears
 - ~~**Fraction input for weight field**~~ — **DONE (Increment 5)**: `parseFraction()` in `js/utils.js` handles `1/1000`, `1 1/2`, and plain decimals. Weight input changed to `type="text"` with `inputmode="decimal"`
 - **Numista integration — Sync & Search** (prerequisite: fix Numista API client above):
@@ -110,12 +110,11 @@ These items focus on visual polish and usability improvements that require no ba
   - **Scope**: `css/styles.css` theme sections (`[data-theme="light"]`, `[data-theme="sepia"]`), sticky column rules, table row/hover rules
 - ~~**eBay search icon redesign**~~ — **DONE (v3.06.01 + v3.06.02)**: Replaced emoji-in-red-circle with clean 12px SVG magnifying glass using `currentColor`. Split into two search functions: Purchase column → active listings (buy), Retail column → sold listings (price research)
 - **Table CSS hardening** — audit responsive breakpoints, test mobile layout, ensure all 14 columns degrade gracefully
-- **Summary cards visual refresh** — update card layout to better surface the portfolio model (total purchase cost, total melt value, total retail, net gain/loss)
+- ~~**Summary cards visual refresh**~~ — **DONE (v3.07.00)**: Added "All Metals" combined totals card, Avg Cost/oz metric per metal and combined, Gain/Loss "bottom line" emphasis with separator and larger font
 - **Spot price manual input UX** — improve the experience for manually entering spot prices when API is unavailable
-- **Metal stats modal overhaul** — enhance the per-metal detail modals (opened by clicking a metal stats card) with full portfolio breakdown:
-  - **Breakdown tables**: replace single "total value" column with the full quartet — Purchase Cost, Melt Value, Est. Retail, Gain/Loss — for each category row (type, name, etc.)
+- ~~**Metal stats modal overhaul**~~ — **DONE (v3.07.00)**: Breakdown rows now show full Purchase/Melt/Retail/Gain-Loss in a 2x2 grid. Chart tooltips show all 4 values. Remaining future work:
   - **Pie chart toggle**: add a toggle or tab bar letting users switch the pie chart between Purchase / Melt / Retail / Gain-Loss views, so the chart slices reflect whichever value set the user cares about
-  - **Library audit**: evaluate whether Chart.js (already integrated) is sufficient for these richer visualizations, or whether a more dashboard-oriented library offers better interactivity (tooltips, drill-down, responsive legends). Candidates: Chart.js (current), ApexCharts, Tabler.io (full UI kit). Preference is to stay with Chart.js if it handles the use case cleanly to avoid adding a framework dependency
+  - **Library audit**: evaluate whether Chart.js (already integrated) is sufficient for these richer visualizations, or whether a more dashboard-oriented library offers better interactivity (tooltips, drill-down, responsive legends)
 - **Chart.js dashboard improvements** — add spot price trend visualization, portfolio value over time
 - **Custom tagging system** — replace the removed `isCollectable` boolean with a flexible tagging system (e.g., "IRA", "stack", "numismatic", "gift")
 - ~~**Dead CSS cleanup pass**~~ — **DONE (v3.06.01)**: Removed ~125 lines of orphaned `.collectable-*` selectors and unused icon utility classes

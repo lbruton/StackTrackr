@@ -64,7 +64,7 @@ const getChartTextColor = () => {
  */
 const createPieChart = (canvas, data, title) => {
   const labels = Object.keys(data);
-  const values = Object.values(data).map(item => item.value);
+  const values = Object.values(data).map(item => item.purchase || item.value || 0);
   const colors = generateColors(labels.length);
 
   const ctx = canvas.getContext('2d');
@@ -129,16 +129,19 @@ const createPieChart = (canvas, data, title) => {
               const total = context.dataset.data.reduce((a, b) => a + b, 0);
               const percentage = ((value / total) * 100).toFixed(1);
 
-              // Get breakdown data for additional info
-              const breakdownItem = data[label];
-              const count = breakdownItem ? breakdownItem.count : 0;
-              const weight = breakdownItem ? breakdownItem.weight.toFixed(2) : '0.00';
-
-              return [
-                `${label}: ${formatCurrency(value)} (${percentage}%)`,
-                `Items: ${count}`,
-                `Weight: ${weight} oz`
+              const b = data[label];
+              const lines = [
+                `${label} (${percentage}%)`,
+                `Items: ${b ? b.count : 0} \u00B7 Weight: ${b ? b.weight.toFixed(2) : '0.00'} oz`,
+                `Purchase: ${formatCurrency(value)}`
               ];
+              if (b && b.melt !== undefined) {
+                lines.push(`Melt: ${formatCurrency(b.melt)}`);
+                lines.push(`Retail: ${formatCurrency(b.retail)}`);
+                const gl = b.gainLoss;
+                lines.push(`Gain/Loss: ${gl > 0 ? '+' : ''}${formatCurrency(gl)}`);
+              }
+              return lines;
             }
           }
         }
