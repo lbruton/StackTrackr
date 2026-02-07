@@ -27,6 +27,11 @@ Project direction and planned work for the StackrTrackr precious metals inventor
 - **About modal overhaul** — update GitHub repository URLs to match new location, review and clean up the version/changelog display process, ensure all links are functional and information is current
 - **Full UI review walkthrough** — hands-on walk-through of the entire application UI after Increments 1 and 2, cataloging visual issues, layout inconsistencies, and UX friction before proceeding with further feature work
 - **Fix spot price change indicator** — price direction arrows (green up / red down / orange unchanged) always show orange on page refresh because `updateSpotCardColor()` in `spot.js:112-149` compares against the last `spotHistory` entry regardless of source. Cached reads (`source: "cached"`) reset the baseline so the comparison is always equal. Fix: filter `spotHistory` to only compare against last `source: "api"` entry, preserving cached entries in history for auditing. Affects `spot.js` (comparison logic) and possibly `api.js` (`recordSpot` calls). Quick fix — should be < 10 lines changed
+- **CRITICAL: Unify Add/Edit into single modal** — the Edit modal has drifted from the Add modal, causing data integrity bugs:
+  - Edit modal is **missing the weight unit selector** (grams vs oz) — Add modal has `<select id="itemWeightUnit">`, Edit modal has nothing. Weight unit is hidden in a fragile `dataset.unit` attribute invisible to the user
+  - **Purchase price is lost** when editing items (e.g., changing a Gold Note to Gold Aurum) — likely caused by hidden weight unit state getting disrupted during form interaction, causing save logic to overwrite fields with empty values
+  - Fix: consolidate into a **single modal** that operates in "add" or "edit" mode. One set of fields, one save handler with a mode flag, one place to maintain. Eliminates the entire class of modal-drift bugs
+  - Affects: `index.html` (two modal HTML blocks → one), `js/events.js` (two save handlers → one with mode), `js/inventory.js` (`editItem()` populates same form), `js/init.js` (element references)
 
 ---
 
