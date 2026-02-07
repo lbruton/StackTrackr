@@ -41,11 +41,12 @@ Project direction and planned work for the StackTrackr precious metals inventory
 - Removed encryption password field from Numista settings UI, added Numista API signup link
 - Files: `js/utils.js`, `js/catalog-api.js`, `js/constants.js`, `index.html`
 
-### Increment 5 — Fraction Input + Duplicate Item Button
+### Increment 5 — Fraction Input + Duplicate Item Button + Notes Column Removal
 - Added `parseFraction()` utility in `js/utils.js` — parses `1/1000`, `1 1/2`, and plain decimals. Changed weight input from `type="number"` to `type="text"` with `inputmode="decimal"` to allow `/` character entry
 - Added duplicate item button (copy icon) to table action column between Edit and Delete. `duplicateItem()` function in `js/inventory.js` opens unified `#itemModal` in add mode pre-filled from source item, date defaults to today, qty resets to 1, serial clears
-- Added `<th>` header for duplicate column in `index.html`
-- Files: `js/utils.js`, `js/events.js`, `js/inventory.js`, `index.html`
+- Removed Notes icon column from table (15 → 14 columns). Notes remain in add/edit modal
+- Fixed sticky column CSS: added `right:` offset for duplicate column, removed orphaned notes sticky rule, fixed `background: transparent` override that broke sticky header backgrounds
+- Files: `js/utils.js`, `js/events.js`, `js/inventory.js`, `index.html`, `css/styles.css`
 
 ---
 
@@ -86,7 +87,7 @@ These items focus on visual polish and usability improvements that require no ba
   - Replace inline dropdowns with a **chip settings modal** allowing users to select which columns produce chips (metal, type, normalized name, purchase location, storage location) and configure the top-N limit per category
   - Consolidate the legacy `updateTypeSummary()` / `#typeSummary` div (now a no-op) with the active `renderActiveFilters()` system — this is the root cause of the duplicate chip bug
   - Future-proof: design chip settings to accommodate **tags** as a chip source when the custom tagging system is implemented
-- **Notes column removal + N# column restoration + hover tooltip** — remove the Notes icon column from the table (14 → 13 columns) to reclaim width, then re-add the N# column (back to 14). Notes remain in the unified add/edit modal as a multi-line textarea. Add a **row hover tooltip** that displays notes content when the user hovers over any row — this tooltip system can later be expanded to show additional metrics (trending data, price history) as backend features are built out
+- **Notes column removal** ~~+ N# column restoration + hover tooltip~~ — ~~remove~~ **DONE (Increment 5)**: Notes icon column removed from table (15 → 14 columns with new duplicate column). Notes remain in the add/edit modal. Remaining: re-add N# column, add row hover tooltip for notes content
   - **N# column behavior**: clicking the N# value **filters the table** to show all items sharing that catalog number (same pattern as metal/type filter links). A small external-link icon next to the N# opens the Numista catalog page in the existing iframe modal (same icon pattern as purchase location external links). This replaces the previous standalone "N# grouping view" idea — grouping is now just a filter click away
   - Items without a N# show "—" in the column (no filter link, no icon)
 - **Retail column UX bundle** — ship together as one increment:

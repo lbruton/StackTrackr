@@ -4460,7 +4460,7 @@ input:disabled + .slider {
   margin: 0 auto 0.25rem;
 }
 
-/* Sticky action columns: keep notes/edit/delete visible when horizontally scrolling.
+/* Sticky action columns: keep edit/duplicate/delete visible when horizontally scrolling.
   Header cells use --bg-secondary; body cells inherit the row background
   so striping and hover highlights apply naturally even when cells are sticky. */
 #inventoryTable th.icon-col {
@@ -4479,19 +4479,19 @@ input:disabled + .slider {
   z-index: 6;
 }
 
-/* Layered right offsets (values chosen to match approximate icon widths). */
+/* Layered right offsets for sticky icon columns (right-to-left stacking). */
 #inventoryTable th[data-column="delete"],
 #inventoryTable td[data-column="delete"] {
   right: 0;
 }
 
-#inventoryTable th[data-column="edit"],
-#inventoryTable td[data-column="edit"] {
+#inventoryTable th[data-column="duplicate"],
+#inventoryTable td[data-column="duplicate"] {
   right: 3.6rem;
 }
 
-#inventoryTable th[data-column="notes"],
-#inventoryTable td[data-column="notes"] {
+#inventoryTable th[data-column="edit"],
+#inventoryTable td[data-column="edit"] {
   right: 7.2rem;
 }
 
@@ -4520,12 +4520,8 @@ input:disabled + .slider {
 /* Removed hover effect to prevent cell flooding */
 
 #inventoryTable .icon-svg { width: 1.05rem; height: 1.05rem; display: block; fill: currentColor; color: inherit; }
-.notes-svg { color: inherit; }
 .edit-svg { color: inherit; }
 .delete-svg { color: inherit; }
-
-/* Has-notes indicator */
-.has-notes .icon-svg { color: var(--info); }
 
 /* Theme fills for collectable icons */
 .collectable-icon.vault-icon { color: var(--text-muted); }
@@ -4565,11 +4561,9 @@ input:disabled + .slider {
   #inventoryTable td[data-column="meltValue"] { width: 20%; }
 }
 
-/* Make sure sticky cells have a solid background so they sit above the scrolled content */
+/* Sticky icon columns: remove left border so they blend with adjacent cells */
 #inventoryTable th.icon-col,
 #inventoryTable td.icon-col {
-  /* Match the table header/row theme so icons blend in */
-  background: transparent;
   border-left: none;
 }
 
