@@ -33,6 +33,8 @@ Project direction and planned work for the StackrTrackr precious metals inventor
 
 These items focus on visual polish and usability improvements that require no backend changes.
 
+- **Retail price confidence styling** — visually differentiate manual vs auto-computed retail prices. Auto (melt fallback): muted/gray + italic to signal "estimated". Manual (user-set): standard weight + color to signal "confirmed". Carry styling through to Gain/Loss column so estimated gains are also visually distinct from confirmed ones
+- **eBay API integration** — if/when backend exists, proxy eBay Browse API for sold listing lookups to pre-populate retail estimates (current pre-populated search link works well as the client-side solution)
 - **Table CSS hardening** — audit responsive breakpoints, test mobile layout, ensure all 14 columns degrade gracefully
 - **Summary cards visual refresh** — update card layout to better surface the portfolio model (total purchase cost, total melt value, total retail, net gain/loss)
 - **Spot price manual input UX** — improve the experience for manually entering spot prices when API is unavailable
