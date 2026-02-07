@@ -91,6 +91,16 @@ const populateVersionModal = (version, html) => {
  */
 const getEmbeddedChangelog = (version) => {
   const changelogs = {
+    "3.07.01": `
+      <li><strong>Light theme: clean backgrounds</strong>: Cool gray page background with white cards — visible elevation and row striping</li>
+      <li><strong>Table cleanup</strong>: Removed sticky columns, filter-based hover, and cell-level transitions — hover is now a simple row background change</li>
+      <li><strong>Metal/type text contrast</strong>: Darkened Silver, Gold, Coin, Bar, etc. color tokens so they pass WCAG AA in light and sepia themes</li>
+      <li><strong>Confidence styling</strong>: Estimated Retail/Gain-Loss now uses theme-safe muted text color instead of opacity dimming</li>
+      <li><strong>Sepia theme: removed global sepia filter</strong>: Warm palette now controlled by custom properties instead of an unpredictable CSS filter</li>
+      <li><strong>Sepia theme: WCAG text contrast fix</strong>: Muted text was failing WCAG AA (3:1 ratio) — now passes at 6.7:1</li>
+      <li><strong>Sepia theme: warm info color</strong>: Replaced jarring sky-blue with desaturated warm teal to match the palette</li>
+      <li><strong>Sepia theme: visible borders and shadows</strong>: Fixed identical border-hover/bg-tertiary, strengthened shadow opacity</li>
+    `,
     "3.07.00": `
       <li><strong>Confidence styling</strong>: Retail and Gain/Loss columns now show italic/muted for estimated values (melt fallback) vs bold for confirmed (manual retail)</li>
       <li><strong>All Metals summary card</strong>: New combined totals card with portfolio-wide metrics and Avg Cost/oz per metal</li>
