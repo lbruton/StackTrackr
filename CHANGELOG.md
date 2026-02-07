@@ -15,7 +15,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Domain-based auto-branding**: Updated domain map to support three domains — `staktrakr.com` (primary, shows "StakTrakr"), `stackrtrackr.com` (legacy, shows "StackrTrackr"), `stackertrackr.com` (shows "Stacker Tracker"). Each domain automatically displays its own brand name via the existing `BRANDING_DOMAIN_OPTIONS` system
 - **localStorage key prefix migration**: Renamed `stackrtrackr.*` keys to `staktrakr.*` (debug, catalog cache, catalog settings). Debug flag checks both old and new keys for backwards compatibility
 - **Footer domain**: Default domain now shows `staktrakr.com`, with auto-detection for all three owned domains
-- **Reddit community link**: Updated from `/r/stackrtrackr` to `/r/staktrakr`
+- **Reddit community link**: Hardcoded to `/r/stackrtrackr/` (subreddit name unchanged)
+- **GitHub link**: Added link to `github.com/lbruton/StackTrackr` in footer
+- **Dynamic SVG logo**: Logo tspan text and SVG viewBox width now update per domain at page load — prevents clipping on longer names like "Stacker Tracker"
+- **Dynamic footer brand**: Footer "Thank you for using ..." text now updates to match the domain brand name
 
 ## [3.05.04] - 2026-02-07
 

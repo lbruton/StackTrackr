@@ -64,9 +64,16 @@ document.addEventListener("DOMContentLoaded", () => {
     if (logoSplit) {
       document.querySelectorAll('.logo-silver').forEach(el => { el.textContent = logoSplit[0]; });
       document.querySelectorAll('.logo-gold').forEach(el => { el.textContent = logoSplit[1]; });
+      // Adjust SVG viewBox for longer brand names
+      if (logoSplit[2]) {
+        const logoSvg = document.querySelector('.stackr-logo');
+        if (logoSvg) logoSvg.setAttribute('viewBox', `0 0 ${logoSplit[2]} 200`);
+      }
     }
     const appLogo = document.getElementById('appLogo');
     if (appLogo) appLogo.setAttribute('aria-label', brandName);
+    const footerBrand = document.getElementById('footerBrand');
+    if (footerBrand) footerBrand.textContent = brandName;
 
     // Phase 1: Initialize Core DOM Elements
     debugLog("Phase 1: Initializing core DOM elements...");

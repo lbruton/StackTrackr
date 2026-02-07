@@ -286,7 +286,7 @@ const getEmbeddedRoadmap = () => {
   return `
     <li><strong>About modal overhaul</strong>: Update repository URLs, review version/changelog display</li>
     <li><strong>Filter chips rebuild</strong>: Top-N per category model, normalized name chips, chip settings modal</li>
-    <li><strong>Notes column removal + N# restore</strong>: Remove Notes icon column, re-add Numista catalog column with filter-on-click</li>
+    <li><strong>N# column restore</strong>: Re-add Numista catalog column with filter-on-click and iframe link</li>
   `;
 };
 
