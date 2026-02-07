@@ -22,6 +22,13 @@ Project direction and planned work for the StackrTrackr precious metals inventor
 
 ---
 
+## Next Session (Priority)
+
+- **About modal overhaul** — update GitHub repository URLs to match new location, review and clean up the version/changelog display process, ensure all links are functional and information is current
+- **Full UI review walkthrough** — hands-on walk-through of the entire application UI after Increments 1 and 2, cataloging visual issues, layout inconsistencies, and UX friction before proceeding with further feature work
+
+---
+
 ## Near-Term (UI Focus)
 
 These items focus on visual polish and usability improvements that require no backend changes.
