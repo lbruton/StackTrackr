@@ -337,6 +337,12 @@ const BRANDING_DOMAIN_OPTIONS = {
     stackrtrackr: "StackrTrackr",
     stackertrackr: "Stacker Tracker",
   },
+  /** Logo split: [silverPart, goldPart] for the inline SVG tspan elements */
+  logoSplit: {
+    "StakTrakr": ["Stak", "Trakr"],
+    "StackrTrackr": ["Stackr", "Trackr"],
+    "Stacker Tracker": ["Stacker ", "Tracker"],
+  },
   removeExtension: true,
   alwaysOverride: false,
 };

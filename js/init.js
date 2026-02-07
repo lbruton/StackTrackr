@@ -58,6 +58,16 @@ document.addEventListener("DOMContentLoaded", () => {
   console.log('🚀 For agent setup: node rEngine/quick-agent-setup.js');
 
   try {
+    // Phase 0: Apply domain-based logo branding
+    const brandName = typeof getBrandingName === 'function' ? getBrandingName() : BRANDING_TITLE;
+    const logoSplit = BRANDING_DOMAIN_OPTIONS.logoSplit[brandName];
+    if (logoSplit) {
+      document.querySelectorAll('.logo-silver').forEach(el => { el.textContent = logoSplit[0]; });
+      document.querySelectorAll('.logo-gold').forEach(el => { el.textContent = logoSplit[1]; });
+    }
+    const appLogo = document.getElementById('appLogo');
+    if (appLogo) appLogo.setAttribute('aria-label', brandName);
+
     // Phase 1: Initialize Core DOM Elements
     debugLog("Phase 1: Initializing core DOM elements...");
 
