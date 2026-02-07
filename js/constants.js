@@ -258,7 +258,7 @@ const API_PROVIDERS = {
  * Updated: 2025-08-15 - Price column styling consistency fixes
  */
 
-const APP_VERSION = "3.05.03";
+const APP_VERSION = "3.05.04";
 
 /**
  * @constant {string} DEFAULT_CURRENCY - Default currency code for monetary formatting

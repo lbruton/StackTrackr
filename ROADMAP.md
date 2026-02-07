@@ -41,6 +41,12 @@ Project direction and planned work for the StackTrackr precious metals inventory
 - Removed encryption password field from Numista settings UI, added Numista API signup link
 - Files: `js/utils.js`, `js/catalog-api.js`, `js/constants.js`, `index.html`
 
+### Increment 5 — Fraction Input + Duplicate Item Button
+- Added `parseFraction()` utility in `js/utils.js` — parses `1/1000`, `1 1/2`, and plain decimals. Changed weight input from `type="number"` to `type="text"` with `inputmode="decimal"` to allow `/` character entry
+- Added duplicate item button (copy icon) to table action column between Edit and Delete. `duplicateItem()` function in `js/inventory.js` opens unified `#itemModal` in add mode pre-filled from source item, date defaults to today, qty resets to 1, serial clears
+- Added `<th>` header for duplicate column in `index.html`
+- Files: `js/utils.js`, `js/events.js`, `js/inventory.js`, `index.html`
+
 ---
 
 ## Next Session (Priority)
@@ -86,8 +92,8 @@ These items focus on visual polish and usability improvements that require no ba
 - **Retail column UX bundle** — ship together as one increment:
   - **Inline retail editing**: add pencil icon to the Retail column (mirroring the existing Name column inline edit) so users can click to set/update retail price without opening the full edit modal. Gain/Loss should recalculate immediately on save
   - **Confidence styling**: visually differentiate manual vs auto-computed retail prices. Auto (melt fallback): muted/gray + italic to signal "estimated". Manual (user-set): standard weight + color to signal "confirmed". Carry styling through to Gain/Loss column so estimated gains are also visually distinct from confirmed ones
-- **Duplicate item button** — add a copy icon to the table's action column (next to Edit/Delete) that opens the unified `#itemModal` in **add mode** pre-filled with all fields from the source item. Date defaults to today, `editingIndex` stays `null` so it creates a new record. Ideal for entering mixed-date sets (e.g., adding 10 American Silver Eagles from different years — add one, then duplicate and change only the year/date). The copy should carry over: metal, type, name, weight, unit, price, qty (reset to 1), purchase location, storage location, catalog number, and notes
-- **Fraction input for weight field** — allow users to type fractions like `1/1000` or `1/2` in the weight input, which the app auto-converts to decimal before saving. Aurum notes and Goldbacks print their precious metal content as fractions (e.g., "1/1000th of a gram") and users shouldn't need to do the math themselves. Implementation: on form submit, detect `/` in the weight value, evaluate the fraction (`parseFloat(num) / parseFloat(denom)`), and proceed with the decimal result. Purely client-side, no backend needed. Could also support mixed numbers like `1 1/2` for half-ounce items
+- ~~**Duplicate item button**~~ — **DONE (Increment 5)**: Copy icon in action column opens `#itemModal` in add mode pre-filled from source item. Date defaults to today, qty resets to 1, serial clears
+- ~~**Fraction input for weight field**~~ — **DONE (Increment 5)**: `parseFraction()` in `js/utils.js` handles `1/1000`, `1 1/2`, and plain decimals. Weight input changed to `type="text"` with `inputmode="decimal"`
 - **Numista integration — Sync & Search** (prerequisite: fix Numista API client above):
   - **"Sync from Numista" button** on the add/edit modal next to the Catalog (N#) field. When clicked with a valid N#, calls `GET /types/{type_id}` and auto-populates: **Name** ← `title`, **Weight** ← `weight` (grams, set unit to "g"), **Type** ← normalized type, **Metal** ← `composition.text` parsed to standard metals, **Notes** ← `description`. User reviews pre-filled fields, adjusts price/qty/location, saves. ~30 lines of glue code wiring API response to existing form fields
   - **"Numista Lookup" button** next to Sync — opens a search modal where users can type a coin name (e.g., "American Silver Eagle") and browse results with thumbnails (returned in search results as `obverse_thumbnail`/`reverse_thumbnail`). Selecting a result populates the N# field and triggers the Sync flow. Search supports: text query (`q`), category filter (`coin`/`exonumia`/`banknote`), and issuer filter. Metal/composition filtering is NOT available at the search level — only in full item detail

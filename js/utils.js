@@ -493,6 +493,41 @@ const sanitizeHtml = (text) => {
 };
 
 /**
+ * Parses a weight string that may contain fractions
+ * Supports: "0.5", "1/1000", "1 1/2" (mixed numbers)
+ *
+ * @param {string} str - Weight string to parse
+ * @returns {number} Parsed decimal value, or NaN if invalid
+ */
+const parseFraction = (str) => {
+  if (typeof str !== 'string') return parseFloat(str);
+  str = str.trim();
+  if (!str) return NaN;
+
+  // Mixed number: "1 1/2"
+  const mixedMatch = str.match(/^(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)\/(\d+(?:\.\d+)?)$/);
+  if (mixedMatch) {
+    const whole = parseFloat(mixedMatch[1]);
+    const num = parseFloat(mixedMatch[2]);
+    const denom = parseFloat(mixedMatch[3]);
+    if (denom === 0) return NaN;
+    return whole + (num / denom);
+  }
+
+  // Simple fraction: "1/1000"
+  const fracMatch = str.match(/^(\d+(?:\.\d+)?)\/(\d+(?:\.\d+)?)$/);
+  if (fracMatch) {
+    const num = parseFloat(fracMatch[1]);
+    const denom = parseFloat(fracMatch[2]);
+    if (denom === 0) return NaN;
+    return num / denom;
+  }
+
+  // Plain number
+  return parseFloat(str);
+};
+
+/**
  * Converts grams to troy ounces
  *
  * @param {number} grams - Weight in grams

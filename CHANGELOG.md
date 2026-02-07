@@ -5,6 +5,15 @@ All notable changes to StackTrackr will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.05.04] - 2026-02-07
+
+### Increment 5 — Fraction Input + Duplicate Item Button
+
+#### Added
+
+- **Fraction input for weight field**: Weight input now accepts fractions like `1/1000` or `1 1/2` (mixed numbers), auto-converted to decimal before saving. Input changed from `type="number"` to `type="text"` with `inputmode="decimal"` for mobile numeric keyboard
+- **Duplicate item button**: New copy icon in the table action column (between Edit and Delete). Opens the add modal pre-filled with all fields from the source item — date defaults to today, qty resets to 1, serial clears. Ideal for entering mixed-date sets of the same coin
+
 ## [3.05.03] - 2026-02-07
 
 ### Increment 4 — Date Bug Fix + Numista API Key Simplification

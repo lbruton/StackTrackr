@@ -91,6 +91,10 @@ const populateVersionModal = (version, html) => {
  */
 const getEmbeddedChangelog = (version) => {
   const changelogs = {
+    "3.05.04": `
+      <li><strong>Fraction weight input</strong>: Weight field now accepts fractions like 1/1000 or 1 1/2 — auto-converts to decimal</li>
+      <li><strong>Duplicate item button</strong>: Copy icon in action column opens add modal pre-filled from source item (date = today, qty = 1)</li>
+    `,
     "3.05.03": `
       <li><strong>Date display fix</strong>: Table dates no longer show one day earlier than entered — fixed UTC midnight timezone bug</li>
       <li><strong>Numista API key storage</strong>: Key now persists across sessions — removed broken encryption, simplified to base64 encoding</li>

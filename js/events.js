@@ -497,13 +497,13 @@ const setupEventListeners = () => {
 
           const type = elements.itemType.value || (isEditing ? existingItem.type : '');
 
-          // Weight: uses real <select> instead of fragile dataset.unit
+          // Weight: uses real <select>, supports fraction input (e.g. "1/1000", "1 1/2")
           const weightRaw = elements.itemWeight.value;
           let weight;
           if (isEditing && weightRaw === '') {
             weight = typeof existingItem.weight !== 'undefined' ? existingItem.weight : 0;
           } else {
-            weight = parseFloat(weightRaw);
+            weight = parseFraction(weightRaw);
             if (elements.itemWeightUnit.value === 'g') {
               weight = gramsToOzt(weight);
             }
