@@ -267,6 +267,7 @@ const setupAckModalEvents = () => {
  */
 const getEmbeddedWhatsNew = () => {
   return `
+    <li><strong>v3.07.01 – Light &amp; Sepia theme contrast pass</strong>: Clean gray-to-white light palette, darkened metal/type text for WCAG AA, removed sticky columns and filter-based hover, estimated values use muted color instead of opacity. Sepia: removed global filter, fixed text contrast, warm info color.</li>
     <li><strong>v3.07.00 – Portfolio visibility overhaul</strong>: Confidence styling for Retail/Gain-Loss, All Metals totals card with Avg Cost/oz and clickable breakdown modal, metal detail modals show full portfolio breakdown per type and location.</li>
     <li><strong>v3.06.02 – eBay search split</strong>: Purchase column searches active listings (what's for sale), Retail column searches sold listings (what items sold for).</li>
     <li><strong>v3.06.01 – CSS cleanup &amp; icon polish</strong>: Removed 125+ lines of dead CSS, replaced eBay emoji icon with clean SVG, overhauled About modal with live site and project links.</li>
@@ -287,9 +288,9 @@ const getEmbeddedWhatsNew = () => {
  */
 const getEmbeddedRoadmap = () => {
   return `
-    <li><strong>Light &amp; Sepia theme contrast pass</strong>: Gray layering for light theme, toned-down sepia, action column theming, WCAG font contrast audit</li>
     <li><strong>Filter chips rebuild</strong>: Top-N per category model, normalized name chips, chip settings modal</li>
     <li><strong>N# column restore</strong>: Re-add Numista catalog column with filter-on-click and iframe link</li>
+    <li><strong>Retail column UX</strong>: Inline retail editing with pencil icon, confidence styling for manual vs auto-computed prices</li>
   `;
 };
 
