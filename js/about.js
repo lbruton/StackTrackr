@@ -284,7 +284,7 @@ const getEmbeddedWhatsNew = () => {
  */
 const getEmbeddedRoadmap = () => {
   return `
-    <li><strong>About modal overhaul</strong>: Update repository URLs, review version/changelog display</li>
+    <li><strong>Light &amp; Sepia theme contrast pass</strong>: Gray layering for light theme, toned-down sepia, action column theming, WCAG font contrast audit</li>
     <li><strong>Filter chips rebuild</strong>: Top-N per category model, normalized name chips, chip settings modal</li>
     <li><strong>N# column restore</strong>: Re-add Numista catalog column with filter-on-click and iframe link</li>
   `;
