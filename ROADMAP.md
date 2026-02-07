@@ -34,11 +34,12 @@ Project direction and planned work for the StackrTrackr precious metals inventor
 These items focus on visual polish and usability improvements that require no backend changes.
 
 - **Filter chips overhaul** — comprehensive review and rebuild of the filter chip system (`filters.js`, `events.js`, `inventory.js`):
-  - Remove date chips and "Unknown" value chips from chip generation
-  - Change default minimum count from 100+ to **5+** (current default hides nearly all chips)
-  - Replace inline dropdowns with a **chip settings modal** allowing users to select which columns produce chips (metal, type, normalized name, purchase location, storage location)
-  - Fix smart grouping visibility — currently works but is invisible because the 100+ default suppresses the name chips it operates on
-  - Clean up the hardcoded date threshold (>10, ignores the dropdown) and the zero-threshold location chips
+  - **Core problem**: name chips are never generated as summary chips — `generateCategorySummary()` only produces metal, type, date, and location chips. The "Smart Grouping" toggle only affects how name *filters* behave on click, not chip generation. The normalizer (`normalizeItemName()`) works but has no code path to produce chips like "American Silver Eagle (6)"
+  - **New distribution model**: replace flat threshold with a **"top N per category"** approach — show the top entries from each selected column instead of flooding with everything above count X. This ensures useful chips from each category without visual noise
+  - Remove date chips entirely (purchase dates aren't useful as filter categories) and suppress "Unknown" value chips
+  - Change default minimum count from 100+ to **5+** as baseline (current default hides nearly all chips)
+  - **Add normalized name chips** to `generateCategorySummary()` using `autocomplete.normalizeItemName()` — this is the missing feature that would group "2021 American Silver Eagle", "2022 American Silver Eagle", etc. into one "American Silver Eagle" chip
+  - Replace inline dropdowns with a **chip settings modal** allowing users to select which columns produce chips (metal, type, normalized name, purchase location, storage location) and configure the top-N limit per category
   - Consolidate the legacy `updateTypeSummary()` / `#typeSummary` div (now a no-op) with the active `renderActiveFilters()` system
   - Future-proof: design chip settings to accommodate **tags** as a chip source when the custom tagging system is implemented
 - **Retail price confidence styling** — visually differentiate manual vs auto-computed retail prices. Auto (melt fallback): muted/gray + italic to signal "estimated". Manual (user-set): standard weight + color to signal "confirmed". Carry styling through to Gain/Loss column so estimated gains are also visually distinct from confirmed ones
