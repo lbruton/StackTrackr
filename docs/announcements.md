@@ -14,6 +14,7 @@
 ## Development Roadmap
 
 - **Light & Sepia theme contrast pass**: Fix washed-out light theme (gray layering instead of pure white), tone down over-saturated sepia, fix action column backgrounds, WCAG font contrast audit
+- **eBay search icon redesign**: Replace oversized emoji icon in Purchase column with a clean, theme-aware icon matching the rest of the UI
 - **About modal overhaul**: Update repository URLs, review version/changelog display, ensure all links are current
 - **Filter chips rebuild**: Top-N per category model, normalized name chips, chip settings modal
 - **N# column restore**: Re-add Numista catalog column with filter-on-click and iframe link
