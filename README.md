@@ -28,7 +28,7 @@ A client-side precious metals inventory tracker for Silver, Gold, Platinum, and 
 | CSV | PapaParse 5.4.1 |
 | PDF | jsPDF 2.5.1 + AutoTable 3.5.25 |
 | Backup | JSZip 3.10.1 |
-| Deployment | Docker (nginx:alpine) |
+| Hosting | Cloudflare Pages |
 
 ## Quick Start
 
@@ -40,12 +40,6 @@ open index.html
 **Option 2 — HTTP server**
 ```
 python -m http.server 8000
-```
-
-**Option 3 — Docker**
-```bash
-docker-compose up -d --build
-# Access at http://localhost:8080
 ```
 
 ## Project Structure

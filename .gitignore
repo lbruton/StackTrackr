@@ -6,6 +6,8 @@
 # Claude Code local config
 .claude/
 .mcp.json
+CLAUDE.md
+TAXONOMY.md
 
 # Node modules (if added in future)
 node_modules/
