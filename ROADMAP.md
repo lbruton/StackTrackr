@@ -26,6 +26,7 @@ Project direction and planned work for the StackrTrackr precious metals inventor
 
 - **About modal overhaul** — update GitHub repository URLs to match new location, review and clean up the version/changelog display process, ensure all links are functional and information is current
 - **Full UI review walkthrough** — hands-on walk-through of the entire application UI after Increments 1 and 2, cataloging visual issues, layout inconsistencies, and UX friction before proceeding with further feature work
+- **Fix spot price change indicator** — price direction arrows (green up / red down / orange unchanged) always show orange on page refresh because `updateSpotCardColor()` in `spot.js:112-149` compares against the last `spotHistory` entry regardless of source. Cached reads (`source: "cached"`) reset the baseline so the comparison is always equal. Fix: filter `spotHistory` to only compare against last `source: "api"` entry, preserving cached entries in history for auditing. Affects `spot.js` (comparison logic) and possibly `api.js` (`recordSpot` calls). Quick fix — should be < 10 lines changed
 
 ---
 
