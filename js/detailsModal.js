@@ -57,6 +57,59 @@ const getBreakdownData = (metal) => {
 };
 
 /**
+ * Calculates breakdown data across all metals — by metal and by location
+ * Used when clicking the "All Metals" summary card
+ *
+ * @returns {Object} Breakdown data organized by metal and location
+ */
+const getAllMetalsBreakdownData = () => {
+  const metalBreakdown = {};
+  const locationBreakdown = {};
+
+  const initBucket = () => ({
+    count: 0,
+    weight: 0,
+    purchase: 0,
+    melt: 0,
+    retail: 0,
+    gainLoss: 0
+  });
+
+  inventory.forEach(item => {
+    const qty = Number(item.qty) || 1;
+    const itemWeight = qty * (parseFloat(item.weight) || 0);
+    const purchaseTotal = qty * (parseFloat(item.price) || 0);
+    const currentSpot = spotPrices[item.metal.toLowerCase()] || 0;
+    const meltValue = itemWeight * currentSpot;
+    const isManualRetail = item.marketValue && item.marketValue > 0;
+    const retailTotal = isManualRetail ? item.marketValue * qty : meltValue;
+    const gainLoss = retailTotal - purchaseTotal;
+
+    // Metal breakdown
+    const metal = item.metal || 'Unknown';
+    if (!metalBreakdown[metal]) metalBreakdown[metal] = initBucket();
+    metalBreakdown[metal].count += qty;
+    metalBreakdown[metal].weight += itemWeight;
+    metalBreakdown[metal].purchase += purchaseTotal;
+    metalBreakdown[metal].melt += meltValue;
+    metalBreakdown[metal].retail += retailTotal;
+    metalBreakdown[metal].gainLoss += gainLoss;
+
+    // Location breakdown
+    const loc = item.purchaseLocation || 'Unknown';
+    if (!locationBreakdown[loc]) locationBreakdown[loc] = initBucket();
+    locationBreakdown[loc].count += qty;
+    locationBreakdown[loc].weight += itemWeight;
+    locationBreakdown[loc].purchase += purchaseTotal;
+    locationBreakdown[loc].melt += meltValue;
+    locationBreakdown[loc].retail += retailTotal;
+    locationBreakdown[loc].gainLoss += gainLoss;
+  });
+
+  return { metalBreakdown, locationBreakdown };
+};
+
+/**
  * Creates breakdown DOM elements for display
  * CHANGED from renderBreakdownHTML to use DOM methods instead of innerHTML
  * 
@@ -140,10 +193,16 @@ const createBreakdownElements = (breakdown) => {
  * @param {string} metal - Metal type to show details for
  */
 const showDetailsModal = (metal) => {
-  const breakdownData = getBreakdownData(metal);
+  const isAll = metal === 'All';
+  const typePanelTitle = document.getElementById('typePanelTitle');
+  const locationPanelTitle = document.getElementById('locationPanelTitle');
 
-  // Update modal title
-  elements.detailsModalTitle.textContent = `${metal} Detailed Breakdown`;
+  // Update modal title and panel labels
+  elements.detailsModalTitle.textContent = isAll
+    ? 'All Metals — Portfolio Breakdown'
+    : `${metal} Detailed Breakdown`;
+  if (typePanelTitle) typePanelTitle.textContent = isAll ? 'Breakdown by Metal' : 'Breakdown by Type';
+  if (locationPanelTitle) locationPanelTitle.textContent = 'Breakdown by Purchase Location';
 
   // Clear existing content
   elements.typeBreakdown.textContent = '';
@@ -152,26 +211,38 @@ const showDetailsModal = (metal) => {
   // Destroy existing charts
   destroyCharts();
 
+  // Get breakdown data — different shape for "All" vs single metal
+  let leftBreakdown, rightBreakdown;
+  if (isAll) {
+    const allData = getAllMetalsBreakdownData();
+    leftBreakdown = allData.metalBreakdown;
+    rightBreakdown = allData.locationBreakdown;
+  } else {
+    const metalData = getBreakdownData(metal);
+    leftBreakdown = metalData.typeBreakdown;
+    rightBreakdown = metalData.locationBreakdown;
+  }
+
   // Create pie charts if there's data
-  if (Object.keys(breakdownData.typeBreakdown).length > 0) {
+  if (Object.keys(leftBreakdown).length > 0) {
     chartInstances.typeChart = createPieChart(
       elements.typeChart,
-      breakdownData.typeBreakdown,
-      'Type Breakdown'
+      leftBreakdown,
+      isAll ? 'Metal Breakdown' : 'Type Breakdown'
     );
   }
 
-  if (Object.keys(breakdownData.locationBreakdown).length > 0) {
+  if (Object.keys(rightBreakdown).length > 0) {
     chartInstances.locationChart = createPieChart(
       elements.locationChart,
-      breakdownData.locationBreakdown,
+      rightBreakdown,
       'Location Breakdown'
     );
   }
 
   // Append DOM elements for detailed breakdown
-  elements.typeBreakdown.appendChild(createBreakdownElements(breakdownData.typeBreakdown));
-  elements.locationBreakdown.appendChild(createBreakdownElements(breakdownData.locationBreakdown));
+  elements.typeBreakdown.appendChild(createBreakdownElements(leftBreakdown));
+  elements.locationBreakdown.appendChild(createBreakdownElements(rightBreakdown));
 
   // Show modal
   if (window.openModalById) openModalById('detailsModal');

@@ -906,7 +906,7 @@
           </div>
           <!-- All metals combined totals card -->
           <div class="total-card total-card-all">
-            <div class="total-title">All Metals</div>
+            <div class="total-title" data-metal="All">All Metals</div>
             <div class="total-group">
               <div class="total-item">
                 <span class="total-label">Items:</span>
@@ -1181,7 +1181,7 @@
         <div class="modal-body">
           <div class="details-grid">
             <div class="details-panel">
-              <h3 class="details-panel-title">Breakdown by Type</h3>
+              <h3 class="details-panel-title" id="typePanelTitle">Breakdown by Type</h3>
               <div class="chart-canvas-container">
                 <canvas class="chart-canvas" id="typeChart"></canvas>
               </div>
@@ -1190,7 +1190,7 @@
               </div>
             </div>
             <div class="details-panel">
-              <h3 class="details-panel-title">Breakdown by Purchase Location</h3>
+              <h3 class="details-panel-title" id="locationPanelTitle">Breakdown by Purchase Location</h3>
               <div class="chart-canvas-container">
                 <canvas class="chart-canvas" id="locationChart"></canvas>
               </div>

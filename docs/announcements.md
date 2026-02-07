@@ -1,6 +1,6 @@
 ## What's New
 
-- **Portfolio visibility overhaul (v3.07.00)**: Confidence styling for Retail/Gain-Loss (estimated vs confirmed), new "All Metals" totals card with Avg Cost/oz, metal detail modal now shows full Purchase/Melt/Retail/Gain-Loss breakdown per type and location in a compact 2x2 grid
+- **Portfolio visibility overhaul (v3.07.00)**: Confidence styling for Retail/Gain-Loss (estimated vs confirmed), new "All Metals" totals card with Avg Cost/oz and clickable breakdown modal showing by-metal and by-location allocation, metal detail modals now show full Purchase/Melt/Retail/Gain-Loss breakdown per type and location in a compact 2x2 grid
 - **eBay search split (v3.06.02)**: Purchase column search icon now opens active eBay listings (what's for sale), Retail column search icon opens sold listings (what items actually sold for) — research buying price and resale value from the right columns
 - **CSS cleanup & icon polish (v3.06.01)**: Removed 125+ lines of dead CSS, replaced eBay emoji icon with clean SVG, overhauled About modal with project links and MIT License
 - **Rebrand to StakTrakr (v3.06.00)**: New canonical brand with multi-domain auto-branding — `staktrakr.com`, `stackrtrackr.com`, and `stackertrackr.com` each display their own brand name automatically
