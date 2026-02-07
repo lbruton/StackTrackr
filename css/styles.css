@@ -2728,10 +2728,6 @@ a.about-badge:hover {
   flex-shrink: 0;
 }
 
-.about-badge-static {
-  cursor: default;
-}
-
 .about-alert {
   background: linear-gradient(135deg, #fef2f2, #f5f5f5);
   border: 1px solid #fecaca;
