@@ -19,3 +19,4 @@
 - **N# column restore**: Re-add Numista catalog column with filter-on-click and iframe link
 - **Retail column UX**: Inline retail editing with pencil icon, confidence styling for manual vs auto-computed prices
 - **Numista API fix**: Correct endpoints, auth headers, and parameters in the NumistaProvider class
+- **Mobile card view**: Responsive layout that switches from table to card-based view on small screens
