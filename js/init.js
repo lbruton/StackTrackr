@@ -297,6 +297,7 @@ document.addEventListener("DOMContentLoaded", () => {
         purchased: safeGetElement(`totalPurchased${metalName}`),
         retailValue: safeGetElement(`retailValue${metalName}`),
         lossProfit: safeGetElement(`lossProfit${metalName}`),
+        avgCostPerOz: safeGetElement(`avgCostPerOz${metalName}`),
       };
     });
 
@@ -308,6 +309,7 @@ document.addEventListener("DOMContentLoaded", () => {
       purchased: safeGetElement("totalPurchasedAll"),
       retailValue: safeGetElement("retailValueAll"),
       lossProfit: safeGetElement("lossProfitAll"),
+      avgCostPerOz: safeGetElement("avgCostPerOzAll"),
     };
 
     // Phase 11: Version Management

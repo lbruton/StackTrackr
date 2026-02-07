@@ -772,6 +772,10 @@
                 <span class="total-label">Weight (oz):</span>
                 <span class="total-value" id="totalWeightSilver">0.00</span>
               </div>
+              <div class="total-item">
+                <span class="total-label">Avg Cost/oz:</span>
+                <span class="total-value" id="avgCostPerOzSilver">$0.00</span>
+              </div>
             </div>
             <div class="total-group">
               <div class="total-item">
@@ -786,7 +790,7 @@
                 <span class="total-label">Retail Value:</span>
                 <span class="total-value" id="retailValueSilver">$0.00</span>
               </div>
-              <div class="total-item">
+              <div class="total-item total-item-bottom-line">
                 <span class="total-label">Gain/Loss:</span>
                 <span class="total-value" id="lossProfitSilver">$0.00</span>
               </div>
@@ -804,6 +808,10 @@
                 <span class="total-label">Weight (oz):</span>
                 <span class="total-value" id="totalWeightGold">0.00</span>
               </div>
+              <div class="total-item">
+                <span class="total-label">Avg Cost/oz:</span>
+                <span class="total-value" id="avgCostPerOzGold">$0.00</span>
+              </div>
             </div>
             <div class="total-group">
               <div class="total-item">
@@ -818,7 +826,7 @@
                 <span class="total-label">Retail Value:</span>
                 <span class="total-value" id="retailValueGold">$0.00</span>
               </div>
-              <div class="total-item">
+              <div class="total-item total-item-bottom-line">
                 <span class="total-label">Gain/Loss:</span>
                 <span class="total-value" id="lossProfitGold">$0.00</span>
               </div>
@@ -836,6 +844,10 @@
                 <span class="total-label">Weight (oz):</span>
                 <span class="total-value" id="totalWeightPlatinum">0.00</span>
               </div>
+              <div class="total-item">
+                <span class="total-label">Avg Cost/oz:</span>
+                <span class="total-value" id="avgCostPerOzPlatinum">$0.00</span>
+              </div>
             </div>
             <div class="total-group">
               <div class="total-item">
@@ -850,7 +862,7 @@
                 <span class="total-label">Retail Value:</span>
                 <span class="total-value" id="retailValuePlatinum">$0.00</span>
               </div>
-              <div class="total-item">
+              <div class="total-item total-item-bottom-line">
                 <span class="total-label">Gain/Loss:</span>
                 <span class="total-value" id="lossProfitPlatinum">$0.00</span>
               </div>
@@ -868,6 +880,10 @@
                 <span class="total-label">Weight (oz):</span>
                 <span class="total-value" id="totalWeightPalladium">0.00</span>
               </div>
+              <div class="total-item">
+                <span class="total-label">Avg Cost/oz:</span>
+                <span class="total-value" id="avgCostPerOzPalladium">$0.00</span>
+              </div>
             </div>
             <div class="total-group">
               <div class="total-item">
@@ -882,9 +898,45 @@
                 <span class="total-label">Retail Value:</span>
                 <span class="total-value" id="retailValuePalladium">$0.00</span>
               </div>
-              <div class="total-item">
+              <div class="total-item total-item-bottom-line">
                 <span class="total-label">Gain/Loss:</span>
                 <span class="total-value" id="lossProfitPalladium">$0.00</span>
+              </div>
+            </div>
+          </div>
+          <!-- All metals combined totals card -->
+          <div class="total-card total-card-all">
+            <div class="total-title" data-metal="All">All Metals</div>
+            <div class="total-group">
+              <div class="total-item">
+                <span class="total-label">Items:</span>
+                <span class="total-value" id="totalItemsAll">0</span>
+              </div>
+              <div class="total-item">
+                <span class="total-label">Weight (oz):</span>
+                <span class="total-value" id="totalWeightAll">0.00</span>
+              </div>
+              <div class="total-item">
+                <span class="total-label">Avg Cost/oz:</span>
+                <span class="total-value" id="avgCostPerOzAll">$0.00</span>
+              </div>
+            </div>
+            <div class="total-group">
+              <div class="total-item">
+                <span class="total-label">Purchase Price:</span>
+                <span class="total-value" id="totalPurchasedAll">$0.00</span>
+              </div>
+              <div class="total-item">
+                <span class="total-label">Melt Value:</span>
+                <span class="total-value" id="currentValueAll">$0.00</span>
+              </div>
+              <div class="total-item">
+                <span class="total-label">Retail Value:</span>
+                <span class="total-value" id="retailValueAll">$0.00</span>
+              </div>
+              <div class="total-item total-item-bottom-line">
+                <span class="total-label">Gain/Loss:</span>
+                <span class="total-value" id="lossProfitAll">$0.00</span>
               </div>
             </div>
           </div>
@@ -1129,7 +1181,7 @@
         <div class="modal-body">
           <div class="details-grid">
             <div class="details-panel">
-              <h3 class="details-panel-title">Breakdown by Type</h3>
+              <h3 class="details-panel-title" id="typePanelTitle">Breakdown by Type</h3>
               <div class="chart-canvas-container">
                 <canvas class="chart-canvas" id="typeChart"></canvas>
               </div>
@@ -1138,7 +1190,7 @@
               </div>
             </div>
             <div class="details-panel">
-              <h3 class="details-panel-title">Breakdown by Purchase Location</h3>
+              <h3 class="details-panel-title" id="locationPanelTitle">Breakdown by Purchase Location</h3>
               <div class="chart-canvas-container">
                 <canvas class="chart-canvas" id="locationChart"></canvas>
               </div>

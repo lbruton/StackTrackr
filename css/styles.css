@@ -1724,8 +1724,27 @@ input[type="submit"] {
 .palladium .total-title {
   border-bottom: 4px solid var(--palladium);
 }
-/* Metal-specific colors */
-/* (removed empty duplicate metal-specific rules) */
+
+/* All Metals combined card — uses primary accent */
+.total-card-all .total-title {
+  border-bottom: 4px solid var(--primary);
+}
+
+/* Gain/Loss bottom-line emphasis — the "bottom line" of each card */
+.total-item-bottom-line {
+  border-bottom: none;
+  border-top: 2px solid var(--border);
+  margin-top: 0.25rem;
+  padding-top: 0.5rem;
+}
+.total-item-bottom-line .total-label {
+  font-weight: 700;
+  font-size: 0.875rem;
+}
+.total-item-bottom-line .total-value {
+  font-weight: 700;
+  font-size: 1rem;
+}
 
 /* =============================================================================
    TABLES - Main inventory table with interactive features
@@ -2984,9 +3003,6 @@ a.about-badge:hover {
 }
 
 .breakdown-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
   padding: var(--spacing-sm) 0;
   border-bottom: 1px dashed var(--border);
 }
@@ -2995,30 +3011,56 @@ a.about-badge:hover {
   border-bottom: none;
 }
 
-.breakdown-label {
-  font-weight: 500;
-  color: var(--text-primary);
+.breakdown-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 0.25rem;
 }
 
-.breakdown-values {
-  text-align: right;
+.breakdown-label {
+  font-weight: 600;
+  color: var(--text-primary);
   font-size: 0.875rem;
 }
 
-.breakdown-count {
+.breakdown-meta {
   color: var(--text-muted);
+  font-size: 0.75rem;
   font-weight: 500;
 }
 
-.breakdown-weight {
-  color: var(--primary);
-  font-weight: 600;
+/* 2x2 financial grid for breakdown rows */
+.breakdown-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.125rem 0.75rem;
+  font-size: 0.8rem;
 }
 
-.breakdown-value {
-  color: var(--success);
-  font-weight: 600;
+.breakdown-cell {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 0.1rem 0;
 }
+
+.breakdown-cell-label {
+  color: var(--text-muted);
+  font-weight: 400;
+  font-size: 0.75rem;
+}
+
+.breakdown-cell-value {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.breakdown-purchase .breakdown-cell-value { color: var(--text-primary); }
+.breakdown-melt .breakdown-cell-value { color: var(--primary); }
+.breakdown-retail .breakdown-cell-value { color: var(--text-secondary); }
+.breakdown-gain .breakdown-cell-value { color: var(--success); }
+.breakdown-loss .breakdown-cell-value { color: var(--danger); }
 
 .chart-canvas-container {
   position: relative;
@@ -4672,6 +4714,19 @@ th {
 
 .ebay-price-link:hover .ebay-search-svg {
   color: var(--text-primary);
+}
+
+/* Retail/Gain-Loss confidence styling — estimated (melt fallback) vs confirmed (manual) */
+.retail-estimated {
+  font-style: italic;
+  opacity: 0.65;
+}
+.retail-confirmed {
+  font-weight: 600;
+}
+.gainloss-estimated {
+  font-style: italic;
+  opacity: 0.65;
 }
 
 /* Responsive catalog link with improved mobile experience */
