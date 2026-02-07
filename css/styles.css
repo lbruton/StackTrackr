@@ -223,7 +223,7 @@ html {
 }
 
 body {
-  max-width: 2000px; /* Increased from 1600px for wider screens */
+  max-width: 1600px;
   width: 100%;
   margin: var(--spacing-lg) auto;
   padding: var(--spacing);
@@ -2506,7 +2506,7 @@ td input:checked + .slider:before {
    MODALS - Edit modal and analytics modal with charts
    
    Two modal types:
-   1. Edit Modal: Item editing form with validation and collectable toggle
+   1. Edit Modal: Item editing form with validation
    2. Details Modal: Analytics with pie charts and data breakdowns
    
    Features:
@@ -2694,6 +2694,43 @@ td input:checked + .slider:before {
   border: 1px solid var(--border);
 }
 
+.about-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: center;
+  margin-top: 1rem;
+}
+
+.about-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.3rem 0.65rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: 2rem;
+  text-decoration: none;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+a.about-badge:hover {
+  color: var(--text-primary);
+  border-color: var(--text-muted);
+}
+
+.about-badge svg {
+  width: 0.9rem;
+  height: 0.9rem;
+  flex-shrink: 0;
+}
+
+.about-badge-static {
+  cursor: default;
+}
 
 .about-alert {
   background: linear-gradient(135deg, #fef2f2, #f5f5f5);
@@ -3795,33 +3832,6 @@ input:disabled + .slider {
   opacity: 0.6;
 }
 
-.collectable-toggle {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-}
-
-.collectable-note,
-.collectable-explanation {
-  font-size: 0.75rem;
-  color: var(--text-muted);
-  margin-top: 0;
-  text-align: left;
-  font-style: italic;
-}
-
-.collectable-card {
-  background: var(--bg-secondary);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: var(--spacing);
-  margin-bottom: var(--spacing);
-}
-
-.collectable-card .collectable-note {
-  margin-top: var(--spacing-xs);
-}
-
 /* =============================================================================
    BOATING ACCIDENT SECTION
    ============================================================================= */
@@ -4294,72 +4304,11 @@ input:disabled + .slider {
   font-size: 0.75rem;
 }
 
-.collectable-status {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-}
-
-#inventoryTable td.icon-col .collectable-status svg,
+/* Icon sizing in action cells */
 #inventoryTable th.icon-col svg,
 #inventoryTable td.icon-col .action-icon {
   width: 1rem;
   height: 1rem;
-}
-
-/* Collectable icon theming - Fixed for all themes */
-.collectable-icon {
-  width: 1rem;
-  height: 1rem;
-  transition: var(--transition);
-}
-
-/* Collection status theming */
-.collectable-icon.icon-gold {
-  color: var(--gold);
-  fill: var(--gold);
-}
-
-.collectable-icon.icon-copper {
-  color: var(--text-muted);
-  fill: none;
-  stroke: var(--text-muted);
-  stroke-width: 1.5;
-}
-
-/* Enhanced icon colors for all themes */
-.icon-gold { color: var(--gold) !important; }
-.icon-silver { color: var(--silver) !important; }
-.icon-platinum { color: var(--platinum) !important; }
-.icon-palladium { color: var(--palladium) !important; }
-.icon-copper { 
-  color: var(--text-muted) !important;
-  stroke: var(--text-muted) !important;
-}
-
-/* Theme-specific icon adjustments */
-[data-theme="dark"] .header-icon {
-  color: var(--text-primary);
-}
-
-[data-theme="sepia"] .header-icon {
-  color: var(--text-primary);
-}
-
-[data-theme="light"] .header-icon {
-  color: var(--text-primary);
-}
-
-/* Ensure collectable icons are properly themed in dark mode */
-[data-theme="dark"] .collectable-icon.icon-copper {
-  color: var(--text-muted) !important;
-  stroke: var(--text-muted) !important;
-}
-
-[data-theme="dark"] .collectable-icon.icon-gold {
-  color: var(--gold) !important;
-  fill: var(--gold) !important;
 }
 
 #inventoryTable td[data-column="purchaseLocation"],
@@ -4495,8 +4444,6 @@ input:disabled + .slider {
   right: 7.2rem;
 }
 
-/* Collectable column removed in portfolio redesign */
-
 /* Icon button base for action cells */
 #inventoryTable .icon-btn {
   display: inline-flex;
@@ -4522,10 +4469,6 @@ input:disabled + .slider {
 #inventoryTable .icon-svg { width: 1.05rem; height: 1.05rem; display: block; fill: currentColor; color: inherit; }
 .edit-svg { color: inherit; }
 .delete-svg { color: inherit; }
-
-/* Theme fills for collectable icons */
-.collectable-icon.vault-icon { color: var(--text-muted); }
-.collectable-icon.bar-icon { color: var(--silver); }
 
 /* MOBILE PRIORITY RULES — Portfolio layout
    Keep Name, Purchase, Melt, Retail visible on tight screens. */
@@ -4616,36 +4559,6 @@ th {
 
 /* Slightly smaller icon size in cells to reduce visual weight */
 #inventoryTable .icon-svg { width: 0.95rem; height: 0.95rem; }
-
-/* Ensure collectable icon visually matches muted style until active */
-.collectable-icon { color: var(--text-secondary); }
-.collectable-icon.bar-icon { color: var(--silver); }
-
-/* Active collectable highlight: vault icon shows filled gold with subtle glow */
-.collectable-icon.vault-icon {
-  color: var(--gold);
-  fill: var(--gold);
-  stroke: none;
-  transform-origin: center;
-  transition: transform 0.12s ease, filter 0.12s ease;
-  filter: drop-shadow(0 1px 3px rgba(0,0,0,0.35));
-}
-
-.collectable-icon.vault-icon:hover {
-  transform: scale(1.08);
-  filter: drop-shadow(0 4px 8px rgba(255, 190, 60, 0.18));
-}
-
-/* When the item is not collectable show a subtle gold-outline bar */
-.collectable-icon.bar-icon {
-  opacity: 0.95;
-  transition: opacity 0.12s ease, transform 0.12s ease;
-}
-
-.collectable-icon.bar-icon:hover {
-  transform: translateY(-1px);
-  opacity: 1;
-}
 
 /* Dense table mode: reduce paddings, font-size and icon sizes for a compact view */
 #inventoryTable {
@@ -4754,21 +4667,15 @@ th {
   opacity: 0.8;
 }
 
-.ebay-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background-color: #e53e2f;
-  color: white;
-  border-radius: 50%;
-  width: 16px;
-  height: 16px;
-  font-size: 10px;
-  line-height: 1;
+.ebay-search-svg {
+  width: 12px;
+  height: 12px;
+  color: var(--text-muted);
+  flex-shrink: 0;
 }
 
-[data-theme="dark"] .ebay-icon {
-  background-color: #f05545;
+.ebay-price-link:hover .ebay-search-svg {
+  color: var(--text-primary);
 }
 
 /* Responsive catalog link with improved mobile experience */

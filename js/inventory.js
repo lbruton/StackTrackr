@@ -1006,7 +1006,7 @@ const hideEmptyColumns = () => {
     const cells = document.querySelectorAll(`#inventoryTable tbody [data-column="${col}"]`);
     const allEmpty = cells.length > 0 && Array.from(cells).every(cell => {
       // If the cell contains interactive or icon elements, consider it non-empty
-      if (cell.querySelector && (cell.querySelector('svg') || cell.querySelector('button') || cell.querySelector('.action-icon') || cell.querySelector('.collectable-status'))) {
+      if (cell.querySelector && (cell.querySelector('svg') || cell.querySelector('button') || cell.querySelector('.action-icon'))) {
         return false;
       }
       return cell.textContent.trim() === '';
@@ -1068,7 +1068,7 @@ const renderTable = () => {
       <td class="shrink" data-column="weight">${filterLink('weight', item.weight, 'var(--text-primary)', formatWeight(item.weight), item.weight < 1 ? 'Grams (g)' : 'Troy ounces (ozt)')}</td>
       <td class="shrink" data-column="purchasePrice" title="Purchase Price (USD) - Click to search eBay sold listings" style="color: var(--text-primary);">
         <a href="#" onclick="event.stopPropagation(); openEbaySearch('${sanitizeHtml(item.metal)} ${sanitizeHtml(item.name)}'); return false;" class="ebay-price-link" title="Search eBay sold listings for ${sanitizeHtml(item.metal)} ${sanitizeHtml(item.name)}">
-          ${formatCurrency(purchasePrice)} <span class="ebay-icon">🔍</span>
+          ${formatCurrency(purchasePrice)} <svg class="ebay-search-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6" fill="none" stroke="currentColor" stroke-width="2.5"/><line x1="15" y1="15" x2="21" y2="21" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
         </a>
       </td>
       <td class="shrink" data-column="meltValue" title="Melt Value (USD)" style="color: var(--text-primary);">${meltDisplay}</td>
