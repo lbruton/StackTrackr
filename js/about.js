@@ -175,14 +175,11 @@ const loadAnnouncements = async () => {
  */
 const showFullChangelog = () => {
   // Try to open changelog documentation
-  const urls = [
-    "docs/changelog.md",
-    "https://github.com/lbruton/Precious-Metals-Inventory/blob/main/docs/changelog.md",
-    "README.md",
-  ];
-
-  // Open the first available URL
-  window.open(urls[1], "_blank", "noopener,noreferrer");
+  window.open(
+    "https://github.com/lbruton/StackTrackr/blob/main/CHANGELOG.md",
+    "_blank",
+    "noopener,noreferrer",
+  );
 };
 
 /**
@@ -270,11 +267,10 @@ const setupAckModalEvents = () => {
  */
 const getEmbeddedWhatsNew = () => {
   return `
-    <li><strong>v3.04.86 – Centered Name header</strong>: Wrapped "Name" header text with .header-text span for consistent alignment and removed obsolete centering rules.</li>
-    <li><strong>v3.04.82 – Logo height via CSS</strong>: Removed invalid height attribute from Stackr logo SVG, relying on CSS for proper sizing.</li>
-    <li><strong>v3.04.81 – Composition helper cleanup</strong>: Removed obsolete composition helper comment and synchronized documentation.</li>
-    <li><strong>v3.04.76 – Table Item Counter</strong>: Added dynamic item counter below the inventory table displaying the number of visible items with muted, right-aligned styling.</li>
-    <li><strong>v3.04.74 – CSV Import/Export Fixes</strong>: Fixed undefined notes reference in imports, improved CSV export cleanup, and restored global access for import/export functions.</li>
+    <li><strong>v3.05.00 – Unified Add/Edit Modal</strong>: Merged two separate modals into one, fixing weight unit selector, price preservation, and sub-gram weight precision.</li>
+    <li><strong>v3.05.00 – Qty-adjusted financials</strong>: Retail, Gain/Loss, and summary totals now correctly multiply by quantity for multi-qty items.</li>
+    <li><strong>v3.05.00 – Spot price indicators</strong>: Direction arrows (green/red) now persist across page refreshes instead of resetting.</li>
+    <li><strong>v3.05.00 – $0 price support</strong>: Free/promo items now display $0.00 and correctly compute gain from melt value.</li>
   `;
 };
 
@@ -284,9 +280,9 @@ const getEmbeddedWhatsNew = () => {
  */
 const getEmbeddedRoadmap = () => {
   return `
-    <li><strong>Phase 3</strong>: Advanced filtering system with date ranges and multi-criteria support</li>
-    <li><strong>Enhanced mobile experience</strong>: Touch-optimized interfaces and better small screen layouts</li>
-    <li><strong>Data visualization</strong>: Interactive charts for portfolio analysis and performance tracking</li>
+    <li><strong>About modal overhaul</strong>: Update repository URLs, review version/changelog display</li>
+    <li><strong>Filter chips rebuild</strong>: Top-N per category model, normalized name chips, chip settings modal</li>
+    <li><strong>Notes column removal + N# restore</strong>: Remove Notes icon column, re-add Numista catalog column with filter-on-click</li>
   `;
 };
 

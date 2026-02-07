@@ -18,7 +18,7 @@ const checkVersionChange = () => {
   const current = localStorage.getItem(APP_VERSION_KEY) || APP_VERSION;
   if (acknowledged === current) return;
 
-  fetch("./docs/changelog.md")
+  fetch("./CHANGELOG.md")
     .then((resp) => {
       if (!resp.ok) {
         throw new Error(`HTTP ${resp.status}: ${resp.statusText}`);
@@ -45,8 +45,9 @@ const checkVersionChange = () => {
  */
 const getChangelogForVersion = (text, version) => {
   const escaped = version.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  // Match Keep a Changelog format: ## [X.XX.XX] - YYYY-MM-DD
   const regex = new RegExp(
-    `### Version ${escaped}[^\\n]*\\n([\\s\\S]*?)(?=\\n### Version|$)`,
+    `## \\[${escaped}\\][^\\n]*\\n([\\s\\S]*?)(?=\\n## \\[|$)`,
   );
   const match = text.match(regex);
   if (!match) {
@@ -56,7 +57,10 @@ const getChangelogForVersion = (text, version) => {
     .trim()
     .split("\n")
     .filter((line) => line.trim().startsWith("-"))
-    .map((line) => `<li>${sanitizeHtml(line.replace(/^\-\s*/, ""))}</li>`)
+    .map((line) => {
+      const clean = line.replace(/^\s*-\s*/, "");
+      return `<li>${sanitizeHtml(clean).replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")}</li>`;
+    })
     .join("");
 };
 
@@ -87,6 +91,19 @@ const populateVersionModal = (version, html) => {
  */
 const getEmbeddedChangelog = (version) => {
   const changelogs = {
+    "3.05.01": `
+      <li><strong>What's New modal fix</strong>: Changelog and roadmap now populate correctly from CHANGELOG.md and docs/announcements.md</li>
+      <li><strong>GitHub URLs updated</strong>: All repository links now point to the correct StackTrackr repository</li>
+      <li><strong>Changelog parser</strong>: Updated to read Keep a Changelog format instead of legacy format</li>
+    `,
+    "3.05.00": `
+      <li><strong>Unified Add/Edit Modal</strong>: Merged two separate modals into a single modal that switches between add and edit mode</li>
+      <li><strong>Weight unit fix</strong>: Edit mode now uses the real weight unit selector instead of a hidden attribute</li>
+      <li><strong>Price preservation</strong>: Empty price field in edit mode preserves existing price instead of zeroing it out</li>
+      <li><strong>Weight precision</strong>: Sub-gram weights (e.g., Goldbacks) no longer rounded to zero</li>
+      <li><strong>Qty-adjusted financials</strong>: Retail, Gain/Loss, and totals now correctly multiply by quantity</li>
+      <li><strong>Spot price indicators</strong>: Direction arrows now persist across page refreshes</li>
+    `,
     "3.04.88": `
       <li><strong>Table Polish (Increment 2)</strong>: Removed Numista column from table (15 to 14 columns) - N# data preserved in modals, exports, and data model</li>
       <li><strong>Header Font Fix</strong>: Price column headers now use system font instead of monospace - data cells remain monospace for alignment</li>

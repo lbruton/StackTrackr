@@ -5,6 +5,16 @@ All notable changes to StackrTrackr will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.05.01] - 2026-02-07
+
+### Fixed
+
+- **What's New modal**: Changelog and roadmap sections now populate correctly — fetch points to root `CHANGELOG.md` instead of missing `docs/changelog.md`
+- **Changelog parser**: Updated regex to match Keep a Changelog format (`## [X.XX.XX]`) instead of legacy `### Version X.XX.XX` format
+- **GitHub URLs**: All 3 repository links (aboutModal, versionModal, View Full Changelog) updated from `Precious-Metals-Inventory` to `StackTrackr`
+- **Embedded fallbacks**: Updated What's New and Roadmap fallback data with current Increment 3 content
+- **Created `docs/announcements.md`**: Primary data source for What's New and Development Roadmap modal sections
+
 ## [3.05.00] - 2026-02-07
 
 ### Increment 3 — Unified Add/Edit Modal
