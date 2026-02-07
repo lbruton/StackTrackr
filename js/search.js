@@ -30,20 +30,12 @@ const filterInventory = () => {
 
   if (!searchQuery.trim()) return result;
 
-  let query = searchQuery.toLowerCase();
-  let filterCollectable = false;
-
-  // Handle collectable keyword separately and remove from query
-  query = query.replace(/collectable|collectible/g, () => {
-    filterCollectable = true;
-    return '';
-  }).trim();
+  let query = searchQuery.toLowerCase().trim();
 
   // Support comma-separated terms for multi-value search
   const terms = query.split(',').map(t => t.trim()).filter(t => t);
 
   return result.filter(item => {
-    if (filterCollectable && !item.isCollectable) return false;
     if (!terms.length) return true;
 
     const formattedDate = formatDisplayDate(item.date).toLowerCase();
@@ -253,8 +245,7 @@ const filterInventory = () => {
           formattedDate.includes(word) ||
           String(Number.isFinite(Number(item.qty)) ? Number(item.qty) : '').includes(word) ||
           String(Number.isFinite(Number(item.weight)) ? Number(item.weight) : '').includes(word) ||
-          String(Number.isFinite(Number(item.price)) ? Number(item.price) : '').includes(word) ||
-          (item.isCollectable ? 'yes' : 'no').includes(word)
+          String(Number.isFinite(Number(item.price)) ? Number(item.price) : '').includes(word)
         );
       });
     });

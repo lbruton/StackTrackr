@@ -38,11 +38,8 @@ const logItemChanges = (oldItem, newItem) => {
     'qty',
     'weight',
     'price',
-    'spotPriceAtPurchase',
-    'totalPremium',
+    'marketValue',
     'purchaseLocation',
-    'storageLocation',
-    'isCollectable',
     'notes',
   ];
 

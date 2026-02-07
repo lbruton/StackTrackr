@@ -289,14 +289,8 @@ document.addEventListener("DOMContentLoaded", () => {
         weight: safeGetElement(`totalWeight${metalName}`),
         value: safeGetElement(`currentValue${metalName}`),
         purchased: safeGetElement(`totalPurchased${metalName}`),
-        premium: safeGetElement(`totalPremium${metalName}`),
+        retailValue: safeGetElement(`retailValue${metalName}`),
         lossProfit: safeGetElement(`lossProfit${metalName}`),
-        avgPrice: safeGetElement(`avgPrice${metalName}`),
-        avgPremium: safeGetElement(`avgPremium${metalName}`),
-        avgCollectablePrice: safeGetElement(`avgCollectablePrice${metalName}`),
-        avgNonCollectablePrice: safeGetElement(
-          `avgNonCollectablePrice${metalName}`,
-        ),
       };
     });
 
@@ -306,12 +300,8 @@ document.addEventListener("DOMContentLoaded", () => {
       weight: safeGetElement("totalWeightAll"),
       value: safeGetElement("currentValueAll"),
       purchased: safeGetElement("totalPurchasedAll"),
-      premium: safeGetElement("totalPremiumAll"),
+      retailValue: safeGetElement("retailValueAll"),
       lossProfit: safeGetElement("lossProfitAll"),
-      avgPrice: safeGetElement("avgPriceAll"),
-      avgPremium: safeGetElement("avgPremiumAll"),
-      avgCollectablePrice: safeGetElement("avgCollectablePriceAll"),
-      avgNonCollectablePrice: safeGetElement("avgNonCollectablePriceAll"),
     };
 
     // Phase 11: Version Management

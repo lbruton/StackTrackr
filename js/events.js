@@ -502,9 +502,6 @@ const setupEventListeners = () => {
             elements.storageLocation.value.trim() || "Unknown";
           const notes = elements.itemNotes.value.trim() || "";
           const date = elements.itemDate.value || todayStr();
-          const spotPriceInput = elements.itemSpotPrice.value.trim();
-          const isCollectable = elements.itemCollectable ? elements.itemCollectable.checked : false;
-
           // Validate the mandatory fields: Name, Date, Type, Metal, Weight, and Quantity
           if (
             !name ||
@@ -520,28 +517,15 @@ const setupEventListeners = () => {
             return alert("Please enter valid values for Name, Date, Type, Metal, Weight, and Quantity.");
           }
 
-          // Determine spot price at purchase
+          // Determine spot price at purchase (auto-fill from current spot)
           const metalKey = metal.toLowerCase();
-          const spotPriceAtPurchase =
-            spotPriceInput === ""
-              ? spotPrices[metalKey] ?? 0
-              : parseFloat(spotPriceInput);
-
-          // Calculate premium per ounce (only for non-collectible items)
-          let premiumPerOz = 0;
-          let totalPremium = 0;
-
-          if (!isCollectable) {
-            const pricePerOz = price / weight;
-            premiumPerOz = pricePerOz - spotPriceAtPurchase;
-            totalPremium = premiumPerOz * qty * weight;
-          }
+          const spotPriceAtPurchase = spotPrices[metalKey] ?? 0;
 
           const serial = getNextSerial();
           const catalog = elements.itemCatalog ? elements.itemCatalog.value.trim() : "";
           const marketValueInput = elements.itemMarketValue ? elements.itemMarketValue.value.trim() : "";
           const marketValue = marketValueInput && !isNaN(parseFloat(marketValueInput)) ? parseFloat(marketValueInput) : 0;
-          
+
           inventory.push({
             metal,
             composition,
@@ -556,9 +540,9 @@ const setupEventListeners = () => {
             storageLocation,
             notes,
             spotPriceAtPurchase,
-            premiumPerOz,
-            totalPremium,
-            isCollectable,
+            premiumPerOz: 0,
+            totalPremium: 0,
+            isCollectable: false,
             serial,
             numistaId: catalog,
           });
@@ -638,27 +622,8 @@ const setupEventListeners = () => {
           // Preserve existing date if the edit field is left blank. Do not default to today.
           const date = (elements.editDate && elements.editDate.value) ? elements.editDate.value : (existingItem.date || '');
 
-          // Use the checkbox state the user just set (if unchanged it will equal old value)
-          const isCollectable = document.getElementById("editCollectable") ? document.getElementById("editCollectable").checked : !!existingItem.isCollectable;
-
-          // Get spot price input value
-          const spotPriceInput = elements.editSpotPrice.value.trim();
-
-          // Preserve previous item data as a fallback when spot prices are missing
+          // Preserve previous item data as a fallback
           const oldItemFallback = (inventory[editingIndex] && { ...inventory[editingIndex] }) || {};
-          const metalKey = metal.toLowerCase();
-
-          // If spot price is empty and item is not collectable, prefer current spot price,
-          // then fallback to previously stored spotPriceAtPurchase on the item.
-          let spotPriceAtPurchase;
-          if (!isCollectable && spotPriceInput === "") {
-            spotPriceAtPurchase = spotPrices[metalKey] ?? oldItemFallback.spotPriceAtPurchase ?? 0;
-          } else {
-            spotPriceAtPurchase = parseFloat(spotPriceInput);
-            if (isNaN(spotPriceAtPurchase) || spotPriceAtPurchase <= 0) {
-              spotPriceAtPurchase = oldItemFallback.spotPriceAtPurchase ?? 0;
-            }
-          }
 
           // Validate the mandatory fields: Name, Date, Type, Metal, Weight, and Quantity
           if (
@@ -676,22 +641,12 @@ const setupEventListeners = () => {
             return alert("Please enter valid values for Name, Date, Type, Metal, Weight, and Quantity.");
           }
 
-          // Calculate premium per ounce (only for non-collectible items)
-          let premiumPerOz = 0;
-          let totalPremium = 0;
-
-          if (!isCollectable) {
-            const pricePerOz = price / weight;
-            premiumPerOz = pricePerOz - spotPriceAtPurchase;
-            totalPremium = premiumPerOz * qty * weight;
-          }
-
           const oldItem = { ...inventory[editingIndex] };
           const serial = oldItem.serial;
           const marketValueInput = elements.editMarketValue ? elements.editMarketValue.value.trim() : "";
           const marketValue = marketValueInput && !isNaN(parseFloat(marketValueInput)) ? parseFloat(marketValueInput) : (oldItem.marketValue || 0);
 
-          // Update the item preserving serial
+          // Update the item preserving serial and legacy fields
           inventory[editingIndex] = {
             ...oldItem,
             metal,
@@ -706,10 +661,7 @@ const setupEventListeners = () => {
             purchaseLocation,
             storageLocation,
             notes,
-            spotPriceAtPurchase: isCollectable ? 0 : spotPriceAtPurchase,
-            premiumPerOz,
-            totalPremium,
-            isCollectable,
+            isCollectable: false,
             numistaId: elements.editCatalog.value.trim(),
           };
 
@@ -2132,42 +2084,7 @@ const setupApiEvents = () => {
       "ESC key modal close",
     );
 
-    // Setup collectable toggle listeners for market value field visibility
-    if (elements.itemCollectable) {
-      safeAttachListener(
-        elements.itemCollectable,
-        "change",
-        function() {
-          const isCollectable = this.checked;
-          if (elements.marketValueField) {
-            elements.marketValueField.style.display = isCollectable ? 'block' : 'none';
-          }
-          if (elements.dateField) {
-            elements.dateField.style.display = isCollectable ? 'none' : 'block';
-          }
-        },
-        "Add form collectable toggle"
-      );
-    }
-
-    // Setup edit form collectable toggle
-    const editCollectable = document.getElementById('editCollectable');
-    if (editCollectable) {
-      safeAttachListener(
-        editCollectable,
-        "change",
-        function() {
-          const isCollectable = this.checked;
-          if (elements.editMarketValueField) {
-            elements.editMarketValueField.style.display = isCollectable ? 'block' : 'none';
-          }
-          if (elements.editDateField) {
-            elements.editDateField.style.display = isCollectable ? 'none' : 'block';
-          }
-        },
-        "Edit form collectable toggle"
-      );
-    }
+    // Collectable toggle listeners removed — portfolio redesign
 
     debugLog("✓ API events setup complete");
   } catch (error) {

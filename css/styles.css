@@ -1937,22 +1937,17 @@ th[data-column="date"] {
 }
 
 /* Keep icon columns compact and always visible */
-td[data-column="collectable"],
 td[data-column="notes"],
 td[data-column="edit"],
 td[data-column="delete"] {
-  max-width: 3rem; /* Icon columns stay small */
-  white-space: normal; /* Allow icons to display normally */
+  max-width: 3rem;
+  white-space: normal;
   position: sticky;
   background: inherit;
   z-index: 2;
 }
 
 /* Sticky positioning for action columns */
-#inventoryTable td[data-column="collectable"] {
-  right: 9rem; /* Rightmost position */
-}
-
 #inventoryTable td[data-column="notes"] {
   right: 6rem;
 }
@@ -2008,11 +2003,7 @@ td[data-column="delete"] {
   display: none;
 }
 
-#inventoryTable th[data-column="collectable"] svg {
-    display: block;
-    margin: 0 auto;
-    fill: currentColor;
-}
+/* Collectable column header removed in portfolio redesign */
 
 /* Base row styling */
 tr {
@@ -2054,23 +2045,17 @@ tr:hover {
 
 /* Enhanced Mobile Responsive Design with Auto-Scaling */
 
-/* Progressive column hiding for responsive design */
+/* Progressive column hiding for responsive design (legacy section — see portfolio overrides below) */
 @media (max-width: 1200px) {
-  /* Hide less critical columns on medium screens */
-  #inventoryTable th[data-column="spot"],
-  #inventoryTable td[data-column="spot"],
-  #inventoryTable th[data-column="premium"],
-  #inventoryTable td[data-column="premium"] {
+  #inventoryTable th[data-column="gainLoss"],
+  #inventoryTable td[data-column="gainLoss"] {
     display: none;
   }
 }
 
 @media (max-width: 1024px) {
-  /* Hide purchase and storage columns on smaller screens */
   #inventoryTable th[data-column="purchaseLocation"],
-  #inventoryTable td[data-column="purchaseLocation"],
-  #inventoryTable th[data-column="storageLocation"],
-  #inventoryTable td[data-column="storageLocation"] {
+  #inventoryTable td[data-column="purchaseLocation"] {
     display: none;
   }
   
@@ -2172,14 +2157,10 @@ tr:hover {
   }
   
   /* Progressive column hiding for better mobile experience */
-  #inventoryTable th[data-column="spot"],
-  #inventoryTable td[data-column="spot"],
-  #inventoryTable th[data-column="premium"],
-  #inventoryTable td[data-column="premium"],
-  #inventoryTable th[data-column="purchaseLocation"],
-  #inventoryTable td[data-column="purchaseLocation"],
-  #inventoryTable th[data-column="storageLocation"],
-  #inventoryTable td[data-column="storageLocation"] {
+  #inventoryTable th[data-column="weight"],
+  #inventoryTable td[data-column="weight"],
+  #inventoryTable th[data-column="date"],
+  #inventoryTable td[data-column="date"] {
     display: none;
   }
   
@@ -2251,7 +2232,6 @@ tr:hover {
   
   /* Reduce icon sizes for mobile */
   #inventoryTable td.icon-col .action-icon,
-  #inventoryTable td.icon-col .collectable-status svg,
   #inventoryTable th.icon-col svg {
     width: 0.9rem;
     height: 0.9rem;
@@ -4524,24 +4504,17 @@ input:disabled + .slider {
   z-index: 7; /* keep headers above body cells */
 }
 
-/* Most icon columns are sticky positioned on the right */
-#inventoryTable th.icon-col:not([data-column="collectable"]) {
-  position: sticky;
-  right: 0; /* default for the right-most action column (delete) */
-}
-
-/* Collectable column stays in normal document flow (not sticky) */
-#inventoryTable th[data-column="collectable"] {
-  position: static;
-}
-
-#inventoryTable td.icon-col:not([data-column="collectable"]) {
+/* Icon columns are sticky positioned on the right */
+#inventoryTable th.icon-col {
   position: sticky;
   right: 0;
-  /* Keep body cells transparent so they inherit the TR background (striping & hover)
-    while remaining on top for clickability */
+}
+
+#inventoryTable td.icon-col {
+  position: sticky;
+  right: 0;
   background: transparent;
-  color: inherit; /* inherit text color from the row */
+  color: inherit;
   z-index: 6;
 }
 
@@ -4561,38 +4534,7 @@ input:disabled + .slider {
   right: 7.2rem;
 }
 
-/* Collectable column should remain in DOM order (right after N#) and not be sticky. */
-#inventoryTable th[data-column="collectable"] {
-  position: static;
-  background: var(--bg-secondary); /* Match other headers */
-}
-
-#inventoryTable td[data-column="collectable"] {
-  position: static;
-  background: inherit !important; /* CORRECT - Ensures proper zebra striping */
-}
-
-/* Collectable icon specific styles */
-.collectable-icon.vault-icon {
-  width: 1.1rem;
-  height: 1.1rem;
-  fill: var(--text-muted);
-  stroke: none;
-}
-
-.collectable-icon.bar-icon {
-  width: 1.1rem;
-  height: 1.1rem;
-  fill: var(--silver);
-  stroke: none;
-}
-
-/* Ensure the clickable collectable cell centers its icon */
-#inventoryTable td[data-column="collectable"] .collectable-status {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
+/* Collectable column removed in portfolio redesign */
 
 /* Icon button base for action cells */
 #inventoryTable .icon-btn {
@@ -4628,52 +4570,40 @@ input:disabled + .slider {
 .collectable-icon.vault-icon { color: var(--text-muted); }
 .collectable-icon.bar-icon { color: var(--silver); }
 
-/* MOBILE PRIORITY RULES
-   Keep Qty, Name, Price, Edit visible on tight screens. Deprioritize Spot, Premium, Storage, Metal. */
+/* MOBILE PRIORITY RULES — Portfolio layout
+   Keep Name, Purchase, Melt, Retail visible on tight screens. */
 @media (max-width: 768px) {
-  /* Hide low-priority columns first */
-  #inventoryTable th[data-column="spot"],
-  #inventoryTable td[data-column="spot"],
-  #inventoryTable th[data-column="premium"],
-  #inventoryTable td[data-column="premium"],
-  #inventoryTable th[data-column="storageLocation"],
-  #inventoryTable td[data-column="storageLocation"],
+  #inventoryTable th[data-column="numista"],
+  #inventoryTable td[data-column="numista"],
+  #inventoryTable th[data-column="type"],
+  #inventoryTable td[data-column="type"] {
+    display: none;
+  }
+
+  #inventoryTable th[data-column="name"],
+  #inventoryTable td[data-column="name"] { width: 35%; }
+  #inventoryTable th[data-column="purchasePrice"],
+  #inventoryTable td[data-column="purchasePrice"] { width: 15%; }
+  #inventoryTable th[data-column="meltValue"],
+  #inventoryTable td[data-column="meltValue"] { width: 15%; }
+
+  #inventoryTable th, #inventoryTable td { padding: 0.2rem 0.15rem; }
+}
+
+@media (max-width: 480px) {
+  #inventoryTable th[data-column="retailPrice"],
+  #inventoryTable td[data-column="retailPrice"],
   #inventoryTable th[data-column="metal"],
   #inventoryTable td[data-column="metal"] {
     display: none;
   }
 
-  /* Keep Name, Qty, Price, Edit visible and allocate space */
   #inventoryTable th[data-column="name"],
-  #inventoryTable td[data-column="name"] { width: 45%; }
-  #inventoryTable th[data-column="qty"],
-  #inventoryTable td[data-column="qty"] { width: 8%; }
-  #inventoryTable th[data-column="purchasePrice"],
-  #inventoryTable td[data-column="purchasePrice"] { width: 18%; }
-  #inventoryTable th[data-column="edit"],
-  #inventoryTable td[data-column="edit"] { width: 6%; }
-
-  /* Slightly reduce padding to fit more */
-  #inventoryTable th, #inventoryTable td { padding: 0.2rem 0.15rem; }
-}
-
-@media (max-width: 480px) {
-  /* On very small screens, hide even more and keep essentials */
-  #inventoryTable th[data-column="purchaseLocation"],
-  #inventoryTable td[data-column="purchaseLocation"],
-  #inventoryTable th[data-column="numista"],
-  #inventoryTable td[data-column="numista"],
-  #inventoryTable th[data-column="weight"],
-  #inventoryTable td[data-column="weight"] {
-    display: none;
-  }
-
-  #inventoryTable th[data-column="name"],
-  #inventoryTable td[data-column="name"] { width: 60%; }
-  #inventoryTable th[data-column="qty"],
-  #inventoryTable td[data-column="qty"] { width: 10%; }
+  #inventoryTable td[data-column="name"] { width: 50%; }
   #inventoryTable th[data-column="purchasePrice"],
   #inventoryTable td[data-column="purchasePrice"] { width: 20%; }
+  #inventoryTable th[data-column="meltValue"],
+  #inventoryTable td[data-column="meltValue"] { width: 20%; }
 }
 
 /* Make sure sticky cells have a solid background so they sit above the scrolled content */
@@ -5381,12 +5311,10 @@ th {
 /* Removed hover effect to prevent cell flooding */
 
 /* Fixed action columns styling */
-#inventoryTable th[data-column="collectable"],
-#inventoryTable th[data-column="notes"], 
+#inventoryTable th[data-column="notes"],
 #inventoryTable th[data-column="edit"],
 #inventoryTable th[data-column="delete"],
-#inventoryTable td[data-column="collectable"],
-#inventoryTable td[data-column="notes"], 
+#inventoryTable td[data-column="notes"],
 #inventoryTable td[data-column="edit"],
 #inventoryTable td[data-column="delete"] {
   position: sticky;
@@ -5398,64 +5326,53 @@ th {
 }
 
 /* Ensure header styling consistency for action columns */
-#inventoryTable th[data-column="notes"], 
+#inventoryTable th[data-column="notes"],
 #inventoryTable th[data-column="edit"],
 #inventoryTable th[data-column="delete"] {
   background: var(--bg-secondary) !important;
   color: var(--text-secondary) !important;
 }
 
-/* Responsive column hiding */
+/* Portfolio column styling */
+#inventoryTable td[data-column="meltValue"],
+#inventoryTable td[data-column="retailPrice"],
+#inventoryTable td[data-column="gainLoss"] {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Responsive column hiding — progressive disclosure for portfolio layout */
 @media (max-width: 1200px) {
-  #inventoryTable th[data-column="spot"],
-  #inventoryTable td[data-column="spot"] {
+  #inventoryTable th[data-column="gainLoss"],
+  #inventoryTable td[data-column="gainLoss"] {
     display: none;
   }
 }
 
-@media (max-width: 1100px) {
-  #inventoryTable th[data-column="marketValue"],
-  #inventoryTable td[data-column="marketValue"] {
-    display: none;
-  }
-}
-
-@media (max-width: 1000px) {
-  #inventoryTable th[data-column="premium"],
-  #inventoryTable td[data-column="premium"] {
-    display: none;
-  }
-}
-
-@media (max-width: 900px) {
+@media (max-width: 1024px) {
   #inventoryTable th[data-column="purchaseLocation"],
   #inventoryTable td[data-column="purchaseLocation"] {
     display: none;
   }
 }
 
-@media (max-width: 800px) {
-  #inventoryTable th[data-column="storageLocation"],
-  #inventoryTable td[data-column="storageLocation"] {
-    display: none;
-  }
-}
-
-@media (max-width: 700px) {
-  #inventoryTable th[data-column="weight"],
-  #inventoryTable td[data-column="weight"] {
+@media (max-width: 768px) {
+  #inventoryTable th[data-column="numista"],
+  #inventoryTable td[data-column="numista"],
+  #inventoryTable th[data-column="type"],
+  #inventoryTable td[data-column="type"] {
     display: none;
   }
 }
 
 @media (max-width: 600px) {
+  #inventoryTable th[data-column="weight"],
+  #inventoryTable td[data-column="weight"],
   #inventoryTable th[data-column="date"],
-  #inventoryTable td[data-column="date"],
-  #inventoryTable th[data-column="type"],
-  #inventoryTable td[data-column="type"] {
+  #inventoryTable td[data-column="date"] {
     display: none;
   }
-  
+
   /* Make action buttons smaller on mobile */
   #inventoryTable td.icon-col .action-icon {
     width: 1rem;
@@ -5544,12 +5461,12 @@ th {
 /* All Price columns - increased width to prevent ellipsis */
 #inventoryTable th[data-column="purchasePrice"],
 #inventoryTable td[data-column="purchasePrice"],
-#inventoryTable th[data-column="marketValue"],
-#inventoryTable td[data-column="marketValue"],
-#inventoryTable th[data-column="spot"],
-#inventoryTable td[data-column="spot"],
-#inventoryTable th[data-column="premium"],
-#inventoryTable td[data-column="premium"] {
+#inventoryTable th[data-column="meltValue"],
+#inventoryTable td[data-column="meltValue"],
+#inventoryTable th[data-column="retailPrice"],
+#inventoryTable td[data-column="retailPrice"],
+#inventoryTable th[data-column="gainLoss"],
+#inventoryTable td[data-column="gainLoss"] {
   max-width: 110px !important;
   width: 110px !important;
   min-width: 110px !important;
@@ -5564,28 +5481,19 @@ th {
 
 /* Header styling for price columns */
 #inventoryTable th[data-column="purchasePrice"],
-#inventoryTable th[data-column="marketValue"],
-#inventoryTable th[data-column="spot"],
-#inventoryTable th[data-column="premium"] {
+#inventoryTable th[data-column="meltValue"],
+#inventoryTable th[data-column="retailPrice"],
+#inventoryTable th[data-column="gainLoss"] {
   font-weight: 600;
   background: var(--bg-secondary);
   color: var(--text-secondary);
 }
 
-/* Market value and price columns - remove background variations for consistent header appearance */
-#inventoryTable td[data-column="marketValue"] {
-  font-weight: 500;
-}
-
-#inventoryTable td[data-column="purchasePrice"] {
-  font-weight: 500;
-}
-
-#inventoryTable td[data-column="spot"] {
-  font-weight: 500;
-}
-
-#inventoryTable td[data-column="premium"] {
+/* Price columns consistent weight */
+#inventoryTable td[data-column="purchasePrice"],
+#inventoryTable td[data-column="meltValue"],
+#inventoryTable td[data-column="retailPrice"],
+#inventoryTable td[data-column="gainLoss"] {
   font-weight: 500;
 }
 
@@ -5593,7 +5501,6 @@ th {
 #inventoryTable td[data-column="name"],
 #inventoryTable td[data-column="metal"],
 #inventoryTable td[data-column="purchaseLocation"],
-#inventoryTable td[data-column="storageLocation"],
 #inventoryTable td[data-column="date"] {
   font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
@@ -5602,9 +5509,9 @@ th {
 #inventoryTable td[data-column="qty"],
 #inventoryTable td[data-column="weight"],
 #inventoryTable td[data-column="purchasePrice"],
-#inventoryTable td[data-column="marketValue"],
-#inventoryTable td[data-column="spot"],
-#inventoryTable td[data-column="premium"] {
+#inventoryTable td[data-column="meltValue"],
+#inventoryTable td[data-column="retailPrice"],
+#inventoryTable td[data-column="gainLoss"] {
   font-family: var(--font-mono, 'Courier New', monospace) !important;
   font-size: 0.85rem !important;
   font-weight: 500 !important;
@@ -5643,12 +5550,10 @@ th {
   color: rgba(34, 197, 94, 0.9); /* Soft green for purchase prices */
 }
 
-#inventoryTable td[data-column="marketValue"] {
-  color: rgba(59, 130, 246, 0.95); /* Primary blue for market values */
+#inventoryTable td[data-column="meltValue"] {
+  color: rgba(245, 158, 11, 0.9); /* Soft amber for melt values */
 }
 
-#inventoryTable td[data-column="spot"] {
-  color: rgba(245, 158, 11, 0.9); /* Soft amber for spot prices */
+#inventoryTable td[data-column="retailPrice"] {
+  color: rgba(59, 130, 246, 0.95); /* Primary blue for retail values */
 }
-
-/* Premium column styling removed - treat like other calculation columns */

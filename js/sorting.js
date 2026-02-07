@@ -17,21 +17,34 @@ const sortInventory = (data = inventory) => {
   return [...data].sort((a, b) => {
     let valA, valB;
 
-    // Map column index to data property
+    // Map column index to data property (portfolio layout: 15 columns)
+    const spotA = spotPrices[(a.metal || '').toLowerCase()] || 0;
+    const spotB = spotPrices[(b.metal || '').toLowerCase()] || 0;
     switch(sortColumn) {
-  case 0: valA = a.date; valB = b.date; break; // Date
-      case 1: valA = a.type; valB = b.type; break; // Type
-      case 2: valA = a.composition || a.metal; valB = b.composition || b.metal; break; // Metal
-      case 3: valA = a.qty; valB = b.qty; break; // Qty
-      case 4: valA = a.name; valB = b.name; break; // Name
+      case 0: valA = a.date; valB = b.date; break; // Date
+      case 1: valA = a.composition || a.metal; valB = b.composition || b.metal; break; // Metal
+      case 2: valA = a.type; valB = b.type; break; // Type
+      case 3: valA = a.name; valB = b.name; break; // Name
+      case 4: valA = a.qty; valB = b.qty; break; // Qty
       case 5: valA = a.weight; valB = b.weight; break; // Weight
-      case 6: valA = a.price; valB = b.price; break; // Price
-      case 7: valA = a.spotPriceAtPurchase; valB = b.spotPriceAtPurchase; break; // Spot
-      case 8: valA = a.totalPremium; valB = b.totalPremium; break; // Premium
-      case 9: valA = a.purchaseLocation; valB = b.purchaseLocation; break; // Purchase Location
-      case 10: valA = a.storageLocation || 'Unknown'; valB = b.storageLocation || 'Unknown'; break; // Storage Location
+      case 6: valA = a.price; valB = b.price; break; // Purchase Price
+      case 7: // Melt Value (computed)
+        valA = (parseFloat(a.weight) || 0) * (Number(a.qty) || 0) * spotA;
+        valB = (parseFloat(b.weight) || 0) * (Number(b.qty) || 0) * spotB;
+        break;
+      case 8: // Retail Price (marketValue or melt)
+        valA = (a.marketValue && a.marketValue > 0) ? a.marketValue : (parseFloat(a.weight) || 0) * (Number(a.qty) || 0) * spotA;
+        valB = (b.marketValue && b.marketValue > 0) ? b.marketValue : (parseFloat(b.weight) || 0) * (Number(b.qty) || 0) * spotB;
+        break;
+      case 9: { // Gain/Loss (computed)
+        const retailA = (a.marketValue && a.marketValue > 0) ? a.marketValue : (parseFloat(a.weight) || 0) * (Number(a.qty) || 0) * spotA;
+        const retailB = (b.marketValue && b.marketValue > 0) ? b.marketValue : (parseFloat(b.weight) || 0) * (Number(b.qty) || 0) * spotB;
+        valA = retailA - (a.price || 0);
+        valB = retailB - (b.price || 0);
+        break;
+      }
+      case 10: valA = a.purchaseLocation; valB = b.purchaseLocation; break; // Location
       case 11: valA = parseInt(a.numistaId || '0', 10); valB = parseInt(b.numistaId || '0', 10); break; // N#
-      case 12: valA = a.isCollectable; valB = b.isCollectable; break; // Collectable
       default: return 0;
     }
 
@@ -55,10 +68,6 @@ const sortInventory = (data = inventory) => {
     // Numeric comparison for numbers
     if (typeof valA === 'number' && typeof valB === 'number') {
       return sortDirection === 'asc' ? valA - valB : valB - valA;
-    } 
-    // Boolean comparison for collectable
-    else if (typeof valA === 'boolean' && typeof valB === 'boolean') {
-      return sortDirection === 'asc' ? (valA - valB) : (valB - valA);
     }
     // String comparison for everything else
     else {

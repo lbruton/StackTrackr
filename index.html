@@ -576,12 +576,6 @@
                 </svg>
                 <span class="header-text">Date</span>
               </th>
-              <th class="shrink" data-column="type">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="header-icon">
-                  <polygon points="12,2 22,8.5 22,15.5 12,22 2,15.5 2,8.5"/>
-                </svg>
-                <span class="header-text">Type</span>
-              </th>
               <th class="shrink" data-column="metal">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="header-icon">
                   <circle cx="12" cy="12" r="10"/>
@@ -589,6 +583,19 @@
                   <circle cx="12" cy="12" r="2"/>
                 </svg>
                 <span class="header-text">Metal</span>
+              </th>
+              <th class="shrink" data-column="type">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="header-icon">
+                  <polygon points="12,2 22,8.5 22,15.5 12,22 2,15.5 2,8.5"/>
+                </svg>
+                <span class="header-text">Type</span>
+              </th>
+              <th class="expand" data-column="name">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="header-icon">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                  <circle cx="12" cy="7" r="4"/>
+                </svg>
+                <span class="header-text">Name</span>
               </th>
               <th class="shrink center-align" data-column="qty">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="header-icon">
@@ -601,13 +608,6 @@
                 </svg>
                 <span class="header-text">Qty</span>
               </th>
-              <th class="expand" data-column="name">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="header-icon">
-                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                  <circle cx="12" cy="7" r="4"/>
-                </svg>
-                <span class="header-text">Name</span>
-              </th>
               <th class="shrink" data-column="weight">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="header-icon">
                   <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
@@ -619,43 +619,34 @@
                   <line x1="12" y1="1" x2="12" y2="23"/>
                   <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
                 </svg>
-                <span class="header-text">Purchase Price</span>
+                <span class="header-text">Purchase</span>
               </th>
-              <th class="shrink" data-column="marketValue" title="USD">
+              <th class="shrink" data-column="meltValue" title="USD">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="header-icon">
+                  <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2z"/>
+                  <path d="M12 6v6l4 2"/>
+                </svg>
+                <span class="header-text">Melt</span>
+              </th>
+              <th class="shrink" data-column="retailPrice" title="USD">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="header-icon">
                   <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
                 </svg>
-                <span class="header-text">Market Value</span>
+                <span class="header-text">Retail</span>
               </th>
-              <th class="shrink" data-column="spot" title="USD">
+              <th class="shrink" data-column="gainLoss" title="USD">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="header-icon">
-                  <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
-                  <circle cx="18" cy="6" r="2"/>
+                  <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/>
+                  <polyline points="17 6 23 6 23 12"/>
                 </svg>
-                <span class="header-text">Spot</span>
-              </th>
-              <th class="shrink" data-column="premium">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="header-icon">
-                  <line x1="12" y1="2" x2="12" y2="22"/>
-                  <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
-                  <path d="M8 12l2 2 4-4"/>
-                </svg>
-                <span class="header-text">Premium</span>
+                <span class="header-text">Gain/Loss</span>
               </th>
               <th class="shrink" data-column="purchaseLocation">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="header-icon">
                   <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
                   <polyline points="9,22 9,12 15,12 15,22"/>
                 </svg>
-                <span class="header-text">Purchase</span>
-              </th>
-              <th class="shrink" data-column="storageLocation">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="header-icon">
-                  <path d="M6 2h12l2 7H4l2-7z"/>
-                  <path d="M4 9v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9"/>
-                  <rect x="10" y="13" width="4" height="4"/>
-                </svg>
-                <span class="header-text">Storage</span>
+                <span class="header-text">Location</span>
               </th>
               <th class="shrink" data-column="numista">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="header-icon">
@@ -663,15 +654,6 @@
                   <path d="m8 12 2 2 4-4"/>
                 </svg>
                 <span class="header-text">N#</span>
-              </th>
-              <th class="icon-col" data-column="collectable" aria-label="Collectable" title="Collectable">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="header-icon">
-                  <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2" fill="none"/>
-                  <circle cx="12" cy="12" r="6" stroke="currentColor" stroke-width="1" fill="none"/>
-                  <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1" fill="none"/>
-                  <circle cx="12" cy="12" r="1" fill="currentColor"/>
-                </svg>
-                <span class="header-text">Collect</span>
               </th>
               <th class="icon-col" data-column="notes" aria-label="Notes" title="Notes">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="header-icon">
@@ -787,14 +769,14 @@
         <div class="totals">
           <!-- Silver totals card -->
           <div class="total-card silver">
-            <div class="total-title" data-metal="Silver">Silver Totals</div>
+            <div class="total-title" data-metal="Silver">Silver</div>
             <div class="total-group">
               <div class="total-item">
-                <span class="total-label">Total Items:</span>
+                <span class="total-label">Items:</span>
                 <span class="total-value" id="totalItemsSilver">0</span>
               </div>
               <div class="total-item">
-                <span class="total-label">Total Weight (oz):</span>
+                <span class="total-label">Weight (oz):</span>
                 <span class="total-value" id="totalWeightSilver">0.00</span>
               </div>
             </div>
@@ -808,47 +790,25 @@
                 <span class="total-value" id="currentValueSilver">$0.00</span>
               </div>
               <div class="total-item">
-                <span class="total-label">Avg. Price (oz):</span>
-                <span class="total-value" id="avgPriceSilver">$0.00</span>
+                <span class="total-label">Retail Value:</span>
+                <span class="total-value" id="retailValueSilver">$0.00</span>
               </div>
               <div class="total-item">
-                <span class="total-label">Avg. Collectable (oz):</span>
-                <span class="total-value" id="avgCollectablePriceSilver"
-                  >$0.00</span
-                >
-              </div>
-              <div class="total-item">
-                <span class="total-label">Avg Non-Collectable (oz):</span>
-                <span class="total-value" id="avgNonCollectablePriceSilver"
-                  >$0.00</span
-                >
-              </div>
-              <div class="total-item">
-                <span class="total-label">Avg. Premium (oz):</span>
-                <span class="total-value" id="avgPremiumSilver">$0.00</span>
-              </div>
-            </div>
-            <div class="total-group">
-              <div class="total-item">
-                <span class="total-label">Lifetime Premiums Paid:</span>
-                <span class="total-value" id="totalPremiumSilver">$0.00</span>
-              </div>
-              <div class="total-item">
-                <span class="total-label">Lifetime Loss/Profit:</span>
+                <span class="total-label">Gain/Loss:</span>
                 <span class="total-value" id="lossProfitSilver">$0.00</span>
               </div>
             </div>
           </div>
           <!-- Gold totals card -->
           <div class="total-card gold">
-            <div class="total-title" data-metal="Gold">Gold Totals</div>
+            <div class="total-title" data-metal="Gold">Gold</div>
             <div class="total-group">
               <div class="total-item">
-                <span class="total-label">Total Items:</span>
+                <span class="total-label">Items:</span>
                 <span class="total-value" id="totalItemsGold">0</span>
               </div>
               <div class="total-item">
-                <span class="total-label">Total Weight (oz):</span>
+                <span class="total-label">Weight (oz):</span>
                 <span class="total-value" id="totalWeightGold">0.00</span>
               </div>
             </div>
@@ -862,149 +822,75 @@
                 <span class="total-value" id="currentValueGold">$0.00</span>
               </div>
               <div class="total-item">
-                <span class="total-label">Avg. Price (oz):</span>
-                <span class="total-value" id="avgPriceGold">$0.00</span>
+                <span class="total-label">Retail Value:</span>
+                <span class="total-value" id="retailValueGold">$0.00</span>
               </div>
               <div class="total-item">
-                <span class="total-label">Avg. Collectable (oz):</span>
-                <span class="total-value" id="avgCollectablePriceGold"
-                  >$0.00</span
-                >
-              </div>
-              <div class="total-item">
-                <span class="total-label">Avg Non-Collectable (oz):</span>
-                <span class="total-value" id="avgNonCollectablePriceGold"
-                  >$0.00</span
-                >
-              </div>
-              <div class="total-item">
-                <span class="total-label">Avg. Premium (oz):</span>
-                <span class="total-value" id="avgPremiumGold">$0.00</span>
-              </div>
-            </div>
-            <div class="total-group">
-              <div class="total-item">
-                <span class="total-label">Lifetime Premiums Paid:</span>
-                <span class="total-value" id="totalPremiumGold">$0.00</span>
-              </div>
-              <div class="total-item">
-                <span class="total-label">Lifetime Loss/Profit:</span>
+                <span class="total-label">Gain/Loss:</span>
                 <span class="total-value" id="lossProfitGold">$0.00</span>
               </div>
             </div>
           </div>
           <!-- Platinum totals card -->
           <div class="total-card platinum">
-            <div class="total-title" data-metal="Platinum">Platinum Totals</div>
+            <div class="total-title" data-metal="Platinum">Platinum</div>
             <div class="total-group">
               <div class="total-item">
-                <span class="total-label">Total Items:</span>
+                <span class="total-label">Items:</span>
                 <span class="total-value" id="totalItemsPlatinum">0</span>
               </div>
               <div class="total-item">
-                <span class="total-label">Total Weight (oz):</span>
+                <span class="total-label">Weight (oz):</span>
                 <span class="total-value" id="totalWeightPlatinum">0.00</span>
               </div>
             </div>
             <div class="total-group">
               <div class="total-item">
                 <span class="total-label">Purchase Price:</span>
-                <span class="total-value" id="totalPurchasedPlatinum"
-                  >$0.00</span
-                >
+                <span class="total-value" id="totalPurchasedPlatinum">$0.00</span>
               </div>
               <div class="total-item">
                 <span class="total-label">Melt Value:</span>
                 <span class="total-value" id="currentValuePlatinum">$0.00</span>
               </div>
               <div class="total-item">
-                <span class="total-label">Avg. Price (oz):</span>
-                <span class="total-value" id="avgPricePlatinum">$0.00</span>
+                <span class="total-label">Retail Value:</span>
+                <span class="total-value" id="retailValuePlatinum">$0.00</span>
               </div>
               <div class="total-item">
-                <span class="total-label">Avg. Collectable (oz):</span>
-                <span class="total-value" id="avgCollectablePricePlatinum"
-                  >$0.00</span
-                >
-              </div>
-              <div class="total-item">
-                <span class="total-label">Avg Non-Collectable (oz):</span>
-                <span class="total-value" id="avgNonCollectablePricePlatinum"
-                  >$0.00</span
-                >
-              </div>
-              <div class="total-item">
-                <span class="total-label">Avg. Premium (oz):</span>
-                <span class="total-value" id="avgPremiumPlatinum">$0.00</span>
-              </div>
-            </div>
-            <div class="total-group">
-              <div class="total-item">
-                <span class="total-label">Lifetime Premiums Paid:</span>
-                <span class="total-value" id="totalPremiumPlatinum">$0.00</span>
-              </div>
-              <div class="total-item">
-                <span class="total-label">Lifetime Loss/Profit:</span>
+                <span class="total-label">Gain/Loss:</span>
                 <span class="total-value" id="lossProfitPlatinum">$0.00</span>
               </div>
             </div>
           </div>
           <!-- Palladium totals card -->
           <div class="total-card palladium">
-            <div class="total-title" data-metal="Palladium">Palladium Totals</div>
+            <div class="total-title" data-metal="Palladium">Palladium</div>
             <div class="total-group">
               <div class="total-item">
-                <span class="total-label">Total Items:</span>
+                <span class="total-label">Items:</span>
                 <span class="total-value" id="totalItemsPalladium">0</span>
               </div>
               <div class="total-item">
-                <span class="total-label">Total Weight (oz):</span>
+                <span class="total-label">Weight (oz):</span>
                 <span class="total-value" id="totalWeightPalladium">0.00</span>
               </div>
             </div>
             <div class="total-group">
               <div class="total-item">
                 <span class="total-label">Purchase Price:</span>
-                <span class="total-value" id="totalPurchasedPalladium"
-                  >$0.00</span
-                >
+                <span class="total-value" id="totalPurchasedPalladium">$0.00</span>
               </div>
               <div class="total-item">
                 <span class="total-label">Melt Value:</span>
-                <span class="total-value" id="currentValuePalladium"
-                  >$0.00</span
-                >
+                <span class="total-value" id="currentValuePalladium">$0.00</span>
               </div>
               <div class="total-item">
-                <span class="total-label">Avg. Price (oz):</span>
-                <span class="total-value" id="avgPricePalladium">$0.00</span>
+                <span class="total-label">Retail Value:</span>
+                <span class="total-value" id="retailValuePalladium">$0.00</span>
               </div>
               <div class="total-item">
-                <span class="total-label">Avg. Collectable (oz):</span>
-                <span class="total-value" id="avgCollectablePricePalladium"
-                  >$0.00</span
-                >
-              </div>
-              <div class="total-item">
-                <span class="total-label">Avg Non-Collectable (oz):</span>
-                <span class="total-value" id="avgNonCollectablePricePalladium"
-                  >$0.00</span
-                >
-              </div>
-              <div class="total-item">
-                <span class="total-label">Avg. Premium (oz):</span>
-                <span class="total-value" id="avgPremiumPalladium">$0.00</span>
-              </div>
-            </div>
-            <div class="total-group">
-              <div class="total-item">
-                <span class="total-label">Lifetime Premiums Paid:</span>
-                <span class="total-value" id="totalPremiumPalladium"
-                  >$0.00</span
-                >
-              </div>
-              <div class="total-item">
-                <span class="total-label">Lifetime Loss/Profit:</span>
+                <span class="total-label">Gain/Loss:</span>
                 <span class="total-value" id="lossProfitPalladium">$0.00</span>
               </div>
             </div>
@@ -1039,16 +925,6 @@
         </div>
         <div class="modal-body">
           <form id="inventoryForm">
-            <div class="collectable-card">
-              <div style="display:flex;align-items:center;gap:var(--spacing);">
-                <label for="itemCollectable" style="margin:0;">Collectable Item</label>
-                <label class="switch">
-                  <input id="itemCollectable" type="checkbox" />
-                  <span class="slider"></span>
-                </label>
-              </div>
-              <p class="collectable-note">Collectable items may have additional numismatic value beyond their metal content</p>
-            </div>
             <!-- First row of add form fields -->
             <div class="grid grid-2">
               <div>
@@ -1058,7 +934,6 @@
                   <option value="Gold">Gold</option>
                   <option value="Platinum">Platinum</option>
                   <option value="Palladium">Palladium</option>
-                  <option value="Alloy/Other">Alloy/Other</option>
                 </select>
               </div>
               <div>
@@ -1114,30 +989,24 @@
                   <input id="itemPrice" min="0" step="0.01" type="number" />
                 </div>
               </div>
-              <div id="marketValueField" style="display: none;">
-                <label for="itemMarketValue">Market Value ($)</label>
+              <div id="marketValueField">
+                <label for="itemMarketValue">Retail Price ($) <span style="font-weight:normal;opacity:0.6;">(optional)</span></label>
                 <div class="currency-input">
-                  <input id="itemMarketValue" min="0" step="0.01" type="number" placeholder="Estimated market value" />
+                  <input id="itemMarketValue" min="0" step="0.01" type="number" placeholder="Defaults to melt value" />
                 </div>
               </div>
               <div id="dateField">
                 <label for="itemDate">Purchase Date</label>
                 <input id="itemDate" required type="date" />
               </div>
-            </div>
-            <!-- Spot price and catalog field -->
-            <div class="grid grid-2">
-              <div>
-                <label for="itemSpotPrice">Spot Price ($/oz)</label>
-                <div class="currency-input">
-                  <input id="itemSpotPrice" min="0" step="0.01" type="number" />
-                </div>
-              </div>
               <div>
                 <label for="itemCatalog">Catalog (N#)</label>
                 <input id="itemCatalog" type="text" placeholder="Numista catalog #" />
               </div>
             </div>
+            <!-- Hidden fields for backward compatibility -->
+            <input type="hidden" id="itemCollectable" value="false" />
+            <input type="hidden" id="itemSpotPrice" value="" />
             <!-- Form action buttons -->
             <div style="margin-top: 1rem; text-align: right">
               <button class="btn" id="cancelAdd" type="button">Cancel</button>
@@ -1170,27 +1039,18 @@
         </div>
         <div class="modal-body">
         <form id="editForm">
-          <div class="collectable-card">
-            <div style="display:flex;align-items:center;gap:var(--spacing);">
-              <label for="editCollectable" style="margin:0;">Collectable Item</label>
-              <label class="switch">
-                <input id="editCollectable" type="checkbox" />
-                <span class="slider"></span>
-              </label>
-            </div>
-            <p class="collectable-note">Collectable items may have additional numismatic value beyond their metal content</p>
-          </div>
           <input type="hidden" id="editSerial" />
+          <input type="hidden" id="editCollectable" value="false" />
+          <input type="hidden" id="editSpotPrice" value="" />
           <!-- First row of edit form fields -->
           <div class="grid grid-2">
             <div>
-                <label for="editMetal">Metal</label>
+              <label for="editMetal">Metal</label>
               <select id="editMetal">
                 <option value="Silver">Silver</option>
                 <option value="Gold">Gold</option>
                 <option value="Platinum">Platinum</option>
                 <option value="Palladium">Palladium</option>
-                <option value="Alloy/Other">Alloy/Other</option>
               </select>
             </div>
             <div>
@@ -1210,20 +1070,14 @@
             </div>
             <div>
               <label for="editWeight">Weight (oz)</label>
-              <input
-                id="editWeight"
-                min="0.0001"
-                required=""
-                step="0.0001"
-                type="number"
-              />
+              <input id="editWeight" min="0.0001" required step="0.0001" type="number" />
             </div>
           </div>
           <!-- Second row of edit form fields -->
           <div class="grid grid-2">
             <div>
               <label for="editName">Name</label>
-              <input id="editName" required="" type="text" />
+              <input id="editName" required type="text" />
             </div>
             <div>
               <label for="editPurchaseLocation">Purchase Location</label>
@@ -1231,19 +1085,11 @@
             </div>
             <div>
               <label for="editStorageLocation">Storage Location</label>
-              <input
-                id="editStorageLocation"
-                type="text"
-                placeholder="Vault A, Safe B, etc..."
-              />
+              <input id="editStorageLocation" type="text" placeholder="Vault A, Safe B, etc..." />
             </div>
             <div>
               <label for="editNotes">Notes</label>
-              <input
-                id="editNotes"
-                type="text"
-                placeholder="Additional notes or comments..."
-              />
+              <input id="editNotes" type="text" placeholder="Additional notes or comments..." />
             </div>
           </div>
           <!-- Third row of edit form fields -->
@@ -1251,43 +1097,18 @@
             <div>
               <label for="editPrice">Purchase Price ($)</label>
               <div class="currency-input">
-                <input
-                  id="editPrice"
-                  min="0"
-                  step="0.01"
-                  type="number"
-                />
+                <input id="editPrice" min="0" step="0.01" type="number" />
               </div>
             </div>
             <div id="editMarketValueField">
-              <label for="editMarketValue">Market Value ($)</label>
+              <label for="editMarketValue">Retail Price ($) <span style="font-weight:normal;opacity:0.6;">(optional)</span></label>
               <div class="currency-input">
-                <input
-                  id="editMarketValue"
-                  min="0"
-                  step="0.01"
-                  type="number"
-                  placeholder="Estimated market value"
-                />
+                <input id="editMarketValue" min="0" step="0.01" type="number" placeholder="Defaults to melt value" />
               </div>
             </div>
             <div id="editDateField">
               <label for="editDate">Purchase Date</label>
               <input id="editDate" type="date" />
-            </div>
-          </div>
-          <!-- Spot price and catalog field -->
-          <div class="grid grid-2">
-            <div>
-              <label for="editSpotPrice">Spot Price ($/oz)</label>
-              <div class="currency-input">
-                <input
-                  id="editSpotPrice"
-                  min="0"
-                  step="0.01"
-                  type="number"
-                />
-              </div>
             </div>
             <div>
               <label for="editCatalog">Catalog (N#)</label>
