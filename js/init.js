@@ -136,31 +136,14 @@ document.addEventListener("DOMContentLoaded", () => {
     elements.aboutModal = safeGetElement("aboutModal");
     elements.ackModal = safeGetElement("ackModal");
     elements.ackAcceptBtn = safeGetElement("ackAcceptBtn");
-    elements.editModal = safeGetElement("editModal");
-    elements.editForm = safeGetElement("editForm");
-    elements.cancelEditBtn = safeGetElement("cancelEdit");
-    elements.editCloseBtn = safeGetElement("editCloseBtn");
-    elements.editMetal = safeGetElement("editMetal");
-    elements.editName = safeGetElement("editName");
-    elements.editQty = safeGetElement("editQty");
-    elements.editType = safeGetElement("editType");
-    elements.editWeight = safeGetElement("editWeight");
-    elements.editPrice = safeGetElement("editPrice");
-    elements.editMarketValue = safeGetElement("editMarketValue");
-    elements.editMarketValueField = safeGetElement("editMarketValueField");
-    elements.editDateField = safeGetElement("editDateField");
-    elements.editPurchaseLocation = safeGetElement("editPurchaseLocation");
-    elements.editStorageLocation = safeGetElement("editStorageLocation");
-    elements.editNotes = safeGetElement("editNotes");
-    elements.editDate = safeGetElement("editDate");
-    elements.editSpotPrice = safeGetElement("editSpotPrice");
-    elements.editCatalog = safeGetElement("editCatalog");
+    // Unified item modal elements (add/edit)
+    elements.itemModal = safeGetElement("itemModal");
+    elements.itemCloseBtn = safeGetElement("itemCloseBtn");
+    elements.cancelItemBtn = safeGetElement("cancelItem");
+    elements.itemModalTitle = safeGetElement("itemModalTitle");
+    elements.itemModalSubmit = safeGetElement("itemModalSubmit");
+    elements.itemSerial = safeGetElement("itemSerial");
     elements.undoChangeBtn = safeGetElement("undoChangeBtn");
-    elements.editSerial = safeGetElement("editSerial");
-
-    elements.addModal = safeGetElement("addModal");
-    elements.addCloseBtn = safeGetElement("addCloseBtn");
-    elements.cancelAddBtn = safeGetElement("cancelAdd");
 
     // Show acknowledgment modal immediately and set up modal events
     if (typeof setupAckModalEvents === "function") {

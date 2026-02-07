@@ -92,28 +92,6 @@ const elements = {
   removeInventoryDataBtn: null,
   boatingAccidentBtn: null,
 
-  // Edit modal elements
-  editModal: null,
-  editForm: null,
-  cancelEditBtn: null,
-  editMetal: null,
-  editName: null,
-  editQty: null,
-  editType: null,
-  editWeight: null,
-  editPrice: null,
-  editMarketValue: null,
-  editMarketValueField: null,
-  editDateField: null,
-  editPurchaseLocation: null,
-  editStorageLocation: null,
-  editNotes: null,
-  editDate: null,
-  editSpotPrice: null,
-  editCatalog: null,
-  undoChangeBtn: null,
-  editSerial: null,
-  editCloseBtn: null,
 
   // Notes modal elements
   notesModal: null,
@@ -167,10 +145,14 @@ const elements = {
   searchResultsInfo: null,
   activeFilters: null,
 
-  // Add item modal elements
-  addModal: null,
-  addCloseBtn: null,
-  cancelAddBtn: null,
+  // Unified item modal elements (add/edit)
+  itemModal: null,
+  itemCloseBtn: null,
+  cancelItemBtn: null,
+  itemModalTitle: null,
+  itemModalSubmit: null,
+  itemSerial: null,
+  undoChangeBtn: null,
 
   // About & acknowledgment modal elements
   aboutBtn: null,

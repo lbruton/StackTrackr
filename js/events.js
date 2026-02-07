@@ -473,8 +473,8 @@ const setupEventListeners = () => {
       console.error("Inventory table not found for sorting setup!");
     }
 
-    // MAIN FORM SUBMISSION
-    debugLog("Setting up main form...");
+    // UNIFIED FORM SUBMISSION (Add + Edit via single #itemModal)
+    debugLog("Setting up unified item form...");
     if (elements.inventoryForm) {
       safeAttachListener(
         elements.inventoryForm,
@@ -482,27 +482,56 @@ const setupEventListeners = () => {
         function (e) {
           e.preventDefault();
 
+          const isEditing = editingIndex !== null;
+          const existingItem = isEditing ? { ...inventory[editingIndex] } : {};
+
+          // Read all fields (same for both modes)
           const composition = getCompositionFirstWords(elements.itemMetal.value);
           const metal = parseNumistaMetal(composition);
-          const name = elements.itemName.value.trim();
+
+          const nameInput = elements.itemName.value.trim();
+          const name = isEditing ? (nameInput || existingItem.name || '') : nameInput;
+
           const qtyInput = elements.itemQty.value.trim();
-          const qty = qtyInput === "" ? 1 : parseInt(qtyInput, 10);
-          const type = elements.itemType.value;
-          let weight = parseFloat(elements.itemWeight.value);
-          if (elements.itemWeightUnit.value === "g") {
-            weight = gramsToOzt(weight);
+          const qty = qtyInput === '' ? (isEditing ? (existingItem.qty || 1) : 1) : parseInt(qtyInput, 10);
+
+          const type = elements.itemType.value || (isEditing ? existingItem.type : '');
+
+          // Weight: uses real <select> instead of fragile dataset.unit
+          const weightRaw = elements.itemWeight.value;
+          let weight;
+          if (isEditing && weightRaw === '') {
+            weight = typeof existingItem.weight !== 'undefined' ? existingItem.weight : 0;
+          } else {
+            weight = parseFloat(weightRaw);
+            if (elements.itemWeightUnit.value === 'g') {
+              weight = gramsToOzt(weight);
+            }
+            weight = isNaN(weight) ? 0 : parseFloat(weight.toFixed(6));
           }
-          weight = isNaN(weight) ? 0 : parseFloat(weight.toFixed(2));
-          const priceInput = elements.itemPrice.value.trim();
-          let price = priceInput === "" ? 0 : parseFloat(priceInput);
-          price = isNaN(price) || price < 0 ? 0 : price;
-          const purchaseLocation =
-            elements.purchaseLocation.value.trim() || "";
-          const storageLocation =
-            elements.storageLocation.value.trim() || "Unknown";
-          const notes = elements.itemNotes.value.trim() || "";
-          const date = elements.itemDate.value || todayStr();
-          // Validate the mandatory fields: Name, Date, Type, Metal, Weight, and Quantity
+
+          // Price: in edit mode, empty field preserves existing price
+          const priceRaw = elements.itemPrice.value.trim();
+          let price;
+          if (isEditing && priceRaw === '') {
+            price = typeof existingItem.price !== 'undefined' ? existingItem.price : 0;
+          } else {
+            price = priceRaw === '' ? 0 : parseFloat(priceRaw);
+            price = isNaN(price) || price < 0 ? 0 : price;
+          }
+
+          const purchaseLocation = elements.purchaseLocation.value.trim() || (isEditing ? (existingItem.purchaseLocation || '') : '');
+          const storageLocation = elements.storageLocation.value.trim() || (isEditing ? (existingItem.storageLocation || 'Unknown') : 'Unknown');
+          const notes = elements.itemNotes.value.trim() || (isEditing ? (existingItem.notes || '') : '');
+          const date = elements.itemDate.value || (isEditing ? (existingItem.date || '') : todayStr());
+
+          const catalog = elements.itemCatalog ? elements.itemCatalog.value.trim() : '';
+          const marketValueInput = elements.itemMarketValue ? elements.itemMarketValue.value.trim() : '';
+          const marketValue = marketValueInput && !isNaN(parseFloat(marketValueInput))
+            ? parseFloat(marketValueInput)
+            : (isEditing ? (existingItem.marketValue || 0) : 0);
+
+          // Validate mandatory fields
           if (
             !name ||
             !date ||
@@ -517,190 +546,105 @@ const setupEventListeners = () => {
             return alert("Please enter valid values for Name, Date, Type, Metal, Weight, and Quantity.");
           }
 
-          // Determine spot price at purchase (auto-fill from current spot)
-          const metalKey = metal.toLowerCase();
-          const spotPriceAtPurchase = spotPrices[metalKey] ?? 0;
+          if (isEditing) {
+            // --- EDIT MODE ---
+            const oldItem = { ...inventory[editingIndex] };
+            const serial = oldItem.serial;
 
-          const serial = getNextSerial();
-          const catalog = elements.itemCatalog ? elements.itemCatalog.value.trim() : "";
-          const marketValueInput = elements.itemMarketValue ? elements.itemMarketValue.value.trim() : "";
-          const marketValue = marketValueInput && !isNaN(parseFloat(marketValueInput)) ? parseFloat(marketValueInput) : 0;
+            inventory[editingIndex] = {
+              ...oldItem,
+              metal,
+              composition,
+              name,
+              qty,
+              type,
+              weight,
+              price,
+              marketValue,
+              date,
+              purchaseLocation,
+              storageLocation,
+              notes,
+              isCollectable: false,
+              numistaId: catalog,
+            };
 
-          inventory.push({
-            metal,
-            composition,
-            name,
-            qty,
-            type,
-            weight,
-            price,
-            marketValue,
-            date,
-            purchaseLocation,
-            storageLocation,
-            notes,
-            spotPriceAtPurchase,
-            premiumPerOz: 0,
-            totalPremium: 0,
-            isCollectable: false,
-            serial,
-            numistaId: catalog,
-          });
+            addCompositionOption(composition);
 
-          typeof registerName === "function" && registerName(name);
-          addCompositionOption(composition);
+            try {
+              if (window.catalogManager && inventory[editingIndex].numistaId) {
+                catalogManager.setCatalogId(serial, inventory[editingIndex].numistaId);
+              }
+            } catch (catErr) {
+              console.warn('Failed to update catalog mapping:', catErr);
+            }
 
-          if (window.catalogManager && catalog) {
-            catalogManager.setCatalogId(serial, catalog);
+            saveInventory();
+            renderTable();
+            logItemChanges(oldItem, inventory[editingIndex]);
+
+            editingIndex = null;
+            editingChangeLogIndex = null;
+          } else {
+            // --- ADD MODE ---
+            const metalKey = metal.toLowerCase();
+            const spotPriceAtPurchase = spotPrices[metalKey] ?? 0;
+            const serial = getNextSerial();
+
+            inventory.push({
+              metal,
+              composition,
+              name,
+              qty,
+              type,
+              weight,
+              price,
+              marketValue,
+              date,
+              purchaseLocation,
+              storageLocation,
+              notes,
+              spotPriceAtPurchase,
+              premiumPerOz: 0,
+              totalPremium: 0,
+              isCollectable: false,
+              serial,
+              numistaId: catalog,
+            });
+
+            typeof registerName === "function" && registerName(name);
+            addCompositionOption(composition);
+
+            if (window.catalogManager && catalog) {
+              catalogManager.setCatalogId(serial, catalog);
+            }
+
+            saveInventory();
+            renderTable();
+            this.reset();
+            elements.itemWeightUnit.value = "oz";
+            elements.itemDate.value = todayStr();
           }
-          saveInventory();
-          renderTable();
-          this.reset();
-          elements.itemWeightUnit.value = "oz";
-          elements.itemDate.value = todayStr();
-          if (elements.addModal) {
-            if (window.closeModalById) closeModalById('addModal');
-            else elements.addModal.style.display = "none";
+
+          // Close modal
+          try {
+            if (typeof closeModalById === 'function') {
+              closeModalById('itemModal');
+            } else if (elements.itemModal) {
+              elements.itemModal.style.display = 'none';
+              document.body.style.overflow = '';
+            }
+          } catch (closeErr) {
+            console.warn('Failed to close item modal:', closeErr);
           }
         },
-        "Main inventory form",
+        "Unified item form",
       );
     } else {
       console.error("Main inventory form not found!");
     }
 
-    // EDIT FORM SUBMISSION
-    debugLog("Setting up edit form...");
-    if (elements.editForm) {
-      safeAttachListener(
-        elements.editForm,
-        "submit",
-        function (e) {
-          e.preventDefault();
-
-          if (editingIndex === null) return;
-
-          // Preserve old item values; only override with inputs that are present
-          const existingItem = inventory[editingIndex] ? { ...inventory[editingIndex] } : {};
-
-          const compositionInput = (elements.editMetal && elements.editMetal.value) ? elements.editMetal.value.trim() : '';
-          const composition = compositionInput ? getCompositionFirstWords(compositionInput) : (existingItem.composition || existingItem.metal || 'Silver');
-          const metal = parseNumistaMetal(composition);
-
-          const nameInput = elements.editName && elements.editName.value ? elements.editName.value.trim() : '';
-          const name = nameInput || existingItem.name || '';
-
-          const qtyInput = elements.editQty && elements.editQty.value ? elements.editQty.value.trim() : '';
-          const qty = qtyInput === '' ? (existingItem.qty || 1) : parseInt(qtyInput, 10);
-
-          const type = (elements.editType && elements.editType.value) ? elements.editType.value : (existingItem.type || '');
-
-          const weightRaw = elements.editWeight && elements.editWeight.value ? elements.editWeight.value : '';
-          let weight;
-          if (weightRaw === '') {
-            weight = typeof existingItem.weight !== 'undefined' ? existingItem.weight : 0;
-          } else {
-            weight = parseFloat(weightRaw);
-            if (elements.editWeight && elements.editWeight.dataset.unit === 'g') {
-              weight = gramsToOzt(weight);
-            }
-            weight = isNaN(weight) ? 0 : parseFloat(weight.toFixed(2));
-          }
-
-          const priceRaw = elements.editPrice && elements.editPrice.value ? elements.editPrice.value : '';
-          let price;
-          if (priceRaw === '') {
-            price = typeof existingItem.price !== 'undefined' ? existingItem.price : 0;
-          } else {
-            price = parseFloat(priceRaw);
-            price = isNaN(price) || price < 0 ? 0 : price;
-          }
-
-          const purchaseLocation = (elements.editPurchaseLocation && elements.editPurchaseLocation.value && elements.editPurchaseLocation.value.trim()) ? elements.editPurchaseLocation.value.trim() : (existingItem.purchaseLocation || '');
-          const storageLocation = (elements.editStorageLocation && elements.editStorageLocation.value && elements.editStorageLocation.value.trim()) ? elements.editStorageLocation.value.trim() : (existingItem.storageLocation || 'Unknown');
-          const notes = (elements.editNotes && elements.editNotes.value) ? elements.editNotes.value.trim() : (existingItem.notes || '');
-          // Preserve existing date if the edit field is left blank. Do not default to today.
-          const date = (elements.editDate && elements.editDate.value) ? elements.editDate.value : (existingItem.date || '');
-
-          // Preserve previous item data as a fallback
-          const oldItemFallback = (inventory[editingIndex] && { ...inventory[editingIndex] }) || {};
-
-          // Validate the mandatory fields: Name, Date, Type, Metal, Weight, and Quantity
-          if (
-            !name ||
-            !date ||
-            !type ||
-            !metal ||
-            isNaN(weight) ||
-            weight <= 0 ||
-            isNaN(qty) ||
-            qty < 1 ||
-            !Number.isInteger(qty)
-          ) {
-            try { console.debug('Edit validation failed', { name, date, type, metal, weight, qty }); } catch (e) {}
-            return alert("Please enter valid values for Name, Date, Type, Metal, Weight, and Quantity.");
-          }
-
-          const oldItem = { ...inventory[editingIndex] };
-          const serial = oldItem.serial;
-          const marketValueInput = elements.editMarketValue ? elements.editMarketValue.value.trim() : "";
-          const marketValue = marketValueInput && !isNaN(parseFloat(marketValueInput)) ? parseFloat(marketValueInput) : (oldItem.marketValue || 0);
-
-          // Update the item preserving serial and legacy fields
-          inventory[editingIndex] = {
-            ...oldItem,
-            metal,
-            composition,
-            name,
-            qty,
-            type,
-            weight,
-            price,
-            marketValue,
-            date,
-            purchaseLocation,
-            storageLocation,
-            notes,
-            isCollectable: false,
-            numistaId: elements.editCatalog.value.trim(),
-          };
-
-          addCompositionOption(composition);
-
-          try {
-            if (window.catalogManager && inventory[editingIndex].numistaId) {
-              catalogManager.setCatalogId(serial, inventory[editingIndex].numistaId);
-            }
-          } catch (e) {
-            console.warn('Failed to update catalog mapping:', e);
-          }
-          
-          saveInventory();
-          renderTable();
-          logItemChanges(oldItem, inventory[editingIndex]);
-
-          // Debug trace to confirm save reached the close path
-          try { console.debug('Edit form saved for index', editingIndex); } catch (e) {}
-
-          // Close the modal
-          editingIndex = null;
-          editingChangeLogIndex = null;
-          
-          try { 
-            if (typeof closeModalById === 'function') {
-              closeModalById('editModal'); 
-            } else if (elements.editModal) {
-              elements.editModal.style.display = 'none';
-              document.body.style.overflow = '';
-            }
-          } catch(e) {
-            console.warn('Failed to close edit modal:', e);
-          }
-        },
-        "Edit form",
-      );
-    }
-
+    // UNDO CHANGE BUTTON
     if (elements.undoChangeBtn) {
       safeAttachListener(
         elements.undoChangeBtn,
@@ -709,7 +653,7 @@ const setupEventListeners = () => {
           if (e && typeof e.preventDefault === 'function') e.preventDefault();
           if (editingChangeLogIndex !== null) {
             toggleChange(editingChangeLogIndex);
-            try { if (typeof closeModalById === 'function') closeModalById('editModal'); } catch(e) {}
+            try { if (typeof closeModalById === 'function') closeModalById('itemModal'); } catch(undoErr) {}
             editingIndex = null;
             editingChangeLogIndex = null;
             renderChangeLog();
@@ -719,59 +663,34 @@ const setupEventListeners = () => {
       );
     }
 
-    // CANCEL EDIT BUTTON
-    if (elements.cancelEditBtn) {
+    // ITEM MODAL CLOSE / CANCEL BUTTONS
+    if (elements.cancelItemBtn) {
       safeAttachListener(
-        elements.cancelEditBtn,
+        elements.cancelItemBtn,
         "click",
         function (e) {
-          // Prevent any accidental form submission or event propagation
           if (e && typeof e.preventDefault === 'function') e.preventDefault();
           if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
-
-          // Close modal and clear editing state without saving
-          try { if (typeof closeModalById === 'function') closeModalById('editModal'); } catch(e) {}
+          try { if (typeof closeModalById === 'function') closeModalById('itemModal'); } catch(closeErr) {}
           editingIndex = null;
           editingChangeLogIndex = null;
         },
-        "Cancel edit button",
+        "Cancel item button",
       );
     }
 
-    if (elements.editCloseBtn) {
+    if (elements.itemCloseBtn) {
       safeAttachListener(
-        elements.editCloseBtn,
+        elements.itemCloseBtn,
         "click",
         (e) => {
           if (e && typeof e.preventDefault === 'function') e.preventDefault();
           if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
-          try { if (typeof closeModalById === 'function') closeModalById('editModal'); } catch(e) {}
+          try { if (typeof closeModalById === 'function') closeModalById('itemModal'); } catch(closeErr) {}
           editingIndex = null;
           editingChangeLogIndex = null;
         },
-        "Edit modal close button",
-      );
-    }
-
-    if (elements.addCloseBtn) {
-      safeAttachListener(
-        elements.addCloseBtn,
-        "click",
-        () => {
-          elements.addModal.style.display = "none";
-        },
-        "Add modal close button",
-      );
-    }
-
-    if (elements.cancelAddBtn) {
-      safeAttachListener(
-        elements.cancelAddBtn,
-        "click",
-        () => {
-          if (elements.addModal) elements.addModal.style.display = "none";
-        },
-        "Cancel add button",
+        "Item modal close button",
       );
     }
 
@@ -1586,14 +1505,24 @@ const setupSearch = () => {
         elements.newItemBtn,
         "click",
         () => {
+          // Clear editing state (ensures add mode)
+          editingIndex = null;
+          editingChangeLogIndex = null;
+          // Reset form and set defaults
           if (elements.inventoryForm) {
             elements.inventoryForm.reset();
             elements.itemWeightUnit.value = "oz";
             elements.itemDate.value = todayStr();
           }
-          if (elements.addModal) {
-            if (window.openModalById) openModalById('addModal');
-            else elements.addModal.style.display = "flex";
+          if (elements.itemSerial) elements.itemSerial.value = '';
+          // Set modal to add mode
+          if (elements.itemModalTitle) elements.itemModalTitle.textContent = "Add Inventory Item";
+          if (elements.itemModalSubmit) elements.itemModalSubmit.textContent = "Add to Inventory";
+          if (elements.undoChangeBtn) elements.undoChangeBtn.style.display = "none";
+          // Open modal
+          if (elements.itemModal) {
+            if (window.openModalById) openModalById('itemModal');
+            else elements.itemModal.style.display = "flex";
           }
         },
         "New item button",
@@ -2021,8 +1950,7 @@ const setupApiEvents = () => {
           const infoModal = document.getElementById("apiInfoModal");
           const historyModal = document.getElementById("apiHistoryModal");
           const providersModal = document.getElementById("apiProvidersModal");
-          const editModal = document.getElementById("editModal");
-          const addModal = document.getElementById("addModal");
+          const itemModal = document.getElementById("itemModal");
           const notesModal = document.getElementById("notesModal");
           const detailsModal = document.getElementById("detailsModal");
           const changeLogModal = document.getElementById("changeLogModal");
@@ -2058,12 +1986,12 @@ const setupApiEvents = () => {
             typeof hideApiProvidersModal === "function"
           ) {
             hideApiProvidersModal();
-          } else if (editModal && editModal.style.display === "flex") {
-            editModal.style.display = "none";
+          } else if (itemModal && itemModal.style.display === "flex") {
+            itemModal.style.display = "none";
+            document.body.style.overflow = "";
             editingIndex = null;
-          } else if (addModal && addModal.style.display === "flex") {
-            addModal.style.display = "none";
-        } else if (notesModal && notesModal.style.display === "flex") {
+            editingChangeLogIndex = null;
+          } else if (notesModal && notesModal.style.display === "flex") {
           notesModal.style.display = "none";
           notesIndex = null;
         } else if (changeLogModal && changeLogModal.style.display === "flex") {

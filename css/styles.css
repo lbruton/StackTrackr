@@ -1524,7 +1524,7 @@ input[type="submit"] {
 /* shared modal content structure */
 #changeLogModal .modal-content,
 #detailsModal .modal-content,
-#editModal .modal-content {
+#itemModal .modal-content {
   display: flex;
   flex-direction: column;
   padding: 0;
@@ -1540,7 +1540,7 @@ input[type="submit"] {
 #changeLogModal .modal-header,
 #detailsModal .modal-header,
 #storageReportModal .modal-header,
-#editModal .modal-header {
+#itemModal .modal-header {
   background: linear-gradient(135deg, var(--primary), var(--primary-hover));
   color: #f8fafc;
   padding: var(--spacing-xl);
@@ -1552,14 +1552,14 @@ input[type="submit"] {
 #changeLogModal .modal-header h2,
 #detailsModal .modal-header h2,
 #storageReportModal .modal-header h2,
-#editModal .modal-header h2 {
+#itemModal .modal-header h2 {
   margin: 0;
   color: #f8fafc;
   text-align: center;
 }
 
 #changeLogModal .modal-body,
-#editModal .modal-body {
+#itemModal .modal-body {
   padding: var(--spacing);
   overflow: auto;
   flex: 1;

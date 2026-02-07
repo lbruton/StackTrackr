@@ -116,9 +116,13 @@ const updateSpotCardColor = (metalKey, newPrice) => {
   const el = elements.spotPriceDisplay[metalKey];
   if (!el) return;
 
+  // Find the most recent API/manual entry with a DIFFERENT price.
+  // This ensures the direction indicator persists across page refreshes —
+  // cached reads reload the same price, so comparing against them (or against
+  // the most recent same-price API entry) would always show "unchanged".
   const lastEntry = [...spotHistory]
     .reverse()
-    .find((e) => e.metal === metalConfig.name);
+    .find((e) => e.metal === metalConfig.name && e.source !== "cached" && e.spot !== newPrice);
 
   let arrow = "";
   const formatted = typeof formatCurrency === "function"

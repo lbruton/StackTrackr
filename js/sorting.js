@@ -32,15 +32,20 @@ const sortInventory = (data = inventory) => {
         valA = (parseFloat(a.weight) || 0) * (Number(a.qty) || 0) * spotA;
         valB = (parseFloat(b.weight) || 0) * (Number(b.qty) || 0) * spotB;
         break;
-      case 8: // Retail Price (marketValue or melt)
-        valA = (a.marketValue && a.marketValue > 0) ? a.marketValue : (parseFloat(a.weight) || 0) * (Number(a.qty) || 0) * spotA;
-        valB = (b.marketValue && b.marketValue > 0) ? b.marketValue : (parseFloat(b.weight) || 0) * (Number(b.qty) || 0) * spotB;
+      case 8: { // Retail Price (marketValue × qty or melt total)
+        const qtyA8 = Number(a.qty) || 1;
+        const qtyB8 = Number(b.qty) || 1;
+        valA = (a.marketValue && a.marketValue > 0) ? a.marketValue * qtyA8 : (parseFloat(a.weight) || 0) * qtyA8 * spotA;
+        valB = (b.marketValue && b.marketValue > 0) ? b.marketValue * qtyB8 : (parseFloat(b.weight) || 0) * qtyB8 * spotB;
         break;
-      case 9: { // Gain/Loss (computed)
-        const retailA = (a.marketValue && a.marketValue > 0) ? a.marketValue : (parseFloat(a.weight) || 0) * (Number(a.qty) || 0) * spotA;
-        const retailB = (b.marketValue && b.marketValue > 0) ? b.marketValue : (parseFloat(b.weight) || 0) * (Number(b.qty) || 0) * spotB;
-        valA = retailA - (a.price || 0);
-        valB = retailB - (b.price || 0);
+      }
+      case 9: { // Gain/Loss (computed, qty-adjusted)
+        const qtyA9 = Number(a.qty) || 1;
+        const qtyB9 = Number(b.qty) || 1;
+        const retailA = (a.marketValue && a.marketValue > 0) ? a.marketValue * qtyA9 : (parseFloat(a.weight) || 0) * qtyA9 * spotA;
+        const retailB = (b.marketValue && b.marketValue > 0) ? b.marketValue * qtyB9 : (parseFloat(b.weight) || 0) * qtyB9 * spotB;
+        valA = retailA - ((a.price || 0) * qtyA9);
+        valB = retailB - ((b.price || 0) * qtyB9);
         break;
       }
       case 10: valA = a.purchaseLocation; valB = b.purchaseLocation; break; // Location

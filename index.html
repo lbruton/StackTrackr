@@ -909,16 +909,20 @@
          Implementation in inventory.js with format-specific parsing
       ============================================================================= -->
     </div>
-    <!-- ADD ITEM MODAL -->
-    <div class="modal" id="addModal" style="display: none">
+    <!-- UNIFIED ITEM MODAL (Add / Edit) -->
+    <div class="modal" id="itemModal" style="display: none">
       <div class="modal-content">
         <div class="modal-header">
-          <h2>Add Inventory Item</h2>
-          <button aria-label="Close modal" class="modal-close" id="addCloseBtn">×</button>
+          <h2 id="itemModalTitle">Add Inventory Item</h2>
+          <button aria-label="Close modal" class="modal-close" id="itemCloseBtn">×</button>
         </div>
         <div class="modal-body">
           <form id="inventoryForm">
-            <!-- First row of add form fields -->
+            <!-- Hidden fields -->
+            <input type="hidden" id="itemSerial" value="" />
+            <input type="hidden" id="itemCollectable" value="false" />
+            <input type="hidden" id="itemSpotPrice" value="" />
+            <!-- First row of form fields -->
             <div class="grid grid-2">
               <div>
                 <label for="itemMetal">Metal</label>
@@ -955,7 +959,7 @@
                 </div>
               </div>
             </div>
-            <!-- Second row of add form fields -->
+            <!-- Second row of form fields -->
             <div class="grid grid-2">
               <div>
                 <label for="itemName">Name</label>
@@ -974,7 +978,7 @@
                 <input id="itemNotes" type="text" placeholder="Additional notes or comments..." />
               </div>
             </div>
-            <!-- Third row of add form fields -->
+            <!-- Third row of form fields -->
             <div class="grid grid-2">
               <div>
                 <label for="itemPrice">Purchase Price ($)</label>
@@ -997,124 +1001,13 @@
                 <input id="itemCatalog" type="text" placeholder="Numista catalog #" />
               </div>
             </div>
-            <!-- Hidden fields for backward compatibility -->
-            <input type="hidden" id="itemCollectable" value="false" />
-            <input type="hidden" id="itemSpotPrice" value="" />
             <!-- Form action buttons -->
             <div style="margin-top: 1rem; text-align: right">
-              <button class="btn" id="cancelAdd" type="button">Cancel</button>
-              <button class="btn premium" type="submit">Add to Inventory</button>
+              <button class="btn" id="undoChangeBtn" type="button" style="display:none">Undo</button>
+              <button class="btn" id="cancelItem" type="button">Cancel</button>
+              <button class="btn premium" id="itemModalSubmit" type="submit">Add to Inventory</button>
             </div>
           </form>
-        </div>
-      </div>
-    </div>
-    <!-- =============================================================================
-       EDIT MODAL
-
-       Comprehensive item editing interface that appears when:
-       - User clicks on item name in table
-       - Edit button is pressed (in older versions)
-       Features:
-       - All item fields editable including historical spot price
-       - Collectable toggle switch with explanatory text
-       - Real-time validation and premium recalculation
-       - Save/Cancel actions with confirmation
-
-       Modal display controlled by editItem() function in inventory.js
-       Form submission handled in events.js with data validation
-       ============================================================================= -->
-    <div class="modal" id="editModal" style="display: none">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h2>Edit Inventory Item</h2>
-          <button aria-label="Close modal" class="modal-close" id="editCloseBtn">×</button>
-        </div>
-        <div class="modal-body">
-        <form id="editForm">
-          <input type="hidden" id="editSerial" />
-          <input type="hidden" id="editCollectable" value="false" />
-          <input type="hidden" id="editSpotPrice" value="" />
-          <!-- First row of edit form fields -->
-          <div class="grid grid-2">
-            <div>
-              <label for="editMetal">Metal</label>
-              <select id="editMetal">
-                <option value="Silver">Silver</option>
-                <option value="Gold">Gold</option>
-                <option value="Platinum">Platinum</option>
-                <option value="Palladium">Palladium</option>
-              </select>
-            </div>
-            <div>
-              <label for="editType">Type</label>
-              <select id="editType">
-                <option value="Coin">Coin</option>
-                <option value="Bar">Bar</option>
-                <option value="Round">Round</option>
-                <option value="Note">Note</option>
-                <option value="Aurum">Aurum</option>
-                <option value="Other">Other</option>
-              </select>
-            </div>
-            <div>
-              <label for="editQty">Quantity</label>
-              <input id="editQty" min="1" required step="1" type="number" />
-            </div>
-            <div>
-              <label for="editWeight">Weight (oz)</label>
-              <input id="editWeight" min="0.0001" required step="0.0001" type="number" />
-            </div>
-          </div>
-          <!-- Second row of edit form fields -->
-          <div class="grid grid-2">
-            <div>
-              <label for="editName">Name</label>
-              <input id="editName" required type="text" />
-            </div>
-            <div>
-              <label for="editPurchaseLocation">Purchase Location</label>
-              <input id="editPurchaseLocation" type="text" />
-            </div>
-            <div>
-              <label for="editStorageLocation">Storage Location</label>
-              <input id="editStorageLocation" type="text" placeholder="Vault A, Safe B, etc..." />
-            </div>
-            <div>
-              <label for="editNotes">Notes</label>
-              <input id="editNotes" type="text" placeholder="Additional notes or comments..." />
-            </div>
-          </div>
-          <!-- Third row of edit form fields -->
-          <div class="grid grid-2">
-            <div>
-              <label for="editPrice">Purchase Price ($)</label>
-              <div class="currency-input">
-                <input id="editPrice" min="0" step="0.01" type="number" />
-              </div>
-            </div>
-            <div id="editMarketValueField">
-              <label for="editMarketValue">Retail Price ($) <span style="font-weight:normal;opacity:0.6;">(optional)</span></label>
-              <div class="currency-input">
-                <input id="editMarketValue" min="0" step="0.01" type="number" placeholder="Defaults to melt value" />
-              </div>
-            </div>
-            <div id="editDateField">
-              <label for="editDate">Purchase Date</label>
-              <input id="editDate" type="date" />
-            </div>
-            <div>
-              <label for="editCatalog">Catalog (N#)</label>
-              <input id="editCatalog" type="text" placeholder="Numista catalog #" />
-            </div>
-          </div>
-          <!-- Form action buttons -->
-          <div style="margin-top: 1rem; text-align: right">
-            <button class="btn" id="undoChangeBtn" type="button" style="display:none">Undo</button>
-            <button class="btn" id="cancelEdit" type="button">Cancel</button>
-            <button class="btn premium" type="submit">Save Changes</button>
-          </div>
-        </form>
         </div>
       </div>
     </div>

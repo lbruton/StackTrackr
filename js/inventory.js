@@ -94,9 +94,13 @@ const createBackupZip = async () => {
     const csvRows = [];
     for (const item of sortedInventory) {
       const currentSpot = spotPrices[item.metal.toLowerCase()] || 0;
-      const meltValue = (parseFloat(item.weight) || 0) * (Number(item.qty) || 0) * currentSpot;
-      const retailPrice = (item.marketValue && item.marketValue > 0) ? item.marketValue : meltValue;
-      const gainLoss = (item.price && item.price > 0) ? retailPrice - item.price : null;
+      const qty = Number(item.qty) || 1;
+      const meltValue = (parseFloat(item.weight) || 0) * qty * currentSpot;
+      const isManualRetail = item.marketValue && item.marketValue > 0;
+      const retailTotal = isManualRetail ? item.marketValue * qty : meltValue;
+      const purchasePrice = typeof item.price === 'number' ? item.price : parseFloat(item.price) || 0;
+      const purchaseTotal = purchasePrice * qty;
+      const gainLoss = (currentSpot > 0 || isManualRetail) ? retailTotal - purchaseTotal : null;
 
       csvRows.push([
         item.date,
@@ -105,9 +109,9 @@ const createBackupZip = async () => {
         item.name,
         item.qty,
         parseFloat(item.weight).toFixed(4),
-        formatCurrency(item.price),
+        formatCurrency(purchasePrice),
         currentSpot > 0 ? formatCurrency(meltValue) : '—',
-        formatCurrency(retailPrice),
+        formatCurrency(retailTotal),
         gainLoss !== null ? formatCurrency(gainLoss) : '—',
         item.purchaseLocation,
         item.numistaId || '',
@@ -1032,16 +1036,19 @@ const renderTable = () => {
       const originalIdx = inventory.indexOf(item);
       debugLog('renderTable row', i, item.name);
 
-      // Portfolio computed values
+      // Portfolio computed values (all financial columns are qty-adjusted totals)
       const currentSpot = spotPrices[item.metal.toLowerCase()] || 0;
-      const meltValue = (parseFloat(item.weight) || 0) * (Number(item.qty) || 0) * currentSpot;
-      const retailPrice = (item.marketValue && item.marketValue > 0) ? item.marketValue : meltValue;
-      const gainLoss = (item.price && item.price > 0) ? retailPrice - item.price : null;
+      const qty = Number(item.qty) || 1;
+      const meltValue = (parseFloat(item.weight) || 0) * qty * currentSpot;
       const isManualRetail = item.marketValue && item.marketValue > 0;
+      const retailTotal = isManualRetail ? item.marketValue * qty : meltValue;
+      const purchasePrice = typeof item.price === 'number' ? item.price : parseFloat(item.price) || 0;
+      const purchaseTotal = purchasePrice * qty;
+      const gainLoss = (currentSpot > 0 || isManualRetail) ? retailTotal - purchaseTotal : null;
 
       // Format computed displays
       const meltDisplay = currentSpot > 0 ? formatCurrency(meltValue) : '—';
-      const retailDisplay = currentSpot > 0 || isManualRetail ? formatCurrency(retailPrice) : '—';
+      const retailDisplay = currentSpot > 0 || isManualRetail ? formatCurrency(retailTotal) : '—';
       const gainLossDisplay = gainLoss !== null && (currentSpot > 0 || isManualRetail) ? formatCurrency(Math.abs(gainLoss)) : '—';
       const gainLossColor = gainLoss > 0 ? 'var(--success, #4caf50)' : gainLoss < 0 ? 'var(--danger, #f44336)' : 'var(--text-primary)';
       const gainLossPrefix = gainLoss > 0 ? '+' : gainLoss < 0 ? '-' : '';
@@ -1060,11 +1067,9 @@ const renderTable = () => {
       <td class="shrink" data-column="qty">${filterLink('qty', item.qty, 'var(--text-primary)')}</td>
       <td class="shrink" data-column="weight">${filterLink('weight', item.weight, 'var(--text-primary)', formatWeight(item.weight), item.weight < 1 ? 'Grams (g)' : 'Troy ounces (ozt)')}</td>
       <td class="shrink" data-column="purchasePrice" title="Purchase Price (USD) - Click to search eBay sold listings" style="color: var(--text-primary);">
-        ${(item.price && item.price > 0) ?
-          `<a href="#" onclick="event.stopPropagation(); openEbaySearch('${sanitizeHtml(item.metal)} ${sanitizeHtml(item.name)}'); return false;" class="ebay-price-link" title="Search eBay sold listings for ${sanitizeHtml(item.metal)} ${sanitizeHtml(item.name)}">
-            ${formatCurrency(item.price)} <span class="ebay-icon">🔍</span>
-          </a>` :
-          '—'}
+        <a href="#" onclick="event.stopPropagation(); openEbaySearch('${sanitizeHtml(item.metal)} ${sanitizeHtml(item.name)}'); return false;" class="ebay-price-link" title="Search eBay sold listings for ${sanitizeHtml(item.metal)} ${sanitizeHtml(item.name)}">
+          ${formatCurrency(purchasePrice)} <span class="ebay-icon">🔍</span>
+        </a>
       </td>
       <td class="shrink" data-column="meltValue" title="Melt Value (USD)" style="color: var(--text-primary);">${meltDisplay}</td>
       <td class="shrink" data-column="retailPrice" title="${isManualRetail ? 'Manual retail price' : 'Defaults to melt value'}" style="color: var(--text-primary);">${retailDisplay}${isManualRetail ? ' <span style="opacity:0.5;font-size:0.8em;" title="Manually set retail price">*</span>' : ''}</td>
@@ -1167,14 +1172,12 @@ const updateSummary = () => {
         const purchaseTotal = qty * price;
         totalPurchased += purchaseTotal;
 
-        // Retail price: manual marketValue if set, otherwise melt value
-        const retailPrice = (item.marketValue && item.marketValue > 0) ? item.marketValue : meltValue;
-        totalRetailValue += retailPrice;
+        // Retail total: manual marketValue × qty if set, otherwise melt (already qty-adjusted)
+        const retailTotal = (item.marketValue && item.marketValue > 0) ? item.marketValue * qty : meltValue;
+        totalRetailValue += retailTotal;
 
-        // Gain/loss: retail minus purchase (for ALL items uniformly)
-        if (price > 0) {
-          totalGainLoss += retailPrice - purchaseTotal;
-        }
+        // Gain/loss: retail minus purchase (for ALL items, including free/promo items)
+        totalGainLoss += retailTotal - purchaseTotal;
       }
     }
 
@@ -1295,41 +1298,45 @@ const editItem = (idx, logIdx = null) => {
   editingChangeLogIndex = logIdx;
   const item = inventory[idx];
 
-  // Populate edit form
-  elements.editMetal.value = item.composition || item.metal;
-  elements.editName.value = item.name;
-  elements.editQty.value = item.qty;
-  elements.editType.value = item.type;
-  if (item.weight < 1) {
-    elements.editWeight.value = oztToGrams(item.weight).toFixed(2);
-    elements.editWeight.dataset.unit = 'g';
-  } else {
-    elements.editWeight.value = parseFloat(item.weight).toFixed(2);
-    elements.editWeight.dataset.unit = 'oz';
-  }
-  elements.editPrice.value = item.price > 0 ? item.price : '';
-  elements.editMarketValue.value = item.marketValue > 0 ? item.marketValue : '';
-  elements.editPurchaseLocation.value = item.purchaseLocation;
-  elements.editStorageLocation.value = item.storageLocation && item.storageLocation !== 'Unknown' ? item.storageLocation : '';
-  
-  // Add fallback for notes field
-  const notesField = elements.editNotes || document.getElementById('editNotes');
-  if (notesField) {
-    notesField.value = item.notes || '';
-  }
-  
-  elements.editDate.value = item.date;
-  elements.editCatalog.value = item.numistaId || "";
-  elements.editSerial.value = item.serial;
+  // Set modal to edit mode
+  if (elements.itemModalTitle) elements.itemModalTitle.textContent = "Edit Inventory Item";
+  if (elements.itemModalSubmit) elements.itemModalSubmit.textContent = "Save Changes";
 
+  // Populate unified form fields
+  elements.itemMetal.value = item.composition || item.metal;
+  elements.itemName.value = item.name;
+  elements.itemQty.value = item.qty;
+  elements.itemType.value = item.type;
+
+  // Weight: use real <select> instead of dataset.unit (BUG FIX)
+  if (item.weight < 1) {
+    const grams = oztToGrams(item.weight);
+    // Show up to 4 decimal places for sub-gram precision, strip trailing zeros
+    elements.itemWeight.value = parseFloat(grams.toFixed(4));
+    elements.itemWeightUnit.value = 'g';
+  } else {
+    elements.itemWeight.value = parseFloat(item.weight).toFixed(2);
+    elements.itemWeightUnit.value = 'oz';
+  }
+
+  elements.itemPrice.value = item.price > 0 ? item.price : '';
+  if (elements.itemMarketValue) elements.itemMarketValue.value = item.marketValue > 0 ? item.marketValue : '';
+  elements.purchaseLocation.value = item.purchaseLocation || '';
+  elements.storageLocation.value = item.storageLocation && item.storageLocation !== 'Unknown' ? item.storageLocation : '';
+  if (elements.itemNotes) elements.itemNotes.value = item.notes || '';
+  elements.itemDate.value = item.date;
+  if (elements.itemCatalog) elements.itemCatalog.value = item.numistaId || '';
+  if (elements.itemSerial) elements.itemSerial.value = item.serial;
+
+  // Show/hide Undo button based on changelog context
   if (elements.undoChangeBtn) {
     elements.undoChangeBtn.style.display =
       logIdx !== null ? "inline-block" : "none";
   }
 
-  // Show modal
-  if (window.openModalById) openModalById('editModal');
-  else elements.editModal.style.display = 'flex';
+  // Open unified modal
+  if (window.openModalById) openModalById('itemModal');
+  else if (elements.itemModal) elements.itemModal.style.display = 'flex';
 };
 
 /**
@@ -1646,7 +1653,7 @@ const importNumistaCsv = (file, override = false) => {
             const val = parseFloat(String(row[col]).replace(/[^0-9.]/g, ''));
             if (!isNaN(val)) weightGrams = Math.max(weightGrams, val);
           }
-          const weight = parseFloat(gramsToOzt(weightGrams).toFixed(2));
+          const weight = parseFloat(gramsToOzt(weightGrams).toFixed(6));
 
           const isCollectable = false;
 
@@ -1932,9 +1939,13 @@ const exportCsv = () => {
 
   for (const i of sortedInventory) {
     const currentSpot = spotPrices[i.metal.toLowerCase()] || 0;
-    const meltValue = (parseFloat(i.weight) || 0) * (Number(i.qty) || 0) * currentSpot;
-    const retailPrice = (i.marketValue && i.marketValue > 0) ? i.marketValue : meltValue;
-    const gainLoss = (i.price && i.price > 0) ? retailPrice - i.price : 0;
+    const qty = Number(i.qty) || 1;
+    const meltValue = (parseFloat(i.weight) || 0) * qty * currentSpot;
+    const isManualRetail = i.marketValue && i.marketValue > 0;
+    const retailTotal = isManualRetail ? i.marketValue * qty : meltValue;
+    const purchasePrice = typeof i.price === 'number' ? i.price : parseFloat(i.price) || 0;
+    const purchaseTotal = purchasePrice * qty;
+    const gainLoss = (currentSpot > 0 || isManualRetail) ? retailTotal - purchaseTotal : null;
 
     rows.push([
       i.date,
@@ -1943,10 +1954,10 @@ const exportCsv = () => {
       i.name,
       i.qty,
       parseFloat(i.weight).toFixed(4),
-      formatCurrency(i.price),
+      formatCurrency(purchasePrice),
       currentSpot > 0 ? formatCurrency(meltValue) : '—',
-      formatCurrency(retailPrice),
-      i.price > 0 ? formatCurrency(gainLoss) : '—',
+      formatCurrency(retailTotal),
+      gainLoss !== null ? formatCurrency(gainLoss) : '—',
       i.purchaseLocation,
       i.numistaId || '',
       i.notes || ''
@@ -2227,9 +2238,13 @@ const exportPdf = () => {
   // Prepare table data with computed portfolio columns
   const tableData = sortedInventory.map(item => {
     const currentSpot = spotPrices[item.metal.toLowerCase()] || 0;
-    const meltValue = (parseFloat(item.weight) || 0) * (Number(item.qty) || 0) * currentSpot;
-    const retailPrice = (item.marketValue && item.marketValue > 0) ? item.marketValue : meltValue;
-    const gainLoss = (item.price && item.price > 0) ? retailPrice - item.price : null;
+    const qty = Number(item.qty) || 1;
+    const meltValue = (parseFloat(item.weight) || 0) * qty * currentSpot;
+    const isManualRetail = item.marketValue && item.marketValue > 0;
+    const retailTotal = isManualRetail ? item.marketValue * qty : meltValue;
+    const purchasePrice = typeof item.price === 'number' ? item.price : parseFloat(item.price) || 0;
+    const purchaseTotal = purchasePrice * qty;
+    const gainLoss = (currentSpot > 0 || isManualRetail) ? retailTotal - purchaseTotal : null;
 
     return [
       item.date,
@@ -2238,9 +2253,9 @@ const exportPdf = () => {
       item.name,
       item.qty,
       parseFloat(item.weight).toFixed(2),
-      formatCurrency(item.price),
+      formatCurrency(purchasePrice),
       currentSpot > 0 ? formatCurrency(meltValue) : '—',
-      formatCurrency(retailPrice),
+      formatCurrency(retailTotal),
       gainLoss !== null ? formatCurrency(gainLoss) : '—',
       item.purchaseLocation,
       item.numistaId || '',

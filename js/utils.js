@@ -155,7 +155,7 @@ const refreshCompositionOptions = () => {
     }
     return a.localeCompare(b);
   });
-  [elements.itemMetal, elements.editMetal].forEach((sel) => {
+  [elements.itemMetal].forEach((sel) => {
     if (!sel) return;
     const current = sel.value;
     sel.innerHTML = sorted
