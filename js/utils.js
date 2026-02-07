@@ -2631,17 +2631,25 @@ function generateStorageReport(){
  * @param {string} searchTerm - The item name and metal to search for
  */
 function openEbaySearch(searchTerm) {
+  openEbaySoldSearch(searchTerm);
+}
+
+function openEbayBuySearch(searchTerm) {
   if (!searchTerm) return;
-  
-  // Clean and format the search term
   const cleanTerm = searchTerm.trim().replace(/\s+/g, ' ');
   const encodedTerm = encodeURIComponent(cleanTerm);
-  
-  // eBay sold listings URL with search term
+  // eBay active listings URL — items currently for sale, sorted by best match
+  const ebayUrl = `https://www.ebay.com/sch/i.html?_from=R40&_nkw=${encodedTerm}&_sacat=0&LH_BIN=1&_sop=12`;
+  window.open(ebayUrl, `ebay_buy_${Date.now()}`, 'width=1200,height=800,scrollbars=yes,resizable=yes,toolbar=no,location=no,menubar=no,status=no');
+}
+
+function openEbaySoldSearch(searchTerm) {
+  if (!searchTerm) return;
+  const cleanTerm = searchTerm.trim().replace(/\s+/g, ' ');
+  const encodedTerm = encodeURIComponent(cleanTerm);
+  // eBay sold listings URL — completed sales, sorted by most recent
   const ebayUrl = `https://www.ebay.com/sch/i.html?_from=R40&_nkw=${encodedTerm}&_sacat=0&LH_Sold=1&LH_Complete=1&_sop=13`;
-  
-  // Open in 1200px wide popup window without controls
-  window.open(ebayUrl, `ebay_search_${Date.now()}`, 'width=1200,height=800,scrollbars=yes,resizable=yes,toolbar=no,location=no,menubar=no,status=no');
+  window.open(ebayUrl, `ebay_sold_${Date.now()}`, 'width=1200,height=800,scrollbars=yes,resizable=yes,toolbar=no,location=no,menubar=no,status=no');
 }
 
 if (typeof window !== 'undefined') {
@@ -2658,6 +2666,8 @@ if (typeof window !== 'undefined') {
   window.openStorageReportPopup = openStorageReportPopup;
   window.debounce = debounce;
   window.openEbaySearch = openEbaySearch;
+  window.openEbayBuySearch = openEbayBuySearch;
+  window.openEbaySoldSearch = openEbaySoldSearch;
 }
 
 if (typeof module !== 'undefined' && module.exports) {

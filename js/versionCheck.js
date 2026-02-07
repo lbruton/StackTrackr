@@ -91,6 +91,9 @@ const populateVersionModal = (version, html) => {
  */
 const getEmbeddedChangelog = (version) => {
   const changelogs = {
+    "3.06.02": `
+      <li><strong>eBay search split</strong>: Purchase column now searches active listings (what's for sale), Retail column searches sold listings (what items actually sold for)</li>
+    `,
     "3.06.01": `
       <li><strong>Dead CSS cleanup</strong>: Removed 125+ lines of orphaned collectable-* selectors from the legacy feature removal</li>
       <li><strong>eBay search icon</strong>: Replaced oversized emoji-in-red-circle with a clean 12px SVG magnifying glass that themes automatically</li>

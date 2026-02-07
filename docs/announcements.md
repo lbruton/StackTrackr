@@ -1,5 +1,6 @@
 ## What's New
 
+- **eBay search split (v3.06.02)**: Purchase column search icon now opens active eBay listings (what's for sale), Retail column search icon opens sold listings (what items actually sold for) — research buying price and resale value from the right columns
 - **CSS cleanup & icon polish (v3.06.01)**: Removed 125+ lines of dead CSS, replaced eBay emoji icon with clean SVG, overhauled About modal with project links and MIT License
 - **Rebrand to StakTrakr (v3.06.00)**: New canonical brand with multi-domain auto-branding — `staktrakr.com`, `stackrtrackr.com`, and `stackertrackr.com` each display their own brand name automatically
 - **Fraction weight input (v3.05.04)**: Type fractions like `1/1000` or `1 1/2` in the weight field — auto-converts to decimal. Great for Goldbacks and Aurum notes
