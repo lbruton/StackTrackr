@@ -44,7 +44,6 @@ const sortInventory = (data = inventory) => {
         break;
       }
       case 10: valA = a.purchaseLocation; valB = b.purchaseLocation; break; // Location
-      case 11: valA = parseInt(a.numistaId || '0', 10); valB = parseInt(b.numistaId || '0', 10); break; // N#
       default: return 0;
     }
 

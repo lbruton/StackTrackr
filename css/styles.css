@@ -82,14 +82,6 @@
   --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Empty N# column styling */
-.numista-empty {
-  display: inline-block;
-  color: var(--text-muted);
-  font-style: italic;
-  font-size: 0.8rem;
-}
-
 [data-theme="dark"] {
   /* Primary Colors - Dark Mode */
   --primary: #3b82f6;
@@ -1936,30 +1928,6 @@ th[data-column="date"] {
   text-overflow: ellipsis;
 }
 
-/* Keep icon columns compact and always visible */
-td[data-column="notes"],
-td[data-column="edit"],
-td[data-column="delete"] {
-  max-width: 3rem;
-  white-space: normal;
-  position: sticky;
-  background: inherit;
-  z-index: 2;
-}
-
-/* Sticky positioning for action columns */
-#inventoryTable td[data-column="notes"] {
-  right: 6rem;
-}
-
-#inventoryTable td[data-column="edit"] {
-  right: 3rem;
-}
-
-#inventoryTable td[data-column="delete"] {
-  right: 0; /* Stays at far right */
-}
-
 /* Metal column with toggle capability and increased width */
 #inventoryTable th[data-column="metal"],
 #inventoryTable td[data-column="metal"] {
@@ -2199,8 +2167,6 @@ tr:hover {
   /* Further column hiding for very small screens */
   #inventoryTable th[data-column="type"],
   #inventoryTable td[data-column="type"],
-  #inventoryTable th[data-column="numista"],
-  #inventoryTable td[data-column="numista"],
   #inventoryTable th[data-column="metal"],
   #inventoryTable td[data-column="metal"] {
     display: none;
@@ -4495,25 +4461,20 @@ input:disabled + .slider {
 }
 
 /* Sticky action columns: keep notes/edit/delete visible when horizontally scrolling.
-  Collectable column intentionally left non-sticky so it remains adjacent to N#. */
-/* Header cells remain visually consistent with other headers; body cells inherit the row background
+  Header cells use --bg-secondary; body cells inherit the row background
   so striping and hover highlights apply naturally even when cells are sticky. */
-#inventoryTable th.icon-col {
-  background: var(--bg-secondary); /* Match all other headers consistently */
-  color: var(--text-primary);
-  z-index: 7; /* keep headers above body cells */
-}
-
-/* Icon columns are sticky positioned on the right */
 #inventoryTable th.icon-col {
   position: sticky;
   right: 0;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  z-index: 7; /* keep headers above body cells */
 }
 
 #inventoryTable td.icon-col {
   position: sticky;
   right: 0;
-  background: transparent;
+  background: inherit;
   color: inherit;
   z-index: 6;
 }
@@ -4573,8 +4534,6 @@ input:disabled + .slider {
 /* MOBILE PRIORITY RULES — Portfolio layout
    Keep Name, Purchase, Melt, Retail visible on tight screens. */
 @media (max-width: 768px) {
-  #inventoryTable th[data-column="numista"],
-  #inventoryTable td[data-column="numista"],
   #inventoryTable th[data-column="type"],
   #inventoryTable td[data-column="type"] {
     display: none;
@@ -4787,28 +4746,6 @@ th {
   color: #1d4ed8;
 }
 
-/* Numista badge - improved visibility */
-.numista-badge {
-  display: inline-block;
-  padding: 0.2rem 0.4rem;
-  background-color: #1d4ed8;
-  color: white;
-  border-radius: 0.3rem;
-  font-size: 0.75rem;
-  font-weight: 600;
-  transition: all 0.2s ease;
-}
-
-[data-theme="dark"] .numista-badge {
-  background-color: #3b82f6;
-  color: #111827;
-}
-
-.numista-badge:hover {
-  transform: scale(1.05);
-  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-}
-
 /* eBay price link styling */
 .ebay-price-link {
   text-decoration: none;
@@ -4840,14 +4777,6 @@ th {
   background-color: #f05545;
 }
 
-/* Empty N# column styling */
-.numista-empty {
-  color: var(--text-muted);
-  font-style: italic;
-  font-size: 0.7rem;
-  text-align: center;
-}
-
 /* Responsive catalog link with improved mobile experience */
 @media (max-width: 768px) {
   .catalog-link {
@@ -4863,10 +4792,6 @@ th {
 
 @media (max-width: 480px) {
   .catalog-link {
-    font-size: 0.6rem;
-  }
-  
-  .numista-empty {
     font-size: 0.6rem;
   }
 }
@@ -5296,7 +5221,7 @@ th {
 
 /* Remove ellipsis from action buttons - clean look */
 #inventoryTable td.icon-col {
-  text-overflow: none !important;
+  text-overflow: clip !important;
   overflow: visible !important;
 }
 
@@ -5309,29 +5234,6 @@ th {
 }
 
 /* Removed hover effect to prevent cell flooding */
-
-/* Fixed action columns styling */
-#inventoryTable th[data-column="notes"],
-#inventoryTable th[data-column="edit"],
-#inventoryTable th[data-column="delete"],
-#inventoryTable td[data-column="notes"],
-#inventoryTable td[data-column="edit"],
-#inventoryTable td[data-column="delete"] {
-  position: sticky;
-  right: 0;
-  background: var(--bg-secondary);
-  z-index: 5;
-  min-width: 50px;
-  width: 50px;
-}
-
-/* Ensure header styling consistency for action columns */
-#inventoryTable th[data-column="notes"],
-#inventoryTable th[data-column="edit"],
-#inventoryTable th[data-column="delete"] {
-  background: var(--bg-secondary) !important;
-  color: var(--text-secondary) !important;
-}
 
 /* Portfolio column styling */
 #inventoryTable td[data-column="meltValue"],
@@ -5357,8 +5259,6 @@ th {
 }
 
 @media (max-width: 768px) {
-  #inventoryTable th[data-column="numista"],
-  #inventoryTable td[data-column="numista"],
   #inventoryTable th[data-column="type"],
   #inventoryTable td[data-column="type"] {
     display: none;
@@ -5458,7 +5358,7 @@ th {
   flex-shrink: 0;
 }
 
-/* All Price columns - increased width to prevent ellipsis */
+/* All Price columns — width and layout (th + td) */
 #inventoryTable th[data-column="purchasePrice"],
 #inventoryTable td[data-column="purchasePrice"],
 #inventoryTable th[data-column="meltValue"],
@@ -5470,8 +5370,6 @@ th {
   max-width: 110px !important;
   width: 110px !important;
   min-width: 110px !important;
-  font-family: var(--font-mono, 'Courier New', monospace);
-  font-size: 0.85rem;
   text-align: right;
   padding: 0.5rem 0.75rem;
   white-space: nowrap;
@@ -5479,7 +5377,7 @@ th {
   text-overflow: ellipsis;
 }
 
-/* Header styling for price columns */
+/* Price headers — inherit system font from .header-text */
 #inventoryTable th[data-column="purchasePrice"],
 #inventoryTable th[data-column="meltValue"],
 #inventoryTable th[data-column="retailPrice"],
@@ -5489,11 +5387,13 @@ th {
   color: var(--text-secondary);
 }
 
-/* Price columns consistent weight */
+/* Price data cells — monospace for numeric alignment */
 #inventoryTable td[data-column="purchasePrice"],
 #inventoryTable td[data-column="meltValue"],
 #inventoryTable td[data-column="retailPrice"],
 #inventoryTable td[data-column="gainLoss"] {
+  font-family: var(--font-mono, 'Courier New', monospace);
+  font-size: 0.85rem;
   font-weight: 500;
 }
 

@@ -87,6 +87,13 @@ const populateVersionModal = (version, html) => {
  */
 const getEmbeddedChangelog = (version) => {
   const changelogs = {
+    "3.04.88": `
+      <li><strong>Table Polish (Increment 2)</strong>: Removed Numista column from table (15 to 14 columns) - N# data preserved in modals, exports, and data model</li>
+      <li><strong>Header Font Fix</strong>: Price column headers now use system font instead of monospace - data cells remain monospace for alignment</li>
+      <li><strong>Action Column CSS</strong>: Consolidated three conflicting CSS rulesets for Notes/Edit/Delete into one authoritative set with proper sticky offsets</li>
+      <li><strong>Roadmap</strong>: Added ROADMAP.md documenting project direction and planned work</li>
+      <li><strong>Files Updated</strong>: index.html, js/inventory.js, js/sorting.js, css/styles.css, js/constants.js, ROADMAP.md</li>
+    `,
     "3.04.86": `
       <li><strong>Centered Name header</strong>: Wrapped "Name" header text with .header-text span for consistent alignment</li>
       <li><strong>Cleanup</strong>: Removed obsolete #inventoryTable th[data-column="name"] centering rule</li>

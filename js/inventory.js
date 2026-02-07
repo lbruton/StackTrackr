@@ -1072,11 +1072,6 @@ const renderTable = () => {
       <td class="shrink" data-column="purchaseLocation">
         ${formatPurchaseLocation(item.purchaseLocation)}
       </td>
-      <td class="shrink" data-column="numista">${item.numistaId ? `
-        <a href="#" onclick="openNumistaModal('${sanitizeHtml(item.numistaId)}', '${sanitizeHtml(item.name)}'); return false;" title="N#${sanitizeHtml(item.numistaId)} - open numista.com" class="catalog-link">
-          <span class="numista-badge">N#${sanitizeHtml(item.numistaId)}</span>
-        </a>
-      ` : '<span class="numista-empty">—</span>'}</td>
       <td class="icon-col" data-column="notes"><button class="icon-btn action-icon ${item.notes && item.notes.trim() ? 'has-notes' : ''}" role="button" tabindex="0" onclick="showNotes(${originalIdx})" aria-label="View notes" title="View notes">
         <svg class="icon-svg notes-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15V5a2 2 0 0 0-2-2H7L3 7v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2z"/></svg>
       </button></td>
@@ -1093,7 +1088,7 @@ const renderTable = () => {
     const visibleCount = endIndex - startIndex;
     const placeholders = Array.from(
       { length: Math.max(0, itemsPerPage - visibleCount) },
-      () => '<tr><td class="shrink" colspan="15">&nbsp;</td></tr>'
+      () => '<tr><td class="shrink" colspan="14">&nbsp;</td></tr>'
     );
 
     // Find tbody element directly if cached version fails
