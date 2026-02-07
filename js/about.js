@@ -267,6 +267,7 @@ const setupAckModalEvents = () => {
  */
 const getEmbeddedWhatsNew = () => {
   return `
+    <li><strong>v3.06.01 – CSS cleanup &amp; icon polish</strong>: Removed 125+ lines of dead CSS, replaced eBay emoji icon with clean SVG, overhauled About modal with live site and project links.</li>
     <li><strong>v3.06.00 – Rebrand to StakTrakr</strong>: New canonical brand with multi-domain auto-branding — staktrakr.com, stackrtrackr.com, and stackertrackr.com each show their own name.</li>
     <li><strong>v3.05.04 – Fraction weight input</strong>: Type fractions like 1/1000 or 1 1/2 in the weight field — auto-converts to decimal for Goldbacks and Aurum notes.</li>
     <li><strong>v3.05.04 – Duplicate item button</strong>: Copy icon in action column opens add modal pre-filled from source item. Date resets to today, qty to 1.</li>

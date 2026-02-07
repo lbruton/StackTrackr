@@ -91,6 +91,11 @@ const populateVersionModal = (version, html) => {
  */
 const getEmbeddedChangelog = (version) => {
   const changelogs = {
+    "3.06.01": `
+      <li><strong>Dead CSS cleanup</strong>: Removed 125+ lines of orphaned collectable-* selectors from the legacy feature removal</li>
+      <li><strong>eBay search icon</strong>: Replaced oversized emoji-in-red-circle with a clean 12px SVG magnifying glass that themes automatically</li>
+      <li><strong>About modal overhaul</strong>: New description with live site, GitHub, Community, and MIT License links. Removed duplicated privacy notice from version modal</li>
+    `,
     "3.06.00": `
       <li><strong>Rebrand to StakTrakr</strong>: Updated canonical brand from "StackTrackr" to "StakTrakr" — logo, titles, exports, Docker, documentation</li>
       <li><strong>Multi-domain auto-branding</strong>: staktrakr.com, stackrtrackr.com, and stackertrackr.com each show their own brand name automatically</li>
