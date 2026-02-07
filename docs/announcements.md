@@ -1,5 +1,6 @@
 ## What's New
 
+- **Light & Sepia theme contrast pass (v3.07.01)**: Clean gray-to-white light palette with visible card elevation. Darkened metal/type text colors to pass WCAG AA in both themes. Removed sticky action columns and filter-based hover lag. Estimated Retail/Gain-Loss now uses muted text color instead of opacity. Sepia: removed global filter, fixed text contrast, warm info color, visible borders and shadows
 - **Portfolio visibility overhaul (v3.07.00)**: Confidence styling for Retail/Gain-Loss (estimated vs confirmed), new "All Metals" totals card with Avg Cost/oz and clickable breakdown modal showing by-metal and by-location allocation, metal detail modals now show full Purchase/Melt/Retail/Gain-Loss breakdown per type and location in a compact 2x2 grid
 - **eBay search split (v3.06.02)**: Purchase column search icon now opens active eBay listings (what's for sale), Retail column search icon opens sold listings (what items actually sold for) — research buying price and resale value from the right columns
 - **CSS cleanup & icon polish (v3.06.01)**: Removed 125+ lines of dead CSS, replaced eBay emoji icon with clean SVG, overhauled About modal with project links and MIT License
@@ -16,7 +17,6 @@
 
 ## Development Roadmap
 
-- **Light & Sepia theme contrast pass**: Fix washed-out light theme (gray layering instead of pure white), tone down over-saturated sepia, fix action column backgrounds, WCAG font contrast audit
 - **Filter chips rebuild**: Top-N per category model, normalized name chips, chip settings modal
 - **N# column restore**: Re-add Numista catalog column with filter-on-click and iframe link
 - **Retail column UX**: Inline retail editing with pencil icon, confidence styling for manual vs auto-computed prices

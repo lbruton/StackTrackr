@@ -21,12 +21,12 @@
     /* Disclaimer warning color */
     --disclaimer-color: var(--warning);
 
-  /* Background Tokens - Darker Light Mode */
-  --bg: #e7edf2;
-  --bg-elev-1: #d7dfe6;
-  --bg-elev-2: #bec7cf;
-  --surface: #d7dfe6;
-  --surface-alt: #bec7cf;
+  /* Background Tokens - Clean Light Mode */
+  --bg: #eef2f7;
+  --bg-elev-1: #e2e8f0;
+  --bg-elev-2: #d5dce6;
+  --surface: #ffffff;
+  --surface-alt: #e2e8f0;
 
   /* Map existing background variables */
   --bg-primary: var(--bg);
@@ -51,22 +51,22 @@
   --shadow-lg:
     0 10px 15px -3px rgb(0 0 0 / 0.15), 0 4px 6px -4px rgb(0 0 0 / 0.1);
 
-  /* Metal-specific Colors - tuned for light mode */
-  --silver: #6b7280;
-  --gold: #b45309;
+  /* Metal-specific Colors - tuned for light mode (WCAG AA on #eef2f7) */
+  --silver: #5f6673;
+  --gold: #a04808;
   --platinum: #4b5563;
-  --palladium: #7c3aed;
+  --palladium: #6d35d0;
 
-  /* Inventory Type Colors */
-  --type-coin-bg: #d97706;
-  --type-coin-text: #f8fafc;
-  --type-round-bg: #6b7280;
+  /* Inventory Type Colors (darkened for text readability on light backgrounds) */
+  --type-coin-bg: #b85f00;
+  --type-coin-text: #ffffff;
+  --type-round-bg: #5a6170;
   --type-round-text: #f8fafc;
-  --type-bar-bg: #eab308;
-  --type-bar-text: #000000;
-  --type-note-bg: #059669;
+  --type-bar-bg: #946d00;
+  --type-bar-text: #ffffff;
+  --type-note-bg: #047857;
   --type-note-text: #f8fafc;
-  --type-other-bg: #7c3aed;
+  --type-other-bg: #6d35d0;
   --type-other-text: #f8fafc;
 
   /* Component Spacing */
@@ -147,52 +147,50 @@
   --secondary-hover: #6d5c3f;
   --success: #698f3f;
   --success-hover: #577a34;
-  --info: #0ea5e9;
-  --info-hover: #0284c7;
+  --info: #1d7a8a;
+  --info-hover: #16616e;
   --warning: #d97706;
   --warning-hover: #b45309;
   --danger: #dc2626;
   --danger-hover: #b91c1c;
 
-  /* Metal-specific Colors - Sepia tone */
-  --silver: #a8a29e;
-  --gold: #b58900;
-  --platinum: #8d8d8d;
-  --palladium: #a58b6f;
+  /* Metal-specific Colors - Sepia tone (darkened for WCAG AA text contrast on warm bg) */
+  --silver: #706b66;
+  --gold: #80620a;
+  --platinum: #5a5a5a;
+  --palladium: #6b5640;
 
-  /* Inventory Type Colors */
-  --type-coin-bg: #c4650e;
+  /* Inventory Type Colors (darkened for text readability on sepia backgrounds) */
+  --type-coin-bg: #a35008;
   --type-coin-text: #ffffff;
-  --type-round-bg: #807363;
+  --type-round-bg: #5e544a;
   --type-round-text: #ffffff;
-  --type-bar-bg: #d8a500;
-  --type-bar-text: #3e2f1e;
-  --type-note-bg: #0b7d61;
+  --type-bar-bg: #8a6b00;
+  --type-bar-text: #ffffff;
+  --type-note-bg: #066b52;
   --type-note-text: #ffffff;
-  --type-other-bg: #7b4dbf;
+  --type-other-bg: #6a3fa8;
   --type-other-text: #ffffff;
 
   /* Background Colors - Sepia Mode */
   --bg-primary: #f2e7d5;
   --bg-secondary: #e9ddc8;
-  --bg-tertiary: #c0b198; /* Darker for better logo contrast */
+  --bg-tertiary: #d0c4a8; /* Lighter — separates from border-hover */
   --bg-card: #f2e7d5;
 
   /* Text Colors - Sepia Mode */
   --text-primary: #3e2f1e;
-  --text-secondary: #5a4a36;
-  --text-muted: #6f604e;
+  --text-secondary: #4f3f2c;
+  --text-muted: #5c4e3a;
   --chip-text: #3e2f1e;
 
   /* Border & Shadow - Sepia Mode */
   --border: #d1c2a5;
-  --border-hover: #c0b198;
-  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --border-hover: #a89878;
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.12);
   --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
   --shadow-lg:
     0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-
-  filter: sepia(30%);
 }
 
 /* =============================================================================
@@ -4447,39 +4445,15 @@ input:disabled + .slider {
   margin: 0 auto 0.25rem;
 }
 
-/* Sticky action columns: keep edit/duplicate/delete visible when horizontally scrolling.
-  Header cells use --bg-secondary; body cells inherit the row background
-  so striping and hover highlights apply naturally even when cells are sticky. */
+/* Action column styling — no sticky positioning needed (table fits viewport) */
 #inventoryTable th.icon-col {
-  position: sticky;
-  right: 0;
   background: var(--bg-secondary);
   color: var(--text-primary);
-  z-index: 7; /* keep headers above body cells */
 }
 
 #inventoryTable td.icon-col {
-  position: sticky;
-  right: 0;
   background: inherit;
   color: inherit;
-  z-index: 6;
-}
-
-/* Layered right offsets for sticky icon columns (right-to-left stacking). */
-#inventoryTable th[data-column="delete"],
-#inventoryTable td[data-column="delete"] {
-  right: 0;
-}
-
-#inventoryTable th[data-column="duplicate"],
-#inventoryTable td[data-column="duplicate"] {
-  right: 3.6rem;
-}
-
-#inventoryTable th[data-column="edit"],
-#inventoryTable td[data-column="edit"] {
-  right: 7.2rem;
 }
 
 /* Icon button base for action cells */
@@ -4624,14 +4598,16 @@ th {
   border-bottom: 2px solid var(--bg-secondary);
 }
 
-/* Subtle alternating row background for better separation */
+/* Alternating row background using theme tokens */
 #inventoryTable tbody tr:nth-child(even) {
-  background: rgba(30, 41, 59, 0.3);
+  background: var(--bg-secondary);
 }
 
-/* Hover state for row interaction */
+/* Hover state for row interaction — override generic filter:brightness hover */
 #inventoryTable tbody tr:hover {
-  background: rgba(30, 41, 59, 0.5);
+  background: var(--bg-tertiary);
+  filter: none;
+  box-shadow: none;
 }
 
 /* Keep visual clarity on very small screens */
@@ -4719,14 +4695,14 @@ th {
 /* Retail/Gain-Loss confidence styling — estimated (melt fallback) vs confirmed (manual) */
 .retail-estimated {
   font-style: italic;
-  opacity: 0.65;
+  color: var(--text-muted);
 }
 .retail-confirmed {
   font-weight: 600;
 }
 .gainloss-estimated {
   font-style: italic;
-  opacity: 0.65;
+  color: var(--text-muted);
 }
 
 /* Responsive catalog link with improved mobile experience */
@@ -5242,19 +5218,6 @@ th {
 /* Modern table cell styling */
 #inventoryTable td {
   border-bottom: 1px solid var(--border);
-  transition: background-color 0.2s ease;
-}
-
-#inventoryTable tr:hover td:not(:empty):not([data-empty="true"]):not(.na-value):not(.empty-cell) {
-  background-color: var(--bg-secondary);
-}
-
-/* Prevent hover effects on empty cells and cells with dashes */
-#inventoryTable tr:hover td:empty,
-#inventoryTable tr:hover td[data-empty="true"],
-#inventoryTable tr:hover td.na-value,
-#inventoryTable tr:hover td.empty-cell {
-  background-color: transparent !important;
 }
 
 /* Legacy price column styling - consolidated above */
