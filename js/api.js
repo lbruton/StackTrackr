@@ -1746,7 +1746,7 @@ const downloadCompleteBackup = async () => {
 
     // 4. Create API documentation and restoration guide
     const backupData = createBackupData();
-    const apiInfo = `# StackrTrackr - Complete Backup
+    const apiInfo = `# StackTrackr - Complete Backup
 
 Generated: ${new Date().toLocaleString()}
 Application Version: ${APP_VERSION}
@@ -1798,7 +1798,7 @@ ${
 2. Reconfigure API settings if needed (keys not backed up for security)
 3. Use **complete-backup-${timestamp}.json** for full data restoration if needed
 
-*This backup was created by StackrTrackr v${APP_VERSION}*
+*This backup was created by StackTrackr v${APP_VERSION}*
 `;
 
     downloadFile(`backup-info-${timestamp}.md`, apiInfo, "text/markdown");

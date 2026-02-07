@@ -9,7 +9,7 @@
   function log(level,args){
     if(!isEnabled()) return;
     try{
-      const parts = ['[StackrTrackr]', new Date().toISOString(), level+':'].concat([].slice.call(args));
+      const parts = ['[StackTrackr]', new Date().toISOString(), level+':'].concat([].slice.call(args));
       history.push(parts.join(' '));
       if(level==='WARN') console.warn.apply(console,parts);
       else if(level==='ERROR') console.error.apply(console,parts);

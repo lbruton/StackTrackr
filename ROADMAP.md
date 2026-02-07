@@ -1,6 +1,6 @@
-# StackrTrackr Roadmap
+# StackTrackr Roadmap
 
-Project direction and planned work for the StackrTrackr precious metals inventory tracker.
+Project direction and planned work for the StackTrackr precious metals inventory tracker.
 
 ---
 

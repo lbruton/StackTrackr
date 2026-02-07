@@ -1,4 +1,4 @@
-# StackrTrackr
+# StackTrackr
 
 A client-side precious metals inventory tracker for Silver, Gold, Platinum, and Palladium. Runs entirely in the browser with no backend dependencies.
 

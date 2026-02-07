@@ -258,7 +258,7 @@ const generateBackupHtml = (sortedInventory, timeFormatted) => {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>StackrTrackr Backup</title>
+  <title>StackTrackr Backup</title>
   <style>
     body { font-family: Arial, sans-serif; margin: 20px; }
     h1 { color: #2563eb; }
@@ -269,7 +269,7 @@ const generateBackupHtml = (sortedInventory, timeFormatted) => {
   </style>
 </head>
 <body>
-  <h1>StackrTrackr Backup</h1>
+  <h1>StackTrackr Backup</h1>
   <div class="backup-info">
     <strong>Backup Created:</strong> ${timeFormatted}<br>
     <strong>Application Version:</strong> ${APP_VERSION}<br>
@@ -374,7 +374,7 @@ RESTORATION INSTRUCTIONS:
 SUPPORT:
 --------
 
-For questions about this backup or the StackrTrackr application:
+For questions about this backup or the StackTrackr application:
 - Check the application documentation
 - Verify file integrity before restoration
 - Test imports with sample data first
@@ -2229,7 +2229,7 @@ const exportPdf = () => {
 
   // Add title
   doc.setFontSize(16);
-  doc.text("StackrTrackr", 14, 15);
+  doc.text("StackTrackr", 14, 15);
 
   // Add date
   doc.setFontSize(10);

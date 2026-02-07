@@ -1,9 +1,17 @@
 # Changelog
 
-All notable changes to StackrTrackr will be documented in this file.
+All notable changes to StackTrackr will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [3.05.02] - 2026-02-07
+
+### Changed
+
+- **Full rebrand**: Renamed "StackrTrackr" to "StackTrackr" across entire codebase — SVG banner (all 3 themes), standalone logo, HTML titles, aria-labels, debug logs, backup/export templates, PDF headers, storage reports, constants, Docker labels, documentation, and CLAUDE.md
+- **Footer cleanup**: Removed outdated "previous build" and "alpha release" links, simplified to subreddit and GitHub Issues reporting
+- **Copyright**: Updated footer from "2025" to "2025-2026"
 
 ## [3.05.01] - 2026-02-07
 
@@ -68,7 +76,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Initial Release
 
-- Initial StackrTrackr precious metals inventory tracking application
+- Initial StackTrackr precious metals inventory tracking application
 - Client-side localStorage persistence with file:// protocol support
 - Multiple spot price API providers (metals-api.com, fcsapi.com, etc.)
 - CSV import/export functionality with ZIP backup support

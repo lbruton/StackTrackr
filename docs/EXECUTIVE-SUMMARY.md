@@ -1,4 +1,4 @@
-# StackrTrackr - Executive Summary
+# StackTrackr - Executive Summary
 
 > ✨ **Migrated to Linear**: [STACK-7 - Architecture Overview & Executive Summary](https://linear.app/hextrackr/issue/STACK-7)
 
@@ -10,7 +10,7 @@
 
 ## Overview
 
-StackrTrackr is a sophisticated **client-side precious metals inventory tracking application** built entirely with vanilla JavaScript. It requires **NO backend infrastructure**, runs on the `file://` protocol, and uses localStorage for persistence.
+StackTrackr is a sophisticated **client-side precious metals inventory tracking application** built entirely with vanilla JavaScript. It requires **NO backend infrastructure**, runs on the `file://` protocol, and uses localStorage for persistence.
 
 ### Core Capabilities
 - **Metals Tracked:** Silver, Gold, Platinum, Palladium
@@ -163,7 +163,7 @@ lossProfit = currentValue - price;
 │ │$X,XXX │$X,XXX │ $X,XXX │$X,XXX │$X,XXX │  [Click for charts]              │
 │ └───────┴───────┴───────┴───────┴───────┘                                   │
 ├──────────────────────────────────────────────────────────────────────────────┤
-│ StackrTrackr v3.04.87 │ Storage: XX% │ [Change Log] │ [Backup Reminder]    │
+│ StackTrackr v3.04.87 │ Storage: XX% │ [Change Log] │ [Backup Reminder]    │
 └──────────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -332,7 +332,7 @@ sudo docker ps                     # Check status
 ## File Structure
 
 ```
-/home/lbruton/StackrTrackr/
+/home/lbruton/StackTrackr/
 ├── index.html                    # Main application (117KB)
 ├── Dockerfile                    # nginx:alpine container
 ├── docker-compose.yml            # Container orchestration

@@ -42,7 +42,7 @@
   <!-- Main title with drop shadow -->
   <g filter="url(#dropShadow)">
     <text x="50" y="80" font-family="Arial, sans-serif" font-size="72" font-weight="bold">
-      <tspan fill="url(#silverGradient)">Stackr</tspan><tspan fill="url(#goldGradient)">Trackr</tspan>
+      <tspan fill="url(#silverGradient)">Stack</tspan><tspan fill="url(#goldGradient)">Trackr</tspan>
     </text>
   </g>
   
