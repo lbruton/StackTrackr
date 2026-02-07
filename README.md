@@ -71,4 +71,6 @@ docs/               Architecture documentation
 
 ## License
 
-Personal project. Not currently accepting contributions.
+MIT License. See [LICENSE](LICENSE) for details.
+
+Contributions via fork and pull request are welcome.
