@@ -1,6 +1,6 @@
 // CATALOG API SYSTEM
 // =============================================================================
-// Provider-agnostic catalog API architecture for StackTrackr
+// Provider-agnostic catalog API architecture for StakTrakr
 // Designed for easy swapping between Numista and rSynk APIs
 
 /**
@@ -408,7 +408,7 @@ class LocalProvider extends CatalogProvider {
   loadLocalData() {
     // Load any cached catalog data from localStorage
     try {
-      const stored = localStorage.getItem('stackrtrackr.catalog.cache');
+      const stored = localStorage.getItem('staktrakr.catalog.cache');
       return stored ? JSON.parse(stored) : {};
     } catch (error) {
       console.warn('Could not load local catalog cache:', error);
@@ -445,7 +445,7 @@ class LocalProvider extends CatalogProvider {
   cacheItem(catalogId, itemData) {
     this.localData[catalogId] = itemData;
     try {
-      localStorage.setItem('stackrtrackr.catalog.cache', JSON.stringify(this.localData));
+      localStorage.setItem('staktrakr.catalog.cache', JSON.stringify(this.localData));
     } catch (error) {
       console.warn('Could not cache item data:', error);
     }
@@ -471,7 +471,7 @@ class CatalogAPI {
    */
   loadSettings() {
     try {
-      const stored = localStorage.getItem('stackrtrackr.catalog.settings');
+      const stored = localStorage.getItem('staktrakr.catalog.settings');
       return stored ? JSON.parse(stored) : {
         activeProvider: 'numista',
         numistaApiKey: '',
@@ -490,7 +490,7 @@ class CatalogAPI {
    */
   saveSettings() {
     try {
-      localStorage.setItem('stackrtrackr.catalog.settings', JSON.stringify(this.settings));
+      localStorage.setItem('staktrakr.catalog.settings', JSON.stringify(this.settings));
     } catch (error) {
       console.warn('Could not save catalog API settings:', error);
     }

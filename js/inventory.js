@@ -258,7 +258,7 @@ const generateBackupHtml = (sortedInventory, timeFormatted) => {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>StackTrackr Backup</title>
+  <title>StakTrakr Backup</title>
   <style>
     body { font-family: Arial, sans-serif; margin: 20px; }
     h1 { color: #2563eb; }
@@ -269,7 +269,7 @@ const generateBackupHtml = (sortedInventory, timeFormatted) => {
   </style>
 </head>
 <body>
-  <h1>StackTrackr Backup</h1>
+  <h1>StakTrakr Backup</h1>
   <div class="backup-info">
     <strong>Backup Created:</strong> ${timeFormatted}<br>
     <strong>Application Version:</strong> ${APP_VERSION}<br>
@@ -374,7 +374,7 @@ RESTORATION INSTRUCTIONS:
 SUPPORT:
 --------
 
-For questions about this backup or the StackTrackr application:
+For questions about this backup or the StakTrakr application:
 - Check the application documentation
 - Verify file integrity before restoration
 - Test imports with sample data first
@@ -1618,7 +1618,7 @@ const importCsv = (file, override = false) => {
           updateStorageStats();
         }
         debugLog('importCsv complete', deduped.length, 'items added');
-        if (localStorage.getItem('stackrtrackr.debug') && typeof window.showDebugModal === 'function') {
+        if (localStorage.getItem('staktrakr.debug') && typeof window.showDebugModal === 'function') {
           showDebugModal();
         }
       },
@@ -2211,7 +2211,7 @@ const importJson = (file, override = false) => {
         updateStorageStats();
       }
       debugLog('importJson complete', deduped.length, 'items added');
-      if (localStorage.getItem('stackrtrackr.debug') && typeof window.showDebugModal === 'function') {
+      if (localStorage.getItem('staktrakr.debug') && typeof window.showDebugModal === 'function') {
         showDebugModal();
       }
     } catch (error) {
@@ -2277,7 +2277,7 @@ const exportPdf = () => {
 
   // Add title
   doc.setFontSize(16);
-  doc.text("StackTrackr", 14, 15);
+  doc.text("StakTrakr", 14, 15);
 
   // Add date
   doc.setFontSize(10);

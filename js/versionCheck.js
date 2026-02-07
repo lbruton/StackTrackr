@@ -91,6 +91,11 @@ const populateVersionModal = (version, html) => {
  */
 const getEmbeddedChangelog = (version) => {
   const changelogs = {
+    "3.06.00": `
+      <li><strong>Rebrand to StakTrakr</strong>: Updated canonical brand from "StackTrackr" to "StakTrakr" — logo, titles, exports, Docker, documentation</li>
+      <li><strong>Multi-domain auto-branding</strong>: staktrakr.com, stackrtrackr.com, and stackertrackr.com each show their own brand name automatically</li>
+      <li><strong>localStorage key migration</strong>: Renamed stackrtrackr.* keys to staktrakr.* with backwards-compatible debug flag</li>
+    `,
     "3.05.04": `
       <li><strong>Fraction weight input</strong>: Weight field now accepts fractions like 1/1000 or 1 1/2 — auto-converts to decimal</li>
       <li><strong>Duplicate item button</strong>: Copy icon in action column opens add modal pre-filled from source item (date = today, qty = 1)</li>
@@ -103,7 +108,7 @@ const getEmbeddedChangelog = (version) => {
     `,
     "3.05.01": `
       <li><strong>What's New modal fix</strong>: Changelog and roadmap now populate correctly from CHANGELOG.md and docs/announcements.md</li>
-      <li><strong>GitHub URLs updated</strong>: All repository links now point to the correct StackTrackr repository</li>
+      <li><strong>GitHub URLs updated</strong>: All repository links now point to the correct repository</li>
       <li><strong>Changelog parser</strong>: Updated to read Keep a Changelog format instead of legacy format</li>
     `,
     "3.05.00": `

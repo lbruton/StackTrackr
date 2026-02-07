@@ -1,5 +1,5 @@
 /**
- * Autocomplete Module for StackTrackr
+ * Autocomplete Module for StakTrakr
  * 
  * Provides lookup table generation and management for fuzzy autocomplete functionality.
  * Works with the fuzzy-search.js module to provide intelligent search suggestions.

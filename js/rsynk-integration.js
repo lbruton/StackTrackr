@@ -1,12 +1,12 @@
 /**
- * rSynk Client Integration for StackTrackr
+ * rSynk Client Integration for StakTrakr
  * 
  * Integrates local LLM-powered search enhancement via rEngine API relay
  * Provides fallback to local AI and traditional search for reliability
  * 
  * @fileoverview rSynk client-side integration
  * @version 1.0.0
- * @requires StackTrackr core functionality
+ * @requires StakTrakr core functionality
  */
 
 /**
@@ -128,7 +128,7 @@ class rSynkClient {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'User-Agent': 'StackTrackr-rSynk/1.0'
+          'User-Agent': 'StakTrakr-rSynk/1.0'
         },
         body: JSON.stringify(requestData),
         timeout: this.config.timeout
@@ -174,7 +174,7 @@ class rSynkClient {
   }
   
   /**
-   * Process rSynk server response and integrate with StackTrackr
+   * Process rSynk server response and integrate with StakTrakr
    * @param {Object} rsynkResult - Raw rSynk response
    * @param {string} originalQuery - Original search query
    * @param {Array} inventory - Current inventory
@@ -377,7 +377,7 @@ class rSynkClient {
   }
   
   /**
-   * Fallback to traditional StackTrackr search
+   * Fallback to traditional StakTrakr search
    * @param {string} query - Search query
    * @param {Array} inventory - Current inventory
    * @returns {Object} Traditional search results
@@ -395,13 +395,13 @@ class rSynkClient {
   }
   
   /**
-   * Get traditional search results using existing StackTrackr logic
+   * Get traditional search results using existing StakTrakr logic
    * @param {string} query - Search query
    * @param {Array} inventory - Current inventory
    * @returns {Array} Traditional search results
    */
   getTraditionalResults(query, inventory) {
-    // Use existing StackTrackr search if available
+    // Use existing StakTrakr search if available
     if (typeof window.filterInventory === 'function') {
       const originalQuery = window.searchQuery;
       window.searchQuery = query;
@@ -575,7 +575,7 @@ function initializerSynk() {
   // Create global rSynk instance
   window.rSynk = new rSynkClient(RSYNK_CONFIG);
   
-  // Integrate with existing StackTrackr search
+  // Integrate with existing StakTrakr search
   if (typeof window.filterInventory === 'function') {
     const originalFilterInventory = window.filterInventory;
     

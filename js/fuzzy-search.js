@@ -1,4 +1,4 @@
-// Fuzzy Search Engine Module for StackTrackr
+// Fuzzy Search Engine Module for StakTrakr
 // Provides typo-tolerant, partial, and order-independent search utilities
 
 /**

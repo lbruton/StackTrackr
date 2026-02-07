@@ -1,12 +1,12 @@
 /**
- * rEngine API Relay Client for StackTrackr
+ * rEngine API Relay Client for StakTrakr
  * 
  * This client routes all API calls through the rEngine relay infrastructure
  * for intelligent caching, rate limiting, and market intelligence aggregation.
  * 
  * @fileoverview Enhanced API client using rEngine relay services
  * @version 1.0.0
- * @requires StackTrackr v3.04.86+
+ * @requires StakTrakr v3.04.86+
  */
 
 /**
@@ -22,7 +22,7 @@ const RENGINE_CONFIG = {
   
   // Client identification
   client: {
-    name: 'StackTrackr',
+    name: 'StakTrakr',
     version: '3.04.86',
     capabilities: ['metals-tracking', 'market-intelligence', 'community-data']
   },
@@ -458,7 +458,7 @@ class rEngineAPIClient {
   }
 
   hasUserOptedIn() {
-    return localStorage.getItem('stacktrackr_data_sharing_opt_in') === 'true';
+    return localStorage.getItem('staktrakr_data_sharing_opt_in') === 'true';
   }
 
   /**
@@ -523,9 +523,9 @@ class rEngineAPIClient {
 }
 
 /**
- * Integration with existing StackTrackr API system
+ * Integration with existing StakTrakr API system
  */
-class StackTrackrEnhancedAPI {
+class StakTrakrEnhancedAPI {
   constructor() {
     // Determine user tier (this would come from user settings/subscription)
     this.userTier = this.getUserTier();
@@ -547,7 +547,7 @@ class StackTrackrEnhancedAPI {
       
       const enhancedData = await this.rEngineClient.fetchSpotPrices(metals);
       
-      // Update spot prices in StackTrackr
+      // Update spot prices in StakTrakr
       this.updateSpotPricesInUI(enhancedData.spotPrices);
       
       // Update market intelligence if available
@@ -618,7 +618,7 @@ class StackTrackrEnhancedAPI {
   }
 
   /**
-   * Update StackTrackr UI with enhanced data
+   * Update StakTrakr UI with enhanced data
    */
   updateSpotPricesInUI(spotPrices) {
     Object.entries(spotPrices).forEach(([metal, price]) => {
@@ -673,11 +673,11 @@ class StackTrackrEnhancedAPI {
 }
 
 // Initialize enhanced API client
-window.rEngineAPI = new StackTrackrEnhancedAPI();
+window.rEngineAPI = new StakTrakrEnhancedAPI();
 
-// Integration hook for existing StackTrackr code
+// Integration hook for existing StakTrakr code
 if (typeof window.enhanceWithrEngine !== 'undefined') {
   window.enhanceWithrEngine();
 }
 
-console.log('✅ rEngine API Relay Client Loaded - StackTrackr Enhanced');
+console.log('✅ rEngine API Relay Client Loaded - StakTrakr Enhanced');

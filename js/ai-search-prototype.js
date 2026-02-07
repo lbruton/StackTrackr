@@ -1,11 +1,11 @@
 /**
- * StackTrackr AI-Powered Search Engine Prototype
+ * StakTrakr AI-Powered Search Engine Prototype
  * 
  * This prototype demonstrates how GPT can enhance the existing sophisticated
  * search system with natural language interpretation while maintaining
  * backward compatibility.
  * 
- * @fileoverview AI search enhancement for StackTrackr
+ * @fileoverview AI search enhancement for StakTrakr
  * @version 1.0.0
  * @requires GPT API access
  */
@@ -25,7 +25,7 @@ const AI_SEARCH_CONFIG = {
   cache: {
     ttl: 24 * 60 * 60 * 1000,  // 24 hours
     maxSize: 1000,              // Maximum cached responses
-    storageKey: 'stacktrackr_ai_search_cache'
+    storageKey: 'staktrakr_ai_search_cache'
   },
   
   // Search enhancement settings
@@ -38,7 +38,7 @@ const AI_SEARCH_CONFIG = {
 
 /**
  * AI-Enhanced Search Engine Class
- * Integrates with existing StackTrackr search functionality
+ * Integrates with existing StakTrakr search functionality
  */
 class AISearchEngine {
   constructor(apiKey, model = AI_SEARCH_CONFIG.models.primary) {
@@ -460,7 +460,7 @@ RESPONSE FORMAT (JSON):
 }
 
 /**
- * Integration with existing StackTrackr search system
+ * Integration with existing StakTrakr search system
  * Enhances the existing filterInventory function with AI capabilities
  */
 async function enhanceExistingSearch() {
@@ -555,4 +555,4 @@ function displayAIInsights(aiInterpretation) {
 window.AISearchEngine = AISearchEngine;
 window.enhanceExistingSearch = enhanceExistingSearch;
 
-console.log('✅ StackTrackr AI Search Engine Prototype Loaded');
+console.log('✅ StakTrakr AI Search Engine Prototype Loaded');

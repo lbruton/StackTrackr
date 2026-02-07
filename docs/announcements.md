@@ -1,5 +1,6 @@
 ## What's New
 
+- **Rebrand to StakTrakr (v3.06.00)**: New canonical brand with multi-domain auto-branding — `staktrakr.com`, `stackrtrackr.com`, and `stackertrackr.com` each display their own brand name automatically
 - **Fraction weight input (v3.05.04)**: Type fractions like `1/1000` or `1 1/2` in the weight field — auto-converts to decimal. Great for Goldbacks and Aurum notes
 - **Duplicate item button (v3.05.04)**: New copy icon in the action column opens the add modal pre-filled from the source item. Date resets to today, qty to 1 — perfect for entering sets of the same coin
 - **Date bug fix (v3.05.03)**: Table dates no longer display one day earlier than entered — fixed UTC midnight parsing that shifted dates back in US timezones
@@ -14,6 +15,6 @@
 
 - **About modal overhaul**: Update repository URLs, review version/changelog display, ensure all links are current
 - **Filter chips rebuild**: Top-N per category model, normalized name chips, chip settings modal
-- **Notes column removal + N# restore**: Remove Notes icon column, re-add Numista catalog column with filter-on-click and iframe link
+- **N# column restore**: Re-add Numista catalog column with filter-on-click and iframe link
 - **Retail column UX**: Inline retail editing with pencil icon, confidence styling for manual vs auto-computed prices
 - **Numista API fix**: Correct endpoints, auth headers, and parameters in the NumistaProvider class

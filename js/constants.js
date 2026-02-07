@@ -258,7 +258,7 @@ const API_PROVIDERS = {
  * Updated: 2025-08-15 - Price column styling consistency fixes
  */
 
-const APP_VERSION = "3.05.04";
+const APP_VERSION = "3.06.00";
 
 /**
  * @constant {string} DEFAULT_CURRENCY - Default currency code for monetary formatting
@@ -281,7 +281,7 @@ const getVersionString = (prefix = "v") => `${prefix}${APP_VERSION}`;
 const getTemplateVariables = () => ({
   VERSION: APP_VERSION,
   VERSION_WITH_V: `v${APP_VERSION}`,
-  VERSION_TITLE: `StackTrackr v${APP_VERSION}`,
+  VERSION_TITLE: `StakTrakr v${APP_VERSION}`,
   VERSION_BRANCH: APP_VERSION.split('.').slice(0, 2).join('.') + '.x',
   BRANDING_NAME: BRANDING_TITLE
 });
@@ -318,7 +318,7 @@ const injectVersionString = (elementId, prefix = "v") => {
 };
 
 /** @constant {string} BRANDING_TITLE - Optional custom application title */
-const BRANDING_TITLE = "StackTrackr";
+const BRANDING_TITLE = "StakTrakr";
 
 /**
  * Domain-based branding configuration
@@ -333,8 +333,9 @@ const BRANDING_TITLE = "StackTrackr";
  */
 const BRANDING_DOMAIN_OPTIONS = {
   domainMap: {
-    stackertracker: "Stacker Tracker",
-    stackrtrackr: "StackTrackr",
+    staktrakr: "StakTrakr",
+    stackrtrackr: "StackrTrackr",
+    stackertrackr: "Stacker Tracker",
   },
   removeExtension: true,
   alwaysOverride: false,
@@ -426,6 +427,7 @@ const ALLOWED_STORAGE_KEYS = [
   "changeLog",
   "autocomplete_lookup_cache",
   "autocomplete_cache_timestamp",
+  "staktrakr.debug",
   "stackrtrackr.debug",
   "catalog_api_config",
 ];

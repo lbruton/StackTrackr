@@ -1,9 +1,21 @@
 # Changelog
 
-All notable changes to StackTrackr will be documented in this file.
+All notable changes to StakTrakr will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [3.06.00] - 2026-02-07
+
+### Rebrand — StackTrackr → StakTrakr
+
+#### Changed
+
+- **Full rebrand to StakTrakr**: Updated canonical brand name from "StackTrackr" to "StakTrakr" across the entire codebase — inline SVG banner (all 3 themes), standalone logo SVG, HTML titles, aria-labels, footer copyright, about/acknowledgment modals, debug log prefix, backup/export templates, PDF headers, storage reports, constants, Docker labels/service names, and all documentation
+- **Domain-based auto-branding**: Updated domain map to support three domains — `staktrakr.com` (primary, shows "StakTrakr"), `stackrtrackr.com` (legacy, shows "StackrTrackr"), `stackertrackr.com` (shows "Stacker Tracker"). Each domain automatically displays its own brand name via the existing `BRANDING_DOMAIN_OPTIONS` system
+- **localStorage key prefix migration**: Renamed `stackrtrackr.*` keys to `staktrakr.*` (debug, catalog cache, catalog settings). Debug flag checks both old and new keys for backwards compatibility
+- **Footer domain**: Default domain now shows `staktrakr.com`, with auto-detection for all three owned domains
+- **Reddit community link**: Updated from `/r/stackrtrackr` to `/r/staktrakr`
 
 ## [3.05.04] - 2026-02-07
 
