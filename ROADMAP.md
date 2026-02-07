@@ -98,6 +98,15 @@ These items require backend work and represent a shift from pure client-side to 
 
 ---
 
+## Long-Term (Self-Hosting & Distribution)
+
+These items focus on making StackTrackr easy for others to deploy and run.
+
+- **Docker build & image** — production-ready Dockerfile and docker-compose.yml for self-hosting. nginx:alpine serving static files, health checks, environment-based configuration. Publish image to Docker Hub or GitHub Container Registry for one-command deployment
+- **Proxmox LXC setup guide/script** — step-by-step guide or automated script for deploying StackTrackr in a Proxmox LXC container. Lightweight alternative to full VM, ideal for home lab users running Proxmox on mini PCs
+
+---
+
 ## Deferred
 
 Items that are explicitly out of scope until prerequisites are met.
