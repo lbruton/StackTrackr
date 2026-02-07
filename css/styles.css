@@ -3003,9 +3003,6 @@ a.about-badge:hover {
 }
 
 .breakdown-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
   padding: var(--spacing-sm) 0;
   border-bottom: 1px dashed var(--border);
 }
@@ -3014,30 +3011,56 @@ a.about-badge:hover {
   border-bottom: none;
 }
 
-.breakdown-label {
-  font-weight: 500;
-  color: var(--text-primary);
+.breakdown-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 0.25rem;
 }
 
-.breakdown-values {
-  text-align: right;
+.breakdown-label {
+  font-weight: 600;
+  color: var(--text-primary);
   font-size: 0.875rem;
 }
 
-.breakdown-count {
+.breakdown-meta {
   color: var(--text-muted);
+  font-size: 0.75rem;
   font-weight: 500;
 }
 
-.breakdown-weight {
-  color: var(--primary);
-  font-weight: 600;
+/* 2x2 financial grid for breakdown rows */
+.breakdown-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.125rem 0.75rem;
+  font-size: 0.8rem;
 }
 
-.breakdown-value {
-  color: var(--success);
-  font-weight: 600;
+.breakdown-cell {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 0.1rem 0;
 }
+
+.breakdown-cell-label {
+  color: var(--text-muted);
+  font-weight: 400;
+  font-size: 0.75rem;
+}
+
+.breakdown-cell-value {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.breakdown-purchase .breakdown-cell-value { color: var(--text-primary); }
+.breakdown-melt .breakdown-cell-value { color: var(--primary); }
+.breakdown-retail .breakdown-cell-value { color: var(--text-secondary); }
+.breakdown-gain .breakdown-cell-value { color: var(--success); }
+.breakdown-loss .breakdown-cell-value { color: var(--danger); }
 
 .chart-canvas-container {
   position: relative;

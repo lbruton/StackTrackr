@@ -94,7 +94,7 @@ const getEmbeddedChangelog = (version) => {
     "3.07.00": `
       <li><strong>Confidence styling</strong>: Retail and Gain/Loss columns now show italic/muted for estimated values (melt fallback) vs bold for confirmed (manual retail)</li>
       <li><strong>All Metals summary card</strong>: New combined totals card with portfolio-wide metrics and Avg Cost/oz per metal</li>
-      <li><strong>Gain/Loss bottom line</strong>: Each summary card emphasizes Gain/Loss with a separator and larger font</li>
+      <li><strong>Metal detail modal overhaul</strong>: Full portfolio breakdown (Purchase, Melt, Retail, Gain/Loss) per type and location in a compact 2x2 grid</li>
     `,
     "3.06.02": `
       <li><strong>eBay search split</strong>: Purchase column now searches active listings (what's for sale), Retail column searches sold listings (what items actually sold for)</li>

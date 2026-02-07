@@ -112,10 +112,9 @@ These items focus on visual polish and usability improvements that require no ba
 - **Table CSS hardening** — audit responsive breakpoints, test mobile layout, ensure all 14 columns degrade gracefully
 - ~~**Summary cards visual refresh**~~ — **DONE (v3.07.00)**: Added "All Metals" combined totals card, Avg Cost/oz metric per metal and combined, Gain/Loss "bottom line" emphasis with separator and larger font
 - **Spot price manual input UX** — improve the experience for manually entering spot prices when API is unavailable
-- **Metal stats modal overhaul** — enhance the per-metal detail modals (opened by clicking a metal stats card) with full portfolio breakdown:
-  - **Breakdown tables**: replace single "total value" column with the full quartet — Purchase Cost, Melt Value, Est. Retail, Gain/Loss — for each category row (type, name, etc.)
+- ~~**Metal stats modal overhaul**~~ — **DONE (v3.07.00)**: Breakdown rows now show full Purchase/Melt/Retail/Gain-Loss in a 2x2 grid. Chart tooltips show all 4 values. Remaining future work:
   - **Pie chart toggle**: add a toggle or tab bar letting users switch the pie chart between Purchase / Melt / Retail / Gain-Loss views, so the chart slices reflect whichever value set the user cares about
-  - **Library audit**: evaluate whether Chart.js (already integrated) is sufficient for these richer visualizations, or whether a more dashboard-oriented library offers better interactivity (tooltips, drill-down, responsive legends). Candidates: Chart.js (current), ApexCharts, Tabler.io (full UI kit). Preference is to stay with Chart.js if it handles the use case cleanly to avoid adding a framework dependency
+  - **Library audit**: evaluate whether Chart.js (already integrated) is sufficient for these richer visualizations, or whether a more dashboard-oriented library offers better interactivity (tooltips, drill-down, responsive legends)
 - **Chart.js dashboard improvements** — add spot price trend visualization, portfolio value over time
 - **Custom tagging system** — replace the removed `isCollectable` boolean with a flexible tagging system (e.g., "IRA", "stack", "numismatic", "gift")
 - ~~**Dead CSS cleanup pass**~~ — **DONE (v3.06.01)**: Removed ~125 lines of orphaned `.collectable-*` selectors and unused icon utility classes

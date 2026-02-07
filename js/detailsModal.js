@@ -10,37 +10,47 @@
  */
 const getBreakdownData = (metal) => {
   const metalItems = inventory.filter(item => item.metal === metal);
+  const currentSpot = spotPrices[metal.toLowerCase()] || 0;
 
   const typeBreakdown = {};
   const locationBreakdown = {};
 
+  const initBucket = () => ({
+    count: 0,
+    weight: 0,
+    purchase: 0,
+    melt: 0,
+    retail: 0,
+    gainLoss: 0
+  });
+
   metalItems.forEach(item => {
-    const itemWeight = item.qty * item.weight;
-    const itemValue = item.qty * item.price;
+    const qty = Number(item.qty) || 1;
+    const itemWeight = qty * (parseFloat(item.weight) || 0);
+    const purchaseTotal = qty * (parseFloat(item.price) || 0);
+    const meltValue = itemWeight * currentSpot;
+    const isManualRetail = item.marketValue && item.marketValue > 0;
+    const retailTotal = isManualRetail ? item.marketValue * qty : meltValue;
+    const gainLoss = retailTotal - purchaseTotal;
 
     // Type breakdown
-    if (!typeBreakdown[item.type]) {
-      typeBreakdown[item.type] = {
-        count: 0,
-        weight: 0,
-        value: 0
-      };
-    }
-    typeBreakdown[item.type].count += item.qty;
+    if (!typeBreakdown[item.type]) typeBreakdown[item.type] = initBucket();
+    typeBreakdown[item.type].count += qty;
     typeBreakdown[item.type].weight += itemWeight;
-    typeBreakdown[item.type].value += itemValue;
+    typeBreakdown[item.type].purchase += purchaseTotal;
+    typeBreakdown[item.type].melt += meltValue;
+    typeBreakdown[item.type].retail += retailTotal;
+    typeBreakdown[item.type].gainLoss += gainLoss;
 
     // Location breakdown
-    if (!locationBreakdown[item.purchaseLocation]) {
-      locationBreakdown[item.purchaseLocation] = {
-        count: 0,
-        weight: 0,
-        value: 0
-      };
-    }
-    locationBreakdown[item.purchaseLocation].count += item.qty;
-    locationBreakdown[item.purchaseLocation].weight += itemWeight;
-    locationBreakdown[item.purchaseLocation].value += itemValue;
+    const loc = item.purchaseLocation || 'Unknown';
+    if (!locationBreakdown[loc]) locationBreakdown[loc] = initBucket();
+    locationBreakdown[loc].count += qty;
+    locationBreakdown[loc].weight += itemWeight;
+    locationBreakdown[loc].purchase += purchaseTotal;
+    locationBreakdown[loc].melt += meltValue;
+    locationBreakdown[loc].retail += retailTotal;
+    locationBreakdown[loc].gainLoss += gainLoss;
   });
 
   return { typeBreakdown, locationBreakdown };
@@ -59,48 +69,65 @@ const createBreakdownElements = (breakdown) => {
   if (Object.keys(breakdown).length === 0) {
     const item = document.createElement('div');
     item.className = 'breakdown-item';
-
     const label = document.createElement('span');
     label.className = 'breakdown-label';
     label.textContent = 'No data available';
-
     item.appendChild(label);
     container.appendChild(item);
     return container;
   }
 
-  // Sort by value descending
-  const sortedEntries = Object.entries(breakdown).sort((a, b) => b[1].value - a[1].value);
+  // Sort by purchase value descending
+  const sortedEntries = Object.entries(breakdown).sort((a, b) => b[1].purchase - a[1].purchase);
 
   sortedEntries.forEach(([key, data]) => {
     const item = document.createElement('div');
     item.className = 'breakdown-item';
 
+    // Header row: name + count/weight
+    const header = document.createElement('div');
+    header.className = 'breakdown-header';
+
     const label = document.createElement('span');
     label.className = 'breakdown-label';
     label.textContent = key;
 
-    const values = document.createElement('div');
-    values.className = 'breakdown-values';
+    const meta = document.createElement('span');
+    meta.className = 'breakdown-meta';
+    meta.textContent = `${data.count} items \u00B7 ${data.weight.toFixed(2)} oz`;
 
-    const count = document.createElement('div');
-    count.className = 'breakdown-count';
-    count.textContent = `${data.count} items`;
+    header.appendChild(label);
+    header.appendChild(meta);
 
-    const weight = document.createElement('div');
-    weight.className = 'breakdown-weight';
-    weight.textContent = `${data.weight.toFixed(2)} oz`;
+    // 2x2 financial grid
+    const grid = document.createElement('div');
+    grid.className = 'breakdown-grid';
 
-    const value = document.createElement('div');
-    value.className = 'breakdown-value';
-    value.textContent = formatCurrency(data.value);
+    const cells = [
+      { label: 'Purchase', value: formatCurrency(data.purchase), cls: 'breakdown-purchase' },
+      { label: 'Melt', value: formatCurrency(data.melt), cls: 'breakdown-melt' },
+      { label: 'Retail', value: formatCurrency(data.retail), cls: 'breakdown-retail' },
+      { label: 'Gain/Loss', value: formatCurrency(Math.abs(data.gainLoss)), cls: data.gainLoss >= 0 ? 'breakdown-gain' : 'breakdown-loss' }
+    ];
 
-    values.appendChild(count);
-    values.appendChild(weight);
-    values.appendChild(value);
+    cells.forEach(cell => {
+      const el = document.createElement('div');
+      el.className = `breakdown-cell ${cell.cls}`;
+      const lbl = document.createElement('span');
+      lbl.className = 'breakdown-cell-label';
+      lbl.textContent = cell.label;
+      const val = document.createElement('span');
+      val.className = 'breakdown-cell-value';
+      val.textContent = cell.label === 'Gain/Loss'
+        ? (data.gainLoss > 0 ? '+' : data.gainLoss < 0 ? '-' : '') + cell.value
+        : cell.value;
+      el.appendChild(lbl);
+      el.appendChild(val);
+      grid.appendChild(el);
+    });
 
-    item.appendChild(label);
-    item.appendChild(values);
+    item.appendChild(header);
+    item.appendChild(grid);
     container.appendChild(item);
   });
 
