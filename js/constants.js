@@ -360,9 +360,12 @@ const BRANDING_DOMAIN_OVERRIDE =
         let host = window.location.hostname.toLowerCase();
         if (BRANDING_DOMAIN_OPTIONS.removeExtension) {
           const parts = host.split(".");
-          if (parts.length > 1) {
-            host = parts[0];
-          }
+          // Strip www prefix and TLD to get the core domain name
+          // "www.stackrtrackr.com" → ["www","stackrtrackr","com"] → "stackrtrackr"
+          // "stackrtrackr.com" → ["stackrtrackr","com"] → "stackrtrackr"
+          // "staktrakr.pages.dev" → ["staktrakr","pages","dev"] → "staktrakr"
+          const filtered = parts.filter(p => p !== "www");
+          host = filtered.length > 1 ? filtered[0] : parts[0];
         }
         return BRANDING_DOMAIN_OPTIONS.domainMap[host] || null;
       })()
