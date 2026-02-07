@@ -2,6 +2,8 @@
 
 A client-side precious metals inventory tracker for Silver, Gold, Platinum, and Palladium. Runs entirely in the browser with no backend dependencies.
 
+**Live site:** [www.staktrakr.com](https://www.staktrakr.com)
+
 ## Features
 
 - **Portfolio tracking** with purchase price, melt value, retail price, and computed gain/loss
