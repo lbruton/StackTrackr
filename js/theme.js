@@ -24,6 +24,9 @@ const setTheme = (theme) => {
   if (typeof renderTable === "function") {
     renderTable();
   }
+  if (typeof updateAllSparklines === "function") {
+    updateAllSparklines();
+  }
 };
 
 /**

@@ -267,8 +267,8 @@ const setupAckModalEvents = () => {
  */
 const getEmbeddedWhatsNew = () => {
   return `
-    <li><strong>v3.07.02 – Shift+click inline editing</strong>: Hold Shift and click any editable cell (Name, Qty, Weight, Purchase Price, Retail Price, Location) to edit in place. Enter saves, Escape cancels. Removed pencil icon and save/cancel buttons — clean keyboard-only editing</li>
-    <li><strong>v3.07.01 – Light &amp; Sepia theme contrast pass</strong>: Clean gray-to-white light palette, darkened metal/type text for WCAG AA, estimated values use muted color instead of opacity. Sepia: removed global filter, fixed text contrast</li>
+    <li><strong>v3.08.00 – Spot price card redesign</strong>: Background sparkline trends on all 4 cards, sync icon replaces button panel, shift+click manual price entry, per-card range dropdown (7d/30d/60d/90d). Dedup fix for historical backfill</li>
+    <li><strong>v3.07.02 – Shift+click inline editing</strong>: Hold Shift and click any editable cell (Name, Qty, Weight, Purchase Price, Retail Price, Location) to edit in place. Enter saves, Escape cancels</li>
     <li><strong>v3.07.00 – Portfolio visibility overhaul</strong>: Confidence styling for Retail/Gain-Loss, All Metals totals card with Avg Cost/oz and clickable breakdown modal, metal detail modals show full portfolio breakdown per type and location</li>
   `;
 };
@@ -279,10 +279,9 @@ const getEmbeddedWhatsNew = () => {
  */
 const getEmbeddedRoadmap = () => {
   return `
+    <li><strong>Inline catalog &amp; grading tags</strong>: Optional (N#), (PCGS), (NGC), (Grade) tags on the Name cell with iframe links — no new column needed</li>
     <li><strong>Filter chips rebuild</strong>: Top-N per category model, normalized name chips, chip settings modal</li>
-    <li><strong>N# column restore</strong>: Re-add Numista catalog column with filter-on-click and iframe link</li>
     <li><strong>Numista API fix</strong>: Correct endpoints, auth headers, and parameters in the NumistaProvider class</li>
-    <li><strong>Mobile card view</strong>: Responsive layout that switches from table to card-based view on small screens</li>
   `;
 };
 

@@ -50,69 +50,52 @@ Project direction and planned work for the StakTrakr precious metals inventory t
 
 ---
 
-## Next Session (Priority)
-
-- ~~**BUG: Table dates off by one day**~~ — **DONE (Increment 4)**: `formatDisplayDate()` now parses the `YYYY-MM-DD` string directly via `split('-')` — no `Date` constructor, no timezone ambiguity
-- ~~**About modal overhaul**~~ — **DONE (v3.06.01)**: Rewrote description with project links, added badge-style links (site/GitHub/community/MIT License) with dynamic domain-aware site URL, removed duplicated privacy notice from version modal
-- **Full UI review walkthrough** — hands-on walk-through of the entire application UI after Increments 1 and 2, cataloging visual issues, layout inconsistencies, and UX friction before proceeding with further feature work
-- ~~**Fix spot price change indicator**~~ — **DONE (Increment 3)**: `updateSpotCardColor()` now compares against the most recent API/manual entry with a *different* price, so direction arrows persist across page refreshes instead of always resetting to orange
-- ~~**Numista API key storage broken**~~ — **DONE (Increment 4)**: Removed non-functional AES-256-GCM encryption (`CryptoUtils` class), simplified to base64 encoding matching the metals API key pattern. Added `catalog_api_config` to `ALLOWED_STORAGE_KEYS` so the key persists across page loads. Removed password field from settings UI
-- **CRITICAL: Fix Numista API client** — the `NumistaProvider` class in `js/catalog-api.js` has never worked due to three implementation bugs against the real Numista v3 API:
-  1. **Wrong endpoints**: uses `/items/search` and `/items/{id}` → should be `/types` and `/types/{type_id}`
-  2. **Wrong auth**: passes `apikey` as query parameter → should use `Numista-API-Key` HTTP header
-  3. **Non-existent params**: sends `metal`, `country`, `limit` → should be `category`, `issuer`, `count`
-  - Must be fixed before any Numista features (sync, search, auto-populate) can ship
-  - Affects: `js/catalog-api.js` (NumistaProvider class, ~lines 400-550)
-
----
-
 ## Near-Term (UI Focus)
 
 These items focus on visual polish and usability improvements that require no backend changes.
 
-- **Filter chips overhaul** — comprehensive review and rebuild of the filter chip system (`filters.js`, `events.js`, `inventory.js`):
-  - **Core problem**: name chips are never generated as summary chips — `generateCategorySummary()` only produces metal, type, date, and location chips. The "Smart Grouping" toggle only affects how name *filters* behave on click, not chip generation. The normalizer (`normalizeItemName()`) works but has no code path to produce chips like "American Silver Eagle (6)"
-  - **Confirmed**: with 8+ American Silver Eagles visible and threshold set to 5+, no name chip appears regardless of Smart Grouping toggle state. The feature simply doesn't exist yet — it's not a threshold or grouping bug, it's a missing code path in `generateCategorySummary()`
-  - **Duplicate chip bug**: clicking a location value (e.g., "herobullion.com") to filter produces both a summary chip ("herobullion.com 25/25") AND an active filter chip ("herobullion.com ×") — two independent systems rendering the same filter. Summary chips should either hide when an active filter matches, or the two systems need to merge into one
-  - **Threshold ignored**: with dropdown set to 5+, chips with counts as low as 2/159 still display. One of the two competing systems doesn't check the threshold setting
-  - **Initial load styling bug**: Silver chip renders with white text on first page load (unreadable), switches to correct black text after any click interaction. The legacy system renders first with wrong CSS classes, then the active system overwrites on interaction
-  - **New distribution model**: replace flat threshold with a **"top N per category"** approach — show the top entries from each selected column instead of flooding with everything above count X. This ensures useful chips from each category without visual noise
-  - Remove date chips entirely (purchase dates aren't useful as filter categories) and suppress "Unknown" value chips
-  - Change default minimum count from 100+ to **5+** as baseline (current default hides nearly all chips)
-  - **Add normalized name chips** to `generateCategorySummary()` — this is the missing feature that would group "2021 American Silver Eagle", "2022 American Silver Eagle", etc. into one "American Silver Eagle" chip. Two-layer approach:
-    - **Automatic normalizer**: strip leading years, trailing "Type 1/2", mint marks, edition text. Existing `autocomplete.normalizeItemName()` does some of this already — extend and wire into chip generation. Covers standard bullion (ASEs, Maples, Britannias, Krugerrands, etc.)
-    - **User-defined grouping rules**: for edge cases where auto-stripping isn't enough (e.g., grouping "Canada Majestic Polar Bear" with "Canadian Polar Bear 2024"). Reuse the regex rule engine pattern from `js/customMapping.js`. Store rules in localStorage, let users add/edit via a settings UI
-    - **Baseline pattern development**: use a CSV export of real inventory data to discover common name patterns and build the initial normalizer rules. Analysis of 152-item dataset identified 8 naming patterns, a 10-step regex pipeline covering ~85% of cases, and data quality issues (typos: "Flordia"×3, "Diety", "NCG"; concatenated eBay titles). Edge case: APMEX Lunar Year bars where the year IS the identity — normalizer needs a pre-check to skip year stripping for series where year is semantically meaningful
-  - **Batch rename/normalize tool**: reuse the normalizer pipeline to offer a "Clean Up Names" feature — button opens a confirmation modal showing a preview table (Current Name → Proposed Name) for every item that would change. User can check/uncheck individual rows and tweak proposed names before applying. All renames logged in change log for undo. Same engine powers both filter chips and batch cleanup
-  - Replace inline dropdowns with a **chip settings modal** allowing users to select which columns produce chips (metal, type, normalized name, purchase location, storage location) and configure the top-N limit per category
-  - Consolidate the legacy `updateTypeSummary()` / `#typeSummary` div (now a no-op) with the active `renderActiveFilters()` system — this is the root cause of the duplicate chip bug
-  - Future-proof: design chip settings to accommodate **tags** as a chip source when the custom tagging system is implemented
-- **Notes column removal** ~~+ N# column restoration + hover tooltip~~ — ~~remove~~ **DONE (Increment 5)**: Notes icon column removed from table (15 → 14 columns with new duplicate column). Notes remain in the add/edit modal. Remaining: re-add N# column, add row hover tooltip for notes content
-  - **N# column behavior**: clicking the N# value **filters the table** to show all items sharing that catalog number (same pattern as metal/type filter links). A small external-link icon next to the N# opens the Numista catalog page in the existing iframe modal (same icon pattern as purchase location external links). This replaces the previous standalone "N# grouping view" idea — grouping is now just a filter click away
-  - Items without a N# show "—" in the column (no filter link, no icon)
-- **Retail column UX bundle**:
-  - **Inline retail editing**: add pencil icon to the Retail column (mirroring the existing Name column inline edit) so users can click to set/update retail price without opening the full edit modal. Gain/Loss should recalculate immediately on save
-  - ~~**Confidence styling**~~ — **DONE (v3.07.00)**: Retail and Gain/Loss columns now visually differentiate estimated (melt fallback — italic, muted) vs confirmed (manual retail — bold). Removed asterisk indicator in favor of CSS classes
-- ~~**Duplicate item button**~~ — **DONE (Increment 5)**: Copy icon in action column opens `#itemModal` in add mode pre-filled from source item. Date defaults to today, qty resets to 1, serial clears
-- ~~**Fraction input for weight field**~~ — **DONE (Increment 5)**: `parseFraction()` in `js/utils.js` handles `1/1000`, `1 1/2`, and plain decimals. Weight input changed to `type="text"` with `inputmode="decimal"`
-- **Numista integration — Sync & Search** (prerequisite: fix Numista API client above):
-  - **"Sync from Numista" button** on the add/edit modal next to the Catalog (N#) field. When clicked with a valid N#, calls `GET /types/{type_id}` and auto-populates: **Name** ← `title`, **Weight** ← `weight` (grams, set unit to "g"), **Type** ← normalized type, **Metal** ← `composition.text` parsed to standard metals, **Notes** ← `description`. User reviews pre-filled fields, adjusts price/qty/location, saves. ~30 lines of glue code wiring API response to existing form fields
-  - **"Numista Lookup" button** next to Sync — opens a search modal where users can type a coin name (e.g., "American Silver Eagle") and browse results with thumbnails (returned in search results as `obverse_thumbnail`/`reverse_thumbnail`). Selecting a result populates the N# field and triggers the Sync flow. Search supports: text query (`q`), category filter (`coin`/`exonumia`/`banknote`), and issuer filter. Metal/composition filtering is NOT available at the search level — only in full item detail
-  - **N# grouping**: handled by the restored N# table column (see "Notes column removal" item above) — clicking a N# value filters the table to all items with that catalog number. No separate grouping view needed
-  - **API budget awareness**: free tier = 2,000 requests/month. Sync = 1 call per item. Search = 1 call per query (returns up to 50 results). Cache all lookups in existing `LocalProvider` cache to minimize repeat calls
-  - **Image policy note**: Numista thumbnails appear in search results and are technically loadable, but their ToU prohibits reproduction of user-contributed images. The Lookup search modal can display thumbnails *within the search context* (transient display during search, not cached/stored). For persistent item images, user photo upload is deferred — see Deferred section
-- **eBay API integration** — if/when backend exists, proxy eBay Browse API for sold listing lookups to pre-populate retail estimates (current pre-populated search link works well as the client-side solution)
-- ~~**Light & Sepia theme contrast pass**~~ — **DONE (v3.07.01)**: Light theme switched from gray-blue layering to white-based palette (`#f8fafc` / `#ebeff4` / `#dce2e9`, cards pure white). Sepia theme: removed global `filter: sepia(30%)`, fixed WCAG-failing `--text-muted` (3:1 → 6.7:1), warmed `--info` to teal, fixed invisible `--border-hover`, strengthened shadows. All text passes WCAG AA minimum
-- ~~**eBay search icon redesign**~~ — **DONE (v3.06.01 + v3.06.02)**: Replaced emoji-in-red-circle with clean 12px SVG magnifying glass using `currentColor`. Split into two search functions: Purchase column → active listings (buy), Retail column → sold listings (price research)
-- **Table CSS hardening** — audit responsive breakpoints, test mobile layout, ensure all 14 columns degrade gracefully
-- ~~**Summary cards visual refresh**~~ — **DONE (v3.07.00)**: Added "All Metals" combined totals card, Avg Cost/oz metric per metal and combined, Gain/Loss "bottom line" emphasis with separator and larger font
+- **Inline catalog & grading tags** — instead of a dedicated N# table column, append optional clickable tags to the Name cell. Example: `2025 American Eagle (PCGS) (MS70-FS) (N#1234)`. All tags optional — most items just show the name
+  - **Name cell format**: `{item name} (SERVICE) (GRADE) (N#ID)` — only renders tags the item actually has
+  - **Tag click behavior**: opens iframe modal to the relevant service page (Numista catalog, PCGS cert viewer, NGC cert viewer). Same pattern as eBay search links
+  - **Grade display**: Sheldon scale, shown as a separate tag next to the certification service — e.g., `(PCGS) (MS70-FS)` or `(NGC) (PF69-UC)`
+  - **New item modal fields**: Certification Service dropdown (None/PCGS/NGC), Cert Number input, Grade dropdown (Sheldon scale with designations: FS, UC, DCAM, etc.). All optional. Separate from existing Catalog (N#) field
+  - **Data model additions**: `certService` (string: `''`|`'PCGS'`|`'NGC'`), `certNumber` (string), `grade` (string)
+  - **No new table column** — all info lives inline in the Name cell, keeping the table compact
+  - **CSV export**: add `certService`, `certNumber`, `grade` to export headers
 - **Spot price manual input UX** — improve the experience for manually entering spot prices when API is unavailable
-- ~~**Metal stats modal overhaul**~~ — **DONE (v3.07.00)**: Breakdown rows now show full Purchase/Melt/Retail/Gain-Loss in a 2x2 grid. Chart tooltips show all 4 values. Remaining future work:
-  - **Pie chart toggle**: add a toggle or tab bar letting users switch the pie chart between Purchase / Melt / Retail / Gain-Loss views, so the chart slices reflect whichever value set the user cares about
-  - **Library audit**: evaluate whether Chart.js (already integrated) is sufficient for these richer visualizations, or whether a more dashboard-oriented library offers better interactivity (tooltips, drill-down, responsive legends)
-- **Chart.js dashboard improvements** — add spot price trend visualization, portfolio value over time
-- **Custom tagging system** — replace the removed `isCollectable` boolean with a flexible tagging system (e.g., "IRA", "stack", "numismatic", "gift")
-- ~~**Dead CSS cleanup pass**~~ — **DONE (v3.06.01)**: Removed ~125 lines of orphaned `.collectable-*` selectors and unused icon utility classes
+- **Filter chips overhaul** — comprehensive review and rebuild of the filter chip system (`filters.js`, `events.js`, `inventory.js`):
+  - **Core problem**: name chips are never generated as summary chips — `generateCategorySummary()` only produces metal, type, date, and location chips. The normalizer (`normalizeItemName()`) works but has no code path to produce chips like "American Silver Eagle (6)"
+  - **Duplicate chip bug**: clicking a location value to filter produces both a summary chip AND an active filter chip — two independent systems rendering the same filter
+  - **Threshold ignored**: with dropdown set to 5+, chips with counts as low as 2/159 still display
+  - **New distribution model**: replace flat threshold with a **"top N per category"** approach
+  - Remove date chips entirely and suppress "Unknown" value chips
+  - **Add normalized name chips** — group year variants into one chip. Two-layer approach: automatic normalizer (strip years, mint marks, edition text) + user-defined grouping rules via regex engine
+  - **Batch rename/normalize tool**: reuse the normalizer to offer a "Clean Up Names" feature with preview and undo
+  - **Chip settings modal**: select which columns produce chips and configure top-N limit per category
+  - Consolidate legacy `updateTypeSummary()` with `renderActiveFilters()` — root cause of the duplicate chip bug
+- **Numista API fix** — the `NumistaProvider` class in `js/catalog-api.js` has never worked due to three bugs: wrong endpoints (`/items/search` → `/types`), wrong auth (query param → `Numista-API-Key` header), non-existent params (`metal`/`country`/`limit` → `category`/`issuer`/`count`). Must be fixed before any Numista features can ship
+- **Numista integration — Sync & Search** (prerequisite: Numista API fix):
+  - **"Sync from Numista" button** on the add/edit modal — auto-populates Name, Weight, Type, Metal, Notes from a valid N#
+  - **"Numista Lookup" button** — search modal with thumbnails, selecting a result populates N# and triggers Sync
+  - **API budget awareness**: free tier = 2,000 requests/month. Cache all lookups in `LocalProvider`
+- **Pie chart toggle**: switch metal detail modal chart between Purchase / Melt / Retail / Gain-Loss views
+- **Chart.js dashboard improvements** — spot price trend visualization, portfolio value over time
+- **Custom tagging system** — replace the removed `isCollectable` boolean with flexible tags (e.g., "IRA", "stack", "numismatic", "gift")
+- **Table CSS hardening** — audit responsive breakpoints, test mobile layout, ensure 14 columns degrade gracefully
+- **Full UI review walkthrough** — hands-on walk-through cataloging visual issues, layout inconsistencies, and UX friction
+- **eBay API integration** — if/when backend exists, proxy eBay Browse API for sold listing lookups to pre-populate retail estimates
+
+### Completed (Near-Term)
+- ~~**Retail column UX bundle**~~ — **DONE (v3.07.00 + v3.07.02)**: Confidence styling for estimated vs confirmed values (v3.07.00). Shift+click inline editing for all 6 editable columns including Retail — replaces pencil icon approach (v3.07.02)
+- ~~**Duplicate item button**~~ — **DONE (Increment 5)**
+- ~~**Fraction input for weight field**~~ — **DONE (Increment 5)**
+- ~~**Light & Sepia theme contrast pass**~~ — **DONE (v3.07.01)**
+- ~~**eBay search icon redesign**~~ — **DONE (v3.06.01 + v3.06.02)**
+- ~~**Summary cards visual refresh**~~ — **DONE (v3.07.00)**
+- ~~**Metal stats modal overhaul**~~ — **DONE (v3.07.00)**
+- ~~**Dead CSS cleanup pass**~~ — **DONE (v3.06.01)**
+- ~~**About modal overhaul**~~ — **DONE (v3.06.01)**
+- ~~**Notes column removal**~~ — **DONE (Increment 5)**
 
 ---
 
