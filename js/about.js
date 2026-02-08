@@ -267,18 +267,9 @@ const setupAckModalEvents = () => {
  */
 const getEmbeddedWhatsNew = () => {
   return `
-    <li><strong>v3.07.01 – Light &amp; Sepia theme contrast pass</strong>: Clean gray-to-white light palette, darkened metal/type text for WCAG AA, removed sticky columns and filter-based hover, estimated values use muted color instead of opacity. Sepia: removed global filter, fixed text contrast, warm info color.</li>
-    <li><strong>v3.07.00 – Portfolio visibility overhaul</strong>: Confidence styling for Retail/Gain-Loss, All Metals totals card with Avg Cost/oz and clickable breakdown modal, metal detail modals show full portfolio breakdown per type and location.</li>
-    <li><strong>v3.06.02 – eBay search split</strong>: Purchase column searches active listings (what's for sale), Retail column searches sold listings (what items sold for).</li>
-    <li><strong>v3.06.01 – CSS cleanup &amp; icon polish</strong>: Removed 125+ lines of dead CSS, replaced eBay emoji icon with clean SVG, overhauled About modal with live site and project links.</li>
-    <li><strong>v3.06.00 – Rebrand to StakTrakr</strong>: New canonical brand with multi-domain auto-branding — staktrakr.com, stackrtrackr.com, and stackertrackr.com each show their own name.</li>
-    <li><strong>v3.05.04 – Fraction weight input</strong>: Type fractions like 1/1000 or 1 1/2 in the weight field — auto-converts to decimal for Goldbacks and Aurum notes.</li>
-    <li><strong>v3.05.04 – Duplicate item button</strong>: Copy icon in action column opens add modal pre-filled from source item. Date resets to today, qty to 1.</li>
-    <li><strong>v3.05.03 – Date display fix</strong>: Table dates no longer show one day earlier than entered — fixed UTC midnight timezone bug.</li>
-    <li><strong>v3.05.03 – Numista API key fix</strong>: Key now saves and persists across sessions — removed broken encryption, simplified to base64 encoding.</li>
-    <li><strong>v3.05.00 – Unified Add/Edit Modal</strong>: Merged two separate modals into one, fixing weight unit selector, price preservation, and sub-gram weight precision.</li>
-    <li><strong>v3.05.00 – Qty-adjusted financials</strong>: Retail, Gain/Loss, and summary totals now correctly multiply by quantity for multi-qty items.</li>
-    <li><strong>v3.05.00 – $0 price support</strong>: Free/promo items now display $0.00 and correctly compute gain from melt value.</li>
+    <li><strong>v3.07.02 – Shift+click inline editing</strong>: Hold Shift and click any editable cell (Name, Qty, Weight, Purchase Price, Retail Price, Location) to edit in place. Enter saves, Escape cancels. Removed pencil icon and save/cancel buttons — clean keyboard-only editing</li>
+    <li><strong>v3.07.01 – Light &amp; Sepia theme contrast pass</strong>: Clean gray-to-white light palette, darkened metal/type text for WCAG AA, estimated values use muted color instead of opacity. Sepia: removed global filter, fixed text contrast</li>
+    <li><strong>v3.07.00 – Portfolio visibility overhaul</strong>: Confidence styling for Retail/Gain-Loss, All Metals totals card with Avg Cost/oz and clickable breakdown modal, metal detail modals show full portfolio breakdown per type and location</li>
   `;
 };
 
@@ -290,7 +281,8 @@ const getEmbeddedRoadmap = () => {
   return `
     <li><strong>Filter chips rebuild</strong>: Top-N per category model, normalized name chips, chip settings modal</li>
     <li><strong>N# column restore</strong>: Re-add Numista catalog column with filter-on-click and iframe link</li>
-    <li><strong>Retail column UX</strong>: Inline retail editing with pencil icon, confidence styling for manual vs auto-computed prices</li>
+    <li><strong>Numista API fix</strong>: Correct endpoints, auth headers, and parameters in the NumistaProvider class</li>
+    <li><strong>Mobile card view</strong>: Responsive layout that switches from table to card-based view on small screens</li>
   `;
 };
 

@@ -455,7 +455,8 @@ const setupEventListeners = () => {
         safeAttachListener(
           header,
           "click",
-          () => {
+          (e) => {
+            if (e.shiftKey) return;
             // Toggle sort direction if same column, otherwise set to new column with asc
             if (sortColumn === index) {
               sortDirection = sortDirection === "asc" ? "desc" : "asc";
