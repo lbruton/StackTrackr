@@ -1,5 +1,7 @@
 ## What's New
 
+- **Numista iframe fix (v3.10.01)**: Numista pages now open in a popup window — fixes "Can't Open This Page" error on hosted sites
+- **Sort fix (v3.10.01)**: Gain/Loss and Source columns now sort and resize correctly
 - **Serial # field (v3.10.00)**: New optional Serial Number input for bars and notes with physical serial numbers. Included in all export/import formats
 - **Numista Aurum fix (v3.10.00)**: Goldback / Aurum items now return results from Numista search
 - **Enhanced Numista no-results (v3.10.00)**: Retry search box + popular bullion quick-picks when no results found
