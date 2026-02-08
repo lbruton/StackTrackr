@@ -292,9 +292,11 @@ const generateVariations = (term) => {
 };
 
 /**
- * Normalize item name to base form for grouping
- * Removes year prefixes and matches against lookup table
- * @param {string} fullName - Full item name (e.g., "2024 American Silver Eagle")
+ * Normalize item name to base form for grouping (e.g., filter chips).
+ * Uses precise starts-with matching against PREBUILT_LOOKUP_DATA — longest
+ * match wins. Falls back to suffix stripping for items not in the lookup.
+ *
+ * @param {string} fullName - Full item name (e.g., "2024 American Silver Eagle PCGS MS70")
  * @returns {string} Base name (e.g., "American Silver Eagle")
  */
 const normalizeItemName = (fullName) => {
@@ -302,77 +304,51 @@ const normalizeItemName = (fullName) => {
     return fullName || '';
   }
 
-  // Remove leading and trailing whitespace
-  let normalized = fullName.trim();
-  
-  // Remove year prefixes (2020-2030 range) and common fractional patterns
-  normalized = normalized.replace(/^(20[2-3][0-9])\s+/, '');
-  
-  // Handle fractional patterns like "1/10 oz", "1/4 oz", "1/2 oz"
-  const fractionalPattern = /\b(1\/10|1\/4|1\/2)\s+(oz|ounce)\s+/i;
-  let fractionalMatch = normalized.match(fractionalPattern);
-  let fractionalPart = '';
-  if (fractionalMatch) {
-    fractionalPart = fractionalMatch[0].trim() + ' ';
-    normalized = normalized.replace(fractionalPattern, '').trim();
-  }
-  
-  // Try to find exact match in PREBUILT_LOOKUP_DATA first
-  const exactMatch = PREBUILT_LOOKUP_DATA.find(baseName => 
-    normalized.toLowerCase() === baseName.toLowerCase()
-  );
-  if (exactMatch) {
-    return fractionalPart + exactMatch;
-  }
-  
-  // Try fuzzy matching against PREBUILT_LOOKUP_DATA
-  const normalizedLower = normalized.toLowerCase();
+  let name = fullName.trim();
+
+  // Step 1: Strip year prefixes (1900-2039, with optional mint marks like P, S, D, PDSSS)
+  name = name.replace(/^(1[89]\d{2}|20[0-3]\d)[A-Za-z]*\s+/, '');
+
+  // Step 2: Strip weight prefixes ("1 oz", "2 oz", "1/2 oz", "1/10 oz", "30 gram", etc.)
+  name = name.replace(/^\d+(?:\s*\/\s*\d+)?\s*(?:oz|ounce|gram|g)\s+/i, '');
+
+  // Step 3: Find the longest PREBUILT_LOOKUP_DATA entry that the name starts with
+  const nameLower = name.toLowerCase();
+  let bestMatch = null;
+  let bestMatchLen = 0;
+
   for (const baseName of PREBUILT_LOOKUP_DATA) {
     const baseNameLower = baseName.toLowerCase();
-    
-    // Check if the normalized name contains the base name
-    if (normalizedLower.includes(baseNameLower)) {
-      return fractionalPart + baseName;
-    }
-    
-    // Check if the base name contains the normalized name (for shorter variants)
-    if (baseNameLower.includes(normalizedLower) && normalizedLower.length >= 5) {
-      return fractionalPart + baseName;
-    }
-    
-    // Check for partial word matches (at least 2 significant words matching)
-    const normalizedWords = normalizedLower.split(/\s+/).filter(word => word.length >= 3);
-    const baseWords = baseNameLower.split(/\s+/).filter(word => word.length >= 3);
-    
-    if (normalizedWords.length >= 2 && baseWords.length >= 2) {
-      const matchingWords = normalizedWords.filter(word => 
-        baseWords.some(baseWord => baseWord.includes(word) || word.includes(baseWord))
-      );
-      
-      if (matchingWords.length >= Math.min(2, normalizedWords.length)) {
-        return fractionalPart + baseName;
+    if (nameLower.startsWith(baseNameLower) && baseName.length > bestMatchLen) {
+      // Ensure word boundary — next char must be space, end-of-string, or non-alpha
+      const nextChar = name[baseName.length];
+      if (!nextChar || nextChar === ' ' || !/[a-zA-Z]/.test(nextChar)) {
+        bestMatch = baseName;
+        bestMatchLen = baseName.length;
       }
     }
   }
-  
-  // Handle common variations not in lookup table
-  const commonVariations = {
-    'buffalo': 'Buffalo Round',
-    'walking liberty': 'Walking Liberty Round',
-    'morgan': 'Morgan Design Round',
-    'peace': 'Peace Dollar Design Round',
-    'saint gaudens': 'Saint-Gaudens Design Round',
-    'mercury': 'Mercury Dime Design Round'
-  };
-  
-  for (const [pattern, replacement] of Object.entries(commonVariations)) {
-    if (normalizedLower.includes(pattern)) {
-      return fractionalPart + replacement;
-    }
+
+  if (bestMatch) {
+    return bestMatch;
   }
-  
-  // If no match found, return the original name with year removed
-  return fractionalPart + normalized;
+
+  // Step 4: No lookup match — strip known suffixes for clean grouping
+  // First, collapse embedded weight patterns (" 1 oz ", " 30 gram ") to a single space
+  name = name.replace(/\s+\d+(?:\s*\/\s*\d+)?\s*(?:oz|ounce|gram|g)\s+/i, ' ');
+
+  name = name
+    .replace(/\b(?:PCGS|NGC|NCG|ICG|ANACS)\b.*/i, '')
+    .replace(/\b(?:MS|PR|PF)\s*\d{2}\b.*/i, '')
+    .replace(/\b(?:BU|Proof|UNC|Uncirculated)\b.*/i, '')
+    .replace(/\b(?:In Capsule|In Assay|Sealed|w\/Box|COA)\b.*/i, '')
+    .replace(/\b(?:Colorized|Colored|Antiqued|Abrasions)\b.*/i, '')
+    .replace(/\b(?:with\s+TEP|TEP)\b.*/i, '')
+    .replace(/\b(?:FS|FR|DCAM|First Strike|First Release|Deep Cameo)\b.*/i, '')
+    .replace(/\s+(?:Silver|Gold|Platinum|Palladium)\s+(?:Coin|Bar|Round)\s*$/i, '')
+    .trim();
+
+  return name || fullName.trim();
 };
 
 /**
