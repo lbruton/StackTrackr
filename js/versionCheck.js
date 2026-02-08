@@ -91,6 +91,10 @@ const populateVersionModal = (version, html) => {
  */
 const getEmbeddedChangelog = (version) => {
   const changelogs = {
+    "3.09.02": `
+      <li><strong>Numista API v3 fix</strong>: Corrected base URL (<code>/v3</code>), endpoint paths (<code>/types</code>), auth header (<code>Numista-API-Key</code>), query parameters (<code>count</code>, <code>issuer</code>, <code>category</code>), response parsing (<code>data.types</code>), and field mapping (<code>min_year</code>/<code>max_year</code>, <code>issuer.name</code>, <code>size</code>, <code>category</code>, <code>obverse_thumbnail</code>, <code>comments</code>, <code>value.numeric_value</code>) — 7 bugs total</li>
+      <li><strong>localStorage whitelist fix</strong>: Added <code>staktrakr.catalog.cache</code> and <code>staktrakr.catalog.settings</code> to the allowed storage keys — without these, <code>cleanupStorage()</code> deleted catalog data on every page load</li>
+    `,
     "3.09.01": `
       <li><strong>Normalized name chips</strong>: Filter chip bar groups item name variants into single chips (e.g., "Silver Eagle 15/164"). Click to filter, click again to toggle off. Respects minCount threshold and Smart Grouping toggle</li>
       <li><strong>Name normalizer rewrite</strong>: Precise starts-with matching replaces fuzzy word matching — no more phantom chips for items you don't own (e.g., "American Gold Eagle" when you only have Silver Eagles)</li>
