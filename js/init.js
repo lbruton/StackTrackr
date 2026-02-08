@@ -108,6 +108,11 @@ document.addEventListener("DOMContentLoaded", () => {
     elements.itemSpotPrice = safeGetElement("itemSpotPrice");
     elements.itemCollectable = safeGetElement("itemCollectable");
     elements.itemCatalog = safeGetElement("itemCatalog");
+    elements.itemYear = safeGetElement("itemYear");
+    elements.itemGrade = safeGetElement("itemGrade");
+    elements.itemGradingAuthority = safeGetElement("itemGradingAuthority");
+    elements.itemCertNumber = safeGetElement("itemCertNumber");
+    elements.searchNumistaBtn = safeGetElement("searchNumistaBtn");
 
     // Header buttons - CRITICAL
     debugLog("Phase 2: Initializing header buttons...");
@@ -391,7 +396,7 @@ document.addEventListener("DOMContentLoaded", () => {
         setupColumnResizing();
         
         // Setup Edit header toggle functionality
-        const editHeader = document.querySelector('th[data-column="edit"]');
+        const editHeader = document.querySelector('th[data-column="actions"]');
         if (editHeader) {
           editHeader.style.cursor = 'pointer';
           editHeader.addEventListener('click', (event) => {

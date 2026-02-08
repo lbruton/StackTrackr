@@ -276,7 +276,7 @@ class NumistaProvider extends CatalogProvider {
 
     if (filters.page) params.append('page', filters.page);
     if (filters.country) params.append('issuer', filters.country);
-    if (filters.metal) params.append('category', filters.metal);
+    if (filters.category) params.append('category', filters.category);
     if (filters.year) params.append('year', filters.year);
 
     const url = `${this.baseUrl}/types?${params.toString()}`;
@@ -763,6 +763,7 @@ let catalogHistoryEntries = [];
 let catalogHistorySortColumn = "";
 let catalogHistorySortAsc = true;
 let catalogHistoryFilterText = "";
+let selectedNumistaResult = null;
 
 /**
  * Save catalog history to localStorage
@@ -913,6 +914,391 @@ const hideCatalogHistoryModal = () => {
   if (modal) modal.style.display = "none";
 };
 
+// =============================================================================
+// NUMISTA RESULTS MODAL — Search results + field picker UI
+// =============================================================================
+
+/**
+ * Escape HTML for safe insertion into innerHTML
+ * @param {string} str - Raw string
+ * @returns {string} Escaped string
+ */
+const escapeHtmlCatalog = (str) =>
+  String(str || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+
+/**
+ * Render a single result card HTML string
+ * @param {Object} result - Normalized Numista item data
+ * @param {number} index - Index in results array
+ * @returns {string} HTML string
+ */
+const renderNumistaResultCard = (result, index) => {
+  const imgHtml = result.imageUrl
+    ? `<img src="${escapeHtmlCatalog(result.imageUrl)}" alt="" loading="lazy">`
+    : `<div style="width:48px;height:48px;background:var(--bg-tertiary);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0;">🪙</div>`;
+  const meta = [
+    result.year,
+    result.country,
+    result.metal,
+    result.weight ? `${result.weight}g` : '',
+    result.type
+  ].filter(Boolean).join(' · ');
+
+  return `<div class="numista-result-card" data-result-index="${index}">
+    ${imgHtml}
+    <div class="numista-result-info">
+      <div class="numista-result-name">${escapeHtmlCatalog(result.name)}</div>
+      <div class="numista-result-meta">${escapeHtmlCatalog(meta)}</div>
+      <div class="numista-result-id">N#${escapeHtmlCatalog(result.catalogId)}</div>
+    </div>
+  </div>`;
+};
+
+/**
+ * Render the selected item preview in field picker
+ * @param {Object} result - Normalized Numista item data
+ * @returns {string} HTML string
+ */
+const renderNumistaSelectedItem = (result) => {
+  const imgHtml = result.imageUrl
+    ? `<img src="${escapeHtmlCatalog(result.imageUrl)}" alt="" loading="lazy">`
+    : `<div style="width:48px;height:48px;background:var(--bg-tertiary);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0;">🪙</div>`;
+  const meta = [
+    result.year,
+    result.country,
+    result.metal,
+    result.weight ? `${result.weight}g` : '',
+    result.type
+  ].filter(Boolean).join(' · ');
+
+  return `${imgHtml}
+    <div class="numista-result-info">
+      <div class="numista-result-name">${escapeHtmlCatalog(result.name)}</div>
+      <div class="numista-result-meta">${escapeHtmlCatalog(meta)}</div>
+      <div class="numista-result-id">N#${escapeHtmlCatalog(result.catalogId)}</div>
+    </div>`;
+};
+
+/**
+ * Check if a value matches a valid <select> option
+ * @param {string} selectId - DOM id of the select element
+ * @param {string} value - Value to check
+ * @returns {boolean}
+ */
+const isValidSelectOption = (selectId, value) => {
+  const el = document.getElementById(selectId);
+  if (!el) return false;
+  return Array.from(el.options).some(o => o.value === value);
+};
+
+/**
+ * Render field checkboxes with editable input fields for the selected result.
+ * Each row: [checkbox] [label] [editable text input]
+ * User can tweak values before hitting "Fill Fields".
+ * @param {Object} result - Normalized Numista item data
+ */
+const renderNumistaFieldCheckboxes = (result) => {
+  const container = document.getElementById('numistaFieldCheckboxes');
+  if (!container) return;
+
+  const typeValid = result.type && isValidSelectOption('itemType', result.type);
+
+  // Fields ordered: primary (checked by default) first, then optional (unchecked)
+  const fields = [
+    { key: 'name', label: 'Name', value: result.name || '', available: true, defaultOn: true },
+    { key: 'catalog', label: 'Catalog N#', value: result.catalogId || '', available: true, defaultOn: true },
+    { key: 'year', label: 'Year', value: result.year || '', available: !!result.year, defaultOn: false },
+    {
+      key: 'type', label: 'Type',
+      value: result.type || '',
+      available: typeValid,
+      defaultOn: false,
+      warn: result.type && !typeValid ? `"${result.type}" — not in form options` : ''
+    },
+    { key: 'weight', label: 'Weight (g)', value: result.weight ? String(result.weight) : '', available: result.weight > 0, defaultOn: false },
+  ];
+
+  // Keep the heading, rebuild field rows
+  const heading = container.querySelector('.numista-fields-heading');
+  container.innerHTML = '';
+  if (heading) {
+    container.appendChild(heading);
+  } else {
+    const h = document.createElement('div');
+    h.className = 'numista-fields-heading';
+    h.textContent = 'Fields to fill:';
+    container.appendChild(h);
+  }
+
+  // Map field keys to current form values for "Current:" hints
+  const currentFormValues = {
+    name: (elements.itemName || document.getElementById('itemName'))?.value?.trim() || '',
+    catalog: (elements.itemCatalog || document.getElementById('itemCatalog'))?.value?.trim() || '',
+    year: (elements.itemYear || document.getElementById('itemYear'))?.value?.trim() || '',
+    type: (elements.itemType || document.getElementById('itemType'))?.value || '',
+    weight: (elements.itemWeight || document.getElementById('itemWeight'))?.value?.trim() || '',
+  };
+
+  fields.forEach(f => {
+    // Checkbox — grid column 1
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.name = 'numistaField';
+    cb.value = f.key;
+    cb.checked = f.available && !!f.value && f.defaultOn;
+    if (!f.value) cb.disabled = true;
+
+    // Label — grid column 2
+    const label = document.createElement('span');
+    label.className = 'numista-field-label';
+    label.textContent = f.label + ':';
+
+    // Editable text input — grid column 3
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'numista-field-input';
+    input.name = 'numistaFieldValue_' + f.key;
+    input.value = f.value;
+    input.placeholder = f.available ? '' : 'N/A';
+    if (!f.available && !f.value) input.disabled = true;
+
+    // Toggle input enabled/disabled when checkbox changes
+    cb.addEventListener('change', () => { input.disabled = !cb.checked; });
+    if (!cb.checked) input.disabled = true;
+
+    container.appendChild(cb);
+    container.appendChild(label);
+    container.appendChild(input);
+
+    // "Current:" hint showing existing form value (helps user compare before filling)
+    const currentVal = currentFormValues[f.key];
+    if (currentVal) {
+      const hint = document.createElement('div');
+      hint.className = 'numista-field-current';
+      hint.textContent = `Current: ${currentVal}`;
+      hint.title = currentVal;
+      container.appendChild(hint);
+    }
+
+    // Warning text spanning all columns (e.g. "Alloy/Other — not in form options")
+    if (f.warn) {
+      const warn = document.createElement('div');
+      warn.className = 'numista-field-warn';
+      warn.textContent = f.warn;
+      container.appendChild(warn);
+    }
+  });
+};
+
+/**
+ * Curated list of popular bullion items for quick-pick in the no-results modal.
+ * Focused on items silver/gold stackers commonly own.
+ * @returns {Array<{id: string, name: string, metal: string}>}
+ */
+const getPopularNumistaItems = () => [
+  // Silver bullion
+  { id: '1493',   name: 'American Silver Eagle',         metal: 'Silver' },
+  { id: '298883', name: 'American Silver Eagle (New Rev)', metal: 'Silver' },
+  { id: '9164',   name: 'Canadian Silver Maple Leaf',    metal: 'Silver' },
+  { id: '13410',  name: 'British Silver Britannia',      metal: 'Silver' },
+  { id: '9165',   name: 'Austrian Silver Philharmonic',  metal: 'Silver' },
+  { id: '13855',  name: 'Mexican Silver Libertad',       metal: 'Silver' },
+  { id: '143754', name: 'Silver Krugerrand',             metal: 'Silver' },
+  // Gold bullion
+  { id: '23134',  name: 'American Gold Eagle',           metal: 'Gold' },
+  { id: '18451',  name: 'American Gold Buffalo',         metal: 'Gold' },
+  { id: '6002',   name: 'Gold Krugerrand',               metal: 'Gold' },
+  { id: '15150',  name: 'Austrian Gold Philharmonic',    metal: 'Gold' },
+  // Classic silver
+  { id: '1492',   name: 'Morgan Dollar',                 metal: 'Silver' },
+  { id: '5580',   name: 'Peace Dollar',                  metal: 'Silver' },
+];
+
+/**
+ * Show Numista results modal with search results
+ * @param {Array} results - Array of normalized Numista item data
+ * @param {boolean} directLookup - If true and single result, skip list and show field picker
+ * @param {string} originalQuery - The search query used (for retry pre-fill)
+ */
+const showNumistaResults = (results, directLookup = false, originalQuery = '') => {
+  const modal = document.getElementById('numistaResultsModal');
+  const list = document.getElementById('numistaResultsList');
+  const picker = document.getElementById('numistaFieldPicker');
+  const title = document.getElementById('numistaResultsTitle');
+  const preview = document.getElementById('numistaSelectedItem');
+  if (!modal || !list || !picker) return;
+
+  selectedNumistaResult = null;
+  list.innerHTML = '';
+  picker.style.display = 'none';
+
+  if (!results || results.length === 0) {
+    title.textContent = 'No Results';
+
+    // Build quick-picks from curated popular items
+    const popularItems = getPopularNumistaItems();
+    const quickPicksHtml = `<div class="numista-quick-picks">
+        <p class="numista-quick-picks-label">Popular bullion items:</p>
+        <div class="numista-quick-picks-list">
+          ${popularItems.map(item =>
+            `<button type="button" class="numista-quick-pick" data-numista-id="${escapeHtmlCatalog(item.id)}">
+              <span class="quick-pick-id">N#${escapeHtmlCatalog(item.id)}</span>
+              <span class="quick-pick-name">${escapeHtmlCatalog(item.name)}</span>
+              <span class="quick-pick-count">${escapeHtmlCatalog(item.metal)}</span>
+            </button>`
+          ).join('')}
+        </div>
+      </div>`;
+
+    list.innerHTML = `<div class="numista-no-results-enhanced">
+      <div class="numista-retry-search">
+        <p>No matching items found on Numista.</p>
+        <div class="numista-retry-row">
+          <input type="text" id="numistaRetryInput" class="numista-retry-input"
+                 placeholder="Refine your search..." value="${escapeHtmlCatalog(originalQuery)}">
+          <button type="button" id="numistaRetryBtn" class="btn btn-primary numista-retry-btn">Search</button>
+        </div>
+      </div>
+      ${quickPicksHtml}
+    </div>`;
+    list.style.display = 'block';
+    modal.style.display = 'flex';
+
+    // Wire up retry search
+    const retryBtn = document.getElementById('numistaRetryBtn');
+    const retryInput = document.getElementById('numistaRetryInput');
+    if (retryBtn && retryInput) {
+      const doRetry = async () => {
+        const query = retryInput.value.trim();
+        if (!query) return;
+        retryBtn.disabled = true;
+        retryBtn.textContent = 'Searching\u2026';
+        try {
+          const retryResults = await catalogAPI.searchItems(query, { limit: 20 });
+          showNumistaResults(retryResults, false, query);
+        } catch (err) {
+          console.error('Numista retry search failed:', err);
+          retryBtn.textContent = 'Failed';
+          setTimeout(() => { retryBtn.textContent = 'Search'; retryBtn.disabled = false; }, 1500);
+        }
+      };
+      retryBtn.addEventListener('click', doRetry);
+      retryInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') doRetry(); });
+      // Auto-focus the search input for quick editing
+      setTimeout(() => retryInput.select(), 50);
+    }
+
+    // Wire up quick-pick clicks
+    list.querySelectorAll('.numista-quick-pick').forEach(pickBtn => {
+      pickBtn.addEventListener('click', async () => {
+        const nId = pickBtn.dataset.numistaId;
+        if (!nId) return;
+        pickBtn.style.opacity = '0.5';
+        pickBtn.disabled = true;
+        try {
+          const result = await catalogAPI.lookupItem(nId);
+          showNumistaResults(result ? [result] : [], true, nId);
+        } catch (err) {
+          console.error('Numista quick-pick lookup failed:', err);
+          pickBtn.style.opacity = '1';
+          pickBtn.disabled = false;
+        }
+      });
+    });
+
+    return;
+  }
+
+  // Direct lookup with single result → skip to field picker
+  if (directLookup && results.length === 1) {
+    title.textContent = 'Numista Item Found';
+    list.style.display = 'none';
+    selectedNumistaResult = results[0];
+    preview.innerHTML = renderNumistaSelectedItem(results[0]);
+    renderNumistaFieldCheckboxes(results[0]);
+    picker.style.display = 'block';
+    modal.style.display = 'flex';
+    return;
+  }
+
+  // Multiple results → show selectable card list
+  title.textContent = `Numista Results (${results.length})`;
+  // Stash results on the list element for delegated click retrieval
+  list._numistaResults = results;
+  list.innerHTML = results.slice(0, 20).map((r, i) => renderNumistaResultCard(r, i)).join('');
+  list.style.display = 'flex';
+  modal.style.display = 'flex';
+};
+
+/**
+ * Fill form fields from the editable picker inputs.
+ * Reads values from the numistaFieldValue_* text inputs (user may have edited them).
+ */
+const fillFormFromNumistaResult = () => {
+  const container = document.getElementById('numistaFieldCheckboxes');
+  if (!container) return;
+
+  // Collect checked fields and their edited values from the picker inputs
+  const checkboxes = container.querySelectorAll('input[name="numistaField"]');
+  checkboxes.forEach(cb => {
+    if (!cb.checked) return;
+    const input = container.querySelector(`input[name="numistaFieldValue_${cb.value}"]`);
+    if (!input) return;
+    const val = input.value.trim();
+    if (!val) return;
+
+    switch (cb.value) {
+      case 'name': {
+        const el = elements.itemName || document.getElementById('itemName');
+        if (el) el.value = val;
+        break;
+      }
+      case 'year': {
+        const el = elements.itemYear || document.getElementById('itemYear');
+        if (el) el.value = val;
+        break;
+      }
+      case 'type': {
+        const el = elements.itemType || document.getElementById('itemType');
+        if (el) {
+          const valid = Array.from(el.options).map(o => o.value);
+          if (valid.includes(val)) el.value = val;
+        }
+        break;
+      }
+      case 'weight': {
+        const el = elements.itemWeight || document.getElementById('itemWeight');
+        const unitEl = document.getElementById('itemWeightUnit');
+        const num = parseFloat(val);
+        if (el && !isNaN(num) && num > 0) {
+          el.value = num;
+          if (unitEl) unitEl.value = 'g';
+        }
+        break;
+      }
+      case 'catalog': {
+        const el = elements.itemCatalog || document.getElementById('itemCatalog');
+        if (el) el.value = val;
+        break;
+      }
+    }
+  });
+};
+
+/**
+ * Close Numista results modal and clean up state
+ */
+const closeNumistaResultsModal = () => {
+  const modal = document.getElementById('numistaResultsModal');
+  if (modal) modal.style.display = 'none';
+  selectedNumistaResult = null;
+};
+
 // Test function for Numista API
 async function testNumistaAPI() {
   if (!catalogConfig.isNumistaEnabled()) {
@@ -948,6 +1334,9 @@ if (typeof window !== 'undefined') {
   window.recordCatalogHistory = recordCatalogHistory;
   window.loadCatalogHistory = loadCatalogHistory;
   window.saveCatalogHistory = saveCatalogHistory;
+  window.showNumistaResults = showNumistaResults;
+  window.fillFormFromNumistaResult = fillFormFromNumistaResult;
+  window.closeNumistaResultsModal = closeNumistaResultsModal;
 }
 
 // Initialize UI event handlers when DOM is ready
@@ -1036,4 +1425,81 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     });
   }
+
+  // =========================================================================
+  // NUMISTA RESULTS MODAL — event wiring
+  // =========================================================================
+
+  const numistaResultsModal = document.getElementById('numistaResultsModal');
+  const numistaResultsCloseBtn = document.getElementById('numistaResultsCloseBtn');
+  const numistaFillCancelBtn = document.getElementById('numistaFillCancelBtn');
+  const numistaFillBtn = document.getElementById('numistaFillBtn');
+  const numistaResultsList = document.getElementById('numistaResultsList');
+
+  // Close button
+  if (numistaResultsCloseBtn) {
+    numistaResultsCloseBtn.addEventListener('click', closeNumistaResultsModal);
+  }
+
+  // Cancel button in field picker
+  if (numistaFillCancelBtn) {
+    numistaFillCancelBtn.addEventListener('click', closeNumistaResultsModal);
+  }
+
+  // Fill Fields button
+  if (numistaFillBtn) {
+    numistaFillBtn.addEventListener('click', function() {
+      if (selectedNumistaResult) {
+        fillFormFromNumistaResult();
+      }
+      closeNumistaResultsModal();
+    });
+  }
+
+  // Delegated click on result cards → select and show field picker
+  if (numistaResultsList) {
+    numistaResultsList.addEventListener('click', function(e) {
+      const card = e.target.closest('.numista-result-card');
+      if (!card) return;
+
+      const index = parseInt(card.dataset.resultIndex, 10);
+      const results = numistaResultsList._numistaResults;
+      if (!results || !results[index]) return;
+
+      // Highlight selected card
+      numistaResultsList.querySelectorAll('.numista-result-card').forEach(c => c.classList.remove('selected'));
+      card.classList.add('selected');
+
+      // Transition to field picker
+      selectedNumistaResult = results[index];
+      const preview = document.getElementById('numistaSelectedItem');
+      const picker = document.getElementById('numistaFieldPicker');
+      const title = document.getElementById('numistaResultsTitle');
+      if (preview) preview.innerHTML = renderNumistaSelectedItem(selectedNumistaResult);
+      renderNumistaFieldCheckboxes(selectedNumistaResult);
+      if (numistaResultsList) numistaResultsList.style.display = 'none';
+      if (picker) picker.style.display = 'block';
+      if (title) title.textContent = 'Fill Form Fields';
+    });
+  }
+
+  // Background click dismiss
+  if (numistaResultsModal) {
+    numistaResultsModal.addEventListener('click', function(e) {
+      if (e.target === numistaResultsModal) {
+        closeNumistaResultsModal();
+      }
+    });
+  }
+
+  // ESC key handler — results modal has higher z-index, check it first
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      const resultsModal = document.getElementById('numistaResultsModal');
+      if (resultsModal && resultsModal.style.display !== 'none') {
+        e.stopImmediatePropagation();
+        closeNumistaResultsModal();
+      }
+    }
+  });
 });

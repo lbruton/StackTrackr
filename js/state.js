@@ -62,11 +62,17 @@ const elements = {
   dateField: null,
   purchaseLocation: null,
   storageLocation: null,
+  itemSerialNumber: null,
   itemNotes: null,
   itemDate: null,
   itemSpotPrice: null,
   itemCollectable: null,
   itemCatalog: null,
+  itemYear: null,
+  itemGrade: null,
+  itemGradingAuthority: null,
+  itemCertNumber: null,
+  searchNumistaBtn: null,
 
   // Spot price sync icons (per-metal)
   syncIconSilver: null,
