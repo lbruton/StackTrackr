@@ -102,8 +102,8 @@ const setupColumnResizing = () => {
       }
     }
 
-    // Skip adding resize handles to action columns (edit/notes/delete)
-    if (index >= headers.length - 3) return;
+    // Skip adding resize handle to the Actions column (last column)
+    if (index >= headers.length - 1) return;
 
     const resizeHandle = document.createElement("div");
     resizeHandle.className = "resize-handle";
@@ -445,8 +445,8 @@ const setupEventListeners = () => {
     if (inventoryTable) {
       const headers = inventoryTable.querySelectorAll("th");
       headers.forEach((header, index) => {
-        // Skip action columns (edit/notes/delete)
-        if (index >= headers.length - 3) {
+        // Skip the Actions column (last column)
+        if (index >= headers.length - 1) {
           return;
         }
 
