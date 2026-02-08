@@ -1,13 +1,12 @@
 ## What's New
 
-- **Totals above table (v3.08.01)**: Per-metal portfolio summary cards now appear above the inventory table — Spot Prices → Totals → Table. Sparkline colors now match metal accent bars. Default rows per page raised to 25
-- **Spot price card redesign (v3.08.00)**: Background sparkline trend charts on all 4 spot cards, sync icon replaces button panel, shift+click for manual price entry, per-card range dropdown (7d/30d/60d/90d). Historical backfill dedup prevents duplicate entries on repeated syncs
-- **Shift+click inline editing (v3.07.02)**: Hold Shift and click any editable cell (Name, Qty, Weight, Purchase Price, Retail Price, Location) to edit in place. Enter saves, Escape cancels
-- **Light & Sepia theme contrast pass (v3.07.01)**: Clean gray-to-white light palette with visible card elevation. Darkened metal/type text colors to pass WCAG AA in both themes
-- **Portfolio visibility overhaul (v3.07.00)**: Confidence styling for Retail/Gain-Loss (estimated vs confirmed), new "All Metals" totals card with Avg Cost/oz and clickable breakdown modal
+- **Normalized name chips (v3.09.01)**: Filter chip bar now groups item name variants into single chips (e.g., "Silver Eagle 6/164"). Click to filter, click again to toggle off. Respects minCount threshold and Smart Grouping toggle
+- **Silver chip contrast fix (v3.09.01)**: Silver metal chip text no longer invisible on dark/sepia themes at page load
+- **Duplicate location chip fix (v3.09.01)**: Clicking a location chip no longer produces two chips
+- **Filter chips cleanup (v3.09.00)**: Default threshold lowered to 3+, date chips removed, "Unknown" locations suppressed, all locations respect minCount dropdown. Dead code removed. Chips now update after every inventory mutation
+- **Spot card hint (v3.09.00)**: Cards with no price data show "Shift+click price to set" — discoverability for the manual price entry pattern
 
 ## Development Roadmap
 
 - **Inline catalog & grading tags**: Optional (N#), (PCGS), (NGC), (Grade) tags on the Name cell with iframe links — no new column needed
-- **Filter chips rebuild**: Top-N per category model, normalized name chips, chip settings modal
 - **Numista API fix**: Correct endpoints, auth headers, and parameters in the NumistaProvider class

@@ -272,6 +272,13 @@ const updateSpotTimestamp = (metalName) => {
   const cacheHtml = getLastUpdateTime(metalName, "cache");
   const apiHtml = getLastUpdateTime(metalName, "api");
 
+  // If no price data at all, show shift+click hint for discoverability
+  if (!cacheHtml && !apiHtml) {
+    el.innerHTML = "Shift+click price to set";
+    el.onclick = null;
+    return;
+  }
+
   el.dataset.mode = "cache";
   el.dataset.cache = cacheHtml;
   el.dataset.api = apiHtml;

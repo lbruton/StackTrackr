@@ -11,7 +11,6 @@ let activeFilters = {};
  */
 const clearAllFilters = () => {
   activeFilters = {};
-  columnFilters = {};
   searchQuery = '';
 
   const searchInput = document.getElementById('searchInput');
@@ -53,13 +52,8 @@ const removeFilter = (field, value) => {
       // Remove entire filter
       delete activeFilters[field];
     }
-    
-    // Also remove from legacy column filters
-    if (field === 'metal' || field === 'type') {
-      delete columnFilters[field];
-    }
   }
-  
+
   currentPage = 1;
   renderTable();
 };
@@ -216,70 +210,79 @@ const simplifyChipValue = (value, field) => {
 const generateCategorySummary = (inventory) => {
   // Get minimum count setting from dropdown control or localStorage
   const chipMinCountEl = document.getElementById('chipMinCount');
-  let minCount = 100;
+  let minCount = 3;
   if (chipMinCountEl && chipMinCountEl.value) {
     minCount = parseInt(chipMinCountEl.value, 10);
   } else {
-    minCount = parseInt(localStorage.getItem('chipMinCount') || '100', 10);
+    minCount = parseInt(localStorage.getItem('chipMinCount') || '3', 10);
   }
 
   const metals = {};
   const types = {};
-  const dates = {};
   const purchaseLocations = {};
   const storageLocations = {};
-  
+  const names = {};
+
   inventory.forEach(item => {
     // Count metals
     const metal = getCompositionFirstWords(item.composition || item.metal || '');
     if (metal) {
       metals[metal] = (metals[metal] || 0) + 1;
     }
-    
+
     // Count types
     if (item.type) {
       types[item.type] = (types[item.type] || 0) + 1;
     }
-    
-    // Count dates (use >10 threshold instead of minCount)
-    if (item.date) {
-      dates[item.date] = (dates[item.date] || 0) + 1;
-    }
-    
-    // Count purchase locations (always show regardless of count)
-    if (item.purchaseLocation && item.purchaseLocation.trim()) {
+
+    // Count purchase locations (skip empty / "Unknown")
+    const pLoc = (item.purchaseLocation || '').trim();
+    if (pLoc && pLoc.toLowerCase() !== 'unknown') {
       purchaseLocations[item.purchaseLocation] = (purchaseLocations[item.purchaseLocation] || 0) + 1;
     }
-    
-    // Count storage locations (always show regardless of count)
-    if (item.storageLocation && item.storageLocation.trim()) {
+
+    // Count storage locations (skip empty / "Unknown")
+    const sLoc = (item.storageLocation || '').trim();
+    if (sLoc && sLoc.toLowerCase() !== 'unknown') {
       storageLocations[item.storageLocation] = (storageLocations[item.storageLocation] || 0) + 1;
     }
+
+    // Count normalized names (grouped name chips)
+    if (window.featureFlags && window.featureFlags.isEnabled('GROUPED_NAME_CHIPS')) {
+      const itemName = (item.name || '').trim();
+      if (itemName) {
+        let baseName = itemName;
+        if (window.autocomplete && typeof window.autocomplete.normalizeItemName === 'function') {
+          baseName = window.autocomplete.normalizeItemName(itemName);
+        }
+        names[baseName] = (names[baseName] || 0) + 1;
+      }
+    }
   });
-  
-  // Filter out categories below minimum count
+
+  // Apply minCount threshold to all categories
   const filteredMetals = Object.fromEntries(
     Object.entries(metals).filter(([key, count]) => count >= minCount)
   );
   const filteredTypes = Object.fromEntries(
     Object.entries(types).filter(([key, count]) => count >= minCount)
   );
-  
-  // Filter dates with >10 matches
-  const filteredDates = Object.fromEntries(
-    Object.entries(dates).filter(([key, count]) => count > 10)
+  const filteredPurchaseLocations = Object.fromEntries(
+    Object.entries(purchaseLocations).filter(([key, count]) => count >= minCount)
   );
-  
-  // Include ALL purchase and storage locations (no minimum threshold)
-  const filteredPurchaseLocations = { ...purchaseLocations };
-  const filteredStorageLocations = { ...storageLocations };
-  
+  const filteredStorageLocations = Object.fromEntries(
+    Object.entries(storageLocations).filter(([key, count]) => count >= minCount)
+  );
+  const filteredNames = Object.fromEntries(
+    Object.entries(names).filter(([key, count]) => count >= minCount)
+  );
+
   return {
     metals: filteredMetals,
     types: filteredTypes,
-    dates: filteredDates,
     purchaseLocations: filteredPurchaseLocations,
     storageLocations: filteredStorageLocations,
+    names: filteredNames,
     totalItems: inventory.length
   };
 };
@@ -357,22 +360,24 @@ const renderActiveFilters = () => {
       chips.push({ field: 'type', value: type, count, total: categorySummary.totalItems });
     }
   });
-  
-  // Add date chips for dates with >10 matches
-  Object.entries(categorySummary.dates).forEach(([date, count]) => {
-    if (count > 10) {
-      chips.push({ field: 'date', value: date, count, total: categorySummary.totalItems });
-    }
-  });
-  
-  // Add purchase location chips (all locations, regardless of count)
+
+  // Add name chips (grouped by normalized base name)
+  if (window.featureFlags && window.featureFlags.isEnabled('GROUPED_NAME_CHIPS') && categorySummary.names) {
+    Object.entries(categorySummary.names).forEach(([baseName, count]) => {
+      if (count > 0) {
+        chips.push({ field: 'name', value: baseName, count, total: categorySummary.totalItems, isGrouped: true });
+      }
+    });
+  }
+
+  // Add purchase location chips
   Object.entries(categorySummary.purchaseLocations).forEach(([location, count]) => {
     if (count > 0) {
       chips.push({ field: 'purchaseLocation', value: location, count, total: categorySummary.totalItems });
     }
   });
   
-  // Add storage location chips (all locations, regardless of count)
+  // Add storage location chips
   Object.entries(categorySummary.storageLocations).forEach(([location, count]) => {
     if (count > 0) {
       chips.push({ field: 'storageLocation', value: location, count, total: categorySummary.totalItems });
@@ -381,8 +386,8 @@ const renderActiveFilters = () => {
 
   // Add any explicitly applied filter chips (but not if they duplicate category chips)
   Object.entries(activeFilters).forEach(([field, criteria]) => {
-    // Skip metal and type filters as they're handled by category summary
-    if (field === 'metal' || field === 'type') return;
+    // Skip fields already rendered as category summary chips to avoid duplicates
+    if (field === 'metal' || field === 'type' || field === 'purchaseLocation' || field === 'storageLocation' || field === 'name') return;
     
     if (criteria && typeof criteria === 'object' && Array.isArray(criteria.values)) {
       criteria.values.forEach(value => {
@@ -397,14 +402,6 @@ const renderActiveFilters = () => {
     }
   });
   
-  // Add legacy column filter chips (but not metal/type which are handled above)
-  Object.entries(columnFilters).forEach(([field, value]) => {
-    if (field === 'metal' || field === 'type') return; // Skip, handled by category summary
-    if (!activeFilters[field] && value && value.toString().trim()) {
-      chips.push({ field, value });
-    }
-  });
-
   if (chips.length === 0) {
     container.style.display = 'none';
     return;
@@ -414,7 +411,6 @@ const renderActiveFilters = () => {
 
   const colors = ['var(--primary)', 'var(--secondary)', 'var(--success)', 'var(--warning)', 'var(--danger)', 'var(--info)'];
 
-  console.log('Rendering active filters:', chips);
   chips.forEach((f, i) => {
     const chip = document.createElement('span');
     chip.className = 'filter-chip';
@@ -424,43 +420,36 @@ const renderActiveFilters = () => {
     switch (f.field) {
       case 'type':
         color = getTypeColor(firstValue);
-        console.log('Type color:', color, 'Value:', firstValue);
         break;
       case 'metal': {
         let key = firstValue;
         if (!METAL_COLORS[key]) {
-          color = getColor(nameColors, key); // Fallback to getColor for undefined metals
-          console.log('Metal fallback color:', color, 'Key:', key);
+          color = getColor(nameColors, key);
         } else {
           color = METAL_COLORS[key];
           textColor = METAL_TEXT_COLORS[key] ? METAL_TEXT_COLORS[key]() : undefined;
-          console.log('Metal predefined color:', color, 'Text color:', textColor, 'Key:', key);
         }
         break;
       }
-      case 'date':
-        color = 'var(--info)'; // Use info color for dates
-        console.log('Date color:', color, 'Value:', firstValue);
+      case 'name':
+        color = getColor(nameColors, firstValue);
         break;
       case 'purchaseLocation':
         color = getPurchaseLocationColor(firstValue);
-        console.log('Purchase location color:', color, 'Value:', firstValue);
         break;
       case 'storageLocation':
         color = getStorageLocationColor(firstValue);
-        console.log('Storage location color:', color, 'Value:', firstValue);
         break;
       default:
         color = colors[i % colors.length];
-        console.log('Default color:', color, 'Value:', firstValue);
     }
     const bg = color || colors[i % colors.length];
     chip.style.backgroundColor = bg;
     chip.style.color = textColor || getContrastColor(bg);
-    console.log('Final chip colors:', { backgroundColor: bg, textColor });
 
-    // Only display the simplified content, with counts for category chips
-    const displayValue = simplifyChipValue(f.value, f.field);
+    // Display simplified value for most chips, but keep full base name for name chips
+    // (e.g., "American Silver Eagle" not "Silver Eagle" — country context matters)
+    const displayValue = f.field === 'name' ? f.value : simplifyChipValue(f.value, f.field);
     let label;
     
     if (f.field === 'search') {
@@ -491,7 +480,7 @@ const renderActiveFilters = () => {
       // Category summary chips - clicking adds filter
       chip.title = `Click to filter by ${f.field}: ${displayValue} (${f.count} items)`;
       chip.onclick = () => {
-        applyQuickFilter(f.field, f.value);
+        applyQuickFilter(f.field, f.value, f.isGrouped || false);
       };
     } else {
       // Active filter chips - clicking removes filter
@@ -605,18 +594,6 @@ const filterInventoryAdvanced = () => {
           result = result.filter(item => item.date <= value);
           break;
       }
-    }
-  });
-
-  // Apply legacy column filters for compatibility
-  Object.entries(columnFilters).forEach(([field, value]) => {
-    if (!activeFilters[field]) { // Don't double-filter
-      const lower = value.toLowerCase();
-      result = result.filter(item => {
-        const rawVal = item[field] ?? (field === 'metal' ? item.metal : '');
-        const fieldVal = String(rawVal ?? '').toLowerCase();
-        return fieldVal === lower;
-      });
     }
   });
 
@@ -855,10 +832,6 @@ const applyQuickFilter = (field, value, isGrouped = false) => {
   // If this exact filter is already active, remove it (toggle behavior)
   if (activeFilters[field]?.values?.[0] === value && !isGrouped) {
     delete activeFilters[field];
-    // Clean up legacy filters too
-    if (field === 'metal' || field === 'type') {
-      delete columnFilters[field];
-    }
   } else if (field === 'name' && isGrouped && window.featureFlags && window.featureFlags.isEnabled('GROUPED_NAME_CHIPS')) {
     // Handle grouped name filtering
     if (window.autocomplete && window.autocomplete.normalizeItemName) {
@@ -897,11 +870,6 @@ const applyQuickFilter = (field, value, isGrouped = false) => {
   } else {
     // Add or replace the filter for this field
     activeFilters[field] = { values: [value], exclude: false };
-
-    // Update legacy filters for compatibility
-    if (field === 'metal' || field === 'type') {
-      columnFilters[field] = value;
-    }
   }
 
   // Don't clear search query - allow search + filters to work together

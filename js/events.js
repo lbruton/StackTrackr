@@ -638,6 +638,11 @@ const setupEventListeners = () => {
           } catch (closeErr) {
             console.warn('Failed to close item modal:', closeErr);
           }
+
+          // Update filter chips after inventory mutation
+          if (typeof renderActiveFilters === 'function') {
+            renderActiveFilters();
+          }
         },
         "Unified item form",
       );
@@ -1129,6 +1134,7 @@ const setupEventListeners = () => {
             localStorage.removeItem(LS_KEY);
             loadInventory();
             renderTable();
+            renderActiveFilters();
             alert("Inventory data cleared.");
           }
         },
@@ -1158,6 +1164,7 @@ const setupEventListeners = () => {
 
             loadInventory();
             renderTable();
+            renderActiveFilters();
             loadSpotHistory();
             fetchSpotPrice();
 
@@ -1381,14 +1388,15 @@ const setupSearch = () => {
         function () {
           const value = this.value;
           if (value) {
-            columnFilters.type = value;
+            activeFilters.type = { values: [value], exclude: false };
           } else {
-            delete columnFilters.type;
+            delete activeFilters.type;
           }
           searchQuery = "";
           if (elements.searchInput) elements.searchInput.value = "";
           currentPage = 1;
           renderTable();
+          renderActiveFilters();
         },
         "Type filter select",
       );
@@ -1401,14 +1409,15 @@ const setupSearch = () => {
         function () {
           const value = this.value;
           if (value) {
-            columnFilters.metal = value;
+            activeFilters.metal = { values: [value], exclude: false };
           } else {
-            delete columnFilters.metal;
+            delete activeFilters.metal;
           }
           searchQuery = "";
           if (elements.searchInput) elements.searchInput.value = "";
           currentPage = 1;
           renderTable();
+          renderActiveFilters();
         },
         "Metal filter select",
       );

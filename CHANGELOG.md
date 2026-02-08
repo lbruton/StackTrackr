@@ -5,6 +5,47 @@ All notable changes to StakTrakr will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.09.01] - 2026-02-07
+
+### Patch — Name Chips + Silver Contrast Fix + Duplicate Chip Fix
+
+#### Added
+
+- **Normalized name chips**: Filter chip bar now shows grouped name chips (e.g., "Silver Eagle 15/164") that aggregate year variants, grades, and editions into a single clickable chip. Uses `normalizeItemName()` with the 280-entry `PREBUILT_LOOKUP_DATA` dictionary for grouping and `simplifyChipValue()` for display names. Respects the minCount dropdown threshold and the `GROUPED_NAME_CHIPS` feature flag (Smart Grouping toggle)
+- **Name chip click filtering**: Clicking a name chip filters the inventory to all matching variants (e.g., clicking "Silver Eagle" shows all American Silver Eagle items regardless of year). Click again to toggle off. Uses the existing grouped filter path in `applyQuickFilter()`
+
+#### Fixed
+
+- **`normalizeItemName()` rewrite — precise starts-with matching**: Replaced the fuzzy matching algorithm (partial word match, reverse contains) with a precise "starts-with, longest match wins" strategy. The old algorithm matched any 2 shared words — causing "American Silver Eagle" to incorrectly match "American Gold Eagle" (sharing "American" + "Eagle"), since Gold came first in the lookup array. The new algorithm strips year prefixes (with mint marks like P/S/D), weight prefixes, then checks if the cleaned name starts with a `PREBUILT_LOOKUP_DATA` entry at a word boundary. For items not in the lookup, suffix stripping removes grading (PCGS, NGC, NCG), grades (MS70, PR69), condition (BU, Proof, Antiqued, Colorized), and packaging (In Capsule, TEP, Sealed) to produce a clean base name
+- **Silver chip contrast on dark/sepia themes**: Silver metal chip text was nearly invisible on initial page load in dark and sepia themes — white text on a light gray background. Root cause: `renderActiveFilters()` computed contrast colors against `:root` CSS variables before the `data-theme` attribute was applied. Fix: apply the saved theme attribute before Phase 13 rendering, so `var(--silver)` resolves to the correct theme value when `getContrastColor()` runs
+- **Duplicate location chips**: Clicking a purchase or storage location chip produced two chips — a category summary chip and an active filter chip. Expanded the dedup skip list in the active filters loop to include `purchaseLocation`, `storageLocation`, and `name` fields alongside the existing `metal` and `type`
+
+## [3.09.00] - 2026-02-07
+
+### Increment 8 — Filter Chips Cleanup + Spot Card Hint
+
+#### Added
+
+- **Spot card shift+click hint**: When no spot price data exists for a metal, the timestamp area shows "Shift+click price to set" instead of blank — serves as discoverability training for the shift+click manual entry pattern. Hint disappears once a price is entered (manual or API)
+
+#### Changed
+
+- **Default chip threshold**: Filter chips now appear at 3+ items by default (was 100+), making them immediately useful on typical inventories
+- **Unified threshold application**: Purchase and storage location chips now respect the minCount dropdown — previously they showed all locations regardless of count
+- **Date chips removed**: Date-based filter chips are removed entirely (too granular to be useful as filters)
+- **"Unknown" location chips suppressed**: Empty and "Unknown" purchase/storage location values no longer produce filter chips
+- **Dropdown filters migrated to activeFilters**: Type and Metal `<select>` dropdowns now write to the unified `activeFilters` system and update chips immediately
+
+#### Removed
+
+- **Dead `updateTypeSummary()` function**: Removed the legacy chip renderer and its `#typeSummary` container — fully replaced by `renderActiveFilters()`
+- **Dead `columnFilters` state**: Removed the legacy filter object and all reads/writes across `state.js`, `filters.js`, `events.js`, and `search.js` — all filtering now uses the unified `activeFilters` system
+- **Stale console.log statements**: Removed 9 debugging `console.log()` calls from chip rendering (opt-in `DEBUG_FILTERS` logging preserved)
+
+#### Fixed
+
+- **Chips update after all mutations**: `renderActiveFilters()` is now called after delete, backup restore, inventory wipe, and add/edit modal submit — previously chips could show stale counts after these operations
+
 ## [3.08.01] - 2026-02-07
 
 ### Patch — Move Metals Totals Above Inventory Table
@@ -209,34 +250,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Qty-adjusted financials**: Retail, Gain/Loss, and summary totals now multiply per-unit `marketValue` and `price` by `qty`. Previously showed single-unit values for multi-qty line items
 - **Gain/Loss sort order**: `js/sorting.js` cases 8 (Retail) and 9 (Gain/Loss) now use qty-adjusted totals matching the display
 - **Spot price card colors**: `updateSpotCardColor()` in `js/spot.js` now compares against the last API/manual entry with a different price, so direction arrows (green / red) persist across page refreshes instead of always resetting to unchanged
-
-## [Unreleased]
-
-### Removed
-
-- **Master Password Encryption Feature** (2025-10-01)
-  - Removed UI section from API modal (74 lines)
-  - Removed `js/encryption.js` (995 lines)
-  - Removed encryption event handlers from `events.js` (258 lines)
-  - Simplified `saveData()` and `loadData()` in `utils.js` (removed encryption checks)
-  - Removed Phase 15 encryption initialization from `init.js`
-  - **Reason:** Feature was fundamentally incompatible with pure client-side architecture
-  - **Note:** Future encryption will require backend server with proper session management
-
-### Added
-
-- Comprehensive code quality improvement roadmap
-- Semantic versioning adoption following semver.org specification
-- Structured changelog management following keepachangelog.com format
-- Version management workflow integration
-- Release criteria for v1.0.0 stable release
-- Complete architectural documentation in `/docs/` folder
-
-### Changed
-
-- Development workflow now includes version tracking and changelog updates
-- Timeline restructured to include foundational Phase 0 for standards
-- localStorage now stores data unencrypted (appropriate for personal deployment)
 
 ## [0.1.0] - 2024-08-31
 

@@ -19,9 +19,6 @@ let itemsPerPage = 25; // Number of items to display per page
 /** @type {string} Current search query */
 let searchQuery = "";
 
-/** @type {Object<string, string>} Active column filters */
-let columnFilters = {};
-
 /** @type {Object} Chart instances for proper cleanup */
 let chartInstances = {
   typeChart: null,
@@ -136,7 +133,6 @@ const elements = {
   // Change log elements
     changeLogBtn: null,
     backupReminder: null,
-    typeSummary: null,
   changeLogModal: null,
   changeLogCloseBtn: null,
   changeLogClearBtn: null,
