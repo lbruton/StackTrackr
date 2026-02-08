@@ -199,7 +199,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
       elements.changeLogBtn = safeGetElement("changeLogBtn");
       elements.backupReminder = safeGetElement("backupReminder");
-      elements.typeSummary = safeGetElement("typeSummary");
       elements.changeLogModal = safeGetElement("changeLogModal");
       elements.changeLogCloseBtn = safeGetElement("changeLogCloseBtn");
       elements.changeLogClearBtn = safeGetElement("changeLogClearBtn");
@@ -220,10 +219,10 @@ document.addEventListener("DOMContentLoaded", () => {
       const chipMinEl = document.getElementById('chipMinCount');
       const saved = localStorage.getItem('chipMinCount');
       if (!saved) {
-        localStorage.setItem('chipMinCount', '100');
+        localStorage.setItem('chipMinCount', '3');
       }
       if (chipMinEl) {
-        chipMinEl.value = localStorage.getItem('chipMinCount') || '100';
+        chipMinEl.value = localStorage.getItem('chipMinCount') || '3';
       }
     } catch (e) {
       // ignore storage errors
@@ -349,6 +348,15 @@ document.addEventListener("DOMContentLoaded", () => {
     // Initialize API system
     apiConfig = loadApiConfig();
     apiCache = loadApiCache();
+
+    // Apply saved theme attribute early so CSS variables resolve correctly
+    // before renderActiveFilters() computes contrast colors in Phase 13
+    const earlyTheme = localStorage.getItem(THEME_KEY);
+    if (earlyTheme === 'dark') {
+      document.documentElement.setAttribute('data-theme', 'dark');
+    } else if (earlyTheme === 'sepia') {
+      document.documentElement.setAttribute('data-theme', 'sepia');
+    }
 
     // Phase 13: Initial Rendering
     debugLog("Phase 13: Rendering initial display...");

@@ -19,13 +19,16 @@ const filterInventory = () => {
   // Legacy filtering for compatibility
   let result = inventory;
 
-  Object.entries(columnFilters).forEach(([field, value]) => {
-    const lower = value.toLowerCase();
-    result = result.filter((item) => {
-      const rawVal = item[field] ?? (field === 'metal' ? item.metal : '');
-      const fieldVal = String(rawVal ?? '').toLowerCase();
-      return fieldVal === lower;
-    });
+  Object.entries(activeFilters).forEach(([field, criteria]) => {
+    if (criteria && typeof criteria === 'object' && Array.isArray(criteria.values)) {
+      const lowerVals = criteria.values.map(v => String(v).toLowerCase());
+      result = result.filter((item) => {
+        const rawVal = item[field] ?? (field === 'metal' ? item.metal : '');
+        const fieldVal = String(rawVal ?? '').toLowerCase();
+        const match = lowerVals.includes(fieldVal);
+        return criteria.exclude ? !match : match;
+      });
+    }
   });
 
   if (!searchQuery.trim()) return result;

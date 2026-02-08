@@ -91,6 +91,21 @@ const populateVersionModal = (version, html) => {
  */
 const getEmbeddedChangelog = (version) => {
   const changelogs = {
+    "3.09.01": `
+      <li><strong>Normalized name chips</strong>: Filter chip bar groups item name variants into single chips (e.g., "Silver Eagle 15/164"). Click to filter, click again to toggle off. Respects minCount threshold and Smart Grouping toggle</li>
+      <li><strong>Name normalizer rewrite</strong>: Precise starts-with matching replaces fuzzy word matching — no more phantom chips for items you don't own (e.g., "American Gold Eagle" when you only have Silver Eagles)</li>
+      <li><strong>Silver chip contrast fix</strong>: Silver metal chip text no longer invisible on dark/sepia themes at page load</li>
+      <li><strong>Duplicate location chip fix</strong>: Clicking a location chip no longer produces two chips</li>
+    `,
+    "3.09.00": `
+      <li><strong>Spot card hint</strong>: Cards with no price data show "Shift+click price to set" for discoverability</li>
+      <li><strong>Default chip threshold</strong>: Filter chips now appear at 3+ items (was 100+)</li>
+      <li><strong>Unified thresholds</strong>: Purchase and storage location chips now respect the minCount dropdown</li>
+      <li><strong>Date chips removed</strong>: Too granular — removed entirely</li>
+      <li><strong>"Unknown" suppressed</strong>: Empty and "Unknown" location values no longer produce chips</li>
+      <li><strong>Dead code cleanup</strong>: Removed legacy columnFilters, updateTypeSummary, and 9 stale console.log calls</li>
+      <li><strong>Chips update on mutations</strong>: Filter chips now refresh after delete, import, wipe, and add/edit</li>
+    `,
     "3.08.01": `
       <li><strong>Totals above table</strong>: Per-metal portfolio summary cards now appear above the inventory table — Spot Prices → Totals → Table</li>
       <li><strong>Sparkline color consistency</strong>: Trend lines now use the same metal accent colors as the totals card bars, across all themes</li>

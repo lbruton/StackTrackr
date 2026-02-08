@@ -4,52 +4,6 @@ Project direction and planned work for the StakTrakr precious metals inventory t
 
 ---
 
-## Completed
-
-### Increment 1 — Portfolio Table Redesign
-- Reduced table from 17 to 15 columns by replacing 6 legacy columns (Spot, Premium/oz, Total Premium, Market Value, Collectable, Collectable Value) with 3 computed columns (Melt Value, Retail, Gain/Loss)
-- Introduced three-value portfolio model: Purchase / Melt / Retail with computed Gain/Loss
-- Added inline editing support for retail price with manual override
-- Streamlined form modals and summary cards for the new layout
-- Removed collectable toggle from filters, search, events, and sorting
-
-### Increment 2 — Table Polish
-- Removed Numista (N#) column from table view (15 to 14 columns); kept in modals, data model, and exports
-- Fixed header font inconsistency where price column headers rendered in monospace instead of system font
-- Consolidated three conflicting CSS rulesets for action columns (Notes/Edit/Delete) into one authoritative set
-- Fixed invalid CSS (`text-overflow: none` to `text-overflow: clip`)
-- Created this roadmap
-
-### Increment 3 — Unified Add/Edit Modal
-- Merged `#addModal` and `#editModal` into a single `#itemModal` that switches between "add" and "edit" mode via `editingIndex`
-- Fixed critical bug: edit modal was missing the weight unit `<select>` — used a fragile `dataset.unit` attribute invisible to the user. Now both modes share the real `<select id="itemWeightUnit">`
-- Fixed price preservation: empty price field in edit mode now preserves existing purchase price instead of zeroing it out
-- Fixed weight precision: `toFixed(2)` → `toFixed(6)` for stored troy oz values — sub-gram weights (e.g., 0.02g Goldbacks = 0.000643 ozt) were being rounded to zero, causing validation failures
-- Removed ~100 lines of duplicated edit modal HTML, ~20 duplicate element declarations, ~20 duplicate element lookups
-- Consolidated two separate form submit handlers into one unified handler with `isEditing` branch
-- Files: `index.html`, `js/state.js`, `js/init.js`, `js/events.js`, `js/inventory.js`, `css/styles.css`, `js/utils.js`
-- Fixed weight precision: `toFixed(2)` → `toFixed(6)` for stored troy oz values — sub-gram weights (e.g., 0.02g Goldbacks = 0.000643 ozt) were being rounded to zero, causing validation failures
-- Fixed $0 purchase price display: items with price=0 (free/promo) now show `$0.00` instead of a dash, and gain/loss correctly computes full melt as gain
-- Fixed qty-adjusted financials: Retail, Gain/Loss, and summary totals now multiply per-unit `marketValue` and `price` by `qty`. Previously showed single-unit values for multi-qty line items
-- Fixed gain/loss sort order: `js/sorting.js` cases 8 (Retail) and 9 (Gain/Loss) now use qty-adjusted totals matching the display
-- Fixed spot price card colors: `updateSpotCardColor()` in `js/spot.js` now compares against the last API/manual entry with a different price, so direction arrows (green ▲ / red ▼) persist across page refreshes instead of always resetting to orange =
-
-### Increment 4 — Date Bug Fix + Numista API Key Simplification
-- Fixed `formatDisplayDate()` UTC midnight bug — dates entered as "2024-01-15" no longer display as "Jan 14, 2024" in US timezones. Parses `YYYY-MM-DD` string directly via `split('-')` instead of using `new Date()`
-- Removed non-functional `CryptoUtils` AES-256-GCM encryption class (~115 lines) from `js/catalog-api.js` — replaced with base64 encoding matching the metals API key pattern
-- Added `catalog_api_config` to `ALLOWED_STORAGE_KEYS` in `js/constants.js` — the missing whitelist entry was causing `cleanupStorage()` to delete saved Numista config on every page load
-- Removed encryption password field from Numista settings UI, added Numista API signup link
-- Files: `js/utils.js`, `js/catalog-api.js`, `js/constants.js`, `index.html`
-
-### Increment 5 — Fraction Input + Duplicate Item Button + Notes Column Removal
-- Added `parseFraction()` utility in `js/utils.js` — parses `1/1000`, `1 1/2`, and plain decimals. Changed weight input from `type="number"` to `type="text"` with `inputmode="decimal"` to allow `/` character entry
-- Added duplicate item button (copy icon) to table action column between Edit and Delete. `duplicateItem()` function in `js/inventory.js` opens unified `#itemModal` in add mode pre-filled from source item, date defaults to today, qty resets to 1, serial clears
-- Removed Notes icon column from table (15 → 14 columns). Notes remain in add/edit modal
-- Fixed sticky column CSS: added `right:` offset for duplicate column, removed orphaned notes sticky rule, fixed `background: transparent` override that broke sticky header backgrounds
-- Files: `js/utils.js`, `js/events.js`, `js/inventory.js`, `index.html`, `css/styles.css`
-
----
-
 ## Near-Term (UI Focus)
 
 These items focus on visual polish and usability improvements that require no backend changes.
@@ -62,17 +16,9 @@ These items focus on visual polish and usability improvements that require no ba
   - **Data model additions**: `certService` (string: `''`|`'PCGS'`|`'NGC'`), `certNumber` (string), `grade` (string)
   - **No new table column** — all info lives inline in the Name cell, keeping the table compact
   - **CSV export**: add `certService`, `certNumber`, `grade` to export headers
-- **Spot price manual input UX** — improve the experience for manually entering spot prices when API is unavailable
-- **Filter chips overhaul** — comprehensive review and rebuild of the filter chip system (`filters.js`, `events.js`, `inventory.js`):
-  - **Core problem**: name chips are never generated as summary chips — `generateCategorySummary()` only produces metal, type, date, and location chips. The normalizer (`normalizeItemName()`) works but has no code path to produce chips like "American Silver Eagle (6)"
-  - **Duplicate chip bug**: clicking a location value to filter produces both a summary chip AND an active filter chip — two independent systems rendering the same filter
-  - **Threshold ignored**: with dropdown set to 5+, chips with counts as low as 2/159 still display
-  - **New distribution model**: replace flat threshold with a **"top N per category"** approach
-  - Remove date chips entirely and suppress "Unknown" value chips
-  - **Add normalized name chips** — group year variants into one chip. Two-layer approach: automatic normalizer (strip years, mint marks, edition text) + user-defined grouping rules via regex engine
+- **~~Normalized name chips~~** — **DONE (v3.09.01)**: Grouped name chips in filter bar (e.g., "Silver Eagle 6/164") using `normalizeItemName()` dictionary. Click-to-filter with toggle. Respects minCount threshold and GROUPED_NAME_CHIPS feature flag. Remaining sub-items:
   - **Batch rename/normalize tool**: reuse the normalizer to offer a "Clean Up Names" feature with preview and undo
   - **Chip settings modal**: select which columns produce chips and configure top-N limit per category
-  - Consolidate legacy `updateTypeSummary()` with `renderActiveFilters()` — root cause of the duplicate chip bug
 - **Numista API fix** — the `NumistaProvider` class in `js/catalog-api.js` has never worked due to three bugs: wrong endpoints (`/items/search` → `/types`), wrong auth (query param → `Numista-API-Key` header), non-existent params (`metal`/`country`/`limit` → `category`/`issuer`/`count`). Must be fixed before any Numista features can ship
 - **Numista integration — Sync & Search** (prerequisite: Numista API fix):
   - **"Sync from Numista" button** on the add/edit modal — auto-populates Name, Weight, Type, Metal, Notes from a valid N#
@@ -81,11 +27,12 @@ These items focus on visual polish and usability improvements that require no ba
 - **Pie chart toggle**: switch metal detail modal chart between Purchase / Melt / Retail / Gain-Loss views
 - **Chart.js dashboard improvements** — spot price trend visualization, portfolio value over time
 - **Custom tagging system** — replace the removed `isCollectable` boolean with flexible tags (e.g., "IRA", "stack", "numismatic", "gift")
-- **Table CSS hardening** — audit responsive breakpoints, test mobile layout, ensure 14 columns degrade gracefully
-- **Full UI review walkthrough** — hands-on walk-through cataloging visual issues, layout inconsistencies, and UX friction
-- **eBay API integration** — if/when backend exists, proxy eBay Browse API for sold listing lookups to pre-populate retail estimates
+
 
 ### Completed (Near-Term)
+- ~~**Normalized name chips**~~ — **DONE (v3.09.01)**: Grouped name chips in filter bar using `normalizeItemName()` dictionary. Click-to-filter with toggle. Respects minCount threshold and feature flag. Also fixed: Silver chip contrast on dark/sepia, duplicate location chips
+- ~~**Filter chips cleanup**~~ — **DONE (v3.09.00)**: Unified threshold application (all categories respect minCount), removed date chips, suppressed "Unknown" locations, removed dead `columnFilters` and `updateTypeSummary()`, default threshold 3+, chips update after all mutations
+- ~~**Spot price manual input UX**~~ — **DONE (v3.09.00)**: Spot cards with no price data show "Shift+click price to set" hint
 - ~~**Retail column UX bundle**~~ — **DONE (v3.07.00 + v3.07.02)**: Confidence styling for estimated vs confirmed values (v3.07.00). Shift+click inline editing for all 6 editable columns including Retail — replaces pencil icon approach (v3.07.02)
 - ~~**Duplicate item button**~~ — **DONE (Increment 5)**
 - ~~**Fraction input for weight field**~~ — **DONE (Increment 5)**
@@ -130,3 +77,6 @@ Items that are explicitly out of scope until prerequisites are met.
 - **User photo upload** — allow users to photograph their own coins/bars and attach images to inventory items. Stored server-side (filesystem or BLOB column in SQLite). Displayed in the edit modal and optionally as a row thumbnail. Avoids all Numista copyright issues since users own the photos. Could support multiple images per item (obverse/reverse). Low priority — trends, statistics, and hosted build come first
 - **Numista image caching (CC-licensed only)** — for items where the Numista API returns a `picture_copyright` field with an explicit Creative Commons license, cache those images server-side with proper attribution. Non-CC images get a placeholder with a "View on Numista" link. Requires per-image license checking logic. Depends on SQLite backend + user photo upload infrastructure
 - **Mobile camera capture** — on mobile devices, add a camera button to the add/edit modal that triggers the device camera via `<input type="file" accept="image/*" capture="environment">`. Snap a photo of a coin/bar and attach it directly to the inventory item. Pairs with the user photo upload feature (server-side storage required) and the mobile card view (photos could appear as card thumbnails). Pure client-side version could store photos as base64 in localStorage, but this doesn't scale — practical implementation needs the SQLite backend
+- **Table CSS hardening** — audit responsive breakpoints, test mobile layout, ensure 14 columns degrade gracefully
+- **Full UI review walkthrough** — hands-on walk-through cataloging visual issues, layout inconsistencies, and UX friction
+- **eBay API integration** — if/when backend exists, proxy eBay Browse API for sold listing lookups to pre-populate retail estimates

@@ -234,6 +234,7 @@ const restoreBackupZip = async (file) => {
 
     loadInventory();
     renderTable();
+    renderActiveFilters();
     loadSpotHistory();
     fetchSpotPrice();
     alert("Data imported successfully.");
@@ -890,18 +891,6 @@ const startCellEdit = (idx, field, element) => {
 window.startCellEdit = startCellEdit;
 
 
-/**
- * Legacy chip-type filter system - now disabled in favor of renderActiveFilters
- * This function now just clears the typeSummary container to avoid conflicts
- */
-const updateTypeSummary = (items = inventory) => {
-  const el = elements.typeSummary || document.getElementById('typeSummary');
-  if (!el) return;
-  
-  // Clear the container to avoid conflicts with the new renderActiveFilters system
-  el.innerHTML = '';
-};
-window.updateTypeSummary = updateTypeSummary;
 
 /**
  * Hides table columns that contain no data after filtering.
@@ -1014,7 +1003,6 @@ const renderTable = () => {
     
     tbody.innerHTML = rows.concat(placeholders).join('');
     hideEmptyColumns();
-    updateTypeSummary(filteredInventory);
 
     debugLog('renderTable complete');
 
@@ -1169,6 +1157,7 @@ const deleteItem = (idx) => {
     inventory.splice(idx, 1);
     saveInventory();
     renderTable();
+    renderActiveFilters();
     if (item) logChange(item.name, 'Deleted', JSON.stringify(item), '', idx);
   }
 };
@@ -1528,9 +1517,6 @@ const importCsv = (file, override = false) => {
         if (typeof renderActiveFilters === 'function') {
           renderActiveFilters();
         }
-        if (typeof updateTypeSummary === 'function') {
-          updateTypeSummary();
-        }
         if (typeof updateStorageStats === 'function') {
           updateStorageStats();
         }
@@ -1774,9 +1760,6 @@ const importNumistaCsv = (file, override = false) => {
         renderTable();
         if (typeof renderActiveFilters === 'function') {
           renderActiveFilters();
-        }
-        if (typeof updateTypeSummary === 'function') {
-          updateTypeSummary();
         }
         if (typeof updateStorageStats === 'function') {
           updateStorageStats();
@@ -2120,9 +2103,6 @@ const importJson = (file, override = false) => {
       renderTable();
       if (typeof renderActiveFilters === 'function') {
         renderActiveFilters();
-      }
-      if (typeof updateTypeSummary === 'function') {
-        updateTypeSummary();
       }
       if (typeof updateStorageStats === "function") {
         updateStorageStats();

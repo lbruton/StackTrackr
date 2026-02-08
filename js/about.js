@@ -267,10 +267,11 @@ const setupAckModalEvents = () => {
  */
 const getEmbeddedWhatsNew = () => {
   return `
-    <li><strong>v3.08.01 – Layout &amp; polish</strong>: Totals cards moved above inventory table, sparkline colors match metal accent bars, default rows per page raised to 25</li>
-    <li><strong>v3.08.00 – Spot price card redesign</strong>: Background sparkline trends on all 4 cards, sync icon replaces button panel, shift+click manual price entry, per-card range dropdown (7d/30d/60d/90d). Dedup fix for historical backfill</li>
-    <li><strong>v3.07.02 – Shift+click inline editing</strong>: Hold Shift and click any editable cell (Name, Qty, Weight, Purchase Price, Retail Price, Location) to edit in place. Enter saves, Escape cancels</li>
-    <li><strong>v3.07.00 – Portfolio visibility overhaul</strong>: Confidence styling for Retail/Gain-Loss, All Metals totals card with Avg Cost/oz and clickable breakdown modal, metal detail modals show full portfolio breakdown per type and location</li>
+    <li><strong>v3.09.01 – Name chips</strong>: Filter chip bar groups item name variants into single chips (e.g., "Silver Eagle 6/164"). Click to filter, click again to toggle off. Respects minCount threshold and Smart Grouping toggle</li>
+    <li><strong>v3.09.01 – Silver contrast fix</strong>: Silver metal chip text no longer invisible on dark/sepia themes at page load</li>
+    <li><strong>v3.09.01 – Duplicate chip fix</strong>: Clicking a location chip no longer produces two chips</li>
+    <li><strong>v3.09.00 – Filter chips cleanup</strong>: Default threshold 3+, date chips removed, "Unknown" locations suppressed, all locations respect minCount dropdown. Dead code removed. Chips update after every mutation</li>
+    <li><strong>v3.09.00 – Spot card hint</strong>: Cards with no price data show "Shift+click price to set" for discoverability</li>
   `;
 };
 
@@ -281,7 +282,6 @@ const getEmbeddedWhatsNew = () => {
 const getEmbeddedRoadmap = () => {
   return `
     <li><strong>Inline catalog &amp; grading tags</strong>: Optional (N#), (PCGS), (NGC), (Grade) tags on the Name cell with iframe links — no new column needed</li>
-    <li><strong>Filter chips rebuild</strong>: Top-N per category model, normalized name chips, chip settings modal</li>
     <li><strong>Numista API fix</strong>: Correct endpoints, auth headers, and parameters in the NumistaProvider class</li>
   `;
 };
