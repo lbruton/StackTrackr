@@ -695,6 +695,9 @@ const refreshFromCache = () => {
   if (updatedCount > 0) {
     // Update summary calculations
     updateSummary();
+    if (typeof updateAllSparklines === "function") {
+      updateAllSparklines();
+    }
     return true;
   }
 
@@ -836,9 +839,7 @@ const fetchBatchSpotPrices = async (provider, apiKey, selectedMetals, historyDay
 
     // Replace placeholders based on provider specifics
     if (provider === 'METALS_DEV') {
-      const metals = selectedMetals.join(',');
-      url = url.replace('{API_KEY}', apiKey)
-              .replace('{METALS}', metals);
+      url = url.replace('{API_KEY}', apiKey);
     } else if (provider === 'METALS_API') {
       const symbolMap = { silver: 'XAG', gold: 'XAU', platinum: 'XPT', palladium: 'XPD' };
       const symbols = selectedMetals.map(metal => symbolMap[metal]).join(',');
@@ -849,6 +850,16 @@ const fetchBatchSpotPrices = async (provider, apiKey, selectedMetals, historyDay
       const currencies = selectedMetals.map(metal => symbolMap[metal]).join(',');
       url = url.replace('{API_KEY}', apiKey)
               .replace('{CURRENCIES}', currencies);
+    }
+
+    // Compute start/end dates for timeseries endpoints (all providers)
+    if (url.includes('{START_DATE}') || url.includes('{END_DATE}')) {
+      const end = new Date();
+      const start = new Date();
+      start.setDate(start.getDate() - (historyDays || 29));
+      const fmt = (d) => d.toISOString().slice(0, 10);
+      url = url.replace('{START_DATE}', fmt(start))
+              .replace('{END_DATE}', fmt(end));
     }
 
     // Apply historical parameters if supported
@@ -903,7 +914,8 @@ const fetchBatchSpotPrices = async (provider, apiKey, selectedMetals, historyDay
     // Record historical data if provided
     const providerName = providerConfig.name;
     Object.entries(history).forEach(([metal, entries]) => {
-      const metalName = METALS[metal]?.name || metal;
+      const metalConfig = Object.values(METALS).find((m) => m.key === metal);
+      const metalName = metalConfig?.name || metal;
       entries.forEach(({ timestamp, price }) => {
         recordSpot(price, "api", metalName, providerName, timestamp);
       });
@@ -1106,13 +1118,18 @@ const syncSpotPricesFromApi = async (
               ? `${hoursAgo} hours ago`
               : `${minutesAgo} minutes ago`;
 
-          alert(
-            `Using cached prices from ${timeText}. To pull fresh data from the API, go to the Metals API configuration and clear the cache first.`,
+          const override = confirm(
+            `Cached prices from ${timeText}.\n\nFetch fresh prices from the API? (uses 1 API call)`,
           );
+          if (override) {
+            // User wants fresh data — skip cache, fall through to API fetch
+          } else {
+            return refreshFromCache();
+          }
+        } else {
+          // Silent mode (autoSync) — just use cache
+          return refreshFromCache();
         }
-
-        // Use cached data to refresh display
-        return refreshFromCache();
       }
     }
   }
@@ -1166,6 +1183,9 @@ const syncSpotPricesFromApi = async (
       updateSummary();
       if (typeof updateStorageStats === "function") {
         updateStorageStats();
+      }
+      if (typeof updateAllSparklines === "function") {
+        updateAllSparklines();
       }
 
       setProviderStatus(apiConfig.provider, "connected");
@@ -1319,6 +1339,9 @@ const handleProviderSync = async (provider) => {
     if (updatedCount > 0) {
       saveApiCache(data, provider);
       updateSummary();
+      if (typeof updateAllSparklines === "function") {
+        updateAllSparklines();
+      }
       setProviderStatus(provider, "connected");
       updateProviderHistoryTables();
       alert(
@@ -1378,15 +1401,20 @@ const updateSyncButtonStates = (syncing = false) => {
     apiConfig && apiConfig.provider && apiConfig.keys[apiConfig.provider];
 
   Object.values(METALS).forEach((metalConfig) => {
-    const syncBtn = document.getElementById(`syncBtn${metalConfig.name}`);
-    if (syncBtn) {
-      syncBtn.disabled = !hasApi || syncing;
-      syncBtn.textContent = syncing ? "..." : "Sync";
-      syncBtn.title = hasApi
+    // New sparkline card sync icon
+    const syncIcon = document.getElementById(`syncIcon${metalConfig.name}`);
+    if (syncIcon) {
+      syncIcon.disabled = !hasApi || syncing;
+      syncIcon.title = hasApi
         ? syncing
           ? "Syncing..."
           : "Sync from API"
         : "Configure API first";
+      if (syncing) {
+        syncIcon.classList.add("syncing");
+      } else {
+        syncIcon.classList.remove("syncing");
+      }
     }
   });
 };

@@ -845,87 +845,20 @@ const setupEventListeners = () => {
       );
     }
 
-    // SPOT PRICE EVENT LISTENERS
+    // SPOT PRICE EVENT LISTENERS — Sparkline card redesign
     debugLog("Setting up spot price listeners...");
     Object.values(METALS).forEach((metalConfig) => {
       const metalKey = metalConfig.key;
       const metalName = metalConfig.name;
 
-      // Main spot price action buttons
-        const addBtn = document.getElementById(`addBtn${metalName}`);
-        const historyBtn = document.getElementById(`historyBtn${metalName}`);
-        const syncBtn = document.getElementById(`syncBtn${metalName}`);
-        const spotCard = document.querySelector(
-          `.spot-input.${metalKey} .spot-card`,
-        );
-        const actions = document.querySelector(
-          `.spot-input.${metalKey} .spot-actions`,
-        );
-
-        if (spotCard && actions) {
-          safeAttachListener(
-            spotCard,
-            "click",
-            () => {
-              const visible = actions.style.display === "flex";
-              document
-                .querySelectorAll(".spot-actions")
-                .forEach((el) => (el.style.display = "none"));
-              document
-                .querySelectorAll(".manual-input")
-                .forEach((el) => (el.style.display = "none"));
-              actions.style.display = visible ? "none" : "flex";
-            },
-            `${metalName} spot card`,
-          );
-        }
-
-      // Manual input buttons
-      const saveBtn = elements.saveSpotBtn[metalKey];
-      const cancelBtn = document.getElementById(`cancelSpotBtn${metalName}`);
-      const inputEl = elements.userSpotPriceInput[metalKey];
-
-      // Add button - shows manual input
-      if (addBtn) {
+      // Sync icon button
+      const syncIcon = document.getElementById(`syncIcon${metalName}`);
+      if (syncIcon) {
         safeAttachListener(
-          addBtn,
+          syncIcon,
           "click",
           () => {
-            debugLog(`Add button clicked for ${metalName}`);
-            const manualInput = document.getElementById(
-              `manualInput${metalName}`,
-            );
-            if (manualInput) {
-              manualInput.style.display = "block";
-              const input = document.getElementById(
-                `userSpotPrice${metalName}`,
-              );
-              if (input) input.focus();
-            }
-          },
-          `Add spot price for ${metalName}`,
-        );
-      }
-
-      // History button (placeholder)
-      if (historyBtn) {
-        safeAttachListener(
-          historyBtn,
-          "click",
-          () => {
-            debugLog(`History button clicked for ${metalName}`);
-          },
-          `Spot history for ${metalName}`,
-        );
-      }
-
-      // Sync button
-      if (syncBtn) {
-        safeAttachListener(
-          syncBtn,
-          "click",
-          () => {
-            debugLog(`Sync button clicked for ${metalName}`);
+            debugLog(`Sync icon clicked for ${metalName}`);
             if (typeof syncSpotPricesFromApi === "function") {
               syncSpotPricesFromApi(true);
             } else {
@@ -938,59 +871,48 @@ const setupEventListeners = () => {
         );
       }
 
-      // Save button (in manual input)
-      if (saveBtn) {
-        safeAttachListener(
-          saveBtn,
-          "click",
-          () => {
-            if (typeof updateManualSpot === "function") {
-              updateManualSpot(metalKey);
-            } else {
-              console.error(
-                `updateManualSpot function not available for ${metalName}`,
-              );
-            }
-          },
-          `Save manual spot price for ${metalName}`,
-        );
-      }
+      // Range dropdown change → re-render sparkline + save preference
+      const rangeSelect = document.getElementById(`spotRange${metalName}`);
+      if (rangeSelect) {
+        // Restore saved preference
+        const saved = typeof loadTrendRanges === "function" ? loadTrendRanges() : {};
+        if (saved[metalKey]) {
+          rangeSelect.value = String(saved[metalKey]);
+        }
 
-      // Cancel button (in manual input)
-      if (cancelBtn) {
         safeAttachListener(
-          cancelBtn,
-          "click",
+          rangeSelect,
+          "change",
           () => {
-            const manualInput = document.getElementById(
-              `manualInput${metalName}`,
-            );
-            if (manualInput) {
-              manualInput.style.display = "none";
-              const input = document.getElementById(
-                `userSpotPrice${metalName}`,
-              );
-              if (input) input.value = "";
-            }
+            const days = parseInt(rangeSelect.value, 10);
+            if (typeof saveTrendRange === "function") saveTrendRange(metalKey, days);
+            if (typeof updateSparkline === "function") updateSparkline(metalKey);
           },
-          `Cancel manual spot price for ${metalName}`,
-        );
-      }
-
-      // Enter key in input field
-      if (inputEl) {
-        safeAttachListener(
-          inputEl,
-          "keydown",
-          (e) => {
-            if (e.key === "Enter" && typeof updateManualSpot === "function") {
-              updateManualSpot(metalKey);
-            }
-          },
-          `Manual spot price input for ${metalName}`,
+          `Trend range for ${metalName}`,
         );
       }
     });
+
+    // Shift+click capture handler for inline spot price editing
+    document.addEventListener(
+      "click",
+      (e) => {
+        if (!e.shiftKey) return;
+        const valueEl = e.target.closest(".spot-card-value");
+        if (!valueEl) return;
+
+        e.preventDefault();
+        e.stopPropagation();
+
+        const card = valueEl.closest(".spot-card");
+        if (!card || !card.dataset.metal) return;
+
+        if (typeof startSpotInlineEdit === "function") {
+          startSpotInlineEdit(valueEl, card.dataset.metal);
+        }
+      },
+      true,
+    );
 
     // IMPORT/EXPORT EVENT LISTENERS
     debugLog("Setting up import/export listeners...");

@@ -28,6 +28,14 @@ let chartInstances = {
   locationChart: null,
 };
 
+/** @type {Object} Sparkline Chart.js instances keyed by metal (for cleanup) */
+let sparklineInstances = {
+  silver: null,
+  gold: null,
+  platinum: null,
+  palladium: null,
+};
+
 /** @type {Set<string>} Available composition options */
 let compositionOptions = new Set(["Gold", "Silver", "Platinum", "Palladium", "Alloy"]);
 
@@ -38,9 +46,9 @@ let marketValueViewItems = new Set();
 const elements = {
   // Spot price elements
   spotPriceDisplay: {},
-  userSpotPriceInput: {},
-  saveSpotBtn: {},
-  historyBtn: {},
+  spotSyncIcon: {},
+  spotRangeSelect: {},
+  spotSparkline: {},
 
   // Form elements
   inventoryForm: null,
@@ -63,11 +71,11 @@ const elements = {
   itemCollectable: null,
   itemCatalog: null,
 
-  // Spot price buttons
-  saveSpotBtnSilver: null,
-  saveSpotBtnGold: null,
-  historyBtnSilver: null,
-  historyBtnGold: null,
+  // Spot price sync icons (per-metal)
+  syncIconSilver: null,
+  syncIconGold: null,
+  syncIconPlatinum: null,
+  syncIconPalladium: null,
 
   // Import elements
   importCsvFile: null,

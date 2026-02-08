@@ -25,67 +25,28 @@ const API_PROVIDERS = {
     parseResponse: (data) => data.rate?.price || null,
     documentation: "https://www.metals.dev/docs",
     batchSupported: true,
-    batchEndpoint: "/metals/spot?api_key={API_KEY}&metals={METALS}&days={DAYS}&currency=USD",
+    batchEndpoint: "/timeseries?api_key={API_KEY}&start_date={START_DATE}&end_date={END_DATE}",
     parseBatchResponse: (data) => {
+      // Metals.dev /timeseries response:
+      // { status, currency, unit, rates: { "YYYY-MM-DD": { metals: { gold: N, silver: N, ... } } } }
       const current = {};
       const history = {};
-      if (Array.isArray(data?.data)) {
-        data.data.forEach((entry) => {
-          const ts =
-            entry.timestamp || entry.datetime || entry.date || entry.time || entry[0];
-          const metalsData = entry.metals || entry.prices || entry;
-          Object.entries(metalsData).forEach(([metal, val]) => {
-            if (["timestamp", "datetime", "date", "time"].includes(metal)) return;
-            const hPrice =
-              val.price || val.rate?.price || val.value || val;
-            if (hPrice) {
-              const key = metal.toLowerCase();
-              if (!history[key]) history[key] = [];
-              const tsNorm =
-                typeof ts === "string" && /^\d{4}-\d{2}-\d{2}$/.test(ts)
-                  ? `${ts} 00:00:00`
-                  : ts;
-              history[key].push({ timestamp: tsNorm, price: hPrice });
-              current[key] = hPrice;
-            }
+      if (data?.rates && typeof data.rates === "object") {
+        const dates = Object.keys(data.rates).sort();
+        dates.forEach((dateStr) => {
+          const entry = data.rates[dateStr];
+          const metals = entry.metals || entry;
+          Object.entries(metals).forEach(([metal, price]) => {
+            if (typeof price !== "number" || price <= 0) return;
+            const key = metal.toLowerCase();
+            if (!history[key]) history[key] = [];
+            history[key].push({
+              timestamp: `${dateStr} 00:00:00`,
+              price,
+            });
+            // Latest date becomes current price
+            current[key] = price;
           });
-        });
-      } else if (data?.data) {
-        Object.entries(data.data).forEach(([metal, info]) => {
-          const price = info.price || info.rate?.price || null;
-          if (price) current[metal] = price;
-          if (info.history) {
-            const entries = [];
-            if (Array.isArray(info.history)) {
-              info.history.forEach((h) => {
-                const hPrice = h.price || h.rate?.price || h.value;
-                const ts =
-                  h.timestamp || h.datetime || h.date || h.time || h[0];
-                if (hPrice && ts) {
-                  const tsNorm =
-                    typeof ts === "string" && /^\d{4}-\d{2}-\d{2}$/.test(ts)
-                      ? `${ts} 00:00:00`
-                      : ts;
-                  entries.push({ timestamp: tsNorm, price: hPrice });
-                }
-              });
-            } else if (typeof info.history === "object") {
-              Object.entries(info.history).forEach(([ts, val]) => {
-                const hPrice =
-                  typeof val === "object"
-                    ? val.price || val.rate?.price || val.value
-                    : val;
-                if (hPrice) {
-                  const tsNorm =
-                    typeof ts === "string" && /^\d{4}-\d{2}-\d{2}$/.test(ts)
-                      ? `${ts} 00:00:00`
-                      : ts;
-                  entries.push({ timestamp: tsNorm, price: hPrice });
-                }
-              });
-            }
-            if (entries.length) history[metal] = entries;
-          }
         });
       }
       return { current, history };
@@ -115,7 +76,7 @@ const API_PROVIDERS = {
     },
     documentation: "https://metals-api.com/documentation",
     batchSupported: true,
-    batchEndpoint: "/latest?access_key={API_KEY}&base=USD&symbols={SYMBOLS}",
+    batchEndpoint: "/timeseries?access_key={API_KEY}&start_date={START_DATE}&end_date={END_DATE}&base=USD&symbols={SYMBOLS}",
     parseBatchResponse: (data) => {
       const current = {};
       const history = {};
@@ -181,7 +142,7 @@ const API_PROVIDERS = {
     },
     documentation: "https://metalpriceapi.com/documentation",
     batchSupported: true,
-    batchEndpoint: "/latest?api_key={API_KEY}&base=USD&currencies={CURRENCIES}",
+    batchEndpoint: "/timeframe?api_key={API_KEY}&start_date={START_DATE}&end_date={END_DATE}&base=USD&currencies={CURRENCIES}",
     parseBatchResponse: (data) => {
       const current = {};
       const history = {};
@@ -258,7 +219,7 @@ const API_PROVIDERS = {
  * Updated: 2025-08-15 - Price column styling consistency fixes
  */
 
-const APP_VERSION = "3.07.02";
+const APP_VERSION = "3.08.00";
 
 /**
  * @constant {string} DEFAULT_CURRENCY - Default currency code for monetary formatting
@@ -410,6 +371,9 @@ const VERSION_ACK_KEY = "ackVersion";
 /** @constant {string} FEATURE_FLAGS_KEY - LocalStorage key for feature flags */
 const FEATURE_FLAGS_KEY = "featureFlags";
 
+/** @constant {string} SPOT_TREND_RANGE_KEY - LocalStorage key for sparkline trend range preferences */
+const SPOT_TREND_RANGE_KEY = "spotTrendRange";
+
 /**
  * List of recognized localStorage keys for cleanup validation
  * @constant {string[]}
@@ -439,6 +403,7 @@ const ALLOWED_STORAGE_KEYS = [
   "staktrakr.debug",
   "stackrtrackr.debug",
   "catalog_api_config",
+  SPOT_TREND_RANGE_KEY,
 ];
 
 // Persist current application version for comparison on future loads

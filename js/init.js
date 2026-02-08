@@ -246,11 +246,11 @@ document.addEventListener("DOMContentLoaded", () => {
     // Phase 9: Initialize Metal-Specific Elements
     debugLog("Phase 9: Initializing metal-specific elements...");
 
-    // Initialize nested objects
+    // Initialize nested objects for spot price cards
     elements.spotPriceDisplay = {};
-    elements.userSpotPriceInput = {};
-    elements.saveSpotBtn = {};
-    elements.historyBtn = {};
+    elements.spotSyncIcon = {};
+    elements.spotRangeSelect = {};
+    elements.spotSparkline = {};
 
     Object.values(METALS).forEach((metalConfig) => {
       const metalKey = metalConfig.key;
@@ -258,25 +258,21 @@ document.addEventListener("DOMContentLoaded", () => {
 
       debugLog(`  Setting up ${metalName} elements...`);
 
-      // Spot price display elements with CORRECT IDs
       elements.spotPriceDisplay[metalKey] = safeGetElement(
         `spotPriceDisplay${metalName}`,
       );
-      elements.userSpotPriceInput[metalKey] = safeGetElement(
-        `userSpotPrice${metalName}`,
+      elements.spotSyncIcon[metalKey] = safeGetElement(
+        `syncIcon${metalName}`,
       );
-      elements.saveSpotBtn[metalKey] = safeGetElement(
-        `saveSpotBtn${metalName}`,
+      elements.spotRangeSelect[metalKey] = safeGetElement(
+        `spotRange${metalName}`,
       );
-      elements.historyBtn[metalKey] = safeGetElement(
-        `historyBtn${metalName}`,
+      elements.spotSparkline[metalKey] = safeGetElement(
+        `sparkline${metalName}`,
       );
 
-      // Debug log for each metal
-      const displayEl = document.getElementById(`spotPriceDisplay${metalName}`);
-      const inputEl = document.getElementById(`userSpotPrice${metalName}`);
-      debugLog(`    - ${metalName} display element:`, !!displayEl);
-      debugLog(`    - ${metalName} input element:`, !!inputEl);
+      debugLog(`    - ${metalName} display element:`, !!document.getElementById(`spotPriceDisplay${metalName}`));
+      debugLog(`    - ${metalName} sparkline canvas:`, !!document.getElementById(`sparkline${metalName}`));
     });
 
     // Phase 10: Initialize Totals Elements
@@ -361,6 +357,9 @@ document.addEventListener("DOMContentLoaded", () => {
         renderActiveFilters();
       }
       fetchSpotPrice();
+      if (typeof updateAllSparklines === "function") {
+        updateAllSparklines();
+      }
       updateSyncButtonStates();
       if (typeof updateStorageStats === "function") {
         updateStorageStats();
