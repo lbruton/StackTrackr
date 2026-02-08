@@ -227,220 +227,92 @@
             gap: 1rem;
           "
         >
-          <!-- Silver spot price controls -->
+          <!-- Silver spot price card -->
           <div class="spot-input silver">
-            <div class="spot-card">
-              <div class="spot-card-label">Silver Spot Price</div>
-              <div class="spot-card-value" id="spotPriceDisplaySilver">$ -</div>
-              <div class="spot-card-timestamp" id="spotTimestampSilver">
-                No data
+            <div class="spot-card" data-metal="silver">
+              <canvas class="spot-sparkline" id="sparklineSilver" aria-hidden="true"></canvas>
+              <div class="spot-card-header">
+                <div class="spot-card-label">Silver Spot Price</div>
+                <div class="spot-card-controls">
+                  <select class="spot-range-select" id="spotRangeSilver" title="Trend period">
+                    <option value="7">7d</option>
+                    <option value="30">30d</option>
+                    <option value="60">60d</option>
+                    <option value="90" selected>90d</option>
+                  </select>
+                  <button class="spot-sync-icon" id="syncIconSilver" title="Sync from API" disabled>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6"/><path d="M2.5 22v-6h6"/><path d="M2.5 11.5a10 10 0 0 1 18.4-4.5"/><path d="M21.5 12.5a10 10 0 0 1-18.4 4.5"/></svg>
+                  </button>
+                </div>
               </div>
+              <div class="spot-card-value" id="spotPriceDisplaySilver" title="Shift+click to edit">$ -</div>
+              <div class="spot-card-timestamp" id="spotTimestampSilver">No data</div>
             </div>
-            <div class="spot-actions">
-              <button
-                class="btn spot-action-btn"
-                id="syncBtnSilver"
-                title="Sync from API"
-                disabled
-              >
-                Sync
-              </button>
-              <button
-                class="btn spot-action-btn"
-                id="addBtnSilver"
-                title="Add/Override Price"
-              >
-                Add
-              </button>
-              <button
-                class="btn spot-action-btn"
-                id="historyBtnSilver"
-                title="View Spot History"
-              >
-                History
-              </button>
-            </div>
-            <div
-              class="manual-input"
-              id="manualInputSilver"
-              style="display: none"
-            >
-              <label for="userSpotPriceSilver">Manual Silver Price</label>
-              <div class="currency-input">
-                <input
-                  id="userSpotPriceSilver"
-                  min="0"
-                  placeholder="Enter price"
-                  step="0.01"
-                  type="number"
-                />
-              </div>
-              <div class="grid grid-2">
-                <button class="btn" id="saveSpotBtnSilver">Save</button>
-                <button class="btn" id="cancelSpotBtnSilver">Cancel</button>
-              </div>
           </div>
-        </div>
-          <!-- Gold spot price controls -->
+          <!-- Gold spot price card -->
           <div class="spot-input gold">
-            <div class="spot-card">
-              <div class="spot-card-label">Gold Spot Price</div>
-              <div class="spot-card-value" id="spotPriceDisplayGold">$ -</div>
-              <div class="spot-card-timestamp" id="spotTimestampGold">
-                No data
+            <div class="spot-card" data-metal="gold">
+              <canvas class="spot-sparkline" id="sparklineGold" aria-hidden="true"></canvas>
+              <div class="spot-card-header">
+                <div class="spot-card-label">Gold Spot Price</div>
+                <div class="spot-card-controls">
+                  <select class="spot-range-select" id="spotRangeGold" title="Trend period">
+                    <option value="7">7d</option>
+                    <option value="30">30d</option>
+                    <option value="60">60d</option>
+                    <option value="90" selected>90d</option>
+                  </select>
+                  <button class="spot-sync-icon" id="syncIconGold" title="Sync from API" disabled>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6"/><path d="M2.5 22v-6h6"/><path d="M2.5 11.5a10 10 0 0 1 18.4-4.5"/><path d="M21.5 12.5a10 10 0 0 1-18.4 4.5"/></svg>
+                  </button>
+                </div>
               </div>
-            </div>
-            <div class="spot-actions">
-              <button
-                class="btn spot-action-btn"
-                id="syncBtnGold"
-                title="Sync from API"
-                disabled
-              >
-                Sync
-              </button>
-              <button
-                class="btn spot-action-btn"
-                id="addBtnGold"
-                title="Add/Override Price"
-              >
-                Add
-              </button>
-              <button
-                class="btn spot-action-btn"
-                id="historyBtnGold"
-                title="View Spot History"
-              >
-                History
-              </button>
-            </div>
-            <div
-              class="manual-input"
-              id="manualInputGold"
-              style="display: none"
-            >
-              <label for="userSpotPriceGold">Manual Gold Price</label>
-              <div class="currency-input">
-                <input
-                  id="userSpotPriceGold"
-                  min="0"
-                  placeholder="Enter price"
-                  step="0.01"
-                  type="number"
-                />
-              </div>
-              <div class="grid grid-2">
-                <button class="btn" id="saveSpotBtnGold">Save</button>
-                <button class="btn" id="cancelSpotBtnGold">Cancel</button>
-              </div>
+              <div class="spot-card-value" id="spotPriceDisplayGold" title="Shift+click to edit">$ -</div>
+              <div class="spot-card-timestamp" id="spotTimestampGold">No data</div>
             </div>
           </div>
-          <!-- Platinum spot price controls -->
+          <!-- Platinum spot price card -->
           <div class="spot-input platinum">
-            <div class="spot-card">
-              <div class="spot-card-label">Platinum Spot Price</div>
-              <div class="spot-card-value" id="spotPriceDisplayPlatinum">$ -</div>
-              <div class="spot-card-timestamp" id="spotTimestampPlatinum">
-                No data
+            <div class="spot-card" data-metal="platinum">
+              <canvas class="spot-sparkline" id="sparklinePlatinum" aria-hidden="true"></canvas>
+              <div class="spot-card-header">
+                <div class="spot-card-label">Platinum Spot Price</div>
+                <div class="spot-card-controls">
+                  <select class="spot-range-select" id="spotRangePlatinum" title="Trend period">
+                    <option value="7">7d</option>
+                    <option value="30">30d</option>
+                    <option value="60">60d</option>
+                    <option value="90" selected>90d</option>
+                  </select>
+                  <button class="spot-sync-icon" id="syncIconPlatinum" title="Sync from API" disabled>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6"/><path d="M2.5 22v-6h6"/><path d="M2.5 11.5a10 10 0 0 1 18.4-4.5"/><path d="M21.5 12.5a10 10 0 0 1-18.4 4.5"/></svg>
+                  </button>
+                </div>
               </div>
-            </div>
-            <div class="spot-actions">
-              <button
-                class="btn spot-action-btn"
-                id="syncBtnPlatinum"
-                title="Sync from API"
-                disabled
-              >
-                Sync
-              </button>
-              <button
-                class="btn spot-action-btn"
-                id="addBtnPlatinum"
-                title="Add/Override Price"
-              >
-                Add
-              </button>
-              <button
-                class="btn spot-action-btn"
-                id="historyBtnPlatinum"
-                title="View Spot History"
-              >
-                History
-              </button>
-            </div>
-            <div
-              class="manual-input"
-              id="manualInputPlatinum"
-              style="display: none"
-            >
-              <label for="userSpotPricePlatinum">Manual Platinum Price</label>
-              <div class="currency-input">
-                <input
-                  id="userSpotPricePlatinum"
-                  min="0"
-                  placeholder="Enter price"
-                  step="0.01"
-                  type="number"
-                />
-              </div>
-              <div class="grid grid-2">
-                <button class="btn" id="saveSpotBtnPlatinum">Save</button>
-                <button class="btn" id="cancelSpotBtnPlatinum">Cancel</button>
-              </div>
+              <div class="spot-card-value" id="spotPriceDisplayPlatinum" title="Shift+click to edit">$ -</div>
+              <div class="spot-card-timestamp" id="spotTimestampPlatinum">No data</div>
             </div>
           </div>
-          <!-- Palladium spot price controls -->
+          <!-- Palladium spot price card -->
           <div class="spot-input palladium">
-            <div class="spot-card">
-              <div class="spot-card-label">Palladium Spot Price</div>
-              <div class="spot-card-value" id="spotPriceDisplayPalladium">$ -</div>
-              <div class="spot-card-timestamp" id="spotTimestampPalladium">
-                No data
+            <div class="spot-card" data-metal="palladium">
+              <canvas class="spot-sparkline" id="sparklinePalladium" aria-hidden="true"></canvas>
+              <div class="spot-card-header">
+                <div class="spot-card-label">Palladium Spot Price</div>
+                <div class="spot-card-controls">
+                  <select class="spot-range-select" id="spotRangePalladium" title="Trend period">
+                    <option value="7">7d</option>
+                    <option value="30">30d</option>
+                    <option value="60">60d</option>
+                    <option value="90" selected>90d</option>
+                  </select>
+                  <button class="spot-sync-icon" id="syncIconPalladium" title="Sync from API" disabled>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6"/><path d="M2.5 22v-6h6"/><path d="M2.5 11.5a10 10 0 0 1 18.4-4.5"/><path d="M21.5 12.5a10 10 0 0 1-18.4 4.5"/></svg>
+                  </button>
+                </div>
               </div>
-            </div>
-            <div class="spot-actions">
-              <button
-                class="btn spot-action-btn"
-                id="syncBtnPalladium"
-                title="Sync from API"
-                disabled
-              >
-                Sync
-              </button>
-              <button
-                class="btn spot-action-btn"
-                id="addBtnPalladium"
-                title="Add/Override Price"
-              >
-                Add
-              </button>
-              <button
-                class="btn spot-action-btn"
-                id="historyBtnPalladium"
-                title="View Spot History"
-              >
-                History
-              </button>
-            </div>
-            <div
-              class="manual-input"
-              id="manualInputPalladium"
-              style="display: none"
-            >
-              <label for="userSpotPricePalladium">Manual Palladium Price</label>
-              <div class="currency-input">
-                <input
-                  id="userSpotPricePalladium"
-                  min="0"
-                  placeholder="Enter price"
-                  step="0.01"
-                  type="number"
-                />
-              </div>
-              <div class="grid grid-2">
-                <button class="btn" id="saveSpotBtnPalladium">Save</button>
-                <button class="btn" id="cancelSpotBtnPalladium">Cancel</button>
-              </div>
+              <div class="spot-card-value" id="spotPriceDisplayPalladium" title="Shift+click to edit">$ -</div>
+              <div class="spot-card-timestamp" id="spotTimestampPalladium">No data</div>
             </div>
           </div>
         </div>

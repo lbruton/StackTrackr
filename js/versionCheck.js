@@ -91,10 +91,17 @@ const populateVersionModal = (version, html) => {
  */
 const getEmbeddedChangelog = (version) => {
   const changelogs = {
+    "3.08.00": `
+      <li><strong>Sparkline trend charts</strong>: Background Chart.js line charts on all 4 spot price cards showing price history with gradient fill</li>
+      <li><strong>Trend range dropdown</strong>: Per-card 7d/30d/60d/90d selector with persistent preference</li>
+      <li><strong>Sync icon</strong>: Compact refresh icon replaces old Sync/Add/History button panel, spins during fetch</li>
+      <li><strong>Shift+click manual price</strong>: Hold Shift and click the spot price to edit inline — Enter saves, Escape cancels</li>
+      <li><strong>History dedup fix</strong>: Repeated syncs with 30-day backfill no longer create duplicate spotHistory entries</li>
+    `,
     "3.07.02": `
       <li><strong>Shift+click inline editing</strong>: Hold Shift and click any editable cell (Name, Qty, Weight, Purchase Price, Retail Price, Location) to edit in place. Enter saves, Escape cancels, click away cancels</li>
       <li><strong>Removed pencil icon</strong>: Name column no longer shows the edit icon — shift+click replaces it for all 6 editable columns</li>
-      <li><strong>Removed save/cancel icons</strong>: Inline edit fields use Enter/Escape only — no more ✔️/✖️ buttons competing for space in narrow cells</li>
+      <li><strong>Removed save/cancel icons</strong>: Inline edit fields use Enter/Escape only — no more buttons competing for space in narrow cells</li>
       <li><strong>Hidden number spinners</strong>: Qty, Weight, and price fields no longer show browser-native up/down arrows</li>
     `,
     "3.07.01": `

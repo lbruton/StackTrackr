@@ -84,11 +84,18 @@ const recordSpot = (
   const entryTimestamp = timestamp
     ? new Date(timestamp).toISOString().replace("T", " ").slice(0, 19)
     : new Date().toISOString().replace("T", " ").slice(0, 19);
-  if (
-    !spotHistory.length ||
-    spotHistory[spotHistory.length - 1].spot !== newSpot ||
-    spotHistory[spotHistory.length - 1].metal !== metal
-  ) {
+
+  // Historical backfill (explicit timestamp): full-array dedup by timestamp+metal.
+  // Real-time entries (no explicit timestamp): fast O(1) tail check.
+  const isDuplicate = timestamp
+    ? spotHistory.some(
+        (e) => e.timestamp === entryTimestamp && e.metal === metal,
+      )
+    : spotHistory.length > 0 &&
+      spotHistory[spotHistory.length - 1].spot === newSpot &&
+      spotHistory[spotHistory.length - 1].metal === metal;
+
+  if (!isDuplicate) {
     spotHistory.push({
       spot: newSpot,
       metal,
@@ -324,7 +331,240 @@ const resetSpotByName = (metalName) => {
 };
 
 // =============================================================================
+// SPARKLINE FUNCTIONS
+// =============================================================================
+
+/**
+ * Returns the theme-aware color for a metal sparkline
+ * @param {string} metalKey - 'silver', 'gold', 'platinum', 'palladium'
+ * @returns {string} CSS color string
+ */
+const getMetalColor = (metalKey) => {
+  const colors = {
+    silver: "#94a3b8",
+    gold: "#eab308",
+    platinum: "#a78bfa",
+    palladium: "#f97316",
+  };
+  return colors[metalKey] || "#6366f1";
+};
+
+/**
+ * Loads saved trend range preferences from localStorage
+ * @returns {Object} Map of metal key → days (default 30)
+ */
+const loadTrendRanges = () => {
+  try {
+    const stored = loadDataSync(SPOT_TREND_RANGE_KEY, null);
+    return stored && typeof stored === "object" ? stored : {};
+  } catch (e) {
+    return {};
+  }
+};
+
+/**
+ * Saves a single metal's trend range preference
+ * @param {string} metalKey - Metal key
+ * @param {number} days - Number of days
+ */
+const saveTrendRange = (metalKey, days) => {
+  const ranges = loadTrendRanges();
+  ranges[metalKey] = days;
+  saveDataSync(SPOT_TREND_RANGE_KEY, ranges);
+};
+
+/**
+ * Extracts sparkline data from spotHistory for a given metal and date range
+ * @param {string} metalName - Metal name ('Silver', 'Gold', etc.)
+ * @param {number} days - Number of days to look back
+ * @returns {{ labels: string[], data: number[] }} Arrays for Chart.js
+ */
+const getSparklineData = (metalName, days) => {
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - days);
+
+  const entries = spotHistory
+    .filter((e) => e.metal === metalName && new Date(e.timestamp) >= cutoff)
+    .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+
+  // Deduplicate by date string (keep last entry per day)
+  const byDay = new Map();
+  entries.forEach((e) => {
+    const day = e.timestamp.slice(0, 10);
+    byDay.set(day, e);
+  });
+
+  const sorted = [...byDay.values()].sort(
+    (a, b) => new Date(a.timestamp) - new Date(b.timestamp),
+  );
+
+  return {
+    labels: sorted.map((e) => e.timestamp.slice(0, 10)),
+    data: sorted.map((e) => e.spot),
+  };
+};
+
+/**
+ * Renders or updates a sparkline chart for a single metal card
+ * @param {string} metalKey - Metal key ('silver', 'gold', etc.)
+ */
+const updateSparkline = (metalKey) => {
+  const metalConfig = Object.values(METALS).find((m) => m.key === metalKey);
+  if (!metalConfig) return;
+
+  const canvasId = `sparkline${metalConfig.name}`;
+  const canvas = document.getElementById(canvasId);
+  if (!canvas || !canvas.getContext) return;
+
+  // Determine range from dropdown or saved preference
+  const rangeSelect = document.getElementById(`spotRange${metalConfig.name}`);
+  const days = rangeSelect ? parseInt(rangeSelect.value, 10) : 90;
+
+  const { labels, data } = getSparklineData(metalConfig.name, days);
+
+  // Destroy existing chart instance
+  if (sparklineInstances[metalKey]) {
+    sparklineInstances[metalKey].destroy();
+    sparklineInstances[metalKey] = null;
+  }
+
+  // Need at least 2 data points for a meaningful line
+  if (data.length < 2) return;
+
+  const ctx = canvas.getContext("2d");
+  const color = getMetalColor(metalKey);
+
+  // Create gradient fill
+  const gradient = ctx.createLinearGradient(0, 0, 0, canvas.clientHeight || 80);
+  gradient.addColorStop(0, color);
+  gradient.addColorStop(1, "transparent");
+
+  sparklineInstances[metalKey] = new Chart(ctx, {
+    type: "line",
+    data: {
+      datasets: [
+        {
+          data: data.map((val, i) => ({ x: i, y: val })),
+          borderColor: color,
+          backgroundColor: gradient,
+          fill: true,
+          borderWidth: 1.5,
+          pointRadius: 0,
+          tension: 0.3,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      layout: { padding: { top: 6, right: 0, bottom: 0, left: 0 } },
+      plugins: {
+        legend: { display: false },
+        tooltip: { enabled: false },
+      },
+      scales: {
+        x: {
+          type: "linear",
+          display: false,
+          min: 0,
+          max: data.length - 1,
+        },
+        y: { display: false, beginAtZero: false },
+      },
+      animation: { duration: 400 },
+      interaction: { enabled: false },
+    },
+  });
+};
+
+/**
+ * Refreshes sparklines on all 4 metal cards
+ */
+const updateAllSparklines = () => {
+  Object.values(METALS).forEach((mc) => updateSparkline(mc.key));
+};
+
+/**
+ * Destroys all sparkline Chart.js instances (cleanup)
+ */
+const destroySparklines = () => {
+  Object.keys(sparklineInstances).forEach((key) => {
+    if (sparklineInstances[key]) {
+      sparklineInstances[key].destroy();
+      sparklineInstances[key] = null;
+    }
+  });
+};
+
+/**
+ * Opens an inline input on a spot card price for manual editing (shift+click)
+ * @param {HTMLElement} valueEl - The .spot-card-value element that was clicked
+ * @param {string} metalKey - Metal key ('silver', 'gold', etc.)
+ */
+const startSpotInlineEdit = (valueEl, metalKey) => {
+  if (valueEl.querySelector(".spot-inline-input")) return; // already editing
+
+  const metalConfig = Object.values(METALS).find((m) => m.key === metalKey);
+  if (!metalConfig) return;
+
+  const currentPrice = spotPrices[metalKey] || 0;
+  const originalHTML = valueEl.innerHTML;
+
+  const input = document.createElement("input");
+  input.type = "number";
+  input.className = "spot-inline-input";
+  input.value = currentPrice > 0 ? currentPrice.toFixed(2) : "";
+  input.step = "0.01";
+  input.min = "0";
+
+  valueEl.textContent = "";
+  valueEl.appendChild(input);
+  input.focus();
+  input.select();
+
+  const cancel = () => {
+    valueEl.innerHTML = originalHTML;
+  };
+
+  const save = () => {
+    const num = parseFloat(input.value);
+    if (isNaN(num) || num <= 0) {
+      cancel();
+      return;
+    }
+
+    localStorage.setItem(metalConfig.localStorageKey, num);
+    spotPrices[metalKey] = num;
+    valueEl.textContent = formatCurrency(num);
+    updateSpotCardColor(metalKey, num);
+    recordSpot(num, "manual", metalConfig.name);
+    updateSpotTimestamp(metalConfig.name);
+    updateSummary();
+    updateSparkline(metalKey);
+  };
+
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      save();
+    } else if (e.key === "Escape") {
+      e.preventDefault();
+      cancel();
+    }
+  });
+
+  input.addEventListener("blur", cancel);
+};
+
+// =============================================================================
 
 // Ensure global availability
 window.fetchSpotPrice = fetchSpotPrice;
 window.updateSpotCardColor = updateSpotCardColor;
+window.updateSparkline = updateSparkline;
+window.updateAllSparklines = updateAllSparklines;
+window.destroySparklines = destroySparklines;
+window.startSpotInlineEdit = startSpotInlineEdit;
+window.getMetalColor = getMetalColor;
+window.loadTrendRanges = loadTrendRanges;
+window.saveTrendRange = saveTrendRange;
