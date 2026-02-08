@@ -91,115 +91,22 @@ const populateVersionModal = (version, html) => {
  */
 const getEmbeddedChangelog = (version) => {
   const changelogs = {
+    "3.07.02": `
+      <li><strong>Shift+click inline editing</strong>: Hold Shift and click any editable cell (Name, Qty, Weight, Purchase Price, Retail Price, Location) to edit in place. Enter saves, Escape cancels, click away cancels</li>
+      <li><strong>Removed pencil icon</strong>: Name column no longer shows the edit icon — shift+click replaces it for all 6 editable columns</li>
+      <li><strong>Removed save/cancel icons</strong>: Inline edit fields use Enter/Escape only — no more ✔️/✖️ buttons competing for space in narrow cells</li>
+      <li><strong>Hidden number spinners</strong>: Qty, Weight, and price fields no longer show browser-native up/down arrows</li>
+    `,
     "3.07.01": `
       <li><strong>Light theme: clean backgrounds</strong>: Cool gray page background with white cards — visible elevation and row striping</li>
-      <li><strong>Table cleanup</strong>: Removed sticky columns, filter-based hover, and cell-level transitions — hover is now a simple row background change</li>
-      <li><strong>Metal/type text contrast</strong>: Darkened Silver, Gold, Coin, Bar, etc. color tokens so they pass WCAG AA in light and sepia themes</li>
-      <li><strong>Confidence styling</strong>: Estimated Retail/Gain-Loss now uses theme-safe muted text color instead of opacity dimming</li>
-      <li><strong>Sepia theme: removed global sepia filter</strong>: Warm palette now controlled by custom properties instead of an unpredictable CSS filter</li>
-      <li><strong>Sepia theme: WCAG text contrast fix</strong>: Muted text was failing WCAG AA (3:1 ratio) — now passes at 6.7:1</li>
-      <li><strong>Sepia theme: warm info color</strong>: Replaced jarring sky-blue with desaturated warm teal to match the palette</li>
-      <li><strong>Sepia theme: visible borders and shadows</strong>: Fixed identical border-hover/bg-tertiary, strengthened shadow opacity</li>
+      <li><strong>Table cleanup</strong>: Removed sticky columns, filter-based hover, and cell-level transitions</li>
+      <li><strong>Metal/type text contrast</strong>: Darkened color tokens so they pass WCAG AA in light and sepia themes</li>
+      <li><strong>Sepia theme fixes</strong>: Removed global sepia filter, fixed text contrast to pass WCAG AA, warm info color, visible borders</li>
     `,
     "3.07.00": `
-      <li><strong>Confidence styling</strong>: Retail and Gain/Loss columns now show italic/muted for estimated values (melt fallback) vs bold for confirmed (manual retail)</li>
-      <li><strong>All Metals summary card</strong>: New combined totals card with portfolio-wide metrics and Avg Cost/oz per metal</li>
-      <li><strong>Metal detail modal overhaul</strong>: Full portfolio breakdown (Purchase, Melt, Retail, Gain/Loss) per type and location in a compact 2x2 grid</li>
-      <li><strong>All Metals breakdown modal</strong>: Click the All Metals card header for portfolio-wide by-metal and by-location allocation with pie charts</li>
-    `,
-    "3.06.02": `
-      <li><strong>eBay search split</strong>: Purchase column now searches active listings (what's for sale), Retail column searches sold listings (what items actually sold for)</li>
-    `,
-    "3.06.01": `
-      <li><strong>Dead CSS cleanup</strong>: Removed 125+ lines of orphaned collectable-* selectors from the legacy feature removal</li>
-      <li><strong>eBay search icon</strong>: Replaced oversized emoji-in-red-circle with a clean 12px SVG magnifying glass that themes automatically</li>
-      <li><strong>About modal overhaul</strong>: New description with live site, GitHub, Community, and MIT License links. Removed duplicated privacy notice from version modal</li>
-    `,
-    "3.06.00": `
-      <li><strong>Rebrand to StakTrakr</strong>: Updated canonical brand from "StackTrackr" to "StakTrakr" — logo, titles, exports, Docker, documentation</li>
-      <li><strong>Multi-domain auto-branding</strong>: staktrakr.com, stackrtrackr.com, and stackertrackr.com each show their own brand name automatically</li>
-      <li><strong>localStorage key migration</strong>: Renamed stackrtrackr.* keys to staktrakr.* with backwards-compatible debug flag</li>
-    `,
-    "3.05.04": `
-      <li><strong>Fraction weight input</strong>: Weight field now accepts fractions like 1/1000 or 1 1/2 — auto-converts to decimal</li>
-      <li><strong>Duplicate item button</strong>: Copy icon in action column opens add modal pre-filled from source item (date = today, qty = 1)</li>
-    `,
-    "3.05.03": `
-      <li><strong>Date display fix</strong>: Table dates no longer show one day earlier than entered — fixed UTC midnight timezone bug</li>
-      <li><strong>Numista API key storage</strong>: Key now persists across sessions — removed broken encryption, simplified to base64 encoding</li>
-      <li><strong>Storage whitelist fix</strong>: Added catalog_api_config to allowed keys so Numista config survives page reload</li>
-      <li><strong>Numista settings UI</strong>: Removed password field, added API signup link with free tier info</li>
-    `,
-    "3.05.01": `
-      <li><strong>What's New modal fix</strong>: Changelog and roadmap now populate correctly from CHANGELOG.md and docs/announcements.md</li>
-      <li><strong>GitHub URLs updated</strong>: All repository links now point to the correct repository</li>
-      <li><strong>Changelog parser</strong>: Updated to read Keep a Changelog format instead of legacy format</li>
-    `,
-    "3.05.00": `
-      <li><strong>Unified Add/Edit Modal</strong>: Merged two separate modals into a single modal that switches between add and edit mode</li>
-      <li><strong>Weight unit fix</strong>: Edit mode now uses the real weight unit selector instead of a hidden attribute</li>
-      <li><strong>Price preservation</strong>: Empty price field in edit mode preserves existing price instead of zeroing it out</li>
-      <li><strong>Weight precision</strong>: Sub-gram weights (e.g., Goldbacks) no longer rounded to zero</li>
-      <li><strong>Qty-adjusted financials</strong>: Retail, Gain/Loss, and totals now correctly multiply by quantity</li>
-      <li><strong>Spot price indicators</strong>: Direction arrows now persist across page refreshes</li>
-    `,
-    "3.04.88": `
-      <li><strong>Table Polish (Increment 2)</strong>: Removed Numista column from table (15 to 14 columns) - N# data preserved in modals, exports, and data model</li>
-      <li><strong>Header Font Fix</strong>: Price column headers now use system font instead of monospace - data cells remain monospace for alignment</li>
-      <li><strong>Action Column CSS</strong>: Consolidated three conflicting CSS rulesets for Notes/Edit/Delete into one authoritative set with proper sticky offsets</li>
-      <li><strong>Roadmap</strong>: Added ROADMAP.md documenting project direction and planned work</li>
-      <li><strong>Files Updated</strong>: index.html, js/inventory.js, js/sorting.js, css/styles.css, js/constants.js, ROADMAP.md</li>
-    `,
-    "3.04.86": `
-      <li><strong>Centered Name header</strong>: Wrapped "Name" header text with .header-text span for consistent alignment</li>
-      <li><strong>Cleanup</strong>: Removed obsolete #inventoryTable th[data-column="name"] centering rule</li>
-      <li><strong>Files Updated</strong>: index.html, css/styles.css, docs/changelog.md</li>
-    `,
-    "3.04.82": `
-      <li><strong>Logo height via CSS</strong>: Removed invalid height attribute from Stackr logo SVG</li>
-      <li><strong>Improved Styling</strong>: Now relying on CSS for proper logo sizing</li>
-      <li><strong>Files Updated</strong>: index.html, docs/changelog.md</li>
-    `,
-    "3.04.81": `
-      <li><strong>Composition helper cleanup</strong>: Removed obsolete composition helper comment</li>
-      <li><strong>Documentation sync</strong>: Synchronized documentation across files</li>
-      <li><strong>Files Updated</strong>: js/utils.js, README.md, docs/changelog.md</li>
-    `,
-    "3.04.76": `
-      <li><strong>Inventory Insight</strong>: Added dynamic item counter below the inventory table displaying the number of visible items</li>
-      <li><strong>Styling</strong>: Muted text, right-aligned using .table-item-count for a subtle appearance</li>
-      <li><strong>Files Updated</strong>: index.html, css/styles.css, js/state.js, js/inventory.js</li>
-    `,
-    "3.04.74": `
-      <li><strong>Import Reliability</strong>: Fixed undefined notes reference and removed unnecessary file input reset in importCsv</li>
-      <li><strong>Export Cleanup</strong>: Released object URLs after CSV download to free resources</li>
-      <li><strong>Global Access</strong>: Restored global exports for import/export functions and summary utilities</li>
-      <li><strong>Files Updated</strong>: js/inventory.js, js/constants.js</li>
-    `,
-    "3.04.73": `
-      <li><strong>Hotfix</strong>: Resolved "Unable to load changelog" error in version modal and about dialog</li>
-      <li><strong>Enhanced Error Handling</strong>: Added embedded fallback data for changelog and announcements when file:// protocol blocks fetch requests</li>
-      <li><strong>Improved Reliability</strong>: Version change notifications now work consistently regardless of file access restrictions</li>
-      <li><strong>Better User Experience</strong>: About modal and version dialogs display proper content even when offline or in restricted environments</li>
-    `,
-    "3.04.72": `
-      <li><strong>Major Fix</strong>: Resolved dual chip system conflicts causing duplicate filter displays</li>
-      <li><strong>System Consolidation</strong>: Eliminated competing chip rendering systems (updateTypeSummary vs renderActiveFilters)</li>
-      <li><strong>Enhanced Click Functionality</strong>: Category chips (with counts) now click to ADD filters, active filter chips click to REMOVE filters</li>
-      <li><strong>Search Precision</strong>: Enhanced word boundary matching - "Silver Eagle" no longer matches "American Gold Eagle"</li>
-      <li><strong>Data-Driven Display</strong>: Only show filter chips for items that actually exist in filtered inventory</li>
-      <li><strong>Clean Formatting</strong>: Chips display content without "Title:" prefixes</li>
-      <li><strong>Context-Aware Tooltips</strong>: Clear indication of what clicking each chip will do</li>
-    `,
-    "3.04.71": `
-      <li><strong>Critical Fix</strong>: Resolved search precision issue where queries like "Silver Eagle" incorrectly matched "Gold Eagle" items</li>
-      <li><strong>Search Enhancement</strong>: Modified search logic to use AND logic for words within search terms (previously used OR logic)</li>
-      <li><strong>Multi-word searches</strong>: Now require ALL words to match somewhere in the item</li>
-      <li><strong>Example</strong>: "Silver Eagle" now only matches items containing both "silver" AND "eagle"</li>
-    `,
-    "3.04.70": `
-      <li><strong>Grouped filter chips</strong>: Added grouped name chips feature with toggle</li>
-      <li><strong>Consolidation</strong>: Items like "American Silver Eagle (3)" instead of separate year variants</li>
+      <li><strong>Confidence styling</strong>: Retail and Gain/Loss columns show italic/muted for estimated vs bold for confirmed values</li>
+      <li><strong>All Metals summary card</strong>: Combined totals with Avg Cost/oz and clickable breakdown modal</li>
+      <li><strong>Metal detail modal overhaul</strong>: Full portfolio breakdown per type and location in a 2x2 grid</li>
     `
   };
   

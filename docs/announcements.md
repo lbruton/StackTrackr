@@ -1,24 +1,12 @@
 ## What's New
 
-- **Light & Sepia theme contrast pass (v3.07.01)**: Clean gray-to-white light palette with visible card elevation. Darkened metal/type text colors to pass WCAG AA in both themes. Removed sticky action columns and filter-based hover lag. Estimated Retail/Gain-Loss now uses muted text color instead of opacity. Sepia: removed global filter, fixed text contrast, warm info color, visible borders and shadows
-- **Portfolio visibility overhaul (v3.07.00)**: Confidence styling for Retail/Gain-Loss (estimated vs confirmed), new "All Metals" totals card with Avg Cost/oz and clickable breakdown modal showing by-metal and by-location allocation, metal detail modals now show full Purchase/Melt/Retail/Gain-Loss breakdown per type and location in a compact 2x2 grid
-- **eBay search split (v3.06.02)**: Purchase column search icon now opens active eBay listings (what's for sale), Retail column search icon opens sold listings (what items actually sold for) — research buying price and resale value from the right columns
-- **CSS cleanup & icon polish (v3.06.01)**: Removed 125+ lines of dead CSS, replaced eBay emoji icon with clean SVG, overhauled About modal with project links and MIT License
-- **Rebrand to StakTrakr (v3.06.00)**: New canonical brand with multi-domain auto-branding — `staktrakr.com`, `stackrtrackr.com`, and `stackertrackr.com` each display their own brand name automatically
-- **Fraction weight input (v3.05.04)**: Type fractions like `1/1000` or `1 1/2` in the weight field — auto-converts to decimal. Great for Goldbacks and Aurum notes
-- **Duplicate item button (v3.05.04)**: New copy icon in the action column opens the add modal pre-filled from the source item. Date resets to today, qty to 1 — perfect for entering sets of the same coin
-- **Date bug fix (v3.05.03)**: Table dates no longer display one day earlier than entered — fixed UTC midnight parsing that shifted dates back in US timezones
-- **Numista API key fix (v3.05.03)**: API key now saves and persists across sessions — removed broken encryption system, simplified to match the metals API key pattern
-- **Unified Add/Edit Modal (v3.05.00)**: Merged two separate modals into one — fixes weight unit selector, price preservation, and sub-gram weight precision for Goldbacks and Aurum notes
-- **Qty-adjusted financials**: Retail, Gain/Loss, and summary totals now correctly multiply by quantity for multi-qty line items
-- **Spot price indicators**: Direction arrows (green/red) now persist across page refreshes instead of always resetting to unchanged
-- **$0 price support**: Free/promo items now display $0.00 and correctly compute full melt value as gain
-- **Gain/Loss sort fix**: Sorting by Gain/Loss column now uses qty-adjusted totals matching the display
+- **Shift+click inline editing (v3.07.02)**: Hold Shift and click any editable cell (Name, Qty, Weight, Purchase Price, Retail Price, Location) to edit in place. Enter saves, Escape cancels. Removed pencil icon and save/cancel buttons — clean keyboard-only editing
+- **Light & Sepia theme contrast pass (v3.07.01)**: Clean gray-to-white light palette with visible card elevation. Darkened metal/type text colors to pass WCAG AA in both themes. Estimated Retail/Gain-Loss now uses muted text color instead of opacity
+- **Portfolio visibility overhaul (v3.07.00)**: Confidence styling for Retail/Gain-Loss (estimated vs confirmed), new "All Metals" totals card with Avg Cost/oz and clickable breakdown modal, metal detail modals now show full portfolio breakdown per type and location
 
 ## Development Roadmap
 
 - **Filter chips rebuild**: Top-N per category model, normalized name chips, chip settings modal
 - **N# column restore**: Re-add Numista catalog column with filter-on-click and iframe link
-- **Retail column UX**: Inline retail editing with pencil icon, confidence styling for manual vs auto-computed prices
 - **Numista API fix**: Correct endpoints, auth headers, and parameters in the NumistaProvider class
 - **Mobile card view**: Responsive layout that switches from table to card-based view on small screens
