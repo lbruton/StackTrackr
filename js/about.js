@@ -267,6 +267,12 @@ const setupAckModalEvents = () => {
  */
 const getEmbeddedWhatsNew = () => {
   return `
+    <li><strong>v3.10.00 – Serial # field</strong>: New optional Serial Number input for bars and notes. Included in all export/import formats</li>
+    <li><strong>v3.10.00 – Numista Aurum fix</strong>: Goldback / Aurum items now return results from Numista search</li>
+    <li><strong>v3.10.00 – Enhanced no-results</strong>: Numista search shows retry box + popular bullion quick-picks when no results found</li>
+    <li><strong>v3.10.00 – Source column + filter chips</strong>: "Location" renamed to "Source"; Year, Grade, and N# filter chips added</li>
+    <li><strong>v3.09.05 – Grade, Authority & Cert #</strong>: New optional grading fields — Grade dropdown (AG through PF-70), Grading Authority (PCGS/NGC/ANACS/ICG), and Cert # input. Color-coded grade tags on table with one-click cert verification</li>
+    <li><strong>v3.09.05 – eBay search fix</strong>: Item names with quotes or parentheses no longer produce broken eBay search results</li>
     <li><strong>v3.09.04 – Year field + inline tag</strong>: New optional Year field in form with inline year badge on table Name cell. Numista picker fills Year instead of Metal</li>
     <li><strong>v3.09.04 – Form restructure</strong>: Name wider with Year beside it; purchase fields grouped: Date | Price, Location | Retail Price</li>
     <li><strong>v3.09.03 – Numista field picker fix</strong>: Replaced broken fieldset+flexbox with CSS Grid — checkboxes, labels, and inputs now align correctly across all browsers</li>
@@ -285,7 +291,6 @@ const getEmbeddedWhatsNew = () => {
  */
 const getEmbeddedRoadmap = () => {
   return `
-    <li><strong>Inline catalog &amp; grading tags</strong>: Optional (N#), (PCGS), (NGC), (Grade) tags on the Name cell with iframe links — no new column needed</li>
     <li><strong>Batch rename / normalize</strong>: Bulk rename items using Numista catalog data and the name normalizer</li>
   `;
 };

@@ -75,9 +75,16 @@ const sortInventory = (data = inventory) => {
     }
     // String comparison for everything else
     else {
-      return sortDirection === 'asc' 
-        ? String(valA).localeCompare(String(valB)) 
+      const cmp = sortDirection === 'asc'
+        ? String(valA).localeCompare(String(valB))
         : String(valB).localeCompare(String(valA));
+      // Secondary sort by year when names are equal
+      if (cmp === 0 && sortColumn === 3) {
+        const yearA = parseInt(a.year, 10) || 0;
+        const yearB = parseInt(b.year, 10) || 0;
+        return sortDirection === 'asc' ? yearA - yearB : yearB - yearA;
+      }
+      return cmp;
     }
   });
 };

@@ -222,6 +222,9 @@ const generateCategorySummary = (inventory) => {
   const purchaseLocations = {};
   const storageLocations = {};
   const names = {};
+  const years = {};
+  const grades = {};
+  const numistaIds = {};
 
   inventory.forEach(item => {
     // Count metals
@@ -258,6 +261,24 @@ const generateCategorySummary = (inventory) => {
         names[baseName] = (names[baseName] || 0) + 1;
       }
     }
+
+    // Count years (skip empty)
+    const yr = (item.year || '').trim();
+    if (yr) {
+      years[yr] = (years[yr] || 0) + 1;
+    }
+
+    // Count grades (skip empty)
+    const gr = (item.grade || '').trim();
+    if (gr) {
+      grades[gr] = (grades[gr] || 0) + 1;
+    }
+
+    // Count Numista IDs (skip empty)
+    const nId = (item.numistaId || '').trim();
+    if (nId) {
+      numistaIds[nId] = (numistaIds[nId] || 0) + 1;
+    }
   });
 
   // Apply minCount threshold to all categories
@@ -276,6 +297,15 @@ const generateCategorySummary = (inventory) => {
   const filteredNames = Object.fromEntries(
     Object.entries(names).filter(([key, count]) => count >= minCount)
   );
+  const filteredYears = Object.fromEntries(
+    Object.entries(years).filter(([key, count]) => count >= minCount)
+  );
+  const filteredGrades = Object.fromEntries(
+    Object.entries(grades).filter(([key, count]) => count >= minCount)
+  );
+  const filteredNumistaIds = Object.fromEntries(
+    Object.entries(numistaIds).filter(([key, count]) => count >= minCount)
+  );
 
   return {
     metals: filteredMetals,
@@ -283,6 +313,9 @@ const generateCategorySummary = (inventory) => {
     purchaseLocations: filteredPurchaseLocations,
     storageLocations: filteredStorageLocations,
     names: filteredNames,
+    years: filteredYears,
+    grades: filteredGrades,
+    numistaIds: filteredNumistaIds,
     totalItems: inventory.length
   };
 };
@@ -384,10 +417,37 @@ const renderActiveFilters = () => {
     }
   });
 
+  // Add year chips
+  if (categorySummary.years) {
+    Object.entries(categorySummary.years).forEach(([year, count]) => {
+      if (count > 0) {
+        chips.push({ field: 'year', value: year, count, total: categorySummary.totalItems });
+      }
+    });
+  }
+
+  // Add grade chips
+  if (categorySummary.grades) {
+    Object.entries(categorySummary.grades).forEach(([grade, count]) => {
+      if (count > 0) {
+        chips.push({ field: 'grade', value: grade, count, total: categorySummary.totalItems });
+      }
+    });
+  }
+
+  // Add Numista ID chips
+  if (categorySummary.numistaIds) {
+    Object.entries(categorySummary.numistaIds).forEach(([nId, count]) => {
+      if (count > 0) {
+        chips.push({ field: 'numistaId', value: nId, count, total: categorySummary.totalItems });
+      }
+    });
+  }
+
   // Add any explicitly applied filter chips (but not if they duplicate category chips)
   Object.entries(activeFilters).forEach(([field, criteria]) => {
     // Skip fields already rendered as category summary chips to avoid duplicates
-    if (field === 'metal' || field === 'type' || field === 'purchaseLocation' || field === 'storageLocation' || field === 'name') return;
+    if (field === 'metal' || field === 'type' || field === 'purchaseLocation' || field === 'storageLocation' || field === 'name' || field === 'year' || field === 'grade' || field === 'numistaId') return;
     
     if (criteria && typeof criteria === 'object' && Array.isArray(criteria.values)) {
       criteria.values.forEach(value => {
@@ -449,7 +509,9 @@ const renderActiveFilters = () => {
 
     // Display simplified value for most chips, but keep full base name for name chips
     // (e.g., "American Silver Eagle" not "Silver Eagle" — country context matters)
-    const displayValue = f.field === 'name' ? f.value : simplifyChipValue(f.value, f.field);
+    const displayValue = f.field === 'name' ? f.value
+      : f.field === 'numistaId' ? `N#${f.value}`
+      : simplifyChipValue(f.value, f.field);
     let label;
     
     if (f.field === 'search') {
