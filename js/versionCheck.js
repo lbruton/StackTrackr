@@ -91,6 +91,10 @@ const populateVersionModal = (version, html) => {
  */
 const getEmbeddedChangelog = (version) => {
   const changelogs = {
+    "3.10.01": `
+      <li><strong>Numista iframe fix</strong>: Numista pages now open in a popup window instead of an iframe — fixes "Can't Open This Page" error on hosted deployments (X-Frame-Options)</li>
+      <li><strong>Sort fix</strong>: Gain/Loss and Source columns now sort and resize correctly</li>
+    `,
     "3.10.00": `
       <li><strong>Serial # field</strong>: New optional Serial Number input for bars and notes with physical serial numbers. Included in all CSV/JSON/ZIP exports and imports</li>
       <li><strong>Numista Aurum fix</strong>: Goldback / Aurum items now return results from Numista search (removed incorrect "banknote" category filter)</li>

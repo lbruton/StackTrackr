@@ -5,6 +5,16 @@ All notable changes to StakTrakr will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.10.01] - 2026-02-08
+
+### Fix — Numista iframe blocked on hosted sites + column sort regression
+
+#### Fixed
+
+- **Numista iframe → popup**: Numista sets `X-Frame-Options: SAMEORIGIN`, which blocks iframe embedding on hosted deployments (worked on `file://` but not `www.staktrakr.com`). Replaced the iframe modal with a popup window that works everywhere. Removed modal HTML, iframe CSS, and navigation history code
+- **Gain/Loss and Source column sorting**: Skip guard used `headers.length - 3` from when Edit/Notes/Delete were 3 separate columns — after merging into a single Actions column, Gain/Loss (index 9) and Source (index 10) were incorrectly skipped. Fixed to `headers.length - 1`
+- **Gain/Loss and Source column resizing**: Same `length - 3` guard also blocked resize handles on these columns
+
 ## [3.10.00] - 2026-02-08
 
 ### Feature — Serial #, Numista UX, Filter Chips & Column Tweaks
