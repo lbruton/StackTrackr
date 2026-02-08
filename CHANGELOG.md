@@ -5,6 +5,80 @@ All notable changes to StakTrakr will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.10.00] - 2026-02-08
+
+### Feature — Serial #, Numista UX, Filter Chips & Column Tweaks
+
+#### Added
+
+- **Serial # field**: New optional Serial Number input in the add/edit form (between Storage Location and Catalog N#) for bars and notes with physical serial numbers
+- **Serial # in exports/imports**: Serial Number included in CSV, JSON, ZIP, and PDF exports; imported from CSV and JSON with `Serial Number` / `serialNumber` column fallbacks
+- **Enhanced Numista no-results**: When Numista search returns no results, the modal now shows a retry search box (pre-filled with original query) and a quick-pick list of popular bullion items (Silver Eagles, Maple Leafs, Krugerrands, etc.)
+- **Year/Grade/N# filter chips**: Year, Grade, and Numista ID values now generate clickable filter chips in the chip bar (respects minCount threshold)
+- **Year sort tiebreaker**: Items with identical names now sub-sort by Year when sorting the Name column
+
+#### Changed
+
+- **Source column**: "Location" table header renamed to "Source" with storefront icon for clarity (data field unchanged: `purchaseLocation`)
+- **eBay search includes year**: Year is now appended to eBay search URLs between metal and name for more precise results
+- **Form layout**: Notes field moved to end of form (next to Catalog N#); Serial # takes its former position next to Storage Location
+
+#### Fixed
+
+- **Numista Aurum category**: Removed incorrect `'Aurum': 'banknote'` mapping — Goldbacks are "Embedded-asset notes" on Numista, which isn't a valid API category filter. Aurum items now search without a category constraint, returning correct results
+- **eBay search attribute escaping**: Switched from `sanitizeHtml()` to `escapeAttribute()` for `data-search` attributes — item names with double quotes no longer truncate the search URL
+
+## [3.09.05] - 2026-02-08
+
+### Feature — Grade, Grading Authority & Cert # Fields + eBay Search Fix
+
+#### Added
+
+- **Grade field**: New optional Grade dropdown with 3 optgroups — Standard (AG through BU), Mint State (MS-60 through MS-70), and Proof (PF-60 through PF-70)
+- **Grading Authority field**: Dropdown to select grading service — PCGS, NGC, ANACS, or ICG
+- **Cert # field**: Free-text input for certification number
+- **Inline Grade tag**: Color-coded grade badge on inventory table Name cell (after N# tag) — PCGS blue, NGC gold, ANACS green, ICG purple. Theme-aware across light/dark/sepia
+- **Cert verification click**: Grade tags with cert numbers are clickable — opens grading service's cert lookup page in a popup window (PCGS and NGC direct lookup, ANACS and ICG generic verify pages)
+- **Grade tooltip**: Hover shows grading details — authority + cert# when available, or just grade
+- **Grade in CSV/JSON/PDF export**: Grade, Grading Authority, and Cert # columns added to all export formats
+- **Grade in CSV/JSON import**: Reads grade, authority, and cert# from imported files with multiple column name fallbacks
+
+#### Fixed
+
+- **eBay search URL sanitization**: Item names containing quotes `"`, parentheses `()`, or backslashes `\` (allowed since v3.09.04) no longer act as eBay search operators. New `cleanSearchTerm()` strips these characters before building search URLs
+
+## [3.09.04] - 2026-02-08
+
+### Feature — Year Field + Inline Year Tag + Form Restructure
+
+#### Added
+
+- **Year field**: New optional Year field in add/edit form, stored as `year` in the data model. Accepts single years ("2024") or ranges ("2021-2026")
+- **Inline Year tag**: Year badge displayed on the inventory table Name cell (before the N# tag) with muted informational styling and theme-aware colors
+- **Year in Numista field picker**: Replaced Metal with Year in the "Fill Form Fields" picker — Numista's year range is editable before filling
+- **Year in CSV/JSON export**: "Year" column added to standard CSV export after "Name"; `year` field added to JSON export
+- **Year in CSV import**: Reads "Year", "year", or "issuedYear" columns from imported CSV files
+
+#### Changed
+
+- **Form layout restructured**: Name (wider, 60%) paired with Year (40%); purchase fields grouped together: Purchase Date | Purchase Price, Purchase Location | Retail Price
+- **Removed Metal from Numista picker**: Numista returns "Alloy/Other" which never matches form options — removed to reduce confusion
+- **Data migration**: Existing items with `issuedYear` (from Numista CSV imports) automatically migrate to `year` on load
+
+## [3.09.03] - 2026-02-08
+
+### Patch — Numista Field Picker Layout + Smart Category Search
+
+#### Fixed
+
+- **Numista field picker layout**: Replaced broken `<fieldset>` + flexbox with `<div>` + CSS Grid (`grid-template-columns: auto auto 1fr`) — fixes checkboxes centering and labels/inputs pushed off-screen across browsers
+- **Numista search `category` param**: `searchItems()` now maps `filters.category` instead of `filters.metal` to the Numista API `category` parameter
+
+#### Added
+
+- **Smart category search**: Numista search now maps the form's Type field to Numista categories (Coin→coin, Bar/Round→exonumia, Note/Aurum→banknote) for more relevant results
+- **Metal-augmented queries**: When Metal is set and not already in the search text, it's prepended to the query (e.g., Metal=Silver + "Eagle" → searches "Silver Eagle")
+
 ## [3.09.02] - 2026-02-08
 
 ### Patch — Numista API v3 Integration Fix

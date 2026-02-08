@@ -475,6 +475,14 @@ section:hover {
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
 }
 
+.grid-name-year {
+  grid-template-columns: 3fr 2fr;
+}
+
+.grid-grade {
+  grid-template-columns: 1fr 1fr 1.5fr;
+}
+
 /* =============================================================================
    FORM ELEMENTS
    ============================================================================= */
@@ -1573,13 +1581,22 @@ input[type="submit"] {
 /* Standardized modal layout for change log and details views */
 /* shared modal content structure */
 #changeLogModal .modal-content,
-#detailsModal .modal-content,
 #itemModal .modal-content {
   display: flex;
   flex-direction: column;
   padding: 0;
   overflow: hidden;
   width: 90%;
+  max-width: 700px;
+}
+
+#detailsModal .modal-content {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  overflow: hidden;
+  width: 90%;
+  max-width: 1000px;
 }
 
 #changeLogModal .modal-content {
@@ -1973,7 +1990,8 @@ td {
 
 /* Allow certain columns to be wider */
 td[data-column="name"] {
-  max-width: 25ch; /* Name column can be slightly wider */
+  max-width: none;
+  width: auto;
 }
 
 td[data-column="purchaseLocation"],
@@ -1986,12 +2004,12 @@ td[data-column="storageLocation"] {
   text-overflow: ellipsis;
 }
 
-/* Fixed date column with proper width for full dates */
+/* Fixed date column — compact MM/DD/YY format */
 td[data-column="date"],
 th[data-column="date"] {
-  max-width: 12ch; /* Increased from 8ch to fit full dates like "Feb 28, 2024" */
-  width: 12ch;
-  min-width: 12ch;
+  max-width: 9ch;
+  width: 9ch;
+  min-width: 9ch;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -3070,15 +3088,24 @@ a.about-badge:hover {
 
 .breakdown-header {
   display: flex;
-  justify-content: space-between;
-  align-items: baseline;
+  align-items: center;
   margin-bottom: 0.25rem;
+}
+
+.breakdown-color-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-right: 0.4rem;
+  flex-shrink: 0;
 }
 
 .breakdown-label {
   font-weight: 600;
   color: var(--text-primary);
   font-size: 0.875rem;
+  flex: 1;
 }
 
 .breakdown-meta {
@@ -4201,7 +4228,9 @@ input:disabled + .slider {
     padding: var(--spacing);
   }
 
-  .grid-2 {
+  .grid-2,
+  .grid-name-year,
+  .grid-grade {
     grid-template-columns: 1fr;
   }
 
@@ -4328,33 +4357,33 @@ input:disabled + .slider {
   font-weight: bold;
 }
 
-/* Edit column styling for single toggle button */
-#inventoryTable td[data-column="edit"] {
+/* Actions column styling */
+#inventoryTable td[data-column="actions"] {
   text-align: center;
   padding: 0.2rem;
 }
 
-#inventoryTable td[data-column="edit"] .icon-btn {
+#inventoryTable td[data-column="actions"] .icon-btn {
   margin: 0;
 }
 
 /* Style the edit toggle button based on mode */
-#inventoryTable td[data-column="edit"] .edit-toggle {
+#inventoryTable td[data-column="actions"] .edit-toggle {
   color: var(--primary);
   transition: color 0.2s ease;
 }
 
-#inventoryTable td[data-column="edit"] .edit-toggle:hover {
+#inventoryTable td[data-column="actions"] .edit-toggle:hover {
   color: var(--primary-dark);
 }
 
-/* Edit header styling */
-#inventoryTable th[data-column="edit"] {
+/* Actions header styling */
+#inventoryTable th[data-column="actions"] {
   cursor: pointer;
   transition: background-color 0.2s ease;
 }
 
-#inventoryTable th[data-column="edit"]:hover {
+#inventoryTable th[data-column="actions"]:hover {
   background-color: var(--bg-hover);
 }
 
@@ -4490,6 +4519,20 @@ input:disabled + .slider {
   text-align: center;
   margin-top: 0.15rem;
   line-height: 1;
+}
+
+/* Actions column — merged edit/copy/delete */
+#inventoryTable th.actions-col,
+#inventoryTable td.actions-cell {
+  width: 6rem;
+  min-width: 5rem;
+}
+
+.actions-row {
+  display: flex;
+  gap: 0.25rem;
+  justify-content: center;
+  align-items: center;
 }
 
 /* Icon column styling */
@@ -4781,6 +4824,530 @@ th {
   .catalog-link {
     font-size: 0.6rem;
   }
+}
+
+/* =============================================================================
+   NUMISTA TAG — Inline N# badge on inventory table Name cell
+   ============================================================================= */
+.numista-tag {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.65rem;
+  font-weight: 600;
+  padding: 0.1rem 0.35rem;
+  margin-left: 0.35rem;
+  border-radius: var(--radius);
+  background: var(--bg-tertiary);
+  color: var(--primary);
+  cursor: pointer;
+  text-decoration: none;
+  transition: var(--transition);
+  vertical-align: middle;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.numista-tag:hover,
+.numista-tag:focus-visible {
+  background: var(--primary);
+  color: #fff;
+  outline: none;
+}
+
+/* Dark theme overrides */
+[data-theme="dark"] .numista-tag {
+  background: rgba(255, 255, 255, 0.1);
+  color: #60a5fa;
+}
+[data-theme="dark"] .numista-tag:hover,
+[data-theme="dark"] .numista-tag:focus-visible {
+  background: #60a5fa;
+  color: #1a1a2e;
+}
+
+/* Sepia theme overrides */
+[data-theme="sepia"] .numista-tag {
+  background: rgba(0, 0, 0, 0.08);
+  color: #1d4ed8;
+}
+[data-theme="sepia"] .numista-tag:hover,
+[data-theme="sepia"] .numista-tag:focus-visible {
+  background: #1d4ed8;
+  color: #fff;
+}
+
+/* =============================================================================
+   YEAR TAG — Inline year badge on inventory table Name cell
+   ============================================================================= */
+.year-tag {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.65rem;
+  font-weight: 600;
+  padding: 0.1rem 0.35rem;
+  margin-left: 0.35rem;
+  border-radius: var(--radius);
+  background: var(--bg-tertiary);
+  color: var(--text-secondary, #666);
+  vertical-align: middle;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+/* Dark theme overrides */
+[data-theme="dark"] .year-tag {
+  background: rgba(255, 255, 255, 0.08);
+  color: #9ca3af;
+}
+
+/* Sepia theme overrides */
+[data-theme="sepia"] .year-tag {
+  background: rgba(0, 0, 0, 0.06);
+  color: #78716c;
+}
+
+/* =============================================================================
+   GRADE TAG — Inline grade badge on inventory table Name cell
+   Color-coded by grading authority: PCGS=blue, NGC=gold, ANACS=green, ICG=purple
+   ============================================================================= */
+.grade-tag {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.65rem;
+  font-weight: 600;
+  padding: 0.1rem 0.35rem;
+  margin-left: 0.35rem;
+  border-radius: var(--radius);
+  background: var(--bg-tertiary);
+  color: var(--text-secondary, #666);
+  text-decoration: none;
+  vertical-align: middle;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+/* Clickable grade tags (have cert number) */
+.grade-tag[data-clickable="true"] {
+  cursor: pointer;
+  transition: var(--transition);
+}
+.grade-tag[data-clickable="true"]:hover,
+.grade-tag[data-clickable="true"]:focus-visible {
+  filter: brightness(0.85);
+  outline: none;
+}
+
+/* Authority color coding — Light theme */
+.grade-tag[data-authority="PCGS"] {
+  background: rgba(37, 99, 235, 0.12);
+  color: #2563eb;
+}
+.grade-tag[data-authority="NGC"] {
+  background: rgba(217, 119, 6, 0.12);
+  color: #d97706;
+}
+.grade-tag[data-authority="ANACS"] {
+  background: rgba(5, 150, 105, 0.12);
+  color: #059669;
+}
+.grade-tag[data-authority="ICG"] {
+  background: rgba(124, 58, 237, 0.12);
+  color: #7c3aed;
+}
+
+/* Clickable hover overrides — Light theme */
+.grade-tag[data-clickable="true"][data-authority="PCGS"]:hover,
+.grade-tag[data-clickable="true"][data-authority="PCGS"]:focus-visible {
+  background: #2563eb;
+  color: #fff;
+}
+.grade-tag[data-clickable="true"][data-authority="NGC"]:hover,
+.grade-tag[data-clickable="true"][data-authority="NGC"]:focus-visible {
+  background: #d97706;
+  color: #fff;
+}
+.grade-tag[data-clickable="true"][data-authority="ANACS"]:hover,
+.grade-tag[data-clickable="true"][data-authority="ANACS"]:focus-visible {
+  background: #059669;
+  color: #fff;
+}
+.grade-tag[data-clickable="true"][data-authority="ICG"]:hover,
+.grade-tag[data-clickable="true"][data-authority="ICG"]:focus-visible {
+  background: #7c3aed;
+  color: #fff;
+}
+
+/* Dark theme overrides */
+[data-theme="dark"] .grade-tag {
+  background: rgba(255, 255, 255, 0.08);
+  color: #9ca3af;
+}
+[data-theme="dark"] .grade-tag[data-authority="PCGS"] {
+  background: rgba(96, 165, 250, 0.15);
+  color: #60a5fa;
+}
+[data-theme="dark"] .grade-tag[data-authority="NGC"] {
+  background: rgba(251, 191, 36, 0.15);
+  color: #fbbf24;
+}
+[data-theme="dark"] .grade-tag[data-authority="ANACS"] {
+  background: rgba(52, 211, 153, 0.15);
+  color: #34d399;
+}
+[data-theme="dark"] .grade-tag[data-authority="ICG"] {
+  background: rgba(167, 139, 250, 0.15);
+  color: #a78bfa;
+}
+[data-theme="dark"] .grade-tag[data-clickable="true"][data-authority="PCGS"]:hover,
+[data-theme="dark"] .grade-tag[data-clickable="true"][data-authority="PCGS"]:focus-visible {
+  background: #60a5fa;
+  color: #1a1a2e;
+}
+[data-theme="dark"] .grade-tag[data-clickable="true"][data-authority="NGC"]:hover,
+[data-theme="dark"] .grade-tag[data-clickable="true"][data-authority="NGC"]:focus-visible {
+  background: #fbbf24;
+  color: #1a1a2e;
+}
+[data-theme="dark"] .grade-tag[data-clickable="true"][data-authority="ANACS"]:hover,
+[data-theme="dark"] .grade-tag[data-clickable="true"][data-authority="ANACS"]:focus-visible {
+  background: #34d399;
+  color: #1a1a2e;
+}
+[data-theme="dark"] .grade-tag[data-clickable="true"][data-authority="ICG"]:hover,
+[data-theme="dark"] .grade-tag[data-clickable="true"][data-authority="ICG"]:focus-visible {
+  background: #a78bfa;
+  color: #1a1a2e;
+}
+
+/* Sepia theme overrides */
+[data-theme="sepia"] .grade-tag {
+  background: rgba(0, 0, 0, 0.06);
+  color: #78716c;
+}
+[data-theme="sepia"] .grade-tag[data-authority="PCGS"] {
+  background: rgba(37, 99, 235, 0.1);
+  color: #1d4ed8;
+}
+[data-theme="sepia"] .grade-tag[data-authority="NGC"] {
+  background: rgba(180, 83, 9, 0.1);
+  color: #b45309;
+}
+[data-theme="sepia"] .grade-tag[data-authority="ANACS"] {
+  background: rgba(4, 120, 87, 0.1);
+  color: #047857;
+}
+[data-theme="sepia"] .grade-tag[data-authority="ICG"] {
+  background: rgba(109, 40, 217, 0.1);
+  color: #6d28d9;
+}
+[data-theme="sepia"] .grade-tag[data-clickable="true"][data-authority="PCGS"]:hover,
+[data-theme="sepia"] .grade-tag[data-clickable="true"][data-authority="PCGS"]:focus-visible {
+  background: #1d4ed8;
+  color: #fff;
+}
+[data-theme="sepia"] .grade-tag[data-clickable="true"][data-authority="NGC"]:hover,
+[data-theme="sepia"] .grade-tag[data-clickable="true"][data-authority="NGC"]:focus-visible {
+  background: #b45309;
+  color: #fff;
+}
+[data-theme="sepia"] .grade-tag[data-clickable="true"][data-authority="ANACS"]:hover,
+[data-theme="sepia"] .grade-tag[data-clickable="true"][data-authority="ANACS"]:focus-visible {
+  background: #047857;
+  color: #fff;
+}
+[data-theme="sepia"] .grade-tag[data-clickable="true"][data-authority="ICG"]:hover,
+[data-theme="sepia"] .grade-tag[data-clickable="true"][data-authority="ICG"]:focus-visible {
+  background: #6d28d9;
+  color: #fff;
+}
+
+/* =============================================================================
+   ITEM MODAL ACTION BAR — Search Numista left, Cancel/Submit right
+   ============================================================================= */
+.item-modal-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 1rem;
+  gap: 0.5rem;
+}
+
+.item-modal-actions-right {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* =============================================================================
+   NUMISTA RESULTS MODAL — Stacked modal for search results / field picker
+   ============================================================================= */
+#numistaResultsModal {
+  z-index: 10000;
+}
+
+.numista-results-modal-content {
+  max-width: 600px;
+  width: 90%;
+}
+
+.numista-results-list {
+  max-height: 400px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.5rem 0;
+}
+
+.numista-result-card {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: var(--transition);
+  background: var(--bg-secondary);
+}
+
+.numista-result-card:hover {
+  border-color: var(--primary);
+  background: var(--bg-tertiary);
+}
+
+.numista-result-card.selected {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px var(--primary);
+}
+
+.numista-result-card img {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+  border-radius: 4px;
+  flex-shrink: 0;
+  background: var(--bg-primary);
+}
+
+.numista-result-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.numista-result-name {
+  font-weight: 600;
+  font-size: 0.9rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.numista-result-meta {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 0.15rem;
+}
+
+.numista-result-id {
+  font-size: 0.7rem;
+  color: var(--primary);
+  font-weight: 600;
+}
+
+/* Field picker area */
+.numista-field-picker {
+  padding: 0.5rem 0;
+}
+
+.numista-selected-preview {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 0.75rem;
+  border: 2px solid var(--primary);
+  border-radius: var(--radius);
+  background: var(--bg-secondary);
+  margin-bottom: 0.75rem;
+}
+
+.numista-selected-preview img {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.numista-field-checkboxes {
+  display: grid;
+  grid-template-columns: auto auto 1fr;
+  gap: 0.35rem 0.5rem;
+  align-items: center;
+  margin: 0 0 0.75rem 0;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.numista-fields-heading {
+  grid-column: 1 / -1;
+  font-weight: 600;
+  font-size: 0.85rem;
+  margin-bottom: 0.15rem;
+}
+
+.numista-field-checkboxes input[type="checkbox"] {
+  margin: 0;
+}
+
+.numista-field-label {
+  font-weight: 600;
+  font-size: 0.8rem;
+  white-space: nowrap;
+  text-align: right;
+  color: var(--text-secondary, var(--text-primary));
+}
+
+.numista-field-input {
+  min-width: 0;
+  padding: 0.25rem 0.4rem;
+  font-size: 0.8rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+.numista-field-input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.numista-field-input:focus {
+  border-color: var(--primary);
+  outline: none;
+}
+
+.numista-field-current {
+  grid-column: 3;
+  font-size: 0.65rem;
+  color: var(--text-muted, #999);
+  margin-top: -0.2rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.numista-field-warn {
+  grid-column: 1 / -1;
+  font-size: 0.7rem;
+  color: var(--danger, #f44336);
+  font-style: italic;
+  margin-top: -0.2rem;
+  padding-left: 1.5rem;
+}
+
+.numista-fill-actions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+
+.numista-no-results {
+  text-align: center;
+  padding: 2rem 1rem;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+/* Enhanced no-results: retry search + quick-picks */
+.numista-no-results-enhanced {
+  padding: 1rem;
+}
+
+.numista-retry-search p {
+  text-align: center;
+  color: var(--text-muted);
+  font-style: italic;
+  margin-bottom: 0.75rem;
+}
+
+.numista-retry-row {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.numista-retry-input {
+  flex: 1;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  background: var(--bg-input);
+  color: var(--text-primary);
+  font-size: 0.9rem;
+}
+
+.numista-retry-btn {
+  white-space: nowrap;
+}
+
+.numista-quick-picks-label {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.numista-quick-picks-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  max-height: 280px;
+  overflow-y: auto;
+}
+
+.numista-quick-pick {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.45rem 0.65rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  background: var(--bg-card);
+  cursor: pointer;
+  transition: background 0.15s;
+  text-align: left;
+}
+
+.numista-quick-pick:hover {
+  background: var(--bg-hover);
+}
+
+.quick-pick-id {
+  font-weight: 600;
+  color: var(--primary);
+  font-size: 0.85rem;
+  min-width: 5rem;
+}
+
+.quick-pick-name {
+  flex: 1;
+  font-size: 0.85rem;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.quick-pick-count {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  background: var(--bg-input);
+  padding: 0.1rem 0.4rem;
+  border-radius: 0.75rem;
 }
 
 #typeSummary .summary-chip {
@@ -5332,15 +5899,9 @@ th {
   flex-shrink: 0;
 }
 
-/* All Price columns — width and layout (th + td) */
+/* Purchase Price column — fixed width */
 #inventoryTable th[data-column="purchasePrice"],
-#inventoryTable td[data-column="purchasePrice"],
-#inventoryTable th[data-column="meltValue"],
-#inventoryTable td[data-column="meltValue"],
-#inventoryTable th[data-column="retailPrice"],
-#inventoryTable td[data-column="retailPrice"],
-#inventoryTable th[data-column="gainLoss"],
-#inventoryTable td[data-column="gainLoss"] {
+#inventoryTable td[data-column="purchasePrice"] {
   max-width: 110px !important;
   width: 110px !important;
   min-width: 110px !important;
@@ -5349,6 +5910,23 @@ th {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* Melt, Retail, Gain/Loss columns — auto-size to content */
+#inventoryTable th[data-column="meltValue"],
+#inventoryTable td[data-column="meltValue"],
+#inventoryTable th[data-column="retailPrice"],
+#inventoryTable td[data-column="retailPrice"],
+#inventoryTable th[data-column="gainLoss"],
+#inventoryTable td[data-column="gainLoss"] {
+  width: auto !important;
+  min-width: unset !important;
+  max-width: none !important;
+  text-align: right;
+  padding: 0.5rem 0.75rem;
+  white-space: nowrap;
+  overflow: visible;
+  text-overflow: clip;
 }
 
 /* Price headers — inherit system font from .header-text */

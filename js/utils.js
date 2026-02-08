@@ -427,10 +427,10 @@ function parseDate(dateStr) {
 }
 
 /**
- * Formats a date string into Month Day, Year format
+ * Formats a date string into compact MM/DD/YY format
  *
- * @param {string} dateStr - Date in any parseable format
- * @returns {string} Formatted date (e.g., "Jan 1, 1969")
+ * @param {string} dateStr - Date in YYYY-MM-DD format
+ * @returns {string} Formatted date (e.g., "1/1/69")
  */
 const formatDisplayDate = (dateStr) => {
   if (!dateStr || dateStr === '—' || dateStr === 'Unknown') return '—';
@@ -439,14 +439,13 @@ const formatDisplayDate = (dateStr) => {
   if (parts.length !== 3) return '—';
 
   const year = parseInt(parts[0], 10);
-  const month = parseInt(parts[1], 10) - 1;
+  const month = parseInt(parts[1], 10);
   const day = parseInt(parts[2], 10);
 
-  if (isNaN(year) || isNaN(month) || isNaN(day) || month < 0 || month > 11) return '—';
+  if (isNaN(year) || isNaN(month) || isNaN(day) || month < 1 || month > 12) return '—';
 
-  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-                  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  return `${months[month]} ${day}, ${year}`;
+  const yy = String(year).slice(-2);
+  return `${month}/${day}/${yy}`;
 };
 
 /**
@@ -626,7 +625,7 @@ const cleanString = (str = "") =>
     .replace(/<[^>]*>/g, "")
     .normalize("NFD")
     .replace(/\p{Diacritic}/gu, "")
-    .replace(/[\u0000-\u001F\u007F'\"]/g, "")
+    .replace(/[\u0000-\u001F\u007F]/g, "")
     .replace(/\s+/g, " ")
     .trim();
 
@@ -641,11 +640,10 @@ const sanitizeObjectFields = (obj) => {
   for (const key of Object.keys(cleaned)) {
     if (typeof cleaned[key] === "string" && key !== 'notes') {
       const allowHyphen = key === 'date';
-      const allowSlash = key === 'name';
       cleaned[key] =
-        key === 'purchaseLocation'
+        (key === 'name' || key === 'purchaseLocation' || key === 'year' || key === 'grade' || key === 'gradingAuthority' || key === 'certNumber')
           ? cleanString(cleaned[key])
-          : stripNonAlphanumeric(cleaned[key], { allowHyphen, allowSlash });
+          : stripNonAlphanumeric(cleaned[key], { allowHyphen });
     }
   }
   return cleaned;
@@ -883,7 +881,7 @@ const sanitizeImportedItem = (item) => {
       .replace(/<[^>]*>/g, '')
       .normalize('NFD')
       .replace(/\p{Diacritic}/gu, '')
-      .replace(/[\u0000-\u0008\u000B-\u001F\u007F'\"]/g, '')
+      .replace(/[\u0000-\u0008\u000B-\u001F\u007F]/g, '')
       .replace(/\r\n?/g, '\n')
       .replace(/[ \t]+/g, ' ')
       .replace(/ *\n */g, '\n')
@@ -2641,9 +2639,22 @@ function openEbaySearch(searchTerm) {
   openEbaySoldSearch(searchTerm);
 }
 
+/**
+ * Strips search-operator characters from a search term for use in external URLs.
+ * Removes quotes, parentheses, and backslashes that act as search operators on eBay.
+ * @param {string} term - Raw search term (may contain user-entered punctuation)
+ * @returns {string} Cleaned term safe for external search queries
+ */
+function cleanSearchTerm(term) {
+  return term
+    .replace(/["'()\\]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 function openEbayBuySearch(searchTerm) {
   if (!searchTerm) return;
-  const cleanTerm = searchTerm.trim().replace(/\s+/g, ' ');
+  const cleanTerm = cleanSearchTerm(searchTerm);
   const encodedTerm = encodeURIComponent(cleanTerm);
   // eBay active listings URL — items currently for sale, sorted by best match
   const ebayUrl = `https://www.ebay.com/sch/i.html?_from=R40&_nkw=${encodedTerm}&_sacat=0&LH_BIN=1&_sop=12`;
@@ -2652,7 +2663,7 @@ function openEbayBuySearch(searchTerm) {
 
 function openEbaySoldSearch(searchTerm) {
   if (!searchTerm) return;
-  const cleanTerm = searchTerm.trim().replace(/\s+/g, ' ');
+  const cleanTerm = cleanSearchTerm(searchTerm);
   const encodedTerm = encodeURIComponent(cleanTerm);
   // eBay sold listings URL — completed sales, sorted by most recent
   const ebayUrl = `https://www.ebay.com/sch/i.html?_from=R40&_nkw=${encodedTerm}&_sacat=0&LH_Sold=1&LH_Complete=1&_sop=13`;
@@ -2675,6 +2686,7 @@ if (typeof window !== 'undefined') {
   window.openEbaySearch = openEbaySearch;
   window.openEbayBuySearch = openEbayBuySearch;
   window.openEbaySoldSearch = openEbaySoldSearch;
+  window.cleanSearchTerm = cleanSearchTerm;
 }
 
 if (typeof module !== 'undefined' && module.exports) {

@@ -55,6 +55,11 @@ const createBackupZip = async () => {
         premiumPerOz: item.premiumPerOz,
         totalPremium: item.totalPremium,
         numistaId: item.numistaId,
+        year: item.year || '',
+        grade: item.grade || '',
+        gradingAuthority: item.gradingAuthority || '',
+        certNumber: item.certNumber || '',
+        serialNumber: item.serialNumber || '',
         serial: item.serial
       }))
     };
@@ -88,7 +93,7 @@ const createBackupZip = async () => {
     const csvHeaders = [
       "Date", "Metal", "Type", "Name", "Qty", "Weight(oz)",
       "Purchase Price", "Melt Value", "Retail Price", "Gain/Loss",
-      "Purchase Location", "N#", "Notes"
+      "Purchase Location", "N#", "Serial Number", "Notes"
     ];
     const sortedInventory = sortInventoryByDateNewestFirst();
     const csvRows = [];
@@ -115,6 +120,7 @@ const createBackupZip = async () => {
         gainLoss !== null ? formatCurrency(gainLoss) : '—',
         item.purchaseLocation,
         item.numistaId || '',
+        item.serialNumber || '',
         item.notes || ''
       ]);
     }
@@ -144,6 +150,7 @@ const createBackupZip = async () => {
         notes: item.notes,
         isCollectable: item.isCollectable,
         numistaId: item.numistaId,
+        serialNumber: item.serialNumber || '',
         serial: item.serial
       }));
       zip.file('sample_data.json', JSON.stringify(sampleData, null, 2));
@@ -461,6 +468,10 @@ const loadInventory = () => {
         storageLocation: item.storageLocation || "Unknown",
         notes: item.notes || "",
         marketValue: item.marketValue || 0,
+        year: item.year || item.issuedYear || "",
+        grade: item.grade || '',
+        gradingAuthority: item.gradingAuthority || '',
+        certNumber: item.certNumber || '',
         spotPriceAtPurchase: spotPrice,
         premiumPerOz,
         totalPremium,
@@ -476,6 +487,10 @@ const loadInventory = () => {
         storageLocation: item.storageLocation || "Unknown",
         notes: item.notes || "",
         marketValue: item.marketValue || 0,
+        year: item.year || item.issuedYear || "",
+        grade: item.grade || '',
+        gradingAuthority: item.gradingAuthority || '',
+        certNumber: item.certNumber || '',
         isCollectable: item.isCollectable !== undefined ? item.isCollectable : false,
         composition: item.composition || item.metal || ""
       };
@@ -943,6 +958,32 @@ const renderTable = () => {
       const purchaseTotal = purchasePrice * qty;
       const gainLoss = (currentSpot > 0 || isManualRetail) ? retailTotal - purchaseTotal : null;
 
+      // Resolve Numista catalog ID for inline tag
+      const numistaId = item.numistaId || (typeof catalogManager !== 'undefined'
+        && catalogManager.getCatalogId ? catalogManager.getCatalogId(item.serial) : null);
+
+      // Build grade tag (after N# tag in Name cell)
+      const gradeTag = item.grade ? (() => {
+        const authority = item.gradingAuthority || '';
+        const certNum = item.certNumber || '';
+        const isClickable = !!certNum;
+        let tooltip;
+        if (authority && certNum) {
+          tooltip = `${authority} Cert #${certNum} \u2014 Click to verify`;
+        } else if (authority) {
+          tooltip = `Graded by ${authority}: ${item.grade}`;
+        } else {
+          tooltip = `Grade: ${item.grade}`;
+        }
+        const attrs = [
+          authority ? `data-authority="${escapeAttribute(authority)}"` : '',
+          isClickable ? 'data-clickable="true"' : '',
+          certNum ? `data-cert-number="${escapeAttribute(certNum)}"` : '',
+          isClickable ? 'tabindex="0" role="button"' : '',
+        ].filter(Boolean).join(' ');
+        return `<span class="grade-tag" ${attrs} title="${escapeAttribute(tooltip)}">${sanitizeHtml(item.grade)}</span>`;
+      })() : '';
+
       // Format computed displays
       const meltDisplay = currentSpot > 0 ? formatCurrency(meltValue) : '—';
       const retailDisplay = currentSpot > 0 || isManualRetail ? formatCurrency(retailTotal) : '—';
@@ -956,18 +997,25 @@ const renderTable = () => {
       <td class="shrink" data-column="metal" data-metal="${escapeAttribute(item.composition || item.metal || '')}">${filterLink('metal', item.composition || item.metal || 'Silver', METAL_COLORS[item.metal] || 'var(--primary)', getDisplayComposition(item.composition || item.metal || 'Silver'))}</td>
       <td class="shrink" data-column="type">${filterLink('type', item.type, getTypeColor(item.type))}</td>
       <td class="expand" data-column="name" style="text-align: left;">
-        ${filterLink('name', item.name, 'var(--text-primary)')}
+        ${filterLink('name', item.name, 'var(--text-primary)')}${item.year
+          ? `<span class="year-tag" title="Year: ${escapeAttribute(String(item.year))}">${sanitizeHtml(String(item.year))}</span>`
+          : ''}${numistaId
+          ? `<span class="numista-tag" data-numista-id="${escapeAttribute(String(numistaId))}"
+               data-coin-name="${escapeAttribute(item.name)}"
+               title="View N#${escapeAttribute(String(numistaId))} on Numista"
+               tabindex="0" role="button">N#${sanitizeHtml(String(numistaId))}</span>`
+          : ''}${gradeTag}
       </td>
       <td class="shrink" data-column="qty">${filterLink('qty', item.qty, 'var(--text-primary)')}</td>
       <td class="shrink" data-column="weight">${filterLink('weight', item.weight, 'var(--text-primary)', formatWeight(item.weight), item.weight < 1 ? 'Grams (g)' : 'Troy ounces (ozt)')}</td>
       <td class="shrink" data-column="purchasePrice" title="Purchase Price (USD) - Click to search eBay active listings" style="color: var(--text-primary);">
-        <a href="#" class="ebay-buy-link ebay-price-link" data-search="${sanitizeHtml(item.metal + ' ' + item.name)}" title="Search eBay active listings for ${sanitizeHtml(item.metal)} ${sanitizeHtml(item.name)}">
+        <a href="#" class="ebay-buy-link ebay-price-link" data-search="${escapeAttribute(item.metal + (item.year ? ' ' + item.year : '') + ' ' + item.name)}" title="Search eBay active listings for ${escapeAttribute(item.metal)} ${escapeAttribute(item.name)}">
           ${formatCurrency(purchasePrice)} <svg class="ebay-search-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6" fill="none" stroke="currentColor" stroke-width="2.5"/><line x1="15" y1="15" x2="21" y2="21" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
         </a>
       </td>
       <td class="shrink" data-column="meltValue" title="Melt Value (USD)" style="color: var(--text-primary);">${meltDisplay}</td>
       <td class="shrink ${isManualRetail ? 'retail-confirmed' : 'retail-estimated'}" data-column="retailPrice" title="${isManualRetail ? 'Manual retail price (confirmed)' : 'Estimated — defaults to melt value'} - Click to search eBay sold listings">
-        <a href="#" class="ebay-sold-link ebay-price-link" data-search="${sanitizeHtml(item.metal + ' ' + item.name)}" title="Search eBay sold listings for ${sanitizeHtml(item.metal)} ${sanitizeHtml(item.name)}">
+        <a href="#" class="ebay-sold-link ebay-price-link" data-search="${escapeAttribute(item.metal + (item.year ? ' ' + item.year : '') + ' ' + item.name)}" title="Search eBay sold listings for ${escapeAttribute(item.metal)} ${escapeAttribute(item.name)}">
           ${retailDisplay} <svg class="ebay-search-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6" fill="none" stroke="currentColor" stroke-width="2.5"/><line x1="15" y1="15" x2="21" y2="21" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
         </a>
       </td>
@@ -975,15 +1023,17 @@ const renderTable = () => {
       <td class="shrink" data-column="purchaseLocation">
         ${formatPurchaseLocation(item.purchaseLocation)}
       </td>
-      <td class="icon-col" data-column="edit"><button class="icon-btn action-icon edit-icon" role="button" tabindex="0" onclick="editItem(${originalIdx})" aria-label="Edit ${sanitizeHtml(item.name)}" title="Edit item">
-        <svg class="icon-svg edit-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5M19.43,12.97C19.47,12.65 19.5,12.33 19.5,12C19.5,11.67 19.47,11.34 19.43,11L21.54,9.37C21.73,9.22 21.78,8.95 21.66,8.73L19.66,5.27C19.54,5.05 19.27,4.96 19.05,5.05L16.56,6.05C16.04,5.66 15.5,5.32 14.87,5.07L14.5,2.42C14.46,2.18 14.25,2 14,2H10C9.75,2 9.54,2.18 9.5,2.42L9.13,5.07C8.5,5.32 7.96,5.66 7.44,6.05L4.95,5.05C4.73,4.96 4.46,5.05 4.34,5.27L2.34,8.73C2.22,8.95 2.27,9.22 2.46,9.37L4.57,11C4.53,11.34 4.5,11.67 4.5,12C4.5,12.33 4.53,12.65 4.57,12.97L2.46,14.63C2.27,14.78 2.22,15.05 2.34,15.27L4.34,18.73C4.46,18.95 4.73,19.03 4.95,18.95L7.44,17.94C7.96,18.34 8.5,18.68 9.13,18.93L9.5,21.58C9.54,21.82 9.75,22 10,22H14C14.25,22 14.46,21.82 14.5,21.58L14.87,18.93C15.5,18.67 16.04,18.34 16.56,17.94L19.05,18.95C19.27,19.03 19.54,18.95 19.66,18.73L21.66,15.27C21.78,15.05 21.73,14.78 21.54,14.63L19.43,12.97Z"/></svg>
-      </button></td>
-      <td class="icon-col" data-column="duplicate"><button class="icon-btn action-icon" role="button" tabindex="0" onclick="duplicateItem(${originalIdx})" aria-label="Duplicate ${sanitizeHtml(item.name)}" title="Duplicate item">
-        <svg class="icon-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M16 1H4a2 2 0 0 0-2 2v14h2V3h12V1zm3 4H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zm0 16H8V7h11v14z"/></svg>
-      </button></td>
-      <td class="icon-col" data-column="delete"><button class="icon-btn action-icon danger" role="button" tabindex="0" onclick="deleteItem(${originalIdx})" aria-label="Delete item" title="Delete item">
-        <svg class="icon-svg delete-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 7h12v13a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V7zm3-4h6l1 1h4v2H3V4h4l1-1z"/></svg>
-      </button></td>
+      <td class="icon-col actions-cell" data-column="actions"><div class="actions-row">
+        <button class="icon-btn action-icon edit-icon" role="button" tabindex="0" onclick="editItem(${originalIdx})" aria-label="Edit ${sanitizeHtml(item.name)}" title="Edit item">
+          <svg class="icon-svg edit-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5M19.43,12.97C19.47,12.65 19.5,12.33 19.5,12C19.5,11.67 19.47,11.34 19.43,11L21.54,9.37C21.73,9.22 21.78,8.95 21.66,8.73L19.66,5.27C19.54,5.05 19.27,4.96 19.05,5.05L16.56,6.05C16.04,5.66 15.5,5.32 14.87,5.07L14.5,2.42C14.46,2.18 14.25,2 14,2H10C9.75,2 9.54,2.18 9.5,2.42L9.13,5.07C8.5,5.32 7.96,5.66 7.44,6.05L4.95,5.05C4.73,4.96 4.46,5.05 4.34,5.27L2.34,8.73C2.22,8.95 2.27,9.22 2.46,9.37L4.57,11C4.53,11.34 4.5,11.67 4.5,12C4.5,12.33 4.53,12.65 4.57,12.97L2.46,14.63C2.27,14.78 2.22,15.05 2.34,15.27L4.34,18.73C4.46,18.95 4.73,19.03 4.95,18.95L7.44,17.94C7.96,18.34 8.5,18.68 9.13,18.93L9.5,21.58C9.54,21.82 9.75,22 10,22H14C14.25,22 14.46,21.82 14.5,21.58L14.87,18.93C15.5,18.67 16.04,18.34 16.56,17.94L19.05,18.95C19.27,19.03 19.54,18.95 19.66,18.73L21.66,15.27C21.78,15.05 21.73,14.78 21.54,14.63L19.43,12.97Z"/></svg>
+        </button>
+        <button class="icon-btn action-icon" role="button" tabindex="0" onclick="duplicateItem(${originalIdx})" aria-label="Duplicate ${sanitizeHtml(item.name)}" title="Duplicate item">
+          <svg class="icon-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M16 1H4a2 2 0 0 0-2 2v14h2V3h12V1zm3 4H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zm0 16H8V7h11v14z"/></svg>
+        </button>
+        <button class="icon-btn action-icon danger" role="button" tabindex="0" onclick="deleteItem(${originalIdx})" aria-label="Delete item" title="Delete item">
+          <svg class="icon-svg delete-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 7h12v13a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V7zm3-4h6l1 1h4v2H3V4h4l1-1z"/></svg>
+        </button>
+      </div></td>
       </tr>
       `);
     }
@@ -991,7 +1041,7 @@ const renderTable = () => {
     const visibleCount = endIndex - startIndex;
     const placeholders = Array.from(
       { length: Math.max(0, itemsPerPage - visibleCount) },
-      () => '<tr><td class="shrink" colspan="14">&nbsp;</td></tr>'
+      () => '<tr><td class="shrink" colspan="12">&nbsp;</td></tr>'
     );
 
     // Find tbody element directly if cached version fails
@@ -1229,9 +1279,14 @@ const editItem = (idx, logIdx = null) => {
   if (elements.itemMarketValue) elements.itemMarketValue.value = item.marketValue > 0 ? item.marketValue : '';
   elements.purchaseLocation.value = item.purchaseLocation || '';
   elements.storageLocation.value = item.storageLocation && item.storageLocation !== 'Unknown' ? item.storageLocation : '';
+  if (elements.itemSerialNumber) elements.itemSerialNumber.value = item.serialNumber || '';
   if (elements.itemNotes) elements.itemNotes.value = item.notes || '';
   elements.itemDate.value = item.date;
   if (elements.itemCatalog) elements.itemCatalog.value = item.numistaId || '';
+  if (elements.itemYear) elements.itemYear.value = item.year || item.issuedYear || '';
+  if (elements.itemGrade) elements.itemGrade.value = item.grade || '';
+  if (elements.itemGradingAuthority) elements.itemGradingAuthority.value = item.gradingAuthority || '';
+  if (elements.itemCertNumber) elements.itemCertNumber.value = item.certNumber || '';
   if (elements.itemSerial) elements.itemSerial.value = item.serial;
 
   // Show/hide Undo button based on changelog context
@@ -1283,9 +1338,14 @@ const duplicateItem = (idx) => {
   if (elements.itemMarketValue) elements.itemMarketValue.value = item.marketValue > 0 ? item.marketValue : '';
   elements.purchaseLocation.value = item.purchaseLocation || '';
   elements.storageLocation.value = item.storageLocation && item.storageLocation !== 'Unknown' ? item.storageLocation : '';
+  if (elements.itemSerialNumber) elements.itemSerialNumber.value = item.serialNumber || '';
   if (elements.itemNotes) elements.itemNotes.value = item.notes || '';
   elements.itemDate.value = todayStr(); // Default to today
   if (elements.itemCatalog) elements.itemCatalog.value = item.numistaId || '';
+  if (elements.itemYear) elements.itemYear.value = item.year || item.issuedYear || '';
+  if (elements.itemGrade) elements.itemGrade.value = item.grade || '';
+  if (elements.itemGradingAuthority) elements.itemGradingAuthority.value = item.gradingAuthority || '';
+  if (elements.itemCertNumber) elements.itemCertNumber.value = item.certNumber || '';
   if (elements.itemSerial) elements.itemSerial.value = ''; // Serial should be unique per item
 
   // Open unified modal
@@ -1405,6 +1465,10 @@ const importCsv = (file, override = false) => {
           const purchaseLocation = row['Purchase Location'] || '';
           const storageLocation = row['Storage Location'] || '';
           const notes = row['Notes'] || '';
+          const year = row['Year'] || row['year'] || row['issuedYear'] || '';
+          const grade = row['Grade'] || row['grade'] || '';
+          const gradingAuthority = row['Grading Authority'] || row['gradingAuthority'] || row['Authority'] || '';
+          const certNumber = (row['Cert #'] || row['certNumber'] || row['Cert Number'] || '').toString();
           const date = parseDate(row['Date']);
 
           // Parse retail price from CSV (backward-compatible with legacy columns)
@@ -1432,6 +1496,7 @@ const importCsv = (file, override = false) => {
           const numistaRaw = (row['N#'] || row['Numista #'] || row['numistaId'] || '').toString();
           const numistaMatch = numistaRaw.match(/\d+/);
           const numistaId = numistaMatch ? numistaMatch[0] : '';
+          const serialNumber = row['Serial Number'] || row['serialNumber'] || '';
           const serial = row['Serial'] || row['serial'] || getNextSerial();
 
           addCompositionOption(composition);
@@ -1449,11 +1514,16 @@ const importCsv = (file, override = false) => {
             purchaseLocation,
             storageLocation,
             notes,
+            year,
+            grade,
+            gradingAuthority,
+            certNumber,
             spotPriceAtPurchase,
             premiumPerOz,
             totalPremium,
             isCollectable: false,
             numistaId,
+            serialNumber,
             serial
           });
 
@@ -1697,7 +1767,10 @@ const importNumistaCsv = (file, override = false) => {
             totalPremium,
             isCollectable,
             numistaId,
-            issuedYear,
+            year: issuedYear,
+            grade: '',
+            gradingAuthority: '',
+            certNumber: '',
             serial
           });
 
@@ -1807,7 +1880,7 @@ const exportNumistaCsv = () => {
   const rows = [];
 
   for (const item of sortedInventory) {
-    const year = item.issuedYear || '';
+    const year = item.year || item.issuedYear || '';
     let title = item.name || '';
     if (year) {
       const yearRegex = new RegExp(`\\s*${year}\\b`);
@@ -1877,9 +1950,9 @@ const exportCsv = () => {
   debugLog('exportCsv start', inventory.length, 'items');
   const timestamp = new Date().toISOString().slice(0,10).replace(/-/g,'');
   const headers = [
-    "Date","Metal","Type","Name","Qty","Weight(oz)",
+    "Date","Metal","Type","Name","Year","Qty","Weight(oz)",
     "Purchase Price","Melt Value","Retail Price","Gain/Loss",
-    "Purchase Location","N#","Notes"
+    "Purchase Location","N#","Grade","Grading Authority","Cert #","Serial Number","Notes"
   ];
 
   const sortedInventory = sortInventoryByDateNewestFirst();
@@ -1900,6 +1973,7 @@ const exportCsv = () => {
       i.metal || 'Silver',
       i.type,
       i.name,
+      i.year || '',
       i.qty,
       parseFloat(i.weight).toFixed(4),
       formatCurrency(purchasePrice),
@@ -1908,6 +1982,10 @@ const exportCsv = () => {
       gainLoss !== null ? formatCurrency(gainLoss) : '—',
       i.purchaseLocation,
       i.numistaId || '',
+      i.grade || '',
+      i.gradingAuthority || '',
+      i.certNumber || '',
+      i.serialNumber || '',
       i.notes || ''
     ]);
   }
@@ -1983,6 +2061,10 @@ const importJson = (file, override = false) => {
         const purchaseLocation = raw.purchaseLocation || '';
         const storageLocation = raw.storageLocation || 'Unknown';
         const notes = raw.notes || '';
+        const year = (raw.year || raw.issuedYear || '').toString().trim();
+        const grade = (raw.grade || '').toString().trim();
+        const gradingAuthority = (raw.gradingAuthority || raw.authority || '').toString().trim();
+        const certNumber = (raw.certNumber || '').toString().trim();
         const date = parseDate(raw.date);
 
         // Parse marketValue (retail price), backward-compatible with legacy fields
@@ -2024,6 +2106,10 @@ const importJson = (file, override = false) => {
           totalPremium,
           isCollectable: false,
           numistaId,
+          year,
+          grade,
+          gradingAuthority,
+          certNumber,
           serial
         });
 
@@ -2134,6 +2220,7 @@ const exportJson = () => {
     metal: item.metal,
     type: item.type,
     name: item.name,
+    year: item.year || '',
     qty: item.qty,
     weight: item.weight,
     price: item.price,
@@ -2142,6 +2229,10 @@ const exportJson = () => {
     storageLocation: item.storageLocation,
     notes: item.notes,
     numistaId: item.numistaId,
+    grade: item.grade || '',
+    gradingAuthority: item.gradingAuthority || '',
+    certNumber: item.certNumber || '',
+    serialNumber: item.serialNumber || '',
     serial: item.serial,
     // Legacy fields preserved for backward compatibility
     spotPriceAtPurchase: item.spotPriceAtPurchase,
@@ -2204,6 +2295,9 @@ const exportPdf = () => {
       gainLoss !== null ? formatCurrency(gainLoss) : '—',
       item.purchaseLocation,
       item.numistaId || '',
+      item.grade || '',
+      item.gradingAuthority || '',
+      item.certNumber || '',
       item.notes || ''
     ];
   });
@@ -2211,7 +2305,7 @@ const exportPdf = () => {
   // Add table
   doc.autoTable({
     head: [['Date', 'Metal', 'Type', 'Name', 'Qty', 'Weight(oz)', 'Purchase',
-            'Melt Value', 'Retail', 'Gain/Loss', 'Location', 'N#', 'Notes']],
+            'Melt Value', 'Retail', 'Gain/Loss', 'Location', 'N#', 'Grade', 'Auth', 'Cert#', 'Notes']],
     body: tableData,
     startY: 30,
     theme: 'striped',
@@ -2291,6 +2385,39 @@ window.showNotes = showNotes;
  * when item names contain quotes or special characters.
  */
 document.addEventListener('click', (e) => {
+  // Numista N# tag click → open Numista iframe modal
+  const numistaTag = e.target.closest('.numista-tag');
+  if (numistaTag) {
+    e.preventDefault();
+    e.stopPropagation();
+    const nId = numistaTag.dataset.numistaId;
+    const coinName = numistaTag.dataset.coinName || '';
+    if (nId && typeof openNumistaModal === 'function') {
+      openNumistaModal(nId, coinName);
+    }
+    return;
+  }
+
+  // Grade tag click → open cert verification URL
+  const gradeTag = e.target.closest('.grade-tag[data-clickable="true"]');
+  if (gradeTag) {
+    e.preventDefault();
+    e.stopPropagation();
+    const authority = gradeTag.dataset.authority || '';
+    const certNum = gradeTag.dataset.certNumber || '';
+    if (authority && typeof CERT_LOOKUP_URLS !== 'undefined' && CERT_LOOKUP_URLS[authority]) {
+      const url = CERT_LOOKUP_URLS[authority].replace('{certNumber}', encodeURIComponent(certNum));
+      const popup = window.open(url, `cert_${authority}_${certNum || Date.now()}`,
+        'width=1200,height=800,scrollbars=yes,resizable=yes,toolbar=no,location=no,menubar=no,status=no');
+      if (!popup) {
+        alert(`Popup blocked! Please allow popups or manually visit:\n${url}`);
+      } else {
+        popup.focus();
+      }
+    }
+    return;
+  }
+
   const buyLink = e.target.closest('.ebay-buy-link');
   if (buyLink) {
     e.preventDefault();

@@ -116,7 +116,7 @@ const getAllMetalsBreakdownData = () => {
  * @param {Object} breakdown - Breakdown data object
  * @returns {DocumentFragment} DOM fragment containing the breakdown elements
  */
-const createBreakdownElements = (breakdown) => {
+const createBreakdownElements = (breakdown, colorMap = {}) => {
   const container = document.createDocumentFragment();
 
   if (Object.keys(breakdown).length === 0) {
@@ -140,6 +140,14 @@ const createBreakdownElements = (breakdown) => {
     // Header row: name + count/weight
     const header = document.createElement('div');
     header.className = 'breakdown-header';
+
+    // Color dot matching pie chart segment
+    if (colorMap[key]) {
+      const dot = document.createElement('span');
+      dot.className = 'breakdown-color-dot';
+      dot.style.backgroundColor = colorMap[key];
+      header.appendChild(dot);
+    }
 
     const label = document.createElement('span');
     label.className = 'breakdown-label';
@@ -240,9 +248,20 @@ const showDetailsModal = (metal) => {
     );
   }
 
-  // Append DOM elements for detailed breakdown
-  elements.typeBreakdown.appendChild(createBreakdownElements(leftBreakdown));
-  elements.locationBreakdown.appendChild(createBreakdownElements(rightBreakdown));
+  // Build color maps matching pie chart segment order (by insertion order)
+  const buildColorMap = (breakdown) => {
+    const keys = Object.keys(breakdown);
+    const colors = (window.generateColors || generateColors)(keys.length);
+    const map = {};
+    keys.forEach((key, i) => { map[key] = colors[i]; });
+    return map;
+  };
+  const leftColorMap = buildColorMap(leftBreakdown);
+  const rightColorMap = buildColorMap(rightBreakdown);
+
+  // Append DOM elements for detailed breakdown (with color-keyed headers)
+  elements.typeBreakdown.appendChild(createBreakdownElements(leftBreakdown, leftColorMap));
+  elements.locationBreakdown.appendChild(createBreakdownElements(rightBreakdown, rightColorMap));
 
   // Show modal
   if (window.openModalById) openModalById('detailsModal');

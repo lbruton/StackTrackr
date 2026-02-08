@@ -86,6 +86,7 @@ const createPieChart = (canvas, data, title) => {
       maintainAspectRatio: false,
       plugins: {
         legend: {
+          display: false,
           position: 'bottom',
           labels: {
             color: getChartTextColor(),
@@ -167,5 +168,8 @@ const destroyCharts = () => {
     }
   });
 };
+
+// Expose generateColors globally for breakdown color-keying
+window.generateColors = generateColors;
 
 // =============================================================================
