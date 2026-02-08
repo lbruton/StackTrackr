@@ -233,7 +233,7 @@ const CERT_LOOKUP_URLS = {
  * Updated: 2026-02-08 - Numista API v3 integration fix
  */
 
-const APP_VERSION = "3.10.00";
+const APP_VERSION = "3.10.01";
 
 /**
  * @constant {string} DEFAULT_CURRENCY - Default currency code for monetary formatting

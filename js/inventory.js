@@ -2385,7 +2385,7 @@ window.showNotes = showNotes;
  * when item names contain quotes or special characters.
  */
 document.addEventListener('click', (e) => {
-  // Numista N# tag click → open Numista iframe modal
+  // Numista N# tag click → open Numista in popup window
   const numistaTag = e.target.closest('.numista-tag');
   if (numistaTag) {
     e.preventDefault();

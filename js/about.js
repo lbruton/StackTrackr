@@ -267,6 +267,8 @@ const setupAckModalEvents = () => {
  */
 const getEmbeddedWhatsNew = () => {
   return `
+    <li><strong>v3.10.01 – Numista iframe fix</strong>: Numista pages now open in a popup window — fixes "Can't Open This Page" error on hosted sites</li>
+    <li><strong>v3.10.01 – Sort fix</strong>: Gain/Loss and Source columns now sort and resize correctly</li>
     <li><strong>v3.10.00 – Serial # field</strong>: New optional Serial Number input for bars and notes. Included in all export/import formats</li>
     <li><strong>v3.10.00 – Numista Aurum fix</strong>: Goldback / Aurum items now return results from Numista search</li>
     <li><strong>v3.10.00 – Enhanced no-results</strong>: Numista search shows retry box + popular bullion quick-picks when no results found</li>
