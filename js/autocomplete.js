@@ -333,6 +333,19 @@ const normalizeItemName = (fullName) => {
     return bestMatch;
   }
 
+  // Step 3b: Keyword-based grouping for series that span multiple
+  // denominations, states, or variants (no consistent prefix to match)
+  const keywordGroups = {
+    'goldback': 'Goldback',
+    'zombucks': 'Zombucks',
+    'silverback': 'Silverback',
+  };
+  for (const [keyword, groupName] of Object.entries(keywordGroups)) {
+    if (nameLower.includes(keyword)) {
+      return groupName;
+    }
+  }
+
   // Step 4: No lookup match — strip known suffixes for clean grouping
   // First, collapse embedded weight patterns (" 1 oz ", " 30 gram ") to a single space
   name = name.replace(/\s+\d+(?:\s*\/\s*\d+)?\s*(?:oz|ounce|gram|g)\s+/i, ' ');
