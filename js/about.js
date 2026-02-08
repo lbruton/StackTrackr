@@ -267,6 +267,7 @@ const setupAckModalEvents = () => {
  */
 const getEmbeddedWhatsNew = () => {
   return `
+    <li><strong>v3.08.01 – Layout &amp; polish</strong>: Totals cards moved above inventory table, sparkline colors match metal accent bars, default rows per page raised to 25</li>
     <li><strong>v3.08.00 – Spot price card redesign</strong>: Background sparkline trends on all 4 cards, sync icon replaces button panel, shift+click manual price entry, per-card range dropdown (7d/30d/60d/90d). Dedup fix for historical backfill</li>
     <li><strong>v3.07.02 – Shift+click inline editing</strong>: Hold Shift and click any editable cell (Name, Qty, Weight, Purchase Price, Retail Price, Location) to edit in place. Enter saves, Escape cancels</li>
     <li><strong>v3.07.00 – Portfolio visibility overhaul</strong>: Confidence styling for Retail/Gain-Loss, All Metals totals card with Avg Cost/oz and clickable breakdown modal, metal detail modals show full portfolio breakdown per type and location</li>

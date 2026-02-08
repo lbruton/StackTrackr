@@ -1,5 +1,6 @@
 ## What's New
 
+- **Totals above table (v3.08.01)**: Per-metal portfolio summary cards now appear above the inventory table — Spot Prices → Totals → Table. Sparkline colors now match metal accent bars. Default rows per page raised to 25
 - **Spot price card redesign (v3.08.00)**: Background sparkline trend charts on all 4 spot cards, sync icon replaces button panel, shift+click for manual price entry, per-card range dropdown (7d/30d/60d/90d). Historical backfill dedup prevents duplicate entries on repeated syncs
 - **Shift+click inline editing (v3.07.02)**: Hold Shift and click any editable cell (Name, Qty, Weight, Purchase Price, Retail Price, Location) to edit in place. Enter saves, Escape cancels
 - **Light & Sepia theme contrast pass (v3.07.01)**: Clean gray-to-white light palette with visible card elevation. Darkened metal/type text colors to pass WCAG AA in both themes
