@@ -91,6 +91,11 @@ const populateVersionModal = (version, html) => {
  */
 const getEmbeddedChangelog = (version) => {
   const changelogs = {
+    "3.08.01": `
+      <li><strong>Totals above table</strong>: Per-metal portfolio summary cards now appear above the inventory table — Spot Prices → Totals → Table</li>
+      <li><strong>Sparkline color consistency</strong>: Trend lines now use the same metal accent colors as the totals card bars, across all themes</li>
+      <li><strong>Default 25 rows</strong>: Table now shows 25 rows by default (10 and 15 removed from dropdown)</li>
+    `,
     "3.08.00": `
       <li><strong>Sparkline trend charts</strong>: Background Chart.js line charts on all 4 spot price cards showing price history with gradient fill</li>
       <li><strong>Trend range dropdown</strong>: Per-card 7d/30d/60d/90d selector with persistent preference</li>

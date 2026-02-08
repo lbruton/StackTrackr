@@ -5,6 +5,16 @@ All notable changes to StakTrakr will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.08.01] - 2026-02-07
+
+### Patch — Move Metals Totals Above Inventory Table
+
+#### Changed
+
+- **Layout reorder**: Moved the per-metal portfolio summary cards (`.totals-section`) above the inventory table so the page flows: Spot Price Cards → Metals Totals → Search/Table/Pagination. Puts the portfolio bottom line closer to spot prices for an overview-first information hierarchy
+- **Sparkline colors match metal accent**: Sparkline trend lines now read the active theme's CSS custom properties (`--silver`, `--gold`, `--platinum`, `--palladium`) instead of hardcoded colors, matching the totals card accent bars across all themes
+- **Default rows per page**: Changed from 10 to 25; removed 10 and 15 row options from the dropdown (25 / 50 / 100 remain)
+
 ## [3.08.00] - 2026-02-07
 
 ### Increment 7 — Spot Price Card Redesign with Sparkline Trends
