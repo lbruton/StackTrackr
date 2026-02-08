@@ -335,18 +335,17 @@ const resetSpotByName = (metalName) => {
 // =============================================================================
 
 /**
- * Returns the theme-aware color for a metal sparkline
+ * Returns the theme-aware color for a metal sparkline by reading the
+ * CSS custom property (--silver, --gold, etc.) from the active theme.
+ * Falls back to hardcoded defaults if getComputedStyle is unavailable.
  * @param {string} metalKey - 'silver', 'gold', 'platinum', 'palladium'
  * @returns {string} CSS color string
  */
 const getMetalColor = (metalKey) => {
-  const colors = {
-    silver: "#94a3b8",
-    gold: "#eab308",
-    platinum: "#a78bfa",
-    palladium: "#f97316",
-  };
-  return colors[metalKey] || "#6366f1";
+  const prop = getComputedStyle(document.documentElement).getPropertyValue(`--${metalKey}`).trim();
+  if (prop) return prop;
+  const fallback = { silver: "#d1d5db", gold: "#fbbf24", platinum: "#f3f4f6", palladium: "#d8b4fe" };
+  return fallback[metalKey] || "#6366f1";
 };
 
 /**

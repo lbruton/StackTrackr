@@ -14,7 +14,7 @@ let editingChangeLogIndex = null;
 
 /** @type {Object} Pagination state */
 let currentPage = 1; // Current page number (1-based)
-let itemsPerPage = 10; // Number of items to display per page (default changed to 10+)
+let itemsPerPage = 25; // Number of items to display per page
 
 /** @type {string} Current search query */
 let searchQuery = "";
