@@ -475,6 +475,10 @@ section:hover {
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
 }
 
+.grid-name-year {
+  grid-template-columns: 3fr 2fr;
+}
+
 /* =============================================================================
    FORM ELEMENTS
    ============================================================================= */
@@ -1580,6 +1584,7 @@ input[type="submit"] {
   padding: 0;
   overflow: hidden;
   width: 90%;
+  max-width: 700px;
 }
 
 #changeLogModal .modal-content {
@@ -4201,7 +4206,8 @@ input:disabled + .slider {
     padding: var(--spacing);
   }
 
-  .grid-2 {
+  .grid-2,
+  .grid-name-year {
     grid-template-columns: 1fr;
   }
 
@@ -4781,6 +4787,286 @@ th {
   .catalog-link {
     font-size: 0.6rem;
   }
+}
+
+/* =============================================================================
+   NUMISTA TAG — Inline N# badge on inventory table Name cell
+   ============================================================================= */
+.numista-tag {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.65rem;
+  font-weight: 600;
+  padding: 0.1rem 0.35rem;
+  margin-left: 0.35rem;
+  border-radius: var(--radius);
+  background: var(--bg-tertiary);
+  color: var(--primary);
+  cursor: pointer;
+  text-decoration: none;
+  transition: var(--transition);
+  vertical-align: middle;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.numista-tag:hover,
+.numista-tag:focus-visible {
+  background: var(--primary);
+  color: #fff;
+  outline: none;
+}
+
+/* Dark theme overrides */
+[data-theme="dark"] .numista-tag {
+  background: rgba(255, 255, 255, 0.1);
+  color: #60a5fa;
+}
+[data-theme="dark"] .numista-tag:hover,
+[data-theme="dark"] .numista-tag:focus-visible {
+  background: #60a5fa;
+  color: #1a1a2e;
+}
+
+/* Sepia theme overrides */
+[data-theme="sepia"] .numista-tag {
+  background: rgba(0, 0, 0, 0.08);
+  color: #1d4ed8;
+}
+[data-theme="sepia"] .numista-tag:hover,
+[data-theme="sepia"] .numista-tag:focus-visible {
+  background: #1d4ed8;
+  color: #fff;
+}
+
+/* =============================================================================
+   YEAR TAG — Inline year badge on inventory table Name cell
+   ============================================================================= */
+.year-tag {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.65rem;
+  font-weight: 600;
+  padding: 0.1rem 0.35rem;
+  margin-left: 0.35rem;
+  border-radius: var(--radius);
+  background: var(--bg-tertiary);
+  color: var(--text-secondary, #666);
+  vertical-align: middle;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+/* Dark theme overrides */
+[data-theme="dark"] .year-tag {
+  background: rgba(255, 255, 255, 0.08);
+  color: #9ca3af;
+}
+
+/* Sepia theme overrides */
+[data-theme="sepia"] .year-tag {
+  background: rgba(0, 0, 0, 0.06);
+  color: #78716c;
+}
+
+/* =============================================================================
+   ITEM MODAL ACTION BAR — Search Numista left, Cancel/Submit right
+   ============================================================================= */
+.item-modal-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 1rem;
+  gap: 0.5rem;
+}
+
+.item-modal-actions-right {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* =============================================================================
+   NUMISTA RESULTS MODAL — Stacked modal for search results / field picker
+   ============================================================================= */
+#numistaResultsModal {
+  z-index: 10000;
+}
+
+.numista-results-modal-content {
+  max-width: 600px;
+  width: 90%;
+}
+
+.numista-results-list {
+  max-height: 400px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.5rem 0;
+}
+
+.numista-result-card {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: var(--transition);
+  background: var(--bg-secondary);
+}
+
+.numista-result-card:hover {
+  border-color: var(--primary);
+  background: var(--bg-tertiary);
+}
+
+.numista-result-card.selected {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px var(--primary);
+}
+
+.numista-result-card img {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+  border-radius: 4px;
+  flex-shrink: 0;
+  background: var(--bg-primary);
+}
+
+.numista-result-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.numista-result-name {
+  font-weight: 600;
+  font-size: 0.9rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.numista-result-meta {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 0.15rem;
+}
+
+.numista-result-id {
+  font-size: 0.7rem;
+  color: var(--primary);
+  font-weight: 600;
+}
+
+/* Field picker area */
+.numista-field-picker {
+  padding: 0.5rem 0;
+}
+
+.numista-selected-preview {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 0.75rem;
+  border: 2px solid var(--primary);
+  border-radius: var(--radius);
+  background: var(--bg-secondary);
+  margin-bottom: 0.75rem;
+}
+
+.numista-selected-preview img {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.numista-field-checkboxes {
+  display: grid;
+  grid-template-columns: auto auto 1fr;
+  gap: 0.35rem 0.5rem;
+  align-items: center;
+  margin: 0 0 0.75rem 0;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.numista-fields-heading {
+  grid-column: 1 / -1;
+  font-weight: 600;
+  font-size: 0.85rem;
+  margin-bottom: 0.15rem;
+}
+
+.numista-field-checkboxes input[type="checkbox"] {
+  margin: 0;
+}
+
+.numista-field-label {
+  font-weight: 600;
+  font-size: 0.8rem;
+  white-space: nowrap;
+  text-align: right;
+  color: var(--text-secondary, var(--text-primary));
+}
+
+.numista-field-input {
+  min-width: 0;
+  padding: 0.25rem 0.4rem;
+  font-size: 0.8rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+.numista-field-input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.numista-field-input:focus {
+  border-color: var(--primary);
+  outline: none;
+}
+
+.numista-field-current {
+  grid-column: 3;
+  font-size: 0.65rem;
+  color: var(--text-muted, #999);
+  margin-top: -0.2rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.numista-field-warn {
+  grid-column: 1 / -1;
+  font-size: 0.7rem;
+  color: var(--danger, #f44336);
+  font-style: italic;
+  margin-top: -0.2rem;
+  padding-left: 1.5rem;
+}
+
+.numista-fill-actions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+
+.numista-no-results {
+  text-align: center;
+  padding: 2rem 1rem;
+  color: var(--text-muted);
+  font-style: italic;
 }
 
 #typeSummary .summary-chip {

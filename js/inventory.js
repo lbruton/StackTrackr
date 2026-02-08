@@ -461,6 +461,7 @@ const loadInventory = () => {
         storageLocation: item.storageLocation || "Unknown",
         notes: item.notes || "",
         marketValue: item.marketValue || 0,
+        year: item.year || item.issuedYear || "",
         spotPriceAtPurchase: spotPrice,
         premiumPerOz,
         totalPremium,
@@ -476,6 +477,7 @@ const loadInventory = () => {
         storageLocation: item.storageLocation || "Unknown",
         notes: item.notes || "",
         marketValue: item.marketValue || 0,
+        year: item.year || item.issuedYear || "",
         isCollectable: item.isCollectable !== undefined ? item.isCollectable : false,
         composition: item.composition || item.metal || ""
       };
@@ -943,6 +945,10 @@ const renderTable = () => {
       const purchaseTotal = purchasePrice * qty;
       const gainLoss = (currentSpot > 0 || isManualRetail) ? retailTotal - purchaseTotal : null;
 
+      // Resolve Numista catalog ID for inline tag
+      const numistaId = item.numistaId || (typeof catalogManager !== 'undefined'
+        && catalogManager.getCatalogId ? catalogManager.getCatalogId(item.serial) : null);
+
       // Format computed displays
       const meltDisplay = currentSpot > 0 ? formatCurrency(meltValue) : '—';
       const retailDisplay = currentSpot > 0 || isManualRetail ? formatCurrency(retailTotal) : '—';
@@ -956,7 +962,14 @@ const renderTable = () => {
       <td class="shrink" data-column="metal" data-metal="${escapeAttribute(item.composition || item.metal || '')}">${filterLink('metal', item.composition || item.metal || 'Silver', METAL_COLORS[item.metal] || 'var(--primary)', getDisplayComposition(item.composition || item.metal || 'Silver'))}</td>
       <td class="shrink" data-column="type">${filterLink('type', item.type, getTypeColor(item.type))}</td>
       <td class="expand" data-column="name" style="text-align: left;">
-        ${filterLink('name', item.name, 'var(--text-primary)')}
+        ${filterLink('name', item.name, 'var(--text-primary)')}${item.year
+          ? `<span class="year-tag" title="Year: ${escapeAttribute(String(item.year))}">${sanitizeHtml(String(item.year))}</span>`
+          : ''}${numistaId
+          ? `<span class="numista-tag" data-numista-id="${escapeAttribute(String(numistaId))}"
+               data-coin-name="${escapeAttribute(item.name)}"
+               title="View N#${escapeAttribute(String(numistaId))} on Numista"
+               tabindex="0" role="button">N#${sanitizeHtml(String(numistaId))}</span>`
+          : ''}
       </td>
       <td class="shrink" data-column="qty">${filterLink('qty', item.qty, 'var(--text-primary)')}</td>
       <td class="shrink" data-column="weight">${filterLink('weight', item.weight, 'var(--text-primary)', formatWeight(item.weight), item.weight < 1 ? 'Grams (g)' : 'Troy ounces (ozt)')}</td>
@@ -1232,6 +1245,7 @@ const editItem = (idx, logIdx = null) => {
   if (elements.itemNotes) elements.itemNotes.value = item.notes || '';
   elements.itemDate.value = item.date;
   if (elements.itemCatalog) elements.itemCatalog.value = item.numistaId || '';
+  if (elements.itemYear) elements.itemYear.value = item.year || item.issuedYear || '';
   if (elements.itemSerial) elements.itemSerial.value = item.serial;
 
   // Show/hide Undo button based on changelog context
@@ -1286,6 +1300,7 @@ const duplicateItem = (idx) => {
   if (elements.itemNotes) elements.itemNotes.value = item.notes || '';
   elements.itemDate.value = todayStr(); // Default to today
   if (elements.itemCatalog) elements.itemCatalog.value = item.numistaId || '';
+  if (elements.itemYear) elements.itemYear.value = item.year || item.issuedYear || '';
   if (elements.itemSerial) elements.itemSerial.value = ''; // Serial should be unique per item
 
   // Open unified modal
@@ -1405,6 +1420,7 @@ const importCsv = (file, override = false) => {
           const purchaseLocation = row['Purchase Location'] || '';
           const storageLocation = row['Storage Location'] || '';
           const notes = row['Notes'] || '';
+          const year = row['Year'] || row['year'] || row['issuedYear'] || '';
           const date = parseDate(row['Date']);
 
           // Parse retail price from CSV (backward-compatible with legacy columns)
@@ -1449,6 +1465,7 @@ const importCsv = (file, override = false) => {
             purchaseLocation,
             storageLocation,
             notes,
+            year,
             spotPriceAtPurchase,
             premiumPerOz,
             totalPremium,
@@ -1697,7 +1714,7 @@ const importNumistaCsv = (file, override = false) => {
             totalPremium,
             isCollectable,
             numistaId,
-            issuedYear,
+            year: issuedYear,
             serial
           });
 
@@ -1807,7 +1824,7 @@ const exportNumistaCsv = () => {
   const rows = [];
 
   for (const item of sortedInventory) {
-    const year = item.issuedYear || '';
+    const year = item.year || item.issuedYear || '';
     let title = item.name || '';
     if (year) {
       const yearRegex = new RegExp(`\\s*${year}\\b`);
@@ -1877,7 +1894,7 @@ const exportCsv = () => {
   debugLog('exportCsv start', inventory.length, 'items');
   const timestamp = new Date().toISOString().slice(0,10).replace(/-/g,'');
   const headers = [
-    "Date","Metal","Type","Name","Qty","Weight(oz)",
+    "Date","Metal","Type","Name","Year","Qty","Weight(oz)",
     "Purchase Price","Melt Value","Retail Price","Gain/Loss",
     "Purchase Location","N#","Notes"
   ];
@@ -1900,6 +1917,7 @@ const exportCsv = () => {
       i.metal || 'Silver',
       i.type,
       i.name,
+      i.year || '',
       i.qty,
       parseFloat(i.weight).toFixed(4),
       formatCurrency(purchasePrice),
@@ -2134,6 +2152,7 @@ const exportJson = () => {
     metal: item.metal,
     type: item.type,
     name: item.name,
+    year: item.year || '',
     qty: item.qty,
     weight: item.weight,
     price: item.price,
@@ -2291,6 +2310,19 @@ window.showNotes = showNotes;
  * when item names contain quotes or special characters.
  */
 document.addEventListener('click', (e) => {
+  // Numista N# tag click → open Numista iframe modal
+  const numistaTag = e.target.closest('.numista-tag');
+  if (numistaTag) {
+    e.preventDefault();
+    e.stopPropagation();
+    const nId = numistaTag.dataset.numistaId;
+    const coinName = numistaTag.dataset.coinName || '';
+    if (nId && typeof openNumistaModal === 'function') {
+      openNumistaModal(nId, coinName);
+    }
+    return;
+  }
+
   const buyLink = e.target.closest('.ebay-buy-link');
   if (buyLink) {
     e.preventDefault();

@@ -67,6 +67,8 @@ const elements = {
   itemSpotPrice: null,
   itemCollectable: null,
   itemCatalog: null,
+  itemYear: null,
+  searchNumistaBtn: null,
 
   // Spot price sync icons (per-metal)
   syncIconSilver: null,

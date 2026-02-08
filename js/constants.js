@@ -219,7 +219,7 @@ const API_PROVIDERS = {
  * Updated: 2026-02-08 - Numista API v3 integration fix
  */
 
-const APP_VERSION = "3.09.02";
+const APP_VERSION = "3.09.04";
 
 /**
  * @constant {string} DEFAULT_CURRENCY - Default currency code for monetary formatting

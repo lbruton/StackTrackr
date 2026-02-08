@@ -108,6 +108,8 @@ document.addEventListener("DOMContentLoaded", () => {
     elements.itemSpotPrice = safeGetElement("itemSpotPrice");
     elements.itemCollectable = safeGetElement("itemCollectable");
     elements.itemCatalog = safeGetElement("itemCatalog");
+    elements.itemYear = safeGetElement("itemYear");
+    elements.searchNumistaBtn = safeGetElement("searchNumistaBtn");
 
     // Header buttons - CRITICAL
     debugLog("Phase 2: Initializing header buttons...");

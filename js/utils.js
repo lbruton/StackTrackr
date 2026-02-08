@@ -626,7 +626,7 @@ const cleanString = (str = "") =>
     .replace(/<[^>]*>/g, "")
     .normalize("NFD")
     .replace(/\p{Diacritic}/gu, "")
-    .replace(/[\u0000-\u001F\u007F'\"]/g, "")
+    .replace(/[\u0000-\u001F\u007F]/g, "")
     .replace(/\s+/g, " ")
     .trim();
 
@@ -641,11 +641,10 @@ const sanitizeObjectFields = (obj) => {
   for (const key of Object.keys(cleaned)) {
     if (typeof cleaned[key] === "string" && key !== 'notes') {
       const allowHyphen = key === 'date';
-      const allowSlash = key === 'name';
       cleaned[key] =
-        key === 'purchaseLocation'
+        (key === 'name' || key === 'purchaseLocation' || key === 'year')
           ? cleanString(cleaned[key])
-          : stripNonAlphanumeric(cleaned[key], { allowHyphen, allowSlash });
+          : stripNonAlphanumeric(cleaned[key], { allowHyphen });
     }
   }
   return cleaned;
@@ -883,7 +882,7 @@ const sanitizeImportedItem = (item) => {
       .replace(/<[^>]*>/g, '')
       .normalize('NFD')
       .replace(/\p{Diacritic}/gu, '')
-      .replace(/[\u0000-\u0008\u000B-\u001F\u007F'\"]/g, '')
+      .replace(/[\u0000-\u0008\u000B-\u001F\u007F]/g, '')
       .replace(/\r\n?/g, '\n')
       .replace(/[ \t]+/g, ' ')
       .replace(/ *\n */g, '\n')
