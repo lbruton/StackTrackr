@@ -1096,11 +1096,36 @@ const renderNumistaFieldCheckboxes = (result) => {
 };
 
 /**
+ * Curated list of popular bullion items for quick-pick in the no-results modal.
+ * Focused on items silver/gold stackers commonly own.
+ * @returns {Array<{id: string, name: string, metal: string}>}
+ */
+const getPopularNumistaItems = () => [
+  // Silver bullion
+  { id: '1493',   name: 'American Silver Eagle',         metal: 'Silver' },
+  { id: '298883', name: 'American Silver Eagle (New Rev)', metal: 'Silver' },
+  { id: '9164',   name: 'Canadian Silver Maple Leaf',    metal: 'Silver' },
+  { id: '13410',  name: 'British Silver Britannia',      metal: 'Silver' },
+  { id: '9165',   name: 'Austrian Silver Philharmonic',  metal: 'Silver' },
+  { id: '13855',  name: 'Mexican Silver Libertad',       metal: 'Silver' },
+  { id: '143754', name: 'Silver Krugerrand',             metal: 'Silver' },
+  // Gold bullion
+  { id: '23134',  name: 'American Gold Eagle',           metal: 'Gold' },
+  { id: '18451',  name: 'American Gold Buffalo',         metal: 'Gold' },
+  { id: '6002',   name: 'Gold Krugerrand',               metal: 'Gold' },
+  { id: '15150',  name: 'Austrian Gold Philharmonic',    metal: 'Gold' },
+  // Classic silver
+  { id: '1492',   name: 'Morgan Dollar',                 metal: 'Silver' },
+  { id: '5580',   name: 'Peace Dollar',                  metal: 'Silver' },
+];
+
+/**
  * Show Numista results modal with search results
  * @param {Array} results - Array of normalized Numista item data
  * @param {boolean} directLookup - If true and single result, skip list and show field picker
+ * @param {string} originalQuery - The search query used (for retry pre-fill)
  */
-const showNumistaResults = (results, directLookup = false) => {
+const showNumistaResults = (results, directLookup = false, originalQuery = '') => {
   const modal = document.getElementById('numistaResultsModal');
   const list = document.getElementById('numistaResultsList');
   const picker = document.getElementById('numistaFieldPicker');
@@ -1114,9 +1139,78 @@ const showNumistaResults = (results, directLookup = false) => {
 
   if (!results || results.length === 0) {
     title.textContent = 'No Results';
-    list.innerHTML = '<div class="numista-no-results">No matching items found on Numista.</div>';
+
+    // Build quick-picks from curated popular items
+    const popularItems = getPopularNumistaItems();
+    const quickPicksHtml = `<div class="numista-quick-picks">
+        <p class="numista-quick-picks-label">Popular bullion items:</p>
+        <div class="numista-quick-picks-list">
+          ${popularItems.map(item =>
+            `<button type="button" class="numista-quick-pick" data-numista-id="${escapeHtmlCatalog(item.id)}">
+              <span class="quick-pick-id">N#${escapeHtmlCatalog(item.id)}</span>
+              <span class="quick-pick-name">${escapeHtmlCatalog(item.name)}</span>
+              <span class="quick-pick-count">${escapeHtmlCatalog(item.metal)}</span>
+            </button>`
+          ).join('')}
+        </div>
+      </div>`;
+
+    list.innerHTML = `<div class="numista-no-results-enhanced">
+      <div class="numista-retry-search">
+        <p>No matching items found on Numista.</p>
+        <div class="numista-retry-row">
+          <input type="text" id="numistaRetryInput" class="numista-retry-input"
+                 placeholder="Refine your search..." value="${escapeHtmlCatalog(originalQuery)}">
+          <button type="button" id="numistaRetryBtn" class="btn btn-primary numista-retry-btn">Search</button>
+        </div>
+      </div>
+      ${quickPicksHtml}
+    </div>`;
     list.style.display = 'block';
     modal.style.display = 'flex';
+
+    // Wire up retry search
+    const retryBtn = document.getElementById('numistaRetryBtn');
+    const retryInput = document.getElementById('numistaRetryInput');
+    if (retryBtn && retryInput) {
+      const doRetry = async () => {
+        const query = retryInput.value.trim();
+        if (!query) return;
+        retryBtn.disabled = true;
+        retryBtn.textContent = 'Searching\u2026';
+        try {
+          const retryResults = await catalogAPI.searchItems(query, { limit: 20 });
+          showNumistaResults(retryResults, false, query);
+        } catch (err) {
+          console.error('Numista retry search failed:', err);
+          retryBtn.textContent = 'Failed';
+          setTimeout(() => { retryBtn.textContent = 'Search'; retryBtn.disabled = false; }, 1500);
+        }
+      };
+      retryBtn.addEventListener('click', doRetry);
+      retryInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') doRetry(); });
+      // Auto-focus the search input for quick editing
+      setTimeout(() => retryInput.select(), 50);
+    }
+
+    // Wire up quick-pick clicks
+    list.querySelectorAll('.numista-quick-pick').forEach(pickBtn => {
+      pickBtn.addEventListener('click', async () => {
+        const nId = pickBtn.dataset.numistaId;
+        if (!nId) return;
+        pickBtn.style.opacity = '0.5';
+        pickBtn.disabled = true;
+        try {
+          const result = await catalogAPI.lookupItem(nId);
+          showNumistaResults(result ? [result] : [], true, nId);
+        } catch (err) {
+          console.error('Numista quick-pick lookup failed:', err);
+          pickBtn.style.opacity = '1';
+          pickBtn.disabled = false;
+        }
+      });
+    });
+
     return;
   }
 

@@ -212,6 +212,20 @@ const API_PROVIDERS = {
 // =============================================================================
 
 /**
+ * Cert verification lookup URLs for grading authorities.
+ * {certNumber} is replaced with the actual certification number.
+ * URLs without {certNumber} open the generic verification page.
+ *
+ * @constant {Object.<string, string>}
+ */
+const CERT_LOOKUP_URLS = {
+  PCGS: 'https://www.pcgs.com/cert/{certNumber}',
+  NGC: 'https://www.ngccoin.com/certlookup/{certNumber}/',
+  ANACS: 'https://anacs.com/verify/',
+  ICG: 'https://www.icgcoin.com/verification/',
+};
+
+/**
  * @constant {string} APP_VERSION - Application version
  * Follows BRANCH.RELEASE.PATCH.state format
  * State codes: a=alpha, b=beta, rc=release candidate
@@ -219,7 +233,7 @@ const API_PROVIDERS = {
  * Updated: 2026-02-08 - Numista API v3 integration fix
  */
 
-const APP_VERSION = "3.09.04";
+const APP_VERSION = "3.10.00";
 
 /**
  * @constant {string} DEFAULT_CURRENCY - Default currency code for monetary formatting
@@ -858,6 +872,7 @@ if (typeof window !== "undefined") {
   window.disableFeature = disableFeature;
   window.toggleFeature = toggleFeature;
   window.ALLOWED_STORAGE_KEYS = ALLOWED_STORAGE_KEYS;
+  window.CERT_LOOKUP_URLS = CERT_LOOKUP_URLS;
 }
 
 // Expose APP_VERSION globally for non-module usage

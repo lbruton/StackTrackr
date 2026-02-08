@@ -212,7 +212,7 @@ const updateColumnVisibility = () => {
         "numista",
         "type",
         "metal",
-        "delete",
+        "actions",
       ],
     },
   ];
@@ -236,7 +236,7 @@ const updateColumnVisibility = () => {
     "numista",
     "collectable",
     "notes",
-    "delete",
+    "actions",
   ];
 
   allColumns.forEach((col) => {
@@ -523,11 +523,15 @@ const setupEventListeners = () => {
 
           const purchaseLocation = elements.purchaseLocation.value.trim() || (isEditing ? (existingItem.purchaseLocation || '') : '');
           const storageLocation = elements.storageLocation.value.trim() || (isEditing ? (existingItem.storageLocation || 'Unknown') : 'Unknown');
+          const serialNumber = (elements.itemSerialNumber || document.getElementById('itemSerialNumber'))?.value?.trim() || (isEditing ? (existingItem.serialNumber || '') : '');
           const notes = elements.itemNotes.value.trim() || (isEditing ? (existingItem.notes || '') : '');
           const date = elements.itemDate.value || (isEditing ? (existingItem.date || '') : todayStr());
 
           const catalog = elements.itemCatalog ? elements.itemCatalog.value.trim() : '';
           const year = (elements.itemYear || document.getElementById('itemYear'))?.value?.trim() || '';
+          const grade = (elements.itemGrade || document.getElementById('itemGrade'))?.value?.trim() || '';
+          const gradingAuthority = (elements.itemGradingAuthority || document.getElementById('itemGradingAuthority'))?.value?.trim() || '';
+          const certNumber = (elements.itemCertNumber || document.getElementById('itemCertNumber'))?.value?.trim() || '';
           const marketValueInput = elements.itemMarketValue ? elements.itemMarketValue.value.trim() : '';
           const marketValue = marketValueInput && !isNaN(parseFloat(marketValueInput))
             ? parseFloat(marketValueInput)
@@ -566,8 +570,12 @@ const setupEventListeners = () => {
               date,
               purchaseLocation,
               storageLocation,
+              serialNumber,
               notes,
-              year: year || existingItem.year || existingItem.issuedYear || '',
+              year,
+              grade,
+              gradingAuthority,
+              certNumber,
               isCollectable: false,
               numistaId: catalog,
             };
@@ -606,8 +614,12 @@ const setupEventListeners = () => {
               date,
               purchaseLocation,
               storageLocation,
+              serialNumber,
               notes,
               year,
+              grade,
+              gradingAuthority,
+              certNumber,
               spotPriceAtPurchase,
               premiumPerOz: 0,
               totalPremium: 0,
@@ -733,14 +745,15 @@ const setupEventListeners = () => {
             'Bar': 'exonumia',
             'Round': 'exonumia',
             'Note': 'banknote',
-            'Aurum': 'banknote',
+            // Aurum omitted — Goldbacks are "Embedded-asset notes" on Numista,
+            // which isn't a valid API category. Uncategorized search finds them.
           };
 
           try {
             if (catalogVal) {
               // Direct N# lookup → single result
               const result = await catalogAPI.lookupItem(catalogVal);
-              showNumistaResults(result ? [result] : [], true);
+              showNumistaResults(result ? [result] : [], true, catalogVal);
             } else {
               // Name search → multiple results with smart category/metal filtering
               const typeVal = (elements.itemType || document.getElementById('itemType'))?.value || '';
@@ -755,7 +768,7 @@ const setupEventListeners = () => {
                 ? `${metalVal} ${nameVal}` : nameVal;
 
               const results = await catalogAPI.searchItems(searchQuery, searchFilters);
-              showNumistaResults(results, false);
+              showNumistaResults(results, false, searchQuery);
             }
           } catch (error) {
             console.error('Numista search error:', error);

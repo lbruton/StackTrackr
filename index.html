@@ -714,32 +714,19 @@
               </th>
               <th class="shrink" data-column="purchaseLocation">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="header-icon">
-                  <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-                  <polyline points="9,22 9,12 15,12 15,22"/>
+                  <path d="M3 9l1.5-5h15L21 9"/>
+                  <path d="M3 9v11a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1V9"/>
+                  <path d="M9 21V13h6v8"/>
                 </svg>
-                <span class="header-text">Location</span>
+                <span class="header-text">Source</span>
               </th>
-              <th class="icon-col" data-column="edit" aria-label="Edit" title="Edit">
+              <th class="icon-col actions-col" data-column="actions" aria-label="Actions" title="Actions">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="header-icon">
-                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                  <circle cx="12" cy="5" r="1.5"/>
+                  <circle cx="12" cy="12" r="1.5"/>
+                  <circle cx="12" cy="19" r="1.5"/>
                 </svg>
-                <span class="header-text">Edit</span>
-              </th>
-              <th class="icon-col" data-column="duplicate" aria-label="Duplicate" title="Duplicate">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="header-icon">
-                  <path d="M16 1H4a2 2 0 0 0-2 2v14h2V3h12V1zm3 4H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zm0 16H8V7h11v14z"/>
-                </svg>
-                <span class="header-text">Copy</span>
-              </th>
-              <th class="icon-col" data-column="delete" aria-label="Delete" title="Delete">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="header-icon">
-                  <polyline points="3,6 5,6 21,6"/>
-                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-                  <line x1="10" y1="11" x2="10" y2="17"/>
-                  <line x1="14" y1="11" x2="14" y2="17"/>
-                </svg>
-                <span class="header-text">Delete</span>
+                <span class="header-text">Actions</span>
               </th>
             </tr>
           </thead>
@@ -890,15 +877,75 @@
                 <input id="itemYear" type="text" placeholder="e.g. 2024" />
               </div>
             </div>
-            <!-- Row: Storage Location & Notes -->
+            <!-- Row: Grade, Authority & Cert # -->
+            <div class="grid grid-grade">
+              <div>
+                <label for="itemGrade">Grade <span style="font-weight:normal;opacity:0.6;">(optional)</span></label>
+                <select id="itemGrade">
+                  <option value="">-- None --</option>
+                  <optgroup label="Standard">
+                    <option value="AG">AG - About Good</option>
+                    <option value="G">G - Good</option>
+                    <option value="VG">VG - Very Good</option>
+                    <option value="F">F - Fine</option>
+                    <option value="VF">VF - Very Fine</option>
+                    <option value="XF">XF - Extremely Fine</option>
+                    <option value="AU">AU - About Uncirculated</option>
+                    <option value="UNC">UNC - Uncirculated</option>
+                    <option value="BU">BU - Brilliant Uncirculated</option>
+                  </optgroup>
+                  <optgroup label="Mint State">
+                    <option value="MS-60">MS-60</option>
+                    <option value="MS-61">MS-61</option>
+                    <option value="MS-62">MS-62</option>
+                    <option value="MS-63">MS-63</option>
+                    <option value="MS-64">MS-64</option>
+                    <option value="MS-65">MS-65</option>
+                    <option value="MS-66">MS-66</option>
+                    <option value="MS-67">MS-67</option>
+                    <option value="MS-68">MS-68</option>
+                    <option value="MS-69">MS-69</option>
+                    <option value="MS-70">MS-70</option>
+                  </optgroup>
+                  <optgroup label="Proof">
+                    <option value="PF-60">PF-60</option>
+                    <option value="PF-61">PF-61</option>
+                    <option value="PF-62">PF-62</option>
+                    <option value="PF-63">PF-63</option>
+                    <option value="PF-64">PF-64</option>
+                    <option value="PF-65">PF-65</option>
+                    <option value="PF-66">PF-66</option>
+                    <option value="PF-67">PF-67</option>
+                    <option value="PF-68">PF-68</option>
+                    <option value="PF-69">PF-69</option>
+                    <option value="PF-70">PF-70</option>
+                  </optgroup>
+                </select>
+              </div>
+              <div>
+                <label for="itemGradingAuthority">Authority <span style="font-weight:normal;opacity:0.6;">(optional)</span></label>
+                <select id="itemGradingAuthority">
+                  <option value="">-- None --</option>
+                  <option value="PCGS">PCGS</option>
+                  <option value="NGC">NGC</option>
+                  <option value="ANACS">ANACS</option>
+                  <option value="ICG">ICG</option>
+                </select>
+              </div>
+              <div>
+                <label for="itemCertNumber">Cert # <span style="font-weight:normal;opacity:0.6;">(optional)</span></label>
+                <input id="itemCertNumber" type="text" placeholder="e.g. 12345678" />
+              </div>
+            </div>
+            <!-- Row: Storage Location & Serial # -->
             <div class="grid grid-2">
               <div>
                 <label for="storageLocation">Storage Location</label>
                 <input id="storageLocation" type="text" placeholder="Vault A, Safe B, etc..." />
               </div>
               <div>
-                <label for="itemNotes">Notes</label>
-                <input id="itemNotes" type="text" placeholder="Additional notes or comments..." />
+                <label for="itemSerialNumber">Serial # <span style="font-weight:normal;opacity:0.6;">(optional)</span></label>
+                <input id="itemSerialNumber" type="text" placeholder="Bar or note serial number" />
               </div>
             </div>
             <!-- Row: Purchase Date & Purchase Price -->
@@ -927,11 +974,15 @@
                 </div>
               </div>
             </div>
-            <!-- Row: Catalog N# -->
+            <!-- Row: Catalog N# & Notes -->
             <div class="grid grid-2">
               <div>
                 <label for="itemCatalog">Catalog (N#)</label>
                 <input id="itemCatalog" type="text" placeholder="Numista catalog #" />
+              </div>
+              <div>
+                <label for="itemNotes">Notes</label>
+                <input id="itemNotes" type="text" placeholder="Additional notes or comments..." />
               </div>
             </div>
             <!-- Form action buttons -->

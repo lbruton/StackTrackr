@@ -91,6 +91,20 @@ const populateVersionModal = (version, html) => {
  */
 const getEmbeddedChangelog = (version) => {
   const changelogs = {
+    "3.10.00": `
+      <li><strong>Serial # field</strong>: New optional Serial Number input for bars and notes with physical serial numbers. Included in all CSV/JSON/ZIP exports and imports</li>
+      <li><strong>Numista Aurum fix</strong>: Goldback / Aurum items now return results from Numista search (removed incorrect "banknote" category filter)</li>
+      <li><strong>Enhanced Numista no-results</strong>: When Numista search returns nothing, a retry search box and quick-pick list of popular bullion items appear instead of a dead-end</li>
+      <li><strong>Source column rename</strong>: "Location" column header renamed to "Source" with storefront icon for clarity</li>
+      <li><strong>Year/Grade/N# filter chips</strong>: Year, Grade, and Numista ID values now appear as clickable filter chips in the chip bar</li>
+      <li><strong>Year sort tiebreaker</strong>: Items with identical names now sub-sort by Year when sorting the Name column</li>
+      <li><strong>eBay search year</strong>: Year is now included in eBay search URLs for more precise results</li>
+    `,
+    "3.09.05": `
+      <li><strong>Grade, Authority & Cert #</strong>: New optional grading fields — Grade dropdown (AG through PF-70), Grading Authority (PCGS/NGC/ANACS/ICG), and Cert # input. Color-coded grade tags on table Name cell</li>
+      <li><strong>Cert verification</strong>: Grade tags with cert numbers are clickable — opens the grading service's cert lookup page in a popup window</li>
+      <li><strong>eBay search fix</strong>: Item names with quotes or parentheses no longer produce broken eBay search results</li>
+    `,
     "3.09.04": `
       <li><strong>Year field</strong>: New optional Year field in add/edit form with inline year badge on inventory table (before N# tag). Numista picker fills Year instead of Metal</li>
       <li><strong>Form restructure</strong>: Name wider with Year beside it; purchase fields grouped: Date | Price, Location | Retail Price</li>
