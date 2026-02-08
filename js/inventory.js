@@ -111,7 +111,7 @@ const createBackupZip = async () => {
         parseFloat(item.weight).toFixed(4),
         formatCurrency(purchasePrice),
         currentSpot > 0 ? formatCurrency(meltValue) : '—',
-        formatCurrency(retailTotal),
+        formatCurrency(item.marketValue || 0),
         gainLoss !== null ? formatCurrency(gainLoss) : '—',
         item.purchaseLocation,
         item.numistaId || '',
@@ -750,10 +750,10 @@ const validateFieldValue = (field, value) => {
  * Enhanced inline editing for table cells with support for multiple field types
  * @param {number} idx - Index of item to edit
  * @param {string} field - Field name to update
- * @param {HTMLElement} icon - Clicked pencil icon
+ * @param {HTMLElement} element - The td cell or a child element within it
  */
-const startCellEdit = (idx, field, icon) => {
-  const td = icon.closest('td');
+const startCellEdit = (idx, field, element) => {
+  const td = element.tagName === 'TD' ? element : element.closest('td');
   const item = inventory[idx];
   const current = item[field] ?? '';
   const originalContent = td.innerHTML;
@@ -828,81 +828,19 @@ const startCellEdit = (idx, field, icon) => {
   td.innerHTML = '';
   td.appendChild(input);
 
-  const saveIcon = document.createElement('span');
-  saveIcon.className = 'save-inline';
-  saveIcon.textContent = '✔️';
-  saveIcon.title = 'Save changes';
-  
-  const cancelIcon = document.createElement('span');
-  cancelIcon.className = 'cancel-inline';
-  cancelIcon.textContent = '✖️';
-  cancelIcon.title = 'Cancel edit';
-  
-  td.appendChild(saveIcon);
-  td.appendChild(cancelIcon);
-
   const cancelEdit = () => {
     td.classList.remove('editing');
     td.innerHTML = originalContent;
   };
 
-  const renderCell = () => {
-    td.classList.remove('editing');
-    const iconHtml = `<span class="inline-edit-icon" role="button" tabindex="0" onclick="startCellEdit(${idx}, '${field}', this)" aria-label="Edit ${field}" title="Edit ${field}">✎</span>`;
-    let content = '';
-    
-    switch (field) {
-      case 'name':
-        content = filterLink('name', item.name, 'var(--text-primary)');
-        break;
-      case 'qty':
-        content = filterLink('qty', item.qty, 'var(--text-primary)');
-        break;
-      case 'weight':
-        content = filterLink('weight', item.weight, 'var(--text-primary)', formatWeight(item.weight), item.weight < 1 ? 'Grams (g)' : 'Troy ounces (ozt)');
-        break;
-      case 'price':
-        content = filterLink('price', item.price, 'var(--text-primary)', formatCurrency(item.price));
-        break;
-      case 'marketValue': {
-        const mvDisplay = (item.marketValue && item.marketValue > 0) ? formatCurrency(item.marketValue) : '—';
-        content = mvDisplay;
-        break;
-      }
-      case 'type':
-        content = filterLink('type', item.type, getTypeColor(item.type));
-        break;
-      case 'metal':
-        content = filterLink('metal', item.composition || item.metal || 'Silver', METAL_COLORS[item.metal] || 'var(--primary)', getDisplayComposition(item.composition || item.metal || 'Silver'));
-        break;
-      case 'date':
-        content = filterLink('date', item.date, 'var(--text-primary)', formatDisplayDate(item.date));
-        break;
-      case 'purchaseLocation':
-        content = formatPurchaseLocation(item.purchaseLocation);
-        break;
-      case 'storageLocation':
-        content = formatStorageLocation(item.storageLocation);
-        break;
-      case 'notes':
-        const hasNotes = item.notes && item.notes.trim();
-        content = `<span class="action-icon ${hasNotes ? 'success' : ''}" title="${hasNotes ? 'Has notes' : 'No notes'}">📓</span>`;
-        break;
-      default:
-        content = filterLink(field, item[field], 'var(--text-primary)');
-    }
-    td.innerHTML = `${iconHtml} ${content}`;
-    updateSummary(); // Update totals after edit
-  };
-
-  saveIcon.onclick = () => {
+  const saveEdit = () => {
     const value = input.value;
     if (!validateFieldValue(field, value)) {
       alert(`Invalid value for ${field}`);
       cancelEdit();
       return;
     }
-    
+
     let finalValue;
     if (field === 'qty') {
       finalValue = parseInt(value, 10);
@@ -914,65 +852,35 @@ const startCellEdit = (idx, field, icon) => {
     } else {
       finalValue = value.trim();
     }
-    
+
     // Store the old value for change logging
     const oldValue = item[field];
     item[field] = finalValue;
-    
+
     // Log the change
     if (typeof logChange === 'function') {
       logChange(item.name || `Item ${idx + 1}`, field, oldValue, finalValue, idx);
     }
-    
+
     saveInventory();
-    renderCell();
+    renderTable();
   };
 
-  cancelIcon.onclick = cancelEdit;
-
-  // Enhanced keyboard navigation
+  // Keyboard-only: Enter saves, Escape cancels
   input.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') {
       e.preventDefault();
-      saveIcon.click();
+      saveEdit();
     }
     if (e.key === 'Escape') {
       e.preventDefault();
       cancelEdit();
     }
-    if (e.key === 'Tab') {
-      // Allow tab to move to save/cancel buttons
-      if (e.shiftKey) {
-        e.preventDefault();
-        cancelIcon.focus();
-      } else {
-        e.preventDefault();
-        saveIcon.focus();
-      }
-    }
   });
-  
-  // Handle save/cancel button keyboard navigation
-  saveIcon.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      saveIcon.click();
-    }
-    if (e.key === 'Tab' && !e.shiftKey) {
-      e.preventDefault();
-      cancelIcon.focus();
-    }
-  });
-  
-  cancelIcon.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      cancelIcon.click();
-    }
-    if (e.key === 'Tab' && e.shiftKey) {
-      e.preventDefault();
-      saveIcon.focus();
-    }
+
+  // Cancel on blur (clicking away from the input)
+  input.addEventListener('blur', () => {
+    cancelEdit();
   });
 
   input.focus();
@@ -1054,15 +962,12 @@ const renderTable = () => {
       const gainLossPrefix = gainLoss > 0 ? '+' : gainLoss < 0 ? '-' : '';
 
   rows.push(`
-      <tr>
+      <tr data-idx="${originalIdx}">
   <td class="shrink" data-column="date">${filterLink('date', item.date, 'var(--text-primary)', item.date ? formatDisplayDate(item.date) : '—')}</td>
       <td class="shrink" data-column="metal" data-metal="${escapeAttribute(item.composition || item.metal || '')}">${filterLink('metal', item.composition || item.metal || 'Silver', METAL_COLORS[item.metal] || 'var(--primary)', getDisplayComposition(item.composition || item.metal || 'Silver'))}</td>
       <td class="shrink" data-column="type">${filterLink('type', item.type, getTypeColor(item.type))}</td>
-      <td class="expand" data-column="name" style="text-align: left; position: relative; padding-right: 30px;">
+      <td class="expand" data-column="name" style="text-align: left;">
         ${filterLink('name', item.name, 'var(--text-primary)')}
-        <span class="inline-edit-icon" onclick="event.stopPropagation(); startCellEdit(${originalIdx}, 'name', this)" title="Quick edit name" tabindex="0" role="button" onkeydown="if(event.key==='Enter'||event.key===' '){event.stopPropagation(); startCellEdit(${originalIdx}, 'name', this)}" style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); opacity: 0.6; cursor: pointer; font-size: 14px; transition: opacity 0.2s; z-index: 1;">
-          <svg class="icon-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" style="width: 14px; height: 14px; fill: currentColor;" aria-hidden="true"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1.003 1.003 0 0 0 0-1.42l-2.34-2.34a1.003 1.003 0 0 0-1.42 0l-1.83 1.83 3.75 3.75 1.84-1.82z"/></svg>
-        </span>
       </td>
       <td class="shrink" data-column="qty">${filterLink('qty', item.qty, 'var(--text-primary)')}</td>
       <td class="shrink" data-column="weight">${filterLink('weight', item.weight, 'var(--text-primary)', formatWeight(item.weight), item.weight < 1 ? 'Grams (g)' : 'Troy ounces (ozt)')}</td>
@@ -2016,7 +1921,7 @@ const exportCsv = () => {
       parseFloat(i.weight).toFixed(4),
       formatCurrency(purchasePrice),
       currentSpot > 0 ? formatCurrency(meltValue) : '—',
-      formatCurrency(retailTotal),
+      formatCurrency(i.marketValue || 0),
       gainLoss !== null ? formatCurrency(gainLoss) : '—',
       i.purchaseLocation,
       i.numistaId || '',
@@ -2421,6 +2326,34 @@ document.addEventListener('click', (e) => {
     return;
   }
 });
+
+/**
+ * Shift+click inline editing — power user shortcut for editable cells.
+ * Capture-phase listener intercepts shift+clicks before inline onclick
+ * handlers (filterLink) and bubble-phase eBay handlers can fire.
+ */
+document.addEventListener('click', (e) => {
+  if (!e.shiftKey) return;
+  const td = e.target.closest('#inventoryTable td[data-column]');
+  if (!td) return;
+  const EDITABLE = {
+    name: 'name',
+    qty: 'qty',
+    weight: 'weight',
+    purchasePrice: 'price',
+    retailPrice: 'marketValue',
+    purchaseLocation: 'purchaseLocation'
+  };
+  const field = EDITABLE[td.dataset.column];
+  if (!field) return;
+  const tr = td.closest('tr[data-idx]');
+  if (!tr) return;
+  const idx = parseInt(tr.dataset.idx, 10);
+  if (isNaN(idx)) return;
+  e.preventDefault();
+  e.stopPropagation();
+  startCellEdit(idx, field, td);
+}, true); // capture phase
 
 /**
  * Phase 1C: Storage optimization and housekeeping
