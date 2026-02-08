@@ -3088,15 +3088,24 @@ a.about-badge:hover {
 
 .breakdown-header {
   display: flex;
-  justify-content: space-between;
-  align-items: baseline;
+  align-items: center;
   margin-bottom: 0.25rem;
+}
+
+.breakdown-color-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-right: 0.4rem;
+  flex-shrink: 0;
 }
 
 .breakdown-label {
   font-weight: 600;
   color: var(--text-primary);
   font-size: 0.875rem;
+  flex: 1;
 }
 
 .breakdown-meta {
