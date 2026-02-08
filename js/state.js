@@ -265,6 +265,9 @@ let spotPrices = {
 /** @type {Array} Historical spot price records */
 let spotHistory = [];
 
+/** @type {Array} Catalog API call history records */
+let catalogHistory = [];
+
 /** @type {Object|null} Current Metals API configuration */
 let apiConfig = null;
 

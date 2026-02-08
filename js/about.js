@@ -267,11 +267,11 @@ const setupAckModalEvents = () => {
  */
 const getEmbeddedWhatsNew = () => {
   return `
+    <li><strong>v3.09.02 – Numista API v3 fix</strong>: Corrected base URL, endpoints, auth headers, query parameters, response parsing, and field mapping — 7 bugs total. Test Connection button now works</li>
+    <li><strong>v3.09.02 – localStorage whitelist fix</strong>: Catalog cache and settings no longer deleted on page load</li>
     <li><strong>v3.09.01 – Name chips</strong>: Filter chip bar groups item name variants into single chips (e.g., "Silver Eagle 6/164"). Click to filter, click again to toggle off. Respects minCount threshold and Smart Grouping toggle</li>
     <li><strong>v3.09.01 – Silver contrast fix</strong>: Silver metal chip text no longer invisible on dark/sepia themes at page load</li>
     <li><strong>v3.09.01 – Duplicate chip fix</strong>: Clicking a location chip no longer produces two chips</li>
-    <li><strong>v3.09.00 – Filter chips cleanup</strong>: Default threshold 3+, date chips removed, "Unknown" locations suppressed, all locations respect minCount dropdown. Dead code removed. Chips update after every mutation</li>
-    <li><strong>v3.09.00 – Spot card hint</strong>: Cards with no price data show "Shift+click price to set" for discoverability</li>
   `;
 };
 
@@ -282,7 +282,7 @@ const getEmbeddedWhatsNew = () => {
 const getEmbeddedRoadmap = () => {
   return `
     <li><strong>Inline catalog &amp; grading tags</strong>: Optional (N#), (PCGS), (NGC), (Grade) tags on the Name cell with iframe links — no new column needed</li>
-    <li><strong>Numista API fix</strong>: Correct endpoints, auth headers, and parameters in the NumistaProvider class</li>
+    <li><strong>Batch rename / normalize</strong>: Bulk rename items using Numista catalog data and the name normalizer</li>
   `;
 };
 

@@ -1803,6 +1803,20 @@ const setupApiEvents = () => {
       );
     }
 
+    const catalogHistoryBtn = document.getElementById("catalogHistoryBtn");
+    if (catalogHistoryBtn) {
+      safeAttachListener(
+        catalogHistoryBtn,
+        "click",
+        () => {
+          if (typeof showCatalogHistoryModal === "function") {
+            showCatalogHistoryModal();
+          }
+        },
+        "Catalog history button",
+      );
+    }
+
     const syncAllBtn = document.getElementById("syncAllBtn");
     if (syncAllBtn) {
       safeAttachListener(
@@ -1846,6 +1860,32 @@ const setupApiEvents = () => {
         "API history close button",
       );
     }
+    const catalogHistoryModal = document.getElementById("catalogHistoryModal");
+    const catalogHistoryCloseBtn = document.getElementById("catalogHistoryCloseBtn");
+    if (catalogHistoryModal) {
+      safeAttachListener(
+        catalogHistoryModal,
+        "click",
+        (e) => {
+          if (e.target === catalogHistoryModal && typeof hideCatalogHistoryModal === "function") {
+            hideCatalogHistoryModal();
+          }
+        },
+        "Catalog history modal background",
+      );
+    }
+    if (catalogHistoryCloseBtn) {
+      safeAttachListener(
+        catalogHistoryCloseBtn,
+        "click",
+        () => {
+          if (typeof hideCatalogHistoryModal === "function") {
+            hideCatalogHistoryModal();
+          }
+        },
+        "Catalog history close button",
+      );
+    }
     if (providersModal) {
       safeAttachListener(
         providersModal,
@@ -1887,6 +1927,7 @@ const setupApiEvents = () => {
           const detailsModal = document.getElementById("detailsModal");
           const changeLogModal = document.getElementById("changeLogModal");
           const storageReportModal = document.getElementById("storageReportModal");
+          const catalogHistModal = document.getElementById("catalogHistoryModal");
 
           if (
             filesModal &&
@@ -1912,6 +1953,12 @@ const setupApiEvents = () => {
             typeof hideApiHistoryModal === "function"
           ) {
             hideApiHistoryModal();
+          } else if (
+            catalogHistModal &&
+            catalogHistModal.style.display === "flex" &&
+            typeof hideCatalogHistoryModal === "function"
+          ) {
+            hideCatalogHistoryModal();
           } else if (
             providersModal &&
             providersModal.style.display === "flex" &&
