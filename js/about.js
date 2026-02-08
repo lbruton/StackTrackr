@@ -267,6 +267,10 @@ const setupAckModalEvents = () => {
  */
 const getEmbeddedWhatsNew = () => {
   return `
+    <li><strong>v3.09.04 – Year field + inline tag</strong>: New optional Year field in form with inline year badge on table Name cell. Numista picker fills Year instead of Metal</li>
+    <li><strong>v3.09.04 – Form restructure</strong>: Name wider with Year beside it; purchase fields grouped: Date | Price, Location | Retail Price</li>
+    <li><strong>v3.09.03 – Numista field picker fix</strong>: Replaced broken fieldset+flexbox with CSS Grid — checkboxes, labels, and inputs now align correctly across all browsers</li>
+    <li><strong>v3.09.03 – Smart category search</strong>: Numista search maps Type to API categories and prepends Metal to queries for more relevant results</li>
     <li><strong>v3.09.02 – Numista API v3 fix</strong>: Corrected base URL, endpoints, auth headers, query parameters, response parsing, and field mapping — 7 bugs total. Test Connection button now works</li>
     <li><strong>v3.09.02 – localStorage whitelist fix</strong>: Catalog cache and settings no longer deleted on page load</li>
     <li><strong>v3.09.01 – Name chips</strong>: Filter chip bar groups item name variants into single chips (e.g., "Silver Eagle 6/164"). Click to filter, click again to toggle off. Respects minCount threshold and Smart Grouping toggle</li>

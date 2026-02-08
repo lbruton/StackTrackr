@@ -879,16 +879,19 @@
                 </div>
               </div>
             </div>
-            <!-- Second row of form fields -->
-            <div class="grid grid-2">
+            <!-- Row: Name & Year (Name wider) -->
+            <div class="grid grid-name-year">
               <div>
                 <label for="itemName">Name</label>
                 <input id="itemName" required type="text" />
               </div>
               <div>
-                <label for="purchaseLocation">Purchase Location</label>
-                <input id="purchaseLocation" type="text" />
+                <label for="itemYear">Year <span style="font-weight:normal;opacity:0.6;">(optional)</span></label>
+                <input id="itemYear" type="text" placeholder="e.g. 2024" />
               </div>
+            </div>
+            <!-- Row: Storage Location & Notes -->
+            <div class="grid grid-2">
               <div>
                 <label for="storageLocation">Storage Location</label>
                 <input id="storageLocation" type="text" placeholder="Vault A, Safe B, etc..." />
@@ -898,13 +901,24 @@
                 <input id="itemNotes" type="text" placeholder="Additional notes or comments..." />
               </div>
             </div>
-            <!-- Third row of form fields -->
+            <!-- Row: Purchase Date & Purchase Price -->
             <div class="grid grid-2">
+              <div id="dateField">
+                <label for="itemDate">Purchase Date</label>
+                <input id="itemDate" required type="date" />
+              </div>
               <div>
                 <label for="itemPrice">Purchase Price ($)</label>
                 <div class="currency-input">
                   <input id="itemPrice" min="0" step="0.01" type="number" />
                 </div>
+              </div>
+            </div>
+            <!-- Row: Purchase Location & Retail Price -->
+            <div class="grid grid-2">
+              <div>
+                <label for="purchaseLocation">Purchase Location</label>
+                <input id="purchaseLocation" type="text" />
               </div>
               <div id="marketValueField">
                 <label for="itemMarketValue">Retail Price ($) <span style="font-weight:normal;opacity:0.6;">(optional)</span></label>
@@ -912,20 +926,29 @@
                   <input id="itemMarketValue" min="0" step="0.01" type="number" placeholder="Defaults to melt value" />
                 </div>
               </div>
-              <div id="dateField">
-                <label for="itemDate">Purchase Date</label>
-                <input id="itemDate" required type="date" />
-              </div>
+            </div>
+            <!-- Row: Catalog N# -->
+            <div class="grid grid-2">
               <div>
                 <label for="itemCatalog">Catalog (N#)</label>
                 <input id="itemCatalog" type="text" placeholder="Numista catalog #" />
               </div>
             </div>
             <!-- Form action buttons -->
-            <div style="margin-top: 1rem; text-align: right">
-              <button class="btn" id="undoChangeBtn" type="button" style="display:none">Undo</button>
-              <button class="btn" id="cancelItem" type="button">Cancel</button>
-              <button class="btn premium" id="itemModalSubmit" type="submit">Add to Inventory</button>
+            <div class="item-modal-actions">
+              <button class="btn secondary" id="searchNumistaBtn" type="button"
+                      title="Search Numista catalog using the Name or N# field">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                     stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+                     style="vertical-align: -2px; margin-right: 0.3rem;">
+                  <circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="21" y2="21"/>
+                </svg>Search Numista
+              </button>
+              <div class="item-modal-actions-right">
+                <button class="btn" id="undoChangeBtn" type="button" style="display:none">Undo</button>
+                <button class="btn" id="cancelItem" type="button">Cancel</button>
+                <button class="btn premium" id="itemModalSubmit" type="submit">Add to Inventory</button>
+              </div>
             </div>
           </form>
         </div>
@@ -2138,6 +2161,38 @@
         </div>
         <div class="modal-body numista-modal-body">
           <iframe id="numistaIframe" src="" frameborder="0" style="width: 100%; height: 100%; border-radius: var(--radius);"></iframe>
+        </div>
+      </div>
+    </div>
+
+    <!-- =============================================================================
+       NUMISTA RESULTS MODAL
+
+       Stacked modal (z-index 10000) that appears over the item Add/Edit form.
+       Shows search results from Numista API and a field picker to fill form fields.
+       ============================================================================= -->
+    <div class="modal" id="numistaResultsModal" style="display: none">
+      <div class="modal-content numista-results-modal-content">
+        <div class="modal-header">
+          <h2 id="numistaResultsTitle">Numista Results</h2>
+          <button aria-label="Close modal" class="modal-close" id="numistaResultsCloseBtn">&times;</button>
+        </div>
+        <div class="modal-body">
+          <!-- Search results list -->
+          <div id="numistaResultsList" class="numista-results-list"></div>
+
+          <!-- Field picker (hidden until a result is selected) -->
+          <div id="numistaFieldPicker" class="numista-field-picker" style="display: none">
+            <div id="numistaSelectedItem" class="numista-selected-preview"></div>
+            <div id="numistaFieldCheckboxes" class="numista-field-checkboxes">
+              <div class="numista-fields-heading">Fields to fill:</div>
+              <!-- Populated dynamically with value previews by catalog-api.js -->
+            </div>
+            <div class="numista-fill-actions">
+              <button class="btn" id="numistaFillCancelBtn" type="button">Cancel</button>
+              <button class="btn premium" id="numistaFillBtn" type="button">Fill Fields</button>
+            </div>
+          </div>
         </div>
       </div>
     </div>

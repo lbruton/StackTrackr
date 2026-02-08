@@ -91,6 +91,15 @@ const populateVersionModal = (version, html) => {
  */
 const getEmbeddedChangelog = (version) => {
   const changelogs = {
+    "3.09.04": `
+      <li><strong>Year field</strong>: New optional Year field in add/edit form with inline year badge on inventory table (before N# tag). Numista picker fills Year instead of Metal</li>
+      <li><strong>Form restructure</strong>: Name wider with Year beside it; purchase fields grouped: Date | Price, Location | Retail Price</li>
+      <li><strong>Year in import/export</strong>: CSV and JSON exports include Year; imports read Year column; existing <code>issuedYear</code> data auto-migrates</li>
+    `,
+    "3.09.03": `
+      <li><strong>Numista field picker fix</strong>: Replaced broken fieldset+flexbox with CSS Grid — checkboxes, labels, and inputs now align correctly across all browsers</li>
+      <li><strong>Smart category search</strong>: Numista search maps your Type selection to API categories (Coin→coin, Bar/Round→exonumia, Note/Aurum→banknote) and prepends Metal to the query when not already present</li>
+    `,
     "3.09.02": `
       <li><strong>Numista API v3 fix</strong>: Corrected base URL (<code>/v3</code>), endpoint paths (<code>/types</code>), auth header (<code>Numista-API-Key</code>), query parameters (<code>count</code>, <code>issuer</code>, <code>category</code>), response parsing (<code>data.types</code>), and field mapping (<code>min_year</code>/<code>max_year</code>, <code>issuer.name</code>, <code>size</code>, <code>category</code>, <code>obverse_thumbnail</code>, <code>comments</code>, <code>value.numeric_value</code>) — 7 bugs total</li>
       <li><strong>localStorage whitelist fix</strong>: Added <code>staktrakr.catalog.cache</code> and <code>staktrakr.catalog.settings</code> to the allowed storage keys — without these, <code>cleanupStorage()</code> deleted catalog data on every page load</li>

@@ -5,6 +5,38 @@ All notable changes to StakTrakr will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.09.04] - 2026-02-08
+
+### Feature — Year Field + Inline Year Tag + Form Restructure
+
+#### Added
+
+- **Year field**: New optional Year field in add/edit form, stored as `year` in the data model. Accepts single years ("2024") or ranges ("2021-2026")
+- **Inline Year tag**: Year badge displayed on the inventory table Name cell (before the N# tag) with muted informational styling and theme-aware colors
+- **Year in Numista field picker**: Replaced Metal with Year in the "Fill Form Fields" picker — Numista's year range is editable before filling
+- **Year in CSV/JSON export**: "Year" column added to standard CSV export after "Name"; `year` field added to JSON export
+- **Year in CSV import**: Reads "Year", "year", or "issuedYear" columns from imported CSV files
+
+#### Changed
+
+- **Form layout restructured**: Name (wider, 60%) paired with Year (40%); purchase fields grouped together: Purchase Date | Purchase Price, Purchase Location | Retail Price
+- **Removed Metal from Numista picker**: Numista returns "Alloy/Other" which never matches form options — removed to reduce confusion
+- **Data migration**: Existing items with `issuedYear` (from Numista CSV imports) automatically migrate to `year` on load
+
+## [3.09.03] - 2026-02-08
+
+### Patch — Numista Field Picker Layout + Smart Category Search
+
+#### Fixed
+
+- **Numista field picker layout**: Replaced broken `<fieldset>` + flexbox with `<div>` + CSS Grid (`grid-template-columns: auto auto 1fr`) — fixes checkboxes centering and labels/inputs pushed off-screen across browsers
+- **Numista search `category` param**: `searchItems()` now maps `filters.category` instead of `filters.metal` to the Numista API `category` parameter
+
+#### Added
+
+- **Smart category search**: Numista search now maps the form's Type field to Numista categories (Coin→coin, Bar/Round→exonumia, Note/Aurum→banknote) for more relevant results
+- **Metal-augmented queries**: When Metal is set and not already in the search text, it's prepended to the query (e.g., Metal=Silver + "Eagle" → searches "Silver Eagle")
+
 ## [3.09.02] - 2026-02-08
 
 ### Patch — Numista API v3 Integration Fix

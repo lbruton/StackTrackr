@@ -527,6 +527,7 @@ const setupEventListeners = () => {
           const date = elements.itemDate.value || (isEditing ? (existingItem.date || '') : todayStr());
 
           const catalog = elements.itemCatalog ? elements.itemCatalog.value.trim() : '';
+          const year = (elements.itemYear || document.getElementById('itemYear'))?.value?.trim() || '';
           const marketValueInput = elements.itemMarketValue ? elements.itemMarketValue.value.trim() : '';
           const marketValue = marketValueInput && !isNaN(parseFloat(marketValueInput))
             ? parseFloat(marketValueInput)
@@ -566,6 +567,7 @@ const setupEventListeners = () => {
               purchaseLocation,
               storageLocation,
               notes,
+              year: year || existingItem.year || existingItem.issuedYear || '',
               isCollectable: false,
               numistaId: catalog,
             };
@@ -605,6 +607,7 @@ const setupEventListeners = () => {
               purchaseLocation,
               storageLocation,
               notes,
+              year,
               spotPriceAtPurchase,
               premiumPerOz: 0,
               totalPremium: 0,
@@ -697,6 +700,72 @@ const setupEventListeners = () => {
           editingChangeLogIndex = null;
         },
         "Item modal close button",
+      );
+    }
+
+    // SEARCH NUMISTA BUTTON — lookup by N# or search by name
+    if (elements.searchNumistaBtn) {
+      safeAttachListener(
+        elements.searchNumistaBtn,
+        "click",
+        async () => {
+          const catalogVal = (elements.itemCatalog || document.getElementById('itemCatalog'))?.value.trim() || '';
+          const nameVal = (elements.itemName || document.getElementById('itemName'))?.value.trim() || '';
+
+          if (!catalogVal && !nameVal) {
+            alert('Enter a Name or Catalog N# to search.');
+            return;
+          }
+
+          if (!catalogAPI || !catalogAPI.activeProvider) {
+            alert('Configure Numista API key in Settings first.');
+            return;
+          }
+
+          const btn = elements.searchNumistaBtn;
+          const originalText = btn.textContent;
+          btn.textContent = 'Searching...';
+          btn.disabled = true;
+
+          // Type → Numista category mapping for smarter search results
+          const TYPE_TO_NUMISTA_CATEGORY = {
+            'Coin': 'coin',
+            'Bar': 'exonumia',
+            'Round': 'exonumia',
+            'Note': 'banknote',
+            'Aurum': 'banknote',
+          };
+
+          try {
+            if (catalogVal) {
+              // Direct N# lookup → single result
+              const result = await catalogAPI.lookupItem(catalogVal);
+              showNumistaResults(result ? [result] : [], true);
+            } else {
+              // Name search → multiple results with smart category/metal filtering
+              const typeVal = (elements.itemType || document.getElementById('itemType'))?.value || '';
+              const metalVal = (elements.itemMetal || document.getElementById('itemMetal'))?.value || '';
+
+              const searchFilters = { limit: 20 };
+              const numistaCategory = TYPE_TO_NUMISTA_CATEGORY[typeVal];
+              if (numistaCategory) searchFilters.category = numistaCategory;
+
+              // Prepend metal to query for better results (avoid doubling e.g. "Silver Silver Eagle")
+              const searchQuery = metalVal && !nameVal.toLowerCase().includes(metalVal.toLowerCase())
+                ? `${metalVal} ${nameVal}` : nameVal;
+
+              const results = await catalogAPI.searchItems(searchQuery, searchFilters);
+              showNumistaResults(results, false);
+            }
+          } catch (error) {
+            console.error('Numista search error:', error);
+            alert('Search failed: ' + error.message);
+          } finally {
+            btn.textContent = originalText;
+            btn.disabled = false;
+          }
+        },
+        "Search Numista button",
       );
     }
 
