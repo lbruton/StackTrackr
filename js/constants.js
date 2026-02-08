@@ -216,10 +216,10 @@ const API_PROVIDERS = {
  * Follows BRANCH.RELEASE.PATCH.state format
  * State codes: a=alpha, b=beta, rc=release candidate
  * Example: 3.03.02a → branch 3, release 03, patch 02, alpha
- * Updated: 2025-08-15 - Price column styling consistency fixes
+ * Updated: 2026-02-08 - Numista API v3 integration fix
  */
 
-const APP_VERSION = "3.09.01";
+const APP_VERSION = "3.09.02";
 
 /**
  * @constant {string} DEFAULT_CURRENCY - Default currency code for monetary formatting
@@ -344,6 +344,9 @@ const CATALOG_MAP_KEY = "catalogMap";
 /** @constant {string} SPOT_HISTORY_KEY - LocalStorage key for spot price history */
 const SPOT_HISTORY_KEY = "metalSpotHistory";
 
+/** @constant {string} CATALOG_HISTORY_KEY - LocalStorage key for catalog API call history */
+const CATALOG_HISTORY_KEY = "staktrakr.catalog.history";
+
 /** @constant {string} THEME_KEY - LocalStorage key for theme preference */
 const THEME_KEY = "appTheme";
 
@@ -403,6 +406,9 @@ const ALLOWED_STORAGE_KEYS = [
   "staktrakr.debug",
   "stackrtrackr.debug",
   "catalog_api_config",
+  "staktrakr.catalog.cache",
+  "staktrakr.catalog.settings",
+  CATALOG_HISTORY_KEY,
   SPOT_TREND_RANGE_KEY,
 ];
 

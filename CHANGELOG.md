@@ -5,6 +5,20 @@ All notable changes to StakTrakr will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.09.02] - 2026-02-08
+
+### Patch — Numista API v3 Integration Fix
+
+#### Fixed
+
+- **Numista base URL**: Changed from `/api/v3` to `/v3` — the `/api` prefix does not exist in the Numista API
+- **Numista lookup endpoint**: Changed from `/items/{id}?apikey=` to `/types/{id}?lang=en` with `Numista-API-Key` header authentication
+- **Numista search endpoint**: Changed from `/items/search` to `/types` with `Numista-API-Key` header authentication
+- **Numista search parameters**: `limit` → `count` (capped at 50), `country` → `issuer`, `metal` → `category`, added `page` and `lang=en`
+- **Numista search response**: Changed from `data.items` to `data.types` to match actual API response structure
+- **Numista field mapping**: `year` composed from `min_year`/`max_year`, `country` from `issuer.name`, `composition` handles string or object, `diameter` from `size`, `type` from `category`, `mintage` hardcoded to 0 (per-issue not per-type), `estimatedValue` from `value.numeric_value`, `imageUrl` from `obverse_thumbnail` with nested fallback, `description` from `comments`
+- **localStorage whitelist**: Added `staktrakr.catalog.cache` and `staktrakr.catalog.settings` to `ALLOWED_STORAGE_KEYS` — without these, `cleanupStorage()` deleted catalog data on every page load
+
 ## [3.09.01] - 2026-02-07
 
 ### Patch — Name Chips + Silver Contrast Fix + Duplicate Chip Fix

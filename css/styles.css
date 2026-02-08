@@ -1380,6 +1380,14 @@ input[type="submit"] {
   cursor: pointer;
 }
 
+#catalogHistoryTable {
+  width: 100%;
+  min-width: 100%;
+}
+
+#catalogHistoryTable th {
+  cursor: pointer;
+}
 
 .api-info-body {
   margin-bottom: 1rem;
