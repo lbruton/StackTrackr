@@ -1360,6 +1360,7 @@
               <button class="btn success" id="saveNumistaBtn" style="margin-top: 0.5rem;">Save Key</button>
               <button class="btn info" id="testNumistaBtn" style="margin-top: 0.5rem;">Test Connection</button>
               <button class="btn secondary" id="clearNumistaBtn" style="margin-top: 0.5rem;">Clear Key</button>
+              <button class="btn" id="catalogHistoryBtn" style="margin-top: 0.5rem;">History</button>
             </div>
             <div id="numistaStatus" class="api-status" style="margin-top: 0.5rem;"></div>
           </div>
@@ -2076,8 +2077,52 @@
     </div>
     
     <!-- =============================================================================
+       CATALOG HISTORY MODAL
+
+       Modal for viewing catalog API call history (Numista lookups, searches).
+       Mirrors the apiHistoryModal structure with sortable/filterable table.
+       ============================================================================= -->
+    <div class="modal" id="catalogHistoryModal" style="display: none">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Catalog API History</h2>
+          <button
+            aria-label="Close modal"
+            class="modal-close"
+            id="catalogHistoryCloseBtn"
+          >
+            &times;
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="api-history-body">
+            <div class="api-history-table">
+              <div class="api-history-filter">
+                <input
+                  type="text"
+                  id="catalogHistoryFilter"
+                  placeholder="Filter history..."
+                />
+                <button
+                  type="button"
+                  class="btn secondary"
+                  id="catalogHistoryClearFilterBtn"
+                >
+                  Clear
+                </button>
+              </div>
+              <div class="api-history-table-wrapper">
+                <table id="catalogHistoryTable"></table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- =============================================================================
        NUMISTA MODAL
-       
+
        Modal for viewing Numista coin database pages in an embedded iframe.
        Features navigation controls and responsive 90% width display.
        ============================================================================= -->

@@ -229,7 +229,7 @@ class NumistaProvider extends CatalogProvider {
     super({
       name: 'Numista',
       apiKey: config.apiKey,
-      baseUrl: 'https://api.numista.com/api/v3',
+      baseUrl: 'https://api.numista.com/v3',
       rateLimit: 100, // Numista allows 100 requests per minute
       timeout: 15000
     });
@@ -245,13 +245,15 @@ class NumistaProvider extends CatalogProvider {
    */
   async lookupItem(catalogId) {
     if (!catalogId) throw new Error('Catalog ID is required');
-    
-    const url = `${this.baseUrl}/items/${catalogId}?apikey=${this.apiKey}`;
-    
+
+    const url = `${this.baseUrl}/types/${catalogId}?lang=en`;
+
     try {
-      const response = await this.request(url);
+      const response = await this.request(url, {
+        headers: { 'Numista-API-Key': this.apiKey }
+      });
       const data = await response.json();
-      
+
       return this.normalizeItemData(data);
     } catch (error) {
       console.error(`Numista lookup failed for ID ${catalogId}:`, error);
@@ -267,22 +269,25 @@ class NumistaProvider extends CatalogProvider {
    */
   async searchItems(query, filters = {}) {
     const params = new URLSearchParams({
-      apikey: this.apiKey,
       q: query,
-      limit: filters.limit || 20
+      count: Math.min(filters.limit || 20, 50),
+      lang: 'en'
     });
 
-    if (filters.country) params.append('country', filters.country);
-    if (filters.metal) params.append('metal', filters.metal);
+    if (filters.page) params.append('page', filters.page);
+    if (filters.country) params.append('issuer', filters.country);
+    if (filters.metal) params.append('category', filters.metal);
     if (filters.year) params.append('year', filters.year);
 
-    const url = `${this.baseUrl}/items/search?${params.toString()}`;
-    
+    const url = `${this.baseUrl}/types?${params.toString()}`;
+
     try {
-      const response = await this.request(url);
+      const response = await this.request(url, {
+        headers: { 'Numista-API-Key': this.apiKey }
+      });
       const data = await response.json();
-      
-      return data.items ? data.items.map(item => this.normalizeItemData(item)) : [];
+
+      return data.types ? data.types.map(item => this.normalizeItemData(item)) : [];
     } catch (error) {
       console.error('Numista search failed:', error);
       throw new Error(`Numista search failed: ${error.message}`);
@@ -312,19 +317,34 @@ class NumistaProvider extends CatalogProvider {
    * @returns {Object} Standardized item data
    */
   normalizeItemData(numistaData) {
+    // Compose year from min_year / max_year range
+    const minY = numistaData.min_year;
+    const maxY = numistaData.max_year;
+    const year = minY && maxY && minY !== maxY ? `${minY}-${maxY}` : (minY || maxY || '');
+
+    // Handle composition — can be a string or object with .text
+    const rawComp = numistaData.composition;
+    const composition = typeof rawComp === 'object' && rawComp !== null ? (rawComp.text || '') : (rawComp || '');
+
+    // Image: prefer obverse_thumbnail with nested fallback
+    const imageUrl = numistaData.obverse_thumbnail ||
+      numistaData.obverse?.thumbnail ||
+      numistaData.reverse_thumbnail ||
+      '';
+
     return {
       catalogId: numistaData.id?.toString() || '',
       name: numistaData.title || '',
-      year: numistaData.year || '',
-      country: numistaData.country || '',
-      metal: this.normalizeMetal(numistaData.composition || ''),
+      year: year.toString(),
+      country: numistaData.issuer?.name || '',
+      metal: this.normalizeMetal(composition),
       weight: numistaData.weight || 0,
-      diameter: numistaData.diameter || 0,
-      type: this.normalizeType(numistaData.type || ''),
-      mintage: numistaData.mintage || 0,
-      estimatedValue: numistaData.value || 0,
-      imageUrl: numistaData.image_url || '',
-      description: numistaData.description || '',
+      diameter: numistaData.size || 0,
+      type: this.normalizeType(numistaData.category || ''),
+      mintage: 0, // Mintage is per-issue, not per-type in Numista API
+      estimatedValue: numistaData.value?.numeric_value || 0,
+      imageUrl: imageUrl,
+      description: numistaData.comments || '',
       provider: 'Numista',
       lastUpdated: new Date().toISOString()
     };
@@ -571,10 +591,13 @@ class CatalogAPI {
   /**
    * Lookup item with fallback chain
    * @param {string} catalogId - Catalog identifier
+   * @param {Object} [options={}] - Options (e.g. { action: 'test' })
    * @returns {Promise<Object>} Standardized item data
    */
-  async lookupItem(catalogId) {
-    const providers = this.settings.enableFallback ? 
+  async lookupItem(catalogId, options = {}) {
+    const startTime = Date.now();
+    const action = options.action || 'lookup';
+    const providers = this.settings.enableFallback ?
       [this.activeProvider, ...this.providers.filter(p => p !== this.activeProvider), this.localProvider] :
       [this.activeProvider];
 
@@ -586,12 +609,21 @@ class CatalogAPI {
       try {
         console.log(`Attempting lookup with ${provider.name}...`);
         const result = await provider.lookupItem(catalogId);
-        
+
         // Cache successful results locally
         if (provider !== this.localProvider) {
           this.localProvider.cacheItem(catalogId, result);
         }
-        
+
+        recordCatalogHistory({
+          action,
+          query: catalogId,
+          result: 'success',
+          itemCount: 1,
+          provider: provider.name,
+          duration: Date.now() - startTime,
+        });
+
         return result;
       } catch (error) {
         console.warn(`${provider.name} lookup failed:`, error.message);
@@ -599,6 +631,16 @@ class CatalogAPI {
         continue;
       }
     }
+
+    recordCatalogHistory({
+      action,
+      query: catalogId,
+      result: 'fail',
+      itemCount: 0,
+      provider: '',
+      duration: Date.now() - startTime,
+      error: lastError ? lastError.message : 'All providers failed',
+    });
 
     throw lastError || new Error('All catalog providers failed');
   }
@@ -610,11 +652,44 @@ class CatalogAPI {
    * @returns {Promise<Array>} Array of standardized item data
    */
   async searchItems(query, filters = {}) {
+    const startTime = Date.now();
+
     if (!this.activeProvider) {
+      recordCatalogHistory({
+        action: 'search',
+        query,
+        result: 'fail',
+        itemCount: 0,
+        provider: '',
+        duration: Date.now() - startTime,
+        error: 'No catalog provider available',
+      });
       throw new Error('No catalog provider available');
     }
 
-    return await this.activeProvider.searchItems(query, filters);
+    try {
+      const results = await this.activeProvider.searchItems(query, filters);
+      recordCatalogHistory({
+        action: 'search',
+        query,
+        result: 'success',
+        itemCount: results.length,
+        provider: this.activeProvider.name,
+        duration: Date.now() - startTime,
+      });
+      return results;
+    } catch (error) {
+      recordCatalogHistory({
+        action: 'search',
+        query,
+        result: 'fail',
+        itemCount: 0,
+        provider: this.activeProvider.name,
+        duration: Date.now() - startTime,
+        error: error.message,
+      });
+      throw error;
+    }
   }
 
   /**
@@ -623,20 +698,43 @@ class CatalogAPI {
    * @returns {Promise<number>} Current market value in USD
    */
   async getMarketValue(catalogId) {
-    const providers = this.settings.enableFallback ? 
+    const startTime = Date.now();
+    const providers = this.settings.enableFallback ?
       [this.activeProvider, ...this.providers.filter(p => p !== this.activeProvider)] :
       [this.activeProvider];
+
+    let lastError;
 
     for (const provider of providers) {
       if (!provider) continue;
 
       try {
-        return await provider.getMarketValue(catalogId);
+        const value = await provider.getMarketValue(catalogId);
+        recordCatalogHistory({
+          action: 'market_value',
+          query: catalogId,
+          result: 'success',
+          itemCount: 1,
+          provider: provider.name,
+          duration: Date.now() - startTime,
+        });
+        return value;
       } catch (error) {
         console.warn(`${provider.name} market value lookup failed:`, error.message);
+        lastError = error;
         continue;
       }
     }
+
+    recordCatalogHistory({
+      action: 'market_value',
+      query: catalogId,
+      result: 'fail',
+      itemCount: 0,
+      provider: '',
+      duration: Date.now() - startTime,
+      error: lastError ? lastError.message : 'All providers failed',
+    });
 
     return 0; // Fallback to 0 if all providers fail
   }
@@ -657,6 +755,164 @@ class CatalogAPI {
 // Global catalog API instance
 let catalogAPI = new CatalogAPI();
 
+// =============================================================================
+// CATALOG HISTORY LOGGING
+// =============================================================================
+
+let catalogHistoryEntries = [];
+let catalogHistorySortColumn = "";
+let catalogHistorySortAsc = true;
+let catalogHistoryFilterText = "";
+
+/**
+ * Save catalog history to localStorage
+ */
+const saveCatalogHistory = () => {
+  try {
+    saveDataSync(CATALOG_HISTORY_KEY, catalogHistory);
+  } catch (e) {
+    console.warn("Failed to save catalog history:", e);
+  }
+};
+
+/**
+ * Load catalog history from localStorage
+ */
+const loadCatalogHistory = () => {
+  catalogHistory = loadDataSync(CATALOG_HISTORY_KEY, []);
+};
+
+/**
+ * Purge catalog history entries older than given number of days
+ * @param {number} days - Maximum age in days (default 180)
+ */
+const purgeCatalogHistory = (days = 180) => {
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - days);
+  const cutoffStr = cutoff.toISOString().slice(0, 10).replace(/-/g, "-");
+  catalogHistory = catalogHistory.filter(
+    (e) => e.timestamp >= cutoffStr
+  );
+};
+
+/**
+ * Record a catalog API call to history
+ * @param {Object} entry - History entry data
+ */
+const recordCatalogHistory = (entry) => {
+  loadCatalogHistory();
+  purgeCatalogHistory();
+
+  const now = new Date();
+  const pad = (n) => String(n).padStart(2, "0");
+  const timestamp = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+
+  catalogHistory.push({
+    timestamp,
+    action: entry.action || "lookup",
+    query: entry.query || "",
+    result: entry.result || "success",
+    itemCount: entry.itemCount || 0,
+    provider: entry.provider || "",
+    duration: entry.duration || 0,
+    error: entry.error || null,
+  });
+
+  saveCatalogHistory();
+};
+
+/**
+ * Renders catalog history table with filtering and sorting
+ * Mirrors renderApiHistoryTable() in api.js
+ */
+const renderCatalogHistoryTable = () => {
+  const table = document.getElementById("catalogHistoryTable");
+  if (!table) return;
+
+  let data = [...catalogHistoryEntries];
+  if (catalogHistoryFilterText) {
+    const f = catalogHistoryFilterText.toLowerCase();
+    data = data.filter((e) =>
+      Object.values(e).some((v) => String(v).toLowerCase().includes(f))
+    );
+  }
+  if (catalogHistorySortColumn) {
+    data.sort((a, b) => {
+      const valA = a[catalogHistorySortColumn];
+      const valB = b[catalogHistorySortColumn];
+      if (valA < valB) return catalogHistorySortAsc ? -1 : 1;
+      if (valA > valB) return catalogHistorySortAsc ? 1 : -1;
+      return 0;
+    });
+  }
+  if (!catalogHistorySortColumn) {
+    data.sort((a, b) => (a.timestamp < b.timestamp ? 1 : -1));
+  }
+
+  let html =
+    '<tr><th data-column="timestamp">Time</th><th data-column="action">Action</th><th data-column="query">Query</th><th data-column="result">Result</th><th data-column="itemCount">Items</th><th data-column="provider">Provider</th><th data-column="duration">Duration</th></tr>';
+  data.forEach((e) => {
+    const resultClass = e.result === "fail" ? ' style="color: var(--danger, #e74c3c);"' : "";
+    const errorTitle = e.error ? ` title="${e.error.replace(/"/g, "&quot;")}"` : "";
+    html += `<tr><td>${e.timestamp}</td><td>${e.action}</td><td>${e.query}</td><td${resultClass}${errorTitle}>${e.result}</td><td>${e.itemCount}</td><td>${e.provider || ""}</td><td>${e.duration}ms</td></tr>`;
+  });
+  table.innerHTML = html;
+
+  table.querySelectorAll("th").forEach((th) => {
+    th.addEventListener("click", () => {
+      const col = th.dataset.column;
+      if (catalogHistorySortColumn === col) {
+        catalogHistorySortAsc = !catalogHistorySortAsc;
+      } else {
+        catalogHistorySortColumn = col;
+        catalogHistorySortAsc = true;
+      }
+      renderCatalogHistoryTable();
+    });
+  });
+};
+
+/**
+ * Shows catalog history modal
+ */
+const showCatalogHistoryModal = () => {
+  const modal = document.getElementById("catalogHistoryModal");
+  if (!modal) return;
+
+  loadCatalogHistory();
+  catalogHistoryEntries = [...catalogHistory];
+  catalogHistorySortColumn = "";
+  catalogHistorySortAsc = true;
+  catalogHistoryFilterText = "";
+
+  const filterInput = document.getElementById("catalogHistoryFilter");
+  const clearFilterBtn = document.getElementById("catalogHistoryClearFilterBtn");
+  if (filterInput) {
+    filterInput.value = "";
+    filterInput.oninput = (e) => {
+      catalogHistoryFilterText = e.target.value;
+      renderCatalogHistoryTable();
+    };
+  }
+  if (clearFilterBtn) {
+    clearFilterBtn.onclick = () => {
+      catalogHistoryFilterText = "";
+      if (filterInput) filterInput.value = "";
+      renderCatalogHistoryTable();
+    };
+  }
+  renderCatalogHistoryTable();
+  modal.style.display = "flex";
+};
+
+/**
+ * Hides catalog history modal
+ */
+const hideCatalogHistoryModal = () => {
+  const modal = document.getElementById("catalogHistoryModal");
+  if (modal) modal.style.display = "none";
+};
+
 // Test function for Numista API
 async function testNumistaAPI() {
   if (!catalogConfig.isNumistaEnabled()) {
@@ -669,7 +925,7 @@ async function testNumistaAPI() {
   try {
     // Test with a known coin ID (American Silver Eagle)
     const testId = '5685'; // This is a common test ID for American Silver Eagle 1986
-    const result = await catalogAPI.lookupItem(testId);
+    const result = await catalogAPI.lookupItem(testId, { action: 'test' });
     console.log('✅ Numista API test successful:', result);
     return result;
   } catch (error) {
@@ -687,6 +943,11 @@ if (typeof window !== 'undefined') {
   window.NumistaProvider = NumistaProvider;
   window.rSynkProvider = rSynkProvider;
   window.LocalProvider = LocalProvider;
+  window.showCatalogHistoryModal = showCatalogHistoryModal;
+  window.hideCatalogHistoryModal = hideCatalogHistoryModal;
+  window.recordCatalogHistory = recordCatalogHistory;
+  window.loadCatalogHistory = loadCatalogHistory;
+  window.saveCatalogHistory = saveCatalogHistory;
 }
 
 // Initialize UI event handlers when DOM is ready
