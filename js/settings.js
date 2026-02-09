@@ -60,7 +60,7 @@ const switchSettingsSection = (name) => {
 
 /**
  * Switches the visible provider tab in the API section.
- * @param {string} key - Provider key: 'METALS_DEV', 'METALS_API', 'METAL_PRICE_API', 'CUSTOM'
+ * @param {string} key - Provider key: 'NUMISTA', 'METALS_DEV', 'METALS_API', 'METAL_PRICE_API', 'CUSTOM'
  */
 const switchProviderTab = (key) => {
   // Hide all provider panels
@@ -122,6 +122,15 @@ const syncSettingsUI = () => {
   // Inline chip config table
   renderInlineChipConfigTable();
 
+  // Filter chip category config table
+  renderFilterChipCategoryTable();
+
+  // Chip sort order — sync settings dropdown with stored value
+  const chipSortSetting = document.getElementById('settingsChipSortOrder');
+  if (chipSortSetting) {
+    chipSortSetting.value = localStorage.getItem('chipSortOrder') || 'default';
+  }
+
   // Storage footer
   updateSettingsFooter();
 
@@ -135,10 +144,10 @@ const syncSettingsUI = () => {
     renderNumistaUsageBar();
   }
 
-  // Set first provider tab active if none visible
+  // Set first provider tab active if none visible — default to Numista
   const anyVisible = document.querySelector('.settings-provider-panel[style*="display: block"]');
   if (!anyVisible) {
-    switchProviderTab('METALS_DEV');
+    switchProviderTab('NUMISTA');
   }
 };
 
@@ -258,6 +267,19 @@ const setupSettingsEventListeners = () => {
     });
   }
 
+  // Chip sort order in settings
+  const chipSortSetting = document.getElementById('settingsChipSortOrder');
+  if (chipSortSetting) {
+    chipSortSetting.addEventListener('change', () => {
+      const val = chipSortSetting.value;
+      localStorage.setItem('chipSortOrder', val);
+      // Sync inline control
+      const chipSortInline = document.getElementById('chipSortOrder');
+      if (chipSortInline) chipSortInline.value = val;
+      if (typeof renderActiveFilters === 'function') renderActiveFilters();
+    });
+  }
+
   // Chip grouping events (blacklist + custom rules)
   if (typeof window.setupChipGroupingEvents === 'function') {
     window.setupChipGroupingEvents();
@@ -276,6 +298,113 @@ const setupSettingsEventListeners = () => {
       if (e.target === modal) hideSettingsModal();
     });
   }
+
+  // Provider tab drag-to-reorder
+  setupProviderTabDrag();
+};
+
+/**
+ * Sets up HTML5 drag-and-drop for metals provider tabs.
+ * Numista tab is pinned (not draggable). Metals tab order = sync priority.
+ */
+const setupProviderTabDrag = () => {
+  const tabContainer = document.querySelector('.settings-provider-tabs');
+  if (!tabContainer) return;
+
+  let draggedTab = null;
+
+  const tabs = () => tabContainer.querySelectorAll('.settings-provider-tab:not(.pinned)');
+
+  tabs().forEach(tab => {
+    tab.addEventListener('dragstart', (e) => {
+      draggedTab = tab;
+      tabContainer.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', tab.dataset.provider);
+      // Slight delay to let the drag image render
+      requestAnimationFrame(() => tab.style.opacity = '0.4');
+    });
+
+    tab.addEventListener('dragend', () => {
+      tabContainer.classList.remove('dragging');
+      tab.style.opacity = '';
+      tabs().forEach(t => t.classList.remove('drag-over'));
+      draggedTab = null;
+    });
+
+    tab.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      if (draggedTab && tab !== draggedTab) {
+        tab.classList.add('drag-over');
+      }
+    });
+
+    tab.addEventListener('dragleave', () => {
+      tab.classList.remove('drag-over');
+    });
+
+    tab.addEventListener('drop', (e) => {
+      e.preventDefault();
+      tab.classList.remove('drag-over');
+      if (!draggedTab || draggedTab === tab) return;
+
+      // Reorder DOM: insert dragged tab before or after the drop target
+      const allTabs = [...tabs()];
+      const dragIdx = allTabs.indexOf(draggedTab);
+      const dropIdx = allTabs.indexOf(tab);
+
+      if (dragIdx < dropIdx) {
+        tabContainer.insertBefore(draggedTab, tab.nextSibling);
+      } else {
+        tabContainer.insertBefore(draggedTab, tab);
+      }
+
+      // Persist new order and update default provider
+      saveProviderTabOrder();
+      if (typeof autoSelectDefaultProvider === 'function') {
+        autoSelectDefaultProvider();
+      }
+    });
+  });
+};
+
+/**
+ * Saves the current metals provider tab order to localStorage.
+ * Only saves the metals providers (not Numista which is pinned).
+ */
+const saveProviderTabOrder = () => {
+  const tabContainer = document.querySelector('.settings-provider-tabs');
+  if (!tabContainer) return;
+  const order = [...tabContainer.querySelectorAll('.settings-provider-tab:not(.pinned)')]
+    .map(tab => tab.dataset.provider);
+  try {
+    localStorage.setItem('apiProviderOrder', JSON.stringify(order));
+  } catch (e) { /* ignore */ }
+};
+
+/**
+ * Restores provider tab DOM order from localStorage.
+ * Called when the API section is populated.
+ */
+const loadProviderTabOrder = () => {
+  let order;
+  try {
+    const stored = localStorage.getItem('apiProviderOrder');
+    order = stored ? JSON.parse(stored) : null;
+  } catch (e) { return; }
+  if (!Array.isArray(order) || order.length === 0) return;
+
+  const tabContainer = document.querySelector('.settings-provider-tabs');
+  if (!tabContainer) return;
+
+  // Reorder tabs to match saved order
+  order.forEach(provider => {
+    const tab = tabContainer.querySelector(`.settings-provider-tab[data-provider="${provider}"]`);
+    if (tab && !tab.classList.contains('pinned')) {
+      tabContainer.appendChild(tab);
+    }
+  });
 };
 
 /**
@@ -287,55 +416,163 @@ const renderInlineChipConfigTable = () => {
   if (!container || typeof getInlineChipConfig !== 'function') return;
 
   const config = getInlineChipConfig();
+  container.textContent = '';
 
   if (!config.length) {
-    container.innerHTML = '<div class="chip-grouping-empty">No chip types available</div>';
+    const empty = document.createElement('div');
+    empty.className = 'chip-grouping-empty';
+    empty.textContent = 'No chip types available';
+    container.appendChild(empty);
     return;
   }
 
-  let html = '<table class="chip-grouping-table"><tbody>';
-  config.forEach((chip, idx) => {
-    html += `<tr data-chip-id="${chip.id}">
-      <td style="width:2rem;text-align:center;">
-        <input type="checkbox" ${chip.enabled ? 'checked' : ''} data-chip-idx="${idx}" class="inline-chip-toggle" title="Toggle ${chip.label}">
-      </td>
-      <td>${chip.label}</td>
-      <td style="width:3.5rem;text-align:right;white-space:nowrap;">
-        <button type="button" class="inline-chip-move" data-dir="up" data-idx="${idx}" ${idx === 0 ? 'disabled' : ''} title="Move up">&uarr;</button>
-        <button type="button" class="inline-chip-move" data-dir="down" data-idx="${idx}" ${idx === config.length - 1 ? 'disabled' : ''} title="Move down">&darr;</button>
-      </td>
-    </tr>`;
-  });
-  html += '</tbody></table>';
-  container.innerHTML = html;
+  const table = document.createElement('table');
+  table.className = 'chip-grouping-table';
+  const tbody = document.createElement('tbody');
 
-  // Attach event listeners
-  container.querySelectorAll('.inline-chip-toggle').forEach(cb => {
+  config.forEach((chip, idx) => {
+    const tr = document.createElement('tr');
+    tr.dataset.chipId = chip.id;
+
+    // Checkbox cell
+    const tdCheck = document.createElement('td');
+    tdCheck.style.cssText = 'width:2rem;text-align:center';
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.checked = chip.enabled;
+    cb.className = 'inline-chip-toggle';
+    cb.title = 'Toggle ' + chip.label;
     cb.addEventListener('change', () => {
       const cfg = getInlineChipConfig();
-      const i = parseInt(cb.dataset.chipIdx, 10);
-      if (cfg[i]) {
-        cfg[i].enabled = cb.checked;
+      const item = cfg.at(idx);
+      if (item) {
+        item.enabled = cb.checked;
         saveInlineChipConfig(cfg);
         if (typeof renderTable === 'function') renderTable();
       }
     });
+    tdCheck.appendChild(cb);
+
+    // Label cell
+    const tdLabel = document.createElement('td');
+    tdLabel.textContent = chip.label;
+
+    // Arrow buttons cell
+    const tdMove = document.createElement('td');
+    tdMove.style.cssText = 'width:3.5rem;text-align:right;white-space:nowrap';
+
+    const makeBtn = (dir, disabled) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'inline-chip-move';
+      btn.textContent = dir === 'up' ? '\u2191' : '\u2193';
+      btn.title = 'Move ' + dir;
+      btn.disabled = disabled;
+      btn.addEventListener('click', () => {
+        const cfg = getInlineChipConfig();
+        const j = dir === 'up' ? idx - 1 : idx + 1;
+        if (j < 0 || j >= cfg.length) return;
+        const moved = cfg.splice(idx, 1).at(0);
+        cfg.splice(j, 0, moved);
+        saveInlineChipConfig(cfg);
+        renderInlineChipConfigTable();
+        if (typeof renderTable === 'function') renderTable();
+      });
+      return btn;
+    };
+    tdMove.appendChild(makeBtn('up', idx === 0));
+    tdMove.appendChild(makeBtn('down', idx === config.length - 1));
+
+    tr.append(tdCheck, tdLabel, tdMove);
+    tbody.appendChild(tr);
   });
 
-  container.querySelectorAll('.inline-chip-move').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const cfg = getInlineChipConfig();
-      const i = parseInt(btn.dataset.idx, 10);
-      const dir = btn.dataset.dir;
-      const j = dir === 'up' ? i - 1 : i + 1;
-      if (j < 0 || j >= cfg.length) return;
-      // Swap
-      [cfg[i], cfg[j]] = [cfg[j], cfg[i]];
-      saveInlineChipConfig(cfg);
-      renderInlineChipConfigTable();
-      if (typeof renderTable === 'function') renderTable();
+  table.appendChild(tbody);
+  container.appendChild(table);
+};
+
+/**
+ * Renders the filter chip category config table in Settings > Chips.
+ * Each row has a checkbox (enable/disable) and up/down arrows for reordering.
+ */
+const renderFilterChipCategoryTable = () => {
+  const container = document.getElementById('filterChipCategoryContainer');
+  if (!container || typeof getFilterChipCategoryConfig !== 'function') return;
+
+  const config = getFilterChipCategoryConfig();
+  container.textContent = '';
+
+  if (!config.length) {
+    const empty = document.createElement('div');
+    empty.className = 'chip-grouping-empty';
+    empty.textContent = 'No chip categories available';
+    container.appendChild(empty);
+    return;
+  }
+
+  const table = document.createElement('table');
+  table.className = 'chip-grouping-table';
+  const tbody = document.createElement('tbody');
+
+  config.forEach((cat, idx) => {
+    const tr = document.createElement('tr');
+    tr.dataset.catId = cat.id;
+
+    // Checkbox cell
+    const tdCheck = document.createElement('td');
+    tdCheck.style.cssText = 'width:2rem;text-align:center';
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.checked = cat.enabled;
+    cb.className = 'filter-cat-toggle';
+    cb.title = 'Toggle ' + cat.label;
+    cb.addEventListener('change', () => {
+      const cfg = getFilterChipCategoryConfig();
+      const item = cfg.at(idx);
+      if (item) {
+        item.enabled = cb.checked;
+        saveFilterChipCategoryConfig(cfg);
+        if (typeof renderActiveFilters === 'function') renderActiveFilters();
+      }
     });
+    tdCheck.appendChild(cb);
+
+    // Label cell
+    const tdLabel = document.createElement('td');
+    tdLabel.textContent = cat.label;
+
+    // Arrow buttons cell
+    const tdMove = document.createElement('td');
+    tdMove.style.cssText = 'width:3.5rem;text-align:right;white-space:nowrap';
+
+    const makeBtn = (dir, disabled) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'inline-chip-move';
+      btn.textContent = dir === 'up' ? '\u2191' : '\u2193';
+      btn.title = 'Move ' + dir;
+      btn.disabled = disabled;
+      btn.addEventListener('click', () => {
+        const cfg = getFilterChipCategoryConfig();
+        const j = dir === 'up' ? idx - 1 : idx + 1;
+        if (j < 0 || j >= cfg.length) return;
+        const moved = cfg.splice(idx, 1).at(0);
+        cfg.splice(j, 0, moved);
+        saveFilterChipCategoryConfig(cfg);
+        renderFilterChipCategoryTable();
+        if (typeof renderActiveFilters === 'function') renderActiveFilters();
+      });
+      return btn;
+    };
+    tdMove.appendChild(makeBtn('up', idx === 0));
+    tdMove.appendChild(makeBtn('down', idx === config.length - 1));
+
+    tr.append(tdCheck, tdLabel, tdMove);
+    tbody.appendChild(tr);
   });
+
+  table.appendChild(tbody);
+  container.appendChild(table);
 };
 
 // Expose globally
@@ -346,4 +583,8 @@ if (typeof window !== 'undefined') {
   window.switchProviderTab = switchProviderTab;
   window.setupSettingsEventListeners = setupSettingsEventListeners;
   window.renderInlineChipConfigTable = renderInlineChipConfigTable;
+  window.renderFilterChipCategoryTable = renderFilterChipCategoryTable;
+  window.setupProviderTabDrag = setupProviderTabDrag;
+  window.loadProviderTabOrder = loadProviderTabOrder;
+  window.saveProviderTabOrder = saveProviderTabOrder;
 }

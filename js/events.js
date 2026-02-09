@@ -415,6 +415,31 @@ const setupEventListeners = () => {
       );
     }
 
+    // Chip sort order inline control
+    const chipSortEl = document.getElementById('chipSortOrder');
+    if (chipSortEl) {
+      // Restore saved value on setup
+      const savedSort = localStorage.getItem('chipSortOrder');
+      if (savedSort) chipSortEl.value = savedSort;
+
+      safeAttachListener(
+        chipSortEl,
+        'change',
+        (e) => {
+          const val = e.target.value;
+          localStorage.setItem('chipSortOrder', val);
+          // Sync settings modal control
+          const settingsSort = document.getElementById('settingsChipSortOrder');
+          if (settingsSort) settingsSort.value = val;
+          // Refresh chips
+          if (typeof renderActiveFilters === 'function') {
+            renderActiveFilters();
+          }
+        },
+        'Chip sort order toggle'
+      );
+    }
+
     if (elements.detailsCloseBtn) {
       safeAttachListener(
         elements.detailsCloseBtn,
@@ -1630,21 +1655,6 @@ const setupApiEvents = () => {
       );
     }
 
-    document.querySelectorAll(".api-info-link").forEach((link) => {
-      const provider = link.getAttribute("data-provider");
-      safeAttachListener(
-        link,
-        "click",
-        (e) => {
-          e.preventDefault();
-          if (typeof showProviderInfo === "function") {
-            showProviderInfo(provider);
-          }
-        },
-        "API info link",
-      );
-    });
-
     document.querySelectorAll(".api-save-btn").forEach((btn) => {
       const provider = btn.getAttribute("data-provider");
       safeAttachListener(
@@ -1673,30 +1683,6 @@ const setupApiEvents = () => {
       );
     });
 
-    document.querySelectorAll(".api-quota-btn").forEach((btn) => {
-      const provider = btn.getAttribute("data-provider");
-      safeAttachListener(
-        btn,
-        "click",
-        () => {
-          quotaProvider = provider;
-          const modal = elements.apiQuotaModal;
-          const input = document.getElementById("apiQuotaInput");
-          if (modal && input) {
-            const cfg = loadApiConfig();
-            const usage = cfg.usage?.[provider] || {
-              quota: DEFAULT_API_QUOTA,
-              used: 0,
-            };
-            input.value = usage.quota;
-            if (window.openModalById) openModalById('apiQuotaModal');
-            else modal.style.display = "flex";
-          }
-        },
-        "API quota button",
-      );
-    });
-
     document.querySelectorAll(".api-clear-btn").forEach((btn) => {
       const provider = btn.getAttribute("data-provider");
       safeAttachListener(
@@ -1708,20 +1694,6 @@ const setupApiEvents = () => {
           }
         },
         "API clear key button",
-      );
-    });
-
-    document.querySelectorAll(".provider-default-btn").forEach((btn) => {
-      const provider = btn.getAttribute("data-provider");
-      safeAttachListener(
-        btn,
-        "click",
-        () => {
-          if (typeof setDefaultProvider === "function") {
-            setDefaultProvider(provider);
-          }
-        },
-        "Default provider button",
       );
     });
 
@@ -1742,11 +1714,12 @@ const setupApiEvents = () => {
         () => {
           const input = document.getElementById("apiQuotaInput");
           const val = parseInt(input.value, 10);
-          if (!isNaN(val) && quotaProvider) {
+          const qp = elements.apiQuotaModal.dataset.quotaProvider || quotaProvider;
+          if (!isNaN(val) && qp) {
             const cfg = loadApiConfig();
-            if (!cfg.usage[quotaProvider])
-              cfg.usage[quotaProvider] = { quota: val, used: 0 };
-            cfg.usage[quotaProvider].quota = val;
+            if (!cfg.usage[qp])
+              cfg.usage[qp] = { quota: val, used: 0 };
+            cfg.usage[qp].quota = val;
             saveApiConfig(cfg);
             elements.apiQuotaModal.style.display = "none";
             updateProviderHistoryTables();

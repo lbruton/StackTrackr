@@ -601,6 +601,14 @@
                   <option value="no">No</option>
                 </select>
               </div>
+              <div class="control-group">
+                <label for="chipSortOrder" class="control-label">Chip Sort:</label>
+                <select class="control-select" id="chipSortOrder" title="Sort chips within each category" style="width:auto;min-width:6rem">
+                  <option value="default">Default</option>
+                  <option value="alpha">Name (A-Z)</option>
+                  <option value="count">Qty (High→Low)</option>
+                </select>
+              </div>
             </div>
             <div class="filter-row">
               <div class="active-filters" id="activeFilters"></div>
@@ -1472,6 +1480,24 @@
               </div>
 
               <div class="settings-group">
+                <div class="settings-group-label">Filter chip categories</div>
+                <p class="settings-subtext">Enable, disable, and reorder chip categories in the filter bar.</p>
+                <div class="chip-grouping-table-container" id="filterChipCategoryContainer">
+                  <div class="chip-grouping-empty">Loading…</div>
+                </div>
+              </div>
+
+              <div class="settings-group">
+                <div class="settings-group-label">Chip sort order</div>
+                <p class="settings-subtext">Sort chips within each category by name or quantity.</p>
+                <select id="settingsChipSortOrder">
+                  <option value="default">Default</option>
+                  <option value="alpha">Name (A-Z)</option>
+                  <option value="count">Qty (High→Low)</option>
+                </select>
+              </div>
+
+              <div class="settings-group">
                 <div class="settings-group-label">Chip blacklist</div>
                 <p class="settings-subtext">Suppressed auto-generated chips. Right-click any name chip to add it here.</p>
                 <div class="chip-grouping-controls">
@@ -1501,34 +1527,60 @@
 
             <!-- ===== API ===== -->
             <div class="settings-section-panel" id="settingsPanel_api" style="display: none">
-              <h3>Metals API Configuration</h3>
-              <p class="settings-subtext">Manage API cache, history, and providers.</p>
-
-              <div class="api-status-summary" id="apiStatusSummary"></div>
+              <h3>API Configuration</h3>
 
               <div class="settings-actions">
-                <button type="button" class="btn success" id="syncAllBtn">Sync All</button>
-                <button type="button" class="btn danger" id="flushCacheBtn">Flush Cache</button>
-                <button type="button" class="btn" id="apiHistoryBtn">History</button>
+                <button type="button" class="btn success" id="syncAllBtn">Sync Metals</button>
+                <button type="button" class="btn danger" id="flushCacheBtn">Flush Metals Cache</button>
+                <button type="button" class="btn" id="apiHistoryBtn">Metals History</button>
+                <button type="button" class="btn" id="catalogHistoryBtn">Numista History</button>
               </div>
 
-              <!-- Provider Tabs -->
+              <div class="api-header-status-row" id="apiHeaderStatusRow"></div>
+
+              <!-- Provider Tabs — Numista pinned, metals draggable -->
               <div class="settings-provider-tabs">
-                <button class="settings-provider-tab active" data-provider="METALS_DEV">Metals.dev</button>
-                <button class="settings-provider-tab" data-provider="METALS_API">Metals-API</button>
-                <button class="settings-provider-tab" data-provider="METAL_PRICE_API">MetalPriceAPI</button>
-                <button class="settings-provider-tab" data-provider="CUSTOM">Custom</button>
+                <button class="settings-provider-tab pinned active" data-provider="NUMISTA">Numista</button>
+                <button class="settings-provider-tab" data-provider="METALS_DEV" draggable="true">Metals.dev</button>
+                <button class="settings-provider-tab" data-provider="METALS_API" draggable="true">Metals-API</button>
+                <button class="settings-provider-tab" data-provider="METAL_PRICE_API" draggable="true">MetalPriceAPI</button>
+                <button class="settings-provider-tab" data-provider="CUSTOM" draggable="true">Custom Spot API</button>
               </div>
 
-              <!-- Provider Panels (one per provider, same IDs as before) -->
-              <div class="settings-provider-panel" id="providerPanel_METALS_DEV" style="display: block">
+              <!-- Numista Provider Panel -->
+              <div class="settings-provider-panel" id="providerPanel_NUMISTA" style="display: block">
+                <div class="api-provider" data-provider="NUMISTA">
+                  <div class="provider-header">
+                    <span class="provider-name">Numista Catalog API</span>
+                  </div>
+                  <div class="api-key-row">
+                    <label for="numistaApiKey">API Key:</label>
+                    <input type="password" id="numistaApiKey" placeholder="Enter your Numista API key" />
+                  </div>
+                  <div class="api-key-note">
+                    <p>Get a free API key at <a href="https://en.numista.com/api/" target="_blank" rel="noopener">numista.com/api</a> (2,000 requests/month free tier). Your key is stored locally in your browser.</p>
+                  </div>
+                  <div id="numistaUsageBar" class="api-usage" style="margin-top: 0.75rem;"></div>
+                  <div class="provider-info">
+                    <div class="provider-status" id="numistaProviderStatus"><span class="status-dot"></span><span class="status-text">Disconnected</span></div>
+                  </div>
+                  <div class="provider-footer">
+                    <div class="provider-actions">
+                      <button class="btn api-save-btn success" id="saveNumistaBtn" data-provider="NUMISTA">Save Key</button>
+                      <button class="btn api-sync-btn info" id="testNumistaBtn" data-provider="NUMISTA">Test Connection</button>
+                      <button class="btn api-clear-btn warning" id="clearNumistaBtn" data-provider="NUMISTA">Clear Key</button>
+                    </div>
+                  </div>
+                  <div id="numistaStatus" class="api-status" style="margin-top: 0.5rem;"></div>
+                </div>
+              </div>
+
+              <!-- Metals.dev Provider Panel -->
+              <div class="settings-provider-panel" id="providerPanel_METALS_DEV" style="display: none">
                 <div class="api-provider" data-provider="METALS_DEV">
                   <div class="provider-header">
                     <span class="provider-name">Metals.dev</span>
-                    <span class="provider-url">https://api.metals.dev/v1</span>
-                    <span class="provider-batch-badge">Batch Optimized</span>
                   </div>
-                  <a href="#" class="api-info-link" data-provider="METALS_DEV">Provider Information</a>
                   <div class="api-key-row">
                     <label for="apiKey_METALS_DEV">API Key:</label>
                     <input type="password" id="apiKey_METALS_DEV" placeholder="Enter your API key" />
@@ -1562,37 +1614,28 @@
                         <label class="metal-checkbox"><input type="checkbox" class="provider-metal" data-provider="METALS_DEV" data-metal="palladium" checked><span class="metal-name">Palladium (PD)</span></label>
                       </div>
                     </div>
-                    <div class="batch-optimization">
-                      <div class="batch-info" id="batchInfo_METALS_DEV">Batch Request: 4 metals + 30 days = 1 API call<br><span class="batch-savings">(saves 123 calls vs individual requests)</span></div>
-                    </div>
                     <div class="provider-info">
                       <div class="api-key-note">Your API key is stored locally and never shared.</div>
-                      <div class="provider-status"><span class="status-dot"></span><span class="status-text">Disconnected</span></div>
+                      <div class="provider-status"><span class="status-dot"></span><span class="status-text">Disconnected</span><span class="status-last-used"></span></div>
                       <div class="provider-history"></div>
                     </div>
                   </div>
                   <div class="provider-footer">
                     <div class="provider-actions">
-                      <button type="button" class="btn provider-default-btn" data-provider="METALS_DEV"></button>
-                      <div class="provider-actions-right">
-                        <button type="button" class="btn api-quota-btn" data-provider="METALS_DEV">Quota</button>
-                        <button type="button" class="btn api-clear-btn warning" data-provider="METALS_DEV">Clear Key</button>
-                        <button type="button" class="btn api-save-btn" data-provider="METALS_DEV">Save</button>
-                        <button type="button" class="btn api-sync-btn success" data-provider="METALS_DEV">Save and Test</button>
-                      </div>
+                      <button type="button" class="btn api-save-btn" data-provider="METALS_DEV">Save</button>
+                      <button type="button" class="btn api-sync-btn success" data-provider="METALS_DEV">Save and Test</button>
+                      <button type="button" class="btn api-clear-btn warning" data-provider="METALS_DEV">Clear Key</button>
                     </div>
                   </div>
                 </div>
               </div>
 
+              <!-- Metals-API Provider Panel -->
               <div class="settings-provider-panel" id="providerPanel_METALS_API" style="display: none">
                 <div class="api-provider" data-provider="METALS_API">
                   <div class="provider-header">
                     <span class="provider-name">Metals-API.com</span>
-                    <span class="provider-url">https://metals-api.com/api</span>
-                    <span class="provider-batch-badge">Batch Optimized</span>
                   </div>
-                  <a href="#" class="api-info-link" data-provider="METALS_API">Provider Information</a>
                   <div class="api-key-row">
                     <label for="apiKey_METALS_API">API Key:</label>
                     <input type="password" id="apiKey_METALS_API" placeholder="Enter your API key" />
@@ -1626,37 +1669,28 @@
                         <label class="metal-checkbox"><input type="checkbox" class="provider-metal" data-provider="METALS_API" data-metal="palladium" checked><span class="metal-name">Palladium (PD)</span></label>
                       </div>
                     </div>
-                    <div class="batch-optimization">
-                      <div class="batch-info" id="batchInfo_METALS_API">Batch Request: 4 metals + 30 days = 1 API call<br><span class="batch-savings">(saves 123 calls vs individual requests)</span></div>
-                    </div>
                     <div class="provider-info">
                       <div class="api-key-note">Your API key is stored locally and never shared.</div>
-                      <div class="provider-status"><span class="status-dot"></span><span class="status-text">Disconnected</span></div>
+                      <div class="provider-status"><span class="status-dot"></span><span class="status-text">Disconnected</span><span class="status-last-used"></span></div>
                       <div class="provider-history"></div>
                     </div>
                   </div>
                   <div class="provider-footer">
                     <div class="provider-actions">
-                      <button type="button" class="btn provider-default-btn" data-provider="METALS_API"></button>
-                      <div class="provider-actions-right">
-                        <button type="button" class="btn api-quota-btn" data-provider="METALS_API">Quota</button>
-                        <button type="button" class="btn api-clear-btn warning" data-provider="METALS_API">Clear Key</button>
-                        <button type="button" class="btn api-save-btn" data-provider="METALS_API">Save</button>
-                        <button type="button" class="btn api-sync-btn success" data-provider="METALS_API">Save and Test</button>
-                      </div>
+                      <button type="button" class="btn api-save-btn" data-provider="METALS_API">Save</button>
+                      <button type="button" class="btn api-sync-btn success" data-provider="METALS_API">Save and Test</button>
+                      <button type="button" class="btn api-clear-btn warning" data-provider="METALS_API">Clear Key</button>
                     </div>
                   </div>
                 </div>
               </div>
 
+              <!-- MetalPriceAPI Provider Panel -->
               <div class="settings-provider-panel" id="providerPanel_METAL_PRICE_API" style="display: none">
                 <div class="api-provider" data-provider="METAL_PRICE_API">
                   <div class="provider-header">
                     <span class="provider-name">MetalPriceAPI.com</span>
-                    <span class="provider-url">https://api.metalpriceapi.com/v1</span>
-                    <span class="provider-batch-badge">Batch Optimized</span>
                   </div>
-                  <a href="#" class="api-info-link" data-provider="METAL_PRICE_API">Provider Information</a>
                   <div class="api-key-row">
                     <label for="apiKey_METAL_PRICE_API">API Key:</label>
                     <input type="password" id="apiKey_METAL_PRICE_API" placeholder="Enter your API key" />
@@ -1690,33 +1724,27 @@
                         <label class="metal-checkbox"><input type="checkbox" class="provider-metal" data-provider="METAL_PRICE_API" data-metal="palladium" checked><span class="metal-name">Palladium (PD)</span></label>
                       </div>
                     </div>
-                    <div class="batch-optimization">
-                      <div class="batch-info" id="batchInfo_METAL_PRICE_API">Batch Request: 4 metals + 30 days = 1 API call<br><span class="batch-savings">(saves 123 calls vs individual requests)</span></div>
-                    </div>
                     <div class="provider-info">
                       <div class="api-key-note">Your API key is stored locally and never shared.</div>
-                      <div class="provider-status"><span class="status-dot"></span><span class="status-text">Disconnected</span></div>
+                      <div class="provider-status"><span class="status-dot"></span><span class="status-text">Disconnected</span><span class="status-last-used"></span></div>
                       <div class="provider-history"></div>
                     </div>
                   </div>
                   <div class="provider-footer">
                     <div class="provider-actions">
-                      <button type="button" class="btn provider-default-btn" data-provider="METAL_PRICE_API"></button>
-                      <div class="provider-actions-right">
-                        <button type="button" class="btn api-quota-btn" data-provider="METAL_PRICE_API">Quota</button>
-                        <button type="button" class="btn api-clear-btn warning" data-provider="METAL_PRICE_API">Clear Key</button>
-                        <button type="button" class="btn api-save-btn" data-provider="METAL_PRICE_API">Save</button>
-                        <button type="button" class="btn api-sync-btn success" data-provider="METAL_PRICE_API">Save and Test</button>
-                      </div>
+                      <button type="button" class="btn api-save-btn" data-provider="METAL_PRICE_API">Save</button>
+                      <button type="button" class="btn api-sync-btn success" data-provider="METAL_PRICE_API">Save and Test</button>
+                      <button type="button" class="btn api-clear-btn warning" data-provider="METAL_PRICE_API">Clear Key</button>
                     </div>
                   </div>
                 </div>
               </div>
 
+              <!-- Custom Spot API Provider Panel -->
               <div class="settings-provider-panel" id="providerPanel_CUSTOM" style="display: none">
                 <div class="api-provider" data-provider="CUSTOM">
                   <div class="provider-header">
-                    <span class="provider-name">Custom Provider</span>
+                    <span class="provider-name">Custom Spot API</span>
                   </div>
                   <div class="api-field-row">
                     <label for="apiBase_CUSTOM">Base URL:</label>
@@ -1766,47 +1794,20 @@
                         <label class="metal-checkbox"><input type="checkbox" class="provider-metal" data-provider="CUSTOM" data-metal="palladium" checked><span class="metal-name">Palladium (PD)</span></label>
                       </div>
                     </div>
-                    <div class="batch-optimization">
-                      <div class="batch-info" id="batchInfo_CUSTOM">Individual Requests: 4 metals = 4 API calls<br><span class="batch-savings">(batch requests not supported)</span></div>
-                    </div>
                     <div class="provider-info">
                       <div class="api-key-note">Your API key is stored locally and never shared.</div>
-                      <div class="provider-status"><span class="status-dot"></span><span class="status-text">Disconnected</span></div>
+                      <div class="provider-status"><span class="status-dot"></span><span class="status-text">Disconnected</span><span class="status-last-used"></span></div>
                       <div class="provider-history"></div>
                     </div>
                   </div>
                   <div class="provider-footer">
                     <div class="provider-actions">
-                      <button type="button" class="btn provider-default-btn" data-provider="CUSTOM"></button>
-                      <div class="provider-actions-right">
-                        <button type="button" class="btn api-quota-btn" data-provider="CUSTOM">Quota</button>
-                        <button type="button" class="btn api-clear-btn warning" data-provider="CUSTOM">Clear Key</button>
-                        <button type="button" class="btn api-save-btn" data-provider="CUSTOM">Save</button>
-                        <button type="button" class="btn api-sync-btn success" data-provider="CUSTOM">Save and Test</button>
-                      </div>
+                      <button type="button" class="btn api-save-btn" data-provider="CUSTOM">Save</button>
+                      <button type="button" class="btn api-sync-btn success" data-provider="CUSTOM">Save and Test</button>
+                      <button type="button" class="btn api-clear-btn warning" data-provider="CUSTOM">Clear Key</button>
                     </div>
                   </div>
                 </div>
-              </div>
-
-              <!-- Numista API Section -->
-              <div class="settings-section" style="margin-top: 1.5rem">
-                <h3 style="margin-bottom: 1rem">Numista API</h3>
-                <div class="api-key-row">
-                  <label for="numistaApiKey">API Key:</label>
-                  <input type="password" id="numistaApiKey" placeholder="Enter your Numista API key" />
-                </div>
-                <div class="api-key-note">
-                  <p>Get a free API key at <a href="https://en.numista.com/api/" target="_blank" rel="noopener">numista.com/api</a> (2,000 requests/month free tier). Your key is stored locally in your browser.</p>
-                </div>
-                <div id="numistaUsageBar" class="api-usage" style="margin-top: 0.75rem;"></div>
-                <div class="provider-actions" style="margin-top: 0.75rem;">
-                  <button class="btn success" id="saveNumistaBtn">Save Key</button>
-                  <button class="btn info" id="testNumistaBtn">Test Connection</button>
-                  <button class="btn secondary" id="clearNumistaBtn">Clear Key</button>
-                  <button class="btn" id="catalogHistoryBtn">History</button>
-                </div>
-                <div id="numistaStatus" class="api-status" style="margin-top: 0.5rem;"></div>
               </div>
             </div>
 

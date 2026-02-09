@@ -5,6 +5,31 @@ All notable changes to StakTrakr will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.19.00] - 2026-02-09
+
+### Added — Filter Chip Enhancements
+
+- **Category toggles**: Enable, disable, and reorder 10 filter chip categories (Metals, Types, Names, Custom Groups, Dynamic Names, Purchase Location, Storage Location, Years, Grades, Numista IDs) in Settings > Chips. Disabled categories are hidden from the filter bar. Order persists via `filterChipCategoryConfig` in localStorage
+- **Chip sort order**: Sort chips within each category by Name (A-Z) or Qty (High→Low) from new inline dropdown or Settings > Chips. Bidirectional sync between both controls. Persists via `chipSortOrder` in localStorage
+- **Config-driven chip rendering**: `renderActiveFilters()` refactored from 10 hard-coded category blocks to a single data-driven loop using category descriptor map — adding future categories requires only 2 entries instead of a new code block
+
+---
+
+## [3.18.00] - 2026-02-09
+
+### Changed — API Settings Redesign
+
+- **Numista first-class tab**: Numista API promoted from appended section to pinned first tab in unified API Configuration panel
+- **Drag-to-reorder provider priority**: Metals provider tabs are drag-and-drop reorderable — tab position determines sync priority (position 1 = primary provider). Order persists across sessions via `apiProviderOrder` in localStorage
+- **Header status row**: Compact per-provider connection indicators with last-used timestamps replace the old status summary
+- **Clickable quota bars**: Usage bars in provider cards are now clickable to open the quota editor — dedicated Quota buttons removed
+- **Streamlined provider cards**: Removed "Batch Optimized" badges, batch savings calculations, "Provider Information" links, Default/Backup buttons, and API base URL display
+- **Unified button layout**: Each provider card simplified to Save, Save and Test, Clear Key
+- **Renamed header actions**: "Sync All" → "Sync Metals", "Flush Cache" → "Flush Metals Cache", "History" → "Metals History", plus new "Numista History" button in header
+- **Auto-select default provider**: Provider priority determined by tab order instead of manual Default/Backup button clicks
+
+---
+
 ## [3.17.00] - 2026-02-09
 
 ### Added — Inline Name Chips, Search Expansion & Backup Fix
