@@ -91,6 +91,11 @@ const populateVersionModal = (version, html) => {
  */
 const getEmbeddedChangelog = (version) => {
   const changelogs = {
+    "3.14.01": `
+      <li><strong>Name column truncation fix</strong>: Long item names now properly truncate with ellipsis — chips (Grade, N#, Year) stay visible</li>
+      <li><strong>Compact N# chips</strong>: Numista catalog tags shortened to "N#" with full ID shown on hover</li>
+      <li><strong>Tighter action icons</strong>: Edit/copy/delete buttons use less space — trash icon no longer clipped on narrow viewports</li>
+    `,
     "3.14.00": `
       <li><strong>Encrypted portable backup</strong>: Export all data as a password-protected .stvault file (AES-256-GCM). Import on any device to restore inventory, settings, API keys, and price history</li>
       <li><strong>Password strength indicator</strong>: Live strength bar and match validation in the vault modal</li>

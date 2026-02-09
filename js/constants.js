@@ -233,7 +233,7 @@ const CERT_LOOKUP_URLS = {
  * Updated: 2026-02-09 - Feature release: Encrypted portable backup (.stvault)
  */
 
-const APP_VERSION = "3.14.00";
+const APP_VERSION = "3.14.01";
 
 /**
  * @constant {string} DEFAULT_CURRENCY - Default currency code for monetary formatting

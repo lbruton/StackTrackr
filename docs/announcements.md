@@ -1,5 +1,6 @@
 ## What's New
 
+- **Name column & action icon fix (v3.14.01)**: Long names truncate with ellipsis, N# chips compacted to just "N#" (hover for full ID), action icons no longer clipped on narrow viewports
 - **Encrypted portable backup (v3.14.00)**: Export all data as a password-protected `.stvault` file (AES-256-GCM). Import on any device to restore inventory, settings, API keys, and price history. Password strength bar + crypto fallback for file:// protocol
 - **NGC cert lookup fix (v3.12.02)**: Clicking a graded item's cert tag now opens NGC with the actual coin details visible
 - **Name column overflow fix (v3.12.02)**: Long names truncate with ellipsis — tags (Year, N#, Grade) always stay visible
