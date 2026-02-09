@@ -416,55 +416,77 @@ const renderInlineChipConfigTable = () => {
   if (!container || typeof getInlineChipConfig !== 'function') return;
 
   const config = getInlineChipConfig();
+  container.textContent = '';
 
   if (!config.length) {
-    container.innerHTML = '<div class="chip-grouping-empty">No chip types available</div>';
+    const empty = document.createElement('div');
+    empty.className = 'chip-grouping-empty';
+    empty.textContent = 'No chip types available';
+    container.appendChild(empty);
     return;
   }
 
-  let html = '<table class="chip-grouping-table"><tbody>';
-  config.forEach((chip, idx) => {
-    html += `<tr data-chip-id="${chip.id}">
-      <td style="width:2rem;text-align:center;">
-        <input type="checkbox" ${chip.enabled ? 'checked' : ''} data-chip-idx="${idx}" class="inline-chip-toggle" title="Toggle ${chip.label}">
-      </td>
-      <td>${chip.label}</td>
-      <td style="width:3.5rem;text-align:right;white-space:nowrap;">
-        <button type="button" class="inline-chip-move" data-dir="up" data-idx="${idx}" ${idx === 0 ? 'disabled' : ''} title="Move up">&uarr;</button>
-        <button type="button" class="inline-chip-move" data-dir="down" data-idx="${idx}" ${idx === config.length - 1 ? 'disabled' : ''} title="Move down">&darr;</button>
-      </td>
-    </tr>`;
-  });
-  html += '</tbody></table>';
-  container.innerHTML = html;
+  const table = document.createElement('table');
+  table.className = 'chip-grouping-table';
+  const tbody = document.createElement('tbody');
 
-  // Attach event listeners
-  container.querySelectorAll('.inline-chip-toggle').forEach(cb => {
+  config.forEach((chip, idx) => {
+    const tr = document.createElement('tr');
+    tr.dataset.chipId = chip.id;
+
+    // Checkbox cell
+    const tdCheck = document.createElement('td');
+    tdCheck.style.cssText = 'width:2rem;text-align:center';
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.checked = chip.enabled;
+    cb.className = 'inline-chip-toggle';
+    cb.title = 'Toggle ' + chip.label;
     cb.addEventListener('change', () => {
       const cfg = getInlineChipConfig();
-      const i = parseInt(cb.dataset.chipIdx, 10);
-      if (cfg[i]) {
-        cfg[i].enabled = cb.checked;
+      if (cfg[idx]) {
+        cfg[idx].enabled = cb.checked;
         saveInlineChipConfig(cfg);
         if (typeof renderTable === 'function') renderTable();
       }
     });
+    tdCheck.appendChild(cb);
+
+    // Label cell
+    const tdLabel = document.createElement('td');
+    tdLabel.textContent = chip.label;
+
+    // Arrow buttons cell
+    const tdMove = document.createElement('td');
+    tdMove.style.cssText = 'width:3.5rem;text-align:right;white-space:nowrap';
+
+    const makeBtn = (dir, disabled) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'inline-chip-move';
+      btn.textContent = dir === 'up' ? '\u2191' : '\u2193';
+      btn.title = 'Move ' + dir;
+      btn.disabled = disabled;
+      btn.addEventListener('click', () => {
+        const cfg = getInlineChipConfig();
+        const j = dir === 'up' ? idx - 1 : idx + 1;
+        if (j < 0 || j >= cfg.length) return;
+        [cfg[idx], cfg[j]] = [cfg[j], cfg[idx]];
+        saveInlineChipConfig(cfg);
+        renderInlineChipConfigTable();
+        if (typeof renderTable === 'function') renderTable();
+      });
+      return btn;
+    };
+    tdMove.appendChild(makeBtn('up', idx === 0));
+    tdMove.appendChild(makeBtn('down', idx === config.length - 1));
+
+    tr.append(tdCheck, tdLabel, tdMove);
+    tbody.appendChild(tr);
   });
 
-  container.querySelectorAll('.inline-chip-move').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const cfg = getInlineChipConfig();
-      const i = parseInt(btn.dataset.idx, 10);
-      const dir = btn.dataset.dir;
-      const j = dir === 'up' ? i - 1 : i + 1;
-      if (j < 0 || j >= cfg.length) return;
-      // Swap
-      [cfg[i], cfg[j]] = [cfg[j], cfg[i]];
-      saveInlineChipConfig(cfg);
-      renderInlineChipConfigTable();
-      if (typeof renderTable === 'function') renderTable();
-    });
-  });
+  table.appendChild(tbody);
+  container.appendChild(table);
 };
 
 /**
@@ -476,55 +498,77 @@ const renderFilterChipCategoryTable = () => {
   if (!container || typeof getFilterChipCategoryConfig !== 'function') return;
 
   const config = getFilterChipCategoryConfig();
+  container.textContent = '';
 
   if (!config.length) {
-    container.innerHTML = '<div class="chip-grouping-empty">No chip categories available</div>';
+    const empty = document.createElement('div');
+    empty.className = 'chip-grouping-empty';
+    empty.textContent = 'No chip categories available';
+    container.appendChild(empty);
     return;
   }
 
-  let html = '<table class="chip-grouping-table"><tbody>';
-  config.forEach((cat, idx) => {
-    html += `<tr data-cat-id="${cat.id}">
-      <td style="width:2rem;text-align:center;">
-        <input type="checkbox" ${cat.enabled ? 'checked' : ''} data-cat-idx="${idx}" class="filter-cat-toggle" title="Toggle ${cat.label}">
-      </td>
-      <td>${cat.label}</td>
-      <td style="width:3.5rem;text-align:right;white-space:nowrap;">
-        <button type="button" class="inline-chip-move" data-dir="up" data-cat-idx="${idx}" ${idx === 0 ? 'disabled' : ''} title="Move up">&uarr;</button>
-        <button type="button" class="inline-chip-move" data-dir="down" data-cat-idx="${idx}" ${idx === config.length - 1 ? 'disabled' : ''} title="Move down">&darr;</button>
-      </td>
-    </tr>`;
-  });
-  html += '</tbody></table>';
-  container.innerHTML = html;
+  const table = document.createElement('table');
+  table.className = 'chip-grouping-table';
+  const tbody = document.createElement('tbody');
 
-  // Attach toggle listeners
-  container.querySelectorAll('.filter-cat-toggle').forEach(cb => {
+  config.forEach((cat, idx) => {
+    const tr = document.createElement('tr');
+    tr.dataset.catId = cat.id;
+
+    // Checkbox cell
+    const tdCheck = document.createElement('td');
+    tdCheck.style.cssText = 'width:2rem;text-align:center';
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.checked = cat.enabled;
+    cb.className = 'filter-cat-toggle';
+    cb.title = 'Toggle ' + cat.label;
     cb.addEventListener('change', () => {
       const cfg = getFilterChipCategoryConfig();
-      const i = parseInt(cb.dataset.catIdx, 10);
-      if (cfg[i]) {
-        cfg[i].enabled = cb.checked;
+      if (cfg[idx]) {
+        cfg[idx].enabled = cb.checked;
         saveFilterChipCategoryConfig(cfg);
         if (typeof renderActiveFilters === 'function') renderActiveFilters();
       }
     });
+    tdCheck.appendChild(cb);
+
+    // Label cell
+    const tdLabel = document.createElement('td');
+    tdLabel.textContent = cat.label;
+
+    // Arrow buttons cell
+    const tdMove = document.createElement('td');
+    tdMove.style.cssText = 'width:3.5rem;text-align:right;white-space:nowrap';
+
+    const makeBtn = (dir, disabled) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'inline-chip-move';
+      btn.textContent = dir === 'up' ? '\u2191' : '\u2193';
+      btn.title = 'Move ' + dir;
+      btn.disabled = disabled;
+      btn.addEventListener('click', () => {
+        const cfg = getFilterChipCategoryConfig();
+        const j = dir === 'up' ? idx - 1 : idx + 1;
+        if (j < 0 || j >= cfg.length) return;
+        [cfg[idx], cfg[j]] = [cfg[j], cfg[idx]];
+        saveFilterChipCategoryConfig(cfg);
+        renderFilterChipCategoryTable();
+        if (typeof renderActiveFilters === 'function') renderActiveFilters();
+      });
+      return btn;
+    };
+    tdMove.appendChild(makeBtn('up', idx === 0));
+    tdMove.appendChild(makeBtn('down', idx === config.length - 1));
+
+    tr.append(tdCheck, tdLabel, tdMove);
+    tbody.appendChild(tr);
   });
 
-  // Attach move listeners
-  container.querySelectorAll('.inline-chip-move').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const cfg = getFilterChipCategoryConfig();
-      const i = parseInt(btn.dataset.catIdx, 10);
-      const dir = btn.dataset.dir;
-      const j = dir === 'up' ? i - 1 : i + 1;
-      if (j < 0 || j >= cfg.length) return;
-      [cfg[i], cfg[j]] = [cfg[j], cfg[i]];
-      saveFilterChipCategoryConfig(cfg);
-      renderFilterChipCategoryTable();
-      if (typeof renderActiveFilters === 'function') renderActiveFilters();
-    });
-  });
+  table.appendChild(tbody);
+  container.appendChild(table);
 };
 
 // Expose globally

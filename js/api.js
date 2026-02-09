@@ -32,19 +32,32 @@ const renderApiStatusSummary = () => {
     const name = API_PROVIDERS[prov].name;
     const statusClass = status === "cached" ? "connected" : status;
     const lastSync = typeof getLastProviderSyncTime === "function" ? getLastProviderSyncTime(prov) : null;
-    let tsHtml = "";
+    let tsLabel = "";
     if (lastSync) {
       const d = new Date(lastSync);
-      const timeStr = d.toLocaleDateString(undefined, { month: "short", day: "numeric" }) + " " + d.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
-      tsHtml = `<span class="status-timestamp">${timeStr}</span>`;
+      tsLabel = d.toLocaleDateString(undefined, { month: "short", day: "numeric" }) + " " + d.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
     }
-    items.push({ name, status: statusClass, tsHtml, provider: prov });
+    items.push({ name, status: statusClass, tsLabel, provider: prov });
   });
 
-  container.innerHTML = items.map(item => {
-    const ts = item.tsHtml || "";
-    return `<span class="api-header-status-item ${item.status}"><span class="status-dot"></span><span class="status-name">${item.name}</span>${ts}</span>`;
-  }).join("");
+  container.textContent = '';
+  items.forEach(item => {
+    const span = document.createElement('span');
+    span.className = 'api-header-status-item ' + item.status;
+    const dot = document.createElement('span');
+    dot.className = 'status-dot';
+    const nameEl = document.createElement('span');
+    nameEl.className = 'status-name';
+    nameEl.textContent = item.name;
+    span.append(dot, nameEl);
+    if (item.tsLabel) {
+      const ts = document.createElement('span');
+      ts.className = 'status-timestamp';
+      ts.textContent = item.tsLabel;
+      span.appendChild(ts);
+    }
+    container.appendChild(span);
+  });
 };
 
 // API history table state
