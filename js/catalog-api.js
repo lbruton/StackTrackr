@@ -1377,10 +1377,34 @@ const renderNumistaUsageBar = () => {
   const container = document.getElementById('numistaUsageBar');
   if (!container) return;
   const usage = catalogConfig.getNumistaUsage();
-  const usedPercent = Math.min((usage.used / usage.quota) * 100, 100);
+  // Coerce to safe finite numbers and validate month format
+  const used = Number.isFinite(usage.used) ? Math.max(0, usage.used) : 0;
+  const quota = Number.isFinite(usage.quota) && usage.quota > 0 ? usage.quota : 2000;
+  const month = /^\d{4}-\d{2}$/.test(usage.month) ? usage.month : '';
+  const usedPercent = Math.min((used / quota) * 100, 100);
   const remainingPercent = 100 - usedPercent;
-  const warning = usage.used / usage.quota >= 0.9;
-  container.innerHTML = `<div class="api-usage"><div class="usage-bar"><div class="used" style="width:${usedPercent}%"></div><div class="remaining" style="width:${remainingPercent}%"></div></div><div class="usage-text">${usage.used}/${usage.quota} calls (${usage.month})${warning ? " 🚩" : ""}</div></div>`;
+  const warning = used / quota >= 0.9;
+
+  // Build DOM nodes safely (no innerHTML with localStorage-sourced values)
+  container.textContent = '';
+  const wrapper = document.createElement('div');
+  wrapper.className = 'api-usage';
+  const bar = document.createElement('div');
+  bar.className = 'usage-bar';
+  const usedDiv = document.createElement('div');
+  usedDiv.className = 'used';
+  usedDiv.style.width = `${usedPercent}%`;
+  const remainDiv = document.createElement('div');
+  remainDiv.className = 'remaining';
+  remainDiv.style.width = `${remainingPercent}%`;
+  bar.appendChild(usedDiv);
+  bar.appendChild(remainDiv);
+  const text = document.createElement('div');
+  text.className = 'usage-text';
+  text.textContent = `${used}/${quota} calls${month ? ` (${month})` : ''}${warning ? ' 🚩' : ''}`;
+  wrapper.appendChild(bar);
+  wrapper.appendChild(text);
+  container.appendChild(wrapper);
 };
 
 // Export for use in other modules
