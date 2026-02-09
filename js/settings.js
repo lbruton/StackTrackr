@@ -444,8 +444,9 @@ const renderInlineChipConfigTable = () => {
     cb.title = 'Toggle ' + chip.label;
     cb.addEventListener('change', () => {
       const cfg = getInlineChipConfig();
-      if (cfg[idx]) {
-        cfg[idx].enabled = cb.checked;
+      const item = cfg.at(idx);
+      if (item) {
+        item.enabled = cb.checked;
         saveInlineChipConfig(cfg);
         if (typeof renderTable === 'function') renderTable();
       }
@@ -471,7 +472,8 @@ const renderInlineChipConfigTable = () => {
         const cfg = getInlineChipConfig();
         const j = dir === 'up' ? idx - 1 : idx + 1;
         if (j < 0 || j >= cfg.length) return;
-        [cfg[idx], cfg[j]] = [cfg[j], cfg[idx]];
+        const moved = cfg.splice(idx, 1).at(0);
+        cfg.splice(j, 0, moved);
         saveInlineChipConfig(cfg);
         renderInlineChipConfigTable();
         if (typeof renderTable === 'function') renderTable();
@@ -526,8 +528,9 @@ const renderFilterChipCategoryTable = () => {
     cb.title = 'Toggle ' + cat.label;
     cb.addEventListener('change', () => {
       const cfg = getFilterChipCategoryConfig();
-      if (cfg[idx]) {
-        cfg[idx].enabled = cb.checked;
+      const item = cfg.at(idx);
+      if (item) {
+        item.enabled = cb.checked;
         saveFilterChipCategoryConfig(cfg);
         if (typeof renderActiveFilters === 'function') renderActiveFilters();
       }
@@ -553,7 +556,8 @@ const renderFilterChipCategoryTable = () => {
         const cfg = getFilterChipCategoryConfig();
         const j = dir === 'up' ? idx - 1 : idx + 1;
         if (j < 0 || j >= cfg.length) return;
-        [cfg[idx], cfg[j]] = [cfg[j], cfg[idx]];
+        const moved = cfg.splice(idx, 1).at(0);
+        cfg.splice(j, 0, moved);
         saveFilterChipCategoryConfig(cfg);
         renderFilterChipCategoryTable();
         if (typeof renderActiveFilters === 'function') renderActiveFilters();
