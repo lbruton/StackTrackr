@@ -230,10 +230,10 @@ const CERT_LOOKUP_URLS = {
  * Follows BRANCH.RELEASE.PATCH.state format
  * State codes: a=alpha, b=beta, rc=release candidate
  * Example: 3.03.02a → branch 3, release 03, patch 02, alpha
- * Updated: 2026-02-09 - Feature release: Encrypted portable backup (.stvault)
+ * Updated: 2026-02-09 - Feature release: Custom chip grouping & smart grouping blacklist
  */
 
-const APP_VERSION = "3.14.01";
+const APP_VERSION = "3.16.00";
 
 /**
  * @constant {string} DEFAULT_CURRENCY - Default currency code for monetary formatting
@@ -430,6 +430,8 @@ const ALLOWED_STORAGE_KEYS = [
   CATALOG_HISTORY_KEY,
   SPOT_TREND_RANGE_KEY,
   ITEMS_PER_PAGE_KEY,
+  "chipCustomGroups",
+  "chipBlacklist",
 ];
 
 // Persist current application version for comparison on future loads
@@ -499,6 +501,13 @@ const FEATURE_FLAGS = {
     urlOverride: true,
     userToggle: true,
     description: "Group item names by base name (e.g., 'American Silver Eagle (3)' instead of separate year chips)",
+    phase: "beta"
+  },
+  DYNAMIC_NAME_CHIPS: {
+    enabled: true,
+    urlOverride: true,
+    userToggle: true,
+    description: "Auto-extract text from parentheses and quotes in item names as additional filter chips",
     phase: "beta"
   }
 };

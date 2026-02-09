@@ -279,6 +279,18 @@ const generateCategorySummary = (inventory) => {
     }
   });
 
+  // Count custom groups
+  let customGroups = {};
+  if (typeof window.countCustomGroups === 'function') {
+    customGroups = window.countCustomGroups(inventory);
+  }
+
+  // Extract dynamic chips (text from parentheses/quotes)
+  let dynamicNames = {};
+  if (window.featureFlags && window.featureFlags.isEnabled('DYNAMIC_NAME_CHIPS') && typeof window.extractDynamicChips === 'function') {
+    dynamicNames = window.extractDynamicChips(inventory);
+  }
+
   // Apply minCount threshold to all categories
   const filteredMetals = Object.fromEntries(
     Object.entries(metals).filter(([key, count]) => count >= minCount)
@@ -292,7 +304,7 @@ const generateCategorySummary = (inventory) => {
   const filteredStorageLocations = Object.fromEntries(
     Object.entries(storageLocations).filter(([key, count]) => count >= minCount)
   );
-  const filteredNames = Object.fromEntries(
+  let filteredNames = Object.fromEntries(
     Object.entries(names).filter(([key, count]) => count >= minCount)
   );
   const filteredYears = Object.fromEntries(
@@ -304,6 +316,28 @@ const generateCategorySummary = (inventory) => {
   const filteredNumistaIds = Object.fromEntries(
     Object.entries(numistaIds).filter(([key, count]) => count >= minCount)
   );
+  const filteredDynamicNames = Object.fromEntries(
+    Object.entries(dynamicNames).filter(([key, count]) => count >= minCount)
+  );
+
+  // Apply blacklist filter to auto-generated name chips and dynamic chips
+  if (typeof window.isBlacklisted === 'function') {
+    filteredNames = Object.fromEntries(
+      Object.entries(filteredNames).filter(([key]) => !window.isBlacklisted(key))
+    );
+    // Filter dynamic names through blacklist too
+    for (const key of Object.keys(filteredDynamicNames)) {
+      if (window.isBlacklisted(key)) {
+        delete filteredDynamicNames[key];
+      }
+    }
+  }
+
+  // Suppress auto-generated names that duplicate a custom group label
+  const customLabelsLower = new Set(Object.values(customGroups).map(g => g.label.toLowerCase()));
+  filteredNames = Object.fromEntries(
+    Object.entries(filteredNames).filter(([key]) => !customLabelsLower.has(key.toLowerCase()))
+  );
 
   return {
     metals: filteredMetals,
@@ -314,6 +348,8 @@ const generateCategorySummary = (inventory) => {
     years: filteredYears,
     grades: filteredGrades,
     numistaIds: filteredNumistaIds,
+    customGroups,
+    dynamicNames: filteredDynamicNames,
     totalItems: inventory.length
   };
 };
@@ -401,6 +437,24 @@ const renderActiveFilters = () => {
     });
   }
 
+  // Add custom group chips
+  if (categorySummary.customGroups) {
+    Object.entries(categorySummary.customGroups).forEach(([groupId, info]) => {
+      if (info.count > 0) {
+        chips.push({ field: 'customGroup', value: groupId, displayLabel: info.label, count: info.count, total: categorySummary.totalItems, isCustomGroup: true });
+      }
+    });
+  }
+
+  // Add dynamic name chips (text extracted from parentheses/quotes)
+  if (categorySummary.dynamicNames) {
+    Object.entries(categorySummary.dynamicNames).forEach(([text, count]) => {
+      if (count > 0) {
+        chips.push({ field: 'dynamicName', value: text, count, total: categorySummary.totalItems, isDynamic: true });
+      }
+    });
+  }
+
   // Add purchase location chips
   Object.entries(categorySummary.purchaseLocations).forEach(([location, count]) => {
     if (count > 0) {
@@ -445,7 +499,7 @@ const renderActiveFilters = () => {
   // Add any explicitly applied filter chips (but not if they duplicate category chips)
   Object.entries(activeFilters).forEach(([field, criteria]) => {
     // Skip fields already rendered as category summary chips to avoid duplicates
-    if (field === 'metal' || field === 'type' || field === 'purchaseLocation' || field === 'storageLocation' || field === 'name' || field === 'year' || field === 'grade' || field === 'numistaId') return;
+    if (field === 'metal' || field === 'type' || field === 'purchaseLocation' || field === 'storageLocation' || field === 'name' || field === 'year' || field === 'grade' || field === 'numistaId' || field === 'customGroup' || field === 'dynamicName') return;
     
     if (criteria && typeof criteria === 'object' && Array.isArray(criteria.values)) {
       criteria.values.forEach(value => {
@@ -472,6 +526,8 @@ const renderActiveFilters = () => {
   chips.forEach((f, i) => {
     const chip = document.createElement('span');
     chip.className = 'filter-chip';
+    if (f.isDynamic) chip.classList.add('dynamic-chip');
+    if (f.isCustomGroup) chip.classList.add('custom-chip');
     const firstValue = String(f.value).split(', ')[0];
     let color;
     let textColor;
@@ -492,6 +548,12 @@ const renderActiveFilters = () => {
       case 'name':
         color = getColor(nameColors, firstValue);
         break;
+      case 'customGroup':
+        color = 'var(--info)';
+        break;
+      case 'dynamicName':
+        color = getColor(nameColors, firstValue);
+        break;
       case 'purchaseLocation':
         color = getPurchaseLocationColor(firstValue);
         break;
@@ -506,12 +568,14 @@ const renderActiveFilters = () => {
     chip.style.color = textColor || getContrastColor(bg);
 
     // Display simplified value for most chips, but keep full base name for name chips
-    // (e.g., "American Silver Eagle" not "Silver Eagle" — country context matters)
-    const displayValue = f.field === 'name' ? f.value
+    // Custom groups use their display label; dynamic chips are wrapped in quotes
+    const displayValue = f.isCustomGroup ? f.displayLabel
+      : f.isDynamic ? `\u201C${f.value}\u201D`
+      : f.field === 'name' ? f.value
       : f.field === 'numistaId' ? `N#${f.value}`
       : simplifyChipValue(f.value, f.field);
     let label;
-    
+
     if (f.field === 'search') {
       label = displayValue;
     } else if (f.count !== undefined && f.total !== undefined) {
@@ -535,22 +599,40 @@ const renderActiveFilters = () => {
       console.debug('renderActiveFilters: adding chip', { field: f.field, value: f.value, label });
     }
     
+    // Right-click context menu for name and dynamic chips (blacklist)
+    if (f.field === 'name' || f.field === 'dynamicName') {
+      chip.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+        const chipName = f.field === 'dynamicName' ? f.value : f.value;
+        if (typeof window.showChipContextMenu === 'function') {
+          window.showChipContextMenu(e.clientX, e.clientY, chipName);
+        }
+      });
+    }
+
     // Different tooltip and click behavior for different chip types
     if (f.count !== undefined && f.total !== undefined) {
-      // Category summary chips - clicking adds filter
-      chip.title = `Click to filter by ${f.field}: ${displayValue} (${f.count} items)`;
-      chip.onclick = () => {
-        applyQuickFilter(f.field, f.value, f.isGrouped || false);
-      };
+      // Category summary chips - clicking adds filter; shift+click blacklists (name/dynamic only)
+      const canBlacklist = f.field === 'name' || f.field === 'dynamicName';
+      chip.title = `Click to filter by ${f.field}: ${displayValue} (${f.count} items)` +
+        (canBlacklist ? ' · Shift+click to ignore' : '');
+      chip.addEventListener('click', (e) => {
+        if (canBlacklist && e.shiftKey && typeof window.showBlacklistConfirm === 'function') {
+          e.preventDefault();
+          window.showBlacklistConfirm(e.clientX, e.clientY, f.value);
+          return;
+        }
+        applyQuickFilter(f.field, f.value, f.isGrouped || f.isCustomGroup || f.isDynamic || false);
+      });
     } else {
       // Active filter chips - clicking removes filter
       chip.title = f.field === 'search'
         ? `Search term: ${displayValue} (click to remove)`
         : `Active filter: ${f.field} = ${displayValue} (click to remove)`;
-      chip.onclick = () => {
+      chip.addEventListener('click', () => {
         removeFilter(f.field, f.value);
         renderActiveFilters();
-      };
+      });
     }
     // Make the close glyph interactive and keyboard accessible (removes the filter)
     close.setAttribute('role', 'button');
@@ -889,6 +971,64 @@ const filterInventoryAdvanced = () => {
  * @param {boolean} [isGrouped=false] - Whether this is a grouped name filter
  */
 const applyQuickFilter = (field, value, isGrouped = false) => {
+  // Handle custom group chip click
+  if (field === 'customGroup') {
+    const groups = typeof window.loadCustomGroups === 'function' ? window.loadCustomGroups() : [];
+    const group = groups.find(g => g.id === value);
+    if (group) {
+      const matchingNames = [];
+      inventory.forEach(item => {
+        const itemName = (item.name || '').toLowerCase();
+        if (group.patterns.some(p => itemName.includes(p.toLowerCase()))) {
+          matchingNames.push(item.name);
+        }
+      });
+      const uniqueNames = [...new Set(matchingNames)];
+
+      // Toggle behavior: if same custom group filter is active, remove it
+      const currentValues = activeFilters['name']?.values || [];
+      const isCurrentlyActive = uniqueNames.length > 0 &&
+        uniqueNames.every(n => currentValues.includes(n)) &&
+        currentValues.length === uniqueNames.length;
+
+      if (isCurrentlyActive) {
+        delete activeFilters['name'];
+      } else if (uniqueNames.length > 0) {
+        activeFilters['name'] = { values: uniqueNames, exclude: false };
+      }
+    }
+    renderTable();
+    renderActiveFilters();
+    return;
+  }
+
+  // Handle dynamic name chip click
+  if (field === 'dynamicName') {
+    const matchingNames = [];
+    inventory.forEach(item => {
+      const name = item.name || '';
+      if (name.includes('(' + value + ')') || name.includes('"' + value + '"')) {
+        matchingNames.push(name);
+      }
+    });
+    const uniqueNames = [...new Set(matchingNames)];
+
+    // Toggle behavior
+    const currentValues = activeFilters['name']?.values || [];
+    const isCurrentlyActive = uniqueNames.length > 0 &&
+      uniqueNames.every(n => currentValues.includes(n)) &&
+      currentValues.length === uniqueNames.length;
+
+    if (isCurrentlyActive) {
+      delete activeFilters['name'];
+    } else if (uniqueNames.length > 0) {
+      activeFilters['name'] = { values: uniqueNames, exclude: false };
+    }
+    renderTable();
+    renderActiveFilters();
+    return;
+  }
+
   // If this exact filter is already active, remove it (toggle behavior)
   if (activeFilters[field]?.values?.[0] === value && !isGrouped) {
     delete activeFilters[field];

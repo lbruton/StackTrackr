@@ -1561,6 +1561,105 @@ input[type="submit"] {
   margin-bottom: 0.5rem;
 }
 
+/* Chip grouping controls (blacklist & custom rules) */
+.chip-grouping-controls {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.chip-grouping-input {
+  flex: 1;
+  min-width: 0;
+  padding: 0.35rem 0.5rem;
+  font-size: 0.8125rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-card);
+  color: var(--text-primary);
+}
+
+.chip-grouping-input-wide {
+  flex: 2;
+  min-width: 0;
+  padding: 0.35rem 0.5rem;
+  font-size: 0.8125rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-card);
+  color: var(--text-primary);
+}
+
+.chip-grouping-table-container {
+  max-height: 200px;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-top: 0.25rem;
+}
+
+.chip-grouping-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8125rem;
+}
+
+.chip-grouping-table thead {
+  position: sticky;
+  top: 0;
+  background: var(--bg-card);
+  z-index: 1;
+}
+
+.chip-grouping-table th,
+.chip-grouping-table td {
+  padding: 0.3rem 0.5rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-primary);
+}
+
+.chip-grouping-table th {
+  font-weight: 600;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--text-muted);
+}
+
+.chip-grouping-table td.chip-grouping-patterns {
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chip-grouping-empty {
+  text-align: center;
+  padding: 1rem;
+  color: var(--text-muted);
+  font-size: 0.8125rem;
+  font-style: italic;
+}
+
+.chip-grouping-delete {
+  background: none;
+  border: none;
+  color: var(--danger);
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1;
+  padding: 0.1rem 0.3rem;
+  border-radius: var(--radius);
+  transition: background 0.1s;
+}
+
+.chip-grouping-delete:hover {
+  background: rgba(var(--danger-rgb, 220, 53, 69), 0.12);
+}
+
 /* Theme picker */
 .theme-picker {
   display: flex;
@@ -3814,6 +3913,83 @@ a.about-badge:hover {
 
 .filter-chip:active {
   transform: translateY(0);
+}
+
+.filter-chip.dynamic-chip {
+  font-style: italic;
+}
+
+.filter-chip.custom-chip {
+  font-weight: 600;
+}
+
+/* Chip context menu (right-click on name/dynamic chips) */
+.chip-context-menu {
+  position: fixed;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lg, 0 4px 12px rgba(0,0,0,0.15));
+  z-index: 10000;
+  min-width: 160px;
+  padding: 0.25rem 0;
+}
+
+.chip-context-menu-item {
+  padding: 0.5rem 1rem;
+  font-size: 0.8125rem;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.chip-context-menu-item:hover {
+  background: var(--bg-hover, var(--border));
+}
+
+.chip-confirm-message {
+  padding: 0.5rem 0.75rem 0.25rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+.chip-confirm-buttons {
+  display: flex;
+  gap: 0.35rem;
+  padding: 0.25rem 0.75rem 0.5rem;
+}
+
+.chip-confirm-yes,
+.chip-confirm-no {
+  flex: 1;
+  padding: 0.3rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.chip-confirm-yes {
+  background: var(--danger);
+  color: #fff;
+  border-color: var(--danger);
+}
+
+.chip-confirm-yes:hover {
+  opacity: 0.85;
+}
+
+.chip-confirm-no {
+  background: var(--bg-card);
+  color: var(--text-primary);
+}
+
+.chip-confirm-no:hover {
+  background: var(--bg-hover, var(--border));
 }
 
 .search-results-info {

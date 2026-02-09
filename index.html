@@ -1364,6 +1364,10 @@
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
               Site
             </button>
+            <button class="settings-nav-item" data-section="grouping">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+              Grouping
+            </button>
             <button class="settings-nav-item" data-section="api">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83"/></svg>
               API
@@ -1421,6 +1425,12 @@
                 </select>
               </div>
 
+            </div>
+
+            <!-- ===== GROUPING SETTINGS ===== -->
+            <div class="settings-section-panel" id="settingsPanel_grouping" style="display: none">
+              <h3>Chip Grouping</h3>
+
               <div class="settings-group">
                 <div class="settings-group-label">Smart name grouping</div>
                 <p class="settings-subtext">Group item names by base name (e.g., "American Silver Eagle (3)").</p>
@@ -1428,6 +1438,42 @@
                   <option value="yes">Enabled</option>
                   <option value="no">Disabled</option>
                 </select>
+              </div>
+
+              <div class="settings-group">
+                <div class="settings-group-label">Dynamic name chips</div>
+                <p class="settings-subtext">Auto-extract text from parentheses and quotes in item names as additional filter chips.</p>
+                <select id="settingsDynamicChips">
+                  <option value="yes">Enabled</option>
+                  <option value="no">Disabled</option>
+                </select>
+              </div>
+
+              <div class="settings-group">
+                <div class="settings-group-label">Chip blacklist</div>
+                <p class="settings-subtext">Suppressed auto-generated chips. Right-click any name chip to add it here.</p>
+                <div class="chip-grouping-controls">
+                  <select id="blacklistInput" class="chip-grouping-input">
+                    <option value="">Select a chip to suppress…</option>
+                  </select>
+                  <button type="button" class="btn" id="addBlacklistBtn">Add</button>
+                </div>
+                <div class="chip-grouping-table-container" id="blacklistTableContainer">
+                  <div class="chip-grouping-empty">No blacklisted chips</div>
+                </div>
+              </div>
+
+              <div class="settings-group">
+                <div class="settings-group-label">Custom grouping rules</div>
+                <p class="settings-subtext">Define chip labels with comma or semicolon-separated name patterns.</p>
+                <div class="chip-grouping-controls">
+                  <input type="text" id="customGroupLabelInput" class="chip-grouping-input" placeholder="Chip label">
+                  <input type="text" id="customGroupPatternsInput" class="chip-grouping-input-wide" placeholder="Patterns (comma-separated)">
+                  <button type="button" class="btn" id="addCustomGroupBtn">Add Rule</button>
+                </div>
+                <div class="chip-grouping-table-container" id="customGroupTableContainer">
+                  <div class="chip-grouping-empty">No custom grouping rules</div>
+                </div>
               </div>
             </div>
 
@@ -2121,6 +2167,7 @@
     <script defer src="./js/charts.js"></script>
     <script defer src="./js/theme.js"></script>
     <script defer src="./js/search.js"></script>
+    <script defer src="./js/chip-grouping.js"></script>
     <script defer src="./js/filters.js"></script>
     <script defer src="./js/sorting.js"></script>
     <script defer src="./js/pagination.js"></script>
