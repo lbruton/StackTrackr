@@ -595,11 +595,11 @@
                 </select>
               </div>
               <div class="control-group">
-                <label for="groupNameChips" class="control-label">Smart Grouping:</label>
-                <select class="control-select" id="groupNameChips" title="Group similar item names (e.g., 'American Silver Eagle (3)' instead of separate year chips)">
-                  <option value="yes" selected>Yes</option>
-                  <option value="no">No</option>
-                </select>
+                <span class="control-label">Smart Grouping:</span>
+                <div class="chip-sort-toggle" id="groupNameChips" title="Group similar item names (e.g., 'American Silver Eagle (3)' instead of separate year chips)">
+                  <button type="button" class="chip-sort-btn active" data-val="yes">On</button>
+                  <button type="button" class="chip-sort-btn" data-val="no">Off</button>
+                </div>
               </div>
               <div class="control-group">
                 <span class="control-label">Chip Sort:</span>
@@ -1463,10 +1463,10 @@
               <div class="settings-group">
                 <div class="settings-group-label">Smart name grouping</div>
                 <p class="settings-subtext">Group item names by base name (e.g., "American Silver Eagle (3)").</p>
-                <select id="settingsGroupNameChips">
-                  <option value="yes">Enabled</option>
-                  <option value="no">Disabled</option>
-                </select>
+                <div class="chip-sort-toggle" id="settingsGroupNameChips">
+                  <button type="button" class="chip-sort-btn active" data-val="yes">On</button>
+                  <button type="button" class="chip-sort-btn" data-val="no">Off</button>
+                </div>
               </div>
 
               <div class="settings-group">

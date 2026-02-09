@@ -390,29 +390,33 @@ const setupEventListeners = () => {
     const groupNameChipsEl = document.getElementById('groupNameChips');
     if (groupNameChipsEl && window.featureFlags) {
       // Set initial state from feature flag
-      groupNameChipsEl.value = window.featureFlags.isEnabled('GROUPED_NAME_CHIPS') ? 'yes' : 'no';
+      const initVal = window.featureFlags.isEnabled('GROUPED_NAME_CHIPS') ? 'yes' : 'no';
+      groupNameChipsEl.querySelectorAll('.chip-sort-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.val === initVal);
+      });
 
-      safeAttachListener(
-        groupNameChipsEl,
-        'change',
-        (e) => {
-          const isEnabled = e.target.value === 'yes';
-          // Update feature flag setting
-          if (isEnabled) {
-            window.featureFlags.enable('GROUPED_NAME_CHIPS');
-          } else {
-            window.featureFlags.disable('GROUPED_NAME_CHIPS');
-          }
-          // Sync settings modal control
-          const settingsGroup = document.getElementById('settingsGroupNameChips');
-          if (settingsGroup) settingsGroup.value = e.target.value;
-          // Refresh the chips display
-          if (typeof renderActiveFilters === 'function') {
-            renderActiveFilters();
-          }
-        },
-        'Grouped name chips toggle'
-      );
+      groupNameChipsEl.addEventListener('click', (e) => {
+        const btn = e.target.closest('.chip-sort-btn');
+        if (!btn) return;
+        const isEnabled = btn.dataset.val === 'yes';
+        if (isEnabled) {
+          window.featureFlags.enable('GROUPED_NAME_CHIPS');
+        } else {
+          window.featureFlags.disable('GROUPED_NAME_CHIPS');
+        }
+        // Update active state
+        groupNameChipsEl.querySelectorAll('.chip-sort-btn').forEach(b => {
+          b.classList.toggle('active', b.dataset.val === btn.dataset.val);
+        });
+        // Sync settings modal toggle
+        const settingsGroup = document.getElementById('settingsGroupNameChips');
+        if (settingsGroup) {
+          settingsGroup.querySelectorAll('.chip-sort-btn').forEach(b => {
+            b.classList.toggle('active', b.dataset.val === btn.dataset.val);
+          });
+        }
+        if (typeof renderActiveFilters === 'function') renderActiveFilters();
+      });
     }
 
     // Chip sort order inline toggle

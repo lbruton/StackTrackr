@@ -102,10 +102,13 @@ const syncSettingsUI = () => {
     chipMinSetting.value = localStorage.getItem('chipMinCount') || '3';
   }
 
-  // Smart name grouping — sync with inline control
+  // Smart name grouping — sync with inline toggle
   const groupSetting = document.getElementById('settingsGroupNameChips');
   if (groupSetting && window.featureFlags) {
-    groupSetting.value = featureFlags.isEnabled('GROUPED_NAME_CHIPS') ? 'yes' : 'no';
+    const gVal = featureFlags.isEnabled('GROUPED_NAME_CHIPS') ? 'yes' : 'no';
+    groupSetting.querySelectorAll('.chip-sort-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.val === gVal);
+    });
   }
 
   // Dynamic name chips
@@ -242,18 +245,28 @@ const setupSettingsEventListeners = () => {
     });
   }
 
-  // Smart name grouping in settings
-  const groupSetting = document.getElementById('settingsGroupNameChips');
-  if (groupSetting) {
-    groupSetting.addEventListener('change', () => {
-      const isEnabled = groupSetting.value === 'yes';
+  // Smart name grouping toggle in settings
+  const groupSettingEl = document.getElementById('settingsGroupNameChips');
+  if (groupSettingEl) {
+    groupSettingEl.addEventListener('click', (e) => {
+      const btn = e.target.closest('.chip-sort-btn');
+      if (!btn) return;
+      const isEnabled = btn.dataset.val === 'yes';
       if (window.featureFlags) {
         if (isEnabled) featureFlags.enable('GROUPED_NAME_CHIPS');
         else featureFlags.disable('GROUPED_NAME_CHIPS');
       }
-      // Sync inline control
+      // Update active state
+      groupSettingEl.querySelectorAll('.chip-sort-btn').forEach(b => {
+        b.classList.toggle('active', b.dataset.val === btn.dataset.val);
+      });
+      // Sync inline toggle
       const groupInline = document.getElementById('groupNameChips');
-      if (groupInline) groupInline.value = groupSetting.value;
+      if (groupInline) {
+        groupInline.querySelectorAll('.chip-sort-btn').forEach(b => {
+          b.classList.toggle('active', b.dataset.val === btn.dataset.val);
+        });
+      }
       if (typeof renderActiveFilters === 'function') renderActiveFilters();
     });
   }
