@@ -220,7 +220,7 @@ const API_PROVIDERS = {
  */
 const CERT_LOOKUP_URLS = {
   PCGS: 'https://www.pcgs.com/cert/{certNumber}',
-  NGC: 'https://www.ngccoin.com/certlookup/{certNumber}/',
+  NGC: 'https://www.ngccoin.com/certlookup/{certNumber}/?CertNum={certNumber}&Grade={grade}&lookup=',
   ANACS: 'https://anacs.com/verify/',
   ICG: 'https://www.icgcoin.com/verification/',
 };
@@ -230,10 +230,10 @@ const CERT_LOOKUP_URLS = {
  * Follows BRANCH.RELEASE.PATCH.state format
  * State codes: a=alpha, b=beta, rc=release candidate
  * Example: 3.03.02a → branch 3, release 03, patch 02, alpha
- * Updated: 2026-02-08 - Unified Settings modal
+ * Updated: 2026-02-08 - Patch release: NGC cert fix, name overflow, Numista Sets, source display
  */
 
-const APP_VERSION = "3.12.01";
+const APP_VERSION = "3.12.02";
 
 /**
  * @constant {string} DEFAULT_CURRENCY - Default currency code for monetary formatting

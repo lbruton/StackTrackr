@@ -13,7 +13,11 @@
  * @param {string} coinName - The name of the coin (used for window title)
  */
 function openNumistaModal(numistaId, coinName) {
-  const url = `https://en.numista.com/catalogue/pieces${numistaId}.html`;
+  const isSet = /^S/i.test(numistaId);
+  const cleanId = numistaId.replace(/^[NS]?#?\s*/i, '').trim();
+  const url = isSet
+    ? `https://en.numista.com/catalogue/set.php?id=${cleanId}`
+    : `https://en.numista.com/catalogue/pieces${cleanId}.html`;
 
   const popup = window.open(
     url,

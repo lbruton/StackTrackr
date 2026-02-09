@@ -562,6 +562,7 @@ const typeColors = {
   Round: 'var(--type-round-bg)',
   Bar: 'var(--type-bar-bg)',
   Note: 'var(--type-note-bg)',
+  Set: 'var(--type-set-bg)',
   Other: 'var(--type-other-bg)'
 };
 const purchaseLocationColors = {};
@@ -627,19 +628,28 @@ const getStorageLocationColor = loc =>
  */
 const formatPurchaseLocation = (loc) => {
   let value = loc || '—';
-  
+
   // Convert "Numista Import" and "Unknown" to "—"
   if (value === 'Numista Import' || value === 'Unknown') {
     value = '—';
   }
-  
-  // Truncate at 18 characters (reduced from 24)
-  const truncated = value.length > 18 ? value.substring(0, 18) + '…' : value;
-  const color = getPurchaseLocationColor(value);
+
   const urlPattern = /^(https?:\/\/)?[\w.-]+\.[A-Za-z]{2,}(\S*)?$/;
+  const isUrl = urlPattern.test(value);
+
+  // Strip domain suffix for display only (keep full value for filter + href)
+  let displayValue = value;
+  if (isUrl) {
+    displayValue = value
+      .replace(/^(https?:\/\/)?(www\.)?/i, '')
+      .replace(/\.(com|net|org|co|io|us|uk|ca|au|de|fr|shop|store)\/?.*$/i, '');
+  }
+
+  const truncated = displayValue.length > 18 ? displayValue.substring(0, 18) + '…' : displayValue;
+  const color = getPurchaseLocationColor(value);
   const filterSpan = filterLink('purchaseLocation', value, color, truncated, value !== truncated ? value : undefined);
-  
-  if (urlPattern.test(value)) {
+
+  if (isUrl) {
     let href = value;
     if (!/^https?:\/\//i.test(href)) {
       href = `https://${href}`;
@@ -749,7 +759,7 @@ const validateFieldValue = (field, value) => {
       return date >= minDate && date <= today;
       
     case 'type':
-      const validTypes = ['Coin', 'Bar', 'Round', 'Note', 'Aurum', 'Other'];
+      const validTypes = ['Coin', 'Bar', 'Round', 'Note', 'Aurum', 'Set', 'Other'];
       return validTypes.includes(trimmedValue);
       
     case 'metal':
@@ -792,7 +802,7 @@ const startCellEdit = (idx, field, element) => {
     input.className = 'inline-select';
     
     if (field === 'type') {
-      const types = ['Coin', 'Bar', 'Round', 'Note', 'Aurum', 'Other'];
+      const types = ['Coin', 'Bar', 'Round', 'Note', 'Aurum', 'Set', 'Other'];
       types.forEach(type => {
         const option = document.createElement('option');
         option.value = type;
@@ -975,6 +985,7 @@ const renderTable = () => {
           authority ? `data-authority="${escapeAttribute(authority)}"` : '',
           isClickable ? 'data-clickable="true"' : '',
           certNum ? `data-cert-number="${escapeAttribute(certNum)}"` : '',
+          `data-grade="${escapeAttribute(item.grade || '')}"`,
           isClickable ? 'tabindex="0" role="button"' : '',
         ].filter(Boolean).join(' ');
         return `<span class="grade-tag" ${attrs} title="${escapeAttribute(tooltip)}">${sanitizeHtml(item.grade)}</span>`;
@@ -993,14 +1004,16 @@ const renderTable = () => {
       <td class="shrink" data-column="metal" data-metal="${escapeAttribute(item.composition || item.metal || '')}">${filterLink('metal', item.composition || item.metal || 'Silver', METAL_COLORS[item.metal] || 'var(--primary)', getDisplayComposition(item.composition || item.metal || 'Silver'))}</td>
       <td class="shrink" data-column="type">${filterLink('type', item.type, getTypeColor(item.type))}</td>
       <td class="expand" data-column="name" style="text-align: left;">
-        ${filterLink('name', item.name, 'var(--text-primary)')}${item.year
-          ? `<span class="year-tag" title="Year: ${escapeAttribute(String(item.year))}">${sanitizeHtml(String(item.year))}</span>`
-          : ''}${numistaId
+        <div class="name-cell-content">
+        ${filterLink('name', item.name, 'var(--text-primary)', undefined, item.name)}${gradeTag}${numistaId
           ? `<span class="numista-tag" data-numista-id="${escapeAttribute(String(numistaId))}"
                data-coin-name="${escapeAttribute(item.name)}"
                title="View N#${escapeAttribute(String(numistaId))} on Numista"
                tabindex="0" role="button">N#${sanitizeHtml(String(numistaId))}</span>`
-          : ''}${gradeTag}
+          : ''}${item.year
+          ? `<span class="year-tag" title="Year: ${escapeAttribute(String(item.year))}">${sanitizeHtml(String(item.year))}</span>`
+          : ''}
+        </div>
       </td>
       <td class="shrink" data-column="qty">${filterLink('qty', item.qty, 'var(--text-primary)')}</td>
       <td class="shrink" data-column="weight">${filterLink('weight', item.weight, 'var(--text-primary)', formatWeight(item.weight), item.weight < 1 ? 'Grams (g)' : 'Troy ounces (ozt)')}</td>
@@ -2396,7 +2409,9 @@ document.addEventListener('click', (e) => {
     const authority = gradeTag.dataset.authority || '';
     const certNum = gradeTag.dataset.certNumber || '';
     if (authority && typeof CERT_LOOKUP_URLS !== 'undefined' && CERT_LOOKUP_URLS[authority]) {
-      const url = CERT_LOOKUP_URLS[authority].replace('{certNumber}', encodeURIComponent(certNum));
+      let url = CERT_LOOKUP_URLS[authority].replaceAll('{certNumber}', encodeURIComponent(certNum));
+      const gradeNum = (gradeTag.dataset.grade || '').match(/\d+/)?.[0] || '';
+      url = url.replace('{grade}', encodeURIComponent(gradeNum));
       const popup = window.open(url, `cert_${authority}_${certNum || Date.now()}`,
         'width=1200,height=800,scrollbars=yes,resizable=yes,toolbar=no,location=no,menubar=no,status=no');
       if (!popup) {

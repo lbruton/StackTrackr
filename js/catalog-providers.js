@@ -6,14 +6,18 @@
 class NumistaCatalogProvider extends CatalogProvider {
   constructor(){ super({ name: 'Numista', key: 'numista' }); }
   normalizeId(id){
-    const s = (id||'').toString().trim().replace(/^N#?/i,'');
-    return s;
+    return id ? id.replace(/^[NS]?#?\s*/i, '').trim() : null;
   }
   buildLink(id){
     const nid = this.normalizeId(id);
-    return nid ? `https://en.numista.com/catalogue/pieces${nid}.html` : null;
+    if (!nid) return null;
+    const isSet = /^S/i.test(id);
+    if (isSet) {
+      return `https://en.numista.com/catalogue/set.php?id=${nid}`;
+    }
+    return `https://en.numista.com/catalogue/pieces${nid}.html`;
   }
-  isValid(id){ return /^N?#?\d+$/i.test(id) || /^\d+$/.test(id); }
+  isValid(id){ return /^[NS]?#?\d+$/i.test(id) || /^\d+$/.test(id); }
 }
 
 const CatalogProviders = (function(){
