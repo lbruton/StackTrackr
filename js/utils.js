@@ -653,7 +653,7 @@ const sanitizeObjectFields = (obj) => {
  * Allowed inventory item types
  * @constant {string[]}
  */
-const VALID_TYPES = ["Coin", "Bar", "Round", "Note", "Aurum", "Other"];
+const VALID_TYPES = ["Coin", "Bar", "Round", "Note", "Aurum", "Set", "Other"];
 
 /**
  * Normalizes item type to one of the predefined options

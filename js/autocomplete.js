@@ -339,6 +339,7 @@ const normalizeItemName = (fullName) => {
     'goldback': 'Goldback',
     'zombucks': 'Zombucks',
     'silverback': 'Silverback',
+    'year of the': 'Lunar Series',
   };
   for (const [keyword, groupName] of Object.entries(keywordGroups)) {
     if (nameLower.includes(keyword)) {
@@ -360,6 +361,9 @@ const normalizeItemName = (fullName) => {
     .replace(/\b(?:FS|FR|DCAM|First Strike|First Release|Deep Cameo)\b.*/i, '')
     .replace(/\s+(?:Silver|Gold|Platinum|Palladium)\s+(?:Coin|Bar|Round)\s*$/i, '')
     .trim();
+
+  // Clean up any leading punctuation/dashes left after stripping
+  name = name.replace(/^[\s\-–—:,]+/, '').trim();
 
   return name || fullName.trim();
 };

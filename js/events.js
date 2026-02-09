@@ -736,6 +736,8 @@ const setupEventListeners = () => {
             'Note': 'banknote',
             // Aurum omitted — Goldbacks are "Embedded-asset notes" on Numista,
             // which isn't a valid API category. Uncategorized search finds them.
+            // Set omitted — Numista sets use a different URL scheme (set.php)
+            // and are not searchable via the /types API endpoint.
           };
 
           try {
