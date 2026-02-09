@@ -108,6 +108,17 @@ const syncSettingsUI = () => {
     groupSetting.value = featureFlags.isEnabled('GROUPED_NAME_CHIPS') ? 'yes' : 'no';
   }
 
+  // Dynamic name chips
+  const dynamicSetting = document.getElementById('settingsDynamicChips');
+  if (dynamicSetting && window.featureFlags) {
+    dynamicSetting.value = featureFlags.isEnabled('DYNAMIC_NAME_CHIPS') ? 'yes' : 'no';
+  }
+
+  // Chip grouping tables and dropdown
+  if (typeof window.populateBlacklistDropdown === 'function') window.populateBlacklistDropdown();
+  if (typeof window.renderBlacklistTable === 'function') window.renderBlacklistTable();
+  if (typeof window.renderCustomGroupTable === 'function') window.renderCustomGroupTable();
+
   // Storage footer
   updateSettingsFooter();
 
@@ -224,6 +235,24 @@ const setupSettingsEventListeners = () => {
       if (groupInline) groupInline.value = groupSetting.value;
       if (typeof renderActiveFilters === 'function') renderActiveFilters();
     });
+  }
+
+  // Dynamic name chips toggle
+  const dynamicChipsSetting = document.getElementById('settingsDynamicChips');
+  if (dynamicChipsSetting) {
+    dynamicChipsSetting.addEventListener('change', () => {
+      const isEnabled = dynamicChipsSetting.value === 'yes';
+      if (window.featureFlags) {
+        if (isEnabled) featureFlags.enable('DYNAMIC_NAME_CHIPS');
+        else featureFlags.disable('DYNAMIC_NAME_CHIPS');
+      }
+      if (typeof renderActiveFilters === 'function') renderActiveFilters();
+    });
+  }
+
+  // Chip grouping events (blacklist + custom rules)
+  if (typeof window.setupChipGroupingEvents === 'function') {
+    window.setupChipGroupingEvents();
   }
 
   // Settings modal close button

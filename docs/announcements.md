@@ -1,5 +1,6 @@
 ## What's New
 
+- **Custom chip grouping & blacklist (v3.16.00)**: Define custom chip labels with comma-separated name patterns. Right-click any name chip to blacklist it. Dynamic chips auto-extract text from parentheses/quotes in item names. New Settings > Grouping panel for all chip controls
 - **Name column & action icon fix (v3.14.01)**: Long names truncate with ellipsis, N# chips compacted to just "N#" (hover for full ID), action icons no longer clipped on narrow viewports
 - **Encrypted portable backup (v3.14.00)**: Export all data as a password-protected `.stvault` file (AES-256-GCM). Import on any device to restore inventory, settings, API keys, and price history. Password strength bar + crypto fallback for file:// protocol
 - **NGC cert lookup fix (v3.12.02)**: Clicking a graded item's cert tag now opens NGC with the actual coin details visible
