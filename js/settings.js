@@ -560,7 +560,7 @@ const renderFilterChipCategoryTable = () => {
     const groupSelect = document.createElement('select');
     groupSelect.className = 'control-select';
     groupSelect.title = 'Merge group — same letter = chips sort together';
-    groupSelect.style.cssText = 'width:auto;min-width:2.5rem;padding:0.15rem 0.3rem;font-size:0.8rem';
+    groupSelect.style.cssText = 'width:auto;min-width:3.2rem;padding:0.15rem 0.3rem;font-size:0.8rem';
     const groupOptions = ['\u2014', 'A', 'B', 'C', 'D', 'E'];
     groupOptions.forEach(letter => {
       const opt = document.createElement('option');
