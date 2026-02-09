@@ -267,6 +267,7 @@ const setupAckModalEvents = () => {
  */
 const getEmbeddedWhatsNew = () => {
   return `
+    <li><strong>v3.14.00 – Encrypted portable backup</strong>: Export all data as a password-protected .stvault file (AES-256-GCM). Import on any device to restore inventory, settings, API keys, and price history</li>
     <li><strong>v3.12.02 – NGC cert lookup fix</strong>: Cert tag click now opens NGC with actual coin details visible</li>
     <li><strong>v3.12.02 – Numista Sets</strong>: New "Set" type for mint/proof sets with S-prefix Numista IDs</li>
     <li><strong>v3.12.02 – Source column cleanup</strong>: URL sources display domain name only with link icon</li>

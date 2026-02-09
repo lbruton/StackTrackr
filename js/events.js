@@ -1197,6 +1197,62 @@ const setupEventListeners = () => {
       );
     }
 
+    // Vault Encrypted Backup Buttons
+    if (elements.vaultExportBtn) {
+      safeAttachListener(
+        elements.vaultExportBtn,
+        "click",
+        function () {
+          openVaultModal("export");
+        },
+        "Vault export button",
+      );
+    }
+
+    if (elements.vaultImportBtn) {
+      safeAttachListener(
+        elements.vaultImportBtn,
+        "click",
+        function () {
+          if (elements.vaultImportFile) elements.vaultImportFile.click();
+        },
+        "Vault import button",
+      );
+    }
+
+    if (elements.vaultImportFile) {
+      safeAttachListener(
+        elements.vaultImportFile,
+        "change",
+        function (e) {
+          var file = e.target.files && e.target.files[0];
+          if (file) {
+            openVaultModal("import", file);
+            // Reset input so the same file can be selected again
+            e.target.value = "";
+          }
+        },
+        "Vault import file input",
+      );
+    }
+
+    // Vault modal live password events
+    (function () {
+      var pw = document.getElementById("vaultPassword");
+      var cpw = document.getElementById("vaultConfirmPassword");
+      if (pw) {
+        pw.addEventListener("input", function () {
+          updateStrengthBar(pw.value);
+          if (cpw) updateMatchIndicator(pw.value, cpw.value);
+        });
+      }
+      if (cpw) {
+        cpw.addEventListener("input", function () {
+          if (pw) updateMatchIndicator(pw.value, cpw.value);
+        });
+      }
+    })();
+
     // Remove Inventory Data Button
     if (elements.removeInventoryDataBtn) {
       safeAttachListener(
