@@ -91,6 +91,13 @@ const populateVersionModal = (version, html) => {
  */
 const getEmbeddedChangelog = (version) => {
   const changelogs = {
+    "3.16.01": `
+      <li><strong>Cache timeout persistence</strong>: Per-provider cache timeout settings now persist across page reloads</li>
+      <li><strong>Historical data for all providers</strong>: Metals-API and MetalPriceAPI now fetch historical data on first sync instead of current-only prices</li>
+      <li><strong>Auto-sync all providers</strong>: Page refresh syncs all configured providers with stale caches, not just the default</li>
+      <li><strong>Standalone "Save" button</strong>: Save API key and settings without triggering a connection test or price fetch</li>
+      <li><strong>Numista usage progress bar</strong>: Tracks API calls persistently with monthly auto-reset — shows X/2000 calls in Settings</li>
+    `,
     "3.16.00": `
       <li><strong>Custom chip grouping</strong>: Define your own chip labels with comma-separated name patterns — group items any way you want</li>
       <li><strong>Smart grouping blacklist</strong>: Right-click any name chip to suppress it. Manage blacklisted chips in Settings &gt; Grouping</li>

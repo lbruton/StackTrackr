@@ -267,6 +267,7 @@ const setupAckModalEvents = () => {
  */
 const getEmbeddedWhatsNew = () => {
   return `
+    <li><strong>v3.16.01 – API settings fixes & Numista usage</strong>: Cache timeout persists per-provider, historical data fetches for all providers, page refresh syncs all configured APIs. Standalone "Save" button per provider. Numista usage progress bar with monthly auto-reset</li>
     <li><strong>v3.16.00 – Custom chip grouping & blacklist</strong>: Define custom chip labels with name patterns, right-click chips to blacklist, auto-extract dynamic chips from parentheses/quotes in names</li>
     <li><strong>v3.14.01 – Name column & action icon fix</strong>: Long names truncate properly, N# chips compacted, action icons no longer clipped</li>
     <li><strong>v3.14.00 – Encrypted portable backup</strong>: Export all data as a password-protected .stvault file (AES-256-GCM). Import on any device to restore inventory, settings, API keys, and price history</li>
