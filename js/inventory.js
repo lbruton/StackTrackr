@@ -1008,8 +1008,8 @@ const renderTable = () => {
         ${filterLink('name', item.name, 'var(--text-primary)', undefined, item.name)}${gradeTag}${numistaId
           ? `<span class="numista-tag" data-numista-id="${escapeAttribute(String(numistaId))}"
                data-coin-name="${escapeAttribute(item.name)}"
-               title="View N#${escapeAttribute(String(numistaId))} on Numista"
-               tabindex="0" role="button">N#${sanitizeHtml(String(numistaId))}</span>`
+               title="N#${escapeAttribute(String(numistaId))} — View on Numista"
+               tabindex="0" role="button">N#</span>`
           : ''}${item.year
           ? `<span class="year-tag" title="Year: ${escapeAttribute(String(item.year))}">${sanitizeHtml(String(item.year))}</span>`
           : ''}
