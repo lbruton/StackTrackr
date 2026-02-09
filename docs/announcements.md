@@ -1,5 +1,10 @@
 ## What's New
 
+- **NGC cert lookup fix (v3.12.02)**: Clicking a graded item's cert tag now opens NGC with the actual coin details visible
+- **Name column overflow fix (v3.12.02)**: Long names truncate with ellipsis — tags (Year, N#, Grade) always stay visible
+- **Numista Sets (v3.12.02)**: New "Set" type for mint/proof sets with S-prefix Numista IDs (e.g., S4203)
+- **"Lunar Series" chip (v3.12.02)**: "Year of the Dragon/Snake/etc." items group under one chip
+- **Source column cleanup (v3.12.02)**: URL sources like "apmex.com" display as "apmex" with link icon
 - **Sticky header fix (v3.12.01)**: Column headers now correctly pin at the top of the scrollable portal view during vertical scroll
 - **Portal view (v3.12.00)**: Inventory table now renders all items in a scrollable container with sticky column headers — pagination removed. Visible rows (10/15/25/50/100) control viewport height
 - **Unified Settings modal (v3.11.00)**: API, Files, and Appearance consolidated into a single Settings modal with sidebar navigation. Header simplified to About + Settings

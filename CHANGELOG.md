@@ -5,6 +5,22 @@ All notable changes to StakTrakr will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.12.02] - 2026-02-08
+
+### Fixed
+
+- **NGC cert lookup**: Cert tag click now opens NGC with query params (`CertNum`, `Grade`, `lookup`) so the actual coin details display instead of the blank lookup form
+- **Name column overflow**: Long item names no longer push Source and Actions columns off-screen. Name text truncates with ellipsis; Year, N#, and Grade tags always stay visible via flex layout
+- **"- Route 66" chip**: Leading dash/punctuation stripped from normalized chip names after suffix removal
+- **Source column display**: URL-like sources (e.g., "apmex.com") now display the domain name only ("apmex") with a link icon; plain text sources show without icon
+
+### Added
+
+- **"Lunar Series" chip**: Items with "Year of the" in the name (e.g., "Year of the Dragon") now group under a "Lunar Series" filter chip
+- **Numista Sets support**: New "Set" inventory type with purple color. Numista S-prefix IDs (e.g., S4203) route to the correct `set.php` URL pattern instead of `pieces{ID}.html`
+
+---
+
 ## [3.12.01] - 2026-02-08
 
 ### Fixed — Sticky header

@@ -66,6 +66,8 @@
   --type-bar-text: #ffffff;
   --type-note-bg: #047857;
   --type-note-text: #f8fafc;
+  --type-set-bg: #8B5CF6;
+  --type-set-text: #ffffff;
   --type-other-bg: #6d35d0;
   --type-other-text: #f8fafc;
 
@@ -115,6 +117,8 @@
   --type-bar-text: #1e293b;
   --type-note-bg: #047857;
   --type-note-text: #ffffff;
+  --type-set-bg: #a78bfa;
+  --type-set-text: #1e293b;
   --type-other-bg: #8b5cf6;
   --type-other-text: #ffffff;
 
@@ -169,6 +173,8 @@
   --type-bar-text: #ffffff;
   --type-note-bg: #066b52;
   --type-note-text: #ffffff;
+  --type-set-bg: #7c3aed;
+  --type-set-text: #ffffff;
   --type-other-bg: #6a3fa8;
   --type-other-text: #ffffff;
 
@@ -2183,6 +2189,33 @@ td {
 td[data-column="name"] {
   max-width: none;
   width: auto;
+  overflow: hidden; /* Constrain inner flex container to cell's computed width */
+}
+
+/* Name cell flex layout — name text truncates, tags stay visible */
+.name-cell-content {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  max-width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+/* Name text truncates with ellipsis */
+.name-cell-content > .filter-text {
+  flex: 1 1 0;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Tags never shrink — always visible */
+.name-cell-content > .year-tag,
+.name-cell-content > .numista-tag,
+.name-cell-content > .grade-tag {
+  flex-shrink: 0;
 }
 
 td[data-column="purchaseLocation"],
@@ -2219,13 +2252,11 @@ th[data-column="date"] {
 /* Metal column expansion on hover - CELLS ONLY */
 #inventoryTable td[data-column="metal"]:hover {
   max-width: none;
-  white-space: normal;
-  word-wrap: break-word;
+  white-space: nowrap;
   z-index: 10;
   background: var(--bg-primary);
   box-shadow: var(--shadow);
   border-radius: var(--radius-sm);
-  padding: 0.5rem;
 }
 
 /* Price column toggle styling */
@@ -4732,6 +4763,7 @@ th {
 .type-round { color: var(--type-round-bg); }
 .type-bar { color: var(--type-bar-bg); }
 .type-note { color: var(--type-note-bg); }
+.type-set { color: var(--type-set-bg); }
 .type-other { color: var(--type-other-bg); }
 
 /* =============================================================================
@@ -5409,6 +5441,10 @@ th {
 .type-chip.note {
   background-color: var(--type-note-bg);
   color: var(--type-note-text);
+}
+.type-chip.set {
+  background-color: var(--type-set-bg);
+  color: var(--type-set-text);
 }
 .type-chip.other {
   background-color: var(--type-other-bg);
