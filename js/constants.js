@@ -230,10 +230,10 @@ const CERT_LOOKUP_URLS = {
  * Follows BRANCH.RELEASE.PATCH.state format
  * State codes: a=alpha, b=beta, rc=release candidate
  * Example: 3.03.02a → branch 3, release 03, patch 02, alpha
- * Updated: 2026-02-09 - Feature release: Custom chip grouping & smart grouping blacklist
+ * Updated: 2026-02-09 - Patch: API settings fixes & Numista usage tracking
  */
 
-const APP_VERSION = "3.16.00";
+const APP_VERSION = "3.16.01";
 
 /**
  * @constant {string} DEFAULT_CURRENCY - Default currency code for monetary formatting

@@ -88,12 +88,22 @@ const loadApiConfig = () => {
         Object.keys(usage).forEach((p) => (usage[p].used = 0));
         needsSave = true;
       }
+      // Reconstruct per-provider cache timeouts, defaulting to global cacheHours or 24
+      const cacheTimeouts = config.cacheTimeouts || {};
+      const globalCache = Number.isFinite(config.cacheHours) ? config.cacheHours : 24;
+      Object.keys(API_PROVIDERS).forEach((p) => {
+        if (!Number.isFinite(cacheTimeouts[p]) || cacheTimeouts[p] < 0) {
+          cacheTimeouts[p] = globalCache;
+        }
+      });
+
       const result = {
         provider: config.provider || "",
         // Clone keys object to prevent accidental cross-provider references
         keys: { ...(config.keys || {}) },
         cacheHours:
           typeof config.cacheHours === "number" ? config.cacheHours : 24,
+        cacheTimeouts,
         customConfig: config.customConfig || {
           baseUrl: "",
           endpoint: "",
@@ -117,16 +127,19 @@ const loadApiConfig = () => {
   const metals = {};
   const historyDays = {};
   const historyTimes = {};
+  const defaultCacheTimeouts = {};
   Object.keys(API_PROVIDERS).forEach((p) => {
     usage[p] = { quota: DEFAULT_API_QUOTA, used: 0 };
     metals[p] = { silver: true, gold: true, platinum: true, palladium: true };
     historyDays[p] = p === "METALS_DEV" ? 29 : 30;
     historyTimes[p] = [];
+    defaultCacheTimeouts[p] = 24;
   });
   return {
     provider: "",
     keys: {},
     cacheHours: 24,
+    cacheTimeouts: defaultCacheTimeouts,
     customConfig: { baseUrl: "", endpoint: "", format: "symbol" },
     metals,
     usage,
@@ -147,6 +160,7 @@ const saveApiConfig = (config) => {
       keys: {},
       cacheHours:
         typeof config.cacheHours === "number" ? config.cacheHours : 24,
+      cacheTimeouts: config.cacheTimeouts || {},
       customConfig: config.customConfig || {
         baseUrl: "",
         endpoint: "",
@@ -211,9 +225,14 @@ const clearApiCache = () => {
  * Gets cache duration in milliseconds
  * @returns {number} Cache duration
  */
-const getCacheDurationMs = () => {
-  const hours = apiConfig?.cacheHours ?? 24;
-  return hours * 60 * 60 * 1000;
+const getCacheDurationMs = (provider) => {
+  let hours;
+  if (provider && Number.isFinite(apiConfig?.cacheTimeouts?.[provider])) {
+    hours = apiConfig.cacheTimeouts[provider];
+  } else {
+    hours = apiConfig?.cacheHours ?? 24;
+  }
+  return (Number.isFinite(hours) && hours >= 0 ? hours : 24) * 60 * 60 * 1000;
 };
 
 /**
@@ -387,8 +406,8 @@ const refreshProviderStatuses = () => {
     console.error("Error reading API cache for status check:", err);
   }
   const now = Date.now();
-  const duration = getCacheDurationMs();
   Object.keys(API_PROVIDERS).forEach((prov) => {
+    const duration = getCacheDurationMs(prov);
     if (config.keys[prov]) {
       // API key is stored
       if (cache && cache.provider === prov && cache.timestamp) {
@@ -670,7 +689,7 @@ const loadApiCache = () => {
       const cache = JSON.parse(stored);
       const now = new Date().getTime();
 
-      const duration = getCacheDurationMs();
+      const duration = getCacheDurationMs(cache.provider);
       if (cache.timestamp && now - cache.timestamp < duration) {
         return cache;
       } else {
@@ -690,7 +709,7 @@ const loadApiCache = () => {
  */
 const saveApiCache = (data, provider) => {
   try {
-    const duration = getCacheDurationMs();
+    const duration = getCacheDurationMs(provider);
     if (duration === 0) {
       localStorage.removeItem(API_CACHE_KEY);
       apiCache = null;
@@ -724,7 +743,7 @@ const autoSyncSpotPrices = async () => {
 
   const cache = loadApiCache();
   const now = Date.now();
-  const duration = getCacheDurationMs();
+  const duration = getCacheDurationMs(apiConfig.provider);
 
   const cacheValid =
     cache &&
@@ -738,6 +757,49 @@ const autoSyncSpotPrices = async () => {
   } else {
     refreshFromCache();
   }
+
+  // Sync other configured providers whose per-provider cache is stale
+  const config = loadApiConfig();
+  for (const prov of Object.keys(API_PROVIDERS)) {
+    if (prov === apiConfig.provider) continue; // Already synced above
+    const key = config.keys?.[prov];
+    if (!key) continue;
+    const provDuration = getCacheDurationMs(prov);
+    // Check per-provider cache staleness using spot history timestamps
+    const lastSync = getLastProviderSyncTime(prov);
+    if (lastSync && now - lastSync < provDuration) continue;
+    try {
+      await fetchSpotPricesFromApi(prov, key);
+      setProviderStatus(prov, "connected");
+    } catch (err) {
+      console.warn(`Auto-sync failed for ${prov}:`, err.message);
+      setProviderStatus(prov, "error");
+    }
+  }
+};
+
+/**
+ * Gets the last sync timestamp for a specific provider from spot history
+ * @param {string} provider - Provider key
+ * @returns {number|null} Timestamp in ms or null if never synced
+ */
+const getLastProviderSyncTime = (provider) => {
+  try {
+    const providerName = API_PROVIDERS[provider]?.name;
+    if (!providerName || !spotHistory || !spotHistory.length) return null;
+    // Find most recent API entry from this provider
+    for (let i = spotHistory.length - 1; i >= 0; i--) {
+      const entry = spotHistory[i];
+      if (entry.source === "api" && entry.provider === providerName) {
+        // Parse timestamp string "YYYY-MM-DD HH:MM:SS" to ms
+        const ts = new Date(entry.timestamp).getTime();
+        if (!isNaN(ts)) return ts;
+      }
+    }
+  } catch (e) {
+    console.warn("Error checking provider sync time:", e);
+  }
+  return null;
 };
 
 /**
@@ -920,7 +982,7 @@ const fetchSpotPricesFromApi = async (provider, apiKey) => {
   // Try batch request first if supported
   if (providerConfig.batchSupported) {
     try {
-      let historyDays = config.historyDays?.[provider] || 0;
+      let historyDays = config.historyDays?.[provider] || 30;
       if (provider === "METALS_DEV" && historyDays > 30) historyDays = 30;
       const historyTimes = config.historyTimes?.[provider] || [];
       return await fetchBatchSpotPrices(
@@ -1062,7 +1124,7 @@ const syncSpotPricesFromApi = async (
     if (cache && cache.data && cache.timestamp) {
       const now = new Date().getTime();
       const cacheAge = now - cache.timestamp;
-      const duration = getCacheDurationMs();
+      const duration = getCacheDurationMs(apiConfig.provider);
 
       if (cacheAge < duration) {
         if (showProgress) {
@@ -1558,6 +1620,62 @@ const hideProviderInfo = () => {
   window.showProviderInfo = showProviderInfo;
   window.hideProviderInfo = hideProviderInfo;
 
+/**
+ * Saves provider settings (key, cache timeout, history days) without testing or fetching
+ * @param {string} provider - Provider key
+ */
+const handleProviderSave = (provider) => {
+  const keyInput = document.getElementById(`apiKey_${provider}`);
+  if (!keyInput) return;
+
+  const apiKey = keyInput.value.trim();
+  const config = loadApiConfig();
+  config.keys = { ...(config.keys || {}) };
+
+  if (apiKey) {
+    config.keys[provider] = apiKey;
+  }
+
+  if (provider === "CUSTOM") {
+    const base = document.getElementById("apiBase_CUSTOM")?.value.trim() || "";
+    const endpoint = document.getElementById("apiEndpoint_CUSTOM")?.value.trim() || "";
+    const format = document.getElementById("apiFormat_CUSTOM")?.value || "symbol";
+    config.customConfig = { baseUrl: base, endpoint, format };
+  }
+
+  // Persist per-provider settings (cache timeout, history days, history times)
+  updateProviderSettings(provider);
+
+  // Re-load after updateProviderSettings saved, then layer key + CUSTOM config on top
+  const updated = loadApiConfig();
+  updated.keys = { ...(updated.keys || {}) };
+  if (apiKey) updated.keys[provider] = apiKey;
+  if (provider === "CUSTOM") {
+    updated.customConfig = {
+      baseUrl: document.getElementById("apiBase_CUSTOM")?.value.trim() || "",
+      endpoint: document.getElementById("apiEndpoint_CUSTOM")?.value.trim() || "",
+      format: document.getElementById("apiFormat_CUSTOM")?.value || "symbol",
+    };
+  }
+  saveApiConfig(updated);
+
+  updateDefaultProviderButtons();
+  updateSyncButtonStates();
+
+  // Brief visual confirmation via status indicator
+  const btn = document.querySelector(`.api-save-btn[data-provider="${provider}"]`);
+  if (btn) {
+    const origText = btn.textContent;
+    btn.textContent = "Saved!";
+    btn.disabled = true;
+    setTimeout(() => {
+      btn.textContent = origText;
+      btn.disabled = false;
+    }, 1200);
+  }
+};
+
+window.handleProviderSave = handleProviderSave;
 window.handleProviderSync = handleProviderSync;
 window.clearApiKey = clearApiKey;
 window.clearApiCache = clearApiCache;

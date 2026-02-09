@@ -127,6 +127,11 @@ const syncSettingsUI = () => {
     renderApiStatusSummary();
   }
 
+  // Numista usage bar
+  if (typeof renderNumistaUsageBar === 'function') {
+    renderNumistaUsageBar();
+  }
+
   // Set first provider tab active if none visible
   const anyVisible = document.querySelector('.settings-provider-panel[style*="display: block"]');
   if (!anyVisible) {
