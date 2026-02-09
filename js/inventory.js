@@ -72,7 +72,6 @@ const createBackupZip = async () => {
       spotPrices: spotPrices,
       theme: localStorage.getItem(THEME_KEY) || 'light',
       itemsPerPage: itemsPerPage,
-      currentPage: currentPage,
       searchQuery: searchQuery,
       sortColumn: sortColumn,
       sortDirection: sortDirection,
@@ -937,13 +936,10 @@ const renderTable = () => {
     updateItemCount(filteredInventory.length, inventory.length);
     const sortedInventory = sortInventory(filteredInventory);
     debugLog('renderTable start', sortedInventory.length, 'items');
-    const totalPages = calculateTotalPages(sortedInventory);
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    const endIndex = Math.min(startIndex + itemsPerPage, sortedInventory.length);
 
     const rows = [];
 
-    for (let i = startIndex; i < endIndex; i++) {
+    for (let i = 0; i < sortedInventory.length; i++) {
       const item = sortedInventory[i];
       const originalIdx = inventory.indexOf(item);
       debugLog('renderTable row', i, item.name);
@@ -1038,20 +1034,14 @@ const renderTable = () => {
       `);
     }
 
-    const visibleCount = endIndex - startIndex;
-    const placeholders = Array.from(
-      { length: Math.max(0, itemsPerPage - visibleCount) },
-      () => '<tr><td class="shrink" colspan="12">&nbsp;</td></tr>'
-    );
-
     // Find tbody element directly if cached version fails
     const tbody = elements.inventoryTable || document.querySelector('#inventoryTable tbody');
     if (!tbody) {
       console.error('Could not find table tbody element');
       return;
     }
-    
-    tbody.innerHTML = rows.concat(placeholders).join('');
+
+    tbody.innerHTML = rows.join('');
     hideEmptyColumns();
 
     debugLog('renderTable complete');
@@ -1071,7 +1061,7 @@ const renderTable = () => {
       header.appendChild(indicator);
     }
 
-    renderPagination(sortedInventory);
+    updatePortalHeight();
     updateSummary();
     
     // Re-setup column resizing and responsive visibility after table re-render

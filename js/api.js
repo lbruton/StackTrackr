@@ -530,56 +530,9 @@ const hideApiHistoryModal = () => {
  * Shows API providers modal
  */
 const showApiProvidersModal = () => {
-  const modal = document.getElementById("apiProvidersModal");
-  if (modal) {
-    refreshProviderStatuses();
-    updateProviderHistoryTables();
-    
-    // Initialize provider settings
-    Object.keys(API_PROVIDERS).forEach(provider => {
-      setupProviderSettingsListeners(provider);
-      
-      // Load current settings
-      const config = loadApiConfig();
-      
-      // Set cache timeout
-      const cacheSelect = document.getElementById(`cacheTimeout_${provider}`);
-      if (cacheSelect) {
-        const timeout = config.cacheTimeouts?.[provider] || 24;
-        cacheSelect.value = timeout;
-      }
-      
-      // Set history days
-      const historyInput = document.getElementById(`historyDays_${provider}`);
-      if (historyInput) {
-        const defaultDays = provider === "METALS_DEV" ? 29 : 30;
-        let days = config.historyDays?.[provider];
-        if (typeof days !== "number" || isNaN(days)) days = defaultDays;
-        if (provider === "METALS_DEV" && days > 30) days = 30;
-        historyInput.value = days;
-      }
-
-      // Set history times
-      const timesInput = document.getElementById(`historyTimes_${provider}`);
-      if (timesInput) {
-        const times = config.historyTimes?.[provider] || [];
-        timesInput.value = Array.isArray(times) ? times.join(',') : '';
-      }
-
-      // Set metal selections
-      const metals = config.metals?.[provider] || {};
-      ['silver', 'gold', 'platinum', 'palladium'].forEach(metal => {
-        const checkbox = document.querySelector(`.provider-metal[data-provider="${provider}"][data-metal="${metal}"]`);
-        if (checkbox) {
-          checkbox.checked = metals[metal] !== false;
-        }
-      });
-      
-      // Update batch calculation
-      updateBatchCalculation(provider);
-    });
-    
-    modal.style.display = "flex";
+  // Redirect to Settings modal API section
+  if (typeof showSettingsModal === "function") {
+    showSettingsModal('api');
   }
 };
 
@@ -587,8 +540,10 @@ const showApiProvidersModal = () => {
  * Hides API providers modal
  */
 const hideApiProvidersModal = () => {
-  const modal = document.getElementById("apiProvidersModal");
-  if (modal) modal.style.display = "none";
+  // Legacy — Settings modal handles its own close
+  if (typeof hideSettingsModal === "function") {
+    hideSettingsModal();
+  }
 };
 
 /**
@@ -1423,11 +1378,10 @@ const updateSyncButtonStates = (syncing = false) => {
  * Updates API status display in modal
  */
 /**
- * Shows settings modal and populates API fields
+ * Populates the API section fields with current configuration.
+ * Called when switching to the API section in the Settings modal.
  */
-const showApiModal = () => {
-  const modal = document.getElementById("apiModal");
-  if (!modal) return;
+const populateApiSection = () => {
   let currentConfig = loadApiConfig() || {
     provider: "",
     keys: {},
@@ -1457,39 +1411,92 @@ const showApiModal = () => {
 
   updateDefaultProviderButtons();
   updateProviderHistoryTables();
-  modal.style.display = "flex";
+
+  // Initialize provider settings listeners and load saved values
+  const cfg = loadApiConfig();
+  Object.keys(API_PROVIDERS).forEach(provider => {
+    if (typeof setupProviderSettingsListeners === 'function') {
+      setupProviderSettingsListeners(provider);
+    }
+
+    // Load saved cache timeout
+    const cacheSelect = document.getElementById(`cacheTimeout_${provider}`);
+    if (cacheSelect) {
+      cacheSelect.value = cfg.cacheTimeouts?.[provider] || 24;
+    }
+
+    // Load saved history days
+    const historyInput = document.getElementById(`historyDays_${provider}`);
+    if (historyInput) {
+      const defaultDays = provider === "METALS_DEV" ? 29 : 30;
+      let days = cfg.historyDays?.[provider];
+      if (typeof days !== "number" || isNaN(days)) days = defaultDays;
+      if (provider === "METALS_DEV" && days > 30) days = 30;
+      historyInput.value = days;
+    }
+
+    // Load saved history times
+    const timesInput = document.getElementById(`historyTimes_${provider}`);
+    if (timesInput) {
+      const times = cfg.historyTimes?.[provider] || [];
+      timesInput.value = Array.isArray(times) ? times.join(',') : '';
+    }
+
+    // Load saved metal selections
+    const metals = cfg.metals?.[provider] || {};
+    ['silver', 'gold', 'platinum', 'palladium'].forEach(metal => {
+      const checkbox = document.querySelector(`.provider-metal[data-provider="${provider}"][data-metal="${metal}"]`);
+      if (checkbox) {
+        checkbox.checked = metals[metal] !== false;
+      }
+    });
+
+    if (typeof updateBatchCalculation === 'function') {
+      updateBatchCalculation(provider);
+    }
+  });
+
+  if (typeof refreshProviderStatuses === 'function') {
+    refreshProviderStatuses();
+  }
 };
 
 /**
- * Hides API modal
+ * Legacy showApiModal — redirects to Settings modal API section
+ */
+const showApiModal = () => {
+  if (typeof showSettingsModal === "function") {
+    showSettingsModal('api');
+  }
+};
+
+/**
+ * Legacy hideApiModal — redirects to hideSettingsModal
  */
 const hideApiModal = () => {
-  const modal = document.getElementById("apiModal");
-  if (modal) {
-    modal.style.display = "none";
+  if (typeof hideSettingsModal === "function") {
+    hideSettingsModal();
   }
 };
 
+/**
+ * Legacy showFilesModal — redirects to Settings modal Files section
+ */
 const showFilesModal = () => {
-  const modal = document.getElementById("filesModal");
-  if (window.openModalById) {
-    openModalById('filesModal');
-  } else if (modal) {
-    modal.style.display = "flex";
-    document.body.style.overflow = 'hidden';
+  if (typeof showSettingsModal === "function") {
+    showSettingsModal('files');
   }
 };
 
+/**
+ * Legacy hideFilesModal — redirects to hideSettingsModal
+ */
 const hideFilesModal = () => {
-  if (window.closeModalById) {
-    closeModalById('filesModal');
+  if (typeof hideSettingsModal === "function") {
+    hideSettingsModal();
   } else {
-    const modal = document.getElementById("filesModal");
-    if (modal) {
-      modal.style.display = "none";
-    }
-    try { 
-      document.body.style.overflow = ''; 
+    try {
+      document.body.style.overflow = '';
     } catch (e) {
       console.warn('Failed to reset body overflow:', e);
     }
@@ -1547,6 +1554,7 @@ const hideProviderInfo = () => {
   window.hideApiModal = hideApiModal;
   window.showFilesModal = showFilesModal;
   window.hideFilesModal = hideFilesModal;
+  window.populateApiSection = populateApiSection;
   window.showProviderInfo = showProviderInfo;
   window.hideProviderInfo = hideProviderInfo;
 

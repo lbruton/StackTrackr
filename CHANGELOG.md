@@ -5,6 +5,69 @@ All notable changes to StakTrakr will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.12.01] - 2026-02-08
+
+### Fixed — Sticky header
+
+- **Sticky header fix**: Column headers now correctly pin at the top of the scrollable table during vertical scroll. Removed inline `position: relative` set by column-resize JS that overrode CSS `position: sticky` on all non-Actions headers
+- **Scroll container fallback**: Portal scroll container now has a CSS `max-height: 70vh` fallback so sticky headers work even before JS measures exact row heights
+- **Specificity fixes**: Removed `position: relative` from `th[data-column="purchasePrice"]` and `th.icon-col` CSS rules that outranked the sticky rule
+- **Overflow fix**: `.table-section` now uses `overflow: visible` to prevent base `section{overflow:hidden}` from creating a competing scroll context
+
+---
+
+## [3.12.00] - 2026-02-08
+
+### Feature — Portal View (Scrollable Table)
+
+#### Added
+
+- **Portal view**: Inventory table now renders all items in a scrollable container with sticky column headers — replaces slice-based pagination
+- **Visible rows control**: Dropdown (10 / 15 / 25 / 50 / 100) sets the viewport height of the scrollable table; users scroll to see remaining items
+- **Sticky headers**: Column headers stay pinned at the top during vertical scroll via CSS `position: sticky`
+
+#### Changed
+
+- **"Items per page" → "Visible rows"**: Label updated in both the table footer dropdown and the Settings modal
+- **Table footer simplified**: Item count + visible-rows dropdown only; pagination bar (first/prev/1/2/3.../next/last) removed entirely
+
+#### Removed
+
+- **Pagination controls**: `calculateTotalPages()`, `renderPagination()`, `goToPage()` functions removed from `pagination.js`
+- **Placeholder rows**: Empty padding rows no longer rendered to maintain fixed table height
+- **`currentPage` state**: Page tracking variable and all associated resets removed from state, events, search, filters, and settings modules
+- **Pagination CSS**: All `.pagination-*` rules and responsive overrides deleted
+
+---
+
+## [3.11.00] - 2026-02-08
+
+### Feature — Unified Settings Modal
+
+#### Added
+
+- **Settings modal**: Consolidated API, Files, and Appearance into a single near-full-screen modal with sidebar navigation (Site, API, Files, Cloud, Tools)
+- **Settings button**: Gear icon replaces API, Files, and Theme buttons in the header — now just About + Settings
+- **Theme picker**: 3-button theme selector (Light, Dark, Sepia) in Site Settings replaces the cycling toggle button
+- **Items per page persistence**: Items-per-page setting now persists to localStorage via `ITEMS_PER_PAGE_KEY` — no longer resets to 25 on reload
+- **Tabbed API providers**: API provider configuration uses tabbed panels (Metals.dev | Metals-API | MetalPriceAPI | Custom) instead of scrollable list
+- **Settings footer**: Storage usage and app version displayed in the modal footer bar
+- **Cloud & Tools placeholders**: Sidebar sections ready for future BYO-Backend sync and bulk operations
+- **Bidirectional control sync**: Filter chip threshold and smart name grouping controls sync between inline controls and Settings modal
+
+#### Changed
+
+- **Header simplified**: 4 header buttons (About, API, Files, Theme) reduced to 2 (About, Settings)
+- **API providers inline**: Provider configuration moved from separate `apiProvidersModal` into tabbed panels within the API section
+- **Backup reminder**: Now opens Settings → Files section instead of standalone Files modal
+
+#### Removed
+
+- **`apiModal`**: Standalone API modal replaced by Settings → API section
+- **`filesModal`**: Standalone Files modal replaced by Settings → Files section
+- **`apiProvidersModal`**: Standalone providers modal replaced by inline tabbed panels
+- **`appearanceBtn`**: Theme cycling button replaced by Settings → Site → Theme picker
+
 ## [3.10.01] - 2026-02-08
 
 ### Fix — Numista iframe blocked on hosted sites + column sort regression

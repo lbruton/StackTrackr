@@ -91,6 +91,19 @@ const populateVersionModal = (version, html) => {
  */
 const getEmbeddedChangelog = (version) => {
   const changelogs = {
+    "3.12.01": `
+      <li><strong>Sticky header fix</strong>: Column headers now correctly pin at the top of the scrollable table during vertical scroll</li>
+    `,
+    "3.12.00": `
+      <li><strong>Portal view</strong>: Inventory table now renders all items in a scrollable container with sticky column headers — pagination removed</li>
+      <li><strong>Visible rows</strong>: Dropdown (10 / 15 / 25 / 50 / 100) sets the viewport height; scroll to see remaining items</li>
+    `,
+    "3.11.00": `
+      <li><strong>Unified Settings modal</strong>: API, Files, and Appearance consolidated into a single near-full-screen modal with sidebar navigation. Header simplified to About + Settings</li>
+      <li><strong>Theme picker</strong>: 3-button theme selector (Light / Dark / Sepia) replaces the cycling toggle button</li>
+      <li><strong>Tabbed API providers</strong>: Provider configuration uses tabbed panels instead of a scrollable list</li>
+      <li><strong>Items per page persisted</strong>: Items-per-page setting now survives page reloads</li>
+    `,
     "3.10.01": `
       <li><strong>Numista iframe fix</strong>: Numista pages now open in a popup window instead of an iframe — fixes "Can't Open This Page" error on hosted deployments (X-Frame-Options)</li>
       <li><strong>Sort fix</strong>: Gain/Loss and Source columns now sort and resize correctly</li>
