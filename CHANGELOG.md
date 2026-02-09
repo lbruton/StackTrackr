@@ -5,6 +5,21 @@ All notable changes to StakTrakr will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.17.00] - 2026-02-09
+
+### Added — Inline Name Chips, Search Expansion & Backup Fix
+
+- **Inline Name chip settings**: New Settings > Table panel to enable/disable and reorder 6 inline chip types (Grade, Numista, Year, Serial #, Storage Location, Notes Indicator) in the Name cell. Config-driven rendering replaces hard-coded chip order
+- **Table settings section**: New sidebar tab in Settings for table display controls (Visible rows, Inline Name chips). Grouping section renamed to "Chips"
+- **3 new inline chips**: Serial # (purple badge with serial number), Storage Location (muted badge with truncated location), and Notes Indicator (document icon when item has notes) — all disabled by default, enable in Settings > Table
+- **Search expansion**: 6 new fields searchable — Year, Grade, Grading Authority, Cert Number, Numista ID, and Serial Number. Works in both search bar and advanced filter text matching
+
+### Fixed
+
+- **ZIP backup/restore**: chipCustomGroups, chipBlacklist, chipMinCount, featureFlags, and inlineChipConfig now included in ZIP backup and properly restored. Also restores itemsPerPage, sortColumn, and sortDirection (previously backed up but never restored)
+
+---
+
 ## [3.16.02] - 2026-02-09
 
 ### Added

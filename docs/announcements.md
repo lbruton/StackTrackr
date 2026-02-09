@@ -1,5 +1,6 @@
 ## What's New
 
+- **Inline Name chips & search expansion (v3.17.00)**: 3 new inline chips (Serial #, Storage Location, Notes Indicator) join Grade, Numista, and Year in the Name cell. Enable/disable and reorder all 6 chip types in new Settings > Table panel. Search now covers Year, Grade, Grading Authority, Cert #, Numista ID, and Serial Number. ZIP backup/restore includes all chip settings and display preferences. Settings reorganized: Theme, Table, Chips tabs
 - **Edit custom grouping rules (v3.16.02)**: Inline edit button on custom chip grouping rules — modify label and patterns without delete/recreate. Filter chip threshold setting moved to Grouping panel
 - **API settings fixes & Numista usage (v3.16.01)**: Cache timeout now persists per-provider, historical data fetches for all providers, page refresh syncs all configured APIs. New standalone "Save" button per provider. Numista usage progress bar tracks API calls with monthly auto-reset
 - **Custom chip grouping & blacklist (v3.16.00)**: Define custom chip labels with comma-separated name patterns. Right-click any name chip to blacklist it. Dynamic chips auto-extract text from parentheses/quotes in item names. New Settings > Grouping panel for all chip controls

@@ -267,6 +267,7 @@ const setupAckModalEvents = () => {
  */
 const getEmbeddedWhatsNew = () => {
   return `
+    <li><strong>v3.17.00 – Inline Name chips & search expansion</strong>: 3 new inline chips (Serial #, Storage Location, Notes Indicator) in the Name cell. Enable/disable and reorder all 6 chip types in new Settings &gt; Table panel. Search covers Year, Grade, Grading Authority, Cert #, Numista ID, and Serial Number. ZIP backup/restore includes all chip and display settings. Settings reorganized: Theme, Table, Chips tabs</li>
     <li><strong>v3.16.02 – Edit custom grouping rules</strong>: Inline edit button on custom chip rules — modify label and patterns without delete/recreate. Filter chip threshold moved to Grouping panel</li>
     <li><strong>v3.16.01 – API settings fixes & Numista usage</strong>: Cache timeout persists per-provider, historical data fetches for all providers, page refresh syncs all configured APIs. Standalone "Save" button per provider. Numista usage progress bar with monthly auto-reset</li>
     <li><strong>v3.16.00 – Custom chip grouping & blacklist</strong>: Define custom chip labels with name patterns, right-click chips to blacklist, auto-extract dynamic chips from parentheses/quotes in names</li>

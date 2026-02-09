@@ -233,7 +233,7 @@ const CERT_LOOKUP_URLS = {
  * Updated: 2026-02-09 - Patch: Edit custom grouping rules, relocate chip threshold
  */
 
-const APP_VERSION = "3.16.02";
+const APP_VERSION = "3.17.00";
 
 /**
  * @constant {string} DEFAULT_CURRENCY - Default currency code for monetary formatting
@@ -432,7 +432,65 @@ const ALLOWED_STORAGE_KEYS = [
   ITEMS_PER_PAGE_KEY,
   "chipCustomGroups",
   "chipBlacklist",
+  "inlineChipConfig",
 ];
+
+// =============================================================================
+// INLINE CHIP CONFIG — controls which chips appear in the Name cell and order
+// =============================================================================
+
+/**
+ * Default inline chip configuration. Order determines display order.
+ * @constant {Array<{id: string, label: string, enabled: boolean}>}
+ */
+const INLINE_CHIP_DEFAULTS = [
+  { id: 'grade',   label: 'Grade',           enabled: true },
+  { id: 'numista', label: 'Numista (N#)',     enabled: true },
+  { id: 'year',    label: 'Year',            enabled: true },
+  { id: 'serial',  label: 'Serial #',         enabled: false },
+  { id: 'storage', label: 'Storage Location', enabled: false },
+  { id: 'notes',   label: 'Notes Indicator',  enabled: false },
+];
+
+/**
+ * Loads the inline chip config from localStorage, merging with defaults
+ * so new chip types added in future versions appear automatically.
+ * @returns {Array<{id: string, label: string, enabled: boolean}>}
+ */
+const getInlineChipConfig = () => {
+  try {
+    const raw = localStorage.getItem('inlineChipConfig');
+    if (raw) {
+      const saved = JSON.parse(raw);
+      // Build a map of saved chips for quick lookup
+      const savedMap = new Map(saved.map(c => [c.id, c]));
+      // Start with saved order, preserving user's arrangement
+      const merged = saved.filter(c => INLINE_CHIP_DEFAULTS.some(d => d.id === c.id));
+      // Append any new defaults not in saved config
+      for (const def of INLINE_CHIP_DEFAULTS) {
+        if (!savedMap.has(def.id)) {
+          merged.push({ ...def });
+        }
+      }
+      return merged;
+    }
+  } catch (e) {
+    console.warn('Failed to load inline chip config:', e);
+  }
+  return INLINE_CHIP_DEFAULTS.map(d => ({ ...d }));
+};
+
+/**
+ * Saves the inline chip config to localStorage.
+ * @param {Array<{id: string, label: string, enabled: boolean}>} config
+ */
+const saveInlineChipConfig = (config) => {
+  try {
+    localStorage.setItem('inlineChipConfig', JSON.stringify(config));
+  } catch (e) {
+    console.warn('Failed to save inline chip config:', e);
+  }
+};
 
 // Persist current application version for comparison on future loads
 try {
@@ -888,6 +946,10 @@ if (typeof window !== "undefined") {
   window.toggleFeature = toggleFeature;
   window.ALLOWED_STORAGE_KEYS = ALLOWED_STORAGE_KEYS;
   window.CERT_LOOKUP_URLS = CERT_LOOKUP_URLS;
+  // Inline chip config
+  window.INLINE_CHIP_DEFAULTS = INLINE_CHIP_DEFAULTS;
+  window.getInlineChipConfig = getInlineChipConfig;
+  window.saveInlineChipConfig = saveInlineChipConfig;
 }
 
 // Expose APP_VERSION globally for non-module usage
