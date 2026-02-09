@@ -125,10 +125,14 @@ const syncSettingsUI = () => {
   // Filter chip category config table
   renderFilterChipCategoryTable();
 
-  // Chip sort order — sync settings dropdown with stored value
+  // Chip sort order — sync settings toggle with stored value
   const chipSortSetting = document.getElementById('settingsChipSortOrder');
   if (chipSortSetting) {
-    chipSortSetting.value = localStorage.getItem('chipSortOrder') || 'default';
+    const saved = localStorage.getItem('chipSortOrder');
+    const active = (saved === 'count') ? 'count' : 'alpha';
+    chipSortSetting.querySelectorAll('.chip-sort-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.sort === active);
+    });
   }
 
   // Storage footer
@@ -267,15 +271,25 @@ const setupSettingsEventListeners = () => {
     });
   }
 
-  // Chip sort order in settings
-  const chipSortSetting = document.getElementById('settingsChipSortOrder');
-  if (chipSortSetting) {
-    chipSortSetting.addEventListener('change', () => {
-      const val = chipSortSetting.value;
+  // Chip sort order toggle in settings
+  const chipSortSettingEl = document.getElementById('settingsChipSortOrder');
+  if (chipSortSettingEl) {
+    chipSortSettingEl.addEventListener('click', (e) => {
+      const btn = e.target.closest('.chip-sort-btn');
+      if (!btn) return;
+      const val = btn.dataset.sort;
       localStorage.setItem('chipSortOrder', val);
-      // Sync inline control
+      // Update active state
+      chipSortSettingEl.querySelectorAll('.chip-sort-btn').forEach(b => {
+        b.classList.toggle('active', b.dataset.sort === val);
+      });
+      // Sync inline toggle
       const chipSortInline = document.getElementById('chipSortOrder');
-      if (chipSortInline) chipSortInline.value = val;
+      if (chipSortInline) {
+        chipSortInline.querySelectorAll('.chip-sort-btn').forEach(b => {
+          b.classList.toggle('active', b.dataset.sort === val);
+        });
+      }
       if (typeof renderActiveFilters === 'function') renderActiveFilters();
     });
   }

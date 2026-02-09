@@ -415,29 +415,34 @@ const setupEventListeners = () => {
       );
     }
 
-    // Chip sort order inline control
+    // Chip sort order inline toggle
     const chipSortEl = document.getElementById('chipSortOrder');
     if (chipSortEl) {
-      // Restore saved value on setup
+      // Restore saved value on setup (migrate 'default' → 'alpha')
       const savedSort = localStorage.getItem('chipSortOrder');
-      if (savedSort) chipSortEl.value = savedSort;
+      const activeSort = (savedSort === 'count') ? 'count' : 'alpha';
+      chipSortEl.querySelectorAll('.chip-sort-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.sort === activeSort);
+      });
 
-      safeAttachListener(
-        chipSortEl,
-        'change',
-        (e) => {
-          const val = e.target.value;
-          localStorage.setItem('chipSortOrder', val);
-          // Sync settings modal control
-          const settingsSort = document.getElementById('settingsChipSortOrder');
-          if (settingsSort) settingsSort.value = val;
-          // Refresh chips
-          if (typeof renderActiveFilters === 'function') {
-            renderActiveFilters();
-          }
-        },
-        'Chip sort order toggle'
-      );
+      chipSortEl.addEventListener('click', (e) => {
+        const btn = e.target.closest('.chip-sort-btn');
+        if (!btn) return;
+        const val = btn.dataset.sort;
+        localStorage.setItem('chipSortOrder', val);
+        // Update active state
+        chipSortEl.querySelectorAll('.chip-sort-btn').forEach(b => {
+          b.classList.toggle('active', b.dataset.sort === val);
+        });
+        // Sync settings modal toggle
+        const settingsSort = document.getElementById('settingsChipSortOrder');
+        if (settingsSort) {
+          settingsSort.querySelectorAll('.chip-sort-btn').forEach(b => {
+            b.classList.toggle('active', b.dataset.sort === val);
+          });
+        }
+        if (typeof renderActiveFilters === 'function') renderActiveFilters();
+      });
     }
 
     if (elements.detailsCloseBtn) {
