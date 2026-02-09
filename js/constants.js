@@ -504,16 +504,16 @@ const saveInlineChipConfig = (config) => {
  * @constant {Array<{id: string, label: string, enabled: boolean}>}
  */
 const FILTER_CHIP_CATEGORY_DEFAULTS = [
-  { id: 'metal',            label: 'Metals',            enabled: true },
-  { id: 'type',             label: 'Types',             enabled: true },
-  { id: 'name',             label: 'Names',             enabled: true },
-  { id: 'customGroup',      label: 'Custom Groups',     enabled: true },
-  { id: 'dynamicName',      label: 'Dynamic Names',     enabled: true },
-  { id: 'purchaseLocation', label: 'Purchase Location', enabled: true },
-  { id: 'storageLocation',  label: 'Storage Location',  enabled: true },
-  { id: 'year',             label: 'Years',             enabled: true },
-  { id: 'grade',            label: 'Grades',            enabled: true },
-  { id: 'numistaId',        label: 'Numista IDs',       enabled: true },
+  { id: 'metal',            label: 'Metals',            enabled: true, group: null },
+  { id: 'type',             label: 'Types',             enabled: true, group: null },
+  { id: 'name',             label: 'Names',             enabled: true, group: null },
+  { id: 'customGroup',      label: 'Custom Groups',     enabled: true, group: null },
+  { id: 'dynamicName',      label: 'Dynamic Names',     enabled: true, group: null },
+  { id: 'purchaseLocation', label: 'Purchase Location', enabled: true, group: null },
+  { id: 'storageLocation',  label: 'Storage Location',  enabled: true, group: null },
+  { id: 'year',             label: 'Years',             enabled: true, group: null },
+  { id: 'grade',            label: 'Grades',            enabled: true, group: null },
+  { id: 'numistaId',        label: 'Numista IDs',       enabled: true, group: null },
 ];
 
 /**

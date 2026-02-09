@@ -512,6 +512,19 @@ const renderFilterChipCategoryTable = () => {
 
   const table = document.createElement('table');
   table.className = 'chip-grouping-table';
+
+  // Header row
+  const thead = document.createElement('thead');
+  const headRow = document.createElement('tr');
+  ['', 'Category', 'Group', ''].forEach(text => {
+    const th = document.createElement('th');
+    th.textContent = text;
+    th.style.cssText = 'font-size:0.75rem;font-weight:normal;opacity:0.6;padding:0.2rem 0.4rem';
+    headRow.appendChild(th);
+  });
+  thead.appendChild(headRow);
+  table.appendChild(thead);
+
   const tbody = document.createElement('tbody');
 
   config.forEach((cat, idx) => {
@@ -541,6 +554,33 @@ const renderFilterChipCategoryTable = () => {
     const tdLabel = document.createElement('td');
     tdLabel.textContent = cat.label;
 
+    // Group dropdown cell
+    const tdGroup = document.createElement('td');
+    tdGroup.style.cssText = 'width:3rem;text-align:center';
+    const groupSelect = document.createElement('select');
+    groupSelect.className = 'control-select';
+    groupSelect.title = 'Merge group — same letter = chips sort together';
+    groupSelect.style.cssText = 'width:auto;min-width:3.2rem;padding:0.15rem 0.3rem;font-size:0.8rem';
+    const groupOptions = ['\u2014', 'A', 'B', 'C', 'D', 'E'];
+    groupOptions.forEach(letter => {
+      const opt = document.createElement('option');
+      opt.value = letter === '\u2014' ? '' : letter;
+      opt.textContent = letter;
+      if ((cat.group || '') === opt.value) opt.selected = true;
+      groupSelect.appendChild(opt);
+    });
+    groupSelect.addEventListener('change', () => {
+      const cfg = getFilterChipCategoryConfig();
+      const item = cfg.at(idx);
+      if (item) {
+        item.group = groupSelect.value || null;
+        saveFilterChipCategoryConfig(cfg);
+        renderFilterChipCategoryTable();
+        if (typeof renderActiveFilters === 'function') renderActiveFilters();
+      }
+    });
+    tdGroup.appendChild(groupSelect);
+
     // Arrow buttons cell
     const tdMove = document.createElement('td');
     tdMove.style.cssText = 'width:3.5rem;text-align:right;white-space:nowrap';
@@ -567,7 +607,7 @@ const renderFilterChipCategoryTable = () => {
     tdMove.appendChild(makeBtn('up', idx === 0));
     tdMove.appendChild(makeBtn('down', idx === config.length - 1));
 
-    tr.append(tdCheck, tdLabel, tdMove);
+    tr.append(tdCheck, tdLabel, tdGroup, tdMove);
     tbody.appendChild(tr);
   });
 
