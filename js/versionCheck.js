@@ -91,6 +91,13 @@ const populateVersionModal = (version, html) => {
  */
 const getEmbeddedChangelog = (version) => {
   const changelogs = {
+    "3.12.02": `
+      <li><strong>NGC cert lookup fix</strong>: Cert tag click now opens NGC with actual coin details visible</li>
+      <li><strong>Name column overflow</strong>: Long names truncate with ellipsis — tags always stay visible</li>
+      <li><strong>Numista Sets</strong>: New "Set" type for mint/proof sets with S-prefix Numista IDs</li>
+      <li><strong>"Lunar Series" chip</strong>: "Year of the Dragon/Snake/etc." items group under one chip</li>
+      <li><strong>Source column cleanup</strong>: URL sources display domain name only with link icon</li>
+    `,
     "3.12.01": `
       <li><strong>Sticky header fix</strong>: Column headers now correctly pin at the top of the scrollable table during vertical scroll</li>
     `,

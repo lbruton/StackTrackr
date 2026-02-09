@@ -267,6 +267,9 @@ const setupAckModalEvents = () => {
  */
 const getEmbeddedWhatsNew = () => {
   return `
+    <li><strong>v3.12.02 – NGC cert lookup fix</strong>: Cert tag click now opens NGC with actual coin details visible</li>
+    <li><strong>v3.12.02 – Numista Sets</strong>: New "Set" type for mint/proof sets with S-prefix Numista IDs</li>
+    <li><strong>v3.12.02 – Source column cleanup</strong>: URL sources display domain name only with link icon</li>
     <li><strong>v3.12.01 – Sticky header fix</strong>: Column headers now correctly pin at the top of the scrollable portal view during vertical scroll</li>
     <li><strong>v3.12.00 – Portal view</strong>: Inventory table now renders all items in a scrollable container with sticky column headers — pagination removed. Visible rows (10/15/25/50/100) control viewport height</li>
     <li><strong>v3.11.00 – Unified Settings modal</strong>: API, Files, and Appearance consolidated into a single Settings modal with sidebar navigation. Header simplified to About + Settings</li>
