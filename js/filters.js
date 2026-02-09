@@ -540,8 +540,7 @@ const renderActiveFilters = () => {
   chips.forEach((f, i) => {
     const chip = document.createElement('span');
     chip.className = 'filter-chip';
-    if (f.isDynamic) chip.classList.add('dynamic-chip');
-    if (f.isCustomGroup) chip.classList.add('custom-chip');
+    // All chip categories render visually identical — no italic/bold distinction
     const firstValue = String(f.value).split(', ')[0];
     let color;
     let textColor;
