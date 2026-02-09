@@ -5,6 +5,16 @@ All notable changes to StakTrakr will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.19.00] - 2026-02-09
+
+### Added — Filter Chip Enhancements
+
+- **Category toggles**: Enable, disable, and reorder 10 filter chip categories (Metals, Types, Names, Custom Groups, Dynamic Names, Purchase Location, Storage Location, Years, Grades, Numista IDs) in Settings > Chips. Disabled categories are hidden from the filter bar. Order persists via `filterChipCategoryConfig` in localStorage
+- **Chip sort order**: Sort chips within each category by Name (A-Z) or Qty (High→Low) from new inline dropdown or Settings > Chips. Bidirectional sync between both controls. Persists via `chipSortOrder` in localStorage
+- **Config-driven chip rendering**: `renderActiveFilters()` refactored from 10 hard-coded category blocks to a single data-driven loop using category descriptor map — adding future categories requires only 2 entries instead of a new code block
+
+---
+
 ## [3.18.00] - 2026-02-09
 
 ### Changed — API Settings Redesign

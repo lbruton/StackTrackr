@@ -91,6 +91,11 @@ const populateVersionModal = (version, html) => {
  */
 const getEmbeddedChangelog = (version) => {
   const changelogs = {
+    "3.19.00": `
+      <li><strong>Category toggles</strong>: Enable, disable, and reorder 10 filter chip categories in Settings &gt; Chips. Disabled categories hidden from filter bar</li>
+      <li><strong>Chip sort order</strong>: Sort chips within each category by Name (A-Z) or Qty (High&rarr;Low) from inline dropdown or Settings. Bidirectional sync between controls</li>
+      <li><strong>Config-driven rendering</strong>: renderActiveFilters() refactored from 10 hard-coded blocks to a single data-driven loop</li>
+    `,
     "3.18.00": `
       <li><strong>Numista first-class tab</strong>: Numista API promoted from appended section to pinned first tab in unified API Configuration panel</li>
       <li><strong>Drag-to-reorder provider priority</strong>: Metals tabs are drag-and-drop reorderable — tab position determines sync priority. Order persists across sessions</li>

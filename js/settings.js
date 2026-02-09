@@ -122,6 +122,15 @@ const syncSettingsUI = () => {
   // Inline chip config table
   renderInlineChipConfigTable();
 
+  // Filter chip category config table
+  renderFilterChipCategoryTable();
+
+  // Chip sort order — sync settings dropdown with stored value
+  const chipSortSetting = document.getElementById('settingsChipSortOrder');
+  if (chipSortSetting) {
+    chipSortSetting.value = localStorage.getItem('chipSortOrder') || 'default';
+  }
+
   // Storage footer
   updateSettingsFooter();
 
@@ -254,6 +263,19 @@ const setupSettingsEventListeners = () => {
         if (isEnabled) featureFlags.enable('DYNAMIC_NAME_CHIPS');
         else featureFlags.disable('DYNAMIC_NAME_CHIPS');
       }
+      if (typeof renderActiveFilters === 'function') renderActiveFilters();
+    });
+  }
+
+  // Chip sort order in settings
+  const chipSortSetting = document.getElementById('settingsChipSortOrder');
+  if (chipSortSetting) {
+    chipSortSetting.addEventListener('change', () => {
+      const val = chipSortSetting.value;
+      localStorage.setItem('chipSortOrder', val);
+      // Sync inline control
+      const chipSortInline = document.getElementById('chipSortOrder');
+      if (chipSortInline) chipSortInline.value = val;
       if (typeof renderActiveFilters === 'function') renderActiveFilters();
     });
   }
@@ -445,6 +467,66 @@ const renderInlineChipConfigTable = () => {
   });
 };
 
+/**
+ * Renders the filter chip category config table in Settings > Chips.
+ * Each row has a checkbox (enable/disable) and up/down arrows for reordering.
+ */
+const renderFilterChipCategoryTable = () => {
+  const container = document.getElementById('filterChipCategoryContainer');
+  if (!container || typeof getFilterChipCategoryConfig !== 'function') return;
+
+  const config = getFilterChipCategoryConfig();
+
+  if (!config.length) {
+    container.innerHTML = '<div class="chip-grouping-empty">No chip categories available</div>';
+    return;
+  }
+
+  let html = '<table class="chip-grouping-table"><tbody>';
+  config.forEach((cat, idx) => {
+    html += `<tr data-cat-id="${cat.id}">
+      <td style="width:2rem;text-align:center;">
+        <input type="checkbox" ${cat.enabled ? 'checked' : ''} data-cat-idx="${idx}" class="filter-cat-toggle" title="Toggle ${cat.label}">
+      </td>
+      <td>${cat.label}</td>
+      <td style="width:3.5rem;text-align:right;white-space:nowrap;">
+        <button type="button" class="inline-chip-move" data-dir="up" data-cat-idx="${idx}" ${idx === 0 ? 'disabled' : ''} title="Move up">&uarr;</button>
+        <button type="button" class="inline-chip-move" data-dir="down" data-cat-idx="${idx}" ${idx === config.length - 1 ? 'disabled' : ''} title="Move down">&darr;</button>
+      </td>
+    </tr>`;
+  });
+  html += '</tbody></table>';
+  container.innerHTML = html;
+
+  // Attach toggle listeners
+  container.querySelectorAll('.filter-cat-toggle').forEach(cb => {
+    cb.addEventListener('change', () => {
+      const cfg = getFilterChipCategoryConfig();
+      const i = parseInt(cb.dataset.catIdx, 10);
+      if (cfg[i]) {
+        cfg[i].enabled = cb.checked;
+        saveFilterChipCategoryConfig(cfg);
+        if (typeof renderActiveFilters === 'function') renderActiveFilters();
+      }
+    });
+  });
+
+  // Attach move listeners
+  container.querySelectorAll('.inline-chip-move').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const cfg = getFilterChipCategoryConfig();
+      const i = parseInt(btn.dataset.catIdx, 10);
+      const dir = btn.dataset.dir;
+      const j = dir === 'up' ? i - 1 : i + 1;
+      if (j < 0 || j >= cfg.length) return;
+      [cfg[i], cfg[j]] = [cfg[j], cfg[i]];
+      saveFilterChipCategoryConfig(cfg);
+      renderFilterChipCategoryTable();
+      if (typeof renderActiveFilters === 'function') renderActiveFilters();
+    });
+  });
+};
+
 // Expose globally
 if (typeof window !== 'undefined') {
   window.showSettingsModal = showSettingsModal;
@@ -453,6 +535,7 @@ if (typeof window !== 'undefined') {
   window.switchProviderTab = switchProviderTab;
   window.setupSettingsEventListeners = setupSettingsEventListeners;
   window.renderInlineChipConfigTable = renderInlineChipConfigTable;
+  window.renderFilterChipCategoryTable = renderFilterChipCategoryTable;
   window.setupProviderTabDrag = setupProviderTabDrag;
   window.loadProviderTabOrder = loadProviderTabOrder;
   window.saveProviderTabOrder = saveProviderTabOrder;

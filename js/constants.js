@@ -233,7 +233,7 @@ const CERT_LOOKUP_URLS = {
  * Updated: 2026-02-09 - Patch: Edit custom grouping rules, relocate chip threshold
  */
 
-const APP_VERSION = "3.18.00";
+const APP_VERSION = "3.19.00";
 
 /**
  * @constant {string} DEFAULT_CURRENCY - Default currency code for monetary formatting
@@ -434,6 +434,8 @@ const ALLOWED_STORAGE_KEYS = [
   "chipBlacklist",
   "inlineChipConfig",
   "apiProviderOrder",
+  "filterChipCategoryConfig",
+  "chipSortOrder",
 ];
 
 // =============================================================================
@@ -490,6 +492,66 @@ const saveInlineChipConfig = (config) => {
     localStorage.setItem('inlineChipConfig', JSON.stringify(config));
   } catch (e) {
     console.warn('Failed to save inline chip config:', e);
+  }
+};
+
+// =============================================================================
+// FILTER CHIP CATEGORY CONFIG — controls which chip categories appear and order
+// =============================================================================
+
+/**
+ * Default filter chip category configuration. Order determines display order.
+ * @constant {Array<{id: string, label: string, enabled: boolean}>}
+ */
+const FILTER_CHIP_CATEGORY_DEFAULTS = [
+  { id: 'metal',            label: 'Metals',            enabled: true },
+  { id: 'type',             label: 'Types',             enabled: true },
+  { id: 'name',             label: 'Names',             enabled: true },
+  { id: 'customGroup',      label: 'Custom Groups',     enabled: true },
+  { id: 'dynamicName',      label: 'Dynamic Names',     enabled: true },
+  { id: 'purchaseLocation', label: 'Purchase Location', enabled: true },
+  { id: 'storageLocation',  label: 'Storage Location',  enabled: true },
+  { id: 'year',             label: 'Years',             enabled: true },
+  { id: 'grade',            label: 'Grades',            enabled: true },
+  { id: 'numistaId',        label: 'Numista IDs',       enabled: true },
+];
+
+/**
+ * Loads the filter chip category config from localStorage, merging with defaults
+ * so new categories added in future versions appear automatically.
+ * @returns {Array<{id: string, label: string, enabled: boolean}>}
+ */
+const getFilterChipCategoryConfig = () => {
+  try {
+    const raw = localStorage.getItem('filterChipCategoryConfig');
+    if (raw) {
+      const saved = JSON.parse(raw);
+      const savedMap = new Map(saved.map(c => [c.id, c]));
+      // Start with saved order, preserving user's arrangement
+      const merged = saved.filter(c => FILTER_CHIP_CATEGORY_DEFAULTS.some(d => d.id === c.id));
+      // Append any new defaults not in saved config
+      for (const def of FILTER_CHIP_CATEGORY_DEFAULTS) {
+        if (!savedMap.has(def.id)) {
+          merged.push({ ...def });
+        }
+      }
+      return merged;
+    }
+  } catch (e) {
+    console.warn('Failed to load filter chip category config:', e);
+  }
+  return FILTER_CHIP_CATEGORY_DEFAULTS.map(d => ({ ...d }));
+};
+
+/**
+ * Saves the filter chip category config to localStorage.
+ * @param {Array<{id: string, label: string, enabled: boolean}>} config
+ */
+const saveFilterChipCategoryConfig = (config) => {
+  try {
+    localStorage.setItem('filterChipCategoryConfig', JSON.stringify(config));
+  } catch (e) {
+    console.warn('Failed to save filter chip category config:', e);
   }
 };
 
@@ -951,6 +1013,10 @@ if (typeof window !== "undefined") {
   window.INLINE_CHIP_DEFAULTS = INLINE_CHIP_DEFAULTS;
   window.getInlineChipConfig = getInlineChipConfig;
   window.saveInlineChipConfig = saveInlineChipConfig;
+  // Filter chip category config
+  window.FILTER_CHIP_CATEGORY_DEFAULTS = FILTER_CHIP_CATEGORY_DEFAULTS;
+  window.getFilterChipCategoryConfig = getFilterChipCategoryConfig;
+  window.saveFilterChipCategoryConfig = saveFilterChipCategoryConfig;
 }
 
 // Expose APP_VERSION globally for non-module usage

@@ -1,5 +1,6 @@
 ## What's New
 
+- **Filter chip enhancements (v3.19.00)**: Enable/disable and reorder 10 filter chip categories in Settings > Chips. Sort chips within each category by Name (A-Z) or Qty (High→Low) from new inline dropdown or Settings. Config-driven rendering replaces hard-coded category blocks
 - **API Settings redesign (v3.18.00)**: Numista promoted to first-class pinned tab. Metals provider tabs are drag-to-reorder — position = sync priority. Compact header status row with per-provider connection indicators and last-used timestamps. Batch badges, savings calculations, info links, and Default/Backup buttons removed. Clickable quota bars replace Quota buttons. Streamlined provider cards: Save, Save and Test, Clear Key
 - **Inline Name chips & search expansion (v3.17.00)**: 3 new inline chips (Serial #, Storage Location, Notes Indicator) join Grade, Numista, and Year in the Name cell. Enable/disable and reorder all 6 chip types in new Settings > Table panel. Search now covers Year, Grade, Grading Authority, Cert #, Numista ID, and Serial Number. ZIP backup/restore includes all chip settings and display preferences. Settings reorganized: Theme, Table, Chips tabs
 - **Edit custom grouping rules (v3.16.02)**: Inline edit button on custom chip grouping rules — modify label and patterns without delete/recreate. Filter chip threshold setting moved to Grouping panel

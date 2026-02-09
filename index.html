@@ -601,6 +601,14 @@
                   <option value="no">No</option>
                 </select>
               </div>
+              <div class="control-group">
+                <label for="chipSortOrder" class="control-label">Chip Sort:</label>
+                <select class="control-select" id="chipSortOrder" title="Sort chips within each category" style="width:auto;min-width:6rem">
+                  <option value="default">Default</option>
+                  <option value="alpha">Name (A-Z)</option>
+                  <option value="count">Qty (High→Low)</option>
+                </select>
+              </div>
             </div>
             <div class="filter-row">
               <div class="active-filters" id="activeFilters"></div>
@@ -1468,6 +1476,24 @@
                 <select id="settingsDynamicChips">
                   <option value="yes">Enabled</option>
                   <option value="no">Disabled</option>
+                </select>
+              </div>
+
+              <div class="settings-group">
+                <div class="settings-group-label">Filter chip categories</div>
+                <p class="settings-subtext">Enable, disable, and reorder chip categories in the filter bar.</p>
+                <div class="chip-grouping-table-container" id="filterChipCategoryContainer">
+                  <div class="chip-grouping-empty">Loading…</div>
+                </div>
+              </div>
+
+              <div class="settings-group">
+                <div class="settings-group-label">Chip sort order</div>
+                <p class="settings-subtext">Sort chips within each category by name or quantity.</p>
+                <select id="settingsChipSortOrder">
+                  <option value="default">Default</option>
+                  <option value="alpha">Name (A-Z)</option>
+                  <option value="count">Qty (High→Low)</option>
                 </select>
               </div>
 
