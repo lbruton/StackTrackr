@@ -770,7 +770,13 @@ const filterInventoryAdvanced = () => {
           item.type,
           item.purchaseLocation,
           item.storageLocation || '',
-          item.notes || ''
+          item.notes || '',
+          String(item.year || ''),
+          item.grade || '',
+          item.gradingAuthority || '',
+          String(item.certNumber || ''),
+          String(item.numistaId || ''),
+          item.serialNumber || ''
         ].join(' ').toLowerCase();
         
         // Check for exact phrase match first
@@ -956,7 +962,13 @@ const filterInventoryAdvanced = () => {
           formattedDate.includes(word) ||
           String(Number.isFinite(Number(item.qty)) ? Number(item.qty) : '').includes(word) ||
           String(Number.isFinite(Number(item.weight)) ? Number(item.weight) : '').includes(word) ||
-          String(Number.isFinite(Number(item.price)) ? Number(item.price) : '').includes(word)
+          String(Number.isFinite(Number(item.price)) ? Number(item.price) : '').includes(word) ||
+          (item.year && wordRegex.test(String(item.year))) ||
+          (item.grade && wordRegex.test(item.grade)) ||
+          (item.gradingAuthority && wordRegex.test(item.gradingAuthority)) ||
+          (item.certNumber && wordRegex.test(String(item.certNumber))) ||
+          (item.numistaId && wordRegex.test(String(item.numistaId))) ||
+          (item.serialNumber && wordRegex.test(item.serialNumber))
         );
       });
     });

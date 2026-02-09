@@ -76,7 +76,14 @@ const createBackupZip = async () => {
       sortColumn: sortColumn,
       sortDirection: sortDirection,
       // Add catalog mappings to settings for backup
-      catalogMappings: catalogManager.exportMappings()
+      catalogMappings: catalogManager.exportMappings(),
+      // Chip grouping settings (v3.16.00+)
+      chipCustomGroups: loadDataSync('chipCustomGroups', []),
+      chipBlacklist: loadDataSync('chipBlacklist', []),
+      chipMinCount: localStorage.getItem('chipMinCount'),
+      featureFlags: localStorage.getItem(FEATURE_FLAGS_KEY),
+      // Inline chip config (v3.17.00+)
+      inlineChipConfig: localStorage.getItem('inlineChipConfig')
     };
     zip.file('settings.json', JSON.stringify(settings, null, 2));
 
@@ -224,6 +231,35 @@ const restoreBackupZip = async (file) => {
       if (settingsObj.catalogMappings) {
         // Use catalog manager to import mappings
         catalogManager.importMappings(settingsObj.catalogMappings, false);
+      }
+
+      // Restore chip grouping settings (v3.16.00+)
+      if (Array.isArray(settingsObj.chipCustomGroups)) {
+        saveDataSync('chipCustomGroups', settingsObj.chipCustomGroups);
+      }
+      if (Array.isArray(settingsObj.chipBlacklist)) {
+        saveDataSync('chipBlacklist', settingsObj.chipBlacklist);
+      }
+      if (settingsObj.chipMinCount != null) {
+        localStorage.setItem('chipMinCount', settingsObj.chipMinCount);
+      }
+      if (settingsObj.featureFlags != null) {
+        localStorage.setItem(FEATURE_FLAGS_KEY, settingsObj.featureFlags);
+      }
+      // Restore inline chip config (v3.17.00+)
+      if (settingsObj.inlineChipConfig != null) {
+        localStorage.setItem('inlineChipConfig', settingsObj.inlineChipConfig);
+      }
+      // Restore display settings (backed up but previously not restored)
+      if (settingsObj.itemsPerPage != null) {
+        localStorage.setItem(ITEMS_PER_PAGE_KEY, String(settingsObj.itemsPerPage));
+        itemsPerPage = Number(settingsObj.itemsPerPage);
+      }
+      if (settingsObj.sortColumn != null) {
+        sortColumn = settingsObj.sortColumn;
+      }
+      if (settingsObj.sortDirection != null) {
+        sortDirection = settingsObj.sortDirection;
       }
     }
 
@@ -948,6 +984,7 @@ const renderTable = () => {
     debugLog('renderTable start', sortedInventory.length, 'items');
 
     const rows = [];
+    const chipConfig = typeof getInlineChipConfig === 'function' ? getInlineChipConfig() : [];
 
     for (let i = 0; i < sortedInventory.length; i++) {
       const item = sortedInventory[i];
@@ -968,7 +1005,7 @@ const renderTable = () => {
       const numistaId = item.numistaId || (typeof catalogManager !== 'undefined'
         && catalogManager.getCatalogId ? catalogManager.getCatalogId(item.serial) : null);
 
-      // Build grade tag (after N# tag in Name cell)
+      // Build inline chip HTML strings for config-driven rendering
       const gradeTag = item.grade ? (() => {
         const authority = item.gradingAuthority || '';
         const certNum = item.certNumber || '';
@@ -991,6 +1028,33 @@ const renderTable = () => {
         return `<span class="grade-tag" ${attrs} title="${escapeAttribute(tooltip)}">${sanitizeHtml(item.grade)}</span>`;
       })() : '';
 
+      const numistaTag = numistaId
+        ? `<span class="numista-tag" data-numista-id="${escapeAttribute(String(numistaId))}"
+               data-coin-name="${escapeAttribute(item.name)}"
+               title="N#${escapeAttribute(String(numistaId))} — View on Numista"
+               tabindex="0" role="button">N#</span>`
+        : '';
+
+      const yearTag = item.year
+        ? `<span class="year-tag" title="Year: ${escapeAttribute(String(item.year))}">${sanitizeHtml(String(item.year))}</span>`
+        : '';
+
+      const serialTag = item.serialNumber
+        ? `<span class="serial-tag" title="S/N: ${escapeAttribute(item.serialNumber)}">${sanitizeHtml(item.serialNumber)}</span>`
+        : '';
+
+      const storageTag = item.storageLocation && item.storageLocation !== 'Unknown'
+        ? `<span class="storage-tag" title="${escapeAttribute(item.storageLocation)}">${sanitizeHtml(item.storageLocation)}</span>`
+        : '';
+
+      const notesIndicator = item.notes
+        ? `<span class="notes-indicator" title="${escapeAttribute((item.notes || '').substring(0, 200))}"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6zm-1 2l5 5h-5V4zM6 20V4h5v7h7v9H6z"/></svg></span>`
+        : '';
+
+      // Config-driven chip ordering
+      const chipMap = { grade: gradeTag, numista: numistaTag, year: yearTag, serial: serialTag, storage: storageTag, notes: notesIndicator };
+      const orderedChips = chipConfig.filter(c => c.enabled && chipMap[c.id]).map(c => chipMap[c.id]).join('');
+
       // Format computed displays
       const meltDisplay = currentSpot > 0 ? formatCurrency(meltValue) : '—';
       const retailDisplay = currentSpot > 0 || isManualRetail ? formatCurrency(retailTotal) : '—';
@@ -1005,14 +1069,7 @@ const renderTable = () => {
       <td class="shrink" data-column="type">${filterLink('type', item.type, getTypeColor(item.type))}</td>
       <td class="expand" data-column="name" style="text-align: left;">
         <div class="name-cell-content">
-        ${filterLink('name', item.name, 'var(--text-primary)', undefined, item.name)}${gradeTag}${numistaId
-          ? `<span class="numista-tag" data-numista-id="${escapeAttribute(String(numistaId))}"
-               data-coin-name="${escapeAttribute(item.name)}"
-               title="N#${escapeAttribute(String(numistaId))} — View on Numista"
-               tabindex="0" role="button">N#</span>`
-          : ''}${item.year
-          ? `<span class="year-tag" title="Year: ${escapeAttribute(String(item.year))}">${sanitizeHtml(String(item.year))}</span>`
-          : ''}
+        ${filterLink('name', item.name, 'var(--text-primary)', undefined, item.name)}${orderedChips}
         </div>
       </td>
       <td class="shrink" data-column="qty">${filterLink('qty', item.qty, 'var(--text-primary)')}</td>

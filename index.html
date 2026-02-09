@@ -1361,12 +1361,16 @@
           <!-- Sidebar Navigation -->
           <nav class="settings-sidebar">
             <button class="settings-nav-item active" data-section="site">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-              Site
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r="2.5"/><circle cx="19" cy="13" r="2.5"/><circle cx="16" cy="20" r="2.5"/><circle cx="7" cy="20" r="2.5"/><circle cx="4" cy="13" r="2.5"/><circle cx="12" cy="13" r="3"/></svg>
+              Theme
+            </button>
+            <button class="settings-nav-item" data-section="table">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
+              Table
             </button>
             <button class="settings-nav-item" data-section="grouping">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
-              Grouping
+              Chips
             </button>
             <button class="settings-nav-item" data-section="api">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83"/></svg>
@@ -1389,18 +1393,29 @@
           <!-- Content Area -->
           <div class="settings-content-area">
 
-            <!-- ===== SITE SETTINGS ===== -->
+            <!-- ===== THEME SETTINGS ===== -->
             <div class="settings-section-panel" id="settingsPanel_site" style="display: block">
-              <h3>Site Settings</h3>
+              <h3>Theme</h3>
 
               <div class="settings-group">
-                <div class="settings-group-label">Theme</div>
+                <div class="settings-group-label">Color scheme</div>
                 <div class="theme-picker">
                   <button class="theme-option" data-theme="light" title="Light">&#9728;&#65039; Light</button>
                   <button class="theme-option" data-theme="dark" title="Dark">&#127769; Dark</button>
                   <button class="theme-option" data-theme="sepia" title="Sepia">&#128220; Sepia</button>
                 </div>
               </div>
+
+              <div class="settings-placeholder" style="margin-top: 1.5rem;">
+                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.3"><circle cx="13.5" cy="6.5" r="2.5"/><circle cx="19" cy="13" r="2.5"/><circle cx="16" cy="20" r="2.5"/><circle cx="7" cy="20" r="2.5"/><circle cx="4" cy="13" r="2.5"/><circle cx="12" cy="13" r="3"/></svg>
+                <p>Custom themes coming soon.</p>
+              </div>
+
+            </div>
+
+            <!-- ===== TABLE SETTINGS ===== -->
+            <div class="settings-section-panel" id="settingsPanel_table" style="display: none">
+              <h3>Table Display</h3>
 
               <div class="settings-group">
                 <div class="settings-group-label">Visible rows</div>
@@ -1413,11 +1428,18 @@
                 </select>
               </div>
 
+              <div class="settings-group">
+                <div class="settings-group-label">Inline Name chips</div>
+                <p class="settings-subtext">Choose which badges appear next to item names in the table.</p>
+                <div class="chip-grouping-table-container" id="inlineChipConfigContainer">
+                  <div class="chip-grouping-empty">Loading...</div>
+                </div>
+              </div>
             </div>
 
-            <!-- ===== GROUPING SETTINGS ===== -->
+            <!-- ===== CHIPS ===== -->
             <div class="settings-section-panel" id="settingsPanel_grouping" style="display: none">
-              <h3>Chip Grouping</h3>
+              <h3>Filter Chips</h3>
 
               <div class="settings-group">
                 <div class="settings-group-label">Filter chip threshold</div>
@@ -1807,7 +1829,6 @@
                         <button class="btn success" id="importJsonMerge">Merge JSON</button>
                         <input accept=".json" hidden id="importJsonFile" type="file" />
                       </div>
-                      <button class="btn secondary" id="cloudSyncBtn">Cloud Sync</button>
                     </div>
                     <progress class="import-progress" id="importProgress" value="0" max="0"></progress>
                     <div class="import-progress-text" id="importProgressText"></div>

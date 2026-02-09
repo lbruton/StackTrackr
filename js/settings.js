@@ -119,6 +119,9 @@ const syncSettingsUI = () => {
   if (typeof window.renderBlacklistTable === 'function') window.renderBlacklistTable();
   if (typeof window.renderCustomGroupTable === 'function') window.renderCustomGroupTable();
 
+  // Inline chip config table
+  renderInlineChipConfigTable();
+
   // Storage footer
   updateSettingsFooter();
 
@@ -275,6 +278,66 @@ const setupSettingsEventListeners = () => {
   }
 };
 
+/**
+ * Renders the inline chip config table in Settings > Grouping.
+ * Each row has a checkbox (enable/disable) and up/down arrows for reordering.
+ */
+const renderInlineChipConfigTable = () => {
+  const container = document.getElementById('inlineChipConfigContainer');
+  if (!container || typeof getInlineChipConfig !== 'function') return;
+
+  const config = getInlineChipConfig();
+
+  if (!config.length) {
+    container.innerHTML = '<div class="chip-grouping-empty">No chip types available</div>';
+    return;
+  }
+
+  let html = '<table class="chip-grouping-table"><tbody>';
+  config.forEach((chip, idx) => {
+    html += `<tr data-chip-id="${chip.id}">
+      <td style="width:2rem;text-align:center;">
+        <input type="checkbox" ${chip.enabled ? 'checked' : ''} data-chip-idx="${idx}" class="inline-chip-toggle" title="Toggle ${chip.label}">
+      </td>
+      <td>${chip.label}</td>
+      <td style="width:3.5rem;text-align:right;white-space:nowrap;">
+        <button type="button" class="inline-chip-move" data-dir="up" data-idx="${idx}" ${idx === 0 ? 'disabled' : ''} title="Move up">&uarr;</button>
+        <button type="button" class="inline-chip-move" data-dir="down" data-idx="${idx}" ${idx === config.length - 1 ? 'disabled' : ''} title="Move down">&darr;</button>
+      </td>
+    </tr>`;
+  });
+  html += '</tbody></table>';
+  container.innerHTML = html;
+
+  // Attach event listeners
+  container.querySelectorAll('.inline-chip-toggle').forEach(cb => {
+    cb.addEventListener('change', () => {
+      const cfg = getInlineChipConfig();
+      const i = parseInt(cb.dataset.chipIdx, 10);
+      if (cfg[i]) {
+        cfg[i].enabled = cb.checked;
+        saveInlineChipConfig(cfg);
+        if (typeof renderTable === 'function') renderTable();
+      }
+    });
+  });
+
+  container.querySelectorAll('.inline-chip-move').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const cfg = getInlineChipConfig();
+      const i = parseInt(btn.dataset.idx, 10);
+      const dir = btn.dataset.dir;
+      const j = dir === 'up' ? i - 1 : i + 1;
+      if (j < 0 || j >= cfg.length) return;
+      // Swap
+      [cfg[i], cfg[j]] = [cfg[j], cfg[i]];
+      saveInlineChipConfig(cfg);
+      renderInlineChipConfigTable();
+      if (typeof renderTable === 'function') renderTable();
+    });
+  });
+};
+
 // Expose globally
 if (typeof window !== 'undefined') {
   window.showSettingsModal = showSettingsModal;
@@ -282,4 +345,5 @@ if (typeof window !== 'undefined') {
   window.switchSettingsSection = switchSettingsSection;
   window.switchProviderTab = switchProviderTab;
   window.setupSettingsEventListeners = setupSettingsEventListeners;
+  window.renderInlineChipConfigTable = renderInlineChipConfigTable;
 }
