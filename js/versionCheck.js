@@ -91,6 +91,11 @@ const populateVersionModal = (version, html) => {
  */
 const getEmbeddedChangelog = (version) => {
   const changelogs = {
+    "3.14.00": `
+      <li><strong>Encrypted portable backup</strong>: Export all data as a password-protected .stvault file (AES-256-GCM). Import on any device to restore inventory, settings, API keys, and price history</li>
+      <li><strong>Password strength indicator</strong>: Live strength bar and match validation in the vault modal</li>
+      <li><strong>Crypto fallback</strong>: Uses Web Crypto API natively; falls back to forge.js on Firefox file:// protocol</li>
+    `,
     "3.12.02": `
       <li><strong>NGC cert lookup fix</strong>: Cert tag click now opens NGC with actual coin details visible</li>
       <li><strong>Name column overflow</strong>: Long names truncate with ellipsis — tags always stay visible</li>

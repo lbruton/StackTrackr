@@ -230,10 +230,10 @@ const CERT_LOOKUP_URLS = {
  * Follows BRANCH.RELEASE.PATCH.state format
  * State codes: a=alpha, b=beta, rc=release candidate
  * Example: 3.03.02a → branch 3, release 03, patch 02, alpha
- * Updated: 2026-02-08 - Patch release: NGC cert fix, name overflow, Numista Sets, source display
+ * Updated: 2026-02-09 - Feature release: Encrypted portable backup (.stvault)
  */
 
-const APP_VERSION = "3.12.02";
+const APP_VERSION = "3.14.00";
 
 /**
  * @constant {string} DEFAULT_CURRENCY - Default currency code for monetary formatting
@@ -398,6 +398,8 @@ const ITEMS_PER_PAGE_KEY = "settingsItemsPerPage";
  * List of recognized localStorage keys for cleanup validation
  * @constant {string[]}
  */
+const VAULT_FILE_EXTENSION = '.stvault';
+
 const ALLOWED_STORAGE_KEYS = [
   LS_KEY,
   SERIAL_KEY,

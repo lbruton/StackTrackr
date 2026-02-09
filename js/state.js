@@ -98,6 +98,11 @@ const elements = {
   exportPdfBtn: null,
   cloudSyncBtn: null,
   syncAllBtn: null,
+  // Vault encrypted backup elements
+  vaultExportBtn: null,
+  vaultImportBtn: null,
+  vaultImportFile: null,
+  vaultModal: null,
   // Emergency reset button
   removeInventoryDataBtn: null,
   boatingAccidentBtn: null,
