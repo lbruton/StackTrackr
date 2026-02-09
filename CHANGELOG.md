@@ -5,6 +5,16 @@ All notable changes to StakTrakr will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.14.01] - 2026-02-09
+
+### Fixed
+
+- **Name column truncation**: Added `max-width: 340px` constraint so long item names properly truncate with ellipsis instead of pushing the table wider than the viewport
+- **Numista N# chips compacted**: Inline catalog tags shortened from `N#298883` to just `N#` — full catalog number shown on hover tooltip
+- **Action icons clipped**: Reduced icon button size (2.4rem → 1.6rem) and tightened gap (0.25rem → 0.1rem) so Edit/Copy/Delete buttons fit within the Actions column without overflow
+
+---
+
 ## [3.14.00] - 2026-02-09
 
 ### Added — Encrypted Portable Backup (.stvault)

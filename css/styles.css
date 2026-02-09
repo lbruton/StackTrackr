@@ -2185,9 +2185,9 @@ td {
   max-width: 20ch; /* Limit to approximately 20 characters */
 }
 
-/* Allow certain columns to be wider */
+/* Name column — constrain width so flex-based truncation kicks in */
 td[data-column="name"] {
-  max-width: none;
+  max-width: 340px;
   width: auto;
   overflow: hidden; /* Constrain inner flex container to cell's computed width */
 }
@@ -4550,13 +4550,13 @@ input:disabled + .slider {
 /* Actions column — merged edit/copy/delete */
 #inventoryTable th.actions-col,
 #inventoryTable td.actions-cell {
-  width: 6rem;
-  min-width: 5rem;
+  width: 5rem;
+  min-width: 4.5rem;
 }
 
 .actions-row {
   display: flex;
-  gap: 0.25rem;
+  gap: 0.1rem;
   justify-content: center;
   align-items: center;
 }
@@ -4589,9 +4589,9 @@ input:disabled + .slider {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 2.4rem;
-  height: 2.4rem;
-  padding: 0.25rem;
+  width: 1.6rem;
+  height: 1.6rem;
+  padding: 0.15rem;
   background: transparent;
   border: 0;
   border-radius: 6px;
@@ -4864,8 +4864,8 @@ th {
   align-items: center;
   font-size: 0.65rem;
   font-weight: 600;
-  padding: 0.1rem 0.35rem;
-  margin-left: 0.35rem;
+  padding: 0.1rem 0.3rem;
+  margin-left: 0.25rem;
   border-radius: var(--radius);
   background: var(--bg-tertiary);
   color: var(--primary);
