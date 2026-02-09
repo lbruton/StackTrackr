@@ -8,12 +8,10 @@ Project direction and planned work for the StakTrakr precious metals inventory t
 
 These items focus on visual polish and usability improvements that require no backend changes.
 
-### Next Sprint — Inline Chip Settings, Search Expansion & Backup Fix
+### Current Sprint — Filter Chip Enhancements
 
-- **New inline chips in Name cell**: Add Cert#, Storage Location, and Notes indicator chips alongside existing Year, N#, and Grade chips. New chips disabled by default
-- **Inline chip settings UI**: Settings > Grouping panel gains per-chip-type enable/disable toggles for all 6 inline chip types (Year, N#, Grade, Cert#, Storage Location, Notes). User-configurable display order with localStorage persistence
-- **Search expansion**: Add `year`, `grade`, `gradingAuthority`, `certNumber`, `numistaId`, `serialNumber` to the search fields in `js/search.js` and `js/filters.js`. Currently these fields are invisible to search
-- **Backup/restore coverage fix**: Add missing post-v3.14.00 settings to backup export and restore: `chipCustomGroups`, `chipBlacklist`, `chipMinCount`, `featureFlags`, `settingsItemsPerPage`. Also restore `sortColumn`, `sortDirection`, and `searchQuery` which are backed up but never restored
+- **Filter chip category toggles** — Settings > Chips panel gains per-category enable/disable toggles for all filter chip categories (Metals, Types, Names, Custom Groups, Dynamic Names, Purchase Location, Storage Location, Years, Grades, Numista IDs). Mirrors the existing inline chip config pattern (`INLINE_CHIP_DEFAULTS`). Config stored in localStorage with sensible defaults (all enabled)
+- **Filter chip sort option** — Sort dropdown on the filter chips card: sort chips within each category by Name (A-Z) or by Qty (descending). Adds a sort control after the Smart Grouping toggle. Preference persisted in localStorage
 
 ### Phase 3 — Batch Rename/Normalize (Numista-Powered)
 - **Batch rename/normalize tool** — "Clean Up Names" modal with preview and undo, powered by both the local normalizer and the Numista API
@@ -21,6 +19,19 @@ These items focus on visual polish and usability improvements that require no ba
   - For items without N#: use `normalizeItemName()` dictionary matching, then optionally search Numista to find and attach the correct catalog entry
   - Key value: standardizes names for users who don't follow naming conventions (e.g., "Silver Eagle" → "American Silver Eagle" based on Numista's canonical title)
   - Respects API budget (2,000 req/month free tier) — batch lookups with caching via `LocalProvider`
+
+### Phase 4 — Bulk Edit & Search
+
+- **Bulk edit page** — General-purpose bulk edit view accessible from Settings > Tools. Search and filter inventory within the bulk edit view, select multiple items via checkboxes, and batch-modify fields (name, weight, purity, type, storage location, etc.). Builds on the existing scaffolded `#bulkEditPanel` in `index.html` and event wiring in `events.js`
+- **Bulk edit prerequisites**: Implements the undefined `toggleAllItemsEdit()`, `saveAllEdits()`, and `cancelAllEdits()` functions. Adds multi-select UI, confirmation dialogs, and undo support via `changeLog`
+
+### Phase 5 — Purity / Fineness (depends on Phase 4)
+
+- **Purity field in data model** — Add `purity` field to item schema (default `1.0`). Existing items auto-migrate to `purity: 1.0` on load. New localStorage key added to `ALLOWED_STORAGE_KEYS`
+- **Purity dropdown in add/edit modal** — Preset values: `.999` (standard bullion), `.9999` (Canadian Maple, some gold), `.925` (sterling), `.900` (pre-1965 US silver, pre-1933 US gold), `.800` (European), `.600`, `.400` (1965-70 Kennedy halves, Eisenhower dollars), `.350` (war nickels), plus custom entry field
+- **Melt formula update** — Change `meltValue = weight * qty * spot` → `meltValue = weight * qty * spot * purity` at all calculation sites. Extract a centralized `computeMeltValue(item, spot)` helper to prevent formula drift across `inventory.js`, `detailsModal.js`, and export paths
+- **Export/import support** — Add `purity` column to CSV, JSON, and ZIP exports. CSV/JSON import maps `purity` field with `1.0` fallback for files without it
+- **Migration workflow** — After bulk edit is available, users can search for constitutional silver items, select all, and batch-update from artificial weight → actual weight + correct purity (e.g., pre-1965 quarters: change weight from `0.715` to `0.7942 ozt` and set purity to `.900`)
 
 ### Backlog (No Dependency Order)
 - **Numista integration — Sync & Search**:
@@ -33,6 +44,7 @@ These items focus on visual polish and usability improvements that require no ba
 
 
 ### Completed (Near-Term)
+- ~~**Inline chip settings, search expansion & backup fix**~~ — **DONE (v3.17.00 – v3.18.00)**: Added Cert#, Storage Location, and Notes indicator inline chips (disabled by default). Settings > Table panel with per-chip enable/disable toggles and drag-to-reorder. Expanded search to include year, grade, gradingAuthority, certNumber, numistaId, serialNumber. Fixed backup/restore coverage for chipCustomGroups, chipBlacklist, chipMinCount, featureFlags, inlineChipConfig, itemsPerPage, sortColumn, and sortDirection
 - ~~**Custom chip grouping & settings**~~ — **DONE (v3.16.00 – v3.16.02)**: Custom grouping rules with full CRUD (create, edit, delete, toggle). Chip blacklist with right-click suppress. Dynamic name chips from parentheses/quotes. Settings > Grouping panel with chip threshold, smart grouping toggle, dynamic chips toggle, blacklist, and custom rules management. Inline edit for rules via pencil icon
 - ~~**Encrypted portable backup (.stvault)**~~ — **DONE (v3.14.00 – v3.14.01)**: AES-256-GCM encrypted backup/restore with password strength indicator, Web Crypto API with forge.js fallback for `file://` Firefox, binary vault format with 56-byte header. Compact N# chips, name column truncation, and tightened action icons
 - ~~**Portal view (scrollable table)**~~ — **DONE (v3.12.00 – v3.12.02)**: Scrollable table with sticky column headers replaces slice-based pagination. Visible rows dropdown (10/15/25/50/100). NGC cert lookup fix, Numista Sets support, Lunar Series chip. Removed pagination controls, placeholder rows, and `currentPage` state

@@ -414,92 +414,80 @@ const renderActiveFilters = () => {
   // Generate category summary chips from filtered inventory
   const categorySummary = generateCategorySummary(filteredInventory);
   
-  // Add metal chips for metals that exist in the filtered results (ONLY if count > 0)
-  Object.entries(categorySummary.metals).forEach(([metal, count]) => {
-    if (count > 0) {
-      chips.push({ field: 'metal', value: metal, count, total: categorySummary.totalItems });
+  // Category descriptor map — maps category ID to summary key, chip field, and extra props
+  const categoryDescriptors = {
+    metal:            { summaryKey: 'metals',            field: 'metal' },
+    type:             { summaryKey: 'types',             field: 'type' },
+    name:             { summaryKey: 'names',             field: 'name',             extraProps: { isGrouped: true } },
+    customGroup:      { summaryKey: 'customGroups',      field: 'customGroup' },
+    dynamicName:      { summaryKey: 'dynamicNames',      field: 'dynamicName',      extraProps: { isDynamic: true } },
+    purchaseLocation: { summaryKey: 'purchaseLocations', field: 'purchaseLocation' },
+    storageLocation:  { summaryKey: 'storageLocations',  field: 'storageLocation' },
+    year:             { summaryKey: 'years',             field: 'year' },
+    grade:            { summaryKey: 'grades',            field: 'grade' },
+    numistaId:        { summaryKey: 'numistaIds',        field: 'numistaId' },
+  };
+
+  // Read category config (order + enabled state) and sort preference
+  const categoryConfig = typeof getFilterChipCategoryConfig === 'function'
+    ? getFilterChipCategoryConfig()
+    : [
+        { id: 'metal', enabled: true }, { id: 'type', enabled: true },
+        { id: 'name', enabled: true }, { id: 'customGroup', enabled: true },
+        { id: 'dynamicName', enabled: true }, { id: 'purchaseLocation', enabled: true },
+        { id: 'storageLocation', enabled: true }, { id: 'year', enabled: true },
+        { id: 'grade', enabled: true }, { id: 'numistaId', enabled: true },
+      ];
+
+  const sortEl = document.getElementById('chipSortOrder');
+  const chipSortPref = (sortEl && sortEl.value) || localStorage.getItem('chipSortOrder') || 'default';
+
+  // Build chips from each enabled category in config order
+  const categoryFields = new Set();
+  for (const cat of categoryConfig) {
+    if (!cat.enabled) continue;
+    const desc = categoryDescriptors[cat.id];
+    if (!desc) continue;
+    categoryFields.add(desc.field);
+
+    const data = categorySummary[desc.summaryKey];
+    if (!data) continue;
+
+    const catChips = [];
+
+    if (cat.id === 'customGroup') {
+      // customGroup has shape { id: { label, count } }
+      Object.entries(data).forEach(([groupId, info]) => {
+        if (info.count > 0) {
+          catChips.push({ field: desc.field, value: groupId, displayLabel: info.label, count: info.count, total: categorySummary.totalItems, isCustomGroup: true });
+        }
+      });
+    } else {
+      Object.entries(data).forEach(([value, count]) => {
+        if (count > 0) {
+          catChips.push({ field: desc.field, value, count, total: categorySummary.totalItems, ...(desc.extraProps || {}) });
+        }
+      });
     }
-  });
-  
-  // Add type chips for types that exist in the filtered results (ONLY if count > 0)
-  Object.entries(categorySummary.types).forEach(([type, count]) => {
-    if (count > 0) {
-      chips.push({ field: 'type', value: type, count, total: categorySummary.totalItems });
+
+    // Sort chips within this category based on preference
+    if (chipSortPref === 'alpha') {
+      catChips.sort((a, b) => {
+        const aLabel = (a.displayLabel || a.value || '').toString();
+        const bLabel = (b.displayLabel || b.value || '').toString();
+        return aLabel.localeCompare(bLabel, undefined, { numeric: true, sensitivity: 'base' });
+      });
+    } else if (chipSortPref === 'count') {
+      catChips.sort((a, b) => (b.count || 0) - (a.count || 0));
     }
-  });
 
-  // Add name chips (grouped by normalized base name)
-  if (window.featureFlags && window.featureFlags.isEnabled('GROUPED_NAME_CHIPS') && categorySummary.names) {
-    Object.entries(categorySummary.names).forEach(([baseName, count]) => {
-      if (count > 0) {
-        chips.push({ field: 'name', value: baseName, count, total: categorySummary.totalItems, isGrouped: true });
-      }
-    });
-  }
-
-  // Add custom group chips
-  if (categorySummary.customGroups) {
-    Object.entries(categorySummary.customGroups).forEach(([groupId, info]) => {
-      if (info.count > 0) {
-        chips.push({ field: 'customGroup', value: groupId, displayLabel: info.label, count: info.count, total: categorySummary.totalItems, isCustomGroup: true });
-      }
-    });
-  }
-
-  // Add dynamic name chips (text extracted from parentheses/quotes)
-  if (categorySummary.dynamicNames) {
-    Object.entries(categorySummary.dynamicNames).forEach(([text, count]) => {
-      if (count > 0) {
-        chips.push({ field: 'dynamicName', value: text, count, total: categorySummary.totalItems, isDynamic: true });
-      }
-    });
-  }
-
-  // Add purchase location chips
-  Object.entries(categorySummary.purchaseLocations).forEach(([location, count]) => {
-    if (count > 0) {
-      chips.push({ field: 'purchaseLocation', value: location, count, total: categorySummary.totalItems });
-    }
-  });
-  
-  // Add storage location chips
-  Object.entries(categorySummary.storageLocations).forEach(([location, count]) => {
-    if (count > 0) {
-      chips.push({ field: 'storageLocation', value: location, count, total: categorySummary.totalItems });
-    }
-  });
-
-  // Add year chips
-  if (categorySummary.years) {
-    Object.entries(categorySummary.years).forEach(([year, count]) => {
-      if (count > 0) {
-        chips.push({ field: 'year', value: year, count, total: categorySummary.totalItems });
-      }
-    });
-  }
-
-  // Add grade chips
-  if (categorySummary.grades) {
-    Object.entries(categorySummary.grades).forEach(([grade, count]) => {
-      if (count > 0) {
-        chips.push({ field: 'grade', value: grade, count, total: categorySummary.totalItems });
-      }
-    });
-  }
-
-  // Add Numista ID chips
-  if (categorySummary.numistaIds) {
-    Object.entries(categorySummary.numistaIds).forEach(([nId, count]) => {
-      if (count > 0) {
-        chips.push({ field: 'numistaId', value: nId, count, total: categorySummary.totalItems });
-      }
-    });
+    chips.push(...catChips);
   }
 
   // Add any explicitly applied filter chips (but not if they duplicate category chips)
   Object.entries(activeFilters).forEach(([field, criteria]) => {
     // Skip fields already rendered as category summary chips to avoid duplicates
-    if (field === 'metal' || field === 'type' || field === 'purchaseLocation' || field === 'storageLocation' || field === 'name' || field === 'year' || field === 'grade' || field === 'numistaId' || field === 'customGroup' || field === 'dynamicName') return;
+    if (categoryFields.has(field)) return;
     
     if (criteria && typeof criteria === 'object' && Array.isArray(criteria.values)) {
       criteria.values.forEach(value => {
