@@ -91,6 +91,17 @@ const populateVersionModal = (version, html) => {
  */
 const getEmbeddedChangelog = (version) => {
   const changelogs = {
+    "3.17.00": `
+      <li><strong>Settings reorganized</strong>: New Theme, Table, and Chips tabs. Visible rows moved to Table. Grouping renamed to Chips</li>
+      <li><strong>Inline Name chip settings</strong>: Enable/disable and reorder 6 chip types (Grade, Numista, Year, Serial #, Storage, Notes) in Settings &gt; Table</li>
+      <li><strong>3 new inline chips</strong>: Serial # (purple badge), Storage Location (muted badge), and Notes Indicator (document icon) — disabled by default</li>
+      <li><strong>Search expansion</strong>: Year, Grade, Grading Authority, Cert #, Numista ID, and Serial Number now searchable</li>
+      <li><strong>ZIP backup fix</strong>: Chip settings, feature flags, and display preferences now survive ZIP backup/restore round trips</li>
+    `,
+    "3.16.02": `
+      <li><strong>Edit custom grouping rules</strong>: Inline edit button on each rule row — modify label and patterns without delete/recreate</li>
+      <li><strong>Filter chip threshold relocated</strong>: Moved from Settings &gt; Site to Settings &gt; Grouping</li>
+    `,
     "3.16.01": `
       <li><strong>Cache timeout persistence</strong>: Per-provider cache timeout settings now persist across page reloads</li>
       <li><strong>Historical data for all providers</strong>: Metals-API and MetalPriceAPI now fetch historical data on first sync instead of current-only prices</li>

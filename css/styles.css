@@ -1704,6 +1704,30 @@ input[type="submit"] {
   background: rgba(var(--danger-rgb, 220, 53, 69), 0.12);
 }
 
+/* Inline chip config — up/down reorder buttons */
+.inline-chip-move {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1;
+  padding: 0.15rem 0.35rem;
+  border-radius: var(--radius);
+  transition: background 0.1s, color 0.1s;
+}
+
+.inline-chip-move:hover:not(:disabled) {
+  background: var(--bg-tertiary);
+  color: var(--primary);
+}
+
+.inline-chip-move:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
 .chip-grouping-edit-input {
   width: 100%;
   padding: 0.2rem 0.35rem;
@@ -2372,7 +2396,10 @@ td[data-column="name"] {
 /* Tags never shrink — always visible */
 .name-cell-content > .year-tag,
 .name-cell-content > .numista-tag,
-.name-cell-content > .grade-tag {
+.name-cell-content > .grade-tag,
+.name-cell-content > .serial-tag,
+.name-cell-content > .storage-tag,
+.name-cell-content > .notes-indicator {
   flex-shrink: 0;
 }
 
@@ -5324,6 +5351,94 @@ th {
 [data-theme="sepia"] .grade-tag[data-clickable="true"][data-authority="ICG"]:focus-visible {
   background: #6d28d9;
   color: #fff;
+}
+
+/* =============================================================================
+   SERIAL TAG — Inline serial number badge (purple tint)
+   ============================================================================= */
+.serial-tag {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.6rem;
+  font-weight: 600;
+  padding: 0.1rem 0.3rem;
+  margin-left: 0.25rem;
+  border-radius: var(--radius);
+  background: rgba(139, 92, 246, 0.12);
+  color: #7c3aed;
+  vertical-align: middle;
+  line-height: 1.2;
+  white-space: nowrap;
+  max-width: 8ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+[data-theme="dark"] .serial-tag {
+  background: rgba(139, 92, 246, 0.18);
+  color: #a78bfa;
+}
+
+[data-theme="sepia"] .serial-tag {
+  background: rgba(109, 40, 217, 0.1);
+  color: #6d28d9;
+}
+
+/* =============================================================================
+   STORAGE TAG — Inline storage location badge (muted, truncated)
+   ============================================================================= */
+.storage-tag {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.6rem;
+  font-weight: 500;
+  padding: 0.1rem 0.3rem;
+  margin-left: 0.25rem;
+  border-radius: var(--radius);
+  background: var(--bg-tertiary);
+  color: var(--text-muted);
+  vertical-align: middle;
+  line-height: 1.2;
+  white-space: nowrap;
+  max-width: 8ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+[data-theme="dark"] .storage-tag {
+  background: rgba(255, 255, 255, 0.06);
+  color: #6b7280;
+}
+
+[data-theme="sepia"] .storage-tag {
+  background: rgba(0, 0, 0, 0.05);
+  color: #a8a29e;
+}
+
+/* =============================================================================
+   NOTES INDICATOR — Small icon when item has notes
+   ============================================================================= */
+.notes-indicator {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 0.25rem;
+  color: var(--text-muted);
+  vertical-align: middle;
+  line-height: 1;
+}
+
+.notes-indicator svg {
+  width: 0.75rem;
+  height: 0.75rem;
+}
+
+[data-theme="dark"] .notes-indicator {
+  color: #6b7280;
+}
+
+[data-theme="sepia"] .notes-indicator {
+  color: #a8a29e;
 }
 
 /* =============================================================================

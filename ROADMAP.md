@@ -8,23 +8,12 @@ Project direction and planned work for the StakTrakr precious metals inventory t
 
 These items focus on visual polish and usability improvements that require no backend changes.
 
-### Phase 1 — Numista API Fix
-- **Numista API fix** — the `NumistaProvider` class in `js/catalog-api.js` has never worked due to three bugs: wrong endpoints (`/items/search` → `/types`), wrong auth (query param → `Numista-API-Key` header), non-existent params (`metal`/`country`/`limit` → `category`/`issuer`/`count`). Must be fixed before any Numista features can ship
+### Next Sprint — Inline Chip Settings, Search Expansion & Backup Fix
 
-### Phase 2 — Inline Catalog & Grading Tags
-- **Inline catalog & grading tags** — instead of a dedicated N# table column, append optional clickable tags to the Name cell. Example: `2025 American Eagle (PCGS) (MS70-FS) (N#1234)`. All tags optional — most items just show the name
-  - **Name cell format**: `{item name} (SERVICE) (GRADE) (N#ID)` — only renders tags the item actually has
-  - **Tag click behavior**: opens iframe modal to the relevant service page (Numista catalog, PCGS cert viewer, NGC cert viewer). Same pattern as eBay search links
-  - **Grade display**: Sheldon scale, shown as a separate tag next to the certification service — e.g., `(PCGS) (MS70-FS)` or `(NGC) (PF69-UC)`
-  - **New item modal fields**: Certification Service dropdown (None/PCGS/NGC), Cert Number input, Grade dropdown (Sheldon scale with designations: FS, UC, DCAM, etc.). All optional. Separate from existing Catalog (N#) field
-  - **Data model additions**: `certService` (string: `''`|`'PCGS'`|`'NGC'`), `certNumber` (string), `grade` (string)
-  - **No new table column** — all info lives inline in the Name cell, keeping the table compact
-  - **CSV export**: add `certService`, `certNumber`, `grade` to export headers
-
-### Pause — Evaluate Numista Data
-- Review what fields the working Numista API actually returns (canonical names, denominations, metal, weight, descriptions, images)
-- Decide which fields to surface in the add/edit modal and whether to add new data model fields
-- Assess how Numista naming conventions compare to our current `normalizeItemName()` dictionary
+- **New inline chips in Name cell**: Add Cert#, Storage Location, and Notes indicator chips alongside existing Year, N#, and Grade chips. New chips disabled by default
+- **Inline chip settings UI**: Settings > Grouping panel gains per-chip-type enable/disable toggles for all 6 inline chip types (Year, N#, Grade, Cert#, Storage Location, Notes). User-configurable display order with localStorage persistence
+- **Search expansion**: Add `year`, `grade`, `gradingAuthority`, `certNumber`, `numistaId`, `serialNumber` to the search fields in `js/search.js` and `js/filters.js`. Currently these fields are invisible to search
+- **Backup/restore coverage fix**: Add missing post-v3.14.00 settings to backup export and restore: `chipCustomGroups`, `chipBlacklist`, `chipMinCount`, `featureFlags`, `settingsItemsPerPage`. Also restore `sortColumn`, `sortDirection`, and `searchQuery` which are backed up but never restored
 
 ### Phase 3 — Batch Rename/Normalize (Numista-Powered)
 - **Batch rename/normalize tool** — "Clean Up Names" modal with preview and undo, powered by both the local normalizer and the Numista API
@@ -34,24 +23,34 @@ These items focus on visual polish and usability improvements that require no ba
   - Respects API budget (2,000 req/month free tier) — batch lookups with caching via `LocalProvider`
 
 ### Backlog (No Dependency Order)
-- **Numista integration — Sync & Search** (prerequisite: Phase 1):
+- **Numista integration — Sync & Search**:
   - **"Sync from Numista" button** on the add/edit modal — auto-populates Name, Weight, Type, Metal, Notes from a valid N#
   - **"Numista Lookup" button** — search modal with thumbnails, selecting a result populates N# and triggers Sync
   - **API budget awareness**: free tier = 2,000 requests/month. Cache all lookups in `LocalProvider`
-- **Chip settings modal**: select which columns produce chips and configure top-N limit per category
 - **Pie chart toggle**: switch metal detail modal chart between Purchase / Melt / Retail / Gain-Loss views
 - **Chart.js dashboard improvements** — spot price trend visualization, portfolio value over time
 - **Custom tagging system** — replace the removed `isCollectable` boolean with flexible tags (e.g., "IRA", "stack", "numismatic", "gift")
 
 
 ### Completed (Near-Term)
+- ~~**Custom chip grouping & settings**~~ — **DONE (v3.16.00 – v3.16.02)**: Custom grouping rules with full CRUD (create, edit, delete, toggle). Chip blacklist with right-click suppress. Dynamic name chips from parentheses/quotes. Settings > Grouping panel with chip threshold, smart grouping toggle, dynamic chips toggle, blacklist, and custom rules management. Inline edit for rules via pencil icon
+- ~~**Encrypted portable backup (.stvault)**~~ — **DONE (v3.14.00 – v3.14.01)**: AES-256-GCM encrypted backup/restore with password strength indicator, Web Crypto API with forge.js fallback for `file://` Firefox, binary vault format with 56-byte header. Compact N# chips, name column truncation, and tightened action icons
+- ~~**Portal view (scrollable table)**~~ — **DONE (v3.12.00 – v3.12.02)**: Scrollable table with sticky column headers replaces slice-based pagination. Visible rows dropdown (10/15/25/50/100). NGC cert lookup fix, Numista Sets support, Lunar Series chip. Removed pagination controls, placeholder rows, and `currentPage` state
+- ~~**Unified settings modal**~~ — **DONE (v3.11.00)**: Consolidated API, Files, and Appearance into single modal with sidebar navigation (Site, API, Files, Cloud, Tools). Theme picker, tabbed API providers, items-per-page persistence, bidirectional control sync. Reduced header from 4 buttons to 2 (About + Settings)
+- ~~**Serial # field & Numista UX**~~ — **DONE (v3.10.00 – v3.10.01)**: Serial Number field for bars/notes, Year/Grade/N# filter chips, eBay search includes year, Numista no-results retry with quick-pick bullion list. Numista iframe replaced with popup window for hosted compatibility
+- ~~**Inline catalog & grading tags (Phase 2)**~~ — **DONE (v3.09.04 – v3.09.05)**: Year field with inline tag, Grade dropdown (Standard/Mint State/Proof), Grading Authority (PCGS/NGC/ANACS/ICG), Cert # input, color-coded grade badges in Name cell, clickable cert verification links, smart Numista category search, Year/Grade in CSV/JSON export and import
+- ~~**Numista API fix (Phase 1)**~~ — **DONE (v3.09.02 – v3.09.03)**: Fixed base URL (`/api/v3` → `/v3`), endpoints (`/items/search` → `/types`), auth (query param → `Numista-API-Key` header), params (`limit` → `count`, `country` → `issuer`, `metal` → `category`), response parsing, field mapping, and localStorage key whitelist. Smart category search mapping Type field to Numista categories
 - ~~**Filter chips system (complete)**~~ — **DONE (v3.09.00 – v3.09.01)**: Full chip system: metal, type, location, and normalized name chips. Click-to-filter with toggle. Unified threshold (3+ default), keyword grouping (Goldback/Zombucks/Silverback), starts-with normalizer with 280-item dictionary. Fixed: Silver chip contrast on dark/sepia, duplicate location chips, suppressed "Unknown" locations
-- ~~**Spot price manual input UX**~~ — **DONE (v3.09.00)**: Spot cards with no price data show "Shift+click price to set" hint
+- ~~**Spot price card redesign**~~ — **DONE (v3.08.00 – v3.08.01)**: Background sparkline charts with Chart.js, trend range dropdown (7d/30d/60d/90d), sync icon with spin animation, shift+click manual price entry, Metals.dev timeseries endpoint fix, spot history dedup. Totals moved above inventory table, sparkline colors match metal accents
+- ~~**Portfolio visibility overhaul**~~ — **DONE (v3.07.00 – v3.07.03)**: Retail/Gain-Loss confidence styling, "All Metals" summary card, Avg Cost/oz metric, metal detail modal with full Purchase/Melt/Retail/Gain-Loss breakdown by type and location. Spot history dedup fix
 - ~~**Retail column UX bundle**~~ — **DONE (v3.07.00 + v3.07.02)**: Confidence styling for estimated vs confirmed values (v3.07.00). Shift+click inline editing for all 6 editable columns including Retail — replaces pencil icon approach (v3.07.02)
+- ~~**Light & Sepia theme contrast pass**~~ — **DONE (v3.07.01)**: Clean light backgrounds, WCAG AAA text tokens, table zebra striping with theme-aware tokens, removed sticky action columns, sepia global filter removed, WCAG-compliant text contrast
+- ~~**eBay search split & icon redesign**~~ — **DONE (v3.06.01 – v3.06.02)**: Clean SVG magnifying glass icon, dead CSS cleanup, About modal overhaul. Purchase column opens active listings, Retail column opens sold listings for price research
+- ~~**StakTrakr rebrand**~~ — **DONE (v3.06.00)**: Full rebrand from StackTrackr to StakTrakr across entire codebase with domain-based auto-branding for 3 domains (staktrakr.com, stackrtrackr.com, stackertrackr.com)
+- ~~**Unified add/edit modal**~~ — **DONE (v3.05.00 – v3.05.04)**: Merged two modals into one with mode switching, weight precision fix (2→6 decimals), $0 price display, qty-adjusted financials, fraction weight input, duplicate item button, date timezone bug fix, Numista API key simplification
+- ~~**Spot price manual input UX**~~ — **DONE (v3.09.00)**: Spot cards with no price data show "Shift+click price to set" hint
 - ~~**Duplicate item button**~~ — **DONE (Increment 5)**
 - ~~**Fraction input for weight field**~~ — **DONE (Increment 5)**
-- ~~**Light & Sepia theme contrast pass**~~ — **DONE (v3.07.01)**
-- ~~**eBay search icon redesign**~~ — **DONE (v3.06.01 + v3.06.02)**
 - ~~**Summary cards visual refresh**~~ — **DONE (v3.07.00)**
 - ~~**Metal stats modal overhaul**~~ — **DONE (v3.07.00)**
 - ~~**Dead CSS cleanup pass**~~ — **DONE (v3.06.01)**
