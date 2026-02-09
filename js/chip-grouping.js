@@ -66,6 +66,33 @@
     saveCustomGroups();
   };
 
+  /**
+   * Update a custom grouping rule's label and/or patterns.
+   * @param {string} id - Group ID
+   * @param {string} label - New display label
+   * @param {string} patternsStr - New comma/semicolon separated patterns
+   * @returns {Object|null} The updated group, or null if validation fails
+   */
+  const updateCustomGroup = (id, label, patternsStr) => {
+    if (!label || !label.trim()) return null;
+    if (!patternsStr || !patternsStr.trim()) return null;
+
+    const patterns = patternsStr
+      .split(/[,;]/)
+      .map(p => p.trim())
+      .filter(p => p.length > 0);
+
+    if (patterns.length === 0) return null;
+
+    const group = _customGroups.find(g => g.id === id);
+    if (!group) return null;
+
+    group.label = label.trim();
+    group.patterns = patterns;
+    saveCustomGroups();
+    return group;
+  };
+
   /** Toggle a custom group's enabled state */
   const toggleCustomGroup = (id) => {
     const group = _customGroups.find(g => g.id === id);
@@ -338,7 +365,7 @@
   };
 
   /** Render the custom group table inside #customGroupTableContainer */
-  const renderCustomGroupTable = () => {
+  const renderCustomGroupTable = (editingId) => {
     const container = document.getElementById('customGroupTableContainer');
     if (!container) return;
 
@@ -350,12 +377,29 @@
     let html = '<table class="chip-grouping-table"><thead><tr><th>Label</th><th>Patterns</th><th>On</th><th></th></tr></thead><tbody>';
     _customGroups.forEach(group => {
       const checked = group.enabled ? 'checked' : '';
-      html += `<tr>
-        <td>${_escHtml(group.label)}</td>
-        <td class="chip-grouping-patterns">${_escHtml(group.patterns.join(', '))}</td>
-        <td><input type="checkbox" ${checked} data-toggle-group="${_escAttr(group.id)}" title="Toggle rule"></td>
-        <td><button class="chip-grouping-delete" data-delete-group="${_escAttr(group.id)}" title="Delete rule">&times;</button></td>
-      </tr>`;
+      const isEditing = editingId === group.id;
+
+      if (isEditing) {
+        html += `<tr data-editing="${_escAttr(group.id)}">
+          <td><input type="text" class="chip-grouping-edit-input" data-edit-label="${_escAttr(group.id)}" value="${_escAttr(group.label)}"></td>
+          <td><input type="text" class="chip-grouping-edit-input chip-grouping-edit-wide" data-edit-patterns="${_escAttr(group.id)}" value="${_escAttr(group.patterns.join(', '))}"></td>
+          <td><input type="checkbox" ${checked} data-toggle-group="${_escAttr(group.id)}" title="Toggle rule"></td>
+          <td class="chip-grouping-actions">
+            <button class="chip-grouping-save" data-save-group="${_escAttr(group.id)}" title="Save changes">&#10003;</button>
+            <button class="chip-grouping-cancel" data-cancel-group="${_escAttr(group.id)}" title="Cancel editing">&times;</button>
+          </td>
+        </tr>`;
+      } else {
+        html += `<tr>
+          <td>${_escHtml(group.label)}</td>
+          <td class="chip-grouping-patterns">${_escHtml(group.patterns.join(', '))}</td>
+          <td><input type="checkbox" ${checked} data-toggle-group="${_escAttr(group.id)}" title="Toggle rule"></td>
+          <td class="chip-grouping-actions">
+            <button class="chip-grouping-edit" data-edit-group="${_escAttr(group.id)}" title="Edit rule">&#9998;</button>
+            <button class="chip-grouping-delete" data-delete-group="${_escAttr(group.id)}" title="Delete rule">&times;</button>
+          </td>
+        </tr>`;
+      }
     });
     html += '</tbody></table>';
     container.innerHTML = html;
@@ -367,6 +411,70 @@
         if (typeof renderActiveFilters === 'function') renderActiveFilters();
       });
     });
+
+    // Wire edit buttons
+    container.querySelectorAll('.chip-grouping-edit[data-edit-group]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        renderCustomGroupTable(btn.dataset.editGroup);
+      });
+    });
+
+    // Wire save buttons
+    container.querySelectorAll('.chip-grouping-save[data-save-group]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.dataset.saveGroup;
+        const labelInput = container.querySelector(`input[data-edit-label="${CSS.escape(id)}"]`);
+        const patternsInput = container.querySelector(`input[data-edit-patterns="${CSS.escape(id)}"]`);
+        if (labelInput && patternsInput) {
+          const result = updateCustomGroup(id, labelInput.value, patternsInput.value);
+          if (result) {
+            renderCustomGroupTable();
+            if (typeof renderActiveFilters === 'function') renderActiveFilters();
+          }
+        }
+      });
+    });
+
+    // Wire cancel buttons
+    container.querySelectorAll('.chip-grouping-cancel[data-cancel-group]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        renderCustomGroupTable();
+      });
+    });
+
+    // Wire Enter key on edit inputs to save, Escape to cancel
+    container.querySelectorAll('input[data-edit-patterns]').forEach(input => {
+      input.addEventListener('keydown', (e) => {
+        const id = input.dataset.editPatterns;
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          const saveBtn = container.querySelector(`.chip-grouping-save[data-save-group="${CSS.escape(id)}"]`);
+          if (saveBtn) saveBtn.click();
+        } else if (e.key === 'Escape') {
+          e.preventDefault();
+          renderCustomGroupTable();
+        }
+      });
+    });
+    container.querySelectorAll('input[data-edit-label]').forEach(input => {
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          const id = input.dataset.editLabel;
+          const patternsInput = container.querySelector(`input[data-edit-patterns="${CSS.escape(id)}"]`);
+          if (patternsInput) patternsInput.focus();
+        } else if (e.key === 'Escape') {
+          e.preventDefault();
+          renderCustomGroupTable();
+        }
+      });
+    });
+
+    // Focus the label input if we're in edit mode
+    if (editingId) {
+      const labelInput = container.querySelector(`input[data-edit-label="${CSS.escape(editingId)}"]`);
+      if (labelInput) labelInput.focus();
+    }
 
     // Wire delete buttons
     container.querySelectorAll('.chip-grouping-delete[data-delete-group]').forEach(btn => {
@@ -606,6 +714,7 @@
   window.saveCustomGroups = saveCustomGroups;
   window.addCustomGroup = addCustomGroup;
   window.removeCustomGroup = removeCustomGroup;
+  window.updateCustomGroup = updateCustomGroup;
   window.toggleCustomGroup = toggleCustomGroup;
   window.loadChipBlacklist = loadChipBlacklist;
   window.saveChipBlacklist = saveChipBlacklist;
