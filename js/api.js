@@ -90,9 +90,10 @@ const loadApiConfig = () => {
       }
       // Reconstruct per-provider cache timeouts, defaulting to global cacheHours or 24
       const cacheTimeouts = config.cacheTimeouts || {};
+      const globalCache = Number.isFinite(config.cacheHours) ? config.cacheHours : 24;
       Object.keys(API_PROVIDERS).forEach((p) => {
-        if (typeof cacheTimeouts[p] !== "number") {
-          cacheTimeouts[p] = typeof config.cacheHours === "number" ? config.cacheHours : 24;
+        if (!Number.isFinite(cacheTimeouts[p]) || cacheTimeouts[p] < 0) {
+          cacheTimeouts[p] = globalCache;
         }
       });
 
@@ -225,13 +226,13 @@ const clearApiCache = () => {
  * @returns {number} Cache duration
  */
 const getCacheDurationMs = (provider) => {
-  let hours = 24;
-  if (provider && apiConfig?.cacheTimeouts?.[provider] != null) {
+  let hours;
+  if (provider && Number.isFinite(apiConfig?.cacheTimeouts?.[provider])) {
     hours = apiConfig.cacheTimeouts[provider];
   } else {
     hours = apiConfig?.cacheHours ?? 24;
   }
-  return hours * 60 * 60 * 1000;
+  return (Number.isFinite(hours) && hours >= 0 ? hours : 24) * 60 * 60 * 1000;
 };
 
 /**
@@ -405,8 +406,8 @@ const refreshProviderStatuses = () => {
     console.error("Error reading API cache for status check:", err);
   }
   const now = Date.now();
-  const duration = getCacheDurationMs();
   Object.keys(API_PROVIDERS).forEach((prov) => {
+    const duration = getCacheDurationMs(prov);
     if (config.keys[prov]) {
       // API key is stored
       if (cache && cache.provider === prov && cache.timestamp) {
@@ -688,7 +689,7 @@ const loadApiCache = () => {
       const cache = JSON.parse(stored);
       const now = new Date().getTime();
 
-      const duration = getCacheDurationMs();
+      const duration = getCacheDurationMs(cache.provider);
       if (cache.timestamp && now - cache.timestamp < duration) {
         return cache;
       } else {
@@ -708,7 +709,7 @@ const loadApiCache = () => {
  */
 const saveApiCache = (data, provider) => {
   try {
-    const duration = getCacheDurationMs();
+    const duration = getCacheDurationMs(provider);
     if (duration === 0) {
       localStorage.removeItem(API_CACHE_KEY);
       apiCache = null;
@@ -1123,7 +1124,7 @@ const syncSpotPricesFromApi = async (
     if (cache && cache.data && cache.timestamp) {
       const now = new Date().getTime();
       const cacheAge = now - cache.timestamp;
-      const duration = getCacheDurationMs();
+      const duration = getCacheDurationMs(apiConfig.provider);
 
       if (cacheAge < duration) {
         if (showProgress) {
@@ -1645,10 +1646,17 @@ const handleProviderSave = (provider) => {
   // Persist per-provider settings (cache timeout, history days, history times)
   updateProviderSettings(provider);
 
-  // Re-load after updateProviderSettings saved, then save key on top
+  // Re-load after updateProviderSettings saved, then layer key + CUSTOM config on top
   const updated = loadApiConfig();
   updated.keys = { ...(updated.keys || {}) };
   if (apiKey) updated.keys[provider] = apiKey;
+  if (provider === "CUSTOM") {
+    updated.customConfig = {
+      baseUrl: document.getElementById("apiBase_CUSTOM")?.value.trim() || "",
+      endpoint: document.getElementById("apiEndpoint_CUSTOM")?.value.trim() || "",
+      format: document.getElementById("apiFormat_CUSTOM")?.value || "symbol",
+    };
+  }
   saveApiConfig(updated);
 
   updateDefaultProviderButtons();
