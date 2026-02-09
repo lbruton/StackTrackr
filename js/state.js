@@ -12,9 +12,8 @@ let notesIndex = null;
 /** @type {number|null} Change log entry currently being edited */
 let editingChangeLogIndex = null;
 
-/** @type {Object} Pagination state */
-let currentPage = 1; // Current page number (1-based)
-let itemsPerPage = 25; // Number of items to display per page
+/** @type {number} Number of visible rows in the portal (scrollable table) view */
+let itemsPerPage = 25;
 
 /** @type {string} Current search query */
 let searchQuery = "";
@@ -127,13 +126,8 @@ const elements = {
   typeChart: null,
   locationChart: null,
 
-  // Pagination elements
+  // Portal view elements
   itemsPerPage: null,
-  prevPage: null,
-  nextPage: null,
-  firstPage: null,
-  lastPage: null,
-  pageNumbers: null,
   itemCount: null,
 
   // Change log elements
@@ -170,15 +164,13 @@ const elements = {
   ackModal: null,
   ackAcceptBtn: null,
 
-  // Appearance, API & Files elements
-  appearanceBtn: null,
-  apiBtn: null,
-  filesBtn: null,
-  apiModal: null,
-  filesModal: null,
+  // Settings modal elements
+  settingsBtn: null,
+  settingsModal: null,
+
+  // Sub-modals (stacking overlays opened from within Settings)
   apiInfoModal: null,
   apiHistoryModal: null,
-  apiProvidersModal: null,
   cloudSyncModal: null,
   apiQuotaModal: null,
 
