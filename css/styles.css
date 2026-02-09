@@ -3979,12 +3979,35 @@ a.about-badge:hover {
   transform: translateY(0);
 }
 
-.filter-chip.dynamic-chip {
-  font-style: italic;
+/* Chip sort toggle — segmented A-Z / Qty control */
+.chip-sort-toggle {
+  display: inline-flex;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
 }
 
-.filter-chip.custom-chip {
-  font-weight: 600;
+.chip-sort-btn {
+  padding: 0.2rem 0.6rem;
+  border: none;
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.chip-sort-btn:not(:last-child) {
+  border-right: 1px solid var(--border);
+}
+
+.chip-sort-btn:hover {
+  background: var(--bg-secondary);
+}
+
+.chip-sort-btn.active {
+  background: var(--primary);
+  color: #fff;
 }
 
 /* Chip context menu (right-click on name/dynamic chips) */

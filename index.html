@@ -602,12 +602,11 @@
                 </select>
               </div>
               <div class="control-group">
-                <label for="chipSortOrder" class="control-label">Chip Sort:</label>
-                <select class="control-select" id="chipSortOrder" title="Sort chips within each category" style="width:auto;min-width:6rem">
-                  <option value="default">Default</option>
-                  <option value="alpha">Name (A-Z)</option>
-                  <option value="count">Qty (High→Low)</option>
-                </select>
+                <span class="control-label">Chip Sort:</span>
+                <div class="chip-sort-toggle" id="chipSortOrder" title="Sort chips within each category">
+                  <button type="button" class="chip-sort-btn active" data-sort="alpha">A-Z</button>
+                  <button type="button" class="chip-sort-btn" data-sort="count">Qty</button>
+                </div>
               </div>
             </div>
             <div class="filter-row">
@@ -1490,11 +1489,10 @@
               <div class="settings-group">
                 <div class="settings-group-label">Chip sort order</div>
                 <p class="settings-subtext">Sort chips within each category by name or quantity.</p>
-                <select id="settingsChipSortOrder">
-                  <option value="default">Default</option>
-                  <option value="alpha">Name (A-Z)</option>
-                  <option value="count">Qty (High→Low)</option>
-                </select>
+                <div class="chip-sort-toggle" id="settingsChipSortOrder">
+                  <button type="button" class="chip-sort-btn active" data-sort="alpha">A-Z</button>
+                  <button type="button" class="chip-sort-btn" data-sort="count">Qty</button>
+                </div>
               </div>
 
               <div class="settings-group">

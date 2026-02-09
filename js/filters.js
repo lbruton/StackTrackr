@@ -439,8 +439,11 @@ const renderActiveFilters = () => {
         { id: 'grade', enabled: true }, { id: 'numistaId', enabled: true },
       ];
 
+  // Read sort preference from toggle active button or localStorage (default: alpha)
   const sortEl = document.getElementById('chipSortOrder');
-  const chipSortPref = (sortEl && sortEl.value) || localStorage.getItem('chipSortOrder') || 'default';
+  const activeBtn = sortEl && sortEl.querySelector('.chip-sort-btn.active');
+  const rawPref = (activeBtn && activeBtn.dataset.sort) || localStorage.getItem('chipSortOrder') || 'alpha';
+  const chipSortPref = (rawPref === 'count') ? 'count' : 'alpha';
 
   // Helper: collect chips for a single category from the summary data
   const collectCategoryChips = (cat) => {
