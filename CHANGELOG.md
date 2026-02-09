@@ -5,6 +5,18 @@ All notable changes to StakTrakr will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.14.00] - 2026-02-09
+
+### Added — Encrypted Portable Backup (.stvault)
+
+- **Encrypted backup export**: New "Export Encrypted Backup" button in Settings > Files creates a password-protected `.stvault` file containing all inventory data, settings, API keys, and price history using AES-256-GCM encryption
+- **Encrypted backup import**: "Import Encrypted Backup" reads a `.stvault` file, decrypts with the user's password, and restores all data with a full UI refresh
+- **Password strength indicator**: Live strength bar (Weak → Very Strong) and password match validation in the vault modal
+- **Crypto fallback**: Uses native Web Crypto API (PBKDF2 + AES-256-GCM); falls back to forge.js (~87KB) for Firefox on `file://` protocol where `crypto.subtle` is unavailable
+- **Binary vault format**: 56-byte header (magic bytes, version, PBKDF2 iterations, salt, IV) followed by authenticated ciphertext — portable across devices and browsers
+
+---
+
 ## [3.12.02] - 2026-02-08
 
 ### Fixed
