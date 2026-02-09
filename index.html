@@ -60,6 +60,11 @@
       defer=""
       src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"
     ></script>
+    <!-- forge.js for encryption fallback on file:// protocol -->
+    <script
+      defer=""
+      src="https://cdnjs.cloudflare.com/ajax/libs/forge/0.10.0/forge.min.js"
+    ></script>
 
     <link rel="stylesheet" href="./css/styles.css" />
     <link rel="icon" type="image/svg+xml" href="./images/safe-favicon.svg" />
@@ -1786,6 +1791,10 @@
                   <h3>Backup, Restore, Clear</h3>
                   <p class="settings-subtext">Manage local application data.</p>
                   <div class="backup-buttons">
+                    <button class="btn" id="vaultExportBtn">Export Encrypted Backup</button>
+                    <button class="btn info" id="vaultImportBtn">Import Encrypted Backup</button>
+                    <input type="file" id="vaultImportFile" accept=".stvault" hidden />
+                    <hr class="vault-separator" />
                     <button class="btn warning" id="removeInventoryDataBtn">Remove Inventory Data</button>
                     <button class="btn danger" id="boatingAccidentBtn">Wipe All Data</button>
                   </div>
@@ -1831,6 +1840,90 @@
         </div>
         <div class="modal-body">
           ☁️ Feature coming soon ☁️
+        </div>
+      </div>
+    </div>
+
+    <!-- Vault Encrypted Backup Modal -->
+    <div class="modal" id="vaultModal" style="display: none">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 id="vaultModalTitle">Encrypted Backup</h2>
+          <button
+            aria-label="Close modal"
+            class="modal-close"
+            id="vaultCloseBtn"
+            onclick="closeVaultModal()"
+          >
+            &times;
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="encryption-info">
+            <strong>Included:</strong> All inventory data, settings, API keys, and price history.
+          </div>
+
+          <div id="vaultFileInfo" class="encryption-info" style="display: none">
+            <strong>File:</strong> <span id="vaultFileName"></span>
+            (<span id="vaultFileSize"></span>)
+          </div>
+
+          <div class="form-row">
+            <label for="vaultPassword">Password</label>
+            <div class="password-input-group">
+              <input
+                type="password"
+                id="vaultPassword"
+                placeholder="Minimum 8 characters"
+                autocomplete="off"
+              />
+              <button
+                type="button"
+                class="password-toggle"
+                id="vaultPasswordToggle"
+                title="Show/hide password"
+                onclick="toggleVaultPasswordVisibility('vaultPassword', this)"
+              >&#9678;</button>
+            </div>
+          </div>
+
+          <div id="vaultStrengthRow">
+            <div class="strength-bar">
+              <div class="strength-fill" id="vaultStrengthFill"></div>
+            </div>
+            <div class="strength-text" id="vaultStrengthText"></div>
+          </div>
+
+          <div class="form-row" id="vaultConfirmRow">
+            <label for="vaultConfirmPassword">Confirm Password</label>
+            <div class="password-input-group">
+              <input
+                type="password"
+                id="vaultConfirmPassword"
+                placeholder="Re-enter password"
+                autocomplete="off"
+              />
+              <button
+                type="button"
+                class="password-toggle"
+                id="vaultConfirmToggle"
+                title="Show/hide password"
+                onclick="toggleVaultPasswordVisibility('vaultConfirmPassword', this)"
+              >&#9678;</button>
+            </div>
+            <div class="password-match" id="vaultMatchIndicator"></div>
+          </div>
+
+          <div id="vaultStatus" class="encryption-status" style="display: none"></div>
+
+          <div class="encryption-warning">
+            <strong>Warning:</strong> If you forget this password, your backup cannot be recovered.
+          </div>
+
+          <div class="encryption-actions">
+            <button class="btn" id="vaultActionBtn" onclick="handleVaultAction()">Export</button>
+            <button class="btn warning" onclick="closeVaultModal()">Cancel</button>
+          </div>
         </div>
       </div>
     </div>
@@ -2040,6 +2133,7 @@
     <script defer src="./js/catalog-providers.js"></script>
     <script defer src="./js/catalog-manager.js"></script>
     <script defer src="./js/inventory.js"></script>
+    <script defer src="./js/vault.js"></script>
     <script defer src="./js/about.js"></script>
     <script defer src="./js/customMapping.js"></script>
     <script defer src="./js/settings.js"></script>

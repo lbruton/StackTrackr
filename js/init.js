@@ -150,6 +150,9 @@ document.addEventListener("DOMContentLoaded", () => {
     elements.numistaApiKey = safeGetElement("numistaApiKey");
     elements.removeInventoryDataBtn = safeGetElement("removeInventoryDataBtn");
     elements.boatingAccidentBtn = safeGetElement("boatingAccidentBtn");
+    elements.vaultExportBtn = safeGetElement("vaultExportBtn");
+    elements.vaultImportBtn = safeGetElement("vaultImportBtn");
+    elements.vaultImportFile = safeGetElement("vaultImportFile");
 
     // Modal elements
     debugLog("Phase 4: Initializing modal elements...");
@@ -157,6 +160,7 @@ document.addEventListener("DOMContentLoaded", () => {
     elements.apiInfoModal = safeGetElement("apiInfoModal");
     elements.apiHistoryModal = safeGetElement("apiHistoryModal");
     elements.cloudSyncModal = safeGetElement("cloudSyncModal");
+    elements.vaultModal = safeGetElement("vaultModal");
     elements.apiQuotaModal = safeGetElement("apiQuotaModal");
     elements.aboutModal = safeGetElement("aboutModal");
     elements.ackModal = safeGetElement("ackModal");
