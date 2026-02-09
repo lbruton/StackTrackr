@@ -230,10 +230,10 @@ const CERT_LOOKUP_URLS = {
  * Follows BRANCH.RELEASE.PATCH.state format
  * State codes: a=alpha, b=beta, rc=release candidate
  * Example: 3.03.02a → branch 3, release 03, patch 02, alpha
- * Updated: 2026-02-08 - Numista API v3 integration fix
+ * Updated: 2026-02-08 - Unified Settings modal
  */
 
-const APP_VERSION = "3.10.01";
+const APP_VERSION = "3.12.01";
 
 /**
  * @constant {string} DEFAULT_CURRENCY - Default currency code for monetary formatting
@@ -391,6 +391,9 @@ const FEATURE_FLAGS_KEY = "featureFlags";
 /** @constant {string} SPOT_TREND_RANGE_KEY - LocalStorage key for sparkline trend range preferences */
 const SPOT_TREND_RANGE_KEY = "spotTrendRange";
 
+/** @constant {string} ITEMS_PER_PAGE_KEY - LocalStorage key for items per page setting */
+const ITEMS_PER_PAGE_KEY = "settingsItemsPerPage";
+
 /**
  * List of recognized localStorage keys for cleanup validation
  * @constant {string[]}
@@ -424,6 +427,7 @@ const ALLOWED_STORAGE_KEYS = [
   "staktrakr.catalog.settings",
   CATALOG_HISTORY_KEY,
   SPOT_TREND_RANGE_KEY,
+  ITEMS_PER_PAGE_KEY,
 ];
 
 // Persist current application version for comparison on future loads

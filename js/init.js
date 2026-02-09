@@ -112,20 +112,19 @@ document.addEventListener("DOMContentLoaded", () => {
     elements.itemGrade = safeGetElement("itemGrade");
     elements.itemGradingAuthority = safeGetElement("itemGradingAuthority");
     elements.itemCertNumber = safeGetElement("itemCertNumber");
+    elements.itemSerialNumber = safeGetElement("itemSerialNumber");
     elements.searchNumistaBtn = safeGetElement("searchNumistaBtn");
 
     // Header buttons - CRITICAL
     debugLog("Phase 2: Initializing header buttons...");
     elements.appLogo = safeGetElement("appLogo");
-    elements.appearanceBtn = safeGetElement("appearanceBtn");
-    elements.apiBtn = safeGetElement("apiBtn");
-    elements.filesBtn = safeGetElement("filesBtn", true);
+    elements.settingsBtn = safeGetElement("settingsBtn", true);
     elements.aboutBtn = safeGetElement("aboutBtn");
 
     // Check if critical buttons exist
     debugLog(
-      "Files Button found:",
-      !!document.getElementById("filesBtn"),
+      "Settings Button found:",
+      !!document.getElementById("settingsBtn"),
     );
 
     // Import/Export elements
@@ -154,11 +153,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Modal elements
     debugLog("Phase 4: Initializing modal elements...");
-    elements.apiModal = safeGetElement("apiModal");
-    elements.filesModal = safeGetElement("filesModal");
+    elements.settingsModal = safeGetElement("settingsModal");
     elements.apiInfoModal = safeGetElement("apiInfoModal");
     elements.apiHistoryModal = safeGetElement("apiHistoryModal");
-    elements.apiProvidersModal = safeGetElement("apiProvidersModal");
     elements.cloudSyncModal = safeGetElement("cloudSyncModal");
     elements.apiQuotaModal = safeGetElement("apiQuotaModal");
     elements.aboutModal = safeGetElement("aboutModal");
@@ -195,11 +192,6 @@ document.addEventListener("DOMContentLoaded", () => {
     // Pagination elements
     debugLog("Phase 5: Initializing pagination elements...");
     elements.itemsPerPage = safeGetElement("itemsPerPage");
-    elements.prevPage = safeGetElement("prevPage");
-    elements.nextPage = safeGetElement("nextPage");
-    elements.firstPage = safeGetElement("firstPage");
-    elements.lastPage = safeGetElement("lastPage");
-    elements.pageNumbers = safeGetElement("pageNumbers");
     elements.itemCount = safeGetElement("itemCount");
 
       elements.changeLogBtn = safeGetElement("changeLogBtn");
@@ -354,6 +346,18 @@ document.addEventListener("DOMContentLoaded", () => {
     apiConfig = loadApiConfig();
     apiCache = loadApiCache();
 
+    // Load persisted items-per-page setting
+    try {
+      const savedIpp = localStorage.getItem(ITEMS_PER_PAGE_KEY);
+      if (savedIpp) {
+        const parsed = parseInt(savedIpp, 10);
+        if ([10, 15, 25, 50, 100].includes(parsed)) {
+          itemsPerPage = parsed;
+          if (elements.itemsPerPage) elements.itemsPerPage.value = String(parsed);
+        }
+      }
+    } catch (e) { /* ignore */ }
+
     // Apply saved theme attribute early so CSS variables resolve correctly
     // before renderActiveFilters() computes contrast colors in Phase 13
     const earlyTheme = localStorage.getItem(THEME_KEY);
@@ -393,6 +397,9 @@ document.addEventListener("DOMContentLoaded", () => {
         setupPagination();
         setupBulkEditControls();
         setupThemeToggle();
+        if (typeof setupSettingsEventListeners === 'function') {
+          setupSettingsEventListeners();
+        }
         setupColumnResizing();
         
         // Setup Edit header toggle functionality
@@ -434,7 +441,7 @@ document.addEventListener("DOMContentLoaded", () => {
     debugLog("✓ API configured:", !!apiConfig);
     debugLog("✓ Inventory items:", inventory.length);
     debugLog("✓ Critical elements check:");
-    debugLog("  - Files button:", !!elements.filesBtn);
+    debugLog("  - Settings button:", !!elements.settingsBtn);
     debugLog("  - Inventory form:", !!elements.inventoryForm);
     debugLog("  - Inventory table:", !!elements.inventoryTable);
     // Phase 16: Storage optimization pass
@@ -469,43 +476,12 @@ document.addEventListener('DOMContentLoaded', function() {
 function setupBasicEventListeners() {
   debugLog("Setting up basic event listeners as fallback...");
 
-  // Files button
-  const filesBtn = document.getElementById("filesBtn");
-  if (filesBtn) {
-    filesBtn.onclick = function () {
-      if (typeof showFilesModal === "function") {
-        showFilesModal();
-      }
-    };
-  }
-
-  // Appearance button (four-state theme toggle)
-  const appearanceBtn = document.getElementById("appearanceBtn");
-  if (appearanceBtn) {
-    appearanceBtn.onclick = function (e) {
-      e.preventDefault();
-      const savedTheme = localStorage.getItem(THEME_KEY) || "system";
-      if (savedTheme === "dark") {
-        setTheme("light");
-      } else if (savedTheme === "light") {
-        setTheme("sepia");
-      } else if (savedTheme === "sepia") {
-        setTheme("system");
-      } else {
-        setTheme("dark");
-      }
-      if (typeof updateThemeButton === "function") {
-        updateThemeButton();
-      }
-    };
-  }
-
-  // API button
-  const apiBtn = document.getElementById("apiBtn");
-  if (apiBtn) {
-    apiBtn.onclick = function () {
-      if (typeof showApiModal === "function") {
-        showApiModal();
+  // Settings button
+  const settingsBtn = document.getElementById("settingsBtn");
+  if (settingsBtn) {
+    settingsBtn.onclick = function () {
+      if (typeof showSettingsModal === "function") {
+        showSettingsModal();
       }
     };
   }

@@ -1,5 +1,11 @@
 ## What's New
 
+- **Sticky header fix (v3.12.01)**: Column headers now correctly pin at the top of the scrollable portal view during vertical scroll
+- **Portal view (v3.12.00)**: Inventory table now renders all items in a scrollable container with sticky column headers — pagination removed. Visible rows (10/15/25/50/100) control viewport height
+- **Unified Settings modal (v3.11.00)**: API, Files, and Appearance consolidated into a single Settings modal with sidebar navigation. Header simplified to About + Settings
+- **Theme picker (v3.11.00)**: 3-button theme selector (Light / Dark / Sepia) replaces the cycling toggle
+- **Tabbed API providers (v3.11.00)**: Provider configuration uses tabbed panels instead of a scrollable list
+- **Items per page persisted (v3.11.00)**: Items-per-page setting now survives page reloads
 - **Numista iframe fix (v3.10.01)**: Numista pages now open in a popup window — fixes "Can't Open This Page" error on hosted sites
 - **Sort fix (v3.10.01)**: Gain/Loss and Source columns now sort and resize correctly
 - **Serial # field (v3.10.00)**: New optional Serial Number input for bars and notes with physical serial numbers. Included in all export/import formats

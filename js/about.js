@@ -267,6 +267,12 @@ const setupAckModalEvents = () => {
  */
 const getEmbeddedWhatsNew = () => {
   return `
+    <li><strong>v3.12.01 – Sticky header fix</strong>: Column headers now correctly pin at the top of the scrollable portal view during vertical scroll</li>
+    <li><strong>v3.12.00 – Portal view</strong>: Inventory table now renders all items in a scrollable container with sticky column headers — pagination removed. Visible rows (10/15/25/50/100) control viewport height</li>
+    <li><strong>v3.11.00 – Unified Settings modal</strong>: API, Files, and Appearance consolidated into a single Settings modal with sidebar navigation. Header simplified to About + Settings</li>
+    <li><strong>v3.11.00 – Theme picker</strong>: 3-button theme selector replaces cycling toggle</li>
+    <li><strong>v3.11.00 – Tabbed API providers</strong>: Provider config uses tabbed panels instead of scrollable list</li>
+    <li><strong>v3.11.00 – Items per page persisted</strong>: Setting now survives page reloads</li>
     <li><strong>v3.10.01 – Numista iframe fix</strong>: Numista pages now open in a popup window — fixes "Can't Open This Page" error on hosted sites</li>
     <li><strong>v3.10.01 – Sort fix</strong>: Gain/Loss and Source columns now sort and resize correctly</li>
     <li><strong>v3.10.00 – Serial # field</strong>: New optional Serial Number input for bars and notes. Included in all export/import formats</li>
