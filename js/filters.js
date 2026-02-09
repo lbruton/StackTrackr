@@ -582,9 +582,9 @@ const renderActiveFilters = () => {
     chip.style.color = textColor || getContrastColor(bg);
 
     // Display simplified value for most chips, but keep full base name for name chips
-    // Custom groups use their display label; dynamic chips are wrapped in quotes
+    // Custom groups use their display label; dynamic chips are italic (via CSS class)
     const displayValue = f.isCustomGroup ? f.displayLabel
-      : f.isDynamic ? `\u201C${f.value}\u201D`
+      : f.isDynamic ? f.value
       : f.field === 'name' ? f.value
       : f.field === 'numistaId' ? `N#${f.value}`
       : simplifyChipValue(f.value, f.field);
