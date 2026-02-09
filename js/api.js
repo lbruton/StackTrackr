@@ -10,25 +10,41 @@ const providerStatuses = {
 };
 
 const renderApiStatusSummary = () => {
-  const container = document.getElementById("apiStatusSummary");
+  const container = document.getElementById("apiHeaderStatusRow");
   if (!container) return;
-  const html = Object.keys(API_PROVIDERS)
-    .map((prov) => {
-      const status = providerStatuses[prov] || "disconnected";
-      const name = API_PROVIDERS[prov].name;
-      const statusText =
-        status === "connected"
-          ? "Connected"
-          : status === "cached"
-            ? "Connected (cached)"
-            : status === "error"
-              ? "Error"
-              : "Disconnected";
-      const statusClass = status === "cached" ? "connected" : status;
-      return `<span class="status-item ${statusClass}">${name}: ${statusText}</span>`;
-    })
-    .join("");
-  container.innerHTML = html;
+
+  // Build provider list: Numista first, then metals providers
+  const items = [];
+
+  // Numista status
+  let numistaStatus = "disconnected";
+  try {
+    if (typeof catalogConfig !== "undefined" && catalogConfig.getNumistaConfig) {
+      const nc = catalogConfig.getNumistaConfig();
+      numistaStatus = nc.apiKey ? "connected" : "disconnected";
+    }
+  } catch (e) { /* ignore */ }
+  items.push({ name: "Numista", status: numistaStatus, provider: "NUMISTA" });
+
+  // Metals providers
+  Object.keys(API_PROVIDERS).forEach((prov) => {
+    const status = providerStatuses[prov] || "disconnected";
+    const name = API_PROVIDERS[prov].name;
+    const statusClass = status === "cached" ? "connected" : status;
+    const lastSync = typeof getLastProviderSyncTime === "function" ? getLastProviderSyncTime(prov) : null;
+    let tsHtml = "";
+    if (lastSync) {
+      const d = new Date(lastSync);
+      const timeStr = d.toLocaleDateString(undefined, { month: "short", day: "numeric" }) + " " + d.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
+      tsHtml = `<span class="status-timestamp">${timeStr}</span>`;
+    }
+    items.push({ name, status: statusClass, tsHtml, provider: prov });
+  });
+
+  container.innerHTML = items.map(item => {
+    const ts = item.tsHtml || "";
+    return `<span class="api-header-status-item ${item.status}"><span class="status-dot"></span><span class="status-name">${item.name}</span>${ts}</span>`;
+  }).join("");
 };
 
 // API history table state
@@ -267,6 +283,18 @@ const setProviderStatus = (provider, status) => {
             ? "Error"
             : "Disconnected";
   }
+
+  // Update last-used timestamp in provider card
+  const lastUsed = block.querySelector(".status-last-used");
+  if (lastUsed && typeof getLastProviderSyncTime === "function") {
+    const ts = getLastProviderSyncTime(provider);
+    if (ts) {
+      const d = new Date(ts);
+      lastUsed.textContent = "Last: " + d.toLocaleDateString(undefined, { month: "short", day: "numeric" }) + " " + d.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
+    } else {
+      lastUsed.textContent = "";
+    }
+  }
 };
 
 /**
@@ -332,7 +360,6 @@ const updateProviderSettings = (provider) => {
   }
 
   saveApiConfig(config);
-  updateBatchCalculation(provider);
 };
 
 /**
@@ -366,7 +393,6 @@ const setupProviderSettingsListeners = (provider) => {
       if (!config.metals[provider]) config.metals[provider] = {};
       config.metals[provider][metalKey] = e.target.checked;
       saveApiConfig(config);
-      updateBatchCalculation(provider);
     });
   });
 };
@@ -388,8 +414,26 @@ const updateProviderHistoryTables = () => {
     const usedPercent = Math.min((usage.used / usage.quota) * 100, 100);
     const remainingPercent = 100 - usedPercent;
     const warning = usage.used / usage.quota >= 0.9;
-    const usageHtml = `<div class="api-usage"><div class="usage-bar"><div class="used" style="width:${usedPercent}%"></div><div class="remaining" style="width:${remainingPercent}%"></div></div><div class="usage-text">${usage.used}/${usage.quota} calls${warning ? " 🚩" : ""}</div></div>`;
+    const usageHtml = `<div class="api-usage" data-quota-provider="${prov}" style="cursor:pointer" title="Click to edit quota"><div class="usage-bar"><div class="used" style="width:${usedPercent}%"></div><div class="remaining" style="width:${remainingPercent}%"></div></div><div class="usage-text">${usage.used}/${usage.quota} calls${warning ? " 🚩" : ""}</div></div>`;
     container.innerHTML = usageHtml;
+
+    // Make quota bar clickable
+    const usageEl = container.querySelector('.api-usage[data-quota-provider]');
+    if (usageEl) {
+      usageEl.addEventListener('click', () => {
+        const modal = document.getElementById('apiQuotaModal');
+        const input = document.getElementById('apiQuotaInput');
+        if (modal && input) {
+          const cfg = loadApiConfig();
+          const u = cfg.usage?.[prov] || { quota: DEFAULT_API_QUOTA, used: 0 };
+          input.value = u.quota;
+          // Store provider for the save handler
+          modal.dataset.quotaProvider = prov;
+          if (window.openModalById) openModalById('apiQuotaModal');
+          else modal.style.display = 'flex';
+        }
+      });
+    }
   });
 };
 
@@ -427,34 +471,36 @@ const refreshProviderStatuses = () => {
 };
 
 /**
- * Updates default provider button states
+ * Auto-selects the default provider based on tab order and key availability.
+ * Tab order determines priority: first tab with an API key becomes the primary provider.
  */
-const updateDefaultProviderButtons = () => {
+const autoSelectDefaultProvider = () => {
   const config = loadApiConfig();
   const keys = config.keys || {};
-  const active = Object.keys(API_PROVIDERS).filter((p) => keys[p]);
-  if (active.length === 1) {
+
+  // Read tab order from localStorage, fall back to default order
+  let order;
+  try {
+    const stored = localStorage.getItem("apiProviderOrder");
+    order = stored ? JSON.parse(stored) : null;
+  } catch (e) { order = null; }
+  if (!Array.isArray(order) || order.length === 0) {
+    order = Object.keys(API_PROVIDERS);
+  }
+
+  // Select first provider with a key as default
+  const active = order.filter((p) => keys[p]);
+  if (active.length > 0 && config.provider !== active[0]) {
     config.provider = active[0];
     saveApiConfig(config);
+  } else if (active.length === 0 && config.provider) {
+    config.provider = "";
+    saveApiConfig(config);
   }
-  Object.keys(API_PROVIDERS).forEach((prov) => {
-    const btn = document.querySelector(
-      `.provider-default-btn[data-provider="${prov}"]`,
-    );
-    if (!btn) return;
-    btn.classList.remove("default", "backup", "inactive");
-    if (config.provider === prov && keys[prov]) {
-      btn.textContent = "Default";
-      btn.classList.add("default");
-    } else if (keys[prov]) {
-      btn.textContent = "Backup";
-      btn.classList.add("backup");
-    } else {
-      btn.textContent = "Not in use";
-      btn.classList.add("inactive");
-    }
-  });
 };
+
+// Backward-compatible alias
+const updateDefaultProviderButtons = autoSelectDefaultProvider;
 
 /**
  * Renders API history table with filtering, sorting and pagination
@@ -1455,6 +1501,31 @@ const populateApiSection = () => {
     saveApiConfig(currentConfig);
   }
 
+  // Populate Numista tab
+  if (typeof catalogConfig !== "undefined" && catalogConfig.getNumistaConfig) {
+    const nc = catalogConfig.getNumistaConfig();
+    const numistaKeyInput = document.getElementById("numistaApiKey");
+    if (numistaKeyInput) numistaKeyInput.value = nc.apiKey || "";
+    if (typeof renderNumistaUsageBar === "function") renderNumistaUsageBar();
+    // Update Numista status indicator
+    const numistaStatusEl = document.getElementById("numistaProviderStatus");
+    if (numistaStatusEl) {
+      numistaStatusEl.classList.remove("status-connected", "status-disconnected");
+      if (nc.apiKey) {
+        numistaStatusEl.classList.add("status-connected");
+        const dot = numistaStatusEl.querySelector(".status-dot");
+        const text = numistaStatusEl.querySelector(".status-text");
+        if (dot) dot.style.background = "";
+        if (text) text.textContent = "Connected";
+      } else {
+        numistaStatusEl.classList.add("status-disconnected");
+        const text = numistaStatusEl.querySelector(".status-text");
+        if (text) text.textContent = "Disconnected";
+      }
+    }
+  }
+
+  // Populate metals provider tabs
   Object.keys(API_PROVIDERS).forEach((prov) => {
     const input = document.getElementById(`apiKey_${prov}`);
     if (input) input.value = currentConfig.keys?.[prov] || "";
@@ -1471,7 +1542,7 @@ const populateApiSection = () => {
   if (formatSelect)
     formatSelect.value = currentConfig.customConfig?.format || "symbol";
 
-  updateDefaultProviderButtons();
+  autoSelectDefaultProvider();
   updateProviderHistoryTables();
 
   // Initialize provider settings listeners and load saved values
@@ -1512,11 +1583,12 @@ const populateApiSection = () => {
         checkbox.checked = metals[metal] !== false;
       }
     });
-
-    if (typeof updateBatchCalculation === 'function') {
-      updateBatchCalculation(provider);
-    }
   });
+
+  // Restore tab ordering from localStorage
+  if (typeof loadProviderTabOrder === 'function') {
+    loadProviderTabOrder();
+  }
 
   if (typeof refreshProviderStatuses === 'function') {
     refreshProviderStatuses();

@@ -91,6 +91,14 @@ const populateVersionModal = (version, html) => {
  */
 const getEmbeddedChangelog = (version) => {
   const changelogs = {
+    "3.18.00": `
+      <li><strong>Numista first-class tab</strong>: Numista API promoted from appended section to pinned first tab in unified API Configuration panel</li>
+      <li><strong>Drag-to-reorder provider priority</strong>: Metals tabs are drag-and-drop reorderable — tab position determines sync priority. Order persists across sessions</li>
+      <li><strong>Header status row</strong>: Compact per-provider connection indicators with last-used timestamps</li>
+      <li><strong>Clickable quota bars</strong>: Click usage bars to edit quota — dedicated Quota buttons removed</li>
+      <li><strong>Streamlined provider cards</strong>: Removed batch badges, savings calculations, info links, Default/Backup buttons, and API URL display</li>
+      <li><strong>Auto-select default provider</strong>: Provider priority determined by tab order instead of manual Default/Backup clicks</li>
+    `,
     "3.17.00": `
       <li><strong>Settings reorganized</strong>: New Theme, Table, and Chips tabs. Visible rows moved to Table. Grouping renamed to Chips</li>
       <li><strong>Inline Name chip settings</strong>: Enable/disable and reorder 6 chip types (Grade, Numista, Year, Serial #, Storage, Notes) in Settings &gt; Table</li>
