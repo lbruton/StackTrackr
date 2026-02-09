@@ -265,7 +265,6 @@ const searchInput = document.getElementById('searchInput');
 if (searchInput) {
   const debouncedSearch = debounce((query) => {
     searchQuery = query;
-    currentPage = 1;
     filterInventory();
   }, 300);
 

@@ -1,69 +1,48 @@
-// PAGINATION FUNCTIONS
+// PORTAL VIEW UTILITIES
 // =============================================================================
 
 /**
- * Calculates total number of pages based on current data
- * 
- * @param {Array} [data=inventory] - Data to paginate
- * @returns {number} Total number of pages
+ * Updates the max-height of .table-section to show exactly `itemsPerPage` rows.
+ * Measures actual rendered heights (thead + first row) so it adapts to font
+ * scaling, browser zoom, and responsive breakpoints.
+ *
+ * If all rows fit within the computed height, max-height is removed to avoid
+ * an unnecessary scrollbar.
+ *
+ * Called by renderTable() after rows are inserted into the DOM.
  */
-const calculateTotalPages = (data = inventory) => {
-  return Math.max(1, Math.ceil(data.length / itemsPerPage));
-};
+const updatePortalHeight = () => {
+  const portalScroll = document.querySelector('.portal-scroll');
+  if (!portalScroll) return;
 
-/**
- * Renders pagination controls based on current state
- * 
- * @param {Array} [filteredData=filterInventory()] - Filtered data to paginate
- */
-const renderPagination = (filteredData = filterInventory()) => {
-  const totalPages = calculateTotalPages(filteredData);
-  const pageNumbersContainer = elements.pageNumbers;
-  pageNumbersContainer.innerHTML = '';
+  const table = document.getElementById('inventoryTable');
+  if (!table) return;
 
-  // Show limited page numbers (max 7) centered around current page
-  const maxVisiblePages = 7;
-  let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
-  let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+  const thead = table.querySelector('thead');
+  const firstRow = table.querySelector('tbody tr');
 
-  // Adjust startPage if we're near the end
-  if (endPage - startPage + 1 < maxVisiblePages) {
-    startPage = Math.max(1, endPage - maxVisiblePages + 1);
+  if (!thead || !firstRow) {
+    // Empty table — remove max-height constraint
+    portalScroll.style.maxHeight = '';
+    return;
   }
 
-  // Add page number buttons
-  for (let i = startPage; i <= endPage; i++) {
-    const btn = document.createElement('button');
-    btn.textContent = i;
-    btn.className = `pagination-btn${currentPage === i ? ' active' : ''}`;
-    btn.onclick = () => goToPage(i);
-    pageNumbersContainer.appendChild(btn);
+  const theadHeight = thead.getBoundingClientRect().height;
+  const rowHeight = firstRow.getBoundingClientRect().height;
+  const totalRows = table.querySelectorAll('tbody tr').length;
+
+  // If all rows fit, no need for a scrollbar
+  if (totalRows <= itemsPerPage) {
+    portalScroll.style.maxHeight = '';
+    return;
   }
 
-  // Update button states
-  elements.firstPage.disabled = currentPage === 1;
-  elements.prevPage.disabled = currentPage === 1;
-  elements.nextPage.disabled = currentPage === totalPages;
-  elements.lastPage.disabled = currentPage === totalPages;
-
-  // Update search results info
-  if (searchQuery.trim()) {
-    elements.searchResultsInfo.textContent = `Found ${filteredData.length} results matching "${searchQuery}"`;
-  } else {
-    elements.searchResultsInfo.textContent = '';
-  }
+  // Portal height = thead + (visibleRows × rowHeight) + 1px border allowance
+  const portalHeight = theadHeight + (itemsPerPage * rowHeight) + 1;
+  portalScroll.style.maxHeight = `${portalHeight}px`;
 };
 
-/**
- * Navigates to specified page number
- * 
- * @param {number} page - Page number to navigate to
- */
-const goToPage = (page) => {
-  const filteredData = filterInventory();
-  const totalPages = calculateTotalPages(filteredData);
-  currentPage = Math.max(1, Math.min(page, totalPages));
-  renderTable();
-};
+// Expose globally
+window.updatePortalHeight = updatePortalHeight;
 
 // =============================================================================

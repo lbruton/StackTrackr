@@ -1314,6 +1314,12 @@ input[type="submit"] {
   max-height: none;
   display: flex;
   flex-direction: column;
+  padding: 0;
+  overflow: hidden;
+}
+
+#apiHistoryModal .modal-content::before {
+  display: none;
 }
 
 /* Storage report options modal */
@@ -1423,69 +1429,266 @@ input[type="submit"] {
   margin-top: 0.75rem;
 }
 
-/* Settings-style modal layout */
-#apiModal .modal-content,
-#filesModal .modal-content {
-  max-width: 750px;
-  max-height: 90vh;
+/* =============================================================================
+   UNIFIED SETTINGS MODAL
+   ============================================================================= */
+
+/* Settings modal content — near full-screen
+   Compound selector for higher specificity than base .modal-content */
+.modal-content.settings-modal-content {
+  width: 90vw;
+  max-width: 1100px;
+  height: 85vh;
+  max-height: 85vh;
   display: flex;
   flex-direction: column;
   padding: 0;
   overflow: hidden;
 }
 
-#apiModal .modal-header,
-#filesModal .modal-header {
+/* Hide base modal gradient line — settings header has its own */
+.modal-content.settings-modal-content::before {
+  display: none;
+}
+
+.settings-modal-content > .modal-header {
   background: linear-gradient(135deg, var(--primary), var(--primary-hover));
   color: #f8fafc;
-  padding: var(--spacing-xl);
-  position: relative;
+  padding: var(--spacing) var(--spacing-xl);
   border-radius: var(--radius-lg) var(--radius-lg) 0 0;
   box-shadow: var(--shadow);
+  flex-shrink: 0;
 }
 
-#apiModal .modal-header h2,
-#filesModal .modal-header h2 {
+.settings-modal-content > .modal-header h2 {
   margin: 0;
   color: #f8fafc;
-  text-align: center;
 }
 
-#apiModal .modal-body,
-#filesModal .modal-body {
-  padding: var(--spacing-xl);
-  overflow-y: auto;
+/* Sidebar + content layout */
+.settings-modal-layout {
+  display: flex;
   flex: 1;
+  overflow: hidden;
+}
+
+.settings-sidebar {
+  width: 160px;
+  min-width: 160px;
+  background: var(--bg-secondary);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  padding: var(--spacing-sm) 0;
+  overflow-y: auto;
+  flex-shrink: 0;
+}
+
+.settings-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border: none;
+  background: none;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  transition: background 0.15s, color 0.15s;
+}
+
+.settings-nav-item:hover {
+  background: var(--bg-card);
+  color: var(--text-primary);
+}
+
+.settings-nav-item.active {
+  background: var(--bg-card);
+  color: var(--primary);
+  border-left: 3px solid var(--primary);
+  font-weight: 600;
+}
+
+.settings-nav-item svg {
+  flex-shrink: 0;
+}
+
+/* Content area */
+.settings-content-area {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--spacing-xl);
   scrollbar-width: thin;
   scrollbar-color: var(--primary) var(--bg-secondary);
 }
 
-#apiModal .modal-body::-webkit-scrollbar,
-#filesModal .modal-body::-webkit-scrollbar {
-  width: 8px;
+.settings-content-area::-webkit-scrollbar { width: 8px; }
+.settings-content-area::-webkit-scrollbar-track { background: var(--bg-secondary); border-radius: var(--radius); }
+.settings-content-area::-webkit-scrollbar-thumb { background-color: var(--primary); border-radius: var(--radius); }
+.settings-content-area::-webkit-scrollbar-thumb:hover { background-color: var(--primary-hover); }
+
+.settings-section-panel h3 {
+  margin: 0 0 1rem 0;
+  font-size: 1.125rem;
 }
 
-#apiModal .modal-body::-webkit-scrollbar-track,
-#filesModal .modal-body::-webkit-scrollbar-track {
-  background: var(--bg-secondary);
+/* Settings groups (Site section) */
+.settings-group {
+  margin-bottom: 1.25rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.settings-group:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.settings-group-label {
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+}
+
+/* Theme picker */
+.theme-picker {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.theme-option {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.5rem 1rem;
+  border: 2px solid var(--border);
   border-radius: var(--radius);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
 }
 
-#apiModal .modal-body::-webkit-scrollbar-thumb,
-#filesModal .modal-body::-webkit-scrollbar-thumb {
-  background-color: var(--primary);
-  border-radius: var(--radius);
+.theme-option:hover {
+  border-color: var(--primary);
 }
 
-#apiModal .modal-body::-webkit-scrollbar-thumb:hover,
-#filesModal .modal-body::-webkit-scrollbar-thumb:hover {
-  background-color: var(--primary-hover);
+.theme-option.active {
+  border-color: var(--primary);
+  background: var(--primary);
+  color: #fff;
 }
 
-#filesModal .modal-body {
+/* Provider tabs */
+.settings-provider-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 2px solid var(--border);
+  margin: 1rem 0 0 0;
+}
+
+.settings-provider-tab {
+  padding: 0.5rem 1rem;
+  border: none;
+  background: none;
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.settings-provider-tab:hover {
+  color: var(--text-primary);
+}
+
+.settings-provider-tab.active {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+  font-weight: 600;
+}
+
+.settings-provider-panel {
+  padding-top: 1rem;
+}
+
+/* Placeholder sections (Cloud, Tools) */
+.settings-placeholder {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing);
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 1rem;
+  color: var(--text-secondary);
+  text-align: center;
+  gap: 1rem;
+}
+
+.settings-placeholder p {
+  font-size: 0.9375rem;
+  margin: 0;
+}
+
+/* Footer bar */
+.settings-footer {
+  padding: 0.5rem 1rem;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  border-top: 1px solid var(--border);
+  background: var(--bg-secondary);
+  text-align: center;
+  flex-shrink: 0;
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+}
+
+/* Mobile: sidebar becomes horizontal strip */
+@media (max-width: 768px) {
+  .modal-content.settings-modal-content {
+    width: 98vw;
+    height: 95vh;
+    max-height: 95vh;
+  }
+
+  .settings-modal-layout {
+    flex-direction: column;
+  }
+
+  .settings-sidebar {
+    width: 100%;
+    min-width: unset;
+    flex-direction: row;
+    overflow-x: auto;
+    overflow-y: hidden;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    padding: 0;
+    flex-shrink: 0;
+  }
+
+  .settings-nav-item {
+    white-space: nowrap;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.8125rem;
+  }
+
+  .settings-nav-item.active {
+    border-left: none;
+    border-bottom: 3px solid var(--primary);
+  }
+
+  .settings-content-area {
+    padding: var(--spacing);
+  }
 }
 
 
@@ -1545,38 +1748,7 @@ input[type="submit"] {
   text-align: center;
 }
 
-/* API Providers modal layout */
-#apiProvidersModal .modal-content {
-  width: 90vw;
-  max-width: 800px;
-  max-height: 80vh;
-  display: flex;
-  flex-direction: column;
-  padding: 0;
-  overflow: hidden;
-}
-
-#apiProvidersModal .modal-header {
-  background: linear-gradient(135deg, var(--primary), var(--primary-hover));
-  color: #f8fafc;
-  padding: var(--spacing-xl);
-  position: sticky;
-  top: 0;
-  z-index: 1;
-  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-}
-
-#apiProvidersModal .modal-header h2 {
-  margin: 0;
-  color: #f8fafc;
-  text-align: center;
-}
-
-#apiProvidersModal .modal-body {
-  padding: var(--spacing-xl);
-  overflow-y: auto;
-  flex: 1;
-}
+/* Provider panels within Settings modal inherit scrollable content area */
 
 /* Standardized modal layout for change log and details views */
 /* shared modal content structure */
@@ -1838,13 +2010,29 @@ table {
 }
 
 .table-section {
-  overflow-x: auto;
-  overflow-y: visible;
-  -webkit-overflow-scrolling: touch;
   width: 100%;
   max-width: 100%;
   min-height: auto;
   box-sizing: border-box;
+  /* Visual chrome — wraps portal-scroll + footer controls */
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  /* Override base section{overflow:hidden} — portal-scroll handles overflow,
+     and hidden here would create an intermediate scroll container that
+     breaks position:sticky on thead th in some browsers */
+  overflow: visible;
+}
+
+/* Scroll container wrapping only the <table> — footer stays outside.
+   max-height MUST be set so the container actually constrains content
+   and becomes a real scroll container (required for position:sticky).
+   JS updatePortalHeight() overrides with a precise row-based value. */
+.portal-scroll {
+  overflow-x: auto;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  max-height: 70vh;
 }
 
 #inventoryTable {
@@ -1853,14 +2041,17 @@ table {
      remains available via .table-section when necessary. */
   width: 100%;
   table-layout: auto;
-  border: 2px solid var(--border);
-  border-radius: var(--radius);
   background: var(--bg-primary);
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  /* override base table rules that block position:sticky on thead th:
+     - border-collapse:separate keeps each cell's box independent
+     - border-spacing:0 eliminates visual gaps (same look as collapse)
+     - overflow:visible lets sticky reach the .table-section scroll container */
+  border-collapse: separate;
+  border-spacing: 0;
+  overflow: visible;
 }
 
 #inventoryTable tbody {
-  min-height: calc(10 * 2.2rem);
   height: auto;
 }
 
@@ -2040,7 +2231,8 @@ th[data-column="date"] {
 /* Price column toggle styling */
 #inventoryTable th[data-column="purchasePrice"] {
   cursor: pointer;
-  position: relative;
+  /* position: sticky inherited from #inventoryTable thead th —
+     sticky acts as relative for child/pseudo positioning */
 }
 
 #inventoryTable th[data-column="purchasePrice"]:after {
@@ -3163,54 +3355,7 @@ a.about-badge:hover {
    Numista pages now open in popup windows via js/numista-modal.js
    ============================================================================= */
 
-/* =============================================================================
-   PAGINATION
-   ============================================================================= */
-
-.pagination-section {
-  margin: var(--spacing) 0;
-}
-
-.pagination-controls {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--spacing-xs);
-  padding: 0.125rem 0;
-}
-
-.pagination-buttons {
-  display: flex;
-  width: 100%;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 var(--spacing-xs);
-}
-
-.pagination-left,
-.pagination-right {
-  display: flex;
-  gap: var(--spacing-sm);
-}
-
-.pagination-center {
-  display: flex;
-  gap: var(--spacing-sm);
-  justify-content: center;
-  flex-grow: 1;
-}
-
-.items-per-page {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-}
-
-.items-label {
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--text-muted);
-}
+/* Pagination section removed — replaced by portal (scrollable table) view */
 
 .change-log-label {
   font-weight: 700;
@@ -3246,44 +3391,6 @@ a.about-badge:hover {
   cursor: pointer;
 }
 
-.pagination-select {
-  width: 6rem;
-  height: 1.375rem;
-}
-
-.pagination-btn {
-  min-width: 2rem;
-  height: 1.25rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: var(--radius);
-  border: 1px solid var(--border);
-  background: var(--bg-primary);
-  color: var(--text-primary);
-  font-weight: 500;
-  transition: var(--transition);
-  cursor: pointer;
-  padding: 0;
-  font-size: 0.75rem;
-}
-
-.pagination-btn.active {
-  background: var(--primary);
-  color: #f8fafc;
-  border-color: var(--primary);
-  font-weight: 600;
-}
-
-.pagination-btn:hover:not(:disabled) {
-  background: var(--bg-secondary);
-  border-color: var(--border-hover);
-}
-
-.pagination-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
 
 .beta-warning {
   margin-top: var(--spacing-xs);
@@ -4059,26 +4166,6 @@ input:disabled + .slider {
     padding: var(--spacing);
   }
 
-  .pagination-controls {
-    grid-template-columns: 1fr;
-    text-align: center;
-  }
-
-  .pagination-left,
-  .pagination-right {
-    justify-content: center;
-    margin-bottom: var(--spacing-sm);
-  }
-
-    .pagination-center {
-      flex-direction: row;
-      flex-wrap: wrap;
-      gap: var(--spacing-sm);
-    }
-
-    .items-per-page {
-      justify-content: center;
-    }
 
     .table-controls {
       flex-direction: column;
@@ -4223,10 +4310,6 @@ input:disabled + .slider {
     width: 4rem;
   }
 
-  .pagination-btn {
-    padding: 0;
-    font-size: 0.7rem;
-  }
 }
 
 @media (min-width: 600px) {
@@ -4238,13 +4321,21 @@ input:disabled + .slider {
     grid-template-columns: repeat(2, 1fr);
   }
 }
-#inventoryTable th.icon-col,
 #inventoryTable td.icon-col {
   width: 3.5rem;
   padding: 0.25rem;
   text-align: center;
   vertical-align: middle;
   position: relative;
+}
+
+#inventoryTable th.icon-col {
+  width: 3.5rem;
+  padding: 0.25rem;
+  text-align: center;
+  vertical-align: middle;
+  /* position: sticky inherited from #inventoryTable thead th —
+     sticky acts as relative for child/pseudo positioning */
 }
 
 /* Enhanced action icons without hover animations */
@@ -4539,6 +4630,9 @@ th {
   color: var(--text-secondary);
   background: var(--bg-secondary);
   font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  position: sticky;
+  top: 0;
+  z-index: 2;
 }
 
 /* Ensure uniform font family for entire table */

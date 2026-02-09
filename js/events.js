@@ -108,7 +108,9 @@ const setupColumnResizing = () => {
     const resizeHandle = document.createElement("div");
     resizeHandle.className = "resize-handle";
 
-    header.style.position = "relative";
+    /* position:sticky (set via CSS on #inventoryTable thead th) already
+       provides a containing block for the absolutely-positioned resize
+       handle — no inline position:relative needed. */
     header.appendChild(resizeHandle);
 
     safeAttachListener(
@@ -273,7 +275,6 @@ const setupEventListeners = () => {
     if (elements.searchInput) {
       const debouncedSearch = debounce(() => {
         searchQuery = elements.searchInput.value.replace(/[<>]/g, "").trim();
-        currentPage = 1;
         renderTable();
         if (typeof renderActiveFilters === "function") {
           renderActiveFilters();
@@ -288,7 +289,6 @@ const setupEventListeners = () => {
       const debouncedSearchHandler = debounce((event) => {
         const query = event.target.value;
         searchQuery = query;
-        currentPage = 1;
         filterInventory();
       }, 300);
 
@@ -317,22 +317,20 @@ const setupEventListeners = () => {
       );
     }
 
-    // Files Button
-    if (elements.filesBtn) {
+    // Settings Button
+    if (elements.settingsBtn) {
       safeAttachListener(
-        elements.filesBtn,
+        elements.settingsBtn,
         "click",
         (e) => {
           e.preventDefault();
-          debugLog("Files button clicked");
-          if (typeof showFilesModal === "function") {
-            showFilesModal();
+          debugLog("Settings button clicked");
+          if (typeof showSettingsModal === "function") {
+            showSettingsModal();
           }
         },
-        "Files Button",
+        "Settings Button",
       );
-    } else {
-      console.error("Files button element not found!");
     }
 
     // About Button
@@ -347,21 +345,6 @@ const setupEventListeners = () => {
           }
         },
         "About Button",
-      );
-    }
-
-    // API Button
-    if (elements.apiBtn) {
-      safeAttachListener(
-        elements.apiBtn,
-        "click",
-        (e) => {
-          e.preventDefault();
-          if (typeof showApiModal === "function") {
-            showApiModal();
-          }
-        },
-        "API Button",
       );
     }
 
@@ -383,7 +366,7 @@ const setupEventListeners = () => {
       });
     }
 
-    // Chip minimum count dropdown
+    // Chip minimum count dropdown (inline)
     const chipMinCountEl = document.getElementById('chipMinCount');
     if (chipMinCountEl) {
       safeAttachListener(
@@ -392,6 +375,9 @@ const setupEventListeners = () => {
         (e) => {
           const minCount = parseInt(e.target.value, 10);
           localStorage.setItem('chipMinCount', minCount.toString());
+          // Sync settings modal control
+          const settingsChipMin = document.getElementById('settingsChipMinCount');
+          if (settingsChipMin) settingsChipMin.value = minCount.toString();
           if (typeof renderActiveFilters === 'function') {
             renderActiveFilters();
           }
@@ -400,12 +386,12 @@ const setupEventListeners = () => {
       );
     }
 
-    // Grouped name chips toggle
+    // Grouped name chips toggle (inline)
     const groupNameChipsEl = document.getElementById('groupNameChips');
     if (groupNameChipsEl && window.featureFlags) {
       // Set initial state from feature flag
       groupNameChipsEl.value = window.featureFlags.isEnabled('GROUPED_NAME_CHIPS') ? 'yes' : 'no';
-      
+
       safeAttachListener(
         groupNameChipsEl,
         'change',
@@ -417,6 +403,9 @@ const setupEventListeners = () => {
           } else {
             window.featureFlags.disable('GROUPED_NAME_CHIPS');
           }
+          // Sync settings modal control
+          const settingsGroup = document.getElementById('settingsGroupNameChips');
+          if (settingsGroup) settingsGroup.value = e.target.value;
           // Refresh the chips display
           if (typeof renderActiveFilters === 'function') {
             renderActiveFilters();
@@ -880,8 +869,8 @@ const setupEventListeners = () => {
           "click",
           (e) => {
             e.preventDefault();
-            if (typeof showFilesModal === "function") {
-              showFilesModal();
+            if (typeof showSettingsModal === "function") {
+              showSettingsModal('files');
             }
           },
           "Backup reminder link",
@@ -1261,33 +1250,6 @@ const setupEventListeners = () => {
       );
     }
 
-    // Files modal close handlers
-    const filesModal = document.getElementById("filesModal");
-    const filesCloseBtn = document.getElementById("filesCloseBtn");
-    if (filesModal) {
-      safeAttachListener(
-        filesModal,
-        "click",
-        (e) => {
-          if (e.target === filesModal && typeof hideFilesModal === "function") {
-            hideFilesModal();
-          }
-        },
-        "Files modal background",
-      );
-    }
-    if (filesCloseBtn) {
-      safeAttachListener(
-        filesCloseBtn,
-        "click",
-        () => {
-          if (typeof hideFilesModal === "function") hideFilesModal();
-        },
-        "Files close button",
-      );
-    }
-
-
     // API MODAL EVENT LISTENERS
     debugLog("Setting up API modal listeners...");
     setupApiEvents();
@@ -1306,10 +1268,10 @@ const setupEventListeners = () => {
 };
 
 /**
- * Sets up pagination event listeners
+ * Sets up visible-rows (portal view) event listener
  */
 const setupPagination = () => {
-  debugLog("Setting up pagination listeners...");
+  debugLog("Setting up visible-rows listener...");
 
   try {
     if (elements.itemsPerPage) {
@@ -1318,69 +1280,20 @@ const setupPagination = () => {
         "change",
         function () {
           itemsPerPage = parseInt(this.value);
-          currentPage = 1;
+          // Persist setting
+          try { localStorage.setItem(ITEMS_PER_PAGE_KEY, String(itemsPerPage)); } catch (e) { /* ignore */ }
+          // Sync settings modal control
+          const settingsIpp = document.getElementById('settingsItemsPerPage');
+          if (settingsIpp) settingsIpp.value = String(itemsPerPage);
           renderTable();
         },
-        "Items per page select",
+        "Visible rows select",
       );
     }
 
-    if (elements.prevPage) {
-      safeAttachListener(
-        elements.prevPage,
-        "click",
-        function () {
-          if (currentPage > 1) {
-            currentPage--;
-            renderTable();
-          }
-        },
-        "Previous page button",
-      );
-    }
-
-    if (elements.nextPage) {
-      safeAttachListener(
-        elements.nextPage,
-        "click",
-        function () {
-          const totalPages = calculateTotalPages(filterInventory());
-          if (currentPage < totalPages) {
-            currentPage++;
-            renderTable();
-          }
-        },
-        "Next page button",
-      );
-    }
-
-    if (elements.firstPage) {
-      safeAttachListener(
-        elements.firstPage,
-        "click",
-        function () {
-          currentPage = 1;
-          renderTable();
-        },
-        "First page button",
-      );
-    }
-
-    if (elements.lastPage) {
-      safeAttachListener(
-        elements.lastPage,
-        "click",
-        function () {
-          currentPage = calculateTotalPages(filterInventory());
-          renderTable();
-        },
-        "Last page button",
-      );
-    }
-
-    debugLog("✓ Pagination listeners setup complete");
+    debugLog("✓ Visible-rows listener setup complete");
   } catch (error) {
-    console.error("❌ Error setting up pagination listeners:", error);
+    console.error("❌ Error setting up visible-rows listener:", error);
   }
 };
 
@@ -1452,7 +1365,6 @@ const setupSearch = () => {
     if (elements.searchInput) {
       const handleSearchInput = debounce(function () {
         searchQuery = this.value.replace(/[<>]/g, '').trim();
-        currentPage = 1; // Reset to first page when search changes
         renderTable();
       }, 300);
       safeAttachListener(
@@ -1476,7 +1388,6 @@ const setupSearch = () => {
           }
           searchQuery = "";
           if (elements.searchInput) elements.searchInput.value = "";
-          currentPage = 1;
           renderTable();
           renderActiveFilters();
         },
@@ -1497,7 +1408,6 @@ const setupSearch = () => {
           }
           searchQuery = "";
           if (elements.searchInput) elements.searchInput.value = "";
-          currentPage = 1;
           renderTable();
           renderActiveFilters();
         },
@@ -1571,28 +1481,16 @@ const setupSearch = () => {
 const updateThemeButton = () => {
   const savedTheme = localStorage.getItem(THEME_KEY) || "light";
 
-  // Apply theme classes to all theme buttons
+  // Apply theme classes to all theme buttons (header buttons)
   document.querySelectorAll(".theme-btn").forEach((btn) => {
     btn.classList.remove("dark", "light", "sepia");
     btn.classList.add(savedTheme);
   });
 
-  const btn = elements.appearanceBtn;
-  if (!btn) return;
-
-  // Show current theme icon and color on selector button
-  const themeConfig = {
-    dark: { icon: "🌙", label: "Dark mode", color: "#1e293b" },
-    light: { icon: "☀️", label: "Light mode", color: "#f8fafc" },
-    sepia: { icon: "📜", label: "Sepia mode", color: "#f2e7d5" }
-  };
-
-  const config = themeConfig[savedTheme] || themeConfig.light;
-  btn.textContent = config.icon;
-  btn.style.backgroundColor = config.color;
-  btn.style.color = savedTheme === "light" ? "#1e293b" : "#f8fafc";
-  btn.setAttribute("aria-label", config.label);
-  btn.setAttribute("title", config.label);
+  // Update settings modal theme picker active state
+  document.querySelectorAll('.theme-option').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.theme === savedTheme);
+  });
 };
 
 window.updateThemeButton = updateThemeButton;
@@ -1627,33 +1525,7 @@ const setupThemeToggle = () => {
         });
     }
 
-    if (elements.appearanceBtn) {
-      safeAttachListener(
-        elements.appearanceBtn,
-        "click",
-        (e) => {
-          e.preventDefault();
-          if (typeof toggleTheme === "function") {
-            toggleTheme();
-          } else {
-            // Fallback theme cycling: dark → light → sepia → dark
-            const savedTheme = localStorage.getItem(THEME_KEY) || "light";
-            if (savedTheme === "dark") {
-              setTheme("light");
-            } else if (savedTheme === "light") {
-              setTheme("sepia");
-            } else if (savedTheme === "sepia") {
-              setTheme("dark");
-            } else {
-              setTheme("light");
-            }
-          }
-          updateThemeButton();
-        },
-        "Theme toggle button",
-      );
-    }
-
+    // Theme is now controlled from the Settings modal theme picker
     debugLog("✓ Theme toggle setup complete");
   } catch (error) {
     console.error("❌ Error setting up theme toggle:", error);
@@ -1668,36 +1540,8 @@ const setupApiEvents = () => {
 
   try {
     let quotaProvider = null;
-    const apiModal = document.getElementById("apiModal");
-    const apiCloseBtn = document.getElementById("apiCloseBtn");
     const infoModal = document.getElementById("apiInfoModal");
     const infoCloseBtn = document.getElementById("apiInfoCloseBtn");
-
-    if (apiModal) {
-      safeAttachListener(
-        apiModal,
-        "click",
-        (e) => {
-          if (e.target === apiModal && typeof hideApiModal === "function") {
-            hideApiModal();
-          }
-        },
-        "API modal background",
-      );
-    }
-
-    if (apiCloseBtn) {
-      safeAttachListener(
-        apiCloseBtn,
-        "click",
-        () => {
-          if (typeof hideApiModal === "function") {
-            hideApiModal();
-          }
-        },
-        "API close button",
-      );
-    }
 
     if (infoModal) {
       safeAttachListener(
@@ -1857,20 +1701,6 @@ const setupApiEvents = () => {
       );
     }
 
-    const providersBtn = document.getElementById("providersBtn");
-    if (providersBtn) {
-      safeAttachListener(
-        providersBtn,
-        "click",
-        () => {
-          if (typeof showApiProvidersModal === "function") {
-            showApiProvidersModal();
-          }
-        },
-        "Providers button",
-      );
-    }
-
     const historyBtn = document.getElementById("apiHistoryBtn");
     if (historyBtn) {
       safeAttachListener(
@@ -1916,8 +1746,6 @@ const setupApiEvents = () => {
 
     const historyModal = document.getElementById("apiHistoryModal");
     const historyCloseBtn = document.getElementById("apiHistoryCloseBtn");
-    const providersModal = document.getElementById("apiProvidersModal");
-    const providersCloseBtn = document.getElementById("apiProvidersCloseBtn");
     if (historyModal) {
       safeAttachListener(
         historyModal,
@@ -1968,62 +1796,26 @@ const setupApiEvents = () => {
         "Catalog history close button",
       );
     }
-    if (providersModal) {
-      safeAttachListener(
-        providersModal,
-        "click",
-        (e) => {
-          if (e.target === providersModal && typeof hideApiProvidersModal === "function") {
-            hideApiProvidersModal();
-          }
-        },
-        "API providers modal background",
-      );
-    }
-    if (providersCloseBtn) {
-      safeAttachListener(
-        providersCloseBtn,
-        "click",
-        () => {
-          if (typeof hideApiProvidersModal === "function") {
-            hideApiProvidersModal();
-          }
-        },
-        "API providers close button",
-      );
-    }
 
-    // ESC key to close modals
+    // ESC key to close modals (sub-modals first, then settings, then others)
     safeAttachListener(
       document,
       "keydown",
       (e) => {
         if (e.key === "Escape") {
-          const filesModal = document.getElementById("filesModal");
-          const apiModal = document.getElementById("apiModal");
           const infoModal = document.getElementById("apiInfoModal");
           const historyModal = document.getElementById("apiHistoryModal");
-          const providersModal = document.getElementById("apiProvidersModal");
+          const catalogHistModal = document.getElementById("catalogHistoryModal");
+          const quotaModal = document.getElementById("apiQuotaModal");
+          const settingsModal = document.getElementById("settingsModal");
           const itemModal = document.getElementById("itemModal");
           const notesModal = document.getElementById("notesModal");
           const detailsModal = document.getElementById("detailsModal");
           const changeLogModal = document.getElementById("changeLogModal");
           const storageReportModal = document.getElementById("storageReportModal");
-          const catalogHistModal = document.getElementById("catalogHistoryModal");
 
+          // Close sub-modals (stacking overlays) before settings modal
           if (
-            filesModal &&
-            filesModal.style.display === "flex" &&
-            typeof hideFilesModal === "function"
-          ) {
-            hideFilesModal();
-          } else if (
-            apiModal &&
-            apiModal.style.display === "flex" &&
-            typeof hideApiModal === "function"
-          ) {
-            hideApiModal();
-          } else if (
             infoModal &&
             infoModal.style.display === "flex" &&
             typeof hideProviderInfo === "function"
@@ -2042,30 +1834,35 @@ const setupApiEvents = () => {
           ) {
             hideCatalogHistoryModal();
           } else if (
-            providersModal &&
-            providersModal.style.display === "flex" &&
-            typeof hideApiProvidersModal === "function"
+            quotaModal &&
+            quotaModal.style.display === "flex"
           ) {
-            hideApiProvidersModal();
+            quotaModal.style.display = "none";
+          } else if (
+            settingsModal &&
+            settingsModal.style.display === "flex" &&
+            typeof hideSettingsModal === "function"
+          ) {
+            hideSettingsModal();
           } else if (itemModal && itemModal.style.display === "flex") {
             itemModal.style.display = "none";
             document.body.style.overflow = "";
             editingIndex = null;
             editingChangeLogIndex = null;
           } else if (notesModal && notesModal.style.display === "flex") {
-          notesModal.style.display = "none";
-          notesIndex = null;
-        } else if (changeLogModal && changeLogModal.style.display === "flex") {
-          changeLogModal.style.display = "none";
-          document.body.style.overflow = "";
-        } else if (storageReportModal && storageReportModal.style.display === "flex") {
-          storageReportModal.style.display = "none";
-          document.body.style.overflow = "";
-        } else if (
-          detailsModal &&
-          detailsModal.style.display === "flex" &&
-          typeof closeDetailsModal === "function"
-        ) {
+            notesModal.style.display = "none";
+            notesIndex = null;
+          } else if (changeLogModal && changeLogModal.style.display === "flex") {
+            changeLogModal.style.display = "none";
+            document.body.style.overflow = "";
+          } else if (storageReportModal && storageReportModal.style.display === "flex") {
+            storageReportModal.style.display = "none";
+            document.body.style.overflow = "";
+          } else if (
+            detailsModal &&
+            detailsModal.style.display === "flex" &&
+            typeof closeDetailsModal === "function"
+          ) {
             closeDetailsModal();
           }
         }

@@ -22,7 +22,6 @@ const clearAllFilters = () => {
   const metalFilter = document.getElementById('metalFilter');
   if (metalFilter) metalFilter.value = '';
 
-  currentPage = 1;
   // Update chip UI before rerendering the table
   renderActiveFilters();
   renderTable();
@@ -54,7 +53,6 @@ const removeFilter = (field, value) => {
     }
   }
 
-  currentPage = 1;
   renderTable();
 };
 
@@ -935,7 +933,6 @@ const applyQuickFilter = (field, value, isGrouped = false) => {
   }
 
   // Don't clear search query - allow search + filters to work together
-  currentPage = 1;
   renderTable();
   renderActiveFilters();
 };
