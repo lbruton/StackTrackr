@@ -91,6 +91,12 @@ const populateVersionModal = (version, html) => {
  */
 const getEmbeddedChangelog = (version) => {
   const changelogs = {
+    "3.16.00": `
+      <li><strong>Custom chip grouping</strong>: Define your own chip labels with comma-separated name patterns — group items any way you want</li>
+      <li><strong>Smart grouping blacklist</strong>: Right-click any name chip to suppress it. Manage blacklisted chips in Settings &gt; Grouping</li>
+      <li><strong>Dynamic name chips</strong>: Text inside parentheses and quotes in item names auto-generates filterable chips</li>
+      <li><strong>Grouping settings panel</strong>: New Settings &gt; Grouping tab with Smart Grouping, Dynamic Chips, Blacklist, and Custom Rules controls</li>
+    `,
     "3.14.01": `
       <li><strong>Name column truncation fix</strong>: Long item names now properly truncate with ellipsis — chips (Grade, N#, Year) stay visible</li>
       <li><strong>Compact N# chips</strong>: Numista catalog tags shortened to "N#" with full ID shown on hover</li>

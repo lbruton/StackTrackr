@@ -5,6 +5,22 @@ All notable changes to StakTrakr will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.16.00] - 2026-02-09
+
+### Added — Custom Chip Grouping & Smart Grouping Blacklist
+
+- **Custom grouping rules**: Define chip labels with comma/semicolon-separated name patterns to create user-defined filter chips (e.g., "Washington Quarter" matching "Washington Quarter, America The Beautiful Quarter"). Managed in Settings > Grouping
+- **Chip blacklist**: Right-click any name chip to suppress it from the chip bar. Blacklisted chips can be restored in Settings > Grouping
+- **Dynamic name chips**: Auto-extract text from parentheses `()` and double quotes `""` in item names as additional filterable chips. Skips grade strings (BU, MS-XX) and text under 3 characters
+- **Grouping settings panel**: New Settings > Grouping section consolidates Smart Name Grouping toggle (moved from Site), Dynamic Chips toggle, Blacklist management, and Custom Rules management
+- **`DYNAMIC_NAME_CHIPS` feature flag**: Toggle dynamic chip extraction on/off, with URL override support (`?dynamic_name_chips=0`)
+
+### Changed
+
+- **Smart Grouping toggle relocated**: Moved from Settings > Site to Settings > Grouping for better organization with related chip features
+
+---
+
 ## [3.14.01] - 2026-02-09
 
 ### Fixed
