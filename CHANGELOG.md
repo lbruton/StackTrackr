@@ -5,6 +5,18 @@ All notable changes to StakTrakr will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.16.02] - 2026-02-09
+
+### Added
+
+- **Edit custom grouping rules**: Pencil icon on each rule row enables inline editing of label and patterns without deleting and recreating. Supports Enter to save, Escape to cancel
+
+### Changed
+
+- **Filter chip threshold relocated**: Moved from Settings > Site to Settings > Grouping alongside related chip controls
+
+---
+
 ## [3.16.01] - 2026-02-09
 
 ### Fixed — API Settings & Numista Usage Tracking

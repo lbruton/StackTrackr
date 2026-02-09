@@ -1660,6 +1660,65 @@ input[type="submit"] {
   background: rgba(var(--danger-rgb, 220, 53, 69), 0.12);
 }
 
+.chip-grouping-actions {
+  white-space: nowrap;
+}
+
+.chip-grouping-edit,
+.chip-grouping-save,
+.chip-grouping-cancel {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 700;
+  line-height: 1;
+  padding: 0.1rem 0.3rem;
+  border-radius: var(--radius);
+  transition: background 0.1s;
+}
+
+.chip-grouping-edit {
+  color: var(--text-muted);
+}
+
+.chip-grouping-edit:hover {
+  color: var(--info);
+  background: rgba(var(--info-rgb, 13, 110, 253), 0.12);
+}
+
+.chip-grouping-save {
+  color: var(--success);
+}
+
+.chip-grouping-save:hover {
+  background: rgba(var(--success-rgb, 25, 135, 84), 0.12);
+}
+
+.chip-grouping-cancel {
+  color: var(--text-muted);
+}
+
+.chip-grouping-cancel:hover {
+  color: var(--danger);
+  background: rgba(var(--danger-rgb, 220, 53, 69), 0.12);
+}
+
+.chip-grouping-edit-input {
+  width: 100%;
+  padding: 0.2rem 0.35rem;
+  font-size: 0.8125rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-input, var(--bg));
+  color: var(--text);
+  box-sizing: border-box;
+}
+
+.chip-grouping-edit-wide {
+  min-width: 120px;
+}
+
 /* Theme picker */
 .theme-picker {
   display: flex;
