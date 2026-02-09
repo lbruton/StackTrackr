@@ -1645,6 +1645,20 @@ const setupApiEvents = () => {
       );
     });
 
+    document.querySelectorAll(".api-save-btn").forEach((btn) => {
+      const provider = btn.getAttribute("data-provider");
+      safeAttachListener(
+        btn,
+        "click",
+        () => {
+          if (typeof handleProviderSave === "function") {
+            handleProviderSave(provider);
+          }
+        },
+        "API save button",
+      );
+    });
+
     document.querySelectorAll(".api-sync-btn").forEach((btn) => {
       const provider = btn.getAttribute("data-provider");
       safeAttachListener(

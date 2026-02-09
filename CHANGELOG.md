@@ -5,6 +5,21 @@ All notable changes to StakTrakr will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.16.01] - 2026-02-09
+
+### Fixed — API Settings & Numista Usage Tracking
+
+- **Cache timeout persistence**: Per-provider cache timeout settings now persist across page reloads. Previously `cacheTimeouts` was written by the UI but never saved to localStorage or read by `getCacheDurationMs()`
+- **Historical data for non-default providers**: `historyDays` default changed from `0` to `30` so Metals-API and MetalPriceAPI fetch historical data on first sync instead of current-only prices
+- **Auto-sync all configured providers**: Page refresh now syncs all providers with API keys and stale caches, not just the default provider
+
+### Added
+
+- **Standalone "Save" button per provider**: Save API key, cache timeout, and history settings without triggering a connection test or price fetch. Brief "Saved!" confirmation replaces the alert dialog
+- **Numista API usage progress bar**: Tracks API calls persistently across page reloads with automatic monthly reset. Shows `X/2000 calls` in Settings > API > Numista section
+
+---
+
 ## [3.16.00] - 2026-02-09
 
 ### Added — Custom Chip Grouping & Smart Grouping Blacklist

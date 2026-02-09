@@ -37,10 +37,16 @@ class CatalogConfig {
   }
 
   getDefaultConfig() {
+    const now = new Date();
+    const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
     return {
       numista: {
         apiKey: '',
         quota: 2000
+      },
+      numistaUsage: {
+        used: 0,
+        month: month
       },
       rsynk: {
         apiKey: ''
@@ -112,6 +118,44 @@ class CatalogConfig {
   hasNumistaKey() {
     return !!this.config.numista.apiKey;
   }
+
+  /**
+   * Increment Numista usage counter, auto-resetting if month changed
+   */
+  incrementNumistaUsage() {
+    const now = new Date();
+    const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    if (!this.config.numistaUsage) {
+      this.config.numistaUsage = { used: 0, month: currentMonth };
+    }
+    if (this.config.numistaUsage.month !== currentMonth) {
+      this.config.numistaUsage.used = 0;
+      this.config.numistaUsage.month = currentMonth;
+    }
+    this.config.numistaUsage.used++;
+    this.save();
+  }
+
+  /**
+   * Get current Numista usage stats
+   * @returns {{ used: number, quota: number, month: string }}
+   */
+  getNumistaUsage() {
+    const now = new Date();
+    const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    if (!this.config.numistaUsage) {
+      this.config.numistaUsage = { used: 0, month: currentMonth };
+    }
+    if (this.config.numistaUsage.month !== currentMonth) {
+      this.config.numistaUsage.used = 0;
+      this.config.numistaUsage.month = currentMonth;
+    }
+    return {
+      used: this.config.numistaUsage.used,
+      quota: this.config.numista?.quota || 2000,
+      month: this.config.numistaUsage.month
+    };
+  }
 }
 
 // Global catalog configuration instance
@@ -160,7 +204,12 @@ class CatalogProvider {
     }
 
     this.requestCount++;
-    
+
+    // Persist Numista usage across page reloads
+    if (this instanceof NumistaProvider) {
+      catalogConfig.incrementNumistaUsage();
+    }
+
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), this.timeout);
 
@@ -1320,6 +1369,20 @@ async function testNumistaAPI() {
   }
 }
 
+/**
+ * Renders Numista API usage progress bar into #numistaUsageBar
+ * Reuses the same .api-usage / .usage-bar / .usage-text CSS as metals providers
+ */
+const renderNumistaUsageBar = () => {
+  const container = document.getElementById('numistaUsageBar');
+  if (!container) return;
+  const usage = catalogConfig.getNumistaUsage();
+  const usedPercent = Math.min((usage.used / usage.quota) * 100, 100);
+  const remainingPercent = 100 - usedPercent;
+  const warning = usage.used / usage.quota >= 0.9;
+  container.innerHTML = `<div class="api-usage"><div class="usage-bar"><div class="used" style="width:${usedPercent}%"></div><div class="remaining" style="width:${remainingPercent}%"></div></div><div class="usage-text">${usage.used}/${usage.quota} calls (${usage.month})${warning ? " 🚩" : ""}</div></div>`;
+};
+
 // Export for use in other modules
 if (typeof window !== 'undefined') {
   window.catalogAPI = catalogAPI;
@@ -1337,6 +1400,7 @@ if (typeof window !== 'undefined') {
   window.showNumistaResults = showNumistaResults;
   window.fillFormFromNumistaResult = fillFormFromNumistaResult;
   window.closeNumistaResultsModal = closeNumistaResultsModal;
+  window.renderNumistaUsageBar = renderNumistaUsageBar;
 }
 
 // Initialize UI event handlers when DOM is ready
@@ -1375,6 +1439,7 @@ document.addEventListener('DOMContentLoaded', function() {
       }
       catalogConfig.setNumistaConfig(apiKey, 2000);
       catalogAPI.initializeProviders();
+      renderNumistaUsageBar();
       alert('Numista API key saved.');
     });
   }
@@ -1399,6 +1464,7 @@ document.addEventListener('DOMContentLoaded', function() {
       try {
         const result = await testNumistaAPI();
         if (result) {
+          renderNumistaUsageBar();
           alert('✅ Numista API connection successful!');
         } else {
           alert('❌ Numista API connection failed. Please check your API key.');
