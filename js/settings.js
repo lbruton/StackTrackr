@@ -60,7 +60,7 @@ const switchSettingsSection = (name) => {
 
 /**
  * Switches the visible provider tab in the API section.
- * @param {string} key - Provider key: 'METALS_DEV', 'METALS_API', 'METAL_PRICE_API', 'CUSTOM'
+ * @param {string} key - Provider key: 'NUMISTA', 'METALS_DEV', 'METALS_API', 'METAL_PRICE_API', 'CUSTOM'
  */
 const switchProviderTab = (key) => {
   // Hide all provider panels
@@ -135,10 +135,10 @@ const syncSettingsUI = () => {
     renderNumistaUsageBar();
   }
 
-  // Set first provider tab active if none visible
+  // Set first provider tab active if none visible — default to Numista
   const anyVisible = document.querySelector('.settings-provider-panel[style*="display: block"]');
   if (!anyVisible) {
-    switchProviderTab('METALS_DEV');
+    switchProviderTab('NUMISTA');
   }
 };
 
@@ -276,6 +276,113 @@ const setupSettingsEventListeners = () => {
       if (e.target === modal) hideSettingsModal();
     });
   }
+
+  // Provider tab drag-to-reorder
+  setupProviderTabDrag();
+};
+
+/**
+ * Sets up HTML5 drag-and-drop for metals provider tabs.
+ * Numista tab is pinned (not draggable). Metals tab order = sync priority.
+ */
+const setupProviderTabDrag = () => {
+  const tabContainer = document.querySelector('.settings-provider-tabs');
+  if (!tabContainer) return;
+
+  let draggedTab = null;
+
+  const tabs = () => tabContainer.querySelectorAll('.settings-provider-tab:not(.pinned)');
+
+  tabs().forEach(tab => {
+    tab.addEventListener('dragstart', (e) => {
+      draggedTab = tab;
+      tabContainer.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', tab.dataset.provider);
+      // Slight delay to let the drag image render
+      requestAnimationFrame(() => tab.style.opacity = '0.4');
+    });
+
+    tab.addEventListener('dragend', () => {
+      tabContainer.classList.remove('dragging');
+      tab.style.opacity = '';
+      tabs().forEach(t => t.classList.remove('drag-over'));
+      draggedTab = null;
+    });
+
+    tab.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      if (draggedTab && tab !== draggedTab) {
+        tab.classList.add('drag-over');
+      }
+    });
+
+    tab.addEventListener('dragleave', () => {
+      tab.classList.remove('drag-over');
+    });
+
+    tab.addEventListener('drop', (e) => {
+      e.preventDefault();
+      tab.classList.remove('drag-over');
+      if (!draggedTab || draggedTab === tab) return;
+
+      // Reorder DOM: insert dragged tab before or after the drop target
+      const allTabs = [...tabs()];
+      const dragIdx = allTabs.indexOf(draggedTab);
+      const dropIdx = allTabs.indexOf(tab);
+
+      if (dragIdx < dropIdx) {
+        tabContainer.insertBefore(draggedTab, tab.nextSibling);
+      } else {
+        tabContainer.insertBefore(draggedTab, tab);
+      }
+
+      // Persist new order and update default provider
+      saveProviderTabOrder();
+      if (typeof autoSelectDefaultProvider === 'function') {
+        autoSelectDefaultProvider();
+      }
+    });
+  });
+};
+
+/**
+ * Saves the current metals provider tab order to localStorage.
+ * Only saves the metals providers (not Numista which is pinned).
+ */
+const saveProviderTabOrder = () => {
+  const tabContainer = document.querySelector('.settings-provider-tabs');
+  if (!tabContainer) return;
+  const order = [...tabContainer.querySelectorAll('.settings-provider-tab:not(.pinned)')]
+    .map(tab => tab.dataset.provider);
+  try {
+    localStorage.setItem('apiProviderOrder', JSON.stringify(order));
+  } catch (e) { /* ignore */ }
+};
+
+/**
+ * Restores provider tab DOM order from localStorage.
+ * Called when the API section is populated.
+ */
+const loadProviderTabOrder = () => {
+  let order;
+  try {
+    const stored = localStorage.getItem('apiProviderOrder');
+    order = stored ? JSON.parse(stored) : null;
+  } catch (e) { return; }
+  if (!Array.isArray(order) || order.length === 0) return;
+
+  const tabContainer = document.querySelector('.settings-provider-tabs');
+  if (!tabContainer) return;
+
+  // Reorder tabs to match saved order
+  order.forEach(provider => {
+    const tab = tabContainer.querySelector(`.settings-provider-tab[data-provider="${provider}"]`);
+    if (tab && !tab.classList.contains('pinned')) {
+      tabContainer.appendChild(tab);
+    }
+  });
 };
 
 /**
@@ -346,4 +453,7 @@ if (typeof window !== 'undefined') {
   window.switchProviderTab = switchProviderTab;
   window.setupSettingsEventListeners = setupSettingsEventListeners;
   window.renderInlineChipConfigTable = renderInlineChipConfigTable;
+  window.setupProviderTabDrag = setupProviderTabDrag;
+  window.loadProviderTabOrder = loadProviderTabOrder;
+  window.saveProviderTabOrder = saveProviderTabOrder;
 }

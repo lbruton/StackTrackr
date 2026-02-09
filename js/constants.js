@@ -233,7 +233,7 @@ const CERT_LOOKUP_URLS = {
  * Updated: 2026-02-09 - Patch: Edit custom grouping rules, relocate chip threshold
  */
 
-const APP_VERSION = "3.17.00";
+const APP_VERSION = "3.18.00";
 
 /**
  * @constant {string} DEFAULT_CURRENCY - Default currency code for monetary formatting
@@ -433,6 +433,7 @@ const ALLOWED_STORAGE_KEYS = [
   "chipCustomGroups",
   "chipBlacklist",
   "inlineChipConfig",
+  "apiProviderOrder",
 ];
 
 // =============================================================================
