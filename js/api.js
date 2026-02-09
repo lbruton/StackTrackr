@@ -28,8 +28,10 @@ const renderApiStatusSummary = () => {
 
   // Metals providers
   Object.keys(API_PROVIDERS).forEach((prov) => {
-    const status = providerStatuses[prov] || "disconnected";
-    const name = API_PROVIDERS[prov].name;
+    const status = Object.hasOwn(providerStatuses, prov) ? providerStatuses[prov] : "disconnected"; // eslint-disable-line security/detect-object-injection
+    const providerConfig = Object.hasOwn(API_PROVIDERS, prov) ? API_PROVIDERS[prov] : null; // eslint-disable-line security/detect-object-injection
+    if (!providerConfig) return;
+    const name = providerConfig.name;
     const statusClass = status === "cached" ? "connected" : status;
     const lastSync = typeof getLastProviderSyncTime === "function" ? getLastProviderSyncTime(prov) : null;
     let tsLabel = "";
