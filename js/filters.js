@@ -442,46 +442,72 @@ const renderActiveFilters = () => {
   const sortEl = document.getElementById('chipSortOrder');
   const chipSortPref = (sortEl && sortEl.value) || localStorage.getItem('chipSortOrder') || 'default';
 
-  // Build chips from each enabled category in config order
-  const categoryFields = new Set();
-  for (const cat of categoryConfig) {
-    if (!cat.enabled) continue;
-    const desc = categoryDescriptors[cat.id];
-    if (!desc) continue;
-    categoryFields.add(desc.field);
-
-    const data = categorySummary[desc.summaryKey];
-    if (!data) continue;
-
-    const catChips = [];
-
+  // Helper: collect chips for a single category from the summary data
+  const collectCategoryChips = (cat) => {
+    const desc = categoryDescriptors[cat.id]; // eslint-disable-line security/detect-object-injection
+    if (!desc) return [];
+    const data = categorySummary[desc.summaryKey]; // eslint-disable-line security/detect-object-injection
+    if (!data) return [];
+    const result = [];
     if (cat.id === 'customGroup') {
-      // customGroup has shape { id: { label, count } }
       Object.entries(data).forEach(([groupId, info]) => {
         if (info.count > 0) {
-          catChips.push({ field: desc.field, value: groupId, displayLabel: info.label, count: info.count, total: categorySummary.totalItems, isCustomGroup: true });
+          result.push({ field: desc.field, value: groupId, displayLabel: info.label, count: info.count, total: categorySummary.totalItems, isCustomGroup: true });
         }
       });
     } else {
       Object.entries(data).forEach(([value, count]) => {
         if (count > 0) {
-          catChips.push({ field: desc.field, value, count, total: categorySummary.totalItems, ...(desc.extraProps || {}) });
+          result.push({ field: desc.field, value, count, total: categorySummary.totalItems, ...(desc.extraProps || {}) });
         }
       });
     }
+    return result;
+  };
 
-    // Sort chips within this category based on preference
+  // Helper: sort a chip array in place based on preference
+  const sortChips = (arr) => {
     if (chipSortPref === 'alpha') {
-      catChips.sort((a, b) => {
+      arr.sort((a, b) => {
         const aLabel = (a.displayLabel || a.value || '').toString();
         const bLabel = (b.displayLabel || b.value || '').toString();
         return aLabel.localeCompare(bLabel, undefined, { numeric: true, sensitivity: 'base' });
       });
     } else if (chipSortPref === 'count') {
-      catChips.sort((a, b) => (b.count || 0) - (a.count || 0));
+      arr.sort((a, b) => (b.count || 0) - (a.count || 0));
     }
+  };
 
-    chips.push(...catChips);
+  // Build chips — categories with the same group letter pool and sort together
+  const categoryFields = new Set();
+  const emittedGroups = new Set();
+
+  for (const cat of categoryConfig) {
+    if (!cat.enabled) continue;
+    const desc = categoryDescriptors[cat.id]; // eslint-disable-line security/detect-object-injection
+    if (!desc) continue;
+    categoryFields.add(desc.field);
+
+    if (cat.group) {
+      // Grouped: first encounter collects ALL categories in this group
+      if (emittedGroups.has(cat.group)) continue;
+      emittedGroups.add(cat.group);
+
+      const pooled = [];
+      for (const gc of categoryConfig) {
+        if (!gc.enabled || gc.group !== cat.group) continue;
+        const gcDesc = categoryDescriptors[gc.id]; // eslint-disable-line security/detect-object-injection
+        if (gcDesc) categoryFields.add(gcDesc.field);
+        pooled.push(...collectCategoryChips(gc));
+      }
+      sortChips(pooled);
+      chips.push(...pooled);
+    } else {
+      // Ungrouped: collect and sort individually
+      const catChips = collectCategoryChips(cat);
+      sortChips(catChips);
+      chips.push(...catChips);
+    }
   }
 
   // Add any explicitly applied filter chips (but not if they duplicate category chips)
