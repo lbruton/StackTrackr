@@ -3618,6 +3618,38 @@ a.about-badge:hover {
   max-height: 300px !important;
 }
 
+/* Chart metric toggle — segmented button bar for details modal */
+.chart-metric-toggle {
+  display: flex;
+  justify-content: center;
+  gap: 0;
+  margin: 0.75rem auto;
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+  width: fit-content;
+}
+.chart-metric-btn {
+  padding: 0.35rem 0.85rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  transition: background 0.15s, color 0.15s;
+}
+.chart-metric-btn:not(:last-child) {
+  border-right: 1px solid var(--border-color);
+}
+.chart-metric-btn:hover {
+  background: var(--bg-hover);
+}
+.chart-metric-btn.active {
+  background: var(--primary);
+  color: #fff;
+}
+
 /* =============================================================================
    NUMISTA MODAL - Removed (X-Frame-Options blocks iframes on hosted sites)
    Numista pages now open in popup windows via js/numista-modal.js

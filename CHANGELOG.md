@@ -5,6 +5,19 @@ All notable changes to StakTrakr will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.22.00] - 2026-02-10
+
+### Added — STACK-22/24/25/27: Purity, PCGS quota, chart toggle, extraction
+
+- **Added**: Purity (fineness) field — adjusts melt value formula across all calculation sites (STACK-22)
+- **Added**: PCGS API daily quota usage bar in Settings (STACK-24)
+- **Added**: Pie chart metric toggle — switch between Purchase, Melt, Retail, and Gain/Loss views (STACK-27)
+- **Changed**: Extracted inline test loader to js/test-loader.js (STACK-25)
+- **Changed**: CSV, PDF, and ZIP exports now include Purity column
+- **Changed**: Seed data includes realistic purity values for sample items
+
+---
+
 ## [3.21.03] - 2026-02-10
 
 ### Added — STACK-23: Search matches custom chip group labels

@@ -873,6 +873,11 @@ const sanitizeImportedItem = (item) => {
   const parsedPrice = parseFloat(sanitized.price);
   sanitized.price = isNaN(parsedPrice) ? 0 : parsedPrice;
 
+  // Default purity to 1.0 (pure/fine) when missing or invalid
+  const parsedPurity = parseFloat(sanitized.purity);
+  sanitized.purity = (isNaN(parsedPurity) || parsedPurity <= 0 || parsedPurity > 1)
+    ? 1.0 : parsedPurity;
+
   // Ensure other numeric fields parse correctly
   const numFields = ['qty', 'weight', 'spotPriceAtPurchase'];
   for (const field of numFields) {
@@ -908,6 +913,21 @@ const sanitizeImportedItem = (item) => {
   }
 
   return sanitizeObjectFields(sanitized);
+};
+
+/**
+ * Computes the melt value for an inventory item.
+ * Centralises the formula: weight × qty × spot × purity.
+ *
+ * @param {Object} item  - Inventory item (needs weight, qty, purity)
+ * @param {number} spot  - Current spot price for the item's metal
+ * @returns {number} Qty-adjusted melt value
+ */
+const computeMeltValue = (item, spot) => {
+  const weight = parseFloat(item.weight) || 0;
+  const qty = Number(item.qty) || 1;
+  const purity = parseFloat(item.purity) || 1.0;
+  return weight * qty * spot * purity;
 };
 
 /**
@@ -2696,6 +2716,7 @@ if (typeof window !== 'undefined') {
   window.openEbayBuySearch = openEbayBuySearch;
   window.openEbaySoldSearch = openEbaySoldSearch;
   window.cleanSearchTerm = cleanSearchTerm;
+  window.computeMeltValue = computeMeltValue;
 }
 
 if (typeof module !== 'undefined' && module.exports) {
@@ -2703,6 +2724,7 @@ if (typeof module !== 'undefined' && module.exports) {
     stripNonAlphanumeric,
     sanitizeObjectFields,
     sanitizeImportedItem,
+    computeMeltValue,
     getContrastColor,
     debounce,
   };
