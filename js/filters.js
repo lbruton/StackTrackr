@@ -97,6 +97,14 @@ const generateCategorySummary = (inventory) => {
     minCount = parseInt(localStorage.getItem('chipMinCount') || '3', 10);
   }
 
+  // When the user has active filters or a search query, drop minCount to 1
+  // so all descriptive chips for the filtered subset are visible
+  const hasActiveFilters = Object.keys(activeFilters).length > 0;
+  const hasSearchQuery = typeof searchQuery === 'string' && searchQuery.trim().length > 0;
+  if (hasActiveFilters || hasSearchQuery) {
+    minCount = 1;
+  }
+
   const metals = {};
   const types = {};
   const purchaseLocations = {};
