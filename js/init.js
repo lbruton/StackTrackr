@@ -115,6 +115,7 @@ document.addEventListener("DOMContentLoaded", () => {
     elements.itemPcgsNumber = safeGetElement("itemPcgsNumber");
     elements.itemSerialNumber = safeGetElement("itemSerialNumber");
     elements.searchNumistaBtn = safeGetElement("searchNumistaBtn");
+    elements.lookupPcgsBtn = safeGetElement("lookupPcgsBtn");
 
     // Header buttons - CRITICAL
     debugLog("Phase 2: Initializing header buttons...");

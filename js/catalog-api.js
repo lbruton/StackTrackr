@@ -1706,6 +1706,14 @@ document.addEventListener('DOMContentLoaded', function() {
       }
       catalogConfig.setPcgsConfig(token);
       if (pcgsStatus) pcgsStatus.textContent = 'Token saved.';
+      // Update provider status indicator and header status row
+      const statusEl = document.getElementById('pcgsProviderStatus');
+      if (statusEl) {
+        statusEl.querySelector('.status-dot')?.classList.add('connected');
+        const txt = statusEl.querySelector('.status-text');
+        if (txt) txt.textContent = 'Connected';
+      }
+      if (typeof renderApiStatusSummary === 'function') renderApiStatusSummary();
       alert('PCGS bearer token saved.');
     });
   }
@@ -1751,6 +1759,14 @@ document.addEventListener('DOMContentLoaded', function() {
         catalogConfig.clearPcgsToken();
         if (pcgsTokenInput) pcgsTokenInput.value = '';
         if (pcgsStatus) pcgsStatus.textContent = 'Token cleared.';
+        // Update provider status indicator and header status row
+        const statusEl = document.getElementById('pcgsProviderStatus');
+        if (statusEl) {
+          statusEl.querySelector('.status-dot')?.classList.remove('connected');
+          const txt = statusEl.querySelector('.status-text');
+          if (txt) txt.textContent = 'Disconnected';
+        }
+        if (typeof renderApiStatusSummary === 'function') renderApiStatusSummary();
       }
     });
   }

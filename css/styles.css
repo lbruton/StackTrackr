@@ -5577,6 +5577,13 @@ th {
   gap: 0.5rem;
 }
 
+.item-modal-actions-left {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
 .item-modal-actions-right {
   display: flex;
   align-items: center;
