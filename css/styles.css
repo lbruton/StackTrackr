@@ -5502,13 +5502,60 @@ th {
   box-shadow: 0 0 0 2px var(--primary);
 }
 
-.numista-result-card img {
+.numista-result-images {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.numista-result-card img,
+.numista-selected-preview .numista-result-images img {
   width: 48px;
   height: 48px;
   object-fit: contain;
   border-radius: 4px;
   flex-shrink: 0;
   background: var(--bg-primary);
+}
+
+.numista-img-placeholder {
+  width: 48px;
+  height: 48px;
+  background: var(--bg-tertiary);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  flex-shrink: 0;
+}
+
+/* Search refinement bar above results — sticky so it stays visible while scrolling */
+.numista-refine-search {
+  display: flex;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.25rem 0 0.5rem;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--bg-secondary);
+}
+
+.numista-refine-input {
+  flex: 1;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-size: 0.85rem;
+}
+
+.numista-refine-btn {
+  padding: 0.5rem 1rem;
+  white-space: nowrap;
+  font-size: 0.85rem;
 }
 
 .numista-result-info {
@@ -5552,13 +5599,7 @@ th {
   margin-bottom: 0.75rem;
 }
 
-.numista-selected-preview img {
-  width: 48px;
-  height: 48px;
-  object-fit: contain;
-  border-radius: 4px;
-  flex-shrink: 0;
-}
+/* .numista-selected-preview img — handled by .numista-result-images img above */
 
 .numista-field-checkboxes {
   display: grid;
