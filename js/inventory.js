@@ -1239,7 +1239,10 @@ const updateSummary = () => {
     if (els.value) els.value.innerHTML = formatCurrency(totals.totalMeltValue || 0);
     if (els.purchased) els.purchased.innerHTML = formatCurrency(totals.totalPurchased || 0);
     if (els.retailValue) els.retailValue.innerHTML = formatCurrency(totals.totalRetailValue || 0);
-    if (els.lossProfit) els.lossProfit.innerHTML = formatLossProfit(totals.totalGainLoss || 0);
+    if (els.lossProfit) {
+      const gainLossPct = totals.totalPurchased > 0 ? (totals.totalGainLoss / totals.totalPurchased) * 100 : 0;
+      els.lossProfit.innerHTML = formatLossProfit(totals.totalGainLoss || 0, gainLossPct);
+    }
     if (els.avgCostPerOz) {
       const avgCost = totals.totalWeight > 0 ? totals.totalPurchased / totals.totalWeight : 0;
       els.avgCostPerOz.innerHTML = formatCurrency(avgCost);
@@ -1272,7 +1275,10 @@ const updateSummary = () => {
     if (elements.totals.all.value) elements.totals.all.value.innerHTML = formatCurrency(allTotals.totalMeltValue || 0);
     if (elements.totals.all.purchased) elements.totals.all.purchased.innerHTML = formatCurrency(allTotals.totalPurchased || 0);
     if (elements.totals.all.retailValue) elements.totals.all.retailValue.innerHTML = formatCurrency(allTotals.totalRetailValue || 0);
-    if (elements.totals.all.lossProfit) elements.totals.all.lossProfit.innerHTML = formatLossProfit(allTotals.totalGainLoss || 0);
+    if (elements.totals.all.lossProfit) {
+      const allGainLossPct = allTotals.totalPurchased > 0 ? (allTotals.totalGainLoss / allTotals.totalPurchased) * 100 : 0;
+      elements.totals.all.lossProfit.innerHTML = formatLossProfit(allTotals.totalGainLoss || 0, allGainLossPct);
+    }
     if (elements.totals.all.avgCostPerOz) {
       const avgCost = allTotals.totalWeight > 0 ? allTotals.totalPurchased / allTotals.totalWeight : 0;
       elements.totals.all.avgCostPerOz.innerHTML = formatCurrency(avgCost);

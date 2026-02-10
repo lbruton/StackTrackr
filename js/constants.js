@@ -22,8 +22,23 @@ const API_PROVIDERS = {
       platinum: "/metal/spot?api_key={API_KEY}&metal=platinum&currency=USD",
       palladium: "/metal/spot?api_key={API_KEY}&metal=palladium&currency=USD",
     },
+    latestBatchEndpoint: "/latest?api_key={API_KEY}&currency=USD&unit=toz",
     parseResponse: (data) => data.rate?.price || null,
+    parseLatestBatchResponse: (data) => {
+      const current = {};
+      if (data?.metals) {
+        Object.entries(data.metals).forEach(([metal, price]) => {
+          if (typeof price === "number" && price > 0) {
+            current[metal.toLowerCase()] = price;
+          }
+        });
+      }
+      return current;
+    },
     documentation: "https://www.metals.dev/docs",
+    maxHistoryDays: 30,
+    symbolsPerRequest: "all",
+    docUrl: "https://metals.dev/documentation",
     batchSupported: true,
     batchEndpoint: "/timeseries?api_key={API_KEY}&start_date={START_DATE}&end_date={END_DATE}",
     parseBatchResponse: (data) => {
@@ -75,6 +90,9 @@ const API_PROVIDERS = {
       return rate ? 1 / rate : null; // Convert from metal per USD to USD per ounce
     },
     documentation: "https://metals-api.com/documentation",
+    maxHistoryDays: 30,
+    symbolsPerRequest: 1,
+    docUrl: "https://metals-api.com/documentation",
     batchSupported: true,
     batchEndpoint: "/timeseries?access_key={API_KEY}&start_date={START_DATE}&end_date={END_DATE}&base=USD&symbols={SYMBOLS}",
     parseBatchResponse: (data) => {
@@ -141,6 +159,9 @@ const API_PROVIDERS = {
       return rate ? 1 / rate : null; // Convert from metal per USD to USD per ounce
     },
     documentation: "https://metalpriceapi.com/documentation",
+    maxHistoryDays: 365,
+    symbolsPerRequest: "all",
+    docUrl: "https://metalpriceapi.com/documentation",
     batchSupported: true,
     batchEndpoint: "/timeframe?api_key={API_KEY}&start_date={START_DATE}&end_date={END_DATE}&base=USD&currencies={CURRENCIES}",
     parseBatchResponse: (data) => {
