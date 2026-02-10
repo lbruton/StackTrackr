@@ -99,7 +99,7 @@ const createBackupZip = async () => {
     const csvHeaders = [
       "Date", "Metal", "Type", "Name", "Qty", "Weight(oz)",
       "Purchase Price", "Melt Value", "Retail Price", "Gain/Loss",
-      "Purchase Location", "N#", "Serial Number", "Notes"
+      "Purchase Location", "N#", "PCGS #", "Serial Number", "Notes"
     ];
     const sortedInventory = sortInventoryByDateNewestFirst();
     const csvRows = [];
@@ -126,6 +126,7 @@ const createBackupZip = async () => {
         gainLoss !== null ? formatCurrency(gainLoss) : '—',
         item.purchaseLocation,
         item.numistaId || '',
+        item.pcgsNumber || '',
         item.serialNumber || '',
         item.notes || ''
       ]);
@@ -507,6 +508,7 @@ const loadInventory = () => {
         grade: item.grade || '',
         gradingAuthority: item.gradingAuthority || '',
         certNumber: item.certNumber || '',
+        pcgsNumber: item.pcgsNumber || '',
         spotPriceAtPurchase: spotPrice,
         premiumPerOz,
         totalPremium,
@@ -526,6 +528,7 @@ const loadInventory = () => {
         grade: item.grade || '',
         gradingAuthority: item.gradingAuthority || '',
         certNumber: item.certNumber || '',
+        pcgsNumber: item.pcgsNumber || '',
         isCollectable: item.isCollectable !== undefined ? item.isCollectable : false,
         composition: item.composition || item.metal || ""
       };
@@ -1018,6 +1021,12 @@ const renderTable = () => {
         } else {
           tooltip = `Grade: ${item.grade}`;
         }
+        // Show PCGS verify icon when: authority=PCGS + has cert# + PCGS API configured
+        const showPcgsVerify = authority === 'PCGS' && certNum
+          && typeof catalogConfig !== 'undefined' && catalogConfig.isPcgsEnabled();
+        const verifyIcon = showPcgsVerify
+          ? `<span class="pcgs-verify-btn" data-cert-number="${escapeAttribute(certNum)}" title="Verify cert via PCGS API"><svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></span>`
+          : '';
         const attrs = [
           authority ? `data-authority="${escapeAttribute(authority)}"` : '',
           isClickable ? 'data-clickable="true"' : '',
@@ -1025,7 +1034,7 @@ const renderTable = () => {
           `data-grade="${escapeAttribute(item.grade || '')}"`,
           isClickable ? 'tabindex="0" role="button"' : '',
         ].filter(Boolean).join(' ');
-        return `<span class="grade-tag" ${attrs} title="${escapeAttribute(tooltip)}">${sanitizeHtml(item.grade)}</span>`;
+        return `<span class="grade-tag" ${attrs} title="${escapeAttribute(tooltip)}">${sanitizeHtml(item.grade)}${verifyIcon}</span>`;
       })() : '';
 
       const numistaTag = numistaId
@@ -1033,6 +1042,13 @@ const renderTable = () => {
                data-coin-name="${escapeAttribute(item.name)}"
                title="N#${escapeAttribute(String(numistaId))} — View on Numista"
                tabindex="0" role="button">N#${sanitizeHtml(String(numistaId))}</span>`
+        : '';
+
+      const pcgsTag = item.pcgsNumber
+        ? `<span class="pcgs-tag" data-pcgs-number="${escapeAttribute(String(item.pcgsNumber))}"
+               data-grade="${escapeAttribute(item.grade || '')}"
+               title="PCGS #${escapeAttribute(String(item.pcgsNumber))} — View on PCGS CoinFacts"
+               tabindex="0" role="button">PCGS#${sanitizeHtml(String(item.pcgsNumber))}</span>`
         : '';
 
       const yearTag = item.year
@@ -1054,7 +1070,7 @@ const renderTable = () => {
         : '';
 
       // Config-driven chip ordering
-      const chipMap = { grade: gradeTag, numista: numistaTag, year: yearTag, serial: serialTag, storage: storageTag, notes: notesIndicator };
+      const chipMap = { grade: gradeTag, numista: numistaTag, pcgs: pcgsTag, year: yearTag, serial: serialTag, storage: storageTag, notes: notesIndicator };
       const orderedChips = chipConfig.filter(c => c.enabled && chipMap[c.id]).map(c => chipMap[c.id]).join('');
 
       // Format computed displays
@@ -1349,6 +1365,7 @@ const editItem = (idx, logIdx = null) => {
   if (elements.itemGrade) elements.itemGrade.value = item.grade || '';
   if (elements.itemGradingAuthority) elements.itemGradingAuthority.value = item.gradingAuthority || '';
   if (elements.itemCertNumber) elements.itemCertNumber.value = item.certNumber || '';
+  if (elements.itemPcgsNumber) elements.itemPcgsNumber.value = item.pcgsNumber || '';
   if (elements.itemSerial) elements.itemSerial.value = item.serial;
 
   // Show/hide Undo button based on changelog context
@@ -1408,6 +1425,7 @@ const duplicateItem = (idx) => {
   if (elements.itemGrade) elements.itemGrade.value = item.grade || '';
   if (elements.itemGradingAuthority) elements.itemGradingAuthority.value = item.gradingAuthority || '';
   if (elements.itemCertNumber) elements.itemCertNumber.value = item.certNumber || '';
+  if (elements.itemPcgsNumber) elements.itemPcgsNumber.value = item.pcgsNumber || '';
   if (elements.itemSerial) elements.itemSerial.value = ''; // Serial should be unique per item
 
   // Open unified modal
@@ -1558,6 +1576,7 @@ const importCsv = (file, override = false) => {
           const numistaRaw = (row['N#'] || row['Numista #'] || row['numistaId'] || '').toString();
           const numistaMatch = numistaRaw.match(/\d+/);
           const numistaId = numistaMatch ? numistaMatch[0] : '';
+          const pcgsNumber = (row['PCGS #'] || row['PCGS Number'] || row['pcgsNumber'] || '').toString().trim();
           const serialNumber = row['Serial Number'] || row['serialNumber'] || '';
           const serial = row['Serial'] || row['serial'] || getNextSerial();
 
@@ -1580,6 +1599,7 @@ const importCsv = (file, override = false) => {
             grade,
             gradingAuthority,
             certNumber,
+            pcgsNumber,
             spotPriceAtPurchase,
             premiumPerOz,
             totalPremium,
@@ -1833,6 +1853,7 @@ const importNumistaCsv = (file, override = false) => {
             grade: '',
             gradingAuthority: '',
             certNumber: '',
+            pcgsNumber: '',
             serial
           });
 
@@ -2014,7 +2035,7 @@ const exportCsv = () => {
   const headers = [
     "Date","Metal","Type","Name","Year","Qty","Weight(oz)",
     "Purchase Price","Melt Value","Retail Price","Gain/Loss",
-    "Purchase Location","N#","Grade","Grading Authority","Cert #","Serial Number","Notes"
+    "Purchase Location","N#","PCGS #","Grade","Grading Authority","Cert #","Serial Number","Notes"
   ];
 
   const sortedInventory = sortInventoryByDateNewestFirst();
@@ -2044,6 +2065,7 @@ const exportCsv = () => {
       gainLoss !== null ? formatCurrency(gainLoss) : '—',
       i.purchaseLocation,
       i.numistaId || '',
+      i.pcgsNumber || '',
       i.grade || '',
       i.gradingAuthority || '',
       i.certNumber || '',
@@ -2127,6 +2149,7 @@ const importJson = (file, override = false) => {
         const grade = (raw.grade || '').toString().trim();
         const gradingAuthority = (raw.gradingAuthority || raw.authority || '').toString().trim();
         const certNumber = (raw.certNumber || '').toString().trim();
+        const pcgsNumber = (raw.pcgsNumber || raw['PCGS #'] || raw['PCGS Number'] || '').toString().trim();
         const date = parseDate(raw.date);
 
         // Parse marketValue (retail price), backward-compatible with legacy fields
@@ -2172,6 +2195,7 @@ const importJson = (file, override = false) => {
           grade,
           gradingAuthority,
           certNumber,
+          pcgsNumber,
           serial
         });
 
@@ -2357,6 +2381,7 @@ const exportPdf = () => {
       gainLoss !== null ? formatCurrency(gainLoss) : '—',
       item.purchaseLocation,
       item.numistaId || '',
+      item.pcgsNumber || '',
       item.grade || '',
       item.gradingAuthority || '',
       item.certNumber || '',
@@ -2367,7 +2392,7 @@ const exportPdf = () => {
   // Add table
   doc.autoTable({
     head: [['Date', 'Metal', 'Type', 'Name', 'Qty', 'Weight(oz)', 'Purchase',
-            'Melt Value', 'Retail', 'Gain/Loss', 'Location', 'N#', 'Grade', 'Auth', 'Cert#', 'Notes']],
+            'Melt Value', 'Retail', 'Gain/Loss', 'Location', 'N#', 'PCGS#', 'Grade', 'Auth', 'Cert#', 'Notes']],
     body: tableData,
     startY: 30,
     theme: 'striped',
@@ -2491,6 +2516,36 @@ document.addEventListener('click', (e) => {
     return;
   }
 
+  // PCGS verify button click → call PCGS API for cert verification
+  const verifyBtn = e.target.closest('.pcgs-verify-btn');
+  if (verifyBtn) {
+    e.preventDefault();
+    e.stopPropagation();
+    const certNum = verifyBtn.dataset.certNumber || '';
+    if (!certNum || typeof verifyPcgsCert !== 'function') return;
+
+    verifyBtn.classList.add('pcgs-verifying');
+    verifyBtn.title = 'Verifying...';
+
+    verifyPcgsCert(certNum).then(result => {
+      verifyBtn.classList.remove('pcgs-verifying');
+      if (result.verified) {
+        verifyBtn.classList.add('pcgs-verified');
+        const parts = [];
+        if (result.grade) parts.push(`Grade: ${result.grade}`);
+        if (result.population) parts.push(`Pop: ${result.population}`);
+        if (result.popHigher) parts.push(`Pop Higher: ${result.popHigher}`);
+        if (result.priceGuide) parts.push(`Price Guide: $${Number(result.priceGuide).toLocaleString()}`);
+        verifyBtn.title = `Verified — ${parts.join(' | ')}`;
+      } else {
+        verifyBtn.title = result.error || 'Verification failed';
+        verifyBtn.classList.add('pcgs-verify-failed');
+        setTimeout(() => verifyBtn.classList.remove('pcgs-verify-failed'), 3000);
+      }
+    });
+    return;
+  }
+
   // Numista N# tag click → open Numista in popup window
   const numistaTag = e.target.closest('.numista-tag');
   if (numistaTag) {
@@ -2500,6 +2555,26 @@ document.addEventListener('click', (e) => {
     const coinName = numistaTag.dataset.coinName || '';
     if (nId && typeof openNumistaModal === 'function') {
       openNumistaModal(nId, coinName);
+    }
+    return;
+  }
+
+  // PCGS# tag click → open PCGS CoinFacts in popup window
+  const pcgsTagEl = e.target.closest('.pcgs-tag');
+  if (pcgsTagEl) {
+    e.preventDefault();
+    e.stopPropagation();
+    const pcgsNo = pcgsTagEl.dataset.pcgsNumber || '';
+    const gradeNum = (pcgsTagEl.dataset.grade || '').match(/\d+/)?.[0] || '';
+    if (pcgsNo) {
+      const url = `https://www.pcgs.com/coinfacts/coin/detail/${encodeURIComponent(pcgsNo)}/${encodeURIComponent(gradeNum)}`;
+      const popup = window.open(url, `pcgs_${pcgsNo}`,
+        'width=1200,height=800,scrollbars=yes,resizable=yes,toolbar=no,location=no,menubar=no,status=no');
+      if (!popup) {
+        alert(`Popup blocked! Please allow popups or manually visit:\n${url}`);
+      } else {
+        popup.focus();
+      }
     }
     return;
   }

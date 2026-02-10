@@ -40,6 +40,7 @@ const BULK_EDITABLE_FIELDS = [
   { id: 'grade',            label: 'Grade',             inputType: 'text' },
   { id: 'gradingAuthority', label: 'Grading Auth',      inputType: 'text' },
   { id: 'certNumber',       label: 'Cert Number',       inputType: 'text' },
+  { id: 'pcgsNumber',       label: 'PCGS Number',       inputType: 'text' },
   { id: 'purchaseLocation', label: 'Purchase Loc',      inputType: 'text' },
   { id: 'storageLocation',  label: 'Storage Loc',       inputType: 'text' },
   { id: 'date',             label: 'Purchase Date',     inputType: 'date' },

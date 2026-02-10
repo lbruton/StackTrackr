@@ -339,6 +339,11 @@ const generateCategorySummary = (inventory) => {
     Object.entries(filteredNames).filter(([key]) => !customLabelsLower.has(key.toLowerCase()))
   );
 
+  // Apply minCount threshold to custom groups
+  const filteredCustomGroups = Object.fromEntries(
+    Object.entries(customGroups).filter(([, info]) => info.count >= minCount)
+  );
+
   return {
     metals: filteredMetals,
     types: filteredTypes,
@@ -348,7 +353,7 @@ const generateCategorySummary = (inventory) => {
     years: filteredYears,
     grades: filteredGrades,
     numistaIds: filteredNumistaIds,
-    customGroups,
+    customGroups: filteredCustomGroups,
     dynamicNames: filteredDynamicNames,
     totalItems: inventory.length
   };
@@ -516,7 +521,12 @@ const renderActiveFilters = () => {
   // Add any explicitly applied filter chips (but not if they duplicate category chips)
   Object.entries(activeFilters).forEach(([field, criteria]) => {
     // Skip fields already rendered as category summary chips to avoid duplicates
-    if (categoryFields.has(field)) return;
+    // BUT: if no summary chip was rendered for this field (all below minCount),
+    // fall through so the user can still see and remove their active filter
+    if (categoryFields.has(field)) {
+      const hasSummaryChip = chips.some(c => c.field === field && c.count !== undefined);
+      if (hasSummaryChip) return;
+    }
     
     if (criteria && typeof criteria === 'object' && Array.isArray(criteria.values)) {
       criteria.values.forEach(value => {
@@ -565,7 +575,7 @@ const renderActiveFilters = () => {
         color = getColor(nameColors, firstValue);
         break;
       case 'customGroup':
-        color = 'var(--info)';
+        color = getColor(nameColors, f.displayLabel || firstValue);
         break;
       case 'dynamicName':
         color = getColor(nameColors, firstValue);

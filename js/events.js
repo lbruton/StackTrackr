@@ -555,6 +555,7 @@ const setupEventListeners = () => {
           const grade = (elements.itemGrade || document.getElementById('itemGrade'))?.value?.trim() || '';
           const gradingAuthority = (elements.itemGradingAuthority || document.getElementById('itemGradingAuthority'))?.value?.trim() || '';
           const certNumber = (elements.itemCertNumber || document.getElementById('itemCertNumber'))?.value?.trim() || '';
+          const pcgsNumber = (elements.itemPcgsNumber || document.getElementById('itemPcgsNumber'))?.value?.trim() || '';
           const marketValueInput = elements.itemMarketValue ? elements.itemMarketValue.value.trim() : '';
           const marketValue = marketValueInput && !isNaN(parseFloat(marketValueInput))
             ? parseFloat(marketValueInput)
@@ -599,6 +600,7 @@ const setupEventListeners = () => {
               grade,
               gradingAuthority,
               certNumber,
+              pcgsNumber,
               isCollectable: false,
               numistaId: catalog,
             };
@@ -644,6 +646,7 @@ const setupEventListeners = () => {
               grade,
               gradingAuthority,
               certNumber,
+              pcgsNumber,
               spotPriceAtPurchase,
               premiumPerOz: 0,
               totalPremium: 0,

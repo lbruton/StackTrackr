@@ -68,7 +68,8 @@ const filterInventory = () => {
           item.gradingAuthority || '',
           String(item.certNumber || ''),
           String(item.numistaId || ''),
-          item.serialNumber || ''
+          item.serialNumber || '',
+          String(item.pcgsNumber || '')
         ].join(' ').toLowerCase();
         
         // Check for exact phrase match first
@@ -260,7 +261,8 @@ const filterInventory = () => {
           (item.gradingAuthority && wordRegex.test(item.gradingAuthority)) ||
           (item.certNumber && wordRegex.test(String(item.certNumber))) ||
           (item.numistaId && wordRegex.test(String(item.numistaId))) ||
-          (item.serialNumber && wordRegex.test(item.serialNumber))
+          (item.serialNumber && wordRegex.test(item.serialNumber)) ||
+          (item.pcgsNumber && wordRegex.test(String(item.pcgsNumber)))
         );
       });
     });

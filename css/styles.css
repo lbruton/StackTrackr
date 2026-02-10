@@ -2374,6 +2374,7 @@ td[data-column="name"] {
 /* Tags never shrink — always visible */
 .name-cell-content > .year-tag,
 .name-cell-content > .numista-tag,
+.name-cell-content > .pcgs-tag,
 .name-cell-content > .grade-tag,
 .name-cell-content > .serial-tag,
 .name-cell-content > .storage-tag,
@@ -5170,6 +5171,56 @@ th {
 }
 
 /* =============================================================================
+   PCGS TAG — Inline PCGS# badge on inventory table Name cell
+   ============================================================================= */
+.pcgs-tag {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.65rem;
+  font-weight: 600;
+  padding: 0.1rem 0.3rem;
+  margin-left: 0.25rem;
+  border-radius: var(--radius);
+  background: rgba(37, 99, 235, 0.1);
+  color: #2563eb;
+  cursor: pointer;
+  text-decoration: none;
+  transition: var(--transition);
+  vertical-align: middle;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.pcgs-tag:hover,
+.pcgs-tag:focus-visible {
+  background: #2563eb;
+  color: #fff;
+  outline: none;
+}
+
+/* Dark theme overrides */
+[data-theme="dark"] .pcgs-tag {
+  background: rgba(37, 99, 235, 0.2);
+  color: #60a5fa;
+}
+[data-theme="dark"] .pcgs-tag:hover,
+[data-theme="dark"] .pcgs-tag:focus-visible {
+  background: #2563eb;
+  color: #fff;
+}
+
+/* Sepia theme overrides */
+[data-theme="sepia"] .pcgs-tag {
+  background: rgba(37, 99, 235, 0.08);
+  color: #1d4ed8;
+}
+[data-theme="sepia"] .pcgs-tag:hover,
+[data-theme="sepia"] .pcgs-tag:focus-visible {
+  background: #1d4ed8;
+  color: #fff;
+}
+
+/* =============================================================================
    YEAR TAG — Inline year badge on inventory table Name cell
    ============================================================================= */
 .year-tag {
@@ -5445,6 +5496,74 @@ th {
 
 [data-theme="sepia"] .notes-indicator {
   color: #a8a29e;
+}
+
+/* =============================================================================
+   PCGS VERIFY BUTTON — Small checkmark icon inside grade tag
+   ============================================================================= */
+.pcgs-verify-btn {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 0.2rem;
+  cursor: pointer;
+  opacity: 0.5;
+  transition: var(--transition);
+  vertical-align: middle;
+}
+
+.pcgs-verify-btn:hover {
+  opacity: 1;
+}
+
+.pcgs-verify-btn.pcgs-verifying {
+  opacity: 0.3;
+  animation: pcgs-pulse 1s ease-in-out infinite;
+}
+
+.pcgs-verify-btn.pcgs-verified {
+  opacity: 1;
+  color: #16a34a;
+}
+
+.pcgs-verify-btn.pcgs-verify-failed {
+  opacity: 1;
+  color: #dc2626;
+}
+
+@keyframes pcgs-pulse {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.7; }
+}
+
+[data-theme="dark"] .pcgs-verify-btn.pcgs-verified {
+  color: #4ade80;
+}
+
+[data-theme="sepia"] .pcgs-verify-btn.pcgs-verified {
+  color: #15803d;
+}
+
+/* =============================================================================
+   FORM INFO ICON — Always-visible (i) link icon in form labels
+   ============================================================================= */
+.form-info-icon {
+  color: var(--warning, #f59e0b);
+  text-decoration: none;
+  display: inline-flex;
+  vertical-align: middle;
+  margin-left: 0.25rem;
+}
+.form-info-icon:visited,
+.form-info-icon:hover,
+.form-info-icon:active,
+.form-info-icon:link {
+  color: var(--warning, #f59e0b);
+}
+.form-info-icon:hover {
+  opacity: 0.8;
+}
+.form-info-icon svg {
+  stroke: currentColor;
 }
 
 /* =============================================================================

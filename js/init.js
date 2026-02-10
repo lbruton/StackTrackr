@@ -112,6 +112,7 @@ document.addEventListener("DOMContentLoaded", () => {
     elements.itemGrade = safeGetElement("itemGrade");
     elements.itemGradingAuthority = safeGetElement("itemGradingAuthority");
     elements.itemCertNumber = safeGetElement("itemCertNumber");
+    elements.itemPcgsNumber = safeGetElement("itemPcgsNumber");
     elements.itemSerialNumber = safeGetElement("itemSerialNumber");
     elements.searchNumistaBtn = safeGetElement("searchNumistaBtn");
 
