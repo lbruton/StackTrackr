@@ -5,6 +5,17 @@ All notable changes to StakTrakr will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.22.01] - 2026-02-10
+
+### Added — Form layout, bulk edit dropdowns, purity chips
+
+- **Purity form layout**: Weight/Purity/Qty on single row
+- **Bulk Edit**: Purity, Grade, Grading Authority as dropdowns
+- Purity/fineness filter chips (enabled) and inline chips (disabled)
+- Purity inline chip shows numerical value only
+
+---
+
 ## [3.22.00] - 2026-02-10
 
 ### Added — STACK-22/24/25/27: Purity, PCGS quota, chart toggle, extraction

@@ -481,6 +481,10 @@ section:hover {
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
 }
 
+.grid-purity-row {
+  grid-template-columns: 2fr 1fr 1fr auto;
+}
+
 .grid-name-year {
   grid-template-columns: 3fr 2fr;
 }
@@ -2451,7 +2455,8 @@ td[data-column="name"] {
 .name-cell-content > .grade-tag,
 .name-cell-content > .serial-tag,
 .name-cell-content > .storage-tag,
-.name-cell-content > .notes-indicator {
+.name-cell-content > .notes-indicator,
+.name-cell-content > .purity-tag {
   flex-shrink: 0;
 }
 
@@ -4625,6 +4630,10 @@ input:disabled + .slider {
     grid-template-columns: 1fr;
   }
 
+  .grid-purity-row {
+    grid-template-columns: 1fr 1fr;
+  }
+
   .action-buttons {
     grid-template-columns: 1fr;
   }
@@ -5351,6 +5360,35 @@ th {
 
 /* Sepia theme overrides */
 [data-theme="sepia"] .year-tag {
+  background: rgba(0, 0, 0, 0.06);
+  color: #78716c;
+}
+
+/* =============================================================================
+   PURITY TAG — Inline purity badge on inventory table Name cell
+   ============================================================================= */
+
+.purity-tag {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.65rem;
+  font-weight: 600;
+  padding: 0.1rem 0.35rem;
+  margin-left: 0.35rem;
+  border-radius: var(--radius);
+  background: var(--bg-tertiary);
+  color: var(--text-secondary, #666);
+  vertical-align: middle;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+[data-theme="dark"] .purity-tag {
+  background: rgba(255, 255, 255, 0.08);
+  color: #9ca3af;
+}
+
+[data-theme="sepia"] .purity-tag {
   background: rgba(0, 0, 0, 0.06);
   color: #78716c;
 }
