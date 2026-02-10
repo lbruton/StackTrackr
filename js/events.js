@@ -811,6 +811,72 @@ const setupEventListeners = () => {
       );
     }
 
+    // LOOKUP PCGS BUTTON — verify by Cert# or look up by PCGS#
+    if (elements.lookupPcgsBtn) {
+      safeAttachListener(
+        elements.lookupPcgsBtn,
+        "click",
+        async () => {
+          if (typeof lookupPcgsFromForm !== 'function') {
+            alert('PCGS lookup is not available.');
+            return;
+          }
+
+          const btn = elements.lookupPcgsBtn;
+          const originalHTML = btn.innerHTML;
+          btn.textContent = 'Looking up...';
+          btn.disabled = true;
+
+          try {
+            const result = await lookupPcgsFromForm();
+
+            if (!result.verified) {
+              alert(result.error || 'PCGS lookup failed.');
+              return;
+            }
+
+            // Populate form fields from PCGS response
+            const pcgsEl = elements.itemPcgsNumber || document.getElementById('itemPcgsNumber');
+            const gradeEl = elements.itemGrade || document.getElementById('itemGrade');
+            const yearEl = elements.itemYear || document.getElementById('itemYear');
+            const authorityEl = elements.itemGradingAuthority || document.getElementById('itemGradingAuthority');
+
+            if (pcgsEl && result.pcgsNumber) pcgsEl.value = result.pcgsNumber;
+            if (yearEl && result.year) yearEl.value = result.year;
+
+            // Set grade if returned (parse numeric from e.g. "MS-69" → "MS-69")
+            if (gradeEl && result.grade) {
+              // Try to match grade value in the dropdown options
+              const gradeStr = result.grade.toUpperCase().replace(/\s+/g, '-');
+              const options = Array.from(gradeEl.options);
+              const match = options.find(o => o.value === gradeStr || o.value === result.grade);
+              if (match) {
+                gradeEl.value = match.value;
+              }
+            }
+
+            // Set grading authority to PCGS
+            if (authorityEl) authorityEl.value = 'PCGS';
+
+            // Show success summary
+            const parts = [];
+            if (result.name) parts.push(result.name);
+            if (result.grade) parts.push(`Grade: ${result.grade}`);
+            if (result.population) parts.push(`Pop: ${result.population}`);
+            if (result.priceGuide) parts.push(`Price Guide: $${result.priceGuide}`);
+            alert('PCGS Lookup Success!\n\n' + parts.join('\n'));
+          } catch (error) {
+            console.error('PCGS lookup error:', error);
+            alert('PCGS lookup failed: ' + error.message);
+          } finally {
+            btn.innerHTML = originalHTML;
+            btn.disabled = false;
+          }
+        },
+        "Lookup PCGS button",
+      );
+    }
+
     // NOTES MODAL BUTTONS
     if (elements.saveNotesBtn) {
       safeAttachListener(

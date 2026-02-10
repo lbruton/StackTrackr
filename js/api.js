@@ -26,6 +26,15 @@ const renderApiStatusSummary = () => {
   } catch (e) { /* ignore */ }
   items.push({ name: "Numista", status: numistaStatus, provider: "NUMISTA" });
 
+  // PCGS status
+  let pcgsStatus = "disconnected";
+  try {
+    if (typeof catalogConfig !== "undefined" && catalogConfig.isPcgsEnabled) {
+      pcgsStatus = catalogConfig.isPcgsEnabled() ? "connected" : "disconnected";
+    }
+  } catch (e) { /* ignore */ }
+  items.push({ name: "PCGS", status: pcgsStatus, provider: "PCGS" });
+
   // Metals providers
   Object.keys(API_PROVIDERS).forEach((prov) => {
     const status = Object.hasOwn(providerStatuses, prov) ? providerStatuses[prov] : "disconnected"; // eslint-disable-line security/detect-object-injection
@@ -1535,6 +1544,25 @@ const populateApiSection = () => {
       } else {
         numistaStatusEl.classList.add("status-disconnected");
         const text = numistaStatusEl.querySelector(".status-text");
+        if (text) text.textContent = "Disconnected";
+      }
+    }
+  }
+
+  // Populate PCGS tab status
+  if (typeof catalogConfig !== "undefined" && catalogConfig.isPcgsEnabled) {
+    const pcgsStatusEl = document.getElementById("pcgsProviderStatus");
+    if (pcgsStatusEl) {
+      pcgsStatusEl.classList.remove("status-connected", "status-disconnected");
+      if (catalogConfig.isPcgsEnabled()) {
+        pcgsStatusEl.classList.add("status-connected");
+        const dot = pcgsStatusEl.querySelector(".status-dot");
+        const text = pcgsStatusEl.querySelector(".status-text");
+        if (dot) dot.style.background = "";
+        if (text) text.textContent = "Connected";
+      } else {
+        pcgsStatusEl.classList.add("status-disconnected");
+        const text = pcgsStatusEl.querySelector(".status-text");
         if (text) text.textContent = "Disconnected";
       }
     }
