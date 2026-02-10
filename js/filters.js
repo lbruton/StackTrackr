@@ -98,9 +98,13 @@ const generateCategorySummary = (inventory) => {
   }
 
   // When the user has active filters or a search query, drop minCount to 1
-  // so all descriptive chips for the filtered subset are visible
+  // for descriptive categories (metal, type, year, grade, location, groups)
+  // so the filtered subset's attributes are always visible.
+  // Name chips keep the user's threshold (min 2) to avoid flooding the chip
+  // bar with every unique item name in the filtered set.
   const hasActiveFilters = Object.keys(activeFilters).length > 0;
   const hasSearchQuery = typeof searchQuery === 'string' && searchQuery.trim().length > 0;
+  const nameMinCount = Math.max(2, minCount);
   if (hasActiveFilters || hasSearchQuery) {
     minCount = 1;
   }
@@ -195,7 +199,7 @@ const generateCategorySummary = (inventory) => {
     Object.entries(storageLocations).filter(([key, count]) => count >= minCount)
   );
   let filteredNames = Object.fromEntries(
-    Object.entries(names).filter(([key, count]) => count >= minCount)
+    Object.entries(names).filter(([key, count]) => count >= nameMinCount)
   );
   const filteredYears = Object.fromEntries(
     Object.entries(years).filter(([key, count]) => count >= minCount)
