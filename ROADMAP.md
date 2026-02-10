@@ -6,41 +6,54 @@ Project direction and planned work. Each item links to its full Linear issue for
 
 ---
 
-## Near-Term (UI Focus)
+## Near-Term — Price History Foundation
 
-Visual polish and usability improvements — no backend changes required.
+The UUID → silent recording → log tabs → charts pipeline. STACK-42 is the critical path that unblocks the rest.
 
-### Active Backlog
-
-| Issue | Title | Priority | Label |
-|-------|-------|----------|-------|
-| [STACK-26](https://linear.app/hextrackr/issue/STACK-26) | Batch rename/normalize tool (Numista-powered) | Medium | Feature |
-| [STACK-28](https://linear.app/hextrackr/issue/STACK-28) | Chart.js dashboard improvements | Low | Feature |
-| [STACK-29](https://linear.app/hextrackr/issue/STACK-29) | Custom tagging system | Low | Feature |
+| Issue | Title | Priority | Depends On |
+|-------|-------|----------|------------|
+| [STACK-42](https://linear.app/hextrackr/issue/STACK-42) | Assign persistent UUIDs to all inventory items | **High** | — |
+| [STACK-41](https://linear.app/hextrackr/issue/STACK-41) | Per-item retail price history for trend charts | Medium | STACK-42 |
+| [STACK-43](https://linear.app/hextrackr/issue/STACK-43) | Silent per-item price history recording | Medium | STACK-42 |
+| [STACK-44](https://linear.app/hextrackr/issue/STACK-44) | Settings Log tab reorganization with sub-tabs | Medium | STACK-43 |
 
 ---
 
-## Medium-Term (BYO-Backend — Supabase Cloud Sync)
+## Near-Term — Features & UI
+
+Independent feature work that can proceed in parallel with the price history pipeline.
+
+| Issue | Title | Priority | Depends On |
+|-------|-------|----------|------------|
+| [STACK-45](https://linear.app/hextrackr/issue/STACK-45) | Goldback denomination pricing & type support | Medium | — |
+| [STACK-46](https://linear.app/hextrackr/issue/STACK-46) | Configurable spot & portfolio card grid with drag-to-reorder | Medium | STACK-45 (for Goldback card) |
+| [STACK-48](https://linear.app/hextrackr/issue/STACK-48) | Chart system overhaul: migrate to ApexCharts, add time-series trends | Medium | STACK-43 (for time-series data) |
+
+---
+
+## Medium-Term — BYO-Backend (Supabase Cloud Sync)
 
 Zero-cost, zero-server architecture. App stays static; users who want cloud sync bring their own free Supabase project.
 
-| Issue | Title | Priority | Label |
-|-------|-------|----------|-------|
-| [STACK-30](https://linear.app/hextrackr/issue/STACK-30) | BYO-Backend: Supabase cloud sync | Medium | Feature |
+| Issue | Title | Priority | Depends On |
+|-------|-------|----------|------------|
+| [STACK-30](https://linear.app/hextrackr/issue/STACK-30) | BYO-Backend: Supabase cloud sync | Medium | — |
 
 ---
 
-## Long-Term (Polish & Distribution)
+## Long-Term — Polish & Distribution
 
-Enhanced UX, mobile support, and deployment options.
+Enhanced UX, mobile support, deployment options, and the v4 vision.
 
-| Issue | Title | Priority | Label | Blocked By |
-|-------|-------|----------|-------|------------|
-| [STACK-31](https://linear.app/hextrackr/issue/STACK-31) | Mobile-responsive card view | Low | Feature | — |
-| [STACK-32](https://linear.app/hextrackr/issue/STACK-32) | User photo upload for inventory items | Low | Feature | STACK-30 |
-| [STACK-33](https://linear.app/hextrackr/issue/STACK-33) | Mobile camera capture in add/edit modal | Low | Feature | STACK-31, STACK-32 |
-| [STACK-34](https://linear.app/hextrackr/issue/STACK-34) | Docker build & image for self-hosting | Low | Feature | — |
-| [STACK-35](https://linear.app/hextrackr/issue/STACK-35) | Proxmox LXC setup guide | Low | Feature | STACK-34 |
+| Issue | Title | Priority | Depends On |
+|-------|-------|----------|------------|
+| [STACK-47](https://linear.app/hextrackr/issue/STACK-47) | v4.00.00 — Multi-asset wealth dashboard (Stocks, Crypto, Collectibles, Real Estate) | Low | STACK-42, STACK-43, STACK-45, STACK-46 |
+| [STACK-31](https://linear.app/hextrackr/issue/STACK-31) | Mobile-responsive card view | Low | — |
+| [STACK-32](https://linear.app/hextrackr/issue/STACK-32) | User photo upload for inventory items | Low | STACK-30 |
+| [STACK-33](https://linear.app/hextrackr/issue/STACK-33) | Mobile camera capture in add/edit modal | Low | STACK-31, STACK-32 |
+| [STACK-34](https://linear.app/hextrackr/issue/STACK-34) | Docker build & image for self-hosting | Low | — |
+| [STACK-35](https://linear.app/hextrackr/issue/STACK-35) | Proxmox LXC setup guide | Low | STACK-34 |
+| [STACK-37](https://linear.app/hextrackr/issue/STACK-37) | Numista image & API caching | Low | STACK-30 |
 
 ---
 
@@ -48,13 +61,22 @@ Enhanced UX, mobile support, and deployment options.
 
 Explicitly out of scope until prerequisites are met.
 
-| Issue | Title | Priority | Label | Blocked By |
-|-------|-------|----------|-------|------------|
-| [STACK-36](https://linear.app/hextrackr/issue/STACK-36) | Encryption at rest for Supabase data | Low | Feature | STACK-30 |
-| [STACK-37](https://linear.app/hextrackr/issue/STACK-37) | Numista image caching (CC-licensed only) | Low | Feature | STACK-30 |
-| [STACK-38](https://linear.app/hextrackr/issue/STACK-38) | Table CSS hardening & responsive audit | Low | Improvement | — |
-| [STACK-39](https://linear.app/hextrackr/issue/STACK-39) | Full UI review walkthrough | Low | Improvement | — |
-| [STACK-40](https://linear.app/hextrackr/issue/STACK-40) | eBay API integration for retail estimates | Low | Feature | STACK-30 |
+| Issue | Title | Priority | Depends On |
+|-------|-------|----------|------------|
+| [STACK-36](https://linear.app/hextrackr/issue/STACK-36) | Encryption at rest for Supabase data | Low | STACK-30 |
+| [STACK-38](https://linear.app/hextrackr/issue/STACK-38) | Table CSS hardening & responsive audit | Low | — |
+| [STACK-39](https://linear.app/hextrackr/issue/STACK-39) | Full UI review walkthrough | Low | — |
+| [STACK-40](https://linear.app/hextrackr/issue/STACK-40) | eBay API integration for retail estimates | Low | STACK-30 |
+
+---
+
+## Canceled
+
+| Issue | Title | Reason |
+|-------|-------|--------|
+| STACK-26 | Batch rename/normalize tool | Covered by existing Bulk Edit + Numista search |
+| STACK-28 | Chart.js dashboard improvements | Superseded by STACK-48 (ApexCharts migration) |
+| STACK-29 | Custom tagging system | Canceled |
 
 ---
 
@@ -63,6 +85,7 @@ Explicitly out of scope until prerequisites are met.
 <details>
 <summary>Shipped features (click to expand)</summary>
 
+- **v3.22.01** — Form layout, bulk edit dropdowns, purity chips
 - **v3.22.00** — STACK-22/24/25/27: Purity field & melt formula, PCGS quota bar, pie chart metric toggle, test-loader extraction
 - **v3.21.03** — STACK-23: Search matches custom chip group labels
 - **v3.21.02** — Seed data & first-time UX: 720 seed spot history entries, 8 sample inventory items, README overhaul

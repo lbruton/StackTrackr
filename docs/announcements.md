@@ -1,5 +1,6 @@
 ## What's New
 
+- **STACK-42: Persistent UUIDs**: Every inventory item now has a stable UUID v4 identifier that never changes regardless of array position. Foundation for per-item price history, trend charts, and cloud sync. Existing items auto-migrate on load. All export/import formats updated
 - **Form layout, bulk edit dropdowns, purity chips (v3.22.01)**: Purity form layout: Weight/Purity/Qty on single row. Bulk Edit: Purity, Grade, Grading Authority as dropdowns. Purity/fineness filter chips (enabled) and inline chips (disabled). Purity inline chip shows numerical value only
 - **STACK-22/24/25/27: Purity, PCGS quota, chart toggle, extraction (v3.22.00)**: Added: Purity (fineness) field — adjusts melt value formula across all calculation sites (STACK-22). Added: PCGS API daily quota usage bar in Settings (STACK-24). Added: Pie chart metric toggle — switch between Purchase, Melt, Retail, and Gain/Loss views (STACK-27). Changed: Extracted inline test loader to js/test-loader.js (STACK-25). Changed: CSV, PDF, and ZIP exports now include Purity column. Changed: Seed data includes realistic purity values for sample items
 - **STACK-23: Search matches custom chip group labels (v3.21.03)**: Fixed: Search now matches items belonging to custom chip groups when searching by group label (STACK-23)

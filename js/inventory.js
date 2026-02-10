@@ -62,7 +62,8 @@ const createBackupZip = async () => {
         serialNumber: item.serialNumber || '',
         pcgsNumber: item.pcgsNumber || '',
         pcgsVerified: item.pcgsVerified || false,
-        serial: item.serial
+        serial: item.serial,
+        uuid: item.uuid
       }))
     };
     zip.file('inventory_data.json', JSON.stringify(inventoryData, null, 2));
@@ -552,7 +553,12 @@ const loadInventory = () => {
       serialCounter += 1;
       item.serial = serialCounter;
     }
-    
+
+    // Assign UUIDs to items that don't have them (migration for existing data)
+    if (!item.uuid) {
+      item.uuid = generateUUID();
+    }
+
     // Use CatalogManager to synchronize numistaId
     catalogManager.syncItem(item);
   });
@@ -1644,6 +1650,7 @@ const importCsv = (file, override = false) => {
           const purity = parseFloat(purityRaw) || 1.0;
           const serialNumber = row['Serial Number'] || row['serialNumber'] || '';
           const serial = row['Serial'] || row['serial'] || getNextSerial();
+          const uuid = row['UUID'] || row['uuid'] || generateUUID();
 
           addCompositionOption(composition);
 
@@ -1672,7 +1679,8 @@ const importCsv = (file, override = false) => {
             isCollectable: false,
             numistaId,
             serialNumber,
-            serial
+            serial,
+            uuid
           });
 
           imported.push(item);
@@ -1895,6 +1903,7 @@ const importNumistaCsv = (file, override = false) => {
           const premiumPerOz = 0;
           const totalPremium = 0;
           const serial = getNextSerial();
+          const uuid = generateUUID();
 
           const item = sanitizeImportedItem({
             metal,
@@ -1920,7 +1929,8 @@ const importNumistaCsv = (file, override = false) => {
             gradingAuthority: '',
             certNumber: '',
             pcgsNumber: '',
-            serial
+            serial,
+            uuid
           });
 
           imported.push(item);
@@ -2101,7 +2111,7 @@ const exportCsv = () => {
   const headers = [
     "Date","Metal","Type","Name","Year","Qty","Weight(oz)","Purity",
     "Purchase Price","Melt Value","Retail Price","Gain/Loss",
-    "Purchase Location","N#","PCGS #","Grade","Grading Authority","Cert #","Serial Number","Notes"
+    "Purchase Location","N#","PCGS #","Grade","Grading Authority","Cert #","Serial Number","Notes","UUID"
   ];
 
   const sortedInventory = sortInventoryByDateNewestFirst();
@@ -2137,7 +2147,8 @@ const exportCsv = () => {
       i.gradingAuthority || '',
       i.certNumber || '',
       i.serialNumber || '',
-      i.notes || ''
+      i.notes || '',
+      i.uuid || ''
     ]);
   }
 
@@ -2240,6 +2251,7 @@ const importJson = (file, override = false) => {
         const numistaMatch = numistaRaw.match(/\d+/);
         const numistaId = numistaMatch ? numistaMatch[0] : '';
         const serial = raw.serial || getNextSerial();
+        const uuid = raw.uuid || generateUUID();
 
         const processedItem = sanitizeImportedItem({
           metal,
@@ -2265,7 +2277,8 @@ const importJson = (file, override = false) => {
           certNumber,
           pcgsNumber,
           pcgsVerified,
-          serial
+          serial,
+          uuid
         });
 
         const validation = validateInventoryItem(processedItem);
@@ -2391,6 +2404,7 @@ const exportJson = () => {
     pcgsNumber: item.pcgsNumber || '',
     pcgsVerified: item.pcgsVerified || false,
     serial: item.serial,
+    uuid: item.uuid,
     // Legacy fields preserved for backward compatibility
     spotPriceAtPurchase: item.spotPriceAtPurchase,
     isCollectable: item.isCollectable,
@@ -2457,14 +2471,15 @@ const exportPdf = () => {
       item.grade || '',
       item.gradingAuthority || '',
       item.certNumber || '',
-      item.notes || ''
+      item.notes || '',
+      (item.uuid || '').slice(0, 8)
     ];
   });
 
   // Add table
   doc.autoTable({
     head: [['Date', 'Metal', 'Type', 'Name', 'Qty', 'Wt(oz)', 'Purity', 'Purchase',
-            'Melt Value', 'Retail', 'Gain/Loss', 'Location', 'N#', 'PCGS#', 'Grade', 'Auth', 'Cert#', 'Notes']],
+            'Melt Value', 'Retail', 'Gain/Loss', 'Location', 'N#', 'PCGS#', 'Grade', 'Auth', 'Cert#', 'Notes', 'UUID']],
     body: tableData,
     startY: 30,
     theme: 'striped',
