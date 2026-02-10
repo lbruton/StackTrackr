@@ -236,6 +236,11 @@ const getLastUpdateTime = (metalName, mode = "cache") => {
     return `Manual<br>Time entered ${dateText} ${timeText}`;
   }
 
+  if (latestEntry.source === "seed") {
+    const dateText = latestEntry.timestamp.slice(0, 10);
+    return `Seed \u00b7 ${dateText}<br>Shift+click price to set`;
+  }
+
   if (latestEntry.source === "default") return "";
 
   const info = loadDataSync(
