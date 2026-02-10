@@ -1050,7 +1050,7 @@ const renderTable = () => {
         : '';
 
       const notesIndicator = item.notes
-        ? `<span class="notes-indicator" title="${escapeAttribute((item.notes || '').substring(0, 200))}"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6zm-1 2l5 5h-5V4zM6 20V4h5v7h7v9H6z"/></svg></span>`
+        ? `<span class="notes-indicator" title="Click to view notes · Shift+click to edit"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6zm-1 2l5 5h-5V4zM6 20V4h5v7h7v9H6z"/></svg></span>`
         : '';
 
       // Config-driven chip ordering
@@ -2442,11 +2442,55 @@ window.deleteItem = deleteItem;
 window.showNotes = showNotes;
 
 /**
- * Delegated click handler for eBay search links.
- * Uses data-search attribute instead of inline onclick to prevent XSS
+ * Opens a read-only notes viewer for the given inventory index.
+ * @param {number} idx - Inventory array index
+ */
+const showNotesView = (idx) => {
+  const item = inventory[idx];
+  if (!item) return;
+  const titleEl = document.getElementById('notesViewTitle');
+  const contentEl = document.getElementById('notesViewContent');
+  const editBtn = document.getElementById('notesViewEditBtn');
+  if (!contentEl) return;
+
+  if (titleEl) titleEl.textContent = item.name ? `Notes — ${item.name}` : 'Notes';
+  contentEl.textContent = item.notes || '(no notes)';
+
+  // Wire edit button to open the full item edit modal
+  if (editBtn) {
+    editBtn.onclick = () => {
+      closeModalById('notesViewModal');
+      editItem(idx);
+    };
+  }
+
+  openModalById('notesViewModal');
+};
+window.showNotesView = showNotesView;
+
+/**
+ * Delegated click handler for inline tag interactions.
+ * Uses data attributes and closest() to prevent XSS
  * when item names contain quotes or special characters.
  */
 document.addEventListener('click', (e) => {
+  // Notes indicator click → view notes (shift+click → edit item)
+  const notesInd = e.target.closest('.notes-indicator');
+  if (notesInd) {
+    e.preventDefault();
+    e.stopPropagation();
+    const tr = notesInd.closest('tr[data-idx]');
+    if (!tr) return;
+    const idx = parseInt(tr.dataset.idx, 10);
+    if (isNaN(idx)) return;
+    if (e.shiftKey) {
+      editItem(idx);
+    } else {
+      showNotesView(idx);
+    }
+    return;
+  }
+
   // Numista N# tag click → open Numista in popup window
   const numistaTag = e.target.closest('.numista-tag');
   if (numistaTag) {
