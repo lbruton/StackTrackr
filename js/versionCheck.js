@@ -91,6 +91,14 @@ const populateVersionModal = (version, html) => {
  */
 const getEmbeddedChangelog = (version) => {
   const changelogs = {
+    "3.21.01": `
+      <li><strong>Persist verified</strong>: Green checkmark survives reload, sort, and filter</li>
+      <li><strong>Lookup fields</strong>: PCGS lookup populates Name and Retail Price</li>
+      <li><strong>Cert icon</strong>: Verified checkmark in edit modal with theme support</li>
+      <li><strong>History logging</strong>: PCGS verify/lookup calls logged to Catalog History</li>
+      <li><strong>Numista icon fix</strong>: Search icon no longer stripped after search</li>
+      <li><strong>Export fix</strong>: pcgsNumber and pcgsVerified in JSON and ZIP exports</li>
+    `,
     "3.21.00": `
       <li><strong>PCGS# inline chip</strong>: New PCGS catalog number field on add/edit form. PCGS# chip renders in Name cell — click to open PCGS CoinFacts page. Included in CSV/JSON/PDF export, CSV/JSON import, search, and bulk edit</li>
       <li><strong>PCGS cert verification</strong>: New Settings &gt; API &gt; PCGS tab for bearer token configuration. One-click verify icon on PCGS-graded items shows grade, population, and price guide from PCGS API. Daily rate limit tracking (1,000/day)</li>

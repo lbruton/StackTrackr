@@ -1,5 +1,6 @@
 ## What's New
 
+- **PCGS verified persistence & lookup enhancements (v3.21.01)**: Green verified checkmark now survives reload, sort, and filter. PCGS lookup populates Name and Retail Price fields. Verified icon shown in edit modal. PCGS API calls logged to Catalog History. Fixed Numista search icon loss and pcgsNumber missing from exports
 - **PCGS# & Cert Verification (v3.21.00)**: New PCGS catalog number field on add/edit form with inline chip in Name cell (click to open CoinFacts). PCGS API cert verification — configure bearer token in Settings > API > PCGS, then click the verify icon on PCGS-graded items to see grade, population, and price guide. Included in all export/import formats, search, and bulk edit
 - **Bulk Edit tool (v3.20.00)**: Full-screen modal in Settings > Tools to select, edit, copy, or delete multiple items at once. 16 editable fields with enable/disable toggles, searchable item table, Numista Lookup integration. Change Log moved to Settings > Log tab. Numista chips show full ID (N#12345). Year chips click to filter. Fixed chip word boundary matching and shift-click hide bug
 - **Filter chip enhancements (v3.19.00)**: Enable/disable and reorder 10 filter chip categories in Settings > Chips. Sort chips within each category by Name (A-Z) or Qty (High→Low) from new inline dropdown or Settings. Config-driven rendering replaces hard-coded category blocks
@@ -42,7 +43,5 @@
 
 ## Development Roadmap
 
-- **PCGS API integration**: Automated grading data and price guide lookup via PCGS Public API
-- **Notes modal**: Click notes indicator to view notes, shift-click to open edit modal
 - **Filter refresh for renamed items**: Items renamed via Numista no longer vanish from active filters
 - **Numista image cache** *(post-Supabase)*: Per-user caching of Numista API responses with coin images on item profiles. Attribution caption below images. Shift-click to upload custom photo of your specific coin
