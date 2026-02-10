@@ -2258,6 +2258,31 @@
     </div>
 
     <!-- =============================================================================
+       PCGS FIELD PICKER MODAL
+
+       Stacked modal (z-index 10000) that appears over the item Add/Edit form.
+       Shows the PCGS lookup result with images and a field picker to fill form fields.
+       ============================================================================= -->
+    <div class="modal" id="pcgsFieldPickerModal" style="display: none">
+      <div class="modal-content numista-results-modal-content">
+        <div class="modal-header">
+          <h2 id="pcgsFieldPickerTitle">PCGS Item Found</h2>
+          <button aria-label="Close modal" class="modal-close" id="pcgsFieldPickerCloseBtn">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div id="pcgsSelectedItem" class="numista-selected-preview"></div>
+          <div id="pcgsFieldCheckboxes" class="numista-field-checkboxes">
+            <div class="numista-fields-heading">Fields to fill:</div>
+          </div>
+          <div class="numista-fill-actions">
+            <button class="btn" id="pcgsFillCancelBtn" type="button">Cancel</button>
+            <button class="btn premium" id="pcgsFillBtn" type="button">Fill Fields</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- =============================================================================
        DEBUG LOG MODAL
 
        Displays collected debug output when debug mode is enabled.
