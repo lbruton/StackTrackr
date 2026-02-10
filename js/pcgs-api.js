@@ -245,8 +245,8 @@ const renderPcgsFieldCheckboxes = (result) => {
   const container = document.getElementById('pcgsFieldCheckboxes');
   if (!container) return;
 
-  // Check if grade value matches a dropdown option
-  const gradeStr = (result.grade || '').toUpperCase().replace(/\s+/g, '-');
+  // Normalize grade: PCGS returns "MS70", our dropdown uses "MS-70"
+  const gradeStr = (result.grade || '').toUpperCase().replace(/\s+/g, '-').replace(/^([A-Z]+)(\d)/, '$1-$2');
   const gradeEl = document.getElementById('itemGrade');
   let gradeValid = false;
   if (gradeEl && gradeStr) {

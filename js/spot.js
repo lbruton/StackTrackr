@@ -427,8 +427,24 @@ const updateSparkline = (metalKey) => {
     sparklineInstances[metalKey] = null;
   }
 
+  // 1-day view: solid color bar instead of sparkline
+  // TODO: Future enhancement — use MetalpriceAPI /v1/hourly endpoint
+  // for intraday sparkline when provider is configured (paid tier: up to 7 days)
+  if (days === 1) {
+    const ctx = canvas.getContext("2d");
+    const color = getMetalColor(metalKey);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = color + "20"; // 12% opacity
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    updateSpotChangePercent(metalKey);
+    return;
+  }
+
   // Need at least 2 data points for a meaningful line
-  if (data.length < 2) return;
+  if (data.length < 2) {
+    updateSpotChangePercent(metalKey);
+    return;
+  }
 
   const ctx = canvas.getContext("2d");
   const color = getMetalColor(metalKey);
@@ -474,6 +490,65 @@ const updateSparkline = (metalKey) => {
       interaction: { enabled: false },
     },
   });
+
+  updateSpotChangePercent(metalKey);
+};
+
+/**
+ * Computes and displays % change on a spot card based on the selected sparkline period.
+ * Compares oldest vs newest data point in the selected range.
+ *
+ * @param {string} metalKey - Metal key ('silver', 'gold', etc.)
+ */
+const updateSpotChangePercent = (metalKey) => {
+  const metalConfig = Object.values(METALS).find((m) => m.key === metalKey);
+  if (!metalConfig) return;
+  const el = document.getElementById(`spotChange${metalConfig.name}`);
+  if (!el) return;
+
+  const rangeSelect = document.getElementById(`spotRange${metalConfig.name}`);
+  const days = rangeSelect ? parseInt(rangeSelect.value, 10) : 90;
+  const { data } = getSparklineData(metalConfig.name, days);
+
+  if (data.length < 2) {
+    el.textContent = "";
+    return;
+  }
+
+  const oldest = data[0];
+  const newest = data[data.length - 1];
+  const pctChange = ((newest - oldest) / oldest) * 100;
+  const sign = pctChange > 0 ? "+" : "";
+  el.textContent = `${sign}${pctChange.toFixed(2)}%`;
+  el.className =
+    "spot-card-change " +
+    (pctChange > 0 ? "spot-change-up" : pctChange < 0 ? "spot-change-down" : "");
+
+  // Override the arrow direction on the price display to match the period-based
+  // trend. updateSpotCardColor() compares against the last different price in ALL
+  // history, but the user expects the arrow to reflect the selected period.
+  const priceEl = elements.spotPriceDisplay[metalKey];
+  if (priceEl) {
+    const currentPrice = spotPrices[metalKey];
+    const formatted =
+      typeof formatCurrency === "function"
+        ? formatCurrency(currentPrice)
+        : currentPrice.toFixed(2);
+
+    if (pctChange > 0) {
+      priceEl.classList.add("spot-up");
+      priceEl.classList.remove("spot-down", "spot-unchanged");
+      priceEl.textContent = `\u25B2 ${formatted}`;
+    } else if (pctChange < 0) {
+      priceEl.classList.add("spot-down");
+      priceEl.classList.remove("spot-up", "spot-unchanged");
+      priceEl.textContent = `\u25BC ${formatted}`;
+    } else {
+      priceEl.classList.add("spot-unchanged");
+      priceEl.classList.remove("spot-up", "spot-down");
+      priceEl.textContent = `= ${formatted}`;
+    }
+  }
 };
 
 /**
@@ -563,6 +638,7 @@ window.updateSpotCardColor = updateSpotCardColor;
 window.updateSparkline = updateSparkline;
 window.updateAllSparklines = updateAllSparklines;
 window.destroySparklines = destroySparklines;
+window.updateSpotChangePercent = updateSpotChangePercent;
 window.startSpotInlineEdit = startSpotInlineEdit;
 window.getMetalColor = getMetalColor;
 window.loadTrendRanges = loadTrendRanges;

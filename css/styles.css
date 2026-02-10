@@ -809,6 +809,26 @@ input[type="submit"] {
 .spot-down { color: var(--danger); }
 .spot-unchanged { color: var(--warning); }
 
+.spot-card-change {
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-align: center;
+  padding: 2px 0;
+  position: relative;
+  z-index: 2;
+  min-height: 1.1em;
+}
+.spot-change-up { color: var(--success); }
+.spot-change-down { color: var(--danger); }
+
+/* Portfolio card gain/loss percentage — subtle prefix left of value */
+.gain-loss-pct {
+  font-size: 0.7rem;
+  font-weight: 400;
+  opacity: 0.7;
+  margin-right: 0.35em;
+}
+
 .spot-card-timestamp {
   position: relative;
   z-index: 1;
@@ -883,11 +903,56 @@ input[type="submit"] {
 
 .provider-header {
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
   margin-bottom: 0.25rem;
   font-weight: 600;
-  gap: 0.25rem;
+  gap: 0.5rem;
+}
+
+.provider-doc-link {
+  font-size: 0.8rem;
+  font-weight: 400;
+  opacity: 0.7;
+  text-decoration: none;
+  color: var(--primary);
+}
+.provider-doc-link:hover {
+  opacity: 1;
+  text-decoration: underline;
+}
+
+.provider-history-pull {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-sm);
+  flex-wrap: wrap;
+}
+.provider-history-pull label {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin: 0;
+}
+.provider-history-select {
+  width: 110px;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-size: 0.8rem;
+}
+.api-history-btn {
+  font-size: 0.8rem;
+  padding: var(--spacing-xs) var(--spacing-sm);
+}
+.history-pull-cost {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  white-space: nowrap;
 }
 
 
@@ -1339,6 +1404,14 @@ input[type="submit"] {
   padding: var(--spacing-xl);
   overflow: auto;
   flex: 1;
+}
+
+.api-history-footer {
+  padding: var(--spacing);
+  border-top: 1px solid var(--border);
+  display: flex;
+  gap: var(--spacing-sm);
+  justify-content: flex-end;
 }
 
 .api-history-body {
