@@ -418,7 +418,12 @@ const renderActiveFilters = () => {
     // BUT: if no summary chip was rendered for this field (all below minCount),
     // fall through so the user can still see and remove their active filter
     if (categoryFields.has(field)) {
-      const hasSummaryChip = chips.some(c => c.field === field && c.count !== undefined);
+      let hasSummaryChip = chips.some(c => c.field === field && c.count !== undefined);
+      // For 'name' filters, customGroup/dynamicName chips provide visual coverage
+      // so suppress the individual name fallback when those chips are present
+      if (field === 'name' && !hasSummaryChip) {
+        hasSummaryChip = chips.some(c => (c.field === 'customGroup' || c.field === 'dynamicName') && c.count !== undefined);
+      }
       if (hasSummaryChip) return;
     }
     
