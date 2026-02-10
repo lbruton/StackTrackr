@@ -44,3 +44,4 @@
 - **PCGS API integration**: Automated grading data and price guide lookup via PCGS Public API
 - **Notes modal**: Click notes indicator to view notes, shift-click to open edit modal
 - **Filter refresh for renamed items**: Items renamed via Numista no longer vanish from active filters
+- **Numista image cache** *(post-Supabase)*: Per-user caching of Numista API responses with coin images on item profiles. Attribution caption below images. Shift-click to upload custom photo of your specific coin
