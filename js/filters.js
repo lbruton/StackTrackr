@@ -709,14 +709,20 @@ const filterInventoryAdvanced = () => {
         if (itemText.includes(exactPhrase)) {
           return true;
         }
-        
+
+        // STACK-23: Check custom chip group label matching for multi-word searches
+        if (typeof window.itemMatchesCustomGroupLabel === 'function' &&
+            window.itemMatchesCustomGroupLabel(item, q)) {
+          return true;
+        }
+
         // For phrase searches like "American Eagle", be more restrictive
         // Check that all words are present as word boundaries
         const allWordsPresent = words.every(word => {
           const wordRegex = new RegExp(`\\b${word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
           return wordRegex.test(itemText);
         });
-        
+
         if (!allWordsPresent) {
           return false;
         }
@@ -874,7 +880,7 @@ const filterInventoryAdvanced = () => {
       }
       
       // For single words, use word boundary matching
-      return words.every(word => {
+      const fieldMatch = words.every(word => {
         const wordRegex = new RegExp(`\\b${word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`, 'i');
         return (
           wordRegex.test(item.metal) ||
@@ -897,6 +903,13 @@ const filterInventoryAdvanced = () => {
           (item.serialNumber && wordRegex.test(item.serialNumber))
         );
       });
+      if (fieldMatch) return true;
+
+      // STACK-23: Fall back to custom chip group label matching
+      if (typeof window.itemMatchesCustomGroupLabel === 'function') {
+        return window.itemMatchesCustomGroupLabel(item, q);
+      }
+      return false;
     });
   });
 };
