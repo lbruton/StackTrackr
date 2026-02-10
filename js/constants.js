@@ -254,7 +254,7 @@ const CERT_LOOKUP_URLS = {
  * Updated: 2026-02-09 - Patch: Edit custom grouping rules, relocate chip threshold
  */
 
-const APP_VERSION = "3.21.02";
+const APP_VERSION = "3.21.03";
 
 /**
  * @constant {string} DEFAULT_CURRENCY - Default currency code for monetary formatting
