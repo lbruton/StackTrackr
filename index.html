@@ -828,39 +828,42 @@
                   <option value="Other">Other</option>
                 </select>
               </div>
+            </div>
+            <!-- Row: Purity, Quantity, Weight, Unit -->
+            <div class="grid grid-purity-row">
+              <div>
+                <label for="itemPuritySelect">Purity <span style="font-weight:normal;opacity:0.6;">(fineness)</span></label>
+                <select id="itemPuritySelect">
+                  <option value="1.0">Pure</option>
+                  <option value="0.9999">.9999 — Four Nines</option>
+                  <option value="0.999">.999 — Fine</option>
+                  <option value="0.925">.925 — Sterling</option>
+                  <option value="0.900">.900 — 90% Silver</option>
+                  <option value="0.800">.800 — 80% (European)</option>
+                  <option value="0.600">.600 — 60%</option>
+                  <option value="0.400">.400 — 40% Silver</option>
+                  <option value="0.350">.350 — War Nickels</option>
+                  <option value="custom">Custom…</option>
+                </select>
+              </div>
               <div>
                 <label for="itemQty">Quantity</label>
                 <input id="itemQty" min="1" required step="1" type="number" />
               </div>
               <div>
                 <label for="itemWeight">Weight</label>
-                <div style="display:flex;align-items:center;gap:var(--spacing);">
-                  <input id="itemWeight" inputmode="decimal" placeholder="e.g. 1, 0.5, 1/10" required type="text" />
-                  <select id="itemWeightUnit">
-                    <option value="oz">oz</option>
-                    <option value="g">g</option>
-                  </select>
-                </div>
+                <input id="itemWeight" inputmode="decimal" placeholder="1, 0.5, 1/10" required type="text" />
               </div>
-            </div>
-            <!-- Row: Purity -->
-            <div class="grid grid-2" id="purityRow">
               <div>
-                <label for="itemPuritySelect">Purity <span style="font-weight:normal;opacity:0.6;">(fineness)</span></label>
-                <select id="itemPuritySelect">
-                  <option value="1.0">1.000 — Pure / Fine</option>
-                  <option value="0.9999">.9999 — Four Nines</option>
-                  <option value="0.999">.999 — Three Nines</option>
-                  <option value="0.925">.925 — Sterling</option>
-                  <option value="0.900">.900 — Coin Silver / 22K</option>
-                  <option value="0.800">.800 — European</option>
-                  <option value="0.600">.600</option>
-                  <option value="0.400">.400 — 40% Silver</option>
-                  <option value="0.350">.350 — War Nickels</option>
-                  <option value="custom">Custom…</option>
+                <label>&nbsp;</label>
+                <select id="itemWeightUnit">
+                  <option value="oz">oz</option>
+                  <option value="g">g</option>
                 </select>
               </div>
-              <div id="purityCustomWrapper" style="display:none;">
+            </div>
+            <div id="purityCustomWrapper" class="grid grid-2" style="display:none;">
+              <div>
                 <label for="itemPurity">Custom Purity</label>
                 <input id="itemPurity" type="number" min="0.001" max="1" step="0.001" placeholder="e.g. 0.925" />
               </div>

@@ -1078,8 +1078,13 @@ const renderTable = () => {
         ? `<span class="notes-indicator" title="Click to view notes · Shift+click to edit"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6zm-1 2l5 5h-5V4zM6 20V4h5v7h7v9H6z"/></svg></span>`
         : '';
 
+      const purityVal = parseFloat(item.purity);
+      const purityTag = (!isNaN(purityVal) && purityVal > 0 && purityVal < 1.0)
+        ? `<span class="purity-tag" title="Purity: ${purityVal}" onclick="applyColumnFilter('purity', ${JSON.stringify(String(purityVal))})" tabindex="0" role="button" style="cursor:pointer;">${purityVal}</span>`
+        : '';
+
       // Config-driven chip ordering
-      const chipMap = { grade: gradeTag, numista: numistaTag, pcgs: pcgsTag, year: yearTag, serial: serialTag, storage: storageTag, notes: notesIndicator };
+      const chipMap = { grade: gradeTag, numista: numistaTag, pcgs: pcgsTag, year: yearTag, serial: serialTag, storage: storageTag, notes: notesIndicator, purity: purityTag };
       const orderedChips = chipConfig.filter(c => c.enabled && chipMap[c.id]).map(c => chipMap[c.id]).join('');
 
       // Format computed displays

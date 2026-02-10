@@ -91,6 +91,12 @@ const populateVersionModal = (version, html) => {
  */
 const getEmbeddedChangelog = (version) => {
   const changelogs = {
+    "3.22.01": `
+      <li><strong>Purity form layout</strong>: Weight/Purity/Qty on single row</li>
+      <li><strong>Bulk Edit</strong>: Purity, Grade, Grading Authority as dropdowns</li>
+      <li>Purity/fineness filter chips (enabled) and inline chips (disabled)</li>
+      <li>Purity inline chip shows numerical value only</li>
+    `,
     "3.22.00": `
       <li><strong>Added</strong>: Purity (fineness) field — adjusts melt value formula across all calculation sites (STACK-22)</li>
       <li><strong>Added</strong>: PCGS API daily quota usage bar in Settings (STACK-24)</li>
