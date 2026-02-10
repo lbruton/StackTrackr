@@ -880,22 +880,51 @@ const setupEventListeners = () => {
       );
     }
 
+    // Bulk Edit modal open/close
+    if (elements.bulkEditBtn) {
+      safeAttachListener(
+        elements.bulkEditBtn,
+        "click",
+        () => {
+          if (typeof openBulkEdit === "function") openBulkEdit();
+        },
+        "Bulk edit open button",
+      );
+    }
+    if (elements.bulkEditCloseBtn) {
+      safeAttachListener(
+        elements.bulkEditCloseBtn,
+        "click",
+        () => {
+          if (typeof closeBulkEdit === "function") closeBulkEdit();
+        },
+        "Bulk edit close button",
+      );
+    }
+
       if (elements.changeLogBtn) {
         safeAttachListener(
           elements.changeLogBtn,
           "click",
           (e) => {
             e.preventDefault();
-            renderChangeLog();
-            if (elements.changeLogModal) {
-              if (window.openModalById) openModalById('changeLogModal');
-              else {
-                elements.changeLogModal.style.display = "flex";
-                document.body.style.overflow = "hidden";
-              }
+            if (typeof showSettingsModal === "function") {
+              showSettingsModal("changelog");
             }
           },
           "Change log button",
+        );
+      }
+
+      // Settings panel Change Log clear button
+      if (elements.settingsChangeLogClearBtn) {
+        safeAttachListener(
+          elements.settingsChangeLogClearBtn,
+          "click",
+          () => {
+            if (typeof clearChangeLog === "function") clearChangeLog();
+          },
+          "Settings change log clear button",
         );
       }
 
@@ -1861,6 +1890,7 @@ const setupApiEvents = () => {
           const historyModal = document.getElementById("apiHistoryModal");
           const catalogHistModal = document.getElementById("catalogHistoryModal");
           const quotaModal = document.getElementById("apiQuotaModal");
+          const bulkEditModal = document.getElementById("bulkEditModal");
           const settingsModal = document.getElementById("settingsModal");
           const itemModal = document.getElementById("itemModal");
           const notesModal = document.getElementById("notesModal");
@@ -1892,6 +1922,12 @@ const setupApiEvents = () => {
             quotaModal.style.display === "flex"
           ) {
             quotaModal.style.display = "none";
+          } else if (
+            bulkEditModal &&
+            bulkEditModal.style.display !== "none" &&
+            typeof closeBulkEdit === "function"
+          ) {
+            closeBulkEdit();
           } else if (
             settingsModal &&
             settingsModal.style.display === "flex" &&

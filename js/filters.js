@@ -1007,7 +1007,11 @@ const applyQuickFilter = (field, value, isGrouped = false) => {
       const matchingNames = [];
       inventory.forEach(item => {
         const itemName = (item.name || '').toLowerCase();
-        if (group.patterns.some(p => itemName.includes(p.toLowerCase()))) {
+        if (group.patterns.some(p => {
+          try {
+            return new RegExp('\\b' + p.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b', 'i').test(itemName);
+          } catch (e) { return itemName.includes(p.toLowerCase()); }
+        })) {
           matchingNames.push(item.name);
         }
       });

@@ -6504,3 +6504,355 @@ th {
 #inventoryTable td[data-column="retailPrice"] {
   color: rgba(59, 130, 246, 0.95); /* Primary blue for retail values */
 }
+
+/* =============================================================================
+   SETTINGS CHANGE LOG PANEL
+   ============================================================================= */
+
+.settings-changelog-actions {
+  margin-bottom: var(--spacing);
+}
+
+.settings-changelog-wrap {
+  overflow-y: auto;
+  max-height: 55vh;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+#settingsChangeLogTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.75rem;
+}
+
+#settingsChangeLogTable thead {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--bg-secondary, var(--bg));
+}
+
+#settingsChangeLogTable th {
+  padding: 0.35rem 0.5rem;
+  text-align: left;
+  font-weight: 600;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-secondary);
+  border-bottom: 2px solid var(--border);
+  white-space: nowrap;
+}
+
+#settingsChangeLogTable td {
+  padding: 0.3rem 0.5rem;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 180px;
+}
+
+#settingsChangeLogTable tr {
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+#settingsChangeLogTable tbody tr:hover {
+  background: var(--hover-bg, rgba(0,0,0,0.03));
+}
+
+#settingsChangeLogTable .action-btn {
+  font-size: 0.7rem;
+  padding: 0.15rem 0.45rem;
+}
+
+/* =============================================================================
+   BULK EDIT MODAL
+   ============================================================================= */
+
+.bulk-edit-content {
+  width: 95vw;
+  max-width: 1400px;
+  max-height: 92vh;
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  overflow: hidden;
+}
+
+.bulk-edit-content .modal-header {
+  background: linear-gradient(135deg, var(--primary), var(--primary-hover));
+  color: #f8fafc;
+  padding: var(--spacing) var(--spacing-xl);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  flex-shrink: 0;
+}
+
+.bulk-edit-content .modal-header h2 {
+  margin: 0;
+  color: #f8fafc;
+  text-align: center;
+}
+
+.bulk-edit-body {
+  display: flex;
+  gap: 1.5rem;
+  overflow: hidden;
+  padding: var(--spacing);
+  flex: 1;
+  min-height: 0;
+}
+
+.bulk-edit-fields {
+  width: 300px;
+  flex-shrink: 0;
+  overflow-y: auto;
+  max-height: 70vh;
+  padding-right: var(--spacing);
+  border-right: 1px solid var(--border);
+}
+
+.bulk-edit-fields h3 {
+  margin: 0 0 var(--spacing) 0;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+}
+
+.bulk-edit-field-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  padding: 0.35rem 0.5rem;
+  border-radius: var(--radius);
+  transition: background 0.15s;
+}
+
+.bulk-edit-field-row:hover {
+  background: var(--hover-bg, rgba(0,0,0,0.03));
+}
+
+.bulk-edit-field-row input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  min-width: 16px;
+  padding: 0;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.bulk-edit-field-row label {
+  flex-shrink: 0;
+  width: 90px;
+  margin-bottom: 0;
+  font-size: 0.78rem;
+  font-weight: 500;
+  cursor: pointer;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bulk-edit-field-row .field-input {
+  flex: 1;
+  width: auto;
+  min-width: 0;
+  padding: 0.25rem 0.4rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 0.78rem;
+  background: var(--bg);
+  color: var(--text);
+  transition: opacity 0.15s, border-color 0.15s;
+}
+
+.bulk-edit-field-row .field-input:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.bulk-edit-field-row .field-input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15);
+}
+
+.bulk-edit-field-row textarea.field-input {
+  resize: vertical;
+  min-height: 2.4rem;
+}
+
+.bulk-edit-items {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.bulk-edit-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding-bottom: var(--spacing);
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+.bulk-edit-toolbar input[type="search"] {
+  flex: 1;
+  min-width: 150px;
+  padding: 0.4rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 0.85rem;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.bulk-edit-toolbar input[type="search"]:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+.bulk-edit-toolbar .btn {
+  font-size: 0.78rem;
+  padding: 0.35rem 0.7rem;
+  white-space: nowrap;
+}
+
+.bulk-edit-count-badge {
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  background: var(--primary);
+  color: #fff;
+  white-space: nowrap;
+}
+
+.bulk-edit-table-wrap {
+  overflow-y: auto;
+  flex: 1;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.bulk-edit-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+}
+
+.bulk-edit-table thead {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--bg);
+}
+
+.bulk-edit-table th {
+  padding: 0.5rem 0.6rem;
+  text-align: left;
+  font-weight: 600;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-secondary);
+  border-bottom: 2px solid var(--border);
+  white-space: nowrap;
+}
+
+.bulk-edit-table input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  padding: 0;
+}
+
+.bulk-edit-table td {
+  padding: 0.4rem 0.6rem;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
+}
+
+.bulk-edit-table tr {
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.bulk-edit-table tbody tr:hover {
+  background: var(--hover-bg, rgba(0,0,0,0.03));
+}
+
+.bulk-edit-selected {
+  background: rgba(59, 130, 246, 0.08) !important;
+}
+
+[data-theme="dark"] .bulk-edit-selected {
+  background: rgba(59, 130, 246, 0.18) !important;
+}
+
+[data-theme="sepia"] .bulk-edit-selected {
+  background: rgba(139, 92, 42, 0.08) !important;
+}
+
+.bulk-edit-footer {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: var(--spacing) var(--spacing-xl);
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+.bulk-edit-footer .btn {
+  font-size: 0.85rem;
+  padding: 0.45rem 1rem;
+}
+
+.bulk-edit-footer .btn-danger {
+  margin-left: auto;
+}
+
+.bulk-edit-numista-btn {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  cursor: pointer;
+  border-radius: var(--radius);
+  padding: 0.35rem 0.7rem;
+  font-size: 0.78rem;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.bulk-edit-numista-btn:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+/* Responsive: stack on small screens */
+@media (max-width: 768px) {
+  .bulk-edit-body {
+    flex-direction: column;
+  }
+  .bulk-edit-fields {
+    width: 100%;
+    max-height: 200px;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    padding-right: 0;
+    padding-bottom: var(--spacing);
+  }
+  .bulk-edit-content {
+    width: 98vw;
+    max-height: 95vh;
+  }
+}

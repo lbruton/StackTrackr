@@ -1294,6 +1294,21 @@ const fillFormFromNumistaResult = () => {
 
   // Collect checked fields and their edited values from the picker inputs
   const checkboxes = container.querySelectorAll('input[name="numistaField"]');
+
+  // Intercept for bulk edit — when callback is set, route field values there instead
+  if (typeof window._bulkEditNumistaCallback === 'function') {
+    const fieldMap = {};
+    checkboxes.forEach(cb => {
+      if (!cb.checked) return;
+      const input = container.querySelector('input[name="numistaFieldValue_' + cb.value + '"]');
+      if (input && input.value.trim()) fieldMap[cb.value] = input.value.trim();
+    });
+    window._bulkEditNumistaCallback(fieldMap);
+    window._bulkEditNumistaCallback = null;
+    closeNumistaResultsModal();
+    return;
+  }
+
   checkboxes.forEach(cb => {
     if (!cb.checked) return;
     const input = container.querySelector(`input[name="numistaFieldValue_${cb.value}"]`);
