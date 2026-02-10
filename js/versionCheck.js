@@ -91,6 +91,14 @@ const populateVersionModal = (version, html) => {
  */
 const getEmbeddedChangelog = (version) => {
   const changelogs = {
+    "3.21.02": `
+      <li><strong>Seed spot history</strong>: 6 months of baked-in price data (720 entries, 4 metals) — sparklines and price cards work from day one</li>
+      <li><strong>Sample inventory</strong>: 8 pre-configured items (3x ASE, 3x Gold Maple, Platinum Round, Palladium Bar) with grades, Numista IDs, and filter chips</li>
+      <li><strong>Seed timestamp</strong>: Spot cards show 'Seed · date' with shift+click hint for seeded users</li>
+      <li><strong>Metals History</strong>: Seed entries visible in history modal with StakTrakr source label</li>
+      <li><strong>README overhaul</strong>: Hero screenshot, feature showcase, Getting Started guide</li>
+      <li><strong>Seed generator</strong>: generate-seed-data.py processes CSV exports into seed JSON + embedded JS</li>
+    `,
     "3.21.01": `
       <li><strong>Persist verified</strong>: Green checkmark survives reload, sort, and filter</li>
       <li><strong>Lookup fields</strong>: PCGS lookup populates Name and Retail Price</li>
