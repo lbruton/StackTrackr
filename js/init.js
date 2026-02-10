@@ -52,7 +52,7 @@ function safeGetElement(id, required = false) {
  *
  * @returns {void} Fully initializes the application interface
  */
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
   console.log(`=== APPLICATION INITIALIZATION STARTED (v${APP_VERSION}) ===`);
   console.log('🧠 Memory Intelligence System available in rEngine/');
   console.log('🚀 For agent setup: node rEngine/quick-agent-setup.js');
@@ -349,12 +349,21 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Load data
     loadInventory();
+    // Seed sample inventory for first-time users
+    if (typeof loadSeedInventory === 'function') {
+      loadSeedInventory();
+    }
     if (typeof sanitizeTablesOnLoad === "function") {
       sanitizeTablesOnLoad();
     }
     inventory.forEach((i) => addCompositionOption(i.composition || i.metal));
     refreshCompositionOptions();
     loadSpotHistory();
+
+    // Seed spot history for first-time users
+    if (typeof loadSeedSpotHistory === 'function') {
+      await loadSeedSpotHistory();
+    }
 
     // Initialize API system
     apiConfig = loadApiConfig();
