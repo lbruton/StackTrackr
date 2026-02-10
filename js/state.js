@@ -72,6 +72,7 @@ const elements = {
   itemGradingAuthority: null,
   itemCertNumber: null,
   searchNumistaBtn: null,
+  lookupPcgsBtn: null,
 
   // Spot price sync icons (per-metal)
   syncIconSilver: null,
