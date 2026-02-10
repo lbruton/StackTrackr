@@ -233,7 +233,7 @@ const CERT_LOOKUP_URLS = {
  * Updated: 2026-02-09 - Patch: Edit custom grouping rules, relocate chip threshold
  */
 
-const APP_VERSION = "3.20.00";
+const APP_VERSION = "3.21.00";
 
 /**
  * @constant {string} DEFAULT_CURRENCY - Default currency code for monetary formatting
@@ -450,6 +450,7 @@ const ALLOWED_STORAGE_KEYS = [
 const INLINE_CHIP_DEFAULTS = [
   { id: 'grade',   label: 'Grade',           enabled: true },
   { id: 'numista', label: 'Numista (N#)',     enabled: true },
+  { id: 'pcgs',    label: 'PCGS #',          enabled: false },
   { id: 'year',    label: 'Year',            enabled: true },
   { id: 'serial',  label: 'Serial #',         enabled: false },
   { id: 'storage', label: 'Storage Location', enabled: false },

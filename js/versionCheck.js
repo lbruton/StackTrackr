@@ -91,6 +91,10 @@ const populateVersionModal = (version, html) => {
  */
 const getEmbeddedChangelog = (version) => {
   const changelogs = {
+    "3.21.00": `
+      <li><strong>PCGS# inline chip</strong>: New PCGS catalog number field on add/edit form. PCGS# chip renders in Name cell — click to open PCGS CoinFacts page. Included in CSV/JSON/PDF export, CSV/JSON import, search, and bulk edit</li>
+      <li><strong>PCGS cert verification</strong>: New Settings &gt; API &gt; PCGS tab for bearer token configuration. One-click verify icon on PCGS-graded items shows grade, population, and price guide from PCGS API. Daily rate limit tracking (1,000/day)</li>
+    `,
     "3.20.00": `
       <li><strong>Bulk Edit tool</strong>: Full-screen modal in Settings &gt; Tools to select multiple items and edit fields, copy, or delete in bulk. 16 editable fields with enable/disable toggles, searchable item table, Numista Lookup integration</li>
       <li><strong>Change Log Settings tab</strong>: Change Log relocated to Settings &gt; Log tab. Main page Log button opens Settings at the Log tab directly</li>
