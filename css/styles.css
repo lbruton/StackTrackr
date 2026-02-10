@@ -5427,6 +5427,11 @@ th {
   color: var(--text-muted);
   vertical-align: middle;
   line-height: 1;
+  cursor: pointer;
+}
+
+.notes-indicator:hover {
+  color: var(--primary);
 }
 
 .notes-indicator svg {
