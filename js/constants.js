@@ -631,6 +631,13 @@ const FEATURE_FLAGS = {
     userToggle: true,
     description: "Auto-extract text from parentheses and quotes in item names as additional filter chips",
     phase: "beta"
+  },
+  CHIP_QTY_BADGE: {
+    enabled: true,
+    urlOverride: true,
+    userToggle: true,
+    description: "Show item count badge on filter chips",
+    phase: "stable"
   }
 };
 

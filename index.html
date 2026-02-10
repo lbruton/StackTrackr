@@ -995,6 +995,27 @@
     </div>
 
     <!-- =============================================================================
+       NOTES VIEW MODAL
+
+       Read-only view of item notes. Click the notes indicator icon to open.
+       Shift+click the indicator to open the full edit modal instead.
+       ============================================================================= -->
+    <div class="modal" id="notesViewModal" style="display: none">
+      <div class="modal-content" style="max-width: 32rem;">
+        <div class="modal-header">
+          <h2 id="notesViewTitle">Notes</h2>
+          <button aria-label="Close modal" class="modal-close" onclick="closeModalById('notesViewModal')">×</button>
+        </div>
+        <div class="modal-body">
+          <div id="notesViewContent" style="white-space: pre-wrap; line-height: 1.5; min-height: 3rem; max-height: 20rem; overflow-y: auto;"></div>
+          <div style="margin-top: 1rem; text-align: right">
+            <button class="btn" type="button" id="notesViewEditBtn">Edit</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- =============================================================================
        CHANGE LOG MODAL
 
        Displays the 10 most recent inventory cell changes tracked by the system.
@@ -1487,6 +1508,15 @@
                 <p class="settings-subtext">Enable, disable, and reorder chip categories. Assign the same Group letter to merge categories so their chips sort together.</p>
                 <div class="chip-grouping-table-container" id="filterChipCategoryContainer">
                   <div class="chip-grouping-empty">Loading…</div>
+                </div>
+              </div>
+
+              <div class="settings-group">
+                <div class="settings-group-label">Chip quantity badge</div>
+                <p class="settings-subtext">Show item count on each filter chip (e.g., "Gold (13)").</p>
+                <div class="chip-sort-toggle" id="settingsChipQtyBadge">
+                  <button type="button" class="chip-sort-btn active" data-val="yes">On</button>
+                  <button type="button" class="chip-sort-btn" data-val="no">Off</button>
                 </div>
               </div>
 

@@ -615,6 +615,7 @@ const setupEventListeners = () => {
 
             saveInventory();
             renderTable();
+            renderActiveFilters();
             logItemChanges(oldItem, inventory[editingIndex]);
 
             editingIndex = null;

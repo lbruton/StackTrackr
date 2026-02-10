@@ -595,8 +595,9 @@ const renderActiveFilters = () => {
     if (f.field === 'search') {
       label = displayValue;
     } else if (f.count !== undefined && f.total !== undefined) {
-      // For category summary chips (metal/type), show count
-      label = `${displayValue} ${f.count}/${f.total}`;
+      // For category summary chips, show count badge if enabled
+      const showQty = window.featureFlags && window.featureFlags.isEnabled('CHIP_QTY_BADGE');
+      label = showQty ? `${displayValue} (${f.count})` : displayValue;
     } else {
       label = `${displayValue}${f.exclude ? ' (exclude)' : ''}`;
     }
