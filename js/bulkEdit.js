@@ -614,6 +614,7 @@ const copySelectedItems = () => {
     // Deep clone
     const clone = JSON.parse(JSON.stringify(item));
     clone.serial = getNextSerial();
+    clone.uuid = generateUUID();
 
     inventory.push(clone);
 
