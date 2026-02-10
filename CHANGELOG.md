@@ -5,6 +5,14 @@ All notable changes to StakTrakr will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.21.03] - 2026-02-10
+
+### Added — STACK-23: Search matches custom chip group labels
+
+- **Fixed**: Search now matches items belonging to custom chip groups when searching by group label (STACK-23)
+
+---
+
 ## [3.21.02] - 2026-02-10
 
 ### Added — Seed data, sample inventory & README overhaul
