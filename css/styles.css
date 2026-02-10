@@ -5543,6 +5543,9 @@ th {
   color: #15803d;
 }
 
+[data-theme="dark"] #certVerifiedIcon { color: #4ade80; }
+[data-theme="sepia"] #certVerifiedIcon { color: #15803d; }
+
 /* =============================================================================
    FORM INFO ICON — Always-visible (i) link icon in form labels
    ============================================================================= */

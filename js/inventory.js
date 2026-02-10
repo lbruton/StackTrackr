@@ -60,6 +60,8 @@ const createBackupZip = async () => {
         gradingAuthority: item.gradingAuthority || '',
         certNumber: item.certNumber || '',
         serialNumber: item.serialNumber || '',
+        pcgsNumber: item.pcgsNumber || '',
+        pcgsVerified: item.pcgsVerified || false,
         serial: item.serial
       }))
     };
@@ -509,6 +511,7 @@ const loadInventory = () => {
         gradingAuthority: item.gradingAuthority || '',
         certNumber: item.certNumber || '',
         pcgsNumber: item.pcgsNumber || '',
+        pcgsVerified: item.pcgsVerified || false,
         spotPriceAtPurchase: spotPrice,
         premiumPerOz,
         totalPremium,
@@ -529,6 +532,7 @@ const loadInventory = () => {
         gradingAuthority: item.gradingAuthority || '',
         certNumber: item.certNumber || '',
         pcgsNumber: item.pcgsNumber || '',
+        pcgsVerified: item.pcgsVerified || false,
         isCollectable: item.isCollectable !== undefined ? item.isCollectable : false,
         composition: item.composition || item.metal || ""
       };
@@ -1014,7 +1018,9 @@ const renderTable = () => {
         const certNum = item.certNumber || '';
         const isClickable = !!certNum;
         let tooltip;
-        if (authority && certNum) {
+        if (authority === 'PCGS' && certNum && item.pcgsVerified) {
+          tooltip = `${authority} Cert #${certNum} \u2014 Verified`;
+        } else if (authority && certNum) {
           tooltip = `${authority} Cert #${certNum} \u2014 Click to verify`;
         } else if (authority) {
           tooltip = `Graded by ${authority}: ${item.grade}`;
@@ -1025,7 +1031,7 @@ const renderTable = () => {
         const showPcgsVerify = authority === 'PCGS' && certNum
           && typeof catalogConfig !== 'undefined' && catalogConfig.isPcgsEnabled();
         const verifyIcon = showPcgsVerify
-          ? `<span class="pcgs-verify-btn" data-cert-number="${escapeAttribute(certNum)}" title="Verify cert via PCGS API"><svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></span>`
+          ? `<span class="pcgs-verify-btn${item.pcgsVerified ? ' pcgs-verified' : ''}" data-cert-number="${escapeAttribute(certNum)}" title="${item.pcgsVerified ? 'Verified \u2014 Click to re-verify' : 'Verify cert via PCGS API'}"><svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></span>`
           : '';
         const attrs = [
           authority ? `data-authority="${escapeAttribute(authority)}"` : '',
@@ -1368,6 +1374,10 @@ const editItem = (idx, logIdx = null) => {
   if (elements.itemPcgsNumber) elements.itemPcgsNumber.value = item.pcgsNumber || '';
   if (elements.itemSerial) elements.itemSerial.value = item.serial;
 
+  // Show/hide PCGS verified icon next to Cert# label
+  const certVerifiedIcon = document.getElementById('certVerifiedIcon');
+  if (certVerifiedIcon) certVerifiedIcon.style.display = item.pcgsVerified ? 'inline-flex' : 'none';
+
   // Show/hide Undo button based on changelog context
   if (elements.undoChangeBtn) {
     elements.undoChangeBtn.style.display =
@@ -1427,6 +1437,10 @@ const duplicateItem = (idx) => {
   if (elements.itemCertNumber) elements.itemCertNumber.value = item.certNumber || '';
   if (elements.itemPcgsNumber) elements.itemPcgsNumber.value = item.pcgsNumber || '';
   if (elements.itemSerial) elements.itemSerial.value = ''; // Serial should be unique per item
+
+  // Hide PCGS verified icon — duplicate is a new unverified item
+  const certVerifiedIcon = document.getElementById('certVerifiedIcon');
+  if (certVerifiedIcon) certVerifiedIcon.style.display = 'none';
 
   // Open unified modal
   if (window.openModalById) openModalById('itemModal');
@@ -2150,6 +2164,7 @@ const importJson = (file, override = false) => {
         const gradingAuthority = (raw.gradingAuthority || raw.authority || '').toString().trim();
         const certNumber = (raw.certNumber || '').toString().trim();
         const pcgsNumber = (raw.pcgsNumber || raw['PCGS #'] || raw['PCGS Number'] || '').toString().trim();
+        const pcgsVerified = raw.pcgsVerified || false;
         const date = parseDate(raw.date);
 
         // Parse marketValue (retail price), backward-compatible with legacy fields
@@ -2196,6 +2211,7 @@ const importJson = (file, override = false) => {
           gradingAuthority,
           certNumber,
           pcgsNumber,
+          pcgsVerified,
           serial
         });
 
@@ -2319,6 +2335,8 @@ const exportJson = () => {
     gradingAuthority: item.gradingAuthority || '',
     certNumber: item.certNumber || '',
     serialNumber: item.serialNumber || '',
+    pcgsNumber: item.pcgsNumber || '',
+    pcgsVerified: item.pcgsVerified || false,
     serial: item.serial,
     // Legacy fields preserved for backward compatibility
     spotPriceAtPurchase: item.spotPriceAtPurchase,
@@ -2524,6 +2542,9 @@ document.addEventListener('click', (e) => {
     const certNum = verifyBtn.dataset.certNumber || '';
     if (!certNum || typeof verifyPcgsCert !== 'function') return;
 
+    const tr = verifyBtn.closest('tr[data-idx]');
+    const idx = tr ? parseInt(tr.dataset.idx, 10) : -1;
+
     verifyBtn.classList.add('pcgs-verifying');
     verifyBtn.title = 'Verifying...';
 
@@ -2531,6 +2552,10 @@ document.addEventListener('click', (e) => {
       verifyBtn.classList.remove('pcgs-verifying');
       if (result.verified) {
         verifyBtn.classList.add('pcgs-verified');
+        if (idx >= 0 && inventory[idx]) {
+          inventory[idx].pcgsVerified = true;
+          saveInventory();
+        }
         const parts = [];
         if (result.grade) parts.push(`Grade: ${result.grade}`);
         if (result.population) parts.push(`Pop: ${result.population}`);
