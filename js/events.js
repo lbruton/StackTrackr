@@ -1868,9 +1868,13 @@ const setupApiEvents = () => {
         syncAllBtn,
         "click",
         async () => {
-          if (typeof syncAllProviders === "function") {
-            const count = await syncAllProviders();
-            alert(`${count} records updated.`);
+          if (typeof syncProviderChain === "function") {
+            const { updatedCount, results } = await syncProviderChain({ showProgress: true, forceSync: true });
+            const summary = Object.entries(results)
+              .filter(([_, status]) => status !== "skipped")
+              .map(([prov, status]) => `${API_PROVIDERS[prov]?.name || prov}: ${status}`)
+              .join("\n");
+            alert(`Synced ${updatedCount} prices.\n\n${summary}`);
           }
         },
         "Sync all providers button",

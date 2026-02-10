@@ -153,6 +153,7 @@ const loadApiConfig = () => {
         usage,
         historyDays,
         historyTimes,
+        syncMode: config.syncMode || {},
         usageMonth: currentMonth,
       };
       if (needsSave) {
@@ -185,6 +186,7 @@ const loadApiConfig = () => {
     usage,
     historyDays,
     historyTimes,
+    syncMode: {},
     usageMonth: currentMonthKey(),
   };
 };
@@ -210,6 +212,7 @@ const saveApiConfig = (config) => {
       usage: config.usage || {},
       historyDays: config.historyDays || {},
       historyTimes: config.historyTimes || {},
+      syncMode: config.syncMode || {},
       usageMonth: config.usageMonth || currentMonthKey(),
     };
     Object.keys(config.keys || {}).forEach((p) => {
@@ -322,30 +325,29 @@ const setProviderStatus = (provider, status) => {
 };
 
 /**
- * Updates batch calculation display for a provider
+ * Updates the history pull cost indicator for a provider
  * @param {string} provider - Provider key
  */
-const updateBatchCalculation = (provider) => {
+const updateHistoryPullCost = (provider) => {
   const config = loadApiConfig();
   const providerConfig = API_PROVIDERS[provider];
+  const costEl = document.getElementById(`historyPullCost_${provider}`);
+  if (!costEl || !providerConfig) return;
+
   const selected = config.metals?.[provider] || {};
   const selectedMetals = Object.keys(selected).filter(metal => selected[metal] !== false);
-  let historyDays = parseInt(document.getElementById(`historyDays_${provider}`)?.value || 0);
-  if (provider === "METALS_DEV" && historyDays > 30) historyDays = 30;
-  
-  const batchInfoEl = document.getElementById(`batchInfo_${provider}`);
-  if (!batchInfoEl) return;
-  
-  if (providerConfig?.batchSupported && selectedMetals.length > 1) {
-    const usage = calculateApiUsage(selectedMetals, historyDays, true);
-    batchInfoEl.innerHTML = `📊 Batch Request: ${selectedMetals.length} metals + ${historyDays} days = 1 API call<br><span class="batch-savings">(saves ${usage.saved} calls vs individual requests)</span>`;
-  } else if (selectedMetals.length === 1) {
-    batchInfoEl.innerHTML = `📊 Single Request: 1 metal = 1 API call<br><span class="batch-savings">(no batch optimization needed)</span>`;
-  } else if (selectedMetals.length === 0) {
-    batchInfoEl.innerHTML = `⚠️ No metals selected<br><span class="batch-savings">(select metals to track)</span>`;
+  const daysSelect = document.getElementById(`historyPullDays_${provider}`);
+  const totalDays = daysSelect ? parseInt(daysSelect.value, 10) : 30;
+  const maxPerReq = providerConfig.maxHistoryDays || 30;
+  const chunks = Math.ceil(totalDays / maxPerReq);
+
+  let calls;
+  if (providerConfig.symbolsPerRequest === 1) {
+    calls = chunks * selectedMetals.length;
+    costEl.textContent = `${totalDays}d \u00D7 ${selectedMetals.length} metals = ${calls} API calls`;
   } else {
-    const usage = calculateApiUsage(selectedMetals, historyDays, false);
-    batchInfoEl.innerHTML = `📊 Individual Requests: ${selectedMetals.length} metals = ${usage.calls} API calls<br><span class="batch-savings">(batch requests not supported)</span>`;
+    calls = chunks;
+    costEl.textContent = `${totalDays}d = ${calls} API call${calls > 1 ? "s" : ""}`;
   }
 };
 
@@ -355,32 +357,12 @@ const updateBatchCalculation = (provider) => {
  */
 const updateProviderSettings = (provider) => {
   const config = loadApiConfig();
-  
+
   // Update cache timeout
   const cacheSelect = document.getElementById(`cacheTimeout_${provider}`);
   if (cacheSelect) {
     if (!config.cacheTimeouts) config.cacheTimeouts = {};
     config.cacheTimeouts[provider] = parseInt(cacheSelect.value);
-  }
-  
-  // Update history days
-  const historyInput = document.getElementById(`historyDays_${provider}`);
-  if (historyInput) {
-    if (!config.historyDays) config.historyDays = {};
-    let days = parseInt(historyInput.value) || 0;
-    if (provider === "METALS_DEV" && days > 30) days = 30;
-    config.historyDays[provider] = days;
-  }
-
-  // Update history times
-  const timesInput = document.getElementById(`historyTimes_${provider}`);
-  if (timesInput) {
-    if (!config.historyTimes) config.historyTimes = {};
-    const times = timesInput.value
-      .split(',')
-      .map(t => t.trim())
-      .filter(t => /^\d{2}:\d{2}$/.test(t));
-    config.historyTimes[provider] = times;
   }
 
   saveApiConfig(config);
@@ -396,17 +378,17 @@ const setupProviderSettingsListeners = (provider) => {
   if (cacheSelect) {
     cacheSelect.addEventListener('change', () => updateProviderSettings(provider));
   }
-  
-  // History days change
-  const historyInput = document.getElementById(`historyDays_${provider}`);
-  if (historyInput) {
-    historyInput.addEventListener('input', () => updateProviderSettings(provider));
+
+  // History pull days dropdown — update cost indicator
+  const pullDaysSelect = document.getElementById(`historyPullDays_${provider}`);
+  if (pullDaysSelect) {
+    pullDaysSelect.addEventListener('change', () => updateHistoryPullCost(provider));
   }
 
-  // History times change
-  const timesInput = document.getElementById(`historyTimes_${provider}`);
-  if (timesInput) {
-    timesInput.addEventListener('input', () => updateProviderSettings(provider));
+  // History pull button
+  const pullBtn = document.querySelector(`.api-history-btn[data-provider="${provider}"]`);
+  if (pullBtn) {
+    pullBtn.addEventListener('click', () => handleHistoryPull(provider));
   }
 
   // Metal selection changes
@@ -417,8 +399,26 @@ const setupProviderSettingsListeners = (provider) => {
       if (!config.metals[provider]) config.metals[provider] = {};
       config.metals[provider][metalKey] = e.target.checked;
       saveApiConfig(config);
+      updateHistoryPullCost(provider);
     });
   });
+
+  // Sync mode toggle
+  const syncModeToggle = document.getElementById(`syncMode_${provider}`);
+  if (syncModeToggle) {
+    syncModeToggle.addEventListener('click', (e) => {
+      const btn = e.target.closest('.chip-sort-btn');
+      if (!btn) return;
+      const mode = btn.dataset.mode;
+      syncModeToggle.querySelectorAll('.chip-sort-btn').forEach(b => {
+        b.classList.toggle('active', b.dataset.mode === mode);
+      });
+      const config = loadApiConfig();
+      if (!config.syncMode) config.syncMode = {};
+      config.syncMode[provider] = mode;
+      saveApiConfig(config);
+    });
+  }
 };
 
 /**
@@ -525,6 +525,32 @@ const autoSelectDefaultProvider = () => {
 
 // Backward-compatible alias
 const updateDefaultProviderButtons = autoSelectDefaultProvider;
+
+/**
+ * Returns the metals provider priority order from localStorage.
+ * @returns {string[]} Provider keys in priority order
+ */
+const getProviderOrder = () => {
+  try {
+    const stored = localStorage.getItem("apiProviderOrder");
+    const order = stored ? JSON.parse(stored) : null;
+    if (Array.isArray(order) && order.length > 0) return order;
+  } catch (e) { /* ignore */ }
+  return Object.keys(API_PROVIDERS);
+};
+
+/**
+ * Returns default sync mode for a provider based on priority position.
+ * First provider with an API key → "always", rest → "backup".
+ * @param {string} provider - Provider key
+ * @returns {string} "always" or "backup"
+ */
+const getDefaultSyncMode = (provider) => {
+  const order = getProviderOrder();
+  const config = loadApiConfig();
+  const firstWithKey = order.find(p => config.keys?.[p]);
+  return provider === firstWithKey ? "always" : "backup";
+};
 
 /**
  * Renders API history table with filtering, sorting and pagination
@@ -802,50 +828,12 @@ const saveApiCache = (data, provider) => {
  * @returns {Promise<void>} Resolves when sync completes or immediately if no sync needed
  */
 const autoSyncSpotPrices = async () => {
-  if (
-    !apiConfig ||
-    !apiConfig.provider ||
-    !apiConfig.keys ||
-    !apiConfig.keys[apiConfig.provider]
-  ) {
-    return;
-  }
-
-  const cache = loadApiCache();
-  const now = Date.now();
-  const duration = getCacheDurationMs(apiConfig.provider);
-
-  const cacheValid =
-    cache &&
-    cache.provider === apiConfig.provider &&
-    cache.timestamp &&
-    now - cache.timestamp < duration;
-
-  if (!cacheValid) {
-    await syncSpotPricesFromApi(false, true);
-    updateSyncButtonStates();
-  } else {
-    refreshFromCache();
-  }
-
-  // Sync other configured providers whose per-provider cache is stale
   const config = loadApiConfig();
-  for (const prov of Object.keys(API_PROVIDERS)) {
-    if (prov === apiConfig.provider) continue; // Already synced above
-    const key = config.keys?.[prov];
-    if (!key) continue;
-    const provDuration = getCacheDurationMs(prov);
-    // Check per-provider cache staleness using spot history timestamps
-    const lastSync = getLastProviderSyncTime(prov);
-    if (lastSync && now - lastSync < provDuration) continue;
-    try {
-      await fetchSpotPricesFromApi(prov, key);
-      setProviderStatus(prov, "connected");
-    } catch (err) {
-      console.warn(`Auto-sync failed for ${prov}:`, err.message);
-      setProviderStatus(prov, "error");
-    }
-  }
+  const hasAnyKey = Object.values(config.keys || {}).some(k => k);
+  if (!hasAnyKey) return;
+
+  await syncProviderChain({ showProgress: false, forceSync: false });
+  updateSyncButtonStates();
 };
 
 /**
@@ -899,6 +887,106 @@ const calculateApiUsage = (selectedMetals, historyDays = 0, batchSupported = fal
       saved: 0
     };
   }
+};
+
+/**
+ * Fetches today's prices only using individual /latest endpoints (no timeseries).
+ * For providers that support batch latest (metals.dev), uses a single call.
+ * Cost: 1 API call total (metals.dev batch) or 1 per metal (other providers).
+ *
+ * @param {string} provider - Provider key from API_PROVIDERS
+ * @param {string} apiKey - API key
+ * @param {Array} selectedMetals - Array of metal keys to fetch
+ * @returns {Promise<Object>} Promise resolving to { silver: 29.50, gold: 2650.00, ... }
+ */
+const fetchLatestPrices = async (provider, apiKey, selectedMetals) => {
+  const providerConfig = API_PROVIDERS[provider];
+  if (!providerConfig) throw new Error("Invalid API provider");
+
+  const config = loadApiConfig();
+  const usage = config.usage?.[provider] || { quota: DEFAULT_API_QUOTA, used: 0 };
+  const results = {};
+
+  // metals.dev supports a batch /latest endpoint returning all metals in one call
+  if (provider === "METALS_DEV" && providerConfig.latestBatchEndpoint) {
+    try {
+      const url = providerConfig.baseUrl + providerConfig.latestBatchEndpoint.replace("{API_KEY}", apiKey);
+      const headers = { "Content-Type": "application/json" };
+      if (apiKey) headers["Authorization"] = `Bearer ${apiKey}`;
+
+      const response = await fetch(url, { method: "GET", headers, mode: "cors" });
+      if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+
+      const data = await response.json();
+      usage.used++;
+
+      const parsed = providerConfig.parseLatestBatchResponse(data);
+      selectedMetals.forEach((metal) => {
+        if (parsed[metal] && parsed[metal] > 0) results[metal] = parsed[metal];
+      });
+    } catch (err) {
+      console.warn("Batch latest failed for METALS_DEV, falling back to individual:", err.message);
+      // Fall through to individual requests below
+    }
+  }
+
+  // Individual requests for remaining metals (or all metals for non-batch providers)
+  if (Object.keys(results).length < selectedMetals.length) {
+    const remaining = selectedMetals.filter((m) => !results[m]);
+
+    if (provider === "CUSTOM") {
+      const custom = config.customConfig || {};
+      const base = custom.baseUrl || "";
+      const pattern = custom.endpoint || "";
+      const format = custom.format || "symbol";
+      const metalCodes = {
+        silver: format === "symbol" ? "XAG" : "silver",
+        gold: format === "symbol" ? "XAU" : "gold",
+        platinum: format === "symbol" ? "XPT" : "platinum",
+        palladium: format === "symbol" ? "XPD" : "palladium",
+      };
+      for (const metal of remaining) {
+        try {
+          const endpoint = pattern.replace("{API_KEY}", apiKey).replace("{METAL}", metalCodes[metal]);
+          const url = `${base}${endpoint}`;
+          const response = await fetch(url, { method: "GET", headers: { "Content-Type": "application/json" }, mode: "cors" });
+          if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          const data = await response.json();
+          usage.used++;
+          const price = providerConfig.parseResponse(data, metal);
+          if (price && price > 0) results[metal] = price;
+        } catch (err) {
+          console.warn(`Latest fetch failed for ${metal}:`, err.message);
+        }
+      }
+    } else {
+      for (const metal of remaining) {
+        const endpoint = providerConfig.endpoints[metal];
+        if (!endpoint) continue;
+        try {
+          const url = `${providerConfig.baseUrl}${endpoint.replace("{API_KEY}", apiKey)}`;
+          const headers = { "Content-Type": "application/json" };
+          if (provider === "METALS_DEV" && apiKey) headers["Authorization"] = `Bearer ${apiKey}`;
+          const response = await fetch(url, { method: "GET", headers, mode: "cors" });
+          if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          const data = await response.json();
+          usage.used++;
+          const price = providerConfig.parseResponse(data, metal);
+          if (price && price > 0) results[metal] = price;
+        } catch (err) {
+          console.warn(`Latest fetch failed for ${metal}:`, err.message);
+        }
+      }
+    }
+  }
+
+  if (Object.keys(results).length === 0) {
+    throw new Error("No valid prices retrieved from latest endpoints");
+  }
+
+  config.usage[provider] = usage;
+  saveApiConfig(config);
+  return results;
 };
 
 /**
@@ -1022,7 +1110,10 @@ const fetchBatchSpotPrices = async (provider, apiKey, selectedMetals, historyDay
 };
 
 /**
- * Makes API request for spot prices (individual or batch)
+ * Makes API request for spot prices — latest only (no history backfill).
+ * Uses fetchLatestPrices() for efficient single-call sync.
+ * History pulls are now user-initiated via handleHistoryPull().
+ *
  * @param {string} provider - Provider key from API_PROVIDERS
  * @param {string} apiKey - API key
  * @returns {Promise<Object>} Promise resolving to spot prices data
@@ -1035,10 +1126,6 @@ const fetchSpotPricesFromApi = async (provider, apiKey) => {
 
   const config = loadApiConfig();
   const selected = config.metals?.[provider] || {};
-  const usage = config.usage?.[provider] || {
-    quota: DEFAULT_API_QUOTA,
-    used: 0,
-  };
 
   // Get selected metals
   const selectedMetals = Object.keys(selected).filter(
@@ -1049,122 +1136,196 @@ const fetchSpotPricesFromApi = async (provider, apiKey) => {
     throw new Error("No metals selected for sync");
   }
 
-  // Try batch request first if supported
-  if (providerConfig.batchSupported) {
-    try {
-      let historyDays = config.historyDays?.[provider] || 30;
-      if (provider === "METALS_DEV" && historyDays > 30) historyDays = 30;
-      const historyTimes = config.historyTimes?.[provider] || [];
-      return await fetchBatchSpotPrices(
-        provider,
-        apiKey,
-        selectedMetals,
-        historyDays,
-        historyTimes,
-      );
-    } catch (batchError) {
-      console.warn(
-        `Batch request failed for ${provider}, falling back to individual requests:`,
-        batchError.message,
-      );
-      // Fall through to individual requests
-    }
+  // Latest-only: no history backfill on regular sync
+  return await fetchLatestPrices(provider, apiKey, selectedMetals);
+};
+
+// =============================================================================
+// BATCHED HISTORY PULL
+// =============================================================================
+
+/**
+ * Splits a total number of days into date range chunks respecting provider limits.
+ * @param {number} totalDays - Total days of history to fetch
+ * @param {number} maxPerRequest - Maximum days per single API request
+ * @returns {Array<{start: Date, end: Date}>} Array of date range chunks (newest first)
+ */
+const getDateChunks = (totalDays, maxPerRequest) => {
+  const chunks = [];
+  const today = new Date();
+  let remaining = totalDays;
+  let endDate = new Date(today);
+  while (remaining > 0) {
+    const chunkSize = Math.min(remaining, maxPerRequest);
+    const startDate = new Date(endDate);
+    startDate.setDate(startDate.getDate() - chunkSize);
+    chunks.push({ start: new Date(startDate), end: new Date(endDate) });
+    endDate = new Date(startDate);
+    remaining -= chunkSize;
+  }
+  return chunks;
+};
+
+/**
+ * Fetches historical spot price data in batches, respecting per-provider limits.
+ * Generic batching that works across all 3 providers by using their existing
+ * batchEndpoint + parseBatchResponse infrastructure.
+ *
+ * @param {string} provider - Provider key
+ * @param {string} apiKey - API key
+ * @param {Array<string>} selectedMetals - Metal keys to fetch
+ * @param {number} totalDays - Total days of history to pull
+ * @returns {Promise<{totalEntries: number, callsMade: number}>} Summary
+ */
+const fetchHistoryBatched = async (provider, apiKey, selectedMetals, totalDays) => {
+  const providerConfig = API_PROVIDERS[provider];
+  if (!providerConfig || !providerConfig.batchSupported) {
+    throw new Error("Provider does not support history requests");
   }
 
-  const results = {};
-  const errors = [];
+  const maxPerReq = providerConfig.maxHistoryDays || 30;
+  const chunks = getDateChunks(totalDays, maxPerReq);
+  const config = loadApiConfig();
+  const usage = config.usage?.[provider] || { quota: DEFAULT_API_QUOTA, used: 0 };
+  const providerName = providerConfig.name;
+  const fmt = (d) => d.toISOString().slice(0, 10);
 
-  if (provider === "CUSTOM") {
-    const config = loadApiConfig();
-    const custom = config.customConfig || {};
-    const base = custom.baseUrl || "";
-    const pattern = custom.endpoint || "";
-    const format = custom.format || "symbol";
-    const metalCodes = {
-      silver: format === "symbol" ? "XAG" : "silver",
-      gold: format === "symbol" ? "XAU" : "gold",
-      platinum: format === "symbol" ? "XPT" : "platinum",
-      palladium: format === "symbol" ? "XPD" : "palladium",
-    };
-    for (const metal of Object.keys(metalCodes)) {
-      if (selected[metal] === false) continue;
-      try {
-        const endpoint = pattern
-          .replace("{API_KEY}", apiKey)
-          .replace("{METAL}", metalCodes[metal]);
-        const url = `${base}${endpoint}`;
-        const response = await fetch(url, {
-          method: "GET",
-          headers: { "Content-Type": "application/json" },
-          mode: "cors",
-        });
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
-        const data = await response.json();
-        usage.used++;
-        const price = providerConfig.parseResponse(data, metal);
-        if (price && price > 0) {
-          results[metal] = price;
-        } else {
-          errors.push(`${metal}: Invalid price data`);
-        }
-      } catch (error) {
-        errors.push(`${metal}: ${error.message}`);
-      }
-    }
+  // Build symbol groups based on provider capability
+  let symbolGroups;
+  if (providerConfig.symbolsPerRequest === 1) {
+    // One metal per request (e.g., metals-api)
+    symbolGroups = selectedMetals.map((m) => [m]);
   } else {
-    // Fetch prices for each metal using predefined endpoints
-    for (const [metal, endpoint] of Object.entries(providerConfig.endpoints)) {
-      if (selected[metal] === false) continue;
+    // All metals in one request
+    symbolGroups = [selectedMetals];
+  }
+
+  let totalEntries = 0;
+  let callsMade = 0;
+
+  for (const chunk of chunks) {
+    for (const metals of symbolGroups) {
+      let url = providerConfig.baseUrl + providerConfig.batchEndpoint;
+
+      // Replace API key placeholder
+      url = url.replace("{API_KEY}", apiKey);
+
+      // Replace date placeholders
+      url = url.replace("{START_DATE}", fmt(chunk.start)).replace("{END_DATE}", fmt(chunk.end));
+
+      // Replace symbol/currency placeholders
+      if (provider === "METALS_API") {
+        const symbolMap = { silver: "XAG", gold: "XAU", platinum: "XPT", palladium: "XPD" };
+        const symbols = metals.map((m) => symbolMap[m]).join(",");
+        url = url.replace("{SYMBOLS}", symbols);
+      } else if (provider === "METAL_PRICE_API") {
+        const symbolMap = { silver: "XAG", gold: "XAU", platinum: "XPT", palladium: "XPD" };
+        const currencies = metals.map((m) => symbolMap[m]).join(",");
+        url = url.replace("{CURRENCIES}", currencies);
+      }
+
+      const headers = { "Content-Type": "application/json" };
+      if (provider === "METALS_DEV" && apiKey) {
+        headers["Authorization"] = `Bearer ${apiKey}`;
+      }
+
       try {
-        const url = `${providerConfig.baseUrl}${endpoint.replace("{API_KEY}", apiKey)}`;
-
-        const headers = {
-          "Content-Type": "application/json",
-        };
-
-        if (provider === "METALS_DEV" && apiKey) {
-          headers["Authorization"] = `Bearer ${apiKey}`;
-        }
-
-        const response = await fetch(url, {
-          method: "GET",
-          headers: headers,
-          mode: "cors",
-        });
-
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
+        const response = await fetch(url, { method: "GET", headers, mode: "cors" });
+        if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
 
         const data = await response.json();
+        callsMade++;
         usage.used++;
-        const price = providerConfig.parseResponse(data, metal);
 
-        if (price && price > 0) {
-          results[metal] = price;
-        } else {
-          errors.push(`${metal}: Invalid price data`);
-        }
-      } catch (error) {
-        errors.push(`${metal}: ${error.message}`);
+        const { history = {} } = providerConfig.parseBatchResponse(data) || {};
+
+        Object.entries(history).forEach(([metal, entries]) => {
+          if (!selectedMetals.includes(metal)) return;
+          const metalConfig = Object.values(METALS).find((m) => m.key === metal);
+          const metalName = metalConfig?.name || metal;
+          entries.forEach(({ timestamp, price }) => {
+            recordSpot(price, "api", metalName, providerName, timestamp);
+            totalEntries++;
+          });
+        });
+      } catch (err) {
+        console.error(`History batch failed (${fmt(chunk.start)}..${fmt(chunk.end)}):`, err.message);
       }
     }
   }
 
-  if (Object.keys(results).length === 0) {
-    throw new Error(`No valid prices retrieved. Errors: ${errors.join(", ")}`);
-  }
-
-  // If we got some results but not all, show a warning
-  if (errors.length > 0) {
-    console.warn("Some metals failed to fetch:", errors);
-  }
-
+  // Save updated usage
   config.usage[provider] = usage;
   saveApiConfig(config);
-  return results;
+
+  return { totalEntries, callsMade };
+};
+
+/**
+ * Handles a user-initiated history pull for a specific provider.
+ * Reads the dropdown selection, calculates cost, confirms, and executes.
+ *
+ * @param {string} provider - Provider key
+ */
+const handleHistoryPull = async (provider) => {
+  const config = loadApiConfig();
+  const apiKey = config.keys?.[provider];
+  if (!apiKey) {
+    alert("No API key configured for this provider. Please save your key first.");
+    return;
+  }
+
+  const providerConfig = API_PROVIDERS[provider];
+  if (!providerConfig || !providerConfig.batchSupported) {
+    alert("This provider does not support history pulls.");
+    return;
+  }
+
+  const selected = config.metals?.[provider] || {};
+  const selectedMetals = Object.keys(selected).filter((m) => selected[m] !== false);
+  if (selectedMetals.length === 0) {
+    alert("No metals selected. Please select at least one metal to track.");
+    return;
+  }
+
+  const daysSelect = document.getElementById(`historyPullDays_${provider}`);
+  const totalDays = daysSelect ? parseInt(daysSelect.value, 10) : 30;
+
+  // Calculate cost
+  const maxPerReq = providerConfig.maxHistoryDays || 30;
+  const chunks = Math.ceil(totalDays / maxPerReq);
+  const symbolGroups = providerConfig.symbolsPerRequest === 1 ? selectedMetals.length : 1;
+  const totalCalls = chunks * symbolGroups;
+
+  const usage = config.usage?.[provider] || { quota: DEFAULT_API_QUOTA, used: 0 };
+  const remaining = Math.max(0, usage.quota - usage.used);
+
+  const proceed = confirm(
+    `Pull ${totalDays} days of history from ${providerConfig.name}.\n\n` +
+    `This will use ${totalCalls} API call${totalCalls > 1 ? "s" : ""} ` +
+    `(${remaining} remaining this month).\n\nProceed?`
+  );
+  if (!proceed) return;
+
+  // Disable button during pull
+  const btn = document.querySelector(`.api-history-btn[data-provider="${provider}"]`);
+  const origText = btn ? btn.textContent : "";
+  if (btn) { btn.textContent = "Pulling..."; btn.disabled = true; }
+
+  try {
+    const result = await fetchHistoryBatched(provider, apiKey, selectedMetals, totalDays);
+    alert(
+      `History pull complete!\n\n` +
+      `Pulled ${result.totalEntries} data points using ${result.callsMade} API call${result.callsMade > 1 ? "s" : ""}.`
+    );
+    updateProviderHistoryTables();
+    if (typeof updateAllSparklines === "function") updateAllSparklines();
+  } catch (err) {
+    console.error("History pull failed:", err);
+    alert("History pull failed: " + err.message);
+  } finally {
+    if (btn) { btn.textContent = origText; btn.disabled = false; }
+  }
 };
 
 /**
@@ -1177,129 +1338,61 @@ const syncSpotPricesFromApi = async (
   showProgress = true,
   forceSync = false,
 ) => {
-  if (
-    !apiConfig ||
-    !apiConfig.provider ||
-    !apiConfig.keys[apiConfig.provider]
-  ) {
-    alert(
-      "No Metals API configuration found. Please configure an API provider first.",
-    );
+  const config = loadApiConfig();
+  const hasAnyKey = Object.values(config.keys || {}).some(k => k);
+
+  if (!hasAnyKey) {
+    if (showProgress) {
+      alert(
+        "No Metals API configuration found. Please configure an API provider first.",
+      );
+    }
     return false;
   }
 
-  // Check cache age if not forcing sync
-  if (!forceSync) {
+  // Interactive cache prompt (only when user-initiated with visible UI)
+  if (showProgress && !forceSync) {
     const cache = loadApiCache();
     if (cache && cache.data && cache.timestamp) {
-      const now = new Date().getTime();
+      const now = Date.now();
       const cacheAge = now - cache.timestamp;
-      const duration = getCacheDurationMs(apiConfig.provider);
+      const duration = getCacheDurationMs(apiConfig?.provider || config.provider);
 
       if (cacheAge < duration) {
-        if (showProgress) {
-          const hoursAgo = Math.floor(cacheAge / (1000 * 60 * 60));
-          const minutesAgo = Math.floor(cacheAge / (1000 * 60));
-          const timeText =
-            hoursAgo > 0
-              ? `${hoursAgo} hours ago`
-              : `${minutesAgo} minutes ago`;
+        const hoursAgo = Math.floor(cacheAge / (1000 * 60 * 60));
+        const minutesAgo = Math.floor(cacheAge / (1000 * 60));
+        const timeText =
+          hoursAgo > 0
+            ? `${hoursAgo} hours ago`
+            : `${minutesAgo} minutes ago`;
 
-          const override = confirm(
-            `Cached prices from ${timeText}.\n\nFetch fresh prices from the API? (uses 1 API call)`,
-          );
-          if (override) {
-            // User wants fresh data — skip cache, fall through to API fetch
-          } else {
-            return refreshFromCache();
-          }
-        } else {
-          // Silent mode (autoSync) — just use cache
+        const override = confirm(
+          `Cached prices from ${timeText}.\n\nFetch fresh prices from the API?`,
+        );
+        if (!override) {
           return refreshFromCache();
         }
       }
     }
   }
 
-  if (showProgress) {
-    updateSyncButtonStates(true); // Show syncing state
+  // Delegate to provider chain
+  const { updatedCount, anySucceeded, results } = await syncProviderChain({
+    showProgress,
+    forceSync: forceSync || showProgress, // User-initiated always forces
+  });
+
+  if (showProgress && updatedCount > 0) {
+    const summary = Object.entries(results)
+      .filter(([_, status]) => status !== "skipped")
+      .map(([prov, status]) => `${API_PROVIDERS[prov]?.name || prov}: ${status}`)
+      .join("\n");
+    alert(`Synced ${updatedCount} prices.\n\n${summary}`);
+  } else if (showProgress && !anySucceeded) {
+    alert("Failed to sync prices from any provider.");
   }
 
-  try {
-    const spotPricesData = await fetchSpotPricesFromApi(
-      apiConfig.provider,
-      apiConfig.keys[apiConfig.provider],
-    );
-
-    // Update spot prices in the application
-    let updatedCount = 0;
-    Object.entries(spotPricesData).forEach(([metal, price]) => {
-      const metalConfig = Object.values(METALS).find((m) => m.key === metal);
-      if (metalConfig && price > 0) {
-        // Save to localStorage
-        localStorage.setItem(metalConfig.spotKey, price.toString());
-        spotPrices[metal] = price;
-
-        // Update display
-        elements.spotPriceDisplay[metal].textContent = formatCurrency(price);
-
-        updateSpotCardColor(metal, price);
-
-        // Record in history
-        recordSpot(
-          price,
-          "api",
-          metalConfig.name,
-          API_PROVIDERS[apiConfig.provider].name,
-        );
-
-        const ts = document.getElementById(`spotTimestamp${metalConfig.name}`);
-        if (ts) {
-          updateSpotTimestamp(metalConfig.name);
-        }
-
-        updatedCount++;
-      }
-    });
-
-    if (updatedCount > 0) {
-      // Save to cache
-      saveApiCache(spotPricesData, apiConfig.provider);
-
-      // Update summary calculations
-      updateSummary();
-      if (typeof updateStorageStats === "function") {
-        updateStorageStats();
-      }
-      if (typeof updateAllSparklines === "function") {
-        updateAllSparklines();
-      }
-
-      setProviderStatus(apiConfig.provider, "connected");
-
-      if (showProgress) {
-        alert(
-          `Successfully synced ${updatedCount} metal prices from ${API_PROVIDERS[apiConfig.provider].name}`,
-        );
-      }
-
-      return true;
-    } else {
-      setProviderStatus(apiConfig.provider, "error");
-      throw new Error("No valid prices were retrieved from API");
-    }
-  } catch (error) {
-    console.error("API sync error:", error);
-    setProviderStatus(apiConfig.provider, "error");
-    if (showProgress) {
-      alert(`Failed to sync prices: ${error.message}`);
-    }
-    return false;
-  } finally {
-    if (showProgress) {
-      updateSyncButtonStates(false); // Reset sync button states
-    }
-  }
+  return anySucceeded;
 };
 
 /**
@@ -1449,34 +1542,106 @@ const handleProviderSync = async (provider) => {
  * Syncs all configured providers and records results
  */
 const syncAllProviders = async () => {
+  const { updatedCount } = await syncProviderChain({ showProgress: false, forceSync: true });
+  updateProviderHistoryTables();
+  return updatedCount;
+};
+
+/**
+ * Core sync engine — runs providers in priority order respecting sync modes.
+ *
+ * "Always" providers run unconditionally (subject to cache).
+ * "Backup" providers only run if no provider has succeeded yet.
+ *
+ * @param {Object} opts
+ * @param {boolean} opts.showProgress - Show syncing UI state
+ * @param {boolean} opts.forceSync    - Ignore per-provider cache
+ * @returns {Promise<{results: Object, updatedCount: number, anySucceeded: boolean}>}
+ */
+const syncProviderChain = async ({ showProgress = false, forceSync = false } = {}) => {
   const config = loadApiConfig();
-  if (!config || !config.keys) return 0;
-  let updated = 0;
-  for (const prov of Object.keys(API_PROVIDERS)) {
-    const apiKey = config.keys[prov];
-    if (!apiKey) continue;
-    try {
-      const data = await fetchSpotPricesFromApi(prov, apiKey);
-      Object.entries(data).forEach(([metal, price]) => {
-        const metalConfig = Object.values(METALS).find((m) => m.key === metal);
-        if (metalConfig && price > 0) {
-          recordSpot(
-            price,
-            "api",
-            metalConfig.name,
-            API_PROVIDERS[prov].name,
-          );
-          updated++;
+  const order = getProviderOrder();
+  const results = {};
+  let updatedCount = 0;
+  let anySucceeded = false;
+
+  if (showProgress) {
+    updateSyncButtonStates(true);
+  }
+
+  try {
+    for (const prov of order) {
+      const apiKey = config.keys?.[prov];
+      if (!apiKey) continue;
+
+      const mode = config.syncMode?.[prov] || getDefaultSyncMode(prov);
+
+      // Skip backup providers when an earlier provider already succeeded
+      if (mode === "backup" && anySucceeded) {
+        results[prov] = "skipped";
+        continue;
+      }
+
+      // Check per-provider cache unless forcing
+      if (!forceSync) {
+        const provDuration = getCacheDurationMs(prov);
+        const lastSync = getLastProviderSyncTime(prov);
+        if (lastSync && Date.now() - lastSync < provDuration) {
+          results[prov] = "cached";
+          anySucceeded = true;
+          continue;
         }
-      });
-      setProviderStatus(prov, "connected");
-    } catch (err) {
-      console.error(`Sync failed for ${prov}:`, err);
-      setProviderStatus(prov, "error");
+      }
+
+      // Attempt fetch
+      try {
+        const data = await fetchSpotPricesFromApi(prov, apiKey);
+        let provUpdated = 0;
+
+        Object.entries(data).forEach(([metal, price]) => {
+          const metalConfig = Object.values(METALS).find((m) => m.key === metal);
+          if (metalConfig && price > 0) {
+            localStorage.setItem(metalConfig.spotKey, price.toString());
+            spotPrices[metal] = price;
+            elements.spotPriceDisplay[metal].textContent = formatCurrency(price);
+            updateSpotCardColor(metal, price);
+            recordSpot(price, "api", metalConfig.name, API_PROVIDERS[prov].name);
+            const ts = document.getElementById(`spotTimestamp${metalConfig.name}`);
+            if (ts) updateSpotTimestamp(metalConfig.name);
+            provUpdated++;
+          }
+        });
+
+        if (provUpdated > 0) {
+          saveApiCache(data, prov);
+          updatedCount += provUpdated;
+          anySucceeded = true;
+          results[prov] = "success";
+          setProviderStatus(prov, "connected");
+        } else {
+          results[prov] = "no data";
+          setProviderStatus(prov, "error");
+        }
+      } catch (err) {
+        console.warn(`Chain sync failed for ${prov}:`, err.message);
+        results[prov] = "error";
+        setProviderStatus(prov, "error");
+      }
+    }
+
+    // Post-sync updates if anything changed
+    if (updatedCount > 0) {
+      updateSummary();
+      if (typeof updateStorageStats === "function") updateStorageStats();
+      if (typeof updateAllSparklines === "function") updateAllSparklines();
+    }
+  } finally {
+    if (showProgress) {
+      updateSyncButtonStates(false);
     }
   }
-  updateProviderHistoryTables();
-  return updated;
+
+  return { results, updatedCount, anySucceeded };
 };
 
 /**
@@ -1601,21 +1766,9 @@ const populateApiSection = () => {
       cacheSelect.value = cfg.cacheTimeouts?.[provider] || 24;
     }
 
-    // Load saved history days
-    const historyInput = document.getElementById(`historyDays_${provider}`);
-    if (historyInput) {
-      const defaultDays = provider === "METALS_DEV" ? 29 : 30;
-      let days = cfg.historyDays?.[provider];
-      if (typeof days !== "number" || isNaN(days)) days = defaultDays;
-      if (provider === "METALS_DEV" && days > 30) days = 30;
-      historyInput.value = days;
-    }
-
-    // Load saved history times
-    const timesInput = document.getElementById(`historyTimes_${provider}`);
-    if (timesInput) {
-      const times = cfg.historyTimes?.[provider] || [];
-      timesInput.value = Array.isArray(times) ? times.join(',') : '';
+    // Initialize history pull cost indicator
+    if (typeof updateHistoryPullCost === 'function') {
+      updateHistoryPullCost(provider);
     }
 
     // Load saved metal selections
@@ -1626,6 +1779,15 @@ const populateApiSection = () => {
         checkbox.checked = metals[metal] !== false;
       }
     });
+
+    // Load saved sync mode
+    const syncModeToggle = document.getElementById(`syncMode_${provider}`);
+    if (syncModeToggle) {
+      const mode = cfg.syncMode?.[provider] || getDefaultSyncMode(provider);
+      syncModeToggle.querySelectorAll('.chip-sort-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.mode === mode);
+      });
+    }
   });
 
   // Restore tab ordering from localStorage
@@ -1635,6 +1797,11 @@ const populateApiSection = () => {
 
   if (typeof refreshProviderStatuses === 'function') {
     refreshProviderStatuses();
+  }
+
+  // Wire up spot history export/import buttons
+  if (typeof initSpotHistoryButtons === 'function') {
+    initSpotHistoryButtons();
   }
 };
 
@@ -1758,7 +1925,7 @@ const handleProviderSave = (provider) => {
     config.customConfig = { baseUrl: base, endpoint, format };
   }
 
-  // Persist per-provider settings (cache timeout, history days, history times)
+  // Persist per-provider settings (cache timeout)
   updateProviderSettings(provider);
 
   // Re-load after updateProviderSettings saved, then layer key + CUSTOM config on top
@@ -1799,7 +1966,11 @@ window.showApiHistoryModal = showApiHistoryModal;
 window.hideApiHistoryModal = hideApiHistoryModal;
 window.clearApiHistory = clearApiHistory;
 window.syncAllProviders = syncAllProviders;
+window.syncProviderChain = syncProviderChain;
 window.autoSyncSpotPrices = autoSyncSpotPrices;
+window.handleHistoryPull = handleHistoryPull;
+window.updateHistoryPullCost = updateHistoryPullCost;
+window.fetchHistoryBatched = fetchHistoryBatched;
 
 /**
  * Shows manual price input for a specific metal
@@ -2080,5 +2251,119 @@ ${
     alert("Error creating backup: " + error.message);
   }
 };
+
+// =============================================================================
+// SPOT HISTORY EXPORT/IMPORT
+// =============================================================================
+
+/**
+ * Exports all spot history data as a CSV file
+ */
+const exportSpotHistory = () => {
+  loadSpotHistory();
+  if (!spotHistory.length) {
+    alert("No spot history to export.");
+    return;
+  }
+
+  const csv = Papa.unparse([
+    ["Timestamp", "Metal", "Price", "Source", "Provider"],
+    ...spotHistory.map((e) => [
+      e.timestamp,
+      e.metal,
+      e.spot,
+      e.source,
+      e.provider || "",
+    ]),
+  ]);
+  downloadFile(
+    `spot-history-${new Date().toISOString().slice(0, 10)}.csv`,
+    csv,
+    "text/csv",
+  );
+};
+
+/**
+ * Imports spot history data from a CSV or JSON file
+ * @param {File} file - File to import
+ */
+const importSpotHistory = (file) => {
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    let entries = [];
+    try {
+      if (file.name.endsWith(".json")) {
+        const parsed = JSON.parse(e.target.result);
+        // Support both flat array and { history: [...] } wrapper
+        entries = Array.isArray(parsed) ? parsed : parsed.history || [];
+      } else {
+        const parsed = Papa.parse(e.target.result, { header: true });
+        entries = parsed.data
+          .map((row) => ({
+            timestamp: row.Timestamp,
+            metal: row.Metal,
+            spot: parseFloat(row.Price),
+            source: row.Source || "import",
+            provider: row.Provider || "import",
+          }))
+          .filter((entry) => entry.timestamp && entry.metal && entry.spot > 0);
+      }
+    } catch (err) {
+      alert("Failed to parse file: " + err.message);
+      return;
+    }
+
+    if (entries.length === 0) {
+      alert("No valid entries found in file.");
+      return;
+    }
+
+    loadSpotHistory();
+    let imported = 0;
+    entries.forEach((entry) => {
+      recordSpot(
+        entry.spot,
+        entry.source || "import",
+        entry.metal,
+        entry.provider || "import",
+        entry.timestamp,
+      );
+      imported++;
+    });
+
+    alert(`Imported ${imported} spot history entries.`);
+    if (typeof updateAllSparklines === "function") updateAllSparklines();
+
+    // Refresh the visible history table after import
+    apiHistoryEntries = spotHistory.filter((e) => e.source === "api");
+    renderApiHistoryTable();
+  };
+  reader.readAsText(file);
+};
+
+/**
+ * Wires up spot history export/import button event listeners.
+ * Called during populateApiSection() or init.
+ */
+const initSpotHistoryButtons = () => {
+  const exportBtn = document.getElementById("exportSpotHistoryBtn");
+  if (exportBtn) exportBtn.addEventListener("click", exportSpotHistory);
+
+  const importBtn = document.getElementById("importSpotHistoryBtn");
+  const importFile = document.getElementById("importSpotHistoryFile");
+  if (importBtn && importFile) {
+    importBtn.addEventListener("click", () => importFile.click());
+    importFile.addEventListener("change", (e) => {
+      if (e.target.files.length > 0) {
+        importSpotHistory(e.target.files[0]);
+        e.target.value = ""; // Reset so same file can be re-imported
+      }
+    });
+  }
+};
+
+window.exportSpotHistory = exportSpotHistory;
+window.importSpotHistory = importSpotHistory;
+window.initSpotHistoryButtons = initSpotHistoryButtons;
 
 // =============================================================================

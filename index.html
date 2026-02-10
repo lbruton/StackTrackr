@@ -222,7 +222,9 @@
                 <div class="spot-card-label">Silver Spot Price</div>
                 <div class="spot-card-controls">
                   <select class="spot-range-select" id="spotRangeSilver" title="Trend period">
+                    <option value="1">1d</option>
                     <option value="7">7d</option>
+                    <option value="14">14d</option>
                     <option value="30">30d</option>
                     <option value="60">60d</option>
                     <option value="90" selected>90d</option>
@@ -233,6 +235,7 @@
                 </div>
               </div>
               <div class="spot-card-value" id="spotPriceDisplaySilver" title="Shift+click to edit">$ -</div>
+              <div class="spot-card-change" id="spotChangeSilver"></div>
               <div class="spot-card-timestamp" id="spotTimestampSilver">No data</div>
             </div>
           </div>
@@ -244,7 +247,9 @@
                 <div class="spot-card-label">Gold Spot Price</div>
                 <div class="spot-card-controls">
                   <select class="spot-range-select" id="spotRangeGold" title="Trend period">
+                    <option value="1">1d</option>
                     <option value="7">7d</option>
+                    <option value="14">14d</option>
                     <option value="30">30d</option>
                     <option value="60">60d</option>
                     <option value="90" selected>90d</option>
@@ -255,6 +260,7 @@
                 </div>
               </div>
               <div class="spot-card-value" id="spotPriceDisplayGold" title="Shift+click to edit">$ -</div>
+              <div class="spot-card-change" id="spotChangeGold"></div>
               <div class="spot-card-timestamp" id="spotTimestampGold">No data</div>
             </div>
           </div>
@@ -266,7 +272,9 @@
                 <div class="spot-card-label">Platinum Spot Price</div>
                 <div class="spot-card-controls">
                   <select class="spot-range-select" id="spotRangePlatinum" title="Trend period">
+                    <option value="1">1d</option>
                     <option value="7">7d</option>
+                    <option value="14">14d</option>
                     <option value="30">30d</option>
                     <option value="60">60d</option>
                     <option value="90" selected>90d</option>
@@ -277,6 +285,7 @@
                 </div>
               </div>
               <div class="spot-card-value" id="spotPriceDisplayPlatinum" title="Shift+click to edit">$ -</div>
+              <div class="spot-card-change" id="spotChangePlatinum"></div>
               <div class="spot-card-timestamp" id="spotTimestampPlatinum">No data</div>
             </div>
           </div>
@@ -288,7 +297,9 @@
                 <div class="spot-card-label">Palladium Spot Price</div>
                 <div class="spot-card-controls">
                   <select class="spot-range-select" id="spotRangePalladium" title="Trend period">
+                    <option value="1">1d</option>
                     <option value="7">7d</option>
+                    <option value="14">14d</option>
                     <option value="30">30d</option>
                     <option value="60">60d</option>
                     <option value="90" selected>90d</option>
@@ -299,6 +310,7 @@
                 </div>
               </div>
               <div class="spot-card-value" id="spotPriceDisplayPalladium" title="Shift+click to edit">$ -</div>
+              <div class="spot-card-change" id="spotChangePalladium"></div>
               <div class="spot-card-timestamp" id="spotTimestampPalladium">No data</div>
             </div>
           </div>
@@ -1662,6 +1674,7 @@
                 <div class="api-provider" data-provider="METALS_DEV">
                   <div class="provider-header">
                     <span class="provider-name">Metals.dev</span>
+                    <a href="https://metals.dev/documentation" target="_blank" rel="noopener noreferrer" class="provider-doc-link" title="API Documentation">Docs</a>
                   </div>
                   <div class="api-key-row">
                     <label for="apiKey_METALS_DEV">API Key:</label>
@@ -1680,12 +1693,21 @@
                       </select>
                     </div>
                     <div class="provider-setting-row">
-                      <label for="historyDays_METALS_DEV">History Days:</label>
-                      <input type="number" id="historyDays_METALS_DEV" class="provider-history-input" min="1" max="30" value="29" placeholder="1-30">
+                      <label>Sync Mode:</label>
+                      <div class="chip-sort-toggle sync-mode-toggle" id="syncMode_METALS_DEV" data-provider="METALS_DEV">
+                        <button type="button" class="chip-sort-btn" data-mode="always">Always</button>
+                        <button type="button" class="chip-sort-btn" data-mode="backup">Backup</button>
+                      </div>
                     </div>
-                    <div class="provider-setting-row">
-                      <label for="historyTimes_METALS_DEV">Times per Day:</label>
-                      <input type="text" id="historyTimes_METALS_DEV" class="provider-history-input" placeholder="08:00,20:00">
+                    <div class="provider-history-pull">
+                      <label for="historyPullDays_METALS_DEV">Pull History:</label>
+                      <select id="historyPullDays_METALS_DEV" class="provider-history-select">
+                        <option value="7">7 days</option>
+                        <option value="14">14 days</option>
+                        <option value="30" selected>30 days</option>
+                      </select>
+                      <button type="button" class="btn api-history-btn" data-provider="METALS_DEV">Pull History</button>
+                      <span class="history-pull-cost" id="historyPullCost_METALS_DEV"></span>
                     </div>
                     <div class="metal-selection">
                       <label>Select Metals to Track:</label>
@@ -1717,6 +1739,7 @@
                 <div class="api-provider" data-provider="METALS_API">
                   <div class="provider-header">
                     <span class="provider-name">Metals-API.com</span>
+                    <a href="https://metals-api.com/documentation" target="_blank" rel="noopener noreferrer" class="provider-doc-link" title="API Documentation">Docs</a>
                   </div>
                   <div class="api-key-row">
                     <label for="apiKey_METALS_API">API Key:</label>
@@ -1735,12 +1758,25 @@
                       </select>
                     </div>
                     <div class="provider-setting-row">
-                      <label for="historyDays_METALS_API">History Days:</label>
-                      <input type="number" id="historyDays_METALS_API" class="provider-history-input" min="1" max="365" value="30" placeholder="1-365">
+                      <label>Sync Mode:</label>
+                      <div class="chip-sort-toggle sync-mode-toggle" id="syncMode_METALS_API" data-provider="METALS_API">
+                        <button type="button" class="chip-sort-btn" data-mode="always">Always</button>
+                        <button type="button" class="chip-sort-btn" data-mode="backup">Backup</button>
+                      </div>
                     </div>
-                    <div class="provider-setting-row">
-                      <label for="historyTimes_METALS_API">Times per Day:</label>
-                      <input type="text" id="historyTimes_METALS_API" class="provider-history-input" placeholder="08:00,20:00">
+                    <div class="provider-history-pull">
+                      <label for="historyPullDays_METALS_API">Pull History:</label>
+                      <select id="historyPullDays_METALS_API" class="provider-history-select">
+                        <option value="7">7 days</option>
+                        <option value="14">14 days</option>
+                        <option value="30" selected>30 days</option>
+                        <option value="60">60 days</option>
+                        <option value="90">90 days</option>
+                        <option value="180">180 days</option>
+                        <option value="365">365 days</option>
+                      </select>
+                      <button type="button" class="btn api-history-btn" data-provider="METALS_API">Pull History</button>
+                      <span class="history-pull-cost" id="historyPullCost_METALS_API"></span>
                     </div>
                     <div class="metal-selection">
                       <label>Select Metals to Track:</label>
@@ -1772,6 +1808,7 @@
                 <div class="api-provider" data-provider="METAL_PRICE_API">
                   <div class="provider-header">
                     <span class="provider-name">MetalPriceAPI.com</span>
+                    <a href="https://metalpriceapi.com/documentation" target="_blank" rel="noopener noreferrer" class="provider-doc-link" title="API Documentation">Docs</a>
                   </div>
                   <div class="api-key-row">
                     <label for="apiKey_METAL_PRICE_API">API Key:</label>
@@ -1790,12 +1827,25 @@
                       </select>
                     </div>
                     <div class="provider-setting-row">
-                      <label for="historyDays_METAL_PRICE_API">History Days:</label>
-                      <input type="number" id="historyDays_METAL_PRICE_API" class="provider-history-input" min="1" max="365" value="30" placeholder="1-365">
+                      <label>Sync Mode:</label>
+                      <div class="chip-sort-toggle sync-mode-toggle" id="syncMode_METAL_PRICE_API" data-provider="METAL_PRICE_API">
+                        <button type="button" class="chip-sort-btn" data-mode="always">Always</button>
+                        <button type="button" class="chip-sort-btn" data-mode="backup">Backup</button>
+                      </div>
                     </div>
-                    <div class="provider-setting-row">
-                      <label for="historyTimes_METAL_PRICE_API">Times per Day:</label>
-                      <input type="text" id="historyTimes_METAL_PRICE_API" class="provider-history-input" placeholder="08:00,20:00">
+                    <div class="provider-history-pull">
+                      <label for="historyPullDays_METAL_PRICE_API">Pull History:</label>
+                      <select id="historyPullDays_METAL_PRICE_API" class="provider-history-select">
+                        <option value="7">7 days</option>
+                        <option value="14">14 days</option>
+                        <option value="30" selected>30 days</option>
+                        <option value="60">60 days</option>
+                        <option value="90">90 days</option>
+                        <option value="180">180 days</option>
+                        <option value="365">365 days</option>
+                      </select>
+                      <button type="button" class="btn api-history-btn" data-provider="METAL_PRICE_API">Pull History</button>
+                      <span class="history-pull-cost" id="historyPullCost_METAL_PRICE_API"></span>
                     </div>
                     <div class="metal-selection">
                       <label>Select Metals to Track:</label>
@@ -1860,13 +1910,13 @@
                       </select>
                     </div>
                     <div class="provider-setting-row">
-                      <label for="historyDays_CUSTOM">History Days:</label>
-                      <input type="number" id="historyDays_CUSTOM" class="provider-history-input" min="1" max="365" value="30" placeholder="1-365">
+                      <label>Sync Mode:</label>
+                      <div class="chip-sort-toggle sync-mode-toggle" id="syncMode_CUSTOM" data-provider="CUSTOM">
+                        <button type="button" class="chip-sort-btn" data-mode="always">Always</button>
+                        <button type="button" class="chip-sort-btn" data-mode="backup">Backup</button>
+                      </div>
                     </div>
-                    <div class="provider-setting-row">
-                      <label for="historyTimes_CUSTOM">Times per Day:</label>
-                      <input type="text" id="historyTimes_CUSTOM" class="provider-history-input" placeholder="08:00,20:00">
-                    </div>
+                    <!-- Custom providers: no history pull (batch not supported) -->
                     <div class="metal-selection">
                       <label>Select Metals to Track:</label>
                       <div class="metal-checkboxes">
@@ -2176,9 +2226,14 @@
             </div>
           </div>
         </div>
+        <div class="modal-footer api-history-footer">
+          <button type="button" class="btn" id="exportSpotHistoryBtn">Export History</button>
+          <button type="button" class="btn" id="importSpotHistoryBtn">Import History</button>
+          <input type="file" id="importSpotHistoryFile" accept=".csv,.json" style="display:none">
+        </div>
       </div>
     </div>
-    
+
     <!-- =============================================================================
        CATALOG HISTORY MODAL
 
