@@ -225,6 +225,35 @@
     return results;
   };
 
+  /**
+   * Check if an item matches any enabled custom group whose label matches the
+   * search term.  Used by both filterInventory() and filterInventoryAdvanced()
+   * so that searching "black flag" surfaces items tagged under a custom group
+   * labelled "Black Flag".
+   *
+   * @param {Object} item        - Inventory item (needs .name)
+   * @param {string} searchTerm  - Lowercase, trimmed search phrase
+   * @returns {boolean}
+   */
+  const itemMatchesCustomGroupLabel = (item, searchTerm) => {
+    if (!searchTerm || !_customGroups.length) return false;
+    const itemName = (item.name || '').toLowerCase();
+
+    return _customGroups.some(group => {
+      if (!group.enabled) return false;
+      // Check if the search term matches the group label
+      if (!group.label.toLowerCase().includes(searchTerm)) return false;
+      // Check if the item matches any pattern in that group
+      return group.patterns.some(p => {
+        try {
+          return new RegExp('\\b' + p.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b', 'i').test(itemName);
+        } catch (e) {
+          return itemName.includes(p.toLowerCase());
+        }
+      });
+    });
+  };
+
   // ---------------------------------------------------------------------------
   // Settings Panel Rendering
   // ---------------------------------------------------------------------------
@@ -729,6 +758,7 @@
   window.isBlacklisted = isBlacklisted;
   window.extractDynamicChips = extractDynamicChips;
   window.countCustomGroups = countCustomGroups;
+  window.itemMatchesCustomGroupLabel = itemMatchesCustomGroupLabel;
   window.populateBlacklistDropdown = populateBlacklistDropdown;
   window.renderBlacklistTable = renderBlacklistTable;
   window.renderCustomGroupTable = renderCustomGroupTable;
