@@ -1,0 +1,3894 @@
+[
+  {
+    "spot": 37.9937,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-08-15 12:00:00"
+  },
+  {
+    "spot": 3333.7389,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-08-15 12:00:00"
+  },
+  {
+    "spot": 1150.0323,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-08-15 12:00:00"
+  },
+  {
+    "spot": 1358.3337,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-08-15 12:00:00"
+  },
+  {
+    "spot": 38.0023,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-08-16 12:00:00"
+  },
+  {
+    "spot": 3335.6405,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-08-16 12:00:00"
+  },
+  {
+    "spot": 1115.3298,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-08-16 12:00:00"
+  },
+  {
+    "spot": 1341.4801,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-08-16 12:00:00"
+  },
+  {
+    "spot": 38.0085,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-08-17 12:00:00"
+  },
+  {
+    "spot": 3335.6316,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-08-17 12:00:00"
+  },
+  {
+    "spot": 1114.9242,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-08-17 12:00:00"
+  },
+  {
+    "spot": 1341.6687,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-08-17 12:00:00"
+  },
+  {
+    "spot": 37.9393,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-08-18 12:00:00"
+  },
+  {
+    "spot": 3333.5945,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-08-18 12:00:00"
+  },
+  {
+    "spot": 1115.8637,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-08-18 12:00:00"
+  },
+  {
+    "spot": 1340.2576,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-08-18 12:00:00"
+  },
+  {
+    "spot": 38.0535,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-08-19 12:00:00"
+  },
+  {
+    "spot": 3337.6578,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-08-19 12:00:00"
+  },
+  {
+    "spot": 1128.5953,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-08-19 12:00:00"
+  },
+  {
+    "spot": 1335.1297,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-08-19 12:00:00"
+  },
+  {
+    "spot": 37.37,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-08-20 12:00:00"
+  },
+  {
+    "spot": 3314.9168,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-08-20 12:00:00"
+  },
+  {
+    "spot": 1115.3159,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-08-20 12:00:00"
+  },
+  {
+    "spot": 1312.6329,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-08-20 12:00:00"
+  },
+  {
+    "spot": 37.892,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-08-21 12:00:00"
+  },
+  {
+    "spot": 3344.4704,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-08-21 12:00:00"
+  },
+  {
+    "spot": 1120.6134,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-08-21 12:00:00"
+  },
+  {
+    "spot": 1339.3368,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-08-21 12:00:00"
+  },
+  {
+    "spot": 38.086,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-08-22 12:00:00"
+  },
+  {
+    "spot": 3337.2145,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-08-22 12:00:00"
+  },
+  {
+    "spot": 1113.9207,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-08-22 12:00:00"
+  },
+  {
+    "spot": 1350.4141,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-08-22 12:00:00"
+  },
+  {
+    "spot": 38.8895,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-08-23 12:00:00"
+  },
+  {
+    "spot": 3372.0035,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-08-23 12:00:00"
+  },
+  {
+    "spot": 1137.0484,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-08-23 12:00:00"
+  },
+  {
+    "spot": 1361.2113,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-08-23 12:00:00"
+  },
+  {
+    "spot": 38.8865,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-08-24 12:00:00"
+  },
+  {
+    "spot": 3371.8591,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-08-24 12:00:00"
+  },
+  {
+    "spot": 1132.1418,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-08-24 12:00:00"
+  },
+  {
+    "spot": 1360.8856,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-08-24 12:00:00"
+  },
+  {
+    "spot": 38.9022,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-08-25 12:00:00"
+  },
+  {
+    "spot": 3364.9436,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-08-25 12:00:00"
+  },
+  {
+    "spot": 1136.401,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-08-25 12:00:00"
+  },
+  {
+    "spot": 1360.5703,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-08-25 12:00:00"
+  },
+  {
+    "spot": 38.5836,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-08-26 12:00:00"
+  },
+  {
+    "spot": 3365.0908,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-08-26 12:00:00"
+  },
+  {
+    "spot": 1094.6514,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-08-26 12:00:00"
+  },
+  {
+    "spot": 1343.3981,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-08-26 12:00:00"
+  },
+  {
+    "spot": 38.6692,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-08-27 12:00:00"
+  },
+  {
+    "spot": 3391.7103,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-08-27 12:00:00"
+  },
+  {
+    "spot": 1104.9842,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-08-27 12:00:00"
+  },
+  {
+    "spot": 1352.9641,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-08-27 12:00:00"
+  },
+  {
+    "spot": 38.6424,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-08-28 12:00:00"
+  },
+  {
+    "spot": 3395.0589,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-08-28 12:00:00"
+  },
+  {
+    "spot": 1097.3289,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-08-28 12:00:00"
+  },
+  {
+    "spot": 1341.8298,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-08-28 12:00:00"
+  },
+  {
+    "spot": 39.0212,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-08-29 12:00:00"
+  },
+  {
+    "spot": 3417.3722,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-08-29 12:00:00"
+  },
+  {
+    "spot": 1117.1729,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-08-29 12:00:00"
+  },
+  {
+    "spot": 1360.1506,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-08-29 12:00:00"
+  },
+  {
+    "spot": 39.7363,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-08-30 12:00:00"
+  },
+  {
+    "spot": 3448.0024,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-08-30 12:00:00"
+  },
+  {
+    "spot": 1117.7525,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-08-30 12:00:00"
+  },
+  {
+    "spot": 1367.8276,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-08-30 12:00:00"
+  },
+  {
+    "spot": 39.7192,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-08-31 12:00:00"
+  },
+  {
+    "spot": 3448.1867,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-08-31 12:00:00"
+  },
+  {
+    "spot": 1117.7525,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-08-31 12:00:00"
+  },
+  {
+    "spot": 1367.8276,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-08-31 12:00:00"
+  },
+  {
+    "spot": 39.834,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-01 12:00:00"
+  },
+  {
+    "spot": 3443.6898,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-01 12:00:00"
+  },
+  {
+    "spot": 1124.2028,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-01 12:00:00"
+  },
+  {
+    "spot": 1366.3474,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-01 12:00:00"
+  },
+  {
+    "spot": 40.6689,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-02 12:00:00"
+  },
+  {
+    "spot": 3481.2675,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-02 12:00:00"
+  },
+  {
+    "spot": 1158.2677,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-02 12:00:00"
+  },
+  {
+    "spot": 1425.1092,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-02 12:00:00"
+  },
+  {
+    "spot": 40.9037,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-03 12:00:00"
+  },
+  {
+    "spot": 3530.2756,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-03 12:00:00"
+  },
+  {
+    "spot": 1153.9366,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-03 12:00:00"
+  },
+  {
+    "spot": 1417.7294,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-03 12:00:00"
+  },
+  {
+    "spot": 41.082,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-04 12:00:00"
+  },
+  {
+    "spot": 3556.485,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-04 12:00:00"
+  },
+  {
+    "spot": 1160.6785,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-04 12:00:00"
+  },
+  {
+    "spot": 1435.6772,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-04 12:00:00"
+  },
+  {
+    "spot": 40.7348,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-05 12:00:00"
+  },
+  {
+    "spot": 3551.9348,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-05 12:00:00"
+  },
+  {
+    "spot": 1139.2758,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-05 12:00:00"
+  },
+  {
+    "spot": 1384.2214,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-05 12:00:00"
+  },
+  {
+    "spot": 41.0008,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-06 12:00:00"
+  },
+  {
+    "spot": 3586.7723,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-06 12:00:00"
+  },
+  {
+    "spot": 1118.3075,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-06 12:00:00"
+  },
+  {
+    "spot": 1380.6041,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-06 12:00:00"
+  },
+  {
+    "spot": 41.0006,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-07 12:00:00"
+  },
+  {
+    "spot": 3586.6784,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-07 12:00:00"
+  },
+  {
+    "spot": 1118.7897,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-07 12:00:00"
+  },
+  {
+    "spot": 1380.6041,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-07 12:00:00"
+  },
+  {
+    "spot": 40.9005,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-08 12:00:00"
+  },
+  {
+    "spot": 3588.743,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-08 12:00:00"
+  },
+  {
+    "spot": 1114.8847,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-08 12:00:00"
+  },
+  {
+    "spot": 1379.7654,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-08 12:00:00"
+  },
+  {
+    "spot": 41.3179,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-09 12:00:00"
+  },
+  {
+    "spot": 3636.9151,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-09 12:00:00"
+  },
+  {
+    "spot": 1153.6583,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-09 12:00:00"
+  },
+  {
+    "spot": 1392.3551,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-09 12:00:00"
+  },
+  {
+    "spot": 40.8545,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-10 12:00:00"
+  },
+  {
+    "spot": 3631.1005,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-10 12:00:00"
+  },
+  {
+    "spot": 1162.8852,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-10 12:00:00"
+  },
+  {
+    "spot": 1379.4964,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-10 12:00:00"
+  },
+  {
+    "spot": 41.1919,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-11 12:00:00"
+  },
+  {
+    "spot": 3645.3046,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-11 12:00:00"
+  },
+  {
+    "spot": 1209.265,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-11 12:00:00"
+  },
+  {
+    "spot": 1401.0516,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-11 12:00:00"
+  },
+  {
+    "spot": 41.4754,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-12 12:00:00"
+  },
+  {
+    "spot": 3633.0463,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-12 12:00:00"
+  },
+  {
+    "spot": 1208.4015,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-12 12:00:00"
+  },
+  {
+    "spot": 1385.1453,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-12 12:00:00"
+  },
+  {
+    "spot": 42.1785,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-13 12:00:00"
+  },
+  {
+    "spot": 3643.1877,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-13 12:00:00"
+  },
+  {
+    "spot": 1210.91,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-13 12:00:00"
+  },
+  {
+    "spot": 1396.4807,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-13 12:00:00"
+  },
+  {
+    "spot": 42.1864,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-14 12:00:00"
+  },
+  {
+    "spot": 3643.2288,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-14 12:00:00"
+  },
+  {
+    "spot": 1215.3617,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-14 12:00:00"
+  },
+  {
+    "spot": 1398.5484,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-14 12:00:00"
+  },
+  {
+    "spot": 42.2091,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-15 12:00:00"
+  },
+  {
+    "spot": 3640.7908,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-15 12:00:00"
+  },
+  {
+    "spot": 1220.0215,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-15 12:00:00"
+  },
+  {
+    "spot": 1411.1117,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-15 12:00:00"
+  },
+  {
+    "spot": 42.6364,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-16 12:00:00"
+  },
+  {
+    "spot": 3678.4626,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-16 12:00:00"
+  },
+  {
+    "spot": 1218.7138,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-16 12:00:00"
+  },
+  {
+    "spot": 1413.0347,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-16 12:00:00"
+  },
+  {
+    "spot": 42.5896,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-17 12:00:00"
+  },
+  {
+    "spot": 3694.8689,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-17 12:00:00"
+  },
+  {
+    "spot": 1198.4579,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-17 12:00:00"
+  },
+  {
+    "spot": 1402.1183,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-17 12:00:00"
+  },
+  {
+    "spot": 41.7656,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-18 12:00:00"
+  },
+  {
+    "spot": 3663.7163,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-18 12:00:00"
+  },
+  {
+    "spot": 1163.5099,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-18 12:00:00"
+  },
+  {
+    "spot": 1373.8626,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-18 12:00:00"
+  },
+  {
+    "spot": 41.7165,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-19 12:00:00"
+  },
+  {
+    "spot": 3638.7546,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-19 12:00:00"
+  },
+  {
+    "spot": 1168.0833,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-19 12:00:00"
+  },
+  {
+    "spot": 1388.0562,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-19 12:00:00"
+  },
+  {
+    "spot": 43.0713,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-20 12:00:00"
+  },
+  {
+    "spot": 3685.2325,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-20 12:00:00"
+  },
+  {
+    "spot": 1164.9102,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-20 12:00:00"
+  },
+  {
+    "spot": 1413.8018,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-20 12:00:00"
+  },
+  {
+    "spot": 43.0832,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-21 12:00:00"
+  },
+  {
+    "spot": 3685.2583,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-21 12:00:00"
+  },
+  {
+    "spot": 1164.9102,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-21 12:00:00"
+  },
+  {
+    "spot": 1417.0339,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-21 12:00:00"
+  },
+  {
+    "spot": 43.1543,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-22 12:00:00"
+  },
+  {
+    "spot": 3690.0274,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-22 12:00:00"
+  },
+  {
+    "spot": 1165.4667,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-22 12:00:00"
+  },
+  {
+    "spot": 1414.1309,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-22 12:00:00"
+  },
+  {
+    "spot": 43.9798,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-23 12:00:00"
+  },
+  {
+    "spot": 3746.9111,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-23 12:00:00"
+  },
+  {
+    "spot": 1207.2152,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-23 12:00:00"
+  },
+  {
+    "spot": 1423.0348,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-23 12:00:00"
+  },
+  {
+    "spot": 43.9298,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-24 12:00:00"
+  },
+  {
+    "spot": 3759.1088,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-24 12:00:00"
+  },
+  {
+    "spot": 1225.8392,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-24 12:00:00"
+  },
+  {
+    "spot": 1482.8415,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-24 12:00:00"
+  },
+  {
+    "spot": 43.9382,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-25 12:00:00"
+  },
+  {
+    "spot": 3747.8829,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-25 12:00:00"
+  },
+  {
+    "spot": 1222.697,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-25 12:00:00"
+  },
+  {
+    "spot": 1485.4458,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-25 12:00:00"
+  },
+  {
+    "spot": 44.9343,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-26 12:00:00"
+  },
+  {
+    "spot": 3745.3759,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-26 12:00:00"
+  },
+  {
+    "spot": 1266.2033,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-26 12:00:00"
+  },
+  {
+    "spot": 1546.9438,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-26 12:00:00"
+  },
+  {
+    "spot": 46.0485,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-27 12:00:00"
+  },
+  {
+    "spot": 3759.8324,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-27 12:00:00"
+  },
+  {
+    "spot": 1290.8827,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-27 12:00:00"
+  },
+  {
+    "spot": 1583.9281,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-27 12:00:00"
+  },
+  {
+    "spot": 46.0567,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-28 12:00:00"
+  },
+  {
+    "spot": 3759.7264,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-28 12:00:00"
+  },
+  {
+    "spot": 1285.771,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-28 12:00:00"
+  },
+  {
+    "spot": 1586.9237,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-28 12:00:00"
+  },
+  {
+    "spot": 46.4698,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-29 12:00:00"
+  },
+  {
+    "spot": 3774.1546,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-29 12:00:00"
+  },
+  {
+    "spot": 1315.8463,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-29 12:00:00"
+  },
+  {
+    "spot": 1617.1835,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-29 12:00:00"
+  },
+  {
+    "spot": 46.9314,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-30 12:00:00"
+  },
+  {
+    "spot": 3836.5109,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-30 12:00:00"
+  },
+  {
+    "spot": 1283.5048,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-30 12:00:00"
+  },
+  {
+    "spot": 1620.8937,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-09-30 12:00:00"
+  },
+  {
+    "spot": 46.7246,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-01 12:00:00"
+  },
+  {
+    "spot": 3865.0465,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-01 12:00:00"
+  },
+  {
+    "spot": 1278.1122,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-01 12:00:00"
+  },
+  {
+    "spot": 1598.1942,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-01 12:00:00"
+  },
+  {
+    "spot": 47.1059,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-02 12:00:00"
+  },
+  {
+    "spot": 3858.6827,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-02 12:00:00"
+  },
+  {
+    "spot": 1268.5027,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-02 12:00:00"
+  },
+  {
+    "spot": 1571.3373,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-02 12:00:00"
+  },
+  {
+    "spot": 46.9192,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-03 12:00:00"
+  },
+  {
+    "spot": 3860.5448,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-03 12:00:00"
+  },
+  {
+    "spot": 1259.5959,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-03 12:00:00"
+  },
+  {
+    "spot": 1584.7911,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-03 12:00:00"
+  },
+  {
+    "spot": 47.9895,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-04 12:00:00"
+  },
+  {
+    "spot": 3886.4836,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-04 12:00:00"
+  },
+  {
+    "spot": 1273.1988,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-04 12:00:00"
+  },
+  {
+    "spot": 1632.016,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-04 12:00:00"
+  },
+  {
+    "spot": 47.9955,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-05 12:00:00"
+  },
+  {
+    "spot": 3886.7963,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-05 12:00:00"
+  },
+  {
+    "spot": 1273.1981,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-05 12:00:00"
+  },
+  {
+    "spot": 1623.8962,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-05 12:00:00"
+  },
+  {
+    "spot": 48.1962,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-06 12:00:00"
+  },
+  {
+    "spot": 3904.3055,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-06 12:00:00"
+  },
+  {
+    "spot": 1281.8299,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-06 12:00:00"
+  },
+  {
+    "spot": 1628.4422,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-06 12:00:00"
+  },
+  {
+    "spot": 48.5435,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-07 12:00:00"
+  },
+  {
+    "spot": 3971.6819,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-07 12:00:00"
+  },
+  {
+    "spot": 1343.4591,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-07 12:00:00"
+  },
+  {
+    "spot": 1642.5224,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-07 12:00:00"
+  },
+  {
+    "spot": 47.9677,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-08 12:00:00"
+  },
+  {
+    "spot": 3996.8137,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-08 12:00:00"
+  },
+  {
+    "spot": 1370.1282,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-08 12:00:00"
+  },
+  {
+    "spot": 1648.4486,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-08 12:00:00"
+  },
+  {
+    "spot": 48.8109,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-09 12:00:00"
+  },
+  {
+    "spot": 4018.1605,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-09 12:00:00"
+  },
+  {
+    "spot": 1457.6554,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-09 12:00:00"
+  },
+  {
+    "spot": 1663.9962,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-09 12:00:00"
+  },
+  {
+    "spot": 49.4177,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-10 12:00:00"
+  },
+  {
+    "spot": 3989.0318,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-10 12:00:00"
+  },
+  {
+    "spot": 1452.8221,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-10 12:00:00"
+  },
+  {
+    "spot": 1645.1368,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-10 12:00:00"
+  },
+  {
+    "spot": 50.1564,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-11 12:00:00"
+  },
+  {
+    "spot": 4017.3647,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-11 12:00:00"
+  },
+  {
+    "spot": 1440.1459,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-11 12:00:00"
+  },
+  {
+    "spot": 1610.6341,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-11 12:00:00"
+  },
+  {
+    "spot": 50.0857,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-12 12:00:00"
+  },
+  {
+    "spot": 4017.1645,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-12 12:00:00"
+  },
+  {
+    "spot": 1445.3668,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-12 12:00:00"
+  },
+  {
+    "spot": 1608.0239,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-12 12:00:00"
+  },
+  {
+    "spot": 50.4729,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-13 12:00:00"
+  },
+  {
+    "spot": 4032.6369,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-13 12:00:00"
+  },
+  {
+    "spot": 1481.7644,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-13 12:00:00"
+  },
+  {
+    "spot": 1644.7385,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-13 12:00:00"
+  },
+  {
+    "spot": 52.4757,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-14 12:00:00"
+  },
+  {
+    "spot": 4124.2147,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-14 12:00:00"
+  },
+  {
+    "spot": 1556.126,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-14 12:00:00"
+  },
+  {
+    "spot": 1677.4766,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-14 12:00:00"
+  },
+  {
+    "spot": 52.0212,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-15 12:00:00"
+  },
+  {
+    "spot": 4169.309,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-15 12:00:00"
+  },
+  {
+    "spot": 1579.9798,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-15 12:00:00"
+  },
+  {
+    "spot": 1655.7632,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-15 12:00:00"
+  },
+  {
+    "spot": 53.1201,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-16 12:00:00"
+  },
+  {
+    "spot": 4213.6577,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-16 12:00:00"
+  },
+  {
+    "spot": 1568.257,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-16 12:00:00"
+  },
+  {
+    "spot": 1682.3552,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-16 12:00:00"
+  },
+  {
+    "spot": 54.0892,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-17 12:00:00"
+  },
+  {
+    "spot": 4360.4106,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-17 12:00:00"
+  },
+  {
+    "spot": 1667.5307,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-17 12:00:00"
+  },
+  {
+    "spot": 1743.2472,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-17 12:00:00"
+  },
+  {
+    "spot": 51.8942,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-18 12:00:00"
+  },
+  {
+    "spot": 4252.0189,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-18 12:00:00"
+  },
+  {
+    "spot": 1491.8397,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-18 12:00:00"
+  },
+  {
+    "spot": 1619.6572,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-18 12:00:00"
+  },
+  {
+    "spot": 51.9305,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-19 12:00:00"
+  },
+  {
+    "spot": 4250.7356,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-19 12:00:00"
+  },
+  {
+    "spot": 1509.282,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-19 12:00:00"
+  },
+  {
+    "spot": 1618.9573,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-19 12:00:00"
+  },
+  {
+    "spot": 51.4662,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-20 12:00:00"
+  },
+  {
+    "spot": 4228.1778,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-20 12:00:00"
+  },
+  {
+    "spot": 1464.011,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-20 12:00:00"
+  },
+  {
+    "spot": 1585.0694,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-20 12:00:00"
+  },
+  {
+    "spot": 52.4572,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-21 12:00:00"
+  },
+  {
+    "spot": 4359.1485,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-21 12:00:00"
+  },
+  {
+    "spot": 1524.595,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-21 12:00:00"
+  },
+  {
+    "spot": 1652.9729,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-21 12:00:00"
+  },
+  {
+    "spot": 47.7013,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-22 12:00:00"
+  },
+  {
+    "spot": 4010.8952,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-22 12:00:00"
+  },
+  {
+    "spot": 1394.649,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-22 12:00:00"
+  },
+  {
+    "spot": 1492.2444,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-22 12:00:00"
+  },
+  {
+    "spot": 48.1959,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-23 12:00:00"
+  },
+  {
+    "spot": 4088.8039,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-23 12:00:00"
+  },
+  {
+    "spot": 1490.4964,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-23 12:00:00"
+  },
+  {
+    "spot": 1572.9176,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-23 12:00:00"
+  },
+  {
+    "spot": 48.9261,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-24 12:00:00"
+  },
+  {
+    "spot": 4130.6287,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-24 12:00:00"
+  },
+  {
+    "spot": 1466.8116,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-24 12:00:00"
+  },
+  {
+    "spot": 1588.0979,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-24 12:00:00"
+  },
+  {
+    "spot": 48.6137,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-25 12:00:00"
+  },
+  {
+    "spot": 4113.3119,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-25 12:00:00"
+  },
+  {
+    "spot": 1444.7113,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-25 12:00:00"
+  },
+  {
+    "spot": 1593.0388,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-25 12:00:00"
+  },
+  {
+    "spot": 48.6142,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-26 12:00:00"
+  },
+  {
+    "spot": 4113.3271,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-26 12:00:00"
+  },
+  {
+    "spot": 1444.7113,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-26 12:00:00"
+  },
+  {
+    "spot": 1592.3379,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-26 12:00:00"
+  },
+  {
+    "spot": 48.1972,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-27 12:00:00"
+  },
+  {
+    "spot": 4069.7672,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-27 12:00:00"
+  },
+  {
+    "spot": 1418.2914,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-27 12:00:00"
+  },
+  {
+    "spot": 1600.6492,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-27 12:00:00"
+  },
+  {
+    "spot": 46.8067,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-28 12:00:00"
+  },
+  {
+    "spot": 3989.0795,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-28 12:00:00"
+  },
+  {
+    "spot": 1411.151,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-28 12:00:00"
+  },
+  {
+    "spot": 1555.3689,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-28 12:00:00"
+  },
+  {
+    "spot": 47.1781,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-29 12:00:00"
+  },
+  {
+    "spot": 3964.5207,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-29 12:00:00"
+  },
+  {
+    "spot": 1405.6629,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-29 12:00:00"
+  },
+  {
+    "spot": 1567.304,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-29 12:00:00"
+  },
+  {
+    "spot": 47.8336,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-30 12:00:00"
+  },
+  {
+    "spot": 3957.8912,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-30 12:00:00"
+  },
+  {
+    "spot": 1423.2908,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-30 12:00:00"
+  },
+  {
+    "spot": 1595.7555,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-30 12:00:00"
+  },
+  {
+    "spot": 49.0086,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-31 12:00:00"
+  },
+  {
+    "spot": 4030.3095,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-31 12:00:00"
+  },
+  {
+    "spot": 1482.6342,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-31 12:00:00"
+  },
+  {
+    "spot": 1610.4278,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-10-31 12:00:00"
+  },
+  {
+    "spot": 48.6785,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-01 12:00:00"
+  },
+  {
+    "spot": 4002.7283,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-01 12:00:00"
+  },
+  {
+    "spot": 1447.4459,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-01 12:00:00"
+  },
+  {
+    "spot": 1567.0,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-01 12:00:00"
+  },
+  {
+    "spot": 48.6758,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-02 12:00:00"
+  },
+  {
+    "spot": 4002.8164,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-02 12:00:00"
+  },
+  {
+    "spot": 1436.5001,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-02 12:00:00"
+  },
+  {
+    "spot": 1554.9309,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-02 12:00:00"
+  },
+  {
+    "spot": 48.5032,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-03 12:00:00"
+  },
+  {
+    "spot": 3978.7677,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-03 12:00:00"
+  },
+  {
+    "spot": 1439.3969,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-03 12:00:00"
+  },
+  {
+    "spot": 1552.0949,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-03 12:00:00"
+  },
+  {
+    "spot": 47.9823,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-04 12:00:00"
+  },
+  {
+    "spot": 3996.5901,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-04 12:00:00"
+  },
+  {
+    "spot": 1435.22,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-04 12:00:00"
+  },
+  {
+    "spot": 1559.8604,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-04 12:00:00"
+  },
+  {
+    "spot": 47.119,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-05 12:00:00"
+  },
+  {
+    "spot": 3936.5476,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-05 12:00:00"
+  },
+  {
+    "spot": 1400.0759,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-05 12:00:00"
+  },
+  {
+    "spot": 1535.2712,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-05 12:00:00"
+  },
+  {
+    "spot": 48.0713,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-06 12:00:00"
+  },
+  {
+    "spot": 3974.9214,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-06 12:00:00"
+  },
+  {
+    "spot": 1411.3274,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-06 12:00:00"
+  },
+  {
+    "spot": 1557.5317,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-06 12:00:00"
+  },
+  {
+    "spot": 48.148,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-07 12:00:00"
+  },
+  {
+    "spot": 3985.0386,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-07 12:00:00"
+  },
+  {
+    "spot": 1385.3023,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-07 12:00:00"
+  },
+  {
+    "spot": 1531.909,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-07 12:00:00"
+  },
+  {
+    "spot": 48.3261,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-08 12:00:00"
+  },
+  {
+    "spot": 4001.0659,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-08 12:00:00"
+  },
+  {
+    "spot": 1402.9602,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-08 12:00:00"
+  },
+  {
+    "spot": 1547.5131,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-08 12:00:00"
+  },
+  {
+    "spot": 48.3147,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-09 12:00:00"
+  },
+  {
+    "spot": 4001.1123,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-09 12:00:00"
+  },
+  {
+    "spot": 1398.6233,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-09 12:00:00"
+  },
+  {
+    "spot": 1547.5131,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-09 12:00:00"
+  },
+  {
+    "spot": 48.5819,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-10 12:00:00"
+  },
+  {
+    "spot": 4014.3924,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-10 12:00:00"
+  },
+  {
+    "spot": 1404.2382,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-10 12:00:00"
+  },
+  {
+    "spot": 1559.4287,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-10 12:00:00"
+  },
+  {
+    "spot": 50.5362,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-11 12:00:00"
+  },
+  {
+    "spot": 4119.3406,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-11 12:00:00"
+  },
+  {
+    "spot": 1438.0633,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-11 12:00:00"
+  },
+  {
+    "spot": 1587.8387,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-11 12:00:00"
+  },
+  {
+    "spot": 51.3181,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-12 12:00:00"
+  },
+  {
+    "spot": 4143.6882,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-12 12:00:00"
+  },
+  {
+    "spot": 1460.1991,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-12 12:00:00"
+  },
+  {
+    "spot": 1594.4755,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-12 12:00:00"
+  },
+  {
+    "spot": 53.0687,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-13 12:00:00"
+  },
+  {
+    "spot": 4187.7432,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-13 12:00:00"
+  },
+  {
+    "spot": 1480.3593,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-13 12:00:00"
+  },
+  {
+    "spot": 1621.0763,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-13 12:00:00"
+  },
+  {
+    "spot": 52.579,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-14 12:00:00"
+  },
+  {
+    "spot": 4184.8411,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-14 12:00:00"
+  },
+  {
+    "spot": 1446.0143,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-14 12:00:00"
+  },
+  {
+    "spot": 1595.1467,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-14 12:00:00"
+  },
+  {
+    "spot": 50.5877,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-15 12:00:00"
+  },
+  {
+    "spot": 4082.0092,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-15 12:00:00"
+  },
+  {
+    "spot": 1400.1984,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-15 12:00:00"
+  },
+  {
+    "spot": 1541.4011,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-15 12:00:00"
+  },
+  {
+    "spot": 50.5676,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-16 12:00:00"
+  },
+  {
+    "spot": 4082.9392,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-16 12:00:00"
+  },
+  {
+    "spot": 1409.3412,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-16 12:00:00"
+  },
+  {
+    "spot": 1551.2041,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-16 12:00:00"
+  },
+  {
+    "spot": 50.6924,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-17 12:00:00"
+  },
+  {
+    "spot": 4085.7868,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-17 12:00:00"
+  },
+  {
+    "spot": 1402.6379,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-17 12:00:00"
+  },
+  {
+    "spot": 1543.2851,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-17 12:00:00"
+  },
+  {
+    "spot": 49.9162,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-18 12:00:00"
+  },
+  {
+    "spot": 4038.0954,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-18 12:00:00"
+  },
+  {
+    "spot": 1402.6674,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-18 12:00:00"
+  },
+  {
+    "spot": 1537.3648,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-18 12:00:00"
+  },
+  {
+    "spot": 50.7945,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-19 12:00:00"
+  },
+  {
+    "spot": 4073.962,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-19 12:00:00"
+  },
+  {
+    "spot": 1397.9187,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-19 12:00:00"
+  },
+  {
+    "spot": 1537.5196,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-19 12:00:00"
+  },
+  {
+    "spot": 51.7549,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-20 12:00:00"
+  },
+  {
+    "spot": 4104.9858,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-20 12:00:00"
+  },
+  {
+    "spot": 1410.8577,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-20 12:00:00"
+  },
+  {
+    "spot": 1561.2081,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-20 12:00:00"
+  },
+  {
+    "spot": 50.8077,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-21 12:00:00"
+  },
+  {
+    "spot": 4079.6295,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-21 12:00:00"
+  },
+  {
+    "spot": 1390.4767,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-21 12:00:00"
+  },
+  {
+    "spot": 1518.4355,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-21 12:00:00"
+  },
+  {
+    "spot": 49.9913,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-22 12:00:00"
+  },
+  {
+    "spot": 4064.9217,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-22 12:00:00"
+  },
+  {
+    "spot": 1381.9185,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-22 12:00:00"
+  },
+  {
+    "spot": 1516.3825,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-22 12:00:00"
+  },
+  {
+    "spot": 50.0016,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-23 12:00:00"
+  },
+  {
+    "spot": 4065.1415,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-23 12:00:00"
+  },
+  {
+    "spot": 1381.6447,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-23 12:00:00"
+  },
+  {
+    "spot": 1516.3825,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-23 12:00:00"
+  },
+  {
+    "spot": 49.9476,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-24 12:00:00"
+  },
+  {
+    "spot": 4056.4282,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-24 12:00:00"
+  },
+  {
+    "spot": 1385.8174,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-24 12:00:00"
+  },
+  {
+    "spot": 1528.9253,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-24 12:00:00"
+  },
+  {
+    "spot": 51.1426,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-25 12:00:00"
+  },
+  {
+    "spot": 4127.8818,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-25 12:00:00"
+  },
+  {
+    "spot": 1401.178,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-25 12:00:00"
+  },
+  {
+    "spot": 1549.4637,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-25 12:00:00"
+  },
+  {
+    "spot": 51.5122,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-26 12:00:00"
+  },
+  {
+    "spot": 4141.0148,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-26 12:00:00"
+  },
+  {
+    "spot": 1403.614,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-26 12:00:00"
+  },
+  {
+    "spot": 1548.4323,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-26 12:00:00"
+  },
+  {
+    "spot": 53.125,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-27 12:00:00"
+  },
+  {
+    "spot": 4157.9073,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-27 12:00:00"
+  },
+  {
+    "spot": 1446.6035,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-27 12:00:00"
+  },
+  {
+    "spot": 1618.7555,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-27 12:00:00"
+  },
+  {
+    "spot": 53.7531,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-28 12:00:00"
+  },
+  {
+    "spot": 4178.3329,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-28 12:00:00"
+  },
+  {
+    "spot": 1449.6943,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-28 12:00:00"
+  },
+  {
+    "spot": 1630.1622,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-28 12:00:00"
+  },
+  {
+    "spot": 56.3686,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-29 12:00:00"
+  },
+  {
+    "spot": 4216.8632,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-29 12:00:00"
+  },
+  {
+    "spot": 1467.7867,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-29 12:00:00"
+  },
+  {
+    "spot": 1674.2701,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-29 12:00:00"
+  },
+  {
+    "spot": 56.3887,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-30 12:00:00"
+  },
+  {
+    "spot": 4222.7697,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-30 12:00:00"
+  },
+  {
+    "spot": 1464.8299,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-30 12:00:00"
+  },
+  {
+    "spot": 1675.0278,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-11-30 12:00:00"
+  },
+  {
+    "spot": 57.175,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-01 12:00:00"
+  },
+  {
+    "spot": 4230.258,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-01 12:00:00"
+  },
+  {
+    "spot": 1499.7145,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-01 12:00:00"
+  },
+  {
+    "spot": 1687.7552,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-01 12:00:00"
+  },
+  {
+    "spot": 56.8154,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-02 12:00:00"
+  },
+  {
+    "spot": 4202.9098,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-02 12:00:00"
+  },
+  {
+    "spot": 1437.0172,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-02 12:00:00"
+  },
+  {
+    "spot": 1661.7236,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-02 12:00:00"
+  },
+  {
+    "spot": 58.2603,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-03 12:00:00"
+  },
+  {
+    "spot": 4216.5804,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-03 12:00:00"
+  },
+  {
+    "spot": 1482.1215,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-03 12:00:00"
+  },
+  {
+    "spot": 1652.2071,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-03 12:00:00"
+  },
+  {
+    "spot": 58.5264,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-04 12:00:00"
+  },
+  {
+    "spot": 4212.2999,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-04 12:00:00"
+  },
+  {
+    "spot": 1484.0873,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-04 12:00:00"
+  },
+  {
+    "spot": 1668.8258,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-04 12:00:00"
+  },
+  {
+    "spot": 56.9909,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-05 12:00:00"
+  },
+  {
+    "spot": 4196.7257,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-05 12:00:00"
+  },
+  {
+    "spot": 1463.9537,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-05 12:00:00"
+  },
+  {
+    "spot": 1650.466,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-05 12:00:00"
+  },
+  {
+    "spot": 58.3395,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-06 12:00:00"
+  },
+  {
+    "spot": 4197.7228,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-06 12:00:00"
+  },
+  {
+    "spot": 1479.5795,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-06 12:00:00"
+  },
+  {
+    "spot": 1647.1227,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-06 12:00:00"
+  },
+  {
+    "spot": 58.3038,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-07 12:00:00"
+  },
+  {
+    "spot": 4197.7457,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-07 12:00:00"
+  },
+  {
+    "spot": 1479.5795,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-07 12:00:00"
+  },
+  {
+    "spot": 1645.5491,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-07 12:00:00"
+  },
+  {
+    "spot": 58.1964,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-08 12:00:00"
+  },
+  {
+    "spot": 4204.9192,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-08 12:00:00"
+  },
+  {
+    "spot": 1474.6492,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-08 12:00:00"
+  },
+  {
+    "spot": 1655.5505,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-08 12:00:00"
+  },
+  {
+    "spot": 58.1184,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-09 12:00:00"
+  },
+  {
+    "spot": 4196.4475,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-09 12:00:00"
+  },
+  {
+    "spot": 1492.8613,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-09 12:00:00"
+  },
+  {
+    "spot": 1661.6038,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-09 12:00:00"
+  },
+  {
+    "spot": 60.9712,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-10 12:00:00"
+  },
+  {
+    "spot": 4214.2668,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-10 12:00:00"
+  },
+  {
+    "spot": 1512.4895,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-10 12:00:00"
+  },
+  {
+    "spot": 1682.3,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-10 12:00:00"
+  },
+  {
+    "spot": 62.6528,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-11 12:00:00"
+  },
+  {
+    "spot": 4242.5626,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-11 12:00:00"
+  },
+  {
+    "spot": 1500.353,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-11 12:00:00"
+  },
+  {
+    "spot": 1675.8975,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-11 12:00:00"
+  },
+  {
+    "spot": 63.3108,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-12 12:00:00"
+  },
+  {
+    "spot": 4274.3646,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-12 12:00:00"
+  },
+  {
+    "spot": 1506.7132,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-12 12:00:00"
+  },
+  {
+    "spot": 1696.7483,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-12 12:00:00"
+  },
+  {
+    "spot": 61.9297,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-13 12:00:00"
+  },
+  {
+    "spot": 4299.9249,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-13 12:00:00"
+  },
+  {
+    "spot": 1518.4618,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-13 12:00:00"
+  },
+  {
+    "spot": 1755.491,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-13 12:00:00"
+  },
+  {
+    "spot": 61.9289,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-14 12:00:00"
+  },
+  {
+    "spot": 4299.6273,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-14 12:00:00"
+  },
+  {
+    "spot": 1514.232,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-14 12:00:00"
+  },
+  {
+    "spot": 1753.3616,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-14 12:00:00"
+  },
+  {
+    "spot": 61.9267,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-15 12:00:00"
+  },
+  {
+    "spot": 4310.8595,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-15 12:00:00"
+  },
+  {
+    "spot": 1515.5506,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-15 12:00:00"
+  },
+  {
+    "spot": 1754.4361,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-15 12:00:00"
+  },
+  {
+    "spot": 63.5544,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-16 12:00:00"
+  },
+  {
+    "spot": 4304.7246,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-16 12:00:00"
+  },
+  {
+    "spot": 1610.077,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-16 12:00:00"
+  },
+  {
+    "spot": 1826.9615,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-16 12:00:00"
+  },
+  {
+    "spot": 64.2985,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-17 12:00:00"
+  },
+  {
+    "spot": 4317.7874,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-17 12:00:00"
+  },
+  {
+    "spot": 1639.2,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-17 12:00:00"
+  },
+  {
+    "spot": 1882.9367,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-17 12:00:00"
+  },
+  {
+    "spot": 66.1773,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-18 12:00:00"
+  },
+  {
+    "spot": 4330.1647,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-18 12:00:00"
+  },
+  {
+    "spot": 1702.1068,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-18 12:00:00"
+  },
+  {
+    "spot": 1957.2203,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-18 12:00:00"
+  },
+  {
+    "spot": 65.3833,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-19 12:00:00"
+  },
+  {
+    "spot": 4326.1502,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-19 12:00:00"
+  },
+  {
+    "spot": 1735.914,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-19 12:00:00"
+  },
+  {
+    "spot": 1944.7175,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-19 12:00:00"
+  },
+  {
+    "spot": 67.1619,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-20 12:00:00"
+  },
+  {
+    "spot": 4338.8692,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-20 12:00:00"
+  },
+  {
+    "spot": 1763.0596,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-20 12:00:00"
+  },
+  {
+    "spot": 2010.3182,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-20 12:00:00"
+  },
+  {
+    "spot": 67.1627,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-21 12:00:00"
+  },
+  {
+    "spot": 4338.9294,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-21 12:00:00"
+  },
+  {
+    "spot": 1754.6987,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-21 12:00:00"
+  },
+  {
+    "spot": 2010.3182,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-21 12:00:00"
+  },
+  {
+    "spot": 67.9572,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-22 12:00:00"
+  },
+  {
+    "spot": 4365.8037,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-22 12:00:00"
+  },
+  {
+    "spot": 1815.848,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-22 12:00:00"
+  },
+  {
+    "spot": 2046.7594,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-22 12:00:00"
+  },
+  {
+    "spot": 69.6186,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-23 12:00:00"
+  },
+  {
+    "spot": 4484.2165,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-23 12:00:00"
+  },
+  {
+    "spot": 1831.2868,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-23 12:00:00"
+  },
+  {
+    "spot": 2159.9191,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-23 12:00:00"
+  },
+  {
+    "spot": 71.8226,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-24 12:00:00"
+  },
+  {
+    "spot": 4512.7596,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-24 12:00:00"
+  },
+  {
+    "spot": 1945.5332,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-24 12:00:00"
+  },
+  {
+    "spot": 2346.2667,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-24 12:00:00"
+  },
+  {
+    "spot": 71.853,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-25 12:00:00"
+  },
+  {
+    "spot": 4479.5883,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-25 12:00:00"
+  },
+  {
+    "spot": 1761.3157,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-25 12:00:00"
+  },
+  {
+    "spot": 2259.4081,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-25 12:00:00"
+  },
+  {
+    "spot": 74.9641,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-26 12:00:00"
+  },
+  {
+    "spot": 4514.8256,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-26 12:00:00"
+  },
+  {
+    "spot": 1832.6786,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-26 12:00:00"
+  },
+  {
+    "spot": 2378.6581,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-26 12:00:00"
+  },
+  {
+    "spot": 79.2926,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-27 12:00:00"
+  },
+  {
+    "spot": 4533.6999,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-27 12:00:00"
+  },
+  {
+    "spot": 2004.3306,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-27 12:00:00"
+  },
+  {
+    "spot": 2480.1311,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-27 12:00:00"
+  },
+  {
+    "spot": 79.2867,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-28 12:00:00"
+  },
+  {
+    "spot": 4533.6012,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-28 12:00:00"
+  },
+  {
+    "spot": 2004.3306,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-28 12:00:00"
+  },
+  {
+    "spot": 2497.6404,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-28 12:00:00"
+  },
+  {
+    "spot": 78.3734,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-29 12:00:00"
+  },
+  {
+    "spot": 4513.224,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-29 12:00:00"
+  },
+  {
+    "spot": 1929.5349,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-29 12:00:00"
+  },
+  {
+    "spot": 2429.3449,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-29 12:00:00"
+  },
+  {
+    "spot": 72.6486,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-30 12:00:00"
+  },
+  {
+    "spot": 4333.7001,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-30 12:00:00"
+  },
+  {
+    "spot": 1646.1092,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-30 12:00:00"
+  },
+  {
+    "spot": 2084.5393,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-30 12:00:00"
+  },
+  {
+    "spot": 75.2739,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-31 12:00:00"
+  },
+  {
+    "spot": 4354.1472,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-31 12:00:00"
+  },
+  {
+    "spot": 1591.1453,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-31 12:00:00"
+  },
+  {
+    "spot": 2106.63,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2025-12-31 12:00:00"
+  }
+]
