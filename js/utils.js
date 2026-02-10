@@ -475,14 +475,18 @@ const formatCurrency = (value, currency = DEFAULT_CURRENCY) => {
  * @param {number} value - Profit/loss value
  * @returns {string} HTML string with appropriate color styling
  */
-const formatLossProfit = (value) => {
+const formatLossProfit = (value, percent) => {
   const formatted = formatCurrency(value);
+  const pctHtml =
+    percent !== undefined && percent !== 0
+      ? `<span class="gain-loss-pct">${percent > 0 ? "+" : ""}${percent.toFixed(1)}%</span>`
+      : "";
   if (value > 0) {
-    return `<span style="color: var(--success);">${formatted}</span>`;
+    return `<span style="color: var(--success);">${pctHtml}${formatted}</span>`;
   } else if (value < 0) {
-    return `<span style="color: var(--danger);">${formatted}</span>`;
+    return `<span style="color: var(--danger);">${pctHtml}${formatted}</span>`;
   }
-  return formatted;
+  return pctHtml + formatted;
 };
 
 /**
