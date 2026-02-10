@@ -168,6 +168,11 @@ const syncSettingsUI = () => {
     renderNumistaUsageBar();
   }
 
+  // PCGS usage bar
+  if (typeof renderPcgsUsageBar === 'function') {
+    renderPcgsUsageBar();
+  }
+
   // Set first provider tab active if none visible — default to Numista
   const anyVisible = document.querySelector('.settings-provider-panel[style*="display: block"]');
   if (!anyVisible) {

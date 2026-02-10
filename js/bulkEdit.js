@@ -32,6 +32,8 @@ const BULK_EDITABLE_FIELDS = [
     attrs: { min: '1', step: '1' } },
   { id: 'weight',           label: 'Weight (oz)',        inputType: 'number',
     attrs: { min: '0', step: '0.001' } },
+  { id: 'purity',           label: 'Purity',             inputType: 'number',
+    attrs: { min: '0.001', max: '1', step: '0.001' } },
   { id: 'price',            label: 'Purchase Price',     inputType: 'number',
     attrs: { min: '0', step: '0.01' } },
   { id: 'marketValue',      label: 'Market Value',       inputType: 'number',

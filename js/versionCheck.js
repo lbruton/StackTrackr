@@ -91,6 +91,14 @@ const populateVersionModal = (version, html) => {
  */
 const getEmbeddedChangelog = (version) => {
   const changelogs = {
+    "3.22.00": `
+      <li><strong>Added</strong>: Purity (fineness) field — adjusts melt value formula across all calculation sites (STACK-22)</li>
+      <li><strong>Added</strong>: PCGS API daily quota usage bar in Settings (STACK-24)</li>
+      <li><strong>Added</strong>: Pie chart metric toggle — switch between Purchase, Melt, Retail, and Gain/Loss views (STACK-27)</li>
+      <li><strong>Changed</strong>: Extracted inline test loader to js/test-loader.js (STACK-25)</li>
+      <li><strong>Changed</strong>: CSV, PDF, and ZIP exports now include Purity column</li>
+      <li><strong>Changed</strong>: Seed data includes realistic purity values for sample items</li>
+    `,
     "3.21.03": `
       <li><strong>Fixed</strong>: Search now matches items belonging to custom chip groups when searching by group label (STACK-23)</li>
     `,

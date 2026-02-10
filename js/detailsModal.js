@@ -1,6 +1,9 @@
 // DETAILS MODAL FUNCTIONS WITH PIE CHART INTEGRATION
 // =============================================================================
 
+/** @type {string} Current pie chart metric — purchase | melt | retail | gainLoss */
+let detailsChartMetric = 'purchase';
+
 /**
  * Calculates breakdown data for specified metal by type and location
  * RENAMED from calculateBreakdownData to avoid 403 errors
@@ -28,7 +31,8 @@ const getBreakdownData = (metal) => {
     const qty = Number(item.qty) || 1;
     const itemWeight = qty * (parseFloat(item.weight) || 0);
     const purchaseTotal = qty * (parseFloat(item.price) || 0);
-    const meltValue = itemWeight * currentSpot;
+    const purity = parseFloat(item.purity) || 1.0;
+    const meltValue = itemWeight * currentSpot * purity;
     const isManualRetail = item.marketValue && item.marketValue > 0;
     const retailTotal = isManualRetail ? item.marketValue * qty : meltValue;
     const gainLoss = retailTotal - purchaseTotal;
@@ -80,7 +84,8 @@ const getAllMetalsBreakdownData = () => {
     const itemWeight = qty * (parseFloat(item.weight) || 0);
     const purchaseTotal = qty * (parseFloat(item.price) || 0);
     const currentSpot = spotPrices[item.metal.toLowerCase()] || 0;
-    const meltValue = itemWeight * currentSpot;
+    const purity = parseFloat(item.purity) || 1.0;
+    const meltValue = itemWeight * currentSpot * purity;
     const isManualRetail = item.marketValue && item.marketValue > 0;
     const retailTotal = isManualRetail ? item.marketValue * qty : meltValue;
     const gainLoss = retailTotal - purchaseTotal;
@@ -219,6 +224,9 @@ const showDetailsModal = (metal) => {
   // Destroy existing charts
   destroyCharts();
 
+  // Reset metric to default for each modal open
+  detailsChartMetric = 'purchase';
+
   // Get breakdown data — different shape for "All" vs single metal
   let leftBreakdown, rightBreakdown;
   if (isAll) {
@@ -231,22 +239,60 @@ const showDetailsModal = (metal) => {
     rightBreakdown = metalData.locationBreakdown;
   }
 
-  // Create pie charts if there's data
-  if (Object.keys(leftBreakdown).length > 0) {
-    chartInstances.typeChart = createPieChart(
-      elements.typeChart,
-      leftBreakdown,
-      isAll ? 'Metal Breakdown' : 'Type Breakdown'
-    );
+  // Helper: render charts with current metric
+  const renderCharts = () => {
+    destroyCharts();
+    if (Object.keys(leftBreakdown).length > 0) {
+      chartInstances.typeChart = createPieChart(
+        elements.typeChart,
+        leftBreakdown,
+        isAll ? 'Metal Breakdown' : 'Type Breakdown',
+        detailsChartMetric
+      );
+    }
+    if (Object.keys(rightBreakdown).length > 0) {
+      chartInstances.locationChart = createPieChart(
+        elements.locationChart,
+        rightBreakdown,
+        'Location Breakdown',
+        detailsChartMetric
+      );
+    }
+  };
+
+  // Create metric toggle bar before the charts grid
+  const detailsGrid = elements.detailsModal.querySelector('.details-grid');
+  let existingToggle = elements.detailsModal.querySelector('.chart-metric-toggle');
+  if (existingToggle) existingToggle.remove();
+
+  const toggleBar = document.createElement('div');
+  toggleBar.className = 'chart-metric-toggle';
+  const metrics = [
+    { key: 'purchase', label: 'Purchase' },
+    { key: 'melt',     label: 'Melt' },
+    { key: 'retail',   label: 'Retail' },
+    { key: 'gainLoss', label: 'Gain/Loss' }
+  ];
+  metrics.forEach(m => {
+    const btn = document.createElement('button');
+    btn.className = 'chart-metric-btn' + (m.key === detailsChartMetric ? ' active' : '');
+    btn.textContent = m.label;
+    btn.type = 'button';
+    btn.addEventListener('click', () => {
+      detailsChartMetric = m.key;
+      toggleBar.querySelectorAll('.chart-metric-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      renderCharts();
+    });
+    toggleBar.appendChild(btn);
+  });
+
+  if (detailsGrid) {
+    detailsGrid.parentNode.insertBefore(toggleBar, detailsGrid);
   }
 
-  if (Object.keys(rightBreakdown).length > 0) {
-    chartInstances.locationChart = createPieChart(
-      elements.locationChart,
-      rightBreakdown,
-      'Location Breakdown'
-    );
-  }
+  // Initial chart render
+  renderCharts();
 
   // Build color maps matching pie chart segment order (by insertion order)
   const buildColorMap = (breakdown) => {

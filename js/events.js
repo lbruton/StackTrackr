@@ -561,6 +561,19 @@ const setupEventListeners = () => {
             ? parseFloat(marketValueInput)
             : (isEditing ? (existingItem.marketValue || 0) : 0);
 
+          // Purity: read from select or custom input
+          let purity = 1.0;
+          const puritySelect = elements.itemPuritySelect || document.getElementById('itemPuritySelect');
+          if (puritySelect && puritySelect.value === 'custom') {
+            const purityInput = elements.itemPurity || document.getElementById('itemPurity');
+            purity = purityInput ? (parseFloat(purityInput.value) || 1.0) : 1.0;
+          } else if (puritySelect) {
+            purity = parseFloat(puritySelect.value) || 1.0;
+          }
+          if (isEditing && !puritySelect) {
+            purity = existingItem.purity || 1.0;
+          }
+
           // Validate mandatory fields
           if (
             !name ||
@@ -601,6 +614,7 @@ const setupEventListeners = () => {
               gradingAuthority,
               certNumber,
               pcgsNumber,
+              purity,
               isCollectable: false,
               numistaId: catalog,
             };
@@ -648,6 +662,7 @@ const setupEventListeners = () => {
               certNumber,
               pcgsNumber,
               pcgsVerified: false,
+              purity,
               spotPriceAtPurchase,
               premiumPerOz: 0,
               totalPremium: 0,
@@ -1611,6 +1626,9 @@ const setupSearch = () => {
           if (elements.itemModalTitle) elements.itemModalTitle.textContent = "Add Inventory Item";
           if (elements.itemModalSubmit) elements.itemModalSubmit.textContent = "Add to Inventory";
           if (elements.undoChangeBtn) elements.undoChangeBtn.style.display = "none";
+          // Reset purity to default (form.reset already sets select to first option)
+          const purityCustom = elements.purityCustomWrapper || document.getElementById('purityCustomWrapper');
+          if (purityCustom) purityCustom.style.display = 'none';
           // Hide PCGS verified icon in add mode
           const certVerifiedIcon = document.getElementById('certVerifiedIcon');
           if (certVerifiedIcon) certVerifiedIcon.style.display = 'none';

@@ -10,21 +10,11 @@ Project direction and planned work. Each item links to its full Linear issue for
 
 Visual polish and usability improvements — no backend changes required.
 
-### Next Up
-
-| Issue | Title | Priority | Label |
-|-------|-------|----------|-------|
-| [STACK-22](https://linear.app/hextrackr/issue/STACK-22) | Purity / Fineness field and melt formula update | High | Feature |
-
 ### Active Backlog
 
 | Issue | Title | Priority | Label |
 |-------|-------|----------|-------|
-| [STACK-23](https://linear.app/hextrackr/issue/STACK-23) | Bug: Search doesn't match custom chip group keywords | High | Bug |
-| [STACK-24](https://linear.app/hextrackr/issue/STACK-24) | PCGS quota bar & unified quota styling | Medium | Feature |
-| [STACK-25](https://linear.app/hextrackr/issue/STACK-25) | index.html incremental refactoring | Medium | Improvement |
 | [STACK-26](https://linear.app/hextrackr/issue/STACK-26) | Batch rename/normalize tool (Numista-powered) | Medium | Feature |
-| [STACK-27](https://linear.app/hextrackr/issue/STACK-27) | Pie chart toggle in metal detail modal | Low | Feature |
 | [STACK-28](https://linear.app/hextrackr/issue/STACK-28) | Chart.js dashboard improvements | Low | Feature |
 | [STACK-29](https://linear.app/hextrackr/issue/STACK-29) | Custom tagging system | Low | Feature |
 
@@ -73,6 +63,8 @@ Explicitly out of scope until prerequisites are met.
 <details>
 <summary>Shipped features (click to expand)</summary>
 
+- **v3.22.00** — STACK-22/24/25/27: Purity field & melt formula, PCGS quota bar, pie chart metric toggle, test-loader extraction
+- **v3.21.03** — STACK-23: Search matches custom chip group labels
 - **v3.21.02** — Seed data & first-time UX: 720 seed spot history entries, 8 sample inventory items, README overhaul
 - **v3.21.01 – v3.21.02** — Spot card % change, spot history import/export, provider sync toggle, PCGS persistence
 - **v3.21.00** — PCGS# field & cert verification, Bearer token config, PCGS in search/bulk edit/export
