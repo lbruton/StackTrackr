@@ -381,6 +381,11 @@ class NumistaProvider extends CatalogProvider {
       numistaData.reverse_thumbnail ||
       '';
 
+    // Reverse image: separate field for showing both sides
+    const reverseImageUrl = numistaData.reverse_thumbnail ||
+      numistaData.reverse?.thumbnail ||
+      '';
+
     return {
       catalogId: numistaData.id?.toString() || '',
       name: numistaData.title || '',
@@ -393,6 +398,7 @@ class NumistaProvider extends CatalogProvider {
       mintage: 0, // Mintage is per-issue, not per-type in Numista API
       estimatedValue: numistaData.value?.numeric_value || 0,
       imageUrl: imageUrl,
+      reverseImageUrl: reverseImageUrl,
       description: numistaData.comments || '',
       provider: 'Numista',
       lastUpdated: new Date().toISOString()
@@ -987,9 +993,13 @@ const escapeHtmlCatalog = (str) =>
  * @returns {string} HTML string
  */
 const renderNumistaResultCard = (result, index) => {
-  const imgHtml = result.imageUrl
-    ? `<img src="${escapeHtmlCatalog(result.imageUrl)}" alt="" loading="lazy">`
-    : `<div style="width:48px;height:48px;background:var(--bg-tertiary);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0;">🪙</div>`;
+  const placeholder = `<div class="numista-img-placeholder">🪙</div>`;
+  const obverseImg = result.imageUrl
+    ? `<img src="${escapeHtmlCatalog(result.imageUrl)}" alt="Obverse" loading="lazy">`
+    : placeholder;
+  const reverseImg = result.reverseImageUrl
+    ? `<img src="${escapeHtmlCatalog(result.reverseImageUrl)}" alt="Reverse" loading="lazy">`
+    : '';
   const meta = [
     result.year,
     result.country,
@@ -999,7 +1009,7 @@ const renderNumistaResultCard = (result, index) => {
   ].filter(Boolean).join(' · ');
 
   return `<div class="numista-result-card" data-result-index="${index}">
-    ${imgHtml}
+    <div class="numista-result-images">${obverseImg}${reverseImg}</div>
     <div class="numista-result-info">
       <div class="numista-result-name">${escapeHtmlCatalog(result.name)}</div>
       <div class="numista-result-meta">${escapeHtmlCatalog(meta)}</div>
@@ -1014,9 +1024,13 @@ const renderNumistaResultCard = (result, index) => {
  * @returns {string} HTML string
  */
 const renderNumistaSelectedItem = (result) => {
-  const imgHtml = result.imageUrl
-    ? `<img src="${escapeHtmlCatalog(result.imageUrl)}" alt="" loading="lazy">`
-    : `<div style="width:48px;height:48px;background:var(--bg-tertiary);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0;">🪙</div>`;
+  const placeholder = `<div class="numista-img-placeholder">🪙</div>`;
+  const obverseImg = result.imageUrl
+    ? `<img src="${escapeHtmlCatalog(result.imageUrl)}" alt="Obverse" loading="lazy">`
+    : placeholder;
+  const reverseImg = result.reverseImageUrl
+    ? `<img src="${escapeHtmlCatalog(result.reverseImageUrl)}" alt="Reverse" loading="lazy">`
+    : '';
   const meta = [
     result.year,
     result.country,
@@ -1025,7 +1039,7 @@ const renderNumistaSelectedItem = (result) => {
     result.type
   ].filter(Boolean).join(' · ');
 
-  return `${imgHtml}
+  return `<div class="numista-result-images">${obverseImg}${reverseImg}</div>
     <div class="numista-result-info">
       <div class="numista-result-name">${escapeHtmlCatalog(result.name)}</div>
       <div class="numista-result-meta">${escapeHtmlCatalog(meta)}</div>
@@ -1275,13 +1289,44 @@ const showNumistaResults = (results, directLookup = false, originalQuery = '') =
     return;
   }
 
-  // Multiple results → show selectable card list
+  // Multiple results → show selectable card list with search refinement
   title.textContent = `Numista Results (${results.length})`;
   // Stash results on the list element for delegated click retrieval
   list._numistaResults = results;
-  list.innerHTML = results.slice(0, 20).map((r, i) => renderNumistaResultCard(r, i)).join('');
+
+  // Build refinement search bar + result cards
+  const searchBarHtml = `<div class="numista-refine-search">
+    <input type="text" id="numistaRefineInput" class="numista-refine-input"
+           placeholder="Refine search..." value="${escapeHtmlCatalog(originalQuery)}">
+    <button type="button" id="numistaRefineBtn" class="btn btn-primary numista-refine-btn">Search</button>
+  </div>`;
+  const cardsHtml = results.slice(0, 20).map((r, i) => renderNumistaResultCard(r, i)).join('');
+  list.innerHTML = searchBarHtml + cardsHtml;
   list.style.display = 'flex';
   modal.style.display = 'flex';
+
+  // Wire up refinement search
+  const refineBtn = document.getElementById('numistaRefineBtn');
+  const refineInput = document.getElementById('numistaRefineInput');
+  if (refineBtn && refineInput) {
+    const doRefine = async () => {
+      const query = refineInput.value.trim();
+      if (!query) return;
+      refineBtn.disabled = true;
+      refineBtn.textContent = 'Searching\u2026';
+      try {
+        const refineResults = await catalogAPI.searchItems(query, { limit: 20 });
+        showNumistaResults(refineResults, false, query);
+      } catch (err) {
+        console.error('Numista refine search failed:', err);
+        refineBtn.textContent = 'Failed';
+        setTimeout(() => { refineBtn.textContent = 'Search'; refineBtn.disabled = false; }, 1500);
+      }
+    };
+    refineBtn.addEventListener('click', doRefine);
+    refineInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') doRefine(); });
+    setTimeout(() => refineInput.select(), 50);
+  }
 };
 
 /**
@@ -1294,6 +1339,21 @@ const fillFormFromNumistaResult = () => {
 
   // Collect checked fields and their edited values from the picker inputs
   const checkboxes = container.querySelectorAll('input[name="numistaField"]');
+
+  // Intercept for bulk edit — when callback is set, route field values there instead
+  if (typeof window._bulkEditNumistaCallback === 'function') {
+    const fieldMap = {};
+    checkboxes.forEach(cb => {
+      if (!cb.checked) return;
+      const input = container.querySelector('input[name="numistaFieldValue_' + cb.value + '"]');
+      if (input && input.value.trim()) fieldMap[cb.value] = input.value.trim();
+    });
+    window._bulkEditNumistaCallback(fieldMap);
+    window._bulkEditNumistaCallback = null;
+    closeNumistaResultsModal();
+    return;
+  }
+
   checkboxes.forEach(cb => {
     if (!cb.checked) return;
     const input = container.querySelector(`input[name="numistaFieldValue_${cb.value}"]`);

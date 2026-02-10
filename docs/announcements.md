@@ -1,5 +1,6 @@
 ## What's New
 
+- **Bulk Edit tool (v3.20.00)**: Full-screen modal in Settings > Tools to select, edit, copy, or delete multiple items at once. 16 editable fields with enable/disable toggles, searchable item table, Numista Lookup integration. Change Log moved to Settings > Log tab. Numista chips show full ID (N#12345). Year chips click to filter. Fixed chip word boundary matching and shift-click hide bug
 - **Filter chip enhancements (v3.19.00)**: Enable/disable and reorder 10 filter chip categories in Settings > Chips. Sort chips within each category by Name (A-Z) or Qty (High→Low) from new inline dropdown or Settings. Config-driven rendering replaces hard-coded category blocks
 - **API Settings redesign (v3.18.00)**: Numista promoted to first-class pinned tab. Metals provider tabs are drag-to-reorder — position = sync priority. Compact header status row with per-provider connection indicators and last-used timestamps. Batch badges, savings calculations, info links, and Default/Backup buttons removed. Clickable quota bars replace Quota buttons. Streamlined provider cards: Save, Save and Test, Clear Key
 - **Inline Name chips & search expansion (v3.17.00)**: 3 new inline chips (Serial #, Storage Location, Notes Indicator) join Grade, Numista, and Year in the Name cell. Enable/disable and reorder all 6 chip types in new Settings > Table panel. Search now covers Year, Grade, Grading Authority, Cert #, Numista ID, and Serial Number. ZIP backup/restore includes all chip settings and display preferences. Settings reorganized: Theme, Table, Chips tabs
@@ -40,4 +41,7 @@
 
 ## Development Roadmap
 
-- **Batch rename / normalize**: Bulk rename items using Numista catalog data and the name normalizer
+- **PCGS API integration**: Automated grading data and price guide lookup via PCGS Public API
+- **Notes modal**: Click notes indicator to view notes, shift-click to open edit modal
+- **Filter refresh for renamed items**: Items renamed via Numista no longer vanish from active filters
+- **Numista image cache** *(post-Supabase)*: Per-user caching of Numista API responses with coin images on item profiles. Attribution caption below images. Shift-click to upload custom photo of your specific coin

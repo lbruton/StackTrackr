@@ -56,6 +56,11 @@ const switchSettingsSection = (name) => {
   if (name === 'api' && typeof populateApiSection === 'function') {
     populateApiSection();
   }
+
+  // Populate change log when switching to changelog section
+  if (name === 'changelog' && typeof renderChangeLog === 'function') {
+    renderChangeLog();
+  }
 };
 
 /**
@@ -102,10 +107,13 @@ const syncSettingsUI = () => {
     chipMinSetting.value = localStorage.getItem('chipMinCount') || '3';
   }
 
-  // Smart name grouping — sync with inline control
+  // Smart name grouping — sync with inline toggle
   const groupSetting = document.getElementById('settingsGroupNameChips');
   if (groupSetting && window.featureFlags) {
-    groupSetting.value = featureFlags.isEnabled('GROUPED_NAME_CHIPS') ? 'yes' : 'no';
+    const gVal = featureFlags.isEnabled('GROUPED_NAME_CHIPS') ? 'yes' : 'no';
+    groupSetting.querySelectorAll('.chip-sort-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.val === gVal);
+    });
   }
 
   // Dynamic name chips
@@ -125,10 +133,14 @@ const syncSettingsUI = () => {
   // Filter chip category config table
   renderFilterChipCategoryTable();
 
-  // Chip sort order — sync settings dropdown with stored value
+  // Chip sort order — sync settings toggle with stored value
   const chipSortSetting = document.getElementById('settingsChipSortOrder');
   if (chipSortSetting) {
-    chipSortSetting.value = localStorage.getItem('chipSortOrder') || 'default';
+    const saved = localStorage.getItem('chipSortOrder');
+    const active = (saved === 'count') ? 'count' : 'alpha';
+    chipSortSetting.querySelectorAll('.chip-sort-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.sort === active);
+    });
   }
 
   // Storage footer
@@ -238,18 +250,28 @@ const setupSettingsEventListeners = () => {
     });
   }
 
-  // Smart name grouping in settings
-  const groupSetting = document.getElementById('settingsGroupNameChips');
-  if (groupSetting) {
-    groupSetting.addEventListener('change', () => {
-      const isEnabled = groupSetting.value === 'yes';
+  // Smart name grouping toggle in settings
+  const groupSettingEl = document.getElementById('settingsGroupNameChips');
+  if (groupSettingEl) {
+    groupSettingEl.addEventListener('click', (e) => {
+      const btn = e.target.closest('.chip-sort-btn');
+      if (!btn) return;
+      const isEnabled = btn.dataset.val === 'yes';
       if (window.featureFlags) {
         if (isEnabled) featureFlags.enable('GROUPED_NAME_CHIPS');
         else featureFlags.disable('GROUPED_NAME_CHIPS');
       }
-      // Sync inline control
+      // Update active state
+      groupSettingEl.querySelectorAll('.chip-sort-btn').forEach(b => {
+        b.classList.toggle('active', b.dataset.val === btn.dataset.val);
+      });
+      // Sync inline toggle
       const groupInline = document.getElementById('groupNameChips');
-      if (groupInline) groupInline.value = groupSetting.value;
+      if (groupInline) {
+        groupInline.querySelectorAll('.chip-sort-btn').forEach(b => {
+          b.classList.toggle('active', b.dataset.val === btn.dataset.val);
+        });
+      }
       if (typeof renderActiveFilters === 'function') renderActiveFilters();
     });
   }
@@ -267,15 +289,25 @@ const setupSettingsEventListeners = () => {
     });
   }
 
-  // Chip sort order in settings
-  const chipSortSetting = document.getElementById('settingsChipSortOrder');
-  if (chipSortSetting) {
-    chipSortSetting.addEventListener('change', () => {
-      const val = chipSortSetting.value;
+  // Chip sort order toggle in settings
+  const chipSortSettingEl = document.getElementById('settingsChipSortOrder');
+  if (chipSortSettingEl) {
+    chipSortSettingEl.addEventListener('click', (e) => {
+      const btn = e.target.closest('.chip-sort-btn');
+      if (!btn) return;
+      const val = btn.dataset.sort;
       localStorage.setItem('chipSortOrder', val);
-      // Sync inline control
+      // Update active state
+      chipSortSettingEl.querySelectorAll('.chip-sort-btn').forEach(b => {
+        b.classList.toggle('active', b.dataset.sort === val);
+      });
+      // Sync inline toggle
       const chipSortInline = document.getElementById('chipSortOrder');
-      if (chipSortInline) chipSortInline.value = val;
+      if (chipSortInline) {
+        chipSortInline.querySelectorAll('.chip-sort-btn').forEach(b => {
+          b.classList.toggle('active', b.dataset.sort === val);
+        });
+      }
       if (typeof renderActiveFilters === 'function') renderActiveFilters();
     });
   }

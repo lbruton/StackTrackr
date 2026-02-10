@@ -55,9 +55,6 @@ const logItemChanges = (oldItem, newItem) => {
  * Renders the change log table with all entries
  */
 const renderChangeLog = () => {
-  const tableBody = document.querySelector('#changeLogTable tbody');
-  if (!tableBody) return;
-
   const rows = [...changeLog]
     .slice()
     .reverse()
@@ -75,7 +72,13 @@ const renderChangeLog = () => {
       </tr>`;
     });
 
-  tableBody.innerHTML = rows.join('');
+  const html = rows.join('');
+
+  // Populate both the modal table and the settings panel table
+  const modalBody = document.querySelector('#changeLogTable tbody');
+  if (modalBody) modalBody.innerHTML = html;
+  const settingsBody = document.querySelector('#settingsChangeLogTable tbody');
+  if (settingsBody) settingsBody.innerHTML = html;
 };
 
 /**
