@@ -5,6 +5,19 @@ All notable changes to StakTrakr will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.21.00] - 2026-02-09
+
+### Added — PCGS# Catalog Number & Cert Verification
+
+- **PCGS# field**: New optional PCGS catalog number input on add/edit form with (i) info icon linking to PCGS Number Lookup. PCGS# included in item data model, normalization, CSV/JSON/PDF export, CSV/JSON import, and ZIP backup round-trip
+- **PCGS# inline chip**: Blue `PCGS#786060` badge in the Name cell (disabled by default — enable in Settings > Table). Click to open PCGS CoinFacts page in popup window. Config-driven ordering via existing inline chip system
+- **PCGS cert verification API**: New Settings > API > PCGS tab for bearer token configuration (1,000 requests/day). Save, Test Connection, and Clear Token buttons. Token stored locally with base64 encoding matching Numista pattern
+- **Verify icon on grade tag**: PCGS-graded items with cert number + configured API show a small checkmark icon inside the grade tag. Click to verify cert — displays grade, population, pop higher, and price guide value in tooltip. Green checkmark on success, red flash on failure
+- **PCGS# in search**: Search bar and advanced filters now match against PCGS catalog numbers
+- **PCGS# in bulk edit**: New "PCGS Number" field in Settings > Tools > Bulk Edit
+
+---
+
 ## [3.20.00] - 2026-02-09
 
 ### Added — Bulk Edit Tool, Change Log Settings Tab & Focus Group Fixes

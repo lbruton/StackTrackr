@@ -267,6 +267,7 @@ const setupAckModalEvents = () => {
  */
 const getEmbeddedWhatsNew = () => {
   return `
+    <li><strong>v3.21.00 – PCGS# &amp; Cert Verification</strong>: New PCGS catalog number field with inline chip (click to open CoinFacts). PCGS API cert verification in Settings &gt; API &gt; PCGS — click verify icon on graded items to see grade, population, and price guide. Included in all export/import, search, and bulk edit</li>
     <li><strong>v3.20.00 – Bulk Edit tool</strong>: Full-screen modal in Settings &gt; Tools to select, edit, copy, or delete multiple items at once. 16 editable fields with enable/disable toggles, searchable item table, Numista Lookup. Change Log moved to Settings &gt; Log tab. Numista chips show full ID. Year chips click to filter. Chip word boundary and shift-click hide fixes</li>
     <li><strong>v3.19.00 – Filter chip enhancements</strong>: Enable/disable and reorder 10 filter chip categories in Settings &gt; Chips. Sort chips by Name (A-Z) or Qty (High&rarr;Low) from inline dropdown or Settings. Config-driven rendering replaces hard-coded category blocks</li>
     <li><strong>v3.18.00 – API Settings redesign</strong>: Numista promoted to first-class pinned tab. Drag-to-reorder metals provider tabs — position = sync priority. Compact header status row with connection indicators and last-used timestamps. Batch badges, savings calculations, info links, and Default/Backup buttons removed. Clickable quota bars. Streamlined provider cards</li>

@@ -939,16 +939,25 @@
                 </div>
               </div>
             </div>
-            <!-- Row: Catalog N# & Notes -->
+            <!-- Row: Numista # & PCGS # -->
             <div class="grid grid-2">
               <div>
-                <label for="itemCatalog">Catalog (N#)</label>
-                <input id="itemCatalog" type="text" placeholder="Numista catalog #" />
+                <label for="itemCatalog">Numista #</label>
+                <input id="itemCatalog" type="text" placeholder="e.g. 95694" />
               </div>
               <div>
-                <label for="itemNotes">Notes</label>
-                <input id="itemNotes" type="text" placeholder="Additional notes or comments..." />
+                <label for="itemPcgsNumber">PCGS # <span style="font-weight:normal;opacity:0.6;">(optional)</span>
+                  <a href="https://www.pcgs.com/pcgsnolookup" target="_blank" rel="noopener" title="Look up PCGS coin numbers" class="form-info-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                  </a>
+                </label>
+                <input id="itemPcgsNumber" type="text" placeholder="e.g. 786060" />
               </div>
+            </div>
+            <!-- Row: Notes -->
+            <div>
+              <label for="itemNotes">Notes</label>
+              <input id="itemNotes" type="text" placeholder="Additional notes or comments..." />
             </div>
             <!-- Form action buttons -->
             <div class="item-modal-actions">
@@ -1573,6 +1582,7 @@
               <!-- Provider Tabs — Numista pinned, metals draggable -->
               <div class="settings-provider-tabs">
                 <button class="settings-provider-tab pinned active" data-provider="NUMISTA">Numista</button>
+                <button class="settings-provider-tab pinned" data-provider="PCGS">PCGS</button>
                 <button class="settings-provider-tab" data-provider="METALS_DEV" draggable="true">Metals.dev</button>
                 <button class="settings-provider-tab" data-provider="METALS_API" draggable="true">Metals-API</button>
                 <button class="settings-provider-tab" data-provider="METAL_PRICE_API" draggable="true">MetalPriceAPI</button>
@@ -1604,6 +1614,34 @@
                     </div>
                   </div>
                   <div id="numistaStatus" class="api-status" style="margin-top: 0.5rem;"></div>
+                </div>
+              </div>
+
+              <!-- PCGS Provider Panel -->
+              <div class="settings-provider-panel" id="providerPanel_PCGS" style="display: none">
+                <div class="api-provider" data-provider="PCGS">
+                  <div class="provider-header">
+                    <span class="provider-name">PCGS Cert Verification API</span>
+                  </div>
+                  <div class="api-key-row">
+                    <label for="pcgsBearerToken">Bearer Token:</label>
+                    <input type="password" id="pcgsBearerToken" placeholder="Enter your PCGS API bearer token" />
+                  </div>
+                  <div class="api-key-note">
+                    <p>Requires a PCGS API account at <a href="https://api.pcgs.com" target="_blank" rel="noopener">api.pcgs.com</a> (1,000 requests/day). Token is stored locally in your browser.</p>
+                    <p style="margin-top:0.35rem;opacity:0.7;font-size:0.8rem;">HTTPS required — cert verification will not work on <code>file://</code> protocol.</p>
+                  </div>
+                  <div class="provider-info">
+                    <div class="provider-status" id="pcgsProviderStatus"><span class="status-dot"></span><span class="status-text">Disconnected</span></div>
+                  </div>
+                  <div class="provider-footer">
+                    <div class="provider-actions">
+                      <button class="btn api-save-btn success" id="savePcgsBtn" data-provider="PCGS">Save Token</button>
+                      <button class="btn api-sync-btn info" id="testPcgsBtn" data-provider="PCGS">Test Connection</button>
+                      <button class="btn api-clear-btn warning" id="clearPcgsBtn" data-provider="PCGS">Clear Token</button>
+                    </div>
+                  </div>
+                  <div id="pcgsStatus" class="api-status" style="margin-top: 0.5rem;"></div>
                 </div>
               </div>
 
@@ -2285,6 +2323,7 @@
     <script defer src="./js/spot.js"></script>
     <script defer src="./js/api.js"></script>
     <script defer src="./js/catalog-api.js"></script>
+    <script defer src="./js/pcgs-api.js"></script>
     <script defer src="./js/catalog-providers.js"></script>
     <script defer src="./js/catalog-manager.js"></script>
     <script defer src="./js/inventory.js"></script>

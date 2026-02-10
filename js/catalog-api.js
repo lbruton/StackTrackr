@@ -26,6 +26,13 @@ class CatalogConfig {
             // Key wasn't base64 encoded (legacy or plain text) — keep as-is
           }
         }
+        if (parsed.pcgs && parsed.pcgs.bearerToken) {
+          try {
+            parsed.pcgs.bearerToken = atob(parsed.pcgs.bearerToken);
+          } catch (e) {
+            // Token wasn't base64 encoded — keep as-is
+          }
+        }
         this.config = parsed;
       } else {
         this.config = this.getDefaultConfig();
@@ -39,6 +46,7 @@ class CatalogConfig {
   getDefaultConfig() {
     const now = new Date();
     const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    const today = now.toISOString().slice(0, 10);
     return {
       numista: {
         apiKey: '',
@@ -47,6 +55,13 @@ class CatalogConfig {
       numistaUsage: {
         used: 0,
         month: month
+      },
+      pcgs: {
+        bearerToken: ''
+      },
+      pcgsUsage: {
+        used: 0,
+        date: today
       },
       rsynk: {
         apiKey: ''
@@ -63,6 +78,9 @@ class CatalogConfig {
       const toStore = JSON.parse(JSON.stringify(this.config));
       if (toStore.numista && toStore.numista.apiKey) {
         toStore.numista.apiKey = btoa(toStore.numista.apiKey);
+      }
+      if (toStore.pcgs && toStore.pcgs.bearerToken) {
+        toStore.pcgs.bearerToken = btoa(toStore.pcgs.bearerToken);
       }
       localStorage.setItem(this.storageKey, JSON.stringify(toStore));
     } catch (error) {
@@ -154,6 +172,92 @@ class CatalogConfig {
       used: this.config.numistaUsage.used,
       quota: this.config.numista?.quota || 2000,
       month: this.config.numistaUsage.month
+    };
+  }
+
+  // ─── PCGS Methods ───────────────────────────────────────────────────────
+
+  /**
+   * Set PCGS bearer token
+   * @param {string} token - Bearer token from PCGS
+   */
+  setPcgsConfig(token) {
+    if (!this.config.pcgs) this.config.pcgs = {};
+    this.config.pcgs.bearerToken = token || '';
+    this.save();
+    return true;
+  }
+
+  /**
+   * Get current PCGS configuration
+   * @returns {{ bearerToken: string }}
+   */
+  getPcgsConfig() {
+    if (!this.config.pcgs) this.config.pcgs = { bearerToken: '' };
+    return { bearerToken: this.config.pcgs.bearerToken || '' };
+  }
+
+  /**
+   * Check if PCGS is configured with a valid token
+   * @returns {boolean}
+   */
+  isPcgsEnabled() {
+    return !!(this.config.pcgs && this.config.pcgs.bearerToken);
+  }
+
+  /**
+   * Clear stored PCGS token
+   */
+  clearPcgsToken() {
+    this.config.pcgs = { bearerToken: '' };
+    this.save();
+  }
+
+  /**
+   * Increment PCGS usage counter, auto-resetting if date changed (daily limit)
+   */
+  incrementPcgsUsage() {
+    const today = new Date().toISOString().slice(0, 10);
+    if (!this.config.pcgsUsage) {
+      this.config.pcgsUsage = { used: 0, date: today };
+    }
+    if (this.config.pcgsUsage.date !== today) {
+      this.config.pcgsUsage.used = 0;
+      this.config.pcgsUsage.date = today;
+    }
+    this.config.pcgsUsage.used++;
+    this.save();
+  }
+
+  /**
+   * Check if a PCGS API request can be made (under daily rate limit)
+   * @returns {boolean}
+   */
+  canMakePcgsRequest() {
+    const today = new Date().toISOString().slice(0, 10);
+    if (!this.config.pcgsUsage || this.config.pcgsUsage.date !== today) {
+      return true; // New day, counter resets
+    }
+    return this.config.pcgsUsage.used < 1000;
+  }
+
+  /**
+   * Get current PCGS usage stats
+   * @returns {{ used: number, limit: number, date: string }}
+   */
+  getPcgsUsage() {
+    const today = new Date().toISOString().slice(0, 10);
+    if (!this.config.pcgsUsage) {
+      this.config.pcgsUsage = { used: 0, date: today };
+    }
+    if (this.config.pcgsUsage.date !== today) {
+      this.config.pcgsUsage.used = 0;
+      this.config.pcgsUsage.date = today;
+    }
+    return {
+      used: this.config.pcgsUsage.used,
+      limit: 1000,
+      date: this.config.pcgsUsage.date
     };
   }
 }
@@ -1572,6 +1676,81 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         catalogAPI.initializeProviders();
         console.log('🗑️ Numista API key cleared');
+      }
+    });
+  }
+
+  // =========================================================================
+  // PCGS API — settings UI event wiring
+  // =========================================================================
+
+  const pcgsTokenInput = document.getElementById('pcgsBearerToken');
+  const savePcgsBtn = document.getElementById('savePcgsBtn');
+  const testPcgsBtn = document.getElementById('testPcgsBtn');
+  const clearPcgsBtn = document.getElementById('clearPcgsBtn');
+  const pcgsStatus = document.getElementById('pcgsStatus');
+
+  if (pcgsTokenInput) {
+    const existingPcgs = catalogConfig.getPcgsConfig();
+    if (existingPcgs.bearerToken) {
+      pcgsTokenInput.value = existingPcgs.bearerToken;
+    }
+  }
+
+  if (savePcgsBtn) {
+    savePcgsBtn.addEventListener('click', function() {
+      const token = pcgsTokenInput?.value.trim();
+      if (!token) {
+        alert('Please enter your PCGS bearer token first');
+        return;
+      }
+      catalogConfig.setPcgsConfig(token);
+      if (pcgsStatus) pcgsStatus.textContent = 'Token saved.';
+      alert('PCGS bearer token saved.');
+    });
+  }
+
+  if (testPcgsBtn) {
+    testPcgsBtn.addEventListener('click', async function() {
+      const token = pcgsTokenInput?.value.trim();
+      if (!token) {
+        alert('Please enter your PCGS bearer token first');
+        return;
+      }
+
+      // Save first
+      catalogConfig.setPcgsConfig(token);
+
+      this.textContent = 'Testing...';
+      this.disabled = true;
+
+      try {
+        if (typeof verifyPcgsCert === 'function') {
+          const result = await verifyPcgsCert('00000000');
+          // Even a "not found" response means the API is reachable
+          if (pcgsStatus) pcgsStatus.textContent = 'Connected — API reachable.';
+          alert('PCGS API connection successful!');
+        } else {
+          if (pcgsStatus) pcgsStatus.textContent = 'pcgs-api.js not loaded.';
+          alert('PCGS API module not loaded. Ensure pcgs-api.js is included.');
+        }
+      } catch (error) {
+        const msg = error.message || 'Unknown error';
+        if (pcgsStatus) pcgsStatus.textContent = 'Connection failed: ' + msg;
+        alert('PCGS API connection failed: ' + msg);
+      } finally {
+        this.textContent = 'Test Connection';
+        this.disabled = false;
+      }
+    });
+  }
+
+  if (clearPcgsBtn) {
+    clearPcgsBtn.addEventListener('click', function() {
+      if (confirm('Are you sure you want to clear your PCGS bearer token?')) {
+        catalogConfig.clearPcgsToken();
+        if (pcgsTokenInput) pcgsTokenInput.value = '';
+        if (pcgsStatus) pcgsStatus.textContent = 'Token cleared.';
       }
     });
   }
