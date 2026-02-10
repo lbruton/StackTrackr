@@ -210,7 +210,11 @@
       let count = 0;
       inventory.forEach(item => {
         const itemName = (item.name || '').toLowerCase();
-        if (group.patterns.some(p => itemName.includes(p.toLowerCase()))) {
+        if (group.patterns.some(p => {
+          try {
+            return new RegExp('\\b' + p.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b', 'i').test(itemName);
+          } catch (e) { return itemName.includes(p.toLowerCase()); }
+        })) {
           count++;
         }
       });
@@ -538,6 +542,7 @@
       _contextMenuEl.parentNode.removeChild(_contextMenuEl);
     }
     _contextMenuEl = null;
+    document.removeEventListener('click', _hideContextMenu);
     document.removeEventListener('keydown', _onContextMenuKey);
   };
 
@@ -621,6 +626,7 @@
       _confirmEl.parentNode.removeChild(_confirmEl);
     }
     _confirmEl = null;
+    document.removeEventListener('click', _hideBlacklistConfirm);
     document.removeEventListener('keydown', _onConfirmKey);
   };
 

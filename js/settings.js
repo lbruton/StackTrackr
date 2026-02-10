@@ -56,6 +56,11 @@ const switchSettingsSection = (name) => {
   if (name === 'api' && typeof populateApiSection === 'function') {
     populateApiSection();
   }
+
+  // Populate change log when switching to changelog section
+  if (name === 'changelog' && typeof renderChangeLog === 'function') {
+    renderChangeLog();
+  }
 };
 
 /**

@@ -1395,6 +1395,10 @@
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
               Tools
             </button>
+            <button class="settings-nav-item" data-section="changelog">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="10"/></svg>
+              Log
+            </button>
           </nav>
 
           <!-- Content Area -->
@@ -1885,9 +1889,34 @@
             <!-- ===== TOOLS (placeholder) ===== -->
             <div class="settings-section-panel" id="settingsPanel_tools" style="display: none">
               <h3>Tools</h3>
-              <div class="settings-placeholder">
-                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.3"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
-                <p>Bulk rename, bulk operations coming soon.</p>
+              <div class="settings-group">
+                <label>Bulk Edit</label>
+                <p class="settings-subtext">Select multiple items and edit fields, copy, or delete in bulk.</p>
+                <button class="btn btn-primary" id="bulkEditBtn" type="button">Open Bulk Edit</button>
+              </div>
+            </div>
+
+            <!-- ===== CHANGE LOG ===== -->
+            <div class="settings-section-panel" id="settingsPanel_changelog" style="display: none">
+              <h3>Change Log</h3>
+              <p class="settings-subtext">Recent inventory changes. Click a row to edit the item, or undo/redo individual changes.</p>
+              <div class="settings-changelog-actions">
+                <button class="btn btn-secondary" id="settingsChangeLogClearBtn" type="button">Clear Log</button>
+              </div>
+              <div class="settings-changelog-wrap">
+                <table id="settingsChangeLogTable">
+                  <thead>
+                    <tr>
+                      <th>Date</th>
+                      <th>Item</th>
+                      <th>Field</th>
+                      <th>Old Value</th>
+                      <th>New Value</th>
+                      <th>Undo</th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
               </div>
             </div>
 
@@ -2166,6 +2195,30 @@
     </div>
 
     <!-- =============================================================================
+       BULK EDIT MODAL
+
+       Full-screen modal for multi-item editing, copying, and deletion.
+       ============================================================================= -->
+    <div class="modal" id="bulkEditModal" style="display: none">
+      <div class="modal-content bulk-edit-content">
+        <div class="modal-header">
+          <h2>Bulk Edit</h2>
+          <button aria-label="Close modal" class="modal-close" id="bulkEditCloseBtn">&times;</button>
+        </div>
+        <div class="modal-body bulk-edit-body">
+          <!-- Left: Field panel -->
+          <div class="bulk-edit-fields" id="bulkEditFieldPanel"></div>
+          <!-- Right: Item selection table -->
+          <div class="bulk-edit-items">
+            <div class="bulk-edit-toolbar" id="bulkEditToolbar"></div>
+            <div class="bulk-edit-table-wrap" id="bulkEditTableWrap"></div>
+          </div>
+        </div>
+        <div class="modal-footer bulk-edit-footer" id="bulkEditFooter"></div>
+      </div>
+    </div>
+
+    <!-- =============================================================================
        JAVASCRIPT MODULE LOADING
        
        Modular architecture with proper dependency order:
@@ -2209,6 +2262,7 @@
     <script defer src="./js/about.js"></script>
     <script defer src="./js/customMapping.js"></script>
     <script defer src="./js/settings.js"></script>
+    <script defer src="./js/bulkEdit.js"></script>
     <script defer src="./js/events.js"></script>
     
     <!-- Test Scripts (Development) -->

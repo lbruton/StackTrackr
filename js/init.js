@@ -193,6 +193,14 @@ document.addEventListener("DOMContentLoaded", () => {
     elements.debugModal = safeGetElement("debugModal");
     elements.debugCloseBtn = safeGetElement("debugCloseBtn");
 
+    // Bulk edit modal elements
+    elements.bulkEditModal = safeGetElement("bulkEditModal");
+    elements.bulkEditBtn = safeGetElement("bulkEditBtn");
+    elements.bulkEditCloseBtn = safeGetElement("bulkEditCloseBtn");
+
+    // Settings change log panel
+    elements.settingsChangeLogClearBtn = safeGetElement("settingsChangeLogClearBtn");
+
     // Pagination elements
     debugLog("Phase 5: Initializing pagination elements...");
     elements.itemsPerPage = safeGetElement("itemsPerPage");
