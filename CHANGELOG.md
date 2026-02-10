@@ -5,6 +5,20 @@ All notable changes to StakTrakr will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added — STACK-42: Persistent UUIDs for inventory items
+
+- **Added**: Stable UUID v4 field on every inventory item — survives delete, reorder, and sort
+- **Added**: `generateUUID()` helper with `crypto.randomUUID()` and RFC 4122 fallback for `file://`
+- **Added**: Automatic UUID migration for existing items on load (no data loss)
+- **Changed**: CSV, JSON, ZIP, and PDF exports now include UUID column
+- **Changed**: CSV, JSON imports preserve existing UUIDs, generate for items without
+- **Changed**: Bulk copy and add-item assign new UUIDs; edit preserves existing UUID
+- **Fixed**: `sanitizeImportedItem()` safety net ensures no item lacks a UUID
+
+---
+
 ## [3.22.01] - 2026-02-10
 
 ### Added — Form layout, bulk edit dropdowns, purity chips

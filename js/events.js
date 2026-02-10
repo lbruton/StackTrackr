@@ -668,6 +668,7 @@ const setupEventListeners = () => {
               totalPremium: 0,
               isCollectable: false,
               serial,
+              uuid: generateUUID(),
               numistaId: catalog,
             });
 
