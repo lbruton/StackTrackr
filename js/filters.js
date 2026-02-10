@@ -439,8 +439,11 @@ const renderActiveFilters = () => {
         { id: 'grade', enabled: true }, { id: 'numistaId', enabled: true },
       ];
 
+  // Read sort preference from toggle active button or localStorage (default: alpha)
   const sortEl = document.getElementById('chipSortOrder');
-  const chipSortPref = (sortEl && sortEl.value) || localStorage.getItem('chipSortOrder') || 'default';
+  const activeBtn = sortEl && sortEl.querySelector('.chip-sort-btn.active');
+  const rawPref = (activeBtn && activeBtn.dataset.sort) || localStorage.getItem('chipSortOrder') || 'alpha';
+  const chipSortPref = (rawPref === 'count') ? 'count' : 'alpha';
 
   // Helper: collect chips for a single category from the summary data
   const collectCategoryChips = (cat) => {
@@ -1004,7 +1007,11 @@ const applyQuickFilter = (field, value, isGrouped = false) => {
       const matchingNames = [];
       inventory.forEach(item => {
         const itemName = (item.name || '').toLowerCase();
-        if (group.patterns.some(p => itemName.includes(p.toLowerCase()))) {
+        if (group.patterns.some(p => {
+          try {
+            return new RegExp('\\b' + p.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b', 'i').test(itemName);
+          } catch (e) { return itemName.includes(p.toLowerCase()); }
+        })) {
           matchingNames.push(item.name);
         }
       });

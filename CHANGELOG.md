@@ -5,6 +5,22 @@ All notable changes to StakTrakr will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.20.00] - 2026-02-09
+
+### Added — Bulk Edit Tool, Change Log Settings Tab & Focus Group Fixes
+
+- **Bulk Edit tool**: Full-screen modal in Settings > Tools to select multiple inventory items and edit fields, copy, or delete in bulk. Two-column layout with enable/disable field toggles (16 editable fields) on the left and searchable item table with checkboxes on the right. Numista Lookup button fills bulk edit fields from catalog data. Selection persists across modal open/close via localStorage
+- **Change Log Settings tab**: Change Log relocated from standalone modal to new Settings > Log tab. Main page Log button now opens Settings at the Log tab directly. Font size and padding reduced to match Table/Chips tabs
+- **Full Numista ID on chips**: Numista chips now display `N#12345` (full ID) instead of just `N#`
+- **Year chip click-to-filter**: Clicking a year chip in the Name column now applies a year column filter
+
+### Fixed
+
+- **Chip word boundary matching**: Custom group patterns like "AW" no longer match inside words like "Silawa" — uses `\b` word boundary regex instead of substring matching
+- **Shift-click chip hide**: Right-click blacklist and context menu popups now properly clean up document click listeners, fixing the issue where shift-click hide only worked once
+
+---
+
 ## [3.19.00] - 2026-02-09
 
 ### Added — Filter Chip Enhancements

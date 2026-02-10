@@ -91,6 +91,14 @@ const populateVersionModal = (version, html) => {
  */
 const getEmbeddedChangelog = (version) => {
   const changelogs = {
+    "3.20.00": `
+      <li><strong>Bulk Edit tool</strong>: Full-screen modal in Settings &gt; Tools to select multiple items and edit fields, copy, or delete in bulk. 16 editable fields with enable/disable toggles, searchable item table, Numista Lookup integration</li>
+      <li><strong>Change Log Settings tab</strong>: Change Log relocated to Settings &gt; Log tab. Main page Log button opens Settings at the Log tab directly</li>
+      <li><strong>Full Numista ID on chips</strong>: Chips now display N#12345 (full ID) instead of just N#</li>
+      <li><strong>Year chip click-to-filter</strong>: Clicking a year chip applies a year column filter</li>
+      <li><strong>Chip word boundary fix</strong>: Custom group patterns no longer match inside words</li>
+      <li><strong>Shift-click chip hide fix</strong>: Right-click popups now properly clean up listeners</li>
+    `,
     "3.19.00": `
       <li><strong>Category toggles</strong>: Enable, disable, and reorder 10 filter chip categories in Settings &gt; Chips. Disabled categories hidden from filter bar</li>
       <li><strong>Chip sort order</strong>: Sort chips within each category by Name (A-Z) or Qty (High&rarr;Low) from inline dropdown or Settings. Bidirectional sync between controls</li>

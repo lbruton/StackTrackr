@@ -1032,11 +1032,13 @@ const renderTable = () => {
         ? `<span class="numista-tag" data-numista-id="${escapeAttribute(String(numistaId))}"
                data-coin-name="${escapeAttribute(item.name)}"
                title="N#${escapeAttribute(String(numistaId))} — View on Numista"
-               tabindex="0" role="button">N#</span>`
+               tabindex="0" role="button">N#${sanitizeHtml(String(numistaId))}</span>`
         : '';
 
       const yearTag = item.year
-        ? `<span class="year-tag" title="Year: ${escapeAttribute(String(item.year))}">${sanitizeHtml(String(item.year))}</span>`
+        ? `<span class="year-tag" title="Filter by year: ${escapeAttribute(String(item.year))}"
+               onclick="applyColumnFilter('year', ${JSON.stringify(String(item.year))})"
+               tabindex="0" role="button" style="cursor:pointer;">${sanitizeHtml(String(item.year))}</span>`
         : '';
 
       const serialTag = item.serialNumber

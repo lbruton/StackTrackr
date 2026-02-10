@@ -390,54 +390,63 @@ const setupEventListeners = () => {
     const groupNameChipsEl = document.getElementById('groupNameChips');
     if (groupNameChipsEl && window.featureFlags) {
       // Set initial state from feature flag
-      groupNameChipsEl.value = window.featureFlags.isEnabled('GROUPED_NAME_CHIPS') ? 'yes' : 'no';
+      const initVal = window.featureFlags.isEnabled('GROUPED_NAME_CHIPS') ? 'yes' : 'no';
+      groupNameChipsEl.querySelectorAll('.chip-sort-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.val === initVal);
+      });
 
-      safeAttachListener(
-        groupNameChipsEl,
-        'change',
-        (e) => {
-          const isEnabled = e.target.value === 'yes';
-          // Update feature flag setting
-          if (isEnabled) {
-            window.featureFlags.enable('GROUPED_NAME_CHIPS');
-          } else {
-            window.featureFlags.disable('GROUPED_NAME_CHIPS');
-          }
-          // Sync settings modal control
-          const settingsGroup = document.getElementById('settingsGroupNameChips');
-          if (settingsGroup) settingsGroup.value = e.target.value;
-          // Refresh the chips display
-          if (typeof renderActiveFilters === 'function') {
-            renderActiveFilters();
-          }
-        },
-        'Grouped name chips toggle'
-      );
+      groupNameChipsEl.addEventListener('click', (e) => {
+        const btn = e.target.closest('.chip-sort-btn');
+        if (!btn) return;
+        const isEnabled = btn.dataset.val === 'yes';
+        if (isEnabled) {
+          window.featureFlags.enable('GROUPED_NAME_CHIPS');
+        } else {
+          window.featureFlags.disable('GROUPED_NAME_CHIPS');
+        }
+        // Update active state
+        groupNameChipsEl.querySelectorAll('.chip-sort-btn').forEach(b => {
+          b.classList.toggle('active', b.dataset.val === btn.dataset.val);
+        });
+        // Sync settings modal toggle
+        const settingsGroup = document.getElementById('settingsGroupNameChips');
+        if (settingsGroup) {
+          settingsGroup.querySelectorAll('.chip-sort-btn').forEach(b => {
+            b.classList.toggle('active', b.dataset.val === btn.dataset.val);
+          });
+        }
+        if (typeof renderActiveFilters === 'function') renderActiveFilters();
+      });
     }
 
-    // Chip sort order inline control
+    // Chip sort order inline toggle
     const chipSortEl = document.getElementById('chipSortOrder');
     if (chipSortEl) {
-      // Restore saved value on setup
+      // Restore saved value on setup (migrate 'default' → 'alpha')
       const savedSort = localStorage.getItem('chipSortOrder');
-      if (savedSort) chipSortEl.value = savedSort;
+      const activeSort = (savedSort === 'count') ? 'count' : 'alpha';
+      chipSortEl.querySelectorAll('.chip-sort-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.sort === activeSort);
+      });
 
-      safeAttachListener(
-        chipSortEl,
-        'change',
-        (e) => {
-          const val = e.target.value;
-          localStorage.setItem('chipSortOrder', val);
-          // Sync settings modal control
-          const settingsSort = document.getElementById('settingsChipSortOrder');
-          if (settingsSort) settingsSort.value = val;
-          // Refresh chips
-          if (typeof renderActiveFilters === 'function') {
-            renderActiveFilters();
-          }
-        },
-        'Chip sort order toggle'
-      );
+      chipSortEl.addEventListener('click', (e) => {
+        const btn = e.target.closest('.chip-sort-btn');
+        if (!btn) return;
+        const val = btn.dataset.sort;
+        localStorage.setItem('chipSortOrder', val);
+        // Update active state
+        chipSortEl.querySelectorAll('.chip-sort-btn').forEach(b => {
+          b.classList.toggle('active', b.dataset.sort === val);
+        });
+        // Sync settings modal toggle
+        const settingsSort = document.getElementById('settingsChipSortOrder');
+        if (settingsSort) {
+          settingsSort.querySelectorAll('.chip-sort-btn').forEach(b => {
+            b.classList.toggle('active', b.dataset.sort === val);
+          });
+        }
+        if (typeof renderActiveFilters === 'function') renderActiveFilters();
+      });
     }
 
     if (elements.detailsCloseBtn) {
@@ -871,22 +880,51 @@ const setupEventListeners = () => {
       );
     }
 
+    // Bulk Edit modal open/close
+    if (elements.bulkEditBtn) {
+      safeAttachListener(
+        elements.bulkEditBtn,
+        "click",
+        () => {
+          if (typeof openBulkEdit === "function") openBulkEdit();
+        },
+        "Bulk edit open button",
+      );
+    }
+    if (elements.bulkEditCloseBtn) {
+      safeAttachListener(
+        elements.bulkEditCloseBtn,
+        "click",
+        () => {
+          if (typeof closeBulkEdit === "function") closeBulkEdit();
+        },
+        "Bulk edit close button",
+      );
+    }
+
       if (elements.changeLogBtn) {
         safeAttachListener(
           elements.changeLogBtn,
           "click",
           (e) => {
             e.preventDefault();
-            renderChangeLog();
-            if (elements.changeLogModal) {
-              if (window.openModalById) openModalById('changeLogModal');
-              else {
-                elements.changeLogModal.style.display = "flex";
-                document.body.style.overflow = "hidden";
-              }
+            if (typeof showSettingsModal === "function") {
+              showSettingsModal("changelog");
             }
           },
           "Change log button",
+        );
+      }
+
+      // Settings panel Change Log clear button
+      if (elements.settingsChangeLogClearBtn) {
+        safeAttachListener(
+          elements.settingsChangeLogClearBtn,
+          "click",
+          () => {
+            if (typeof clearChangeLog === "function") clearChangeLog();
+          },
+          "Settings change log clear button",
         );
       }
 
@@ -1852,6 +1890,7 @@ const setupApiEvents = () => {
           const historyModal = document.getElementById("apiHistoryModal");
           const catalogHistModal = document.getElementById("catalogHistoryModal");
           const quotaModal = document.getElementById("apiQuotaModal");
+          const bulkEditModal = document.getElementById("bulkEditModal");
           const settingsModal = document.getElementById("settingsModal");
           const itemModal = document.getElementById("itemModal");
           const notesModal = document.getElementById("notesModal");
@@ -1883,6 +1922,12 @@ const setupApiEvents = () => {
             quotaModal.style.display === "flex"
           ) {
             quotaModal.style.display = "none";
+          } else if (
+            bulkEditModal &&
+            bulkEditModal.style.display !== "none" &&
+            typeof closeBulkEdit === "function"
+          ) {
+            closeBulkEdit();
           } else if (
             settingsModal &&
             settingsModal.style.display === "flex" &&
