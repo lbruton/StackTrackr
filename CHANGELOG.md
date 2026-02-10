@@ -5,6 +5,19 @@ All notable changes to StakTrakr will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.21.02] - 2026-02-10
+
+### Added — Seed data, sample inventory & README overhaul
+
+- **Seed spot history**: 6 months of baked-in price data (720 entries, 4 metals) — sparklines and price cards work from day one
+- **Sample inventory**: 8 pre-configured items (3x ASE, 3x Gold Maple, Platinum Round, Palladium Bar) with grades, Numista IDs, and filter chips
+- **Seed timestamp**: Spot cards show 'Seed · date' with shift+click hint for seeded users
+- **Metals History**: Seed entries visible in history modal with StakTrakr source label
+- **README overhaul**: Hero screenshot, feature showcase, Getting Started guide
+- **Seed generator**: generate-seed-data.py processes CSV exports into seed JSON + embedded JS
+
+---
+
 ## [3.21.01] - 2026-02-09
 
 ### Added — PCGS Verified Persistence & Lookup Enhancements
