@@ -32,13 +32,32 @@ const BULK_EDITABLE_FIELDS = [
     attrs: { min: '1', step: '1' } },
   { id: 'weight',           label: 'Weight (oz)',        inputType: 'number',
     attrs: { min: '0', step: '0.001' } },
+  { id: 'purity',           label: 'Purity',             inputType: 'select',
+    options: [
+      { value: '1.0',    label: 'Pure' },
+      { value: '0.9999', label: '.9999 — Four Nines' },
+      { value: '0.999',  label: '.999 — Fine' },
+      { value: '0.925',  label: '.925 — Sterling' },
+      { value: '0.900',  label: '.900 — 90% Silver' },
+      { value: '0.800',  label: '.800 — 80% (European)' },
+      { value: '0.600',  label: '.600 — 60%' },
+      { value: '0.400',  label: '.400 — 40% Silver' },
+      { value: '0.350',  label: '.350 — War Nickels' }
+    ] },
   { id: 'price',            label: 'Purchase Price',     inputType: 'number',
     attrs: { min: '0', step: '0.01' } },
   { id: 'marketValue',      label: 'Market Value',       inputType: 'number',
     attrs: { min: '0', step: '0.01' } },
   { id: 'year',             label: 'Year',              inputType: 'text' },
-  { id: 'grade',            label: 'Grade',             inputType: 'text' },
-  { id: 'gradingAuthority', label: 'Grading Auth',      inputType: 'text' },
+  { id: 'grade',            label: 'Grade',             inputType: 'select',
+    options: [
+      '', 'MS-70', 'MS-69', 'MS-68', 'MS-67', 'MS-66', 'MS-65',
+      'PF-70', 'PF-69', 'PF-68', 'PF-67', 'PF-66', 'PF-65',
+      'AU-58', 'AU-55', 'XF-45', 'XF-40', 'VF-35', 'VF-30',
+      'F-15', 'F-12', 'VG-10', 'VG-8', 'G-6', 'G-4', 'AG-3'
+    ] },
+  { id: 'gradingAuthority', label: 'Grading Auth',      inputType: 'select',
+    options: ['', 'PCGS', 'NGC', 'ANACS', 'ICG', 'SGS'] },
   { id: 'certNumber',       label: 'Cert Number',       inputType: 'text' },
   { id: 'pcgsNumber',       label: 'PCGS Number',       inputType: 'text' },
   { id: 'purchaseLocation', label: 'Purchase Loc',      inputType: 'text' },
@@ -149,8 +168,13 @@ const renderBulkFieldPanel = () => {
       input = document.createElement('select');
       field.options.forEach(opt => {
         const option = document.createElement('option');
-        option.value = opt;
-        option.textContent = opt;
+        if (typeof opt === 'object' && opt !== null) {
+          option.value = opt.value;
+          option.textContent = opt.label;
+        } else {
+          option.value = opt;
+          option.textContent = opt;
+        }
         input.appendChild(option);
       });
     } else if (field.inputType === 'textarea') {
@@ -544,6 +568,9 @@ const applyBulkEdit = () => {
       } else if (fieldId === 'weight' || fieldId === 'price' || fieldId === 'marketValue') {
         val = parseFloat(val);
         if (isNaN(val) || val < 0) val = 0;
+      } else if (fieldId === 'purity') {
+        val = parseFloat(val);
+        if (isNaN(val) || val <= 0 || val > 1) val = 1.0;
       }
 
       item[fieldId] = val;

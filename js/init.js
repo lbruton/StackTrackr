@@ -116,6 +116,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     elements.itemSerialNumber = safeGetElement("itemSerialNumber");
     elements.searchNumistaBtn = safeGetElement("searchNumistaBtn");
     elements.lookupPcgsBtn = safeGetElement("lookupPcgsBtn");
+    elements.itemPuritySelect = safeGetElement("itemPuritySelect");
+    elements.itemPurity = safeGetElement("itemPurity");
+    elements.purityCustomWrapper = safeGetElement("purityCustomWrapper");
 
     // Header buttons - CRITICAL
     debugLog("Phase 2: Initializing header buttons...");
@@ -424,7 +427,17 @@ document.addEventListener("DOMContentLoaded", async () => {
           setupSettingsEventListeners();
         }
         setupColumnResizing();
-        
+
+        // Purity select ↔ custom input toggle
+        if (elements.itemPuritySelect) {
+          elements.itemPuritySelect.addEventListener('change', () => {
+            const wrapper = elements.purityCustomWrapper || document.getElementById('purityCustomWrapper');
+            if (wrapper) {
+              wrapper.style.display = elements.itemPuritySelect.value === 'custom' ? '' : 'none';
+            }
+          });
+        }
+
         // Setup Edit header toggle functionality
         const editHeader = document.querySelector('th[data-column="actions"]');
         if (editHeader) {

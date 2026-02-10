@@ -62,9 +62,12 @@ const getChartTextColor = () => {
  * @param {string} title - Chart title
  * @returns {Chart} Chart.js instance
  */
-const createPieChart = (canvas, data, title) => {
+const createPieChart = (canvas, data, title, metric = 'purchase') => {
   const labels = Object.keys(data);
-  const values = Object.values(data).map(item => item.purchase || item.value || 0);
+  const values = Object.values(data).map(item => {
+    const raw = item[metric] ?? item.purchase ?? item.value ?? 0;
+    return metric === 'gainLoss' ? Math.abs(raw) : raw;
+  });
   const colors = generateColors(labels.length);
 
   const ctx = canvas.getContext('2d');

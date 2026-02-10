@@ -28,6 +28,7 @@ const pcgsPreflightCheck = () => {
 const pcgsFetch = async (url) => {
   const config = catalogConfig.getPcgsConfig();
   catalogConfig.incrementPcgsUsage();
+  if (typeof renderPcgsUsageBar === 'function') renderPcgsUsageBar();
 
   const response = await fetch(url, {
     method: 'GET',

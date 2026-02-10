@@ -99,7 +99,7 @@ const createBackupZip = async () => {
 
     // 4. Generate and add CSV export (portfolio format)
     const csvHeaders = [
-      "Date", "Metal", "Type", "Name", "Qty", "Weight(oz)",
+      "Date", "Metal", "Type", "Name", "Qty", "Weight(oz)", "Purity",
       "Purchase Price", "Melt Value", "Retail Price", "Gain/Loss",
       "Purchase Location", "N#", "PCGS #", "Serial Number", "Notes"
     ];
@@ -108,7 +108,7 @@ const createBackupZip = async () => {
     for (const item of sortedInventory) {
       const currentSpot = spotPrices[item.metal.toLowerCase()] || 0;
       const qty = Number(item.qty) || 1;
-      const meltValue = (parseFloat(item.weight) || 0) * qty * currentSpot;
+      const meltValue = computeMeltValue(item, currentSpot);
       const isManualRetail = item.marketValue && item.marketValue > 0;
       const retailTotal = isManualRetail ? item.marketValue * qty : meltValue;
       const purchasePrice = typeof item.price === 'number' ? item.price : parseFloat(item.price) || 0;
@@ -122,6 +122,7 @@ const createBackupZip = async () => {
         item.name,
         item.qty,
         parseFloat(item.weight).toFixed(4),
+        parseFloat(item.purity) || 1.0,
         formatCurrency(purchasePrice),
         currentSpot > 0 ? formatCurrency(meltValue) : '—',
         formatCurrency(item.marketValue || 0),
@@ -516,7 +517,8 @@ const loadInventory = () => {
         premiumPerOz,
         totalPremium,
         isCollectable: item.isCollectable !== undefined ? item.isCollectable : false,
-        composition: item.composition || item.metal || ""
+        composition: item.composition || item.metal || "",
+        purity: parseFloat(item.purity) || 1.0
       };
     } else {
       // Ensure all items have required properties
@@ -534,7 +536,8 @@ const loadInventory = () => {
         pcgsNumber: item.pcgsNumber || '',
         pcgsVerified: item.pcgsVerified || false,
         isCollectable: item.isCollectable !== undefined ? item.isCollectable : false,
-        composition: item.composition || item.metal || ""
+        composition: item.composition || item.metal || "",
+        purity: parseFloat(item.purity) || 1.0
       };
     }
     return sanitizeImportedItem(normalized);
@@ -1001,7 +1004,7 @@ const renderTable = () => {
       // Portfolio computed values (all financial columns are qty-adjusted totals)
       const currentSpot = spotPrices[item.metal.toLowerCase()] || 0;
       const qty = Number(item.qty) || 1;
-      const meltValue = (parseFloat(item.weight) || 0) * qty * currentSpot;
+      const meltValue = computeMeltValue(item, currentSpot);
       const isManualRetail = item.marketValue && item.marketValue > 0;
       const retailTotal = isManualRetail ? item.marketValue * qty : meltValue;
       const purchasePrice = typeof item.price === 'number' ? item.price : parseFloat(item.price) || 0;
@@ -1075,8 +1078,13 @@ const renderTable = () => {
         ? `<span class="notes-indicator" title="Click to view notes · Shift+click to edit"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6zm-1 2l5 5h-5V4zM6 20V4h5v7h7v9H6z"/></svg></span>`
         : '';
 
+      const purityVal = parseFloat(item.purity);
+      const purityTag = (!isNaN(purityVal) && purityVal > 0 && purityVal < 1.0)
+        ? `<span class="purity-tag" title="Purity: ${purityVal}" onclick="applyColumnFilter('purity', ${JSON.stringify(String(purityVal))})" tabindex="0" role="button" style="cursor:pointer;">${purityVal}</span>`
+        : '';
+
       // Config-driven chip ordering
-      const chipMap = { grade: gradeTag, numista: numistaTag, pcgs: pcgsTag, year: yearTag, serial: serialTag, storage: storageTag, notes: notesIndicator };
+      const chipMap = { grade: gradeTag, numista: numistaTag, pcgs: pcgsTag, year: yearTag, serial: serialTag, storage: storageTag, notes: notesIndicator, purity: purityTag };
       const orderedChips = chipConfig.filter(c => c.enabled && chipMap[c.id]).map(c => chipMap[c.id]).join('');
 
       // Format computed displays
@@ -1194,9 +1202,10 @@ const updateSummary = () => {
         const itemWeight = qty * weight;
         totalWeight += itemWeight;
 
-        // Melt value: weight x qty x current spot
+        // Melt value: weight x qty x current spot x purity
         const currentSpot = spotPrices[item.metal.toLowerCase()] || 0;
-        const meltValue = currentSpot * itemWeight;
+        const purity = parseFloat(item.purity) || 1.0;
+        const meltValue = currentSpot * itemWeight * purity;
         totalMeltValue += meltValue;
 
         // Purchase price total
@@ -1380,6 +1389,23 @@ const editItem = (idx, logIdx = null) => {
   if (elements.itemPcgsNumber) elements.itemPcgsNumber.value = item.pcgsNumber || '';
   if (elements.itemSerial) elements.itemSerial.value = item.serial;
 
+  // Pre-fill purity: match a preset or show custom input
+  const purityVal = parseFloat(item.purity) || 1.0;
+  const puritySelect = elements.itemPuritySelect || document.getElementById('itemPuritySelect');
+  const purityCustom = elements.purityCustomWrapper || document.getElementById('purityCustomWrapper');
+  const purityInput = elements.itemPurity || document.getElementById('itemPurity');
+  if (puritySelect) {
+    const presetOption = Array.from(puritySelect.options).find(o => o.value !== 'custom' && parseFloat(o.value) === purityVal);
+    if (presetOption) {
+      puritySelect.value = presetOption.value;
+      if (purityCustom) purityCustom.style.display = 'none';
+    } else {
+      puritySelect.value = 'custom';
+      if (purityCustom) purityCustom.style.display = '';
+      if (purityInput) purityInput.value = purityVal;
+    }
+  }
+
   // Show/hide PCGS verified icon next to Cert# label
   const certVerifiedIcon = document.getElementById('certVerifiedIcon');
   if (certVerifiedIcon) certVerifiedIcon.style.display = item.pcgsVerified ? 'inline-flex' : 'none';
@@ -1443,6 +1469,23 @@ const duplicateItem = (idx) => {
   if (elements.itemCertNumber) elements.itemCertNumber.value = item.certNumber || '';
   if (elements.itemPcgsNumber) elements.itemPcgsNumber.value = item.pcgsNumber || '';
   if (elements.itemSerial) elements.itemSerial.value = ''; // Serial should be unique per item
+
+  // Pre-fill purity (same logic as editItem)
+  const dupPurity = parseFloat(item.purity) || 1.0;
+  const dupPuritySelect = elements.itemPuritySelect || document.getElementById('itemPuritySelect');
+  const dupPurityCustom = elements.purityCustomWrapper || document.getElementById('purityCustomWrapper');
+  const dupPurityInput = elements.itemPurity || document.getElementById('itemPurity');
+  if (dupPuritySelect) {
+    const presetOpt = Array.from(dupPuritySelect.options).find(o => o.value !== 'custom' && parseFloat(o.value) === dupPurity);
+    if (presetOpt) {
+      dupPuritySelect.value = presetOpt.value;
+      if (dupPurityCustom) dupPurityCustom.style.display = 'none';
+    } else {
+      dupPuritySelect.value = 'custom';
+      if (dupPurityCustom) dupPurityCustom.style.display = '';
+      if (dupPurityInput) dupPurityInput.value = dupPurity;
+    }
+  }
 
   // Hide PCGS verified icon — duplicate is a new unverified item
   const certVerifiedIcon = document.getElementById('certVerifiedIcon');
@@ -1597,6 +1640,8 @@ const importCsv = (file, override = false) => {
           const numistaMatch = numistaRaw.match(/\d+/);
           const numistaId = numistaMatch ? numistaMatch[0] : '';
           const pcgsNumber = (row['PCGS #'] || row['PCGS Number'] || row['pcgsNumber'] || '').toString().trim();
+          const purityRaw = row['Purity'] || row['Fineness'] || row['purity'] || '';
+          const purity = parseFloat(purityRaw) || 1.0;
           const serialNumber = row['Serial Number'] || row['serialNumber'] || '';
           const serial = row['Serial'] || row['serial'] || getNextSerial();
 
@@ -1620,6 +1665,7 @@ const importCsv = (file, override = false) => {
             gradingAuthority,
             certNumber,
             pcgsNumber,
+            purity,
             spotPriceAtPurchase,
             premiumPerOz,
             totalPremium,
@@ -2053,7 +2099,7 @@ const exportCsv = () => {
   debugLog('exportCsv start', inventory.length, 'items');
   const timestamp = new Date().toISOString().slice(0,10).replace(/-/g,'');
   const headers = [
-    "Date","Metal","Type","Name","Year","Qty","Weight(oz)",
+    "Date","Metal","Type","Name","Year","Qty","Weight(oz)","Purity",
     "Purchase Price","Melt Value","Retail Price","Gain/Loss",
     "Purchase Location","N#","PCGS #","Grade","Grading Authority","Cert #","Serial Number","Notes"
   ];
@@ -2064,7 +2110,7 @@ const exportCsv = () => {
   for (const i of sortedInventory) {
     const currentSpot = spotPrices[i.metal.toLowerCase()] || 0;
     const qty = Number(i.qty) || 1;
-    const meltValue = (parseFloat(i.weight) || 0) * qty * currentSpot;
+    const meltValue = computeMeltValue(i, currentSpot);
     const isManualRetail = i.marketValue && i.marketValue > 0;
     const retailTotal = isManualRetail ? i.marketValue * qty : meltValue;
     const purchasePrice = typeof i.price === 'number' ? i.price : parseFloat(i.price) || 0;
@@ -2079,6 +2125,7 @@ const exportCsv = () => {
       i.year || '',
       i.qty,
       parseFloat(i.weight).toFixed(4),
+      parseFloat(i.purity) || 1.0,
       formatCurrency(purchasePrice),
       currentSpot > 0 ? formatCurrency(meltValue) : '—',
       formatCurrency(i.marketValue || 0),
@@ -2385,7 +2432,7 @@ const exportPdf = () => {
   const tableData = sortedInventory.map(item => {
     const currentSpot = spotPrices[item.metal.toLowerCase()] || 0;
     const qty = Number(item.qty) || 1;
-    const meltValue = (parseFloat(item.weight) || 0) * qty * currentSpot;
+    const meltValue = computeMeltValue(item, currentSpot);
     const isManualRetail = item.marketValue && item.marketValue > 0;
     const retailTotal = isManualRetail ? item.marketValue * qty : meltValue;
     const purchasePrice = typeof item.price === 'number' ? item.price : parseFloat(item.price) || 0;
@@ -2399,6 +2446,7 @@ const exportPdf = () => {
       item.name,
       item.qty,
       parseFloat(item.weight).toFixed(2),
+      parseFloat(item.purity) || 1.0,
       formatCurrency(purchasePrice),
       currentSpot > 0 ? formatCurrency(meltValue) : '—',
       formatCurrency(retailTotal),
@@ -2415,7 +2463,7 @@ const exportPdf = () => {
 
   // Add table
   doc.autoTable({
-    head: [['Date', 'Metal', 'Type', 'Name', 'Qty', 'Weight(oz)', 'Purchase',
+    head: [['Date', 'Metal', 'Type', 'Name', 'Qty', 'Wt(oz)', 'Purity', 'Purchase',
             'Melt Value', 'Retail', 'Gain/Loss', 'Location', 'N#', 'PCGS#', 'Grade', 'Auth', 'Cert#', 'Notes']],
     body: tableData,
     startY: 30,
