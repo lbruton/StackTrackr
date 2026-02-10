@@ -211,7 +211,7 @@ const generateCategorySummary = (inventory) => {
     Object.entries(numistaIds).filter(([key, count]) => count >= minCount)
   );
   const filteredDynamicNames = Object.fromEntries(
-    Object.entries(dynamicNames).filter(([key, count]) => count >= minCount)
+    Object.entries(dynamicNames).filter(([key, count]) => count >= nameMinCount)
   );
 
   // Apply blacklist filter to auto-generated name chips and dynamic chips
