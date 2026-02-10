@@ -116,10 +116,13 @@ const syncSettingsUI = () => {
     });
   }
 
-  // Dynamic name chips
+  // Dynamic name chips — sync toggle with feature flag
   const dynamicSetting = document.getElementById('settingsDynamicChips');
   if (dynamicSetting && window.featureFlags) {
-    dynamicSetting.value = featureFlags.isEnabled('DYNAMIC_NAME_CHIPS') ? 'yes' : 'no';
+    const dVal = featureFlags.isEnabled('DYNAMIC_NAME_CHIPS') ? 'yes' : 'no';
+    dynamicSetting.querySelectorAll('.chip-sort-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.val === dVal);
+    });
   }
 
   // Chip quantity badge — sync toggle with feature flag
@@ -288,12 +291,17 @@ const setupSettingsEventListeners = () => {
   // Dynamic name chips toggle
   const dynamicChipsSetting = document.getElementById('settingsDynamicChips');
   if (dynamicChipsSetting) {
-    dynamicChipsSetting.addEventListener('change', () => {
-      const isEnabled = dynamicChipsSetting.value === 'yes';
+    dynamicChipsSetting.addEventListener('click', (e) => {
+      const btn = e.target.closest('.chip-sort-btn');
+      if (!btn) return;
+      const isEnabled = btn.dataset.val === 'yes';
       if (window.featureFlags) {
         if (isEnabled) featureFlags.enable('DYNAMIC_NAME_CHIPS');
         else featureFlags.disable('DYNAMIC_NAME_CHIPS');
       }
+      dynamicChipsSetting.querySelectorAll('.chip-sort-btn').forEach(b => {
+        b.classList.toggle('active', b.dataset.val === btn.dataset.val);
+      });
       if (typeof renderActiveFilters === 'function') renderActiveFilters();
     });
   }
