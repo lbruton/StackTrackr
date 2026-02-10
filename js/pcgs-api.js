@@ -90,12 +90,25 @@ const verifyPcgsCert = async (certNumber) => {
   const check = pcgsPreflightCheck();
   if (check) return check;
 
+  const startTime = Date.now();
   try {
     const url = `https://api.pcgs.com/publicapi/coindetail/GetCoinFactsByCertNo/${encodeURIComponent(certNumber)}`;
     const data = await pcgsFetch(url);
-    if (data._error) return data;
-    return parsePcgsResponse(data);
+    if (data._error) {
+      if (typeof recordCatalogHistory === 'function') {
+        recordCatalogHistory({ action: 'pcgs_verify', query: certNumber, result: 'fail', itemCount: 0, provider: 'PCGS', duration: Date.now() - startTime, error: data.error });
+      }
+      return data;
+    }
+    const parsed = parsePcgsResponse(data);
+    if (typeof recordCatalogHistory === 'function') {
+      recordCatalogHistory({ action: 'pcgs_verify', query: certNumber, result: parsed.verified ? 'success' : 'fail', itemCount: parsed.verified ? 1 : 0, provider: 'PCGS', duration: Date.now() - startTime, error: parsed.verified ? null : parsed.error });
+    }
+    return parsed;
   } catch (error) {
+    if (typeof recordCatalogHistory === 'function') {
+      recordCatalogHistory({ action: 'pcgs_verify', query: certNumber, result: 'fail', itemCount: 0, provider: 'PCGS', duration: Date.now() - startTime, error: error.message });
+    }
     if (error.name === 'TypeError' && error.message.includes('fetch')) {
       return { verified: false, error: 'Network error — check your internet connection.' };
     }
@@ -114,13 +127,26 @@ const lookupPcgsByNumber = async (pcgsNumber, gradeNumber) => {
   const check = pcgsPreflightCheck();
   if (check) return check;
 
+  const startTime = Date.now();
   try {
     const grade = gradeNumber || '0';
     const url = `https://api.pcgs.com/publicapi/coindetail/GetCoinFactsByPCGSNo/${encodeURIComponent(pcgsNumber)}/${encodeURIComponent(grade)}`;
     const data = await pcgsFetch(url);
-    if (data._error) return data;
-    return parsePcgsResponse(data);
+    if (data._error) {
+      if (typeof recordCatalogHistory === 'function') {
+        recordCatalogHistory({ action: 'pcgs_lookup', query: pcgsNumber, result: 'fail', itemCount: 0, provider: 'PCGS', duration: Date.now() - startTime, error: data.error });
+      }
+      return data;
+    }
+    const parsed = parsePcgsResponse(data);
+    if (typeof recordCatalogHistory === 'function') {
+      recordCatalogHistory({ action: 'pcgs_lookup', query: pcgsNumber, result: parsed.verified ? 'success' : 'fail', itemCount: parsed.verified ? 1 : 0, provider: 'PCGS', duration: Date.now() - startTime, error: parsed.verified ? null : parsed.error });
+    }
+    return parsed;
   } catch (error) {
+    if (typeof recordCatalogHistory === 'function') {
+      recordCatalogHistory({ action: 'pcgs_lookup', query: pcgsNumber, result: 'fail', itemCount: 0, provider: 'PCGS', duration: Date.now() - startTime, error: error.message });
+    }
     if (error.name === 'TypeError' && error.message.includes('fetch')) {
       return { verified: false, error: 'Network error — check your internet connection.' };
     }
