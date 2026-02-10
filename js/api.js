@@ -579,7 +579,7 @@ const renderApiHistoryTable = () => {
   }
 
   let html =
-    "<tr><th data-column=\"timestamp\">Time</th><th data-column=\"metal\">Metal</th><th data-column=\"spot\">Price</th><th data-column=\"provider\">API</th></tr>";
+    "<tr><th data-column=\"timestamp\">Time</th><th data-column=\"metal\">Metal</th><th data-column=\"spot\">Price</th><th data-column=\"provider\">Source</th></tr>";
   data.forEach((e) => {
     html += `<tr><td>${e.timestamp}</td><td>${e.metal}</td><td>${formatCurrency(
       e.spot,
@@ -609,7 +609,7 @@ const showApiHistoryModal = () => {
   const modal = document.getElementById("apiHistoryModal");
   if (!modal) return;
   loadSpotHistory();
-  apiHistoryEntries = spotHistory.filter((e) => e.source === "api");
+  apiHistoryEntries = spotHistory.filter((e) => e.source === "api" || e.source === "seed");
   apiHistorySortColumn = "";
   apiHistorySortAsc = true;
   apiHistoryFilterText = "";
@@ -2335,7 +2335,7 @@ const importSpotHistory = (file) => {
     if (typeof updateAllSparklines === "function") updateAllSparklines();
 
     // Refresh the visible history table after import
-    apiHistoryEntries = spotHistory.filter((e) => e.source === "api");
+    apiHistoryEntries = spotHistory.filter((e) => e.source === "api" || e.source === "seed");
     renderApiHistoryTable();
   };
   reader.readAsText(file);
