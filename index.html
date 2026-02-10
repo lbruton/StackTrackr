@@ -898,7 +898,9 @@
                 </select>
               </div>
               <div>
-                <label for="itemCertNumber">Cert # <span style="font-weight:normal;opacity:0.6;">(optional)</span></label>
+                <label for="itemCertNumber">Cert #
+                  <span id="certVerifiedIcon" style="display:none;color:#16a34a;margin-left:0.25rem;vertical-align:middle;" title="PCGS Verified"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></span>
+                  <span style="font-weight:normal;opacity:0.6;">(optional)</span></label>
                 <input id="itemCertNumber" type="text" placeholder="e.g. 12345678" />
               </div>
             </div>
@@ -1584,7 +1586,7 @@
                 <button type="button" class="btn success" id="syncAllBtn">Sync Metals</button>
                 <button type="button" class="btn danger" id="flushCacheBtn">Flush Metals Cache</button>
                 <button type="button" class="btn" id="apiHistoryBtn">Metals History</button>
-                <button type="button" class="btn" id="catalogHistoryBtn">Numista History</button>
+                <button type="button" class="btn" id="catalogHistoryBtn">Catalog History</button>
               </div>
 
               <div class="api-header-status-row" id="apiHeaderStatusRow"></div>

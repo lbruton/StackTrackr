@@ -5,6 +5,23 @@ All notable changes to StakTrakr will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.21.01] - 2026-02-09
+
+### Added — PCGS Verified Persistence & Lookup Enhancements
+
+- **Persist verified**: Green checkmark survives reload, sort, and filter — `pcgsVerified` stored in data model with JSON/ZIP round-trip
+- **Lookup fields**: PCGS lookup populates Name and Retail Price from API response
+- **Cert icon**: Verified checkmark next to Cert# label in edit modal with dark/sepia theme support
+- **History logging**: PCGS verify/lookup calls logged to Catalog History via `recordCatalogHistory()`
+
+### Fixed
+
+- **Numista icon**: Search icon no longer stripped after "Searching..." state (`textContent` → `innerHTML`)
+- **Export fix**: `pcgsNumber` and `pcgsVerified` added to JSON and ZIP exports (was missing)
+- **History label**: Renamed "Numista History" → "Catalog History" to reflect multi-provider support
+
+---
+
 ## [3.21.00] - 2026-02-09
 
 ### Added — PCGS# Catalog Number & Cert Verification
