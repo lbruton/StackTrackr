@@ -647,6 +647,7 @@ const setupEventListeners = () => {
               gradingAuthority,
               certNumber,
               pcgsNumber,
+              pcgsVerified: false,
               spotPriceAtPurchase,
               premiumPerOz: 0,
               totalPremium: 0,
@@ -762,7 +763,7 @@ const setupEventListeners = () => {
           }
 
           const btn = elements.searchNumistaBtn;
-          const originalText = btn.textContent;
+          const originalHTML = btn.innerHTML;
           btn.textContent = 'Searching...';
           btn.disabled = true;
 
@@ -803,7 +804,7 @@ const setupEventListeners = () => {
             console.error('Numista search error:', error);
             alert('Search failed: ' + error.message);
           } finally {
-            btn.textContent = originalText;
+            btn.innerHTML = originalHTML;
             btn.disabled = false;
           }
         },
@@ -840,6 +841,8 @@ const setupEventListeners = () => {
             const gradeEl = elements.itemGrade || document.getElementById('itemGrade');
             const yearEl = elements.itemYear || document.getElementById('itemYear');
             const authorityEl = elements.itemGradingAuthority || document.getElementById('itemGradingAuthority');
+            const nameEl = elements.itemName || document.getElementById('itemName');
+            const marketEl = elements.itemMarketValue || document.getElementById('itemMarketValue');
 
             if (pcgsEl && result.pcgsNumber) pcgsEl.value = result.pcgsNumber;
             if (yearEl && result.year) yearEl.value = result.year;
@@ -857,6 +860,10 @@ const setupEventListeners = () => {
 
             // Set grading authority to PCGS
             if (authorityEl) authorityEl.value = 'PCGS';
+
+            // Populate name and retail price from PCGS response
+            if (nameEl && result.name) nameEl.value = result.name;
+            if (marketEl && result.priceGuide > 0) marketEl.value = result.priceGuide;
 
             // Show success summary
             const parts = [];
@@ -1634,6 +1641,9 @@ const setupSearch = () => {
           if (elements.itemModalTitle) elements.itemModalTitle.textContent = "Add Inventory Item";
           if (elements.itemModalSubmit) elements.itemModalSubmit.textContent = "Add to Inventory";
           if (elements.undoChangeBtn) elements.undoChangeBtn.style.display = "none";
+          // Hide PCGS verified icon in add mode
+          const certVerifiedIcon = document.getElementById('certVerifiedIcon');
+          if (certVerifiedIcon) certVerifiedIcon.style.display = 'none';
           // Open modal
           if (elements.itemModal) {
             if (window.openModalById) openModalById('itemModal');
