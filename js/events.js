@@ -836,42 +836,12 @@ const setupEventListeners = () => {
               return;
             }
 
-            // Populate form fields from PCGS response
-            const pcgsEl = elements.itemPcgsNumber || document.getElementById('itemPcgsNumber');
-            const gradeEl = elements.itemGrade || document.getElementById('itemGrade');
-            const yearEl = elements.itemYear || document.getElementById('itemYear');
-            const authorityEl = elements.itemGradingAuthority || document.getElementById('itemGradingAuthority');
-            const nameEl = elements.itemName || document.getElementById('itemName');
-            const marketEl = elements.itemMarketValue || document.getElementById('itemMarketValue');
-
-            if (pcgsEl && result.pcgsNumber) pcgsEl.value = result.pcgsNumber;
-            if (yearEl && result.year) yearEl.value = result.year;
-
-            // Set grade if returned (parse numeric from e.g. "MS-69" → "MS-69")
-            if (gradeEl && result.grade) {
-              // Try to match grade value in the dropdown options
-              const gradeStr = result.grade.toUpperCase().replace(/\s+/g, '-');
-              const options = Array.from(gradeEl.options);
-              const match = options.find(o => o.value === gradeStr || o.value === result.grade);
-              if (match) {
-                gradeEl.value = match.value;
-              }
+            // Show field picker modal instead of auto-filling
+            if (typeof showPcgsFieldPicker === 'function') {
+              showPcgsFieldPicker(result);
+            } else {
+              alert('PCGS field picker not available.');
             }
-
-            // Set grading authority to PCGS
-            if (authorityEl) authorityEl.value = 'PCGS';
-
-            // Populate name and retail price from PCGS response
-            if (nameEl && result.name) nameEl.value = result.name;
-            if (marketEl && result.priceGuide > 0) marketEl.value = result.priceGuide;
-
-            // Show success summary
-            const parts = [];
-            if (result.name) parts.push(result.name);
-            if (result.grade) parts.push(`Grade: ${result.grade}`);
-            if (result.population) parts.push(`Pop: ${result.population}`);
-            if (result.priceGuide) parts.push(`Price Guide: $${result.priceGuide}`);
-            alert('PCGS Lookup Success!\n\n' + parts.join('\n'));
           } catch (error) {
             console.error('PCGS lookup error:', error);
             alert('PCGS lookup failed: ' + error.message);

@@ -1518,10 +1518,10 @@
               <div class="settings-group">
                 <div class="settings-group-label">Dynamic name chips</div>
                 <p class="settings-subtext">Auto-extract text from parentheses and quotes in item names as additional filter chips.</p>
-                <select id="settingsDynamicChips">
-                  <option value="yes">Enabled</option>
-                  <option value="no">Disabled</option>
-                </select>
+                <div class="chip-sort-toggle" id="settingsDynamicChips">
+                  <button type="button" class="chip-sort-btn active" data-val="yes">On</button>
+                  <button type="button" class="chip-sort-btn" data-val="no">Off</button>
+                </div>
               </div>
 
               <div class="settings-group">
@@ -2252,6 +2252,31 @@
               <button class="btn" id="numistaFillCancelBtn" type="button">Cancel</button>
               <button class="btn premium" id="numistaFillBtn" type="button">Fill Fields</button>
             </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- =============================================================================
+       PCGS FIELD PICKER MODAL
+
+       Stacked modal (z-index 10000) that appears over the item Add/Edit form.
+       Shows the PCGS lookup result with images and a field picker to fill form fields.
+       ============================================================================= -->
+    <div class="modal" id="pcgsFieldPickerModal" style="display: none">
+      <div class="modal-content numista-results-modal-content">
+        <div class="modal-header">
+          <h2 id="pcgsFieldPickerTitle">PCGS Item Found</h2>
+          <button aria-label="Close modal" class="modal-close" id="pcgsFieldPickerCloseBtn">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div id="pcgsSelectedItem" class="numista-selected-preview"></div>
+          <div id="pcgsFieldCheckboxes" class="numista-field-checkboxes">
+            <div class="numista-fields-heading">Fields to fill:</div>
+          </div>
+          <div class="numista-fill-actions">
+            <button class="btn" id="pcgsFillCancelBtn" type="button">Cancel</button>
+            <button class="btn premium" id="pcgsFillBtn" type="button">Fill Fields</button>
           </div>
         </div>
       </div>

@@ -76,7 +76,14 @@ const parsePcgsResponse = (data) => {
     coinFactsUrl,
     name: data.Name || '',
     year: String(data.Year || ''),
-    designation: data.Designation || ''
+    designation: data.Designation || '',
+    denomination: data.Denomination || '',
+    mintMark: data.MintMark || '',
+    certNumber: String(data.CertNo || ''),
+    images: Array.isArray(data.Images) ? data.Images.map(img => ({
+      thumbnail: img.Thumbnail || '',
+      fullsize: img.Fullsize || ''
+    })) : []
   };
 };
 
@@ -185,9 +192,296 @@ const lookupPcgsFromForm = async () => {
   return lookupPcgsByNumber(pcgsNumber);
 };
 
+// =============================================================================
+// PCGS Field Picker Modal — UI for selective field filling
+// =============================================================================
+
+/** Escape HTML for safe injection into innerHTML */
+const escapeHtmlPcgs = (str) =>
+  String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+/**
+ * Render the selected item preview card with images + metadata.
+ * @param {Object} result - Parsed PCGS response
+ * @returns {string} HTML string
+ */
+const renderPcgsSelectedItem = (result) => {
+  const placeholder = `<div class="numista-img-placeholder">🛡️</div>`;
+  let imagesHtml = '';
+  if (result.images && result.images.length > 0) {
+    // Show up to 2 images (obverse/reverse)
+    imagesHtml = result.images.slice(0, 2).map(img => {
+      const src = img.thumbnail || img.fullsize;
+      return src ? `<img src="${escapeHtmlPcgs(src)}" alt="PCGS image" loading="lazy">` : '';
+    }).filter(Boolean).join('');
+  }
+  if (!imagesHtml) imagesHtml = placeholder;
+
+  const meta = [
+    result.year,
+    result.denomination,
+    result.designation,
+    result.mintMark ? `Mint: ${result.mintMark}` : ''
+  ].filter(Boolean).join(' · ');
+
+  const idLink = result.coinFactsUrl
+    ? `<a href="${escapeHtmlPcgs(result.coinFactsUrl)}" target="_blank" rel="noopener noreferrer">PCGS #${escapeHtmlPcgs(result.pcgsNumber)}</a>`
+    : `PCGS #${escapeHtmlPcgs(result.pcgsNumber)}`;
+
+  return `<div class="numista-result-images">${imagesHtml}</div>
+    <div class="numista-result-info">
+      <div class="numista-result-name">${escapeHtmlPcgs(result.name)}</div>
+      <div class="numista-result-meta">${escapeHtmlPcgs(meta)}</div>
+      <div class="numista-result-id">${idLink}</div>
+    </div>`;
+};
+
+/**
+ * Render field checkboxes with editable inputs for the PCGS result.
+ * Each row: [checkbox] [label] [editable text input] [optional current hint]
+ * @param {Object} result - Parsed PCGS response
+ */
+const renderPcgsFieldCheckboxes = (result) => {
+  const container = document.getElementById('pcgsFieldCheckboxes');
+  if (!container) return;
+
+  // Check if grade value matches a dropdown option
+  const gradeStr = (result.grade || '').toUpperCase().replace(/\s+/g, '-');
+  const gradeEl = document.getElementById('itemGrade');
+  let gradeValid = false;
+  if (gradeEl && gradeStr) {
+    gradeValid = Array.from(gradeEl.options).some(o => o.value === gradeStr || o.value === result.grade);
+  }
+
+  const fields = [
+    { key: 'name', label: 'Name', value: result.name || '', available: !!result.name, defaultOn: true },
+    { key: 'year', label: 'Year', value: result.year || '', available: !!result.year, defaultOn: true },
+    {
+      key: 'grade', label: 'Grade',
+      value: gradeStr || result.grade || '',
+      available: gradeValid,
+      defaultOn: gradeValid,
+      warn: result.grade && !gradeValid ? `"${result.grade}" — not in grade options` : ''
+    },
+    { key: 'authority', label: 'Authority', value: 'PCGS', available: true, defaultOn: true },
+    { key: 'pcgsNumber', label: 'PCGS #', value: result.pcgsNumber || '', available: !!result.pcgsNumber, defaultOn: true },
+    { key: 'certNumber', label: 'Cert #', value: result.certNumber || '', available: !!result.certNumber, defaultOn: true },
+    { key: 'retailPrice', label: 'Retail Price', value: result.priceGuide > 0 ? String(result.priceGuide) : '', available: result.priceGuide > 0, defaultOn: result.priceGuide > 0 },
+  ];
+
+  // Keep the heading, rebuild field rows
+  const heading = container.querySelector('.numista-fields-heading');
+  container.innerHTML = '';
+  if (heading) {
+    container.appendChild(heading);
+  } else {
+    const h = document.createElement('div');
+    h.className = 'numista-fields-heading';
+    h.textContent = 'Fields to fill:';
+    container.appendChild(h);
+  }
+
+  // Current form values for "Current:" hints
+  const currentFormValues = {
+    name: (typeof elements !== 'undefined' && elements.itemName || document.getElementById('itemName'))?.value?.trim() || '',
+    year: (typeof elements !== 'undefined' && elements.itemYear || document.getElementById('itemYear'))?.value?.trim() || '',
+    grade: (typeof elements !== 'undefined' && elements.itemGrade || document.getElementById('itemGrade'))?.value || '',
+    authority: (typeof elements !== 'undefined' && elements.itemGradingAuthority || document.getElementById('itemGradingAuthority'))?.value || '',
+    pcgsNumber: (typeof elements !== 'undefined' && elements.itemPcgsNumber || document.getElementById('itemPcgsNumber'))?.value?.trim() || '',
+    certNumber: (typeof elements !== 'undefined' && elements.itemCertNumber || document.getElementById('itemCertNumber'))?.value?.trim() || '',
+    retailPrice: (typeof elements !== 'undefined' && elements.itemMarketValue || document.getElementById('itemMarketValue'))?.value?.trim() || '',
+  };
+
+  fields.forEach(f => {
+    // Checkbox — grid column 1
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.name = 'pcgsField';
+    cb.value = f.key;
+    cb.checked = f.available && !!f.value && f.defaultOn;
+    if (!f.value) cb.disabled = true;
+
+    // Label — grid column 2
+    const label = document.createElement('span');
+    label.className = 'numista-field-label';
+    label.textContent = f.label + ':';
+
+    // Editable text input — grid column 3
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'numista-field-input';
+    input.name = 'pcgsFieldValue_' + f.key;
+    input.value = f.value;
+    input.placeholder = f.available ? '' : 'N/A';
+    if (!f.available && !f.value) input.disabled = true;
+
+    // Toggle input enabled/disabled when checkbox changes
+    cb.addEventListener('change', () => { input.disabled = !cb.checked; });
+    if (!cb.checked) input.disabled = true;
+
+    container.appendChild(cb);
+    container.appendChild(label);
+    container.appendChild(input);
+
+    // "Current:" hint showing existing form value
+    const currentVal = currentFormValues[f.key];
+    if (currentVal) {
+      const hint = document.createElement('div');
+      hint.className = 'numista-field-current';
+      hint.textContent = `Current: ${currentVal}`;
+      hint.title = currentVal;
+      container.appendChild(hint);
+    }
+
+    // Warning text spanning all columns
+    if (f.warn) {
+      const warn = document.createElement('div');
+      warn.className = 'numista-field-warn';
+      warn.textContent = f.warn;
+      container.appendChild(warn);
+    }
+  });
+};
+
+/**
+ * Apply checked fields from the PCGS picker to the item form.
+ * Reads values from the pcgsFieldValue_* text inputs (user may have edited them).
+ */
+const fillFormFromPcgsResult = () => {
+  const container = document.getElementById('pcgsFieldCheckboxes');
+  if (!container) return;
+
+  const checkboxes = container.querySelectorAll('input[name="pcgsField"]');
+
+  checkboxes.forEach(cb => {
+    if (!cb.checked) return;
+    const input = container.querySelector(`input[name="pcgsFieldValue_${cb.value}"]`);
+    if (!input) return;
+    const val = input.value.trim();
+    if (!val) return;
+
+    switch (cb.value) {
+      case 'name': {
+        const el = (typeof elements !== 'undefined' && elements.itemName) || document.getElementById('itemName');
+        if (el) el.value = val;
+        break;
+      }
+      case 'year': {
+        const el = (typeof elements !== 'undefined' && elements.itemYear) || document.getElementById('itemYear');
+        if (el) el.value = val;
+        break;
+      }
+      case 'grade': {
+        const el = (typeof elements !== 'undefined' && elements.itemGrade) || document.getElementById('itemGrade');
+        if (el) {
+          const options = Array.from(el.options);
+          const match = options.find(o => o.value === val || o.value === val.toUpperCase().replace(/\s+/g, '-'));
+          if (match) el.value = match.value;
+        }
+        break;
+      }
+      case 'authority': {
+        const el = (typeof elements !== 'undefined' && elements.itemGradingAuthority) || document.getElementById('itemGradingAuthority');
+        if (el) el.value = val;
+        break;
+      }
+      case 'pcgsNumber': {
+        const el = (typeof elements !== 'undefined' && elements.itemPcgsNumber) || document.getElementById('itemPcgsNumber');
+        if (el) el.value = val;
+        break;
+      }
+      case 'certNumber': {
+        const el = (typeof elements !== 'undefined' && elements.itemCertNumber) || document.getElementById('itemCertNumber');
+        if (el) el.value = val;
+        break;
+      }
+      case 'retailPrice': {
+        const el = (typeof elements !== 'undefined' && elements.itemMarketValue) || document.getElementById('itemMarketValue');
+        const num = parseFloat(val);
+        if (el && !isNaN(num) && num > 0) el.value = num;
+        break;
+      }
+    }
+  });
+};
+
+/**
+ * Open the PCGS field picker modal with the given lookup result.
+ * @param {Object} result - Parsed PCGS response
+ */
+const showPcgsFieldPicker = (result) => {
+  const modal = document.getElementById('pcgsFieldPickerModal');
+  const title = document.getElementById('pcgsFieldPickerTitle');
+  const preview = document.getElementById('pcgsSelectedItem');
+
+  if (!modal) return;
+
+  if (title) title.textContent = 'PCGS Item Found';
+  if (preview) preview.innerHTML = renderPcgsSelectedItem(result);
+  renderPcgsFieldCheckboxes(result);
+
+  modal.style.display = 'flex';
+};
+
+/** Close the PCGS field picker modal. */
+const closePcgsFieldPicker = () => {
+  const modal = document.getElementById('pcgsFieldPickerModal');
+  if (modal) modal.style.display = 'none';
+};
+
+// =============================================================================
+// PCGS Field Picker Modal — event wiring (runs on DOMContentLoaded)
+// =============================================================================
+document.addEventListener('DOMContentLoaded', function() {
+  const pcgsPickerModal = document.getElementById('pcgsFieldPickerModal');
+  const pcgsPickerCloseBtn = document.getElementById('pcgsFieldPickerCloseBtn');
+  const pcgsFillCancelBtn = document.getElementById('pcgsFillCancelBtn');
+  const pcgsFillBtn = document.getElementById('pcgsFillBtn');
+
+  // Close button
+  if (pcgsPickerCloseBtn) {
+    pcgsPickerCloseBtn.addEventListener('click', closePcgsFieldPicker);
+  }
+
+  // Cancel button
+  if (pcgsFillCancelBtn) {
+    pcgsFillCancelBtn.addEventListener('click', closePcgsFieldPicker);
+  }
+
+  // Fill Fields button
+  if (pcgsFillBtn) {
+    pcgsFillBtn.addEventListener('click', function() {
+      fillFormFromPcgsResult();
+      closePcgsFieldPicker();
+    });
+  }
+
+  // Background click dismiss
+  if (pcgsPickerModal) {
+    pcgsPickerModal.addEventListener('click', function(e) {
+      if (e.target === pcgsPickerModal) {
+        closePcgsFieldPicker();
+      }
+    });
+  }
+
+  // ESC key handler
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      const modal = document.getElementById('pcgsFieldPickerModal');
+      if (modal && modal.style.display !== 'none') {
+        e.stopImmediatePropagation();
+        closePcgsFieldPicker();
+      }
+    }
+  });
+});
+
 // Expose globally
 if (typeof window !== 'undefined') {
   window.verifyPcgsCert = verifyPcgsCert;
   window.lookupPcgsByNumber = lookupPcgsByNumber;
   window.lookupPcgsFromForm = lookupPcgsFromForm;
+  window.showPcgsFieldPicker = showPcgsFieldPicker;
+  window.closePcgsFieldPicker = closePcgsFieldPicker;
 }
