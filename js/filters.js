@@ -57,12 +57,13 @@ const removeFilter = (field, value) => {
 };
 
 /**
- * Simplifies common coin names for display in filter chips.
- * Handles comma-separated values and pattern-based simplifications.
+ * Returns the display value for a filter chip.
+ * Passes through the value as-is — hardcoded name simplifications have been
+ * removed in favour of user-configurable custom grouping rules in Settings.
  *
- * @param {string} value - The original value (may contain comma-separated values)
+ * @param {string} value - The original value
  * @param {string} field - The field type (e.g., 'name', 'type', etc.)
- * @returns {string} Simplified display value
+ * @returns {string} Display value
  */
 const simplifyChipValue = (value, field) => {
   if (!value || typeof value !== 'string') {
@@ -76,126 +77,7 @@ const simplifyChipValue = (value, field) => {
       .join(', ');
   }
 
-  // Only apply coin name simplifications to the 'name' field
-  if (field !== 'name') {
-    return value;
-  }
-
-  // Common coin name simplifications based on PREBUILT_LOOKUP_DATA patterns
-  const simplifications = {
-    // Government Eagles
-    'American Silver Eagle': 'Silver Eagle',
-    'American Gold Eagle': 'Gold Eagle', 
-    'American Platinum Eagle': 'Platinum Eagle',
-    'American Palladium Eagle': 'Palladium Eagle',
-    'American Gold Buffalo': 'Gold Buffalo',
-    
-    // International Maples
-    'Canadian Gold Maple Leaf': 'Gold Maple',
-    'Canadian Silver Maple Leaf': 'Silver Maple',
-    'Canadian Platinum Maple Leaf': 'Platinum Maple',
-    'Canadian Palladium Maple Leaf': 'Palladium Maple',
-    'Canada Maple Leaf': 'Maple Leaf',
-    
-    // British Coins
-    'British Gold Britannia': 'Gold Britannia',
-    'British Silver Britannia': 'Silver Britannia',
-    'British Platinum Britannia': 'Platinum Britannia',
-    'British Gold Sovereign': 'Sovereign',
-    'British Half Sovereign': 'Half Sovereign',
-    'British Quarter Sovereign': 'Quarter Sovereign',
-    'UK Britannia': 'Britannia',
-    
-    // Austrian Philharmonics
-    'Austrian Gold Philharmonic': 'Gold Philharmonic',
-    'Austrian Silver Philharmonic': 'Silver Philharmonic',
-    'Austrian Platinum Philharmonic': 'Platinum Philharmonic',
-    
-    // South African
-    'South African Gold Krugerrand': 'Krugerrand',
-    'South African Silver Krugerrand': 'Silver Krugerrand',
-    'South African Platinum Krugerrand': 'Platinum Krugerrand',
-    'South Africa Krugerrand': 'Krugerrand',
-    
-    // Chinese Pandas
-    'Chinese Gold Panda': 'Gold Panda',
-    'Chinese Silver Panda': 'Silver Panda',
-    
-    // Australian
-    'Australian Gold Kangaroo': 'Gold Kangaroo',
-    'Australian Silver Kangaroo': 'Silver Kangaroo',
-    'Australian Silver Kookaburra': 'Kookaburra',
-    'Australian Silver Koala': 'Koala',
-    'Australian Platinum Platypus': 'Platypus',
-    'Australian Gold Lunar Series III': 'Gold Lunar III',
-    'Australian Silver Lunar Series III': 'Silver Lunar III',
-    'Australia Kookaburra': 'Kookaburra',
-    'Australia Kangaroo': 'Kangaroo',
-    'Australia Platypus': 'Platypus',
-    
-    // Mexican
-    'Mexican Gold Libertad': 'Gold Libertad',
-    'Mexican Silver Libertad': 'Silver Libertad',
-    'Mexican Platinum Libertad': 'Platinum Libertad',
-    
-    // Specialty Items from sample data
-    'Silver Buffalo Round': 'Buffalo Round',
-    'Germania Round': 'Germania',
-    'Lunar Dragon Bar': 'Lunar Dragon',
-    'Royal Canadian Mint Bar': 'RCM Bar',
-    'PAMP Suisse Bar': 'PAMP Bar',
-    'Perth Mint Lunar Dragon': 'Lunar Dragon',
-    'Valcambi Bar': 'Valcambi',
-    'Baird & Co. Bar': 'Baird Bar'
-  };
-
-  // First check for exact matches
-  if (simplifications[value]) {
-    return simplifications[value];
-  }
-
-  // Pattern-based simplifications for variations with years, weights, etc.
-  let simplified = value;
-  
-  // Remove year prefixes (2020-2030)
-  simplified = simplified.replace(/^(20[2-3][0-9])\s+/, '');
-  
-  // Handle fractional patterns - keep the fraction but simplify the name
-  const fractionalMatch = simplified.match(/^(1\/10|1\/4|1\/2)\s+(oz\s+)?(.+)/i);
-  if (fractionalMatch) {
-    const fraction = fractionalMatch[1];
-    const baseName = fractionalMatch[3];
-    // Try to simplify the base name
-    for (const [full, simple] of Object.entries(simplifications)) {
-      if (baseName.includes(full)) {
-        return `${fraction} oz ${simple}`;
-      }
-    }
-    return `${fraction} oz ${baseName}`;
-  }
-  
-  // Try partial matches for names that contain our known patterns
-  for (const [full, simple] of Object.entries(simplifications)) {
-    if (simplified.includes(full)) {
-      return simplified.replace(full, simple);
-    }
-  }
-  
-  // Additional simplifications for common patterns not in exact match list
-  simplified = simplified
-    .replace(/^Australia\s+/i, '')
-    .replace(/^Canadian?\s+/i, '')
-    .replace(/^American?\s+/i, '')
-    .replace(/^British?\s+/i, '')
-    .replace(/^Austrian?\s+/i, '')
-    .replace(/^South African?\s+/i, '')
-    .replace(/^Chinese?\s+/i, '')
-    .replace(/^Mexican?\s+/i, '')
-    .replace(/\s+1\s+oz$/i, '')
-    .replace(/\s+Bar$/i, '')
-    .replace(/\s+Round$/i, '');
-  
-  return simplified.trim();
+  return value;
 };
 
 /**
@@ -213,6 +95,14 @@ const generateCategorySummary = (inventory) => {
     minCount = parseInt(chipMinCountEl.value, 10);
   } else {
     minCount = parseInt(localStorage.getItem('chipMinCount') || '3', 10);
+  }
+
+  // When the user has active filters or a search query, drop minCount to 1
+  // so all descriptive chips for the filtered subset are visible
+  const hasActiveFilters = Object.keys(activeFilters).length > 0;
+  const hasSearchQuery = typeof searchQuery === 'string' && searchQuery.trim().length > 0;
+  if (hasActiveFilters || hasSearchQuery) {
+    minCount = 1;
   }
 
   const metals = {};
