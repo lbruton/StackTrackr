@@ -69,7 +69,8 @@ const filterInventory = () => {
           String(item.certNumber || ''),
           String(item.numistaId || ''),
           item.serialNumber || '',
-          String(item.pcgsNumber || '')
+          String(item.pcgsNumber || ''),
+          String(item.purity || '')
         ].join(' ').toLowerCase();
         
         // Check for exact phrase match first

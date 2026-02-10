@@ -1571,6 +1571,42 @@ const renderNumistaUsageBar = () => {
   container.appendChild(wrapper);
 };
 
+/**
+ * Renders PCGS API usage progress bar into #pcgsUsageBar
+ * Clones the Numista pattern but uses daily granularity (1,000/day)
+ */
+const renderPcgsUsageBar = () => {
+  const container = document.getElementById('pcgsUsageBar');
+  if (!container) return;
+  const usage = catalogConfig.getPcgsUsage();
+  const used = Number.isFinite(usage.used) ? Math.max(0, usage.used) : 0;
+  const quota = Number.isFinite(usage.limit) && usage.limit > 0 ? usage.limit : 1000;
+  const day = /^\d{4}-\d{2}-\d{2}$/.test(usage.date) ? usage.date : '';
+  const usedPercent = Math.min((used / quota) * 100, 100);
+  const remainingPercent = 100 - usedPercent;
+  const warning = used / quota >= 0.9;
+
+  container.textContent = '';
+  const wrapper = document.createElement('div');
+  wrapper.className = 'api-usage';
+  const bar = document.createElement('div');
+  bar.className = 'usage-bar';
+  const usedDiv = document.createElement('div');
+  usedDiv.className = 'used';
+  usedDiv.style.width = `${usedPercent}%`;
+  const remainDiv = document.createElement('div');
+  remainDiv.className = 'remaining';
+  remainDiv.style.width = `${remainingPercent}%`;
+  bar.appendChild(usedDiv);
+  bar.appendChild(remainDiv);
+  const text = document.createElement('div');
+  text.className = 'usage-text';
+  text.textContent = `${used}/${quota} calls${day ? ` (${day})` : ''}${warning ? ' \uD83D\uDEA9' : ''}`;
+  wrapper.appendChild(bar);
+  wrapper.appendChild(text);
+  container.appendChild(wrapper);
+};
+
 // Export for use in other modules
 if (typeof window !== 'undefined') {
   window.catalogAPI = catalogAPI;
@@ -1589,6 +1625,7 @@ if (typeof window !== 'undefined') {
   window.fillFormFromNumistaResult = fillFormFromNumistaResult;
   window.closeNumistaResultsModal = closeNumistaResultsModal;
   window.renderNumistaUsageBar = renderNumistaUsageBar;
+  window.renderPcgsUsageBar = renderPcgsUsageBar;
 }
 
 // Initialize UI event handlers when DOM is ready
@@ -1714,6 +1751,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (txt) txt.textContent = 'Connected';
       }
       if (typeof renderApiStatusSummary === 'function') renderApiStatusSummary();
+      renderPcgsUsageBar();
       alert('PCGS bearer token saved.');
     });
   }

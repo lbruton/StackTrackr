@@ -853,6 +853,7 @@ const SEED_INVENTORY_ITEMS = [
     premiumPerOz: 0,
     totalPremium: 0,
     isCollectable: true,
+    purity: 0.999,
     numistaId: "298883",
   },
   {
@@ -879,6 +880,7 @@ const SEED_INVENTORY_ITEMS = [
     premiumPerOz: 0,
     totalPremium: 0,
     isCollectable: true,
+    purity: 0.999,
     numistaId: "298883",
   },
   {
@@ -905,6 +907,7 @@ const SEED_INVENTORY_ITEMS = [
     premiumPerOz: 0,
     totalPremium: 0,
     isCollectable: true,
+    purity: 0.999,
     numistaId: "298883",
   },
   // --- 3x Canadian Gold Maple Leaf (Numista 75250) ---
@@ -932,6 +935,7 @@ const SEED_INVENTORY_ITEMS = [
     premiumPerOz: 0,
     totalPremium: 0,
     isCollectable: false,
+    purity: 0.9999,
     numistaId: "75250",
   },
   {
@@ -958,6 +962,7 @@ const SEED_INVENTORY_ITEMS = [
     premiumPerOz: 0,
     totalPremium: 0,
     isCollectable: false,
+    purity: 0.9999,
     numistaId: "75250",
   },
   {
@@ -984,6 +989,7 @@ const SEED_INVENTORY_ITEMS = [
     premiumPerOz: 0,
     totalPremium: 0,
     isCollectable: false,
+    purity: 0.9999,
     numistaId: "75250",
   },
   // --- 1x Platinum Round ---
@@ -1011,6 +1017,7 @@ const SEED_INVENTORY_ITEMS = [
     premiumPerOz: 0,
     totalPremium: 0,
     isCollectable: false,
+    purity: 0.9995,
     numistaId: "",
   },
   // --- 1x Palladium Bar ---
@@ -1038,6 +1045,7 @@ const SEED_INVENTORY_ITEMS = [
     premiumPerOz: 0,
     totalPremium: 0,
     isCollectable: false,
+    purity: 0.9995,
     numistaId: "",
   },
 ];

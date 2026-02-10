@@ -117,6 +117,7 @@ const generateCategorySummary = (inventory) => {
   const years = {};
   const grades = {};
   const numistaIds = {};
+  const purities = {};
 
   inventory.forEach(item => {
     // Count metals
@@ -171,6 +172,13 @@ const generateCategorySummary = (inventory) => {
     if (nId) {
       numistaIds[nId] = (numistaIds[nId] || 0) + 1;
     }
+
+    // Count purities (skip default 1.0 — only show non-pure fineness)
+    const pur = parseFloat(item.purity);
+    if (!isNaN(pur) && pur > 0 && pur < 1.0) {
+      const purKey = String(pur);
+      purities[purKey] = (purities[purKey] || 0) + 1;
+    }
   });
 
   // Count custom groups
@@ -209,6 +217,9 @@ const generateCategorySummary = (inventory) => {
   );
   const filteredNumistaIds = Object.fromEntries(
     Object.entries(numistaIds).filter(([key, count]) => count >= minCount)
+  );
+  const filteredPurities = Object.fromEntries(
+    Object.entries(purities).filter(([key, count]) => count >= minCount)
   );
   const filteredDynamicNames = Object.fromEntries(
     Object.entries(dynamicNames).filter(([key, count]) => count >= nameMinCount)
@@ -249,6 +260,7 @@ const generateCategorySummary = (inventory) => {
     numistaIds: filteredNumistaIds,
     customGroups: filteredCustomGroups,
     dynamicNames: filteredDynamicNames,
+    purities: filteredPurities,
     totalItems: inventory.length
   };
 };
@@ -325,6 +337,7 @@ const renderActiveFilters = () => {
     year:             { summaryKey: 'years',             field: 'year' },
     grade:            { summaryKey: 'grades',            field: 'grade' },
     numistaId:        { summaryKey: 'numistaIds',        field: 'numistaId' },
+    purity:           { summaryKey: 'purities',          field: 'purity' },
   };
 
   // Read category config (order + enabled state) and sort preference
@@ -336,6 +349,7 @@ const renderActiveFilters = () => {
         { id: 'dynamicName', enabled: true }, { id: 'purchaseLocation', enabled: true },
         { id: 'storageLocation', enabled: true }, { id: 'year', enabled: true },
         { id: 'grade', enabled: true }, { id: 'numistaId', enabled: true },
+        { id: 'purity', enabled: true },
       ];
 
   // Read sort preference from toggle active button or localStorage (default: alpha)

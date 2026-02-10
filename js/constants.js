@@ -254,7 +254,7 @@ const CERT_LOOKUP_URLS = {
  * Updated: 2026-02-09 - Patch: Edit custom grouping rules, relocate chip threshold
  */
 
-const APP_VERSION = "3.21.03";
+const APP_VERSION = "3.22.01";
 
 /**
  * @constant {string} DEFAULT_CURRENCY - Default currency code for monetary formatting
@@ -476,6 +476,7 @@ const INLINE_CHIP_DEFAULTS = [
   { id: 'serial',  label: 'Serial #',         enabled: false },
   { id: 'storage', label: 'Storage Location', enabled: false },
   { id: 'notes',   label: 'Notes Indicator',  enabled: false },
+  { id: 'purity',  label: 'Purity',           enabled: false },
 ];
 
 /**
@@ -537,6 +538,7 @@ const FILTER_CHIP_CATEGORY_DEFAULTS = [
   { id: 'year',             label: 'Years',             enabled: true, group: null },
   { id: 'grade',            label: 'Grades',            enabled: true, group: null },
   { id: 'numistaId',        label: 'Numista IDs',       enabled: true, group: null },
+  { id: 'purity',           label: 'Purity',            enabled: true, group: null },
 ];
 
 /**
