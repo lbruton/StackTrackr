@@ -267,6 +267,7 @@ const setupAckModalEvents = () => {
  */
 const getEmbeddedWhatsNew = () => {
   return `
+    <li><strong>v3.23.02 &ndash; STACK-52: Bulk Edit pinned selections</strong>: Bulk Edit pinned selections &mdash; selected items stay visible at the top of the table when the search term changes. Extracted shared search filter helper and added master checkbox indeterminate state. Removed dormant rEngine/rSynk/AI prototype files</li>
     <li><strong>v3.23.01 &ndash; Goldback real-time estimation, Settings reorganization</strong>: Added: Goldback real-time price estimation from gold spot (STACK-52). Added: User-configurable estimation premium modifier. Changed: Settings sidebar — renamed Theme to Appearance, Tools to System. Changed: Default estimation formula to pure 2x spot (modifier = 1.0)</li>
     <li><strong>v3.23.00 &ndash; STACK-42/43/45: UUIDs, Price History, Goldback Pricing</strong>: Added: Goldback denomination pricing &amp; type support (STACK-45). Added: Persistent UUID v4 for every inventory item (STACK-42). Added: Silent per-item price history recording (STACK-43)</li>
     <li><strong>v3.22.01 &ndash; Form layout, bulk edit dropdowns, purity chips</strong>: Purity form layout: Weight/Purity/Qty on single row. Bulk Edit: Purity, Grade, Grading Authority as dropdowns. Purity/fineness filter chips (enabled) and inline chips (disabled). Purity inline chip shows numerical value only</li>

@@ -1,5 +1,6 @@
 ## What's New
 
+- **STACK-52: Bulk Edit pinned selections (v3.23.02)**: Bulk Edit pinned selections — selected items stay visible at the top of the table when the search term changes. Extracted shared search filter helper and added master checkbox indeterminate state. Removed dormant rEngine/rSynk/AI prototype files
 - **Goldback real-time estimation, Settings reorganization (v3.23.01)**: Added: Goldback real-time price estimation from gold spot (STACK-52). Added: User-configurable estimation premium modifier. Changed: Settings sidebar — renamed Theme to Appearance, Tools to System. Changed: Default estimation formula to pure 2x spot (modifier = 1.0)
 - **STACK-42/43/45: UUIDs, Price History, Goldback Pricing (v3.23.00)**: Added: Goldback denomination pricing & type support (STACK-45). Added: Persistent UUID v4 for every inventory item (STACK-42). Added: Silent per-item price history recording (STACK-43)
 - **STACK-45: Goldback denomination pricing**: New `gb` weight unit for Goldback items — 1 gb = 0.001 ozt 24K gold. Manual denomination pricing in Settings > Goldback tab with save, history logging, and enable/disable toggle. Retail value uses 3-tier hierarchy: manual override > Goldback denomination price > melt value. CSV/PDF/ZIP exports include Weight Unit column. Edit and duplicate preserve gb unit
