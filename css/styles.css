@@ -437,6 +437,18 @@ section {
   color: var(--text-secondary);
 }
 
+.footer-badges {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.footer-badges img {
+  vertical-align: middle;
+}
+
 .storage-line a {
   margin-left: var(--spacing-sm);
 }
