@@ -55,6 +55,7 @@ const elements = {
   itemType: null,
   itemWeight: null,
   itemWeightUnit: null,
+  itemGbDenom: null,
   itemPrice: null,
   itemMarketValue: null,
   marketValueField: null,
@@ -180,6 +181,7 @@ const elements = {
   // Sub-modals (stacking overlays opened from within Settings)
   apiInfoModal: null,
   apiHistoryModal: null,
+  goldbackHistoryModal: null,
   cloudSyncModal: null,
   apiQuotaModal: null,
 
@@ -274,6 +276,15 @@ let spotHistory = [];
 
 /** @type {Object} Per-item price history keyed by UUID (STACK-43) */
 let itemPriceHistory = {};
+
+/** @type {Object} Goldback denomination prices keyed by weight string (STACK-45) */
+let goldbackPrices = {};
+
+/** @type {Object} Goldback price history keyed by weight string (STACK-45) */
+let goldbackPriceHistory = {};
+
+/** @type {boolean} Whether Goldback denomination pricing is enabled (STACK-45) */
+let goldbackEnabled = false;
 
 /** @type {Array} Catalog API call history records */
 let catalogHistory = [];

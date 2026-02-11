@@ -382,6 +382,35 @@ const SPOT_HISTORY_KEY = "metalSpotHistory";
 /** @constant {string} ITEM_PRICE_HISTORY_KEY - LocalStorage key for per-item price history (STACK-43) */
 const ITEM_PRICE_HISTORY_KEY = "item-price-history";
 
+/** @constant {string} GOLDBACK_PRICES_KEY - LocalStorage key for Goldback denomination prices (STACK-45) */
+const GOLDBACK_PRICES_KEY = "goldback-prices";
+
+/** @constant {string} GOLDBACK_PRICE_HISTORY_KEY - LocalStorage key for Goldback price history (STACK-45) */
+const GOLDBACK_PRICE_HISTORY_KEY = "goldback-price-history";
+
+/** @constant {string} GOLDBACK_ENABLED_KEY - LocalStorage key for Goldback pricing toggle (STACK-45) */
+const GOLDBACK_ENABLED_KEY = "goldback-enabled";
+
+/** @constant {number} GB_TO_OZT - Conversion factor: 1 Goldback = 0.001 troy oz 24K gold */
+const GB_TO_OZT = 0.001;
+
+/**
+ * Standard Goldback denominations with gold content.
+ * weight = denomination value (used as item.weight when weightUnit='gb')
+ * goldOz = troy oz of 24K gold per note
+ * @constant {Array<{weight: number, label: string, goldOz: number}>}
+ */
+const GOLDBACK_DENOMINATIONS = [
+  { weight: 0.5,  label: '½ Goldback',   goldOz: 0.0005 },
+  { weight: 1,    label: '1 Goldback',   goldOz: 0.001 },
+  { weight: 2,    label: '2 Goldback',   goldOz: 0.002 },
+  { weight: 5,    label: '5 Goldback',   goldOz: 0.005 },
+  { weight: 10,   label: '10 Goldback',  goldOz: 0.01 },
+  { weight: 25,   label: '25 Goldback',  goldOz: 0.025 },
+  { weight: 50,   label: '50 Goldback',  goldOz: 0.05 },
+  { weight: 100,  label: '100 Goldback', goldOz: 0.1 },
+];
+
 /** @constant {string} CATALOG_HISTORY_KEY - LocalStorage key for catalog API call history */
 const CATALOG_HISTORY_KEY = "staktrakr.catalog.history";
 
@@ -462,6 +491,9 @@ const ALLOWED_STORAGE_KEYS = [
   "filterChipCategoryConfig",
   "chipSortOrder",
   "bulkEditSelection",
+  GOLDBACK_PRICES_KEY,
+  GOLDBACK_PRICE_HISTORY_KEY,
+  GOLDBACK_ENABLED_KEY,
 ];
 
 // =============================================================================
@@ -1053,6 +1085,12 @@ if (typeof window !== "undefined") {
   window.FILTER_CHIP_CATEGORY_DEFAULTS = FILTER_CHIP_CATEGORY_DEFAULTS;
   window.getFilterChipCategoryConfig = getFilterChipCategoryConfig;
   window.saveFilterChipCategoryConfig = saveFilterChipCategoryConfig;
+  // Goldback denomination pricing (STACK-45)
+  window.GOLDBACK_PRICES_KEY = GOLDBACK_PRICES_KEY;
+  window.GOLDBACK_PRICE_HISTORY_KEY = GOLDBACK_PRICE_HISTORY_KEY;
+  window.GOLDBACK_ENABLED_KEY = GOLDBACK_ENABLED_KEY;
+  window.GB_TO_OZT = GB_TO_OZT;
+  window.GOLDBACK_DENOMINATIONS = GOLDBACK_DENOMINATIONS;
 }
 
 // Expose APP_VERSION globally for non-module usage

@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added — STACK-45: Goldback denomination pricing & type support
+
+- **Added**: New `gb` weight unit option — Goldbacks stored as denomination value (1 gb = 0.001 ozt 24K gold)
+- **Added**: New `js/goldback.js` module — save/load/record for manual denomination pricing
+- **Added**: Settings > Goldback tab — enable/disable toggle, denomination price table, reference link
+- **Added**: Goldback price history logging — timestamped data points per denomination on each save
+- **Added**: `GOLDBACK_DENOMINATIONS` lookup table (0.5, 1, 2, 5, 10, 25, 50, 100 gb) with gold content
+- **Added**: Denomination picker — swaps weight input for a select dropdown when gb unit is selected
+- **Added**: Goldback Price History modal — filterable, sortable table with CSV export
+- **Added**: Quick Fill — enter 1 Goldback rate to auto-calculate all denomination prices
+- **Added**: Goldback exchange rate link opens in popup window (matches eBay pattern)
+- **Added**: Bulk Edit — new Weight Unit field (oz/g/gb) for batch-converting items
+- **Changed**: `computeMeltValue()` converts gb→ozt before spot multiplication
+- **Changed**: `formatWeight()` accepts optional `weightUnit` param, displays "5 gb" for Goldback items
+- **Changed**: Retail hierarchy updated: gb denomination > manual marketValue > melt (denomination pricing is authoritative for gb items)
+- **Changed**: Bulk Edit weight column shows formatted weight with unit suffix
+- **Changed**: CSV, ZIP CSV, and PDF exports include "Weight Unit" column
+- **Changed**: CSV import reads "Weight Unit" column, defaults to 'oz'
+- **Changed**: ZIP backup/restore includes goldback prices, price history, and enabled toggle
+- **Changed**: Edit/duplicate item modal pre-fills gb weight unit correctly
+- **Fixed**: Retail column and gain/loss display conditions now include gb denomination pricing
+- **Fixed**: CSV, ZIP CSV, and PDF exports apply 3-tier retail hierarchy (manual > gb > melt)
+
 ### Added — STACK-42: Persistent UUIDs for inventory items
 
 - **Added**: Stable UUID v4 field on every inventory item — survives delete, reorder, and sort
