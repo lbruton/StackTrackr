@@ -1,5 +1,7 @@
 # StakTrakr
 
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/e9e32713db6a446693ec025874abaa7e)](https://app.codacy.com/gh/lbruton/StackTrackr?utm_source=github.com&utm_medium=referral&utm_content=lbruton/StackTrackr&utm_campaign=Badge_Grade)
+
 **Track Your Stack. Your Way.**
 
 A powerful, privacy-first precious metals portfolio tracker for Silver, Gold, Platinum, Palladium, and Goldbacks. Runs entirely in your browser — no accounts, no cloud, no data collection. Your stack, your data, your rules.
