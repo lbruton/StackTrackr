@@ -212,6 +212,7 @@
         const itemName = (item.name || '').toLowerCase();
         if (group.patterns.some(p => {
           try {
+            // nosemgrep: javascript.dos.rule-non-literal-regexp
             return new RegExp('\\b' + p.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b', 'i').test(itemName);
           } catch (e) { return itemName.includes(p.toLowerCase()); }
         })) {

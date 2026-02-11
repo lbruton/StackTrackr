@@ -46,6 +46,7 @@ const checkVersionChange = () => {
 const getChangelogForVersion = (text, version) => {
   const escaped = version.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   // Match Keep a Changelog format: ## [X.XX.XX] - YYYY-MM-DD
+  // nosemgrep: javascript.dos.rule-non-literal-regexp
   const regex = new RegExp(
     `## \\[${escaped}\\][^\\n]*\\n([\\s\\S]*?)(?=\\n## \\[|$)`,
   );
