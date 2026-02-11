@@ -5141,11 +5141,14 @@ th {
   background: var(--bg-secondary);
 }
 
-/* Hover state for row interaction — override generic filter:brightness hover */
+/* Hover state for row interaction — override generic tr:hover which sets
+   position:relative + z-index:1, causing rows to paint above the sticky thead */
 #inventoryTable tbody tr:hover {
   background: var(--bg-tertiary);
   filter: none;
   box-shadow: none;
+  position: static;
+  z-index: auto;
 }
 
 /* Keep visual clarity on very small screens */
