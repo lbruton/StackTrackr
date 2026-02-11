@@ -17,6 +17,9 @@ The price history pipeline is complete (STACK-42/43). These items are unblocked 
 | [STACK-48](https://linear.app/hextrackr/issue/STACK-48) | Chart system overhaul: migrate to ApexCharts, add time-series trends | Medium | STACK-43 ✅ |
 | [STACK-38](https://linear.app/hextrackr/issue/STACK-38) | Table CSS hardening & responsive audit | Medium | — |
 | [STACK-49](https://linear.app/hextrackr/issue/STACK-49) | Spot Price Lookup by Date on Add/Edit Form | Low | — |
+| [STACK-50](https://linear.app/hextrackr/issue/STACK-50) | Multi-currency support with user-selectable display currency | Medium | — |
+| [STACK-51](https://linear.app/hextrackr/issue/STACK-51) | Custom CSV import mapper with header mapping UI and saved profiles | Medium | — |
+| [STACK-52](https://linear.app/hextrackr/issue/STACK-52) | Bulk Edit: pin selected items to top of table across search changes | High | — |
 
 ---
 
