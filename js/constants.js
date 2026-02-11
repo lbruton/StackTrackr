@@ -254,7 +254,7 @@ const CERT_LOOKUP_URLS = {
  * Updated: 2026-02-09 - Patch: Edit custom grouping rules, relocate chip threshold
  */
 
-const APP_VERSION = "3.23.00";
+const APP_VERSION = "3.23.01";
 
 /**
  * @constant {string} DEFAULT_CURRENCY - Default currency code for monetary formatting
@@ -391,6 +391,15 @@ const GOLDBACK_PRICE_HISTORY_KEY = "goldback-price-history";
 /** @constant {string} GOLDBACK_ENABLED_KEY - LocalStorage key for Goldback pricing toggle (STACK-45) */
 const GOLDBACK_ENABLED_KEY = "goldback-enabled";
 
+/** @constant {string} GOLDBACK_ESTIMATE_ENABLED_KEY - LocalStorage key for Goldback estimation toggle (STACK-52) */
+const GOLDBACK_ESTIMATE_ENABLED_KEY = "goldback-estimate-enabled";
+
+/** @constant {number} GB_ESTIMATE_PREMIUM - Default estimation premium multiplier (1.0 = no premium, pure 2x spot) */
+const GB_ESTIMATE_PREMIUM = 1.0;
+
+/** @constant {string} GB_ESTIMATE_MODIFIER_KEY - LocalStorage key for user-configurable premium modifier */
+const GB_ESTIMATE_MODIFIER_KEY = "goldback-estimate-modifier";
+
 /** @constant {number} GB_TO_OZT - Conversion factor: 1 Goldback = 0.001 troy oz 24K gold */
 const GB_TO_OZT = 0.001;
 
@@ -494,6 +503,8 @@ const ALLOWED_STORAGE_KEYS = [
   GOLDBACK_PRICES_KEY,
   GOLDBACK_PRICE_HISTORY_KEY,
   GOLDBACK_ENABLED_KEY,
+  GOLDBACK_ESTIMATE_ENABLED_KEY,
+  GB_ESTIMATE_MODIFIER_KEY,
 ];
 
 // =============================================================================
@@ -1091,6 +1102,9 @@ if (typeof window !== "undefined") {
   window.GOLDBACK_ENABLED_KEY = GOLDBACK_ENABLED_KEY;
   window.GB_TO_OZT = GB_TO_OZT;
   window.GOLDBACK_DENOMINATIONS = GOLDBACK_DENOMINATIONS;
+  window.GOLDBACK_ESTIMATE_ENABLED_KEY = GOLDBACK_ESTIMATE_ENABLED_KEY;
+  window.GB_ESTIMATE_PREMIUM = GB_ESTIMATE_PREMIUM;
+  window.GB_ESTIMATE_MODIFIER_KEY = GB_ESTIMATE_MODIFIER_KEY;
 }
 
 // Expose APP_VERSION globally for non-module usage

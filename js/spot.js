@@ -204,6 +204,9 @@ const fetchSpotPrice = () => {
   });
 
   updateSummary();
+
+  // Goldback estimation hook — fire after all spots loaded (STACK-52)
+  if (typeof onGoldSpotPriceChanged === 'function') onGoldSpotPriceChanged();
 };
 
 /**
@@ -251,6 +254,9 @@ const updateManualSpot = (metalKey) => {
 
   // Snapshot item prices after manual spot change (STACK-43)
   if (typeof recordAllItemPriceSnapshots === 'function') recordAllItemPriceSnapshots();
+
+  // Goldback estimation hook (STACK-52)
+  if (metalKey === 'gold' && typeof onGoldSpotPriceChanged === 'function') onGoldSpotPriceChanged();
 
   // Clear the input and hide the manual input section if available
   input.value = "";
@@ -316,6 +322,9 @@ const resetSpot = (metalKey) => {
 
   // Snapshot item prices after spot reset (STACK-43)
   if (typeof recordAllItemPriceSnapshots === 'function') recordAllItemPriceSnapshots();
+
+  // Goldback estimation hook (STACK-52)
+  if (metalKey === 'gold' && typeof onGoldSpotPriceChanged === 'function') onGoldSpotPriceChanged();
 
   // Hide manual input if shown and function is available
   if (typeof hideManualInput === "function") {
@@ -624,6 +633,9 @@ const startSpotInlineEdit = (valueEl, metalKey) => {
 
     // Snapshot item prices after inline spot edit (STACK-43)
     if (typeof recordAllItemPriceSnapshots === 'function') recordAllItemPriceSnapshots();
+
+    // Goldback estimation hook (STACK-52)
+    if (metalKey === 'gold' && typeof onGoldSpotPriceChanged === 'function') onGoldSpotPriceChanged();
   };
 
   input.addEventListener("keydown", (e) => {

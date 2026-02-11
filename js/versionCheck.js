@@ -91,6 +91,12 @@ const populateVersionModal = (version, html) => {
  */
 const getEmbeddedChangelog = (version) => {
   const changelogs = {
+    "3.23.01": `
+      <li><strong>Added</strong>: Goldback real-time price estimation from gold spot (STACK-52)</li>
+      <li><strong>Added</strong>: User-configurable estimation premium modifier</li>
+      <li><strong>Changed</strong>: Settings sidebar — renamed Theme to Appearance, Tools to System</li>
+      <li><strong>Changed</strong>: Default estimation formula to pure 2x spot (modifier = 1.0)</li>
+    `,
     "3.23.00": `
       <li><strong>Added</strong>: Goldback denomination pricing &amp; type support (STACK-45)</li>
       <li><strong>Added</strong>: Persistent UUID v4 for every inventory item (STACK-42)</li>

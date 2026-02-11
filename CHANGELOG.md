@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.23.01] - 2026-02-11
+
+### Added — Goldback real-time estimation, Settings reorganization
+
+- **Added**: Goldback real-time price estimation from gold spot (STACK-52)
+- **Added**: User-configurable estimation premium modifier
+- **Changed**: Settings sidebar — renamed Theme to Appearance, Tools to System
+- **Changed**: Default estimation formula to pure 2x spot (modifier = 1.0)
+
+---
+
 ## [3.23.00] - 2026-02-11
 
 ### Added — STACK-45: Goldback denomination pricing & type support

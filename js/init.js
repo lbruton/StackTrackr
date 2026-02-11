@@ -374,6 +374,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (typeof loadGoldbackPrices === 'function') loadGoldbackPrices();
     if (typeof loadGoldbackPriceHistory === 'function') loadGoldbackPriceHistory();
     if (typeof loadGoldbackEnabled === 'function') loadGoldbackEnabled();
+    if (typeof loadGoldbackEstimateEnabled === 'function') loadGoldbackEstimateEnabled();
+    if (typeof loadGoldbackEstimateModifier === 'function') loadGoldbackEstimateModifier();
 
     // Seed spot history for first-time users
     if (typeof loadSeedSpotHistory === 'function') {

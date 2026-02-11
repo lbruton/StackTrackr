@@ -3,7 +3,7 @@
 
 /**
  * Opens the unified Settings modal, optionally navigating to a section.
- * @param {string} [section='site'] - Section to display: 'site', 'api', 'files', 'cloud', 'tools'
+ * @param {string} [section='site'] - Section to display: 'site', 'system', 'table', 'grouping', 'api', 'files', 'cloud', 'goldback', 'changelog'
  */
 const showSettingsModal = (section = 'site') => {
   const modal = document.getElementById('settingsModal');
@@ -35,7 +35,7 @@ const hideSettingsModal = () => {
 
 /**
  * Switches the visible section panel in the Settings modal.
- * @param {string} name - Section key: 'site', 'api', 'files', 'cloud', 'tools'
+ * @param {string} name - Section key: 'site', 'system', 'table', 'grouping', 'api', 'files', 'cloud', 'goldback', 'changelog'
  */
 const switchSettingsSection = (name) => {
   // Hide all panels
@@ -378,6 +378,58 @@ const setupSettingsEventListeners = () => {
       const isEnabled = btn.dataset.val === 'on';
       if (typeof saveGoldbackEnabled === 'function') saveGoldbackEnabled(isEnabled);
       gbToggle.querySelectorAll('.chip-sort-btn').forEach(b => b.classList.toggle('active', b === btn));
+      if (typeof renderTable === 'function') renderTable();
+    });
+  }
+
+  // Goldback estimation toggle (STACK-52)
+  const gbEstToggle = document.getElementById('settingsGoldbackEstimateEnabled');
+  if (gbEstToggle) {
+    gbEstToggle.addEventListener('click', (e) => {
+      const btn = e.target.closest('.chip-sort-btn');
+      if (!btn) return;
+      const isEnabled = btn.dataset.val === 'on';
+      if (typeof saveGoldbackEstimateEnabled === 'function') saveGoldbackEstimateEnabled(isEnabled);
+      gbEstToggle.querySelectorAll('.chip-sort-btn').forEach(b => b.classList.toggle('active', b === btn));
+      // If turning ON, immediately populate prices from current gold spot
+      if (isEnabled && typeof onGoldSpotPriceChanged === 'function') onGoldSpotPriceChanged();
+      if (typeof syncGoldbackSettingsUI === 'function') syncGoldbackSettingsUI();
+      if (typeof renderTable === 'function') renderTable();
+    });
+  }
+
+  // Goldback estimation refresh button (STACK-52)
+  const gbEstRefreshBtn = document.getElementById('goldbackEstimateRefreshBtn');
+  if (gbEstRefreshBtn) {
+    gbEstRefreshBtn.addEventListener('click', async () => {
+      if (typeof syncProviderChain !== 'function') return;
+      const origText = gbEstRefreshBtn.textContent;
+      gbEstRefreshBtn.textContent = 'Refreshing...';
+      gbEstRefreshBtn.disabled = true;
+      try {
+        await syncProviderChain({ showProgress: false, forceSync: true });
+        // onGoldSpotPriceChanged() is called by the hooks in api.js after sync
+      } catch (err) {
+        console.warn('Goldback estimate refresh failed:', err);
+      } finally {
+        gbEstRefreshBtn.textContent = origText;
+        gbEstRefreshBtn.disabled = false;
+      }
+    });
+  }
+
+  // Goldback estimation modifier input (STACK-52)
+  const gbModifierInput = document.getElementById('goldbackEstimateModifierInput');
+  if (gbModifierInput) {
+    gbModifierInput.addEventListener('change', () => {
+      const val = parseFloat(gbModifierInput.value);
+      if (isNaN(val) || val <= 0) {
+        gbModifierInput.value = goldbackEstimateModifier.toFixed(2);
+        return;
+      }
+      if (typeof saveGoldbackEstimateModifier === 'function') saveGoldbackEstimateModifier(val);
+      if (goldbackEstimateEnabled && typeof onGoldSpotPriceChanged === 'function') onGoldSpotPriceChanged();
+      if (typeof syncGoldbackSettingsUI === 'function') syncGoldbackSettingsUI();
       if (typeof renderTable === 'function') renderTable();
     });
   }
@@ -792,13 +844,55 @@ const renderFilterChipCategoryTable = () => {
  * Renders denomination price rows and updates enabled toggle.
  */
 const syncGoldbackSettingsUI = () => {
-  // Toggle
+  // Toggle — Goldback pricing enabled
   const toggleGroup = document.getElementById('settingsGoldbackEnabled');
   if (toggleGroup) {
     toggleGroup.querySelectorAll('.chip-sort-btn').forEach(btn => {
       const isOn = btn.dataset.val === 'on';
       btn.classList.toggle('active', goldbackEnabled ? isOn : !isOn);
     });
+  }
+
+  // Toggle — estimation enabled
+  const estToggle = document.getElementById('settingsGoldbackEstimateEnabled');
+  if (estToggle) {
+    estToggle.querySelectorAll('.chip-sort-btn').forEach(btn => {
+      const isOn = btn.dataset.val === 'on';
+      btn.classList.toggle('active', goldbackEstimateEnabled ? isOn : !isOn);
+    });
+  }
+
+  // Refresh button — visible only when estimation ON
+  const refreshBtn = document.getElementById('goldbackEstimateRefreshBtn');
+  if (refreshBtn) {
+    refreshBtn.style.display = goldbackEstimateEnabled ? '' : 'none';
+  }
+
+  // Modifier row — visible only when estimation ON
+  const modifierRow = document.getElementById('goldbackEstimateModifierRow');
+  if (modifierRow) {
+    modifierRow.style.display = goldbackEstimateEnabled ? '' : 'none';
+  }
+  const modifierInput = document.getElementById('goldbackEstimateModifierInput');
+  if (modifierInput) {
+    modifierInput.value = goldbackEstimateModifier.toFixed(2);
+  }
+
+  // Info line — show estimated rate + gold spot reference
+  const infoEl = document.getElementById('goldbackEstimateInfo');
+  if (infoEl) {
+    const goldSpot = spotPrices && spotPrices.gold ? spotPrices.gold : 0;
+    if (goldbackEstimateEnabled && goldSpot > 0) {
+      const rate = typeof computeGoldbackEstimatedRate === 'function'
+        ? computeGoldbackEstimatedRate(goldSpot)
+        : 0;
+      const fmtRate = typeof formatCurrency === 'function' ? formatCurrency(rate) : '$' + rate.toFixed(2);
+      const fmtSpot = typeof formatCurrency === 'function' ? formatCurrency(goldSpot) : '$' + goldSpot.toFixed(2);
+      infoEl.textContent = `Estimated 1 GB rate: ${fmtRate}  (gold spot: ${fmtSpot})`;
+      infoEl.style.display = '';
+    } else {
+      infoEl.style.display = 'none';
+    }
   }
 
   // Denomination table
@@ -810,9 +904,12 @@ const syncGoldbackSettingsUI = () => {
     const key = String(d.weight);
     const entry = goldbackPrices[key];
     const price = entry ? entry.price : '';
-    const updatedAt = entry && entry.updatedAt
+    let updatedAt = entry && entry.updatedAt
       ? new Date(entry.updatedAt).toLocaleString()
       : '\u2014';
+    if (goldbackEstimateEnabled && entry && entry.updatedAt) {
+      updatedAt += ' (auto)';
+    }
 
     const tr = document.createElement('tr');
     tr.dataset.denom = key;
