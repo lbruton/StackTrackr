@@ -367,6 +367,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (typeof loadGoldbackEstimateEnabled === 'function') loadGoldbackEstimateEnabled();
     if (typeof loadGoldbackEstimateModifier === 'function') loadGoldbackEstimateModifier();
 
+    // Load display currency preference and cached exchange rates (STACK-50)
+    if (typeof loadDisplayCurrency === 'function') loadDisplayCurrency();
+    if (typeof loadExchangeRates === 'function') loadExchangeRates();
+
     // Seed spot history for first-time users
     if (typeof loadSeedSpotHistory === 'function') {
       await loadSeedSpotHistory();
@@ -415,6 +419,17 @@ document.addEventListener("DOMContentLoaded", async () => {
     // Automatically sync prices if cache is stale and API keys are available
     if (typeof autoSyncSpotPrices === "function") {
       autoSyncSpotPrices();
+    }
+
+    // Fetch fresh exchange rates in the background (STACK-50)
+    if (typeof fetchExchangeRates === 'function') {
+      fetchExchangeRates().then(updated => {
+        if (updated && displayCurrency !== 'USD') {
+          // Re-render with fresh rates
+          if (typeof renderTable === 'function') renderTable();
+          if (typeof updateSummary === 'function') updateSummary();
+        }
+      }).catch(() => {});
     }
 
     // Phase 14: Event Listeners Setup (Delayed)

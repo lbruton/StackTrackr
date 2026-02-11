@@ -254,13 +254,70 @@ const CERT_LOOKUP_URLS = {
  * Updated: 2026-02-09 - Patch: Edit custom grouping rules, relocate chip threshold
  */
 
-const APP_VERSION = "3.23.02";
+const APP_VERSION = "3.24.00";
 
 /**
  * @constant {string} DEFAULT_CURRENCY - Default currency code for monetary formatting
  */
 const DEFAULT_CURRENCY = "USD";
 
+/**
+ * Supported display currencies for the currency selector (STACK-50)
+ * @constant {Array<{code: string, name: string}>}
+ */
+const SUPPORTED_CURRENCIES = [
+  { code: "USD", name: "US Dollar" },
+  { code: "EUR", name: "Euro" },
+  { code: "GBP", name: "British Pound" },
+  { code: "CAD", name: "Canadian Dollar" },
+  { code: "AUD", name: "Australian Dollar" },
+  { code: "CHF", name: "Swiss Franc" },
+  { code: "JPY", name: "Japanese Yen" },
+  { code: "CNY", name: "Chinese Yuan" },
+  { code: "INR", name: "Indian Rupee" },
+  { code: "MXN", name: "Mexican Peso" },
+  { code: "SEK", name: "Swedish Krona" },
+  { code: "NOK", name: "Norwegian Krone" },
+  { code: "NZD", name: "New Zealand Dollar" },
+  { code: "SGD", name: "Singapore Dollar" },
+  { code: "HKD", name: "Hong Kong Dollar" },
+  { code: "ZAR", name: "South African Rand" },
+  { code: "RUB", name: "Russian Ruble" },
+];
+
+/** @constant {string} DISPLAY_CURRENCY_KEY - LocalStorage key for display currency preference (STACK-50) */
+const DISPLAY_CURRENCY_KEY = "displayCurrency";
+
+/** @constant {string} EXCHANGE_RATES_KEY - LocalStorage key for cached exchange rates (STACK-50) */
+const EXCHANGE_RATES_KEY = "exchangeRates";
+
+/** @constant {string} EXCHANGE_RATE_API_URL - Free exchange rate API (no key required) */
+const EXCHANGE_RATE_API_URL = "https://open.er-api.com/v6/latest/USD";
+
+/**
+ * Fallback exchange rates (USD-based) for offline/file:// use (STACK-50)
+ * Updated Feb 2026. Used only when API fetch fails and no cached rates exist.
+ * @constant {Object<string, number>}
+ */
+const FALLBACK_EXCHANGE_RATES = {
+  USD: 1,
+  EUR: 0.92,
+  GBP: 0.79,
+  CAD: 1.36,
+  AUD: 1.53,
+  CHF: 0.89,
+  JPY: 149.5,
+  CNY: 7.24,
+  INR: 83.1,
+  MXN: 17.15,
+  SEK: 10.42,
+  NOK: 10.55,
+  NZD: 1.64,
+  SGD: 1.34,
+  HKD: 7.82,
+  ZAR: 18.65,
+  RUB: 92.5,
+};
 
 /**
  * Returns formatted version string
@@ -505,6 +562,8 @@ const ALLOWED_STORAGE_KEYS = [
   GOLDBACK_ENABLED_KEY,
   GOLDBACK_ESTIMATE_ENABLED_KEY,
   GB_ESTIMATE_MODIFIER_KEY,
+  DISPLAY_CURRENCY_KEY,
+  EXCHANGE_RATES_KEY,
 ];
 
 // =============================================================================
@@ -1105,6 +1164,12 @@ if (typeof window !== "undefined") {
   window.GOLDBACK_ESTIMATE_ENABLED_KEY = GOLDBACK_ESTIMATE_ENABLED_KEY;
   window.GB_ESTIMATE_PREMIUM = GB_ESTIMATE_PREMIUM;
   window.GB_ESTIMATE_MODIFIER_KEY = GB_ESTIMATE_MODIFIER_KEY;
+  // Multi-currency support (STACK-50)
+  window.SUPPORTED_CURRENCIES = SUPPORTED_CURRENCIES;
+  window.DISPLAY_CURRENCY_KEY = DISPLAY_CURRENCY_KEY;
+  window.EXCHANGE_RATES_KEY = EXCHANGE_RATES_KEY;
+  window.EXCHANGE_RATE_API_URL = EXCHANGE_RATE_API_URL;
+  window.FALLBACK_EXCHANGE_RATES = FALLBACK_EXCHANGE_RATES;
 }
 
 // Expose APP_VERSION globally for non-module usage

@@ -91,6 +91,13 @@ const populateVersionModal = (version, html) => {
  */
 const getEmbeddedChangelog = (version) => {
   const changelogs = {
+    "3.24.00": `
+      <li><strong>Added</strong>: Multi-currency display with 17 supported currencies and exchange rate conversion (STACK-50)</li>
+      <li><strong>Added</strong>: Daily exchange rate fetching from open.er-api.com with localStorage caching and hardcoded fallback rates</li>
+      <li><strong>Added</strong>: Dynamic currency symbols in modals, Goldback settings, and CSV export</li>
+      <li><strong>Added</strong>: Dynamic Gain/Loss labels &mdash; green &ldquo;Gain:&rdquo; or red &ldquo;Loss:&rdquo; on totals cards</li>
+      <li><strong>Fixed</strong>: Sticky header bleed-through when hovering table rows</li>
+    `,
     "3.23.02": `
       <li><strong>Added</strong>: Bulk Edit pinned selections &mdash; selected items stay visible at the top of the table when the search term changes (STACK-52)</li>
       <li><strong>Changed</strong>: Extracted shared search filter helper and added master checkbox indeterminate state in Bulk Edit</li>

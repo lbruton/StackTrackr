@@ -561,13 +561,16 @@ const setupEventListeners = () => {
           }
 
           // Price: in edit mode, empty field preserves existing price
+          // User enters in display currency; convert to USD for storage (STACK-50)
           const priceRaw = elements.itemPrice.value.trim();
+          const fxRate = (typeof getExchangeRate === 'function') ? getExchangeRate() : 1;
           let price;
           if (isEditing && priceRaw === '') {
             price = typeof existingItem.price !== 'undefined' ? existingItem.price : 0;
           } else {
-            price = priceRaw === '' ? 0 : parseFloat(priceRaw);
-            price = isNaN(price) || price < 0 ? 0 : price;
+            let enteredPrice = priceRaw === '' ? 0 : parseFloat(priceRaw);
+            enteredPrice = isNaN(enteredPrice) || enteredPrice < 0 ? 0 : enteredPrice;
+            price = fxRate !== 1 ? enteredPrice / fxRate : enteredPrice;
           }
 
           const purchaseLocation = elements.purchaseLocation.value.trim() || (isEditing ? (existingItem.purchaseLocation || '') : '');
@@ -583,9 +586,13 @@ const setupEventListeners = () => {
           const certNumber = (elements.itemCertNumber || document.getElementById('itemCertNumber'))?.value?.trim() || '';
           const pcgsNumber = (elements.itemPcgsNumber || document.getElementById('itemPcgsNumber'))?.value?.trim() || '';
           const marketValueInput = elements.itemMarketValue ? elements.itemMarketValue.value.trim() : '';
-          const marketValue = marketValueInput && !isNaN(parseFloat(marketValueInput))
-            ? parseFloat(marketValueInput)
-            : (isEditing ? (existingItem.marketValue || 0) : 0);
+          let marketValue;
+          if (marketValueInput && !isNaN(parseFloat(marketValueInput))) {
+            const enteredMv = parseFloat(marketValueInput);
+            marketValue = fxRate !== 1 ? enteredMv / fxRate : enteredMv;
+          } else {
+            marketValue = isEditing ? (existingItem.marketValue || 0) : 0;
+          }
 
           // Purity: read from select or custom input
           let purity = 1.0;
@@ -644,6 +651,7 @@ const setupEventListeners = () => {
               purity,
               isCollectable: false,
               numistaId: catalog,
+              currency: displayCurrency,
             };
 
             addCompositionOption(composition);
@@ -709,6 +717,7 @@ const setupEventListeners = () => {
               serial,
               uuid: generateUUID(),
               numistaId: catalog,
+              currency: displayCurrency,
             });
 
             typeof registerName === "function" && registerName(name);
@@ -1680,6 +1689,8 @@ const setupSearch = () => {
           // Hide PCGS verified icon in add mode
           const certVerifiedIcon = document.getElementById('certVerifiedIcon');
           if (certVerifiedIcon) certVerifiedIcon.style.display = 'none';
+          // Update currency symbols in modal (STACK-50)
+          if (typeof updateModalCurrencyUI === 'function') updateModalCurrencyUI();
           // Open modal
           if (elements.itemModal) {
             if (window.openModalById) openModalById('itemModal');

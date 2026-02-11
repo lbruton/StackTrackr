@@ -1208,7 +1208,7 @@ const fetchHistoryBatched = async (provider, apiKey, selectedMetals, totalDays) 
     for (const metals of symbolGroups) {
       let url = providerConfig.baseUrl + providerConfig.batchEndpoint;
 
-      // Replace API key placeholder
+      // Replace API key and currency placeholders
       url = url.replace("{API_KEY}", apiKey);
 
       // Replace date placeholders
@@ -1633,6 +1633,10 @@ const syncProviderChain = async ({ showProgress = false, forceSync = false } = {
 
     // Post-sync updates if anything changed
     if (updatedCount > 0) {
+      // Refresh exchange rates alongside spot prices (STACK-50)
+      if (typeof fetchExchangeRates === 'function') {
+        fetchExchangeRates().catch(() => {});
+      }
       updateSummary();
       if (typeof recordAllItemPriceSnapshots === 'function') recordAllItemPriceSnapshots();
       if (typeof updateStorageStats === "function") updateStorageStats();

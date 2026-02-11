@@ -480,18 +480,138 @@ const formatDisplayDate = (dateStr) => {
  * @param {string} [currency=DEFAULT_CURRENCY] - ISO currency code
  * @returns {string} Formatted currency string (e.g., "$1,234.56")
  */
-const formatCurrency = (value, currency = DEFAULT_CURRENCY) => {
+const formatCurrency = (value, currency = (typeof displayCurrency !== 'undefined' ? displayCurrency : DEFAULT_CURRENCY)) => {
   const num = parseFloat(value);
   if (isNaN(num)) return "";
+  // Convert internal USD value to target currency (STACK-50)
+  const rate = (typeof getExchangeRate === 'function') ? getExchangeRate(currency) : 1;
+  const converted = num * rate;
   try {
     return new Intl.NumberFormat(undefined, {
       style: "currency",
       currency,
-    }).format(num);
+    }).format(converted);
   } catch (e) {
     // Fallback for environments without Intl support
-    return `${currency} ${num.toFixed(2)}`;
+    return `${currency} ${converted.toFixed(2)}`;
   }
+};
+
+/**
+ * Loads the display currency preference from localStorage (STACK-50)
+ */
+const loadDisplayCurrency = () => {
+  try {
+    const saved = loadDataSync(DISPLAY_CURRENCY_KEY, DEFAULT_CURRENCY);
+    if (saved && typeof saved === 'string') {
+      displayCurrency = saved;
+    }
+  } catch (e) { displayCurrency = DEFAULT_CURRENCY; }
+};
+
+/**
+ * Saves the display currency preference to localStorage (STACK-50)
+ * @param {string} code - ISO 4217 currency code
+ */
+const saveDisplayCurrency = (code) => {
+  displayCurrency = code;
+  saveDataSync(DISPLAY_CURRENCY_KEY, code);
+};
+
+/**
+ * Extracts the currency symbol from Intl.NumberFormat for the given currency code (STACK-50)
+ * @param {string} [currency] - ISO 4217 code; defaults to displayCurrency
+ * @returns {string} Currency symbol (e.g. "$", "€", "£", "₽")
+ */
+const getCurrencySymbol = (currency) => {
+  const code = currency || (typeof displayCurrency !== 'undefined' ? displayCurrency : 'USD');
+  try {
+    const parts = new Intl.NumberFormat('en', { style: 'currency', currency: code }).formatToParts(0);
+    const sym = parts.find(p => p.type === 'currency');
+    return sym ? sym.value : code;
+  } catch (e) { return code; }
+};
+
+/**
+ * Updates the add/edit modal's currency symbols and placeholders (STACK-50)
+ * Sets the CSS custom property --currency-symbol on .currency-input wrappers
+ * and updates input placeholders with the current currency code.
+ */
+const updateModalCurrencyUI = () => {
+  const symbol = getCurrencySymbol();
+  // Scale padding based on symbol width: 1 char → 2rem, 2 → 2.5rem, 3+ → 3.25rem
+  const padding = symbol.length <= 1 ? '2rem' : symbol.length <= 2 ? '2.5rem' : '3.25rem';
+  document.querySelectorAll('.currency-input').forEach(el => {
+    el.style.setProperty('--currency-symbol', `"${symbol}"`);
+    el.style.setProperty('--currency-padding', padding);
+  });
+  const priceInput = document.getElementById('itemPrice');
+  if (priceInput) priceInput.placeholder = displayCurrency || 'USD';
+  const marketInput = document.getElementById('itemMarketValue');
+  if (marketInput) marketInput.placeholder = `${displayCurrency || 'USD'} — defaults to melt value`;
+};
+
+/**
+ * Returns the exchange rate for a target currency (STACK-50).
+ * 1 USD = getExchangeRate(code) × target currency.
+ * Falls back: cached exchangeRates → FALLBACK_EXCHANGE_RATES → 1.
+ *
+ * @param {string} [targetCurrency] - ISO 4217 code; defaults to displayCurrency
+ * @returns {number} Exchange rate multiplier
+ */
+const getExchangeRate = (targetCurrency) => {
+  const target = targetCurrency || displayCurrency;
+  if (target === 'USD') return 1;
+  if (exchangeRates[target]) return exchangeRates[target];
+  if (typeof FALLBACK_EXCHANGE_RATES !== 'undefined' && FALLBACK_EXCHANGE_RATES[target]) {
+    return FALLBACK_EXCHANGE_RATES[target];
+  }
+  return 1;
+};
+
+/**
+ * Loads cached exchange rates from localStorage (STACK-50).
+ * Called on startup before any rendering.
+ */
+const loadExchangeRates = () => {
+  try {
+    const saved = loadDataSync(EXCHANGE_RATES_KEY, null);
+    if (saved && typeof saved === 'object') {
+      exchangeRates = saved;
+    }
+  } catch (e) { exchangeRates = {}; }
+};
+
+/**
+ * Saves exchange rates to localStorage (STACK-50).
+ * @param {Object<string, number>} rates - Exchange rates keyed by currency code
+ */
+const saveExchangeRates = (rates) => {
+  exchangeRates = rates;
+  saveDataSync(EXCHANGE_RATES_KEY, rates);
+};
+
+/**
+ * Fetches latest exchange rates from the free API and caches them (STACK-50).
+ * Non-blocking — if fetch fails, existing cached/fallback rates are used.
+ * @returns {Promise<boolean>} Whether the fetch succeeded
+ */
+const fetchExchangeRates = async () => {
+  try {
+    const url = typeof EXCHANGE_RATE_API_URL !== 'undefined'
+      ? EXCHANGE_RATE_API_URL
+      : 'https://open.er-api.com/v6/latest/USD';
+    const response = await fetch(url, { method: 'GET', mode: 'cors' });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const data = await response.json();
+    if (data && data.rates && typeof data.rates === 'object') {
+      saveExchangeRates(data.rates);
+      return true;
+    }
+  } catch (e) {
+    console.warn('Exchange rate fetch failed, using cached/fallback rates:', e.message);
+  }
+  return false;
 };
 
 /**
@@ -2761,6 +2881,15 @@ if (typeof window !== 'undefined') {
   window.openEbaySoldSearch = openEbaySoldSearch;
   window.cleanSearchTerm = cleanSearchTerm;
   window.computeMeltValue = computeMeltValue;
+  // Multi-currency support (STACK-50)
+  window.loadDisplayCurrency = loadDisplayCurrency;
+  window.saveDisplayCurrency = saveDisplayCurrency;
+  window.getCurrencySymbol = getCurrencySymbol;
+  window.updateModalCurrencyUI = updateModalCurrencyUI;
+  window.getExchangeRate = getExchangeRate;
+  window.loadExchangeRates = loadExchangeRates;
+  window.saveExchangeRates = saveExchangeRates;
+  window.fetchExchangeRates = fetchExchangeRates;
 }
 
 if (typeof module !== 'undefined' && module.exports) {

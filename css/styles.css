@@ -532,11 +532,11 @@ select:focus {
 }
 
 .currency-input input {
-  padding-left: 2rem;
+  padding-left: var(--currency-padding, 2rem);
 }
 
 .currency-input::before {
-  content: "$";
+  content: var(--currency-symbol, "$");
   position: absolute;
   left: 0.75rem;
   top: 50%;
@@ -806,6 +806,10 @@ input[type="submit"] {
   font-weight: 700;
   color: var(--primary);
   cursor: default;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 0 var(--spacing);
 }
 
 /* Spot price change indicators */
@@ -2191,12 +2195,18 @@ input[type="submit"] {
   font-weight: 500;
   color: var(--text-secondary);
   font-size: 0.8125rem;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .total-value {
   font-weight: 600;
   color: var(--text-primary);
   font-size: 0.9375rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
 }
 
 
@@ -2520,6 +2530,9 @@ th[data-column="date"] {
   overflow: hidden;
   text-overflow: ellipsis;
   cursor: pointer;
+}
+/* Transition only on td — transition:all on the sticky th breaks stacking */
+#inventoryTable td[data-column="metal"] {
   transition: all 0.3s ease;
 }
 
@@ -5064,6 +5077,10 @@ th {
   position: sticky;
   top: 0;
   z-index: 2;
+  /* Override generic th { transition: var(--transition) } — transition:all on
+     sticky elements creates temporary compositor layers during scroll that can
+     break stacking order, causing data rows to paint above the header */
+  transition: none;
 }
 
 /* Ensure uniform font family for entire table */
@@ -5141,11 +5158,28 @@ th {
   background: var(--bg-secondary);
 }
 
-/* Hover state for row interaction — override generic filter:brightness hover */
+/* Neutralise generic tr:hover on header row — filter/position on a tr ancestor
+   breaks position:sticky on child th elements */
+#inventoryTable thead tr:hover {
+  filter: none;
+  box-shadow: none;
+  position: static;
+  z-index: auto;
+}
+
+/* Hover state for data rows — override generic tr:hover which sets
+   position:relative + z-index:1, causing rows to paint above the sticky thead */
 #inventoryTable tbody tr:hover {
   background: var(--bg-tertiary);
   filter: none;
   box-shadow: none;
+  position: static;
+  z-index: auto;
+}
+
+/* Prevent any data cell from elevating above the sticky header (z-index:2) */
+#inventoryTable tbody td {
+  z-index: auto;
 }
 
 /* Keep visual clarity on very small screens */
