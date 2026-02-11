@@ -30,11 +30,13 @@ const getBreakdownData = (metal) => {
   metalItems.forEach(item => {
     const qty = Number(item.qty) || 1;
     const itemWeight = qty * (parseFloat(item.weight) || 0);
-    const purchaseTotal = qty * (parseFloat(item.price) || 0);
+    const purchasePrice = parseFloat(item.price) || 0;
+    const purchaseTotal = qty * purchasePrice;
     const purity = parseFloat(item.purity) || 1.0;
     const meltValue = itemWeight * currentSpot * purity;
-    const isManualRetail = item.marketValue && item.marketValue > 0;
-    const retailTotal = isManualRetail ? item.marketValue * qty : meltValue;
+    const rawMarket = parseFloat(item.marketValue) || 0;
+    const isManualRetail = rawMarket > 0;
+    const retailTotal = isManualRetail ? rawMarket * qty : meltValue;
     const gainLoss = retailTotal - purchaseTotal;
 
     // Type breakdown
@@ -82,12 +84,14 @@ const getAllMetalsBreakdownData = () => {
   inventory.forEach(item => {
     const qty = Number(item.qty) || 1;
     const itemWeight = qty * (parseFloat(item.weight) || 0);
-    const purchaseTotal = qty * (parseFloat(item.price) || 0);
+    const purchasePrice = parseFloat(item.price) || 0;
+    const purchaseTotal = qty * purchasePrice;
     const currentSpot = spotPrices[item.metal.toLowerCase()] || 0;
     const purity = parseFloat(item.purity) || 1.0;
     const meltValue = itemWeight * currentSpot * purity;
-    const isManualRetail = item.marketValue && item.marketValue > 0;
-    const retailTotal = isManualRetail ? item.marketValue * qty : meltValue;
+    const rawMv2 = parseFloat(item.marketValue) || 0;
+    const isManualRetail = rawMv2 > 0;
+    const retailTotal = isManualRetail ? rawMv2 * qty : meltValue;
     const gainLoss = retailTotal - purchaseTotal;
 
     // Metal breakdown
