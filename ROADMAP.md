@@ -8,18 +8,17 @@ Project direction and planned work. Each item links to its full Linear issue for
 
 ## Near-Term — Next Up
 
-The price history pipeline is complete (STACK-42/43). These items are unblocked and ready for the next sprint.
+Multi-currency is shipped (STACK-50). These items are unblocked and ready for the next sprint.
 
 | Issue | Title | Priority | Depends On |
 |-------|-------|----------|------------|
+| [STACK-54](https://linear.app/hextrackr/issue/STACK-54) | Appearance Settings: header toggles, time zone, layout visibility | Medium | STACK-50 ✅ |
 | [STACK-44](https://linear.app/hextrackr/issue/STACK-44) | Settings Log tab reorganization with sub-tabs | Medium | STACK-43 ✅ |
 | [STACK-46](https://linear.app/hextrackr/issue/STACK-46) | Configurable spot & portfolio card grid with drag-to-reorder | Medium | STACK-45 ✅ |
 | [STACK-48](https://linear.app/hextrackr/issue/STACK-48) | Chart system overhaul: migrate to ApexCharts, add time-series trends | Medium | STACK-43 ✅ |
 | [STACK-38](https://linear.app/hextrackr/issue/STACK-38) | Table CSS hardening & responsive audit | Medium | — |
 | [STACK-49](https://linear.app/hextrackr/issue/STACK-49) | Spot Price Lookup by Date on Add/Edit Form | Low | — |
-| [STACK-50](https://linear.app/hextrackr/issue/STACK-50) | Multi-currency support with user-selectable display currency | Medium | — |
 | [STACK-51](https://linear.app/hextrackr/issue/STACK-51) | Custom CSV import mapper with header mapping UI and saved profiles | Medium | — |
-| [STACK-52](https://linear.app/hextrackr/issue/STACK-52) | Bulk Edit: pin selected items to top of table across search changes | High | — |
 | [STACK-53](https://linear.app/hextrackr/issue/STACK-53) | [RFC] Community spot price history CDN via GitHub with manifest-based selective import | Medium | — |
 
 ---
@@ -78,6 +77,9 @@ Explicitly out of scope until prerequisites are met.
 <details>
 <summary>Shipped features (click to expand)</summary>
 
+- **v3.24.00** — STACK-50: Multi-currency support with 17-currency display, daily exchange rate conversion, dynamic formatting
+- **v3.23.02** — STACK-52: Bulk Edit pinned selections, dormant prototype cleanup
+- **v3.23.01** — Goldback real-time estimation, Settings reorganization
 - **v3.23.00** — STACK-42/43/45: Persistent UUIDs, silent price history recording, Goldback denomination pricing & type support
 - **v3.22.01** — Form layout, bulk edit dropdowns, purity chips
 - **v3.22.00** — STACK-22/24/25/27: Purity field & melt formula, PCGS quota bar, pie chart metric toggle, test-loader extraction
