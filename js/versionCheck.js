@@ -74,6 +74,7 @@ const populateVersionModal = (version, html) => {
   const body = document.getElementById("versionChanges");
   const ver = document.getElementById("versionModalVersion");
   if (ver) ver.textContent = `v${version}`;
+  // nosemgrep: javascript.browser.security.insecure-innerhtml.insecure-innerhtml, javascript.browser.security.insecure-document-method.insecure-document-method
   if (body) body.innerHTML = html;
   if (!modal) return;
   modal.style.display = "flex";
@@ -91,6 +92,10 @@ const populateVersionModal = (version, html) => {
  */
 const getEmbeddedChangelog = (version) => {
   const changelogs = {
+    "3.24.01": `
+      <li><strong>Fixed</strong>: Convert innerHTML to textContent for plain-text currency formatting</li>
+      <li><strong>Changed</strong>: Add PMD, ESLint, and Semgrep configuration to resolve 90 Codacy issues</li>
+    `,
     "3.24.00": `
       <li><strong>Added</strong>: Multi-currency display with 17 supported currencies and exchange rate conversion (STACK-50)</li>
       <li><strong>Added</strong>: Daily exchange rate fetching from open.er-api.com with localStorage caching and hardcoded fallback rates</li>

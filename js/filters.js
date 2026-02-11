@@ -360,10 +360,8 @@ const renderActiveFilters = () => {
 
   // Helper: collect chips for a single category from the summary data
   const collectCategoryChips = (cat) => {
-    const desc = categoryDescriptors[cat.id]; // eslint-disable-line security/detect-object-injection
-    if (!desc) return [];
-    const data = categorySummary[desc.summaryKey]; // eslint-disable-line security/detect-object-injection
-    if (!data) return [];
+    const desc = categoryDescriptors[cat.id];    if (!desc) return [];
+    const data = categorySummary[desc.summaryKey];    if (!data) return [];
     const result = [];
     if (cat.id === 'customGroup') {
       Object.entries(data).forEach(([groupId, info]) => {
@@ -400,8 +398,7 @@ const renderActiveFilters = () => {
 
   for (const cat of categoryConfig) {
     if (!cat.enabled) continue;
-    const desc = categoryDescriptors[cat.id]; // eslint-disable-line security/detect-object-injection
-    if (!desc) continue;
+    const desc = categoryDescriptors[cat.id];    if (!desc) continue;
     categoryFields.add(desc.field);
 
     if (cat.group) {
@@ -412,8 +409,7 @@ const renderActiveFilters = () => {
       const pooled = [];
       for (const gc of categoryConfig) {
         if (!gc.enabled || gc.group !== cat.group) continue;
-        const gcDesc = categoryDescriptors[gc.id]; // eslint-disable-line security/detect-object-injection
-        if (gcDesc) categoryFields.add(gcDesc.field);
+        const gcDesc = categoryDescriptors[gc.id];        if (gcDesc) categoryFields.add(gcDesc.field);
         pooled.push(...collectCategoryChips(gc));
       }
       sortChips(pooled);

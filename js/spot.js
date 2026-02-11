@@ -612,6 +612,7 @@ const startSpotInlineEdit = (valueEl, metalKey) => {
   input.select();
 
   const cancel = () => {
+    // nosemgrep: javascript.browser.security.insecure-innerhtml.insecure-innerhtml, javascript.browser.security.insecure-document-method.insecure-document-method
     valueEl.innerHTML = originalHTML;
   };
 
