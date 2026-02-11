@@ -7200,6 +7200,50 @@ th {
   background: rgba(139, 92, 42, 0.08) !important;
 }
 
+/* Pinned section — selected items not matching current search */
+.bulk-edit-pinned-header td {
+  background: var(--bg-secondary);
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-secondary);
+  padding: 0.35rem 0.75rem;
+  cursor: default;
+}
+
+.bulk-edit-pinned-header:hover {
+  background: var(--bg-secondary) !important;
+}
+
+.bulk-edit-pinned {
+  border-left: 3px solid var(--primary);
+}
+
+.bulk-edit-pinned.bulk-edit-selected {
+  background: rgba(59, 130, 246, 0.12) !important;
+}
+
+[data-theme="dark"] .bulk-edit-pinned.bulk-edit-selected {
+  background: rgba(59, 130, 246, 0.22) !important;
+}
+
+[data-theme="sepia"] .bulk-edit-pinned.bulk-edit-selected {
+  background: rgba(139, 92, 42, 0.12) !important;
+}
+
+.bulk-edit-pinned-divider td {
+  height: 2px;
+  padding: 0;
+  background: var(--border);
+}
+
+.bulk-edit-pinned-divider,
+.bulk-edit-pinned-divider:hover {
+  cursor: default;
+  background: none !important;
+}
+
 .bulk-edit-footer {
   display: flex;
   align-items: center;
