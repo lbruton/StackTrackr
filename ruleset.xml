@@ -6,10 +6,12 @@
 
     <description>StackTrackr PMD ruleset — excludes false-positive rules for client-side JS</description>
 
-    <!-- Include all ECMAScript error-prone rules except InnaccurateNumericLiteral.
-         Values like 42.00, 3400.00, 0.0005 are exactly representable in IEEE 754. -->
+    <!-- Include all ECMAScript error-prone rules with exclusions for false positives. -->
     <rule ref="category/ecmascript/errorprone.xml">
+        <!-- Values like 42.00, 3400.00, 0.0005 are exactly representable in IEEE 754. -->
         <exclude name="InnaccurateNumericLiteral"/>
+        <!-- Trailing commas are standard ES2017+ and used throughout the codebase. -->
+        <exclude name="AvoidTrailingComma"/>
     </rule>
 
 </ruleset>
