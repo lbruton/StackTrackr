@@ -911,7 +911,7 @@ const fetchLatestPrices = async (provider, apiKey, selectedMetals) => {
   // metals.dev supports a batch /latest endpoint returning all metals in one call
   if (provider === "METALS_DEV" && providerConfig.latestBatchEndpoint) {
     try {
-      const url = providerConfig.baseUrl + providerConfig.latestBatchEndpoint.replace("{API_KEY}", apiKey).replace("{CURRENCY}", displayCurrency);
+      const url = providerConfig.baseUrl + providerConfig.latestBatchEndpoint.replace("{API_KEY}", apiKey);
       const headers = { "Content-Type": "application/json" };
       if (apiKey) headers["Authorization"] = `Bearer ${apiKey}`;
 
@@ -965,7 +965,7 @@ const fetchLatestPrices = async (provider, apiKey, selectedMetals) => {
         const endpoint = providerConfig.endpoints[metal];
         if (!endpoint) continue;
         try {
-          const url = `${providerConfig.baseUrl}${endpoint.replace("{API_KEY}", apiKey).replace("{CURRENCY}", displayCurrency)}`;
+          const url = `${providerConfig.baseUrl}${endpoint.replace("{API_KEY}", apiKey)}`;
           const headers = { "Content-Type": "application/json" };
           if (provider === "METALS_DEV" && apiKey) headers["Authorization"] = `Bearer ${apiKey}`;
           const response = await fetch(url, { method: "GET", headers, mode: "cors" });
@@ -1015,18 +1015,16 @@ const fetchBatchSpotPrices = async (provider, apiKey, selectedMetals, historyDay
 
     // Replace placeholders based on provider specifics
     if (provider === 'METALS_DEV') {
-      url = url.replace('{API_KEY}', apiKey).replace('{CURRENCY}', displayCurrency);
+      url = url.replace('{API_KEY}', apiKey);
     } else if (provider === 'METALS_API') {
       const symbolMap = { silver: 'XAG', gold: 'XAU', platinum: 'XPT', palladium: 'XPD' };
       const symbols = selectedMetals.map(metal => symbolMap[metal]).join(',');
       url = url.replace('{API_KEY}', apiKey)
-              .replace('{CURRENCY}', displayCurrency)
               .replace('{SYMBOLS}', symbols);
     } else if (provider === 'METAL_PRICE_API') {
       const symbolMap = { silver: 'XAG', gold: 'XAU', platinum: 'XPT', palladium: 'XPD' };
       const currencies = selectedMetals.map(metal => symbolMap[metal]).join(',');
       url = url.replace('{API_KEY}', apiKey)
-              .replace('{CURRENCY}', displayCurrency)
               .replace('{CURRENCIES}', currencies);
     }
 
@@ -1211,7 +1209,7 @@ const fetchHistoryBatched = async (provider, apiKey, selectedMetals, totalDays) 
       let url = providerConfig.baseUrl + providerConfig.batchEndpoint;
 
       // Replace API key and currency placeholders
-      url = url.replace("{API_KEY}", apiKey).replace("{CURRENCY}", displayCurrency);
+      url = url.replace("{API_KEY}", apiKey);
 
       // Replace date placeholders
       url = url.replace("{START_DATE}", fmt(chunk.start)).replace("{END_DATE}", fmt(chunk.end));
@@ -1635,6 +1633,10 @@ const syncProviderChain = async ({ showProgress = false, forceSync = false } = {
 
     // Post-sync updates if anything changed
     if (updatedCount > 0) {
+      // Refresh exchange rates alongside spot prices (STACK-50)
+      if (typeof fetchExchangeRates === 'function') {
+        fetchExchangeRates().catch(() => {});
+      }
       updateSummary();
       if (typeof recordAllItemPriceSnapshots === 'function') recordAllItemPriceSnapshots();
       if (typeof updateStorageStats === "function") updateStorageStats();

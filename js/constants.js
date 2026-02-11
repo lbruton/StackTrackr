@@ -17,12 +17,12 @@ const API_PROVIDERS = {
     name: "Metals.dev",
     baseUrl: "https://api.metals.dev/v1",
     endpoints: {
-      silver: "/metal/spot?api_key={API_KEY}&metal=silver&currency={CURRENCY}",
-      gold: "/metal/spot?api_key={API_KEY}&metal=gold&currency={CURRENCY}",
-      platinum: "/metal/spot?api_key={API_KEY}&metal=platinum&currency={CURRENCY}",
-      palladium: "/metal/spot?api_key={API_KEY}&metal=palladium&currency={CURRENCY}",
+      silver: "/metal/spot?api_key={API_KEY}&metal=silver&currency=USD",
+      gold: "/metal/spot?api_key={API_KEY}&metal=gold&currency=USD",
+      platinum: "/metal/spot?api_key={API_KEY}&metal=platinum&currency=USD",
+      palladium: "/metal/spot?api_key={API_KEY}&metal=palladium&currency=USD",
     },
-    latestBatchEndpoint: "/latest?api_key={API_KEY}&currency={CURRENCY}&unit=toz",
+    latestBatchEndpoint: "/latest?api_key={API_KEY}&currency=USD&unit=toz",
     parseResponse: (data) => data.rate?.price || null,
     parseLatestBatchResponse: (data) => {
       const current = {};
@@ -71,10 +71,10 @@ const API_PROVIDERS = {
     name: "Metals-API.com",
     baseUrl: "https://metals-api.com/api",
     endpoints: {
-      silver: "/latest?access_key={API_KEY}&base={CURRENCY}&symbols=XAG",
-      gold: "/latest?access_key={API_KEY}&base={CURRENCY}&symbols=XAU",
-      platinum: "/latest?access_key={API_KEY}&base={CURRENCY}&symbols=XPT",
-      palladium: "/latest?access_key={API_KEY}&base={CURRENCY}&symbols=XPD",
+      silver: "/latest?access_key={API_KEY}&base=USD&symbols=XAG",
+      gold: "/latest?access_key={API_KEY}&base=USD&symbols=XAU",
+      platinum: "/latest?access_key={API_KEY}&base=USD&symbols=XPT",
+      palladium: "/latest?access_key={API_KEY}&base=USD&symbols=XPD",
     },
     parseResponse: (data, metal) => {
       // Expected format: { "success": true, "rates": { "XAG": 0.04 } }
@@ -94,7 +94,7 @@ const API_PROVIDERS = {
     symbolsPerRequest: 1,
     docUrl: "https://metals-api.com/documentation",
     batchSupported: true,
-    batchEndpoint: "/timeseries?access_key={API_KEY}&start_date={START_DATE}&end_date={END_DATE}&base={CURRENCY}&symbols={SYMBOLS}",
+    batchEndpoint: "/timeseries?access_key={API_KEY}&start_date={START_DATE}&end_date={END_DATE}&base=USD&symbols={SYMBOLS}",
     parseBatchResponse: (data) => {
       const current = {};
       const history = {};
@@ -140,10 +140,10 @@ const API_PROVIDERS = {
     name: "MetalPriceAPI.com",
     baseUrl: "https://api.metalpriceapi.com/v1",
     endpoints: {
-      silver: "/latest?api_key={API_KEY}&base={CURRENCY}&currencies=XAG",
-      gold: "/latest?api_key={API_KEY}&base={CURRENCY}&currencies=XAU",
-      platinum: "/latest?api_key={API_KEY}&base={CURRENCY}&currencies=XPT",
-      palladium: "/latest?api_key={API_KEY}&base={CURRENCY}&currencies=XPD",
+      silver: "/latest?api_key={API_KEY}&base=USD&currencies=XAG",
+      gold: "/latest?api_key={API_KEY}&base=USD&currencies=XAU",
+      platinum: "/latest?api_key={API_KEY}&base=USD&currencies=XPT",
+      palladium: "/latest?api_key={API_KEY}&base=USD&currencies=XPD",
     },
     parseResponse: (data, metal) => {
       // Expected format: { "success": true, "rates": { "XAG": 0.04 } }
@@ -163,7 +163,7 @@ const API_PROVIDERS = {
     symbolsPerRequest: "all",
     docUrl: "https://metalpriceapi.com/documentation",
     batchSupported: true,
-    batchEndpoint: "/timeframe?api_key={API_KEY}&start_date={START_DATE}&end_date={END_DATE}&base={CURRENCY}&currencies={CURRENCIES}",
+    batchEndpoint: "/timeframe?api_key={API_KEY}&start_date={START_DATE}&end_date={END_DATE}&base=USD&currencies={CURRENCIES}",
     parseBatchResponse: (data) => {
       const current = {};
       const history = {};
@@ -287,6 +287,37 @@ const SUPPORTED_CURRENCIES = [
 
 /** @constant {string} DISPLAY_CURRENCY_KEY - LocalStorage key for display currency preference (STACK-50) */
 const DISPLAY_CURRENCY_KEY = "displayCurrency";
+
+/** @constant {string} EXCHANGE_RATES_KEY - LocalStorage key for cached exchange rates (STACK-50) */
+const EXCHANGE_RATES_KEY = "exchangeRates";
+
+/** @constant {string} EXCHANGE_RATE_API_URL - Free exchange rate API (no key required) */
+const EXCHANGE_RATE_API_URL = "https://open.er-api.com/v6/latest/USD";
+
+/**
+ * Fallback exchange rates (USD-based) for offline/file:// use (STACK-50)
+ * Updated Feb 2026. Used only when API fetch fails and no cached rates exist.
+ * @constant {Object<string, number>}
+ */
+const FALLBACK_EXCHANGE_RATES = {
+  USD: 1,
+  EUR: 0.92,
+  GBP: 0.79,
+  CAD: 1.36,
+  AUD: 1.53,
+  CHF: 0.89,
+  JPY: 149.5,
+  CNY: 7.24,
+  INR: 83.1,
+  MXN: 17.15,
+  SEK: 10.42,
+  NOK: 10.55,
+  NZD: 1.64,
+  SGD: 1.34,
+  HKD: 7.82,
+  ZAR: 18.65,
+  RUB: 92.5,
+};
 
 /**
  * Returns formatted version string
@@ -532,6 +563,7 @@ const ALLOWED_STORAGE_KEYS = [
   GOLDBACK_ESTIMATE_ENABLED_KEY,
   GB_ESTIMATE_MODIFIER_KEY,
   DISPLAY_CURRENCY_KEY,
+  EXCHANGE_RATES_KEY,
 ];
 
 // =============================================================================
@@ -1135,6 +1167,9 @@ if (typeof window !== "undefined") {
   // Multi-currency support (STACK-50)
   window.SUPPORTED_CURRENCIES = SUPPORTED_CURRENCIES;
   window.DISPLAY_CURRENCY_KEY = DISPLAY_CURRENCY_KEY;
+  window.EXCHANGE_RATES_KEY = EXCHANGE_RATES_KEY;
+  window.EXCHANGE_RATE_API_URL = EXCHANGE_RATE_API_URL;
+  window.FALLBACK_EXCHANGE_RATES = FALLBACK_EXCHANGE_RATES;
 }
 
 // Expose APP_VERSION globally for non-module usage

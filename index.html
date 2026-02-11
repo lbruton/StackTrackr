@@ -234,7 +234,7 @@
                   </button>
                 </div>
               </div>
-              <div class="spot-card-value" id="spotPriceDisplaySilver" title="Shift+click to edit">$ -</div>
+              <div class="spot-card-value" id="spotPriceDisplaySilver" title="Shift+click to edit">—</div>
               <div class="spot-card-change" id="spotChangeSilver"></div>
               <div class="spot-card-timestamp" id="spotTimestampSilver">No data</div>
             </div>
@@ -259,7 +259,7 @@
                   </button>
                 </div>
               </div>
-              <div class="spot-card-value" id="spotPriceDisplayGold" title="Shift+click to edit">$ -</div>
+              <div class="spot-card-value" id="spotPriceDisplayGold" title="Shift+click to edit">—</div>
               <div class="spot-card-change" id="spotChangeGold"></div>
               <div class="spot-card-timestamp" id="spotTimestampGold">No data</div>
             </div>
@@ -284,7 +284,7 @@
                   </button>
                 </div>
               </div>
-              <div class="spot-card-value" id="spotPriceDisplayPlatinum" title="Shift+click to edit">$ -</div>
+              <div class="spot-card-value" id="spotPriceDisplayPlatinum" title="Shift+click to edit">—</div>
               <div class="spot-card-change" id="spotChangePlatinum"></div>
               <div class="spot-card-timestamp" id="spotTimestampPlatinum">No data</div>
             </div>
@@ -309,7 +309,7 @@
                   </button>
                 </div>
               </div>
-              <div class="spot-card-value" id="spotPriceDisplayPalladium" title="Shift+click to edit">$ -</div>
+              <div class="spot-card-value" id="spotPriceDisplayPalladium" title="Shift+click to edit">—</div>
               <div class="spot-card-change" id="spotChangePalladium"></div>
               <div class="spot-card-timestamp" id="spotTimestampPalladium">No data</div>
             </div>
@@ -970,7 +970,7 @@
                 <input id="itemDate" required type="date" />
               </div>
               <div>
-                <label for="itemPrice">Purchase Price ($)</label>
+                <label for="itemPrice">Purchase Price</label>
                 <div class="currency-input">
                   <input id="itemPrice" min="0" step="0.01" type="number" />
                 </div>
@@ -983,7 +983,7 @@
                 <input id="purchaseLocation" type="text" />
               </div>
               <div id="marketValueField">
-                <label for="itemMarketValue">Retail Price ($) <span style="font-weight:normal;opacity:0.6;">(optional)</span></label>
+                <label for="itemMarketValue">Retail Price <span style="font-weight:normal;opacity:0.6;">(optional)</span></label>
                 <div class="currency-input">
                   <input id="itemMarketValue" min="0" step="0.01" type="number" placeholder="Defaults to melt value" />
                 </div>
@@ -1513,7 +1513,7 @@
 
               <div class="settings-group">
                 <div class="settings-group-label">Display currency</div>
-                <p class="settings-subtext">All prices, spot values, and exports will use this currency.</p>
+                <p class="settings-subtext">All prices, spot values, and exports will use this currency. Spot prices are fetched in USD and converted using daily exchange rates. Converted values may differ slightly from native currency quotes.</p>
                 <select id="settingsDisplayCurrency"></select>
               </div>
 
@@ -2128,7 +2128,7 @@
                 <label>Quick Fill</label>
                 <p class="settings-subtext">Enter the 1 Goldback exchange rate to auto-fill all denominations.</p>
                 <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.75rem;">
-                  <span style="color:var(--text-secondary);">$</span>
+                  <span id="gbQuickFillSymbol" style="color:var(--text-secondary);">$</span>
                   <input type="number" id="goldbackQuickFillInput" min="0" step="0.01" placeholder="1 GB rate" style="width:100px;" />
                   <button class="btn btn-primary" id="goldbackQuickFillBtn" type="button">Set All</button>
                 </div>
