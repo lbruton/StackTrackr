@@ -1,57 +1,12 @@
 ## What's New
 
-- **STACK-52: Bulk Edit pinned selections (v3.23.02)**: Bulk Edit pinned selections — selected items stay visible at the top of the table when the search term changes. Extracted shared search filter helper and added master checkbox indeterminate state. Removed dormant rEngine/rSynk/AI prototype files
-- **Goldback real-time estimation, Settings reorganization (v3.23.01)**: Added: Goldback real-time price estimation from gold spot (STACK-52). Added: User-configurable estimation premium modifier. Changed: Settings sidebar — renamed Theme to Appearance, Tools to System. Changed: Default estimation formula to pure 2x spot (modifier = 1.0)
-- **STACK-42/43/45: UUIDs, Price History, Goldback Pricing (v3.23.00)**: Added: Goldback denomination pricing & type support (STACK-45). Added: Persistent UUID v4 for every inventory item (STACK-42). Added: Silent per-item price history recording (STACK-43)
-- **STACK-45: Goldback denomination pricing**: New `gb` weight unit for Goldback items — 1 gb = 0.001 ozt 24K gold. Manual denomination pricing in Settings > Goldback tab with save, history logging, and enable/disable toggle. Retail value uses 3-tier hierarchy: manual override > Goldback denomination price > melt value. CSV/PDF/ZIP exports include Weight Unit column. Edit and duplicate preserve gb unit
-- **STACK-43: Silent price history**: Per-item price history now records silently in the background. Every add, edit, bulk change, and spot price sync captures a timestamped retail/spot/melt snapshot keyed by UUID. When trend charts ship, you'll already have months of data. ZIP backup includes price history with smart merge on restore
-- **STACK-42: Persistent UUIDs**: Every inventory item now has a stable UUID v4 identifier that never changes regardless of array position. Foundation for per-item price history, trend charts, and cloud sync. Existing items auto-migrate on load. All export/import formats updated
-- **Form layout, bulk edit dropdowns, purity chips (v3.22.01)**: Purity form layout: Weight/Purity/Qty on single row. Bulk Edit: Purity, Grade, Grading Authority as dropdowns. Purity/fineness filter chips (enabled) and inline chips (disabled). Purity inline chip shows numerical value only
-- **STACK-22/24/25/27: Purity, PCGS quota, chart toggle, extraction (v3.22.00)**: Added: Purity (fineness) field — adjusts melt value formula across all calculation sites (STACK-22). Added: PCGS API daily quota usage bar in Settings (STACK-24). Added: Pie chart metric toggle — switch between Purchase, Melt, Retail, and Gain/Loss views (STACK-27). Changed: Extracted inline test loader to js/test-loader.js (STACK-25). Changed: CSV, PDF, and ZIP exports now include Purity column. Changed: Seed data includes realistic purity values for sample items
-- **STACK-23: Search matches custom chip group labels (v3.21.03)**: Fixed: Search now matches items belonging to custom chip groups when searching by group label (STACK-23)
-- **Seed data, sample inventory & README overhaul (v3.21.02)**: Seed spot history: 6 months of baked-in price data (720 entries, 4 metals) — sparklines and price cards work from day one. Sample inventory: 8 pre-configured items (3x ASE, 3x Gold Maple, Platinum Round, Palladium Bar) with grades, Numista IDs, and filter chips. Seed timestamp: Spot cards show 'Seed · date' with shift+click hint for seeded users. Metals History: Seed entries visible in history modal with StakTrakr source label. README overhaul: Hero screenshot, feature showcase, Getting Started guide. Seed generator: generate-seed-data.py processes CSV exports into seed JSON + embedded JS
-- **PCGS verified persistence & lookup enhancements (v3.21.01)**: Green verified checkmark now survives reload, sort, and filter. PCGS lookup populates Name and Retail Price fields. Verified icon shown in edit modal. PCGS API calls logged to Catalog History. Fixed Numista search icon loss and pcgsNumber missing from exports
-- **PCGS# & Cert Verification (v3.21.00)**: New PCGS catalog number field on add/edit form with inline chip in Name cell (click to open CoinFacts). PCGS API cert verification — configure bearer token in Settings > API > PCGS, then click the verify icon on PCGS-graded items to see grade, population, and price guide. Included in all export/import formats, search, and bulk edit
-- **Bulk Edit tool (v3.20.00)**: Full-screen modal in Settings > Tools to select, edit, copy, or delete multiple items at once. 16 editable fields with enable/disable toggles, searchable item table, Numista Lookup integration. Change Log moved to Settings > Log tab. Numista chips show full ID (N#12345). Year chips click to filter. Fixed chip word boundary matching and shift-click hide bug
-- **Filter chip enhancements (v3.19.00)**: Enable/disable and reorder 10 filter chip categories in Settings > Chips. Sort chips within each category by Name (A-Z) or Qty (High→Low) from new inline dropdown or Settings. Config-driven rendering replaces hard-coded category blocks
-- **API Settings redesign (v3.18.00)**: Numista promoted to first-class pinned tab. Metals provider tabs are drag-to-reorder — position = sync priority. Compact header status row with per-provider connection indicators and last-used timestamps. Batch badges, savings calculations, info links, and Default/Backup buttons removed. Clickable quota bars replace Quota buttons. Streamlined provider cards: Save, Save and Test, Clear Key
-- **Inline Name chips & search expansion (v3.17.00)**: 3 new inline chips (Serial #, Storage Location, Notes Indicator) join Grade, Numista, and Year in the Name cell. Enable/disable and reorder all 6 chip types in new Settings > Table panel. Search now covers Year, Grade, Grading Authority, Cert #, Numista ID, and Serial Number. ZIP backup/restore includes all chip settings and display preferences. Settings reorganized: Theme, Table, Chips tabs
-- **Edit custom grouping rules (v3.16.02)**: Inline edit button on custom chip grouping rules — modify label and patterns without delete/recreate. Filter chip threshold setting moved to Grouping panel
-- **API settings fixes & Numista usage (v3.16.01)**: Cache timeout now persists per-provider, historical data fetches for all providers, page refresh syncs all configured APIs. New standalone "Save" button per provider. Numista usage progress bar tracks API calls with monthly auto-reset
-- **Custom chip grouping & blacklist (v3.16.00)**: Define custom chip labels with comma-separated name patterns. Right-click any name chip to blacklist it. Dynamic chips auto-extract text from parentheses/quotes in item names. New Settings > Grouping panel for all chip controls
-- **Name column & action icon fix (v3.14.01)**: Long names truncate with ellipsis, N# chips compacted to just "N#" (hover for full ID), action icons no longer clipped on narrow viewports
-- **Encrypted portable backup (v3.14.00)**: Export all data as a password-protected `.stvault` file (AES-256-GCM). Import on any device to restore inventory, settings, API keys, and price history. Password strength bar + crypto fallback for file:// protocol
-- **NGC cert lookup fix (v3.12.02)**: Clicking a graded item's cert tag now opens NGC with the actual coin details visible
-- **Name column overflow fix (v3.12.02)**: Long names truncate with ellipsis — tags (Year, N#, Grade) always stay visible
-- **Numista Sets (v3.12.02)**: New "Set" type for mint/proof sets with S-prefix Numista IDs (e.g., S4203)
-- **"Lunar Series" chip (v3.12.02)**: "Year of the Dragon/Snake/etc." items group under one chip
-- **Source column cleanup (v3.12.02)**: URL sources like "apmex.com" display as "apmex" with link icon
-- **Sticky header fix (v3.12.01)**: Column headers now correctly pin at the top of the scrollable portal view during vertical scroll
-- **Portal view (v3.12.00)**: Inventory table now renders all items in a scrollable container with sticky column headers — pagination removed. Visible rows (10/15/25/50/100) control viewport height
-- **Unified Settings modal (v3.11.00)**: API, Files, and Appearance consolidated into a single Settings modal with sidebar navigation. Header simplified to About + Settings
-- **Theme picker (v3.11.00)**: 3-button theme selector (Light / Dark / Sepia) replaces the cycling toggle
-- **Tabbed API providers (v3.11.00)**: Provider configuration uses tabbed panels instead of a scrollable list
-- **Items per page persisted (v3.11.00)**: Items-per-page setting now survives page reloads
-- **Numista iframe fix (v3.10.01)**: Numista pages now open in a popup window — fixes "Can't Open This Page" error on hosted sites
-- **Sort fix (v3.10.01)**: Gain/Loss and Source columns now sort and resize correctly
-- **Serial # field (v3.10.00)**: New optional Serial Number input for bars and notes with physical serial numbers. Included in all export/import formats
-- **Numista Aurum fix (v3.10.00)**: Goldback / Aurum items now return results from Numista search
-- **Enhanced Numista no-results (v3.10.00)**: Retry search box + popular bullion quick-picks when no results found
-- **Source column + filter chips (v3.10.00)**: "Location" renamed to "Source"; Year, Grade, and N# filter chips added to chip bar
-- **Year sort + eBay year (v3.10.00)**: Name column sub-sorts by Year; eBay search URLs include year
-- **Grade, Authority & Cert # (v3.09.05)**: New optional grading fields — Grade dropdown (AG through PF-70), Grading Authority (PCGS/NGC/ANACS/ICG), and Cert # input. Color-coded grade tags on table with one-click cert verification
-- **eBay search fix (v3.09.05)**: Item names with quotes or parentheses no longer produce broken eBay search results
-- **Year field + inline tag (v3.09.04)**: New optional Year field in add/edit form with inline year badge on inventory table Name cell. Numista picker now fills Year instead of Metal
-- **Form layout restructure (v3.09.04)**: Name wider with Year beside it; purchase fields grouped: Date | Price, Location | Retail Price
-- **Numista field picker fix (v3.09.03)**: Fixed broken layout — checkboxes, labels, and inputs now align correctly using CSS Grid instead of fieldset+flexbox
-- **Smart category search (v3.09.03)**: Numista search uses your Type selection (Coin, Bar, Round, Note, Aurum) to filter results by category, and prepends Metal to the query when relevant
-- **Numista API v3 fix (v3.09.02)**: Corrected base URL, endpoints, auth headers, query parameters, response parsing, and field mapping — 7 bugs total. Test Connection button now works
-- **localStorage whitelist fix (v3.09.02)**: Catalog cache and settings no longer deleted on page load
-- **Normalized name chips (v3.09.01)**: Filter chip bar now groups item name variants into single chips (e.g., "Silver Eagle 6/164"). Click to filter, click again to toggle off. Respects minCount threshold and Smart Grouping toggle
-- **Silver chip contrast fix (v3.09.01)**: Silver metal chip text no longer invisible on dark/sepia themes at page load
-- **Duplicate location chip fix (v3.09.01)**: Clicking a location chip no longer produces two chips
+- **STACK-50: Multi-Currency Support (v3.24.00)**: 17-currency display with daily exchange rate conversion. Dynamic currency symbols across modals, Goldback settings, and exports. Dynamic Gain/Loss labels on totals cards. Sticky header fix
+- **STACK-52: Bulk Edit pinned selections (v3.23.02)**: Selected items stay visible at top of table when search changes. Removed dormant prototype files
+- **Goldback real-time estimation, Settings reorganization (v3.23.01)**: Goldback price estimation from gold spot with configurable premium. Settings sidebar renamed Theme to Appearance, Tools to System
+- **STACK-42/43/45: UUIDs, Price History, Goldback Pricing (v3.23.00)**: Goldback denomination pricing and type support. Persistent UUID v4 for every item. Silent per-item price history recording
 
 ## Development Roadmap
 
-- **Filter refresh for renamed items**: Items renamed via Numista no longer vanish from active filters
-- **Numista image cache** *(post-Supabase)*: Per-user caching of Numista API responses with coin images on item profiles. Attribution caption below images. Shift-click to upload custom photo of your specific coin
+- **Appearance Settings (STACK-54)**: Header quick-access toggles for currency and theme, time zone selection, show/hide layout sections
+- **Chart Overhaul (STACK-48)**: Migrate to ApexCharts with time-series trend views
+- **Custom CSV Mapper (STACK-51)**: Header mapping UI with saved import profiles

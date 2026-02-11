@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.24.00] - 2026-02-11
+
+### Added — STACK-50: Multi-Currency Support
+
+- **Added**: Multi-currency display with 17 supported currencies and exchange rate conversion (STACK-50)
+- **Added**: Daily exchange rate fetching from open.er-api.com with localStorage caching and hardcoded fallback rates
+- **Added**: Dynamic currency symbols in add/edit modal, Goldback denomination settings, and CSV export headers
+- **Added**: Dynamic Gain/Loss labels — green "Gain:" or red "Loss:" on totals cards
+- **Fixed**: Sticky header bleed-through when hovering table rows in first 4 columns
+- **Fixed**: Codacy false positives via .eslintrc.json
+
+---
+
 ## [3.23.02] - 2026-02-11
 
 ### Added — STACK-52: Bulk Edit pinned selections
