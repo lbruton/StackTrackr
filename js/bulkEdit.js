@@ -19,6 +19,25 @@ let bulkSearchTerm = '';            // Current search/filter text
 let bulkSearchTimer = null;         // Debounce timer for search input
 
 // =============================================================================
+// SEARCH FILTER HELPER
+// =============================================================================
+
+const getFilteredItems = (term) => {
+  if (typeof inventory === 'undefined' || !Array.isArray(inventory)) return [];
+  const t = (term || '').toLowerCase().trim();
+  if (!t) return inventory.slice();
+  return inventory.filter(item =>
+    (item.name || '').toLowerCase().includes(t) ||
+    (item.metal || '').toLowerCase().includes(t) ||
+    (item.type || '').toLowerCase().includes(t) ||
+    (item.year || '').toLowerCase().includes(t) ||
+    (item.storageLocation || '').toLowerCase().includes(t) ||
+    (item.purchaseLocation || '').toLowerCase().includes(t) ||
+    String(item.serial).includes(t)
+  );
+};
+
+// =============================================================================
 // EDITABLE FIELDS DEFINITION
 // =============================================================================
 
@@ -374,25 +393,22 @@ const renderBulkTableBody = () => {
   }
 
   // Filter by search term
+  const filtered = getFilteredItems(bulkSearchTerm);
   const term = (bulkSearchTerm || '').toLowerCase().trim();
-  const filtered = term
-    ? inventory.filter(item =>
-        (item.name || '').toLowerCase().includes(term) ||
-        (item.metal || '').toLowerCase().includes(term) ||
-        (item.type || '').toLowerCase().includes(term) ||
-        (item.year || '').toLowerCase().includes(term) ||
-        (item.storageLocation || '').toLowerCase().includes(term) ||
-        (item.purchaseLocation || '').toLowerCase().includes(term) ||
-        String(item.serial).includes(term)
-      )
-    : inventory;
+
+  // Compute pinned items — selected items NOT in search results (only when search active)
+  let pinnedItems = [];
+  if (term) {
+    const filteredSerials = new Set(filtered.map(i => String(i.serial)));
+    pinnedItems = inventory.filter(item =>
+      bulkSelection.has(String(item.serial)) && !filteredSerials.has(String(item.serial))
+    );
+  }
 
   const table = document.createElement('table');
   table.className = 'bulk-edit-table';
 
-  // Thead
-  const thead = document.createElement('thead');
-  const headerRow = document.createElement('tr');
+  // Column definitions
   const columns = [
     { key: 'cb',     label: '' },
     { key: 'name',   label: 'Name' },
@@ -403,6 +419,17 @@ const renderBulkTableBody = () => {
     { key: 'year',   label: 'Year' },
     { key: 'storageLocation', label: 'Location' },
   ];
+  const colCount = columns.length;
+
+  // Master checkbox state (based on filtered items only, excludes pinned)
+  const allFilteredSelected = filtered.length > 0 &&
+    filtered.every(item => bulkSelection.has(String(item.serial)));
+  const someFilteredSelected = !allFilteredSelected &&
+    filtered.some(item => bulkSelection.has(String(item.serial)));
+
+  // Thead
+  const thead = document.createElement('thead');
+  const headerRow = document.createElement('tr');
 
   columns.forEach(col => {
     const th = document.createElement('th');
@@ -410,7 +437,8 @@ const renderBulkTableBody = () => {
       const masterCb = document.createElement('input');
       masterCb.type = 'checkbox';
       masterCb.title = 'Toggle all visible';
-      masterCb.checked = filtered.length > 0 && filtered.every(item => bulkSelection.has(String(item.serial)));
+      masterCb.checked = allFilteredSelected;
+      masterCb.indeterminate = someFilteredSelected;
       masterCb.addEventListener('change', () => selectAllItems(masterCb.checked));
       th.appendChild(masterCb);
     } else {
@@ -421,14 +449,14 @@ const renderBulkTableBody = () => {
   thead.appendChild(headerRow);
   table.appendChild(thead);
 
-  // Tbody
-  const tbody = document.createElement('tbody');
-  filtered.forEach(item => {
+  // Shared row builder
+  const buildItemRow = (item, isPinned) => {
     const serial = String(item.serial);
     const tr = document.createElement('tr');
     tr.setAttribute('data-serial', serial);
     const isSelected = bulkSelection.has(serial);
     if (isSelected) tr.classList.add('bulk-edit-selected');
+    if (isPinned) tr.classList.add('bulk-edit-pinned');
 
     // Row click toggles selection
     tr.addEventListener('click', (e) => {
@@ -461,8 +489,42 @@ const renderBulkTableBody = () => {
     addCell(item.year);
     addCell(item.storageLocation);
 
-    tbody.appendChild(tr);
+    return tr;
+  };
+
+  // Tbody
+  const tbody = document.createElement('tbody');
+
+  // Pinned section (selected items not matching current search)
+  if (pinnedItems.length > 0) {
+    // Section header
+    const headerTr = document.createElement('tr');
+    headerTr.className = 'bulk-edit-pinned-header';
+    const headerTd = document.createElement('td');
+    headerTd.colSpan = colCount;
+    headerTd.textContent = 'Pinned selections (' + pinnedItems.length + ')';
+    headerTr.appendChild(headerTd);
+    tbody.appendChild(headerTr);
+
+    // Pinned rows
+    pinnedItems.forEach(item => {
+      tbody.appendChild(buildItemRow(item, true));
+    });
+
+    // Divider
+    const divTr = document.createElement('tr');
+    divTr.className = 'bulk-edit-pinned-divider';
+    const divTd = document.createElement('td');
+    divTd.colSpan = colCount;
+    divTr.appendChild(divTd);
+    tbody.appendChild(divTr);
+  }
+
+  // Filtered rows
+  filtered.forEach(item => {
+    tbody.appendChild(buildItemRow(item, false));
   });
+
   table.appendChild(tbody);
   wrap.appendChild(table);
 
@@ -490,32 +552,27 @@ const toggleItemSelection = (serial) => {
   } else {
     bulkSelection.add(serial);
   }
-  updateBulkSelectionUI();
+  // When search is active, pinned rows appear/disappear — full re-render needed
+  const term = (bulkSearchTerm || '').toLowerCase().trim();
+  if (term) {
+    renderBulkTableBody();
+  } else {
+    updateBulkSelectionUI();
+  }
 };
 
 const selectAllItems = (select) => {
-  const term = (bulkSearchTerm || '').toLowerCase().trim();
-  const filtered = term
-    ? inventory.filter(item =>
-        (item.name || '').toLowerCase().includes(term) ||
-        (item.metal || '').toLowerCase().includes(term) ||
-        (item.type || '').toLowerCase().includes(term) ||
-        (item.year || '').toLowerCase().includes(term) ||
-        (item.storageLocation || '').toLowerCase().includes(term) ||
-        (item.purchaseLocation || '').toLowerCase().includes(term) ||
-        String(item.serial).includes(term)
-      )
-    : inventory;
+  const filtered = getFilteredItems(bulkSearchTerm);
 
-  filtered.forEach(item => {
-    const serial = String(item.serial);
-    if (select) {
-      bulkSelection.add(serial);
-    } else {
-      bulkSelection.delete(serial);
-    }
-  });
-  updateBulkSelectionUI();
+  if (select) {
+    // Select All: add only filtered (search-matched) items
+    filtered.forEach(item => bulkSelection.add(String(item.serial)));
+  } else {
+    // Deselect All: clear everything including pinned
+    bulkSelection.clear();
+  }
+  renderBulkTableBody();
+  renderBulkFooter();
 };
 
 const updateBulkSelectionUI = () => {
@@ -540,12 +597,16 @@ const updateBulkSelectionUI = () => {
       if (cb) cb.checked = isSelected;
     });
 
-    // Update master checkbox in thead
+    // Update master checkbox — exclude pinned rows from the calculation
     const masterCb = wrap.querySelector('thead input[type="checkbox"]');
     if (masterCb) {
-      const visibleRows = wrap.querySelectorAll('tbody tr[data-serial]');
-      masterCb.checked = visibleRows.length > 0 &&
-        Array.from(visibleRows).every(tr => bulkSelection.has(tr.getAttribute('data-serial')));
+      const filteredRows = wrap.querySelectorAll('tbody tr[data-serial]:not(.bulk-edit-pinned)');
+      const allSelected = filteredRows.length > 0 &&
+        Array.from(filteredRows).every(tr => bulkSelection.has(tr.getAttribute('data-serial')));
+      const someSelected = !allSelected &&
+        Array.from(filteredRows).some(tr => bulkSelection.has(tr.getAttribute('data-serial')));
+      masterCb.checked = allSelected;
+      masterCb.indeterminate = someSelected;
     }
   }
 
