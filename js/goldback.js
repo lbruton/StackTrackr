@@ -134,6 +134,103 @@ const isGoldbackPricingActive = () => {
 };
 
 // =============================================================================
+// GOLDBACK REAL-TIME PRICE ESTIMATION (STACK-52)
+// =============================================================================
+
+/**
+ * Loads the Goldback estimation enabled toggle from localStorage.
+ */
+const loadGoldbackEstimateEnabled = () => {
+  try {
+    const val = loadDataSync(GOLDBACK_ESTIMATE_ENABLED_KEY, false);
+    goldbackEstimateEnabled = val === true;
+  } catch (error) {
+    console.error('Error loading Goldback estimate enabled state:', error);
+    goldbackEstimateEnabled = false;
+  }
+};
+
+/**
+ * Saves the Goldback estimation enabled toggle to localStorage.
+ * @param {boolean} val - Whether estimation is enabled
+ */
+const saveGoldbackEstimateEnabled = (val) => {
+  goldbackEstimateEnabled = val === true;
+  try {
+    saveDataSync(GOLDBACK_ESTIMATE_ENABLED_KEY, goldbackEstimateEnabled);
+  } catch (error) {
+    console.error('Error saving Goldback estimate enabled state:', error);
+  }
+};
+
+/**
+ * Loads the user-configurable premium modifier from localStorage.
+ */
+const loadGoldbackEstimateModifier = () => {
+  try {
+    const val = loadDataSync(GB_ESTIMATE_MODIFIER_KEY, GB_ESTIMATE_PREMIUM);
+    const num = parseFloat(val);
+    goldbackEstimateModifier = (!isNaN(num) && num > 0) ? num : GB_ESTIMATE_PREMIUM;
+  } catch (error) {
+    console.error('Error loading Goldback estimate modifier:', error);
+    goldbackEstimateModifier = GB_ESTIMATE_PREMIUM;
+  }
+};
+
+/**
+ * Saves the user-configurable premium modifier to localStorage.
+ * @param {number} val - Modifier value (e.g. 1.0, 1.03)
+ */
+const saveGoldbackEstimateModifier = (val) => {
+  const num = parseFloat(val);
+  goldbackEstimateModifier = (!isNaN(num) && num > 0) ? num : GB_ESTIMATE_PREMIUM;
+  try {
+    saveDataSync(GB_ESTIMATE_MODIFIER_KEY, goldbackEstimateModifier);
+  } catch (error) {
+    console.error('Error saving Goldback estimate modifier:', error);
+  }
+};
+
+/**
+ * Computes the estimated 1 Goldback exchange rate from gold spot price.
+ * Formula: 2 × (goldSpot / 1000) × modifier
+ * @param {number} goldSpot - Current gold spot price per troy oz
+ * @returns {number} Estimated 1 Goldback rate in USD
+ */
+const computeGoldbackEstimatedRate = (goldSpot) => {
+  return 2 * (goldSpot / 1000) * goldbackEstimateModifier;
+};
+
+/**
+ * Hook called whenever the gold spot price changes (API sync, manual, cache).
+ * If estimation is ON + Goldback pricing is ON + valid gold spot:
+ * calculates all denomination prices, saves them, records history, refreshes UI.
+ */
+const onGoldSpotPriceChanged = () => {
+  if (!goldbackEstimateEnabled || !goldbackEnabled) return;
+
+  const goldSpot = spotPrices && spotPrices.gold ? spotPrices.gold : 0;
+  if (!goldSpot || goldSpot <= 0) return;
+
+  const gbRate = computeGoldbackEstimatedRate(goldSpot);
+  const now = Date.now();
+
+  if (typeof GOLDBACK_DENOMINATIONS === 'undefined') return;
+
+  for (const d of GOLDBACK_DENOMINATIONS) {
+    const key = String(d.weight);
+    const denomPrice = Math.round(gbRate * d.weight * 100) / 100;
+    goldbackPrices[key] = { price: denomPrice, updatedAt: now };
+  }
+
+  if (typeof saveGoldbackPrices === 'function') saveGoldbackPrices();
+  if (typeof recordGoldbackPrices === 'function') recordGoldbackPrices();
+
+  // Refresh settings UI if the Goldback panel is visible
+  if (typeof syncGoldbackSettingsUI === 'function') syncGoldbackSettingsUI();
+};
+
+// =============================================================================
 // GOLDBACK PRICE HISTORY MODAL
 // =============================================================================
 
@@ -304,3 +401,27 @@ const exportGoldbackHistory = () => {
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
 };
+
+// =============================================================================
+// GLOBAL EXPOSURE
+// =============================================================================
+if (typeof window !== 'undefined') {
+  window.loadGoldbackEstimateEnabled = loadGoldbackEstimateEnabled;
+  window.saveGoldbackEstimateEnabled = saveGoldbackEstimateEnabled;
+  window.loadGoldbackEstimateModifier = loadGoldbackEstimateModifier;
+  window.saveGoldbackEstimateModifier = saveGoldbackEstimateModifier;
+  window.computeGoldbackEstimatedRate = computeGoldbackEstimatedRate;
+  window.onGoldSpotPriceChanged = onGoldSpotPriceChanged;
+  window.saveGoldbackPrices = saveGoldbackPrices;
+  window.loadGoldbackPrices = loadGoldbackPrices;
+  window.saveGoldbackPriceHistory = saveGoldbackPriceHistory;
+  window.loadGoldbackPriceHistory = loadGoldbackPriceHistory;
+  window.loadGoldbackEnabled = loadGoldbackEnabled;
+  window.saveGoldbackEnabled = saveGoldbackEnabled;
+  window.recordGoldbackPrices = recordGoldbackPrices;
+  window.getGoldbackDenominationPrice = getGoldbackDenominationPrice;
+  window.isGoldbackPricingActive = isGoldbackPricingActive;
+  window.showGoldbackHistoryModal = showGoldbackHistoryModal;
+  window.hideGoldbackHistoryModal = hideGoldbackHistoryModal;
+  window.exportGoldbackHistory = exportGoldbackHistory;
+}

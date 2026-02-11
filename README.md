@@ -2,7 +2,7 @@
 
 **Track Your Stack. Your Way.**
 
-A powerful, privacy-first precious metals portfolio tracker for Silver, Gold, Platinum, and Palladium. Runs entirely in your browser — no accounts, no cloud, no data collection. Your stack, your data, your rules.
+A powerful, privacy-first precious metals portfolio tracker for Silver, Gold, Platinum, Palladium, and Goldbacks. Runs entirely in your browser — no accounts, no cloud, no data collection. Your stack, your data, your rules.
 
 **Live site:** [www.staktrakr.com](https://www.staktrakr.com)
 
@@ -14,7 +14,7 @@ A powerful, privacy-first precious metals portfolio tracker for Silver, Gold, Pl
 
 Most portfolio trackers want your email, store your data on their servers, or lock features behind a paywall. StakTrakr is different:
 
-- **100% client-side** — runs from a single HTML file, even on `file://` protocol
+- **100% client-side** — while you can use the hosted application at [staktrakr.com](https://www.staktrakr.com), all data is stored entirely in your browser. The full source code is available to anyone who wishes to run it offline — even from a single HTML file on `file://` protocol
 - **Zero data collection** — everything lives in your browser's localStorage
 - **No account required** — open the page and start tracking
 - **Works offline** — no internet needed after first load
@@ -40,6 +40,7 @@ Full per-item tracking with a rich data model:
 
 - **Purchase Price / Melt Value / Retail Price** with computed Gain/Loss
 - **Percentage gain/loss** shown per-metal and portfolio-wide
+- **Goldback support** — denomination-aware pricing (1, 5, 10, 25, 50) with manual rate management, separate from spot metal APIs
 - **Year, Grade, Grading Authority, Cert #** — full numismatic metadata
 - **PCGS catalog numbers** with inline chips and one-click CoinFacts lookup
 - **PCGS cert verification** — verify grading directly from the inventory table

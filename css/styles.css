@@ -1865,7 +1865,31 @@ input[type="submit"] {
   padding-top: 1rem;
 }
 
-/* Placeholder sections (Cloud, Tools) */
+/* Settings action button — outlined style for in-panel actions */
+.settings-action-btn {
+  background: transparent;
+  color: var(--primary);
+  border: 1px solid var(--primary);
+  padding: 0.5rem 1.25rem;
+  min-height: 2.25rem;
+}
+.settings-action-btn:hover {
+  background: var(--primary);
+  color: #fff;
+}
+
+/* Info icon tooltip next to labels */
+.settings-tooltip {
+  cursor: help;
+  opacity: 0.5;
+  font-size: 0.85em;
+  margin-left: 0.25rem;
+}
+.settings-tooltip:hover {
+  opacity: 0.8;
+}
+
+/* Placeholder sections (Cloud) */
 .settings-placeholder {
   display: flex;
   flex-direction: column;
@@ -7174,6 +7198,50 @@ th {
 
 [data-theme="sepia"] .bulk-edit-selected {
   background: rgba(139, 92, 42, 0.08) !important;
+}
+
+/* Pinned section — selected items not matching current search */
+.bulk-edit-pinned-header td {
+  background: var(--bg-secondary);
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-secondary);
+  padding: 0.35rem 0.75rem;
+  cursor: default;
+}
+
+.bulk-edit-pinned-header:hover {
+  background: var(--bg-secondary) !important;
+}
+
+.bulk-edit-pinned {
+  border-left: 3px solid var(--primary);
+}
+
+.bulk-edit-pinned.bulk-edit-selected {
+  background: rgba(59, 130, 246, 0.12) !important;
+}
+
+[data-theme="dark"] .bulk-edit-pinned.bulk-edit-selected {
+  background: rgba(59, 130, 246, 0.22) !important;
+}
+
+[data-theme="sepia"] .bulk-edit-pinned.bulk-edit-selected {
+  background: rgba(139, 92, 42, 0.12) !important;
+}
+
+.bulk-edit-pinned-divider td {
+  height: 2px;
+  padding: 0;
+  background: var(--border);
+}
+
+.bulk-edit-pinned-divider,
+.bulk-edit-pinned-divider:hover {
+  cursor: default;
+  background: none !important;
 }
 
 .bulk-edit-footer {

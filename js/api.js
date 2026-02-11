@@ -768,6 +768,7 @@ const refreshFromCache = () => {
     if (typeof updateAllSparklines === "function") {
       updateAllSparklines();
     }
+    if (typeof onGoldSpotPriceChanged === 'function') onGoldSpotPriceChanged();
     return true;
   }
 
@@ -1636,6 +1637,7 @@ const syncProviderChain = async ({ showProgress = false, forceSync = false } = {
       if (typeof recordAllItemPriceSnapshots === 'function') recordAllItemPriceSnapshots();
       if (typeof updateStorageStats === "function") updateStorageStats();
       if (typeof updateAllSparklines === "function") updateAllSparklines();
+      if (typeof onGoldSpotPriceChanged === 'function') onGoldSpotPriceChanged();
     }
   } finally {
     if (showProgress) {

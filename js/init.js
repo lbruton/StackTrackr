@@ -37,25 +37,15 @@ function safeGetElement(id, required = false) {
 }
 
 /**
- * Main application initialization function - ENHANCED VERSION
+ * Main application initialization function
  *
  * This function coordinates the complete application startup process with proper
- * error handling, DOM element validation, and integration with the Memory Intelligence System.
- *
- * Memory Intelligence Integration:
- * - Fast recall system for instant context lookup
- * - Extended context database for persistent memory
- * - API LLM optimization for performance
- * - MCP integration for seamless scribe interaction
- *
- * Quick Setup: node /Volumes/DATA/GitHub/StackTrackr/rEngine/quick-agent-setup.js
+ * error handling, DOM element validation, and event binding.
  *
  * @returns {void} Fully initializes the application interface
  */
 document.addEventListener("DOMContentLoaded", async () => {
-  console.log(`=== APPLICATION INITIALIZATION STARTED (v${APP_VERSION}) ===`);
-  console.log('🧠 Memory Intelligence System available in rEngine/');
-  console.log('🚀 For agent setup: node rEngine/quick-agent-setup.js');
+  debugLog(`=== APPLICATION INITIALIZATION STARTED (v${APP_VERSION}) ===`);
 
   try {
     // Phase 0: Apply domain-based logo branding
@@ -374,6 +364,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (typeof loadGoldbackPrices === 'function') loadGoldbackPrices();
     if (typeof loadGoldbackPriceHistory === 'function') loadGoldbackPriceHistory();
     if (typeof loadGoldbackEnabled === 'function') loadGoldbackEnabled();
+    if (typeof loadGoldbackEstimateEnabled === 'function') loadGoldbackEstimateEnabled();
+    if (typeof loadGoldbackEstimateModifier === 'function') loadGoldbackEstimateModifier();
 
     // Seed spot history for first-time users
     if (typeof loadSeedSpotHistory === 'function') {
