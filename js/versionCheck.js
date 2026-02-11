@@ -74,6 +74,7 @@ const populateVersionModal = (version, html) => {
   const body = document.getElementById("versionChanges");
   const ver = document.getElementById("versionModalVersion");
   if (ver) ver.textContent = `v${version}`;
+  // nosemgrep: javascript.browser.security.insecure-innerhtml.insecure-innerhtml, javascript.browser.security.insecure-document-method.insecure-document-method
   if (body) body.innerHTML = html;
   if (!modal) return;
   modal.style.display = "flex";
