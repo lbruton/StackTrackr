@@ -729,6 +729,7 @@ const filterInventoryAdvanced = () => {
         // For phrase searches like "American Eagle", be more restrictive
         // Check that all words are present as word boundaries
         const allWordsPresent = words.every(word => {
+          // nosemgrep: javascript.dos.rule-non-literal-regexp
           const wordRegex = new RegExp(`\\b${word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
           return wordRegex.test(itemText);
         });
@@ -891,6 +892,7 @@ const filterInventoryAdvanced = () => {
       
       // For single words, use word boundary matching
       const fieldMatch = words.every(word => {
+        // nosemgrep: javascript.dos.rule-non-literal-regexp
         const wordRegex = new RegExp(`\\b${word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`, 'i');
         return (
           wordRegex.test(item.metal) ||
@@ -942,6 +944,7 @@ const applyQuickFilter = (field, value, isGrouped = false) => {
         const itemName = (item.name || '').toLowerCase();
         if (group.patterns.some(p => {
           try {
+            // nosemgrep: javascript.dos.rule-non-literal-regexp
             return new RegExp('\\b' + p.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b', 'i').test(itemName);
           } catch (e) { return itemName.includes(p.toLowerCase()); }
         })) {

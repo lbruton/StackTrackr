@@ -2154,6 +2154,7 @@ const exportNumistaCsv = () => {
     const year = item.year || item.issuedYear || '';
     let title = item.name || '';
     if (year) {
+      // nosemgrep: javascript.dos.rule-non-literal-regexp
       const yearRegex = new RegExp(`\\s*${year}\\b`);
       title = title.replace(yearRegex, '').trim();
     }

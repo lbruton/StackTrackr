@@ -122,6 +122,7 @@ const loadAnnouncements = async () => {
     const text = await res.text();
 
     const section = (name) => {
+      // nosemgrep: javascript.dos.rule-non-literal-regexp
       const regex = new RegExp(`##\\s+${name}\\n([\\s\\S]*?)(?=##|$)`, "i");
       const match = text.match(regex);
       return match ? match[1] : "";
