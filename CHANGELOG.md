@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+---
+
+## [3.23.00] - 2026-02-11
+
 ### Added — STACK-45: Goldback denomination pricing & type support
 
 - **Added**: New `gb` weight unit option — Goldbacks stored as denomination value (1 gb = 0.001 ozt 24K gold)
@@ -29,6 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Changed**: Edit/duplicate item modal pre-fills gb weight unit correctly
 - **Fixed**: Retail column and gain/loss display conditions now include gb denomination pricing
 - **Fixed**: CSV, ZIP CSV, and PDF exports apply 3-tier retail hierarchy (manual > gb > melt)
+- **Fixed**: Bulk edit denomination picker now applies correct weight value (was reading stale hidden input)
 
 ### Added — STACK-42: Persistent UUIDs for inventory items
 
