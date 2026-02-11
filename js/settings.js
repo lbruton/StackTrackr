@@ -173,6 +173,11 @@ const syncSettingsUI = () => {
     renderPcgsUsageBar();
   }
 
+  // Display currency (STACK-50)
+  if (typeof syncCurrencySettingsUI === 'function') {
+    syncCurrencySettingsUI();
+  }
+
   // Goldback denomination pricing (STACK-45)
   if (typeof syncGoldbackSettingsUI === 'function') {
     syncGoldbackSettingsUI();
@@ -244,6 +249,20 @@ const setupSettingsEventListeners = () => {
       });
     });
   });
+
+  // Display currency (STACK-50)
+  const currencySelect = document.getElementById('settingsDisplayCurrency');
+  if (currencySelect) {
+    currencySelect.addEventListener('change', () => {
+      saveDisplayCurrency(currencySelect.value);
+      // Re-render all display with new currency conversion (STACK-50)
+      if (typeof renderTable === 'function') renderTable();
+      if (typeof updateSummary === 'function') updateSummary();
+      if (typeof updateAllSparklines === 'function') updateAllSparklines();
+      // Update Goldback denomination symbols (STACK-50)
+      if (typeof syncGoldbackSettingsUI === 'function') syncGoldbackSettingsUI();
+    });
+  }
 
   // Items per page
   const ippSelect = document.getElementById('settingsItemsPerPage');
@@ -441,13 +460,16 @@ const setupSettingsEventListeners = () => {
       const tbody = document.getElementById('goldbackPriceTableBody');
       if (!tbody) return;
       const now = Date.now();
+      // Convert entered display-currency values back to USD for storage (STACK-50)
+      const fxRate = (typeof getExchangeRate === 'function') ? getExchangeRate() : 1;
       tbody.querySelectorAll('tr[data-denom]').forEach(row => {
         const denom = row.dataset.denom;
         const input = row.querySelector('input[type="number"]');
         if (!input) return;
-        const val = parseFloat(input.value);
-        if (!isNaN(val) && val > 0) {
-          goldbackPrices[denom] = { price: val, updatedAt: now };
+        const displayVal = parseFloat(input.value);
+        if (!isNaN(displayVal) && displayVal > 0) {
+          const usdVal = fxRate !== 1 ? displayVal / fxRate : displayVal;
+          goldbackPrices[denom] = { price: usdVal, updatedAt: now };
         }
       });
       if (typeof saveGoldbackPrices === 'function') saveGoldbackPrices();
@@ -840,6 +862,24 @@ const renderFilterChipCategoryTable = () => {
 };
 
 /**
+ * Syncs the display currency dropdown with current state (STACK-50).
+ * Populates options from SUPPORTED_CURRENCIES on first call.
+ */
+const syncCurrencySettingsUI = () => {
+  const sel = document.getElementById('settingsDisplayCurrency');
+  if (!sel) return;
+  if (sel.options.length === 0) {
+    SUPPORTED_CURRENCIES.forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c.code;
+      opt.textContent = `${c.code} \u2014 ${c.name}`;
+      sel.appendChild(opt);
+    });
+  }
+  sel.value = displayCurrency;
+};
+
+/**
  * Syncs the Goldback settings panel UI with current state.
  * Renders denomination price rows and updates enabled toggle.
  */
@@ -900,10 +940,13 @@ const syncGoldbackSettingsUI = () => {
   if (!tbody || typeof GOLDBACK_DENOMINATIONS === 'undefined') return;
 
   tbody.innerHTML = '';
+  // Convert stored USD prices to display currency for the input fields (STACK-50)
+  const fxRate = (typeof getExchangeRate === 'function') ? getExchangeRate() : 1;
   for (const d of GOLDBACK_DENOMINATIONS) {
     const key = String(d.weight);
     const entry = goldbackPrices[key];
-    const price = entry ? entry.price : '';
+    const usdPrice = entry ? entry.price : '';
+    const displayPrice = (usdPrice !== '' && fxRate !== 1) ? (usdPrice * fxRate).toFixed(2) : usdPrice;
     let updatedAt = entry && entry.updatedAt
       ? new Date(entry.updatedAt).toLocaleString()
       : '\u2014';
@@ -916,10 +959,16 @@ const syncGoldbackSettingsUI = () => {
     tr.innerHTML = `
       <td>${d.label}</td>
       <td>${d.goldOz} oz</td>
-      <td><span style="margin-right:2px;">$</span><input type="number" min="0" step="0.01" value="${price}" style="width:80px;" /></td>
+      <td><span class="gb-denom-symbol" style="margin-right:2px;">${typeof getCurrencySymbol === 'function' ? getCurrencySymbol() : '$'}</span><input type="number" min="0" step="0.01" value="${displayPrice}" style="width:80px;" /></td>
       <td style="font-size:0.85em;color:var(--text-secondary);">${updatedAt}</td>
     `;
     tbody.appendChild(tr);
+  }
+
+  // Update Quick Fill currency symbol (STACK-50)
+  const gbQfSymbol = document.getElementById('gbQuickFillSymbol');
+  if (gbQfSymbol && typeof getCurrencySymbol === 'function') {
+    gbQfSymbol.textContent = getCurrencySymbol();
   }
 };
 
@@ -936,4 +985,5 @@ if (typeof window !== 'undefined') {
   window.loadProviderTabOrder = loadProviderTabOrder;
   window.saveProviderTabOrder = saveProviderTabOrder;
   window.syncGoldbackSettingsUI = syncGoldbackSettingsUI;
+  window.syncCurrencySettingsUI = syncCurrencySettingsUI;
 }

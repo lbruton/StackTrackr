@@ -123,9 +123,10 @@ const createBackupZip = async () => {
       const qty = Number(item.qty) || 1;
       const meltValue = computeMeltValue(item, currentSpot);
       const gbDenomPrice = (typeof getGoldbackRetailPrice === 'function') ? getGoldbackRetailPrice(item) : null;
-      const isManualRetail = !gbDenomPrice && item.marketValue && item.marketValue > 0;
+      const marketValue = parseFloat(item.marketValue) || 0;
+      const isManualRetail = !gbDenomPrice && marketValue > 0;
       const retailTotal = gbDenomPrice   ? gbDenomPrice * qty
-                        : isManualRetail ? item.marketValue * qty
+                        : isManualRetail ? marketValue * qty
                         : meltValue;
       const purchasePrice = typeof item.price === 'number' ? item.price : parseFloat(item.price) || 0;
       const purchaseTotal = purchasePrice * qty;
@@ -1061,9 +1062,10 @@ const renderTable = () => {
       const meltValue = computeMeltValue(item, currentSpot);
       // Retail hierarchy: gb denomination > manual marketValue > melt
       const gbDenomPrice = (typeof getGoldbackRetailPrice === 'function') ? getGoldbackRetailPrice(item) : null;
-      const isManualRetail = !gbDenomPrice && item.marketValue && item.marketValue > 0;
+      const marketValue = parseFloat(item.marketValue) || 0;
+      const isManualRetail = !gbDenomPrice && marketValue > 0;
       const retailTotal = gbDenomPrice   ? gbDenomPrice * qty
-                        : isManualRetail ? item.marketValue * qty
+                        : isManualRetail ? marketValue * qty
                         : meltValue;
       const purchasePrice = typeof item.price === 'number' ? item.price : parseFloat(item.price) || 0;
       const purchaseTotal = purchasePrice * qty;
@@ -1164,12 +1166,12 @@ const renderTable = () => {
       </td>
       <td class="shrink" data-column="qty">${filterLink('qty', item.qty, 'var(--text-primary)')}</td>
       <td class="shrink" data-column="weight">${filterLink('weight', item.weight, 'var(--text-primary)', formatWeight(item.weight, item.weightUnit), item.weightUnit === 'gb' ? 'Goldback denomination' : item.weight < 1 ? 'Grams (g)' : 'Troy ounces (ozt)')}</td>
-      <td class="shrink" data-column="purchasePrice" title="Purchase Price (USD) - Click to search eBay active listings" style="color: var(--text-primary);">
+      <td class="shrink" data-column="purchasePrice" title="Purchase Price (${displayCurrency}) - Click to search eBay active listings" style="color: var(--text-primary);">
         <a href="#" class="ebay-buy-link ebay-price-link" data-search="${escapeAttribute(item.metal + (item.year ? ' ' + item.year : '') + ' ' + item.name)}" title="Search eBay active listings for ${escapeAttribute(item.metal)} ${escapeAttribute(item.name)}">
           ${formatCurrency(purchasePrice)} <svg class="ebay-search-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6" fill="none" stroke="currentColor" stroke-width="2.5"/><line x1="15" y1="15" x2="21" y2="21" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
         </a>
       </td>
-      <td class="shrink" data-column="meltValue" title="Melt Value (USD)" style="color: var(--text-primary);">${meltDisplay}</td>
+      <td class="shrink" data-column="meltValue" title="Melt Value (${displayCurrency})" style="color: var(--text-primary);">${meltDisplay}</td>
       <td class="shrink ${gbDenomPrice ? 'retail-confirmed' : isManualRetail ? 'retail-confirmed' : 'retail-estimated'}" data-column="retailPrice" title="${gbDenomPrice ? 'Goldback denomination price' : isManualRetail ? 'Manual retail price (confirmed)' : 'Estimated — defaults to melt value'} - Click to search eBay sold listings">
         <a href="#" class="ebay-sold-link ebay-price-link" data-search="${escapeAttribute(item.metal + (item.year ? ' ' + item.year : '') + ' ' + item.name)}" title="Search eBay sold listings for ${escapeAttribute(item.metal)} ${escapeAttribute(item.name)}">
           ${retailDisplay} <svg class="ebay-search-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6" fill="none" stroke="currentColor" stroke-width="2.5"/><line x1="15" y1="15" x2="21" y2="21" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
@@ -1268,19 +1270,20 @@ const updateSummary = () => {
         const meltValue = currentSpot * itemWeight * purity;
         totalMeltValue += meltValue;
 
-        // Purchase price total
+        // Purchase price total (price already converted)
         const purchaseTotal = qty * price;
         totalPurchased += purchaseTotal;
 
         // Retail total: (1) gb denomination price, (2) manual marketValue, (3) melt
         const gbDenomPrice = (typeof getGoldbackRetailPrice === 'function') ? getGoldbackRetailPrice(item) : null;
-        const isManualRetail = !gbDenomPrice && item.marketValue && item.marketValue > 0;
+        const marketValue = parseFloat(item.marketValue) || 0;
+        const isManualRetail = !gbDenomPrice && marketValue > 0;
         const retailTotal = gbDenomPrice   ? gbDenomPrice * qty
-                          : isManualRetail ? item.marketValue * qty
+                          : isManualRetail ? marketValue * qty
                           : meltValue;
         totalRetailValue += retailTotal;
 
-        // Gain/loss: retail minus purchase (for ALL items, including free/promo items)
+        // Gain/loss: retail minus purchase (both in USD; converted at display time)
         totalGainLoss += retailTotal - purchaseTotal;
       }
     }
@@ -1313,8 +1316,16 @@ const updateSummary = () => {
     if (els.purchased) els.purchased.innerHTML = formatCurrency(totals.totalPurchased || 0);
     if (els.retailValue) els.retailValue.innerHTML = formatCurrency(totals.totalRetailValue || 0);
     if (els.lossProfit) {
-      const gainLossPct = totals.totalPurchased > 0 ? (totals.totalGainLoss / totals.totalPurchased) * 100 : 0;
-      els.lossProfit.innerHTML = formatLossProfit(totals.totalGainLoss || 0, gainLossPct);
+      const gl = totals.totalGainLoss || 0;
+      const gainLossPct = totals.totalPurchased > 0 ? (gl / totals.totalPurchased) * 100 : 0;
+      els.lossProfit.innerHTML = formatLossProfit(gl, gainLossPct);
+      // Dynamic label: "Gain:" green, "Loss:" red, "Gain/Loss:" neutral (STACK-50)
+      const glLabel = els.lossProfit.parentElement && els.lossProfit.parentElement.querySelector('.total-label');
+      if (glLabel) {
+        glLabel.textContent = gl > 0 ? 'Gain:' : gl < 0 ? 'Loss:' : 'Gain/Loss:';
+        glLabel.style.color = gl > 0 ? 'var(--success)' : gl < 0 ? 'var(--danger)' : '';
+        glLabel.style.fontWeight = gl !== 0 ? '600' : '';
+      }
     }
     if (els.avgCostPerOz) {
       const avgCost = totals.totalWeight > 0 ? totals.totalPurchased / totals.totalWeight : 0;
@@ -1349,8 +1360,15 @@ const updateSummary = () => {
     if (elements.totals.all.purchased) elements.totals.all.purchased.innerHTML = formatCurrency(allTotals.totalPurchased || 0);
     if (elements.totals.all.retailValue) elements.totals.all.retailValue.innerHTML = formatCurrency(allTotals.totalRetailValue || 0);
     if (elements.totals.all.lossProfit) {
-      const allGainLossPct = allTotals.totalPurchased > 0 ? (allTotals.totalGainLoss / allTotals.totalPurchased) * 100 : 0;
-      elements.totals.all.lossProfit.innerHTML = formatLossProfit(allTotals.totalGainLoss || 0, allGainLossPct);
+      const allGl = allTotals.totalGainLoss || 0;
+      const allGainLossPct = allTotals.totalPurchased > 0 ? (allGl / allTotals.totalPurchased) * 100 : 0;
+      elements.totals.all.lossProfit.innerHTML = formatLossProfit(allGl, allGainLossPct);
+      const allGlLabel = elements.totals.all.lossProfit.parentElement && elements.totals.all.lossProfit.parentElement.querySelector('.total-label');
+      if (allGlLabel) {
+        allGlLabel.textContent = allGl > 0 ? 'Gain:' : allGl < 0 ? 'Loss:' : 'Gain/Loss:';
+        allGlLabel.style.color = allGl > 0 ? 'var(--success)' : allGl < 0 ? 'var(--danger)' : '';
+        allGlLabel.style.fontWeight = allGl !== 0 ? '600' : '';
+      }
     }
     if (elements.totals.all.avgCostPerOz) {
       const avgCost = allTotals.totalWeight > 0 ? allTotals.totalPurchased / allTotals.totalWeight : 0;
@@ -1446,8 +1464,12 @@ const editItem = (idx, logIdx = null) => {
     if (typeof toggleGbDenomPicker === 'function') toggleGbDenomPicker();
   }
 
-  elements.itemPrice.value = item.price > 0 ? item.price : '';
-  if (elements.itemMarketValue) elements.itemMarketValue.value = item.marketValue > 0 ? item.marketValue : '';
+  // Convert stored USD values to display currency for the form (STACK-50)
+  const fxRate = (typeof getExchangeRate === 'function') ? getExchangeRate() : 1;
+  const displayPrice = item.price > 0 ? (fxRate !== 1 ? (item.price * fxRate).toFixed(2) : item.price) : '';
+  const displayMv = item.marketValue > 0 ? (fxRate !== 1 ? (item.marketValue * fxRate).toFixed(2) : item.marketValue) : '';
+  elements.itemPrice.value = displayPrice;
+  if (elements.itemMarketValue) elements.itemMarketValue.value = displayMv;
   elements.purchaseLocation.value = item.purchaseLocation || '';
   elements.storageLocation.value = item.storageLocation && item.storageLocation !== 'Unknown' ? item.storageLocation : '';
   if (elements.itemSerialNumber) elements.itemSerialNumber.value = item.serialNumber || '';
@@ -1487,6 +1509,9 @@ const editItem = (idx, logIdx = null) => {
     elements.undoChangeBtn.style.display =
       logIdx !== null ? "inline-block" : "none";
   }
+
+  // Update currency symbols in modal (STACK-50)
+  if (typeof updateModalCurrencyUI === 'function') updateModalCurrencyUI();
 
   // Open unified modal
   if (window.openModalById) openModalById('itemModal');
@@ -1535,8 +1560,12 @@ const duplicateItem = (idx) => {
     if (typeof toggleGbDenomPicker === 'function') toggleGbDenomPicker();
   }
 
-  elements.itemPrice.value = item.price > 0 ? item.price : '';
-  if (elements.itemMarketValue) elements.itemMarketValue.value = item.marketValue > 0 ? item.marketValue : '';
+  // Convert stored USD values to display currency for the form (STACK-50)
+  const dupFxRate = (typeof getExchangeRate === 'function') ? getExchangeRate() : 1;
+  const dupDisplayPrice = item.price > 0 ? (dupFxRate !== 1 ? (item.price * dupFxRate).toFixed(2) : item.price) : '';
+  const dupDisplayMv = item.marketValue > 0 ? (dupFxRate !== 1 ? (item.marketValue * dupFxRate).toFixed(2) : item.marketValue) : '';
+  elements.itemPrice.value = dupDisplayPrice;
+  if (elements.itemMarketValue) elements.itemMarketValue.value = dupDisplayMv;
   elements.purchaseLocation.value = item.purchaseLocation || '';
   elements.storageLocation.value = item.storageLocation && item.storageLocation !== 'Unknown' ? item.storageLocation : '';
   if (elements.itemSerialNumber) elements.itemSerialNumber.value = item.serialNumber || '';
@@ -1570,6 +1599,9 @@ const duplicateItem = (idx) => {
   // Hide PCGS verified icon — duplicate is a new unverified item
   const certVerifiedIcon = document.getElementById('certVerifiedIcon');
   if (certVerifiedIcon) certVerifiedIcon.style.display = 'none';
+
+  // Update currency symbols in modal (STACK-50)
+  if (typeof updateModalCurrencyUI === 'function') updateModalCurrencyUI();
 
   // Open unified modal
   if (window.openModalById) openModalById('itemModal');
@@ -1916,7 +1948,7 @@ const importNumistaCsv = (file, override = false) => {
             const rawVal = String(row[key] ?? '').trim();
             const valueCurrency = detectCurrency(rawVal);
             const headerCurrencyMatch = key.match(/\(([^)]+)\)/);
-            const headerCurrency = headerCurrencyMatch ? headerCurrencyMatch[1] : 'USD';
+            const headerCurrency = headerCurrencyMatch ? headerCurrencyMatch[1] : displayCurrency;
             const currency = valueCurrency || headerCurrency;
             const amount = parseFloat(rawVal.replace(/[^0-9.\-]/g, ''));
             return isNaN(amount) ? 0 : convertToUsd(amount, currency);
@@ -2101,7 +2133,7 @@ const exportNumistaCsv = () => {
     "Quantity",
     "Type",
     "Weight (g)",
-    "Buying price (USD)",
+    `Buying price (${displayCurrency})`,
     "Acquisition place",
     "Storage location",
     "Acquisition date",
