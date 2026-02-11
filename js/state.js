@@ -286,6 +286,12 @@ let goldbackPriceHistory = {};
 /** @type {boolean} Whether Goldback denomination pricing is enabled (STACK-45) */
 let goldbackEnabled = false;
 
+/** @type {boolean} Whether Goldback real-time price estimation is enabled (STACK-52) */
+let goldbackEstimateEnabled = false;
+
+/** @type {number} User-configurable premium modifier for Goldback estimation (STACK-52) */
+let goldbackEstimateModifier = GB_ESTIMATE_PREMIUM;
+
 /** @type {Array} Catalog API call history records */
 let catalogHistory = [];
 

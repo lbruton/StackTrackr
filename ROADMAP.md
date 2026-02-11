@@ -20,6 +20,7 @@ The price history pipeline is complete (STACK-42/43). These items are unblocked 
 | [STACK-50](https://linear.app/hextrackr/issue/STACK-50) | Multi-currency support with user-selectable display currency | Medium | — |
 | [STACK-51](https://linear.app/hextrackr/issue/STACK-51) | Custom CSV import mapper with header mapping UI and saved profiles | Medium | — |
 | [STACK-52](https://linear.app/hextrackr/issue/STACK-52) | Bulk Edit: pin selected items to top of table across search changes | High | — |
+| [STACK-53](https://linear.app/hextrackr/issue/STACK-53) | [RFC] Community spot price history CDN via GitHub with manifest-based selective import | Medium | — |
 
 ---
 
