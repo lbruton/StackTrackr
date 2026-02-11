@@ -584,6 +584,17 @@ const applyBulkEdit = () => {
     updated++;
   });
 
+  // Record price data points for bulk-edited items with price-related changes (STACK-43)
+  if (typeof recordItemPrice === 'function') {
+    const priceFields = ['price', 'marketValue', 'weight', 'qty', 'metal', 'purity'];
+    if ([...bulkEnabledFields].some(id => priceFields.includes(id))) {
+      inventory.forEach(item => {
+        if (bulkSelection.has(String(item.serial))) recordItemPrice(item, 'bulk');
+      });
+      saveItemPriceHistory();
+    }
+  }
+
   // Persist and re-render
   if (typeof saveInventory === 'function') saveInventory();
   if (typeof renderTable === 'function') renderTable();
@@ -617,6 +628,11 @@ const copySelectedItems = () => {
     clone.uuid = generateUUID();
 
     inventory.push(clone);
+
+    // Record initial price data point for the copy (STACK-43)
+    if (typeof recordSingleItemPrice === 'function') {
+      recordSingleItemPrice(clone, 'add');
+    }
 
     // Log the copy
     if (typeof logChange === 'function') {

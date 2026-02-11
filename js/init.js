@@ -363,6 +363,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     refreshCompositionOptions();
     loadSpotHistory();
 
+    // Load per-item price history (STACK-43)
+    if (typeof loadItemPriceHistory === 'function') {
+      loadItemPriceHistory();
+    }
+
     // Seed spot history for first-time users
     if (typeof loadSeedSpotHistory === 'function') {
       await loadSeedSpotHistory();
