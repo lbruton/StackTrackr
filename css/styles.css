@@ -2520,6 +2520,9 @@ th[data-column="date"] {
   overflow: hidden;
   text-overflow: ellipsis;
   cursor: pointer;
+}
+/* Transition only on td — transition:all on the sticky th breaks stacking */
+#inventoryTable td[data-column="metal"] {
   transition: all 0.3s ease;
 }
 
@@ -5064,6 +5067,10 @@ th {
   position: sticky;
   top: 0;
   z-index: 2;
+  /* Override generic th { transition: var(--transition) } — transition:all on
+     sticky elements creates temporary compositor layers during scroll that can
+     break stacking order, causing data rows to paint above the header */
+  transition: none;
 }
 
 /* Ensure uniform font family for entire table */
