@@ -30,11 +30,17 @@ const BULK_EDITABLE_FIELDS = [
     options: ['Coin', 'Bar', 'Round', 'Note', 'Aurum', 'Set', 'Other'] },
   { id: 'qty',              label: 'Quantity',           inputType: 'number',
     attrs: { min: '1', step: '1' } },
-  { id: 'weight',           label: 'Weight (oz)',        inputType: 'number',
+  { id: 'weight',           label: 'Weight',             inputType: 'number',
     attrs: { min: '0', step: '0.001' } },
+  { id: 'weightUnit',       label: 'Weight Unit',        inputType: 'select',
+    options: [
+      { value: 'oz', label: 'ounce' },
+      { value: 'g',  label: 'gram' },
+      { value: 'gb', label: 'goldback' }
+    ] },
   { id: 'purity',           label: 'Purity',             inputType: 'select',
     options: [
-      { value: '1.0',    label: 'Pure' },
+      { value: '1.0',    label: '100% — Pure' },
       { value: '0.9999', label: '.9999 — Four Nines' },
       { value: '0.999',  label: '.999 — Fine' },
       { value: '0.925',  label: '.925 — Sterling' },
@@ -223,6 +229,69 @@ const renderBulkFieldPanel = () => {
     panel.appendChild(row);
   });
 
+  // Wire up denomination picker swap for weight field (mirrors main modal)
+  const bwInput = safeGetElement('bulkFieldVal_weight');
+  const bwUnitSelect = safeGetElement('bulkFieldVal_weightUnit');
+  const bwLabel = panel.querySelector('label[for="bulkField_weight"]');
+  const bwCheckbox = safeGetElement('bulkField_weight');
+
+  if (bwInput && bwUnitSelect && typeof GOLDBACK_DENOMINATIONS !== 'undefined') {
+    // Build hidden denomination select
+    const denomSelect = document.createElement('select');
+    denomSelect.className = 'field-input';
+    denomSelect.id = 'bulkFieldVal_weightDenom';
+    denomSelect.style.display = 'none';
+    denomSelect.disabled = bwInput.disabled;
+
+    GOLDBACK_DENOMINATIONS.forEach(d => {
+      const opt = document.createElement('option');
+      opt.value = String(d.weight);
+      opt.textContent = d.label;
+      denomSelect.appendChild(opt);
+    });
+
+    // Insert right after weight input in the same row
+    bwInput.parentNode.insertBefore(denomSelect, bwInput.nextSibling);
+
+    // Restore persisted value
+    if (bulkFieldValues['weight'] !== undefined) {
+      denomSelect.value = String(bulkFieldValues['weight']);
+    }
+
+    // Track denomination changes → update weight field value
+    denomSelect.addEventListener('change', () => {
+      bulkFieldValues['weight'] = denomSelect.value;
+    });
+
+    // Swap function
+    const toggleBulkGbPicker = () => {
+      const isGb = bwUnitSelect.value === 'gb';
+      bwInput.style.display = isGb ? 'none' : '';
+      denomSelect.style.display = isGb ? '' : 'none';
+      if (bwLabel) bwLabel.textContent = isGb ? 'Denomination' : 'Weight';
+      if (isGb) {
+        denomSelect.disabled = bwInput.disabled;
+        bulkFieldValues['weight'] = denomSelect.value;
+      }
+    };
+
+    // Listen for unit changes
+    bwUnitSelect.addEventListener('change', toggleBulkGbPicker);
+
+    // Sync disabled state when weight checkbox toggles
+    if (bwCheckbox) {
+      bwCheckbox.addEventListener('change', () => {
+        denomSelect.disabled = !bwCheckbox.checked;
+      });
+    }
+
+    // Initialize state (e.g. if weightUnit was persisted as 'gb')
+    if (bulkFieldValues['weightUnit'] === 'gb') {
+      bwUnitSelect.value = 'gb';
+      toggleBulkGbPicker();
+    }
+  }
+
 };
 
 // =============================================================================
@@ -388,7 +457,7 @@ const renderBulkTableBody = () => {
     addCell(item.metal);
     addCell(item.type);
     addCell(item.qty != null ? String(item.qty) : '1');
-    addCell(item.weight != null ? String(item.weight) : '');
+    addCell(item.weight != null ? (typeof formatWeight === 'function' ? formatWeight(item.weight, item.weightUnit) : String(item.weight)) : '');
     addCell(item.year);
     addCell(item.storageLocation);
 

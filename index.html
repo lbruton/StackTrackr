@@ -834,7 +834,7 @@
               <div>
                 <label for="itemPuritySelect">Purity <span style="font-weight:normal;opacity:0.6;">(fineness)</span></label>
                 <select id="itemPuritySelect">
-                  <option value="1.0">Pure</option>
+                  <option value="1.0">100% — Pure</option>
                   <option value="0.9999">.9999 — Four Nines</option>
                   <option value="0.999">.999 — Fine</option>
                   <option value="0.925">.925 — Sterling</option>
@@ -851,14 +851,25 @@
                 <input id="itemQty" min="1" required step="1" type="number" />
               </div>
               <div>
-                <label for="itemWeight">Weight</label>
+                <label for="itemWeight" id="itemWeightLabel">Weight</label>
                 <input id="itemWeight" inputmode="decimal" placeholder="1, 0.5, 1/10" required type="text" />
+                <select id="itemGbDenom" style="display:none;">
+                  <option value="0.5">½ Goldback</option>
+                  <option value="1" selected>1 Goldback</option>
+                  <option value="2">2 Goldback</option>
+                  <option value="5">5 Goldback</option>
+                  <option value="10">10 Goldback</option>
+                  <option value="25">25 Goldback</option>
+                  <option value="50">50 Goldback</option>
+                  <option value="100">100 Goldback</option>
+                </select>
               </div>
               <div>
                 <label>&nbsp;</label>
                 <select id="itemWeightUnit">
-                  <option value="oz">oz</option>
-                  <option value="g">g</option>
+                  <option value="oz">ounce</option>
+                  <option value="g">gram</option>
+                  <option value="gb">goldback</option>
                 </select>
               </div>
             </div>
@@ -1434,8 +1445,8 @@
     <!-- =============================================================================
        UNIFIED SETTINGS MODAL
        Consolidates API, Files, and Appearance into a single sidebar-navigated modal.
-       Sub-modals (apiInfoModal, apiHistoryModal, catalogHistoryModal, apiQuotaModal)
-       remain as stacking overlays.
+       Sub-modals (apiInfoModal, apiHistoryModal, catalogHistoryModal, apiQuotaModal,
+       goldbackHistoryModal) remain as stacking overlays.
        ============================================================================= -->
     <div class="modal" id="settingsModal" style="display: none">
       <div class="modal-content settings-modal-content">
@@ -1473,6 +1484,10 @@
             <button class="settings-nav-item" data-section="tools">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
               Tools
+            </button>
+            <button class="settings-nav-item" data-section="goldback">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v12"/><path d="M9 9a3 3 0 0 1 3-1.5c2 0 3 1 3 2.5s-1 2.5-3 2.5-3 1-3 2.5a3 3 0 0 0 3 2.5"/></svg>
+              Goldback
             </button>
             <button class="settings-nav-item" data-section="changelog">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="10"/></svg>
@@ -2052,6 +2067,54 @@
               </div>
             </div>
 
+            <!-- ===== GOLDBACK PRICING (STACK-45) ===== -->
+            <div class="settings-section-panel" id="settingsPanel_goldback" style="display: none">
+              <h3>Goldback Denomination Pricing</h3>
+              <p class="settings-subtext">
+                Manually set market prices for Goldback denominations.
+                Check current rates at
+                <a href="#" id="goldbackExchangeRateLink" onclick="window.open('https://www.goldback.com/exchange-rates/', 'goldback_rates', 'width=1200,height=800,scrollbars=yes,resizable=yes,toolbar=no,location=no,menubar=no,status=no'); return false;">goldback.com/exchange-rates</a>.
+              </p>
+
+              <div class="settings-group">
+                <label>Goldback Pricing</label>
+                <p class="settings-subtext">Use denomination prices as retail value for gb-unit items.</p>
+                <div id="settingsGoldbackEnabled" class="chip-sort-group">
+                  <button class="chip-sort-btn" data-val="on" type="button">On</button>
+                  <button class="chip-sort-btn active" data-val="off" type="button">Off</button>
+                </div>
+              </div>
+
+              <div class="settings-group">
+                <label>Quick Fill</label>
+                <p class="settings-subtext">Enter the 1 Goldback exchange rate to auto-fill all denominations.</p>
+                <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.75rem;">
+                  <span style="color:var(--text-secondary);">$</span>
+                  <input type="number" id="goldbackQuickFillInput" min="0" step="0.01" placeholder="1 GB rate" style="width:100px;" />
+                  <button class="btn btn-primary" id="goldbackQuickFillBtn" type="button">Set All</button>
+                </div>
+              </div>
+
+              <div class="settings-group">
+                <label>Denomination Prices</label>
+                <table class="settings-goldback-table" id="goldbackPriceTable">
+                  <thead>
+                    <tr>
+                      <th>Denomination</th>
+                      <th>Gold Content</th>
+                      <th>Market Price</th>
+                      <th>Last Updated</th>
+                    </tr>
+                  </thead>
+                  <tbody id="goldbackPriceTableBody">
+                    <!-- Rows rendered dynamically by syncGoldbackSettingsUI() -->
+                  </tbody>
+                </table>
+                <button class="btn btn-primary" id="goldbackSavePricesBtn" type="button" style="margin-top: 0.5rem;">Save Prices</button>
+                <button class="btn" id="goldbackHistoryBtn" type="button" style="margin-top: 0.5rem;">Goldback History</button>
+              </div>
+            </div>
+
             <!-- ===== CHANGE LOG ===== -->
             <div class="settings-section-panel" id="settingsPanel_changelog" style="display: none">
               <h3>Change Log</h3>
@@ -2261,6 +2324,53 @@
     </div>
 
     <!-- =============================================================================
+       GOLDBACK PRICE HISTORY MODAL (STACK-45)
+
+       Modal for viewing Goldback denomination price history.
+       Mirrors the apiHistoryModal structure with sortable/filterable table.
+       ============================================================================= -->
+    <div class="modal" id="goldbackHistoryModal" style="display: none">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Goldback Price History</h2>
+          <button
+            aria-label="Close modal"
+            class="modal-close"
+            id="goldbackHistoryCloseBtn"
+          >
+            &times;
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="api-history-body">
+            <div class="api-history-table">
+              <div class="api-history-filter">
+                <input
+                  type="text"
+                  id="goldbackHistoryFilter"
+                  placeholder="Filter history..."
+                />
+                <button
+                  type="button"
+                  class="btn secondary"
+                  id="goldbackHistoryClearFilterBtn"
+                >
+                  Clear
+                </button>
+              </div>
+              <div class="api-history-table-wrapper">
+                <table id="goldbackHistoryTable"></table>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer api-history-footer">
+          <button type="button" class="btn" id="exportGoldbackHistoryBtn">Export History</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- =============================================================================
        CATALOG HISTORY MODAL
 
        Modal for viewing catalog API call history (Numista lookups, searches).
@@ -2441,6 +2551,7 @@
     <script defer src="./js/spot.js"></script>
     <script defer src="./js/seed-data.js"></script>
     <script defer src="./js/priceHistory.js"></script>
+    <script defer src="./js/goldback.js"></script>
     <script defer src="./js/api.js"></script>
     <script defer src="./js/catalog-api.js"></script>
     <script defer src="./js/pcgs-api.js"></script>
