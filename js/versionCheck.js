@@ -91,6 +91,11 @@ const populateVersionModal = (version, html) => {
  */
 const getEmbeddedChangelog = (version) => {
   const changelogs = {
+    "3.23.02": `
+      <li><strong>Added</strong>: Bulk Edit pinned selections &mdash; selected items stay visible at the top of the table when the search term changes (STACK-52)</li>
+      <li><strong>Changed</strong>: Extracted shared search filter helper and added master checkbox indeterminate state in Bulk Edit</li>
+      <li><strong>Removed</strong>: Dormant rEngine/rSynk/AI prototype files and references</li>
+    `,
     "3.23.01": `
       <li><strong>Added</strong>: Goldback real-time price estimation from gold spot (STACK-52)</li>
       <li><strong>Added</strong>: User-configurable estimation premium modifier</li>
