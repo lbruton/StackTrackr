@@ -91,6 +91,17 @@ const populateVersionModal = (version, html) => {
  */
 const getEmbeddedChangelog = (version) => {
   const changelogs = {
+    "3.23.02": `
+      <li><strong>Added</strong>: Bulk Edit pinned selections &mdash; selected items stay visible at the top of the table when the search term changes (STACK-52)</li>
+      <li><strong>Changed</strong>: Extracted shared search filter helper and added master checkbox indeterminate state in Bulk Edit</li>
+      <li><strong>Removed</strong>: Dormant rEngine/rSynk/AI prototype files and references</li>
+    `,
+    "3.23.01": `
+      <li><strong>Added</strong>: Goldback real-time price estimation from gold spot (STACK-52)</li>
+      <li><strong>Added</strong>: User-configurable estimation premium modifier</li>
+      <li><strong>Changed</strong>: Settings sidebar — renamed Theme to Appearance, Tools to System</li>
+      <li><strong>Changed</strong>: Default estimation formula to pure 2x spot (modifier = 1.0)</li>
+    `,
     "3.23.00": `
       <li><strong>Added</strong>: Goldback denomination pricing &amp; type support (STACK-45)</li>
       <li><strong>Added</strong>: Persistent UUID v4 for every inventory item (STACK-42)</li>

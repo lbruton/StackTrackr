@@ -1459,7 +1459,11 @@
           <nav class="settings-sidebar">
             <button class="settings-nav-item active" data-section="site">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r="2.5"/><circle cx="19" cy="13" r="2.5"/><circle cx="16" cy="20" r="2.5"/><circle cx="7" cy="20" r="2.5"/><circle cx="4" cy="13" r="2.5"/><circle cx="12" cy="13" r="3"/></svg>
-              Theme
+              Appearance
+            </button>
+            <button class="settings-nav-item" data-section="system">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+              System
             </button>
             <button class="settings-nav-item" data-section="table">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
@@ -1481,10 +1485,6 @@
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
               Cloud
             </button>
-            <button class="settings-nav-item" data-section="tools">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
-              Tools
-            </button>
             <button class="settings-nav-item" data-section="goldback">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v12"/><path d="M9 9a3 3 0 0 1 3-1.5c2 0 3 1 3 2.5s-1 2.5-3 2.5-3 1-3 2.5a3 3 0 0 0 3 2.5"/></svg>
               Goldback
@@ -1498,9 +1498,9 @@
           <!-- Content Area -->
           <div class="settings-content-area">
 
-            <!-- ===== THEME SETTINGS ===== -->
+            <!-- ===== APPEARANCE SETTINGS ===== -->
             <div class="settings-section-panel" id="settingsPanel_site" style="display: block">
-              <h3>Theme</h3>
+              <h3>Appearance</h3>
 
               <div class="settings-group">
                 <div class="settings-group-label">Color scheme</div>
@@ -2057,13 +2057,20 @@
               </div>
             </div>
 
-            <!-- ===== TOOLS (placeholder) ===== -->
-            <div class="settings-section-panel" id="settingsPanel_tools" style="display: none">
-              <h3>Tools</h3>
+            <!-- ===== SYSTEM ===== -->
+            <div class="settings-section-panel" id="settingsPanel_system" style="display: none">
+              <h3>System</h3>
+
               <div class="settings-group">
-                <label>Bulk Edit</label>
-                <p class="settings-subtext">Select multiple items and edit fields, copy, or delete in bulk.</p>
-                <button class="btn btn-primary" id="bulkEditBtn" type="button">Open Bulk Edit</button>
+                <label>Bulk Editor</label>
+                <p class="settings-subtext">
+                  Select multiple inventory items and apply batch operations &mdash;
+                  edit shared fields, duplicate entries, or remove items in bulk.
+                </p>
+                <button class="btn settings-action-btn" id="bulkEditBtn" type="button">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:0.35rem;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                  Open Bulk Editor
+                </button>
               </div>
             </div>
 
@@ -2071,7 +2078,7 @@
             <div class="settings-section-panel" id="settingsPanel_goldback" style="display: none">
               <h3>Goldback Denomination Pricing</h3>
               <p class="settings-subtext">
-                Manually set market prices for Goldback denominations.
+                Set market prices for Goldback denominations manually or auto-estimate from gold spot.
                 Check current rates at
                 <a href="#" id="goldbackExchangeRateLink" onclick="window.open('https://www.goldback.com/exchange-rates/', 'goldback_rates', 'width=1200,height=800,scrollbars=yes,resizable=yes,toolbar=no,location=no,menubar=no,status=no'); return false;">goldback.com/exchange-rates</a>.
               </p>
@@ -2083,6 +2090,32 @@
                   <button class="chip-sort-btn" data-val="on" type="button">On</button>
                   <button class="chip-sort-btn active" data-val="off" type="button">Off</button>
                 </div>
+              </div>
+
+              <div class="settings-group">
+                <label>Real-Time Price Estimation</label>
+                <p class="settings-subtext">
+                  Auto-estimate prices from gold spot: <code>2 &times; (spot&thinsp;/&thinsp;1000) &times; modifier</code>.
+                  Manual edits will be overwritten on the next spot refresh.
+                </p>
+                <div style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;">
+                  <div id="settingsGoldbackEstimateEnabled" class="chip-sort-group">
+                    <button class="chip-sort-btn" data-val="on" type="button">On</button>
+                    <button class="chip-sort-btn active" data-val="off" type="button">Off</button>
+                  </div>
+                  <button class="btn btn-primary" id="goldbackEstimateRefreshBtn" type="button" style="display:none;">Refresh from API</button>
+                </div>
+                <div id="goldbackEstimateModifierRow" style="display:none;margin-top:0.5rem;">
+                  <label style="font-size:0.85em;">
+                    Modifier
+                    <span class="settings-tooltip" title="Community research suggests Goldback pegs at roughly 2&times; gold spot + ~3% (modifier 1.03). The default is 1.0 (no premium). Adjust based on how your API spot price compares to Goldback's published rates.">&#9432;</span>
+                  </label>
+                  <div style="display:flex;align-items:center;gap:0.4rem;margin-top:0.25rem;">
+                    <input type="number" id="goldbackEstimateModifierInput" min="0.5" max="2.0" step="0.01" value="1.0" style="width:80px;" />
+                    <span style="font-size:0.8em;color:var(--text-secondary);">(1.0 = no premium, 1.03 = ~3% premium)</span>
+                  </div>
+                </div>
+                <p id="goldbackEstimateInfo" class="settings-subtext" style="display:none;margin-top:0.5rem;"></p>
               </div>
 
               <div class="settings-group">

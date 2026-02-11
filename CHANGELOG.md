@@ -9,6 +9,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.23.02] - 2026-02-11
+
+### Added — STACK-52: Bulk Edit pinned selections
+
+- **Added**: Bulk Edit pinned selections — selected items stay visible at the top of the table when the search term changes (STACK-52)
+- **Changed**: Extracted shared search filter helper and added master checkbox indeterminate state in Bulk Edit
+- **Removed**: Dormant rEngine/rSynk/AI prototype files and references
+
+---
+
+## [3.23.01] - 2026-02-11
+
+### Added — Goldback real-time estimation, Settings reorganization
+
+- **Added**: Goldback real-time price estimation from gold spot (STACK-52)
+- **Added**: User-configurable estimation premium modifier
+- **Changed**: Settings sidebar — renamed Theme to Appearance, Tools to System
+- **Changed**: Default estimation formula to pure 2x spot (modifier = 1.0)
+
+---
+
 ## [3.23.00] - 2026-02-11
 
 ### Added — STACK-45: Goldback denomination pricing & type support
