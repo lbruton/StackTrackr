@@ -367,6 +367,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (typeof loadGoldbackEstimateEnabled === 'function') loadGoldbackEstimateEnabled();
     if (typeof loadGoldbackEstimateModifier === 'function') loadGoldbackEstimateModifier();
 
+    // Load display currency preference (STACK-50)
+    if (typeof loadDisplayCurrency === 'function') loadDisplayCurrency();
+
     // Seed spot history for first-time users
     if (typeof loadSeedSpotHistory === 'function') {
       await loadSeedSpotHistory();

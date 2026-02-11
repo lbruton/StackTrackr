@@ -292,6 +292,9 @@ let goldbackEstimateEnabled = false;
 /** @type {number} User-configurable premium modifier for Goldback estimation (STACK-52) */
 let goldbackEstimateModifier = GB_ESTIMATE_PREMIUM;
 
+/** @type {string} User's selected display currency (ISO 4217), default USD (STACK-50) */
+let displayCurrency = DEFAULT_CURRENCY;
+
 /** @type {Array} Catalog API call history records */
 let catalogHistory = [];
 

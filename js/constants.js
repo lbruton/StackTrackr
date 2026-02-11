@@ -17,12 +17,12 @@ const API_PROVIDERS = {
     name: "Metals.dev",
     baseUrl: "https://api.metals.dev/v1",
     endpoints: {
-      silver: "/metal/spot?api_key={API_KEY}&metal=silver&currency=USD",
-      gold: "/metal/spot?api_key={API_KEY}&metal=gold&currency=USD",
-      platinum: "/metal/spot?api_key={API_KEY}&metal=platinum&currency=USD",
-      palladium: "/metal/spot?api_key={API_KEY}&metal=palladium&currency=USD",
+      silver: "/metal/spot?api_key={API_KEY}&metal=silver&currency={CURRENCY}",
+      gold: "/metal/spot?api_key={API_KEY}&metal=gold&currency={CURRENCY}",
+      platinum: "/metal/spot?api_key={API_KEY}&metal=platinum&currency={CURRENCY}",
+      palladium: "/metal/spot?api_key={API_KEY}&metal=palladium&currency={CURRENCY}",
     },
-    latestBatchEndpoint: "/latest?api_key={API_KEY}&currency=USD&unit=toz",
+    latestBatchEndpoint: "/latest?api_key={API_KEY}&currency={CURRENCY}&unit=toz",
     parseResponse: (data) => data.rate?.price || null,
     parseLatestBatchResponse: (data) => {
       const current = {};
@@ -71,10 +71,10 @@ const API_PROVIDERS = {
     name: "Metals-API.com",
     baseUrl: "https://metals-api.com/api",
     endpoints: {
-      silver: "/latest?access_key={API_KEY}&base=USD&symbols=XAG",
-      gold: "/latest?access_key={API_KEY}&base=USD&symbols=XAU",
-      platinum: "/latest?access_key={API_KEY}&base=USD&symbols=XPT",
-      palladium: "/latest?access_key={API_KEY}&base=USD&symbols=XPD",
+      silver: "/latest?access_key={API_KEY}&base={CURRENCY}&symbols=XAG",
+      gold: "/latest?access_key={API_KEY}&base={CURRENCY}&symbols=XAU",
+      platinum: "/latest?access_key={API_KEY}&base={CURRENCY}&symbols=XPT",
+      palladium: "/latest?access_key={API_KEY}&base={CURRENCY}&symbols=XPD",
     },
     parseResponse: (data, metal) => {
       // Expected format: { "success": true, "rates": { "XAG": 0.04 } }
@@ -94,7 +94,7 @@ const API_PROVIDERS = {
     symbolsPerRequest: 1,
     docUrl: "https://metals-api.com/documentation",
     batchSupported: true,
-    batchEndpoint: "/timeseries?access_key={API_KEY}&start_date={START_DATE}&end_date={END_DATE}&base=USD&symbols={SYMBOLS}",
+    batchEndpoint: "/timeseries?access_key={API_KEY}&start_date={START_DATE}&end_date={END_DATE}&base={CURRENCY}&symbols={SYMBOLS}",
     parseBatchResponse: (data) => {
       const current = {};
       const history = {};
@@ -140,10 +140,10 @@ const API_PROVIDERS = {
     name: "MetalPriceAPI.com",
     baseUrl: "https://api.metalpriceapi.com/v1",
     endpoints: {
-      silver: "/latest?api_key={API_KEY}&base=USD&currencies=XAG",
-      gold: "/latest?api_key={API_KEY}&base=USD&currencies=XAU",
-      platinum: "/latest?api_key={API_KEY}&base=USD&currencies=XPT",
-      palladium: "/latest?api_key={API_KEY}&base=USD&currencies=XPD",
+      silver: "/latest?api_key={API_KEY}&base={CURRENCY}&currencies=XAG",
+      gold: "/latest?api_key={API_KEY}&base={CURRENCY}&currencies=XAU",
+      platinum: "/latest?api_key={API_KEY}&base={CURRENCY}&currencies=XPT",
+      palladium: "/latest?api_key={API_KEY}&base={CURRENCY}&currencies=XPD",
     },
     parseResponse: (data, metal) => {
       // Expected format: { "success": true, "rates": { "XAG": 0.04 } }
@@ -163,7 +163,7 @@ const API_PROVIDERS = {
     symbolsPerRequest: "all",
     docUrl: "https://metalpriceapi.com/documentation",
     batchSupported: true,
-    batchEndpoint: "/timeframe?api_key={API_KEY}&start_date={START_DATE}&end_date={END_DATE}&base=USD&currencies={CURRENCIES}",
+    batchEndpoint: "/timeframe?api_key={API_KEY}&start_date={START_DATE}&end_date={END_DATE}&base={CURRENCY}&currencies={CURRENCIES}",
     parseBatchResponse: (data) => {
       const current = {};
       const history = {};
@@ -261,6 +261,32 @@ const APP_VERSION = "3.23.02";
  */
 const DEFAULT_CURRENCY = "USD";
 
+/**
+ * Supported display currencies for the currency selector (STACK-50)
+ * @constant {Array<{code: string, name: string}>}
+ */
+const SUPPORTED_CURRENCIES = [
+  { code: "USD", name: "US Dollar" },
+  { code: "EUR", name: "Euro" },
+  { code: "GBP", name: "British Pound" },
+  { code: "CAD", name: "Canadian Dollar" },
+  { code: "AUD", name: "Australian Dollar" },
+  { code: "CHF", name: "Swiss Franc" },
+  { code: "JPY", name: "Japanese Yen" },
+  { code: "CNY", name: "Chinese Yuan" },
+  { code: "INR", name: "Indian Rupee" },
+  { code: "MXN", name: "Mexican Peso" },
+  { code: "SEK", name: "Swedish Krona" },
+  { code: "NOK", name: "Norwegian Krone" },
+  { code: "NZD", name: "New Zealand Dollar" },
+  { code: "SGD", name: "Singapore Dollar" },
+  { code: "HKD", name: "Hong Kong Dollar" },
+  { code: "ZAR", name: "South African Rand" },
+  { code: "RUB", name: "Russian Ruble" },
+];
+
+/** @constant {string} DISPLAY_CURRENCY_KEY - LocalStorage key for display currency preference (STACK-50) */
+const DISPLAY_CURRENCY_KEY = "displayCurrency";
 
 /**
  * Returns formatted version string
@@ -505,6 +531,7 @@ const ALLOWED_STORAGE_KEYS = [
   GOLDBACK_ENABLED_KEY,
   GOLDBACK_ESTIMATE_ENABLED_KEY,
   GB_ESTIMATE_MODIFIER_KEY,
+  DISPLAY_CURRENCY_KEY,
 ];
 
 // =============================================================================
@@ -1105,6 +1132,9 @@ if (typeof window !== "undefined") {
   window.GOLDBACK_ESTIMATE_ENABLED_KEY = GOLDBACK_ESTIMATE_ENABLED_KEY;
   window.GB_ESTIMATE_PREMIUM = GB_ESTIMATE_PREMIUM;
   window.GB_ESTIMATE_MODIFIER_KEY = GB_ESTIMATE_MODIFIER_KEY;
+  // Multi-currency support (STACK-50)
+  window.SUPPORTED_CURRENCIES = SUPPORTED_CURRENCIES;
+  window.DISPLAY_CURRENCY_KEY = DISPLAY_CURRENCY_KEY;
 }
 
 // Expose APP_VERSION globally for non-module usage

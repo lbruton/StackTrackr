@@ -173,6 +173,11 @@ const syncSettingsUI = () => {
     renderPcgsUsageBar();
   }
 
+  // Display currency (STACK-50)
+  if (typeof syncCurrencySettingsUI === 'function') {
+    syncCurrencySettingsUI();
+  }
+
   // Goldback denomination pricing (STACK-45)
   if (typeof syncGoldbackSettingsUI === 'function') {
     syncGoldbackSettingsUI();
@@ -244,6 +249,21 @@ const setupSettingsEventListeners = () => {
       });
     });
   });
+
+  // Display currency (STACK-50)
+  const currencySelect = document.getElementById('settingsDisplayCurrency');
+  if (currencySelect) {
+    currencySelect.addEventListener('change', () => {
+      saveDisplayCurrency(currencySelect.value);
+      // Re-fetch spot prices in new currency from API
+      if (typeof fetchSpotPrice === 'function') fetchSpotPrice();
+      // Re-render table with new currency formatting
+      if (typeof renderTable === 'function') renderTable();
+      if (typeof updateSummary === 'function') updateSummary();
+      // Update charts
+      if (typeof updateAllSparklines === 'function') updateAllSparklines();
+    });
+  }
 
   // Items per page
   const ippSelect = document.getElementById('settingsItemsPerPage');
@@ -840,6 +860,24 @@ const renderFilterChipCategoryTable = () => {
 };
 
 /**
+ * Syncs the display currency dropdown with current state (STACK-50).
+ * Populates options from SUPPORTED_CURRENCIES on first call.
+ */
+const syncCurrencySettingsUI = () => {
+  const sel = document.getElementById('settingsDisplayCurrency');
+  if (!sel) return;
+  if (sel.options.length === 0) {
+    SUPPORTED_CURRENCIES.forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c.code;
+      opt.textContent = `${c.code} \u2014 ${c.name}`;
+      sel.appendChild(opt);
+    });
+  }
+  sel.value = displayCurrency;
+};
+
+/**
  * Syncs the Goldback settings panel UI with current state.
  * Renders denomination price rows and updates enabled toggle.
  */
@@ -936,4 +974,5 @@ if (typeof window !== 'undefined') {
   window.loadProviderTabOrder = loadProviderTabOrder;
   window.saveProviderTabOrder = saveProviderTabOrder;
   window.syncGoldbackSettingsUI = syncGoldbackSettingsUI;
+  window.syncCurrencySettingsUI = syncCurrencySettingsUI;
 }
