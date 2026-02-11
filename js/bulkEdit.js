@@ -610,6 +610,19 @@ const applyBulkEdit = () => {
     if (input) valuesToApply[fieldId] = input.value;
   });
 
+  // When gb denomination mode is active, read weight from the denomination picker
+  // (the hidden number input has stale/empty value).
+  // Check both: explicit weightUnit in apply set, OR denomination picker visibly active.
+  if (bulkEnabledFields.has('weight')) {
+    const denomSelect = safeGetElement('bulkFieldVal_weightDenom');
+    const unitSelect = safeGetElement('bulkFieldVal_weightUnit');
+    const isGbMode = (valuesToApply['weightUnit'] === 'gb') ||
+                     (unitSelect && unitSelect.value === 'gb');
+    if (isGbMode && denomSelect && denomSelect.style.display !== 'none') {
+      valuesToApply['weight'] = denomSelect.value;
+    }
+  }
+
   const fieldNames = [...bulkEnabledFields].map(id => {
     const def = BULK_EDITABLE_FIELDS.find(f => f.id === id);
     return def ? def.label : id;
@@ -655,7 +668,7 @@ const applyBulkEdit = () => {
 
   // Record price data points for bulk-edited items with price-related changes (STACK-43)
   if (typeof recordItemPrice === 'function') {
-    const priceFields = ['price', 'marketValue', 'weight', 'qty', 'metal', 'purity'];
+    const priceFields = ['price', 'marketValue', 'weight', 'weightUnit', 'qty', 'metal', 'purity'];
     if ([...bulkEnabledFields].some(id => priceFields.includes(id))) {
       inventory.forEach(item => {
         if (bulkSelection.has(String(item.serial))) recordItemPrice(item, 'bulk');
