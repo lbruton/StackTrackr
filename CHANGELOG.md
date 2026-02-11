@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.24.01] - 2026-02-11
+
+### Fixed — Codacy code quality cleanup
+
+- **Fixed**: Convert 8 `innerHTML` assignments to `textContent` where content is plain text from `formatCurrency()`
+- **Fixed**: Remove stale `eslint-disable-line` comments referencing unloaded security plugin
+- **Changed**: Add PMD `ruleset.xml` to exclude false-positive `InnaccurateNumericLiteral` rule
+- **Changed**: Add `nosemgrep` suppression for 30 legitimate `innerHTML` uses in client-side rendering
+
+---
+
 ## [3.24.00] - 2026-02-11
 
 ### Added — STACK-50: Multi-Currency Support

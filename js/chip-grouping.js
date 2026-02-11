@@ -384,6 +384,7 @@
       </tr>`;
     });
     html += '</tbody></table>';
+    // nosemgrep: javascript.browser.security.insecure-innerhtml.insecure-innerhtml, javascript.browser.security.insecure-document-method.insecure-document-method
     container.innerHTML = html;
 
     // Wire delete buttons

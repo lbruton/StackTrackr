@@ -37,9 +37,7 @@ const renderApiStatusSummary = () => {
 
   // Metals providers
   Object.keys(API_PROVIDERS).forEach((prov) => {
-    const status = Object.hasOwn(providerStatuses, prov) ? providerStatuses[prov] : "disconnected"; // eslint-disable-line security/detect-object-injection
-    const providerConfig = Object.hasOwn(API_PROVIDERS, prov) ? API_PROVIDERS[prov] : null; // eslint-disable-line security/detect-object-injection
-    if (!providerConfig) return;
+    const status = Object.hasOwn(providerStatuses, prov) ? providerStatuses[prov] : "disconnected";    const providerConfig = Object.hasOwn(API_PROVIDERS, prov) ? API_PROVIDERS[prov] : null;    if (!providerConfig) return;
     const name = providerConfig.name;
     const statusClass = status === "cached" ? "connected" : status;
     const lastSync = typeof getLastProviderSyncTime === "function" ? getLastProviderSyncTime(prov) : null;
@@ -439,6 +437,7 @@ const updateProviderHistoryTables = () => {
     const remainingPercent = 100 - usedPercent;
     const warning = usage.used / usage.quota >= 0.9;
     const usageHtml = `<div class="api-usage" data-quota-provider="${prov}" style="cursor:pointer" title="Click to edit quota"><div class="usage-bar"><div class="used" style="width:${usedPercent}%"></div><div class="remaining" style="width:${remainingPercent}%"></div></div><div class="usage-text">${usage.used}/${usage.quota} calls${warning ? " 🚩" : ""}</div></div>`;
+    // nosemgrep: javascript.browser.security.insecure-innerhtml.insecure-innerhtml, javascript.browser.security.insecure-document-method.insecure-document-method
     container.innerHTML = usageHtml;
 
     // Make quota bar clickable
@@ -585,6 +584,7 @@ const renderApiHistoryTable = () => {
       e.spot,
     )}</td><td>${e.provider || ""}</td></tr>`;
   });
+  // nosemgrep: javascript.browser.security.insecure-innerhtml.insecure-innerhtml, javascript.browser.security.insecure-document-method.insecure-document-method
   table.innerHTML = html;
 
   table.querySelectorAll("th").forEach((th) => {
@@ -1870,6 +1870,7 @@ const showProviderInfo = (providerKey) => {
 
   if (title) title.textContent = "Provider Information";
   if (body) {
+    // nosemgrep: javascript.browser.security.insecure-innerhtml.insecure-innerhtml, javascript.browser.security.insecure-document-method.insecure-document-method
     body.innerHTML = `
       <div class="info-provider-name">${provider.name}</div>
       <div>Base URL: ${provider.baseUrl}</div>

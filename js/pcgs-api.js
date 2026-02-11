@@ -418,6 +418,7 @@ const showPcgsFieldPicker = (result) => {
   if (!modal) return;
 
   if (title) title.textContent = 'PCGS Item Found';
+  // nosemgrep: javascript.browser.security.insecure-innerhtml.insecure-innerhtml, javascript.browser.security.insecure-document-method.insecure-document-method
   if (preview) preview.innerHTML = renderPcgsSelectedItem(result);
   renderPcgsFieldCheckboxes(result);
 

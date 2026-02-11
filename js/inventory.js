@@ -949,6 +949,7 @@ const startCellEdit = (idx, field, element) => {
 
   const cancelEdit = () => {
     td.classList.remove('editing');
+    // nosemgrep: javascript.browser.security.insecure-innerhtml.insecure-innerhtml, javascript.browser.security.insecure-document-method.insecure-document-method
     td.innerHTML = originalContent;
   };
 
@@ -1203,6 +1204,7 @@ const renderTable = () => {
       return;
     }
 
+    // nosemgrep: javascript.browser.security.insecure-innerhtml.insecure-innerhtml, javascript.browser.security.insecure-document-method.insecure-document-method
     tbody.innerHTML = rows.join('');
     hideEmptyColumns();
 
@@ -1312,12 +1314,13 @@ const updateSummary = () => {
 
     if (els.items) els.items.textContent = totals.totalItems;
     if (els.weight) els.weight.textContent = totals.totalWeight.toFixed(2);
-    if (els.value) els.value.innerHTML = formatCurrency(totals.totalMeltValue || 0);
-    if (els.purchased) els.purchased.innerHTML = formatCurrency(totals.totalPurchased || 0);
-    if (els.retailValue) els.retailValue.innerHTML = formatCurrency(totals.totalRetailValue || 0);
+    if (els.value) els.value.textContent = formatCurrency(totals.totalMeltValue || 0);
+    if (els.purchased) els.purchased.textContent = formatCurrency(totals.totalPurchased || 0);
+    if (els.retailValue) els.retailValue.textContent = formatCurrency(totals.totalRetailValue || 0);
     if (els.lossProfit) {
       const gl = totals.totalGainLoss || 0;
       const gainLossPct = totals.totalPurchased > 0 ? (gl / totals.totalPurchased) * 100 : 0;
+      // nosemgrep: javascript.browser.security.insecure-innerhtml.insecure-innerhtml, javascript.browser.security.insecure-document-method.insecure-document-method
       els.lossProfit.innerHTML = formatLossProfit(gl, gainLossPct);
       // Dynamic label: "Gain:" green, "Loss:" red, "Gain/Loss:" neutral (STACK-50)
       const glLabel = els.lossProfit.parentElement && els.lossProfit.parentElement.querySelector('.total-label');
@@ -1329,7 +1332,7 @@ const updateSummary = () => {
     }
     if (els.avgCostPerOz) {
       const avgCost = totals.totalWeight > 0 ? totals.totalPurchased / totals.totalWeight : 0;
-      els.avgCostPerOz.innerHTML = formatCurrency(avgCost);
+      els.avgCostPerOz.textContent = formatCurrency(avgCost);
     }
   });
 
@@ -1356,12 +1359,13 @@ const updateSummary = () => {
   if (elements.totals.all && elements.totals.all.items) {
     elements.totals.all.items.textContent = allTotals.totalItems;
     if (elements.totals.all.weight) elements.totals.all.weight.textContent = allTotals.totalWeight.toFixed(2);
-    if (elements.totals.all.value) elements.totals.all.value.innerHTML = formatCurrency(allTotals.totalMeltValue || 0);
-    if (elements.totals.all.purchased) elements.totals.all.purchased.innerHTML = formatCurrency(allTotals.totalPurchased || 0);
-    if (elements.totals.all.retailValue) elements.totals.all.retailValue.innerHTML = formatCurrency(allTotals.totalRetailValue || 0);
+    if (elements.totals.all.value) elements.totals.all.value.textContent = formatCurrency(allTotals.totalMeltValue || 0);
+    if (elements.totals.all.purchased) elements.totals.all.purchased.textContent = formatCurrency(allTotals.totalPurchased || 0);
+    if (elements.totals.all.retailValue) elements.totals.all.retailValue.textContent = formatCurrency(allTotals.totalRetailValue || 0);
     if (elements.totals.all.lossProfit) {
       const allGl = allTotals.totalGainLoss || 0;
       const allGainLossPct = allTotals.totalPurchased > 0 ? (allGl / allTotals.totalPurchased) * 100 : 0;
+      // nosemgrep: javascript.browser.security.insecure-innerhtml.insecure-innerhtml, javascript.browser.security.insecure-document-method.insecure-document-method
       elements.totals.all.lossProfit.innerHTML = formatLossProfit(allGl, allGainLossPct);
       const allGlLabel = elements.totals.all.lossProfit.parentElement && elements.totals.all.lossProfit.parentElement.querySelector('.total-label');
       if (allGlLabel) {
@@ -1372,7 +1376,7 @@ const updateSummary = () => {
     }
     if (elements.totals.all.avgCostPerOz) {
       const avgCost = allTotals.totalWeight > 0 ? allTotals.totalPurchased / allTotals.totalWeight : 0;
-      elements.totals.all.avgCostPerOz.innerHTML = formatCurrency(avgCost);
+      elements.totals.all.avgCostPerOz.textContent = formatCurrency(avgCost);
     }
   }
 };

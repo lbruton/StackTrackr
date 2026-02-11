@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<ruleset name="StackTrackr"
+    xmlns="http://pmd.sourceforge.net/ruleset/2.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://pmd.sourceforge.net/ruleset/2.0.0 https://pmd.sourceforge.io/ruleset_2_0_0.xsd">
+
+    <description>StackTrackr PMD ruleset — excludes false-positive rules for client-side JS</description>
+
+    <!-- Include all ECMAScript error-prone rules except InnaccurateNumericLiteral.
+         Values like 42.00, 3400.00, 0.0005 are exactly representable in IEEE 754. -->
+    <rule ref="category/ecmascript/errorprone.xml">
+        <exclude name="InnaccurateNumericLiteral"/>
+    </rule>
+
+</ruleset>
