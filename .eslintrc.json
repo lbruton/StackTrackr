@@ -1,0 +1,14 @@
+{
+  "env": {
+    "browser": true,
+    "es2020": true
+  },
+  "rules": {
+    "no-undef": "off",
+    "security/detect-object-injection": "off"
+  },
+  "plugins": [],
+  "parserOptions": {
+    "ecmaVersion": 2020
+  }
+}
