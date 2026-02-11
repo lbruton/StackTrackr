@@ -480,7 +480,7 @@ const formatDisplayDate = (dateStr) => {
  * @param {string} [currency=DEFAULT_CURRENCY] - ISO currency code
  * @returns {string} Formatted currency string (e.g., "$1,234.56")
  */
-const formatCurrency = (value, currency = DEFAULT_CURRENCY) => {
+const formatCurrency = (value, currency = (typeof displayCurrency !== 'undefined' ? displayCurrency : DEFAULT_CURRENCY)) => {
   const num = parseFloat(value);
   if (isNaN(num)) return "";
   try {
@@ -492,6 +492,27 @@ const formatCurrency = (value, currency = DEFAULT_CURRENCY) => {
     // Fallback for environments without Intl support
     return `${currency} ${num.toFixed(2)}`;
   }
+};
+
+/**
+ * Loads the display currency preference from localStorage (STACK-50)
+ */
+const loadDisplayCurrency = () => {
+  try {
+    const saved = loadDataSync(DISPLAY_CURRENCY_KEY, DEFAULT_CURRENCY);
+    if (saved && typeof saved === 'string') {
+      displayCurrency = saved;
+    }
+  } catch (e) { displayCurrency = DEFAULT_CURRENCY; }
+};
+
+/**
+ * Saves the display currency preference to localStorage (STACK-50)
+ * @param {string} code - ISO 4217 currency code
+ */
+const saveDisplayCurrency = (code) => {
+  displayCurrency = code;
+  saveDataSync(DISPLAY_CURRENCY_KEY, code);
 };
 
 /**
@@ -2761,6 +2782,9 @@ if (typeof window !== 'undefined') {
   window.openEbaySoldSearch = openEbaySoldSearch;
   window.cleanSearchTerm = cleanSearchTerm;
   window.computeMeltValue = computeMeltValue;
+  // Multi-currency support (STACK-50)
+  window.loadDisplayCurrency = loadDisplayCurrency;
+  window.saveDisplayCurrency = saveDisplayCurrency;
 }
 
 if (typeof module !== 'undefined' && module.exports) {

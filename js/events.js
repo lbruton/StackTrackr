@@ -644,6 +644,7 @@ const setupEventListeners = () => {
               purity,
               isCollectable: false,
               numistaId: catalog,
+              currency: displayCurrency,
             };
 
             addCompositionOption(composition);
@@ -709,6 +710,7 @@ const setupEventListeners = () => {
               serial,
               uuid: generateUUID(),
               numistaId: catalog,
+              currency: displayCurrency,
             });
 
             typeof registerName === "function" && registerName(name);

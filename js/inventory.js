@@ -1164,12 +1164,12 @@ const renderTable = () => {
       </td>
       <td class="shrink" data-column="qty">${filterLink('qty', item.qty, 'var(--text-primary)')}</td>
       <td class="shrink" data-column="weight">${filterLink('weight', item.weight, 'var(--text-primary)', formatWeight(item.weight, item.weightUnit), item.weightUnit === 'gb' ? 'Goldback denomination' : item.weight < 1 ? 'Grams (g)' : 'Troy ounces (ozt)')}</td>
-      <td class="shrink" data-column="purchasePrice" title="Purchase Price (USD) - Click to search eBay active listings" style="color: var(--text-primary);">
+      <td class="shrink" data-column="purchasePrice" title="Purchase Price (${displayCurrency}) - Click to search eBay active listings" style="color: var(--text-primary);">
         <a href="#" class="ebay-buy-link ebay-price-link" data-search="${escapeAttribute(item.metal + (item.year ? ' ' + item.year : '') + ' ' + item.name)}" title="Search eBay active listings for ${escapeAttribute(item.metal)} ${escapeAttribute(item.name)}">
           ${formatCurrency(purchasePrice)} <svg class="ebay-search-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6" fill="none" stroke="currentColor" stroke-width="2.5"/><line x1="15" y1="15" x2="21" y2="21" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
         </a>
       </td>
-      <td class="shrink" data-column="meltValue" title="Melt Value (USD)" style="color: var(--text-primary);">${meltDisplay}</td>
+      <td class="shrink" data-column="meltValue" title="Melt Value (${displayCurrency})" style="color: var(--text-primary);">${meltDisplay}</td>
       <td class="shrink ${gbDenomPrice ? 'retail-confirmed' : isManualRetail ? 'retail-confirmed' : 'retail-estimated'}" data-column="retailPrice" title="${gbDenomPrice ? 'Goldback denomination price' : isManualRetail ? 'Manual retail price (confirmed)' : 'Estimated — defaults to melt value'} - Click to search eBay sold listings">
         <a href="#" class="ebay-sold-link ebay-price-link" data-search="${escapeAttribute(item.metal + (item.year ? ' ' + item.year : '') + ' ' + item.name)}" title="Search eBay sold listings for ${escapeAttribute(item.metal)} ${escapeAttribute(item.name)}">
           ${retailDisplay} <svg class="ebay-search-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6" fill="none" stroke="currentColor" stroke-width="2.5"/><line x1="15" y1="15" x2="21" y2="21" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
@@ -1916,7 +1916,7 @@ const importNumistaCsv = (file, override = false) => {
             const rawVal = String(row[key] ?? '').trim();
             const valueCurrency = detectCurrency(rawVal);
             const headerCurrencyMatch = key.match(/\(([^)]+)\)/);
-            const headerCurrency = headerCurrencyMatch ? headerCurrencyMatch[1] : 'USD';
+            const headerCurrency = headerCurrencyMatch ? headerCurrencyMatch[1] : displayCurrency;
             const currency = valueCurrency || headerCurrency;
             const amount = parseFloat(rawVal.replace(/[^0-9.\-]/g, ''));
             return isNaN(amount) ? 0 : convertToUsd(amount, currency);
@@ -2101,7 +2101,7 @@ const exportNumistaCsv = () => {
     "Quantity",
     "Type",
     "Weight (g)",
-    "Buying price (USD)",
+    `Buying price (${displayCurrency})`,
     "Acquisition place",
     "Storage location",
     "Acquisition date",
