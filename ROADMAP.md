@@ -6,28 +6,17 @@ Project direction and planned work. Each item links to its full Linear issue for
 
 ---
 
-## Near-Term — Price History Foundation
+## Near-Term — Next Up
 
-The UUID → silent recording → log tabs → charts pipeline. STACK-42 is the critical path that unblocks the rest.
-
-| Issue | Title | Priority | Depends On |
-|-------|-------|----------|------------|
-| [STACK-42](https://linear.app/hextrackr/issue/STACK-42) | Assign persistent UUIDs to all inventory items | **High** | — |
-| [STACK-41](https://linear.app/hextrackr/issue/STACK-41) | Per-item retail price history for trend charts | Medium | STACK-42 |
-| [STACK-43](https://linear.app/hextrackr/issue/STACK-43) | Silent per-item price history recording | Medium | STACK-42 |
-| [STACK-44](https://linear.app/hextrackr/issue/STACK-44) | Settings Log tab reorganization with sub-tabs | Medium | STACK-43 |
-
----
-
-## Near-Term — Features & UI
-
-Independent feature work that can proceed in parallel with the price history pipeline.
+The price history pipeline is complete (STACK-42/43). These items are unblocked and ready for the next sprint.
 
 | Issue | Title | Priority | Depends On |
 |-------|-------|----------|------------|
-| [STACK-45](https://linear.app/hextrackr/issue/STACK-45) | Goldback denomination pricing & type support | Medium | — |
-| [STACK-46](https://linear.app/hextrackr/issue/STACK-46) | Configurable spot & portfolio card grid with drag-to-reorder | Medium | STACK-45 (for Goldback card) |
-| [STACK-48](https://linear.app/hextrackr/issue/STACK-48) | Chart system overhaul: migrate to ApexCharts, add time-series trends | Medium | STACK-43 (for time-series data) |
+| [STACK-44](https://linear.app/hextrackr/issue/STACK-44) | Settings Log tab reorganization with sub-tabs | Medium | STACK-43 ✅ |
+| [STACK-46](https://linear.app/hextrackr/issue/STACK-46) | Configurable spot & portfolio card grid with drag-to-reorder | Medium | STACK-45 ✅ |
+| [STACK-48](https://linear.app/hextrackr/issue/STACK-48) | Chart system overhaul: migrate to ApexCharts, add time-series trends | Medium | STACK-43 ✅ |
+| [STACK-38](https://linear.app/hextrackr/issue/STACK-38) | Table CSS hardening & responsive audit | Medium | — |
+| [STACK-49](https://linear.app/hextrackr/issue/STACK-49) | Spot Price Lookup by Date on Add/Edit Form | Low | — |
 
 ---
 
@@ -52,7 +41,6 @@ Enhanced UX, mobile support, deployment options, and the v4 vision.
 | [STACK-32](https://linear.app/hextrackr/issue/STACK-32) | User photo upload for inventory items | Low | STACK-30 |
 | [STACK-33](https://linear.app/hextrackr/issue/STACK-33) | Mobile camera capture in add/edit modal | Low | STACK-31, STACK-32 |
 | [STACK-34](https://linear.app/hextrackr/issue/STACK-34) | Docker build & image for self-hosting | Low | — |
-| [STACK-35](https://linear.app/hextrackr/issue/STACK-35) | Proxmox LXC setup guide | Low | STACK-34 |
 | [STACK-37](https://linear.app/hextrackr/issue/STACK-37) | Numista image & API caching | Low | STACK-30 |
 
 ---
@@ -64,8 +52,6 @@ Explicitly out of scope until prerequisites are met.
 | Issue | Title | Priority | Depends On |
 |-------|-------|----------|------------|
 | [STACK-36](https://linear.app/hextrackr/issue/STACK-36) | Encryption at rest for Supabase data | Low | STACK-30 |
-| [STACK-38](https://linear.app/hextrackr/issue/STACK-38) | Table CSS hardening & responsive audit | Low | — |
-| [STACK-39](https://linear.app/hextrackr/issue/STACK-39) | Full UI review walkthrough | Low | — |
 | [STACK-40](https://linear.app/hextrackr/issue/STACK-40) | eBay API integration for retail estimates | Low | STACK-30 |
 
 ---
@@ -76,7 +62,10 @@ Explicitly out of scope until prerequisites are met.
 |-------|-------|--------|
 | STACK-26 | Batch rename/normalize tool | Covered by existing Bulk Edit + Numista search |
 | STACK-28 | Chart.js dashboard improvements | Superseded by STACK-48 (ApexCharts migration) |
-| STACK-29 | Custom tagging system | Canceled |
+| STACK-29 | Custom tagging system | Covered by existing custom chip grouping system |
+| STACK-35 | Proxmox LXC setup guide | Canceled — Docker (STACK-34) sufficient for self-hosting |
+| STACK-39 | Full UI review walkthrough | Rolled into STACK-38 (responsive audit) |
+| STACK-41 | Per-item retail price history | Duplicate of STACK-43 |
 
 ---
 
@@ -85,6 +74,7 @@ Explicitly out of scope until prerequisites are met.
 <details>
 <summary>Shipped features (click to expand)</summary>
 
+- **v3.23.00** — STACK-42/43/45: Persistent UUIDs, silent price history recording, Goldback denomination pricing & type support
 - **v3.22.01** — Form layout, bulk edit dropdowns, purity chips
 - **v3.22.00** — STACK-22/24/25/27: Purity field & melt formula, PCGS quota bar, pie chart metric toggle, test-loader extraction
 - **v3.21.03** — STACK-23: Search matches custom chip group labels

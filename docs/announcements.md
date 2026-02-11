@@ -1,5 +1,6 @@
 ## What's New
 
+- **STACK-42/43/45: UUIDs, Price History, Goldback Pricing (v3.23.00)**: Added: Goldback denomination pricing & type support (STACK-45). Added: Persistent UUID v4 for every inventory item (STACK-42). Added: Silent per-item price history recording (STACK-43)
 - **STACK-45: Goldback denomination pricing**: New `gb` weight unit for Goldback items — 1 gb = 0.001 ozt 24K gold. Manual denomination pricing in Settings > Goldback tab with save, history logging, and enable/disable toggle. Retail value uses 3-tier hierarchy: manual override > Goldback denomination price > melt value. CSV/PDF/ZIP exports include Weight Unit column. Edit and duplicate preserve gb unit
 - **STACK-43: Silent price history**: Per-item price history now records silently in the background. Every add, edit, bulk change, and spot price sync captures a timestamped retail/spot/melt snapshot keyed by UUID. When trend charts ship, you'll already have months of data. ZIP backup includes price history with smart merge on restore
 - **STACK-42: Persistent UUIDs**: Every inventory item now has a stable UUID v4 identifier that never changes regardless of array position. Foundation for per-item price history, trend charts, and cloud sync. Existing items auto-migrate on load. All export/import formats updated
