@@ -497,6 +497,29 @@ const setupEventListeners = () => {
       console.error("Inventory table not found for sorting setup!");
     }
 
+    // GOLDBACK DENOMINATION PICKER TOGGLE (STACK-45)
+    // Swaps weight text input ↔ denomination select when unit changes to/from 'gb'.
+    // Auto-fills hidden weight value from the selected denomination.
+    window.toggleGbDenomPicker = () => {
+      const isGb = elements.itemWeightUnit && elements.itemWeightUnit.value === 'gb';
+      const weightInput = elements.itemWeight;
+      const denomSelect = elements.itemGbDenom || document.getElementById('itemGbDenom');
+      const weightLabel = document.getElementById('itemWeightLabel');
+
+      if (denomSelect) {
+        denomSelect.style.display = isGb ? '' : 'none';
+      }
+      if (weightInput) {
+        weightInput.style.display = isGb ? 'none' : '';
+        if (isGb && denomSelect) {
+          weightInput.value = denomSelect.value;
+        }
+      }
+      if (weightLabel) {
+        weightLabel.textContent = isGb ? 'Denomination' : 'Weight';
+      }
+    };
+
     // UNIFIED FORM SUBMISSION (Add + Edit via single #itemModal)
     debugLog("Setting up unified item form...");
     if (elements.inventoryForm) {
@@ -522,15 +545,18 @@ const setupEventListeners = () => {
           const type = elements.itemType.value || (isEditing ? existingItem.type : '');
 
           // Weight: uses real <select>, supports fraction input (e.g. "1/1000", "1 1/2")
-          const weightRaw = elements.itemWeight.value;
+          const weightUnit = elements.itemWeightUnit.value;
+          const denomSelect = elements.itemGbDenom || document.getElementById('itemGbDenom');
+          const weightRaw = (weightUnit === 'gb' && denomSelect) ? denomSelect.value : elements.itemWeight.value;
           let weight;
           if (isEditing && weightRaw === '') {
             weight = typeof existingItem.weight !== 'undefined' ? existingItem.weight : 0;
           } else {
             weight = parseFraction(weightRaw);
-            if (elements.itemWeightUnit.value === 'g') {
+            if (weightUnit === 'g') {
               weight = gramsToOzt(weight);
             }
+            // gb: weight stays as raw denomination value (conversion happens in computeMeltValue)
             weight = isNaN(weight) ? 0 : parseFloat(weight.toFixed(6));
           }
 
@@ -602,6 +628,7 @@ const setupEventListeners = () => {
               qty,
               type,
               weight,
+              weightUnit,
               price,
               marketValue,
               date,
@@ -630,6 +657,17 @@ const setupEventListeners = () => {
             }
 
             saveInventory();
+
+            // Record price data point if price-related fields changed (STACK-43)
+            if (typeof recordSingleItemPrice === 'function') {
+              const cur = inventory[editingIndex];
+              const priceChanged = oldItem.marketValue !== cur.marketValue
+                || oldItem.price !== cur.price || oldItem.weight !== cur.weight
+                || oldItem.qty !== cur.qty || oldItem.metal !== cur.metal
+                || oldItem.purity !== cur.purity;
+              if (priceChanged) recordSingleItemPrice(cur, 'edit');
+            }
+
             renderTable();
             renderActiveFilters();
             logItemChanges(oldItem, inventory[editingIndex]);
@@ -649,6 +687,7 @@ const setupEventListeners = () => {
               qty,
               type,
               weight,
+              weightUnit,
               price,
               marketValue,
               date,
@@ -680,6 +719,12 @@ const setupEventListeners = () => {
             }
 
             saveInventory();
+
+            // Record initial price data point (STACK-43)
+            if (typeof recordSingleItemPrice === 'function') {
+              recordSingleItemPrice(inventory[inventory.length - 1], 'add');
+            }
+
             renderTable();
             this.reset();
             elements.itemWeightUnit.value = "oz";
@@ -1630,6 +1675,8 @@ const setupSearch = () => {
           // Reset purity to default (form.reset already sets select to first option)
           const purityCustom = elements.purityCustomWrapper || document.getElementById('purityCustomWrapper');
           if (purityCustom) purityCustom.style.display = 'none';
+          // Reset gb denomination picker (STACK-45)
+          if (typeof toggleGbDenomPicker === 'function') toggleGbDenomPicker();
           // Hide PCGS verified icon in add mode
           const certVerifiedIcon = document.getElementById('certVerifiedIcon');
           if (certVerifiedIcon) certVerifiedIcon.style.display = 'none';

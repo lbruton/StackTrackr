@@ -580,12 +580,18 @@ const gramsToOzt = (grams) => grams / 31.1034768;
 const oztToGrams = (ozt) => ozt * 31.1034768;
 
 /**
- * Formats a weight in troy ounces to either grams or ounces
+ * Formats a weight in troy ounces to either grams or ounces.
+ * If weightUnit is 'gb', displays as Goldback denomination (no gram auto-conversion).
  *
- * @param {number} ozt - Weight in troy ounces
+ * @param {number} ozt - Weight in troy ounces (or Goldback denomination if weightUnit='gb')
+ * @param {string} [weightUnit] - Optional weight unit: 'oz', 'g', or 'gb'
  * @returns {string} Formatted weight string with unit
  */
-const formatWeight = (ozt) => {
+const formatWeight = (ozt, weightUnit) => {
+  if (weightUnit === 'gb') {
+    const w = parseFloat(ozt);
+    return `${(w % 1 === 0) ? w : w.toFixed(1)} gb`;
+  }
   const weight = parseFloat(ozt);
   if (weight < 1) {
     return `${oztToGrams(weight).toFixed(2)} g`;
@@ -950,7 +956,22 @@ const computeMeltValue = (item, spot) => {
   const weight = parseFloat(item.weight) || 0;
   const qty = Number(item.qty) || 1;
   const purity = parseFloat(item.purity) || 1.0;
-  return weight * qty * spot * purity;
+  const weightOz = (item.weightUnit === 'gb') ? weight * GB_TO_OZT : weight;
+  return weightOz * qty * spot * purity;
+};
+
+/**
+ * Returns the per-unit Goldback denomination retail price, or null.
+ * Checks: weightUnit is 'gb', Goldback pricing is enabled, and a price exists.
+ *
+ * @param {Object} item - Inventory item
+ * @returns {number|null} Per-unit denomination price, or null
+ */
+const getGoldbackRetailPrice = (item) => {
+  if (item.weightUnit !== 'gb') return null;
+  if (typeof isGoldbackPricingActive !== 'function' || !isGoldbackPricingActive()) return null;
+  if (typeof getGoldbackDenominationPrice !== 'function') return null;
+  return getGoldbackDenominationPrice(parseFloat(item.weight));
 };
 
 /**

@@ -97,6 +97,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     elements.itemType = safeGetElement("itemType", true);
     elements.itemWeight = safeGetElement("itemWeight", true);
     elements.itemWeightUnit = safeGetElement("itemWeightUnit", true);
+    elements.itemGbDenom = safeGetElement("itemGbDenom");
     elements.itemPrice = safeGetElement("itemPrice", true);
     elements.itemMarketValue = safeGetElement("itemMarketValue");
     elements.marketValueField = safeGetElement("marketValueField");
@@ -164,6 +165,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     elements.settingsModal = safeGetElement("settingsModal");
     elements.apiInfoModal = safeGetElement("apiInfoModal");
     elements.apiHistoryModal = safeGetElement("apiHistoryModal");
+    elements.goldbackHistoryModal = safeGetElement("goldbackHistoryModal");
     elements.cloudSyncModal = safeGetElement("cloudSyncModal");
     elements.vaultModal = safeGetElement("vaultModal");
     elements.apiQuotaModal = safeGetElement("apiQuotaModal");
@@ -363,6 +365,16 @@ document.addEventListener("DOMContentLoaded", async () => {
     refreshCompositionOptions();
     loadSpotHistory();
 
+    // Load per-item price history (STACK-43)
+    if (typeof loadItemPriceHistory === 'function') {
+      loadItemPriceHistory();
+    }
+
+    // Load Goldback denomination pricing (STACK-45)
+    if (typeof loadGoldbackPrices === 'function') loadGoldbackPrices();
+    if (typeof loadGoldbackPriceHistory === 'function') loadGoldbackPriceHistory();
+    if (typeof loadGoldbackEnabled === 'function') loadGoldbackEnabled();
+
     // Seed spot history for first-time users
     if (typeof loadSeedSpotHistory === 'function') {
       await loadSeedSpotHistory();
@@ -438,10 +450,23 @@ document.addEventListener("DOMContentLoaded", async () => {
           });
         }
 
+        // Weight unit ↔ denomination picker toggle (STACK-45)
+        if (elements.itemWeightUnit) {
+          elements.itemWeightUnit.addEventListener('change', () => {
+            if (typeof toggleGbDenomPicker === 'function') toggleGbDenomPicker();
+          });
+        }
+        if (elements.itemGbDenom) {
+          elements.itemGbDenom.addEventListener('change', () => {
+            if (elements.itemWeight) {
+              elements.itemWeight.value = elements.itemGbDenom.value;
+            }
+          });
+        }
+
         // Setup Edit header toggle functionality
         const editHeader = document.querySelector('th[data-column="actions"]');
         if (editHeader) {
-          editHeader.style.cursor = 'pointer';
           editHeader.addEventListener('click', (event) => {
             if (event.shiftKey) {
               // Shift + Click = Toggle all items edit mode

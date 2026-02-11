@@ -173,6 +173,11 @@ const syncSettingsUI = () => {
     renderPcgsUsageBar();
   }
 
+  // Goldback denomination pricing (STACK-45)
+  if (typeof syncGoldbackSettingsUI === 'function') {
+    syncGoldbackSettingsUI();
+  }
+
   // Set first provider tab active if none visible — default to Numista
   const anyVisible = document.querySelector('.settings-provider-panel[style*="display: block"]');
   if (!anyVisible) {
@@ -362,6 +367,100 @@ const setupSettingsEventListeners = () => {
   const closeBtn = document.getElementById('settingsCloseBtn');
   if (closeBtn) {
     closeBtn.addEventListener('click', hideSettingsModal);
+  }
+
+  // Goldback pricing toggle (STACK-45)
+  const gbToggle = document.getElementById('settingsGoldbackEnabled');
+  if (gbToggle) {
+    gbToggle.addEventListener('click', (e) => {
+      const btn = e.target.closest('.chip-sort-btn');
+      if (!btn) return;
+      const isEnabled = btn.dataset.val === 'on';
+      if (typeof saveGoldbackEnabled === 'function') saveGoldbackEnabled(isEnabled);
+      gbToggle.querySelectorAll('.chip-sort-btn').forEach(b => b.classList.toggle('active', b === btn));
+      if (typeof renderTable === 'function') renderTable();
+    });
+  }
+
+  // Goldback save prices button (STACK-45)
+  const gbSaveBtn = document.getElementById('goldbackSavePricesBtn');
+  if (gbSaveBtn) {
+    gbSaveBtn.addEventListener('click', () => {
+      const tbody = document.getElementById('goldbackPriceTableBody');
+      if (!tbody) return;
+      const now = Date.now();
+      tbody.querySelectorAll('tr[data-denom]').forEach(row => {
+        const denom = row.dataset.denom;
+        const input = row.querySelector('input[type="number"]');
+        if (!input) return;
+        const val = parseFloat(input.value);
+        if (!isNaN(val) && val > 0) {
+          goldbackPrices[denom] = { price: val, updatedAt: now };
+        }
+      });
+      if (typeof saveGoldbackPrices === 'function') saveGoldbackPrices();
+      if (typeof recordGoldbackPrices === 'function') recordGoldbackPrices();
+      if (typeof syncGoldbackSettingsUI === 'function') syncGoldbackSettingsUI();
+      if (typeof renderTable === 'function') renderTable();
+    });
+  }
+
+  // Goldback quick-fill button (STACK-45)
+  const gbQuickFillBtn = document.getElementById('goldbackQuickFillBtn');
+  if (gbQuickFillBtn) {
+    gbQuickFillBtn.addEventListener('click', () => {
+      const input = document.getElementById('goldbackQuickFillInput');
+      if (!input) return;
+      const rate = parseFloat(input.value);
+      if (isNaN(rate) || rate <= 0) {
+        alert('Enter a valid 1 Goldback rate.');
+        return;
+      }
+      // Fill all denomination inputs proportionally (round to nearest cent)
+      const tbody = document.getElementById('goldbackPriceTableBody');
+      if (!tbody || typeof GOLDBACK_DENOMINATIONS === 'undefined') return;
+      tbody.querySelectorAll('tr[data-denom]').forEach(row => {
+        const denom = parseFloat(row.dataset.denom);
+        const priceInput = row.querySelector('input[type="number"]');
+        if (priceInput) {
+          priceInput.value = (Math.round(rate * denom * 100) / 100).toFixed(2);
+        }
+      });
+    });
+  }
+
+  // Goldback history button (STACK-45)
+  const gbHistoryBtn = document.getElementById('goldbackHistoryBtn');
+  if (gbHistoryBtn) {
+    gbHistoryBtn.addEventListener('click', () => {
+      if (typeof showGoldbackHistoryModal === 'function') showGoldbackHistoryModal();
+    });
+  }
+
+  // Goldback history modal close
+  const gbHistoryCloseBtn = document.getElementById('goldbackHistoryCloseBtn');
+  if (gbHistoryCloseBtn) {
+    gbHistoryCloseBtn.addEventListener('click', () => {
+      if (typeof hideGoldbackHistoryModal === 'function') hideGoldbackHistoryModal();
+    });
+  }
+
+  // Goldback history modal backdrop click
+  const gbHistoryModal = document.getElementById('goldbackHistoryModal');
+  if (gbHistoryModal) {
+    gbHistoryModal.addEventListener('click', (e) => {
+      if (e.target === gbHistoryModal) {
+        if (typeof hideGoldbackHistoryModal === 'function') hideGoldbackHistoryModal();
+      }
+    });
+  }
+
+  // Goldback history export button
+  const gbExportBtn = document.getElementById('exportGoldbackHistoryBtn');
+  if (gbExportBtn) {
+    gbExportBtn.addEventListener('click', () => {
+      if (typeof exportGoldbackHistory === 'function') exportGoldbackHistory();
+    });
   }
 
   // Settings modal backdrop click
@@ -688,6 +787,45 @@ const renderFilterChipCategoryTable = () => {
   container.appendChild(table);
 };
 
+/**
+ * Syncs the Goldback settings panel UI with current state.
+ * Renders denomination price rows and updates enabled toggle.
+ */
+const syncGoldbackSettingsUI = () => {
+  // Toggle
+  const toggleGroup = document.getElementById('settingsGoldbackEnabled');
+  if (toggleGroup) {
+    toggleGroup.querySelectorAll('.chip-sort-btn').forEach(btn => {
+      const isOn = btn.dataset.val === 'on';
+      btn.classList.toggle('active', goldbackEnabled ? isOn : !isOn);
+    });
+  }
+
+  // Denomination table
+  const tbody = document.getElementById('goldbackPriceTableBody');
+  if (!tbody || typeof GOLDBACK_DENOMINATIONS === 'undefined') return;
+
+  tbody.innerHTML = '';
+  for (const d of GOLDBACK_DENOMINATIONS) {
+    const key = String(d.weight);
+    const entry = goldbackPrices[key];
+    const price = entry ? entry.price : '';
+    const updatedAt = entry && entry.updatedAt
+      ? new Date(entry.updatedAt).toLocaleString()
+      : '\u2014';
+
+    const tr = document.createElement('tr');
+    tr.dataset.denom = key;
+    tr.innerHTML = `
+      <td>${d.label}</td>
+      <td>${d.goldOz} oz</td>
+      <td><span style="margin-right:2px;">$</span><input type="number" min="0" step="0.01" value="${price}" style="width:80px;" /></td>
+      <td style="font-size:0.85em;color:var(--text-secondary);">${updatedAt}</td>
+    `;
+    tbody.appendChild(tr);
+  }
+};
+
 // Expose globally
 if (typeof window !== 'undefined') {
   window.showSettingsModal = showSettingsModal;
@@ -700,4 +838,5 @@ if (typeof window !== 'undefined') {
   window.setupProviderTabDrag = setupProviderTabDrag;
   window.loadProviderTabOrder = loadProviderTabOrder;
   window.saveProviderTabOrder = saveProviderTabOrder;
+  window.syncGoldbackSettingsUI = syncGoldbackSettingsUI;
 }
