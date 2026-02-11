@@ -1,7 +1,7 @@
 // CATALOG API SYSTEM
 // =============================================================================
 // Provider-agnostic catalog API architecture for StakTrakr
-// Designed for easy swapping between Numista and rSynk APIs
+// Provider-agnostic architecture for catalog lookups
 
 /**
  * Catalog API Configuration with base64-encoded key storage
@@ -62,9 +62,6 @@ class CatalogConfig {
       pcgsUsage: {
         used: 0,
         date: today
-      },
-      rsynk: {
-        apiKey: ''
       },
       local: {
         enabled: true
@@ -540,36 +537,6 @@ class NumistaProvider extends CatalogProvider {
 }
 
 /**
- * rSynk API Provider (Future Implementation)
- * Ready for rSynk API when available
- */
-class rSynkProvider extends CatalogProvider {
-  constructor(apiKey) {
-    super({
-      name: 'rSynk',
-      apiKey: apiKey,
-      baseUrl: 'https://api.rsynk.com/v1', // Placeholder URL
-      rateLimit: 120, // Assumed rate limit
-      timeout: 10000
-    });
-  }
-
-  async lookupItem(catalogId) {
-    // TODO: Implement rSynk-specific lookup
-    throw new Error('rSynk provider not yet implemented');
-  }
-
-  async searchItems(query, filters = {}) {
-    // TODO: Implement rSynk-specific search
-    throw new Error('rSynk provider not yet implemented');
-  }
-
-  async getMarketValue(catalogId) {
-    // TODO: Implement rSynk-specific market value lookup
-    throw new Error('rSynk provider not yet implemented');
-  }
-}
-
 /**
  * Local Provider (Fallback)
  * Uses local data when external APIs are unavailable
@@ -654,7 +621,6 @@ class CatalogAPI {
       return stored ? JSON.parse(stored) : {
         activeProvider: 'numista',
         numistaApiKey: '',
-        rsynkApiKey: '',
         enableFallback: true,
         cacheDuration: 3600000 // 1 hour
       };
@@ -693,20 +659,6 @@ class CatalogAPI {
       }
     }
 
-    // Add rSynk provider if API key is available (future)
-    if (this.settings.rsynkApiKey) {
-      try {
-        const rsynk = new rSynkProvider(this.settings.rsynkApiKey);
-        this.providers.push(rsynk);
-        if (this.settings.activeProvider === 'rsynk') {
-          this.activeProvider = rsynk;
-        }
-        console.log('✅ rSynk provider initialized');
-      } catch (error) {
-        console.error('❌ Failed to initialize rSynk provider:', error);
-      }
-    }
-
     // Default to first available provider if none set
     if (!this.activeProvider && this.providers.length > 0) {
       this.activeProvider = this.providers[0];
@@ -717,14 +669,12 @@ class CatalogAPI {
 
   /**
    * Set API key for a provider
-   * @param {string} provider - Provider name ('numista' or 'rsynk')
+   * @param {string} provider - Provider name ('numista')
    * @param {string} apiKey - API key
    */
   setApiKey(provider, apiKey) {
     if (provider === 'numista') {
       this.settings.numistaApiKey = apiKey;
-    } else if (provider === 'rsynk') {
-      this.settings.rsynkApiKey = apiKey;
     }
     
     this.saveSettings();
@@ -1614,7 +1564,6 @@ if (typeof window !== 'undefined') {
   window.testNumistaAPI = testNumistaAPI;
   window.CatalogAPI = CatalogAPI;
   window.NumistaProvider = NumistaProvider;
-  window.rSynkProvider = rSynkProvider;
   window.LocalProvider = LocalProvider;
   window.showCatalogHistoryModal = showCatalogHistoryModal;
   window.hideCatalogHistoryModal = hideCatalogHistoryModal;
