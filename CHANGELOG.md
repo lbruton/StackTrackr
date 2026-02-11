@@ -17,6 +17,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Changed**: Bulk copy and add-item assign new UUIDs; edit preserves existing UUID
 - **Fixed**: `sanitizeImportedItem()` safety net ensures no item lacks a UUID
 
+### Added — STACK-43: Silent per-item price history recording
+
+- **Added**: New `js/priceHistory.js` module — silently records timestamped retail/spot/melt data points per item
+- **Added**: `item-price-history` localStorage key with UUID-keyed object structure
+- **Added**: Recording triggers on item add, edit, inline edit, bulk edit, bulk copy, and spot price sync
+- **Added**: Dedup rules — 24h throttle for spot-sync, 1% delta threshold, exact-duplicate suppression
+- **Added**: ZIP backup includes `item_price_history.json`; restore uses union merge (not replace)
+- **Added**: Vault backup/restore auto-included via `ALLOWED_STORAGE_KEYS`
+- **Added**: `purgeItemPriceHistory()` and `cleanOrphanedItemPriceHistory()` for future storage management
+
 ---
 
 ## [3.22.01] - 2026-02-10

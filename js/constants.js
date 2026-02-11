@@ -379,6 +379,9 @@ const CATALOG_MAP_KEY = "catalogMap";
 /** @constant {string} SPOT_HISTORY_KEY - LocalStorage key for spot price history */
 const SPOT_HISTORY_KEY = "metalSpotHistory";
 
+/** @constant {string} ITEM_PRICE_HISTORY_KEY - LocalStorage key for per-item price history (STACK-43) */
+const ITEM_PRICE_HISTORY_KEY = "item-price-history";
+
 /** @constant {string} CATALOG_HISTORY_KEY - LocalStorage key for catalog API call history */
 const CATALOG_HISTORY_KEY = "staktrakr.catalog.history";
 
@@ -426,6 +429,7 @@ const ALLOWED_STORAGE_KEYS = [
   SERIAL_KEY,
   CATALOG_MAP_KEY,
   SPOT_HISTORY_KEY,
+  ITEM_PRICE_HISTORY_KEY,
   THEME_KEY,
   ACK_DISMISSED_KEY,
   API_KEY_STORAGE_KEY,

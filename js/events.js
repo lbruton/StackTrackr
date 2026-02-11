@@ -630,6 +630,17 @@ const setupEventListeners = () => {
             }
 
             saveInventory();
+
+            // Record price data point if price-related fields changed (STACK-43)
+            if (typeof recordSingleItemPrice === 'function') {
+              const cur = inventory[editingIndex];
+              const priceChanged = oldItem.marketValue !== cur.marketValue
+                || oldItem.price !== cur.price || oldItem.weight !== cur.weight
+                || oldItem.qty !== cur.qty || oldItem.metal !== cur.metal
+                || oldItem.purity !== cur.purity;
+              if (priceChanged) recordSingleItemPrice(cur, 'edit');
+            }
+
             renderTable();
             renderActiveFilters();
             logItemChanges(oldItem, inventory[editingIndex]);
@@ -680,6 +691,12 @@ const setupEventListeners = () => {
             }
 
             saveInventory();
+
+            // Record initial price data point (STACK-43)
+            if (typeof recordSingleItemPrice === 'function') {
+              recordSingleItemPrice(inventory[inventory.length - 1], 'add');
+            }
+
             renderTable();
             this.reset();
             elements.itemWeightUnit.value = "oz";

@@ -98,6 +98,14 @@ const createBackupZip = async () => {
     };
     zip.file('spot_price_history.json', JSON.stringify(spotHistoryData, null, 2));
 
+    // 3b. Add per-item price history (STACK-43)
+    const itemPriceHistoryData = {
+      version: APP_VERSION,
+      exportDate: new Date().toISOString(),
+      history: itemPriceHistory
+    };
+    zip.file('item_price_history.json', JSON.stringify(itemPriceHistoryData, null, 2));
+
     // 4. Generate and add CSV export (portfolio format)
     const csvHeaders = [
       "Date", "Metal", "Type", "Name", "Qty", "Weight(oz)", "Purity",
@@ -283,6 +291,18 @@ const restoreBackupZip = async (file) => {
     renderTable();
     renderActiveFilters();
     loadSpotHistory();
+
+    // Restore per-item price history with merge (STACK-43)
+    const itemHistoryStr = await zip.file("item_price_history.json")?.async("string");
+    if (itemHistoryStr) {
+      const itemHistObj = JSON.parse(itemHistoryStr);
+      if (typeof mergeItemPriceHistory === 'function') {
+        mergeItemPriceHistory(itemHistObj.history || {});
+      }
+    } else if (typeof loadItemPriceHistory === 'function') {
+      loadItemPriceHistory();
+    }
+
     fetchSpotPrice();
     alert("Data imported successfully.");
   } catch (err) {
@@ -940,6 +960,13 @@ const startCellEdit = (idx, field, element) => {
     }
 
     saveInventory();
+
+    // Record price data point for inline edits on price-related fields (STACK-43)
+    if (typeof recordSingleItemPrice === 'function' &&
+        ['price', 'marketValue', 'weight', 'qty'].includes(field)) {
+      recordSingleItemPrice(item, 'edit');
+    }
+
     renderTable();
   };
 

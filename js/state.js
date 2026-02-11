@@ -272,6 +272,9 @@ let spotPrices = {
 /** @type {Array} Historical spot price records */
 let spotHistory = [];
 
+/** @type {Object} Per-item price history keyed by UUID (STACK-43) */
+let itemPriceHistory = {};
+
 /** @type {Array} Catalog API call history records */
 let catalogHistory = [];
 
