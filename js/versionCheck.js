@@ -91,6 +91,11 @@ const populateVersionModal = (version, html) => {
  */
 const getEmbeddedChangelog = (version) => {
   const changelogs = {
+    "3.23.00": `
+      <li><strong>Added</strong>: Goldback denomination pricing &amp; type support (STACK-45)</li>
+      <li><strong>Added</strong>: Persistent UUID v4 for every inventory item (STACK-42)</li>
+      <li><strong>Added</strong>: Silent per-item price history recording (STACK-43)</li>
+    `,
     "3.22.01": `
       <li><strong>Purity form layout</strong>: Weight/Purity/Qty on single row</li>
       <li><strong>Bulk Edit</strong>: Purity, Grade, Grading Authority as dropdowns</li>

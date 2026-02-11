@@ -10,6 +10,14 @@ CLAUDE.md
 TAXONOMY.md
 SPRINT.md
 
+# Internal dev docs (not for public repo)
+docs/CLOUD-SYNC-DESIGN.md
+docs/UI-WIREFRAME.md
+
+# Internal dev scripts
+versionbump.py
+generate-seed-data.py
+
 # Node modules (if added in future)
 node_modules/
 npm-debug.log*
