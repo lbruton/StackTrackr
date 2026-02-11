@@ -1519,6 +1519,7 @@ const handleProviderSync = async (provider) => {
     if (updatedCount > 0) {
       saveApiCache(data, provider);
       updateSummary();
+      if (typeof recordAllItemPriceSnapshots === 'function') recordAllItemPriceSnapshots();
       if (typeof updateAllSparklines === "function") {
         updateAllSparklines();
       }
@@ -1632,6 +1633,7 @@ const syncProviderChain = async ({ showProgress = false, forceSync = false } = {
     // Post-sync updates if anything changed
     if (updatedCount > 0) {
       updateSummary();
+      if (typeof recordAllItemPriceSnapshots === 'function') recordAllItemPriceSnapshots();
       if (typeof updateStorageStats === "function") updateStorageStats();
       if (typeof updateAllSparklines === "function") updateAllSparklines();
     }

@@ -86,7 +86,11 @@ const createBackupZip = async () => {
       chipMinCount: localStorage.getItem('chipMinCount'),
       featureFlags: localStorage.getItem(FEATURE_FLAGS_KEY),
       // Inline chip config (v3.17.00+)
-      inlineChipConfig: localStorage.getItem('inlineChipConfig')
+      inlineChipConfig: localStorage.getItem('inlineChipConfig'),
+      // Goldback denomination pricing (STACK-45)
+      goldbackPrices: goldbackPrices,
+      goldbackPriceHistory: goldbackPriceHistory,
+      goldbackEnabled: goldbackEnabled
     };
     zip.file('settings.json', JSON.stringify(settings, null, 2));
 
@@ -98,9 +102,17 @@ const createBackupZip = async () => {
     };
     zip.file('spot_price_history.json', JSON.stringify(spotHistoryData, null, 2));
 
+    // 3b. Add per-item price history (STACK-43)
+    const itemPriceHistoryData = {
+      version: APP_VERSION,
+      exportDate: new Date().toISOString(),
+      history: itemPriceHistory
+    };
+    zip.file('item_price_history.json', JSON.stringify(itemPriceHistoryData, null, 2));
+
     // 4. Generate and add CSV export (portfolio format)
     const csvHeaders = [
-      "Date", "Metal", "Type", "Name", "Qty", "Weight(oz)", "Purity",
+      "Date", "Metal", "Type", "Name", "Qty", "Weight(oz)", "Weight Unit", "Purity",
       "Purchase Price", "Melt Value", "Retail Price", "Gain/Loss",
       "Purchase Location", "N#", "PCGS #", "Serial Number", "Notes"
     ];
@@ -110,11 +122,14 @@ const createBackupZip = async () => {
       const currentSpot = spotPrices[item.metal.toLowerCase()] || 0;
       const qty = Number(item.qty) || 1;
       const meltValue = computeMeltValue(item, currentSpot);
-      const isManualRetail = item.marketValue && item.marketValue > 0;
-      const retailTotal = isManualRetail ? item.marketValue * qty : meltValue;
+      const gbDenomPrice = (typeof getGoldbackRetailPrice === 'function') ? getGoldbackRetailPrice(item) : null;
+      const isManualRetail = !gbDenomPrice && item.marketValue && item.marketValue > 0;
+      const retailTotal = gbDenomPrice   ? gbDenomPrice * qty
+                        : isManualRetail ? item.marketValue * qty
+                        : meltValue;
       const purchasePrice = typeof item.price === 'number' ? item.price : parseFloat(item.price) || 0;
       const purchaseTotal = purchasePrice * qty;
-      const gainLoss = (currentSpot > 0 || isManualRetail) ? retailTotal - purchaseTotal : null;
+      const gainLoss = (currentSpot > 0 || isManualRetail || gbDenomPrice) ? retailTotal - purchaseTotal : null;
 
       csvRows.push([
         item.date,
@@ -123,6 +138,7 @@ const createBackupZip = async () => {
         item.name,
         item.qty,
         parseFloat(item.weight).toFixed(4),
+        item.weightUnit || 'oz',
         parseFloat(item.purity) || 1.0,
         formatCurrency(purchasePrice),
         currentSpot > 0 ? formatCurrency(meltValue) : '—',
@@ -255,6 +271,19 @@ const restoreBackupZip = async (file) => {
       if (settingsObj.inlineChipConfig != null) {
         localStorage.setItem('inlineChipConfig', settingsObj.inlineChipConfig);
       }
+      // Restore Goldback denomination pricing (STACK-45)
+      if (settingsObj.goldbackPrices != null) {
+        saveDataSync(GOLDBACK_PRICES_KEY, settingsObj.goldbackPrices);
+        goldbackPrices = settingsObj.goldbackPrices;
+      }
+      if (settingsObj.goldbackPriceHistory != null) {
+        saveDataSync(GOLDBACK_PRICE_HISTORY_KEY, settingsObj.goldbackPriceHistory);
+        goldbackPriceHistory = settingsObj.goldbackPriceHistory;
+      }
+      if (settingsObj.goldbackEnabled != null) {
+        saveDataSync(GOLDBACK_ENABLED_KEY, settingsObj.goldbackEnabled === true);
+        goldbackEnabled = settingsObj.goldbackEnabled === true;
+      }
       // Restore display settings (backed up but previously not restored)
       if (settingsObj.itemsPerPage != null) {
         localStorage.setItem(ITEMS_PER_PAGE_KEY, String(settingsObj.itemsPerPage));
@@ -283,6 +312,18 @@ const restoreBackupZip = async (file) => {
     renderTable();
     renderActiveFilters();
     loadSpotHistory();
+
+    // Restore per-item price history with merge (STACK-43)
+    const itemHistoryStr = await zip.file("item_price_history.json")?.async("string");
+    if (itemHistoryStr) {
+      const itemHistObj = JSON.parse(itemHistoryStr);
+      if (typeof mergeItemPriceHistory === 'function') {
+        mergeItemPriceHistory(itemHistObj.history || {});
+      }
+    } else if (typeof loadItemPriceHistory === 'function') {
+      loadItemPriceHistory();
+    }
+
     fetchSpotPrice();
     alert("Data imported successfully.");
   } catch (err) {
@@ -940,6 +981,13 @@ const startCellEdit = (idx, field, element) => {
     }
 
     saveInventory();
+
+    // Record price data point for inline edits on price-related fields (STACK-43)
+    if (typeof recordSingleItemPrice === 'function' &&
+        ['price', 'marketValue', 'weight', 'qty'].includes(field)) {
+      recordSingleItemPrice(item, 'edit');
+    }
+
     renderTable();
   };
 
@@ -1011,11 +1059,15 @@ const renderTable = () => {
       const currentSpot = spotPrices[item.metal.toLowerCase()] || 0;
       const qty = Number(item.qty) || 1;
       const meltValue = computeMeltValue(item, currentSpot);
-      const isManualRetail = item.marketValue && item.marketValue > 0;
-      const retailTotal = isManualRetail ? item.marketValue * qty : meltValue;
+      // Retail hierarchy: gb denomination > manual marketValue > melt
+      const gbDenomPrice = (typeof getGoldbackRetailPrice === 'function') ? getGoldbackRetailPrice(item) : null;
+      const isManualRetail = !gbDenomPrice && item.marketValue && item.marketValue > 0;
+      const retailTotal = gbDenomPrice   ? gbDenomPrice * qty
+                        : isManualRetail ? item.marketValue * qty
+                        : meltValue;
       const purchasePrice = typeof item.price === 'number' ? item.price : parseFloat(item.price) || 0;
       const purchaseTotal = purchasePrice * qty;
-      const gainLoss = (currentSpot > 0 || isManualRetail) ? retailTotal - purchaseTotal : null;
+      const gainLoss = (currentSpot > 0 || isManualRetail || gbDenomPrice) ? retailTotal - purchaseTotal : null;
 
       // Resolve Numista catalog ID for inline tag
       const numistaId = item.numistaId || (typeof catalogManager !== 'undefined'
@@ -1095,8 +1147,8 @@ const renderTable = () => {
 
       // Format computed displays
       const meltDisplay = currentSpot > 0 ? formatCurrency(meltValue) : '—';
-      const retailDisplay = currentSpot > 0 || isManualRetail ? formatCurrency(retailTotal) : '—';
-      const gainLossDisplay = gainLoss !== null && (currentSpot > 0 || isManualRetail) ? formatCurrency(Math.abs(gainLoss)) : '—';
+      const retailDisplay = currentSpot > 0 || isManualRetail || gbDenomPrice ? formatCurrency(retailTotal) : '—';
+      const gainLossDisplay = gainLoss !== null && (currentSpot > 0 || isManualRetail || gbDenomPrice) ? formatCurrency(Math.abs(gainLoss)) : '—';
       const gainLossColor = gainLoss > 0 ? 'var(--success, #4caf50)' : gainLoss < 0 ? 'var(--danger, #f44336)' : 'var(--text-primary)';
       const gainLossPrefix = gainLoss > 0 ? '+' : gainLoss < 0 ? '-' : '';
 
@@ -1111,14 +1163,14 @@ const renderTable = () => {
         </div>
       </td>
       <td class="shrink" data-column="qty">${filterLink('qty', item.qty, 'var(--text-primary)')}</td>
-      <td class="shrink" data-column="weight">${filterLink('weight', item.weight, 'var(--text-primary)', formatWeight(item.weight), item.weight < 1 ? 'Grams (g)' : 'Troy ounces (ozt)')}</td>
+      <td class="shrink" data-column="weight">${filterLink('weight', item.weight, 'var(--text-primary)', formatWeight(item.weight, item.weightUnit), item.weightUnit === 'gb' ? 'Goldback denomination' : item.weight < 1 ? 'Grams (g)' : 'Troy ounces (ozt)')}</td>
       <td class="shrink" data-column="purchasePrice" title="Purchase Price (USD) - Click to search eBay active listings" style="color: var(--text-primary);">
         <a href="#" class="ebay-buy-link ebay-price-link" data-search="${escapeAttribute(item.metal + (item.year ? ' ' + item.year : '') + ' ' + item.name)}" title="Search eBay active listings for ${escapeAttribute(item.metal)} ${escapeAttribute(item.name)}">
           ${formatCurrency(purchasePrice)} <svg class="ebay-search-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6" fill="none" stroke="currentColor" stroke-width="2.5"/><line x1="15" y1="15" x2="21" y2="21" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
         </a>
       </td>
       <td class="shrink" data-column="meltValue" title="Melt Value (USD)" style="color: var(--text-primary);">${meltDisplay}</td>
-      <td class="shrink ${isManualRetail ? 'retail-confirmed' : 'retail-estimated'}" data-column="retailPrice" title="${isManualRetail ? 'Manual retail price (confirmed)' : 'Estimated — defaults to melt value'} - Click to search eBay sold listings">
+      <td class="shrink ${gbDenomPrice ? 'retail-confirmed' : isManualRetail ? 'retail-confirmed' : 'retail-estimated'}" data-column="retailPrice" title="${gbDenomPrice ? 'Goldback denomination price' : isManualRetail ? 'Manual retail price (confirmed)' : 'Estimated — defaults to melt value'} - Click to search eBay sold listings">
         <a href="#" class="ebay-sold-link ebay-price-link" data-search="${escapeAttribute(item.metal + (item.year ? ' ' + item.year : '') + ' ' + item.name)}" title="Search eBay sold listings for ${escapeAttribute(item.metal)} ${escapeAttribute(item.name)}">
           ${retailDisplay} <svg class="ebay-search-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6" fill="none" stroke="currentColor" stroke-width="2.5"/><line x1="15" y1="15" x2="21" y2="21" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
         </a>
@@ -1205,7 +1257,9 @@ const updateSummary = () => {
         const price = parseFloat(item.price) || 0;
 
         totalItems += qty;
-        const itemWeight = qty * weight;
+        // Convert gb denomination to troy oz for weight totals
+        const weightOz = (item.weightUnit === 'gb') ? weight * GB_TO_OZT : weight;
+        const itemWeight = qty * weightOz;
         totalWeight += itemWeight;
 
         // Melt value: weight x qty x current spot x purity
@@ -1218,8 +1272,12 @@ const updateSummary = () => {
         const purchaseTotal = qty * price;
         totalPurchased += purchaseTotal;
 
-        // Retail total: manual marketValue × qty if set, otherwise melt (already qty-adjusted)
-        const retailTotal = (item.marketValue && item.marketValue > 0) ? item.marketValue * qty : meltValue;
+        // Retail total: (1) gb denomination price, (2) manual marketValue, (3) melt
+        const gbDenomPrice = (typeof getGoldbackRetailPrice === 'function') ? getGoldbackRetailPrice(item) : null;
+        const isManualRetail = !gbDenomPrice && item.marketValue && item.marketValue > 0;
+        const retailTotal = gbDenomPrice   ? gbDenomPrice * qty
+                          : isManualRetail ? item.marketValue * qty
+                          : meltValue;
         totalRetailValue += retailTotal;
 
         // Gain/loss: retail minus purchase (for ALL items, including free/promo items)
@@ -1370,14 +1428,22 @@ const editItem = (idx, logIdx = null) => {
   elements.itemType.value = item.type;
 
   // Weight: use real <select> instead of dataset.unit (BUG FIX)
-  if (item.weight < 1) {
+  if (item.weightUnit === 'gb') {
+    const denomSelect = elements.itemGbDenom || document.getElementById('itemGbDenom');
+    elements.itemWeight.value = parseFloat(item.weight);
+    elements.itemWeightUnit.value = 'gb';
+    if (denomSelect) denomSelect.value = String(parseFloat(item.weight));
+    if (typeof toggleGbDenomPicker === 'function') toggleGbDenomPicker();
+  } else if (item.weight < 1) {
     const grams = oztToGrams(item.weight);
     // Show up to 4 decimal places for sub-gram precision, strip trailing zeros
     elements.itemWeight.value = parseFloat(grams.toFixed(4));
     elements.itemWeightUnit.value = 'g';
+    if (typeof toggleGbDenomPicker === 'function') toggleGbDenomPicker();
   } else {
     elements.itemWeight.value = parseFloat(item.weight).toFixed(2);
     elements.itemWeightUnit.value = 'oz';
+    if (typeof toggleGbDenomPicker === 'function') toggleGbDenomPicker();
   }
 
   elements.itemPrice.value = item.price > 0 ? item.price : '';
@@ -1452,13 +1518,21 @@ const duplicateItem = (idx) => {
   elements.itemType.value = item.type;
 
   // Weight: same conversion logic as editItem
-  if (item.weight < 1) {
+  if (item.weightUnit === 'gb') {
+    const denomSelect = elements.itemGbDenom || document.getElementById('itemGbDenom');
+    elements.itemWeight.value = parseFloat(item.weight);
+    elements.itemWeightUnit.value = 'gb';
+    if (denomSelect) denomSelect.value = String(parseFloat(item.weight));
+    if (typeof toggleGbDenomPicker === 'function') toggleGbDenomPicker();
+  } else if (item.weight < 1) {
     const grams = oztToGrams(item.weight);
     elements.itemWeight.value = parseFloat(grams.toFixed(4));
     elements.itemWeightUnit.value = 'g';
+    if (typeof toggleGbDenomPicker === 'function') toggleGbDenomPicker();
   } else {
     elements.itemWeight.value = parseFloat(item.weight).toFixed(2);
     elements.itemWeightUnit.value = 'oz';
+    if (typeof toggleGbDenomPicker === 'function') toggleGbDenomPicker();
   }
 
   elements.itemPrice.value = item.price > 0 ? item.price : '';
@@ -1606,6 +1680,7 @@ const importCsv = (file, override = false) => {
           const qty = row['Qty'] || row['qty'] || 1;
           const type = normalizeType(row['Type'] || row['type']);
           const weight = row['Weight(oz)'] || row['weight'];
+          const weightUnit = row['Weight Unit'] || row['weightUnit'] || 'oz';
           const priceStr = row['Purchase Price'] || row['price'];
           let price = typeof priceStr === 'string'
             ? parseFloat(priceStr.replace(/[^\d.-]+/g, ''))
@@ -1661,6 +1736,7 @@ const importCsv = (file, override = false) => {
             qty,
             type,
             weight,
+            weightUnit,
             price,
             marketValue,
             date,
@@ -2109,7 +2185,7 @@ const exportCsv = () => {
   debugLog('exportCsv start', inventory.length, 'items');
   const timestamp = new Date().toISOString().slice(0,10).replace(/-/g,'');
   const headers = [
-    "Date","Metal","Type","Name","Year","Qty","Weight(oz)","Purity",
+    "Date","Metal","Type","Name","Year","Qty","Weight(oz)","Weight Unit","Purity",
     "Purchase Price","Melt Value","Retail Price","Gain/Loss",
     "Purchase Location","N#","PCGS #","Grade","Grading Authority","Cert #","Serial Number","Notes","UUID"
   ];
@@ -2121,11 +2197,14 @@ const exportCsv = () => {
     const currentSpot = spotPrices[i.metal.toLowerCase()] || 0;
     const qty = Number(i.qty) || 1;
     const meltValue = computeMeltValue(i, currentSpot);
-    const isManualRetail = i.marketValue && i.marketValue > 0;
-    const retailTotal = isManualRetail ? i.marketValue * qty : meltValue;
+    const gbDenomPrice = (typeof getGoldbackRetailPrice === 'function') ? getGoldbackRetailPrice(i) : null;
+    const isManualRetail = !gbDenomPrice && i.marketValue && i.marketValue > 0;
+    const retailTotal = gbDenomPrice   ? gbDenomPrice * qty
+                      : isManualRetail ? i.marketValue * qty
+                      : meltValue;
     const purchasePrice = typeof i.price === 'number' ? i.price : parseFloat(i.price) || 0;
     const purchaseTotal = purchasePrice * qty;
-    const gainLoss = (currentSpot > 0 || isManualRetail) ? retailTotal - purchaseTotal : null;
+    const gainLoss = (currentSpot > 0 || isManualRetail || gbDenomPrice) ? retailTotal - purchaseTotal : null;
 
     rows.push([
       i.date,
@@ -2135,6 +2214,7 @@ const exportCsv = () => {
       i.year || '',
       i.qty,
       parseFloat(i.weight).toFixed(4),
+      i.weightUnit || 'oz',
       parseFloat(i.purity) || 1.0,
       formatCurrency(purchasePrice),
       currentSpot > 0 ? formatCurrency(meltValue) : '—',
@@ -2447,11 +2527,14 @@ const exportPdf = () => {
     const currentSpot = spotPrices[item.metal.toLowerCase()] || 0;
     const qty = Number(item.qty) || 1;
     const meltValue = computeMeltValue(item, currentSpot);
-    const isManualRetail = item.marketValue && item.marketValue > 0;
-    const retailTotal = isManualRetail ? item.marketValue * qty : meltValue;
+    const gbDenomPrice = (typeof getGoldbackRetailPrice === 'function') ? getGoldbackRetailPrice(item) : null;
+    const isManualRetail = !gbDenomPrice && item.marketValue && item.marketValue > 0;
+    const retailTotal = gbDenomPrice   ? gbDenomPrice * qty
+                      : isManualRetail ? item.marketValue * qty
+                      : meltValue;
     const purchasePrice = typeof item.price === 'number' ? item.price : parseFloat(item.price) || 0;
     const purchaseTotal = purchasePrice * qty;
-    const gainLoss = (currentSpot > 0 || isManualRetail) ? retailTotal - purchaseTotal : null;
+    const gainLoss = (currentSpot > 0 || isManualRetail || gbDenomPrice) ? retailTotal - purchaseTotal : null;
 
     return [
       item.date,
@@ -2459,7 +2542,7 @@ const exportPdf = () => {
       item.type,
       item.name,
       item.qty,
-      parseFloat(item.weight).toFixed(2),
+      formatWeight(item.weight, item.weightUnit),
       parseFloat(item.purity) || 1.0,
       formatCurrency(purchasePrice),
       currentSpot > 0 ? formatCurrency(meltValue) : '—',
@@ -2478,7 +2561,7 @@ const exportPdf = () => {
 
   // Add table
   doc.autoTable({
-    head: [['Date', 'Metal', 'Type', 'Name', 'Qty', 'Wt(oz)', 'Purity', 'Purchase',
+    head: [['Date', 'Metal', 'Type', 'Name', 'Qty', 'Weight', 'Purity', 'Purchase',
             'Melt Value', 'Retail', 'Gain/Loss', 'Location', 'N#', 'PCGS#', 'Grade', 'Auth', 'Cert#', 'Notes', 'UUID']],
     body: tableData,
     startY: 30,

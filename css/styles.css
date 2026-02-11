@@ -2276,7 +2276,15 @@ table {
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   max-height: 70vh;
+  scrollbar-width: thin;
+  scrollbar-color: var(--primary) var(--bg-secondary);
+  scrollbar-gutter: stable;
 }
+
+.portal-scroll::-webkit-scrollbar { width: 8px; }
+.portal-scroll::-webkit-scrollbar-track { background: var(--bg-secondary); }
+.portal-scroll::-webkit-scrollbar-thumb { background-color: var(--primary); border-radius: var(--radius); }
+.portal-scroll::-webkit-scrollbar-thumb:hover { background-color: var(--primary-hover); }
 
 #inventoryTable {
   /* Use the available container width and allow responsive scaling
@@ -4774,7 +4782,6 @@ input:disabled + .slider {
 /* Style the edit toggle button based on mode */
 #inventoryTable td[data-column="actions"] .edit-toggle {
   color: var(--primary);
-  transition: color 0.2s ease;
 }
 
 #inventoryTable td[data-column="actions"] .edit-toggle:hover {
@@ -4782,15 +4789,6 @@ input:disabled + .slider {
 }
 
 /* Actions header styling */
-#inventoryTable th[data-column="actions"] {
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-}
-
-#inventoryTable th[data-column="actions"]:hover {
-  background-color: var(--bg-hover);
-}
-
 /* Row editing styles */
 #inventoryTable tbody tr.editing-row {
   background: var(--bg-secondary) !important;
@@ -4974,7 +4972,7 @@ input:disabled + .slider {
   border: 0;
   border-radius: 6px;
   cursor: pointer;
-  transition: background 0.15s ease, transform 0.08s ease;
+  /* No transition — hover effects disabled to prevent repaint at sticky header boundary */
 }
 
 #inventoryTable .icon-btn:focus {
@@ -5100,8 +5098,15 @@ th {
 #inventoryTable .icon-btn { width: 2rem; height: 2rem; }
 #inventoryTable .icon-svg { width: 0.9rem; height: 0.9rem; }
 
+/* Force tbody into a lower stacking context so positioned td cells
+   (metal, actions) never paint above the sticky thead (z-index: 2) */
+#inventoryTable tbody {
+  position: relative;
+  z-index: 1;
+}
+
 /* Tighter row height with improved visual separation */
-#inventoryTable tbody tr { 
+#inventoryTable tbody tr {
   min-height: 2rem;
   background: var(--bg-primary);
   border-bottom: 2px solid var(--bg-secondary);
@@ -6589,7 +6594,7 @@ th {
 /* Remove ellipsis from action buttons - clean look */
 #inventoryTable td.icon-col {
   text-overflow: clip !important;
-  overflow: visible !important;
+  overflow: clip !important;
 }
 
 /* Enhanced delete button styling - restore red */
@@ -6790,7 +6795,6 @@ th {
 #inventoryTable .action-icon:focus {
   background: transparent !important;
   transform: none !important;
-  color: inherit !important;
   box-shadow: none !important;
   outline: none !important;
 }
@@ -6821,6 +6825,57 @@ th {
 
 #inventoryTable td[data-column="retailPrice"] {
   color: rgba(59, 130, 246, 0.95); /* Primary blue for retail values */
+}
+
+/* =============================================================================
+   SETTINGS GOLDBACK PANEL (STACK-45)
+   ============================================================================= */
+
+.settings-goldback-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.settings-goldback-table th,
+.settings-goldback-table td {
+  padding: 0.35rem 0.5rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+
+.settings-goldback-table th {
+  font-weight: 600;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+/* Hide number spinners on denomination price inputs and quick-fill */
+.settings-goldback-table input[type="number"]::-webkit-outer-spin-button,
+.settings-goldback-table input[type="number"]::-webkit-inner-spin-button,
+#goldbackQuickFillInput::-webkit-outer-spin-button,
+#goldbackQuickFillInput::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.settings-goldback-table input[type="number"],
+#goldbackQuickFillInput {
+  -moz-appearance: textfield;
+}
+
+/* Style links inside the goldback settings panel */
+#settingsPanel_goldback a {
+  color: var(--primary);
+  text-decoration: none;
+  font-weight: 500;
+}
+#settingsPanel_goldback a:hover {
+  text-decoration: underline;
+  opacity: 0.85;
+}
+#settingsPanel_goldback a:visited {
+  color: var(--primary);
 }
 
 /* =============================================================================
