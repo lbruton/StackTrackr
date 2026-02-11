@@ -446,7 +446,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         // Setup Edit header toggle functionality
         const editHeader = document.querySelector('th[data-column="actions"]');
         if (editHeader) {
-          editHeader.style.cursor = 'pointer';
           editHeader.addEventListener('click', (event) => {
             if (event.shiftKey) {
               // Shift + Click = Toggle all items edit mode
