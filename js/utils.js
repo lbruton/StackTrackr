@@ -602,6 +602,7 @@ const saveExchangeRates = (rates) => {
  */
 const fetchExchangeRates = async () => {
   try {
+    // Safe: URL from hardcoded constant EXCHANGE_RATE_API_URL or fallback literal
     const url = typeof EXCHANGE_RATE_API_URL !== 'undefined'
       ? EXCHANGE_RATE_API_URL
       : 'https://open.er-api.com/v6/latest/USD';
