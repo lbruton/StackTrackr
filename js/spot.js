@@ -410,10 +410,17 @@ const getSparklineData = (metalName, days, intraday = false) => {
     .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
 
   if (intraday) {
-    // Return all entries for granular intraday detail
+    // Average all entries per calendar day for a smooth daily trend
+    const byDay = new Map();
+    entries.forEach((e) => {
+      const day = e.timestamp.slice(0, 10);
+      if (!byDay.has(day)) byDay.set(day, []);
+      byDay.get(day).push(e.spot);
+    });
+    const sorted = [...byDay.entries()].sort((a, b) => a[0].localeCompare(b[0]));
     return {
-      labels: entries.map((e) => e.timestamp),
-      data: entries.map((e) => e.spot),
+      labels: sorted.map(([day]) => day),
+      data: sorted.map(([, prices]) => prices.reduce((a, b) => a + b, 0) / prices.length),
     };
   }
 
