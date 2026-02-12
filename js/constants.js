@@ -254,7 +254,7 @@ const CERT_LOOKUP_URLS = {
  * Updated: 2026-02-12 - STACK-55: Bulk Editor clean selection, code cleanup
  */
 
-const APP_VERSION = "3.25.01";
+const APP_VERSION = "3.25.02";
 
 /**
  * @constant {string} DEFAULT_CURRENCY - Default currency code for monetary formatting
