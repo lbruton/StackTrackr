@@ -720,13 +720,17 @@ const filterInventoryAdvanced = () => {
           break;
         case 'purchaseLocation':
           result = result.filter(item => {
-            const match = values.includes(item.purchaseLocation);
+            const loc = item.purchaseLocation;
+            const normalized = (!loc || loc === 'Unknown' || loc === 'Numista Import') ? '—' : loc;
+            const match = values.includes(normalized);
             return exclude ? !match : match;
           });
           break;
         case 'storageLocation':
           result = result.filter(item => {
-            const match = values.includes(item.storageLocation);
+            const loc = item.storageLocation;
+            const normalized = (!loc || loc === 'Unknown' || loc === 'Numista Import') ? '—' : loc;
+            const match = values.includes(normalized);
             return exclude ? !match : match;
           });
           break;
