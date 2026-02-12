@@ -653,6 +653,91 @@ const startSpotInlineEdit = (valueEl, metalKey) => {
 };
 
 // =============================================================================
+// SPOT HISTORY — SETTINGS LOG TABLE
+// =============================================================================
+
+/** @type {string} Current sort column for settings spot history table */
+let settingsSpotSortColumn = '';
+/** @type {boolean} Sort ascending for settings spot history table */
+let settingsSpotSortAsc = true;
+
+/**
+ * Renders the spot price history table in the Settings > Activity Log > Metals sub-tab.
+ * Reads from the global spotHistory array and sorts by timestamp descending by default.
+ */
+const renderSpotHistoryTable = () => {
+  const table = document.getElementById('settingsSpotHistoryTable');
+  if (!table) return;
+
+  loadSpotHistory();
+  let data = [...spotHistory];
+
+  // Sort
+  if (settingsSpotSortColumn) {
+    data.sort((a, b) => {
+      const valA = a[settingsSpotSortColumn];
+      const valB = b[settingsSpotSortColumn];
+      if (valA < valB) return settingsSpotSortAsc ? -1 : 1;
+      if (valA > valB) return settingsSpotSortAsc ? 1 : -1;
+      return 0;
+    });
+  } else {
+    data.sort((a, b) => (a.timestamp < b.timestamp ? 1 : -1));
+  }
+
+  const tbody = table.querySelector('tbody');
+  if (!tbody) return;
+
+  if (data.length === 0) {
+    // nosemgrep: javascript.browser.security.insecure-innerhtml.insecure-innerhtml
+    tbody.innerHTML = '<tr class="settings-log-empty"><td colspan="5">No spot price history recorded yet.</td></tr>';
+    return;
+  }
+
+  const rows = data.map(e => {
+    const ts = e.timestamp ? new Date(e.timestamp).toLocaleString() : '';
+    const metal = e.metal || '';
+    const price = typeof formatCurrency === 'function' ? formatCurrency(e.spot) : `$${Number(e.spot).toFixed(2)}`;
+    const source = e.source || '';
+    const provider = e.provider || '';
+    return `<tr><td>${ts}</td><td>${metal}</td><td>${price}</td><td>${source}</td><td>${provider}</td></tr>`;
+  });
+
+  // nosemgrep: javascript.browser.security.insecure-innerhtml.insecure-innerhtml
+  tbody.innerHTML = rows.join('');
+
+  // Sortable headers
+  table.querySelectorAll('th').forEach(th => {
+    th.style.cursor = 'pointer';
+    th.onclick = () => {
+      const cols = ['timestamp', 'metal', 'spot', 'source', 'provider'];
+      const idx = Array.from(th.parentNode.children).indexOf(th);
+      const col = cols[idx];
+      if (settingsSpotSortColumn === col) {
+        settingsSpotSortAsc = !settingsSpotSortAsc;
+      } else {
+        settingsSpotSortColumn = col;
+        settingsSpotSortAsc = true;
+      }
+      renderSpotHistoryTable();
+    };
+  });
+};
+
+/**
+ * Clears all spot price history after user confirmation.
+ */
+const clearSpotHistory = () => {
+  if (!confirm('Clear all spot price history? This cannot be undone.')) return;
+  spotHistory = [];
+  saveSpotHistory();
+  // Reset rendered flag so it re-renders fresh
+  const panel = document.getElementById('logPanel_metals');
+  if (panel) delete panel.dataset.rendered;
+  renderSpotHistoryTable();
+};
+
+// =============================================================================
 
 // Ensure global availability
 window.fetchSpotPrice = fetchSpotPrice;
@@ -665,3 +750,5 @@ window.startSpotInlineEdit = startSpotInlineEdit;
 window.getMetalColor = getMetalColor;
 window.loadTrendRanges = loadTrendRanges;
 window.saveTrendRange = saveTrendRange;
+window.renderSpotHistoryTable = renderSpotHistoryTable;
+window.clearSpotHistory = clearSpotHistory;

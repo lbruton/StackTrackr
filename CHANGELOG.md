@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.24.02] - 2026-02-11
+
+### Added — STACK-44: Settings Log Tab Reorganization
+
+- **Added**: Activity Log sub-tabs in Settings — Changelog, Metals, Catalogs, Price History (STACK-44)
+- **Added**: Spot price history table with sortable columns (Timestamp, Metal, Spot Price, Source, Provider)
+- **Added**: Catalog API call history table with failed entries highlighted in red
+- **Added**: Per-item price history table with item name filter and sortable columns
+- **Added**: Clear button with confirmation dialog for each log sub-tab
+- **Added**: Lazy-rendering of sub-tab content on first activation
+
+---
+
 ## [3.24.01] - 2026-02-11
 
 ### Fixed — Codacy code quality cleanup
