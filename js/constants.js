@@ -254,7 +254,7 @@ const CERT_LOOKUP_URLS = {
  * Updated: 2026-02-12 - STACK-55: Bulk Editor clean selection, code cleanup
  */
 
-const APP_VERSION = "3.25.00";
+const APP_VERSION = "3.25.01";
 
 /**
  * @constant {string} DEFAULT_CURRENCY - Default currency code for monetary formatting
@@ -504,6 +504,21 @@ const APP_VERSION_KEY = "currentAppVersion";
 /** @constant {string} VERSION_ACK_KEY - LocalStorage key for acknowledged app version */
 const VERSION_ACK_KEY = "ackVersion";
 
+/** @constant {string} LAST_VERSION_CHECK_KEY - LocalStorage key for last remote version check timestamp (STACK-67) */
+const LAST_VERSION_CHECK_KEY = "lastVersionCheck";
+
+/** @constant {string} LATEST_REMOTE_VERSION_KEY - LocalStorage key for cached latest remote version (STACK-67) */
+const LATEST_REMOTE_VERSION_KEY = "latestRemoteVersion";
+
+/** @constant {string} LATEST_REMOTE_URL_KEY - LocalStorage key for cached latest remote release URL (STACK-67) */
+const LATEST_REMOTE_URL_KEY = "latestRemoteUrl";
+
+/** @constant {string} VERSION_CHECK_URL - Remote endpoint for latest version info (STACK-67) */
+const VERSION_CHECK_URL = "https://staktrakr.com/version.json";
+
+/** @constant {number} VERSION_CHECK_TTL - Cache TTL for remote version check in ms (24 hours) */
+const VERSION_CHECK_TTL = 24 * 60 * 60 * 1000;
+
 /** @constant {string} FEATURE_FLAGS_KEY - LocalStorage key for feature flags */
 const FEATURE_FLAGS_KEY = "featureFlags";
 
@@ -566,6 +581,9 @@ const ALLOWED_STORAGE_KEYS = [
   "headerThemeBtnVisible",    // boolean string: "true"/"false" (STACK-54)
   "headerCurrencyBtnVisible", // boolean string: "true"/"false" (STACK-54)
   "layoutVisibility",         // JSON object: { spotPrices, totals, search, table } (STACK-54)
+  LAST_VERSION_CHECK_KEY,     // timestamp: last remote version check (STACK-67)
+  LATEST_REMOTE_VERSION_KEY,  // string: cached latest remote version (STACK-67)
+  LATEST_REMOTE_URL_KEY,      // string: cached latest remote release URL (STACK-67)
 ];
 
 // =============================================================================

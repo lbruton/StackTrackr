@@ -449,6 +449,36 @@ section {
   vertical-align: middle;
 }
 
+.version-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 10px;
+  text-decoration: none;
+  height: 20px;
+  box-sizing: border-box;
+  vertical-align: middle;
+}
+
+.version-badge--current {
+  background: var(--success);
+  color: #fff;
+}
+
+.version-badge--update {
+  background: var(--warning);
+  color: #fff;
+  cursor: pointer;
+}
+
+.version-badge--static {
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
 .storage-line a {
   margin-left: var(--spacing-sm);
 }

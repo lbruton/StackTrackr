@@ -9,6 +9,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.25.01] - 2026-02-12
+
+### Fixed — STACK-64: Version splash content source
+
+- **Fixed**: Version splash modal now shows user-friendly "What's New" announcements instead of raw changelog entries (STACK-64)
+- **Removed**: ~270 lines of embedded changelog data from `versionCheck.js` — content now sourced from `loadAnnouncements()` shared with the About modal
+
+### Added — STACK-67: Remote version check badge
+
+- **Added**: Footer version badge shows installed version with link to GitHub releases (STACK-67)
+- **Added**: Remote version check fetches `version.json` from staktrakr.com with 24hr cache (STACK-67)
+- **Added**: Badge upgrades to green "up to date" or amber "available" on hosted deployments (STACK-67)
+- **Added**: `version.json` at project root for self-hosted version checking
+- **Changed**: Footer `staktrakr.com` text is now a clickable link
+
+---
+
 ## [3.25.00] - 2026-02-12
 
 ### Added — STACK-54, STACK-66: Appearance settings, spot lookup & sparkline improvements
