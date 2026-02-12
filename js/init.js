@@ -550,14 +550,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 });
 
-// Bootstrap dynamic footer version
-document.addEventListener('DOMContentLoaded', function() {
-  var el = document.getElementById('footerVersion');
-  if (el) {
-    var v = (typeof APP_VERSION !== 'undefined') ? APP_VERSION : (window.APP_VERSION || '');
-    el.textContent = v;
-  }
-});
 
 /**
  * Basic event listener setup as fallback
