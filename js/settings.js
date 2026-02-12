@@ -353,7 +353,7 @@ const setupSettingsEventListeners = () => {
         const saved = JSON.parse(localStorage.getItem('layoutVisibility') || '{}');
         saved[key] = cb.checked;
         localStorage.setItem('layoutVisibility', JSON.stringify(saved));
-        applyLayoutVisibility(saved);
+        applyLayoutVisibility();
       });
     }
   });
@@ -1144,18 +1144,16 @@ const syncLayoutVisibilityUI = () => {
     if (cb) cb.checked = state[key];
   }
 
-  applyLayoutVisibility(state);
+  applyLayoutVisibility();
 };
 
 /**
  * Shows/hides major page sections based on layout visibility state.
  * @param {Object} [state] - Optional visibility state object; reads from localStorage if omitted.
  */
-const applyLayoutVisibility = (state) => {
-  if (!state) {
-    const saved = JSON.parse(localStorage.getItem('layoutVisibility') || '{}');
-    state = { spotPrices: true, totals: true, search: true, table: true, ...saved };
-  }
+const applyLayoutVisibility = () => {
+  const saved = JSON.parse(localStorage.getItem('layoutVisibility') || '{}');
+  const state = { spotPrices: true, totals: true, search: true, table: true, ...saved };
 
   const sectionMap = {
     spotPrices: elements.spotPricesSection,
@@ -1224,10 +1222,8 @@ const toggleCurrencyDropdown = () => {
   // Align right edge of dropdown with right edge of button
   dropdown.style.right = (window.innerWidth - rect.right) + 'px';
 
-  // Close on outside click (next tick to avoid the current click)
-  requestAnimationFrame(() => {
-    document.addEventListener('click', closeCurrencyDropdownOnOutside);
-  });
+  // Close on outside click; header button click already stops propagation
+  document.addEventListener('click', closeCurrencyDropdownOnOutside);
 };
 
 /** Closes the currency dropdown and removes the outside-click listener. */
