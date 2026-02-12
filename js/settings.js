@@ -350,9 +350,9 @@ const setupSettingsEventListeners = () => {
     const cb = document.getElementById(id);
     if (cb) {
       cb.addEventListener('change', () => {
-        const saved = JSON.parse(localStorage.getItem('layoutVisibility') || '{}');
+        const saved = loadDataSync('layoutVisibility', {});
         saved[key] = cb.checked;
-        localStorage.setItem('layoutVisibility', JSON.stringify(saved));
+        saveDataSync('layoutVisibility', saved);
         applyLayoutVisibility();
       });
     }
@@ -1129,7 +1129,7 @@ window.applyHeaderToggleVisibility = applyHeaderToggleVisibility;
  * Syncs layout visibility checkboxes in Settings with stored state.
  */
 const syncLayoutVisibilityUI = () => {
-  const saved = JSON.parse(localStorage.getItem('layoutVisibility') || '{}');
+  const saved = loadDataSync('layoutVisibility', {});
   const defaults = { spotPrices: true, totals: true, search: true, table: true };
   const state = { ...defaults, ...saved };
 
@@ -1149,10 +1149,10 @@ const syncLayoutVisibilityUI = () => {
 
 /**
  * Shows/hides major page sections based on layout visibility state.
- * @param {Object} [state] - Optional visibility state object; reads from localStorage if omitted.
+ * Always reads from localStorage and merges with defaults.
  */
 const applyLayoutVisibility = () => {
-  const saved = JSON.parse(localStorage.getItem('layoutVisibility') || '{}');
+  const saved = loadDataSync('layoutVisibility', {});
   const state = { spotPrices: true, totals: true, search: true, table: true, ...saved };
 
   const sectionMap = {
@@ -1173,7 +1173,7 @@ window.applyLayoutVisibility = applyLayoutVisibility;
  * Creates the dropdown lazily on first use; subsequent calls toggle visibility.
  */
 const toggleCurrencyDropdown = () => {
-  const btn = elements.headerCurrencyBtn;
+  const btn = document.getElementById('headerCurrencyBtn');
   if (!btn) return;
 
   // If dropdown already open, close it
