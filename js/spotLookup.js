@@ -397,7 +397,20 @@ const useSpotPrice = (spotPrice, timestamp) => {
   // Populate visible Purchase Price field (convert USD → display currency)
   if (elements.itemPrice) {
     const fxRate = (typeof getExchangeRate === 'function') ? getExchangeRate() : 1;
-    const displayPrice = (spotPrice * fxRate).toFixed(2);
+
+    // Goldback: convert gold spot → per-unit Goldback price (STACK-68)
+    let priceUSD = spotPrice;
+    if (elements.itemWeightUnit && elements.itemWeightUnit.value === 'gb'
+        && typeof computeGoldbackEstimatedRate === 'function') {
+      const gbRate = computeGoldbackEstimatedRate(spotPrice);
+      const denom = parseFloat(
+        (elements.itemGbDenom && elements.itemGbDenom.value) ||
+        (elements.itemWeight && elements.itemWeight.value) || 1
+      );
+      priceUSD = gbRate * denom;
+    }
+
+    const displayPrice = (priceUSD * fxRate).toFixed(2);
     elements.itemPrice.value = displayPrice;
 
     // Brief visual highlight on the price field for confirmation

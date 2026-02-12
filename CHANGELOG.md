@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.25.02] - 2026-02-12
+
+### Fixed — STACK-68: Goldback spot lookup fix
+
+- **Fixed**: Spot price lookup now applies Goldback formula (`2 × (goldSpot / 1000) × modifier × denomination`) instead of raw gold spot for purchase price (STACK-68)
+
+---
+
 ## [3.25.01] - 2026-02-12
 
 ### Fixed — STACK-64: Version splash content source
