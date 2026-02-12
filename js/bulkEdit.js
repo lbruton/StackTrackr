@@ -192,10 +192,9 @@ const coerceFieldValue = (fieldId, value) => {
  * Builds a table row element for a single inventory item in the bulk edit table.
  * @param {Object} item - The inventory item
  * @param {boolean} isPinned - Whether the row is in the pinned section
- * @param {Array} columns - Column definitions array
  * @returns {HTMLTableRowElement} The constructed row
  */
-const buildBulkItemRow = (item, isPinned, columns) => {
+const buildBulkItemRow = (item, isPinned) => {
   const serial = String(item.serial);
   const tr = document.createElement('tr');
   tr.setAttribute('data-serial', serial);
@@ -527,7 +526,7 @@ const renderBulkTableBody = () => {
 
     // Pinned rows
     pinnedItems.forEach(item => {
-      tbody.appendChild(buildBulkItemRow(item, true, columns));
+      tbody.appendChild(buildBulkItemRow(item, true));
     });
 
     // Divider
@@ -541,7 +540,7 @@ const renderBulkTableBody = () => {
 
   // Filtered rows
   filtered.forEach(item => {
-    tbody.appendChild(buildBulkItemRow(item, false, columns));
+    tbody.appendChild(buildBulkItemRow(item, false));
   });
 
   table.appendChild(tbody);
