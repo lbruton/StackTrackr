@@ -272,10 +272,9 @@ const setupAckModalEvents = () => {
  */
 const getEmbeddedWhatsNew = () => {
   return `
+    <li><strong>v3.25.00 &ndash; STACK-54, STACK-66: Appearance settings &amp; sparkline improvements</strong>: Header quick-access buttons for theme and currency. Layout visibility toggles. 1-day sparkline with daily-averaged trend. Spot lookup now fills visible price field. 15/30-minute API cache options</li>
     <li><strong>v3.24.06 &ndash; STACK-56: Complexity reduction</strong>: Refactored 6 functions below Lizard CCN threshold &mdash; dispatch maps, extracted helpers, optionalListener utility. &minus;301 lines from events.js</li>
-    <li><strong>v3.24.05 &ndash; Code cleanup</strong>: Fix debugLog warn level, remove dead parameter, update version comment</li>
     <li><strong>v3.24.04 &ndash; STACK-55: Bulk Editor clean selection</strong>: Bulk Editor now resets selection on every open. Removed stale localStorage persistence</li>
-    <li><strong>v3.24.03 &ndash; Fix Goldback melt/retail/weight in Details Modal</strong>: Goldback melt values no longer inflated 1000x in breakdown modals. Applies GB_TO_OZT conversion and denomination retail pricing</li>
     <li><strong>v3.24.02 &ndash; STACK-44: Activity Log sub-tabs</strong>: Settings Log panel reorganized with 4 sub-tabs &mdash; Changelog, Metals, Catalogs, Price History. Sortable tables, filter, and clear buttons</li>
     <li><strong>v3.24.00 &ndash; STACK-50: Multi-Currency Support</strong>: 17-currency display with daily exchange rate conversion. Dynamic currency symbols across modals, Goldback settings, and exports. Dynamic Gain/Loss labels on totals cards. Sticky header fix</li>
   `;
@@ -287,9 +286,9 @@ const getEmbeddedWhatsNew = () => {
  */
 const getEmbeddedRoadmap = () => {
   return `
-    <li><strong>Appearance Settings (STACK-54)</strong>: Header quick-access toggles for currency and theme, time zone selection, show/hide layout sections</li>
     <li><strong>Chart Overhaul (STACK-48)</strong>: Migrate to ApexCharts with time-series trend views</li>
     <li><strong>Custom CSV Mapper (STACK-51)</strong>: Header mapping UI with saved import profiles</li>
+    <li><strong>Table CSS Hardening (STACK-38)</strong>: Responsive audit and CSS cleanup</li>
   `;
 };
 

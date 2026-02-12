@@ -93,6 +93,16 @@ const populateVersionModal = (version, html) => {
  */
 const getEmbeddedChangelog = (version) => {
   const changelogs = {
+    "3.25.00": `
+      <li><strong>Added</strong>: Header quick-access buttons &mdash; theme cycle and currency picker dropdown (STACK-54)</li>
+      <li><strong>Added</strong>: Layout visibility toggles &mdash; show/hide spot cards, totals, search bar, inventory table (STACK-54)</li>
+      <li><strong>Added</strong>: 1-day sparkline shows yesterday &rarr; today trend with daily-averaged data points (STACK-66)</li>
+      <li><strong>Added</strong>: 15-minute and 30-minute API cache timeout options</li>
+      <li><strong>Fixed</strong>: Spot lookup &ldquo;Use&rdquo; button now updates visible Purchase Price field with currency conversion (STACK-65)</li>
+      <li><strong>Fixed</strong>: Clearing Retail Price field during editing now reverts to melt value</li>
+      <li><strong>Fixed</strong>: Spot lookup price rounded to nearest cent</li>
+      <li><strong>Fixed</strong>: Sparkline Y-axis scaling and curve overshoot on 1-day view</li>
+    `,
     "3.24.06": `
       <li><strong>Refactored</strong>: 6 functions reduced below Lizard CCN threshold &mdash; dispatch maps, extracted helpers, <code>optionalListener</code> utility (STACK-56)</li>
       <li><strong>Added</strong>: <code>optionalListener</code> and <code>setupFormatImport</code> utilities in events.js</li>
