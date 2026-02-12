@@ -234,6 +234,11 @@ const syncSettingsUI = () => {
     syncGoldbackSettingsUI();
   }
 
+  // Header shortcuts (STACK-54)
+  syncHeaderToggleUI();
+  // Layout visibility (STACK-54)
+  syncLayoutVisibilityUI();
+
   // Set first provider tab active if none visible — default to Numista
   const anyVisible = document.querySelector('.settings-provider-panel[style*="display: block"]');
   if (!anyVisible) {
@@ -319,6 +324,59 @@ const setupSettingsEventListeners = () => {
       if (typeof updateAllSparklines === 'function') updateAllSparklines();
       // Update Goldback denomination symbols (STACK-50)
       if (typeof syncGoldbackSettingsUI === 'function') syncGoldbackSettingsUI();
+    });
+  }
+
+  // Header shortcuts (STACK-54)
+  const headerThemeCb = document.getElementById('settingsHeaderThemeBtn');
+  if (headerThemeCb) {
+    headerThemeCb.addEventListener('change', () => {
+      localStorage.setItem('headerThemeBtnVisible', headerThemeCb.checked ? 'true' : 'false');
+      applyHeaderToggleVisibility();
+    });
+  }
+
+  const headerCurrencyCb = document.getElementById('settingsHeaderCurrencyBtn');
+  if (headerCurrencyCb) {
+    headerCurrencyCb.addEventListener('change', () => {
+      localStorage.setItem('headerCurrencyBtnVisible', headerCurrencyCb.checked ? 'true' : 'false');
+      applyHeaderToggleVisibility();
+    });
+  }
+
+  // Layout visibility (STACK-54)
+  ['spotPrices', 'totals', 'search', 'table'].forEach(key => {
+    const id = 'layout' + key.charAt(0).toUpperCase() + key.slice(1);
+    const cb = document.getElementById(id);
+    if (cb) {
+      cb.addEventListener('change', () => {
+        const saved = loadDataSync('layoutVisibility', {});
+        saved[key] = cb.checked;
+        saveDataSync('layoutVisibility', saved);
+        applyLayoutVisibility();
+      });
+    }
+  });
+
+  // Theme cycle header button (STACK-54)
+  if (elements.headerThemeBtn) {
+    elements.headerThemeBtn.addEventListener('click', () => {
+      if (typeof toggleTheme === 'function') toggleTheme();
+      if (typeof updateThemeButton === 'function') updateThemeButton();
+      // Sync settings picker if open
+      const currentTheme = localStorage.getItem(THEME_KEY) || 'light';
+      document.querySelectorAll('.theme-option').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.theme === currentTheme);
+      });
+    });
+  }
+
+  // Currency picker header button (STACK-54)
+  // Opens a floating dropdown to switch display currency directly from the header.
+  if (elements.headerCurrencyBtn) {
+    elements.headerCurrencyBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      toggleCurrencyDropdown();
     });
   }
 
@@ -1031,6 +1089,159 @@ const syncGoldbackSettingsUI = () => {
   }
 };
 
+// =============================================================================
+// HEADER TOGGLE & LAYOUT VISIBILITY (STACK-54)
+// =============================================================================
+
+/**
+ * Syncs the header shortcut checkboxes in Settings with stored state.
+ */
+const syncHeaderToggleUI = () => {
+  const themeVisible = localStorage.getItem('headerThemeBtnVisible') !== 'false';
+  const currencyVisible = localStorage.getItem('headerCurrencyBtnVisible') !== 'false';
+
+  const themeCb = document.getElementById('settingsHeaderThemeBtn');
+  const currencyCb = document.getElementById('settingsHeaderCurrencyBtn');
+  if (themeCb) themeCb.checked = themeVisible;
+  if (currencyCb) currencyCb.checked = currencyVisible;
+
+  applyHeaderToggleVisibility();
+};
+
+/**
+ * Shows/hides the header shortcut buttons based on stored preferences.
+ * Default is visible (true) unless explicitly set to 'false'.
+ */
+const applyHeaderToggleVisibility = () => {
+  const themeVisible = localStorage.getItem('headerThemeBtnVisible') !== 'false';
+  const currencyVisible = localStorage.getItem('headerCurrencyBtnVisible') !== 'false';
+
+  if (elements.headerThemeBtn) {
+    elements.headerThemeBtn.style.display = themeVisible ? '' : 'none';
+  }
+  if (elements.headerCurrencyBtn) {
+    elements.headerCurrencyBtn.style.display = currencyVisible ? '' : 'none';
+  }
+};
+window.applyHeaderToggleVisibility = applyHeaderToggleVisibility;
+
+/**
+ * Syncs layout visibility checkboxes in Settings with stored state.
+ */
+const syncLayoutVisibilityUI = () => {
+  const saved = loadDataSync('layoutVisibility', {});
+  const defaults = { spotPrices: true, totals: true, search: true, table: true };
+  const state = { ...defaults, ...saved };
+
+  const map = {
+    spotPrices: 'layoutSpotPrices',
+    totals: 'layoutTotals',
+    search: 'layoutSearch',
+    table: 'layoutTable',
+  };
+  for (const [key, id] of Object.entries(map)) {
+    const cb = document.getElementById(id);
+    if (cb) cb.checked = state[key];
+  }
+
+  applyLayoutVisibility();
+};
+
+/**
+ * Shows/hides major page sections based on layout visibility state.
+ * Always reads from localStorage and merges with defaults.
+ */
+const applyLayoutVisibility = () => {
+  const saved = loadDataSync('layoutVisibility', {});
+  const state = { spotPrices: true, totals: true, search: true, table: true, ...saved };
+
+  const sectionMap = {
+    spotPrices: elements.spotPricesSection,
+    totals: elements.totalsSectionEl,
+    search: elements.searchSectionEl,
+    table: elements.tableSectionEl,
+  };
+
+  for (const [key, el] of Object.entries(sectionMap)) {
+    if (el) el.style.display = state[key] ? '' : 'none';
+  }
+};
+window.applyLayoutVisibility = applyLayoutVisibility;
+
+/**
+ * Toggles the floating currency picker dropdown anchored to the header button.
+ * Creates the dropdown lazily on first use; subsequent calls toggle visibility.
+ */
+const toggleCurrencyDropdown = () => {
+  const btn = document.getElementById('headerCurrencyBtn');
+  if (!btn) return;
+
+  // If dropdown already open, close it
+  const existing = document.getElementById('headerCurrencyDropdown');
+  if (existing) {
+    closeCurrencyDropdown();
+    return;
+  }
+
+  // Build dropdown
+  const dropdown = document.createElement('div');
+  dropdown.id = 'headerCurrencyDropdown';
+  dropdown.className = 'header-currency-dropdown';
+
+  const currentCode = displayCurrency || 'USD';
+
+  SUPPORTED_CURRENCIES.forEach(c => {
+    const item = document.createElement('button');
+    item.type = 'button';
+    item.className = 'header-currency-item';
+    if (c.code === currentCode) item.classList.add('active');
+
+    const symbol = getCurrencySymbol(c.code);
+    item.textContent = `${symbol}  ${c.code} — ${c.name}`;
+
+    item.addEventListener('click', (e) => {
+      e.stopPropagation();
+      saveDisplayCurrency(c.code);
+      if (typeof renderTable === 'function') renderTable();
+      if (typeof updateSummary === 'function') updateSummary();
+      if (typeof updateAllSparklines === 'function') updateAllSparklines();
+      if (typeof syncGoldbackSettingsUI === 'function') syncGoldbackSettingsUI();
+      // Sync settings dropdown if open
+      const sel = document.getElementById('settingsDisplayCurrency');
+      if (sel) sel.value = c.code;
+      closeCurrencyDropdown();
+    });
+
+    dropdown.appendChild(item);
+  });
+
+  // Position below button
+  document.body.appendChild(dropdown);
+  const rect = btn.getBoundingClientRect();
+  dropdown.style.top = (rect.bottom + 4) + 'px';
+  // Align right edge of dropdown with right edge of button
+  dropdown.style.right = (window.innerWidth - rect.right) + 'px';
+
+  // Close on outside click; header button click already stops propagation
+  document.addEventListener('click', closeCurrencyDropdownOnOutside);
+};
+
+/** Closes the currency dropdown and removes the outside-click listener. */
+const closeCurrencyDropdown = () => {
+  const el = document.getElementById('headerCurrencyDropdown');
+  if (el) el.remove();
+  document.removeEventListener('click', closeCurrencyDropdownOnOutside);
+};
+
+/** Click-outside handler for the currency dropdown. */
+const closeCurrencyDropdownOnOutside = (e) => {
+  const dropdown = document.getElementById('headerCurrencyDropdown');
+  const btn = elements.headerCurrencyBtn;
+  if (dropdown && !dropdown.contains(e.target) && e.target !== btn) {
+    closeCurrencyDropdown();
+  }
+};
+
 // Expose globally
 if (typeof window !== 'undefined') {
   window.showSettingsModal = showSettingsModal;
@@ -1045,4 +1256,6 @@ if (typeof window !== 'undefined') {
   window.saveProviderTabOrder = saveProviderTabOrder;
   window.syncGoldbackSettingsUI = syncGoldbackSettingsUI;
   window.syncCurrencySettingsUI = syncCurrencySettingsUI;
+  window.syncHeaderToggleUI = syncHeaderToggleUI;
+  window.syncLayoutVisibilityUI = syncLayoutVisibilityUI;
 }

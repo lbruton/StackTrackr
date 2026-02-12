@@ -563,6 +563,9 @@ const ALLOWED_STORAGE_KEYS = [
   GB_ESTIMATE_MODIFIER_KEY,
   DISPLAY_CURRENCY_KEY,
   EXCHANGE_RATES_KEY,
+  "headerThemeBtnVisible",    // boolean string: "true"/"false" (STACK-54)
+  "headerCurrencyBtnVisible", // boolean string: "true"/"false" (STACK-54)
+  "layoutVisibility",         // JSON object: { spotPrices, totals, search, table } (STACK-54)
 ];
 
 // =============================================================================

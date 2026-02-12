@@ -175,6 +175,16 @@ const elements = {
   ackModal: null,
   ackAcceptBtn: null,
 
+  // Header toggle buttons (STACK-54)
+  headerThemeBtn: null,
+  headerCurrencyBtn: null,
+
+  // Layout section containers (STACK-54)
+  spotPricesSection: null,
+  totalsSectionEl: null,
+  searchSectionEl: null,
+  tableSectionEl: null,
+
   // Settings modal elements
   settingsBtn: null,
   settingsModal: null,
