@@ -389,16 +389,22 @@ const renderSpotLookupEmpty = (container, metalName, dateStr) => {
  * @param {string} timestamp - Timestamp of the selected entry (for reference)
  */
 const useSpotPrice = (spotPrice, timestamp) => {
+  // Store in hidden field for spotPriceAtPurchase (melt value calculation)
   if (elements.itemSpotPrice) {
     elements.itemSpotPrice.value = spotPrice;
   }
 
-  // Brief visual highlight on the date field for confirmation
-  if (elements.itemDate) {
-    elements.itemDate.style.transition = 'background-color 0.3s';
-    elements.itemDate.style.backgroundColor = 'var(--accent, #fbbf24)';
+  // Populate visible Purchase Price field (convert USD → display currency)
+  if (elements.itemPrice) {
+    const fxRate = (typeof getExchangeRate === 'function') ? getExchangeRate() : 1;
+    const displayPrice = fxRate !== 1 ? (spotPrice * fxRate).toFixed(2) : spotPrice;
+    elements.itemPrice.value = displayPrice;
+
+    // Brief visual highlight on the price field for confirmation
+    elements.itemPrice.style.transition = 'background-color 0.3s';
+    elements.itemPrice.style.backgroundColor = 'var(--accent, #fbbf24)';
     setTimeout(() => {
-      elements.itemDate.style.backgroundColor = '';
+      elements.itemPrice.style.backgroundColor = '';
     }, 800);
   }
 
