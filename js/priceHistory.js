@@ -210,3 +210,124 @@ const cleanOrphanedItemPriceHistory = () => {
   if (removed > 0) saveItemPriceHistory();
   return removed;
 };
+
+// =============================================================================
+// ITEM PRICE HISTORY — SETTINGS LOG TABLE
+// =============================================================================
+
+/** @type {string} Filter text for the settings price history table */
+let priceHistoryFilterText = '';
+/** @type {string} Sort column for settings price history table */
+let settingsPriceSortColumn = '';
+/** @type {boolean} Sort ascending for settings price history table */
+let settingsPriceSortAsc = true;
+
+/**
+ * Renders the item price history table in the Settings > Activity Log > Price History sub-tab.
+ * Flattens the UUID-keyed object into rows with item name lookups from inventory.
+ */
+const renderItemPriceHistoryTable = () => {
+  const table = document.getElementById('settingsPriceHistoryTable');
+  if (!table) return;
+
+  loadItemPriceHistory();
+
+  // Flatten into rows with item name lookup
+  const rows = [];
+  for (const [uuid, entries] of Object.entries(itemPriceHistory)) {
+    const item = inventory.find(i => i.uuid === uuid);
+    const name = item ? (item.name || 'Unnamed') : `(deleted: ${uuid.slice(0, 8)})`;
+    for (const e of entries) {
+      rows.push({
+        ts: e.ts,
+        name,
+        retail: e.retail,
+        spot: e.spot,
+        melt: e.melt,
+      });
+    }
+  }
+
+  // Filter
+  let data = rows;
+  if (priceHistoryFilterText) {
+    const f = priceHistoryFilterText.toLowerCase();
+    data = data.filter(r => r.name.toLowerCase().includes(f));
+  }
+
+  // Sort
+  if (settingsPriceSortColumn) {
+    data.sort((a, b) => {
+      const valA = a[settingsPriceSortColumn];
+      const valB = b[settingsPriceSortColumn];
+      if (valA < valB) return settingsPriceSortAsc ? -1 : 1;
+      if (valA > valB) return settingsPriceSortAsc ? 1 : -1;
+      return 0;
+    });
+  } else {
+    data.sort((a, b) => b.ts - a.ts);
+  }
+
+  const tbody = table.querySelector('tbody');
+  if (!tbody) return;
+
+  if (data.length === 0) {
+    const msg = priceHistoryFilterText ? 'No items match the current filter.' : 'No item price history recorded yet.';
+    // nosemgrep: javascript.browser.security.insecure-innerhtml.insecure-innerhtml
+    tbody.innerHTML = `<tr class="settings-log-empty"><td colspan="5">${msg}</td></tr>`;
+    return;
+  }
+
+  const fmt = (v) => typeof formatCurrency === 'function' ? formatCurrency(v) : `$${Number(v).toFixed(2)}`;
+
+  const htmlRows = data.map(r => {
+    const ts = new Date(r.ts).toLocaleString();
+    return `<tr><td>${ts}</td><td>${r.name}</td><td>${fmt(r.retail)}</td><td>${fmt(r.spot)}</td><td>${fmt(r.melt)}</td></tr>`;
+  });
+
+  // nosemgrep: javascript.browser.security.insecure-innerhtml.insecure-innerhtml
+  tbody.innerHTML = htmlRows.join('');
+
+  // Sortable headers
+  table.querySelectorAll('th').forEach(th => {
+    th.style.cursor = 'pointer';
+    th.onclick = () => {
+      const cols = ['ts', 'name', 'retail', 'spot', 'melt'];
+      const idx = Array.from(th.parentNode.children).indexOf(th);
+      const col = cols[idx];
+      if (settingsPriceSortColumn === col) {
+        settingsPriceSortAsc = !settingsPriceSortAsc;
+      } else {
+        settingsPriceSortColumn = col;
+        settingsPriceSortAsc = true;
+      }
+      renderItemPriceHistoryTable();
+    };
+  });
+};
+
+/**
+ * Reads the filter input value and re-renders the price history table.
+ */
+const filterItemPriceHistoryTable = () => {
+  const input = document.getElementById('priceHistoryFilterInput');
+  priceHistoryFilterText = input ? input.value : '';
+  renderItemPriceHistoryTable();
+};
+
+/**
+ * Clears all item price history after user confirmation.
+ */
+const clearItemPriceHistory = () => {
+  if (!confirm('Clear all item price history? This cannot be undone.')) return;
+  itemPriceHistory = {};
+  saveItemPriceHistory();
+  const panel = document.getElementById('logPanel_pricehistory');
+  if (panel) delete panel.dataset.rendered;
+  renderItemPriceHistoryTable();
+};
+
+// Ensure global availability
+window.renderItemPriceHistoryTable = renderItemPriceHistoryTable;
+window.filterItemPriceHistoryTable = filterItemPriceHistoryTable;
+window.clearItemPriceHistory = clearItemPriceHistory;

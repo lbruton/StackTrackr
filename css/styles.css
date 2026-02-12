@@ -7011,6 +7011,117 @@ th {
   padding: 0.15rem 0.45rem;
 }
 
+/* Log sub-tabs (inside Activity Log panel) */
+.settings-log-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 2px solid var(--border);
+  margin: 1rem 0 0 0;
+}
+
+.settings-log-tab {
+  padding: 0.5rem 1rem;
+  border: none;
+  background: none;
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.settings-log-tab:hover {
+  color: var(--text-primary);
+}
+
+.settings-log-tab.active {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+  font-weight: 600;
+}
+
+.settings-log-panel {
+  padding-top: 1rem;
+}
+
+/* Price history filter + clear row */
+.settings-pricehistory-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: var(--spacing);
+}
+
+.settings-filter-input {
+  flex: 1;
+  max-width: 280px;
+  padding: 0.35rem 0.6rem;
+  font-size: 0.8125rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg);
+  color: var(--text-primary);
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.settings-filter-input:focus {
+  border-color: var(--primary);
+}
+
+/* Shared table styles for all log sub-tab tables */
+#settingsSpotHistoryTable,
+#settingsCatalogHistoryTable,
+#settingsPriceHistoryTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.75rem;
+}
+
+#settingsSpotHistoryTable thead,
+#settingsCatalogHistoryTable thead,
+#settingsPriceHistoryTable thead {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--bg-secondary, var(--bg));
+}
+
+#settingsSpotHistoryTable th,
+#settingsCatalogHistoryTable th,
+#settingsPriceHistoryTable th {
+  padding: 0.35rem 0.5rem;
+  text-align: left;
+  font-weight: 600;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-secondary);
+  border-bottom: 2px solid var(--border);
+  white-space: nowrap;
+}
+
+#settingsSpotHistoryTable td,
+#settingsCatalogHistoryTable td,
+#settingsPriceHistoryTable td {
+  padding: 0.3rem 0.5rem;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 180px;
+}
+
+/* Empty-state message row */
+.settings-log-empty td {
+  text-align: center;
+  color: var(--text-secondary);
+  padding: 2rem 0.5rem;
+  font-style: italic;
+}
+
 /* =============================================================================
    BULK EDIT MODAL
    ============================================================================= */

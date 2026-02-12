@@ -915,6 +915,7 @@ const fetchLatestPrices = async (provider, apiKey, selectedMetals) => {
       const headers = { "Content-Type": "application/json" };
       if (apiKey) headers["Authorization"] = `Bearer ${apiKey}`;
 
+      // Safe: URL constructed from hardcoded API_PROVIDERS config (latestBatchEndpoint)
       const response = await fetch(url, { method: "GET", headers, mode: "cors" });
       if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
 
@@ -940,6 +941,17 @@ const fetchLatestPrices = async (provider, apiKey, selectedMetals) => {
       const base = custom.baseUrl || "";
       const pattern = custom.endpoint || "";
       const format = custom.format || "symbol";
+
+      // Validate custom API base URL before use
+      try {
+        const validated = new URL(base);
+        if (validated.protocol !== 'https:') {
+          throw new Error('Custom API base must use HTTPS');
+        }
+      } catch (urlErr) {
+        debugLog('warn', 'Invalid custom API base URL:', base, urlErr.message);
+        return results;
+      }
       const metalCodes = {
         silver: format === "symbol" ? "XAG" : "silver",
         gold: format === "symbol" ? "XAU" : "gold",
@@ -965,6 +977,7 @@ const fetchLatestPrices = async (provider, apiKey, selectedMetals) => {
         const endpoint = providerConfig.endpoints[metal];
         if (!endpoint) continue;
         try {
+          // Safe: URL constructed from hardcoded API_PROVIDERS config (baseUrl + endpoints)
           const url = `${providerConfig.baseUrl}${endpoint.replace("{API_KEY}", apiKey)}`;
           const headers = { "Content-Type": "application/json" };
           if (provider === "METALS_DEV" && apiKey) headers["Authorization"] = `Bearer ${apiKey}`;
@@ -1231,6 +1244,7 @@ const fetchHistoryBatched = async (provider, apiKey, selectedMetals, totalDays) 
       }
 
       try {
+        // Safe: URL constructed from hardcoded API_PROVIDERS config (baseUrl + batchEndpoint + templated dates/metals)
         const response = await fetch(url, { method: "GET", headers, mode: "cors" });
         if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
 

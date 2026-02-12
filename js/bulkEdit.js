@@ -151,6 +151,116 @@ const closeBulkEdit = () => {
 };
 
 // =============================================================================
+// HELPER FACTORIES
+// =============================================================================
+
+/**
+ * Creates the appropriate input element for a bulk edit field definition.
+ * @param {Object} field - Field definition from BULK_EDITABLE_FIELDS
+ * @returns {HTMLElement} The input/select/textarea element
+ */
+const createFieldInput = (field) => {
+  let input;
+  if (field.inputType === 'select') {
+    input = document.createElement('select');
+    field.options.forEach(opt => {
+      const option = document.createElement('option');
+      if (typeof opt === 'object' && opt !== null) {
+        option.value = opt.value;
+        option.textContent = opt.label;
+      } else {
+        option.value = opt;
+        option.textContent = opt;
+      }
+      input.appendChild(option);
+    });
+  } else if (field.inputType === 'textarea') {
+    input = document.createElement('textarea');
+    input.rows = 2;
+  } else {
+    input = document.createElement('input');
+    input.type = field.inputType;
+    if (field.attrs) {
+      Object.keys(field.attrs).forEach(k => input.setAttribute(k, field.attrs[k]));
+    }
+  }
+  input.className = 'field-input';
+  input.id = 'bulkFieldVal_' + field.id;
+  return input;
+};
+
+/**
+ * Coerces a bulk edit field value to the correct type based on field ID.
+ * @param {string} fieldId - The field identifier
+ * @param {string} value - The raw string value from the input
+ * @returns {*} The coerced value
+ */
+const coerceFieldValue = (fieldId, value) => {
+  if (fieldId === 'qty') {
+    const v = parseInt(value, 10);
+    return (isNaN(v) || v < 1) ? 1 : v;
+  }
+  if (fieldId === 'weight' || fieldId === 'price' || fieldId === 'marketValue') {
+    const v = parseFloat(value);
+    return (isNaN(v) || v < 0) ? 0 : v;
+  }
+  if (fieldId === 'purity') {
+    const v = parseFloat(value);
+    return (isNaN(v) || v <= 0 || v > 1) ? 1.0 : v;
+  }
+  return value;
+};
+
+/**
+ * Builds a table row element for a single inventory item in the bulk edit table.
+ * @param {Object} item - The inventory item
+ * @param {boolean} isPinned - Whether the row is in the pinned section
+ * @param {Array} columns - Column definitions array
+ * @returns {HTMLTableRowElement} The constructed row
+ */
+const buildBulkItemRow = (item, isPinned, columns) => {
+  const serial = String(item.serial);
+  const tr = document.createElement('tr');
+  tr.setAttribute('data-serial', serial);
+  const isSelected = bulkSelection.has(serial);
+  if (isSelected) tr.classList.add('bulk-edit-selected');
+  if (isPinned) tr.classList.add('bulk-edit-pinned');
+
+  // Row click toggles selection
+  tr.addEventListener('click', (e) => {
+    if (e.target.type === 'checkbox') return;
+    toggleItemSelection(serial);
+  });
+
+  // Checkbox cell
+  const cbTd = document.createElement('td');
+  const cb = document.createElement('input');
+  cb.type = 'checkbox';
+  cb.checked = isSelected;
+  cb.addEventListener('change', () => toggleItemSelection(serial));
+  cbTd.appendChild(cb);
+  tr.appendChild(cbTd);
+
+  // Data cells
+  const addCell = (text) => {
+    const td = document.createElement('td');
+    td.textContent = text || '';
+    td.title = text || '';
+    tr.appendChild(td);
+  };
+
+  addCell(item.name);
+  addCell(item.metal);
+  addCell(item.type);
+  addCell(item.qty != null ? String(item.qty) : '1');
+  addCell(item.weight != null ? (typeof formatWeight === 'function' ? formatWeight(item.weight, item.weightUnit) : String(item.weight)) : '');
+  addCell(item.year);
+  addCell(item.storageLocation);
+
+  return tr;
+};
+
+// =============================================================================
 // FIELD PANEL (left side)
 // =============================================================================
 
@@ -188,32 +298,7 @@ const renderBulkFieldPanel = () => {
     lbl.textContent = field.label;
 
     // Input
-    let input;
-    if (field.inputType === 'select') {
-      input = document.createElement('select');
-      field.options.forEach(opt => {
-        const option = document.createElement('option');
-        if (typeof opt === 'object' && opt !== null) {
-          option.value = opt.value;
-          option.textContent = opt.label;
-        } else {
-          option.value = opt;
-          option.textContent = opt;
-        }
-        input.appendChild(option);
-      });
-    } else if (field.inputType === 'textarea') {
-      input = document.createElement('textarea');
-      input.rows = 2;
-    } else {
-      input = document.createElement('input');
-      input.type = field.inputType;
-      if (field.attrs) {
-        Object.keys(field.attrs).forEach(k => input.setAttribute(k, field.attrs[k]));
-      }
-    }
-    input.className = 'field-input';
-    input.id = 'bulkFieldVal_' + field.id;
+    const input = createFieldInput(field);
     input.disabled = !bulkEnabledFields.has(field.id);
 
     // Restore persisted value
@@ -449,49 +534,6 @@ const renderBulkTableBody = () => {
   thead.appendChild(headerRow);
   table.appendChild(thead);
 
-  // Shared row builder
-  const buildItemRow = (item, isPinned) => {
-    const serial = String(item.serial);
-    const tr = document.createElement('tr');
-    tr.setAttribute('data-serial', serial);
-    const isSelected = bulkSelection.has(serial);
-    if (isSelected) tr.classList.add('bulk-edit-selected');
-    if (isPinned) tr.classList.add('bulk-edit-pinned');
-
-    // Row click toggles selection
-    tr.addEventListener('click', (e) => {
-      if (e.target.type === 'checkbox') return;
-      toggleItemSelection(serial);
-    });
-
-    // Checkbox cell
-    const cbTd = document.createElement('td');
-    const cb = document.createElement('input');
-    cb.type = 'checkbox';
-    cb.checked = isSelected;
-    cb.addEventListener('change', () => toggleItemSelection(serial));
-    cbTd.appendChild(cb);
-    tr.appendChild(cbTd);
-
-    // Data cells
-    const addCell = (text) => {
-      const td = document.createElement('td');
-      td.textContent = text || '';
-      td.title = text || '';
-      tr.appendChild(td);
-    };
-
-    addCell(item.name);
-    addCell(item.metal);
-    addCell(item.type);
-    addCell(item.qty != null ? String(item.qty) : '1');
-    addCell(item.weight != null ? (typeof formatWeight === 'function' ? formatWeight(item.weight, item.weightUnit) : String(item.weight)) : '');
-    addCell(item.year);
-    addCell(item.storageLocation);
-
-    return tr;
-  };
-
   // Tbody
   const tbody = document.createElement('tbody');
 
@@ -508,7 +550,7 @@ const renderBulkTableBody = () => {
 
     // Pinned rows
     pinnedItems.forEach(item => {
-      tbody.appendChild(buildItemRow(item, true));
+      tbody.appendChild(buildBulkItemRow(item, true, columns));
     });
 
     // Divider
@@ -522,7 +564,7 @@ const renderBulkTableBody = () => {
 
   // Filtered rows
   filtered.forEach(item => {
-    tbody.appendChild(buildItemRow(item, false));
+    tbody.appendChild(buildBulkItemRow(item, false, columns));
   });
 
   table.appendChild(tbody);
@@ -702,21 +744,7 @@ const applyBulkEdit = () => {
 
     // Apply each enabled field
     Object.keys(valuesToApply).forEach(fieldId => {
-      let val = valuesToApply[fieldId];
-
-      // Coerce numeric fields
-      if (fieldId === 'qty') {
-        val = parseInt(val, 10);
-        if (isNaN(val) || val < 1) val = 1;
-      } else if (fieldId === 'weight' || fieldId === 'price' || fieldId === 'marketValue') {
-        val = parseFloat(val);
-        if (isNaN(val) || val < 0) val = 0;
-      } else if (fieldId === 'purity') {
-        val = parseFloat(val);
-        if (isNaN(val) || val <= 0 || val > 1) val = 1.0;
-      }
-
-      item[fieldId] = val;
+      item[fieldId] = coerceFieldValue(fieldId, valuesToApply[fieldId]);
     });
 
     // Log changes for undo support
