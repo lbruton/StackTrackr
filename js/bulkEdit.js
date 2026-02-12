@@ -101,24 +101,8 @@ const openBulkEdit = () => {
   const modal = safeGetElement('bulkEditModal');
   if (!modal) return;
 
-  // Restore persisted selection
-  try {
-    const saved = localStorage.getItem('bulkEditSelection');
-    if (saved) {
-      const arr = JSON.parse(saved);
-      if (Array.isArray(arr)) bulkSelection = new Set(arr.map(String));
-    }
-  } catch (e) {
-    debugLog('bulkEdit: failed to restore selection', e);
-  }
-
-  // Prune selection — remove serials that no longer exist in inventory
-  if (typeof inventory !== 'undefined' && Array.isArray(inventory)) {
-    const validSerials = new Set(inventory.map(item => String(item.serial)));
-    bulkSelection.forEach(s => {
-      if (!validSerials.has(s)) bulkSelection.delete(s);
-    });
-  }
+  // Always start with a clean selection (STACK-55)
+  bulkSelection = new Set();
 
   modal.style.display = 'flex';
   document.body.style.overflow = 'hidden';
@@ -135,13 +119,6 @@ const openBulkEdit = () => {
 const closeBulkEdit = () => {
   const modal = safeGetElement('bulkEditModal');
   if (!modal) return;
-
-  // Persist selection
-  try {
-    localStorage.setItem('bulkEditSelection', JSON.stringify([...bulkSelection]));
-  } catch (e) {
-    debugLog('bulkEdit: failed to persist selection', e);
-  }
 
   // Clear Numista callback
   window._bulkEditNumistaCallback = null;

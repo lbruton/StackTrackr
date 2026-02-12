@@ -254,7 +254,7 @@ const CERT_LOOKUP_URLS = {
  * Updated: 2026-02-11 - STACK-44: Settings Log tab reorganization with sub-tabs
  */
 
-const APP_VERSION = "3.24.03";
+const APP_VERSION = "3.24.04";
 
 /**
  * @constant {string} DEFAULT_CURRENCY - Default currency code for monetary formatting
@@ -556,7 +556,6 @@ const ALLOWED_STORAGE_KEYS = [
   "apiProviderOrder",
   "filterChipCategoryConfig",
   "chipSortOrder",
-  "bulkEditSelection",
   GOLDBACK_PRICES_KEY,
   GOLDBACK_PRICE_HISTORY_KEY,
   GOLDBACK_ENABLED_KEY,
