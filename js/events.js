@@ -728,6 +728,12 @@ const commitItemToInventory = (f, isEditing, editIdx) => {
       console.warn('Failed to update catalog mapping:', catErr);
     }
 
+    // Apply spot lookup override if user selected a historical spot (STACK-49)
+    const lookupSpotEdit = elements.itemSpotPrice ? parseFloat(elements.itemSpotPrice.value) : NaN;
+    if (!isNaN(lookupSpotEdit) && lookupSpotEdit > 0) {
+      inventory[editIdx].spotPriceAtPurchase = lookupSpotEdit;
+    }
+
     saveInventory();
 
     // Record price data point if price-related fields changed (STACK-43)
@@ -748,7 +754,11 @@ const commitItemToInventory = (f, isEditing, editIdx) => {
     editingChangeLogIndex = null;
   } else {
     const metalKey = f.metal.toLowerCase();
-    const spotPriceAtPurchase = spotPrices[metalKey] ?? 0;
+    // Prefer spot price from lookup modal, fall back to current spot (STACK-49)
+    const lookupSpot = elements.itemSpotPrice ? parseFloat(elements.itemSpotPrice.value) : NaN;
+    const spotPriceAtPurchase = !isNaN(lookupSpot) && lookupSpot > 0
+      ? lookupSpot
+      : (spotPrices[metalKey] ?? 0);
     const serial = getNextSerial();
 
     inventory.push({
@@ -835,6 +845,9 @@ const setupItemFormListeners = () => {
         if (error) { alert(error); return; }
 
         commitItemToInventory(fields, isEditing, editingIndex);
+
+        // Clear spot lookup hidden field after commit (STACK-49)
+        if (elements.itemSpotPrice) elements.itemSpotPrice.value = '';
 
         if (!isEditing) {
           this.reset();
@@ -1015,6 +1028,41 @@ const setupItemFormListeners = () => {
         }
       },
       "Lookup PCGS button",
+    );
+  }
+
+  // SPOT LOOKUP BUTTON — search historical spot prices by date (STACK-49)
+  if (elements.spotLookupBtn) {
+    safeAttachListener(
+      elements.spotLookupBtn,
+      "click",
+      () => {
+        if (typeof openSpotLookupModal === 'function') openSpotLookupModal();
+      },
+      "Spot lookup button",
+    );
+  }
+
+  // DATE FIELD — enable/disable spot lookup button based on date value (STACK-49)
+  if (elements.itemDate) {
+    const updateSpotBtnState = () => {
+      if (elements.spotLookupBtn) {
+        elements.spotLookupBtn.disabled = !elements.itemDate.value;
+      }
+    };
+    safeAttachListener(elements.itemDate, "change", updateSpotBtnState, "Date field for spot btn");
+    safeAttachListener(elements.itemDate, "input", updateSpotBtnState, "Date field input for spot btn");
+  }
+
+  // METAL CHANGE — clear stale spot lookup value (STACK-49)
+  if (elements.itemMetal) {
+    safeAttachListener(
+      elements.itemMetal,
+      "change",
+      () => {
+        if (elements.itemSpotPrice) elements.itemSpotPrice.value = '';
+      },
+      "Metal change clears spot lookup",
     );
   }
 };
@@ -1499,6 +1547,9 @@ const setupSearch = () => {
             elements.itemDate.value = todayStr();
           }
           if (elements.itemSerial) elements.itemSerial.value = '';
+          // Reset spot lookup state (STACK-49)
+          if (elements.itemSpotPrice) elements.itemSpotPrice.value = '';
+          if (elements.spotLookupBtn) elements.spotLookupBtn.disabled = !elements.itemDate.value;
           // Set modal to add mode
           if (elements.itemModalTitle) elements.itemModalTitle.textContent = "Add Inventory Item";
           if (elements.itemModalSubmit) elements.itemModalSubmit.textContent = "Add to Inventory";
@@ -1887,6 +1938,11 @@ const setupApiEvents = () => {
             typeof hideSettingsModal === "function"
           ) {
             hideSettingsModal();
+          } else if (
+            document.getElementById("spotLookupModal")?.style.display === "flex" &&
+            typeof closeSpotLookupModal === "function"
+          ) {
+            closeSpotLookupModal();
           } else if (itemModal && itemModal.style.display === "flex") {
             itemModal.style.display = "none";
             document.body.style.overflow = "";
