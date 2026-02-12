@@ -9,6 +9,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.24.06] - 2026-02-12
+
+### Changed — STACK-56: Cyclomatic complexity reduction (batch 1 & 2)
+
+- **Refactored**: `renderLogTab` — switch → dispatch map (CCN 9 → ~2)
+- **Refactored**: `coerceFieldValue` — if-chain → dispatch map (CCN 13 → ~2)
+- **Refactored**: `toggleGbDenomPicker` — extract `showEl` helper, drop redundant fallback (CCN 11 → ~7)
+- **Refactored**: `renderItemPriceHistoryTable` — extract `preparePriceHistoryRows` and `attachPriceHistorySortHeaders` (CCN 11 → ~6)
+- **Refactored**: `setupNoteAndModalListeners` — new `optionalListener` helper eliminates 16 if-guards, extract `dismissNotesModal` (CCN 17 → ~1)
+- **Refactored**: `setupImportExportListeners` — new `setupFormatImport` triad helper, split into `setupVaultListeners` + `setupDataManagementListeners` (CCN 27 → ~3)
+- **Added**: `optionalListener` utility — null-safe listener attachment without console.warn spam
+- **Added**: `setupFormatImport` utility — reusable override/merge/file-input import triad
+- **Net**: −301 lines from `events.js`, 6 of 9 Lizard violations resolved
+
+---
+
 ## [3.24.05] - 2026-02-12
 
 ### Fixed — Code cleanup and minor fixes

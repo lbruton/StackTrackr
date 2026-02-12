@@ -93,6 +93,11 @@ const populateVersionModal = (version, html) => {
  */
 const getEmbeddedChangelog = (version) => {
   const changelogs = {
+    "3.24.06": `
+      <li><strong>Refactored</strong>: 6 functions reduced below Lizard CCN threshold &mdash; dispatch maps, extracted helpers, <code>optionalListener</code> utility (STACK-56)</li>
+      <li><strong>Added</strong>: <code>optionalListener</code> and <code>setupFormatImport</code> utilities in events.js</li>
+      <li><strong>Net</strong>: &minus;301 lines from events.js, 6 of 9 Lizard violations resolved</li>
+    `,
     "3.24.05": `
       <li><strong>Fixed</strong>: <code>debugLog('warn', ...)</code> now uses <code>console.warn()</code></li>
       <li><strong>Removed</strong>: Unused <code>columns</code> parameter from <code>buildBulkItemRow()</code></li>
