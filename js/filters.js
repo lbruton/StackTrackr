@@ -194,36 +194,16 @@ const generateCategorySummary = (inventory) => {
   }
 
   // Apply minCount threshold to all categories
-  const filteredMetals = Object.fromEntries(
-    Object.entries(metals).filter(([key, count]) => count >= minCount)
-  );
-  const filteredTypes = Object.fromEntries(
-    Object.entries(types).filter(([key, count]) => count >= minCount)
-  );
-  const filteredPurchaseLocations = Object.fromEntries(
-    Object.entries(purchaseLocations).filter(([key, count]) => count >= minCount)
-  );
-  const filteredStorageLocations = Object.fromEntries(
-    Object.entries(storageLocations).filter(([key, count]) => count >= minCount)
-  );
-  let filteredNames = Object.fromEntries(
-    Object.entries(names).filter(([key, count]) => count >= nameMinCount)
-  );
-  const filteredYears = Object.fromEntries(
-    Object.entries(years).filter(([key, count]) => count >= minCount)
-  );
-  const filteredGrades = Object.fromEntries(
-    Object.entries(grades).filter(([key, count]) => count >= minCount)
-  );
-  const filteredNumistaIds = Object.fromEntries(
-    Object.entries(numistaIds).filter(([key, count]) => count >= minCount)
-  );
-  const filteredPurities = Object.fromEntries(
-    Object.entries(purities).filter(([key, count]) => count >= minCount)
-  );
-  const filteredDynamicNames = Object.fromEntries(
-    Object.entries(dynamicNames).filter(([key, count]) => count >= nameMinCount)
-  );
+  const filteredMetals = applyMinCountThreshold(metals, minCount);
+  const filteredTypes = applyMinCountThreshold(types, minCount);
+  const filteredPurchaseLocations = applyMinCountThreshold(purchaseLocations, minCount);
+  const filteredStorageLocations = applyMinCountThreshold(storageLocations, minCount);
+  let filteredNames = applyMinCountThreshold(names, nameMinCount);
+  const filteredYears = applyMinCountThreshold(years, minCount);
+  const filteredGrades = applyMinCountThreshold(grades, minCount);
+  const filteredNumistaIds = applyMinCountThreshold(numistaIds, minCount);
+  const filteredPurities = applyMinCountThreshold(purities, minCount);
+  const filteredDynamicNames = applyMinCountThreshold(dynamicNames, nameMinCount);
 
   // Apply blacklist filter to auto-generated name chips and dynamic chips
   if (typeof window.isBlacklisted === 'function') {
@@ -457,48 +437,13 @@ const renderActiveFilters = () => {
   
   container.style.display = '';
 
-  const colors = ['var(--primary)', 'var(--secondary)', 'var(--success)', 'var(--warning)', 'var(--danger)', 'var(--info)'];
-
   chips.forEach((f, i) => {
     const chip = document.createElement('span');
     chip.className = 'filter-chip';
     // All chip categories render visually identical — no italic/bold distinction
     const firstValue = String(f.value).split(', ')[0];
-    let color;
-    let textColor;
-    switch (f.field) {
-      case 'type':
-        color = getTypeColor(firstValue);
-        break;
-      case 'metal': {
-        let key = firstValue;
-        if (!METAL_COLORS[key]) {
-          color = getColor(nameColors, key);
-        } else {
-          color = METAL_COLORS[key];
-          textColor = METAL_TEXT_COLORS[key] ? METAL_TEXT_COLORS[key]() : undefined;
-        }
-        break;
-      }
-      case 'name':
-        color = getColor(nameColors, firstValue);
-        break;
-      case 'customGroup':
-        color = getColor(nameColors, f.displayLabel || firstValue);
-        break;
-      case 'dynamicName':
-        color = getColor(nameColors, firstValue);
-        break;
-      case 'purchaseLocation':
-        color = getPurchaseLocationColor(firstValue);
-        break;
-      case 'storageLocation':
-        color = getStorageLocationColor(firstValue);
-        break;
-      default:
-        color = colors[i % colors.length];
-    }
-    const bg = color || colors[i % colors.length];
+    const colorKey = f.field === 'customGroup' ? (f.displayLabel || firstValue) : firstValue;
+    const { bg, text: textColor } = getChipColors(f.field, colorKey, i);
     chip.style.backgroundColor = bg;
     chip.style.color = textColor || getContrastColor(bg);
 
@@ -602,6 +547,139 @@ const renderActiveFilters = () => {
     };
     container.appendChild(clearButton);
   }
+};
+
+/**
+ * Checks whether a two-word search like "Silver Eagle" should match an item,
+ * preventing cross-metal false positives (e.g. "Silver Eagle" matching "American Gold Eagle").
+ *
+ * @param {string} searchMetal - First word of the two-word search (lowercase)
+ * @param {string} coinType - Second word of the two-word search (lowercase)
+ * @param {string} itemText - Concatenated item fields (lowercase)
+ * @param {string} exactPhrase - Full two-word search string (lowercase)
+ * @returns {boolean|null} true/false for definitive match result, null to fall through to default logic
+ */
+const matchCoinSeries = (searchMetal, coinType, itemText, exactPhrase) => {
+  const metalWords = ['gold', 'silver', 'platinum', 'palladium'];
+
+  const checkNationalPrefix = (prefix) => {
+    const hasMetalBetween = metalWords.some(metal =>
+      itemText.includes(`${prefix} ${metal} ${coinType}`) && !exactPhrase.includes(metal)
+    );
+    return !hasMetalBetween;
+  };
+
+  // Eagle series
+  if (coinType === 'eagle') {
+    if (searchMetal === 'american') return checkNationalPrefix('american');
+    if (metalWords.includes(searchMetal)) return itemText.includes(exactPhrase);
+  }
+  // Maple series
+  if (coinType === 'maple') {
+    if (metalWords.includes(searchMetal)) {
+      return itemText.includes(exactPhrase) || itemText.includes(`${searchMetal} maple leaf`);
+    }
+    if (searchMetal === 'canadian') return checkNationalPrefix('canadian');
+  }
+  // Britannia series
+  if (coinType === 'britannia') {
+    if (metalWords.includes(searchMetal)) return itemText.includes(exactPhrase);
+    if (searchMetal === 'british') {
+      const hasMetalBetween = metalWords.some(metal =>
+        itemText.includes(`british ${metal} britannia`) && !exactPhrase.includes(metal)
+      );
+      return !hasMetalBetween;
+    }
+  }
+  // Krugerrand series
+  if (coinType === 'krugerrand') {
+    if (metalWords.includes(searchMetal)) return itemText.includes(exactPhrase);
+    if (searchMetal === 'south' || searchMetal === 'african') {
+      const hasMetalBetween = metalWords.some(metal =>
+        (itemText.includes(`south african ${metal} krugerrand`) ||
+         itemText.includes(`${metal} krugerrand`)) && !exactPhrase.includes(metal)
+      );
+      return !hasMetalBetween;
+    }
+  }
+  // Buffalo series
+  if (coinType === 'buffalo') {
+    if (metalWords.includes(searchMetal)) return itemText.includes(exactPhrase);
+    if (searchMetal === 'american') return checkNationalPrefix('american');
+  }
+  // Panda series
+  if (coinType === 'panda') {
+    if (metalWords.includes(searchMetal)) return itemText.includes(exactPhrase);
+    if (searchMetal === 'chinese') return checkNationalPrefix('chinese');
+  }
+  // Kangaroo series
+  if (coinType === 'kangaroo') {
+    if (metalWords.includes(searchMetal)) return itemText.includes(exactPhrase);
+    if (searchMetal === 'australian') {
+      const hasMetalBetween = metalWords.some(metal =>
+        itemText.includes(`australian ${metal} kangaroo`) && !exactPhrase.includes(metal)
+      );
+      return !hasMetalBetween;
+    }
+  }
+
+  return null; // No series match — fall through to default logic
+};
+
+/**
+ * Applies a minimum count threshold to a category data object, filtering out entries below the threshold.
+ * @param {Object} data - Map of { key: count }
+ * @param {number} minCount - Minimum count to include
+ * @returns {Object} Filtered map
+ */
+const applyMinCountThreshold = (data, minCount) => {
+  return Object.fromEntries(
+    Object.entries(data).filter(([, count]) => count >= minCount)
+  );
+};
+
+/**
+ * Returns chip color and text color for a given field/value combination.
+ * @param {string} field - Chip field type
+ * @param {string} value - Chip value
+ * @param {number} index - Chip index for fallback color cycling
+ * @returns {{ bg: string, text: string|undefined }} Background and optional text color
+ */
+const getChipColors = (field, value, index) => {
+  const fallbackColors = ['var(--primary)', 'var(--secondary)', 'var(--success)', 'var(--warning)', 'var(--danger)', 'var(--info)'];
+  let color;
+  let textColor;
+
+  switch (field) {
+    case 'type':
+      color = getTypeColor(value);
+      break;
+    case 'metal':
+      if (!METAL_COLORS[value]) {
+        color = getColor(nameColors, value);
+      } else {
+        color = METAL_COLORS[value];
+        textColor = METAL_TEXT_COLORS[value] ? METAL_TEXT_COLORS[value]() : undefined;
+      }
+      break;
+    case 'name':
+    case 'dynamicName':
+      color = getColor(nameColors, value);
+      break;
+    case 'customGroup':
+      color = getColor(nameColors, value);
+      break;
+    case 'purchaseLocation':
+      color = getPurchaseLocationColor(value);
+      break;
+    case 'storageLocation':
+      color = getStorageLocationColor(value);
+      break;
+    default:
+      color = fallbackColors[index % fallbackColors.length];
+  }
+
+  return { bg: color || fallbackColors[index % fallbackColors.length], text: textColor };
 };
 
 /**
@@ -738,117 +816,10 @@ const filterInventoryAdvanced = () => {
           return false;
         }
         
-        // Additional check: prevent cross-metal matching for common coin series
-        // "Silver Eagle" should not match "American Gold Eagle"
-        // "Gold Maple" should not match "Silver Maple Leaf"
-        // etc.
+        // Prevent cross-metal matching for common coin series
         if (words.length === 2) {
-          const searchMetal = words[0];
-          const coinType = words[1];
-          
-          // Handle Eagle series
-          if (coinType === 'eagle') {
-            if (searchMetal === 'american') {
-              // "American Eagle" should not match "American [Metal] Eagle"
-              const metalWords = ['gold', 'silver', 'platinum', 'palladium'];
-              const hasMetalBetween = metalWords.some(metal => 
-                itemText.includes(`american ${metal} eagle`) && !exactPhrase.includes(metal)
-              );
-              return !hasMetalBetween;
-            } else if (['silver', 'gold', 'platinum', 'palladium'].includes(searchMetal)) {
-              // Metal-specific eagle searches must match exact phrase
-              return itemText.includes(exactPhrase);
-            }
-          }
-          
-          // Handle Maple series (Canadian Maple Leaf)
-          else if (coinType === 'maple') {
-            if (['silver', 'gold', 'platinum', 'palladium'].includes(searchMetal)) {
-              // "Silver Maple" should only match items with "silver maple"
-              return itemText.includes(exactPhrase) || itemText.includes(`${searchMetal} maple leaf`);
-            } else if (searchMetal === 'canadian') {
-              // "Canadian Maple" should not match specific metal maples unless no metal specified
-              const metalWords = ['gold', 'silver', 'platinum', 'palladium'];
-              const hasMetalBetween = metalWords.some(metal => 
-                itemText.includes(`canadian ${metal} maple`) && !exactPhrase.includes(metal)
-              );
-              return !hasMetalBetween;
-            }
-          }
-          
-          // Handle Britannia series (British Britannia)
-          else if (coinType === 'britannia') {
-            if (['silver', 'gold', 'platinum', 'palladium'].includes(searchMetal)) {
-              // "Silver Britannia" should only match items with "silver britannia"
-              return itemText.includes(exactPhrase);
-            } else if (searchMetal === 'british') {
-              // "British Britannia" should not match specific metal britannias
-              const metalWords = ['gold', 'silver', 'platinum', 'palladium'];
-              const hasMetalBetween = metalWords.some(metal => 
-                itemText.includes(`british ${metal} britannia`) && !exactPhrase.includes(metal)
-              );
-              return !hasMetalBetween;
-            }
-          }
-          
-          // Handle Krugerrand series
-          else if (coinType === 'krugerrand') {
-            if (['silver', 'gold', 'platinum', 'palladium'].includes(searchMetal)) {
-              // "Gold Krugerrand" should only match gold krugerrands
-              return itemText.includes(exactPhrase);
-            } else if (searchMetal === 'south' || searchMetal === 'african') {
-              // Handle "South African Krugerrand" - don't match if metal specified
-              const metalWords = ['gold', 'silver', 'platinum', 'palladium'];
-              const hasMetalBetween = metalWords.some(metal => 
-                (itemText.includes(`south african ${metal} krugerrand`) || 
-                 itemText.includes(`${metal} krugerrand`)) && !exactPhrase.includes(metal)
-              );
-              return !hasMetalBetween;
-            }
-          }
-          
-          // Handle Buffalo series
-          else if (coinType === 'buffalo') {
-            if (['silver', 'gold', 'platinum', 'palladium'].includes(searchMetal)) {
-              // "Gold Buffalo" should only match gold buffalos
-              return itemText.includes(exactPhrase);
-            } else if (searchMetal === 'american') {
-              // "American Buffalo" should not match if metal specified
-              const metalWords = ['gold', 'silver', 'platinum', 'palladium'];
-              const hasMetalBetween = metalWords.some(metal => 
-                itemText.includes(`american ${metal} buffalo`) && !exactPhrase.includes(metal)
-              );
-              return !hasMetalBetween;
-            }
-          }
-          
-          // Handle Panda series
-          else if (coinType === 'panda') {
-            if (['silver', 'gold', 'platinum', 'palladium'].includes(searchMetal)) {
-              // "Silver Panda" should only match silver pandas
-              return itemText.includes(exactPhrase);
-            } else if (searchMetal === 'chinese') {
-              // "Chinese Panda" should not match if metal specified
-              const metalWords = ['gold', 'silver', 'platinum', 'palladium'];
-              const hasMetalBetween = metalWords.some(metal => 
-                itemText.includes(`chinese ${metal} panda`) && !exactPhrase.includes(metal)
-              );
-              return !hasMetalBetween;
-            }
-          }
-          
-          // Handle Kangaroo series
-          else if (coinType === 'kangaroo') {
-            if (['silver', 'gold', 'platinum', 'palladium'].includes(searchMetal)) {
-              return itemText.includes(exactPhrase);
-            } else if (searchMetal === 'australian') {
-              const metalWords = ['gold', 'silver', 'platinum', 'palladium'];
-              const hasMetalBetween = metalWords.some(metal => 
-                itemText.includes(`australian ${metal} kangaroo`) && !exactPhrase.includes(metal)
-              );
-              return !hasMetalBetween;
-            }
-          }
+          const seriesResult = matchCoinSeries(words[0], words[1], itemText, exactPhrase);
+          if (seriesResult !== null) return seriesResult;
         }
         
         // Handle three-word searches with special patterns

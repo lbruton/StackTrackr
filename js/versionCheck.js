@@ -93,6 +93,14 @@ const populateVersionModal = (version, html) => {
  */
 const getEmbeddedChangelog = (version) => {
   const changelogs = {
+    "3.24.03": `
+      <li><strong>Fixed</strong>: Goldback melt values inflated 1000x in Details Modal &mdash; apply GB_TO_OZT conversion and denomination retail pricing</li>
+    `,
+    "3.24.02": `
+      <li><strong>Added</strong>: Activity Log sub-tabs in Settings &mdash; Changelog, Metals, Catalogs, Price History (STACK-44)</li>
+      <li><strong>Added</strong>: Sortable spot price history, catalog API call log, and per-item price history tables</li>
+      <li><strong>Added</strong>: Filter and clear buttons for each log sub-tab with confirmation dialogs</li>
+    `,
     "3.24.01": `
       <li><strong>Fixed</strong>: Convert innerHTML to textContent for plain-text currency formatting</li>
       <li><strong>Changed</strong>: Add PMD, ESLint, and Semgrep configuration to resolve 90 Codacy issues</li>

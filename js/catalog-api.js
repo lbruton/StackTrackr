@@ -1561,6 +1561,87 @@ const renderPcgsUsageBar = () => {
   container.appendChild(wrapper);
 };
 
+// =============================================================================
+// CATALOG HISTORY — SETTINGS LOG TABLE
+// =============================================================================
+
+/** @type {string} Sort column for settings catalog history table */
+let settingsCatalogSortColumn = '';
+/** @type {boolean} Sort ascending for settings catalog history table */
+let settingsCatalogSortAsc = true;
+
+/**
+ * Renders the catalog history table in the Settings > Activity Log > Catalogs sub-tab.
+ * Reads from global catalogHistory, sorts by timestamp descending by default.
+ */
+const renderCatalogHistoryForSettings = () => {
+  const table = document.getElementById('settingsCatalogHistoryTable');
+  if (!table) return;
+
+  loadCatalogHistory();
+  let data = [...catalogHistory];
+
+  // Sort
+  if (settingsCatalogSortColumn) {
+    data.sort((a, b) => {
+      const valA = a[settingsCatalogSortColumn];
+      const valB = b[settingsCatalogSortColumn];
+      if (valA < valB) return settingsCatalogSortAsc ? -1 : 1;
+      if (valA > valB) return settingsCatalogSortAsc ? 1 : -1;
+      return 0;
+    });
+  } else {
+    data.sort((a, b) => (a.timestamp < b.timestamp ? 1 : -1));
+  }
+
+  const tbody = table.querySelector('tbody');
+  if (!tbody) return;
+
+  if (data.length === 0) {
+    // nosemgrep: javascript.browser.security.insecure-innerhtml.insecure-innerhtml
+    tbody.innerHTML = '<tr class="settings-log-empty"><td colspan="7">No catalog history recorded yet.</td></tr>';
+    return;
+  }
+
+  const rows = data.map(e => {
+    const resultClass = e.result === 'fail' ? ' style="color: var(--danger, #e74c3c);"' : '';
+    const errorTitle = e.error ? ` title="${String(e.error).replace(/"/g, '&quot;')}"` : '';
+    return `<tr><td>${e.timestamp || ''}</td><td>${e.action || ''}</td><td>${e.query || ''}</td><td${resultClass}${errorTitle}>${e.result || ''}</td><td>${e.itemCount || 0}</td><td>${e.provider || ''}</td><td>${e.duration || 0}ms</td></tr>`;
+  });
+
+  // nosemgrep: javascript.browser.security.insecure-innerhtml.insecure-innerhtml
+  tbody.innerHTML = rows.join('');
+
+  // Sortable headers
+  table.querySelectorAll('th').forEach(th => {
+    th.style.cursor = 'pointer';
+    th.onclick = () => {
+      const cols = ['timestamp', 'action', 'query', 'result', 'itemCount', 'provider', 'duration'];
+      const idx = Array.from(th.parentNode.children).indexOf(th);
+      const col = cols[idx];
+      if (settingsCatalogSortColumn === col) {
+        settingsCatalogSortAsc = !settingsCatalogSortAsc;
+      } else {
+        settingsCatalogSortColumn = col;
+        settingsCatalogSortAsc = true;
+      }
+      renderCatalogHistoryForSettings();
+    };
+  });
+};
+
+/**
+ * Clears all catalog API history after user confirmation.
+ */
+const clearCatalogHistory = () => {
+  if (!confirm('Clear all catalog history? This cannot be undone.')) return;
+  catalogHistory = [];
+  saveCatalogHistory();
+  const panel = document.getElementById('logPanel_catalogs');
+  if (panel) delete panel.dataset.rendered;
+  renderCatalogHistoryForSettings();
+};
+
 // Export for use in other modules
 if (typeof window !== 'undefined') {
   window.catalogAPI = catalogAPI;
@@ -1579,6 +1660,8 @@ if (typeof window !== 'undefined') {
   window.closeNumistaResultsModal = closeNumistaResultsModal;
   window.renderNumistaUsageBar = renderNumistaUsageBar;
   window.renderPcgsUsageBar = renderPcgsUsageBar;
+  window.renderCatalogHistoryForSettings = renderCatalogHistoryForSettings;
+  window.clearCatalogHistory = clearCatalogHistory;
 }
 
 // Initialize UI event handlers when DOM is ready

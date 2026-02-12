@@ -57,9 +57,11 @@ const switchSettingsSection = (name) => {
     populateApiSection();
   }
 
-  // Populate change log when switching to changelog section
-  if (name === 'changelog' && typeof renderChangeLog === 'function') {
-    renderChangeLog();
+  // Render the active log sub-tab when switching to the changelog section
+  if (name === 'changelog') {
+    const activeTab = document.querySelector('.settings-log-tab.active');
+    const activeKey = activeTab ? activeTab.dataset.logTab : 'changelog';
+    switchLogTab(activeKey);
   }
 };
 
@@ -81,6 +83,59 @@ const switchProviderTab = (key) => {
   document.querySelectorAll('.settings-provider-tab').forEach(tab => {
     tab.classList.toggle('active', tab.dataset.provider === key);
   });
+};
+
+/**
+ * Switches the visible log sub-tab in the Activity Log panel.
+ * Lazy-renders each sub-tab on first activation via data-rendered attribute.
+ * @param {string} key - Sub-tab key: 'changelog', 'metals', 'catalogs', 'pricehistory'
+ */
+const switchLogTab = (key) => {
+  // Hide all log panels
+  document.querySelectorAll('.settings-log-panel').forEach(panel => {
+    panel.style.display = 'none';
+  });
+
+  // Show target panel
+  const target = document.getElementById(`logPanel_${key}`);
+  if (target) target.style.display = 'block';
+
+  // Update active tab
+  document.querySelectorAll('.settings-log-tab').forEach(tab => {
+    tab.classList.toggle('active', tab.dataset.logTab === key);
+  });
+
+  // Lazy-render on first activation
+  if (target && !target.dataset.rendered) {
+    renderLogTab(key);
+    target.dataset.rendered = '1';
+  }
+
+  // Always re-render changelog (existing behavior — it may have changed)
+  if (key === 'changelog') {
+    renderLogTab(key);
+  }
+};
+
+/**
+ * Dispatches to the appropriate render function for a log sub-tab.
+ * @param {string} key - Sub-tab key
+ */
+const renderLogTab = (key) => {
+  switch (key) {
+    case 'changelog':
+      if (typeof renderChangeLog === 'function') renderChangeLog();
+      break;
+    case 'metals':
+      if (typeof renderSpotHistoryTable === 'function') renderSpotHistoryTable();
+      break;
+    case 'catalogs':
+      if (typeof renderCatalogHistoryForSettings === 'function') renderCatalogHistoryForSettings();
+      break;
+    case 'pricehistory':
+      if (typeof renderItemPriceHistoryTable === 'function') renderItemPriceHistoryTable();
+      break;
+  }
 };
 
 /**
@@ -230,6 +285,13 @@ const setupSettingsEventListeners = () => {
   document.querySelectorAll('.settings-provider-tab').forEach(tab => {
     tab.addEventListener('click', () => {
       switchProviderTab(tab.dataset.provider);
+    });
+  });
+
+  // Log sub-tabs
+  document.querySelectorAll('[data-log-tab]').forEach(tab => {
+    tab.addEventListener('click', () => {
+      switchLogTab(tab.dataset.logTab);
     });
   });
 
