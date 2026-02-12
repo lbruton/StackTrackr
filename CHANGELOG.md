@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.24.04] - 2026-02-12
+
+### Fixed — STACK-55: Bulk Editor retains selected items after close/reopen
+
+- **Fixed**: Bulk Editor now starts with a clean selection every time it opens (STACK-55)
+- **Removed**: `bulkEditSelection` localStorage persistence — selection no longer carries across sessions
+
+---
+
 ## [3.24.03] - 2026-02-12
 
 ### Fixed — Goldback melt/retail/weight in Details Modal

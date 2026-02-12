@@ -93,6 +93,10 @@ const populateVersionModal = (version, html) => {
  */
 const getEmbeddedChangelog = (version) => {
   const changelogs = {
+    "3.24.04": `
+      <li><strong>Fixed</strong>: Bulk Editor now starts with a clean selection every time it opens (STACK-55)</li>
+      <li><strong>Removed</strong>: <code>bulkEditSelection</code> localStorage persistence</li>
+    `,
     "3.24.03": `
       <li><strong>Fixed</strong>: Goldback melt values inflated 1000x in Details Modal &mdash; apply GB_TO_OZT conversion and denomination retail pricing</li>
     `,
