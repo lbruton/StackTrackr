@@ -20,6 +20,7 @@ Multi-currency is shipped (STACK-50). These items are unblocked and ready for th
 | [STACK-49](https://linear.app/hextrackr/issue/STACK-49) | Spot Price Lookup by Date on Add/Edit Form | Low | — |
 | [STACK-51](https://linear.app/hextrackr/issue/STACK-51) | Custom CSV import mapper with header mapping UI and saved profiles | Medium | — |
 | [STACK-53](https://linear.app/hextrackr/issue/STACK-53) | [RFC] Community spot price history CDN via GitHub with manifest-based selective import | Medium | — |
+| [STACK-60](https://linear.app/hextrackr/issue/STACK-60) | Source "—" click-to-filter returns no results for empty source items | Low | — |
 
 ---
 
