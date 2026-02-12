@@ -397,7 +397,7 @@ const useSpotPrice = (spotPrice, timestamp) => {
   // Populate visible Purchase Price field (convert USD → display currency)
   if (elements.itemPrice) {
     const fxRate = (typeof getExchangeRate === 'function') ? getExchangeRate() : 1;
-    const displayPrice = fxRate !== 1 ? (spotPrice * fxRate).toFixed(2) : spotPrice;
+    const displayPrice = (spotPrice * fxRate).toFixed(2);
     elements.itemPrice.value = displayPrice;
 
     // Brief visual highlight on the price field for confirmation
