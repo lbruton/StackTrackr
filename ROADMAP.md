@@ -24,13 +24,17 @@ Multi-currency is shipped (STACK-50). These items are unblocked and ready for th
 
 ---
 
-## Medium-Term — BYO-Backend (Supabase Cloud Sync)
+## Medium-Term — Cloud Sync (Supabase + GitHub Sponsors)
 
-Zero-cost, zero-server architecture. App stays static; users who want cloud sync bring their own free Supabase project.
+Encrypted cloud sync for sponsors ($3/month). Zero-knowledge architecture — data encrypted client-side (AES-256-GCM) before upload, decrypted client-side after download. Server never sees plaintext. Self-hostable for users who want their own Supabase instance.
 
 | Issue | Title | Priority | Depends On |
 |-------|-------|----------|------------|
-| [STACK-30](https://linear.app/hextrackr/issue/STACK-30) | BYO-Backend: Supabase cloud sync | Medium | — |
+| [STACK-30](https://linear.app/hextrackr/issue/STACK-30) | BYO-Backend: Supabase cloud sync (self-host) | Medium | — |
+| DEVS-5 | Cloud Sync — Supabase-backed encrypted sync for sponsors (epic) | High | — |
+| DEVS-6 | M1: Supabase schema, RLS policies & self-host docs | Medium | — |
+| DEVS-7 | M2: Client-side sync UI & upload/download logic | Medium | DEVS-6 |
+| DEVS-8 | M3: GitHub Action — automated sponsor key lifecycle | Medium | DEVS-6 |
 
 ---
 
@@ -78,6 +82,8 @@ Explicitly out of scope until prerequisites are met.
 <details>
 <summary>Shipped features (click to expand)</summary>
 
+- **v3.25.01** — STACK-64/67: Version splash fix (friendly announcements), footer version badge with remote update check, sponsor badges
+- **v3.25.00** — STACK-54/65/66: Appearance settings (header buttons, layout toggles), spot lookup fix, sparkline improvements
 - **v3.24.00** — STACK-50: Multi-currency support with 17-currency display, daily exchange rate conversion, dynamic formatting
 - **v3.23.02** — STACK-52: Bulk Edit pinned selections, dormant prototype cleanup
 - **v3.23.01** — Goldback real-time estimation, Settings reorganization
