@@ -272,12 +272,11 @@ const setupAckModalEvents = () => {
  */
 const getEmbeddedWhatsNew = () => {
   return `
+    <li><strong>v3.24.03 &ndash; Fix Goldback melt/retail/weight in Details Modal</strong>: Goldback melt values no longer inflated 1000x in breakdown modals. Applies GB_TO_OZT conversion and denomination retail pricing</li>
     <li><strong>v3.24.02 &ndash; STACK-44: Activity Log sub-tabs</strong>: Settings Log panel reorganized with 4 sub-tabs &mdash; Changelog, Metals, Catalogs, Price History. Sortable tables, filter, and clear buttons</li>
     <li><strong>v3.24.01 &ndash; Codacy code quality cleanup</strong>: innerHTML-to-textContent fixes, PMD/ESLint/Semgrep configuration. 90 issues resolved</li>
     <li><strong>v3.24.00 &ndash; STACK-50: Multi-Currency Support</strong>: 17-currency display with daily exchange rate conversion. Dynamic currency symbols across modals, Goldback settings, and exports. Dynamic Gain/Loss labels on totals cards. Sticky header fix</li>
     <li><strong>v3.23.02 &ndash; STACK-52: Bulk Edit pinned selections</strong>: Selected items stay visible at top of table when search changes. Removed dormant prototype files</li>
-    <li><strong>v3.23.01 &ndash; Goldback real-time estimation, Settings reorganization</strong>: Goldback price estimation from gold spot with configurable premium. Settings sidebar renamed Theme to Appearance, Tools to System</li>
-    <li><strong>v3.23.00 &ndash; STACK-42/43/45: UUIDs, Price History, Goldback Pricing</strong>: Goldback denomination pricing and type support. Persistent UUID v4 for every item. Silent per-item price history recording</li>
   `;
 };
 

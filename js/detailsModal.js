@@ -29,14 +29,19 @@ const getBreakdownData = (metal) => {
 
   metalItems.forEach(item => {
     const qty = Number(item.qty) || 1;
-    const itemWeight = qty * (parseFloat(item.weight) || 0);
+    const weight = parseFloat(item.weight) || 0;
+    const weightOz = (item.weightUnit === 'gb') ? weight * GB_TO_OZT : weight;
+    const itemWeight = qty * weightOz;
     const purchasePrice = parseFloat(item.price) || 0;
     const purchaseTotal = qty * purchasePrice;
     const purity = parseFloat(item.purity) || 1.0;
     const meltValue = itemWeight * currentSpot * purity;
+    const gbDenomPrice = (typeof getGoldbackRetailPrice === 'function') ? getGoldbackRetailPrice(item) : null;
     const rawMarket = parseFloat(item.marketValue) || 0;
-    const isManualRetail = rawMarket > 0;
-    const retailTotal = isManualRetail ? rawMarket * qty : meltValue;
+    const isManualRetail = !gbDenomPrice && rawMarket > 0;
+    const retailTotal = gbDenomPrice   ? gbDenomPrice * qty
+                      : isManualRetail ? rawMarket * qty
+                      : meltValue;
     const gainLoss = retailTotal - purchaseTotal;
 
     // Type breakdown
@@ -83,15 +88,20 @@ const getAllMetalsBreakdownData = () => {
 
   inventory.forEach(item => {
     const qty = Number(item.qty) || 1;
-    const itemWeight = qty * (parseFloat(item.weight) || 0);
+    const weight = parseFloat(item.weight) || 0;
+    const weightOz = (item.weightUnit === 'gb') ? weight * GB_TO_OZT : weight;
+    const itemWeight = qty * weightOz;
     const purchasePrice = parseFloat(item.price) || 0;
     const purchaseTotal = qty * purchasePrice;
     const currentSpot = spotPrices[item.metal.toLowerCase()] || 0;
     const purity = parseFloat(item.purity) || 1.0;
     const meltValue = itemWeight * currentSpot * purity;
+    const gbDenomPrice = (typeof getGoldbackRetailPrice === 'function') ? getGoldbackRetailPrice(item) : null;
     const rawMv2 = parseFloat(item.marketValue) || 0;
-    const isManualRetail = rawMv2 > 0;
-    const retailTotal = isManualRetail ? rawMv2 * qty : meltValue;
+    const isManualRetail = !gbDenomPrice && rawMv2 > 0;
+    const retailTotal = gbDenomPrice   ? gbDenomPrice * qty
+                      : isManualRetail ? rawMv2 * qty
+                      : meltValue;
     const gainLoss = retailTotal - purchaseTotal;
 
     // Metal breakdown

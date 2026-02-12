@@ -254,7 +254,7 @@ const CERT_LOOKUP_URLS = {
  * Updated: 2026-02-11 - STACK-44: Settings Log tab reorganization with sub-tabs
  */
 
-const APP_VERSION = "3.24.02";
+const APP_VERSION = "3.24.03";
 
 /**
  * @constant {string} DEFAULT_CURRENCY - Default currency code for monetary formatting
