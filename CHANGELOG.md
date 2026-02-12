@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.24.05] - 2026-02-12
+
+### Fixed — Code cleanup and minor fixes
+
+- **Fixed**: `debugLog('warn', ...)` in custom API validation now uses `console.warn()` (debugLog has no level support)
+- **Removed**: Unused `columns` parameter from `buildBulkItemRow()` in Bulk Edit
+- **Fixed**: Stale `Updated:` comment on APP_VERSION docblock
+
+---
+
 ## [3.24.04] - 2026-02-12
 
 ### Fixed — STACK-55: Bulk Editor retains selected items after close/reopen
