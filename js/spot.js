@@ -391,15 +391,31 @@ const saveTrendRange = (metalKey, days) => {
  * Extracts sparkline data from spotHistory for a given metal and date range
  * @param {string} metalName - Metal name ('Silver', 'Gold', etc.)
  * @param {number} days - Number of days to look back
+ * @param {boolean} [intraday=false] - If true, keep all entries (no per-day dedup)
+ *   and use midnight cutoff instead of current-time offset (STACK-66)
  * @returns {{ labels: string[], data: number[] }} Arrays for Chart.js
  */
-const getSparklineData = (metalName, days) => {
+const getSparklineData = (metalName, days, intraday = false) => {
   const cutoff = new Date();
-  cutoff.setDate(cutoff.getDate() - days);
+  if (intraday) {
+    // Use midnight of N days ago for clean calendar-day boundaries
+    cutoff.setDate(cutoff.getDate() - days);
+    cutoff.setHours(0, 0, 0, 0);
+  } else {
+    cutoff.setDate(cutoff.getDate() - days);
+  }
 
   const entries = spotHistory
     .filter((e) => e.metal === metalName && new Date(e.timestamp) >= cutoff)
     .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+
+  if (intraday) {
+    // Return all entries for granular intraday detail
+    return {
+      labels: entries.map((e) => e.timestamp),
+      data: entries.map((e) => e.spot),
+    };
+  }
 
   // Deduplicate by date string (keep last entry per day)
   const byDay = new Map();
@@ -434,9 +450,11 @@ const updateSparkline = (metalKey) => {
   const rangeSelect = document.getElementById(`spotRange${metalConfig.name}`);
   const days = rangeSelect ? parseInt(rangeSelect.value, 10) : 90;
 
-  // 1-day view: widen to 2-day window (yesterday→today) for sparkline (STACK-66)
-  const effectiveDays = (days === 1) ? 2 : days;
-  let { labels, data } = getSparklineData(metalConfig.name, effectiveDays);
+  // 1-day view: use 3-day intraday window with all data points (STACK-66)
+  // 3 days ensures ≥2 points even with once-daily API refreshes
+  const isIntraday = (days === 1);
+  const effectiveDays = isIntraday ? 3 : days;
+  let { labels, data } = getSparklineData(metalConfig.name, effectiveDays, isIntraday);
 
   // Destroy existing chart instance
   if (sparklineInstances[metalKey]) {
@@ -512,9 +530,10 @@ const updateSpotChangePercent = (metalKey) => {
 
   const rangeSelect = document.getElementById(`spotRange${metalConfig.name}`);
   const days = rangeSelect ? parseInt(rangeSelect.value, 10) : 90;
-  // 1-day view: widen to 2-day window for yesterday→today comparison (STACK-66)
-  const effectiveDays = (days === 1) ? 2 : days;
-  const { data } = getSparklineData(metalConfig.name, effectiveDays);
+  // 1-day view: use 3-day intraday window for yesterday→today comparison (STACK-66)
+  const isIntraday = (days === 1);
+  const effectiveDays = isIntraday ? 3 : days;
+  const { data } = getSparklineData(metalConfig.name, effectiveDays, isIntraday);
 
   if (data.length < 2) {
     el.textContent = "";
