@@ -635,7 +635,7 @@ const parseItemFormFields = (isEditing, existingItem) => {
     const enteredMv = parseFloat(marketValueInput);
     marketValue = fxRate !== 1 ? enteredMv / fxRate : enteredMv;
   } else {
-    marketValue = isEditing ? (existingItem.marketValue || 0) : 0;
+    marketValue = 0;
   }
 
   return {
