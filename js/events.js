@@ -486,24 +486,17 @@ const setupTableSortListeners = () => {
   // GOLDBACK DENOMINATION PICKER TOGGLE (STACK-45)
   // Swaps weight text input ↔ denomination select when unit changes to/from 'gb'.
   // Auto-fills hidden weight value from the selected denomination.
+  const showEl = (el, visible) => { if (el) el.style.display = visible ? '' : 'none'; };
   window.toggleGbDenomPicker = () => {
-    const isGb = elements.itemWeightUnit && elements.itemWeightUnit.value === 'gb';
+    const isGb = elements.itemWeightUnit?.value === 'gb';
+    const denomSelect = elements.itemGbDenom;
     const weightInput = elements.itemWeight;
-    const denomSelect = elements.itemGbDenom || document.getElementById('itemGbDenom');
     const weightLabel = document.getElementById('itemWeightLabel');
 
-    if (denomSelect) {
-      denomSelect.style.display = isGb ? '' : 'none';
-    }
-    if (weightInput) {
-      weightInput.style.display = isGb ? 'none' : '';
-      if (isGb && denomSelect) {
-        weightInput.value = denomSelect.value;
-      }
-    }
-    if (weightLabel) {
-      weightLabel.textContent = isGb ? 'Denomination' : 'Weight';
-    }
+    showEl(denomSelect, isGb);
+    showEl(weightInput, !isGb);
+    if (isGb && weightInput && denomSelect) weightInput.value = denomSelect.value;
+    if (weightLabel) weightLabel.textContent = isGb ? 'Denomination' : 'Weight';
   };
 };
 

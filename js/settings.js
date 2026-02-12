@@ -117,25 +117,21 @@ const switchLogTab = (key) => {
   }
 };
 
+/** Dispatch map: log sub-tab key → window function name */
+const LOG_TAB_RENDERERS = {
+  changelog: 'renderChangeLog',
+  metals: 'renderSpotHistoryTable',
+  catalogs: 'renderCatalogHistoryForSettings',
+  pricehistory: 'renderItemPriceHistoryTable',
+};
+
 /**
  * Dispatches to the appropriate render function for a log sub-tab.
  * @param {string} key - Sub-tab key
  */
 const renderLogTab = (key) => {
-  switch (key) {
-    case 'changelog':
-      if (typeof renderChangeLog === 'function') renderChangeLog();
-      break;
-    case 'metals':
-      if (typeof renderSpotHistoryTable === 'function') renderSpotHistoryTable();
-      break;
-    case 'catalogs':
-      if (typeof renderCatalogHistoryForSettings === 'function') renderCatalogHistoryForSettings();
-      break;
-    case 'pricehistory':
-      if (typeof renderItemPriceHistoryTable === 'function') renderItemPriceHistoryTable();
-      break;
-  }
+  const fn = window[LOG_TAB_RENDERERS[key]];
+  if (typeof fn === 'function') fn();
 };
 
 /**
