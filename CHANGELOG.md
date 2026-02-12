@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.24.03] - 2026-02-12
+
+### Fixed — Goldback melt/retail/weight in Details Modal
+
+- **Fixed**: Goldback melt values inflated 1000x in Details Modal — apply `GB_TO_OZT` conversion and denomination retail pricing
+
+---
+
 ## [3.24.02] - 2026-02-11
 
 ### Added — STACK-44: Settings Log Tab Reorganization
