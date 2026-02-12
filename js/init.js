@@ -118,6 +118,16 @@ document.addEventListener("DOMContentLoaded", async () => {
     elements.settingsBtn = safeGetElement("settingsBtn", true);
     elements.aboutBtn = safeGetElement("aboutBtn");
 
+    // STACK-54 header toggles
+    elements.headerThemeBtn = safeGetElement("headerThemeBtn");
+    elements.headerCurrencyBtn = safeGetElement("headerCurrencyBtn");
+
+    // STACK-54 layout sections
+    elements.spotPricesSection = safeGetElement("spotPricesSection");
+    elements.totalsSectionEl = safeGetElement("totalsSectionEl");
+    elements.searchSectionEl = safeGetElement("searchSectionEl");
+    elements.tableSectionEl = safeGetElement("tableSectionEl");
+
     // Check if critical buttons exist
     debugLog(
       "Settings Button found:",
@@ -407,6 +417,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     } else if (earlyTheme === 'sepia') {
       document.documentElement.setAttribute('data-theme', 'sepia');
     }
+
+    // Apply header toggle & layout visibility from saved prefs (STACK-54)
+    if (typeof applyHeaderToggleVisibility === 'function') applyHeaderToggleVisibility();
+    if (typeof applyLayoutVisibility === 'function') applyLayoutVisibility();
 
     // Phase 13: Initial Rendering
     debugLog("Phase 13: Rendering initial display...");
