@@ -272,6 +272,7 @@ const setupAckModalEvents = () => {
  */
 const getEmbeddedWhatsNew = () => {
   return `
+    <li><strong>v3.24.06 &ndash; STACK-56: Complexity reduction</strong>: Refactored 6 functions below Lizard CCN threshold &mdash; dispatch maps, extracted helpers, optionalListener utility. &minus;301 lines from events.js</li>
     <li><strong>v3.24.05 &ndash; Code cleanup</strong>: Fix debugLog warn level, remove dead parameter, update version comment</li>
     <li><strong>v3.24.04 &ndash; STACK-55: Bulk Editor clean selection</strong>: Bulk Editor now resets selection on every open. Removed stale localStorage persistence</li>
     <li><strong>v3.24.03 &ndash; Fix Goldback melt/retail/weight in Details Modal</strong>: Goldback melt values no longer inflated 1000x in breakdown modals. Applies GB_TO_OZT conversion and denomination retail pricing</li>
