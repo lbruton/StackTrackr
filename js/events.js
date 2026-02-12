@@ -552,6 +552,268 @@ const setupTableSortListeners = () => {
   };
 };
 
+// FORM SUBMIT HELPERS (STACK-61)
+// =============================================================================
+
+/**
+ * Parses weight from form input, handling Goldback denominations,
+ * fractions, and gram-to-troy-oz conversion.
+ * @param {string} weightRaw - Raw weight input value
+ * @param {string} weightUnit - Unit: 'oz', 'g', or 'gb'
+ * @param {boolean} isEditing - Whether in edit mode
+ * @param {Object} existingItem - Existing item (edit mode)
+ * @returns {number} Weight in troy ounces (or denomination value for gb)
+ */
+const parseWeight = (weightRaw, weightUnit, isEditing, existingItem) => {
+  if (isEditing && weightRaw === '') {
+    return typeof existingItem.weight !== 'undefined' ? existingItem.weight : 0;
+  }
+  let weight = parseFraction(weightRaw);
+  if (weightUnit === 'g') {
+    weight = gramsToOzt(weight);
+  }
+  // gb: weight stays as raw denomination value (conversion happens in computeMeltValue)
+  return isNaN(weight) ? 0 : parseFloat(weight.toFixed(6));
+};
+
+/**
+ * Converts a user-entered price from display currency to USD.
+ * @param {string} rawValue - Raw price input value
+ * @param {number} fxRate - Exchange rate (display currency per 1 USD)
+ * @param {boolean} isEditing - Whether in edit mode
+ * @param {number} existingValue - Existing price (edit mode)
+ * @returns {number} Price in USD
+ */
+const parsePriceToUSD = (rawValue, fxRate, isEditing, existingValue) => {
+  if (isEditing && rawValue === '') {
+    return typeof existingValue !== 'undefined' ? existingValue : 0;
+  }
+  let entered = rawValue === '' ? 0 : parseFloat(rawValue);
+  entered = isNaN(entered) || entered < 0 ? 0 : entered;
+  return fxRate !== 1 ? entered / fxRate : entered;
+};
+
+/**
+ * Reads purity from the select/custom input pair.
+ * @param {boolean} isEditing - Whether in edit mode
+ * @param {Object} existingItem - Existing item (edit mode)
+ * @returns {number} Purity value (0–1)
+ */
+const parsePurity = (isEditing, existingItem) => {
+  const puritySelect = elements.itemPuritySelect;
+  if (puritySelect && puritySelect.value === 'custom') {
+    return elements.itemPurity ? (parseFloat(elements.itemPurity.value) || 1.0) : 1.0;
+  }
+  if (puritySelect) {
+    return parseFloat(puritySelect.value) || 1.0;
+  }
+  return isEditing ? (existingItem.purity || 1.0) : 1.0;
+};
+
+/**
+ * Reads all form fields and returns a parsed fields object.
+ * @param {boolean} isEditing - Whether in edit mode
+ * @param {Object} existingItem - Existing item (edit mode)
+ * @returns {Object} Parsed field values
+ */
+const parseItemFormFields = (isEditing, existingItem) => {
+  const composition = getCompositionFirstWords(elements.itemMetal.value);
+  const metal = parseNumistaMetal(composition);
+  const fxRate = (typeof getExchangeRate === 'function') ? getExchangeRate() : 1;
+
+  const nameInput = elements.itemName.value.trim();
+  const qtyInput = elements.itemQty.value.trim();
+
+  const weightUnit = elements.itemWeightUnit.value;
+  const weightRaw = (weightUnit === 'gb' && elements.itemGbDenom)
+    ? elements.itemGbDenom.value
+    : elements.itemWeight.value;
+
+  const marketValueInput = elements.itemMarketValue ? elements.itemMarketValue.value.trim() : '';
+  let marketValue;
+  if (marketValueInput && !isNaN(parseFloat(marketValueInput))) {
+    const enteredMv = parseFloat(marketValueInput);
+    marketValue = fxRate !== 1 ? enteredMv / fxRate : enteredMv;
+  } else {
+    marketValue = isEditing ? (existingItem.marketValue || 0) : 0;
+  }
+
+  return {
+    metal,
+    composition,
+    name: isEditing ? (nameInput || existingItem.name || '') : nameInput,
+    qty: qtyInput === '' ? (isEditing ? (existingItem.qty || 1) : 1) : parseInt(qtyInput, 10),
+    type: elements.itemType.value || (isEditing ? existingItem.type : ''),
+    weight: parseWeight(weightRaw, weightUnit, isEditing, existingItem),
+    weightUnit,
+    price: parsePriceToUSD(elements.itemPrice.value.trim(), fxRate, isEditing, existingItem.price),
+    purchaseLocation: elements.purchaseLocation.value.trim() || (isEditing ? (existingItem.purchaseLocation || '') : ''),
+    storageLocation: elements.storageLocation.value.trim() || (isEditing ? (existingItem.storageLocation || 'Unknown') : 'Unknown'),
+    serialNumber: elements.itemSerialNumber?.value?.trim() || (isEditing ? (existingItem.serialNumber || '') : ''),
+    notes: elements.itemNotes.value.trim() || (isEditing ? (existingItem.notes || '') : ''),
+    date: elements.itemDate.value || (isEditing ? (existingItem.date || '') : todayStr()),
+    catalog: elements.itemCatalog ? elements.itemCatalog.value.trim() : '',
+    year: elements.itemYear?.value?.trim() || '',
+    grade: elements.itemGrade?.value?.trim() || '',
+    gradingAuthority: elements.itemGradingAuthority?.value?.trim() || '',
+    certNumber: elements.itemCertNumber?.value?.trim() || '',
+    pcgsNumber: elements.itemPcgsNumber?.value?.trim() || '',
+    marketValue,
+    purity: parsePurity(isEditing, existingItem),
+    currency: displayCurrency,
+  };
+};
+
+/**
+ * Validates mandatory item fields.
+ * @param {Object} f - Parsed fields from parseItemFormFields()
+ * @returns {string|null} Error message or null if valid
+ */
+const validateItemFields = (f) => {
+  if (
+    !f.name || !f.date || !f.type || !f.metal ||
+    isNaN(f.weight) || f.weight <= 0 ||
+    isNaN(f.qty) || f.qty < 1 || !Number.isInteger(f.qty)
+  ) {
+    return "Please enter valid values for Name, Date, Type, Metal, Weight, and Quantity.";
+  }
+  return null;
+};
+
+/**
+ * Commits a parsed item to inventory (add or edit mode).
+ * @param {Object} f - Parsed fields from parseItemFormFields()
+ * @param {boolean} isEditing - Whether in edit mode
+ * @param {number|null} editIdx - Index being edited (null for add)
+ */
+const commitItemToInventory = (f, isEditing, editIdx) => {
+  if (isEditing) {
+    const oldItem = { ...inventory[editIdx] };
+    const serial = oldItem.serial;
+
+    inventory[editIdx] = {
+      ...oldItem,
+      metal: f.metal,
+      composition: f.composition,
+      name: f.name,
+      qty: f.qty,
+      type: f.type,
+      weight: f.weight,
+      weightUnit: f.weightUnit,
+      price: f.price,
+      marketValue: f.marketValue,
+      date: f.date,
+      purchaseLocation: f.purchaseLocation,
+      storageLocation: f.storageLocation,
+      serialNumber: f.serialNumber,
+      notes: f.notes,
+      year: f.year,
+      grade: f.grade,
+      gradingAuthority: f.gradingAuthority,
+      certNumber: f.certNumber,
+      pcgsNumber: f.pcgsNumber,
+      purity: f.purity,
+      isCollectable: false,
+      numistaId: f.catalog,
+      currency: f.currency,
+    };
+
+    addCompositionOption(f.composition);
+
+    try {
+      if (window.catalogManager && inventory[editIdx].numistaId) {
+        catalogManager.setCatalogId(serial, inventory[editIdx].numistaId);
+      }
+    } catch (catErr) {
+      console.warn('Failed to update catalog mapping:', catErr);
+    }
+
+    saveInventory();
+
+    // Record price data point if price-related fields changed (STACK-43)
+    if (typeof recordSingleItemPrice === 'function') {
+      const cur = inventory[editIdx];
+      const priceChanged = oldItem.marketValue !== cur.marketValue
+        || oldItem.price !== cur.price || oldItem.weight !== cur.weight
+        || oldItem.qty !== cur.qty || oldItem.metal !== cur.metal
+        || oldItem.purity !== cur.purity;
+      if (priceChanged) recordSingleItemPrice(cur, 'edit');
+    }
+
+    renderTable();
+    renderActiveFilters();
+    logItemChanges(oldItem, inventory[editIdx]);
+
+    editingIndex = null;
+    editingChangeLogIndex = null;
+  } else {
+    const metalKey = f.metal.toLowerCase();
+    const spotPriceAtPurchase = spotPrices[metalKey] ?? 0;
+    const serial = getNextSerial();
+
+    inventory.push({
+      metal: f.metal,
+      composition: f.composition,
+      name: f.name,
+      qty: f.qty,
+      type: f.type,
+      weight: f.weight,
+      weightUnit: f.weightUnit,
+      price: f.price,
+      marketValue: f.marketValue,
+      date: f.date,
+      purchaseLocation: f.purchaseLocation,
+      storageLocation: f.storageLocation,
+      serialNumber: f.serialNumber,
+      notes: f.notes,
+      year: f.year,
+      grade: f.grade,
+      gradingAuthority: f.gradingAuthority,
+      certNumber: f.certNumber,
+      pcgsNumber: f.pcgsNumber,
+      pcgsVerified: false,
+      purity: f.purity,
+      spotPriceAtPurchase,
+      premiumPerOz: 0,
+      totalPremium: 0,
+      isCollectable: false,
+      serial,
+      uuid: generateUUID(),
+      numistaId: f.catalog,
+      currency: f.currency,
+    });
+
+    typeof registerName === "function" && registerName(f.name);
+    addCompositionOption(f.composition);
+
+    if (window.catalogManager && f.catalog) {
+      catalogManager.setCatalogId(serial, f.catalog);
+    }
+
+    saveInventory();
+
+    // Record initial price data point (STACK-43)
+    if (typeof recordSingleItemPrice === 'function') {
+      recordSingleItemPrice(inventory[inventory.length - 1], 'add');
+    }
+
+    renderTable();
+  }
+};
+
+/**
+ * Builds a Numista search query, prepending metal if not already in name.
+ * @param {string} nameVal - Item name input value
+ * @param {string} metalVal - Metal composition value
+ * @returns {string} Search query
+ */
+const buildNumistaSearchQuery = (nameVal, metalVal) => {
+  if (metalVal && !nameVal.toLowerCase().includes(metalVal.toLowerCase())) {
+    return `${metalVal} ${nameVal}`;
+  }
+  return nameVal;
+};
+
 /**
  * Sets up item form submission and related button listeners
  */
@@ -568,209 +830,13 @@ const setupItemFormListeners = () => {
         const isEditing = editingIndex !== null;
         const existingItem = isEditing ? { ...inventory[editingIndex] } : {};
 
-        // Read all fields (same for both modes)
-        const composition = getCompositionFirstWords(elements.itemMetal.value);
-        const metal = parseNumistaMetal(composition);
+        const fields = parseItemFormFields(isEditing, existingItem);
+        const error = validateItemFields(fields);
+        if (error) { alert(error); return; }
 
-        const nameInput = elements.itemName.value.trim();
-        const name = isEditing ? (nameInput || existingItem.name || '') : nameInput;
+        commitItemToInventory(fields, isEditing, editingIndex);
 
-        const qtyInput = elements.itemQty.value.trim();
-        const qty = qtyInput === '' ? (isEditing ? (existingItem.qty || 1) : 1) : parseInt(qtyInput, 10);
-
-        const type = elements.itemType.value || (isEditing ? existingItem.type : '');
-
-        // Weight: uses real <select>, supports fraction input (e.g. "1/1000", "1 1/2")
-        const weightUnit = elements.itemWeightUnit.value;
-        const denomSelect = elements.itemGbDenom || document.getElementById('itemGbDenom');
-        const weightRaw = (weightUnit === 'gb' && denomSelect) ? denomSelect.value : elements.itemWeight.value;
-        let weight;
-        if (isEditing && weightRaw === '') {
-          weight = typeof existingItem.weight !== 'undefined' ? existingItem.weight : 0;
-        } else {
-          weight = parseFraction(weightRaw);
-          if (weightUnit === 'g') {
-            weight = gramsToOzt(weight);
-          }
-          // gb: weight stays as raw denomination value (conversion happens in computeMeltValue)
-          weight = isNaN(weight) ? 0 : parseFloat(weight.toFixed(6));
-        }
-
-        // Price: in edit mode, empty field preserves existing price
-        // User enters in display currency; convert to USD for storage (STACK-50)
-        const priceRaw = elements.itemPrice.value.trim();
-        const fxRate = (typeof getExchangeRate === 'function') ? getExchangeRate() : 1;
-        let price;
-        if (isEditing && priceRaw === '') {
-          price = typeof existingItem.price !== 'undefined' ? existingItem.price : 0;
-        } else {
-          let enteredPrice = priceRaw === '' ? 0 : parseFloat(priceRaw);
-          enteredPrice = isNaN(enteredPrice) || enteredPrice < 0 ? 0 : enteredPrice;
-          price = fxRate !== 1 ? enteredPrice / fxRate : enteredPrice;
-        }
-
-        const purchaseLocation = elements.purchaseLocation.value.trim() || (isEditing ? (existingItem.purchaseLocation || '') : '');
-        const storageLocation = elements.storageLocation.value.trim() || (isEditing ? (existingItem.storageLocation || 'Unknown') : 'Unknown');
-        const serialNumber = (elements.itemSerialNumber || document.getElementById('itemSerialNumber'))?.value?.trim() || (isEditing ? (existingItem.serialNumber || '') : '');
-        const notes = elements.itemNotes.value.trim() || (isEditing ? (existingItem.notes || '') : '');
-        const date = elements.itemDate.value || (isEditing ? (existingItem.date || '') : todayStr());
-
-        const catalog = elements.itemCatalog ? elements.itemCatalog.value.trim() : '';
-        const year = (elements.itemYear || document.getElementById('itemYear'))?.value?.trim() || '';
-        const grade = (elements.itemGrade || document.getElementById('itemGrade'))?.value?.trim() || '';
-        const gradingAuthority = (elements.itemGradingAuthority || document.getElementById('itemGradingAuthority'))?.value?.trim() || '';
-        const certNumber = (elements.itemCertNumber || document.getElementById('itemCertNumber'))?.value?.trim() || '';
-        const pcgsNumber = (elements.itemPcgsNumber || document.getElementById('itemPcgsNumber'))?.value?.trim() || '';
-        const marketValueInput = elements.itemMarketValue ? elements.itemMarketValue.value.trim() : '';
-        let marketValue;
-        if (marketValueInput && !isNaN(parseFloat(marketValueInput))) {
-          const enteredMv = parseFloat(marketValueInput);
-          marketValue = fxRate !== 1 ? enteredMv / fxRate : enteredMv;
-        } else {
-          marketValue = isEditing ? (existingItem.marketValue || 0) : 0;
-        }
-
-        // Purity: read from select or custom input
-        let purity = 1.0;
-        const puritySelect = elements.itemPuritySelect || document.getElementById('itemPuritySelect');
-        if (puritySelect && puritySelect.value === 'custom') {
-          const purityInput = elements.itemPurity || document.getElementById('itemPurity');
-          purity = purityInput ? (parseFloat(purityInput.value) || 1.0) : 1.0;
-        } else if (puritySelect) {
-          purity = parseFloat(puritySelect.value) || 1.0;
-        }
-        if (isEditing && !puritySelect) {
-          purity = existingItem.purity || 1.0;
-        }
-
-        // Validate mandatory fields
-        if (
-          !name ||
-          !date ||
-          !type ||
-          !metal ||
-          isNaN(weight) ||
-          weight <= 0 ||
-          isNaN(qty) ||
-          qty < 1 ||
-          !Number.isInteger(qty)
-        ) {
-          return alert("Please enter valid values for Name, Date, Type, Metal, Weight, and Quantity.");
-        }
-
-        if (isEditing) {
-          // --- EDIT MODE ---
-          const oldItem = { ...inventory[editingIndex] };
-          const serial = oldItem.serial;
-
-          inventory[editingIndex] = {
-            ...oldItem,
-            metal,
-            composition,
-            name,
-            qty,
-            type,
-            weight,
-            weightUnit,
-            price,
-            marketValue,
-            date,
-            purchaseLocation,
-            storageLocation,
-            serialNumber,
-            notes,
-            year,
-            grade,
-            gradingAuthority,
-            certNumber,
-            pcgsNumber,
-            purity,
-            isCollectable: false,
-            numistaId: catalog,
-            currency: displayCurrency,
-          };
-
-          addCompositionOption(composition);
-
-          try {
-            if (window.catalogManager && inventory[editingIndex].numistaId) {
-              catalogManager.setCatalogId(serial, inventory[editingIndex].numistaId);
-            }
-          } catch (catErr) {
-            console.warn('Failed to update catalog mapping:', catErr);
-          }
-
-          saveInventory();
-
-          // Record price data point if price-related fields changed (STACK-43)
-          if (typeof recordSingleItemPrice === 'function') {
-            const cur = inventory[editingIndex];
-            const priceChanged = oldItem.marketValue !== cur.marketValue
-              || oldItem.price !== cur.price || oldItem.weight !== cur.weight
-              || oldItem.qty !== cur.qty || oldItem.metal !== cur.metal
-              || oldItem.purity !== cur.purity;
-            if (priceChanged) recordSingleItemPrice(cur, 'edit');
-          }
-
-          renderTable();
-          renderActiveFilters();
-          logItemChanges(oldItem, inventory[editingIndex]);
-
-          editingIndex = null;
-          editingChangeLogIndex = null;
-        } else {
-          // --- ADD MODE ---
-          const metalKey = metal.toLowerCase();
-          const spotPriceAtPurchase = spotPrices[metalKey] ?? 0;
-          const serial = getNextSerial();
-
-          inventory.push({
-            metal,
-            composition,
-            name,
-            qty,
-            type,
-            weight,
-            weightUnit,
-            price,
-            marketValue,
-            date,
-            purchaseLocation,
-            storageLocation,
-            serialNumber,
-            notes,
-            year,
-            grade,
-            gradingAuthority,
-            certNumber,
-            pcgsNumber,
-            pcgsVerified: false,
-            purity,
-            spotPriceAtPurchase,
-            premiumPerOz: 0,
-            totalPremium: 0,
-            isCollectable: false,
-            serial,
-            uuid: generateUUID(),
-            numistaId: catalog,
-            currency: displayCurrency,
-          });
-
-          typeof registerName === "function" && registerName(name);
-          addCompositionOption(composition);
-
-          if (window.catalogManager && catalog) {
-            catalogManager.setCatalogId(serial, catalog);
-          }
-
-          saveInventory();
-
-          // Record initial price data point (STACK-43)
-          if (typeof recordSingleItemPrice === 'function') {
-            recordSingleItemPrice(inventory[inventory.length - 1], 'add');
-          }
-
-          renderTable();
+        if (!isEditing) {
           this.reset();
           elements.itemWeightUnit.value = "oz";
           elements.itemDate.value = todayStr();
@@ -855,8 +921,8 @@ const setupItemFormListeners = () => {
       elements.searchNumistaBtn,
       "click",
       async () => {
-        const catalogVal = (elements.itemCatalog || document.getElementById('itemCatalog'))?.value.trim() || '';
-        const nameVal = (elements.itemName || document.getElementById('itemName'))?.value.trim() || '';
+        const catalogVal = elements.itemCatalog?.value.trim() || '';
+        const nameVal = elements.itemName?.value.trim() || '';
 
         if (!catalogVal && !nameVal) {
           alert('Enter a Name or Catalog N# to search.');
@@ -879,30 +945,21 @@ const setupItemFormListeners = () => {
           'Bar': 'exonumia',
           'Round': 'exonumia',
           'Note': 'banknote',
-          // Aurum omitted — Goldbacks are "Embedded-asset notes" on Numista,
-          // which isn't a valid API category. Uncategorized search finds them.
-          // Set omitted — Numista sets use a different URL scheme (set.php)
-          // and are not searchable via the /types API endpoint.
         };
 
         try {
           if (catalogVal) {
-            // Direct N# lookup → single result
             const result = await catalogAPI.lookupItem(catalogVal);
             showNumistaResults(result ? [result] : [], true, catalogVal);
           } else {
-            // Name search → multiple results with smart category/metal filtering
-            const typeVal = (elements.itemType || document.getElementById('itemType'))?.value || '';
-            const metalVal = (elements.itemMetal || document.getElementById('itemMetal'))?.value || '';
+            const typeVal = elements.itemType?.value || '';
+            const metalVal = elements.itemMetal?.value || '';
 
             const searchFilters = { limit: 20 };
             const numistaCategory = TYPE_TO_NUMISTA_CATEGORY[typeVal];
             if (numistaCategory) searchFilters.category = numistaCategory;
 
-            // Prepend metal to query for better results (avoid doubling e.g. "Silver Silver Eagle")
-            const searchQuery = metalVal && !nameVal.toLowerCase().includes(metalVal.toLowerCase())
-              ? `${metalVal} ${nameVal}` : nameVal;
-
+            const searchQuery = buildNumistaSearchQuery(nameVal, metalVal);
             const results = await catalogAPI.searchItems(searchQuery, searchFilters);
             showNumistaResults(results, false, searchQuery);
           }
@@ -964,8 +1021,7 @@ const setupItemFormListeners = () => {
 
 /** Closes the notes modal and resets the notes index. */
 const dismissNotesModal = () => {
-  const modal = elements.notesModal || document.getElementById("notesModal");
-  if (modal) modal.style.display = "none";
+  if (elements.notesModal) elements.notesModal.style.display = "none";
   notesIndex = null;
 };
 
@@ -976,8 +1032,7 @@ const setupNoteAndModalListeners = () => {
   // NOTES MODAL BUTTONS
   optionalListener(elements.saveNotesBtn, "click", () => {
     if (notesIndex === null) return;
-    const textareaElement = elements.notesTextarea || document.getElementById("notesTextarea");
-    const text = textareaElement ? textareaElement.value.trim() : "";
+    const text = elements.notesTextarea ? elements.notesTextarea.value.trim() : "";
 
     const oldItem = { ...inventory[notesIndex] };
     inventory[notesIndex].notes = text;
@@ -1449,7 +1504,7 @@ const setupSearch = () => {
           if (elements.itemModalSubmit) elements.itemModalSubmit.textContent = "Add to Inventory";
           if (elements.undoChangeBtn) elements.undoChangeBtn.style.display = "none";
           // Reset purity to default (form.reset already sets select to first option)
-          const purityCustom = elements.purityCustomWrapper || document.getElementById('purityCustomWrapper');
+          const purityCustom = elements.purityCustomWrapper;
           if (purityCustom) purityCustom.style.display = 'none';
           // Reset gb denomination picker (STACK-45)
           if (typeof toggleGbDenomPicker === 'function') toggleGbDenomPicker();
