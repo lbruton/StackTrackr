@@ -434,25 +434,14 @@ const updateSparkline = (metalKey) => {
   const rangeSelect = document.getElementById(`spotRange${metalConfig.name}`);
   const days = rangeSelect ? parseInt(rangeSelect.value, 10) : 90;
 
-  const { labels, data } = getSparklineData(metalConfig.name, days);
+  // 1-day view: widen to 2-day window (yesterday→today) for sparkline (STACK-66)
+  const effectiveDays = (days === 1) ? 2 : days;
+  let { labels, data } = getSparklineData(metalConfig.name, effectiveDays);
 
   // Destroy existing chart instance
   if (sparklineInstances[metalKey]) {
     sparklineInstances[metalKey].destroy();
     sparklineInstances[metalKey] = null;
-  }
-
-  // 1-day view: solid color bar instead of sparkline
-  // TODO: Future enhancement — use MetalpriceAPI /v1/hourly endpoint
-  // for intraday sparkline when provider is configured (paid tier: up to 7 days)
-  if (days === 1) {
-    const ctx = canvas.getContext("2d");
-    const color = getMetalColor(metalKey);
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = color + "20"; // 12% opacity
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    updateSpotChangePercent(metalKey);
-    return;
   }
 
   // Need at least 2 data points for a meaningful line
@@ -523,7 +512,9 @@ const updateSpotChangePercent = (metalKey) => {
 
   const rangeSelect = document.getElementById(`spotRange${metalConfig.name}`);
   const days = rangeSelect ? parseInt(rangeSelect.value, 10) : 90;
-  const { data } = getSparklineData(metalConfig.name, days);
+  // 1-day view: widen to 2-day window for yesterday→today comparison (STACK-66)
+  const effectiveDays = (days === 1) ? 2 : days;
+  const { data } = getSparklineData(metalConfig.name, effectiveDays);
 
   if (data.length < 2) {
     el.textContent = "";
