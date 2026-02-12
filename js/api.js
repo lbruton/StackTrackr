@@ -949,7 +949,7 @@ const fetchLatestPrices = async (provider, apiKey, selectedMetals) => {
           throw new Error('Custom API base must use HTTPS');
         }
       } catch (urlErr) {
-        debugLog('warn', 'Invalid custom API base URL:', base, urlErr.message);
+        console.warn('Invalid custom API base URL:', base, urlErr.message);
         return results;
       }
       const metalCodes = {
