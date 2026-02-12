@@ -108,13 +108,16 @@ const populateAckModal = () => {
  * Loads announcements and populates changelog and roadmap sections
  */
 const loadAnnouncements = async () => {
-  const latestList = document.getElementById("aboutChangelogLatest");
+  const whatsNewTargets = [
+    document.getElementById("aboutChangelogLatest"),
+    document.getElementById("versionChanges"),
+  ].filter(Boolean);
   const roadmapTargets = [
     document.getElementById("aboutRoadmapList"),
     document.getElementById("versionRoadmapList"),
   ].filter(Boolean);
 
-  if (!latestList && !roadmapTargets.length) return;
+  if (!whatsNewTargets.length && !roadmapTargets.length) return;
 
   try {
     const res = await fetch("docs/announcements.md");
@@ -136,15 +139,16 @@ const loadAnnouncements = async () => {
           .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>"));
 
     const whatsNewItems = parseList(section("What's New"));
-    if (latestList) {
-      // nosemgrep: javascript.browser.security.insecure-innerhtml.insecure-innerhtml, javascript.browser.security.insecure-document-method.insecure-document-method
-      latestList.innerHTML =
+    if (whatsNewTargets.length) {
+      const html =
         whatsNewItems.length > 0
           ? whatsNewItems
               .slice(0, 5)
               .map((i) => `<li>${i}</li>`)
               .join("")
           : "<li>No recent announcements</li>";
+      // nosemgrep: javascript.browser.security.insecure-innerhtml.insecure-innerhtml, javascript.browser.security.insecure-document-method.insecure-document-method
+      whatsNewTargets.forEach((el) => (el.innerHTML = html));
     }
 
     const roadmapItems = parseList(section("Development Roadmap"));
@@ -166,10 +170,8 @@ const loadAnnouncements = async () => {
     const embeddedWhatsNew = getEmbeddedWhatsNew();
     const embeddedRoadmap = getEmbeddedRoadmap();
     
-    if (latestList) {
-      // nosemgrep: javascript.browser.security.insecure-innerhtml.insecure-innerhtml, javascript.browser.security.insecure-document-method.insecure-document-method
-      latestList.innerHTML = embeddedWhatsNew;
-    }
+    // nosemgrep: javascript.browser.security.insecure-innerhtml.insecure-innerhtml, javascript.browser.security.insecure-document-method.insecure-document-method
+    whatsNewTargets.forEach((el) => (el.innerHTML = embeddedWhatsNew));
     // nosemgrep: javascript.browser.security.insecure-innerhtml.insecure-innerhtml, javascript.browser.security.insecure-document-method.insecure-document-method
     roadmapTargets.forEach((el) => (el.innerHTML = embeddedRoadmap));
   }
@@ -272,6 +274,7 @@ const setupAckModalEvents = () => {
  */
 const getEmbeddedWhatsNew = () => {
   return `
+    <li><strong>v3.25.01 &ndash; STACK-64, STACK-67: Version splash fix &amp; update badge</strong>: Version splash now shows friendly &ldquo;What&rsquo;s New&rdquo; content. Footer version badge links to GitHub releases; on hosted sites, checks for updates with 24hr cache</li>
     <li><strong>v3.25.00 &ndash; STACK-54, STACK-66: Appearance settings &amp; sparkline improvements</strong>: Header quick-access buttons for theme and currency. Layout visibility toggles. 1-day sparkline with daily-averaged trend. Spot lookup now fills visible price field. 15/30-minute API cache options</li>
     <li><strong>v3.24.06 &ndash; STACK-56: Complexity reduction</strong>: Refactored 6 functions below Lizard CCN threshold &mdash; dispatch maps, extracted helpers, optionalListener utility. &minus;301 lines from events.js</li>
     <li><strong>v3.24.04 &ndash; STACK-55: Bulk Editor clean selection</strong>: Bulk Editor now resets selection on every open. Removed stale localStorage persistence</li>
