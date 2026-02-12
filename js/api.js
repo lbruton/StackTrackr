@@ -360,7 +360,7 @@ const updateProviderSettings = (provider) => {
   const cacheSelect = document.getElementById(`cacheTimeout_${provider}`);
   if (cacheSelect) {
     if (!config.cacheTimeouts) config.cacheTimeouts = {};
-    config.cacheTimeouts[provider] = parseInt(cacheSelect.value);
+    config.cacheTimeouts[provider] = parseFloat(cacheSelect.value);
   }
 
   saveApiConfig(config);

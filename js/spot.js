@@ -391,15 +391,38 @@ const saveTrendRange = (metalKey, days) => {
  * Extracts sparkline data from spotHistory for a given metal and date range
  * @param {string} metalName - Metal name ('Silver', 'Gold', etc.)
  * @param {number} days - Number of days to look back
+ * @param {boolean} [intraday=false] - If true, keep all entries (no per-day dedup)
+ *   and use midnight cutoff instead of current-time offset (STACK-66)
  * @returns {{ labels: string[], data: number[] }} Arrays for Chart.js
  */
-const getSparklineData = (metalName, days) => {
+const getSparklineData = (metalName, days, intraday = false) => {
   const cutoff = new Date();
-  cutoff.setDate(cutoff.getDate() - days);
+  if (intraday) {
+    // Use midnight of N days ago for clean calendar-day boundaries
+    cutoff.setDate(cutoff.getDate() - days);
+    cutoff.setHours(0, 0, 0, 0);
+  } else {
+    cutoff.setDate(cutoff.getDate() - days);
+  }
 
   const entries = spotHistory
     .filter((e) => e.metal === metalName && new Date(e.timestamp) >= cutoff)
     .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+
+  if (intraday) {
+    // Average all entries per calendar day for a smooth daily trend
+    const byDay = new Map();
+    entries.forEach((e) => {
+      const day = e.timestamp.slice(0, 10);
+      if (!byDay.has(day)) byDay.set(day, []);
+      byDay.get(day).push(e.spot);
+    });
+    const sorted = [...byDay.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+    return {
+      labels: sorted.map(([day]) => day),
+      data: sorted.map(([, prices]) => prices.reduce((a, b) => a + b, 0) / prices.length),
+    };
+  }
 
   // Deduplicate by date string (keep last entry per day)
   const byDay = new Map();
@@ -434,25 +457,16 @@ const updateSparkline = (metalKey) => {
   const rangeSelect = document.getElementById(`spotRange${metalConfig.name}`);
   const days = rangeSelect ? parseInt(rangeSelect.value, 10) : 90;
 
-  const { labels, data } = getSparklineData(metalConfig.name, days);
+  // 1-day view: use 3-day intraday window with all data points (STACK-66)
+  // 3 days ensures ≥2 points even with once-daily API refreshes
+  const isIntraday = (days === 1);
+  const effectiveDays = isIntraday ? 3 : days;
+  let { labels, data } = getSparklineData(metalConfig.name, effectiveDays, isIntraday);
 
   // Destroy existing chart instance
   if (sparklineInstances[metalKey]) {
     sparklineInstances[metalKey].destroy();
     sparklineInstances[metalKey] = null;
-  }
-
-  // 1-day view: solid color bar instead of sparkline
-  // TODO: Future enhancement — use MetalpriceAPI /v1/hourly endpoint
-  // for intraday sparkline when provider is configured (paid tier: up to 7 days)
-  if (days === 1) {
-    const ctx = canvas.getContext("2d");
-    const color = getMetalColor(metalKey);
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = color + "20"; // 12% opacity
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    updateSpotChangePercent(metalKey);
-    return;
   }
 
   // Need at least 2 data points for a meaningful line
@@ -480,7 +494,7 @@ const updateSparkline = (metalKey) => {
           fill: true,
           borderWidth: 1.5,
           pointRadius: 0,
-          tension: 0.3,
+          tension: isIntraday ? 0 : 0.3,
         },
       ],
     },
@@ -499,7 +513,7 @@ const updateSparkline = (metalKey) => {
           min: 0,
           max: data.length - 1,
         },
-        y: { display: false, beginAtZero: false },
+        y: { display: false, beginAtZero: false, grace: '50%' },
       },
       animation: { duration: 400 },
       interaction: { enabled: false },
@@ -523,7 +537,10 @@ const updateSpotChangePercent = (metalKey) => {
 
   const rangeSelect = document.getElementById(`spotRange${metalConfig.name}`);
   const days = rangeSelect ? parseInt(rangeSelect.value, 10) : 90;
-  const { data } = getSparklineData(metalConfig.name, days);
+  // 1-day view: use 3-day intraday window for yesterday→today comparison (STACK-66)
+  const isIntraday = (days === 1);
+  const effectiveDays = isIntraday ? 3 : days;
+  const { data } = getSparklineData(metalConfig.name, effectiveDays, isIntraday);
 
   if (data.length < 2) {
     el.textContent = "";

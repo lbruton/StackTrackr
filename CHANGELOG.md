@@ -9,6 +9,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.25.00] - 2026-02-12
+
+### Added — STACK-54, STACK-66: Appearance settings, spot lookup & sparkline improvements
+
+- **Added**: Header quick-access buttons — theme cycle and currency picker dropdown (STACK-54)
+- **Added**: Layout visibility toggles — show/hide spot cards, totals, search bar, inventory table (STACK-54)
+- **Added**: Settings nav item and panel for Layout controls (STACK-54)
+- **Added**: 1-day sparkline shows yesterday→today trend with daily-averaged data points (STACK-66)
+- **Added**: 15-minute and 30-minute API cache timeout options for more frequent spot refreshes
+- **Fixed**: Spot lookup "Use" button now updates visible Purchase Price field with currency conversion (STACK-65)
+- **Fixed**: Clearing Retail Price field during editing now correctly reverts to melt value
+- **Fixed**: Spot lookup price rounded to nearest cent
+- **Fixed**: Sparkline Y-axis scaling and curve overshoot on 1-day view
+
+---
+
 ## [3.24.06] - 2026-02-12
 
 ### Changed — STACK-56: Cyclomatic complexity reduction (batch 1 & 2)
