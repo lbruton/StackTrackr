@@ -222,40 +222,31 @@ let settingsPriceSortColumn = '';
 /** @type {boolean} Sort ascending for settings price history table */
 let settingsPriceSortAsc = true;
 
-/**
- * Renders the item price history table in the Settings > Activity Log > Price History sub-tab.
- * Flattens the UUID-keyed object into rows with item name lookups from inventory.
- */
-const renderItemPriceHistoryTable = () => {
-  const table = document.getElementById('settingsPriceHistoryTable');
-  if (!table) return;
+/** Column keys for the price history table, matching <th> order. */
+const PRICE_HISTORY_COLS = ['ts', 'name', 'retail', 'spot', 'melt'];
 
+/**
+ * Flattens, filters, and sorts item price history into renderable rows.
+ * @returns {Array<Object>} Sorted row objects
+ */
+const preparePriceHistoryRows = () => {
   loadItemPriceHistory();
 
-  // Flatten into rows with item name lookup
   const rows = [];
   for (const [uuid, entries] of Object.entries(itemPriceHistory)) {
     const item = inventory.find(i => i.uuid === uuid);
     const name = item ? (item.name || 'Unnamed') : `(deleted: ${uuid.slice(0, 8)})`;
     for (const e of entries) {
-      rows.push({
-        ts: e.ts,
-        name,
-        retail: e.retail,
-        spot: e.spot,
-        melt: e.melt,
-      });
+      rows.push({ ts: e.ts, name, retail: e.retail, spot: e.spot, melt: e.melt });
     }
   }
 
-  // Filter
   let data = rows;
   if (priceHistoryFilterText) {
     const f = priceHistoryFilterText.toLowerCase();
     data = data.filter(r => r.name.toLowerCase().includes(f));
   }
 
-  // Sort
   if (settingsPriceSortColumn) {
     data.sort((a, b) => {
       const valA = a[settingsPriceSortColumn];
@@ -268,6 +259,38 @@ const renderItemPriceHistoryTable = () => {
     data.sort((a, b) => b.ts - a.ts);
   }
 
+  return data;
+};
+
+/**
+ * Attaches click-to-sort handlers to price history table headers.
+ * @param {HTMLTableElement} table
+ */
+const attachPriceHistorySortHeaders = (table) => {
+  table.querySelectorAll('th').forEach(th => {
+    th.style.cursor = 'pointer';
+    th.onclick = () => {
+      const idx = Array.from(th.parentNode.children).indexOf(th);
+      const col = PRICE_HISTORY_COLS[idx];
+      if (settingsPriceSortColumn === col) {
+        settingsPriceSortAsc = !settingsPriceSortAsc;
+      } else {
+        settingsPriceSortColumn = col;
+        settingsPriceSortAsc = true;
+      }
+      renderItemPriceHistoryTable();
+    };
+  });
+};
+
+/**
+ * Renders the item price history table in the Settings > Activity Log > Price History sub-tab.
+ */
+const renderItemPriceHistoryTable = () => {
+  const table = document.getElementById('settingsPriceHistoryTable');
+  if (!table) return;
+
+  const data = preparePriceHistoryRows();
   const tbody = table.querySelector('tbody');
   if (!tbody) return;
 
@@ -279,7 +302,6 @@ const renderItemPriceHistoryTable = () => {
   }
 
   const fmt = (v) => typeof formatCurrency === 'function' ? formatCurrency(v) : `$${Number(v).toFixed(2)}`;
-
   const htmlRows = data.map(r => {
     const ts = new Date(r.ts).toLocaleString();
     return `<tr><td>${ts}</td><td>${r.name}</td><td>${fmt(r.retail)}</td><td>${fmt(r.spot)}</td><td>${fmt(r.melt)}</td></tr>`;
@@ -287,23 +309,7 @@ const renderItemPriceHistoryTable = () => {
 
   // nosemgrep: javascript.browser.security.insecure-innerhtml.insecure-innerhtml
   tbody.innerHTML = htmlRows.join('');
-
-  // Sortable headers
-  table.querySelectorAll('th').forEach(th => {
-    th.style.cursor = 'pointer';
-    th.onclick = () => {
-      const cols = ['ts', 'name', 'retail', 'spot', 'melt'];
-      const idx = Array.from(th.parentNode.children).indexOf(th);
-      const col = cols[idx];
-      if (settingsPriceSortColumn === col) {
-        settingsPriceSortAsc = !settingsPriceSortAsc;
-      } else {
-        settingsPriceSortColumn = col;
-        settingsPriceSortAsc = true;
-      }
-      renderItemPriceHistoryTable();
-    };
-  });
+  attachPriceHistorySortHeaders(table);
 };
 
 /**
