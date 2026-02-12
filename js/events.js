@@ -1046,6 +1046,54 @@ const setupEventListeners = () => {
         );
       }
 
+      // Settings Spot History clear button (STACK-44)
+      if (elements.settingsSpotHistoryClearBtn) {
+        safeAttachListener(
+          elements.settingsSpotHistoryClearBtn,
+          "click",
+          () => {
+            if (typeof clearSpotHistory === "function") clearSpotHistory();
+          },
+          "Settings spot history clear button",
+        );
+      }
+
+      // Settings Catalog History clear button (STACK-44)
+      if (elements.settingsCatalogHistoryClearBtn) {
+        safeAttachListener(
+          elements.settingsCatalogHistoryClearBtn,
+          "click",
+          () => {
+            if (typeof clearCatalogHistory === "function") clearCatalogHistory();
+          },
+          "Settings catalog history clear button",
+        );
+      }
+
+      // Settings Price History clear button (STACK-44)
+      if (elements.settingsPriceHistoryClearBtn) {
+        safeAttachListener(
+          elements.settingsPriceHistoryClearBtn,
+          "click",
+          () => {
+            if (typeof clearItemPriceHistory === "function") clearItemPriceHistory();
+          },
+          "Settings price history clear button",
+        );
+      }
+
+      // Price History filter input (STACK-44)
+      if (elements.priceHistoryFilterInput) {
+        safeAttachListener(
+          elements.priceHistoryFilterInput,
+          "input",
+          () => {
+            if (typeof filterItemPriceHistoryTable === "function") filterItemPriceHistoryTable();
+          },
+          "Price history filter input",
+        );
+      }
+
       if (elements.backupReminder) {
         safeAttachListener(
           elements.backupReminder,

@@ -198,6 +198,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     // Settings change log panel
     elements.settingsChangeLogClearBtn = safeGetElement("settingsChangeLogClearBtn");
 
+    // Settings Activity Log sub-tab elements (STACK-44)
+    elements.settingsSpotHistoryClearBtn = safeGetElement("settingsSpotHistoryClearBtn");
+    elements.settingsCatalogHistoryClearBtn = safeGetElement("settingsCatalogHistoryClearBtn");
+    elements.settingsPriceHistoryClearBtn = safeGetElement("settingsPriceHistoryClearBtn");
+    elements.priceHistoryFilterInput = safeGetElement("priceHistoryFilterInput");
+
     // Pagination elements
     debugLog("Phase 5: Initializing pagination elements...");
     elements.itemsPerPage = safeGetElement("itemsPerPage");
