@@ -47,6 +47,58 @@ const safeAttachListener = (element, event, handler, description = "") => {
 };
 
 /**
+ * Attaches a listener only if the element exists; silent no-op otherwise.
+ * Avoids console.warn spam for intentionally optional UI elements.
+ * @param {HTMLElement|null} el - Element (may be null)
+ * @param {string} event - Event type
+ * @param {Function} handler - Event handler
+ * @param {string} label - Description for logging
+ */
+const optionalListener = (el, event, handler, label) => {
+  if (el) safeAttachListener(el, event, handler, label);
+};
+
+/**
+ * Sets up the override/merge/file-input triad for a single import format.
+ * @param {HTMLElement|null} overrideBtn - "Override" button element
+ * @param {HTMLElement|null} mergeBtn - "Merge" button element
+ * @param {HTMLElement|null} fileInput - Hidden file input element
+ * @param {Function} importFn - Import function (file, isOverride) => void
+ * @param {string} formatName - Human label (e.g. "CSV", "JSON", "Numista CSV")
+ */
+const setupFormatImport = (overrideBtn, mergeBtn, fileInput, importFn, formatName) => {
+  let isOverride = false;
+
+  if (overrideBtn && fileInput) {
+    safeAttachListener(overrideBtn, "click", () => {
+      if (confirm(`Importing ${formatName} will overwrite all existing data. To combine data, choose Merge instead. Press OK to continue.`)) {
+        isOverride = true;
+        fileInput.click();
+      }
+    }, `${formatName} override button`);
+  }
+
+  if (mergeBtn && fileInput) {
+    safeAttachListener(mergeBtn, "click", () => {
+      isOverride = false;
+      fileInput.click();
+    }, `${formatName} merge button`);
+  }
+
+  optionalListener(fileInput, "change", function (e) {
+    if (e.target.files.length > 0) {
+      const file = e.target.files[0];
+      if (!checkFileSize(file)) {
+        alert("File exceeds 2MB limit. Enable cloud backup for larger uploads.");
+      } else {
+        importFn(file, isOverride);
+      }
+    }
+    this.value = "";
+  }, `${formatName} import`);
+};
+
+/**
  * Implements dynamic column resizing for the inventory table
  */
 const setupColumnResizing = () => {
@@ -910,236 +962,93 @@ const setupItemFormListeners = () => {
   }
 };
 
+/** Closes the notes modal and resets the notes index. */
+const dismissNotesModal = () => {
+  const modal = elements.notesModal || document.getElementById("notesModal");
+  if (modal) modal.style.display = "none";
+  notesIndex = null;
+};
+
 /**
  * Sets up notes modal, debug modal, bulk edit, changelog, and settings clear button listeners
  */
 const setupNoteAndModalListeners = () => {
   // NOTES MODAL BUTTONS
-  if (elements.saveNotesBtn) {
-    safeAttachListener(
-      elements.saveNotesBtn,
-      "click",
-      () => {
-        if (notesIndex === null) return;
-        const textareaElement =
-          elements.notesTextarea || document.getElementById("notesTextarea");
-        const text = textareaElement ? textareaElement.value.trim() : "";
+  optionalListener(elements.saveNotesBtn, "click", () => {
+    if (notesIndex === null) return;
+    const textareaElement = elements.notesTextarea || document.getElementById("notesTextarea");
+    const text = textareaElement ? textareaElement.value.trim() : "";
 
-        const oldItem = { ...inventory[notesIndex] };
-        inventory[notesIndex].notes = text;
-        saveInventory();
-        renderTable();
-        logItemChanges(oldItem, inventory[notesIndex]);
+    const oldItem = { ...inventory[notesIndex] };
+    inventory[notesIndex].notes = text;
+    saveInventory();
+    renderTable();
+    logItemChanges(oldItem, inventory[notesIndex]);
+    dismissNotesModal();
+  }, "Save notes button");
 
-        const modalElement =
-          elements.notesModal || document.getElementById("notesModal");
-        if (modalElement) {
-          modalElement.style.display = "none";
-        }
-        notesIndex = null;
-      },
-      "Save notes button",
-    );
-  }
+  optionalListener(elements.cancelNotesBtn, "click", dismissNotesModal, "Cancel notes button");
+  optionalListener(elements.notesCloseBtn, "click", dismissNotesModal, "Notes modal close button");
 
-  if (elements.cancelNotesBtn) {
-    safeAttachListener(
-      elements.cancelNotesBtn,
-      "click",
-      () => {
-        const modalElement =
-          elements.notesModal || document.getElementById("notesModal");
-        if (modalElement) {
-          modalElement.style.display = "none";
-        }
-        notesIndex = null;
-      },
-      "Cancel notes button",
-    );
-  }
-
-  if (elements.notesCloseBtn) {
-    safeAttachListener(
-      elements.notesCloseBtn,
-      "click",
-      () => {
-        const modalElement =
-          elements.notesModal || document.getElementById("notesModal");
-        if (modalElement) {
-          modalElement.style.display = "none";
-        }
-        notesIndex = null;
-      },
-      "Notes modal close button",
-    );
-  }
-
-  if (elements.debugCloseBtn) {
-    safeAttachListener(
-      elements.debugCloseBtn,
-      "click",
-      () => {
-        if (typeof hideDebugModal === "function") {
-          hideDebugModal();
-        }
-      },
-      "Debug modal close button",
-    );
-  }
+  optionalListener(elements.debugCloseBtn, "click",
+    () => { if (typeof hideDebugModal === "function") hideDebugModal(); },
+    "Debug modal close button");
 
   // Bulk Edit modal open/close
-  if (elements.bulkEditBtn) {
-    safeAttachListener(
-      elements.bulkEditBtn,
-      "click",
-      () => {
-        if (typeof openBulkEdit === "function") openBulkEdit();
-      },
-      "Bulk edit open button",
-    );
-  }
-  if (elements.bulkEditCloseBtn) {
-    safeAttachListener(
-      elements.bulkEditCloseBtn,
-      "click",
-      () => {
-        if (typeof closeBulkEdit === "function") closeBulkEdit();
-      },
-      "Bulk edit close button",
-    );
-  }
+  optionalListener(elements.bulkEditBtn, "click",
+    () => { if (typeof openBulkEdit === "function") openBulkEdit(); },
+    "Bulk edit open button");
+  optionalListener(elements.bulkEditCloseBtn, "click",
+    () => { if (typeof closeBulkEdit === "function") closeBulkEdit(); },
+    "Bulk edit close button");
 
-    if (elements.changeLogBtn) {
-      safeAttachListener(
-        elements.changeLogBtn,
-        "click",
-        (e) => {
-          e.preventDefault();
-          if (typeof showSettingsModal === "function") {
-            showSettingsModal("changelog");
-          }
-        },
-        "Change log button",
-      );
+  optionalListener(elements.changeLogBtn, "click", (e) => {
+    e.preventDefault();
+    if (typeof showSettingsModal === "function") showSettingsModal("changelog");
+  }, "Change log button");
+
+  // Settings panel clear buttons (STACK-44)
+  optionalListener(elements.settingsChangeLogClearBtn, "click",
+    () => { if (typeof clearChangeLog === "function") clearChangeLog(); },
+    "Settings change log clear button");
+  optionalListener(elements.settingsSpotHistoryClearBtn, "click",
+    () => { if (typeof clearSpotHistory === "function") clearSpotHistory(); },
+    "Settings spot history clear button");
+  optionalListener(elements.settingsCatalogHistoryClearBtn, "click",
+    () => { if (typeof clearCatalogHistory === "function") clearCatalogHistory(); },
+    "Settings catalog history clear button");
+  optionalListener(elements.settingsPriceHistoryClearBtn, "click",
+    () => { if (typeof clearItemPriceHistory === "function") clearItemPriceHistory(); },
+    "Settings price history clear button");
+
+  // Price History filter input (STACK-44)
+  optionalListener(elements.priceHistoryFilterInput, "input",
+    () => { if (typeof filterItemPriceHistoryTable === "function") filterItemPriceHistoryTable(); },
+    "Price history filter input");
+
+  optionalListener(elements.backupReminder, "click", (e) => {
+    e.preventDefault();
+    if (typeof showSettingsModal === "function") showSettingsModal('files');
+  }, "Backup reminder link");
+
+  optionalListener(elements.storageReportLink, "click", (e) => {
+    e.preventDefault();
+    if (typeof openStorageReportPopup === "function") openStorageReportPopup();
+  }, "Storage report link");
+
+  optionalListener(elements.changeLogCloseBtn, "click", () => {
+    if (elements.changeLogModal) {
+      if (window.closeModalById) closeModalById('changeLogModal');
+      else {
+        elements.changeLogModal.style.display = "none";
+        document.body.style.overflow = "";
+      }
     }
+  }, "Change log close button");
 
-    // Settings panel Change Log clear button
-    if (elements.settingsChangeLogClearBtn) {
-      safeAttachListener(
-        elements.settingsChangeLogClearBtn,
-        "click",
-        () => {
-          if (typeof clearChangeLog === "function") clearChangeLog();
-        },
-        "Settings change log clear button",
-      );
-    }
-
-    // Settings Spot History clear button (STACK-44)
-    if (elements.settingsSpotHistoryClearBtn) {
-      safeAttachListener(
-        elements.settingsSpotHistoryClearBtn,
-        "click",
-        () => {
-          if (typeof clearSpotHistory === "function") clearSpotHistory();
-        },
-        "Settings spot history clear button",
-      );
-    }
-
-    // Settings Catalog History clear button (STACK-44)
-    if (elements.settingsCatalogHistoryClearBtn) {
-      safeAttachListener(
-        elements.settingsCatalogHistoryClearBtn,
-        "click",
-        () => {
-          if (typeof clearCatalogHistory === "function") clearCatalogHistory();
-        },
-        "Settings catalog history clear button",
-      );
-    }
-
-    // Settings Price History clear button (STACK-44)
-    if (elements.settingsPriceHistoryClearBtn) {
-      safeAttachListener(
-        elements.settingsPriceHistoryClearBtn,
-        "click",
-        () => {
-          if (typeof clearItemPriceHistory === "function") clearItemPriceHistory();
-        },
-        "Settings price history clear button",
-      );
-    }
-
-    // Price History filter input (STACK-44)
-    if (elements.priceHistoryFilterInput) {
-      safeAttachListener(
-        elements.priceHistoryFilterInput,
-        "input",
-        () => {
-          if (typeof filterItemPriceHistoryTable === "function") filterItemPriceHistoryTable();
-        },
-        "Price history filter input",
-      );
-    }
-
-    if (elements.backupReminder) {
-      safeAttachListener(
-        elements.backupReminder,
-        "click",
-        (e) => {
-          e.preventDefault();
-          if (typeof showSettingsModal === "function") {
-            showSettingsModal('files');
-          }
-        },
-        "Backup reminder link",
-      );
-    }
-
-    if (elements.storageReportLink) {
-      safeAttachListener(
-        elements.storageReportLink,
-        "click",
-        (e) => {
-          e.preventDefault();
-          if (typeof openStorageReportPopup === "function") {
-            openStorageReportPopup();
-          }
-        },
-        "Storage report link",
-      );
-    }
-
-  if (elements.changeLogCloseBtn) {
-    safeAttachListener(
-      elements.changeLogCloseBtn,
-      "click",
-      () => {
-        if (elements.changeLogModal) {
-          if (window.closeModalById) closeModalById('changeLogModal');
-          else {
-            elements.changeLogModal.style.display = "none";
-            document.body.style.overflow = "";
-          }
-        }
-      },
-      "Change log close button",
-    );
-  }
-
-  if (elements.changeLogClearBtn) {
-    safeAttachListener(
-      elements.changeLogClearBtn,
-      "click",
-      () => {
-        if (typeof clearChangeLog === "function") {
-          clearChangeLog();
-        }
-      },
-      "Change log clear button",
-    );
-  }
+  optionalListener(elements.changeLogClearBtn, "click",
+    () => { if (typeof clearChangeLog === "function") clearChangeLog(); },
+    "Change log clear button");
 };
 
 /**
@@ -1217,324 +1126,114 @@ const setupSpotPriceListeners = () => {
 };
 
 /**
+ * Sets up vault backup/restore listeners and password strength UI.
+ */
+const setupVaultListeners = () => {
+  optionalListener(elements.vaultExportBtn, "click",
+    () => { openVaultModal("export"); },
+    "Vault export button");
+
+  optionalListener(elements.vaultImportBtn, "click",
+    () => { if (elements.vaultImportFile) elements.vaultImportFile.click(); },
+    "Vault import button");
+
+  optionalListener(elements.vaultImportFile, "change", function (e) {
+    var file = e.target.files && e.target.files[0];
+    if (file) {
+      openVaultModal("import", file);
+      e.target.value = "";
+    }
+  }, "Vault import file input");
+
+  // Vault modal live password events
+  const pw = document.getElementById("vaultPassword");
+  const cpw = document.getElementById("vaultConfirmPassword");
+  optionalListener(pw, "input", () => {
+    updateStrengthBar(pw.value);
+    if (cpw) updateMatchIndicator(pw.value, cpw.value);
+  }, "Vault password input");
+  optionalListener(cpw, "input", () => {
+    if (pw) updateMatchIndicator(pw.value, cpw.value);
+  }, "Vault confirm password input");
+};
+
+/**
+ * Sets up data-destructive action listeners (remove data, boating accident).
+ */
+const setupDataManagementListeners = () => {
+  optionalListener(elements.removeInventoryDataBtn, "click", () => {
+    if (confirm("Remove all inventory items? This cannot be undone.")) {
+      localStorage.removeItem(LS_KEY);
+      loadInventory();
+      renderTable();
+      renderActiveFilters();
+      alert("Inventory data cleared.");
+    }
+  }, "Remove inventory data button");
+
+  optionalListener(elements.boatingAccidentBtn, "click", () => {
+    if (confirm("Did you really lose it all in a boating accident? This will wipe all local data.")) {
+      localStorage.removeItem(LS_KEY);
+      localStorage.removeItem(SPOT_HISTORY_KEY);
+      localStorage.removeItem(API_KEY_STORAGE_KEY);
+      localStorage.removeItem(API_CACHE_KEY);
+      Object.values(METALS).forEach((metalConfig) => {
+        localStorage.removeItem(metalConfig.localStorageKey);
+      });
+      sessionStorage.clear();
+
+      loadInventory();
+      renderTable();
+      renderActiveFilters();
+      loadSpotHistory();
+      fetchSpotPrice();
+
+      apiConfig = { provider: "", keys: {} };
+      apiCache = null;
+      updateSyncButtonStates();
+
+      alert("All data has been erased. Hope your scuba gear is ready!");
+    }
+  }, "Boating accident button");
+};
+
+/**
  * Sets up import/export event listeners (CSV, JSON, Numista, PDF, Vault, etc.)
  */
 const setupImportExportListeners = () => {
-  // IMPORT/EXPORT EVENT LISTENERS
   debugLog("Setting up import/export listeners...");
 
-  let csvImportOverride = false;
-  if (elements.importCsvOverride && elements.importCsvFile) {
-    safeAttachListener(
-      elements.importCsvOverride,
-      "click",
-      () => {
-        if (
-          confirm(
-            "Importing CSV will overwrite all existing data. To combine data, choose Merge instead. Press OK to continue.",
-          )
-        ) {
-          csvImportOverride = true;
-          elements.importCsvFile.click();
-        }
-      },
-      "CSV override button",
-    );
-  }
-  if (elements.importCsvMerge && elements.importCsvFile) {
-    safeAttachListener(
-      elements.importCsvMerge,
-      "click",
-      () => {
-        csvImportOverride = false;
-        elements.importCsvFile.click();
-      },
-      "CSV merge button",
-    );
-  }
-  if (elements.importCsvFile) {
-    safeAttachListener(
-      elements.importCsvFile,
-      "change",
-      function (e) {
-        if (e.target.files.length > 0) {
+  // Import triads: Override / Merge / File-input for each format
+  setupFormatImport(elements.importCsvOverride, elements.importCsvMerge, elements.importCsvFile, importCsv, "CSV");
+  setupFormatImport(elements.importJsonOverride, elements.importJsonMerge, elements.importJsonFile, importJson, "JSON");
+  setupFormatImport(
+    document.getElementById("importNumistaBtn"),
+    document.getElementById("mergeNumistaBtn"),
+    elements.numistaImportFile, importNumistaCsv, "Numista CSV"
+  );
 
-          const file = e.target.files[0];
-          if (!checkFileSize(file)) {
-            alert("File exceeds 2MB limit. Enable cloud backup for larger uploads.");
-          } else {
-            importCsv(file, csvImportOverride);
-          }
+  // Export buttons
+  optionalListener(elements.exportCsvBtn, "click", exportCsv, "CSV export");
+  optionalListener(elements.exportJsonBtn, "click", exportJson, "JSON export");
+  optionalListener(elements.exportPdfBtn, "click", exportPdf, "PDF export");
 
-        }
-        this.value = "";
-      },
-      "CSV import",
-    );
-  }
-
-  let jsonImportOverride = false;
-  if (elements.importJsonOverride && elements.importJsonFile) {
-    safeAttachListener(
-      elements.importJsonOverride,
-      "click",
-      () => {
-        if (
-          confirm(
-            "Importing JSON will overwrite all existing data. To combine data, choose Merge instead. Press OK to continue.",
-          )
-        ) {
-          jsonImportOverride = true;
-          elements.importJsonFile.click();
-        }
-      },
-      "JSON override button",
-    );
-  }
-  if (elements.importJsonMerge && elements.importJsonFile) {
-    safeAttachListener(
-      elements.importJsonMerge,
-      "click",
-      () => {
-        jsonImportOverride = false;
-        elements.importJsonFile.click();
-      },
-      "JSON merge button",
-    );
-  }
-  if (elements.importJsonFile) {
-    safeAttachListener(
-      elements.importJsonFile,
-      "change",
-      function (e) {
-        if (e.target.files.length > 0) {
-
-          const file = e.target.files[0];
-          if (!checkFileSize(file)) {
-            alert("File exceeds 2MB limit. Enable cloud backup for larger uploads.");
-          } else {
-            importJson(file, jsonImportOverride);
-          }
-
-        }
-        this.value = "";
-      },
-      "JSON import",
-    );
-  }
-
-  let numistaOverride = false;
-  const importNumistaBtn = document.getElementById("importNumistaBtn");
-  const mergeNumistaBtn = document.getElementById("mergeNumistaBtn");
-  if (importNumistaBtn && elements.numistaImportFile) {
-    safeAttachListener(
-      importNumistaBtn,
-      "click",
-      () => {
-        if (
-          confirm(
-            "Importing Numista CSV will overwrite all existing data. To combine data, choose Merge instead. Press OK to continue.",
-          )
-        ) {
-          numistaOverride = true;
-          elements.numistaImportFile.click();
-        }
-      },
-      "Import Numista CSV button",
-    );
-  }
-  if (mergeNumistaBtn && elements.numistaImportFile) {
-    safeAttachListener(
-      mergeNumistaBtn,
-      "click",
-      () => {
-        numistaOverride = false;
-        elements.numistaImportFile.click();
-      },
-      "Merge Numista CSV button",
-    );
-  }
-    if (elements.numistaImportFile) {
-      safeAttachListener(
-        elements.numistaImportFile,
-        "change",
-        function (e) {
-          if (e.target.files.length > 0) {
-
-          const file = e.target.files[0];
-          if (!checkFileSize(file)) {
-            alert("File exceeds 2MB limit. Enable cloud backup for larger uploads.");
-          } else {
-            importNumistaCsv(file, numistaOverride);
-          }
-        }
-        this.value = "";
-      },
-        "Numista CSV import",
-      );
+  // Cloud Sync modal
+  optionalListener(elements.cloudSyncBtn, "click", () => {
+    if (elements.cloudSyncModal) {
+      if (window.openModalById) openModalById('cloudSyncModal');
+      else elements.cloudSyncModal.style.display = "flex";
     }
-
-    // Export buttons
-    if (elements.exportCsvBtn) {
-      safeAttachListener(
-      elements.exportCsvBtn,
-      "click",
-      exportCsv,
-      "CSV export",
-    );
-  }
-  if (elements.exportJsonBtn) {
-    safeAttachListener(
-      elements.exportJsonBtn,
-      "click",
-      exportJson,
-      "JSON export",
-    );
-  }
-  if (elements.exportPdfBtn) {
-    safeAttachListener(
-      elements.exportPdfBtn,
-      "click",
-      exportPdf,
-      "PDF export",
-    );
-  }
-  if (elements.cloudSyncBtn) {
-    safeAttachListener(
-      elements.cloudSyncBtn,
-      "click",
-      () => {
-        if (elements.cloudSyncModal) {
-          if (window.openModalById) openModalById('cloudSyncModal');
-          else elements.cloudSyncModal.style.display = "flex";
-        }
-      },
-      "Cloud Sync button",
-    );
-  }
+  }, "Cloud Sync button");
   const cloudSyncCloseBtn = document.getElementById("cloudSyncCloseBtn");
   if (cloudSyncCloseBtn && elements.cloudSyncModal) {
-    safeAttachListener(
-      cloudSyncCloseBtn,
-      "click",
-      () => {
-        if (window.closeModalById) closeModalById('cloudSyncModal');
-        else elements.cloudSyncModal.style.display = "none";
-      },
-      "Cloud Sync close",
-    );
+    safeAttachListener(cloudSyncCloseBtn, "click", () => {
+      if (window.closeModalById) closeModalById('cloudSyncModal');
+      else elements.cloudSyncModal.style.display = "none";
+    }, "Cloud Sync close");
   }
 
-  // Vault Encrypted Backup Buttons
-  if (elements.vaultExportBtn) {
-    safeAttachListener(
-      elements.vaultExportBtn,
-      "click",
-      function () {
-        openVaultModal("export");
-      },
-      "Vault export button",
-    );
-  }
-
-  if (elements.vaultImportBtn) {
-    safeAttachListener(
-      elements.vaultImportBtn,
-      "click",
-      function () {
-        if (elements.vaultImportFile) elements.vaultImportFile.click();
-      },
-      "Vault import button",
-    );
-  }
-
-  if (elements.vaultImportFile) {
-    safeAttachListener(
-      elements.vaultImportFile,
-      "change",
-      function (e) {
-        var file = e.target.files && e.target.files[0];
-        if (file) {
-          openVaultModal("import", file);
-          // Reset input so the same file can be selected again
-          e.target.value = "";
-        }
-      },
-      "Vault import file input",
-    );
-  }
-
-  // Vault modal live password events
-  (function () {
-    var pw = document.getElementById("vaultPassword");
-    var cpw = document.getElementById("vaultConfirmPassword");
-    if (pw) {
-      pw.addEventListener("input", function () {
-        updateStrengthBar(pw.value);
-        if (cpw) updateMatchIndicator(pw.value, cpw.value);
-      });
-    }
-    if (cpw) {
-      cpw.addEventListener("input", function () {
-        if (pw) updateMatchIndicator(pw.value, cpw.value);
-      });
-    }
-  })();
-
-  // Remove Inventory Data Button
-  if (elements.removeInventoryDataBtn) {
-    safeAttachListener(
-      elements.removeInventoryDataBtn,
-      "click",
-      function () {
-        if (confirm("Remove all inventory items? This cannot be undone.")) {
-          localStorage.removeItem(LS_KEY);
-          loadInventory();
-          renderTable();
-          renderActiveFilters();
-          alert("Inventory data cleared.");
-        }
-      },
-      "Remove inventory data button",
-    );
-  }
-
-  // Boating Accident Button
-  if (elements.boatingAccidentBtn) {
-    safeAttachListener(
-      elements.boatingAccidentBtn,
-      "click",
-      function () {
-        if (
-          confirm(
-            "Did you really lose it all in a boating accident? This will wipe all local data.",
-          )
-        ) {
-          localStorage.removeItem(LS_KEY);
-          localStorage.removeItem(SPOT_HISTORY_KEY);
-          localStorage.removeItem(API_KEY_STORAGE_KEY);
-          localStorage.removeItem(API_CACHE_KEY);
-          Object.values(METALS).forEach((metalConfig) => {
-            localStorage.removeItem(metalConfig.localStorageKey);
-          });
-          sessionStorage.clear();
-
-          loadInventory();
-          renderTable();
-          renderActiveFilters();
-          loadSpotHistory();
-          fetchSpotPrice();
-
-          apiConfig = { provider: "", keys: {} };
-          apiCache = null;
-          updateSyncButtonStates();
-
-          alert("All data has been erased. Hope your scuba gear is ready!");
-        }
-      },
-      "Boating accident button",
-    );
-  }
+  setupVaultListeners();
+  setupDataManagementListeners();
 };
 
 // MAIN EVENT LISTENERS SETUP
