@@ -47,6 +47,58 @@ const safeAttachListener = (element, event, handler, description = "") => {
 };
 
 /**
+ * Attaches a listener only if the element exists; silent no-op otherwise.
+ * Avoids console.warn spam for intentionally optional UI elements.
+ * @param {HTMLElement|null} el - Element (may be null)
+ * @param {string} event - Event type
+ * @param {Function} handler - Event handler
+ * @param {string} label - Description for logging
+ */
+const optionalListener = (el, event, handler, label) => {
+  if (el) safeAttachListener(el, event, handler, label);
+};
+
+/**
+ * Sets up the override/merge/file-input triad for a single import format.
+ * @param {HTMLElement|null} overrideBtn - "Override" button element
+ * @param {HTMLElement|null} mergeBtn - "Merge" button element
+ * @param {HTMLElement|null} fileInput - Hidden file input element
+ * @param {Function} importFn - Import function (file, isOverride) => void
+ * @param {string} formatName - Human label (e.g. "CSV", "JSON", "Numista CSV")
+ */
+const setupFormatImport = (overrideBtn, mergeBtn, fileInput, importFn, formatName) => {
+  let isOverride = false;
+
+  if (overrideBtn && fileInput) {
+    safeAttachListener(overrideBtn, "click", () => {
+      if (confirm(`Importing ${formatName} will overwrite all existing data. To combine data, choose Merge instead. Press OK to continue.`)) {
+        isOverride = true;
+        fileInput.click();
+      }
+    }, `${formatName} override button`);
+  }
+
+  if (mergeBtn && fileInput) {
+    safeAttachListener(mergeBtn, "click", () => {
+      isOverride = false;
+      fileInput.click();
+    }, `${formatName} merge button`);
+  }
+
+  optionalListener(fileInput, "change", function (e) {
+    if (e.target.files.length > 0) {
+      const file = e.target.files[0];
+      if (!checkFileSize(file)) {
+        alert("File exceeds 2MB limit. Enable cloud backup for larger uploads.");
+      } else {
+        importFn(file, isOverride);
+      }
+    }
+    this.value = "";
+  }, `${formatName} import`);
+};
+
+/**
  * Implements dynamic column resizing for the inventory table
  */
 const setupColumnResizing = () => {
@@ -486,25 +538,290 @@ const setupTableSortListeners = () => {
   // GOLDBACK DENOMINATION PICKER TOGGLE (STACK-45)
   // Swaps weight text input ↔ denomination select when unit changes to/from 'gb'.
   // Auto-fills hidden weight value from the selected denomination.
+  const showEl = (el, visible) => { if (el) el.style.display = visible ? '' : 'none'; };
   window.toggleGbDenomPicker = () => {
-    const isGb = elements.itemWeightUnit && elements.itemWeightUnit.value === 'gb';
+    const isGb = elements.itemWeightUnit?.value === 'gb';
+    const denomSelect = elements.itemGbDenom;
     const weightInput = elements.itemWeight;
-    const denomSelect = elements.itemGbDenom || document.getElementById('itemGbDenom');
     const weightLabel = document.getElementById('itemWeightLabel');
 
-    if (denomSelect) {
-      denomSelect.style.display = isGb ? '' : 'none';
-    }
-    if (weightInput) {
-      weightInput.style.display = isGb ? 'none' : '';
-      if (isGb && denomSelect) {
-        weightInput.value = denomSelect.value;
-      }
-    }
-    if (weightLabel) {
-      weightLabel.textContent = isGb ? 'Denomination' : 'Weight';
-    }
+    showEl(denomSelect, isGb);
+    showEl(weightInput, !isGb);
+    if (isGb && weightInput && denomSelect) weightInput.value = denomSelect.value;
+    if (weightLabel) weightLabel.textContent = isGb ? 'Denomination' : 'Weight';
   };
+};
+
+// FORM SUBMIT HELPERS (STACK-61)
+// =============================================================================
+
+/**
+ * Parses weight from form input, handling Goldback denominations,
+ * fractions, and gram-to-troy-oz conversion.
+ * @param {string} weightRaw - Raw weight input value
+ * @param {string} weightUnit - Unit: 'oz', 'g', or 'gb'
+ * @param {boolean} isEditing - Whether in edit mode
+ * @param {Object} existingItem - Existing item (edit mode)
+ * @returns {number} Weight in troy ounces (or denomination value for gb)
+ */
+const parseWeight = (weightRaw, weightUnit, isEditing, existingItem) => {
+  if (isEditing && weightRaw === '') {
+    return typeof existingItem.weight !== 'undefined' ? existingItem.weight : 0;
+  }
+  let weight = parseFraction(weightRaw);
+  if (weightUnit === 'g') {
+    weight = gramsToOzt(weight);
+  }
+  // gb: weight stays as raw denomination value (conversion happens in computeMeltValue)
+  return isNaN(weight) ? 0 : parseFloat(weight.toFixed(6));
+};
+
+/**
+ * Converts a user-entered price from display currency to USD.
+ * @param {string} rawValue - Raw price input value
+ * @param {number} fxRate - Exchange rate (display currency per 1 USD)
+ * @param {boolean} isEditing - Whether in edit mode
+ * @param {number} existingValue - Existing price (edit mode)
+ * @returns {number} Price in USD
+ */
+const parsePriceToUSD = (rawValue, fxRate, isEditing, existingValue) => {
+  if (isEditing && rawValue === '') {
+    return typeof existingValue !== 'undefined' ? existingValue : 0;
+  }
+  let entered = rawValue === '' ? 0 : parseFloat(rawValue);
+  entered = isNaN(entered) || entered < 0 ? 0 : entered;
+  return fxRate !== 1 ? entered / fxRate : entered;
+};
+
+/**
+ * Reads purity from the select/custom input pair.
+ * @param {boolean} isEditing - Whether in edit mode
+ * @param {Object} existingItem - Existing item (edit mode)
+ * @returns {number} Purity value (0–1)
+ */
+const parsePurity = (isEditing, existingItem) => {
+  const puritySelect = elements.itemPuritySelect;
+  if (puritySelect && puritySelect.value === 'custom') {
+    return elements.itemPurity ? (parseFloat(elements.itemPurity.value) || 1.0) : 1.0;
+  }
+  if (puritySelect) {
+    return parseFloat(puritySelect.value) || 1.0;
+  }
+  return isEditing ? (existingItem.purity || 1.0) : 1.0;
+};
+
+/**
+ * Reads all form fields and returns a parsed fields object.
+ * @param {boolean} isEditing - Whether in edit mode
+ * @param {Object} existingItem - Existing item (edit mode)
+ * @returns {Object} Parsed field values
+ */
+const parseItemFormFields = (isEditing, existingItem) => {
+  const composition = getCompositionFirstWords(elements.itemMetal.value);
+  const metal = parseNumistaMetal(composition);
+  const fxRate = (typeof getExchangeRate === 'function') ? getExchangeRate() : 1;
+
+  const nameInput = elements.itemName.value.trim();
+  const qtyInput = elements.itemQty.value.trim();
+
+  const weightUnit = elements.itemWeightUnit.value;
+  const weightRaw = (weightUnit === 'gb' && elements.itemGbDenom)
+    ? elements.itemGbDenom.value
+    : elements.itemWeight.value;
+
+  const marketValueInput = elements.itemMarketValue ? elements.itemMarketValue.value.trim() : '';
+  let marketValue;
+  if (marketValueInput && !isNaN(parseFloat(marketValueInput))) {
+    const enteredMv = parseFloat(marketValueInput);
+    marketValue = fxRate !== 1 ? enteredMv / fxRate : enteredMv;
+  } else {
+    marketValue = isEditing ? (existingItem.marketValue || 0) : 0;
+  }
+
+  return {
+    metal,
+    composition,
+    name: isEditing ? (nameInput || existingItem.name || '') : nameInput,
+    qty: qtyInput === '' ? (isEditing ? (existingItem.qty || 1) : 1) : parseInt(qtyInput, 10),
+    type: elements.itemType.value || (isEditing ? existingItem.type : ''),
+    weight: parseWeight(weightRaw, weightUnit, isEditing, existingItem),
+    weightUnit,
+    price: parsePriceToUSD(elements.itemPrice.value.trim(), fxRate, isEditing, existingItem.price),
+    purchaseLocation: elements.purchaseLocation.value.trim() || (isEditing ? (existingItem.purchaseLocation || '') : ''),
+    storageLocation: elements.storageLocation.value.trim() || (isEditing ? (existingItem.storageLocation || 'Unknown') : 'Unknown'),
+    serialNumber: elements.itemSerialNumber?.value?.trim() || (isEditing ? (existingItem.serialNumber || '') : ''),
+    notes: elements.itemNotes.value.trim() || (isEditing ? (existingItem.notes || '') : ''),
+    date: elements.itemDate.value || (isEditing ? (existingItem.date || '') : todayStr()),
+    catalog: elements.itemCatalog ? elements.itemCatalog.value.trim() : '',
+    year: elements.itemYear?.value?.trim() || '',
+    grade: elements.itemGrade?.value?.trim() || '',
+    gradingAuthority: elements.itemGradingAuthority?.value?.trim() || '',
+    certNumber: elements.itemCertNumber?.value?.trim() || '',
+    pcgsNumber: elements.itemPcgsNumber?.value?.trim() || '',
+    marketValue,
+    purity: parsePurity(isEditing, existingItem),
+    currency: displayCurrency,
+  };
+};
+
+/**
+ * Validates mandatory item fields.
+ * @param {Object} f - Parsed fields from parseItemFormFields()
+ * @returns {string|null} Error message or null if valid
+ */
+const validateItemFields = (f) => {
+  if (
+    !f.name || !f.date || !f.type || !f.metal ||
+    isNaN(f.weight) || f.weight <= 0 ||
+    isNaN(f.qty) || f.qty < 1 || !Number.isInteger(f.qty)
+  ) {
+    return "Please enter valid values for Name, Date, Type, Metal, Weight, and Quantity.";
+  }
+  return null;
+};
+
+/**
+ * Commits a parsed item to inventory (add or edit mode).
+ * @param {Object} f - Parsed fields from parseItemFormFields()
+ * @param {boolean} isEditing - Whether in edit mode
+ * @param {number|null} editIdx - Index being edited (null for add)
+ */
+const commitItemToInventory = (f, isEditing, editIdx) => {
+  if (isEditing) {
+    const oldItem = { ...inventory[editIdx] };
+    const serial = oldItem.serial;
+
+    inventory[editIdx] = {
+      ...oldItem,
+      metal: f.metal,
+      composition: f.composition,
+      name: f.name,
+      qty: f.qty,
+      type: f.type,
+      weight: f.weight,
+      weightUnit: f.weightUnit,
+      price: f.price,
+      marketValue: f.marketValue,
+      date: f.date,
+      purchaseLocation: f.purchaseLocation,
+      storageLocation: f.storageLocation,
+      serialNumber: f.serialNumber,
+      notes: f.notes,
+      year: f.year,
+      grade: f.grade,
+      gradingAuthority: f.gradingAuthority,
+      certNumber: f.certNumber,
+      pcgsNumber: f.pcgsNumber,
+      purity: f.purity,
+      isCollectable: false,
+      numistaId: f.catalog,
+      currency: f.currency,
+    };
+
+    addCompositionOption(f.composition);
+
+    try {
+      if (window.catalogManager && inventory[editIdx].numistaId) {
+        catalogManager.setCatalogId(serial, inventory[editIdx].numistaId);
+      }
+    } catch (catErr) {
+      console.warn('Failed to update catalog mapping:', catErr);
+    }
+
+    // Apply spot lookup override if user selected a historical spot (STACK-49)
+    const lookupSpotEdit = elements.itemSpotPrice ? parseFloat(elements.itemSpotPrice.value) : NaN;
+    if (!isNaN(lookupSpotEdit) && lookupSpotEdit > 0) {
+      inventory[editIdx].spotPriceAtPurchase = lookupSpotEdit;
+    }
+
+    saveInventory();
+
+    // Record price data point if price-related fields changed (STACK-43)
+    if (typeof recordSingleItemPrice === 'function') {
+      const cur = inventory[editIdx];
+      const priceChanged = oldItem.marketValue !== cur.marketValue
+        || oldItem.price !== cur.price || oldItem.weight !== cur.weight
+        || oldItem.qty !== cur.qty || oldItem.metal !== cur.metal
+        || oldItem.purity !== cur.purity;
+      if (priceChanged) recordSingleItemPrice(cur, 'edit');
+    }
+
+    renderTable();
+    renderActiveFilters();
+    logItemChanges(oldItem, inventory[editIdx]);
+
+    editingIndex = null;
+    editingChangeLogIndex = null;
+  } else {
+    const metalKey = f.metal.toLowerCase();
+    // Prefer spot price from lookup modal, fall back to current spot (STACK-49)
+    const lookupSpot = elements.itemSpotPrice ? parseFloat(elements.itemSpotPrice.value) : NaN;
+    const spotPriceAtPurchase = !isNaN(lookupSpot) && lookupSpot > 0
+      ? lookupSpot
+      : (spotPrices[metalKey] ?? 0);
+    const serial = getNextSerial();
+
+    inventory.push({
+      metal: f.metal,
+      composition: f.composition,
+      name: f.name,
+      qty: f.qty,
+      type: f.type,
+      weight: f.weight,
+      weightUnit: f.weightUnit,
+      price: f.price,
+      marketValue: f.marketValue,
+      date: f.date,
+      purchaseLocation: f.purchaseLocation,
+      storageLocation: f.storageLocation,
+      serialNumber: f.serialNumber,
+      notes: f.notes,
+      year: f.year,
+      grade: f.grade,
+      gradingAuthority: f.gradingAuthority,
+      certNumber: f.certNumber,
+      pcgsNumber: f.pcgsNumber,
+      pcgsVerified: false,
+      purity: f.purity,
+      spotPriceAtPurchase,
+      premiumPerOz: 0,
+      totalPremium: 0,
+      isCollectable: false,
+      serial,
+      uuid: generateUUID(),
+      numistaId: f.catalog,
+      currency: f.currency,
+    });
+
+    typeof registerName === "function" && registerName(f.name);
+    addCompositionOption(f.composition);
+
+    if (window.catalogManager && f.catalog) {
+      catalogManager.setCatalogId(serial, f.catalog);
+    }
+
+    saveInventory();
+
+    // Record initial price data point (STACK-43)
+    if (typeof recordSingleItemPrice === 'function') {
+      recordSingleItemPrice(inventory[inventory.length - 1], 'add');
+    }
+
+    renderTable();
+  }
+};
+
+/**
+ * Builds a Numista search query, prepending metal if not already in name.
+ * @param {string} nameVal - Item name input value
+ * @param {string} metalVal - Metal composition value
+ * @returns {string} Search query
+ */
+const buildNumistaSearchQuery = (nameVal, metalVal) => {
+  if (metalVal && !nameVal.toLowerCase().includes(metalVal.toLowerCase())) {
+    return `${metalVal} ${nameVal}`;
+  }
+  return nameVal;
 };
 
 /**
@@ -523,209 +840,16 @@ const setupItemFormListeners = () => {
         const isEditing = editingIndex !== null;
         const existingItem = isEditing ? { ...inventory[editingIndex] } : {};
 
-        // Read all fields (same for both modes)
-        const composition = getCompositionFirstWords(elements.itemMetal.value);
-        const metal = parseNumistaMetal(composition);
+        const fields = parseItemFormFields(isEditing, existingItem);
+        const error = validateItemFields(fields);
+        if (error) { alert(error); return; }
 
-        const nameInput = elements.itemName.value.trim();
-        const name = isEditing ? (nameInput || existingItem.name || '') : nameInput;
+        commitItemToInventory(fields, isEditing, editingIndex);
 
-        const qtyInput = elements.itemQty.value.trim();
-        const qty = qtyInput === '' ? (isEditing ? (existingItem.qty || 1) : 1) : parseInt(qtyInput, 10);
+        // Clear spot lookup hidden field after commit (STACK-49)
+        if (elements.itemSpotPrice) elements.itemSpotPrice.value = '';
 
-        const type = elements.itemType.value || (isEditing ? existingItem.type : '');
-
-        // Weight: uses real <select>, supports fraction input (e.g. "1/1000", "1 1/2")
-        const weightUnit = elements.itemWeightUnit.value;
-        const denomSelect = elements.itemGbDenom || document.getElementById('itemGbDenom');
-        const weightRaw = (weightUnit === 'gb' && denomSelect) ? denomSelect.value : elements.itemWeight.value;
-        let weight;
-        if (isEditing && weightRaw === '') {
-          weight = typeof existingItem.weight !== 'undefined' ? existingItem.weight : 0;
-        } else {
-          weight = parseFraction(weightRaw);
-          if (weightUnit === 'g') {
-            weight = gramsToOzt(weight);
-          }
-          // gb: weight stays as raw denomination value (conversion happens in computeMeltValue)
-          weight = isNaN(weight) ? 0 : parseFloat(weight.toFixed(6));
-        }
-
-        // Price: in edit mode, empty field preserves existing price
-        // User enters in display currency; convert to USD for storage (STACK-50)
-        const priceRaw = elements.itemPrice.value.trim();
-        const fxRate = (typeof getExchangeRate === 'function') ? getExchangeRate() : 1;
-        let price;
-        if (isEditing && priceRaw === '') {
-          price = typeof existingItem.price !== 'undefined' ? existingItem.price : 0;
-        } else {
-          let enteredPrice = priceRaw === '' ? 0 : parseFloat(priceRaw);
-          enteredPrice = isNaN(enteredPrice) || enteredPrice < 0 ? 0 : enteredPrice;
-          price = fxRate !== 1 ? enteredPrice / fxRate : enteredPrice;
-        }
-
-        const purchaseLocation = elements.purchaseLocation.value.trim() || (isEditing ? (existingItem.purchaseLocation || '') : '');
-        const storageLocation = elements.storageLocation.value.trim() || (isEditing ? (existingItem.storageLocation || 'Unknown') : 'Unknown');
-        const serialNumber = (elements.itemSerialNumber || document.getElementById('itemSerialNumber'))?.value?.trim() || (isEditing ? (existingItem.serialNumber || '') : '');
-        const notes = elements.itemNotes.value.trim() || (isEditing ? (existingItem.notes || '') : '');
-        const date = elements.itemDate.value || (isEditing ? (existingItem.date || '') : todayStr());
-
-        const catalog = elements.itemCatalog ? elements.itemCatalog.value.trim() : '';
-        const year = (elements.itemYear || document.getElementById('itemYear'))?.value?.trim() || '';
-        const grade = (elements.itemGrade || document.getElementById('itemGrade'))?.value?.trim() || '';
-        const gradingAuthority = (elements.itemGradingAuthority || document.getElementById('itemGradingAuthority'))?.value?.trim() || '';
-        const certNumber = (elements.itemCertNumber || document.getElementById('itemCertNumber'))?.value?.trim() || '';
-        const pcgsNumber = (elements.itemPcgsNumber || document.getElementById('itemPcgsNumber'))?.value?.trim() || '';
-        const marketValueInput = elements.itemMarketValue ? elements.itemMarketValue.value.trim() : '';
-        let marketValue;
-        if (marketValueInput && !isNaN(parseFloat(marketValueInput))) {
-          const enteredMv = parseFloat(marketValueInput);
-          marketValue = fxRate !== 1 ? enteredMv / fxRate : enteredMv;
-        } else {
-          marketValue = isEditing ? (existingItem.marketValue || 0) : 0;
-        }
-
-        // Purity: read from select or custom input
-        let purity = 1.0;
-        const puritySelect = elements.itemPuritySelect || document.getElementById('itemPuritySelect');
-        if (puritySelect && puritySelect.value === 'custom') {
-          const purityInput = elements.itemPurity || document.getElementById('itemPurity');
-          purity = purityInput ? (parseFloat(purityInput.value) || 1.0) : 1.0;
-        } else if (puritySelect) {
-          purity = parseFloat(puritySelect.value) || 1.0;
-        }
-        if (isEditing && !puritySelect) {
-          purity = existingItem.purity || 1.0;
-        }
-
-        // Validate mandatory fields
-        if (
-          !name ||
-          !date ||
-          !type ||
-          !metal ||
-          isNaN(weight) ||
-          weight <= 0 ||
-          isNaN(qty) ||
-          qty < 1 ||
-          !Number.isInteger(qty)
-        ) {
-          return alert("Please enter valid values for Name, Date, Type, Metal, Weight, and Quantity.");
-        }
-
-        if (isEditing) {
-          // --- EDIT MODE ---
-          const oldItem = { ...inventory[editingIndex] };
-          const serial = oldItem.serial;
-
-          inventory[editingIndex] = {
-            ...oldItem,
-            metal,
-            composition,
-            name,
-            qty,
-            type,
-            weight,
-            weightUnit,
-            price,
-            marketValue,
-            date,
-            purchaseLocation,
-            storageLocation,
-            serialNumber,
-            notes,
-            year,
-            grade,
-            gradingAuthority,
-            certNumber,
-            pcgsNumber,
-            purity,
-            isCollectable: false,
-            numistaId: catalog,
-            currency: displayCurrency,
-          };
-
-          addCompositionOption(composition);
-
-          try {
-            if (window.catalogManager && inventory[editingIndex].numistaId) {
-              catalogManager.setCatalogId(serial, inventory[editingIndex].numistaId);
-            }
-          } catch (catErr) {
-            console.warn('Failed to update catalog mapping:', catErr);
-          }
-
-          saveInventory();
-
-          // Record price data point if price-related fields changed (STACK-43)
-          if (typeof recordSingleItemPrice === 'function') {
-            const cur = inventory[editingIndex];
-            const priceChanged = oldItem.marketValue !== cur.marketValue
-              || oldItem.price !== cur.price || oldItem.weight !== cur.weight
-              || oldItem.qty !== cur.qty || oldItem.metal !== cur.metal
-              || oldItem.purity !== cur.purity;
-            if (priceChanged) recordSingleItemPrice(cur, 'edit');
-          }
-
-          renderTable();
-          renderActiveFilters();
-          logItemChanges(oldItem, inventory[editingIndex]);
-
-          editingIndex = null;
-          editingChangeLogIndex = null;
-        } else {
-          // --- ADD MODE ---
-          const metalKey = metal.toLowerCase();
-          const spotPriceAtPurchase = spotPrices[metalKey] ?? 0;
-          const serial = getNextSerial();
-
-          inventory.push({
-            metal,
-            composition,
-            name,
-            qty,
-            type,
-            weight,
-            weightUnit,
-            price,
-            marketValue,
-            date,
-            purchaseLocation,
-            storageLocation,
-            serialNumber,
-            notes,
-            year,
-            grade,
-            gradingAuthority,
-            certNumber,
-            pcgsNumber,
-            pcgsVerified: false,
-            purity,
-            spotPriceAtPurchase,
-            premiumPerOz: 0,
-            totalPremium: 0,
-            isCollectable: false,
-            serial,
-            uuid: generateUUID(),
-            numistaId: catalog,
-            currency: displayCurrency,
-          });
-
-          typeof registerName === "function" && registerName(name);
-          addCompositionOption(composition);
-
-          if (window.catalogManager && catalog) {
-            catalogManager.setCatalogId(serial, catalog);
-          }
-
-          saveInventory();
-
-          // Record initial price data point (STACK-43)
-          if (typeof recordSingleItemPrice === 'function') {
-            recordSingleItemPrice(inventory[inventory.length - 1], 'add');
-          }
-
-          renderTable();
+        if (!isEditing) {
           this.reset();
           elements.itemWeightUnit.value = "oz";
           elements.itemDate.value = todayStr();
@@ -810,8 +934,8 @@ const setupItemFormListeners = () => {
       elements.searchNumistaBtn,
       "click",
       async () => {
-        const catalogVal = (elements.itemCatalog || document.getElementById('itemCatalog'))?.value.trim() || '';
-        const nameVal = (elements.itemName || document.getElementById('itemName'))?.value.trim() || '';
+        const catalogVal = elements.itemCatalog?.value.trim() || '';
+        const nameVal = elements.itemName?.value.trim() || '';
 
         if (!catalogVal && !nameVal) {
           alert('Enter a Name or Catalog N# to search.');
@@ -834,30 +958,21 @@ const setupItemFormListeners = () => {
           'Bar': 'exonumia',
           'Round': 'exonumia',
           'Note': 'banknote',
-          // Aurum omitted — Goldbacks are "Embedded-asset notes" on Numista,
-          // which isn't a valid API category. Uncategorized search finds them.
-          // Set omitted — Numista sets use a different URL scheme (set.php)
-          // and are not searchable via the /types API endpoint.
         };
 
         try {
           if (catalogVal) {
-            // Direct N# lookup → single result
             const result = await catalogAPI.lookupItem(catalogVal);
             showNumistaResults(result ? [result] : [], true, catalogVal);
           } else {
-            // Name search → multiple results with smart category/metal filtering
-            const typeVal = (elements.itemType || document.getElementById('itemType'))?.value || '';
-            const metalVal = (elements.itemMetal || document.getElementById('itemMetal'))?.value || '';
+            const typeVal = elements.itemType?.value || '';
+            const metalVal = elements.itemMetal?.value || '';
 
             const searchFilters = { limit: 20 };
             const numistaCategory = TYPE_TO_NUMISTA_CATEGORY[typeVal];
             if (numistaCategory) searchFilters.category = numistaCategory;
 
-            // Prepend metal to query for better results (avoid doubling e.g. "Silver Silver Eagle")
-            const searchQuery = metalVal && !nameVal.toLowerCase().includes(metalVal.toLowerCase())
-              ? `${metalVal} ${nameVal}` : nameVal;
-
+            const searchQuery = buildNumistaSearchQuery(nameVal, metalVal);
             const results = await catalogAPI.searchItems(searchQuery, searchFilters);
             showNumistaResults(results, false, searchQuery);
           }
@@ -915,6 +1030,47 @@ const setupItemFormListeners = () => {
       "Lookup PCGS button",
     );
   }
+
+  // SPOT LOOKUP BUTTON — search historical spot prices by date (STACK-49)
+  if (elements.spotLookupBtn) {
+    safeAttachListener(
+      elements.spotLookupBtn,
+      "click",
+      () => {
+        if (typeof openSpotLookupModal === 'function') openSpotLookupModal();
+      },
+      "Spot lookup button",
+    );
+  }
+
+  // DATE FIELD — enable/disable spot lookup button based on date value (STACK-49)
+  if (elements.itemDate) {
+    const updateSpotBtnState = () => {
+      if (elements.spotLookupBtn) {
+        elements.spotLookupBtn.disabled = !elements.itemDate.value;
+      }
+    };
+    safeAttachListener(elements.itemDate, "change", updateSpotBtnState, "Date field for spot btn");
+    safeAttachListener(elements.itemDate, "input", updateSpotBtnState, "Date field input for spot btn");
+  }
+
+  // METAL CHANGE — clear stale spot lookup value (STACK-49)
+  if (elements.itemMetal) {
+    safeAttachListener(
+      elements.itemMetal,
+      "change",
+      () => {
+        if (elements.itemSpotPrice) elements.itemSpotPrice.value = '';
+      },
+      "Metal change clears spot lookup",
+    );
+  }
+};
+
+/** Closes the notes modal and resets the notes index. */
+const dismissNotesModal = () => {
+  if (elements.notesModal) elements.notesModal.style.display = "none";
+  notesIndex = null;
 };
 
 /**
@@ -922,231 +1078,80 @@ const setupItemFormListeners = () => {
  */
 const setupNoteAndModalListeners = () => {
   // NOTES MODAL BUTTONS
-  if (elements.saveNotesBtn) {
-    safeAttachListener(
-      elements.saveNotesBtn,
-      "click",
-      () => {
-        if (notesIndex === null) return;
-        const textareaElement =
-          elements.notesTextarea || document.getElementById("notesTextarea");
-        const text = textareaElement ? textareaElement.value.trim() : "";
+  optionalListener(elements.saveNotesBtn, "click", () => {
+    if (notesIndex === null) return;
+    const text = elements.notesTextarea ? elements.notesTextarea.value.trim() : "";
 
-        const oldItem = { ...inventory[notesIndex] };
-        inventory[notesIndex].notes = text;
-        saveInventory();
-        renderTable();
-        logItemChanges(oldItem, inventory[notesIndex]);
+    const oldItem = { ...inventory[notesIndex] };
+    inventory[notesIndex].notes = text;
+    saveInventory();
+    renderTable();
+    logItemChanges(oldItem, inventory[notesIndex]);
+    dismissNotesModal();
+  }, "Save notes button");
 
-        const modalElement =
-          elements.notesModal || document.getElementById("notesModal");
-        if (modalElement) {
-          modalElement.style.display = "none";
-        }
-        notesIndex = null;
-      },
-      "Save notes button",
-    );
-  }
+  optionalListener(elements.cancelNotesBtn, "click", dismissNotesModal, "Cancel notes button");
+  optionalListener(elements.notesCloseBtn, "click", dismissNotesModal, "Notes modal close button");
 
-  if (elements.cancelNotesBtn) {
-    safeAttachListener(
-      elements.cancelNotesBtn,
-      "click",
-      () => {
-        const modalElement =
-          elements.notesModal || document.getElementById("notesModal");
-        if (modalElement) {
-          modalElement.style.display = "none";
-        }
-        notesIndex = null;
-      },
-      "Cancel notes button",
-    );
-  }
-
-  if (elements.notesCloseBtn) {
-    safeAttachListener(
-      elements.notesCloseBtn,
-      "click",
-      () => {
-        const modalElement =
-          elements.notesModal || document.getElementById("notesModal");
-        if (modalElement) {
-          modalElement.style.display = "none";
-        }
-        notesIndex = null;
-      },
-      "Notes modal close button",
-    );
-  }
-
-  if (elements.debugCloseBtn) {
-    safeAttachListener(
-      elements.debugCloseBtn,
-      "click",
-      () => {
-        if (typeof hideDebugModal === "function") {
-          hideDebugModal();
-        }
-      },
-      "Debug modal close button",
-    );
-  }
+  optionalListener(elements.debugCloseBtn, "click",
+    () => { if (typeof hideDebugModal === "function") hideDebugModal(); },
+    "Debug modal close button");
 
   // Bulk Edit modal open/close
-  if (elements.bulkEditBtn) {
-    safeAttachListener(
-      elements.bulkEditBtn,
-      "click",
-      () => {
-        if (typeof openBulkEdit === "function") openBulkEdit();
-      },
-      "Bulk edit open button",
-    );
-  }
-  if (elements.bulkEditCloseBtn) {
-    safeAttachListener(
-      elements.bulkEditCloseBtn,
-      "click",
-      () => {
-        if (typeof closeBulkEdit === "function") closeBulkEdit();
-      },
-      "Bulk edit close button",
-    );
-  }
+  optionalListener(elements.bulkEditBtn, "click",
+    () => { if (typeof openBulkEdit === "function") openBulkEdit(); },
+    "Bulk edit open button");
+  optionalListener(elements.bulkEditCloseBtn, "click",
+    () => { if (typeof closeBulkEdit === "function") closeBulkEdit(); },
+    "Bulk edit close button");
 
-    if (elements.changeLogBtn) {
-      safeAttachListener(
-        elements.changeLogBtn,
-        "click",
-        (e) => {
-          e.preventDefault();
-          if (typeof showSettingsModal === "function") {
-            showSettingsModal("changelog");
-          }
-        },
-        "Change log button",
-      );
+  optionalListener(elements.changeLogBtn, "click", (e) => {
+    e.preventDefault();
+    if (typeof showSettingsModal === "function") showSettingsModal("changelog");
+  }, "Change log button");
+
+  // Settings panel clear buttons (STACK-44)
+  optionalListener(elements.settingsChangeLogClearBtn, "click",
+    () => { if (typeof clearChangeLog === "function") clearChangeLog(); },
+    "Settings change log clear button");
+  optionalListener(elements.settingsSpotHistoryClearBtn, "click",
+    () => { if (typeof clearSpotHistory === "function") clearSpotHistory(); },
+    "Settings spot history clear button");
+  optionalListener(elements.settingsCatalogHistoryClearBtn, "click",
+    () => { if (typeof clearCatalogHistory === "function") clearCatalogHistory(); },
+    "Settings catalog history clear button");
+  optionalListener(elements.settingsPriceHistoryClearBtn, "click",
+    () => { if (typeof clearItemPriceHistory === "function") clearItemPriceHistory(); },
+    "Settings price history clear button");
+
+  // Price History filter input (STACK-44)
+  optionalListener(elements.priceHistoryFilterInput, "input",
+    () => { if (typeof filterItemPriceHistoryTable === "function") filterItemPriceHistoryTable(); },
+    "Price history filter input");
+
+  optionalListener(elements.backupReminder, "click", (e) => {
+    e.preventDefault();
+    if (typeof showSettingsModal === "function") showSettingsModal('files');
+  }, "Backup reminder link");
+
+  optionalListener(elements.storageReportLink, "click", (e) => {
+    e.preventDefault();
+    if (typeof openStorageReportPopup === "function") openStorageReportPopup();
+  }, "Storage report link");
+
+  optionalListener(elements.changeLogCloseBtn, "click", () => {
+    if (elements.changeLogModal) {
+      if (window.closeModalById) closeModalById('changeLogModal');
+      else {
+        elements.changeLogModal.style.display = "none";
+        document.body.style.overflow = "";
+      }
     }
+  }, "Change log close button");
 
-    // Settings panel Change Log clear button
-    if (elements.settingsChangeLogClearBtn) {
-      safeAttachListener(
-        elements.settingsChangeLogClearBtn,
-        "click",
-        () => {
-          if (typeof clearChangeLog === "function") clearChangeLog();
-        },
-        "Settings change log clear button",
-      );
-    }
-
-    // Settings Spot History clear button (STACK-44)
-    if (elements.settingsSpotHistoryClearBtn) {
-      safeAttachListener(
-        elements.settingsSpotHistoryClearBtn,
-        "click",
-        () => {
-          if (typeof clearSpotHistory === "function") clearSpotHistory();
-        },
-        "Settings spot history clear button",
-      );
-    }
-
-    // Settings Catalog History clear button (STACK-44)
-    if (elements.settingsCatalogHistoryClearBtn) {
-      safeAttachListener(
-        elements.settingsCatalogHistoryClearBtn,
-        "click",
-        () => {
-          if (typeof clearCatalogHistory === "function") clearCatalogHistory();
-        },
-        "Settings catalog history clear button",
-      );
-    }
-
-    // Settings Price History clear button (STACK-44)
-    if (elements.settingsPriceHistoryClearBtn) {
-      safeAttachListener(
-        elements.settingsPriceHistoryClearBtn,
-        "click",
-        () => {
-          if (typeof clearItemPriceHistory === "function") clearItemPriceHistory();
-        },
-        "Settings price history clear button",
-      );
-    }
-
-    // Price History filter input (STACK-44)
-    if (elements.priceHistoryFilterInput) {
-      safeAttachListener(
-        elements.priceHistoryFilterInput,
-        "input",
-        () => {
-          if (typeof filterItemPriceHistoryTable === "function") filterItemPriceHistoryTable();
-        },
-        "Price history filter input",
-      );
-    }
-
-    if (elements.backupReminder) {
-      safeAttachListener(
-        elements.backupReminder,
-        "click",
-        (e) => {
-          e.preventDefault();
-          if (typeof showSettingsModal === "function") {
-            showSettingsModal('files');
-          }
-        },
-        "Backup reminder link",
-      );
-    }
-
-    if (elements.storageReportLink) {
-      safeAttachListener(
-        elements.storageReportLink,
-        "click",
-        (e) => {
-          e.preventDefault();
-          if (typeof openStorageReportPopup === "function") {
-            openStorageReportPopup();
-          }
-        },
-        "Storage report link",
-      );
-    }
-
-  if (elements.changeLogCloseBtn) {
-    safeAttachListener(
-      elements.changeLogCloseBtn,
-      "click",
-      () => {
-        if (elements.changeLogModal) {
-          if (window.closeModalById) closeModalById('changeLogModal');
-          else {
-            elements.changeLogModal.style.display = "none";
-            document.body.style.overflow = "";
-          }
-        }
-      },
-      "Change log close button",
-    );
-  }
-
-  if (elements.changeLogClearBtn) {
-    safeAttachListener(
-      elements.changeLogClearBtn,
-      "click",
-      () => {
-        if (typeof clearChangeLog === "function") {
-          clearChangeLog();
-        }
-      },
-      "Change log clear button",
-    );
-  }
+  optionalListener(elements.changeLogClearBtn, "click",
+    () => { if (typeof clearChangeLog === "function") clearChangeLog(); },
+    "Change log clear button");
 };
 
 /**
@@ -1224,324 +1229,114 @@ const setupSpotPriceListeners = () => {
 };
 
 /**
+ * Sets up vault backup/restore listeners and password strength UI.
+ */
+const setupVaultListeners = () => {
+  optionalListener(elements.vaultExportBtn, "click",
+    () => { openVaultModal("export"); },
+    "Vault export button");
+
+  optionalListener(elements.vaultImportBtn, "click",
+    () => { if (elements.vaultImportFile) elements.vaultImportFile.click(); },
+    "Vault import button");
+
+  optionalListener(elements.vaultImportFile, "change", function (e) {
+    var file = e.target.files && e.target.files[0];
+    if (file) {
+      openVaultModal("import", file);
+      e.target.value = "";
+    }
+  }, "Vault import file input");
+
+  // Vault modal live password events
+  const pw = document.getElementById("vaultPassword");
+  const cpw = document.getElementById("vaultConfirmPassword");
+  optionalListener(pw, "input", () => {
+    updateStrengthBar(pw.value);
+    if (cpw) updateMatchIndicator(pw.value, cpw.value);
+  }, "Vault password input");
+  optionalListener(cpw, "input", () => {
+    if (pw) updateMatchIndicator(pw.value, cpw.value);
+  }, "Vault confirm password input");
+};
+
+/**
+ * Sets up data-destructive action listeners (remove data, boating accident).
+ */
+const setupDataManagementListeners = () => {
+  optionalListener(elements.removeInventoryDataBtn, "click", () => {
+    if (confirm("Remove all inventory items? This cannot be undone.")) {
+      localStorage.removeItem(LS_KEY);
+      loadInventory();
+      renderTable();
+      renderActiveFilters();
+      alert("Inventory data cleared.");
+    }
+  }, "Remove inventory data button");
+
+  optionalListener(elements.boatingAccidentBtn, "click", () => {
+    if (confirm("Did you really lose it all in a boating accident? This will wipe all local data.")) {
+      localStorage.removeItem(LS_KEY);
+      localStorage.removeItem(SPOT_HISTORY_KEY);
+      localStorage.removeItem(API_KEY_STORAGE_KEY);
+      localStorage.removeItem(API_CACHE_KEY);
+      Object.values(METALS).forEach((metalConfig) => {
+        localStorage.removeItem(metalConfig.localStorageKey);
+      });
+      sessionStorage.clear();
+
+      loadInventory();
+      renderTable();
+      renderActiveFilters();
+      loadSpotHistory();
+      fetchSpotPrice();
+
+      apiConfig = { provider: "", keys: {} };
+      apiCache = null;
+      updateSyncButtonStates();
+
+      alert("All data has been erased. Hope your scuba gear is ready!");
+    }
+  }, "Boating accident button");
+};
+
+/**
  * Sets up import/export event listeners (CSV, JSON, Numista, PDF, Vault, etc.)
  */
 const setupImportExportListeners = () => {
-  // IMPORT/EXPORT EVENT LISTENERS
   debugLog("Setting up import/export listeners...");
 
-  let csvImportOverride = false;
-  if (elements.importCsvOverride && elements.importCsvFile) {
-    safeAttachListener(
-      elements.importCsvOverride,
-      "click",
-      () => {
-        if (
-          confirm(
-            "Importing CSV will overwrite all existing data. To combine data, choose Merge instead. Press OK to continue.",
-          )
-        ) {
-          csvImportOverride = true;
-          elements.importCsvFile.click();
-        }
-      },
-      "CSV override button",
-    );
-  }
-  if (elements.importCsvMerge && elements.importCsvFile) {
-    safeAttachListener(
-      elements.importCsvMerge,
-      "click",
-      () => {
-        csvImportOverride = false;
-        elements.importCsvFile.click();
-      },
-      "CSV merge button",
-    );
-  }
-  if (elements.importCsvFile) {
-    safeAttachListener(
-      elements.importCsvFile,
-      "change",
-      function (e) {
-        if (e.target.files.length > 0) {
+  // Import triads: Override / Merge / File-input for each format
+  setupFormatImport(elements.importCsvOverride, elements.importCsvMerge, elements.importCsvFile, importCsv, "CSV");
+  setupFormatImport(elements.importJsonOverride, elements.importJsonMerge, elements.importJsonFile, importJson, "JSON");
+  setupFormatImport(
+    document.getElementById("importNumistaBtn"),
+    document.getElementById("mergeNumistaBtn"),
+    elements.numistaImportFile, importNumistaCsv, "Numista CSV"
+  );
 
-          const file = e.target.files[0];
-          if (!checkFileSize(file)) {
-            alert("File exceeds 2MB limit. Enable cloud backup for larger uploads.");
-          } else {
-            importCsv(file, csvImportOverride);
-          }
+  // Export buttons
+  optionalListener(elements.exportCsvBtn, "click", exportCsv, "CSV export");
+  optionalListener(elements.exportJsonBtn, "click", exportJson, "JSON export");
+  optionalListener(elements.exportPdfBtn, "click", exportPdf, "PDF export");
 
-        }
-        this.value = "";
-      },
-      "CSV import",
-    );
-  }
-
-  let jsonImportOverride = false;
-  if (elements.importJsonOverride && elements.importJsonFile) {
-    safeAttachListener(
-      elements.importJsonOverride,
-      "click",
-      () => {
-        if (
-          confirm(
-            "Importing JSON will overwrite all existing data. To combine data, choose Merge instead. Press OK to continue.",
-          )
-        ) {
-          jsonImportOverride = true;
-          elements.importJsonFile.click();
-        }
-      },
-      "JSON override button",
-    );
-  }
-  if (elements.importJsonMerge && elements.importJsonFile) {
-    safeAttachListener(
-      elements.importJsonMerge,
-      "click",
-      () => {
-        jsonImportOverride = false;
-        elements.importJsonFile.click();
-      },
-      "JSON merge button",
-    );
-  }
-  if (elements.importJsonFile) {
-    safeAttachListener(
-      elements.importJsonFile,
-      "change",
-      function (e) {
-        if (e.target.files.length > 0) {
-
-          const file = e.target.files[0];
-          if (!checkFileSize(file)) {
-            alert("File exceeds 2MB limit. Enable cloud backup for larger uploads.");
-          } else {
-            importJson(file, jsonImportOverride);
-          }
-
-        }
-        this.value = "";
-      },
-      "JSON import",
-    );
-  }
-
-  let numistaOverride = false;
-  const importNumistaBtn = document.getElementById("importNumistaBtn");
-  const mergeNumistaBtn = document.getElementById("mergeNumistaBtn");
-  if (importNumistaBtn && elements.numistaImportFile) {
-    safeAttachListener(
-      importNumistaBtn,
-      "click",
-      () => {
-        if (
-          confirm(
-            "Importing Numista CSV will overwrite all existing data. To combine data, choose Merge instead. Press OK to continue.",
-          )
-        ) {
-          numistaOverride = true;
-          elements.numistaImportFile.click();
-        }
-      },
-      "Import Numista CSV button",
-    );
-  }
-  if (mergeNumistaBtn && elements.numistaImportFile) {
-    safeAttachListener(
-      mergeNumistaBtn,
-      "click",
-      () => {
-        numistaOverride = false;
-        elements.numistaImportFile.click();
-      },
-      "Merge Numista CSV button",
-    );
-  }
-    if (elements.numistaImportFile) {
-      safeAttachListener(
-        elements.numistaImportFile,
-        "change",
-        function (e) {
-          if (e.target.files.length > 0) {
-
-          const file = e.target.files[0];
-          if (!checkFileSize(file)) {
-            alert("File exceeds 2MB limit. Enable cloud backup for larger uploads.");
-          } else {
-            importNumistaCsv(file, numistaOverride);
-          }
-        }
-        this.value = "";
-      },
-        "Numista CSV import",
-      );
+  // Cloud Sync modal
+  optionalListener(elements.cloudSyncBtn, "click", () => {
+    if (elements.cloudSyncModal) {
+      if (window.openModalById) openModalById('cloudSyncModal');
+      else elements.cloudSyncModal.style.display = "flex";
     }
-
-    // Export buttons
-    if (elements.exportCsvBtn) {
-      safeAttachListener(
-      elements.exportCsvBtn,
-      "click",
-      exportCsv,
-      "CSV export",
-    );
-  }
-  if (elements.exportJsonBtn) {
-    safeAttachListener(
-      elements.exportJsonBtn,
-      "click",
-      exportJson,
-      "JSON export",
-    );
-  }
-  if (elements.exportPdfBtn) {
-    safeAttachListener(
-      elements.exportPdfBtn,
-      "click",
-      exportPdf,
-      "PDF export",
-    );
-  }
-  if (elements.cloudSyncBtn) {
-    safeAttachListener(
-      elements.cloudSyncBtn,
-      "click",
-      () => {
-        if (elements.cloudSyncModal) {
-          if (window.openModalById) openModalById('cloudSyncModal');
-          else elements.cloudSyncModal.style.display = "flex";
-        }
-      },
-      "Cloud Sync button",
-    );
-  }
+  }, "Cloud Sync button");
   const cloudSyncCloseBtn = document.getElementById("cloudSyncCloseBtn");
   if (cloudSyncCloseBtn && elements.cloudSyncModal) {
-    safeAttachListener(
-      cloudSyncCloseBtn,
-      "click",
-      () => {
-        if (window.closeModalById) closeModalById('cloudSyncModal');
-        else elements.cloudSyncModal.style.display = "none";
-      },
-      "Cloud Sync close",
-    );
+    safeAttachListener(cloudSyncCloseBtn, "click", () => {
+      if (window.closeModalById) closeModalById('cloudSyncModal');
+      else elements.cloudSyncModal.style.display = "none";
+    }, "Cloud Sync close");
   }
 
-  // Vault Encrypted Backup Buttons
-  if (elements.vaultExportBtn) {
-    safeAttachListener(
-      elements.vaultExportBtn,
-      "click",
-      function () {
-        openVaultModal("export");
-      },
-      "Vault export button",
-    );
-  }
-
-  if (elements.vaultImportBtn) {
-    safeAttachListener(
-      elements.vaultImportBtn,
-      "click",
-      function () {
-        if (elements.vaultImportFile) elements.vaultImportFile.click();
-      },
-      "Vault import button",
-    );
-  }
-
-  if (elements.vaultImportFile) {
-    safeAttachListener(
-      elements.vaultImportFile,
-      "change",
-      function (e) {
-        var file = e.target.files && e.target.files[0];
-        if (file) {
-          openVaultModal("import", file);
-          // Reset input so the same file can be selected again
-          e.target.value = "";
-        }
-      },
-      "Vault import file input",
-    );
-  }
-
-  // Vault modal live password events
-  (function () {
-    var pw = document.getElementById("vaultPassword");
-    var cpw = document.getElementById("vaultConfirmPassword");
-    if (pw) {
-      pw.addEventListener("input", function () {
-        updateStrengthBar(pw.value);
-        if (cpw) updateMatchIndicator(pw.value, cpw.value);
-      });
-    }
-    if (cpw) {
-      cpw.addEventListener("input", function () {
-        if (pw) updateMatchIndicator(pw.value, cpw.value);
-      });
-    }
-  })();
-
-  // Remove Inventory Data Button
-  if (elements.removeInventoryDataBtn) {
-    safeAttachListener(
-      elements.removeInventoryDataBtn,
-      "click",
-      function () {
-        if (confirm("Remove all inventory items? This cannot be undone.")) {
-          localStorage.removeItem(LS_KEY);
-          loadInventory();
-          renderTable();
-          renderActiveFilters();
-          alert("Inventory data cleared.");
-        }
-      },
-      "Remove inventory data button",
-    );
-  }
-
-  // Boating Accident Button
-  if (elements.boatingAccidentBtn) {
-    safeAttachListener(
-      elements.boatingAccidentBtn,
-      "click",
-      function () {
-        if (
-          confirm(
-            "Did you really lose it all in a boating accident? This will wipe all local data.",
-          )
-        ) {
-          localStorage.removeItem(LS_KEY);
-          localStorage.removeItem(SPOT_HISTORY_KEY);
-          localStorage.removeItem(API_KEY_STORAGE_KEY);
-          localStorage.removeItem(API_CACHE_KEY);
-          Object.values(METALS).forEach((metalConfig) => {
-            localStorage.removeItem(metalConfig.localStorageKey);
-          });
-          sessionStorage.clear();
-
-          loadInventory();
-          renderTable();
-          renderActiveFilters();
-          loadSpotHistory();
-          fetchSpotPrice();
-
-          apiConfig = { provider: "", keys: {} };
-          apiCache = null;
-          updateSyncButtonStates();
-
-          alert("All data has been erased. Hope your scuba gear is ready!");
-        }
-      },
-      "Boating accident button",
-    );
-  }
+  setupVaultListeners();
+  setupDataManagementListeners();
 };
 
 // MAIN EVENT LISTENERS SETUP
@@ -1752,12 +1547,15 @@ const setupSearch = () => {
             elements.itemDate.value = todayStr();
           }
           if (elements.itemSerial) elements.itemSerial.value = '';
+          // Reset spot lookup state (STACK-49)
+          if (elements.itemSpotPrice) elements.itemSpotPrice.value = '';
+          if (elements.spotLookupBtn) elements.spotLookupBtn.disabled = !elements.itemDate.value;
           // Set modal to add mode
           if (elements.itemModalTitle) elements.itemModalTitle.textContent = "Add Inventory Item";
           if (elements.itemModalSubmit) elements.itemModalSubmit.textContent = "Add to Inventory";
           if (elements.undoChangeBtn) elements.undoChangeBtn.style.display = "none";
           // Reset purity to default (form.reset already sets select to first option)
-          const purityCustom = elements.purityCustomWrapper || document.getElementById('purityCustomWrapper');
+          const purityCustom = elements.purityCustomWrapper;
           if (purityCustom) purityCustom.style.display = 'none';
           // Reset gb denomination picker (STACK-45)
           if (typeof toggleGbDenomPicker === 'function') toggleGbDenomPicker();
@@ -2140,6 +1938,11 @@ const setupApiEvents = () => {
             typeof hideSettingsModal === "function"
           ) {
             hideSettingsModal();
+          } else if (
+            document.getElementById("spotLookupModal")?.style.display === "flex" &&
+            typeof closeSpotLookupModal === "function"
+          ) {
+            closeSpotLookupModal();
           } else if (itemModal && itemModal.style.display === "flex") {
             itemModal.style.display = "none";
             document.body.style.overflow = "";

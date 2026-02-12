@@ -1498,6 +1498,9 @@ const editItem = (idx, logIdx = null) => {
   if (elements.itemSerialNumber) elements.itemSerialNumber.value = item.serialNumber || '';
   if (elements.itemNotes) elements.itemNotes.value = item.notes || '';
   elements.itemDate.value = item.date;
+  // Reset spot lookup state for edit mode (STACK-49)
+  if (elements.itemSpotPrice) elements.itemSpotPrice.value = '';
+  if (elements.spotLookupBtn) elements.spotLookupBtn.disabled = !item.date;
   if (elements.itemCatalog) elements.itemCatalog.value = item.numistaId || '';
   if (elements.itemYear) elements.itemYear.value = item.year || item.issuedYear || '';
   if (elements.itemGrade) elements.itemGrade.value = item.grade || '';

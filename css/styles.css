@@ -6124,6 +6124,75 @@ th {
   border-radius: 0.75rem;
 }
 
+/* =============================================================================
+   SPOT LOOKUP MODAL — Historical spot price search (STACK-49)
+   ============================================================================= */
+#spotLookupModal {
+  z-index: 10000;
+}
+
+.spot-lookup-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.spot-lookup-table th {
+  text-transform: uppercase;
+  font-size: 0.7rem;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  padding: 0.4rem 0.5rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+
+.spot-lookup-table td {
+  padding: 0.45rem 0.5rem;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+
+.spot-lookup-table tr:last-child td {
+  border-bottom: none;
+}
+
+.spot-lookup-offset {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.15rem 0.45rem;
+  border-radius: 0.75rem;
+  background: var(--bg-secondary);
+  color: var(--text-muted);
+}
+
+.spot-lookup-offset.exact {
+  background: var(--primary);
+  color: #fff;
+}
+
+.spot-lookup-use-btn {
+  padding: 0.25rem 0.75rem;
+  font-size: 0.8rem;
+}
+
+.spot-lookup-empty {
+  text-align: center;
+  padding: 2rem 1rem;
+  color: var(--text-muted);
+}
+
+.spot-lookup-hint {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-top: 0.5rem;
+}
+
+.spot-lookup-fetch-btn {
+  margin-top: 1rem;
+}
+
 #typeSummary .summary-chip {
   display: inline-flex;
   align-items: center;

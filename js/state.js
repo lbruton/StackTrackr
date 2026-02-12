@@ -74,6 +74,7 @@ const elements = {
   itemCertNumber: null,
   searchNumistaBtn: null,
   lookupPcgsBtn: null,
+  spotLookupBtn: null,
   itemPuritySelect: null,
   itemPurity: null,
   purityCustomWrapper: null,
