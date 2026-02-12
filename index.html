@@ -1028,6 +1028,14 @@
                     <circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="21" y2="21"/>
                   </svg>PCGS
                 </button>
+                <button class="btn secondary" id="spotLookupBtn" type="button" disabled
+                        title="Look up spot price on the purchase date">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                       stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+                       style="vertical-align: -2px; margin-right: 0.3rem;">
+                    <line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                  </svg>Spot
+                </button>
               </div>
               <div class="item-modal-actions-right">
                 <button class="btn" id="undoChangeBtn" type="button" style="display:none">Undo</button>
@@ -2602,6 +2610,23 @@
     </div>
 
     <!-- =============================================================================
+       SPOT LOOKUP MODAL (STACK-49)
+
+       Stacked modal (z-index 10000) that appears over the item Add/Edit form.
+       Shows historical spot prices near the purchase date for the selected metal.
+       ============================================================================= -->
+    <div class="modal" id="spotLookupModal" style="display: none">
+      <div class="modal-content numista-results-modal-content">
+        <div class="modal-header">
+          <h2 id="spotLookupTitle">Spot Price Lookup</h2>
+          <button aria-label="Close modal" class="modal-close" onclick="closeSpotLookupModal()">&times;</button>
+        </div>
+        <div class="modal-body" id="spotLookupBody">
+        </div>
+      </div>
+    </div>
+
+    <!-- =============================================================================
        DEBUG LOG MODAL
 
        Displays collected debug output when debug mode is enabled.
@@ -2679,6 +2704,7 @@
     <script defer src="./js/spot.js"></script>
     <script defer src="./js/seed-data.js"></script>
     <script defer src="./js/priceHistory.js"></script>
+    <script defer src="./js/spotLookup.js"></script>
     <script defer src="./js/goldback.js"></script>
     <script defer src="./js/api.js"></script>
     <script defer src="./js/catalog-api.js"></script>
