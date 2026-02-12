@@ -166,6 +166,15 @@ const createFieldInput = (field) => {
   return input;
 };
 
+/** Coercion rules: fieldId → (rawValue) => coerced value */
+const FIELD_COERCIONS = {
+  qty:         (v) => { const n = parseInt(v, 10);  return (isNaN(n) || n < 1)            ? 1   : n; },
+  weight:      (v) => { const n = parseFloat(v);    return (isNaN(n) || n < 0)            ? 0   : n; },
+  price:       (v) => { const n = parseFloat(v);    return (isNaN(n) || n < 0)            ? 0   : n; },
+  marketValue: (v) => { const n = parseFloat(v);    return (isNaN(n) || n < 0)            ? 0   : n; },
+  purity:      (v) => { const n = parseFloat(v);    return (isNaN(n) || n <= 0 || n > 1)  ? 1.0 : n; },
+};
+
 /**
  * Coerces a bulk edit field value to the correct type based on field ID.
  * @param {string} fieldId - The field identifier
@@ -173,19 +182,8 @@ const createFieldInput = (field) => {
  * @returns {*} The coerced value
  */
 const coerceFieldValue = (fieldId, value) => {
-  if (fieldId === 'qty') {
-    const v = parseInt(value, 10);
-    return (isNaN(v) || v < 1) ? 1 : v;
-  }
-  if (fieldId === 'weight' || fieldId === 'price' || fieldId === 'marketValue') {
-    const v = parseFloat(value);
-    return (isNaN(v) || v < 0) ? 0 : v;
-  }
-  if (fieldId === 'purity') {
-    const v = parseFloat(value);
-    return (isNaN(v) || v <= 0 || v > 1) ? 1.0 : v;
-  }
-  return value;
+  const coerce = FIELD_COERCIONS[fieldId];
+  return coerce ? coerce(value) : value;
 };
 
 /**
