@@ -1301,6 +1301,65 @@ input[type="submit"] {
   font-size: 0.9rem;
 }
 
+/* Header toggle buttons (STACK-54) */
+.header-toggle-btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* Settings checkbox labels (STACK-54) */
+.settings-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0;
+  cursor: pointer;
+  font-size: 0.9375rem;
+}
+
+.settings-checkbox-label input[type="checkbox"] {
+  width: 1rem;
+  height: 1rem;
+  accent-color: var(--primary);
+  cursor: pointer;
+}
+
+/* Header currency dropdown (STACK-54) */
+.header-currency-dropdown {
+  position: fixed;
+  z-index: 9999;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  box-shadow: var(--shadow);
+  max-height: 320px;
+  overflow-y: auto;
+  min-width: 220px;
+  padding: 0.25rem 0;
+}
+
+.header-currency-item {
+  display: block;
+  width: 100%;
+  padding: 0.45rem 0.75rem;
+  border: none;
+  background: none;
+  color: var(--text);
+  font-size: 0.85rem;
+  text-align: left;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.header-currency-item:hover {
+  background: var(--bg-elev-1);
+}
+
+.header-currency-item.active {
+  color: var(--primary);
+  font-weight: 600;
+}
+
 .theme-buttons {
   display: flex;
   gap: 1rem;
