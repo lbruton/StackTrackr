@@ -45,6 +45,8 @@ const createBackupZip = async () => {
         qty: item.qty,
         type: item.type,
         weight: item.weight,
+        weightUnit: item.weightUnit || 'oz',
+        purity: item.purity || 1.0,
         price: item.price,
         date: item.date,
         purchaseLocation: item.purchaseLocation,
@@ -54,6 +56,7 @@ const createBackupZip = async () => {
         isCollectable: item.isCollectable,
         premiumPerOz: item.premiumPerOz,
         totalPremium: item.totalPremium,
+        marketValue: item.marketValue || 0,
         numistaId: item.numistaId,
         year: item.year || '',
         grade: item.grade || '',
@@ -90,7 +93,9 @@ const createBackupZip = async () => {
       // Goldback denomination pricing (STACK-45)
       goldbackPrices: goldbackPrices,
       goldbackPriceHistory: goldbackPriceHistory,
-      goldbackEnabled: goldbackEnabled
+      goldbackEnabled: goldbackEnabled,
+      goldbackEstimateEnabled: goldbackEstimateEnabled,
+      goldbackEstimateModifier: goldbackEstimateModifier
     };
     zip.file('settings.json', JSON.stringify(settings, null, 2));
 
@@ -171,6 +176,8 @@ const createBackupZip = async () => {
         qty: item.qty,
         type: item.type,
         weight: item.weight,
+        weightUnit: item.weightUnit || 'oz',
+        purity: item.purity || 1.0,
         price: item.price,
         date: item.date,
         purchaseLocation: item.purchaseLocation,
@@ -179,6 +186,7 @@ const createBackupZip = async () => {
         isCollectable: item.isCollectable,
         numistaId: item.numistaId,
         serialNumber: item.serialNumber || '',
+        marketValue: item.marketValue || 0,
         serial: item.serial
       }));
       zip.file('sample_data.json', JSON.stringify(sampleData, null, 2));
@@ -285,6 +293,17 @@ const restoreBackupZip = async (file) => {
         saveDataSync(GOLDBACK_ENABLED_KEY, settingsObj.goldbackEnabled === true);
         goldbackEnabled = settingsObj.goldbackEnabled === true;
       }
+      if (settingsObj.goldbackEstimateEnabled != null) {
+        saveDataSync(GOLDBACK_ESTIMATE_ENABLED_KEY, settingsObj.goldbackEstimateEnabled === true);
+        goldbackEstimateEnabled = settingsObj.goldbackEstimateEnabled === true;
+      }
+      if (settingsObj.goldbackEstimateModifier != null) {
+        const mod = parseFloat(settingsObj.goldbackEstimateModifier);
+        if (!isNaN(mod) && mod > 0) {
+          saveDataSync(GB_ESTIMATE_MODIFIER_KEY, mod);
+          goldbackEstimateModifier = mod;
+        }
+      }
       // Restore display settings (backed up but previously not restored)
       if (settingsObj.itemsPerPage != null) {
         localStorage.setItem(ITEMS_PER_PAGE_KEY, String(settingsObj.itemsPerPage));
@@ -369,7 +388,7 @@ const generateBackupHtml = (sortedInventory, timeFormatted) => {
   <table>
     <thead>
       <tr>
-        <th>Composition</th><th>Name</th><th>Qty</th><th>Type</th><th>Weight(oz)</th>
+        <th>Composition</th><th>Name</th><th>Qty</th><th>Type</th><th>Weight</th>
         <th>Purchase Price</th><th>Purchase Location</th><th>Storage Location</th>
         <th>Notes</th><th>Date</th><th>Collectable</th>
       </tr>
@@ -381,7 +400,7 @@ const generateBackupHtml = (sortedInventory, timeFormatted) => {
           <td>${item.name}</td>
           <td>${item.qty}</td>
           <td>${item.type}</td>
-          <td>${parseFloat(item.weight).toFixed(2)}</td>
+          <td>${formatWeight(item.weight, item.weightUnit)}</td>
           <td>${formatCurrency(item.price)}</td>
           <td>${item.purchaseLocation}</td>
           <td>${item.storageLocation || ''}</td>
@@ -2331,6 +2350,8 @@ const importJson = (file, override = false) => {
         const qty = parseInt(raw.qty ?? raw.quantity ?? 1, 10);
         const type = normalizeType(raw.type || raw.itemType || 'Other');
         const weight = parseFloat(raw.weight ?? raw.weightOz ?? 0);
+        const weightUnit = raw.weightUnit || raw['Weight Unit'] || 'oz';
+        const purity = parseFloat(raw.purity ?? raw['Purity'] ?? raw['Fineness'] ?? 1.0) || 1.0;
         const priceStr = raw.price ?? raw.purchasePrice ?? 0;
         let price = typeof priceStr === 'string'
           ? parseFloat(priceStr.replace(/[^\d.-]+/g, ''))
@@ -2376,6 +2397,7 @@ const importJson = (file, override = false) => {
           qty,
           type,
           weight,
+          weightUnit,
           price,
           marketValue,
           date,
@@ -2393,6 +2415,7 @@ const importJson = (file, override = false) => {
           certNumber,
           pcgsNumber,
           pcgsVerified,
+          purity,
           serial,
           uuid
         });
@@ -2507,6 +2530,8 @@ const exportJson = () => {
     year: item.year || '',
     qty: item.qty,
     weight: item.weight,
+    weightUnit: item.weightUnit || 'oz',
+    purity: parseFloat(item.purity) || 1.0,
     price: item.price,
     marketValue: item.marketValue || 0,
     purchaseLocation: item.purchaseLocation,
