@@ -1232,7 +1232,7 @@ const renderTable = () => {
       tbody.addEventListener('click', (e) => {
         if (window.innerWidth > 768) return;
         // Don't intercept clicks on buttons, links, or interactive elements
-        if (e.target.closest('button, a, input, select, textarea, .icon-btn')) return;
+        if (e.target.closest('button, a, input, select, textarea, .icon-btn, .filter-text, [role="button"], .year-tag, .purity-tag')) return;
         const row = e.target.closest('tr[data-idx]');
         if (row) editItem(Number(row.dataset.idx));
       });
