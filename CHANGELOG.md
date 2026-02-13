@@ -9,6 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.25.05] - 2026-02-13
+
+### Added — STACK-71: Details modal QoL — responsive charts, slice labels, scrollable breakdown
+
+- **Added**: Pie chart percentage labels via chartjs-plugin-datalabels — slices ≥5% show percentage directly on the chart (STACK-71)
+- **Added**: Sticky metric toggle (Purchase/Melt/Retail/Gain-Loss) stays visible while scrolling the modal body (STACK-71)
+- **Fixed**: Details modal overflow cascade — breakdowns no longer clipped off-screen at any viewport size (STACK-71)
+- **Fixed**: Chart container uses `aspect-ratio: 1` for circular pie charts instead of rigid 300px height (STACK-71)
+- **Fixed**: ResizeObserver memory leak — observer now disconnected on modal close (STACK-71)
+- **Fixed**: Sepia theme chart colors — tooltips now use correct background/text colors for all 4 themes (STACK-71)
+- **Fixed**: Allow clearing optional form fields on edit
+- **Removed**: Dead CSS chart-height rules at ≤768px/≤640px/≤480px (already hidden by STACK-70)
+
+---
+
 ## [3.25.04] - 2026-02-12
 
 ### Added — STACK-70: Mobile-optimized modals
