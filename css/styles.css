@@ -441,6 +441,7 @@ section {
   display: flex;
   justify-content: center;
   align-items: center;
+  flex-wrap: wrap;
   gap: 6px;
   margin-top: 6px;
 }
@@ -2709,198 +2710,9 @@ tr:hover {
 }
 
 
-/* Enhanced Mobile Responsive Design with Auto-Scaling */
-
-/* Progressive column hiding for responsive design (legacy section — see portfolio overrides below) */
-@media (max-width: 1200px) {
-  #inventoryTable th[data-column="gainLoss"],
-  #inventoryTable td[data-column="gainLoss"] {
-    display: none;
-  }
-}
-
-@media (max-width: 1024px) {
-  #inventoryTable th[data-column="purchaseLocation"],
-  #inventoryTable td[data-column="purchaseLocation"] {
-    display: none;
-  }
-  
-  #inventoryTable {
-    font-size: 0.8rem;
-  }
-  
-  #inventoryTable th,
-  #inventoryTable td {
-    padding: 0.3rem 0.2rem;
-  }
-}
-
-@media (max-width: 768px) {
-  #inventoryTable {
-    width: 100%;
-    min-width: 0;
-    table-layout: fixed;
-    font-size: 0.75rem;
-  }
-
-  #inventoryTable th,
-  #inventoryTable td {
-    padding: 0.25rem 0.15rem;
-    white-space: normal;
-    overflow: hidden;
-    text-overflow: clip;
-    word-break: break-word;
-    line-height: 1.2;
-  }
-  
-  /* Auto-scale column widths for mobile with improved distribution */
-  #inventoryTable th[data-column="date"],
-  #inventoryTable td[data-column="date"] {
-    width: 10%;
-    font-size: 0.7rem;
-  }
-  
-  #inventoryTable th[data-column="metal"],
-  #inventoryTable td[data-column="metal"] {
-    width: 8%;
-    font-size: 0.7rem;
-  }
-  
-  #inventoryTable th[data-column="name"],
-  #inventoryTable td[data-column="name"] {
-    width: 30%;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  
-  #inventoryTable th[data-column="qty"],
-  #inventoryTable td[data-column="qty"] {
-    width: 6%;
-  }
-  
-  #inventoryTable th[data-column="weight"],
-  #inventoryTable td[data-column="weight"] {
-    width: 10%;
-  }
-  
-  #inventoryTable th[data-column="purchasePrice"],
-  #inventoryTable td[data-column="purchasePrice"] {
-    width: 12%;
-  }
-  
-  /* Icon columns get minimal width but remain functional */
-  #inventoryTable th.icon-col,
-  #inventoryTable td.icon-col {
-    width: 6%;
-    min-width: 2.5rem;
-    padding: 0.2rem 0.1rem;
-  }
-
-  /* Enhanced responsive text handling */
-  .shrink {
-    width: auto;
-    min-width: 0;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  
-  .expand {
-    word-wrap: break-word;
-    overflow-wrap: break-word;
-    white-space: normal;
-  }
-}
-
-@media (max-width: 600px) {
-  #inventoryTable {
-    font-size: 0.7rem;
-  }
-  
-  #inventoryTable th,
-  #inventoryTable td {
-    padding: 0.2rem 0.1rem;
-  }
-  
-  /* Progressive column hiding for better mobile experience */
-  #inventoryTable th[data-column="weight"],
-  #inventoryTable td[data-column="weight"],
-  #inventoryTable th[data-column="date"],
-  #inventoryTable td[data-column="date"] {
-    display: none;
-  }
-  
-  /* Redistribute space for remaining columns */
-  #inventoryTable th[data-column="name"],
-  #inventoryTable td[data-column="name"] {
-    width: 40%;
-  }
-  
-  #inventoryTable th[data-column="weight"],
-  #inventoryTable td[data-column="weight"] {
-    width: 12%;
-  }
-  
-  #inventoryTable th[data-column="purchasePrice"],
-  #inventoryTable td[data-column="purchasePrice"] {
-    width: 15%;
-  }
-  
-  #inventoryTable th[data-column="qty"],
-  #inventoryTable td[data-column="qty"] {
-    width: 8%;
-  }
-}
-
-@media (max-width: 480px) {
-  #inventoryTable {
-    font-size: 0.65rem;
-  }
-  
-  #inventoryTable th,
-  #inventoryTable td {
-    padding: 0.15rem 0.05rem;
-  }
-  
-  /* Further column hiding for very small screens */
-  #inventoryTable th[data-column="type"],
-  #inventoryTable td[data-column="type"],
-  #inventoryTable th[data-column="metal"],
-  #inventoryTable td[data-column="metal"] {
-    display: none;
-  }
-  
-  /* Maximize space for essential columns */
-  #inventoryTable th[data-column="name"],
-  #inventoryTable td[data-column="name"] {
-    width: 50%;
-  }
-  
-  #inventoryTable th[data-column="weight"],
-  #inventoryTable td[data-column="weight"] {
-    width: 15%;
-  }
-  
-  #inventoryTable th[data-column="purchasePrice"],
-  #inventoryTable td[data-column="purchasePrice"] {
-    width: 15%;
-  }
-  
-  /* Icon columns remain functional but compact */
-  #inventoryTable th.icon-col,
-  #inventoryTable td.icon-col {
-    width: 8%;
-    min-width: 1.8rem;
-    padding: 0.1rem;
-  }
-  
-  /* Reduce icon sizes for mobile */
-  #inventoryTable td.icon-col .action-icon,
-  #inventoryTable th.icon-col svg {
-    width: 0.9rem;
-    height: 0.9rem;
-  }
-}
+/* Legacy "Enhanced Mobile Responsive Design" section removed —
+   consolidated into canonical responsive block below line 5127 and
+   card-view rules at end of file.  See STACK-38 / STACK-31. */
 
 /* Clickable name cell styling */
 .name-cell {
@@ -4820,52 +4632,7 @@ input:disabled + .slider {
   }
 }
 
-/* Additional mobile table adjustments */
-@media (max-width: 768px) {
-  th {
-    font-size: 0.7rem;
-    padding: 0.25rem 0.125rem;
-  }
-
-  td {
-    font-size: 0.7rem;
-    padding: 0.2rem;
-  }
-}
-
-@media (max-width: 480px) {
-  th {
-    font-size: 0.65rem;
-    padding: 0.2rem 0.1rem;
-  }
-
-  .header-text {
-    font-size: 0.6rem;
-    margin-top: 0.1rem;
-  }
-
-  .icon-col {
-    min-width: 3rem;
-  }
-
-  td {
-    font-size: 0.65rem;
-    padding: 0.15rem;
-  }
-
-  td .btn {
-    padding: 0.2rem 0.3rem;
-    font-size: 0.65rem;
-    min-height: 1.5rem;
-  }
-  td .action-btn {
-    width: 4rem;
-  }
-  td .action-icon {
-    width: 4rem;
-  }
-
-}
+/* Additional mobile table adjustments — removed ≤768px rules (card view handles them) */
 
 @media (min-width: 600px) {
   .grid-2 {
@@ -5124,38 +4891,24 @@ input:disabled + .slider {
 .edit-svg { color: inherit; }
 .delete-svg { color: inherit; }
 
-/* MOBILE PRIORITY RULES — Portfolio layout
-   Keep Name, Purchase, Melt, Retail visible on tight screens. */
-@media (max-width: 768px) {
-  #inventoryTable th[data-column="type"],
-  #inventoryTable td[data-column="type"] {
+/* CANONICAL RESPONSIVE TABLE RULES — Progressive disclosure + portfolio layout
+   Single source of truth for all inventory table responsive behavior.
+   Card view (≤768px) lives at end of file.  See STACK-38 / STACK-31. */
+
+@media (max-width: 1200px) {
+  #inventoryTable th[data-column="gainLoss"],
+  #inventoryTable td[data-column="gainLoss"] {
     display: none;
   }
-
-  #inventoryTable th[data-column="name"],
-  #inventoryTable td[data-column="name"] { width: 35%; }
-  #inventoryTable th[data-column="purchasePrice"],
-  #inventoryTable td[data-column="purchasePrice"] { width: 15%; }
-  #inventoryTable th[data-column="meltValue"],
-  #inventoryTable td[data-column="meltValue"] { width: 15%; }
-
-  #inventoryTable th, #inventoryTable td { padding: 0.2rem 0.15rem; }
 }
 
-@media (max-width: 480px) {
-  #inventoryTable th[data-column="retailPrice"],
-  #inventoryTable td[data-column="retailPrice"],
-  #inventoryTable th[data-column="metal"],
-  #inventoryTable td[data-column="metal"] {
+@media (max-width: 1024px) {
+  #inventoryTable th[data-column="purchaseLocation"],
+  #inventoryTable td[data-column="purchaseLocation"] {
     display: none;
   }
-
-  #inventoryTable th[data-column="name"],
-  #inventoryTable td[data-column="name"] { width: 50%; }
-  #inventoryTable th[data-column="purchasePrice"],
-  #inventoryTable td[data-column="purchasePrice"] { width: 20%; }
-  #inventoryTable th[data-column="meltValue"],
-  #inventoryTable td[data-column="meltValue"] { width: 20%; }
+  #inventoryTable { font-size: 0.8rem; }
+  #inventoryTable th, #inventoryTable td { padding: 0.3rem 0.2rem; }
 }
 
 /* Sticky icon columns: remove left border so they blend with adjacent cells */
@@ -6843,42 +6596,9 @@ th {
   font-variant-numeric: tabular-nums;
 }
 
-/* Responsive column hiding — progressive disclosure for portfolio layout */
-@media (max-width: 1200px) {
-  #inventoryTable th[data-column="gainLoss"],
-  #inventoryTable td[data-column="gainLoss"] {
-    display: none;
-  }
-}
-
-@media (max-width: 1024px) {
-  #inventoryTable th[data-column="purchaseLocation"],
-  #inventoryTable td[data-column="purchaseLocation"] {
-    display: none;
-  }
-}
-
-@media (max-width: 768px) {
-  #inventoryTable th[data-column="type"],
-  #inventoryTable td[data-column="type"] {
-    display: none;
-  }
-}
-
-@media (max-width: 600px) {
-  #inventoryTable th[data-column="weight"],
-  #inventoryTable td[data-column="weight"],
-  #inventoryTable th[data-column="date"],
-  #inventoryTable td[data-column="date"] {
-    display: none;
-  }
-
-  /* Make action buttons smaller on mobile */
-  #inventoryTable td.icon-col .action-icon {
-    width: 1rem;
-    height: 1rem;
-  }
-}
+/* Legacy "Responsive column hiding" section removed —
+   consolidated into canonical responsive block and card-view rules.
+   See STACK-38 / STACK-31. */
 
 /* Smooth table scrolling */
 #inventoryTable {
@@ -7610,5 +7330,340 @@ th {
   .bulk-edit-content {
     width: 98vw;
     max-height: 95vh;
+  }
+}
+
+/* =============================================================================
+   CARD VIEW — Inventory table ≤768px  (STACK-31 / STACK-38)
+   Converts each <tr> into a card via CSS grid. Labels generated from
+   data-label attributes on <td> elements via ::before pseudo-elements.
+   ============================================================================= */
+
+@media (max-width: 768px) {
+  /* Hide table header — card labels replace column headers */
+  #inventoryTable thead {
+    display: none;
+  }
+
+  /* Remove table layout so rows become blocks */
+  #inventoryTable,
+  #inventoryTable tbody {
+    display: block;
+    width: 100%;
+    border-spacing: 0;
+  }
+
+  /* Each row becomes a card (flexbox wrap for reliable spanning) */
+  #inventoryTable tbody tr {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.15rem 0;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    padding: 0.75rem;
+    margin-bottom: 0.5rem;
+    cursor: pointer;
+  }
+
+  /* All cells: half-width by default (2-column pairs).
+     Reset all table-layout width/max-width constraints from .shrink, .expand,
+     .icon-col, and data-column selectors — card view uses flex-basis only. */
+  #inventoryTable tbody td,
+  #inventoryTable tbody td.shrink,
+  #inventoryTable tbody td.expand,
+  #inventoryTable tbody td.icon-col {
+    display: flex !important;
+    justify-content: space-between;
+    align-items: baseline;
+    flex: 0 0 50% !important;
+    box-sizing: border-box;
+    padding: 0.2rem 0.35rem;
+    border: none;
+    font-size: 0.95rem;
+    color: var(--text-primary);
+    width: unset !important;
+    max-width: none !important;
+    min-width: 0 !important;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+  }
+
+  /* Label pseudo-element from data-label attribute */
+  #inventoryTable tbody td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-right: 0.5rem;
+    flex-shrink: 0;
+  }
+
+  /* Name — full-width card title, no label */
+  #inventoryTable tbody td[data-column="name"] {
+    flex: 0 0 100% !important;
+    order: -2;
+    font-size: 1.05rem;
+    font-weight: 600;
+    justify-content: flex-start;
+    padding-bottom: 0.25rem;
+    text-align: left;
+  }
+  #inventoryTable tbody td[data-column="name"]::before {
+    display: none;
+  }
+
+  /* Metal — full-width subtitle row */
+  #inventoryTable tbody td[data-column="metal"] {
+    flex: 0 0 100% !important;
+    order: -1;
+    font-size: 0.9rem;
+    justify-content: flex-start;
+    padding-bottom: 0.35rem;
+    margin-bottom: 0.25rem;
+    border-bottom: 1px solid var(--border);
+  }
+  #inventoryTable tbody td[data-column="metal"]::before {
+    display: none;
+  }
+
+  /* Actions — full-width bottom row, centered, no label */
+  #inventoryTable tbody td[data-column="actions"],
+  #inventoryTable tbody td.icon-col[data-column="actions"] {
+    flex: 0 0 100% !important;
+    width: unset !important;
+    max-width: none !important;
+    justify-content: center;
+    padding-top: 0.35rem;
+    margin-top: 0.25rem;
+    border-top: 1px solid var(--border);
+  }
+  #inventoryTable tbody td[data-column="actions"]::before {
+    display: none;
+  }
+
+  /* Hide lower-priority fields in card view */
+  #inventoryTable tbody td[data-column="date"],
+  #inventoryTable tbody td[data-column="type"],
+  #inventoryTable tbody td[data-column="purchaseLocation"] {
+    display: none !important;
+  }
+
+  /* Override hideEmptyColumns() display:none for visible card fields */
+  #inventoryTable tbody td[data-column="name"],
+  #inventoryTable tbody td[data-column="metal"],
+  #inventoryTable tbody td[data-column="qty"],
+  #inventoryTable tbody td[data-column="weight"],
+  #inventoryTable tbody td[data-column="purchasePrice"],
+  #inventoryTable tbody td[data-column="meltValue"],
+  #inventoryTable tbody td[data-column="retailPrice"],
+  #inventoryTable tbody td[data-column="gainLoss"],
+  #inventoryTable tbody td[data-column="actions"] {
+    display: flex !important;
+  }
+
+  /* eBay search SVG icons: hide in card view to save space */
+  #inventoryTable tbody td .ebay-search-svg {
+    display: none;
+  }
+
+  /* Action row layout inside card — centered */
+  #inventoryTable tbody td[data-column="actions"] .actions-row {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    width: 100%;
+  }
+
+  /* Touch-friendly action buttons (44px minimum per Apple HIG) */
+  #inventoryTable tbody td[data-column="actions"] .icon-btn {
+    width: 2.75rem;
+    height: 2.75rem;
+    padding: 0.4rem;
+    border-radius: var(--radius);
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+  }
+
+  #inventoryTable tbody td[data-column="actions"] .icon-svg {
+    width: 1.25rem;
+    height: 1.25rem;
+  }
+
+  /* Cards scroll naturally — remove portal max-height */
+  .portal-scroll {
+    max-height: none !important;
+    overflow: visible;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Name cell: name on line 1, all chips wrap horizontally on line 2 */
+  #inventoryTable tbody td[data-column="name"] .name-cell-content {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.35rem;
+    width: 100%;
+  }
+
+  /* Name text takes full width → forces chips to next line */
+  #inventoryTable tbody td[data-column="name"] .name-cell-content > .filter-text {
+    flex: 0 0 100%;
+    overflow: visible;
+    white-space: normal;
+    text-overflow: clip;
+    font-size: 1.05rem;
+  }
+
+  /* Chips: horizontal row, touch-friendly size */
+  #inventoryTable tbody td[data-column="name"] .name-cell-content > .year-tag,
+  #inventoryTable tbody td[data-column="name"] .name-cell-content > .numista-tag,
+  #inventoryTable tbody td[data-column="name"] .name-cell-content > .pcgs-tag,
+  #inventoryTable tbody td[data-column="name"] .name-cell-content > .grade-tag,
+  #inventoryTable tbody td[data-column="name"] .name-cell-content > .serial-tag,
+  #inventoryTable tbody td[data-column="name"] .name-cell-content > .storage-tag,
+  #inventoryTable tbody td[data-column="name"] .name-cell-content > .notes-indicator,
+  #inventoryTable tbody td[data-column="name"] .name-cell-content > .purity-tag {
+    flex-shrink: 0;
+    font-size: 0.8rem !important;
+    padding: 0.2rem 0.5rem !important;
+    min-height: 1.75rem;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  /* Bump card body text sizes for readability */
+  #inventoryTable tbody td {
+    font-size: 0.95rem;
+  }
+
+  #inventoryTable tbody td::before {
+    font-size: 0.8rem;
+  }
+
+  #inventoryTable tbody td[data-column="metal"] {
+    font-size: 0.9rem;
+  }
+
+  /* Header: scale logo to fill mobile width, center buttons below */
+  .app-header {
+    min-height: auto;
+    padding: var(--spacing-sm);
+    align-items: stretch;
+  }
+
+  .app-header > div {
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--spacing-sm);
+  }
+
+  .app-logo {
+    width: 100%;
+    justify-content: center;
+    transform: scale(1.3);
+    transform-origin: center top;
+    margin-bottom: -1rem;
+  }
+
+  .stackr-logo {
+    max-width: 100% !important;
+  }
+
+  /* Compact pagination footer for card view */
+  .table-footer-controls {
+    flex-wrap: wrap;
+    gap: var(--spacing-xs);
+    justify-content: center;
+  }
+
+  .table-item-count {
+    font-size: 0.85rem;
+  }
+
+  .table-footer-controls select {
+    font-size: 0.85rem;
+    padding: 0.25rem 0.5rem;
+    max-width: 6rem;
+  }
+}
+
+/* =============================================================================
+   DETAILS MODAL — Narrow viewport fixes ≤640px  (STACK-38)
+   Stacks panels vertically, single-column breakdown, reduced chart.
+   ============================================================================= */
+
+@media (max-width: 640px) {
+  #detailsModal .modal-content {
+    width: 98vw;
+    max-width: 98vw;
+    max-height: 98vh;
+    padding: var(--spacing-sm);
+  }
+
+  .details-grid {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-sm);
+  }
+
+  .breakdown-grid {
+    grid-template-columns: 1fr;
+    gap: 0.125rem;
+  }
+
+  .chart-canvas-container {
+    height: 150px;
+    flex: 0 0 150px;
+  }
+
+  .chart-canvas {
+    max-height: 150px !important;
+  }
+
+  /* Reduce breakdown font sizes */
+  .breakdown-label {
+    font-size: 0.8rem;
+  }
+
+  .breakdown-meta {
+    font-size: 0.7rem;
+  }
+
+  .breakdown-grid {
+    font-size: 0.75rem;
+  }
+
+  .breakdown-cell-label {
+    font-size: 0.7rem;
+  }
+}
+
+/* =============================================================================
+   ADDITIONAL SMALL-VIEWPORT FIXES  (STACK-38)
+   Targets zoom-induced short viewports, filter controls, and form grids.
+   ============================================================================= */
+
+/* Short viewport (e.g. 300% zoom on 1080p → ~360px height) */
+@media (max-height: 500px) {
+  .portal-scroll {
+    max-height: 50vh;
+  }
+}
+
+/* Filter controls + form grids at narrow widths */
+@media (max-width: 640px) {
+  .filter-controls {
+    flex-wrap: wrap;
+    gap: var(--spacing-xs);
+    justify-content: center;
+  }
+
+  .grid-2,
+  .grid-purity-row {
+    grid-template-columns: 1fr;
   }
 }
