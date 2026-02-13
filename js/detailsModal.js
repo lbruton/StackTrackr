@@ -253,8 +253,12 @@ const showDetailsModal = (metal) => {
     rightBreakdown = metalData.locationBreakdown;
   }
 
+  // Charts hidden via CSS on mobile — skip creation entirely (STACK-70)
+  const isMobile = window.innerWidth <= 768;
+
   // Helper: render charts with current metric
   const renderCharts = () => {
+    if (isMobile) return;
     destroyCharts();
     if (Object.keys(leftBreakdown).length > 0) {
       chartInstances.typeChart = createPieChart(
@@ -279,33 +283,35 @@ const showDetailsModal = (metal) => {
   let existingToggle = elements.detailsModal.querySelector('.chart-metric-toggle');
   if (existingToggle) existingToggle.remove();
 
-  const toggleBar = document.createElement('div');
-  toggleBar.className = 'chart-metric-toggle';
-  const metrics = [
-    { key: 'purchase', label: 'Purchase' },
-    { key: 'melt',     label: 'Melt' },
-    { key: 'retail',   label: 'Retail' },
-    { key: 'gainLoss', label: 'Gain/Loss' }
-  ];
-  metrics.forEach(m => {
-    const btn = document.createElement('button');
-    btn.className = 'chart-metric-btn' + (m.key === detailsChartMetric ? ' active' : '');
-    btn.textContent = m.label;
-    btn.type = 'button';
-    btn.addEventListener('click', () => {
-      detailsChartMetric = m.key;
-      toggleBar.querySelectorAll('.chart-metric-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      renderCharts();
+  if (!isMobile) {
+    const toggleBar = document.createElement('div');
+    toggleBar.className = 'chart-metric-toggle';
+    const metrics = [
+      { key: 'purchase', label: 'Purchase' },
+      { key: 'melt',     label: 'Melt' },
+      { key: 'retail',   label: 'Retail' },
+      { key: 'gainLoss', label: 'Gain/Loss' }
+    ];
+    metrics.forEach(m => {
+      const btn = document.createElement('button');
+      btn.className = 'chart-metric-btn' + (m.key === detailsChartMetric ? ' active' : '');
+      btn.textContent = m.label;
+      btn.type = 'button';
+      btn.addEventListener('click', () => {
+        detailsChartMetric = m.key;
+        toggleBar.querySelectorAll('.chart-metric-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        renderCharts();
+      });
+      toggleBar.appendChild(btn);
     });
-    toggleBar.appendChild(btn);
-  });
 
-  if (detailsGrid) {
-    detailsGrid.parentNode.insertBefore(toggleBar, detailsGrid);
+    if (detailsGrid) {
+      detailsGrid.parentNode.insertBefore(toggleBar, detailsGrid);
+    }
   }
 
-  // Initial chart render
+  // Initial chart render (no-op on mobile)
   renderCharts();
 
   // Build color maps matching pie chart segment order (by insertion order)
