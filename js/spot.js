@@ -387,6 +387,165 @@ const saveTrendRange = (metalKey, days) => {
   saveDataSync(SPOT_TREND_RANGE_KEY, ranges);
 };
 
+// =============================================================================
+// HISTORICAL DATA — YEAR-FILE FETCH & CACHE (STACK-69)
+// =============================================================================
+
+/** @type {Map<number, Array>} Cached year-file entries keyed by year */
+const historicalDataCache = new Map();
+
+/** @type {Map<number, Promise<Array>>} In-flight fetch promises to deduplicate concurrent requests */
+const historicalFetchPromises = new Map();
+
+/**
+ * Calculates which year files are needed for a given lookback period.
+ * @param {number} days - Number of days to look back
+ * @returns {number[]} Array of year numbers to fetch
+ */
+const getRequiredYears = (days) => {
+  const now = new Date();
+  const cutoff = new Date(now);
+  cutoff.setDate(cutoff.getDate() - days);
+  const startYear = cutoff.getFullYear();
+  const endYear = now.getFullYear();
+  const years = [];
+  for (let y = startYear; y <= endYear; y++) {
+    years.push(y);
+  }
+  return years;
+};
+
+/** @constant {string} Remote base URL for historical data (file:// fallback) */
+const HISTORICAL_DATA_REMOTE = 'https://staktrakr.com/data/';
+
+/**
+ * Loads a local JSON file via XMLHttpRequest (sync-free).
+ * Broader file:// compatibility than fetch() — works in Firefox/Safari
+ * and Chrome with --allow-file-access-from-files.
+ * @param {string} url - Relative or absolute URL to JSON file
+ * @returns {Promise<any>} Parsed JSON
+ */
+const xhrLoadJSON = (url) =>
+  new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open('GET', url, true);
+    xhr.responseType = 'json';
+    xhr.onload = () => {
+      if (xhr.status === 200 || (xhr.status === 0 && xhr.response)) {
+        resolve(xhr.response);
+      } else {
+        reject(new Error(`XHR ${xhr.status}`));
+      }
+    };
+    xhr.onerror = () => reject(new Error('XHR network error'));
+    xhr.send();
+  });
+
+/**
+ * Fetches a single year file from data/spot-history-{year}.json.
+ * Three-tier loading: local fetch → local XHR → remote staktrakr.com.
+ * Caches the result (or empty array on failure) to avoid retries.
+ * Deduplicates concurrent fetches for the same year.
+ * @param {number} year - Year to fetch
+ * @returns {Promise<Array>} Array of spot history entries
+ */
+const fetchYearFile = (year) => {
+  // Already cached — return immediately
+  if (historicalDataCache.has(year)) {
+    return Promise.resolve(historicalDataCache.get(year));
+  }
+
+  // Already in-flight — return shared promise
+  if (historicalFetchPromises.has(year)) {
+    return historicalFetchPromises.get(year);
+  }
+
+  const filename = `spot-history-${year}.json`;
+  const localUrl = `data/${filename}`;
+  const remoteUrl = `${HISTORICAL_DATA_REMOTE}${filename}`;
+
+  const promise = fetch(localUrl)
+    .then((res) => {
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return res.json();
+    })
+    .catch(() => xhrLoadJSON(localUrl))       // Fallback 1: XHR for file://
+    .catch(() => fetch(remoteUrl)             // Fallback 2: remote staktrakr.com
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
+      })
+    )
+    .then((entries) => {
+      // Validate: must be an array of objects with spot/metal/timestamp
+      if (!Array.isArray(entries)) {
+        historicalDataCache.set(year, []);
+        return [];
+      }
+      const valid = entries.filter(
+        (e) => e && typeof e.spot === "number" && e.metal && e.timestamp,
+      );
+      historicalDataCache.set(year, valid);
+      return valid;
+    })
+    .catch(() => {
+      // All three methods failed — cache empty to avoid retries
+      historicalDataCache.set(year, []);
+      return [];
+    })
+    .finally(() => {
+      historicalFetchPromises.delete(year);
+    });
+
+  historicalFetchPromises.set(year, promise);
+  return promise;
+};
+
+/**
+ * Fetches needed year files, merges with live spotHistory, filters to
+ * metal + range, deduplicates by day (live data wins over seed).
+ * @param {string} metalName - Metal name ('Silver', 'Gold', etc.)
+ * @param {number} days - Number of days to look back
+ * @returns {Promise<{ labels: string[], data: number[] }>} Arrays for Chart.js
+ */
+const getHistoricalSparklineData = async (metalName, days) => {
+  const years = getRequiredYears(days);
+  const yearArrays = await Promise.all(years.map(fetchYearFile));
+
+  // Merge all historical entries
+  const allHistorical = yearArrays.flat();
+
+  // Cutoff date
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - days);
+
+  // Combine: historical + live spotHistory
+  const combined = [...allHistorical, ...spotHistory]
+    .filter((e) => e.metal === metalName && new Date(e.timestamp) >= cutoff)
+    .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+
+  // Deduplicate by day — live data (non-seed) wins over seed
+  const byDay = new Map();
+  combined.forEach((e) => {
+    const day = e.timestamp.slice(0, 10);
+    const existing = byDay.get(day);
+    if (!existing || existing.source === "seed") {
+      byDay.set(day, e);
+    }
+  });
+
+  const sorted = [...byDay.values()].sort(
+    (a, b) => new Date(a.timestamp) - new Date(b.timestamp),
+  );
+
+  return {
+    labels: sorted.map((e) => e.timestamp.slice(0, 10)),
+    data: sorted.map((e) => e.spot),
+  };
+};
+
+// =============================================================================
+
 /**
  * Extracts sparkline data from spotHistory for a given metal and date range
  * @param {string} metalName - Metal name ('Silver', 'Gold', etc.)
@@ -442,16 +601,23 @@ const getSparklineData = (metalName, days, intraday = false) => {
 };
 
 /**
- * Renders or updates a sparkline chart for a single metal card
+ * Renders or updates a sparkline chart for a single metal card.
+ * For ranges >180 days, fetches historical year files asynchronously.
  * @param {string} metalKey - Metal key ('silver', 'gold', etc.)
  */
-const updateSparkline = (metalKey) => {
+const updateSparkline = async (metalKey) => {
   const metalConfig = Object.values(METALS).find((m) => m.key === metalKey);
   if (!metalConfig) return;
 
   const canvasId = `sparkline${metalConfig.name}`;
   const canvas = document.getElementById(canvasId);
   if (!canvas || !canvas.getContext) return;
+
+  // Destroy existing chart instance early to avoid stale visuals during async fetch
+  if (sparklineInstances[metalKey]) {
+    sparklineInstances[metalKey].destroy();
+    sparklineInstances[metalKey] = null;
+  }
 
   // Determine range from dropdown or saved preference
   const rangeSelect = document.getElementById(`spotRange${metalConfig.name}`);
@@ -461,17 +627,24 @@ const updateSparkline = (metalKey) => {
   // 3 days ensures ≥2 points even with once-daily API refreshes
   const isIntraday = (days === 1);
   const effectiveDays = isIntraday ? 3 : days;
-  let { labels, data } = getSparklineData(metalConfig.name, effectiveDays, isIntraday);
 
-  // Destroy existing chart instance
-  if (sparklineInstances[metalKey]) {
-    sparklineInstances[metalKey].destroy();
-    sparklineInstances[metalKey] = null;
+  let labels, data;
+
+  if (effectiveDays > 180) {
+    // Historical range — async fetch year files (STACK-69)
+    if (rangeSelect) rangeSelect.disabled = true;
+    try {
+      ({ labels, data } = await getHistoricalSparklineData(metalConfig.name, effectiveDays));
+    } finally {
+      if (rangeSelect) rangeSelect.disabled = false;
+    }
+  } else {
+    ({ labels, data } = getSparklineData(metalConfig.name, effectiveDays, isIntraday));
   }
 
   // Need at least 2 data points for a meaningful line
   if (data.length < 2) {
-    updateSpotChangePercent(metalKey);
+    updateSpotChangePercent(metalKey, data);
     return;
   }
 
@@ -520,7 +693,7 @@ const updateSparkline = (metalKey) => {
     },
   });
 
-  updateSpotChangePercent(metalKey);
+  updateSpotChangePercent(metalKey, data);
 };
 
 /**
@@ -528,19 +701,26 @@ const updateSparkline = (metalKey) => {
  * Compares oldest vs newest data point in the selected range.
  *
  * @param {string} metalKey - Metal key ('silver', 'gold', etc.)
+ * @param {number[]|null} [precomputedData=null] - Pre-fetched data array from updateSparkline
+ *   (avoids redundant re-fetch for historical ranges). When null, uses sync getSparklineData().
  */
-const updateSpotChangePercent = (metalKey) => {
+const updateSpotChangePercent = (metalKey, precomputedData = null) => {
   const metalConfig = Object.values(METALS).find((m) => m.key === metalKey);
   if (!metalConfig) return;
   const el = document.getElementById(`spotChange${metalConfig.name}`);
   if (!el) return;
 
-  const rangeSelect = document.getElementById(`spotRange${metalConfig.name}`);
-  const days = rangeSelect ? parseInt(rangeSelect.value, 10) : 90;
-  // 1-day view: use 3-day intraday window for yesterday→today comparison (STACK-66)
-  const isIntraday = (days === 1);
-  const effectiveDays = isIntraday ? 3 : days;
-  const { data } = getSparklineData(metalConfig.name, effectiveDays, isIntraday);
+  let data;
+  if (precomputedData) {
+    data = precomputedData;
+  } else {
+    const rangeSelect = document.getElementById(`spotRange${metalConfig.name}`);
+    const days = rangeSelect ? parseInt(rangeSelect.value, 10) : 90;
+    // 1-day view: use 3-day intraday window for yesterday→today comparison (STACK-66)
+    const isIntraday = (days === 1);
+    const effectiveDays = isIntraday ? 3 : days;
+    ({ data } = getSparklineData(metalConfig.name, effectiveDays, isIntraday));
+  }
 
   if (data.length < 2) {
     el.textContent = "";
@@ -584,10 +764,10 @@ const updateSpotChangePercent = (metalKey) => {
 };
 
 /**
- * Refreshes sparklines on all 4 metal cards
+ * Refreshes sparklines on all 4 metal cards concurrently
  */
-const updateAllSparklines = () => {
-  Object.values(METALS).forEach((mc) => updateSparkline(mc.key));
+const updateAllSparklines = async () => {
+  await Promise.all(Object.values(METALS).map((mc) => updateSparkline(mc.key)));
 };
 
 /**
@@ -769,3 +949,5 @@ window.loadTrendRanges = loadTrendRanges;
 window.saveTrendRange = saveTrendRange;
 window.renderSpotHistoryTable = renderSpotHistoryTable;
 window.clearSpotHistory = clearSpotHistory;
+window.getHistoricalSparklineData = getHistoricalSparklineData;
+window.historicalDataCache = historicalDataCache;
