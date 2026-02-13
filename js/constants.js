@@ -580,7 +580,8 @@ const ALLOWED_STORAGE_KEYS = [
   EXCHANGE_RATES_KEY,
   "headerThemeBtnVisible",    // boolean string: "true"/"false" (STACK-54)
   "headerCurrencyBtnVisible", // boolean string: "true"/"false" (STACK-54)
-  "layoutVisibility",         // JSON object: { spotPrices, totals, search, table } (STACK-54)
+  "layoutVisibility",         // JSON object: { spotPrices, totals, search, table } (STACK-54) — legacy, migrated to layoutSectionConfig
+  "layoutSectionConfig",      // JSON array: ordered section config [{ id, label, enabled }] (STACK-54)
   LAST_VERSION_CHECK_KEY,     // timestamp: last remote version check (STACK-67)
   LATEST_REMOTE_VERSION_KEY,  // string: cached latest remote version (STACK-67)
   LATEST_REMOTE_URL_KEY,      // string: cached latest remote release URL (STACK-67)
@@ -703,6 +704,85 @@ const saveFilterChipCategoryConfig = (config) => {
     localStorage.setItem('filterChipCategoryConfig', JSON.stringify(config));
   } catch (e) {
     console.warn('Failed to save filter chip category config:', e);
+  }
+};
+
+// =============================================================================
+// LAYOUT SECTION CONFIG — controls visibility and order of major page sections
+// =============================================================================
+
+/**
+ * Default layout section configuration. Order determines display order.
+ * @constant {Array<{id: string, label: string, enabled: boolean}>}
+ */
+const LAYOUT_SECTION_DEFAULTS = [
+  { id: 'spotPrices', label: 'Spot price cards',    enabled: true },
+  { id: 'totals',     label: 'Summary totals',      enabled: true },
+  { id: 'search',     label: 'Search & filter bar', enabled: true },
+  { id: 'table',      label: 'Inventory table',     enabled: true },
+];
+
+/**
+ * Migrates old layoutVisibility object to new ordered array format.
+ * @param {Object} obj - Old format: { spotPrices: bool, totals: bool, ... }
+ * @returns {Array<{id: string, label: string, enabled: boolean}>}
+ */
+const migrateLayoutVisibility = (obj) => {
+  const config = LAYOUT_SECTION_DEFAULTS.map(d => ({
+    ...d,
+    enabled: obj[d.id] !== undefined ? !!obj[d.id] : d.enabled,
+  }));
+  try {
+    localStorage.setItem('layoutSectionConfig', JSON.stringify(config));
+    localStorage.removeItem('layoutVisibility');
+  } catch (e) {
+    console.warn('Failed to migrate layout visibility:', e);
+  }
+  return config;
+};
+
+/**
+ * Loads the layout section config from localStorage, with migration support.
+ * Falls back to migrating old layoutVisibility format, then to defaults.
+ * @returns {Array<{id: string, label: string, enabled: boolean}>}
+ */
+const getLayoutSectionConfig = () => {
+  try {
+    const raw = localStorage.getItem('layoutSectionConfig');
+    if (raw) {
+      const saved = JSON.parse(raw);
+      const savedMap = new Map(saved.map(c => [c.id, c]));
+      // Start with saved order, preserving user's arrangement
+      const merged = saved.filter(c => LAYOUT_SECTION_DEFAULTS.some(d => d.id === c.id));
+      // Append any new defaults not in saved config
+      for (const def of LAYOUT_SECTION_DEFAULTS) {
+        if (!savedMap.has(def.id)) {
+          merged.push({ ...def });
+        }
+      }
+      return merged;
+    }
+    // Try migrating old format
+    const legacy = localStorage.getItem('layoutVisibility');
+    if (legacy) {
+      const obj = JSON.parse(legacy);
+      return migrateLayoutVisibility(obj);
+    }
+  } catch (e) {
+    console.warn('Failed to load layout section config:', e);
+  }
+  return LAYOUT_SECTION_DEFAULTS.map(d => ({ ...d }));
+};
+
+/**
+ * Saves the layout section config to localStorage.
+ * @param {Array<{id: string, label: string, enabled: boolean}>} config
+ */
+const saveLayoutSectionConfig = (config) => {
+  try {
+    localStorage.setItem('layoutSectionConfig', JSON.stringify(config));
+  } catch (e) {
+    console.warn('Failed to save layout section config:', e);
   }
 };
 
@@ -1175,6 +1255,10 @@ if (typeof window !== "undefined") {
   window.FILTER_CHIP_CATEGORY_DEFAULTS = FILTER_CHIP_CATEGORY_DEFAULTS;
   window.getFilterChipCategoryConfig = getFilterChipCategoryConfig;
   window.saveFilterChipCategoryConfig = saveFilterChipCategoryConfig;
+  // Layout section config
+  window.LAYOUT_SECTION_DEFAULTS = LAYOUT_SECTION_DEFAULTS;
+  window.getLayoutSectionConfig = getLayoutSectionConfig;
+  window.saveLayoutSectionConfig = saveLayoutSectionConfig;
   // Goldback denomination pricing (STACK-45)
   window.GOLDBACK_PRICES_KEY = GOLDBACK_PRICES_KEY;
   window.GOLDBACK_PRICE_HISTORY_KEY = GOLDBACK_PRICE_HISTORY_KEY;

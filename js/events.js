@@ -585,9 +585,6 @@ const parseWeight = (weightRaw, weightUnit, isEditing, existingItem) => {
  * @returns {number} Price in USD
  */
 const parsePriceToUSD = (rawValue, fxRate, isEditing, existingValue) => {
-  if (isEditing && rawValue === '') {
-    return typeof existingValue !== 'undefined' ? existingValue : 0;
-  }
   let entered = rawValue === '' ? 0 : parseFloat(rawValue);
   entered = isNaN(entered) || entered < 0 ? 0 : entered;
   return fxRate !== 1 ? entered / fxRate : entered;

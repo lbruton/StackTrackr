@@ -220,10 +220,68 @@ const fetchSpotForDate = async (metalName, dateStr) => {
 };
 
 /**
- * Opens the spot lookup modal, searching local history for the date and metal
- * currently selected in the add/edit form.
+ * Searches historical year files for prices near a given date for a specific metal.
+ * Uses the same progressive widening as searchSpotByDate: exact → ±1d → ±3d → ±7d.
+ * Requires fetchYearFile() from spot.js (STACK-69).
+ *
+ * @param {string} metalName - Metal name ('Silver', 'Gold', 'Platinum', 'Palladium')
+ * @param {string} dateStr - Target date in YYYY-MM-DD format
+ * @returns {Promise<Array<Object>>} Matching entries with `dayOffset` appended, sorted by proximity
  */
-const openSpotLookupModal = () => {
+const searchHistoricalByDate = async (metalName, dateStr) => {
+  if (typeof fetchYearFile !== 'function') return [];
+
+  const targetDate = new Date(dateStr + 'T00:00:00');
+  if (isNaN(targetDate.getTime())) return [];
+
+  // Fetch target year + adjacent years (±7d window can cross year boundary)
+  const year = targetDate.getFullYear();
+  const yearsToFetch = [year - 1, year, year + 1].filter(y => y >= 1968);
+  const yearArrays = await Promise.all(yearsToFetch.map(fetchYearFile));
+  const allEntries = yearArrays.flat().filter(e => e.metal === metalName);
+
+  if (allEntries.length === 0) return [];
+
+  // Compute day offset for each entry
+  const withOffset = allEntries.map(entry => {
+    const entryDate = new Date(entry.timestamp);
+    const diffMs = entryDate.getTime() - targetDate.getTime();
+    const dayOffset = Math.round(diffMs / (1000 * 60 * 60 * 24));
+    return { ...entry, dayOffset };
+  });
+
+  // Progressive widening: try exact, then ±1, ±3, ±7
+  const windows = [0, 1, 3, 7];
+  let results = [];
+  for (const window of windows) {
+    results = withOffset.filter(e => Math.abs(e.dayOffset) <= window);
+    if (results.length > 0) break;
+  }
+
+  // Sort by proximity (absolute offset), then by newest timestamp
+  results.sort((a, b) => {
+    const proxDiff = Math.abs(a.dayOffset) - Math.abs(b.dayOffset);
+    if (proxDiff !== 0) return proxDiff;
+    return new Date(b.timestamp) - new Date(a.timestamp);
+  });
+
+  // Deduplicate by day (keep latest entry per calendar day)
+  const byDay = new Map();
+  results.forEach(entry => {
+    const day = entry.timestamp.slice(0, 10);
+    if (!byDay.has(day)) {
+      byDay.set(day, entry);
+    }
+  });
+
+  return [...byDay.values()];
+};
+
+/**
+ * Opens the spot lookup modal, searching local history and historical seed data
+ * for the date and metal currently selected in the add/edit form.
+ */
+const openSpotLookupModal = async () => {
   const dateVal = elements.itemDate ? elements.itemDate.value : '';
   const metalVal = elements.itemMetal ? elements.itemMetal.value : '';
 
@@ -245,8 +303,13 @@ const openSpotLookupModal = () => {
     return;
   }
 
-  // Search local history
-  const results = searchSpotByDate(metalName, dateVal);
+  // Search local spotHistory first (≤180 days)
+  let results = searchSpotByDate(metalName, dateVal);
+
+  // Fallback: search historical year files (STACK-69)
+  if (results.length === 0) {
+    results = await searchHistoricalByDate(metalName, dateVal);
+  }
 
   // Update modal title
   const titleEl = document.getElementById('spotLookupTitle');
