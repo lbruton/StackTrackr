@@ -9,6 +9,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.25.04] - 2026-02-12
+
+### Added — STACK-70: Mobile-optimized modals
+
+- **Added**: Full-screen modals at ≤768px using `100dvh` with `100vh` fallback — all primary modals fill the viewport on mobile (STACK-70)
+- **Added**: Settings sidebar 5×2 tab grid replacing horizontal scroll — all 10 tabs visible simultaneously (STACK-70)
+- **Added**: Touch-sized inputs (44px min-height) and stacked action buttons in add/edit item modal (STACK-70)
+- **Added**: Landscape card view for touch devices 769–1024px via `pointer: coarse` detection and `body.force-card-view` class (STACK-70)
+- **Added**: 2-column card grid for portrait ≤768px in landscape orientation (STACK-70)
+- **Changed**: Pie charts and metric toggle hidden on mobile in details modal — Chart.js creation skipped entirely for performance (STACK-70)
+- **Changed**: Bulk edit modal stacks vertically with full-screen integration and touch-sized inputs (STACK-70)
+- **Changed**: `updateColumnVisibility()` extended to apply `.force-card-view` for landscape touch devices (STACK-70)
+- **Changed**: `updatePortalHeight()` clears max-height for `.force-card-view` card layout (STACK-70)
+- **Fixed**: Small utility modals (notes, API info, storage options, cloud sync) remain as centered popups, not full-screen (STACK-70)
+
+---
+
 ## [3.25.03] - 2026-02-12
 
 ### Added — STACK-38/STACK-31: Responsive card view & mobile layout
