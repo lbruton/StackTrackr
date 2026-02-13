@@ -420,7 +420,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     // Apply header toggle & layout visibility from saved prefs (STACK-54)
     if (typeof applyHeaderToggleVisibility === 'function') applyHeaderToggleVisibility();
-    if (typeof applyLayoutVisibility === 'function') applyLayoutVisibility();
+    if (typeof applyLayoutOrder === 'function') applyLayoutOrder();
 
     // Phase 13: Initial Rendering
     debugLog("Phase 13: Rendering initial display...");
