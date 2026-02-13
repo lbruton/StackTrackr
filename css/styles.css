@@ -7335,7 +7335,7 @@ th {
 
 /* =============================================================================
    CARD VIEW — Inventory table ≤768px  (STACK-31 / STACK-38)
-   Converts each <tr> into a card via CSS grid. Labels generated from
+   Converts each <tr> into a flexbox-based card. Labels generated from
    data-label attributes on <td> elements via ::before pseudo-elements.
    ============================================================================= */
 
