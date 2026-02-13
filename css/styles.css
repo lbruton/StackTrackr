@@ -7340,7 +7340,7 @@ th {
    data-label attributes on <td> elements via ::before pseudo-elements.
    ============================================================================= */
 
-@media (max-width: 1024px) {
+@media (max-width: 1350px) {
   /* Hide table header — card labels replace column headers */
   #inventoryTable thead {
     display: none;
@@ -7986,7 +7986,7 @@ body.force-card-view .table-footer-controls select {
 }
 
 /* Landscape orientation: 2-column card grid */
-@media (max-width: 1024px) and (orientation: landscape) {
+@media (max-width: 1350px) and (orientation: landscape) {
   #inventoryTable tbody {
     display: grid !important;
     grid-template-columns: 1fr 1fr;
