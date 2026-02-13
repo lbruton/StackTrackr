@@ -274,6 +274,7 @@ const setupAckModalEvents = () => {
  */
 const getEmbeddedWhatsNew = () => {
   return `
+    <li><strong>v3.25.03 &ndash; STACK-38/STACK-31: Responsive card view &amp; mobile layout</strong>: Inventory table converts to touch-friendly cards at &le;768px with horizontal chips, 2-column financials, centered action buttons. Consolidated responsive CSS, details modal fixes at &le;640px</li>
     <li><strong>v3.25.02 &ndash; STACK-68: Goldback spot lookup fix</strong>: Spot price lookup now converts gold spot to Goldback denomination price instead of using raw gold formula</li>
     <li><strong>v3.25.01 &ndash; STACK-64, STACK-67: Version splash fix &amp; update badge</strong>: Version splash now shows friendly &ldquo;What&rsquo;s New&rdquo; content. Footer version badge links to GitHub releases; on hosted sites, checks for updates with 24hr cache</li>
     <li><strong>v3.25.00 &ndash; STACK-54, STACK-66: Appearance settings &amp; sparkline improvements</strong>: Header quick-access buttons for theme and currency. Layout visibility toggles. 1-day sparkline with daily-averaged trend. Spot lookup now fills visible price field. 15/30-minute API cache options</li>

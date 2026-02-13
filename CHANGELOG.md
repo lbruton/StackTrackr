@@ -9,6 +9,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.25.03] - 2026-02-12
+
+### Added — STACK-38/STACK-31: Responsive card view & mobile layout
+
+- **Added**: CSS card view at ≤768px — inventory table converts to flexbox cards with name title, horizontal chips, metal subtitle, 2-column financial grid, and centered touch-friendly action buttons (44px targets per Apple HIG) (STACK-31)
+- **Added**: `data-label` attributes on all `<td>` elements for card view `::before` labels (STACK-31)
+- **Added**: Card tap-to-edit — tapping card body opens edit modal; buttons/links work normally (STACK-31)
+- **Added**: Details modal fixes at ≤640px — single-column breakdown grid, 150px chart, stacked panels (STACK-38)
+- **Added**: Short-viewport portal scroll cap at ≤500px height for 300% zoom scenarios (STACK-38)
+- **Changed**: Consolidated 3 duplicate responsive table CSS sections into single canonical block (STACK-38)
+- **Changed**: `updateColumnVisibility()` skips at ≤768px — card CSS handles visibility (STACK-38)
+- **Changed**: `updatePortalHeight()` clears max-height at ≤768px — cards scroll naturally (STACK-38)
+- **Fixed**: Footer badges wrap on mobile instead of overflowing card
+- **Fixed**: Filter chips stay horizontal and wrap instead of stacking vertically at narrow widths
+- **Fixed**: Header logo scales to fill mobile width with centered action buttons below
+
+---
+
 ## [3.25.02] - 2026-02-12
 
 ### Fixed — STACK-68: Goldback spot lookup fix
