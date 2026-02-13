@@ -2024,44 +2024,45 @@ input[type="submit"] {
   border-radius: 0 0 var(--radius-lg) var(--radius-lg);
 }
 
-/* Mobile: sidebar becomes horizontal strip */
+/* Mobile: sidebar becomes 5×2 grid — all 10 tabs visible (STACK-70) */
 @media (max-width: 768px) {
-  .modal-content.settings-modal-content {
-    width: 98vw;
-    height: 95vh;
-    max-height: 95vh;
-  }
-
-  .settings-modal-layout {
-    flex-direction: column;
-  }
+  .settings-modal-layout { flex-direction: column; }
 
   .settings-sidebar {
     width: 100%;
     min-width: unset;
-    flex-direction: row;
-    overflow-x: auto;
-    overflow-y: hidden;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    overflow: visible;
     border-right: none;
     border-bottom: 1px solid var(--border);
-    padding: 0;
+    padding: var(--spacing-xs);
+    gap: 2px;
     flex-shrink: 0;
   }
 
   .settings-nav-item {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.15rem;
+    padding: 0.35rem 0.25rem;
+    font-size: 0.65rem;
+    text-align: center;
     white-space: nowrap;
-    padding: 0.5rem 0.75rem;
-    font-size: 0.8125rem;
+    min-height: 44px;
+    border-radius: var(--radius);
   }
+
+  .settings-nav-item svg { width: 14px; height: 14px; }
 
   .settings-nav-item.active {
     border-left: none;
-    border-bottom: 3px solid var(--primary);
+    background: var(--primary);
+    color: #f8fafc;
   }
 
-  .settings-content-area {
-    padding: var(--spacing);
-  }
+  .settings-content-area { padding: var(--spacing); }
 }
 
 
@@ -7665,5 +7666,330 @@ th {
   .grid-2,
   .grid-purity-row {
     grid-template-columns: 1fr;
+  }
+}
+
+/* =============================================================================
+   MOBILE-OPTIMIZED MODALS  (STACK-70)
+   Full-screen modals, touch-sized inputs, hidden charts, landscape card view.
+   ============================================================================= */
+
+/* --- Phase 1: Full-screen modal base ------------------------------------ */
+@media (max-width: 768px) {
+  .modal { padding: 0; }
+
+  .modal-content {
+    width: 100vw !important;
+    max-width: 100vw !important;
+    height: 100vh; height: 100dvh;
+    max-height: 100vh; max-height: 100dvh;
+    margin: 0;
+    border-radius: 0;
+    animation: none;
+  }
+
+  /* Specificity overrides for modals that set their own width */
+  .modal-content.settings-modal-content,
+  #itemModal .modal-content,
+  #detailsModal .modal-content,
+  .bulk-edit-content,
+  .about-modal-content {
+    width: 100vw !important;
+    max-width: 100vw !important;
+    height: 100vh; height: 100dvh;
+    max-height: 100vh; max-height: 100dvh;
+    margin: 0;
+    border-radius: 0;
+  }
+
+  /* Remove header border-radius on fullscreen modals */
+  .modal-content .modal-header,
+  .about-modal-header,
+  .bulk-edit-content .modal-header { border-radius: 0; }
+
+  .modal-content::before { border-radius: 0; }
+
+  /* Exempt small utility modals — keep as centered popups */
+  #apiInfoModal .modal-content,
+  #notesModal .modal-content,
+  #notesViewModal .modal-content,
+  #storageOptionsModal .modal-content,
+  #cloudSyncModal .modal-content {
+    width: 95vw !important;
+    max-width: 400px !important;
+    height: auto;
+    max-height: 90vh; max-height: 90dvh;
+    border-radius: var(--radius-lg);
+  }
+
+  /* --- Phase 3: Item modal — touch-friendly inputs & stacked actions ---- */
+  #itemModal .modal-content { display: flex; flex-direction: column; }
+  #itemModal .modal-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: var(--spacing);
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Touch-sized inputs: 44px min height (Apple HIG) */
+  #itemModal input,
+  #itemModal select,
+  #itemModal textarea {
+    min-height: 44px;
+    font-size: 1rem;
+    padding: 0.5rem 0.75rem;
+  }
+
+  #itemModal .btn { min-height: 44px; font-size: 0.9rem; }
+
+  /* Stack action rows: Save/Cancel on top, lookup buttons below */
+  .item-modal-actions {
+    flex-direction: column;
+    gap: var(--spacing);
+    padding-top: var(--spacing);
+    border-top: 1px solid var(--border);
+  }
+  .item-modal-actions-left { justify-content: center; order: 2; }
+  .item-modal-actions-right { width: 100%; }
+  .item-modal-actions-right .btn { flex: 1; }
+
+  /* --- Phase 4: Details modal — hide charts, stack panels --------------- */
+  .chart-canvas-container { display: none !important; }
+  .chart-metric-toggle { display: none; }
+
+  .details-grid { grid-template-columns: 1fr; gap: var(--spacing); }
+  .details-panel { padding: var(--spacing); }
+  #detailsModal .modal-body { overflow-y: auto; flex: 1; }
+
+  /* Breakdown grid: keep 2-col for compact financial data */
+  .breakdown-grid { grid-template-columns: 1fr 1fr; gap: 0.125rem 0.5rem; }
+
+  /* --- Phase 6: Bulk edit modal — full-screen stacking ------------------ */
+  .bulk-edit-content { display: flex; flex-direction: column; }
+  .bulk-edit-body {
+    flex-direction: column;
+    flex: 1;
+    overflow-y: auto;
+  }
+  .bulk-edit-fields {
+    width: 100%;
+    max-height: none;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
+  .bulk-edit-fields input,
+  .bulk-edit-fields select { min-height: 44px; }
+  .bulk-edit-items { flex: 1; overflow-y: auto; }
+}
+
+/* --- Phase 5: Landscape card view (STACK-70) ----------------------------
+   Touch devices between 769–1024px get card view via JS-applied
+   body.force-card-view class. Rules mirror the ≤768px card block
+   (STACK-31, lines ~7342–7593) — keep both in sync during edits.
+   ----------------------------------------------------------------------- */
+
+/* Landscape touch: 2-column card grid */
+body.force-card-view #inventoryTable thead { display: none; }
+
+body.force-card-view #inventoryTable,
+body.force-card-view #inventoryTable tbody {
+  display: block;
+  width: 100%;
+  border-spacing: 0;
+}
+
+body.force-card-view #inventoryTable tbody {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+}
+
+body.force-card-view #inventoryTable tbody tr {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.15rem 0;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  padding: 0.75rem;
+  cursor: pointer;
+}
+
+body.force-card-view #inventoryTable tbody td,
+body.force-card-view #inventoryTable tbody td.shrink,
+body.force-card-view #inventoryTable tbody td.expand,
+body.force-card-view #inventoryTable tbody td.icon-col {
+  display: flex !important;
+  justify-content: space-between;
+  align-items: baseline;
+  flex: 0 0 50% !important;
+  box-sizing: border-box;
+  padding: 0.2rem 0.35rem;
+  border: none;
+  font-size: 0.95rem;
+  color: var(--text-primary);
+  width: unset !important;
+  max-width: none !important;
+  min-width: 0 !important;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+}
+
+body.force-card-view #inventoryTable tbody td::before {
+  content: attr(data-label);
+  font-weight: 600;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-right: 0.5rem;
+  flex-shrink: 0;
+}
+
+/* Name — full-width card title */
+body.force-card-view #inventoryTable tbody td[data-column="name"] {
+  flex: 0 0 100% !important;
+  order: -2;
+  font-size: 1.05rem;
+  font-weight: 600;
+  justify-content: flex-start;
+  padding-bottom: 0.25rem;
+  text-align: left;
+}
+body.force-card-view #inventoryTable tbody td[data-column="name"]::before { display: none; }
+
+/* Metal — full-width subtitle */
+body.force-card-view #inventoryTable tbody td[data-column="metal"] {
+  flex: 0 0 100% !important;
+  order: -1;
+  font-size: 0.9rem;
+  justify-content: flex-start;
+  padding-bottom: 0.35rem;
+  margin-bottom: 0.25rem;
+  border-bottom: 1px solid var(--border);
+}
+body.force-card-view #inventoryTable tbody td[data-column="metal"]::before { display: none; }
+
+/* Actions — full-width bottom row */
+body.force-card-view #inventoryTable tbody td[data-column="actions"],
+body.force-card-view #inventoryTable tbody td.icon-col[data-column="actions"] {
+  flex: 0 0 100% !important;
+  width: unset !important;
+  max-width: none !important;
+  justify-content: center;
+  padding-top: 0.35rem;
+  margin-top: 0.25rem;
+  border-top: 1px solid var(--border);
+}
+body.force-card-view #inventoryTable tbody td[data-column="actions"]::before { display: none; }
+
+/* Hide lower-priority fields */
+body.force-card-view #inventoryTable tbody td[data-column="date"],
+body.force-card-view #inventoryTable tbody td[data-column="type"],
+body.force-card-view #inventoryTable tbody td[data-column="purchaseLocation"] {
+  display: none !important;
+}
+
+/* Override hideEmptyColumns() for visible card fields */
+body.force-card-view #inventoryTable tbody td[data-column="name"],
+body.force-card-view #inventoryTable tbody td[data-column="metal"],
+body.force-card-view #inventoryTable tbody td[data-column="qty"],
+body.force-card-view #inventoryTable tbody td[data-column="weight"],
+body.force-card-view #inventoryTable tbody td[data-column="purchasePrice"],
+body.force-card-view #inventoryTable tbody td[data-column="meltValue"],
+body.force-card-view #inventoryTable tbody td[data-column="retailPrice"],
+body.force-card-view #inventoryTable tbody td[data-column="gainLoss"],
+body.force-card-view #inventoryTable tbody td[data-column="actions"] {
+  display: flex !important;
+}
+
+/* eBay search SVG icons: hide in card view */
+body.force-card-view #inventoryTable tbody td .ebay-search-svg { display: none; }
+
+/* Action row layout inside card */
+body.force-card-view #inventoryTable tbody td[data-column="actions"] .actions-row {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  width: 100%;
+}
+
+/* Touch-friendly action buttons (44px minimum) */
+body.force-card-view #inventoryTable tbody td[data-column="actions"] .icon-btn {
+  width: 2.75rem;
+  height: 2.75rem;
+  padding: 0.4rem;
+  border-radius: var(--radius);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+}
+
+body.force-card-view #inventoryTable tbody td[data-column="actions"] .icon-svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+/* Cards scroll naturally — remove portal max-height */
+body.force-card-view .portal-scroll {
+  max-height: none !important;
+  overflow: visible;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Name cell: name on line 1, chips wrap on line 2 */
+body.force-card-view #inventoryTable tbody td[data-column="name"] .name-cell-content {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  width: 100%;
+}
+
+body.force-card-view #inventoryTable tbody td[data-column="name"] .name-cell-content > .filter-text {
+  flex: 0 0 100%;
+  overflow: visible;
+  white-space: normal;
+  text-overflow: clip;
+  font-size: 1.05rem;
+}
+
+/* Chips: horizontal row, touch-friendly */
+body.force-card-view #inventoryTable tbody td[data-column="name"] .name-cell-content > .year-tag,
+body.force-card-view #inventoryTable tbody td[data-column="name"] .name-cell-content > .numista-tag,
+body.force-card-view #inventoryTable tbody td[data-column="name"] .name-cell-content > .pcgs-tag,
+body.force-card-view #inventoryTable tbody td[data-column="name"] .name-cell-content > .grade-tag,
+body.force-card-view #inventoryTable tbody td[data-column="name"] .name-cell-content > .serial-tag,
+body.force-card-view #inventoryTable tbody td[data-column="name"] .name-cell-content > .storage-tag,
+body.force-card-view #inventoryTable tbody td[data-column="name"] .name-cell-content > .notes-indicator,
+body.force-card-view #inventoryTable tbody td[data-column="name"] .name-cell-content > .purity-tag {
+  flex-shrink: 0;
+  font-size: 0.8rem !important;
+  padding: 0.2rem 0.5rem !important;
+  min-height: 1.75rem;
+  display: inline-flex;
+  align-items: center;
+}
+
+/* Compact pagination footer for card view */
+body.force-card-view .table-footer-controls {
+  flex-wrap: wrap;
+  gap: var(--spacing-xs);
+  justify-content: center;
+}
+
+body.force-card-view .table-item-count { font-size: 0.85rem; }
+
+body.force-card-view .table-footer-controls select {
+  font-size: 0.85rem;
+  padding: 0.25rem 0.5rem;
+  max-width: 6rem;
+}
+
+/* Portrait ≤768px in landscape orientation: 2-column card grid */
+@media (max-width: 768px) and (orientation: landscape) {
+  #inventoryTable tbody {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
   }
 }
