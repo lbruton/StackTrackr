@@ -243,13 +243,13 @@ const setupColumnResizing = () => {
 const updateColumnVisibility = () => {
   const width = window.innerWidth;
   const isTouch = window.matchMedia('(pointer: coarse)').matches;
-  const forceCards = isTouch && width > 768 && width <= 1024;
+  const forceCards = isTouch && width > 1024 && width <= 1280;
 
   document.body.classList.toggle('force-card-view', forceCards);
 
-  // Card view handles all column visibility via CSS at ≤768px (STACK-31)
-  // or via .force-card-view for landscape touch devices (STACK-70)
-  if (width <= 768 || forceCards) return;
+  // Card view handles all column visibility via CSS at ≤1024px (STACK-70)
+  // or via .force-card-view for landscape touch tablets (STACK-70)
+  if (width <= 1024 || forceCards) return;
   const hidden = new Set();
 
   const breakpoints = [
