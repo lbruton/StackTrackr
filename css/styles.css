@@ -7548,7 +7548,26 @@ th {
     font-size: 0.9rem;
   }
 
-  /* Header: scale logo to fill mobile width, center buttons below */
+  /* Compact pagination footer for card view */
+  .table-footer-controls {
+    flex-wrap: wrap;
+    gap: var(--spacing-xs);
+    justify-content: center;
+  }
+
+  .table-item-count {
+    font-size: 0.85rem;
+  }
+
+  .table-footer-controls select {
+    font-size: 0.85rem;
+    padding: 0.25rem 0.5rem;
+    max-width: 6rem;
+  }
+}
+
+/* Header: scale logo and center buttons — mobile only (STACK-70) */
+@media (max-width: 768px) {
   .app-header {
     min-height: auto;
     padding: var(--spacing-sm);
@@ -7573,23 +7592,6 @@ th {
 
   .stackr-logo {
     max-width: 100% !important;
-  }
-
-  /* Compact pagination footer for card view */
-  .table-footer-controls {
-    flex-wrap: wrap;
-    gap: var(--spacing-xs);
-    justify-content: center;
-  }
-
-  .table-item-count {
-    font-size: 0.85rem;
-  }
-
-  .table-footer-controls select {
-    font-size: 0.85rem;
-    padding: 0.25rem 0.5rem;
-    max-width: 6rem;
   }
 }
 
