@@ -344,20 +344,6 @@ const setupSettingsEventListeners = () => {
     });
   }
 
-  // Layout visibility (STACK-54)
-  ['spotPrices', 'totals', 'search', 'table'].forEach(key => {
-    const id = 'layout' + key.charAt(0).toUpperCase() + key.slice(1);
-    const cb = document.getElementById(id);
-    if (cb) {
-      cb.addEventListener('change', () => {
-        const saved = loadDataSync('layoutVisibility', {});
-        saved[key] = cb.checked;
-        saveDataSync('layoutVisibility', saved);
-        applyLayoutVisibility();
-      });
-    }
-  });
-
   // Theme cycle header button (STACK-54)
   if (elements.headerThemeBtn) {
     elements.headerThemeBtn.addEventListener('click', () => {
@@ -1126,47 +1112,122 @@ const applyHeaderToggleVisibility = () => {
 window.applyHeaderToggleVisibility = applyHeaderToggleVisibility;
 
 /**
- * Syncs layout visibility checkboxes in Settings with stored state.
+ * Syncs layout section config table in Settings and applies layout order.
  */
 const syncLayoutVisibilityUI = () => {
-  const saved = loadDataSync('layoutVisibility', {});
-  const defaults = { spotPrices: true, totals: true, search: true, table: true };
-  const state = { ...defaults, ...saved };
-
-  const map = {
-    spotPrices: 'layoutSpotPrices',
-    totals: 'layoutTotals',
-    search: 'layoutSearch',
-    table: 'layoutTable',
-  };
-  for (const [key, id] of Object.entries(map)) {
-    const cb = document.getElementById(id);
-    if (cb) cb.checked = state[key];
-  }
-
-  applyLayoutVisibility();
+  renderLayoutSectionConfigTable();
+  applyLayoutOrder();
 };
 
 /**
- * Shows/hides major page sections based on layout visibility state.
- * Always reads from localStorage and merges with defaults.
+ * Renders the layout section config table in Settings > Layout.
+ * Each row has a checkbox (enable/disable) and up/down arrows for reordering.
  */
-const applyLayoutVisibility = () => {
-  const saved = loadDataSync('layoutVisibility', {});
-  const state = { spotPrices: true, totals: true, search: true, table: true, ...saved };
+const renderLayoutSectionConfigTable = () => {
+  const container = document.getElementById('layoutSectionConfigContainer');
+  if (!container || typeof getLayoutSectionConfig !== 'function') return;
 
+  const config = getLayoutSectionConfig();
+  container.textContent = '';
+
+  if (!config.length) {
+    const empty = document.createElement('div');
+    empty.className = 'chip-grouping-empty';
+    empty.textContent = 'No sections available';
+    container.appendChild(empty);
+    return;
+  }
+
+  const table = document.createElement('table');
+  table.className = 'chip-grouping-table';
+  const tbody = document.createElement('tbody');
+
+  config.forEach((section, idx) => {
+    const tr = document.createElement('tr');
+    tr.dataset.sectionId = section.id;
+
+    // Checkbox cell
+    const tdCheck = document.createElement('td');
+    tdCheck.style.cssText = 'width:2rem;text-align:center';
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.checked = section.enabled;
+    cb.className = 'inline-chip-toggle';
+    cb.title = 'Toggle ' + section.label;
+    cb.addEventListener('change', () => {
+      const cfg = getLayoutSectionConfig();
+      const item = cfg.at(idx);
+      if (item) {
+        item.enabled = cb.checked;
+        saveLayoutSectionConfig(cfg);
+        applyLayoutOrder();
+      }
+    });
+    tdCheck.appendChild(cb);
+
+    // Label cell
+    const tdLabel = document.createElement('td');
+    tdLabel.textContent = section.label;
+
+    // Arrow buttons cell
+    const tdMove = document.createElement('td');
+    tdMove.style.cssText = 'width:3.5rem;text-align:right;white-space:nowrap';
+
+    const makeBtn = (dir, disabled) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'inline-chip-move';
+      btn.textContent = dir === 'up' ? '\u2191' : '\u2193';
+      btn.title = 'Move ' + dir;
+      btn.disabled = disabled;
+      btn.addEventListener('click', () => {
+        const cfg = getLayoutSectionConfig();
+        const j = dir === 'up' ? idx - 1 : idx + 1;
+        if (j < 0 || j >= cfg.length) return;
+        const moved = cfg.splice(idx, 1).at(0);
+        cfg.splice(j, 0, moved);
+        saveLayoutSectionConfig(cfg);
+        renderLayoutSectionConfigTable();
+        applyLayoutOrder();
+      });
+      return btn;
+    };
+    tdMove.appendChild(makeBtn('up', idx === 0));
+    tdMove.appendChild(makeBtn('down', idx === config.length - 1));
+
+    tr.append(tdCheck, tdLabel, tdMove);
+    tbody.appendChild(tr);
+  });
+
+  table.appendChild(tbody);
+  container.appendChild(table);
+};
+
+/**
+ * Shows/hides and reorders major page sections based on layout section config.
+ * Reads from localStorage and applies both visibility and DOM order.
+ */
+const applyLayoutOrder = () => {
+  const config = getLayoutSectionConfig();
   const sectionMap = {
     spotPrices: elements.spotPricesSection,
-    totals: elements.totalsSectionEl,
-    search: elements.searchSectionEl,
-    table: elements.tableSectionEl,
+    totals:     elements.totalsSectionEl,
+    search:     elements.searchSectionEl,
+    table:      elements.tableSectionEl,
   };
+  const container = document.querySelector('.container');
+  if (!container) return;
 
-  for (const [key, el] of Object.entries(sectionMap)) {
-    if (el) el.style.display = state[key] ? '' : 'none';
+  for (const section of config) {
+    const el = sectionMap[section.id];
+    if (!el) continue;
+    el.style.display = section.enabled ? '' : 'none';
+    container.append(el);
   }
 };
+const applyLayoutVisibility = applyLayoutOrder;
 window.applyLayoutVisibility = applyLayoutVisibility;
+window.applyLayoutOrder = applyLayoutOrder;
 
 /**
  * Toggles the floating currency picker dropdown anchored to the header button.
@@ -1251,6 +1312,7 @@ if (typeof window !== 'undefined') {
   window.setupSettingsEventListeners = setupSettingsEventListeners;
   window.renderInlineChipConfigTable = renderInlineChipConfigTable;
   window.renderFilterChipCategoryTable = renderFilterChipCategoryTable;
+  window.renderLayoutSectionConfigTable = renderLayoutSectionConfigTable;
   window.setupProviderTabDrag = setupProviderTabDrag;
   window.loadProviderTabOrder = loadProviderTabOrder;
   window.saveProviderTabOrder = saveProviderTabOrder;

@@ -260,6 +260,10 @@
                     <option value="30">30d</option>
                     <option value="60">60d</option>
                     <option value="90" selected>90d</option>
+                    <option value="365">1Y</option>
+                    <option value="1095">3Y</option>
+                    <option value="1825">5Y</option>
+                    <option value="3650">10Y</option>
                   </select>
                   <button class="spot-sync-icon" id="syncIconSilver" title="Sync from API" disabled>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6"/><path d="M2.5 22v-6h6"/><path d="M2.5 11.5a10 10 0 0 1 18.4-4.5"/><path d="M21.5 12.5a10 10 0 0 1-18.4 4.5"/></svg>
@@ -285,6 +289,10 @@
                     <option value="30">30d</option>
                     <option value="60">60d</option>
                     <option value="90" selected>90d</option>
+                    <option value="365">1Y</option>
+                    <option value="1095">3Y</option>
+                    <option value="1825">5Y</option>
+                    <option value="3650">10Y</option>
                   </select>
                   <button class="spot-sync-icon" id="syncIconGold" title="Sync from API" disabled>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6"/><path d="M2.5 22v-6h6"/><path d="M2.5 11.5a10 10 0 0 1 18.4-4.5"/><path d="M21.5 12.5a10 10 0 0 1-18.4 4.5"/></svg>
@@ -310,6 +318,10 @@
                     <option value="30">30d</option>
                     <option value="60">60d</option>
                     <option value="90" selected>90d</option>
+                    <option value="365">1Y</option>
+                    <option value="1095">3Y</option>
+                    <option value="1825">5Y</option>
+                    <option value="3650">10Y</option>
                   </select>
                   <button class="spot-sync-icon" id="syncIconPlatinum" title="Sync from API" disabled>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6"/><path d="M2.5 22v-6h6"/><path d="M2.5 11.5a10 10 0 0 1 18.4-4.5"/><path d="M21.5 12.5a10 10 0 0 1-18.4 4.5"/></svg>
@@ -335,6 +347,10 @@
                     <option value="30">30d</option>
                     <option value="60">60d</option>
                     <option value="90" selected>90d</option>
+                    <option value="365">1Y</option>
+                    <option value="1095">3Y</option>
+                    <option value="1825">5Y</option>
+                    <option value="3650">10Y</option>
                   </select>
                   <button class="spot-sync-icon" id="syncIconPalladium" title="Sync from API" disabled>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6"/><path d="M2.5 22v-6h6"/><path d="M2.5 11.5a10 10 0 0 1 18.4-4.5"/><path d="M21.5 12.5a10 10 0 0 1-18.4 4.5"/></svg>
@@ -567,7 +583,6 @@
 
          Wrapper containing search and inventory table
          ============================================================================= -->
-      <section class="inventory-section">
         <!-- =============================================================================
            SEARCH FUNCTIONALITY
 
@@ -804,7 +819,6 @@
             </div>
           </div>
         </section>
-    </section>
       <!-- =============================================================================
          IMPORT/EXPORT SECTION
          
@@ -1602,19 +1616,10 @@
 
               <div class="settings-group">
                 <div class="settings-group-label">Visible sections</div>
-                <p class="settings-subtext">Toggle major page sections on or off. Hidden sections are still functional — just not visible.</p>
-                <label class="settings-checkbox-label">
-                  <input type="checkbox" id="layoutSpotPrices" checked> Spot price cards
-                </label>
-                <label class="settings-checkbox-label">
-                  <input type="checkbox" id="layoutTotals" checked> Summary totals
-                </label>
-                <label class="settings-checkbox-label">
-                  <input type="checkbox" id="layoutSearch" checked> Search & filter bar
-                </label>
-                <label class="settings-checkbox-label">
-                  <input type="checkbox" id="layoutTable" checked> Inventory table
-                </label>
+                <p class="settings-subtext">Toggle visibility and reorder major page sections.</p>
+                <div class="chip-grouping-table-container" id="layoutSectionConfigContainer">
+                  <div class="chip-grouping-empty">Loading...</div>
+                </div>
               </div>
             </div>
 
