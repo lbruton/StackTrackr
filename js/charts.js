@@ -40,18 +40,26 @@ const generateColors = (count) => {
  * @returns {string} Background color
  */
 const getChartBackgroundColor = () => {
-  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-  return isDark ? '#1e293b' : '#f8fafc';
+  const theme = document.documentElement.getAttribute('data-theme') || 'light';
+  switch (theme) {
+    case 'dark':  return '#1e293b';
+    case 'sepia': return '#e9ddc8';
+    default:      return '#f8fafc';
+  }
 };
 
 /**
  * Gets appropriate text color for charts based on current theme
- * 
+ *
  * @returns {string} Text color
  */
 const getChartTextColor = () => {
-  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-  return isDark ? '#f8fafc' : '#1e293b';
+  const theme = document.documentElement.getAttribute('data-theme') || 'light';
+  switch (theme) {
+    case 'dark':  return '#f8fafc';
+    case 'sepia': return '#3e2f1e';
+    default:      return '#1e293b';
+  }
 };
 
 /**
@@ -72,8 +80,12 @@ const createPieChart = (canvas, data, title, metric = 'purchase') => {
 
   const ctx = canvas.getContext('2d');
 
+  // STACK-71: per-chart datalabels plugin (graceful if CDN unavailable)
+  const piePlugins = typeof ChartDataLabels !== 'undefined' ? [ChartDataLabels] : [];
+
   return new Chart(ctx, {
     type: 'pie',
+    plugins: piePlugins,
     data: {
       labels: labels,
       datasets: [{
@@ -148,6 +160,23 @@ const createPieChart = (canvas, data, title, metric = 'purchase') => {
               return lines;
             }
           }
+        },
+        datalabels: {
+          display: function(context) {
+            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+            if (total === 0) return false;
+            return ((context.dataset.data[context.dataIndex] / total) * 100) >= 5;
+          },
+          formatter: function(value, context) {
+            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+            return ((value / total) * 100).toFixed(0) + '%';
+          },
+          color: '#fff',
+          font: { weight: 'bold', size: 12 },
+          textStrokeColor: 'rgba(0,0,0,0.5)',
+          textStrokeWidth: 2,
+          anchor: 'center',
+          align: 'center'
         }
       },
       animation: {

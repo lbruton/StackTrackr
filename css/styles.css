@@ -2142,7 +2142,8 @@ input[type="submit"] {
   padding: 0;
   overflow: hidden;
   width: 90%;
-  max-width: 1000px;
+  max-width: 1200px;
+  max-height: 90vh;
 }
 
 #changeLogModal .modal-content {
@@ -2192,7 +2193,7 @@ input[type="submit"] {
 #detailsModal .modal-body {
   padding: var(--spacing-xl);
   flex: 1;
-  overflow: hidden;
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
 }
@@ -3470,8 +3471,8 @@ a.about-badge:hover {
   grid-template-columns: 1fr 1fr;
   gap: var(--spacing-xl);
   margin-bottom: var(--spacing-lg);
-  flex: 1;
-  overflow: hidden;
+  flex: 0 0 auto;
+  overflow: visible;
 }
 
 .details-panel {
@@ -3482,12 +3483,12 @@ a.about-badge:hover {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-lg);
-  overflow: hidden;
+  overflow: visible;
 }
 
 .details-breakdown {
-  flex: 1;
-  overflow: auto;
+  flex: 0 0 auto;
+  overflow: visible;
   padding-right: var(--spacing-sm);
 }
 
@@ -3572,10 +3573,12 @@ a.about-badge:hover {
 
 .chart-canvas-container {
   position: relative;
-  height: 300px;
   width: 100%;
+  max-width: 300px;
+  max-height: 300px;
+  aspect-ratio: 1;
   margin: 0 auto;
-  flex: 0 0 300px;
+  flex: 0 0 auto;
 }
 
 .chart-canvas {
@@ -3587,24 +3590,36 @@ a.about-badge:hover {
   display: flex;
   justify-content: center;
   gap: 0;
-  margin: 0.75rem auto;
+  margin: 0 auto 0.75rem;
   border-radius: var(--radius);
-  overflow: hidden;
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--border);
   width: fit-content;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--bg-primary);
+  padding: 0.5rem 0;
 }
 .chart-metric-btn {
-  padding: 0.35rem 0.85rem;
-  font-size: 0.8rem;
-  font-weight: 500;
+  padding: 0.5rem 1.25rem;
+  font-size: 14px;
+  font-weight: 600;
   cursor: pointer;
   border: none;
   background: var(--bg-secondary);
   color: var(--text-primary);
   transition: background 0.15s, color 0.15s;
+  white-space: nowrap;
+  line-height: 1.4;
+}
+.chart-metric-btn:first-child {
+  border-radius: var(--radius) 0 0 var(--radius);
+}
+.chart-metric-btn:last-child {
+  border-radius: 0 var(--radius) var(--radius) 0;
 }
 .chart-metric-btn:not(:last-child) {
-  border-right: 1px solid var(--border-color);
+  border-right: 1px solid var(--border);
 }
 .chart-metric-btn:hover {
   background: var(--bg-hover);
@@ -4485,6 +4500,13 @@ input:disabled + .slider {
    - Optimized table display with column adjustments
    ============================================================================= */
 
+/* STACK-71: Single-column details at tablet widths, aligned with card-view breakpoint */
+@media (max-width: 1350px) {
+  .details-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (max-width: 1200px) {
   .totals {
     grid-template-columns: repeat(3, 1fr);
@@ -4492,10 +4514,6 @@ input:disabled + .slider {
 
   #detailsModal .modal-content {
     max-width: 900px;
-  }
-
-  .details-grid {
-    grid-template-columns: 1fr;
   }
 }
 
@@ -4505,7 +4523,7 @@ input:disabled + .slider {
   }
 
   #detailsModal .modal-content {
-    max-width: 700px;
+    max-width: 900px;
   }
 }
 
@@ -4596,14 +4614,6 @@ input:disabled + .slider {
   .action-buttons {
     grid-template-columns: 1fr;
   }
-
-  .chart-canvas-container {
-    height: 250px;
-  }
-
-  .chart-canvas {
-    max-height: 250px !important;
-  }
 }
 
 @media (max-width: 480px) {
@@ -4622,14 +4632,6 @@ input:disabled + .slider {
 
   .spot-input {
     padding: var(--spacing);
-  }
-
-  .chart-canvas-container {
-    height: 200px;
-  }
-
-  .chart-canvas {
-    max-height: 200px !important;
   }
 }
 
@@ -7616,15 +7618,6 @@ th {
   .breakdown-grid {
     grid-template-columns: 1fr;
     gap: 0.125rem;
-  }
-
-  .chart-canvas-container {
-    height: 150px;
-    flex: 0 0 150px;
-  }
-
-  .chart-canvas {
-    max-height: 150px !important;
   }
 
   /* Reduce breakdown font sizes */

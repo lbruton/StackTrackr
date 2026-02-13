@@ -4,6 +4,9 @@
 /** @type {string} Current pie chart metric — purchase | melt | retail | gainLoss */
 let detailsChartMetric = 'purchase';
 
+/** @type {ResizeObserver|null} Active ResizeObserver for chart resize handling */
+let detailsResizeObserver = null;
+
 /**
  * Calculates breakdown data for specified metal by type and location
  * RENAMED from calculateBreakdownData to avoid 403 errors
@@ -336,22 +339,35 @@ const showDetailsModal = (metal) => {
     document.body.style.overflow = 'hidden';
   }
 
-  // Add chart resize handling
-  const resizeObserver = new ResizeObserver(() => {
-    Object.values(chartInstances).forEach(chart => {
-      if (chart) {
-        chart.resize();
-      }
-    });
-  });
+  // Scroll modal body to top on open
+  const modalBody = elements.detailsModal.querySelector('.modal-body');
+  if (modalBody) modalBody.scrollTop = 0;
 
-  resizeObserver.observe(elements.detailsModal);
+  // Clean up any existing resize observer before creating a new one
+  if (detailsResizeObserver) {
+    detailsResizeObserver.disconnect();
+    detailsResizeObserver = null;
+  }
+
+  // Add chart resize handling (skip on mobile where charts are hidden)
+  if (!isMobile) {
+    detailsResizeObserver = new ResizeObserver(() => {
+      Object.values(chartInstances).forEach(chart => {
+        if (chart) chart.resize();
+      });
+    });
+    detailsResizeObserver.observe(elements.detailsModal);
+  }
 };
 
 /**
  * Closes the details modal and cleans up charts
  */
 const closeDetailsModal = () => {
+  if (detailsResizeObserver) {
+    detailsResizeObserver.disconnect();
+    detailsResizeObserver = null;
+  }
   if (window.closeModalById) closeModalById('detailsModal');
   else {
     elements.detailsModal.style.display = 'none';
