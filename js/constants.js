@@ -251,10 +251,10 @@ const CERT_LOOKUP_URLS = {
  * Follows BRANCH.RELEASE.PATCH.state format
  * State codes: a=alpha, b=beta, rc=release candidate
  * Example: 3.03.02a → branch 3, release 03, patch 02, alpha
- * Updated: 2026-02-12 - STACK-55: Bulk Editor clean selection, code cleanup
+ * Updated: 2026-02-12 - STACK-38/STACK-31: Responsive card view + mobile layout
  */
 
-const APP_VERSION = "3.25.02";
+const APP_VERSION = "3.25.03";
 
 /**
  * @constant {string} DEFAULT_CURRENCY - Default currency code for monetary formatting
