@@ -15,6 +15,12 @@ const updatePortalHeight = () => {
   const portalScroll = document.querySelector('.portal-scroll');
   if (!portalScroll) return;
 
+  // Card view at ≤768px: cards scroll naturally in the page (STACK-31)
+  if (window.innerWidth <= 768) {
+    portalScroll.style.maxHeight = '';
+    return;
+  }
+
   const table = document.getElementById('inventoryTable');
   if (!table) return;
 

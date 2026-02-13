@@ -242,6 +242,8 @@ const setupColumnResizing = () => {
  */
 const updateColumnVisibility = () => {
   const width = window.innerWidth;
+  // Card view handles all column visibility via CSS at ≤768px (STACK-31)
+  if (width <= 768) return;
   const hidden = new Set();
 
   const breakpoints = [
