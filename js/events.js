@@ -242,8 +242,14 @@ const setupColumnResizing = () => {
  */
 const updateColumnVisibility = () => {
   const width = window.innerWidth;
+  const isTouch = window.matchMedia('(pointer: coarse)').matches;
+  const forceCards = isTouch && width > 768 && width <= 1024;
+
+  document.body.classList.toggle('force-card-view', forceCards);
+
   // Card view handles all column visibility via CSS at ≤768px (STACK-31)
-  if (width <= 768) return;
+  // or via .force-card-view for landscape touch devices (STACK-70)
+  if (width <= 768 || forceCards) return;
   const hidden = new Set();
 
   const breakpoints = [
