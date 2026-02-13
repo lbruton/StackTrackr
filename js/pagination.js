@@ -15,9 +15,9 @@ const updatePortalHeight = () => {
   const portalScroll = document.querySelector('.portal-scroll');
   if (!portalScroll) return;
 
-  // Card view at ≤768px or landscape touch (STACK-31 / STACK-70):
+  // Card view at ≤1350px or large touch tablets (STACK-31 / STACK-70):
   // cards scroll naturally in the page
-  if (window.innerWidth <= 768 || document.body.classList.contains('force-card-view')) {
+  if (window.innerWidth <= 1350 || document.body.classList.contains('force-card-view')) {
     portalScroll.style.maxHeight = '';
     return;
   }
