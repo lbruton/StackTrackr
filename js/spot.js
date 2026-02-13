@@ -731,10 +731,51 @@ const updateSpotChangePercent = (metalKey, precomputedData = null) => {
   const newest = data[data.length - 1];
   const pctChange = ((newest - oldest) / oldest) * 100;
   const sign = pctChange > 0 ? "+" : "";
-  el.textContent = `${sign}${pctChange.toFixed(2)}%`;
-  el.className =
-    "spot-card-change " +
-    (pctChange > 0 ? "spot-change-up" : pctChange < 0 ? "spot-change-down" : "");
+  const rangeClass = pctChange > 0 ? "spot-change-up" : pctChange < 0 ? "spot-change-down" : "";
+
+  // Build DOM: range % (colored) + optional 24h % (independently colored)
+  el.className = "spot-card-change";
+  el.textContent = "";
+
+  const rangeSpan = document.createElement("span");
+  rangeSpan.className = rangeClass;
+  rangeSpan.textContent = `${sign}${pctChange.toFixed(2)}%`;
+  el.appendChild(rangeSpan);
+
+  // Append secondary % indicator in parentheses (STACK-69)
+  // >1d views: show 24h change | 1d view: show 90d change for context
+  const rangeSelectEl = document.getElementById(`spotRange${metalConfig.name}`);
+  const selectedDays = rangeSelectEl ? parseInt(rangeSelectEl.value, 10) : 90;
+  if (selectedDays > 1) {
+    const { data: dailyData } = getSparklineData(metalConfig.name, 3, true);
+    if (dailyData.length >= 2) {
+      const dayOld = dailyData[dailyData.length - 2];
+      const dayNew = dailyData[dailyData.length - 1];
+      const dayPct = ((dayNew - dayOld) / dayOld) * 100;
+      const daySign = dayPct > 0 ? "+" : "";
+      const dayClass = dayPct > 0 ? "spot-change-up" : dayPct < 0 ? "spot-change-down" : "";
+
+      const daySpan = document.createElement("span");
+      daySpan.className = dayClass;
+      daySpan.textContent = ` (${daySign}${dayPct.toFixed(2)}% 24h)`;
+      el.appendChild(daySpan);
+    }
+  } else {
+    // 1d view: show 90d context
+    const { data: ctx90 } = getSparklineData(metalConfig.name, 90);
+    if (ctx90.length >= 2) {
+      const ctxOld = ctx90[0];
+      const ctxNew = ctx90[ctx90.length - 1];
+      const ctxPct = ((ctxNew - ctxOld) / ctxOld) * 100;
+      const ctxSign = ctxPct > 0 ? "+" : "";
+      const ctxClass = ctxPct > 0 ? "spot-change-up" : ctxPct < 0 ? "spot-change-down" : "";
+
+      const ctxSpan = document.createElement("span");
+      ctxSpan.className = ctxClass;
+      ctxSpan.textContent = ` (${ctxSign}${ctxPct.toFixed(2)}% 90d)`;
+      el.appendChild(ctxSpan);
+    }
+  }
 
   // Override the arrow direction on the price display to match the period-based
   // trend. updateSpotCardColor() compares against the last different price in ALL
