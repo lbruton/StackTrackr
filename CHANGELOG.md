@@ -9,6 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.27.04] - 2026-02-14
+
+### Added — Spot Comparison Mode & Mobile API Settings
+
+- **Added**: User setting for 24h % comparison mode — Close/Close, Open/Open, Open/Close (STACK-92)
+- **Changed**: Replaced drag-to-sort provider tabs with explicit Sync Priority dropdowns that work on all devices (STACK-90)
+- **Changed**: Provider tabs now scroll horizontally on mobile instead of overflowing (STACK-90)
+- **Removed**: Sync Mode toggle (Always/Backup) — replaced by priority numbers (STACK-90)
+- **Fixed**: Cache-bust favicon and add root-level copies for PWA
+- **Fixed**: Consistent 24h % across all spot card views (STACK-89)
+- **Changed**: Extract fetchAndCache helper in service worker
+
+---
+
 ## [3.27.03] - 2026-02-14
 
 ### Added — PWA Support & Bug Fixes
