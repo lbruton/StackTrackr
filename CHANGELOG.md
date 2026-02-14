@@ -9,6 +9,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.27.00] - 2026-02-13
+
+### Added — Coin Image Cache & Item View Modal
+
+- **Added**: IndexedDB image cache (`js/image-cache.js`) — fetches, resizes, and stores Numista coin images with 50MB quota and graceful `file://` degradation
+- **Added**: Item view modal (`js/viewModal.js`) with coin images, inventory data, valuation, grading, and Numista enrichment — opens via item name click or card tap
+- **Added**: Numista metadata caching with 30-day TTL — denomination, shape, diameter, thickness, orientation, composition, technique, references, rarity, mintage, edge, tags, and commemorative info
+- **Added**: Settings toggles for 15 Numista view modal fields in API settings panel
+- **Added**: View (eye) button in table/card actions, card tap opens view modal on mobile
+- **Added**: Reusable iframe popup modal (1250px) for source URLs, N# Numista links, and external references
+- **Added**: IndexedDB storage reporting in settings footer (LS + IDB) and storage report modal
+- **Added**: Search eBay button in view modal footer
+- **Added**: `COIN_IMAGES` feature flag (beta) gating entire image/view system
+- **Changed**: All popup windows widened from 1200px to 1250px
+- **Changed**: Full-screen view modal on mobile with sticky footer, safe-area insets, and 44px touch targets
+- **Changed**: Rectangular image frames for bars, notes, and Aurum/Goldback items in view modal
+
+---
+
 ## [3.26.03] - 2026-02-13
 
 ### Fixed — STACK-79, STACK-80: XSS & HTML Injection Hardening

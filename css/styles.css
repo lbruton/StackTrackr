@@ -3106,6 +3106,520 @@ td input:checked + .slider:before {
 }
 
 /* =============================================================================
+   VIEW ITEM MODAL — Coin showcase card with image display + enriched data
+
+   Glass-morphism card matching existing modal system.
+   Images displayed on a subtle dark field (coin presentation aesthetic).
+   Sections separated by faint gradient dividers.
+   ============================================================================= */
+
+/* --- Modal content shell --- */
+#viewItemModal .modal-content {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  overflow: hidden;
+  width: 92%;
+  max-width: 820px;
+  max-height: 90vh;
+}
+
+/* --- Header with gradient banner --- */
+#viewItemModal .modal-header {
+  background: linear-gradient(135deg, var(--primary), var(--primary-hover));
+  color: #f8fafc;
+  padding: var(--spacing-lg) var(--spacing-xl);
+  padding-right: 2.5rem; /* room for close button */
+  position: relative;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  box-shadow: var(--shadow);
+}
+
+#viewItemModal .modal-header h2 {
+  margin: 0;
+  color: #f8fafc;
+  font-size: 1.1rem;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#viewItemModal .view-modal-catalog-id {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 500;
+  opacity: 0.85;
+  background: rgba(255, 255, 255, 0.15);
+  padding: 2px 8px;
+  border-radius: 4px;
+  margin-top: 4px;
+}
+
+/* --- Scrollable body --- */
+#viewItemModal .modal-body {
+  padding: 0;
+  overflow-y: auto;
+  flex: 1;
+}
+
+/* --- Image showcase section --- */
+.view-image-section {
+  background: linear-gradient(145deg, #1a1a2e, #16213e);
+  padding: var(--spacing-lg);
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  gap: var(--spacing-lg);
+  position: relative;
+}
+
+/* Subtle coin-case texture overlay */
+.view-image-section::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.3) 100%);
+  pointer-events: none;
+}
+
+.view-image-slot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-xs);
+  position: relative;
+  z-index: 1;
+}
+
+/* Default: round coin frame */
+.view-image-slot img {
+  max-width: 180px;
+  max-height: 180px;
+  object-fit: contain;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+/* Rectangular frame for bars, notes, Aurum/Goldback — auto-fits aspect ratio */
+.view-image-section.view-shape-rect .view-image-slot img {
+  border-radius: var(--radius);
+  max-width: 200px;
+  max-height: 260px;
+  width: auto;
+  height: auto;
+}
+
+.view-image-section.view-shape-rect .view-image-placeholder {
+  border-radius: var(--radius);
+  width: 140px;
+  height: 200px;
+}
+
+.view-image-slot img:hover {
+  transform: scale(1.06);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+}
+
+.view-image-slot .view-image-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(248, 250, 252, 0.55);
+  font-weight: 500;
+}
+
+/* Placeholder when no image available */
+.view-image-placeholder {
+  width: 160px;
+  height: 160px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px dashed rgba(255, 255, 255, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.5rem;
+  color: rgba(255, 255, 255, 0.15);
+}
+
+/* --- Data sections --- */
+.view-detail-section {
+  padding: var(--spacing) var(--spacing-xl);
+  border-bottom: 1px solid var(--border);
+}
+
+.view-detail-section:last-child {
+  border-bottom: none;
+}
+
+.view-section-title {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--primary);
+  margin: 0 0 var(--spacing-sm) 0;
+  padding-bottom: 2px;
+}
+
+.view-detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px var(--spacing-lg);
+}
+
+.view-detail-grid.three-col {
+  grid-template-columns: 1fr 1fr 1fr;
+}
+
+.view-detail-item {
+  display: flex;
+  flex-direction: column;
+  padding: 3px 0;
+}
+
+.view-detail-item.full-width {
+  grid-column: 1 / -1;
+}
+
+.view-detail-label {
+  font-size: 0.65rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.view-detail-value {
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  word-break: break-word;
+}
+
+.view-detail-value.gain {
+  color: var(--success);
+  font-weight: 600;
+}
+
+.view-detail-value.loss {
+  color: var(--danger);
+  font-weight: 600;
+}
+
+.view-detail-value.muted {
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+/* --- Numista enrichment section — distinct separator --- */
+.view-numista-section {
+  padding: var(--spacing) var(--spacing-xl);
+  background: var(--bg-secondary);
+  border-top: 2px solid var(--border);
+  position: relative;
+}
+
+.view-numista-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: var(--spacing-xl);
+  right: var(--spacing-xl);
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--primary), transparent);
+  opacity: 0.3;
+  margin-top: -2px;
+}
+
+.view-numista-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.6rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--primary);
+  background: rgba(59, 130, 246, 0.08);
+  padding: 2px 8px;
+  border-radius: 4px;
+  margin-bottom: var(--spacing-sm);
+}
+
+/* Numista section uses 3 columns by default for compact layout */
+.view-numista-section .view-detail-grid {
+  grid-template-columns: 1fr 1fr 1fr;
+}
+
+/* Image tooltip for obverse/reverse descriptions */
+.view-image-slot {
+  position: relative;
+}
+
+.view-image-slot[title] img {
+  cursor: help;
+}
+
+/* Rarity bar */
+.view-rarity-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.view-rarity-track {
+  flex: 1;
+  height: 6px;
+  background: var(--bg-tertiary);
+  border-radius: 3px;
+  overflow: hidden;
+  max-width: 120px;
+}
+
+.view-rarity-fill {
+  height: 100%;
+  border-radius: 3px;
+  background: linear-gradient(90deg, var(--success), var(--warning), var(--danger));
+  transition: width 0.4s ease;
+}
+
+.view-rarity-score {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+/* --- Notes section --- */
+.view-notes-text {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  font-style: italic;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* --- Footer actions --- */
+.view-modal-footer {
+  padding: var(--spacing) var(--spacing-xl);
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.view-footer-left {
+  display: flex;
+  gap: var(--spacing-sm);
+}
+
+.view-footer-right {
+  display: flex;
+  gap: var(--spacing-sm);
+}
+
+.view-modal-footer button {
+  padding: 6px 16px;
+  border-radius: var(--radius);
+  font-size: 0.82rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition);
+  border: 1px solid var(--border);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+.view-modal-footer button:hover {
+  background: var(--bg-tertiary);
+}
+
+.view-modal-footer .view-edit-btn {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+}
+
+.view-modal-footer .view-edit-btn:hover {
+  background: var(--primary-hover);
+  border-color: var(--primary-hover);
+}
+
+.view-ebay-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+}
+
+.view-ebay-btn:hover {
+  color: var(--text-primary);
+  border-color: var(--text-secondary);
+}
+
+/* --- Iframe Popup Modal --- */
+.iframe-popup-content {
+  width: 95vw;
+  max-width: 1250px;
+  height: 85vh;
+  max-height: 900px;
+}
+
+.iframe-popup-body {
+  height: calc(100% - 60px);
+  padding: 0;
+}
+
+/* Clickable N# badge */
+.view-modal-catalog-id[style*="cursor: pointer"]:hover {
+  filter: brightness(1.2);
+}
+
+/* --- Responsive: mobile view modal (≤768px) --- */
+@media (max-width: 768px) {
+  /* Full-screen modal on phones — no chrome, maximum content */
+  #viewItemModal .modal-content {
+    width: 100%;
+    max-width: 100%;
+    max-height: 100vh;
+    height: 100vh;
+    border-radius: 0;
+    margin: 0;
+  }
+
+  #viewItemModal .modal-header {
+    border-radius: 0;
+    padding: var(--spacing-sm) var(--spacing);
+  }
+
+  #viewItemModal .modal-header h2 {
+    font-size: 0.95rem;
+    line-height: 1.3;
+  }
+
+  /* Images: side-by-side but smaller — keep both visible */
+  .view-image-section {
+    flex-direction: row;
+    justify-content: center;
+    gap: var(--spacing);
+    padding: var(--spacing);
+  }
+
+  .view-image-slot img {
+    max-width: 120px;
+    max-height: 120px;
+  }
+
+  .view-image-placeholder {
+    width: 110px;
+    height: 110px;
+    font-size: 2rem;
+  }
+
+  .view-image-section.view-shape-rect .view-image-slot img {
+    max-width: 110px;
+    max-height: 160px;
+  }
+
+  .view-image-section.view-shape-rect .view-image-placeholder {
+    width: 95px;
+    height: 140px;
+  }
+
+  /* 2-column data grid (down from 3) */
+  .view-detail-grid,
+  .view-detail-grid.three-col {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .view-detail-section {
+    padding: var(--spacing-sm) var(--spacing);
+  }
+
+  .view-numista-section {
+    padding: var(--spacing-sm) var(--spacing);
+  }
+
+  /* Footer: sticky bottom bar with 44px touch targets + safe-area */
+  .view-modal-footer {
+    position: sticky;
+    bottom: 0;
+    background: var(--bg-primary);
+    border-top: 1px solid var(--border);
+    padding: var(--spacing-sm) var(--spacing);
+    padding-bottom: calc(var(--spacing-sm) + env(safe-area-inset-bottom, 0px));
+    z-index: 2;
+    flex-wrap: wrap;
+    gap: var(--spacing-sm);
+  }
+
+  .view-modal-footer button {
+    min-height: 44px;
+    font-size: 0.85rem;
+    padding: 8px 16px;
+  }
+
+  .view-footer-left {
+    order: 2;
+    width: 100%;
+  }
+
+  .view-ebay-btn {
+    width: 100%;
+    min-height: 38px;
+  }
+
+  .view-footer-right {
+    order: 1;
+    width: 100%;
+    display: flex;
+    gap: var(--spacing-sm);
+  }
+
+  .view-footer-right button {
+    flex: 1;
+  }
+
+  /* Iframe popup: full-screen on mobile */
+  .iframe-popup-content {
+    width: 100%;
+    max-width: 100%;
+    height: 100vh;
+    max-height: 100vh;
+    border-radius: 0;
+    margin: 0;
+  }
+
+  .iframe-popup-body {
+    height: calc(100vh - 56px);
+  }
+}
+
+/* --- Extra-small phones (≤400px) — single-column data --- */
+@media (max-width: 400px) {
+  .view-detail-grid,
+  .view-detail-grid.three-col {
+    grid-template-columns: 1fr;
+  }
+
+  .view-image-section {
+    flex-direction: column;
+    align-items: center;
+  }
+}
+
+/* --- Sepia theme adjustments for image showcase --- */
+[data-theme="sepia"] .view-image-section {
+  background: linear-gradient(145deg, #2c1e0e, #3a2a18);
+}
+
+/* =============================================================================
    ABOUT MODAL STYLING - Enhanced splash page design
    ============================================================================= */
 
@@ -4685,6 +5199,14 @@ input:disabled + .slider {
 #inventoryTable td.icon-col .action-icon.edit-icon {
   color: var(--primary);
   font-weight: bold;
+}
+
+#inventoryTable td.icon-col .action-icon.view-icon {
+  color: var(--text-secondary);
+}
+
+#inventoryTable td.icon-col .action-icon.view-icon:hover {
+  color: var(--primary);
 }
 
 /* Actions column styling */
@@ -7505,6 +8027,17 @@ th {
     height: 1.25rem;
   }
 
+  /* View button: primary accent in card view */
+  #inventoryTable tbody td[data-column="actions"] .icon-btn.view-icon {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: #fff;
+  }
+
+  #inventoryTable tbody td[data-column="actions"] .icon-btn.view-icon .icon-svg {
+    fill: #fff;
+  }
+
   /* Cards scroll naturally — remove portal max-height */
   .portal-scroll {
     max-height: none !important;
@@ -7927,6 +8460,17 @@ body.force-card-view #inventoryTable tbody td[data-column="actions"] .icon-btn {
   border-radius: var(--radius);
   background: var(--bg-secondary);
   border: 1px solid var(--border);
+}
+
+/* View button: primary accent in card view */
+body.force-card-view #inventoryTable tbody td[data-column="actions"] .icon-btn.view-icon {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+
+body.force-card-view #inventoryTable tbody td[data-column="actions"] .icon-btn.view-icon .icon-svg {
+  fill: #fff;
 }
 
 body.force-card-view #inventoryTable tbody td[data-column="actions"] .icon-svg {

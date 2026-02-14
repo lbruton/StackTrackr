@@ -197,6 +197,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     elements.cancelNotesBtn = safeGetElement("cancelNotes");
     elements.notesCloseBtn = safeGetElement("notesCloseBtn");
 
+    // View item modal elements
+    elements.viewItemModal = safeGetElement("viewItemModal");
+    elements.viewModalCloseBtn = safeGetElement("viewModalCloseBtn");
+
     // Debug modal elements
     elements.debugModal = safeGetElement("debugModal");
     elements.debugCloseBtn = safeGetElement("debugCloseBtn");
@@ -418,6 +422,29 @@ document.addEventListener("DOMContentLoaded", async () => {
       document.documentElement.setAttribute('data-theme', 'sepia');
     }
 
+    // Initialize IndexedDB image cache (COIN_IMAGES feature)
+    if (typeof imageCache !== 'undefined' && featureFlags.isEnabled('COIN_IMAGES')) {
+      try {
+        await imageCache.init();
+        debugLog('ImageCache available:', imageCache.isAvailable());
+      } catch (e) {
+        console.warn('ImageCache init failed:', e);
+      }
+    }
+
+    // Wire view modal close button
+    if (elements.viewModalCloseBtn) {
+      elements.viewModalCloseBtn.addEventListener('click', () => {
+        if (typeof closeViewModal === 'function') closeViewModal();
+      });
+    }
+    // Background click dismiss for view modal
+    if (elements.viewItemModal) {
+      elements.viewItemModal.addEventListener('click', (e) => {
+        if (e.target === elements.viewItemModal && typeof closeViewModal === 'function') closeViewModal();
+      });
+    }
+
     // Apply header toggle & layout visibility from saved prefs (STACK-54)
     if (typeof applyHeaderToggleVisibility === 'function') applyHeaderToggleVisibility();
     if (typeof applyLayoutOrder === 'function') applyLayoutOrder();
@@ -436,6 +463,11 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (typeof updateStorageStats === "function") {
         updateStorageStats();
       }
+
+    // Load Numista search lookup custom rules
+    if (typeof NumistaLookup !== 'undefined' && typeof NumistaLookup.loadCustomRules === 'function') {
+      NumistaLookup.loadCustomRules();
+    }
 
     // STACK-62: Initialize autocomplete/fuzzy search system
     if (typeof initializeAutocomplete === 'function') {
@@ -579,6 +611,8 @@ function setupBasicEventListeners() {
 window.toggleCollectable = toggleCollectable;
 window.showDetailsModal = showDetailsModal;
 window.closeDetailsModal = closeDetailsModal;
+window.showViewModal = typeof showViewModal !== 'undefined' ? showViewModal : () => {};
+window.closeViewModal = typeof closeViewModal !== 'undefined' ? closeViewModal : () => {};
 window.editItem = editItem;
 window.deleteItem = deleteItem;
 window.showNotes = showNotes;

@@ -1552,6 +1552,10 @@
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
               Chips
             </button>
+            <button class="settings-nav-item" data-section="search">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              Search
+            </button>
             <button class="settings-nav-item" data-section="api">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83"/></svg>
               API
@@ -1704,15 +1708,6 @@
               </div>
 
               <div class="settings-group">
-                <div class="settings-group-label">Fuzzy autocomplete</div>
-                <p class="settings-subtext">Show smart suggestions when typing in the Name, Purchase Location, and Storage Location fields.</p>
-                <div class="chip-sort-toggle" id="settingsFuzzyAutocomplete">
-                  <button type="button" class="chip-sort-btn active" data-val="yes">On</button>
-                  <button type="button" class="chip-sort-btn" data-val="no">Off</button>
-                </div>
-              </div>
-
-              <div class="settings-group">
                 <div class="settings-group-label">Chip sort order</div>
                 <p class="settings-subtext">Sort chips within each category by name or quantity.</p>
                 <div class="chip-sort-toggle" id="settingsChipSortOrder">
@@ -1745,6 +1740,51 @@
                 </div>
                 <div class="chip-grouping-table-container" id="customGroupTableContainer">
                   <div class="chip-grouping-empty">No custom grouping rules</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- ===== SEARCH ===== -->
+            <div class="settings-section-panel" id="settingsPanel_search" style="display: none">
+              <h3>Search</h3>
+
+              <div class="settings-group">
+                <div class="settings-group-label">Fuzzy autocomplete</div>
+                <p class="settings-subtext">Show smart suggestions when typing in the Name, Purchase Location, and Storage Location fields.</p>
+                <div class="chip-sort-toggle" id="settingsFuzzyAutocomplete">
+                  <button type="button" class="chip-sort-btn active" data-val="yes">On</button>
+                  <button type="button" class="chip-sort-btn" data-val="no">Off</button>
+                </div>
+              </div>
+
+              <div class="settings-group">
+                <div class="settings-group-label">Numista name matching</div>
+                <p class="settings-subtext">Rewrite common coin names (e.g. "ASE") into Numista-optimized search queries with direct lookups for known catalog IDs.</p>
+                <div class="chip-sort-toggle" id="settingsNumistaLookup">
+                  <button type="button" class="chip-sort-btn active" data-val="yes">On</button>
+                  <button type="button" class="chip-sort-btn" data-val="no">Off</button>
+                </div>
+              </div>
+
+              <div class="settings-group">
+                <div class="settings-group-label">Built-in patterns <span id="seedRuleCount" style="font-size:0.8em;opacity:0.6;margin-left:0.3em;"></span></div>
+                <p class="settings-subtext">Pre-configured lookup rules shipped with StakTrakr. These cannot be edited.</p>
+                <div class="chip-grouping-table-container" id="seedRuleTableContainer" style="max-height:220px;overflow-y:auto;">
+                  <div class="chip-grouping-empty">Loading…</div>
+                </div>
+              </div>
+
+              <div class="settings-group">
+                <div class="settings-group-label">Custom patterns</div>
+                <p class="settings-subtext">Add your own regex patterns to rewrite Numista search queries. Custom rules override built-in patterns.</p>
+                <div class="chip-grouping-controls">
+                  <input type="text" id="numistaRulePatternInput" class="chip-grouping-input" placeholder="Regex pattern">
+                  <input type="text" id="numistaRuleReplacementInput" class="chip-grouping-input-wide" placeholder="Numista query">
+                  <input type="text" id="numistaRuleIdInput" class="chip-grouping-input" placeholder="N# (optional)" style="width:90px;">
+                  <button type="button" class="btn" id="addNumistaRuleBtn">Add</button>
+                </div>
+                <div class="chip-grouping-table-container" id="customRuleTableContainer">
+                  <div class="chip-grouping-empty">No custom patterns</div>
                 </div>
               </div>
             </div>
@@ -1797,6 +1837,29 @@
                     </div>
                   </div>
                   <div id="numistaStatus" class="api-status" style="margin-top: 0.5rem;"></div>
+
+                  <!-- View Modal Field Toggles -->
+                  <div class="settings-group" style="margin-top: 1rem; border-top: 1px solid var(--border); padding-top: 0.75rem;">
+                    <div class="settings-group-label">View modal fields</div>
+                    <p class="settings-subtext">Choose which Numista data fields appear in the item view modal.</p>
+                    <div id="numistaViewFieldToggles" style="display: grid; grid-template-columns: 1fr 1fr; gap: 2px 1rem;">
+                      <label class="settings-checkbox-label"><input type="checkbox" data-nf="denomination" checked> Denomination</label>
+                      <label class="settings-checkbox-label"><input type="checkbox" data-nf="shape" checked> Shape</label>
+                      <label class="settings-checkbox-label"><input type="checkbox" data-nf="diameter" checked> Diameter</label>
+                      <label class="settings-checkbox-label"><input type="checkbox" data-nf="thickness" checked> Thickness</label>
+                      <label class="settings-checkbox-label"><input type="checkbox" data-nf="orientation" checked> Orientation</label>
+                      <label class="settings-checkbox-label"><input type="checkbox" data-nf="composition" checked> Composition</label>
+                      <label class="settings-checkbox-label"><input type="checkbox" data-nf="country" checked> Country</label>
+                      <label class="settings-checkbox-label"><input type="checkbox" data-nf="technique" checked> Technique</label>
+                      <label class="settings-checkbox-label"><input type="checkbox" data-nf="references" checked> References (KM#)</label>
+                      <label class="settings-checkbox-label"><input type="checkbox" data-nf="edge" checked> Edge</label>
+                      <label class="settings-checkbox-label"><input type="checkbox" data-nf="tags" checked> Tags</label>
+                      <label class="settings-checkbox-label"><input type="checkbox" data-nf="commemorative" checked> Commemorative</label>
+                      <label class="settings-checkbox-label"><input type="checkbox" data-nf="rarity" checked> Rarity</label>
+                      <label class="settings-checkbox-label"><input type="checkbox" data-nf="mintage" checked> Mintage</label>
+                      <label class="settings-checkbox-label"><input type="checkbox" data-nf="imageTooltips" checked> Image tooltips</label>
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -2207,7 +2270,7 @@
               <p class="settings-subtext">
                 Set market prices for Goldback denominations manually or auto-estimate from gold spot.
                 Check current rates at
-                <a href="#" id="goldbackExchangeRateLink" onclick="window.open('https://www.goldback.com/exchange-rates/', 'goldback_rates', 'width=1200,height=800,scrollbars=yes,resizable=yes,toolbar=no,location=no,menubar=no,status=no'); return false;">goldback.com/exchange-rates</a>.
+                <a href="#" id="goldbackExchangeRateLink" onclick="window.open('https://www.goldback.com/exchange-rates/', 'goldback_rates', 'width=1250,height=800,scrollbars=yes,resizable=yes,toolbar=no,location=no,menubar=no,status=no'); return false;">goldback.com/exchange-rates</a>.
               </p>
 
               <div class="settings-group">
@@ -2734,6 +2797,39 @@
     </div>
 
     <!-- =============================================================================
+       IFRAME POPUP MODAL — Reusable overlay for external URLs (source, Numista, etc.)
+       ============================================================================= -->
+    <div class="modal" id="iframePopupModal" style="display: none">
+      <div class="modal-content iframe-popup-content">
+        <div class="modal-header">
+          <h2 id="iframePopupTitle"></h2>
+          <button aria-label="Close popup" class="modal-close" id="iframePopupCloseBtn">&times;</button>
+        </div>
+        <div class="modal-body iframe-popup-body">
+          <iframe id="iframePopupFrame" src="about:blank" style="width: 100%; height: 100%; border: none;"></iframe>
+        </div>
+      </div>
+    </div>
+
+    <!-- =============================================================================
+       VIEW ITEM MODAL
+
+       Card-style showcase for viewing a single inventory item with coin images,
+       inventory data, valuation, grading, and Numista enrichment data.
+       Gated behind COIN_IMAGES feature flag.
+       ============================================================================= -->
+    <div class="modal" id="viewItemModal" style="display: none">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button aria-label="Close modal" class="modal-close" id="viewModalCloseBtn" style="position: absolute; top: var(--spacing-sm); right: var(--spacing-sm);">&times;</button>
+          <h2 id="viewModalTitle"></h2>
+          <span class="view-modal-catalog-id" id="viewModalCatalogId"></span>
+        </div>
+        <div class="modal-body" id="viewModalBody"></div>
+      </div>
+    </div>
+
+    <!-- =============================================================================
        DEBUG LOG MODAL
 
        Displays collected debug output when debug mode is enabled.
@@ -2794,8 +2890,10 @@
   <script defer src="./js/constants.js"></script>
   <script defer src="./js/state.js"></script>
   <script defer src="./js/utils.js"></script>
+  <script defer src="./js/image-cache.js"></script>
   <script defer src="./js/fuzzy-search.js"></script>
   <script defer src="./js/autocomplete.js"></script>
+  <script defer src="./js/numista-lookup.js"></script>
   <script defer src="./js/versionCheck.js"></script>
   <script defer src="./js/changeLog.js"></script>
     <script defer src="./js/charts.js"></script>
@@ -2806,6 +2904,7 @@
     <script defer src="./js/sorting.js"></script>
     <script defer src="./js/pagination.js"></script>
     <script defer src="./js/detailsModal.js"></script>
+    <script defer src="./js/viewModal.js"></script>
     <script defer src="./js/debugModal.js"></script>
     <script defer src="./js/numista-modal.js"></script>
     <script defer src="./js/spot.js"></script>

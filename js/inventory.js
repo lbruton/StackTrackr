@@ -770,7 +770,7 @@ const formatPurchaseLocation = (loc) => {
       href = `https://${href}`;
     }
     const safeHref = escapeAttribute(href);
-    return `<a href="#" onclick="event.stopPropagation(); window.open('${safeHref}', '_blank', 'width=1200,height=800,scrollbars=yes,resizable=yes,toolbar=no,location=no,menubar=no,status=no'); return false;" class="purchase-link" title="${safeHref}">
+    return `<a href="#" onclick="event.stopPropagation(); window.open('${safeHref}', '_blank', 'width=1250,height=800,scrollbars=yes,resizable=yes,toolbar=no,location=no,menubar=no,status=no'); return false;" class="purchase-link" title="${safeHref}">
       <svg class="purchase-link-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" style="width: 12px; height: 12px; fill: currentColor; margin-right: 4px;" aria-hidden="true">
         <path d="M14,3V5H17.59L7.76,14.83L9.17,16.24L19,6.41V10H21V3M19,19H5V5H12V3H5C3.89,3 3,3.9 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V12H19V19Z"/>
       </svg>
@@ -1183,7 +1183,9 @@ const renderTable = () => {
       <td class="shrink" data-column="type" data-label="Type">${filterLink('type', item.type, getTypeColor(item.type))}</td>
       <td class="expand" data-column="name" data-label="" style="text-align: left;">
         <div class="name-cell-content">
-        ${filterLink('name', item.name, 'var(--text-primary)', undefined, item.name)}${orderedChips}
+        ${featureFlags.isEnabled('COIN_IMAGES')
+          ? `<span class="filter-text" style="color: var(--text-primary); cursor: pointer;" onclick="showViewModal(${originalIdx})" tabindex="0" role="button" onkeydown="if(event.key==='Enter'||event.key===' ')showViewModal(${originalIdx})" title="View ${escapeAttribute(item.name)}">${sanitizeHtml(item.name)}</span>`
+          : filterLink('name', item.name, 'var(--text-primary)', undefined, item.name)}${orderedChips}
         </div>
       </td>
       <td class="shrink" data-column="qty" data-label="Qty">${filterLink('qty', item.qty, 'var(--text-primary)')}</td>
@@ -1204,6 +1206,9 @@ const renderTable = () => {
         ${formatPurchaseLocation(item.purchaseLocation)}
       </td>
       <td class="icon-col actions-cell" data-column="actions" data-label=""><div class="actions-row">
+        ${featureFlags.isEnabled('COIN_IMAGES') ? `<button class="icon-btn action-icon view-icon" role="button" tabindex="0" onclick="event.stopPropagation(); showViewModal(${originalIdx})" aria-label="View ${sanitizeHtml(item.name)}" title="View item">
+          <svg class="icon-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
+        </button>` : ''}
         <button class="icon-btn action-icon edit-icon" role="button" tabindex="0" onclick="editItem(${originalIdx})" aria-label="Edit ${sanitizeHtml(item.name)}" title="Edit item">
           <svg class="icon-svg edit-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5M19.43,12.97C19.47,12.65 19.5,12.33 19.5,12C19.5,11.67 19.47,11.34 19.43,11L21.54,9.37C21.73,9.22 21.78,8.95 21.66,8.73L19.66,5.27C19.54,5.05 19.27,4.96 19.05,5.05L16.56,6.05C16.04,5.66 15.5,5.32 14.87,5.07L14.5,2.42C14.46,2.18 14.25,2 14,2H10C9.75,2 9.54,2.18 9.5,2.42L9.13,5.07C8.5,5.32 7.96,5.66 7.44,6.05L4.95,5.05C4.73,4.96 4.46,5.05 4.34,5.27L2.34,8.73C2.22,8.95 2.27,9.22 2.46,9.37L4.57,11C4.53,11.34 4.5,11.67 4.5,12C4.5,12.33 4.53,12.65 4.57,12.97L2.46,14.63C2.27,14.78 2.22,15.05 2.34,15.27L4.34,18.73C4.46,18.95 4.73,19.03 4.95,18.95L7.44,17.94C7.96,18.34 8.5,18.68 9.13,18.93L9.5,21.58C9.54,21.82 9.75,22 10,22H14C14.25,22 14.46,21.82 14.5,21.58L14.87,18.93C15.5,18.67 16.04,18.34 16.56,17.94L19.05,18.95C19.27,19.03 19.54,18.95 19.66,18.73L21.66,15.27C21.78,15.05 21.73,14.78 21.54,14.63L19.43,12.97Z"/></svg>
         </button>
@@ -1228,7 +1233,8 @@ const renderTable = () => {
     // nosemgrep: javascript.browser.security.insecure-innerhtml.insecure-innerhtml, javascript.browser.security.insecure-document-method.insecure-document-method
     tbody.innerHTML = rows.join('');
 
-    // Card-view tap-to-edit: delegate click on tbody rows (≤768px only)
+    // Card-view tap: delegate click on tbody rows (≤768px only)
+    // Opens view modal if COIN_IMAGES enabled, otherwise edit modal
     if (!tbody._cardTapBound) {
       tbody._cardTapBound = true;
       tbody.addEventListener('click', (e) => {
@@ -1236,7 +1242,14 @@ const renderTable = () => {
         // Don't intercept clicks on buttons, links, or interactive elements
         if (e.target.closest('button, a, input, select, textarea, .icon-btn, .filter-text, [role="button"], .year-tag, .purity-tag')) return;
         const row = e.target.closest('tr[data-idx]');
-        if (row) editItem(Number(row.dataset.idx));
+        if (row) {
+          const idx = Number(row.dataset.idx);
+          if (featureFlags.isEnabled('COIN_IMAGES') && typeof showViewModal === 'function') {
+            showViewModal(idx);
+          } else {
+            editItem(idx);
+          }
+        }
       });
     }
 
@@ -2825,7 +2838,7 @@ document.addEventListener('click', (e) => {
     if (pcgsNo) {
       const url = `https://www.pcgs.com/coinfacts/coin/detail/${encodeURIComponent(pcgsNo)}/${encodeURIComponent(gradeNum)}`;
       const popup = window.open(url, `pcgs_${pcgsNo}`,
-        'width=1200,height=800,scrollbars=yes,resizable=yes,toolbar=no,location=no,menubar=no,status=no');
+        'width=1250,height=800,scrollbars=yes,resizable=yes,toolbar=no,location=no,menubar=no,status=no');
       if (!popup) {
         alert(`Popup blocked! Please allow popups or manually visit:\n${url}`);
       } else {
@@ -2847,7 +2860,7 @@ document.addEventListener('click', (e) => {
       const gradeNum = (gradeTag.dataset.grade || '').match(/\d+/)?.[0] || '';
       url = url.replace('{grade}', encodeURIComponent(gradeNum));
       const popup = window.open(url, `cert_${authority}_${certNum || Date.now()}`,
-        'width=1200,height=800,scrollbars=yes,resizable=yes,toolbar=no,location=no,menubar=no,status=no');
+        'width=1250,height=800,scrollbars=yes,resizable=yes,toolbar=no,location=no,menubar=no,status=no');
       if (!popup) {
         alert(`Popup blocked! Please allow popups or manually visit:\n${url}`);
       } else {
