@@ -1316,27 +1316,20 @@ input[type="submit"] {
   margin-left: 0.5rem;
 }
 
-/* Pinned provider tab (Numista — not draggable) */
+/* Pinned provider tab (Numista) */
 .settings-provider-tab.pinned {
   cursor: default;
 }
 
-/* Drag-in-progress visual feedback */
-.settings-provider-tabs.dragging .settings-provider-tab:not(.pinned) {
-  opacity: 0.7;
-  transition: opacity 0.15s;
-}
-
-.settings-provider-tab.drag-over {
-  border-bottom: 2px solid var(--primary);
-}
-
-.settings-provider-tab[draggable="true"] {
-  cursor: grab;
-}
-
-.settings-provider-tab[draggable="true"]:active {
-  cursor: grabbing;
+/* Provider priority dropdown (STACK-90) */
+.provider-priority-select {
+  padding: 0.35rem 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 0.85rem;
+  min-width: 140px;
 }
 
 .settings-subtext {
@@ -1955,6 +1948,9 @@ input[type="submit"] {
   gap: 0;
   border-bottom: 2px solid var(--border);
   margin: 1rem 0 0 0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
 }
 
 .settings-provider-tab {
@@ -2076,6 +2072,10 @@ input[type="submit"] {
   }
 
   .settings-content-area { padding: var(--spacing); }
+
+  /* Provider tabs: horizontal scroll on mobile (STACK-90) */
+  .settings-provider-tabs { flex-wrap: nowrap; }
+  .settings-provider-tab { white-space: nowrap; flex-shrink: 0; padding: 0.5rem 0.75rem; font-size: 0.75rem; }
 }
 
 

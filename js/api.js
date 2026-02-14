@@ -401,22 +401,6 @@ const setupProviderSettingsListeners = (provider) => {
     });
   });
 
-  // Sync mode toggle
-  const syncModeToggle = document.getElementById(`syncMode_${provider}`);
-  if (syncModeToggle) {
-    syncModeToggle.addEventListener('click', (e) => {
-      const btn = e.target.closest('.chip-sort-btn');
-      if (!btn) return;
-      const mode = btn.dataset.mode;
-      syncModeToggle.querySelectorAll('.chip-sort-btn').forEach(b => {
-        b.classList.toggle('active', b.dataset.mode === mode);
-      });
-      const config = loadApiConfig();
-      if (!config.syncMode) config.syncMode = {};
-      config.syncMode[provider] = mode;
-      saveApiConfig(config);
-    });
-  }
 };
 
 /**
@@ -526,10 +510,25 @@ const autoSelectDefaultProvider = () => {
 const updateDefaultProviderButtons = autoSelectDefaultProvider;
 
 /**
- * Returns the metals provider priority order from localStorage.
+ * Returns the metals provider priority order from localStorage (STACK-90).
+ * Reads providerPriority first (new system), falls back to legacy apiProviderOrder.
+ * Disabled providers (priority 0) are excluded.
  * @returns {string[]} Provider keys in priority order
  */
 const getProviderOrder = () => {
+  try {
+    const stored = localStorage.getItem("providerPriority");
+    if (stored) {
+      const priorities = JSON.parse(stored);
+      if (typeof priorities === 'object' && priorities !== null) {
+        return Object.entries(priorities)
+          .filter(([, p]) => p > 0)
+          .sort((a, b) => a[1] - b[1])
+          .map(([prov]) => prov);
+      }
+    }
+  } catch (e) { /* ignore */ }
+  // Legacy fallback
   try {
     const stored = localStorage.getItem("apiProviderOrder");
     const order = stored ? JSON.parse(stored) : null;
@@ -1585,15 +1584,18 @@ const syncProviderChain = async ({ showProgress = false, forceSync = false } = {
     updateSyncButtonStates(true);
   }
 
+  // Load priorities once outside loop (STACK-90)
+  const priorities = typeof loadProviderPriorities === 'function'
+    ? loadProviderPriorities() : {};
+
   try {
     for (const prov of order) {
       const apiKey = config.keys?.[prov];
       if (!apiKey) continue;
 
-      const mode = config.syncMode?.[prov] || getDefaultSyncMode(prov);
-
-      // Skip backup providers when an earlier provider already succeeded
-      if (mode === "backup" && anySucceeded) {
+      // Priority-based sync: priority > 1 are backups, skip if primary succeeded (STACK-90)
+      if (priorities[prov] === 0) { results[prov] = "disabled"; continue; }
+      if (priorities[prov] > 1 && anySucceeded) {
         results[prov] = "skipped";
         continue;
       }
@@ -1802,19 +1804,11 @@ const populateApiSection = () => {
       }
     });
 
-    // Load saved sync mode
-    const syncModeToggle = document.getElementById(`syncMode_${provider}`);
-    if (syncModeToggle) {
-      const mode = cfg.syncMode?.[provider] || getDefaultSyncMode(provider);
-      syncModeToggle.querySelectorAll('.chip-sort-btn').forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.mode === mode);
-      });
-    }
   });
 
-  // Restore tab ordering from localStorage
-  if (typeof loadProviderTabOrder === 'function') {
-    loadProviderTabOrder();
+  // Restore provider priority UI (STACK-90)
+  if (typeof loadProviderPriorities === 'function' && typeof syncProviderPriorityUI === 'function') {
+    syncProviderPriorityUI(loadProviderPriorities());
   }
 
   if (typeof refreshProviderStatuses === 'function') {
