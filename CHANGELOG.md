@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.27.02] - 2026-02-13
+
+### Changed — Multi-Color Storage Bar
+
+- **Changed**: Footer storage bar now shows localStorage (blue) and IndexedDB (green) as stacked segments with color legend dots
+- **Changed**: Storage text displays per-source breakdown (LS KB + IDB KB) with combined total
+- **Changed**: Hover tooltips on bar segments show individual source limits
+
+---
+
 ## [3.27.01] - 2026-02-13
 
 ### Fixed — Iframe to Popup Window Migration

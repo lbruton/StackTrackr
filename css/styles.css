@@ -484,32 +484,45 @@ section {
   margin-left: var(--spacing-sm);
 }
 
-.storage-line progress {
-  margin-left: var(--spacing-sm);
+/* Multi-color storage bar (localStorage + IndexedDB) */
+.storage-bar {
+  display: inline-flex;
   vertical-align: middle;
-  width: 150px;
+  margin-left: var(--spacing-sm);
+  width: 180px;
   height: 0.75rem;
-  appearance: none;
-  -webkit-appearance: none;
   border: 1px solid var(--border);
   border-radius: var(--radius);
   background-color: var(--bg-tertiary);
+  overflow: hidden;
 }
 
-.storage-line progress::-webkit-progress-bar {
-  background-color: var(--bg-tertiary);
-  border-radius: var(--radius);
-}
-
-.storage-line progress::-webkit-progress-value {
+.storage-bar-ls {
+  height: 100%;
   background-color: var(--primary);
-  border-radius: var(--radius);
+  transition: width 0.3s ease;
+  min-width: 0;
 }
 
-.storage-line progress::-moz-progress-bar {
-  background-color: var(--primary);
-  border-radius: var(--radius);
+.storage-bar-idb {
+  height: 100%;
+  background-color: var(--success);
+  transition: width 0.3s ease;
+  min-width: 0;
 }
+
+/* Legend dots in storage text */
+.storage-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin: 0 2px 0 6px;
+  vertical-align: middle;
+}
+
+.storage-dot--ls { background-color: var(--primary); }
+.storage-dot--idb { background-color: var(--success); }
 
 section:hover {
   box-shadow: var(--shadow-lg);
