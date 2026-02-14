@@ -1,8 +1,8 @@
 ## What's New
 
+- **Coin Image Cache & Item View Modal (v3.27.00)**: IndexedDB image cache for Numista coin photos with 50MB quota. Card-style view modal with images, inventory data, valuation, grading, and enriched Numista metadata. Settings toggles for 15 fields. View button in table/card actions. Iframe popup for source URLs and Numista pages. eBay search from view modal. Full-screen mobile layout with sticky footer
 - **STACK-79, STACK-80: XSS & HTML Injection Hardening (v3.26.03)**: Escaped item names in Price History, metal/source/provider in Spot History, and source/data-attrs in Spot Lookup. Added shared escapeHtml() utility
 - **Autocomplete Migration & Version Check CORS (v3.26.02)**: One-time migration auto-enables fuzzy autocomplete for users with silently disabled flag. Fixed version check CORS failure from staktrakr.com 301 redirect
-- **Fuzzy Autocomplete Settings Toggle (v3.26.01)**: Added On/Off toggle for fuzzy autocomplete in Settings > Filter Chips. Fixed autocomplete feature flag not discoverable when persisted as disabled
 - **STACK-62: Autocomplete & Fuzzy Search Pipeline (v3.26.00)**: Autocomplete dropdowns on form inputs (name, purchase/storage location), abbreviation expansion in search (ASE, kook, krug, etc.), fuzzy fallback with indicator banner, registerName() for dynamic suggestions, Firefox compatibility fix
 
 ## Development Roadmap

@@ -721,6 +721,8 @@ const commitItemToInventory = (f, isEditing, editIdx) => {
       isCollectable: false,
       numistaId: f.catalog,
       currency: f.currency,
+      obverseImageUrl: window.selectedNumistaResult?.imageUrl || oldItem.obverseImageUrl || '',
+      reverseImageUrl: window.selectedNumistaResult?.reverseImageUrl || oldItem.reverseImageUrl || '',
     };
 
     addCompositionOption(f.composition);
@@ -796,6 +798,8 @@ const commitItemToInventory = (f, isEditing, editIdx) => {
       uuid: generateUUID(),
       numistaId: f.catalog,
       currency: f.currency,
+      obverseImageUrl: window.selectedNumistaResult?.imageUrl || '',
+      reverseImageUrl: window.selectedNumistaResult?.reverseImageUrl || '',
     });
 
     typeof registerName === "function" && registerName(f.name);
@@ -817,16 +821,25 @@ const commitItemToInventory = (f, isEditing, editIdx) => {
 };
 
 /**
- * Builds a Numista search query, prepending metal if not already in name.
+ * Builds a Numista search query, optionally rewriting via NumistaLookup patterns.
  * @param {string} nameVal - Item name input value
  * @param {string} metalVal - Metal composition value
- * @returns {string} Search query
+ * @returns {{ query: string, numistaId: string|null, matched: boolean }}
  */
 const buildNumistaSearchQuery = (nameVal, metalVal) => {
-  if (metalVal && !nameVal.toLowerCase().includes(metalVal.toLowerCase())) {
-    return `${metalVal} ${nameVal}`;
+  const combined = (metalVal && !nameVal.toLowerCase().includes(metalVal.toLowerCase()))
+    ? `${metalVal} ${nameVal}` : nameVal;
+
+  // Try pattern-based lookup if feature is enabled
+  if (window.NumistaLookup && window.featureFlags && featureFlags.isEnabled('NUMISTA_SEARCH_LOOKUP')) {
+    const match = NumistaLookup.matchQuery(combined);
+    if (match) {
+      return { query: match.replacement, numistaId: match.numistaId, matched: true };
+    }
   }
-  return nameVal;
+
+  // Fallback: original behavior (raw query)
+  return { query: combined, numistaId: null, matched: false };
 };
 
 /**
@@ -977,9 +990,41 @@ const setupItemFormListeners = () => {
             const numistaCategory = TYPE_TO_NUMISTA_CATEGORY[typeVal];
             if (numistaCategory) searchFilters.category = numistaCategory;
 
-            const searchQuery = buildNumistaSearchQuery(nameVal, metalVal);
-            const results = await catalogAPI.searchItems(searchQuery, searchFilters);
-            showNumistaResults(results, false, searchQuery);
+            const searchResult = buildNumistaSearchQuery(nameVal, metalVal);
+
+            if (searchResult.matched) {
+              // Pattern matched — build raw query for fallback results
+              const rawQuery = (metalVal && !nameVal.toLowerCase().includes(metalVal.toLowerCase()))
+                ? `${metalVal} ${nameVal}` : nameVal;
+
+              // Fire all requests in parallel: direct N# + rewritten + raw fallback
+              const promises = [
+                searchResult.numistaId
+                  ? catalogAPI.lookupItem(searchResult.numistaId).catch(() => null)
+                  : Promise.resolve(null),
+                catalogAPI.searchItems(searchResult.query, searchFilters),
+                catalogAPI.searchItems(rawQuery, searchFilters),
+              ];
+              const [directResult, rewrittenResults, rawResults] = await Promise.all(promises);
+
+              // Layer results: pinned direct → rewritten → raw fallback (deduped)
+              const seen = new Set();
+              const merged = [];
+              const addUnique = (item) => {
+                if (item && item.catalogId && !seen.has(item.catalogId)) {
+                  seen.add(item.catalogId);
+                  merged.push(item);
+                }
+              };
+              if (directResult) addUnique(directResult);
+              for (const r of rewrittenResults) addUnique(r);
+              for (const r of rawResults) addUnique(r);
+
+              showNumistaResults(merged, false, searchResult.query);
+            } else {
+              const results = await catalogAPI.searchItems(searchResult.query, searchFilters);
+              showNumistaResults(results, false, searchResult.query);
+            }
           }
         } catch (error) {
           console.error('Numista search error:', error);

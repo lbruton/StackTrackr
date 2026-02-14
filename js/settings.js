@@ -194,6 +194,19 @@ const syncSettingsUI = () => {
     });
   }
 
+  // Numista name matching — sync toggle with feature flag
+  const numistaLookupSetting = document.getElementById('settingsNumistaLookup');
+  if (numistaLookupSetting && window.featureFlags) {
+    const nlVal = featureFlags.isEnabled('NUMISTA_SEARCH_LOOKUP') ? 'yes' : 'no';
+    numistaLookupSetting.querySelectorAll('.chip-sort-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.val === nlVal);
+    });
+  }
+
+  // Numista lookup rule tables
+  renderSeedRuleTable();
+  renderCustomRuleTable();
+
   // Chip grouping tables and dropdown
   if (typeof window.populateBlacklistDropdown === 'function') window.populateBlacklistDropdown();
   if (typeof window.renderBlacklistTable === 'function') window.renderBlacklistTable();
@@ -258,7 +271,7 @@ const syncSettingsUI = () => {
 /**
  * Updates the storage + version footer bar at the bottom of the Settings modal.
  */
-const updateSettingsFooter = () => {
+const updateSettingsFooter = async () => {
   const footerEl = document.getElementById('settingsFooter');
   if (!footerEl) return;
 
@@ -270,8 +283,18 @@ const updateSettingsFooter = () => {
       const val = localStorage.getItem(key);
       totalBytes += (key.length + (val ? val.length : 0)) * 2; // UTF-16
     }
-    const mb = (totalBytes / (1024 * 1024)).toFixed(2);
-    storageText = `Storage: ${mb} MB / 5 MB`;
+    const lsMb = (totalBytes / (1024 * 1024)).toFixed(2);
+    storageText = `LS: ${lsMb} MB / 5 MB`;
+
+    // Append IndexedDB usage if available
+    if (window.imageCache?.isAvailable()) {
+      try {
+        const idbUsage = await imageCache.getStorageUsage();
+        const idbMb = (idbUsage.totalBytes / (1024 * 1024)).toFixed(2);
+        const idbLimit = (idbUsage.limitBytes / (1024 * 1024)).toFixed(0);
+        storageText += `  \u00b7  IDB: ${idbMb} MB / ${idbLimit} MB`;
+      } catch { /* ignore */ }
+    }
   } catch (e) {
     storageText = 'Storage: unknown';
   }
@@ -484,6 +507,74 @@ const setupSettingsEventListeners = () => {
       if (isEnabled && typeof initializeAutocomplete === 'function') {
         initializeAutocomplete(inventory);
       }
+    });
+  }
+
+  // Numista name matching toggle
+  const numistaLookupSettingEl = document.getElementById('settingsNumistaLookup');
+  if (numistaLookupSettingEl) {
+    numistaLookupSettingEl.addEventListener('click', (e) => {
+      const btn = e.target.closest('.chip-sort-btn');
+      if (!btn) return;
+      const isEnabled = btn.dataset.val === 'yes';
+      if (window.featureFlags) {
+        if (isEnabled) featureFlags.enable('NUMISTA_SEARCH_LOOKUP');
+        else featureFlags.disable('NUMISTA_SEARCH_LOOKUP');
+      }
+      numistaLookupSettingEl.querySelectorAll('.chip-sort-btn').forEach(b => {
+        b.classList.toggle('active', b.dataset.val === btn.dataset.val);
+      });
+    });
+  }
+
+  // Numista view modal field toggles
+  const numistaViewContainer = document.getElementById('numistaViewFieldToggles');
+  if (numistaViewContainer) {
+    // Load saved state and apply to checkboxes
+    const nfConfig = typeof getNumistaViewFieldConfig === 'function' ? getNumistaViewFieldConfig() : {};
+    numistaViewContainer.querySelectorAll('input[data-nf]').forEach(cb => {
+      const field = cb.dataset.nf;
+      if (nfConfig[field] !== undefined) cb.checked = nfConfig[field];
+    });
+    // Save on change
+    numistaViewContainer.addEventListener('change', () => {
+      const config = {};
+      numistaViewContainer.querySelectorAll('input[data-nf]').forEach(cb => {
+        config[cb.dataset.nf] = cb.checked;
+      });
+      if (typeof saveNumistaViewFieldConfig === 'function') saveNumistaViewFieldConfig(config);
+    });
+  }
+
+  // Add Numista lookup rule button
+  const addNumistaRuleBtn = document.getElementById('addNumistaRuleBtn');
+  if (addNumistaRuleBtn) {
+    addNumistaRuleBtn.addEventListener('click', () => {
+      const patternInput = document.getElementById('numistaRulePatternInput');
+      const replacementInput = document.getElementById('numistaRuleReplacementInput');
+      const idInput = document.getElementById('numistaRuleIdInput');
+      if (!patternInput || !replacementInput) return;
+
+      const pattern = patternInput.value.trim();
+      const replacement = replacementInput.value.trim();
+      const numistaId = idInput ? idInput.value.trim() : '';
+
+      if (!pattern || !replacement) {
+        alert('Pattern and Numista query are required.');
+        return;
+      }
+
+      if (!window.NumistaLookup) return;
+      const result = NumistaLookup.addRule(pattern, replacement, numistaId || null);
+      if (!result.success) {
+        alert(result.error);
+        return;
+      }
+
+      patternInput.value = '';
+      replacementInput.value = '';
+      if (idInput) idInput.value = '';
+      renderCustomRuleTable();
     });
   }
 
@@ -995,6 +1086,132 @@ const renderFilterChipCategoryTable = () => {
 };
 
 /**
+ * Renders the built-in (seed) Numista lookup rules as a read-only table.
+ */
+const renderSeedRuleTable = () => {
+  const container = document.getElementById('seedRuleTableContainer');
+  if (!container || !window.NumistaLookup) return;
+
+  const rules = NumistaLookup.listSeedRules();
+  const countBadge = document.getElementById('seedRuleCount');
+  if (countBadge) countBadge.textContent = `(${rules.length})`;
+
+  container.textContent = '';
+  if (!rules.length) {
+    const empty = document.createElement('div');
+    empty.className = 'chip-grouping-empty';
+    empty.textContent = 'No built-in patterns';
+    container.appendChild(empty);
+    return;
+  }
+
+  const table = document.createElement('table');
+  table.className = 'chip-grouping-table';
+
+  const thead = document.createElement('thead');
+  const headRow = document.createElement('tr');
+  ['Pattern', 'Numista Query', 'N#'].forEach(text => {
+    const th = document.createElement('th');
+    th.textContent = text;
+    th.style.cssText = 'font-size:0.75rem;font-weight:normal;opacity:0.6;padding:0.2rem 0.4rem';
+    headRow.appendChild(th);
+  });
+  thead.appendChild(headRow);
+  table.appendChild(thead);
+
+  const tbody = document.createElement('tbody');
+  const esc = typeof escapeHtml === 'function' ? escapeHtml : (s) => s;
+  for (const rule of rules) {
+    const tr = document.createElement('tr');
+
+    const tdPattern = document.createElement('td');
+    tdPattern.style.cssText = 'font-family:monospace;font-size:0.8rem;word-break:break-all';
+    tdPattern.textContent = rule.pattern;
+
+    const tdReplacement = document.createElement('td');
+    tdReplacement.textContent = rule.replacement;
+
+    const tdId = document.createElement('td');
+    tdId.style.cssText = 'font-size:0.85rem;opacity:0.7;white-space:nowrap';
+    tdId.textContent = rule.numistaId || '\u2014';
+
+    tr.append(tdPattern, tdReplacement, tdId);
+    tbody.appendChild(tr);
+  }
+
+  table.appendChild(tbody);
+  container.appendChild(table);
+};
+
+/**
+ * Renders the custom Numista lookup rules table with delete buttons.
+ */
+const renderCustomRuleTable = () => {
+  const container = document.getElementById('customRuleTableContainer');
+  if (!container || !window.NumistaLookup) return;
+
+  const rules = NumistaLookup.listCustomRules();
+  container.textContent = '';
+
+  if (!rules.length) {
+    const empty = document.createElement('div');
+    empty.className = 'chip-grouping-empty';
+    empty.textContent = 'No custom patterns';
+    container.appendChild(empty);
+    return;
+  }
+
+  const table = document.createElement('table');
+  table.className = 'chip-grouping-table';
+
+  const thead = document.createElement('thead');
+  const headRow = document.createElement('tr');
+  ['Pattern', 'Numista Query', 'N#', ''].forEach(text => {
+    const th = document.createElement('th');
+    th.textContent = text;
+    th.style.cssText = 'font-size:0.75rem;font-weight:normal;opacity:0.6;padding:0.2rem 0.4rem';
+    headRow.appendChild(th);
+  });
+  thead.appendChild(headRow);
+  table.appendChild(thead);
+
+  const tbody = document.createElement('tbody');
+  for (const rule of rules) {
+    const tr = document.createElement('tr');
+
+    const tdPattern = document.createElement('td');
+    tdPattern.style.cssText = 'font-family:monospace;font-size:0.8rem;word-break:break-all';
+    tdPattern.textContent = rule.pattern;
+
+    const tdReplacement = document.createElement('td');
+    tdReplacement.textContent = rule.replacement;
+
+    const tdId = document.createElement('td');
+    tdId.style.cssText = 'font-size:0.85rem;opacity:0.7;white-space:nowrap';
+    tdId.textContent = rule.numistaId || '\u2014';
+
+    const tdDelete = document.createElement('td');
+    tdDelete.style.cssText = 'width:2rem;text-align:center';
+    const delBtn = document.createElement('button');
+    delBtn.type = 'button';
+    delBtn.className = 'inline-chip-move';
+    delBtn.textContent = '\u2715';
+    delBtn.title = 'Delete rule';
+    delBtn.addEventListener('click', () => {
+      NumistaLookup.removeRule(rule.id);
+      renderCustomRuleTable();
+    });
+    tdDelete.appendChild(delBtn);
+
+    tr.append(tdPattern, tdReplacement, tdId, tdDelete);
+    tbody.appendChild(tr);
+  }
+
+  table.appendChild(tbody);
+  container.appendChild(table);
+};
+
+/**
  * Syncs the display currency dropdown with current state (STACK-50).
  * Populates options from SUPPORTED_CURRENCIES on first call.
  */
@@ -1351,4 +1568,6 @@ if (typeof window !== 'undefined') {
   window.syncCurrencySettingsUI = syncCurrencySettingsUI;
   window.syncHeaderToggleUI = syncHeaderToggleUI;
   window.syncLayoutVisibilityUI = syncLayoutVisibilityUI;
+  window.renderSeedRuleTable = renderSeedRuleTable;
+  window.renderCustomRuleTable = renderCustomRuleTable;
 }
