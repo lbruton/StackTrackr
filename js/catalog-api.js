@@ -487,6 +487,33 @@ class NumistaProvider extends CatalogProvider {
       numistaData.reverse?.thumbnail ||
       '';
 
+    // Extract catalog references (KM#, Schon#, etc.)
+    const kmReferences = [];
+    if (Array.isArray(numistaData.references)) {
+      numistaData.references.forEach(ref => {
+        if (ref.catalogue?.code && ref.number) {
+          kmReferences.push(`${ref.catalogue.code}# ${ref.number}`);
+        }
+      });
+    }
+
+    // Extract mintage data by year
+    const mintageByYear = [];
+    if (Array.isArray(numistaData.years)) {
+      numistaData.years.forEach(y => {
+        if (y.year) {
+          mintageByYear.push({
+            year: y.year,
+            mintage: y.mintage || 0,
+            remark: y.remark || '',
+          });
+        }
+      });
+    }
+
+    // Denomination / face value
+    const denomination = numistaData.value?.text || '';
+
     return {
       catalogId: numistaData.id?.toString() || '',
       name: numistaData.title || '',
@@ -495,6 +522,7 @@ class NumistaProvider extends CatalogProvider {
       metal: this.normalizeMetal(composition),
       weight: numistaData.weight || 0,
       diameter: numistaData.size || 0,
+      thickness: numistaData.thickness || 0,
       type: this.normalizeType(numistaData.category || ''),
       mintage: 0, // Mintage is per-issue, not per-type in Numista API
       estimatedValue: numistaData.value?.numeric_value || 0,
@@ -502,7 +530,22 @@ class NumistaProvider extends CatalogProvider {
       reverseImageUrl: reverseImageUrl,
       description: numistaData.comments || '',
       provider: 'Numista',
-      lastUpdated: new Date().toISOString()
+      lastUpdated: new Date().toISOString(),
+      // Enriched fields for view modal
+      denomination: denomination,
+      shape: numistaData.shape || '',
+      composition: composition,
+      orientation: numistaData.orientation || '',
+      commemorative: !!numistaData.is_commemorative,
+      commemorativeDesc: numistaData.commemorative_description || '',
+      rarityIndex: numistaData.rarity_index || 0,
+      kmReferences: kmReferences,
+      mintageByYear: mintageByYear,
+      tags: Array.isArray(numistaData.tags) ? numistaData.tags : [],
+      technique: typeof numistaData.technique === 'object' ? (numistaData.technique?.text || '') : (numistaData.technique || ''),
+      obverseDesc: numistaData.obverse?.description || '',
+      reverseDesc: numistaData.reverse?.description || '',
+      edgeDesc: numistaData.edge?.description || '',
     };
   }
 
@@ -1870,6 +1913,20 @@ document.addEventListener('DOMContentLoaded', function() {
     numistaFillBtn.addEventListener('click', function() {
       if (selectedNumistaResult) {
         fillFormFromNumistaResult();
+
+        // Fire-and-forget: cache images + metadata in IndexedDB
+        if (window.imageCache?.isAvailable() && selectedNumistaResult.catalogId &&
+            window.featureFlags?.isEnabled('COIN_IMAGES')) {
+          imageCache.cacheImages(
+            selectedNumistaResult.catalogId,
+            selectedNumistaResult.imageUrl || '',
+            selectedNumistaResult.reverseImageUrl || ''
+          ).catch(e => console.warn('Image cache failed:', e));
+          imageCache.cacheMetadata(
+            selectedNumistaResult.catalogId,
+            selectedNumistaResult
+          ).catch(e => console.warn('Metadata cache failed:', e));
+        }
       }
       closeNumistaResultsModal();
     });

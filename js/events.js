@@ -721,6 +721,8 @@ const commitItemToInventory = (f, isEditing, editIdx) => {
       isCollectable: false,
       numistaId: f.catalog,
       currency: f.currency,
+      obverseImageUrl: window.selectedNumistaResult?.imageUrl || oldItem.obverseImageUrl || '',
+      reverseImageUrl: window.selectedNumistaResult?.reverseImageUrl || oldItem.reverseImageUrl || '',
     };
 
     addCompositionOption(f.composition);
@@ -796,6 +798,8 @@ const commitItemToInventory = (f, isEditing, editIdx) => {
       uuid: generateUUID(),
       numistaId: f.catalog,
       currency: f.currency,
+      obverseImageUrl: window.selectedNumistaResult?.imageUrl || '',
+      reverseImageUrl: window.selectedNumistaResult?.reverseImageUrl || '',
     });
 
     typeof registerName === "function" && registerName(f.name);

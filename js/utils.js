@@ -1271,8 +1271,13 @@ const downloadStorageReport = () => {
 /**
  * Displays the storage report HTML inside a modal iframe
  */
-const openStorageReportPopup = () => {
-  const htmlContent = generateStorageReportHTML();
+const openStorageReportPopup = async () => {
+  // Fetch IndexedDB stats before generating report
+  let idbStats = null;
+  if (window.imageCache?.isAvailable()) {
+    try { idbStats = await imageCache.getStorageUsage(); } catch { /* ignore */ }
+  }
+  const htmlContent = generateStorageReportHTML(idbStats);
   const modal = document.getElementById('storageReportModal');
   const iframe = document.getElementById('storageReportFrame');
 
@@ -1348,7 +1353,7 @@ const openModalById = (id) => {
 /**
  * Generates comprehensive HTML storage report with theme support
  */
-const generateStorageReportHTML = () => {
+const generateStorageReportHTML = (idbStats) => {
   const reportData = analyzeStorageData();
   const timestamp = new Date().toLocaleString();
   const currentTheme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
@@ -1389,17 +1394,26 @@ const generateStorageReportHTML = () => {
             <h2>Storage Overview</h2>
             <div class="summary-grid">
                 <div class="summary-item">
-                    <span class="summary-label">Total Storage Used:</span>
-                    <span class="summary-value">${reportData.totalSize.toFixed(2)} KB</span>
+                    <span class="summary-label">localStorage Used:</span>
+                    <span class="summary-value">${reportData.totalSize.toFixed(2)} KB / 5,120 KB</span>
                 </div>
                 <div class="summary-item">
-                    <span class="summary-label">Storage Items:</span>
+                    <span class="summary-label">localStorage Items:</span>
                     <span class="summary-value">${reportData.items.length}</span>
                 </div>
                 <div class="summary-item">
                     <span class="summary-label">Largest Item:</span>
                     <span class="summary-value">${reportData.largestItem ? getStorageItemDisplayName(reportData.largestItem.key) : 'None'} ${reportData.largestItem ? '(' + reportData.largestItem.size.toFixed(2) + ' KB)' : ''}</span>
                 </div>
+                ${idbStats ? `
+                <div class="summary-item">
+                    <span class="summary-label">IndexedDB (Images):</span>
+                    <span class="summary-value">${(idbStats.totalBytes / 1024).toFixed(1)} KB / ${(idbStats.limitBytes / (1024 * 1024)).toFixed(0)} MB (${idbStats.count} cached)</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Combined Total:</span>
+                    <span class="summary-value">${((reportData.totalSize * 1024 + idbStats.totalBytes) / 1024).toFixed(1)} KB</span>
+                </div>` : ''}
             </div>
         </section>
         
@@ -2864,7 +2878,7 @@ function openEbayBuySearch(searchTerm) {
   const encodedTerm = encodeURIComponent(cleanTerm);
   // eBay active listings URL — items currently for sale, sorted by best match
   const ebayUrl = `https://www.ebay.com/sch/i.html?_from=R40&_nkw=${encodedTerm}&_sacat=0&LH_BIN=1&_sop=12`;
-  window.open(ebayUrl, `ebay_buy_${Date.now()}`, 'width=1200,height=800,scrollbars=yes,resizable=yes,toolbar=no,location=no,menubar=no,status=no');
+  window.open(ebayUrl, `ebay_buy_${Date.now()}`, 'width=1250,height=800,scrollbars=yes,resizable=yes,toolbar=no,location=no,menubar=no,status=no');
 }
 
 function openEbaySoldSearch(searchTerm) {
@@ -2873,7 +2887,7 @@ function openEbaySoldSearch(searchTerm) {
   const encodedTerm = encodeURIComponent(cleanTerm);
   // eBay sold listings URL — completed sales, sorted by most recent
   const ebayUrl = `https://www.ebay.com/sch/i.html?_from=R40&_nkw=${encodedTerm}&_sacat=0&LH_Sold=1&LH_Complete=1&_sop=13`;
-  window.open(ebayUrl, `ebay_sold_${Date.now()}`, 'width=1200,height=800,scrollbars=yes,resizable=yes,toolbar=no,location=no,menubar=no,status=no');
+  window.open(ebayUrl, `ebay_sold_${Date.now()}`, 'width=1250,height=800,scrollbars=yes,resizable=yes,toolbar=no,location=no,menubar=no,status=no');
 }
 
 if (typeof window !== 'undefined') {

@@ -185,6 +185,10 @@ const elements = {
   searchSectionEl: null,
   tableSectionEl: null,
 
+  // View item modal elements
+  viewItemModal: null,
+  viewModalCloseBtn: null,
+
   // Settings modal elements
   settingsBtn: null,
   settingsModal: null,

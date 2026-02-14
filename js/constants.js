@@ -254,7 +254,7 @@ const CERT_LOOKUP_URLS = {
  * Updated: 2026-02-12 - STACK-38/STACK-31: Responsive card view + mobile layout
  */
 
-const APP_VERSION = "3.26.03";
+const APP_VERSION = "3.27.00";
 
 /**
  * @constant {string} DEFAULT_CURRENCY - Default currency code for monetary formatting
@@ -587,6 +587,7 @@ const ALLOWED_STORAGE_KEYS = [
   LATEST_REMOTE_URL_KEY,      // string: cached latest remote release URL (STACK-67)
   "ff_migration_fuzzy_autocomplete", // one-time migration flag (v3.26.01)
   "numistaLookupRules",              // custom Numista search lookup rules (JSON array)
+  "numistaViewFields",               // view modal Numista field visibility config (JSON object)
 ];
 
 // =============================================================================
@@ -788,6 +789,61 @@ const saveLayoutSectionConfig = (config) => {
   }
 };
 
+// =============================================================================
+// NUMISTA VIEW FIELD CONFIG — controls which fields appear in view modal
+// =============================================================================
+
+/**
+ * Default Numista view field visibility. All enabled by default.
+ * @constant {Object<string, boolean>}
+ */
+const NUMISTA_VIEW_FIELD_DEFAULTS = {
+  denomination: true,
+  shape: true,
+  diameter: true,
+  thickness: true,
+  orientation: true,
+  composition: true,
+  country: true,
+  technique: true,
+  references: true,
+  edge: true,
+  tags: true,
+  commemorative: true,
+  rarity: true,
+  mintage: true,
+  imageTooltips: true,
+};
+
+/**
+ * Load Numista view field config from localStorage, merged with defaults.
+ * @returns {Object<string, boolean>}
+ */
+const getNumistaViewFieldConfig = () => {
+  try {
+    const raw = localStorage.getItem('numistaViewFields');
+    if (raw) {
+      const saved = JSON.parse(raw);
+      return { ...NUMISTA_VIEW_FIELD_DEFAULTS, ...saved };
+    }
+  } catch (e) {
+    console.warn('Failed to load Numista view field config:', e);
+  }
+  return { ...NUMISTA_VIEW_FIELD_DEFAULTS };
+};
+
+/**
+ * Save Numista view field config to localStorage.
+ * @param {Object<string, boolean>} config
+ */
+const saveNumistaViewFieldConfig = (config) => {
+  try {
+    localStorage.setItem('numistaViewFields', JSON.stringify(config));
+  } catch (e) {
+    console.warn('Failed to save Numista view field config:', e);
+  }
+};
+
 // Persist current application version for comparison on future loads
 try {
   localStorage.setItem(APP_VERSION_KEY, APP_VERSION);
@@ -876,6 +932,13 @@ const FEATURE_FLAGS = {
     urlOverride: true,
     userToggle: true,
     description: "Pattern-based Numista search improvement",
+    phase: "beta"
+  },
+  COIN_IMAGES: {
+    enabled: true,
+    urlOverride: true,
+    userToggle: true,
+    description: "Coin image caching and item view modal",
     phase: "beta"
   }
 };
@@ -1286,6 +1349,10 @@ if (typeof window !== "undefined") {
   window.GOLDBACK_ESTIMATE_ENABLED_KEY = GOLDBACK_ESTIMATE_ENABLED_KEY;
   window.GB_ESTIMATE_PREMIUM = GB_ESTIMATE_PREMIUM;
   window.GB_ESTIMATE_MODIFIER_KEY = GB_ESTIMATE_MODIFIER_KEY;
+  // Numista view field config
+  window.NUMISTA_VIEW_FIELD_DEFAULTS = NUMISTA_VIEW_FIELD_DEFAULTS;
+  window.getNumistaViewFieldConfig = getNumistaViewFieldConfig;
+  window.saveNumistaViewFieldConfig = saveNumistaViewFieldConfig;
   // Multi-currency support (STACK-50)
   window.SUPPORTED_CURRENCIES = SUPPORTED_CURRENCIES;
   window.DISPLAY_CURRENCY_KEY = DISPLAY_CURRENCY_KEY;
