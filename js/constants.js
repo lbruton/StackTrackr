@@ -586,6 +586,7 @@ const ALLOWED_STORAGE_KEYS = [
   LATEST_REMOTE_VERSION_KEY,  // string: cached latest remote version (STACK-67)
   LATEST_REMOTE_URL_KEY,      // string: cached latest remote release URL (STACK-67)
   "ff_migration_fuzzy_autocomplete", // one-time migration flag (v3.26.01)
+  "numistaLookupRules",              // custom Numista search lookup rules (JSON array)
 ];
 
 // =============================================================================
@@ -869,6 +870,13 @@ const FEATURE_FLAGS = {
     userToggle: true,
     description: "Show item count badge on filter chips",
     phase: "stable"
+  },
+  NUMISTA_SEARCH_LOOKUP: {
+    enabled: true,
+    urlOverride: true,
+    userToggle: true,
+    description: "Pattern-based Numista search improvement",
+    phase: "beta"
   }
 };
 
