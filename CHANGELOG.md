@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.27.05] - 2026-02-14
+
+### Added — Numista Bulk Sync & IDB Cache Fix
+
+- **Added**: Numista Bulk Sync — metadata + image syncing from API card with inline stats, progress, and activity log (STACK-87, STACK-88)
+- **Changed**: Moved image cache controls from Settings > System into the Numista API card as "Bulk Sync"
+- **Fixed**: Opaque blob IDB corruption — images disappeared after bulk cache on HTTPS (STACK-87)
+- **Fixed**: Empty blob safety guard in getImageUrl() prevents blocking CDN fallback
+- **Added**: Table row thumbnail images with hover preloading (STACK-84)
+
+---
+
 ## [3.27.04] - 2026-02-14
 
 ### Added — Spot Comparison Mode & Mobile API Settings

@@ -210,10 +210,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     elements.bulkEditBtn = safeGetElement("bulkEditBtn");
     elements.bulkEditCloseBtn = safeGetElement("bulkEditCloseBtn");
 
-    // Image cache elements (STACK-87)
-    elements.bulkImageCacheGroup = safeGetElement("bulkImageCacheGroup");
-    elements.openImageCacheBtn = safeGetElement("openImageCacheBtn");
-    elements.imageCacheModal = safeGetElement("imageCacheModal");
 
     // Settings change log panel
     elements.settingsChangeLogClearBtn = safeGetElement("settingsChangeLogClearBtn");
