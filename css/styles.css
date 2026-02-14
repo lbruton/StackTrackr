@@ -3512,8 +3512,8 @@ td input:checked + .slider:before {
   }
 
   .view-image-slot img {
-    max-width: 120px;
-    max-height: 120px;
+    max-width: 110px;
+    max-height: 110px;
   }
 
   .view-image-placeholder {
@@ -3588,8 +3588,8 @@ td input:checked + .slider:before {
 
 }
 
-/* --- Extra-small phones (≤400px) — single-column data --- */
-@media (max-width: 400px) {
+/* --- Extra-small phones (≤480px) — single-column data, stacked images --- */
+@media (max-width: 480px) {
   .view-detail-grid,
   .view-detail-grid.three-col {
     grid-template-columns: 1fr;

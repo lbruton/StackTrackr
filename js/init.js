@@ -617,3 +617,8 @@ window.editItem = editItem;
 window.deleteItem = deleteItem;
 window.showNotes = showNotes;
 window.applyColumnFilter = applyColumnFilter;
+
+// Register service worker for PWA support (HTTP/HTTPS only, skip file://)
+if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+  navigator.serviceWorker.register('./sw.js').catch(() => {});
+}

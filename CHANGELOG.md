@@ -9,6 +9,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.27.03] - 2026-02-14
+
+### Added — PWA Support & Bug Fixes
+
+- **Added**: PWA support — manifest.json, service worker with offline caching, installable app experience (STACK-74)
+- **Added**: PWA icons (192×192, 512×512) and Apple mobile web app meta tags
+- **Fixed**: `parsePriceToUSD` now preserves existing price when edit field is left empty instead of zeroing it (STACK-81)
+- **Fixed**: Date change in add/edit form now clears stale spot-lookup override price (STACK-82)
+- **Fixed**: Activity Log sub-tabs (spot history, catalog history, price history) now re-render on every switch instead of showing stale data (STACK-83)
+- **Fixed**: Item detail modal layout on Samsung S24+ Ultra — raised breakpoint from 400px to 480px for single-column grid (STACK-85)
+- **Removed**: Redundant View (eye) icon from table action column — item name click already opens view modal (STACK-86)
+- **Added**: Spot history seed data for Jan 2 – Feb 14, 2026 (32 dates × 4 metals) from Docker poller infrastructure
+- **Changed**: Spot history and spot lookup display "Seed" label for seed-sourced entries
+
+---
+
 ## [3.27.02] - 2026-02-13
 
 ### Changed — Multi-Color Storage Bar
