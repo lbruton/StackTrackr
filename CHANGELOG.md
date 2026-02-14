@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.26.02] - 2026-02-13
+
+### Fixed — Autocomplete Migration & Version Check CORS
+
+- **Fixed**: One-time migration auto-enables `FUZZY_AUTOCOMPLETE` for users who had it silently disabled before the settings toggle existed
+- **Fixed**: Version check CORS failure — `staktrakr.com` 301 redirects to `www.staktrakr.com` without CORS headers; updated URL to skip redirect
+
+---
+
 ## [3.26.01] - 2026-02-13
 
 ### Added — Fuzzy Autocomplete Settings Toggle

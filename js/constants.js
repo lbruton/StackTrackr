@@ -254,7 +254,7 @@ const CERT_LOOKUP_URLS = {
  * Updated: 2026-02-12 - STACK-38/STACK-31: Responsive card view + mobile layout
  */
 
-const APP_VERSION = "3.26.01";
+const APP_VERSION = "3.26.02";
 
 /**
  * @constant {string} DEFAULT_CURRENCY - Default currency code for monetary formatting
@@ -514,7 +514,7 @@ const LATEST_REMOTE_VERSION_KEY = "latestRemoteVersion";
 const LATEST_REMOTE_URL_KEY = "latestRemoteUrl";
 
 /** @constant {string} VERSION_CHECK_URL - Remote endpoint for latest version info (STACK-67) */
-const VERSION_CHECK_URL = "https://staktrakr.com/version.json";
+const VERSION_CHECK_URL = "https://www.staktrakr.com/version.json";
 
 /** @constant {number} VERSION_CHECK_TTL - Cache TTL for remote version check in ms (24 hours) */
 const VERSION_CHECK_TTL = 24 * 60 * 60 * 1000;
@@ -585,6 +585,7 @@ const ALLOWED_STORAGE_KEYS = [
   LAST_VERSION_CHECK_KEY,     // timestamp: last remote version check (STACK-67)
   LATEST_REMOTE_VERSION_KEY,  // string: cached latest remote version (STACK-67)
   LATEST_REMOTE_URL_KEY,      // string: cached latest remote release URL (STACK-67)
+  "ff_migration_fuzzy_autocomplete", // one-time migration flag (v3.26.01)
 ];
 
 // =============================================================================
@@ -890,13 +891,22 @@ class FeatureFlags {
     try {
       const stored = localStorage.getItem(FEATURE_FLAGS_KEY);
       const parsed = stored ? JSON.parse(stored) : {};
-      
+
       // Merge with defaults
       const state = {};
       for (const [key, config] of Object.entries(FEATURE_FLAGS)) {
         state[key] = parsed[key] !== undefined ? parsed[key] : config.enabled;
       }
-      
+
+      // One-time migration (v3.26.01): re-enable FUZZY_AUTOCOMPLETE for users
+      // who had it silently disabled before the settings toggle existed
+      const migrationKey = 'ff_migration_fuzzy_autocomplete';
+      if (!localStorage.getItem(migrationKey) && parsed.FUZZY_AUTOCOMPLETE === false) {
+        state.FUZZY_AUTOCOMPLETE = true;
+        localStorage.setItem(migrationKey, '1');
+        localStorage.setItem(FEATURE_FLAGS_KEY, JSON.stringify(state));
+      }
+
       return state;
     } catch (e) {
       console.warn('Failed to load feature flags from localStorage:', e);
