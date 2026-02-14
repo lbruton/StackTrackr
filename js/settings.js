@@ -185,6 +185,15 @@ const syncSettingsUI = () => {
     });
   }
 
+  // Fuzzy autocomplete — sync toggle with feature flag
+  const autocompleteSetting = document.getElementById('settingsFuzzyAutocomplete');
+  if (autocompleteSetting && window.featureFlags) {
+    const aVal = featureFlags.isEnabled('FUZZY_AUTOCOMPLETE') ? 'yes' : 'no';
+    autocompleteSetting.querySelectorAll('.chip-sort-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.val === aVal);
+    });
+  }
+
   // Chip grouping tables and dropdown
   if (typeof window.populateBlacklistDropdown === 'function') window.populateBlacklistDropdown();
   if (typeof window.renderBlacklistTable === 'function') window.renderBlacklistTable();
@@ -453,6 +462,28 @@ const setupSettingsEventListeners = () => {
         b.classList.toggle('active', b.dataset.val === btn.dataset.val);
       });
       if (typeof renderActiveFilters === 'function') renderActiveFilters();
+    });
+  }
+
+  // Fuzzy autocomplete toggle
+  const autocompleteSettingEl = document.getElementById('settingsFuzzyAutocomplete');
+  if (autocompleteSettingEl) {
+    autocompleteSettingEl.addEventListener('click', (e) => {
+      const btn = e.target.closest('.chip-sort-btn');
+      if (!btn) return;
+      const isEnabled = btn.dataset.val === 'yes';
+      if (window.featureFlags) {
+        if (isEnabled) featureFlags.enable('FUZZY_AUTOCOMPLETE');
+        else featureFlags.disable('FUZZY_AUTOCOMPLETE');
+      }
+      // Update active state
+      autocompleteSettingEl.querySelectorAll('.chip-sort-btn').forEach(b => {
+        b.classList.toggle('active', b.dataset.val === btn.dataset.val);
+      });
+      // Re-initialize or tear down autocomplete live
+      if (isEnabled && typeof initializeAutocomplete === 'function') {
+        initializeAutocomplete(inventory);
+      }
     });
   }
 
