@@ -437,6 +437,11 @@ document.addEventListener("DOMContentLoaded", async () => {
         updateStorageStats();
       }
 
+    // Load Numista search lookup custom rules
+    if (typeof NumistaLookup !== 'undefined' && typeof NumistaLookup.loadCustomRules === 'function') {
+      NumistaLookup.loadCustomRules();
+    }
+
     // STACK-62: Initialize autocomplete/fuzzy search system
     if (typeof initializeAutocomplete === 'function') {
       initializeAutocomplete(inventory);
