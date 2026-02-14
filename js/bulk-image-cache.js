@@ -1,9 +1,9 @@
-// BULK IMAGE CACHE (STACK-87)
+// BULK SYNC (STACK-87/88)
 // =============================================================================
-// Downloads and caches all coin images for inventory items that have Numista IDs.
-// Sequential with configurable delay to avoid CDN rate-limiting.
+// Syncs metadata and images for inventory items that have Numista catalog IDs.
+// Sequential with configurable delay to avoid API/CDN rate-limiting.
 // Resolves catalog IDs from catalogManager when not directly on items.
-// Fetches image URLs from Numista API when not stored on the item.
+// Fetches metadata + image URLs from Numista API, caches both to IndexedDB.
 // Reuses imageCache.cacheImages() pipeline (fetch → resize → compress → store).
 // =============================================================================
 
@@ -117,10 +117,14 @@ const BulkImageCache = (() => {
         onProgress({ current: i + 1, total, catalogId });
       }
 
-      // Skip if already cached
-      if (await imageCache.hasImages(catalogId)) {
+      // Check what's already synced
+      const hasImagesCached = await imageCache.hasImages(catalogId);
+      const hasMetaCached = !!(await imageCache.getMetadata(catalogId));
+
+      // Skip if both images and metadata are already cached
+      if (hasImagesCached && hasMetaCached) {
         skipped++;
-        if (onLog) onLog({ catalogId, status: 'skip-cached', message: 'Already cached' });
+        if (onLog) onLog({ catalogId, status: 'skip-cached', message: 'Already synced' });
         continue;
       }
 
@@ -132,40 +136,48 @@ const BulkImageCache = (() => {
         break;
       }
 
-      // Resolve image URLs: item props → IDB record → Numista API lookup
+      // Resolve image URLs from item properties first
       // Validate URLs — corrupted strings (missing ://) must be treated as empty
       const _valid = (u) => ImageCache.isValidImageUrl(u);
       let obverseUrl = _valid(item.obverseImageUrl) ? item.obverseImageUrl : '';
       let reverseUrl = _valid(item.reverseImageUrl) ? item.reverseImageUrl : '';
 
-      // Check existing IDB record for stored URLs
+      // Fetch & cache metadata from Numista API (also resolves image URLs)
+      if (!hasMetaCached && window.catalogAPI) {
+        if (onLog) onLog({ catalogId, status: 'api-lookup', message: 'Syncing metadata from Numista...' });
+        try {
+          const apiResult = await catalogAPI.lookupItem(catalogId);
+          apiLookups++;
+
+          // Persist image URLs back to item
+          if (!obverseUrl && apiResult.imageUrl) {
+            obverseUrl = apiResult.imageUrl;
+            item.obverseImageUrl = obverseUrl;
+          }
+          if (!reverseUrl && apiResult.reverseImageUrl) {
+            reverseUrl = apiResult.reverseImageUrl;
+            item.reverseImageUrl = reverseUrl;
+          }
+          // Also sync numistaId back to item if it was only in catalogManager
+          if (!item.numistaId) item.numistaId = catalogId;
+
+          // Cache metadata to IndexedDB
+          await imageCache.cacheMetadata(catalogId, apiResult);
+          if (onLog) onLog({ catalogId, status: 'metadata', message: 'Metadata synced' });
+        } catch (err) {
+          if (onLog) onLog({ catalogId, status: 'meta-failed', message: `Metadata: ${err.message}` });
+          // Continue to image caching even if metadata fails
+        }
+      }
+
+      // Skip image caching if already done
+      if (hasImagesCached) continue;
+
+      // Check existing IDB record for stored URLs if still missing
       if (!obverseUrl && !reverseUrl) {
         const imgRecord = await imageCache.getImages(catalogId);
         obverseUrl = _valid(imgRecord?.obverseUrl) ? imgRecord.obverseUrl : '';
         reverseUrl = _valid(imgRecord?.reverseUrl) ? imgRecord.reverseUrl : '';
-      }
-
-      // Last resort: call Numista API to fetch image URLs
-      if (!obverseUrl && !reverseUrl && window.catalogAPI) {
-        if (onLog) onLog({ catalogId, status: 'api-lookup', message: 'Looking up image URLs from Numista...' });
-        try {
-          const result = await catalogAPI.lookupItem(catalogId);
-          apiLookups++;
-          obverseUrl = result?.imageUrl || '';
-          reverseUrl = result?.reverseImageUrl || '';
-          // Persist URLs back to item for future use
-          if (obverseUrl) item.obverseImageUrl = obverseUrl;
-          if (reverseUrl) item.reverseImageUrl = reverseUrl;
-          // Also sync numistaId back to item if it was only in catalogManager
-          if (!item.numistaId) item.numistaId = catalogId;
-        } catch (err) {
-          failed++;
-          if (onLog) onLog({ catalogId, status: 'failed', message: `API lookup failed: ${err.message}` });
-          if (i < entries.length - 1 && !_aborted) {
-            await new Promise(r => setTimeout(r, delay));
-          }
-          continue;
-        }
       }
 
       if (!obverseUrl && !reverseUrl) {
