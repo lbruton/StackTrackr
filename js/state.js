@@ -189,9 +189,6 @@ const elements = {
   viewItemModal: null,
   viewModalCloseBtn: null,
 
-  // Image cache elements (STACK-87)
-  bulkImageCacheGroup: null,
-  openImageCacheBtn: null,
 
   // Settings modal elements
   settingsBtn: null,
@@ -201,7 +198,6 @@ const elements = {
   apiInfoModal: null,
   apiHistoryModal: null,
   goldbackHistoryModal: null,
-  imageCacheModal: null,
   cloudSyncModal: null,
   apiQuotaModal: null,
 

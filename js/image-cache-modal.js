@@ -1,32 +1,22 @@
-// IMAGE CACHE MANAGER MODAL
+// NUMISTA BULK SYNC UI (STACK-87/88)
 // =============================================================================
-// Sub-modal opened from Settings > System to manage cached coin images.
+// Inline UI within Settings > API > Numista card for bulk syncing metadata
+// and images. Replaces the former standalone Image Cache Manager modal.
 // Shows stats, eligible item table with per-row status, real-time activity log,
-// and bulk cache controls. Resolves catalog IDs from catalogManager.
+// and sync controls. Resolves catalog IDs from catalogManager.
 // =============================================================================
 
 /** @type {Map<string, HTMLElement>} Status cells keyed by catalogId for live updates */
 let _statusCells = new Map();
 
 /**
- * Opens the Image Cache Manager modal, rendering stats and item table.
+ * Renders the Numista Bulk Sync inline UI: stats, eligible items table.
+ * Called when the Numista provider tab is shown and conditions are met.
  */
-const showImageCacheModal = async () => {
+const renderNumistaSyncUI = async () => {
   _statusCells.clear();
-  if (typeof openModalById === 'function') {
-    openModalById('imageCacheModal');
-  }
-  await renderCacheStats();
+  await renderSyncStats();
   await renderEligibleItemsTable();
-};
-
-/**
- * Closes the Image Cache Manager modal.
- */
-const hideImageCacheModal = () => {
-  if (typeof closeModalById === 'function') {
-    closeModalById('imageCacheModal');
-  }
 };
 
 // ---------------------------------------------------------------------------
@@ -36,8 +26,8 @@ const hideImageCacheModal = () => {
 /**
  * Renders the cache statistics bar: count, total size, quota percentage.
  */
-const renderCacheStats = async () => {
-  const container = document.getElementById('imageCacheStats');
+const renderSyncStats = async () => {
+  const container = document.getElementById('numistaSyncStats');
   if (!container) return;
 
   if (!window.imageCache?.isAvailable()) {
@@ -73,10 +63,10 @@ const renderCacheStats = async () => {
 /**
  * Renders the table of all inventory items that have Numista catalog IDs.
  * Each row shows: N#, item name, cache status, and action buttons.
- * Status cells are tracked in _statusCells for live updates during bulk cache.
+ * Status cells are tracked in _statusCells for live updates during bulk sync.
  */
 const renderEligibleItemsTable = async () => {
-  const container = document.getElementById('cachedImagesTableContainer');
+  const container = document.getElementById('numistaSyncTableContainer');
   if (!container) return;
 
   container.textContent = '';
@@ -119,6 +109,7 @@ const renderEligibleItemsTable = async () => {
 
   for (const { item, catalogId } of entries) {
     const isCached = await imageCache.hasImages(catalogId);
+    const hasMeta = !!(await imageCache.getMetadata(catalogId));
     const hasUrls = !!(item.obverseImageUrl || item.reverseImageUrl);
 
     const tr = document.createElement('tr');
@@ -133,17 +124,23 @@ const renderEligibleItemsTable = async () => {
     tdName.textContent = item.name || '\u2014';
     tdName.style.cssText = 'max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap';
 
-    // Status cell (updated live during bulk cache)
+    // Status cell (updated live during bulk sync)
     const tdStatus = document.createElement('td');
     tdStatus.style.cssText = 'font-size:0.8rem;white-space:nowrap';
-    if (isCached) {
+    if (isCached && hasMeta) {
+      tdStatus.textContent = '\u2713 Synced';
+      tdStatus.style.color = 'var(--success-color, green)';
+    } else if (isCached) {
       tdStatus.textContent = '\u2713 Cached';
       tdStatus.style.color = 'var(--success-color, green)';
+    } else if (hasMeta) {
+      tdStatus.textContent = '\u2295 Meta only';
+      tdStatus.style.color = 'var(--color-info, #5b9bd5)';
     } else if (hasUrls) {
       tdStatus.textContent = 'Ready';
       tdStatus.style.color = 'var(--text-secondary, #888)';
     } else {
-      tdStatus.textContent = 'Needs API lookup';
+      tdStatus.textContent = 'Needs sync';
       tdStatus.style.color = 'var(--warning-color, orange)';
     }
     _statusCells.set(catalogId, tdStatus);
@@ -152,19 +149,19 @@ const renderEligibleItemsTable = async () => {
     const tdActions = document.createElement('td');
     tdActions.style.cssText = 'white-space:nowrap;text-align:right';
 
-    if (isCached) {
+    if (isCached || hasMeta) {
       // Re-sync button
       const syncBtn = document.createElement('button');
       syncBtn.type = 'button';
       syncBtn.className = 'inline-chip-move';
       syncBtn.textContent = '\u21BB';
-      syncBtn.title = 'Re-sync images';
+      syncBtn.title = 'Re-sync';
       syncBtn.addEventListener('click', async () => {
         syncBtn.disabled = true;
         await resyncCachedEntry(catalogId);
         syncBtn.disabled = false;
         await renderEligibleItemsTable();
-        await renderCacheStats();
+        await renderSyncStats();
       });
 
       // Delete button
@@ -172,12 +169,12 @@ const renderEligibleItemsTable = async () => {
       delBtn.type = 'button';
       delBtn.className = 'inline-chip-move';
       delBtn.textContent = '\u2715';
-      delBtn.title = 'Delete cached images';
+      delBtn.title = 'Delete cached data';
       delBtn.addEventListener('click', async () => {
         await imageCache.deleteImages(catalogId);
-        logCacheActivity(`Deleted cache for ${catalogId}`, 'warn');
+        logSyncActivity(`Deleted cache for ${catalogId}`, 'warn');
         await renderEligibleItemsTable();
-        await renderCacheStats();
+        await renderSyncStats();
       });
 
       tdActions.append(syncBtn, delBtn);
@@ -206,35 +203,37 @@ const resyncCachedEntry = async (catalogId) => {
   let obverseUrl = item?.obverseImageUrl || '';
   let reverseUrl = item?.reverseImageUrl || '';
 
-  // If no URLs on item, try Numista API
-  if (!obverseUrl && !reverseUrl && window.catalogAPI) {
-    logCacheActivity(`${catalogId}: Looking up URLs from Numista...`, 'info');
+  // Fetch metadata + image URLs from Numista API
+  if (window.catalogAPI) {
+    logSyncActivity(`${catalogId}: Syncing from Numista...`, 'info');
     try {
       const result = await catalogAPI.lookupItem(catalogId);
-      obverseUrl = result?.imageUrl || '';
-      reverseUrl = result?.reverseImageUrl || '';
+      if (!obverseUrl && result?.imageUrl) obverseUrl = result.imageUrl;
+      if (!reverseUrl && result?.reverseImageUrl) reverseUrl = result.reverseImageUrl;
       if (item) {
         if (obverseUrl) item.obverseImageUrl = obverseUrl;
         if (reverseUrl) item.reverseImageUrl = reverseUrl;
         if (typeof saveInventory === 'function') saveInventory();
       }
+      // Cache metadata
+      await imageCache.cacheMetadata(catalogId, result);
+      logSyncActivity(`${catalogId}: Metadata synced`, 'success');
     } catch (err) {
-      logCacheActivity(`${catalogId}: API lookup failed: ${err.message}`, 'error');
-      return;
+      logSyncActivity(`${catalogId}: API lookup failed: ${err.message}`, 'error');
     }
   }
 
   if (!obverseUrl && !reverseUrl) {
-    logCacheActivity(`${catalogId}: No image URLs available`, 'warn');
+    logSyncActivity(`${catalogId}: No image URLs available`, 'warn');
     return;
   }
 
-  logCacheActivity(`${catalogId}: Re-fetching images...`, 'info');
+  logSyncActivity(`${catalogId}: Re-fetching images...`, 'info');
   const ok = await imageCache.cacheImages(catalogId, obverseUrl, reverseUrl);
   if (ok) {
-    logCacheActivity(`${catalogId}: Re-synced successfully`, 'success');
+    logSyncActivity(`${catalogId}: Re-synced successfully`, 'success');
   } else {
-    logCacheActivity(`${catalogId}: Re-sync failed`, 'error');
+    logSyncActivity(`${catalogId}: Image cache failed`, 'error');
   }
 };
 
@@ -247,8 +246,8 @@ const resyncCachedEntry = async (catalogId) => {
  * @param {string} message
  * @param {'info'|'success'|'warn'|'error'} [type='info']
  */
-const logCacheActivity = (message, type = 'info') => {
-  const logEl = document.getElementById('imageCacheLog');
+const logSyncActivity = (message, type = 'info') => {
+  const logEl = document.getElementById('numistaSyncLog');
   if (!logEl) return;
 
   const line = document.createElement('div');
@@ -278,19 +277,19 @@ const updateStatusCell = (catalogId, text, color) => {
 };
 
 // ---------------------------------------------------------------------------
-// Bulk cache from modal
+// Bulk sync from inline UI
 // ---------------------------------------------------------------------------
 
 /**
- * Starts the bulk cache operation from within the modal.
+ * Starts the bulk sync operation from the inline Numista card.
  * Updates per-row status cells in real time as items are processed.
  */
-const startBulkCacheFromModal = () => {
+const startBulkSync = () => {
   if (!window.BulkImageCache || BulkImageCache.isRunning()) return;
 
-  const startBtn = document.getElementById('imageCacheStartBtn');
-  const cancelBtn = document.getElementById('imageCacheCancelBtn');
-  const progressBar = document.getElementById('imageCacheProgress');
+  const startBtn = document.getElementById('numistaSyncStartBtn');
+  const cancelBtn = document.getElementById('numistaSyncCancelBtn');
+  const progressBar = document.getElementById('numistaSyncProgress');
 
   if (startBtn) startBtn.disabled = true;
   if (cancelBtn) cancelBtn.style.display = '';
@@ -300,14 +299,16 @@ const startBulkCacheFromModal = () => {
     progressBar.max = 0;
   }
 
-  logCacheActivity('Starting bulk image cache...', 'info');
+  logSyncActivity('Starting bulk sync...', 'info');
 
   const statusColorMap = {
     'skip-cached': ['var(--success-color, green)', '\u2713 Cached'],
     'skip-no-url': ['var(--warning-color, orange)', 'No URLs'],
-    'api-lookup': ['var(--text-secondary, #888)', 'API lookup...'],
+    'api-lookup': ['var(--text-secondary, #888)', 'Syncing...'],
+    'metadata': ['var(--color-info, #5b9bd5)', '\u2295 Metadata'],
+    'meta-failed': ['var(--warning-color, orange)', '\u26a0 Meta fail'],
     'caching': ['var(--text-secondary, #888)', 'Downloading...'],
-    'cached': ['var(--success-color, green)', '\u2713 Cached'],
+    'cached': ['var(--success-color, green)', '\u2713 Synced'],
     'browser-cached': ['var(--color-info, #5b9bd5)', '\u2295 Browser'],
     'failed': ['var(--danger-color, red)', '\u2717 Failed'],
     'quota': ['var(--danger-color, red)', 'Quota exceeded'],
@@ -328,9 +329,10 @@ const startBulkCacheFromModal = () => {
       // Log to activity log
       const logTypeMap = {
         'skip-cached': 'info', 'skip-no-url': 'warn', 'api-lookup': 'info',
+        'metadata': 'success', 'meta-failed': 'warn',
         'caching': 'info', 'cached': 'success', 'failed': 'error', 'quota': 'error'
       };
-      logCacheActivity(`${catalogId}: ${message}`, logTypeMap[status] || 'info');
+      logSyncActivity(`${catalogId}: ${message}`, logTypeMap[status] || 'info');
     },
     onComplete: async ({ cached, skipped, failed, apiLookups, quotaExceeded, elapsed }) => {
       if (startBtn) startBtn.disabled = false;
@@ -342,42 +344,43 @@ const startBulkCacheFromModal = () => {
       if (apiLookups > 0) msg += `, ${apiLookups} API lookups`;
       msg += '.';
       if (quotaExceeded) msg += ' Quota limit reached.';
-      logCacheActivity(msg, failed > 0 || quotaExceeded ? 'warn' : 'success');
+      logSyncActivity(msg, failed > 0 || quotaExceeded ? 'warn' : 'success');
 
       // Refresh table and stats
       await renderEligibleItemsTable();
-      await renderCacheStats();
+      await renderSyncStats();
 
-      // Refresh settings footer storage display
+      // Refresh Numista usage bar + settings footer storage display
+      if (typeof renderNumistaUsageBar === 'function') renderNumistaUsageBar();
       if (typeof updateSettingsFooter === 'function') updateSettingsFooter();
     }
   });
 };
 
 /**
- * Clears all cached images after confirmation.
+ * Clears all cached images and metadata after confirmation.
  */
-const clearAllCachedImages = async () => {
+const clearAllCachedData = async () => {
   if (!window.imageCache?.isAvailable()) return;
 
   const usage = await imageCache.getStorageUsage();
   if (usage.count === 0) {
-    logCacheActivity('No cached images to clear', 'info');
+    logSyncActivity('No cached data to clear', 'info');
     return;
   }
 
   // eslint-disable-next-line no-restricted-globals
-  if (!confirm(`Delete all ${usage.count} cached images? This cannot be undone.`)) return;
+  if (!confirm(`Delete all ${usage.count} cached entries (images + metadata)? This cannot be undone.`)) return;
 
   const ok = await imageCache.clearAll();
   if (ok) {
-    logCacheActivity(`Cleared all ${usage.count} cached images`, 'warn');
+    logSyncActivity(`Cleared all ${usage.count} cached entries`, 'warn');
   } else {
-    logCacheActivity('Failed to clear cache', 'error');
+    logSyncActivity('Failed to clear cache', 'error');
   }
 
   await renderEligibleItemsTable();
-  await renderCacheStats();
+  await renderSyncStats();
   if (typeof updateSettingsFooter === 'function') updateSettingsFooter();
 };
 
@@ -385,8 +388,7 @@ const clearAllCachedImages = async () => {
 // Global exports
 // ---------------------------------------------------------------------------
 if (typeof window !== 'undefined') {
-  window.showImageCacheModal = showImageCacheModal;
-  window.hideImageCacheModal = hideImageCacheModal;
-  window.startBulkCacheFromModal = startBulkCacheFromModal;
-  window.clearAllCachedImages = clearAllCachedImages;
+  window.renderNumistaSyncUI = renderNumistaSyncUI;
+  window.startBulkSync = startBulkSync;
+  window.clearAllCachedData = clearAllCachedData;
 }

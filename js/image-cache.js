@@ -188,7 +188,8 @@ class ImageCache {
   async getImageUrl(catalogId, side) {
     const record = await this.getImages(catalogId);
     const blob = record?.[side];
-    if (!blob) return null;
+    // Reject empty blobs (e.g. opaque responses that lost data in IDB round-trip)
+    if (!blob || (blob.size === 0 && !blob.type)) return null;
     return URL.createObjectURL(blob);
   }
 
@@ -348,7 +349,7 @@ class ImageCache {
    * Strategy A: fetch(CORS) → createImageBitmap → canvas resize → JPEG blob
    * Strategy B: fetch(CORS) succeeded but canvas tainted → store raw blob
    * Strategy C: Image element (no crossOrigin) → canvas → JPEG blob
-   * Strategy D: fetch(no-cors) → opaque blob stored directly (still displayable)
+   * Strategy D: fetch(no-cors) → non-opaque blob if available (opaque blobs rejected — lose data in IDB)
    *
    * @param {string} url
    * @returns {Promise<Blob|null>}
@@ -443,11 +444,12 @@ class ImageCache {
       if (resp.ok) return await resp.blob();
     } catch { /* fall through */ }
 
-    // Try no-cors fetch (opaque blob — still displayable via object URL)
+    // Try no-cors fetch — only accept non-opaque blobs (opaque blobs report
+    // size === 0 and lose their data during IDB structured clone round-trips)
     try {
       const resp = await fetch(url, { mode: 'no-cors' });
       const blob = await resp.blob();
-      if (blob.size > 0) return blob;
+      if (blob && blob.size > 0) return blob;
     } catch { /* fall through */ }
 
     return null;

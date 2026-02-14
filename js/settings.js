@@ -83,6 +83,14 @@ const switchProviderTab = (key) => {
   document.querySelectorAll('.settings-provider-tab').forEach(tab => {
     tab.classList.toggle('active', tab.dataset.provider === key);
   });
+
+  // Render Numista bulk sync UI when switching to Numista tab (STACK-87/88)
+  if (key === 'NUMISTA' && typeof renderNumistaSyncUI === 'function') {
+    const syncGroup = document.getElementById('numistaBulkSyncGroup');
+    if (syncGroup && syncGroup.style.display !== 'none') {
+      renderNumistaSyncUI();
+    }
+  }
 };
 
 /**
@@ -248,11 +256,12 @@ const syncSettingsUI = () => {
     syncGoldbackSettingsUI();
   }
 
-  // Bulk image cache visibility (STACK-87)
-  if (elements.bulkImageCacheGroup) {
-    const showBulkCache = window.featureFlags?.isEnabled('COIN_IMAGES') &&
-                          window.imageCache?.isAvailable();
-    elements.bulkImageCacheGroup.style.display = showBulkCache ? '' : 'none';
+  // Numista bulk sync visibility (STACK-87/88)
+  const numistaSyncGroup = document.getElementById('numistaBulkSyncGroup');
+  if (numistaSyncGroup) {
+    const showBulkSync = window.featureFlags?.isEnabled('COIN_IMAGES') &&
+                         window.imageCache?.isAvailable();
+    numistaSyncGroup.style.display = showBulkSync ? '' : 'none';
   }
 
   // Spot compare mode (STACK-92)
@@ -620,10 +629,24 @@ const setupSettingsEventListeners = () => {
     window.setupChipGroupingEvents();
   }
 
-  // Image Cache Manager modal opener (STACK-87)
-  if (elements.openImageCacheBtn) {
-    elements.openImageCacheBtn.addEventListener('click', () => {
-      if (typeof showImageCacheModal === 'function') showImageCacheModal();
+  // Numista Bulk Sync inline controls (STACK-87/88)
+  const nsStartBtn = document.getElementById('numistaSyncStartBtn');
+  if (nsStartBtn) {
+    nsStartBtn.addEventListener('click', () => {
+      if (typeof startBulkSync === 'function') startBulkSync();
+    });
+  }
+  const nsCancelBtn = document.getElementById('numistaSyncCancelBtn');
+  if (nsCancelBtn) {
+    nsCancelBtn.addEventListener('click', () => {
+      if (window.BulkImageCache) BulkImageCache.abort();
+      nsCancelBtn.style.display = 'none';
+    });
+  }
+  const nsClearBtn = document.getElementById('numistaSyncClearBtn');
+  if (nsClearBtn) {
+    nsClearBtn.addEventListener('click', () => {
+      if (typeof clearAllCachedData === 'function') clearAllCachedData();
     });
   }
 
@@ -782,32 +805,6 @@ const setupSettingsEventListeners = () => {
     });
   }
 
-  // Image Cache Manager modal events (STACK-87)
-  const icCloseBtn = document.getElementById('imageCacheCloseBtn');
-  if (icCloseBtn) {
-    icCloseBtn.addEventListener('click', () => {
-      if (typeof hideImageCacheModal === 'function') hideImageCacheModal();
-    });
-  }
-  const icStartBtn = document.getElementById('imageCacheStartBtn');
-  if (icStartBtn) {
-    icStartBtn.addEventListener('click', () => {
-      if (typeof startBulkCacheFromModal === 'function') startBulkCacheFromModal();
-    });
-  }
-  const icCancelBtn = document.getElementById('imageCacheCancelBtn');
-  if (icCancelBtn) {
-    icCancelBtn.addEventListener('click', () => {
-      if (window.BulkImageCache) BulkImageCache.abort();
-      icCancelBtn.style.display = 'none';
-    });
-  }
-  const icClearAllBtn = document.getElementById('imageCacheClearAllBtn');
-  if (icClearAllBtn) {
-    icClearAllBtn.addEventListener('click', () => {
-      if (typeof clearAllCachedImages === 'function') clearAllCachedImages();
-    });
-  }
 
   // Settings modal backdrop click
   const modal = document.getElementById('settingsModal');
