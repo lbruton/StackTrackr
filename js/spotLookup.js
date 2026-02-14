@@ -357,10 +357,10 @@ const renderSpotLookupResults = (container, results, metalName, dateStr) => {
     html += '<tr>';
     html += `<td>${ts}</td>`;
     html += `<td><strong>${price}</strong></td>`;
-    html += `<td>${source}</td>`;
+    html += `<td>${escapeHtml(source)}</td>`;
     html += `<td><span class="spot-lookup-offset${exactClass}">${offsetLabel}</span></td>`;
     html += `<td><button class="btn spot-lookup-use-btn" type="button" `
-         + `data-spot="${entry.spot}" data-ts="${entry.timestamp || ''}">Use</button></td>`;
+         + `data-spot="${escapeHtml(entry.spot)}" data-ts="${escapeHtml(entry.timestamp || '')}">Use</button></td>`;
     html += '</tr>';
   });
 

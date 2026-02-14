@@ -9,6 +9,14 @@ const LZString = {
 // UTILITY FUNCTIONS
 
 /**
+ * Escape HTML special characters to prevent XSS when interpolating into innerHTML.
+ * @param {*} str - Value to escape (coerced to string)
+ * @returns {string} Escaped HTML-safe string
+ */
+const escapeHtml = (str) =>
+  String(str ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+
+/**
  * Logs messages to console when DEBUG flag is enabled
  *
  * @param {...any} args - Values to log when debugging

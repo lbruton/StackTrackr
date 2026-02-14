@@ -938,7 +938,7 @@ const renderSpotHistoryTable = () => {
     const price = typeof formatCurrency === 'function' ? formatCurrency(e.spot) : `$${Number(e.spot).toFixed(2)}`;
     const source = e.source || '';
     const provider = e.provider || '';
-    return `<tr><td>${ts}</td><td>${metal}</td><td>${price}</td><td>${source}</td><td>${provider}</td></tr>`;
+    return `<tr><td>${ts}</td><td>${escapeHtml(metal)}</td><td>${price}</td><td>${escapeHtml(source)}</td><td>${escapeHtml(provider)}</td></tr>`;
   });
 
   // nosemgrep: javascript.browser.security.insecure-innerhtml.insecure-innerhtml
