@@ -274,11 +274,11 @@ const setupAckModalEvents = () => {
  */
 const getEmbeddedWhatsNew = () => {
   return `
+    <li><strong>v3.26.00 &ndash; STACK-62: Autocomplete &amp; Fuzzy Search Pipeline</strong>: Autocomplete dropdowns on form inputs (name, purchase/storage location), abbreviation expansion in search (ASE, kook, krug, etc.), fuzzy fallback with indicator banner, registerName() for dynamic suggestions, Firefox compatibility fix</li>
     <li><strong>v3.25.05 &ndash; STACK-71: Details modal QoL</strong>: Pie chart percentage labels on slices, sticky metric toggle, scrollable modal body fixes overflow cascade, circular chart aspect-ratio, ResizeObserver leak fix, sepia theme chart colors</li>
     <li><strong>v3.25.04 &ndash; STACK-70: Mobile-optimized modals</strong>: Full-screen modals on mobile with 100dvh, settings 5&times;2 tab grid, 44px touch inputs, hidden pie charts, landscape card view for touch devices 769&ndash;1024px, bulk edit stacking</li>
     <li><strong>v3.25.03 &ndash; STACK-38/STACK-31: Responsive card view &amp; mobile layout</strong>: Inventory table converts to touch-friendly cards at &le;768px with horizontal chips, 2-column financials, centered action buttons. Consolidated responsive CSS, details modal fixes at &le;640px</li>
     <li><strong>v3.25.02 &ndash; STACK-68: Goldback spot lookup fix</strong>: Spot price lookup now converts gold spot to Goldback denomination price instead of using raw gold formula</li>
-    <li><strong>v3.25.01 &ndash; STACK-64, STACK-67: Version splash fix &amp; update badge</strong>: Version splash now shows friendly &ldquo;What&rsquo;s New&rdquo; content. Footer version badge links to GitHub releases; on hosted sites, checks for updates with 24hr cache</li>
   `;
 };
 
@@ -290,7 +290,7 @@ const getEmbeddedRoadmap = () => {
   return `
     <li><strong>Chart Overhaul (STACK-48)</strong>: Migrate to ApexCharts with time-series trend views</li>
     <li><strong>Custom CSV Mapper (STACK-51)</strong>: Header mapping UI with saved import profiles</li>
-    <li><strong>Autocomplete &amp; Fuzzy Search (STACK-62)</strong>: Wire up existing autocomplete/fuzzy-search infrastructure into search and form inputs</li>
+    <li><strong>PWA Support (STACK-74)</strong>: Manifest, service worker, installable app experience</li>
   `;
 };
 

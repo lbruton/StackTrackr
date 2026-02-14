@@ -254,7 +254,7 @@ const CERT_LOOKUP_URLS = {
  * Updated: 2026-02-12 - STACK-38/STACK-31: Responsive card view + mobile layout
  */
 
-const APP_VERSION = "3.25.05";
+const APP_VERSION = "3.26.00";
 
 /**
  * @constant {string} DEFAULT_CURRENCY - Default currency code for monetary formatting
@@ -835,11 +835,11 @@ if (typeof window !== "undefined") {
  */
 const FEATURE_FLAGS = {
   FUZZY_AUTOCOMPLETE: {
-    enabled: false,
+    enabled: true,
     urlOverride: true,
     userToggle: true,
     description: "Fuzzy search autocomplete for item names and locations",
-    phase: "testing"
+    phase: "stable"
   },
   DEBUG_UI: {
     enabled: false,

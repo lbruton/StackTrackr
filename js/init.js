@@ -437,6 +437,11 @@ document.addEventListener("DOMContentLoaded", async () => {
         updateStorageStats();
       }
 
+    // STACK-62: Initialize autocomplete/fuzzy search system
+    if (typeof initializeAutocomplete === 'function') {
+      initializeAutocomplete(inventory);
+    }
+
     // Automatically sync prices if cache is stale and API keys are available
     if (typeof autoSyncSpotPrices === "function") {
       autoSyncSpotPrices();

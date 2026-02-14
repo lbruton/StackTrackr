@@ -52,7 +52,12 @@ const filterInventory = () => {
       // If searching for "American Eagle", it should only match items that have both words
       // but NOT match "American Gold Eagle" (which has an extra word in between)
       if (words.length >= 2) {
-        // For multi-word searches, check if the exact phrase exists or 
+        // Expand abbreviations in the query words for multi-word searches
+        const abbrevs = typeof METAL_ABBREVIATIONS !== 'undefined' ? METAL_ABBREVIATIONS : {};
+        const expandedWords = words.map(w => abbrevs[w.toLowerCase()] || w);
+        const expandedPhrase = expandedWords.join(' ').toLowerCase();
+
+        // For multi-word searches, check if the exact phrase exists or
         // if all words exist as separate word boundaries without conflicting words
         const exactPhrase = q.toLowerCase();
         const itemText = [
@@ -75,6 +80,11 @@ const filterInventory = () => {
         
         // Check for exact phrase match first
         if (itemText.includes(exactPhrase)) {
+          return true;
+        }
+
+        // Check expanded abbreviation phrase (e.g. "ase 2024" → "american silver eagle 2024")
+        if (expandedPhrase !== exactPhrase && itemText.includes(expandedPhrase)) {
           return true;
         }
 
@@ -247,9 +257,23 @@ const filterInventory = () => {
         return true;
       }
       
-      // For single words, use word boundary matching
+      // For single words, use word boundary matching with abbreviation expansion
       const fieldMatch = words.every(word => {
-        const wordRegex = new RegExp(`\\b${word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`, 'i');
+        // Build regex patterns: original word + any abbreviation expansion
+        const escaped = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const patterns = [escaped];
+
+        // Expand abbreviation if one exists (e.g. 'ase' → 'American Silver Eagle')
+        const abbrevs = typeof METAL_ABBREVIATIONS !== 'undefined' ? METAL_ABBREVIATIONS : {};
+        const expansion = abbrevs[word.toLowerCase()];
+        if (expansion) {
+          patterns.push(expansion.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+        }
+
+        // OR together: match original word OR expanded term
+        const combined = patterns.join('|');
+        const wordRegex = new RegExp(`\\b(?:${combined})`, 'i');
+
         return (
           wordRegex.test(item.metal) ||
           (item.composition && wordRegex.test(item.composition)) ||
@@ -278,6 +302,23 @@ const filterInventory = () => {
       if (typeof window.itemMatchesCustomGroupLabel === 'function') {
         return window.itemMatchesCustomGroupLabel(item, q);
       }
+
+      // STACK-62: Fuzzy fallback — score item fields when exact matching fails
+      if (typeof window.featureFlags !== 'undefined' &&
+          window.featureFlags.isEnabled('FUZZY_AUTOCOMPLETE') &&
+          typeof fuzzyMatch === 'function') {
+        const fuzzyThreshold = typeof AUTOCOMPLETE_CONFIG !== 'undefined'
+          ? AUTOCOMPLETE_CONFIG.threshold : 0.3;
+        const fieldsToCheck = [item.name, item.purchaseLocation, item.storageLocation || '', item.notes || ''];
+        for (const field of fieldsToCheck) {
+          if (field && fuzzyMatch(q, field, { threshold: fuzzyThreshold }) > 0) {
+            // Mark that fuzzy matching was used (for indicator)
+            if (!window._fuzzyMatchUsed) window._fuzzyMatchUsed = true;
+            return true;
+          }
+        }
+      }
+
       return false;
     });
   });
@@ -285,15 +326,47 @@ const filterInventory = () => {
 
 // Note: applyColumnFilter function is now in filters.js for advanced filtering
 
+/**
+ * Show or hide the fuzzy search indicator banner.
+ * Displayed when exact search returns 0 results but fuzzy returns > 0.
+ *
+ * @param {string} query - The search query that triggered fuzzy matching
+ * @param {boolean} show - Whether to show or hide the indicator
+ */
+const updateFuzzyIndicator = (query, show) => {
+  let indicator = safeGetElement('fuzzySearchIndicator');
+  // safeGetElement returns a dummy if not found; check for real DOM node
+  if (!indicator.id) indicator = null;
+  if (!show) {
+    if (indicator) indicator.style.display = 'none';
+    return;
+  }
+  if (!indicator) {
+    // Create indicator next to searchResultsInfo
+    const parent = safeGetElement('searchResultsInfo');
+    if (!parent.id || !parent.parentElement) return;
+    indicator = document.createElement('div');
+    indicator.id = 'fuzzySearchIndicator';
+    indicator.className = 'fuzzy-indicator';
+    parent.parentElement.insertBefore(indicator, parent.nextSibling);
+  }
+  indicator.textContent = `Showing approximate matches for \u2018${query}\u2019`;
+  indicator.style.display = '';
+};
+
 // Expose for global access
 window.filterInventory = filterInventory;
+window.updateFuzzyIndicator = updateFuzzyIndicator;
 
 // Apply debounce to search input
 const searchInput = document.getElementById('searchInput');
 if (searchInput) {
   const debouncedSearch = debounce((query) => {
+    window._fuzzyMatchUsed = false;
     searchQuery = query;
     filterInventory();
+    // Show fuzzy indicator if fuzzy matching was used
+    updateFuzzyIndicator(query, !!(query.trim() && window._fuzzyMatchUsed));
   }, 300);
 
   searchInput.addEventListener('input', (e) => {

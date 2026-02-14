@@ -21,6 +21,9 @@ Multi-currency is shipped (STACK-50). These items are unblocked and ready for th
 | [STACK-51](https://linear.app/hextrackr/issue/STACK-51) | Custom CSV import mapper with header mapping UI and saved profiles | Medium | — |
 | [STACK-53](https://linear.app/hextrackr/issue/STACK-53) | [RFC] Community spot price history CDN via GitHub with manifest-based selective import | Medium | — |
 | [STACK-60](https://linear.app/hextrackr/issue/STACK-60) | Source "—" click-to-filter returns no results for empty source items | Low | — |
+| [STACK-73](https://linear.app/hextrackr/issue/STACK-73) | Date Run Checklist: track collecting goals with auto-matched year sets | Medium | — |
+| [STACK-74](https://linear.app/hextrackr/issue/STACK-74) | PWA support: manifest, service worker, installable app experience | Medium | — |
+| [STACK-76](https://linear.app/hextrackr/issue/STACK-76) | Numismatics expansion: paper notes, non-melt collectibles, asset class field | Medium | — |
 
 ---
 
@@ -45,6 +48,9 @@ Enhanced UX, mobile support, deployment options, and the v4 vision.
 | Issue | Title | Priority | Depends On |
 |-------|-------|----------|------------|
 | [STACK-47](https://linear.app/hextrackr/issue/STACK-47) | v4.00.00 — Multi-asset wealth dashboard (Stocks, Crypto, Collectibles, Real Estate) | Low | STACK-42, STACK-43, STACK-45, STACK-46 |
+| [STACK-75](https://linear.app/hextrackr/issue/STACK-75) | Desktop wrapper research: Tauri vs Electron for native installers | Low | STACK-74 |
+| [STACK-77](https://linear.app/hextrackr/issue/STACK-77) | Stocks & Crypto module: ticker-based pricing with portfolio tracking | Low | STACK-76 |
+| [STACK-78](https://linear.app/hextrackr/issue/STACK-78) | Mobile native app: Capacitor/Tauri wrapper with Supabase sync | Low | STACK-30, STACK-74, STACK-75 |
 | [STACK-31](https://linear.app/hextrackr/issue/STACK-31) | Mobile-responsive card view | Low | — |
 | [STACK-32](https://linear.app/hextrackr/issue/STACK-32) | User photo upload for inventory items | Low | STACK-30 |
 | [STACK-33](https://linear.app/hextrackr/issue/STACK-33) | Mobile camera capture in add/edit modal | Low | STACK-31, STACK-32 |
