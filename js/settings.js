@@ -271,7 +271,7 @@ const syncSettingsUI = () => {
 /**
  * Updates the storage + version footer bar at the bottom of the Settings modal.
  */
-const updateSettingsFooter = () => {
+const updateSettingsFooter = async () => {
   const footerEl = document.getElementById('settingsFooter');
   if (!footerEl) return;
 
@@ -283,8 +283,18 @@ const updateSettingsFooter = () => {
       const val = localStorage.getItem(key);
       totalBytes += (key.length + (val ? val.length : 0)) * 2; // UTF-16
     }
-    const mb = (totalBytes / (1024 * 1024)).toFixed(2);
-    storageText = `Storage: ${mb} MB / 5 MB`;
+    const lsMb = (totalBytes / (1024 * 1024)).toFixed(2);
+    storageText = `LS: ${lsMb} MB / 5 MB`;
+
+    // Append IndexedDB usage if available
+    if (window.imageCache?.isAvailable()) {
+      try {
+        const idbUsage = await imageCache.getStorageUsage();
+        const idbMb = (idbUsage.totalBytes / (1024 * 1024)).toFixed(2);
+        const idbLimit = (idbUsage.limitBytes / (1024 * 1024)).toFixed(0);
+        storageText += `  \u00b7  IDB: ${idbMb} MB / ${idbLimit} MB`;
+      } catch { /* ignore */ }
+    }
   } catch (e) {
     storageText = 'Storage: unknown';
   }
@@ -514,6 +524,25 @@ const setupSettingsEventListeners = () => {
       numistaLookupSettingEl.querySelectorAll('.chip-sort-btn').forEach(b => {
         b.classList.toggle('active', b.dataset.val === btn.dataset.val);
       });
+    });
+  }
+
+  // Numista view modal field toggles
+  const numistaViewContainer = document.getElementById('numistaViewFieldToggles');
+  if (numistaViewContainer) {
+    // Load saved state and apply to checkboxes
+    const nfConfig = typeof getNumistaViewFieldConfig === 'function' ? getNumistaViewFieldConfig() : {};
+    numistaViewContainer.querySelectorAll('input[data-nf]').forEach(cb => {
+      const field = cb.dataset.nf;
+      if (nfConfig[field] !== undefined) cb.checked = nfConfig[field];
+    });
+    // Save on change
+    numistaViewContainer.addEventListener('change', () => {
+      const config = {};
+      numistaViewContainer.querySelectorAll('input[data-nf]').forEach(cb => {
+        config[cb.dataset.nf] = cb.checked;
+      });
+      if (typeof saveNumistaViewFieldConfig === 'function') saveNumistaViewFieldConfig(config);
     });
   }
 

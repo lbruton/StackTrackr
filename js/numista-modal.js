@@ -22,7 +22,7 @@ function openNumistaModal(numistaId, coinName) {
   const popup = window.open(
     url,
     `numista_${numistaId}`,
-    'width=1200,height=800,scrollbars=yes,resizable=yes,toolbar=no,location=no,menubar=no,status=no'
+    'width=1250,height=800,scrollbars=yes,resizable=yes,toolbar=no,location=no,menubar=no,status=no'
   );
 
   if (!popup) {
