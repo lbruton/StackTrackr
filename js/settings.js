@@ -87,7 +87,7 @@ const switchProviderTab = (key) => {
 
 /**
  * Switches the visible log sub-tab in the Activity Log panel.
- * Lazy-renders each sub-tab on first activation via data-rendered attribute.
+ * Re-renders the tab content on every switch to ensure fresh data.
  * @param {string} key - Sub-tab key: 'changelog', 'metals', 'catalogs', 'pricehistory'
  */
 const switchLogTab = (key) => {
@@ -105,16 +105,8 @@ const switchLogTab = (key) => {
     tab.classList.toggle('active', tab.dataset.logTab === key);
   });
 
-  // Lazy-render on first activation
-  if (target && !target.dataset.rendered) {
-    renderLogTab(key);
-    target.dataset.rendered = '1';
-  }
-
-  // Always re-render changelog (existing behavior — it may have changed)
-  if (key === 'changelog') {
-    renderLogTab(key);
-  }
+  // Always re-render to show fresh data
+  renderLogTab(key);
 };
 
 /** Dispatch map: log sub-tab key → window function name */

@@ -8,22 +8,24 @@ Project direction and planned work. Each item links to its full Linear issue for
 
 ## Near-Term — Next Up
 
-Multi-currency is shipped (STACK-50). These items are unblocked and ready for the next sprint.
+Image cache and mobile views are shipped (v3.27.xx). These items are unblocked and ready for the next sprint.
 
 | Issue | Title | Priority | Depends On |
 |-------|-------|----------|------------|
-| [STACK-54](https://linear.app/hextrackr/issue/STACK-54) | Appearance Settings: header toggles, time zone, layout visibility | Medium | STACK-50 ✅ |
-| [STACK-44](https://linear.app/hextrackr/issue/STACK-44) | Settings Log tab reorganization with sub-tabs | Medium | STACK-43 ✅ |
-| [STACK-46](https://linear.app/hextrackr/issue/STACK-46) | Configurable spot & portfolio card grid with drag-to-reorder | Medium | STACK-45 ✅ |
+| [STACK-85](https://linear.app/hextrackr/issue/STACK-85) | Fix item detail modal layout overlap on Samsung S24+ Ultra | High | — |
+| [STACK-88](https://linear.app/hextrackr/issue/STACK-88) | Include image cache in ZIP backup and restore | High | — |
+| [STACK-81](https://linear.app/hextrackr/issue/STACK-81) | Fix parsePriceToUSD ignoring edit-mode parameters (silent price zeroing) | Medium | — |
+| [STACK-82](https://linear.app/hextrackr/issue/STACK-82) | Fix stale spot-lookup override persisting across date changes | Medium | — |
+| [STACK-84](https://linear.app/hextrackr/issue/STACK-84) | Table Row Thumbnail Images with Hover/Click Preview | Medium | STACK-87 |
+| [STACK-87](https://linear.app/hextrackr/issue/STACK-87) | Bulk cache all inventory coin images in one action | Medium | — |
 | [STACK-48](https://linear.app/hextrackr/issue/STACK-48) | Chart system overhaul: migrate to ApexCharts, add time-series trends | Medium | STACK-43 ✅ |
-| [STACK-38](https://linear.app/hextrackr/issue/STACK-38) | Table CSS hardening & responsive audit | Medium | — |
-| [STACK-49](https://linear.app/hextrackr/issue/STACK-49) | Spot Price Lookup by Date on Add/Edit Form | Low | — |
-| [STACK-51](https://linear.app/hextrackr/issue/STACK-51) | Custom CSV import mapper with header mapping UI and saved profiles | Medium | — |
-| [STACK-53](https://linear.app/hextrackr/issue/STACK-53) | [RFC] Community spot price history CDN via GitHub with manifest-based selective import | Medium | — |
-| [STACK-60](https://linear.app/hextrackr/issue/STACK-60) | Source "—" click-to-filter returns no results for empty source items | Low | — |
+| [STACK-72](https://linear.app/hextrackr/issue/STACK-72) | Realized gains/losses: track sold, lost, and disposed items | Medium | — |
 | [STACK-73](https://linear.app/hextrackr/issue/STACK-73) | Date Run Checklist: track collecting goals with auto-matched year sets | Medium | — |
 | [STACK-74](https://linear.app/hextrackr/issue/STACK-74) | PWA support: manifest, service worker, installable app experience | Medium | — |
 | [STACK-76](https://linear.app/hextrackr/issue/STACK-76) | Numismatics expansion: paper notes, non-melt collectibles, asset class field | Medium | — |
+| [STACK-86](https://linear.app/hextrackr/issue/STACK-86) | Remove redundant View icon from action row | Low | — |
+| [STACK-83](https://linear.app/hextrackr/issue/STACK-83) | Fix Activity Log sub-tabs showing stale data after first render | Low | — |
+| [STACK-63](https://linear.app/hextrackr/issue/STACK-63) | Time Zone Selection for Timestamps | Low | — |
 
 ---
 
@@ -47,15 +49,13 @@ Enhanced UX, mobile support, deployment options, and the v4 vision.
 
 | Issue | Title | Priority | Depends On |
 |-------|-------|----------|------------|
-| [STACK-47](https://linear.app/hextrackr/issue/STACK-47) | v4.00.00 — Multi-asset wealth dashboard (Stocks, Crypto, Collectibles, Real Estate) | Low | STACK-42, STACK-43, STACK-45, STACK-46 |
+| [STACK-47](https://linear.app/hextrackr/issue/STACK-47) | v4.00.00 — Multi-asset wealth dashboard (Stocks, Crypto, Collectibles, Real Estate) | Low | STACK-42, STACK-43, STACK-45 |
 | [STACK-75](https://linear.app/hextrackr/issue/STACK-75) | Desktop wrapper research: Tauri vs Electron for native installers | Low | STACK-74 |
 | [STACK-77](https://linear.app/hextrackr/issue/STACK-77) | Stocks & Crypto module: ticker-based pricing with portfolio tracking | Low | STACK-76 |
 | [STACK-78](https://linear.app/hextrackr/issue/STACK-78) | Mobile native app: Capacitor/Tauri wrapper with Supabase sync | Low | STACK-30, STACK-74, STACK-75 |
-| [STACK-31](https://linear.app/hextrackr/issue/STACK-31) | Mobile-responsive card view | Low | — |
 | [STACK-32](https://linear.app/hextrackr/issue/STACK-32) | User photo upload for inventory items | Low | STACK-30 |
-| [STACK-33](https://linear.app/hextrackr/issue/STACK-33) | Mobile camera capture in add/edit modal | Low | STACK-31, STACK-32 |
+| [STACK-33](https://linear.app/hextrackr/issue/STACK-33) | Mobile camera capture in add/edit modal | Low | STACK-32 |
 | [STACK-34](https://linear.app/hextrackr/issue/STACK-34) | Docker build & image for self-hosting | Low | — |
-| [STACK-37](https://linear.app/hextrackr/issue/STACK-37) | Numista image & API caching | Low | STACK-30 |
 
 ---
 
@@ -80,6 +80,8 @@ Explicitly out of scope until prerequisites are met.
 | STACK-35 | Proxmox LXC setup guide | Canceled — Docker (STACK-34) sufficient for self-hosting |
 | STACK-39 | Full UI review walkthrough | Rolled into STACK-38 (responsive audit) |
 | STACK-41 | Per-item retail price history | Duplicate of STACK-43 |
+| STACK-46 | Configurable spot & portfolio card grid with drag-to-reorder | Canceled |
+| STACK-53 | Community spot price history CDN via GitHub | Canceled |
 
 ---
 
@@ -88,12 +90,24 @@ Explicitly out of scope until prerequisites are met.
 <details>
 <summary>Shipped features (click to expand)</summary>
 
+- **v3.27.02** — Multi-color storage bar: stacked localStorage (blue) + IndexedDB (green) segments with tooltips
+- **v3.27.01** — Iframe to popup window migration for source URLs and Numista links
+- **v3.27.00** — STACK-37: Coin image cache (IndexedDB, 50MB quota) & item view modal with Numista enrichment, metadata caching, eBay search
+- **v3.26.03** — STACK-79/80: XSS & HTML injection hardening with shared `escapeHtml()` utility
+- **v3.26.02** — Autocomplete migration fix, version check CORS fix
+- **v3.26.01** — Fuzzy autocomplete settings toggle
+- **v3.26.00** — STACK-62: Autocomplete & fuzzy search pipeline with abbreviation expansion
+- **v3.25.05** — STACK-71: Details modal QoL — responsive charts, pie slice labels, scrollable breakdown
+- **v3.25.04** — STACK-70: Mobile-optimized modals — full-screen at ≤768px, touch-sized inputs, landscape card view
+- **v3.25.03** — STACK-31/38: Responsive card view & mobile layout — CSS card view at ≤768px, table CSS hardening
+- **v3.25.02** — STACK-56/61: Codebase refactoring — complexity reduction, CCN decomposition, modularization
 - **v3.25.01** — STACK-64/67: Version splash fix (friendly announcements), footer version badge with remote update check, sponsor badges
 - **v3.25.00** — STACK-54/65/66: Appearance settings (header buttons, layout toggles), spot lookup fix, sparkline improvements
+- **v3.24.01** — STACK-57: ZIP/JSON backup fix — Goldback fields, weightUnit, purity, marketValue preserved on restore
 - **v3.24.00** — STACK-50: Multi-currency support with 17-currency display, daily exchange rate conversion, dynamic formatting
 - **v3.23.02** — STACK-52: Bulk Edit pinned selections, dormant prototype cleanup
 - **v3.23.01** — Goldback real-time estimation, Settings reorganization
-- **v3.23.00** — STACK-42/43/45: Persistent UUIDs, silent price history recording, Goldback denomination pricing & type support
+- **v3.23.00** — STACK-42/43/44/45: Persistent UUIDs, silent price history recording, Settings Log sub-tabs, Goldback denomination pricing & type support
 - **v3.22.01** — Form layout, bulk edit dropdowns, purity chips
 - **v3.22.00** — STACK-22/24/25/27: Purity field & melt formula, PCGS quota bar, pie chart metric toggle, test-loader extraction
 - **v3.21.03** — STACK-23: Search matches custom chip group labels

@@ -41,3 +41,7 @@ logs/
 # Environment variables
 .env
 .env.local
+
+# DevOps tooling (private)
+devops/*
+!devops/.env.example
