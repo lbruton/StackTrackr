@@ -118,42 +118,32 @@ self.addEventListener('fetch', (event) => {
   }
 });
 
+// Shared: fetch and write successful responses to cache
+function fetchAndCache(request) {
+  return fetch(request).then((response) => {
+    if (response.ok) {
+      const clone = response.clone();
+      caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+    }
+    return response;
+  });
+}
+
 // Strategy: cache-first with network fallback
 function cacheFirst(request) {
   return caches.match(request).then((cached) => {
-    return cached || fetch(request).then((response) => {
-      if (response.ok) {
-        const clone = response.clone();
-        caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
-      }
-      return response;
-    });
+    return cached || fetchAndCache(request);
   });
 }
 
 // Strategy: network-first with cache fallback
 function networkFirst(request) {
-  return fetch(request)
-    .then((response) => {
-      if (response.ok) {
-        const clone = response.clone();
-        caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
-      }
-      return response;
-    })
-    .catch(() => caches.match(request));
+  return fetchAndCache(request).catch(() => caches.match(request));
 }
 
 // Strategy: stale-while-revalidate (serve cached, update in background)
 function staleWhileRevalidate(request) {
   return caches.match(request).then((cached) => {
-    const fetchPromise = fetch(request).then((response) => {
-      if (response.ok) {
-        const clone = response.clone();
-        caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
-      }
-      return response;
-    });
-    return cached || fetchPromise;
+    return cached || fetchAndCache(request);
   });
 }
