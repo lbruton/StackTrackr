@@ -115,8 +115,6 @@ class ImageCache {
       reverse: reverseBlob,
       obverseUrl: obverseUrl || '',
       reverseUrl: reverseUrl || '',
-      width: this._maxDim,
-      height: this._maxDim,
       cachedAt: Date.now(),
       size
     };
@@ -215,6 +213,23 @@ class ImageCache {
   }
 
   /**
+   * List all cached catalog IDs without loading blob data.
+   * Uses key-only cursor for minimal memory footprint.
+   * @returns {Promise<string[]>}
+   */
+  async listAllCachedIds() {
+    if (!this._available) return [];
+    return new Promise((resolve) => {
+      try {
+        const tx = this._db.transaction('coinImages', 'readonly');
+        const req = tx.objectStore('coinImages').getAllKeys();
+        req.onsuccess = () => resolve(req.result || []);
+        req.onerror = () => resolve([]);
+      } catch { resolve([]); }
+    });
+  }
+
+  /**
    * Remove a single image record.
    * @param {string} catalogId
    * @returns {Promise<boolean>}
@@ -222,6 +237,48 @@ class ImageCache {
   async deleteImages(catalogId) {
     if (!this._available || !catalogId) return false;
     return this._delete('coinImages', catalogId);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Export / Import (for ZIP backup — STACK-88)
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Export all image records (with blobs) for backup.
+   * @returns {Promise<Array>}
+   */
+  async exportAllImages() {
+    if (!this._available) return [];
+    return this._getAll('coinImages');
+  }
+
+  /**
+   * Export all metadata records for backup.
+   * @returns {Promise<Array>}
+   */
+  async exportAllMetadata() {
+    if (!this._available) return [];
+    return this._getAll('coinMetadata');
+  }
+
+  /**
+   * Import a single image record (from ZIP restore).
+   * @param {Object} record - Image record with catalogId, obverse, reverse blobs
+   * @returns {Promise<boolean>}
+   */
+  async importImageRecord(record) {
+    if (!this._available || !record?.catalogId) return false;
+    return this._put('coinImages', record);
+  }
+
+  /**
+   * Import a single metadata record (from ZIP restore).
+   * @param {Object} record - Metadata record with catalogId key
+   * @returns {Promise<boolean>}
+   */
+  async importMetadataRecord(record) {
+    if (!this._available || !record?.catalogId) return false;
+    return this._put('coinMetadata', record);
   }
 
   /**
@@ -266,38 +323,90 @@ class ImageCache {
   }
 
   // ---------------------------------------------------------------------------
+  // Validation
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Check whether a string looks like a usable image URL.
+   * Rejects corrupted URLs that have had special characters stripped.
+   * @param {string} url
+   * @returns {boolean}
+   */
+  static isValidImageUrl(url) {
+    if (!url || typeof url !== 'string') return false;
+    return /^https?:\/\/.+\..+/i.test(url);
+  }
+
+  // ---------------------------------------------------------------------------
   // Image pipeline (private)
   // ---------------------------------------------------------------------------
 
   /**
-   * Fetch an image URL → resize to max dimension → compress as JPEG blob.
-   * Falls back to Image element if fetch fails (CORS on file://).
+   * Fetch an image URL using a multi-strategy cascade that gracefully
+   * degrades when CORS headers are unavailable (e.g. Numista CDN).
+   *
+   * Strategy A: fetch(CORS) → createImageBitmap → canvas resize → JPEG blob
+   * Strategy B: fetch(CORS) succeeded but canvas tainted → store raw blob
+   * Strategy C: Image element (no crossOrigin) → canvas → JPEG blob
+   * Strategy D: fetch(no-cors) → opaque blob stored directly (still displayable)
+   *
    * @param {string} url
    * @returns {Promise<Blob|null>}
    */
   async _fetchAndResize(url) {
-    if (!url) return null;
+    if (!url || !ImageCache.isValidImageUrl(url)) return null;
 
-    let imgBitmap;
-
+    // --- Strategy A: CORS fetch → canvas resize → JPEG ---
     try {
-      // Primary: fetch as blob
       const resp = await fetch(url, { mode: 'cors' });
       if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
       const blob = await resp.blob();
-      imgBitmap = await createImageBitmap(blob);
-    } catch {
-      // Fallback: Image element (works when fetch CORS fails)
-      try {
-        imgBitmap = await this._loadImageElement(url);
-      } catch (e2) {
-        console.warn('ImageCache: failed to load image', url, e2);
-        return null;
-      }
+      const imgBitmap = await createImageBitmap(blob);
+
+      const resized = await this._resizeToJpeg(imgBitmap);
+      if (resized) return resized;
+
+      // Strategy B: fetch succeeded but canvas failed — use raw blob
+      console.warn('ImageCache: Strategy A canvas failed, using raw blob for', url);
+      return blob;
+    } catch (errA) {
+      console.warn('ImageCache: Strategy A (CORS fetch) failed for', url, errA.message);
     }
 
-    // Resize to fit within maxDim × maxDim, preserving aspect ratio
-    let { width, height } = imgBitmap;
+    // --- Strategy C: Image element without crossOrigin → canvas ---
+    try {
+      const img = await this._loadImageElement(url, false);
+      const resized = await this._resizeToJpeg(img);
+      if (resized) return resized;
+      console.warn('ImageCache: Strategy C canvas tainted for', url);
+    } catch (errC) {
+      console.warn('ImageCache: Strategy C (Image element) failed for', url, errC.message);
+    }
+
+    // --- Strategy D: no-cors fetch → opaque blob (displayable via object URL) ---
+    try {
+      const blob = await this._fetchBlobDirect(url);
+      if (blob) {
+        console.warn('ImageCache: Strategy D (no-cors blob) succeeded for', url);
+        return blob;
+      }
+    } catch (errD) {
+      console.warn('ImageCache: Strategy D (no-cors) failed for', url, errD.message);
+    }
+
+    console.warn('ImageCache: all strategies failed for', url);
+    return null;
+  }
+
+  /**
+   * Resize an image source to fit within maxDim × maxDim and compress as JPEG.
+   * Returns null if canvas is tainted (SecurityError).
+   * @param {ImageBitmap|HTMLImageElement} source
+   * @returns {Promise<Blob|null>}
+   */
+  async _resizeToJpeg(source) {
+    let width = source.width;
+    let height = source.height;
     const scale = Math.min(this._maxDim / width, this._maxDim / height, 1);
     width = Math.round(width * scale);
     height = Math.round(height * scale);
@@ -306,27 +415,54 @@ class ImageCache {
     canvas.width = width;
     canvas.height = height;
     const ctx = canvas.getContext('2d');
-    ctx.drawImage(imgBitmap, 0, 0, width, height);
+    ctx.drawImage(source, 0, 0, width, height);
 
-    // Compress to JPEG
-    return new Promise((resolve) => {
-      canvas.toBlob(
-        (blob) => resolve(blob),
-        'image/jpeg',
-        this._jpegQuality
-      );
-    });
+    try {
+      return await new Promise((resolve, reject) => {
+        canvas.toBlob(
+          (blob) => blob ? resolve(blob) : reject(new Error('toBlob returned null')),
+          'image/jpeg',
+          this._jpegQuality
+        );
+      });
+    } catch {
+      return null;
+    }
   }
 
   /**
-   * Load an image via HTMLImageElement (fallback for CORS-restricted fetch).
+   * Try to get a raw blob for a URL without canvas processing.
+   * Falls back to no-cors fetch (opaque blob — still displayable via object URL).
    * @param {string} url
+   * @returns {Promise<Blob|null>}
+   */
+  async _fetchBlobDirect(url) {
+    // Try standard fetch first
+    try {
+      const resp = await fetch(url);
+      if (resp.ok) return await resp.blob();
+    } catch { /* fall through */ }
+
+    // Try no-cors fetch (opaque blob — still displayable via object URL)
+    try {
+      const resp = await fetch(url, { mode: 'no-cors' });
+      const blob = await resp.blob();
+      if (blob.size > 0) return blob;
+    } catch { /* fall through */ }
+
+    return null;
+  }
+
+  /**
+   * Load an image via HTMLImageElement.
+   * @param {string} url
+   * @param {boolean} [useCors=false] - Whether to set crossOrigin='anonymous'
    * @returns {Promise<ImageBitmap>}
    */
-  _loadImageElement(url) {
+  _loadImageElement(url, useCors = false) {
     return new Promise((resolve, reject) => {
       const img = new Image();
-      img.crossOrigin = 'anonymous';
+      if (useCors) img.crossOrigin = 'anonymous';
       img.onload = () => {
         createImageBitmap(img).then(resolve).catch(reject);
       };

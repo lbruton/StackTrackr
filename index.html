@@ -2290,6 +2290,18 @@
                   Open Bulk Editor
                 </button>
               </div>
+
+              <!-- Coin Image Cache (STACK-87) — gated by COIN_IMAGES flag + IDB availability -->
+              <div class="settings-group" id="bulkImageCacheGroup" style="display:none;">
+                <label>Coin Image Cache</label>
+                <p class="settings-subtext">
+                  Download and cache coin images for offline viewing.
+                  Manage cached images, bulk download, or clear the cache.
+                </p>
+                <button class="btn settings-action-btn" id="openImageCacheBtn" type="button">
+                  Manage Image Cache
+                </button>
+              </div>
             </div>
 
             <!-- ===== GOLDBACK PRICING (STACK-45) ===== -->
@@ -2705,6 +2717,49 @@
     </div>
 
     <!-- =============================================================================
+       IMAGE CACHE MANAGER MODAL
+
+       Sub-modal opened from Settings > System > Manage Image Cache.
+       Shows cache stats, per-entry table with actions, real-time activity log,
+       and bulk cache controls.
+       ============================================================================= -->
+    <div class="modal" id="imageCacheModal" style="display: none">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Image Cache Manager</h2>
+          <button
+            aria-label="Close modal"
+            class="modal-close"
+            id="imageCacheCloseBtn"
+          >
+            &times;
+          </button>
+        </div>
+        <div class="modal-body">
+          <!-- Stats bar -->
+          <div id="imageCacheStats" class="settings-subtext" style="margin-bottom:0.75rem;"></div>
+
+          <!-- Cached images table -->
+          <div id="cachedImagesTableContainer" class="chip-grouping-table-container" style="max-height:220px;overflow-y:auto;margin-bottom:0.75rem;"></div>
+
+          <!-- Activity log -->
+          <label style="font-size:0.8rem;opacity:0.7;">Activity Log</label>
+          <div id="imageCacheLog" style="max-height:150px;overflow-y:auto;border:1px solid var(--border-color, #ddd);border-radius:4px;padding:0.4rem;margin-top:0.25rem;background:var(--bg-secondary, #f9f9f9);"></div>
+
+          <!-- Progress bar (hidden until bulk cache starts) -->
+          <progress id="imageCacheProgress" value="0" max="0" style="display:none;width:100%;margin-top:0.5rem;"></progress>
+        </div>
+        <div class="modal-footer" style="display:flex;gap:0.5rem;justify-content:space-between;">
+          <div style="display:flex;gap:0.5rem;">
+            <button type="button" class="btn" id="imageCacheStartBtn">Cache All Images</button>
+            <button type="button" class="btn warning" id="imageCacheCancelBtn" style="display:none;">Cancel</button>
+          </div>
+          <button type="button" class="btn danger" id="imageCacheClearAllBtn">Clear All</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- =============================================================================
        CATALOG HISTORY MODAL
 
        Modal for viewing catalog API call history (Numista lookups, searches).
@@ -2904,6 +2959,8 @@
   <script defer src="./js/state.js"></script>
   <script defer src="./js/utils.js"></script>
   <script defer src="./js/image-cache.js"></script>
+  <script defer src="./js/bulk-image-cache.js"></script>
+  <script defer src="./js/image-cache-modal.js"></script>
   <script defer src="./js/fuzzy-search.js"></script>
   <script defer src="./js/autocomplete.js"></script>
   <script defer src="./js/numista-lookup.js"></script>
