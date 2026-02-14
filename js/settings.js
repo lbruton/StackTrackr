@@ -248,6 +248,13 @@ const syncSettingsUI = () => {
     syncGoldbackSettingsUI();
   }
 
+  // Bulk image cache visibility (STACK-87)
+  if (elements.bulkImageCacheGroup) {
+    const showBulkCache = window.featureFlags?.isEnabled('COIN_IMAGES') &&
+                          window.imageCache?.isAvailable();
+    elements.bulkImageCacheGroup.style.display = showBulkCache ? '' : 'none';
+  }
+
   // Spot compare mode (STACK-92)
   const spotCompareSelect = document.getElementById('settingsSpotCompareMode');
   if (spotCompareSelect) {
@@ -613,6 +620,13 @@ const setupSettingsEventListeners = () => {
     window.setupChipGroupingEvents();
   }
 
+  // Image Cache Manager modal opener (STACK-87)
+  if (elements.openImageCacheBtn) {
+    elements.openImageCacheBtn.addEventListener('click', () => {
+      if (typeof showImageCacheModal === 'function') showImageCacheModal();
+    });
+  }
+
   // Settings modal close button
   const closeBtn = document.getElementById('settingsCloseBtn');
   if (closeBtn) {
@@ -765,6 +779,33 @@ const setupSettingsEventListeners = () => {
   if (gbExportBtn) {
     gbExportBtn.addEventListener('click', () => {
       if (typeof exportGoldbackHistory === 'function') exportGoldbackHistory();
+    });
+  }
+
+  // Image Cache Manager modal events (STACK-87)
+  const icCloseBtn = document.getElementById('imageCacheCloseBtn');
+  if (icCloseBtn) {
+    icCloseBtn.addEventListener('click', () => {
+      if (typeof hideImageCacheModal === 'function') hideImageCacheModal();
+    });
+  }
+  const icStartBtn = document.getElementById('imageCacheStartBtn');
+  if (icStartBtn) {
+    icStartBtn.addEventListener('click', () => {
+      if (typeof startBulkCacheFromModal === 'function') startBulkCacheFromModal();
+    });
+  }
+  const icCancelBtn = document.getElementById('imageCacheCancelBtn');
+  if (icCancelBtn) {
+    icCancelBtn.addEventListener('click', () => {
+      if (window.BulkImageCache) BulkImageCache.abort();
+      icCancelBtn.style.display = 'none';
+    });
+  }
+  const icClearAllBtn = document.getElementById('imageCacheClearAllBtn');
+  if (icClearAllBtn) {
+    icClearAllBtn.addEventListener('click', () => {
+      if (typeof clearAllCachedImages === 'function') clearAllCachedImages();
     });
   }
 

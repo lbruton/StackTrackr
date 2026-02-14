@@ -1,4 +1,12 @@
 // INVENTORY FUNCTIONS
+
+/** Blob URLs created by _enhanceTableThumbnails — revoked on each re-render */
+let _thumbBlobUrls = [];
+window.addEventListener('beforeunload', () => {
+  for (const url of _thumbBlobUrls) {
+    try { URL.revokeObjectURL(url); } catch { /* ignore */ }
+  }
+});
 /**
  * Creates a comprehensive backup ZIP file containing all application data
  * 
@@ -192,8 +200,29 @@ const createBackupZip = async () => {
       zip.file('sample_data.json', JSON.stringify(sampleData, null, 2));
     }
 
+    // 9. Add cached coin images (STACK-88)
+    if (window.imageCache?.isAvailable()) {
+      const allImages = await imageCache.exportAllImages();
+      if (allImages.length > 0) {
+        const imgFolder = zip.folder('images');
+        for (const rec of allImages) {
+          if (rec.obverse) imgFolder.file(`${rec.catalogId}_obverse.jpg`, rec.obverse);
+          if (rec.reverse) imgFolder.file(`${rec.catalogId}_reverse.jpg`, rec.reverse);
+        }
+      }
+      const allMeta = await imageCache.exportAllMetadata();
+      if (allMeta.length > 0) {
+        zip.file('image_metadata.json', JSON.stringify({
+          version: APP_VERSION,
+          exportDate: new Date().toISOString(),
+          count: allMeta.length,
+          metadata: allMeta
+        }, null, 2));
+      }
+    }
+
     // Generate and download the ZIP file
-    const zipBlob = await zip.generateAsync({ type: 'blob' });
+    const zipBlob = await zip.generateAsync({ type: 'blob', streamFiles: true });
     const url = URL.createObjectURL(zipBlob);
     
     const a = document.createElement('a');
@@ -344,6 +373,50 @@ const restoreBackupZip = async (file) => {
       loadItemPriceHistory();
     }
 
+    // Restore cached coin images (STACK-88)
+    if (window.imageCache?.isAvailable()) {
+      const imgFolder = zip.folder('images');
+      const imgEntries = [];
+      if (imgFolder) {
+        imgFolder.forEach((path, file) => { imgEntries.push({ path, file }); });
+      }
+
+      if (imgEntries.length > 0) {
+        await imageCache.clearAll();
+        const imageMap = new Map();
+
+        for (const { path, file } of imgEntries) {
+          const m = path.match(/^(.+)_(obverse|reverse)\.jpg$/);
+          if (!m) continue;
+          if (!imageMap.has(m[1])) imageMap.set(m[1], {});
+          imageMap.get(m[1])[m[2]] = await file.async('blob');
+        }
+
+        for (const [catalogId, sides] of imageMap) {
+          await imageCache.importImageRecord({
+            catalogId,
+            obverse: sides.obverse || null,
+            reverse: sides.reverse || null,
+            width: 400,
+            height: 400,
+            cachedAt: Date.now(),
+            size: (sides.obverse?.size || 0) + (sides.reverse?.size || 0)
+          });
+        }
+      }
+
+      // Restore metadata
+      const metaStr = await zip.file('image_metadata.json')?.async('string');
+      if (metaStr) {
+        const metaObj = JSON.parse(metaStr);
+        if (Array.isArray(metaObj.metadata)) {
+          for (const rec of metaObj.metadata) {
+            await imageCache.importMetadataRecord(rec);
+          }
+        }
+      }
+    }
+
     fetchSpotPrice();
     alert("Data imported successfully.");
   } catch (err) {
@@ -464,6 +537,15 @@ FILE CONTENTS:
 7. README.txt (this file)
    - Backup contents explanation
    - Restoration instructions
+
+8. images/ (if coin images are cached)
+   - Cached coin images as JPEG files
+   - Named {catalogId}_obverse.jpg / {catalogId}_reverse.jpg
+   - Automatically restored when importing backup
+
+9. image_metadata.json (if coin images are cached)
+   - Enriched Numista metadata for cached coins
+   - Restored alongside images for offline viewing
 
 RESTORATION INSTRUCTIONS:
 ------------------------
@@ -1062,6 +1144,27 @@ const hideEmptyColumns = () => {
   });
 };
 
+/**
+ * Upgrades table thumbnail src attributes from CDN URLs to IDB blob URLs.
+ * Fire-and-forget — thumbnails upgrade progressively as blobs resolve.
+ */
+async function _enhanceTableThumbnails() {
+  if (!featureFlags.isEnabled('COIN_IMAGES') || !window.imageCache?.isAvailable()) return;
+  const imgs = document.querySelectorAll('#inventoryTable .table-thumb[data-catalog-id]');
+  for (const img of imgs) {
+    const catId = img.dataset.catalogId;
+    if (!catId) continue;
+    try {
+      const blobUrl = await imageCache.getImageUrl(catId, 'obverse');
+      if (blobUrl) {
+        _thumbBlobUrls.push(blobUrl);
+        img.src = blobUrl;
+        img.style.display = '';  // un-hide if onerror had hidden it
+      }
+    } catch { /* ignore — IDB unavailable or entry missing */ }
+  }
+}
+
 const renderTable = () => {
   return monitorPerformance(() => {
     // Ensure filterInventory is available (search.js may still be loading)
@@ -1165,6 +1268,16 @@ const renderTable = () => {
         ? `<span class="purity-tag" title="Purity: ${purityVal}" onclick="applyColumnFilter('purity', ${JSON.stringify(String(purityVal))})" tabindex="0" role="button" style="cursor:pointer;">${purityVal}</span>`
         : '';
 
+      // Table thumbnail — coin obverse preview in name cell
+      // Omit src attribute entirely when no URL (avoids browser requesting page URL for src="")
+      const thumbUrl = ImageCache.isValidImageUrl(item.obverseImageUrl) ? item.obverseImageUrl : '';
+      const thumbSrcAttr = thumbUrl ? ` src="${escapeAttribute(thumbUrl)}"` : '';
+      const thumbHtml = featureFlags.isEnabled('COIN_IMAGES') && (thumbUrl || item.numistaId)
+        ? `<img class="table-thumb"${thumbSrcAttr}
+               data-catalog-id="${escapeAttribute(item.numistaId || '')}"
+               alt="" loading="lazy" onerror="this.style.display='none'" />`
+        : '';
+
       // Config-driven chip ordering
       const chipMap = { grade: gradeTag, numista: numistaTag, pcgs: pcgsTag, year: yearTag, serial: serialTag, storage: storageTag, notes: notesIndicator, purity: purityTag };
       const orderedChips = chipConfig.filter(c => c.enabled && chipMap[c.id]).map(c => chipMap[c.id]).join('');
@@ -1183,7 +1296,7 @@ const renderTable = () => {
       <td class="shrink" data-column="type" data-label="Type">${filterLink('type', item.type, getTypeColor(item.type))}</td>
       <td class="expand" data-column="name" data-label="" style="text-align: left;">
         <div class="name-cell-content">
-        ${featureFlags.isEnabled('COIN_IMAGES')
+        ${thumbHtml}${featureFlags.isEnabled('COIN_IMAGES')
           ? `<span class="filter-text" style="color: var(--text-primary); cursor: pointer;" onclick="showViewModal(${originalIdx})" tabindex="0" role="button" onkeydown="if(event.key==='Enter'||event.key===' ')showViewModal(${originalIdx})" title="View ${escapeAttribute(item.name)}">${sanitizeHtml(item.name)}</span>`
           : filterLink('name', item.name, 'var(--text-primary)', undefined, item.name)}${orderedChips}
         </div>
@@ -1227,8 +1340,17 @@ const renderTable = () => {
       return;
     }
 
+    // Revoke previous thumbnail blob URLs to prevent memory leaks
+    for (const url of _thumbBlobUrls) {
+      try { URL.revokeObjectURL(url); } catch { /* ignore */ }
+    }
+    _thumbBlobUrls = [];
+
     // nosemgrep: javascript.browser.security.insecure-innerhtml.insecure-innerhtml, javascript.browser.security.insecure-document-method.insecure-document-method
     tbody.innerHTML = rows.join('');
+
+    // Upgrade table thumbnails from CDN URLs to IDB blob URLs (fire-and-forget)
+    _enhanceTableThumbnails();
 
     // Card-view tap: delegate click on tbody rows (≤768px only)
     // Opens view modal if COIN_IMAGES enabled, otherwise edit modal

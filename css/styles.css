@@ -2607,6 +2607,21 @@ td[data-column="name"] {
   white-space: nowrap;
 }
 
+/* Table thumbnail — coin obverse preview */
+.table-thumb {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  background: var(--bg-tertiary, #2a2a2a);
+  vertical-align: middle;
+}
+/* Hide thumbnail when no image URL available (src omitted until IDB enhancement) */
+.table-thumb:not([src]) {
+  display: none;
+}
+
 /* Tags never shrink — always visible */
 .name-cell-content > .year-tag,
 .name-cell-content > .numista-tag,
@@ -8048,6 +8063,12 @@ th {
     white-space: normal;
     text-overflow: clip;
     font-size: 1.05rem;
+  }
+
+  /* Table thumb in card view — slightly larger */
+  #inventoryTable tbody td[data-column="name"] .table-thumb {
+    width: 36px;
+    height: 36px;
   }
 
   /* Chips: horizontal row, touch-friendly size */

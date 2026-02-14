@@ -345,10 +345,12 @@ async function loadViewImages(item, container) {
     if (obvUrl || revUrl) return true;
   }
 
-  // Fallback: CDN URLs stored on the item
-  if (item.obverseImageUrl) _setSlotImage(obvSlot, item.obverseImageUrl);
-  if (item.reverseImageUrl) _setSlotImage(revSlot, item.reverseImageUrl);
-  if (item.obverseImageUrl || item.reverseImageUrl) return true;
+  // Fallback: CDN URLs stored on the item (validate to skip corrupted URLs)
+  const validObv = ImageCache.isValidImageUrl(item.obverseImageUrl);
+  const validRev = ImageCache.isValidImageUrl(item.reverseImageUrl);
+  if (validObv) _setSlotImage(obvSlot, item.obverseImageUrl);
+  if (validRev) _setSlotImage(revSlot, item.reverseImageUrl);
+  if (validObv || validRev) return true;
 
   return false;
 }
