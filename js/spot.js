@@ -710,16 +710,19 @@ const updateSpotChangePercent = (metalKey, precomputedData = null) => {
   const el = document.getElementById(`spotChange${metalConfig.name}`);
   if (!el) return;
 
+  const rangeSelectEl0 = document.getElementById(`spotRange${metalConfig.name}`);
+  const selectedDays0 = rangeSelectEl0 ? parseInt(rangeSelectEl0.value, 10) : 90;
+
   let data;
-  if (precomputedData) {
+  if (selectedDays0 === 1) {
+    // 1-day view: fetch last-entry-per-day (same method as the 24h badge on
+    // multi-day views) so the primary % is a true 24h change.  The sparkline
+    // visual still uses its own intraday-averaged data from updateSparkline().
+    ({ data } = getSparklineData(metalConfig.name, 3, false));
+  } else if (precomputedData) {
     data = precomputedData;
   } else {
-    const rangeSelect = document.getElementById(`spotRange${metalConfig.name}`);
-    const days = rangeSelect ? parseInt(rangeSelect.value, 10) : 90;
-    // 1-day view: use 3-day intraday window for yesterday→today comparison (STACK-66)
-    const isIntraday = (days === 1);
-    const effectiveDays = isIntraday ? 3 : days;
-    ({ data } = getSparklineData(metalConfig.name, effectiveDays, isIntraday));
+    ({ data } = getSparklineData(metalConfig.name, selectedDays0));
   }
 
   if (data.length < 2) {
@@ -727,7 +730,9 @@ const updateSpotChangePercent = (metalKey, precomputedData = null) => {
     return;
   }
 
-  const oldest = data[0];
+  // For 1d view, compare yesterday→today (last two points) for true 24h change.
+  // For all other views, compare oldest→newest across the full selected range.
+  const oldest = selectedDays0 === 1 ? data[data.length - 2] : data[0];
   const newest = data[data.length - 1];
   const pctChange = ((newest - oldest) / oldest) * 100;
   const sign = pctChange > 0 ? "+" : "";
@@ -744,10 +749,8 @@ const updateSpotChangePercent = (metalKey, precomputedData = null) => {
 
   // Append secondary % indicator in parentheses (STACK-69)
   // >1d views: show 24h change | 1d view: show 90d change for context
-  const rangeSelectEl = document.getElementById(`spotRange${metalConfig.name}`);
-  const selectedDays = rangeSelectEl ? parseInt(rangeSelectEl.value, 10) : 90;
-  if (selectedDays > 1) {
-    const { data: dailyData } = getSparklineData(metalConfig.name, 3, true);
+  if (selectedDays0 > 1) {
+    const { data: dailyData } = getSparklineData(metalConfig.name, 3, false);
     if (dailyData.length >= 2) {
       const dayOld = dailyData[dailyData.length - 2];
       const dayNew = dailyData[dailyData.length - 1];

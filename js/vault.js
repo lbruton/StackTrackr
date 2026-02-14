@@ -731,17 +731,6 @@ function showVaultStatus(type, message) {
 }
 
 /**
- * Escape HTML special characters.
- * @param {string} str
- * @returns {string}
- */
-function escapeHtml(str) {
-  var div = document.createElement("div");
-  div.appendChild(document.createTextNode(str));
-  return div.innerHTML;
-}
-
-/**
  * Format file size in human-readable form.
  * @param {number} bytes
  * @returns {string}
