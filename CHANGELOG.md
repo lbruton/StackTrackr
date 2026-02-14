@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.26.03] - 2026-02-13
+
+### Fixed — STACK-79, STACK-80: XSS & HTML Injection Hardening
+
+- **Fixed**: DOM XSS in Price History table — item names now escaped via `escapeHtml()` before innerHTML interpolation (STACK-79)
+- **Fixed**: HTML injection in Spot History table — metal, source, and provider fields now escaped (STACK-80)
+- **Fixed**: HTML injection in Spot Lookup modal — source and data attributes now escaped (STACK-80)
+- **Added**: Shared `escapeHtml()` utility in `utils.js` for consistent XSS prevention across modules
+
+---
+
 ## [3.26.02] - 2026-02-13
 
 ### Fixed — Autocomplete Migration & Version Check CORS
