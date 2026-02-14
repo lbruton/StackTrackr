@@ -274,10 +274,10 @@ const setupAckModalEvents = () => {
  */
 const getEmbeddedWhatsNew = () => {
   return `
+    <li><strong>v3.27.04 &ndash; Spot Comparison Mode &amp; Mobile API Settings</strong>: 24h % comparison mode setting (Close/Close, Open/Open, Open/Close). Replaced drag-to-sort provider tabs with Sync Priority dropdowns. Mobile tab overflow fix. Consistent 24h % across all spot card views (STACK-89, STACK-90, STACK-92)</li>
     <li><strong>v3.27.03 &ndash; PWA Support &amp; Bug Fixes</strong>: Installable app experience with offline caching via service worker. Fixed: edit-mode price preservation (STACK-81), stale spot-lookup on date change (STACK-82), Activity Log tabs showing stale data (STACK-83), Samsung S24+ Ultra layout (STACK-85). Removed redundant View icon (STACK-86). Spot history seed data from Docker poller infrastructure</li>
     <li><strong>v3.27.00 &ndash; Coin Image Cache &amp; Item View Modal</strong>: IndexedDB image cache for Numista coin photos with 50MB quota. Card-style view modal with images, inventory data, valuation, grading, and enriched Numista metadata. Settings toggles for 15 fields. View button in table/card actions. Clickable source URLs and N# badges open in popup windows. eBay search from view modal. Full-screen mobile layout with sticky footer</li>
-    <li><strong>v3.26.03 &ndash; STACK-79, STACK-80: XSS &amp; HTML Injection Hardening</strong>: Escaped item names in Price History, metal/source/provider in Spot History, and source/data-attrs in Spot Lookup. Added shared escapeHtml() utility</li>
-    <li><strong>v3.26.02 &ndash; Autocomplete Migration &amp; Version Check CORS</strong>: One-time migration auto-enables fuzzy autocomplete for users with silently disabled flag. Fixed version check CORS failure from staktrakr.com 301 redirect</li>
+    <li><strong>v3.26.03 &ndash; XSS &amp; HTML Injection Hardening</strong>: Escaped item names in Price History, metal/source/provider in Spot History, and source/data-attrs in Spot Lookup. Added shared escapeHtml() utility</li>
   `;
 };
 

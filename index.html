@@ -1621,6 +1621,17 @@
                 </label>
               </div>
 
+              <!-- Spot price comparison mode (STACK-92) -->
+              <div class="settings-group">
+                <div class="settings-group-label">24h price comparison</div>
+                <p class="settings-subtext">Choose how the 24h percentage change on spot cards is calculated.</p>
+                <select id="settingsSpotCompareMode">
+                  <option value="close-close">Close / Close (default)</option>
+                  <option value="open-open">Open / Open</option>
+                  <option value="open-close">Open / Close</option>
+                </select>
+              </div>
+
               <div class="settings-placeholder" style="margin-top: 1.5rem;">
                 <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.3"><circle cx="13.5" cy="6.5" r="2.5"/><circle cx="19" cy="13" r="2.5"/><circle cx="16" cy="20" r="2.5"/><circle cx="7" cy="20" r="2.5"/><circle cx="4" cy="13" r="2.5"/><circle cx="12" cy="13" r="3"/></svg>
                 <p>Custom themes coming soon.</p>
@@ -1815,10 +1826,10 @@
               <div class="settings-provider-tabs">
                 <button class="settings-provider-tab pinned active" data-provider="NUMISTA">Numista</button>
                 <button class="settings-provider-tab pinned" data-provider="PCGS">PCGS</button>
-                <button class="settings-provider-tab" data-provider="METALS_DEV" draggable="true">Metals.dev</button>
-                <button class="settings-provider-tab" data-provider="METALS_API" draggable="true">Metals-API</button>
-                <button class="settings-provider-tab" data-provider="METAL_PRICE_API" draggable="true">MetalPriceAPI</button>
-                <button class="settings-provider-tab" data-provider="CUSTOM" draggable="true">Custom Spot API</button>
+                <button class="settings-provider-tab" data-provider="METALS_DEV">Metals.dev</button>
+                <button class="settings-provider-tab" data-provider="METALS_API">Metals-API</button>
+                <button class="settings-provider-tab" data-provider="METAL_PRICE_API">MetalPriceAPI</button>
+                <button class="settings-provider-tab" data-provider="CUSTOM">Custom Spot API</button>
               </div>
 
               <!-- Numista Provider Panel -->
@@ -1927,11 +1938,13 @@
                       </select>
                     </div>
                     <div class="provider-setting-row">
-                      <label>Sync Mode:</label>
-                      <div class="chip-sort-toggle sync-mode-toggle" id="syncMode_METALS_DEV" data-provider="METALS_DEV">
-                        <button type="button" class="chip-sort-btn" data-mode="always">Always</button>
-                        <button type="button" class="chip-sort-btn" data-mode="backup">Backup</button>
-                      </div>
+                      <label for="providerPriority_METALS_DEV">Sync Priority:</label>
+                      <select class="provider-priority-select" id="providerPriority_METALS_DEV" data-provider="METALS_DEV">
+                        <option value="1">1 — Primary</option>
+                        <option value="2">2 — Backup</option>
+                        <option value="3">3 — Tertiary</option>
+                        <option value="0">Disabled</option>
+                      </select>
                     </div>
                     <div class="provider-history-pull">
                       <label for="historyPullDays_METALS_DEV">Pull History:</label>
@@ -1994,11 +2007,13 @@
                       </select>
                     </div>
                     <div class="provider-setting-row">
-                      <label>Sync Mode:</label>
-                      <div class="chip-sort-toggle sync-mode-toggle" id="syncMode_METALS_API" data-provider="METALS_API">
-                        <button type="button" class="chip-sort-btn" data-mode="always">Always</button>
-                        <button type="button" class="chip-sort-btn" data-mode="backup">Backup</button>
-                      </div>
+                      <label for="providerPriority_METALS_API">Sync Priority:</label>
+                      <select class="provider-priority-select" id="providerPriority_METALS_API" data-provider="METALS_API">
+                        <option value="1">1 — Primary</option>
+                        <option value="2">2 — Backup</option>
+                        <option value="3">3 — Tertiary</option>
+                        <option value="0">Disabled</option>
+                      </select>
                     </div>
                     <div class="provider-history-pull">
                       <label for="historyPullDays_METALS_API">Pull History:</label>
@@ -2065,11 +2080,13 @@
                       </select>
                     </div>
                     <div class="provider-setting-row">
-                      <label>Sync Mode:</label>
-                      <div class="chip-sort-toggle sync-mode-toggle" id="syncMode_METAL_PRICE_API" data-provider="METAL_PRICE_API">
-                        <button type="button" class="chip-sort-btn" data-mode="always">Always</button>
-                        <button type="button" class="chip-sort-btn" data-mode="backup">Backup</button>
-                      </div>
+                      <label for="providerPriority_METAL_PRICE_API">Sync Priority:</label>
+                      <select class="provider-priority-select" id="providerPriority_METAL_PRICE_API" data-provider="METAL_PRICE_API">
+                        <option value="1">1 — Primary</option>
+                        <option value="2">2 — Backup</option>
+                        <option value="3">3 — Tertiary</option>
+                        <option value="0">Disabled</option>
+                      </select>
                     </div>
                     <div class="provider-history-pull">
                       <label for="historyPullDays_METAL_PRICE_API">Pull History:</label>
@@ -2150,11 +2167,13 @@
                       </select>
                     </div>
                     <div class="provider-setting-row">
-                      <label>Sync Mode:</label>
-                      <div class="chip-sort-toggle sync-mode-toggle" id="syncMode_CUSTOM" data-provider="CUSTOM">
-                        <button type="button" class="chip-sort-btn" data-mode="always">Always</button>
-                        <button type="button" class="chip-sort-btn" data-mode="backup">Backup</button>
-                      </div>
+                      <label for="providerPriority_CUSTOM">Sync Priority:</label>
+                      <select class="provider-priority-select" id="providerPriority_CUSTOM" data-provider="CUSTOM">
+                        <option value="1">1 — Primary</option>
+                        <option value="2">2 — Backup</option>
+                        <option value="3">3 — Tertiary</option>
+                        <option value="0">Disabled</option>
+                      </select>
                     </div>
                     <!-- Custom providers: no history pull (batch not supported) -->
                     <div class="metal-selection">
