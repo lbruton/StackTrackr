@@ -937,7 +937,7 @@ const renderSpotHistoryTable = () => {
     const metal = e.metal || '';
     const price = typeof formatCurrency === 'function' ? formatCurrency(e.spot) : `$${Number(e.spot).toFixed(2)}`;
     const source = e.source || '';
-    const provider = e.provider || '';
+    const provider = e.source === 'seed' ? 'Seed' : (e.provider || '');
     return `<tr><td>${ts}</td><td>${escapeHtml(metal)}</td><td>${price}</td><td>${escapeHtml(source)}</td><td>${escapeHtml(provider)}</td></tr>`;
   });
 
