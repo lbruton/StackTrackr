@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.26.01] - 2026-02-13
+
+### Added — Fuzzy Autocomplete Settings Toggle
+
+- **Added**: Fuzzy autocomplete On/Off toggle in Settings > Filter Chips panel
+- **Fixed**: Autocomplete feature flag not discoverable — persisted disabled state had no UI to re-enable
+
+---
+
 ## [3.26.00] - 2026-02-13
 
 ### Added — STACK-62: Autocomplete & Fuzzy Search Pipeline
