@@ -1180,31 +1180,55 @@ const getUserFriendlyMessage = (errorMessage) => {
  * Updates footer with localStorage usage statistics
  * and visual usage indicator
  */
-const updateStorageStats = () => {
+const updateStorageStats = async () => {
   try {
-    // 5MB typical localStorage limit expressed in bytes
-    const limit = 5 * 1024 * 1024;
-    let used = 0;
+    // localStorage: 5MB limit in bytes
+    const lsLimit = 5 * 1024 * 1024;
+    let lsUsed = 0;
 
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
       const value = localStorage.getItem(key);
       // localStorage stores strings in UTF-16 (~2 bytes per character)
-      used += (key.length + (value ? value.length : 0)) * 2;
+      lsUsed += (key.length + (value ? value.length : 0)) * 2;
     }
 
-    const usedKB = used / 1024;
-    const limitKB = limit / 1024;
+    // IndexedDB: fetch from imageCache if available
+    let idbUsed = 0;
+    let idbLimit = 50 * 1024 * 1024; // 50MB default
+    if (window.imageCache?.isAvailable()) {
+      try {
+        const idbStats = await imageCache.getStorageUsage();
+        idbUsed = idbStats.totalBytes || 0;
+        idbLimit = idbStats.limitBytes || idbLimit;
+      } catch { /* ignore */ }
+    }
+
+    // Combined total for display
+    const combinedLimit = lsLimit + idbLimit;
+    const combinedUsed = lsUsed + idbUsed;
+
     const el = document.getElementById("storageUsage");
     if (el) {
-      el.textContent = `${usedKB.toFixed(1)} KB / ${limitKB.toFixed(1)} KB`;
+      const lsKB = (lsUsed / 1024).toFixed(1);
+      const idbKB = idbUsed > 0 ? (idbUsed / 1024).toFixed(1) : '0';
+      const totalMB = (combinedUsed / (1024 * 1024)).toFixed(2);
+      const limitMB = (combinedLimit / (1024 * 1024)).toFixed(0);
+      // Show legend dots + breakdown
+      el.innerHTML = `<span class="storage-dot storage-dot--ls"></span>LS ${lsKB} KB`
+        + ` <span class="storage-dot storage-dot--idb"></span>IDB ${idbKB} KB`
+        + ` <span style="color:var(--text-muted); margin-left:4px;">(${totalMB} MB / ${limitMB} MB)</span>`;
     }
 
-    const bar = document.getElementById("storageUsageBar");
-    if (bar) {
-      bar.max = limitKB;
-      bar.value = usedKB;
-    }
+    // Multi-color bar: widths as % of combined limit
+    const lsBar = document.getElementById("storageBarLs");
+    const idbBar = document.getElementById("storageBarIdb");
+    if (lsBar) lsBar.style.width = `${(lsUsed / combinedLimit) * 100}%`;
+    if (idbBar) idbBar.style.width = `${(idbUsed / combinedLimit) * 100}%`;
+
+    // Update tooltips with details
+    if (lsBar) lsBar.title = `localStorage: ${(lsUsed / 1024).toFixed(1)} KB / ${(lsLimit / (1024 * 1024)).toFixed(0)} MB`;
+    if (idbBar) idbBar.title = `IndexedDB Images: ${(idbUsed / 1024).toFixed(1)} KB / ${(idbLimit / (1024 * 1024)).toFixed(0)} MB`;
   } catch (err) {
     const el = document.getElementById("storageUsage");
     if (el) el.textContent = "Storage info unavailable";

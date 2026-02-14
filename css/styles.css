@@ -484,32 +484,45 @@ section {
   margin-left: var(--spacing-sm);
 }
 
-.storage-line progress {
-  margin-left: var(--spacing-sm);
+/* Multi-color storage bar (localStorage + IndexedDB) */
+.storage-bar {
+  display: inline-flex;
   vertical-align: middle;
-  width: 150px;
+  margin-left: var(--spacing-sm);
+  width: 180px;
   height: 0.75rem;
-  appearance: none;
-  -webkit-appearance: none;
   border: 1px solid var(--border);
   border-radius: var(--radius);
   background-color: var(--bg-tertiary);
+  overflow: hidden;
 }
 
-.storage-line progress::-webkit-progress-bar {
-  background-color: var(--bg-tertiary);
-  border-radius: var(--radius);
-}
-
-.storage-line progress::-webkit-progress-value {
+.storage-bar-ls {
+  height: 100%;
   background-color: var(--primary);
-  border-radius: var(--radius);
+  transition: width 0.3s ease;
+  min-width: 0;
 }
 
-.storage-line progress::-moz-progress-bar {
-  background-color: var(--primary);
-  border-radius: var(--radius);
+.storage-bar-idb {
+  height: 100%;
+  background-color: var(--success);
+  transition: width 0.3s ease;
+  min-width: 0;
 }
+
+/* Legend dots in storage text */
+.storage-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin: 0 2px 0 6px;
+  vertical-align: middle;
+}
+
+.storage-dot--ls { background-color: var(--primary); }
+.storage-dot--idb { background-color: var(--success); }
 
 section:hover {
   box-shadow: var(--shadow-lg);
@@ -3463,19 +3476,6 @@ td input:checked + .slider:before {
   border-color: var(--text-secondary);
 }
 
-/* --- Iframe Popup Modal --- */
-.iframe-popup-content {
-  width: 95vw;
-  max-width: 1250px;
-  height: 85vh;
-  max-height: 900px;
-}
-
-.iframe-popup-body {
-  height: calc(100% - 60px);
-  padding: 0;
-}
-
 /* Clickable N# badge */
 .view-modal-catalog-id[style*="cursor: pointer"]:hover {
   filter: brightness(1.2);
@@ -3586,19 +3586,6 @@ td input:checked + .slider:before {
     flex: 1;
   }
 
-  /* Iframe popup: full-screen on mobile */
-  .iframe-popup-content {
-    width: 100%;
-    max-width: 100%;
-    height: 100vh;
-    max-height: 100vh;
-    border-radius: 0;
-    margin: 0;
-  }
-
-  .iframe-popup-body {
-    height: calc(100vh - 56px);
-  }
 }
 
 /* --- Extra-small phones (≤400px) — single-column data --- */

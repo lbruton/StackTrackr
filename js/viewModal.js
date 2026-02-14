@@ -120,7 +120,7 @@ function buildViewContent(item, index) {
         const url = isSet
           ? `https://en.numista.com/catalogue/set.php?id=${cleanId}`
           : `https://en.numista.com/catalogue/pieces${cleanId}.html`;
-        _openIframePopup(url, `Numista — N#${nId}`);
+        _openExternalPopup(url, `numista_${nId}`);
       };
     } else {
       catalogBadge.onclick = null;
@@ -177,7 +177,7 @@ function buildViewContent(item, index) {
       srcLink.textContent = srcVal.replace(/^(https?:\/\/)?(www\.)?/i, '').replace(/\/(.*)/i, '');
       srcLink.addEventListener('click', (e) => {
         e.preventDefault();
-        _openIframePopup(srcHref, 'Source');
+        _openExternalPopup(srcHref, 'source_popup');
       });
       valEl.appendChild(srcLink);
     }
@@ -565,45 +565,26 @@ function _extractMetadata(result) {
 }
 
 // ---------------------------------------------------------------------------
-// Iframe popup (private)
+// External popup (private)
 // ---------------------------------------------------------------------------
 
 /**
- * Open a URL in a modal iframe popup overlay (1250px wide).
- * Falls back to window.open() if the modal element isn't in the DOM.
+ * Open a URL in a 1250px popup window.
+ * Most external sites block iframe embedding (X-Frame-Options), so we use window.open().
  * @param {string} url
- * @param {string} [title='']
+ * @param {string} [name='_blank'] - Window name for reuse
  */
-function _openIframePopup(url, title) {
-  const modal = document.getElementById('iframePopupModal');
-  const frame = document.getElementById('iframePopupFrame');
-  const titleEl = document.getElementById('iframePopupTitle');
-  const closeBtn = document.getElementById('iframePopupCloseBtn');
-
-  if (!modal || !frame) {
-    // Fallback to window.open
-    window.open(url, '_blank', 'width=1250,height=800,scrollbars=yes,resizable=yes,toolbar=no,location=no,menubar=no,status=no');
-    return;
-  }
-
-  frame.src = url;
-  if (titleEl) titleEl.textContent = title || '';
-  modal.style.display = 'flex';
-
-  // Wire close (only once)
-  if (!modal._closeWired) {
-    modal._closeWired = true;
-
-    const close = () => {
-      modal.style.display = 'none';
-      frame.src = 'about:blank';
-    };
-
-    if (closeBtn) closeBtn.addEventListener('click', close);
-    modal.addEventListener('click', (e) => { if (e.target === modal) close(); });
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && modal.style.display !== 'none') close();
-    });
+function _openExternalPopup(url, name) {
+  const popup = window.open(
+    url,
+    name || '_blank',
+    'width=1250,height=800,scrollbars=yes,resizable=yes,toolbar=no,location=no,menubar=no,status=no'
+  );
+  if (!popup) {
+    // Popup blocked — let user know
+    alert(`Popup blocked! Please allow popups or manually visit:\n${url}`);
+  } else {
+    popup.focus();
   }
 }
 
