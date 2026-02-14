@@ -274,11 +274,10 @@ const setupAckModalEvents = () => {
  */
 const getEmbeddedWhatsNew = () => {
   return `
+    <li><strong>v3.26.02 &ndash; Autocomplete Migration &amp; Version Check CORS</strong>: One-time migration auto-enables fuzzy autocomplete for users with silently disabled flag. Fixed version check CORS failure from staktrakr.com 301 redirect</li>
     <li><strong>v3.26.01 &ndash; Fuzzy Autocomplete Settings Toggle</strong>: Added On/Off toggle for fuzzy autocomplete in Settings &gt; Filter Chips. Fixed autocomplete feature flag not discoverable when persisted as disabled</li>
     <li><strong>v3.26.00 &ndash; STACK-62: Autocomplete &amp; Fuzzy Search Pipeline</strong>: Autocomplete dropdowns on form inputs (name, purchase/storage location), abbreviation expansion in search (ASE, kook, krug, etc.), fuzzy fallback with indicator banner, registerName() for dynamic suggestions, Firefox compatibility fix</li>
     <li><strong>v3.25.05 &ndash; STACK-71: Details modal QoL</strong>: Pie chart percentage labels on slices, sticky metric toggle, scrollable modal body fixes overflow cascade, circular chart aspect-ratio, ResizeObserver leak fix, sepia theme chart colors</li>
-    <li><strong>v3.25.04 &ndash; STACK-70: Mobile-optimized modals</strong>: Full-screen modals on mobile with 100dvh, settings 5&times;2 tab grid, 44px touch inputs, hidden pie charts, landscape card view for touch devices 769&ndash;1024px, bulk edit stacking</li>
-    <li><strong>v3.25.03 &ndash; STACK-38/STACK-31: Responsive card view &amp; mobile layout</strong>: Inventory table converts to touch-friendly cards at &le;768px with horizontal chips, 2-column financials, centered action buttons. Consolidated responsive CSS, details modal fixes at &le;640px</li>
   `;
 };
 
