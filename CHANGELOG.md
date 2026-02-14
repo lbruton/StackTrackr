@@ -9,6 +9,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.27.02] - 2026-02-13
+
+### Changed — Multi-Color Storage Bar
+
+- **Changed**: Footer storage bar now shows localStorage (blue) and IndexedDB (green) as stacked segments with color legend dots
+- **Changed**: Storage text displays per-source breakdown (LS KB + IDB KB) with combined total
+- **Changed**: Hover tooltips on bar segments show individual source limits
+
+---
+
+## [3.27.01] - 2026-02-13
+
+### Fixed — Iframe to Popup Window Migration
+
+- **Fixed**: Source URL and N# Numista links in view modal now open in popup windows instead of iframe overlays — external sites block iframe embedding via X-Frame-Options headers
+- **Removed**: Iframe popup modal HTML and CSS (replaced by standard window.open popups)
+
+---
+
 ## [3.27.00] - 2026-02-13
 
 ### Added — Coin Image Cache & Item View Modal
@@ -18,7 +37,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Added**: Numista metadata caching with 30-day TTL — denomination, shape, diameter, thickness, orientation, composition, technique, references, rarity, mintage, edge, tags, and commemorative info
 - **Added**: Settings toggles for 15 Numista view modal fields in API settings panel
 - **Added**: View (eye) button in table/card actions, card tap opens view modal on mobile
-- **Added**: Reusable iframe popup modal (1250px) for source URLs, N# Numista links, and external references
+- **Added**: Clickable source URLs and N# Numista badges open in 1250px popup windows
 - **Added**: IndexedDB storage reporting in settings footer (LS + IDB) and storage report modal
 - **Added**: Search eBay button in view modal footer
 - **Added**: `COIN_IMAGES` feature flag (beta) gating entire image/view system
