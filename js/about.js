@@ -274,10 +274,10 @@ const setupAckModalEvents = () => {
  */
 const getEmbeddedWhatsNew = () => {
   return `
+    <li><strong>v3.26.03 &ndash; STACK-79, STACK-80: XSS &amp; HTML Injection Hardening</strong>: Escaped item names in Price History, metal/source/provider in Spot History, and source/data-attrs in Spot Lookup. Added shared escapeHtml() utility</li>
     <li><strong>v3.26.02 &ndash; Autocomplete Migration &amp; Version Check CORS</strong>: One-time migration auto-enables fuzzy autocomplete for users with silently disabled flag. Fixed version check CORS failure from staktrakr.com 301 redirect</li>
     <li><strong>v3.26.01 &ndash; Fuzzy Autocomplete Settings Toggle</strong>: Added On/Off toggle for fuzzy autocomplete in Settings &gt; Filter Chips. Fixed autocomplete feature flag not discoverable when persisted as disabled</li>
     <li><strong>v3.26.00 &ndash; STACK-62: Autocomplete &amp; Fuzzy Search Pipeline</strong>: Autocomplete dropdowns on form inputs (name, purchase/storage location), abbreviation expansion in search (ASE, kook, krug, etc.), fuzzy fallback with indicator banner, registerName() for dynamic suggestions, Firefox compatibility fix</li>
-    <li><strong>v3.25.05 &ndash; STACK-71: Details modal QoL</strong>: Pie chart percentage labels on slices, sticky metric toggle, scrollable modal body fixes overflow cascade, circular chart aspect-ratio, ResizeObserver leak fix, sepia theme chart colors</li>
   `;
 };
 

@@ -304,7 +304,7 @@ const renderItemPriceHistoryTable = () => {
   const fmt = (v) => typeof formatCurrency === 'function' ? formatCurrency(v) : `$${Number(v).toFixed(2)}`;
   const htmlRows = data.map(r => {
     const ts = new Date(r.ts).toLocaleString();
-    return `<tr><td>${ts}</td><td>${r.name}</td><td>${fmt(r.retail)}</td><td>${fmt(r.spot)}</td><td>${fmt(r.melt)}</td></tr>`;
+    return `<tr><td>${ts}</td><td>${escapeHtml(r.name)}</td><td>${fmt(r.retail)}</td><td>${fmt(r.spot)}</td><td>${fmt(r.melt)}</td></tr>`;
   });
 
   // nosemgrep: javascript.browser.security.insecure-innerhtml.insecure-innerhtml
