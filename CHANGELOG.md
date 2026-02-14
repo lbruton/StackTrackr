@@ -9,6 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.26.00] - 2026-02-13
+
+### Added — STACK-62: Autocomplete & Fuzzy Search Pipeline
+
+- **Added**: Autocomplete dropdown on Name, Purchase Location, and Storage Location form inputs — suggestions from inventory + prebuilt coin database (STACK-62)
+- **Added**: Abbreviation expansion in search — "ASE", "AGE", "kook", "krug" etc. match full coin names (STACK-62)
+- **Added**: Fuzzy search fallback — approximate matches shown with indicator banner when exact search returns no results (STACK-62)
+- **Added**: `registerName()` dynamically adds new item names to autocomplete suggestions (STACK-62)
+- **Fixed**: Firefox autocomplete suppression using non-standard attribute value (STACK-62)
+- **Fixed**: Autocomplete cache invalidated on inventory save, clear, and boating accident (STACK-62)
+- **Changed**: `FUZZY_AUTOCOMPLETE` feature flag promoted to stable (STACK-62)
+
+---
+
 ## [3.25.05] - 2026-02-13
 
 ### Added — STACK-71: Details modal QoL — responsive charts, slice labels, scrollable breakdown

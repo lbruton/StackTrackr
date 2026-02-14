@@ -165,23 +165,36 @@ const PREBUILT_LOOKUP_DATA = [
   "Argor-Heraeus 1 oz Gold Bar", "Argor-Heraeus 10 oz Gold Bar", "Argor-Heraeus 1 oz Silver Bar", "Argor-Heraeus 10 oz Silver Bar"
 ];
 const METAL_ABBREVIATIONS = {
-  // Silver variations
+  // Coin series abbreviations (stacker slang)
   'ase': 'American Silver Eagle',
+  'age': 'American Gold Eagle',
   'agl': 'American Gold Eagle',
-  'cml': 'Canadian Maple Leaf',
-  'ap': 'Austrian Philharmonic',
+  'ape': 'American Platinum Eagle',
+  'cml': 'Maple Leaf',
+  'sml': 'Silver Maple Leaf',
+  'gml': 'Gold Maple Leaf',
+  'krug': 'Krugerrand',
+  'kruger': 'Krugerrand',
+  'phil': 'Philharmonic',
+  'buff': 'Buffalo',
+  'ap': 'Philharmonic',
   'br': 'Britannia',
-  'panda': 'Chinese Panda',
-  'libertad': 'Mexican Libertad',
-  'kook': 'Australian Kookaburra',
-  'koala': 'Australian Koala',
-  
+  'panda': 'Panda',
+  'libertad': 'Libertad',
+  'kook': 'Kookaburra',
+  'koala': 'Koala',
+
+  // Common purchase/storage locations
+  'jmb': 'JM Bullion',
+  'lcs': 'Local Coin Shop',
+  'sdb': 'Safety Deposit Box',
+
   // Common metal types
   'ag': 'silver',
   'au': 'gold',
   'pt': 'platinum',
   'pd': 'palladium',
-  
+
   // Common terms
   'oz': 'ounce',
   '1oz': '1 ounce',
@@ -714,22 +727,295 @@ const refreshLookupTable = (inventory) => {
 };
 
 /**
+ * Register a new item name into the current lookup table.
+ * Called automatically when items are added or imported.
+ *
+ * @param {string} name - Item name to register
+ */
+const registerName = (name) => {
+  if (!name || !currentLookupTable) return;
+  const trimmed = name.trim();
+  if (!trimmed || currentLookupTable.names.includes(trimmed)) return;
+  currentLookupTable.names.push(trimmed);
+  if (currentLookupTable.searchIndices?.nameVariants) {
+    const variations = generateVariations(trimmed);
+    for (const v of variations) {
+      if (!currentLookupTable.searchIndices.nameVariants.has(v)) {
+        currentLookupTable.searchIndices.nameVariants.set(v, []);
+      }
+      const arr = currentLookupTable.searchIndices.nameVariants.get(v);
+      if (!arr.includes(trimmed)) {
+        arr.push(trimmed);
+      }
+    }
+  }
+};
+
+// Expose registerName globally so existing call sites pick it up
+if (typeof window !== 'undefined') {
+  window.registerName = registerName;
+}
+
+/**
+ * Attach autocomplete dropdown to an input element.
+ * Creates a dropdown that shows filtered suggestions from the lookup table.
+ *
+ * @param {HTMLInputElement} inputEl - The input element to attach to
+ * @param {string} sourceType - Key into currentLookupTable ('names', 'purchaseLocations', 'storageLocations')
+ */
+const attachAutocomplete = (inputEl, sourceType) => {
+  if (!inputEl || !inputEl.tagName) return;
+
+  // Suppress native browser autocomplete
+  // Firefox ignores "off" — a non-standard value forces it to back off
+  inputEl.setAttribute('autocomplete', 'staktrakr-no-autofill');
+
+  let dropdown = null;
+  let activeIndex = -1;
+  let items = [];
+  let debounceTimer = null;
+
+  const getSourceArray = () => {
+    if (!currentLookupTable) return [];
+    return currentLookupTable[sourceType] || [];
+  };
+
+  /**
+   * Position the dropdown using fixed coordinates relative to the input.
+   * This "portal" approach escapes overflow:hidden on parent containers
+   * (like modal-body / modal-content).
+   */
+  const positionDropdown = () => {
+    if (!dropdown) return;
+    const rect = inputEl.getBoundingClientRect();
+    dropdown.style.position = 'fixed';
+    dropdown.style.top = `${rect.bottom}px`;
+    dropdown.style.left = `${rect.left}px`;
+    dropdown.style.width = `${rect.width}px`;
+  };
+
+  const createDropdown = () => {
+    if (dropdown) return dropdown;
+    dropdown = document.createElement('div');
+    dropdown.className = 'autocomplete-dropdown';
+    dropdown.setAttribute('role', 'listbox');
+    // Append to body to escape modal overflow clipping
+    document.body.appendChild(dropdown);
+    positionDropdown();
+    return dropdown;
+  };
+
+  const hideDropdown = () => {
+    if (dropdown) {
+      dropdown.remove();
+      dropdown = null;
+    }
+    activeIndex = -1;
+    items = [];
+  };
+
+  const setActiveItem = (index) => {
+    const children = dropdown ? dropdown.querySelectorAll('.autocomplete-item') : [];
+    children.forEach(c => c.classList.remove('active'));
+    activeIndex = index;
+    if (index >= 0 && index < children.length) {
+      children[index].classList.add('active');
+      children[index].scrollIntoView({ block: 'nearest' });
+    }
+  };
+
+  const selectItem = (value) => {
+    inputEl.value = value;
+    hideDropdown();
+    // Fire input event so any listeners (e.g. validation) react
+    inputEl.dispatchEvent(new Event('input', { bubbles: true }));
+    inputEl.focus();
+  };
+
+  const renderSuggestions = (suggestions) => {
+    const dd = createDropdown();
+    dd.innerHTML = '';
+    activeIndex = -1;
+    items = suggestions;
+
+    if (!suggestions.length) {
+      hideDropdown();
+      return;
+    }
+
+    suggestions.forEach((s, i) => {
+      const div = document.createElement('div');
+      div.className = 'autocomplete-item';
+      div.setAttribute('role', 'option');
+      // Highlight the matching portion
+      const query = inputEl.value.trim();
+      div.innerHTML = highlightMatch(s.text, query);
+      div.addEventListener('mousedown', (e) => {
+        e.preventDefault(); // prevent blur before selection
+        selectItem(s.text);
+      });
+      div.addEventListener('mouseenter', () => setActiveItem(i));
+      dd.appendChild(div);
+    });
+  };
+
+  /**
+   * Highlight matching characters in suggestion text
+   */
+  const highlightMatch = (text, query) => {
+    if (!query) return escapeHtml(text);
+    const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const regex = new RegExp(`(${escaped})`, 'gi');
+    return escapeHtml(text).replace(regex, '<mark>$1</mark>');
+  };
+
+  const escapeHtml = (str) => {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  };
+
+  const onInput = () => {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => {
+      const query = inputEl.value.trim();
+      if (query.length < AUTOCOMPLETE_CONFIG.minCharacters) {
+        hideDropdown();
+        return;
+      }
+
+      const source = getSourceArray();
+      let suggestions = [];
+
+      // Check abbreviation expansion first
+      const abbrevKey = query.toLowerCase();
+      const expansion = METAL_ABBREVIATIONS[abbrevKey];
+      if (expansion) {
+        // Prepend the expanded term as top suggestion
+        const expandedResults = fuzzySearch(expansion, source, {
+          threshold: AUTOCOMPLETE_CONFIG.threshold,
+          maxResults: AUTOCOMPLETE_CONFIG.maxSuggestions
+        });
+        suggestions = expandedResults;
+      }
+
+      // Run fuzzy search on the original query
+      const fuzzyResults = fuzzySearch(query, source, {
+        threshold: AUTOCOMPLETE_CONFIG.threshold,
+        maxResults: AUTOCOMPLETE_CONFIG.maxSuggestions
+      });
+
+      // Merge: prefix matches first, then fuzzy, deduplicated
+      const seen = new Set();
+      const merged = [];
+
+      // Exact prefix matches get highest priority
+      const queryLower = query.toLowerCase();
+      for (const item of source) {
+        if (item.toLowerCase().startsWith(queryLower)) {
+          if (!seen.has(item)) {
+            seen.add(item);
+            merged.push({ text: item, score: 2 }); // high score for prefix
+          }
+        }
+      }
+
+      // Add abbreviation expansion results
+      for (const r of suggestions) {
+        if (!seen.has(r.text)) {
+          seen.add(r.text);
+          merged.push(r);
+        }
+      }
+
+      // Add fuzzy results
+      for (const r of fuzzyResults) {
+        if (!seen.has(r.text)) {
+          seen.add(r.text);
+          merged.push(r);
+        }
+      }
+
+      // Limit to maxSuggestions
+      renderSuggestions(merged.slice(0, AUTOCOMPLETE_CONFIG.maxSuggestions));
+    }, 150);
+  };
+
+  const onKeydown = (e) => {
+    if (!dropdown) return;
+    const count = items.length;
+    if (!count) return;
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setActiveItem(activeIndex < count - 1 ? activeIndex + 1 : 0);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setActiveItem(activeIndex > 0 ? activeIndex - 1 : count - 1);
+    } else if (e.key === 'Enter' && activeIndex >= 0) {
+      e.preventDefault();
+      selectItem(items[activeIndex].text);
+    } else if (e.key === 'Escape') {
+      hideDropdown();
+    } else if (e.key === 'Tab' && activeIndex >= 0) {
+      selectItem(items[activeIndex].text);
+    }
+  };
+
+  const onBlur = () => {
+    // Delay to allow mousedown on dropdown items to fire first
+    setTimeout(() => hideDropdown(), 150);
+  };
+
+  // Hide dropdown on scroll within the modal body (fixed position gets stale)
+  const onScroll = () => { if (dropdown) hideDropdown(); };
+  const modalBody = inputEl.closest('.modal-body');
+  if (modalBody) {
+    modalBody.addEventListener('scroll', onScroll, { passive: true });
+  }
+
+  inputEl.addEventListener('input', onInput);
+  inputEl.addEventListener('keydown', onKeydown);
+  inputEl.addEventListener('blur', onBlur);
+  inputEl.addEventListener('focus', () => {
+    // Re-show suggestions if there's text and dropdown isn't visible
+    if (inputEl.value.trim().length >= AUTOCOMPLETE_CONFIG.minCharacters && !dropdown) {
+      onInput();
+    }
+  });
+};
+
+/**
  * Initialize autocomplete system
  * Should be called when inventory is loaded or changed
- * 
+ *
  * @param {Array} [inventory] - Current inventory data
  */
 const initializeAutocomplete = (inventory) => {
   try {
+    // Check feature flag
+    if (typeof window !== 'undefined' && window.featureFlags && !window.featureFlags.isEnabled('FUZZY_AUTOCOMPLETE')) {
+      console.log('⏭️ Autocomplete disabled by feature flag');
+      return createEmptyLookupTable();
+    }
+
     console.log('🚀 Initializing autocomplete system...');
-    
+
     // Load or generate lookup table
     const lookupTable = loadLookupTable(inventory);
-    
+
+    // Attach to form inputs if DOM elements are available
+    // Note: `elements` is a global lexical binding from state.js, not window.elements
+    if (typeof elements !== 'undefined' && elements) {
+      if (elements.itemName) attachAutocomplete(elements.itemName, 'names');
+      if (elements.purchaseLocation) attachAutocomplete(elements.purchaseLocation, 'purchaseLocations');
+      if (elements.storageLocation) attachAutocomplete(elements.storageLocation, 'storageLocations');
+    }
+
     // Log initialization stats
     const stats = getLookupStats();
     console.log('📊 Autocomplete initialized:', stats);
-    
+
     return lookupTable;
   } catch (error) {
     console.error('initializeAutocomplete error:', error);
@@ -739,31 +1025,35 @@ const initializeAutocomplete = (inventory) => {
 
 // Export functions for use by other modules
 if (typeof window !== 'undefined') {
+  window.initializeAutocomplete = initializeAutocomplete;
+  window.clearLookupCache = clearLookupCache;
   window.autocomplete = {
     // Core functions
     generateLookupTable,
     loadLookupTable,
     refreshLookupTable,
     initializeAutocomplete,
-    
+    registerName,
+    attachAutocomplete,
+
     // Utility functions
     extractUniqueValues,
     generateVariations,
     buildSearchIndices,
     normalizeItemName,
-    
+
     // Cache management
     getCachedLookupTable,
     cacheLookupTable,
     clearLookupCache,
-    
+
     // Stats and info
     getLookupStats,
-    
+
     // Configuration
     config: AUTOCOMPLETE_CONFIG,
     abbreviations: METAL_ABBREVIATIONS,
-    
+
     // Current state
     getCurrentLookupTable: () => currentLookupTable
   };
@@ -776,6 +1066,8 @@ if (typeof module !== 'undefined' && module.exports) {
     loadLookupTable,
     refreshLookupTable,
     initializeAutocomplete,
+    registerName,
+    attachAutocomplete,
     extractUniqueValues,
     generateVariations,
     buildSearchIndices,

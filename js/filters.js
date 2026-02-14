@@ -778,7 +778,12 @@ const filterInventoryAdvanced = () => {
       // If searching for "American Eagle", it should only match items that have both words
       // but NOT match "American Gold Eagle" (which has an extra word in between)
       if (words.length >= 2) {
-        // For multi-word searches, check if the exact phrase exists or 
+        // STACK-62: Expand abbreviations in the query words for multi-word searches
+        const abbrevs = typeof METAL_ABBREVIATIONS !== 'undefined' ? METAL_ABBREVIATIONS : {};
+        const expandedWords = words.map(w => abbrevs[w.toLowerCase()] || w);
+        const expandedPhrase = expandedWords.join(' ').toLowerCase();
+
+        // For multi-word searches, check if the exact phrase exists or
         // if all words exist as separate word boundaries without conflicting words
         const exactPhrase = q.toLowerCase();
         const itemText = [
@@ -796,9 +801,14 @@ const filterInventoryAdvanced = () => {
           String(item.numistaId || ''),
           item.serialNumber || ''
         ].join(' ').toLowerCase();
-        
+
         // Check for exact phrase match first
         if (itemText.includes(exactPhrase)) {
+          return true;
+        }
+
+        // STACK-62: Check expanded abbreviation phrase (e.g. "ase 2024" → "american silver eagle 2024")
+        if (expandedPhrase !== exactPhrase && itemText.includes(expandedPhrase)) {
           return true;
         }
 
@@ -865,10 +875,20 @@ const filterInventoryAdvanced = () => {
         return true;
       }
       
-      // For single words, use word boundary matching
+      // For single words, use word boundary matching with abbreviation expansion
       const fieldMatch = words.every(word => {
+        // STACK-62: Build regex with original word + abbreviation expansion
+        const escaped = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const patterns = [escaped];
+        const abbrevs = typeof METAL_ABBREVIATIONS !== 'undefined' ? METAL_ABBREVIATIONS : {};
+        const expansion = abbrevs[word.toLowerCase()];
+        if (expansion) {
+          patterns.push(expansion.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+        }
+        const combined = patterns.join('|');
         // nosemgrep: javascript.dos.rule-non-literal-regexp
-        const wordRegex = new RegExp(`\\b${word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`, 'i');
+        const wordRegex = new RegExp(`\\b(?:${combined})`, 'i');
+
         return (
           wordRegex.test(item.metal) ||
           (item.composition && wordRegex.test(item.composition)) ||
@@ -896,6 +916,22 @@ const filterInventoryAdvanced = () => {
       if (typeof window.itemMatchesCustomGroupLabel === 'function') {
         return window.itemMatchesCustomGroupLabel(item, q);
       }
+
+      // STACK-62: Fuzzy fallback — score item fields when exact matching fails
+      if (typeof window.featureFlags !== 'undefined' &&
+          window.featureFlags.isEnabled('FUZZY_AUTOCOMPLETE') &&
+          typeof fuzzyMatch === 'function') {
+        const fuzzyThreshold = typeof AUTOCOMPLETE_CONFIG !== 'undefined'
+          ? AUTOCOMPLETE_CONFIG.threshold : 0.3;
+        const fieldsToCheck = [item.name, item.purchaseLocation, item.storageLocation || '', item.notes || ''];
+        for (const field of fieldsToCheck) {
+          if (field && fuzzyMatch(q, field, { threshold: fuzzyThreshold }) > 0) {
+            if (!window._fuzzyMatchUsed) window._fuzzyMatchUsed = true;
+            return true;
+          }
+        }
+      }
+
       return false;
     });
   });
