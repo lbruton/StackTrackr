@@ -248,6 +248,12 @@ const syncSettingsUI = () => {
     syncGoldbackSettingsUI();
   }
 
+  // Spot compare mode (STACK-92)
+  const spotCompareSelect = document.getElementById('settingsSpotCompareMode');
+  if (spotCompareSelect) {
+    spotCompareSelect.value = localStorage.getItem(SPOT_COMPARE_MODE_KEY) || 'close-close';
+  }
+
   // Header shortcuts (STACK-54)
   syncHeaderToggleUI();
   // Layout visibility (STACK-54)
@@ -401,6 +407,15 @@ const setupSettingsEventListeners = () => {
       // Sync footer select
       if (elements.itemsPerPage) elements.itemsPerPage.value = String(val);
       renderTable();
+    });
+  }
+
+  // Spot compare mode (STACK-92)
+  const spotCompareSetting = document.getElementById('settingsSpotCompareMode');
+  if (spotCompareSetting) {
+    spotCompareSetting.addEventListener('change', () => {
+      try { localStorage.setItem(SPOT_COMPARE_MODE_KEY, spotCompareSetting.value); } catch (e) { /* ignore */ }
+      if (typeof updateAllSparklines === 'function') updateAllSparklines();
     });
   }
 
@@ -761,111 +776,136 @@ const setupSettingsEventListeners = () => {
     });
   }
 
-  // Provider tab drag-to-reorder
-  setupProviderTabDrag();
+  // Provider priority dropdowns (STACK-90)
+  setupProviderPriority();
 };
 
 /**
- * Sets up HTML5 drag-and-drop for metals provider tabs.
- * Numista tab is pinned (not draggable). Metals tab order = sync priority.
+ * One-time migration from legacy apiProviderOrder + syncMode to priority numbers (STACK-90).
+ * Maps first "always" provider → 1, remaining providers → 2,3 in order, disabled → 0.
+ * @returns {Object} Priority map { METALS_DEV: 1, METALS_API: 2, ... }
  */
-const setupProviderTabDrag = () => {
-  const tabContainer = document.querySelector('.settings-provider-tabs');
-  if (!tabContainer) return;
-
-  let draggedTab = null;
-
-  const tabs = () => tabContainer.querySelectorAll('.settings-provider-tab:not(.pinned)');
-
-  tabs().forEach(tab => {
-    tab.addEventListener('dragstart', (e) => {
-      draggedTab = tab;
-      tabContainer.classList.add('dragging');
-      e.dataTransfer.effectAllowed = 'move';
-      e.dataTransfer.setData('text/plain', tab.dataset.provider);
-      // Slight delay to let the drag image render
-      requestAnimationFrame(() => tab.style.opacity = '0.4');
-    });
-
-    tab.addEventListener('dragend', () => {
-      tabContainer.classList.remove('dragging');
-      tab.style.opacity = '';
-      tabs().forEach(t => t.classList.remove('drag-over'));
-      draggedTab = null;
-    });
-
-    tab.addEventListener('dragover', (e) => {
-      e.preventDefault();
-      e.dataTransfer.dropEffect = 'move';
-      if (draggedTab && tab !== draggedTab) {
-        tab.classList.add('drag-over');
-      }
-    });
-
-    tab.addEventListener('dragleave', () => {
-      tab.classList.remove('drag-over');
-    });
-
-    tab.addEventListener('drop', (e) => {
-      e.preventDefault();
-      tab.classList.remove('drag-over');
-      if (!draggedTab || draggedTab === tab) return;
-
-      // Reorder DOM: insert dragged tab before or after the drop target
-      const allTabs = [...tabs()];
-      const dragIdx = allTabs.indexOf(draggedTab);
-      const dropIdx = allTabs.indexOf(tab);
-
-      if (dragIdx < dropIdx) {
-        tabContainer.insertBefore(draggedTab, tab.nextSibling);
-      } else {
-        tabContainer.insertBefore(draggedTab, tab);
-      }
-
-      // Persist new order and update default provider
-      saveProviderTabOrder();
-      if (typeof autoSelectDefaultProvider === 'function') {
-        autoSelectDefaultProvider();
-      }
-    });
-  });
-};
-
-/**
- * Saves the current metals provider tab order to localStorage.
- * Only saves the metals providers (not Numista which is pinned).
- */
-const saveProviderTabOrder = () => {
-  const tabContainer = document.querySelector('.settings-provider-tabs');
-  if (!tabContainer) return;
-  const order = [...tabContainer.querySelectorAll('.settings-provider-tab:not(.pinned)')]
-    .map(tab => tab.dataset.provider);
-  try {
-    localStorage.setItem('apiProviderOrder', JSON.stringify(order));
-  } catch (e) { /* ignore */ }
-};
-
-/**
- * Restores provider tab DOM order from localStorage.
- * Called when the API section is populated.
- */
-const loadProviderTabOrder = () => {
+const migrateProviderPriority = () => {
+  const priorities = {};
+  const metalsProviders = Object.keys(API_PROVIDERS);
   let order;
   try {
     const stored = localStorage.getItem('apiProviderOrder');
     order = stored ? JSON.parse(stored) : null;
-  } catch (e) { return; }
-  if (!Array.isArray(order) || order.length === 0) return;
+  } catch (e) { /* ignore */ }
+  if (!Array.isArray(order) || order.length === 0) {
+    order = metalsProviders;
+  }
 
-  const tabContainer = document.querySelector('.settings-provider-tabs');
-  if (!tabContainer) return;
+  // Read legacy sync modes
+  let syncModes = {};
+  try {
+    const cfg = loadApiConfig();
+    syncModes = cfg.syncMode || {};
+  } catch (e) { /* ignore */ }
 
-  // Reorder tabs to match saved order
-  order.forEach(provider => {
-    const tab = tabContainer.querySelector(`.settings-provider-tab[data-provider="${provider}"]`);
-    if (tab && !tab.classList.contains('pinned')) {
-      tabContainer.appendChild(tab);
+  let nextPriority = 1;
+  // First pass: assign based on legacy order + sync mode
+  order.forEach(prov => {
+    if (!metalsProviders.includes(prov)) return;
+    const mode = syncModes[prov] || 'always';
+    if (mode === 'backup' && nextPriority === 1) {
+      // All backup = assign sequentially starting at 2
+      priorities[prov] = nextPriority++;
+    } else {
+      priorities[prov] = nextPriority++;
     }
+  });
+
+  // Ensure any providers not in legacy order get a priority
+  metalsProviders.forEach(prov => {
+    if (!(prov in priorities)) {
+      priorities[prov] = nextPriority++;
+    }
+  });
+
+  saveProviderPriorities(priorities);
+  return priorities;
+};
+
+/**
+ * Loads provider priority map from localStorage.
+ * Falls back to migration if not found.
+ * @returns {Object} Priority map { METALS_DEV: 1, METALS_API: 2, ... }
+ */
+const loadProviderPriorities = () => {
+  try {
+    const stored = localStorage.getItem('providerPriority');
+    if (stored) {
+      const priorities = JSON.parse(stored);
+      if (typeof priorities === 'object' && priorities !== null) return priorities;
+    }
+  } catch (e) { /* ignore */ }
+  return migrateProviderPriority();
+};
+
+/**
+ * Saves provider priority map and writes backward-compatible apiProviderOrder (STACK-90).
+ * @param {Object} priorities - { METALS_DEV: 1, METALS_API: 2, ... }
+ */
+const saveProviderPriorities = (priorities) => {
+  try {
+    localStorage.setItem('providerPriority', JSON.stringify(priorities));
+    // Backward compatibility: write apiProviderOrder sorted by priority (non-disabled only)
+    const sorted = Object.entries(priorities)
+      .filter(([, p]) => p > 0)
+      .sort((a, b) => a[1] - b[1])
+      .map(([prov]) => prov);
+    localStorage.setItem('apiProviderOrder', JSON.stringify(sorted));
+  } catch (e) { /* ignore */ }
+};
+
+/**
+ * Sets all priority <select> values from a priority map.
+ * @param {Object} priorities - { METALS_DEV: 1, ... }
+ */
+const syncProviderPriorityUI = (priorities) => {
+  Object.entries(priorities).forEach(([prov, val]) => {
+    const sel = document.getElementById(`providerPriority_${prov}`);
+    if (sel) sel.value = String(val);
+  });
+};
+
+/**
+ * Sets up change listeners on provider priority selects (STACK-90).
+ * Auto-shifts: setting provider X to priority N bumps any existing N holder to N+1 (cascade).
+ */
+const setupProviderPriority = () => {
+  const selects = document.querySelectorAll('.provider-priority-select');
+  if (!selects.length) return;
+
+  selects.forEach(sel => {
+    sel.addEventListener('change', () => {
+      const provider = sel.dataset.provider;
+      const newVal = parseInt(sel.value, 10);
+      const priorities = loadProviderPriorities();
+
+      if (newVal === 0) {
+        // Disabled — just set it
+        priorities[provider] = 0;
+      } else {
+        // Auto-shift: bump any provider already at this priority
+        const oldVal = priorities[provider];
+        Object.keys(priorities).forEach(prov => {
+          if (prov !== provider && priorities[prov] === newVal && priorities[prov] > 0) {
+            // Cascade: shift this one to the old slot (or next available)
+            priorities[prov] = oldVal > 0 ? oldVal : newVal + 1;
+          }
+        });
+        priorities[provider] = newVal;
+      }
+
+      saveProviderPriorities(priorities);
+      syncProviderPriorityUI(priorities);
+      if (typeof autoSelectDefaultProvider === 'function') {
+        autoSelectDefaultProvider();
+      }
+    });
   });
 };
 

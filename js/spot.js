@@ -583,20 +583,25 @@ const getSparklineData = (metalName, days, intraday = false) => {
     };
   }
 
-  // Deduplicate by date string (keep last entry per day)
+  // Track first and last entry per day for open/close comparison (STACK-92)
   const byDay = new Map();
   entries.forEach((e) => {
     const day = e.timestamp.slice(0, 10);
-    byDay.set(day, e);
+    if (!byDay.has(day)) {
+      byDay.set(day, { first: e, last: e });
+    } else {
+      byDay.get(day).last = e;
+    }
   });
 
   const sorted = [...byDay.values()].sort(
-    (a, b) => new Date(a.timestamp) - new Date(b.timestamp),
+    (a, b) => new Date(a.last.timestamp) - new Date(b.last.timestamp),
   );
 
   return {
-    labels: sorted.map((e) => e.timestamp.slice(0, 10)),
-    data: sorted.map((e) => e.spot),
+    labels: sorted.map((pair) => pair.last.timestamp.slice(0, 10)),
+    data: sorted.map((pair) => pair.last.spot),       // close prices (backward-compatible)
+    openData: sorted.map((pair) => pair.first.spot),   // open prices (STACK-92)
   };
 };
 
@@ -697,6 +702,42 @@ const updateSparkline = async (metalKey) => {
 };
 
 /**
+ * Computes 24h % change using the user's selected comparison mode (STACK-92).
+ * Modes: close-close (default), open-open, open-close.
+ * Graceful degradation: when only 1 entry/day exists, first === last so all modes match.
+ * @param {string} metalName - 'Silver', 'Gold', etc.
+ * @returns {{ pct: number, valid: boolean }}
+ */
+const get24hChange = (metalName) => {
+  const mode = localStorage.getItem(SPOT_COMPARE_MODE_KEY) || 'close-close';
+  const { data: closeData, openData } = getSparklineData(metalName, 3, false);
+
+  if (closeData.length < 2) return { pct: 0, valid: false };
+
+  const yesterday = closeData.length - 2;
+  const today = closeData.length - 1;
+  let oldPrice, newPrice;
+
+  switch (mode) {
+    case 'open-open':
+      oldPrice = openData[yesterday];
+      newPrice = openData[today];
+      break;
+    case 'open-close':
+      oldPrice = openData[yesterday];
+      newPrice = closeData[today];
+      break;
+    default: // 'close-close'
+      oldPrice = closeData[yesterday];
+      newPrice = closeData[today];
+      break;
+  }
+
+  if (!oldPrice || oldPrice === 0) return { pct: 0, valid: false };
+  return { pct: ((newPrice - oldPrice) / oldPrice) * 100, valid: true };
+};
+
+/**
  * Computes and displays % change on a spot card based on the selected sparkline period.
  * Compares oldest vs newest data point in the selected range.
  *
@@ -715,9 +756,7 @@ const updateSpotChangePercent = (metalKey, precomputedData = null) => {
 
   let data;
   if (selectedDays0 === 1) {
-    // 1-day view: fetch last-entry-per-day (same method as the 24h badge on
-    // multi-day views) so the primary % is a true 24h change.  The sparkline
-    // visual still uses its own intraday-averaged data from updateSparkline().
+    // 1-day view: use get24hChange() which respects the user's comparison mode (STACK-92)
     ({ data } = getSparklineData(metalConfig.name, 3, false));
   } else if (precomputedData) {
     data = precomputedData;
@@ -730,11 +769,17 @@ const updateSpotChangePercent = (metalKey, precomputedData = null) => {
     return;
   }
 
-  // For 1d view, compare yesterday→today (last two points) for true 24h change.
+  // For 1d view, use get24hChange() for mode-aware comparison (STACK-92).
   // For all other views, compare oldest→newest across the full selected range.
-  const oldest = selectedDays0 === 1 ? data[data.length - 2] : data[0];
-  const newest = data[data.length - 1];
-  const pctChange = ((newest - oldest) / oldest) * 100;
+  let pctChange;
+  if (selectedDays0 === 1) {
+    const change24h = get24hChange(metalConfig.name);
+    pctChange = change24h.valid ? change24h.pct : 0;
+  } else {
+    const oldest = data[0];
+    const newest = data[data.length - 1];
+    pctChange = ((newest - oldest) / oldest) * 100;
+  }
   const sign = pctChange > 0 ? "+" : "";
   const rangeClass = pctChange > 0 ? "spot-change-up" : pctChange < 0 ? "spot-change-down" : "";
 
@@ -747,14 +792,12 @@ const updateSpotChangePercent = (metalKey, precomputedData = null) => {
   rangeSpan.textContent = `${sign}${pctChange.toFixed(2)}%`;
   el.appendChild(rangeSpan);
 
-  // Append secondary % indicator in parentheses (STACK-69)
-  // >1d views: show 24h change | 1d view: show 90d change for context
+  // Append secondary % indicator in parentheses (STACK-69, STACK-92)
+  // >1d views: show 24h change (mode-aware) | 1d view: show 90d change for context
   if (selectedDays0 > 1) {
-    const { data: dailyData } = getSparklineData(metalConfig.name, 3, false);
-    if (dailyData.length >= 2) {
-      const dayOld = dailyData[dailyData.length - 2];
-      const dayNew = dailyData[dailyData.length - 1];
-      const dayPct = ((dayNew - dayOld) / dayOld) * 100;
+    const change24h = get24hChange(metalConfig.name);
+    if (change24h.valid) {
+      const dayPct = change24h.pct;
       const daySign = dayPct > 0 ? "+" : "";
       const dayClass = dayPct > 0 ? "spot-change-up" : dayPct < 0 ? "spot-change-down" : "";
 

@@ -254,7 +254,7 @@ const CERT_LOOKUP_URLS = {
  * Updated: 2026-02-12 - STACK-38/STACK-31: Responsive card view + mobile layout
  */
 
-const APP_VERSION = "3.27.03";
+const APP_VERSION = "3.27.04";
 
 /**
  * @constant {string} DEFAULT_CURRENCY - Default currency code for monetary formatting
@@ -525,6 +525,9 @@ const FEATURE_FLAGS_KEY = "featureFlags";
 /** @constant {string} SPOT_TREND_RANGE_KEY - LocalStorage key for sparkline trend range preferences */
 const SPOT_TREND_RANGE_KEY = "spotTrendRange";
 
+/** @constant {string} SPOT_COMPARE_MODE_KEY - LocalStorage key for 24h % comparison mode (STACK-92) */
+const SPOT_COMPARE_MODE_KEY = "spotCompareMode";
+
 /** @constant {string} ITEMS_PER_PAGE_KEY - LocalStorage key for items per page setting */
 const ITEMS_PER_PAGE_KEY = "settingsItemsPerPage";
 
@@ -564,11 +567,13 @@ const ALLOWED_STORAGE_KEYS = [
   "staktrakr.catalog.settings",
   CATALOG_HISTORY_KEY,
   SPOT_TREND_RANGE_KEY,
+  SPOT_COMPARE_MODE_KEY,
   ITEMS_PER_PAGE_KEY,
   "chipCustomGroups",
   "chipBlacklist",
   "inlineChipConfig",
   "apiProviderOrder",
+  "providerPriority",
   "filterChipCategoryConfig",
   "chipSortOrder",
   GOLDBACK_PRICES_KEY,
