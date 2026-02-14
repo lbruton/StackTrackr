@@ -3864,15 +3864,12 @@ a.about-badge:hover {
 }
 
 .autocomplete-dropdown {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  right: 0;
+  position: fixed;
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   box-shadow: var(--shadow);
-  z-index: 1000;
+  z-index: 10100;
   max-height: 12rem;
   overflow-y: auto;
 }
@@ -3885,6 +3882,19 @@ a.about-badge:hover {
 .autocomplete-item.active,
 .autocomplete-item:hover {
   background: var(--bg-secondary);
+}
+
+.autocomplete-item mark {
+  background: transparent;
+  color: var(--info);
+  font-weight: 600;
+}
+
+.fuzzy-indicator {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  padding: var(--spacing-xs) 0;
+  font-style: italic;
 }
 
 
