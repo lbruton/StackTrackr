@@ -1272,6 +1272,8 @@ const setupDataManagementListeners = () => {
   optionalListener(elements.removeInventoryDataBtn, "click", () => {
     if (confirm("Remove all inventory items? This cannot be undone.")) {
       localStorage.removeItem(LS_KEY);
+      // STACK-62: Clear stale autocomplete cache so it rebuilds from fresh inventory
+      if (typeof clearLookupCache === 'function') clearLookupCache();
       loadInventory();
       renderTable();
       renderActiveFilters();
@@ -1288,6 +1290,8 @@ const setupDataManagementListeners = () => {
       Object.values(METALS).forEach((metalConfig) => {
         localStorage.removeItem(metalConfig.localStorageKey);
       });
+      // STACK-62: Clear autocomplete cache with everything else
+      if (typeof clearLookupCache === 'function') clearLookupCache();
       sessionStorage.clear();
 
       loadInventory();
