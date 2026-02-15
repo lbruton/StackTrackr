@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.29.00] - 2026-02-15
+
+### Added — Edit Modal Pattern Rule Toggle
+
+- **Added**: "Apply to all matching items" checkbox in edit modal image upload — creates a pattern rule from keywords instead of saving a per-item image
+- **Changed**: Extracted shared section config helpers to reduce code clones across layout/view modal settings
+
+---
+
 ## [3.28.00] - 2026-02-14
 
 ### Added — Price History Chart Overhaul & View Modal Customization

@@ -254,7 +254,7 @@ const CERT_LOOKUP_URLS = {
  * Updated: 2026-02-12 - STACK-38/STACK-31: Responsive card view + mobile layout
  */
 
-const APP_VERSION = "3.28.00";
+const APP_VERSION = "3.29.00";
 
 /**
  * @constant {string} DEFAULT_CURRENCY - Default currency code for monetary formatting
@@ -534,6 +534,19 @@ const TIMEZONE_KEY = "appTimeZone";
 /** @constant {string} ITEMS_PER_PAGE_KEY - LocalStorage key for items per page setting */
 const ITEMS_PER_PAGE_KEY = "settingsItemsPerPage";
 
+// =============================================================================
+// IMAGE PROCESSOR DEFAULTS (STACK-95)
+// =============================================================================
+
+/** @constant {number} IMAGE_MAX_DIM - Max image dimension in px for resize */
+const IMAGE_MAX_DIM = 500;
+
+/** @constant {number} IMAGE_QUALITY - Default compression quality (0-1) */
+const IMAGE_QUALITY = 0.75;
+
+/** @constant {number} IMAGE_MAX_BYTES - Max output size per image side in bytes (500 KB) */
+const IMAGE_MAX_BYTES = 512000;
+
 /**
  * List of recognized localStorage keys for cleanup validation
  * @constant {string[]}
@@ -598,6 +611,8 @@ const ALLOWED_STORAGE_KEYS = [
   "numistaViewFields",               // view modal Numista field visibility config (JSON object)
   TIMEZONE_KEY,                        // string: "auto" | "UTC" | IANA zone (STACK-63)
   "viewModalSectionConfig",            // JSON array: ordered view modal section config [{ id, label, enabled }]
+  "numistaOverridePersonal",           // boolean string: "true"/"false" — Numista API overrides user pattern images
+  "tableImagesEnabled",                // boolean string: "true"/"false" — show thumbnail images in table rows
 ];
 
 // =============================================================================

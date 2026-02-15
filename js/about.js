@@ -274,10 +274,10 @@ const setupAckModalEvents = () => {
  */
 const getEmbeddedWhatsNew = () => {
   return `
+    <li><strong>v3.29.00 &ndash; Edit Modal Pattern Rule Toggle</strong>: &ldquo;Apply to all matching items&rdquo; checkbox in edit modal image upload &mdash; creates a pattern rule from keywords instead of per-item images. Extracted shared section config helpers to reduce code clones</li>
     <li><strong>v3.28.00 &ndash; Price History Chart Overhaul &amp; View Modal Customization</strong>: Melt value chart derived from spot price history with range toggle pills (7d/14d/30d/60d/90d/180d/All). Retail value line anchored from purchase date to current market value. Layered chart fills for purchase, melt, and retail. Configurable view modal section order in Settings &gt; Layout</li>
     <li><strong>v3.27.06 &ndash; Timezone Selection &amp; PWA Fixes</strong>: Display timezone selector in Settings &gt; System &mdash; all timestamps respect user-chosen zone while stored data stays UTC. Fixed bare UTC timestamp parsing for spot cards and history. PWA second-launch fix with absolute start_url and navigation-aware service worker. What&rsquo;s New splash stale cache fix (STACK-63, STACK-93)</li>
     <li><strong>v3.27.05 &ndash; Numista Bulk Sync &amp; IDB Cache Fix</strong>: Bulk sync metadata + images from the Numista API card with inline progress and activity log. Fixed opaque blob IDB corruption that caused images to disappear after bulk cache on HTTPS. Table row thumbnail images with hover preloading (STACK-84, STACK-87, STACK-88)</li>
-    <li><strong>v3.27.04 &ndash; Spot Comparison Mode &amp; Mobile API Settings</strong>: 24h % comparison mode setting (Close/Close, Open/Open, Open/Close). Replaced drag-to-sort provider tabs with Sync Priority dropdowns. Mobile tab overflow fix. Consistent 24h % across all spot card views (STACK-89, STACK-90, STACK-92)</li>
   `;
 };
 
