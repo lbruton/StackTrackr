@@ -838,13 +838,18 @@ function _createPriceHistoryChart(canvas, allSpotEntries, allRetailEntries, purc
     return best;
   };
 
-  // Anchor start: purchase price on the spot entry nearest to purchase date
-  // Only anchor if purchase date falls within the visible timeline range
-  if (purchaseDate > 0 && purchasePerUnit > 0 &&
-      purchaseDate >= spotEntries[0].ts &&
-      purchaseDate <= spotEntries[spotEntries.length - 1].ts) {
-    const idx = _nearestSpotIdx(purchaseDate);
-    retailData[idx] = purchasePerUnit;
+  // Anchor start: purchase price at the leftmost chart position.
+  // If purchase date is within the visible range, snap to that day.
+  // If purchase date is before the range, pin to index 0 so the
+  // retail line always starts with "what you paid" as a reference.
+  if (purchaseDate > 0 && purchasePerUnit > 0) {
+    if (purchaseDate >= spotEntries[0].ts &&
+        purchaseDate <= spotEntries[spotEntries.length - 1].ts) {
+      const idx = _nearestSpotIdx(purchaseDate);
+      retailData[idx] = purchasePerUnit;
+    } else if (purchaseDate < spotEntries[0].ts) {
+      retailData[0] = purchasePerUnit;
+    }
   }
 
   // Middle: sparse itemPriceHistory retail values snapped to nearest spot day
