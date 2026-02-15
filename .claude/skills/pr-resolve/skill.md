@@ -146,6 +146,7 @@ For each "Fix now" item (both review threads and Codacy findings), in order:
 4. Continue to next item (stage all at the end)
 
 **Batch fixes into logical commits.** Group related fixes:
+
 - All Copilot review fixes for the same file → one commit
 - All Codacy fixes for the same category → one commit
 - Don't mix Copilot and Codacy fixes in the same commit (makes the audit trail clearer)
