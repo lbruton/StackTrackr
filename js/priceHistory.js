@@ -303,7 +303,7 @@ const renderItemPriceHistoryTable = () => {
 
   const fmt = (v) => typeof formatCurrency === 'function' ? formatCurrency(v) : `$${Number(v).toFixed(2)}`;
   const htmlRows = data.map(r => {
-    const ts = new Date(r.ts).toLocaleString();
+    const ts = typeof formatTimestamp === 'function' ? formatTimestamp(r.ts) : new Date(r.ts).toLocaleString();
     return `<tr><td>${ts}</td><td>${escapeHtml(r.name)}</td><td>${fmt(r.retail)}</td><td>${fmt(r.spot)}</td><td>${fmt(r.melt)}</td></tr>`;
   });
 

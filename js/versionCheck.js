@@ -8,6 +8,7 @@
 const checkVersionChange = () => {
   const hasData = !!localStorage.getItem(LS_KEY);
   if (!hasData) {
+    if (typeof window !== 'undefined' && typeof window.debugLog === "function") window.debugLog("versionCheck: no inventory data, showing ack modal");
     if (typeof showAckModal === "function") {
       showAckModal();
     }
@@ -16,8 +17,14 @@ const checkVersionChange = () => {
 
   const acknowledged = localStorage.getItem(VERSION_ACK_KEY);
   const current = localStorage.getItem(APP_VERSION_KEY) || APP_VERSION;
+  if (typeof window !== 'undefined' && typeof window.debugLog === "function") {
+    window.debugLog(`versionCheck: ack=${acknowledged}, current=${current}, APP_VERSION=${APP_VERSION}`);
+  }
   if (acknowledged === current) return;
 
+  if (typeof window !== 'undefined' && typeof window.debugLog === "function") {
+    window.debugLog(`versionCheck: mismatch — showing What's New modal`);
+  }
   populateVersionModal(current);
 };
 
@@ -71,7 +78,7 @@ const setupVersionModalEvents = (version) => {
   }
 
   document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape" && modal && modal.style.display === "block") {
+    if (e.key === "Escape" && modal && modal.style.display !== "none" && modal.style.display !== "") {
       accept();
     }
   });

@@ -60,6 +60,13 @@ class ImageCache {
         req.onerror = (e) => reject(e.target.error);
       });
 
+      // Detect browser-initiated connection closure
+      this._db.onclose = () => {
+        console.warn('ImageCache: DB connection closed by browser');
+        this._db = null;
+        this._available = false;
+      };
+
       this._available = true;
       debugLog('ImageCache: initialized');
       return true;
@@ -78,6 +85,28 @@ class ImageCache {
     return this._available;
   }
 
+  /**
+   * Ensure the DB connection is alive, reconnecting if stale.
+   * Call this before every public operation to guard against
+   * browser-initiated connection closures (storage pressure,
+   * tab backgrounding, etc.).
+   * @returns {Promise<boolean>}
+   */
+  async _ensureDb() {
+    if (this._db) {
+      try {
+        // Lightweight probe — creating a transaction will throw if connection is dead
+        this._db.transaction('coinImages', 'readonly');
+        return true;
+      } catch {
+        console.warn('ImageCache: DB connection stale, reconnecting...');
+        this._db = null;
+        this._available = false;
+      }
+    }
+    return this.init();
+  }
+
   // ---------------------------------------------------------------------------
   // Image storage
   // ---------------------------------------------------------------------------
@@ -90,7 +119,7 @@ class ImageCache {
    * @returns {Promise<boolean>} true if at least one image was cached
    */
   async cacheImages(catalogId, obverseUrl, reverseUrl) {
-    if (!this._available || !catalogId) return false;
+    if (!catalogId || !(await this._ensureDb())) return false;
 
     // Skip if already cached
     if (await this.hasImages(catalogId)) return true;
@@ -129,7 +158,7 @@ class ImageCache {
    * @returns {Promise<boolean>}
    */
   async cacheMetadata(catalogId, numistaResult) {
-    if (!this._available || !catalogId || !numistaResult) return false;
+    if (!catalogId || !numistaResult || !(await this._ensureDb())) return false;
 
     const record = {
       catalogId,
@@ -164,7 +193,7 @@ class ImageCache {
    * @returns {Promise<Object|null>}
    */
   async getImages(catalogId) {
-    if (!this._available || !catalogId) return null;
+    if (!catalogId || !(await this._ensureDb())) return null;
     return this._get('coinImages', catalogId);
   }
 
@@ -174,7 +203,7 @@ class ImageCache {
    * @returns {Promise<Object|null>}
    */
   async getMetadata(catalogId) {
-    if (!this._available || !catalogId) return null;
+    if (!catalogId || !(await this._ensureDb())) return null;
     return this._get('coinMetadata', catalogId);
   }
 
@@ -199,7 +228,7 @@ class ImageCache {
    * @returns {Promise<boolean>}
    */
   async hasImages(catalogId) {
-    if (!this._available || !catalogId) return false;
+    if (!catalogId || !(await this._ensureDb())) return false;
 
     return new Promise((resolve) => {
       try {
@@ -219,7 +248,7 @@ class ImageCache {
    * @returns {Promise<string[]>}
    */
   async listAllCachedIds() {
-    if (!this._available) return [];
+    if (!(await this._ensureDb())) return [];
     return new Promise((resolve) => {
       try {
         const tx = this._db.transaction('coinImages', 'readonly');
@@ -236,8 +265,18 @@ class ImageCache {
    * @returns {Promise<boolean>}
    */
   async deleteImages(catalogId) {
-    if (!this._available || !catalogId) return false;
+    if (!catalogId || !(await this._ensureDb())) return false;
     return this._delete('coinImages', catalogId);
+  }
+
+  /**
+   * Delete cached metadata for a catalog ID.
+   * @param {string} catalogId
+   * @returns {Promise<boolean>}
+   */
+  async deleteMetadata(catalogId) {
+    if (!catalogId || !(await this._ensureDb())) return false;
+    return this._delete('coinMetadata', catalogId);
   }
 
   // ---------------------------------------------------------------------------
@@ -249,7 +288,7 @@ class ImageCache {
    * @returns {Promise<Array>}
    */
   async exportAllImages() {
-    if (!this._available) return [];
+    if (!(await this._ensureDb())) return [];
     return this._getAll('coinImages');
   }
 
@@ -258,7 +297,7 @@ class ImageCache {
    * @returns {Promise<Array>}
    */
   async exportAllMetadata() {
-    if (!this._available) return [];
+    if (!(await this._ensureDb())) return [];
     return this._getAll('coinMetadata');
   }
 
@@ -268,7 +307,7 @@ class ImageCache {
    * @returns {Promise<boolean>}
    */
   async importImageRecord(record) {
-    if (!this._available || !record?.catalogId) return false;
+    if (!record?.catalogId || !(await this._ensureDb())) return false;
     return this._put('coinImages', record);
   }
 
@@ -278,7 +317,7 @@ class ImageCache {
    * @returns {Promise<boolean>}
    */
   async importMetadataRecord(record) {
-    if (!this._available || !record?.catalogId) return false;
+    if (!record?.catalogId || !(await this._ensureDb())) return false;
     return this._put('coinMetadata', record);
   }
 
@@ -287,7 +326,7 @@ class ImageCache {
    * @returns {Promise<boolean>}
    */
   async clearAll() {
-    if (!this._available) return false;
+    if (!(await this._ensureDb())) return false;
 
     try {
       const tx = this._db.transaction(['coinImages', 'coinMetadata'], 'readwrite');
@@ -307,14 +346,25 @@ class ImageCache {
    * @returns {Promise<{count: number, totalBytes: number, limitBytes: number}>}
    */
   async getStorageUsage() {
-    const result = { count: 0, totalBytes: 0, limitBytes: this._quotaBytes };
-    if (!this._available) return result;
+    const result = { count: 0, totalBytes: 0, metadataCount: 0, limitBytes: this._quotaBytes };
+    if (!(await this._ensureDb())) return result;
 
     try {
       const records = await this._getAll('coinImages');
       result.count = records.length;
       for (const rec of records) {
         result.totalBytes += rec.size || 0;
+      }
+    } catch {
+      // ignore
+    }
+
+    try {
+      const metaRecords = await this._getAll('coinMetadata');
+      result.metadataCount = metaRecords.length;
+      for (const rec of metaRecords) {
+        // Approximate metadata size from JSON serialization
+        result.totalBytes += new Blob([JSON.stringify(rec)]).size;
       }
     } catch {
       // ignore
