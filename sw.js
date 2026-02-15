@@ -17,7 +17,6 @@ function offlineResponse() {
 // Core shell assets to pre-cache on install
 const CORE_ASSETS = [
   './',
-  './index.html',
   './css/styles.css',
   './js/file-protocol-fix.js',
   './js/debug-log.js',
@@ -85,10 +84,14 @@ const CDN_HOSTS = [
 
 // Install: pre-cache core shell
 self.addEventListener('install', (event) => {
+  console.log('[SW] Installing', CACHE_NAME);
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => cache.addAll(CORE_ASSETS))
-      .then(() => self.skipWaiting())
+      .then(() => {
+        console.log('[SW] Install complete, skip waiting');
+        return self.skipWaiting();
+      })
       .catch((err) => {
         console.error('[SW] Install failed:', err);
         throw err;
@@ -98,13 +101,14 @@ self.addEventListener('install', (event) => {
 
 // Activate: purge old caches
 self.addEventListener('activate', (event) => {
+  console.log('[SW] Activating', CACHE_NAME);
   event.waitUntil(
     caches.keys()
-      .then((keys) => Promise.all(
-        keys
-          .filter((key) => key.startsWith('staktrakr-') && key !== CACHE_NAME)
-          .map((key) => caches.delete(key))
-      ))
+      .then((keys) => {
+        const old = keys.filter((key) => key.startsWith('staktrakr-') && key !== CACHE_NAME);
+        if (old.length) console.log('[SW] Purging old caches:', old);
+        return Promise.all(old.map((key) => caches.delete(key)));
+      })
       .then(() => self.clients.claim())
   );
 });
@@ -125,14 +129,24 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Navigation requests (PWA launch, page reload) — always serve cached index.html shell
+  // Navigation requests (PWA launch, page reload) — serve cached app shell
   if (event.request.mode === 'navigate' && url.origin === self.location.origin) {
     event.respondWith(
-      caches.match('./index.html')
-        .then((cached) => cached || fetchAndCache(event.request))
-        .catch(() => caches.match('./'))
-        .then((response) => response || offlineResponse())
-        .catch(() => offlineResponse())
+      caches.match('./')
+        .then((cached) => {
+          if (cached) return cached;
+          console.log('[SW] Cache miss for ./, fetching from network');
+          return fetchAndCache(event.request);
+        })
+        .then((response) => {
+          if (response) return response;
+          console.warn('[SW] No response from cache or network, serving offline page');
+          return offlineResponse();
+        })
+        .catch((err) => {
+          console.error('[SW] Navigation handler failed:', err);
+          return offlineResponse();
+        })
     );
     return;
   }
