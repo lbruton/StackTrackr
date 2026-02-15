@@ -4,6 +4,16 @@
 
 const CACHE_NAME = 'staktrakr-v3.29.02';
 
+// Offline fallback for navigation requests when all cache/network strategies fail
+const OFFLINE_HTML = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>StakTrakr</title></head>' +
+  '<body style="font-family:system-ui;text-align:center;padding:4rem">' +
+  '<h2>Offline</h2><p>StakTrakr is not available right now.</p>' +
+  '<p><button onclick="location.reload()">Try Again</button></p></body></html>';
+
+function offlineResponse() {
+  return new Response(OFFLINE_HTML, { headers: { 'Content-Type': 'text/html' } });
+}
+
 // Core shell assets to pre-cache on install
 const CORE_ASSETS = [
   './',
@@ -121,20 +131,8 @@ self.addEventListener('fetch', (event) => {
       caches.match('./index.html')
         .then((cached) => cached || fetchAndCache(event.request))
         .catch(() => caches.match('./'))
-        .then((response) => response || new Response(
-          '<!DOCTYPE html><html><head><meta charset="utf-8"><title>StakTrakr</title></head>' +
-          '<body style="font-family:system-ui;text-align:center;padding:4rem">' +
-          '<h2>Offline</h2><p>StakTrakr is not available right now.</p>' +
-          '<p><button onclick="location.reload()">Try Again</button></p></body></html>',
-          { headers: { 'Content-Type': 'text/html' } }
-        ))
-        .catch(() => new Response(
-          '<!DOCTYPE html><html><head><meta charset="utf-8"><title>StakTrakr</title></head>' +
-          '<body style="font-family:system-ui;text-align:center;padding:4rem">' +
-          '<h2>Offline</h2><p>StakTrakr is not available right now.</p>' +
-          '<p><button onclick="location.reload()">Try Again</button></p></body></html>',
-          { headers: { 'Content-Type': 'text/html' } }
-        ))
+        .then((response) => response || offlineResponse())
+        .catch(() => offlineResponse())
     );
     return;
   }
@@ -151,7 +149,8 @@ function fetchAndCache(request) {
   return fetch(request).then((response) => {
     if (response.ok) {
       const clone = response.clone();
-      caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+      caches.open(CACHE_NAME).then((cache) => cache.put(request, clone))
+        .catch((err) => console.warn('[SW] Cache put failed:', request.url, err));
     }
     return response;
   }).catch(() => caches.match(request));
