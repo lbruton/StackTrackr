@@ -1051,14 +1051,23 @@ function _createPriceHistoryChart(canvas, allSpotEntries, allRetailEntries, purc
   }
 
   // Build labels + melt data from spot entries
-  // Include year in labels when range spans multiple years
+  // Adaptive formatting: decade spans → year only, multi-year → two-line [month, year],
+  // single-year → month + day
   const firstYear = new Date(spotEntries[0].ts).getFullYear();
   const lastYear = new Date(spotEntries[spotEntries.length - 1].ts).getFullYear();
-  const multiYear = lastYear - firstYear >= 1;
+  const yearSpan = lastYear - firstYear;
   const labels = spotEntries.map(e => {
     const d = new Date(e.ts);
-    if (multiYear) {
-      return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short' });
+    if (yearSpan > 10) {
+      // Decade+ ranges: compact "Jan '24" or just "'24"
+      return d.toLocaleDateString(undefined, { year: '2-digit', month: 'short' });
+    }
+    if (yearSpan >= 1) {
+      // 1–10 year ranges: two-line label [month day, year]
+      return [
+        d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
+        String(d.getFullYear())
+      ];
     }
     return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
   });
