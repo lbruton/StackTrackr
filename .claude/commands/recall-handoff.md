@@ -4,7 +4,7 @@ Recall a specific development handoff by ID: $ARGUMENTS
 
 **Usage Patterns:**
 ```bash
-/recall-handoff id:STACKTRACKR-HANDOFF-20251001-143045    # Full handoff ID with timestamp
+/recall-handoff id:STAKTRAKR-HANDOFF-20251001-143045    # Full handoff ID with timestamp
 /recall-handoff id:12                                   # Shorthand ID lookup
 /recall-handoff recent                                  # Most recent handoff
 /recall-handoff date:2025-09-07                         # Handoffs from specific date
@@ -44,7 +44,7 @@ mcp__memento__open_nodes({
 **Tag-Based Search Examples (optimal search method):**
 - `"handoff spec:001"` - All handoffs for specification 001 (search_nodes - exact tag)
 - `"handoff blocked"` - Handoffs with blocking issues (search_nodes - exact tag)
-- `"handoff project:stacktrackr in-progress"` - Active StackTrackr handoffs (search_nodes - tags)
+- `"handoff project:staktrakr in-progress"` - Active StakTrakr handoffs (search_nodes - tags)
 - `"handoff week-38-2025"` - This week's handoffs (search_nodes - temporal tag)
 - `"backend architecture decisions"` - Backend design handoffs (semantic_search - concepts)
 

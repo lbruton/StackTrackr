@@ -1,12 +1,12 @@
 ---
 name: browser-testing
-description: Browser automation patterns for StackTrackr UI testing — screenshots, accessibility snapshots, interaction recording, theme/scaling verification. Use when testing UI, taking screenshots, running Chrome DevTools, or verifying themes/layouts.
+description: Browser automation patterns for StakTrakr UI testing — screenshots, accessibility snapshots, interaction recording, theme/scaling verification. Use when testing UI, taking screenshots, running Chrome DevTools, or verifying themes/layouts.
 user-invocable: false
 ---
 
-# StackTrackr Browser Testing
+# StakTrakr Browser Testing
 
-Patterns and workflows for testing the StackTrackr UI using Chrome MCP tools. Use this skill when working on themes, layout scaling, responsive design, visual regression, or any task that requires viewing or interacting with the live UI.
+Patterns and workflows for testing the StakTrakr UI using Chrome MCP tools. Use this skill when working on themes, layout scaling, responsive design, visual regression, or any task that requires viewing or interacting with the live UI.
 
 ---
 
@@ -14,7 +14,7 @@ Patterns and workflows for testing the StackTrackr UI using Chrome MCP tools. Us
 
 ### 1. Start the local server
 
-StackTrackr must be served over HTTP for full browser tool access:
+StakTrakr must be served over HTTP for full browser tool access:
 
 ```bash
 python3 -m http.server 8888
@@ -54,7 +54,7 @@ Keep the server running in the background for the duration of the testing sessio
 
 **Navigation** — use `navigate_page`. Works with both protocols:
 - HTTP: `http://localhost:8888/index.html`
-- File: `file:///Volumes/DATA/GitHub/StackTrackr/index.html`
+- File: `file:///Volumes/DATA/GitHub/StakTrakr/index.html`
 
 **Accessibility snapshots** — use `take_snapshot`. Returns a structured tree:
 ```
@@ -96,7 +96,7 @@ JSON.stringify(window.featureFlags)
 3. Capture extra frames before/after each action for smooth playback
 4. Name files meaningfully: `theme_switch_dark.gif`, `add_item_flow.gif`
 
-**Page reading** — `read_page` works on localhost but StackTrackr's single-page HTML is very dense. Tips:
+**Page reading** — `read_page` works on localhost but StakTrakr's single-page HTML is very dense. Tips:
 - Use CSS selectors to target specific sections: `read_page` with a selector like `#inventoryTable`
 - For full-page analysis, prefer `chrome-devtools` `take_snapshot` instead
 - If output is truncated, use `evaluate_script` to extract specific data
@@ -119,7 +119,7 @@ JSON.stringify(window.featureFlags)
 
 ### Output size limits
 
-StackTrackr is a single HTML page with dense DOM. Some tools hit character limits:
+StakTrakr is a single HTML page with dense DOM. Some tools hit character limits:
 - `read_page` at depth > 1 can exceed output limits
 - `take_snapshot` returns ~400 lines for the full app — manageable but large
 - Use `evaluate_script` with targeted DOM queries for specific element inspection

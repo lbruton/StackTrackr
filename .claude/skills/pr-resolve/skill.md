@@ -1,4 +1,4 @@
-# PR Resolve — StackTrackr
+# PR Resolve — StakTrakr
 
 Review, reply to, and resolve all PR review comments and CI check failures. Handles Copilot review threads, Codacy quality gate findings, and human reviewer comments in a single pass.
 
@@ -24,7 +24,7 @@ Use GraphQL to get threads with full context:
 ```bash
 gh api graphql -f query='
 {
-  repository(owner: "lbruton", name: "StackTrackr") {
+  repository(owner: "lbruton", name: "StakTrakr") {
     pullRequest(number: PR_NUMBER) {
       reviewThreads(first: 50) {
         nodes {
@@ -59,17 +59,17 @@ If Codacy failed or reported issues:
 
 1. **Check Codacy PR comments** — Codacy sometimes leaves inline comments:
    ```bash
-   gh api repos/lbruton/StackTrackr/pulls/PR_NUMBER/comments --jq '.[] | select(.user.login | test("codacy"; "i")) | "\(.id) | \(.path):\(.line) | \(.body)"'
+   gh api repos/lbruton/StakTrakr/pulls/PR_NUMBER/comments --jq '.[] | select(.user.login | test("codacy"; "i")) | "\(.id) | \(.path):\(.line) | \(.body)"'
    ```
 
 2. **Fetch Codacy PR findings via MCP** — use the Codacy MCP tools for detailed analysis:
    ```
-   mcp__codacy__codacy_list_pull_request_issues  (provider: "gh", owner: "lbruton", repo: "StackTrackr", pullRequestNumber: PR_NUMBER)
+   mcp__codacy__codacy_list_pull_request_issues  (provider: "gh", owner: "lbruton", repo: "StakTrakr", pullRequestNumber: PR_NUMBER)
    ```
 
 3. **Cross-reference with Codacy dashboard** — for pattern-level details:
    ```
-   mcp__codacy__codacy_get_repository_with_analysis  (provider: "gh", owner: "lbruton", repo: "StackTrackr")
+   mcp__codacy__codacy_get_repository_with_analysis  (provider: "gh", owner: "lbruton", repo: "StakTrakr")
    ```
 
 ### Step 4: Summarize all findings
@@ -215,7 +215,7 @@ Valid concern. <Brief acknowledgment>. Tracked as [STACK-XX](link) for a future 
 
 Reply using the GitHub API:
 ```bash
-gh api repos/lbruton/StackTrackr/pulls/PR_NUMBER/comments/COMMENT_ID/replies \
+gh api repos/lbruton/StakTrakr/pulls/PR_NUMBER/comments/COMMENT_ID/replies \
   -f body="REPLY_TEXT"
 ```
 
@@ -256,7 +256,7 @@ After all fixes are pushed, wait for CI to re-run, then verify:
 ```bash
 gh api graphql -f query='
 {
-  repository(owner: "lbruton", name: "StackTrackr") {
+  repository(owner: "lbruton", name: "StakTrakr") {
     pullRequest(number: PR_NUMBER) {
       reviewThreads(first: 50) {
         nodes {

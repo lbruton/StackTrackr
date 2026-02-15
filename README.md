@@ -1,12 +1,19 @@
 # StakTrakr
+ 
+[![MIT License](https://img.shields.io/github/license/lbruton/StakTrakr?style=flat-square)](https://github.com/lbruton/StakTrakr/blob/main/LICENSE)
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/b8d30126676546cb958fa6a7e0174da8)](https://app.codacy.com/gh/lbruton/StakTrakr/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
+[![GitHub Issues](https://img.shields.io/github/issues/lbruton/StakTrakr?style=flat-square)](https://github.com/lbruton/StakTrakr/issues)
+[![Reddit Community](https://img.shields.io/reddit/subreddit-subscribers/staktrakr?style=flat-square&label=community)](https://www.reddit.com/r/staktrakr/)
+[![Sponsor](https://img.shields.io/badge/sponsor-%E2%99%A1-ea4aaa?style=flat-square)](https://github.com/sponsors/lbruton)
+[![Maintained by Claude Code](https://img.shields.io/badge/Maintained%20by-Claude%20Code-blueviolet)](https://claude.com/claude-code)
 
-**Track Your Stack. Your Way.**
+**Track your precious metals stack. Your Way!**
 
-A powerful, privacy-first precious metals portfolio tracker for Silver, Gold, Platinum, Palladium, and Goldbacks. Runs entirely in your browser — no accounts, no cloud, no data collection. Your stack, your data, your rules.
+A powerful, privacy-first precious metals portfolio tracker for Silver, Gold, Platinum, Palladium, and Goldbacks. Runs entirely in your browser — Your stack, your data, your rules.
 
-**Live site:** [www.staktrakr.com](https://www.staktrakr.com)
 
-[![Codacy Badge](https://app.codacy.com/project/badge/Grade/b8d30126676546cb958fa6a7e0174da8)](https://app.codacy.com/gh/lbruton/StackTrackr/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
+**Give it a try today at:** [www.staktrakr.com](https://www.staktrakr.com)
+
 
 ![StakTrakr Screenshot](ScreenshotStakTrakr.png)
 
@@ -186,4 +193,4 @@ docs/                   Architecture documentation
 
 MIT License. See [LICENSE](LICENSE) for details.
 
-Contributions via fork and pull request are welcome. Report issues at [GitHub Issues](https://github.com/lbruton/StackTrackr/issues).
+Contributions via fork and pull request are welcome. Report issues at [GitHub Issues](https://github.com/lbruton/StakTrakr/issues).
