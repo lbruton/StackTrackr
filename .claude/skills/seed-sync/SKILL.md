@@ -1,12 +1,13 @@
 # Seed Data Sync — StackTrackr
 
-Check the Docker spot-price poller output and stage any new seed data for commit. Run this before every release or whenever you suspect seed data has drifted from the repo.
+Check the Docker spot-price poller output and stage any new seed data for commit. Can also fetch today's prices directly without Docker.
 
 ## When to Use
 
 - **Before every release** — the `/release` skill references this as a prerequisite
 - **After merging PRs** — seed data may have accumulated while the PR was open
 - **On demand** — `/seed-sync` to check and stage
+- **Manual update** — when the Docker poller isn't running and you need fresh prices
 
 ## Phase 1: Docker Poller Health Check
 
@@ -14,7 +15,15 @@ Check the Docker spot-price poller output and stage any new seed data for commit
 2. Run `docker logs stacktrakr-seed-poller --tail 10` to check for errors or successful polls
 3. Report the container status:
    - **Running**: show uptime and last log line
-   - **Stopped/Missing**: warn the user and suggest `docker compose -f devops/docker-compose.yml up -d`
+   - **Stopped/Missing**: warn the user and suggest `docker compose -f devops/spot-poller/docker-compose.yml up -d`
+
+**If the poller is not running**, offer to fetch today's prices directly using the built-in script:
+
+```bash
+python3 .claude/skills/seed-sync/update-today.py
+```
+
+This slim script fetches today's spot prices from MetalPriceAPI and appends them to the appropriate `data/spot-history-{year}.json` file. It reads the API key from the environment or from `devops/spot-poller/.env`. No Docker required.
 
 ## Phase 2: Seed Data Freshness Audit
 
@@ -70,3 +79,20 @@ Report any issues found. Do NOT auto-fix — flag for the user.
 ## Integration with /release
 
 The `/release` skill should invoke `/seed-sync` at the start of Phase 0 (before gathering context). This ensures seed data is staged before the release commit is created. The release skill's Phase 2 step 6 and Phase 3 `git add` already handle the files — this skill just makes the check explicit and visible.
+
+## File Layout
+
+```
+devops/spot-poller/          # Docker-based continuous poller (public)
+  ├── docker-compose.yml     # Docker Compose config
+  ├── Dockerfile             # Python 3.12 Alpine image
+  ├── poller.py              # Long-running poll loop (catchup + hourly)
+  ├── update-seed-data.py    # One-shot backfill script (CLI)
+  ├── requirements.txt       # Python dependencies
+  ├── .env.example           # API key template
+  └── README.md              # Setup and usage guide
+
+.claude/skills/seed-sync/    # Claude Code skill
+  ├── SKILL.md               # This file
+  └── update-today.py        # Slim one-shot script (no Docker needed)
+```
