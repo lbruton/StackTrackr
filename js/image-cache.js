@@ -269,6 +269,16 @@ class ImageCache {
     return this._delete('coinImages', catalogId);
   }
 
+  /**
+   * Delete cached metadata for a catalog ID.
+   * @param {string} catalogId
+   * @returns {Promise<boolean>}
+   */
+  async deleteMetadata(catalogId) {
+    if (!catalogId || !(await this._ensureDb())) return false;
+    return this._delete('coinMetadata', catalogId);
+  }
+
   // ---------------------------------------------------------------------------
   // Export / Import (for ZIP backup — STACK-88)
   // ---------------------------------------------------------------------------
@@ -336,7 +346,7 @@ class ImageCache {
    * @returns {Promise<{count: number, totalBytes: number, limitBytes: number}>}
    */
   async getStorageUsage() {
-    const result = { count: 0, totalBytes: 0, limitBytes: this._quotaBytes };
+    const result = { count: 0, totalBytes: 0, metadataCount: 0, limitBytes: this._quotaBytes };
     if (!(await this._ensureDb())) return result;
 
     try {
@@ -344,6 +354,17 @@ class ImageCache {
       result.count = records.length;
       for (const rec of records) {
         result.totalBytes += rec.size || 0;
+      }
+    } catch {
+      // ignore
+    }
+
+    try {
+      const metaRecords = await this._getAll('coinMetadata');
+      result.metadataCount = metaRecords.length;
+      for (const rec of metaRecords) {
+        // Approximate metadata size from JSON serialization
+        result.totalBytes += new Blob([JSON.stringify(rec)]).size;
       }
     } catch {
       // ignore

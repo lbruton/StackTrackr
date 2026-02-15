@@ -188,7 +188,9 @@ const resyncCachedEntry = async (catalogId) => {
     return resolved === catalogId;
   });
 
+  // Delete both images and metadata for a clean re-sync
   await imageCache.deleteImages(catalogId);
+  await imageCache.deleteMetadata(catalogId);
 
   // Fetch metadata + image URLs from Numista API
   if (window.catalogAPI) {

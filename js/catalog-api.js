@@ -403,9 +403,11 @@ class NumistaProvider extends CatalogProvider {
         headers: { 'Numista-API-Key': this.apiKey }
       });
       const data = await response.json();
-      debugLog(`Numista lookup ${catalogId}: keys=${Object.keys(data).join(',')}`);
-      if (data.obverse) debugLog(`  obverse keys: ${Object.keys(data.obverse).join(',')}`);
-      if (data.reverse) debugLog(`  reverse keys: ${Object.keys(data.reverse).join(',')}`);
+      if (typeof window !== 'undefined' && typeof window.debugLog === 'function') {
+        window.debugLog(`Numista lookup ${catalogId}: keys=${Object.keys(data).join(',')}`);
+        if (data.obverse) window.debugLog(`  obverse keys: ${Object.keys(data.obverse).join(',')}`);
+        if (data.reverse) window.debugLog(`  reverse keys: ${Object.keys(data.reverse).join(',')}`);
+      }
 
       return this.normalizeItemData(data);
     } catch (error) {

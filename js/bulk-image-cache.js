@@ -61,7 +61,12 @@ const BulkImageCache = (() => {
    */
   async function cacheAll({ onProgress, onComplete, onLog, delay = 200 } = {}) {
     if (_running) return;
-    if (!window.imageCache?.isAvailable()) return;
+    if (!window.imageCache) return;
+    // Re-open IDB if the browser closed the connection (storage pressure, backgrounding)
+    if (!imageCache.isAvailable()) {
+      await imageCache.init();
+      if (!imageCache.isAvailable()) return;
+    }
 
     _running = true;
     _aborted = false;
