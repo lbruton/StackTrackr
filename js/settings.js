@@ -57,6 +57,19 @@ const switchSettingsSection = (name) => {
     populateApiSection();
   }
 
+  // Sync image display toggles when switching to Appearance section
+  if (name === 'site') {
+    const tableToggle = document.getElementById('tableImagesToggle');
+    if (tableToggle) tableToggle.checked = localStorage.getItem('tableImagesEnabled') !== 'false';
+    const overrideToggle = document.getElementById('numistaOverrideToggle');
+    if (overrideToggle) overrideToggle.checked = localStorage.getItem('numistaOverridePersonal') === 'true';
+  }
+
+  // Populate Images data when switching to Images section (STACK-96)
+  if (name === 'images') {
+    populateImagesSection();
+  }
+
   // Render the active log sub-tab when switching to the changelog section
   if (name === 'changelog') {
     const activeTab = document.querySelector('.settings-log-tab.active');
@@ -833,6 +846,285 @@ const setupSettingsEventListeners = () => {
 
   // Provider priority dropdowns (STACK-90)
   setupProviderPriority();
+
+  // Image settings action buttons
+  const clearImagesBtn = document.getElementById('clearAllImagesBtn');
+  if (clearImagesBtn) {
+    clearImagesBtn.addEventListener('click', async () => {
+      if (!window.imageCache?.isAvailable()) return;
+      if (!confirm('Clear all cached images (Numista, pattern, and user uploads)?')) return;
+      await imageCache.clearAll();
+      populateImagesSection();
+    });
+  }
+
+  // Pattern mode toggle (Keywords ↔ Regex)
+  let _patternMode = 'keywords'; // default to keywords (user-friendly)
+  const patternModeKeywords = document.getElementById('patternModeKeywords');
+  const patternModeRegex = document.getElementById('patternModeRegex');
+  const patternInput = document.getElementById('patternRulePattern');
+  const patternTip = document.getElementById('patternRuleTip');
+
+  if (patternModeKeywords && patternModeRegex) {
+    patternModeKeywords.addEventListener('click', () => {
+      _patternMode = 'keywords';
+      patternModeKeywords.classList.add('active');
+      patternModeRegex.classList.remove('active');
+      if (patternInput) patternInput.placeholder = 'e.g. morgan, peace, walking liberty';
+      if (patternTip) patternTip.textContent = 'Separate keywords with commas or semicolons. Matches item names containing any keyword.';
+    });
+    patternModeRegex.addEventListener('click', () => {
+      _patternMode = 'regex';
+      patternModeRegex.classList.add('active');
+      patternModeKeywords.classList.remove('active');
+      if (patternInput) patternInput.placeholder = 'e.g. \\bmorgan\\b|\\bpeace\\b';
+      if (patternTip) patternTip.textContent = 'Case-insensitive regex. Use \\b for word boundaries, | for OR, .* for wildcards.';
+    });
+  }
+
+  // Attach autocomplete to pattern input (reuses item name lookup table)
+  if (patternInput && typeof attachAutocomplete === 'function') {
+    attachAutocomplete(patternInput, 'names');
+  }
+
+  // Add Pattern Rule handler
+  const addPatternRuleBtn = document.getElementById('addPatternRuleBtn');
+  if (addPatternRuleBtn) {
+    addPatternRuleBtn.addEventListener('click', async () => {
+      const replacementInput = document.getElementById('patternRuleReplacement');
+      const numistaIdInput = document.getElementById('patternRuleNumistaId');
+      const obverseInput = document.getElementById('patternRuleObverse');
+      const reverseInput = document.getElementById('patternRuleReverse');
+
+      const rawPattern = patternInput?.value?.trim();
+      const replacement = replacementInput?.value?.trim() || rawPattern || '';
+      const numistaId = numistaIdInput?.value?.trim() || null;
+
+      if (!rawPattern) {
+        alert('Pattern is required.');
+        return;
+      }
+
+      // Convert keywords mode to regex: "morgan, peace" → "morgan|peace"
+      let pattern = rawPattern;
+      if (_patternMode === 'keywords') {
+        const terms = rawPattern.split(/[,;]/).map(t => t.trim()).filter(t => t.length > 0);
+        if (terms.length === 0) { alert('Enter at least one keyword.'); return; }
+        // Escape regex special chars in each term, join with |
+        pattern = terms.map(t => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|');
+      }
+
+      // Validate regex
+      try { new RegExp(pattern, 'i'); }
+      catch (e) { alert('Invalid pattern: ' + e.message); return; }
+
+      // Require at least one image
+      if (!obverseInput?.files?.[0] && !reverseInput?.files?.[0]) {
+        alert('Please select at least one image (obverse or reverse).');
+        return;
+      }
+
+      // Process images
+      let obverseBlob = null;
+      let reverseBlob = null;
+      const processor = typeof imageProcessor !== 'undefined' ? imageProcessor : null;
+
+      try {
+        if (obverseInput?.files?.[0]) {
+          if (processor) {
+            const result = await processor.processFile(obverseInput.files[0]);
+            obverseBlob = result?.blob || null;
+          } else {
+            obverseBlob = obverseInput.files[0];
+          }
+        }
+        if (reverseInput?.files?.[0]) {
+          if (processor) {
+            const result = await processor.processFile(reverseInput.files[0]);
+            reverseBlob = result?.blob || null;
+          } else {
+            reverseBlob = reverseInput.files[0];
+          }
+        }
+      } catch (err) {
+        console.error('Image processing failed:', err);
+        alert('Failed to process image: ' + err.message);
+        return;
+      }
+
+      // Generate rule ID and create the rule
+      const ruleId = 'custom-img-' + Date.now();
+      const addResult = NumistaLookup.addRule(pattern, replacement, numistaId, ruleId);
+      if (!addResult.success) {
+        alert(addResult.error || 'Failed to add rule.');
+        return;
+      }
+
+      // Store images in patternImages store
+      if ((obverseBlob || reverseBlob) && window.imageCache?.isAvailable()) {
+        await imageCache.cachePatternImage(ruleId, obverseBlob, reverseBlob);
+      }
+
+      // Clear form
+      if (patternInput) patternInput.value = '';
+      if (replacementInput) replacementInput.value = '';
+      if (numistaIdInput) numistaIdInput.value = '';
+      if (obverseInput) obverseInput.value = '';
+      if (reverseInput) reverseInput.value = '';
+
+      renderCustomPatternRules();
+      renderImageStorageStats();
+    });
+  }
+
+  // Table images toggle
+  const tableImagesToggle = document.getElementById('tableImagesToggle');
+  if (tableImagesToggle) {
+    tableImagesToggle.checked = localStorage.getItem('tableImagesEnabled') !== 'false'; // default ON
+    tableImagesToggle.addEventListener('change', () => {
+      localStorage.setItem('tableImagesEnabled', tableImagesToggle.checked ? 'true' : 'false');
+      if (typeof renderTable === 'function') renderTable();
+    });
+  }
+
+  // Numista override toggle
+  const overrideToggle = document.getElementById('numistaOverrideToggle');
+  if (overrideToggle) {
+    overrideToggle.checked = localStorage.getItem('numistaOverridePersonal') === 'true';
+    overrideToggle.addEventListener('change', () => {
+      localStorage.setItem('numistaOverridePersonal', overrideToggle.checked ? 'true' : 'false');
+    });
+  }
+
+  // Export all images
+  const exportBtn = document.getElementById('exportAllImagesBtn');
+  if (exportBtn) {
+    exportBtn.addEventListener('click', async () => {
+      if (!window.imageCache?.isAvailable()) { alert('IndexedDB unavailable.'); return; }
+      if (typeof JSZip === 'undefined') { alert('JSZip not loaded.'); return; }
+
+      exportBtn.textContent = 'Exporting...';
+      exportBtn.disabled = true;
+
+      try {
+        const zip = new JSZip();
+
+        // User images
+        const userImages = await imageCache.exportAllUserImages();
+        for (const rec of userImages) {
+          if (rec.obverse) zip.file(`user/${rec.uuid}_obverse.webp`, rec.obverse);
+          if (rec.reverse) zip.file(`user/${rec.uuid}_reverse.webp`, rec.reverse);
+        }
+
+        // Pattern images
+        const patternImages = await imageCache.exportAllPatternImages();
+        for (const rec of patternImages) {
+          if (rec.obverse) zip.file(`pattern/${rec.ruleId}_obverse.webp`, rec.obverse);
+          if (rec.reverse) zip.file(`pattern/${rec.ruleId}_reverse.webp`, rec.reverse);
+        }
+
+        // Pattern rules JSON
+        const customRules = NumistaLookup.listCustomRules();
+        zip.file('pattern_rules.json', JSON.stringify(customRules, null, 2));
+
+        const blob = await zip.generateAsync({ type: 'blob' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'staktrakr-images.zip';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+      } catch (err) {
+        console.error('Image export failed:', err);
+        alert('Export failed: ' + err.message);
+      } finally {
+        exportBtn.textContent = 'Export All Images';
+        exportBtn.disabled = false;
+      }
+    });
+  }
+
+  // Import images
+  const importBtn = document.getElementById('importImagesBtn');
+  const importFile = document.getElementById('importImagesFile');
+  if (importBtn && importFile) {
+    importBtn.addEventListener('click', () => importFile.click());
+    importFile.addEventListener('change', async (e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      if (typeof JSZip === 'undefined') { alert('JSZip not loaded.'); return; }
+      if (!window.imageCache?.isAvailable()) { alert('IndexedDB unavailable.'); return; }
+
+      importBtn.textContent = 'Importing...';
+      importBtn.disabled = true;
+
+      try {
+        const zip = await JSZip.loadAsync(file);
+
+        // Import pattern rules (skip duplicates by pattern string)
+        const rulesFile = zip.file('pattern_rules.json');
+        if (rulesFile) {
+          const rulesJson = await rulesFile.async('string');
+          const rules = JSON.parse(rulesJson);
+          const existingPatterns = new Set(NumistaLookup.listCustomRules().map(r => r.pattern));
+          for (const rule of rules) {
+            if (!rule.pattern || existingPatterns.has(rule.pattern)) continue;
+            NumistaLookup.addRule(rule.pattern, rule.replacement || '', rule.numistaId || null, rule.seedImageId || null);
+            existingPatterns.add(rule.pattern);
+          }
+        }
+
+        // Import pattern images
+        const patternFiles = zip.folder('pattern');
+        if (patternFiles) {
+          const patternMap = new Map();
+          patternFiles.forEach((relativePath, zipEntry) => {
+            const match = relativePath.match(/^(.+)_(obverse|reverse)\.webp$/);
+            if (match) {
+              const [, ruleId, side] = match;
+              if (!patternMap.has(ruleId)) patternMap.set(ruleId, {});
+              patternMap.get(ruleId)[side] = zipEntry;
+            }
+          });
+          for (const [ruleId, sides] of patternMap) {
+            const obverse = sides.obverse ? await sides.obverse.async('blob') : null;
+            const reverse = sides.reverse ? await sides.reverse.async('blob') : null;
+            await imageCache.cachePatternImage(ruleId, obverse, reverse);
+          }
+        }
+
+        // Import user images
+        const userFolder = zip.folder('user');
+        if (userFolder) {
+          const userMap = new Map();
+          userFolder.forEach((relativePath, zipEntry) => {
+            const match = relativePath.match(/^(.+)_(obverse|reverse)\.webp$/);
+            if (match) {
+              const [, uuid, side] = match;
+              if (!userMap.has(uuid)) userMap.set(uuid, {});
+              userMap.get(uuid)[side] = zipEntry;
+            }
+          });
+          for (const [uuid, sides] of userMap) {
+            const obverse = sides.obverse ? await sides.obverse.async('blob') : null;
+            const reverse = sides.reverse ? await sides.reverse.async('blob') : null;
+            if (obverse) await imageCache.cacheUserImage(uuid, obverse, reverse);
+          }
+        }
+
+        populateImagesSection();
+      } catch (err) {
+        console.error('Image import failed:', err);
+        alert('Import failed: ' + err.message);
+      } finally {
+        importBtn.textContent = 'Import Images';
+        importBtn.disabled = false;
+        importFile.value = '';
+      }
+    });
+  }
 };
 
 /**
@@ -1663,6 +1955,315 @@ const closeCurrencyDropdownOnOutside = (e) => {
   }
 };
 
+// =============================================================================
+// IMAGES SETTINGS TAB (STACK-96)
+// =============================================================================
+
+/**
+ * Populate all sub-sections of the Images settings tab.
+ */
+const populateImagesSection = () => {
+  renderImageStorageStats();
+  renderCustomPatternRules();
+  renderUserImageGrid();
+};
+
+/**
+ * Create a thumbnail element (img or placeholder) for a given blob URL.
+ * @param {string|null} src - Object URL or null
+ * @param {string} alt - Alt text
+ * @returns {HTMLElement}
+ */
+const createThumbEl = (src, alt) => {
+  if (src) {
+    const img = document.createElement('img');
+    img.src = src;
+    img.alt = alt;
+    img.className = 'pattern-rule-thumb';
+    return img;
+  }
+  const placeholder = document.createElement('div');
+  placeholder.className = 'pattern-rule-thumb pattern-rule-thumb-empty';
+  placeholder.textContent = 'No img';
+  return placeholder;
+};
+
+/**
+ * Render user-created pattern image rules with dual thumbnails, edit, and delete.
+ */
+const renderCustomPatternRules = async () => {
+  const container = document.getElementById('customPatternImageRules');
+  if (!container) return;
+
+  if (typeof NumistaLookup === 'undefined') {
+    container.innerHTML = '<p style="font-size:0.85em;color:var(--text-secondary)">NumistaLookup not available.</p>';
+    return;
+  }
+
+  const rules = NumistaLookup.listCustomRules();
+  if (!rules.length) {
+    container.innerHTML = '<p style="font-size:0.85em;color:var(--text-secondary)">No custom pattern rules yet. Use the form above to add one.</p>';
+    return;
+  }
+
+  container.textContent = '';
+
+  for (const rule of rules) {
+    const row = document.createElement('div');
+    row.className = 'pattern-rule-row';
+
+    // Dual thumbnails (obverse + reverse)
+    const thumbs = document.createElement('div');
+    thumbs.className = 'pattern-rule-thumbs';
+
+    let obverseSrc = null;
+    let reverseSrc = null;
+    if (rule.seedImageId && window.imageCache?.isAvailable()) {
+      try { obverseSrc = await imageCache.getPatternImageUrl(rule.seedImageId, 'obverse'); } catch { /* ignore */ }
+      try { reverseSrc = await imageCache.getPatternImageUrl(rule.seedImageId, 'reverse'); } catch { /* ignore */ }
+    }
+    thumbs.appendChild(createThumbEl(obverseSrc, rule.pattern + ' obverse'));
+    thumbs.appendChild(createThumbEl(reverseSrc, rule.pattern + ' reverse'));
+    row.appendChild(thumbs);
+
+    // Info
+    const info = document.createElement('div');
+    info.className = 'pattern-rule-info';
+    info.innerHTML = `<div class="rule-pattern">/${rule.pattern}/i</div>
+      <div class="rule-replacement">${rule.replacement || '\u2014'}${rule.numistaId ? ' (N#' + rule.numistaId + ')' : ''}</div>`;
+    row.appendChild(info);
+
+    // Actions
+    const actions = document.createElement('div');
+    actions.className = 'pattern-rule-actions';
+
+    const editBtn = document.createElement('button');
+    editBtn.className = 'btn';
+    editBtn.textContent = 'Edit';
+
+    const deleteBtn = document.createElement('button');
+    deleteBtn.className = 'btn danger';
+    deleteBtn.textContent = 'Delete';
+    deleteBtn.addEventListener('click', async () => {
+      NumistaLookup.removeRule(rule.id);
+      if (rule.seedImageId && window.imageCache?.isAvailable()) {
+        await imageCache.deletePatternImage(rule.seedImageId);
+      }
+      renderCustomPatternRules();
+      renderImageStorageStats();
+    });
+
+    actions.appendChild(editBtn);
+    actions.appendChild(deleteBtn);
+    row.appendChild(actions);
+
+    // Inline edit form (hidden by default)
+    const editForm = document.createElement('div');
+    editForm.className = 'pattern-rule-edit-form';
+    editForm.style.display = 'none';
+    editForm.innerHTML = `
+      <div class="edit-form-fields">
+        <label>Pattern <input type="text" class="edit-pattern" value="${rule.pattern.replace(/"/g, '&quot;')}" /></label>
+        <label>Replacement <input type="text" class="edit-replacement" value="${(rule.replacement || '').replace(/"/g, '&quot;')}" /></label>
+        <label>N# <input type="text" class="edit-numista-id" value="${rule.numistaId || ''}" /></label>
+        <label>Obverse <input type="file" class="edit-obverse" accept="image/*" /></label>
+        <label>Reverse <input type="file" class="edit-reverse" accept="image/*" /></label>
+      </div>
+      <div class="edit-form-actions">
+        <button type="button" class="btn edit-save-btn">Save</button>
+        <button type="button" class="btn edit-cancel-btn">Cancel</button>
+      </div>`;
+
+    // Toggle edit form
+    editBtn.addEventListener('click', () => {
+      const isVisible = editForm.style.display !== 'none';
+      editForm.style.display = isVisible ? 'none' : 'block';
+      editBtn.textContent = isVisible ? 'Edit' : 'Editing...';
+    });
+
+    // Cancel
+    editForm.querySelector('.edit-cancel-btn').addEventListener('click', () => {
+      editForm.style.display = 'none';
+      editBtn.textContent = 'Edit';
+    });
+
+    // Save
+    editForm.querySelector('.edit-save-btn').addEventListener('click', async () => {
+      const newPattern = editForm.querySelector('.edit-pattern').value.trim();
+      const newReplacement = editForm.querySelector('.edit-replacement').value.trim();
+      const newNumistaId = editForm.querySelector('.edit-numista-id').value.trim();
+
+      if (!newPattern || !newReplacement) {
+        alert('Pattern and replacement are required.');
+        return;
+      }
+
+      const result = NumistaLookup.updateRule(rule.id, {
+        pattern: newPattern,
+        replacement: newReplacement,
+        numistaId: newNumistaId || null
+      });
+
+      if (!result.success) {
+        alert(result.error || 'Failed to update rule.');
+        return;
+      }
+
+      // Handle new image uploads
+      const obvFile = editForm.querySelector('.edit-obverse').files[0];
+      const revFile = editForm.querySelector('.edit-reverse').files[0];
+      if ((obvFile || revFile) && window.imageCache?.isAvailable()) {
+        const ruleId = rule.seedImageId || rule.id;
+        const processor = typeof imageProcessor !== 'undefined' ? imageProcessor : null;
+        let obvBlob = null;
+        let revBlob = null;
+
+        try {
+          if (obvFile) {
+            obvBlob = processor ? (await processor.processFile(obvFile))?.blob || null : obvFile;
+          }
+          if (revFile) {
+            revBlob = processor ? (await processor.processFile(revFile))?.blob || null : revFile;
+          }
+        } catch (err) {
+          console.error('Image processing failed:', err);
+          alert('Failed to process image: ' + err.message);
+          return;
+        }
+
+        // Preserve existing side when only one side is uploaded
+        if (rule.seedImageId && !(obvFile && revFile)) {
+          const existing = await imageCache.getPatternImage(rule.seedImageId);
+          await imageCache.cachePatternImage(ruleId, obvBlob || existing?.obverse || null, revBlob || existing?.reverse || null);
+        } else {
+          await imageCache.cachePatternImage(ruleId, obvBlob, revBlob);
+        }
+
+        // Ensure seedImageId is set on the rule
+        if (!rule.seedImageId) {
+          NumistaLookup.updateRule(rule.id, { seedImageId: ruleId });
+        }
+      }
+
+      renderCustomPatternRules();
+      renderImageStorageStats();
+    });
+
+    row.appendChild(editForm);
+    container.appendChild(row);
+  }
+};
+
+/**
+ * Render storage statistics for the image system.
+ */
+const renderImageStorageStats = async () => {
+  const container = document.getElementById('imageStorageStats');
+  if (!container) return;
+
+  if (!window.imageCache?.isAvailable()) {
+    container.innerHTML = '<span class="stat-item">IndexedDB unavailable</span>';
+    return;
+  }
+
+  const usage = await imageCache.getStorageUsage();
+  const totalMB = (usage.totalBytes / 1024 / 1024).toFixed(1);
+  const limitMB = (usage.limitBytes / 1024 / 1024).toFixed(0);
+  const pct = usage.limitBytes > 0 ? ((usage.totalBytes / usage.limitBytes) * 100).toFixed(1) : 0;
+
+  container.innerHTML = `
+    <span class="stat-item">Total: ${totalMB} / ${limitMB} MB (${pct}%)</span>
+    <span class="stat-item">Numista: ${usage.numistaCount}</span>
+    <span class="stat-item">Pattern: ${usage.patternImageCount || 0}</span>
+    <span class="stat-item">User: ${usage.userImageCount}</span>
+    <span class="stat-item">Metadata: ${usage.metadataCount}</span>
+  `;
+};
+
+/**
+ * Render user-uploaded images as rows with dual thumbnails, edit link, and delete.
+ */
+const renderUserImageGrid = async () => {
+  const container = document.getElementById('userImageGrid');
+  if (!container) return;
+
+  if (!window.imageCache?.isAvailable()) {
+    container.innerHTML = '<p style="font-size:0.85em;color:var(--text-secondary)">IndexedDB unavailable.</p>';
+    return;
+  }
+
+  let userImages;
+  try {
+    userImages = await imageCache.exportAllUserImages();
+  } catch {
+    container.innerHTML = '<p style="font-size:0.85em;color:var(--text-secondary)">Could not load user images.</p>';
+    return;
+  }
+
+  if (!userImages?.length) {
+    container.innerHTML = '<p style="font-size:0.85em;color:var(--text-secondary)">No user-uploaded images yet.</p>';
+    return;
+  }
+
+  container.textContent = '';
+
+  for (const rec of userImages) {
+    const row = document.createElement('div');
+    row.className = 'pattern-rule-row';
+
+    // Dual thumbnails
+    const thumbs = document.createElement('div');
+    thumbs.className = 'pattern-rule-thumbs';
+    let obverseSrc = null;
+    let reverseSrc = null;
+    if (rec.obverse) { try { obverseSrc = URL.createObjectURL(rec.obverse); } catch { /* ignore */ } }
+    if (rec.reverse) { try { reverseSrc = URL.createObjectURL(rec.reverse); } catch { /* ignore */ } }
+    thumbs.appendChild(createThumbEl(obverseSrc, 'obverse'));
+    thumbs.appendChild(createThumbEl(reverseSrc, 'reverse'));
+    row.appendChild(thumbs);
+
+    // Item name
+    const item = typeof inventory !== 'undefined' ? inventory.find(i => i.uuid === rec.uuid) : null;
+    const itemIndex = item && typeof inventory !== 'undefined' ? inventory.indexOf(item) : -1;
+    const name = item ? item.name : rec.uuid.slice(0, 8) + '...';
+
+    const info = document.createElement('div');
+    info.className = 'pattern-rule-info';
+    info.innerHTML = `<div class="rule-replacement">${name}</div>`;
+    row.appendChild(info);
+
+    // Actions
+    const actions = document.createElement('div');
+    actions.className = 'pattern-rule-actions';
+
+    // Edit link — opens item's edit modal
+    if (itemIndex >= 0) {
+      const editLink = document.createElement('button');
+      editLink.className = 'btn';
+      editLink.textContent = 'Edit';
+      editLink.addEventListener('click', () => {
+        hideSettingsModal();
+        if (typeof editItem === 'function') editItem(itemIndex);
+      });
+      actions.appendChild(editLink);
+    }
+
+    const deleteBtn = document.createElement('button');
+    deleteBtn.className = 'btn danger';
+    deleteBtn.textContent = 'Delete';
+    deleteBtn.addEventListener('click', async () => {
+      if (!confirm('Delete images for "' + name + '"?')) return;
+      await imageCache.deleteUserImage(rec.uuid);
+      renderUserImageGrid();
+      renderImageStorageStats();
+    });
+    actions.appendChild(deleteBtn);
+    row.appendChild(actions);
+
+    container.appendChild(row);
+  }
+};
+
 // Expose globally
 if (typeof window !== 'undefined') {
   window.showSettingsModal = showSettingsModal;
@@ -1682,4 +2283,5 @@ if (typeof window !== 'undefined') {
   window.syncLayoutVisibilityUI = syncLayoutVisibilityUI;
   window.renderSeedRuleTable = renderSeedRuleTable;
   window.renderCustomRuleTable = renderCustomRuleTable;
+  window.populateImagesSection = populateImagesSection;
 }

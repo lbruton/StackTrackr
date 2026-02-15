@@ -6,9 +6,11 @@
  * and enriched Numista metadata. Images are resized and compressed to JPEG before storage.
  *
  * Schema:
- *   DB: StakTrakrImages v1
- *   Store "coinImages"   — keyPath: catalogId (Numista N# string)
+ *   DB: StakTrakrImages v3
+ *   Store "coinImages"    — keyPath: catalogId (Numista N# string)
  *   Store "coinMetadata"  — keyPath: catalogId (Numista N# string)
+ *   Store "userImages"    — keyPath: uuid (item UUID string)
+ *   Store "patternImages" — keyPath: ruleId (pattern rule ID string)
  *
  * @class
  */
@@ -21,9 +23,9 @@ class ImageCache {
     /** @type {number} Default storage quota in bytes (50 MB) */
     this._quotaBytes = 50 * 1024 * 1024;
     /** @type {number} Max image dimension (px) for resize */
-    this._maxDim = 400;
-    /** @type {number} JPEG quality (0-1) */
-    this._jpegQuality = 0.80;
+    this._maxDim = typeof IMAGE_MAX_DIM !== 'undefined' ? IMAGE_MAX_DIM : 600;
+    /** @type {number} Compression quality (0-1) */
+    this._quality = typeof IMAGE_QUALITY !== 'undefined' ? IMAGE_QUALITY : 0.75;
   }
 
   // ---------------------------------------------------------------------------
@@ -44,7 +46,7 @@ class ImageCache {
 
     try {
       this._db = await new Promise((resolve, reject) => {
-        const req = indexedDB.open('StakTrakrImages', 1);
+        const req = indexedDB.open('StakTrakrImages', 3);
 
         req.onupgradeneeded = (e) => {
           const db = e.target.result;
@@ -53,6 +55,16 @@ class ImageCache {
           }
           if (!db.objectStoreNames.contains('coinMetadata')) {
             db.createObjectStore('coinMetadata', { keyPath: 'catalogId' });
+          }
+          // v2: User-uploaded images keyed by item UUID (STACK-32)
+          if (!db.objectStoreNames.contains('userImages')) {
+            db.createObjectStore('userImages', { keyPath: 'uuid' });
+          }
+          // v3: Pattern images keyed by rule ID (user pattern image rules)
+          if (e.oldVersion < 3) {
+            if (!db.objectStoreNames.contains('patternImages')) {
+              db.createObjectStore('patternImages', { keyPath: 'ruleId' });
+            }
           }
         };
 
@@ -329,9 +341,11 @@ class ImageCache {
     if (!(await this._ensureDb())) return false;
 
     try {
-      const tx = this._db.transaction(['coinImages', 'coinMetadata'], 'readwrite');
-      tx.objectStore('coinImages').clear();
-      tx.objectStore('coinMetadata').clear();
+      const stores = ['coinImages', 'coinMetadata'];
+      if (this._db.objectStoreNames.contains('userImages')) stores.push('userImages');
+      if (this._db.objectStoreNames.contains('patternImages')) stores.push('patternImages');
+      const tx = this._db.transaction(stores, 'readwrite');
+      for (const s of stores) tx.objectStore(s).clear();
       await this._txComplete(tx);
       debugLog('ImageCache: cleared all stores');
       return true;
@@ -342,16 +356,17 @@ class ImageCache {
   }
 
   /**
-   * Calculate current storage usage across both stores.
-   * @returns {Promise<{count: number, totalBytes: number, limitBytes: number}>}
+   * Calculate current storage usage across all stores.
+   * @returns {Promise<{count: number, totalBytes: number, limitBytes: number, metadataCount: number, userImageCount: number, patternImageCount: number, numistaCount: number}>}
    */
   async getStorageUsage() {
-    const result = { count: 0, totalBytes: 0, metadataCount: 0, limitBytes: this._quotaBytes };
+    const result = { count: 0, totalBytes: 0, metadataCount: 0, userImageCount: 0, patternImageCount: 0, numistaCount: 0, limitBytes: this._quotaBytes };
     if (!(await this._ensureDb())) return result;
 
     try {
       const records = await this._getAll('coinImages');
       result.count = records.length;
+      result.numistaCount = records.length;
       for (const rec of records) {
         result.totalBytes += rec.size || 0;
       }
@@ -363,14 +378,299 @@ class ImageCache {
       const metaRecords = await this._getAll('coinMetadata');
       result.metadataCount = metaRecords.length;
       for (const rec of metaRecords) {
-        // Approximate metadata size from JSON serialization
         result.totalBytes += new Blob([JSON.stringify(rec)]).size;
       }
     } catch {
       // ignore
     }
 
+    try {
+      if (this._db.objectStoreNames.contains('userImages')) {
+        const userRecords = await this._getAll('userImages');
+        result.userImageCount = userRecords.length;
+        for (const rec of userRecords) {
+          result.totalBytes += rec.size || 0;
+        }
+      }
+    } catch {
+      // ignore
+    }
+
+    try {
+      if (this._db.objectStoreNames.contains('patternImages')) {
+        const patternRecords = await this._getAll('patternImages');
+        result.patternImageCount = patternRecords.length;
+        for (const rec of patternRecords) {
+          result.totalBytes += rec.size || 0;
+        }
+      }
+    } catch {
+      // ignore
+    }
+
     return result;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Image resolution cascade (STACK-32)
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Resolve the best available image for an inventory item.
+   * Default:  user upload → pattern image → numista cache → null.
+   * Override: numista cache → user upload → pattern image → null.
+   *
+   * @param {Object} item - Inventory item with uuid, numistaId, name, metal, type fields
+   * @returns {Promise<{catalogId: string, source: 'user'|'pattern'|'numista'}|null>}
+   */
+  async resolveImageForItem(item) {
+    if (!item || !(await this._ensureDb())) return null;
+
+    // Check Numista override toggle
+    // When ON:  numista cache → user upload → pattern image
+    // When OFF: user upload → pattern image → numista cache
+    const numistaOverride = localStorage.getItem('numistaOverridePersonal') === 'true';
+
+    // Helper: check user-uploaded image (by UUID in userImages store)
+    const _checkUserImage = async () => {
+      if (!item.uuid || !this._db.objectStoreNames.contains('userImages')) return null;
+      const userRec = await this._get('userImages', item.uuid);
+      if (userRec?.obverse?.size > 0) {
+        return { catalogId: item.uuid, source: 'user' };
+      }
+      return null;
+    };
+
+    // Helper: check pattern images store for a matching rule
+    const _checkPatternImage = async () => {
+      if (typeof NumistaLookup === 'undefined') return null;
+      const match = NumistaLookup.matchQuery(item.name || '');
+      if (!match?.rule?.seedImageId) return null;
+      const ruleImageId = match.rule.seedImageId;
+      if (this._db.objectStoreNames.contains('patternImages')) {
+        const rec = await this._get('patternImages', ruleImageId);
+        if (rec?.obverse?.size > 0) {
+          return { catalogId: ruleImageId, source: 'pattern' };
+        }
+      }
+      return null;
+    };
+
+    // Helper: check Numista API cache
+    const _checkNumistaCache = async () => {
+      const catalogId = item.numistaId || '';
+      if (catalogId && await this.hasImages(catalogId)) {
+        return { catalogId, source: 'numista' };
+      }
+      return null;
+    };
+
+    if (numistaOverride) {
+      // Override mode: Numista wins over everything
+      const numista = await _checkNumistaCache();
+      if (numista) return numista;
+      const user = await _checkUserImage();
+      if (user) return user;
+      const pattern = await _checkPatternImage();
+      if (pattern) return pattern;
+    } else {
+      // Default: user uploads → pattern rules → Numista cache
+      const user = await _checkUserImage();
+      if (user) return user;
+      const pattern = await _checkPatternImage();
+      if (pattern) return pattern;
+      const numista = await _checkNumistaCache();
+      if (numista) return numista;
+    }
+
+    return null;
+  }
+
+  /**
+   * Get a user-uploaded image as an object URL.
+   * Caller must revoke the URL when done.
+   * @param {string} uuid - Item UUID
+   * @param {'obverse'|'reverse'} [side='obverse']
+   * @returns {Promise<string|null>}
+   */
+  async getUserImageUrl(uuid, side = 'obverse') {
+    if (!uuid || !(await this._ensureDb())) return null;
+    if (!this._db.objectStoreNames.contains('userImages')) return null;
+    const rec = await this._get('userImages', uuid);
+    const blob = rec?.[side];
+    if (!blob || blob.size === 0) return null;
+    return URL.createObjectURL(blob);
+  }
+
+  // ---------------------------------------------------------------------------
+  // User image CRUD (STACK-32)
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Store a user-uploaded image for an inventory item.
+   * @param {string} uuid - Item UUID
+   * @param {Blob} obverse - Processed obverse image blob
+   * @param {Blob} [reverse] - Optional reverse image blob
+   * @returns {Promise<boolean>}
+   */
+  async cacheUserImage(uuid, obverse, reverse = null) {
+    if (!uuid || !obverse) {
+      debugLog('ImageCache.cacheUserImage: missing uuid or obverse blob');
+      return false;
+    }
+    if (!(await this._ensureDb())) {
+      debugLog('ImageCache.cacheUserImage: DB not available, attempting re-init');
+      // Defensive retry: re-open DB in case v2 upgrade didn't complete
+      this._db = null;
+      this._available = false;
+      if (!(await this.init())) {
+        debugLog('ImageCache.cacheUserImage: re-init failed');
+        return false;
+      }
+    }
+    if (!this._db.objectStoreNames.contains('userImages')) {
+      debugLog('ImageCache.cacheUserImage: userImages store missing — DB may need upgrade');
+      return false;
+    }
+
+    const size = (obverse?.size || 0) + (reverse?.size || 0);
+    const record = {
+      uuid,
+      obverse,
+      reverse: reverse || null,
+      cachedAt: Date.now(),
+      size,
+    };
+
+    const result = await this._put('userImages', record);
+    debugLog(`ImageCache.cacheUserImage: uuid=${uuid} size=${size} saved=${result}`);
+    return result;
+  }
+
+  /**
+   * Retrieve a user-uploaded image record.
+   * @param {string} uuid - Item UUID
+   * @returns {Promise<Object|null>}
+   */
+  async getUserImage(uuid) {
+    if (!uuid || !(await this._ensureDb())) return null;
+    if (!this._db.objectStoreNames.contains('userImages')) return null;
+    return this._get('userImages', uuid);
+  }
+
+  /**
+   * Delete a user-uploaded image.
+   * @param {string} uuid - Item UUID
+   * @returns {Promise<boolean>}
+   */
+  async deleteUserImage(uuid) {
+    if (!uuid || !(await this._ensureDb())) return false;
+    if (!this._db.objectStoreNames.contains('userImages')) return false;
+    return this._delete('userImages', uuid);
+  }
+
+  /**
+   * Export all user images for backup.
+   * @returns {Promise<Array>}
+   */
+  async exportAllUserImages() {
+    if (!(await this._ensureDb())) return [];
+    if (!this._db.objectStoreNames.contains('userImages')) return [];
+    return this._getAll('userImages');
+  }
+
+  /**
+   * Import a single user image record (from ZIP restore).
+   * @param {Object} record - User image record with uuid key
+   * @returns {Promise<boolean>}
+   */
+  async importUserImageRecord(record) {
+    if (!record?.uuid || !(await this._ensureDb())) return false;
+    if (!this._db.objectStoreNames.contains('userImages')) return false;
+    return this._put('userImages', record);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Pattern image CRUD (user pattern image rules)
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Store pattern rule images (obverse/reverse blobs).
+   * @param {string} ruleId - Pattern rule ID
+   * @param {Blob|null} obverseBlob
+   * @param {Blob|null} reverseBlob
+   * @returns {Promise<boolean>}
+   */
+  async cachePatternImage(ruleId, obverseBlob, reverseBlob) {
+    if (!ruleId || !(await this._ensureDb())) return false;
+    if (!this._db.objectStoreNames.contains('patternImages')) return false;
+
+    const size = (obverseBlob?.size || 0) + (reverseBlob?.size || 0);
+    const record = {
+      ruleId,
+      obverse: obverseBlob || null,
+      reverse: reverseBlob || null,
+      cachedAt: Date.now(),
+      size,
+    };
+    return this._put('patternImages', record);
+  }
+
+  /**
+   * Retrieve a pattern image record by rule ID.
+   * @param {string} ruleId
+   * @returns {Promise<Object|null>}
+   */
+  async getPatternImage(ruleId) {
+    if (!ruleId || !(await this._ensureDb())) return null;
+    if (!this._db.objectStoreNames.contains('patternImages')) return null;
+    return this._get('patternImages', ruleId);
+  }
+
+  /**
+   * Get a pattern image as an object URL.
+   * Caller must revoke the URL when done.
+   * @param {string} ruleId
+   * @param {'obverse'|'reverse'} [side='obverse']
+   * @returns {Promise<string|null>}
+   */
+  async getPatternImageUrl(ruleId, side = 'obverse') {
+    const rec = await this.getPatternImage(ruleId);
+    const blob = rec?.[side];
+    if (!blob || blob.size === 0) return null;
+    return URL.createObjectURL(blob);
+  }
+
+  /**
+   * Delete a pattern image record.
+   * @param {string} ruleId
+   * @returns {Promise<boolean>}
+   */
+  async deletePatternImage(ruleId) {
+    if (!ruleId || !(await this._ensureDb())) return false;
+    if (!this._db.objectStoreNames.contains('patternImages')) return false;
+    return this._delete('patternImages', ruleId);
+  }
+
+  /**
+   * Export all pattern image records for backup.
+   * @returns {Promise<Array>}
+   */
+  async exportAllPatternImages() {
+    if (!(await this._ensureDb())) return [];
+    if (!this._db.objectStoreNames.contains('patternImages')) return [];
+    return this._getAll('patternImages');
+  }
+
+  /**
+   * Import a single pattern image record (from ZIP restore).
+   * @param {Object} record - Pattern image record with ruleId key
+   * @returns {Promise<boolean>}
+   */
+  async importPatternImageRecord(record) {
+    if (!record?.ruleId || !(await this._ensureDb())) return false;
+    if (!this._db.objectStoreNames.contains('patternImages')) return false;
+    return this._put('patternImages', record);
   }
 
   // ---------------------------------------------------------------------------
@@ -407,14 +707,24 @@ class ImageCache {
   async _fetchAndResize(url) {
     if (!url || !ImageCache.isValidImageUrl(url)) return null;
 
-    // --- Strategy A: CORS fetch → canvas resize → JPEG ---
+    // --- Strategy A: CORS fetch → ImageProcessor pipeline ---
     try {
       const resp = await fetch(url, { mode: 'cors' });
       if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
       const blob = await resp.blob();
-      const imgBitmap = await createImageBitmap(blob);
 
-      const resized = await this._resizeToJpeg(imgBitmap);
+      // Prefer ImageProcessor (WebP + byte budget) when available
+      if (typeof imageProcessor !== 'undefined') {
+        const result = await imageProcessor.processFile(blob, {
+          maxDim: this._maxDim,
+          quality: this._quality,
+        });
+        if (result?.blob) return result.blob;
+      }
+
+      // Fallback: bitmap → canvas resize
+      const imgBitmap = await createImageBitmap(blob);
+      const resized = await this._resizeAndCompress(imgBitmap);
       if (resized) return resized;
 
       // Strategy B: fetch succeeded but canvas failed — use raw blob
@@ -427,7 +737,7 @@ class ImageCache {
     // --- Strategy C: Image element without crossOrigin → canvas ---
     try {
       const img = await this._loadImageElement(url, false);
-      const resized = await this._resizeToJpeg(img);
+      const resized = await this._resizeAndCompress(img);
       if (resized) return resized;
       console.warn('ImageCache: Strategy C canvas tainted for', url);
     } catch (errC) {
@@ -450,12 +760,35 @@ class ImageCache {
   }
 
   /**
-   * Resize an image source to fit within maxDim × maxDim and compress as JPEG.
-   * Returns null if canvas is tainted (SecurityError).
+   * Resize and compress an image source using ImageProcessor (STACK-95).
+   * Falls back to inline Canvas JPEG if ImageProcessor is unavailable.
    * @param {ImageBitmap|HTMLImageElement} source
    * @returns {Promise<Blob|null>}
    */
-  async _resizeToJpeg(source) {
+  async _resizeAndCompress(source) {
+    // Delegate to ImageProcessor when available
+    if (typeof imageProcessor !== 'undefined') {
+      try {
+        // Convert source to blob first so ImageProcessor can handle it
+        const canvas = document.createElement('canvas');
+        canvas.width = source.width;
+        canvas.height = source.height;
+        canvas.getContext('2d').drawImage(source, 0, 0);
+        const srcBlob = await new Promise((resolve) => {
+          canvas.toBlob((b) => resolve(b), 'image/png');
+        });
+        if (!srcBlob) return null;
+        const result = await imageProcessor.processFile(srcBlob, {
+          maxDim: this._maxDim,
+          quality: this._quality,
+        });
+        return result?.blob || null;
+      } catch {
+        // Fall through to legacy path
+      }
+    }
+
+    // Legacy fallback: inline Canvas JPEG resize
     let width = source.width;
     let height = source.height;
     const scale = Math.min(this._maxDim / width, this._maxDim / height, 1);
@@ -465,15 +798,14 @@ class ImageCache {
     const canvas = document.createElement('canvas');
     canvas.width = width;
     canvas.height = height;
-    const ctx = canvas.getContext('2d');
-    ctx.drawImage(source, 0, 0, width, height);
+    canvas.getContext('2d').drawImage(source, 0, 0, width, height);
 
     try {
       return await new Promise((resolve, reject) => {
         canvas.toBlob(
           (blob) => blob ? resolve(blob) : reject(new Error('toBlob returned null')),
           'image/jpeg',
-          this._jpegQuality
+          this._quality
         );
       });
     } catch {

@@ -6,14 +6,29 @@ Project direction and planned work. Each item links to its full Linear issue for
 
 ---
 
+## In Progress — v3.29.0 Image Management Sprint
+
+[STACK-94](https://linear.app/hextrackr/issue/STACK-94) — Local Image System (Epic)
+
+| Issue | Title | Status | Phase |
+|-------|-------|--------|-------|
+| [STACK-95](https://linear.app/hextrackr/issue/STACK-95) | Image Processor Layer | Done | 2 |
+| [STACK-96](https://linear.app/hextrackr/issue/STACK-96) | Seeded Image Library | Done | 3 |
+| [STACK-102](https://linear.app/hextrackr/issue/STACK-102) | Images Settings Tab | Done | 4 |
+| [STACK-32](https://linear.app/hextrackr/issue/STACK-32) | User Photo Upload | Done | 5 |
+| [STACK-33](https://linear.app/hextrackr/issue/STACK-33) | Mobile Camera Capture | Done | 5 |
+| [STACK-97](https://linear.app/hextrackr/issue/STACK-97) | Image Quota Manager | Backlog | — |
+
+---
+
 ## Near-Term — Next Up
 
-Image cache and mobile views are shipped (v3.27.xx). These items are unblocked and ready for the next sprint.
+Image management sprint is in progress (v3.29.0). These items are unblocked and ready after the current sprint.
 
 | Issue | Title | Priority | Depends On |
 |-------|-------|----------|------------|
 | [STACK-85](https://linear.app/hextrackr/issue/STACK-85) | Fix item detail modal layout overlap on Samsung S24+ Ultra | High | — |
-| [STACK-88](https://linear.app/hextrackr/issue/STACK-88) | Include image cache in ZIP backup and restore | High | — |
+| [STACK-88](https://linear.app/hextrackr/issue/STACK-88) | Include image cache in ZIP backup and restore (needs userImages update) | High | — |
 | [STACK-81](https://linear.app/hextrackr/issue/STACK-81) | Fix parsePriceToUSD ignoring edit-mode parameters (silent price zeroing) | Medium | — |
 | [STACK-82](https://linear.app/hextrackr/issue/STACK-82) | Fix stale spot-lookup override persisting across date changes | Medium | — |
 | [STACK-84](https://linear.app/hextrackr/issue/STACK-84) | Table Row Thumbnail Images with Hover/Click Preview | Medium | STACK-87 |
