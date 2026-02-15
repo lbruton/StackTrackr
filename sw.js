@@ -172,9 +172,7 @@ function cacheFirst(request) {
 
 // Strategy: network-first with cache fallback
 function networkFirst(request) {
-  return ensureResponse(
-    fetchAndCache(request).catch(() => caches.match(request))
-  );
+  return ensureResponse(fetchAndCache(request));
 }
 
 // Strategy: stale-while-revalidate (serve cached, update in background)
