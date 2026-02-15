@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.27.06] - 2026-02-14
+
+### Added — Timezone Selection & PWA Fixes
+
+- **Added**: Display timezone selector in Settings > System — all timestamps respect user-chosen timezone while stored data stays UTC (STACK-63)
+- **Fixed**: Spot card and history timestamps displayed UTC values regardless of browser timezone — bare UTC strings now parsed correctly (STACK-63)
+- **Fixed**: PWA installed app failed to load on second launch — absolute start_url and navigation-aware service worker
+- **Fixed**: What's New splash re-triggering from stale SW cache + missing ESC handler (STACK-93)
+
+---
+
 ## [3.27.05] - 2026-02-14
 
 ### Added — Numista Bulk Sync & IDB Cache Fix

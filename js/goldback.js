@@ -263,7 +263,7 @@ const flattenGoldbackHistory = () => {
         label,
         price: e.price,
         timestamp: e.ts,
-        timeStr: new Date(e.ts).toLocaleString(),
+        timeStr: typeof formatTimestamp === 'function' ? formatTimestamp(e.ts) : new Date(e.ts).toLocaleString(),
       });
     }
   }

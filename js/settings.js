@@ -264,6 +264,12 @@ const syncSettingsUI = () => {
     numistaSyncGroup.style.display = showBulkSync ? '' : 'none';
   }
 
+  // Display timezone (STACK-63)
+  const tzSelect = document.getElementById('settingsTimezone');
+  if (tzSelect) {
+    tzSelect.value = localStorage.getItem(TIMEZONE_KEY) || 'auto';
+  }
+
   // Spot compare mode (STACK-92)
   const spotCompareSelect = document.getElementById('settingsSpotCompareMode');
   if (spotCompareSelect) {
@@ -370,6 +376,15 @@ const setupSettingsEventListeners = () => {
       if (typeof updateAllSparklines === 'function') updateAllSparklines();
       // Update Goldback denomination symbols (STACK-50)
       if (typeof syncGoldbackSettingsUI === 'function') syncGoldbackSettingsUI();
+    });
+  }
+
+  // Display timezone (STACK-63)
+  const tzSelect = document.getElementById('settingsTimezone');
+  if (tzSelect) {
+    tzSelect.addEventListener('change', () => {
+      localStorage.setItem(TIMEZONE_KEY, tzSelect.value);
+      if (typeof renderTable === 'function') renderTable();
     });
   }
 
@@ -1368,7 +1383,7 @@ const syncGoldbackSettingsUI = () => {
     const usdPrice = entry ? entry.price : '';
     const displayPrice = (usdPrice !== '' && fxRate !== 1) ? (usdPrice * fxRate).toFixed(2) : usdPrice;
     let updatedAt = entry && entry.updatedAt
-      ? new Date(entry.updatedAt).toLocaleString()
+      ? (typeof formatTimestamp === 'function' ? formatTimestamp(entry.updatedAt) : new Date(entry.updatedAt).toLocaleString())
       : '\u2014';
     if (goldbackEstimateEnabled && entry && entry.updatedAt) {
       updatedAt += ' (auto)';
