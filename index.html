@@ -2325,6 +2325,37 @@
                 </button>
               </div>
 
+              <div class="settings-group">
+                <label for="settingsTimezone">Display Timezone</label>
+                <p class="settings-subtext">
+                  Choose which timezone to use when displaying timestamps throughout StakTrakr.
+                  Stored data is always UTC &mdash; this only affects how dates appear on screen.
+                </p>
+                <select id="settingsTimezone" class="form-control" style="max-width:280px;">
+                  <option value="auto">Auto (browser default)</option>
+                  <option value="UTC">UTC</option>
+                  <optgroup label="Americas">
+                    <option value="America/New_York">Eastern (New York)</option>
+                    <option value="America/Chicago">Central (Chicago)</option>
+                    <option value="America/Denver">Mountain (Denver)</option>
+                    <option value="America/Los_Angeles">Pacific (Los Angeles)</option>
+                    <option value="America/Anchorage">Alaska</option>
+                    <option value="Pacific/Honolulu">Hawaii</option>
+                  </optgroup>
+                  <optgroup label="Europe">
+                    <option value="Europe/London">London (GMT/BST)</option>
+                    <option value="Europe/Paris">Paris / CET</option>
+                    <option value="Europe/Moscow">Moscow</option>
+                  </optgroup>
+                  <optgroup label="Asia / Pacific">
+                    <option value="Asia/Tokyo">Tokyo (JST)</option>
+                    <option value="Asia/Shanghai">Shanghai (CST)</option>
+                    <option value="Asia/Kolkata">Kolkata (IST)</option>
+                    <option value="Australia/Sydney">Sydney (AEST)</option>
+                  </optgroup>
+                </select>
+              </div>
+
             </div>
 
             <!-- ===== GOLDBACK PRICING (STACK-45) ===== -->

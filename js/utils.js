@@ -255,14 +255,7 @@ const getLastUpdateTime = (metalName, mode = "cache") => {
   const latestEntry = metalEntries[metalEntries.length - 1];
 
   if (latestEntry.source === "manual") {
-    const timestamp = new Date(latestEntry.timestamp);
-    const dateText = `${timestamp.getFullYear()}-${pad2(
-      timestamp.getMonth() + 1,
-    )}-${pad2(timestamp.getDate())}`;
-    const timeText = `${pad2(timestamp.getHours())}:${pad2(
-      timestamp.getMinutes(),
-    )}:${pad2(timestamp.getSeconds())}`;
-    return `Manual<br>Time entered ${dateText} ${timeText}`;
+    return `Manual<br>Time entered ${formatTimestamp(latestEntry.timestamp)}`;
   }
 
   if (latestEntry.source === "seed") {
@@ -278,17 +271,9 @@ const getLastUpdateTime = (metalName, mode = "cache") => {
   );
   if (!info || !info.timestamp) return "";
 
-  const timestamp = new Date(info.timestamp);
-  const dateText = `${timestamp.getFullYear()}-${pad2(
-    timestamp.getMonth() + 1,
-  )}-${pad2(timestamp.getDate())}`;
-  const timeText = `${pad2(timestamp.getHours())}:${pad2(
-    timestamp.getMinutes(),
-  )}:${pad2(timestamp.getSeconds())}`;
-
   const label = mode === "api" ? "Last API Sync" : "Last Cache Refresh";
   const sourceLine = info.provider || "";
-  const timeLine = `${label} ${dateText} ${timeText}`;
+  const timeLine = `${label} ${formatTimestamp(info.timestamp)}`;
 
   if (!sourceLine && !timeLine) return "";
   return `${sourceLine}<br>${timeLine}`;
@@ -361,6 +346,59 @@ const todayStr = () => {
 const currentMonthKey = () => {
   const d = new Date();
   return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}`;
+};
+
+/**
+ * Formats a date/timestamp for display using the user's timezone preference (STACK-63).
+ * When timezone is "auto" (default), uses the browser's local timezone — identical to previous behavior.
+ *
+ * @param {Date|string|number} date - Date object, ISO string, or epoch ms
+ * @param {Intl.DateTimeFormatOptions} [options] - Override individual format options
+ * @returns {string} Formatted date+time string
+ */
+const formatTimestamp = (date, options = {}) => {
+  let d;
+  if (date instanceof Date) {
+    d = date;
+  } else if (typeof date === 'string' && /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}(:\d{2})?$/.test(date)) {
+    // Bare UTC timestamp stored by recordSpot (e.g. "2026-02-15 01:58:32")
+    // These are toISOString() values with T/Z stripped — re-attach Z so Date parses as UTC
+    d = new Date(date.replace(' ', 'T') + 'Z');
+  } else {
+    d = new Date(date);
+  }
+  if (isNaN(d.getTime())) return '—';
+  const tz = localStorage.getItem(TIMEZONE_KEY) || 'auto';
+  const resolvedTz = tz === 'auto' ? undefined : tz;
+  const defaults = {
+    year: 'numeric', month: 'short', day: 'numeric',
+    hour: '2-digit', minute: '2-digit',
+    ...(resolvedTz ? { timeZone: resolvedTz } : {})
+  };
+  return d.toLocaleString(undefined, { ...defaults, ...options });
+};
+
+/**
+ * Formats a date for display (date only, no time) using the user's timezone preference.
+ *
+ * @param {Date|string|number} date - Date object, ISO string, or epoch ms
+ * @returns {string} Formatted date string
+ */
+const formatDateOnly = (date) => {
+  return formatTimestamp(date, { hour: undefined, minute: undefined });
+};
+
+/**
+ * Formats a date for display (time only, no date) using the user's timezone preference.
+ *
+ * @param {Date|string|number} date - Date object, ISO string, or epoch ms
+ * @returns {string} Formatted time string
+ */
+const formatTimeOnly = (date) => {
+  return formatTimestamp(date, {
+    year: undefined, month: undefined, day: undefined,
+    hour: '2-digit', minute: '2-digit', second: '2-digit'
+  });
 };
 
 /**
@@ -1379,7 +1417,7 @@ const openModalById = (id) => {
  */
 const generateStorageReportHTML = (idbStats) => {
   const reportData = analyzeStorageData();
-  const timestamp = new Date().toLocaleString();
+  const timestamp = formatTimestamp(new Date());
   const currentTheme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
   
   return `<!DOCTYPE html>
@@ -2787,7 +2825,7 @@ const generateStorageReportTar = async () => {
   const readme = `StakTrakr Storage Report Archive
 =================================
 
-Generated: ${new Date().toLocaleString()}
+Generated: ${formatTimestamp(new Date())}
 Version: ${APP_VERSION}
 Total Storage: ${reportData.totalSize.toFixed(2)} KB
 Items: ${reportData.items.length}

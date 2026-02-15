@@ -230,7 +230,7 @@ const logSyncActivity = (message, type = 'info') => {
   line.style.color = colorMap[type] || 'inherit';
 
   const now = new Date();
-  const ts = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  const ts = typeof formatTimeOnly === 'function' ? formatTimeOnly(now) : now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
   line.textContent = `[${ts}] ${message}`;
   logEl.appendChild(line);
   logEl.scrollTop = logEl.scrollHeight;

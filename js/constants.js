@@ -254,7 +254,7 @@ const CERT_LOOKUP_URLS = {
  * Updated: 2026-02-12 - STACK-38/STACK-31: Responsive card view + mobile layout
  */
 
-const APP_VERSION = "3.27.05";
+const APP_VERSION = "3.27.06";
 
 /**
  * @constant {string} DEFAULT_CURRENCY - Default currency code for monetary formatting
@@ -528,6 +528,9 @@ const SPOT_TREND_RANGE_KEY = "spotTrendRange";
 /** @constant {string} SPOT_COMPARE_MODE_KEY - LocalStorage key for 24h % comparison mode (STACK-92) */
 const SPOT_COMPARE_MODE_KEY = "spotCompareMode";
 
+/** @constant {string} TIMEZONE_KEY - LocalStorage key for display timezone preference (STACK-63) */
+const TIMEZONE_KEY = "appTimeZone";
+
 /** @constant {string} ITEMS_PER_PAGE_KEY - LocalStorage key for items per page setting */
 const ITEMS_PER_PAGE_KEY = "settingsItemsPerPage";
 
@@ -593,6 +596,7 @@ const ALLOWED_STORAGE_KEYS = [
   "ff_migration_fuzzy_autocomplete", // one-time migration flag (v3.26.01)
   "numistaLookupRules",              // custom Numista search lookup rules (JSON array)
   "numistaViewFields",               // view modal Numista field visibility config (JSON object)
+  TIMEZONE_KEY,                        // string: "auto" | "UTC" | IANA zone (STACK-63)
 ];
 
 // =============================================================================

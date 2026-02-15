@@ -979,7 +979,7 @@ const renderSpotHistoryTable = () => {
   }
 
   const rows = data.map(e => {
-    const ts = e.timestamp ? new Date(e.timestamp).toLocaleString() : '';
+    const ts = e.timestamp ? (typeof formatTimestamp === 'function' ? formatTimestamp(e.timestamp) : new Date(e.timestamp).toLocaleString()) : '';
     const metal = e.metal || '';
     const price = typeof formatCurrency === 'function' ? formatCurrency(e.spot) : `$${Number(e.spot).toFixed(2)}`;
     const source = e.source || '';

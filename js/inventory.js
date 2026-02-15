@@ -40,7 +40,7 @@ const createBackupZip = async () => {
     // Create new JSZip instance
     const zip = new JSZip();
     const timestamp = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-    const timeFormatted = new Date().toLocaleString();
+    const timeFormatted = typeof formatTimestamp === 'function' ? formatTimestamp(new Date()) : new Date().toLocaleString();
 
     // 1. Add main inventory data (JSON)
     const inventoryData = {
@@ -2731,7 +2731,7 @@ const exportPdf = () => {
 
   // Add date
   doc.setFontSize(10);
-  doc.text(`Exported: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}`, 14, 22);
+  doc.text(`Exported: ${typeof formatTimestamp === 'function' ? formatTimestamp(new Date()) : new Date().toLocaleString()}`, 14, 22);
 
   // Prepare table data with computed portfolio columns
   const tableData = sortedInventory.map(item => {
