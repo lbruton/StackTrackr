@@ -433,6 +433,9 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
     }
 
+    // Clean up stale localStorage keys from removed systems
+    try { localStorage.removeItem('seedImagesVersion'); } catch (_) { /* ignore */ }
+
     // Wire view modal close button
     if (elements.viewModalCloseBtn) {
       elements.viewModalCloseBtn.addEventListener('click', () => {

@@ -54,8 +54,8 @@ const NumistaLookup = (() => {
     // === Australia (yearly designs — no single N#, query-rewrite only) ===
     { id: 'au-kook',         pattern: '\\bkookaburra\\b',                                    replacement: '"Australian Kookaburra" silver Bullion', numistaId: null, builtIn: true },
     { id: 'au-koala',        pattern: '\\bkoala\\b',                                          replacement: '"Koala" silver Bullion Australia', numistaId: null, builtIn: true },
+    { id: 'au-kangaroo-s',   pattern: '\\b(kangaroo\\s+silver|silver\\s+kangaroo)\\b',       replacement: '"Australian Kangaroo" silver Bullion', numistaId: null, builtIn: true },
     { id: 'au-kangaroo',     pattern: '\\b(kangaroo|nugget)\\s*(gold)?\\b',                  replacement: '"Australian Nugget" gold Bullion', numistaId: null, builtIn: true },
-    { id: 'au-kangaroo-s',   pattern: '\\bkangaroo\\s+silver\\b',                            replacement: '"Australian Kangaroo" silver Bullion', numistaId: null, builtIn: true },
     { id: 'au-lunar-i',      pattern: '\\blunar\\s+(series\\s+)?I\\b',                       replacement: '"Lunar" series I silver Australia', numistaId: null, builtIn: true },
     { id: 'au-lunar-ii',     pattern: '\\blunar\\s+(series\\s+)?II\\b',                      replacement: '"Lunar" series II silver Australia', numistaId: null, builtIn: true },
     { id: 'au-lunar-iii',    pattern: '\\blunar\\s+(series\\s+)?III\\b',                     replacement: '"Lunar" series III silver Australia', numistaId: null, builtIn: true },
@@ -66,8 +66,8 @@ const NumistaLookup = (() => {
     { id: 'au-dragon-bar',   pattern: '\\bdragon\\s+(silver\\s+)?bar\\b',                    replacement: '"Dragon" rectangular silver Australia', numistaId: null, builtIn: true },
 
     // === South Africa (yearly/anniversary variants — query-rewrite only) ===
+    { id: 'za-krugerrand-s', pattern: '\\b(krugerrand\\s+silver|silver\\s+krugerrand)\\b',   replacement: 'Krugerrand silver South Africa', numistaId: null, builtIn: true },
     { id: 'za-krugerrand',   pattern: '\\bkrugerrand\\b',                                    replacement: 'Krugerrand gold South Africa', numistaId: null, builtIn: true },
-    { id: 'za-krugerrand-s', pattern: '\\bkrugerrand\\s+silver\\b',                          replacement: 'Krugerrand silver South Africa', numistaId: null, builtIn: true },
 
     // === UK (yearly/variant designs — query-rewrite only) ===
     { id: 'uk-britannia-s',  pattern: '\\bbritannia\\s*(silver)?\\b',                        replacement: '"Britannia" silver Bullion United Kingdom', numistaId: null, builtIn: true },
@@ -174,7 +174,7 @@ const NumistaLookup = (() => {
    * @param {string} [numistaId] - Optional Numista N# for direct lookup
    * @returns {{ success: boolean, error?: string }}
    */
-  const addRule = (pattern, replacement, numistaId) => {
+  const addRule = (pattern, replacement, numistaId, seedImageId) => {
     if (!pattern || !replacement) {
       return { success: false, error: 'Pattern and replacement are required.' };
     }
@@ -192,12 +192,41 @@ const NumistaLookup = (() => {
       pattern,
       replacement,
       numistaId: numistaId || null,
+      seedImageId: seedImageId || null,
       builtIn: false,
     };
 
     customRules.push(rule);
     compiledRegex.delete(id); // clear any stale cache
     getRegex(rule); // eagerly compile
+    saveCustomRules();
+    return { success: true, id };
+  };
+
+  /**
+   * Updates an existing custom rule by ID. Only specified fields are changed.
+   * @param {string} id - Rule ID to update
+   * @param {Object} updates - Fields to update (pattern, replacement, numistaId, seedImageId)
+   * @returns {{ success: boolean, error?: string }}
+   */
+  const updateRule = (id, updates) => {
+    const rule = customRules.find(r => r.id === id);
+    if (!rule) return { success: false, error: 'Rule not found.' };
+
+    if (updates.pattern !== undefined) {
+      try {
+        new RegExp(updates.pattern, 'i');
+      } catch (e) {
+        return { success: false, error: 'Invalid regex pattern: ' + e.message };
+      }
+      rule.pattern = updates.pattern;
+      compiledRegex.delete(id);
+      getRegex(rule);
+    }
+    if (updates.replacement !== undefined) rule.replacement = updates.replacement;
+    if (updates.numistaId !== undefined) rule.numistaId = updates.numistaId || null;
+    if (updates.seedImageId !== undefined) rule.seedImageId = updates.seedImageId || null;
+
     saveCustomRules();
     return { success: true };
   };
@@ -240,6 +269,7 @@ const NumistaLookup = (() => {
         pattern: r.pattern,
         replacement: r.replacement,
         numistaId: r.numistaId,
+        seedImageId: r.seedImageId || null,
         builtIn: false,
       }));
       localStorage.setItem('numistaLookupRules', JSON.stringify(data));
@@ -262,6 +292,7 @@ const NumistaLookup = (() => {
             pattern: r.pattern || '',
             replacement: r.replacement || '',
             numistaId: r.numistaId || null,
+            seedImageId: r.seedImageId || null,
             builtIn: false,
           }));
           // Compile custom rule regexes
@@ -282,6 +313,7 @@ const NumistaLookup = (() => {
   return {
     matchQuery,
     addRule,
+    updateRule,
     removeRule,
     listRules,
     listSeedRules,
