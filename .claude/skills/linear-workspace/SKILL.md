@@ -121,6 +121,7 @@ SPRINT-{Mon}-{DD}-{YYYY}-{Theme}
 ```
 
 Examples:
+
 - `SPRINT-Feb-15-2026-Visual` — View Modal & UX quick wins
 - `SPRINT-Mar-01-2026-DesignSystem` — CSS style guide & settings polish
 - `SPRINT-Mar-15-2026-Mobile` — Mobile card view redesign
