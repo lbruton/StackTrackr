@@ -3779,6 +3779,8 @@ td input:checked + .slider:before {
 /* --- Chart range pills --- */
 .view-chart-range-bar {
   display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   gap: 4px;
   margin-bottom: var(--spacing-sm);
 }
@@ -3803,6 +3805,43 @@ td input:checked + .slider:before {
   background: var(--primary);
   color: #fff;
   border-color: var(--primary);
+}
+
+/* --- Custom date range picker --- */
+.view-chart-date-range {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+}
+
+.view-chart-date-input {
+  padding: 1px 4px;
+  font-size: 0.6rem;
+  font-family: inherit;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: var(--transition);
+  max-width: 110px;
+}
+
+.view-chart-date-input:hover {
+  border-color: var(--primary);
+}
+
+.view-chart-date-input:focus {
+  outline: none;
+  border-color: var(--primary);
+  color: var(--text-primary);
+}
+
+.view-chart-date-sep {
+  font-size: 0.6rem;
+  color: var(--text-secondary);
+  line-height: 1;
 }
 
 /* --- Price history chart --- */
