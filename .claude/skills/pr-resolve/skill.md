@@ -5,6 +5,7 @@ Review, reply to, and resolve all PR review comments and CI check failures. Hand
 ## Arguments
 
 `/pr-resolve` accepts:
+
 - `<PR number>` — resolve comments on a specific PR (e.g., `/pr-resolve 136`)
 - No argument — auto-detect the open PR for the current branch
 
