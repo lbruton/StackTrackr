@@ -3817,7 +3817,7 @@ td input:checked + .slider:before {
 
 .view-chart-date-input {
   padding: 1px 4px;
-  font-size: 0.6rem;
+  font-size: 0.75rem;
   font-family: inherit;
   border: 1px solid var(--border);
   border-radius: 8px;
@@ -3839,7 +3839,7 @@ td input:checked + .slider:before {
 }
 
 .view-chart-date-sep {
-  font-size: 0.6rem;
+  font-size: 0.75rem;
   color: var(--text-secondary);
   line-height: 1;
 }
