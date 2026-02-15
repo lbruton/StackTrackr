@@ -9,6 +9,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.29.03] - 2026-02-15
+
+### Fixed — STAK-108, STAK-109, STAK-103: Price History Fixes & Chart Improvements
+
+- **Fixed**: Goldback items recording $0.00 retail in price history — added 3-tier retail hierarchy lookup with `getGoldbackRetailPrice()` (STAK-108)
+- **Fixed**: API sync timing — Goldback denomination prices now update before price history snapshots are recorded (STAK-108)
+- **Added**: Per-item price history modal with inline delete and undo/redo from Edit Modal retail price field (STAK-109)
+- **Added**: Delete buttons on Settings > Price History table with change log integration (STAK-109)
+- **Fixed**: All-time chart showing only ~1 year on file:// protocol — 749KB seed bundle loaded via `<script>` tag bypasses Chrome fetch restrictions
+- **Added**: Adaptive x-axis year labels — decade+ ranges show compact 2-digit year, multi-year ranges show two-line date+year
+- **Added**: Custom date range picker on Item View chart with cross-constrained from/to inputs (STAK-103)
+- **Fixed**: WCAG accessibility — date input font-size increased from 0.6rem to 0.75rem
+- **Fixed**: Async chart error handling with graceful fallback on fetch failure
+
+---
+
 ## [3.29.02] - 2026-02-15
 
 ### Fixed — PWA Crash Fix: Service Worker Error Handling

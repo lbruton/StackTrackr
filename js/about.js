@@ -274,10 +274,10 @@ const setupAckModalEvents = () => {
  */
 const getEmbeddedWhatsNew = () => {
   return `
-    <li><strong>v3.29.02 &ndash; PWA Crash Fix: Service Worker Error Handling</strong>: Fixed installed PWA crash (ERR_FAILED) by adding error handling to all service worker fetch strategies. Navigation handler now falls back through cached index.html, cached root, and inline offline page. Install event failures are now logged for diagnostics</li>
-    <li><strong>v3.29.01 &ndash; Codacy Duplication Reduction</strong>: Extracted shared toggle helpers, merged config table renderers, deduplicated item field builders and modal close handlers. Removed unused Numista Query and N# fields from pattern image rules</li>
-    <li><strong>v3.29.00 &ndash; Edit Modal Pattern Rule Toggle</strong>: &ldquo;Apply to all matching items&rdquo; checkbox in edit modal image upload &mdash; creates a pattern rule from keywords instead of per-item images. Extracted shared section config helpers to reduce code clones</li>
-    <li><strong>v3.28.00 &ndash; Price History Chart Overhaul &amp; View Modal Customization</strong>: Melt value chart derived from spot price history with range toggle pills (7d/14d/30d/60d/90d/180d/All). Retail value line anchored from purchase date to current market value. Layered chart fills for purchase, melt, and retail. Configurable view modal section order in Settings &gt; Layout</li>
+    <li><strong>v3.29.03 &ndash; Price History Fixes &amp; Chart Improvements</strong>: Fixed Goldback items recording $0.00 retail in price history. Added per-item price history modal with inline delete and undo/redo. Fixed All-time chart on file:// protocol via seed bundle. Adaptive x-axis year labels. Custom date range picker on charts (STAK-108, STAK-109, STAK-103)</li>
+    <li><strong>v3.29.02 &ndash; PWA Crash Fix: Service Worker Error Handling</strong>: Fixed installed PWA crash (ERR_FAILED) by adding error handling to all service worker fetch strategies. Navigation handler now falls back through cached index.html, cached root, and inline offline page</li>
+    <li><strong>v3.29.01 &ndash; Codacy Duplication Reduction</strong>: Extracted shared toggle helpers, merged config table renderers, deduplicated item field builders and modal close handlers</li>
+    <li><strong>v3.29.00 &ndash; Edit Modal Pattern Rule Toggle</strong>: &ldquo;Apply to all matching items&rdquo; checkbox in edit modal image upload &mdash; creates a pattern rule from keywords instead of per-item images</li>
   `;
 };
 
@@ -287,8 +287,8 @@ const getEmbeddedWhatsNew = () => {
  */
 const getEmbeddedRoadmap = () => {
   return `
-    <li><strong>Chart Overhaul (STACK-48)</strong>: Migrate to ApexCharts with time-series trend views</li>
-    <li><strong>Custom CSV Mapper (STACK-51)</strong>: Header mapping UI with saved import profiles</li>
+    <li><strong>Chart Overhaul (STAK-48)</strong>: Migrate to ApexCharts with time-series trend views</li>
+    <li><strong>Custom CSV Mapper (STAK-51)</strong>: Header mapping UI with saved import profiles</li>
   `;
 };
 
