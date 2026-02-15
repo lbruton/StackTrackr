@@ -1,9 +1,9 @@
 // NUMISTA BULK SYNC UI (STACK-87/88)
 // =============================================================================
-// Inline UI within Settings > API > Numista card for bulk syncing metadata
-// and images. Replaces the former standalone Image Cache Manager modal.
+// Inline UI within Settings > API > Numista card for bulk syncing metadata.
 // Shows stats, eligible item table with per-row status, real-time activity log,
 // and sync controls. Resolves catalog IDs from catalogManager.
+// Image caching is handled on-demand by the view modal (viewModal.js).
 // =============================================================================
 
 /** @type {Map<string, HTMLElement>} Status cells keyed by catalogId for live updates */
@@ -108,9 +108,7 @@ const renderEligibleItemsTable = async () => {
   const tbody = document.createElement('tbody');
 
   for (const { item, catalogId } of entries) {
-    const isCached = await imageCache.hasImages(catalogId);
     const hasMeta = !!(await imageCache.getMetadata(catalogId));
-    const hasUrls = !!(item.obverseImageUrl || item.reverseImageUrl);
 
     const tr = document.createElement('tr');
 
@@ -127,18 +125,9 @@ const renderEligibleItemsTable = async () => {
     // Status cell (updated live during bulk sync)
     const tdStatus = document.createElement('td');
     tdStatus.style.cssText = 'font-size:0.8rem;white-space:nowrap';
-    if (isCached && hasMeta) {
+    if (hasMeta) {
       tdStatus.textContent = '\u2713 Synced';
       tdStatus.style.color = 'var(--success-color, green)';
-    } else if (isCached) {
-      tdStatus.textContent = '\u2713 Cached';
-      tdStatus.style.color = 'var(--success-color, green)';
-    } else if (hasMeta) {
-      tdStatus.textContent = '\u2295 Meta only';
-      tdStatus.style.color = 'var(--color-info, #5b9bd5)';
-    } else if (hasUrls) {
-      tdStatus.textContent = 'Ready';
-      tdStatus.style.color = 'var(--text-secondary, #888)';
     } else {
       tdStatus.textContent = 'Needs sync';
       tdStatus.style.color = 'var(--warning-color, orange)';
@@ -149,7 +138,7 @@ const renderEligibleItemsTable = async () => {
     const tdActions = document.createElement('td');
     tdActions.style.cssText = 'white-space:nowrap;text-align:right';
 
-    if (isCached || hasMeta) {
+    if (hasMeta) {
       // Re-sync button
       const syncBtn = document.createElement('button');
       syncBtn.type = 'button';
@@ -189,7 +178,8 @@ const renderEligibleItemsTable = async () => {
 };
 
 /**
- * Re-syncs a single cached entry: deletes then re-fetches from inventory/API URLs.
+ * Re-syncs a single cached entry: deletes metadata then re-fetches from Numista API.
+ * Image caching is handled on-demand by the view modal.
  * @param {string} catalogId
  */
 const resyncCachedEntry = async (catalogId) => {
@@ -200,40 +190,23 @@ const resyncCachedEntry = async (catalogId) => {
 
   await imageCache.deleteImages(catalogId);
 
-  let obverseUrl = item?.obverseImageUrl || '';
-  let reverseUrl = item?.reverseImageUrl || '';
-
   // Fetch metadata + image URLs from Numista API
   if (window.catalogAPI) {
-    logSyncActivity(`${catalogId}: Syncing from Numista...`, 'info');
+    logSyncActivity(`${catalogId}: Re-syncing metadata from Numista...`, 'info');
     try {
       const result = await catalogAPI.lookupItem(catalogId);
-      if (!obverseUrl && result?.imageUrl) obverseUrl = result.imageUrl;
-      if (!reverseUrl && result?.reverseImageUrl) reverseUrl = result.reverseImageUrl;
       if (item) {
-        if (obverseUrl) item.obverseImageUrl = obverseUrl;
-        if (reverseUrl) item.reverseImageUrl = reverseUrl;
+        if (result?.imageUrl && !item.obverseImageUrl) item.obverseImageUrl = result.imageUrl;
+        if (result?.reverseImageUrl && !item.reverseImageUrl) item.reverseImageUrl = result.reverseImageUrl;
         if (typeof saveInventory === 'function') saveInventory();
       }
-      // Cache metadata
       await imageCache.cacheMetadata(catalogId, result);
-      logSyncActivity(`${catalogId}: Metadata synced`, 'success');
+      logSyncActivity(`${catalogId}: Metadata re-synced`, 'success');
     } catch (err) {
       logSyncActivity(`${catalogId}: API lookup failed: ${err.message}`, 'error');
     }
-  }
-
-  if (!obverseUrl && !reverseUrl) {
-    logSyncActivity(`${catalogId}: No image URLs available`, 'warn');
-    return;
-  }
-
-  logSyncActivity(`${catalogId}: Re-fetching images...`, 'info');
-  const ok = await imageCache.cacheImages(catalogId, obverseUrl, reverseUrl);
-  if (ok) {
-    logSyncActivity(`${catalogId}: Re-synced successfully`, 'success');
   } else {
-    logSyncActivity(`${catalogId}: Image cache failed`, 'error');
+    logSyncActivity(`${catalogId}: Catalog API not available`, 'error');
   }
 };
 
@@ -299,19 +272,13 @@ const startBulkSync = () => {
     progressBar.max = 0;
   }
 
-  logSyncActivity('Starting bulk sync...', 'info');
+  logSyncActivity('Starting metadata sync...', 'info');
 
   const statusColorMap = {
-    'skip-cached': ['var(--success-color, green)', '\u2713 Cached'],
-    'skip-no-url': ['var(--warning-color, orange)', 'No URLs'],
+    'skip-cached': ['var(--success-color, green)', '\u2713 Synced'],
     'api-lookup': ['var(--text-secondary, #888)', 'Syncing...'],
-    'metadata': ['var(--color-info, #5b9bd5)', '\u2295 Metadata'],
-    'meta-failed': ['var(--warning-color, orange)', '\u26a0 Meta fail'],
-    'caching': ['var(--text-secondary, #888)', 'Downloading...'],
-    'cached': ['var(--success-color, green)', '\u2713 Synced'],
-    'browser-cached': ['var(--color-info, #5b9bd5)', '\u2295 Browser'],
-    'failed': ['var(--danger-color, red)', '\u2717 Failed'],
-    'quota': ['var(--danger-color, red)', 'Quota exceeded'],
+    'metadata': ['var(--success-color, green)', '\u2713 Synced'],
+    'meta-failed': ['var(--warning-color, orange)', '\u26a0 Failed'],
   };
 
   BulkImageCache.cacheAll({
@@ -328,23 +295,21 @@ const startBulkSync = () => {
 
       // Log to activity log
       const logTypeMap = {
-        'skip-cached': 'info', 'skip-no-url': 'warn', 'api-lookup': 'info',
+        'skip-cached': 'info', 'api-lookup': 'info',
         'metadata': 'success', 'meta-failed': 'warn',
-        'caching': 'info', 'cached': 'success', 'failed': 'error', 'quota': 'error'
       };
       logSyncActivity(`${catalogId}: ${message}`, logTypeMap[status] || 'info');
     },
-    onComplete: async ({ cached, skipped, failed, apiLookups, quotaExceeded, elapsed }) => {
+    onComplete: async ({ synced, skipped, failed, apiLookups, elapsed }) => {
       if (startBtn) startBtn.disabled = false;
       if (cancelBtn) cancelBtn.style.display = 'none';
       if (progressBar) progressBar.style.display = 'none';
 
       const secs = (elapsed / 1000).toFixed(1);
-      let msg = `Complete in ${secs}s: ${cached} cached, ${skipped} skipped, ${failed} failed`;
-      if (apiLookups > 0) msg += `, ${apiLookups} API lookups`;
+      let msg = `Complete in ${secs}s: ${synced} synced, ${skipped} skipped, ${failed} failed`;
+      if (apiLookups > 0) msg += `, ${apiLookups} API calls`;
       msg += '.';
-      if (quotaExceeded) msg += ' Quota limit reached.';
-      logSyncActivity(msg, failed > 0 || quotaExceeded ? 'warn' : 'success');
+      logSyncActivity(msg, failed > 0 ? 'warn' : 'success');
 
       // Refresh table and stats
       await renderEligibleItemsTable();
