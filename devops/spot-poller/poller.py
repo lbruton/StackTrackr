@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-StackTrackr Seed Data Poller
+StakTrakr Seed Data Poller
 =============================
 Long-running script (designed for Docker) that:
   1. On startup: backfills any gap since the last seed data entry
@@ -130,7 +130,7 @@ def log(msg):
 
 
 def main():
-    log("StackTrackr Seed Data Poller starting...")
+    log("StakTrakr Seed Data Poller starting...")
 
     api_key = seed.load_config()
     data_dir = seed.resolve_data_dir()

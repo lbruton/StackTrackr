@@ -1,4 +1,4 @@
-# StackTrackr Verification
+# StakTrakr Verification
 
 Run comprehensive verification on the current codebase state before committing.
 

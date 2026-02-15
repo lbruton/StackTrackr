@@ -87,7 +87,7 @@ Most MCP tool rules are in auto-loading skills (`.claude/skills/`). Only safety-
 Persistent knowledge graph in Neo4j at `localhost:7687` (local Mac). Shared with HexTrackr.
 
 - **NEVER use `read_graph`** — graph exceeds 200K tokens, will fail. Use `search_nodes` or `semantic_search` instead.
-- **Always tag** entities with `TAG: project:stacktrackr` for project isolation.
+- **Always tag** entities with `TAG: project:staktrakr` for project isolation.
 - See `TAXONOMY.md` for the complete tagging taxonomy.
 
 ### Tool Rules (auto-loaded via skills)
