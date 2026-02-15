@@ -63,7 +63,7 @@ const renderChangeLog = () => {
       const actionLabel = entry.undone ? 'Redo' : 'Undo';
       return `
       <tr onclick="editFromChangeLog(${entry.idx}, ${globalIndex})">
-        <td title="${new Date(entry.timestamp).toLocaleString()}">${new Date(entry.timestamp).toLocaleString()}</td>
+        <td title="${formatTimestamp(entry.timestamp)}">${formatTimestamp(entry.timestamp)}</td>
         <td title="${sanitizeHtml(entry.itemName)}">${sanitizeHtml(entry.itemName)}</td>
         <td title="${sanitizeHtml(entry.field)}">${sanitizeHtml(entry.field)}</td>
         <td title="${sanitizeHtml(String(entry.oldValue))}">${sanitizeHtml(String(entry.oldValue))}</td>

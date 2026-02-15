@@ -2,7 +2,7 @@
 // Enables offline support and installable PWA experience
 // Cache version is tied to APP_VERSION — old caches are purged on activate
 
-const CACHE_NAME = 'staktrakr-v3.27.03';
+const CACHE_NAME = 'staktrakr-v3.27.06';
 
 // Core shell assets to pre-cache on install
 const CORE_ASSETS = [
@@ -108,6 +108,14 @@ self.addEventListener('fetch', (event) => {
   // Stale-while-revalidate for CDN libraries
   if (CDN_HOSTS.some((host) => url.hostname === host)) {
     event.respondWith(staleWhileRevalidate(event.request));
+    return;
+  }
+
+  // Navigation requests (PWA launch, page reload) — always serve cached index.html shell
+  if (event.request.mode === 'navigate' && url.origin === self.location.origin) {
+    event.respondWith(
+      caches.match('./index.html').then((cached) => cached || fetchAndCache(event.request))
+    );
     return;
   }
 

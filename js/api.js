@@ -44,7 +44,7 @@ const renderApiStatusSummary = () => {
     let tsLabel = "";
     if (lastSync) {
       const d = new Date(lastSync);
-      tsLabel = d.toLocaleDateString(undefined, { month: "short", day: "numeric" }) + " " + d.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
+      tsLabel = typeof formatTimestamp === 'function' ? formatTimestamp(d, { year: undefined }) : d.toLocaleString();
     }
     items.push({ name, status: statusClass, tsLabel, provider: prov });
   });
@@ -315,7 +315,7 @@ const setProviderStatus = (provider, status) => {
     const ts = getLastProviderSyncTime(provider);
     if (ts) {
       const d = new Date(ts);
-      lastUsed.textContent = "Last: " + d.toLocaleDateString(undefined, { month: "short", day: "numeric" }) + " " + d.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
+      lastUsed.textContent = "Last: " + (typeof formatTimestamp === 'function' ? formatTimestamp(d, { year: undefined }) : d.toLocaleString());
     } else {
       lastUsed.textContent = "";
     }
@@ -2205,7 +2205,7 @@ const downloadCompleteBackup = async () => {
     const backupData = createBackupData();
     const apiInfo = `# StakTrakr - Complete Backup
 
-Generated: ${new Date().toLocaleString()}
+Generated: ${typeof formatTimestamp === 'function' ? formatTimestamp(new Date()) : new Date().toLocaleString()}
 Application Version: ${APP_VERSION}
 
 ## Backup Contents
@@ -2222,7 +2222,7 @@ ${
 - Provider: ${backupData.apiConfig.providerName}
 - Has API Key: ${backupData.apiConfig.hasKey}
 - Key Length: ${backupData.apiConfig.keyLength} characters
-- Configured: ${new Date(backupData.apiConfig.timestamp).toLocaleString()}
+- Configured: ${typeof formatTimestamp === 'function' ? formatTimestamp(backupData.apiConfig.timestamp) : new Date(backupData.apiConfig.timestamp).toLocaleString()}
 
 **⚠️ Security Note:** API keys are not included in backups for security.
 After restoring, reconfigure your API key in the API settings.

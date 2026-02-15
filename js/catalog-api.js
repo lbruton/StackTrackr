@@ -403,6 +403,11 @@ class NumistaProvider extends CatalogProvider {
         headers: { 'Numista-API-Key': this.apiKey }
       });
       const data = await response.json();
+      if (typeof window !== 'undefined' && typeof window.debugLog === 'function') {
+        window.debugLog(`Numista lookup ${catalogId}: keys=${Object.keys(data).join(',')}`);
+        if (data.obverse) window.debugLog(`  obverse keys: ${Object.keys(data.obverse).join(',')}`);
+        if (data.reverse) window.debugLog(`  reverse keys: ${Object.keys(data.reverse).join(',')}`);
+      }
 
       return this.normalizeItemData(data);
     } catch (error) {
@@ -486,6 +491,8 @@ class NumistaProvider extends CatalogProvider {
     const reverseImageUrl = numistaData.reverse_thumbnail ||
       numistaData.reverse?.thumbnail ||
       '';
+
+    debugLog(`  imageUrl: ${imageUrl || '(empty)'}, reverseImageUrl: ${reverseImageUrl || '(empty)'}`);
 
     // Extract catalog references (KM#, Schon#, etc.)
     const kmReferences = [];

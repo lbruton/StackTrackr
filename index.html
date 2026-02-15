@@ -1883,10 +1883,10 @@
 
                   <!-- Numista Bulk Sync (STACK-87/88) -->
                   <div class="settings-group" id="numistaBulkSyncGroup" style="margin-top: 1rem; border-top: 1px solid var(--border); padding-top: 0.75rem; display: none;">
-                    <div class="settings-group-label">Bulk Sync</div>
+                    <div class="settings-group-label">Metadata Sync</div>
                     <p class="settings-subtext">
-                      Sync metadata and images for all inventory items with Numista catalog IDs.
-                      Uses your API key (counts toward monthly quota).
+                      Sync metadata for all inventory items with Numista catalog IDs.
+                      Images are loaded on-demand when viewing items. Uses your API key (counts toward monthly quota).
                     </p>
 
                     <!-- Stats bar -->
@@ -1909,7 +1909,7 @@
 
                     <!-- Action buttons -->
                     <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
-                      <button type="button" class="btn info" id="numistaSyncStartBtn">Sync All</button>
+                      <button type="button" class="btn info" id="numistaSyncStartBtn">Sync Metadata</button>
                       <button type="button" class="btn warning" id="numistaSyncCancelBtn" style="display:none;">Cancel</button>
                       <button type="button" class="btn danger" id="numistaSyncClearBtn" style="font-size:0.8rem;">Clear Cache</button>
                     </div>
@@ -2323,6 +2323,37 @@
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:0.35rem;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                   Open Bulk Editor
                 </button>
+              </div>
+
+              <div class="settings-group">
+                <label for="settingsTimezone">Display Timezone</label>
+                <p class="settings-subtext">
+                  Choose which timezone to use when displaying timestamps throughout StakTrakr.
+                  Stored data is always UTC &mdash; this only affects how dates appear on screen.
+                </p>
+                <select id="settingsTimezone" class="form-control" style="max-width:280px;">
+                  <option value="auto">Auto (browser default)</option>
+                  <option value="UTC">UTC</option>
+                  <optgroup label="Americas">
+                    <option value="America/New_York">Eastern (New York)</option>
+                    <option value="America/Chicago">Central (Chicago)</option>
+                    <option value="America/Denver">Mountain (Denver)</option>
+                    <option value="America/Los_Angeles">Pacific (Los Angeles)</option>
+                    <option value="America/Anchorage">Alaska</option>
+                    <option value="Pacific/Honolulu">Hawaii</option>
+                  </optgroup>
+                  <optgroup label="Europe">
+                    <option value="Europe/London">London (GMT/BST)</option>
+                    <option value="Europe/Paris">Paris / CET</option>
+                    <option value="Europe/Moscow">Moscow</option>
+                  </optgroup>
+                  <optgroup label="Asia / Pacific">
+                    <option value="Asia/Tokyo">Tokyo (JST)</option>
+                    <option value="Asia/Shanghai">Shanghai (CST)</option>
+                    <option value="Asia/Kolkata">Kolkata (IST)</option>
+                    <option value="Australia/Sydney">Sydney (AEST)</option>
+                  </optgroup>
+                </select>
               </div>
 
             </div>

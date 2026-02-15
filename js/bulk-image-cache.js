@@ -1,49 +1,16 @@
 // BULK SYNC (STACK-87/88)
 // =============================================================================
-// Syncs metadata and images for inventory items that have Numista catalog IDs.
-// Sequential with configurable delay to avoid API/CDN rate-limiting.
+// Syncs metadata for inventory items that have Numista catalog IDs.
+// Sequential with configurable delay to avoid API rate-limiting.
 // Resolves catalog IDs from catalogManager when not directly on items.
-// Fetches metadata + image URLs from Numista API, caches both to IndexedDB.
-// Reuses imageCache.cacheImages() pipeline (fetch → resize → compress → store).
+// Fetches metadata + image URLs from Numista API, caches metadata to IndexedDB.
+// Image caching is handled on-demand by the view modal (viewModal.js).
 // =============================================================================
 
 // eslint-disable-next-line no-unused-vars
 const BulkImageCache = (() => {
   let _aborted = false;
   let _running = false;
-
-  /**
-   * Preloads image URLs into the browser cache via hidden <img> elements.
-   * Works on file:// protocol where fetch/canvas are blocked by CORS.
-   * @param {string} obverseUrl
-   * @param {string} reverseUrl
-   * @returns {Promise<boolean>} true if at least one image loaded
-   */
-  function _preloadViaBrowserCache(obverseUrl, reverseUrl) {
-    const urls = [obverseUrl, reverseUrl].filter(Boolean);
-    if (!urls.length) return Promise.resolve(false);
-
-    return new Promise((resolve) => {
-      let loaded = 0;
-      let succeeded = false;
-      const total = urls.length;
-
-      for (const url of urls) {
-        const img = new Image();
-        img.onload = () => {
-          succeeded = true;
-          if (++loaded >= total) resolve(succeeded);
-        };
-        img.onerror = () => {
-          if (++loaded >= total) resolve(succeeded);
-        };
-        img.src = url;
-      }
-
-      // Safety timeout — don't hang forever
-      setTimeout(() => resolve(succeeded), 15000);
-    });
-  }
 
   /**
    * Resolves catalog ID for an inventory item.
@@ -81,29 +48,34 @@ const BulkImageCache = (() => {
   }
 
   /**
-   * Cache images for all inventory items that have Numista catalog IDs.
-   * Resolves IDs from catalogManager and fetches image URLs from Numista API
-   * when they are not stored on the inventory item.
+   * Sync metadata for all inventory items that have Numista catalog IDs.
+   * Resolves IDs from catalogManager and fetches metadata + image URLs from
+   * the Numista API. Image downloading is NOT performed here — images are
+   * loaded on-demand when the user opens the view modal.
    * @param {Object} opts
    * @param {function({current:number, total:number, catalogId:string}):void} [opts.onProgress]
-   * @param {function({cached:number, skipped:number, failed:number, apiLookups:number, quotaExceeded:boolean, elapsed:number}):void} [opts.onComplete]
+   * @param {function({synced:number, skipped:number, failed:number, apiLookups:number, elapsed:number}):void} [opts.onComplete]
    * @param {function({catalogId:string, status:string, message:string}):void} [opts.onLog]
    * @param {number} [opts.delay=200] - Delay (ms) between network requests
    * @returns {Promise<void>}
    */
   async function cacheAll({ onProgress, onComplete, onLog, delay = 200 } = {}) {
     if (_running) return;
-    if (!window.imageCache?.isAvailable()) return;
+    if (!window.imageCache) return;
+    // Re-open IDB if the browser closed the connection (storage pressure, backgrounding)
+    if (!imageCache.isAvailable()) {
+      await imageCache.init();
+      if (!imageCache.isAvailable()) return;
+    }
 
     _running = true;
     _aborted = false;
 
     const startTime = Date.now();
-    let cached = 0;
+    let synced = 0;
     let skipped = 0;
     let failed = 0;
     let apiLookups = 0;
-    let quotaExceeded = false;
 
     const entries = buildEligibleList();
     const total = entries.length;
@@ -117,39 +89,27 @@ const BulkImageCache = (() => {
         onProgress({ current: i + 1, total, catalogId });
       }
 
-      // Check what's already synced
-      const hasImagesCached = await imageCache.hasImages(catalogId);
+      // Check if metadata is already cached — skip if so
       const hasMetaCached = !!(await imageCache.getMetadata(catalogId));
-
-      // Skip if both images and metadata are already cached
-      if (hasImagesCached && hasMetaCached) {
+      if (hasMetaCached) {
         skipped++;
         if (onLog) onLog({ catalogId, status: 'skip-cached', message: 'Already synced' });
         continue;
       }
 
-      // Check quota before fetching
-      const usage = await imageCache.getStorageUsage();
-      if (usage.totalBytes >= usage.limitBytes) {
-        quotaExceeded = true;
-        if (onLog) onLog({ catalogId, status: 'quota', message: 'Storage quota exceeded — stopping' });
-        break;
-      }
-
       // Resolve image URLs from item properties first
-      // Validate URLs — corrupted strings (missing ://) must be treated as empty
       const _valid = (u) => ImageCache.isValidImageUrl(u);
       let obverseUrl = _valid(item.obverseImageUrl) ? item.obverseImageUrl : '';
       let reverseUrl = _valid(item.reverseImageUrl) ? item.reverseImageUrl : '';
 
       // Fetch & cache metadata from Numista API (also resolves image URLs)
-      if (!hasMetaCached && window.catalogAPI) {
+      if (window.catalogAPI) {
         if (onLog) onLog({ catalogId, status: 'api-lookup', message: 'Syncing metadata from Numista...' });
         try {
           const apiResult = await catalogAPI.lookupItem(catalogId);
           apiLookups++;
 
-          // Persist image URLs back to item
+          // Persist image URLs back to item for CDN fallback in view modal
           if (!obverseUrl && apiResult.imageUrl) {
             obverseUrl = apiResult.imageUrl;
             item.obverseImageUrl = obverseUrl;
@@ -163,64 +123,15 @@ const BulkImageCache = (() => {
 
           // Cache metadata to IndexedDB
           await imageCache.cacheMetadata(catalogId, apiResult);
+          synced++;
           if (onLog) onLog({ catalogId, status: 'metadata', message: 'Metadata synced' });
         } catch (err) {
-          if (onLog) onLog({ catalogId, status: 'meta-failed', message: `Metadata: ${err.message}` });
-          // Continue to image caching even if metadata fails
-        }
-      }
-
-      // Skip image caching if already done
-      if (hasImagesCached) continue;
-
-      // Check existing IDB record for stored URLs if still missing
-      if (!obverseUrl && !reverseUrl) {
-        const imgRecord = await imageCache.getImages(catalogId);
-        obverseUrl = _valid(imgRecord?.obverseUrl) ? imgRecord.obverseUrl : '';
-        reverseUrl = _valid(imgRecord?.reverseUrl) ? imgRecord.reverseUrl : '';
-      }
-
-      if (!obverseUrl && !reverseUrl) {
-        skipped++;
-        if (onLog) onLog({ catalogId, status: 'skip-no-url', message: 'No image URLs available' });
-        continue;
-      }
-
-      if (onLog) {
-        const urlInfo = [obverseUrl ? 'obverse' : '', reverseUrl ? 'reverse' : ''].filter(Boolean).join(' + ');
-        onLog({ catalogId, status: 'caching', message: `Downloading: ${urlInfo} ...` });
-      }
-
-      try {
-        const result = await imageCache.cacheImages(catalogId, obverseUrl, reverseUrl);
-        if (result) {
-          cached++;
-          if (onLog) onLog({ catalogId, status: 'cached', message: 'Cached successfully' });
-        } else {
-          // IDB caching failed — try browser-cache preload via <img> elements
-          const preloaded = await _preloadViaBrowserCache(obverseUrl, reverseUrl);
-          if (preloaded) {
-            cached++;
-            if (onLog) onLog({ catalogId, status: 'browser-cached',
-              message: 'Preloaded to browser cache (file:// mode)' });
-          } else {
-            failed++;
-            const urls = [obverseUrl, reverseUrl].filter(Boolean).join(', ');
-            if (onLog) onLog({ catalogId, status: 'failed',
-              message: `All cache strategies failed — URLs: ${urls}` });
-          }
-        }
-      } catch (err) {
-        // IDB threw — try browser-cache preload as last resort
-        const preloaded = await _preloadViaBrowserCache(obverseUrl, reverseUrl);
-        if (preloaded) {
-          cached++;
-          if (onLog) onLog({ catalogId, status: 'browser-cached',
-            message: 'Preloaded to browser cache (file:// mode)' });
-        } else {
           failed++;
-          if (onLog) onLog({ catalogId, status: 'failed', message: err.message || 'Unknown error' });
+          if (onLog) onLog({ catalogId, status: 'meta-failed', message: `Metadata: ${err.message}` });
         }
+      } else {
+        failed++;
+        if (onLog) onLog({ catalogId, status: 'meta-failed', message: 'Catalog API not available' });
       }
 
       // Delay between requests to avoid rate-limiting
@@ -232,13 +143,13 @@ const BulkImageCache = (() => {
     _running = false;
 
     // Persist any URL updates back to localStorage
-    if ((cached > 0 || apiLookups > 0) && typeof saveInventory === 'function') {
+    if (apiLookups > 0 && typeof saveInventory === 'function') {
       saveInventory();
     }
 
     const elapsed = Date.now() - startTime;
     if (onComplete) {
-      onComplete({ cached, skipped, failed, apiLookups, quotaExceeded, elapsed });
+      onComplete({ synced, skipped, failed, apiLookups, elapsed });
     }
   }
 

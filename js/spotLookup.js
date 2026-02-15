@@ -348,7 +348,7 @@ const renderSpotLookupResults = (container, results, metalName, dateStr) => {
   html += '</tr></thead><tbody>';
 
   results.forEach(entry => {
-    const ts = entry.timestamp ? new Date(entry.timestamp).toLocaleString() : '';
+    const ts = entry.timestamp ? formatTimestamp(entry.timestamp) : '';
     const price = formatPrice(entry.spot);
     const source = entry.source === 'seed' ? 'Seed' : (entry.provider || entry.source || '');
     const offsetLabel = formatOffsetLabel(entry.dayOffset);
