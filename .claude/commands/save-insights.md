@@ -11,7 +11,7 @@ Extract and save high-value insights to Memento with PROJECT:DOMAIN:TYPE classif
 - Security considerations and implementation approaches
 
 **Entity Details:**
-- **Classification**: Use PROJECT:DOMAIN:TYPE (e.g., SYSTEM:WORKFLOW:PATTERN, STACKTRACKR:PRICING:INSIGHT)
+- **Classification**: Use PROJECT:DOMAIN:TYPE (e.g., SYSTEM:WORKFLOW:PATTERN, STAKTRAKR:PRICING:INSIGHT)
 - **Name**: Specific, searchable title describing the core insight
 - **Observations**: Concrete, actionable knowledge applicable to future projects
 - **Relations**: Connect to relevant technologies, frameworks, or project patterns
@@ -19,7 +19,7 @@ Extract and save high-value insights to Memento with PROJECT:DOMAIN:TYPE classif
 **Insight ID Generation:**
 ```javascript
 // Auto-generate insight ID: PROJECT-INSIGHT-YYYYMMDD-HHMMSS
-const generateInsightID = (project = "STACKTRACKR") => {
+const generateInsightID = (project = "STAKTRAKR") => {
   const now = new Date();
 
   // DATE VERIFICATION: Ensure we're using correct current date
@@ -45,7 +45,7 @@ const generateInsightID = (project = "STACKTRACKR") => {
   return `${project}-INSIGHT-${date}-${time}`;
 };
 
-// Example: "STACKTRACKR-INSIGHT-20251001-143045"
+// Example: "STAKTRAKR-INSIGHT-20251001-143045"
 ```
 
 **Memory Tools:**

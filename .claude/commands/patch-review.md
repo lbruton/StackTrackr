@@ -1,4 +1,4 @@
-# StackTrackr Patch Review
+# StakTrakr Patch Review
 
 Comprehensive security and quality review of uncommitted or staged changes.
 

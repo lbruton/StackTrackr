@@ -4,7 +4,7 @@ description: Release workflow — version bump, changelog, announcements, commit
 allowed-tools: Bash, Read, Write, Edit, Grep, Glob, mcp__linear-server__*
 ---
 
-# Release — StackTrackr
+# Release — StakTrakr
 
 End-to-end release workflow: bump version across all 7 files, commit to dev, and create a PR to main.
 
@@ -27,7 +27,7 @@ Before gathering release context, run the `/seed-sync` workflow to check for uns
 
 1. `git log --oneline main..dev` — list all commits on dev that aren't on main yet
 2. `git diff --stat main..dev` — summary of files changed
-3. Check Linear for any **In Progress** or recently **Done** issues on the StackTrackr team (ID: `f876864d-ff80-4231-ae6c-a8e5cb69aca4`) that relate to commits on dev
+3. Check Linear for any **In Progress** or recently **Done** issues on the StakTrakr team (ID: `f876864d-ff80-4231-ae6c-a8e5cb69aca4`) that relate to commits on dev
 
 ### Step 2: Read current state
 
@@ -154,7 +154,7 @@ Update the version and release date at the project root:
 {
   "version": "NEW_VERSION",
   "releaseDate": "YYYY-MM-DD",
-  "releaseUrl": "https://github.com/lbruton/StackTrackr/releases/latest"
+  "releaseUrl": "https://github.com/lbruton/StakTrakr/releases/latest"
 }
 ```
 
@@ -292,7 +292,7 @@ Release complete!
 Version:  vNEW_VERSION
 Commit:   [hash] [message]
 PR:       #XX — [url]
-Release:  https://github.com/lbruton/StackTrackr/releases/tag/vNEW_VERSION
+Release:  https://github.com/lbruton/StakTrakr/releases/tag/vNEW_VERSION
 Linear:   STACK-XX → Done (if applicable)
 
 Next: merge the PR on GitHub when ready (release tag already created).

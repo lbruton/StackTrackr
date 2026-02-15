@@ -5,7 +5,7 @@ Create comprehensive handoff package with unique handoff ID: $ARGUMENTS
 **Step 1: Generate Handoff ID**
 ```javascript
 // Auto-generate handoff ID: PROJECT-HANDOFF-YYYYMMDD-HHMMSS
-const generateHandoffID = (project = "STACKTRACKR") => {
+const generateHandoffID = (project = "STAKTRAKR") => {
   const now = new Date();
 
   // DATE VERIFICATION: Ensure we're using correct current date
@@ -30,7 +30,7 @@ const generateHandoffID = (project = "STACKTRACKR") => {
 
   return `${project}-HANDOFF-${date}-${time}`;
 };
-// Example: "STACKTRACKR-HANDOFF-20251001-143045"
+// Example: "STAKTRAKR-HANDOFF-20251001-143045"
 ```
 
 **Step 2: Save to Memento with ID**
@@ -56,7 +56,7 @@ mcp__memento__add_observations({
   observations: [{
     entityName: "Handoff: [GENERATED_HANDOFF_ID]",
     contents: [
-      "TAG: project:[PROJECT_NAME]",        // Required: project:stacktrackr, project:zen, etc.
+      "TAG: project:[PROJECT_NAME]",        // Required: project:staktrakr, project:zen, etc.
       "TAG: handoff",                       // Always include for handoffs
       "TAG: spec:[ACTIVE_SPEC]",           // Current spec being worked on
       "TAG: [CATEGORY]",                    // Work area: frontend, backend, database, etc.
@@ -105,9 +105,9 @@ const getWeekNumber = () => {
 **JSON Structure:**
 ```json
 {
-  "handoff_id": "STACKTRACKR-HANDOFF-20251001-143045",
+  "handoff_id": "STAKTRAKR-HANDOFF-20251001-143045",
   "timestamp": "2025-10-01T14:30:45Z",
-  "project": "StackTrackr", 
+  "project": "StakTrakr", 
   "session_context": "Brief description",
   "active_files": ["path:line", "path:line"],
   "key_decisions": ["decision 1", "decision 2"],

@@ -3,7 +3,7 @@ description: Sprint loop — daisy-chain context across chat rewinds for multi-t
 allowed-tools: Bash, Read, Write, Edit, Grep, Glob, mcp__linear-server__*, mcp__memento__*, mcp__claude-context__*
 ---
 
-# Sprint Loop — StackTrackr
+# Sprint Loop — StakTrakr
 
 This command manages a **rewind-based sprint workflow** for sessions with multiple tasks. The user will rewind the chat back to this message after each task, preserving the base context while carrying forward progress via handoff files.
 
@@ -28,7 +28,7 @@ Look for the most recent sprint handoff:
 
 1. Check `logs/sprint/` directory for files matching `handoff_*.md` (newest first)
 2. If found, read it — it contains what was completed, what's next, and any state to carry forward
-3. If no file found, also search Memento: `semantic_search("stacktrackr sprint handoff", limit: 3)`
+3. If no file found, also search Memento: `semantic_search("staktrakr sprint handoff", limit: 3)`
 4. If nothing found anywhere, this is a fresh loop — ask the user what we're working on
 
 ### Step 2: Quick git check
@@ -84,9 +84,9 @@ Write to `logs/sprint/handoff_[TIMESTAMP].md`:
 ### Step 3: Save to Memento
 
 Save a lightweight handoff entity to Memento with:
-- Entity type: `STACKTRACKR:DEVELOPMENT:HANDOFF`
+- Entity type: `STAKTRAKR:DEVELOPMENT:HANDOFF`
 - Observations: TIMESTAMP, ABSTRACT (1 line), SUMMARY (full handoff content)
-- Tags: `project:stacktrackr`, `type:sprint-handoff`
+- Tags: `project:staktrakr`, `type:sprint-handoff`
 
 ### Step 4: Confirm ready for rewind
 

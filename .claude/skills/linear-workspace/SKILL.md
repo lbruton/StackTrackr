@@ -1,10 +1,10 @@
 ---
 name: linear-workspace
-description: Linear workspace structure, team IDs, issue routing rules, and label conventions for StackTrackr. Use when creating, updating, or querying Linear issues.
+description: Linear workspace structure, team IDs, issue routing rules, and label conventions for StakTrakr. Use when creating, updating, or querying Linear issues.
 user-invocable: false
 ---
 
-# Linear Workspace — StackTrackr
+# Linear Workspace — StakTrakr
 
 Reference guide for routing issues to the correct team, using the right labels, and avoiding unnecessary API calls.
 
@@ -12,14 +12,14 @@ Reference guide for routing issues to the correct team, using the right labels, 
 
 | Team | ID | Prefix | Visibility | Purpose |
 |------|----|--------|------------|---------|
-| **StackTrackr** | `f876864d-ff80-4231-ae6c-a8e5cb69aca4` | STACK- | Public | All user-facing features, bugs, and improvements |
+| **StakTrakr** | `f876864d-ff80-4231-ae6c-a8e5cb69aca4` | STACK- | Public | All user-facing features, bugs, and improvements |
 | **Developers** | `38d57c9f-388c-41ec-9cd2-259a21a5df1c` | DEVS- | Private | Internal strategy, research, architecture notes, sensitive roadmap items |
 
 **Always use the team ID directly** — never call `list_teams` to look it up. This avoids the "too much data" error and saves an API round-trip.
 
 ## Issue Routing Rules
 
-### Goes on StackTrackr (public)
+### Goes on StakTrakr (public)
 
 - User-facing features and enhancements
 - Bug fixes
@@ -39,7 +39,7 @@ Reference guide for routing issues to the correct team, using the right labels, 
 - Anything the user explicitly asks to keep private
 - Research spikes and prototyping notes
 
-**When in doubt, ask the user** which team an issue should go on. Default to StackTrackr unless the content is sensitive or strategic.
+**When in doubt, ask the user** which team an issue should go on. Default to StakTrakr unless the content is sensitive or strategic.
 
 ## Labels
 
@@ -87,7 +87,7 @@ Always filter by team ID to avoid loading the entire workspace:
 
 ```
 mcp__linear-server__list_issues
-  team: "f876864d-ff80-4231-ae6c-a8e5cb69aca4"  # StackTrackr
+  team: "f876864d-ff80-4231-ae6c-a8e5cb69aca4"  # StakTrakr
   state: "In Progress"                            # Filter by state
   limit: 10                                       # Keep results small
 ```
@@ -119,4 +119,4 @@ mcp__linear-server__get_issue
 
 ## Assignee
 
-Default assignee for StackTrackr issues: **Lonnie B.** (ID: `ba9478fe-2f7b-4d51-9460-a2e2031e2ea8`). Only set assignee when explicitly asked.
+Default assignee for StakTrakr issues: **Lonnie B.** (ID: `ba9478fe-2f7b-4d51-9460-a2e2031e2ea8`). Only set assignee when explicitly asked.

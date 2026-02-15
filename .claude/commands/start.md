@@ -3,7 +3,7 @@ description: Quick session start — load recent context without a full prime.
 allowed-tools: Bash, Read, Grep, Glob, mcp__linear-server__*, mcp__memento__*, mcp__claude-context__*
 ---
 
-# Session Start — StackTrackr
+# Session Start — StakTrakr
 
 Lightweight context loader for the start of a development session. Gets you up to speed in 30 seconds, not 5 minutes.
 
@@ -36,7 +36,7 @@ Run these commands (parallel where possible):
 
 ## Phase 2: Linear Quick Check
 
-Query the **StackTrackr** team (ID: `f876864d-ff80-4231-ae6c-a8e5cb69aca4`) for active work:
+Query the **StakTrakr** team (ID: `f876864d-ff80-4231-ae6c-a8e5cb69aca4`) for active work:
 
 1. List **In Progress** issues (these are what we're likely continuing)
 2. List **Todo** issues (these are queued next)
@@ -48,7 +48,7 @@ If no In Progress issues, skip to Phase 3.
 
 Search Memento for the most recent handoff or session save:
 
-1. `mcp__memento__semantic_search` with query: `"stacktrackr handoff session"`, limit: 3, min_similarity: 0.5
+1. `mcp__memento__semantic_search` with query: `"staktrakr handoff session"`, limit: 3, min_similarity: 0.5
 2. If a handoff entity is found, read it with `mcp__memento__open_nodes` for full context
 3. If no handoff found, that's fine — Phase 1 and 2 provide sufficient context
 
@@ -57,7 +57,7 @@ Search Memento for the most recent handoff or session save:
 Produce a concise summary (not a formal report — just conversational):
 
 ```
-Session Start — StackTrackr v[VERSION] on [BRANCH]
+Session Start — StakTrakr v[VERSION] on [BRANCH]
 
 Recent: [1-2 sentence summary of last few commits]
 In Progress: [STACK-XX: title, STACK-YY: title] or "None"

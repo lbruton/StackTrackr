@@ -1,9 +1,9 @@
 ---
 name: coding-standards
-description: StackTrackr coding standards — vanilla JavaScript, single-page app, no build step, localStorage persistence.
+description: StakTrakr coding standards — vanilla JavaScript, single-page app, no build step, localStorage persistence.
 ---
 
-# StackTrackr Coding Standards
+# StakTrakr Coding Standards
 
 Coding standards for a **pure client-side precious metals inventory tracker**. Single HTML page (`index.html`), vanilla JavaScript, localStorage persistence, no backend, no build step. Must work on both `file://` protocol and HTTP servers.
 
