@@ -121,7 +121,7 @@ self.addEventListener('fetch', (event) => {
       caches.match('./index.html')
         .then((cached) => cached || fetchAndCache(event.request))
         .catch(() => caches.match('./'))
-        .catch(() => new Response(
+        .then((response) => response || new Response(
           '<!DOCTYPE html><html><head><meta charset="utf-8"><title>StakTrakr</title></head>' +
           '<body style="font-family:system-ui;text-align:center;padding:4rem">' +
           '<h2>Offline</h2><p>StakTrakr is not available right now.</p>' +
