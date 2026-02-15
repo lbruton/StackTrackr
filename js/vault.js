@@ -694,7 +694,8 @@ async function handleVaultAction() {
 
     try {
       await importEncryptedBackup(_vaultPendingFile, password);
-      showVaultStatus("success", "Data restored successfully.");
+      showVaultStatus("success", "Data restored successfully. Reloading\u2026");
+      setTimeout(function () { location.reload(); }, 1200);
     } catch (err) {
       showVaultStatus("error", err.message || "Import failed.");
     } finally {

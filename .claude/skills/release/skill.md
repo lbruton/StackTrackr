@@ -52,7 +52,7 @@ Commits since main:
 Proposed title: [inferred from commits/Linear issues]
 
 Proposed changelog bullets:
-- **Label**: Description (STACK-XX)
+- **Label**: Description (STAK-XX)
 - ...
 
 Proceed? [Adjust title / Adjust bullets / Go]
@@ -74,7 +74,7 @@ const APP_VERSION = "3.XX.YY";  // ← new
 
 ### File 2: `sw.js` — CACHE_NAME
 
-The service worker's cache name must match the app version. If it drifts, the SW serves stale `constants.js` with an old `APP_VERSION`, causing the What's New splash to re-trigger on every page load (see STACK-93).
+The service worker's cache name must match the app version. If it drifts, the SW serves stale `constants.js` with an old `APP_VERSION`, causing the What's New splash to re-trigger on every page load (see STAK-93).
 
 Find and replace the cache name string:
 ```javascript
@@ -91,7 +91,7 @@ Insert a new section **before** the first `## [x.y.z]` heading (after `## [Unrel
 
 ### Added — TITLE
 
-- **Label**: Description (STACK-XX)
+- **Label**: Description (STAK-XX)
 - **Label**: Description
 ...
 
@@ -104,7 +104,7 @@ Format rules:
 - Section heading is `### Added — TITLE` (use the release title)
 - Bullets use `**Label**: Description` format. Labels are typically `Added`, `Changed`, `Fixed`
 - Each bullet is a single line (no wrapping)
-- STACK-XX references go at the end of the bullet in parentheses
+- STAK-XX references go at the end of the bullet in parentheses
 
 ### Files 4 & 6: `docs/announcements.md` + `js/about.js` — MUST STAY IN SYNC
 
@@ -187,8 +187,8 @@ git commit -m "vNEW_VERSION — TITLE"
 
 Commit message format: `vNEW_VERSION — TITLE`
 - Use em dash (`—`), not hyphen
-- Include STACK-XX references if applicable: `v3.24.00 — STACK-55: Feature name`
-- Match the pattern from existing commits: `v3.23.01 — STACK-52: Goldback real-time estimation, Settings reorganization`
+- Include STAK-XX references if applicable: `v3.24.00 — STAK-55: Feature name`
+- Match the pattern from existing commits: `v3.23.01 — STAK-52: Goldback real-time estimation, Settings reorganization`
 
 If there are other uncommitted changes beyond the 5 version files, ask the user whether to include them in this commit or leave them staged separately.
 
@@ -219,7 +219,7 @@ If there are other uncommitted changes beyond the 5 version files, ask the user 
 
    ## Linear Issues
 
-   - [STACK-XX: title — link] (if applicable)
+   - [STAK-XX: title — link] (if applicable)
 
    🤖 Generated with [Claude Code](https://claude.com/claude-code)
    EOF
@@ -293,7 +293,7 @@ Version:  vNEW_VERSION
 Commit:   [hash] [message]
 PR:       #XX — [url]
 Release:  https://github.com/lbruton/StakTrakr/releases/tag/vNEW_VERSION
-Linear:   STACK-XX → Done (if applicable)
+Linear:   STAK-XX → Done (if applicable)
 
 Next: merge the PR on GitHub when ready (release tag already created).
 ```

@@ -61,13 +61,30 @@ const renderChangeLog = () => {
     .map((entry, i) => {
       const globalIndex = changeLog.length - 1 - i;
       const actionLabel = entry.undone ? 'Redo' : 'Undo';
+
+      // Friendly display for price history deletions (STAK-109)
+      let displayField = sanitizeHtml(entry.field);
+      let displayOld = sanitizeHtml(String(entry.oldValue));
+      let displayNew = sanitizeHtml(String(entry.newValue));
+      let rowClick = `onclick="editFromChangeLog(${entry.idx}, ${globalIndex})"`;
+      if (entry.field === 'priceHistoryDelete') {
+        displayField = 'Price Entry Deleted';
+        try {
+          const d = JSON.parse(entry.oldValue);
+          const fmtFn = typeof formatCurrency === 'function' ? formatCurrency : (v) => '$' + Number(v).toFixed(2);
+          displayOld = `Retail: ${sanitizeHtml(fmtFn(d.entry.retail))}`;
+        } catch { displayOld = '(price entry)'; }
+        displayNew = entry.undone ? 'Restored' : 'Deleted';
+        rowClick = ''; // No item to navigate to
+      }
+
       return `
-      <tr onclick="editFromChangeLog(${entry.idx}, ${globalIndex})">
+      <tr ${rowClick}>
         <td title="${formatTimestamp(entry.timestamp)}">${formatTimestamp(entry.timestamp)}</td>
         <td title="${sanitizeHtml(entry.itemName)}">${sanitizeHtml(entry.itemName)}</td>
-        <td title="${sanitizeHtml(entry.field)}">${sanitizeHtml(entry.field)}</td>
-        <td title="${sanitizeHtml(String(entry.oldValue))}">${sanitizeHtml(String(entry.oldValue))}</td>
-        <td title="${sanitizeHtml(String(entry.newValue))}">${sanitizeHtml(String(entry.newValue))}</td>
+        <td title="${displayField}">${displayField}</td>
+        <td title="${displayOld}">${displayOld}</td>
+        <td title="${displayNew}">${displayNew}</td>
         <td class="action-cell"><button class="btn action-btn" style="margin:1px;" onclick="event.stopPropagation(); toggleChange(${globalIndex})">${actionLabel}</button></td>
       </tr>`;
     });
@@ -90,6 +107,35 @@ const renderChangeLog = () => {
 const toggleChange = (logIdx) => {
   const entry = changeLog[logIdx];
   if (!entry) return;
+
+  // Price history delete — undo restores the entry, redo re-deletes it (STAK-109)
+  if (entry.field === 'priceHistoryDelete') {
+    const deleted = JSON.parse(entry.oldValue);
+    if (entry.undone) {
+      // Redo: re-delete the entry
+      if (itemPriceHistory[deleted.uuid]) {
+        itemPriceHistory[deleted.uuid] = itemPriceHistory[deleted.uuid]
+          .filter(e => e.ts !== deleted.entry.ts);
+        if (itemPriceHistory[deleted.uuid].length === 0) {
+          delete itemPriceHistory[deleted.uuid];
+        }
+      }
+      entry.undone = false;
+    } else {
+      // Undo: restore the deleted entry
+      if (!itemPriceHistory[deleted.uuid]) itemPriceHistory[deleted.uuid] = [];
+      itemPriceHistory[deleted.uuid].push(deleted.entry);
+      itemPriceHistory[deleted.uuid].sort((a, b) => a.ts - b.ts);
+      entry.undone = true;
+    }
+    if (typeof saveItemPriceHistory === 'function') saveItemPriceHistory();
+    if (typeof renderItemPriceHistoryTable === 'function') renderItemPriceHistoryTable();
+    if (typeof renderItemPriceHistoryModalTable === 'function') renderItemPriceHistoryModalTable();
+    renderChangeLog();
+    localStorage.setItem('changeLog', JSON.stringify(changeLog));
+    return;
+  }
+
   if (entry.field === 'Deleted') {
     if (entry.undone) {
       const removed = inventory.splice(entry.idx, 1)[0];

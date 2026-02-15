@@ -311,22 +311,89 @@ function buildViewContent(item, index) {
 
     // Range pill bar
     const rangeBar = _el('div', 'view-chart-range-bar');
+    // Date picker inputs for custom range
+    const dateRange = _el('div', 'view-chart-date-range');
+    const fromInput = document.createElement('input');
+    fromInput.type = 'date';
+    fromInput.className = 'view-chart-date-input';
+    fromInput.title = 'From date';
+    const toInput = document.createElement('input');
+    toInput.type = 'date';
+    toInput.className = 'view-chart-date-input';
+    toInput.title = 'To date';
+    const todayStr = new Date().toISOString().slice(0, 10);
+    fromInput.max = todayStr;
+    toInput.max = todayStr;
+
+    const dateSep = _el('span', 'view-chart-date-sep');
+    dateSep.textContent = '\u2014';
+    dateRange.appendChild(fromInput);
+    dateRange.appendChild(dateSep);
+    dateRange.appendChild(toInput);
+
+    // Custom range handler — shared by both date inputs
+    const onDateChange = async () => {
+      // Deactivate all pills (custom range mode)
+      rangeBar.querySelectorAll('.view-chart-range-pill').forEach(p => p.classList.remove('active'));
+      // Cross-constrain min/max
+      if (fromInput.value) toInput.min = fromInput.value;
+      else toInput.min = '';
+      if (toInput.value) fromInput.max = toInput.value;
+      else fromInput.max = todayStr;
+      // Parse timestamps (start of day for From, end of day for To)
+      const fromTs = fromInput.value ? new Date(fromInput.value + 'T00:00:00').getTime() : 0;
+      const toTs = toInput.value ? new Date(toInput.value + 'T23:59:59').getTime() : 0;
+      if (fromTs <= 0 && toTs <= 0) return;
+      const canvas = chartSection.querySelector('#viewPriceHistoryChart');
+      if (canvas) {
+        try {
+          // Async-fetch historical data for custom ranges (may span decades)
+          const fullSpot = await _fetchHistoricalSpotData(metalName, 0, fromTs, toTs);
+          _createPriceHistoryChart(canvas, fullSpot, retailEntries, purchasePerUnit, meltFactor, 0, purchaseDate, currentRetail, fromTs, toTs);
+        } catch (err) {
+          // Fall back to empty dataset on fetch failure (network, parsing errors)
+          console.error('Custom date range fetch failed:', err);
+          _createPriceHistoryChart(canvas, [], retailEntries, purchasePerUnit, meltFactor, 0, purchaseDate, currentRetail, fromTs, toTs);
+        }
+      }
+    };
+    fromInput.addEventListener('change', onDateChange);
+    toInput.addEventListener('change', onDateChange);
+
     _VIEW_CHART_RANGES.forEach((days, i) => {
       const pill = _el('button', 'view-chart-range-pill');
       pill.type = 'button';
       pill.textContent = _VIEW_CHART_RANGE_LABELS[i];
       pill.dataset.days = String(days);
       if (days === _VIEW_CHART_DEFAULT_RANGE) pill.classList.add('active');
-      pill.addEventListener('click', () => {
+      pill.addEventListener('click', async () => {
         rangeBar.querySelectorAll('.view-chart-range-pill').forEach(p => p.classList.remove('active'));
         pill.classList.add('active');
+        // Clear date inputs (back to pill mode)
+        fromInput.value = '';
+        toInput.value = '';
+        fromInput.max = todayStr;
+        toInput.min = '';
         const canvas = chartSection.querySelector('#viewPriceHistoryChart');
         if (canvas) {
-          _createPriceHistoryChart(canvas, dailySpotEntries, retailEntries, purchasePerUnit, meltFactor, days, purchaseDate, currentRetail);
+          if (days === 0 || days > 180) {
+            try {
+              // "All" or long range — async-fetch historical year files
+              const fullSpot = await _fetchHistoricalSpotData(metalName, days);
+              _createPriceHistoryChart(canvas, fullSpot, retailEntries, purchasePerUnit, meltFactor, days, purchaseDate, currentRetail);
+            } catch (err) {
+              // Fall back to empty dataset on fetch failure
+              console.error('Range pill fetch failed:', err);
+              _createPriceHistoryChart(canvas, [], retailEntries, purchasePerUnit, meltFactor, days, purchaseDate, currentRetail);
+            }
+          } else {
+            _createPriceHistoryChart(canvas, dailySpotEntries, retailEntries, purchasePerUnit, meltFactor, days, purchaseDate, currentRetail);
+          }
         }
       });
       rangeBar.appendChild(pill);
     });
+    rangeBar.appendChild(dateRange);
     chartSection.appendChild(rangeBar);
 
     const chartContainer = _el('div', 'view-chart-container');
@@ -795,6 +862,130 @@ function _isLightColor(color) {
 }
 
 // ---------------------------------------------------------------------------
+// Historical spot data fetcher (private, self-contained)
+// ---------------------------------------------------------------------------
+
+/** @type {Map<number, Array>} Year-file cache shared with spot.js when available */
+const _viewYearCache = new Map();
+
+/** @type {Map<number, Promise<Array>>} In-flight fetch promises to deduplicate concurrent requests */
+const _viewYearFetchPromises = new Map();
+
+/**
+ * Fetch a single year file with three-tier fallback (fetch → XHR → remote).
+ * Reuses spot.js cache/fetcher when available; falls back to own implementation.
+ * Deduplicates concurrent fetches for the same year.
+ * @param {number} year
+ * @returns {Promise<Array>}
+ */
+function _fetchYearFile(year) {
+  // Prefer spot.js fetcher (shares its dedup + cache)
+  if (typeof window.fetchYearFile === 'function') {
+    return window.fetchYearFile(year);
+  }
+
+  // Self-contained fallback
+  // Already cached — return immediately
+  if (_viewYearCache.has(year)) return Promise.resolve(_viewYearCache.get(year));
+
+  // Already in-flight — return shared promise
+  if (_viewYearFetchPromises.has(year)) {
+    return _viewYearFetchPromises.get(year);
+  }
+
+  const filename = `spot-history-${year}.json`;
+  const localUrl = `data/${filename}`;
+  const remoteUrl = `https://staktrakr.com/data/${filename}`;
+
+  const promise = fetch(localUrl)
+    .then(res => { if (!res.ok) throw new Error(`HTTP ${res.status}`); return res.json(); })
+    .catch(() => new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open('GET', localUrl, true);
+      xhr.responseType = 'json';
+      xhr.onload = () => (xhr.status === 200 || (xhr.status === 0 && xhr.response)) ? resolve(xhr.response) : reject(new Error(`XHR ${xhr.status}`));
+      xhr.onerror = () => reject(new Error('XHR error'));
+      xhr.send();
+    }))
+    .catch(() => fetch(remoteUrl).then(res => { if (!res.ok) throw new Error(`HTTP ${res.status}`); return res.json(); }))
+    .then(entries => {
+      const valid = Array.isArray(entries) ? entries.filter(e => e && typeof e.spot === 'number' && e.metal && e.timestamp) : [];
+      _viewYearCache.set(year, valid);
+      return valid;
+    })
+    .catch(() => { _viewYearCache.set(year, []); return []; })
+    .finally(() => {
+      _viewYearFetchPromises.delete(year);
+    });
+
+  // Store promise in Map immediately to ensure proper cleanup
+  _viewYearFetchPromises.set(year, promise);
+  return promise;
+}
+
+/**
+ * Fetch full historical spot data for a metal by loading year files.
+ * Merges fetched year-file data with live spotHistory, deduplicates by day
+ * (live data wins over seed). Returns sorted {ts, spot} entries.
+ *
+ * For ranges <= 180 days, just returns the in-memory spotHistory slice (no fetch).
+ * For longer ranges (including "All"), async-fetches year files back to 1968.
+ *
+ * @param {string} metalName - Metal name ('Silver', 'Gold', etc.)
+ * @param {number} days - Number of days (0 = all available data)
+ * @param {number} [fromTs=0] - Custom range start (0 = unbounded)
+ * @param {number} [toTs=0] - Custom range end (0 = unbounded)
+ * @returns {Promise<Array<{ts:number, spot:number}>>} Sorted daily spot entries
+ */
+async function _fetchHistoricalSpotData(metalName, days, fromTs, toTs) {
+  fromTs = fromTs || 0;
+  toTs = toTs || 0;
+
+  // Calculate which years to fetch
+  let startYear;
+  if (fromTs > 0) {
+    startYear = new Date(fromTs).getFullYear();
+  } else if (days > 0 && days <= 180) {
+    // Short range — in-memory spotHistory is sufficient
+    const liveEntries = (typeof spotHistory !== 'undefined' ? spotHistory : [])
+      .filter(e => e.metal === metalName)
+      .map(e => ({ ts: new Date(e.timestamp).getTime(), spot: e.spot }));
+    liveEntries.sort((a, b) => a.ts - b.ts);
+    const byDay = new Map();
+    for (const e of liveEntries) byDay.set(new Date(e.ts).toISOString().slice(0, 10), e);
+    return [...byDay.values()].sort((a, b) => a.ts - b.ts);
+  } else {
+    // "All" — go back to 1968 (earliest seed data)
+    startYear = 1968;
+  }
+
+  const endYear = new Date().getFullYear();
+  const years = [];
+  for (let y = startYear; y <= endYear; y++) years.push(y);
+
+  // Fetch all needed year files in parallel
+  const yearArrays = await Promise.all(years.map(_fetchYearFile));
+  const allHistorical = yearArrays.flat();
+
+  // Merge historical + live spotHistory
+  const live = typeof spotHistory !== 'undefined' ? spotHistory : [];
+  const combined = [...allHistorical, ...live]
+    .filter(e => e.metal === metalName)
+    .map(e => ({ ts: new Date(e.timestamp).getTime(), spot: e.spot }));
+
+  // Sort chronologically
+  combined.sort((a, b) => a.ts - b.ts);
+
+  // Dedup to one entry per day (later entries win — live data appended after seed)
+  const byDay = new Map();
+  for (const e of combined) {
+    byDay.set(new Date(e.ts).toISOString().slice(0, 10), e);
+  }
+
+  return [...byDay.values()].sort((a, b) => a.ts - b.ts);
+}
+
+// ---------------------------------------------------------------------------
 // Price history chart (private)
 // ---------------------------------------------------------------------------
 
@@ -813,8 +1004,10 @@ function _isLightColor(color) {
  * @param {number} [days=0] - Number of days to show (0 = all)
  * @param {number} [purchaseDate=0] - Purchase date timestamp (anchor start for retail line)
  * @param {number} [currentRetail=0] - Current market/retail value (anchor end for retail line)
+ * @param {number} [fromTs=0] - Custom range start timestamp (0 = unbounded)
+ * @param {number} [toTs=0] - Custom range end timestamp (0 = unbounded)
  */
-function _createPriceHistoryChart(canvas, allSpotEntries, allRetailEntries, purchasePerUnit, meltFactor, days, purchaseDate, currentRetail) {
+function _createPriceHistoryChart(canvas, allSpotEntries, allRetailEntries, purchasePerUnit, meltFactor, days, purchaseDate, currentRetail, fromTs, toTs) {
   if (typeof Chart === 'undefined') return;
 
   // Destroy any previous instance
@@ -824,8 +1017,25 @@ function _createPriceHistoryChart(canvas, allSpotEntries, allRetailEntries, purc
   }
 
   // Filter spot entries by time range
+  fromTs = fromTs || 0;
+  toTs = toTs || 0;
   const cutoff = days > 0 ? Date.now() - (days * 86400000) : 0;
-  const spotEntries = cutoff > 0 ? allSpotEntries.filter(e => e.ts >= cutoff) : allSpotEntries;
+  let spotEntries;
+  if (fromTs > 0 || toTs > 0) {
+    // Custom date range mode
+    spotEntries = allSpotEntries.filter(e =>
+      (fromTs <= 0 || e.ts >= fromTs) && (toTs <= 0 || e.ts <= toTs)
+    );
+  } else {
+    spotEntries = cutoff > 0 ? allSpotEntries.filter(e => e.ts >= cutoff) : [...allSpotEntries];
+  }
+
+  // If "All" range or custom range and purchase date is before earliest spot data,
+  // prepend a synthetic entry so the chart extends back to purchase date
+  const isAllOrCustom = days === 0 || fromTs > 0 || toTs > 0;
+  if (isAllOrCustom && purchaseDate > 0 && spotEntries.length > 0 && purchaseDate < spotEntries[0].ts) {
+    spotEntries.unshift({ ts: purchaseDate, spot: spotEntries[0].spot });
+  }
 
   // Show fallback message if insufficient data for selected range
   const container = canvas.parentElement;
@@ -842,8 +1052,24 @@ function _createPriceHistoryChart(canvas, allSpotEntries, allRetailEntries, purc
   }
 
   // Build labels + melt data from spot entries
+  // Adaptive formatting: decade spans → year only, multi-year → two-line [month, year],
+  // single-year → month + day
+  const firstYear = new Date(spotEntries[0].ts).getFullYear();
+  const lastYear = new Date(spotEntries[spotEntries.length - 1].ts).getFullYear();
+  const yearSpan = lastYear - firstYear;
   const labels = spotEntries.map(e => {
     const d = new Date(e.ts);
+    if (yearSpan > 10) {
+      // Decade+ ranges: compact "Jan '24" or just "'24"
+      return d.toLocaleDateString(undefined, { year: '2-digit', month: 'short' });
+    }
+    if (yearSpan >= 1) {
+      // 1–10 year ranges: two-line label [month day, year]
+      return [
+        d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
+        String(d.getFullYear())
+      ];
+    }
     return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
   });
   const meltData = spotEntries.map(e => parseFloat((e.spot * meltFactor).toFixed(2)));
@@ -869,7 +1095,7 @@ function _createPriceHistoryChart(canvas, allSpotEntries, allRetailEntries, purc
   // If purchase date is within the visible range, snap to that day.
   // If purchase date is before the range, pin to index 0 so the
   // retail line always starts with "what you paid" as a reference.
-  if (purchaseDate > 0 && purchasePerUnit > 0) {
+  if (purchaseDate > 0) {
     if (purchaseDate >= spotEntries[0].ts &&
         purchaseDate <= spotEntries[spotEntries.length - 1].ts) {
       const idx = _nearestSpotIdx(purchaseDate);
@@ -882,6 +1108,8 @@ function _createPriceHistoryChart(canvas, allSpotEntries, allRetailEntries, purc
   // Middle: sparse itemPriceHistory retail values snapped to nearest spot day
   for (const re of allRetailEntries) {
     if (cutoff > 0 && re.ts < cutoff) continue;
+    if (fromTs > 0 && re.ts < fromTs) continue;
+    if (toTs > 0 && re.ts > toTs) continue;
     const idx = _nearestSpotIdx(re.ts);
     retailData[idx] = re.retail;
   }
