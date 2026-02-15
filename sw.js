@@ -156,27 +156,30 @@ function fetchAndCache(request) {
   }).catch(() => caches.match(request));
 }
 
-// Strategy: cache-first with network fallback
-function cacheFirst(request) {
-  return caches.match(request)
-    .then((cached) => cached || fetchAndCache(request))
-    .catch(() => caches.match(request))
+// Guarantee a Response for respondWith() — catch undefined and rejections
+function ensureResponse(promise) {
+  return promise
     .then((response) => response || Response.error())
     .catch(() => Response.error());
+}
+
+// Strategy: cache-first with network fallback
+function cacheFirst(request) {
+  return ensureResponse(
+    caches.match(request).then((cached) => cached || fetchAndCache(request))
+  );
 }
 
 // Strategy: network-first with cache fallback
 function networkFirst(request) {
-  return fetchAndCache(request)
-    .catch(() => caches.match(request))
-    .then((response) => response || Response.error())
-    .catch(() => Response.error());
+  return ensureResponse(
+    fetchAndCache(request).catch(() => caches.match(request))
+  );
 }
 
 // Strategy: stale-while-revalidate (serve cached, update in background)
 function staleWhileRevalidate(request) {
-  return caches.match(request)
-    .then((cached) => cached || fetchAndCache(request))
-    .then((response) => response || Response.error())
-    .catch(() => Response.error());
+  return ensureResponse(
+    caches.match(request).then((cached) => cached || fetchAndCache(request))
+  );
 }
