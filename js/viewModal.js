@@ -266,7 +266,7 @@ function buildViewContent(item, index) {
             .replace(/\{certNumber\}/g, encodeURIComponent(certNum))
             .replace(/\{grade\}/g, encodeURIComponent(item.grade || ''));
         }
-        const popup = window.open(url, `cert_${authority}_${certNum || pcgsNo}`,
+        const popup = window.open(url, `cert_${authority}_${certNum || pcgsNo}`.replace(/[^a-zA-Z0-9_]/g, '_'),
           'width=1250,height=800,scrollbars=yes,resizable=yes,toolbar=no,location=no,menubar=no,status=no');
         if (popup) popup.focus();
       });
@@ -313,6 +313,10 @@ function buildViewContent(item, index) {
             verifySpan.classList.add('pcgs-verify-failed');
             setTimeout(() => verifySpan.classList.remove('pcgs-verify-failed'), 3000);
           }
+        }).catch((err) => {
+          verifySpan.classList.remove('pcgs-verifying');
+          verifySpan.title = 'Verification service unavailable';
+          if (typeof debugLog === 'function') debugLog('warn', 'PCGS verify failed:', err);
         });
       });
       badge.appendChild(verifySpan);
