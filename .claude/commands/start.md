@@ -9,14 +9,30 @@ Lightweight context loader for the start of a development session. Gets you up t
 
 **Do NOT read or re-analyze CLAUDE.md** — it's already loaded as system context.
 
-## Phase 1: Recent Git Activity
+## Phase 1: Sync Check
+
+Detect if a cloud session (Claude Code web, Codex, GitHub) pushed changes we don't have locally:
+
+1. `git fetch origin` — update remote tracking refs
+2. `git branch --show-current` — confirm working branch
+3. `git rev-list HEAD..origin/<branch> --count` — count commits we're behind
+
+**If behind by 1+ commits:**
+- Show what's incoming: `git log --oneline HEAD..origin/<branch>`
+- Check for uncommitted local work: `git status --short`
+- If clean working tree: ask the user to confirm, then `git pull origin <branch>`
+- If dirty working tree: warn that local changes exist, suggest `git stash` then pull, or manual merge
+- After pulling, note which files changed: `git diff --stat HEAD~N..HEAD` (where N = commits pulled)
+
+**If up to date:** Continue silently.
+
+## Phase 2: Recent Git Activity
 
 Run these commands (parallel where possible):
 
 1. `git log --oneline -8` — last 8 commits for recent momentum
 2. `git status --short` — uncommitted work from a prior session
-3. `git branch --show-current` — confirm working branch
-4. `git diff --stat` — size of any uncommitted changes
+3. `git diff --stat` — size of any uncommitted changes
 
 ## Phase 2: Linear Quick Check
 
