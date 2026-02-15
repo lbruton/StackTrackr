@@ -19,6 +19,7 @@ Detect if a cloud session (Claude Code web, Codex, GitHub) pushed changes we don
 3. `git rev-list HEAD..origin/<branch> --count` — count commits we're behind
 
 **If behind by 1+ commits:**
+
 - Show what's incoming: `git log --oneline HEAD..origin/<branch>`
 - Check for uncommitted local work: `git status --short`
 - If clean working tree: ask the user to confirm, then `git pull origin <branch>`
@@ -57,6 +58,7 @@ Search Memento for the most recent handoff. Use **keyword search first** (reliab
 4. If no handoff found, that's fine — Phase 2 and 3 provide sufficient context
 
 **Key handoff fields to surface:**
+
 - `ACTIVE_SPRINT` — current sprint project name and theme
 - `SPRINT_ISSUES` — issues in the active sprint
 - `NEXT_STEPS` — what to work on next
