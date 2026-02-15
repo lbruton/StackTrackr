@@ -755,49 +755,56 @@ const migrateLayoutVisibility = (obj) => {
 };
 
 /**
- * Loads the layout section config from localStorage, with migration support.
- * Falls back to migrating old layoutVisibility format, then to defaults.
+ * Generic loader for section config arrays from localStorage.
+ * Merges saved user config with defaults so new sections are auto-appended.
+ * @param {string} key - localStorage key
+ * @param {Array<{id: string, label: string, enabled: boolean}>} defaults
+ * @param {string} [legacyKey] - Optional legacy key to migrate from
+ * @param {function} [migrateFn] - Migration function for legacy data
  * @returns {Array<{id: string, label: string, enabled: boolean}>}
  */
-const getLayoutSectionConfig = () => {
+const _loadSectionConfig = (key, defaults, legacyKey, migrateFn) => {
   try {
-    const raw = localStorage.getItem('layoutSectionConfig');
+    const raw = localStorage.getItem(key);
     if (raw) {
       const saved = JSON.parse(raw);
       const savedMap = new Map(saved.map(c => [c.id, c]));
-      // Start with saved order, preserving user's arrangement
-      const merged = saved.filter(c => LAYOUT_SECTION_DEFAULTS.some(d => d.id === c.id));
-      // Append any new defaults not in saved config
-      for (const def of LAYOUT_SECTION_DEFAULTS) {
-        if (!savedMap.has(def.id)) {
-          merged.push({ ...def });
-        }
+      const merged = saved.filter(c => defaults.some(d => d.id === c.id));
+      for (const def of defaults) {
+        if (!savedMap.has(def.id)) merged.push({ ...def });
       }
       return merged;
     }
-    // Try migrating old format
-    const legacy = localStorage.getItem('layoutVisibility');
-    if (legacy) {
-      const obj = JSON.parse(legacy);
-      return migrateLayoutVisibility(obj);
+    if (legacyKey && migrateFn) {
+      const legacy = localStorage.getItem(legacyKey);
+      if (legacy) return migrateFn(JSON.parse(legacy));
     }
   } catch (e) {
-    console.warn('Failed to load layout section config:', e);
+    console.warn(`Failed to load ${key}:`, e);
   }
-  return LAYOUT_SECTION_DEFAULTS.map(d => ({ ...d }));
+  return defaults.map(d => ({ ...d }));
 };
 
 /**
- * Saves the layout section config to localStorage.
+ * Generic saver for section config arrays to localStorage.
+ * @param {string} key - localStorage key
  * @param {Array<{id: string, label: string, enabled: boolean}>} config
  */
-const saveLayoutSectionConfig = (config) => {
+const _saveSectionConfig = (key, config) => {
   try {
-    localStorage.setItem('layoutSectionConfig', JSON.stringify(config));
+    localStorage.setItem(key, JSON.stringify(config));
   } catch (e) {
-    console.warn('Failed to save layout section config:', e);
+    console.warn(`Failed to save ${key}:`, e);
   }
 };
+
+/** Loads the layout section config, with migration from old layoutVisibility format. */
+const getLayoutSectionConfig = () =>
+  _loadSectionConfig('layoutSectionConfig', LAYOUT_SECTION_DEFAULTS, 'layoutVisibility', migrateLayoutVisibility);
+
+/** Saves the layout section config to localStorage. */
+const saveLayoutSectionConfig = (config) =>
+  _saveSectionConfig('layoutSectionConfig', config);
 
 // =============================================================================
 // VIEW MODAL SECTION CONFIG — controls order/visibility of view modal sections
@@ -817,43 +824,13 @@ const VIEW_MODAL_SECTION_DEFAULTS = [
   { id: 'notes',        label: 'Notes',              enabled: true },
 ];
 
-/**
- * Loads the view modal section config from localStorage, merged with defaults.
- * @returns {Array<{id: string, label: string, enabled: boolean}>}
- */
-const getViewModalSectionConfig = () => {
-  try {
-    const raw = localStorage.getItem('viewModalSectionConfig');
-    if (raw) {
-      const saved = JSON.parse(raw);
-      const savedMap = new Map(saved.map(c => [c.id, c]));
-      // Start with saved order, preserving user's arrangement
-      const merged = saved.filter(c => VIEW_MODAL_SECTION_DEFAULTS.some(d => d.id === c.id));
-      // Append any new defaults not in saved config
-      for (const def of VIEW_MODAL_SECTION_DEFAULTS) {
-        if (!savedMap.has(def.id)) {
-          merged.push({ ...def });
-        }
-      }
-      return merged;
-    }
-  } catch (e) {
-    console.warn('Failed to load view modal section config:', e);
-  }
-  return VIEW_MODAL_SECTION_DEFAULTS.map(d => ({ ...d }));
-};
+/** Loads the view modal section config from localStorage, merged with defaults. */
+const getViewModalSectionConfig = () =>
+  _loadSectionConfig('viewModalSectionConfig', VIEW_MODAL_SECTION_DEFAULTS);
 
-/**
- * Saves the view modal section config to localStorage.
- * @param {Array<{id: string, label: string, enabled: boolean}>} config
- */
-const saveViewModalSectionConfig = (config) => {
-  try {
-    localStorage.setItem('viewModalSectionConfig', JSON.stringify(config));
-  } catch (e) {
-    console.warn('Failed to save view modal section config:', e);
-  }
-};
+/** Saves the view modal section config to localStorage. */
+const saveViewModalSectionConfig = (config) =>
+  _saveSectionConfig('viewModalSectionConfig', config);
 
 // =============================================================================
 // NUMISTA VIEW FIELD CONFIG — controls which fields appear in view modal
