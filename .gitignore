@@ -8,9 +8,7 @@
 !.claude/skills/
 !.claude/commands/
 .mcp.json
-TAXONOMY.md
 SPRINT.md
-AGENTS.md
 
 # Internal dev docs (not for public repo)
 docs/CLOUD-SYNC-DESIGN.md
