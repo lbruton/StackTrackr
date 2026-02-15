@@ -336,6 +336,70 @@ const updateSettingsFooter = async () => {
 };
 
 /**
+ * Wires a yes/no chip toggle to a feature flag.
+ * Handles click delegation, flag enable/disable, active-class sync,
+ * optional mirror element sync, and optional callback.
+ *
+ * @param {string} elementId - DOM id of the toggle container
+ * @param {string} flagName - Feature flag key (e.g. 'GROUPED_NAME_CHIPS')
+ * @param {Object} [opts]
+ * @param {string} [opts.syncId] - DOM id of a mirror toggle to keep in sync
+ * @param {Function} [opts.onApply] - Called after toggle with (isEnabled) arg
+ */
+const wireFeatureFlagToggle = (elementId, flagName, opts = {}) => {
+  const el = document.getElementById(elementId);
+  if (!el) return;
+  el.addEventListener('click', (e) => {
+    const btn = e.target.closest('.chip-sort-btn');
+    if (!btn) return;
+    const isEnabled = btn.dataset.val === 'yes';
+    if (window.featureFlags) {
+      if (isEnabled) featureFlags.enable(flagName);
+      else featureFlags.disable(flagName);
+    }
+    el.querySelectorAll('.chip-sort-btn').forEach(b => {
+      b.classList.toggle('active', b.dataset.val === btn.dataset.val);
+    });
+    if (opts.syncId) {
+      const syncEl = document.getElementById(opts.syncId);
+      if (syncEl) syncEl.querySelectorAll('.chip-sort-btn').forEach(b => {
+        b.classList.toggle('active', b.dataset.val === btn.dataset.val);
+      });
+    }
+    if (opts.onApply) opts.onApply(isEnabled);
+  });
+};
+window.wireFeatureFlagToggle = wireFeatureFlagToggle;
+
+/**
+ * Wires a chip sort order toggle (alpha/count) with bidirectional sync.
+ *
+ * @param {string} elementId - DOM id of the toggle container
+ * @param {string} [syncId] - DOM id of a mirror toggle to keep in sync
+ */
+const wireChipSortToggle = (elementId, syncId) => {
+  const el = document.getElementById(elementId);
+  if (!el) return;
+  el.addEventListener('click', (e) => {
+    const btn = e.target.closest('.chip-sort-btn');
+    if (!btn) return;
+    const val = btn.dataset.sort;
+    localStorage.setItem('chipSortOrder', val);
+    el.querySelectorAll('.chip-sort-btn').forEach(b => {
+      b.classList.toggle('active', b.dataset.sort === val);
+    });
+    if (syncId) {
+      const syncEl = document.getElementById(syncId);
+      if (syncEl) syncEl.querySelectorAll('.chip-sort-btn').forEach(b => {
+        b.classList.toggle('active', b.dataset.sort === val);
+      });
+    }
+    if (typeof renderActiveFilters === 'function') renderActiveFilters();
+  });
+};
+window.wireChipSortToggle = wireChipSortToggle;
+
+/**
  * Wires up all Settings modal event listeners.
  * Called once during initialization.
  */
@@ -479,106 +543,29 @@ const setupSettingsEventListeners = () => {
   }
 
   // Smart name grouping toggle in settings
-  const groupSettingEl = document.getElementById('settingsGroupNameChips');
-  if (groupSettingEl) {
-    groupSettingEl.addEventListener('click', (e) => {
-      const btn = e.target.closest('.chip-sort-btn');
-      if (!btn) return;
-      const isEnabled = btn.dataset.val === 'yes';
-      if (window.featureFlags) {
-        if (isEnabled) featureFlags.enable('GROUPED_NAME_CHIPS');
-        else featureFlags.disable('GROUPED_NAME_CHIPS');
-      }
-      // Update active state
-      groupSettingEl.querySelectorAll('.chip-sort-btn').forEach(b => {
-        b.classList.toggle('active', b.dataset.val === btn.dataset.val);
-      });
-      // Sync inline toggle
-      const groupInline = document.getElementById('groupNameChips');
-      if (groupInline) {
-        groupInline.querySelectorAll('.chip-sort-btn').forEach(b => {
-          b.classList.toggle('active', b.dataset.val === btn.dataset.val);
-        });
-      }
-      if (typeof renderActiveFilters === 'function') renderActiveFilters();
-    });
-  }
+  wireFeatureFlagToggle('settingsGroupNameChips', 'GROUPED_NAME_CHIPS', {
+    syncId: 'groupNameChips', onApply: () => { if (typeof renderActiveFilters === 'function') renderActiveFilters(); },
+  });
 
   // Dynamic name chips toggle
-  const dynamicChipsSetting = document.getElementById('settingsDynamicChips');
-  if (dynamicChipsSetting) {
-    dynamicChipsSetting.addEventListener('click', (e) => {
-      const btn = e.target.closest('.chip-sort-btn');
-      if (!btn) return;
-      const isEnabled = btn.dataset.val === 'yes';
-      if (window.featureFlags) {
-        if (isEnabled) featureFlags.enable('DYNAMIC_NAME_CHIPS');
-        else featureFlags.disable('DYNAMIC_NAME_CHIPS');
-      }
-      dynamicChipsSetting.querySelectorAll('.chip-sort-btn').forEach(b => {
-        b.classList.toggle('active', b.dataset.val === btn.dataset.val);
-      });
-      if (typeof renderActiveFilters === 'function') renderActiveFilters();
-    });
-  }
+  wireFeatureFlagToggle('settingsDynamicChips', 'DYNAMIC_NAME_CHIPS', {
+    onApply: () => { if (typeof renderActiveFilters === 'function') renderActiveFilters(); },
+  });
 
   // Chip quantity badge toggle
-  const qtyBadgeSettingEl = document.getElementById('settingsChipQtyBadge');
-  if (qtyBadgeSettingEl) {
-    qtyBadgeSettingEl.addEventListener('click', (e) => {
-      const btn = e.target.closest('.chip-sort-btn');
-      if (!btn) return;
-      const isEnabled = btn.dataset.val === 'yes';
-      if (window.featureFlags) {
-        if (isEnabled) featureFlags.enable('CHIP_QTY_BADGE');
-        else featureFlags.disable('CHIP_QTY_BADGE');
-      }
-      // Update active state
-      qtyBadgeSettingEl.querySelectorAll('.chip-sort-btn').forEach(b => {
-        b.classList.toggle('active', b.dataset.val === btn.dataset.val);
-      });
-      if (typeof renderActiveFilters === 'function') renderActiveFilters();
-    });
-  }
+  wireFeatureFlagToggle('settingsChipQtyBadge', 'CHIP_QTY_BADGE', {
+    onApply: () => { if (typeof renderActiveFilters === 'function') renderActiveFilters(); },
+  });
 
   // Fuzzy autocomplete toggle
-  const autocompleteSettingEl = document.getElementById('settingsFuzzyAutocomplete');
-  if (autocompleteSettingEl) {
-    autocompleteSettingEl.addEventListener('click', (e) => {
-      const btn = e.target.closest('.chip-sort-btn');
-      if (!btn) return;
-      const isEnabled = btn.dataset.val === 'yes';
-      if (window.featureFlags) {
-        if (isEnabled) featureFlags.enable('FUZZY_AUTOCOMPLETE');
-        else featureFlags.disable('FUZZY_AUTOCOMPLETE');
-      }
-      // Update active state
-      autocompleteSettingEl.querySelectorAll('.chip-sort-btn').forEach(b => {
-        b.classList.toggle('active', b.dataset.val === btn.dataset.val);
-      });
-      // Re-initialize or tear down autocomplete live
-      if (isEnabled && typeof initializeAutocomplete === 'function') {
-        initializeAutocomplete(inventory);
-      }
-    });
-  }
+  wireFeatureFlagToggle('settingsFuzzyAutocomplete', 'FUZZY_AUTOCOMPLETE', {
+    onApply: (isEnabled) => {
+      if (isEnabled && typeof initializeAutocomplete === 'function') initializeAutocomplete(inventory);
+    },
+  });
 
   // Numista name matching toggle
-  const numistaLookupSettingEl = document.getElementById('settingsNumistaLookup');
-  if (numistaLookupSettingEl) {
-    numistaLookupSettingEl.addEventListener('click', (e) => {
-      const btn = e.target.closest('.chip-sort-btn');
-      if (!btn) return;
-      const isEnabled = btn.dataset.val === 'yes';
-      if (window.featureFlags) {
-        if (isEnabled) featureFlags.enable('NUMISTA_SEARCH_LOOKUP');
-        else featureFlags.disable('NUMISTA_SEARCH_LOOKUP');
-      }
-      numistaLookupSettingEl.querySelectorAll('.chip-sort-btn').forEach(b => {
-        b.classList.toggle('active', b.dataset.val === btn.dataset.val);
-      });
-    });
-  }
+  wireFeatureFlagToggle('settingsNumistaLookup', 'NUMISTA_SEARCH_LOOKUP');
 
   // Numista view modal field toggles
   const numistaViewContainer = document.getElementById('numistaViewFieldToggles');
@@ -632,27 +619,7 @@ const setupSettingsEventListeners = () => {
   }
 
   // Chip sort order toggle in settings
-  const chipSortSettingEl = document.getElementById('settingsChipSortOrder');
-  if (chipSortSettingEl) {
-    chipSortSettingEl.addEventListener('click', (e) => {
-      const btn = e.target.closest('.chip-sort-btn');
-      if (!btn) return;
-      const val = btn.dataset.sort;
-      localStorage.setItem('chipSortOrder', val);
-      // Update active state
-      chipSortSettingEl.querySelectorAll('.chip-sort-btn').forEach(b => {
-        b.classList.toggle('active', b.dataset.sort === val);
-      });
-      // Sync inline toggle
-      const chipSortInline = document.getElementById('chipSortOrder');
-      if (chipSortInline) {
-        chipSortInline.querySelectorAll('.chip-sort-btn').forEach(b => {
-          b.classList.toggle('active', b.dataset.sort === val);
-        });
-      }
-      if (typeof renderActiveFilters === 'function') renderActiveFilters();
-    });
-  }
+  wireChipSortToggle('settingsChipSortOrder', 'chipSortOrder');
 
   // Chip grouping events (blacklist + custom rules)
   if (typeof window.setupChipGroupingEvents === 'function') {
@@ -891,14 +858,11 @@ const setupSettingsEventListeners = () => {
   const addPatternRuleBtn = document.getElementById('addPatternRuleBtn');
   if (addPatternRuleBtn) {
     addPatternRuleBtn.addEventListener('click', async () => {
-      const replacementInput = document.getElementById('patternRuleReplacement');
-      const numistaIdInput = document.getElementById('patternRuleNumistaId');
       const obverseInput = document.getElementById('patternRuleObverse');
       const reverseInput = document.getElementById('patternRuleReverse');
 
       const rawPattern = patternInput?.value?.trim();
-      const replacement = replacementInput?.value?.trim() || rawPattern || '';
-      const numistaId = numistaIdInput?.value?.trim() || null;
+      const replacement = rawPattern || '';
 
       if (!rawPattern) {
         alert('Pattern is required.');
@@ -954,7 +918,7 @@ const setupSettingsEventListeners = () => {
 
       // Generate rule ID and create the rule
       const ruleId = 'custom-img-' + Date.now();
-      const addResult = NumistaLookup.addRule(pattern, replacement, numistaId, ruleId);
+      const addResult = NumistaLookup.addRule(pattern, replacement, null, ruleId);
       if (!addResult.success) {
         alert(addResult.error || 'Failed to add rule.');
         return;
@@ -967,8 +931,6 @@ const setupSettingsEventListeners = () => {
 
       // Clear form
       if (patternInput) patternInput.value = '';
-      if (replacementInput) replacementInput.value = '';
-      if (numistaIdInput) numistaIdInput.value = '';
       if (obverseInput) obverseInput.value = '';
       if (reverseInput) reverseInput.value = '';
 
@@ -1258,87 +1220,16 @@ const setupProviderPriority = () => {
 
 /**
  * Renders the inline chip config table in Settings > Grouping.
- * Each row has a checkbox (enable/disable) and up/down arrows for reordering.
+ * Delegates to the generic _renderSectionConfigTable helper.
  */
-const renderInlineChipConfigTable = () => {
-  const container = document.getElementById('inlineChipConfigContainer');
-  if (!container || typeof getInlineChipConfig !== 'function') return;
-
-  const config = getInlineChipConfig();
-  container.textContent = '';
-
-  if (!config.length) {
-    const empty = document.createElement('div');
-    empty.className = 'chip-grouping-empty';
-    empty.textContent = 'No chip types available';
-    container.appendChild(empty);
-    return;
-  }
-
-  const table = document.createElement('table');
-  table.className = 'chip-grouping-table';
-  const tbody = document.createElement('tbody');
-
-  config.forEach((chip, idx) => {
-    const tr = document.createElement('tr');
-    tr.dataset.chipId = chip.id;
-
-    // Checkbox cell
-    const tdCheck = document.createElement('td');
-    tdCheck.style.cssText = 'width:2rem;text-align:center';
-    const cb = document.createElement('input');
-    cb.type = 'checkbox';
-    cb.checked = chip.enabled;
-    cb.className = 'inline-chip-toggle';
-    cb.title = 'Toggle ' + chip.label;
-    cb.addEventListener('change', () => {
-      const cfg = getInlineChipConfig();
-      const item = cfg.at(idx);
-      if (item) {
-        item.enabled = cb.checked;
-        saveInlineChipConfig(cfg);
-        if (typeof renderTable === 'function') renderTable();
-      }
-    });
-    tdCheck.appendChild(cb);
-
-    // Label cell
-    const tdLabel = document.createElement('td');
-    tdLabel.textContent = chip.label;
-
-    // Arrow buttons cell
-    const tdMove = document.createElement('td');
-    tdMove.style.cssText = 'width:3.5rem;text-align:right;white-space:nowrap';
-
-    const makeBtn = (dir, disabled) => {
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'inline-chip-move';
-      btn.textContent = dir === 'up' ? '\u2191' : '\u2193';
-      btn.title = 'Move ' + dir;
-      btn.disabled = disabled;
-      btn.addEventListener('click', () => {
-        const cfg = getInlineChipConfig();
-        const j = dir === 'up' ? idx - 1 : idx + 1;
-        if (j < 0 || j >= cfg.length) return;
-        const moved = cfg.splice(idx, 1).at(0);
-        cfg.splice(j, 0, moved);
-        saveInlineChipConfig(cfg);
-        renderInlineChipConfigTable();
-        if (typeof renderTable === 'function') renderTable();
-      });
-      return btn;
-    };
-    tdMove.appendChild(makeBtn('up', idx === 0));
-    tdMove.appendChild(makeBtn('down', idx === config.length - 1));
-
-    tr.append(tdCheck, tdLabel, tdMove);
-    tbody.appendChild(tr);
-  });
-
-  table.appendChild(tbody);
-  container.appendChild(table);
-};
+const renderInlineChipConfigTable = () => _renderSectionConfigTable({
+  containerId: 'inlineChipConfigContainer',
+  getConfig: getInlineChipConfig,
+  saveConfig: saveInlineChipConfig,
+  emptyText: 'No chip types available',
+  onApply: typeof renderTable === 'function' ? renderTable : null,
+  onRender: () => renderInlineChipConfigTable(),
+});
 
 /**
  * Renders the filter chip category config table in Settings > Chips.
@@ -1755,6 +1646,7 @@ const syncLayoutVisibilityUI = () => {
  * @param {string} opts.containerId - DOM id of the container element
  * @param {function} opts.getConfig - Returns the current config array
  * @param {function} opts.saveConfig - Persists the updated config array
+ * @param {string} [opts.emptyText] - Text shown when config is empty (default: 'No sections available')
  * @param {function} [opts.onApply] - Called after every change (e.g. applyLayoutOrder)
  * @param {function} [opts.onRender] - Called to re-render after reorder (defaults to self)
  */
@@ -1768,7 +1660,7 @@ const _renderSectionConfigTable = (opts) => {
   if (!config.length) {
     const empty = document.createElement('div');
     empty.className = 'chip-grouping-empty';
-    empty.textContent = 'No sections available';
+    empty.textContent = opts.emptyText || 'No sections available';
     container.appendChild(empty);
     return;
   }

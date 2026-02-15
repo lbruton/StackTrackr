@@ -537,7 +537,7 @@ const setupSearchAndChipListeners = () => {
     );
   }
 
-  // Grouped name chips toggle (inline)
+  // Grouped name chips toggle (inline) — uses global helper from settings.js
   const groupNameChipsEl = document.getElementById('groupNameChips');
   if (groupNameChipsEl && window.featureFlags) {
     // Set initial state from feature flag
@@ -545,32 +545,15 @@ const setupSearchAndChipListeners = () => {
     groupNameChipsEl.querySelectorAll('.chip-sort-btn').forEach(btn => {
       btn.classList.toggle('active', btn.dataset.val === initVal);
     });
-
-    groupNameChipsEl.addEventListener('click', (e) => {
-      const btn = e.target.closest('.chip-sort-btn');
-      if (!btn) return;
-      const isEnabled = btn.dataset.val === 'yes';
-      if (isEnabled) {
-        window.featureFlags.enable('GROUPED_NAME_CHIPS');
-      } else {
-        window.featureFlags.disable('GROUPED_NAME_CHIPS');
-      }
-      // Update active state
-      groupNameChipsEl.querySelectorAll('.chip-sort-btn').forEach(b => {
-        b.classList.toggle('active', b.dataset.val === btn.dataset.val);
-      });
-      // Sync settings modal toggle
-      const settingsGroup = document.getElementById('settingsGroupNameChips');
-      if (settingsGroup) {
-        settingsGroup.querySelectorAll('.chip-sort-btn').forEach(b => {
-          b.classList.toggle('active', b.dataset.val === btn.dataset.val);
-        });
-      }
-      if (typeof renderActiveFilters === 'function') renderActiveFilters();
+  }
+  if (typeof wireFeatureFlagToggle === 'function') {
+    wireFeatureFlagToggle('groupNameChips', 'GROUPED_NAME_CHIPS', {
+      syncId: 'settingsGroupNameChips',
+      onApply: () => { if (typeof renderActiveFilters === 'function') renderActiveFilters(); },
     });
   }
 
-  // Chip sort order inline toggle
+  // Chip sort order inline toggle — uses global helper from settings.js
   const chipSortEl = document.getElementById('chipSortOrder');
   if (chipSortEl) {
     // Restore saved value on setup (migrate 'default' → 'alpha')
@@ -579,25 +562,9 @@ const setupSearchAndChipListeners = () => {
     chipSortEl.querySelectorAll('.chip-sort-btn').forEach(btn => {
       btn.classList.toggle('active', btn.dataset.sort === activeSort);
     });
-
-    chipSortEl.addEventListener('click', (e) => {
-      const btn = e.target.closest('.chip-sort-btn');
-      if (!btn) return;
-      const val = btn.dataset.sort;
-      localStorage.setItem('chipSortOrder', val);
-      // Update active state
-      chipSortEl.querySelectorAll('.chip-sort-btn').forEach(b => {
-        b.classList.toggle('active', b.dataset.sort === val);
-      });
-      // Sync settings modal toggle
-      const settingsSort = document.getElementById('settingsChipSortOrder');
-      if (settingsSort) {
-        settingsSort.querySelectorAll('.chip-sort-btn').forEach(b => {
-          b.classList.toggle('active', b.dataset.sort === val);
-        });
-      }
-      if (typeof renderActiveFilters === 'function') renderActiveFilters();
-    });
+  }
+  if (typeof wireChipSortToggle === 'function') {
+    wireChipSortToggle('chipSortOrder', 'settingsChipSortOrder');
   }
 };
 
@@ -866,6 +833,20 @@ const validateItemFields = (f) => {
 };
 
 /**
+ * Builds the common field object shared by both add and edit paths.
+ * @param {Object} f - Parsed fields from parseItemFormFields()
+ * @returns {Object} Common item fields
+ */
+const buildItemFields = (f) => ({
+  metal: f.metal, composition: f.composition, name: f.name, qty: f.qty,
+  type: f.type, weight: f.weight, weightUnit: f.weightUnit, price: f.price,
+  marketValue: f.marketValue, date: f.date, purchaseLocation: f.purchaseLocation,
+  storageLocation: f.storageLocation, serialNumber: f.serialNumber, notes: f.notes,
+  year: f.year, grade: f.grade, gradingAuthority: f.gradingAuthority,
+  certNumber: f.certNumber, pcgsNumber: f.pcgsNumber, purity: f.purity,
+});
+
+/**
  * Commits a parsed item to inventory (add or edit mode).
  * @param {Object} f - Parsed fields from parseItemFormFields()
  * @param {boolean} isEditing - Whether in edit mode
@@ -878,26 +859,7 @@ const commitItemToInventory = (f, isEditing, editIdx) => {
 
     inventory[editIdx] = {
       ...oldItem,
-      metal: f.metal,
-      composition: f.composition,
-      name: f.name,
-      qty: f.qty,
-      type: f.type,
-      weight: f.weight,
-      weightUnit: f.weightUnit,
-      price: f.price,
-      marketValue: f.marketValue,
-      date: f.date,
-      purchaseLocation: f.purchaseLocation,
-      storageLocation: f.storageLocation,
-      serialNumber: f.serialNumber,
-      notes: f.notes,
-      year: f.year,
-      grade: f.grade,
-      gradingAuthority: f.gradingAuthority,
-      certNumber: f.certNumber,
-      pcgsNumber: f.pcgsNumber,
-      purity: f.purity,
+      ...buildItemFields(f),
       isCollectable: false,
       numistaId: f.catalog,
       currency: f.currency,
@@ -949,27 +911,8 @@ const commitItemToInventory = (f, isEditing, editIdx) => {
     const serial = getNextSerial();
 
     inventory.push({
-      metal: f.metal,
-      composition: f.composition,
-      name: f.name,
-      qty: f.qty,
-      type: f.type,
-      weight: f.weight,
-      weightUnit: f.weightUnit,
-      price: f.price,
-      marketValue: f.marketValue,
-      date: f.date,
-      purchaseLocation: f.purchaseLocation,
-      storageLocation: f.storageLocation,
-      serialNumber: f.serialNumber,
-      notes: f.notes,
-      year: f.year,
-      grade: f.grade,
-      gradingAuthority: f.gradingAuthority,
-      certNumber: f.certNumber,
-      pcgsNumber: f.pcgsNumber,
+      ...buildItemFields(f),
       pcgsVerified: false,
-      purity: f.purity,
       spotPriceAtPurchase,
       premiumPerOz: 0,
       totalPremium: 0,
@@ -1145,35 +1088,16 @@ const setupItemFormListeners = () => {
   }
 
   // ITEM MODAL CLOSE / CANCEL BUTTONS
-  if (elements.cancelItemBtn) {
-    safeAttachListener(
-      elements.cancelItemBtn,
-      "click",
-      function (e) {
-        if (e && typeof e.preventDefault === 'function') e.preventDefault();
-        if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
-        try { if (typeof closeModalById === 'function') closeModalById('itemModal'); } catch(closeErr) {}
-        editingIndex = null;
-        editingChangeLogIndex = null;
-      },
-      "Cancel item button",
-    );
-  }
+  const closeItemModal = (e) => {
+    if (e && typeof e.preventDefault === 'function') e.preventDefault();
+    if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
+    try { if (typeof closeModalById === 'function') closeModalById('itemModal'); } catch(closeErr) {}
+    editingIndex = null;
+    editingChangeLogIndex = null;
+  };
 
-  if (elements.itemCloseBtn) {
-    safeAttachListener(
-      elements.itemCloseBtn,
-      "click",
-      (e) => {
-        if (e && typeof e.preventDefault === 'function') e.preventDefault();
-        if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
-        try { if (typeof closeModalById === 'function') closeModalById('itemModal'); } catch(closeErr) {}
-        editingIndex = null;
-        editingChangeLogIndex = null;
-      },
-      "Item modal close button",
-    );
-  }
+  optionalListener(elements.cancelItemBtn, "click", closeItemModal, "Cancel item button");
+  optionalListener(elements.itemCloseBtn, "click", closeItemModal, "Item modal close button");
 
   // IMAGE UPLOAD BUTTONS — Obverse + Reverse (STACK-32/33)
   const imageUploadGroup = document.getElementById('imageUploadGroup');

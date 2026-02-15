@@ -2,7 +2,7 @@
 // Enables offline support and installable PWA experience
 // Cache version is tied to APP_VERSION — old caches are purged on activate
 
-const CACHE_NAME = 'staktrakr-v3.29.00';
+const CACHE_NAME = 'staktrakr-v3.29.01';
 
 // Core shell assets to pre-cache on install
 const CORE_ASSETS = [
