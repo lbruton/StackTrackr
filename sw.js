@@ -2,7 +2,17 @@
 // Enables offline support and installable PWA experience
 // Cache version is tied to APP_VERSION — old caches are purged on activate
 
-const CACHE_NAME = 'staktrakr-v3.29.01';
+const CACHE_NAME = 'staktrakr-v3.29.02';
+
+// Offline fallback for navigation requests when all cache/network strategies fail
+const OFFLINE_HTML = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>StakTrakr</title></head>' +
+  '<body style="font-family:system-ui;text-align:center;padding:4rem">' +
+  '<h2>Offline</h2><p>StakTrakr is not available right now.</p>' +
+  '<p><button onclick="location.reload()">Try Again</button></p></body></html>';
+
+function offlineResponse() {
+  return new Response(OFFLINE_HTML, { headers: { 'Content-Type': 'text/html' } });
+}
 
 // Core shell assets to pre-cache on install
 const CORE_ASSETS = [
@@ -79,6 +89,10 @@ self.addEventListener('install', (event) => {
     caches.open(CACHE_NAME)
       .then((cache) => cache.addAll(CORE_ASSETS))
       .then(() => self.skipWaiting())
+      .catch((err) => {
+        console.error('[SW] Install failed:', err);
+        throw err;
+      })
   );
 });
 
@@ -114,7 +128,11 @@ self.addEventListener('fetch', (event) => {
   // Navigation requests (PWA launch, page reload) — always serve cached index.html shell
   if (event.request.mode === 'navigate' && url.origin === self.location.origin) {
     event.respondWith(
-      caches.match('./index.html').then((cached) => cached || fetchAndCache(event.request))
+      caches.match('./index.html')
+        .then((cached) => cached || fetchAndCache(event.request))
+        .catch(() => caches.match('./'))
+        .then((response) => response || offlineResponse())
+        .catch(() => offlineResponse())
     );
     return;
   }
@@ -131,27 +149,38 @@ function fetchAndCache(request) {
   return fetch(request).then((response) => {
     if (response.ok) {
       const clone = response.clone();
-      caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+      caches.open(CACHE_NAME).then((cache) => cache.put(request, clone))
+        .catch((err) => console.warn('[SW] Cache put failed:', request.url, err));
     }
     return response;
-  });
+  }).catch(() => caches.match(request));
+}
+
+// Guarantee a Response for respondWith() — catch undefined and rejections
+function ensureResponse(promise) {
+  return promise
+    .then((response) => response || Response.error())
+    .catch(() => Response.error());
 }
 
 // Strategy: cache-first with network fallback
 function cacheFirst(request) {
-  return caches.match(request).then((cached) => {
-    return cached || fetchAndCache(request);
-  });
+  return ensureResponse(
+    caches.match(request).then((cached) => cached || fetchAndCache(request))
+  );
 }
 
 // Strategy: network-first with cache fallback
 function networkFirst(request) {
-  return fetchAndCache(request).catch(() => caches.match(request));
+  return ensureResponse(fetchAndCache(request));
 }
 
 // Strategy: stale-while-revalidate (serve cached, update in background)
 function staleWhileRevalidate(request) {
-  return caches.match(request).then((cached) => {
-    return cached || fetchAndCache(request);
-  });
+  return ensureResponse(
+    caches.match(request).then((cached) => {
+      const fetchPromise = fetchAndCache(request);
+      return cached || fetchPromise;
+    })
+  );
 }
