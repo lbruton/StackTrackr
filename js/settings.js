@@ -384,7 +384,9 @@ const setupSettingsEventListeners = () => {
   if (tzSelect) {
     tzSelect.addEventListener('change', () => {
       localStorage.setItem(TIMEZONE_KEY, tzSelect.value);
-      if (typeof renderTable === 'function') renderTable();
+      // Timestamps appear across many sections (spot cards, change log, API status, etc.)
+      // A full reload ensures all timestamp-driven UI picks up the new timezone
+      window.location.reload();
     });
   }
 

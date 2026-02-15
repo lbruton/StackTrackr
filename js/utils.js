@@ -375,7 +375,18 @@ const formatTimestamp = (date, options = {}) => {
     hour: '2-digit', minute: '2-digit',
     ...(resolvedTz ? { timeZone: resolvedTz } : {})
   };
-  return d.toLocaleString(undefined, { ...defaults, ...options });
+  try {
+    return d.toLocaleString(undefined, { ...defaults, ...options });
+  } catch (err) {
+    if (err instanceof RangeError) {
+      // Invalid IANA timezone in localStorage — fall back to auto and clear bad value
+      try { localStorage.removeItem(TIMEZONE_KEY); } catch (_) { /* ignore */ }
+      const safeDefaults = { ...defaults };
+      delete safeDefaults.timeZone;
+      return d.toLocaleString(undefined, { ...safeDefaults, ...options });
+    }
+    throw err;
+  }
 };
 
 /**
