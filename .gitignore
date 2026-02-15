@@ -41,6 +41,6 @@ logs/
 .env
 .env.local
 
-# DevOps tooling (private)
+# DevOps tooling — spot-poller is public, other scripts stay private
 devops/*
-!devops/.env.example
+!devops/spot-poller/
