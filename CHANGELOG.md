@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.28.00] - 2026-02-14
+
+### Added — Price History Chart Overhaul & View Modal Customization
+
+- **Added**: Price history chart derives melt value from spot price history — every item gets a chart from day one
+- **Added**: Chart range toggle pills (7d / 14d / 30d / 60d / 90d / 180d / All) with 30d default
+- **Added**: Retail value line anchored from purchase date/price to current market value with sparse midpoint snapshots
+- **Added**: Layered chart fills — purchase (red), melt (green), retail (blue) with transparency blending
+- **Changed**: View modal section order: Images → Price History → Valuation → Inventory → Grading → Numista → Notes
+- **Added**: Configurable view modal section order in Settings > Layout with checkbox + arrow reorder table
+
+---
+
 ## [3.27.06] - 2026-02-14
 
 ### Added — Timezone Selection & PWA Fixes

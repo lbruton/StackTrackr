@@ -1451,6 +1451,7 @@ window.applyHeaderToggleVisibility = applyHeaderToggleVisibility;
  */
 const syncLayoutVisibilityUI = () => {
   renderLayoutSectionConfigTable();
+  renderViewModalSectionConfigTable();
   applyLayoutOrder();
 };
 
@@ -1524,6 +1525,89 @@ const renderLayoutSectionConfigTable = () => {
         saveLayoutSectionConfig(cfg);
         renderLayoutSectionConfigTable();
         applyLayoutOrder();
+      });
+      return btn;
+    };
+    tdMove.appendChild(makeBtn('up', idx === 0));
+    tdMove.appendChild(makeBtn('down', idx === config.length - 1));
+
+    tr.append(tdCheck, tdLabel, tdMove);
+    tbody.appendChild(tr);
+  });
+
+  table.appendChild(tbody);
+  container.appendChild(table);
+};
+
+/**
+ * Renders the view modal section config table in Settings > Layout.
+ * Each row has a checkbox (enable/disable) and up/down arrows for reordering.
+ * Mirrors renderLayoutSectionConfigTable() for consistency.
+ */
+const renderViewModalSectionConfigTable = () => {
+  const container = document.getElementById('viewModalSectionConfigContainer');
+  if (!container || typeof getViewModalSectionConfig !== 'function') return;
+
+  const config = getViewModalSectionConfig();
+  container.textContent = '';
+
+  if (!config.length) {
+    const empty = document.createElement('div');
+    empty.className = 'chip-grouping-empty';
+    empty.textContent = 'No sections available';
+    container.appendChild(empty);
+    return;
+  }
+
+  const table = document.createElement('table');
+  table.className = 'chip-grouping-table';
+  const tbody = document.createElement('tbody');
+
+  config.forEach((section, idx) => {
+    const tr = document.createElement('tr');
+    tr.dataset.sectionId = section.id;
+
+    // Checkbox cell
+    const tdCheck = document.createElement('td');
+    tdCheck.style.cssText = 'width:2rem;text-align:center';
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.checked = section.enabled;
+    cb.className = 'inline-chip-toggle';
+    cb.title = 'Toggle ' + section.label;
+    cb.addEventListener('change', () => {
+      const cfg = getViewModalSectionConfig();
+      const item = cfg.at(idx);
+      if (item) {
+        item.enabled = cb.checked;
+        saveViewModalSectionConfig(cfg);
+      }
+    });
+    tdCheck.appendChild(cb);
+
+    // Label cell
+    const tdLabel = document.createElement('td');
+    tdLabel.textContent = section.label;
+
+    // Arrow buttons cell
+    const tdMove = document.createElement('td');
+    tdMove.style.cssText = 'width:3.5rem;text-align:right;white-space:nowrap';
+
+    const makeBtn = (dir, disabled) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'inline-chip-move';
+      btn.textContent = dir === 'up' ? '\u2191' : '\u2193';
+      btn.title = 'Move ' + dir;
+      btn.disabled = disabled;
+      btn.addEventListener('click', () => {
+        const cfg = getViewModalSectionConfig();
+        const j = dir === 'up' ? idx - 1 : idx + 1;
+        if (j < 0 || j >= cfg.length) return;
+        const moved = cfg.splice(idx, 1).at(0);
+        cfg.splice(j, 0, moved);
+        saveViewModalSectionConfig(cfg);
+        renderViewModalSectionConfigTable();
       });
       return btn;
     };
