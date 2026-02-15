@@ -154,17 +154,23 @@ function fetchAndCache(request) {
 function cacheFirst(request) {
   return caches.match(request)
     .then((cached) => cached || fetchAndCache(request))
-    .catch(() => caches.match(request));
+    .catch(() => caches.match(request))
+    .then((response) => response || Response.error())
+    .catch(() => Response.error());
 }
 
 // Strategy: network-first with cache fallback
 function networkFirst(request) {
-  return fetchAndCache(request).catch(() => caches.match(request)).catch(() => undefined);
+  return fetchAndCache(request)
+    .catch(() => caches.match(request))
+    .then((response) => response || Response.error())
+    .catch(() => Response.error());
 }
 
 // Strategy: stale-while-revalidate (serve cached, update in background)
 function staleWhileRevalidate(request) {
-  return caches.match(request).then((cached) => {
-    return cached || fetchAndCache(request);
-  });
+  return caches.match(request)
+    .then((cached) => cached || fetchAndCache(request))
+    .then((response) => response || Response.error())
+    .catch(() => Response.error());
 }
