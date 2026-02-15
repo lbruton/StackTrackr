@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.29.02] - 2026-02-15
+
+### Fixed — PWA Crash Fix: Service Worker Error Handling
+
+- **Fixed**: Navigation fetch handler crash in installed PWAs — added 3-tier fallback (cached index.html → cached root → inline offline page) so `respondWith()` never receives a rejected promise
+- **Fixed**: `fetchAndCache`, `cacheFirst`, and `networkFirst` strategy functions now catch network/cache failures instead of propagating rejections
+- **Fixed**: Install event failures are now logged with detailed error information to make SW install issues diagnosable
+
+---
+
 ## [3.29.01] - 2026-02-15
 
 ### Changed — Codacy Duplication Reduction
