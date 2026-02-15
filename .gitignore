@@ -3,10 +3,11 @@
 .AppleDouble
 .LSOverride
 
-# Claude Code local config
-.claude/
+# Claude Code — share skills and commands, keep local config private
+.claude/*
+!.claude/skills/
+!.claude/commands/
 .mcp.json
-CLAUDE.md
 TAXONOMY.md
 SPRINT.md
 AGENTS.md
