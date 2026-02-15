@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.29.01] - 2026-02-15
+
+### Changed — Codacy Duplication Reduction
+
+- **Changed**: Extracted `wireFeatureFlagToggle` and `wireChipSortToggle` helpers to deduplicate 6 identical chip toggle handlers across settings.js and events.js
+- **Changed**: Merged `renderInlineChipConfigTable` into generic `_renderSectionConfigTable` with `emptyText` option
+- **Changed**: Extracted `buildItemFields` helper to deduplicate item field listings in add/edit paths
+- **Changed**: Extracted `closeItemModal` to deduplicate cancel/close button handlers
+- **Removed**: Unused Numista Query and N# form fields from pattern image rule form
+
+---
+
 ## [3.29.00] - 2026-02-15
 
 ### Added — Edit Modal Pattern Rule Toggle
