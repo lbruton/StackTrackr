@@ -1883,10 +1883,10 @@
 
                   <!-- Numista Bulk Sync (STACK-87/88) -->
                   <div class="settings-group" id="numistaBulkSyncGroup" style="margin-top: 1rem; border-top: 1px solid var(--border); padding-top: 0.75rem; display: none;">
-                    <div class="settings-group-label">Bulk Sync</div>
+                    <div class="settings-group-label">Metadata Sync</div>
                     <p class="settings-subtext">
-                      Sync metadata and images for all inventory items with Numista catalog IDs.
-                      Uses your API key (counts toward monthly quota).
+                      Sync metadata for all inventory items with Numista catalog IDs.
+                      Images are loaded on-demand when viewing items. Uses your API key (counts toward monthly quota).
                     </p>
 
                     <!-- Stats bar -->
@@ -1909,7 +1909,7 @@
 
                     <!-- Action buttons -->
                     <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
-                      <button type="button" class="btn info" id="numistaSyncStartBtn">Sync All</button>
+                      <button type="button" class="btn info" id="numistaSyncStartBtn">Sync Metadata</button>
                       <button type="button" class="btn warning" id="numistaSyncCancelBtn" style="display:none;">Cancel</button>
                       <button type="button" class="btn danger" id="numistaSyncClearBtn" style="font-size:0.8rem;">Clear Cache</button>
                     </div>
