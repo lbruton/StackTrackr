@@ -178,6 +178,9 @@ function networkFirst(request) {
 // Strategy: stale-while-revalidate (serve cached, update in background)
 function staleWhileRevalidate(request) {
   return ensureResponse(
-    caches.match(request).then((cached) => cached || fetchAndCache(request))
+    caches.match(request).then((cached) => {
+      const fetchPromise = fetchAndCache(request);
+      return cached || fetchPromise;
+    })
   );
 }
