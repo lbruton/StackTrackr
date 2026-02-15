@@ -274,10 +274,10 @@ const setupAckModalEvents = () => {
  */
 const getEmbeddedWhatsNew = () => {
   return `
+    <li><strong>v3.29.02 &ndash; PWA Crash Fix: Service Worker Error Handling</strong>: Fixed installed PWA crash (ERR_FAILED) by adding error handling to all service worker fetch strategies. Navigation handler now falls back through cached index.html, cached root, and inline offline page. Install event failures are now logged for diagnostics</li>
     <li><strong>v3.29.01 &ndash; Codacy Duplication Reduction</strong>: Extracted shared toggle helpers, merged config table renderers, deduplicated item field builders and modal close handlers. Removed unused Numista Query and N# fields from pattern image rules</li>
     <li><strong>v3.29.00 &ndash; Edit Modal Pattern Rule Toggle</strong>: &ldquo;Apply to all matching items&rdquo; checkbox in edit modal image upload &mdash; creates a pattern rule from keywords instead of per-item images. Extracted shared section config helpers to reduce code clones</li>
     <li><strong>v3.28.00 &ndash; Price History Chart Overhaul &amp; View Modal Customization</strong>: Melt value chart derived from spot price history with range toggle pills (7d/14d/30d/60d/90d/180d/All). Retail value line anchored from purchase date to current market value. Layered chart fills for purchase, melt, and retail. Configurable view modal section order in Settings &gt; Layout</li>
-    <li><strong>v3.27.06 &ndash; Timezone Selection &amp; PWA Fixes</strong>: Display timezone selector in Settings &gt; System &mdash; all timestamps respect user-chosen zone while stored data stays UTC. Fixed bare UTC timestamp parsing for spot cards and history. PWA second-launch fix with absolute start_url and navigation-aware service worker. What&rsquo;s New splash stale cache fix (STACK-63, STACK-93)</li>
   `;
 };
 

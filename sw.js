@@ -2,7 +2,7 @@
 // Enables offline support and installable PWA experience
 // Cache version is tied to APP_VERSION — old caches are purged on activate
 
-const CACHE_NAME = 'staktrakr-v3.29.01';
+const CACHE_NAME = 'staktrakr-v3.29.02';
 
 // Core shell assets to pre-cache on install
 const CORE_ASSETS = [
@@ -79,6 +79,10 @@ self.addEventListener('install', (event) => {
     caches.open(CACHE_NAME)
       .then((cache) => cache.addAll(CORE_ASSETS))
       .then(() => self.skipWaiting())
+      .catch((err) => {
+        console.error('[SW] Install failed:', err);
+        throw err;
+      })
   );
 });
 
@@ -114,7 +118,16 @@ self.addEventListener('fetch', (event) => {
   // Navigation requests (PWA launch, page reload) — always serve cached index.html shell
   if (event.request.mode === 'navigate' && url.origin === self.location.origin) {
     event.respondWith(
-      caches.match('./index.html').then((cached) => cached || fetchAndCache(event.request))
+      caches.match('./index.html')
+        .then((cached) => cached || fetchAndCache(event.request))
+        .catch(() => caches.match('./'))
+        .catch(() => new Response(
+          '<!DOCTYPE html><html><head><meta charset="utf-8"><title>StakTrakr</title></head>' +
+          '<body style="font-family:system-ui;text-align:center;padding:4rem">' +
+          '<h2>Offline</h2><p>StakTrakr is not available right now.</p>' +
+          '<p><button onclick="location.reload()">Try Again</button></p></body></html>',
+          { headers: { 'Content-Type': 'text/html' } }
+        ))
     );
     return;
   }
@@ -134,19 +147,19 @@ function fetchAndCache(request) {
       caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
     }
     return response;
-  });
+  }).catch(() => caches.match(request));
 }
 
 // Strategy: cache-first with network fallback
 function cacheFirst(request) {
-  return caches.match(request).then((cached) => {
-    return cached || fetchAndCache(request);
-  });
+  return caches.match(request)
+    .then((cached) => cached || fetchAndCache(request))
+    .catch(() => caches.match(request));
 }
 
 // Strategy: network-first with cache fallback
 function networkFirst(request) {
-  return fetchAndCache(request).catch(() => caches.match(request));
+  return fetchAndCache(request).catch(() => caches.match(request)).catch(() => undefined);
 }
 
 // Strategy: stale-while-revalidate (serve cached, update in background)
