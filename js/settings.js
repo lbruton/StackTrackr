@@ -1451,18 +1451,26 @@ window.applyHeaderToggleVisibility = applyHeaderToggleVisibility;
  */
 const syncLayoutVisibilityUI = () => {
   renderLayoutSectionConfigTable();
+  renderViewModalSectionConfigTable();
   applyLayoutOrder();
 };
 
 /**
- * Renders the layout section config table in Settings > Layout.
- * Each row has a checkbox (enable/disable) and up/down arrows for reordering.
+ * Generic section-config table renderer.
+ * Builds a checkbox + arrow reorder table for any {id, label, enabled}[] config.
+ *
+ * @param {Object} opts
+ * @param {string} opts.containerId - DOM id of the container element
+ * @param {function} opts.getConfig - Returns the current config array
+ * @param {function} opts.saveConfig - Persists the updated config array
+ * @param {function} [opts.onApply] - Called after every change (e.g. applyLayoutOrder)
+ * @param {function} [opts.onRender] - Called to re-render after reorder (defaults to self)
  */
-const renderLayoutSectionConfigTable = () => {
-  const container = document.getElementById('layoutSectionConfigContainer');
-  if (!container || typeof getLayoutSectionConfig !== 'function') return;
+const _renderSectionConfigTable = (opts) => {
+  const container = document.getElementById(opts.containerId);
+  if (!container || typeof opts.getConfig !== 'function') return;
 
-  const config = getLayoutSectionConfig();
+  const config = opts.getConfig();
   container.textContent = '';
 
   if (!config.length) {
@@ -1490,12 +1498,12 @@ const renderLayoutSectionConfigTable = () => {
     cb.className = 'inline-chip-toggle';
     cb.title = 'Toggle ' + section.label;
     cb.addEventListener('change', () => {
-      const cfg = getLayoutSectionConfig();
+      const cfg = opts.getConfig();
       const item = cfg.at(idx);
       if (item) {
         item.enabled = cb.checked;
-        saveLayoutSectionConfig(cfg);
-        applyLayoutOrder();
+        opts.saveConfig(cfg);
+        if (opts.onApply) opts.onApply();
       }
     });
     tdCheck.appendChild(cb);
@@ -1516,14 +1524,14 @@ const renderLayoutSectionConfigTable = () => {
       btn.title = 'Move ' + dir;
       btn.disabled = disabled;
       btn.addEventListener('click', () => {
-        const cfg = getLayoutSectionConfig();
+        const cfg = opts.getConfig();
         const j = dir === 'up' ? idx - 1 : idx + 1;
         if (j < 0 || j >= cfg.length) return;
         const moved = cfg.splice(idx, 1).at(0);
         cfg.splice(j, 0, moved);
-        saveLayoutSectionConfig(cfg);
-        renderLayoutSectionConfigTable();
-        applyLayoutOrder();
+        opts.saveConfig(cfg);
+        (opts.onRender || (() => _renderSectionConfigTable(opts)))();
+        if (opts.onApply) opts.onApply();
       });
       return btn;
     };
@@ -1537,6 +1545,23 @@ const renderLayoutSectionConfigTable = () => {
   table.appendChild(tbody);
   container.appendChild(table);
 };
+
+/** Renders the main page layout section config table in Settings > Layout. */
+const renderLayoutSectionConfigTable = () => _renderSectionConfigTable({
+  containerId: 'layoutSectionConfigContainer',
+  getConfig: getLayoutSectionConfig,
+  saveConfig: saveLayoutSectionConfig,
+  onApply: typeof applyLayoutOrder === 'function' ? applyLayoutOrder : null,
+  onRender: () => renderLayoutSectionConfigTable(),
+});
+
+/** Renders the view modal section config table in Settings > Layout. */
+const renderViewModalSectionConfigTable = () => _renderSectionConfigTable({
+  containerId: 'viewModalSectionConfigContainer',
+  getConfig: getViewModalSectionConfig,
+  saveConfig: saveViewModalSectionConfig,
+  onRender: () => renderViewModalSectionConfigTable(),
+});
 
 /**
  * Shows/hides and reorders major page sections based on layout section config.
