@@ -1043,7 +1043,9 @@
                 <input id="purchaseLocation" type="text" />
               </div>
               <div id="marketValueField">
-                <label for="itemMarketValue">Retail Price <span style="font-weight:normal;opacity:0.6;">(optional)</span></label>
+                <label for="itemMarketValue">Retail Price <span style="font-weight:normal;opacity:0.6;">(optional)</span>
+                  <span id="retailPriceHistoryLink" class="field-history-link" title="View price history">&#x1f4c8;</span>
+                </label>
                 <div class="currency-input">
                   <input id="itemMarketValue" min="0" step="0.01" type="number" placeholder="Defaults to melt value" />
                 </div>
@@ -2686,6 +2688,7 @@
                         <th>Retail</th>
                         <th>Spot</th>
                         <th>Melt</th>
+                        <th>Actions</th>
                       </tr>
                     </thead>
                     <tbody></tbody>
@@ -2922,6 +2925,62 @@
         </div>
         <div class="modal-footer api-history-footer">
           <button type="button" class="btn" id="exportGoldbackHistoryBtn">Export History</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- =============================================================================
+       ITEM PRICE HISTORY MODAL
+
+       Per-item price history viewer with inline delete capability.
+       Opens from the Retail Price field icon in the edit modal (STAK-109).
+       Stacks above the edit modal (z-index: 10000).
+       ============================================================================= -->
+    <div class="modal" id="itemPriceHistoryModal" style="display: none">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 id="itemPriceHistoryTitle">Item Price History</h2>
+          <button
+            aria-label="Close modal"
+            class="modal-close"
+            id="itemPriceHistoryCloseBtn"
+          >
+            &times;
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="api-history-body">
+            <div class="api-history-table">
+              <div class="api-history-filter">
+                <input
+                  type="text"
+                  id="itemPriceHistoryFilter"
+                  placeholder="Filter history..."
+                />
+                <button
+                  type="button"
+                  class="btn secondary"
+                  id="itemPriceHistoryClearFilterBtn"
+                >
+                  Clear
+                </button>
+              </div>
+              <div class="api-history-table-wrapper">
+                <table id="itemPriceHistoryTable">
+                  <thead>
+                    <tr>
+                      <th>Timestamp</th>
+                      <th>Retail</th>
+                      <th>Spot</th>
+                      <th>Melt</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

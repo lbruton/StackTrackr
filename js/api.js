@@ -1533,6 +1533,8 @@ const handleProviderSync = async (provider) => {
     if (updatedCount > 0) {
       saveApiCache(data, provider);
       updateSummary();
+      // Update Goldback denomination prices BEFORE snapshotting item prices (STAK-108)
+      if (typeof onGoldSpotPriceChanged === 'function') onGoldSpotPriceChanged();
       if (typeof recordAllItemPriceSnapshots === 'function') recordAllItemPriceSnapshots();
       if (typeof updateAllSparklines === "function") {
         updateAllSparklines();
@@ -1654,10 +1656,12 @@ const syncProviderChain = async ({ showProgress = false, forceSync = false } = {
         fetchExchangeRates().catch(() => {});
       }
       updateSummary();
+      // Update Goldback denomination prices BEFORE snapshotting item prices,
+      // so the retail hierarchy reflects the new gold spot (STAK-108)
+      if (typeof onGoldSpotPriceChanged === 'function') onGoldSpotPriceChanged();
       if (typeof recordAllItemPriceSnapshots === 'function') recordAllItemPriceSnapshots();
       if (typeof updateStorageStats === "function") updateStorageStats();
       if (typeof updateAllSparklines === "function") updateAllSparklines();
-      if (typeof onGoldSpotPriceChanged === 'function') onGoldSpotPriceChanged();
     }
   } finally {
     if (showProgress) {
