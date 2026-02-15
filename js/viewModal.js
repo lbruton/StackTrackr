@@ -905,6 +905,7 @@ function _fetchYearFile(year) {
       _viewYearFetchPromises.delete(year);
     });
 
+  // Store promise in Map immediately to ensure proper cleanup
   _viewYearFetchPromises.set(year, promise);
   return promise;
 }
