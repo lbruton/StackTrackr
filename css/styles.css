@@ -3156,11 +3156,19 @@ td input:checked + .slider:before {
 #viewItemModal .modal-header {
   background: linear-gradient(135deg, var(--primary), var(--primary-hover));
   color: #f8fafc;
-  padding: var(--spacing-lg) var(--spacing-xl);
-  padding-right: 2.5rem; /* room for close button */
+  padding: var(--spacing-sm) var(--spacing-xl);
   position: relative;
   border-radius: var(--radius-lg) var(--radius-lg) 0 0;
   box-shadow: var(--shadow);
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--spacing-sm);
+}
+
+.view-header-left {
+  flex: 1;
+  min-width: 0;
 }
 
 #viewItemModal .modal-header h2 {
@@ -3173,15 +3181,78 @@ td input:checked + .slider:before {
   white-space: nowrap;
 }
 
+.view-header-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+/* --- Header action buttons (eBay, Edit, Close) --- */
+.view-header-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+  align-items: center;
+}
+
+.view-header-actions button {
+  padding: 5px 12px;
+  border-radius: var(--radius);
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.1);
+  color: inherit;
+  white-space: nowrap;
+}
+
+.view-header-actions button:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.view-header-actions .view-edit-btn {
+  background: rgba(255, 255, 255, 0.9);
+  color: #1e293b;
+  border-color: transparent;
+  font-weight: 600;
+}
+
+.view-header-actions .view-edit-btn:hover {
+  background: #fff;
+}
+
+.view-header-actions .view-ebay-btn {
+  background: transparent;
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.view-header-actions .view-ebay-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
 #viewItemModal .view-modal-catalog-id {
   display: inline-block;
   font-size: 0.7rem;
   font-weight: 500;
   opacity: 0.85;
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(128, 128, 128, 0.2);
+  color: inherit;
   padding: 2px 8px;
   border-radius: 4px;
-  margin-top: 4px;
+}
+
+#viewItemModal .view-modal-count-chip {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 500;
+  opacity: 0.85;
+  background: rgba(128, 128, 128, 0.2);
+  color: inherit;
+  padding: 2px 8px;
+  border-radius: 4px;
 }
 
 /* --- Scrollable body --- */
@@ -3292,6 +3363,8 @@ td input:checked + .slider:before {
   color: var(--primary);
   margin: 0 0 var(--spacing-sm) 0;
   padding-bottom: 2px;
+  padding-left: 8px;
+  border-left: 2px solid var(--primary);
 }
 
 .view-detail-grid {
@@ -3302,6 +3375,10 @@ td input:checked + .slider:before {
 
 .view-detail-grid.three-col {
   grid-template-columns: 1fr 1fr 1fr;
+}
+
+.view-detail-grid.four-col {
+  grid-template-columns: 1fr 1fr 1fr 1fr;
 }
 
 .view-detail-item {
@@ -3341,6 +3418,58 @@ td input:checked + .slider:before {
 
 .view-detail-value.muted {
   color: var(--text-secondary);
+  font-style: italic;
+}
+
+/* --- Valuation section emphasis --- */
+.view-detail-section.view-valuation-section {
+  background: var(--bg-secondary);
+}
+
+/* --- Chart range pills --- */
+.view-chart-range-bar {
+  display: flex;
+  gap: 4px;
+  margin-bottom: var(--spacing-sm);
+}
+
+.view-chart-range-pill {
+  padding: 2px 8px;
+  font-size: 0.6rem;
+  font-weight: 500;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.view-chart-range-pill:hover {
+  background: var(--bg-tertiary);
+}
+
+.view-chart-range-pill.active {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+}
+
+/* --- Price history chart --- */
+.view-chart-container {
+  position: relative;
+  width: 100%;
+  height: 200px;
+  margin-top: var(--spacing-sm);
+}
+
+.view-chart-no-data {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 120px;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
   font-style: italic;
 }
 
@@ -3432,64 +3561,7 @@ td input:checked + .slider:before {
   word-break: break-word;
 }
 
-/* --- Footer actions --- */
-.view-modal-footer {
-  padding: var(--spacing) var(--spacing-xl);
-  border-top: 1px solid var(--border);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: var(--spacing-sm);
-}
-
-.view-footer-left {
-  display: flex;
-  gap: var(--spacing-sm);
-}
-
-.view-footer-right {
-  display: flex;
-  gap: var(--spacing-sm);
-}
-
-.view-modal-footer button {
-  padding: 6px 16px;
-  border-radius: var(--radius);
-  font-size: 0.82rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: var(--transition);
-  border: 1px solid var(--border);
-  background: var(--bg-secondary);
-  color: var(--text-primary);
-}
-
-.view-modal-footer button:hover {
-  background: var(--bg-tertiary);
-}
-
-.view-modal-footer .view-edit-btn {
-  background: var(--primary);
-  color: #fff;
-  border-color: var(--primary);
-}
-
-.view-modal-footer .view-edit-btn:hover {
-  background: var(--primary-hover);
-  border-color: var(--primary-hover);
-}
-
-.view-ebay-btn {
-  background: transparent;
-  border: 1px solid var(--border);
-  color: var(--text-secondary);
-  font-size: 0.78rem;
-}
-
-.view-ebay-btn:hover {
-  color: var(--text-primary);
-  border-color: var(--text-secondary);
-}
+/* (Footer removed — action buttons now live in .view-header-actions) */
 
 /* Clickable N# badge */
 .view-modal-catalog-id[style*="cursor: pointer"]:hover {
@@ -3511,11 +3583,21 @@ td input:checked + .slider:before {
   #viewItemModal .modal-header {
     border-radius: 0;
     padding: var(--spacing-sm) var(--spacing);
+    flex-wrap: wrap;
   }
 
   #viewItemModal .modal-header h2 {
     font-size: 0.95rem;
     line-height: 1.3;
+  }
+
+  .view-header-actions {
+    gap: 4px;
+  }
+
+  .view-header-actions button {
+    padding: 4px 8px;
+    font-size: 0.7rem;
   }
 
   /* Images: side-by-side but smaller — keep both visible */
@@ -3547,10 +3629,15 @@ td input:checked + .slider:before {
     height: 140px;
   }
 
-  /* 2-column data grid (down from 3) */
+  /* 2-column data grid (down from 3/4) */
   .view-detail-grid,
-  .view-detail-grid.three-col {
+  .view-detail-grid.three-col,
+  .view-detail-grid.four-col {
     grid-template-columns: 1fr 1fr;
+  }
+
+  .view-chart-container {
+    height: 160px;
   }
 
   .view-detail-section {
@@ -3561,52 +3648,13 @@ td input:checked + .slider:before {
     padding: var(--spacing-sm) var(--spacing);
   }
 
-  /* Footer: sticky bottom bar with 44px touch targets + safe-area */
-  .view-modal-footer {
-    position: sticky;
-    bottom: 0;
-    background: var(--bg-primary);
-    border-top: 1px solid var(--border);
-    padding: var(--spacing-sm) var(--spacing);
-    padding-bottom: calc(var(--spacing-sm) + env(safe-area-inset-bottom, 0px));
-    z-index: 2;
-    flex-wrap: wrap;
-    gap: var(--spacing-sm);
-  }
-
-  .view-modal-footer button {
-    min-height: 44px;
-    font-size: 0.85rem;
-    padding: 8px 16px;
-  }
-
-  .view-footer-left {
-    order: 2;
-    width: 100%;
-  }
-
-  .view-ebay-btn {
-    width: 100%;
-    min-height: 38px;
-  }
-
-  .view-footer-right {
-    order: 1;
-    width: 100%;
-    display: flex;
-    gap: var(--spacing-sm);
-  }
-
-  .view-footer-right button {
-    flex: 1;
-  }
-
 }
 
 /* --- Extra-small phones (≤480px) — single-column data, stacked images --- */
 @media (max-width: 480px) {
   .view-detail-grid,
-  .view-detail-grid.three-col {
+  .view-detail-grid.three-col,
+  .view-detail-grid.four-col {
     grid-template-columns: 1fr;
   }
 

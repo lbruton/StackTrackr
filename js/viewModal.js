@@ -8,8 +8,20 @@
  */
 let _viewModalObjectUrls = [];
 
+/** @type {Chart|null} Price history chart instance — destroyed on modal close */
+let _viewModalChartInstance = null;
+
 /** @type {number} Metadata cache TTL: 30 days in ms */
 const VIEW_METADATA_TTL = 30 * 24 * 60 * 60 * 1000;
+
+/** @type {number[]} Available chart range options (0 = all) */
+const _VIEW_CHART_RANGES = [7, 14, 30, 60, 90, 180, 0];
+
+/** @type {string[]} Display labels for chart range pills */
+const _VIEW_CHART_RANGE_LABELS = ['7d', '14d', '30d', '60d', '90d', '180d', 'All'];
+
+/** @type {number} Default chart range in days */
+const _VIEW_CHART_DEFAULT_RANGE = 30;
 
 // ---------------------------------------------------------------------------
 // Public API
@@ -32,6 +44,13 @@ async function showViewModal(index) {
   // Build modal content
   body.textContent = '';
   body.appendChild(buildViewContent(item, index));
+
+  // Render price history chart (canvas must be in DOM first)
+  const chartCanvas = body.querySelector('#viewPriceHistoryChart');
+  if (chartCanvas && chartCanvas._chartData) {
+    const cd = chartCanvas._chartData;
+    _createPriceHistoryChart(chartCanvas, cd.spotEntries, cd.retailEntries, cd.purchasePerUnit, cd.meltFactor, _VIEW_CHART_DEFAULT_RANGE, cd.purchaseDate, cd.currentRetail);
+  }
 
   modal.style.display = 'flex';
 
@@ -74,6 +93,12 @@ function closeViewModal() {
   const modal = document.getElementById('viewItemModal');
   if (modal) modal.style.display = 'none';
 
+  // Destroy price history chart to free canvas resources
+  if (_viewModalChartInstance) {
+    _viewModalChartInstance.destroy();
+    _viewModalChartInstance = null;
+  }
+
   // Revoke all object URLs to free memory
   _viewModalObjectUrls.forEach(url => {
     try { URL.revokeObjectURL(url); } catch { /* ignore */ }
@@ -87,6 +112,7 @@ function closeViewModal() {
 
 /**
  * Build the full view modal body as a DocumentFragment.
+ * Sections are built eagerly then appended in user-configured order.
  * @param {Object} item - Inventory item
  * @param {number} index - Item index for edit button
  * @returns {DocumentFragment}
@@ -128,8 +154,31 @@ function buildViewContent(item, index) {
     }
   }
 
-  // --- Image section (placeholders, populated async) ---
-  // Detect non-round items: bars, notes, Aurum/Goldback, sets → use rectangular frame
+  // --- Metal-themed header gradient ---
+  const metalColor = typeof getMetalColor === 'function' ? getMetalColor(metalKey) : null;
+  const modalHeader = document.getElementById('viewItemModal')?.querySelector('.modal-header');
+  if (modalHeader && metalColor) {
+    modalHeader.style.background = `linear-gradient(135deg, ${metalColor}, ${_darkenColor(metalColor, 0.3)})`;
+    const textColor = _isLightColor(metalColor) ? '#1e293b' : '#f8fafc';
+    modalHeader.style.color = textColor;
+    if (header) header.style.color = textColor;
+  }
+
+  // --- Total count chip ---
+  const countChip = document.getElementById('viewModalCountChip');
+  if (countChip) {
+    const totalQty = inventory.reduce((sum, i) =>
+      i.name === item.name && i.metal === item.metal
+        ? sum + (Number(i.qty) || 1) : sum, 0);
+    countChip.textContent = totalQty > 1 ? `\u00d7${totalQty} in inventory` : '';
+    countChip.style.display = totalQty > 1 ? '' : 'none';
+  }
+
+  // =========================================================================
+  // Build all sections eagerly, then append in config order
+  // =========================================================================
+
+  // --- Images section ---
   const itemType = (item.type || '').toLowerCase();
   const isRectShape = itemType === 'bar' || itemType === 'note' || itemType === 'aurum'
     || itemType === 'set' || isGb;
@@ -141,9 +190,12 @@ function buildViewContent(item, index) {
   const revSlot = _imageSlot('reverse', 'Reverse');
   imgSection.appendChild(obvSlot);
   imgSection.appendChild(revSlot);
-  frag.appendChild(imgSection);
 
-  // --- Inventory data ---
+  if (metalColor) {
+    imgSection.style.background = `linear-gradient(145deg, color-mix(in srgb, ${metalColor} 15%, #1a1a2e), color-mix(in srgb, ${metalColor} 8%, #16213e))`;
+  }
+
+  // --- Inventory section ---
   const invSection = _section('Inventory');
   const invGrid = _el('div', 'view-detail-grid three-col');
   _addDetail(invGrid, 'Metal', item.composition || item.metal || '—');
@@ -155,7 +207,6 @@ function buildViewContent(item, index) {
   invSection.appendChild(invGrid);
 
   const invGrid2 = _el('div', 'view-detail-grid three-col');
-  _addDetail(invGrid2, 'Purchase', typeof formatCurrency === 'function' ? formatCurrency(parseFloat(item.price) || 0) : `$${item.price}`);
   _addDetail(invGrid2, 'Date', item.date ? (typeof formatDisplayDate === 'function' ? formatDisplayDate(item.date) : item.date) : '—');
 
   // Source — render as iframe link if it looks like a URL
@@ -173,7 +224,6 @@ function buildViewContent(item, index) {
       srcLink.title = srcHref;
       srcLink.style.color = 'var(--primary)';
       srcLink.style.textDecoration = 'none';
-      // Display: strip protocol and www, truncate domain suffix for readability
       srcLink.textContent = srcVal.replace(/^(https?:\/\/)?(www\.)?/i, '').replace(/\/(.*)/i, '');
       srcLink.addEventListener('click', (e) => {
         e.preventDefault();
@@ -192,9 +242,8 @@ function buildViewContent(item, index) {
     _addDetail(storGrid, 'Storage', item.storageLocation);
     invSection.appendChild(storGrid);
   }
-  frag.appendChild(invSection);
 
-  // --- Valuation ---
+  // --- Valuation section ---
   const meltValue = currentSpot > 0 ? weightOz * qty * currentSpot * purity : 0;
   const purchaseTotal = qty * (parseFloat(item.price) || 0);
   const marketVal = parseFloat(item.marketValue) || 0;
@@ -202,7 +251,9 @@ function buildViewContent(item, index) {
   const gainLoss = retailTotal > 0 ? retailTotal - purchaseTotal : null;
 
   const valSection = _section('Valuation');
-  const valGrid = _el('div', 'view-detail-grid three-col');
+  valSection.classList.add('view-valuation-section');
+  const valGrid = _el('div', 'view-detail-grid four-col');
+  _addDetail(valGrid, 'Purchase', formatCurrency(purchaseTotal));
   _addDetail(valGrid, 'Melt Value', currentSpot > 0 ? formatCurrency(meltValue) : '—');
   _addDetail(valGrid, 'Retail', retailTotal > 0 ? formatCurrency(retailTotal) : '—');
 
@@ -215,17 +266,75 @@ function buildViewContent(item, index) {
     _addDetail(valGrid, 'Gain/Loss', '—', 'muted');
   }
   valSection.appendChild(valGrid);
-  frag.appendChild(valSection);
 
-  // --- Grading (conditional) ---
+  // --- Price History section (spot-derived melt + sparse retail overlay) ---
+  // Primary: derive melt value from spotHistory (dense daily data per metal)
+  // Secondary: retail values from itemPriceHistory (sparse, plotted where they exist)
+  const metalName = item.metal || 'Silver';
+  const meltFactor = weightOz * qty * purity; // meltValue = spot * meltFactor
+  const spotEntries = (typeof spotHistory !== 'undefined')
+    ? spotHistory
+        .filter(e => e.metal === metalName)
+        .map(e => ({ ts: new Date(e.timestamp).getTime(), spot: e.spot }))
+        .sort((a, b) => a.ts - b.ts)
+    : [];
+  // Dedup to one entry per day (last value wins, like sparkline)
+  const spotByDay = new Map();
+  for (const e of spotEntries) {
+    const day = new Date(e.ts).toISOString().slice(0, 10);
+    spotByDay.set(day, e);
+  }
+  const dailySpotEntries = [...spotByDay.values()];
+
+  const retailEntries = (typeof itemPriceHistory !== 'undefined' && item.uuid)
+    ? (itemPriceHistory[item.uuid] || []).filter(e => e.retail > 0)
+    : [];
+  const purchasePerUnit = parseFloat(item.price) || 0;
+  const purchaseDate = item.date ? new Date(item.date).getTime() : 0;
+  const currentRetail = parseFloat(item.marketValue) || 0;
+
+  let chartSection = null;
+  if (dailySpotEntries.length >= 2) {
+    chartSection = _section('Price History');
+
+    // Range pill bar
+    const rangeBar = _el('div', 'view-chart-range-bar');
+    _VIEW_CHART_RANGES.forEach((days, i) => {
+      const pill = _el('button', 'view-chart-range-pill');
+      pill.type = 'button';
+      pill.textContent = _VIEW_CHART_RANGE_LABELS[i];
+      pill.dataset.days = String(days);
+      if (days === _VIEW_CHART_DEFAULT_RANGE) pill.classList.add('active');
+      pill.addEventListener('click', () => {
+        rangeBar.querySelectorAll('.view-chart-range-pill').forEach(p => p.classList.remove('active'));
+        pill.classList.add('active');
+        const canvas = chartSection.querySelector('#viewPriceHistoryChart');
+        if (canvas) {
+          _createPriceHistoryChart(canvas, dailySpotEntries, retailEntries, purchasePerUnit, meltFactor, days, purchaseDate, currentRetail);
+        }
+      });
+      rangeBar.appendChild(pill);
+    });
+    chartSection.appendChild(rangeBar);
+
+    const chartContainer = _el('div', 'view-chart-container');
+    const canvas = document.createElement('canvas');
+    canvas.id = 'viewPriceHistoryChart';
+    // Stash data for showViewModal to use after DOM insertion
+    canvas._chartData = { spotEntries: dailySpotEntries, retailEntries, purchasePerUnit, meltFactor, purchaseDate, currentRetail };
+    chartContainer.appendChild(canvas);
+    chartSection.appendChild(chartContainer);
+  }
+
+  // --- Grading section (conditional) ---
+  let gradeSection = null;
   if (item.grade || item.gradingAuthority || item.certNumber) {
-    const gradeSection = _section('Grading');
+    gradeSection = _section('Grading');
     const gradeGrid = _el('div', 'view-detail-grid three-col');
     _addDetail(gradeGrid, 'Grade', item.grade || '—');
     _addDetail(gradeGrid, 'Authority', item.gradingAuthority || '—');
     if (item.certNumber) {
       const certItem = _detailItem('Cert #', item.certNumber);
-      // Add verification link if authority has a lookup URL
       if (item.gradingAuthority && typeof CERT_LOOKUP_URLS !== 'undefined' && CERT_LOOKUP_URLS[item.gradingAuthority]) {
         const url = CERT_LOOKUP_URLS[item.gradingAuthority]
           .replace(/{certNumber}/g, encodeURIComponent(item.certNumber))
@@ -248,62 +357,82 @@ function buildViewContent(item, index) {
       _addDetail(gradeGrid, 'Cert #', '—');
     }
     gradeSection.appendChild(gradeGrid);
-    frag.appendChild(gradeSection);
   }
 
   // --- Numista enrichment placeholder (populated async) ---
   const numistaPlaceholder = _el('div', '');
   numistaPlaceholder.id = 'viewNumistaSection';
-  frag.appendChild(numistaPlaceholder);
 
-  // --- Notes ---
+  // --- Notes section (conditional) ---
+  let notesSection = null;
   if (item.notes) {
-    const notesSection = _section('Notes');
+    notesSection = _section('Notes');
     const noteText = _el('div', 'view-notes-text');
     noteText.textContent = item.notes;
     notesSection.appendChild(noteText);
-    frag.appendChild(notesSection);
   }
 
-  // --- Footer ---
-  const footer = _el('div', 'view-modal-footer');
+  // =========================================================================
+  // Append sections in user-configured order
+  // =========================================================================
 
-  // Left side — eBay search
-  const footerLeft = _el('div', 'view-footer-left');
-  const ebayBtn = document.createElement('button');
-  ebayBtn.className = 'view-ebay-btn';
-  ebayBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" style="fill:currentColor;margin-right:4px;vertical-align:-2px;"><circle cx="10.5" cy="10.5" r="6" fill="none" stroke="currentColor" stroke-width="2.5"/><line x1="15" y1="15" x2="21" y2="21" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>Search eBay';
-  ebayBtn.title = 'Search eBay for this item';
-  ebayBtn.addEventListener('click', () => {
-    const searchTerm = (item.metal || '') + (item.year ? ' ' + item.year : '') + ' ' + (item.name || '');
-    if (typeof openEbayBuySearch === 'function') {
-      openEbayBuySearch(searchTerm);
-    } else if (typeof openEbaySoldSearch === 'function') {
-      openEbaySoldSearch(searchTerm);
+  const sectionBuilders = {
+    images:       () => imgSection,
+    priceHistory: () => chartSection,
+    valuation:    () => valSection,
+    inventory:    () => invSection,
+    grading:      () => gradeSection,
+    numista:      () => numistaPlaceholder,
+    notes:        () => notesSection,
+  };
+
+  const sectionConfig = typeof getViewModalSectionConfig === 'function'
+    ? getViewModalSectionConfig() : VIEW_MODAL_SECTION_DEFAULTS;
+
+  for (const sec of sectionConfig) {
+    if (!sec.enabled) continue;
+    const builder = sectionBuilders[sec.id];
+    if (builder) {
+      const el = builder();
+      if (el) frag.appendChild(el);
     }
-  });
-  footerLeft.appendChild(ebayBtn);
-  footer.appendChild(footerLeft);
+  }
 
-  // Right side — Edit + Close
-  const footerRight = _el('div', 'view-footer-right');
+  // --- Header action buttons (eBay, Edit, Close) ---
+  const headerActions = document.getElementById('viewHeaderActions');
+  if (headerActions) {
+    headerActions.textContent = '';
 
-  const editBtn = document.createElement('button');
-  editBtn.className = 'view-edit-btn';
-  editBtn.textContent = 'Edit Item';
-  editBtn.addEventListener('click', () => {
-    closeViewModal();
-    if (typeof editItem === 'function') editItem(index);
-  });
+    const ebayBtn = document.createElement('button');
+    ebayBtn.className = 'view-ebay-btn';
+    ebayBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" style="fill:currentColor;margin-right:4px;vertical-align:-2px;"><circle cx="10.5" cy="10.5" r="6" fill="none" stroke="currentColor" stroke-width="2.5"/><line x1="15" y1="15" x2="21" y2="21" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>eBay';
+    ebayBtn.title = 'Search eBay for this item';
+    ebayBtn.addEventListener('click', () => {
+      const searchTerm = (item.metal || '') + (item.year ? ' ' + item.year : '') + ' ' + (item.name || '');
+      if (typeof openEbayBuySearch === 'function') {
+        openEbayBuySearch(searchTerm);
+      } else if (typeof openEbaySoldSearch === 'function') {
+        openEbaySoldSearch(searchTerm);
+      }
+    });
 
-  const closeBtn = document.createElement('button');
-  closeBtn.textContent = 'Close';
-  closeBtn.addEventListener('click', closeViewModal);
+    const editBtn = document.createElement('button');
+    editBtn.className = 'view-edit-btn';
+    editBtn.textContent = 'Edit';
+    editBtn.addEventListener('click', () => {
+      closeViewModal();
+      if (typeof editItem === 'function') editItem(index);
+    });
 
-  footerRight.appendChild(editBtn);
-  footerRight.appendChild(closeBtn);
-  footer.appendChild(footerRight);
-  frag.appendChild(footer);
+    const closeBtn = document.createElement('button');
+    closeBtn.className = 'view-close-btn';
+    closeBtn.textContent = 'Close';
+    closeBtn.addEventListener('click', closeViewModal);
+
+    headerActions.appendChild(ebayBtn);
+    headerActions.appendChild(editBtn);
+    headerActions.appendChild(closeBtn);
+  }
 
   return frag;
 }
@@ -588,6 +717,256 @@ function _openExternalPopup(url, name) {
   } else {
     popup.focus();
   }
+}
+
+// ---------------------------------------------------------------------------
+// Color helpers (private)
+// ---------------------------------------------------------------------------
+
+/**
+ * Parse a color string (hex #rrggbb or rgb(r,g,b)) into [r, g, b].
+ * @param {string} color
+ * @returns {number[]} [r, g, b] in 0-255
+ */
+function _parseColor(color) {
+  if (!color) return [99, 102, 241]; // fallback indigo
+  const s = color.trim();
+  // Handle #rrggbb / #rgb
+  if (s.startsWith('#')) {
+    let hex = s.slice(1);
+    if (hex.length === 3) hex = hex[0]+hex[0]+hex[1]+hex[1]+hex[2]+hex[2];
+    return [parseInt(hex.slice(0,2),16), parseInt(hex.slice(2,4),16), parseInt(hex.slice(4,6),16)];
+  }
+  // Handle rgb(r, g, b)
+  const m = s.match(/rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/);
+  if (m) return [parseInt(m[1]), parseInt(m[2]), parseInt(m[3])];
+  return [99, 102, 241];
+}
+
+/**
+ * Darken a hex/rgb color by a factor (0–1). 0 = no change, 1 = black.
+ * @param {string} color - Hex or rgb() string
+ * @param {number} amount - Darkening factor
+ * @returns {string} Hex color
+ */
+function _darkenColor(color, amount) {
+  const [r, g, b] = _parseColor(color);
+  const f = 1 - Math.min(Math.max(amount, 0), 1);
+  const toHex = v => Math.round(v * f).toString(16).padStart(2, '0');
+  return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+}
+
+/**
+ * Check if a color is light based on relative luminance.
+ * @param {string} color - Hex or rgb() string
+ * @returns {boolean} True if light (needs dark text)
+ */
+function _isLightColor(color) {
+  const [r, g, b] = _parseColor(color);
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  return luminance > 0.5;
+}
+
+// ---------------------------------------------------------------------------
+// Price history chart (private)
+// ---------------------------------------------------------------------------
+
+/**
+ * Create a Chart.js line chart showing price history for the viewed item.
+ * Primary: melt value derived from spotHistory (dense daily data).
+ * Secondary: retail value anchored from purchase date/price to current market value,
+ *   with sparse itemPriceHistory snapshots in between.
+ * Purchase price shown as a flat dashed reference line.
+ *
+ * @param {HTMLCanvasElement} canvas
+ * @param {Array<{ts:number, spot:number}>} allSpotEntries - Daily spot prices for this metal
+ * @param {Array<{ts:number, retail:number}>} allRetailEntries - Sparse retail value snapshots
+ * @param {number} purchasePerUnit - Original purchase price per unit
+ * @param {number} meltFactor - weightOz * qty * purity (melt = spot * meltFactor)
+ * @param {number} [days=0] - Number of days to show (0 = all)
+ * @param {number} [purchaseDate=0] - Purchase date timestamp (anchor start for retail line)
+ * @param {number} [currentRetail=0] - Current market/retail value (anchor end for retail line)
+ */
+function _createPriceHistoryChart(canvas, allSpotEntries, allRetailEntries, purchasePerUnit, meltFactor, days, purchaseDate, currentRetail) {
+  if (typeof Chart === 'undefined') return;
+
+  // Destroy any previous instance
+  if (_viewModalChartInstance) {
+    _viewModalChartInstance.destroy();
+    _viewModalChartInstance = null;
+  }
+
+  // Filter spot entries by time range
+  const cutoff = days > 0 ? Date.now() - (days * 86400000) : 0;
+  const spotEntries = cutoff > 0 ? allSpotEntries.filter(e => e.ts >= cutoff) : allSpotEntries;
+
+  // Show fallback message if insufficient data for selected range
+  const container = canvas.parentElement;
+  const existingMsg = container.querySelector('.view-chart-no-data');
+  if (existingMsg) existingMsg.remove();
+  canvas.style.display = '';
+
+  if (spotEntries.length < 2) {
+    canvas.style.display = 'none';
+    const msg = _el('div', 'view-chart-no-data');
+    msg.textContent = 'Not enough data for this range';
+    container.appendChild(msg);
+    return;
+  }
+
+  // Build labels + melt data from spot entries
+  const labels = spotEntries.map(e => {
+    const d = new Date(e.ts);
+    return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  });
+  const meltData = spotEntries.map(e => parseFloat((e.spot * meltFactor).toFixed(2)));
+  const purchaseLine = spotEntries.map(() => purchasePerUnit);
+
+  // Build retail data: anchored from purchase date to present, with sparse midpoints.
+  // Uses index-based snapping to find the nearest spot entry for each retail point,
+  // since anchor dates may not have an exact-match spot entry on that calendar day.
+  const retailData = new Array(spotEntries.length).fill(null);
+
+  // Helper: find the index of the spot entry nearest to a given timestamp
+  const _nearestSpotIdx = (ts) => {
+    let best = 0;
+    let bestDist = Math.abs(spotEntries[0].ts - ts);
+    for (let i = 1; i < spotEntries.length; i++) {
+      const dist = Math.abs(spotEntries[i].ts - ts);
+      if (dist < bestDist) { best = i; bestDist = dist; }
+    }
+    return best;
+  };
+
+  // Anchor start: purchase price on the spot entry nearest to purchase date
+  // Only anchor if purchase date falls within the visible timeline range
+  if (purchaseDate > 0 && purchasePerUnit > 0 &&
+      purchaseDate >= spotEntries[0].ts &&
+      purchaseDate <= spotEntries[spotEntries.length - 1].ts) {
+    const idx = _nearestSpotIdx(purchaseDate);
+    retailData[idx] = purchasePerUnit;
+  }
+
+  // Middle: sparse itemPriceHistory retail values snapped to nearest spot day
+  for (const re of allRetailEntries) {
+    if (cutoff > 0 && re.ts < cutoff) continue;
+    const idx = _nearestSpotIdx(re.ts);
+    retailData[idx] = re.retail;
+  }
+
+  // Anchor end: current market value on the last spot entry (≈ today)
+  if (currentRetail > 0) {
+    retailData[spotEntries.length - 1] = currentRetail;
+  }
+
+  const hasRetail = retailData.some(v => v !== null);
+
+  const showPoints = spotEntries.length <= 30;
+
+  const textColor = typeof getChartTextColor === 'function' ? getChartTextColor() : '#1e293b';
+  const bgColor = typeof getChartBackgroundColor === 'function' ? getChartBackgroundColor() : '#f8fafc';
+
+  // Dataset order: purchase (bottom) → melt (middle) → retail (top)
+  // Layered fills create visual bands showing cost basis, intrinsic value, and market premium
+  const datasets = [
+    {
+      label: 'Purchase Price',
+      data: purchaseLine,
+      borderColor: '#ef4444',
+      backgroundColor: 'rgba(239, 68, 68, 0.06)',
+      fill: 'origin',
+      borderDash: [6, 3],
+      tension: 0,
+      pointRadius: 0,
+      pointHoverRadius: 0,
+      borderWidth: 1.5,
+      order: 3,
+    },
+    {
+      label: 'Melt Value',
+      data: meltData,
+      borderColor: '#10b981',
+      backgroundColor: 'rgba(16, 185, 129, 0.12)',
+      fill: 'origin',
+      tension: 0.3,
+      pointRadius: showPoints ? 3 : 0,
+      pointHoverRadius: 5,
+      borderWidth: 2,
+      order: 2,
+    },
+    {
+      label: 'Retail Value',
+      data: retailData,
+      borderColor: '#3b82f6',
+      backgroundColor: 'rgba(59, 130, 246, 0.08)',
+      fill: 'origin',
+      tension: 0.3,
+      spanGaps: true,
+      pointRadius: 4,
+      pointHoverRadius: 6,
+      borderWidth: 2,
+      hidden: !hasRetail,
+      order: 1,
+    },
+  ];
+
+  _viewModalChartInstance = new Chart(canvas, {
+    type: 'line',
+    data: { labels, datasets },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: { duration: 400 },
+      interaction: { mode: 'index', intersect: false },
+      scales: {
+        x: {
+          ticks: {
+            color: textColor,
+            maxTicksLimit: 6,
+            autoSkip: true,
+            font: { size: 10 }
+          },
+          grid: { display: false }
+        },
+        y: {
+          ticks: {
+            color: textColor,
+            font: { size: 10 },
+            callback: function(value) {
+              return typeof formatCurrency === 'function' ? formatCurrency(value) : '$' + value;
+            }
+          },
+          grid: { color: 'rgba(128,128,128,0.1)' }
+        }
+      },
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: {
+            color: textColor,
+            usePointStyle: true,
+            pointStyle: 'line',
+            padding: 12,
+            font: { size: 10 }
+          }
+        },
+        tooltip: {
+          backgroundColor: bgColor,
+          titleColor: textColor,
+          bodyColor: textColor,
+          borderColor: textColor,
+          borderWidth: 1,
+          callbacks: {
+            label: function(ctx) {
+              if (ctx.parsed.y === null) return null;
+              const val = typeof formatCurrency === 'function' ? formatCurrency(ctx.parsed.y) : '$' + ctx.parsed.y;
+              return `${ctx.dataset.label}: ${val}`;
+            }
+          }
+        }
+      }
+    }
+  });
 }
 
 // ---------------------------------------------------------------------------

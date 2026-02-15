@@ -254,7 +254,7 @@ const CERT_LOOKUP_URLS = {
  * Updated: 2026-02-12 - STACK-38/STACK-31: Responsive card view + mobile layout
  */
 
-const APP_VERSION = "3.27.06";
+const APP_VERSION = "3.28.00";
 
 /**
  * @constant {string} DEFAULT_CURRENCY - Default currency code for monetary formatting
@@ -597,6 +597,7 @@ const ALLOWED_STORAGE_KEYS = [
   "numistaLookupRules",              // custom Numista search lookup rules (JSON array)
   "numistaViewFields",               // view modal Numista field visibility config (JSON object)
   TIMEZONE_KEY,                        // string: "auto" | "UTC" | IANA zone (STACK-63)
+  "viewModalSectionConfig",            // JSON array: ordered view modal section config [{ id, label, enabled }]
 ];
 
 // =============================================================================
@@ -795,6 +796,62 @@ const saveLayoutSectionConfig = (config) => {
     localStorage.setItem('layoutSectionConfig', JSON.stringify(config));
   } catch (e) {
     console.warn('Failed to save layout section config:', e);
+  }
+};
+
+// =============================================================================
+// VIEW MODAL SECTION CONFIG — controls order/visibility of view modal sections
+// =============================================================================
+
+/**
+ * Default view modal section configuration. Order determines display order.
+ * @constant {Array<{id: string, label: string, enabled: boolean}>}
+ */
+const VIEW_MODAL_SECTION_DEFAULTS = [
+  { id: 'images',       label: 'Coin images',       enabled: true },
+  { id: 'priceHistory', label: 'Price history',      enabled: true },
+  { id: 'valuation',    label: 'Valuation',          enabled: true },
+  { id: 'inventory',    label: 'Inventory details',  enabled: true },
+  { id: 'grading',      label: 'Grading',            enabled: true },
+  { id: 'numista',      label: 'Numista data',       enabled: true },
+  { id: 'notes',        label: 'Notes',              enabled: true },
+];
+
+/**
+ * Loads the view modal section config from localStorage, merged with defaults.
+ * @returns {Array<{id: string, label: string, enabled: boolean}>}
+ */
+const getViewModalSectionConfig = () => {
+  try {
+    const raw = localStorage.getItem('viewModalSectionConfig');
+    if (raw) {
+      const saved = JSON.parse(raw);
+      const savedMap = new Map(saved.map(c => [c.id, c]));
+      // Start with saved order, preserving user's arrangement
+      const merged = saved.filter(c => VIEW_MODAL_SECTION_DEFAULTS.some(d => d.id === c.id));
+      // Append any new defaults not in saved config
+      for (const def of VIEW_MODAL_SECTION_DEFAULTS) {
+        if (!savedMap.has(def.id)) {
+          merged.push({ ...def });
+        }
+      }
+      return merged;
+    }
+  } catch (e) {
+    console.warn('Failed to load view modal section config:', e);
+  }
+  return VIEW_MODAL_SECTION_DEFAULTS.map(d => ({ ...d }));
+};
+
+/**
+ * Saves the view modal section config to localStorage.
+ * @param {Array<{id: string, label: string, enabled: boolean}>} config
+ */
+const saveViewModalSectionConfig = (config) => {
+  try {
+    localStorage.setItem('viewModalSectionConfig', JSON.stringify(config));
+  } catch (e) {
+    console.warn('Failed to save view modal section config:', e);
   }
 };
 
@@ -1358,6 +1415,10 @@ if (typeof window !== "undefined") {
   window.GOLDBACK_ESTIMATE_ENABLED_KEY = GOLDBACK_ESTIMATE_ENABLED_KEY;
   window.GB_ESTIMATE_PREMIUM = GB_ESTIMATE_PREMIUM;
   window.GB_ESTIMATE_MODIFIER_KEY = GB_ESTIMATE_MODIFIER_KEY;
+  // View modal section config
+  window.VIEW_MODAL_SECTION_DEFAULTS = VIEW_MODAL_SECTION_DEFAULTS;
+  window.getViewModalSectionConfig = getViewModalSectionConfig;
+  window.saveViewModalSectionConfig = saveViewModalSectionConfig;
   // Numista view field config
   window.NUMISTA_VIEW_FIELD_DEFAULTS = NUMISTA_VIEW_FIELD_DEFAULTS;
   window.getNumistaViewFieldConfig = getNumistaViewFieldConfig;
