@@ -337,6 +337,7 @@ function buildViewContent(item, index) {
       rangeBar.querySelectorAll('.view-chart-range-pill').forEach(p => p.classList.remove('active'));
       // Cross-constrain min/max
       if (fromInput.value) toInput.min = fromInput.value;
+      else toInput.min = '';
       if (toInput.value) fromInput.max = toInput.value;
       else fromInput.max = todayStr;
       // Parse timestamps (start of day for From, end of day for To)
