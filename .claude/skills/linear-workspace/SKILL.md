@@ -12,7 +12,7 @@ Reference guide for routing issues to the correct team, using the right labels, 
 
 | Team | ID | Prefix | Visibility | Purpose |
 |------|----|--------|------------|---------|
-| **StakTrakr** | `f876864d-ff80-4231-ae6c-a8e5cb69aca4` | STACK- | Public | All user-facing features, bugs, and improvements |
+| **StakTrakr** | `f876864d-ff80-4231-ae6c-a8e5cb69aca4` | STAK- | Public | All user-facing features, bugs, and improvements |
 | **Developers** | `38d57c9f-388c-41ec-9cd2-259a21a5df1c` | DEVS- | Private | Internal strategy, research, architecture notes, sensitive roadmap items |
 
 **Always use the team ID directly** — never call `list_teams` to look it up. This avoids the "too much data" error and saves an API round-trip.
@@ -107,14 +107,14 @@ Always include:
 Use the identifier directly:
 ```
 mcp__linear-server__get_issue
-  id: "STACK-73"
+  id: "STAK-73"
 ```
 
 ## Cross-References
 
 - **ROADMAP.md** is the public quick-reference index — update it when creating/completing significant issues
-- **Commit messages** reference STACK-XX identifiers
-- **CHANGELOG.md** entries reference STACK-XX in parentheses
+- **Commit messages** reference STAK-XX identifiers
+- **CHANGELOG.md** entries reference STAK-XX in parentheses
 - **GitHub issues** are auto-synced — only create GitHub issues manually for public-facing bugs (use `gh issue create` with the `bug` label)
 
 ## Assignee

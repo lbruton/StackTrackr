@@ -3779,6 +3779,8 @@ td input:checked + .slider:before {
 /* --- Chart range pills --- */
 .view-chart-range-bar {
   display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   gap: 4px;
   margin-bottom: var(--spacing-sm);
 }
@@ -3803,6 +3805,43 @@ td input:checked + .slider:before {
   background: var(--primary);
   color: #fff;
   border-color: var(--primary);
+}
+
+/* --- Custom date range picker --- */
+.view-chart-date-range {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+}
+
+.view-chart-date-input {
+  padding: 1px 4px;
+  font-size: 0.75rem;
+  font-family: inherit;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: var(--transition);
+  max-width: 110px;
+}
+
+.view-chart-date-input:hover {
+  border-color: var(--primary);
+}
+
+.view-chart-date-input:focus {
+  outline: none;
+  border-color: var(--primary);
+  color: var(--text-primary);
+}
+
+.view-chart-date-sep {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  line-height: 1;
 }
 
 /* --- Price history chart --- */
@@ -8947,4 +8986,44 @@ body.force-card-view .table-footer-controls select {
     grid-template-columns: 1fr 1fr;
     gap: 0.5rem;
   }
+}
+
+/* =============================================================================
+   ITEM PRICE HISTORY — Management UI (STAK-109)
+   ============================================================================= */
+
+/* Retail Price field history icon link */
+.field-history-link {
+  cursor: pointer;
+  opacity: 0.5;
+  font-size: 0.85em;
+  margin-left: 0.25rem;
+  transition: opacity 0.2s ease;
+  vertical-align: middle;
+}
+.field-history-link:hover {
+  opacity: 1;
+}
+
+/* Item Price History modal stacks above the edit modal */
+#itemPriceHistoryModal {
+  z-index: 10000;
+}
+
+/* Delete button in price history tables */
+.price-history-delete-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm, 4px);
+  color: var(--text-secondary, #888);
+  cursor: pointer;
+  font-size: 1.1rem;
+  line-height: 1;
+  padding: 0.15rem 0.45rem;
+  transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+}
+.price-history-delete-btn:hover {
+  color: var(--danger, #dc3545);
+  border-color: var(--danger, #dc3545);
+  background: rgba(220, 53, 69, 0.08);
 }

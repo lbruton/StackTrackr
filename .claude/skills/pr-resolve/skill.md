@@ -189,7 +189,7 @@ For each Copilot/human review thread, reply with the appropriate format:
 ```
 **Deferred to future patch**
 
-Valid concern. <Brief acknowledgment>. Tracked as [STACK-XX](link) for a future release.
+Valid concern. <Brief acknowledgment>. Tracked as [STAK-XX](link) for a future release.
 ```
 
 **False positive:**

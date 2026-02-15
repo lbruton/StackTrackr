@@ -1099,6 +1099,55 @@ const setupItemFormListeners = () => {
   optionalListener(elements.cancelItemBtn, "click", closeItemModal, "Cancel item button");
   optionalListener(elements.itemCloseBtn, "click", closeItemModal, "Item modal close button");
 
+  // RETAIL PRICE HISTORY LINK — opens per-item price history modal (STAK-109)
+  const retailHistoryLink = document.getElementById('retailPriceHistoryLink');
+  if (retailHistoryLink) {
+    retailHistoryLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (editingIndex === null) return;
+      const item = inventory[editingIndex];
+      if (!item || !item.uuid) return;
+      if (typeof openItemPriceHistoryModal === 'function') {
+        openItemPriceHistoryModal(item.uuid, item.name || 'Unnamed');
+      }
+    });
+  }
+
+  // ITEM PRICE HISTORY MODAL — close & filter handlers (STAK-109)
+  const itemPriceHistoryModal = document.getElementById('itemPriceHistoryModal');
+  const itemPriceHistoryCloseBtn = document.getElementById('itemPriceHistoryCloseBtn');
+  const itemPriceHistoryFilter = document.getElementById('itemPriceHistoryFilter');
+  const itemPriceHistoryClearFilterBtn = document.getElementById('itemPriceHistoryClearFilterBtn');
+
+  if (itemPriceHistoryCloseBtn) {
+    itemPriceHistoryCloseBtn.addEventListener('click', () => {
+      if (itemPriceHistoryModal) itemPriceHistoryModal.style.display = 'none';
+    });
+  }
+  if (itemPriceHistoryModal) {
+    itemPriceHistoryModal.addEventListener('click', (e) => {
+      if (e.target === itemPriceHistoryModal) {
+        itemPriceHistoryModal.style.display = 'none';
+      }
+    });
+  }
+  if (itemPriceHistoryFilter) {
+    itemPriceHistoryFilter.addEventListener('input', () => {
+      if (typeof window._setItemPriceModalFilter === 'function') {
+        window._setItemPriceModalFilter(itemPriceHistoryFilter.value);
+      }
+    });
+  }
+  if (itemPriceHistoryClearFilterBtn) {
+    itemPriceHistoryClearFilterBtn.addEventListener('click', () => {
+      if (itemPriceHistoryFilter) itemPriceHistoryFilter.value = '';
+      if (typeof window._setItemPriceModalFilter === 'function') {
+        window._setItemPriceModalFilter('');
+      }
+    });
+  }
+
   // IMAGE UPLOAD BUTTONS — Obverse + Reverse (STACK-32/33)
   const imageUploadGroup = document.getElementById('imageUploadGroup');
 
@@ -1856,6 +1905,9 @@ const setupSearch = () => {
           // Hide PCGS verified icon in add mode
           const certVerifiedIcon = document.getElementById('certVerifiedIcon');
           if (certVerifiedIcon) certVerifiedIcon.style.display = 'none';
+          // Hide price history link in add mode (STAK-109)
+          const addRetailHistoryLink = document.getElementById('retailPriceHistoryLink');
+          if (addRetailHistoryLink) addRetailHistoryLink.style.display = 'none';
           // Update currency symbols in modal (STACK-50)
           if (typeof updateModalCurrencyUI === 'function') updateModalCurrencyUI();
           // Clear image upload state for fresh add (STACK-32)

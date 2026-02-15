@@ -9,6 +9,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.29.03] - 2026-02-15
+
+### Fixed — STAK-108, STAK-109, STAK-103: Price History Fixes & Chart Improvements
+
+- **Fixed**: Goldback items recording $0.00 retail in price history — added 3-tier retail hierarchy lookup with `getGoldbackRetailPrice()` (STAK-108)
+- **Fixed**: API sync timing — Goldback denomination prices now update before price history snapshots are recorded (STAK-108)
+- **Added**: Per-item price history modal with inline delete and undo/redo from Edit Modal retail price field (STAK-109)
+- **Added**: Delete buttons on Settings > Price History table with change log integration (STAK-109)
+- **Fixed**: All-time chart showing only ~1 year on file:// protocol — 749KB seed bundle loaded via `<script>` tag bypasses Chrome fetch restrictions
+- **Added**: Adaptive x-axis year labels — decade+ ranges show compact 2-digit year, multi-year ranges show two-line date+year
+- **Added**: Custom date range picker on Item View chart with cross-constrained from/to inputs (STAK-103)
+- **Fixed**: WCAG accessibility — date input font-size increased from 0.6rem to 0.75rem
+- **Fixed**: Async chart error handling with graceful fallback on fetch failure
+
+---
+
 ## [3.29.02] - 2026-02-15
 
 ### Fixed — PWA Crash Fix: Service Worker Error Handling
@@ -57,10 +73,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added — Timezone Selection & PWA Fixes
 
-- **Added**: Display timezone selector in Settings > System — all timestamps respect user-chosen timezone while stored data stays UTC (STACK-63)
-- **Fixed**: Spot card and history timestamps displayed UTC values regardless of browser timezone — bare UTC strings now parsed correctly (STACK-63)
+- **Added**: Display timezone selector in Settings > System — all timestamps respect user-chosen timezone while stored data stays UTC (STAK-63)
+- **Fixed**: Spot card and history timestamps displayed UTC values regardless of browser timezone — bare UTC strings now parsed correctly (STAK-63)
 - **Fixed**: PWA installed app failed to load on second launch — absolute start_url and navigation-aware service worker
-- **Fixed**: What's New splash re-triggering from stale SW cache + missing ESC handler (STACK-93)
+- **Fixed**: What's New splash re-triggering from stale SW cache + missing ESC handler (STAK-93)
 
 ---
 
@@ -68,11 +84,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added — Numista Bulk Sync & IDB Cache Fix
 
-- **Added**: Numista Bulk Sync — metadata + image syncing from API card with inline stats, progress, and activity log (STACK-87, STACK-88)
+- **Added**: Numista Bulk Sync — metadata + image syncing from API card with inline stats, progress, and activity log (STAK-87, STAK-88)
 - **Changed**: Moved image cache controls from Settings > System into the Numista API card as "Bulk Sync"
-- **Fixed**: Opaque blob IDB corruption — images disappeared after bulk cache on HTTPS (STACK-87)
+- **Fixed**: Opaque blob IDB corruption — images disappeared after bulk cache on HTTPS (STAK-87)
 - **Fixed**: Empty blob safety guard in getImageUrl() prevents blocking CDN fallback
-- **Added**: Table row thumbnail images with hover preloading (STACK-84)
+- **Added**: Table row thumbnail images with hover preloading (STAK-84)
 
 ---
 
@@ -80,12 +96,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added — Spot Comparison Mode & Mobile API Settings
 
-- **Added**: User setting for 24h % comparison mode — Close/Close, Open/Open, Open/Close (STACK-92)
-- **Changed**: Replaced drag-to-sort provider tabs with explicit Sync Priority dropdowns that work on all devices (STACK-90)
-- **Changed**: Provider tabs now scroll horizontally on mobile instead of overflowing (STACK-90)
-- **Removed**: Sync Mode toggle (Always/Backup) — replaced by priority numbers (STACK-90)
+- **Added**: User setting for 24h % comparison mode — Close/Close, Open/Open, Open/Close (STAK-92)
+- **Changed**: Replaced drag-to-sort provider tabs with explicit Sync Priority dropdowns that work on all devices (STAK-90)
+- **Changed**: Provider tabs now scroll horizontally on mobile instead of overflowing (STAK-90)
+- **Removed**: Sync Mode toggle (Always/Backup) — replaced by priority numbers (STAK-90)
 - **Fixed**: Cache-bust favicon and add root-level copies for PWA
-- **Fixed**: Consistent 24h % across all spot card views (STACK-89)
+- **Fixed**: Consistent 24h % across all spot card views (STAK-89)
 - **Changed**: Extract fetchAndCache helper in service worker
 
 ---
@@ -94,13 +110,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added — PWA Support & Bug Fixes
 
-- **Added**: PWA support — manifest.json, service worker with offline caching, installable app experience (STACK-74)
+- **Added**: PWA support — manifest.json, service worker with offline caching, installable app experience (STAK-74)
 - **Added**: PWA icons (192×192, 512×512) and Apple mobile web app meta tags
-- **Fixed**: `parsePriceToUSD` now preserves existing price when edit field is left empty instead of zeroing it (STACK-81)
-- **Fixed**: Date change in add/edit form now clears stale spot-lookup override price (STACK-82)
-- **Fixed**: Activity Log sub-tabs (spot history, catalog history, price history) now re-render on every switch instead of showing stale data (STACK-83)
-- **Fixed**: Item detail modal layout on Samsung S24+ Ultra — raised breakpoint from 400px to 480px for single-column grid (STACK-85)
-- **Removed**: Redundant View (eye) icon from table action column — item name click already opens view modal (STACK-86)
+- **Fixed**: `parsePriceToUSD` now preserves existing price when edit field is left empty instead of zeroing it (STAK-81)
+- **Fixed**: Date change in add/edit form now clears stale spot-lookup override price (STAK-82)
+- **Fixed**: Activity Log sub-tabs (spot history, catalog history, price history) now re-render on every switch instead of showing stale data (STAK-83)
+- **Fixed**: Item detail modal layout on Samsung S24+ Ultra — raised breakpoint from 400px to 480px for single-column grid (STAK-85)
+- **Removed**: Redundant View (eye) icon from table action column — item name click already opens view modal (STAK-86)
 - **Added**: Spot history seed data for Jan 2 – Feb 14, 2026 (32 dates × 4 metals) from Docker poller infrastructure
 - **Changed**: Spot history and spot lookup display "Seed" label for seed-sourced entries
 
@@ -146,11 +162,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [3.26.03] - 2026-02-13
 
-### Fixed — STACK-79, STACK-80: XSS & HTML Injection Hardening
+### Fixed — STAK-79, STAK-80: XSS & HTML Injection Hardening
 
-- **Fixed**: DOM XSS in Price History table — item names now escaped via `escapeHtml()` before innerHTML interpolation (STACK-79)
-- **Fixed**: HTML injection in Spot History table — metal, source, and provider fields now escaped (STACK-80)
-- **Fixed**: HTML injection in Spot Lookup modal — source and data attributes now escaped (STACK-80)
+- **Fixed**: DOM XSS in Price History table — item names now escaped via `escapeHtml()` before innerHTML interpolation (STAK-79)
+- **Fixed**: HTML injection in Spot History table — metal, source, and provider fields now escaped (STAK-80)
+- **Fixed**: HTML injection in Spot Lookup modal — source and data attributes now escaped (STAK-80)
 - **Added**: Shared `escapeHtml()` utility in `utils.js` for consistent XSS prevention across modules
 
 ---
@@ -175,62 +191,62 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [3.26.00] - 2026-02-13
 
-### Added — STACK-62: Autocomplete & Fuzzy Search Pipeline
+### Added — STAK-62: Autocomplete & Fuzzy Search Pipeline
 
-- **Added**: Autocomplete dropdown on Name, Purchase Location, and Storage Location form inputs — suggestions from inventory + prebuilt coin database (STACK-62)
-- **Added**: Abbreviation expansion in search — "ASE", "AGE", "kook", "krug" etc. match full coin names (STACK-62)
-- **Added**: Fuzzy search fallback — approximate matches shown with indicator banner when exact search returns no results (STACK-62)
-- **Added**: `registerName()` dynamically adds new item names to autocomplete suggestions (STACK-62)
-- **Fixed**: Firefox autocomplete suppression using non-standard attribute value (STACK-62)
-- **Fixed**: Autocomplete cache invalidated on inventory save, clear, and boating accident (STACK-62)
-- **Changed**: `FUZZY_AUTOCOMPLETE` feature flag promoted to stable (STACK-62)
+- **Added**: Autocomplete dropdown on Name, Purchase Location, and Storage Location form inputs — suggestions from inventory + prebuilt coin database (STAK-62)
+- **Added**: Abbreviation expansion in search — "ASE", "AGE", "kook", "krug" etc. match full coin names (STAK-62)
+- **Added**: Fuzzy search fallback — approximate matches shown with indicator banner when exact search returns no results (STAK-62)
+- **Added**: `registerName()` dynamically adds new item names to autocomplete suggestions (STAK-62)
+- **Fixed**: Firefox autocomplete suppression using non-standard attribute value (STAK-62)
+- **Fixed**: Autocomplete cache invalidated on inventory save, clear, and boating accident (STAK-62)
+- **Changed**: `FUZZY_AUTOCOMPLETE` feature flag promoted to stable (STAK-62)
 
 ---
 
 ## [3.25.05] - 2026-02-13
 
-### Added — STACK-71: Details modal QoL — responsive charts, slice labels, scrollable breakdown
+### Added — STAK-71: Details modal QoL — responsive charts, slice labels, scrollable breakdown
 
-- **Added**: Pie chart percentage labels via chartjs-plugin-datalabels — slices ≥5% show percentage directly on the chart (STACK-71)
-- **Added**: Sticky metric toggle (Purchase/Melt/Retail/Gain-Loss) stays visible while scrolling the modal body (STACK-71)
-- **Fixed**: Details modal overflow cascade — breakdowns no longer clipped off-screen at any viewport size (STACK-71)
-- **Fixed**: Chart container uses `aspect-ratio: 1` for circular pie charts instead of rigid 300px height (STACK-71)
-- **Fixed**: ResizeObserver memory leak — observer now disconnected on modal close (STACK-71)
-- **Fixed**: Sepia theme chart colors — tooltips now use correct background/text colors for all 4 themes (STACK-71)
+- **Added**: Pie chart percentage labels via chartjs-plugin-datalabels — slices ≥5% show percentage directly on the chart (STAK-71)
+- **Added**: Sticky metric toggle (Purchase/Melt/Retail/Gain-Loss) stays visible while scrolling the modal body (STAK-71)
+- **Fixed**: Details modal overflow cascade — breakdowns no longer clipped off-screen at any viewport size (STAK-71)
+- **Fixed**: Chart container uses `aspect-ratio: 1` for circular pie charts instead of rigid 300px height (STAK-71)
+- **Fixed**: ResizeObserver memory leak — observer now disconnected on modal close (STAK-71)
+- **Fixed**: Sepia theme chart colors — tooltips now use correct background/text colors for all 4 themes (STAK-71)
 - **Fixed**: Allow clearing optional form fields on edit
-- **Removed**: Dead CSS chart-height rules at ≤768px/≤640px/≤480px (already hidden by STACK-70)
+- **Removed**: Dead CSS chart-height rules at ≤768px/≤640px/≤480px (already hidden by STAK-70)
 
 ---
 
 ## [3.25.04] - 2026-02-12
 
-### Added — STACK-70: Mobile-optimized modals
+### Added — STAK-70: Mobile-optimized modals
 
-- **Added**: Full-screen modals at ≤768px using `100dvh` with `100vh` fallback — all primary modals fill the viewport on mobile (STACK-70)
-- **Added**: Settings sidebar 5×2 tab grid replacing horizontal scroll — all 10 tabs visible simultaneously (STACK-70)
-- **Added**: Touch-sized inputs (44px min-height) and stacked action buttons in add/edit item modal (STACK-70)
-- **Added**: Landscape card view for touch devices 769–1024px via `pointer: coarse` detection and `body.force-card-view` class (STACK-70)
-- **Added**: 2-column card grid for portrait ≤768px in landscape orientation (STACK-70)
-- **Changed**: Pie charts and metric toggle hidden on mobile in details modal — Chart.js creation skipped entirely for performance (STACK-70)
-- **Changed**: Bulk edit modal stacks vertically with full-screen integration and touch-sized inputs (STACK-70)
-- **Changed**: `updateColumnVisibility()` extended to apply `.force-card-view` for landscape touch devices (STACK-70)
-- **Changed**: `updatePortalHeight()` clears max-height for `.force-card-view` card layout (STACK-70)
-- **Fixed**: Small utility modals (notes, API info, storage options, cloud sync) remain as centered popups, not full-screen (STACK-70)
+- **Added**: Full-screen modals at ≤768px using `100dvh` with `100vh` fallback — all primary modals fill the viewport on mobile (STAK-70)
+- **Added**: Settings sidebar 5×2 tab grid replacing horizontal scroll — all 10 tabs visible simultaneously (STAK-70)
+- **Added**: Touch-sized inputs (44px min-height) and stacked action buttons in add/edit item modal (STAK-70)
+- **Added**: Landscape card view for touch devices 769–1024px via `pointer: coarse` detection and `body.force-card-view` class (STAK-70)
+- **Added**: 2-column card grid for portrait ≤768px in landscape orientation (STAK-70)
+- **Changed**: Pie charts and metric toggle hidden on mobile in details modal — Chart.js creation skipped entirely for performance (STAK-70)
+- **Changed**: Bulk edit modal stacks vertically with full-screen integration and touch-sized inputs (STAK-70)
+- **Changed**: `updateColumnVisibility()` extended to apply `.force-card-view` for landscape touch devices (STAK-70)
+- **Changed**: `updatePortalHeight()` clears max-height for `.force-card-view` card layout (STAK-70)
+- **Fixed**: Small utility modals (notes, API info, storage options, cloud sync) remain as centered popups, not full-screen (STAK-70)
 
 ---
 
 ## [3.25.03] - 2026-02-12
 
-### Added — STACK-38/STACK-31: Responsive card view & mobile layout
+### Added — STAK-38/STAK-31: Responsive card view & mobile layout
 
-- **Added**: CSS card view at ≤768px — inventory table converts to flexbox cards with name title, horizontal chips, metal subtitle, 2-column financial grid, and centered touch-friendly action buttons (44px targets per Apple HIG) (STACK-31)
-- **Added**: `data-label` attributes on all `<td>` elements for card view `::before` labels (STACK-31)
-- **Added**: Card tap-to-edit — tapping card body opens edit modal; buttons/links work normally (STACK-31)
-- **Added**: Details modal fixes at ≤640px — single-column breakdown grid, 150px chart, stacked panels (STACK-38)
-- **Added**: Short-viewport portal scroll cap at ≤500px height for 300% zoom scenarios (STACK-38)
-- **Changed**: Consolidated 3 duplicate responsive table CSS sections into single canonical block (STACK-38)
-- **Changed**: `updateColumnVisibility()` skips at ≤768px — card CSS handles visibility (STACK-38)
-- **Changed**: `updatePortalHeight()` clears max-height at ≤768px — cards scroll naturally (STACK-38)
+- **Added**: CSS card view at ≤768px — inventory table converts to flexbox cards with name title, horizontal chips, metal subtitle, 2-column financial grid, and centered touch-friendly action buttons (44px targets per Apple HIG) (STAK-31)
+- **Added**: `data-label` attributes on all `<td>` elements for card view `::before` labels (STAK-31)
+- **Added**: Card tap-to-edit — tapping card body opens edit modal; buttons/links work normally (STAK-31)
+- **Added**: Details modal fixes at ≤640px — single-column breakdown grid, 150px chart, stacked panels (STAK-38)
+- **Added**: Short-viewport portal scroll cap at ≤500px height for 300% zoom scenarios (STAK-38)
+- **Changed**: Consolidated 3 duplicate responsive table CSS sections into single canonical block (STAK-38)
+- **Changed**: `updateColumnVisibility()` skips at ≤768px — card CSS handles visibility (STAK-38)
+- **Changed**: `updatePortalHeight()` clears max-height at ≤768px — cards scroll naturally (STAK-38)
 - **Fixed**: Footer badges wrap on mobile instead of overflowing card
 - **Fixed**: Filter chips stay horizontal and wrap instead of stacking vertically at narrow widths
 - **Fixed**: Header logo scales to fill mobile width with centered action buttons below
@@ -239,24 +255,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [3.25.02] - 2026-02-12
 
-### Fixed — STACK-68: Goldback spot lookup fix
+### Fixed — STAK-68: Goldback spot lookup fix
 
-- **Fixed**: Spot price lookup now applies Goldback formula (`2 × (goldSpot / 1000) × modifier × denomination`) instead of raw gold spot for purchase price (STACK-68)
+- **Fixed**: Spot price lookup now applies Goldback formula (`2 × (goldSpot / 1000) × modifier × denomination`) instead of raw gold spot for purchase price (STAK-68)
 
 ---
 
 ## [3.25.01] - 2026-02-12
 
-### Fixed — STACK-64: Version splash content source
+### Fixed — STAK-64: Version splash content source
 
-- **Fixed**: Version splash modal now shows user-friendly "What's New" announcements instead of raw changelog entries (STACK-64)
+- **Fixed**: Version splash modal now shows user-friendly "What's New" announcements instead of raw changelog entries (STAK-64)
 - **Removed**: ~270 lines of embedded changelog data from `versionCheck.js` — content now sourced from `loadAnnouncements()` shared with the About modal
 
-### Added — STACK-67: Remote version check badge
+### Added — STAK-67: Remote version check badge
 
-- **Added**: Footer version badge shows installed version with link to GitHub releases (STACK-67)
-- **Added**: Remote version check fetches `version.json` from staktrakr.com with 24hr cache (STACK-67)
-- **Added**: Badge upgrades to green "up to date" or amber "available" on hosted deployments (STACK-67)
+- **Added**: Footer version badge shows installed version with link to GitHub releases (STAK-67)
+- **Added**: Remote version check fetches `version.json` from staktrakr.com with 24hr cache (STAK-67)
+- **Added**: Badge upgrades to green "up to date" or amber "available" on hosted deployments (STAK-67)
 - **Added**: `version.json` at project root for self-hosted version checking
 - **Changed**: Footer `staktrakr.com` text is now a clickable link
 
@@ -264,14 +280,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [3.25.00] - 2026-02-12
 
-### Added — STACK-54, STACK-66: Appearance settings, spot lookup & sparkline improvements
+### Added — STAK-54, STAK-66: Appearance settings, spot lookup & sparkline improvements
 
-- **Added**: Header quick-access buttons — theme cycle and currency picker dropdown (STACK-54)
-- **Added**: Layout visibility toggles — show/hide spot cards, totals, search bar, inventory table (STACK-54)
-- **Added**: Settings nav item and panel for Layout controls (STACK-54)
-- **Added**: 1-day sparkline shows yesterday→today trend with daily-averaged data points (STACK-66)
+- **Added**: Header quick-access buttons — theme cycle and currency picker dropdown (STAK-54)
+- **Added**: Layout visibility toggles — show/hide spot cards, totals, search bar, inventory table (STAK-54)
+- **Added**: Settings nav item and panel for Layout controls (STAK-54)
+- **Added**: 1-day sparkline shows yesterday→today trend with daily-averaged data points (STAK-66)
 - **Added**: 15-minute and 30-minute API cache timeout options for more frequent spot refreshes
-- **Fixed**: Spot lookup "Use" button now updates visible Purchase Price field with currency conversion (STACK-65)
+- **Fixed**: Spot lookup "Use" button now updates visible Purchase Price field with currency conversion (STAK-65)
 - **Fixed**: Clearing Retail Price field during editing now correctly reverts to melt value
 - **Fixed**: Spot lookup price rounded to nearest cent
 - **Fixed**: Sparkline Y-axis scaling and curve overshoot on 1-day view
@@ -280,7 +296,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [3.24.06] - 2026-02-12
 
-### Changed — STACK-56: Cyclomatic complexity reduction (batch 1 & 2)
+### Changed — STAK-56: Cyclomatic complexity reduction (batch 1 & 2)
 
 - **Refactored**: `renderLogTab` — switch → dispatch map (CCN 9 → ~2)
 - **Refactored**: `coerceFieldValue` — if-chain → dispatch map (CCN 13 → ~2)
@@ -306,9 +322,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [3.24.04] - 2026-02-12
 
-### Fixed — STACK-55: Bulk Editor retains selected items after close/reopen
+### Fixed — STAK-55: Bulk Editor retains selected items after close/reopen
 
-- **Fixed**: Bulk Editor now starts with a clean selection every time it opens (STACK-55)
+- **Fixed**: Bulk Editor now starts with a clean selection every time it opens (STAK-55)
 - **Removed**: `bulkEditSelection` localStorage persistence — selection no longer carries across sessions
 
 ---
@@ -323,9 +339,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [3.24.02] - 2026-02-11
 
-### Added — STACK-44: Settings Log Tab Reorganization
+### Added — STAK-44: Settings Log Tab Reorganization
 
-- **Added**: Activity Log sub-tabs in Settings — Changelog, Metals, Catalogs, Price History (STACK-44)
+- **Added**: Activity Log sub-tabs in Settings — Changelog, Metals, Catalogs, Price History (STAK-44)
 - **Added**: Spot price history table with sortable columns (Timestamp, Metal, Spot Price, Source, Provider)
 - **Added**: Catalog API call history table with failed entries highlighted in red
 - **Added**: Per-item price history table with item name filter and sortable columns
@@ -347,9 +363,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [3.24.00] - 2026-02-11
 
-### Added — STACK-50: Multi-Currency Support
+### Added — STAK-50: Multi-Currency Support
 
-- **Added**: Multi-currency display with 17 supported currencies and exchange rate conversion (STACK-50)
+- **Added**: Multi-currency display with 17 supported currencies and exchange rate conversion (STAK-50)
 - **Added**: Daily exchange rate fetching from open.er-api.com with localStorage caching and hardcoded fallback rates
 - **Added**: Dynamic currency symbols in add/edit modal, Goldback denomination settings, and CSV export headers
 - **Added**: Dynamic Gain/Loss labels — green "Gain:" or red "Loss:" on totals cards
@@ -360,9 +376,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [3.23.02] - 2026-02-11
 
-### Added — STACK-52: Bulk Edit pinned selections
+### Added — STAK-52: Bulk Edit pinned selections
 
-- **Added**: Bulk Edit pinned selections — selected items stay visible at the top of the table when the search term changes (STACK-52)
+- **Added**: Bulk Edit pinned selections — selected items stay visible at the top of the table when the search term changes (STAK-52)
 - **Changed**: Extracted shared search filter helper and added master checkbox indeterminate state in Bulk Edit
 - **Removed**: Dormant rEngine/rSynk/AI prototype files and references
 
@@ -372,7 +388,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added — Goldback real-time estimation, Settings reorganization
 
-- **Added**: Goldback real-time price estimation from gold spot (STACK-52)
+- **Added**: Goldback real-time price estimation from gold spot (STAK-52)
 - **Added**: User-configurable estimation premium modifier
 - **Changed**: Settings sidebar — renamed Theme to Appearance, Tools to System
 - **Changed**: Default estimation formula to pure 2x spot (modifier = 1.0)
@@ -381,7 +397,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [3.23.00] - 2026-02-11
 
-### Added — STACK-45: Goldback denomination pricing & type support
+### Added — STAK-45: Goldback denomination pricing & type support
 
 - **Added**: New `gb` weight unit option — Goldbacks stored as denomination value (1 gb = 0.001 ozt 24K gold)
 - **Added**: New `js/goldback.js` module — save/load/record for manual denomination pricing
@@ -405,7 +421,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Fixed**: CSV, ZIP CSV, and PDF exports apply 3-tier retail hierarchy (manual > gb > melt)
 - **Fixed**: Bulk edit denomination picker now applies correct weight value (was reading stale hidden input)
 
-### Added — STACK-42: Persistent UUIDs for inventory items
+### Added — STAK-42: Persistent UUIDs for inventory items
 
 - **Added**: Stable UUID v4 field on every inventory item — survives delete, reorder, and sort
 - **Added**: `generateUUID()` helper with `crypto.randomUUID()` and RFC 4122 fallback for `file://`
@@ -415,7 +431,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Changed**: Bulk copy and add-item assign new UUIDs; edit preserves existing UUID
 - **Fixed**: `sanitizeImportedItem()` safety net ensures no item lacks a UUID
 
-### Added — STACK-43: Silent per-item price history recording
+### Added — STAK-43: Silent per-item price history recording
 
 - **Added**: New `js/priceHistory.js` module — silently records timestamped retail/spot/melt data points per item
 - **Added**: `item-price-history` localStorage key with UUID-keyed object structure
@@ -440,12 +456,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [3.22.00] - 2026-02-10
 
-### Added — STACK-22/24/25/27: Purity, PCGS quota, chart toggle, extraction
+### Added — STAK-22/24/25/27: Purity, PCGS quota, chart toggle, extraction
 
-- **Added**: Purity (fineness) field — adjusts melt value formula across all calculation sites (STACK-22)
-- **Added**: PCGS API daily quota usage bar in Settings (STACK-24)
-- **Added**: Pie chart metric toggle — switch between Purchase, Melt, Retail, and Gain/Loss views (STACK-27)
-- **Changed**: Extracted inline test loader to js/test-loader.js (STACK-25)
+- **Added**: Purity (fineness) field — adjusts melt value formula across all calculation sites (STAK-22)
+- **Added**: PCGS API daily quota usage bar in Settings (STAK-24)
+- **Added**: Pie chart metric toggle — switch between Purchase, Melt, Retail, and Gain/Loss views (STAK-27)
+- **Changed**: Extracted inline test loader to js/test-loader.js (STAK-25)
 - **Changed**: CSV, PDF, and ZIP exports now include Purity column
 - **Changed**: Seed data includes realistic purity values for sample items
 
@@ -453,9 +469,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [3.21.03] - 2026-02-10
 
-### Added — STACK-23: Search matches custom chip group labels
+### Added — STAK-23: Search matches custom chip group labels
 
-- **Fixed**: Search now matches items belonging to custom chip groups when searching by group label (STACK-23)
+- **Fixed**: Search now matches items belonging to custom chip groups when searching by group label (STAK-23)
 
 ---
 

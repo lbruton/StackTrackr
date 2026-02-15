@@ -72,9 +72,12 @@ const recordItemPrice = (item, trigger = 'spot-sync') => {
   const metalKey = (item.metal || 'Silver').toLowerCase();
   const spot = spotPrices[metalKey] || 0;
   const melt = parseFloat(computeMeltValue(item, spot).toFixed(2));
-  const retail = (item.marketValue && item.marketValue > 0)
-    ? parseFloat(item.marketValue)
-    : 0;
+
+  // Retail hierarchy: (1) Goldback denomination price, (2) manual marketValue, (3) 0
+  // Must match the 3-tier lookup used by table renderer, CSV/PDF export, and details modal
+  const gbDenomPrice = (typeof getGoldbackRetailPrice === 'function') ? getGoldbackRetailPrice(item) : null;
+  const rawMarket = (item.marketValue && item.marketValue > 0) ? parseFloat(item.marketValue) : 0;
+  const retail = gbDenomPrice ? parseFloat(gbDenomPrice.toFixed(2)) : rawMarket;
   const now = Date.now();
 
   // Initialize array for this UUID if needed
@@ -227,17 +230,19 @@ const PRICE_HISTORY_COLS = ['ts', 'name', 'retail', 'spot', 'melt'];
 
 /**
  * Flattens, filters, and sorts item price history into renderable rows.
- * @returns {Array<Object>} Sorted row objects
+ * @param {string} [filterUuid] - If provided, only return rows for this UUID
+ * @returns {Array<Object>} Sorted row objects (includes uuid for delete support)
  */
-const preparePriceHistoryRows = () => {
+const preparePriceHistoryRows = (filterUuid) => {
   loadItemPriceHistory();
 
   const rows = [];
-  for (const [uuid, entries] of Object.entries(itemPriceHistory)) {
+  const uuids = filterUuid ? [[filterUuid, itemPriceHistory[filterUuid] || []]] : Object.entries(itemPriceHistory);
+  for (const [uuid, entries] of uuids) {
     const item = inventory.find(i => i.uuid === uuid);
     const name = item ? (item.name || 'Unnamed') : `(deleted: ${uuid.slice(0, 8)})`;
     for (const e of entries) {
-      rows.push({ ts: e.ts, name, retail: e.retail, spot: e.spot, melt: e.melt });
+      rows.push({ ts: e.ts, name, uuid, retail: e.retail, spot: e.spot, melt: e.melt });
     }
   }
 
@@ -268,10 +273,11 @@ const preparePriceHistoryRows = () => {
  */
 const attachPriceHistorySortHeaders = (table) => {
   table.querySelectorAll('th').forEach(th => {
+    const idx = Array.from(th.parentNode.children).indexOf(th);
+    const col = PRICE_HISTORY_COLS[idx];
+    if (!col) return; // Skip non-data columns (e.g. Actions)
     th.style.cursor = 'pointer';
     th.onclick = () => {
-      const idx = Array.from(th.parentNode.children).indexOf(th);
-      const col = PRICE_HISTORY_COLS[idx];
       if (settingsPriceSortColumn === col) {
         settingsPriceSortAsc = !settingsPriceSortAsc;
       } else {
@@ -297,14 +303,15 @@ const renderItemPriceHistoryTable = () => {
   if (data.length === 0) {
     const msg = priceHistoryFilterText ? 'No items match the current filter.' : 'No item price history recorded yet.';
     // nosemgrep: javascript.browser.security.insecure-innerhtml.insecure-innerhtml
-    tbody.innerHTML = `<tr class="settings-log-empty"><td colspan="5">${msg}</td></tr>`;
+    tbody.innerHTML = `<tr class="settings-log-empty"><td colspan="6">${msg}</td></tr>`;
     return;
   }
 
   const fmt = (v) => typeof formatCurrency === 'function' ? formatCurrency(v) : `$${Number(v).toFixed(2)}`;
   const htmlRows = data.map(r => {
     const ts = typeof formatTimestamp === 'function' ? formatTimestamp(r.ts) : new Date(r.ts).toLocaleString();
-    return `<tr><td>${ts}</td><td>${escapeHtml(r.name)}</td><td>${fmt(r.retail)}</td><td>${fmt(r.spot)}</td><td>${fmt(r.melt)}</td></tr>`;
+    const deleteBtn = `<button class="price-history-delete-btn" title="Delete entry" onclick="event.stopPropagation(); deleteItemPriceEntry('${escapeHtml(r.uuid)}', ${r.ts})">&times;</button>`;
+    return `<tr><td>${ts}</td><td>${escapeHtml(r.name)}</td><td>${fmt(r.retail)}</td><td>${fmt(r.spot)}</td><td>${fmt(r.melt)}</td><td class="action-cell">${deleteBtn}</td></tr>`;
   });
 
   // nosemgrep: javascript.browser.security.insecure-innerhtml.insecure-innerhtml
@@ -333,7 +340,122 @@ const clearItemPriceHistory = () => {
   renderItemPriceHistoryTable();
 };
 
+// =============================================================================
+// ITEM PRICE HISTORY — PER-ITEM MODAL (STAK-109)
+// =============================================================================
+
+/** @type {string} UUID of the item currently displayed in the per-item modal */
+let _itemPriceModalUuid = '';
+/** @type {string} Filter text for the per-item modal table */
+let _itemPriceModalFilterText = '';
+
+/**
+ * Opens the per-item price history modal for a specific inventory item.
+ * @param {string} uuid - Item UUID
+ * @param {string} itemName - Item name for the modal title
+ */
+const openItemPriceHistoryModal = (uuid, itemName) => {
+  _itemPriceModalUuid = uuid;
+  _itemPriceModalFilterText = '';
+
+  const titleEl = document.getElementById('itemPriceHistoryTitle');
+  if (titleEl) titleEl.textContent = `Price History — ${itemName}`;
+
+  const filterInput = document.getElementById('itemPriceHistoryFilter');
+  if (filterInput) filterInput.value = '';
+
+  renderItemPriceHistoryModalTable();
+
+  const modal = document.getElementById('itemPriceHistoryModal');
+  if (modal) modal.style.display = 'flex';
+};
+
+/**
+ * Renders the per-item price history modal table.
+ * Shows entries only for _itemPriceModalUuid, newest first.
+ */
+const renderItemPriceHistoryModalTable = () => {
+  const table = document.getElementById('itemPriceHistoryTable');
+  if (!table) return;
+
+  const tbody = table.querySelector('tbody');
+  if (!tbody) return;
+
+  const data = preparePriceHistoryRows(_itemPriceModalUuid);
+
+  // Apply modal-specific filter
+  let filtered = data;
+  if (_itemPriceModalFilterText) {
+    const f = _itemPriceModalFilterText.toLowerCase();
+    filtered = data.filter(r => {
+      const ts = typeof formatTimestamp === 'function' ? formatTimestamp(r.ts) : new Date(r.ts).toLocaleString();
+      const fmt = (v) => typeof formatCurrency === 'function' ? formatCurrency(v) : `$${Number(v).toFixed(2)}`;
+      return ts.toLowerCase().includes(f) || fmt(r.retail).includes(f) || fmt(r.spot).includes(f) || fmt(r.melt).includes(f);
+    });
+  }
+
+  if (filtered.length === 0) {
+    const msg = _itemPriceModalFilterText ? 'No entries match the filter.' : 'No price history for this item.';
+    // nosemgrep: javascript.browser.security.insecure-innerhtml.insecure-innerhtml
+    tbody.innerHTML = `<tr class="settings-log-empty"><td colspan="5">${msg}</td></tr>`;
+    return;
+  }
+
+  const fmt = (v) => typeof formatCurrency === 'function' ? formatCurrency(v) : `$${Number(v).toFixed(2)}`;
+  const htmlRows = filtered.map(r => {
+    const ts = typeof formatTimestamp === 'function' ? formatTimestamp(r.ts) : new Date(r.ts).toLocaleString();
+    const deleteBtn = `<button class="price-history-delete-btn" title="Delete entry" onclick="event.stopPropagation(); deleteItemPriceEntry('${escapeHtml(r.uuid)}', ${r.ts})">&times;</button>`;
+    return `<tr><td>${ts}</td><td>${fmt(r.retail)}</td><td>${fmt(r.spot)}</td><td>${fmt(r.melt)}</td><td class="action-cell">${deleteBtn}</td></tr>`;
+  });
+
+  // nosemgrep: javascript.browser.security.insecure-innerhtml.insecure-innerhtml
+  tbody.innerHTML = htmlRows.join('');
+};
+
+/**
+ * Deletes a single price history entry by UUID and timestamp.
+ * Logs the deletion to the change log for undo/redo support.
+ * @param {string} uuid - Item UUID
+ * @param {number} timestamp - Entry timestamp to delete
+ */
+const deleteItemPriceEntry = (uuid, timestamp) => {
+  if (!itemPriceHistory[uuid]) return;
+
+  const idx = itemPriceHistory[uuid].findIndex(e => e.ts === timestamp);
+  if (idx === -1) return;
+
+  const deletedEntry = itemPriceHistory[uuid][idx];
+  itemPriceHistory[uuid].splice(idx, 1);
+
+  // Clean up empty arrays
+  if (itemPriceHistory[uuid].length === 0) {
+    delete itemPriceHistory[uuid];
+  }
+
+  saveItemPriceHistory();
+
+  // Log to change log for undo support
+  const item = inventory.find(i => i.uuid === uuid);
+  const itemName = item ? (item.name || 'Unnamed') : `(deleted: ${uuid.slice(0, 8)})`;
+  if (typeof logChange === 'function') {
+    logChange(itemName, 'priceHistoryDelete',
+      JSON.stringify({ uuid, entry: deletedEntry }), null, -1);
+    if (typeof renderChangeLog === 'function') renderChangeLog();
+  }
+
+  // Re-render both tables
+  renderItemPriceHistoryModalTable();
+  renderItemPriceHistoryTable();
+};
+
 // Ensure global availability
 window.renderItemPriceHistoryTable = renderItemPriceHistoryTable;
 window.filterItemPriceHistoryTable = filterItemPriceHistoryTable;
 window.clearItemPriceHistory = clearItemPriceHistory;
+window.openItemPriceHistoryModal = openItemPriceHistoryModal;
+window.renderItemPriceHistoryModalTable = renderItemPriceHistoryModalTable;
+window.deleteItemPriceEntry = deleteItemPriceEntry;
+window._setItemPriceModalFilter = (val) => {
+  _itemPriceModalFilterText = val;
+  renderItemPriceHistoryModalTable();
+};

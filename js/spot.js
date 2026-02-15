@@ -1023,6 +1023,39 @@ const clearSpotHistory = () => {
 
 // =============================================================================
 
+// ---------------------------------------------------------------------------
+// Seed bundle loader (file:// protocol support)
+// ---------------------------------------------------------------------------
+// data/spot-history-bundle.js calls this function on load.
+// Compact format: { year: { metal: [[MM-DD, price], ...] } }
+// Expands into full historicalDataCache entries so fetchYearFile() finds
+// cached data immediately without network requests.
+window._loadSpotSeedBundle = function(bundle) {
+  let loaded = 0;
+  for (const yearStr of Object.keys(bundle)) {
+    const year = parseInt(yearStr, 10);
+    if (historicalDataCache.has(year) && historicalDataCache.get(year).length > 0) continue;
+    const metals = bundle[yearStr];
+    const entries = [];
+    for (const metal of Object.keys(metals)) {
+      for (const pair of metals[metal]) {
+        entries.push({
+          spot: pair[1],
+          metal: metal,
+          source: 'seed',
+          provider: 'LBMA',
+          timestamp: yearStr + '-' + pair[0] + ' 12:00:00'
+        });
+      }
+    }
+    historicalDataCache.set(year, entries);
+    loaded += entries.length;
+  }
+  if (loaded > 0) {
+    console.log('[SpotSeed] Loaded ' + loaded + ' entries from bundle (' + Object.keys(bundle).length + ' years)');
+  }
+};
+
 // Ensure global availability
 window.fetchSpotPrice = fetchSpotPrice;
 window.updateSpotCardColor = updateSpotCardColor;
@@ -1037,4 +1070,6 @@ window.saveTrendRange = saveTrendRange;
 window.renderSpotHistoryTable = renderSpotHistoryTable;
 window.clearSpotHistory = clearSpotHistory;
 window.getHistoricalSparklineData = getHistoricalSparklineData;
+window.getRequiredYears = getRequiredYears;
+window.fetchYearFile = fetchYearFile;
 window.historicalDataCache = historicalDataCache;
