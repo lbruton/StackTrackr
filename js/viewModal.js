@@ -855,9 +855,13 @@ function _isLightColor(color) {
 /** @type {Map<number, Array>} Year-file cache shared with spot.js when available */
 const _viewYearCache = new Map();
 
+/** @type {Map<number, Promise<Array>>} In-flight fetch promises to deduplicate concurrent requests */
+const _viewYearFetchPromises = new Map();
+
 /**
  * Fetch a single year file with three-tier fallback (fetch → XHR → remote).
  * Reuses spot.js cache/fetcher when available; falls back to own implementation.
+ * Deduplicates concurrent fetches for the same year.
  * @param {number} year
  * @returns {Promise<Array>}
  */
@@ -868,13 +872,19 @@ function _fetchYearFile(year) {
   }
 
   // Self-contained fallback
+  // Already cached — return immediately
   if (_viewYearCache.has(year)) return Promise.resolve(_viewYearCache.get(year));
+
+  // Already in-flight — return shared promise
+  if (_viewYearFetchPromises.has(year)) {
+    return _viewYearFetchPromises.get(year);
+  }
 
   const filename = `spot-history-${year}.json`;
   const localUrl = `data/${filename}`;
   const remoteUrl = `https://staktrakr.com/data/${filename}`;
 
-  return fetch(localUrl)
+  const promise = fetch(localUrl)
     .then(res => { if (!res.ok) throw new Error(`HTTP ${res.status}`); return res.json(); })
     .catch(() => new Promise((resolve, reject) => {
       const xhr = new XMLHttpRequest();
@@ -890,7 +900,13 @@ function _fetchYearFile(year) {
       _viewYearCache.set(year, valid);
       return valid;
     })
-    .catch(() => { _viewYearCache.set(year, []); return []; });
+    .catch(() => { _viewYearCache.set(year, []); return []; })
+    .finally(() => {
+      _viewYearFetchPromises.delete(year);
+    });
+
+  _viewYearFetchPromises.set(year, promise);
+  return promise;
 }
 
 /**
