@@ -6,19 +6,6 @@ Project direction and planned work. Each item links to its full Linear issue for
 
 ---
 
-## Next Up — View Modal & Quick UX Wins
-
-Small, interconnected improvements to the item detail experience. High user impact, low effort.
-
-| Issue | Title | Priority |
-|-------|-------|----------|
-| [STAK-110](https://linear.app/hextrackr/issue/STAK-110) | View Modal: Change default section order to Valuation-first | Medium |
-| [STAK-111](https://linear.app/hextrackr/issue/STAK-111) | View Modal: Add Purchase Date to Valuation section | Medium |
-| [STAK-113](https://linear.app/hextrackr/issue/STAK-113) | View Modal: PCGS certified badge overlay on image display | Medium |
-| [STAK-114](https://linear.app/hextrackr/issue/STAK-114) | Filter Chips: Display Grade and Cert between Qty and N# chips | Medium |
-
----
-
 ## Near-Term — Design System & Settings Polish
 
 Establish a CSS style guide and unify UI patterns before bigger UI sprints.
@@ -118,6 +105,7 @@ Encrypted cloud sync for sponsors ($3/month). Zero-knowledge architecture — da
 <details>
 <summary>Shipped features (click to expand)</summary>
 
+- **v3.29.04** — STAK-110/111/113: View Modal Visual Sprint — cert badge overlay with authority colors, chart range pills (1Y/5Y/10Y/Purchased), valuation-first default order, purchase date in valuation
 - **v3.29.03** — STAK-108/109/103: Price history bug fix, per-item price history management UI with inline delete and undo/redo, chart fixes (seed bundle for file://, adaptive x-axis labels, custom date range picker)
 - **v3.29.02** — PWA crash fix: service worker error handling for all fetch strategies
 - **v3.29.01** — Codacy duplication reduction: shared toggle helpers, merged config renderers, deduplicated builders
