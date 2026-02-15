@@ -1144,25 +1144,116 @@ const hideEmptyColumns = () => {
   });
 };
 
+/** IntersectionObserver instance for lazy-loading table thumbnails */
+let _thumbObserver = null;
+
+// Metal-colored SVG placeholder cache (one per metal+type combo)
+const _thumbPlaceholders = {};
+
 /**
- * Upgrades table thumbnail src attributes from CDN URLs to IDB blob URLs.
- * Fire-and-forget — thumbnails upgrade progressively as blobs resolve.
+ * Generate an inline SVG data URI for a metal-themed placeholder thumbnail.
+ * Uses the metal's brand color and an icon based on item type (coin vs bar).
+ * @param {string} metal - Metal name (Silver, Gold, Platinum, Palladium)
+ * @param {string} type - Item type (Coin, Bar, Round, etc.)
+ * @returns {string} data:image/svg+xml URI
+ */
+function _getThumbPlaceholder(metal, type) {
+  const key = (metal || 'Silver') + ':' + (type || 'Coin');
+  if (_thumbPlaceholders[key]) return _thumbPlaceholders[key];
+
+  // Metal color palette (matches CSS custom properties)
+  const colors = {
+    Silver:    { fill: '#a8b5c4', stroke: '#8a9bb0', text: '#6b7d91' },
+    Gold:      { fill: '#d4a74a', stroke: '#b8912e', text: '#9a7a24' },
+    Platinum:  { fill: '#b8c5d6', stroke: '#95a8bd', text: '#7b8fa5' },
+    Palladium: { fill: '#c2b8a3', stroke: '#a89e8a', text: '#8e846f' },
+  };
+  const c = colors[metal] || colors.Silver;
+
+  // Icon path: coin (circle) for most types, rectangle for bars
+  const isBar = /bar|ingot/i.test(type || '');
+  const icon = isBar
+    ? `<rect x="11" y="7" width="10" height="18" rx="1.5" fill="none" stroke="${c.text}" stroke-width="1.5" opacity="0.5"/><line x1="13" y1="12" x2="19" y2="12" stroke="${c.text}" stroke-width="0.8" opacity="0.4"/><line x1="13" y1="15" x2="19" y2="15" stroke="${c.text}" stroke-width="0.8" opacity="0.4"/><line x1="13" y1="18" x2="19" y2="18" stroke="${c.text}" stroke-width="0.8" opacity="0.4"/>`
+    : `<circle cx="16" cy="16" r="8" fill="none" stroke="${c.text}" stroke-width="1.2" opacity="0.45"/><circle cx="16" cy="16" r="5" fill="none" stroke="${c.text}" stroke-width="0.8" opacity="0.3" stroke-dasharray="2 2"/>`;
+
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
+    <circle cx="16" cy="16" r="15" fill="${c.fill}" stroke="${c.stroke}" stroke-width="1" opacity="0.25"/>
+    ${icon}
+  </svg>`;
+
+  const uri = 'data:image/svg+xml,' + encodeURIComponent(svg);
+  _thumbPlaceholders[key] = uri;
+  return uri;
+}
+
+/**
+ * Upgrades table thumbnail src attributes from IDB blob URLs using
+ * IntersectionObserver for viewport-based lazy loading.
+ * Pre-loads 200px before viewport for smooth scrolling.
  */
 async function _enhanceTableThumbnails() {
   if (!featureFlags.isEnabled('COIN_IMAGES') || !window.imageCache?.isAvailable()) return;
-  const imgs = document.querySelectorAll('#inventoryTable .table-thumb[data-catalog-id]');
-  for (const img of imgs) {
-    const catId = img.dataset.catalogId;
-    if (!catId) continue;
-    try {
-      const blobUrl = await imageCache.getImageUrl(catId, 'obverse');
+
+  // Respect table images toggle (default ON)
+  if (localStorage.getItem('tableImagesEnabled') === 'false') return;
+
+  // Disconnect previous observer to avoid observing stale nodes
+  if (_thumbObserver) _thumbObserver.disconnect();
+
+  _thumbObserver = new IntersectionObserver((entries) => {
+    for (const entry of entries) {
+      if (!entry.isIntersecting) continue;
+      _thumbObserver.unobserve(entry.target);
+      _loadThumbImage(entry.target);
+    }
+  }, { rootMargin: '200px 0px' });
+
+  document.querySelectorAll('#inventoryTable .table-thumb').forEach(img => {
+    _thumbObserver.observe(img);
+  });
+}
+
+/**
+ * Resolve and set blob URL for a single table thumbnail image.
+ * Checks IDB cache (user uploads → pattern images → Numista cache).
+ * Falls back to a metal-colored SVG placeholder when no image is available.
+ * @param {HTMLImageElement} img - Table thumbnail element with data attributes
+ */
+async function _loadThumbImage(img) {
+  try {
+    const item = {
+      uuid: img.dataset.itemUuid || '',
+      numistaId: img.dataset.catalogId || '',
+      name: img.dataset.itemName || '',
+      metal: img.dataset.itemMetal || '',
+      type: img.dataset.itemType || '',
+    };
+
+    const resolved = await imageCache.resolveImageForItem(item);
+
+    if (resolved) {
+      let blobUrl;
+      if (resolved.source === 'user') {
+        blobUrl = await imageCache.getUserImageUrl(resolved.catalogId, 'obverse');
+      } else if (resolved.source === 'pattern') {
+        blobUrl = await imageCache.getPatternImageUrl(resolved.catalogId, 'obverse');
+      } else {
+        blobUrl = await imageCache.getImageUrl(resolved.catalogId, 'obverse');
+      }
+
       if (blobUrl) {
         _thumbBlobUrls.push(blobUrl);
         img.src = blobUrl;
-        img.style.display = '';  // un-hide if onerror had hidden it
+        img.style.visibility = '';
+        return;
       }
-    } catch { /* ignore — IDB unavailable or entry missing */ }
-  }
+    }
+
+    // No cached image — show metal-themed placeholder
+    img.src = _getThumbPlaceholder(item.metal, item.type);
+    img.style.visibility = '';
+    img.classList.add('table-thumb-placeholder');
+  } catch { /* ignore — IDB unavailable or entry missing */ }
 }
 
 const renderTable = () => {
@@ -1270,11 +1361,17 @@ const renderTable = () => {
 
       // Table thumbnail — coin obverse preview in name cell
       // Omit src attribute entirely when no URL (avoids browser requesting page URL for src="")
+      // Hidden when tableImagesEnabled toggle is off
+      const _tableImagesOn = localStorage.getItem('tableImagesEnabled') !== 'false';
       const thumbUrl = ImageCache.isValidImageUrl(item.obverseImageUrl) ? item.obverseImageUrl : '';
       const thumbSrcAttr = thumbUrl ? ` src="${escapeAttribute(thumbUrl)}"` : '';
-      const thumbHtml = featureFlags.isEnabled('COIN_IMAGES') && (thumbUrl || item.numistaId)
+      const thumbHtml = _tableImagesOn && featureFlags.isEnabled('COIN_IMAGES')
         ? `<img class="table-thumb"${thumbSrcAttr}
                data-catalog-id="${escapeAttribute(item.numistaId || '')}"
+               data-item-uuid="${escapeAttribute(item.uuid || '')}"
+               data-item-name="${escapeAttribute(item.name || '')}"
+               data-item-metal="${escapeAttribute(item.metal || '')}"
+               data-item-type="${escapeAttribute(item.type || '')}"
                alt="" loading="lazy" onerror="this.style.display='none'" />`
         : '';
 
@@ -1685,6 +1782,40 @@ const editItem = (idx, logIdx = null) => {
 
   // Update currency symbols in modal (STACK-50)
   if (typeof updateModalCurrencyUI === 'function') updateModalCurrencyUI();
+
+  // Preload user images (obverse + reverse) into upload previews (STACK-32)
+  if (typeof clearUploadState === 'function') clearUploadState();
+  if (item.uuid && window.imageCache?.isAvailable()) {
+    imageCache.getUserImage(item.uuid).then(rec => {
+      if (!rec) return;
+      // Preload obverse
+      if (rec.obverse) {
+        try {
+          const url = URL.createObjectURL(rec.obverse);
+          const previewContainer = document.getElementById('itemImagePreviewObv');
+          const previewImg = document.getElementById('itemImagePreviewImgObv');
+          const removeBtn = document.getElementById('itemImageRemoveBtnObv');
+          if (previewImg) previewImg.src = url;
+          if (previewContainer) previewContainer.style.display = 'block';
+          if (removeBtn) removeBtn.style.display = '';
+          if (typeof setEditPreviewUrl === 'function') setEditPreviewUrl(url, 'obverse');
+        } catch { /* ignore */ }
+      }
+      // Preload reverse
+      if (rec.reverse) {
+        try {
+          const url = URL.createObjectURL(rec.reverse);
+          const previewContainer = document.getElementById('itemImagePreviewRev');
+          const previewImg = document.getElementById('itemImagePreviewImgRev');
+          const removeBtn = document.getElementById('itemImageRemoveBtnRev');
+          if (previewImg) previewImg.src = url;
+          if (previewContainer) previewContainer.style.display = 'block';
+          if (removeBtn) removeBtn.style.display = '';
+          if (typeof setEditPreviewUrl === 'function') setEditPreviewUrl(url, 'reverse');
+        } catch { /* ignore */ }
+      }
+    }).catch(() => {});
+  }
 
   // Open unified modal
   if (window.openModalById) openModalById('itemModal');

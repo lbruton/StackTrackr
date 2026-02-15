@@ -1361,6 +1361,59 @@ input[type="submit"] {
   cursor: pointer;
 }
 
+/* Toggle switch — iOS-style for settings toggles */
+.settings-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  cursor: pointer;
+  font-size: 0.9rem;
+  padding: 0.3rem 0;
+  user-select: none;
+}
+.settings-toggle input[type="checkbox"] {
+  display: none;
+}
+.settings-toggle .toggle-track {
+  position: relative;
+  width: 36px;
+  height: 20px;
+  background: var(--bg-tertiary, #3a3a3a);
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  transition: background 0.2s ease, border-color 0.2s ease;
+  flex-shrink: 0;
+}
+.settings-toggle .toggle-track::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  background: var(--text-secondary);
+  border-radius: 50%;
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+.settings-toggle input:checked + .toggle-track {
+  background: var(--primary);
+  border-color: var(--primary);
+}
+.settings-toggle input:checked + .toggle-track::after {
+  transform: translateX(16px);
+  background: #fff;
+}
+.settings-toggle .toggle-label {
+  line-height: 1.3;
+}
+.settings-toggle .toggle-desc {
+  display: block;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  margin-top: 1px;
+  line-height: 1.3;
+}
+
 /* Header currency dropdown (STACK-54) */
 .header-currency-dropdown {
   position: fixed;
@@ -1726,6 +1779,298 @@ input[type="submit"] {
   font-size: 0.875rem;
   color: var(--text-primary);
   margin-bottom: 0.5rem;
+}
+
+/* Seed image grid (Images settings tab — STACK-96) */
+.seed-image-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 0.75rem;
+}
+.seed-image-card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.5rem;
+  text-align: center;
+  background: var(--bg-card);
+  position: relative;
+}
+.seed-image-card img {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: contain;
+  border-radius: calc(var(--radius) - 2px);
+  background: var(--bg-secondary);
+}
+.seed-image-card .seed-label {
+  font-size: 0.75rem;
+  margin-top: 0.35rem;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.seed-image-card .seed-metal-badge {
+  display: inline-block;
+  font-size: 0.65rem;
+  padding: 0.1rem 0.35rem;
+  border-radius: 3px;
+  margin-top: 0.2rem;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+.seed-image-card .seed-metal-badge[data-metal="silver"] { background: #c0c0c0; color: #333; }
+.seed-image-card .seed-metal-badge[data-metal="gold"] { background: #ffd700; color: #333; }
+.seed-image-card .seed-metal-badge[data-metal="platinum"] { background: #e5e4e2; color: #333; }
+.seed-image-card .seed-metal-badge[data-metal="palladium"] { background: #ced4da; color: #333; }
+.seed-image-card .seed-delete-btn {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  background: var(--danger, #dc3545);
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  font-size: 0.7rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+.image-storage-stats {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  font-size: 0.85rem;
+}
+.image-storage-stats .stat-item {
+  background: var(--bg-secondary);
+  padding: 0.35rem 0.65rem;
+  border-radius: var(--radius);
+  color: var(--text-primary);
+}
+.image-pattern-table {
+  width: 100%;
+  font-size: 0.8rem;
+  border-collapse: collapse;
+}
+.image-pattern-table th,
+.image-pattern-table td {
+  padding: 0.3rem 0.5rem;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+}
+.image-pattern-table th {
+  font-weight: 600;
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+}
+
+/* Pattern rule form (Settings > Images) */
+.pattern-rule-form-row {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.5rem;
+}
+.pattern-rule-field {
+  flex: 1;
+  min-width: 140px;
+}
+.pattern-rule-field label {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin-bottom: 0.2rem;
+}
+.pattern-rule-field-narrow {
+  flex: 0 0 120px;
+  min-width: 100px;
+}
+.pattern-rule-field input[type="file"] {
+  font-size: 0.8rem;
+  max-width: 100%;
+}
+
+/* Pattern mode toggle (Keywords / Regex) */
+.pattern-mode-toggle {
+  display: inline-flex;
+  gap: 2px;
+  margin-left: 0.4rem;
+  vertical-align: middle;
+}
+.pattern-mode-btn {
+  font-size: 0.65rem;
+  padding: 1px 6px;
+  border: 1px solid var(--border);
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  border-radius: 3px;
+  cursor: pointer;
+  line-height: 1.4;
+}
+.pattern-mode-btn.active {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+}
+.pattern-rule-tip {
+  display: block;
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  margin-top: 2px;
+  line-height: 1.3;
+}
+
+/* Custom pattern rule rows */
+.pattern-rule-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.85rem;
+}
+.pattern-rule-row:last-child { border-bottom: none; }
+.pattern-rule-thumb {
+  width: 36px;
+  height: 36px;
+  border-radius: 4px;
+  object-fit: cover;
+  flex-shrink: 0;
+  background: var(--bg-secondary);
+}
+.pattern-rule-info {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+.pattern-rule-info .rule-pattern {
+  font-family: monospace;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.pattern-rule-info .rule-replacement {
+  font-size: 0.8rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.pattern-rule-actions {
+  flex-shrink: 0;
+  display: flex;
+  gap: 0.25rem;
+}
+.pattern-rule-actions .btn {
+  padding: 0.2rem 0.5rem;
+  font-size: 0.75rem;
+}
+
+/* Dual thumbnail wrapper (obverse + reverse side by side) */
+.pattern-rule-thumbs {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+.pattern-rule-thumb-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.65rem;
+  color: var(--text-secondary);
+}
+
+/* Allow pattern rule rows to wrap for inline edit form */
+.pattern-rule-row { flex-wrap: wrap; }
+
+/* Inline edit form for pattern rules */
+.pattern-rule-edit-form {
+  width: 100%;
+  padding: 0.5rem 0 0.25rem;
+  border-top: 1px dashed var(--border);
+  margin-top: 0.25rem;
+}
+.pattern-rule-edit-form .edit-form-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.35rem 0.75rem;
+  font-size: 0.8rem;
+}
+.pattern-rule-edit-form .edit-form-fields label {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+.pattern-rule-edit-form .edit-form-fields input[type="text"] {
+  padding: 0.25rem 0.4rem;
+  font-size: 0.8rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+}
+.pattern-rule-edit-form .edit-form-fields input[type="file"] {
+  font-size: 0.75rem;
+}
+.pattern-rule-edit-form .edit-form-actions {
+  display: flex;
+  gap: 0.35rem;
+  margin-top: 0.4rem;
+}
+
+/* Image upload UI — dual obverse/reverse (STACK-32) */
+.image-upload-group { margin-top: 0.25rem; }
+.image-pattern-toggle-group { margin-top: 0.5rem; font-size: 0.85rem; }
+.image-pattern-toggle-group .form-control { margin-top: 0.35rem; }
+.image-pattern-toggle-group .pattern-rule-tip { display: block; margin-top: 0.2rem; color: var(--text-muted, #888); font-size: 0.78rem; }
+.image-upload-sides {
+  display: flex;
+  gap: 1rem;
+}
+.image-upload-side {
+  flex: 1;
+  min-width: 0;
+}
+.image-side-label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 0.25rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.image-upload-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.image-upload-preview {
+  margin-top: 0.5rem;
+  max-width: 120px;
+}
+.image-upload-preview img {
+  width: 100%;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+}
+.image-size-info {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+.btn-sm {
+  padding: 0.25rem 0.6rem;
+  font-size: 0.8rem;
 }
 
 /* Chip grouping controls (blacklist & custom rules) */
@@ -2617,9 +2962,14 @@ td[data-column="name"] {
   background: var(--bg-tertiary, #2a2a2a);
   vertical-align: middle;
 }
-/* Hide thumbnail when no image URL available (src omitted until IDB enhancement) */
+/* Keep thumbnail in layout for IntersectionObserver but invisible until src is set */
 .table-thumb:not([src]) {
-  display: none;
+  visibility: hidden;
+}
+/* Placeholder thumbnails — subtler than real images */
+.table-thumb-placeholder {
+  opacity: 0.55;
+  filter: saturate(0.7);
 }
 
 /* Tags never shrink — always visible */

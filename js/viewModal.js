@@ -60,25 +60,37 @@ async function showViewModal(index) {
   let apiResult = null;
 
   // Try loading images from cache/item first
-  const imagesLoaded = await loadViewImages(item, body, null);
+  const cacheResult = await loadViewImages(item, body);
+  const imagesLoaded = cacheResult.loaded;
+  const imageSource = cacheResult.source;
 
   // If images or metadata are needed, do a single API lookup
   if (catalogId && (!imagesLoaded || body.querySelector('#viewNumistaSection'))) {
     apiResult = await _fetchNumistaResult(catalogId);
   }
 
-  // Fill images from API result if cache/item didn't have them
-  if (!imagesLoaded && apiResult) {
+  // Fill images from API result when:
+  // 1. No images were loaded at all, OR
+  // 2. Override is ON and current images are from user uploads or pattern rules (Numista wins)
+  const numistaOverride = localStorage.getItem('numistaOverridePersonal') === 'true';
+  const shouldReplaceWithApi = !imagesLoaded || (numistaOverride && (imageSource === 'pattern' || imageSource === 'user'));
+
+  if (shouldReplaceWithApi && apiResult && (apiResult.imageUrl || apiResult.reverseImageUrl)) {
     const section = body.querySelector('#viewImageSection');
     if (section) {
       const slots = section.querySelectorAll('.view-image-slot');
       if (apiResult.imageUrl) _setSlotImage(slots[0], apiResult.imageUrl);
       if (apiResult.reverseImageUrl) _setSlotImage(slots[1], apiResult.reverseImageUrl);
 
-      // Cache for next time
+      // Cache for next time (future resolveImageForItem will find it)
       if (window.imageCache?.isAvailable()) {
         imageCache.cacheImages(catalogId, apiResult.imageUrl || '', apiResult.reverseImageUrl || '').catch(() => {});
       }
+    }
+  } else if (!imagesLoaded && apiResult) {
+    // Fallback: cache even if no image URLs (metadata-only result)
+    if (window.imageCache?.isAvailable() && catalogId) {
+      imageCache.cacheImages(catalogId, apiResult.imageUrl || '', apiResult.reverseImageUrl || '').catch(() => {});
     }
   }
 
@@ -448,40 +460,55 @@ function buildViewContent(item, index) {
  * @param {HTMLElement} container
  * @returns {Promise<boolean>} true if images loaded from cache/item
  */
+/**
+ * Load coin images from IndexedDB cache → CDN URL fallback.
+ * @param {Object} item
+ * @param {HTMLElement} container
+ * @returns {Promise<{loaded: boolean, source: string|null}>}
+ */
 async function loadViewImages(item, container) {
   const section = container.querySelector('#viewImageSection');
-  if (!section) return false;
+  if (!section) return { loaded: false, source: null };
 
-  const catalogId = item.numistaId || '';
   const slots = section.querySelectorAll('.view-image-slot');
   const obvSlot = slots[0];
   const revSlot = slots[1];
 
-  // Attempt IndexedDB cache first
-  if (catalogId && window.imageCache?.isAvailable()) {
-    const obvUrl = await imageCache.getImageUrl(catalogId, 'obverse');
-    if (obvUrl) {
-      _viewModalObjectUrls.push(obvUrl);
-      _setSlotImage(obvSlot, obvUrl);
-    }
-
-    const revUrl = await imageCache.getImageUrl(catalogId, 'reverse');
-    if (revUrl) {
-      _viewModalObjectUrls.push(revUrl);
-      _setSlotImage(revSlot, revUrl);
-    }
-
-    if (obvUrl || revUrl) return true;
+  if (!window.imageCache?.isAvailable()) {
+    // Fallback: CDN URLs stored on the item
+    const validObv = ImageCache.isValidImageUrl(item.obverseImageUrl);
+    const validRev = ImageCache.isValidImageUrl(item.reverseImageUrl);
+    if (validObv) _setSlotImage(obvSlot, item.obverseImageUrl);
+    if (validRev) _setSlotImage(revSlot, item.reverseImageUrl);
+    return { loaded: validObv || validRev, source: 'cdn' };
   }
 
-  // Fallback: CDN URLs stored on the item (validate to skip corrupted URLs)
+  // Use the resolution cascade (user → pattern → numista)
+  const resolved = await imageCache.resolveImageForItem(item);
+  if (resolved) {
+    let obvUrl, revUrl;
+    if (resolved.source === 'user') {
+      obvUrl = await imageCache.getUserImageUrl(resolved.catalogId, 'obverse');
+      revUrl = await imageCache.getUserImageUrl(resolved.catalogId, 'reverse');
+    } else if (resolved.source === 'pattern') {
+      obvUrl = await imageCache.getPatternImageUrl(resolved.catalogId, 'obverse');
+      revUrl = await imageCache.getPatternImageUrl(resolved.catalogId, 'reverse');
+    } else {
+      obvUrl = await imageCache.getImageUrl(resolved.catalogId, 'obverse');
+      revUrl = await imageCache.getImageUrl(resolved.catalogId, 'reverse');
+    }
+
+    if (obvUrl) { _viewModalObjectUrls.push(obvUrl); _setSlotImage(obvSlot, obvUrl); }
+    if (revUrl) { _viewModalObjectUrls.push(revUrl); _setSlotImage(revSlot, revUrl); }
+    if (obvUrl || revUrl) return { loaded: true, source: resolved.source };
+  }
+
+  // Final fallback: CDN URLs stored on the item (validate to skip corrupted URLs)
   const validObv = ImageCache.isValidImageUrl(item.obverseImageUrl);
   const validRev = ImageCache.isValidImageUrl(item.reverseImageUrl);
   if (validObv) _setSlotImage(obvSlot, item.obverseImageUrl);
   if (validRev) _setSlotImage(revSlot, item.reverseImageUrl);
-  if (validObv || validRev) return true;
-
-  return false;
+  return { loaded: validObv || validRev, source: (validObv || validRev) ? 'cdn' : null };
 }
 
 /**
@@ -1030,13 +1057,25 @@ function _imageSlot(side, label) {
 /** Replace placeholder with actual image in a slot */
 function _setSlotImage(slot, src) {
   if (!slot || !src) return;
+
+  // If an image already exists, update its src (for override replacement)
+  const existing = slot.querySelector('img');
+  if (existing) {
+    existing.src = src;
+    existing.style.display = '';
+    return;
+  }
+
+  // First time: replace placeholder with new img element
   const ph = slot.querySelector('.view-image-placeholder');
   if (!ph) return;
 
   const img = document.createElement('img');
   img.src = src;
   img.alt = slot.dataset.side || 'Coin';
-  img.loading = 'lazy';
+  // Only use lazy loading for network URLs — blob URLs are already in memory
+  // and lazy loading can prevent display in modals that just became visible
+  if (!src.startsWith('blob:')) img.loading = 'lazy';
   img.onerror = () => { img.style.display = 'none'; };
   ph.replaceWith(img);
 }

@@ -1069,6 +1069,50 @@
               <label for="itemNotes">Notes</label>
               <input id="itemNotes" type="text" placeholder="Additional notes or comments..." />
             </div>
+            <!-- Image upload — Obverse + Reverse (STACK-32/33) -->
+            <div id="imageUploadGroup" class="image-upload-group" style="display:none">
+              <label>Photos</label>
+              <div class="image-upload-sides">
+                <!-- Obverse -->
+                <div class="image-upload-side">
+                  <span class="image-side-label">Obverse</span>
+                  <div class="image-upload-row">
+                    <input type="file" id="itemImageFileObv" accept="image/jpeg,image/png,image/webp" style="display:none" />
+                    <button class="btn secondary btn-sm" id="itemImageUploadBtnObv" type="button">Upload</button>
+                    <button class="btn secondary btn-sm" id="itemImageCameraBtnObv" type="button" style="display:none">Camera</button>
+                    <button class="btn secondary btn-sm" id="itemImageRemoveBtnObv" type="button" style="display:none">Remove</button>
+                    <span id="itemImageSizeInfoObv" class="image-size-info"></span>
+                  </div>
+                  <div id="itemImagePreviewObv" class="image-upload-preview" style="display:none">
+                    <img id="itemImagePreviewImgObv" alt="Obverse preview" />
+                  </div>
+                </div>
+                <!-- Reverse -->
+                <div class="image-upload-side">
+                  <span class="image-side-label">Reverse</span>
+                  <div class="image-upload-row">
+                    <input type="file" id="itemImageFileRev" accept="image/jpeg,image/png,image/webp" style="display:none" />
+                    <button class="btn secondary btn-sm" id="itemImageUploadBtnRev" type="button">Upload</button>
+                    <button class="btn secondary btn-sm" id="itemImageCameraBtnRev" type="button" style="display:none">Camera</button>
+                    <button class="btn secondary btn-sm" id="itemImageRemoveBtnRev" type="button" style="display:none">Remove</button>
+                    <span id="itemImageSizeInfoRev" class="image-size-info"></span>
+                  </div>
+                  <div id="itemImagePreviewRev" class="image-upload-preview" style="display:none">
+                    <img id="itemImagePreviewImgRev" alt="Reverse preview" />
+                  </div>
+                </div>
+              </div>
+              <div id="imagePatternToggleGroup" class="image-pattern-toggle-group" style="display:none">
+                <label class="settings-checkbox-label">
+                  <input type="checkbox" id="imagePatternToggle" />
+                  Apply to all matching items
+                </label>
+                <div id="imagePatternKeywordsGroup" style="display:none">
+                  <input type="text" id="imagePatternKeywords" class="form-control" placeholder="e.g. American Silver Eagle, 2024" />
+                  <small class="pattern-rule-tip">Pre-filled with the item name. Add year or keywords separated by commas to narrow matches.</small>
+                </div>
+              </div>
+            </div>
             <!-- Form action buttons -->
             <div class="item-modal-actions">
               <div class="item-modal-actions-left">
@@ -1549,6 +1593,10 @@
               </svg>
               Layout
             </button>
+            <button class="settings-nav-item" data-section="images">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
+              Images
+            </button>
             <button class="settings-nav-item" data-section="system">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
               System
@@ -1630,6 +1678,27 @@
                   <option value="open-open">Open / Open</option>
                   <option value="open-close">Open / Close</option>
                 </select>
+              </div>
+
+              <!-- Image display toggles (moved from Images section) -->
+              <div class="settings-group">
+                <div class="settings-group-label">Image display</div>
+                <label class="settings-toggle">
+                  <input type="checkbox" id="tableImagesToggle" />
+                  <span class="toggle-track"></span>
+                  <span class="toggle-label">
+                    Table thumbnails
+                    <span class="toggle-desc">Show coin images next to item names. Uses cached images from uploads, pattern rules, and Numista lookups.</span>
+                  </span>
+                </label>
+                <label class="settings-toggle" style="margin-top:0.4rem">
+                  <input type="checkbox" id="numistaOverrideToggle" />
+                  <span class="toggle-track"></span>
+                  <span class="toggle-label">
+                    Numista priority override
+                    <span class="toggle-desc">When on, Numista API images take priority over your uploads and pattern rules.</span>
+                  </span>
+                </label>
               </div>
 
               <div class="settings-placeholder" style="margin-top: 1.5rem;">
@@ -2317,6 +2386,93 @@
               </div>
             </div>
 
+            <!-- ===== IMAGES (STACK-96) ===== -->
+            <div class="settings-section-panel" id="settingsPanel_images" style="display: none">
+              <h3>Images</h3>
+
+              <!-- Storage Stats -->
+              <div class="settings-group">
+                <div class="settings-group-label">Storage</div>
+                <div id="imageStorageStats" class="image-storage-stats">
+                  <span class="stat-item">Loading...</span>
+                </div>
+              </div>
+
+              <!-- Add Pattern Image Rule -->
+              <div class="settings-group">
+                <div class="settings-group-label">Add Pattern Image Rule</div>
+                <p style="font-size:0.85em;color:var(--text-secondary);margin:0 0 0.5rem">
+                  Create rules that automatically assign images to items matching a name pattern.
+                </p>
+                <div class="pattern-rule-form" id="patternRuleForm">
+                  <div class="pattern-rule-form-row">
+                    <div class="pattern-rule-field">
+                      <label for="patternRulePattern">
+                        Name Pattern
+                        <span class="pattern-mode-toggle">
+                          <button type="button" id="patternModeKeywords" class="pattern-mode-btn active" title="Comma or semicolon separated keywords">Keywords</button>
+                          <button type="button" id="patternModeRegex" class="pattern-mode-btn" title="Regular expression">Regex</button>
+                        </span>
+                      </label>
+                      <input type="text" id="patternRulePattern" class="form-control" placeholder="e.g. morgan, peace, walking liberty" />
+                      <small id="patternRuleTip" class="pattern-rule-tip">Separate keywords with commas or semicolons. Matches item names containing any keyword.</small>
+                    </div>
+                    <div class="pattern-rule-field">
+                      <label for="patternRuleReplacement">Numista Query (optional)</label>
+                      <input type="text" id="patternRuleReplacement" class="form-control" placeholder="e.g. 1 Dollar &quot;Morgan Dollar&quot;" />
+                    </div>
+                    <div class="pattern-rule-field pattern-rule-field-narrow">
+                      <label for="patternRuleNumistaId">N# (optional)</label>
+                      <input type="text" id="patternRuleNumistaId" class="form-control" placeholder="e.g. 1492" />
+                    </div>
+                  </div>
+                  <div class="pattern-rule-form-row">
+                    <div class="pattern-rule-field">
+                      <label for="patternRuleObverse">Obverse Image</label>
+                      <input type="file" id="patternRuleObverse" accept="image/*" />
+                    </div>
+                    <div class="pattern-rule-field">
+                      <label for="patternRuleReverse">Reverse Image</label>
+                      <input type="file" id="patternRuleReverse" accept="image/*" />
+                    </div>
+                    <div class="pattern-rule-field pattern-rule-field-narrow" style="align-self:flex-end">
+                      <button class="btn" id="addPatternRuleBtn" type="button">Add Rule</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Custom Pattern Rules -->
+              <div class="settings-group">
+                <div class="settings-group-label">Custom Pattern Rules</div>
+                <div id="customPatternImageRules"></div>
+              </div>
+
+              <!-- User Images -->
+              <div class="settings-group">
+                <div class="settings-group-label">Per-Item User Images</div>
+                <div id="userImageGrid"></div>
+              </div>
+
+              <!-- Import / Export -->
+              <div class="settings-group">
+                <div class="settings-group-label">Image Backup</div>
+                <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
+                  <button class="btn" id="exportAllImagesBtn" type="button">Export All Images</button>
+                  <button class="btn" id="importImagesBtn" type="button">Import Images</button>
+                  <input type="file" id="importImagesFile" accept=".zip" style="display:none" />
+                </div>
+              </div>
+
+              <!-- Actions -->
+              <div class="settings-group">
+                <div class="settings-group-label">Actions</div>
+                <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
+                  <button class="btn danger" id="clearAllImagesBtn" type="button">Clear All Images</button>
+                </div>
+              </div>
+            </div>
+
             <!-- ===== SYSTEM ===== -->
             <div class="settings-section-panel" id="settingsPanel_system" style="display: none">
               <h3>System</h3>
@@ -2982,6 +3138,7 @@
   <script defer src="./js/constants.js"></script>
   <script defer src="./js/state.js"></script>
   <script defer src="./js/utils.js"></script>
+  <script defer src="./js/image-processor.js"></script>
   <script defer src="./js/image-cache.js"></script>
   <script defer src="./js/bulk-image-cache.js"></script>
   <script defer src="./js/image-cache-modal.js"></script>

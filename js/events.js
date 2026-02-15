@@ -58,6 +58,183 @@ const optionalListener = (el, event, handler, label) => {
   if (el) safeAttachListener(el, event, handler, label);
 };
 
+// =============================================================================
+// IMAGE UPLOAD STATE (STACK-32) — Dual obverse/reverse support
+// =============================================================================
+
+/** @type {Blob|null} Pending obverse upload blob — saved on item commit */
+let _pendingObverseBlob = null;
+/** @type {Blob|null} Pending reverse upload blob — saved on item commit */
+let _pendingReverseBlob = null;
+
+/** @type {string|null} Preview object URL for obverse — revoked on modal close */
+let _pendingObversePreviewUrl = null;
+/** @type {string|null} Preview object URL for reverse — revoked on modal close */
+let _pendingReversePreviewUrl = null;
+
+// Legacy aliases for backward compatibility
+/** @deprecated Use _pendingObverseBlob */
+let _pendingUploadBlob = null;
+
+/**
+ * Process a user-selected image file and show preview for a specific side.
+ * @param {File} file
+ * @param {'obverse'|'reverse'} [side='obverse']
+ */
+const processUploadedImage = async (file, side = 'obverse') => {
+  if (!file || typeof imageProcessor === 'undefined') return;
+
+  const result = await imageProcessor.processFile(file, {
+    maxDim: typeof IMAGE_MAX_DIM !== 'undefined' ? IMAGE_MAX_DIM : 600,
+    maxBytes: typeof IMAGE_MAX_BYTES !== 'undefined' ? IMAGE_MAX_BYTES : 512000,
+  });
+
+  if (!result?.blob) {
+    debugLog('Image processing failed for ' + side);
+    return;
+  }
+
+  const suffix = side === 'reverse' ? 'Rev' : 'Obv';
+
+  if (side === 'reverse') {
+    _pendingReverseBlob = result.blob;
+    if (_pendingReversePreviewUrl) URL.revokeObjectURL(_pendingReversePreviewUrl);
+    _pendingReversePreviewUrl = imageProcessor.createPreview(result.blob);
+  } else {
+    _pendingObverseBlob = result.blob;
+    _pendingUploadBlob = result.blob; // legacy alias
+    if (_pendingObversePreviewUrl) URL.revokeObjectURL(_pendingObversePreviewUrl);
+    _pendingObversePreviewUrl = imageProcessor.createPreview(result.blob);
+  }
+
+  const previewUrl = side === 'reverse' ? _pendingReversePreviewUrl : _pendingObversePreviewUrl;
+
+  // Show preview in the appropriate side's elements
+  const previewContainer = document.getElementById('itemImagePreview' + suffix);
+  const previewImg = document.getElementById('itemImagePreviewImg' + suffix);
+  const sizeInfo = document.getElementById('itemImageSizeInfo' + suffix);
+  const removeBtn = document.getElementById('itemImageRemoveBtn' + suffix);
+
+  if (previewImg && previewUrl) {
+    previewImg.src = previewUrl;
+    if (previewContainer) previewContainer.style.display = 'block';
+  }
+  if (sizeInfo) {
+    const origKB = (result.originalSize / 1024).toFixed(0);
+    const compKB = (result.compressedSize / 1024).toFixed(0);
+    sizeInfo.textContent = `${origKB} KB → ${compKB} KB (${result.format.split('/')[1]})`;
+  }
+  if (removeBtn) removeBtn.style.display = '';
+};
+
+/**
+ * Track an externally-created preview object URL so it gets revoked
+ * when clearUploadState() runs (prevents memory leaks in editItem preview).
+ * @param {string} url - Object URL to track
+ * @param {'obverse'|'reverse'} [side='obverse']
+ */
+const setEditPreviewUrl = (url, side = 'obverse') => {
+  if (side === 'reverse') {
+    if (_pendingReversePreviewUrl) URL.revokeObjectURL(_pendingReversePreviewUrl);
+    _pendingReversePreviewUrl = url;
+  } else {
+    if (_pendingObversePreviewUrl) URL.revokeObjectURL(_pendingObversePreviewUrl);
+    _pendingObversePreviewUrl = url;
+  }
+};
+
+/**
+ * Clear the pending upload state and previews for both sides.
+ */
+const clearUploadState = () => {
+  _pendingObverseBlob = null;
+  _pendingReverseBlob = null;
+  _pendingUploadBlob = null;
+
+  if (_pendingObversePreviewUrl) {
+    URL.revokeObjectURL(_pendingObversePreviewUrl);
+    _pendingObversePreviewUrl = null;
+  }
+  if (_pendingReversePreviewUrl) {
+    URL.revokeObjectURL(_pendingReversePreviewUrl);
+    _pendingReversePreviewUrl = null;
+  }
+
+  // Clear obverse side UI
+  const previewObv = document.getElementById('itemImagePreviewObv');
+  const imgObv = document.getElementById('itemImagePreviewImgObv');
+  const sizeObv = document.getElementById('itemImageSizeInfoObv');
+  const removeObv = document.getElementById('itemImageRemoveBtnObv');
+  const fileObv = document.getElementById('itemImageFileObv');
+
+  if (previewObv) previewObv.style.display = 'none';
+  if (imgObv) imgObv.src = '';
+  if (sizeObv) sizeObv.textContent = '';
+  if (removeObv) removeObv.style.display = 'none';
+  if (fileObv) fileObv.value = '';
+
+  // Clear reverse side UI
+  const previewRev = document.getElementById('itemImagePreviewRev');
+  const imgRev = document.getElementById('itemImagePreviewImgRev');
+  const sizeRev = document.getElementById('itemImageSizeInfoRev');
+  const removeRev = document.getElementById('itemImageRemoveBtnRev');
+  const fileRev = document.getElementById('itemImageFileRev');
+
+  if (previewRev) previewRev.style.display = 'none';
+  if (imgRev) imgRev.src = '';
+  if (sizeRev) sizeRev.textContent = '';
+  if (removeRev) removeRev.style.display = 'none';
+  if (fileRev) fileRev.value = '';
+
+  // Reset pattern toggle state
+  const patternToggle = document.getElementById('imagePatternToggle');
+  const patternKeywordsGroup = document.getElementById('imagePatternKeywordsGroup');
+  const patternKeywords = document.getElementById('imagePatternKeywords');
+  if (patternToggle) patternToggle.checked = false;
+  if (patternKeywordsGroup) patternKeywordsGroup.style.display = 'none';
+  if (patternKeywords) patternKeywords.value = '';
+};
+
+/**
+ * Save the pending upload blob(s) to IndexedDB for the given item UUID.
+ * @param {string} uuid
+ * @returns {Promise<boolean>}
+ */
+const saveUserImageForItem = async (uuid) => {
+  if ((!_pendingObverseBlob && !_pendingReverseBlob) || !uuid || !window.imageCache?.isAvailable()) {
+    debugLog('saveUserImageForItem: nothing to save (obv=' + !!_pendingObverseBlob + ', rev=' + !!_pendingReverseBlob + ')');
+    return false;
+  }
+
+  debugLog('saveUserImageForItem: saving images for ' + uuid);
+
+  // If only reverse is new, merge with existing obverse (and vice versa)
+  let obvBlob = _pendingObverseBlob;
+  let revBlob = _pendingReverseBlob;
+
+  if (!obvBlob || !revBlob) {
+    try {
+      const existing = await imageCache.getUserImage(uuid);
+      if (existing) {
+        if (!obvBlob && existing.obverse) obvBlob = existing.obverse;
+        if (!revBlob && existing.reverse) revBlob = existing.reverse;
+      }
+    } catch { /* ignore */ }
+  }
+
+  // cacheUserImage requires at least obverse; pass reverse as optional
+  if (!obvBlob && revBlob) {
+    // Only reverse uploaded — store as obverse (since API requires it)
+    obvBlob = revBlob;
+    revBlob = null;
+  }
+
+  const saved = await imageCache.cacheUserImage(uuid, obvBlob, revBlob);
+  debugLog('saveUserImageForItem: saved=' + saved);
+  clearUploadState();
+  return saved;
+};
+
 /**
  * Sets up the override/merge/file-input triad for a single import format.
  * @param {HTMLElement|null} overrideBtn - "Override" button element
@@ -855,7 +1032,7 @@ const setupItemFormListeners = () => {
     safeAttachListener(
       elements.inventoryForm,
       "submit",
-      function (e) {
+      async function (e) {
         e.preventDefault();
 
         const isEditing = editingIndex !== null;
@@ -865,7 +1042,56 @@ const setupItemFormListeners = () => {
         const error = validateItemFields(fields);
         if (error) { alert(error); return; }
 
+        // Capture index before commit — commitItemToInventory nulls editingIndex
+        const savedEditIdx = editingIndex;
         commitItemToInventory(fields, isEditing, editingIndex);
+
+        // Save user-uploaded image if pending (STACK-32)
+        // Pattern toggle: create a pattern rule instead of per-item image
+        let patternRuleSaved = false;
+        const patternToggle = document.getElementById('imagePatternToggle');
+        if ((_pendingObverseBlob || _pendingReverseBlob) && patternToggle?.checked) {
+          try {
+            const rawKeywords = (document.getElementById('imagePatternKeywords')?.value || '').trim();
+            if (rawKeywords) {
+              // Convert keywords to regex: "morgan, peace" → "morgan|peace"
+              const terms = rawKeywords.split(/[,;]/).map(t => t.trim()).filter(t => t.length > 0);
+              const pattern = terms.map(t => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|');
+              // Pre-generate ruleId and pass as seedImageId — the image lookup
+              // chain resolves via rule.seedImageId, not rule.id
+              const ruleId = 'custom-img-' + Date.now();
+              const result = NumistaLookup.addRule(pattern, rawKeywords, null, ruleId);
+              if (result?.success) {
+                await imageCache.cachePatternImage(ruleId, _pendingObverseBlob, _pendingReverseBlob);
+                debugLog('Pattern rule created: ' + result.id + ' (images: ' + ruleId + ') for "' + rawKeywords + '"');
+              } else {
+                console.warn('Failed to create pattern rule:', result?.error);
+              }
+              clearUploadState();
+              patternRuleSaved = true;
+            }
+          } catch (err) {
+            console.warn('Failed to create pattern rule from modal:', err);
+            clearUploadState();
+            patternRuleSaved = true; // prevent double-save on error
+          }
+        }
+        if (!patternRuleSaved && (_pendingObverseBlob || _pendingReverseBlob)) {
+          // Per-item save: save blobs against the item's UUID
+          const savedItem = isEditing ? inventory[savedEditIdx] : inventory[inventory.length - 1];
+          if (savedItem?.uuid) {
+            try {
+              const saved = await saveUserImageForItem(savedItem.uuid);
+              if (!saved) {
+                debugLog('Image save returned false — image may not have been stored');
+              }
+            } catch (err) {
+              console.warn('Failed to save user image:', err);
+            }
+          }
+        } else if (!patternRuleSaved) {
+          clearUploadState();
+        }
 
         // Clear spot lookup hidden field after commit (STACK-49)
         if (elements.itemSpotPrice) elements.itemSpotPrice.value = '';
@@ -947,6 +1173,92 @@ const setupItemFormListeners = () => {
       },
       "Item modal close button",
     );
+  }
+
+  // IMAGE UPLOAD BUTTONS — Obverse + Reverse (STACK-32/33)
+  const imageUploadGroup = document.getElementById('imageUploadGroup');
+
+  if (imageUploadGroup && featureFlags.isEnabled('COIN_IMAGES')) {
+    imageUploadGroup.style.display = '';
+
+    const isSecure = location.protocol === 'https:' || location.hostname === 'localhost';
+    const isMobile = /Mobi|Android/i.test(navigator.userAgent);
+
+    // Wire each side: Obv and Rev
+    ['Obv', 'Rev'].forEach(suffix => {
+      const side = suffix === 'Rev' ? 'reverse' : 'obverse';
+      const fileInput = document.getElementById('itemImageFile' + suffix);
+      const uploadBtn = document.getElementById('itemImageUploadBtn' + suffix);
+      const cameraBtn = document.getElementById('itemImageCameraBtn' + suffix);
+      const removeBtn = document.getElementById('itemImageRemoveBtn' + suffix);
+
+      if (isMobile && isSecure && cameraBtn && fileInput) {
+        cameraBtn.style.display = '';
+        cameraBtn.addEventListener('click', () => {
+          fileInput.setAttribute('capture', 'environment');
+          fileInput.click();
+        });
+      }
+
+      if (uploadBtn && fileInput) {
+        uploadBtn.addEventListener('click', () => {
+          fileInput.removeAttribute('capture');
+          fileInput.click();
+        });
+      }
+
+      if (fileInput) {
+        fileInput.addEventListener('change', async () => {
+          const file = fileInput.files?.[0];
+          if (file) await processUploadedImage(file, side);
+        });
+      }
+
+      if (removeBtn) {
+        removeBtn.addEventListener('click', () => {
+          // Clear just this side
+          if (side === 'reverse') {
+            _pendingReverseBlob = null;
+            if (_pendingReversePreviewUrl) { URL.revokeObjectURL(_pendingReversePreviewUrl); _pendingReversePreviewUrl = null; }
+          } else {
+            _pendingObverseBlob = null;
+            _pendingUploadBlob = null;
+            if (_pendingObversePreviewUrl) { URL.revokeObjectURL(_pendingObversePreviewUrl); _pendingObversePreviewUrl = null; }
+          }
+          const preview = document.getElementById('itemImagePreview' + suffix);
+          const img = document.getElementById('itemImagePreviewImg' + suffix);
+          const sizeInfo = document.getElementById('itemImageSizeInfo' + suffix);
+          if (preview) preview.style.display = 'none';
+          if (img) img.src = '';
+          if (sizeInfo) sizeInfo.textContent = '';
+          if (removeBtn) removeBtn.style.display = 'none';
+          if (fileInput) fileInput.value = '';
+        });
+      }
+    });
+
+    // PATTERN TOGGLE — "Apply to all matching items" checkbox
+    const patternToggleGroup = document.getElementById('imagePatternToggleGroup');
+    const patternToggleCheckbox = document.getElementById('imagePatternToggle');
+    const patternKeywordsGroup = document.getElementById('imagePatternKeywordsGroup');
+    const patternKeywordsInput = document.getElementById('imagePatternKeywords');
+
+    if (patternToggleGroup) {
+      patternToggleGroup.style.display = '';
+    }
+    if (patternToggleCheckbox) {
+      patternToggleCheckbox.addEventListener('change', () => {
+        if (patternKeywordsGroup) {
+          patternKeywordsGroup.style.display = patternToggleCheckbox.checked ? '' : 'none';
+        }
+        if (patternToggleCheckbox.checked && patternKeywordsInput) {
+          const itemName = document.getElementById('itemName')?.value?.trim() || '';
+          if (itemName && !patternKeywordsInput.value.trim()) {
+            patternKeywordsInput.value = itemName;
+          }
+        }
+      });
+    }
   }
 
   // SEARCH NUMISTA BUTTON — lookup by N# or search by name
@@ -1622,6 +1934,8 @@ const setupSearch = () => {
           if (certVerifiedIcon) certVerifiedIcon.style.display = 'none';
           // Update currency symbols in modal (STACK-50)
           if (typeof updateModalCurrencyUI === 'function') updateModalCurrencyUI();
+          // Clear image upload state for fresh add (STACK-32)
+          if (typeof clearUploadState === 'function') clearUploadState();
           // Open modal
           if (elements.itemModal) {
             if (window.openModalById) openModalById('itemModal');
