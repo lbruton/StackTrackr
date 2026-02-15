@@ -351,6 +351,7 @@ function buildViewContent(item, index) {
           _createPriceHistoryChart(canvas, fullSpot, retailEntries, purchasePerUnit, meltFactor, 0, purchaseDate, currentRetail, fromTs, toTs);
         } catch (err) {
           // Fall back to empty dataset on fetch failure (network, parsing errors)
+          console.error('Custom date range fetch failed:', err);
           _createPriceHistoryChart(canvas, [], retailEntries, purchasePerUnit, meltFactor, 0, purchaseDate, currentRetail, fromTs, toTs);
         }
       }
@@ -381,6 +382,7 @@ function buildViewContent(item, index) {
               _createPriceHistoryChart(canvas, fullSpot, retailEntries, purchasePerUnit, meltFactor, days, purchaseDate, currentRetail);
             } catch (err) {
               // Fall back to empty dataset on fetch failure
+              console.error('Range pill fetch failed:', err);
               _createPriceHistoryChart(canvas, [], retailEntries, purchasePerUnit, meltFactor, days, purchaseDate, currentRetail);
             }
           } else {
