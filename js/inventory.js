@@ -418,7 +418,8 @@ const restoreBackupZip = async (file) => {
     }
 
     fetchSpotPrice();
-    alert("Data imported successfully.");
+    alert("Data imported successfully. The page will now reload.");
+    location.reload();
   } catch (err) {
     console.error("Restore failed", err);
     alert("Restore failed: " + err.message);
@@ -1773,6 +1774,10 @@ const editItem = (idx, logIdx = null) => {
   // Show/hide PCGS verified icon next to Cert# label
   const certVerifiedIcon = document.getElementById('certVerifiedIcon');
   if (certVerifiedIcon) certVerifiedIcon.style.display = item.pcgsVerified ? 'inline-flex' : 'none';
+
+  // Show price history link in edit mode (STAK-109)
+  const retailHistoryLink = document.getElementById('retailPriceHistoryLink');
+  if (retailHistoryLink) retailHistoryLink.style.display = 'inline';
 
   // Show/hide Undo button based on changelog context
   if (elements.undoChangeBtn) {

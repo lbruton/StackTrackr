@@ -713,6 +713,8 @@ const setupSettingsEventListeners = () => {
       }
       if (typeof saveGoldbackEstimateModifier === 'function') saveGoldbackEstimateModifier(val);
       if (goldbackEstimateEnabled && typeof onGoldSpotPriceChanged === 'function') onGoldSpotPriceChanged();
+      // Snapshot item prices after modifier changes denomination prices (STAK-108)
+      if (typeof recordAllItemPriceSnapshots === 'function') recordAllItemPriceSnapshots();
       if (typeof syncGoldbackSettingsUI === 'function') syncGoldbackSettingsUI();
       if (typeof renderTable === 'function') renderTable();
     });
@@ -739,6 +741,8 @@ const setupSettingsEventListeners = () => {
       });
       if (typeof saveGoldbackPrices === 'function') saveGoldbackPrices();
       if (typeof recordGoldbackPrices === 'function') recordGoldbackPrices();
+      // Snapshot item prices so Goldback retail changes appear in price history (STAK-108)
+      if (typeof recordAllItemPriceSnapshots === 'function') recordAllItemPriceSnapshots();
       if (typeof syncGoldbackSettingsUI === 'function') syncGoldbackSettingsUI();
       if (typeof renderTable === 'function') renderTable();
     });
