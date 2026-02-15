@@ -257,7 +257,9 @@ function buildViewContent(item, index) {
         if (hasCoinFacts) {
           // PCGS CoinFacts — detailed coin page via pcgsNumber
           const gradeNum = (item.grade || '').match(/\d+/)?.[0] || '';
-          url = `https://www.pcgs.com/coinfacts/coin/detail/${encodeURIComponent(pcgsNo)}/${encodeURIComponent(gradeNum)}`;
+          url = gradeNum
+            ? `https://www.pcgs.com/coinfacts/coin/detail/${encodeURIComponent(pcgsNo)}/${encodeURIComponent(gradeNum)}`
+            : `https://www.pcgs.com/coinfacts/coin/${encodeURIComponent(pcgsNo)}`;
         } else {
           // Other authorities — cert lookup via CERT_LOOKUP_URLS template
           url = certUrlTemplate
