@@ -265,7 +265,11 @@ function buildViewContent(item, index) {
   const valSection = _section('Valuation');
   valSection.classList.add('view-valuation-section');
   const valGrid = _el('div', 'view-detail-grid four-col');
-  _addDetail(valGrid, 'Purchase', formatCurrency(purchaseTotal));
+  const purchaseDateStr = item.date
+    ? (typeof formatDisplayDate === 'function' ? formatDisplayDate(item.date) : item.date)
+    : '';
+  const purchaseLabel = purchaseDateStr ? `${formatCurrency(purchaseTotal)} (${purchaseDateStr})` : formatCurrency(purchaseTotal);
+  _addDetail(valGrid, 'Purchase', purchaseLabel);
   _addDetail(valGrid, 'Melt Value', currentSpot > 0 ? formatCurrency(meltValue) : '—');
   _addDetail(valGrid, 'Retail', retailTotal > 0 ? formatCurrency(retailTotal) : '—');
 

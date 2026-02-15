@@ -831,8 +831,8 @@ const saveLayoutSectionConfig = (config) =>
  */
 const VIEW_MODAL_SECTION_DEFAULTS = [
   { id: 'images',       label: 'Coin images',       enabled: true },
-  { id: 'priceHistory', label: 'Price history',      enabled: true },
   { id: 'valuation',    label: 'Valuation',          enabled: true },
+  { id: 'priceHistory', label: 'Price history',      enabled: true },
   { id: 'inventory',    label: 'Inventory details',  enabled: true },
   { id: 'grading',      label: 'Grading',            enabled: true },
   { id: 'numista',      label: 'Numista data',       enabled: true },
