@@ -15,7 +15,7 @@ Please:
 - **Status Tags** (use search_nodes): `"completed"` vs `"in-progress"` to show progress
 - **Conceptual Insights** (use semantic_search): Search for themes like "performance improvements", "architectural decisions", "quality enhancements"
 
-**Tag Reference**: See `/Volumes/DATA/GitHub/HexTrackr/memento/TAXONOMY.md`
+**Tag Reference**: See `.claude/skills/memento-taxonomy/SKILL.md`
 
 Template:
 
@@ -89,4 +89,4 @@ Template:
 ---
 
 *Generated using Memento Knowledge Graph with Tag-Based Search*
-*Tag Taxonomy: /memento/TAXONOMY.md*
+*Tag Taxonomy: .claude/skills/memento-taxonomy/SKILL.md*

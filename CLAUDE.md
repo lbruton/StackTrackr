@@ -88,7 +88,8 @@ Persistent knowledge graph in Neo4j at `localhost:7687` (local Mac). Shared with
 
 - **NEVER use `read_graph`** — graph exceeds 200K tokens, will fail. Use `search_nodes` or `semantic_search` instead.
 - **Always tag** entities with `TAG: project:staktrakr` for project isolation.
-- See `TAXONOMY.md` for the complete tagging taxonomy.
+- **Prefer `search_nodes`** over `semantic_search` for recent entities — semantic embeddings may have indexing lag.
+- See the `memento-taxonomy` skill for naming conventions, entity types, required observations, and search patterns.
 
 ### Tool Rules (auto-loaded via skills)
 
@@ -102,3 +103,5 @@ Persistent knowledge graph in Neo4j at `localhost:7687` (local Mac). Shared with
 | `codacy-rules` | Code quality, sequential thinking | Running static analysis |
 | `coding-standards` | JS patterns, conventions | Writing code |
 | `seed-sync` | Docker poller seed data check, staging | Before releases, checking seed freshness |
+| `memento-taxonomy` | Entity naming, tags, search patterns | Saving handoffs, sessions, insights, or querying Memento |
+| `start` | Session context loading, handoff retrieval | Starting a new development session (`/start`) |

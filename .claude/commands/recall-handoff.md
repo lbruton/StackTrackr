@@ -48,7 +48,7 @@ mcp__memento__open_nodes({
 - `"handoff week-38-2025"` - This week's handoffs (search_nodes - temporal tag)
 - `"backend architecture decisions"` - Backend design handoffs (semantic_search - concepts)
 
-**Tag Reference**: See `/home/lbruton/StackrTrackr/TAXONOMY.md`
+**Tag Reference**: See `.claude/skills/memento-taxonomy/SKILL.md`
 
 **Output Format:**
 ```

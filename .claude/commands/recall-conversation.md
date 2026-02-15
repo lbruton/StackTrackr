@@ -45,7 +45,7 @@ mcp__memento__open_nodes({
 - `"testing lessons quality improvements"` - Testing insights (semantic_search)
 - `"v1.0.16 breaking-change"` - Sessions with breaking changes (search_nodes)
 
-**Tag Reference**: See `/Volumes/DATA/GitHub/HexTrackr/memento/TAXONOMY.md`
+**Tag Reference**: See `.claude/skills/memento-taxonomy/SKILL.md`
 
 **Output Format:**
 ```
