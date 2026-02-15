@@ -345,9 +345,14 @@ function buildViewContent(item, index) {
       if (fromTs <= 0 && toTs <= 0) return;
       const canvas = chartSection.querySelector('#viewPriceHistoryChart');
       if (canvas) {
-        // Async-fetch historical data for custom ranges (may span decades)
-        const fullSpot = await _fetchHistoricalSpotData(metalName, 0, fromTs, toTs);
-        _createPriceHistoryChart(canvas, fullSpot, retailEntries, purchasePerUnit, meltFactor, 0, purchaseDate, currentRetail, fromTs, toTs);
+        try {
+          // Async-fetch historical data for custom ranges (may span decades)
+          const fullSpot = await _fetchHistoricalSpotData(metalName, 0, fromTs, toTs);
+          _createPriceHistoryChart(canvas, fullSpot, retailEntries, purchasePerUnit, meltFactor, 0, purchaseDate, currentRetail, fromTs, toTs);
+        } catch (err) {
+          // Fall back to empty dataset on fetch failure (network, parsing errors)
+          _createPriceHistoryChart(canvas, [], retailEntries, purchasePerUnit, meltFactor, 0, purchaseDate, currentRetail, fromTs, toTs);
+        }
       }
     };
     fromInput.addEventListener('change', onDateChange);
@@ -370,9 +375,14 @@ function buildViewContent(item, index) {
         const canvas = chartSection.querySelector('#viewPriceHistoryChart');
         if (canvas) {
           if (days === 0 || days > 180) {
-            // "All" or long range — async-fetch historical year files
-            const fullSpot = await _fetchHistoricalSpotData(metalName, days);
-            _createPriceHistoryChart(canvas, fullSpot, retailEntries, purchasePerUnit, meltFactor, days, purchaseDate, currentRetail);
+            try {
+              // "All" or long range — async-fetch historical year files
+              const fullSpot = await _fetchHistoricalSpotData(metalName, days);
+              _createPriceHistoryChart(canvas, fullSpot, retailEntries, purchasePerUnit, meltFactor, days, purchaseDate, currentRetail);
+            } catch (err) {
+              // Fall back to empty dataset on fetch failure
+              _createPriceHistoryChart(canvas, [], retailEntries, purchasePerUnit, meltFactor, days, purchaseDate, currentRetail);
+            }
           } else {
             _createPriceHistoryChart(canvas, dailySpotEntries, retailEntries, purchasePerUnit, meltFactor, days, purchaseDate, currentRetail);
           }
