@@ -14,14 +14,14 @@ let _viewModalChartInstance = null;
 /** @type {number} Metadata cache TTL: 30 days in ms */
 const VIEW_METADATA_TTL = 30 * 24 * 60 * 60 * 1000;
 
-/** @type {number[]} Available chart range options (0 = all) */
-const _VIEW_CHART_RANGES = [7, 14, 30, 60, 90, 180, 0];
+/** @type {number[]} Available chart range options (0 = all, -1 = from purchase date) */
+const _VIEW_CHART_RANGES = [7, 14, 30, 60, 90, 180, 365, 1825, 3650, -1, 0];
 
 /** @type {string[]} Display labels for chart range pills */
-const _VIEW_CHART_RANGE_LABELS = ['7d', '14d', '30d', '60d', '90d', '180d', 'All'];
+const _VIEW_CHART_RANGE_LABELS = ['7d', '14d', '30d', '60d', '90d', '180d', '1Y', '5Y', '10Y', 'Purchased', 'All'];
 
-/** @type {number} Default chart range in days */
-const _VIEW_CHART_DEFAULT_RANGE = 30;
+/** @type {number} Default chart range in days (-1 = from purchase date, falls back to 30d) */
+const _VIEW_CHART_DEFAULT_RANGE = -1;
 
 // ---------------------------------------------------------------------------
 // Public API
@@ -49,7 +49,23 @@ async function showViewModal(index) {
   const chartCanvas = body.querySelector('#viewPriceHistoryChart');
   if (chartCanvas && chartCanvas._chartData) {
     const cd = chartCanvas._chartData;
-    _createPriceHistoryChart(chartCanvas, cd.spotEntries, cd.retailEntries, cd.purchasePerUnit, cd.meltFactor, _VIEW_CHART_DEFAULT_RANGE, cd.purchaseDate, cd.currentRetail);
+    // "Purchased" default (-1): calculate days from purchase date, fall back to 30d
+    let initRange = _VIEW_CHART_DEFAULT_RANGE;
+    if (initRange === -1) {
+      initRange = cd.purchaseDate > 0
+        ? Math.ceil((Date.now() - cd.purchaseDate) / 86400000)
+        : 30;
+    }
+    if (initRange === 0 || initRange > 180) {
+      const metalName = item.metal || 'Silver';
+      _fetchHistoricalSpotData(metalName, initRange).then((fullSpot) => {
+        _createPriceHistoryChart(chartCanvas, fullSpot, cd.retailEntries, cd.purchasePerUnit, cd.meltFactor, initRange, cd.purchaseDate, cd.currentRetail);
+      }).catch(() => {
+        _createPriceHistoryChart(chartCanvas, cd.spotEntries, cd.retailEntries, cd.purchasePerUnit, cd.meltFactor, initRange, cd.purchaseDate, cd.currentRetail);
+      });
+    } else {
+      _createPriceHistoryChart(chartCanvas, cd.spotEntries, cd.retailEntries, cd.purchasePerUnit, cd.meltFactor, initRange, cd.purchaseDate, cd.currentRetail);
+    }
   }
 
   modal.style.display = 'flex';
@@ -205,6 +221,102 @@ function buildViewContent(item, index) {
 
   if (metalColor) {
     imgSection.style.background = `linear-gradient(145deg, color-mix(in srgb, ${metalColor} 15%, #1a1a2e), color-mix(in srgb, ${metalColor} 8%, #16213e))`;
+  }
+
+  // --- Certification badge overlay on image section ---
+  if (item.grade) {
+    const badge = _el('div', 'view-cert-badge');
+    const authority = item.gradingAuthority || '';
+    const certNum = item.certNumber || '';
+    const pcgsNo = item.pcgsNumber || '';
+    const isVerified = item.pcgsVerified === true && authority === 'PCGS';
+
+    if (authority) badge.dataset.authority = authority;
+
+    // Grade text with authority prefix — e.g. "PCGS MS-70", "NGC AU-58"
+    const gradeSpan = _el('span', 'view-cert-grade');
+    gradeSpan.textContent = authority ? `${authority} ${item.grade}` : item.grade;
+
+    // Build cert lookup URL from CERT_LOOKUP_URLS templates
+    const certUrlTemplate = (typeof CERT_LOOKUP_URLS !== 'undefined' && authority)
+      ? CERT_LOOKUP_URLS[authority] : '';
+    const hasCertLink = certUrlTemplate && (certNum || pcgsNo);
+    // PCGS CoinFacts uses pcgsNumber; cert lookup URLs use certNumber
+    const hasCoinFacts = authority === 'PCGS' && pcgsNo;
+
+    if (hasCertLink || hasCoinFacts) {
+      gradeSpan.classList.add('view-cert-clickable');
+      gradeSpan.title = certNum
+        ? `Look up ${authority} Cert #${certNum}`
+        : `Open ${authority} verification`;
+      gradeSpan.tabIndex = 0;
+      gradeSpan.role = 'button';
+      gradeSpan.addEventListener('click', (e) => {
+        e.stopPropagation();
+        let url;
+        if (hasCoinFacts) {
+          // PCGS CoinFacts — detailed coin page via pcgsNumber
+          const gradeNum = (item.grade || '').match(/\d+/)?.[0] || '';
+          url = `https://www.pcgs.com/coinfacts/coin/detail/${encodeURIComponent(pcgsNo)}/${encodeURIComponent(gradeNum)}`;
+        } else {
+          // Other authorities — cert lookup via CERT_LOOKUP_URLS template
+          url = certUrlTemplate
+            .replace(/\{certNumber\}/g, encodeURIComponent(certNum))
+            .replace(/\{grade\}/g, encodeURIComponent(item.grade || ''));
+        }
+        const popup = window.open(url, `cert_${authority}_${certNum || pcgsNo}`,
+          'width=1250,height=800,scrollbars=yes,resizable=yes,toolbar=no,location=no,menubar=no,status=no');
+        if (popup) popup.focus();
+      });
+    } else {
+      gradeSpan.title = authority
+        ? `Graded by ${authority}: ${item.grade}${certNum ? ` — Cert #${certNum}` : ''}`
+        : `Grade: ${item.grade}`;
+    }
+    badge.appendChild(gradeSpan);
+
+    // Verify icon — clickable to trigger PCGS API verification
+    const showVerifyBtn = authority === 'PCGS' && certNum
+      && typeof catalogConfig !== 'undefined' && catalogConfig.isPcgsEnabled();
+    if (showVerifyBtn) {
+      const verifySpan = _el('span', `view-cert-verify${isVerified ? ' pcgs-verified' : ''}`);
+      verifySpan.tabIndex = 0;
+      verifySpan.role = 'button';
+      verifySpan.dataset.certNumber = certNum;
+      verifySpan.title = isVerified ? `Verified — Cert #${certNum}` : 'Verify cert via PCGS API';
+      verifySpan.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>';
+      verifySpan.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (typeof verifyPcgsCert !== 'function') return;
+        verifySpan.classList.add('pcgs-verifying');
+        verifySpan.title = 'Verifying...';
+        verifyPcgsCert(certNum).then((result) => {
+          verifySpan.classList.remove('pcgs-verifying');
+          if (result.verified) {
+            verifySpan.classList.add('pcgs-verified');
+            // Persist to inventory
+            const idx = inventory.findIndex((inv) => inv.uuid === item.uuid);
+            if (idx >= 0) {
+              inventory[idx].pcgsVerified = true;
+              saveInventory();
+            }
+            const parts = [];
+            if (result.grade) parts.push(`Grade: ${result.grade}`);
+            if (result.population) parts.push(`Pop: ${result.population}`);
+            if (result.popHigher) parts.push(`Pop Higher: ${result.popHigher}`);
+            if (result.priceGuide) parts.push(`Price Guide: $${Number(result.priceGuide).toLocaleString()}`);
+            verifySpan.title = `Verified — ${parts.join(' | ')}`;
+          } else {
+            verifySpan.title = result.error || 'Verification failed';
+            verifySpan.classList.add('pcgs-verify-failed');
+            setTimeout(() => verifySpan.classList.remove('pcgs-verify-failed'), 3000);
+          }
+        });
+      });
+      badge.appendChild(verifySpan);
+    }
+
+    imgSection.appendChild(badge);
   }
 
   // --- Inventory section ---
@@ -365,11 +477,17 @@ function buildViewContent(item, index) {
     toInput.addEventListener('change', onDateChange);
 
     _VIEW_CHART_RANGES.forEach((days, i) => {
+      // Hide "Purchased" pill when no purchase date exists
+      if (days === -1 && !purchaseDate) return;
       const pill = _el('button', 'view-chart-range-pill');
       pill.type = 'button';
       pill.textContent = _VIEW_CHART_RANGE_LABELS[i];
       pill.dataset.days = String(days);
-      if (days === _VIEW_CHART_DEFAULT_RANGE) pill.classList.add('active');
+      // Default: "Purchased" if purchase date exists, otherwise 30d
+      const isDefaultPill = _VIEW_CHART_DEFAULT_RANGE === -1
+        ? (purchaseDate ? days === -1 : days === 30)
+        : days === _VIEW_CHART_DEFAULT_RANGE;
+      if (isDefaultPill) pill.classList.add('active');
       pill.addEventListener('click', async () => {
         rangeBar.querySelectorAll('.view-chart-range-pill').forEach(p => p.classList.remove('active'));
         pill.classList.add('active');
@@ -380,18 +498,22 @@ function buildViewContent(item, index) {
         toInput.min = '';
         const canvas = chartSection.querySelector('#viewPriceHistoryChart');
         if (canvas) {
-          if (days === 0 || days > 180) {
+          // "Purchased" pill (-1): calculate days from purchase date to today
+          const effectiveDays = days === -1 && purchaseDate > 0
+            ? Math.ceil((Date.now() - purchaseDate) / 86400000)
+            : days;
+          if (effectiveDays === 0 || effectiveDays > 180) {
             try {
-              // "All" or long range — async-fetch historical year files
-              const fullSpot = await _fetchHistoricalSpotData(metalName, days);
-              _createPriceHistoryChart(canvas, fullSpot, retailEntries, purchasePerUnit, meltFactor, days, purchaseDate, currentRetail);
+              // "All", long range, or "Purchased" — async-fetch historical year files
+              const fullSpot = await _fetchHistoricalSpotData(metalName, effectiveDays);
+              _createPriceHistoryChart(canvas, fullSpot, retailEntries, purchasePerUnit, meltFactor, effectiveDays, purchaseDate, currentRetail);
             } catch (err) {
               // Fall back to empty dataset on fetch failure
               console.error('Range pill fetch failed:', err);
-              _createPriceHistoryChart(canvas, [], retailEntries, purchasePerUnit, meltFactor, days, purchaseDate, currentRetail);
+              _createPriceHistoryChart(canvas, [], retailEntries, purchasePerUnit, meltFactor, effectiveDays, purchaseDate, currentRetail);
             }
           } else {
-            _createPriceHistoryChart(canvas, dailySpotEntries, retailEntries, purchasePerUnit, meltFactor, days, purchaseDate, currentRetail);
+            _createPriceHistoryChart(canvas, dailySpotEntries, retailEntries, purchasePerUnit, meltFactor, effectiveDays, purchaseDate, currentRetail);
           }
         }
       });
