@@ -58,6 +58,7 @@ const CORE_ASSETS = [
   './js/bulkEdit.js',
   './js/events.js',
   './js/init.js',
+  './data/spot-history-bundle.js',
   './data/spot-history-2025.json',
   './data/spot-history-2026.json',
   './images/safe-favicon.svg',
