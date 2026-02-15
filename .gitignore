@@ -3,13 +3,12 @@
 .AppleDouble
 .LSOverride
 
-# Claude Code local config
-.claude/
+# Claude Code — share skills and commands, keep local config private
+.claude/*
+!.claude/skills/
+!.claude/commands/
 .mcp.json
-CLAUDE.md
-TAXONOMY.md
 SPRINT.md
-AGENTS.md
 
 # Internal dev docs (not for public repo)
 docs/CLOUD-SYNC-DESIGN.md
@@ -42,6 +41,6 @@ logs/
 .env
 .env.local
 
-# DevOps tooling (private)
+# DevOps tooling — spot-poller is public, other scripts stay private
 devops/*
-!devops/.env.example
+!devops/spot-poller/
