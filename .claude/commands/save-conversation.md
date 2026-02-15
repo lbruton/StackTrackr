@@ -64,7 +64,7 @@ mcp__memento__create_entities([{
   ]
 }])
 
-// Step 2: Add tags per TAXONOMY.md (using add_observations with TAG: prefix)
+// Step 2: Add tags per memento-taxonomy skill (using add_observations with TAG: prefix)
 mcp__memento__add_observations({
   observations: [{
     entityName: "Session: [GENERATED_SESSION_ID]",

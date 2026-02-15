@@ -6,7 +6,6 @@
 .claude/              export-ignore
 CLAUDE.md             export-ignore
 AGENTS.md             export-ignore
-TAXONOMY.md           export-ignore
 
 # DevOps tooling
 devops/               export-ignore
