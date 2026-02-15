@@ -13,7 +13,7 @@ Code quality analysis and static analysis.
 - **Use for code quality checks** when available.
 - **Configured via `CODACY_ACCOUNT_TOKEN`** from macOS Keychain — no manual token setup required.
 - **Check tool availability** via ToolSearch before use — tools may not always be loaded.
-- **StackTrackr maintains an A+ rating** — all commits and PRs must pass Codacy quality gates.
+- **StakTrakr maintains an A+ rating** — all commits and PRs must pass Codacy quality gates.
 
 ---
 

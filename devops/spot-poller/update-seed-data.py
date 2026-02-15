@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-StackTrackr Seed Data Updater
+StakTrakr Seed Data Updater
 =============================
 Backfills gaps in data/spot-history-{YEAR}.json using MetalPriceAPI's /timeframe endpoint.
 One-shot script — run manually, then commit when ready.
@@ -264,7 +264,7 @@ def merge_into_year_files(data_dir, new_entries, dry_run=False):
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description="Backfill StackTrackr seed price data from MetalPriceAPI."
+        description="Backfill StakTrakr seed price data from MetalPriceAPI."
     )
     parser.add_argument(
         "--dry-run",

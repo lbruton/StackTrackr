@@ -10,7 +10,7 @@ Save current conversation highlights to Memento with auto-generated session ID: 
 - Project-specific insights with proper classification
 
 **Entity Details:**
-- **Classification**: Use PROJECT:DOMAIN:TYPE pattern (e.g., STACKTRACKR:DEVELOPMENT:SESSION)
+- **Classification**: Use PROJECT:DOMAIN:TYPE pattern (e.g., STAKTRAKR:DEVELOPMENT:SESSION)
 - **Name**: Descriptive title based on main topic and context
 - **Observations**: Actionable outcomes and key learnings (not full transcripts)
 - **Relations**: Link to current project and related technical concepts
@@ -18,7 +18,7 @@ Save current conversation highlights to Memento with auto-generated session ID: 
 **Session ID Generation:**
 ```javascript
 // Auto-generate session ID: PROJECT-KEYWORD-YYYYMMDD-HHMMSS
-const generateSessionID = (keyword, project = "STACKTRACKR") => {
+const generateSessionID = (keyword, project = "STAKTRAKR") => {
   const now = new Date();
 
   // DATE VERIFICATION: Ensure we're using correct current date
@@ -44,7 +44,7 @@ const generateSessionID = (keyword, project = "STACKTRACKR") => {
   return `${project}-${keyword.toUpperCase()}-${date}-${time}`;
 };
 
-// Example: "STACKTRACKR-PRICING-20251001-143045"
+// Example: "STAKTRAKR-PRICING-20251001-143045"
 ```
 
 **Memory Tools:**
@@ -69,7 +69,7 @@ mcp__memento__add_observations({
   observations: [{
     entityName: "Session: [GENERATED_SESSION_ID]",
     contents: [
-      "TAG: project:[PROJECT_NAME]",        // Required: project:stacktrackr, project:zen, etc.
+      "TAG: project:[PROJECT_NAME]",        // Required: project:staktrakr, project:zen, etc.
       "TAG: spec:[SPEC_NUMBER]",            // If working on a spec: spec:001, spec:002, etc.
       "TAG: [CATEGORY]",                    // Required: frontend, backend, database, etc.
       "TAG: [IMPACT]",                      // Optional: feature, enhancement, critical-bug, etc.

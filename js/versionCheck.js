@@ -124,7 +124,7 @@ const renderVersionBadge = (badge, remoteVersion, releaseUrl) => {
 };
 
 /** @constant {string} GITHUB_RELEASES_URL - Fallback link for static version badge */
-const GITHUB_RELEASES_URL = "https://github.com/lbruton/StackTrackr/releases/latest";
+const GITHUB_RELEASES_URL = "https://github.com/lbruton/StakTrakr/releases/latest";
 
 /**
  * Shows a static version badge linking to GitHub releases.

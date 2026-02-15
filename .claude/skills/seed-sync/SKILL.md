@@ -1,4 +1,4 @@
-# Seed Data Sync — StackTrackr
+# Seed Data Sync — StakTrakr
 
 Check the Docker spot-price poller output and stage any new seed data for commit. Can also fetch today's prices directly without Docker.
 

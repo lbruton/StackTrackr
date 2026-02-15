@@ -2,7 +2,7 @@
 
 Project direction and planned work. Each item links to its full Linear issue for details, discussion, and status tracking.
 
-**Linear board**: [StackTrackr](https://linear.app/hextrackr/team/STACK/backlog)
+**Linear board**: [StakTrakr](https://linear.app/hextrackr/team/STACK/backlog)
 
 ---
 

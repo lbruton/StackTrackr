@@ -12,7 +12,7 @@
 
 ```javascript
 // Auto-generate rewind ID: PROJECT-REWIND-YYYYMMDD-HHMMSS
-const generateRewindID = (project = "STACKTRACKR") => {
+const generateRewindID = (project = "STAKTRAKR") => {
   const now = new Date();
 
   // Use UTC for consistency
@@ -33,7 +33,7 @@ const generateRewindID = (project = "STACKTRACKR") => {
 // Lightweight structure - only 5 core observations
 mcp__memento__create_entities([{
   name: "Rewind: [GENERATED_REWIND_ID]",
-  entityType: "STACKTRACKR:SESSION:REWIND",
+  entityType: "STAKTRAKR:SESSION:REWIND",
   observations: [
     `TIMESTAMP: ${new Date().toISOString()}`,
     `ABSTRACT: [One sentence - what was just accomplished]`,
@@ -55,7 +55,7 @@ mcp__memento__add_observations({
   observations: [{
     entityName: "Rewind: [GENERATED_REWIND_ID]",
     contents: [
-      "TAG: project:stacktrackr",
+      "TAG: project:staktrakr",
       "TAG: rewind",
       "TAG: spec:[LINEAR_ISSUE]",
       `TAG: week-${getWeekNumber()}-${new Date().getFullYear()}`

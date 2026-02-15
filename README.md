@@ -3,7 +3,11 @@
 
 # StakTrakr
 
-[![Codacy Badge](https://app.codacy.com/project/badge/Grade/b8d30126676546cb958fa6a7e0174da8)](https://app.codacy.com/gh/lbruton/StackTrackr/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
+[![MIT License](https://img.shields.io/github/license/lbruton/StakTrakr?style=flat-square)](https://github.com/lbruton/StakTrakr/blob/main/LICENSE)
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/b8d30126676546cb958fa6a7e0174da8)](https://app.codacy.com/gh/lbruton/StakTrakr/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
+[![GitHub Issues](https://img.shields.io/github/issues/lbruton/StakTrakr?style=flat-square)](https://github.com/lbruton/StakTrakr/issues)
+[![Reddit Community](https://img.shields.io/reddit/subreddit-subscribers/staktrakr?style=flat-square&label=community)](https://www.reddit.com/r/staktrakr/)
+[![Sponsor](https://img.shields.io/badge/sponsor-%E2%99%A1-ea4aaa?style=flat-square)](https://github.com/sponsors/lbruton)
 [![Maintained by Claude Code](https://img.shields.io/badge/Maintained%20by-Claude%20Code-blueviolet)](https://claude.ai/code)
 
 **Track your precious metals stack. Your Way!**
@@ -192,4 +196,4 @@ docs/                   Architecture documentation
 
 MIT License. See [LICENSE](LICENSE) for details.
 
-Contributions via fork and pull request are welcome. Report issues at [GitHub Issues](https://github.com/lbruton/StackTrackr/issues).
+Contributions via fork and pull request are welcome. Report issues at [GitHub Issues](https://github.com/lbruton/StakTrakr/issues).

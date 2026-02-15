@@ -183,7 +183,7 @@ const loadAnnouncements = async () => {
 const showFullChangelog = () => {
   // Try to open changelog documentation
   window.open(
-    "https://github.com/lbruton/StackTrackr/blob/main/CHANGELOG.md",
+    "https://github.com/lbruton/StakTrakr/blob/main/CHANGELOG.md",
     "_blank",
     "noopener,noreferrer",
   );
