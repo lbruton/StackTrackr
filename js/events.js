@@ -95,7 +95,7 @@ const processUploadedImage = async (file, side = 'obverse') => {
   });
 
   if (!result?.blob) {
-    debugLog('Image processing failed for ' + side);
+    debugLog(`Image processing failed for ${side}`);
     return;
   }
 
@@ -232,7 +232,7 @@ const saveUserImageForItem = async (uuid) => {
   }
 
   // Priority 2: New uploads - merge with existing or replace deleted sides
-  debugLog('saveUserImageForItem: saving images for ' + uuid);
+  debugLog(`saveUserImageForItem: saving images for ${uuid}`);
 
   let obvBlob = _pendingObverseBlob;
   let revBlob = _pendingReverseBlob;
@@ -261,7 +261,7 @@ const saveUserImageForItem = async (uuid) => {
   }
 
   const saved = await window.imageCache.cacheUserImage(uuid, obvBlob, revBlob);
-  debugLog('saveUserImageForItem: saved=' + saved);
+  debugLog(`saveUserImageForItem: saved=${saved}`);
   clearUploadState();
   return saved;
 };
@@ -282,11 +282,11 @@ const handleImageDeletion = async (uuid) => {
 
   if (deleteBoth) {
     // Delete entire record
-    debugLog('handleImageDeletion: deleting both sides for ' + uuid);
+    debugLog(`handleImageDeletion: deleting both sides for ${uuid}`);
     await window.imageCache.deleteUserImage(uuid);
   } else {
     // Partial deletion: keep one side, delete the other
-    debugLog('handleImageDeletion: partial deletion for ' + uuid);
+    debugLog(`handleImageDeletion: partial deletion for ${uuid}`);
 
     try {
       const existing = await window.imageCache.getUserImage(uuid);
@@ -1081,9 +1081,9 @@ const setupItemFormListeners = () => {
               // chain resolves via rule.seedImageId, not rule.id
               const ruleId = 'custom-img-' + Date.now();
               const result = NumistaLookup.addRule(pattern, rawKeywords, null, ruleId);
-              if (result?.success) {
+              if (result?.success && window.imageCache?.isAvailable()) {
                 await window.imageCache.cachePatternImage(ruleId, _pendingObverseBlob, _pendingReverseBlob);
-                debugLog('Pattern rule created: ' + result.id + ' (images: ' + ruleId + ') for "' + rawKeywords + '"');
+                debugLog(`Pattern rule created: ${result.id} (images: ${ruleId}) for "${rawKeywords}"`);
               } else {
                 console.warn('Failed to create pattern rule:', result?.error);
               }
