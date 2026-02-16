@@ -274,11 +274,11 @@ const setupAckModalEvents = () => {
  */
 const getEmbeddedWhatsNew = () => {
   return `
+    <li><strong>v3.29.08 &ndash; Fix What&apos;s New Modal Showing Stale Version</strong>: Version check uses APP_VERSION directly instead of potentially stale localStorage value. Service worker local assets switched to stale-while-revalidate so deployment updates propagate on next load</li>
     <li><strong>v3.29.07 &ndash; Fix Image Deletion in Edit Modal</strong>: Users can now properly remove uploaded photos from items via Remove button &mdash; deletion intent flags ensure images are removed from IndexedDB on Save. Orphaned images cleaned up when items are deleted (STAK-120)</li>
     <li><strong>v3.29.06 &ndash; Design System &amp; Settings Polish</strong>: Unified toggle styles to chip-sort-toggle pattern across Settings. Redesigned Appearance tab with grouped fieldsets. Living style guide (style.html) with theme switching and component samples. CSS design system coding standards (STAK-115, STAK-116, STAK-117)</li>
     <li><strong>v3.29.05 &ndash; Post-Release Hardening &amp; Seed Cache Fix</strong>: Service worker uses stale-while-revalidate for seed data so Docker poller updates reach users between releases. CoinFacts URL fallback for Raw/Authentic grades. Purchased chart range clamped to min 1 day. Cert badge keyboard accessibility. Verify promise and window.open hardening</li>
     <li><strong>v3.29.04 &ndash; View Modal Visual Sprint</strong>: Certification badge overlay on images with authority-specific colors and clickable grade/verify. Chart range pills (1Y, 5Y, 10Y, Purchased). Valuation-first default section order. Purchase date in valuation section (STAK-110, STAK-111, STAK-113)</li>
-    <li><strong>v3.29.03 &ndash; Price History Fixes &amp; Chart Improvements</strong>: Fixed Goldback items recording $0.00 retail in price history. Added per-item price history modal with inline delete and undo/redo. Fixed All-time chart on file:// protocol via seed bundle. Adaptive x-axis year labels. Custom date range picker on charts (STAK-108, STAK-109, STAK-103)</li>
   `;
 };
 

@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.29.08] - 2026-02-15
+
+### Fixed — Fix What's New Modal Showing Stale Version
+
+- **Fixed**: What's New modal no longer shows stale version content after deployments — version check now uses `APP_VERSION` directly instead of potentially stale localStorage value
+- **Fixed**: Service worker local asset strategy changed from cache-first to stale-while-revalidate so deployment updates propagate on next page load
+
+---
+
 ## [3.29.07] - 2026-02-15
 
 ### Fixed — Fix Image Deletion in Edit Modal
