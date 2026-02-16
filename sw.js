@@ -153,7 +153,7 @@ self.addEventListener('fetch', (event) => {
   }
 
   // Stale-while-revalidate for seed data (updated between releases by Docker poller)
-  if (url.origin === self.location.origin && url.pathname.startsWith('/data/spot-history')) {
+  if (url.origin === self.location.origin && url.pathname.includes('/data/spot-history')) {
     event.respondWith(staleWhileRevalidate(event.request));
     return;
   }
