@@ -65,6 +65,7 @@ Scripts load via `<script>` tags in `index.html` in strict dependency order. `fi
 - `formatCurrency(num)`, `formatWeight(num)`, etc. — formatting utilities
 
 **From `js/constants.js`:**
+
 - `API_PROVIDERS`, `METALS`, `ALLOWED_STORAGE_KEYS` — configuration objects
 - `APP_VERSION`, `LS_KEY`, `SPOT_HISTORY_KEY` — constants
 
