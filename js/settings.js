@@ -950,6 +950,7 @@ const setupSettingsEventListeners = () => {
       }
       if (cleared > 0 && typeof saveInventory === 'function') saveInventory();
       populateImagesSection();
+      if (typeof renderTable === 'function') renderTable();
       alert(`Cleared all image data. ${cleared} item URL(s) reset.`);
     });
   }
@@ -1010,6 +1011,8 @@ const setupSettingsEventListeners = () => {
               }
             }
             synced++;
+            // Throttle to avoid Numista API rate limits
+            await new Promise(r => setTimeout(r, 200));
           } catch {
             failed++;
           }
