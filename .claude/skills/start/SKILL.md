@@ -41,7 +41,7 @@ Run these commands (parallel where possible):
 Query the **StakTrakr** team (ID: `f876864d-ff80-4231-ae6c-a8e5cb69aca4`) for active work:
 
 1. List **In Progress** issues (these are what we're likely continuing)
-2. List **Todo** issues (these are queued in the active sprint)
+2. List **Todo** issues (these are queued in the active project)
 3. For each In Progress issue, read the full description to understand current state
 
 If no In Progress issues, skip to Phase 4.
@@ -59,8 +59,8 @@ Search Memento for the most recent handoff. Use **keyword search first** (reliab
 
 **Key handoff fields to surface:**
 
-- `ACTIVE_SPRINT` — current sprint project name and theme
-- `SPRINT_ISSUES` — issues in the active sprint
+- `ACTIVE_LINEAR_PROJ` — current Linear project name and theme
+- `LINEAR_PROJ_ISSUES` — issues in the active project
 - `NEXT_STEPS` — what to work on next
 - `VERSION` — current app version
 
@@ -72,7 +72,7 @@ Produce a concise summary (not a formal report — just conversational):
 Session Start — StakTrakr v[VERSION] on [BRANCH]
 
 Recent: [1-2 sentence summary of last few commits]
-Sprint: [SPRINT-NAME] — [issue list] or "No active sprint"
+Project: [PROJECT-NAME] — [issue list] or "No active project"
 In Progress: [STAK-XX: title, STAK-YY: title] or "None"
 Uncommitted: [X files changed] or "Clean"
 Last handoff: [1 sentence from NEXT_STEPS] or "No handoff found"
