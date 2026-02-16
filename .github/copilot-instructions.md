@@ -56,6 +56,7 @@ Scripts load via `<script>` tags in `index.html` in strict dependency order. `fi
 - `activeFilters` (object) — active filter state
 
 **From `js/changeLog.js`:**
+
 - `logChange(name, action, oldVal, newVal, idx)` — change tracking
 
 **From `js/utils.js`:**
