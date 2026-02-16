@@ -274,10 +274,10 @@ const setupAckModalEvents = () => {
  */
 const getEmbeddedWhatsNew = () => {
   return `
+    <li><strong>v3.29.05 &ndash; Post-Release Hardening &amp; Seed Cache Fix</strong>: Service worker uses stale-while-revalidate for seed data so Docker poller updates reach users between releases. CoinFacts URL fallback for Raw/Authentic grades. Purchased chart range clamped to min 1 day. Cert badge keyboard accessibility. Verify promise and window.open hardening</li>
     <li><strong>v3.29.04 &ndash; View Modal Visual Sprint</strong>: Certification badge overlay on images with authority-specific colors and clickable grade/verify. Chart range pills (1Y, 5Y, 10Y, Purchased). Valuation-first default section order. Purchase date in valuation section (STAK-110, STAK-111, STAK-113)</li>
     <li><strong>v3.29.03 &ndash; Price History Fixes &amp; Chart Improvements</strong>: Fixed Goldback items recording $0.00 retail in price history. Added per-item price history modal with inline delete and undo/redo. Fixed All-time chart on file:// protocol via seed bundle. Adaptive x-axis year labels. Custom date range picker on charts (STAK-108, STAK-109, STAK-103)</li>
     <li><strong>v3.29.02 &ndash; PWA Crash Fix: Service Worker Error Handling</strong>: Fixed installed PWA crash (ERR_FAILED) by adding error handling to all service worker fetch strategies. Navigation handler now falls back through cached index.html, cached root, and inline offline page</li>
-    <li><strong>v3.29.01 &ndash; Codacy Duplication Reduction</strong>: Extracted shared toggle helpers, merged config table renderers, deduplicated item field builders and modal close handlers</li>
   `;
 };
 
