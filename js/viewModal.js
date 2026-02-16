@@ -53,7 +53,7 @@ async function showViewModal(index) {
     let initRange = _VIEW_CHART_DEFAULT_RANGE;
     if (initRange === -1) {
       initRange = cd.purchaseDate > 0
-        ? Math.ceil((Date.now() - cd.purchaseDate) / 86400000)
+        ? Math.max(1, Math.ceil((Date.now() - cd.purchaseDate) / 86400000))
         : 30;
     }
     if (initRange === 0 || initRange > 180) {
@@ -506,7 +506,7 @@ function buildViewContent(item, index) {
         if (canvas) {
           // "Purchased" pill (-1): calculate days from purchase date to today
           const effectiveDays = days === -1 && purchaseDate > 0
-            ? Math.ceil((Date.now() - purchaseDate) / 86400000)
+            ? Math.max(1, Math.ceil((Date.now() - purchaseDate) / 86400000))
             : days;
           if (effectiveDays === 0 || effectiveDays > 180) {
             try {
