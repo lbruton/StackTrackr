@@ -29,6 +29,8 @@ const isCardViewActive = () =>
  * @returns {string} Space-separated "x,y" pairs
  */
 const dataToPolyline = (data, w, h, padY = 4) => {
+  if (data.length === 0) return '';
+  if (data.length === 1) return `0,${(h / 2).toFixed(1)}`;
   const min = Math.min(...data);
   const max = Math.max(...data);
   const range = max - min || 1;
@@ -220,6 +222,11 @@ const _interpolateNulls = (arr) => {
  * @returns {string}
  */
 const _dataToPolylineScaled = (data, w, h, globalMin, globalMax, padY = 4) => {
+  if (data.length === 0) return '';
+  if (data.length === 1) {
+    const y = padY + ((globalMax - data[0]) / (globalMax - globalMin || 1)) * (h - padY * 2);
+    return `0,${y.toFixed(1)}`;
+  }
   const range = globalMax - globalMin || 1;
   return data
     .map((v, i) => {
