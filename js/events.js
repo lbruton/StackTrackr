@@ -240,7 +240,7 @@ const saveUserImageForItem = async (uuid) => {
   // Merge with existing images if only one side uploaded
   if (!obvBlob || !revBlob) {
     try {
-      const existing = await imageCache.getUserImage(uuid);
+      const existing = await window.imageCache.getUserImage(uuid);
       if (existing) {
         // Only merge if not marked for deletion
         if (!obvBlob && existing.obverse && !_deleteObverseOnSave) {
@@ -260,7 +260,7 @@ const saveUserImageForItem = async (uuid) => {
     revBlob = null;
   }
 
-  const saved = await imageCache.cacheUserImage(uuid, obvBlob, revBlob);
+  const saved = await window.imageCache.cacheUserImage(uuid, obvBlob, revBlob);
   debugLog('saveUserImageForItem: saved=' + saved);
   clearUploadState();
   return saved;
@@ -283,13 +283,13 @@ const handleImageDeletion = async (uuid) => {
   if (deleteBoth) {
     // Delete entire record
     debugLog('handleImageDeletion: deleting both sides for ' + uuid);
-    await imageCache.deleteUserImage(uuid);
+    await window.imageCache.deleteUserImage(uuid);
   } else {
     // Partial deletion: keep one side, delete the other
     debugLog('handleImageDeletion: partial deletion for ' + uuid);
 
     try {
-      const existing = await imageCache.getUserImage(uuid);
+      const existing = await window.imageCache.getUserImage(uuid);
       if (!existing) return; // Nothing to delete
 
       // Nullify the deleted side, keep the other
@@ -298,13 +298,13 @@ const handleImageDeletion = async (uuid) => {
 
       // If both would be null, delete entire record
       if (!newObverse && !newReverse) {
-        await imageCache.deleteUserImage(uuid);
+        await window.imageCache.deleteUserImage(uuid);
       } else {
         // Save updated record with one side nullified
         // cacheUserImage requires obverse, so if only reverse remains, store it as obverse
         const obvToSave = newObverse || newReverse;
         const revToSave = newObverse && newReverse ? newReverse : null;
-        await imageCache.cacheUserImage(uuid, obvToSave, revToSave);
+        await window.imageCache.cacheUserImage(uuid, obvToSave, revToSave);
       }
     } catch (err) {
       console.warn('Failed to handle partial deletion:', err);
@@ -1082,7 +1082,7 @@ const setupItemFormListeners = () => {
               const ruleId = 'custom-img-' + Date.now();
               const result = NumistaLookup.addRule(pattern, rawKeywords, null, ruleId);
               if (result?.success) {
-                await imageCache.cachePatternImage(ruleId, _pendingObverseBlob, _pendingReverseBlob);
+                await window.imageCache.cachePatternImage(ruleId, _pendingObverseBlob, _pendingReverseBlob);
                 debugLog('Pattern rule created: ' + result.id + ' (images: ' + ruleId + ') for "' + rawKeywords + '"');
               } else {
                 console.warn('Failed to create pattern rule:', result?.error);
