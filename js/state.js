@@ -72,6 +72,8 @@ const elements = {
   itemGrade: null,
   itemGradingAuthority: null,
   itemCertNumber: null,
+  itemObverseImageUrl: null,
+  itemReverseImageUrl: null,
   searchNumistaBtn: null,
   lookupPcgsBtn: null,
   spotLookupBtn: null,

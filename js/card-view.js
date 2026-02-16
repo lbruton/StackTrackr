@@ -3,9 +3,9 @@
 
 /**
  * Returns the active card style from localStorage.
- * @returns {'A'|'B'|'C'|'D'}
+ * @returns {'A'|'B'|'C'}
  */
-const getCardStyle = () => localStorage.getItem(CARD_STYLE_KEY) || 'A';
+const getCardStyle = () => localStorage.getItem(CARD_STYLE_KEY) || 'B';
 
 /**
  * Returns true when the card view should be rendered instead of the table.
@@ -383,41 +383,12 @@ const renderCardC = (item, idx, computed) => {
   `</article>`;
 };
 
-/**
- * Renders Card Style D: Compact Row card.
- */
-const renderCardD = (item, idx, computed) => {
-  const { purchaseTotal, retailTotal, gainLoss } = computed;
-  const gl = gainLoss ?? 0;
-  const pct = purchaseTotal > 0 ? ((gl / purchaseTotal) * 100) : 0;
-  const metalLabel = (item.metal || '').charAt(0).toUpperCase() + (item.metal || '').slice(1);
-
-  return `<article class="card-d ${_cardMetalClass(item.metal)}" data-idx="${idx}">` +
-    `<div class="cv-card-top">` +
-      `${_cardImageHTML(item, '')}` +
-      `<div class="cv-card-info">` +
-        `<div class="cv-item-name cv-item-name-truncate">${sanitizeHtml(item.name || '')}</div>` +
-        `<div class="cv-chips-row">${_cardChipsHTML(item, true)}</div>` +
-      `</div>` +
-      `<div class="cv-card-gain">` +
-        `<div class="cv-gain-amount ${_gainClass(gl)}">${_gainSign(gl)}${_cardFmt(gl)}</div>` +
-        `<div class="cv-gain-pct ${_gainClass(gl)}">${_gainSign(gl)}${Math.abs(pct).toFixed(1)}%</div>` +
-      `</div>` +
-    `</div>` +
-    `<div class="cv-sparkline-row">${generateSparklineSVG(item, 400, 24, { opacity: 0.7, points: 40 })}</div>` +
-    `<div class="cv-value-row-d">` +
-      `<div class="cv-metal-dot"></div>` +
-      `<span>${sanitizeHtml(metalLabel)} &middot; ${_cardFmt(purchaseTotal)} cost</span>` +
-      `<span class="cv-retail-val">${_cardFmt(retailTotal)}</span>` +
-    `</div>` +
-  `</article>`;
-};
 
 // ---------------------------------------------------------------------------
 // Main card view renderer
 // ---------------------------------------------------------------------------
 
-const _cardRenderers = { A: renderCardA, B: renderCardB, C: renderCardC, D: renderCardD };
+const _cardRenderers = { A: renderCardA, B: renderCardB, C: renderCardC };
 
 /**
  * Renders all items as cards into the given container.
@@ -426,7 +397,7 @@ const _cardRenderers = { A: renderCardA, B: renderCardB, C: renderCardC, D: rend
  */
 const renderCardView = (sortedItems, container) => {
   const style = getCardStyle();
-  const renderer = _cardRenderers[style] || renderCardA;
+  const renderer = _cardRenderers[style] || renderCardB;
 
   const html = sortedItems.map(item => {
     const originalIdx = inventory.indexOf(item);

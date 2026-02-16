@@ -753,6 +753,19 @@ input[type="submit"] {
   overflow: hidden;
 }
 
+/* Spot price cards grid — 1col → 2col → 4col, never 3 */
+.spot-cards-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: 1fr;
+}
+@media (min-width: 640px) {
+  .spot-cards-grid { grid-template-columns: 1fr 1fr; }
+}
+@media (min-width: 960px) {
+  .spot-cards-grid { grid-template-columns: repeat(4, 1fr); }
+}
+
 .spot-card {
   position: relative;
   background: var(--bg-primary);
@@ -2567,10 +2580,20 @@ input[type="submit"] {
    TOTALS CARDS
    ============================================================================= */
 
+/* Summary cards grid — 1col → 2col → 4col, never 3; All Metals spans full width */
 .totals {
   display: grid;
   gap: var(--spacing-lg);
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: 1fr;
+}
+@media (min-width: 640px) {
+  .totals { grid-template-columns: 1fr 1fr; }
+}
+@media (min-width: 1100px) {
+  .totals { grid-template-columns: repeat(4, 1fr); }
+}
+.total-card-all {
+  grid-column: 1 / -1;
 }
 
 .total-card {
@@ -5584,28 +5607,12 @@ input:disabled + .slider {
 }
 
 @media (max-width: 1200px) {
-  .totals {
-    grid-template-columns: repeat(3, 1fr);
-  }
-
-  .total-card:last-child {
-    grid-column: span 2;
-  }
-
   #detailsModal .modal-content {
     max-width: 900px;
   }
 }
 
 @media (max-width: 992px) {
-  .totals {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .total-card:last-child {
-    grid-column: 1 / -1;
-  }
-
   #detailsModal .modal-content {
     max-width: 900px;
   }
@@ -5675,12 +5682,7 @@ input:disabled + .slider {
   }
 
   .totals {
-    grid-template-columns: repeat(2, 1fr);
     gap: var(--spacing-sm);
-  }
-
-  .total-card:last-child {
-    grid-column: 1 / -1;
   }
 
   .total-card {
@@ -9217,54 +9219,6 @@ th {
 .card-c .cv-value-journey { color: var(--text-muted); }
 .card-c .cv-value-gain { font-weight: 700; font-size: 0.78rem; white-space: nowrap; }
 
-/* --- Card D: Compact Row --- */
-.card-d {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow-sm);
-  overflow: hidden;
-  cursor: pointer;
-  transition: box-shadow 0.2s, transform 0.15s;
-}
-.card-d:hover { box-shadow: var(--shadow); transform: translateY(-1px); }
-.card-d:active { transform: scale(0.985); }
-.card-d .cv-card-top {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  padding: 0.5rem 0.65rem;
-}
-.card-d .coin-img { width: 44px; height: 44px; }
-.card-d .cv-card-info { flex: 1; min-width: 0; }
-.card-d .cv-item-name { font-size: 0.78rem; }
-.card-d .cv-chips-row { gap: 0.2rem; margin-top: 0.15rem; }
-.card-d .cv-card-gain { text-align: right; flex-shrink: 0; }
-.card-d .cv-gain-amount { font-size: 0.82rem; font-weight: 700; line-height: 1.2; }
-.card-d .cv-gain-pct { font-size: 0.62rem; color: var(--text-muted); }
-.card-d .cv-sparkline-row {
-  height: 24px;
-  padding: 0 0.65rem;
-  overflow: hidden;
-}
-.card-d .cv-sparkline-row svg { width: 100%; height: 100%; }
-.card-d .cv-value-row-d {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.3rem 0.65rem 0.45rem;
-  font-size: 0.7rem;
-  color: var(--text-muted);
-  border-top: 1px solid var(--border);
-}
-.card-d .cv-retail-val { font-weight: 600; color: var(--text); }
-.card-d .cv-metal-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--metal-color);
-  flex-shrink: 0;
-}
 
 /* --- Phase 5: Landscape card view (STACK-70) ----------------------------
    Touch devices between 769–1024px get card view via JS-applied

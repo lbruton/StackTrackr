@@ -91,6 +91,11 @@ const BulkImageCache = (() => {
 
       // Resolve image URLs already on the item
       const _valid = (u) => u && /^https?:\/\/.+\..+/i.test(u);
+      // Repair malformed URLs (sanitization bug stripped ://./ characters)
+      let urlRepaired = false;
+      if (item.obverseImageUrl && !_valid(item.obverseImageUrl)) { item.obverseImageUrl = ''; urlRepaired = true; }
+      if (item.reverseImageUrl && !_valid(item.reverseImageUrl)) { item.reverseImageUrl = ''; urlRepaired = true; }
+      if (urlRepaired && onLog) onLog({ catalogId, status: 'url-repair', message: 'Cleared malformed image URL(s) — will re-fetch' });
       let obverseUrl = _valid(item.obverseImageUrl) ? item.obverseImageUrl : '';
       let reverseUrl = _valid(item.reverseImageUrl) ? item.reverseImageUrl : '';
 

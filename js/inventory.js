@@ -1809,6 +1809,8 @@ const editItem = (idx, logIdx = null) => {
   if (elements.itemGradingAuthority) elements.itemGradingAuthority.value = item.gradingAuthority || '';
   if (elements.itemCertNumber) elements.itemCertNumber.value = item.certNumber || '';
   if (elements.itemPcgsNumber) elements.itemPcgsNumber.value = item.pcgsNumber || '';
+  if (elements.itemObverseImageUrl) elements.itemObverseImageUrl.value = item.obverseImageUrl || '';
+  if (elements.itemReverseImageUrl) elements.itemReverseImageUrl.value = item.reverseImageUrl || '';
   if (elements.itemSerial) elements.itemSerial.value = item.serial;
 
   // Pre-fill purity: match a preset or show custom input
