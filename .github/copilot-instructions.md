@@ -42,6 +42,7 @@ Scripts load via `<script>` tags in `index.html` in strict dependency order. `fi
 - `elements` (object) — cached DOM references
 
 **From `js/debug-log.js`:**
+
 - `debugLog(message, level)` — debug logging utility
 
 **From `js/image-cache.js`:**
