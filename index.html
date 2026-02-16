@@ -227,6 +227,15 @@
             <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
           </svg>
         </button>
+        <!-- Card/Table toggle button (STAK-118) -->
+        <button class="btn theme-btn header-toggle-btn" id="headerCardViewBtn"
+                title="Toggle card/table view" aria-label="Toggle card/table view" style="display:none">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="1" y="3" width="7" height="7" rx="1"/><rect x="10" y="3" width="7" height="7" rx="1"/>
+            <rect x="1" y="14" width="7" height="7" rx="1"/><rect x="10" y="14" width="7" height="7" rx="1"/>
+          </svg>
+        </button>
         <button class="btn theme-btn" id="aboutBtn" title="About" aria-label="About">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -724,6 +733,14 @@
                 </svg>
                 <span class="header-text">Type</span>
               </th>
+              <th class="shrink" data-column="image">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="header-icon">
+                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                  <circle cx="8.5" cy="8.5" r="1.5"/>
+                  <polyline points="21 15 16 10 5 21"/>
+                </svg>
+                <span class="header-text">Image</span>
+              </th>
               <th class="expand" data-column="name">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="header-icon">
                   <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
@@ -799,12 +816,12 @@
           <div class="table-footer-controls">
             <div class="table-item-count"><strong id="itemCount"></strong></div>
             <select id="itemsPerPage" class="control-select" title="Visible rows">
-              <option value="5">5</option>
-              <option value="10">10</option>
-              <option value="15">15</option>
-              <option value="25" selected>25</option>
-              <option value="50">50</option>
-              <option value="100">100</option>
+              <option value="3">3</option>
+              <option value="12" selected>12</option>
+              <option value="24">24</option>
+              <option value="48">48</option>
+              <option value="96">96</option>
+              <option value="all">All</option>
             </select>
           </div>
           
@@ -1646,6 +1663,10 @@
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
               Cloud
             </button>
+            <button class="settings-nav-item" data-section="currency">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+              Currency
+            </button>
             <button class="settings-nav-item" data-section="goldback">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v12"/><path d="M9 9a3 3 0 0 1 3-1.5c2 0 3 1 3 2.5s-1 2.5-3 2.5-3 1-3 2.5a3 3 0 0 0 3 2.5"/></svg>
               Goldback
@@ -1684,75 +1705,7 @@
                 </div>
               </div>
 
-              <!-- ── Currency & Pricing ── -->
-              <div class="settings-fieldset">
-                <div class="settings-fieldset-title">Currency &amp; Pricing</div>
-                <div class="settings-group">
-                  <div class="settings-group-label">Display currency</div>
-                  <p class="settings-subtext">All prices, spot values, and exports will use this currency. Spot prices are fetched in USD and converted using daily exchange rates.</p>
-                  <select id="settingsDisplayCurrency"></select>
-                </div>
-                <div class="settings-group">
-                  <div class="settings-group-label">Header currency button</div>
-                  <p class="settings-subtext">Show a quick currency switcher in the app header.</p>
-                  <div class="chip-sort-toggle" id="settingsHeaderCurrencyBtn">
-                    <button type="button" class="chip-sort-btn" data-val="yes">On</button>
-                    <button type="button" class="chip-sort-btn" data-val="no">Off</button>
-                  </div>
-                </div>
-                <div class="settings-group">
-                  <div class="settings-group-label">24h price comparison</div>
-                  <p class="settings-subtext">Choose how the 24h percentage change on spot cards is calculated.</p>
-                  <select id="settingsSpotCompareMode">
-                    <option value="close-close">Close / Close (default)</option>
-                    <option value="open-open">Open / Open</option>
-                    <option value="open-close">Open / Close</option>
-                  </select>
-                </div>
-              </div>
-
-              <!-- ── Image Display ── -->
-              <div class="settings-fieldset">
-                <div class="settings-fieldset-title">Image Display</div>
-                <div class="settings-group">
-                  <div class="settings-group-label">Table thumbnails</div>
-                  <p class="settings-subtext">Show coin images next to item names. Uses cached images from uploads, pattern rules, and Numista lookups.</p>
-                  <div class="chip-sort-toggle" id="tableImagesToggle">
-                    <button type="button" class="chip-sort-btn" data-val="yes">On</button>
-                    <button type="button" class="chip-sort-btn" data-val="no">Off</button>
-                  </div>
-                </div>
-                <div class="settings-group">
-                  <div class="settings-group-label">Numista priority override</div>
-                  <p class="settings-subtext">When on, Numista API images take priority over your uploads and pattern rules.</p>
-                  <div class="chip-sort-toggle" id="numistaOverrideToggle">
-                    <button type="button" class="chip-sort-btn" data-val="yes">On</button>
-                    <button type="button" class="chip-sort-btn" data-val="no">Off</button>
-                  </div>
-                </div>
-              </div>
-
-              <!-- ── Card View (STAK-118) ── -->
-              <div class="settings-fieldset">
-                <div class="settings-fieldset-title">Card View</div>
-                <div class="settings-group">
-                  <div class="settings-group-label">Card style</div>
-                  <p class="settings-subtext">Choose the card layout used in mobile and optional desktop card view.</p>
-                  <select id="settingsCardStyle">
-                    <option value="A">A: Sparkline Header</option>
-                    <option value="B">B: Full-Bleed Overlay</option>
-                    <option value="C">C: Split Card</option>
-                  </select>
-                </div>
-                <div class="settings-group">
-                  <div class="settings-group-label">Desktop card view</div>
-                  <p class="settings-subtext">Show cards instead of the table on wide screens. Cards are always used on mobile.</p>
-                  <div class="chip-sort-toggle" id="settingsDesktopCardView">
-                    <button type="button" class="chip-sort-btn" data-val="yes">On</button>
-                    <button type="button" class="chip-sort-btn" data-val="no">Off</button>
-                  </div>
-                </div>
-              </div>
+              <!-- Currency, Image Display, and Card View sections moved to their own tabs -->
 
               <!-- ── Custom Themes (placeholder) ── -->
               <div class="settings-fieldset" style="text-align:center; opacity:0.6;">
@@ -1781,6 +1734,36 @@
                   <div class="chip-grouping-empty">Loading...</div>
                 </div>
               </div>
+
+              <!-- ── Card View (STAK-118) ── -->
+              <div class="settings-fieldset">
+                <div class="settings-fieldset-title">Card View</div>
+                <div class="settings-group">
+                  <div class="settings-group-label">Card style</div>
+                  <p class="settings-subtext">Choose the card layout used in mobile and optional desktop card view.</p>
+                  <select id="settingsCardStyle">
+                    <option value="A">A: Sparkline Header</option>
+                    <option value="B">B: Full-Bleed Overlay</option>
+                    <option value="C">C: Split Card</option>
+                  </select>
+                </div>
+                <div class="settings-group">
+                  <div class="settings-group-label">Desktop card view</div>
+                  <p class="settings-subtext">Show cards instead of the table on wide screens. Cards are always used on mobile.</p>
+                  <div class="chip-sort-toggle" id="settingsDesktopCardView">
+                    <button type="button" class="chip-sort-btn" data-val="yes">On</button>
+                    <button type="button" class="chip-sort-btn" data-val="no">Off</button>
+                  </div>
+                </div>
+                <div class="settings-group">
+                  <div class="settings-group-label">Header card view button</div>
+                  <p class="settings-subtext">Show a quick card/table toggle button in the app header.</p>
+                  <div class="chip-sort-toggle" id="settingsHeaderCardViewBtn">
+                    <button type="button" class="chip-sort-btn" data-val="yes">On</button>
+                    <button type="button" class="chip-sort-btn" data-val="no">Off</button>
+                  </div>
+                </div>
+              </div>
             </div>
 
             <!-- ===== TABLE SETTINGS ===== -->
@@ -1790,12 +1773,12 @@
               <div class="settings-group">
                 <div class="settings-group-label">Visible rows</div>
                 <select id="settingsItemsPerPage">
-                  <option value="5">5</option>
-                  <option value="10">10</option>
-                  <option value="15">15</option>
-                  <option value="25">25</option>
-                  <option value="50">50</option>
-                  <option value="100">100</option>
+                  <option value="3">3</option>
+                  <option value="12">12</option>
+                  <option value="24">24</option>
+                  <option value="48">48</option>
+                  <option value="96">96</option>
+                  <option value="all">All</option>
                 </select>
               </div>
 
@@ -2453,6 +2436,36 @@
                 </div>
               </div>
 
+              <!-- ── Image Display ── -->
+              <div class="settings-fieldset">
+                <div class="settings-fieldset-title">Image Display</div>
+                <div class="settings-group">
+                  <div class="settings-group-label">Table thumbnails</div>
+                  <p class="settings-subtext">Show coin images in the table. Uses cached images from uploads, pattern rules, and Numista lookups.</p>
+                  <div class="chip-sort-toggle" id="tableImagesToggle">
+                    <button type="button" class="chip-sort-btn" data-val="yes">On</button>
+                    <button type="button" class="chip-sort-btn" data-val="no">Off</button>
+                  </div>
+                </div>
+                <div class="settings-group">
+                  <div class="settings-group-label">Table image sides</div>
+                  <p class="settings-subtext">Choose which coin sides to display in the table image column.</p>
+                  <div class="chip-sort-toggle" id="tableImageSidesToggle">
+                    <button type="button" class="chip-sort-btn" data-val="both">Both</button>
+                    <button type="button" class="chip-sort-btn" data-val="obverse">Obverse</button>
+                    <button type="button" class="chip-sort-btn" data-val="reverse">Reverse</button>
+                  </div>
+                </div>
+                <div class="settings-group">
+                  <div class="settings-group-label">Numista priority override</div>
+                  <p class="settings-subtext">When on, Numista API images take priority over your uploads and pattern rules.</p>
+                  <div class="chip-sort-toggle" id="numistaOverrideToggle">
+                    <button type="button" class="chip-sort-btn" data-val="yes">On</button>
+                    <button type="button" class="chip-sort-btn" data-val="no">Off</button>
+                  </div>
+                </div>
+              </div>
+
               <!-- Add Pattern Image Rule -->
               <div class="settings-group">
                 <div class="settings-group-label">Add Pattern Image Rule</div>
@@ -2568,6 +2581,36 @@
                 </select>
               </div>
 
+            </div>
+
+            <!-- ===== CURRENCY & PRICING ===== -->
+            <div class="settings-section-panel" id="settingsPanel_currency" style="display: none">
+              <h3>Currency &amp; Pricing</h3>
+
+              <div class="settings-fieldset">
+                <div class="settings-group">
+                  <div class="settings-group-label">Display currency</div>
+                  <p class="settings-subtext">All prices, spot values, and exports will use this currency. Spot prices are fetched in USD and converted using daily exchange rates.</p>
+                  <select id="settingsDisplayCurrency"></select>
+                </div>
+                <div class="settings-group">
+                  <div class="settings-group-label">Header currency button</div>
+                  <p class="settings-subtext">Show a quick currency switcher in the app header.</p>
+                  <div class="chip-sort-toggle" id="settingsHeaderCurrencyBtn">
+                    <button type="button" class="chip-sort-btn" data-val="yes">On</button>
+                    <button type="button" class="chip-sort-btn" data-val="no">Off</button>
+                  </div>
+                </div>
+                <div class="settings-group">
+                  <div class="settings-group-label">24h price comparison</div>
+                  <p class="settings-subtext">Choose how the 24h percentage change on spot cards is calculated.</p>
+                  <select id="settingsSpotCompareMode">
+                    <option value="close-close">Close / Close (default)</option>
+                    <option value="open-open">Open / Open</option>
+                    <option value="open-close">Open / Close</option>
+                  </select>
+                </div>
+              </div>
             </div>
 
             <!-- ===== GOLDBACK PRICING (STACK-45) ===== -->
@@ -3287,5 +3330,12 @@
     <script defer src="./js/test-loader.js"></script>
 
     <script defer src="./js/init.js"></script>
+
+    <!-- Back to top floating button -->
+    <button id="backToTopBtn" class="back-to-top" title="Back to top" aria-label="Scroll to top">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="18 15 12 9 6 15"/>
+      </svg>
+    </button>
   </body>
 </html>

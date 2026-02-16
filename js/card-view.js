@@ -5,7 +5,7 @@
  * Returns the active card style from localStorage.
  * @returns {'A'|'B'|'C'}
  */
-const getCardStyle = () => localStorage.getItem(CARD_STYLE_KEY) || 'B';
+const getCardStyle = () => localStorage.getItem(CARD_STYLE_KEY) || 'A';
 
 /**
  * Returns true when the card view should be rendered instead of the table.
@@ -144,22 +144,33 @@ const generateSparklineSVG = (item, w, h, opts = {}) => {
   const meltFillPoints = `${meltLine} ${w},${h} 0,${h}`;
   const purchFillPoints = `${purchaseLine} ${w},${h} 0,${h}`;
 
+  // Theme-aware — bold strokes and fills on light/sepia backgrounds
+  const _svgTheme = document.documentElement.getAttribute('data-theme') || 'light';
+  const _lt = _svgTheme === 'light' || _svgTheme === 'sepia';
+  const _meltStroke = _lt ? '#047857' : '#10b981';
+  const _purchStroke = _lt ? '#b91c1c' : '#ef4444';
+  const _retailStroke = _lt ? '#1d4ed8' : '#3b82f6';
+  const _meltFillOp = _lt ? '0.70' : '0.18';
+  const _purchFillOp = _lt ? '0.50' : '0.08';
+  const _sw = _lt ? '3.5' : '1.5';
+  const _purchOp = _lt ? '1' : '0.85';
+
   return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" style="opacity:${opacity}">` +
     `<defs>` +
     `<linearGradient id="${meltGradId}" x1="0" y1="0" x2="0" y2="1">` +
-    `<stop offset="0%" stop-color="#10b981" stop-opacity="0.18"/>` +
-    `<stop offset="100%" stop-color="#10b981" stop-opacity="0"/>` +
+    `<stop offset="0%" stop-color="${_meltStroke}" stop-opacity="${_meltFillOp}"/>` +
+    `<stop offset="100%" stop-color="${_meltStroke}" stop-opacity="0"/>` +
     `</linearGradient>` +
     `<linearGradient id="${purchGradId}" x1="0" y1="0" x2="0" y2="1">` +
-    `<stop offset="0%" stop-color="#ef4444" stop-opacity="0.08"/>` +
-    `<stop offset="100%" stop-color="#ef4444" stop-opacity="0"/>` +
+    `<stop offset="0%" stop-color="${_purchStroke}" stop-opacity="${_purchFillOp}"/>` +
+    `<stop offset="100%" stop-color="${_purchStroke}" stop-opacity="0"/>` +
     `</linearGradient>` +
     `</defs>` +
     `<polygon points="${purchFillPoints}" fill="url(#${purchGradId})"/>` +
     `<polygon points="${meltFillPoints}" fill="url(#${meltGradId})"/>` +
-    `<polyline points="${meltLine}" fill="none" stroke="#10b981" stroke-width="1.5" stroke-linecap="round"/>` +
-    `<polyline points="${purchaseLine}" fill="none" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="4,3" opacity="0.85"/>` +
-    `<polyline points="${retailLine}" fill="none" stroke="#3b82f6" stroke-width="1.5" stroke-linecap="round"/>` +
+    `<polyline points="${meltLine}" fill="none" stroke="${_meltStroke}" stroke-width="${_sw}" stroke-linecap="round"/>` +
+    `<polyline points="${purchaseLine}" fill="none" stroke="${_purchStroke}" stroke-width="${_sw}" stroke-dasharray="4,3" opacity="${_purchOp}"/>` +
+    `<polyline points="${retailLine}" fill="none" stroke="${_retailStroke}" stroke-width="${_sw}" stroke-linecap="round"/>` +
     `</svg>`;
 };
 
@@ -294,7 +305,8 @@ const _cardChipsHTML = (item, small = false) => {
   if (item.grade) h += `<span class="cv-chip cv-chip-grade"${s}>${sanitizeHtml(item.grade)}</span>`;
   const qty = Number(item.qty) || 1;
   if (qty > 1) h += `<span class="cv-chip cv-chip-qty"${s}>x${qty}</span>`;
-  h += `<span class="cv-chip cv-chip-weight"${s}>${sanitizeHtml(item.weight || '')}</span>`;
+  const _wUnit = (item.weightUnit || 'oz').toLowerCase() === 'gb' ? 'gb' : (item.weightUnit || 'oz');
+  h += `<span class="cv-chip cv-chip-weight"${s}>${sanitizeHtml(item.weight || '')} ${sanitizeHtml(_wUnit)}</span>`;
   return h;
 };
 
@@ -330,7 +342,7 @@ const renderCardA = (item, idx, computed) => {
     `<div class="card-a-chart-wrap"><canvas class="card-a-canvas" data-metal="${_cvEscapeAttr((item.metal || '').toLowerCase())}" data-weight="${parseFloat(item.weight) || 1}" data-qty="${Number(item.qty) || 1}" data-purity="${parseFloat(item.purity) || 1}" data-price="${parseFloat(item.price) || 0}" data-market="${parseFloat(item.marketValue) || 0}" data-date="${_cvEscapeAttr(item.date || '')}"></canvas></div>` +
     `<div class="card-body">` +
       `<div class="cv-item-name">${sanitizeHtml(item.name || '')}</div>` +
-      `<div class="cv-chips-row">${_cardChipsHTML(item)}</div>` +
+      `<div class="cv-chips-img-row"><div class="cv-chips-row">${_cardChipsHTML(item)}</div><div class="cv-images-row cv-images-sm">${_cardImageHTML(item, '', 'obverse')}${_cardImageHTML(item, '', 'reverse')}</div></div>` +
       `<div class="cv-value-row">` +
         `<span class="cv-value-journey">${_cardFmt(purchaseTotal)}<span class="cv-arrow">&rarr;</span>${_cardFmt(retailTotal)}</span>` +
         `<span class="cv-value-gain ${_gainClass(gl)}">${_gainArrow(gl)} ${_gainSign(gl)}${_cardFmt(gl)} (${_gainSign(gl)}${Math.abs(pct).toFixed(1)}%)</span>` +
@@ -519,45 +531,48 @@ function _initCardCharts(container) {
 
     const hasRetail = retailData.some(v => v !== null);
 
+    // Theme-aware chart colors — bold lines/fills for light & sepia
+    const _theme = document.documentElement.getAttribute('data-theme') || 'light';
+    const _isLight = _theme === 'light' || _theme === 'sepia';
     const datasets = [
       {
         label: 'Purchase',
         data: purchaseLine,
-        borderColor: '#ef4444',
-        backgroundColor: 'rgba(239, 68, 68, 0.06)',
+        borderColor: _isLight ? '#b91c1c' : '#ef4444',
+        backgroundColor: _isLight ? 'rgba(185, 28, 28, 0.15)' : 'rgba(239, 68, 68, 0.06)',
         fill: 'origin',
         borderDash: [6, 3],
         tension: 0,
         pointRadius: 0,
         pointHoverRadius: 0,
-        borderWidth: 1.5,
-        order: 3,
+        borderWidth: _isLight ? 3 : 1.5,
+        order: 1,
       },
       {
         label: 'Melt',
         data: meltData,
-        borderColor: '#10b981',
-        backgroundColor: 'rgba(16, 185, 129, 0.12)',
+        borderColor: _isLight ? '#047857' : '#10b981',
+        backgroundColor: _isLight ? 'rgba(4, 120, 87, 0.25)' : 'rgba(16, 185, 129, 0.18)',
         fill: 'origin',
         tension: 0.3,
         pointRadius: 0,
         pointHoverRadius: 3,
-        borderWidth: 2,
-        order: 2,
+        borderWidth: _isLight ? 3 : 2,
+        order: 3,
       },
       {
         label: 'Retail',
         data: retailData,
-        borderColor: '#3b82f6',
-        backgroundColor: 'rgba(59, 130, 246, 0.08)',
+        borderColor: _isLight ? '#1d4ed8' : '#3b82f6',
+        backgroundColor: _isLight ? 'rgba(29, 78, 216, 0.15)' : 'rgba(59, 130, 246, 0.12)',
         fill: 'origin',
         tension: 0.3,
         spanGaps: true,
         pointRadius: 0,
         pointHoverRadius: 3,
-        borderWidth: 1.5,
+        borderWidth: _isLight ? 3 : 1.5,
         hidden: !hasRetail,
-        order: 1,
+        order: 2,
       },
     ];
 

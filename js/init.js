@@ -404,22 +404,32 @@ document.addEventListener("DOMContentLoaded", async () => {
     apiConfig = loadApiConfig();
     apiCache = loadApiCache();
 
-    // Load persisted items-per-page setting
+    // Apply saved desktop card view setting (STAK-118)
+    const _isCardOnInit = localStorage.getItem(DESKTOP_CARD_VIEW_KEY) === 'true';
+    if (_isCardOnInit) {
+      document.body.classList.add('force-card-view');
+    }
+
+    // Load persisted items-per-page setting (view-aware defaults: card=3, table=24)
     try {
       const savedIpp = localStorage.getItem(ITEMS_PER_PAGE_KEY);
       if (savedIpp) {
-        const parsed = parseInt(savedIpp, 10);
-        if ([5, 10, 15, 25, 50, 100].includes(parsed)) {
-          itemsPerPage = parsed;
-          if (elements.itemsPerPage) elements.itemsPerPage.value = String(parsed);
+        if (savedIpp === 'all') {
+          itemsPerPage = Infinity;
+          if (elements.itemsPerPage) elements.itemsPerPage.value = 'all';
+        } else {
+          const parsed = parseInt(savedIpp, 10);
+          if ([3, 12, 24, 48, 96].includes(parsed)) {
+            itemsPerPage = parsed;
+            if (elements.itemsPerPage) elements.itemsPerPage.value = String(parsed);
+          }
         }
+      } else {
+        // No saved preference — default to 12
+        itemsPerPage = 12;
+        if (elements.itemsPerPage) elements.itemsPerPage.value = '12';
       }
     } catch (e) { /* ignore */ }
-
-    // Apply saved desktop card view setting (STAK-118)
-    if (localStorage.getItem(DESKTOP_CARD_VIEW_KEY) === 'true') {
-      document.body.classList.add('force-card-view');
-    }
 
     // Apply saved theme attribute early so CSS variables resolve correctly
     // before renderActiveFilters() computes contrast colors in Phase 13

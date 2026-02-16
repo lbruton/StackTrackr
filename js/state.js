@@ -13,7 +13,7 @@ let notesIndex = null;
 let editingChangeLogIndex = null;
 
 /** @type {number} Number of visible rows in the portal (scrollable table) view */
-let itemsPerPage = 25;
+let itemsPerPage = 12;
 
 /** @type {string} Current search query */
 let searchQuery = "";

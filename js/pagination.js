@@ -31,8 +31,8 @@ const updatePortalHeight = () => {
     const cols = Math.max(1, Math.round(gridWidth / (cardRect.width + gap)));
     const totalRows = Math.ceil(totalCards / cols);
 
-    if (totalRows <= itemsPerPage) {
-      cardGrid.style.maxHeight = '';
+    if (totalRows <= itemsPerPage || itemsPerPage === Infinity) {
+      cardGrid.style.maxHeight = 'none';
       cardGrid.style.overflowY = '';
     } else {
       const portalHeight = (itemsPerPage * cardHeight);
@@ -61,9 +61,10 @@ const updatePortalHeight = () => {
   const rowHeight = firstRow.getBoundingClientRect().height;
   const totalRows = table.querySelectorAll('tbody tr').length;
 
-  // If all rows fit, no need for a scrollbar
+  // If all rows fit (or "All" selected), remove scroll constraint
   if (totalRows <= itemsPerPage) {
-    portalScroll.style.maxHeight = '';
+    portalScroll.style.maxHeight = 'none';
+    portalScroll.style.overflowY = '';
     return;
   }
 

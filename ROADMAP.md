@@ -17,15 +17,6 @@ Extend the filter chip and search systems with user-facing feature adds.
 
 ---
 
-## Near-Term — Mobile Overhaul
-
-Redesign mobile layouts. Benefits from the design system foundation above.
-
-| Issue | Title | Priority |
-|-------|-------|----------|
-| [STAK-106](https://linear.app/hextrackr/issue/STAK-106) | Mobile: Redesign metal summary cards for small screens | High |
-| [STAK-118](https://linear.app/hextrackr/issue/STAK-118) | Mobile: Redesign inventory card view with sparklines, images, and new interaction model | High |
-
 ---
 
 ## Medium-Term — Feature Depth
@@ -93,6 +84,7 @@ Encrypted cloud sync for sponsors ($3/month). Zero-knowledge architecture — da
 <details>
 <summary>Shipped features (click to expand)</summary>
 
+- **v3.30.00** — STAK-118/106/124/125/126: Card View Engine, Mobile Overhaul & UI Polish — three card styles with sparkline headers, CDN image URLs, mobile viewport overhaul, rows-per-page with back-to-top, theme-aware sparklines
 - **v3.29.06** — STAK-115/116/117: Design System & Settings Polish — unified toggle styles, Appearance tab fieldset redesign, living style guide (style.html), CSS design system coding standards
 - **v3.29.04** — STAK-110/111/113: View Modal Visual Sprint — cert badge overlay with authority colors, chart range pills (1Y/5Y/10Y/Purchased), valuation-first default order, purchase date in valuation
 - **v3.29.03** — STAK-108/109/103: Price history bug fix, per-item price history management UI with inline delete and undo/redo, chart fixes (seed bundle for file://, adaptive x-axis labels, custom date range picker)
