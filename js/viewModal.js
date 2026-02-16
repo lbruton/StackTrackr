@@ -251,6 +251,7 @@ function buildViewContent(item, index) {
         : `Open ${authority} verification`;
       gradeSpan.tabIndex = 0;
       gradeSpan.role = 'button';
+      gradeSpan.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); gradeSpan.click(); } });
       gradeSpan.addEventListener('click', (e) => {
         e.stopPropagation();
         let url;
@@ -284,6 +285,7 @@ function buildViewContent(item, index) {
       const verifySpan = _el('span', `view-cert-verify${isVerified ? ' pcgs-verified' : ''}`);
       verifySpan.tabIndex = 0;
       verifySpan.role = 'button';
+      verifySpan.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); verifySpan.click(); } });
       verifySpan.dataset.certNumber = certNum;
       verifySpan.title = isVerified ? `Verified — Cert #${certNum}` : 'Verify cert via PCGS API';
       verifySpan.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>';
