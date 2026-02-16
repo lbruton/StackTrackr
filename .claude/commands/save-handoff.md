@@ -51,7 +51,7 @@ mcp__memento__create_entities([{
   ]
 }])
 
-// Add handoff-specific tags per TAXONOMY.md (using add_observations with TAG: prefix)
+// Add handoff-specific tags per memento-taxonomy skill (using add_observations with TAG: prefix)
 mcp__memento__add_observations({
   observations: [{
     entityName: "Handoff: [GENERATED_HANDOFF_ID]",

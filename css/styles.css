@@ -3695,6 +3695,106 @@ td input:checked + .slider:before {
   color: rgba(255, 255, 255, 0.15);
 }
 
+/* --- Certification badge overlay on image section --- */
+.view-cert-badge {
+  position: absolute;
+  bottom: var(--spacing-sm);
+  right: calc(var(--spacing-sm) + 10px); /* extra padding for scrollbar clearance */
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 0.3rem 0.6rem;
+  border-radius: var(--radius);
+  background: rgba(0, 0, 0, 0.55);
+  color: rgba(248, 250, 252, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(4px);
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+/* --- Authority-specific grade + border colors --- */
+.view-cert-badge[data-authority="PCGS"] {
+  border-color: rgba(96, 165, 250, 0.4);
+}
+.view-cert-badge[data-authority="PCGS"] .view-cert-grade {
+  color: #60a5fa;
+}
+.view-cert-badge[data-authority="NGC"] {
+  border-color: rgba(251, 191, 36, 0.4);
+}
+.view-cert-badge[data-authority="NGC"] .view-cert-grade {
+  color: #fbbf24;
+}
+.view-cert-badge[data-authority="ANACS"] {
+  border-color: rgba(52, 211, 153, 0.4);
+}
+.view-cert-badge[data-authority="ANACS"] .view-cert-grade {
+  color: #34d399;
+}
+.view-cert-badge[data-authority="ICG"] {
+  border-color: rgba(167, 139, 250, 0.4);
+}
+.view-cert-badge[data-authority="ICG"] .view-cert-grade {
+  color: #a78bfa;
+}
+
+/* Grade text — clickable when PCGS CoinFacts link available */
+.view-cert-grade.view-cert-clickable {
+  cursor: pointer;
+  transition: var(--transition);
+}
+.view-cert-grade.view-cert-clickable:hover {
+  text-decoration: underline;
+  opacity: 0.85;
+}
+
+/* --- Verify checkmark states: gray → green → red --- */
+.view-cert-verify {
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  color: rgba(255, 255, 255, 0.35); /* gray — never verified */
+  transition: var(--transition);
+  padding: 0.15rem;
+  border-radius: 50%;
+}
+.view-cert-verify:hover {
+  color: rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.1);
+}
+.view-cert-verify.pcgs-verifying {
+  color: rgba(255, 255, 255, 0.3);
+  animation: pcgs-pulse 1s ease-in-out infinite;
+}
+.view-cert-verify.pcgs-verified {
+  color: #4ade80; /* green — passed */
+}
+.view-cert-verify.pcgs-verified:hover {
+  color: #22c55e;
+  background: rgba(74, 222, 128, 0.1);
+}
+.view-cert-verify.pcgs-verify-failed {
+  color: #ef4444; /* red — failed */
+}
+
+/* Sepia theme — adjust colors on dark image bg */
+[data-theme="sepia"] .view-cert-badge[data-authority="PCGS"] .view-cert-grade {
+  color: #93bbfd;
+}
+[data-theme="sepia"] .view-cert-badge[data-authority="NGC"] .view-cert-grade {
+  color: #fcd34d;
+}
+[data-theme="sepia"] .view-cert-badge[data-authority="ANACS"] .view-cert-grade {
+  color: #6ee7b7;
+}
+[data-theme="sepia"] .view-cert-verify.pcgs-verified {
+  color: #86efac;
+}
+
 /* --- Data sections --- */
 .view-detail-section {
   padding: var(--spacing) var(--spacing-xl);
@@ -4050,6 +4150,21 @@ td input:checked + .slider:before {
   .view-image-section {
     flex-direction: column;
     align-items: center;
+  }
+
+  .view-cert-badge {
+    font-size: 0.9rem;
+    padding: 0.4rem 0.7rem;
+    gap: 0.4rem;
+    right: calc(var(--spacing-sm) + 12px);
+  }
+  .view-cert-grade.view-cert-clickable,
+  .view-cert-verify {
+    min-width: 28px;
+    min-height: 28px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
   }
 }
 

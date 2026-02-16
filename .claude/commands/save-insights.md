@@ -65,7 +65,7 @@ mcp__memento__create_entities([{
   ]
 }])
 
-// Step 2: Add insight-specific tags per TAXONOMY.md (using add_observations with TAG: prefix)
+// Step 2: Add insight-specific tags per memento-taxonomy skill (using add_observations with TAG: prefix)
 mcp__memento__add_observations({
   observations: [{
     entityName: "Insight: [GENERATED_INSIGHT_ID]",
