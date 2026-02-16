@@ -407,9 +407,7 @@ const wireStorageToggle = (elementId, storageKey, opts = {}) => {
     if (!btn) return;
     const isEnabled = btn.dataset.val === 'yes';
     localStorage.setItem(storageKey, isEnabled ? 'true' : 'false');
-    el.querySelectorAll('.chip-sort-btn').forEach(b => {
-      b.classList.toggle('active', b.dataset.val === btn.dataset.val);
-    });
+    syncChipToggle(elementId, isEnabled);
     if (opts.onApply) opts.onApply(isEnabled);
   });
 };

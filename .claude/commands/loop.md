@@ -60,7 +60,7 @@ If there are uncommitted changes, create a commit with a descriptive message ref
 Write to `logs/projects/handoff_[TIMESTAMP].md`:
 
 ```markdown
-# Sprint Handoff — [TIMESTAMP]
+# Project Handoff — [TIMESTAMP]
 
 ## Completed This Cycle
 - [What was done, with file:line references]
