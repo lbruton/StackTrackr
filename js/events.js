@@ -539,10 +539,16 @@ const updateColumnVisibility = () => {
     if (width < bp.width) bp.hide.forEach((c) => hidden.add(c));
   });
 
+  // Hide image column when table thumbnails are off or COIN_IMAGES disabled
+  const _imgOn = localStorage.getItem('tableImagesEnabled') !== 'false'
+    && typeof featureFlags !== 'undefined' && featureFlags.isEnabled('COIN_IMAGES');
+  if (!_imgOn) hidden.add('image');
+
   const allColumns = [
     "date",
     "type",
     "metal",
+    "image",
     "qty",
     "name",
     "weight",
@@ -1858,12 +1864,13 @@ const setupPagination = () => {
         elements.itemsPerPage,
         "change",
         function () {
-          itemsPerPage = parseInt(this.value);
+          const ippVal = this.value;
+          itemsPerPage = ippVal === 'all' ? Infinity : parseInt(ippVal, 10);
           // Persist setting
-          try { localStorage.setItem(ITEMS_PER_PAGE_KEY, String(itemsPerPage)); } catch (e) { /* ignore */ }
+          try { localStorage.setItem(ITEMS_PER_PAGE_KEY, ippVal); } catch (e) { /* ignore */ }
           // Sync settings modal control
           const settingsIpp = document.getElementById('settingsItemsPerPage');
-          if (settingsIpp) settingsIpp.value = String(itemsPerPage);
+          if (settingsIpp) settingsIpp.value = ippVal;
           renderTable();
         },
         "Visible rows select",
@@ -1873,6 +1880,17 @@ const setupPagination = () => {
     debugLog("✓ Visible-rows listener setup complete");
   } catch (error) {
     console.error("❌ Error setting up visible-rows listener:", error);
+  }
+
+  // Back to top floating button
+  const backToTopBtn = document.getElementById('backToTopBtn');
+  if (backToTopBtn) {
+    window.addEventListener('scroll', () => {
+      backToTopBtn.classList.toggle('visible', window.scrollY > 300);
+    }, { passive: true });
+    backToTopBtn.addEventListener('click', () => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
   }
 };
 

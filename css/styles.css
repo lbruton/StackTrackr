@@ -2973,9 +2973,47 @@ td[data-column="name"] {
 .table-thumb.table-thumb-rect {
   border-radius: var(--radius);
 }
+/* Back to top floating button */
+.back-to-top {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  z-index: 1000;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-primary);
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
+}
+.back-to-top.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+.back-to-top:hover {
+  background: var(--bg-elev-1);
+}
+[data-theme="dark"] .back-to-top {
+  background: #1e293b;
+  border-color: #475569;
+  color: #f1f5f9;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+[data-theme="dark"] .back-to-top:hover {
+  background: #334155;
+}
+
 /* Reverse thumbnail — slight overlap for paired display */
 .table-thumb + .table-thumb {
-  margin-left: -6px;
+  margin-left: 2px;
 }
 /* Keep thumbnail in layout for IntersectionObserver but invisible until src is set */
 .table-thumb:not([src]) {
@@ -9120,7 +9158,10 @@ th {
 }
 .card-a .card-a-chart-wrap canvas { width: 100% !important; height: 100% !important; }
 .card-a .card-body { padding: 0.5rem 0.75rem 0.65rem; }
-.card-a .cv-chips-row { margin-bottom: 0.5rem; }
+.card-a .cv-chips-img-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem; }
+.card-a .cv-chips-row { margin-bottom: 0; }
+.card-a .cv-images-sm { display: flex; gap: 0.25rem; flex-shrink: 0; align-items: center; }
+.card-a .cv-images-sm .coin-img { width: 36px; height: 36px; border-radius: 50%; overflow: hidden; flex-shrink: 0; }
 .card-a .cv-value-row {
   display: flex;
   align-items: baseline;

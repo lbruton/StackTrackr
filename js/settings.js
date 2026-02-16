@@ -57,14 +57,15 @@ const switchSettingsSection = (name) => {
     populateApiSection();
   }
 
-  // Sync image display toggles when switching to Appearance section
-  if (name === 'site') {
+  // Populate Images data and sync toggles when switching to Images section (STACK-96)
+  if (name === 'images') {
     syncChipToggle('tableImagesToggle', localStorage.getItem('tableImagesEnabled') !== 'false');
     syncChipToggle('numistaOverrideToggle', localStorage.getItem('numistaOverridePersonal') === 'true');
-  }
-
-  // Populate Images data when switching to Images section (STACK-96)
-  if (name === 'images') {
+    const sidesSync = document.getElementById('tableImageSidesToggle');
+    if (sidesSync) {
+      const curSides = localStorage.getItem('tableImageSides') || 'both';
+      sidesSync.querySelectorAll('.chip-sort-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.val === curSides));
+    }
     populateImagesSection();
   }
 
@@ -159,7 +160,7 @@ const syncSettingsUI = () => {
   // Items per page
   const ippSelect = document.getElementById('settingsItemsPerPage');
   if (ippSelect) {
-    ippSelect.value = String(itemsPerPage);
+    ippSelect.value = itemsPerPage === Infinity ? 'all' : String(itemsPerPage);
   }
 
   // Chip min count — sync with inline control
@@ -278,7 +279,7 @@ const syncSettingsUI = () => {
   // Card style (STAK-118)
   const cardStyleSelect = document.getElementById('settingsCardStyle');
   if (cardStyleSelect) {
-    cardStyleSelect.value = localStorage.getItem(CARD_STYLE_KEY) || 'B';
+    cardStyleSelect.value = localStorage.getItem(CARD_STYLE_KEY) || 'A';
   }
 
   // Desktop card view toggle (STAK-118)
@@ -536,6 +537,50 @@ const setupSettingsEventListeners = () => {
     onApply: () => applyHeaderToggleVisibility(),
   });
 
+  wireStorageToggle('settingsHeaderCardViewBtn', 'headerCardViewBtnVisible', {
+    defaultVal: false,
+    onApply: () => applyHeaderToggleVisibility(),
+  });
+
+  // Apply view-appropriate items-per-page default when switching views
+  const applyViewIpp = () => {
+    itemsPerPage = Infinity;
+    const ippStr = 'all';
+    try { localStorage.setItem(ITEMS_PER_PAGE_KEY, ippStr); } catch (e) { /* ignore */ }
+    if (elements.itemsPerPage) elements.itemsPerPage.value = ippStr;
+    const settingsIpp = document.getElementById('settingsItemsPerPage');
+    if (settingsIpp) settingsIpp.value = ippStr;
+  };
+
+  // Card view header button (STAK-118)
+  // Click: cycle card style A → B → C → A
+  // Shift+click: toggle table/card view
+  const CARD_STYLES = ['A', 'B', 'C'];
+  const headerCardViewBtn = document.getElementById('headerCardViewBtn');
+  if (headerCardViewBtn) {
+    headerCardViewBtn.addEventListener('click', (e) => {
+      if (e.shiftKey) {
+        // Shift+click: toggle table ↔ card view
+        const isCard = localStorage.getItem(DESKTOP_CARD_VIEW_KEY) === 'true';
+        const newVal = !isCard;
+        localStorage.setItem(DESKTOP_CARD_VIEW_KEY, String(newVal));
+        document.body.classList.toggle('force-card-view', newVal);
+        applyViewIpp();
+        syncChipToggle('settingsDesktopCardView', newVal ? 'yes' : 'no');
+      } else {
+        // Click: cycle card style
+        const cur = localStorage.getItem(CARD_STYLE_KEY) || 'A';
+        const nextIdx = (CARD_STYLES.indexOf(cur) + 1) % CARD_STYLES.length;
+        const next = CARD_STYLES[nextIdx];
+        localStorage.setItem(CARD_STYLE_KEY, next);
+        // Sync settings select if open
+        const styleSelect = document.getElementById('settingsCardStyle');
+        if (styleSelect) styleSelect.value = next;
+      }
+      if (typeof renderTable === 'function') renderTable();
+    });
+  }
+
   // Theme cycle header button (STACK-54)
   if (elements.headerThemeBtn) {
     elements.headerThemeBtn.addEventListener('click', () => {
@@ -562,12 +607,12 @@ const setupSettingsEventListeners = () => {
   const ippSelect = document.getElementById('settingsItemsPerPage');
   if (ippSelect) {
     ippSelect.addEventListener('change', () => {
-      const val = parseInt(ippSelect.value, 10);
-      itemsPerPage = val;
+      const ippVal = ippSelect.value;
+      itemsPerPage = ippVal === 'all' ? Infinity : parseInt(ippVal, 10);
       // Persist
-      try { localStorage.setItem(ITEMS_PER_PAGE_KEY, String(val)); } catch (e) { /* ignore */ }
+      try { localStorage.setItem(ITEMS_PER_PAGE_KEY, ippVal); } catch (e) { /* ignore */ }
       // Sync footer select
-      if (elements.itemsPerPage) elements.itemsPerPage.value = String(val);
+      if (elements.itemsPerPage) elements.itemsPerPage.value = ippVal;
       renderTable();
     });
   }
@@ -1088,6 +1133,7 @@ const setupSettingsEventListeners = () => {
     defaultVal: false,
     onApply: (isEnabled) => {
       document.body.classList.toggle('force-card-view', isEnabled);
+      applyViewIpp();
       if (typeof renderTable === 'function') renderTable();
     },
   });
@@ -1097,6 +1143,22 @@ const setupSettingsEventListeners = () => {
     defaultVal: true,
     onApply: () => { if (typeof renderTable === 'function') renderTable(); },
   });
+
+  // Table image sides toggle (3-value: both/obverse/reverse)
+  const sidesEl = document.getElementById('tableImageSidesToggle');
+  if (sidesEl) {
+    const curSides = localStorage.getItem('tableImageSides') || 'both';
+    sidesEl.querySelectorAll('.chip-sort-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.val === curSides);
+    });
+    sidesEl.addEventListener('click', (e) => {
+      const btn = e.target.closest('.chip-sort-btn');
+      if (!btn) return;
+      localStorage.setItem('tableImageSides', btn.dataset.val);
+      sidesEl.querySelectorAll('.chip-sort-btn').forEach(b => b.classList.toggle('active', b === btn));
+      if (typeof renderTable === 'function') renderTable();
+    });
+  }
 
   // Numista override toggle (chip-sort-toggle)
   wireStorageToggle('numistaOverrideToggle', 'numistaOverridePersonal', {
@@ -1748,9 +1810,11 @@ const syncGoldbackSettingsUI = () => {
 const syncHeaderToggleUI = () => {
   const themeVisible = localStorage.getItem('headerThemeBtnVisible') !== 'false';
   const currencyVisible = localStorage.getItem('headerCurrencyBtnVisible') !== 'false';
+  const cardViewVisible = localStorage.getItem('headerCardViewBtnVisible') === 'true';
 
   syncChipToggle('settingsHeaderThemeBtn', themeVisible);
   syncChipToggle('settingsHeaderCurrencyBtn', currencyVisible);
+  syncChipToggle('settingsHeaderCardViewBtn', cardViewVisible);
 
   applyHeaderToggleVisibility();
 };
@@ -1762,12 +1826,17 @@ const syncHeaderToggleUI = () => {
 const applyHeaderToggleVisibility = () => {
   const themeVisible = localStorage.getItem('headerThemeBtnVisible') !== 'false';
   const currencyVisible = localStorage.getItem('headerCurrencyBtnVisible') !== 'false';
+  const cardViewVisible = localStorage.getItem('headerCardViewBtnVisible') === 'true';
 
   if (elements.headerThemeBtn) {
     elements.headerThemeBtn.style.display = themeVisible ? '' : 'none';
   }
   if (elements.headerCurrencyBtn) {
     elements.headerCurrencyBtn.style.display = currencyVisible ? '' : 'none';
+  }
+  const headerCardViewBtn = document.getElementById('headerCardViewBtn');
+  if (headerCardViewBtn) {
+    headerCardViewBtn.style.display = cardViewVisible ? '' : 'none';
   }
 };
 window.applyHeaderToggleVisibility = applyHeaderToggleVisibility;

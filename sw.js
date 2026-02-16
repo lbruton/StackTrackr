@@ -2,7 +2,8 @@
 // Enables offline support and installable PWA experience
 // Cache version is tied to APP_VERSION — old caches are purged on activate
 
-const CACHE_NAME = 'staktrakr-v3.29.09';
+const DEV_MODE = false; // Set to true during development — bypasses all caching
+const CACHE_NAME = 'staktrakr-v3.30.00';
 
 // Offline fallback for navigation requests when all cache/network strategies fail
 const OFFLINE_HTML = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>StakTrakr</title></head>' +
@@ -116,6 +117,8 @@ self.addEventListener('activate', (event) => {
 
 // Fetch: route requests by strategy
 self.addEventListener('fetch', (event) => {
+  // Dev mode: bypass all caching, go straight to network
+  if (DEV_MODE) return;
   const url = new URL(event.request.url);
 
   // Network-first for API calls (spot prices, catalog lookups)

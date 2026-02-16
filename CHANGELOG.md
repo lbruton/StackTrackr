@@ -9,6 +9,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.30.00] - 2026-02-16
+
+### Added — Card View Engine, Mobile Overhaul & UI Polish
+
+- **Added**: Three card view styles — Sparkline Header (A), Full-Bleed Overlay (B), Split Card (C) — with header button cycling and shift+click table/card toggle (STAK-118)
+- **Added**: CDN image URLs for obverse/reverse with dedicated table image column, settings toggle for obverse/reverse/both, and card view thumbnails (STAK-118)
+- **Added**: Mobile viewport overhaul — responsive breakpoints, touch-friendly controls, viewport scaling fixes (STAK-124, STAK-125, STAK-126)
+- **Added**: Mobile summary cards — compact 2-col grid with spanning All Metals card (STAK-106)
+- **Added**: Rows-per-page options (3/12/24/48/96/All) with floating back-to-top button and portal scroll override
+- **Added**: CSV, JSON, and ZIP backup/restore now include obverse/reverse image URL fields
+- **Changed**: Theme-aware sparkline colors — bold strokes and fills clearly visible on light, sepia, and dark themes
+- **Changed**: Default card style set to Sparkline Header (A), default rows-per-page set to 12
+- **Fixed**: Service worker DEV_MODE toggle for cache bypass during development
+
+---
+
 ## [3.29.08] - 2026-02-15
 
 ### Fixed — Fix What's New Modal Showing Stale Version
