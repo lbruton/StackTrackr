@@ -51,6 +51,7 @@ Scripts load via `<script>` tags in `index.html` in strict dependency order. `fi
 - Always accessed via `window.imageCache` for consistency with availability checks
 
 **From `js/filters.js`:**
+
 - `renderActiveFilters()` — filter chip rendering
 - `activeFilters` (object) — active filter state
 
