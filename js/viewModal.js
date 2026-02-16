@@ -280,7 +280,8 @@ function buildViewContent(item, index) {
 
     // Verify icon — clickable to trigger PCGS API verification
     const showVerifyBtn = authority === 'PCGS' && certNum
-      && typeof catalogConfig !== 'undefined' && catalogConfig.isPcgsEnabled();
+      && typeof catalogConfig !== 'undefined' && catalogConfig.isPcgsEnabled()
+      && typeof verifyPcgsCert === 'function';
     if (showVerifyBtn) {
       const verifySpan = _el('span', `view-cert-verify${isVerified ? ' pcgs-verified' : ''}`);
       verifySpan.tabIndex = 0;
@@ -291,7 +292,6 @@ function buildViewContent(item, index) {
       verifySpan.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>';
       verifySpan.addEventListener('click', (e) => {
         e.stopPropagation();
-        if (typeof verifyPcgsCert !== 'function') return;
         verifySpan.classList.add('pcgs-verifying');
         verifySpan.title = 'Verifying...';
         verifyPcgsCert(certNum).then((result) => {
@@ -516,9 +516,9 @@ function buildViewContent(item, index) {
               const fullSpot = await _fetchHistoricalSpotData(metalName, effectiveDays);
               _createPriceHistoryChart(canvas, fullSpot, retailEntries, purchasePerUnit, meltFactor, effectiveDays, purchaseDate, currentRetail);
             } catch (err) {
-              // Fall back to empty dataset on fetch failure
+              // Fall back to in-memory spot data on fetch failure
               console.error('Range pill fetch failed:', err);
-              _createPriceHistoryChart(canvas, [], retailEntries, purchasePerUnit, meltFactor, effectiveDays, purchaseDate, currentRetail);
+              _createPriceHistoryChart(canvas, dailySpotEntries, retailEntries, purchasePerUnit, meltFactor, effectiveDays, purchaseDate, currentRetail);
             }
           } else {
             _createPriceHistoryChart(canvas, dailySpotEntries, retailEntries, purchasePerUnit, meltFactor, effectiveDays, purchaseDate, currentRetail);
