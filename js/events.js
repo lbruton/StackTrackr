@@ -74,7 +74,13 @@ let _pendingReversePreviewUrl = null;
 
 // Legacy aliases for backward compatibility
 /** @deprecated Use _pendingObverseBlob */
+// eslint-disable-next-line no-unused-vars -- intentionally kept for backward compatibility
 let _pendingUploadBlob = null;
+
+/** @type {boolean} User clicked Remove on obverse — delete on save */
+let _deleteObverseOnSave = false;
+/** @type {boolean} User clicked Remove on reverse — delete on save */
+let _deleteReverseOnSave = false;
 
 /**
  * Process a user-selected image file and show preview for a specific side.
@@ -90,7 +96,7 @@ const processUploadedImage = async (file, side = 'obverse') => {
   });
 
   if (!result?.blob) {
-    debugLog('Image processing failed for ' + side);
+    debugLog(`Image processing failed for ${side}`);
     return;
   }
 
@@ -150,6 +156,8 @@ const clearUploadState = () => {
   _pendingObverseBlob = null;
   _pendingReverseBlob = null;
   _pendingUploadBlob = null;
+  _deleteObverseOnSave = false;
+  _deleteReverseOnSave = false;
 
   if (_pendingObversePreviewUrl) {
     URL.revokeObjectURL(_pendingObversePreviewUrl);
@@ -201,38 +209,108 @@ const clearUploadState = () => {
  * @returns {Promise<boolean>}
  */
 const saveUserImageForItem = async (uuid) => {
-  if ((!_pendingObverseBlob && !_pendingReverseBlob) || !uuid || !window.imageCache?.isAvailable()) {
-    debugLog('saveUserImageForItem: nothing to save (obv=' + !!_pendingObverseBlob + ', rev=' + !!_pendingReverseBlob + ')');
+  if (!uuid || !window.imageCache?.isAvailable()) {
+    debugLog('saveUserImageForItem: invalid uuid or cache unavailable');
     return false;
   }
 
-  debugLog('saveUserImageForItem: saving images for ' + uuid);
+  // Priority 1: Handle deletions first
+  const hasDeleteIntent = _deleteObverseOnSave || _deleteReverseOnSave;
+  const hasNewImages = _pendingObverseBlob || _pendingReverseBlob;
 
-  // If only reverse is new, merge with existing obverse (and vice versa)
+  if (hasDeleteIntent && !hasNewImages) {
+    // Pure deletion case: user removed images without uploading new ones
+    await handleImageDeletion(uuid);
+    clearUploadState();
+    return true;
+  }
+
+  if (!hasNewImages) {
+    // No changes at all
+    debugLog('saveUserImageForItem: no changes to save');
+    clearUploadState();
+    return false;
+  }
+
+  // Priority 2: New uploads - merge with existing or replace deleted sides
+  debugLog(`saveUserImageForItem: saving images for ${uuid}`);
+
   let obvBlob = _pendingObverseBlob;
   let revBlob = _pendingReverseBlob;
 
+  // Merge with existing images if only one side uploaded
   if (!obvBlob || !revBlob) {
     try {
-      const existing = await imageCache.getUserImage(uuid);
+      const existing = await window.imageCache.getUserImage(uuid);
       if (existing) {
-        if (!obvBlob && existing.obverse) obvBlob = existing.obverse;
-        if (!revBlob && existing.reverse) revBlob = existing.reverse;
+        // Only merge if not marked for deletion
+        if (!obvBlob && existing.obverse && !_deleteObverseOnSave) {
+          obvBlob = existing.obverse;
+        }
+        if (!revBlob && existing.reverse && !_deleteReverseOnSave) {
+          revBlob = existing.reverse;
+        }
       }
     } catch { /* ignore */ }
   }
 
   // cacheUserImage requires at least obverse; pass reverse as optional
   if (!obvBlob && revBlob) {
-    // Only reverse uploaded — store as obverse (since API requires it)
+    // Only reverse uploaded — store as obverse (API requirement)
     obvBlob = revBlob;
     revBlob = null;
   }
 
-  const saved = await imageCache.cacheUserImage(uuid, obvBlob, revBlob);
-  debugLog('saveUserImageForItem: saved=' + saved);
+  const saved = await window.imageCache.cacheUserImage(uuid, obvBlob, revBlob);
+  debugLog(`saveUserImageForItem: saved=${saved}`);
   clearUploadState();
   return saved;
+};
+
+/**
+ * Handle image deletion based on deletion flags.
+ * Supports partial deletion (one side only) or full deletion (both sides).
+ * @param {string} uuid - Item UUID
+ * @returns {Promise<void>}
+ */
+const handleImageDeletion = async (uuid) => {
+  if (!uuid || !window.imageCache?.isAvailable()) return;
+
+  const deleteBoth = _deleteObverseOnSave && _deleteReverseOnSave;
+  const deleteNeither = !_deleteObverseOnSave && !_deleteReverseOnSave;
+
+  if (deleteNeither) return;
+
+  if (deleteBoth) {
+    // Delete entire record
+    debugLog(`handleImageDeletion: deleting both sides for ${uuid}`);
+    await window.imageCache.deleteUserImage(uuid);
+  } else {
+    // Partial deletion: keep one side, delete the other
+    debugLog(`handleImageDeletion: partial deletion for ${uuid}`);
+
+    try {
+      const existing = await window.imageCache.getUserImage(uuid);
+      if (!existing) return; // Nothing to delete
+
+      // Nullify the deleted side, keep the other
+      const newObverse = _deleteObverseOnSave ? null : existing.obverse;
+      const newReverse = _deleteReverseOnSave ? null : existing.reverse;
+
+      // If both would be null, delete entire record
+      if (!newObverse && !newReverse) {
+        await window.imageCache.deleteUserImage(uuid);
+      } else {
+        // Save updated record with one side nullified
+        // cacheUserImage requires obverse, so if only reverse remains, store it as obverse
+        const obvToSave = newObverse || newReverse;
+        const revToSave = newObverse ? newReverse : null;
+        await window.imageCache.cacheUserImage(uuid, obvToSave, revToSave);
+      }
+    } catch (err) {
+      debugLog(`Failed to handle partial deletion: ${err}`, 'warn');
+    }
+  }
 };
 
 /**
@@ -1004,11 +1082,11 @@ const setupItemFormListeners = () => {
               // chain resolves via rule.seedImageId, not rule.id
               const ruleId = 'custom-img-' + Date.now();
               const result = NumistaLookup.addRule(pattern, rawKeywords, null, ruleId);
-              if (result?.success) {
-                await imageCache.cachePatternImage(ruleId, _pendingObverseBlob, _pendingReverseBlob);
-                debugLog('Pattern rule created: ' + result.id + ' (images: ' + ruleId + ') for "' + rawKeywords + '"');
+              if (result?.success && window.imageCache?.isAvailable()) {
+                await window.imageCache.cachePatternImage(ruleId, _pendingObverseBlob, _pendingReverseBlob);
+                debugLog(`Pattern rule created: ${result.id} (images: ${ruleId}) for "${rawKeywords}"`);
               } else {
-                console.warn('Failed to create pattern rule:', result?.error);
+                debugLog(`Failed to create pattern rule: ${result?.error}`, 'warn');
               }
               clearUploadState();
               patternRuleSaved = true;
@@ -1019,7 +1097,7 @@ const setupItemFormListeners = () => {
             patternRuleSaved = true; // prevent double-save on error
           }
         }
-        if (!patternRuleSaved && (_pendingObverseBlob || _pendingReverseBlob)) {
+        if (!patternRuleSaved && (_pendingObverseBlob || _pendingReverseBlob || _deleteObverseOnSave || _deleteReverseOnSave)) {
           // Per-item save: save blobs against the item's UUID
           const savedItem = isEditing ? inventory[savedEditIdx] : inventory[inventory.length - 1];
           if (savedItem?.uuid) {
@@ -1192,10 +1270,12 @@ const setupItemFormListeners = () => {
           // Clear just this side
           if (side === 'reverse') {
             _pendingReverseBlob = null;
+            _deleteReverseOnSave = true;
             if (_pendingReversePreviewUrl) { URL.revokeObjectURL(_pendingReversePreviewUrl); _pendingReversePreviewUrl = null; }
           } else {
             _pendingObverseBlob = null;
             _pendingUploadBlob = null;
+            _deleteObverseOnSave = true;
             if (_pendingObversePreviewUrl) { URL.revokeObjectURL(_pendingObversePreviewUrl); _pendingObversePreviewUrl = null; }
           }
           const preview = document.getElementById('itemImagePreview' + suffix);
