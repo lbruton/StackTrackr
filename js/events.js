@@ -498,7 +498,8 @@ const setupColumnResizing = () => {
 const updateColumnVisibility = () => {
   const width = window.innerWidth;
   const isTouch = window.matchMedia('(pointer: coarse)').matches;
-  const forceCards = isTouch && width > 1350 && width <= 1600;
+  const desktopCardView = localStorage.getItem(DESKTOP_CARD_VIEW_KEY) === 'true';
+  const forceCards = desktopCardView || (isTouch && width > 1350 && width <= 1600);
 
   document.body.classList.toggle('force-card-view', forceCards);
 
@@ -538,10 +539,16 @@ const updateColumnVisibility = () => {
     if (width < bp.width) bp.hide.forEach((c) => hidden.add(c));
   });
 
+  // Hide image column when table thumbnails are off or COIN_IMAGES disabled
+  const _imgOn = localStorage.getItem('tableImagesEnabled') !== 'false'
+    && typeof featureFlags !== 'undefined' && featureFlags.isEnabled('COIN_IMAGES');
+  if (!_imgOn) hidden.add('image');
+
   const allColumns = [
     "date",
     "type",
     "metal",
+    "image",
     "qty",
     "name",
     "weight",
@@ -891,6 +898,8 @@ const parseItemFormFields = (isEditing, existingItem) => {
     marketValue,
     purity: parsePurity(isEditing, existingItem),
     currency: displayCurrency,
+    obverseImageUrl: elements.itemObverseImageUrl?.value?.trim() ?? '',
+    reverseImageUrl: elements.itemReverseImageUrl?.value?.trim() ?? '',
   };
 };
 
@@ -941,8 +950,8 @@ const commitItemToInventory = (f, isEditing, editIdx) => {
       isCollectable: false,
       numistaId: f.catalog,
       currency: f.currency,
-      obverseImageUrl: window.selectedNumistaResult?.imageUrl || oldItem.obverseImageUrl || '',
-      reverseImageUrl: window.selectedNumistaResult?.reverseImageUrl || oldItem.reverseImageUrl || '',
+      obverseImageUrl: f.obverseImageUrl || window.selectedNumistaResult?.imageUrl || oldItem.obverseImageUrl || '',
+      reverseImageUrl: f.reverseImageUrl || window.selectedNumistaResult?.reverseImageUrl || oldItem.reverseImageUrl || '',
     };
 
     addCompositionOption(f.composition);
@@ -999,8 +1008,8 @@ const commitItemToInventory = (f, isEditing, editIdx) => {
       uuid: generateUUID(),
       numistaId: f.catalog,
       currency: f.currency,
-      obverseImageUrl: window.selectedNumistaResult?.imageUrl || '',
-      reverseImageUrl: window.selectedNumistaResult?.reverseImageUrl || '',
+      obverseImageUrl: f.obverseImageUrl || window.selectedNumistaResult?.imageUrl || '',
+      reverseImageUrl: f.reverseImageUrl || window.selectedNumistaResult?.reverseImageUrl || '',
     });
 
     typeof registerName === "function" && registerName(f.name);
@@ -1224,6 +1233,51 @@ const setupItemFormListeners = () => {
         window._setItemPriceModalFilter('');
       }
     });
+  }
+
+  // IMAGE URL FIELDS — show when COIN_IMAGES enabled
+  const imageUrlGroup = document.getElementById('imageUrlGroup');
+  if (imageUrlGroup && featureFlags.isEnabled('COIN_IMAGES')) {
+    imageUrlGroup.style.display = '';
+  }
+
+  // Refresh image URLs button — bypasses SW cache, fetches direct from Numista
+  const refreshImageUrlsBtn = document.getElementById('refreshImageUrlsBtn');
+  if (refreshImageUrlsBtn) {
+    safeAttachListener(refreshImageUrlsBtn, 'click', async () => {
+      const catalogId = (elements.itemCatalog?.value || '').trim();
+      if (!catalogId) {
+        alert('Enter a Numista # first.');
+        return;
+      }
+      refreshImageUrlsBtn.disabled = true;
+      refreshImageUrlsBtn.title = 'Fetching…';
+      try {
+        const config = typeof catalogConfig !== 'undefined' ? catalogConfig.getNumistaConfig() : null;
+        if (!config?.apiKey) {
+          alert('Numista API key not configured.');
+          return;
+        }
+        const url = `https://api.numista.com/v3/types/${catalogId}?lang=en`;
+        const resp = await fetch(url, {
+          headers: { 'Numista-API-Key': config.apiKey, 'Content-Type': 'application/json' },
+          cache: 'no-cache',
+        });
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        const data = await resp.json();
+        const obv = data.obverse_thumbnail || data.obverse?.thumbnail || '';
+        const rev = data.reverse_thumbnail || data.reverse?.thumbnail || '';
+        if (elements.itemObverseImageUrl) elements.itemObverseImageUrl.value = obv;
+        if (elements.itemReverseImageUrl) elements.itemReverseImageUrl.value = rev;
+        if (!obv && !rev) alert('No image URLs returned by Numista for this item.');
+      } catch (err) {
+        console.error('Image URL refresh failed:', err);
+        alert('Failed to fetch image URLs: ' + err.message);
+      } finally {
+        refreshImageUrlsBtn.disabled = false;
+        refreshImageUrlsBtn.title = 'Fetch image URLs from Numista API (bypasses cache)';
+      }
+    }, 'Refresh image URLs button');
   }
 
   // IMAGE UPLOAD BUTTONS — Obverse + Reverse (STACK-32/33)
@@ -1810,12 +1864,13 @@ const setupPagination = () => {
         elements.itemsPerPage,
         "change",
         function () {
-          itemsPerPage = parseInt(this.value);
+          const ippVal = this.value;
+          itemsPerPage = ippVal === 'all' ? Infinity : parseInt(ippVal, 10);
           // Persist setting
-          try { localStorage.setItem(ITEMS_PER_PAGE_KEY, String(itemsPerPage)); } catch (e) { /* ignore */ }
+          try { localStorage.setItem(ITEMS_PER_PAGE_KEY, ippVal); } catch (e) { /* ignore */ }
           // Sync settings modal control
           const settingsIpp = document.getElementById('settingsItemsPerPage');
-          if (settingsIpp) settingsIpp.value = String(itemsPerPage);
+          if (settingsIpp) settingsIpp.value = ippVal;
           renderTable();
         },
         "Visible rows select",
@@ -1825,6 +1880,20 @@ const setupPagination = () => {
     debugLog("✓ Visible-rows listener setup complete");
   } catch (error) {
     console.error("❌ Error setting up visible-rows listener:", error);
+  }
+
+  // Back to top floating button
+  const backToTopBtn = document.getElementById('backToTopBtn');
+  if (backToTopBtn) {
+    if (!window._backToTopInitialized) {
+      window.addEventListener('scroll', () => {
+        backToTopBtn.classList.toggle('visible', window.scrollY > 300);
+      }, { passive: true });
+      backToTopBtn.addEventListener('click', () => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+      window._backToTopInitialized = true;
+    }
   }
 };
 

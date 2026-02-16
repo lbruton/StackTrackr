@@ -89,47 +89,73 @@ const BulkImageCache = (() => {
         onProgress({ current: i + 1, total, catalogId });
       }
 
-      // Check if metadata is already cached — skip if so
+      // Resolve image URLs already on the item
+      const _valid = (u) => u && /^https?:\/\/.+\..+/i.test(u);
+      // Repair malformed URLs (sanitization bug stripped ://./ characters)
+      let urlRepaired = false;
+      if (item.obverseImageUrl && !_valid(item.obverseImageUrl)) { item.obverseImageUrl = ''; urlRepaired = true; }
+      if (item.reverseImageUrl && !_valid(item.reverseImageUrl)) { item.reverseImageUrl = ''; urlRepaired = true; }
+      if (urlRepaired && onLog) onLog({ catalogId, status: 'url-repair', message: 'Cleared malformed image URL(s) — will re-fetch' });
+      let obverseUrl = _valid(item.obverseImageUrl) ? item.obverseImageUrl : '';
+      let reverseUrl = _valid(item.reverseImageUrl) ? item.reverseImageUrl : '';
+
+      // Check if metadata is already cached
       const hasMetaCached = !!(await imageCache.getMetadata(catalogId));
-      if (hasMetaCached) {
+
+      if (hasMetaCached && obverseUrl) {
+        // Metadata synced and URLs already on item — nothing to do
         skipped++;
         if (onLog) onLog({ catalogId, status: 'skip-cached', message: 'Already synced' });
         continue;
       }
 
-      // Resolve image URLs from item properties first
-      const _valid = (u) => ImageCache.isValidImageUrl(u);
-      let obverseUrl = _valid(item.obverseImageUrl) ? item.obverseImageUrl : '';
-      let reverseUrl = _valid(item.reverseImageUrl) ? item.reverseImageUrl : '';
+      // Either metadata is missing or item needs CDN URLs.
+      // Use Local provider cache first (no API call), then fall back to API.
+      let apiResult = null;
 
-      // Fetch & cache metadata from Numista API (also resolves image URLs)
-      if (window.catalogAPI) {
+      // Try local cache first (free, no rate limit)
+      if (!obverseUrl && window.catalogAPI?.localProvider) {
+        try {
+          const localData = catalogAPI.localProvider.localData[catalogId];
+          if (localData && (localData.imageUrl || localData.reverseImageUrl)) {
+            apiResult = localData;
+            if (onLog) onLog({ catalogId, status: 'local-cache', message: 'URLs from local cache' });
+          }
+        } catch { /* ignore */ }
+      }
+
+      // Fall back to API if local cache didn't have URLs or metadata needs syncing
+      if (!apiResult && window.catalogAPI && (!hasMetaCached || !obverseUrl)) {
         if (onLog) onLog({ catalogId, status: 'api-lookup', message: 'Syncing metadata from Numista...' });
         try {
-          const apiResult = await catalogAPI.lookupItem(catalogId);
+          apiResult = await catalogAPI.lookupItem(catalogId);
           apiLookups++;
-
-          // Persist image URLs back to item for CDN fallback in view modal
-          if (!obverseUrl && apiResult.imageUrl) {
-            obverseUrl = apiResult.imageUrl;
-            item.obverseImageUrl = obverseUrl;
-          }
-          if (!reverseUrl && apiResult.reverseImageUrl) {
-            reverseUrl = apiResult.reverseImageUrl;
-            item.reverseImageUrl = reverseUrl;
-          }
-          // Also sync numistaId back to item if it was only in catalogManager
-          if (!item.numistaId) item.numistaId = catalogId;
-
-          // Cache metadata to IndexedDB
-          await imageCache.cacheMetadata(catalogId, apiResult);
-          synced++;
-          if (onLog) onLog({ catalogId, status: 'metadata', message: 'Metadata synced' });
         } catch (err) {
           failed++;
           if (onLog) onLog({ catalogId, status: 'meta-failed', message: `Metadata: ${err.message}` });
         }
-      } else {
+      }
+
+      if (apiResult) {
+        // Persist image URLs back to item for CDN fallback
+        if (!obverseUrl && apiResult.imageUrl) {
+          item.obverseImageUrl = apiResult.imageUrl;
+        }
+        if (!reverseUrl && apiResult.reverseImageUrl) {
+          item.reverseImageUrl = apiResult.reverseImageUrl;
+        }
+        // Sync numistaId back to item if it was only in catalogManager
+        if (!item.numistaId) item.numistaId = catalogId;
+
+        // Cache metadata to IndexedDB if not already there
+        if (!hasMetaCached) {
+          try {
+            await imageCache.cacheMetadata(catalogId, apiResult);
+          } catch { /* ignore */ }
+        }
+        synced++;
+        if (onLog) onLog({ catalogId, status: 'metadata', message: 'Synced' });
+      } else if (!hasMetaCached) {
         failed++;
         if (onLog) onLog({ catalogId, status: 'meta-failed', message: 'Catalog API not available' });
       }
@@ -143,7 +169,7 @@ const BulkImageCache = (() => {
     _running = false;
 
     // Persist any URL updates back to localStorage
-    if (apiLookups > 0 && typeof saveInventory === 'function') {
+    if (synced > 0 && typeof saveInventory === 'function') {
       saveInventory();
     }
 

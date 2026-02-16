@@ -57,14 +57,15 @@ const switchSettingsSection = (name) => {
     populateApiSection();
   }
 
-  // Sync image display toggles when switching to Appearance section
-  if (name === 'site') {
+  // Populate Images data and sync toggles when switching to Images section (STACK-96)
+  if (name === 'images') {
     syncChipToggle('tableImagesToggle', localStorage.getItem('tableImagesEnabled') !== 'false');
     syncChipToggle('numistaOverrideToggle', localStorage.getItem('numistaOverridePersonal') === 'true');
-  }
-
-  // Populate Images data when switching to Images section (STACK-96)
-  if (name === 'images') {
+    const sidesSync = safeGetElement('tableImageSidesToggle');
+    if (sidesSync) {
+      const curSides = localStorage.getItem('tableImageSides') || 'both';
+      sidesSync.querySelectorAll('.chip-sort-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.val === curSides));
+    }
     populateImagesSection();
   }
 
@@ -157,9 +158,9 @@ const syncSettingsUI = () => {
   });
 
   // Items per page
-  const ippSelect = document.getElementById('settingsItemsPerPage');
+  const ippSelect = safeGetElement('settingsItemsPerPage');
   if (ippSelect) {
-    ippSelect.value = String(itemsPerPage);
+    ippSelect.value = itemsPerPage === Infinity ? 'all' : String(itemsPerPage);
   }
 
   // Chip min count — sync with inline control
@@ -273,6 +274,21 @@ const syncSettingsUI = () => {
     const showBulkSync = window.featureFlags?.isEnabled('COIN_IMAGES') &&
                          window.imageCache?.isAvailable();
     numistaSyncGroup.style.display = showBulkSync ? '' : 'none';
+  }
+
+  // Card style (STAK-118)
+  const cardStyleSelect = document.getElementById('settingsCardStyle');
+  if (cardStyleSelect) {
+    cardStyleSelect.value = localStorage.getItem(CARD_STYLE_KEY) || 'A';
+  }
+
+  // Desktop card view toggle (STAK-118)
+  const desktopCardToggle = document.getElementById('settingsDesktopCardView');
+  if (desktopCardToggle) {
+    const dcVal = localStorage.getItem(DESKTOP_CARD_VIEW_KEY) === 'true' ? 'yes' : 'no';
+    desktopCardToggle.querySelectorAll('.chip-sort-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.val === dcVal);
+    });
   }
 
   // Display timezone (STACK-63)
@@ -521,6 +537,67 @@ const setupSettingsEventListeners = () => {
     onApply: () => applyHeaderToggleVisibility(),
   });
 
+  wireStorageToggle('settingsHeaderCardViewBtn', 'headerCardViewBtnVisible', {
+    defaultVal: false,
+    onApply: () => applyHeaderToggleVisibility(),
+  });
+
+  // Apply view-appropriate items-per-page default when switching views.
+  // Card view always uses "all" (Infinity). Table view restores the user's
+  // previous preference (saved before switching to card) or falls back to 12.
+  let _savedTableIpp = null;
+  const applyViewIpp = () => {
+    const enteringCard = localStorage.getItem(DESKTOP_CARD_VIEW_KEY) === 'true';
+    let ippStr;
+    if (enteringCard) {
+      // Save current table IPP before overwriting
+      if (_savedTableIpp === null && itemsPerPage !== Infinity) {
+        _savedTableIpp = itemsPerPage === Infinity ? 'all' : String(itemsPerPage);
+      }
+      itemsPerPage = Infinity;
+      ippStr = 'all';
+    } else {
+      // Restore table IPP
+      const restored = _savedTableIpp || '12';
+      _savedTableIpp = null;
+      itemsPerPage = restored === 'all' ? Infinity : Number(restored);
+      ippStr = restored;
+    }
+    try { localStorage.setItem(ITEMS_PER_PAGE_KEY, ippStr); } catch (e) { /* ignore */ }
+    if (elements.itemsPerPage) elements.itemsPerPage.value = ippStr;
+    const settingsIpp = safeGetElement('settingsItemsPerPage');
+    if (settingsIpp) settingsIpp.value = ippStr;
+  };
+
+  // Card view header button (STAK-118)
+  // Click: cycle card style A → B → C → A
+  // Shift+click: toggle table/card view
+  const CARD_STYLES = ['A', 'B', 'C'];
+  const headerCardViewBtn = document.getElementById('headerCardViewBtn');
+  if (headerCardViewBtn) {
+    headerCardViewBtn.addEventListener('click', (e) => {
+      if (e.shiftKey) {
+        // Shift+click: toggle table ↔ card view
+        const isCard = localStorage.getItem(DESKTOP_CARD_VIEW_KEY) === 'true';
+        const newVal = !isCard;
+        localStorage.setItem(DESKTOP_CARD_VIEW_KEY, String(newVal));
+        document.body.classList.toggle('force-card-view', newVal);
+        applyViewIpp();
+        syncChipToggle('settingsDesktopCardView', newVal ? 'yes' : 'no');
+      } else {
+        // Click: cycle card style
+        const cur = localStorage.getItem(CARD_STYLE_KEY) || 'A';
+        const nextIdx = (CARD_STYLES.indexOf(cur) + 1) % CARD_STYLES.length;
+        const next = CARD_STYLES[nextIdx];
+        localStorage.setItem(CARD_STYLE_KEY, next);
+        // Sync settings select if open
+        const styleSelect = document.getElementById('settingsCardStyle');
+        if (styleSelect) styleSelect.value = next;
+      }
+      if (typeof renderTable === 'function') renderTable();
+    });
+  }
+
   // Theme cycle header button (STACK-54)
   if (elements.headerThemeBtn) {
     elements.headerThemeBtn.addEventListener('click', () => {
@@ -547,12 +624,12 @@ const setupSettingsEventListeners = () => {
   const ippSelect = document.getElementById('settingsItemsPerPage');
   if (ippSelect) {
     ippSelect.addEventListener('change', () => {
-      const val = parseInt(ippSelect.value, 10);
-      itemsPerPage = val;
+      const ippVal = ippSelect.value;
+      itemsPerPage = ippVal === 'all' ? Infinity : parseInt(ippVal, 10);
       // Persist
-      try { localStorage.setItem(ITEMS_PER_PAGE_KEY, String(val)); } catch (e) { /* ignore */ }
+      try { localStorage.setItem(ITEMS_PER_PAGE_KEY, ippVal); } catch (e) { /* ignore */ }
       // Sync footer select
-      if (elements.itemsPerPage) elements.itemsPerPage.value = String(val);
+      if (elements.itemsPerPage) elements.itemsPerPage.value = ippVal;
       renderTable();
     });
   }
@@ -859,10 +936,94 @@ const setupSettingsEventListeners = () => {
   const clearImagesBtn = document.getElementById('clearAllImagesBtn');
   if (clearImagesBtn) {
     clearImagesBtn.addEventListener('click', async () => {
-      if (!window.imageCache?.isAvailable()) return;
-      if (!confirm('Clear all cached images (Numista, pattern, and user uploads)?')) return;
-      await imageCache.clearAll();
+      if (!confirm('Clear all cached images, pattern rules, user uploads, AND image URLs from inventory items?')) return;
+      // Clear IDB blobs (Numista cache, patterns, user uploads)
+      if (window.imageCache?.isAvailable()) await imageCache.clearAll();
+      // Clear image URLs from all inventory items
+      let cleared = 0;
+      for (const item of inventory) {
+        if (item.obverseImageUrl || item.reverseImageUrl) {
+          item.obverseImageUrl = '';
+          item.reverseImageUrl = '';
+          cleared++;
+        }
+      }
+      if (cleared > 0 && typeof saveInventory === 'function') saveInventory();
       populateImagesSection();
+      if (typeof renderTable === 'function') renderTable();
+      alert(`Cleared all image data. ${cleared} item URL(s) reset.`);
+    });
+  }
+
+  // Sync Image URLs from Numista — bypasses SW cache
+  const syncImageUrlsBtn = document.getElementById('syncImageUrlsBtn');
+  if (syncImageUrlsBtn) {
+    syncImageUrlsBtn.addEventListener('click', async () => {
+      const config = typeof catalogConfig !== 'undefined' ? catalogConfig.getNumistaConfig() : null;
+      if (!config?.apiKey) {
+        alert('Numista API key not configured.');
+        return;
+      }
+      const eligible = inventory.filter(i => i.numistaId);
+      if (!eligible.length) {
+        alert('No items with Numista IDs found.');
+        return;
+      }
+      if (!confirm(`Sync image URLs for ${eligible.length} items from Numista API?\nThis bypasses cache and uses your API quota.`)) return;
+
+      syncImageUrlsBtn.disabled = true;
+      syncImageUrlsBtn.textContent = 'Syncing…';
+      let synced = 0, failed = 0, skipped = 0;
+      const seen = new Set(); // dedupe by catalogId
+      const urlByCatId = new Map(); // O(1) lookup for synced URLs
+      try {
+        for (const item of eligible) {
+          const catId = item.numistaId;
+          if (seen.has(catId)) {
+            // Reuse URL from a previously synced item with same catalogId
+            const donor = urlByCatId.get(catId);
+            if (donor) {
+              item.obverseImageUrl = donor.obverseImageUrl;
+              item.reverseImageUrl = donor.reverseImageUrl;
+              synced++;
+            } else {
+              skipped++;
+            }
+            continue;
+          }
+          seen.add(catId);
+          try {
+            const url = `https://api.numista.com/v3/types/${catId}?lang=en`;
+            const resp = await fetch(url, {
+              headers: { 'Numista-API-Key': config.apiKey, 'Content-Type': 'application/json' },
+              cache: 'no-cache',
+            });
+            if (!resp.ok) { failed++; continue; }
+            const data = await resp.json();
+            const obv = data.obverse_thumbnail || data.obverse?.thumbnail || '';
+            const rev = data.reverse_thumbnail || data.reverse?.thumbnail || '';
+            urlByCatId.set(catId, { obverseImageUrl: obv, reverseImageUrl: rev });
+            // Apply to ALL items sharing this catalogId
+            for (const inv of eligible) {
+              if (inv.numistaId === catId) {
+                inv.obverseImageUrl = obv;
+                inv.reverseImageUrl = rev;
+              }
+            }
+            synced++;
+            // Throttle to avoid Numista API rate limits
+            await new Promise(r => setTimeout(r, 200));
+          } catch {
+            failed++;
+          }
+        }
+        if (typeof saveInventory === 'function') saveInventory();
+        populateImagesSection();
+        alert(`Image URL sync complete.\n${synced} synced, ${failed} failed, ${skipped} skipped (dupes).`);
+      } finally {
+        syncImageUrlsBtn.disabled = false;
+        syncImageUrlsBtn.textContent = 'Sync Image URLs from Numista';
+      }
     });
   }
 
@@ -980,11 +1141,46 @@ const setupSettingsEventListeners = () => {
     });
   }
 
+  // Card style select (STAK-118)
+  const cardStyleEl = document.getElementById('settingsCardStyle');
+  if (cardStyleEl) {
+    cardStyleEl.addEventListener('change', () => {
+      localStorage.setItem(CARD_STYLE_KEY, cardStyleEl.value);
+      if (typeof renderTable === 'function') renderTable();
+    });
+  }
+
+  // Desktop card view toggle (STAK-118)
+  wireStorageToggle('settingsDesktopCardView', DESKTOP_CARD_VIEW_KEY, {
+    defaultVal: false,
+    onApply: (isEnabled) => {
+      document.body.classList.toggle('force-card-view', isEnabled);
+      applyViewIpp();
+      if (typeof renderTable === 'function') renderTable();
+    },
+  });
+
   // Table images toggle (chip-sort-toggle)
   wireStorageToggle('tableImagesToggle', 'tableImagesEnabled', {
     defaultVal: true,
     onApply: () => { if (typeof renderTable === 'function') renderTable(); },
   });
+
+  // Table image sides toggle (3-value: both/obverse/reverse)
+  const sidesEl = document.getElementById('tableImageSidesToggle');
+  if (sidesEl) {
+    const curSides = localStorage.getItem('tableImageSides') || 'both';
+    sidesEl.querySelectorAll('.chip-sort-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.val === curSides);
+    });
+    sidesEl.addEventListener('click', (e) => {
+      const btn = e.target.closest('.chip-sort-btn');
+      if (!btn) return;
+      localStorage.setItem('tableImageSides', btn.dataset.val);
+      sidesEl.querySelectorAll('.chip-sort-btn').forEach(b => b.classList.toggle('active', b === btn));
+      if (typeof renderTable === 'function') renderTable();
+    });
+  }
 
   // Numista override toggle (chip-sort-toggle)
   wireStorageToggle('numistaOverrideToggle', 'numistaOverridePersonal', {
@@ -1636,9 +1832,11 @@ const syncGoldbackSettingsUI = () => {
 const syncHeaderToggleUI = () => {
   const themeVisible = localStorage.getItem('headerThemeBtnVisible') !== 'false';
   const currencyVisible = localStorage.getItem('headerCurrencyBtnVisible') !== 'false';
+  const cardViewVisible = localStorage.getItem('headerCardViewBtnVisible') === 'true';
 
   syncChipToggle('settingsHeaderThemeBtn', themeVisible);
   syncChipToggle('settingsHeaderCurrencyBtn', currencyVisible);
+  syncChipToggle('settingsHeaderCardViewBtn', cardViewVisible);
 
   applyHeaderToggleVisibility();
 };
@@ -1650,12 +1848,17 @@ const syncHeaderToggleUI = () => {
 const applyHeaderToggleVisibility = () => {
   const themeVisible = localStorage.getItem('headerThemeBtnVisible') !== 'false';
   const currencyVisible = localStorage.getItem('headerCurrencyBtnVisible') !== 'false';
+  const cardViewVisible = localStorage.getItem('headerCardViewBtnVisible') === 'true';
 
   if (elements.headerThemeBtn) {
     elements.headerThemeBtn.style.display = themeVisible ? '' : 'none';
   }
   if (elements.headerCurrencyBtn) {
     elements.headerCurrencyBtn.style.display = currencyVisible ? '' : 'none';
+  }
+  const headerCardViewBtn = safeGetElement('headerCardViewBtn');
+  if (headerCardViewBtn) {
+    headerCardViewBtn.style.display = cardViewVisible ? '' : 'none';
   }
 };
 window.applyHeaderToggleVisibility = applyHeaderToggleVisibility;

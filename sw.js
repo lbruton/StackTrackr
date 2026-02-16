@@ -2,7 +2,8 @@
 // Enables offline support and installable PWA experience
 // Cache version is tied to APP_VERSION — old caches are purged on activate
 
-const CACHE_NAME = 'staktrakr-v3.29.08';
+const DEV_MODE = false; // Set to true during development — bypasses all caching
+const CACHE_NAME = 'staktrakr-v3.30.00';
 
 // Offline fallback for navigation requests when all cache/network strategies fail
 const OFFLINE_HTML = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>StakTrakr</title></head>' +
@@ -41,6 +42,7 @@ const CORE_ASSETS = [
   './js/debugModal.js',
   './js/numista-modal.js',
   './js/spot.js',
+  './js/card-view.js',
   './js/seed-data.js',
   './js/priceHistory.js',
   './js/spotLookup.js',
@@ -116,6 +118,8 @@ self.addEventListener('activate', (event) => {
 
 // Fetch: route requests by strategy
 self.addEventListener('fetch', (event) => {
+  // Dev mode: bypass all caching, go straight to network
+  if (DEV_MODE) return;
   const url = new URL(event.request.url);
 
   // Network-first for API calls (spot prices, catalog lookups)
@@ -158,7 +162,13 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Stale-while-revalidate for local assets (ensures updates propagate)
+  // Network-first for local JS/CSS (always serve fresh code when online)
+  if (url.origin === self.location.origin && /\.(js|css)$/i.test(url.pathname)) {
+    event.respondWith(networkFirst(event.request));
+    return;
+  }
+
+  // Stale-while-revalidate for other local assets (images, fonts, etc.)
   if (url.origin === self.location.origin) {
     event.respondWith(staleWhileRevalidate(event.request));
     return;
