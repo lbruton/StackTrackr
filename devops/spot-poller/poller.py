@@ -4,7 +4,8 @@ StakTrakr Seed Data Poller
 =============================
 Long-running script (designed for Docker) that:
   1. On startup: backfills any gap since the last seed data entry
-  2. Every hour: polls /latest for today's prices and appends if new
+  2. Every hour: polls /latest and writes to data/hourly/YYYY/MM/DD/HH.json
+  3. At noon EST (hour >= 12): also writes the daily seed entry to spot-history-YYYY.json
 
 Writes directly to the mounted data/ folder. User commits manually.
 """
@@ -79,23 +80,48 @@ def run_catchup(api_key, data_dir):
         log("  Catchup: no data returned (weekends/holidays?).")
 
 # ---------------------------------------------------------------------------
+# Hourly data collection
+# ---------------------------------------------------------------------------
+
+NOON_HOUR = 12  # 12:00 PM EST — market reference price for daily seed
+
+def write_hourly(entries, data_dir, hour_str, date_obj):
+    """
+    Write hourly price snapshot to data/hourly/YYYY/MM/DD/HH.json.
+    Uses the source "hourly" instead of "seed" for provenance.
+    Skips if the file already exists (idempotent).
+    """
+    # Re-tag entries with "hourly" source for the sharded files
+    hourly_entries = []
+    for e in entries:
+        hourly_entry = dict(e)
+        hourly_entry["source"] = "hourly"
+        hourly_entries.append(hourly_entry)
+
+    written = seed.save_hourly_file(data_dir, hourly_entries, date_obj, hour_str)
+    if written:
+        log(f"Hourly: wrote {len(hourly_entries)} entries → "
+            f"hourly/{date_obj.year}/{date_obj.month:02d}/{date_obj.day:02d}/{hour_str}.json")
+    else:
+        log(f"Hourly: {hour_str}.json already exists — skipped.")
+
+# ---------------------------------------------------------------------------
 # Hourly poll
 # ---------------------------------------------------------------------------
 
 def poll_once(api_key, data_dir):
-    """Poll /latest, add today's entry if we don't have one yet."""
-    today = datetime.now().date()
+    """
+    Poll /latest prices every hour.
+    - Always writes to the hourly sharded tree (data/hourly/YYYY/MM/DD/HH.json)
+    - At noon EST (hour >= 12), also writes/overwrites the daily seed file
+    """
+    now = datetime.now()  # TZ=America/New_York from Docker env
+    today = now.date()
+    hour = now.hour
     today_str = today.strftime("%Y-%m-%d")
+    hour_str = f"{hour:02d}"
 
-    # Check if we already have data for today
-    year_data = seed.load_year_file(data_dir, str(today.year))
-    existing_dates = {e["timestamp"][:10] for e in year_data}
-
-    if today_str in existing_dates:
-        log(f"Poll: already have data for {today_str} — skipping.")
-        return
-
-    log(f"Poll: fetching latest prices for {today_str}...")
+    log(f"Poll: fetching latest prices for {today_str} (hour {hour_str})...")
     try:
         data = seed.fetch_latest(api_key)
     except Exception as e:
@@ -112,12 +138,22 @@ def poll_once(api_key, data_dir):
         log("Poll: no valid entries after transformation.")
         return
 
-    results = seed.merge_into_year_files(data_dir, entries)
-    for year, count in sorted(results.items()):
-        if count > 0:
-            log(f"Poll: wrote +{count} entries to spot-history-{year}.json")
+    # Always write hourly data
+    write_hourly(entries, data_dir, hour_str, today)
+
+    # At noon EST (or later if missed), write daily seed
+    if hour >= NOON_HOUR:
+        year_data = seed.load_year_file(data_dir, str(today.year))
+        existing_dates = {e["timestamp"][:10] for e in year_data}
+
+        if today_str not in existing_dates:
+            results = seed.merge_into_year_files(data_dir, entries)
+            for year, count in sorted(results.items()):
+                if count > 0:
+                    log(f"Seed: wrote daily prices for {today_str} "
+                        f"(noon+ window, +{count} entries to spot-history-{year}.json)")
         else:
-            log(f"Poll: no new entries for {year} (already present).")
+            log(f"Seed: daily data for {today_str} already present — skipping.")
 
 # ---------------------------------------------------------------------------
 # Main loop
@@ -130,7 +166,11 @@ def log(msg):
 
 
 def main():
+    once = "--once" in sys.argv
+
     log("StakTrakr Seed Data Poller starting...")
+    if once:
+        log("Running in single-shot mode (--once).")
 
     api_key = seed.load_config()
     data_dir = seed.resolve_data_dir()
@@ -139,6 +179,12 @@ def main():
     if not data_dir.exists():
         log(f"Error: Data directory {data_dir} does not exist. Is the volume mounted?")
         sys.exit(1)
+
+    if once:
+        # Single poll — used by GitHub Actions
+        poll_once(api_key, data_dir)
+        log("Done (single-shot).")
+        return
 
     # Phase 1: catchup
     run_catchup(api_key, data_dir)

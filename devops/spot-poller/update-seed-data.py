@@ -89,6 +89,27 @@ def save_year_file(data_dir, year, entries):
     with open(path, "w", encoding="utf-8") as f:
         json.dump(entries, f, separators=(", ", ": "))
 
+
+def save_hourly_file(data_dir, entries, date_obj, hour_str):
+    """
+    Write hourly price snapshot to data/hourly/YYYY/MM/DD/HH.json.
+
+    Returns True if written, False if file already exists (idempotent).
+    """
+    hourly_dir = (
+        Path(data_dir) / "hourly"
+        / str(date_obj.year)
+        / f"{date_obj.month:02d}"
+        / f"{date_obj.day:02d}"
+    )
+    hourly_dir.mkdir(parents=True, exist_ok=True)
+    path = hourly_dir / f"{hour_str}.json"
+    if path.exists():
+        return False
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(entries, f, indent=2)
+    return True
+
 # ---------------------------------------------------------------------------
 # Gap detection
 # ---------------------------------------------------------------------------
@@ -222,10 +243,13 @@ def transform_latest_to_seed(rates, date_str):
 # Merge logic
 # ---------------------------------------------------------------------------
 
-def merge_into_year_files(data_dir, new_entries, dry_run=False):
+def merge_into_year_files(data_dir, new_entries, dry_run=False, overwrite=False):
     """
     Merge new entries into the appropriate year files.
     Deduplicates by (timestamp, metal). Returns a dict of {year: count_added}.
+
+    If overwrite=True, existing entries with the same (timestamp, metal) key
+    are replaced with the new values (used for noon seed updates).
     """
     # Group new entries by year
     by_year = {}
@@ -237,24 +261,33 @@ def merge_into_year_files(data_dir, new_entries, dry_run=False):
     for year, entries in sorted(by_year.items()):
         existing = load_year_file(data_dir, year)
 
-        # Build a set of existing (timestamp, metal) keys for dedup
-        existing_keys = {(e["timestamp"], e["metal"]) for e in existing}
+        if overwrite:
+            # Build lookup of new entries by key
+            new_keys = {(e["timestamp"], e["metal"]): e for e in entries}
+            # Replace matching entries, keep non-matching ones
+            merged = [new_keys.pop((e["timestamp"], e["metal"]), e) for e in existing]
+            # Append any new entries that weren't replacements
+            remaining = list(new_keys.values())
+            merged.extend(remaining)
+            count = len(entries)
+        else:
+            # Build a set of existing (timestamp, metal) keys for dedup
+            existing_keys = {(e["timestamp"], e["metal"]) for e in existing}
+            # Filter to only truly new entries
+            to_add = [e for e in entries if (e["timestamp"], e["metal"]) not in existing_keys]
+            if not to_add:
+                results[year] = 0
+                continue
+            merged = existing + to_add
+            count = len(to_add)
 
-        # Filter to only truly new entries
-        to_add = [e for e in entries if (e["timestamp"], e["metal"]) not in existing_keys]
-
-        if not to_add:
-            results[year] = 0
-            continue
-
-        merged = existing + to_add
         # Sort by timestamp, then by metal name for consistent ordering
         merged.sort(key=lambda e: (e["timestamp"], e["metal"]))
 
         if not dry_run:
             save_year_file(data_dir, year, merged)
 
-        results[year] = len(to_add)
+        results[year] = count
 
     return results
 
