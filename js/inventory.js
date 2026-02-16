@@ -1662,7 +1662,7 @@ const deleteItem = (idx) => {
     // Clean up user images from IndexedDB (STAK-120)
     if (item?.uuid && window.imageCache?.isAvailable()) {
       window.imageCache.deleteUserImage(item.uuid).catch(err => {
-        debugLog('Failed to delete user images for deleted item: ' + err);
+        debugLog(`Failed to delete user images for deleted item: ${err}`);
       });
     }
   }
