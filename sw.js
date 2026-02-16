@@ -42,6 +42,7 @@ const CORE_ASSETS = [
   './js/debugModal.js',
   './js/numista-modal.js',
   './js/spot.js',
+  './js/card-view.js',
   './js/seed-data.js',
   './js/priceHistory.js',
   './js/spotLookup.js',
