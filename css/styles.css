@@ -308,6 +308,7 @@ label {
   display: block;
 }
 
+
 /* StakTrakr Logo Styles */
 .stackr-logo {
   max-width: 800px;
@@ -379,14 +380,11 @@ label {
 
 /* Responsive scaling */
 @media (max-width: 768px) {
-  .stackr-logo text { 
-    font-size: 0.8em; 
-  }
 }
 
 @media (max-width: 480px) {
-  .stackr-logo text { 
-    font-size: 0.6em; 
+  html {
+    font-size: 14px; /* Down from 16px default — 12.5% global reduction for 360-412px phones */
   }
 }
 
@@ -755,6 +753,19 @@ input[type="submit"] {
   overflow: hidden;
 }
 
+/* Spot price cards grid — 1col → 2col → 4col, never 3 */
+.spot-cards-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: 1fr;
+}
+@media (min-width: 640px) {
+  .spot-cards-grid { grid-template-columns: 1fr 1fr; }
+}
+@media (min-width: 960px) {
+  .spot-cards-grid { grid-template-columns: repeat(4, 1fr); }
+}
+
 .spot-card {
   position: relative;
   background: var(--bg-primary);
@@ -764,6 +775,7 @@ input[type="submit"] {
   border: 1px solid var(--border);
   box-shadow: var(--shadow-sm);
   overflow: hidden;
+  height: 100%;
 }
 
 /* Sparkline canvas — positioned behind card content */
@@ -2568,10 +2580,41 @@ input[type="submit"] {
    TOTALS CARDS
    ============================================================================= */
 
+/* Summary cards grid — 1col → 2col+summary → 5col single row at ≥1200px */
 .totals {
   display: grid;
   gap: var(--spacing-lg);
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: 1fr;
+}
+@media (min-width: 640px) {
+  .totals { grid-template-columns: 1fr 1fr; }
+}
+@media (min-width: 1200px) {
+  .totals { grid-template-columns: repeat(5, 1fr); }
+}
+
+/* Below 1200px: All Metals spans full width with side-by-side layout */
+.total-card-all {
+  grid-column: 1 / -1;
+}
+@media (max-width: 1199px) {
+  .total-card-all {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto;
+    gap: 0 var(--spacing-lg);
+  }
+  .total-card-all .total-title {
+    grid-column: 1 / -1;
+  }
+  .total-card-all .total-item-bottom-line {
+    grid-column: 1 / -1;
+  }
+}
+@media (min-width: 1200px) {
+  .total-card-all {
+    grid-column: auto; /* no spanning — sits in the 5th column */
+  }
 }
 
 .total-card {
@@ -2925,6 +2968,52 @@ td[data-column="name"] {
   flex-shrink: 0;
   background: var(--bg-tertiary, #2a2a2a);
   vertical-align: middle;
+}
+/* Rectangular thumbnails for bars, notes, aurum, sets */
+.table-thumb.table-thumb-rect {
+  border-radius: var(--radius);
+}
+/* Back to top floating button */
+.back-to-top {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  z-index: 1000;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-primary);
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
+}
+.back-to-top.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+.back-to-top:hover {
+  background: var(--bg-elev-1);
+}
+[data-theme="dark"] .back-to-top {
+  background: #1e293b;
+  border-color: #475569;
+  color: #f1f5f9;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+[data-theme="dark"] .back-to-top:hover {
+  background: #334155;
+}
+
+/* Reverse thumbnail — slight overlap for paired display */
+.table-thumb + .table-thumb {
+  margin-left: 2px;
 }
 /* Keep thumbnail in layout for IntersectionObserver but invisible until src is set */
 .table-thumb:not([src]) {
@@ -3726,6 +3815,23 @@ td input:checked + .slider:before {
   padding: 0.15rem;
   border-radius: 50%;
 }
+
+/* Inline verify badge in Grading section (STAK-124) */
+.view-cert-verify-inline {
+  margin-left: 0.4rem;
+  vertical-align: middle;
+  color: var(--text-muted);
+}
+.view-cert-verify-inline:hover {
+  color: var(--text-secondary);
+  background: var(--bg-tertiary);
+}
+.view-cert-verify-inline.pcgs-verified {
+  color: #4ade80;
+}
+.view-cert-verify-inline.pcgs-verify-failed {
+  color: #ef4444;
+}
 .view-cert-verify:hover {
   color: rgba(255, 255, 255, 0.7);
   background: rgba(255, 255, 255, 0.1);
@@ -4053,7 +4159,7 @@ td input:checked + .slider:before {
     font-size: 0.7rem;
   }
 
-  /* Images: side-by-side but smaller — keep both visible */
+  /* Images: side-by-side, flex-fill to use available width (STAK-124) */
   .view-image-section {
     flex-direction: row;
     justify-content: center;
@@ -4061,25 +4167,35 @@ td input:checked + .slider:before {
     padding: var(--spacing);
   }
 
+  .view-image-slot {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+
   .view-image-slot img {
-    max-width: 110px;
-    max-height: 110px;
+    max-width: 100%;
+    max-height: 160px;
+    width: auto;
   }
 
   .view-image-placeholder {
-    width: 110px;
-    height: 110px;
+    width: 100%;
+    aspect-ratio: 1;
     font-size: 2rem;
   }
 
   .view-image-section.view-shape-rect .view-image-slot img {
-    max-width: 110px;
-    max-height: 160px;
+    max-width: 100%;
+    max-height: 200px;
   }
 
   .view-image-section.view-shape-rect .view-image-placeholder {
-    width: 95px;
-    height: 140px;
+    width: 100%;
+    aspect-ratio: 3/4;
+  }
+
+  .view-cert-badge {
+    display: none; /* Hidden ≤768px — inline verify in Grading section instead */
   }
 
   /* 2-column data grid (down from 3/4) */
@@ -4103,32 +4219,32 @@ td input:checked + .slider:before {
 
 }
 
-/* --- Extra-small phones (≤480px) — single-column data, stacked images --- */
+/* --- Extra-small phones (≤480px) — optimized for 360-412px viewports (STAK-124) --- */
 @media (max-width: 480px) {
   .view-detail-grid,
   .view-detail-grid.three-col,
   .view-detail-grid.four-col {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr 1fr;
   }
 
+  /* Tighter image gap at smallest screens */
   .view-image-section {
-    flex-direction: column;
-    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem;
   }
 
-  .view-cert-badge {
-    font-size: 0.9rem;
-    padding: 0.4rem 0.7rem;
-    gap: 0.4rem;
-    right: calc(var(--spacing-sm) + 12px);
+  .view-image-slot img {
+    max-height: 150px;
   }
-  .view-cert-grade.view-cert-clickable,
-  .view-cert-verify {
-    min-width: 28px;
-    min-height: 28px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
+
+  .view-image-section.view-shape-rect .view-image-slot img {
+    max-height: 180px;
+  }
+
+  /* Price History pills — ~5% larger for touch targets (STAK-124) */
+  .view-chart-range-pill {
+    padding: 3px 10px;
+    font-size: 0.65rem;
   }
 }
 
@@ -5550,20 +5666,12 @@ input:disabled + .slider {
 }
 
 @media (max-width: 1200px) {
-  .totals {
-    grid-template-columns: repeat(3, 1fr);
-  }
-
   #detailsModal .modal-content {
     max-width: 900px;
   }
 }
 
 @media (max-width: 992px) {
-  .totals {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
   #detailsModal .modal-content {
     max-width: 900px;
   }
@@ -5576,14 +5684,24 @@ input:disabled + .slider {
     padding: var(--spacing-sm);
   }
 
+  /* Compact header: logo left, 2×2 buttons right (STAK-126) */
   .app-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: var(--spacing);
+    flex-direction: row;
+    align-items: center;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing);
+    padding: var(--spacing-sm);
   }
 
   .app-logo {
     margin: 0;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .app-logo .stackr-logo {
+    max-width: 100%;
+    height: auto;
   }
 
   section {
@@ -5597,36 +5715,69 @@ input:disabled + .slider {
       gap: var(--spacing-sm);
     }
 
-  .search-container {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .search-container .btn:not(.modern-icon-btn) {
-    width: 100%;
-  }
-
-  .search-container .modern-icon-btn {
-    width: 2.75rem;
-    height: 2.75rem;
-    align-self: center;
-  }
-
+  /* Search toolbar: single row with icon-only buttons (STAK-126) */
   .search-container {
     flex-direction: row;
     align-items: center;
-    flex-wrap: wrap;
-    justify-content: center;
+    flex-wrap: nowrap;
     gap: var(--spacing-xs);
   }
 
   .search-container #searchInput {
     flex: 1;
-    min-width: 200px;
+    min-width: 0;
+  }
+
+  .search-action-btn span {
+    display: none;
+  }
+
+  .search-action-btn {
+    padding: 0.5rem;
+    width: 2.75rem;
+    min-width: 2.75rem;
+    height: 2.75rem;
+    justify-content: center;
   }
 
   .totals {
-    grid-template-columns: 1fr;
+    gap: var(--spacing-sm);
+  }
+
+  .total-card {
+    padding: var(--spacing-sm);
+  }
+
+  .total-group {
+    padding: var(--spacing-xs);
+    margin: var(--spacing-xs) 0;
+  }
+
+  .total-item {
+    padding: 0.2rem 0;
+  }
+
+  .total-label {
+    font-size: 0.7rem;
+  }
+
+  .total-value {
+    font-size: 0.8rem;
+  }
+
+  .total-title {
+    font-size: 0.85rem;
+    margin-bottom: var(--spacing-xs);
+    padding-bottom: var(--spacing-xs);
+    border-bottom-width: 3px;
+  }
+
+  .total-item-bottom-line .total-label {
+    font-size: 0.75rem;
+  }
+
+  .total-item-bottom-line .total-value {
+    font-size: 0.85rem;
   }
 
   .import-export-grid {
@@ -5664,16 +5815,41 @@ input:disabled + .slider {
   }
 
   .modal-content {
-    margin: var(--spacing-sm);
-    padding: var(--spacing);
+    margin: 0.25rem;
+    padding: 0.6rem;
   }
 
   .total-card {
-    padding: var(--spacing);
+    padding: var(--spacing-xs);
+  }
+
+  .total-label {
+    font-size: 0.65rem;
+  }
+
+  .total-value {
+    font-size: 0.75rem;
+  }
+
+  .total-title {
+    font-size: 0.8rem;
+  }
+
+  .total-item-bottom-line .total-value {
+    font-size: 0.8rem;
   }
 
   .spot-input {
     padding: var(--spacing);
+  }
+
+  /* Min-width reductions for 360px viewports (STAK-124) */
+  .header-currency-menu {
+    min-width: 180px;
+  }
+
+  .search-container #searchInput {
+    min-width: 160px;
   }
 }
 
@@ -6091,7 +6267,7 @@ th {
 
 /* Keep visual clarity on very small screens */
 @media (max-width: 480px) {
-  #inventoryTable { font-size: 0.78rem; }
+  #inventoryTable { font-size: 0.75rem; }
   #inventoryTable th, #inventoryTable td { padding: 0.14rem 0.12rem; }
   #inventoryTable .icon-btn { width: 1.8rem; height: 1.8rem; }
   #inventoryTable .icon-svg { width: 0.8rem; height: 0.8rem; }
@@ -7231,14 +7407,16 @@ th {
 
 /* Responsive adjustments for control settings */
 @media (max-width: 768px) {
+  /* Keep filter controls horizontal, compact (STAK-126) */
   .filter-controls {
-    flex-direction: column;
-    gap: var(--spacing-sm);
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--spacing-xs);
   }
-  
-  .control-group {
-    justify-content: space-between;
-    width: 100%;
+
+  .control-label {
+    font-size: 0.75rem;
   }
 }
 
@@ -7246,15 +7424,9 @@ th {
   .filter-controls {
     gap: var(--spacing-xs);
   }
-  
-  .control-group {
-    flex-direction: column;
-    gap: var(--spacing-xs);
-    text-align: center;
-  }
-  
+
   .control-label {
-    font-size: 0.75rem;
+    font-size: 0.65rem;
   }
   
   .control-select {
@@ -8843,6 +9015,272 @@ th {
   .bulk-edit-fields select { min-height: 44px; }
   .bulk-edit-items { flex: 1; overflow-y: auto; }
 }
+
+/* =============================================================================
+   CARD VIEW STYLES — Selectable card designs A/B/C/D (STAK-118)
+   ============================================================================= */
+
+/* Container — hidden by default, JS toggles display */
+.card-view-grid {
+  display: none;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  padding: 0 0.25rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* Single column on mobile */
+.card-view-grid > article {
+  flex: 1 1 100%;
+  min-width: 0;
+}
+
+/* 2-column grid on tablets */
+@media (min-width: 640px) {
+  .card-view-grid > article { flex: 0 1 calc(50% - 0.35rem); max-width: calc(50% - 0.35rem); }
+}
+
+/* 3-column grid on desktop */
+@media (min-width: 1100px) {
+  .card-view-grid > article { flex: 0 1 calc(33.333% - 0.45rem); max-width: calc(33.333% - 0.45rem); }
+}
+
+/* --- Shared card primitives --- */
+.cv-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+.cv-chip-year { background: var(--bg-tertiary); color: var(--text-muted); }
+.cv-chip-grade { background: var(--primary); color: #fff; }
+.cv-chip-qty { background: var(--bg-tertiary); color: var(--text-muted); }
+.cv-chip-weight { background: var(--bg-tertiary); color: var(--text-muted); }
+.cv-chip-type {
+  font-size: 0.6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.cv-chip-type.coin { background: var(--type-coin-bg, #b85f00); color: var(--type-coin-text, #fff); }
+.cv-chip-type.bar { background: var(--type-bar-bg, #946d00); color: var(--type-bar-text, #fff); }
+
+.cv-gain { color: var(--success); }
+.cv-loss { color: var(--danger); }
+
+.cv-images-row { display: flex; gap: 0.5rem; margin-bottom: 0.5rem; }
+.cv-images-center { justify-content: center; }
+.cv-chips-row { display: flex; flex-wrap: wrap; gap: 0.25rem; }
+.cv-chips-center { justify-content: center; }
+.cv-item-name {
+  font-size: 0.88rem;
+  font-weight: 600;
+  line-height: 1.3;
+  margin-bottom: 0.35rem;
+  letter-spacing: -0.01em;
+}
+.cv-item-name-truncate {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.cv-arrow { margin: 0 0.2rem; opacity: 0.5; }
+
+/* Metal accent colors */
+.metal-silver { --metal-color: var(--silver); }
+.metal-gold { --metal-color: var(--gold); }
+.metal-platinum { --metal-color: var(--platinum); }
+.metal-palladium { --metal-color: var(--palladium); }
+
+/* Coin image in cards */
+.card-view-grid .coin-img {
+  border-radius: 50%;
+  object-fit: cover;
+  background: var(--bg-tertiary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.card-view-grid .coin-img.bar-shape { border-radius: var(--radius); }
+
+/* No-image placeholder — metal-tinted glass orb / rect */
+.cv-no-image {
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  background: radial-gradient(ellipse at 35% 30%, rgba(255,255,255,0.25) 0%, rgba(255,255,255,0.05) 40%, transparent 70%),
+              linear-gradient(145deg, var(--metal-color, var(--bg-tertiary)), var(--bg-tertiary));
+  box-shadow: inset 0 1px 2px rgba(255,255,255,0.18), inset 0 -2px 4px rgba(0,0,0,0.15);
+  opacity: 0.65;
+}
+/* Metal-specific tints inherited from parent .metal-* class */
+.metal-silver .cv-no-image { --metal-color: #C0C0C0; }
+.metal-gold .cv-no-image { --metal-color: #FFD700; }
+.metal-platinum .cv-no-image { --metal-color: #E5E4E2; }
+.metal-palladium .cv-no-image { --metal-color: #CED0DD; }
+
+/* Table thumbnails — rect items use contain */
+.table-thumb.table-thumb-rect { object-fit: contain; }
+
+/* Table placeholder — same glass effect */
+.table-thumb-placeholder.table-no-image {
+  background: radial-gradient(ellipse at 35% 30%, rgba(255,255,255,0.25) 0%, rgba(255,255,255,0.05) 40%, transparent 70%),
+              linear-gradient(145deg, var(--metal-color, var(--bg-tertiary)), var(--bg-tertiary));
+  box-shadow: inset 0 0.5px 1px rgba(255,255,255,0.18), inset 0 -1px 2px rgba(0,0,0,0.12);
+  opacity: 0.55;
+}
+
+/* --- Card A: Sparkline Header --- */
+.card-a {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--metal-color);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  cursor: pointer;
+  transition: box-shadow 0.2s, transform 0.15s;
+  position: relative;
+}
+.card-a:hover { box-shadow: var(--shadow); transform: translateY(-1px); }
+.card-a:active { transform: scale(0.985); box-shadow: var(--shadow-sm); }
+.card-a .card-a-chart-wrap {
+  position: relative;
+  height: 150px;
+  padding: 0.25rem 0.5rem 0;
+}
+.card-a .card-a-chart-wrap canvas { width: 100% !important; height: 100% !important; }
+.card-a .card-body { padding: 0.5rem 0.75rem 0.65rem; }
+.card-a .cv-chips-img-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem; }
+.card-a .cv-chips-row { margin-bottom: 0; }
+.card-a .cv-images-sm { display: flex; gap: 0.25rem; flex-shrink: 0; align-items: center; }
+.card-a .cv-images-sm .coin-img { width: 36px; height: 36px; border-radius: 50%; overflow: hidden; flex-shrink: 0; }
+.card-a .cv-value-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  font-size: 0.78rem;
+  gap: 0.5rem;
+}
+.card-a .cv-value-journey { color: var(--text-muted); font-weight: 400; }
+.card-a .cv-value-gain { font-weight: 700; font-size: 0.82rem; white-space: nowrap; }
+
+/* --- Card B: Full-Bleed Overlay --- */
+.card-b {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--metal-color, var(--border));
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  cursor: pointer;
+  transition: box-shadow 0.2s, transform 0.15s;
+  position: relative;
+  min-height: 160px;
+}
+.card-b:hover { box-shadow: var(--shadow); transform: translateY(-1px); }
+.card-b:active { transform: scale(0.985); }
+.card-b .sparkline-bg {
+  position: absolute;
+  inset: 0;
+  opacity: 0.18;
+  pointer-events: none;
+}
+[data-theme="dark"] .card-b .sparkline-bg { opacity: 0.22; }
+[data-theme="sepia"] .card-b .sparkline-bg { opacity: 0.15; }
+.card-b .sparkline-bg svg { width: 100%; height: 100%; }
+.card-b .card-content {
+  position: relative;
+  z-index: 1;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.6rem;
+}
+.card-b .coin-img { width: 80px; height: 80px; border: 2px solid var(--border); }
+.card-b .cv-value-hero {
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+.card-b .cv-value-detail { font-size: 0.72rem; color: var(--text-muted); }
+
+/* --- Card C: Split Card --- */
+.card-c {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--metal-color, var(--border));
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  cursor: pointer;
+  transition: box-shadow 0.2s, transform 0.15s;
+  display: flex;
+  min-height: 120px;
+}
+.card-c:hover { box-shadow: var(--shadow); transform: translateY(-1px); }
+.card-c:active { transform: scale(0.985); }
+.card-c .cv-image-col {
+  flex: 0 0 100px;
+  background: var(--bg-secondary);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 0.5rem;
+  position: relative;
+  box-shadow: inset -1px 0 3px rgba(0,0,0,0.08);
+}
+.card-c .cv-image-col::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 0% 50%, var(--metal-color, transparent) 0%, transparent 70%);
+  opacity: 0.18;
+  pointer-events: none;
+}
+/* Rect items in split card — constrained height */
+.card-c .coin-img.bar-shape {
+  width: 80px;
+  height: 56px;
+  border-radius: var(--radius);
+}
+.card-c .coin-img { width: 56px; height: 56px; }
+.card-c .cv-sparkline-strip { display: none; }
+.card-c .cv-data-col {
+  flex: 1;
+  padding: 0.6rem 0.75rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.3rem;
+}
+.card-c .cv-item-name { font-size: 0.82rem; }
+.card-c .cv-chips-row { gap: 0.2rem; }
+.card-c .cv-value-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  padding-top: 0.2rem;
+  border-top: 1px solid var(--border);
+  margin-top: 0.15rem;
+  gap: 0.5rem;
+}
+.card-c .cv-value-journey { color: var(--text-muted); }
+.card-c .cv-value-gain { font-weight: 700; font-size: 0.78rem; white-space: nowrap; }
+
 
 /* --- Phase 5: Landscape card view (STACK-70) ----------------------------
    Touch devices between 769–1024px get card view via JS-applied

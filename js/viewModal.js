@@ -103,10 +103,29 @@ async function showViewModal(index) {
         imageCache.cacheImages(catalogId, apiResult.imageUrl || '', apiResult.reverseImageUrl || '').catch(() => {});
       }
     }
+
   } else if (!imagesLoaded && apiResult) {
     // Fallback: cache even if no image URLs (metadata-only result)
     if (window.imageCache?.isAvailable() && catalogId) {
       imageCache.cacheImages(catalogId, apiResult.imageUrl || '', apiResult.reverseImageUrl || '').catch(() => {});
+    }
+  }
+
+  // Persist CDN URLs to the inventory item so table/card views can use them
+  // without needing an API call. Runs regardless of whether images were replaced
+  // in the modal — the URLs are valuable for card/table rendering. Never overwrite.
+  if (apiResult && (apiResult.imageUrl || apiResult.reverseImageUrl)) {
+    let urlsDirty = false;
+    if (apiResult.imageUrl && !item.obverseImageUrl) {
+      item.obverseImageUrl = apiResult.imageUrl;
+      urlsDirty = true;
+    }
+    if (apiResult.reverseImageUrl && !item.reverseImageUrl) {
+      item.reverseImageUrl = apiResult.reverseImageUrl;
+      urlsDirty = true;
+    }
+    if (urlsDirty && typeof saveInventory === 'function') {
+      saveInventory();
     }
   }
 
@@ -563,6 +582,54 @@ function buildViewContent(item, index) {
           link.style.color = 'var(--primary)';
           link.title = `Verify on ${item.gradingAuthority}`;
           valEl.appendChild(link);
+        }
+      }
+      // Add inline verify badge next to cert link (STAK-124)
+      const showInlineVerify = item.gradingAuthority === 'PCGS' && item.certNumber
+        && typeof catalogConfig !== 'undefined' && catalogConfig.isPcgsEnabled()
+        && typeof verifyPcgsCert === 'function';
+      if (showInlineVerify) {
+        const valEl = certItem.querySelector('.view-detail-value');
+        if (valEl) {
+          const isVerified = item.pcgsVerified === true;
+          const inlineVerify = _el('span', `view-cert-verify view-cert-verify-inline${isVerified ? ' pcgs-verified' : ''}`);
+          inlineVerify.tabIndex = 0;
+          inlineVerify.role = 'button';
+          inlineVerify.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); inlineVerify.click(); } });
+          inlineVerify.dataset.certNumber = item.certNumber;
+          inlineVerify.title = isVerified ? `Verified — Cert #${item.certNumber}` : 'Verify cert via PCGS API';
+          inlineVerify.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>';
+          inlineVerify.addEventListener('click', (e) => {
+            e.stopPropagation();
+            inlineVerify.classList.add('pcgs-verifying');
+            inlineVerify.title = 'Verifying...';
+            verifyPcgsCert(item.certNumber).then((result) => {
+              inlineVerify.classList.remove('pcgs-verifying');
+              if (result.verified) {
+                inlineVerify.classList.add('pcgs-verified');
+                const idx = inventory.findIndex((inv) => inv.uuid === item.uuid);
+                if (idx >= 0) { inventory[idx].pcgsVerified = true; saveInventory(); }
+                const parts = [];
+                if (result.grade) parts.push(`Grade: ${result.grade}`);
+                if (result.population) parts.push(`Pop: ${result.population}`);
+                if (result.popHigher) parts.push(`Pop Higher: ${result.popHigher}`);
+                if (result.priceGuide) parts.push(`Price Guide: $${Number(result.priceGuide).toLocaleString()}`);
+                inlineVerify.title = `Verified — ${parts.join(' | ')}`;
+                // Sync the image badge if present
+                const imgBadgeVerify = document.querySelector('#viewItemModal .view-cert-verify:not(.view-cert-verify-inline)');
+                if (imgBadgeVerify) imgBadgeVerify.classList.add('pcgs-verified');
+              } else {
+                inlineVerify.title = result.error || 'Verification failed';
+                inlineVerify.classList.add('pcgs-verify-failed');
+                setTimeout(() => inlineVerify.classList.remove('pcgs-verify-failed'), 3000);
+              }
+            }).catch((err) => {
+              inlineVerify.classList.remove('pcgs-verifying');
+              inlineVerify.title = 'Verification service unavailable';
+              if (typeof debugLog === 'function') debugLog('warn', 'PCGS verify failed:', err);
+            });
+          });
+          valEl.appendChild(inlineVerify);
         }
       }
       gradeGrid.appendChild(certItem);

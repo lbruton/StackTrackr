@@ -372,6 +372,14 @@ if (searchInput) {
   searchInput.addEventListener('input', (e) => {
     debouncedSearch(e.target.value);
   });
+
+  // Dismiss mobile keyboard on Enter (STAK-126)
+  searchInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      searchInput.blur();
+    }
+  });
 }
 
 // =============================================================================

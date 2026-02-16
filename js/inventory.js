@@ -74,7 +74,9 @@ const createBackupZip = async () => {
         pcgsNumber: item.pcgsNumber || '',
         pcgsVerified: item.pcgsVerified || false,
         serial: item.serial,
-        uuid: item.uuid
+        uuid: item.uuid,
+        obverseImageUrl: item.obverseImageUrl || '',
+        reverseImageUrl: item.reverseImageUrl || ''
       }))
     };
     zip.file('inventory_data.json', JSON.stringify(inventoryData, null, 2));
@@ -103,7 +105,9 @@ const createBackupZip = async () => {
       goldbackPriceHistory: goldbackPriceHistory,
       goldbackEnabled: goldbackEnabled,
       goldbackEstimateEnabled: goldbackEstimateEnabled,
-      goldbackEstimateModifier: goldbackEstimateModifier
+      goldbackEstimateModifier: goldbackEstimateModifier,
+      tableImageSides: localStorage.getItem('tableImageSides') || 'both',
+      tableImagesEnabled: localStorage.getItem('tableImagesEnabled') !== 'false'
     };
     zip.file('settings.json', JSON.stringify(settings, null, 2));
 
@@ -335,14 +339,21 @@ const restoreBackupZip = async (file) => {
       }
       // Restore display settings (backed up but previously not restored)
       if (settingsObj.itemsPerPage != null) {
-        localStorage.setItem(ITEMS_PER_PAGE_KEY, String(settingsObj.itemsPerPage));
-        itemsPerPage = Number(settingsObj.itemsPerPage);
+        const ippRestore = settingsObj.itemsPerPage;
+        localStorage.setItem(ITEMS_PER_PAGE_KEY, String(ippRestore));
+        itemsPerPage = ippRestore === 'all' || ippRestore === Infinity ? Infinity : Number(ippRestore);
       }
       if (settingsObj.sortColumn != null) {
         sortColumn = settingsObj.sortColumn;
       }
       if (settingsObj.sortDirection != null) {
         sortDirection = settingsObj.sortDirection;
+      }
+      if (settingsObj.tableImageSides != null) {
+        localStorage.setItem('tableImageSides', settingsObj.tableImageSides);
+      }
+      if (settingsObj.tableImagesEnabled != null) {
+        localStorage.setItem('tableImagesEnabled', String(settingsObj.tableImagesEnabled));
       }
     }
 
@@ -1133,7 +1144,7 @@ const hideEmptyColumns = () => {
     const cells = document.querySelectorAll(`#inventoryTable tbody [data-column="${col}"]`);
     const allEmpty = cells.length > 0 && Array.from(cells).every(cell => {
       // If the cell contains interactive or icon elements, consider it non-empty
-      if (cell.querySelector && (cell.querySelector('svg') || cell.querySelector('button') || cell.querySelector('.action-icon'))) {
+      if (cell.querySelector && (cell.querySelector('svg') || cell.querySelector('button') || cell.querySelector('.action-icon') || cell.querySelector('img'))) {
         return false;
       }
       return cell.textContent.trim() === '';
@@ -1230,16 +1241,38 @@ async function _loadThumbImage(img) {
       type: img.dataset.itemType || '',
     };
 
+    const side = img.dataset.side || 'obverse';
+
+    // Resolve CDN URL from inventory item
+    const row = img.closest('tr');
+    const idx = row?.dataset?.idx;
+    let cdnUrl = '';
+    if (idx !== undefined) {
+      const invItem = inventory[parseInt(idx, 10)];
+      if (invItem) {
+        const urlKey = side === 'reverse' ? 'reverseImageUrl' : 'obverseImageUrl';
+        cdnUrl = (invItem[urlKey] && /^https?:\/\/.+\..+/i.test(invItem[urlKey])) ? invItem[urlKey] : '';
+      }
+    }
+
+    // Numista override: CDN URLs (Numista source) win over user/pattern blobs
+    const numistaOverride = localStorage.getItem('numistaOverridePersonal') === 'true';
+    if (numistaOverride && cdnUrl) {
+      img.src = cdnUrl;
+      img.style.visibility = '';
+      return;
+    }
+
     const resolved = await imageCache.resolveImageForItem(item);
 
     if (resolved) {
       let blobUrl;
       if (resolved.source === 'user') {
-        blobUrl = await imageCache.getUserImageUrl(resolved.catalogId, 'obverse');
+        blobUrl = await imageCache.getUserImageUrl(resolved.catalogId, side);
       } else if (resolved.source === 'pattern') {
-        blobUrl = await imageCache.getPatternImageUrl(resolved.catalogId, 'obverse');
+        blobUrl = await imageCache.getPatternImageUrl(resolved.catalogId, side);
       } else {
-        blobUrl = await imageCache.getImageUrl(resolved.catalogId, 'obverse');
+        blobUrl = await imageCache.getImageUrl(resolved.catalogId, side);
       }
 
       if (blobUrl) {
@@ -1250,7 +1283,14 @@ async function _loadThumbImage(img) {
       }
     }
 
-    // No cached image — show metal-themed placeholder
+    // Fallback: CDN URL
+    if (cdnUrl) {
+      img.src = cdnUrl;
+      img.style.visibility = '';
+      return;
+    }
+
+    // No cached image, no CDN URL — show metal-themed placeholder
     img.src = _getThumbPlaceholder(item.metal, item.type);
     img.style.visibility = '';
     img.classList.add('table-thumb-placeholder');
@@ -1264,6 +1304,34 @@ const renderTable = () => {
     updateItemCount(filteredInventory.length, inventory.length);
     const sortedInventory = sortInventory(filteredInventory);
     debugLog('renderTable start', sortedInventory.length, 'items');
+
+    // STAK-118: Card view rendering branch
+    if (typeof isCardViewActive === 'function' && isCardViewActive()) {
+      const cardGrid = safeGetElement('cardViewGrid');
+      const portalScroll = document.querySelector('.portal-scroll');
+      if (cardGrid) {
+        cardGrid.style.display = 'flex';
+        if (portalScroll) portalScroll.style.display = 'none';
+
+        renderCardView(sortedInventory, cardGrid);
+        bindCardClickHandler(cardGrid);
+
+        // Defer portal height calc to next frame so cards have their layout
+        requestAnimationFrame(() => updatePortalHeight());
+        updateSummary();
+        return;
+      }
+    }
+
+    // Ensure table is visible when not in card view
+    const cardGridEl = safeGetElement('cardViewGrid');
+    const portalScrollEl = document.querySelector('.portal-scroll');
+    if (cardGridEl) {
+      cardGridEl.style.display = 'none';
+      cardGridEl.style.maxHeight = '';
+      cardGridEl.style.overflowY = '';
+    }
+    if (portalScrollEl) portalScrollEl.style.display = '';
 
     const rows = [];
     const chipConfig = typeof getInlineChipConfig === 'function' ? getInlineChipConfig() : [];
@@ -1360,20 +1428,34 @@ const renderTable = () => {
         ? `<span class="purity-tag" title="Purity: ${purityVal}" onclick="applyColumnFilter('purity', ${JSON.stringify(String(purityVal))})" tabindex="0" role="button" style="cursor:pointer;">${purityVal}</span>`
         : '';
 
-      // Table thumbnail — coin obverse preview in name cell
+      // Table thumbnail — obverse + reverse preview in name cell
       // Omit src attribute entirely when no URL (avoids browser requesting page URL for src="")
       // Hidden when tableImagesEnabled toggle is off
       const _tableImagesOn = localStorage.getItem('tableImagesEnabled') !== 'false';
-      const thumbUrl = ImageCache.isValidImageUrl(item.obverseImageUrl) ? item.obverseImageUrl : '';
-      const thumbSrcAttr = thumbUrl ? ` src="${escapeAttribute(thumbUrl)}"` : '';
-      const thumbHtml = _tableImagesOn && featureFlags.isEnabled('COIN_IMAGES')
-        ? `<img class="table-thumb"${thumbSrcAttr}
-               data-catalog-id="${escapeAttribute(item.numistaId || '')}"
+      const _thumbType = (item.type || '').toLowerCase();
+      const _isRectThumb = _thumbType === 'bar' || _thumbType === 'note' || _thumbType === 'aurum'
+        || _thumbType === 'set' || item.weightUnit === 'gb';
+      const _thumbShapeClass = _isRectThumb ? ' table-thumb-rect' : '';
+      const _validUrl = (u) => u && /^https?:\/\/.+\..+/i.test(u);
+      const obvUrl = _validUrl(item.obverseImageUrl) ? item.obverseImageUrl : '';
+      const revUrl = _validUrl(item.reverseImageUrl) ? item.reverseImageUrl : '';
+      const obvSrcAttr = obvUrl ? ` src="${escapeAttribute(obvUrl)}"` : '';
+      const revSrcAttr = revUrl ? ` src="${escapeAttribute(revUrl)}"` : '';
+      const _sharedThumbAttrs = `data-catalog-id="${escapeAttribute(item.numistaId || '')}"
                data-item-uuid="${escapeAttribute(item.uuid || '')}"
                data-item-name="${escapeAttribute(item.name || '')}"
                data-item-metal="${escapeAttribute(item.metal || '')}"
-               data-item-type="${escapeAttribute(item.type || '')}"
-               alt="" loading="lazy" onerror="this.style.display='none'" />`
+               data-item-type="${escapeAttribute(item.type || '')}"`;
+      const _tableImageSides = localStorage.getItem('tableImageSides') || 'both';
+      const _showObv = _tableImageSides === 'both' || _tableImageSides === 'obverse';
+      const _showRev = _tableImageSides === 'both' || _tableImageSides === 'reverse';
+      const thumbHtml = _tableImagesOn && featureFlags.isEnabled('COIN_IMAGES')
+        ? (_showObv ? `<img class="table-thumb${_thumbShapeClass}"${obvSrcAttr}
+               ${_sharedThumbAttrs} data-side="obverse"
+               alt="" loading="lazy" onerror="this.style.display='none'" />` : '')
+        + (_showRev ? `<img class="table-thumb${_thumbShapeClass}"${revSrcAttr}
+               ${_sharedThumbAttrs} data-side="reverse"
+               alt="" loading="lazy" onerror="this.style.display='none'" />` : '')
         : '';
 
       // Config-driven chip ordering
@@ -1392,9 +1474,10 @@ const renderTable = () => {
   <td class="shrink" data-column="date" data-label="Date">${filterLink('date', item.date, 'var(--text-primary)', item.date ? formatDisplayDate(item.date) : '—')}</td>
       <td class="shrink" data-column="metal" data-label="Metal" data-metal="${escapeAttribute(item.composition || item.metal || '')}">${filterLink('metal', item.composition || item.metal || 'Silver', METAL_COLORS[item.metal] || 'var(--primary)', getDisplayComposition(item.composition || item.metal || 'Silver'))}</td>
       <td class="shrink" data-column="type" data-label="Type">${filterLink('type', item.type, getTypeColor(item.type))}</td>
+      <td class="shrink" data-column="image" data-label="Image" style="text-align: center;">${thumbHtml}</td>
       <td class="expand" data-column="name" data-label="" style="text-align: left;">
         <div class="name-cell-content">
-        ${thumbHtml}${featureFlags.isEnabled('COIN_IMAGES')
+        ${featureFlags.isEnabled('COIN_IMAGES')
           ? `<span class="filter-text" style="color: var(--text-primary); cursor: pointer;" onclick="showViewModal(${originalIdx})" tabindex="0" role="button" onkeydown="if(event.key==='Enter'||event.key===' ')showViewModal(${originalIdx})" title="View ${escapeAttribute(item.name)}">${sanitizeHtml(item.name)}</span>`
           : filterLink('name', item.name, 'var(--text-primary)', undefined, item.name)}${orderedChips}
         </div>
@@ -1759,6 +1842,8 @@ const editItem = (idx, logIdx = null) => {
   if (elements.itemGradingAuthority) elements.itemGradingAuthority.value = item.gradingAuthority || '';
   if (elements.itemCertNumber) elements.itemCertNumber.value = item.certNumber || '';
   if (elements.itemPcgsNumber) elements.itemPcgsNumber.value = item.pcgsNumber || '';
+  if (elements.itemObverseImageUrl) elements.itemObverseImageUrl.value = item.obverseImageUrl || '';
+  if (elements.itemReverseImageUrl) elements.itemReverseImageUrl.value = item.reverseImageUrl || '';
   if (elements.itemSerial) elements.itemSerial.value = item.serial;
 
   // Pre-fill purity: match a preset or show custom input
@@ -2074,6 +2159,8 @@ const importCsv = (file, override = false) => {
           const serialNumber = row['Serial Number'] || row['serialNumber'] || '';
           const serial = row['Serial'] || row['serial'] || getNextSerial();
           const uuid = row['UUID'] || row['uuid'] || generateUUID();
+          const obverseImageUrl = row['Obverse Image URL'] || row['obverseImageUrl'] || '';
+          const reverseImageUrl = row['Reverse Image URL'] || row['reverseImageUrl'] || '';
 
           addCompositionOption(composition);
 
@@ -2104,7 +2191,9 @@ const importCsv = (file, override = false) => {
             numistaId,
             serialNumber,
             serial,
-            uuid
+            uuid,
+            obverseImageUrl,
+            reverseImageUrl
           });
 
           imported.push(item);
@@ -2535,7 +2624,8 @@ const exportCsv = () => {
   const headers = [
     "Date","Metal","Type","Name","Year","Qty","Weight(oz)","Weight Unit","Purity",
     "Purchase Price","Melt Value","Retail Price","Gain/Loss",
-    "Purchase Location","N#","PCGS #","Grade","Grading Authority","Cert #","Serial Number","Notes","UUID"
+    "Purchase Location","N#","PCGS #","Grade","Grading Authority","Cert #","Serial Number","Notes","UUID",
+    "Obverse Image URL","Reverse Image URL"
   ];
 
   const sortedInventory = sortInventoryByDateNewestFirst();
@@ -2576,7 +2666,9 @@ const exportCsv = () => {
       i.certNumber || '',
       i.serialNumber || '',
       i.notes || '',
-      i.uuid || ''
+      i.uuid || '',
+      i.obverseImageUrl || '',
+      i.reverseImageUrl || ''
     ]);
   }
 
@@ -2682,6 +2774,8 @@ const importJson = (file, override = false) => {
         const numistaId = numistaMatch ? numistaMatch[0] : '';
         const serial = raw.serial || getNextSerial();
         const uuid = raw.uuid || generateUUID();
+        const obverseImageUrl = raw.obverseImageUrl || raw['Obverse Image URL'] || '';
+        const reverseImageUrl = raw.reverseImageUrl || raw['Reverse Image URL'] || '';
 
         const processedItem = sanitizeImportedItem({
           metal,
@@ -2710,7 +2804,9 @@ const importJson = (file, override = false) => {
           pcgsVerified,
           purity,
           serial,
-          uuid
+          uuid,
+          obverseImageUrl,
+          reverseImageUrl
         });
 
         const validation = validateInventoryItem(processedItem);
@@ -2839,6 +2935,8 @@ const exportJson = () => {
     pcgsVerified: item.pcgsVerified || false,
     serial: item.serial,
     uuid: item.uuid,
+    obverseImageUrl: item.obverseImageUrl || '',
+    reverseImageUrl: item.reverseImageUrl || '',
     // Legacy fields preserved for backward compatibility
     spotPriceAtPurchase: item.spotPriceAtPurchase,
     isCollectable: item.isCollectable,

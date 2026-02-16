@@ -254,7 +254,7 @@ const CERT_LOOKUP_URLS = {
  * Updated: 2026-02-12 - STACK-38/STACK-31: Responsive card view + mobile layout
  */
 
-const APP_VERSION = "3.29.08";
+const APP_VERSION = "3.30.00";
 
 /**
  * @constant {string} DEFAULT_CURRENCY - Default currency code for monetary formatting
@@ -534,6 +534,12 @@ const TIMEZONE_KEY = "appTimeZone";
 /** @constant {string} ITEMS_PER_PAGE_KEY - LocalStorage key for items per page setting */
 const ITEMS_PER_PAGE_KEY = "settingsItemsPerPage";
 
+/** @constant {string} CARD_STYLE_KEY - LocalStorage key for card view style (A/B/C/D) (STAK-118) */
+const CARD_STYLE_KEY = "cardViewStyle";
+
+/** @constant {string} DESKTOP_CARD_VIEW_KEY - LocalStorage key for desktop card view toggle (STAK-118) */
+const DESKTOP_CARD_VIEW_KEY = "desktopCardView";
+
 // =============================================================================
 // IMAGE PROCESSOR DEFAULTS (STACK-95)
 // =============================================================================
@@ -601,6 +607,7 @@ const ALLOWED_STORAGE_KEYS = [
   EXCHANGE_RATES_KEY,
   "headerThemeBtnVisible",    // boolean string: "true"/"false" (STACK-54)
   "headerCurrencyBtnVisible", // boolean string: "true"/"false" (STACK-54)
+  "headerCardViewBtnVisible", // boolean string: "true"/"false" (STAK-118)
   "layoutVisibility",         // JSON object: { spotPrices, totals, search, table } (STACK-54) — legacy, migrated to layoutSectionConfig
   "layoutSectionConfig",      // JSON array: ordered section config [{ id, label, enabled }] (STACK-54)
   LAST_VERSION_CHECK_KEY,     // timestamp: last remote version check (STACK-67)
@@ -613,6 +620,9 @@ const ALLOWED_STORAGE_KEYS = [
   "viewModalSectionConfig",            // JSON array: ordered view modal section config [{ id, label, enabled }]
   "numistaOverridePersonal",           // boolean string: "true"/"false" — Numista API overrides user pattern images
   "tableImagesEnabled",                // boolean string: "true"/"false" — show thumbnail images in table rows
+  "tableImageSides",                   // string: "both"|"obverse"|"reverse" — which sides to show in table (STAK-118)
+  CARD_STYLE_KEY,                        // string: "A"|"B"|"C" — card view style (STAK-118)
+  DESKTOP_CARD_VIEW_KEY,                 // boolean string: "true"/"false" — desktop card view (STAK-118)
 ];
 
 // =============================================================================
