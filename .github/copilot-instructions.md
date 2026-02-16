@@ -46,6 +46,7 @@ Scripts load via `<script>` tags in `index.html` in strict dependency order. `fi
 - `debugLog(message, level)` — debug logging utility
 
 **From `js/image-cache.js`:**
+
 - `imageCache` (object) — IndexedDB image storage API
 - Always accessed via `window.imageCache` for consistency with availability checks
 
