@@ -12,15 +12,39 @@
  * Called by renderTable() after rows are inserted into the DOM.
  */
 const updatePortalHeight = () => {
-  const portalScroll = document.querySelector('.portal-scroll');
-  if (!portalScroll) return;
+  // Card view portal height
+  const cardGrid = document.getElementById('cardViewGrid');
+  if (cardGrid && cardGrid.style.display !== 'none') {
+    const firstCard = cardGrid.querySelector('article');
+    if (!firstCard) {
+      cardGrid.style.maxHeight = '';
+      cardGrid.style.overflowY = '';
+      return;
+    }
+    const cardRect = firstCard.getBoundingClientRect();
+    const gap = parseFloat(getComputedStyle(cardGrid).gap) || 10;
+    const cardHeight = cardRect.height + gap;
+    const totalCards = cardGrid.querySelectorAll('article').length;
 
-  // Card view at ≤1350px or large touch tablets (STACK-31 / STACK-70):
-  // cards scroll naturally in the page
-  if (window.innerWidth <= 1350 || document.body.classList.contains('force-card-view')) {
-    portalScroll.style.maxHeight = '';
+    // Determine columns from card width vs container width
+    const gridWidth = cardGrid.getBoundingClientRect().width;
+    const cols = Math.max(1, Math.round(gridWidth / (cardRect.width + gap)));
+    const totalRows = Math.ceil(totalCards / cols);
+
+    if (totalRows <= itemsPerPage) {
+      cardGrid.style.maxHeight = '';
+      cardGrid.style.overflowY = '';
+    } else {
+      const portalHeight = (itemsPerPage * cardHeight);
+      cardGrid.style.maxHeight = `${portalHeight}px`;
+      cardGrid.style.overflowY = 'auto';
+    }
     return;
   }
+
+  // Table view portal height
+  const portalScroll = document.querySelector('.portal-scroll');
+  if (!portalScroll) return;
 
   const table = document.getElementById('inventoryTable');
   if (!table) return;
@@ -29,7 +53,6 @@ const updatePortalHeight = () => {
   const firstRow = table.querySelector('tbody tr');
 
   if (!thead || !firstRow) {
-    // Empty table — remove max-height constraint
     portalScroll.style.maxHeight = '';
     return;
   }

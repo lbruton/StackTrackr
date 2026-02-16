@@ -2580,7 +2580,7 @@ input[type="submit"] {
    TOTALS CARDS
    ============================================================================= */
 
-/* Summary cards grid — 1col → 2col → 4col, never 3; All Metals spans full width */
+/* Summary cards grid — 1col → 2col+summary → 5col single row at ≥1200px */
 .totals {
   display: grid;
   gap: var(--spacing-lg);
@@ -2589,11 +2589,32 @@ input[type="submit"] {
 @media (min-width: 640px) {
   .totals { grid-template-columns: 1fr 1fr; }
 }
-@media (min-width: 1100px) {
-  .totals { grid-template-columns: repeat(4, 1fr); }
+@media (min-width: 1200px) {
+  .totals { grid-template-columns: repeat(5, 1fr); }
 }
+
+/* Below 1200px: All Metals spans full width with side-by-side layout */
 .total-card-all {
   grid-column: 1 / -1;
+}
+@media (max-width: 1199px) {
+  .total-card-all {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto;
+    gap: 0 var(--spacing-lg);
+  }
+  .total-card-all .total-title {
+    grid-column: 1 / -1;
+  }
+  .total-card-all .total-item-bottom-line {
+    grid-column: 1 / -1;
+  }
+}
+@media (min-width: 1200px) {
+  .total-card-all {
+    grid-column: auto; /* no spanning — sits in the 5th column */
+  }
 }
 
 .total-card {
@@ -8979,12 +9000,12 @@ th {
 
 /* 2-column grid on tablets */
 @media (min-width: 640px) {
-  .card-view-grid > article { flex: 1 1 calc(50% - 0.35rem); }
+  .card-view-grid > article { flex: 0 1 calc(50% - 0.35rem); max-width: calc(50% - 0.35rem); }
 }
 
 /* 3-column grid on desktop */
 @media (min-width: 1100px) {
-  .card-view-grid > article { flex: 1 1 calc(33.333% - 0.45rem); }
+  .card-view-grid > article { flex: 0 1 calc(33.333% - 0.45rem); max-width: calc(33.333% - 0.45rem); }
 }
 
 /* --- Shared card primitives --- */

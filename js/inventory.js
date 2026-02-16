@@ -1305,7 +1305,8 @@ const renderTable = () => {
         renderCardView(sortedInventory, cardGrid);
         bindCardClickHandler(cardGrid);
 
-        updatePortalHeight();
+        // Defer portal height calc to next frame so cards have their layout
+        requestAnimationFrame(() => updatePortalHeight());
         updateSummary();
         return;
       }
@@ -1314,7 +1315,11 @@ const renderTable = () => {
     // Ensure table is visible when not in card view
     const cardGridEl = document.getElementById('cardViewGrid');
     const portalScrollEl = document.querySelector('.portal-scroll');
-    if (cardGridEl) cardGridEl.style.display = 'none';
+    if (cardGridEl) {
+      cardGridEl.style.display = 'none';
+      cardGridEl.style.maxHeight = '';
+      cardGridEl.style.overflowY = '';
+    }
     if (portalScrollEl) portalScrollEl.style.display = '';
 
     const rows = [];
