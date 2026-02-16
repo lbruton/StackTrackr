@@ -59,10 +59,8 @@ const switchSettingsSection = (name) => {
 
   // Sync image display toggles when switching to Appearance section
   if (name === 'site') {
-    const tableToggle = document.getElementById('tableImagesToggle');
-    if (tableToggle) tableToggle.checked = localStorage.getItem('tableImagesEnabled') !== 'false';
-    const overrideToggle = document.getElementById('numistaOverrideToggle');
-    if (overrideToggle) overrideToggle.checked = localStorage.getItem('numistaOverridePersonal') === 'true';
+    syncChipToggle('tableImagesToggle', localStorage.getItem('tableImagesEnabled') !== 'false');
+    syncChipToggle('numistaOverrideToggle', localStorage.getItem('numistaOverridePersonal') === 'true');
   }
 
   // Populate Images data when switching to Images section (STACK-96)
@@ -372,6 +370,53 @@ const wireFeatureFlagToggle = (elementId, flagName, opts = {}) => {
 window.wireFeatureFlagToggle = wireFeatureFlagToggle;
 
 /**
+ * Syncs a chip-sort-toggle's active state from a boolean value.
+ * @param {string} elementId - DOM id of the .chip-sort-toggle container
+ * @param {boolean} isOn - Whether the 'yes' button should be active
+ */
+const syncChipToggle = (elementId, isOn) => {
+  const el = document.getElementById(elementId);
+  if (!el) return;
+  el.querySelectorAll('.chip-sort-btn').forEach(btn => {
+    const btnIsYes = btn.dataset.val === 'yes';
+    btn.classList.toggle('active', isOn ? btnIsYes : !btnIsYes);
+  });
+};
+
+/**
+ * Wires a yes/no chip toggle to a raw localStorage key (not a feature flag).
+ * Handles click delegation, localStorage read/write, active-class sync, and optional callback.
+ *
+ * @param {string} elementId - DOM id of the toggle container
+ * @param {string} storageKey - localStorage key to read/write ('true'/'false')
+ * @param {Object} [opts]
+ * @param {boolean} [opts.defaultVal=false] - Default value when no localStorage entry exists
+ * @param {Function} [opts.onApply] - Called after toggle with (isEnabled) arg
+ */
+const wireStorageToggle = (elementId, storageKey, opts = {}) => {
+  const el = document.getElementById(elementId);
+  if (!el) return;
+  // Set initial state
+  const defaultVal = opts.defaultVal ?? false;
+  const stored = localStorage.getItem(storageKey);
+  const isOn = stored !== null ? stored === 'true' : defaultVal;
+  syncChipToggle(elementId, isOn);
+
+  el.addEventListener('click', (e) => {
+    const btn = e.target.closest('.chip-sort-btn');
+    if (!btn) return;
+    const isEnabled = btn.dataset.val === 'yes';
+    localStorage.setItem(storageKey, isEnabled ? 'true' : 'false');
+    el.querySelectorAll('.chip-sort-btn').forEach(b => {
+      b.classList.toggle('active', b.dataset.val === btn.dataset.val);
+    });
+    if (opts.onApply) opts.onApply(isEnabled);
+  });
+};
+window.wireStorageToggle = wireStorageToggle;
+window.syncChipToggle = syncChipToggle;
+
+/**
  * Wires a chip sort order toggle (alpha/count) with bidirectional sync.
  *
  * @param {string} elementId - DOM id of the toggle container
@@ -467,22 +512,16 @@ const setupSettingsEventListeners = () => {
     });
   }
 
-  // Header shortcuts (STACK-54)
-  const headerThemeCb = document.getElementById('settingsHeaderThemeBtn');
-  if (headerThemeCb) {
-    headerThemeCb.addEventListener('change', () => {
-      localStorage.setItem('headerThemeBtnVisible', headerThemeCb.checked ? 'true' : 'false');
-      applyHeaderToggleVisibility();
-    });
-  }
+  // Header shortcuts (STACK-54) — chip-sort-toggle wiring
+  wireStorageToggle('settingsHeaderThemeBtn', 'headerThemeBtnVisible', {
+    defaultVal: true,
+    onApply: () => applyHeaderToggleVisibility(),
+  });
 
-  const headerCurrencyCb = document.getElementById('settingsHeaderCurrencyBtn');
-  if (headerCurrencyCb) {
-    headerCurrencyCb.addEventListener('change', () => {
-      localStorage.setItem('headerCurrencyBtnVisible', headerCurrencyCb.checked ? 'true' : 'false');
-      applyHeaderToggleVisibility();
-    });
-  }
+  wireStorageToggle('settingsHeaderCurrencyBtn', 'headerCurrencyBtnVisible', {
+    defaultVal: true,
+    onApply: () => applyHeaderToggleVisibility(),
+  });
 
   // Theme cycle header button (STACK-54)
   if (elements.headerThemeBtn) {
@@ -943,24 +982,16 @@ const setupSettingsEventListeners = () => {
     });
   }
 
-  // Table images toggle
-  const tableImagesToggle = document.getElementById('tableImagesToggle');
-  if (tableImagesToggle) {
-    tableImagesToggle.checked = localStorage.getItem('tableImagesEnabled') !== 'false'; // default ON
-    tableImagesToggle.addEventListener('change', () => {
-      localStorage.setItem('tableImagesEnabled', tableImagesToggle.checked ? 'true' : 'false');
-      if (typeof renderTable === 'function') renderTable();
-    });
-  }
+  // Table images toggle (chip-sort-toggle)
+  wireStorageToggle('tableImagesToggle', 'tableImagesEnabled', {
+    defaultVal: true,
+    onApply: () => { if (typeof renderTable === 'function') renderTable(); },
+  });
 
-  // Numista override toggle
-  const overrideToggle = document.getElementById('numistaOverrideToggle');
-  if (overrideToggle) {
-    overrideToggle.checked = localStorage.getItem('numistaOverridePersonal') === 'true';
-    overrideToggle.addEventListener('change', () => {
-      localStorage.setItem('numistaOverridePersonal', overrideToggle.checked ? 'true' : 'false');
-    });
-  }
+  // Numista override toggle (chip-sort-toggle)
+  wireStorageToggle('numistaOverrideToggle', 'numistaOverridePersonal', {
+    defaultVal: false,
+  });
 
   // Export all images
   const exportBtn = document.getElementById('exportAllImagesBtn');
@@ -1608,10 +1639,8 @@ const syncHeaderToggleUI = () => {
   const themeVisible = localStorage.getItem('headerThemeBtnVisible') !== 'false';
   const currencyVisible = localStorage.getItem('headerCurrencyBtnVisible') !== 'false';
 
-  const themeCb = document.getElementById('settingsHeaderThemeBtn');
-  const currencyCb = document.getElementById('settingsHeaderCurrencyBtn');
-  if (themeCb) themeCb.checked = themeVisible;
-  if (currencyCb) currencyCb.checked = currencyVisible;
+  syncChipToggle('settingsHeaderThemeBtn', themeVisible);
+  syncChipToggle('settingsHeaderCurrencyBtn', currencyVisible);
 
   applyHeaderToggleVisibility();
 };

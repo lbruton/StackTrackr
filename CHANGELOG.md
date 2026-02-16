@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.29.06] - 2026-02-15
+
+### Changed — STAK-115, STAK-116, STAK-117: Design System & Settings Polish
+
+- **Changed**: Unified Settings toggle styles — replaced iOS-style switches with chip-sort-toggle pattern for Table Thumbnails, Numista Priority, and header shortcut settings (STAK-116)
+- **Changed**: Redesigned Settings > Appearance tab with grouped fieldsets — Theme, Currency & Pricing, Image Display, and Custom Themes placeholder (STAK-115)
+- **Added**: Living style guide (`style.html`) — standalone design system reference with theme switching, color token swatches, and all UI component samples (STAK-117)
+- **Added**: CSS & Design System coding standards — token usage rules, toggle standard, button variants, settings group patterns (STAK-117)
+
+---
+
 ## [3.29.05] - 2026-02-15
 
 ### Fixed — Post-Release Hardening & Seed Cache Fix

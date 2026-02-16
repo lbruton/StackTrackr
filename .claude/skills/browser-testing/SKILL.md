@@ -65,7 +65,7 @@ uid=1_0 RootWebArea "StakTrakr" url="http://localhost:8888/index.html"
   ...
 ```
 
-Each element has a `uid` that can be used with `click`, `fill`, and other interaction tools. Save snapshots to `logs/sprint/ui-snapshot.txt` for reference across sessions.
+Each element has a `uid` that can be used with `click`, `fill`, and other interaction tools. Save snapshots to `logs/projects/ui-snapshot.txt` for reference across sessions.
 
 **Script evaluation** — use `evaluate_script` for in-page inspection:
 ```javascript
@@ -190,9 +190,9 @@ When testing user flows (add item, edit, bulk operations):
 
 | File | Purpose |
 |------|---------|
-| `logs/sprint/ui-snapshot.txt` | Saved accessibility tree snapshots |
-| `logs/sprint/*.gif` | Recorded browser interaction GIFs |
-| `logs/sprint/screenshot_*.png` | Saved screenshots for comparison |
+| `logs/projects/ui-snapshot.txt` | Saved accessibility tree snapshots |
+| `logs/projects/*.gif` | Recorded browser interaction GIFs |
+| `logs/projects/screenshot_*.png` | Saved screenshots for comparison |
 
 ---
 
@@ -202,5 +202,5 @@ When done with browser testing:
 
 1. **Kill the HTTP server**: `lsof -ti:8888 | xargs kill`
 2. **Close extra Chrome tabs** opened during testing
-3. **Save useful snapshots** to `logs/sprint/` for future reference
+3. **Save useful snapshots** to `logs/projects/` for future reference
 4. **Note any UI issues found** in the handoff file if using the `/loop` workflow

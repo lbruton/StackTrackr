@@ -6,18 +6,6 @@ Project direction and planned work. Each item links to its full Linear issue for
 
 ---
 
-## Near-Term — Design System & Settings Polish
-
-Establish a CSS style guide and unify UI patterns before bigger UI sprints.
-
-| Issue | Title | Priority |
-|-------|-------|----------|
-| [STAK-117](https://linear.app/hextrackr/issue/STAK-117) | DevOps: Create CSS style guide skill and design system standards | High |
-| [STAK-115](https://linear.app/hextrackr/issue/STAK-115) | Settings: Redesign Appearance tab layout and grouping | Medium |
-| [STAK-116](https://linear.app/hextrackr/issue/STAK-116) | Settings: Unify toggle styles to match filter chip toggle pattern | Medium |
-
----
-
 ## Near-Term — Search & Discovery
 
 Extend the filter chip and search systems with user-facing feature adds.
@@ -105,6 +93,7 @@ Encrypted cloud sync for sponsors ($3/month). Zero-knowledge architecture — da
 <details>
 <summary>Shipped features (click to expand)</summary>
 
+- **v3.29.06** — STAK-115/116/117: Design System & Settings Polish — unified toggle styles, Appearance tab fieldset redesign, living style guide (style.html), CSS design system coding standards
 - **v3.29.04** — STAK-110/111/113: View Modal Visual Sprint — cert badge overlay with authority colors, chart range pills (1Y/5Y/10Y/Purchased), valuation-first default order, purchase date in valuation
 - **v3.29.03** — STAK-108/109/103: Price history bug fix, per-item price history management UI with inline delete and undo/redo, chart fixes (seed bundle for file://, adaptive x-axis labels, custom date range picker)
 - **v3.29.02** — PWA crash fix: service worker error handling for all fetch strategies

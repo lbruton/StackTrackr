@@ -416,3 +416,116 @@ Things to actively avoid and fix when encountered during refactoring:
 - **DOM queries in loops** — cache the element reference before the loop
 - **String concatenation for HTML** without escaping — always use `escapeAttribute()` on user content
 - **Hardcoded localStorage key strings** — use the named constants from `constants.js`
+
+---
+
+## 10. CSS & Design System
+
+### Living reference
+
+Open `style.html` in a browser to see all components rendered with CSS variable labels. This file references the same `css/styles.css` the app uses — it is the single source of truth for visual patterns.
+
+### Token usage (mandatory)
+
+**Never hardcode colors, spacing, or border-radius.** Always use CSS custom properties:
+
+```css
+/* CORRECT */
+color: var(--text-primary);
+background: var(--bg-card);
+border-radius: var(--radius);
+padding: var(--spacing);
+
+/* WRONG — hardcoded values bypass theming */
+color: #1b232c;
+background: #ffffff;
+border-radius: 8px;
+padding: 0.75rem;
+```
+
+### Toggle standard
+
+**Always use `.chip-sort-toggle`** for boolean On/Off settings. Never use iOS-style switches or raw checkboxes for settings toggles:
+
+```html
+<div class="chip-sort-toggle" id="myToggle">
+  <button type="button" class="chip-sort-btn" data-val="yes">On</button>
+  <button type="button" class="chip-sort-btn" data-val="no">Off</button>
+</div>
+```
+
+Wire with `wireStorageToggle(elementId, storageKey, opts)` for raw localStorage keys, or `wireFeatureFlagToggle(elementId, flagName, opts)` for feature flags.
+
+**Exception**: Checkbox lists (e.g., Numista view field toggles) where many items appear in a compact list may use `.settings-checkbox-label` with raw checkboxes.
+
+### Button variants
+
+All buttons use the `.btn` base class with optional modifier:
+
+| Class | Purpose | Background token |
+|-------|---------|-----------------|
+| `.btn` | Primary action | `--primary` |
+| `.btn.secondary` | Secondary / cancel | `--secondary` |
+| `.btn.success` | Positive confirmation | `--success` |
+| `.btn.danger` | Destructive action | `--danger` |
+| `.btn.warning` | Caution | `--warning` |
+| `.btn.info` | Informational | `--info` |
+| `.btn.premium` | Premium / paid feature | `--warning` |
+| `.btn.btn-sm` | Small variant | (same as parent) |
+
+### Settings group pattern
+
+Related settings wrap in a `.settings-fieldset` card with a `.settings-fieldset-title` header:
+
+```html
+<div class="settings-fieldset">
+  <div class="settings-fieldset-title">Group Name</div>
+  <div class="settings-group">
+    <div class="settings-group-label">Setting label</div>
+    <p class="settings-subtext">Help text.</p>
+    <!-- toggle or input here -->
+  </div>
+</div>
+```
+
+### Modal structure
+
+Standard modal pattern — glass-morphism shell with gradient top accent:
+
+```html
+<div class="modal-overlay" id="myModal">
+  <div class="modal-content">
+    <!-- Header -->
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; padding-bottom:0.75rem; border-bottom:1px solid var(--border);">
+      <h2>Title</h2>
+      <button class="btn btn-sm secondary" id="myCloseBtn">&times;</button>
+    </div>
+    <!-- Body -->
+    <div>...</div>
+    <!-- Footer -->
+    <div style="display:flex; justify-content:flex-end; gap:0.5rem; padding-top:0.75rem; border-top:1px solid var(--border);">
+      <button class="btn secondary btn-sm">Cancel</button>
+      <button class="btn btn-sm">Save</button>
+    </div>
+  </div>
+</div>
+```
+
+### Theme compatibility
+
+All new CSS **must** work across light, dark, and sepia themes. Use semantic tokens (`--text-primary`, `--bg-card`, etc.) which automatically adapt per theme. Test all three themes when adding new UI.
+
+### Key CSS custom properties
+
+| Category | Tokens |
+|----------|--------|
+| Colors | `--primary`, `--secondary`, `--success`, `--info`, `--warning`, `--danger` + `-hover` variants |
+| Backgrounds | `--bg-primary`, `--bg-secondary`, `--bg-tertiary`, `--bg-card` |
+| Text | `--text-primary`, `--text-secondary` |
+| Metals | `--silver`, `--gold`, `--platinum`, `--palladium` |
+| Types | `--type-{coin,round,bar,note,set,other}-{bg,text}` |
+| Borders | `--border`, `--border-hover` |
+| Shadows | `--shadow-sm`, `--shadow`, `--shadow-lg` |
+| Spacing | `--spacing-xs`, `--spacing-sm`, `--spacing`, `--spacing-lg`, `--spacing-xl` |
+| Radius | `--radius` (8px), `--radius-lg` (12px) |
+| Transition | `--transition` |
