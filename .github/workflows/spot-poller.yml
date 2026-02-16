@@ -1,0 +1,53 @@
+# Hourly spot price poller — writes to the `data` branch
+# Requires repository secret: METAL_PRICE_API_KEY
+name: Spot Price Poller
+
+on:
+  schedule:
+    # Every hour at :05 (avoid the :00 rush on GitHub Actions)
+    - cron: '5 * * * *'
+  workflow_dispatch: # Manual trigger for testing
+
+env:
+  TZ: America/New_York
+
+jobs:
+  poll:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout data branch
+        uses: actions/checkout@v4
+        with:
+          ref: data
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install -r devops/spot-poller/requirements.txt
+
+      - name: Run poller (single shot)
+        env:
+          METAL_PRICE_API_KEY: ${{ secrets.METAL_PRICE_API_KEY }}
+          DATA_DIR: ${{ github.workspace }}/data
+        run: python devops/spot-poller/poller.py --once
+
+      - name: Commit and push data
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/
+          if git diff --cached --quiet; then
+            echo "No new data to commit."
+          else
+            HOUR=$(date +%H)
+            DATE=$(date +%Y-%m-%d)
+            git commit -m "spot: ${DATE} hour ${HOUR} price data"
+            git push
+          fi
