@@ -303,7 +303,7 @@ const handleImageDeletion = async (uuid) => {
         // Save updated record with one side nullified
         // cacheUserImage requires obverse, so if only reverse remains, store it as obverse
         const obvToSave = newObverse || newReverse;
-        const revToSave = newObverse && newReverse ? newReverse : null;
+        const revToSave = newObverse ? newReverse : null;
         await window.imageCache.cacheUserImage(uuid, obvToSave, revToSave);
       }
     } catch (err) {
