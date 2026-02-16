@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.29.04] - 2026-02-15
+
+### Added — STAK-110, STAK-111, STAK-113: View Modal Visual Sprint
+
+- **Added**: Certification badge overlay on View Modal images — authority-specific colors (PCGS, NGC, ANACS, ICG), clickable grade for cert lookup, verification checkmark with pass/fail states (STAK-113)
+- **Added**: Chart range pills for 1Y, 5Y, 10Y, and Purchased (purchase date → present) with Purchased as default (STAK-113)
+- **Changed**: View Modal default section order — Images first, then Valuation (STAK-110)
+- **Added**: Purchase date in parentheses next to purchase total in Valuation section (STAK-111)
+- **Fixed**: Date range picker "From" clearing not resetting "To" minimum constraint
+
+---
+
 ## [3.29.03] - 2026-02-15
 
 ### Fixed — STAK-108, STAK-109, STAK-103: Price History Fixes & Chart Improvements

@@ -2,7 +2,7 @@
 // Enables offline support and installable PWA experience
 // Cache version is tied to APP_VERSION — old caches are purged on activate
 
-const CACHE_NAME = 'staktrakr-v3.29.03';
+const CACHE_NAME = 'staktrakr-v3.29.04';
 
 // Offline fallback for navigation requests when all cache/network strategies fail
 const OFFLINE_HTML = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>StakTrakr</title></head>' +

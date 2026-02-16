@@ -6,82 +6,82 @@ Project direction and planned work. Each item links to its full Linear issue for
 
 ---
 
-## In Progress — v3.29.0 Image Management Sprint
+## Near-Term — Design System & Settings Polish
 
-[STAK-94](https://linear.app/hextrackr/issue/STAK-94) — Local Image System (Epic)
+Establish a CSS style guide and unify UI patterns before bigger UI sprints.
 
-| Issue | Title | Status | Phase |
-|-------|-------|--------|-------|
-| [STAK-95](https://linear.app/hextrackr/issue/STAK-95) | Image Processor Layer | Done | 2 |
-| [STAK-96](https://linear.app/hextrackr/issue/STAK-96) | Seeded Image Library | Done | 3 |
-| [STAK-102](https://linear.app/hextrackr/issue/STAK-102) | Images Settings Tab | Done | 4 |
-| [STAK-32](https://linear.app/hextrackr/issue/STAK-32) | User Photo Upload | Done | 5 |
-| [STAK-33](https://linear.app/hextrackr/issue/STAK-33) | Mobile Camera Capture | Done | 5 |
-| [STAK-97](https://linear.app/hextrackr/issue/STAK-97) | Image Quota Manager | Backlog | — |
+| Issue | Title | Priority |
+|-------|-------|----------|
+| [STAK-117](https://linear.app/hextrackr/issue/STAK-117) | DevOps: Create CSS style guide skill and design system standards | High |
+| [STAK-115](https://linear.app/hextrackr/issue/STAK-115) | Settings: Redesign Appearance tab layout and grouping | Medium |
+| [STAK-116](https://linear.app/hextrackr/issue/STAK-116) | Settings: Unify toggle styles to match filter chip toggle pattern | Medium |
 
 ---
 
-## Near-Term — Next Up
+## Near-Term — Search & Discovery
 
-Image management sprint is in progress (v3.29.0). These items are unblocked and ready after the current sprint.
+Extend the filter chip and search systems with user-facing feature adds.
+
+| Issue | Title | Priority |
+|-------|-------|----------|
+| [STAK-104](https://linear.app/hextrackr/issue/STAK-104) | Save Search as Custom Filter Chip from Search Bar | High |
+| [STAK-98](https://linear.app/hextrackr/issue/STAK-98) | Item tags system: Numista tags + custom user tags with filter chip integration | Medium |
+
+---
+
+## Near-Term — Mobile Overhaul
+
+Redesign mobile layouts. Benefits from the design system foundation above.
+
+| Issue | Title | Priority |
+|-------|-------|----------|
+| [STAK-106](https://linear.app/hextrackr/issue/STAK-106) | Mobile: Redesign metal summary cards for small screens | High |
+| [STAK-118](https://linear.app/hextrackr/issue/STAK-118) | Mobile: Redesign inventory card view with sparklines, images, and new interaction model | High |
+
+---
+
+## Medium-Term — Feature Depth
+
+Deeper feature work — charts, API integrations, portfolio tracking, and documentation.
+
+| Issue | Title | Priority | Notes |
+|-------|-------|----------|-------|
+| [STAK-48](https://linear.app/hextrackr/issue/STAK-48) | Chart system overhaul: migrate to ApexCharts, add time-series trends | Low | Unblocked (STAK-43 done) |
+| [STAK-99](https://linear.app/hextrackr/issue/STAK-99) | PCGS API Deep Integration — View Modal Verification & Price Guide Lookup | Medium | Extends existing PCGS infrastructure |
+| [STAK-72](https://linear.app/hextrackr/issue/STAK-72) | Realized gains/losses: track sold, lost, and disposed items | Medium | Most-requested portfolio feature |
+| [STAK-112](https://linear.app/hextrackr/issue/STAK-112) | Settings: Add field selection options for View Modal display | Low | After core modal improvements |
+| [STAK-105](https://linear.app/hextrackr/issue/STAK-105) | Full JSDoc coverage and documentation portal | Medium | Community/contributor enablement |
+| [STAK-101](https://linear.app/hextrackr/issue/STAK-101) | Numista OAuth 2.0 Integration — Cloud Sync for User Collections | Low | Requires server-side token exchange |
+
+---
+
+## Long-Term — Platform Expansion
+
+New asset classes, cloud infrastructure, and native distribution.
 
 | Issue | Title | Priority | Depends On |
 |-------|-------|----------|------------|
-| [STAK-85](https://linear.app/hextrackr/issue/STAK-85) | Fix item detail modal layout overlap on Samsung S24+ Ultra | High | — |
-| [STAK-88](https://linear.app/hextrackr/issue/STAK-88) | Include image cache in ZIP backup and restore (needs userImages update) | High | — |
-| [STAK-81](https://linear.app/hextrackr/issue/STAK-81) | Fix parsePriceToUSD ignoring edit-mode parameters (silent price zeroing) | Medium | — |
-| [STAK-82](https://linear.app/hextrackr/issue/STAK-82) | Fix stale spot-lookup override persisting across date changes | Medium | — |
-| [STAK-84](https://linear.app/hextrackr/issue/STAK-84) | Table Row Thumbnail Images with Hover/Click Preview | Medium | STAK-87 |
-| [STAK-87](https://linear.app/hextrackr/issue/STAK-87) | Bulk cache all inventory coin images in one action | Medium | — |
-| [STAK-48](https://linear.app/hextrackr/issue/STAK-48) | Chart system overhaul: migrate to ApexCharts, add time-series trends | Medium | STAK-43 ✅ |
-| [STAK-72](https://linear.app/hextrackr/issue/STAK-72) | Realized gains/losses: track sold, lost, and disposed items | Medium | — |
-| [STAK-73](https://linear.app/hextrackr/issue/STAK-73) | Date Run Checklist: track collecting goals with auto-matched year sets | Medium | — |
-| [STAK-74](https://linear.app/hextrackr/issue/STAK-74) | PWA support: manifest, service worker, installable app experience | Medium | — |
-| [STAK-76](https://linear.app/hextrackr/issue/STAK-76) | Numismatics expansion: paper notes, non-melt collectibles, asset class field | Medium | — |
-| [STAK-86](https://linear.app/hextrackr/issue/STAK-86) | Remove redundant View icon from action row | Low | — |
-| [STAK-83](https://linear.app/hextrackr/issue/STAK-83) | Fix Activity Log sub-tabs showing stale data after first render | Low | — |
-| [STAK-63](https://linear.app/hextrackr/issue/STAK-63) | Time Zone Selection for Timestamps | Low | — |
+| [STAK-76](https://linear.app/hextrackr/issue/STAK-76) | Numismatics expansion: paper notes, non-melt collectibles, asset class field | Low | — |
+| [STAK-73](https://linear.app/hextrackr/issue/STAK-73) | Date Run Checklist: track collecting goals with auto-matched year sets | Low | — |
+| [STAK-30](https://linear.app/hextrackr/issue/STAK-30) | BYO-Backend: Supabase cloud sync | Low | — |
+| [STAK-36](https://linear.app/hextrackr/issue/STAK-36) | Encryption at rest for Supabase data | Low | STAK-30 |
+| [STAK-75](https://linear.app/hextrackr/issue/STAK-75) | Desktop wrapper research: Tauri vs Electron for native installers | Low | — |
+| [STAK-77](https://linear.app/hextrackr/issue/STAK-77) | Stocks & Crypto module: ticker-based pricing with portfolio tracking | Low | STAK-76 |
+| [STAK-78](https://linear.app/hextrackr/issue/STAK-78) | Mobile native app: Capacitor/Tauri wrapper with Supabase sync | Low | STAK-30, STAK-75 |
 
 ---
 
-## Medium-Term — Cloud Sync (Supabase + GitHub Sponsors)
+## Long-Term — Cloud Sync (Supabase + GitHub Sponsors)
 
 Encrypted cloud sync for sponsors ($3/month). Zero-knowledge architecture — data encrypted client-side (AES-256-GCM) before upload, decrypted client-side after download. Server never sees plaintext. Self-hostable for users who want their own Supabase instance.
 
 | Issue | Title | Priority | Depends On |
 |-------|-------|----------|------------|
-| [STAK-30](https://linear.app/hextrackr/issue/STAK-30) | BYO-Backend: Supabase cloud sync (self-host) | Medium | — |
+| [STAK-30](https://linear.app/hextrackr/issue/STAK-30) | BYO-Backend: Supabase cloud sync (self-host) | Low | — |
 | DEVS-5 | Cloud Sync — Supabase-backed encrypted sync for sponsors (epic) | High | — |
 | DEVS-6 | M1: Supabase schema, RLS policies & self-host docs | Medium | — |
 | DEVS-7 | M2: Client-side sync UI & upload/download logic | Medium | DEVS-6 |
 | DEVS-8 | M3: GitHub Action — automated sponsor key lifecycle | Medium | DEVS-6 |
-
----
-
-## Long-Term — Polish & Distribution
-
-Enhanced UX, mobile support, deployment options, and the v4 vision.
-
-| Issue | Title | Priority | Depends On |
-|-------|-------|----------|------------|
-| [STAK-47](https://linear.app/hextrackr/issue/STAK-47) | v4.00.00 — Multi-asset wealth dashboard (Stocks, Crypto, Collectibles, Real Estate) | Low | STAK-42, STAK-43, STAK-45 |
-| [STAK-75](https://linear.app/hextrackr/issue/STAK-75) | Desktop wrapper research: Tauri vs Electron for native installers | Low | STAK-74 |
-| [STAK-77](https://linear.app/hextrackr/issue/STAK-77) | Stocks & Crypto module: ticker-based pricing with portfolio tracking | Low | STAK-76 |
-| [STAK-78](https://linear.app/hextrackr/issue/STAK-78) | Mobile native app: Capacitor/Tauri wrapper with Supabase sync | Low | STAK-30, STAK-74, STAK-75 |
-| [STAK-32](https://linear.app/hextrackr/issue/STAK-32) | User photo upload for inventory items | Low | STAK-30 |
-| [STAK-33](https://linear.app/hextrackr/issue/STAK-33) | Mobile camera capture in add/edit modal | Low | STAK-32 |
-| [STAK-34](https://linear.app/hextrackr/issue/STAK-34) | Docker build & image for self-hosting | Low | — |
-
----
-
-## Deferred
-
-Explicitly out of scope until prerequisites are met.
-
-| Issue | Title | Priority | Depends On |
-|-------|-------|----------|------------|
-| [STAK-36](https://linear.app/hextrackr/issue/STAK-36) | Encryption at rest for Supabase data | Low | STAK-30 |
-| [STAK-40](https://linear.app/hextrackr/issue/STAK-40) | eBay API integration for retail estimates | Low | STAK-30 |
 
 ---
 
@@ -91,7 +91,7 @@ Explicitly out of scope until prerequisites are met.
 |-------|-------|--------|
 | STAK-26 | Batch rename/normalize tool | Covered by existing Bulk Edit + Numista search |
 | STAK-28 | Chart.js dashboard improvements | Superseded by STAK-48 (ApexCharts migration) |
-| STAK-29 | Custom tagging system | Covered by existing custom chip grouping system |
+| STAK-29 | Custom tagging system | Superseded by STAK-98 (Numista + custom tags with filter chip integration) |
 | STAK-35 | Proxmox LXC setup guide | Canceled — Docker (STAK-34) sufficient for self-hosting |
 | STAK-39 | Full UI review walkthrough | Rolled into STAK-38 (responsive audit) |
 | STAK-41 | Per-item retail price history | Duplicate of STAK-43 |
@@ -105,6 +105,19 @@ Explicitly out of scope until prerequisites are met.
 <details>
 <summary>Shipped features (click to expand)</summary>
 
+- **v3.29.04** — STAK-110/111/113: View Modal Visual Sprint — cert badge overlay with authority colors, chart range pills (1Y/5Y/10Y/Purchased), valuation-first default order, purchase date in valuation
+- **v3.29.03** — STAK-108/109/103: Price history bug fix, per-item price history management UI with inline delete and undo/redo, chart fixes (seed bundle for file://, adaptive x-axis labels, custom date range picker)
+- **v3.29.02** — PWA crash fix: service worker error handling for all fetch strategies
+- **v3.29.01** — Codacy duplication reduction: shared toggle helpers, merged config renderers, deduplicated builders
+- **v3.29.00** — STAK-94 (Epic): Local Image System — image processor (STAK-95), seeded image library (STAK-96), images settings tab (STAK-102), user photo upload (STAK-32), mobile camera capture (STAK-33), image quota manager (STAK-97), edit modal pattern rule toggle
+- **v3.28.04** — STAK-91: Item View Modal overhaul — price history charts, valuation section, section reordering
+- **v3.28.03** — STAK-84: Table row thumbnail images with hover/click preview
+- **v3.28.02** — STAK-87/88: Bulk cache all inventory coin images, include image cache in ZIP backup/restore
+- **v3.28.01** — STAK-89/92: Fix 24h % on spot cards, spot card comparison mode setting (Close/Close, Open/Open, Open/Close)
+- **v3.28.00** — STAK-90/93/107: Mobile API settings fix, What's New splash bug fix, backup restore hydration fix
+- **v3.27.05** — STAK-81/82/83/85/86: parsePriceToUSD fix, stale spot-lookup fix, Activity Log stale data fix, Samsung S24+ layout fix, remove redundant View icon
+- **v3.27.04** — STAK-63: Time Zone Selection for Timestamps
+- **v3.27.03** — STAK-74: PWA support — manifest, service worker, installable app experience
 - **v3.27.02** — Multi-color storage bar: stacked localStorage (blue) + IndexedDB (green) segments with tooltips
 - **v3.27.01** — Iframe to popup window migration for source URLs and Numista links
 - **v3.27.00** — STAK-37: Coin image cache (IndexedDB, 50MB quota) & item view modal with Numista enrichment, metadata caching, eBay search
