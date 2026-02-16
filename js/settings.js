@@ -957,12 +957,13 @@ const setupSettingsEventListeners = () => {
       syncImageUrlsBtn.textContent = 'Syncing…';
       let synced = 0, failed = 0, skipped = 0;
       const seen = new Set(); // dedupe by catalogId
+      const urlByCatId = new Map(); // O(1) lookup for synced URLs
       try {
         for (const item of eligible) {
           const catId = item.numistaId;
           if (seen.has(catId)) {
             // Reuse URL from a previously synced item with same catalogId
-            const donor = eligible.find(i => i.numistaId === catId && i.obverseImageUrl);
+            const donor = urlByCatId.get(catId);
             if (donor) {
               item.obverseImageUrl = donor.obverseImageUrl;
               item.reverseImageUrl = donor.reverseImageUrl;
@@ -983,6 +984,7 @@ const setupSettingsEventListeners = () => {
             const data = await resp.json();
             const obv = data.obverse_thumbnail || data.obverse?.thumbnail || '';
             const rev = data.reverse_thumbnail || data.reverse?.thumbnail || '';
+            urlByCatId.set(catId, { obverseImageUrl: obv, reverseImageUrl: rev });
             // Apply to ALL items sharing this catalogId
             for (const inv of eligible) {
               if (inv.numistaId === catId) {

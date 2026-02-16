@@ -1885,12 +1885,15 @@ const setupPagination = () => {
   // Back to top floating button
   const backToTopBtn = document.getElementById('backToTopBtn');
   if (backToTopBtn) {
-    window.addEventListener('scroll', () => {
-      backToTopBtn.classList.toggle('visible', window.scrollY > 300);
-    }, { passive: true });
-    backToTopBtn.addEventListener('click', () => {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    });
+    if (!window._backToTopInitialized) {
+      window.addEventListener('scroll', () => {
+        backToTopBtn.classList.toggle('visible', window.scrollY > 300);
+      }, { passive: true });
+      backToTopBtn.addEventListener('click', () => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+      window._backToTopInitialized = true;
+    }
   }
 };
 
