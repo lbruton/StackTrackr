@@ -407,12 +407,17 @@ document.addEventListener("DOMContentLoaded", async () => {
       const savedIpp = localStorage.getItem(ITEMS_PER_PAGE_KEY);
       if (savedIpp) {
         const parsed = parseInt(savedIpp, 10);
-        if ([10, 15, 25, 50, 100].includes(parsed)) {
+        if ([5, 10, 15, 25, 50, 100].includes(parsed)) {
           itemsPerPage = parsed;
           if (elements.itemsPerPage) elements.itemsPerPage.value = String(parsed);
         }
       }
     } catch (e) { /* ignore */ }
+
+    // Apply saved desktop card view setting (STAK-118)
+    if (localStorage.getItem(DESKTOP_CARD_VIEW_KEY) === 'true') {
+      document.body.classList.add('force-card-view');
+    }
 
     // Apply saved theme attribute early so CSS variables resolve correctly
     // before renderActiveFilters() computes contrast colors in Phase 13
@@ -432,6 +437,40 @@ document.addEventListener("DOMContentLoaded", async () => {
         console.warn('ImageCache init failed:', e);
       }
     }
+
+    // Backfill CDN image URLs from local catalog cache (no API calls).
+    // Items viewed before URL persistence was added may have cached Numista
+    // data in the Local provider but no URLs on the inventory item itself.
+    try {
+      const catalogCache = JSON.parse(localStorage.getItem('staktrakr.catalog.cache') || '{}');
+      const cacheKeys = Object.keys(catalogCache);
+      const itemsWithNid = inventory.filter(i => i.numistaId).length;
+      debugLog(`[CDN Backfill] Catalog cache has ${cacheKeys.length} entries, ${itemsWithNid} items have numistaId`);
+      let backfilled = 0;
+      for (const item of inventory) {
+        const catId = item.numistaId;
+        if (!catId) continue;
+        const cached = catalogCache[catId];
+        if (!cached) {
+          debugLog(`[CDN Backfill] No cache entry for ${catId} (${(item.name || '').slice(0, 30)})`);
+          continue;
+        }
+        if (!item.obverseImageUrl && cached.imageUrl) {
+          item.obverseImageUrl = cached.imageUrl;
+          backfilled++;
+        }
+        if (!item.reverseImageUrl && cached.reverseImageUrl) {
+          item.reverseImageUrl = cached.reverseImageUrl;
+          backfilled++;
+        }
+      }
+      if (backfilled > 0) {
+        saveInventory();
+        debugLog(`[CDN Backfill] Backfilled ${backfilled} CDN image URLs from catalog cache`);
+      } else {
+        debugLog(`[CDN Backfill] Nothing to backfill (items may already have URLs or cache is empty)`);
+      }
+    } catch (e) { debugLog('[CDN Backfill] Error:', e); }
 
     // Clean up stale localStorage keys from removed systems
     try { localStorage.removeItem('seedImagesVersion'); } catch (_) { /* ignore */ }

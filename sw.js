@@ -2,7 +2,7 @@
 // Enables offline support and installable PWA experience
 // Cache version is tied to APP_VERSION — old caches are purged on activate
 
-const CACHE_NAME = 'staktrakr-v3.29.08';
+const CACHE_NAME = 'staktrakr-v3.29.09';
 
 // Offline fallback for navigation requests when all cache/network strategies fail
 const OFFLINE_HTML = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>StakTrakr</title></head>' +
@@ -158,7 +158,13 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Stale-while-revalidate for local assets (ensures updates propagate)
+  // Network-first for local JS/CSS (always serve fresh code when online)
+  if (url.origin === self.location.origin && /\.(js|css)$/i.test(url.pathname)) {
+    event.respondWith(networkFirst(event.request));
+    return;
+  }
+
+  // Stale-while-revalidate for other local assets (images, fonts, etc.)
   if (url.origin === self.location.origin) {
     event.respondWith(staleWhileRevalidate(event.request));
     return;

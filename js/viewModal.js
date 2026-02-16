@@ -103,10 +103,29 @@ async function showViewModal(index) {
         imageCache.cacheImages(catalogId, apiResult.imageUrl || '', apiResult.reverseImageUrl || '').catch(() => {});
       }
     }
+
   } else if (!imagesLoaded && apiResult) {
     // Fallback: cache even if no image URLs (metadata-only result)
     if (window.imageCache?.isAvailable() && catalogId) {
       imageCache.cacheImages(catalogId, apiResult.imageUrl || '', apiResult.reverseImageUrl || '').catch(() => {});
+    }
+  }
+
+  // Persist CDN URLs to the inventory item so table/card views can use them
+  // without needing an API call. Runs regardless of whether images were replaced
+  // in the modal — the URLs are valuable for card/table rendering. Never overwrite.
+  if (apiResult && (apiResult.imageUrl || apiResult.reverseImageUrl)) {
+    let urlsDirty = false;
+    if (apiResult.imageUrl && !item.obverseImageUrl) {
+      item.obverseImageUrl = apiResult.imageUrl;
+      urlsDirty = true;
+    }
+    if (apiResult.reverseImageUrl && !item.reverseImageUrl) {
+      item.reverseImageUrl = apiResult.reverseImageUrl;
+      urlsDirty = true;
+    }
+    if (urlsDirty && typeof saveInventory === 'function') {
+      saveInventory();
     }
   }
 
