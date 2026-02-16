@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.29.07] - 2026-02-15
+
+### Fixed — Fix Image Deletion in Edit Modal
+
+- **Fixed**: Users can now properly remove uploaded photos from items via Remove button in edit modal — deletion intent flags ensure images are removed from IndexedDB on Save (STAK-120)
+- **Fixed**: Orphaned user images are now cleaned up from IndexedDB when inventory items are deleted, preventing storage bloat (STAK-120)
+
+---
+
 ## [3.29.06] - 2026-02-15
 
 ### Changed — STAK-115, STAK-116, STAK-117: Design System & Settings Polish
