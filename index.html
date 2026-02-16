@@ -1644,68 +1644,79 @@
             <div class="settings-section-panel" id="settingsPanel_site" style="display: block">
               <h3>Appearance</h3>
 
-              <div class="settings-group">
-                <div class="settings-group-label">Color scheme</div>
-                <div class="theme-picker">
-                  <button class="theme-option" data-theme="light" title="Light">&#9728;&#65039; Light</button>
-                  <button class="theme-option" data-theme="dark" title="Dark">&#127769; Dark</button>
-                  <button class="theme-option" data-theme="sepia" title="Sepia">&#128220; Sepia</button>
+              <!-- ── Theme ── -->
+              <div class="settings-fieldset">
+                <div class="settings-fieldset-title">Theme</div>
+                <div class="settings-group">
+                  <div class="settings-group-label">Color scheme</div>
+                  <div class="theme-picker">
+                    <button class="theme-option" data-theme="light" title="Light">&#9728;&#65039; Light</button>
+                    <button class="theme-option" data-theme="dark" title="Dark">&#127769; Dark</button>
+                    <button class="theme-option" data-theme="sepia" title="Sepia">&#128220; Sepia</button>
+                  </div>
+                </div>
+                <div class="settings-group">
+                  <div class="settings-group-label">Header theme button</div>
+                  <p class="settings-subtext">Show a quick theme cycle button in the app header.</p>
+                  <div class="chip-sort-toggle" id="settingsHeaderThemeBtn">
+                    <button type="button" class="chip-sort-btn" data-val="yes">On</button>
+                    <button type="button" class="chip-sort-btn" data-val="no">Off</button>
+                  </div>
                 </div>
               </div>
 
-              <div class="settings-group">
-                <div class="settings-group-label">Display currency</div>
-                <p class="settings-subtext">All prices, spot values, and exports will use this currency. Spot prices are fetched in USD and converted using daily exchange rates. Converted values may differ slightly from native currency quotes.</p>
-                <select id="settingsDisplayCurrency"></select>
+              <!-- ── Currency & Pricing ── -->
+              <div class="settings-fieldset">
+                <div class="settings-fieldset-title">Currency &amp; Pricing</div>
+                <div class="settings-group">
+                  <div class="settings-group-label">Display currency</div>
+                  <p class="settings-subtext">All prices, spot values, and exports will use this currency. Spot prices are fetched in USD and converted using daily exchange rates.</p>
+                  <select id="settingsDisplayCurrency"></select>
+                </div>
+                <div class="settings-group">
+                  <div class="settings-group-label">Header currency button</div>
+                  <p class="settings-subtext">Show a quick currency switcher in the app header.</p>
+                  <div class="chip-sort-toggle" id="settingsHeaderCurrencyBtn">
+                    <button type="button" class="chip-sort-btn" data-val="yes">On</button>
+                    <button type="button" class="chip-sort-btn" data-val="no">Off</button>
+                  </div>
+                </div>
+                <div class="settings-group">
+                  <div class="settings-group-label">24h price comparison</div>
+                  <p class="settings-subtext">Choose how the 24h percentage change on spot cards is calculated.</p>
+                  <select id="settingsSpotCompareMode">
+                    <option value="close-close">Close / Close (default)</option>
+                    <option value="open-open">Open / Open</option>
+                    <option value="open-close">Open / Close</option>
+                  </select>
+                </div>
               </div>
 
-              <!-- Header shortcuts (STACK-54) -->
-              <div class="settings-group">
-                <div class="settings-group-label">Header shortcuts</div>
-                <p class="settings-subtext">Show quick-access buttons in the app header.</p>
-                <label class="settings-checkbox-label">
-                  <input type="checkbox" id="settingsHeaderThemeBtn" checked> Theme cycle button
-                </label>
-                <label class="settings-checkbox-label">
-                  <input type="checkbox" id="settingsHeaderCurrencyBtn" checked> Currency toggle button
-                </label>
+              <!-- ── Image Display ── -->
+              <div class="settings-fieldset">
+                <div class="settings-fieldset-title">Image Display</div>
+                <div class="settings-group">
+                  <div class="settings-group-label">Table thumbnails</div>
+                  <p class="settings-subtext">Show coin images next to item names. Uses cached images from uploads, pattern rules, and Numista lookups.</p>
+                  <div class="chip-sort-toggle" id="tableImagesToggle">
+                    <button type="button" class="chip-sort-btn" data-val="yes">On</button>
+                    <button type="button" class="chip-sort-btn" data-val="no">Off</button>
+                  </div>
+                </div>
+                <div class="settings-group">
+                  <div class="settings-group-label">Numista priority override</div>
+                  <p class="settings-subtext">When on, Numista API images take priority over your uploads and pattern rules.</p>
+                  <div class="chip-sort-toggle" id="numistaOverrideToggle">
+                    <button type="button" class="chip-sort-btn" data-val="yes">On</button>
+                    <button type="button" class="chip-sort-btn" data-val="no">Off</button>
+                  </div>
+                </div>
               </div>
 
-              <!-- Spot price comparison mode (STACK-92) -->
-              <div class="settings-group">
-                <div class="settings-group-label">24h price comparison</div>
-                <p class="settings-subtext">Choose how the 24h percentage change on spot cards is calculated.</p>
-                <select id="settingsSpotCompareMode">
-                  <option value="close-close">Close / Close (default)</option>
-                  <option value="open-open">Open / Open</option>
-                  <option value="open-close">Open / Close</option>
-                </select>
-              </div>
-
-              <!-- Image display toggles (moved from Images section) -->
-              <div class="settings-group">
-                <div class="settings-group-label">Image display</div>
-                <label class="settings-toggle">
-                  <input type="checkbox" id="tableImagesToggle" />
-                  <span class="toggle-track"></span>
-                  <span class="toggle-label">
-                    Table thumbnails
-                    <span class="toggle-desc">Show coin images next to item names. Uses cached images from uploads, pattern rules, and Numista lookups.</span>
-                  </span>
-                </label>
-                <label class="settings-toggle" style="margin-top:0.4rem">
-                  <input type="checkbox" id="numistaOverrideToggle" />
-                  <span class="toggle-track"></span>
-                  <span class="toggle-label">
-                    Numista priority override
-                    <span class="toggle-desc">When on, Numista API images take priority over your uploads and pattern rules.</span>
-                  </span>
-                </label>
-              </div>
-
-              <div class="settings-placeholder" style="margin-top: 1.5rem;">
+              <!-- ── Custom Themes (placeholder) ── -->
+              <div class="settings-fieldset" style="text-align:center; opacity:0.6;">
                 <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.3"><circle cx="13.5" cy="6.5" r="2.5"/><circle cx="19" cy="13" r="2.5"/><circle cx="16" cy="20" r="2.5"/><circle cx="7" cy="20" r="2.5"/><circle cx="4" cy="13" r="2.5"/><circle cx="12" cy="13" r="3"/></svg>
-                <p>Custom themes coming soon.</p>
+                <p style="margin-top:0.5rem; font-size:0.85rem;">Custom themes coming soon &mdash; build your own color scheme.</p>
               </div>
 
             </div>

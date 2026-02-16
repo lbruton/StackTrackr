@@ -1,11 +1,11 @@
 ---
-description: Sprint loop — daisy-chain context across chat rewinds for multi-task sessions.
+description: Project loop — daisy-chain context across chat rewinds for multi-task sessions.
 allowed-tools: Bash, Read, Write, Edit, Grep, Glob, mcp__linear-server__*, mcp__memento__*, mcp__claude-context__*
 ---
 
-# Sprint Loop — StakTrakr
+# Project Loop — StakTrakr
 
-This command manages a **rewind-based sprint workflow** for sessions with multiple tasks. The user will rewind the chat back to this message after each task, preserving the base context while carrying forward progress via handoff files.
+This command manages a **rewind-based project workflow** for sessions with multiple tasks. The user will rewind the chat back to this message after each task, preserving the base context while carrying forward progress via handoff files.
 
 ## How the Loop Works
 
@@ -24,11 +24,11 @@ Each cycle:
 
 ### Step 1: Check for a handoff file
 
-Look for the most recent sprint handoff:
+Look for the most recent project handoff:
 
-1. Check `logs/sprint/` directory for files matching `handoff_*.md` (newest first)
+1. Check `logs/projects/` directory for files matching `handoff_*.md` (newest first)
 2. If found, read it — it contains what was completed, what's next, and any state to carry forward
-3. If no file found, also search Memento: `semantic_search("staktrakr sprint handoff", limit: 3)`
+3. If no file found, also search Memento: `semantic_search("staktrakr project handoff", limit: 3)`
 4. If nothing found anywhere, this is a fresh loop — ask the user what we're working on
 
 ### Step 2: Quick git check
@@ -57,7 +57,7 @@ If there are uncommitted changes, create a commit with a descriptive message ref
 
 ### Step 2: Write handoff file
 
-Write to `logs/sprint/handoff_[TIMESTAMP].md`:
+Write to `logs/projects/handoff_[TIMESTAMP].md`:
 
 ```markdown
 # Sprint Handoff — [TIMESTAMP]
@@ -73,7 +73,7 @@ Write to `logs/sprint/handoff_[TIMESTAMP].md`:
 - [What should be worked on next]
 - [Any context needed: file paths, approach decisions, gotchas]
 
-## Sprint Progress
+## Project Progress
 - [X/Y tasks completed overall]
 - [List of all tasks with status]
 
@@ -93,7 +93,7 @@ Save a lightweight handoff entity to Memento with:
 ```
 Handoff saved. You can rewind now.
 
-File: logs/sprint/handoff_[TIMESTAMP].md
+File: logs/projects/handoff_[TIMESTAMP].md
 Commit: [hash] [message]
 Next task: [brief description]
 ```

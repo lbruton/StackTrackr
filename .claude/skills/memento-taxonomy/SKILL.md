@@ -56,9 +56,9 @@ Handoffs should also include:
 |-------|---------|
 | `VERSION` | Current app version (e.g., `v3.29.03`) |
 | `BRANCH` | Current git branch |
-| `ACTIVE_SPRINT` | Current sprint project name and theme |
-| `SPRINT_ISSUES` | Issues in the active sprint with brief descriptions |
-| `QUEUED_SPRINTS` | Upcoming sprint projects |
+| `ACTIVE_LINEAR_PROJ` | Current Linear project name and theme |
+| `LINEAR_PROJ_ISSUES` | Issues in the active project with brief descriptions |
+| `QUEUED_LINEAR_PROJS` | Upcoming Linear projects |
 | `LINEAR_STATE` | Issue counts by state (In Progress / Todo / Backlog) |
 | `FILES_MODIFIED_THIS_SESSION` | Key files changed |
 | `NEXT_STEPS` | What to work on next (critical for continuity) |
@@ -79,7 +79,7 @@ Handoffs should also include:
 |-----|-------------|
 | `TAG: v3.29.03` | Version tag for release-related entities |
 | `TAG: 2026-02` | Month tag for temporal queries |
-| `TAG: sprint-visual` | Sprint theme tag (matches sprint project name) |
+| `TAG: linear-proj:visual` | Linear project theme tag (matches project name) |
 | `TAG: release` | Release-related work |
 | `TAG: completed` | Finished work |
 | `TAG: in-progress` | Active work (update to `completed` when done) |
@@ -130,11 +130,11 @@ mcp__memento__search_nodes
   query: "v3.29.03 project:staktrakr"
 ```
 
-### Finding work by sprint
+### Finding work by Linear project
 
 ```
 mcp__memento__search_nodes
-  query: "sprint-visual project:staktrakr"
+  query: "linear-proj:visual project:staktrakr"
 ```
 
 ## Example: Creating a Handoff
@@ -150,8 +150,8 @@ mcp__memento__create_entities([{
     "SUMMARY: Detailed description of accomplishments...",
     "VERSION: v3.29.03",
     "BRANCH: dev",
-    "ACTIVE_SPRINT: SPRINT-Feb-15-2026-Visual — View Modal & Quick UX Wins",
-    "SPRINT_ISSUES: STAK-110 (title), STAK-111 (title)...",
+    "ACTIVE_LINEAR_PROJ: Visual — Feb 2026 — View Modal & Quick UX Wins",
+    "LINEAR_PROJ_ISSUES: STAK-110 (title), STAK-111 (title)...",
     "NEXT_STEPS: What to do next...",
     "TAG: project:staktrakr",
     "TAG: handoff",
@@ -159,7 +159,7 @@ mcp__memento__create_entities([{
     "TAG: completed",
     "TAG: v3.29.03",
     "TAG: 2026-02",
-    "TAG: sprint-visual"
+    "TAG: linear-proj:visual"
   ]
 }]);
 ```

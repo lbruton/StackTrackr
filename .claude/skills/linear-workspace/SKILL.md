@@ -58,7 +58,7 @@ Do not create new labels without asking the user.
 | Value | Name | When to use |
 |-------|------|-------------|
 | 1 | Urgent | Blocking users, data loss risk |
-| 2 | High | Important, next sprint |
+| 2 | High | Important, next project |
 | 3 | Normal/Medium | Standard backlog item |
 | 4 | Low | Nice-to-have, long-term |
 
@@ -67,7 +67,7 @@ Do not create new labels without asking the user.
 | State | Meaning |
 |-------|---------|
 | Backlog | Planned but not scheduled |
-| Todo | Queued for next sprint |
+| Todo | Queued for next project |
 | In Progress | Actively being worked on |
 | Done | Shipped and merged |
 | Canceled | Won't do |
@@ -110,74 +110,74 @@ mcp__linear-server__get_issue
   id: "STAK-73"
 ```
 
-## Sprint Project Workflow
+## Project Workflow
 
-Sprints are managed as Linear **projects** that group related backlog issues into a focused work batch. This is the standard workflow for starting a new sprint.
+Linear **projects** group related backlog issues into a focused work batch. This is the standard workflow for planning and executing projects.
 
 ### Naming Convention
 
 ```
-SPRINT-{Mon}-{DD}-{YYYY}-{Theme}
+{Theme} — {Mon} {YYYY}
 ```
 
 Examples:
 
-- `SPRINT-Feb-15-2026-Visual` — View Modal & UX quick wins
-- `SPRINT-Mar-01-2026-DesignSystem` — CSS style guide & settings polish
-- `SPRINT-Mar-15-2026-Mobile` — Mobile card view redesign
+- `Visual — Feb 2026` — View Modal & UX quick wins
+- `DesignSystem — Mar 2026` — CSS style guide & settings polish
+- `Mobile — Mar 2026` — Mobile card view redesign
 
-Theme should be a single word or short PascalCase phrase that captures the sprint's focus.
+Theme should be a single word or short PascalCase phrase that captures the project's focus. Queued projects that aren't dated yet use just the theme name (e.g., `Mobile`).
 
-### Planning Sprints
+### Planning Projects
 
-Sprints can be pre-planned as backlog projects. Issues stay in **Backlog** until the sprint is actively started. This lets you queue up multiple themed sprints ahead of time.
+Projects can be pre-planned in the backlog. Issues stay in **Backlog** until the project is actively started. This lets you queue up multiple themed projects ahead of time.
 
 1. **Create the project**:
    ```
    mcp__claude_ai_Linear__create_project
-     name: "SPRINT-Mon-DD-YYYY-Theme"  (active sprint)
-     name: "SPRINT-Next-Theme"          (queued sprint, no date yet)
-     description: "Sprint goal summary. Lists the issues included."
+     name: "Theme — Mon YYYY"   (active project)
+     name: "Theme"               (queued project, no date yet)
+     description: "Project goal summary. Lists the issues included."
      team: "f876864d-ff80-4231-ae6c-a8e5cb69aca4"
    ```
 2. **Add issues to the project** (keep in Backlog):
    ```
    mcp__claude_ai_Linear__update_issue
      id: "STAK-XX"
-     project: "SPRINT-Next-Theme"
+     project: "Theme"
    ```
-3. **Update ROADMAP.md** if sprint issues aren't already listed in the correct section
+3. **Update ROADMAP.md** if project issues aren't already listed in the correct section
 
-Use `SPRINT-Next-Theme` for queued sprints (no date). When starting a queued sprint, rename it to `SPRINT-Mon-DD-YYYY-Theme` with the actual start date.
+Use just the theme name for queued projects. When starting a queued project, rename it to include the date (e.g., `Mobile` → `Mobile — Mar 2026`).
 
-### Starting a Sprint
+### Starting a Project
 
-1. Move sprint issues from **Backlog** to **Todo**
-2. Rename the project from `SPRINT-Next-Theme` to `SPRINT-Mon-DD-YYYY-Theme` if it was queued
+1. Move project issues from **Backlog** to **Todo**
+2. Rename the project to include the date if it was queued
 
-Issues move to Todo only when you're actively pulling work for the sprint.
+Issues move to Todo only when you're actively pulling work for the project.
 
-### During a Sprint
+### During a Project
 
 - Move issues to **In Progress** when starting work on them
 - Move issues to **Done** only after the PR is merged and Codacy approved
-- If an issue is deferred mid-sprint, move it back to **Backlog** (it stays in the project for audit trail)
+- If an issue is deferred mid-project, move it back to **Backlog** (it stays in the project for audit trail)
 
-### Closing a Sprint
+### Closing a Project
 
-When all sprint issues are Done (or explicitly deferred):
+When all project issues are Done (or explicitly deferred):
 
 1. The project stays as-is — it becomes a historical record of what shipped and when
 2. Issues marked Done will show in the project's completed view
 3. Any deferred issues should be noted in the project description
-4. Pick up the next queued `SPRINT-Next-*` project and start it
+4. Pick up the next queued project and start it
 
-### Querying Sprint Status
+### Querying Project Status
 
-To see all issues in a sprint project:
+To see all issues in a project:
 ```
 mcp__claude_ai_Linear__list_issues
-  project: "SPRINT-Mon-DD-YYYY-Theme"
+  project: "Theme — Mon YYYY"
   limit: 20
 ```
 
