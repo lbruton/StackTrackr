@@ -107,8 +107,8 @@ Before committing markdown changes:
 After editing any markdown file, Claude Code automatically:
 
 1. Runs `codacy_cli_analyze` on the modified file
-2. Reports any markdown linting violations
-3. Fixes violations immediately
-4. Re-runs analysis to verify
+1. Reports any markdown linting violations
+1. Fixes violations immediately
+1. Re-runs analysis to verify
 
 Common Codacy markdown rule codes: **MD032**, **MD031**, **MD022**, **MD047**, **MD012**, **MD009**, **MD010**, **MD040**, **MD025**, **MD026**.
