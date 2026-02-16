@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.29.05] - 2026-02-15
+
+### Fixed — Post-Release Hardening & Seed Cache Fix
+
+- **Fixed**: Seed data cache staleness — service worker now uses stale-while-revalidate for spot-history files so Docker poller updates reach users between releases
+- **Fixed**: CoinFacts URL fallback for Raw/Authentic grades in View Modal cert badge (PR #161)
+- **Fixed**: Purchased chart range clamped to minimum 1 day to avoid All-range collision (PR #161)
+- **Fixed**: Verify promise unhandled rejection and window.open name sanitization (PR #161)
+- **Fixed**: Keyboard activation (Enter/Space) added to cert badge buttons for accessibility (PR #161)
+- **Fixed**: dailySpotEntries fallback on fetch failure, verify button visibility guard (PR #161)
+
+---
+
 ## [3.29.04] - 2026-02-15
 
 ### Added — STAK-110, STAK-111, STAK-113: View Modal Visual Sprint

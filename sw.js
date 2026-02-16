@@ -2,7 +2,7 @@
 // Enables offline support and installable PWA experience
 // Cache version is tied to APP_VERSION — old caches are purged on activate
 
-const CACHE_NAME = 'staktrakr-v3.29.04';
+const CACHE_NAME = 'staktrakr-v3.29.05';
 
 // Offline fallback for navigation requests when all cache/network strategies fail
 const OFFLINE_HTML = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>StakTrakr</title></head>' +
@@ -149,6 +149,12 @@ self.addEventListener('fetch', (event) => {
           return offlineResponse();
         })
     );
+    return;
+  }
+
+  // Stale-while-revalidate for seed data (updated between releases by Docker poller)
+  if (url.origin === self.location.origin && url.pathname.includes('/data/spot-history')) {
+    event.respondWith(staleWhileRevalidate(event.request));
     return;
   }
 
