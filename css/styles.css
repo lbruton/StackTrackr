@@ -308,6 +308,7 @@ label {
   display: block;
 }
 
+
 /* StakTrakr Logo Styles */
 .stackr-logo {
   max-width: 800px;
@@ -379,14 +380,11 @@ label {
 
 /* Responsive scaling */
 @media (max-width: 768px) {
-  .stackr-logo text { 
-    font-size: 0.8em; 
-  }
 }
 
 @media (max-width: 480px) {
-  .stackr-logo text { 
-    font-size: 0.6em; 
+  html {
+    font-size: 14px; /* Down from 16px default — 12.5% global reduction for 360-412px phones */
   }
 }
 
@@ -764,6 +762,7 @@ input[type="submit"] {
   border: 1px solid var(--border);
   box-shadow: var(--shadow-sm);
   overflow: hidden;
+  height: 100%;
 }
 
 /* Sparkline canvas — positioned behind card content */
@@ -3726,6 +3725,23 @@ td input:checked + .slider:before {
   padding: 0.15rem;
   border-radius: 50%;
 }
+
+/* Inline verify badge in Grading section (STAK-124) */
+.view-cert-verify-inline {
+  margin-left: 0.4rem;
+  vertical-align: middle;
+  color: var(--text-muted);
+}
+.view-cert-verify-inline:hover {
+  color: var(--text-secondary);
+  background: var(--bg-tertiary);
+}
+.view-cert-verify-inline.pcgs-verified {
+  color: #4ade80;
+}
+.view-cert-verify-inline.pcgs-verify-failed {
+  color: #ef4444;
+}
 .view-cert-verify:hover {
   color: rgba(255, 255, 255, 0.7);
   background: rgba(255, 255, 255, 0.1);
@@ -4053,7 +4069,7 @@ td input:checked + .slider:before {
     font-size: 0.7rem;
   }
 
-  /* Images: side-by-side but smaller — keep both visible */
+  /* Images: side-by-side, flex-fill to use available width (STAK-124) */
   .view-image-section {
     flex-direction: row;
     justify-content: center;
@@ -4061,25 +4077,35 @@ td input:checked + .slider:before {
     padding: var(--spacing);
   }
 
+  .view-image-slot {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+
   .view-image-slot img {
-    max-width: 110px;
-    max-height: 110px;
+    max-width: 100%;
+    max-height: 160px;
+    width: auto;
   }
 
   .view-image-placeholder {
-    width: 110px;
-    height: 110px;
+    width: 100%;
+    aspect-ratio: 1;
     font-size: 2rem;
   }
 
   .view-image-section.view-shape-rect .view-image-slot img {
-    max-width: 110px;
-    max-height: 160px;
+    max-width: 100%;
+    max-height: 200px;
   }
 
   .view-image-section.view-shape-rect .view-image-placeholder {
-    width: 95px;
-    height: 140px;
+    width: 100%;
+    aspect-ratio: 3/4;
+  }
+
+  .view-cert-badge {
+    display: none; /* Hidden ≤768px — inline verify in Grading section instead */
   }
 
   /* 2-column data grid (down from 3/4) */
@@ -4103,32 +4129,32 @@ td input:checked + .slider:before {
 
 }
 
-/* --- Extra-small phones (≤480px) — single-column data, stacked images --- */
+/* --- Extra-small phones (≤480px) — optimized for 360-412px viewports (STAK-124) --- */
 @media (max-width: 480px) {
   .view-detail-grid,
   .view-detail-grid.three-col,
   .view-detail-grid.four-col {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr 1fr;
   }
 
+  /* Tighter image gap at smallest screens */
   .view-image-section {
-    flex-direction: column;
-    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem;
   }
 
-  .view-cert-badge {
-    font-size: 0.9rem;
-    padding: 0.4rem 0.7rem;
-    gap: 0.4rem;
-    right: calc(var(--spacing-sm) + 12px);
+  .view-image-slot img {
+    max-height: 150px;
   }
-  .view-cert-grade.view-cert-clickable,
-  .view-cert-verify {
-    min-width: 28px;
-    min-height: 28px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
+
+  .view-image-section.view-shape-rect .view-image-slot img {
+    max-height: 180px;
+  }
+
+  /* Price History pills — ~5% larger for touch targets (STAK-124) */
+  .view-chart-range-pill {
+    padding: 3px 10px;
+    font-size: 0.65rem;
   }
 }
 
@@ -5576,14 +5602,24 @@ input:disabled + .slider {
     padding: var(--spacing-sm);
   }
 
+  /* Compact header: logo left, 2×2 buttons right (STAK-126) */
   .app-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: var(--spacing);
+    flex-direction: row;
+    align-items: center;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing);
+    padding: var(--spacing-sm);
   }
 
   .app-logo {
     margin: 0;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .app-logo .stackr-logo {
+    max-width: 100%;
+    height: auto;
   }
 
   section {
@@ -5597,32 +5633,29 @@ input:disabled + .slider {
       gap: var(--spacing-sm);
     }
 
-  .search-container {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .search-container .btn:not(.modern-icon-btn) {
-    width: 100%;
-  }
-
-  .search-container .modern-icon-btn {
-    width: 2.75rem;
-    height: 2.75rem;
-    align-self: center;
-  }
-
+  /* Search toolbar: single row with icon-only buttons (STAK-126) */
   .search-container {
     flex-direction: row;
     align-items: center;
-    flex-wrap: wrap;
-    justify-content: center;
+    flex-wrap: nowrap;
     gap: var(--spacing-xs);
   }
 
   .search-container #searchInput {
     flex: 1;
-    min-width: 200px;
+    min-width: 0;
+  }
+
+  .search-action-btn span {
+    display: none;
+  }
+
+  .search-action-btn {
+    padding: 0.5rem;
+    width: 2.75rem;
+    min-width: 2.75rem;
+    height: 2.75rem;
+    justify-content: center;
   }
 
   .totals {
@@ -5664,8 +5697,8 @@ input:disabled + .slider {
   }
 
   .modal-content {
-    margin: var(--spacing-sm);
-    padding: var(--spacing);
+    margin: 0.25rem;
+    padding: 0.6rem;
   }
 
   .total-card {
@@ -5674,6 +5707,15 @@ input:disabled + .slider {
 
   .spot-input {
     padding: var(--spacing);
+  }
+
+  /* Min-width reductions for 360px viewports (STAK-124) */
+  .header-currency-menu {
+    min-width: 180px;
+  }
+
+  .search-container #searchInput {
+    min-width: 160px;
   }
 }
 
@@ -6091,7 +6133,7 @@ th {
 
 /* Keep visual clarity on very small screens */
 @media (max-width: 480px) {
-  #inventoryTable { font-size: 0.78rem; }
+  #inventoryTable { font-size: 0.75rem; }
   #inventoryTable th, #inventoryTable td { padding: 0.14rem 0.12rem; }
   #inventoryTable .icon-btn { width: 1.8rem; height: 1.8rem; }
   #inventoryTable .icon-svg { width: 0.8rem; height: 0.8rem; }
@@ -7231,14 +7273,16 @@ th {
 
 /* Responsive adjustments for control settings */
 @media (max-width: 768px) {
+  /* Keep filter controls horizontal, compact (STAK-126) */
   .filter-controls {
-    flex-direction: column;
-    gap: var(--spacing-sm);
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--spacing-xs);
   }
-  
-  .control-group {
-    justify-content: space-between;
-    width: 100%;
+
+  .control-label {
+    font-size: 0.75rem;
   }
 }
 
@@ -7246,15 +7290,9 @@ th {
   .filter-controls {
     gap: var(--spacing-xs);
   }
-  
-  .control-group {
-    flex-direction: column;
-    gap: var(--spacing-xs);
-    text-align: center;
-  }
-  
+
   .control-label {
-    font-size: 0.75rem;
+    font-size: 0.65rem;
   }
   
   .control-select {
