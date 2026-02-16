@@ -102,6 +102,7 @@ Persistent knowledge graph in Neo4j at `localhost:7687` (local Mac). Shared with
 | `browser-testing` | Chrome DevTools, screenshots, snapshots | Testing UI, taking screenshots |
 | `codacy-rules` | Code quality, sequential thinking | Running static analysis |
 | `coding-standards` | JS patterns, conventions | Writing code |
+| `markdown-standards` | Markdown linting rules, formatting | Editing markdown files |
 | `seed-sync` | Docker poller seed data check, staging | Before releases, checking seed freshness |
 | `memento-taxonomy` | Entity naming, tags, search patterns | Saving handoffs, sessions, insights, or querying Memento |
 | `start` | Session context loading, handoff retrieval | Starting a new development session (`/start`) |
