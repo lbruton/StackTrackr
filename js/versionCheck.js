@@ -16,7 +16,7 @@ const checkVersionChange = () => {
   }
 
   const acknowledged = localStorage.getItem(VERSION_ACK_KEY);
-  const current = localStorage.getItem(APP_VERSION_KEY) || APP_VERSION;
+  const current = APP_VERSION;
   if (typeof window !== 'undefined' && typeof window.debugLog === "function") {
     window.debugLog(`versionCheck: ack=${acknowledged}, current=${current}, APP_VERSION=${APP_VERSION}`);
   }
