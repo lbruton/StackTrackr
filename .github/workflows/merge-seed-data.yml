@@ -1,0 +1,41 @@
+# Nightly merge of seed/hourly data from `data` branch into `dev`
+name: Merge Seed Data
+
+on:
+  schedule:
+    # 5:00 AM UTC = midnight EST — merge after the day's data is complete
+    - cron: '0 5 * * *'
+  workflow_dispatch: # Manual trigger
+
+jobs:
+  merge:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout dev branch
+        uses: actions/checkout@v4
+        with:
+          ref: dev
+          fetch-depth: 0 # Full history needed for merge
+
+      - name: Merge data branch into dev
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git fetch origin data
+          if git merge origin/data --no-edit; then
+            git push
+            echo "Merged data → dev successfully."
+          else
+            echo "::error::Merge conflict merging data → dev. Resolve manually."
+            git merge --abort
+            exit 1
+          fi
+
+      - name: Sync dev scripts back to data branch
+        run: |
+          git checkout data
+          git merge origin/dev --no-edit -m "sync: dev scripts → data" || true
+          git push || true
