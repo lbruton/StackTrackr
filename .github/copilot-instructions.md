@@ -59,6 +59,7 @@ Scripts load via `<script>` tags in `index.html` in strict dependency order. `fi
 - `logChange(name, action, oldVal, newVal, idx)` — change tracking
 
 **From `js/utils.js`:**
+
 - `saveData()`, `loadData()` — async storage
 - `saveDataSync()`, `loadDataSync()` — sync storage
 - `sanitizeHtml(str)` — XSS prevention
