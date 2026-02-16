@@ -28,9 +28,50 @@ All localStorage keys **must** be registered in `ALLOWED_STORAGE_KEYS` in `js/co
 
 Prefer `saveData()`/`loadData()` (async) or `saveDataSync()`/`loadDataSync()` from `js/utils.js` for application data.
 
-### 3. Script Loading Order
+### 3. Script Loading Order & Global Scope Architecture
 
 Scripts load via `<script>` tags in `index.html` in strict dependency order. `file-protocol-fix.js` loads first (no `defer`), `init.js` loads last. If a PR adds a new script file, verify it's placed correctly in `index.html`.
+
+**CRITICAL: Do not flag "undefined" globals** — this is a vanilla JS app with global scope across files. The following globals are defined in other files and are intentionally available throughout the app:
+
+**From `js/state.js`:**
+- `inventory` (array) — main inventory data
+- `spotPrices` (object) — current metal prices
+- `displayCurrency`, `exchangeRate`, `currencySymbol` — currency settings
+- `elements` (object) — cached DOM references
+
+**From `js/debug-log.js`:**
+- `debugLog(message, level)` — debug logging utility
+
+**From `js/image-cache.js`:**
+- `imageCache` (object) — IndexedDB image storage API
+- Always accessed via `window.imageCache` for consistency with availability checks
+
+**From `js/filters.js`:**
+- `renderActiveFilters()` — filter chip rendering
+- `activeFilters` (object) — active filter state
+
+**From `js/changeLog.js`:**
+- `logChange(name, action, oldVal, newVal, idx)` — change tracking
+
+**From `js/utils.js`:**
+- `saveData()`, `loadData()` — async storage
+- `saveDataSync()`, `loadDataSync()` — sync storage
+- `sanitizeHtml(str)` — XSS prevention
+- `formatCurrency(num)`, `formatWeight(num)`, etc. — formatting utilities
+
+**From `js/constants.js`:**
+- `API_PROVIDERS`, `METALS`, `ALLOWED_STORAGE_KEYS` — configuration objects
+- `APP_VERSION`, `LS_KEY`, `SPOT_HISTORY_KEY` — constants
+
+**From other modules:**
+- `renderTable()`, `saveInventory()`, `loadInventory()` — inventory.js
+- `updateSparkline()`, `syncSpotPricesFromApi()` — spot.js
+- `catalogManager`, `catalogAPI` — catalog-*.js
+- `NumistaLookup` — numista-lookup.js
+- Plus many others across 30+ script files
+
+**Do NOT flag these as "not defined"** — they are globals by design. The app has no module bundler; script loading order ensures dependencies are available.
 
 ### 4. Service Worker — respondWith() Must Always Resolve to a Response
 
@@ -101,7 +142,7 @@ The project uses `.eslintrc.json` with these settings. Copilot should enforce th
 | `no-var` | error | Always use `const` or `let` — `var` is banned |
 | `eqeqeq` | error | Always use `===` / `!==` — never `==` / `!=` |
 | `no-implicit-globals` | warn | All declarations should be `const`/`let` or inside functions |
-| `no-unused-vars` | warn | Flag unused variables (ignore params prefixed with `_`) |
+| `no-unused-vars` | warn | Flag unused variables (ignore params prefixed with `_` and variables marked as legacy aliases in comments) |
 | `no-redeclare` | error | No re-declaring variables in the same scope |
 | `no-shadow` | warn | Avoid variable shadowing in nested scopes |
 | `no-use-before-define` | warn | Functions/variables should be defined before use |
