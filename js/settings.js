@@ -275,6 +275,21 @@ const syncSettingsUI = () => {
     numistaSyncGroup.style.display = showBulkSync ? '' : 'none';
   }
 
+  // Card style (STAK-118)
+  const cardStyleSelect = document.getElementById('settingsCardStyle');
+  if (cardStyleSelect) {
+    cardStyleSelect.value = localStorage.getItem(CARD_STYLE_KEY) || 'A';
+  }
+
+  // Desktop card view toggle (STAK-118)
+  const desktopCardToggle = document.getElementById('settingsDesktopCardView');
+  if (desktopCardToggle) {
+    const dcVal = localStorage.getItem(DESKTOP_CARD_VIEW_KEY) === 'true' ? 'yes' : 'no';
+    desktopCardToggle.querySelectorAll('.chip-sort-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.val === dcVal);
+    });
+  }
+
   // Display timezone (STACK-63)
   const tzSelect = document.getElementById('settingsTimezone');
   if (tzSelect) {
@@ -979,6 +994,24 @@ const setupSettingsEventListeners = () => {
       renderImageStorageStats();
     });
   }
+
+  // Card style select (STAK-118)
+  const cardStyleEl = document.getElementById('settingsCardStyle');
+  if (cardStyleEl) {
+    cardStyleEl.addEventListener('change', () => {
+      localStorage.setItem(CARD_STYLE_KEY, cardStyleEl.value);
+      if (typeof renderTable === 'function') renderTable();
+    });
+  }
+
+  // Desktop card view toggle (STAK-118)
+  wireStorageToggle('settingsDesktopCardView', DESKTOP_CARD_VIEW_KEY, {
+    defaultVal: false,
+    onApply: (isEnabled) => {
+      document.body.classList.toggle('force-card-view', isEnabled);
+      if (typeof renderTable === 'function') renderTable();
+    },
+  });
 
   // Table images toggle (chip-sort-toggle)
   wireStorageToggle('tableImagesToggle', 'tableImagesEnabled', {

@@ -856,6 +856,8 @@ const sanitizeObjectFields = (obj) => {
   const cleaned = { ...obj };
   for (const key of Object.keys(cleaned)) {
     if (typeof cleaned[key] === "string" && key !== 'notes') {
+      // URL fields must not be sanitized — they contain :, /, . characters
+      if (key === 'obverseImageUrl' || key === 'reverseImageUrl') continue;
       const allowHyphen = key === 'date';
       cleaned[key] =
         (key === 'name' || key === 'purchaseLocation' || key === 'year' || key === 'grade' || key === 'gradingAuthority' || key === 'certNumber')

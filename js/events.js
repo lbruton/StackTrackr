@@ -498,7 +498,8 @@ const setupColumnResizing = () => {
 const updateColumnVisibility = () => {
   const width = window.innerWidth;
   const isTouch = window.matchMedia('(pointer: coarse)').matches;
-  const forceCards = isTouch && width > 1350 && width <= 1600;
+  const desktopCardView = localStorage.getItem(DESKTOP_CARD_VIEW_KEY) === 'true';
+  const forceCards = desktopCardView || (isTouch && width > 1350 && width <= 1600);
 
   document.body.classList.toggle('force-card-view', forceCards);
 

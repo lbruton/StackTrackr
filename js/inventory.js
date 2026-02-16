@@ -1230,16 +1230,17 @@ async function _loadThumbImage(img) {
       type: img.dataset.itemType || '',
     };
 
+    const side = img.dataset.side || 'obverse';
     const resolved = await imageCache.resolveImageForItem(item);
 
     if (resolved) {
       let blobUrl;
       if (resolved.source === 'user') {
-        blobUrl = await imageCache.getUserImageUrl(resolved.catalogId, 'obverse');
+        blobUrl = await imageCache.getUserImageUrl(resolved.catalogId, side);
       } else if (resolved.source === 'pattern') {
-        blobUrl = await imageCache.getPatternImageUrl(resolved.catalogId, 'obverse');
+        blobUrl = await imageCache.getPatternImageUrl(resolved.catalogId, side);
       } else {
-        blobUrl = await imageCache.getImageUrl(resolved.catalogId, 'obverse');
+        blobUrl = await imageCache.getImageUrl(resolved.catalogId, side);
       }
 
       if (blobUrl) {
@@ -1250,7 +1251,23 @@ async function _loadThumbImage(img) {
       }
     }
 
-    // No cached image — show metal-themed placeholder
+    // Fallback: CDN URL stored on the inventory item (same as view modal)
+    const row = img.closest('tr');
+    const idx = row?.dataset?.idx;
+    if (idx !== undefined) {
+      const invItem = inventory[parseInt(idx, 10)];
+      if (invItem) {
+        const urlKey = side === 'reverse' ? 'reverseImageUrl' : 'obverseImageUrl';
+        const cdnUrl = invItem[urlKey];
+        if (cdnUrl && /^https?:\/\/.+\..+/i.test(cdnUrl)) {
+          img.src = cdnUrl;
+          img.style.visibility = '';
+          return;
+        }
+      }
+    }
+
+    // No cached image, no CDN URL — show metal-themed placeholder
     img.src = _getThumbPlaceholder(item.metal, item.type);
     img.style.visibility = '';
     img.classList.add('table-thumb-placeholder');
@@ -1264,6 +1281,29 @@ const renderTable = () => {
     updateItemCount(filteredInventory.length, inventory.length);
     const sortedInventory = sortInventory(filteredInventory);
     debugLog('renderTable start', sortedInventory.length, 'items');
+
+    // STAK-118: Card view rendering branch
+    if (typeof isCardViewActive === 'function' && isCardViewActive()) {
+      const cardGrid = document.getElementById('cardViewGrid');
+      const portalScroll = document.querySelector('.portal-scroll');
+      if (cardGrid) {
+        cardGrid.style.display = 'flex';
+        if (portalScroll) portalScroll.style.display = 'none';
+
+        renderCardView(sortedInventory, cardGrid);
+        bindCardClickHandler(cardGrid);
+
+        updatePortalHeight();
+        updateSummary();
+        return;
+      }
+    }
+
+    // Ensure table is visible when not in card view
+    const cardGridEl = document.getElementById('cardViewGrid');
+    const portalScrollEl = document.querySelector('.portal-scroll');
+    if (cardGridEl) cardGridEl.style.display = 'none';
+    if (portalScrollEl) portalScrollEl.style.display = '';
 
     const rows = [];
     const chipConfig = typeof getInlineChipConfig === 'function' ? getInlineChipConfig() : [];
@@ -1360,19 +1400,29 @@ const renderTable = () => {
         ? `<span class="purity-tag" title="Purity: ${purityVal}" onclick="applyColumnFilter('purity', ${JSON.stringify(String(purityVal))})" tabindex="0" role="button" style="cursor:pointer;">${purityVal}</span>`
         : '';
 
-      // Table thumbnail — coin obverse preview in name cell
+      // Table thumbnail — obverse + reverse preview in name cell
       // Omit src attribute entirely when no URL (avoids browser requesting page URL for src="")
       // Hidden when tableImagesEnabled toggle is off
       const _tableImagesOn = localStorage.getItem('tableImagesEnabled') !== 'false';
-      const thumbUrl = ImageCache.isValidImageUrl(item.obverseImageUrl) ? item.obverseImageUrl : '';
-      const thumbSrcAttr = thumbUrl ? ` src="${escapeAttribute(thumbUrl)}"` : '';
-      const thumbHtml = _tableImagesOn && featureFlags.isEnabled('COIN_IMAGES')
-        ? `<img class="table-thumb"${thumbSrcAttr}
-               data-catalog-id="${escapeAttribute(item.numistaId || '')}"
+      const _thumbType = (item.type || '').toLowerCase();
+      const _isRectThumb = _thumbType === 'bar' || _thumbType === 'note' || _thumbType === 'aurum'
+        || _thumbType === 'set' || item.weightUnit === 'gb';
+      const _thumbShapeClass = _isRectThumb ? ' table-thumb-rect' : '';
+      const _validUrl = (u) => u && /^https?:\/\/.+\..+/i.test(u);
+      const obvUrl = _validUrl(item.obverseImageUrl) ? item.obverseImageUrl : '';
+      const revUrl = _validUrl(item.reverseImageUrl) ? item.reverseImageUrl : '';
+      const obvSrcAttr = obvUrl ? ` src="${escapeAttribute(obvUrl)}"` : '';
+      const revSrcAttr = revUrl ? ` src="${escapeAttribute(revUrl)}"` : '';
+      const _sharedThumbAttrs = `data-catalog-id="${escapeAttribute(item.numistaId || '')}"
                data-item-uuid="${escapeAttribute(item.uuid || '')}"
                data-item-name="${escapeAttribute(item.name || '')}"
                data-item-metal="${escapeAttribute(item.metal || '')}"
-               data-item-type="${escapeAttribute(item.type || '')}"
+               data-item-type="${escapeAttribute(item.type || '')}"`;
+      const thumbHtml = _tableImagesOn && featureFlags.isEnabled('COIN_IMAGES')
+        ? `<img class="table-thumb${_thumbShapeClass}"${obvSrcAttr}
+               ${_sharedThumbAttrs} data-side="obverse"
+               alt="" loading="lazy" onerror="this.style.display='none'" /><img class="table-thumb${_thumbShapeClass}"${revSrcAttr}
+               ${_sharedThumbAttrs} data-side="reverse"
                alt="" loading="lazy" onerror="this.style.display='none'" />`
         : '';
 

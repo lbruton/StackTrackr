@@ -702,6 +702,7 @@
          Portal view shows all items in a scrollable table with sticky headers
          ============================================================================= -->
         <section class="table-section" id="tableSectionEl">
+          <div class="card-view-grid" id="cardViewGrid"></div>
           <div class="portal-scroll">
           <table id="inventoryTable">
           <thead>
@@ -804,6 +805,7 @@
           <div class="table-footer-controls">
             <div class="table-item-count"><strong id="itemCount"></strong></div>
             <select id="itemsPerPage" class="control-select" title="Visible rows">
+              <option value="5">5</option>
               <option value="10">10</option>
               <option value="15">15</option>
               <option value="25" selected>25</option>
@@ -1713,6 +1715,29 @@
                 </div>
               </div>
 
+              <!-- ── Card View (STAK-118) ── -->
+              <div class="settings-fieldset">
+                <div class="settings-fieldset-title">Card View</div>
+                <div class="settings-group">
+                  <div class="settings-group-label">Card style</div>
+                  <p class="settings-subtext">Choose the card layout used in mobile and optional desktop card view.</p>
+                  <select id="settingsCardStyle">
+                    <option value="A">A: Sparkline Header</option>
+                    <option value="B">B: Full-Bleed Overlay</option>
+                    <option value="C">C: Split Card</option>
+                    <option value="D">D: Compact Row</option>
+                  </select>
+                </div>
+                <div class="settings-group">
+                  <div class="settings-group-label">Desktop card view</div>
+                  <p class="settings-subtext">Show cards instead of the table on wide screens. Cards are always used on mobile.</p>
+                  <div class="chip-sort-toggle" id="settingsDesktopCardView">
+                    <button type="button" class="chip-sort-btn" data-val="yes">On</button>
+                    <button type="button" class="chip-sort-btn" data-val="no">Off</button>
+                  </div>
+                </div>
+              </div>
+
               <!-- ── Custom Themes (placeholder) ── -->
               <div class="settings-fieldset" style="text-align:center; opacity:0.6;">
                 <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.3"><circle cx="13.5" cy="6.5" r="2.5"/><circle cx="19" cy="13" r="2.5"/><circle cx="16" cy="20" r="2.5"/><circle cx="7" cy="20" r="2.5"/><circle cx="4" cy="13" r="2.5"/><circle cx="12" cy="13" r="3"/></svg>
@@ -1749,6 +1774,7 @@
               <div class="settings-group">
                 <div class="settings-group-label">Visible rows</div>
                 <select id="settingsItemsPerPage">
+                  <option value="5">5</option>
                   <option value="10">10</option>
                   <option value="15">15</option>
                   <option value="25">25</option>
@@ -3232,6 +3258,7 @@
     <script defer src="./js/catalog-providers.js"></script>
     <script defer src="./js/catalog-manager.js"></script>
     <script defer src="./js/inventory.js"></script>
+    <script defer src="./js/card-view.js"></script>
     <script defer src="./js/vault.js"></script>
     <script defer src="./js/about.js"></script>
     <script defer src="./js/customMapping.js"></script>

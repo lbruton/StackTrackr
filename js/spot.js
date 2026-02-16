@@ -111,6 +111,23 @@ const recordSpot = (
 };
 
 /**
+ * Returns recent spot prices for a given metal from spotHistory.
+ * Used by card-view sparklines (STAK-118).
+ * @param {string} metal - Metal key ('silver', 'gold', etc.)
+ * @param {number} [points=30] - Number of data points to return
+ * @param {boolean} [withTimestamps=false] - If true, returns {ts, spot} objects
+ * @returns {number[]|{ts:number,spot:number}[]|null} Array of spot prices, or null if insufficient data
+ */
+const getSpotHistoryForMetal = (metal, points = 30, withTimestamps = false) => {
+  const metalName = Object.values(METALS).find(m => m.key === metal)?.name || metal;
+  const entries = spotHistory.filter(e => e.metal === metalName);
+  if (entries.length < 2) return null;
+  const recent = entries.slice(-points);
+  if (withTimestamps) return recent.map(e => ({ ts: new Date(e.timestamp).getTime(), spot: e.spot }));
+  return recent.map(e => e.spot);
+};
+
+/**
  * Updates spot card color based on price movement compared to last history entry
  *
  * @param {string} metalKey - Metal key ('silver', 'gold', etc.)
