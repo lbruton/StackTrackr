@@ -35,6 +35,7 @@ Scripts load via `<script>` tags in `index.html` in strict dependency order. `fi
 **CRITICAL: Do not flag "undefined" globals** — this is a vanilla JS app with global scope across files. The following globals are defined in other files and are intentionally available throughout the app:
 
 **From `js/state.js`:**
+
 - `inventory` (array) — main inventory data
 - `spotPrices` (object) — current metal prices
 - `displayCurrency`, `exchangeRate`, `currencySymbol` — currency settings
