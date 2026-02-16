@@ -1231,6 +1231,27 @@ async function _loadThumbImage(img) {
     };
 
     const side = img.dataset.side || 'obverse';
+
+    // Resolve CDN URL from inventory item
+    const row = img.closest('tr');
+    const idx = row?.dataset?.idx;
+    let cdnUrl = '';
+    if (idx !== undefined) {
+      const invItem = inventory[parseInt(idx, 10)];
+      if (invItem) {
+        const urlKey = side === 'reverse' ? 'reverseImageUrl' : 'obverseImageUrl';
+        cdnUrl = (invItem[urlKey] && /^https?:\/\/.+\..+/i.test(invItem[urlKey])) ? invItem[urlKey] : '';
+      }
+    }
+
+    // Numista override: CDN URLs (Numista source) win over user/pattern blobs
+    const numistaOverride = localStorage.getItem('numistaOverridePersonal') === 'true';
+    if (numistaOverride && cdnUrl) {
+      img.src = cdnUrl;
+      img.style.visibility = '';
+      return;
+    }
+
     const resolved = await imageCache.resolveImageForItem(item);
 
     if (resolved) {
@@ -1251,20 +1272,11 @@ async function _loadThumbImage(img) {
       }
     }
 
-    // Fallback: CDN URL stored on the inventory item (same as view modal)
-    const row = img.closest('tr');
-    const idx = row?.dataset?.idx;
-    if (idx !== undefined) {
-      const invItem = inventory[parseInt(idx, 10)];
-      if (invItem) {
-        const urlKey = side === 'reverse' ? 'reverseImageUrl' : 'obverseImageUrl';
-        const cdnUrl = invItem[urlKey];
-        if (cdnUrl && /^https?:\/\/.+\..+/i.test(cdnUrl)) {
-          img.src = cdnUrl;
-          img.style.visibility = '';
-          return;
-        }
-      }
+    // Fallback: CDN URL
+    if (cdnUrl) {
+      img.src = cdnUrl;
+      img.style.visibility = '';
+      return;
     }
 
     // No cached image, no CDN URL — show metal-themed placeholder

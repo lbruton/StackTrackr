@@ -679,6 +679,24 @@ async function _loadCardImage(img) {
     };
     const side = img.dataset.side || 'obverse';
 
+    // Resolve CDN URL from inventory item
+    const idx = img.closest('[data-idx]')?.dataset.idx;
+    let cdnUrl = '';
+    if (idx !== undefined && typeof inventory !== 'undefined') {
+      const invItem = inventory[parseInt(idx, 10)];
+      if (invItem) {
+        const urlKey = side === 'reverse' ? 'reverseImageUrl' : 'obverseImageUrl';
+        cdnUrl = (invItem[urlKey] && /^https?:\/\/.+\..+/i.test(invItem[urlKey])) ? invItem[urlKey] : '';
+      }
+    }
+
+    // Numista override: CDN URLs (Numista source) win over user/pattern blobs
+    const numistaOverride = localStorage.getItem('numistaOverridePersonal') === 'true';
+    if (numistaOverride && cdnUrl) {
+      _showCardImage(img, cdnUrl);
+      return;
+    }
+
     // Try IDB resolution cascade (user → pattern → numista cache)
     if (window.imageCache?.isAvailable()) {
       const resolved = await imageCache.resolveImageForItem(item);
@@ -700,18 +718,10 @@ async function _loadCardImage(img) {
       }
     }
 
-    // Fallback: CDN URL stored on the inventory item (same as view modal)
-    const idx = img.closest('[data-idx]')?.dataset.idx;
-    if (idx !== undefined && typeof inventory !== 'undefined') {
-      const invItem = inventory[parseInt(idx, 10)];
-      if (invItem) {
-        const urlKey = side === 'reverse' ? 'reverseImageUrl' : 'obverseImageUrl';
-        const cdnUrl = invItem[urlKey];
-        if (cdnUrl && /^https?:\/\/.+\..+/i.test(cdnUrl)) {
-          _showCardImage(img, cdnUrl);
-          return;
-        }
-      }
+    // Fallback: CDN URL
+    if (cdnUrl) {
+      _showCardImage(img, cdnUrl);
+      return;
     }
   } catch { /* ignore — IDB unavailable or entry missing */ }
 }
