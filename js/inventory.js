@@ -1307,7 +1307,7 @@ const renderTable = () => {
 
     // STAK-118: Card view rendering branch
     if (typeof isCardViewActive === 'function' && isCardViewActive()) {
-      const cardGrid = document.getElementById('cardViewGrid');
+      const cardGrid = safeGetElement('cardViewGrid');
       const portalScroll = document.querySelector('.portal-scroll');
       if (cardGrid) {
         cardGrid.style.display = 'flex';
@@ -1324,7 +1324,7 @@ const renderTable = () => {
     }
 
     // Ensure table is visible when not in card view
-    const cardGridEl = document.getElementById('cardViewGrid');
+    const cardGridEl = safeGetElement('cardViewGrid');
     const portalScrollEl = document.querySelector('.portal-scroll');
     if (cardGridEl) {
       cardGridEl.style.display = 'none';

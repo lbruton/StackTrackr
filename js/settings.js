@@ -61,7 +61,7 @@ const switchSettingsSection = (name) => {
   if (name === 'images') {
     syncChipToggle('tableImagesToggle', localStorage.getItem('tableImagesEnabled') !== 'false');
     syncChipToggle('numistaOverrideToggle', localStorage.getItem('numistaOverridePersonal') === 'true');
-    const sidesSync = document.getElementById('tableImageSidesToggle');
+    const sidesSync = safeGetElement('tableImageSidesToggle');
     if (sidesSync) {
       const curSides = localStorage.getItem('tableImageSides') || 'both';
       sidesSync.querySelectorAll('.chip-sort-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.val === curSides));
@@ -158,7 +158,7 @@ const syncSettingsUI = () => {
   });
 
   // Items per page
-  const ippSelect = document.getElementById('settingsItemsPerPage');
+  const ippSelect = safeGetElement('settingsItemsPerPage');
   if (ippSelect) {
     ippSelect.value = itemsPerPage === Infinity ? 'all' : String(itemsPerPage);
   }
@@ -542,13 +542,30 @@ const setupSettingsEventListeners = () => {
     onApply: () => applyHeaderToggleVisibility(),
   });
 
-  // Apply view-appropriate items-per-page default when switching views
+  // Apply view-appropriate items-per-page default when switching views.
+  // Card view always uses "all" (Infinity). Table view restores the user's
+  // previous preference (saved before switching to card) or falls back to 12.
+  let _savedTableIpp = null;
   const applyViewIpp = () => {
-    itemsPerPage = Infinity;
-    const ippStr = 'all';
+    const enteringCard = localStorage.getItem(DESKTOP_CARD_VIEW_KEY) === 'true';
+    let ippStr;
+    if (enteringCard) {
+      // Save current table IPP before overwriting
+      if (_savedTableIpp === null && itemsPerPage !== Infinity) {
+        _savedTableIpp = itemsPerPage === Infinity ? 'all' : String(itemsPerPage);
+      }
+      itemsPerPage = Infinity;
+      ippStr = 'all';
+    } else {
+      // Restore table IPP
+      const restored = _savedTableIpp || '12';
+      _savedTableIpp = null;
+      itemsPerPage = restored === 'all' ? Infinity : Number(restored);
+      ippStr = restored;
+    }
     try { localStorage.setItem(ITEMS_PER_PAGE_KEY, ippStr); } catch (e) { /* ignore */ }
     if (elements.itemsPerPage) elements.itemsPerPage.value = ippStr;
-    const settingsIpp = document.getElementById('settingsItemsPerPage');
+    const settingsIpp = safeGetElement('settingsItemsPerPage');
     if (settingsIpp) settingsIpp.value = ippStr;
   };
 
@@ -1836,7 +1853,7 @@ const applyHeaderToggleVisibility = () => {
   if (elements.headerCurrencyBtn) {
     elements.headerCurrencyBtn.style.display = currencyVisible ? '' : 'none';
   }
-  const headerCardViewBtn = document.getElementById('headerCardViewBtn');
+  const headerCardViewBtn = safeGetElement('headerCardViewBtn');
   if (headerCardViewBtn) {
     headerCardViewBtn.style.display = cardViewVisible ? '' : 'none';
   }
