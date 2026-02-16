@@ -18,7 +18,7 @@ StakTrakr developmers have future plans for ApexCharts and Tabler integration. S
 
 **Quality Gates** StakTrakr uses Codacy for Code Quality Gates and maintains an A+ Rating. All commits and PR's must be approved by Codacy. 
 
-**Code Search Strategy**: Use Claude-Context (`search_code`) as the **first step** for any codebase lookup — it returns results in ~2s with zero subprocess token cost. For focused, single-function queries it is often sufficient on its own. For cross-cutting concerns (patterns scattered across many files), comprehensive traces, or when Claude-Context results seem incomplete, pass the initial findings to an **Explore agent** as seed context — this makes the Explore search faster and more targeted. Use Explore agents directly (without Claude-Context first) only for large-scope investigations that clearly span many files. Re-index Claude-Context after any major structural changes.
+**Code Search Strategy**: Tiered — claude-context first (fast, cheap), then Grep/Glob (literal matches), then Explore agents (comprehensive). See the `search-code` skill for the full decision flowchart and escalation rules.
 
 ## Critical Development Patterns
 
@@ -96,9 +96,11 @@ Persistent knowledge graph in Neo4j at `localhost:7687` (local Mac). Shared with
 | Skill | Covers | Auto-loads when... |
 |-------|--------|-------------------|
 | `linear-workspace` | Team IDs, issue routing, labels, states | Creating/querying Linear issues |
+| `search-code` | Tiered search strategy (claude-context → Grep → Explore) | Searching for functions, patterns, architecture |
 | `claude-context-rules` | Semantic code search, indexing | Searching the codebase |
-| `context7-rules` | Library doc lookups | Looking up external library docs |
-| `brave-search-rules` | Web/news search, summarizer | Performing web searches |
+| `context7-rules` | Library doc lookups, API verification, planning | Looking up external library docs or writing code that uses library APIs |
+| `research` | Web research strategy, tool priority chain (Brave → WebSearch) | Researching topics, looking up information, web searches |
+| `brave-search-rules` | Brave Search tool details, summarizer flow | Referenced by `research` skill for Brave-specific usage |
 | `browser-testing` | Chrome DevTools, screenshots, snapshots | Testing UI, taking screenshots |
 | `codacy-rules` | Code quality, sequential thinking | Running static analysis |
 | `coding-standards` | JS patterns, conventions | Writing code |

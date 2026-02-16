@@ -28,7 +28,23 @@ Detect if a cloud session (Claude Code web, Codex, GitHub) pushed changes we don
 
 **If up to date:** Continue silently.
 
-## Phase 2: Recent Git Activity
+## Phase 2: Claude-Context Index Freshness
+
+Check if the semantic code search index is stale and refresh it proactively:
+
+1. Call `mcp__claude-context__get_indexing_status` with path `/Volumes/DATA/GitHub/StakTrakr`
+2. Read the `Last updated` timestamp from the response
+3. **If the index is older than 1 hour** — kick off a re-index:
+   - Call `mcp__claude-context__index_codebase` with path `/Volumes/DATA/GitHub/StakTrakr` (no `force` needed unless files were renamed/deleted)
+   - Report: `"Re-indexing claude-context (last indexed X hours ago)… takes ~2 min."`
+   - Do NOT block on completion — continue to Phase 3+ while it indexes in the background
+4. **If the index is fresh (< 1 hour)** — report stats and continue:
+   - `"Claude-Context index fresh (X files, Y chunks, updated Z min ago)"`
+5. **If indexing is already in progress** — skip, note it in the output
+
+This ensures `search_code` results reflect the latest codebase state for the entire session.
+
+## Phase 3: Recent Git Activity
 
 Run these commands (parallel where possible):
 
@@ -36,48 +52,182 @@ Run these commands (parallel where possible):
 2. `git status --short` — uncommitted work from a prior session
 3. `git diff --stat` — size of any uncommitted changes
 
-## Phase 3: Linear Quick Check
+## Phase 4: Linear Triage
 
-Query the **StakTrakr** team (ID: `f876864d-ff80-4231-ae6c-a8e5cb69aca4`) for active work:
+Query the **StakTrakr** team (ID: `f876864d-ff80-4231-ae6c-a8e5cb69aca4`). Run ALL of the following queries in parallel — do not short-circuit or cascade.
 
-1. List **In Progress** issues (these are what we're likely continuing)
-2. List **Todo** issues (these are queued in the active project)
-3. For each In Progress issue, read the full description to understand current state
+### Query 1: Projects (sprints)
 
-If no In Progress issues, skip to Phase 4.
+```
+list_projects  team: "f876864d-..."
+```
 
-## Phase 4: Last Handoff
+Fetch all projects. Filter out Completed and Canceled projects. These represent our sprint-sized work packages.
 
-Search Memento for the most recent handoff. Use **keyword search first** (reliable for structured entities), then fall back to semantic search:
+### Query 2: In Progress issues
 
-1. **Primary** — `mcp__memento__search_nodes` with query: `"STAKTRAKR handoff"`
-   - This finds entities matching our naming convention: `Handoff: STAKTRAKR-*`
-   - Sort by most recent (check TIMESTAMP observation)
-2. **Fallback** — If no results, try `mcp__memento__semantic_search` with query: `"staktrakr handoff development session"`, limit: 3, min_similarity: 0.3
-3. If a handoff entity is found, read it with `mcp__memento__open_nodes` for full context
-4. If no handoff found, that's fine — Phase 2 and 3 provide sufficient context
+```
+list_issues  team: "f876864d-..."  state: "In Progress"  limit: 10
+```
 
-**Key handoff fields to surface:**
+If issues found, read the full description for each to understand current state.
 
-- `ACTIVE_LINEAR_PROJ` — current Linear project name and theme
-- `LINEAR_PROJ_ISSUES` — issues in the active project
-- `NEXT_STEPS` — what to work on next
-- `VERSION` — current app version
+### Query 3: Todo issues
+
+```
+list_issues  team: "f876864d-..."  state: "Todo"  limit: 20
+```
+
+### Query 4: Backlog issues
+
+```
+list_issues  team: "f876864d-..."  state: "Backlog"  limit: 50
+```
+
+### Processing
+
+After all queries return, categorize the data for the output tables:
+
+1. **Projects table** — all non-Completed/Canceled projects with their status, issue count, and priority
+2. **Critical/Bugs table** — any issues with Bug label OR priority 1-2 (Urgent/High) from any state. These always surface first
+3. **Unassigned issues table** — backlog issues that have NO project assigned. These are orphans that need triage or are standalone work items. Show their priority and status
+4. **Recommendation** — based on everything above, suggest where to start. Priority order: active In Progress work > bugs/critical > highest-priority project > unassigned high-priority items
+
+## Phase 5: Memento Context
+
+Quick scan of the knowledge graph for recent context. Run these searches in parallel:
+
+### Search 1: Recent insights and lessons learned
+
+```
+mcp__memento__semantic_search
+  query: "staktrakr development insight lesson learned pattern"
+  limit: 5
+  min_similarity: 0.4
+```
+
+Surface any insights from the last few sessions — architectural decisions, gotchas, patterns discovered. These prevent re-learning the same lessons.
+
+### Search 2: Recent handoffs and sessions
+
+```
+mcp__memento__search_nodes
+  query: "STAKTRAKR handoff"
+```
+
+If a recent handoff exists, open it with `open_nodes` and pull:
+- `NEXT_STEPS` — what was planned next (most useful field)
+- `VERSION` — version at time of handoff
+- `FILES_MODIFIED_THIS_SESSION` — recent hot spots
+
+### Search 3: Recent rewinds (lightweight bookmarks)
+
+```
+mcp__memento__search_nodes
+  query: "STAKTRAKR rewind"
+```
+
+Rewinds are lighter than handoffs — check if there's one more recent than the last handoff.
+
+### What to surface
+
+- **Always show** `NEXT_STEPS` from the most recent handoff or rewind (if any)
+- **Show insights** only if they're relevant to the current In Progress or Todo work — don't dump the full list
+- **If nothing found** in Memento, that's fine — say "No recent Memento context" and move on. Git history and Linear are the primary sources.
 
 ## Output
 
-Produce a concise summary (not a formal report — just conversational):
+Use markdown tables for all Linear data — they render well in the CLI terminal and are much easier to scan than bullet lists. The output has two sections: a brief header block, then the Linear tables.
+
+### Header Block
+
+Keep this short — 3-4 lines max:
 
 ```
 Session Start — StakTrakr v[VERSION] on [BRANCH]
 
+Code index: [fresh (50 files, 1235 chunks, 12 min ago)] or [re-indexing…]
 Recent: [1-2 sentence summary of last few commits]
-Project: [PROJECT-NAME] — [issue list] or "No active project"
-In Progress: [STAK-XX: title, STAK-YY: title] or "None"
 Uncommitted: [X files changed] or "Clean"
-Last handoff: [1 sentence from NEXT_STEPS] or "No handoff found"
+```
 
+### Linear Tables
+
+Always render these tables in this order. Omit a table only if it would be completely empty (but say "None" inline instead of silently skipping).
+
+**Table 1: Active Projects** — all non-Completed/Canceled projects
+
+```
+| Project              | Status  | Issues                | Priority |
+|----------------------|---------|-----------------------|----------|
+| Critical Bugs        | Backlog | STAK-120              | Urgent   |
+| SPRINT-Next-Mobile   | Started | STAK-106, STAK-118    | High     |
+| CustomTheme          | Backlog | STAK-121              | —        |
+```
+
+- Status comes from the project's Linear status (Backlog, Planned, Started, etc.)
+- Issues column lists the STAK-XX identifiers assigned to that project
+- Priority shows the project-level priority if set, "—" if none
+
+**Table 2: Bugs & Critical Issues** — priority 1-2 or Bug-labeled, from ANY state
+
+```
+| Issue    | Title                        | Priority | State       | Project        |
+|----------|------------------------------|----------|-------------|----------------|
+| STAK-120 | Image deletion bug           | High     | Todo        | Critical Bugs  |
+```
+
+If none exist, output: `**Bugs & Critical:** None`
+
+**Table 3: Unassigned Issues** — backlog/todo issues with NO project
+
+```
+| Issue    | Title                              | Priority | State   |
+|----------|------------------------------------|----------|---------|
+| STAK-119 | LBMA reference table               | Low      | Backlog |
+| STAK-72  | Realized gains/losses              | Medium   | Backlog |
+```
+
+If none exist, output: `**Unassigned Issues:** None`
+
+**Table 4: In Progress** — any issues currently being worked on
+
+```
+| Issue    | Title                        | Project              |
+|----------|------------------------------|----------------------|
+| STAK-106 | Mobile summary cards         | SPRINT-Next-Mobile   |
+```
+
+If none exist, output: `**In Progress:** None`
+
+### Recommendation Block
+
+After the tables, add a brief recommendation:
+
+```
+Recommendation: [1-2 sentences suggesting where to start and why.
+Priority order: active In Progress > bugs/critical > highest-priority project > unassigned high-priority items.]
+```
+
+### Memento Block
+
+```
+Memento:
+  Last session: [NEXT_STEPS from most recent handoff/rewind] or "No recent context"
+  Insights: [relevant insight if applicable] or omit
+```
+
+### Closing
+
+```
 Ready to work. What's next?
 ```
 
-Keep it brief. The goal is awareness, not a research paper.
+### Formatting Rules
+
+- **Always use markdown tables** for Linear data — no bullet lists for issue/project listings
+- Keep table columns aligned for CLI readability
+- Bugs/Critical table always appears before other issue tables, even if empty (show "None")
+- Only show Memento insights if they're directly relevant to the current work queue
+- If Memento returns nothing useful, a single "No recent context" line is fine
+- The recommendation should be opinionated — suggest ONE clear starting point, not a menu of options
