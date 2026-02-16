@@ -13,7 +13,7 @@
  */
 const updatePortalHeight = () => {
   // Card view portal height
-  const cardGrid = document.getElementById('cardViewGrid');
+  const cardGrid = safeGetElement('cardViewGrid');
   if (cardGrid && cardGrid.style.display !== 'none') {
     const firstCard = cardGrid.querySelector('article');
     if (!firstCard) {
@@ -46,7 +46,7 @@ const updatePortalHeight = () => {
   const portalScroll = document.querySelector('.portal-scroll');
   if (!portalScroll) return;
 
-  const table = document.getElementById('inventoryTable');
+  const table = safeGetElement('inventoryTable');
   if (!table) return;
 
   const thead = table.querySelector('thead');
