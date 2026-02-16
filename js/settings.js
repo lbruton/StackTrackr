@@ -278,7 +278,7 @@ const syncSettingsUI = () => {
   // Card style (STAK-118)
   const cardStyleSelect = document.getElementById('settingsCardStyle');
   if (cardStyleSelect) {
-    cardStyleSelect.value = localStorage.getItem(CARD_STYLE_KEY) || 'A';
+    cardStyleSelect.value = localStorage.getItem(CARD_STYLE_KEY) || 'B';
   }
 
   // Desktop card view toggle (STAK-118)
@@ -874,10 +874,89 @@ const setupSettingsEventListeners = () => {
   const clearImagesBtn = document.getElementById('clearAllImagesBtn');
   if (clearImagesBtn) {
     clearImagesBtn.addEventListener('click', async () => {
-      if (!window.imageCache?.isAvailable()) return;
-      if (!confirm('Clear all cached images (Numista, pattern, and user uploads)?')) return;
-      await imageCache.clearAll();
+      if (!confirm('Clear all cached images, pattern rules, user uploads, AND image URLs from inventory items?')) return;
+      // Clear IDB blobs (Numista cache, patterns, user uploads)
+      if (window.imageCache?.isAvailable()) await imageCache.clearAll();
+      // Clear image URLs from all inventory items
+      let cleared = 0;
+      for (const item of inventory) {
+        if (item.obverseImageUrl || item.reverseImageUrl) {
+          item.obverseImageUrl = '';
+          item.reverseImageUrl = '';
+          cleared++;
+        }
+      }
+      if (cleared > 0 && typeof saveInventory === 'function') saveInventory();
       populateImagesSection();
+      alert(`Cleared all image data. ${cleared} item URL(s) reset.`);
+    });
+  }
+
+  // Sync Image URLs from Numista — bypasses SW cache
+  const syncImageUrlsBtn = document.getElementById('syncImageUrlsBtn');
+  if (syncImageUrlsBtn) {
+    syncImageUrlsBtn.addEventListener('click', async () => {
+      const config = typeof catalogConfig !== 'undefined' ? catalogConfig.getNumistaConfig() : null;
+      if (!config?.apiKey) {
+        alert('Numista API key not configured.');
+        return;
+      }
+      const eligible = inventory.filter(i => i.numistaId);
+      if (!eligible.length) {
+        alert('No items with Numista IDs found.');
+        return;
+      }
+      if (!confirm(`Sync image URLs for ${eligible.length} items from Numista API?\nThis bypasses cache and uses your API quota.`)) return;
+
+      syncImageUrlsBtn.disabled = true;
+      syncImageUrlsBtn.textContent = 'Syncing…';
+      let synced = 0, failed = 0, skipped = 0;
+      const seen = new Set(); // dedupe by catalogId
+      try {
+        for (const item of eligible) {
+          const catId = item.numistaId;
+          if (seen.has(catId)) {
+            // Reuse URL from a previously synced item with same catalogId
+            const donor = eligible.find(i => i.numistaId === catId && i.obverseImageUrl);
+            if (donor) {
+              item.obverseImageUrl = donor.obverseImageUrl;
+              item.reverseImageUrl = donor.reverseImageUrl;
+              synced++;
+            } else {
+              skipped++;
+            }
+            continue;
+          }
+          seen.add(catId);
+          try {
+            const url = `https://api.numista.com/v3/types/${catId}?lang=en`;
+            const resp = await fetch(url, {
+              headers: { 'Numista-API-Key': config.apiKey, 'Content-Type': 'application/json' },
+              cache: 'no-cache',
+            });
+            if (!resp.ok) { failed++; continue; }
+            const data = await resp.json();
+            const obv = data.obverse_thumbnail || data.obverse?.thumbnail || '';
+            const rev = data.reverse_thumbnail || data.reverse?.thumbnail || '';
+            // Apply to ALL items sharing this catalogId
+            for (const inv of eligible) {
+              if (inv.numistaId === catId) {
+                inv.obverseImageUrl = obv;
+                inv.reverseImageUrl = rev;
+              }
+            }
+            synced++;
+          } catch {
+            failed++;
+          }
+        }
+        if (typeof saveInventory === 'function') saveInventory();
+        populateImagesSection();
+        alert(`Image URL sync complete.\n${synced} synced, ${failed} failed, ${skipped} skipped (dupes).`);
+      } finally {
+        syncImageUrlsBtn.disabled = false;
+        syncImageUrlsBtn.textContent = 'Sync Image URLs from Numista';
+      }
     });
   }
 

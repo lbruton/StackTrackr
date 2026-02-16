@@ -892,6 +892,8 @@ const parseItemFormFields = (isEditing, existingItem) => {
     marketValue,
     purity: parsePurity(isEditing, existingItem),
     currency: displayCurrency,
+    obverseImageUrl: elements.itemObverseImageUrl?.value?.trim() ?? '',
+    reverseImageUrl: elements.itemReverseImageUrl?.value?.trim() ?? '',
   };
 };
 
@@ -942,8 +944,8 @@ const commitItemToInventory = (f, isEditing, editIdx) => {
       isCollectable: false,
       numistaId: f.catalog,
       currency: f.currency,
-      obverseImageUrl: window.selectedNumistaResult?.imageUrl || oldItem.obverseImageUrl || '',
-      reverseImageUrl: window.selectedNumistaResult?.reverseImageUrl || oldItem.reverseImageUrl || '',
+      obverseImageUrl: f.obverseImageUrl || window.selectedNumistaResult?.imageUrl || oldItem.obverseImageUrl || '',
+      reverseImageUrl: f.reverseImageUrl || window.selectedNumistaResult?.reverseImageUrl || oldItem.reverseImageUrl || '',
     };
 
     addCompositionOption(f.composition);
@@ -1000,8 +1002,8 @@ const commitItemToInventory = (f, isEditing, editIdx) => {
       uuid: generateUUID(),
       numistaId: f.catalog,
       currency: f.currency,
-      obverseImageUrl: window.selectedNumistaResult?.imageUrl || '',
-      reverseImageUrl: window.selectedNumistaResult?.reverseImageUrl || '',
+      obverseImageUrl: f.obverseImageUrl || window.selectedNumistaResult?.imageUrl || '',
+      reverseImageUrl: f.reverseImageUrl || window.selectedNumistaResult?.reverseImageUrl || '',
     });
 
     typeof registerName === "function" && registerName(f.name);
@@ -1225,6 +1227,51 @@ const setupItemFormListeners = () => {
         window._setItemPriceModalFilter('');
       }
     });
+  }
+
+  // IMAGE URL FIELDS — show when COIN_IMAGES enabled
+  const imageUrlGroup = document.getElementById('imageUrlGroup');
+  if (imageUrlGroup && featureFlags.isEnabled('COIN_IMAGES')) {
+    imageUrlGroup.style.display = '';
+  }
+
+  // Refresh image URLs button — bypasses SW cache, fetches direct from Numista
+  const refreshImageUrlsBtn = document.getElementById('refreshImageUrlsBtn');
+  if (refreshImageUrlsBtn) {
+    safeAttachListener(refreshImageUrlsBtn, 'click', async () => {
+      const catalogId = (elements.itemCatalog?.value || '').trim();
+      if (!catalogId) {
+        alert('Enter a Numista # first.');
+        return;
+      }
+      refreshImageUrlsBtn.disabled = true;
+      refreshImageUrlsBtn.title = 'Fetching…';
+      try {
+        const config = typeof catalogConfig !== 'undefined' ? catalogConfig.getNumistaConfig() : null;
+        if (!config?.apiKey) {
+          alert('Numista API key not configured.');
+          return;
+        }
+        const url = `https://api.numista.com/v3/types/${catalogId}?lang=en`;
+        const resp = await fetch(url, {
+          headers: { 'Numista-API-Key': config.apiKey, 'Content-Type': 'application/json' },
+          cache: 'no-cache',
+        });
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        const data = await resp.json();
+        const obv = data.obverse_thumbnail || data.obverse?.thumbnail || '';
+        const rev = data.reverse_thumbnail || data.reverse?.thumbnail || '';
+        if (elements.itemObverseImageUrl) elements.itemObverseImageUrl.value = obv;
+        if (elements.itemReverseImageUrl) elements.itemReverseImageUrl.value = rev;
+        if (!obv && !rev) alert('No image URLs returned by Numista for this item.');
+      } catch (err) {
+        console.error('Image URL refresh failed:', err);
+        alert('Failed to fetch image URLs: ' + err.message);
+      } finally {
+        refreshImageUrlsBtn.disabled = false;
+        refreshImageUrlsBtn.title = 'Fetch image URLs from Numista API (bypasses cache)';
+      }
+    }, 'Refresh image URLs button');
   }
 
   // IMAGE UPLOAD BUTTONS — Obverse + Reverse (STACK-32/33)
