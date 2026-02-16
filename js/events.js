@@ -74,6 +74,7 @@ let _pendingReversePreviewUrl = null;
 
 // Legacy aliases for backward compatibility
 /** @deprecated Use _pendingObverseBlob */
+// eslint-disable-next-line no-unused-vars -- intentionally kept for backward compatibility
 let _pendingUploadBlob = null;
 
 /** @type {boolean} User clicked Remove on obverse — delete on save */
@@ -307,7 +308,7 @@ const handleImageDeletion = async (uuid) => {
         await window.imageCache.cacheUserImage(uuid, obvToSave, revToSave);
       }
     } catch (err) {
-      console.warn('Failed to handle partial deletion:', err);
+      debugLog(`Failed to handle partial deletion: ${err}`, 'warn');
     }
   }
 };
@@ -1085,7 +1086,7 @@ const setupItemFormListeners = () => {
                 await window.imageCache.cachePatternImage(ruleId, _pendingObverseBlob, _pendingReverseBlob);
                 debugLog(`Pattern rule created: ${result.id} (images: ${ruleId}) for "${rawKeywords}"`);
               } else {
-                console.warn('Failed to create pattern rule:', result?.error);
+                debugLog(`Failed to create pattern rule: ${result?.error}`, 'warn');
               }
               clearUploadState();
               patternRuleSaved = true;
