@@ -43,9 +43,6 @@ const dataToPolyline = (data, w, h, padY = 4) => {
     .join(' ');
 };
 
-/** @type {Map<string, string>} Cached sparkline SVG strings keyed by "metal-style-w-h" */
-const _sparklineCache = new Map();
-
 /**
  * Generates a "since purchased" 3-line sparkline SVG matching the view modal pattern.
  * Red dashed = purchase price (flat), Green = melt value over time, Blue = retail/market value.
