@@ -44,3 +44,7 @@ logs/
 # DevOps tooling — spot-poller is public, other scripts stay private
 devops/*
 !devops/spot-poller/
+
+
+# AI/MCP configuration files are tracked for project consistency
+# (removed: .github/instructions/codacy.instructions.md)
