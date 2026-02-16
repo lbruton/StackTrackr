@@ -70,6 +70,7 @@ Scripts load via `<script>` tags in `index.html` in strict dependency order. `fi
 - `APP_VERSION`, `LS_KEY`, `SPOT_HISTORY_KEY` — constants
 
 **From other modules:**
+
 - `renderTable()`, `saveInventory()`, `loadInventory()` — inventory.js
 - `updateSparkline()`, `syncSpotPricesFromApi()` — spot.js
 - `catalogManager`, `catalogAPI` — catalog-*.js
