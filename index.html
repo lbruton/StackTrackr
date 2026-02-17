@@ -817,6 +817,7 @@
             <div class="table-item-count"><strong id="itemCount"></strong></div>
             <select id="itemsPerPage" class="control-select" title="Visible rows">
               <option value="3">3</option>
+              <option value="6">6</option>
               <option value="12" selected>12</option>
               <option value="24">24</option>
               <option value="48">48</option>
@@ -2106,6 +2107,18 @@
                         <label class="metal-checkbox"><input type="checkbox" class="provider-metal" data-provider="STAKTRAKR" data-metal="palladium" checked><span class="metal-name">Palladium (PD)</span></label>
                       </div>
                     </div>
+                    <div class="provider-history-pull">
+                      <label for="historyPullDays_STAKTRAKR">Pull Hourly History:</label>
+                      <select id="historyPullDays_STAKTRAKR" class="provider-history-select">
+                        <option value="1">1 day</option>
+                        <option value="3">3 days</option>
+                        <option value="7" selected>7 days</option>
+                        <option value="14">14 days</option>
+                        <option value="30">30 days</option>
+                      </select>
+                      <button type="button" class="btn api-history-btn" data-provider="STAKTRAKR">Pull History</button>
+                      <span class="history-pull-cost" id="historyPullCost_STAKTRAKR"></span>
+                    </div>
                     <div class="provider-info">
                       <div class="provider-status"><span class="status-dot"></span><span class="status-text">Disconnected</span><span class="status-last-used"></span></div>
                       <div class="provider-history"></div>
@@ -2313,6 +2326,10 @@
                         <option value="365">365 days</option>
                       </select>
                       <button type="button" class="btn api-history-btn" data-provider="METAL_PRICE_API">Pull History</button>
+                      <label class="metal-checkbox" style="margin-left: 0.5rem;">
+                        <input type="checkbox" id="hourlyPull_METAL_PRICE_API" class="provider-hourly-toggle" data-provider="METAL_PRICE_API">
+                        <span class="metal-name">Hourly</span>
+                      </label>
                       <span class="history-pull-cost" id="historyPullCost_METAL_PRICE_API"></span>
                     </div>
                     <div class="metal-selection">

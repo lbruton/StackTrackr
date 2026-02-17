@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.30.02] - 2026-02-16
+
+### Fixed — Keyless Provider Fixes & Hourly History Pull
+
+- **Fixed**: Keyless providers (STAKTRAKR) now enable sync buttons, show "Connected" status, and auto-select correctly
+- **Fixed**: STAKTRAKR usage counter tracks API calls with 5000 default quota
+- **Added**: Hourly history pull for STAKTRAKR provider (1–30 days of hourly files)
+- **Added**: Hourly history pull for MetalPriceAPI provider (up to 7 days, per-metal)
+- **Added**: History log distinguishes hourly entries with "(hourly)" source label
+- **Added**: One-time migration re-tags existing StakTrakr hourly entries for production users
+
+---
+
 ## [3.30.01] - 2026-02-16
 
 ### Added — StakTrakr Free API Provider & UTC Poller Fix
