@@ -8,17 +8,13 @@ StakTrakr is a **precious metals inventory tracker** (Silver, Gold, Platinum, Pa
 
 **Dev tooling is fine** — build scripts, test runners (Playwright), linters, bundlers for devops are all acceptable in `devops/`. The constraint is the **runtime artifact**: the app itself must remain a single HTML page with vanilla JS that loads without a server or install step. Future roadmap includes native macOS/Windows wrappers.
 
-StakTrakr developmers have future plans for ApexCharts and Tabler integration. Slowly migrating new features. Always check Context7 with future compatability in mind.  
+StakTrakr developers have future plans for ApexCharts and Tabler integration. Slowly migrating new features with future compatibility in mind.
 
 **Portfolio model**: Purchase Price / Melt Value / Retail Price with computed Gain/Loss. All per-unit values; multiply by `qty` for totals. `meltValue` is already qty-adjusted (`weight * qty * spot`).
 
 **Versioning**: `BRANCH.RELEASE.PATCH` format in `js/constants.js` (`APP_VERSION`). Use the `/release` skill to bump versions across all 7 files: `js/constants.js`, `sw.js` (CACHE_NAME), `CHANGELOG.md`, `docs/announcements.md`, `js/about.js`, `version.json`, plus seed data.
 
-**Versioning Skills** This project has a `/release` skill that outlines the full release process. This skill must also be updated anytime changes are made to the version system.
-
-**Quality Gates** StakTrakr uses Codacy for Code Quality Gates and maintains an A+ Rating. All commits and PR's must be approved by Codacy. 
-
-**Code Search Strategy**: Tiered — claude-context first (fast, cheap), then Grep/Glob (literal matches), then Explore agents (comprehensive). See the `search-code` skill for the full decision flowchart and escalation rules.
+**Quality Gates**: StakTrakr uses Codacy for Code Quality Gates and maintains an A+ Rating. All commits and PRs must be approved by Codacy.
 
 ## Critical Development Patterns
 
@@ -41,70 +37,50 @@ Use `saveData()`/`loadData()` (async, preferred) or `saveDataSync()`/`loadDataSy
 ## Key Application Files
 
 ### Core Data Flow
-- **`js/file-protocol-fix.js`** - localStorage fallbacks for `file://` protocol (loads first, no `defer`)
-- **`js/debug-log.js`** - Debug logging utilities
-- **`js/constants.js`** - Global config, API providers, storage keys, app version, branding
-- **`js/state.js`** - Application state and cached DOM element references
-- **`js/inventory.js`** - Core CRUD operations, table rendering, CSV/PDF/ZIP export
-- **`js/api.js`** - External pricing API integration with provider fallback chain
-- **`js/utils.js`** - Formatting, validation, helpers, storage report
-- **`js/events.js`** - Event handlers, unified add/edit modal submit, UI interactions
-- **`js/init.js`** - Application initialization (loads last)
+
+- **`js/file-protocol-fix.js`** — localStorage fallbacks for `file://` protocol (loads first, no `defer`)
+- **`js/debug-log.js`** — Debug logging utilities
+- **`js/constants.js`** — Global config, API providers, storage keys, app version, branding
+- **`js/state.js`** — Application state and cached DOM element references
+- **`js/inventory.js`** — Core CRUD operations, table rendering, CSV/PDF/ZIP export
+- **`js/api.js`** — External pricing API integration with provider fallback chain
+- **`js/utils.js`** — Formatting, validation, helpers, storage report
+- **`js/events.js`** — Event handlers, unified add/edit modal submit, UI interactions
+- **`js/init.js`** — Application initialization (loads last)
 
 ### Feature Modules
-- **`js/spot.js`** - Spot price history, card color indicators, manual/API price management
-- **`js/sorting.js`** - Multi-column table sorting (qty-adjusted for computed columns)
-- **`js/filters.js`** - Advanced column filtering and summary chip system
-- **`js/search.js`** & **`js/fuzzy-search.js`** - Search functionality
-- **`js/charts.js`** - Chart.js spot price visualization
-- **`js/pagination.js`** - Table pagination
-- **`js/theme.js`** - Four-state theme system (light / dark / sepia / system)
-- **`js/autocomplete.js`** - Input autocomplete
+
+- **`js/spot.js`** — Spot price history, card color indicators, manual/API price management
+- **`js/sorting.js`** — Multi-column table sorting (qty-adjusted for computed columns)
+- **`js/filters.js`** — Advanced column filtering and summary chip system
+- **`js/search.js`** & **`js/fuzzy-search.js`** — Search functionality
+- **`js/charts.js`** — Chart.js spot price visualization
+- **`js/pagination.js`** — Table pagination
+- **`js/theme.js`** — Four-state theme system (light / dark / sepia / system)
+- **`js/autocomplete.js`** — Input autocomplete
+- **`js/card-view.js`** — Card view rendering engine (styles A/B/C)
 
 ### Modals
-- **`js/about.js`** - About modal, acknowledgment modal, announcements loading
-- **`js/versionCheck.js`** - Version change detection, What's New modal, changelog parsing
-- **`js/changeLog.js`** - Item change log tracking and undo/redo
-- **`js/detailsModal.js`** - Item detail view
-- **`js/debugModal.js`** - Debug information
+
+- **`js/about.js`** — About modal, acknowledgment modal, announcements loading
+- **`js/versionCheck.js`** — Version change detection, What's New modal, changelog parsing
+- **`js/changeLog.js`** — Item change log tracking and undo/redo
+- **`js/detailsModal.js`** — Item detail view
+- **`js/viewModal.js`** — Full item view modal with charts
+- **`js/debugModal.js`** — Debug information
 
 ### Numista Integration
-- **`js/catalog-api.js`** - Numista API client (BROKEN — see ROADMAP.md Next Session)
-- **`js/catalog-providers.js`** - Catalog data providers
-- **`js/catalog-manager.js`** - Catalog orchestration
-- **`js/numista-modal.js`** - Catalog search modal UI
+
+- **`js/catalog-api.js`** — Numista API client
+- **`js/catalog-providers.js`** — Catalog data providers
+- **`js/catalog-manager.js`** — Catalog orchestration
+- **`js/numista-modal.js`** — Catalog search modal UI
 
 ### Import/Export
-- **`js/customMapping.js`** - Regex-based rule engine for CSV field mapping
+
+- **`js/customMapping.js`** — Regex-based rule engine for CSV field mapping
 - CSV via PapaParse, PDF via jsPDF + AutoTable, ZIP backup via JSZip
 
-## MCP Tools
+## Local Development Note
 
-Most MCP tool rules are in auto-loading skills (`.claude/skills/`). Only safety-critical rules stay here.
-
-### Memento Knowledge Graph (mcp__memento__) — SAFETY RULES
-
-Persistent knowledge graph in Neo4j at `localhost:7687` (local Mac). Shared with HexTrackr.
-
-- **NEVER use `read_graph`** — graph exceeds 200K tokens, will fail. Use `search_nodes` or `semantic_search` instead.
-- **Always tag** entities with `TAG: project:staktrakr` for project isolation.
-- **Prefer `search_nodes`** over `semantic_search` for recent entities — semantic embeddings may have indexing lag.
-- See the `memento-taxonomy` skill for naming conventions, entity types, required observations, and search patterns.
-
-### Tool Rules (auto-loaded via skills)
-
-| Skill | Covers | Auto-loads when... |
-|-------|--------|-------------------|
-| `linear-workspace` | Team IDs, issue routing, labels, states | Creating/querying Linear issues |
-| `search-code` | Tiered search strategy (claude-context → Grep → Explore) | Searching for functions, patterns, architecture |
-| `claude-context-rules` | Semantic code search, indexing | Searching the codebase |
-| `context7-rules` | Library doc lookups, API verification, planning | Looking up external library docs or writing code that uses library APIs |
-| `research` | Web research strategy, tool priority chain (Brave → WebSearch) | Researching topics, looking up information, web searches |
-| `brave-search-rules` | Brave Search tool details, summarizer flow | Referenced by `research` skill for Brave-specific usage |
-| `browser-testing` | Chrome DevTools, screenshots, snapshots | Testing UI, taking screenshots |
-| `codacy-rules` | Code quality, sequential thinking | Running static analysis |
-| `coding-standards` | JS patterns, conventions | Writing code |
-| `markdown-standards` | Markdown linting rules, formatting | Editing markdown files |
-| `seed-sync` | Docker poller seed data check, staging | Before releases, checking seed freshness |
-| `memento-taxonomy` | Entity naming, tags, search patterns | Saving handoffs, sessions, insights, or querying Memento |
-| `start` | Session context loading, handoff retrieval | Starting a new development session (`/start`) |
+Local developers with MCP servers (Linear, Memento, Brave Search, etc.) have additional skills and commands in `.claude/` that are gitignored. These provide project management, session persistence, and enhanced search capabilities. See the local `.claude/skills/` directory for available tooling.
