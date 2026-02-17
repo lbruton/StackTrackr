@@ -282,7 +282,7 @@ const CERT_LOOKUP_URLS = {
  * Updated: 2026-02-12 - STACK-38/STACK-31: Responsive card view + mobile layout
  */
 
-const APP_VERSION = "3.30.06";
+const APP_VERSION = "3.30.07";
 
 /**
  * @constant {string} DEFAULT_CURRENCY - Default currency code for monetary formatting
