@@ -26,26 +26,33 @@ const sortInventory = (data = inventory) => {
       case 2: valA = a.type; valB = b.type; break; // Type
       case 3: valA = a.name; valB = b.name; break; // Name
       case 4: valA = a.qty; valB = b.qty; break; // Qty
-      case 5: valA = a.weight; valB = b.weight; break; // Weight
-      case 6: valA = a.price; valB = b.price; break; // Purchase Price
-      case 7: // Melt Value (computed)
-        valA = (parseFloat(a.weight) || 0) * (Number(a.qty) || 0) * spotA * (parseFloat(a.purity) || 1.0);
-        valB = (parseFloat(b.weight) || 0) * (Number(b.qty) || 0) * spotB * (parseFloat(b.purity) || 1.0);
+      case 5: // Weight (normalize gb to ozt for consistent sorting)
+        valA = (a.weightUnit === 'gb') ? (parseFloat(a.weight) || 0) * GB_TO_OZT : (parseFloat(a.weight) || 0);
+        valB = (b.weightUnit === 'gb') ? (parseFloat(b.weight) || 0) * GB_TO_OZT : (parseFloat(b.weight) || 0);
         break;
-      case 8: { // Retail Price (marketValue × qty or melt total)
+      case 6: valA = parseFloat(a.price) || 0; valB = parseFloat(b.price) || 0; break; // Purchase Price
+      case 7: // Melt Value (computed — uses computeMeltValue for correct gb handling)
+        valA = computeMeltValue(a, spotA);
+        valB = computeMeltValue(b, spotB);
+        break;
+      case 8: { // Retail Price (gbDenom → marketValue → melt, matching render logic)
         const qtyA8 = Number(a.qty) || 1;
         const qtyB8 = Number(b.qty) || 1;
-        valA = (a.marketValue && a.marketValue > 0) ? a.marketValue * qtyA8 : (parseFloat(a.weight) || 0) * qtyA8 * spotA * (parseFloat(a.purity) || 1.0);
-        valB = (b.marketValue && b.marketValue > 0) ? b.marketValue * qtyB8 : (parseFloat(b.weight) || 0) * qtyB8 * spotB * (parseFloat(b.purity) || 1.0);
+        const gbA8 = (typeof getGoldbackRetailPrice === 'function') ? getGoldbackRetailPrice(a) : null;
+        const gbB8 = (typeof getGoldbackRetailPrice === 'function') ? getGoldbackRetailPrice(b) : null;
+        valA = gbA8 ? gbA8 * qtyA8 : (a.marketValue && a.marketValue > 0) ? a.marketValue * qtyA8 : computeMeltValue(a, spotA);
+        valB = gbB8 ? gbB8 * qtyB8 : (b.marketValue && b.marketValue > 0) ? b.marketValue * qtyB8 : computeMeltValue(b, spotB);
         break;
       }
-      case 9: { // Gain/Loss (computed, qty-adjusted)
+      case 9: { // Gain/Loss (computed, qty-adjusted, matching render logic)
         const qtyA9 = Number(a.qty) || 1;
         const qtyB9 = Number(b.qty) || 1;
-        const retailA = (a.marketValue && a.marketValue > 0) ? a.marketValue * qtyA9 : (parseFloat(a.weight) || 0) * qtyA9 * spotA * (parseFloat(a.purity) || 1.0);
-        const retailB = (b.marketValue && b.marketValue > 0) ? b.marketValue * qtyB9 : (parseFloat(b.weight) || 0) * qtyB9 * spotB * (parseFloat(b.purity) || 1.0);
-        valA = retailA - ((a.price || 0) * qtyA9);
-        valB = retailB - ((b.price || 0) * qtyB9);
+        const gbA9 = (typeof getGoldbackRetailPrice === 'function') ? getGoldbackRetailPrice(a) : null;
+        const gbB9 = (typeof getGoldbackRetailPrice === 'function') ? getGoldbackRetailPrice(b) : null;
+        const retailA = gbA9 ? gbA9 * qtyA9 : (a.marketValue && a.marketValue > 0) ? a.marketValue * qtyA9 : computeMeltValue(a, spotA);
+        const retailB = gbB9 ? gbB9 * qtyB9 : (b.marketValue && b.marketValue > 0) ? b.marketValue * qtyB9 : computeMeltValue(b, spotB);
+        valA = retailA - ((parseFloat(a.price) || 0) * qtyA9);
+        valB = retailB - ((parseFloat(b.price) || 0) * qtyB9);
         break;
       }
       case 10: valA = a.purchaseLocation; valB = b.purchaseLocation; break; // Location

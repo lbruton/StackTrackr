@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.30.05] - 2026-02-16
+
+### Fixed — Goldback Sorting Fix
+
+- **Fixed**: Sorting by Melt, Retail, and Gain/Loss columns now correctly handles Goldback items — previously a ½ Goldback (0.0005 ozt) was computed as 0.5 ozt of gold, inflating its sort value ~1000x
+- **Fixed**: Sorting by Retail and Gain/Loss now uses Goldback denomination pricing (matching table render logic)
+- **Fixed**: Weight column sort normalizes Goldback "gb" units to troy ounces for consistent cross-unit comparison
+- **Fixed**: Purchase Price sort now coerces to number defensively, preventing string-vs-number comparison issues
+
+---
+
 ## [3.30.04] - 2026-02-16
 
 ### Fixed — Pagination Dropdown Fix & Settings Reorganization
