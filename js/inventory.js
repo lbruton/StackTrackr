@@ -397,13 +397,15 @@ const restoreBackupZip = async (file) => {
 
     // Restore item tags (STAK-126)
     const itemTagsStr = await zip.file("item_tags.json")?.async("string");
+    let restoredTags = null;
     if (itemTagsStr) {
       const itemTagsObj = JSON.parse(itemTagsStr);
       if (itemTagsObj.tags && typeof itemTagsObj.tags === 'object') {
-        itemTags = itemTagsObj.tags;
-        if (typeof saveItemTags === 'function') saveItemTags();
+        restoredTags = itemTagsObj.tags;
       }
     }
+    itemTags = restoredTags || {};
+    if (typeof saveItemTags === 'function') saveItemTags();
 
     // Restore cached coin images (STACK-88)
     if (window.imageCache?.isAvailable()) {
