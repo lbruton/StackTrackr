@@ -399,9 +399,13 @@ const restoreBackupZip = async (file) => {
     const itemTagsStr = await zip.file("item_tags.json")?.async("string");
     let restoredTags = null;
     if (itemTagsStr) {
-      const itemTagsObj = JSON.parse(itemTagsStr);
-      if (itemTagsObj.tags && typeof itemTagsObj.tags === 'object') {
-        restoredTags = itemTagsObj.tags;
+      try {
+        const itemTagsObj = JSON.parse(itemTagsStr);
+        if (itemTagsObj.tags && typeof itemTagsObj.tags === 'object') {
+          restoredTags = itemTagsObj.tags;
+        }
+      } catch (e) {
+        debugLog('restoreBackupZip: item_tags.json parse error', e);
       }
     }
     itemTags = restoredTags || {};
