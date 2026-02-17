@@ -72,15 +72,17 @@ const APP_VERSION = "3.XX.YY";  // ← old
 const APP_VERSION = "3.XX.YY";  // ← new
 ```
 
-### File 2: `sw.js` — CACHE_NAME
+### File 2: `sw.js` — CACHE_NAME (automatic)
 
-The service worker's cache name must match the app version. If it drifts, the SW serves stale `constants.js` with an old `APP_VERSION`, causing the What's New splash to re-trigger on every page load (see STAK-93).
+**This is now handled automatically by the pre-commit hook** (`devops/hooks/stamp-sw-cache.sh`). When the commit is created, the hook detects that `js/constants.js` (with the new `APP_VERSION`) is staged, reads the version, generates a build timestamp, and writes:
 
-Find and replace the cache name string:
 ```javascript
-const CACHE_NAME = 'staktrakr-vOLD_VERSION';  // ← old
-const CACHE_NAME = 'staktrakr-vNEW_VERSION';  // ← new
+const CACHE_NAME = 'staktrakr-vNEW_VERSION-bTIMESTAMP';
 ```
+
+You do NOT need to manually edit `sw.js` CACHE_NAME during releases. The hook handles it.
+
+**Do verify** that `sw.js` CORE_ASSETS is up to date (any new `.js` files added since last release must be listed). See the `sw-cache` skill for details.
 
 ### File 3: `CHANGELOG.md` — New version section
 

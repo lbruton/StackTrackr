@@ -41,9 +41,10 @@ logs/
 .env
 .env.local
 
-# DevOps tooling — spot-poller is public, other scripts stay private
+# DevOps tooling — spot-poller and hooks are public, other scripts stay private
 devops/*
 !devops/spot-poller/
+!devops/hooks/
 
 
 # AI/MCP configuration files are tracked for project consistency

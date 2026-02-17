@@ -16,6 +16,8 @@ StakTrakr developmers have future plans for ApexCharts and Tabler integration. S
 
 **Versioning Skills** This project has a `/release` skill that outlines the full release process. This skill must also be updated anytime changes are made to the version system.
 
+**Service Worker Cache**: `sw.js` CACHE_NAME is auto-stamped by a pre-commit hook (`devops/hooks/stamp-sw-cache.sh`). Format: `staktrakr-v{VERSION}-b{EPOCH}`. The hook fires when any cached asset is staged, reads `APP_VERSION`, appends a build timestamp, and re-stages `sw.js`. New `.js` files must be added to `sw.js` CORE_ASSETS. See the `sw-cache` skill. Install hook: `ln -sf ../../devops/hooks/stamp-sw-cache.sh .git/hooks/pre-commit`
+
 **Quality Gates** StakTrakr uses Codacy for Code Quality Gates and maintains an A+ Rating. All commits and PR's must be approved by Codacy. 
 
 **Code Search Strategy**: Tiered — claude-context first (fast, cheap), then Grep/Glob (literal matches), then Explore agents (comprehensive). See the `search-code` skill for the full decision flowchart and escalation rules.
