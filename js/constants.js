@@ -282,7 +282,7 @@ const CERT_LOOKUP_URLS = {
  * Updated: 2026-02-12 - STACK-38/STACK-31: Responsive card view + mobile layout
  */
 
-const APP_VERSION = "3.30.05";
+const APP_VERSION = "3.30.06";
 
 /**
  * @constant {string} DEFAULT_CURRENCY - Default currency code for monetary formatting
@@ -1025,7 +1025,7 @@ const FEATURE_FLAGS = {
     phase: "stable"
   },
   NUMISTA_SEARCH_LOOKUP: {
-    enabled: true,
+    enabled: false,
     urlOverride: true,
     userToggle: true,
     description: "Pattern-based Numista search improvement",

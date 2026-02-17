@@ -425,9 +425,9 @@ document.addEventListener("DOMContentLoaded", async () => {
           }
         }
       } else {
-        // No saved preference — default to 6
-        itemsPerPage = 6;
-        if (elements.itemsPerPage) elements.itemsPerPage.value = '6';
+        // No saved preference — default to 12
+        itemsPerPage = 12;
+        if (elements.itemsPerPage) elements.itemsPerPage.value = '12';
       }
     } catch (e) { /* ignore */ }
 

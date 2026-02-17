@@ -274,11 +274,11 @@ const setupAckModalEvents = () => {
  */
 const getEmbeddedWhatsNew = () => {
   return `
+    <li><strong>v3.30.06 &ndash; Card View Sort Controls &amp; UX Polish</strong>: Card sort bar with sort dropdown, direction toggle, and A/B/C style toggle visible only in card view. Pagination hidden in card view. Default table rows changed to 12. Header button simplified to toggle card/table view. Numista name matching disabled by default (STAK-131)</li>
     <li><strong>v3.30.05 &ndash; Sort Column Index Realignment</strong>: All table sorts after Type were off by one since v3.30.00 &mdash; the Image column was missing from the sort index map, causing every column from Name onward to sort by the wrong field. Retail and Gain/Loss sorting now also uses correct Goldback denomination pricing</li>
     <li><strong>v3.30.04 &ndash; Pagination Dropdown Fix &amp; Settings Reorganization</strong>: Settings &ldquo;Visible rows&rdquo; dropdown now includes value 6, preventing silent fallback when switching views. Default items-per-page changed from 12 to 6. Added 128 and 512 options. &ldquo;Table&rdquo; tab renamed to &ldquo;Inventory&rdquo; with card settings consolidated</li>
     <li><strong>v3.30.03 &ndash; PumpkinCrouton Patch &mdash; Purity Input &amp; Save Fix</strong>: Added .9995 (pure platinum) to purity dropdown. Custom purity accepts 4 decimal places. Fixed save corruption where hidden custom purity input blocked all form submissions. Duplicate items now preserve original purchase date. Thanks to u/PumpkinCrouton for the report (STAK-130)</li>
     <li><strong>v3.30.02 &ndash; Keyless Provider Fixes &amp; Hourly History Pull</strong>: Fixed keyless providers (STAKTRAKR) enabling sync buttons, connected status, and auto-select. STAKTRAKR usage counter with 5000 default quota. Hourly history pull for STAKTRAKR (1&ndash;30 days) and MetalPriceAPI (up to 7 days). History log distinguishes hourly entries. One-time migration for existing users</li>
-    <li><strong>v3.30.01 &ndash; StakTrakr Free API Provider &amp; UTC Poller Fix</strong>: Free, keyless StakTrakr API provider at rank 1 fetching hourly spot prices. Provider panel with &ldquo;Free&rdquo; badge and best-effort disclaimer. 1st&ndash;5th priority labels across all providers. Poller switched to UTC for timezone-neutral paths. Auto-sync works without any API keys</li>
   `;
 };
 
