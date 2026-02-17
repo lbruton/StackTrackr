@@ -1003,15 +1003,20 @@ const receiveBulkNumistaResult = (fieldMap) => {
       if (purityCustomInput && !optionExists) {
         purityCustomInput.value = String(fieldMap[fieldId]);
       }
+      // Enable field and check checkbox before dispatching change event
+      // so syncPurityState() sees the correct disabled state
+      input.disabled = false;
+      bulkFieldValues[fieldId] = fieldMap[fieldId];
+      bulkEnabledFields.add(fieldId);
+      if (cb) cb.checked = true;
       input.dispatchEvent(new Event('change'));
     } else {
       input.value = fieldMap[fieldId];
+      input.disabled = false;
+      bulkFieldValues[fieldId] = fieldMap[fieldId];
+      bulkEnabledFields.add(fieldId);
+      if (cb) cb.checked = true;
     }
-    input.disabled = false;
-    bulkFieldValues[fieldId] = fieldMap[fieldId];
-    bulkEnabledFields.add(fieldId);
-
-    if (cb) cb.checked = true;
   });
 
   // Update footer to reflect newly enabled fields
