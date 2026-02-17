@@ -41,8 +41,8 @@ const initTheme = () => {
   if (savedTheme && ["dark", "light", "sepia"].includes(savedTheme)) {
     setTheme(savedTheme);
   } else {
-    // Default to system preference on first load, but store explicit theme
-    setTheme(systemPrefersDark ? "dark" : "light");
+    // Default to dark theme on first load
+    setTheme("dark");
   }
 };
 

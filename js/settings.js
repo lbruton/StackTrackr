@@ -746,15 +746,17 @@ const renderFilterChipCategoryTable = () => {
 };
 
 /**
- * Renders the built-in (seed) Numista lookup rules as a read-only table.
+ * Renders the built-in (seed) Numista lookup rules table with enable/disable toggles.
  */
 const renderSeedRuleTable = () => {
   const container = document.getElementById('seedRuleTableContainer');
   if (!container || !window.NumistaLookup) return;
 
   const rules = NumistaLookup.listSeedRules();
+  const enabledCount = typeof NumistaLookup.getEnabledSeedRuleCount === 'function'
+    ? NumistaLookup.getEnabledSeedRuleCount() : rules.length;
   const countBadge = document.getElementById('seedRuleCount');
-  if (countBadge) countBadge.textContent = `(${rules.length})`;
+  if (countBadge) countBadge.textContent = `(${enabledCount}/${rules.length})`;
 
   container.textContent = '';
   if (!rules.length) {
@@ -765,12 +767,39 @@ const renderSeedRuleTable = () => {
     return;
   }
 
+  // Bulk toggle buttons
+  const btnBar = document.createElement('div');
+  btnBar.style.cssText = 'display:flex;gap:0.5rem;margin-bottom:0.5rem';
+
+  const enableAllBtn = document.createElement('button');
+  enableAllBtn.type = 'button';
+  enableAllBtn.className = 'btn';
+  enableAllBtn.textContent = 'Enable All';
+  enableAllBtn.style.cssText = 'font-size:0.75rem;padding:0.2rem 0.6rem';
+  enableAllBtn.addEventListener('click', () => {
+    NumistaLookup.setAllSeedRulesEnabled(true);
+    renderSeedRuleTable();
+  });
+
+  const disableAllBtn = document.createElement('button');
+  disableAllBtn.type = 'button';
+  disableAllBtn.className = 'btn';
+  disableAllBtn.textContent = 'Disable All';
+  disableAllBtn.style.cssText = 'font-size:0.75rem;padding:0.2rem 0.6rem';
+  disableAllBtn.addEventListener('click', () => {
+    NumistaLookup.setAllSeedRulesEnabled(false);
+    renderSeedRuleTable();
+  });
+
+  btnBar.append(enableAllBtn, disableAllBtn);
+  container.appendChild(btnBar);
+
   const table = document.createElement('table');
   table.className = 'chip-grouping-table';
 
   const thead = document.createElement('thead');
   const headRow = document.createElement('tr');
-  ['Pattern', 'Numista Query', 'N#'].forEach(text => {
+  ['Enabled', 'Pattern', 'Numista Query', 'N#'].forEach(text => {
     const th = document.createElement('th');
     th.textContent = text;
     th.style.cssText = 'font-size:0.75rem;font-weight:normal;opacity:0.6;padding:0.2rem 0.4rem';
@@ -780,9 +809,27 @@ const renderSeedRuleTable = () => {
   table.appendChild(thead);
 
   const tbody = document.createElement('tbody');
-  const esc = typeof escapeHtml === 'function' ? escapeHtml : (s) => s;
   for (const rule of rules) {
     const tr = document.createElement('tr');
+
+    // Enabled checkbox
+    const tdEnabled = document.createElement('td');
+    tdEnabled.style.cssText = 'width:2.5rem;text-align:center';
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.checked = typeof NumistaLookup.isSeedRuleEnabled === 'function'
+      ? NumistaLookup.isSeedRuleEnabled(rule.id) : true;
+    cb.title = 'Toggle ' + rule.id;
+    cb.addEventListener('change', () => {
+      if (typeof NumistaLookup.setSeedRuleEnabled === 'function') {
+        NumistaLookup.setSeedRuleEnabled(rule.id, cb.checked);
+      }
+      // Update count badge
+      const newCount = typeof NumistaLookup.getEnabledSeedRuleCount === 'function'
+        ? NumistaLookup.getEnabledSeedRuleCount() : rules.length;
+      if (countBadge) countBadge.textContent = `(${newCount}/${rules.length})`;
+    });
+    tdEnabled.appendChild(cb);
 
     const tdPattern = document.createElement('td');
     tdPattern.style.cssText = 'font-family:monospace;font-size:0.8rem;word-break:break-all';
@@ -795,7 +842,7 @@ const renderSeedRuleTable = () => {
     tdId.style.cssText = 'font-size:0.85rem;opacity:0.7;white-space:nowrap';
     tdId.textContent = rule.numistaId || '\u2014';
 
-    tr.append(tdPattern, tdReplacement, tdId);
+    tr.append(tdEnabled, tdPattern, tdReplacement, tdId);
     tbody.appendChild(tr);
   }
 
@@ -991,7 +1038,7 @@ const syncGoldbackSettingsUI = () => {
  * Syncs the header shortcut checkboxes in Settings with stored state.
  */
 const syncHeaderToggleUI = () => {
-  const themeVisible = localStorage.getItem('headerThemeBtnVisible') !== 'false';
+  const themeVisible = localStorage.getItem('headerThemeBtnVisible') === 'true';
   const currencyVisible = localStorage.getItem('headerCurrencyBtnVisible') !== 'false';
   const cardViewVisible = localStorage.getItem('headerCardViewBtnVisible') === 'true';
 
@@ -1007,7 +1054,7 @@ const syncHeaderToggleUI = () => {
  * Default is visible (true) unless explicitly set to 'false'.
  */
 const applyHeaderToggleVisibility = () => {
-  const themeVisible = localStorage.getItem('headerThemeBtnVisible') !== 'false';
+  const themeVisible = localStorage.getItem('headerThemeBtnVisible') === 'true';
   const currencyVisible = localStorage.getItem('headerCurrencyBtnVisible') !== 'false';
   const cardViewVisible = localStorage.getItem('headerCardViewBtnVisible') === 'true';
 

@@ -282,7 +282,7 @@ const CERT_LOOKUP_URLS = {
  * Updated: 2026-02-12 - STACK-38/STACK-31: Responsive card view + mobile layout
  */
 
-const APP_VERSION = "3.30.07";
+const APP_VERSION = "3.30.08";
 
 /**
  * @constant {string} DEFAULT_CURRENCY - Default currency code for monetary formatting
@@ -662,6 +662,8 @@ const ALLOWED_STORAGE_KEYS = [
   CARD_STYLE_KEY,                        // string: "A"|"B"|"C" — card view style (STAK-118)
   DESKTOP_CARD_VIEW_KEY,                 // boolean string: "true"/"false" — desktop card view (STAK-118)
   ITEM_TAGS_KEY,                           // JSON object: per-item tags keyed by UUID (STAK-126)
+  "enabledSeedRules",                        // JSON array: enabled built-in Numista lookup rule IDs
+  "seedImagesVer",                             // string: current seed images version for cache invalidation
 ];
 
 // =============================================================================
@@ -1024,7 +1026,7 @@ const FEATURE_FLAGS = {
     phase: "beta"
   },
   DYNAMIC_NAME_CHIPS: {
-    enabled: true,
+    enabled: false,
     urlOverride: true,
     userToggle: true,
     description: "Auto-extract text from parentheses and quotes in item names as additional filter chips",

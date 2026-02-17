@@ -25,7 +25,7 @@ const applyViewIpp = () => {
     ippStr = 'all';
   } else {
     // Restore table IPP.
-    const restored = _savedTableIpp || '12';
+    const restored = _savedTableIpp || 'all';
     _savedTableIpp = null;
     itemsPerPage = restored === 'all' ? Infinity : Number(restored);
     ippStr = restored;
@@ -98,7 +98,7 @@ const bindAppearanceAndHeaderListeners = () => {
   }
 
   wireStorageToggle('settingsHeaderThemeBtn', 'headerThemeBtnVisible', {
-    defaultVal: true,
+    defaultVal: false,
     onApply: () => applyHeaderToggleVisibility(),
   });
 
