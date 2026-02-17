@@ -1699,6 +1699,16 @@ const setupSpotPriceListeners = () => {
     },
     true,
   );
+
+  // Goldback exchange rate helper link belongs to the Goldback settings context.
+  optionalListener(document.getElementById('goldbackExchangeRateLink'), 'click', (e) => {
+    e.preventDefault();
+    window.open(
+      'https://www.goldback.com/exchange-rates/',
+      'goldback_rates',
+      'width=1250,height=800,scrollbars=yes,resizable=yes,toolbar=no,location=no,menubar=no,status=no',
+    );
+  }, 'Goldback exchange rates link');
 };
 
 /**
