@@ -61,13 +61,15 @@ const BULK_EDITABLE_FIELDS = [
     options: [
       { value: '1.0',    label: '100% — Pure' },
       { value: '0.9999', label: '.9999 — Four Nines' },
+      { value: '0.9995', label: '.9995 — Pure Platinum' },
       { value: '0.999',  label: '.999 — Fine' },
       { value: '0.925',  label: '.925 — Sterling' },
       { value: '0.900',  label: '.900 — 90% Silver' },
       { value: '0.800',  label: '.800 — 80% (European)' },
       { value: '0.600',  label: '.600 — 60%' },
       { value: '0.400',  label: '.400 — 40% Silver' },
-      { value: '0.350',  label: '.350 — War Nickels' }
+      { value: '0.350',  label: '.350 — War Nickels' },
+      { value: 'custom', label: 'Custom…' }
     ] },
   { id: 'price',            label: 'Purchase Price',     inputType: 'number',
     attrs: { min: '0', step: '0.01' } },
@@ -76,13 +78,47 @@ const BULK_EDITABLE_FIELDS = [
   { id: 'year',             label: 'Year',              inputType: 'text' },
   { id: 'grade',            label: 'Grade',             inputType: 'select',
     options: [
-      '', 'MS-70', 'MS-69', 'MS-68', 'MS-67', 'MS-66', 'MS-65',
-      'PF-70', 'PF-69', 'PF-68', 'PF-67', 'PF-66', 'PF-65',
-      'AU-58', 'AU-55', 'XF-45', 'XF-40', 'VF-35', 'VF-30',
-      'F-15', 'F-12', 'VG-10', 'VG-8', 'G-6', 'G-4', 'AG-3'
+      { value: '', label: '-- None --' },
+      { value: 'AG', label: 'AG - About Good' },
+      { value: 'G', label: 'G - Good' },
+      { value: 'VG', label: 'VG - Very Good' },
+      { value: 'F', label: 'F - Fine' },
+      { value: 'VF', label: 'VF - Very Fine' },
+      { value: 'XF', label: 'XF - Extremely Fine' },
+      { value: 'AU', label: 'AU - About Uncirculated' },
+      { value: 'UNC', label: 'UNC - Uncirculated' },
+      { value: 'BU', label: 'BU - Brilliant Uncirculated' },
+      { value: 'MS-60', label: 'MS-60' },
+      { value: 'MS-61', label: 'MS-61' },
+      { value: 'MS-62', label: 'MS-62' },
+      { value: 'MS-63', label: 'MS-63' },
+      { value: 'MS-64', label: 'MS-64' },
+      { value: 'MS-65', label: 'MS-65' },
+      { value: 'MS-66', label: 'MS-66' },
+      { value: 'MS-67', label: 'MS-67' },
+      { value: 'MS-68', label: 'MS-68' },
+      { value: 'MS-69', label: 'MS-69' },
+      { value: 'MS-70', label: 'MS-70' },
+      { value: 'PF-60', label: 'PF-60' },
+      { value: 'PF-61', label: 'PF-61' },
+      { value: 'PF-62', label: 'PF-62' },
+      { value: 'PF-63', label: 'PF-63' },
+      { value: 'PF-64', label: 'PF-64' },
+      { value: 'PF-65', label: 'PF-65' },
+      { value: 'PF-66', label: 'PF-66' },
+      { value: 'PF-67', label: 'PF-67' },
+      { value: 'PF-68', label: 'PF-68' },
+      { value: 'PF-69', label: 'PF-69' },
+      { value: 'PF-70', label: 'PF-70' }
     ] },
   { id: 'gradingAuthority', label: 'Grading Auth',      inputType: 'select',
-    options: ['', 'PCGS', 'NGC', 'ANACS', 'ICG', 'SGS'] },
+    options: [
+      { value: '', label: '-- None --' },
+      { value: 'PCGS', label: 'PCGS' },
+      { value: 'NGC', label: 'NGC' },
+      { value: 'ANACS', label: 'ANACS' },
+      { value: 'ICG', label: 'ICG' }
+    ] },
   { id: 'certNumber',       label: 'Cert Number',       inputType: 'text' },
   { id: 'pcgsNumber',       label: 'PCGS Number',       inputType: 'text' },
   { id: 'purchaseLocation', label: 'Purchase Loc',      inputType: 'text' },
@@ -368,6 +404,63 @@ const renderBulkFieldPanel = () => {
       bwUnitSelect.value = 'gb';
       toggleBulkGbPicker();
     }
+  }
+
+  // Wire up custom purity input behavior (matches inventory modal pattern)
+  const puritySelect = safeGetElement('bulkFieldVal_purity');
+  const purityCheckbox = safeGetElement('bulkField_purity');
+  if (puritySelect) {
+    const purityCustomInput = document.createElement('input');
+    purityCustomInput.type = 'number';
+    purityCustomInput.id = 'bulkFieldVal_purityCustom';
+    purityCustomInput.className = 'field-input';
+    purityCustomInput.min = '0.001';
+    purityCustomInput.max = '1';
+    purityCustomInput.step = '0.0001';
+    purityCustomInput.placeholder = 'e.g. 0.9995';
+    purityCustomInput.setAttribute('aria-label', 'Custom purity');
+    purityCustomInput.style.display = 'none';
+    purityCustomInput.disabled = puritySelect.disabled;
+    puritySelect.parentNode.insertBefore(purityCustomInput, puritySelect.nextSibling);
+
+    const optionValues = new Set(Array.from(puritySelect.options).map(option => option.value));
+    const savedPurity = bulkFieldValues.purity;
+    if (savedPurity !== undefined) {
+      const savedPurityStr = String(savedPurity);
+      if (optionValues.has(savedPurityStr) && savedPurityStr !== 'custom') {
+        puritySelect.value = savedPurityStr;
+      } else {
+        puritySelect.value = 'custom';
+        purityCustomInput.value = savedPurityStr;
+      }
+    }
+
+    const syncPurityState = () => {
+      const isCustom = puritySelect.value === 'custom';
+      purityCustomInput.style.display = isCustom ? '' : 'none';
+      purityCustomInput.disabled = puritySelect.disabled || !isCustom;
+      if (isCustom) {
+        bulkFieldValues.purity = purityCustomInput.value;
+      } else {
+        bulkFieldValues.purity = puritySelect.value;
+      }
+    };
+
+    puritySelect.addEventListener('change', syncPurityState);
+    purityCustomInput.addEventListener('input', () => {
+      bulkFieldValues.purity = purityCustomInput.value;
+    });
+    purityCustomInput.addEventListener('change', () => {
+      bulkFieldValues.purity = purityCustomInput.value;
+    });
+
+    if (purityCheckbox) {
+      purityCheckbox.addEventListener('change', () => {
+        syncPurityState();
+      });
+    }
+
+    syncPurityState();
   }
 
 };
@@ -687,6 +780,20 @@ const applyBulkEdit = () => {
     if (input) valuesToApply[fieldId] = input.value;
   });
 
+  if (bulkEnabledFields.has('purity') && valuesToApply.purity === 'custom') {
+    const purityCustomInput = safeGetElement('bulkFieldVal_purityCustom');
+    const rawPurity = purityCustomInput ? purityCustomInput.value.trim() : '';
+    const numericPurity = Number(rawPurity);
+
+    if (!rawPurity || !Number.isFinite(numericPurity) || numericPurity < 0.001 || numericPurity > 1) {
+      alert('Please enter a custom purity between 0.001 and 1 before applying bulk changes.');
+      return;
+    }
+
+    // Keep the original string; coercion logic will normalize as needed.
+    valuesToApply.purity = rawPurity;
+  }
+
   // When gb denomination mode is active, read weight from the denomination picker
   // (the hidden number input has stale/empty value).
   // Check both: explicit weightUnit in apply set, OR denomination picker visibly active.
@@ -899,12 +1006,27 @@ const receiveBulkNumistaResult = (fieldMap) => {
     const cb = safeGetElement('bulkField_' + fieldId);
     if (!input) return;
 
-    input.value = fieldMap[fieldId];
-    input.disabled = false;
-    bulkFieldValues[fieldId] = fieldMap[fieldId];
-    bulkEnabledFields.add(fieldId);
-
-    if (cb) cb.checked = true;
+    if (fieldId === 'purity' && input.tagName === 'SELECT') {
+      const optionExists = Array.from(input.options).some(option => option.value === String(fieldMap[fieldId]));
+      input.value = optionExists ? String(fieldMap[fieldId]) : 'custom';
+      const purityCustomInput = safeGetElement('bulkFieldVal_purityCustom');
+      if (purityCustomInput && !optionExists) {
+        purityCustomInput.value = String(fieldMap[fieldId]);
+      }
+      // Enable field and check checkbox before dispatching change event
+      // so syncPurityState() sees the correct disabled state
+      input.disabled = false;
+      bulkFieldValues[fieldId] = fieldMap[fieldId];
+      bulkEnabledFields.add(fieldId);
+      if (cb) cb.checked = true;
+      input.dispatchEvent(new Event('change'));
+    } else {
+      input.value = fieldMap[fieldId];
+      input.disabled = false;
+      bulkFieldValues[fieldId] = fieldMap[fieldId];
+      bulkEnabledFields.add(fieldId);
+      if (cb) cb.checked = true;
+    }
   });
 
   // Update footer to reflect newly enabled fields
