@@ -105,7 +105,7 @@ const fetchStaktrakrHourlyRange = async (hoursBack) => {
         if (spot <= 0) return;
         const metalConfig = Object.values(METALS).find(m => m.key === metalKey);
         if (!metalConfig) return;
-        const entryTimestamp = new Date(result.timestamp).toISOString().replace("T", " ").slice(0, 19);
+        const entryTimestamp = result.timestamp.replace("T", " ").replace("Z", "");
         const isDuplicate = existingKeys.has(`${entryTimestamp}|${metalConfig.name}`);
         if (!isDuplicate) {
           spotHistory.push({
@@ -120,8 +120,6 @@ const fetchStaktrakrHourlyRange = async (hoursBack) => {
   }
 
   if (newCount > 0) {
-    updateLastTimestamps("api-hourly", providerName,
-      spotHistory[spotHistory.length - 1].timestamp);
     saveSpotHistory();
     console.log(`[StakTrakr] Added ${newCount} hourly entries (${fetchCount} files fetched)`);
   }
@@ -1580,8 +1578,6 @@ const fetchMetalPriceApiHourly = async (apiKey, selectedMetals, totalDays) => {
   }
 
   if (totalEntries > 0) {
-    updateLastTimestamps('api-hourly', providerName,
-      spotHistory[spotHistory.length - 1].timestamp);
     saveSpotHistory();
   }
 
