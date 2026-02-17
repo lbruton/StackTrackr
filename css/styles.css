@@ -4850,8 +4850,45 @@ a.about-badge:hover {
   align-items: center;
 }
 
-#searchInput {
+.search-input-wrapper {
+  position: relative;
   flex: 1;
+}
+
+#searchInput {
+  width: 100%;
+}
+
+.search-input-wrapper #searchInput {
+  padding-right: 2.75rem;
+}
+
+.search-save-btn {
+  position: absolute;
+  right: 0.65rem;
+  top: 50%;
+  transform: translateY(-50%);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 2.1rem;
+  height: 2.1rem;
+  padding: 0.25rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-secondary);
+  color: var(--text-muted);
+  transition: all 0.15s ease;
+}
+
+.search-save-btn:hover {
+  color: var(--primary);
+  border-color: var(--primary);
+}
+
+.search-save-btn:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
 }
 
 .modern-icon-btn {
@@ -5733,9 +5770,14 @@ input:disabled + .slider {
     gap: var(--spacing-xs);
   }
 
-  .search-container #searchInput {
+  .search-input-wrapper {
     flex: 1;
+  }
+
+  .search-input-wrapper #searchInput {
+    width: 100%;
     min-width: 0;
+    padding-right: 2.75rem;
   }
 
   .search-action-btn span {
@@ -5858,7 +5900,7 @@ input:disabled + .slider {
     min-width: 180px;
   }
 
-  .search-container #searchInput {
+  .search-input-wrapper #searchInput {
     min-width: 160px;
   }
 }
