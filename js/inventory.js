@@ -1922,7 +1922,7 @@ const editItem = (idx, logIdx = null) => {
 
 /**
  * Duplicates an inventory item by opening the add modal pre-filled with
- * the source item's fields. Date defaults to today, qty resets to 1.
+ * the source item's fields. Date preserves the original purchase date, qty resets to 1.
  *
  * @param {number} idx - Index of item to duplicate
  */
