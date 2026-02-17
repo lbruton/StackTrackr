@@ -401,7 +401,7 @@ const restoreBackupZip = async (file) => {
     if (itemTagsStr) {
       try {
         const itemTagsObj = JSON.parse(itemTagsStr);
-        if (itemTagsObj.tags && typeof itemTagsObj.tags === 'object') {
+        if (itemTagsObj.tags && typeof itemTagsObj.tags === 'object' && !Array.isArray(itemTagsObj.tags)) {
           restoredTags = itemTagsObj.tags;
         }
       } catch (e) {
@@ -2894,7 +2894,8 @@ const importJson = (file, override = false) => {
             pendingTags = jsonTags.split(';').map(t => t.trim()).filter(Boolean);
           }
           if (pendingTags.length > 0) {
-            pendingTagsByUuid.set(processedItem.uuid, pendingTags);
+            const existing = pendingTagsByUuid.get(processedItem.uuid) || [];
+            pendingTagsByUuid.set(processedItem.uuid, [...new Set([...existing, ...pendingTags])]);
           }
         }
 
