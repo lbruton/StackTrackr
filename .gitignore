@@ -48,6 +48,10 @@ logs/
 .env
 .env.local
 
+# Python
+__pycache__/
+*.pyc
+
 # DevOps tooling — spot-poller and hooks are public, other scripts stay private
 devops/*
 !devops/spot-poller/
