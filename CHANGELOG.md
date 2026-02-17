@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.30.06] - 2026-02-17
+
+### Added — Card View Sort Controls & UX Polish
+
+- **Added**: Card sort bar with sort-by dropdown, direction toggle, and A/B/C card style toggle — visible only in card view (STAK-131)
+- **Changed**: Pagination dropdown hidden in card view — cards always show all items
+- **Changed**: Default table rows changed from 6 to 12
+- **Changed**: Header card view button now simply toggles card/table view
+- **Changed**: Numista name matching (NUMISTA_SEARCH_LOOKUP) disabled by default
+
+---
+
 ## [3.30.05] - 2026-02-16
 
 ### Fixed — Sort Column Index Realignment

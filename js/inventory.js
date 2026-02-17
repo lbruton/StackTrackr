@@ -1305,13 +1305,20 @@ const renderTable = () => {
     const sortedInventory = sortInventory(filteredInventory);
     debugLog('renderTable start', sortedInventory.length, 'items');
 
-    // STAK-118: Card view rendering branch
+    // STAK-131: Card sort bar + card view rendering branch
+    const cardSortBar = document.getElementById('cardSortBar');
+    const footerSelect = document.querySelector('.table-footer-controls select');
     if (typeof isCardViewActive === 'function' && isCardViewActive()) {
       const cardGrid = safeGetElement('cardViewGrid');
       const portalScroll = document.querySelector('.portal-scroll');
       if (cardGrid) {
         cardGrid.style.display = 'flex';
         if (portalScroll) portalScroll.style.display = 'none';
+        // Show card sort bar and hide pagination dropdown
+        if (cardSortBar) cardSortBar.style.display = 'flex';
+        if (footerSelect) footerSelect.style.display = 'none';
+        if (typeof initCardSortBar === 'function') initCardSortBar();
+        if (typeof updateCardSortBar === 'function') updateCardSortBar();
 
         renderCardView(sortedInventory, cardGrid);
         bindCardClickHandler(cardGrid);
@@ -1332,6 +1339,9 @@ const renderTable = () => {
       cardGridEl.style.overflowY = '';
     }
     if (portalScrollEl) portalScrollEl.style.display = '';
+    // Hide card sort bar and show pagination dropdown
+    if (cardSortBar) cardSortBar.style.display = 'none';
+    if (footerSelect) footerSelect.style.display = '';
 
     const rows = [];
     const chipConfig = typeof getInlineChipConfig === 'function' ? getInlineChipConfig() : [];
