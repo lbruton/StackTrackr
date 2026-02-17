@@ -60,3 +60,4 @@ devops/*
 
 # AI/MCP configuration files are tracked for project consistency
 # (removed: .github/instructions/codacy.instructions.md)
+package-lock.json
