@@ -987,6 +987,16 @@ input[type="submit"] {
   gap: 0.5rem;
 }
 
+.provider-badge.free {
+  background: var(--success, #28a745);
+  color: #fff;
+  font-size: 0.7rem;
+  padding: 2px 8px;
+  border-radius: 10px;
+  margin-left: 0.5rem;
+  font-weight: 600;
+}
+
 .provider-doc-link {
   font-size: 0.8rem;
   font-weight: 400;

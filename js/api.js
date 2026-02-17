@@ -3,10 +3,45 @@
 
 // Track provider connection status for settings UI
 const providerStatuses = {
+  STAKTRAKR: "disconnected",
   METALS_DEV: "disconnected",
   METALS_API: "disconnected",
   METAL_PRICE_API: "disconnected",
   CUSTOM: "disconnected",
+};
+
+/** Check whether a provider requires an API key */
+const providerRequiresKey = (prov) => API_PROVIDERS[prov]?.requiresKey !== false;
+
+/**
+ * Fetch spot prices from StakTrakr hourly JSON files.
+ * Walks back up to 6 hours from the current UTC hour to find data.
+ */
+const fetchStaktrakrPrices = async (selectedMetals) => {
+  const baseUrl = API_PROVIDERS.STAKTRAKR.hourlyBaseUrl;
+  const now = new Date();
+
+  for (let offset = 0; offset <= 6; offset++) {
+    const target = new Date(now.getTime() - offset * 3600000);
+    const yyyy = target.getUTCFullYear();
+    const mm = String(target.getUTCMonth() + 1).padStart(2, '0');
+    const dd = String(target.getUTCDate()).padStart(2, '0');
+    const hh = String(target.getUTCHours()).padStart(2, '0');
+
+    const url = `${baseUrl}/${yyyy}/${mm}/${dd}/${hh}.json`;
+    try {
+      const resp = await fetch(url, { mode: 'cors' });
+      if (!resp.ok) continue;
+      const data = await resp.json();
+      const { current } = API_PROVIDERS.STAKTRAKR.parseBatchResponse(data);
+      const results = {};
+      selectedMetals.forEach(metal => {
+        if (current[metal] > 0) results[metal] = current[metal];
+      });
+      if (Object.keys(results).length > 0) return results;
+    } catch { continue; }
+  }
+  throw new Error('No hourly data available from StakTrakr API');
 };
 
 const renderApiStatusSummary = () => {
@@ -546,8 +581,8 @@ const getProviderOrder = () => {
 const getDefaultSyncMode = (provider) => {
   const order = getProviderOrder();
   const config = loadApiConfig();
-  const firstWithKey = order.find(p => config.keys?.[p]);
-  return provider === firstWithKey ? "always" : "backup";
+  const firstActive = order.find(p => config.keys?.[p] || !providerRequiresKey(p));
+  return provider === firstActive ? "always" : "backup";
 };
 
 /**
@@ -830,7 +865,8 @@ const saveApiCache = (data, provider) => {
 const autoSyncSpotPrices = async () => {
   const config = loadApiConfig();
   const hasAnyKey = Object.values(config.keys || {}).some(k => k);
-  if (!hasAnyKey) return;
+  const hasKeylessProvider = Object.keys(API_PROVIDERS).some(p => !providerRequiresKey(p));
+  if (!hasAnyKey && !hasKeylessProvider) return;
 
   await syncProviderChain({ showProgress: false, forceSync: false });
   updateSyncButtonStates();
@@ -1149,6 +1185,11 @@ const fetchSpotPricesFromApi = async (provider, apiKey) => {
     throw new Error("No metals selected for sync");
   }
 
+  // StakTrakr uses its own hourly JSON fetch instead of generic provider logic
+  if (provider === 'STAKTRAKR') {
+    return await fetchStaktrakrPrices(selectedMetals);
+  }
+
   // Latest-only: no history backfill on regular sync
   return await fetchLatestPrices(provider, apiKey, selectedMetals);
 };
@@ -1354,8 +1395,9 @@ const syncSpotPricesFromApi = async (
 ) => {
   const config = loadApiConfig();
   const hasAnyKey = Object.values(config.keys || {}).some(k => k);
+  const hasKeylessProvider = Object.keys(API_PROVIDERS).some(p => !providerRequiresKey(p));
 
-  if (!hasAnyKey) {
+  if (!hasAnyKey && !hasKeylessProvider) {
     if (showProgress) {
       alert(
         "No Metals API configuration found. Please configure an API provider first.",
@@ -1423,6 +1465,11 @@ const testApiConnection = async (provider, apiKey) => {
       throw new Error("Invalid provider");
     }
 
+    if (provider === 'STAKTRAKR') {
+      const result = await fetchStaktrakrPrices(['silver']);
+      return result.silver > 0;
+    }
+
     let url = "";
     const headers = {
       "Content-Type": "application/json",
@@ -1467,19 +1514,21 @@ const testApiConnection = async (provider, apiKey) => {
  * @param {string} provider - Provider key
  */
 const handleProviderSync = async (provider) => {
-  const keyInput = document.getElementById(`apiKey_${provider}`);
-  if (!keyInput) return;
-
-  const apiKey = keyInput.value.trim();
-  if (!apiKey) {
-    alert("Please enter your API key");
-    return;
+  let apiKey = '';
+  if (providerRequiresKey(provider)) {
+    const keyInput = document.getElementById(`apiKey_${provider}`);
+    if (!keyInput) return;
+    apiKey = keyInput.value.trim();
+    if (!apiKey) {
+      alert("Please enter your API key");
+      return;
+    }
   }
 
   const config = loadApiConfig();
   // Ensure keys object exists and clone to avoid mutating shared references
   config.keys = { ...(config.keys || {}) };
-  config.keys[provider] = apiKey;
+  if (apiKey) config.keys[provider] = apiKey;
   if (provider === "CUSTOM") {
     const base = document.getElementById("apiBase_CUSTOM")?.value.trim() || "";
     const endpoint =
@@ -1593,7 +1642,7 @@ const syncProviderChain = async ({ showProgress = false, forceSync = false } = {
   try {
     for (const prov of order) {
       const apiKey = config.keys?.[prov];
-      if (!apiKey) continue;
+      if (!apiKey && providerRequiresKey(prov)) continue;
 
       // Priority-based sync: priority > 1 are backups, skip if primary succeeded (STACK-90)
       if (priorities[prov] === 0) { results[prov] = "disabled"; continue; }

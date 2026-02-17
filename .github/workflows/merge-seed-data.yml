@@ -36,6 +36,6 @@ jobs:
 
       - name: Sync dev scripts back to data branch
         run: |
-          git checkout data
+          git switch data
           git merge origin/dev --no-edit -m "sync: dev scripts → data" || true
           git push || true
