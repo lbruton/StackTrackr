@@ -15,6 +15,9 @@ const clearAllFilters = () => {
 
   const searchInput = document.getElementById('searchInput');
   if (searchInput) searchInput.value = '';
+  if (typeof window.updateSaveSearchButton === 'function') {
+    window.updateSaveSearchButton('', false);
+  }
 
   const typeFilter = document.getElementById('typeFilter');
   if (typeFilter) typeFilter.value = '';
@@ -39,6 +42,9 @@ const removeFilter = (field, value) => {
     searchQuery = '';
     const searchInput = document.getElementById('searchInput');
     if (searchInput) searchInput.value = '';
+    if (typeof window.updateSaveSearchButton === 'function') {
+      window.updateSaveSearchButton('', false);
+    }
   } else if (activeFilters[field]) {
     if (activeFilters[field].values && Array.isArray(activeFilters[field].values)) {
       // Remove specific value from array
