@@ -405,7 +405,7 @@ const restoreBackupZip = async (file) => {
           restoredTags = itemTagsObj.tags;
         }
       } catch (e) {
-        debugLog('restoreBackupZip: item_tags.json parse error', e);
+        debugWarn('restoreBackupZip: item_tags.json parse error', e);
       }
     }
     itemTags = restoredTags || {};
