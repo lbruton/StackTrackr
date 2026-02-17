@@ -14,7 +14,13 @@ StakTrakr developers have future plans for ApexCharts and Tabler integration. Sl
 
 **Versioning**: `BRANCH.RELEASE.PATCH` format in `js/constants.js` (`APP_VERSION`). Use the `/release` skill to bump versions across all 7 files: `js/constants.js`, `sw.js` (CACHE_NAME), `CHANGELOG.md`, `docs/announcements.md`, `js/about.js`, `version.json`, plus seed data.
 
-**Quality Gates**: StakTrakr uses Codacy for Code Quality Gates and maintains an A+ Rating. All commits and PRs must be approved by Codacy.
+**Versioning Skills** This project has a `/release` skill that outlines the full release process. This skill must also be updated anytime changes are made to the version system.
+
+**Service Worker Cache**: `sw.js` CACHE_NAME is auto-stamped by a pre-commit hook (`devops/hooks/stamp-sw-cache.sh`). Format: `staktrakr-v{VERSION}-b{EPOCH}`. The hook fires when any cached asset is staged, reads `APP_VERSION`, appends a build timestamp, and re-stages `sw.js`. New `.js` files must be added to `sw.js` CORE_ASSETS. See the `sw-cache` skill. Install hook: `ln -sf ../../devops/hooks/stamp-sw-cache.sh .git/hooks/pre-commit`
+
+**Quality Gates** StakTrakr uses Codacy for Code Quality Gates and maintains an A+ Rating. All commits and PR's must be approved by Codacy. 
+
+**Code Search Strategy**: Tiered — claude-context first (fast, cheap), then Grep/Glob (literal matches), then Explore agents (comprehensive). See the `search-code` skill for the full decision flowchart and escalation rules.
 
 ## Critical Development Patterns
 

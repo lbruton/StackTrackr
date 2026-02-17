@@ -1021,6 +1021,12 @@ const commitItemToInventory = (f, isEditing, editIdx) => {
 
     saveInventory();
 
+    // STAK-126: Auto-apply Numista tags from the lookup result
+    if (window.selectedNumistaResult?.tags && typeof applyNumistaTags === 'function') {
+      const newUuid = inventory[inventory.length - 1].uuid;
+      applyNumistaTags(newUuid, window.selectedNumistaResult.tags);
+    }
+
     // Record initial price data point (STACK-43)
     if (typeof recordSingleItemPrice === 'function') {
       recordSingleItemPrice(inventory[inventory.length - 1], 'add');
