@@ -1571,6 +1571,22 @@ const setupNoteAndModalListeners = () => {
 
   optionalListener(elements.cancelNotesBtn, "click", dismissNotesModal, "Cancel notes button");
   optionalListener(elements.notesCloseBtn, "click", dismissNotesModal, "Notes modal close button");
+  optionalListener(document.getElementById('notesViewCloseBtn'), "click", () => {
+    if (typeof closeModalById === 'function') closeModalById('notesViewModal');
+  }, "Notes view modal close button");
+
+  optionalListener(document.getElementById('goldbackExchangeRateLink'), "click", (e) => {
+    e.preventDefault();
+    window.open(
+      'https://www.goldback.com/exchange-rates/',
+      'goldback_rates',
+      'width=1250,height=800,scrollbars=yes,resizable=yes,toolbar=no,location=no,menubar=no,status=no',
+    );
+  }, "Goldback exchange rates link");
+
+  optionalListener(document.getElementById('spotLookupCloseBtn'), "click", () => {
+    if (typeof closeSpotLookupModal === 'function') closeSpotLookupModal();
+  }, "Spot lookup modal close button");
 
   optionalListener(elements.debugCloseBtn, "click",
     () => { if (typeof hideDebugModal === "function") hideDebugModal(); },
@@ -1711,6 +1727,12 @@ const setupSpotPriceListeners = () => {
  * Sets up vault backup/restore listeners and password strength UI.
  */
 const setupVaultListeners = () => {
+  const vaultCloseBtn = document.getElementById('vaultCloseBtn');
+  const vaultActionBtn = document.getElementById('vaultActionBtn');
+  const vaultCancelBtn = document.getElementById('vaultCancelBtn');
+  const vaultPasswordToggle = document.getElementById('vaultPasswordToggle');
+  const vaultConfirmToggle = document.getElementById('vaultConfirmToggle');
+
   optionalListener(elements.vaultExportBtn, "click",
     () => { openVaultModal("export"); },
     "Vault export button");
@@ -1726,6 +1748,30 @@ const setupVaultListeners = () => {
       e.target.value = "";
     }
   }, "Vault import file input");
+
+  optionalListener(vaultCloseBtn, "click", () => {
+    if (typeof closeVaultModal === 'function') closeVaultModal();
+  }, "Vault modal close button");
+
+  optionalListener(vaultActionBtn, "click", () => {
+    if (typeof handleVaultAction === 'function') handleVaultAction();
+  }, "Vault modal action button");
+
+  optionalListener(vaultCancelBtn, "click", () => {
+    if (typeof closeVaultModal === 'function') closeVaultModal();
+  }, "Vault modal cancel button");
+
+  optionalListener(vaultPasswordToggle, "click", () => {
+    if (typeof toggleVaultPasswordVisibility === 'function') {
+      toggleVaultPasswordVisibility('vaultPassword', vaultPasswordToggle);
+    }
+  }, "Vault password toggle");
+
+  optionalListener(vaultConfirmToggle, "click", () => {
+    if (typeof toggleVaultPasswordVisibility === 'function') {
+      toggleVaultPasswordVisibility('vaultConfirmPassword', vaultConfirmToggle);
+    }
+  }, "Vault confirm password toggle");
 
   // Vault modal live password events
   const pw = document.getElementById("vaultPassword");
