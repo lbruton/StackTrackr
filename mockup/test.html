@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>StakTrakr Settings Modal Mockups</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body data-theme="light">
+  <main class="demo-shell">
+    <header class="demo-header">
+      <h1>Settings Modal UX Mockups</h1>
+      <p>Two drop-in design concepts that preserve existing setting categories and control patterns.</p>
+      <div class="demo-controls">
+        <button class="btn" data-open-modal="tabler">Open Design A · Tabler Inspired</button>
+        <button class="btn" data-open-modal="adaptive">Open Design B · Adaptive Panels</button>
+        <label>
+          Theme
+          <select id="themeSelect">
+            <option value="light">Light</option>
+            <option value="dark">Dark</option>
+            <option value="sepia">Sepia</option>
+          </select>
+        </label>
+      </div>
+    </header>
+
+    <section class="coverage">
+      <h2>Coverage</h2>
+      <p>Both modal designs include the same 13 settings families currently present in the app: Site, Layout, Images, System,
+        Table, Grouping, Search, API, Files, Cloud, Currency, Goldback, and Changelog.</p>
+    </section>
+  </main>
+
+  <div class="mockup-modal" id="modalTabler" aria-hidden="true">
+    <div class="modal-frame modal-a">
+      <header class="modal-head">
+        <h2>Settings · Design A</h2>
+        <button class="icon-btn" data-close-modal>&times;</button>
+      </header>
+      <div class="modal-body">
+        <aside class="settings-nav" id="navA"></aside>
+        <section class="settings-content" id="contentA"></section>
+      </div>
+      <footer class="modal-foot">
+        <button class="btn ghost" data-close-modal>Cancel</button>
+        <button class="btn">Save changes</button>
+      </footer>
+    </div>
+  </div>
+
+  <div class="mockup-modal" id="modalAdaptive" aria-hidden="true">
+    <div class="modal-frame modal-b">
+      <header class="modal-head">
+        <h2>Settings · Design B</h2>
+        <button class="icon-btn" data-close-modal>&times;</button>
+      </header>
+      <div class="toolbar">
+        <input id="searchB" type="search" placeholder="Find setting or section...">
+      </div>
+      <div class="modal-body adaptive-layout">
+        <aside class="settings-nav compact" id="navB"></aside>
+        <section class="settings-content accordion" id="contentB"></section>
+      </div>
+      <footer class="modal-foot sticky">
+        <button class="btn ghost" data-close-modal>Close</button>
+        <button class="btn">Apply</button>
+      </footer>
+    </div>
+  </div>
+
+  <script src="mockups.js"></script>
+</body>
+</html>
