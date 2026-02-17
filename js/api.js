@@ -75,6 +75,12 @@ const fetchStaktrakrHourlyRange = async (hoursBack) => {
     hours.push(new Date(now.getTime() - i * 3600000));
   }
 
+  // Purge once, then build dedup set for batch append (avoids N×save)
+  purgeSpotHistory();
+  const existingKeys = new Set(
+    spotHistory.map(e => `${e.timestamp}|${e.metal}`)
+  );
+
   // Fetch hours in batches of 6
   let newCount = 0;
   let fetchCount = 0;
@@ -106,14 +112,24 @@ const fetchStaktrakrHourlyRange = async (hoursBack) => {
         if (spot <= 0) return;
         const metalConfig = Object.values(METALS).find(m => m.key === metalKey);
         if (!metalConfig) return;
-        // Use recordSpot for consistent timestamp normalization and persistence
-        recordSpot(spot, "api-hourly", metalConfig.name, providerName, result.timestamp);
-        newCount++;
+        const entryTimestamp = new Date(result.timestamp).toISOString().replace("T", " ").slice(0, 19);
+        const isDuplicate = existingKeys.has(`${entryTimestamp}|${metalConfig.name}`);
+        if (!isDuplicate) {
+          spotHistory.push({
+            spot, metal: metalConfig.name, source: "api-hourly",
+            provider: providerName, timestamp: entryTimestamp,
+          });
+          existingKeys.add(`${entryTimestamp}|${metalConfig.name}`);
+          newCount++;
+        }
       });
     });
   }
 
   if (newCount > 0) {
+    updateLastTimestamps("api-hourly", providerName,
+      spotHistory[spotHistory.length - 1].timestamp);
+    saveSpotHistory();
     console.log(`[StakTrakr] Added ${newCount} hourly entries (${fetchCount} files fetched)`);
   }
 
@@ -1527,6 +1543,12 @@ const fetchMetalPriceApiHourly = async (apiKey, selectedMetals, totalDays) => {
   start.setDate(start.getDate() - totalDays);
   const fmt = (d) => d.toISOString().slice(0, 10);
 
+  // Purge once, then build dedup set for batch append (avoids N×save)
+  purgeSpotHistory();
+  const existingKeys = new Set(
+    spotHistory.map(e => `${e.timestamp}|${e.metal}`)
+  );
+
   let totalEntries = 0;
   let callsMade = 0;
 
@@ -1545,16 +1567,29 @@ const fetchMetalPriceApiHourly = async (apiKey, selectedMetals, totalDays) => {
       const metalName = metalConfig?.name || metal;
       (data.rates || []).forEach(entry => {
         const ts = new Date(entry.timestamp * 1000);
-        const timestamp = ts.toISOString().replace('T', ' ').slice(0, 19);
+        const entryTimestamp = ts.toISOString().replace('T', ' ').slice(0, 19);
         const rate = entry.rates?.[currency];
         if (!rate) return;
         const price = 1 / rate;
-        recordSpot(price, 'api-hourly', metalName, providerName, timestamp);
-        totalEntries++;
+        const key = `${entryTimestamp}|${metalName}`;
+        if (!existingKeys.has(key)) {
+          spotHistory.push({
+            spot: price, metal: metalName, source: 'api-hourly',
+            provider: providerName, timestamp: entryTimestamp,
+          });
+          existingKeys.add(key);
+          totalEntries++;
+        }
       });
     } catch (err) {
       console.warn(`Hourly fetch failed for ${metal}:`, err.message);
     }
+  }
+
+  if (totalEntries > 0) {
+    updateLastTimestamps('api-hourly', providerName,
+      spotHistory[spotHistory.length - 1].timestamp);
+    saveSpotHistory();
   }
 
   config.usage.METAL_PRICE_API = usage;
