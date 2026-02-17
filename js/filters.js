@@ -353,6 +353,7 @@ const renderActiveFilters = () => {
         { id: 'storageLocation', enabled: true }, { id: 'year', enabled: true },
         { id: 'grade', enabled: true }, { id: 'numistaId', enabled: true },
         { id: 'purity', enabled: true },
+        { id: 'tags', enabled: true },
       ];
 
   // Read sort preference from toggle active button or localStorage (default: alpha)

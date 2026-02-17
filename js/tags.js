@@ -204,12 +204,12 @@ const buildTagSection = (uuid, numistaTags, onChanged) => {
 
   // Always show section so user can add custom tags
   const section = document.createElement('div');
-  section.className = 'view-tags-section';
+  section.className = 'view-detail-section';
   section.id = 'viewTagsSection';
 
   const heading = document.createElement('div');
-  heading.className = 'view-section-header';
-  heading.innerHTML = '<span class="view-section-icon">&#9873;</span> Tags';
+  heading.className = 'view-section-title';
+  heading.textContent = 'Tags';
   section.appendChild(heading);
 
   const container = document.createElement('div');

@@ -9685,18 +9685,6 @@ body.force-card-view .table-footer-controls select {
 }
 
 /* --- View modal tag section ----------------------------------------------- */
-.view-tags-section {
-  margin-bottom: 1rem;
-}
-.view-tags-section .view-section-header {
-  font-weight: 600;
-  font-size: 0.85rem;
-  margin-bottom: 0.5rem;
-  color: var(--text-primary, #1f2937);
-}
-.view-tags-section .view-section-icon {
-  margin-right: 0.25rem;
-}
 .view-tags-container {
   display: flex;
   flex-wrap: wrap;
