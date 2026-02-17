@@ -1,0 +1,1190 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>StakTrakr — Settings Modal Design Preview</title>
+  <style>
+    /* ─── Master theme tokens ─────────────────────────────────────────── */
+    :root {
+      --bg:          #f4f6fb;
+      --surface:     #ffffff;
+      --surface-2:   #eef2f7;
+      --text:        #1f2937;
+      --muted:       #64748b;
+      --border:      #d7dde8;
+      --accent:      #206bc4;
+      --accent-soft: #dbeafe;
+      --shadow:      0 20px 55px rgba(15,23,42,.22);
+      --radius:      12px;
+    }
+    [data-theme='dark'] {
+      --bg:          #0f172a;
+      --surface:     #111827;
+      --surface-2:   #1e293b;
+      --text:        #e5e7eb;
+      --muted:       #94a3b8;
+      --border:      #334155;
+      --accent:      #4f8cff;
+      --accent-soft: #1e3a8a;
+      --shadow:      0 30px 65px rgba(0,0,0,.55);
+    }
+    [data-theme='sepia'] {
+      --bg:          #f5eee1;
+      --surface:     #fff9ef;
+      --surface-2:   #f0e6d2;
+      --text:        #4d3f2d;
+      --muted:       #786857;
+      --border:      #d9c5a7;
+      --accent:      #9a6b2f;
+      --accent-soft: #f4e8d4;
+      --shadow:      0 20px 50px rgba(93,64,34,.22);
+    }
+
+    /* ─── Global reset + base ─────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+    a { color: var(--accent); }
+
+    /* ─── Shared button / input primitives ───────────────────────────── */
+    .btn {
+      display: inline-flex; align-items: center; gap: .4rem;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+      border-radius: 8px;
+      padding: .55rem .85rem;
+      font-size: .9rem;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background .15s, border-color .15s;
+    }
+    .btn:hover { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+    .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .btn.primary:hover { filter: brightness(1.1); }
+    .btn.ghost { background: transparent; border-color: var(--border); }
+    .icon-btn { border: none; background: transparent; color: var(--muted); font-size: 1.4rem; cursor: pointer; padding: .2rem .4rem; line-height: 1; }
+    input[type='search'], select {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--surface);
+      color: var(--text);
+      padding: .5rem .7rem;
+      font-size: .9rem;
+    }
+    input[type='search']:focus, select:focus { outline: 2px solid var(--accent); }
+
+    /* ─── Landing page ────────────────────────────────────────────────── */
+    .page-header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 1.25rem 1.5rem;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+    .page-header h1 { margin: 0; font-size: 1.25rem; }
+    .page-header p  { margin: .15rem 0 0; font-size: .85rem; color: var(--muted); }
+
+    .theme-switcher { display: flex; gap: .5rem; flex-wrap: wrap; align-items: center; }
+    .theme-switcher span { font-size: .8rem; color: var(--muted); margin-right: .2rem; }
+    .theme-btn {
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+      border-radius: 999px;
+      padding: .3rem .75rem;
+      font-size: .8rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .15s;
+    }
+    .theme-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+    .design-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1rem;
+      padding: 1.5rem;
+      max-width: 1280px;
+      margin: 0 auto;
+    }
+    .design-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.1rem 1.25rem 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: .65rem;
+    }
+    .design-card .badge {
+      font-size: .7rem;
+      font-weight: 700;
+      letter-spacing: .05em;
+      text-transform: uppercase;
+      color: var(--accent);
+      background: var(--accent-soft);
+      padding: .2rem .55rem;
+      border-radius: 999px;
+      align-self: flex-start;
+    }
+    .design-card h2 { margin: 0; font-size: 1rem; }
+    .design-card p  { margin: 0; font-size: .83rem; color: var(--muted); line-height: 1.5; flex: 1; }
+    .design-card .open-btn { margin-top: .25rem; }
+
+    /* ─── Shared modal shell ──────────────────────────────────────────── */
+    .modal-shell {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(15,23,42,.6);
+      z-index: 100;
+      padding: 16px;
+      overflow: auto;
+    }
+    .modal-shell.open { display: flex; align-items: center; justify-content: center; }
+    .modal-dialog {
+      width: min(1160px, 100%);
+      max-height: min(92vh, 960px);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    .m-head {
+      display: flex; align-items: center; justify-content: space-between; gap: .75rem;
+      padding: .9rem 1.1rem;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface-2);
+      flex-shrink: 0;
+    }
+    .m-head h2 { margin: 0; font-size: 1.05rem; }
+    .m-head small { color: var(--muted); font-size: .8rem; display: block; margin-top: .1rem; }
+    .m-foot {
+      display: flex; align-items: center; justify-content: space-between; gap: .5rem;
+      padding: .75rem 1.1rem;
+      border-top: 1px solid var(--border);
+      background: var(--surface-2);
+      flex-shrink: 0;
+    }
+    .m-foot-hint { font-size: .78rem; color: var(--muted); }
+    .m-foot-actions { display: flex; gap: .5rem; }
+
+    /* ─── Shared nav sidebar ──────────────────────────────────────────── */
+    .side-nav {
+      border-right: 1px solid var(--border);
+      background: var(--surface-2);
+      padding: .6rem;
+      display: flex;
+      flex-direction: column;
+      gap: .25rem;
+      overflow-y: auto;
+      flex-shrink: 0;
+    }
+    .nav-btn {
+      text-align: left;
+      border: 1px solid transparent;
+      border-radius: 8px;
+      background: transparent;
+      color: var(--text);
+      padding: .5rem .65rem;
+      font-size: .875rem;
+      cursor: pointer;
+      width: 100%;
+    }
+    .nav-btn:hover { background: var(--surface); border-color: var(--border); }
+    .nav-btn.active { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); font-weight: 600; }
+    .settings-content { overflow-y: auto; flex: 1; padding: 1rem; }
+
+    /* Shared setting card */
+    .s-card {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: .85rem 1rem;
+      background: var(--surface);
+    }
+    .s-card h3 { margin: 0 0 .65rem; font-size: .95rem; }
+    .s-row {
+      display: flex; justify-content: space-between; align-items: flex-start; gap: .5rem;
+      border-top: 1px dashed color-mix(in srgb, var(--border) 70%, transparent);
+      padding-top: .5rem; margin-top: .5rem;
+    }
+    .s-row:first-of-type { border-top: 0; padding-top: 0; margin-top: 0; }
+    .s-label { font-weight: 600; font-size: .875rem; }
+    .s-help  { color: var(--muted); font-size: .8rem; margin-top: .1rem; }
+    .pill-tag {
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: .18rem .55rem;
+      font-size: .75rem;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    /* ─────────────────────────────────────────────────────────────────── *
+     *  DESIGN 1A — PR217 · Tabler-inspired sidebar + live card panel     *
+     * ─────────────────────────────────────────────────────────────────── */
+    #d1a .modal-body-1a {
+      display: grid;
+      grid-template-columns: 220px 1fr;
+      min-height: 0;
+      flex: 1;
+      overflow: hidden;
+    }
+    #d1a .content-area-1a {
+      overflow-y: auto;
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: .75rem;
+    }
+    #d1a .section-card {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: .9rem 1rem;
+      background: var(--surface);
+    }
+    #d1a .section-card h3 { margin: 0 0 .6rem; font-size: .95rem; }
+    @media (max-width: 860px) {
+      #d1a .modal-body-1a { grid-template-columns: 1fr; }
+      #d1a .side-nav { flex-direction: row; flex-wrap: wrap; border-right: 0; border-bottom: 1px solid var(--border); }
+      #d1a .nav-btn { width: auto; }
+    }
+
+    /* ─────────────────────────────────────────────────────────────────── *
+     *  DESIGN 1B — PR217 · Journey accordion with section search          *
+     * ─────────────────────────────────────────────────────────────────── */
+    #d1b .modal-body-1b {
+      flex: 1; overflow-y: auto; padding: .9rem;
+    }
+    #d1b .journey-search { margin-bottom: .8rem; }
+    #d1b .journey-search input { width: 100%; border-radius: 10px; }
+    #d1b .journey-accordion { display: grid; gap: .5rem; }
+    #d1b details {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      background: var(--surface);
+    }
+    #d1b details > summary {
+      list-style: none; cursor: pointer;
+      padding: .7rem .9rem;
+      background: var(--surface-2);
+      font-weight: 600;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    #d1b details > summary::after { content: '▸'; color: var(--muted); font-size: .75rem; }
+    #d1b details[open] > summary { border-bottom: 1px solid var(--border); }
+    #d1b details[open] > summary::after { content: '▾'; }
+    #d1b .panel-content { padding: .75rem .9rem; }
+
+    /* ─────────────────────────────────────────────────────────────────── *
+     *  DESIGN 2A — PR218 · Tabler Inspired (sidebar + scrollable cards)  *
+     * ─────────────────────────────────────────────────────────────────── */
+    #d2a .modal-body-2a {
+      display: grid;
+      grid-template-columns: 220px 1fr;
+      min-height: 0; flex: 1; overflow: hidden;
+    }
+    #d2a .cards-area { overflow-y: auto; padding: .9rem; display: grid; gap: .8rem; }
+    @media (max-width: 860px) {
+      #d2a .modal-body-2a { grid-template-columns: 1fr; }
+      #d2a .side-nav { flex-direction: row; flex-wrap: wrap; border-right: 0; border-bottom: 1px solid var(--border); }
+      #d2a .nav-btn { width: auto; }
+    }
+
+    /* ─────────────────────────────────────────────────────────────────── *
+     *  DESIGN 2B — PR218 · Adaptive panels (compact nav + search bar)    *
+     * ─────────────────────────────────────────────────────────────────── */
+    #d2b .toolbar-2b {
+      padding: .65rem 1rem; border-bottom: 1px solid var(--border); flex-shrink: 0;
+    }
+    #d2b .toolbar-2b input { width: min(340px, 100%); }
+    #d2b .modal-body-2b {
+      display: grid;
+      grid-template-columns: 180px 1fr;
+      min-height: 0; flex: 1; overflow: hidden;
+    }
+    #d2b .side-nav.compact .nav-btn { font-size: .82rem; }
+    #d2b .accordion-area { overflow-y: auto; padding: .9rem; display: grid; gap: .8rem; }
+    #d2b .s-card { border-left: 4px solid color-mix(in srgb, var(--accent) 35%, transparent); }
+    @media (max-width: 860px) {
+      #d2b .modal-body-2b { grid-template-columns: 1fr; }
+      #d2b .side-nav { flex-direction: row; flex-wrap: wrap; border-right: 0; border-bottom: 1px solid var(--border); }
+      #d2b .nav-btn { width: auto; }
+    }
+
+    /* ─────────────────────────────────────────────────────────────────── *
+     *  DESIGN 3A — PR219 · Tabler + metric card grid overview             *
+     * ─────────────────────────────────────────────────────────────────── */
+    #d3a .modal-body-3a {
+      display: grid;
+      grid-template-columns: 260px 1fr;
+      min-height: 0; flex: 1; overflow: hidden;
+    }
+    #d3a .metric-grid { overflow-y: auto; padding: 1rem; display: grid; grid-template-columns: repeat(2, 1fr); gap: .85rem; align-content: start; }
+    #d3a .metric-card { border: 1px solid var(--border); border-radius: 10px; padding: .85rem 1rem; background: var(--surface); }
+    #d3a .metric-label { font-size: .75rem; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+    #d3a .metric-value { font-weight: 700; font-size: 1rem; margin-top: .3rem; }
+    @media (max-width: 860px) {
+      #d3a .modal-body-3a { grid-template-columns: 1fr; }
+      #d3a .metric-grid { grid-template-columns: 1fr; }
+      #d3a .side-nav { flex-direction: row; flex-wrap: wrap; border-right: 0; border-bottom: 1px solid var(--border); }
+      #d3a .nav-btn { width: auto; }
+    }
+
+    /* ─────────────────────────────────────────────────────────────────── *
+     *  DESIGN 3B — PR219 · Adaptive workspace (left pane + accordions)   *
+     * ─────────────────────────────────────────────────────────────────── */
+    #d3b .modal-body-3b {
+      display: grid;
+      grid-template-columns: 300px 1fr;
+      min-height: 0; flex: 1; overflow: hidden;
+    }
+    #d3b .left-pane {
+      border-right: 1px solid var(--border);
+      background: var(--surface-2);
+      padding: 1rem;
+      overflow-y: auto;
+      display: flex; flex-direction: column; gap: .85rem;
+    }
+    #d3b .left-pane input { width: 100%; }
+    #d3b .pane-card {
+      border: 1px solid var(--border); border-radius: 10px; padding: .8rem;
+      background: var(--surface);
+    }
+    #d3b .pane-card .pane-label { font-size: .72rem; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; margin-bottom: .5rem; font-weight: 700; }
+    #d3b .pane-card .workflow-btn {
+      display: block; width: 100%; text-align: left;
+      border: 1px solid var(--border); border-radius: 7px;
+      background: var(--surface); color: var(--text);
+      padding: .4rem .6rem; font-size: .83rem; cursor: pointer;
+      margin-bottom: .4rem;
+    }
+    #d3b .pane-card .workflow-btn:hover { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+    #d3b .right-pane { overflow-y: auto; padding: 1rem; }
+    #d3b .wf-accordion { display: grid; gap: .65rem; }
+    #d3b details {
+      border: 1px solid var(--border); border-radius: 10px; background: var(--surface);
+    }
+    #d3b details > summary {
+      list-style: none; cursor: pointer;
+      padding: .7rem .9rem; font-weight: 600;
+      background: var(--surface-2);
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    #d3b details > summary::after { content: '▸'; color: var(--muted); font-size: .75rem; }
+    #d3b details[open] > summary { border-bottom: 1px solid var(--border); }
+    #d3b details[open] > summary::after { content: '▾'; }
+    #d3b .wf-detail { padding: .75rem .9rem; color: var(--muted); font-size: .85rem; line-height: 1.5; }
+    @media (max-width: 900px) {
+      #d3b .modal-body-3b { grid-template-columns: 1fr; }
+      #d3b .left-pane { border-right: 0; border-bottom: 1px solid var(--border); max-height: 240px; }
+    }
+
+    /* ─────────────────────────────────────────────────────────────────── *
+     *  DESIGN 4A — PR220 · Tabler + filter row + per-section card grid   *
+     * ─────────────────────────────────────────────────────────────────── */
+    #d4a .modal-body-4a {
+      display: grid;
+      grid-template-columns: 240px 1fr;
+      min-height: 0; flex: 1; overflow: hidden;
+    }
+    #d4a .main-panel { padding: 1rem; display: grid; grid-template-rows: auto 1fr; gap: .75rem; overflow: hidden; }
+    #d4a .filter-row { display: flex; gap: .6rem; }
+    #d4a .filter-row input { flex: 1; }
+    #d4a .card-grid-4a { overflow-y: auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: .75rem; align-content: start; }
+    #d4a .s-card h3 { margin: 0 0 .4rem; font-size: .92rem; }
+    #d4a .s-card p  { margin: 0; color: var(--muted); font-size: .81rem; }
+    @media (max-width: 860px) {
+      #d4a .modal-body-4a { grid-template-columns: 1fr; }
+      #d4a .side-nav { flex-direction: row; flex-wrap: wrap; border-right: 0; border-bottom: 1px solid var(--border); }
+      #d4a .nav-btn { width: auto; }
+      #d4a .card-grid-4a { grid-template-columns: 1fr; }
+    }
+
+    /* ─────────────────────────────────────────────────────────────────── *
+     *  DESIGN 4B — PR220 · Segmented tabs header + stacked panels        *
+     * ─────────────────────────────────────────────────────────────────── */
+    #d4b .seg-header {
+      padding: .75rem 1.1rem;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface-2);
+      display: flex; align-items: center; gap: 1rem; flex-shrink: 0;
+      flex-wrap: wrap;
+    }
+    #d4b .seg-header h2 { margin: 0; font-size: 1.05rem; flex-shrink: 0; }
+    #d4b .seg-tabs { display: flex; gap: .35rem; overflow-x: auto; flex: 1; padding-bottom: .15rem; }
+    #d4b .seg-tab {
+      border: 1px solid var(--border); background: transparent; color: var(--text);
+      border-radius: 999px; padding: .3rem .75rem; font-size: .82rem; white-space: nowrap; cursor: pointer;
+    }
+    #d4b .seg-tab.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+    #d4b .modal-body-4b {
+      display: grid;
+      grid-template-columns: 220px 1fr;
+      min-height: 0; flex: 1; overflow: hidden;
+    }
+    #d4b .stepper-pane {
+      border-right: 1px solid var(--border);
+      background: var(--surface-2);
+      padding: 1rem;
+      display: flex; flex-direction: column; gap: .5rem;
+    }
+    #d4b .stepper-pane .step-label { font-size: .75rem; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+    #d4b .stepper-pane .step-title { font-size: 1.1rem; font-weight: 700; }
+    #d4b .stepper-pane small { color: var(--muted); font-size: .8rem; }
+    #d4b .stacked-panels { overflow-y: auto; padding: 1rem; display: grid; gap: .75rem; }
+    #d4b .panel-row { border: 1px solid var(--border); border-radius: 10px; padding: .85rem 1rem; background: var(--surface); }
+    #d4b .panel-row h3 { margin: 0 0 .3rem; font-size: .93rem; }
+    #d4b .panel-row p  { margin: 0; color: var(--muted); font-size: .82rem; line-height: 1.5; }
+    @media (max-width: 860px) {
+      #d4b .modal-body-4b { grid-template-columns: 1fr; }
+      #d4b .stepper-pane { border-right: 0; border-bottom: 1px solid var(--border); }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════════ LANDING HEADER ══════════════════════════════════ -->
+<header class="page-header">
+  <div>
+    <h1>StakTrakr — Settings Modal Design Preview</h1>
+    <p>8 designs from 4 Codex PRs &nbsp;·&nbsp; Click any card to open the interactive mockup</p>
+  </div>
+  <div class="theme-switcher">
+    <span>Theme:</span>
+    <button class="theme-btn active" data-t="light">Light</button>
+    <button class="theme-btn" data-t="dark">Dark</button>
+    <button class="theme-btn" data-t="sepia">Sepia</button>
+  </div>
+</header>
+
+<!-- ══════════════════ DESIGN CARDS GRID ═══════════════════════════════ -->
+<div class="design-grid">
+
+  <div class="design-card">
+    <span class="badge">PR 217 · Design A</span>
+    <h2>Tabler Sidebar + Card Panel</h2>
+    <p>Left rail of section buttons, right area shows the active section as a card with detailed rows. Click-to-switch navigation.</p>
+    <button class="btn primary open-btn" data-modal="d1a">Open Design 1A</button>
+  </div>
+
+  <div class="design-card">
+    <span class="badge">PR 217 · Design B</span>
+    <h2>Journey Accordion</h2>
+    <p>All sections stacked as collapsible <code>details</code> elements with a live search bar to filter sections by keyword.</p>
+    <button class="btn primary open-btn" data-modal="d1b">Open Design 1B</button>
+  </div>
+
+  <div class="design-card">
+    <span class="badge">PR 218 · Design A</span>
+    <h2>Tabler Inspired — Scrollable Cards</h2>
+    <p>Sidebar nav scrolls the content area to the active section card; all 13 section cards visible, each with setting rows.</p>
+    <button class="btn primary open-btn" data-modal="d2a">Open Design 2A</button>
+  </div>
+
+  <div class="design-card">
+    <span class="badge">PR 218 · Design B</span>
+    <h2>Adaptive Panels + Search Bar</h2>
+    <p>Compact 180px sidebar, top search input filters cards, accent left-border on each card. Mobile-first approach.</p>
+    <button class="btn primary open-btn" data-modal="d2b">Open Design 2B</button>
+  </div>
+
+  <div class="design-card">
+    <span class="badge">PR 219 · Design A</span>
+    <h2>Tabler + Metric Card Grid</h2>
+    <p>Wider 260px sidebar, right area shows a 2-column scannable metric grid summarizing current values per section.</p>
+    <button class="btn primary open-btn" data-modal="d3a">Open Design 3A</button>
+  </div>
+
+  <div class="design-card">
+    <span class="badge">PR 219 · Design B</span>
+    <h2>Adaptive Workspace + Workflows</h2>
+    <p>320px left pane with search, pinned workflow shortcuts, and coverage summary. Right pane groups settings into 5 workflow-based accordions.</p>
+    <button class="btn primary open-btn" data-modal="d3b">Open Design 3B</button>
+  </div>
+
+  <div class="design-card">
+    <span class="badge">PR 220 · Concept A</span>
+    <h2>Tabler + Filter Row + Card Grid</h2>
+    <p>Sidebar nav, section title, filter input + Reset button, then an auto-fit card grid showing sub-categories per section.</p>
+    <button class="btn primary open-btn" data-modal="d4a">Open Design 4A</button>
+  </div>
+
+  <div class="design-card">
+    <span class="badge">PR 220 · Concept B</span>
+    <h2>Segmented Tabs + Guided Panels</h2>
+    <p>Segmented pill tabs live in the modal header, left pane shows a guided stepper/label, right pane shows stacked sub-panels for the active tab.</p>
+    <button class="btn primary open-btn" data-modal="d4b">Open Design 4B</button>
+  </div>
+
+</div><!-- /design-grid -->
+
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     MODAL 1A — PR217 Design A: Tabler sidebar + active card panel
+════════════════════════════════════════════════════════════════════════ -->
+<div class="modal-shell" id="d1a">
+  <div class="modal-dialog">
+    <div class="m-head">
+      <div>
+        <h2>Settings — Design 1A (Tabler Sidebar)</h2>
+        <small>PR 217 · Click a section in the left rail to switch panels</small>
+      </div>
+      <button class="icon-btn" data-close>✕</button>
+    </div>
+
+    <div class="modal-body-1a">
+      <nav class="side-nav" id="nav1a"></nav>
+      <div class="content-area-1a" id="content1a"></div>
+    </div>
+
+    <div class="m-foot">
+      <span class="m-foot-hint">Design A — fixed sidebar, single panel view</span>
+      <div class="m-foot-actions">
+        <button class="btn ghost" data-close>Cancel</button>
+        <button class="btn primary">Save Settings</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     MODAL 1B — PR217 Design B: Journey accordion + section search
+════════════════════════════════════════════════════════════════════════ -->
+<div class="modal-shell" id="d1b">
+  <div class="modal-dialog">
+    <div class="m-head">
+      <div>
+        <h2>Settings — Design 1B (Journey Accordion)</h2>
+        <small>PR 217 · Search to filter sections; click to expand</small>
+      </div>
+      <button class="icon-btn" data-close>✕</button>
+    </div>
+
+    <div class="modal-body-1b">
+      <div class="journey-search">
+        <input type="search" id="search1b" placeholder="Search settings sections…">
+      </div>
+      <div class="journey-accordion" id="accordion1b"></div>
+    </div>
+
+    <div class="m-foot">
+      <span class="m-foot-hint">Design B — all sections visible, search-filtered</span>
+      <div class="m-foot-actions">
+        <button class="btn ghost" data-close>Cancel</button>
+        <button class="btn primary">Save Settings</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     MODAL 2A — PR218 Design A: Tabler sidebar + scrollable section cards
+════════════════════════════════════════════════════════════════════════ -->
+<div class="modal-shell" id="d2a">
+  <div class="modal-dialog">
+    <div class="m-head">
+      <div>
+        <h2>Settings — Design 2A (Tabler Inspired)</h2>
+        <small>PR 218 · Sidebar nav scrolls content; all cards always rendered</small>
+      </div>
+      <button class="icon-btn" data-close>✕</button>
+    </div>
+
+    <div class="modal-body-2a">
+      <nav class="side-nav" id="nav2a"></nav>
+      <div class="cards-area" id="cards2a"></div>
+    </div>
+
+    <div class="m-foot">
+      <span class="m-foot-hint">Design 2A — smooth-scroll to section on nav click</span>
+      <div class="m-foot-actions">
+        <button class="btn ghost" data-close>Cancel</button>
+        <button class="btn primary">Save Changes</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     MODAL 2B — PR218 Design B: Adaptive panels + compact nav + search
+════════════════════════════════════════════════════════════════════════ -->
+<div class="modal-shell" id="d2b">
+  <div class="modal-dialog">
+    <div class="m-head">
+      <div>
+        <h2>Settings — Design 2B (Adaptive Panels)</h2>
+        <small>PR 218 · Compact sidebar, top search filters visible cards</small>
+      </div>
+      <button class="icon-btn" data-close>✕</button>
+    </div>
+
+    <div class="toolbar-2b">
+      <input type="search" id="search2b" placeholder="Find setting or section…">
+    </div>
+
+    <div class="modal-body-2b">
+      <nav class="side-nav compact" id="nav2b"></nav>
+      <div class="accordion-area" id="cards2b"></div>
+    </div>
+
+    <div class="m-foot">
+      <span class="m-foot-hint">Design 2B — accent-border cards, search-filtered</span>
+      <div class="m-foot-actions">
+        <button class="btn ghost" data-close>Close</button>
+        <button class="btn primary">Apply</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     MODAL 3A — PR219 Design A: Tabler + 2-col metric card grid
+════════════════════════════════════════════════════════════════════════ -->
+<div class="modal-shell" id="d3a">
+  <div class="modal-dialog">
+    <div class="m-head">
+      <div>
+        <h2>Settings — Design 3A (Tabler + Metric Grid)</h2>
+        <small>PR 219 · Wide sidebar, right shows scannable metric cards for the active section</small>
+      </div>
+      <button class="icon-btn" data-close>✕</button>
+    </div>
+
+    <div class="modal-body-3a">
+      <nav class="side-nav" id="nav3a"></nav>
+      <div class="metric-grid" id="grid3a"></div>
+    </div>
+
+    <div class="m-foot">
+      <span class="m-foot-hint">Sticky action bar keeps Save / Reset always reachable</span>
+      <div class="m-foot-actions">
+        <button class="btn ghost">Reset</button>
+        <button class="btn ghost" data-close>Cancel</button>
+        <button class="btn primary">Save Settings</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     MODAL 3B — PR219 Design B: Adaptive workspace + workflow accordions
+════════════════════════════════════════════════════════════════════════ -->
+<div class="modal-shell" id="d3b">
+  <div class="modal-dialog">
+    <div class="m-head">
+      <div>
+        <h2>Settings — Design 3B (Adaptive Workspace)</h2>
+        <small>PR 219 · Search-first left pane + workflow-grouped right accordions</small>
+      </div>
+      <button class="icon-btn" data-close>✕</button>
+    </div>
+
+    <div class="modal-body-3b">
+      <aside class="left-pane">
+        <input type="search" id="search3b" placeholder="Find settings: theme, API, cache…">
+
+        <div class="pane-card">
+          <div class="pane-label">Pinned Workflows</div>
+          <button class="workflow-btn">New device setup</button>
+          <button class="workflow-btn">Performance tuning</button>
+          <button class="workflow-btn">Import / export</button>
+          <button class="workflow-btn">API diagnostics</button>
+        </div>
+
+        <div class="pane-card">
+          <div class="pane-label">Coverage</div>
+          <p style="margin:.35rem 0 0;font-size:.82rem;color:var(--muted);line-height:1.5;">
+            All 13 existing sections mapped into 5 workflow groups. No controls removed; organisation only.
+          </p>
+        </div>
+      </aside>
+
+      <div class="right-pane">
+        <div class="wf-accordion" id="accordion3b">
+          <details open>
+            <summary>Appearance &amp; navigation</summary>
+            <div class="wf-detail">Site · Layout · Table settings grouped for immediate visual-behaviour tuning. Controls theme mode, header actions, column visibility, and pagination.</div>
+          </details>
+          <details>
+            <summary>Data intelligence &amp; grouping</summary>
+            <div class="wf-detail">Grouping · Search · Goldback in one place for pricing and findability workflows. Fuzzy-match scoring, chip thresholds, denomination pricing.</div>
+          </details>
+          <details>
+            <summary>Connectivity &amp; providers</summary>
+            <div class="wf-detail">API, Numista/PCGS, sync status, key diagnostics, and quota feedback. Primary/fallback chain configuration and manual refresh controls.</div>
+          </details>
+          <details>
+            <summary>Backups, storage &amp; security</summary>
+            <div class="wf-detail">Files · Cloud · System · Images — exports, encrypted vault restore, cache stats, IndexedDB cleanup, storage diagnostics, and debug toggles.</div>
+          </details>
+          <details>
+            <summary>Regional preferences &amp; auditing</summary>
+            <div class="wf-detail">Currency + Activity Log — exchange rate fallbacks, display formatting, persistent history tables, change log retention, and export.</div>
+          </details>
+        </div>
+      </div>
+    </div>
+
+    <div class="m-foot">
+      <span class="m-foot-hint">Mobile: collapses to search + accordions. Desktop: dual-pane command-palette feel.</span>
+      <div class="m-foot-actions">
+        <button class="btn ghost" data-close>Cancel</button>
+        <button class="btn primary">Apply</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     MODAL 4A — PR220 Concept A: Tabler + filter row + auto-fit card grid
+════════════════════════════════════════════════════════════════════════ -->
+<div class="modal-shell" id="d4a">
+  <div class="modal-dialog">
+    <div class="m-head">
+      <div>
+        <h2>Settings — Design 4A (Tabler + Filter + Card Grid)</h2>
+        <small>PR 220 · Sidebar nav, section title, filter input, then an auto-fit card grid</small>
+      </div>
+      <button class="icon-btn" data-close>✕</button>
+    </div>
+
+    <div class="modal-body-4a">
+      <nav class="side-nav" id="nav4a"></nav>
+      <div class="main-panel">
+        <div class="filter-row">
+          <h3 id="title4a" style="margin:0;font-size:1rem;"></h3>
+          <input type="search" id="search4a" placeholder="Quick filter settings…" style="margin-left:auto;">
+          <button class="btn ghost">Reset section</button>
+        </div>
+        <div class="card-grid-4a" id="grid4a"></div>
+      </div>
+    </div>
+
+    <div class="m-foot">
+      <span class="m-foot-hint">Storage: 5.7 MB · Version: 3.30.08 · Light / Dark / Sepia ready</span>
+      <div class="m-foot-actions">
+        <button class="btn ghost" data-close>Cancel</button>
+        <button class="btn primary">Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     MODAL 4B — PR220 Concept B: Segmented pill tabs + stacked panels
+════════════════════════════════════════════════════════════════════════ -->
+<div class="modal-shell" id="d4b">
+  <div class="modal-dialog">
+    <div class="seg-header">
+      <h2>Settings</h2>
+      <div class="seg-tabs" id="tabs4b"></div>
+      <button class="icon-btn" data-close>✕</button>
+    </div>
+    <div class="m-head" style="border-top:0;background:transparent;">
+      <small style="color:var(--muted);font-size:.78rem;">PR 220 · Segmented pill tabs in header; left pane guides the user through the active section</small>
+    </div>
+
+    <div class="modal-body-4b">
+      <aside class="stepper-pane">
+        <div class="step-label">Guided flow</div>
+        <div class="step-title" id="stepTitle4b"></div>
+        <small>Tap tabs to jump between groups. Accordion or card-stack pattern optimised for touch workflows.</small>
+      </aside>
+      <div class="stacked-panels" id="panels4b"></div>
+    </div>
+
+    <div class="m-foot">
+      <span class="m-foot-hint">All existing controls mount here without changing current IDs or event wiring.</span>
+      <div class="m-foot-actions">
+        <button class="btn ghost" data-close>Cancel</button>
+        <button class="btn primary">Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     SHARED DATA + JAVASCRIPT
+════════════════════════════════════════════════════════════════════════ -->
+<script>
+// ─── Shared settings data ──────────────────────────────────────────────
+const SECTIONS = [
+  { key: 'site',       label: 'Site',         items: [['Theme mode','Light / Dark / Sepia / System'],['Header quick actions','Theme, currency, card-view toggles'],['Version info','App build metadata and links']] },
+  { key: 'layout',     label: 'Layout',       items: [['Visible sections','Toggle and reorder app sections'],['Detail modal order','Reorder and hide detail blocks'],['Card/table defaults','Open mode and desktop behaviour']] },
+  { key: 'images',     label: 'Images',       items: [['Image quality','Resize / encode / upload limits'],['Cache manager','IndexedDB image cache actions'],['Bulk prefetch','Download and store remote assets']] },
+  { key: 'system',     label: 'System',       items: [['Timezone','Display and calculation timezone'],['Storage diagnostics','Compression + quota usage'],['Debug info','Telemetry and diagnostics toggles']] },
+  { key: 'table',      label: 'Table',        items: [['Items per page','Pagination size and defaults'],['Column visibility','Show / hide and reorder columns'],['Sort behaviour','Computed totals and default sort']] },
+  { key: 'grouping',   label: 'Grouping',     items: [['Chip grouping','Name, metal, and custom groups'],['Group threshold','Minimum chip count to group'],['Chip order','Sort mode and quantity badges']] },
+  { key: 'search',     label: 'Search',       items: [['Fuzzy search','Scoring and match strategy'],['Autocomplete','Live suggestions controls'],['Numista lookup','Rule-engine assisted search']] },
+  { key: 'api',        label: 'API',          items: [['Provider chain','Primary / fallback API sequence'],['Keys and quotas','Credential and rate-limit controls'],['Sync mode','Manual vs automatic spot updates']] },
+  { key: 'files',      label: 'Files',        items: [['CSV mapping','Import mapping templates'],['Backup / restore','ZIP and encrypted vault workflow'],['Export settings','PDF / CSV / ZIP options']] },
+  { key: 'cloud',      label: 'Cloud',        items: [['Remote status','Connection and provider state'],['Sync triggers','Push / pull and conflict handling'],['Encryption mode','Client-side safeguards']] },
+  { key: 'currency',   label: 'Currency',     items: [['Display currency','USD base + exchange display'],['Rate source','Fallback / manual conversion'],['Formatting','Symbol and decimal display']] },
+  { key: 'goldback',   label: 'Goldback',     items: [['Goldback mode','Enable denomination pricing'],['Estimation mode','2× spot fallback formula'],['Display behaviour','Goldback-only inputs and columns']] },
+  { key: 'activity',   label: 'Activity Log', items: [['History tabs','All / item / sync logs'],['Retention','Cleanup horizon and cap'],['Export logs','Share and archive changes']] },
+];
+
+// Metric card data for Design 3A overview
+const METRICS = [
+  ['Theme mode','Light · Dark · Sepia · System'],
+  ['Items per page','10 / 25 / 50 / 100 / All'],
+  ['Search enhancements','Fuzzy autocomplete · Numista lookup'],
+  ['Grouping tools','Smart chips · dynamic chips · badges'],
+  ['API providers','Metals API chain + Numista + PCGS'],
+  ['Storage & backup','CSV / PDF / ZIP + encrypted vault'],
+  ['Image cache','Table images, side toggle, cache stats'],
+  ['Activity history','Change log · spot history · catalog log'],
+];
+
+// Sub-card groups for Design 4A
+const SUBCARDS = [
+  'Primary controls',
+  'Advanced options',
+  'Visibility + shortcuts',
+  'Validation + reset',
+];
+
+// ─── Build helper: settings card HTML ─────────────────────────────────
+function buildSCard(section) {
+  const rows = section.items.map(([label, help]) => `
+    <div class="s-row">
+      <div>
+        <div class="s-label">${label}</div>
+        <div class="s-help">${help}</div>
+      </div>
+      <span class="pill-tag">Control</span>
+    </div>`).join('');
+  return `<div class="s-card" data-section="${section.key}"><h3>${section.label}</h3>${rows}</div>`;
+}
+
+// ─── DESIGN 1A ─────────────────────────────────────────────────────────
+(function () {
+  const nav     = document.getElementById('nav1a');
+  const content = document.getElementById('content1a');
+
+  SECTIONS.forEach((sec, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'nav-btn' + (i === 0 ? ' active' : '');
+    btn.textContent = sec.label;
+    btn.dataset.key = sec.key;
+    nav.appendChild(btn);
+  });
+
+  function show(key) {
+    content.innerHTML = '';
+    const sec = SECTIONS.find(s => s.key === key);
+    if (!sec) return;
+    const card = document.createElement('div');
+    card.className = 'section-card';
+    card.innerHTML = `<h3>${sec.label}</h3>` + sec.items.map(([l, h]) => `
+      <div class="s-row">
+        <div><div class="s-label">${l}</div><div class="s-help">${h}</div></div>
+        <span class="pill-tag">Control</span>
+      </div>`).join('');
+    content.appendChild(card);
+  }
+
+  show(SECTIONS[0].key);
+
+  nav.addEventListener('click', e => {
+    const btn = e.target.closest('.nav-btn');
+    if (!btn) return;
+    nav.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    show(btn.dataset.key);
+  });
+})();
+
+// ─── DESIGN 1B ─────────────────────────────────────────────────────────
+(function () {
+  const accordion = document.getElementById('accordion1b');
+  const search    = document.getElementById('search1b');
+
+  SECTIONS.forEach((sec, i) => {
+    const el = document.createElement('details');
+    if (i < 2) el.open = true;
+    el.dataset.section = sec.key;
+
+    const rows = sec.items.map(([l, h]) => `
+      <div class="s-row">
+        <div><div class="s-label">${l}</div><div class="s-help">${h}</div></div>
+        <span class="pill-tag">Control</span>
+      </div>`).join('');
+
+    el.innerHTML = `<summary>${sec.label}</summary><div class="panel-content">${rows}</div>`;
+    accordion.appendChild(el);
+  });
+
+  search.addEventListener('input', () => {
+    const term = search.value.toLowerCase();
+    accordion.querySelectorAll('details').forEach(d => {
+      const hit = d.textContent.toLowerCase().includes(term);
+      d.style.display = hit ? '' : 'none';
+      if (term && hit) d.open = true;
+    });
+  });
+})();
+
+// ─── DESIGN 2A ─────────────────────────────────────────────────────────
+(function () {
+  const nav   = document.getElementById('nav2a');
+  const cards = document.getElementById('cards2a');
+
+  SECTIONS.forEach((sec, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'nav-btn' + (i === 0 ? ' active' : '');
+    btn.textContent = sec.label;
+    btn.dataset.key = sec.key;
+    nav.appendChild(btn);
+
+    const card = document.createElement('div');
+    card.innerHTML = buildSCard(sec);
+    card.firstChild.id = 'card2a-' + sec.key;
+    cards.appendChild(card.firstChild);
+  });
+
+  nav.addEventListener('click', e => {
+    const btn = e.target.closest('.nav-btn');
+    if (!btn) return;
+    nav.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const target = cards.querySelector('#card2a-' + btn.dataset.key);
+    if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+})();
+
+// ─── DESIGN 2B ─────────────────────────────────────────────────────────
+(function () {
+  const nav    = document.getElementById('nav2b');
+  const cards  = document.getElementById('cards2b');
+  const search = document.getElementById('search2b');
+
+  SECTIONS.forEach((sec, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'nav-btn' + (i === 0 ? ' active' : '');
+    btn.textContent = sec.label;
+    btn.dataset.key = sec.key;
+    nav.appendChild(btn);
+
+    const card = document.createElement('div');
+    card.innerHTML = buildSCard(sec);
+    card.firstChild.id = 'card2b-' + sec.key;
+    cards.appendChild(card.firstChild);
+  });
+
+  nav.addEventListener('click', e => {
+    const btn = e.target.closest('.nav-btn');
+    if (!btn) return;
+    nav.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const target = cards.querySelector('#card2b-' + btn.dataset.key);
+    if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+
+  search.addEventListener('input', () => {
+    const term = search.value.toLowerCase();
+    cards.querySelectorAll('.s-card').forEach(c => {
+      c.style.display = c.textContent.toLowerCase().includes(term) ? '' : 'none';
+    });
+  });
+})();
+
+// ─── DESIGN 3A ─────────────────────────────────────────────────────────
+(function () {
+  const nav  = document.getElementById('nav3a');
+  const grid = document.getElementById('grid3a');
+
+  function renderMetrics(sec) {
+    // Use section items as metrics; supplement with global metrics for Site section
+    const data = sec.key === 'site' ? METRICS : sec.items.map(([l, h]) => [l, h]);
+    grid.innerHTML = data.map(([label, value]) => `
+      <div class="metric-card">
+        <div class="metric-label">${label}</div>
+        <div class="metric-value">${value}</div>
+      </div>`).join('');
+  }
+
+  SECTIONS.forEach((sec, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'nav-btn' + (i === 0 ? ' active' : '');
+    btn.textContent = sec.label;
+    btn.dataset.key = sec.key;
+    nav.appendChild(btn);
+  });
+
+  renderMetrics(SECTIONS[0]);
+
+  nav.addEventListener('click', e => {
+    const btn = e.target.closest('.nav-btn');
+    if (!btn) return;
+    nav.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderMetrics(SECTIONS.find(s => s.key === btn.dataset.key));
+  });
+})();
+
+// ─── DESIGN 3B — search filter on left pane ────────────────────────────
+(function () {
+  const search   = document.getElementById('search3b');
+  const accordion = document.getElementById('accordion3b');
+
+  search.addEventListener('input', () => {
+    const term = search.value.toLowerCase();
+    accordion.querySelectorAll('details').forEach(d => {
+      const hit = !term || d.textContent.toLowerCase().includes(term);
+      d.style.display = hit ? '' : 'none';
+      if (term && hit) d.open = true;
+    });
+  });
+})();
+
+// ─── DESIGN 4A ─────────────────────────────────────────────────────────
+(function () {
+  const nav    = document.getElementById('nav4a');
+  const grid   = document.getElementById('grid4a');
+  const title  = document.getElementById('title4a');
+  const search = document.getElementById('search4a');
+
+  function renderCards(sec) {
+    title.textContent = sec.label;
+    grid.innerHTML = SUBCARDS.map(card => `
+      <div class="s-card">
+        <h3>${card}</h3>
+        <p>Mount existing ${sec.label} controls here — current IDs and event wiring unchanged.</p>
+      </div>`).join('');
+  }
+
+  SECTIONS.forEach((sec, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'nav-btn' + (i === 0 ? ' active' : '');
+    btn.textContent = sec.label;
+    btn.dataset.key = sec.key;
+    nav.appendChild(btn);
+  });
+
+  renderCards(SECTIONS[0]);
+
+  nav.addEventListener('click', e => {
+    const btn = e.target.closest('.nav-btn');
+    if (!btn) return;
+    nav.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderCards(SECTIONS.find(s => s.key === btn.dataset.key));
+    search.value = '';
+  });
+
+  search.addEventListener('input', () => {
+    const term = search.value.toLowerCase();
+    grid.querySelectorAll('.s-card').forEach(c => {
+      c.style.display = c.textContent.toLowerCase().includes(term) ? '' : 'none';
+    });
+  });
+})();
+
+// ─── DESIGN 4B ─────────────────────────────────────────────────────────
+(function () {
+  const tabs      = document.getElementById('tabs4b');
+  const stepTitle = document.getElementById('stepTitle4b');
+  const panels    = document.getElementById('panels4b');
+
+  const GROUPS = [
+    { label: 'Appearance', subs: ['Theme & layout', 'Table & sorting', 'Quick-action visibility', 'Reset to defaults'] },
+    { label: 'Data & Grouping', subs: ['Chip grouping rules', 'Search & fuzzy scoring', 'Goldback denominations', 'Autocomplete config'] },
+    { label: 'Connectivity', subs: ['API provider chain', 'Numista + PCGS keys', 'Sync mode & schedule', 'Quota diagnostics'] },
+    { label: 'Storage & Security', subs: ['CSV import mapping', 'Encrypted vault', 'Image cache & cleanup', 'Debug & diagnostics'] },
+    { label: 'Regional & Audit', subs: ['Currency & exchange rates', 'Display formatting', 'Activity log retention', 'Export & archive'] },
+  ];
+
+  function renderGroup(group) {
+    stepTitle.textContent = group.label;
+    panels.innerHTML = group.subs.map(sub => `
+      <div class="panel-row">
+        <h3>${group.label} — ${sub}</h3>
+        <p>Accordion or card-stack pattern. Existing controls mount here without changing IDs or event wiring.</p>
+      </div>`).join('');
+  }
+
+  GROUPS.forEach((g, i) => {
+    const tab = document.createElement('button');
+    tab.className = 'seg-tab' + (i === 0 ? ' active' : '');
+    tab.textContent = g.label;
+    tab.dataset.idx = i;
+    tabs.appendChild(tab);
+  });
+
+  renderGroup(GROUPS[0]);
+
+  tabs.addEventListener('click', e => {
+    const tab = e.target.closest('.seg-tab');
+    if (!tab) return;
+    tabs.querySelectorAll('.seg-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    renderGroup(GROUPS[+tab.dataset.idx]);
+  });
+})();
+
+
+// ─── Global: modal open/close + theme switcher ─────────────────────────
+document.querySelectorAll('.open-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const modal = document.getElementById(btn.dataset.modal);
+    if (modal) modal.classList.add('open');
+  });
+});
+
+document.addEventListener('click', e => {
+  // Close button inside modal
+  const closeBtn = e.target.closest('[data-close]');
+  if (closeBtn) {
+    const shell = closeBtn.closest('.modal-shell');
+    if (shell) shell.classList.remove('open');
+    return;
+  }
+  // Click on backdrop
+  if (e.target.classList.contains('modal-shell')) {
+    e.target.classList.remove('open');
+  }
+});
+
+// Escape key closes any open modal
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    document.querySelectorAll('.modal-shell.open').forEach(m => m.classList.remove('open'));
+  }
+});
+
+// Theme switcher
+document.querySelectorAll('.theme-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.documentElement.setAttribute('data-theme', btn.dataset.t);
+    document.querySelectorAll('.theme-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  });
+});
+</script>
+</body>
+</html>
