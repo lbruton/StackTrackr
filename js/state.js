@@ -316,6 +316,9 @@ let displayCurrency = DEFAULT_CURRENCY;
 /** @type {Object<string, number>} Cached exchange rates: 1 USD = rate × target currency (STACK-50) */
 let exchangeRates = {};
 
+/** @type {Object} Item tags mapping: { [uuid]: string[] } (STAK-126) */
+let itemTags = {};
+
 /** @type {Array} Catalog API call history records */
 let catalogHistory = [];
 

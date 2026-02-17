@@ -127,11 +127,21 @@ const createBackupZip = async () => {
     };
     zip.file('item_price_history.json', JSON.stringify(itemPriceHistoryData, null, 2));
 
+    // 3c. Add item tags (STAK-126)
+    if (typeof itemTags !== 'undefined' && Object.keys(itemTags).length > 0) {
+      const itemTagsData = {
+        version: APP_VERSION,
+        exportDate: new Date().toISOString(),
+        tags: itemTags
+      };
+      zip.file('item_tags.json', JSON.stringify(itemTagsData, null, 2));
+    }
+
     // 4. Generate and add CSV export (portfolio format)
     const csvHeaders = [
       "Date", "Metal", "Type", "Name", "Qty", "Weight(oz)", "Weight Unit", "Purity",
       "Purchase Price", "Melt Value", "Retail Price", "Gain/Loss",
-      "Purchase Location", "N#", "PCGS #", "Serial Number", "Notes"
+      "Purchase Location", "N#", "PCGS #", "Serial Number", "Tags", "Notes"
     ];
     const sortedInventory = sortInventoryByDateNewestFirst();
     const csvRows = [];
@@ -166,6 +176,7 @@ const createBackupZip = async () => {
         item.numistaId || '',
         item.pcgsNumber || '',
         item.serialNumber || '',
+        typeof getItemTags === 'function' ? getItemTags(item.uuid).join('; ') : '',
         item.notes || ''
       ]);
     }
@@ -382,6 +393,16 @@ const restoreBackupZip = async (file) => {
       }
     } else if (typeof loadItemPriceHistory === 'function') {
       loadItemPriceHistory();
+    }
+
+    // Restore item tags (STAK-126)
+    const itemTagsStr = await zip.file("item_tags.json")?.async("string");
+    if (itemTagsStr) {
+      const itemTagsObj = JSON.parse(itemTagsStr);
+      if (itemTagsObj.tags && typeof itemTagsObj.tags === 'object') {
+        itemTags = itemTagsObj.tags;
+        if (typeof saveItemTags === 'function') saveItemTags();
+      }
     }
 
     // Restore cached coin images (STACK-88)
@@ -1468,8 +1489,14 @@ const renderTable = () => {
                alt="" loading="lazy" onerror="this.style.display='none'" />` : '')
         : '';
 
+      // STAK-126: Inline tags chip (show first 2 tags, ellipsis if more)
+      const _inlineTags = typeof getItemTags === 'function' ? getItemTags(item.uuid) : [];
+      const tagsChip = _inlineTags.length > 0
+        ? `<span class="tags-inline-chip" title="${escapeAttribute(_inlineTags.join(', '))}">${sanitizeHtml(_inlineTags.slice(0, 2).join(', '))}${_inlineTags.length > 2 ? '\u2026' : ''}</span>`
+        : '';
+
       // Config-driven chip ordering
-      const chipMap = { grade: gradeTag, numista: numistaTag, pcgs: pcgsTag, year: yearTag, serial: serialTag, storage: storageTag, notes: notesIndicator, purity: purityTag };
+      const chipMap = { grade: gradeTag, numista: numistaTag, pcgs: pcgsTag, year: yearTag, serial: serialTag, storage: storageTag, notes: notesIndicator, purity: purityTag, tags: tagsChip };
       const orderedChips = chipConfig.filter(c => c.enabled && chipMap[c.id]).map(c => chipMap[c.id]).join('');
 
       // Format computed displays
@@ -1757,6 +1784,11 @@ const deleteItem = (idx) => {
       window.imageCache.deleteUserImage(item.uuid).catch(err => {
         debugLog(`Failed to delete user images for deleted item: ${err}`);
       });
+    }
+
+    // Clean up item tags (STAK-126)
+    if (item?.uuid && typeof deleteItemTags === 'function') {
+      deleteItemTags(item.uuid);
     }
   }
 };
@@ -2171,6 +2203,7 @@ const importCsv = (file, override = false) => {
           const serialNumber = row['Serial Number'] || row['serialNumber'] || '';
           const serial = row['Serial'] || row['serial'] || getNextSerial();
           const uuid = row['UUID'] || row['uuid'] || generateUUID();
+          const csvTags = (row['Tags'] || row['tags'] || '').trim();
           const obverseImageUrl = row['Obverse Image URL'] || row['obverseImageUrl'] || '';
           const reverseImageUrl = row['Reverse Image URL'] || row['reverseImageUrl'] || '';
 
@@ -2209,9 +2242,20 @@ const importCsv = (file, override = false) => {
           });
 
           imported.push(item);
+
+          // STAK-126: Import tags from CSV
+          if (csvTags && typeof addItemTag === 'function') {
+            csvTags.split(';').map(t => t.trim()).filter(Boolean).forEach(tag => {
+              addItemTag(item.uuid, tag, false);
+            });
+          }
+
           importedCount++;
           updateImportProgress(processed, importedCount, totalRows);
         }
+
+        // STAK-126: Persist any imported tags
+        if (typeof saveItemTags === 'function') saveItemTags();
 
         endImportProgress();
 
@@ -2831,9 +2875,25 @@ const importJson = (file, override = false) => {
 
         addCompositionOption(composition);
         imported.push(processedItem);
+
+        // STAK-126: Import tags from JSON if present
+        if (typeof addItemTag === 'function') {
+          const jsonTags = raw.tags;
+          if (Array.isArray(jsonTags)) {
+            jsonTags.forEach(tag => addItemTag(processedItem.uuid, String(tag).trim(), false));
+          } else if (typeof jsonTags === 'string' && jsonTags.trim()) {
+            jsonTags.split(';').map(t => t.trim()).filter(Boolean).forEach(tag => {
+              addItemTag(processedItem.uuid, tag, false);
+            });
+          }
+        }
+
         importedCount++;
         updateImportProgress(processed, importedCount, totalItems);
       }
+
+      // STAK-126: Persist any imported tags
+      if (typeof saveItemTags === 'function') saveItemTags();
 
       endImportProgress();
 

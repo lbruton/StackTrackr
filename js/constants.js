@@ -505,6 +505,15 @@ const GOLDBACK_DENOMINATIONS = [
   { weight: 100,  label: '100 Goldback', goldOz: 0.1 },
 ];
 
+/** @constant {string} ITEM_TAGS_KEY - LocalStorage key for item tags mapping (STAK-126) */
+const ITEM_TAGS_KEY = "itemTags";
+
+/** @constant {number} MAX_TAGS_PER_ITEM - Maximum number of tags allowed per item (STAK-126) */
+const MAX_TAGS_PER_ITEM = 20;
+
+/** @constant {number} MAX_TAG_LENGTH - Maximum characters per tag name (STAK-126) */
+const MAX_TAG_LENGTH = 50;
+
 /** @constant {string} CATALOG_HISTORY_KEY - LocalStorage key for catalog API call history */
 const CATALOG_HISTORY_KEY = "staktrakr.catalog.history";
 
@@ -652,6 +661,7 @@ const ALLOWED_STORAGE_KEYS = [
   "tableImageSides",                   // string: "both"|"obverse"|"reverse" — which sides to show in table (STAK-118)
   CARD_STYLE_KEY,                        // string: "A"|"B"|"C" — card view style (STAK-118)
   DESKTOP_CARD_VIEW_KEY,                 // boolean string: "true"/"false" — desktop card view (STAK-118)
+  ITEM_TAGS_KEY,                           // JSON object: per-item tags keyed by UUID (STAK-126)
 ];
 
 // =============================================================================
@@ -671,6 +681,7 @@ const INLINE_CHIP_DEFAULTS = [
   { id: 'storage', label: 'Storage Location', enabled: false },
   { id: 'notes',   label: 'Notes Indicator',  enabled: false },
   { id: 'purity',  label: 'Purity',           enabled: false },
+  { id: 'tags',    label: 'Tags',             enabled: false },
 ];
 
 /**
@@ -733,6 +744,7 @@ const FILTER_CHIP_CATEGORY_DEFAULTS = [
   { id: 'grade',            label: 'Grades',            enabled: true, group: null },
   { id: 'numistaId',        label: 'Numista IDs',       enabled: true, group: null },
   { id: 'purity',           label: 'Purity',            enabled: true, group: null },
+  { id: 'tags',             label: 'Tags',              enabled: false, group: null },
 ];
 
 /**
@@ -875,6 +887,7 @@ const VIEW_MODAL_SECTION_DEFAULTS = [
   { id: 'inventory',    label: 'Inventory details',  enabled: true },
   { id: 'grading',      label: 'Grading',            enabled: true },
   { id: 'numista',      label: 'Numista data',       enabled: true },
+  { id: 'tags',         label: 'Tags',               enabled: true },
   { id: 'notes',        label: 'Notes',              enabled: true },
 ];
 
@@ -1454,6 +1467,10 @@ if (typeof window !== "undefined") {
   window.NUMISTA_VIEW_FIELD_DEFAULTS = NUMISTA_VIEW_FIELD_DEFAULTS;
   window.getNumistaViewFieldConfig = getNumistaViewFieldConfig;
   window.saveNumistaViewFieldConfig = saveNumistaViewFieldConfig;
+  // Item tags (STAK-126)
+  window.ITEM_TAGS_KEY = ITEM_TAGS_KEY;
+  window.MAX_TAGS_PER_ITEM = MAX_TAGS_PER_ITEM;
+  window.MAX_TAG_LENGTH = MAX_TAG_LENGTH;
   // Multi-currency support (STACK-50)
   window.SUPPORTED_CURRENCIES = SUPPORTED_CURRENCIES;
   window.DISPLAY_CURRENCY_KEY = DISPLAY_CURRENCY_KEY;

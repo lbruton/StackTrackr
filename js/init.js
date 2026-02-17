@@ -384,6 +384,12 @@ document.addEventListener("DOMContentLoaded", async () => {
       loadItemPriceHistory();
     }
 
+    // Load item tags (STAK-126)
+    if (typeof loadItemTags === 'function') {
+      loadItemTags();
+      debugLog(`Loaded tags for ${Object.keys(itemTags).length} items`);
+    }
+
     // Load Goldback denomination pricing (STACK-45)
     if (typeof loadGoldbackPrices === 'function') loadGoldbackPrices();
     if (typeof loadGoldbackPriceHistory === 'function') loadGoldbackPriceHistory();
