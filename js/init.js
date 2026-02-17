@@ -419,15 +419,15 @@ document.addEventListener("DOMContentLoaded", async () => {
           if (elements.itemsPerPage) elements.itemsPerPage.value = 'all';
         } else {
           const parsed = parseInt(savedIpp, 10);
-          if ([3, 12, 24, 48, 96].includes(parsed)) {
+          if ([3, 6, 12, 24, 48, 96, 128, 512].includes(parsed)) {
             itemsPerPage = parsed;
             if (elements.itemsPerPage) elements.itemsPerPage.value = String(parsed);
           }
         }
       } else {
-        // No saved preference — default to 12
-        itemsPerPage = 12;
-        if (elements.itemsPerPage) elements.itemsPerPage.value = '12';
+        // No saved preference — default to 6
+        itemsPerPage = 6;
+        if (elements.itemsPerPage) elements.itemsPerPage.value = '6';
       }
     } catch (e) { /* ignore */ }
 

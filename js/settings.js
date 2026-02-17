@@ -544,7 +544,7 @@ const setupSettingsEventListeners = () => {
 
   // Apply view-appropriate items-per-page default when switching views.
   // Card view always uses "all" (Infinity). Table view restores the user's
-  // previous preference (saved before switching to card) or falls back to 12.
+  // previous preference (saved before switching to card) or falls back to 6.
   let _savedTableIpp = null;
   const applyViewIpp = () => {
     const enteringCard = localStorage.getItem(DESKTOP_CARD_VIEW_KEY) === 'true';
@@ -558,7 +558,7 @@ const setupSettingsEventListeners = () => {
       ippStr = 'all';
     } else {
       // Restore table IPP
-      const restored = _savedTableIpp || '12';
+      const restored = _savedTableIpp || '6';
       _savedTableIpp = null;
       itemsPerPage = restored === 'all' ? Infinity : Number(restored);
       ippStr = restored;
