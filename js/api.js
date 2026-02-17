@@ -1548,7 +1548,7 @@ const fetchMetalPriceApiHourly = async (apiKey, selectedMetals, totalDays) => {
   for (const metal of selectedMetals) {
     const currency = symbolMap[metal];
     if (!currency) continue;
-    const url = `${baseUrl}/hourly?api_key=${apiKey}&base=USD&currency=${currency}&start_date=${fmt(start)}&end_date=${fmt(end)}`;
+    const url = `${baseUrl}/hourly?api_key=${encodeURIComponent(apiKey)}&base=USD&currency=${currency}&start_date=${fmt(start)}&end_date=${fmt(end)}`;
     try {
       const resp = await fetch(url, { method: 'GET', headers: { 'Content-Type': 'application/json' }, mode: 'cors' });
       if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
