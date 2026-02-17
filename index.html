@@ -1262,7 +1262,7 @@
       <div class="modal-content" style="max-width: 32rem;">
         <div class="modal-header">
           <h2 id="notesViewTitle">Notes</h2>
-          <button aria-label="Close modal" class="modal-close" onclick="closeModalById('notesViewModal')">×</button>
+          <button aria-label="Close modal" class="modal-close" id="notesViewCloseBtn">×</button>
         </div>
         <div class="modal-body">
           <div id="notesViewContent" style="white-space: pre-wrap; line-height: 1.5; min-height: 3rem; max-height: 20rem; overflow-y: auto;"></div>
@@ -2742,7 +2742,7 @@
               <p class="settings-subtext">
                 Set market prices for Goldback denominations manually or auto-estimate from gold spot.
                 Check current rates at
-                <a href="#" id="goldbackExchangeRateLink" onclick="window.open('https://www.goldback.com/exchange-rates/', 'goldback_rates', 'width=1250,height=800,scrollbars=yes,resizable=yes,toolbar=no,location=no,menubar=no,status=no'); return false;">goldback.com/exchange-rates</a>.
+                <a href="#" id="goldbackExchangeRateLink">goldback.com/exchange-rates</a>.
               </p>
 
               <div class="settings-group">
@@ -2951,7 +2951,6 @@
             aria-label="Close modal"
             class="modal-close"
             id="vaultCloseBtn"
-            onclick="closeVaultModal()"
           >
             &times;
           </button>
@@ -2980,7 +2979,6 @@
                 class="password-toggle"
                 id="vaultPasswordToggle"
                 title="Show/hide password"
-                onclick="toggleVaultPasswordVisibility('vaultPassword', this)"
               >&#9678;</button>
             </div>
           </div>
@@ -3006,7 +3004,6 @@
                 class="password-toggle"
                 id="vaultConfirmToggle"
                 title="Show/hide password"
-                onclick="toggleVaultPasswordVisibility('vaultConfirmPassword', this)"
               >&#9678;</button>
             </div>
             <div class="password-match" id="vaultMatchIndicator"></div>
@@ -3019,8 +3016,8 @@
           </div>
 
           <div class="encryption-actions">
-            <button class="btn" id="vaultActionBtn" onclick="handleVaultAction()">Export</button>
-            <button class="btn warning" onclick="closeVaultModal()">Cancel</button>
+            <button class="btn" id="vaultActionBtn">Export</button>
+            <button class="btn warning" id="vaultCancelBtn">Cancel</button>
           </div>
         </div>
       </div>
@@ -3318,7 +3315,7 @@
       <div class="modal-content numista-results-modal-content">
         <div class="modal-header">
           <h2 id="spotLookupTitle">Spot Price Lookup</h2>
-          <button aria-label="Close modal" class="modal-close" onclick="closeSpotLookupModal()">&times;</button>
+          <button aria-label="Close modal" class="modal-close" id="spotLookupCloseBtn">&times;</button>
         </div>
         <div class="modal-body" id="spotLookupBody">
         </div>
