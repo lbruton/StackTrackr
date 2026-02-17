@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.30.07] - 2026-02-17
+
+### Added — STAK-104: Save Search as Filter Chip
+
+- **Added**: Bookmark button inside search input to save multi-term comma-separated searches as custom filter chips (STAK-104)
+- **Added**: Smart enable/disable logic — button activates only for 2+ comma-separated terms that don't already exist as a saved group or auto-generated chip
+- **Added**: Button disabled during fuzzy search mode to prevent saving approximate matches
+- **Added**: Save button state syncs with filter clear and filter remove actions
+
+---
+
 ## [3.30.06] - 2026-02-17
 
 ### Added — Card View Sort Controls & UX Polish

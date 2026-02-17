@@ -274,6 +274,7 @@ const setupAckModalEvents = () => {
  */
 const getEmbeddedWhatsNew = () => {
   return `
+    <li><strong>v3.30.07 &ndash; Save Search as Filter Chip</strong>: Bookmark button inside search input saves multi-term comma-separated searches as custom filter chips. Smart enable/disable logic activates only for valid multi-term queries that aren&rsquo;t already saved. Disabled during fuzzy search mode. Button state syncs with filter clear and remove actions (STAK-104)</li>
     <li><strong>v3.30.06 &ndash; Card View Sort Controls &amp; UX Polish</strong>: Card sort bar with sort dropdown, direction toggle, and A/B/C style toggle visible only in card view. Pagination hidden in card view. Default table rows changed to 12. Header button simplified to toggle card/table view. Numista name matching disabled by default (STAK-131)</li>
     <li><strong>v3.30.05 &ndash; Sort Column Index Realignment</strong>: All table sorts after Type were off by one since v3.30.00 &mdash; the Image column was missing from the sort index map, causing every column from Name onward to sort by the wrong field. Retail and Gain/Loss sorting now also uses correct Goldback denomination pricing</li>
     <li><strong>v3.30.04 &ndash; Pagination Dropdown Fix &amp; Settings Reorganization</strong>: Settings &ldquo;Visible rows&rdquo; dropdown now includes value 6, preventing silent fallback when switching views. Default items-per-page changed from 12 to 6. Added 128 and 512 options. &ldquo;Table&rdquo; tab renamed to &ldquo;Inventory&rdquo; with card settings consolidated</li>
