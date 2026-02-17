@@ -418,6 +418,7 @@ const renderBulkFieldPanel = () => {
     purityCustomInput.max = '1';
     purityCustomInput.step = '0.0001';
     purityCustomInput.placeholder = 'e.g. 0.9995';
+    purityCustomInput.setAttribute('aria-label', 'Custom purity');
     purityCustomInput.style.display = 'none';
     purityCustomInput.disabled = puritySelect.disabled;
     puritySelect.parentNode.insertBefore(purityCustomInput, puritySelect.nextSibling);
