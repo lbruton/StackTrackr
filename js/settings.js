@@ -1362,6 +1362,13 @@ const migrateProviderPriority = () => {
     }
   });
 
+  // Ensure STAKTRAKR is always rank 1 for fresh migrations
+  if (priorities.STAKTRAKR && priorities.STAKTRAKR !== 1) {
+    const currentRank1 = Object.entries(priorities).find(([, p]) => p === 1);
+    if (currentRank1) priorities[currentRank1[0]] = priorities.STAKTRAKR;
+    priorities.STAKTRAKR = 1;
+  }
+
   saveProviderPriorities(priorities);
   return priorities;
 };
@@ -1376,7 +1383,17 @@ const loadProviderPriorities = () => {
     const stored = localStorage.getItem('providerPriority');
     if (stored) {
       const priorities = JSON.parse(stored);
-      if (typeof priorities === 'object' && priorities !== null) return priorities;
+      if (typeof priorities === 'object' && priorities !== null) {
+        // Inject STAKTRAKR at rank 1 for existing users upgrading
+        if (!('STAKTRAKR' in priorities)) {
+          Object.keys(priorities).forEach(prov => {
+            if (priorities[prov] > 0) priorities[prov]++;
+          });
+          priorities.STAKTRAKR = 1;
+          saveProviderPriorities(priorities);
+        }
+        return priorities;
+      }
     }
   } catch (e) { /* ignore */ }
   return migrateProviderPriority();

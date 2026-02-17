@@ -83,7 +83,7 @@ def run_catchup(api_key, data_dir):
 # Hourly data collection
 # ---------------------------------------------------------------------------
 
-NOON_HOUR = 12  # 12:00 PM EST — market reference price for daily seed
+NOON_HOUR = 17  # noon EST = 17:00 UTC — market reference price for daily seed
 
 def write_hourly(entries, data_dir, hour_str, date_obj):
     """
@@ -115,7 +115,7 @@ def poll_once(api_key, data_dir):
     - Always writes to the hourly sharded tree (data/hourly/YYYY/MM/DD/HH.json)
     - At noon EST (hour >= 12), also writes/overwrites the daily seed file
     """
-    now = datetime.now()  # TZ=America/New_York from Docker env
+    now = datetime.utcnow()  # UTC for timezone-neutral hourly file paths
     today = now.date()
     hour = now.hour
     today_str = today.strftime("%Y-%m-%d")
