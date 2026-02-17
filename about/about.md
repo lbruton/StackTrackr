@@ -46,19 +46,23 @@ All provider configuration lives in **Settings > API**. You can set provider pri
 
 ## The Dashboard
 
-### Main View — Dark Theme, Small Cards
+### Table View — Dark Theme
+
+![StakTrakr table view in dark theme showing inventory with thumbnails, filter chips, and portfolio summary](screens/00-main-dark-table.png)
+
+The default table view packs everything into a dense, sortable layout:
+
+- **Thumbnail images** next to each item — pulled from Numista or your own uploads
+- **Inline name chips** — color-coded badges for purity, grade, PCGS number, serial, storage location, and more (all configurable)
+- **Multi-column sorting** — click any column header to sort, shift-click for secondary sort. Computed columns like Melt Value sort by qty-adjusted values
+- **Filter chips** — the full color-coded chip bar with category chips, series chips, and dynamic groupings. Click to filter, right-click to blocklist
+- **Spot price cards** and **portfolio summary panels** across the top, same as every view
+
+### Card View — Small Cards
 
 ![StakTrakr main dashboard in dark theme with small card view](screens/01-main-dark-cards-small.png)
 
-The main dashboard gives you everything at a glance:
-
-- **Spot Price Cards** across the top — live prices for Silver, Gold, Platinum, and Palladium with sparkline charts showing recent trend, 24h change percentage, and last refresh timestamp
-- **Portfolio Summary Panels** — per-metal breakdowns showing item count, total weight, average cost, purchase price, melt value, retail value, and total gain/loss. The "All Metals" panel aggregates everything
-- **Search Bar** with fuzzy matching — search by metal, name, type, purchase location, storage location, notes, date, or any field
-- **Filter Chips** — color-coded category chips that let you filter your inventory instantly by type, series, or custom groupings. Each chip shows item count
-- **Inventory Cards** — each card shows the item image, name, key specs, and gain/loss at a glance
-- **Pagination** with configurable items-per-page at the bottom
-- **Status Bar** — localStorage usage, IndexedDB size, and current version
+Toggle to card view for a more visual layout. Small cards show the item image, name, key price data, and gain/loss in a compact grid. Same spot price cards, portfolio summary, search bar, filter chips, and pagination as the table view.
 
 ### Item Detail Modal
 

@@ -31,11 +31,17 @@ StakTrakr also supports **PCGS number validation** for grading, and if you want 
 
 Here's a walkthrough of the app with live data.
 
-### Dashboard — Dark Theme
+### Table View
 
-![StakTrakr main dashboard in dark theme](https://www.staktrakr.com/about/screens/01-main-dark-cards-small.png)
+![StakTrakr table view in dark theme](https://www.staktrakr.com/about/screens/00-main-dark-table.png)
 
-Live spot prices with sparklines across the top. Portfolio breakdown per metal (items, weight, avg cost, purchase price, melt value, retail, gain/loss). Fuzzy search, color-coded filter chips, and paginated inventory cards below.
+The default view — sortable table with thumbnail images, inline metadata chips, color-coded filter bar, live spot prices with sparklines, and full portfolio breakdown per metal.
+
+### Card View — Small Cards
+
+![StakTrakr card view with small cards](https://www.staktrakr.com/about/screens/01-main-dark-cards-small.png)
+
+Toggle to card view for a more visual layout. Three card sizes available.
 
 ### Item Detail
 
