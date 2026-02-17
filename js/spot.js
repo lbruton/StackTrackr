@@ -27,6 +27,43 @@ const loadSpotHistory = () => {
 };
 
 /**
+ * One-time migration: re-tag old StakTrakr hourly backfill entries.
+ * Before v3.30.02, backfill entries were stored with source:"api" (same as
+ * live syncs). Identifies them by the heuristic: provider is "StakTrakr",
+ * source is "api", and timestamp lands exactly on the hour (:00:00).
+ * Regular syncs never produce on-the-hour timestamps.
+ */
+const migrateHourlySource = () => {
+  const FLAG = "migration_hourlySource";
+  try {
+    if (localStorage.getItem(FLAG)) return;
+    loadSpotHistory();
+    let changed = 0;
+    spotHistory.forEach(e => {
+      if (
+        e.provider === "StakTrakr" &&
+        e.source === "api" &&
+        typeof e.timestamp === "string" &&
+        e.timestamp.endsWith(":00:00")
+      ) {
+        e.source = "api-hourly";
+        changed++;
+      }
+    });
+    if (changed > 0) {
+      saveSpotHistory();
+      console.log(`[Migration] Re-tagged ${changed} StakTrakr entries as api-hourly`);
+    }
+    localStorage.setItem(FLAG, "1");
+  } catch (err) {
+    console.warn("Hourly source migration failed:", err);
+  }
+};
+
+// Run migration on script load
+migrateHourlySource();
+
+/**
  * Removes spot history entries older than the specified number of days
  *
  * @param {number} days - Number of days to retain
@@ -586,17 +623,10 @@ const getSparklineData = (metalName, days, intraday = false) => {
     .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
 
   if (intraday) {
-    // Average all entries per calendar day for a smooth daily trend
-    const byDay = new Map();
-    entries.forEach((e) => {
-      const day = e.timestamp.slice(0, 10);
-      if (!byDay.has(day)) byDay.set(day, []);
-      byDay.get(day).push(e.spot);
-    });
-    const sorted = [...byDay.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+    // Return individual entries for hourly resolution
     return {
-      labels: sorted.map(([day]) => day),
-      data: sorted.map(([, prices]) => prices.reduce((a, b) => a + b, 0) / prices.length),
+      labels: entries.map((e) => e.timestamp.slice(11, 16)),  // "HH:MM"
+      data: entries.map((e) => e.spot),
     };
   }
 
@@ -645,10 +675,9 @@ const updateSparkline = async (metalKey) => {
   const rangeSelect = document.getElementById(`spotRange${metalConfig.name}`);
   const days = rangeSelect ? parseInt(rangeSelect.value, 10) : 90;
 
-  // 1-day view: use 3-day intraday window with all data points (STACK-66)
-  // 3 days ensures ≥2 points even with once-daily API refreshes
+  // 1-day view: try 1-day intraday window first, widen to 3 if too few points
   const isIntraday = (days === 1);
-  const effectiveDays = isIntraday ? 3 : days;
+  let effectiveDays = isIntraday ? 1 : days;
 
   let labels, data;
 
@@ -662,6 +691,11 @@ const updateSparkline = async (metalKey) => {
     }
   } else {
     ({ labels, data } = getSparklineData(metalConfig.name, effectiveDays, isIntraday));
+  }
+
+  // Adaptive fallback: if 1-day window has too few points, widen to 3 days
+  if (isIntraday && data.length < 2) {
+    ({ labels, data } = getSparklineData(metalConfig.name, 3, true));
   }
 
   // Need at least 2 data points for a meaningful line
