@@ -633,6 +633,17 @@
                 placeholder="Search inventory by metal, name, type, purchase location, storage location, notes, date..."
                 type="text"
               />
+              <button
+                type="button"
+                class="btn search-save-btn"
+                id="saveSearchPatternBtn"
+                title="Save as filter chip"
+                aria-label="Save search as filter chip"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+                </svg>
+              </button>
             </div>
             <button
               class="btn search-action-btn clear-btn"
@@ -685,20 +696,6 @@
                   <button type="button" class="chip-sort-btn active" data-sort="alpha">A-Z</button>
                   <button type="button" class="chip-sort-btn" data-sort="count">Qty</button>
                 </div>
-              </div>
-              <div class="control-group search-save-group">
-                <button
-                  type="button"
-                  class="btn search-save-btn"
-                  id="saveSearchPatternBtn"
-                  title="Save as filter chip"
-                  aria-label="Save search as filter chip"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
-                  </svg>
-                  <span>Save</span>
-                </button>
               </div>
             </div>
             <div class="filter-row">

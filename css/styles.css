@@ -4851,11 +4851,21 @@ a.about-badge:hover {
 }
 
 .search-input-wrapper {
+  position: relative;
   flex: 1;
+}
+
+.search-input-wrapper #searchInput {
+  width: 100%;
+  padding-right: 3.25rem;
 }
 
 .search-save-btn {
   display: inline-flex;
+  position: absolute;
+  right: 0.45rem;
+  top: 50%;
+  transform: translateY(-50%);
   align-items: center;
   gap: 0.35rem;
   padding: 0.5rem 0.75rem;
