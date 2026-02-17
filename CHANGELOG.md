@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.30.08] - 2026-02-17
+
+### Added — Default Settings Overhaul & Seed Pattern Images
+
+- **Changed**: Default sort to Name ascending, show all rows, dark theme for new users
+- **Changed**: Header theme button hidden by default (existing users migrated to keep visible)
+- **Changed**: Dynamic Name Chips disabled by default
+- **Changed**: Goldback denomination pricing and real-time estimation enabled by default
+- **Added**: Per-rule enable/disable toggles for built-in Numista lookup patterns with Enable All / Disable All controls
+- **Added**: Seed pattern images — American Silver Eagle and Canadian Gold Maple demo rules with coin photos in Custom Pattern Rules for first-time user coaching
+
+---
+
 ## [3.30.07] - 2026-02-17
 
 ### Added — STAK-104: Save Search as Filter Chip

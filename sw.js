@@ -28,6 +28,7 @@ const CORE_ASSETS = [
   './js/fuzzy-search.js',
   './js/autocomplete.js',
   './js/numista-lookup.js',
+  './js/seed-images.js',
   './js/versionCheck.js',
   './js/changeLog.js',
   './js/charts.js',

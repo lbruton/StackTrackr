@@ -2,8 +2,8 @@
 // =============================================================================
 
 /** @type {Object} Sorting state tracking */
-let sortColumn = 0; // Default to date column (index 0) - most recent first
-let sortDirection = "desc"; // 'asc' or 'desc' - default to descending for recent dates first
+let sortColumn = 4; // Default to name column (index 4) - alphabetical
+let sortDirection = "asc"; // 'asc' or 'desc' - default to ascending for A-Z names
 
 /** @type {number|null} Index of item being edited (null = no edit in progress) */
 let editingIndex = null;
@@ -13,7 +13,7 @@ let notesIndex = null;
 let editingChangeLogIndex = null;
 
 /** @type {number} Number of visible rows in the portal (scrollable table) view */
-let itemsPerPage = 12;
+let itemsPerPage = Infinity;
 
 /** @type {string} Current search query */
 let searchQuery = "";

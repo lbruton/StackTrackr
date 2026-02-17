@@ -60,11 +60,11 @@ const loadGoldbackPriceHistory = () => {
  */
 const loadGoldbackEnabled = () => {
   try {
-    const val = loadDataSync(GOLDBACK_ENABLED_KEY, false);
+    const val = loadDataSync(GOLDBACK_ENABLED_KEY, true);
     goldbackEnabled = val === true;
   } catch (error) {
     console.error('Error loading Goldback enabled state:', error);
-    goldbackEnabled = false;
+    goldbackEnabled = true;
   }
 };
 
@@ -142,11 +142,11 @@ const isGoldbackPricingActive = () => {
  */
 const loadGoldbackEstimateEnabled = () => {
   try {
-    const val = loadDataSync(GOLDBACK_ESTIMATE_ENABLED_KEY, false);
+    const val = loadDataSync(GOLDBACK_ESTIMATE_ENABLED_KEY, true);
     goldbackEstimateEnabled = val === true;
   } catch (error) {
     console.error('Error loading Goldback estimate enabled state:', error);
-    goldbackEstimateEnabled = false;
+    goldbackEstimateEnabled = true;
   }
 };
 
