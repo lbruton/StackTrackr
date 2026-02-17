@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.30.04] - 2026-02-16
+
+### Fixed — Pagination Dropdown Fix & Settings Reorganization
+
+- **Fixed**: Settings modal "Visible rows" dropdown now includes value 6 — prevents silent fallback to 12 when switching between card and table views
+- **Changed**: Items-per-page default changed from 12 to 6 across all code paths
+- **Added**: 128 and 512 options to both footer and settings dropdowns
+- **Changed**: "Table" settings tab renamed to "Inventory" with card settings consolidated under it
+
+---
+
 ## [3.30.03] - 2026-02-17
 
 ### Fixed — STAK-130: PumpkinCrouton Patch — Purity Input & Save Fix

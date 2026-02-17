@@ -817,11 +817,13 @@
             <div class="table-item-count"><strong id="itemCount"></strong></div>
             <select id="itemsPerPage" class="control-select" title="Visible rows">
               <option value="3">3</option>
-              <option value="6">6</option>
-              <option value="12" selected>12</option>
+              <option value="6" selected>6</option>
+              <option value="12">12</option>
               <option value="24">24</option>
               <option value="48">48</option>
               <option value="96">96</option>
+              <option value="128">128</option>
+              <option value="512">512</option>
               <option value="all">All</option>
             </select>
           </div>
@@ -1643,7 +1645,7 @@
             </button>
             <button class="settings-nav-item" data-section="table">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
-              Table
+              Inventory
             </button>
             <button class="settings-nav-item" data-section="grouping">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
@@ -1737,35 +1739,6 @@
                 </div>
               </div>
 
-              <!-- ── Card View (STAK-118) ── -->
-              <div class="settings-fieldset">
-                <div class="settings-fieldset-title">Card View</div>
-                <div class="settings-group">
-                  <div class="settings-group-label">Card style</div>
-                  <p class="settings-subtext">Choose the card layout used in mobile and optional desktop card view.</p>
-                  <select id="settingsCardStyle">
-                    <option value="A">A: Sparkline Header</option>
-                    <option value="B">B: Full-Bleed Overlay</option>
-                    <option value="C">C: Split Card</option>
-                  </select>
-                </div>
-                <div class="settings-group">
-                  <div class="settings-group-label">Desktop card view</div>
-                  <p class="settings-subtext">Show cards instead of the table on wide screens. Cards are always used on mobile.</p>
-                  <div class="chip-sort-toggle" id="settingsDesktopCardView">
-                    <button type="button" class="chip-sort-btn" data-val="yes">On</button>
-                    <button type="button" class="chip-sort-btn" data-val="no">Off</button>
-                  </div>
-                </div>
-                <div class="settings-group">
-                  <div class="settings-group-label">Header card view button</div>
-                  <p class="settings-subtext">Show a quick card/table toggle button in the app header.</p>
-                  <div class="chip-sort-toggle" id="settingsHeaderCardViewBtn">
-                    <button type="button" class="chip-sort-btn" data-val="yes">On</button>
-                    <button type="button" class="chip-sort-btn" data-val="no">Off</button>
-                  </div>
-                </div>
-              </div>
             </div>
 
             <!-- ===== TABLE SETTINGS ===== -->
@@ -1776,10 +1749,13 @@
                 <div class="settings-group-label">Visible rows</div>
                 <select id="settingsItemsPerPage">
                   <option value="3">3</option>
+                  <option value="6">6</option>
                   <option value="12">12</option>
                   <option value="24">24</option>
                   <option value="48">48</option>
                   <option value="96">96</option>
+                  <option value="128">128</option>
+                  <option value="512">512</option>
                   <option value="all">All</option>
                 </select>
               </div>
@@ -1789,6 +1765,34 @@
                 <p class="settings-subtext">Choose which badges appear next to item names in the table.</p>
                 <div class="chip-grouping-table-container" id="inlineChipConfigContainer">
                   <div class="chip-grouping-empty">Loading...</div>
+                </div>
+              </div>
+
+              <!-- ── Card View (STAK-118) ── -->
+              <h3>Card View</h3>
+              <div class="settings-group">
+                <div class="settings-group-label">Card style</div>
+                <p class="settings-subtext">Choose the card layout used in mobile and optional desktop card view.</p>
+                <select id="settingsCardStyle">
+                  <option value="A">A: Sparkline Header</option>
+                  <option value="B">B: Full-Bleed Overlay</option>
+                  <option value="C">C: Split Card</option>
+                </select>
+              </div>
+              <div class="settings-group">
+                <div class="settings-group-label">Desktop card view</div>
+                <p class="settings-subtext">Show cards instead of the table on wide screens. Cards are always used on mobile.</p>
+                <div class="chip-sort-toggle" id="settingsDesktopCardView">
+                  <button type="button" class="chip-sort-btn" data-val="yes">On</button>
+                  <button type="button" class="chip-sort-btn" data-val="no">Off</button>
+                </div>
+              </div>
+              <div class="settings-group">
+                <div class="settings-group-label">Header card view button</div>
+                <p class="settings-subtext">Show a quick card/table toggle button in the app header.</p>
+                <div class="chip-sort-toggle" id="settingsHeaderCardViewBtn">
+                  <button type="button" class="chip-sort-btn" data-val="yes">On</button>
+                  <button type="button" class="chip-sort-btn" data-val="no">Off</button>
                 </div>
               </div>
             </div>
