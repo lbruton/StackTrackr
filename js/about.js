@@ -274,10 +274,10 @@ const setupAckModalEvents = () => {
  */
 const getEmbeddedWhatsNew = () => {
   return `
+    <li><strong>v3.30.03 &ndash; PumpkinCrouton Patch &mdash; Purity Input &amp; Save Fix</strong>: Added .9995 (pure platinum) to purity dropdown. Custom purity accepts 4 decimal places. Fixed save corruption where hidden custom purity input blocked all form submissions. Duplicate items now preserve original purchase date. Thanks to u/PumpkinCrouton for the report (STAK-130)</li>
     <li><strong>v3.30.02 &ndash; Keyless Provider Fixes &amp; Hourly History Pull</strong>: Fixed keyless providers (STAKTRAKR) enabling sync buttons, connected status, and auto-select. STAKTRAKR usage counter with 5000 default quota. Hourly history pull for STAKTRAKR (1&ndash;30 days) and MetalPriceAPI (up to 7 days). History log distinguishes hourly entries. One-time migration for existing users</li>
     <li><strong>v3.30.01 &ndash; StakTrakr Free API Provider &amp; UTC Poller Fix</strong>: Free, keyless StakTrakr API provider at rank 1 fetching hourly spot prices. Provider panel with &ldquo;Free&rdquo; badge and best-effort disclaimer. 1st&ndash;5th priority labels across all providers. Poller switched to UTC for timezone-neutral paths. Auto-sync works without any API keys</li>
     <li><strong>v3.30.00 &ndash; Card View Engine, Mobile Overhaul &amp; UI Polish</strong>: Three card view styles (Sparkline Header, Full-Bleed, Split Card) with header button cycling. CDN image URLs with dedicated table image column and card thumbnails. Mobile viewport overhaul with responsive breakpoints. Rows-per-page options with floating back-to-top button. Theme-aware sparkline colors. CSV/JSON/ZIP export includes image URLs (STAK-118, STAK-106, STAK-124, STAK-125, STAK-126)</li>
-    <li><strong>v3.29.08 &ndash; Fix What&apos;s New Modal Showing Stale Version</strong>: Version check uses APP_VERSION directly instead of potentially stale localStorage value. Service worker local assets switched to stale-while-revalidate so deployment updates propagate on next load</li>
   `;
 };
 

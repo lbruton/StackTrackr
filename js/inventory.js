@@ -1856,6 +1856,7 @@ const editItem = (idx, logIdx = null) => {
     if (presetOption) {
       puritySelect.value = presetOption.value;
       if (purityCustom) purityCustom.style.display = 'none';
+      if (purityInput) purityInput.value = '';
     } else {
       puritySelect.value = 'custom';
       if (purityCustom) purityCustom.style.display = '';
@@ -1921,7 +1922,7 @@ const editItem = (idx, logIdx = null) => {
 
 /**
  * Duplicates an inventory item by opening the add modal pre-filled with
- * the source item's fields. Date defaults to today, qty resets to 1.
+ * the source item's fields. Date preserves the original purchase date, qty resets to 1.
  *
  * @param {number} idx - Index of item to duplicate
  */
@@ -1971,7 +1972,7 @@ const duplicateItem = (idx) => {
   elements.storageLocation.value = item.storageLocation && item.storageLocation !== 'Unknown' ? item.storageLocation : '';
   if (elements.itemSerialNumber) elements.itemSerialNumber.value = item.serialNumber || '';
   if (elements.itemNotes) elements.itemNotes.value = item.notes || '';
-  elements.itemDate.value = todayStr(); // Default to today
+  elements.itemDate.value = item.date || todayStr();
   if (elements.itemCatalog) elements.itemCatalog.value = item.numistaId || '';
   if (elements.itemYear) elements.itemYear.value = item.year || item.issuedYear || '';
   if (elements.itemGrade) elements.itemGrade.value = item.grade || '';
@@ -1990,6 +1991,7 @@ const duplicateItem = (idx) => {
     if (presetOpt) {
       dupPuritySelect.value = presetOpt.value;
       if (dupPurityCustom) dupPurityCustom.style.display = 'none';
+      if (dupPurityInput) dupPurityInput.value = '';
     } else {
       dupPuritySelect.value = 'custom';
       if (dupPurityCustom) dupPurityCustom.style.display = '';
