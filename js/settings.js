@@ -544,7 +544,7 @@ const setupSettingsEventListeners = () => {
 
   // Apply view-appropriate items-per-page default when switching views.
   // Card view always uses "all" (Infinity). Table view restores the user's
-  // previous preference (saved before switching to card) or falls back to 6.
+  // previous preference (saved before switching to card) or falls back to 12.
   let _savedTableIpp = null;
   const applyViewIpp = () => {
     const enteringCard = localStorage.getItem(DESKTOP_CARD_VIEW_KEY) === 'true';
@@ -558,7 +558,7 @@ const setupSettingsEventListeners = () => {
       ippStr = 'all';
     } else {
       // Restore table IPP
-      const restored = _savedTableIpp || '6';
+      const restored = _savedTableIpp || '12';
       _savedTableIpp = null;
       itemsPerPage = restored === 'all' ? Infinity : Number(restored);
       ippStr = restored;
@@ -569,31 +569,16 @@ const setupSettingsEventListeners = () => {
     if (settingsIpp) settingsIpp.value = ippStr;
   };
 
-  // Card view header button (STAK-118)
-  // Click: cycle card style A → B → C → A
-  // Shift+click: toggle table/card view
-  const CARD_STYLES = ['A', 'B', 'C'];
+  // Card view header button (STAK-131) — simple toggle between table and card view
   const headerCardViewBtn = document.getElementById('headerCardViewBtn');
   if (headerCardViewBtn) {
-    headerCardViewBtn.addEventListener('click', (e) => {
-      if (e.shiftKey) {
-        // Shift+click: toggle table ↔ card view
-        const isCard = localStorage.getItem(DESKTOP_CARD_VIEW_KEY) === 'true';
-        const newVal = !isCard;
-        localStorage.setItem(DESKTOP_CARD_VIEW_KEY, String(newVal));
-        document.body.classList.toggle('force-card-view', newVal);
-        applyViewIpp();
-        syncChipToggle('settingsDesktopCardView', newVal ? 'yes' : 'no');
-      } else {
-        // Click: cycle card style
-        const cur = localStorage.getItem(CARD_STYLE_KEY) || 'A';
-        const nextIdx = (CARD_STYLES.indexOf(cur) + 1) % CARD_STYLES.length;
-        const next = CARD_STYLES[nextIdx];
-        localStorage.setItem(CARD_STYLE_KEY, next);
-        // Sync settings select if open
-        const styleSelect = document.getElementById('settingsCardStyle');
-        if (styleSelect) styleSelect.value = next;
-      }
+    headerCardViewBtn.addEventListener('click', () => {
+      const isCard = localStorage.getItem(DESKTOP_CARD_VIEW_KEY) === 'true';
+      const newVal = !isCard;
+      localStorage.setItem(DESKTOP_CARD_VIEW_KEY, String(newVal));
+      document.body.classList.toggle('force-card-view', newVal);
+      applyViewIpp();
+      syncChipToggle('settingsDesktopCardView', newVal ? 'yes' : 'no');
       if (typeof renderTable === 'function') renderTable();
     });
   }

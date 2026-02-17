@@ -705,6 +705,38 @@
          Portal view shows all items in a scrollable table with sticky headers
          ============================================================================= -->
         <section class="table-section" id="tableSectionEl">
+          <div class="card-sort-bar" id="cardSortBar" style="display:none">
+            <div class="card-sort-left">
+              <span class="control-label">Sort:</span>
+              <select id="cardSortColumn" class="control-select" title="Sort cards by column">
+                <option value="0">Date</option>
+                <option value="1">Metal</option>
+                <option value="2">Type</option>
+                <option value="4">Name</option>
+                <option value="5">Qty</option>
+                <option value="6">Weight</option>
+                <option value="7">Purchase</option>
+                <option value="8">Melt Value</option>
+                <option value="9">Retail</option>
+                <option value="10">Gain/Loss</option>
+                <option value="11">Source</option>
+              </select>
+              <button type="button" class="card-sort-dir-btn" id="cardSortDirBtn" title="Toggle sort direction">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline class="sort-arrow-up" points="18 15 12 9 6 15"/>
+                  <polyline class="sort-arrow-down" points="6 9 12 15 18 9"/>
+                </svg>
+              </button>
+            </div>
+            <div class="card-sort-right">
+              <span class="control-label">Style:</span>
+              <div class="chip-sort-toggle" id="cardStyleToggle">
+                <button type="button" class="chip-sort-btn active" data-style="A" title="Chart cards">A</button>
+                <button type="button" class="chip-sort-btn" data-style="B" title="Hero cards">B</button>
+                <button type="button" class="chip-sort-btn" data-style="C" title="Split cards">C</button>
+              </div>
+            </div>
+          </div>
           <div class="card-view-grid" id="cardViewGrid"></div>
           <div class="portal-scroll">
           <table id="inventoryTable">
@@ -817,8 +849,8 @@
             <div class="table-item-count"><strong id="itemCount"></strong></div>
             <select id="itemsPerPage" class="control-select" title="Visible rows">
               <option value="3">3</option>
-              <option value="6" selected>6</option>
-              <option value="12">12</option>
+              <option value="6">6</option>
+              <option value="12" selected>12</option>
               <option value="24">24</option>
               <option value="48">48</option>
               <option value="96">96</option>
