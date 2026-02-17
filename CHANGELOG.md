@@ -11,12 +11,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [3.30.05] - 2026-02-16
 
-### Fixed — Goldback Sorting Fix
+### Fixed — Sort Column Index Realignment
 
-- **Fixed**: Sorting by Melt, Retail, and Gain/Loss columns now correctly handles Goldback items — previously a ½ Goldback (0.0005 ozt) was computed as 0.5 ozt of gold, inflating its sort value ~1000x
-- **Fixed**: Sorting by Retail and Gain/Loss now uses Goldback denomination pricing (matching table render logic)
-- **Fixed**: Weight column sort normalizes Goldback "gb" units to troy ounces for consistent cross-unit comparison
-- **Fixed**: Purchase Price sort now coerces to number defensively, preventing string-vs-number comparison issues
+- **Fixed**: All table sorts after the Type column were off by one — the Image column added in v3.30.00 was missing from the sort index map, causing every click from Name onward to sort by the wrong field (e.g. clicking Purchase sorted by Melt, clicking Gain/Loss sorted by Source)
+- **Fixed**: Sorting by Retail and Gain/Loss now uses `computeMeltValue()` and `getGoldbackRetailPrice()` matching the table render logic
+- **Fixed**: Image column header click is now a no-op instead of incorrectly sorting by Name
+- **Fixed**: Secondary year sub-sort on Name column updated to correct index
 
 ---
 
