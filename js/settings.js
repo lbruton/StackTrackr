@@ -924,6 +924,10 @@ const setupSettingsEventListeners = () => {
       if (!confirm('Clear all cached images, pattern rules, user uploads, AND image URLs from inventory items?')) return;
       // Clear IDB blobs (Numista cache, patterns, user uploads)
       if (window.imageCache?.isAvailable()) await imageCache.clearAll();
+      // Clear SW image responses to prevent stale thumbnails from rendering
+      const swPurged = typeof purgeImageResponsesFromSwCache === 'function'
+        ? await purgeImageResponsesFromSwCache()
+        : 0;
       // Clear image URLs from all inventory items
       let cleared = 0;
       for (const item of inventory) {
@@ -936,7 +940,7 @@ const setupSettingsEventListeners = () => {
       if (cleared > 0 && typeof saveInventory === 'function') saveInventory();
       populateImagesSection();
       if (typeof renderTable === 'function') renderTable();
-      alert(`Cleared all image data. ${cleared} item URL(s) reset.`);
+      alert(`Cleared all image data. ${cleared} item URL(s) reset. ${swPurged} SW image response(s) removed.`);
     });
   }
 

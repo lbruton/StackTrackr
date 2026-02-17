@@ -340,8 +340,11 @@ const clearAllCachedData = async () => {
   if (!confirm(`Delete all ${usage.count} cached entries (images + metadata)? This cannot be undone.`)) return;
 
   const ok = await imageCache.clearAll();
+  const swPurged = typeof purgeImageResponsesFromSwCache === 'function'
+    ? await purgeImageResponsesFromSwCache()
+    : 0;
   if (ok) {
-    logSyncActivity(`Cleared all ${usage.count} cached entries`, 'warn');
+    logSyncActivity(`Cleared all ${usage.count} cached entries and ${swPurged} SW image response(s)`, 'warn');
   } else {
     logSyncActivity('Failed to clear cache', 'error');
   }

@@ -922,8 +922,39 @@ class ImageCache {
   }
 }
 
+/**
+ * Remove cached HTTP responses for image URLs from StakTrakr service worker caches.
+ * @returns {Promise<number>} number of deleted cache entries
+ */
+async function purgeImageResponsesFromSwCache() {
+  if (typeof window === 'undefined' || !('caches' in window)) return 0;
+
+  const imageUrlPattern = /(numista\.com|numisbids\.com|thumbnail|image|img)/i;
+  let deleted = 0;
+
+  try {
+    const cacheKeys = await caches.keys();
+    for (const key of cacheKeys) {
+      if (!key.startsWith('staktrakr-')) continue;
+
+      const cache = await caches.open(key);
+      const requests = await cache.keys();
+      for (const request of requests) {
+        if (!imageUrlPattern.test(request.url)) continue;
+        const removed = await cache.delete(request);
+        if (removed) deleted += 1;
+      }
+    }
+  } catch (err) {
+    console.warn('ImageCache: failed to purge SW image responses', err);
+  }
+
+  return deleted;
+}
+
 // Singleton instance exposed globally
 const imageCache = new ImageCache();
 if (typeof window !== 'undefined') {
   window.imageCache = imageCache;
+  window.purgeImageResponsesFromSwCache = purgeImageResponsesFromSwCache;
 }
