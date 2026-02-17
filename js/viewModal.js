@@ -164,8 +164,7 @@ function closeViewModal() {
  * @param {number} index - Item index for edit button
  * @returns {DocumentFragment}
  */
-function buildViewContent(item, index) {
-  const frag = document.createDocumentFragment();
+function _getViewMetrics(item) {
   const metalKey = (item.metal || 'silver').toLowerCase();
   const currentSpot = spotPrices[metalKey] || 0;
   const qty = Number(item.qty) || 1;
@@ -173,245 +172,242 @@ function buildViewContent(item, index) {
   const purity = parseFloat(item.purity) || 1.0;
   const isGb = item.weightUnit === 'gb';
   const weightOz = isGb ? weight * GB_TO_OZT : weight;
+  const metalColor = typeof getMetalColor === 'function' ? getMetalColor(metalKey) : null;
+  return { currentSpot, qty, weight, purity, isGb, weightOz, metalColor };
+}
 
-  // --- Header info (name + catalog ID) ---
+function _renderHeaderMeta(item, metrics) {
   const header = document.getElementById('viewModalTitle');
   if (header) header.textContent = sanitizeHtml(item.name || 'Untitled Item');
+  _renderCatalogBadge(item);
+  _applyHeaderGradient(header, metrics.metalColor);
+  _renderCountChip(item);
+}
 
+function _renderCatalogBadge(item) {
   const catalogBadge = document.getElementById('viewModalCatalogId');
-  if (catalogBadge) {
-    const nId = item.numistaId || '';
-    catalogBadge.textContent = nId ? `N#${nId}` : '';
-    catalogBadge.style.display = nId ? '' : 'none';
-    if (nId) {
-      catalogBadge.style.cursor = 'pointer';
-      catalogBadge.title = 'View on Numista';
-      catalogBadge.onclick = (e) => {
-        e.stopPropagation();
-        const isSet = /^S/i.test(nId);
-        const cleanId = nId.replace(/^[NS]?#?\s*/i, '').trim();
-        const url = isSet
-          ? `https://en.numista.com/catalogue/set.php?id=${cleanId}`
-          : `https://en.numista.com/catalogue/pieces${cleanId}.html`;
-        _openExternalPopup(url, `numista_${nId}`);
-      };
-    } else {
-      catalogBadge.onclick = null;
-      catalogBadge.style.cursor = '';
-    }
+  if (!catalogBadge) return;
+  const nId = item.numistaId || '';
+  catalogBadge.textContent = nId ? `N#${nId}` : '';
+  catalogBadge.style.display = nId ? '' : 'none';
+  if (!nId) {
+    catalogBadge.onclick = null;
+    catalogBadge.style.cursor = '';
+    return;
   }
+  catalogBadge.style.cursor = 'pointer';
+  catalogBadge.title = 'View on Numista';
+  catalogBadge.onclick = (e) => {
+    e.stopPropagation();
+    const isSet = /^S/i.test(nId);
+    const cleanId = nId.replace(/^[NS]?#?\s*/i, '').trim();
+    const url = isSet
+      ? `https://en.numista.com/catalogue/set.php?id=${cleanId}`
+      : `https://en.numista.com/catalogue/pieces${cleanId}.html`;
+    _openExternalPopup(url, `numista_${nId}`);
+  };
+}
 
-  // --- Metal-themed header gradient ---
-  const metalColor = typeof getMetalColor === 'function' ? getMetalColor(metalKey) : null;
+function _applyHeaderGradient(header, metalColor) {
   const modalHeader = document.getElementById('viewItemModal')?.querySelector('.modal-header');
-  if (modalHeader && metalColor) {
-    modalHeader.style.background = `linear-gradient(135deg, ${metalColor}, ${_darkenColor(metalColor, 0.3)})`;
-    const textColor = _isLightColor(metalColor) ? '#1e293b' : '#f8fafc';
-    modalHeader.style.color = textColor;
-    if (header) header.style.color = textColor;
-  }
+  if (!modalHeader || !metalColor) return;
+  modalHeader.style.background = `linear-gradient(135deg, ${metalColor}, ${_darkenColor(metalColor, 0.3)})`;
+  const textColor = _isLightColor(metalColor) ? '#1e293b' : '#f8fafc';
+  modalHeader.style.color = textColor;
+  if (header) header.style.color = textColor;
+}
 
-  // --- Total count chip ---
+function _renderCountChip(item) {
   const countChip = document.getElementById('viewModalCountChip');
-  if (countChip) {
-    const totalQty = inventory.reduce((sum, i) =>
-      i.name === item.name && i.metal === item.metal
-        ? sum + (Number(i.qty) || 1) : sum, 0);
-    countChip.textContent = totalQty > 1 ? `\u00d7${totalQty} in inventory` : '';
-    countChip.style.display = totalQty > 1 ? '' : 'none';
-  }
+  if (!countChip) return;
+  const totalQty = inventory.reduce((sum, invItem) => {
+    return invItem.name === item.name && invItem.metal === item.metal
+      ? sum + (Number(invItem.qty) || 1)
+      : sum;
+  }, 0);
+  countChip.textContent = totalQty > 1 ? `\u00d7${totalQty} in inventory` : '';
+  countChip.style.display = totalQty > 1 ? '' : 'none';
+}
 
-  // =========================================================================
-  // Build all sections eagerly, then append in config order
-  // =========================================================================
-
-  // --- Images section ---
+function _buildImageSection(item, metrics) {
   const itemType = (item.type || '').toLowerCase();
   const isRectShape = itemType === 'bar' || itemType === 'note' || itemType === 'aurum'
-    || itemType === 'set' || isGb;
-
+    || itemType === 'set' || metrics.isGb;
   const imgSection = _el('div', 'view-image-section' + (isRectShape ? ' view-shape-rect' : ''));
   imgSection.id = 'viewImageSection';
-
-  const obvSlot = _imageSlot('obverse', 'Obverse');
-  const revSlot = _imageSlot('reverse', 'Reverse');
-  imgSection.appendChild(obvSlot);
-  imgSection.appendChild(revSlot);
-
-  if (metalColor) {
-    imgSection.style.background = `linear-gradient(145deg, color-mix(in srgb, ${metalColor} 15%, #1a1a2e), color-mix(in srgb, ${metalColor} 8%, #16213e))`;
+  imgSection.appendChild(_imageSlot('obverse', 'Obverse'));
+  imgSection.appendChild(_imageSlot('reverse', 'Reverse'));
+  if (metrics.metalColor) {
+    imgSection.style.background = `linear-gradient(145deg, color-mix(in srgb, ${metrics.metalColor} 15%, #1a1a2e), color-mix(in srgb, ${metrics.metalColor} 8%, #16213e))`;
   }
+  const badge = _buildImageCertBadge(item);
+  if (badge) imgSection.appendChild(badge);
+  return imgSection;
+}
 
-  // --- Certification badge overlay on image section ---
-  if (item.grade) {
-    const badge = _el('div', 'view-cert-badge');
-    const authority = item.gradingAuthority || '';
-    const certNum = item.certNumber || '';
-    const pcgsNo = item.pcgsNumber || '';
-    const isVerified = item.pcgsVerified === true && authority === 'PCGS';
+function _buildImageCertBadge(item) {
+  if (!item.grade) return null;
+  const badge = _el('div', 'view-cert-badge');
+  const authority = item.gradingAuthority || '';
+  const certNum = item.certNumber || '';
+  const pcgsNo = item.pcgsNumber || '';
+  const isVerified = item.pcgsVerified === true && authority === 'PCGS';
+  if (authority) badge.dataset.authority = authority;
+  const gradeSpan = _buildImageCertGrade(item, authority, certNum, pcgsNo);
+  badge.appendChild(gradeSpan);
+  const verifySpan = _buildPcgsVerifyControl(item, authority, certNum, isVerified, false);
+  if (verifySpan) badge.appendChild(verifySpan);
+  return badge;
+}
 
-    if (authority) badge.dataset.authority = authority;
-
-    // Grade text with authority prefix — e.g. "PCGS MS-70", "NGC AU-58"
-    const gradeSpan = _el('span', 'view-cert-grade');
-    gradeSpan.textContent = authority ? `${authority} ${item.grade}` : item.grade;
-
-    // Build cert lookup URL from CERT_LOOKUP_URLS templates
-    const certUrlTemplate = (typeof CERT_LOOKUP_URLS !== 'undefined' && authority)
-      ? CERT_LOOKUP_URLS[authority] : '';
-    const hasCertLink = certUrlTemplate && (certNum || pcgsNo);
-    // PCGS CoinFacts uses pcgsNumber; cert lookup URLs use certNumber
-    const hasCoinFacts = authority === 'PCGS' && pcgsNo;
-
-    if (hasCertLink || hasCoinFacts) {
-      gradeSpan.classList.add('view-cert-clickable');
-      gradeSpan.title = certNum
-        ? `Look up ${authority} Cert #${certNum}`
-        : `Open ${authority} verification`;
-      gradeSpan.tabIndex = 0;
-      gradeSpan.role = 'button';
-      gradeSpan.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); gradeSpan.click(); } });
-      gradeSpan.addEventListener('click', (e) => {
-        e.stopPropagation();
-        let url;
-        if (hasCoinFacts) {
-          // PCGS CoinFacts — detailed coin page via pcgsNumber
-          const gradeNum = (item.grade || '').match(/\d+/)?.[0] || '';
-          url = gradeNum
-            ? `https://www.pcgs.com/coinfacts/coin/detail/${encodeURIComponent(pcgsNo)}/${encodeURIComponent(gradeNum)}`
-            : `https://www.pcgs.com/coinfacts/coin/${encodeURIComponent(pcgsNo)}`;
-        } else {
-          // Other authorities — cert lookup via CERT_LOOKUP_URLS template
-          url = certUrlTemplate
-            .replace(/\{certNumber\}/g, encodeURIComponent(certNum))
-            .replace(/\{grade\}/g, encodeURIComponent(item.grade || ''));
-        }
-        const popup = window.open(url, `cert_${authority}_${certNum || pcgsNo}`.replace(/[^a-zA-Z0-9_]/g, '_'),
-          'width=1250,height=800,scrollbars=yes,resizable=yes,toolbar=no,location=no,menubar=no,status=no');
-        if (popup) popup.focus();
-      });
-    } else {
-      gradeSpan.title = authority
-        ? `Graded by ${authority}: ${item.grade}${certNum ? ` — Cert #${certNum}` : ''}`
-        : `Grade: ${item.grade}`;
-    }
-    badge.appendChild(gradeSpan);
-
-    // Verify icon — clickable to trigger PCGS API verification
-    const showVerifyBtn = authority === 'PCGS' && certNum
-      && typeof catalogConfig !== 'undefined' && catalogConfig.isPcgsEnabled()
-      && typeof verifyPcgsCert === 'function';
-    if (showVerifyBtn) {
-      const verifySpan = _el('span', `view-cert-verify${isVerified ? ' pcgs-verified' : ''}`);
-      verifySpan.tabIndex = 0;
-      verifySpan.role = 'button';
-      verifySpan.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); verifySpan.click(); } });
-      verifySpan.dataset.certNumber = certNum;
-      verifySpan.title = isVerified ? `Verified — Cert #${certNum}` : 'Verify cert via PCGS API';
-      verifySpan.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>';
-      verifySpan.addEventListener('click', (e) => {
-        e.stopPropagation();
-        verifySpan.classList.add('pcgs-verifying');
-        verifySpan.title = 'Verifying...';
-        verifyPcgsCert(certNum).then((result) => {
-          verifySpan.classList.remove('pcgs-verifying');
-          if (result.verified) {
-            verifySpan.classList.add('pcgs-verified');
-            // Persist to inventory
-            const idx = inventory.findIndex((inv) => inv.uuid === item.uuid);
-            if (idx >= 0) {
-              inventory[idx].pcgsVerified = true;
-              saveInventory();
-            }
-            const parts = [];
-            if (result.grade) parts.push(`Grade: ${result.grade}`);
-            if (result.population) parts.push(`Pop: ${result.population}`);
-            if (result.popHigher) parts.push(`Pop Higher: ${result.popHigher}`);
-            if (result.priceGuide) parts.push(`Price Guide: $${Number(result.priceGuide).toLocaleString()}`);
-            verifySpan.title = `Verified — ${parts.join(' | ')}`;
-          } else {
-            verifySpan.title = result.error || 'Verification failed';
-            verifySpan.classList.add('pcgs-verify-failed');
-            setTimeout(() => verifySpan.classList.remove('pcgs-verify-failed'), 3000);
-          }
-        }).catch((err) => {
-          verifySpan.classList.remove('pcgs-verifying');
-          verifySpan.title = 'Verification service unavailable';
-          if (typeof debugLog === 'function') debugLog('warn', 'PCGS verify failed:', err);
-        });
-      });
-      badge.appendChild(verifySpan);
-    }
-
-    imgSection.appendChild(badge);
+function _buildImageCertGrade(item, authority, certNum, pcgsNo) {
+  const gradeSpan = _el('span', 'view-cert-grade');
+  gradeSpan.textContent = authority ? `${authority} ${item.grade}` : item.grade;
+  const certUrlTemplate = (typeof CERT_LOOKUP_URLS !== 'undefined' && authority) ? CERT_LOOKUP_URLS[authority] : '';
+  const hasCertLink = certUrlTemplate && (certNum || pcgsNo);
+  const hasCoinFacts = authority === 'PCGS' && pcgsNo;
+  if (hasCertLink || hasCoinFacts) {
+    gradeSpan.classList.add('view-cert-clickable');
+    gradeSpan.title = certNum ? `Look up ${authority} Cert #${certNum}` : `Open ${authority} verification`;
+    gradeSpan.tabIndex = 0;
+    gradeSpan.role = 'button';
+    gradeSpan.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); gradeSpan.click(); } });
+    gradeSpan.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const url = hasCoinFacts
+        ? _buildPcgsCoinFactsUrl(item.grade || '', pcgsNo)
+        : certUrlTemplate.replace(/\{certNumber\}/g, encodeURIComponent(certNum)).replace(/\{grade\}/g, encodeURIComponent(item.grade || ''));
+      const popupName = `cert_${authority}_${certNum || pcgsNo}`.replace(/[^a-zA-Z0-9_]/g, '_');
+      const popup = window.open(url, popupName, 'width=1250,height=800,scrollbars=yes,resizable=yes,toolbar=no,location=no,menubar=no,status=no');
+      if (popup) popup.focus();
+    });
+  } else {
+    gradeSpan.title = authority ? `Graded by ${authority}: ${item.grade}${certNum ? ` — Cert #${certNum}` : ''}` : `Grade: ${item.grade}`;
   }
+  return gradeSpan;
+}
 
-  // --- Inventory section ---
+function _buildPcgsCoinFactsUrl(gradeText, pcgsNo) {
+  const gradeNum = gradeText.match(/\d+/)?.[0] || '';
+  return gradeNum
+    ? `https://www.pcgs.com/coinfacts/coin/detail/${encodeURIComponent(pcgsNo)}/${encodeURIComponent(gradeNum)}`
+    : `https://www.pcgs.com/coinfacts/coin/${encodeURIComponent(pcgsNo)}`;
+}
+
+function _buildPcgsVerifyControl(item, authority, certNum, isVerified, inline) {
+  const showVerifyBtn = authority === 'PCGS' && certNum
+    && typeof catalogConfig !== 'undefined' && catalogConfig.isPcgsEnabled()
+    && typeof verifyPcgsCert === 'function';
+  if (!showVerifyBtn) return null;
+  const cls = inline ? 'view-cert-verify view-cert-verify-inline' : 'view-cert-verify';
+  const verifySpan = _el('span', `${cls}${isVerified ? ' pcgs-verified' : ''}`);
+  verifySpan.tabIndex = 0;
+  verifySpan.role = 'button';
+  verifySpan.dataset.certNumber = certNum;
+  verifySpan.title = isVerified ? `Verified — Cert #${certNum}` : 'Verify cert via PCGS API';
+  verifySpan.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>';
+  verifySpan.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); verifySpan.click(); } });
+  verifySpan.addEventListener('click', (e) => {
+    e.stopPropagation();
+    _verifyPcgsCertAndUpdate(item, certNum, verifySpan, inline);
+  });
+  return verifySpan;
+}
+
+function _verifyPcgsCertAndUpdate(item, certNum, verifyEl, syncImageBadge) {
+  verifyEl.classList.add('pcgs-verifying');
+  verifyEl.title = 'Verifying...';
+  verifyPcgsCert(certNum).then((result) => {
+    verifyEl.classList.remove('pcgs-verifying');
+    if (!result.verified) {
+      verifyEl.title = result.error || 'Verification failed';
+      verifyEl.classList.add('pcgs-verify-failed');
+      setTimeout(() => verifyEl.classList.remove('pcgs-verify-failed'), 3000);
+      return;
+    }
+    verifyEl.classList.add('pcgs-verified');
+    const idx = inventory.findIndex((inv) => inv.uuid === item.uuid);
+    if (idx >= 0) {
+      inventory[idx].pcgsVerified = true;
+      saveInventory();
+    }
+    const parts = [];
+    if (result.grade) parts.push(`Grade: ${result.grade}`);
+    if (result.population) parts.push(`Pop: ${result.population}`);
+    if (result.popHigher) parts.push(`Pop Higher: ${result.popHigher}`);
+    if (result.priceGuide) parts.push(`Price Guide: $${Number(result.priceGuide).toLocaleString()}`);
+    verifyEl.title = `Verified — ${parts.join(' | ')}`;
+    if (syncImageBadge) {
+      const imgBadgeVerify = document.querySelector('#viewItemModal .view-cert-verify:not(.view-cert-verify-inline)');
+      if (imgBadgeVerify) imgBadgeVerify.classList.add('pcgs-verified');
+    }
+  }).catch((err) => {
+    verifyEl.classList.remove('pcgs-verifying');
+    verifyEl.title = 'Verification service unavailable';
+    if (typeof debugLog === 'function') debugLog('warn', 'PCGS verify failed:', err);
+  });
+}
+
+function _buildInventorySection(item, metrics) {
   const invSection = _section('Inventory');
   const invGrid = _el('div', 'view-detail-grid three-col');
   _addDetail(invGrid, 'Metal', item.composition || item.metal || '—');
   _addDetail(invGrid, 'Type', item.type || '—');
   _addDetail(invGrid, 'Year', item.year || '—');
-  _addDetail(invGrid, 'Purity', purity < 1 ? `.${String(purity).replace('0.', '')}` : purity === 1 ? '.999+' : String(purity));
-  _addDetail(invGrid, 'Weight', typeof formatWeight === 'function' ? formatWeight(weight, item.weightUnit) : `${weight} oz`);
-  _addDetail(invGrid, 'Qty', String(qty));
+  _addDetail(invGrid, 'Purity', metrics.purity < 1 ? `.${String(metrics.purity).replace('0.', '')}` : metrics.purity === 1 ? '.999+' : String(metrics.purity));
+  _addDetail(invGrid, 'Weight', typeof formatWeight === 'function' ? formatWeight(metrics.weight, item.weightUnit) : `${metrics.weight} oz`);
+  _addDetail(invGrid, 'Qty', String(metrics.qty));
   invSection.appendChild(invGrid);
-
   const invGrid2 = _el('div', 'view-detail-grid three-col');
-  _addDetail(invGrid2, 'Date', item.date ? (typeof formatDisplayDate === 'function' ? formatDisplayDate(item.date) : item.date) : '—');
-
-  // Source — render as iframe link if it looks like a URL
-  const srcVal = item.purchaseLocation || '—';
-  const srcUrlPattern = /^(https?:\/\/)?[\w.-]+\.(com|net|org|co|io|us|uk|ca|au|de|fr|shop|store)\b/i;
-  if (srcUrlPattern.test(srcVal)) {
-    const srcItem = _detailItem('Source', '');
-    const valEl = srcItem.querySelector('.view-detail-value');
-    if (valEl) {
-      valEl.textContent = '';
-      const srcLink = document.createElement('a');
-      srcLink.href = '#';
-      let srcHref = srcVal;
-      if (!/^https?:\/\//i.test(srcHref)) srcHref = `https://${srcHref}`;
-      srcLink.title = srcHref;
-      srcLink.style.color = 'var(--primary)';
-      srcLink.style.textDecoration = 'none';
-      srcLink.textContent = srcVal.replace(/^(https?:\/\/)?(www\.)?/i, '').replace(/\/(.*)/i, '');
-      srcLink.addEventListener('click', (e) => {
-        e.preventDefault();
-        _openExternalPopup(srcHref, 'source_popup');
-      });
-      valEl.appendChild(srcLink);
-    }
-    invGrid2.appendChild(srcItem);
-  } else {
-    _addDetail(invGrid2, 'Source', srcVal);
-  }
+  const dateVal = item.date ? (typeof formatDisplayDate === 'function' ? formatDisplayDate(item.date) : item.date) : '—';
+  _addDetail(invGrid2, 'Date', dateVal);
+  _appendSourceField(invGrid2, item.purchaseLocation || '—');
   invSection.appendChild(invGrid2);
-
   if (item.storageLocation) {
     const storGrid = _el('div', 'view-detail-grid');
     _addDetail(storGrid, 'Storage', item.storageLocation);
     invSection.appendChild(storGrid);
   }
+  return invSection;
+}
 
-  // --- Valuation section ---
-  const meltValue = currentSpot > 0 ? weightOz * qty * currentSpot * purity : 0;
-  const purchaseTotal = qty * (parseFloat(item.price) || 0);
+function _appendSourceField(container, sourceValue) {
+  const srcUrlPattern = /^(https?:\/\/)?[\w.-]+\.(com|net|org|co|io|us|uk|ca|au|de|fr|shop|store)\b/i;
+  if (!srcUrlPattern.test(sourceValue)) {
+    _addDetail(container, 'Source', sourceValue);
+    return;
+  }
+  const srcItem = _detailItem('Source', '');
+  const valEl = srcItem.querySelector('.view-detail-value');
+  if (valEl) {
+    valEl.textContent = '';
+    const srcLink = document.createElement('a');
+    srcLink.href = '#';
+    const srcHref = /^https?:\/\//i.test(sourceValue) ? sourceValue : `https://${sourceValue}`;
+    srcLink.title = srcHref;
+    srcLink.style.color = 'var(--primary)';
+    srcLink.style.textDecoration = 'none';
+    srcLink.textContent = sourceValue.replace(/^(https?:\/\/)?(www\.)?/i, '').replace(/\/(.*)/i, '');
+    srcLink.addEventListener('click', (e) => { e.preventDefault(); _openExternalPopup(srcHref, 'source_popup'); });
+    valEl.appendChild(srcLink);
+  }
+  container.appendChild(srcItem);
+}
+
+function _buildValuationSection(item, metrics) {
+  const meltValue = metrics.currentSpot > 0 ? metrics.weightOz * metrics.qty * metrics.currentSpot * metrics.purity : 0;
+  const purchaseTotal = metrics.qty * (parseFloat(item.price) || 0);
   const marketVal = parseFloat(item.marketValue) || 0;
-  const retailTotal = marketVal > 0 ? qty * marketVal : meltValue;
+  const retailTotal = marketVal > 0 ? metrics.qty * marketVal : meltValue;
   const gainLoss = retailTotal > 0 ? retailTotal - purchaseTotal : null;
-
   const valSection = _section('Valuation');
   valSection.classList.add('view-valuation-section');
   const valGrid = _el('div', 'view-detail-grid four-col');
-  const purchaseDateStr = item.date
-    ? (typeof formatDisplayDate === 'function' ? formatDisplayDate(item.date) : item.date)
-    : '';
+  const purchaseDateStr = item.date ? (typeof formatDisplayDate === 'function' ? formatDisplayDate(item.date) : item.date) : '';
   const purchaseLabel = purchaseDateStr ? `${formatCurrency(purchaseTotal)} (${purchaseDateStr})` : formatCurrency(purchaseTotal);
   _addDetail(valGrid, 'Purchase', purchaseLabel);
-  _addDetail(valGrid, 'Melt Value', currentSpot > 0 ? formatCurrency(meltValue) : '—');
+  _addDetail(valGrid, 'Melt Value', metrics.currentSpot > 0 ? formatCurrency(meltValue) : '—');
   _addDetail(valGrid, 'Retail', retailTotal > 0 ? formatCurrency(retailTotal) : '—');
-
   if (gainLoss !== null && retailTotal > 0) {
     const glItem = _detailItem('Gain/Loss', (gainLoss >= 0 ? '+' : '') + formatCurrency(gainLoss));
     const valEl = glItem.querySelector('.view-detail-value');
@@ -421,309 +417,261 @@ function buildViewContent(item, index) {
     _addDetail(valGrid, 'Gain/Loss', '—', 'muted');
   }
   valSection.appendChild(valGrid);
+  return valSection;
+}
 
-  // --- Price History section (spot-derived melt + sparse retail overlay) ---
-  // Primary: derive melt value from spotHistory (dense daily data per metal)
-  // Secondary: retail values from itemPriceHistory (sparse, plotted where they exist)
+function _getPriceHistoryContext(item, metrics) {
   const metalName = item.metal || 'Silver';
-  const meltFactor = weightOz * qty * purity; // meltValue = spot * meltFactor
+  const meltFactor = metrics.weightOz * metrics.qty * metrics.purity;
   const spotEntries = (typeof spotHistory !== 'undefined')
-    ? spotHistory
-        .filter(e => e.metal === metalName)
-        .map(e => ({ ts: new Date(e.timestamp).getTime(), spot: e.spot }))
-        .sort((a, b) => a.ts - b.ts)
+    ? spotHistory.filter(e => e.metal === metalName).map(e => ({ ts: new Date(e.timestamp).getTime(), spot: e.spot })).sort((a, b) => a.ts - b.ts)
     : [];
-  // Dedup to one entry per day (last value wins, like sparkline)
   const spotByDay = new Map();
   for (const e of spotEntries) {
     const day = new Date(e.ts).toISOString().slice(0, 10);
     spotByDay.set(day, e);
   }
   const dailySpotEntries = [...spotByDay.values()];
+  const retailEntries = (typeof itemPriceHistory !== 'undefined' && item.uuid) ? (itemPriceHistory[item.uuid] || []).filter(e => e.retail > 0) : [];
+  return {
+    metalName,
+    meltFactor,
+    dailySpotEntries,
+    retailEntries,
+    purchasePerUnit: parseFloat(item.price) || 0,
+    purchaseDate: item.date ? new Date(item.date).getTime() : 0,
+    currentRetail: parseFloat(item.marketValue) || 0,
+  };
+}
 
-  const retailEntries = (typeof itemPriceHistory !== 'undefined' && item.uuid)
-    ? (itemPriceHistory[item.uuid] || []).filter(e => e.retail > 0)
-    : [];
-  const purchasePerUnit = parseFloat(item.price) || 0;
-  const purchaseDate = item.date ? new Date(item.date).getTime() : 0;
-  const currentRetail = parseFloat(item.marketValue) || 0;
+function _buildPriceHistorySection(chartCtx) {
+  if (chartCtx.dailySpotEntries.length < 2) return null;
+  const chartSection = _section('Price History');
+  const rangeBar = _buildChartRangeBar(chartSection, chartCtx);
+  chartSection.appendChild(rangeBar);
+  const chartContainer = _el('div', 'view-chart-container');
+  const canvas = document.createElement('canvas');
+  canvas.id = 'viewPriceHistoryChart';
+  canvas._chartData = {
+    spotEntries: chartCtx.dailySpotEntries,
+    retailEntries: chartCtx.retailEntries,
+    purchasePerUnit: chartCtx.purchasePerUnit,
+    meltFactor: chartCtx.meltFactor,
+    purchaseDate: chartCtx.purchaseDate,
+    currentRetail: chartCtx.currentRetail,
+  };
+  chartContainer.appendChild(canvas);
+  chartSection.appendChild(chartContainer);
+  return chartSection;
+}
 
-  let chartSection = null;
-  if (dailySpotEntries.length >= 2) {
-    chartSection = _section('Price History');
-
-    // Range pill bar
-    const rangeBar = _el('div', 'view-chart-range-bar');
-    // Date picker inputs for custom range
-    const dateRange = _el('div', 'view-chart-date-range');
-    const fromInput = document.createElement('input');
-    fromInput.type = 'date';
-    fromInput.className = 'view-chart-date-input';
-    fromInput.title = 'From date';
-    const toInput = document.createElement('input');
-    toInput.type = 'date';
-    toInput.className = 'view-chart-date-input';
-    toInput.title = 'To date';
-    const todayStr = new Date().toISOString().slice(0, 10);
-    fromInput.max = todayStr;
-    toInput.max = todayStr;
-
-    const dateSep = _el('span', 'view-chart-date-sep');
-    dateSep.textContent = '\u2014';
-    dateRange.appendChild(fromInput);
-    dateRange.appendChild(dateSep);
-    dateRange.appendChild(toInput);
-
-    // Custom range handler — shared by both date inputs
-    const onDateChange = async () => {
-      // Deactivate all pills (custom range mode)
+function _buildChartRangeBar(chartSection, chartCtx) {
+  const rangeBar = _el('div', 'view-chart-range-bar');
+  const dateRange = _buildChartDateRangePicker(rangeBar, chartSection, chartCtx);
+  _VIEW_CHART_RANGES.forEach((days, i) => {
+    if (days === -1 && !chartCtx.purchaseDate) return;
+    const pill = _el('button', 'view-chart-range-pill');
+    pill.type = 'button';
+    pill.textContent = _VIEW_CHART_RANGE_LABELS[i];
+    pill.dataset.days = String(days);
+    const isDefaultPill = _VIEW_CHART_DEFAULT_RANGE === -1 ? (chartCtx.purchaseDate ? days === -1 : days === 30) : days === _VIEW_CHART_DEFAULT_RANGE;
+    if (isDefaultPill) pill.classList.add('active');
+    pill.addEventListener('click', async () => {
       rangeBar.querySelectorAll('.view-chart-range-pill').forEach(p => p.classList.remove('active'));
-      // Cross-constrain min/max
-      if (fromInput.value) toInput.min = fromInput.value;
-      else toInput.min = '';
-      if (toInput.value) fromInput.max = toInput.value;
-      else fromInput.max = todayStr;
-      // Parse timestamps (start of day for From, end of day for To)
-      const fromTs = fromInput.value ? new Date(fromInput.value + 'T00:00:00').getTime() : 0;
-      const toTs = toInput.value ? new Date(toInput.value + 'T23:59:59').getTime() : 0;
-      if (fromTs <= 0 && toTs <= 0) return;
-      const canvas = chartSection.querySelector('#viewPriceHistoryChart');
-      if (canvas) {
-        try {
-          // Async-fetch historical data for custom ranges (may span decades)
-          const fullSpot = await _fetchHistoricalSpotData(metalName, 0, fromTs, toTs);
-          _createPriceHistoryChart(canvas, fullSpot, retailEntries, purchasePerUnit, meltFactor, 0, purchaseDate, currentRetail, fromTs, toTs);
-        } catch (err) {
-          // Fall back to empty dataset on fetch failure (network, parsing errors)
-          console.error('Custom date range fetch failed:', err);
-          _createPriceHistoryChart(canvas, [], retailEntries, purchasePerUnit, meltFactor, 0, purchaseDate, currentRetail, fromTs, toTs);
-        }
-      }
-    };
-    fromInput.addEventListener('change', onDateChange);
-    toInput.addEventListener('change', onDateChange);
-
-    _VIEW_CHART_RANGES.forEach((days, i) => {
-      // Hide "Purchased" pill when no purchase date exists
-      if (days === -1 && !purchaseDate) return;
-      const pill = _el('button', 'view-chart-range-pill');
-      pill.type = 'button';
-      pill.textContent = _VIEW_CHART_RANGE_LABELS[i];
-      pill.dataset.days = String(days);
-      // Default: "Purchased" if purchase date exists, otherwise 30d
-      const isDefaultPill = _VIEW_CHART_DEFAULT_RANGE === -1
-        ? (purchaseDate ? days === -1 : days === 30)
-        : days === _VIEW_CHART_DEFAULT_RANGE;
-      if (isDefaultPill) pill.classList.add('active');
-      pill.addEventListener('click', async () => {
-        rangeBar.querySelectorAll('.view-chart-range-pill').forEach(p => p.classList.remove('active'));
-        pill.classList.add('active');
-        // Clear date inputs (back to pill mode)
-        fromInput.value = '';
-        toInput.value = '';
-        fromInput.max = todayStr;
-        toInput.min = '';
-        const canvas = chartSection.querySelector('#viewPriceHistoryChart');
-        if (canvas) {
-          // "Purchased" pill (-1): calculate days from purchase date to today
-          const effectiveDays = days === -1 && purchaseDate > 0
-            ? Math.max(1, Math.ceil((Date.now() - purchaseDate) / 86400000))
-            : days;
-          if (effectiveDays === 0 || effectiveDays > 180) {
-            try {
-              // "All", long range, or "Purchased" — async-fetch historical year files
-              const fullSpot = await _fetchHistoricalSpotData(metalName, effectiveDays);
-              _createPriceHistoryChart(canvas, fullSpot, retailEntries, purchasePerUnit, meltFactor, effectiveDays, purchaseDate, currentRetail);
-            } catch (err) {
-              // Fall back to in-memory spot data on fetch failure
-              console.error('Range pill fetch failed:', err);
-              _createPriceHistoryChart(canvas, dailySpotEntries, retailEntries, purchasePerUnit, meltFactor, effectiveDays, purchaseDate, currentRetail);
-            }
-          } else {
-            _createPriceHistoryChart(canvas, dailySpotEntries, retailEntries, purchasePerUnit, meltFactor, effectiveDays, purchaseDate, currentRetail);
-          }
-        }
-      });
-      rangeBar.appendChild(pill);
+      pill.classList.add('active');
+      await _onChartRangePillClick(days, dateRange, chartSection, chartCtx);
     });
-    rangeBar.appendChild(dateRange);
-    chartSection.appendChild(rangeBar);
+    rangeBar.appendChild(pill);
+  });
+  rangeBar.appendChild(dateRange.wrap);
+  return rangeBar;
+}
 
-    const chartContainer = _el('div', 'view-chart-container');
-    const canvas = document.createElement('canvas');
-    canvas.id = 'viewPriceHistoryChart';
-    // Stash data for showViewModal to use after DOM insertion
-    canvas._chartData = { spotEntries: dailySpotEntries, retailEntries, purchasePerUnit, meltFactor, purchaseDate, currentRetail };
-    chartContainer.appendChild(canvas);
-    chartSection.appendChild(chartContainer);
-  }
-
-  // --- Grading section (conditional) ---
-  let gradeSection = null;
-  if (item.grade || item.gradingAuthority || item.certNumber) {
-    gradeSection = _section('Grading');
-    const gradeGrid = _el('div', 'view-detail-grid three-col');
-    _addDetail(gradeGrid, 'Grade', item.grade || '—');
-    _addDetail(gradeGrid, 'Authority', item.gradingAuthority || '—');
-    if (item.certNumber) {
-      const certItem = _detailItem('Cert #', item.certNumber);
-      if (item.gradingAuthority && typeof CERT_LOOKUP_URLS !== 'undefined' && CERT_LOOKUP_URLS[item.gradingAuthority]) {
-        const url = CERT_LOOKUP_URLS[item.gradingAuthority]
-          .replace(/{certNumber}/g, encodeURIComponent(item.certNumber))
-          .replace(/{grade}/g, encodeURIComponent(item.grade || ''));
-        const valEl = certItem.querySelector('.view-detail-value');
-        if (valEl) {
-          valEl.textContent = '';
-          const link = document.createElement('a');
-          link.href = url;
-          link.target = '_blank';
-          link.rel = 'noopener noreferrer';
-          link.textContent = item.certNumber;
-          link.style.color = 'var(--primary)';
-          link.title = `Verify on ${item.gradingAuthority}`;
-          valEl.appendChild(link);
-        }
-      }
-      // Add inline verify badge next to cert link (STAK-124)
-      const showInlineVerify = item.gradingAuthority === 'PCGS' && item.certNumber
-        && typeof catalogConfig !== 'undefined' && catalogConfig.isPcgsEnabled()
-        && typeof verifyPcgsCert === 'function';
-      if (showInlineVerify) {
-        const valEl = certItem.querySelector('.view-detail-value');
-        if (valEl) {
-          const isVerified = item.pcgsVerified === true;
-          const inlineVerify = _el('span', `view-cert-verify view-cert-verify-inline${isVerified ? ' pcgs-verified' : ''}`);
-          inlineVerify.tabIndex = 0;
-          inlineVerify.role = 'button';
-          inlineVerify.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); inlineVerify.click(); } });
-          inlineVerify.dataset.certNumber = item.certNumber;
-          inlineVerify.title = isVerified ? `Verified — Cert #${item.certNumber}` : 'Verify cert via PCGS API';
-          inlineVerify.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>';
-          inlineVerify.addEventListener('click', (e) => {
-            e.stopPropagation();
-            inlineVerify.classList.add('pcgs-verifying');
-            inlineVerify.title = 'Verifying...';
-            verifyPcgsCert(item.certNumber).then((result) => {
-              inlineVerify.classList.remove('pcgs-verifying');
-              if (result.verified) {
-                inlineVerify.classList.add('pcgs-verified');
-                const idx = inventory.findIndex((inv) => inv.uuid === item.uuid);
-                if (idx >= 0) { inventory[idx].pcgsVerified = true; saveInventory(); }
-                const parts = [];
-                if (result.grade) parts.push(`Grade: ${result.grade}`);
-                if (result.population) parts.push(`Pop: ${result.population}`);
-                if (result.popHigher) parts.push(`Pop Higher: ${result.popHigher}`);
-                if (result.priceGuide) parts.push(`Price Guide: $${Number(result.priceGuide).toLocaleString()}`);
-                inlineVerify.title = `Verified — ${parts.join(' | ')}`;
-                // Sync the image badge if present
-                const imgBadgeVerify = document.querySelector('#viewItemModal .view-cert-verify:not(.view-cert-verify-inline)');
-                if (imgBadgeVerify) imgBadgeVerify.classList.add('pcgs-verified');
-              } else {
-                inlineVerify.title = result.error || 'Verification failed';
-                inlineVerify.classList.add('pcgs-verify-failed');
-                setTimeout(() => inlineVerify.classList.remove('pcgs-verify-failed'), 3000);
-              }
-            }).catch((err) => {
-              inlineVerify.classList.remove('pcgs-verifying');
-              inlineVerify.title = 'Verification service unavailable';
-              if (typeof debugLog === 'function') debugLog('warn', 'PCGS verify failed:', err);
-            });
-          });
-          valEl.appendChild(inlineVerify);
-        }
-      }
-      gradeGrid.appendChild(certItem);
-    } else {
-      _addDetail(gradeGrid, 'Cert #', '—');
+function _buildChartDateRangePicker(rangeBar, chartSection, chartCtx) {
+  const wrap = _el('div', 'view-chart-date-range');
+  const fromInput = document.createElement('input');
+  fromInput.type = 'date';
+  fromInput.className = 'view-chart-date-input';
+  fromInput.title = 'From date';
+  const toInput = document.createElement('input');
+  toInput.type = 'date';
+  toInput.className = 'view-chart-date-input';
+  toInput.title = 'To date';
+  const todayStr = new Date().toISOString().slice(0, 10);
+  fromInput.max = todayStr;
+  toInput.max = todayStr;
+  const dateSep = _el('span', 'view-chart-date-sep');
+  dateSep.textContent = '\u2014';
+  wrap.appendChild(fromInput);
+  wrap.appendChild(dateSep);
+  wrap.appendChild(toInput);
+  const onDateChange = async () => {
+    rangeBar.querySelectorAll('.view-chart-range-pill').forEach(p => p.classList.remove('active'));
+    if (fromInput.value) toInput.min = fromInput.value; else toInput.min = '';
+    if (toInput.value) fromInput.max = toInput.value; else fromInput.max = todayStr;
+    const fromTs = fromInput.value ? new Date(fromInput.value + 'T00:00:00').getTime() : 0;
+    const toTs = toInput.value ? new Date(toInput.value + 'T23:59:59').getTime() : 0;
+    if (fromTs <= 0 && toTs <= 0) return;
+    const canvas = chartSection.querySelector('#viewPriceHistoryChart');
+    if (!canvas) return;
+    try {
+      const fullSpot = await _fetchHistoricalSpotData(chartCtx.metalName, 0, fromTs, toTs);
+      _createPriceHistoryChart(canvas, fullSpot, chartCtx.retailEntries, chartCtx.purchasePerUnit, chartCtx.meltFactor, 0, chartCtx.purchaseDate, chartCtx.currentRetail, fromTs, toTs);
+    } catch (err) {
+      console.error('Custom date range fetch failed:', err);
+      _createPriceHistoryChart(canvas, [], chartCtx.retailEntries, chartCtx.purchasePerUnit, chartCtx.meltFactor, 0, chartCtx.purchaseDate, chartCtx.currentRetail, fromTs, toTs);
     }
-    gradeSection.appendChild(gradeGrid);
-  }
+  };
+  fromInput.addEventListener('change', onDateChange);
+  toInput.addEventListener('change', onDateChange);
+  return { wrap, fromInput, toInput, todayStr };
+}
 
-  // --- Numista enrichment placeholder (populated async) ---
+async function _onChartRangePillClick(days, dateRange, chartSection, chartCtx) {
+  dateRange.fromInput.value = '';
+  dateRange.toInput.value = '';
+  dateRange.fromInput.max = dateRange.todayStr;
+  dateRange.toInput.min = '';
+  const canvas = chartSection.querySelector('#viewPriceHistoryChart');
+  if (!canvas) return;
+  const effectiveDays = days === -1 && chartCtx.purchaseDate > 0
+    ? Math.max(1, Math.ceil((Date.now() - chartCtx.purchaseDate) / 86400000))
+    : days;
+  if (effectiveDays === 0 || effectiveDays > 180) {
+    try {
+      const fullSpot = await _fetchHistoricalSpotData(chartCtx.metalName, effectiveDays);
+      _createPriceHistoryChart(canvas, fullSpot, chartCtx.retailEntries, chartCtx.purchasePerUnit, chartCtx.meltFactor, effectiveDays, chartCtx.purchaseDate, chartCtx.currentRetail);
+    } catch (err) {
+      console.error('Range pill fetch failed:', err);
+      _createPriceHistoryChart(canvas, chartCtx.dailySpotEntries, chartCtx.retailEntries, chartCtx.purchasePerUnit, chartCtx.meltFactor, effectiveDays, chartCtx.purchaseDate, chartCtx.currentRetail);
+    }
+    return;
+  }
+  _createPriceHistoryChart(canvas, chartCtx.dailySpotEntries, chartCtx.retailEntries, chartCtx.purchasePerUnit, chartCtx.meltFactor, effectiveDays, chartCtx.purchaseDate, chartCtx.currentRetail);
+}
+
+function _buildGradingSection(item) {
+  if (!item.grade && !item.gradingAuthority && !item.certNumber) return null;
+  const gradeSection = _section('Grading');
+  const gradeGrid = _el('div', 'view-detail-grid three-col');
+  _addDetail(gradeGrid, 'Grade', item.grade || '—');
+  _addDetail(gradeGrid, 'Authority', item.gradingAuthority || '—');
+  const certItem = _buildGradingCertItem(item);
+  if (certItem) gradeGrid.appendChild(certItem); else _addDetail(gradeGrid, 'Cert #', '—');
+  gradeSection.appendChild(gradeGrid);
+  return gradeSection;
+}
+
+function _buildGradingCertItem(item) {
+  if (!item.certNumber) return null;
+  const certItem = _detailItem('Cert #', item.certNumber);
+  _attachGradingCertLink(certItem, item);
+  const valEl = certItem.querySelector('.view-detail-value');
+  if (!valEl) return certItem;
+  const inlineVerify = _buildPcgsVerifyControl(item, item.gradingAuthority || '', item.certNumber, item.pcgsVerified === true, true);
+  if (inlineVerify) valEl.appendChild(inlineVerify);
+  return certItem;
+}
+
+function _attachGradingCertLink(certItem, item) {
+  if (!item.gradingAuthority || typeof CERT_LOOKUP_URLS === 'undefined' || !CERT_LOOKUP_URLS[item.gradingAuthority]) return;
+  const url = CERT_LOOKUP_URLS[item.gradingAuthority]
+    .replace(/{certNumber}/g, encodeURIComponent(item.certNumber))
+    .replace(/{grade}/g, encodeURIComponent(item.grade || ''));
+  const valEl = certItem.querySelector('.view-detail-value');
+  if (!valEl) return;
+  valEl.textContent = '';
+  const link = document.createElement('a');
+  link.href = url;
+  link.target = '_blank';
+  link.rel = 'noopener noreferrer';
+  link.textContent = item.certNumber;
+  link.style.color = 'var(--primary)';
+  link.title = `Verify on ${item.gradingAuthority}`;
+  valEl.appendChild(link);
+}
+
+function _buildNumistaPlaceholderSection() {
   const numistaPlaceholder = _el('div', '');
   numistaPlaceholder.id = 'viewNumistaSection';
+  return numistaPlaceholder;
+}
 
-  // --- Tags section (STAK-126) ---
-  let tagsSection = null;
-  if (typeof buildTagSection === 'function') {
-    tagsSection = buildTagSection(item.uuid, [], () => {
-      // Re-render filter chips when tags change
-      if (typeof renderActiveFilters === 'function') renderActiveFilters();
-    });
-  }
+function _buildTagsSection(item) {
+  if (typeof buildTagSection !== 'function') return null;
+  return buildTagSection(item.uuid, [], () => {
+    if (typeof renderActiveFilters === 'function') renderActiveFilters();
+  });
+}
 
-  // --- Notes section (conditional) ---
-  let notesSection = null;
-  if (item.notes) {
-    notesSection = _section('Notes');
-    const noteText = _el('div', 'view-notes-text');
-    noteText.textContent = item.notes;
-    notesSection.appendChild(noteText);
-  }
+function _buildNotesSection(item) {
+  if (!item.notes) return null;
+  const notesSection = _section('Notes');
+  const noteText = _el('div', 'view-notes-text');
+  noteText.textContent = item.notes;
+  notesSection.appendChild(noteText);
+  return notesSection;
+}
 
-  // =========================================================================
-  // Append sections in user-configured order
-  // =========================================================================
-
-  const sectionBuilders = {
-    images:       () => imgSection,
-    priceHistory: () => chartSection,
-    valuation:    () => valSection,
-    inventory:    () => invSection,
-    grading:      () => gradeSection,
-    numista:      () => numistaPlaceholder,
-    tags:         () => tagsSection,
-    notes:        () => notesSection,
-  };
-
-  const sectionConfig = typeof getViewModalSectionConfig === 'function'
-    ? getViewModalSectionConfig() : VIEW_MODAL_SECTION_DEFAULTS;
-
+function _appendSectionsInConfiguredOrder(frag, sectionBuilders) {
+  const sectionConfig = typeof getViewModalSectionConfig === 'function' ? getViewModalSectionConfig() : VIEW_MODAL_SECTION_DEFAULTS;
   for (const sec of sectionConfig) {
     if (!sec.enabled) continue;
     const builder = sectionBuilders[sec.id];
-    if (builder) {
-      const el = builder();
-      if (el) frag.appendChild(el);
-    }
+    if (!builder) continue;
+    const el = builder();
+    if (el) frag.appendChild(el);
   }
+}
 
-  // --- Header action buttons (eBay, Edit, Close) ---
+function _renderHeaderActions(item, index) {
   const headerActions = document.getElementById('viewHeaderActions');
-  if (headerActions) {
-    headerActions.textContent = '';
+  if (!headerActions) return;
+  headerActions.textContent = '';
+  const ebayBtn = document.createElement('button');
+  ebayBtn.className = 'view-ebay-btn';
+  ebayBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" style="fill:currentColor;margin-right:4px;vertical-align:-2px;"><circle cx="10.5" cy="10.5" r="6" fill="none" stroke="currentColor" stroke-width="2.5"/><line x1="15" y1="15" x2="21" y2="21" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>eBay';
+  ebayBtn.title = 'Search eBay for this item';
+  ebayBtn.addEventListener('click', () => {
+    const searchTerm = (item.metal || '') + (item.year ? ' ' + item.year : '') + ' ' + (item.name || '');
+    if (typeof openEbayBuySearch === 'function') openEbayBuySearch(searchTerm);
+    else if (typeof openEbaySoldSearch === 'function') openEbaySoldSearch(searchTerm);
+  });
+  const editBtn = document.createElement('button');
+  editBtn.className = 'view-edit-btn';
+  editBtn.textContent = 'Edit';
+  editBtn.addEventListener('click', () => {
+    closeViewModal();
+    if (typeof editItem === 'function') editItem(index);
+  });
+  const closeBtn = document.createElement('button');
+  closeBtn.className = 'view-close-btn';
+  closeBtn.textContent = 'Close';
+  closeBtn.addEventListener('click', closeViewModal);
+  headerActions.appendChild(ebayBtn);
+  headerActions.appendChild(editBtn);
+  headerActions.appendChild(closeBtn);
+}
 
-    const ebayBtn = document.createElement('button');
-    ebayBtn.className = 'view-ebay-btn';
-    ebayBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" style="fill:currentColor;margin-right:4px;vertical-align:-2px;"><circle cx="10.5" cy="10.5" r="6" fill="none" stroke="currentColor" stroke-width="2.5"/><line x1="15" y1="15" x2="21" y2="21" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>eBay';
-    ebayBtn.title = 'Search eBay for this item';
-    ebayBtn.addEventListener('click', () => {
-      const searchTerm = (item.metal || '') + (item.year ? ' ' + item.year : '') + ' ' + (item.name || '');
-      if (typeof openEbayBuySearch === 'function') {
-        openEbayBuySearch(searchTerm);
-      } else if (typeof openEbaySoldSearch === 'function') {
-        openEbaySoldSearch(searchTerm);
-      }
-    });
+function buildViewContent(item, index) {
+  const frag = document.createDocumentFragment();
+  const metrics = _getViewMetrics(item);
+  _renderHeaderMeta(item, metrics);
 
-    const editBtn = document.createElement('button');
-    editBtn.className = 'view-edit-btn';
-    editBtn.textContent = 'Edit';
-    editBtn.addEventListener('click', () => {
-      closeViewModal();
-      if (typeof editItem === 'function') editItem(index);
-    });
+  const chartCtx = _getPriceHistoryContext(item, metrics);
+  const sectionBuilders = {
+    images:       () => _buildImageSection(item, metrics),
+    priceHistory: () => _buildPriceHistorySection(chartCtx),
+    valuation:    () => _buildValuationSection(item, metrics),
+    inventory:    () => _buildInventorySection(item, metrics),
+    grading:      () => _buildGradingSection(item),
+    numista:      () => _buildNumistaPlaceholderSection(),
+    tags:         () => _buildTagsSection(item),
+    notes:        () => _buildNotesSection(item),
+  };
 
-    const closeBtn = document.createElement('button');
-    closeBtn.className = 'view-close-btn';
-    closeBtn.textContent = 'Close';
-    closeBtn.addEventListener('click', closeViewModal);
-
-    headerActions.appendChild(ebayBtn);
-    headerActions.appendChild(editBtn);
-    headerActions.appendChild(closeBtn);
-  }
-
+  _appendSectionsInConfiguredOrder(frag, sectionBuilders);
+  _renderHeaderActions(item, index);
   return frag;
 }
 
