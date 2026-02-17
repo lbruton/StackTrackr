@@ -263,42 +263,6 @@ const generateCategorySummary = (inventory) => {
 };
 
 /**
- * Checks if a filter field/value combination has matching data in the given inventory.
- *
- * @param {string} field - The field name (e.g., 'metal', 'type', 'name')
- * @param {string} value - The filter value
- * @param {Array<Object>} inventory - The inventory to check against
- * @returns {boolean} True if there are items matching this filter
- */
-const hasMatchingData = (field, value, inventory) => {
-  if (!inventory || inventory.length === 0) return false;
-  
-  return inventory.some(item => {
-    switch (field) {
-      case 'metal':
-        const itemMetal = getCompositionFirstWords(item.composition || item.metal || '').toLowerCase();
-        return itemMetal === value.toLowerCase();
-      case 'type':
-        return item.type === value;
-      case 'name':
-        return item.name === value;
-      case 'purchaseLocation':
-        return item.purchaseLocation === value;
-      case 'storageLocation':
-        return item.storageLocation === value;
-      case 'tags':
-        if (typeof getItemTags === 'function') {
-          return getItemTags(item.uuid).some(t => t.toLowerCase() === value.toLowerCase());
-        }
-        return false;
-      default:
-        const fieldVal = String(item[field] ?? '').toLowerCase();
-        return fieldVal === value.toLowerCase();
-    }
-  });
-};
-
-/**
  * Renders active filter chips beneath the search bar.
  * Updates the filter chip container based on current filters and inventory.
  */

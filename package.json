@@ -1,0 +1,12 @@
+{
+  "name": "staktrakr",
+  "private": true,
+  "version": "3.30.07",
+  "description": "Precious metals inventory tracker",
+  "scripts": {
+    "lint": "eslint js/*.js sw.js"
+  },
+  "devDependencies": {
+    "eslint": "^9.21.0"
+  }
+}
