@@ -4855,7 +4855,7 @@ a.about-badge:hover {
 }
 
 .search-save-btn {
-  display: none;
+  display: inline-flex;
   align-items: center;
   gap: 0.35rem;
   padding: 0.5rem 0.75rem;
@@ -4869,6 +4869,12 @@ a.about-badge:hover {
 .search-save-btn:hover {
   color: var(--primary);
   border-color: var(--primary);
+}
+
+.search-save-btn.is-disabled,
+.search-save-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .search-save-btn:focus-visible {
