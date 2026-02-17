@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.30.03] - 2026-02-17
+
+### Fixed — STAK-130: PumpkinCrouton Patch — Purity Input & Save Fix
+
+- **Fixed**: Purity dropdown now includes .9995 (standard pure platinum) as a preset option (STAK-130)
+- **Fixed**: Custom purity input accepts 4 decimal places instead of 3 (STAK-130)
+- **Fixed**: Hidden custom purity input no longer blocks form submission — resolves save corruption where no items could be edited after entering an invalid custom purity value (STAK-130)
+- **Fixed**: Duplicate item preserves original purchase date instead of defaulting to today (STAK-130)
+
+Thanks to u/PumpkinCrouton for finding and reporting this bug.
+
+---
+
 ## [3.30.02] - 2026-02-16
 
 ### Fixed — Keyless Provider Fixes & Hourly History Pull
