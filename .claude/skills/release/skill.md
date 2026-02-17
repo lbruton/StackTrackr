@@ -1,7 +1,7 @@
 ---
 name: release
 description: Release workflow — version bump, changelog, announcements, commit, and PR.
-allowed-tools: Bash, Read, Write, Edit, Grep, Glob, mcp__linear-server__*
+allowed-tools: Bash, Read, Write, Edit, Grep, Glob
 ---
 
 # Release — StakTrakr
@@ -27,7 +27,7 @@ Before gathering release context, run the `/seed-sync` workflow to check for uns
 
 1. `git log --oneline main..dev` — list all commits on dev that aren't on main yet
 2. `git diff --stat main..dev` — summary of files changed
-3. Check Linear for any **In Progress** or recently **Done** issues on the StakTrakr team (ID: `f876864d-ff80-4231-ae6c-a8e5cb69aca4`) that relate to commits on dev
+3. (Optional — requires Linear MCP) Check Linear for any **In Progress** or recently **Done** issues on the StakTrakr team (ID: `f876864d-ff80-4231-ae6c-a8e5cb69aca4`) that relate to commits on dev
 
 ### Step 2: Read current state
 
@@ -133,7 +133,7 @@ Format rules:
 - **What's New**: Keep only the **3–5 most recent** entries (lines between `## What's New` and `## Development Roadmap`). Delete older entries beyond 5.
 - **Development Roadmap**: Keep only the **3–4 most relevant** items. Remove completed items (anything shipped in this release or earlier). If the roadmap has grown beyond 4 items, trim the lowest-priority entries and note which were removed in the release plan output.
 
-Read `ROADMAP.md` and Linear backlog if needed to determine which roadmap items are still relevant vs. completed.
+Read `ROADMAP.md` (and Linear backlog if MCP is available) to determine which roadmap items are still relevant vs. completed.
 
 #### about.js — `getEmbeddedWhatsNew()`
 
@@ -228,7 +228,7 @@ If there are other uncommitted changes beyond the 5 version files, ask the user 
    )"
    ```
 
-3. If Linear issues are referenced, update their status to **Done**.
+3. (Optional — requires Linear MCP) If Linear issues are referenced and Linear MCP is available, update their status to **Done**.
 
 ## Phase 5: GitHub Release & Tag
 
@@ -295,7 +295,7 @@ Version:  vNEW_VERSION
 Commit:   [hash] [message]
 PR:       #XX — [url]
 Release:  https://github.com/lbruton/StakTrakr/releases/tag/vNEW_VERSION
-Linear:   STAK-XX → Done (if applicable)
+Linear:   STAK-XX → Done (if Linear MCP available)
 
 Next: merge the PR on GitHub when ready (release tag already created).
 ```
