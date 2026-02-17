@@ -58,6 +58,7 @@ const CORE_ASSETS = [
   './js/about.js',
   './js/customMapping.js',
   './js/settings.js',
+  './js/settings-listeners.js',
   './js/bulkEdit.js',
   './js/events.js',
   './js/init.js',
