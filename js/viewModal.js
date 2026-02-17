@@ -158,11 +158,9 @@ function closeViewModal() {
 // ---------------------------------------------------------------------------
 
 /**
- * Build the full view modal body as a DocumentFragment.
- * Sections are built eagerly then appended in user-configured order.
+ * Compute shared metrics used by all view modal section renderers.
  * @param {Object} item - Inventory item
- * @param {number} index - Item index for edit button
- * @returns {DocumentFragment}
+ * @returns {Object} Metrics object with currentSpot, qty, weight, purity, isGb, weightOz, metalColor
  */
 function _getViewMetrics(item) {
   const metalKey = (item.metal || 'silver').toLowerCase();
@@ -653,6 +651,13 @@ function _renderHeaderActions(item, index) {
   headerActions.appendChild(closeBtn);
 }
 
+/**
+ * Build the full view modal body as a DocumentFragment.
+ * Sections are built eagerly then appended in user-configured order.
+ * @param {Object} item - Inventory item
+ * @param {number} index - Item index for edit button
+ * @returns {DocumentFragment}
+ */
 function buildViewContent(item, index) {
   const frag = document.createDocumentFragment();
   const metrics = _getViewMetrics(item);
@@ -679,13 +684,6 @@ function buildViewContent(item, index) {
 // Async loaders
 // ---------------------------------------------------------------------------
 
-/**
- * Load coin images from IndexedDB cache → CDN URL fallback.
- * Returns true if images were found from cache or item URLs.
- * @param {Object} item
- * @param {HTMLElement} container
- * @returns {Promise<boolean>} true if images loaded from cache/item
- */
 /**
  * Load coin images from IndexedDB cache → CDN URL fallback.
  * @param {Object} item
