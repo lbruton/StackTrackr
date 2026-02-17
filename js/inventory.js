@@ -397,13 +397,19 @@ const restoreBackupZip = async (file) => {
 
     // Restore item tags (STAK-126)
     const itemTagsStr = await zip.file("item_tags.json")?.async("string");
+    let restoredTags = null;
     if (itemTagsStr) {
-      const itemTagsObj = JSON.parse(itemTagsStr);
-      if (itemTagsObj.tags && typeof itemTagsObj.tags === 'object') {
-        itemTags = itemTagsObj.tags;
-        if (typeof saveItemTags === 'function') saveItemTags();
+      try {
+        const itemTagsObj = JSON.parse(itemTagsStr);
+        if (itemTagsObj.tags && typeof itemTagsObj.tags === 'object') {
+          restoredTags = itemTagsObj.tags;
+        }
+      } catch (e) {
+        debugWarn('restoreBackupZip: item_tags.json parse error', e);
       }
     }
+    itemTags = restoredTags || {};
+    if (typeof saveItemTags === 'function') saveItemTags();
 
     // Restore cached coin images (STACK-88)
     if (window.imageCache?.isAvailable()) {
@@ -2771,6 +2777,8 @@ const importJson = (file, override = false) => {
       let processed = 0;
       let importedCount = 0;
 
+      const pendingTagsByUuid = new Map();
+
       for (const [index, raw] of data.entries()) {
         processed++;
         debugLog('importJson item', index + 1, JSON.stringify(raw));
@@ -2879,21 +2887,20 @@ const importJson = (file, override = false) => {
         // STAK-126: Import tags from JSON if present
         if (typeof addItemTag === 'function') {
           const jsonTags = raw.tags;
+          let pendingTags = [];
           if (Array.isArray(jsonTags)) {
-            jsonTags.forEach(tag => addItemTag(processedItem.uuid, String(tag).trim(), false));
+            pendingTags = jsonTags.map(tag => String(tag).trim()).filter(Boolean);
           } else if (typeof jsonTags === 'string' && jsonTags.trim()) {
-            jsonTags.split(';').map(t => t.trim()).filter(Boolean).forEach(tag => {
-              addItemTag(processedItem.uuid, tag, false);
-            });
+            pendingTags = jsonTags.split(';').map(t => t.trim()).filter(Boolean);
+          }
+          if (pendingTags.length > 0) {
+            pendingTagsByUuid.set(processedItem.uuid, pendingTags);
           }
         }
 
         importedCount++;
         updateImportProgress(processed, importedCount, totalItems);
       }
-
-      // STAK-126: Persist any imported tags
-      if (typeof saveItemTags === 'function') saveItemTags();
 
       endImportProgress();
 
@@ -2936,6 +2943,16 @@ const importJson = (file, override = false) => {
 
       if (deduped.length === 0) {
         return alert('No items to import.');
+      }
+
+      if (typeof addItemTag === 'function') {
+        for (const item of deduped) {
+          const pendingTags = pendingTagsByUuid.get(item.uuid);
+          if (pendingTags && pendingTags.length) {
+            pendingTags.forEach(tag => addItemTag(item.uuid, tag, false));
+          }
+        }
+        if (typeof saveItemTags === 'function') saveItemTags();
       }
 
       for (const item of deduped) {
