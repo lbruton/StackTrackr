@@ -744,7 +744,7 @@ const FILTER_CHIP_CATEGORY_DEFAULTS = [
   { id: 'grade',            label: 'Grades',            enabled: true, group: null },
   { id: 'numistaId',        label: 'Numista IDs',       enabled: true, group: null },
   { id: 'purity',           label: 'Purity',            enabled: true, group: null },
-  { id: 'tags',             label: 'Tags',              enabled: false, group: null },
+  { id: 'tags',             label: 'Tags',              enabled: true, group: null },
 ];
 
 /**
@@ -887,8 +887,8 @@ const VIEW_MODAL_SECTION_DEFAULTS = [
   { id: 'inventory',    label: 'Inventory details',  enabled: true },
   { id: 'grading',      label: 'Grading',            enabled: true },
   { id: 'numista',      label: 'Numista data',       enabled: true },
-  { id: 'tags',         label: 'Tags',               enabled: true },
   { id: 'notes',        label: 'Notes',              enabled: true },
+  { id: 'tags',         label: 'Tags',               enabled: true },
 ];
 
 /** Loads the view modal section config from localStorage, merged with defaults. */
