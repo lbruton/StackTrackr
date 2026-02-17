@@ -783,3 +783,81 @@ const bindCardClickHandler = (container) => {
   });
 };
 
+// ---------------------------------------------------------------------------
+// Card Sort Bar — sort controls + style toggle (STAK-131)
+// ---------------------------------------------------------------------------
+
+/** @type {boolean} Whether card sort bar event listeners have been bound */
+let _cardSortBarBound = false;
+
+/**
+ * Updates the card sort bar UI to reflect current sort state and card style.
+ * Called from renderTable() whenever card view is active.
+ */
+const updateCardSortBar = () => {
+  const bar = document.getElementById('cardSortBar');
+  if (!bar) return;
+
+  // Sync sort dropdown with current sortColumn
+  const colSelect = document.getElementById('cardSortColumn');
+  if (colSelect && colSelect.value !== String(sortColumn)) {
+    colSelect.value = String(sortColumn);
+  }
+
+  // Sync direction button
+  const dirBtn = document.getElementById('cardSortDirBtn');
+  if (dirBtn) {
+    dirBtn.setAttribute('data-dir', sortDirection);
+    dirBtn.title = sortDirection === 'asc' ? 'Ascending — click to reverse' : 'Descending — click to reverse';
+  }
+
+  // Sync card style toggle
+  const style = getCardStyle();
+  const styleToggle = document.getElementById('cardStyleToggle');
+  if (styleToggle) {
+    styleToggle.querySelectorAll('.chip-sort-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.style === style);
+    });
+  }
+};
+
+/**
+ * Binds event listeners on the card sort bar (once).
+ */
+const initCardSortBar = () => {
+  if (_cardSortBarBound) return;
+  _cardSortBarBound = true;
+
+  // Sort column dropdown
+  const colSelect = document.getElementById('cardSortColumn');
+  if (colSelect) {
+    colSelect.addEventListener('change', () => {
+      sortColumn = parseInt(colSelect.value, 10);
+      if (typeof renderTable === 'function') renderTable();
+    });
+  }
+
+  // Sort direction toggle
+  const dirBtn = document.getElementById('cardSortDirBtn');
+  if (dirBtn) {
+    dirBtn.addEventListener('click', () => {
+      sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+      if (typeof renderTable === 'function') renderTable();
+    });
+  }
+
+  // Card style A/B/C toggle
+  const styleToggle = document.getElementById('cardStyleToggle');
+  if (styleToggle) {
+    styleToggle.addEventListener('click', (e) => {
+      const btn = e.target.closest('.chip-sort-btn');
+      if (!btn || !btn.dataset.style) return;
+      localStorage.setItem(CARD_STYLE_KEY, btn.dataset.style);
+      // Sync settings select if open
+      const styleSelect = document.getElementById('settingsCardStyle');
+      if (styleSelect) styleSelect.value = btn.dataset.style;
+      if (typeof renderTable === 'function') renderTable();
+    });
+  }
+};
+

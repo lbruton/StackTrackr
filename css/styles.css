@@ -9030,6 +9030,78 @@ th {
    CARD VIEW STYLES — Selectable card designs A/B/C/D (STAK-118)
    ============================================================================= */
 
+/* Card sort bar — sort dropdown + direction toggle + card style toggle (STAK-131) */
+.card-sort-bar {
+  display: none;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-sm);
+  padding: 0.4rem 0.75rem;
+  margin: 0 auto 0.5rem;
+  max-width: 1400px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.card-sort-left,
+.card-sort-right {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.card-sort-bar .control-label {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.card-sort-bar .control-select {
+  min-width: 7rem;
+  font-size: 0.8rem;
+  padding: 0.2rem 1.4rem 0.2rem 0.4rem;
+}
+
+.card-sort-dir-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.card-sort-dir-btn:hover {
+  background: var(--bg-secondary);
+}
+
+/* Arrow visibility based on data attribute */
+.card-sort-dir-btn .sort-arrow-down { display: none; }
+.card-sort-dir-btn .sort-arrow-up { display: block; }
+.card-sort-dir-btn[data-dir="desc"] .sort-arrow-up { display: none; }
+.card-sort-dir-btn[data-dir="desc"] .sort-arrow-down { display: block; }
+
+/* Mobile: stack sort bar controls */
+@media (max-width: 480px) {
+  .card-sort-bar {
+    justify-content: center;
+    gap: var(--spacing-xs);
+    padding: 0.35rem 0.5rem;
+  }
+  .card-sort-left,
+  .card-sort-right {
+    flex: 1 1 100%;
+    justify-content: center;
+  }
+}
+
 /* Container — hidden by default, JS toggles display */
 .card-view-grid {
   display: none;
