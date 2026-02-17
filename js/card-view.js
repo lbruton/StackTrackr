@@ -3,18 +3,22 @@
 
 /**
  * Returns the active card style from localStorage.
- * @returns {'A'|'B'|'C'}
+ * @returns {'A'|'B'|'C'|'D'}
  */
 const getCardStyle = () => localStorage.getItem(CARD_STYLE_KEY) || 'A';
 
 /**
  * Returns true when the card view should be rendered instead of the table.
  * Card view activates on mobile (≤1350px) or when the desktop toggle is on.
+ * Style D is the accessible table mode — it never switches to cards.
  * @returns {boolean}
  */
-const isCardViewActive = () =>
-  window.innerWidth <= 1350 ||
-  document.body.classList.contains('force-card-view');
+const isCardViewActive = () => {
+  // Style D is always table mode, regardless of viewport width
+  if (getCardStyle() === 'D') return false;
+  return window.innerWidth <= 1350 ||
+    document.body.classList.contains('force-card-view');
+};
 
 // ---------------------------------------------------------------------------
 // SVG Sparkline helpers
@@ -789,6 +793,15 @@ const bindCardClickHandler = (container) => {
 
 /** @type {boolean} Whether card sort bar event listeners have been bound */
 let _cardSortBarBound = false;
+
+/**
+ * Updates the body data-card-style attribute to enable Style D CSS.
+ * Called from renderTable() to sync body state with active card style.
+ */
+const updateBodyCardStyle = () => {
+  const style = getCardStyle();
+  document.body.setAttribute('data-card-style', style);
+};
 
 /**
  * Updates the card sort bar UI to reflect current sort state and card style.

@@ -737,6 +737,7 @@
                 <button type="button" class="chip-sort-btn active" data-style="A" title="Chart cards">A</button>
                 <button type="button" class="chip-sort-btn" data-style="B" title="Hero cards">B</button>
                 <button type="button" class="chip-sort-btn" data-style="C" title="Split cards">C</button>
+                <button type="button" class="chip-sort-btn" data-style="D" title="Accessible table">D</button>
               </div>
             </div>
           </div>
@@ -1803,20 +1804,21 @@
                 </div>
               </div>
 
-              <!-- ── Card View (STAK-118) ── -->
-              <h3>Card View</h3>
+              <!-- ── View Style (STAK-118) ── -->
+              <h3>View Style</h3>
               <div class="settings-group">
-                <div class="settings-group-label">Card style</div>
-                <p class="settings-subtext">Choose the card layout used in mobile and optional desktop card view.</p>
+                <div class="settings-group-label">View style</div>
+                <p class="settings-subtext">Choose the layout style. A/B/C are card layouts (used at ≤1350px), D is an accessible table with horizontal scroll.</p>
                 <select id="settingsCardStyle">
                   <option value="A">A: Sparkline Header</option>
                   <option value="B">B: Full-Bleed Overlay</option>
                   <option value="C">C: Split Card</option>
+                  <option value="D">D: List (Accessible Table)</option>
                 </select>
               </div>
               <div class="settings-group">
                 <div class="settings-group-label">Desktop card view</div>
-                <p class="settings-subtext">Show cards instead of the table on wide screens. Cards are always used on mobile.</p>
+                <p class="settings-subtext">Show cards instead of the table on wide screens (only applies to styles A/B/C). Cards are always used on mobile for A/B/C, Style D is always table mode.</p>
                 <div class="chip-sort-toggle" id="settingsDesktopCardView">
                   <button type="button" class="chip-sort-btn" data-val="yes">On</button>
                   <button type="button" class="chip-sort-btn" data-val="no">Off</button>

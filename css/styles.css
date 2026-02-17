@@ -9615,6 +9615,69 @@ body.force-card-view .table-footer-controls select {
 }
 
 /* =============================================================================
+   STYLE D — Accessible Table Mode (STAK-XXX)
+   ============================================================================= */
+
+/* Style D is a table mode with enhanced accessibility for users at high zoom
+   or with low vision. It renders the standard HTML table with:
+   - Taller rows (≥44px WCAG 2.5.5 touch target size)
+   - Horizontal scroll with sticky headers
+   - Always visible scrollbar for discoverability
+   Style D never switches to card view, even at ≤1350px. */
+
+body[data-card-style="D"] .portal-scroll {
+  /* Horizontal scroll container with always-visible scrollbar */
+  overflow-x: auto;
+  overflow-y: auto;
+  /* Modern scrollbar styling for horizontal scroll discoverability */
+  scrollbar-width: auto;
+  scrollbar-color: var(--primary) var(--bg-secondary);
+}
+
+body[data-card-style="D"] .portal-scroll::-webkit-scrollbar {
+  height: 12px;
+  width: 8px;
+}
+
+body[data-card-style="D"] .portal-scroll::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+}
+
+body[data-card-style="D"] .portal-scroll::-webkit-scrollbar-thumb {
+  background-color: var(--primary);
+  border-radius: var(--radius);
+}
+
+body[data-card-style="D"] .portal-scroll::-webkit-scrollbar-thumb:hover {
+  background-color: var(--primary-hover);
+}
+
+/* Taller rows for touch targets (WCAG 2.5.5) */
+body[data-card-style="D"] #inventoryTable tbody tr {
+  min-height: 44px;
+  height: auto;
+}
+
+body[data-card-style="D"] #inventoryTable td {
+  padding: 0.75rem 0.5rem;
+  vertical-align: middle;
+}
+
+/* Sticky headers remain visible during horizontal scroll */
+body[data-card-style="D"] #inventoryTable thead th {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--bg-secondary);
+}
+
+/* Ensure table doesn't collapse in horizontal scroll */
+body[data-card-style="D"] #inventoryTable {
+  min-width: 100%;
+  width: max-content;
+}
+
+/* =============================================================================
    ITEM PRICE HISTORY — Management UI (STAK-109)
    ============================================================================= */
 

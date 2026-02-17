@@ -659,7 +659,7 @@ const ALLOWED_STORAGE_KEYS = [
   "numistaOverridePersonal",           // boolean string: "true"/"false" — Numista API overrides user pattern images
   "tableImagesEnabled",                // boolean string: "true"/"false" — show thumbnail images in table rows
   "tableImageSides",                   // string: "both"|"obverse"|"reverse" — which sides to show in table (STAK-118)
-  CARD_STYLE_KEY,                        // string: "A"|"B"|"C" — card view style (STAK-118)
+  CARD_STYLE_KEY,                        // string: "A"|"B"|"C"|"D" — card/table view style (STAK-118)
   DESKTOP_CARD_VIEW_KEY,                 // boolean string: "true"/"false" — desktop card view (STAK-118)
   ITEM_TAGS_KEY,                           // JSON object: per-item tags keyed by UUID (STAK-126)
 ];

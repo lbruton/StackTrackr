@@ -1335,6 +1335,10 @@ const renderTable = () => {
     // STAK-131: Card sort bar + card view rendering branch
     const cardSortBar = document.getElementById('cardSortBar');
     const footerSelect = document.querySelector('.table-footer-controls select');
+    
+    // Update body data attribute for Style D CSS (STAK-XXX)
+    if (typeof updateBodyCardStyle === 'function') updateBodyCardStyle();
+    
     if (typeof isCardViewActive === 'function' && isCardViewActive()) {
       const cardGrid = safeGetElement('cardViewGrid');
       const portalScroll = document.querySelector('.portal-scroll');
@@ -3363,6 +3367,85 @@ document.addEventListener('click', (e) => {
   e.stopPropagation();
   startCellEdit(idx, field, td);
 }, true); // capture phase
+
+/**
+ * Long-press to edit — accessibility feature for users who cannot shift+click.
+ * Triggers inline edit after ~500ms press, cancels cleanly on scroll/drag.
+ */
+(() => {
+  let longPressTimer = null;
+  let longPressTarget = null;
+  let startX = 0;
+  let startY = 0;
+  const LONG_PRESS_DURATION = 500; // ms
+  const MOVEMENT_THRESHOLD = 10; // px
+
+  const EDITABLE = {
+    name: 'name',
+    qty: 'qty',
+    weight: 'weight',
+    purchasePrice: 'price',
+    retailPrice: 'marketValue',
+    purchaseLocation: 'purchaseLocation'
+  };
+
+  const clearLongPress = () => {
+    if (longPressTimer) {
+      clearTimeout(longPressTimer);
+      longPressTimer = null;
+    }
+    longPressTarget = null;
+  };
+
+  const triggerEdit = (td) => {
+    const field = EDITABLE[td.dataset.column];
+    if (!field) return;
+    const tr = td.closest('tr[data-idx]');
+    if (!tr) return;
+    const idx = parseInt(tr.dataset.idx, 10);
+    if (isNaN(idx)) return;
+    startCellEdit(idx, field, td);
+  };
+
+  // Start long-press timer on touchstart/mousedown
+  document.addEventListener('pointerdown', (e) => {
+    clearLongPress();
+    const td = e.target.closest('#inventoryTable td[data-column]');
+    if (!td || !EDITABLE[td.dataset.column]) return;
+    
+    longPressTarget = td;
+    startX = e.clientX;
+    startY = e.clientY;
+    
+    longPressTimer = setTimeout(() => {
+      if (longPressTarget === td) {
+        triggerEdit(td);
+        clearLongPress();
+      }
+    }, LONG_PRESS_DURATION);
+  }, { passive: true });
+
+  // Cancel on movement (scroll/drag)
+  document.addEventListener('pointermove', (e) => {
+    if (!longPressTarget) return;
+    const dx = Math.abs(e.clientX - startX);
+    const dy = Math.abs(e.clientY - startY);
+    if (dx > MOVEMENT_THRESHOLD || dy > MOVEMENT_THRESHOLD) {
+      clearLongPress();
+    }
+  }, { passive: true });
+
+  // Cancel or trigger on pointerup
+  document.addEventListener('pointerup', () => {
+    clearLongPress();
+  }, { passive: true });
+
+  // Cancel on scroll
+  document.querySelector('.portal-scroll')?.addEventListener('scroll', () => {
+    clearLongPress();
+  }, { passive: true });
+})();
+
 
 /**
  * Phase 1C: Storage optimization and housekeeping
