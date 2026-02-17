@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Settings Modal Mockups</title>
+    <link rel="stylesheet" href="./mockup.css" />
+  </head>
+  <body data-theme="light">
+    <main class="mockup-shell">
+      <header class="mockup-header">
+        <h1>Settings Modal UX Mockups</h1>
+        <p>
+          Two drop-in-ready concepts that preserve all existing Settings sections while improving
+          discovery for mobile, tablet, and desktop.
+        </p>
+      </header>
+
+      <section class="controls-card">
+        <div class="row">
+          <label for="themePicker">Preview theme</label>
+          <select id="themePicker">
+            <option value="light">Light</option>
+            <option value="dark">Dark</option>
+            <option value="sepia">Sepia</option>
+          </select>
+        </div>
+
+        <div class="row button-row">
+          <button class="btn primary" id="openTablerInspired">Open Concept A — Tabler Inspired</button>
+          <button class="btn" id="openSegmented">Open Concept B — Guided Sections</button>
+        </div>
+      </section>
+
+      <section class="notes-card">
+        <h2>Parity Checklist (100% functional surface area)</h2>
+        <p>
+          Both concepts include all existing settings categories and a unified footer area for
+          storage/version metadata. The content area is designed to host the existing controls
+          without changing their IDs or JS wiring.
+        </p>
+        <ul id="sectionList"></ul>
+      </section>
+    </main>
+
+    <div class="modal" id="modalTabler" aria-hidden="true">
+      <div class="modal-dialog tabler-inspired">
+        <aside class="modal-nav" id="tablerNav"></aside>
+        <section class="modal-main">
+          <header>
+            <h2 id="tablerTitle">Appearance</h2>
+            <button class="icon-btn" data-close="modalTabler" aria-label="Close">✕</button>
+          </header>
+          <div class="search-row">
+            <input type="search" placeholder="Quick filter settings…" />
+            <button class="btn">Reset section</button>
+          </div>
+          <div class="content-grid" id="tablerContent"></div>
+          <footer class="modal-footer">
+            <span>Storage: 5.7 MB / Version: 3.31.00 / Theme-ready for light, dark, sepia.</span>
+            <div>
+              <button class="btn">Cancel</button>
+              <button class="btn primary">Save</button>
+            </div>
+          </footer>
+        </section>
+      </div>
+    </div>
+
+    <div class="modal" id="modalSegmented" aria-hidden="true">
+      <div class="modal-dialog segmented-layout">
+        <header class="segmented-header">
+          <h2>Settings</h2>
+          <div class="segmented-tabs" id="segmentedTabs"></div>
+          <button class="icon-btn" data-close="modalSegmented" aria-label="Close">✕</button>
+        </header>
+
+        <div class="segmented-body">
+          <aside class="mobile-stepper">
+            <p>Guided flow</p>
+            <strong id="stepperTitle">Appearance</strong>
+            <small>Swipe or tap tabs to jump between groups.</small>
+          </aside>
+          <article id="segmentedContent" class="stacked-panels"></article>
+        </div>
+
+        <footer class="modal-footer">
+          <span>All existing controls can mount here without changing current business logic.</span>
+          <div>
+            <button class="btn">Back</button>
+            <button class="btn primary">Next</button>
+          </div>
+        </footer>
+      </div>
+    </div>
+
+    <script src="./mockup.js"></script>
+  </body>
+</html>
