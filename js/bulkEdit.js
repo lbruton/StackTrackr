@@ -781,7 +781,16 @@ const applyBulkEdit = () => {
 
   if (bulkEnabledFields.has('purity') && valuesToApply.purity === 'custom') {
     const purityCustomInput = safeGetElement('bulkFieldVal_purityCustom');
-    valuesToApply.purity = purityCustomInput ? purityCustomInput.value : '';
+    const rawPurity = purityCustomInput ? purityCustomInput.value.trim() : '';
+    const numericPurity = Number(rawPurity);
+
+    if (!rawPurity || !Number.isFinite(numericPurity) || numericPurity < 0.001 || numericPurity > 1) {
+      alert('Please enter a custom purity between 0.001 and 1 before applying bulk changes.');
+      return;
+    }
+
+    // Keep the original string; coercion logic will normalize as needed.
+    valuesToApply.purity = rawPurity;
   }
 
   // When gb denomination mode is active, read weight from the denomination picker
