@@ -33,29 +33,31 @@ Here's a walkthrough of the app with live data.
 
 ### Table View
 
-![StakTrakr table view in dark theme](https://www.staktrakr.com/about/screens/00-main-dark-table.png)
+> [INSERT: 00-main-dark-table.png]
 
 The default view — sortable table with thumbnail images, inline metadata chips, color-coded filter bar, live spot prices with sparklines, and full portfolio breakdown per metal.
 
 ### Card View — Small Cards
 
-![StakTrakr card view with small cards](https://www.staktrakr.com/about/screens/01-main-dark-cards-small.png)
+> [INSERT: 01-main-dark-cards-small.png]
 
 Toggle to card view for a more visual layout. Three card sizes available.
 
 ### Item Detail
 
-![Item detail modal](https://www.staktrakr.com/about/screens/02-detail-modal.png)
+> [INSERT: 02-detail-modal.png]
 
 Click any item for the full view — obverse/reverse images from Numista, interactive price history chart, full coin specs, grade info, and catalog links.
 
-### Card Views
+### Card View — Medium Grid
 
-![Medium card grid](https://www.staktrakr.com/about/screens/03-card-view-medium.png)
+> [INSERT: 03-card-view-medium.png]
 
-Three card sizes to choose from. Medium gives you a nice grid with images and key data.
+Medium gives you a nice dense grid with images and key data.
 
-![Large cards in sepia theme](https://www.staktrakr.com/about/screens/04-card-view-large-sepia.png)
+### Card View — Large Cards, Sepia Theme
+
+> [INSERT: 04-card-view-large-sepia.png]
 
 Large cards with per-item sparkline price charts. This is the sepia theme — there's also light and dark, plus automatic system detection.
 
@@ -63,19 +65,19 @@ Large cards with per-item sparkline price charts. This is the sepia theme — th
 
 The settings are deep. A few highlights:
 
-![Appearance settings](https://www.staktrakr.com/about/screens/05-settings-appearance.png)
+> [INSERT: 05-settings-appearance.png]
 
 **Themes** — Light, Dark, Sepia, or follow your OS.
 
-![API settings for Numista](https://www.staktrakr.com/about/screens/13-settings-api-numista.png)
+> [INSERT: 13-settings-api-numista.png]
 
 **Numista integration** — Paste your free API key and configure which fields to pull. Bulk metadata sync refreshes everything at once.
 
-![File management](https://www.staktrakr.com/about/screens/15-settings-files.png)
+> [INSERT: 15-settings-files.png]
 
 **Import/Export** — CSV, JSON, PDF export. Numista CSV import. Encrypted backup and restore of your entire app state.
 
-![Goldback pricing](https://www.staktrakr.com/about/screens/17-settings-goldback.png)
+> [INSERT: 17-settings-goldback.png]
 
 **Goldback support** — Built-in denomination pricing with live spot-based values.
 
