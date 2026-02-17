@@ -694,14 +694,9 @@ Content here.
 
 ## Integration with Codacy
 
-Codacy automatically checks markdown files for these rules when:
-- Files are committed to a PR
-- Files are analyzed via `codacy_cli_analyze`
+Codacy automatically checks markdown files for these rules when files are committed to a PR.
 
-After editing **any** markdown file, Claude Code must:
-1. Run `codacy_cli_analyze` on the modified file (per `.github/instructions/codacy.instructions.md`)
-2. Fix any reported markdown linting issues immediately
-3. Re-run `codacy_cli_analyze` to verify fixes
+If Codacy CLI MCP is available locally, run `codacy_cli_analyze` on modified markdown files to catch issues before committing. Otherwise, follow the rules in this document manually — Codacy will verify on the PR.
 
 Common Codacy markdown rule codes:
 - **MD032**: Blank lines around lists
