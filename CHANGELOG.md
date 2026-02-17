@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.30.01] - 2026-02-16
+
+### Added — StakTrakr Free API Provider & UTC Poller Fix
+
+- **Added**: StakTrakr as a free, keyless API provider (rank 1 by default) fetching hourly spot prices from api.staktrakr.com
+- **Added**: Provider panel with "Free" badge, best-effort disclaimer, and 1st–5th priority labels across all providers
+- **Changed**: Poller switched from EST to UTC for timezone-neutral hourly file paths
+- **Changed**: Service worker caches api.staktrakr.com with stale-while-revalidate strategy
+- **Fixed**: Auto-sync and provider chain now work without any API keys via keyless providers
+
+---
+
 ## [3.30.00] - 2026-02-16
 
 ### Added — Card View Engine, Mobile Overhaul & UI Polish

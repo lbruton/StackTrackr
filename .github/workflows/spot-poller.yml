@@ -9,7 +9,7 @@ on:
   workflow_dispatch: # Manual trigger for testing
 
 env:
-  TZ: America/New_York
+  TZ: UTC
 
 jobs:
   poll:

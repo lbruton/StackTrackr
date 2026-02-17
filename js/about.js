@@ -274,11 +274,10 @@ const setupAckModalEvents = () => {
  */
 const getEmbeddedWhatsNew = () => {
   return `
+    <li><strong>v3.30.01 &ndash; StakTrakr Free API Provider &amp; UTC Poller Fix</strong>: Free, keyless StakTrakr API provider at rank 1 fetching hourly spot prices. Provider panel with &ldquo;Free&rdquo; badge and best-effort disclaimer. 1st&ndash;5th priority labels across all providers. Poller switched to UTC for timezone-neutral paths. Auto-sync works without any API keys</li>
     <li><strong>v3.30.00 &ndash; Card View Engine, Mobile Overhaul &amp; UI Polish</strong>: Three card view styles (Sparkline Header, Full-Bleed, Split Card) with header button cycling. CDN image URLs with dedicated table image column and card thumbnails. Mobile viewport overhaul with responsive breakpoints. Rows-per-page options with floating back-to-top button. Theme-aware sparkline colors. CSV/JSON/ZIP export includes image URLs (STAK-118, STAK-106, STAK-124, STAK-125, STAK-126)</li>
     <li><strong>v3.29.08 &ndash; Fix What&apos;s New Modal Showing Stale Version</strong>: Version check uses APP_VERSION directly instead of potentially stale localStorage value. Service worker local assets switched to stale-while-revalidate so deployment updates propagate on next load</li>
     <li><strong>v3.29.07 &ndash; Fix Image Deletion in Edit Modal</strong>: Users can now properly remove uploaded photos from items via Remove button &mdash; deletion intent flags ensure images are removed from IndexedDB on Save. Orphaned images cleaned up when items are deleted (STAK-120)</li>
-    <li><strong>v3.29.06 &ndash; Design System &amp; Settings Polish</strong>: Unified toggle styles to chip-sort-toggle pattern across Settings. Redesigned Appearance tab with grouped fieldsets. Living style guide (style.html) with theme switching and component samples. CSS design system coding standards (STAK-115, STAK-116, STAK-117)</li>
-    <li><strong>v3.29.05 &ndash; Post-Release Hardening &amp; Seed Cache Fix</strong>: Service worker uses stale-while-revalidate for seed data so Docker poller updates reach users between releases. CoinFacts URL fallback for Raw/Authentic grades. Purchased chart range clamped to min 1 day. Cert badge keyboard accessibility. Verify promise and window.open hardening</li>
   `;
 };
 

@@ -13,8 +13,31 @@
  * @property {function} parseBatchResponse - Function to parse batch API response
  */
 const API_PROVIDERS = {
+  STAKTRAKR: {
+    name: "StakTrakr",
+    baseUrl: "https://api.staktrakr.com/data",
+    requiresKey: false,
+    documentation: "https://www.staktrakr.com",
+    hourlyBaseUrl: "https://api.staktrakr.com/data/hourly",
+    endpoints: { silver: "", gold: "", platinum: "", palladium: "" },
+    getEndpoint: () => "",
+    parseResponse: () => null,
+    parseBatchResponse: (data) => {
+      const current = {};
+      if (Array.isArray(data)) {
+        data.forEach(e => {
+          if (e.metal && e.spot > 0) current[e.metal.toLowerCase()] = e.spot;
+        });
+      }
+      return { current, history: {} };
+    },
+    batchSupported: false,
+    maxHistoryDays: 365,
+    symbolsPerRequest: "all",
+  },
   METALS_DEV: {
     name: "Metals.dev",
+    requiresKey: true,
     baseUrl: "https://api.metals.dev/v1",
     endpoints: {
       silver: "/metal/spot?api_key={API_KEY}&metal=silver&currency=USD",
@@ -69,6 +92,7 @@ const API_PROVIDERS = {
   },
   METALS_API: {
     name: "Metals-API.com",
+    requiresKey: true,
     baseUrl: "https://metals-api.com/api",
     endpoints: {
       silver: "/latest?access_key={API_KEY}&base=USD&symbols=XAG",
@@ -138,6 +162,7 @@ const API_PROVIDERS = {
   },
   METAL_PRICE_API: {
     name: "MetalPriceAPI.com",
+    requiresKey: true,
     baseUrl: "https://api.metalpriceapi.com/v1",
     endpoints: {
       silver: "/latest?api_key={API_KEY}&base=USD&currencies=XAG",
@@ -206,6 +231,7 @@ const API_PROVIDERS = {
   },
   CUSTOM: {
     name: "Custom Provider",
+    requiresKey: true,
     baseUrl: "",
     endpoints: {
       silver: "",
@@ -254,7 +280,7 @@ const CERT_LOOKUP_URLS = {
  * Updated: 2026-02-12 - STACK-38/STACK-31: Responsive card view + mobile layout
  */
 
-const APP_VERSION = "3.30.00";
+const APP_VERSION = "3.30.01";
 
 /**
  * @constant {string} DEFAULT_CURRENCY - Default currency code for monetary formatting
