@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Settings Modal Redesign Mockups</title>
+    <link rel="stylesheet" href="../../css/styles.css" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="page">
+      <h1>Settings Modal Redesign Mockups</h1>
+      <p>
+        These prototypes load the current settings sections from <code>index.html</code> so content and IDs stay aligned
+        with the existing modal while testing new IA/layout patterns.
+      </p>
+
+      <section class="toolbar">
+        <strong>Theme:</strong>
+        <button type="button" class="pill active" data-theme-choice="light">Light</button>
+        <button type="button" class="pill" data-theme-choice="dark">Dark</button>
+        <button type="button" class="pill" data-theme-choice="sepia">Sepia</button>
+      </section>
+
+      <section class="toolbar">
+        <button type="button" id="openDesignA">Open Design A (Tabler-inspired)</button>
+        <button type="button" id="openDesignB">Open Design B (Journey accordion)</button>
+      </section>
+
+      <p><a href="./framework-research.md">Framework research notes</a></p>
+    </main>
+
+    <div class="overlay" id="overlayA">
+      <div class="mock-modal design-a">
+        <header class="modal-header">
+          <h2>Settings — Design A</h2>
+          <button type="button" data-close="overlayA">Close</button>
+        </header>
+        <div class="modal-body" id="designABody"></div>
+        <footer class="modal-footer">
+          <button type="button">Reset to defaults</button>
+          <button type="button" class="pill active">Save settings</button>
+        </footer>
+      </div>
+    </div>
+
+    <div class="overlay" id="overlayB">
+      <div class="mock-modal design-b">
+        <header class="modal-header">
+          <h2>Settings — Design B</h2>
+          <button type="button" data-close="overlayB">Close</button>
+        </header>
+        <div class="modal-body" id="designBBody"></div>
+        <footer class="modal-footer">
+          <button type="button">Reset to defaults</button>
+          <button type="button" class="pill active">Save settings</button>
+        </footer>
+      </div>
+    </div>
+
+    <script src="./test.js" defer></script>
+  </body>
+</html>
