@@ -392,13 +392,10 @@ const shouldShowSearchSaveButton = (query, fuzzyUsed) => {
 };
 
 const updateSaveSearchButton = (query, fuzzyUsed = false) => {
-  const btn = resolveElement('saveSearchPatternBtn');
-  if (!btn || !btn.id) return;
+  const group = resolveElement('saveSearchPatternGroup');
+  if (!group || !group.id) return;
   const canSave = shouldShowSearchSaveButton(query, fuzzyUsed);
-  btn.style.display = '';
-  btn.disabled = !canSave;
-  btn.classList.toggle('is-disabled', !canSave);
-  btn.setAttribute('aria-disabled', (!canSave).toString());
+  group.style.display = canSave ? '' : 'none';
 };
 
 const deriveSearchLabel = (patterns) => {
@@ -408,8 +405,6 @@ const deriveSearchLabel = (patterns) => {
 };
 
 const handleSaveSearchPattern = () => {
-  const btn = resolveElement('saveSearchPatternBtn');
-  if (btn && btn.disabled) return;
   const input = resolveElement('searchInput');
   if (!input || !input.id) return;
   const query = input.value || '';
