@@ -28,7 +28,7 @@ const loadSpotHistory = () => {
 
 /**
  * One-time migration: re-tag old StakTrakr hourly backfill entries.
- * Before v3.31, backfill entries were stored with source:"api" (same as
+ * Before v3.30.02, backfill entries were stored with source:"api" (same as
  * live syncs). Identifies them by the heuristic: provider is "StakTrakr",
  * source is "api", and timestamp lands exactly on the hour (:00:00).
  * Regular syncs never produce on-the-hour timestamps.
@@ -141,7 +141,7 @@ const recordSpot = (
       timestamp: entryTimestamp,
     });
   }
-  if (source === "api" || source === "api-hourly" || source === "cached") {
+  if (source === "api" || source === "cached") {
     updateLastTimestamps(source, provider, entryTimestamp);
   }
   saveSpotHistory();
