@@ -3,36 +3,19 @@
 .AppleDouble
 .LSOverride
 
-# Claude Code — web-compatible skills/commands are tracked;
-# MCP-dependent ones stay local only (invisible to Claude Code web)
+# Claude Code — only 4 skills are tracked in git;
+# everything else in .claude/ is local-only
 .claude/*
 !.claude/skills/
-!.claude/commands/
+.claude/skills/*
+!.claude/skills/coding-standards/
+!.claude/skills/markdown-standards/
+!.claude/skills/release/
+!.claude/skills/seed-sync/
+.claude/commands/
+CLAUDE.md
 .mcp.json
 SPRINT.md
-
-# MCP-dependent skills (require local MCP servers — Memento, Linear, Brave, etc.)
-.claude/skills/brave-search-rules/
-.claude/skills/browser-testing/
-.claude/skills/claude-context-rules/
-.claude/skills/codacy-rules/
-.claude/skills/context7-rules/
-.claude/skills/linear-workspace/
-.claude/skills/memento-taxonomy/
-.claude/skills/research/
-.claude/skills/search-code/
-.claude/skills/session-management/
-.claude/skills/start/
-.claude/skills/pr-resolve/
-
-# MCP-dependent commands (Memento sessions/handoffs)
-.claude/commands/recall-handoff.md
-.claude/commands/recall-rewind.md
-.claude/commands/recall-session.md
-.claude/commands/save-handoff.md
-.claude/commands/save-rewind.md
-.claude/commands/save-session.md
-.claude/commands/start.md
 
 # Internal dev docs (not for public repo)
 docs/CLOUD-SYNC-DESIGN.md
