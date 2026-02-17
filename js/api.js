@@ -53,13 +53,6 @@ const fetchStaktrakrPrices = async (selectedMetals) => {
 };
 
 /**
- * Backfills the last 24 hours of hourly spot data from StakTrakr into spotHistory.
- * Only runs when STAKTRAKR is the primary provider (rank 1) and sync succeeded.
- * Skips hours already present, fetches missing hours in batches of 6, and
- * performs a single saveSpotHistory() at the end.
- * @returns {Promise<number>} Count of new entries added
- */
-/**
  * Fetches hourly spot data from StakTrakr for a configurable number of hours.
  * Skips hours already present in spotHistory to avoid duplicates.
  * @param {number} hoursBack - Number of hours to look back
@@ -142,12 +135,12 @@ const fetchStaktrakrHourlyRange = async (hoursBack) => {
  * @returns {Promise<number>} Count of new entries added
  */
 const backfillStaktrakrHourly = async () => {
-  const { newCount } = await fetchStaktrakrHourlyRange(24);
-  // Track usage for the backfill
-  if (newCount > 0) {
+  const { newCount, fetchCount } = await fetchStaktrakrHourlyRange(24);
+  // Track usage per file fetched (each file = 1 API request)
+  if (fetchCount > 0) {
     const config = loadApiConfig();
     if (config.usage?.STAKTRAKR) {
-      config.usage.STAKTRAKR.used++;
+      config.usage.STAKTRAKR.used += fetchCount;
       saveApiConfig(config);
     }
   }
@@ -1569,7 +1562,7 @@ const fetchMetalPriceApiHourly = async (apiKey, selectedMetals, totalDays) => {
         const ts = new Date(entry.timestamp * 1000);
         const entryTimestamp = ts.toISOString().replace('T', ' ').slice(0, 19);
         const rate = entry.rates?.[currency];
-        if (!rate) return;
+        if (!Number.isFinite(rate) || rate === 0) return;
         const price = 1 / rate;
         const key = `${entryTimestamp}|${metalName}`;
         if (!existingKeys.has(key)) {
