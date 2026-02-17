@@ -38,10 +38,150 @@ const fetchStaktrakrPrices = async (selectedMetals) => {
       selectedMetals.forEach(metal => {
         if (current[metal] > 0) results[metal] = current[metal];
       });
-      if (Object.keys(results).length > 0) return results;
+      if (Object.keys(results).length > 0) {
+        // Track usage for STAKTRAKR
+        const cfg = loadApiConfig();
+        if (cfg.usage?.STAKTRAKR) {
+          cfg.usage.STAKTRAKR.used++;
+          saveApiConfig(cfg);
+        }
+        return results;
+      }
     } catch { continue; }
   }
   throw new Error('No hourly data available from StakTrakr API');
+};
+
+/**
+ * Backfills the last 24 hours of hourly spot data from StakTrakr into spotHistory.
+ * Only runs when STAKTRAKR is the primary provider (rank 1) and sync succeeded.
+ * Skips hours already present, fetches missing hours in batches of 6, and
+ * performs a single saveSpotHistory() at the end.
+ * @returns {Promise<number>} Count of new entries added
+ */
+/**
+ * Fetches hourly spot data from StakTrakr for a configurable number of hours.
+ * Skips hours already present in spotHistory to avoid duplicates.
+ * @param {number} hoursBack - Number of hours to look back
+ * @returns {Promise<{newCount: number, fetchCount: number}>} Counts of new entries and successful fetches
+ */
+const fetchStaktrakrHourlyRange = async (hoursBack) => {
+  const baseUrl = API_PROVIDERS.STAKTRAKR.hourlyBaseUrl;
+  const now = new Date();
+
+  // Build list of UTC hours as Date objects
+  const hours = [];
+  for (let i = 0; i < hoursBack; i++) {
+    hours.push(new Date(now.getTime() - i * 3600000));
+  }
+
+  // Fetch hours in batches of 6
+  let newCount = 0;
+  let fetchCount = 0;
+  const batchSize = 6;
+  const providerName = API_PROVIDERS.STAKTRAKR.name;
+
+  for (let i = 0; i < hours.length; i += batchSize) {
+    const batch = hours.slice(i, i + batchSize);
+    const results = await Promise.all(batch.map(async (h) => {
+      const yyyy = h.getUTCFullYear();
+      const mm = String(h.getUTCMonth() + 1).padStart(2, '0');
+      const dd = String(h.getUTCDate()).padStart(2, '0');
+      const hh = String(h.getUTCHours()).padStart(2, '0');
+      const url = `${baseUrl}/${yyyy}/${mm}/${dd}/${hh}.json`;
+      try {
+        const resp = await fetch(url, { mode: 'cors' });
+        if (!resp.ok) return null;
+        const data = await resp.json();
+        const { current } = API_PROVIDERS.STAKTRAKR.parseBatchResponse(data);
+        // Use ISO-format UTC timestamp so recordSpot normalizes consistently
+        return { current, timestamp: `${yyyy}-${mm}-${dd}T${hh}:00:00Z` };
+      } catch { return null; }
+    }));
+
+    results.forEach(result => {
+      if (!result) return;
+      fetchCount++;
+      Object.entries(result.current).forEach(([metalKey, spot]) => {
+        if (spot <= 0) return;
+        const metalConfig = Object.values(METALS).find(m => m.key === metalKey);
+        if (!metalConfig) return;
+        // Use recordSpot for consistent timestamp normalization and persistence
+        recordSpot(spot, "api-hourly", metalConfig.name, providerName, result.timestamp);
+        newCount++;
+      });
+    });
+  }
+
+  if (newCount > 0) {
+    console.log(`[StakTrakr] Added ${newCount} hourly entries (${fetchCount} files fetched)`);
+  }
+
+  return { newCount, fetchCount };
+};
+
+/**
+ * Backfills the last 24 hours of hourly spot data from StakTrakr into spotHistory.
+ * Only runs when STAKTRAKR is the primary provider (rank 1) and sync succeeded.
+ * @returns {Promise<number>} Count of new entries added
+ */
+const backfillStaktrakrHourly = async () => {
+  const { newCount } = await fetchStaktrakrHourlyRange(24);
+  // Track usage for the backfill
+  if (newCount > 0) {
+    const config = loadApiConfig();
+    if (config.usage?.STAKTRAKR) {
+      config.usage.STAKTRAKR.used++;
+      saveApiConfig(config);
+    }
+  }
+  return newCount;
+};
+
+/**
+ * Handles user-initiated hourly history pull for STAKTRAKR.
+ * Reads days from dropdown, confirms, fetches, and updates UI.
+ */
+const handleStaktrakrHistoryPull = async () => {
+  const daysSelect = document.getElementById('historyPullDays_STAKTRAKR');
+  const totalDays = daysSelect ? parseInt(daysSelect.value, 10) : 7;
+  const totalHours = totalDays * 24;
+
+  const proceed = confirm(
+    `Pull ${totalDays} day${totalDays > 1 ? 's' : ''} of hourly history from StakTrakr.\n\n` +
+    `This will fetch up to ${totalHours} hourly files (skipping already-fetched hours).\n\nProceed?`
+  );
+  if (!proceed) return;
+
+  // Disable button during pull
+  const btn = document.querySelector('.api-history-btn[data-provider="STAKTRAKR"]');
+  const origText = btn ? btn.textContent : "";
+  if (btn) { btn.textContent = "Pulling..."; btn.disabled = true; }
+
+  try {
+    const { newCount, fetchCount } = await fetchStaktrakrHourlyRange(totalHours);
+
+    // Track usage
+    if (fetchCount > 0) {
+      const config = loadApiConfig();
+      if (config.usage?.STAKTRAKR) {
+        config.usage.STAKTRAKR.used += fetchCount;
+        saveApiConfig(config);
+      }
+    }
+
+    alert(
+      `History pull complete!\n\n` +
+      `Added ${newCount} new entries from ${fetchCount} hourly files.`
+    );
+    updateProviderHistoryTables();
+    if (typeof updateAllSparklines === "function") updateAllSparklines();
+  } catch (err) {
+    console.error("StakTrakr history pull failed:", err);
+    alert("History pull failed: " + err.message);
+  } finally {
+    if (btn) { btn.textContent = origText; btn.disabled = false; }
+  }
 };
 
 const renderApiStatusSummary = () => {
@@ -136,7 +276,10 @@ const loadApiConfig = () => {
       const currentMonth = currentMonthKey();
       const savedMonth = config.usageMonth;
       Object.keys(API_PROVIDERS).forEach((p) => {
-        if (!usage[p]) usage[p] = { quota: DEFAULT_API_QUOTA, used: 0 };
+        if (!usage[p]) usage[p] = {
+          quota: providerRequiresKey(p) ? DEFAULT_API_QUOTA : 5000,
+          used: 0,
+        };
         if (!metals[p])
           metals[p] = {
             silver: true,
@@ -203,7 +346,10 @@ const loadApiConfig = () => {
   const historyTimes = {};
   const defaultCacheTimeouts = {};
   Object.keys(API_PROVIDERS).forEach((p) => {
-    usage[p] = { quota: DEFAULT_API_QUOTA, used: 0 };
+    usage[p] = {
+      quota: providerRequiresKey(p) ? DEFAULT_API_QUOTA : 5000,
+      used: 0,
+    };
     metals[p] = { silver: true, gold: true, platinum: true, palladium: true };
     historyDays[p] = p === "METALS_DEV" ? 29 : 30;
     historyTimes[p] = [];
@@ -367,10 +513,27 @@ const updateHistoryPullCost = (provider) => {
   const costEl = document.getElementById(`historyPullCost_${provider}`);
   if (!costEl || !providerConfig) return;
 
-  const selected = config.metals?.[provider] || {};
-  const selectedMetals = Object.keys(selected).filter(metal => selected[metal] !== false);
   const daysSelect = document.getElementById(`historyPullDays_${provider}`);
   const totalDays = daysSelect ? parseInt(daysSelect.value, 10) : 30;
+
+  // STAKTRAKR: show hourly file count instead of API calls
+  if (provider === 'STAKTRAKR') {
+    const hours = totalDays * 24;
+    costEl.textContent = `${totalDays}d = ${hours} hourly files`;
+    return;
+  }
+
+  const selected = config.metals?.[provider] || {};
+  const selectedMetals = Object.keys(selected).filter(metal => selected[metal] !== false);
+
+  // Check for hourly toggle (MetalPriceAPI)
+  const hourlyToggle = document.getElementById(`hourlyPull_${provider}`);
+  if (hourlyToggle && hourlyToggle.checked) {
+    const calls = selectedMetals.length;
+    costEl.textContent = `${totalDays}d \u00D7 ${selectedMetals.length} metals = ${calls} API calls (hourly)`;
+    return;
+  }
+
   const maxPerReq = providerConfig.maxHistoryDays || 30;
   const chunks = Math.ceil(totalDays / maxPerReq);
 
@@ -422,6 +585,21 @@ const setupProviderSettingsListeners = (provider) => {
   const pullBtn = document.querySelector(`.api-history-btn[data-provider="${provider}"]`);
   if (pullBtn) {
     pullBtn.addEventListener('click', () => handleHistoryPull(provider));
+  }
+
+  // Hourly toggle — cap days dropdown and update cost
+  const hourlyToggle = document.getElementById(`hourlyPull_${provider}`);
+  if (hourlyToggle) {
+    hourlyToggle.addEventListener('change', () => {
+      const daysEl = document.getElementById(`historyPullDays_${provider}`);
+      if (daysEl && hourlyToggle.checked) {
+        const maxDays = API_PROVIDERS[provider]?.maxHourlyDays || 7;
+        if (parseInt(daysEl.value, 10) > maxDays) {
+          daysEl.value = String(maxDays);
+        }
+      }
+      updateHistoryPullCost(provider);
+    });
   }
 
   // Metal selection changes
@@ -494,14 +672,24 @@ const refreshProviderStatuses = () => {
   const now = Date.now();
   Object.keys(API_PROVIDERS).forEach((prov) => {
     const duration = getCacheDurationMs(prov);
-    if (config.keys[prov]) {
-      // API key is stored
+    if (config.keys[prov] || !providerRequiresKey(prov)) {
+      // API key is stored (or provider is keyless)
       if (cache && cache.provider === prov && cache.timestamp) {
         const age = now - cache.timestamp;
         if (age <= duration) {
           setProviderStatus(prov, "connected");  // Recently used with fresh data
         } else {
           setProviderStatus(prov, "cached");     // Key stored but data is old
+        }
+      } else if (!providerRequiresKey(prov)) {
+        // Keyless provider: check last sync time instead of cache object
+        const lastSync = getLastProviderSyncTime(prov);
+        if (lastSync && (now - lastSync) <= duration) {
+          setProviderStatus(prov, "connected");
+        } else if (lastSync) {
+          setProviderStatus(prov, "cached");
+        } else {
+          setProviderStatus(prov, "connected");  // Keyless, always available
         }
       } else {
         setProviderStatus(prov, "cached");       // Key stored but no recent usage
@@ -530,8 +718,8 @@ const autoSelectDefaultProvider = () => {
     order = Object.keys(API_PROVIDERS);
   }
 
-  // Select first provider with a key as default
-  const active = order.filter((p) => keys[p]);
+  // Select first provider with a key (or keyless) as default
+  const active = order.filter((p) => keys[p] || !providerRequiresKey(p));
   if (active.length > 0 && config.provider !== active[0]) {
     config.provider = active[0];
     saveApiConfig(config);
@@ -614,9 +802,12 @@ const renderApiHistoryTable = () => {
   let html =
     "<tr><th data-column=\"timestamp\">Time</th><th data-column=\"metal\">Metal</th><th data-column=\"spot\">Price</th><th data-column=\"provider\">Source</th></tr>";
   data.forEach((e) => {
+    const sourceLabel = e.source === "api-hourly"
+      ? `${e.provider || ""} (hourly)`
+      : (e.provider || "");
     html += `<tr><td>${e.timestamp}</td><td>${e.metal}</td><td>${formatCurrency(
       e.spot,
-    )}</td><td>${e.provider || ""}</td></tr>`;
+    )}</td><td>${sourceLabel}</td></tr>`;
   });
   // nosemgrep: javascript.browser.security.insecure-innerhtml.insecure-innerhtml, javascript.browser.security.insecure-document-method.insecure-document-method
   table.innerHTML = html;
@@ -643,7 +834,7 @@ const showApiHistoryModal = () => {
   const modal = document.getElementById("apiHistoryModal");
   if (!modal) return;
   loadSpotHistory();
-  apiHistoryEntries = spotHistory.filter((e) => e.source === "api" || e.source === "seed");
+  apiHistoryEntries = spotHistory.filter((e) => e.source === "api" || e.source === "api-hourly" || e.source === "seed");
   apiHistorySortColumn = "";
   apiHistorySortAsc = true;
   apiHistoryFilterText = "";
@@ -714,7 +905,7 @@ const clearApiHistory = (silent = false) => {
  */
 const setDefaultProvider = (provider) => {
   const config = loadApiConfig();
-  if (!config.keys[provider]) {
+  if (!config.keys[provider] && providerRequiresKey(provider)) {
     alert("Please enter your API key first");
     return;
   }
@@ -734,7 +925,7 @@ const clearApiKey = (provider) => {
   if (config.provider === provider) {
     config.provider = "";
   }
-  const active = Object.keys(API_PROVIDERS).filter((p) => config.keys[p]);
+  const active = Object.keys(API_PROVIDERS).filter((p) => config.keys[p] || !providerRequiresKey(p));
   if (active.length === 1) {
     config.provider = active[0];
   }
@@ -884,7 +1075,7 @@ const getLastProviderSyncTime = (provider) => {
     // Find most recent API entry from this provider
     for (let i = spotHistory.length - 1; i >= 0; i--) {
       const entry = spotHistory[i];
-      if (entry.source === "api" && entry.provider === providerName) {
+      if ((entry.source === "api" || entry.source === "api-hourly") && entry.provider === providerName) {
         // Parse timestamp string "YYYY-MM-DD HH:MM:SS" to ms
         const ts = new Date(entry.timestamp).getTime();
         if (!isNaN(ts)) return ts;
@@ -1317,12 +1508,72 @@ const fetchHistoryBatched = async (provider, apiKey, selectedMetals, totalDays) 
 };
 
 /**
+ * Fetches hourly historical data from MetalPriceAPI.
+ * Uses the /hourly endpoint (one currency per request).
+ * @param {string} apiKey - API key
+ * @param {Array<string>} selectedMetals - Metal keys to fetch
+ * @param {number} totalDays - Number of days of hourly data
+ * @returns {Promise<{totalEntries: number, callsMade: number}>}
+ */
+const fetchMetalPriceApiHourly = async (apiKey, selectedMetals, totalDays) => {
+  const baseUrl = API_PROVIDERS.METAL_PRICE_API.baseUrl;
+  const symbolMap = { silver: 'XAG', gold: 'XAU', platinum: 'XPT', palladium: 'XPD' };
+  const config = loadApiConfig();
+  const usage = config.usage?.METAL_PRICE_API || { quota: DEFAULT_API_QUOTA, used: 0 };
+  const providerName = API_PROVIDERS.METAL_PRICE_API.name;
+
+  const end = new Date();
+  const start = new Date();
+  start.setDate(start.getDate() - totalDays);
+  const fmt = (d) => d.toISOString().slice(0, 10);
+
+  let totalEntries = 0;
+  let callsMade = 0;
+
+  for (const metal of selectedMetals) {
+    const currency = symbolMap[metal];
+    if (!currency) continue;
+    const url = `${baseUrl}/hourly?api_key=${apiKey}&base=USD&currency=${currency}&start_date=${fmt(start)}&end_date=${fmt(end)}`;
+    try {
+      const resp = await fetch(url, { method: 'GET', headers: { 'Content-Type': 'application/json' }, mode: 'cors' });
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      const data = await resp.json();
+      callsMade++;
+      usage.used++;
+
+      const metalConfig = Object.values(METALS).find(m => m.key === metal);
+      const metalName = metalConfig?.name || metal;
+      (data.rates || []).forEach(entry => {
+        const ts = new Date(entry.timestamp * 1000);
+        const timestamp = ts.toISOString().replace('T', ' ').slice(0, 19);
+        const rate = entry.rates?.[currency];
+        if (!rate) return;
+        const price = 1 / rate;
+        recordSpot(price, 'api-hourly', metalName, providerName, timestamp);
+        totalEntries++;
+      });
+    } catch (err) {
+      console.warn(`Hourly fetch failed for ${metal}:`, err.message);
+    }
+  }
+
+  config.usage.METAL_PRICE_API = usage;
+  saveApiConfig(config);
+  return { totalEntries, callsMade };
+};
+
+/**
  * Handles a user-initiated history pull for a specific provider.
  * Reads the dropdown selection, calculates cost, confirms, and executes.
  *
  * @param {string} provider - Provider key
  */
 const handleHistoryPull = async (provider) => {
+  // STAKTRAKR has its own hourly pull logic (no API key needed)
+  if (provider === 'STAKTRAKR') {
+    return handleStaktrakrHistoryPull();
+  }
+
   const config = loadApiConfig();
   const apiKey = config.keys?.[provider];
   if (!apiKey) {
@@ -1344,19 +1595,33 @@ const handleHistoryPull = async (provider) => {
   }
 
   const daysSelect = document.getElementById(`historyPullDays_${provider}`);
-  const totalDays = daysSelect ? parseInt(daysSelect.value, 10) : 30;
+  let totalDays = daysSelect ? parseInt(daysSelect.value, 10) : 30;
+
+  // Check for hourly mode (MetalPriceAPI)
+  const hourlyToggle = document.getElementById(`hourlyPull_${provider}`);
+  const isHourly = hourlyToggle && hourlyToggle.checked;
+  if (isHourly) {
+    const maxHourly = providerConfig.maxHourlyDays || 7;
+    totalDays = Math.min(totalDays, maxHourly);
+  }
 
   // Calculate cost
-  const maxPerReq = providerConfig.maxHistoryDays || 30;
-  const chunks = Math.ceil(totalDays / maxPerReq);
-  const symbolGroups = providerConfig.symbolsPerRequest === 1 ? selectedMetals.length : 1;
-  const totalCalls = chunks * symbolGroups;
+  let totalCalls;
+  if (isHourly) {
+    totalCalls = selectedMetals.length; // one request per metal
+  } else {
+    const maxPerReq = providerConfig.maxHistoryDays || 30;
+    const chunks = Math.ceil(totalDays / maxPerReq);
+    const symbolGroups = providerConfig.symbolsPerRequest === 1 ? selectedMetals.length : 1;
+    totalCalls = chunks * symbolGroups;
+  }
 
   const usage = config.usage?.[provider] || { quota: DEFAULT_API_QUOTA, used: 0 };
   const remaining = Math.max(0, usage.quota - usage.used);
 
+  const modeLabel = isHourly ? "hourly" : "daily";
   const proceed = confirm(
-    `Pull ${totalDays} days of history from ${providerConfig.name}.\n\n` +
+    `Pull ${totalDays} days of ${modeLabel} history from ${providerConfig.name}.\n\n` +
     `This will use ${totalCalls} API call${totalCalls > 1 ? "s" : ""} ` +
     `(${remaining} remaining this month).\n\nProceed?`
   );
@@ -1368,7 +1633,12 @@ const handleHistoryPull = async (provider) => {
   if (btn) { btn.textContent = "Pulling..."; btn.disabled = true; }
 
   try {
-    const result = await fetchHistoryBatched(provider, apiKey, selectedMetals, totalDays);
+    let result;
+    if (isHourly && provider === 'METAL_PRICE_API') {
+      result = await fetchMetalPriceApiHourly(apiKey, selectedMetals, totalDays);
+    } else {
+      result = await fetchHistoryBatched(provider, apiKey, selectedMetals, totalDays);
+    }
     alert(
       `History pull complete!\n\n` +
       `Pulled ${result.totalEntries} data points using ${result.callsMade} API call${result.callsMade > 1 ? "s" : ""}.`
@@ -1710,6 +1980,11 @@ const syncProviderChain = async ({ showProgress = false, forceSync = false } = {
       if (typeof onGoldSpotPriceChanged === 'function') onGoldSpotPriceChanged();
       if (typeof recordAllItemPriceSnapshots === 'function') recordAllItemPriceSnapshots();
       if (typeof updateStorageStats === "function") updateStorageStats();
+      // Backfill hourly data when StakTrakr is rank 1 and sync was fresh
+      if (results.STAKTRAKR === "success" && priorities.STAKTRAKR === 1) {
+        try { await backfillStaktrakrHourly(); }
+        catch (err) { console.warn("Hourly backfill failed:", err.message); }
+      }
       if (typeof updateAllSparklines === "function") updateAllSparklines();
     }
   } finally {
@@ -1727,7 +2002,8 @@ const syncProviderChain = async ({ showProgress = false, forceSync = false } = {
  */
 const updateSyncButtonStates = (syncing = false) => {
   const hasApi =
-    apiConfig && apiConfig.provider && apiConfig.keys[apiConfig.provider];
+    apiConfig && apiConfig.provider &&
+    (apiConfig.keys[apiConfig.provider] || !providerRequiresKey(apiConfig.provider));
 
   Object.values(METALS).forEach((metalConfig) => {
     // New sparkline card sync icon
@@ -1840,7 +2116,7 @@ const populateApiSection = () => {
     // Load saved cache timeout
     const cacheSelect = document.getElementById(`cacheTimeout_${provider}`);
     if (cacheSelect) {
-      cacheSelect.value = cfg.cacheTimeouts?.[provider] || 24;
+      cacheSelect.value = cfg.cacheTimeouts?.[provider] ?? 24;
     }
 
     // Initialize history pull cost indicator
@@ -2405,7 +2681,7 @@ const importSpotHistory = (file) => {
     if (typeof updateAllSparklines === "function") updateAllSparklines();
 
     // Refresh the visible history table after import
-    apiHistoryEntries = spotHistory.filter((e) => e.source === "api" || e.source === "seed");
+    apiHistoryEntries = spotHistory.filter((e) => e.source === "api" || e.source === "api-hourly" || e.source === "seed");
     renderApiHistoryTable();
   };
   reader.readAsText(file);
