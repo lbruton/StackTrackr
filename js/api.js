@@ -1633,16 +1633,11 @@ const handleHistoryPull = async (provider) => {
     totalDays = Math.min(totalDays, maxHourly);
   }
 
-  // Calculate cost
-  let totalCalls;
-  if (isHourly) {
-    totalCalls = selectedMetals.length; // one request per metal
-  } else {
-    const maxPerReq = providerConfig.maxHistoryDays || 30;
-    const chunks = Math.ceil(totalDays / maxPerReq);
-    const symbolGroups = providerConfig.symbolsPerRequest === 1 ? selectedMetals.length : 1;
-    totalCalls = chunks * symbolGroups;
-  }
+  // Calculate cost — one request per metal for hourly, chunked batches for daily
+  const totalCalls = isHourly
+    ? selectedMetals.length
+    : Math.ceil(totalDays / (providerConfig.maxHistoryDays || 30))
+      * (providerConfig.symbolsPerRequest === 1 ? selectedMetals.length : 1);
 
   const usage = config.usage?.[provider] || { quota: DEFAULT_API_QUOTA, used: 0 };
   const remaining = Math.max(0, usage.quota - usage.used);
