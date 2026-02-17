@@ -3,4 +3,5 @@ exclude_paths:
   - ".claude/**"
   - "devops/**"
   - "style.html"
+  - "about/**"
   - "docs/announcements.md"
