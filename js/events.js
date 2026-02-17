@@ -72,11 +72,6 @@ let _pendingObversePreviewUrl = null;
 /** @type {string|null} Preview object URL for reverse — revoked on modal close */
 let _pendingReversePreviewUrl = null;
 
-// Legacy aliases for backward compatibility
-/** @deprecated Use _pendingObverseBlob */
-// eslint-disable-next-line no-unused-vars -- intentionally kept for backward compatibility
-let _pendingUploadBlob = null;
-
 /** @type {boolean} User clicked Remove on obverse — delete on save */
 let _deleteObverseOnSave = false;
 /** @type {boolean} User clicked Remove on reverse — delete on save */
@@ -108,7 +103,6 @@ const processUploadedImage = async (file, side = 'obverse') => {
     _pendingReversePreviewUrl = imageProcessor.createPreview(result.blob);
   } else {
     _pendingObverseBlob = result.blob;
-    _pendingUploadBlob = result.blob; // legacy alias
     if (_pendingObversePreviewUrl) URL.revokeObjectURL(_pendingObversePreviewUrl);
     _pendingObversePreviewUrl = imageProcessor.createPreview(result.blob);
   }
@@ -155,7 +149,6 @@ const setEditPreviewUrl = (url, side = 'obverse') => {
 const clearUploadState = () => {
   _pendingObverseBlob = null;
   _pendingReverseBlob = null;
-  _pendingUploadBlob = null;
   _deleteObverseOnSave = false;
   _deleteReverseOnSave = false;
 
@@ -1334,7 +1327,6 @@ const setupItemFormListeners = () => {
             if (_pendingReversePreviewUrl) { URL.revokeObjectURL(_pendingReversePreviewUrl); _pendingReversePreviewUrl = null; }
           } else {
             _pendingObverseBlob = null;
-            _pendingUploadBlob = null;
             _deleteObverseOnSave = true;
             if (_pendingObversePreviewUrl) { URL.revokeObjectURL(_pendingObversePreviewUrl); _pendingObversePreviewUrl = null; }
           }
