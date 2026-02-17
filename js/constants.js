@@ -185,10 +185,12 @@ const API_PROVIDERS = {
     },
     documentation: "https://metalpriceapi.com/documentation",
     maxHistoryDays: 365,
+    maxHourlyDays: 7,
     symbolsPerRequest: "all",
     docUrl: "https://metalpriceapi.com/documentation",
     batchSupported: true,
     batchEndpoint: "/timeframe?api_key={API_KEY}&start_date={START_DATE}&end_date={END_DATE}&base=USD&currencies={CURRENCIES}",
+    hourlyEndpoint: "/hourly?api_key={API_KEY}&base=USD&currency={CURRENCY}&start_date={START_DATE}&end_date={END_DATE}",
     parseBatchResponse: (data) => {
       const current = {};
       const history = {};
@@ -280,7 +282,7 @@ const CERT_LOOKUP_URLS = {
  * Updated: 2026-02-12 - STACK-38/STACK-31: Responsive card view + mobile layout
  */
 
-const APP_VERSION = "3.30.01";
+const APP_VERSION = "3.30.02";
 
 /**
  * @constant {string} DEFAULT_CURRENCY - Default currency code for monetary formatting
@@ -640,6 +642,7 @@ const ALLOWED_STORAGE_KEYS = [
   LATEST_REMOTE_VERSION_KEY,  // string: cached latest remote version (STACK-67)
   LATEST_REMOTE_URL_KEY,      // string: cached latest remote release URL (STACK-67)
   "ff_migration_fuzzy_autocomplete", // one-time migration flag (v3.26.01)
+  "migration_hourlySource",          // one-time migration flag: re-tag StakTrakr hourly entries
   "numistaLookupRules",              // custom Numista search lookup rules (JSON array)
   "numistaViewFields",               // view modal Numista field visibility config (JSON object)
   TIMEZONE_KEY,                        // string: "auto" | "UTC" | IANA zone (STACK-63)

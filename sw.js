@@ -3,7 +3,7 @@
 // Cache version is tied to APP_VERSION — old caches are purged on activate
 
 const DEV_MODE = false; // Set to true during development — bypasses all caching
-const CACHE_NAME = 'staktrakr-v3.30.01';
+const CACHE_NAME = 'staktrakr-v3.30.02';
 
 // Offline fallback for navigation requests when all cache/network strategies fail
 const OFFLINE_HTML = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>StakTrakr</title></head>' +
