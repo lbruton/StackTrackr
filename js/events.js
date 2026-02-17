@@ -2049,6 +2049,7 @@ const setupSearch = () => {
           // Reset purity to default (form.reset already sets select to first option)
           const purityCustom = elements.purityCustomWrapper;
           if (purityCustom) purityCustom.style.display = 'none';
+          if (elements.itemPurity) elements.itemPurity.value = '';
           // Reset gb denomination picker (STACK-45)
           if (typeof toggleGbDenomPicker === 'function') toggleGbDenomPicker();
           // Hide PCGS verified icon in add mode
