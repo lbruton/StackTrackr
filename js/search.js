@@ -60,6 +60,8 @@ const filterInventory = () => {
         // For multi-word searches, check if the exact phrase exists or
         // if all words exist as separate word boundaries without conflicting words
         const exactPhrase = q.toLowerCase();
+        // STAK-126: include tags in searchable text
+        const _searchTags = typeof getItemTags === 'function' ? getItemTags(item.uuid).join(' ') : '';
         const itemText = [
           item.metal,
           item.composition || '',
@@ -75,7 +77,8 @@ const filterInventory = () => {
           String(item.numistaId || ''),
           item.serialNumber || '',
           String(item.pcgsNumber || ''),
-          String(item.purity || '')
+          String(item.purity || ''),
+          _searchTags
         ].join(' ').toLowerCase();
         
         // Check for exact phrase match first
@@ -293,7 +296,8 @@ const filterInventory = () => {
           (item.certNumber && wordRegex.test(String(item.certNumber))) ||
           (item.numistaId && wordRegex.test(String(item.numistaId))) ||
           (item.serialNumber && wordRegex.test(item.serialNumber)) ||
-          (item.pcgsNumber && wordRegex.test(String(item.pcgsNumber)))
+          (item.pcgsNumber && wordRegex.test(String(item.pcgsNumber))) ||
+          (typeof getItemTags === 'function' && getItemTags(item.uuid).some(t => wordRegex.test(t)))
         );
       });
       if (fieldMatch) return true;
@@ -366,7 +370,7 @@ const searchPatternMatchesAutoChip = (patterns) => {
     'metals', 'types', 'names',
     'purchaseLocations', 'storageLocations',
     'years', 'grades', 'numistaIds',
-    'purities', 'dynamicNames',
+    'purities', 'dynamicNames', 'tags',
   ];
 
   const autoValues = new Set();

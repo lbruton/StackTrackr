@@ -643,6 +643,15 @@ function buildViewContent(item, index) {
   const numistaPlaceholder = _el('div', '');
   numistaPlaceholder.id = 'viewNumistaSection';
 
+  // --- Tags section (STAK-126) ---
+  let tagsSection = null;
+  if (typeof buildTagSection === 'function') {
+    tagsSection = buildTagSection(item.uuid, [], () => {
+      // Re-render filter chips when tags change
+      if (typeof renderActiveFilters === 'function') renderActiveFilters();
+    });
+  }
+
   // --- Notes section (conditional) ---
   let notesSection = null;
   if (item.notes) {
@@ -663,6 +672,7 @@ function buildViewContent(item, index) {
     inventory:    () => invSection,
     grading:      () => gradeSection,
     numista:      () => numistaPlaceholder,
+    tags:         () => tagsSection,
     notes:        () => notesSection,
   };
 
@@ -941,6 +951,20 @@ async function loadViewNumistaData(item, container, apiResult) {
   }
 
   placeholder.replaceWith(section);
+
+  // STAK-126: Auto-apply Numista tags to the item's tag store and refresh
+  // the tags section so it shows Numista tags with proper visual distinction
+  if (meta.tags && meta.tags.length > 0 && item.uuid && typeof applyNumistaTags === 'function') {
+    applyNumistaTags(item.uuid, meta.tags);
+    // Rebuild the tags section in the modal with Numista tag info
+    const tagsSectionEl = container.querySelector('#viewTagsSection');
+    if (tagsSectionEl && typeof buildTagSection === 'function') {
+      const newTagsSection = buildTagSection(item.uuid, meta.tags, () => {
+        if (typeof renderActiveFilters === 'function') renderActiveFilters();
+      });
+      tagsSectionEl.replaceWith(newTagsSection);
+    }
+  }
 }
 
 // ---------------------------------------------------------------------------
