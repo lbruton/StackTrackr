@@ -564,9 +564,10 @@ document.addEventListener("DOMContentLoaded", async () => {
         if (elements.itemPuritySelect) {
           elements.itemPuritySelect.addEventListener('change', () => {
             const wrapper = elements.purityCustomWrapper || document.getElementById('purityCustomWrapper');
-            if (wrapper) {
-              wrapper.style.display = elements.itemPuritySelect.value === 'custom' ? '' : 'none';
-            }
+            const input = elements.itemPurity || document.getElementById('itemPurity');
+            const isCustom = elements.itemPuritySelect.value === 'custom';
+            if (wrapper) wrapper.style.display = isCustom ? '' : 'none';
+            if (input && !isCustom) input.value = '';
           });
         }
 
