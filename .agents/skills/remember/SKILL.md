@@ -57,12 +57,15 @@ Prefer storing references when possible.
 ## RECALL Workflow
 
 1. Choose strategy:
-   - Colon-delimited name (e.g., `HANDSHAKE:CODEX:2026-02-18`) -> `search_nodes` with exact colon string (never space-split)
+   - Colon-delimited name (e.g., `HANDSHAKE:CODEX:2026-02-18`) -> `search_nodes`
+     with exact colon string (never space-split)
    - Tag prefix (e.g., `project:staktrakr`, `agent:codex`) -> `search_nodes` with exact tag
-   - Date token/time slice -> `search_nodes` with progressive prefixes (`YYYYMMDDHH` -> `YYYYMMDD` -> `YYYYMM` -> `YYYY`)
+   - Date token/time slice -> `search_nodes` with progressive prefixes
+     (`YYYYMMDDHH` -> `YYYYMMDD` -> `YYYYMM` -> `YYYY`)
    - Conceptual/natural language query -> `semantic_search` with `hybrid_search: true`
 2. For day/week recency requests, prefer date tags first (for example `date:20260218`) before semantic recall.
-3. **Fallback**: If `search_nodes` returns 0 results, always retry with `semantic_search` using the same query as natural language.
+3. **Fallback**: If `search_nodes` returns 0 results, always retry with `semantic_search`
+   using the same query as natural language.
 4. Expand relevant results with `open_nodes`.
 5. Present concise summary first, details on demand.
 
@@ -90,7 +93,8 @@ When content is agent handoff related, cross-session pauses, or work transfers:
 1. Create Memento handoff entity.
 2. Post to Linear using the expanded template (see `memento-taxonomy`):
    - If a related issue exists in the project team: post comment there.
-   - If no related issue: create issue in **Developers** team (`38d57c9f-388c-41ec-9cd2-259a21a5df1c`) with title `HANDOFF: <TAG> <topic> <YYYY-MM-DD>`.
+   - If no related issue: create issue in **Developers** team (`38d57c9f-388c-41ec-9cd2-259a21a5df1c`)
+     with title `HANDOFF: <TAG> <topic> <YYYY-MM-DD>`.
 3. Include `Links:`, `Memory:`, and `Risks:` fields in every handoff.
 4. **Never include secrets in Linear** — use Memento entity references only.
 5. Report handoff entity name and Linear comment/issue result.
