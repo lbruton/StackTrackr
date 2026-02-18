@@ -878,7 +878,7 @@ const parseItemFormFields = (isEditing, existingItem) => {
     weightUnit,
     price: parsePriceToUSD(elements.itemPrice.value.trim(), fxRate, isEditing, existingItem.price),
     purchaseLocation: elements.purchaseLocation.value.trim(),
-    storageLocation: elements.storageLocation.value.trim() || 'Unknown',
+    storageLocation: elements.storageLocation.value.trim(),
     serialNumber: elements.itemSerialNumber?.value?.trim() ?? '',
     notes: elements.itemNotes.value.trim(),
     date: elements.itemDate.value || (isEditing ? (existingItem.date || '') : todayStr()),
@@ -940,7 +940,7 @@ const commitItemToInventory = (f, isEditing, editIdx) => {
     inventory[editIdx] = {
       ...oldItem,
       ...buildItemFields(f),
-      isCollectable: false,
+      isCollectable: !!(elements.itemCollectable && elements.itemCollectable.checked),
       numistaId: f.catalog,
       currency: f.currency,
       obverseImageUrl: f.obverseImageUrl || window.selectedNumistaResult?.imageUrl || oldItem.obverseImageUrl || '',
@@ -996,7 +996,7 @@ const commitItemToInventory = (f, isEditing, editIdx) => {
       spotPriceAtPurchase,
       premiumPerOz: 0,
       totalPremium: 0,
-      isCollectable: false,
+      isCollectable: !!(elements.itemCollectable && elements.itemCollectable.checked),
       serial,
       uuid: generateUUID(),
       numistaId: f.catalog,
@@ -1014,18 +1014,31 @@ const commitItemToInventory = (f, isEditing, editIdx) => {
 
     saveInventory();
 
+    // Log the add action to the changelog (BUG-004)
+    const addedItem = inventory[inventory.length - 1];
+    const addSummary = [addedItem.metal, addedItem.type, addedItem.name,
+      typeof formatWeight === 'function' ? formatWeight(addedItem.weight, addedItem.weightUnit) : addedItem.weight + ' oz',
+      typeof formatCurrency === 'function' ? formatCurrency(addedItem.price) : '$' + Number(addedItem.price).toFixed(2)
+    ].filter(Boolean).join(' · ');
+    logChange(addedItem.name, 'Added', '', addSummary, inventory.length - 1);
+
     // STAK-126: Auto-apply Numista tags from the lookup result
     if (window.selectedNumistaResult?.tags && typeof applyNumistaTags === 'function') {
-      const newUuid = inventory[inventory.length - 1].uuid;
+      const newUuid = addedItem.uuid;
       applyNumistaTags(newUuid, window.selectedNumistaResult.tags);
     }
 
     // Record initial price data point (STACK-43)
     if (typeof recordSingleItemPrice === 'function') {
-      recordSingleItemPrice(inventory[inventory.length - 1], 'add');
+      recordSingleItemPrice(addedItem, 'add');
     }
 
     renderTable();
+
+    // Success toast (UX-002)
+    if (typeof showToast === 'function') {
+      showToast('\u2713 ' + addedItem.name + ' added to inventory');
+    }
   }
 };
 
@@ -1177,6 +1190,8 @@ const setupItemFormListeners = () => {
   const closeItemModal = (e) => {
     if (e && typeof e.preventDefault === 'function') e.preventDefault();
     if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
+    // Dismiss any open autocomplete dropdowns (BUG-002/003)
+    if (typeof dismissAllAutocompletes === 'function') dismissAllAutocompletes();
     try { if (typeof closeModalById === 'function') closeModalById('itemModal'); } catch(closeErr) {}
     editingIndex = null;
     editingChangeLogIndex = null;
@@ -1621,12 +1636,12 @@ const setupNoteAndModalListeners = () => {
 
   optionalListener(elements.backupReminder, "click", (e) => {
     e.preventDefault();
-    if (typeof showSettingsModal === "function") showSettingsModal('files');
+    if (typeof showSettingsModal === "function") showSettingsModal('system');
   }, "Backup reminder link");
 
   optionalListener(elements.storageReportLink, "click", (e) => {
     e.preventDefault();
-    if (typeof openStorageReportPopup === "function") openStorageReportPopup();
+    if (typeof showSettingsModal === "function") showSettingsModal("storage");
   }, "Storage report link");
 
   optionalListener(elements.changeLogCloseBtn, "click", () => {
@@ -1853,6 +1868,23 @@ const setupImportExportListeners = () => {
   optionalListener(elements.exportCsvBtn, "click", exportCsv, "CSV export");
   optionalListener(elements.exportJsonBtn, "click", exportJson, "JSON export");
   optionalListener(elements.exportPdfBtn, "click", exportPdf, "PDF export");
+  optionalListener(document.getElementById("exportZipBtn"), "click", () => {
+    if (typeof createBackupZip === "function") createBackupZip();
+  }, "ZIP export");
+
+  // ZIP import
+  const importZipBtn = document.getElementById("importZipBtn");
+  const importZipFile = document.getElementById("importZipFile");
+  if (importZipBtn && importZipFile) {
+    importZipBtn.addEventListener("click", () => importZipFile.click());
+    importZipFile.addEventListener("change", (e) => {
+      const file = e.target.files && e.target.files[0];
+      if (file && typeof restoreBackupZip === "function") {
+        restoreBackupZip(file);
+        importZipFile.value = "";
+      }
+    });
+  }
 
   // Cloud Sync modal
   optionalListener(elements.cloudSyncBtn, "click", () => {
@@ -2455,8 +2487,6 @@ const setupApiEvents = () => {
           const notesModal = document.getElementById("notesModal");
           const detailsModal = document.getElementById("detailsModal");
           const changeLogModal = document.getElementById("changeLogModal");
-          const storageReportModal = document.getElementById("storageReportModal");
-
           // Close sub-modals (stacking overlays) before settings modal
           if (
             infoModal &&
@@ -2508,9 +2538,6 @@ const setupApiEvents = () => {
             notesIndex = null;
           } else if (changeLogModal && changeLogModal.style.display === "flex") {
             changeLogModal.style.display = "none";
-            document.body.style.overflow = "";
-          } else if (storageReportModal && storageReportModal.style.display === "flex") {
-            storageReportModal.style.display = "none";
             document.body.style.overflow = "";
           } else if (
             detailsModal &&

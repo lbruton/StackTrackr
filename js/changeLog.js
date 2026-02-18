@@ -66,6 +66,20 @@ const renderChangeLog = () => {
       let displayField = sanitizeHtml(entry.field);
       let displayOld = sanitizeHtml(String(entry.oldValue));
       let displayNew = sanitizeHtml(String(entry.newValue));
+
+      // Format raw JSON snapshots into human-readable summaries (UX-001)
+      if ((entry.field === 'Deleted' || entry.field === 'Added') && entry.oldValue) {
+        try {
+          const snap = typeof entry.oldValue === 'string' ? JSON.parse(entry.oldValue) : entry.oldValue;
+          if (snap && typeof snap === 'object' && snap.name) {
+            const fmtFn = typeof formatCurrency === 'function' ? formatCurrency : (v) => '$' + Number(v).toFixed(2);
+            const parts = [snap.metal, snap.type, snap.name];
+            if (snap.weight) parts.push(snap.weight + (snap.weightUnit === 'g' ? 'g' : ' oz'));
+            if (snap.price) parts.push(fmtFn(snap.price));
+            displayOld = sanitizeHtml(parts.filter(Boolean).join(' \u00B7 '));
+          }
+        } catch { /* keep original */ }
+      }
       let rowClick = `onclick="editFromChangeLog(${entry.idx}, ${globalIndex})"`;
       if (entry.field === 'priceHistoryDelete') {
         displayField = 'Price Entry Deleted';

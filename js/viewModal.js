@@ -361,11 +361,9 @@ function _buildInventorySection(item, metrics) {
   _addDetail(invGrid2, 'Date', dateVal);
   _appendSourceField(invGrid2, item.purchaseLocation || '—');
   invSection.appendChild(invGrid2);
-  if (item.storageLocation) {
-    const storGrid = _el('div', 'view-detail-grid');
-    _addDetail(storGrid, 'Storage', item.storageLocation);
-    invSection.appendChild(storGrid);
-  }
+  const storGrid = _el('div', 'view-detail-grid');
+  _addDetail(storGrid, 'Storage', item.storageLocation || '\u2014');
+  invSection.appendChild(storGrid);
   return invSection;
 }
 

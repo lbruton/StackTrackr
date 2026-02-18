@@ -221,7 +221,8 @@ const generateCategorySummary = (inventory) => {
   const filteredTags = applyMinCountThreshold(tags, minCount);
   const filteredDynamicNames = applyMinCountThreshold(dynamicNames, nameMinCount);
 
-  // Apply blacklist filter to auto-generated name chips and dynamic chips
+  // Apply blacklist filter to auto-generated name chips, dynamic chips, tag chips,
+  // and custom-group labels so shift-click suppression is consistent across chip types.
   if (typeof window.isBlacklisted === 'function') {
     filteredNames = Object.fromEntries(
       Object.entries(filteredNames).filter(([key]) => !window.isBlacklisted(key))
@@ -230,6 +231,17 @@ const generateCategorySummary = (inventory) => {
     for (const key of Object.keys(filteredDynamicNames)) {
       if (window.isBlacklisted(key)) {
         delete filteredDynamicNames[key];
+      }
+    }
+    for (const key of Object.keys(filteredTags)) {
+      if (window.isBlacklisted(key)) {
+        delete filteredTags[key];
+      }
+    }
+    for (const groupId of Object.keys(customGroups)) {
+      const info = customGroups[groupId];
+      if (info && window.isBlacklisted(info.label)) {
+        delete customGroups[groupId];
       }
     }
   }
@@ -276,6 +288,17 @@ const renderActiveFilters = () => {
   const filteredInventory = filterInventoryAdvanced();
   
   if (filteredInventory.length === 0) {
+    // Show a hint when search narrows to 0 results instead of hiding chips entirely (UX-004)
+    if (searchQuery && searchQuery.trim()) {
+      container.style.display = '';
+      const hint = document.createElement('span');
+      hint.className = 'filter-chip search-hint-chip';
+      hint.style.opacity = '0.55';
+      hint.style.cursor = 'default';
+      hint.textContent = 'Clear search to use filter chips';
+      container.appendChild(hint);
+      return;
+    }
     container.style.display = 'none';
     return;
   }
@@ -402,7 +425,9 @@ const renderActiveFilters = () => {
       if (field === 'name' && !hasSummaryChip) {
         hasSummaryChip = chips.some(c => (c.field === 'customGroup' || c.field === 'dynamicName') && c.count !== undefined);
       }
-      if (hasSummaryChip) return;
+      // Keep excluded filters visible even when category summary chips exist.
+      const isExcludeFilter = !!(criteria && typeof criteria === 'object' && criteria.exclude);
+      if (hasSummaryChip && !isExcludeFilter) return;
     }
     
     if (criteria && typeof criteria === 'object' && Array.isArray(criteria.values)) {
@@ -428,6 +453,7 @@ const renderActiveFilters = () => {
   chips.forEach((f, i) => {
     const chip = document.createElement('span');
     chip.className = 'filter-chip';
+    if (f.exclude) chip.classList.add('filter-chip-excluded');
     // All chip categories render visually identical — no italic/bold distinction
     const firstValue = String(f.value).split(', ')[0];
     const colorKey = f.field === 'customGroup' ? (f.displayLabel || firstValue) : firstValue;
@@ -464,7 +490,6 @@ const renderActiveFilters = () => {
 
     // Debug logging (opt-in)
     if (window.DEBUG_FILTERS) {
-      // eslint-disable-next-line no-console
       console.debug('renderActiveFilters: adding chip', { field: f.field, value: f.value, label });
     }
     
@@ -481,14 +506,15 @@ const renderActiveFilters = () => {
 
     // Different tooltip and click behavior for different chip types
     if (f.count !== undefined && f.total !== undefined) {
-      // Category summary chips - clicking adds filter; shift+click blacklists (name/dynamic only)
-      const canBlacklist = f.field === 'name' || f.field === 'dynamicName';
+      // Category summary chips - clicking adds filter; shift+click blacklists supported chip names.
+      const canBlacklist = f.field === 'name' || f.field === 'dynamicName' || f.field === 'customGroup' || f.field === 'tags';
+      const chipNameForBlacklist = f.field === 'customGroup' ? (f.displayLabel || f.value) : f.value;
       chip.title = `Click to filter by ${f.field}: ${displayValue} (${f.count} items)` +
         (canBlacklist ? ' · Shift+click to ignore' : '');
       chip.addEventListener('click', (e) => {
         if (canBlacklist && e.shiftKey && typeof window.showBlacklistConfirm === 'function') {
           e.preventDefault();
-          window.showBlacklistConfirm(e.clientX, e.clientY, f.value);
+          window.showBlacklistConfirm(e.clientX, e.clientY, chipNameForBlacklist);
           return;
         }
         applyQuickFilter(f.field, f.value, f.isGrouped || f.isCustomGroup || f.isDynamic || false);
@@ -497,7 +523,7 @@ const renderActiveFilters = () => {
       // Active filter chips - clicking removes filter
       chip.title = f.field === 'search'
         ? `Search term: ${displayValue} (click to remove)`
-        : `Active filter: ${f.field} = ${displayValue} (click to remove)`;
+        : `Active ${f.exclude ? 'excluded' : 'included'} filter: ${f.field} = ${displayValue} (click to remove)`;
       chip.addEventListener('click', () => {
         removeFilter(f.field, f.value);
         renderActiveFilters();
@@ -509,15 +535,24 @@ const renderActiveFilters = () => {
     close.setAttribute('aria-label', `Remove filter ${displayValue}`);
     close.onclick = (e) => {
       e.stopPropagation();
-      removeFilter(f.field, f.value);
-      renderActiveFilters();
+      if (f.count !== undefined && f.total !== undefined && f.field !== 'search') {
+        // Exclude summary/result chip while keeping existing filters intact.
+        applyQuickFilter(f.field, f.value, f.isGrouped || f.isCustomGroup || f.isDynamic || false, true);
+      } else {
+        removeFilter(f.field, f.value);
+        renderActiveFilters();
+      }
     };
     close.onkeydown = (e) => {
       if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault();
         e.stopPropagation();
-        removeFilter(f.field, f.value);
-        renderActiveFilters();
+        if (f.count !== undefined && f.total !== undefined && f.field !== 'search') {
+          applyQuickFilter(f.field, f.value, f.isGrouped || f.isCustomGroup || f.isDynamic || false, true);
+        } else {
+          removeFilter(f.field, f.value);
+          renderActiveFilters();
+        }
       }
     };
 
@@ -950,8 +985,9 @@ const filterInventoryAdvanced = () => {
  * @param {string} field - The field to filter by
  * @param {string} value - The value to filter for
  * @param {boolean} [isGrouped=false] - Whether this is a grouped name filter
+ * @param {boolean} [exclude=false] - Whether to apply the filter in exclusion mode
  */
-const applyQuickFilter = (field, value, isGrouped = false) => {
+const applyQuickFilter = (field, value, isGrouped = false, exclude = false) => {
   // Handle custom group chip click
   if (field === 'customGroup') {
     const groups = typeof window.loadCustomGroups === 'function' ? window.loadCustomGroups() : [];
@@ -973,14 +1009,16 @@ const applyQuickFilter = (field, value, isGrouped = false) => {
 
       // Toggle behavior: if same custom group filter is active, remove it
       const currentValues = activeFilters['name']?.values || [];
+      const currentExclude = !!activeFilters['name']?.exclude;
       const isCurrentlyActive = uniqueNames.length > 0 &&
         uniqueNames.every(n => currentValues.includes(n)) &&
-        currentValues.length === uniqueNames.length;
+        currentValues.length === uniqueNames.length &&
+        currentExclude === exclude;
 
       if (isCurrentlyActive) {
         delete activeFilters['name'];
       } else if (uniqueNames.length > 0) {
-        activeFilters['name'] = { values: uniqueNames, exclude: false };
+        activeFilters['name'] = { values: uniqueNames, exclude };
       }
     }
     renderTable();
@@ -1001,14 +1039,16 @@ const applyQuickFilter = (field, value, isGrouped = false) => {
 
     // Toggle behavior
     const currentValues = activeFilters['name']?.values || [];
+    const currentExclude = !!activeFilters['name']?.exclude;
     const isCurrentlyActive = uniqueNames.length > 0 &&
       uniqueNames.every(n => currentValues.includes(n)) &&
-      currentValues.length === uniqueNames.length;
+      currentValues.length === uniqueNames.length &&
+      currentExclude === exclude;
 
     if (isCurrentlyActive) {
       delete activeFilters['name'];
     } else if (uniqueNames.length > 0) {
-      activeFilters['name'] = { values: uniqueNames, exclude: false };
+      activeFilters['name'] = { values: uniqueNames, exclude };
     }
     renderTable();
     renderActiveFilters();
@@ -1016,7 +1056,7 @@ const applyQuickFilter = (field, value, isGrouped = false) => {
   }
 
   // If this exact filter is already active, remove it (toggle behavior)
-  if (activeFilters[field]?.values?.[0] === value && !isGrouped) {
+  if (activeFilters[field]?.values?.[0] === value && activeFilters[field]?.exclude === exclude && !isGrouped) {
     delete activeFilters[field];
   } else if (field === 'name' && isGrouped && window.featureFlags && window.featureFlags.isEnabled('GROUPED_NAME_CHIPS')) {
     // Handle grouped name filtering
@@ -1038,24 +1078,26 @@ const applyQuickFilter = (field, value, isGrouped = false) => {
       if (uniqueNames.length > 0) {
         // Check if this grouped filter is already active
         const currentValues = activeFilters[field]?.values || [];
-        const isCurrentlyActive = uniqueNames.every(name => currentValues.includes(name)) && 
-                                 currentValues.length === uniqueNames.length;
+        const currentExclude = !!activeFilters[field]?.exclude;
+        const isCurrentlyActive = uniqueNames.every(name => currentValues.includes(name)) &&
+                                 currentValues.length === uniqueNames.length &&
+                                 currentExclude === exclude;
         
         if (isCurrentlyActive) {
           // Toggle off - remove the filter
           delete activeFilters[field];
         } else {
           // Apply the grouped filter
-          activeFilters[field] = { values: uniqueNames, exclude: false };
+          activeFilters[field] = { values: uniqueNames, exclude };
         }
       }
     } else {
       // Fallback to regular filtering if normalization is not available
-      activeFilters[field] = { values: [value], exclude: false };
+      activeFilters[field] = { values: [value], exclude };
     }
   } else {
     // Add or replace the filter for this field
-    activeFilters[field] = { values: [value], exclude: false };
+    activeFilters[field] = { values: [value], exclude };
   }
 
   // Don't clear search query - allow search + filters to work together

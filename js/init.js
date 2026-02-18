@@ -191,6 +191,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (typeof setupAboutModalEvents === "function") {
       setupAboutModalEvents();
     }
+    if (typeof setupFaqModalEvents === "function") {
+      setupFaqModalEvents();
+    }
 
     // Notes modal elements
     elements.notesModal = safeGetElement("notesModal");
@@ -653,6 +656,19 @@ document.addEventListener("DOMContentLoaded", async () => {
     debugLog("  - Inventory table:", !!elements.inventoryTable);
     // Phase 16: Storage optimization pass
     if (typeof optimizeStoragePhase1C === 'function') { optimizeStoragePhase1C(); }
+
+    // Phase 17: Hash deep-link handling (runs after event listeners are wired)
+    // Supports privacy.html redirect shim and any direct #privacy / #faq links.
+    setTimeout(() => { // nosemgrep: javascript.lang.security.detect-eval-with-expression.detect-eval-with-expression
+      const hash = window.location.hash;
+      if (hash === '#privacy') {
+        window.location.hash = '';
+        if (window.openModalById) openModalById('privacyModal');
+      } else if (hash === '#faq') {
+        window.location.hash = '';
+        if (typeof showSettingsModal === 'function') showSettingsModal('faq');
+      }
+    }, 250);
 
   } catch (error) {
     console.error("=== CRITICAL INITIALIZATION ERROR ===");

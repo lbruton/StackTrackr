@@ -9,6 +9,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.31.1] - 2026-02-18
+
+### Added — FAQ Modal, Settings Consolidation & Privacy Improvements
+
+- **Added**: Interactive FAQ modal with 13 questions across 6 sections — accessible via Settings sidebar tab, About modal, and app footer
+- **Added**: ZIP export and ZIP restore buttons exposed in Settings → Inventory (previously orphaned globals with no UI)
+- **Added**: pCloud and Box as coming-soon cloud provider cards alongside Google Drive and OneDrive in Settings → Cloud
+- **Changed**: Files settings tab consolidated into Inventory tab — all import/export now in one place
+- **Changed**: Bulk Editor wrapped in settings card with BETA badge
+- **Changed**: Data Reset promoted to standalone fieldset (removed redundant Backup & Security wrapper)
+- **Changed**: StakTrakr Cloud (Sponsors) card moved above Dropbox in Cloud settings
+- **Fixed**: privacy.html now inherits app theme and syncs with user's stored theme preference
+- **Fixed**: "Back to StakTrakr" link on privacy.html works correctly on file:// protocol
+- **Fixed**: Footer thank-you updated to credit r/Silverbugs community
+
+---
+
 ## [3.31.0] - 2026-02-17
 
 ### Added — Cloud Storage Backup (Dropbox)
