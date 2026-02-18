@@ -1,9 +1,11 @@
 // APPLICATION STATE
 // =============================================================================
 
-/** @type {Object} Sorting state tracking */
-let sortColumn = 4; // Default to name column (index 4) - alphabetical
-let sortDirection = "asc"; // 'asc' or 'desc' - default to ascending for A-Z names
+/** @type {Object} Sorting state tracking — initialized from user preference or factory default */
+const _storedSortCol = localStorage.getItem('defaultSortColumn');
+let sortColumn = _storedSortCol !== null ? parseInt(_storedSortCol, 10) : 4;
+const _storedSortDir = localStorage.getItem('defaultSortDir');
+let sortDirection = _storedSortDir || "asc";
 
 /** @type {number|null} Index of item being edited (null = no edit in progress) */
 let editingIndex = null;

@@ -282,7 +282,7 @@ const CERT_LOOKUP_URLS = {
  * Updated: 2026-02-12 - STACK-38/STACK-31: Responsive card view + mobile layout
  */
 
-const APP_VERSION = "3.30.08";
+const APP_VERSION = "3.30.09";
 
 /**
  * @constant {string} DEFAULT_CURRENCY - Default currency code for monetary formatting
@@ -577,6 +577,24 @@ const CARD_STYLE_KEY = "cardViewStyle";
 /** @constant {string} DESKTOP_CARD_VIEW_KEY - LocalStorage key for desktop card view toggle (STAK-118) */
 const DESKTOP_CARD_VIEW_KEY = "desktopCardView";
 
+/** @constant {string} DEFAULT_SORT_COL_KEY - LocalStorage key for default inventory sort column */
+const DEFAULT_SORT_COL_KEY = "defaultSortColumn";
+
+/** @constant {string} DEFAULT_SORT_DIR_KEY - LocalStorage key for default inventory sort direction */
+const DEFAULT_SORT_DIR_KEY = "defaultSortDir";
+
+/** @constant {string} METAL_ORDER_KEY - LocalStorage key for metal order/visibility config */
+const METAL_ORDER_KEY = "metalOrderConfig";
+
+/** @constant {string} SPOT_TREND_KEY - LocalStorage key for persisted spot trend period */
+const SPOT_TREND_KEY = "spotTrendPeriod";
+
+/** @constant {string} HEADER_TREND_BTN_KEY - LocalStorage key for header trend button visibility */
+const HEADER_TREND_BTN_KEY = "headerTrendBtnVisible";
+
+/** @constant {string} HEADER_SYNC_BTN_KEY - LocalStorage key for header sync button visibility */
+const HEADER_SYNC_BTN_KEY = "headerSyncBtnVisible";
+
 // =============================================================================
 // IMAGE PROCESSOR DEFAULTS (STACK-95)
 // =============================================================================
@@ -644,7 +662,9 @@ const ALLOWED_STORAGE_KEYS = [
   EXCHANGE_RATES_KEY,
   "headerThemeBtnVisible",    // boolean string: "true"/"false" (STACK-54)
   "headerCurrencyBtnVisible", // boolean string: "true"/"false" (STACK-54)
-  "headerCardViewBtnVisible", // boolean string: "true"/"false" (STAK-118)
+  SPOT_TREND_KEY,             // string: trend period ("1"|"7"|"30"|"90"|"365"|"1095")
+  HEADER_TREND_BTN_KEY,       // boolean string: "true"/"false" — header trend button visibility
+  HEADER_SYNC_BTN_KEY,        // boolean string: "true"/"false" — header sync button visibility
   "layoutVisibility",         // JSON object: { spotPrices, totals, search, table } (STACK-54) — legacy, migrated to layoutSectionConfig
   "layoutSectionConfig",      // JSON array: ordered section config [{ id, label, enabled }] (STACK-54)
   LAST_VERSION_CHECK_KEY,     // timestamp: last remote version check (STACK-67)
@@ -661,6 +681,9 @@ const ALLOWED_STORAGE_KEYS = [
   "tableImageSides",                   // string: "both"|"obverse"|"reverse" — which sides to show in table (STAK-118)
   CARD_STYLE_KEY,                        // string: "A"|"B"|"C" — card view style (STAK-118)
   DESKTOP_CARD_VIEW_KEY,                 // boolean string: "true"/"false" — desktop card view (STAK-118)
+  DEFAULT_SORT_COL_KEY,                  // number string: default sort column index
+  DEFAULT_SORT_DIR_KEY,                  // string: "asc"|"desc" — default sort direction
+  METAL_ORDER_KEY,                       // JSON array: metal order/visibility config
   ITEM_TAGS_KEY,                           // JSON object: per-item tags keyed by UUID (STAK-126)
   "enabledSeedRules",                        // JSON array: enabled built-in Numista lookup rule IDs
   "seedImagesVer",                             // string: current seed images version for cache invalidation

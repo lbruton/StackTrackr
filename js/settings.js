@@ -1039,24 +1039,35 @@ const syncGoldbackSettingsUI = () => {
  */
 const syncHeaderToggleUI = () => {
   const themeVisible = localStorage.getItem('headerThemeBtnVisible') === 'true';
-  const currencyVisible = localStorage.getItem('headerCurrencyBtnVisible') !== 'false';
-  const cardViewVisible = localStorage.getItem('headerCardViewBtnVisible') === 'true';
+  const currencyVisible = localStorage.getItem('headerCurrencyBtnVisible') === 'true';
+  const trendStored = localStorage.getItem(HEADER_TREND_BTN_KEY);
+  const trendVisible = trendStored !== null ? trendStored === 'true' : true;
+  const syncStored = localStorage.getItem(HEADER_SYNC_BTN_KEY);
+  const syncVisible = syncStored !== null ? syncStored === 'true' : true;
 
   syncChipToggle('settingsHeaderThemeBtn', themeVisible);
+  syncChipToggle('settingsHeaderThemeBtn_hdr', themeVisible);
   syncChipToggle('settingsHeaderCurrencyBtn', currencyVisible);
-  syncChipToggle('settingsHeaderCardViewBtn', cardViewVisible);
+  syncChipToggle('settingsHeaderCurrencyBtn_hdr', currencyVisible);
+  syncChipToggle('settingsHeaderTrendBtn', trendVisible);
+  syncChipToggle('settingsHeaderTrendBtn_hdr', trendVisible);
+  syncChipToggle('settingsHeaderSyncBtn', syncVisible);
+  syncChipToggle('settingsHeaderSyncBtn_hdr', syncVisible);
 
   applyHeaderToggleVisibility();
 };
 
 /**
  * Shows/hides the header shortcut buttons based on stored preferences.
- * Default is visible (true) unless explicitly set to 'false'.
+ * Theme and Currency default hidden; Trend and Sync default visible.
  */
 const applyHeaderToggleVisibility = () => {
   const themeVisible = localStorage.getItem('headerThemeBtnVisible') === 'true';
-  const currencyVisible = localStorage.getItem('headerCurrencyBtnVisible') !== 'false';
-  const cardViewVisible = localStorage.getItem('headerCardViewBtnVisible') === 'true';
+  const currencyVisible = localStorage.getItem('headerCurrencyBtnVisible') === 'true';
+  const trendStored = localStorage.getItem(HEADER_TREND_BTN_KEY);
+  const trendVisible = trendStored !== null ? trendStored === 'true' : true;
+  const syncStored = localStorage.getItem(HEADER_SYNC_BTN_KEY);
+  const syncVisible = syncStored !== null ? syncStored === 'true' : true;
 
   if (elements.headerThemeBtn) {
     elements.headerThemeBtn.style.display = themeVisible ? '' : 'none';
@@ -1064,10 +1075,8 @@ const applyHeaderToggleVisibility = () => {
   if (elements.headerCurrencyBtn) {
     elements.headerCurrencyBtn.style.display = currencyVisible ? '' : 'none';
   }
-  const headerCardViewBtn = safeGetElement('headerCardViewBtn');
-  if (headerCardViewBtn) {
-    headerCardViewBtn.style.display = cardViewVisible ? '' : 'none';
-  }
+  safeGetElement('headerTrendBtn').style.display = trendVisible ? '' : 'none';
+  safeGetElement('headerSyncBtn').style.display = syncVisible ? '' : 'none';
 };
 window.applyHeaderToggleVisibility = applyHeaderToggleVisibility;
 
@@ -1077,6 +1086,8 @@ window.applyHeaderToggleVisibility = applyHeaderToggleVisibility;
 const syncLayoutVisibilityUI = () => {
   renderLayoutSectionConfigTable();
   renderViewModalSectionConfigTable();
+  renderMetalOrderConfigTable();
+  renderInlineChipConfigTable();
   applyLayoutOrder();
 };
 
@@ -1188,6 +1199,90 @@ const renderViewModalSectionConfigTable = () => _renderSectionConfigTable({
   saveConfig: saveViewModalSectionConfig,
   onRender: () => renderViewModalSectionConfigTable(),
 });
+
+// =============================================================================
+// METAL ORDER CONFIG
+// =============================================================================
+
+const METAL_ORDER_DEFAULTS = [
+  { id: 'silver',    label: 'Silver',     enabled: true },
+  { id: 'gold',      label: 'Gold',       enabled: true },
+  { id: 'platinum',  label: 'Platinum',   enabled: true },
+  { id: 'palladium', label: 'Palladium',  enabled: true },
+  { id: 'all',       label: 'All Metals', enabled: true },
+];
+
+/**
+ * Returns the current metal order config, merging stored data with defaults.
+ * New metals added to defaults will be appended to existing stored configs.
+ * @returns {Array<{id:string, label:string, enabled:boolean}>}
+ */
+const getMetalOrderConfig = () => {
+  const stored = localStorage.getItem(METAL_ORDER_KEY);
+  if (stored) {
+    try {
+      const parsed = JSON.parse(stored);
+      // Append any new defaults not yet in stored config
+      const knownIds = new Set(parsed.map(m => m.id));
+      METAL_ORDER_DEFAULTS.filter(m => !knownIds.has(m.id)).forEach(m => parsed.push({ ...m }));
+      return parsed;
+    } catch (e) { /* fall through to defaults */ }
+  }
+  return METAL_ORDER_DEFAULTS.map(m => ({ ...m }));
+};
+
+const saveMetalOrderConfig = (config) => {
+  localStorage.setItem(METAL_ORDER_KEY, JSON.stringify(config));
+};
+
+/**
+ * Applies metal order config: reorders and shows/hides spot price cards and totals cards.
+ */
+const applyMetalOrder = () => {
+  const config = getMetalOrderConfig();
+  const spotGrid     = document.querySelector('.spot-cards-grid');
+  const totalsEl     = document.getElementById('totalsCarousel');
+
+  const spotMap = {
+    silver:   document.querySelector('.spot-input.silver'),
+    gold:     document.querySelector('.spot-input.gold'),
+    platinum: document.querySelector('.spot-input.platinum'),
+    palladium:document.querySelector('.spot-input.palladium'),
+  };
+  const totalsMap = {
+    silver:   document.querySelector('.total-card.silver'),
+    gold:     document.querySelector('.total-card.gold'),
+    platinum: document.querySelector('.total-card.platinum'),
+    palladium:document.querySelector('.total-card.palladium'),
+    all:      document.querySelector('.total-card.total-card-all'),
+  };
+
+  config.forEach(({ id, enabled }) => {
+    const spotEl = spotMap[id];
+    if (spotEl && spotGrid) {
+      spotEl.style.display = enabled ? '' : 'none';
+      spotGrid.appendChild(spotEl);
+    }
+    const totalEl = totalsMap[id];
+    if (totalEl && totalsEl) {
+      totalEl.style.display = enabled ? '' : 'none';
+      totalsEl.appendChild(totalEl);
+    }
+  });
+
+  if (typeof window.refreshTotalsDots === 'function') window.refreshTotalsDots();
+};
+window.applyMetalOrder = applyMetalOrder;
+
+/** Renders the metal order config table in Settings > Chips. */
+const renderMetalOrderConfigTable = () => _renderSectionConfigTable({
+  containerId: 'metalOrderConfigContainer',
+  getConfig: getMetalOrderConfig,
+  saveConfig: saveMetalOrderConfig,
+  onApply: applyMetalOrder,
+  onRender: () => renderMetalOrderConfigTable(),
+});
+window.renderMetalOrderConfigTable = renderMetalOrderConfigTable;
 
 /**
  * Shows/hides and reorders major page sections based on layout section config.
