@@ -406,6 +406,7 @@ async function cloudExchangeCode(code, state) {
 
 // Primary: listen for OAuth callback postMessage from popup
 window.addEventListener('message', function (event) {
+  if (event.origin !== window.location.origin) return;
   if (!event.data || event.data.type !== 'staktrakr-oauth') return;
   var code = event.data.code;
   var state = event.data.state;
@@ -823,29 +824,14 @@ function syncCloudUI() {
     }
   });
 
-  // Update password cache status
-  var pwStatusEl = document.getElementById('cloudPwCacheStatus');
+  // Update password cache status (session-only)
+  var pwStatusEl = typeof safeGetElement === 'function' ? safeGetElement('cloudPwCacheStatus') : document.getElementById('cloudPwCacheStatus');
   if (pwStatusEl) {
-    try {
-      var raw = localStorage.getItem('cloud_vault_pw_cache');
-      if (raw) {
-        var payload = JSON.parse(raw);
-        var remaining = payload.expires - Date.now();
-        if (remaining > 0) {
-          var hours = Math.floor(remaining / 3600000);
-          var days = Math.floor(hours / 24);
-          pwStatusEl.textContent = days > 0 ? 'Expires in ' + days + 'd ' + (hours % 24) + 'h' :
-            hours > 0 ? 'Expires in ' + hours + 'h' : 'Expires soon';
-          pwStatusEl.style.color = 'var(--success)';
-        } else {
-          pwStatusEl.textContent = 'Expired';
-          pwStatusEl.style.color = 'var(--text-secondary)';
-        }
-      } else {
-        pwStatusEl.textContent = 'Not cached';
-        pwStatusEl.style.color = 'var(--text-secondary)';
-      }
-    } catch (_) {
+    var cached = sessionStorage.getItem('cloud_vault_pw_cache');
+    if (cached) {
+      pwStatusEl.textContent = 'Cached (this session)';
+      pwStatusEl.style.color = 'var(--success)';
+    } else {
       pwStatusEl.textContent = 'Not cached';
       pwStatusEl.style.color = 'var(--text-secondary)';
     }
@@ -853,10 +839,10 @@ function syncCloudUI() {
 }
 
 // ---------------------------------------------------------------------------
-// Password cache (XOR obfuscation — NOT cryptographic, just prevents plaintext)
+// Password cache (session-only — never persisted to localStorage)
 // ---------------------------------------------------------------------------
 
-function cloudCachePassword(provider, password, days) {
+function cloudCachePassword(provider, password) {
   var len = password.length;
   var nonce = new Uint8Array(len);
   crypto.getRandomValues(nonce);
@@ -866,22 +852,17 @@ function cloudCachePassword(provider, password, days) {
   var payload = {
     nonce: btoa(String.fromCharCode.apply(null, nonce)),
     data: btoa(String.fromCharCode.apply(null, data)),
-    expires: Date.now() + (days || 3) * 86400000,
     provider: provider,
   };
-  localStorage.setItem('cloud_vault_pw_cache', JSON.stringify(payload));
+  sessionStorage.setItem('cloud_vault_pw_cache', JSON.stringify(payload));
 }
 
 function cloudGetCachedPassword(provider) {
   try {
-    var raw = localStorage.getItem('cloud_vault_pw_cache');
+    var raw = sessionStorage.getItem('cloud_vault_pw_cache');
     if (!raw) return null;
     var payload = JSON.parse(raw);
     if (payload.provider !== provider) return null;
-    if (Date.now() > payload.expires) {
-      cloudClearCachedPassword();
-      return null;
-    }
     var nonce = Uint8Array.from(atob(payload.nonce), function (c) { return c.charCodeAt(0); });
     var data = Uint8Array.from(atob(payload.data), function (c) { return c.charCodeAt(0); });
     var decoded = new Uint8Array(data.length);
@@ -893,7 +874,7 @@ function cloudGetCachedPassword(provider) {
 }
 
 function cloudClearCachedPassword() {
-  localStorage.removeItem('cloud_vault_pw_cache');
+  sessionStorage.removeItem('cloud_vault_pw_cache');
 }
 
 // ---------------------------------------------------------------------------

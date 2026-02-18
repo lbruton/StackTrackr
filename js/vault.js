@@ -714,10 +714,9 @@ async function handleVaultAction() {
         showVaultStatus("info", "Uploading\u2026");
         await cloudUploadVault(_cloudContext.provider, fileBytes);
         showVaultStatus("success", "Backup uploaded successfully.");
-        // Cache password if enabled
-        if (localStorage.getItem('cloud_pw_cache_enabled') === 'true' && typeof cloudCachePassword === 'function') {
-          var cacheDays = parseInt(localStorage.getItem('cloud_pw_cache_days') || '3', 10);
-          cloudCachePassword(_cloudContext.provider, password, cacheDays);
+        // Cache password for this browser session
+        if (typeof cloudCachePassword === 'function') {
+          cloudCachePassword(_cloudContext.provider, password);
         }
         if (typeof showKrakenToastIfFirst === 'function') showKrakenToastIfFirst();
       } else {
@@ -749,10 +748,9 @@ async function handleVaultAction() {
 
     try {
       await importEncryptedBackup(_vaultPendingFile, password);
-      // Cache password if this was a cloud import and caching is enabled
-      if (isCloudImport && _cloudContext && localStorage.getItem('cloud_pw_cache_enabled') === 'true' && typeof cloudCachePassword === 'function') {
-        var cacheDays = parseInt(localStorage.getItem('cloud_pw_cache_days') || '3', 10);
-        cloudCachePassword(_cloudContext.provider, password, cacheDays);
+      // Cache password for this browser session
+      if (isCloudImport && _cloudContext && typeof cloudCachePassword === 'function') {
+        cloudCachePassword(_cloudContext.provider, password);
       }
       showVaultStatus("success", "Data restored successfully. Reloading\u2026");
       setTimeout(function () { location.reload(); }, 1200);

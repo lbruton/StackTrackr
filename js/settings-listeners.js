@@ -1092,10 +1092,10 @@ const renderCloudBackupList = (provider, backups) => {
     const sizeStr = b.size < 1024 ? b.size + ' B' :
       b.size < 1048576 ? (b.size / 1024).toFixed(0) + ' KB' :
         (b.size / 1048576).toFixed(1) + ' MB';
-    return '<button class="cloud-backup-entry" data-provider="' + escapeHtml(provider) +
-      '" data-filename="' + escapeHtml(b.name) + '" data-size="' + b.size + '">' +
-      '<span class="cloud-backup-date">' + escapeHtml(dateStr) + '</span>' +
-      '<span class="cloud-backup-size">' + escapeHtml(sizeStr) + '</span>' +
+    return '<button class="cloud-backup-entry" data-provider="' + sanitizeHtml(provider) +
+      '" data-filename="' + sanitizeHtml(b.name) + '" data-size="' + b.size + '">' +
+      '<span class="cloud-backup-date">' + sanitizeHtml(dateStr) + '</span>' +
+      '<span class="cloud-backup-size">' + sanitizeHtml(sizeStr) + '</span>' +
       '</button>';
   }).join('');
 };
@@ -1104,33 +1104,7 @@ const renderCloudBackupList = (provider, backups) => {
  * Wires cloud storage connect/disconnect/backup/restore buttons.
  */
 const bindCloudCacheListeners = () => {
-  // Password cache toggle
-  const cacheToggle = getExistingElement('cloudPwCacheToggle');
-  if (cacheToggle) {
-    const stored = localStorage.getItem('cloud_pw_cache_enabled') === 'true';
-    cacheToggle.querySelectorAll('.chip-sort-btn').forEach(b => {
-      const isYes = b.dataset.val === 'yes';
-      b.classList.toggle('active', isYes ? stored : !stored);
-    });
-    cacheToggle.addEventListener('click', (e) => {
-      const btn = e.target.closest('.chip-sort-btn');
-      if (!btn) return;
-      const isEnabled = btn.dataset.val === 'yes';
-      localStorage.setItem('cloud_pw_cache_enabled', isEnabled ? 'true' : 'false');
-      cacheToggle.querySelectorAll('.chip-sort-btn').forEach(b => b.classList.toggle('active', b === btn));
-      if (!isEnabled && typeof cloudClearCachedPassword === 'function') cloudClearCachedPassword();
-    });
-  }
-
-  // Cache duration dropdown
-  const cacheDays = getExistingElement('cloudPwCacheDays');
-  if (cacheDays) {
-    const storedDays = localStorage.getItem('cloud_pw_cache_days');
-    if (storedDays) cacheDays.value = storedDays;
-    cacheDays.addEventListener('change', () => {
-      localStorage.setItem('cloud_pw_cache_days', cacheDays.value);
-    });
-  }
+  // Session-only password cache — no toggle needed, auto-caches on first use
 };
 
 /**
@@ -1259,6 +1233,8 @@ const bindCloudStorageListeners = () => {
       // Clicked a specific backup to restore
       var filename = btn.dataset.filename;
       var size = parseInt(btn.dataset.size, 10) || 0;
+      var sizeStr = size < 1024 ? size + ' B' : size < 1048576 ? (size / 1024).toFixed(0) + ' KB' : (size / 1048576).toFixed(1) + ' MB';
+      if (!confirm('Restore "' + filename + '" (' + sizeStr + ')?\n\nThis will overwrite all local data.')) return;
       btn.disabled = true;
       btn.textContent = 'Downloading\u2026';
       try {
