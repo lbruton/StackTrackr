@@ -80,6 +80,11 @@ const switchSettingsSection = (name) => {
     const activeKey = activeTab ? activeTab.dataset.logTab : 'changelog';
     switchLogTab(activeKey);
   }
+
+  // Populate Storage section when switching to it
+  if (name === 'storage' && typeof renderStorageSection === 'function') {
+    renderStorageSection();
+  }
 };
 
 /**
@@ -1699,6 +1704,266 @@ const renderUserImageGrid = async () => {
   }
 };
 
+// =============================================================================
+// STORAGE SECTION
+// =============================================================================
+
+/** Friendly display names for known localStorage keys */
+const STORAGE_KEY_LABELS = {
+  metalInventory:                  { label: 'Inventory Data',            icon: '📋', category: 'Inventory' },
+  inventorySerial:                 { label: 'Item Serial Counter',        icon: '🔢', category: 'Inventory' },
+  catalogMap:                      { label: 'Catalog Map',                icon: '🗂', category: 'Inventory' },
+  itemTags:                        { label: 'Item Tags',                  icon: '🏷', category: 'Inventory' },
+  changeLog:                       { label: 'Change Log',                 icon: '📝', category: 'Inventory' },
+  metalSpotHistory:                { label: 'Spot Price History',         icon: '📈', category: 'Prices' },
+  'item-price-history':            { label: 'Item Price History',         icon: '💰', category: 'Prices' },
+  'goldback-prices':               { label: 'Goldback Prices',            icon: '🥇', category: 'Prices' },
+  'goldback-price-history':        { label: 'Goldback Price History',     icon: '🥇', category: 'Prices' },
+  spotSilver:                      { label: 'Silver Spot (live)',         icon: '🪙', category: 'Prices' },
+  spotGold:                        { label: 'Gold Spot (live)',           icon: '🪙', category: 'Prices' },
+  spotPlatinum:                    { label: 'Platinum Spot (live)',       icon: '🪙', category: 'Prices' },
+  spotPalladium:                   { label: 'Palladium Spot (live)',      icon: '🪙', category: 'Prices' },
+  metalApiConfig:                  { label: 'API Configuration',          icon: '🔑', category: 'API & Cache' },
+  metalApiCache:                   { label: 'API Cache',                  icon: '⚡', category: 'API & Cache' },
+  lastCacheRefresh:                { label: 'Last Cache Refresh',         icon: '⏱', category: 'API & Cache' },
+  lastApiSync:                     { label: 'Last API Sync',              icon: '⏱', category: 'API & Cache' },
+  apiProviderOrder:                { label: 'API Provider Order',         icon: '↕', category: 'API & Cache' },
+  providerPriority:                { label: 'Provider Priority',          icon: '↕', category: 'API & Cache' },
+  'autocomplete_lookup_cache':     { label: 'Autocomplete Cache',         icon: '⚡', category: 'API & Cache' },
+  'autocomplete_cache_timestamp':  { label: 'Autocomplete Cache Stamp',   icon: '⏱', category: 'API & Cache' },
+  'staktrakr.catalog.cache':       { label: 'Catalog Cache',              icon: '⚡', category: 'API & Cache' },
+  'staktrakr.catalog.history':     { label: 'Catalog Call History',       icon: '📜', category: 'API & Cache' },
+  'catalog_api_config':            { label: 'Catalog API Config',         icon: '🔑', category: 'API & Cache' },
+  exchangeRates:                   { label: 'Exchange Rates',             icon: '💱', category: 'API & Cache' },
+  appTheme:                        { label: 'Theme',                      icon: '🎨', category: 'Settings' },
+  displayCurrency:                 { label: 'Display Currency',           icon: '💱', category: 'Settings' },
+  appTimeZone:                     { label: 'Timezone',                   icon: '🕐', category: 'Settings' },
+  settingsItemsPerPage:            { label: 'Items Per Page',             icon: '⚙️', category: 'Settings' },
+  cardViewStyle:                   { label: 'Card View Style',            icon: '⚙️', category: 'Settings' },
+  desktopCardView:                 { label: 'Desktop Card View',          icon: '⚙️', category: 'Settings' },
+  defaultSortColumn:               { label: 'Default Sort Column',        icon: '⚙️', category: 'Settings' },
+  defaultSortDir:                  { label: 'Default Sort Direction',     icon: '⚙️', category: 'Settings' },
+  metalOrderConfig:                { label: 'Metal Order / Visibility',   icon: '⚙️', category: 'Settings' },
+  layoutVisibility:                { label: 'Layout Visibility',          icon: '⚙️', category: 'Settings' },
+  layoutSectionConfig:             { label: 'Layout Section Config',      icon: '⚙️', category: 'Settings' },
+  viewModalSectionConfig:          { label: 'View Modal Section Config',  icon: '⚙️', category: 'Settings' },
+  chipMinCount:                    { label: 'Chip Min Count',             icon: '⚙️', category: 'Settings' },
+  chipCustomGroups:                { label: 'Chip Custom Groups',         icon: '⚙️', category: 'Settings' },
+  chipBlacklist:                   { label: 'Chip Blacklist',             icon: '⚙️', category: 'Settings' },
+  inlineChipConfig:                { label: 'Inline Chip Config',         icon: '⚙️', category: 'Settings' },
+  filterChipCategoryConfig:        { label: 'Filter Chip Categories',     icon: '⚙️', category: 'Settings' },
+  chipSortOrder:                   { label: 'Chip Sort Order',            icon: '⚙️', category: 'Settings' },
+  numistaLookupRules:              { label: 'Numista Lookup Rules',       icon: '🔍', category: 'Settings' },
+  numistaViewFields:               { label: 'Numista View Fields',        icon: '🔍', category: 'Settings' },
+  numistaOverridePersonal:         { label: 'Numista Image Priority',     icon: '🔍', category: 'Settings' },
+  'staktrakr.catalog.settings':   { label: 'Catalog Settings',           icon: '🔍', category: 'Settings' },
+  tableImagesEnabled:              { label: 'Table Images',               icon: '🖼', category: 'Settings' },
+  tableImageSides:                 { label: 'Table Image Sides',          icon: '🖼', category: 'Settings' },
+  enabledSeedRules:                { label: 'Enabled Seed Rules',         icon: '🌱', category: 'Settings' },
+  featureFlags:                    { label: 'Feature Flags',              icon: '🚩', category: 'Settings' },
+  headerTrendBtnVisible:           { label: 'Trend Btn Visible',          icon: '⚙️', category: 'Settings' },
+  headerSyncBtnVisible:            { label: 'Sync Btn Visible',           icon: '⚙️', category: 'Settings' },
+  headerThemeBtnVisible:           { label: 'Theme Btn Visible',          icon: '⚙️', category: 'Settings' },
+  headerCurrencyBtnVisible:        { label: 'Currency Btn Visible',       icon: '⚙️', category: 'Settings' },
+  spotTrendRange:                  { label: 'Spot Trend Range',           icon: '📈', category: 'Settings' },
+  spotCompareMode:                 { label: 'Spot Compare Mode',          icon: '📈', category: 'Settings' },
+  spotTrendPeriod:                 { label: 'Spot Trend Period',          icon: '📈', category: 'Settings' },
+  'goldback-enabled':              { label: 'Goldback Enabled',           icon: '🥇', category: 'Settings' },
+  'goldback-estimate-enabled':     { label: 'Goldback Estimate On',       icon: '🥇', category: 'Settings' },
+  'goldback-estimate-modifier':    { label: 'Goldback Modifier',          icon: '🥇', category: 'Settings' },
+  cloud_token_dropbox:             { label: 'Dropbox Token',              icon: '☁️', category: 'Cloud & Auth' },
+  cloud_token_pcloud:              { label: 'pCloud Token',               icon: '☁️', category: 'Cloud & Auth' },
+  cloud_token_box:                 { label: 'Box Token',                  icon: '☁️', category: 'Cloud & Auth' },
+  cloud_last_backup:               { label: 'Last Cloud Backup',          icon: '☁️', category: 'Cloud & Auth' },
+  cloud_activity_log:              { label: 'Cloud Activity Log',         icon: '☁️', category: 'Cloud & Auth' },
+  cloud_kraken_seen:               { label: 'Cloud Onboarding Seen',      icon: '☁️', category: 'Cloud & Auth' },
+  staktrakr_oauth_result:          { label: 'OAuth Result',               icon: '🔐', category: 'Cloud & Auth' },
+  currentAppVersion:               { label: 'App Version (stored)',       icon: 'ℹ️', category: 'App State' },
+  ackVersion:                      { label: 'Acknowledged Version',       icon: 'ℹ️', category: 'App State' },
+  ackDismissed:                    { label: 'Acknowledgment Dismissed',   icon: 'ℹ️', category: 'App State' },
+  lastVersionCheck:                { label: 'Last Version Check',         icon: 'ℹ️', category: 'App State' },
+  latestRemoteVersion:             { label: 'Latest Remote Version',      icon: 'ℹ️', category: 'App State' },
+  latestRemoteUrl:                 { label: 'Latest Remote URL',          icon: 'ℹ️', category: 'App State' },
+  seedImagesVer:                   { label: 'Seed Images Version',        icon: '🌱', category: 'App State' },
+  ff_migration_fuzzy_autocomplete: { label: 'Migration: Fuzzy Autocomplete', icon: '🔄', category: 'App State' },
+  migration_hourlySource:          { label: 'Migration: Hourly Source',   icon: '🔄', category: 'App State' },
+  'staktrakr.debug':               { label: 'Debug Flag',                 icon: '🐛', category: 'App State' },
+  'stackrtrackr.debug':            { label: 'Debug Flag (legacy typo)',   icon: '🐛', category: 'App State' },
+};
+
+/** Keys under this KB threshold are considered "minor" and hidden by default */
+const STORAGE_TINY_THRESHOLD_KB = 0.5;
+
+/** True = show minor keys; toggled by the button in the panel */
+let _storageTinyVisible = false;
+
+/**
+ * Populates the Storage settings panel with live LS and IDB data.
+ * @param {boolean} [silent=false] - If true, skip the loading spinner on refresh
+ */
+const renderStorageSection = async (silent = false) => {
+  const keyTable  = document.getElementById('storageKeyTable');
+  const idbTable  = document.getElementById('storageIdbTable');
+  if (!keyTable) return;
+
+  if (!silent) {
+    keyTable.innerHTML  = '<div class="storage-key-table-loading">Loading…</div>';
+    if (idbTable) idbTable.innerHTML = '<div class="storage-key-table-loading">Loading…</div>';
+  }
+
+  // ── 1. Gather localStorage data ──────────────────────────────────────────
+  const lsItems = [];
+  let lsTotalKB = 0;
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    const val = localStorage.getItem(key) || '';
+    const sizeKB = ((key.length + val.length) * 2) / 1024;
+    lsTotalKB += sizeKB;
+
+    let type = 'String', records = null;
+    try {
+      const parsed = JSON.parse(val);
+      if (Array.isArray(parsed))        { type = 'Array';  records = parsed.length; }
+      else if (parsed && typeof parsed === 'object') { type = 'Object'; records = Object.keys(parsed).length; }
+      else                               { type = 'Value'; }
+    } catch (e) { /* not JSON */ }
+
+    const meta = STORAGE_KEY_LABELS[key] || {};
+    lsItems.push({ key, sizeKB, type, records, label: meta.label || key, icon: meta.icon || '📄', category: meta.category || 'Other' });
+  }
+  lsItems.sort((a, b) => b.sizeKB - a.sizeKB);
+
+  // ── 2. Gather IndexedDB data ──────────────────────────────────────────────
+  let idbStats = null;
+  if (window.imageCache?.isAvailable()) {
+    try { idbStats = await imageCache.getStorageUsage(); } catch (e) { /* unavailable */ }
+  }
+
+  const idbTotalKB  = idbStats ? idbStats.totalBytes / 1024 : 0;
+  const idbLimitKB  = idbStats ? idbStats.limitBytes / 1024 : 50 * 1024;
+  const lsLimitKB   = 5 * 1024;
+  const combinedKB  = lsTotalKB + idbTotalKB;
+  const combinedLimitKB = lsLimitKB + idbLimitKB;
+
+  // ── 3. Update summary stat cards ─────────────────────────────────────────
+  const fmt = (kb) => kb >= 1024 ? `${(kb / 1024).toFixed(1)} MB` : `${kb.toFixed(1)} KB`;
+  const pct = (used, limit) => limit > 0 ? Math.min((used / limit) * 100, 100) : 0;
+
+  const setCard = (id, val, sub, barId, barPct, barClass) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = val;
+    const subEl = document.getElementById(`${id}_sub`);
+    if (subEl) subEl.textContent = sub;
+    const bar = document.getElementById(barId);
+    if (bar) { bar.style.width = `${barPct.toFixed(1)}%`; if (barClass) bar.className = `storage-stat-bar ${barClass}`; }
+  };
+
+  setCard('storageStat_ls',       fmt(lsTotalKB),    `${pct(lsTotalKB, lsLimitKB).toFixed(1)}% of 5,120 KB`,    'storageStatBar_ls',            pct(lsTotalKB, lsLimitKB),    'storage-stat-bar--ls');
+  setCard('storageStat_idb',      fmt(idbTotalKB),   `${pct(idbTotalKB, idbLimitKB).toFixed(1)}% of ${fmt(idbLimitKB)}`, 'storageStatBar_idb', pct(idbTotalKB, idbLimitKB),   'storage-stat-bar--idb');
+  setCard('storageStat_combined', fmt(combinedKB),   `of ~${fmt(combinedLimitKB)} cap`, 'storageStatBar_combined_ls',  pct(lsTotalKB, combinedLimitKB), 'storage-stat-bar--ls');
+  const combinedIdbBar = document.getElementById('storageStatBar_combined_idb');
+  if (combinedIdbBar) combinedIdbBar.style.width = `${pct(idbTotalKB, combinedLimitKB).toFixed(1)}%`;
+
+  // ── 4. Render localStorage key table ─────────────────────────────────────
+  const major = lsItems.filter(it => it.sizeKB >= STORAGE_TINY_THRESHOLD_KB);
+  const minor = lsItems.filter(it => it.sizeKB < STORAGE_TINY_THRESHOLD_KB);
+  const visible = _storageTinyVisible ? lsItems : major;
+
+  const rowsHtml = visible.map(it => {
+    const barPct = lsTotalKB > 0 ? Math.min((it.sizeKB / lsTotalKB) * 100, 100) : 0;
+    const recStr = it.records !== null ? it.records.toLocaleString() : '—';
+    const sizeStr = it.sizeKB >= 1 ? `${it.sizeKB.toFixed(1)} KB` : `${(it.sizeKB * 1024).toFixed(0)} B`;
+    return `<tr class="storage-key-row">
+      <td class="storage-key-icon">${it.icon}</td>
+      <td class="storage-key-label">${sanitizeHtml ? sanitizeHtml(it.label) : it.label}<span class="storage-key-raw">${sanitizeHtml ? sanitizeHtml(it.key) : it.key}</span></td>
+      <td class="storage-key-size">${sizeStr}</td>
+      <td class="storage-key-bar-cell"><div class="storage-key-bar-wrap"><div class="storage-key-bar" style="width:${barPct.toFixed(1)}%"></div></div></td>
+      <td class="storage-key-pct">${barPct.toFixed(1)}%</td>
+      <td class="storage-key-type"><span class="storage-type-badge storage-type-badge--${it.type.toLowerCase()}">${it.type}</span></td>
+      <td class="storage-key-records">${recStr}</td>
+    </tr>`;
+  }).join('');
+
+  keyTable.innerHTML = `
+    <table class="storage-data-table">
+      <thead><tr>
+        <th></th>
+        <th>Key</th>
+        <th>Size</th>
+        <th class="storage-col-bar">Usage</th>
+        <th>%</th>
+        <th>Type</th>
+        <th>Records</th>
+      </tr></thead>
+      <tbody>${rowsHtml}</tbody>
+    </table>
+    ${minor.length > 0 ? `<p class="storage-minor-note">${_storageTinyVisible ? '' : `${minor.length} minor keys hidden. `}<button class="btn-link storage-toggle-tiny" id="storageToggleTinyBottom">${_storageTinyVisible ? 'Hide minor keys' : 'Show all'}</button></p>` : ''}
+  `;
+
+  // wire bottom toggle
+  const bottomToggle = document.getElementById('storageToggleTinyBottom');
+  if (bottomToggle) bottomToggle.addEventListener('click', _handleStorageTinyToggle);
+
+  // ── 5. Render IndexedDB table ─────────────────────────────────────────────
+  if (idbTable) {
+    if (!idbStats) {
+      idbTable.innerHTML = '<p class="settings-subtext">IndexedDB unavailable in this browser.</p>';
+    } else {
+      const idbRows = [
+        { label: 'Coin Images',     icon: '🖼', count: idbStats.numistaCount,      sizeKB: null },
+        { label: 'User Images',     icon: '📷', count: idbStats.userImageCount,    sizeKB: null },
+        { label: 'Pattern Images',  icon: '🎨', count: idbStats.patternImageCount || 0, sizeKB: null },
+        { label: 'Coin Metadata',   icon: '📄', count: idbStats.metadataCount,     sizeKB: null },
+      ];
+      // Estimate size by proportion of total (exact per-store breakdown not available from getStorageUsage)
+      const idbTotalCount = idbRows.reduce((s, r) => s + r.count, 0) || 1;
+      idbRows.forEach(r => { r.sizeKB = idbTotalCount > 0 ? (r.count / idbTotalCount) * idbTotalKB : 0; });
+
+      const idbRowsHtml = idbRows.map(r => {
+        const barPct = idbTotalKB > 0 ? Math.min((r.sizeKB / idbTotalKB) * 100, 100) : 0;
+        const sizeStr = r.sizeKB >= 1024 ? `${(r.sizeKB / 1024).toFixed(1)} MB` : `${r.sizeKB.toFixed(1)} KB`;
+        return `<tr class="storage-key-row">
+          <td class="storage-key-icon">${r.icon}</td>
+          <td class="storage-key-label">${r.label}<span class="storage-key-raw">StakTrakrImages</span></td>
+          <td class="storage-key-size">~${sizeStr}</td>
+          <td class="storage-key-bar-cell"><div class="storage-key-bar-wrap"><div class="storage-key-bar storage-key-bar--idb" style="width:${barPct.toFixed(1)}%"></div></div></td>
+          <td class="storage-key-pct">${barPct.toFixed(1)}%</td>
+          <td class="storage-key-type"><span class="storage-type-badge storage-type-badge--idb">IDB</span></td>
+          <td class="storage-key-records">${r.count.toLocaleString()}</td>
+        </tr>`;
+      }).join('');
+
+      const idbTotalStr = idbTotalKB >= 1024 ? `${(idbTotalKB / 1024).toFixed(1)} MB` : `${idbTotalKB.toFixed(1)} KB`;
+      const idbLimitStr = idbLimitKB >= 1024 ? `${(idbLimitKB / 1024).toFixed(0)} MB` : `${idbLimitKB.toFixed(0)} KB`;
+
+      idbTable.innerHTML = `
+        <table class="storage-data-table">
+          <thead><tr>
+            <th></th>
+            <th>Store</th>
+            <th>~Size</th>
+            <th class="storage-col-bar">Usage</th>
+            <th>%</th>
+            <th>Type</th>
+            <th>Records</th>
+          </tr></thead>
+          <tbody>${idbRowsHtml}</tbody>
+        </table>
+        <p class="storage-minor-note">Total: ${idbTotalStr} / ${idbLimitStr} &nbsp;·&nbsp; Size per store is estimated proportionally from record count.</p>
+      `;
+    }
+  }
+
+  // ── 6. Update top toggle button text ─────────────────────────────────────
+  const topToggle = document.getElementById('storageToggleTiny');
+  if (topToggle) topToggle.textContent = _storageTinyVisible ? 'Hide minor keys' : `Show minor keys (${minor.length})`;
+};
+
+const _handleStorageTinyToggle = () => {
+  _storageTinyVisible = !_storageTinyVisible;
+  renderStorageSection(true);
+};
+
 // Expose globally
 if (typeof window !== 'undefined') {
   window.showSettingsModal = showSettingsModal;
@@ -1715,4 +1980,5 @@ if (typeof window !== 'undefined') {
   window.renderSeedRuleTable = renderSeedRuleTable;
   window.renderCustomRuleTable = renderCustomRuleTable;
   window.populateImagesSection = populateImagesSection;
+  window.renderStorageSection = renderStorageSection;
 }

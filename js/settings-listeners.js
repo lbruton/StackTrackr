@@ -1241,6 +1241,27 @@ const bindCloudStorageListeners = () => {
 };
 
 /**
+ * Wires up Storage section listeners (Refresh button, tiny-key toggle).
+ */
+const bindStorageListeners = () => {
+  // Refresh button
+  const refreshBtn = document.getElementById('storageRefreshBtn');
+  if (refreshBtn) {
+    refreshBtn.addEventListener('click', () => {
+      if (typeof renderStorageSection === 'function') renderStorageSection();
+    });
+  }
+
+  // Top-level tiny-key toggle
+  const topToggle = document.getElementById('storageToggleTiny');
+  if (topToggle) {
+    topToggle.addEventListener('click', () => {
+      if (typeof _handleStorageTinyToggle === 'function') _handleStorageTinyToggle();
+    });
+  }
+};
+
+/**
  * Wires up all Settings modal event listeners.
  * Called once during initialization.
  */
@@ -1254,6 +1275,7 @@ const setupSettingsEventListeners = () => {
   bindGoldbackActionListeners();
   bindImageSettingsListeners();
   bindCloudStorageListeners();
+  bindStorageListeners();
 };
 
 if (typeof window !== 'undefined') {
