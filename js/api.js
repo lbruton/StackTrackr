@@ -2196,7 +2196,7 @@ const hideApiModal = () => {
  */
 const showFilesModal = () => {
   if (typeof showSettingsModal === "function") {
-    showSettingsModal('files');
+    showSettingsModal('system');
   }
 };
 

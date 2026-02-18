@@ -3,7 +3,7 @@
 
 /**
  * Opens the unified Settings modal, optionally navigating to a section.
- * @param {string} [section='site'] - Section to display: 'site', 'system', 'table', 'grouping', 'api', 'files', 'cloud', 'goldback', 'changelog'
+ * @param {string} [section='site'] - Section to display: 'site', 'system', 'table', 'grouping', 'api', 'cloud', 'images', 'storage', 'goldback', 'changelog'
  */
 const showSettingsModal = (section = 'site') => {
   const modal = document.getElementById('settingsModal');
@@ -35,35 +35,37 @@ const hideSettingsModal = () => {
 
 /**
  * Switches the visible section panel in the Settings modal.
- * @param {string} name - Section key: 'site', 'system', 'table', 'grouping', 'api', 'files', 'cloud', 'goldback', 'changelog'
+ * @param {string} name - Section key: 'site', 'system', 'table', 'grouping', 'api', 'cloud', 'images', 'storage', 'goldback', 'changelog'
  */
 const switchSettingsSection = (name) => {
+  const targetName = document.getElementById(`settingsPanel_${name}`) ? name : 'system';
+
   // Hide all panels
   document.querySelectorAll('.settings-section-panel').forEach(panel => {
     panel.style.display = 'none';
   });
 
   // Show target panel
-  const target = document.getElementById(`settingsPanel_${name}`);
+  const target = document.getElementById(`settingsPanel_${targetName}`);
   if (target) target.style.display = 'block';
 
   // Update active nav item
   document.querySelectorAll('.settings-nav-item').forEach(item => {
-    item.classList.toggle('active', item.dataset.section === name);
+    item.classList.toggle('active', item.dataset.section === targetName);
   });
 
   // Populate API data when switching to API section
-  if (name === 'api' && typeof populateApiSection === 'function') {
+  if (targetName === 'api' && typeof populateApiSection === 'function') {
     populateApiSection();
   }
 
   // Sync cloud UI when switching to Cloud section
-  if (name === 'cloud' && typeof syncCloudUI === 'function') {
+  if (targetName === 'cloud' && typeof syncCloudUI === 'function') {
     syncCloudUI();
   }
 
   // Populate Images data and sync toggles when switching to Images section (STACK-96)
-  if (name === 'images') {
+  if (targetName === 'images') {
     syncChipToggle('tableImagesToggle', localStorage.getItem('tableImagesEnabled') !== 'false');
     syncChipToggle('numistaOverrideToggle', localStorage.getItem('numistaOverridePersonal') === 'true');
     const sidesSync = safeGetElement('tableImageSidesToggle');
@@ -75,14 +77,14 @@ const switchSettingsSection = (name) => {
   }
 
   // Render the active log sub-tab when switching to the changelog section
-  if (name === 'changelog') {
+  if (targetName === 'changelog') {
     const activeTab = document.querySelector('.settings-log-tab.active');
     const activeKey = activeTab ? activeTab.dataset.logTab : 'changelog';
     switchLogTab(activeKey);
   }
 
   // Populate Storage section when switching to it
-  if (name === 'storage' && typeof renderStorageSection === 'function') {
+  if (targetName === 'storage' && typeof renderStorageSection === 'function') {
     renderStorageSection();
   }
 };
