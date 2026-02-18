@@ -54,8 +54,8 @@ if [ "$NEED_STAMP" = false ]; then
 fi
 
 # Extract APP_VERSION from constants.js (e.g. "3.30.08")
-# Use sed instead of grep -P for macOS compatibility
-APP_VERSION=$(sed -n "s/.*APP_VERSION\s*=\s*\"\([^\"]*\)\".*/\1/p" js/constants.js 2>/dev/null | head -1)
+# Use grep + sed for macOS compatibility (no grep -P or sed \s)
+APP_VERSION=$(grep 'const APP_VERSION' js/constants.js 2>/dev/null | sed 's/.*"\([^"]*\)".*/\1/' | head -1)
 APP_VERSION="${APP_VERSION:-0.0.0}"
 
 # Build timestamp (Unix epoch seconds)
@@ -64,7 +64,7 @@ BUILD_TS=$(date +%s)
 NEW_CACHE="staktrakr-v${APP_VERSION}-b${BUILD_TS}"
 
 # Current CACHE_NAME value
-CURRENT=$(sed -n "s/.*CACHE_NAME\s*=\s*'\([^']*\)'.*/\1/p" "$SW_FILE" 2>/dev/null | head -1)
+CURRENT=$(grep 'const CACHE_NAME' "$SW_FILE" 2>/dev/null | sed "s/.*'\([^']*\)'.*/\1/" | head -1)
 
 if [ "$CURRENT" = "$NEW_CACHE" ]; then
   exit 0
