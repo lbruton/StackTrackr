@@ -372,6 +372,7 @@ function restoreVaultData(payload) {
 
   // Refresh the full UI
   try {
+    if (typeof loadItemTags === "function") loadItemTags();
     if (typeof loadInventory === "function") loadInventory();
     if (typeof renderTable === "function") renderTable();
     if (typeof renderActiveFilters === "function") renderActiveFilters();

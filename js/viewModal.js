@@ -80,8 +80,17 @@ async function showViewModal(index) {
   const imagesLoaded = cacheResult.loaded;
   const imageSource = cacheResult.source;
 
-  // If images or metadata are needed, do a single API lookup
-  if (catalogId && (!imagesLoaded || body.querySelector('#viewNumistaSection'))) {
+  // Check whether metadata is already cached in IndexedDB
+  let metaCached = false;
+  if (catalogId && window.imageCache?.isAvailable()) {
+    try {
+      const cachedMeta = await imageCache.getMetadata(catalogId);
+      metaCached = !!(cachedMeta && (Date.now() - (cachedMeta.cachedAt || 0)) < VIEW_METADATA_TTL);
+    } catch { /* ignore */ }
+  }
+
+  // Only hit the API when images are missing OR metadata is not in cache
+  if (catalogId && (!imagesLoaded || !metaCached)) {
     apiResult = await _fetchNumistaResult(catalogId);
   }
 
