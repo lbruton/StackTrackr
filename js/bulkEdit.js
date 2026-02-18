@@ -20,6 +20,10 @@ let bulkSearchTimer = null;         // Debounce timer for search input
 let bulkSortCol = null;             // Column key to sort by, or null
 let bulkSortDir = 'asc';            // 'asc' | 'desc'
 
+// Tracks blob URLs created for bulk image thumbnails so we can revoke them
+// when the modal closes, preventing memory leaks.
+const _bulkBlobUrls = new Set();
+
 // =============================================================================
 // SEARCH FILTER HELPER
 // =============================================================================
@@ -171,6 +175,10 @@ const closeBulkEdit = () => {
   // Clear Numista callback
   window._bulkEditNumistaCallback = null;
 
+  // Revoke all blob URLs created for thumbnails to free memory
+  _bulkBlobUrls.forEach(u => { try { URL.revokeObjectURL(u); } catch (e) { /* ignore */ } });
+  _bulkBlobUrls.clear();
+
   modal.style.display = 'none';
   document.body.style.overflow = '';
 };
@@ -265,21 +273,22 @@ const buildBulkItemRow = (item, isPinned) => {
   cbTd.appendChild(cb);
   tr.appendChild(cbTd);
 
-  // Image thumbnail cell
+  // Image thumbnail cell — resolved async from IDB after row is appended
   const imgTd = document.createElement('td');
   imgTd.className = 'bulk-img-cell';
-  if (item.obverseImageUrl) {
-    const img = document.createElement('img');
-    img.src = item.obverseImageUrl;
-    img.alt = '';
-    img.loading = 'lazy';
-    img.className = 'bulk-img-thumb';
-    imgTd.appendChild(img);
-  } else {
-    const ph = document.createElement('span');
-    ph.className = 'bulk-img-placeholder';
-    imgTd.appendChild(ph);
-  }
+  // Placeholder pair shown until IDB resolves
+  imgTd.innerHTML = '<span class="bulk-img-placeholder" data-side="obverse"></span>';
+  // Store item identity for the async loader and upload popover
+  imgTd.dataset.uuid       = item.uuid || '';
+  imgTd.dataset.numistaId  = item.numistaId || '';
+  imgTd.dataset.itemName   = item.name || '';
+  imgTd.dataset.serial     = serial;
+  imgTd.title = 'Click to manage photos';
+  imgTd.style.cursor = 'pointer';
+  imgTd.addEventListener('click', (e) => {
+    e.stopPropagation();
+    _openBulkImagePopover(imgTd, item);
+  });
   tr.appendChild(imgTd);
 
   // Data cells
@@ -709,6 +718,13 @@ const renderBulkTableBody = () => {
   // Update badge count
   const badge = safeGetElement('bulkEditCountBadge');
   if (badge) badge.textContent = bulkSelection.size + ' selected';
+
+  // Async-load images for all rows now that they are in the DOM
+  const allRows = [...pinnedItems, ...sortedFiltered];
+  allRows.forEach(item => {
+    const tr = tbody.querySelector(`tr[data-serial="${CSS.escape(String(item.serial))}"]`);
+    if (tr) _loadBulkRowImages(tr, item);
+  });
 };
 
 /**
@@ -1115,6 +1131,295 @@ const receiveBulkNumistaResult = (fieldMap) => {
 
   // Clear the callback
   window._bulkEditNumistaCallback = null;
+};
+
+// =============================================================================
+// IMAGE LOADING & UPLOAD
+// =============================================================================
+
+/**
+ * Reads tableImageSides setting and returns which sides to display.
+ * @returns {{ showObv: boolean, showRev: boolean }}
+ */
+const _getBulkImageSides = () => {
+  const sides = localStorage.getItem('tableImageSides') || 'both';
+  return {
+    showObv: sides === 'both' || sides === 'obverse',
+    showRev: sides === 'both' || sides === 'reverse',
+  };
+};
+
+/**
+ * Resolves IDB images for one item and injects <img> elements into its
+ * IMG cell, replacing the placeholder. Respects tableImageSides setting.
+ * Blob URLs are tracked in _bulkBlobUrls for cleanup on modal close.
+ *
+ * @param {HTMLTableRowElement} tr
+ * @param {Object} item
+ */
+const _loadBulkRowImages = async (tr, item) => {
+  const imgTd = tr.querySelector('.bulk-img-cell');
+  if (!imgTd) return;
+
+  // IDB unavailable (e.g. file:// protocol) — fall back to URL strings only
+  if (!window.imageCache?.isAvailable()) {
+    const { showObv, showRev } = _getBulkImageSides();
+    imgTd.innerHTML = '';
+    if (showObv && item.obverseImageUrl) {
+      const img = document.createElement('img');
+      img.src = item.obverseImageUrl; img.alt = ''; img.className = 'bulk-img-thumb'; img.dataset.side = 'obverse';
+      img.onerror = () => { img.style.display = 'none'; };
+      imgTd.appendChild(img);
+    }
+    if (showRev && item.reverseImageUrl) {
+      const img = document.createElement('img');
+      img.src = item.reverseImageUrl; img.alt = ''; img.className = 'bulk-img-thumb'; img.dataset.side = 'reverse';
+      img.onerror = () => { img.style.display = 'none'; };
+      imgTd.appendChild(img);
+    }
+    if (!imgTd.querySelector('img')) imgTd.innerHTML = '<span class="bulk-img-placeholder"></span>';
+    return;
+  }
+
+  const { showObv, showRev } = _getBulkImageSides();
+
+  // Resolve best source via the same cascade inventory table uses
+  const resolved = await imageCache.resolveImageForItem(item);
+
+  /**
+   * Get a URL for one side from the resolved source.
+   * @param {'obverse'|'reverse'} side
+   * @returns {Promise<string|null>}
+   */
+  const _getUrl = async (side) => {
+    if (!resolved) {
+      // Fall back to item.obverseImageUrl / item.reverseImageUrl strings
+      return side === 'obverse' ? (item.obverseImageUrl || null) : (item.reverseImageUrl || null);
+    }
+    let url = null;
+    if (resolved.source === 'user') {
+      url = await imageCache.getUserImageUrl(item.uuid, side);
+    } else if (resolved.source === 'pattern') {
+      url = await imageCache.getPatternImageUrl(resolved.catalogId, side);
+    } else if (resolved.source === 'numista') {
+      url = await imageCache.getImageUrl(resolved.catalogId, side);
+    }
+    if (url) _bulkBlobUrls.add(url);
+    return url;
+  };
+
+  const obvUrl = showObv ? await _getUrl('obverse') : null;
+  const revUrl = showRev ? await _getUrl('reverse') : null;
+
+  // Build replacement content
+  imgTd.innerHTML = '';
+
+  const _makeImg = (url, side) => {
+    const img = document.createElement('img');
+    img.alt = '';
+    img.loading = 'lazy';
+    img.className = 'bulk-img-thumb';
+    img.dataset.side = side;
+    if (url) {
+      img.src = url;
+      img.onerror = () => { img.style.display = 'none'; };
+    } else {
+      img.style.display = 'none';
+    }
+    return img;
+  };
+
+  const _makePh = () => {
+    const ph = document.createElement('span');
+    ph.className = 'bulk-img-placeholder';
+    return ph;
+  };
+
+  const hasAny = obvUrl || revUrl;
+
+  if (showObv) imgTd.appendChild(obvUrl ? _makeImg(obvUrl, 'obverse') : _makePh());
+  if (showRev && (revUrl || (resolved && resolved.source === 'user'))) {
+    imgTd.appendChild(revUrl ? _makeImg(revUrl, 'reverse') : _makePh());
+  }
+
+  if (!hasAny) {
+    // Nothing resolved — ensure at least one placeholder is visible
+    if (!imgTd.querySelector('.bulk-img-placeholder')) imgTd.appendChild(_makePh());
+  }
+};
+
+/**
+ * Opens a small inline image-management popover anchored to the IMG cell.
+ * Lets the user upload obverse/reverse photos or remove existing ones for
+ * a single item. Saves directly to imageCache and refreshes that row.
+ *
+ * @param {HTMLTableDataCellElement} imgTd
+ * @param {Object} item
+ */
+const _openBulkImagePopover = (imgTd, item) => {
+  // Remove any existing popover first
+  const existing = document.getElementById('bulkImagePopover');
+  if (existing) {
+    existing.remove();
+    // If clicking the same cell again, just close
+    if (existing.dataset.forSerial === String(item.serial)) return;
+  }
+
+  const pop = document.createElement('div');
+  pop.id = 'bulkImagePopover';
+  pop.className = 'bulk-img-popover';
+  pop.dataset.forSerial = String(item.serial);
+
+  pop.innerHTML = `
+    <div class="bulk-img-popover-header">
+      <span class="bulk-img-popover-title">Photos</span>
+      <button class="bulk-img-popover-close" type="button" aria-label="Close">×</button>
+    </div>
+    <div class="bulk-img-popover-sides">
+      <div class="bulk-img-popover-side">
+        <span class="bulk-img-popover-label">Obverse</span>
+        <div class="bulk-img-popover-preview" id="bulkPopObvPreview"></div>
+        <div class="bulk-img-popover-actions">
+          <input type="file" id="bulkPopObvFile" accept="image/jpeg,image/png,image/webp" style="display:none" />
+          <button class="btn btn-sm" id="bulkPopObvUpload" type="button">Upload</button>
+          <button class="btn btn-sm" id="bulkPopObvRemove" type="button" style="display:none">Remove</button>
+        </div>
+      </div>
+      <div class="bulk-img-popover-side">
+        <span class="bulk-img-popover-label">Reverse</span>
+        <div class="bulk-img-popover-preview" id="bulkPopRevPreview"></div>
+        <div class="bulk-img-popover-actions">
+          <input type="file" id="bulkPopRevFile" accept="image/jpeg,image/png,image/webp" style="display:none" />
+          <button class="btn btn-sm" id="bulkPopRevUpload" type="button">Upload</button>
+          <button class="btn btn-sm" id="bulkPopRevRemove" type="button" style="display:none">Remove</button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  // Position below the cell
+  document.body.appendChild(pop);
+  const rect = imgTd.getBoundingClientRect();
+  const popW = 260;
+  // position: fixed — coords are viewport-relative, no scroll offset needed
+  let left = rect.left;
+  if (left + popW > window.innerWidth - 8) left = window.innerWidth - popW - 8;
+  let top = rect.bottom + 4;
+  // Flip above cell if popover would overflow viewport bottom
+  if (top + 280 > window.innerHeight) top = rect.top - 284;
+  pop.style.top  = Math.max(4, top) + 'px';
+  pop.style.left = Math.max(4, left) + 'px';
+
+  // --- Close ---
+  const closePopover = () => pop.remove();
+  pop.querySelector('.bulk-img-popover-close').addEventListener('click', closePopover);
+  const _outsideClick = (e) => {
+    if (!pop.contains(e.target) && e.target !== imgTd) {
+      closePopover();
+      document.removeEventListener('click', _outsideClick, true);
+    }
+  };
+  setTimeout(() => document.addEventListener('click', _outsideClick, true), 10);
+
+  // --- Load existing images into previews ---
+  const _loadPreview = async (previewEl, removeBtn, side) => {
+    if (!window.imageCache?.isAvailable()) return;
+    let url = null;
+    const rec = await imageCache.resolveImageForItem(item);
+    if (rec?.source === 'user') {
+      url = await imageCache.getUserImageUrl(item.uuid, side);
+    }
+    if (url) {
+      _bulkBlobUrls.add(url);
+      previewEl.innerHTML = `<img src="${url}" alt="${side}" class="bulk-img-popover-img" />`;
+      removeBtn.style.display = '';
+    }
+  };
+
+  const obvPreview  = pop.querySelector('#bulkPopObvPreview');
+  const revPreview  = pop.querySelector('#bulkPopRevPreview');
+  const obvRemove   = pop.querySelector('#bulkPopObvRemove');
+  const revRemove   = pop.querySelector('#bulkPopRevRemove');
+
+  _loadPreview(obvPreview, obvRemove, 'obverse');
+  _loadPreview(revPreview, revRemove, 'reverse');
+
+  // --- Upload handlers ---
+  const _handleUpload = async (file, side) => {
+    if (!file || typeof imageProcessor === 'undefined') return;
+    const result = await imageProcessor.processFile(file, {
+      maxDim:   typeof IMAGE_MAX_DIM   !== 'undefined' ? IMAGE_MAX_DIM   : 600,
+      maxBytes: typeof IMAGE_MAX_BYTES !== 'undefined' ? IMAGE_MAX_BYTES : 512000,
+    });
+    if (!result?.blob) return;
+
+    // Merge with existing (keep the other side if present)
+    let obvBlob = side === 'obverse' ? result.blob : null;
+    let revBlob = side === 'reverse' ? result.blob : null;
+    try {
+      const existing = await imageCache.getUserImage(item.uuid);
+      if (existing) {
+        if (!obvBlob && existing.obverse) obvBlob = existing.obverse;
+        if (!revBlob && existing.reverse) revBlob = existing.reverse;
+      }
+    } catch (e) { /* ignore */ }
+
+    if (!obvBlob && revBlob) { obvBlob = revBlob; revBlob = null; }
+
+    await imageCache.cacheUserImage(item.uuid, obvBlob, revBlob);
+
+    // Refresh the preview in the popover
+    const previewEl = side === 'obverse' ? obvPreview : revPreview;
+    const removeBtn = side === 'obverse' ? obvRemove  : revRemove;
+    const previewUrl = URL.createObjectURL(result.blob);
+    _bulkBlobUrls.add(previewUrl);
+    previewEl.innerHTML = `<img src="${previewUrl}" alt="${side}" class="bulk-img-popover-img" />`;
+    removeBtn.style.display = '';
+
+    // Refresh the row thumbnail
+    const tr = imgTd.closest('tr');
+    if (tr) _loadBulkRowImages(tr, item);
+  };
+
+  const _wireUpload = (btnId, fileId, side) => {
+    const btn  = pop.querySelector('#' + btnId);
+    const file = pop.querySelector('#' + fileId);
+    if (!btn || !file) return;
+    btn.addEventListener('click', () => file.click());
+    file.addEventListener('change', () => { if (file.files[0]) _handleUpload(file.files[0], side); });
+  };
+
+  _wireUpload('bulkPopObvUpload', 'bulkPopObvFile', 'obverse');
+  _wireUpload('bulkPopRevUpload', 'bulkPopRevFile', 'reverse');
+
+  // --- Remove handlers ---
+  const _handleRemove = async (side) => {
+    if (!window.imageCache?.isAvailable()) return;
+    const existing = await imageCache.getUserImage(item.uuid);
+    if (!existing) return;
+
+    const keepObv = side === 'reverse' ? existing.obverse : null;
+    const keepRev = side === 'obverse' ? existing.reverse : null;
+
+    if (!keepObv && !keepRev) {
+      await imageCache.deleteUserImage(item.uuid);
+    } else {
+      const obvToSave = keepObv || keepRev;
+      const revToSave = keepObv ? keepRev : null;
+      await imageCache.cacheUserImage(item.uuid, obvToSave, revToSave);
+    }
+
+    const previewEl = side === 'obverse' ? obvPreview : revPreview;
+    const removeBtn = side === 'obverse' ? obvRemove  : revRemove;
+    previewEl.innerHTML = '';
+    removeBtn.style.display = 'none';
+
+    const tr = imgTd.closest('tr');
+    if (tr) _loadBulkRowImages(tr, item);
+  };
+
+  obvRemove.addEventListener('click', () => _handleRemove('obverse'));
+  revRemove.addEventListener('click', () => _handleRemove('reverse'));
 };
 
 // =============================================================================
