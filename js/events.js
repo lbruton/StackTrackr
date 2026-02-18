@@ -878,7 +878,7 @@ const parseItemFormFields = (isEditing, existingItem) => {
     weightUnit,
     price: parsePriceToUSD(elements.itemPrice.value.trim(), fxRate, isEditing, existingItem.price),
     purchaseLocation: elements.purchaseLocation.value.trim(),
-    storageLocation: elements.storageLocation.value.trim() || 'Unknown',
+    storageLocation: elements.storageLocation.value.trim(),
     serialNumber: elements.itemSerialNumber?.value?.trim() ?? '',
     notes: elements.itemNotes.value.trim(),
     date: elements.itemDate.value || (isEditing ? (existingItem.date || '') : todayStr()),
@@ -940,7 +940,7 @@ const commitItemToInventory = (f, isEditing, editIdx) => {
     inventory[editIdx] = {
       ...oldItem,
       ...buildItemFields(f),
-      isCollectable: false,
+      isCollectable: !!(elements.itemCollectable && elements.itemCollectable.checked),
       numistaId: f.catalog,
       currency: f.currency,
       obverseImageUrl: f.obverseImageUrl || window.selectedNumistaResult?.imageUrl || oldItem.obverseImageUrl || '',
@@ -996,7 +996,7 @@ const commitItemToInventory = (f, isEditing, editIdx) => {
       spotPriceAtPurchase,
       premiumPerOz: 0,
       totalPremium: 0,
-      isCollectable: false,
+      isCollectable: !!(elements.itemCollectable && elements.itemCollectable.checked),
       serial,
       uuid: generateUUID(),
       numistaId: f.catalog,
@@ -1014,18 +1014,31 @@ const commitItemToInventory = (f, isEditing, editIdx) => {
 
     saveInventory();
 
+    // Log the add action to the changelog (BUG-004)
+    const addedItem = inventory[inventory.length - 1];
+    const addSummary = [addedItem.metal, addedItem.type, addedItem.name,
+      typeof formatWeight === 'function' ? formatWeight(addedItem.weight, addedItem.weightUnit) : addedItem.weight + ' oz',
+      typeof formatCurrency === 'function' ? formatCurrency(addedItem.price) : '$' + Number(addedItem.price).toFixed(2)
+    ].filter(Boolean).join(' · ');
+    logChange(addedItem.name, 'Added', '', addSummary, inventory.length - 1);
+
     // STAK-126: Auto-apply Numista tags from the lookup result
     if (window.selectedNumistaResult?.tags && typeof applyNumistaTags === 'function') {
-      const newUuid = inventory[inventory.length - 1].uuid;
+      const newUuid = addedItem.uuid;
       applyNumistaTags(newUuid, window.selectedNumistaResult.tags);
     }
 
     // Record initial price data point (STACK-43)
     if (typeof recordSingleItemPrice === 'function') {
-      recordSingleItemPrice(inventory[inventory.length - 1], 'add');
+      recordSingleItemPrice(addedItem, 'add');
     }
 
     renderTable();
+
+    // Success toast (UX-002)
+    if (typeof showToast === 'function') {
+      showToast('\u2713 ' + addedItem.name + ' added to inventory');
+    }
   }
 };
 
@@ -1177,6 +1190,8 @@ const setupItemFormListeners = () => {
   const closeItemModal = (e) => {
     if (e && typeof e.preventDefault === 'function') e.preventDefault();
     if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
+    // Dismiss any open autocomplete dropdowns (BUG-002/003)
+    if (typeof dismissAllAutocompletes === 'function') dismissAllAutocompletes();
     try { if (typeof closeModalById === 'function') closeModalById('itemModal'); } catch(closeErr) {}
     editingIndex = null;
     editingChangeLogIndex = null;

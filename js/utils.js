@@ -2972,6 +2972,23 @@ if (typeof window !== 'undefined') {
   window.getContrastColor = getContrastColor;
   window.generateStorageReport = generateStorageReport;
   window.updateSpotTimestamp = updateSpotTimestamp;
+  /**
+   * Show a brief toast notification that auto-dismisses.
+   * Reuses the cloud-toast CSS class + keyframes already in styles.css.
+   * @param {string} message - Text to display
+   * @param {number} [duration=3000] - Auto-dismiss time in ms
+   */
+  window.showToast = (message, duration = 3000) => {
+    const toast = document.createElement('div');
+    toast.className = 'cloud-toast';
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    setTimeout(() => {
+      toast.classList.add('fade-out');
+      toast.addEventListener('animationend', () => toast.remove());
+    }, duration);
+  };
+
   window.cleanupStorage = cleanupStorage;
   window.checkFileSize = checkFileSize;
   window.MAX_LOCAL_FILE_SIZE = MAX_LOCAL_FILE_SIZE;

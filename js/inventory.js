@@ -1778,7 +1778,8 @@ const updateSummary = () => {
  */
 const deleteItem = (idx) => {
   const item = inventory[idx];
-  if (confirm("Delete this item?")) {
+  const itemLabel = item ? item.name : 'this item';
+  if (confirm(`Delete ${itemLabel}?\n\nThis can be undone from the Activity Log.`)) {
     inventory.splice(idx, 1);
     saveInventory();
     renderTable();
@@ -1893,6 +1894,7 @@ const editItem = (idx, logIdx = null) => {
   if (elements.itemObverseImageUrl) elements.itemObverseImageUrl.value = item.obverseImageUrl || '';
   if (elements.itemReverseImageUrl) elements.itemReverseImageUrl.value = item.reverseImageUrl || '';
   if (elements.itemSerial) elements.itemSerial.value = item.serial;
+  if (elements.itemCollectable) elements.itemCollectable.checked = !!item.isCollectable;
 
   // Pre-fill purity: match a preset or show custom input
   const purityVal = parseFloat(item.purity) || 1.0;
