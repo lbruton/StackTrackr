@@ -1896,6 +1896,207 @@ input[type="submit"] {
   text-transform: uppercase;
 }
 
+/* ── Storage Settings Panel ─────────────────────────────────────────────── */
+
+/* Summary stat cards */
+.storage-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--spacing);
+  margin-bottom: var(--spacing-lg);
+}
+
+@media (max-width: 600px) {
+  .storage-summary-grid { grid-template-columns: 1fr; }
+}
+
+.storage-stat-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.storage-stat-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-secondary);
+}
+
+.storage-stat-value {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.storage-stat-bar-wrap {
+  height: 6px;
+  background: var(--bg-tertiary);
+  border-radius: 3px;
+  overflow: hidden;
+  display: flex;
+  margin: 0.15rem 0;
+}
+
+.storage-stat-bar-wrap--stacked {
+  /* children fill left-to-right for the combined bar */
+}
+
+.storage-stat-bar {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.4s ease;
+  min-width: 0;
+}
+
+.storage-stat-bar--ls  { background: var(--primary); }
+.storage-stat-bar--idb { background: var(--success); }
+
+.storage-stat-sub {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+}
+
+/* Fieldset header with actions row */
+.storage-fieldset-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--spacing);
+  gap: var(--spacing);
+  flex-wrap: wrap;
+}
+
+.storage-fieldset-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.storage-refresh-btn {
+  padding: 0.25rem 0.6rem;
+  font-size: 0.78rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.storage-toggle-tiny {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 0.8rem;
+  color: var(--primary);
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.storage-toggle-tiny:hover { color: var(--primary-hover); }
+
+/* Key data table */
+.storage-key-table-loading {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  padding: var(--spacing);
+}
+
+.storage-data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+}
+
+.storage-data-table th {
+  text-align: left;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-secondary);
+  padding: 0.35rem 0.5rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.storage-data-table td {
+  padding: 0.35rem 0.5rem;
+  border-bottom: 1px solid var(--border-light, var(--border));
+  vertical-align: middle;
+}
+
+.storage-key-row:last-child td { border-bottom: none; }
+.storage-key-row:hover { background: var(--bg-tertiary); }
+
+.storage-key-icon { width: 1.5rem; text-align: center; font-size: 0.9rem; }
+
+.storage-key-label {
+  max-width: 14rem;
+}
+
+.storage-key-raw {
+  display: block;
+  font-size: 0.68rem;
+  color: var(--text-secondary);
+  font-family: var(--font-mono, monospace);
+  margin-top: 1px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 13rem;
+}
+
+.storage-key-size { white-space: nowrap; color: var(--text-primary); min-width: 4.5rem; }
+.storage-key-pct  { white-space: nowrap; color: var(--text-secondary); min-width: 3rem; }
+.storage-key-records { color: var(--text-secondary); min-width: 4rem; }
+
+.storage-col-bar { width: 8rem; }
+
+.storage-key-bar-wrap {
+  height: 6px;
+  background: var(--bg-tertiary);
+  border-radius: 3px;
+  overflow: hidden;
+  min-width: 5rem;
+}
+
+.storage-key-bar {
+  height: 100%;
+  background: var(--primary);
+  border-radius: 3px;
+  transition: width 0.3s ease;
+  min-width: 0;
+}
+
+.storage-key-bar--idb { background: var(--success); }
+
+/* Type badges */
+.storage-type-badge {
+  display: inline-block;
+  padding: 0.1rem 0.4rem;
+  border-radius: var(--radius);
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+}
+
+.storage-type-badge--array  { background: color-mix(in srgb, var(--primary) 15%, transparent);  color: var(--primary); }
+.storage-type-badge--object { background: color-mix(in srgb, var(--info) 15%, transparent);     color: var(--info); }
+.storage-type-badge--idb    { background: color-mix(in srgb, var(--success) 15%, transparent);  color: var(--success); }
+
+.storage-minor-note {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  margin-top: var(--spacing-sm);
+  margin-bottom: 0;
+}
+
 /* Pattern rule form (Settings > Images) */
 .pattern-rule-form-row {
   display: flex;
