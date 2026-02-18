@@ -130,17 +130,30 @@ The **Developers** team (`38d57c9f-388c-41ec-9cd2-259a21a5df1c`) is a shared scr
 - If no related issue: create issue in Developers team under the appropriate project
 - **No secrets in Linear** — use references only
 
+### Linear Issue Title Pattern
+
+`HANDOFF: <PROJECT_TAG> <short topic> <YYYY-MM-DD>`
+
 ### Comment Template
 
 ```text
 Agent handoff update:
-- Agent: <claude|codex>
+- Agent: <claude|codex|gemini|human>
 - Status: <blocked|in-progress|ready-for-review|done>
 - Scope: <what changed>
 - Validation: <what was run/verified>
 - Next: <explicit next step + owner>
-- Memento: <entity name>
+- Links: <Linear issue/PR links>
+- Memory: <Memento entity name(s), if used>
+- Risks: <known risks/assumptions>
 ```
+
+### Status Semantics
+
+- `blocked`: cannot proceed without external input/dependency
+- `in-progress`: active work under current owner
+- `ready-for-review`: implementation complete, review needed
+- `done`: handoff chain closed for this scope
 
 ### Rules
 
