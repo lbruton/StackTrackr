@@ -1060,162 +1060,7 @@ const bindImageImportExportListeners = () => {
     });
   }
 
-  // ── URL → ZIP: fetch every image URL in the collection and package for offline use ──
-  const urlToZipBtn = getExistingElement('urlToZipBtn');
-  if (urlToZipBtn) {
-    urlToZipBtn.addEventListener('click', async () => {
-      if (!window.imageCache?.isAvailable()) {
-        alert('IndexedDB unavailable.');
-        return;
-      }
-      if (typeof JSZip === 'undefined') {
-        alert('JSZip not loaded.');
-        return;
-      }
-      if (typeof inventory === 'undefined' || !inventory.length) {
-        alert('No inventory items found.');
-        return;
-      }
 
-      // Collect items to fetch — catalog items (with or without URLs) + user items with direct URLs
-      const toFetch = [];
-      const seenKeys = new Set();
-
-      // Catalog-linked items via BulkImageCache (includes items with numistaId but no URL yet)
-      if (typeof BulkImageCache !== 'undefined') {
-        for (const { item, catalogId } of BulkImageCache.buildEligibleList()) {
-          if (seenKeys.has(catalogId)) continue;
-          seenKeys.add(catalogId);
-          toFetch.push({ item, catalogId, key: catalogId, useCdn: true });
-        }
-      }
-
-      // User items with direct URLs but no catalog ID
-      for (const item of inventory) {
-        if (!item.obverseImageUrl && !item.reverseImageUrl) continue;
-        const catalogId = typeof BulkImageCache !== 'undefined'
-          ? BulkImageCache.resolveCatalogId(item) : '';
-        if (catalogId && seenKeys.has(catalogId)) continue;
-        const key = item.uuid;
-        if (!key || seenKeys.has(key)) continue;
-        seenKeys.add(key);
-        toFetch.push({ item, catalogId: '', key, useCdn: false });
-      }
-
-      if (!toFetch.length) {
-        alert('No items with Numista IDs or image URLs found.\nAdd Numista catalog IDs to items first.');
-        return;
-      }
-
-      // Preflight: block immediately on file:// where cross-origin fetch will never work
-      if (window.location.protocol === 'file:') {
-        alert(
-          'URL\u2192ZIP requires the app to be served over HTTP.\n\n' +
-          'Open a terminal in the StakTrakr folder and run:\n' +
-          '  python3 -m http.server 8080\n\n' +
-          'Then open http://localhost:8080 in your browser.'
-        );
-        return;
-      }
-
-      const progressEl = document.createElement('div');
-      progressEl.id = 'imageCdnProgress';
-      progressEl.innerHTML = '<span id="imageCdnProgressText">Preparing\u2026</span>' +
-        `<progress id="imageCdnProgressBar" value="0" max="${toFetch.length}"></progress>`;
-      urlToZipBtn.parentNode.insertBefore(progressEl, urlToZipBtn.nextSibling);
-
-      urlToZipBtn.disabled = true;
-      urlToZipBtn.textContent = 'Building\u2026';
-
-      try {
-        const zip = new JSZip();
-        const manifest = [];
-
-        for (let i = 0; i < toFetch.length; i++) {
-          const { item, catalogId, key, useCdn } = toFetch[i];
-          const textEl = document.getElementById('imageCdnProgressText');
-          const barEl = document.getElementById('imageCdnProgressBar');
-          if (textEl) textEl.textContent = `Fetching ${item.name || key} (${i + 1} of ${toFetch.length})\u2026`;
-          if (barEl) barEl.value = i + 1;
-
-          let obvBlob = null;
-          let revBlob = null;
-
-          // Resolve image URLs — use what's on the item, or look up via catalog API
-          let obvUrl = item.obverseImageUrl || '';
-          let revUrl = item.reverseImageUrl || '';
-          if (!obvUrl && !revUrl && catalogId && window.catalogAPI) {
-            try {
-              if (textEl) textEl.textContent = `Looking up ${item.name || key} (${i + 1} of ${toFetch.length})\u2026`;
-              const apiResult = await catalogAPI.lookupItem(catalogId);
-              if (apiResult) {
-                obvUrl = apiResult.imageUrl || '';
-                revUrl = apiResult.reverseImageUrl || '';
-                // Persist URLs back to item so they're available next time
-                if (obvUrl) item.obverseImageUrl = obvUrl;
-                if (revUrl) item.reverseImageUrl = revUrl;
-              }
-            } catch { /* skip — will just have no image for this entry */ }
-          }
-
-          if (obvUrl) obvBlob = await imageCache._fetchAndResize(obvUrl).catch(() => null);
-          if (revUrl) revBlob = await imageCache._fetchAndResize(revUrl).catch(() => null);
-
-          // _fetchAndResize already outputs WebP via imageProcessor — use blobs directly
-          const folder = useCdn ? 'cdn' : 'user';
-          const obvFile = obvBlob ? `${folder}/${key}_obverse.webp` : null;
-          const revFile = revBlob ? `${folder}/${key}_reverse.webp` : null;
-
-          if (obvBlob) zip.file(obvFile, obvBlob);
-          if (revBlob) zip.file(revFile, revBlob);
-
-          if (obvBlob || revBlob) {
-            manifest.push({
-              catalogId: catalogId || '',
-              uuid: item.uuid || '',
-              name: item.name || '',
-              numistaId: item.numistaId || '',
-              obverseFile: obvFile,
-              reverseFile: revFile,
-            });
-          }
-
-          if (i < toFetch.length - 1) {
-            await new Promise(r => setTimeout(r, 250));
-          }
-        }
-
-        if (!manifest.length) {
-          alert(
-            'No images could be fetched.\n\n' +
-            'Possible causes:\n' +
-            '\u2022 Run \u201CDownload URLs\u201D first to sync image URLs from Numista.\n' +
-            '\u2022 Serve the app over HTTP (not file://) \u2014 cross-origin image fetches require a real origin.\n' +
-            '\u2022 Network connectivity issue.'
-          );
-          return;
-        }
-
-        zip.file('manifest.json', JSON.stringify(manifest, null, 2));
-        const blob = await zip.generateAsync({ type: 'blob' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'staktrakr-images.zip';
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        URL.revokeObjectURL(url);
-      } catch (err) {
-        console.error('URLtoZIP failed:', err);
-        alert('Failed: ' + err.message);
-      } finally {
-        urlToZipBtn.disabled = false;
-        urlToZipBtn.textContent = 'URL\u2192ZIP';
-        progressEl.remove();
-      }
-    });
-  }
 };
 
 const bindImageSettingsListeners = () => {
@@ -1223,6 +1068,58 @@ const bindImageSettingsListeners = () => {
   bindPatternRuleModeListeners();
   bindCardAndTableImageListeners();
   bindImageImportExportListeners();
+};
+
+/**
+ * Wires cloud storage connect/disconnect/backup/restore buttons.
+ */
+const bindCloudStorageListeners = () => {
+  var panel = document.getElementById('settingsPanel_cloud');
+  if (!panel) return;
+
+  panel.addEventListener('click', function (e) {
+    var btn = e.target.closest('button');
+    if (!btn) return;
+    var provider = btn.dataset.provider;
+    if (!provider) return;
+
+    if (btn.classList.contains('cloud-connect-btn')) {
+      if (typeof cloudAuthStart === 'function') cloudAuthStart(provider);
+    } else if (btn.classList.contains('cloud-disconnect-btn')) {
+      if (typeof cloudDisconnect === 'function') cloudDisconnect(provider);
+    } else if (btn.classList.contains('cloud-backup-btn')) {
+      var pw = prompt('Enter vault password for encryption:');
+      if (!pw) return;
+      btn.disabled = true;
+      btn.textContent = 'Uploading\u2026';
+      cloudUploadVault(provider, pw)
+        .then(function () { alert('Backup uploaded to ' + (CLOUD_PROVIDERS[provider]?.name || provider) + '.'); })
+        .catch(function (err) { alert('Backup failed: ' + err.message); })
+        .finally(function () { btn.disabled = false; btn.textContent = 'Backup Now'; });
+    } else if (btn.classList.contains('cloud-restore-btn')) {
+      if (!confirm('This will replace all local data with the cloud backup. Continue?')) return;
+      btn.disabled = true;
+      btn.textContent = 'Downloading\u2026';
+      cloudDownloadVault(provider)
+        .then(function (fileBytes) {
+          var pw = prompt('Enter vault password to decrypt:');
+          if (!pw) throw new Error('Cancelled');
+          var parsed = parseVaultFile(fileBytes);
+          return vaultDeriveKey(pw, parsed.salt, parsed.iterations).then(function (key) {
+            return vaultDecrypt(parsed.ciphertext, key, parsed.iv);
+          }).then(function (plainBytes) {
+            var payload = JSON.parse(new TextDecoder().decode(plainBytes));
+            restoreVaultData(payload);
+            alert('Restore complete. The page will reload.');
+            location.reload();
+          });
+        })
+        .catch(function (err) {
+          if (err.message !== 'Cancelled') alert('Restore failed: ' + err.message);
+        })
+        .finally(function () { btn.disabled = false; btn.textContent = 'Restore'; });
+    }
+  });
 };
 
 /**
@@ -1238,6 +1135,7 @@ const setupSettingsEventListeners = () => {
   bindGoldbackToggleListeners();
   bindGoldbackActionListeners();
   bindImageSettingsListeners();
+  bindCloudStorageListeners();
 };
 
 if (typeof window !== 'undefined') {
