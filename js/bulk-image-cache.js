@@ -80,6 +80,16 @@ const BulkImageCache = (() => {
     const entries = buildEligibleList();
     const total = entries.length;
 
+    // Pre-build a Map<catalogId, uuid[]> for O(1) tag application inside the loop
+    const catalogIdToUuids = new Map();
+    for (const invItem of (typeof inventory !== 'undefined' ? inventory : [])) {
+      if (!invItem.uuid || !invItem.numistaId) continue;
+      const cid = String(invItem.numistaId).trim();
+      if (!cid) continue;
+      if (!catalogIdToUuids.has(cid)) catalogIdToUuids.set(cid, []);
+      catalogIdToUuids.get(cid).push(invItem.uuid);
+    }
+
     for (let i = 0; i < entries.length; i++) {
       if (_aborted) break;
 
@@ -155,12 +165,11 @@ const BulkImageCache = (() => {
         }
 
         // Apply Numista tags to all inventory items sharing this catalog ID
-        // This ensures filter chips show tags without requiring the view modal to be opened
+        // Uses pre-built Map for O(1) lookup; persist=false defers saveItemTags() to post-loop
         if (apiResult.tags && apiResult.tags.length > 0 && typeof applyNumistaTags === 'function') {
-          for (const invItem of (typeof inventory !== 'undefined' ? inventory : [])) {
-            if (invItem.uuid && invItem.numistaId === catalogId) {
-              applyNumistaTags(invItem.uuid, apiResult.tags);
-            }
+          const uuids = catalogIdToUuids.get(catalogId) || [];
+          for (const uuid of uuids) {
+            applyNumistaTags(uuid, apiResult.tags, false);
           }
         }
 
