@@ -168,14 +168,31 @@ function cloudAuthStart(provider) {
 }
 
 // Exchange an OAuth authorization code for an access token.
-function cloudExchangeCode(code, state) {
+function cloudNotifyAuthFailure(provider, message, details) {
+  var providerName = (CLOUD_PROVIDERS[provider] && CLOUD_PROVIDERS[provider].name) || 'Cloud provider';
+  var fullMessage = providerName + ' authentication failed: ' + message;
+
+  debugLog('[CloudStorage] ' + fullMessage, details || '');
+  if (details) {
+    try { console.error('[CloudStorage] OAuth error details:', details); } catch (_) { /* ignore */ }
+  }
+
+  if (typeof showCloudToast === 'function') {
+    showCloudToast(fullMessage, 7000);
+  } else {
+    alert(fullMessage);
+  }
+}
+
+async function cloudExchangeCode(code, state) {
   var savedState = sessionStorage.getItem('cloud_oauth_state');
+  var provider = (state || '').split('_')[0] || 'dropbox';
+
   if (state !== savedState) {
-    debugLog('[CloudStorage] OAuth state mismatch');
+    cloudNotifyAuthFailure(provider, 'OAuth state mismatch. Please try again.');
     return;
   }
 
-  var provider = state.split('_')[0];
   var config = CLOUD_PROVIDERS[provider];
   if (!config) return;
 
@@ -192,28 +209,59 @@ function cloudExchangeCode(code, state) {
     sessionStorage.removeItem('cloud_pkce_verifier');
   }
 
-  fetch(config.tokenUrl, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: body,
-  })
-    .then(function (resp) { return resp.json(); })
-    .then(function (data) {
-      if (data.access_token) {
-        var tokenData = {
-          access_token: data.access_token,
-          refresh_token: data.refresh_token || null,
-          expires_at: data.expires_in ? Date.now() + data.expires_in * 1000 : null,
-        };
-        cloudStoreToken(provider, tokenData);
-        sessionStorage.removeItem('cloud_oauth_state');
-        if (typeof syncCloudUI === 'function') syncCloudUI();
-        debugLog('[CloudStorage] Connected to ' + config.name);
-      }
-    })
-    .catch(function (err) {
-      debugLog('[CloudStorage] Token exchange failed', err);
+  try {
+    var resp = await fetch(config.tokenUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: body,
     });
+
+    var raw = await resp.text();
+    var data = {};
+    if (raw) {
+      try {
+        data = JSON.parse(raw);
+      } catch (_) {
+        data = { rawResponse: raw };
+      }
+    }
+
+    if (!resp.ok) {
+      var errText = data.error_summary || data.error_description || data.error || 'Unknown error';
+      cloudNotifyAuthFailure(
+        provider,
+        'Token exchange failed (' + resp.status + '). ' + String(errText),
+        data,
+      );
+      return;
+    }
+
+    if (!data.access_token) {
+      cloudNotifyAuthFailure(
+        provider,
+        'Token exchange response did not include an access token.',
+        data,
+      );
+      return;
+    }
+
+    var tokenData = {
+      access_token: data.access_token,
+      refresh_token: data.refresh_token || null,
+      expires_at: data.expires_in ? Date.now() + data.expires_in * 1000 : null,
+    };
+    cloudStoreToken(provider, tokenData);
+    sessionStorage.removeItem('cloud_oauth_state');
+    if (typeof syncCloudUI === 'function') syncCloudUI();
+    if (typeof showCloudToast === 'function') showCloudToast('Connected to ' + config.name + '.');
+    debugLog('[CloudStorage] Connected to ' + config.name);
+  } catch (err) {
+    cloudNotifyAuthFailure(
+      provider,
+      'Token exchange request failed. Check redirect URI/domain registration and try again.',
+      err,
+    );
+  }
 }
 
 // Primary: listen for OAuth callback postMessage from popup
