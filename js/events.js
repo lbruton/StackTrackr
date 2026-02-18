@@ -1636,7 +1636,7 @@ const setupNoteAndModalListeners = () => {
 
   optionalListener(elements.backupReminder, "click", (e) => {
     e.preventDefault();
-    if (typeof showSettingsModal === "function") showSettingsModal('files');
+    if (typeof showSettingsModal === "function") showSettingsModal('system');
   }, "Backup reminder link");
 
   optionalListener(elements.storageReportLink, "click", (e) => {
