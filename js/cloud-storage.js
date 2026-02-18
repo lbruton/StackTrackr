@@ -153,17 +153,31 @@ function cloudAuthStart(provider) {
     token_access_type: 'offline',
   });
 
+  // Open popup SYNCHRONOUSLY during the click event to avoid popup-blocker.
+  // Browsers block window.open() inside async callbacks (like .then()).
+  // For PKCE, we open a blank window first, then navigate it after the
+  // async SHA-256 challenge is computed.
+  var popup = window.open('about:blank', 'cloudOAuth', 'width=600,height=700');
+
   if (config.usePKCE) {
     var verifier = cloudGenerateVerifier();
     sessionStorage.setItem('cloud_pkce_verifier', verifier);
-    // Challenge computed async — build URL after
     cloudGenerateChallenge(verifier).then(function (challenge) {
       params.set('code_challenge', challenge);
       params.set('code_challenge_method', 'S256');
-      window.open(config.authUrl + '?' + params.toString(), 'cloudOAuth', 'width=600,height=700');
+      if (popup && !popup.closed) {
+        popup.location.href = config.authUrl + '?' + params.toString();
+      } else {
+        // Popup was closed or blocked despite sync open — fall back to redirect
+        window.location.href = config.authUrl + '?' + params.toString();
+      }
     });
   } else {
-    window.open(config.authUrl + '?' + params.toString(), 'cloudOAuth', 'width=600,height=700');
+    if (popup && !popup.closed) {
+      popup.location.href = config.authUrl + '?' + params.toString();
+    } else {
+      window.location.href = config.authUrl + '?' + params.toString();
+    }
   }
 }
 
