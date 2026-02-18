@@ -227,45 +227,9 @@
         }
       }
 
-      /* ── DEBUG OVERLAY ──────────────────────────────────────────────────── */
-      #proto-debug {
-        position: fixed; bottom: 12px; left: 12px; z-index: 99999;
-        background: rgba(0,0,0,0.88); color: #0f0; font: 11px/1.6 monospace;
-        padding: 8px 10px; border-radius: 6px; max-width: 400px;
-      }
-      #proto-debug b { color: #ff0; }
-      #proto-debug button {
-        margin-top: 6px; padding: 3px 8px; font: 11px monospace;
-        background: #333; color: #fff; border: 1px solid #0f0;
-        border-radius: 3px; cursor: pointer; display: block; width: 100%;
-      }
     </style>
   </head>
   <body>
-    <!-- PROTOTYPE DEBUG OVERLAY — remove before production -->
-    <div id="proto-debug">loading…</div>
-    <script>
-      (function () {
-        function refresh() {
-          var el = document.getElementById('proto-debug');
-          if (!el) return;
-          var style = localStorage.getItem('cardViewStyle') || 'A';
-          var icva = typeof isCardViewActive === 'function'
-            ? String(isCardViewActive()) : '(fn not yet loaded)';
-          var w = window.innerWidth;
-          var barDisplay = (document.getElementById('cardSortBar') || {}).style && document.getElementById('cardSortBar').style.display;
-          el.innerHTML =
-            'PROTO DEBUG<br>' +
-            'cardViewStyle: <b>' + style + '</b><br>' +
-            'isCardViewActive(): <b>' + icva + '</b><br>' +
-            'window.innerWidth: <b>' + w + 'px</b><br>' +
-            'sort bar display: <b>' + barDisplay + '</b><br>' +
-            '<button onclick="localStorage.removeItem(\'cardViewStyle\');if(typeof renderTable===\'function\')renderTable();">Reset style &amp; re-render</button>';
-        }
-        setInterval(refresh, 800);
-        refresh();
-      }());
-    </script>
     <!-- Application Header -->
     <div class="app-header">
       <div>
