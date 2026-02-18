@@ -534,12 +534,16 @@ async function importEncryptedBackup(fileBytes, password) {
 /** @type {Uint8Array|null} Pending file bytes for import */
 var _vaultPendingFile = null;
 
+/** @type {object|null} Cloud context for cloud-export/cloud-import modes */
+var _cloudContext = null;
+
 /**
- * Open the vault modal in export or import mode.
- * @param {'export'|'import'} mode
- * @param {File} [file] - File object for import mode
+ * Open the vault modal in export, import, cloud-export, or cloud-import mode.
+ * @param {'export'|'import'|'cloud-export'|'cloud-import'} mode
+ * @param {File|object} [fileOrOpts] - File for import, or { provider, fileBytes, filename, size } for cloud-import
  */
-function openVaultModal(mode, file) {
+function openVaultModal(mode, fileOrOpts) {
+  var file = null;
   var modal = safeGetElement("vaultModal");
   if (!modal) return;
 
@@ -567,37 +571,67 @@ function openVaultModal(mode, file) {
   // Update match indicator
   updateMatchIndicator("", "");
 
+  // Resolve effective mode for UI layout
+  var effectiveMode = mode;
+  _cloudContext = null;
+
+  if (mode === 'cloud-export') {
+    effectiveMode = 'export';
+    _cloudContext = { provider: fileOrOpts && fileOrOpts.provider ? fileOrOpts.provider : 'dropbox' };
+  } else if (mode === 'cloud-import') {
+    effectiveMode = 'import';
+    if (fileOrOpts && fileOrOpts.fileBytes) {
+      _cloudContext = {
+        provider: fileOrOpts.provider || 'dropbox',
+        fileBytes: fileOrOpts.fileBytes,
+        filename: fileOrOpts.filename || 'cloud-backup.stvault',
+        size: fileOrOpts.size || fileOrOpts.fileBytes.length,
+      };
+      _vaultPendingFile = fileOrOpts.fileBytes;
+    }
+  } else if (mode === 'import' && fileOrOpts instanceof File) {
+    file = fileOrOpts;
+  } else if (mode === 'import') {
+    file = fileOrOpts;
+  }
+
   modal.setAttribute("data-vault-mode", mode);
 
-  if (mode === "export") {
-    if (titleEl) titleEl.textContent = "Export Encrypted Backup";
+  if (effectiveMode === "export") {
+    var exportTitle = _cloudContext ? "Cloud Backup — Enter Password" : "Export Encrypted Backup";
+    if (titleEl) titleEl.textContent = exportTitle;
     if (confirmRow) confirmRow.style.display = "";
     if (strengthRow) strengthRow.style.display = "";
     if (fileInfoEl) fileInfoEl.style.display = "none";
     if (actionBtn) {
-      actionBtn.textContent = "Export";
+      actionBtn.textContent = _cloudContext ? "Encrypt & Upload" : "Export";
       actionBtn.className = "btn";
     }
     _vaultPendingFile = null;
   } else {
-    if (titleEl) titleEl.textContent = "Import Encrypted Backup";
+    var importTitle = _cloudContext ? "Cloud Restore — Enter Password" : "Import Encrypted Backup";
+    if (titleEl) titleEl.textContent = importTitle;
     if (confirmRow) confirmRow.style.display = "none";
     if (strengthRow) strengthRow.style.display = "none";
     if (fileInfoEl) {
       fileInfoEl.style.display = "";
       var nameSpan = safeGetElement("vaultFileName");
       var sizeSpan = safeGetElement("vaultFileSize");
-      if (nameSpan && file) nameSpan.textContent = file.name;
-      if (sizeSpan && file)
-        sizeSpan.textContent = formatFileSize(file.size);
+      if (_cloudContext) {
+        if (nameSpan) nameSpan.textContent = _cloudContext.filename;
+        if (sizeSpan) sizeSpan.textContent = formatFileSize(_cloudContext.size || 0);
+      } else if (file) {
+        if (nameSpan) nameSpan.textContent = file.name;
+        if (sizeSpan) sizeSpan.textContent = formatFileSize(file.size);
+      }
     }
     if (actionBtn) {
-      actionBtn.textContent = "Import";
+      actionBtn.textContent = _cloudContext ? "Decrypt & Restore" : "Import";
       actionBtn.className = "btn info";
     }
 
-    // Read file bytes
-    if (file) {
+    // Read file bytes (local file import only — cloud sets _vaultPendingFile above)
+    if (file && !_cloudContext) {
       var reader = new FileReader();
       reader.onload = function (e) {
         _vaultPendingFile = new Uint8Array(e.target.result);
@@ -614,6 +648,7 @@ function openVaultModal(mode, file) {
  */
 function closeVaultModal() {
   _vaultPendingFile = null;
+  _cloudContext = null;
   closeModalById("vaultModal");
 }
 
@@ -641,14 +676,18 @@ async function handleVaultAction() {
     return;
   }
 
-  if (mode === "export") {
+  // Determine effective mode
+  var isCloudExport = mode === "cloud-export";
+  var isCloudImport = mode === "cloud-import";
+  var effectiveMode = (isCloudExport) ? "export" : (isCloudImport) ? "import" : mode;
+
+  if (effectiveMode === "export") {
     var confirm = confirmEl ? confirmEl.value : "";
     if (password !== confirm) {
       showVaultStatus("error", "Passwords do not match.");
       return;
     }
 
-    // Check crypto backend
     if (!getCryptoBackend()) {
       showVaultStatus(
         "error",
@@ -657,13 +696,34 @@ async function handleVaultAction() {
       return;
     }
 
-    // Disable button, show progress
     if (actionBtn) actionBtn.disabled = true;
     showVaultStatus("info", "Encrypting\u2026");
 
     try {
-      await exportEncryptedBackup(password);
-      showVaultStatus("success", "Backup exported successfully.");
+      if (isCloudExport && _cloudContext) {
+        // Cloud export: encrypt then upload
+        var payload = collectVaultData();
+        if (!payload) throw new Error("No data to export.");
+        var plaintext = new TextEncoder().encode(JSON.stringify(payload));
+        var salt = vaultRandomBytes(32);
+        var iv = vaultRandomBytes(12);
+        var key = await vaultDeriveKey(password, salt, VAULT_PBKDF2_ITERATIONS);
+        var ciphertext = await vaultEncrypt(plaintext, key, iv);
+        var fileBytes = serializeVaultFile(salt, iv, VAULT_PBKDF2_ITERATIONS, ciphertext);
+
+        showVaultStatus("info", "Uploading\u2026");
+        await cloudUploadVault(_cloudContext.provider, fileBytes);
+        showVaultStatus("success", "Backup uploaded successfully.");
+        // Cache password if enabled
+        if (localStorage.getItem('cloud_pw_cache_enabled') === 'true' && typeof cloudCachePassword === 'function') {
+          var cacheDays = parseInt(localStorage.getItem('cloud_pw_cache_days') || '3', 10);
+          cloudCachePassword(_cloudContext.provider, password, cacheDays);
+        }
+        if (typeof showKrakenToastIfFirst === 'function') showKrakenToastIfFirst();
+      } else {
+        await exportEncryptedBackup(password);
+        showVaultStatus("success", "Backup exported successfully.");
+      }
     } catch (err) {
       showVaultStatus("error", err.message || "Export failed.");
     } finally {
@@ -689,6 +749,11 @@ async function handleVaultAction() {
 
     try {
       await importEncryptedBackup(_vaultPendingFile, password);
+      // Cache password if this was a cloud import and caching is enabled
+      if (isCloudImport && _cloudContext && localStorage.getItem('cloud_pw_cache_enabled') === 'true' && typeof cloudCachePassword === 'function') {
+        var cacheDays = parseInt(localStorage.getItem('cloud_pw_cache_days') || '3', 10);
+        cloudCachePassword(_cloudContext.provider, password, cacheDays);
+      }
       showVaultStatus("success", "Data restored successfully. Reloading\u2026");
       setTimeout(function () { location.reload(); }, 1200);
     } catch (err) {

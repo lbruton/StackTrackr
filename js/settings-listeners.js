@@ -1071,13 +1071,125 @@ const bindImageSettingsListeners = () => {
 };
 
 /**
+ * Render the backup list for a cloud provider.
+ */
+const renderCloudBackupList = (provider, backups) => {
+  const listEl = document.getElementById('cloudBackupList_' + provider);
+  if (!listEl) return;
+
+  if (!backups || backups.length === 0) {
+    listEl.style.display = '';
+    listEl.innerHTML = '<div class="cloud-backup-empty">No backups found</div>';
+    return;
+  }
+
+  listEl.style.display = '';
+  // nosemgrep: javascript.browser.security.insecure-innerhtml.insecure-innerhtml
+  listEl.innerHTML = backups.map(function (b) {
+    const d = new Date(b.server_modified);
+    const dateStr = d.toLocaleDateString([], { month: 'short', day: 'numeric' }) +
+      ' ' + d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+    const sizeStr = b.size < 1024 ? b.size + ' B' :
+      b.size < 1048576 ? (b.size / 1024).toFixed(0) + ' KB' :
+        (b.size / 1048576).toFixed(1) + ' MB';
+    return '<button class="cloud-backup-entry" data-provider="' + escapeHtml(provider) +
+      '" data-filename="' + escapeHtml(b.name) + '" data-size="' + b.size + '">' +
+      '<span class="cloud-backup-date">' + escapeHtml(dateStr) + '</span>' +
+      '<span class="cloud-backup-size">' + escapeHtml(sizeStr) + '</span>' +
+      '</button>';
+  }).join('');
+};
+
+/**
  * Wires cloud storage connect/disconnect/backup/restore buttons.
  */
+const bindCloudCacheListeners = () => {
+  // Password cache toggle
+  const cacheToggle = getExistingElement('cloudPwCacheToggle');
+  if (cacheToggle) {
+    const stored = localStorage.getItem('cloud_pw_cache_enabled') === 'true';
+    cacheToggle.querySelectorAll('.chip-sort-btn').forEach(b => {
+      const isYes = b.dataset.val === 'yes';
+      b.classList.toggle('active', isYes ? stored : !stored);
+    });
+    cacheToggle.addEventListener('click', (e) => {
+      const btn = e.target.closest('.chip-sort-btn');
+      if (!btn) return;
+      const isEnabled = btn.dataset.val === 'yes';
+      localStorage.setItem('cloud_pw_cache_enabled', isEnabled ? 'true' : 'false');
+      cacheToggle.querySelectorAll('.chip-sort-btn').forEach(b => b.classList.toggle('active', b === btn));
+      if (!isEnabled && typeof cloudClearCachedPassword === 'function') cloudClearCachedPassword();
+    });
+  }
+
+  // Cache duration dropdown
+  const cacheDays = getExistingElement('cloudPwCacheDays');
+  if (cacheDays) {
+    const storedDays = localStorage.getItem('cloud_pw_cache_days');
+    if (storedDays) cacheDays.value = storedDays;
+    cacheDays.addEventListener('change', () => {
+      localStorage.setItem('cloud_pw_cache_days', cacheDays.value);
+    });
+  }
+};
+
+/**
+ * Perform a cached-password cloud backup (encrypt + upload, no vault modal).
+ */
+const _cloudBackupWithCachedPw = async (provider, password, btn) => {
+  var origHtml = btn.innerHTML;
+  btn.disabled = true;
+  btn.textContent = 'Encrypting\u2026';
+  try {
+    var payload = typeof collectVaultData === 'function' ? collectVaultData() : null;
+    if (!payload) throw new Error('No data to export.');
+    var plaintext = new TextEncoder().encode(JSON.stringify(payload));
+    var salt = vaultRandomBytes(32);
+    var iv = vaultRandomBytes(12);
+    var key = await vaultDeriveKey(password, salt, VAULT_PBKDF2_ITERATIONS);
+    var ciphertext = await vaultEncrypt(plaintext, key, iv);
+    var fileBytes = serializeVaultFile(salt, iv, VAULT_PBKDF2_ITERATIONS, ciphertext);
+
+    btn.textContent = 'Uploading\u2026';
+    await cloudUploadVault(provider, fileBytes);
+    if (typeof showCloudToast === 'function') showCloudToast('Backup complete.');
+    if (typeof showKrakenToastIfFirst === 'function') showKrakenToastIfFirst();
+  } catch (err) {
+    alert('Backup failed: ' + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = origHtml;
+  }
+};
+
+/**
+ * Perform a cached-password cloud restore (decrypt + restore, no vault modal).
+ */
+const _cloudRestoreWithCachedPw = async (provider, password, fileBytes) => {
+  try {
+    var parsed = parseVaultFile(new Uint8Array(fileBytes));
+    var key = await vaultDeriveKey(password, parsed.salt, parsed.iterations);
+    var plaintext = await vaultDecrypt(parsed.ciphertext, key, parsed.iv);
+    var json = JSON.parse(new TextDecoder().decode(plaintext));
+    restoreVaultData(json);
+    if (typeof showCloudToast === 'function') showCloudToast('Restore complete. Reloading\u2026');
+    setTimeout(function () { location.reload(); }, 1200);
+  } catch (err) {
+    alert('Decryption failed. Opening password prompt.');
+    openVaultModal('cloud-import', {
+      provider: provider,
+      fileBytes: fileBytes,
+    });
+  }
+};
+
 const bindCloudStorageListeners = () => {
   var panel = document.getElementById('settingsPanel_cloud');
   if (!panel) return;
 
-  panel.addEventListener('click', function (e) {
+  bindCloudCacheListeners();
+
+  panel.addEventListener('click', async function (e) {
     var btn = e.target.closest('button');
     if (!btn) return;
     var provider = btn.dataset.provider;
@@ -1085,39 +1197,96 @@ const bindCloudStorageListeners = () => {
 
     if (btn.classList.contains('cloud-connect-btn')) {
       if (typeof cloudAuthStart === 'function') cloudAuthStart(provider);
+
     } else if (btn.classList.contains('cloud-disconnect-btn')) {
       if (typeof cloudDisconnect === 'function') cloudDisconnect(provider);
+
     } else if (btn.classList.contains('cloud-backup-btn')) {
-      var pw = prompt('Enter vault password for encryption:');
-      if (!pw) return;
+      var backupOrigHtml = btn.innerHTML;
       btn.disabled = true;
-      btn.textContent = 'Uploading\u2026';
-      cloudUploadVault(provider, pw)
-        .then(function () { alert('Backup uploaded to ' + (CLOUD_PROVIDERS[provider]?.name || provider) + '.'); })
-        .catch(function (err) { alert('Backup failed: ' + err.message); })
-        .finally(function () { btn.disabled = false; btn.textContent = 'Backup Now'; });
+      btn.textContent = 'Checking\u2026';
+      try {
+        // Check for conflicts
+        var conflict = await cloudCheckConflict(provider);
+        if (conflict.conflict) {
+          var rd = new Date(conflict.remote.timestamp);
+          var remoteInfo = rd.toLocaleDateString() + ' ' + rd.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+          if (conflict.remote.itemCount) remoteInfo += ' (' + conflict.remote.itemCount + ' items)';
+          if (!confirm('A newer backup exists on the server:\n' + remoteInfo +
+            '\n\nOverwrite with current local data?')) {
+            return;
+          }
+        }
+        // Try cached password
+        var cachedPw = typeof cloudGetCachedPassword === 'function' ? cloudGetCachedPassword(provider) : null;
+        if (cachedPw) {
+          await _cloudBackupWithCachedPw(provider, cachedPw, btn);
+          return;
+        }
+        // Open vault modal for password entry
+        openVaultModal('cloud-export', { provider: provider });
+        if (typeof showKrakenToastIfFirst === 'function') showKrakenToastIfFirst();
+      } catch (err) {
+        alert('Conflict check failed: ' + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = backupOrigHtml;
+      }
+
     } else if (btn.classList.contains('cloud-restore-btn')) {
-      if (!confirm('This will replace all local data with the cloud backup. Continue?')) return;
+      // Toggle backup list
+      var listEl = document.getElementById('cloudBackupList_' + provider);
+      if (listEl && listEl.style.display !== 'none' && listEl.innerHTML) {
+        listEl.style.display = 'none';
+        listEl.innerHTML = '';
+        return;
+      }
+
+      var restoreOrigHtml = btn.innerHTML;
+      btn.disabled = true;
+      btn.textContent = 'Loading\u2026';
+      try {
+        var backups = await cloudListBackups(provider);
+        renderCloudBackupList(provider, backups);
+      } catch (err) {
+        alert('Failed to list backups: ' + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = restoreOrigHtml;
+      }
+
+    } else if (btn.classList.contains('cloud-backup-entry')) {
+      // Clicked a specific backup to restore
+      var filename = btn.dataset.filename;
+      var size = parseInt(btn.dataset.size, 10) || 0;
       btn.disabled = true;
       btn.textContent = 'Downloading\u2026';
-      cloudDownloadVault(provider)
-        .then(function (fileBytes) {
-          var pw = prompt('Enter vault password to decrypt:');
-          if (!pw) throw new Error('Cancelled');
-          var parsed = parseVaultFile(fileBytes);
-          return vaultDeriveKey(pw, parsed.salt, parsed.iterations).then(function (key) {
-            return vaultDecrypt(parsed.ciphertext, key, parsed.iv);
-          }).then(function (plainBytes) {
-            var payload = JSON.parse(new TextDecoder().decode(plainBytes));
-            restoreVaultData(payload);
-            alert('Restore complete. The page will reload.');
-            location.reload();
-          });
-        })
-        .catch(function (err) {
-          if (err.message !== 'Cancelled') alert('Restore failed: ' + err.message);
-        })
-        .finally(function () { btn.disabled = false; btn.textContent = 'Restore'; });
+      try {
+        var fileBytes = await cloudDownloadVaultByName(provider, filename);
+        // Try cached password
+        var cachedPw = typeof cloudGetCachedPassword === 'function' ? cloudGetCachedPassword(provider) : null;
+        if (cachedPw) {
+          await _cloudRestoreWithCachedPw(provider, cachedPw, fileBytes);
+          return;
+        }
+        openVaultModal('cloud-import', {
+          provider: provider,
+          fileBytes: fileBytes,
+          filename: filename,
+          size: size,
+        });
+      } catch (err) {
+        alert('Download failed: ' + err.message);
+      } finally {
+        // Re-render the list to restore button state
+        var parentList = btn.closest('.cloud-backup-list');
+        if (parentList) {
+          try {
+            var refreshed = await cloudListBackups(provider);
+            renderCloudBackupList(provider, refreshed);
+          } catch (_) { /* ignore */ }
+        }
+      }
     }
   });
 };

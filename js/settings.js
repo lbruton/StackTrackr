@@ -57,6 +57,11 @@ const switchSettingsSection = (name) => {
     populateApiSection();
   }
 
+  // Sync cloud UI when switching to Cloud section
+  if (name === 'cloud' && typeof syncCloudUI === 'function') {
+    syncCloudUI();
+  }
+
   // Populate Images data and sync toggles when switching to Images section (STACK-96)
   if (name === 'images') {
     syncChipToggle('tableImagesToggle', localStorage.getItem('tableImagesEnabled') !== 'false');

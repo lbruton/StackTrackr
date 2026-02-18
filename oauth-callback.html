@@ -8,16 +8,29 @@
   var code = params.get('code');
   var state = params.get('state');
   if (code && state) {
-    // Primary: postMessage to opener window
+    // Primary: postMessage to opener window (popup flow)
     if (window.opener) {
       window.opener.postMessage({ type: 'staktrakr-oauth', code: code, state: state }, '*');
+      // Fallback: also write localStorage relay
+      try {
+        localStorage.setItem('staktrakr_oauth_result', JSON.stringify({ code: code, state: state }));
+      } catch (e) { /* ignore */ }
+      // Small delay to ensure postMessage delivery before closing
+      setTimeout(function () { window.close(); }, 200);
+    } else {
+      // Main-window redirect: popup was blocked or Cloudflare navigated the main tab.
+      // Store the OAuth result and redirect back to the app root so
+      // the visibilitychange / storage listener in cloud-storage.js picks it up.
+      try {
+        localStorage.setItem('staktrakr_oauth_result', JSON.stringify({ code: code, state: state }));
+      } catch (e) { /* ignore */ }
+      // Redirect to app root — cloud-storage.js will detect the relay key on load
+      window.location.replace(window.location.origin + '/');
     }
-    // Fallback: localStorage relay for when opener is lost (Cloudflare challenge, etc.)
-    try {
-      localStorage.setItem('staktrakr_oauth_result', JSON.stringify({ code: code, state: state }));
-    } catch (e) { /* ignore */ }
+  } else {
+    // No code/state — error or user cancelled, go home
+    window.location.replace(window.location.origin + '/');
   }
-  window.close();
 </script>
 </body>
 </html>
