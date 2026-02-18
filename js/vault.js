@@ -422,6 +422,41 @@ function getPasswordStrength(password) {
 }
 
 // =============================================================================
+// SHARED ENCRYPT / DECRYPT HELPERS
+// =============================================================================
+
+/**
+ * Encrypt inventory data with the given password and return raw vault bytes.
+ * @param {string} password
+ * @returns {Promise<Uint8Array>} serialized vault file bytes
+ */
+async function vaultEncryptToBytes(password) {
+  var payload = collectVaultData();
+  if (!payload) throw new Error("No data to export.");
+  var plaintext = new TextEncoder().encode(JSON.stringify(payload));
+  var salt = vaultRandomBytes(32);
+  var iv = vaultRandomBytes(12);
+  var key = await vaultDeriveKey(password, salt, VAULT_PBKDF2_ITERATIONS);
+  var ciphertext = await vaultEncrypt(plaintext, key, iv);
+  return serializeVaultFile(salt, iv, VAULT_PBKDF2_ITERATIONS, ciphertext);
+}
+
+/**
+ * Decrypt raw vault bytes with the given password and restore data.
+ * @param {Uint8Array|ArrayBuffer} fileBytes
+ * @param {string} password
+ * @returns {Promise<void>}
+ */
+async function vaultDecryptAndRestore(fileBytes, password) {
+  var parsed = parseVaultFile(new Uint8Array(fileBytes));
+  var key = await vaultDeriveKey(password, parsed.salt, parsed.iterations);
+  var plainBytes = await vaultDecrypt(parsed.ciphertext, key, parsed.iv);
+  var payload = JSON.parse(new TextDecoder().decode(plainBytes));
+  if (!payload || !payload.data) throw new Error("Vault file appears corrupted.");
+  restoreVaultData(payload);
+}
+
+// =============================================================================
 // EXPORT FLOW
 // =============================================================================
 
@@ -438,22 +473,9 @@ async function exportEncryptedBackup(password) {
     );
   }
 
-  var payload = collectVaultData();
-  if (!payload) {
-    throw new Error("No data to export.");
-  }
-
   debugLog("Vault: exporting with", backend, "backend");
 
-  var enc = new TextEncoder();
-  var plaintext = enc.encode(JSON.stringify(payload));
-
-  var salt = vaultRandomBytes(32);
-  var iv = vaultRandomBytes(12);
-
-  var key = await vaultDeriveKey(password, salt, VAULT_PBKDF2_ITERATIONS);
-  var ciphertext = await vaultEncrypt(plaintext, key, iv);
-  var fileBytes = serializeVaultFile(salt, iv, VAULT_PBKDF2_ITERATIONS, ciphertext);
+  var fileBytes = await vaultEncryptToBytes(password);
 
   // Download via Blob + anchor
   var blob = new Blob([fileBytes], { type: "application/octet-stream" });
@@ -493,37 +515,8 @@ async function importEncryptedBackup(fileBytes, password) {
     throw new Error("File exceeds 50MB limit.");
   }
 
-  var parsed = parseVaultFile(fileBytes);
-
-  debugLog(
-    "Vault: importing with",
-    backend,
-    "backend,",
-    parsed.iterations,
-    "iterations",
-  );
-
-  var key = await vaultDeriveKey(
-    password,
-    parsed.salt,
-    parsed.iterations,
-  );
-  var plainBytes = await vaultDecrypt(parsed.ciphertext, key, parsed.iv);
-
-  var dec = new TextDecoder();
-  var jsonStr = dec.decode(plainBytes);
-  var payload;
-  try {
-    payload = JSON.parse(jsonStr);
-  } catch (_) {
-    throw new Error("Vault file appears corrupted.");
-  }
-
-  if (!payload || !payload.data) {
-    throw new Error("Vault file appears corrupted.");
-  }
-
-  restoreVaultData(payload);
+  debugLog("Vault: importing with", backend, "backend");
+  await vaultDecryptAndRestore(fileBytes, password);
   debugLog("Vault: import complete");
 }
 
@@ -702,15 +695,7 @@ async function handleVaultAction() {
     try {
       if (isCloudExport && _cloudContext) {
         // Cloud export: encrypt then upload
-        var payload = collectVaultData();
-        if (!payload) throw new Error("No data to export.");
-        var plaintext = new TextEncoder().encode(JSON.stringify(payload));
-        var salt = vaultRandomBytes(32);
-        var iv = vaultRandomBytes(12);
-        var key = await vaultDeriveKey(password, salt, VAULT_PBKDF2_ITERATIONS);
-        var ciphertext = await vaultEncrypt(plaintext, key, iv);
-        var fileBytes = serializeVaultFile(salt, iv, VAULT_PBKDF2_ITERATIONS, ciphertext);
-
+        var fileBytes = await vaultEncryptToBytes(password);
         showVaultStatus("info", "Uploading\u2026");
         await cloudUploadVault(_cloudContext.provider, fileBytes);
         showVaultStatus("success", "Backup uploaded successfully.");

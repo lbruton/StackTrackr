@@ -1115,15 +1115,7 @@ const _cloudBackupWithCachedPw = async (provider, password, btn) => {
   btn.disabled = true;
   btn.textContent = 'Encrypting\u2026';
   try {
-    var payload = typeof collectVaultData === 'function' ? collectVaultData() : null;
-    if (!payload) throw new Error('No data to export.');
-    var plaintext = new TextEncoder().encode(JSON.stringify(payload));
-    var salt = vaultRandomBytes(32);
-    var iv = vaultRandomBytes(12);
-    var key = await vaultDeriveKey(password, salt, VAULT_PBKDF2_ITERATIONS);
-    var ciphertext = await vaultEncrypt(plaintext, key, iv);
-    var fileBytes = serializeVaultFile(salt, iv, VAULT_PBKDF2_ITERATIONS, ciphertext);
-
+    var fileBytes = await vaultEncryptToBytes(password);
     btn.textContent = 'Uploading\u2026';
     await cloudUploadVault(provider, fileBytes);
     if (typeof showCloudToast === 'function') showCloudToast('Backup complete.');
@@ -1141,11 +1133,7 @@ const _cloudBackupWithCachedPw = async (provider, password, btn) => {
  */
 const _cloudRestoreWithCachedPw = async (provider, password, fileBytes) => {
   try {
-    var parsed = parseVaultFile(new Uint8Array(fileBytes));
-    var key = await vaultDeriveKey(password, parsed.salt, parsed.iterations);
-    var plaintext = await vaultDecrypt(parsed.ciphertext, key, parsed.iv);
-    var json = JSON.parse(new TextDecoder().decode(plaintext));
-    restoreVaultData(json);
+    await vaultDecryptAndRestore(fileBytes, password);
     if (typeof showCloudToast === 'function') showCloudToast('Restore complete. Reloading\u2026');
     setTimeout(function () { location.reload(); }, 1200);
   } catch (err) {
