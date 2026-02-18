@@ -274,11 +274,10 @@ const setupAckModalEvents = () => {
  */
 const getEmbeddedWhatsNew = () => {
   return `
+    <li><strong>v3.31.0 &ndash; Cloud Storage Backup</strong>: Encrypted .stvault backup to Dropbox via OAuth PKCE popup flow. Privacy policy page for provider compliance. Favicon and PWA icons updated to ST branding</li>
     <li><strong>v3.30.09 &ndash; Settings &amp; Header Controls Overhaul</strong>: Optional Trend and Sync buttons added to header (enable in Appearance &gt; Header Buttons). Global spot trend/sync bar removed. Settings Appearance panel reorganized with Header Buttons grid, Layout card, and Inventory View cards. Images panel restructured with actions row, camera capture, and fieldset cards. Metal Order and Inline Chips consolidated into Chips panel</li>
     <li><strong>v3.30.08 &ndash; Default Settings Overhaul &amp; Seed Pattern Images</strong>: New user defaults &mdash; dark theme, Name A-Z sort, all rows visible, Goldback pricing ON. Per-rule enable/disable toggles for built-in Numista patterns. Seed coin photos (ASE, Gold Maple) as demo custom pattern rules for first-time user coaching</li>
     <li><strong>v3.30.07 &ndash; Save Search as Filter Chip</strong>: Bookmark button inside search input saves multi-term comma-separated searches as custom filter chips. Smart enable/disable logic activates only for valid multi-term queries that aren&rsquo;t already saved. Disabled during fuzzy search mode (STAK-104)</li>
-    <li><strong>v3.30.06 &ndash; Card View Sort Controls &amp; UX Polish</strong>: Card sort bar with sort dropdown, direction toggle, and A/B/C style toggle visible only in card view. Pagination hidden in card view. Header button simplified to toggle card/table view (STAK-131)</li>
-    <li><strong>v3.30.05 &ndash; Sort Column Index Realignment</strong>: All table sorts after Type were off by one since v3.30.00 &mdash; the Image column was missing from the sort index map. Retail and Gain/Loss sorting now uses correct Goldback denomination pricing</li>
   `;
 };
 

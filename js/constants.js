@@ -282,7 +282,7 @@ const CERT_LOOKUP_URLS = {
  * Updated: 2026-02-12 - STACK-38/STACK-31: Responsive card view + mobile layout
  */
 
-const APP_VERSION = "3.30.09";
+const APP_VERSION = "3.31.0";
 
 /**
  * @constant {string} DEFAULT_CURRENCY - Default currency code for monetary formatting
@@ -687,6 +687,10 @@ const ALLOWED_STORAGE_KEYS = [
   ITEM_TAGS_KEY,                           // JSON object: per-item tags keyed by UUID (STAK-126)
   "enabledSeedRules",                        // JSON array: enabled built-in Numista lookup rule IDs
   "seedImagesVer",                             // string: current seed images version for cache invalidation
+  "cloud_token_dropbox",                       // JSON: Dropbox OAuth token data
+  "cloud_token_pcloud",                        // JSON: pCloud OAuth token data
+  "cloud_token_box",                           // JSON: Box OAuth token data
+  "cloud_last_backup",                         // JSON: { provider, timestamp } last cloud backup info
 ];
 
 // =============================================================================
