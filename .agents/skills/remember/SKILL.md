@@ -85,14 +85,17 @@ Skip if session content is trivial and user did not explicitly ask.
 
 ## HANDOFF Workflow
 
-When content is agent handoff related:
+When content is agent handoff related, cross-session pauses, or work transfers:
 
 1. Create Memento handoff entity.
-2. Post to Linear **Developers** team (`38d57c9f-388c-41ec-9cd2-259a21a5df1c`):
-   - If a related issue exists: post handoff comment on that issue.
-   - If no related issue: create a new Developers team issue.
-3. **Never include secrets in Linear** — use Memento entity references only.
-4. Report handoff entity name and Linear comment/issue result.
+2. Post to Linear using the expanded template (see `memento-taxonomy`):
+   - If a related issue exists in the project team: post comment there.
+   - If no related issue: create issue in **Developers** team (`38d57c9f-388c-41ec-9cd2-259a21a5df1c`) with title `HANDOFF: <TAG> <topic> <YYYY-MM-DD>`.
+3. Include `Links:`, `Memory:`, and `Risks:` fields in every handoff.
+4. **Never include secrets in Linear** — use Memento entity references only.
+5. Report handoff entity name and Linear comment/issue result.
+
+Reference: DEVS-17.
 
 ## Output Format
 
