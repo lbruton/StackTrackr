@@ -7,8 +7,15 @@
   var params = new URLSearchParams(location.search);
   var code = params.get('code');
   var state = params.get('state');
-  if (window.opener) {
-    window.opener.postMessage({ type: 'staktrakr-oauth', code: code, state: state }, '*');
+  if (code && state) {
+    // Primary: postMessage to opener window
+    if (window.opener) {
+      window.opener.postMessage({ type: 'staktrakr-oauth', code: code, state: state }, '*');
+    }
+    // Fallback: localStorage relay for when opener is lost (Cloudflare challenge, etc.)
+    try {
+      localStorage.setItem('staktrakr_oauth_result', JSON.stringify({ code: code, state: state }));
+    } catch (e) { /* ignore */ }
   }
   window.close();
 </script>
