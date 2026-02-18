@@ -22,16 +22,16 @@ If ambiguous, ask one direct clarifying question.
 ## SAVE Workflow
 
 1. Classify entity type (Session/Insight/Handoff/Bug/Feature/Sprint).
-2. Build standardized name and ID using UTC timestamp.
-3. Create entity with ordered observations, including:
+1. Build standardized name and ID using UTC timestamp.
+1. Create entity with ordered observations, including:
    - `TIMESTAMP: <ISO-8601 UTC>`
    - `DATE_TOKEN: <YYYYMMDDHHMMSS>`
-4. Add required and contextual tags, including date buckets:
+1. Add required and contextual tags, including date buckets:
    - `TAG: date:YYYYMMDD`
    - `TAG: date:YYYYMM`
    - `TAG: date:YYYY`
-5. Link related entities when appropriate.
-6. Confirm what was saved and how to recall it.
+1. Link related entities when appropriate.
+1. Confirm what was saved and how to recall it.
 
 ### SAVE Notes
 
@@ -63,11 +63,11 @@ Prefer storing references when possible.
    - Date token/time slice -> `search_nodes` with progressive prefixes
      (`YYYYMMDDHH` -> `YYYYMMDD` -> `YYYYMM` -> `YYYY`)
    - Conceptual/natural language query -> `semantic_search` with `hybrid_search: true`
-2. For day/week recency requests, prefer date tags first (for example `date:20260218`) before semantic recall.
-3. **Fallback**: If `search_nodes` returns 0 results, always retry with `semantic_search`
+1. For day/week recency requests, prefer date tags first (for example `date:20260218`) before semantic recall.
+1. **Fallback**: If `search_nodes` returns 0 results, always retry with `semantic_search`
    using the same query as natural language.
-4. Expand relevant results with `open_nodes`.
-5. Present concise summary first, details on demand.
+1. Expand relevant results with `open_nodes`.
+1. Present concise summary first, details on demand.
 
 ## Secret Handling in RECALL Mode
 
@@ -80,9 +80,9 @@ Prefer storing references when possible.
 When asked to persist session context:
 
 1. Capture major decisions, fixes, and next steps.
-2. Create Session entity with timestamped ID.
-3. Add required tags and any issue/PR references.
-4. Link to created/updated entities from this session.
+1. Create Session entity with timestamped ID.
+1. Add required tags and any issue/PR references.
+1. Link to created/updated entities from this session.
 
 Skip if session content is trivial and user did not explicitly ask.
 
@@ -91,13 +91,13 @@ Skip if session content is trivial and user did not explicitly ask.
 When content is agent handoff related, cross-session pauses, or work transfers:
 
 1. Create Memento handoff entity.
-2. Post to Linear using the expanded template (see `memento-taxonomy`):
+1. Post to Linear using the expanded template (see `memento-taxonomy`):
    - If a related issue exists in the project team: post comment there.
    - If no related issue: create issue in **Developers** team (`38d57c9f-388c-41ec-9cd2-259a21a5df1c`)
      with title `HANDOFF: <TAG> <topic> <YYYY-MM-DD>`.
-3. Include `Links:`, `Memory:`, and `Risks:` fields in every handoff.
-4. **Never include secrets in Linear** — use Memento entity references only.
-5. Report handoff entity name and Linear comment/issue result.
+1. Include `Links:`, `Memory:`, and `Risks:` fields in every handoff.
+1. **Never include secrets in Linear** — use Memento entity references only.
+1. Report handoff entity name and Linear comment/issue result.
 
 Reference: DEVS-17.
 
