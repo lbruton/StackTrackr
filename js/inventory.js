@@ -1341,9 +1341,9 @@ const renderTable = () => {
       if (cardGrid) {
         cardGrid.style.display = 'flex';
         if (portalScroll) portalScroll.style.display = 'none';
-        // Show card sort bar and hide pagination dropdown
+        // Show card sort bar and keep pagination dropdown visible
         if (cardSortBar) cardSortBar.style.display = 'flex';
-        if (footerSelect) footerSelect.style.display = 'none';
+        if (footerSelect) footerSelect.style.display = '';
         if (typeof initCardSortBar === 'function') initCardSortBar();
         if (typeof updateCardSortBar === 'function') updateCardSortBar();
 
@@ -1601,7 +1601,7 @@ const renderTable = () => {
       tbody.addEventListener('click', (e) => {
         if (window.innerWidth > 768) return;
         // Don't intercept clicks on buttons, links, or interactive elements
-        if (e.target.closest('button, a, input, select, textarea, .icon-btn, .filter-text, [role="button"], .year-tag, .purity-tag')) return;
+        if (e.target.closest('button, a, input, select, textarea, .icon-btn, .filter-text, [role="button"], .year-tag, .purity-tag, td[data-column="image"]')) return;
         const row = e.target.closest('tr[data-idx]');
         if (row) {
           const idx = Number(row.dataset.idx);
