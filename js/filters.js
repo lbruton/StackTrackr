@@ -221,7 +221,8 @@ const generateCategorySummary = (inventory) => {
   const filteredTags = applyMinCountThreshold(tags, minCount);
   const filteredDynamicNames = applyMinCountThreshold(dynamicNames, nameMinCount);
 
-  // Apply blacklist filter to auto-generated name chips and dynamic chips
+  // Apply blacklist filter to auto-generated name chips, dynamic chips, tag chips,
+  // and custom-group labels so shift-click suppression is consistent across chip types.
   if (typeof window.isBlacklisted === 'function') {
     filteredNames = Object.fromEntries(
       Object.entries(filteredNames).filter(([key]) => !window.isBlacklisted(key))
@@ -230,6 +231,17 @@ const generateCategorySummary = (inventory) => {
     for (const key of Object.keys(filteredDynamicNames)) {
       if (window.isBlacklisted(key)) {
         delete filteredDynamicNames[key];
+      }
+    }
+    for (const key of Object.keys(filteredTags)) {
+      if (window.isBlacklisted(key)) {
+        delete filteredTags[key];
+      }
+    }
+    for (const groupId of Object.keys(customGroups)) {
+      const info = customGroups[groupId];
+      if (info && window.isBlacklisted(info.label)) {
+        delete customGroups[groupId];
       }
     }
   }
@@ -475,7 +487,6 @@ const renderActiveFilters = () => {
 
     // Debug logging (opt-in)
     if (window.DEBUG_FILTERS) {
-      // eslint-disable-next-line no-console
       console.debug('renderActiveFilters: adding chip', { field: f.field, value: f.value, label });
     }
     
@@ -492,14 +503,15 @@ const renderActiveFilters = () => {
 
     // Different tooltip and click behavior for different chip types
     if (f.count !== undefined && f.total !== undefined) {
-      // Category summary chips - clicking adds filter; shift+click blacklists (name/dynamic only)
-      const canBlacklist = f.field === 'name' || f.field === 'dynamicName';
+      // Category summary chips - clicking adds filter; shift+click blacklists supported chip names.
+      const canBlacklist = f.field === 'name' || f.field === 'dynamicName' || f.field === 'customGroup' || f.field === 'tags';
+      const chipNameForBlacklist = f.field === 'customGroup' ? (f.displayLabel || f.value) : f.value;
       chip.title = `Click to filter by ${f.field}: ${displayValue} (${f.count} items)` +
         (canBlacklist ? ' · Shift+click to ignore' : '');
       chip.addEventListener('click', (e) => {
         if (canBlacklist && e.shiftKey && typeof window.showBlacklistConfirm === 'function') {
           e.preventDefault();
-          window.showBlacklistConfirm(e.clientX, e.clientY, f.value);
+          window.showBlacklistConfirm(e.clientX, e.clientY, chipNameForBlacklist);
           return;
         }
         applyQuickFilter(f.field, f.value, f.isGrouped || f.isCustomGroup || f.isDynamic || false);
