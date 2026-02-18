@@ -1077,21 +1077,33 @@ const bindImageImportExportListeners = () => {
         return;
       }
 
-      // Collect all items that have image URLs, deduped by catalogId or uuid
+      // Collect items to fetch — catalog items (with or without URLs) + user items with direct URLs
       const toFetch = [];
       const seenKeys = new Set();
+
+      // Catalog-linked items via BulkImageCache (includes items with numistaId but no URL yet)
+      if (typeof BulkImageCache !== 'undefined') {
+        for (const { item, catalogId } of BulkImageCache.buildEligibleList()) {
+          if (seenKeys.has(catalogId)) continue;
+          seenKeys.add(catalogId);
+          toFetch.push({ item, catalogId, key: catalogId, useCdn: true });
+        }
+      }
+
+      // User items with direct URLs but no catalog ID
       for (const item of inventory) {
         if (!item.obverseImageUrl && !item.reverseImageUrl) continue;
         const catalogId = typeof BulkImageCache !== 'undefined'
           ? BulkImageCache.resolveCatalogId(item) : '';
-        const key = catalogId || item.uuid;
+        if (catalogId && seenKeys.has(catalogId)) continue;
+        const key = item.uuid;
         if (!key || seenKeys.has(key)) continue;
         seenKeys.add(key);
-        toFetch.push({ item, catalogId, key, useCdn: !!catalogId });
+        toFetch.push({ item, catalogId: '', key, useCdn: false });
       }
 
       if (!toFetch.length) {
-        alert('No items with image URLs found.\nRun \u201CDownload URLs\u201D first to sync catalog image URLs from Numista.');
+        alert('No items with Numista IDs or image URLs found.\nAdd Numista catalog IDs to items first.');
         return;
       }
 
@@ -1106,19 +1118,20 @@ const bindImageImportExportListeners = () => {
         return;
       }
 
-      // Preflight: test one URL before committing to the full loop
-      const firstUrl = toFetch[0].item.obverseImageUrl || toFetch[0].item.reverseImageUrl;
-      try {
-        const testResp = await fetch(firstUrl, { mode: 'cors' });
-        if (!testResp.ok) throw new Error(`HTTP ${testResp.status}`);
-      } catch (preflightErr) {
-        alert(
-          'Could not fetch images \u2014 the image server is blocking cross-origin requests.\n\n' +
-          'Try opening a Numista item in the view modal first (this caches images locally),\n' +
-          'then run URL\u2192ZIP to package the cached copies.\n\n' +
-          `Detail: ${preflightErr.message}`
-        );
-        return;
+      // Preflight: test one URL before committing to the full loop (skip if no URLs known yet)
+      const firstWithUrl = toFetch.find(e => e.item.obverseImageUrl || e.item.reverseImageUrl);
+      if (firstWithUrl) {
+        const firstUrl = firstWithUrl.item.obverseImageUrl || firstWithUrl.item.reverseImageUrl;
+        try {
+          const testResp = await fetch(firstUrl);
+          if (!testResp.ok) throw new Error(`HTTP ${testResp.status}`);
+        } catch (preflightErr) {
+          alert(
+            'Could not fetch images \u2014 network error or image server unavailable.\n\n' +
+            `Detail: ${preflightErr.message}`
+          );
+          return;
+        }
       }
 
       const progressEl = document.createElement('div');
@@ -1144,29 +1157,47 @@ const bindImageImportExportListeners = () => {
           let obvBlob = null;
           let revBlob = null;
 
-          if (item.obverseImageUrl) {
+          // Resolve image URLs — use what's on the item, or look up via catalog API
+          let obvUrl = item.obverseImageUrl || '';
+          let revUrl = item.reverseImageUrl || '';
+          if (!obvUrl && !revUrl && catalogId && window.catalogAPI) {
             try {
-              const resp = await fetch(item.obverseImageUrl, { mode: 'cors' });
-              if (resp.ok) obvBlob = await resp.blob();
-            } catch { /* CORS or network failure — skip */ }
-          }
-          if (item.reverseImageUrl) {
-            try {
-              const resp = await fetch(item.reverseImageUrl, { mode: 'cors' });
-              if (resp.ok) revBlob = await resp.blob();
-            } catch { /* CORS or network failure — skip */ }
+              if (textEl) textEl.textContent = `Looking up ${item.name || key} (${i + 1} of ${toFetch.length})\u2026`;
+              const apiResult = await catalogAPI.lookupItem(catalogId);
+              if (apiResult) {
+                obvUrl = apiResult.imageUrl || '';
+                revUrl = apiResult.reverseImageUrl || '';
+                // Persist URLs back to item so they're available next time
+                if (obvUrl) item.obverseImageUrl = obvUrl;
+                if (revUrl) item.reverseImageUrl = revUrl;
+              }
+            } catch { /* skip — will just have no image for this entry */ }
           }
 
+          if (obvUrl) {
+            try {
+              const raw = await (await fetch(obvUrl)).blob();
+              const result = await imageProcessor.processFile(raw, { maxDim: 1200, quality: 0.85 });
+              obvBlob = result?.blob || raw;
+            } catch { /* skip */ }
+          }
+          if (revUrl) {
+            try {
+              const raw = await (await fetch(revUrl)).blob();
+              const result = await imageProcessor.processFile(raw, { maxDim: 1200, quality: 0.85 });
+              revBlob = result?.blob || raw;
+            } catch { /* skip */ }
+          }
+
+          // imageProcessor.processFile already outputs WebP — use blobs directly
           const folder = useCdn ? 'cdn' : 'user';
-          const obvWebP = obvBlob ? await blobToWebP(obvBlob) : null;
-          const revWebP = revBlob ? await blobToWebP(revBlob) : null;
-          const obvFile = obvWebP ? `${folder}/${key}_obverse.webp` : null;
-          const revFile = revWebP ? `${folder}/${key}_reverse.webp` : null;
+          const obvFile = obvBlob ? `${folder}/${key}_obverse.webp` : null;
+          const revFile = revBlob ? `${folder}/${key}_reverse.webp` : null;
 
-          if (obvWebP) zip.file(obvFile, obvWebP);
-          if (revWebP) zip.file(revFile, revWebP);
+          if (obvBlob) zip.file(obvFile, obvBlob);
+          if (revBlob) zip.file(revFile, revBlob);
 
-          if (obvWebP || revWebP) {
+          if (obvBlob || revBlob) {
             manifest.push({
               catalogId: catalogId || '',
               uuid: item.uuid || '',
