@@ -31,6 +31,7 @@ Compare key sections:
 3. Storage and security rules
 4. Version/release sync rules
 5. Handoff protocol guidance
+6. Claude-relay permission/network safeguards
 
 Report concrete mismatches before editing.
 
@@ -70,4 +71,5 @@ For each drifted skill choose one:
 
 - Keep AGENTS as Codex-primary and CLAUDE as local-Claude-specific.
 - Do not remove Codex-managed MCP/handoff sections from AGENTS.
+- Do not relax Codex relay preflight checks for network/escalated/destructive commands without explicit maintainer approval.
 - Do not overwrite intentional platform-specific adjustments without confirmation.

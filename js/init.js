@@ -191,6 +191,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (typeof setupAboutModalEvents === "function") {
       setupAboutModalEvents();
     }
+    if (typeof setupFaqModalEvents === "function") {
+      setupFaqModalEvents();
+    }
 
     // Notes modal elements
     elements.notesModal = safeGetElement("notesModal");

@@ -274,6 +274,7 @@ const setupAckModalEvents = () => {
  */
 const getEmbeddedWhatsNew = () => {
   return `
+    <li><strong>v3.31.1 &ndash; FAQ Modal &amp; Privacy Improvements</strong>: Interactive FAQ with 13 questions added to Settings sidebar tab, About modal, and footer. ZIP export/import exposed in Settings. Files tab merged into Inventory. privacy.html theme and back-link fixed. pCloud and Box added as coming-soon cloud providers. r/Silverbugs community credit in footer</li>
     <li><strong>v3.31.0 &ndash; Cloud Storage Backup</strong>: Encrypted .stvault backup to Dropbox via OAuth PKCE popup flow. Privacy policy page for provider compliance. Favicon and PWA icons updated to ST branding</li>
     <li><strong>v3.30.09 &ndash; Settings &amp; Header Controls Overhaul</strong>: Optional Trend and Sync buttons added to header (enable in Appearance &gt; Header Buttons). Global spot trend/sync bar removed. Settings Appearance panel reorganized with Header Buttons grid, Layout card, and Inventory View cards. Images panel restructured with actions row, camera capture, and fieldset cards. Metal Order and Inline Chips consolidated into Chips panel</li>
     <li><strong>v3.30.08 &ndash; Default Settings Overhaul &amp; Seed Pattern Images</strong>: New user defaults &mdash; dark theme, Name A-Z sort, all rows visible, Goldback pricing ON. Per-rule enable/disable toggles for built-in Numista patterns. Seed coin photos (ASE, Gold Maple) as demo custom pattern rules for first-time user coaching</li>
@@ -287,9 +288,10 @@ const getEmbeddedWhatsNew = () => {
  */
 const getEmbeddedRoadmap = () => {
   return `
-    <li><strong>Chart Overhaul (STAK-48)</strong>: Migrate to ApexCharts with time-series trend views</li>
-    <li><strong>Custom CSV Mapper (STAK-51)</strong>: Header mapping UI with saved import profiles</li>
-    <li><strong>PCGS Deep Integration (STAK-99)</strong>: View Modal verification and price guide lookup</li>
+    <li><strong>Cloud Backup Conflict Detection (STAK-150)</strong>: Smarter conflict resolution using item count direction, not just timestamps</li>
+    <li><strong>Accessible Table Mode (STAK-144)</strong>: Style D with horizontal scroll, long-press to edit, 300% zoom support</li>
+    <li><strong>Custom Theme Editor (STAK-121)</strong>: User-defined color themes with CSS variable overrides</li>
+    <li><strong>Cloud Sync at Rest (STAK-149)</strong>: Real-time encrypted inventory sync across devices</li>
   `;
 };
 
