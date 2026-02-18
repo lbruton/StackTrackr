@@ -14,7 +14,6 @@ const CLOUD_PROVIDERS = {
     clientId: 'gbxz5vvffweoz4f',
     scopes: '',
     folder: '/StakTrakr',
-    filename: 'staktrakr-backup.stvault',
     usePKCE: true,
     refreshable: true,
   },
@@ -25,7 +24,6 @@ const CLOUD_PROVIDERS = {
     clientId: 'TODO_REPLACE_PCLOUD_CLIENT_ID',
     scopes: '',
     folder: '/StakTrakr',
-    filename: 'staktrakr-backup.stvault',
     usePKCE: false,
     refreshable: false, // pCloud tokens are lifetime
   },
@@ -36,13 +34,13 @@ const CLOUD_PROVIDERS = {
     clientId: 'TODO_REPLACE_BOX_CLIENT_ID',
     scopes: '',
     folder: 'StakTrakr',
-    filename: 'staktrakr-backup.stvault',
     usePKCE: false,
     refreshable: true,
   },
 };
 
 const CLOUD_REDIRECT_URI = 'https://staktrakr.com/oauth-callback.html';
+const CLOUD_LATEST_FILENAME = 'staktrakr-latest.json';
 
 // ---------------------------------------------------------------------------
 // PKCE helpers
@@ -169,14 +167,8 @@ function cloudAuthStart(provider) {
   }
 }
 
-// Listen for OAuth callback postMessage
-window.addEventListener('message', function (event) {
-  if (!event.data || event.data.type !== 'staktrakr-oauth') return;
-
-  var code = event.data.code;
-  var state = event.data.state;
-  if (!code || !state) return;
-
+// Exchange an OAuth authorization code for an access token.
+function cloudExchangeCode(code, state) {
   var savedState = sessionStorage.getItem('cloud_oauth_state');
   if (state !== savedState) {
     debugLog('[CloudStorage] OAuth state mismatch');
@@ -222,10 +214,45 @@ window.addEventListener('message', function (event) {
     .catch(function (err) {
       debugLog('[CloudStorage] Token exchange failed', err);
     });
+}
+
+// Primary: listen for OAuth callback postMessage from popup
+window.addEventListener('message', function (event) {
+  if (!event.data || event.data.type !== 'staktrakr-oauth') return;
+  var code = event.data.code;
+  var state = event.data.state;
+  if (!code || !state) return;
+  cloudExchangeCode(code, state);
+});
+
+// Fallback: localStorage relay when popup loses window.opener (Cloudflare challenge, etc.)
+function cloudCheckOAuthRelay() {
+  try {
+    var raw = localStorage.getItem('staktrakr_oauth_result');
+    if (!raw) return;
+    localStorage.removeItem('staktrakr_oauth_result');
+    var data = JSON.parse(raw);
+    if (data.code && data.state) {
+      cloudExchangeCode(data.code, data.state);
+    }
+  } catch (e) { /* ignore */ }
+}
+
+// Pick up the relay key via storage event (fires when another tab/popup writes it)
+window.addEventListener('storage', function (event) {
+  if (event.key === 'staktrakr_oauth_result' && event.newValue) {
+    cloudCheckOAuthRelay();
+  }
+});
+
+// Also check on visibility change (user returns to tab after popup closed)
+document.addEventListener('visibilitychange', function () {
+  if (!document.hidden) cloudCheckOAuthRelay();
 });
 
 function cloudDisconnect(provider) {
   cloudClearToken(provider);
+  localStorage.removeItem('cloud_last_backup');
   if (typeof syncCloudUI === 'function') syncCloudUI();
 }
 
@@ -265,32 +292,38 @@ async function cloudEnsureFolder(provider, token) {
 }
 
 // ---------------------------------------------------------------------------
-// Upload vault to cloud
+// Versioned filename helper
 // ---------------------------------------------------------------------------
 
-async function cloudUploadVault(provider, password) {
+function cloudBuildVersionedFilename() {
+  var d = new Date();
+  var pad = function (n) { return n < 10 ? '0' + n : String(n); };
+  var stamp = d.getFullYear() +
+    pad(d.getMonth() + 1) + pad(d.getDate()) + '-' +
+    pad(d.getHours()) + pad(d.getMinutes()) + pad(d.getSeconds());
+  return 'staktrakr-backup-' + stamp + '.stvault';
+}
+
+// ---------------------------------------------------------------------------
+// Upload vault to cloud (accepts pre-built fileBytes)
+// ---------------------------------------------------------------------------
+
+async function cloudUploadVault(provider, fileBytes) {
   var token = await cloudGetToken(provider);
   if (!token) throw new Error('Not connected to ' + CLOUD_PROVIDERS[provider].name);
 
   var config = CLOUD_PROVIDERS[provider];
-
-  // Build vault file using existing vault globals
-  var payload = collectVaultData();
-  var plaintext = new TextEncoder().encode(JSON.stringify(payload));
-  var salt = vaultRandomBytes(32);
-  var iv = vaultRandomBytes(12);
-  var iterations = typeof VAULT_PBKDF2_ITERATIONS !== 'undefined' ? VAULT_PBKDF2_ITERATIONS : 600000;
-  var key = await vaultDeriveKey(password, salt, iterations);
-  var ciphertext = await vaultEncrypt(plaintext, key, iv);
-  var fileBytes = serializeVaultFile(salt, iv, iterations, ciphertext);
+  var filename = cloudBuildVersionedFilename();
+  var now = Date.now();
 
   await cloudEnsureFolder(provider, token);
 
   if (provider === 'dropbox') {
+    // Upload versioned backup
     var apiArg = JSON.stringify({
-      path: config.folder + '/' + config.filename,
-      mode: 'overwrite',
-      autorename: false,
+      path: config.folder + '/' + filename,
+      mode: 'add',
+      autorename: true,
       mute: true,
     });
     await fetch('https://content.dropboxapi.com/2/files/upload', {
@@ -302,67 +335,156 @@ async function cloudUploadVault(provider, password) {
       },
       body: fileBytes,
     });
+
+    // Upload latest.json pointer
+    var itemCount = 0;
+    try { itemCount = typeof inventory !== 'undefined' ? inventory.length : 0; } catch (_) { /* ignore */ }
+    var latestData = {
+      filename: filename,
+      timestamp: now,
+      appVersion: typeof APP_VERSION !== 'undefined' ? APP_VERSION : 'unknown',
+      itemCount: itemCount,
+    };
+    var latestBytes = new TextEncoder().encode(JSON.stringify(latestData));
+    var latestArg = JSON.stringify({
+      path: config.folder + '/' + CLOUD_LATEST_FILENAME,
+      mode: 'overwrite',
+      autorename: false,
+      mute: true,
+    });
+    await fetch('https://content.dropboxapi.com/2/files/upload', {
+      method: 'POST',
+      headers: {
+        Authorization: 'Bearer ' + token,
+        'Content-Type': 'application/octet-stream',
+        'Dropbox-API-Arg': latestArg,
+      },
+      body: latestBytes,
+    });
   } else if (provider === 'pcloud') {
     var formData = new FormData();
-    formData.append('file', new Blob([fileBytes]), config.filename);
+    formData.append('file', new Blob([fileBytes]), filename);
     await fetch('https://api.pcloud.com/uploadfile?path=' +
       encodeURIComponent(config.folder) +
-      '&renameifexists=0&nopartial=1&access_token=' + encodeURIComponent(token), {
+      '&renameifexists=1&nopartial=1&access_token=' + encodeURIComponent(token), {
       method: 'POST',
       body: formData,
     });
   } else if (provider === 'box') {
     var folderId = await cloudEnsureFolder(provider, token);
-    // Check if file already exists to update instead of create
-    var searchResp = await fetch('https://api.box.com/2.0/search?query=' + encodeURIComponent(config.filename) +
-      '&type=file&ancestor_folder_ids=' + folderId + '&limit=5', {
-      headers: { Authorization: 'Bearer ' + token },
-    });
-    var searchData = await searchResp.json();
-    var existingFile = (searchData.entries || []).find(function (e) { return e.name === config.filename; });
-
     var fd = new FormData();
-    fd.append('file', new Blob([fileBytes]), config.filename);
-
-    if (existingFile) {
-      // Upload new version
-      await fetch('https://upload.box.com/api/2.0/files/' + existingFile.id + '/content', {
-        method: 'POST',
-        headers: { Authorization: 'Bearer ' + token },
-        body: fd,
-      });
-    } else {
-      fd.append('attributes', JSON.stringify({ name: config.filename, parent: { id: folderId } }));
-      await fetch('https://upload.box.com/api/2.0/files/content', {
-        method: 'POST',
-        headers: { Authorization: 'Bearer ' + token },
-        body: fd,
-      });
-    }
+    fd.append('file', new Blob([fileBytes]), filename);
+    fd.append('attributes', JSON.stringify({ name: filename, parent: { id: folderId } }));
+    await fetch('https://upload.box.com/api/2.0/files/content', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer ' + token },
+      body: fd,
+    });
   }
 
-  localStorage.setItem('cloud_last_backup', JSON.stringify({
+  var backupMeta = {
     provider: provider,
-    timestamp: Date.now(),
-  }));
+    timestamp: now,
+    filename: filename,
+    appVersion: typeof APP_VERSION !== 'undefined' ? APP_VERSION : 'unknown',
+    itemCount: 0,
+  };
+  try { backupMeta.itemCount = typeof inventory !== 'undefined' ? inventory.length : 0; } catch (_) { /* ignore */ }
+  localStorage.setItem('cloud_last_backup', JSON.stringify(backupMeta));
 
   if (typeof syncCloudUI === 'function') syncCloudUI();
-  debugLog('[CloudStorage] Backup uploaded to ' + config.name);
+  debugLog('[CloudStorage] Backup uploaded to ' + config.name + ' as ' + filename);
 }
 
 // ---------------------------------------------------------------------------
-// Download vault from cloud
+// Download latest.json metadata from cloud
 // ---------------------------------------------------------------------------
 
-async function cloudDownloadVault(provider) {
+async function cloudGetRemoteLatest(provider) {
+  var token = await cloudGetToken(provider);
+  if (!token) return null;
+
+  var config = CLOUD_PROVIDERS[provider];
+
+  try {
+    if (provider === 'dropbox') {
+      var apiArg = JSON.stringify({ path: config.folder + '/' + CLOUD_LATEST_FILENAME });
+      var resp = await fetch('https://content.dropboxapi.com/2/files/download', {
+        method: 'POST',
+        headers: {
+          Authorization: 'Bearer ' + token,
+          'Dropbox-API-Arg': apiArg,
+        },
+      });
+      if (!resp.ok) return null;
+      return resp.json();
+    }
+  } catch (e) {
+    debugLog('[CloudStorage] Failed to fetch remote latest', e);
+    return null;
+  }
+  return null;
+}
+
+// ---------------------------------------------------------------------------
+// List backups in cloud folder
+// ---------------------------------------------------------------------------
+
+async function cloudListBackups(provider) {
   var token = await cloudGetToken(provider);
   if (!token) throw new Error('Not connected to ' + CLOUD_PROVIDERS[provider].name);
 
   var config = CLOUD_PROVIDERS[provider];
-  var fileBytes;
+  var backups = [];
 
   if (provider === 'dropbox') {
-    var apiArg = JSON.stringify({ path: config.folder + '/' + config.filename });
+    var resp = await fetch('https://api.dropboxapi.com/2/files/list_folder', {
+      method: 'POST',
+      headers: {
+        Authorization: 'Bearer ' + token,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ path: config.folder, recursive: false }),
+    });
+    if (!resp.ok) {
+      // Folder may not exist yet
+      if (resp.status === 409) return [];
+      throw new Error('List failed: ' + resp.status);
+    }
+    var data = await resp.json();
+    var entries = data.entries || [];
+    for (var i = 0; i < entries.length; i++) {
+      var entry = entries[i];
+      if (entry['.tag'] === 'file' && entry.name.endsWith('.stvault')) {
+        backups.push({
+          name: entry.name,
+          server_modified: entry.server_modified,
+          size: entry.size,
+        });
+      }
+    }
+  }
+
+  // Sort newest first
+  backups.sort(function (a, b) {
+    return new Date(b.server_modified) - new Date(a.server_modified);
+  });
+
+  return backups;
+}
+
+// ---------------------------------------------------------------------------
+// Download a specific vault file by name
+// ---------------------------------------------------------------------------
+
+async function cloudDownloadVaultByName(provider, filename) {
+  var token = await cloudGetToken(provider);
+  if (!token) throw new Error('Not connected to ' + CLOUD_PROVIDERS[provider].name);
+
+  var config = CLOUD_PROVIDERS[provider];
+
+  if (provider === 'dropbox') {
+    var apiArg = JSON.stringify({ path: config.folder + '/' + filename });
     var resp = await fetch('https://content.dropboxapi.com/2/files/download', {
       method: 'POST',
       headers: {
@@ -371,33 +493,57 @@ async function cloudDownloadVault(provider) {
       },
     });
     if (!resp.ok) throw new Error('Download failed: ' + resp.status);
-    fileBytes = new Uint8Array(await resp.arrayBuffer());
-  } else if (provider === 'pcloud') {
-    // Get file link first
-    var linkResp = await fetch('https://api.pcloud.com/getfilelink?path=' +
-      encodeURIComponent(config.folder + '/' + config.filename) +
-      '&access_token=' + encodeURIComponent(token));
-    var linkData = await linkResp.json();
-    if (!linkData.hosts || !linkData.path) throw new Error('File not found on pCloud');
-    var fileUrl = 'https://' + linkData.hosts[0] + linkData.path;
-    var dlResp = await fetch(fileUrl);
-    fileBytes = new Uint8Array(await dlResp.arrayBuffer());
-  } else if (provider === 'box') {
-    var folderId = await cloudEnsureFolder(provider, token);
-    var searchResp = await fetch('https://api.box.com/2.0/search?query=' + encodeURIComponent(config.filename) +
-      '&type=file&ancestor_folder_ids=' + folderId + '&limit=5', {
-      headers: { Authorization: 'Bearer ' + token },
-    });
-    var searchData = await searchResp.json();
-    var file = (searchData.entries || []).find(function (e) { return e.name === config.filename; });
-    if (!file) throw new Error('Backup not found on Box');
-    var dlResp2 = await fetch('https://api.box.com/2.0/files/' + file.id + '/content', {
-      headers: { Authorization: 'Bearer ' + token },
-    });
-    fileBytes = new Uint8Array(await dlResp2.arrayBuffer());
+    return new Uint8Array(await resp.arrayBuffer());
   }
 
-  return fileBytes;
+  throw new Error('Download by name not supported for ' + provider);
+}
+
+// ---------------------------------------------------------------------------
+// Download vault from cloud (legacy — downloads latest)
+// ---------------------------------------------------------------------------
+
+async function cloudDownloadVault(provider) {
+  // Try to get latest pointer first
+  var latest = await cloudGetRemoteLatest(provider);
+  if (latest && latest.filename) {
+    return cloudDownloadVaultByName(provider, latest.filename);
+  }
+
+  // Fallback: list and download newest
+  var backups = await cloudListBackups(provider);
+  if (backups.length > 0) {
+    return cloudDownloadVaultByName(provider, backups[0].name);
+  }
+
+  throw new Error('No backups found on ' + CLOUD_PROVIDERS[provider].name);
+}
+
+// ---------------------------------------------------------------------------
+// Conflict check
+// ---------------------------------------------------------------------------
+
+async function cloudCheckConflict(provider) {
+  var remote = await cloudGetRemoteLatest(provider);
+  if (!remote || !remote.timestamp) {
+    return { conflict: false };
+  }
+
+  var local = null;
+  try {
+    local = JSON.parse(localStorage.getItem('cloud_last_backup'));
+  } catch { /* ignore */ }
+
+  if (!local || !local.timestamp) {
+    // No local record — remote is newer by definition
+    return { conflict: true, remote: remote };
+  }
+
+  if (remote.timestamp > local.timestamp) {
+    return { conflict: true, remote: remote };
+  }
+
+  return { conflict: false };
 }
 
 // ---------------------------------------------------------------------------
@@ -415,26 +561,107 @@ function syncCloudUI() {
     var card = document.getElementById('cloudCard_' + key);
     if (!card) return;
 
-    var connectBtn = card.querySelector('.cloud-connect-btn');
+    // Toggle disconnected vs connected state
+    var loginArea = card.querySelector('.cloud-login-area');
+    var connectedArea = card.querySelector('.cloud-connected-area');
+    var connectedBadge = card.querySelector('.cloud-connected-badge');
     var disconnectBtn = card.querySelector('.cloud-disconnect-btn');
-    var actions = card.querySelector('.cloud-actions');
-    var status = card.querySelector('.cloud-status');
+    var statusEl = card.querySelector('.cloud-status-detail');
+    var backupListEl = document.getElementById('cloudBackupList_' + key);
 
-    if (connectBtn) connectBtn.style.display = connected ? 'none' : '';
+    if (loginArea) loginArea.style.display = connected ? 'none' : '';
+    if (connectedArea) connectedArea.style.display = connected ? '' : 'none';
+    if (connectedBadge) connectedBadge.style.display = connected ? '' : 'none';
     if (disconnectBtn) disconnectBtn.style.display = connected ? '' : 'none';
-    if (actions) actions.style.display = connected ? '' : 'none';
 
-    if (status) {
+    if (statusEl) {
       if (connected && lastBackup && lastBackup.provider === key) {
         var d = new Date(lastBackup.timestamp);
-        status.textContent = 'Last backup: ' + d.toLocaleDateString() + ' ' + d.toLocaleTimeString();
+        var meta = '';
+        if (lastBackup.itemCount) meta += lastBackup.itemCount + ' items';
+        if (lastBackup.appVersion) meta += (meta ? ', ' : '') + 'v' + lastBackup.appVersion;
+        statusEl.textContent = 'Last backup: ' + d.toLocaleDateString() + ' ' +
+          d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) +
+          (meta ? ' (' + meta + ')' : '');
       } else if (connected) {
-        status.textContent = 'Connected — no backups yet';
+        statusEl.textContent = 'No backups yet';
       } else {
-        status.textContent = '';
+        statusEl.textContent = '';
       }
     }
+
+    // Hide backup list when disconnected
+    if (backupListEl && !connected) {
+      backupListEl.style.display = 'none';
+      backupListEl.innerHTML = '';
+    }
   });
+}
+
+// ---------------------------------------------------------------------------
+// Password cache (XOR obfuscation — NOT cryptographic, just prevents plaintext)
+// ---------------------------------------------------------------------------
+
+function cloudCachePassword(provider, password, days) {
+  var len = password.length;
+  var nonce = new Uint8Array(len);
+  crypto.getRandomValues(nonce);
+  var encoded = new TextEncoder().encode(password);
+  var data = new Uint8Array(len);
+  for (var i = 0; i < len; i++) data[i] = encoded[i] ^ nonce[i];
+  var payload = {
+    nonce: btoa(String.fromCharCode.apply(null, nonce)),
+    data: btoa(String.fromCharCode.apply(null, data)),
+    expires: Date.now() + (days || 3) * 86400000,
+    provider: provider,
+  };
+  localStorage.setItem('cloud_vault_pw_cache', JSON.stringify(payload));
+}
+
+function cloudGetCachedPassword(provider) {
+  try {
+    var raw = localStorage.getItem('cloud_vault_pw_cache');
+    if (!raw) return null;
+    var payload = JSON.parse(raw);
+    if (payload.provider !== provider) return null;
+    if (Date.now() > payload.expires) {
+      cloudClearCachedPassword();
+      return null;
+    }
+    var nonce = Uint8Array.from(atob(payload.nonce), function (c) { return c.charCodeAt(0); });
+    var data = Uint8Array.from(atob(payload.data), function (c) { return c.charCodeAt(0); });
+    var decoded = new Uint8Array(data.length);
+    for (var i = 0; i < data.length; i++) decoded[i] = data[i] ^ nonce[i];
+    return new TextDecoder().decode(decoded);
+  } catch (_) {
+    return null;
+  }
+}
+
+function cloudClearCachedPassword() {
+  localStorage.removeItem('cloud_vault_pw_cache');
+}
+
+// ---------------------------------------------------------------------------
+// Kraken toast (easter egg on first cloud backup)
+// ---------------------------------------------------------------------------
+
+function showCloudToast(message, durationMs) {
+  durationMs = durationMs || 5000;
+  var toast = document.createElement('div');
+  toast.className = 'cloud-toast';
+  toast.textContent = message;
+  document.body.appendChild(toast);
+  setTimeout(function () {
+    toast.classList.add('fade-out');
+    toast.addEventListener('animationend', function () { toast.remove(); });
+  }, durationMs);
+}
+
+function showKrakenToastIfFirst() {
+  if (localStorage.getItem('cloud_kraken_seen') === 'true') return;
+  localStorage.setItem('cloud_kraken_seen', 'true');
+  showCloudToast('Yarr! Release the Krakens! Your treasure is encrypted and ready to brave the cloud seas. Stay vigilant, captain!');
 }
 
 // ---------------------------------------------------------------------------
@@ -446,5 +673,14 @@ window.cloudAuthStart = cloudAuthStart;
 window.cloudDisconnect = cloudDisconnect;
 window.cloudUploadVault = cloudUploadVault;
 window.cloudDownloadVault = cloudDownloadVault;
+window.cloudDownloadVaultByName = cloudDownloadVaultByName;
+window.cloudListBackups = cloudListBackups;
+window.cloudGetRemoteLatest = cloudGetRemoteLatest;
+window.cloudCheckConflict = cloudCheckConflict;
 window.cloudIsConnected = cloudIsConnected;
 window.syncCloudUI = syncCloudUI;
+window.cloudCachePassword = cloudCachePassword;
+window.cloudGetCachedPassword = cloudGetCachedPassword;
+window.cloudClearCachedPassword = cloudClearCachedPassword;
+window.showCloudToast = showCloudToast;
+window.showKrakenToastIfFirst = showKrakenToastIfFirst;
