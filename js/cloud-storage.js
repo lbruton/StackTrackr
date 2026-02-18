@@ -39,7 +39,7 @@ const CLOUD_PROVIDERS = {
   },
 };
 
-const CLOUD_REDIRECT_URI = 'https://staktrakr.com/oauth-callback.html';
+const CLOUD_REDIRECT_URI = window.location.origin + '/oauth-callback.html';
 const CLOUD_LATEST_FILENAME = 'staktrakr-latest.json';
 
 // ---------------------------------------------------------------------------
