@@ -1,3 +1,7 @@
+// DEPRECATED (v3.30.09): This prototype file has been promoted to card-view.js.
+// Kept for reference — will be removed in a future release.
+// =============================================================================
+
 // CARD VIEW RENDERING ENGINE (STAK-118)
 // =============================================================================
 

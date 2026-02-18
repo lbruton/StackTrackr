@@ -60,6 +60,8 @@ const filterInventory = () => {
         // For multi-word searches, check if the exact phrase exists or
         // if all words exist as separate word boundaries without conflicting words
         const exactPhrase = q.toLowerCase();
+        // STAK-126: include tags in searchable text
+        const _searchTags = typeof getItemTags === 'function' ? getItemTags(item.uuid).join(' ') : '';
         const itemText = [
           item.metal,
           item.composition || '',
@@ -75,7 +77,8 @@ const filterInventory = () => {
           String(item.numistaId || ''),
           item.serialNumber || '',
           String(item.pcgsNumber || ''),
-          String(item.purity || '')
+          String(item.purity || ''),
+          _searchTags
         ].join(' ').toLowerCase();
         
         // Check for exact phrase match first
@@ -293,7 +296,8 @@ const filterInventory = () => {
           (item.certNumber && wordRegex.test(String(item.certNumber))) ||
           (item.numistaId && wordRegex.test(String(item.numistaId))) ||
           (item.serialNumber && wordRegex.test(item.serialNumber)) ||
-          (item.pcgsNumber && wordRegex.test(String(item.pcgsNumber)))
+          (item.pcgsNumber && wordRegex.test(String(item.pcgsNumber))) ||
+          (typeof getItemTags === 'function' && getItemTags(item.uuid).some(t => wordRegex.test(t)))
         );
       });
       if (fieldMatch) return true;
@@ -325,6 +329,114 @@ const filterInventory = () => {
 };
 
 // Note: applyColumnFilter function is now in filters.js for advanced filtering
+
+const resolveElement = (id) => {
+  if (typeof safeGetElement === 'function') {
+    return safeGetElement(id);
+  }
+  return document.getElementById(id);
+};
+
+const _normalizePatterns = (list) => list
+  .map(p => p.trim().toLowerCase())
+  .filter(p => p.length > 0)
+  .sort();
+
+const parseSearchPatterns = (query) => {
+  if (!query || typeof query !== 'string') return [];
+  return query.split(',').map(part => part.trim()).filter(Boolean);
+};
+
+const searchPatternExistsInCustomGroups = (patterns) => {
+  if (!patterns.length) return false;
+  if (typeof loadCustomGroups !== 'function') return false;
+  const targetKey = _normalizePatterns(patterns).join('|');
+  return loadCustomGroups().some(group => {
+    if (!group || !Array.isArray(group.patterns)) return false;
+    const groupKey = _normalizePatterns(group.patterns).join('|');
+    return groupKey === targetKey;
+  });
+};
+
+const searchPatternMatchesAutoChip = (patterns) => {
+  if (!patterns.length) return false;
+  if (typeof generateCategorySummary !== 'function') return false;
+  if (typeof inventory === 'undefined') return false;
+
+  const summary = generateCategorySummary(inventory);
+  if (!summary || typeof summary !== 'object') return false;
+
+  const summaryKeys = [
+    'metals', 'types', 'names',
+    'purchaseLocations', 'storageLocations',
+    'years', 'grades', 'numistaIds',
+    'purities', 'dynamicNames', 'tags',
+  ];
+
+  const autoValues = new Set();
+  summaryKeys.forEach(key => {
+    const bucket = summary[key];
+    if (bucket && typeof bucket === 'object') {
+      Object.keys(bucket).forEach(val => {
+        autoValues.add(String(val).toLowerCase());
+      });
+    }
+  });
+
+  return patterns.some(p => autoValues.has(p.toLowerCase()));
+};
+
+const shouldShowSearchSaveButton = (query, fuzzyUsed) => {
+  const patterns = parseSearchPatterns(query);
+  if (patterns.length < 2) return false;
+  if (fuzzyUsed) return false;
+  if (searchPatternExistsInCustomGroups(patterns)) return false;
+  if (searchPatternMatchesAutoChip(patterns)) return false;
+  return true;
+};
+
+const updateSaveSearchButton = (query, fuzzyUsed = false) => {
+  const group = resolveElement('saveSearchPatternGroup');
+  if (!group || !group.id) return;
+  const canSave = shouldShowSearchSaveButton(query, fuzzyUsed);
+  group.style.display = canSave ? '' : 'none';
+};
+
+const deriveSearchLabel = (patterns) => {
+  if (!patterns.length) return '';
+  const pretty = patterns.map(p => p.charAt(0).toUpperCase() + p.slice(1));
+  return pretty.join(' / ');
+};
+
+const handleSaveSearchPattern = () => {
+  const input = resolveElement('searchInput');
+  if (!input || !input.id) return;
+  const query = input.value || '';
+  const fuzzyUsed = !!(query.trim() && window._fuzzyMatchUsed);
+  if (!shouldShowSearchSaveButton(query, fuzzyUsed)) {
+    updateSaveSearchButton(query, fuzzyUsed);
+    return;
+  }
+
+  const patterns = parseSearchPatterns(query);
+  const defaultLabel = deriveSearchLabel(patterns);
+  const label = window.prompt('Label for saved filter chip:', defaultLabel);
+  if (!label || !label.trim()) {
+    updateSaveSearchButton(query, fuzzyUsed);
+    return;
+  }
+
+  if (typeof addCustomGroup === 'function') {
+    const group = addCustomGroup(label.trim(), patterns.join(', '));
+    if (group && typeof renderActiveFilters === 'function') {
+      renderActiveFilters();
+    }
+  }
+
+  updateSaveSearchButton(query, fuzzyUsed);
+};
+
+window.updateSaveSearchButton = updateSaveSearchButton;
 
 /**
  * Show or hide the fuzzy search indicator banner.
@@ -359,14 +471,18 @@ window.filterInventory = filterInventory;
 window.updateFuzzyIndicator = updateFuzzyIndicator;
 
 // Apply debounce to search input
-const searchInput = document.getElementById('searchInput');
-if (searchInput) {
+const searchInput = resolveElement('searchInput');
+const saveSearchPatternBtn = resolveElement('saveSearchPatternBtn');
+
+if (searchInput && searchInput.id) {
   const debouncedSearch = debounce((query) => {
     window._fuzzyMatchUsed = false;
     searchQuery = query;
     filterInventory();
     // Show fuzzy indicator if fuzzy matching was used
-    updateFuzzyIndicator(query, !!(query.trim() && window._fuzzyMatchUsed));
+    const fuzzyActive = !!(query.trim() && window._fuzzyMatchUsed);
+    updateFuzzyIndicator(query, fuzzyActive);
+    updateSaveSearchButton(query, fuzzyActive);
   }, 300);
 
   searchInput.addEventListener('input', (e) => {
@@ -380,7 +496,12 @@ if (searchInput) {
       searchInput.blur();
     }
   });
+
+  updateSaveSearchButton(searchInput.value || '', false);
+}
+
+if (saveSearchPatternBtn && saveSearchPatternBtn.id) {
+  saveSearchPatternBtn.addEventListener('click', handleSaveSearchPattern);
 }
 
 // =============================================================================
-

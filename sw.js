@@ -1,9 +1,9 @@
 // StakTrakr Service Worker
 // Enables offline support and installable PWA experience
-// Cache version is tied to APP_VERSION — old caches are purged on activate
+// Cache version: auto-stamped by devops/hooks/stamp-sw-cache.sh pre-commit hook
 
 const DEV_MODE = false; // Set to true during development — bypasses all caching
-const CACHE_NAME = 'staktrakr-v3.30.06';
+const CACHE_NAME = 'staktrakr-v3.30.07-b1771334179';
 
 // Offline fallback for navigation requests when all cache/network strategies fail
 const OFFLINE_HTML = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>StakTrakr</title></head>' +
@@ -28,12 +28,14 @@ const CORE_ASSETS = [
   './js/fuzzy-search.js',
   './js/autocomplete.js',
   './js/numista-lookup.js',
+  './js/seed-images.js',
   './js/versionCheck.js',
   './js/changeLog.js',
   './js/charts.js',
   './js/theme.js',
   './js/search.js',
   './js/chip-grouping.js',
+  './js/tags.js',
   './js/filters.js',
   './js/sorting.js',
   './js/pagination.js',
@@ -54,9 +56,13 @@ const CORE_ASSETS = [
   './js/catalog-manager.js',
   './js/inventory.js',
   './js/vault.js',
+  './js/cloud-storage.js',
+  './oauth-callback.html',
+  './privacy.html',
   './js/about.js',
   './js/customMapping.js',
   './js/settings.js',
+  './js/settings-listeners.js',
   './js/bulkEdit.js',
   './js/events.js',
   './js/init.js',

@@ -15,6 +15,9 @@ const clearAllFilters = () => {
 
   const searchInput = document.getElementById('searchInput');
   if (searchInput) searchInput.value = '';
+  if (typeof window.updateSaveSearchButton === 'function') {
+    window.updateSaveSearchButton('', false);
+  }
 
   const typeFilter = document.getElementById('typeFilter');
   if (typeFilter) typeFilter.value = '';
@@ -39,6 +42,9 @@ const removeFilter = (field, value) => {
     searchQuery = '';
     const searchInput = document.getElementById('searchInput');
     if (searchInput) searchInput.value = '';
+    if (typeof window.updateSaveSearchButton === 'function') {
+      window.updateSaveSearchButton('', false);
+    }
   } else if (activeFilters[field]) {
     if (activeFilters[field].values && Array.isArray(activeFilters[field].values)) {
       // Remove specific value from array
@@ -118,6 +124,7 @@ const generateCategorySummary = (inventory) => {
   const grades = {};
   const numistaIds = {};
   const purities = {};
+  const tags = {};
 
   inventory.forEach(item => {
     // Count metals
@@ -179,6 +186,14 @@ const generateCategorySummary = (inventory) => {
       const purKey = String(pur);
       purities[purKey] = (purities[purKey] || 0) + 1;
     }
+
+    // Count tags (STAK-126)
+    if (typeof getItemTags === 'function' && item.uuid) {
+      const itemTags = getItemTags(item.uuid);
+      itemTags.forEach(tag => {
+        tags[tag] = (tags[tag] || 0) + 1;
+      });
+    }
   });
 
   // Count custom groups
@@ -203,6 +218,7 @@ const generateCategorySummary = (inventory) => {
   const filteredGrades = applyMinCountThreshold(grades, minCount);
   const filteredNumistaIds = applyMinCountThreshold(numistaIds, minCount);
   const filteredPurities = applyMinCountThreshold(purities, minCount);
+  const filteredTags = applyMinCountThreshold(tags, minCount);
   const filteredDynamicNames = applyMinCountThreshold(dynamicNames, nameMinCount);
 
   // Apply blacklist filter to auto-generated name chips and dynamic chips
@@ -241,39 +257,9 @@ const generateCategorySummary = (inventory) => {
     customGroups: filteredCustomGroups,
     dynamicNames: filteredDynamicNames,
     purities: filteredPurities,
+    tags: filteredTags,
     totalItems: inventory.length
   };
-};
-
-/**
- * Checks if a filter field/value combination has matching data in the given inventory.
- *
- * @param {string} field - The field name (e.g., 'metal', 'type', 'name')
- * @param {string} value - The filter value
- * @param {Array<Object>} inventory - The inventory to check against
- * @returns {boolean} True if there are items matching this filter
- */
-const hasMatchingData = (field, value, inventory) => {
-  if (!inventory || inventory.length === 0) return false;
-  
-  return inventory.some(item => {
-    switch (field) {
-      case 'metal':
-        const itemMetal = getCompositionFirstWords(item.composition || item.metal || '').toLowerCase();
-        return itemMetal === value.toLowerCase();
-      case 'type':
-        return item.type === value;
-      case 'name':
-        return item.name === value;
-      case 'purchaseLocation':
-        return item.purchaseLocation === value;
-      case 'storageLocation':
-        return item.storageLocation === value;
-      default:
-        const fieldVal = String(item[field] ?? '').toLowerCase();
-        return fieldVal === value.toLowerCase();
-    }
-  });
 };
 
 /**
@@ -318,6 +304,7 @@ const renderActiveFilters = () => {
     grade:            { summaryKey: 'grades',            field: 'grade' },
     numistaId:        { summaryKey: 'numistaIds',        field: 'numistaId' },
     purity:           { summaryKey: 'purities',          field: 'purity' },
+    tags:             { summaryKey: 'tags',              field: 'tags' },
   };
 
   // Read category config (order + enabled state) and sort preference
@@ -330,6 +317,7 @@ const renderActiveFilters = () => {
         { id: 'storageLocation', enabled: true }, { id: 'year', enabled: true },
         { id: 'grade', enabled: true }, { id: 'numistaId', enabled: true },
         { id: 'purity', enabled: true },
+        { id: 'tags', enabled: true },
       ];
 
   // Read sort preference from toggle active button or localStorage (default: alpha)
@@ -669,6 +657,9 @@ const getChipColors = (field, value, index) => {
     case 'customGroup':
       color = getColor(nameColors, value);
       break;
+    case 'tags':
+      color = getColor(nameColors, value);
+      break;
     case 'purchaseLocation':
       color = getPurchaseLocationColor(value);
       break;
@@ -734,6 +725,18 @@ const filterInventoryAdvanced = () => {
             return exclude ? !match : match;
           });
           break;
+        case 'tags': {
+          // STAK-126: Filter by item tags
+          if (typeof getItemTags === 'function') {
+            const lowerVals = values.map(v => v.toLowerCase());
+            result = result.filter(item => {
+              const tags = getItemTags(item.uuid);
+              const match = tags.some(t => lowerVals.includes(t.toLowerCase()));
+              return exclude ? !match : match;
+            });
+          }
+          break;
+        }
         default: {
           const lowerVals = values.map(v => String(v).toLowerCase());
           result = result.filter(item => {
@@ -786,6 +789,8 @@ const filterInventoryAdvanced = () => {
         // For multi-word searches, check if the exact phrase exists or
         // if all words exist as separate word boundaries without conflicting words
         const exactPhrase = q.toLowerCase();
+        // STAK-126: include tags in searchable text
+        const _searchTags = typeof getItemTags === 'function' ? getItemTags(item.uuid).join(' ') : '';
         const itemText = [
           item.metal,
           item.composition || '',
@@ -799,7 +804,8 @@ const filterInventoryAdvanced = () => {
           item.gradingAuthority || '',
           String(item.certNumber || ''),
           String(item.numistaId || ''),
-          item.serialNumber || ''
+          item.serialNumber || '',
+          _searchTags
         ].join(' ').toLowerCase();
 
         // Check for exact phrase match first
@@ -907,7 +913,8 @@ const filterInventoryAdvanced = () => {
           (item.gradingAuthority && wordRegex.test(item.gradingAuthority)) ||
           (item.certNumber && wordRegex.test(String(item.certNumber))) ||
           (item.numistaId && wordRegex.test(String(item.numistaId))) ||
-          (item.serialNumber && wordRegex.test(item.serialNumber))
+          (item.serialNumber && wordRegex.test(item.serialNumber)) ||
+          (typeof getItemTags === 'function' && getItemTags(item.uuid).some(t => wordRegex.test(t)))
         );
       });
       if (fieldMatch) return true;

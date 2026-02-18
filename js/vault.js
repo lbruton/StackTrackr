@@ -533,8 +533,6 @@ async function importEncryptedBackup(fileBytes, password) {
 
 /** @type {Uint8Array|null} Pending file bytes for import */
 var _vaultPendingFile = null;
-/** @type {string|null} Pending file name for import */
-var _vaultPendingFileName = null;
 
 /**
  * Open the vault modal in export or import mode.
@@ -581,7 +579,6 @@ function openVaultModal(mode, file) {
       actionBtn.className = "btn";
     }
     _vaultPendingFile = null;
-    _vaultPendingFileName = null;
   } else {
     if (titleEl) titleEl.textContent = "Import Encrypted Backup";
     if (confirmRow) confirmRow.style.display = "none";
@@ -601,7 +598,6 @@ function openVaultModal(mode, file) {
 
     // Read file bytes
     if (file) {
-      _vaultPendingFileName = file.name;
       var reader = new FileReader();
       reader.onload = function (e) {
         _vaultPendingFile = new Uint8Array(e.target.result);
@@ -618,7 +614,6 @@ function openVaultModal(mode, file) {
  */
 function closeVaultModal() {
   _vaultPendingFile = null;
-  _vaultPendingFileName = null;
   closeModalById("vaultModal");
 }
 

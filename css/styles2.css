@@ -1,4 +1,9 @@
 /* =============================================================================
+   DEPRECATED (v3.30.09): This prototype stylesheet has been promoted to styles.css.
+   Kept for reference — will be removed in a future release.
+   ============================================================================= */
+
+/* =============================================================================
    CSS CUSTOM PROPERTIES - THEME SYSTEM
    Modern color system with comprehensive dark/light mode support
    ============================================================================= */
@@ -2390,36 +2395,6 @@ input[type="submit"] {
 .settings-placeholder p {
   font-size: 0.9375rem;
   margin: 0;
-}
-
-/* Cloud provider cards */
-.cloud-provider-card {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  padding: 0.75rem 1rem;
-  border: 1px solid var(--border-color, #dee2e6);
-  border-radius: 0.5rem;
-  margin-bottom: 0.75rem;
-}
-.cloud-provider-header {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-.cloud-provider-name {
-  font-weight: 600;
-  flex: 0 0 auto;
-}
-.cloud-status {
-  font-size: 0.8rem;
-  color: var(--text-secondary, #6c757d);
-  margin-left: auto;
-}
-.cloud-provider-actions {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
 }
 
 /* Footer bar */
@@ -8597,7 +8572,6 @@ th {
 }
 
 .bulk-edit-table-wrap {
-  overflow-x: auto;
   overflow-y: auto;
   flex: 1;
   border: 1px solid var(--border);
@@ -8742,48 +8716,6 @@ th {
 .bulk-edit-numista-btn:hover {
   border-color: var(--primary);
   color: var(--primary);
-}
-
-/* Sortable column headers */
-.bulk-edit-table th.bulk-sortable {
-  cursor: pointer;
-  user-select: none;
-}
-.bulk-edit-table th.bulk-sortable:hover {
-  color: var(--text);
-}
-.bulk-edit-table th.bulk-sortable::after {
-  content: ' ⇅';
-  opacity: 0.35;
-  font-size: 0.7em;
-}
-.bulk-edit-table th.sort-asc::after {
-  content: ' ↑';
-  opacity: 1;
-}
-.bulk-edit-table th.sort-desc::after {
-  content: ' ↓';
-  opacity: 1;
-}
-
-/* Image thumbnail column */
-.bulk-img-cell {
-  width: 38px;
-  padding: 0.15rem 0.3rem !important;
-}
-.bulk-img-thumb {
-  width: 32px;
-  height: 32px;
-  object-fit: cover;
-  border-radius: 3px;
-  display: block;
-}
-.bulk-img-placeholder {
-  display: block;
-  width: 32px;
-  height: 32px;
-  background: var(--border);
-  border-radius: 3px;
 }
 
 /* Responsive: stack on small screens */
@@ -9513,69 +9445,4 @@ th {
 }
 [data-theme="dark"] .tag-autocomplete-option:hover {
   background: rgba(129, 140, 248, 0.12);
-}
-
-/* =============================================================================
-   CDN Image Export Progress + Settings Button Row
-   ============================================================================= */
-
-#imageCdnProgress {
-  /* Break out of the flex button row and sit full-width below it */
-  flex: 0 0 100%;
-  width: 100%;
-  max-width: 480px;
-  margin-top: 0.5rem;
-  padding: 0.5rem 0.75rem;
-  background: var(--bg-secondary, #f1f5f9);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  font-size: 0.8rem;
-  color: var(--text-secondary);
-}
-
-#imageCdnProgress progress {
-  display: block;
-  width: 100%;
-  height: 6px;
-  margin-top: 0.25rem;
-  accent-color: var(--primary);
-  /* Reset native appearance so background colour shows in all browsers */
-  -webkit-appearance: none;
-  appearance: none;
-  border: none;
-  border-radius: 3px;
-  background: var(--border);
-  overflow: hidden;
-}
-
-#imageCdnProgress progress::-webkit-progress-bar {
-  background: var(--border);
-  border-radius: 3px;
-}
-
-#imageCdnProgress progress::-webkit-progress-value {
-  background: var(--primary);
-  border-radius: 3px;
-  transition: width 0.15s ease;
-}
-
-#imageCdnProgress progress::-moz-progress-bar {
-  background: var(--primary);
-  border-radius: 3px;
-}
-
-[data-theme="dark"] #imageCdnProgress {
-  background: var(--bg-secondary, #1e1e2e);
-}
-
-[data-theme="sepia"] #imageCdnProgress {
-  background: var(--bg-secondary, #f5f0e8);
-}
-
-.settings-btn-row {
-  display: flex;
-  gap: 0.4rem;
-  flex-wrap: wrap;
-  align-items: center;
-  margin-top: 0.4rem;
 }

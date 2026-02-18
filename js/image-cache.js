@@ -663,6 +663,16 @@ class ImageCache {
   }
 
   /**
+   * Export all coin (CDN) image records for backup.
+   * @returns {Promise<Array>}
+   */
+  async exportAllCoinImages() {
+    if (!(await this._ensureDb())) return [];
+    if (!this._db.objectStoreNames.contains('coinImages')) return [];
+    return this._getAll('coinImages');
+  }
+
+  /**
    * Import a single pattern image record (from ZIP restore).
    * @param {Object} record - Pattern image record with ruleId key
    * @returns {Promise<boolean>}

@@ -282,7 +282,7 @@ const CERT_LOOKUP_URLS = {
  * Updated: 2026-02-12 - STACK-38/STACK-31: Responsive card view + mobile layout
  */
 
-const APP_VERSION = "3.30.06";
+const APP_VERSION = "3.31.0";
 
 /**
  * @constant {string} DEFAULT_CURRENCY - Default currency code for monetary formatting
@@ -505,6 +505,15 @@ const GOLDBACK_DENOMINATIONS = [
   { weight: 100,  label: '100 Goldback', goldOz: 0.1 },
 ];
 
+/** @constant {string} ITEM_TAGS_KEY - LocalStorage key for item tags mapping (STAK-126) */
+const ITEM_TAGS_KEY = "itemTags";
+
+/** @constant {number} MAX_TAGS_PER_ITEM - Maximum number of tags allowed per item (STAK-126) */
+const MAX_TAGS_PER_ITEM = 20;
+
+/** @constant {number} MAX_TAG_LENGTH - Maximum characters per tag name (STAK-126) */
+const MAX_TAG_LENGTH = 50;
+
 /** @constant {string} CATALOG_HISTORY_KEY - LocalStorage key for catalog API call history */
 const CATALOG_HISTORY_KEY = "staktrakr.catalog.history";
 
@@ -567,6 +576,24 @@ const CARD_STYLE_KEY = "cardViewStyle";
 
 /** @constant {string} DESKTOP_CARD_VIEW_KEY - LocalStorage key for desktop card view toggle (STAK-118) */
 const DESKTOP_CARD_VIEW_KEY = "desktopCardView";
+
+/** @constant {string} DEFAULT_SORT_COL_KEY - LocalStorage key for default inventory sort column */
+const DEFAULT_SORT_COL_KEY = "defaultSortColumn";
+
+/** @constant {string} DEFAULT_SORT_DIR_KEY - LocalStorage key for default inventory sort direction */
+const DEFAULT_SORT_DIR_KEY = "defaultSortDir";
+
+/** @constant {string} METAL_ORDER_KEY - LocalStorage key for metal order/visibility config */
+const METAL_ORDER_KEY = "metalOrderConfig";
+
+/** @constant {string} SPOT_TREND_KEY - LocalStorage key for persisted spot trend period */
+const SPOT_TREND_KEY = "spotTrendPeriod";
+
+/** @constant {string} HEADER_TREND_BTN_KEY - LocalStorage key for header trend button visibility */
+const HEADER_TREND_BTN_KEY = "headerTrendBtnVisible";
+
+/** @constant {string} HEADER_SYNC_BTN_KEY - LocalStorage key for header sync button visibility */
+const HEADER_SYNC_BTN_KEY = "headerSyncBtnVisible";
 
 // =============================================================================
 // IMAGE PROCESSOR DEFAULTS (STACK-95)
@@ -635,7 +662,9 @@ const ALLOWED_STORAGE_KEYS = [
   EXCHANGE_RATES_KEY,
   "headerThemeBtnVisible",    // boolean string: "true"/"false" (STACK-54)
   "headerCurrencyBtnVisible", // boolean string: "true"/"false" (STACK-54)
-  "headerCardViewBtnVisible", // boolean string: "true"/"false" (STAK-118)
+  SPOT_TREND_KEY,             // string: trend period ("1"|"7"|"30"|"90"|"365"|"1095")
+  HEADER_TREND_BTN_KEY,       // boolean string: "true"/"false" — header trend button visibility
+  HEADER_SYNC_BTN_KEY,        // boolean string: "true"/"false" — header sync button visibility
   "layoutVisibility",         // JSON object: { spotPrices, totals, search, table } (STACK-54) — legacy, migrated to layoutSectionConfig
   "layoutSectionConfig",      // JSON array: ordered section config [{ id, label, enabled }] (STACK-54)
   LAST_VERSION_CHECK_KEY,     // timestamp: last remote version check (STACK-67)
@@ -652,6 +681,16 @@ const ALLOWED_STORAGE_KEYS = [
   "tableImageSides",                   // string: "both"|"obverse"|"reverse" — which sides to show in table (STAK-118)
   CARD_STYLE_KEY,                        // string: "A"|"B"|"C" — card view style (STAK-118)
   DESKTOP_CARD_VIEW_KEY,                 // boolean string: "true"/"false" — desktop card view (STAK-118)
+  DEFAULT_SORT_COL_KEY,                  // number string: default sort column index
+  DEFAULT_SORT_DIR_KEY,                  // string: "asc"|"desc" — default sort direction
+  METAL_ORDER_KEY,                       // JSON array: metal order/visibility config
+  ITEM_TAGS_KEY,                           // JSON object: per-item tags keyed by UUID (STAK-126)
+  "enabledSeedRules",                        // JSON array: enabled built-in Numista lookup rule IDs
+  "seedImagesVer",                             // string: current seed images version for cache invalidation
+  "cloud_token_dropbox",                       // JSON: Dropbox OAuth token data
+  "cloud_token_pcloud",                        // JSON: pCloud OAuth token data
+  "cloud_token_box",                           // JSON: Box OAuth token data
+  "cloud_last_backup",                         // JSON: { provider, timestamp } last cloud backup info
 ];
 
 // =============================================================================
@@ -671,6 +710,7 @@ const INLINE_CHIP_DEFAULTS = [
   { id: 'storage', label: 'Storage Location', enabled: false },
   { id: 'notes',   label: 'Notes Indicator',  enabled: false },
   { id: 'purity',  label: 'Purity',           enabled: false },
+  { id: 'tags',    label: 'Tags',             enabled: false },
 ];
 
 /**
@@ -733,6 +773,7 @@ const FILTER_CHIP_CATEGORY_DEFAULTS = [
   { id: 'grade',            label: 'Grades',            enabled: true, group: null },
   { id: 'numistaId',        label: 'Numista IDs',       enabled: true, group: null },
   { id: 'purity',           label: 'Purity',            enabled: true, group: null },
+  { id: 'tags',             label: 'Tags',              enabled: true, group: null },
 ];
 
 /**
@@ -876,6 +917,7 @@ const VIEW_MODAL_SECTION_DEFAULTS = [
   { id: 'grading',      label: 'Grading',            enabled: true },
   { id: 'numista',      label: 'Numista data',       enabled: true },
   { id: 'notes',        label: 'Notes',              enabled: true },
+  { id: 'tags',         label: 'Tags',               enabled: true },
 ];
 
 /** Loads the view modal section config from localStorage, merged with defaults. */
@@ -1011,7 +1053,7 @@ const FEATURE_FLAGS = {
     phase: "beta"
   },
   DYNAMIC_NAME_CHIPS: {
-    enabled: true,
+    enabled: false,
     urlOverride: true,
     userToggle: true,
     description: "Auto-extract text from parentheses and quotes in item names as additional filter chips",
@@ -1454,6 +1496,10 @@ if (typeof window !== "undefined") {
   window.NUMISTA_VIEW_FIELD_DEFAULTS = NUMISTA_VIEW_FIELD_DEFAULTS;
   window.getNumistaViewFieldConfig = getNumistaViewFieldConfig;
   window.saveNumistaViewFieldConfig = saveNumistaViewFieldConfig;
+  // Item tags (STAK-126)
+  window.ITEM_TAGS_KEY = ITEM_TAGS_KEY;
+  window.MAX_TAGS_PER_ITEM = MAX_TAGS_PER_ITEM;
+  window.MAX_TAG_LENGTH = MAX_TAG_LENGTH;
   // Multi-currency support (STACK-50)
   window.SUPPORTED_CURRENCIES = SUPPORTED_CURRENCIES;
   window.DISPLAY_CURRENCY_KEY = DISPLAY_CURRENCY_KEY;

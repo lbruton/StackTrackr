@@ -458,850 +458,9 @@ const wireChipSortToggle = (elementId, syncId) => {
 };
 window.wireChipSortToggle = wireChipSortToggle;
 
-/**
- * Wires up all Settings modal event listeners.
- * Called once during initialization.
- */
-const setupSettingsEventListeners = () => {
-  // Sidebar navigation
-  document.querySelectorAll('.settings-nav-item').forEach(item => {
-    item.addEventListener('click', () => {
-      switchSettingsSection(item.dataset.section);
-    });
-  });
-
-  // Provider tabs
-  document.querySelectorAll('.settings-provider-tab').forEach(tab => {
-    tab.addEventListener('click', () => {
-      switchProviderTab(tab.dataset.provider);
-    });
-  });
-
-  // Log sub-tabs
-  document.querySelectorAll('[data-log-tab]').forEach(tab => {
-    tab.addEventListener('click', () => {
-      switchLogTab(tab.dataset.logTab);
-    });
-  });
-
-  // Theme picker buttons
-  document.querySelectorAll('.theme-option').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const theme = btn.dataset.theme;
-      if (typeof setTheme === 'function') {
-        setTheme(theme);
-      }
-      if (typeof updateThemeButton === 'function') {
-        updateThemeButton();
-      }
-      // Update active state
-      document.querySelectorAll('.theme-option').forEach(b => {
-        b.classList.toggle('active', b.dataset.theme === theme);
-      });
-    });
-  });
-
-  // Display currency (STACK-50)
-  const currencySelect = document.getElementById('settingsDisplayCurrency');
-  if (currencySelect) {
-    currencySelect.addEventListener('change', () => {
-      saveDisplayCurrency(currencySelect.value);
-      // Re-render all display with new currency conversion (STACK-50)
-      if (typeof renderTable === 'function') renderTable();
-      if (typeof updateSummary === 'function') updateSummary();
-      if (typeof updateAllSparklines === 'function') updateAllSparklines();
-      // Update Goldback denomination symbols (STACK-50)
-      if (typeof syncGoldbackSettingsUI === 'function') syncGoldbackSettingsUI();
-    });
-  }
-
-  // Display timezone (STACK-63)
-  const tzSelect = document.getElementById('settingsTimezone');
-  if (tzSelect) {
-    tzSelect.addEventListener('change', () => {
-      localStorage.setItem(TIMEZONE_KEY, tzSelect.value);
-      // Timestamps appear across many sections (spot cards, change log, API status, etc.)
-      // A full reload ensures all timestamp-driven UI picks up the new timezone
-      window.location.reload();
-    });
-  }
-
-  // Header shortcuts (STACK-54) — chip-sort-toggle wiring
-  wireStorageToggle('settingsHeaderThemeBtn', 'headerThemeBtnVisible', {
-    defaultVal: true,
-    onApply: () => applyHeaderToggleVisibility(),
-  });
-
-  wireStorageToggle('settingsHeaderCurrencyBtn', 'headerCurrencyBtnVisible', {
-    defaultVal: true,
-    onApply: () => applyHeaderToggleVisibility(),
-  });
-
-  wireStorageToggle('settingsHeaderCardViewBtn', 'headerCardViewBtnVisible', {
-    defaultVal: false,
-    onApply: () => applyHeaderToggleVisibility(),
-  });
-
-  // Apply view-appropriate items-per-page default when switching views.
-  // Card view always uses "all" (Infinity). Table view restores the user's
-  // previous preference (saved before switching to card) or falls back to 12.
-  let _savedTableIpp = null;
-  const applyViewIpp = () => {
-    const enteringCard = localStorage.getItem(DESKTOP_CARD_VIEW_KEY) === 'true';
-    let ippStr;
-    if (enteringCard) {
-      // Save current table IPP before overwriting
-      if (_savedTableIpp === null && itemsPerPage !== Infinity) {
-        _savedTableIpp = itemsPerPage === Infinity ? 'all' : String(itemsPerPage);
-      }
-      itemsPerPage = Infinity;
-      ippStr = 'all';
-    } else {
-      // Restore table IPP
-      const restored = _savedTableIpp || '12';
-      _savedTableIpp = null;
-      itemsPerPage = restored === 'all' ? Infinity : Number(restored);
-      ippStr = restored;
-    }
-    try { localStorage.setItem(ITEMS_PER_PAGE_KEY, ippStr); } catch (e) { /* ignore */ }
-    if (elements.itemsPerPage) elements.itemsPerPage.value = ippStr;
-    const settingsIpp = safeGetElement('settingsItemsPerPage');
-    if (settingsIpp) settingsIpp.value = ippStr;
-  };
-
-  // Card view header button (STAK-131) — simple toggle between table and card view
-  const headerCardViewBtn = document.getElementById('headerCardViewBtn');
-  if (headerCardViewBtn) {
-    headerCardViewBtn.addEventListener('click', () => {
-      const isCard = localStorage.getItem(DESKTOP_CARD_VIEW_KEY) === 'true';
-      const newVal = !isCard;
-      localStorage.setItem(DESKTOP_CARD_VIEW_KEY, String(newVal));
-      document.body.classList.toggle('force-card-view', newVal);
-      applyViewIpp();
-      syncChipToggle('settingsDesktopCardView', newVal ? 'yes' : 'no');
-      if (typeof renderTable === 'function') renderTable();
-    });
-  }
-
-  // Theme cycle header button (STACK-54)
-  if (elements.headerThemeBtn) {
-    elements.headerThemeBtn.addEventListener('click', () => {
-      if (typeof toggleTheme === 'function') toggleTheme();
-      if (typeof updateThemeButton === 'function') updateThemeButton();
-      // Sync settings picker if open
-      const currentTheme = localStorage.getItem(THEME_KEY) || 'light';
-      document.querySelectorAll('.theme-option').forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.theme === currentTheme);
-      });
-    });
-  }
-
-  // Currency picker header button (STACK-54)
-  // Opens a floating dropdown to switch display currency directly from the header.
-  if (elements.headerCurrencyBtn) {
-    elements.headerCurrencyBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      toggleCurrencyDropdown();
-    });
-  }
-
-  // Items per page
-  const ippSelect = document.getElementById('settingsItemsPerPage');
-  if (ippSelect) {
-    ippSelect.addEventListener('change', () => {
-      const ippVal = ippSelect.value;
-      itemsPerPage = ippVal === 'all' ? Infinity : parseInt(ippVal, 10);
-      // Persist
-      try { localStorage.setItem(ITEMS_PER_PAGE_KEY, ippVal); } catch (e) { /* ignore */ }
-      // Sync footer select
-      if (elements.itemsPerPage) elements.itemsPerPage.value = ippVal;
-      renderTable();
-    });
-  }
-
-  // Spot compare mode (STACK-92)
-  const spotCompareSetting = document.getElementById('settingsSpotCompareMode');
-  if (spotCompareSetting) {
-    spotCompareSetting.addEventListener('change', () => {
-      try { localStorage.setItem(SPOT_COMPARE_MODE_KEY, spotCompareSetting.value); } catch (e) { /* ignore */ }
-      if (typeof updateAllSparklines === 'function') updateAllSparklines();
-    });
-  }
-
-  // Chip min count in settings
-  const chipMinSetting = document.getElementById('settingsChipMinCount');
-  if (chipMinSetting) {
-    chipMinSetting.addEventListener('change', () => {
-      const val = chipMinSetting.value;
-      localStorage.setItem('chipMinCount', val);
-      // Sync inline control
-      const chipMinInline = document.getElementById('chipMinCount');
-      if (chipMinInline) chipMinInline.value = val;
-      if (typeof renderActiveFilters === 'function') renderActiveFilters();
-    });
-  }
-
-  // Smart name grouping toggle in settings
-  wireFeatureFlagToggle('settingsGroupNameChips', 'GROUPED_NAME_CHIPS', {
-    syncId: 'groupNameChips', onApply: () => { if (typeof renderActiveFilters === 'function') renderActiveFilters(); },
-  });
-
-  // Dynamic name chips toggle
-  wireFeatureFlagToggle('settingsDynamicChips', 'DYNAMIC_NAME_CHIPS', {
-    onApply: () => { if (typeof renderActiveFilters === 'function') renderActiveFilters(); },
-  });
-
-  // Chip quantity badge toggle
-  wireFeatureFlagToggle('settingsChipQtyBadge', 'CHIP_QTY_BADGE', {
-    onApply: () => { if (typeof renderActiveFilters === 'function') renderActiveFilters(); },
-  });
-
-  // Fuzzy autocomplete toggle
-  wireFeatureFlagToggle('settingsFuzzyAutocomplete', 'FUZZY_AUTOCOMPLETE', {
-    onApply: (isEnabled) => {
-      if (isEnabled && typeof initializeAutocomplete === 'function') initializeAutocomplete(inventory);
-    },
-  });
-
-  // Numista name matching toggle
-  wireFeatureFlagToggle('settingsNumistaLookup', 'NUMISTA_SEARCH_LOOKUP');
-
-  // Numista view modal field toggles
-  const numistaViewContainer = document.getElementById('numistaViewFieldToggles');
-  if (numistaViewContainer) {
-    // Load saved state and apply to checkboxes
-    const nfConfig = typeof getNumistaViewFieldConfig === 'function' ? getNumistaViewFieldConfig() : {};
-    numistaViewContainer.querySelectorAll('input[data-nf]').forEach(cb => {
-      const field = cb.dataset.nf;
-      if (nfConfig[field] !== undefined) cb.checked = nfConfig[field];
-    });
-    // Save on change
-    numistaViewContainer.addEventListener('change', () => {
-      const config = {};
-      numistaViewContainer.querySelectorAll('input[data-nf]').forEach(cb => {
-        config[cb.dataset.nf] = cb.checked;
-      });
-      if (typeof saveNumistaViewFieldConfig === 'function') saveNumistaViewFieldConfig(config);
-    });
-  }
-
-  // Add Numista lookup rule button
-  const addNumistaRuleBtn = document.getElementById('addNumistaRuleBtn');
-  if (addNumistaRuleBtn) {
-    addNumistaRuleBtn.addEventListener('click', () => {
-      const patternInput = document.getElementById('numistaRulePatternInput');
-      const replacementInput = document.getElementById('numistaRuleReplacementInput');
-      const idInput = document.getElementById('numistaRuleIdInput');
-      if (!patternInput || !replacementInput) return;
-
-      const pattern = patternInput.value.trim();
-      const replacement = replacementInput.value.trim();
-      const numistaId = idInput ? idInput.value.trim() : '';
-
-      if (!pattern || !replacement) {
-        alert('Pattern and Numista query are required.');
-        return;
-      }
-
-      if (!window.NumistaLookup) return;
-      const result = NumistaLookup.addRule(pattern, replacement, numistaId || null);
-      if (!result.success) {
-        alert(result.error);
-        return;
-      }
-
-      patternInput.value = '';
-      replacementInput.value = '';
-      if (idInput) idInput.value = '';
-      renderCustomRuleTable();
-    });
-  }
-
-  // Chip sort order toggle in settings
-  wireChipSortToggle('settingsChipSortOrder', 'chipSortOrder');
-
-  // Chip grouping events (blacklist + custom rules)
-  if (typeof window.setupChipGroupingEvents === 'function') {
-    window.setupChipGroupingEvents();
-  }
-
-  // Numista Bulk Sync inline controls (STACK-87/88)
-  const nsStartBtn = document.getElementById('numistaSyncStartBtn');
-  if (nsStartBtn) {
-    nsStartBtn.addEventListener('click', () => {
-      if (typeof startBulkSync === 'function') startBulkSync();
-    });
-  }
-  const nsCancelBtn = document.getElementById('numistaSyncCancelBtn');
-  if (nsCancelBtn) {
-    nsCancelBtn.addEventListener('click', () => {
-      if (window.BulkImageCache) BulkImageCache.abort();
-      nsCancelBtn.style.display = 'none';
-    });
-  }
-  const nsClearBtn = document.getElementById('numistaSyncClearBtn');
-  if (nsClearBtn) {
-    nsClearBtn.addEventListener('click', () => {
-      if (typeof clearAllCachedData === 'function') clearAllCachedData();
-    });
-  }
-
-  // Settings modal close button
-  const closeBtn = document.getElementById('settingsCloseBtn');
-  if (closeBtn) {
-    closeBtn.addEventListener('click', hideSettingsModal);
-  }
-
-  // Goldback pricing toggle (STACK-45)
-  const gbToggle = document.getElementById('settingsGoldbackEnabled');
-  if (gbToggle) {
-    gbToggle.addEventListener('click', (e) => {
-      const btn = e.target.closest('.chip-sort-btn');
-      if (!btn) return;
-      const isEnabled = btn.dataset.val === 'on';
-      if (typeof saveGoldbackEnabled === 'function') saveGoldbackEnabled(isEnabled);
-      gbToggle.querySelectorAll('.chip-sort-btn').forEach(b => b.classList.toggle('active', b === btn));
-      if (typeof renderTable === 'function') renderTable();
-    });
-  }
-
-  // Goldback estimation toggle (STACK-52)
-  const gbEstToggle = document.getElementById('settingsGoldbackEstimateEnabled');
-  if (gbEstToggle) {
-    gbEstToggle.addEventListener('click', (e) => {
-      const btn = e.target.closest('.chip-sort-btn');
-      if (!btn) return;
-      const isEnabled = btn.dataset.val === 'on';
-      if (typeof saveGoldbackEstimateEnabled === 'function') saveGoldbackEstimateEnabled(isEnabled);
-      gbEstToggle.querySelectorAll('.chip-sort-btn').forEach(b => b.classList.toggle('active', b === btn));
-      // If turning ON, immediately populate prices from current gold spot
-      if (isEnabled && typeof onGoldSpotPriceChanged === 'function') onGoldSpotPriceChanged();
-      if (typeof syncGoldbackSettingsUI === 'function') syncGoldbackSettingsUI();
-      if (typeof renderTable === 'function') renderTable();
-    });
-  }
-
-  // Goldback estimation refresh button (STACK-52)
-  const gbEstRefreshBtn = document.getElementById('goldbackEstimateRefreshBtn');
-  if (gbEstRefreshBtn) {
-    gbEstRefreshBtn.addEventListener('click', async () => {
-      if (typeof syncProviderChain !== 'function') return;
-      const origText = gbEstRefreshBtn.textContent;
-      gbEstRefreshBtn.textContent = 'Refreshing...';
-      gbEstRefreshBtn.disabled = true;
-      try {
-        await syncProviderChain({ showProgress: false, forceSync: true });
-        // onGoldSpotPriceChanged() is called by the hooks in api.js after sync
-      } catch (err) {
-        console.warn('Goldback estimate refresh failed:', err);
-      } finally {
-        gbEstRefreshBtn.textContent = origText;
-        gbEstRefreshBtn.disabled = false;
-      }
-    });
-  }
-
-  // Goldback estimation modifier input (STACK-52)
-  const gbModifierInput = document.getElementById('goldbackEstimateModifierInput');
-  if (gbModifierInput) {
-    gbModifierInput.addEventListener('change', () => {
-      const val = parseFloat(gbModifierInput.value);
-      if (isNaN(val) || val <= 0) {
-        gbModifierInput.value = goldbackEstimateModifier.toFixed(2);
-        return;
-      }
-      if (typeof saveGoldbackEstimateModifier === 'function') saveGoldbackEstimateModifier(val);
-      if (goldbackEstimateEnabled && typeof onGoldSpotPriceChanged === 'function') onGoldSpotPriceChanged();
-      // Snapshot item prices after modifier changes denomination prices (STAK-108)
-      if (typeof recordAllItemPriceSnapshots === 'function') recordAllItemPriceSnapshots();
-      if (typeof syncGoldbackSettingsUI === 'function') syncGoldbackSettingsUI();
-      if (typeof renderTable === 'function') renderTable();
-    });
-  }
-
-  // Goldback save prices button (STACK-45)
-  const gbSaveBtn = document.getElementById('goldbackSavePricesBtn');
-  if (gbSaveBtn) {
-    gbSaveBtn.addEventListener('click', () => {
-      const tbody = document.getElementById('goldbackPriceTableBody');
-      if (!tbody) return;
-      const now = Date.now();
-      // Convert entered display-currency values back to USD for storage (STACK-50)
-      const fxRate = (typeof getExchangeRate === 'function') ? getExchangeRate() : 1;
-      tbody.querySelectorAll('tr[data-denom]').forEach(row => {
-        const denom = row.dataset.denom;
-        const input = row.querySelector('input[type="number"]');
-        if (!input) return;
-        const displayVal = parseFloat(input.value);
-        if (!isNaN(displayVal) && displayVal > 0) {
-          const usdVal = fxRate !== 1 ? displayVal / fxRate : displayVal;
-          goldbackPrices[denom] = { price: usdVal, updatedAt: now };
-        }
-      });
-      if (typeof saveGoldbackPrices === 'function') saveGoldbackPrices();
-      if (typeof recordGoldbackPrices === 'function') recordGoldbackPrices();
-      // Snapshot item prices so Goldback retail changes appear in price history (STAK-108)
-      if (typeof recordAllItemPriceSnapshots === 'function') recordAllItemPriceSnapshots();
-      if (typeof syncGoldbackSettingsUI === 'function') syncGoldbackSettingsUI();
-      if (typeof renderTable === 'function') renderTable();
-    });
-  }
-
-  // Goldback quick-fill button (STACK-45)
-  const gbQuickFillBtn = document.getElementById('goldbackQuickFillBtn');
-  if (gbQuickFillBtn) {
-    gbQuickFillBtn.addEventListener('click', () => {
-      const input = document.getElementById('goldbackQuickFillInput');
-      if (!input) return;
-      const rate = parseFloat(input.value);
-      if (isNaN(rate) || rate <= 0) {
-        alert('Enter a valid 1 Goldback rate.');
-        return;
-      }
-      // Fill all denomination inputs proportionally (round to nearest cent)
-      const tbody = document.getElementById('goldbackPriceTableBody');
-      if (!tbody || typeof GOLDBACK_DENOMINATIONS === 'undefined') return;
-      tbody.querySelectorAll('tr[data-denom]').forEach(row => {
-        const denom = parseFloat(row.dataset.denom);
-        const priceInput = row.querySelector('input[type="number"]');
-        if (priceInput) {
-          priceInput.value = (Math.round(rate * denom * 100) / 100).toFixed(2);
-        }
-      });
-    });
-  }
-
-  // Goldback history button (STACK-45)
-  const gbHistoryBtn = document.getElementById('goldbackHistoryBtn');
-  if (gbHistoryBtn) {
-    gbHistoryBtn.addEventListener('click', () => {
-      if (typeof showGoldbackHistoryModal === 'function') showGoldbackHistoryModal();
-    });
-  }
-
-  // Goldback history modal close
-  const gbHistoryCloseBtn = document.getElementById('goldbackHistoryCloseBtn');
-  if (gbHistoryCloseBtn) {
-    gbHistoryCloseBtn.addEventListener('click', () => {
-      if (typeof hideGoldbackHistoryModal === 'function') hideGoldbackHistoryModal();
-    });
-  }
-
-  // Goldback history modal backdrop click
-  const gbHistoryModal = document.getElementById('goldbackHistoryModal');
-  if (gbHistoryModal) {
-    gbHistoryModal.addEventListener('click', (e) => {
-      if (e.target === gbHistoryModal) {
-        if (typeof hideGoldbackHistoryModal === 'function') hideGoldbackHistoryModal();
-      }
-    });
-  }
-
-  // Goldback history export button
-  const gbExportBtn = document.getElementById('exportGoldbackHistoryBtn');
-  if (gbExportBtn) {
-    gbExportBtn.addEventListener('click', () => {
-      if (typeof exportGoldbackHistory === 'function') exportGoldbackHistory();
-    });
-  }
-
-
-  // Settings modal backdrop click
-  const modal = document.getElementById('settingsModal');
-  if (modal) {
-    modal.addEventListener('click', (e) => {
-      if (e.target === modal) hideSettingsModal();
-    });
-  }
-
-  // Provider priority dropdowns (STACK-90)
-  setupProviderPriority();
-
-  // Image settings action buttons
-  const clearImagesBtn = document.getElementById('clearAllImagesBtn');
-  if (clearImagesBtn) {
-    clearImagesBtn.addEventListener('click', async () => {
-      if (!confirm('Clear all cached images, pattern rules, user uploads, AND image URLs from inventory items?')) return;
-      // Clear IDB blobs (Numista cache, patterns, user uploads)
-      if (window.imageCache?.isAvailable()) await imageCache.clearAll();
-      // Clear image URLs from all inventory items
-      let cleared = 0;
-      for (const item of inventory) {
-        if (item.obverseImageUrl || item.reverseImageUrl) {
-          item.obverseImageUrl = '';
-          item.reverseImageUrl = '';
-          cleared++;
-        }
-      }
-      if (cleared > 0 && typeof saveInventory === 'function') saveInventory();
-      populateImagesSection();
-      if (typeof renderTable === 'function') renderTable();
-      alert(`Cleared all image data. ${cleared} item URL(s) reset.`);
-    });
-  }
-
-  // Sync Image URLs from Numista — bypasses SW cache
-  const syncImageUrlsBtn = document.getElementById('syncImageUrlsBtn');
-  if (syncImageUrlsBtn) {
-    syncImageUrlsBtn.addEventListener('click', async () => {
-      const config = typeof catalogConfig !== 'undefined' ? catalogConfig.getNumistaConfig() : null;
-      if (!config?.apiKey) {
-        alert('Numista API key not configured.');
-        return;
-      }
-      const eligible = inventory.filter(i => i.numistaId);
-      if (!eligible.length) {
-        alert('No items with Numista IDs found.');
-        return;
-      }
-      if (!confirm(`Sync image URLs for ${eligible.length} items from Numista API?\nThis bypasses cache and uses your API quota.`)) return;
-
-      syncImageUrlsBtn.disabled = true;
-      syncImageUrlsBtn.textContent = 'Syncing…';
-      let synced = 0, failed = 0, skipped = 0;
-      const seen = new Set(); // dedupe by catalogId
-      const urlByCatId = new Map(); // O(1) lookup for synced URLs
-      try {
-        for (const item of eligible) {
-          const catId = item.numistaId;
-          if (seen.has(catId)) {
-            // Reuse URL from a previously synced item with same catalogId
-            const donor = urlByCatId.get(catId);
-            if (donor) {
-              item.obverseImageUrl = donor.obverseImageUrl;
-              item.reverseImageUrl = donor.reverseImageUrl;
-              synced++;
-            } else {
-              skipped++;
-            }
-            continue;
-          }
-          seen.add(catId);
-          try {
-            const url = `https://api.numista.com/v3/types/${catId}?lang=en`;
-            const resp = await fetch(url, {
-              headers: { 'Numista-API-Key': config.apiKey, 'Content-Type': 'application/json' },
-              cache: 'no-cache',
-            });
-            if (!resp.ok) { failed++; continue; }
-            const data = await resp.json();
-            const obv = data.obverse_thumbnail || data.obverse?.thumbnail || '';
-            const rev = data.reverse_thumbnail || data.reverse?.thumbnail || '';
-            urlByCatId.set(catId, { obverseImageUrl: obv, reverseImageUrl: rev });
-            // Apply to ALL items sharing this catalogId
-            for (const inv of eligible) {
-              if (inv.numistaId === catId) {
-                inv.obverseImageUrl = obv;
-                inv.reverseImageUrl = rev;
-              }
-            }
-            synced++;
-            // Throttle to avoid Numista API rate limits
-            await new Promise(r => setTimeout(r, 200));
-          } catch {
-            failed++;
-          }
-        }
-        if (typeof saveInventory === 'function') saveInventory();
-        populateImagesSection();
-        alert(`Image URL sync complete.\n${synced} synced, ${failed} failed, ${skipped} skipped (dupes).`);
-      } finally {
-        syncImageUrlsBtn.disabled = false;
-        syncImageUrlsBtn.textContent = 'Sync Image URLs from Numista';
-      }
-    });
-  }
-
-  // Pattern mode toggle (Keywords ↔ Regex)
-  let _patternMode = 'keywords'; // default to keywords (user-friendly)
-  const patternModeKeywords = document.getElementById('patternModeKeywords');
-  const patternModeRegex = document.getElementById('patternModeRegex');
-  const patternInput = document.getElementById('patternRulePattern');
-  const patternTip = document.getElementById('patternRuleTip');
-
-  if (patternModeKeywords && patternModeRegex) {
-    patternModeKeywords.addEventListener('click', () => {
-      _patternMode = 'keywords';
-      patternModeKeywords.classList.add('active');
-      patternModeRegex.classList.remove('active');
-      if (patternInput) patternInput.placeholder = 'e.g. morgan, peace, walking liberty';
-      if (patternTip) patternTip.textContent = 'Separate keywords with commas or semicolons. Matches item names containing any keyword.';
-    });
-    patternModeRegex.addEventListener('click', () => {
-      _patternMode = 'regex';
-      patternModeRegex.classList.add('active');
-      patternModeKeywords.classList.remove('active');
-      if (patternInput) patternInput.placeholder = 'e.g. \\bmorgan\\b|\\bpeace\\b';
-      if (patternTip) patternTip.textContent = 'Case-insensitive regex. Use \\b for word boundaries, | for OR, .* for wildcards.';
-    });
-  }
-
-  // Attach autocomplete to pattern input (reuses item name lookup table)
-  if (patternInput && typeof attachAutocomplete === 'function') {
-    attachAutocomplete(patternInput, 'names');
-  }
-
-  // Add Pattern Rule handler
-  const addPatternRuleBtn = document.getElementById('addPatternRuleBtn');
-  if (addPatternRuleBtn) {
-    addPatternRuleBtn.addEventListener('click', async () => {
-      const obverseInput = document.getElementById('patternRuleObverse');
-      const reverseInput = document.getElementById('patternRuleReverse');
-
-      const rawPattern = patternInput?.value?.trim();
-      const replacement = rawPattern || '';
-
-      if (!rawPattern) {
-        alert('Pattern is required.');
-        return;
-      }
-
-      // Convert keywords mode to regex: "morgan, peace" → "morgan|peace"
-      let pattern = rawPattern;
-      if (_patternMode === 'keywords') {
-        const terms = rawPattern.split(/[,;]/).map(t => t.trim()).filter(t => t.length > 0);
-        if (terms.length === 0) { alert('Enter at least one keyword.'); return; }
-        // Escape regex special chars in each term, join with |
-        pattern = terms.map(t => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|');
-      }
-
-      // Validate regex
-      try { new RegExp(pattern, 'i'); }
-      catch (e) { alert('Invalid pattern: ' + e.message); return; }
-
-      // Require at least one image
-      if (!obverseInput?.files?.[0] && !reverseInput?.files?.[0]) {
-        alert('Please select at least one image (obverse or reverse).');
-        return;
-      }
-
-      // Process images
-      let obverseBlob = null;
-      let reverseBlob = null;
-      const processor = typeof imageProcessor !== 'undefined' ? imageProcessor : null;
-
-      try {
-        if (obverseInput?.files?.[0]) {
-          if (processor) {
-            const result = await processor.processFile(obverseInput.files[0]);
-            obverseBlob = result?.blob || null;
-          } else {
-            obverseBlob = obverseInput.files[0];
-          }
-        }
-        if (reverseInput?.files?.[0]) {
-          if (processor) {
-            const result = await processor.processFile(reverseInput.files[0]);
-            reverseBlob = result?.blob || null;
-          } else {
-            reverseBlob = reverseInput.files[0];
-          }
-        }
-      } catch (err) {
-        console.error('Image processing failed:', err);
-        alert('Failed to process image: ' + err.message);
-        return;
-      }
-
-      // Generate rule ID and create the rule
-      const ruleId = 'custom-img-' + Date.now();
-      const addResult = NumistaLookup.addRule(pattern, replacement, null, ruleId);
-      if (!addResult.success) {
-        alert(addResult.error || 'Failed to add rule.');
-        return;
-      }
-
-      // Store images in patternImages store
-      if ((obverseBlob || reverseBlob) && window.imageCache?.isAvailable()) {
-        await imageCache.cachePatternImage(ruleId, obverseBlob, reverseBlob);
-      }
-
-      // Clear form
-      if (patternInput) patternInput.value = '';
-      if (obverseInput) obverseInput.value = '';
-      if (reverseInput) reverseInput.value = '';
-
-      renderCustomPatternRules();
-      renderImageStorageStats();
-    });
-  }
-
-  // Card style select (STAK-118)
-  const cardStyleEl = document.getElementById('settingsCardStyle');
-  if (cardStyleEl) {
-    cardStyleEl.addEventListener('change', () => {
-      localStorage.setItem(CARD_STYLE_KEY, cardStyleEl.value);
-      if (typeof renderTable === 'function') renderTable();
-    });
-  }
-
-  // Desktop card view toggle (STAK-118)
-  wireStorageToggle('settingsDesktopCardView', DESKTOP_CARD_VIEW_KEY, {
-    defaultVal: false,
-    onApply: (isEnabled) => {
-      document.body.classList.toggle('force-card-view', isEnabled);
-      applyViewIpp();
-      if (typeof renderTable === 'function') renderTable();
-    },
-  });
-
-  // Table images toggle (chip-sort-toggle)
-  wireStorageToggle('tableImagesToggle', 'tableImagesEnabled', {
-    defaultVal: true,
-    onApply: () => { if (typeof renderTable === 'function') renderTable(); },
-  });
-
-  // Table image sides toggle (3-value: both/obverse/reverse)
-  const sidesEl = document.getElementById('tableImageSidesToggle');
-  if (sidesEl) {
-    const curSides = localStorage.getItem('tableImageSides') || 'both';
-    sidesEl.querySelectorAll('.chip-sort-btn').forEach(btn => {
-      btn.classList.toggle('active', btn.dataset.val === curSides);
-    });
-    sidesEl.addEventListener('click', (e) => {
-      const btn = e.target.closest('.chip-sort-btn');
-      if (!btn) return;
-      localStorage.setItem('tableImageSides', btn.dataset.val);
-      sidesEl.querySelectorAll('.chip-sort-btn').forEach(b => b.classList.toggle('active', b === btn));
-      if (typeof renderTable === 'function') renderTable();
-    });
-  }
-
-  // Numista override toggle (chip-sort-toggle)
-  wireStorageToggle('numistaOverrideToggle', 'numistaOverridePersonal', {
-    defaultVal: false,
-  });
-
-  // Export all images
-  const exportBtn = document.getElementById('exportAllImagesBtn');
-  if (exportBtn) {
-    exportBtn.addEventListener('click', async () => {
-      if (!window.imageCache?.isAvailable()) { alert('IndexedDB unavailable.'); return; }
-      if (typeof JSZip === 'undefined') { alert('JSZip not loaded.'); return; }
-
-      exportBtn.textContent = 'Exporting...';
-      exportBtn.disabled = true;
-
-      try {
-        const zip = new JSZip();
-
-        // User images
-        const userImages = await imageCache.exportAllUserImages();
-        for (const rec of userImages) {
-          if (rec.obverse) zip.file(`user/${rec.uuid}_obverse.webp`, rec.obverse);
-          if (rec.reverse) zip.file(`user/${rec.uuid}_reverse.webp`, rec.reverse);
-        }
-
-        // Pattern images
-        const patternImages = await imageCache.exportAllPatternImages();
-        for (const rec of patternImages) {
-          if (rec.obverse) zip.file(`pattern/${rec.ruleId}_obverse.webp`, rec.obverse);
-          if (rec.reverse) zip.file(`pattern/${rec.ruleId}_reverse.webp`, rec.reverse);
-        }
-
-        // Pattern rules JSON
-        const customRules = NumistaLookup.listCustomRules();
-        zip.file('pattern_rules.json', JSON.stringify(customRules, null, 2));
-
-        const blob = await zip.generateAsync({ type: 'blob' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'staktrakr-images.zip';
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        URL.revokeObjectURL(url);
-      } catch (err) {
-        console.error('Image export failed:', err);
-        alert('Export failed: ' + err.message);
-      } finally {
-        exportBtn.textContent = 'Export All Images';
-        exportBtn.disabled = false;
-      }
-    });
-  }
-
-  // Import images
-  const importBtn = document.getElementById('importImagesBtn');
-  const importFile = document.getElementById('importImagesFile');
-  if (importBtn && importFile) {
-    importBtn.addEventListener('click', () => importFile.click());
-    importFile.addEventListener('change', async (e) => {
-      const file = e.target.files?.[0];
-      if (!file) return;
-      if (typeof JSZip === 'undefined') { alert('JSZip not loaded.'); return; }
-      if (!window.imageCache?.isAvailable()) { alert('IndexedDB unavailable.'); return; }
-
-      importBtn.textContent = 'Importing...';
-      importBtn.disabled = true;
-
-      try {
-        const zip = await JSZip.loadAsync(file);
-
-        // Import pattern rules (skip duplicates by pattern string)
-        const rulesFile = zip.file('pattern_rules.json');
-        if (rulesFile) {
-          const rulesJson = await rulesFile.async('string');
-          const rules = JSON.parse(rulesJson);
-          const existingPatterns = new Set(NumistaLookup.listCustomRules().map(r => r.pattern));
-          for (const rule of rules) {
-            if (!rule.pattern || existingPatterns.has(rule.pattern)) continue;
-            NumistaLookup.addRule(rule.pattern, rule.replacement || '', rule.numistaId || null, rule.seedImageId || null);
-            existingPatterns.add(rule.pattern);
-          }
-        }
-
-        // Import pattern images
-        const patternFiles = zip.folder('pattern');
-        if (patternFiles) {
-          const patternMap = new Map();
-          patternFiles.forEach((relativePath, zipEntry) => {
-            const match = relativePath.match(/^(.+)_(obverse|reverse)\.webp$/);
-            if (match) {
-              const [, ruleId, side] = match;
-              if (!patternMap.has(ruleId)) patternMap.set(ruleId, {});
-              patternMap.get(ruleId)[side] = zipEntry;
-            }
-          });
-          for (const [ruleId, sides] of patternMap) {
-            const obverse = sides.obverse ? await sides.obverse.async('blob') : null;
-            const reverse = sides.reverse ? await sides.reverse.async('blob') : null;
-            await imageCache.cachePatternImage(ruleId, obverse, reverse);
-          }
-        }
-
-        // Import user images
-        const userFolder = zip.folder('user');
-        if (userFolder) {
-          const userMap = new Map();
-          userFolder.forEach((relativePath, zipEntry) => {
-            const match = relativePath.match(/^(.+)_(obverse|reverse)\.webp$/);
-            if (match) {
-              const [, uuid, side] = match;
-              if (!userMap.has(uuid)) userMap.set(uuid, {});
-              userMap.get(uuid)[side] = zipEntry;
-            }
-          });
-          for (const [uuid, sides] of userMap) {
-            const obverse = sides.obverse ? await sides.obverse.async('blob') : null;
-            const reverse = sides.reverse ? await sides.reverse.async('blob') : null;
-            if (obverse) await imageCache.cacheUserImage(uuid, obverse, reverse);
-          }
-        }
-
-        populateImagesSection();
-      } catch (err) {
-        console.error('Image import failed:', err);
-        alert('Import failed: ' + err.message);
-      } finally {
-        importBtn.textContent = 'Import Images';
-        importBtn.disabled = false;
-        importFile.value = '';
-      }
-    });
-  }
-};
+// STAK-135:
+// setupSettingsEventListeners() moved to js/settings-listeners.js to keep
+// listener wiring split by settings tab/concern.
 
 /**
  * One-time migration from legacy apiProviderOrder + syncMode to priority numbers (STACK-90).
@@ -1587,15 +746,17 @@ const renderFilterChipCategoryTable = () => {
 };
 
 /**
- * Renders the built-in (seed) Numista lookup rules as a read-only table.
+ * Renders the built-in (seed) Numista lookup rules table with enable/disable toggles.
  */
 const renderSeedRuleTable = () => {
   const container = document.getElementById('seedRuleTableContainer');
   if (!container || !window.NumistaLookup) return;
 
   const rules = NumistaLookup.listSeedRules();
+  const enabledCount = typeof NumistaLookup.getEnabledSeedRuleCount === 'function'
+    ? NumistaLookup.getEnabledSeedRuleCount() : rules.length;
   const countBadge = document.getElementById('seedRuleCount');
-  if (countBadge) countBadge.textContent = `(${rules.length})`;
+  if (countBadge) countBadge.textContent = `(${enabledCount}/${rules.length})`;
 
   container.textContent = '';
   if (!rules.length) {
@@ -1606,12 +767,39 @@ const renderSeedRuleTable = () => {
     return;
   }
 
+  // Bulk toggle buttons
+  const btnBar = document.createElement('div');
+  btnBar.style.cssText = 'display:flex;gap:0.5rem;margin-bottom:0.5rem';
+
+  const enableAllBtn = document.createElement('button');
+  enableAllBtn.type = 'button';
+  enableAllBtn.className = 'btn';
+  enableAllBtn.textContent = 'Enable All';
+  enableAllBtn.style.cssText = 'font-size:0.75rem;padding:0.2rem 0.6rem';
+  enableAllBtn.addEventListener('click', () => {
+    NumistaLookup.setAllSeedRulesEnabled(true);
+    renderSeedRuleTable();
+  });
+
+  const disableAllBtn = document.createElement('button');
+  disableAllBtn.type = 'button';
+  disableAllBtn.className = 'btn';
+  disableAllBtn.textContent = 'Disable All';
+  disableAllBtn.style.cssText = 'font-size:0.75rem;padding:0.2rem 0.6rem';
+  disableAllBtn.addEventListener('click', () => {
+    NumistaLookup.setAllSeedRulesEnabled(false);
+    renderSeedRuleTable();
+  });
+
+  btnBar.append(enableAllBtn, disableAllBtn);
+  container.appendChild(btnBar);
+
   const table = document.createElement('table');
   table.className = 'chip-grouping-table';
 
   const thead = document.createElement('thead');
   const headRow = document.createElement('tr');
-  ['Pattern', 'Numista Query', 'N#'].forEach(text => {
+  ['Enabled', 'Pattern', 'Numista Query', 'N#'].forEach(text => {
     const th = document.createElement('th');
     th.textContent = text;
     th.style.cssText = 'font-size:0.75rem;font-weight:normal;opacity:0.6;padding:0.2rem 0.4rem';
@@ -1621,9 +809,27 @@ const renderSeedRuleTable = () => {
   table.appendChild(thead);
 
   const tbody = document.createElement('tbody');
-  const esc = typeof escapeHtml === 'function' ? escapeHtml : (s) => s;
   for (const rule of rules) {
     const tr = document.createElement('tr');
+
+    // Enabled checkbox
+    const tdEnabled = document.createElement('td');
+    tdEnabled.style.cssText = 'width:2.5rem;text-align:center';
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.checked = typeof NumistaLookup.isSeedRuleEnabled === 'function'
+      ? NumistaLookup.isSeedRuleEnabled(rule.id) : true;
+    cb.title = 'Toggle ' + rule.id;
+    cb.addEventListener('change', () => {
+      if (typeof NumistaLookup.setSeedRuleEnabled === 'function') {
+        NumistaLookup.setSeedRuleEnabled(rule.id, cb.checked);
+      }
+      // Update count badge
+      const newCount = typeof NumistaLookup.getEnabledSeedRuleCount === 'function'
+        ? NumistaLookup.getEnabledSeedRuleCount() : rules.length;
+      if (countBadge) countBadge.textContent = `(${newCount}/${rules.length})`;
+    });
+    tdEnabled.appendChild(cb);
 
     const tdPattern = document.createElement('td');
     tdPattern.style.cssText = 'font-family:monospace;font-size:0.8rem;word-break:break-all';
@@ -1636,7 +842,7 @@ const renderSeedRuleTable = () => {
     tdId.style.cssText = 'font-size:0.85rem;opacity:0.7;white-space:nowrap';
     tdId.textContent = rule.numistaId || '\u2014';
 
-    tr.append(tdPattern, tdReplacement, tdId);
+    tr.append(tdEnabled, tdPattern, tdReplacement, tdId);
     tbody.appendChild(tr);
   }
 
@@ -1832,25 +1038,36 @@ const syncGoldbackSettingsUI = () => {
  * Syncs the header shortcut checkboxes in Settings with stored state.
  */
 const syncHeaderToggleUI = () => {
-  const themeVisible = localStorage.getItem('headerThemeBtnVisible') !== 'false';
-  const currencyVisible = localStorage.getItem('headerCurrencyBtnVisible') !== 'false';
-  const cardViewVisible = localStorage.getItem('headerCardViewBtnVisible') === 'true';
+  const themeVisible = localStorage.getItem('headerThemeBtnVisible') === 'true';
+  const currencyVisible = localStorage.getItem('headerCurrencyBtnVisible') === 'true';
+  const trendStored = localStorage.getItem(HEADER_TREND_BTN_KEY);
+  const trendVisible = trendStored !== null ? trendStored === 'true' : true;
+  const syncStored = localStorage.getItem(HEADER_SYNC_BTN_KEY);
+  const syncVisible = syncStored !== null ? syncStored === 'true' : true;
 
   syncChipToggle('settingsHeaderThemeBtn', themeVisible);
+  syncChipToggle('settingsHeaderThemeBtn_hdr', themeVisible);
   syncChipToggle('settingsHeaderCurrencyBtn', currencyVisible);
-  syncChipToggle('settingsHeaderCardViewBtn', cardViewVisible);
+  syncChipToggle('settingsHeaderCurrencyBtn_hdr', currencyVisible);
+  syncChipToggle('settingsHeaderTrendBtn', trendVisible);
+  syncChipToggle('settingsHeaderTrendBtn_hdr', trendVisible);
+  syncChipToggle('settingsHeaderSyncBtn', syncVisible);
+  syncChipToggle('settingsHeaderSyncBtn_hdr', syncVisible);
 
   applyHeaderToggleVisibility();
 };
 
 /**
  * Shows/hides the header shortcut buttons based on stored preferences.
- * Default is visible (true) unless explicitly set to 'false'.
+ * Theme and Currency default hidden; Trend and Sync default visible.
  */
 const applyHeaderToggleVisibility = () => {
-  const themeVisible = localStorage.getItem('headerThemeBtnVisible') !== 'false';
-  const currencyVisible = localStorage.getItem('headerCurrencyBtnVisible') !== 'false';
-  const cardViewVisible = localStorage.getItem('headerCardViewBtnVisible') === 'true';
+  const themeVisible = localStorage.getItem('headerThemeBtnVisible') === 'true';
+  const currencyVisible = localStorage.getItem('headerCurrencyBtnVisible') === 'true';
+  const trendStored = localStorage.getItem(HEADER_TREND_BTN_KEY);
+  const trendVisible = trendStored !== null ? trendStored === 'true' : true;
+  const syncStored = localStorage.getItem(HEADER_SYNC_BTN_KEY);
+  const syncVisible = syncStored !== null ? syncStored === 'true' : true;
 
   if (elements.headerThemeBtn) {
     elements.headerThemeBtn.style.display = themeVisible ? '' : 'none';
@@ -1858,10 +1075,8 @@ const applyHeaderToggleVisibility = () => {
   if (elements.headerCurrencyBtn) {
     elements.headerCurrencyBtn.style.display = currencyVisible ? '' : 'none';
   }
-  const headerCardViewBtn = safeGetElement('headerCardViewBtn');
-  if (headerCardViewBtn) {
-    headerCardViewBtn.style.display = cardViewVisible ? '' : 'none';
-  }
+  safeGetElement('headerTrendBtn').style.display = trendVisible ? '' : 'none';
+  safeGetElement('headerSyncBtn').style.display = syncVisible ? '' : 'none';
 };
 window.applyHeaderToggleVisibility = applyHeaderToggleVisibility;
 
@@ -1871,6 +1086,8 @@ window.applyHeaderToggleVisibility = applyHeaderToggleVisibility;
 const syncLayoutVisibilityUI = () => {
   renderLayoutSectionConfigTable();
   renderViewModalSectionConfigTable();
+  renderMetalOrderConfigTable();
+  renderInlineChipConfigTable();
   applyLayoutOrder();
 };
 
@@ -1982,6 +1199,90 @@ const renderViewModalSectionConfigTable = () => _renderSectionConfigTable({
   saveConfig: saveViewModalSectionConfig,
   onRender: () => renderViewModalSectionConfigTable(),
 });
+
+// =============================================================================
+// METAL ORDER CONFIG
+// =============================================================================
+
+const METAL_ORDER_DEFAULTS = [
+  { id: 'silver',    label: 'Silver',     enabled: true },
+  { id: 'gold',      label: 'Gold',       enabled: true },
+  { id: 'platinum',  label: 'Platinum',   enabled: true },
+  { id: 'palladium', label: 'Palladium',  enabled: true },
+  { id: 'all',       label: 'All Metals', enabled: true },
+];
+
+/**
+ * Returns the current metal order config, merging stored data with defaults.
+ * New metals added to defaults will be appended to existing stored configs.
+ * @returns {Array<{id:string, label:string, enabled:boolean}>}
+ */
+const getMetalOrderConfig = () => {
+  const stored = localStorage.getItem(METAL_ORDER_KEY);
+  if (stored) {
+    try {
+      const parsed = JSON.parse(stored);
+      // Append any new defaults not yet in stored config
+      const knownIds = new Set(parsed.map(m => m.id));
+      METAL_ORDER_DEFAULTS.filter(m => !knownIds.has(m.id)).forEach(m => parsed.push({ ...m }));
+      return parsed;
+    } catch (e) { /* fall through to defaults */ }
+  }
+  return METAL_ORDER_DEFAULTS.map(m => ({ ...m }));
+};
+
+const saveMetalOrderConfig = (config) => {
+  localStorage.setItem(METAL_ORDER_KEY, JSON.stringify(config));
+};
+
+/**
+ * Applies metal order config: reorders and shows/hides spot price cards and totals cards.
+ */
+const applyMetalOrder = () => {
+  const config = getMetalOrderConfig();
+  const spotGrid     = document.querySelector('.spot-cards-grid');
+  const totalsEl     = document.getElementById('totalsCarousel');
+
+  const spotMap = {
+    silver:   document.querySelector('.spot-input.silver'),
+    gold:     document.querySelector('.spot-input.gold'),
+    platinum: document.querySelector('.spot-input.platinum'),
+    palladium:document.querySelector('.spot-input.palladium'),
+  };
+  const totalsMap = {
+    silver:   document.querySelector('.total-card.silver'),
+    gold:     document.querySelector('.total-card.gold'),
+    platinum: document.querySelector('.total-card.platinum'),
+    palladium:document.querySelector('.total-card.palladium'),
+    all:      document.querySelector('.total-card.total-card-all'),
+  };
+
+  config.forEach(({ id, enabled }) => {
+    const spotEl = spotMap[id];
+    if (spotEl && spotGrid) {
+      spotEl.style.display = enabled ? '' : 'none';
+      spotGrid.appendChild(spotEl);
+    }
+    const totalEl = totalsMap[id];
+    if (totalEl && totalsEl) {
+      totalEl.style.display = enabled ? '' : 'none';
+      totalsEl.appendChild(totalEl);
+    }
+  });
+
+  if (typeof window.refreshTotalsDots === 'function') window.refreshTotalsDots();
+};
+window.applyMetalOrder = applyMetalOrder;
+
+/** Renders the metal order config table in Settings > Chips. */
+const renderMetalOrderConfigTable = () => _renderSectionConfigTable({
+  containerId: 'metalOrderConfigContainer',
+  getConfig: getMetalOrderConfig,
+  saveConfig: saveMetalOrderConfig,
+  onApply: applyMetalOrder,
+  onRender: () => renderMetalOrderConfigTable(),
+});
+window.renderMetalOrderConfigTable = renderMetalOrderConfigTable;
 
 /**
  * Shows/hides and reorders major page sections based on layout section config.
@@ -2398,7 +1699,6 @@ if (typeof window !== 'undefined') {
   window.hideSettingsModal = hideSettingsModal;
   window.switchSettingsSection = switchSettingsSection;
   window.switchProviderTab = switchProviderTab;
-  window.setupSettingsEventListeners = setupSettingsEventListeners;
   window.renderInlineChipConfigTable = renderInlineChipConfigTable;
   window.renderFilterChipCategoryTable = renderFilterChipCategoryTable;
   window.renderLayoutSectionConfigTable = renderLayoutSectionConfigTable;

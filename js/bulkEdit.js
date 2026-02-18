@@ -17,6 +17,8 @@ let bulkFieldValues = {};           // { fieldId: value } for enabled fields
 let bulkEnabledFields = new Set();  // Which field checkboxes are checked
 let bulkSearchTerm = '';            // Current search/filter text
 let bulkSearchTimer = null;         // Debounce timer for search input
+let bulkSortCol = null;             // Column key to sort by, or null
+let bulkSortDir = 'asc';            // 'asc' | 'desc'
 
 // =============================================================================
 // SEARCH FILTER HELPER
@@ -61,13 +63,15 @@ const BULK_EDITABLE_FIELDS = [
     options: [
       { value: '1.0',    label: '100% — Pure' },
       { value: '0.9999', label: '.9999 — Four Nines' },
+      { value: '0.9995', label: '.9995 — Pure Platinum' },
       { value: '0.999',  label: '.999 — Fine' },
       { value: '0.925',  label: '.925 — Sterling' },
       { value: '0.900',  label: '.900 — 90% Silver' },
       { value: '0.800',  label: '.800 — 80% (European)' },
       { value: '0.600',  label: '.600 — 60%' },
       { value: '0.400',  label: '.400 — 40% Silver' },
-      { value: '0.350',  label: '.350 — War Nickels' }
+      { value: '0.350',  label: '.350 — War Nickels' },
+      { value: 'custom', label: 'Custom…' }
     ] },
   { id: 'price',            label: 'Purchase Price',     inputType: 'number',
     attrs: { min: '0', step: '0.01' } },
@@ -76,13 +80,47 @@ const BULK_EDITABLE_FIELDS = [
   { id: 'year',             label: 'Year',              inputType: 'text' },
   { id: 'grade',            label: 'Grade',             inputType: 'select',
     options: [
-      '', 'MS-70', 'MS-69', 'MS-68', 'MS-67', 'MS-66', 'MS-65',
-      'PF-70', 'PF-69', 'PF-68', 'PF-67', 'PF-66', 'PF-65',
-      'AU-58', 'AU-55', 'XF-45', 'XF-40', 'VF-35', 'VF-30',
-      'F-15', 'F-12', 'VG-10', 'VG-8', 'G-6', 'G-4', 'AG-3'
+      { value: '', label: '-- None --' },
+      { value: 'AG', label: 'AG - About Good' },
+      { value: 'G', label: 'G - Good' },
+      { value: 'VG', label: 'VG - Very Good' },
+      { value: 'F', label: 'F - Fine' },
+      { value: 'VF', label: 'VF - Very Fine' },
+      { value: 'XF', label: 'XF - Extremely Fine' },
+      { value: 'AU', label: 'AU - About Uncirculated' },
+      { value: 'UNC', label: 'UNC - Uncirculated' },
+      { value: 'BU', label: 'BU - Brilliant Uncirculated' },
+      { value: 'MS-60', label: 'MS-60' },
+      { value: 'MS-61', label: 'MS-61' },
+      { value: 'MS-62', label: 'MS-62' },
+      { value: 'MS-63', label: 'MS-63' },
+      { value: 'MS-64', label: 'MS-64' },
+      { value: 'MS-65', label: 'MS-65' },
+      { value: 'MS-66', label: 'MS-66' },
+      { value: 'MS-67', label: 'MS-67' },
+      { value: 'MS-68', label: 'MS-68' },
+      { value: 'MS-69', label: 'MS-69' },
+      { value: 'MS-70', label: 'MS-70' },
+      { value: 'PF-60', label: 'PF-60' },
+      { value: 'PF-61', label: 'PF-61' },
+      { value: 'PF-62', label: 'PF-62' },
+      { value: 'PF-63', label: 'PF-63' },
+      { value: 'PF-64', label: 'PF-64' },
+      { value: 'PF-65', label: 'PF-65' },
+      { value: 'PF-66', label: 'PF-66' },
+      { value: 'PF-67', label: 'PF-67' },
+      { value: 'PF-68', label: 'PF-68' },
+      { value: 'PF-69', label: 'PF-69' },
+      { value: 'PF-70', label: 'PF-70' }
     ] },
   { id: 'gradingAuthority', label: 'Grading Auth',      inputType: 'select',
-    options: ['', 'PCGS', 'NGC', 'ANACS', 'ICG', 'SGS'] },
+    options: [
+      { value: '', label: '-- None --' },
+      { value: 'PCGS', label: 'PCGS' },
+      { value: 'NGC', label: 'NGC' },
+      { value: 'ANACS', label: 'ANACS' },
+      { value: 'ICG', label: 'ICG' }
+    ] },
   { id: 'certNumber',       label: 'Cert Number',       inputType: 'text' },
   { id: 'pcgsNumber',       label: 'PCGS Number',       inputType: 'text' },
   { id: 'purchaseLocation', label: 'Purchase Loc',      inputType: 'text' },
@@ -91,6 +129,15 @@ const BULK_EDITABLE_FIELDS = [
   { id: 'serialNumber',     label: 'Serial Number',     inputType: 'text' },
   { id: 'notes',            label: 'Notes',             inputType: 'textarea' },
   { id: 'numistaId',        label: 'Numista ID',        inputType: 'text' },
+  { id: 'obverseImageUrl',  label: 'Obverse URL',       inputType: 'text',
+    attrs: { placeholder: 'https://example.com/obverse.jpg' } },
+  { id: 'reverseImageUrl',  label: 'Reverse URL',       inputType: 'text',
+    attrs: { placeholder: 'https://example.com/reverse.jpg' } },
+  { id: 'collectable',      label: 'Collectable',       inputType: 'select',
+    options: [
+      { value: 'true',  label: 'Yes — Collectable' },
+      { value: 'false', label: 'No — Bullion / Melt' },
+    ] },
 ];
 
 // =============================================================================
@@ -173,6 +220,7 @@ const FIELD_COERCIONS = {
   price:       (v) => { const n = parseFloat(v);    return (isNaN(n) || n < 0)            ? 0   : n; },
   marketValue: (v) => { const n = parseFloat(v);    return (isNaN(n) || n < 0)            ? 0   : n; },
   purity:      (v) => { const n = parseFloat(v);    return (isNaN(n) || n <= 0 || n > 1)  ? 1.0 : n; },
+  collectable: (v) => v === 'true',
 };
 
 /**
@@ -215,6 +263,23 @@ const buildBulkItemRow = (item, isPinned) => {
   cbTd.appendChild(cb);
   tr.appendChild(cbTd);
 
+  // Image thumbnail cell
+  const imgTd = document.createElement('td');
+  imgTd.className = 'bulk-img-cell';
+  if (item.obverseImageUrl) {
+    const img = document.createElement('img');
+    img.src = item.obverseImageUrl;
+    img.alt = '';
+    img.loading = 'lazy';
+    img.className = 'bulk-img-thumb';
+    imgTd.appendChild(img);
+  } else {
+    const ph = document.createElement('span');
+    ph.className = 'bulk-img-placeholder';
+    imgTd.appendChild(ph);
+  }
+  tr.appendChild(imgTd);
+
   // Data cells
   const addCell = (text) => {
     const td = document.createElement('td');
@@ -228,8 +293,13 @@ const buildBulkItemRow = (item, isPinned) => {
   addCell(item.type);
   addCell(item.qty != null ? String(item.qty) : '1');
   addCell(item.weight != null ? (typeof formatWeight === 'function' ? formatWeight(item.weight, item.weightUnit) : String(item.weight)) : '');
-  addCell(item.year);
-  addCell(item.storageLocation);
+  addCell(item.purity != null ? String(item.purity) : '');
+  addCell(item.year || '');
+  addCell(item.grade || '');
+  addCell(item.price != null ? (typeof formatCurrency === 'function' ? formatCurrency(item.price) : String(item.price)) : '');
+  addCell(item.storageLocation || '');
+  addCell(item.purchaseLocation || '');
+  addCell(item.date || '');
 
   return tr;
 };
@@ -370,6 +440,63 @@ const renderBulkFieldPanel = () => {
     }
   }
 
+  // Wire up custom purity input behavior (matches inventory modal pattern)
+  const puritySelect = safeGetElement('bulkFieldVal_purity');
+  const purityCheckbox = safeGetElement('bulkField_purity');
+  if (puritySelect) {
+    const purityCustomInput = document.createElement('input');
+    purityCustomInput.type = 'number';
+    purityCustomInput.id = 'bulkFieldVal_purityCustom';
+    purityCustomInput.className = 'field-input';
+    purityCustomInput.min = '0.001';
+    purityCustomInput.max = '1';
+    purityCustomInput.step = '0.0001';
+    purityCustomInput.placeholder = 'e.g. 0.9995';
+    purityCustomInput.setAttribute('aria-label', 'Custom purity');
+    purityCustomInput.style.display = 'none';
+    purityCustomInput.disabled = puritySelect.disabled;
+    puritySelect.parentNode.insertBefore(purityCustomInput, puritySelect.nextSibling);
+
+    const optionValues = new Set(Array.from(puritySelect.options).map(option => option.value));
+    const savedPurity = bulkFieldValues.purity;
+    if (savedPurity !== undefined) {
+      const savedPurityStr = String(savedPurity);
+      if (optionValues.has(savedPurityStr) && savedPurityStr !== 'custom') {
+        puritySelect.value = savedPurityStr;
+      } else {
+        puritySelect.value = 'custom';
+        purityCustomInput.value = savedPurityStr;
+      }
+    }
+
+    const syncPurityState = () => {
+      const isCustom = puritySelect.value === 'custom';
+      purityCustomInput.style.display = isCustom ? '' : 'none';
+      purityCustomInput.disabled = puritySelect.disabled || !isCustom;
+      if (isCustom) {
+        bulkFieldValues.purity = purityCustomInput.value;
+      } else {
+        bulkFieldValues.purity = puritySelect.value;
+      }
+    };
+
+    puritySelect.addEventListener('change', syncPurityState);
+    purityCustomInput.addEventListener('input', () => {
+      bulkFieldValues.purity = purityCustomInput.value;
+    });
+    purityCustomInput.addEventListener('change', () => {
+      bulkFieldValues.purity = purityCustomInput.value;
+    });
+
+    if (purityCheckbox) {
+      purityCheckbox.addEventListener('change', () => {
+        syncPurityState();
+      });
+    }
+
+    syncPurityState();
+  }
+
 };
 
 // =============================================================================
@@ -469,16 +596,34 @@ const renderBulkTableBody = () => {
 
   // Column definitions
   const columns = [
-    { key: 'cb',     label: '' },
-    { key: 'name',   label: 'Name' },
-    { key: 'metal',  label: 'Metal' },
-    { key: 'type',   label: 'Type' },
-    { key: 'qty',    label: 'Qty' },
-    { key: 'weight', label: 'Weight' },
-    { key: 'year',   label: 'Year' },
+    { key: 'cb',              label: '',              nosort: true },
+    { key: 'img',             label: 'Img',           nosort: true },
+    { key: 'name',            label: 'Name' },
+    { key: 'metal',           label: 'Metal' },
+    { key: 'type',            label: 'Type' },
+    { key: 'qty',             label: 'Qty' },
+    { key: 'weight',          label: 'Weight' },
+    { key: 'purity',          label: 'Purity' },
+    { key: 'year',            label: 'Year' },
+    { key: 'grade',           label: 'Grade' },
+    { key: 'price',           label: 'Price' },
     { key: 'storageLocation', label: 'Location' },
+    { key: 'purchaseLocation',label: 'Purchased At' },
+    { key: 'date',            label: 'Date' },
   ];
   const colCount = columns.length;
+
+  // Sort filtered items (preserves original array for selection state checks)
+  const sortedFiltered = bulkSortCol
+    ? [...filtered].sort((a, b) => {
+        const av = a[bulkSortCol] ?? '';
+        const bv = b[bulkSortCol] ?? '';
+        const cmp = (typeof av === 'number' && typeof bv === 'number')
+          ? av - bv
+          : String(av).localeCompare(String(bv), undefined, { numeric: true });
+        return bulkSortDir === 'asc' ? cmp : -cmp;
+      })
+    : filtered;
 
   // Master checkbox state (based on filtered items only, excludes pinned)
   const allFilteredSelected = filtered.length > 0 &&
@@ -500,8 +645,23 @@ const renderBulkTableBody = () => {
       masterCb.indeterminate = someFilteredSelected;
       masterCb.addEventListener('change', () => selectAllItems(masterCb.checked));
       th.appendChild(masterCb);
+    } else if (col.nosort) {
+      th.textContent = col.label;
     } else {
       th.textContent = col.label;
+      th.classList.add('bulk-sortable');
+      if (bulkSortCol === col.key) {
+        th.classList.add(bulkSortDir === 'asc' ? 'sort-asc' : 'sort-desc');
+      }
+      th.addEventListener('click', () => {
+        if (bulkSortCol === col.key) {
+          bulkSortDir = bulkSortDir === 'asc' ? 'desc' : 'asc';
+        } else {
+          bulkSortCol = col.key;
+          bulkSortDir = 'asc';
+        }
+        renderBulkTableBody();
+      });
     }
     headerRow.appendChild(th);
   });
@@ -536,8 +696,8 @@ const renderBulkTableBody = () => {
     tbody.appendChild(divTr);
   }
 
-  // Filtered rows
-  filtered.forEach(item => {
+  // Filtered rows (sorted)
+  sortedFiltered.forEach(item => {
     tbody.appendChild(buildBulkItemRow(item, false));
   });
 
@@ -686,6 +846,20 @@ const applyBulkEdit = () => {
     const input = safeGetElement('bulkFieldVal_' + fieldId);
     if (input) valuesToApply[fieldId] = input.value;
   });
+
+  if (bulkEnabledFields.has('purity') && valuesToApply.purity === 'custom') {
+    const purityCustomInput = safeGetElement('bulkFieldVal_purityCustom');
+    const rawPurity = purityCustomInput ? purityCustomInput.value.trim() : '';
+    const numericPurity = Number(rawPurity);
+
+    if (!rawPurity || !Number.isFinite(numericPurity) || numericPurity < 0.001 || numericPurity > 1) {
+      alert('Please enter a custom purity between 0.001 and 1 before applying bulk changes.');
+      return;
+    }
+
+    // Keep the original string; coercion logic will normalize as needed.
+    valuesToApply.purity = rawPurity;
+  }
 
   // When gb denomination mode is active, read weight from the denomination picker
   // (the hidden number input has stale/empty value).
@@ -899,12 +1073,27 @@ const receiveBulkNumistaResult = (fieldMap) => {
     const cb = safeGetElement('bulkField_' + fieldId);
     if (!input) return;
 
-    input.value = fieldMap[fieldId];
-    input.disabled = false;
-    bulkFieldValues[fieldId] = fieldMap[fieldId];
-    bulkEnabledFields.add(fieldId);
-
-    if (cb) cb.checked = true;
+    if (fieldId === 'purity' && input.tagName === 'SELECT') {
+      const optionExists = Array.from(input.options).some(option => option.value === String(fieldMap[fieldId]));
+      input.value = optionExists ? String(fieldMap[fieldId]) : 'custom';
+      const purityCustomInput = safeGetElement('bulkFieldVal_purityCustom');
+      if (purityCustomInput && !optionExists) {
+        purityCustomInput.value = String(fieldMap[fieldId]);
+      }
+      // Enable field and check checkbox before dispatching change event
+      // so syncPurityState() sees the correct disabled state
+      input.disabled = false;
+      bulkFieldValues[fieldId] = fieldMap[fieldId];
+      bulkEnabledFields.add(fieldId);
+      if (cb) cb.checked = true;
+      input.dispatchEvent(new Event('change'));
+    } else {
+      input.value = fieldMap[fieldId];
+      input.disabled = false;
+      bulkFieldValues[fieldId] = fieldMap[fieldId];
+      bulkEnabledFields.add(fieldId);
+      if (cb) cb.checked = true;
+    }
   });
 
   // Update footer to reflect newly enabled fields
