@@ -42,11 +42,11 @@ DOMAIN values: `DEVELOPMENT`, `PRICING`, `UI`, `API`, `SECURITY`, `WORKFLOW`, `P
 Use this order when creating entities:
 
 1. `TIMESTAMP: <ISO-8601 UTC>`
-2. `DATE_TOKEN: <YYYYMMDDHHMMSS>` (UTC, canonical machine token)
-3. `ABSTRACT: <one-line summary>`
-4. `SUMMARY: <detailed context and implications>`
-5. ID field (`SESSION_ID`, `INSIGHT_ID`, etc.)
-6. Additional context lines
+1. `DATE_TOKEN: <YYYYMMDDHHMMSS>` (UTC, canonical machine token)
+1. `ABSTRACT: <one-line summary>`
+1. `SUMMARY: <detailed context and implications>`
+1. ID field (`SESSION_ID`, `INSIGHT_ID`, etc.)
+1. Additional context lines
 
 Date token rules:
 
@@ -98,16 +98,16 @@ Secret entries should keep `ABSTRACT` non-sensitive (identify service, not full 
 ## Search Strategy
 
 1. Use `search_nodes` for exact IDs, entity names, and tag queries.
-2. For time-scoped recall, use date token prefixes in this order:
+1. For time-scoped recall, use date token prefixes in this order:
    - `YYYYMMDDHH` (hour slice)
    - `YYYYMMDD` (day slice)
    - `YYYYMM` (month slice)
    - `YYYY` (year slice)
-3. Combine time query with tags when possible (for example `agent:codex date:20260218`).
-4. Use `semantic_search` (`hybrid_search: true`) for conceptual recall.
-5. Use `open_nodes` to expand selected results.
-6. Use `read_graph` only for full-graph diagnostics.
-7. **Fallback**: If `search_nodes` returns 0 results, always retry with `semantic_search`.
+1. Combine time query with tags when possible (for example `agent:codex date:20260218`).
+1. Use `semantic_search` (`hybrid_search: true`) for conceptual recall.
+1. Use `open_nodes` to expand selected results.
+1. Use `read_graph` only for full-graph diagnostics.
+1. **Fallback**: If `search_nodes` returns 0 results, always retry with `semantic_search`.
 
 **Critical**: Never space-split colon-delimited entity names. `HANDSHAKE CODEX 2026-02-18` (spaces)
 returns 0 results — use `HANDSHAKE:CODEX:2026-02-18` (colons preserved).
@@ -118,7 +118,7 @@ Colons are part of the name token in the search index.
 For cross-agent handoff, create both:
 
 1. Memento handoff entity (`HANDOFF:...` naming).
-2. Linear comment/issue in the **Developers** team (`38d57c9f-388c-41ec-9cd2-259a21a5df1c`) for cloud-agent visibility.
+1. Linear comment/issue in the **Developers** team (`38d57c9f-388c-41ec-9cd2-259a21a5df1c`) for cloud-agent visibility.
 
 ### Linear Developers Team
 
