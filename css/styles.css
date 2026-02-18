@@ -9392,22 +9392,115 @@ th {
 
 /* Image thumbnail column */
 .bulk-img-cell {
-  width: 38px;
+  width: 76px;
+  min-width: 76px;
   padding: 0.15rem 0.3rem !important;
+}
+/* Obverse + reverse sit side by side inside the cell */
+.bulk-img-cell > img,
+.bulk-img-cell > span {
+  display: inline-block;
+  vertical-align: middle;
+  margin-right: 2px;
+}
+.bulk-img-cell > img:last-child,
+.bulk-img-cell > span:last-child {
+  margin-right: 0;
 }
 .bulk-img-thumb {
   width: 32px;
   height: 32px;
   object-fit: cover;
   border-radius: 3px;
-  display: block;
+  display: inline-block;
+  vertical-align: middle;
 }
 .bulk-img-placeholder {
-  display: block;
+  display: inline-block;
+  vertical-align: middle;
   width: 32px;
   height: 32px;
   background: var(--border);
   border-radius: 3px;
+}
+
+/* Per-row image upload popover */
+.bulk-img-popover {
+  position: fixed;
+  z-index: 9999;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  padding: var(--spacing);
+  width: 260px;
+}
+.bulk-img-popover-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--spacing-sm);
+}
+.bulk-img-popover-title {
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-secondary);
+}
+.bulk-img-popover-close {
+  background: none;
+  border: none;
+  font-size: 1.1rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+  line-height: 1;
+  padding: 0 0.2rem;
+}
+.bulk-img-popover-close:hover { color: var(--text-primary); }
+.bulk-img-popover-sides {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-sm);
+}
+.bulk-img-popover-side {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+.bulk-img-popover-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.bulk-img-popover-preview {
+  width: 100%;
+  aspect-ratio: 1;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.bulk-img-popover-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.bulk-img-popover-actions {
+  display: flex;
+  gap: 0.25rem;
+  flex-wrap: wrap;
+}
+.bulk-img-popover-actions .btn {
+  flex: 1;
+  font-size: 0.72rem;
+  padding: 0.2rem 0.3rem;
+  white-space: nowrap;
 }
 
 /* Responsive: stack on small screens */
