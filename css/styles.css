@@ -2392,6 +2392,36 @@ input[type="submit"] {
   margin: 0;
 }
 
+/* Cloud provider cards */
+.cloud-provider-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--border-color, #dee2e6);
+  border-radius: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+.cloud-provider-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.cloud-provider-name {
+  font-weight: 600;
+  flex: 0 0 auto;
+}
+.cloud-status {
+  font-size: 0.8rem;
+  color: var(--text-secondary, #6c757d);
+  margin-left: auto;
+}
+.cloud-provider-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
 /* Footer bar */
 .settings-footer {
   padding: 0.5rem 1rem;

@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.31.0] - 2026-02-17
+
+### Added — Cloud Storage Backup (Dropbox)
+
+- **Added**: Cloud storage backup — encrypt and upload .stvault files to Dropbox via OAuth PKCE popup flow
+- **Added**: Privacy policy page for OAuth provider compliance
+- **Added**: Cloudflare Pages Function scaffold for future pCloud/Box token exchange proxy
+- **Fixed**: Favicon and PWA SVG icons updated to match ST branding (gold ST on navy)
+
+---
+
 ## [3.30.09] - 2026-02-17
 
 ### Added — Settings & Header Controls Overhaul

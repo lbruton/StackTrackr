@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><title>StakTrakr — OAuth</title></head>
+<body>
+<p>Authenticating&hellip;</p>
+<script>
+  var params = new URLSearchParams(location.search);
+  var code = params.get('code');
+  var state = params.get('state');
+  if (window.opener) {
+    window.opener.postMessage({ type: 'staktrakr-oauth', code: code, state: state }, '*');
+  }
+  window.close();
+</script>
+</body>
+</html>
