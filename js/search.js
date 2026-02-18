@@ -478,7 +478,8 @@ if (searchInput && searchInput.id) {
   const debouncedSearch = debounce((query) => {
     window._fuzzyMatchUsed = false;
     searchQuery = query;
-    filterInventory();
+    renderTable();
+    renderActiveFilters();
     // Show fuzzy indicator if fuzzy matching was used
     const fuzzyActive = !!(query.trim() && window._fuzzyMatchUsed);
     updateFuzzyIndicator(query, fuzzyActive);

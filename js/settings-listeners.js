@@ -1182,11 +1182,20 @@ const bindCloudStorageListeners = () => {
       await _cloudBtnAction(btn, 'Checking\u2026', async () => {
         var conflict = await cloudCheckConflict(provider);
         if (conflict.conflict) {
-          var rd = new Date(conflict.remote.timestamp);
-          var remoteInfo = rd.toLocaleDateString() + ' ' + rd.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
-          if (conflict.remote.itemCount) remoteInfo += ' (' + conflict.remote.itemCount + ' items)';
-          if (!confirm('A newer backup exists on the server:\n' + remoteInfo +
-            '\n\nOverwrite with current local data?')) {
+          var remoteDate = new Date(conflict.remote.timestamp);
+          var remoteItems = Number(conflict.remote.itemCount) || 0;
+          var localItems = conflict.local && Number(conflict.local.itemCount) || 0;
+          var remoteInfo = remoteDate.toLocaleDateString() + ' ' +
+            remoteDate.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+          var localInfo = localItems.toLocaleString() + ' items';
+          var remoteLine = 'Remote: ' + remoteItems.toLocaleString() + ' items (' + remoteInfo + ')';
+          var localLine = 'Local: ' + localInfo;
+          if (!confirm(
+            'A newer remote backup exists.\n\n' +
+            remoteLine + '\n' +
+            localLine + '\n\n' +
+            'Do you want to overwrite the remote backup with current local data?'
+          )) {
             return;
           }
         }
@@ -1241,6 +1250,27 @@ const bindCloudStorageListeners = () => {
 };
 
 /**
+ * Wires up Storage section listeners (Refresh button, tiny-key toggle).
+ */
+const bindStorageListeners = () => {
+  // Refresh button
+  const refreshBtn = document.getElementById('storageRefreshBtn');
+  if (refreshBtn) {
+    refreshBtn.addEventListener('click', () => {
+      if (typeof renderStorageSection === 'function') renderStorageSection();
+    });
+  }
+
+  // Top-level tiny-key toggle
+  const topToggle = document.getElementById('storageToggleTiny');
+  if (topToggle) {
+    topToggle.addEventListener('click', () => {
+      if (typeof _handleStorageTinyToggle === 'function') _handleStorageTinyToggle();
+    });
+  }
+};
+
+/**
  * Wires up all Settings modal event listeners.
  * Called once during initialization.
  */
@@ -1254,6 +1284,7 @@ const setupSettingsEventListeners = () => {
   bindGoldbackActionListeners();
   bindImageSettingsListeners();
   bindCloudStorageListeners();
+  bindStorageListeners();
 };
 
 if (typeof window !== 'undefined') {

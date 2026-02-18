@@ -5,59 +5,20 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>StakTrakr — Privacy Policy</title>
   <link rel="icon" href="./favicon.svg" type="image/svg+xml">
-  <style>
-    :root { --bg: #1a1a2e; --text: #e0e0e0; --accent: #e8b830; --muted: #999; }
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-           background: var(--bg); color: var(--text); line-height: 1.7;
-           max-width: 720px; margin: 0 auto; padding: 2rem 1.5rem; }
-    h1 { color: var(--accent); margin-bottom: 0.25rem; font-size: 1.75rem; }
-    .subtitle { color: var(--muted); font-size: 0.9rem; margin-bottom: 2rem; }
-    h2 { color: var(--accent); font-size: 1.15rem; margin: 1.75rem 0 0.5rem; }
-    p, li { font-size: 0.95rem; margin-bottom: 0.5rem; }
-    ul { padding-left: 1.25rem; }
-    a { color: var(--accent); }
-    .back { display: inline-block; margin-top: 2rem; color: var(--accent); text-decoration: none; font-size: 0.9rem; }
-    .back:hover { text-decoration: underline; }
-  </style>
+  <meta http-equiv="refresh" content="0; url=./index.html#privacy">
+  <script>
+    // Mirror the app's stored theme before first paint to avoid flash
+    (function () {
+      try {
+        var t = localStorage.getItem('theme') || 'dark';
+        document.documentElement.setAttribute('data-theme', t);
+      } catch (e) { document.documentElement.setAttribute('data-theme', 'dark'); }
+    })();
+    // JS fallback if meta-refresh is blocked
+    window.location.replace('./index.html#privacy');
+  </script>
 </head>
 <body>
-  <h1>Privacy Policy</h1>
-  <p class="subtitle">Last updated: February 17, 2026</p>
-
-  <h2>Overview</h2>
-  <p>StakTrakr is a client-side web application for tracking precious metals inventory. Your data stays on your device. We do not operate servers that store user data.</p>
-
-  <h2>Data Storage</h2>
-  <p>All inventory data, settings, and preferences are stored locally in your browser using localStorage and IndexedDB. Nothing is transmitted to StakTrakr servers.</p>
-
-  <h2>Cloud Backup (Optional)</h2>
-  <p>If you choose to connect a cloud storage provider (Dropbox, pCloud, or Box), StakTrakr will:</p>
-  <ul>
-    <li>Request authorization to read and write files in a <code>/StakTrakr/</code> folder on your account</li>
-    <li>Encrypt your backup locally with AES-256-GCM before uploading — your cloud provider never sees your unencrypted data</li>
-    <li>Store an OAuth access token in your browser's localStorage to maintain the connection</li>
-  </ul>
-  <p>You can disconnect at any time, which removes the stored token. StakTrakr does not access any other files in your cloud storage account.</p>
-
-  <h2>Third-Party APIs</h2>
-  <p>StakTrakr may contact external services for spot price data, exchange rates, and catalog lookups. These requests contain no personal information — only metal type or coin identifiers. No cookies or tracking identifiers are sent.</p>
-
-  <h2>Analytics &amp; Tracking</h2>
-  <p>StakTrakr does not use analytics, tracking pixels, fingerprinting, or advertising of any kind. There are no third-party scripts that collect user behavior.</p>
-
-  <h2>Cookies</h2>
-  <p>StakTrakr does not set cookies. OAuth providers may set their own cookies during the authorization flow in the popup window.</p>
-
-  <h2>Children</h2>
-  <p>StakTrakr is not directed at children under 13 and does not knowingly collect information from children.</p>
-
-  <h2>Changes</h2>
-  <p>If this policy changes, the updated version will be posted at this URL with a new date.</p>
-
-  <h2>Contact</h2>
-  <p>Questions about this policy can be directed to the project's <a href="https://github.com/lbruton/StakTrakr/issues">GitHub Issues</a> page.</p>
-
-  <a class="back" href="./">&larr; Back to StakTrakr</a>
+  <p>Redirecting to <a href="./index.html#privacy">StakTrakr Privacy Policy&hellip;</a></p>
 </body>
 </html>

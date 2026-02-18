@@ -1576,6 +1576,24 @@ const renderTable = () => {
     // Upgrade table thumbnails from CDN URLs to IDB blob URLs (fire-and-forget)
     _enhanceTableThumbnails();
 
+    // Image-cell click: open the thumb popover for upload/view
+    if (!tbody._imgCellBound) {
+      tbody._imgCellBound = true;
+      tbody.addEventListener('click', (e) => {
+        if (!featureFlags.isEnabled('COIN_IMAGES')) return;
+        const cell = e.target.closest('td[data-column="image"]');
+        if (!cell) return;
+        e.stopPropagation();
+        const row = cell.closest('tr[data-idx]');
+        if (!row) return;
+        const idx = parseInt(row.dataset.idx, 10);
+        if (isNaN(idx)) return;
+        const item = inventory[idx];
+        if (!item) return;
+        _openThumbPopover(cell, item);
+      });
+    }
+
     // Card-view tap: delegate click on tbody rows (≤768px only)
     // Opens view modal if COIN_IMAGES enabled, otherwise edit modal
     if (!tbody._cardTapBound) {
@@ -1778,7 +1796,8 @@ const updateSummary = () => {
  */
 const deleteItem = (idx) => {
   const item = inventory[idx];
-  if (confirm("Delete this item?")) {
+  const itemLabel = item ? item.name : 'this item';
+  if (confirm(`Delete ${itemLabel}?\n\nThis can be undone from the Activity Log.`)) {
     inventory.splice(idx, 1);
     saveInventory();
     renderTable();
@@ -1893,6 +1912,7 @@ const editItem = (idx, logIdx = null) => {
   if (elements.itemObverseImageUrl) elements.itemObverseImageUrl.value = item.obverseImageUrl || '';
   if (elements.itemReverseImageUrl) elements.itemReverseImageUrl.value = item.reverseImageUrl || '';
   if (elements.itemSerial) elements.itemSerial.value = item.serial;
+  if (elements.itemCollectable) elements.itemCollectable.checked = !!item.isCollectable;
 
   // Pre-fill purity: match a preset or show custom input
   const purityVal = parseFloat(item.purity) || 1.0;
@@ -3363,6 +3383,218 @@ document.addEventListener('click', (e) => {
   e.stopPropagation();
   startCellEdit(idx, field, td);
 }, true); // capture phase
+
+// =============================================================================
+// THUMBNAIL POPOVER  (image view + upload for main table)
+// =============================================================================
+
+/**
+ * Opens a fixed-position popover anchored below (or above) the image cell.
+ * Shows a large preview of the resolved image for each visible side, with
+ * Upload, Camera (mobile/HTTPS only), and Remove buttons.
+ * Saves directly to imageCache and refreshes the row's thumbnails.
+ *
+ * @param {HTMLTableDataCellElement} cell  - the td[data-column="image"] element
+ * @param {Object} item                   - the full inventory item object
+ */
+function _openThumbPopover(cell, item) {
+  // Toggle off if same cell clicked again
+  const existing = document.getElementById('thumbPopover');
+  if (existing) {
+    existing.remove();
+    if (existing.dataset.forUuid === (item.uuid || '')) return;
+  }
+
+  const isSecure = location.protocol === 'https:' || location.hostname === 'localhost';
+  const isMobile = /Mobi|Android/i.test(navigator.userAgent);
+  const showCamera = isMobile && isSecure;
+
+  const { showObv, showRev } = (() => {
+    const s = localStorage.getItem('tableImageSides') || 'both';
+    return { showObv: s === 'both' || s === 'obverse', showRev: s === 'both' || s === 'reverse' };
+  })();
+
+  // Build side HTML helper
+  const sideHtml = (sideKey, label) => `
+    <div class="bulk-img-popover-side">
+      <span class="bulk-img-popover-label">${label}</span>
+      <div class="bulk-img-popover-preview thumb-popover-preview" id="thumbPop_${sideKey}_preview"></div>
+      <div class="bulk-img-popover-actions">
+        <input type="file" id="thumbPop_${sideKey}_file" accept="image/jpeg,image/png,image/webp" style="display:none" />
+        <button class="btn btn-sm" id="thumbPop_${sideKey}_upload" type="button">Upload</button>
+        ${showCamera ? `<button class="btn btn-sm" id="thumbPop_${sideKey}_camera" type="button">📷</button>` : ''}
+        <button class="btn btn-sm btn-danger" id="thumbPop_${sideKey}_remove" type="button" style="display:none">Remove</button>
+      </div>
+    </div>`;
+
+  const pop = document.createElement('div');
+  pop.id = 'thumbPopover';
+  pop.className = 'bulk-img-popover thumb-popover';
+  pop.dataset.forUuid = item.uuid || '';
+
+  pop.innerHTML = `
+    <div class="bulk-img-popover-header">
+      <span class="bulk-img-popover-title">${item.name ? item.name.slice(0, 28) + (item.name.length > 28 ? '…' : '') : 'Photos'}</span>
+      <button class="bulk-img-popover-close" type="button" aria-label="Close">×</button>
+    </div>
+    <div class="bulk-img-popover-sides">
+      ${showObv ? sideHtml('obv', 'Obverse') : ''}
+      ${showRev ? sideHtml('rev', 'Reverse') : ''}
+    </div>`;
+
+  document.body.appendChild(pop);
+
+  // Position: below cell, flip above if near viewport bottom
+  const rect = cell.getBoundingClientRect();
+  const popW = 300;
+  let left = rect.left;
+  if (left + popW > window.innerWidth - 8) left = window.innerWidth - popW - 8;
+  let top = rect.bottom + 4;
+  if (top + 340 > window.innerHeight) top = rect.top - 344;
+  pop.style.left = Math.max(4, left) + 'px';
+  pop.style.top  = Math.max(4, top) + 'px';
+
+  // Close handlers
+  const closePopover = () => pop.remove();
+  pop.querySelector('.bulk-img-popover-close').addEventListener('click', closePopover);
+  const _onOutside = (e) => {
+    if (!pop.contains(e.target) && e.target !== cell) {
+      closePopover();
+      document.removeEventListener('click', _onOutside, true);
+    }
+  };
+  setTimeout(() => document.addEventListener('click', _onOutside, true), 10);
+
+  // Track blob URLs created here so they're revoked with the main pool
+  const _popBlobUrls = [];
+  const _track = (url) => { if (url) { _thumbBlobUrls.push(url); _popBlobUrls.push(url); } return url; };
+
+  // Load existing images into previews
+  const _loadPreview = async (sideKey, side) => {
+    const previewEl = document.getElementById(`thumbPop_${sideKey}_preview`);
+    const removeBtn = document.getElementById(`thumbPop_${sideKey}_remove`);
+    if (!previewEl) return;
+
+    let url = null;
+    if (window.imageCache?.isAvailable()) {
+      const resolved = await imageCache.resolveImageForItem(item);
+      if (resolved?.source === 'user') {
+        url = _track(await imageCache.getUserImageUrl(item.uuid, side));
+      } else if (resolved?.source === 'pattern') {
+        url = _track(await imageCache.getPatternImageUrl(resolved.catalogId, side));
+      } else if (resolved?.source === 'numista') {
+        url = _track(await imageCache.getImageUrl(resolved.catalogId, side));
+      }
+    }
+    // Fallback to CDN URL strings
+    if (!url) {
+      url = side === 'obverse' ? (item.obverseImageUrl || null) : (item.reverseImageUrl || null);
+      if (url && !/^https?:\/\//i.test(url)) url = null;
+    }
+
+    if (url) {
+      previewEl.innerHTML = `<img src="${url}" alt="${side}" class="bulk-img-popover-img" />`;
+      if (removeBtn) removeBtn.style.display = '';
+    } else {
+      previewEl.innerHTML = `<span class="thumb-popover-empty">No image</span>`;
+    }
+  };
+
+  if (showObv) _loadPreview('obv', 'obverse');
+  if (showRev) _loadPreview('rev', 'reverse');
+
+  // Refresh the row thumbnails after a change
+  const _refreshRowThumbs = () => {
+    if (!featureFlags.isEnabled('COIN_IMAGES') || !window.imageCache?.isAvailable()) return;
+    const row = document.querySelector(`#inventoryTable tr[data-idx]`);
+    // Find by uuid via data attribute on the img
+    const thumbImg = document.querySelector(`#inventoryTable .table-thumb[data-item-uuid="${CSS.escape(item.uuid || '')}"]`);
+    if (thumbImg) {
+      // Revoke old blob URL for this specific image
+      if (thumbImg.src && thumbImg.src.startsWith('blob:')) {
+        try { URL.revokeObjectURL(thumbImg.src); } catch { /* ignore */ }
+      }
+      thumbImg.src = '';
+      thumbImg.style.visibility = 'hidden';
+      thumbImg.removeAttribute('src');
+      _loadThumbImage(thumbImg);
+    }
+    // Refresh popover previews too
+    if (showObv) _loadPreview('obv', 'obverse');
+    if (showRev) _loadPreview('rev', 'reverse');
+  };
+
+  // Handle upload for one side
+  const _handleUpload = async (file, side) => {
+    if (!file || typeof imageProcessor === 'undefined') return;
+    const result = await imageProcessor.processFile(file, {
+      maxDim:   typeof IMAGE_MAX_DIM   !== 'undefined' ? IMAGE_MAX_DIM   : 600,
+      maxBytes: typeof IMAGE_MAX_BYTES !== 'undefined' ? IMAGE_MAX_BYTES : 512000,
+    });
+    if (!result?.blob) return;
+
+    let obvBlob = side === 'obverse' ? result.blob : null;
+    let revBlob = side === 'reverse' ? result.blob : null;
+    // Merge: keep the other side if it exists
+    try {
+      const existing = await imageCache.getUserImage(item.uuid);
+      if (existing) {
+        if (!obvBlob && existing.obverse) obvBlob = existing.obverse;
+        if (!revBlob && existing.reverse) revBlob = existing.reverse;
+      }
+    } catch { /* ignore */ }
+    if (!obvBlob && revBlob) { obvBlob = revBlob; revBlob = null; }
+
+    await imageCache.cacheUserImage(item.uuid, obvBlob, revBlob);
+    _refreshRowThumbs();
+  };
+
+  // Wire Upload + Camera buttons for each visible side
+  const _wireSide = (sideKey, side) => {
+    const fileInput = document.getElementById(`thumbPop_${sideKey}_file`);
+    const uploadBtn = document.getElementById(`thumbPop_${sideKey}_upload`);
+    const cameraBtn = document.getElementById(`thumbPop_${sideKey}_camera`);
+    const removeBtn = document.getElementById(`thumbPop_${sideKey}_remove`);
+    if (!fileInput) return;
+
+    if (uploadBtn) {
+      uploadBtn.addEventListener('click', () => {
+        fileInput.removeAttribute('capture');
+        fileInput.click();
+      });
+    }
+    if (cameraBtn) {
+      cameraBtn.addEventListener('click', () => {
+        fileInput.setAttribute('capture', 'environment');
+        fileInput.click();
+      });
+    }
+    fileInput.addEventListener('change', () => {
+      if (fileInput.files[0]) _handleUpload(fileInput.files[0], side);
+    });
+
+    if (removeBtn) {
+      removeBtn.addEventListener('click', async () => {
+        if (!window.imageCache?.isAvailable()) return;
+        const existing = await imageCache.getUserImage(item.uuid);
+        if (!existing) return;
+        const keepObv = side === 'reverse' ? existing.obverse : null;
+        const keepRev = side === 'obverse' ? existing.reverse : null;
+        if (!keepObv && !keepRev) {
+          await imageCache.deleteUserImage(item.uuid);
+        } else {
+          const o = keepObv || keepRev;
+          const r = keepObv ? keepRev : null;
+          await imageCache.cacheUserImage(item.uuid, o, r);
+        }
+        _refreshRowThumbs();
+      });
+    }
+  };
+
+  if (showObv) _wireSide('obv', 'obverse');
+  if (showRev) _wireSide('rev', 'reverse');
+}
 
 /**
  * Phase 1C: Storage optimization and housekeeping

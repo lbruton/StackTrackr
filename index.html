@@ -1083,7 +1083,6 @@
           <form id="inventoryForm">
             <!-- Hidden fields -->
             <input type="hidden" id="itemSerial" value="" />
-            <input type="hidden" id="itemCollectable" value="false" />
             <input type="hidden" id="itemSpotPrice" value="" />
             <!-- First row of form fields -->
             <div class="grid grid-2">
@@ -1108,6 +1107,13 @@
                   <option value="Other">Other</option>
                 </select>
               </div>
+            </div>
+            <!-- Collectable toggle (BUG-007) -->
+            <div style="margin:-0.25rem 0 0.5rem">
+              <label class="settings-checkbox-label" style="font-size:0.85rem">
+                <input type="checkbox" id="itemCollectable" />
+                Collectable <span style="font-weight:normal;opacity:0.6">(not valued at melt)</span>
+              </label>
             </div>
             <!-- Row: Purity, Quantity, Weight, Unit -->
             <div class="grid grid-purity-row">
@@ -1487,26 +1493,6 @@
 
        Displays the generated storage report inside an iframe for in-app viewing.
        ============================================================================= -->
-    <div class="modal" id="storageReportModal" style="display: none">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h2>Storage Report</h2>
-          <button
-            aria-label="Close modal"
-            class="modal-close"
-            id="storageReportCloseBtn"
-          >
-            ×
-          </button>
-        </div>
-        <div class="modal-body">
-          <iframe
-            id="storageReportFrame"
-            style="width: 100%; height: 100%; border: none"
-          ></iframe>
-        </div>
-      </div>
-    </div>
     
     
     <!-- =============================================================================
@@ -1561,7 +1547,7 @@
     <footer class="app-footer">
       <div class="storage-line">Storage: <span id="storageUsage"></span> <div class="storage-bar" id="storageBar"><div class="storage-bar-ls" id="storageBarLs" title="localStorage"></div><div class="storage-bar-idb" id="storageBarIdb" title="IndexedDB Images"></div></div> <a href="#" id="storageReportLink">Storage report</a></div>
       <div class="footer-meta">
-        <span>Thank you for using <span id="footerBrand">StakTrakr</span> <a id="versionBadge" class="version-badge" style="display: none"></a>. &copy; 2025-2026 <a id="footerDomain" href="https://staktrakr.com" target="_blank" rel="noopener">staktrakr.com</a>. Created with love on Apple Silicon.</span>
+        <span>Thank you for using <span id="footerBrand">StakTrakr</span> <a id="versionBadge" class="version-badge" style="display: none"></a>. &copy; 2025-2026 <a id="footerDomain" href="https://staktrakr.com" target="_blank" rel="noopener">staktrakr.com</a>. Special thanks to the <a href="https://www.reddit.com/r/Silverbugs/" target="_blank" rel="noopener">r/Silverbugs</a> community for the feedback, bug reports, and encouragement that shaped this app. &middot; <a href="#" onclick="if(window.showFaqModal){event.preventDefault();window.showFaqModal();}">FAQ</a></span>
         <div class="footer-badges">
           <a href="https://github.com/lbruton/StakTrakr" target="_blank" rel="noopener"><img src="https://img.shields.io/github/license/lbruton/StakTrakr?style=flat-square" alt="MIT License" height="20"></a>
           <a href="https://app.codacy.com/gh/lbruton/StakTrakr/dashboard?utm_source=gh&amp;utm_medium=referral&amp;utm_content=&amp;utm_campaign=Badge_grade" target="_blank" rel="noopener"><img src="https://app.codacy.com/project/badge/Grade/b8d30126676546cb958fa6a7e0174da8" alt="Codacy Badge" height="20"></a>
@@ -1649,7 +1635,6 @@
     <div class="modal" id="aboutModal" style="display: none">
       <div class="modal-content about-modal-content">
         <div class="modal-header about-modal-header">
-          <h1>About</h1>
           <button
             aria-label="Close modal"
             class="modal-close"
@@ -1690,77 +1675,36 @@
                 <svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
                 Sponsor
               </a>
+              <button class="about-badge" onclick="if(window.showFaqModal)window.showFaqModal()">
+                ❓ FAQ
+              </button>
+              <button class="about-badge" onclick="if(window.openModalById)openModalById('privacyModal')">
+                🔒 Privacy
+              </button>
             </div>
           </div>
 
-          <div class="about-alert">
-            <div class="alert-header">
-              <span class="alert-icon">⚠️</span>
-              <strong>Important Privacy &amp; Data Notice</strong>
-            </div>
-            <div class="alert-content">
-              <p>
-                <strong>Your Privacy is Protected:</strong> All data is stored
-                locally in your browser using localStorage and
-                <em>never transmitted to any server</em>. Your precious metals
-                inventory information remains completely private and under your
-                control.
-              </p>
-
-              <p>
-                <strong>Data Backup Responsibility:</strong> Since data is
-                stored locally, it will be lost if you clear browser history,
-                reset browser data, or use private browsing mode. Remember to
-                export your data regularly to keep a copy.
-              </p>
-
-              <p>
-                <strong>Use at Your Own Risk:</strong> This tool is provided for
-                informational and organizational purposes only. The developer
-                assumes no responsibility for any financial decisions,
-                investment choices, or data loss. Always verify spot prices and
-                calculations independently.
-              </p>
-
-              <p>
-                <strong>Spot Price Accuracy:</strong> Prices displayed are for
-                reference only and may not reflect real-time market conditions.
-                Always confirm current pricing with your dealer or official
-                market sources before making transactions.
-              </p>
-            </div>
+          <div class="about-alert about-alert-compact">
+            <span class="alert-icon">⚠️</span>
+            All data is stored locally in your browser and never sent to a server.
+            Export regularly to keep a backup. See <button class="about-alert-link" onclick="if(window.showFaqModal)window.showFaqModal()">FAQ</button> for full details.
           </div>
           <!-- What's New and Roadmap -->
           <div class="about-info-grid">
             <div class="about-section">
               <div class="section-title">🚀 What's New in <span id="aboutCurrentVersion"></span></div>
               <ul id="aboutChangelogLatest" class="changelog-list"></ul>
+              <div class="about-section-footer">
+                <button class="about-card-link" id="aboutShowChangelogBtn">View Full Changelog →</button>
+              </div>
             </div>
 
             <div class="about-section" id="aboutRoadmapSection">
               <div class="section-title">🗺️ Development Roadmap</div>
               <ul id="aboutRoadmapList" class="changelog-list"></ul>
-            </div>
-          </div>
-
-          <!-- Resources Section -->
-          <div class="about-section">
-            <div class="section-title">📄 Resources & Links</div>
-            <div class="resources-grid">
-              <a class="resource-btn" href="sample.csv" download="sample.csv">
-                📄 Download Sample Data
-              </a>
-              <a
-                class="resource-btn"
-                href="https://github.com/lbruton/StakTrakr"
-                target="_blank"
-                rel="noopener"
-              >
-                📁 View Source Code
-              </a>
-              <button class="resource-btn" id="aboutShowChangelogBtn">
-                📜 View Full Changelog
-              </button>
+              <div class="about-section-footer">
+                <a class="about-card-link" href="https://github.com/lbruton/StakTrakr/blob/main/docs/announcements.md" target="_blank" rel="noopener">View Full Roadmap →</a>
+              </div>
             </div>
           </div>
         </div>
@@ -1777,29 +1721,17 @@
             <div class="about-section">
               <div class="section-title">🚀 What's New</div>
               <ul id="versionChanges" class="changelog-list"></ul>
+              <div class="about-section-footer">
+                <button class="about-card-link" id="versionShowChangelogBtn">View Full Changelog →</button>
+              </div>
             </div>
 
             <div class="about-section">
               <div class="section-title">🗺️ Development Roadmap</div>
               <ul id="versionRoadmapList" class="changelog-list"></ul>
-            </div>
-          </div>
-
-          <div class="about-section">
-            <div class="section-title">📄 Resources &amp; Links</div>
-            <div class="resources-grid">
-              <a class="resource-btn" href="sample.csv" download="sample.csv">
-                📄 Download Sample Data
-              </a>
-              <a
-                class="resource-btn"
-                href="https://github.com/lbruton/StakTrakr"
-                target="_blank"
-                rel="noopener"
-              >
-                📁 View Source Code
-              </a>
-              <button class="resource-btn" id="versionShowChangelogBtn">📜 View Full Changelog</button>
+              <div class="about-section-footer">
+                <a class="about-card-link" href="https://github.com/lbruton/StakTrakr/blob/main/docs/announcements.md" target="_blank" rel="noopener">View Full Roadmap →</a>
+              </div>
             </div>
           </div>
 
@@ -1831,33 +1763,21 @@
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r="2.5"/><circle cx="19" cy="13" r="2.5"/><circle cx="16" cy="20" r="2.5"/><circle cx="7" cy="20" r="2.5"/><circle cx="4" cy="13" r="2.5"/><circle cx="12" cy="13" r="3"/></svg>
               Appearance
             </button>
-            <button class="settings-nav-item" data-section="images">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
-              Images
-            </button>
             <button class="settings-nav-item" data-section="system">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
               Inventory
-            </button>
-            <button class="settings-nav-item" data-section="grouping">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
-              Chips
             </button>
             <button class="settings-nav-item" data-section="search">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
               Search
             </button>
-            <button class="settings-nav-item" data-section="api">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83"/></svg>
-              API
+            <button class="settings-nav-item" data-section="grouping">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+              Filters
             </button>
-            <button class="settings-nav-item" data-section="files">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-              Files
-            </button>
-            <button class="settings-nav-item" data-section="cloud">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
-              Cloud
+            <button class="settings-nav-item" data-section="images">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
+              Images
             </button>
             <button class="settings-nav-item" data-section="currency">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
@@ -1866,6 +1786,22 @@
             <button class="settings-nav-item" data-section="goldback">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v12"/><path d="M9 9a3 3 0 0 1 3-1.5c2 0 3 1 3 2.5s-1 2.5-3 2.5-3 1-3 2.5a3 3 0 0 0 3 2.5"/></svg>
               Goldback
+            </button>
+            <button class="settings-nav-item" data-section="storage">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.66 4.03 3 9 3s9-1.34 9-3V5"/><path d="M3 12c0 1.66 4.03 3 9 3s9-1.34 9-3"/></svg>
+              Storage
+            </button>
+            <button class="settings-nav-item" data-section="api">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83"/></svg>
+              API
+            </button>
+            <button class="settings-nav-item" data-section="cloud">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
+              Cloud
+            </button>
+            <button class="settings-nav-item" data-section="faq">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+              FAQ
             </button>
             <button class="settings-nav-item" data-section="changelog">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="10"/></svg>
@@ -2717,212 +2653,157 @@
               </div>
             </div>
 
-            <!-- ===== FILES ===== -->
-            <div class="settings-section-panel" id="settingsPanel_files" style="display: none">
-              <h3>Files</h3>
-              <div class="settings-card-grid">
-                <div class="settings-card">
-                  <h3>Import</h3>
-                  <p class="settings-subtext">Import your data files.</p>
-                  <div class="import-block">
-                    <div class="import-export-grid">
-                      <div class="import-csv-grid">
-                        <button class="btn warning" id="importCsvOverride">Import CSV</button>
-                        <button class="btn success" id="importCsvMerge">Merge CSV</button>
-                        <input accept=".csv" hidden id="importCsvFile" type="file" />
-                      </div>
-                      <div class="import-json-grid">
-                        <button class="btn warning" id="importJsonOverride">Import JSON</button>
-                        <button class="btn success" id="importJsonMerge">Merge JSON</button>
-                        <input accept=".json" hidden id="importJsonFile" type="file" />
-                      </div>
-                    </div>
-                    <progress class="import-progress" id="importProgress" value="0" max="0"></progress>
-                    <div class="import-progress-text" id="importProgressText"></div>
-                  </div>
-                </div>
-                <div class="settings-card">
-                  <h3>Export</h3>
-                  <p class="settings-subtext">Export your data files.</p>
-                  <div class="export-block">
-                    <div class="import-export-grid">
-                      <button class="btn info" id="exportCsvBtn">Export CSV</button>
-                      <button class="btn info" id="exportJsonBtn">Export JSON</button>
-                      <button class="btn info" id="exportPdfBtn">Export PDF</button>
-                    </div>
-                  </div>
-                </div>
-                <div class="settings-card">
-                  <h3>Third-Party</h3>
-                  <p class="settings-subtext">Import data from external services like Numista.</p>
-                  <div class="third-party-block">
-                    <div class="import-export-grid">
-                      <div class="grid grid-2">
-                        <button class="btn warning" id="importNumistaBtn">Import Numista CSV</button>
-                        <button class="btn success" id="mergeNumistaBtn">Merge Numista CSV</button>
-                      </div>
-                      <input type="file" id="numistaImportFile" accept=".csv" hidden />
-                      <div class="beta-warning">Numista import is a beta feature</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
             <!-- ===== CLOUD SYNC ===== -->
             <div class="settings-section-panel" id="settingsPanel_cloud" style="display: none">
               <h3>Cloud Sync</h3>
 
-              <!-- Security Disclaimer -->
-              <div class="encryption-warning">
-                <p><strong>All data is encrypted with AES-256-GCM before it leaves StakTrakr.</strong> Your cloud provider never sees unencrypted data.</p>
-                <p><strong>Never share your vault password.</strong> If you lose it, your backups cannot be recovered. StakTrakr does not store, transmit, or have access to your password.</p>
-                <p style="margin-bottom:0"><a href="./privacy.html" target="_blank" rel="noopener">Privacy Policy</a></p>
+              <!-- Beta Banner -->
+              <div class="cloud-beta-banner">
+                <span class="cloud-beta-badge">BETA</span>
+                <p class="cloud-beta-title">&#x1F409; Here be dragons</p>
+                <p>Cloud Sync lets you store <strong>encrypted vault backups</strong> on your own cloud storage account. Your data is encrypted with AES-256-GCM before it leaves StakTrakr &mdash; your provider never sees the plaintext.</p>
+                <p>This feature is in <strong>early beta</strong>. It works, but rough edges remain. We are a small team and your patience means a lot.</p>
+                <p style="margin-bottom:0"><button class="resource-btn" style="font-size:0.8rem;padding:0.35rem 0.75rem" onclick="if(window.openModalById)openModalById('privacyModal')">&#x1F512; Privacy Policy</button></p>
               </div>
 
-              <!-- Dropbox Provider -->
-              <div class="settings-fieldset" id="cloudCard_dropbox">
-                <div class="settings-fieldset-title">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:-2px;margin-right:0.3rem"><path d="M6 2l6 3.6L6 9.2 0 5.6zm12 0l6 3.6-6 3.6-6-3.6zm-12 8l6 3.6-6 3.6-6-3.6zm12 0l6 3.6-6 3.6-6-3.6zM6 18.4l6-3.6 6 3.6-6 3.6z"/></svg>
-                  Dropbox
-                  <span class="cloud-connected-badge" style="display:none">Connected</span>
+              <!-- StakTrakr Cloud Placeholder -->
+              <div class="cloud-provider-card cloud-provider-card--coming-soon">
+                <div class="cloud-provider-card-header">
+                  <span class="cloud-provider-card-title">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:-2px"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                    StakTrakr Cloud <span style="font-weight:400;font-size:0.8em">(Sponsors)</span>
+                  </span>
+                  <span class="cloud-provider-card-badges">
+                    <span class="cloud-badge cloud-badge--coming-soon">COMING SOON</span>
+                  </span>
+                </div>
+                <p class="settings-subtext" style="margin:0.5rem 0 0">Supabase-powered cloud storage for StakTrakr sponsors. Zero-config encrypted sync with automatic backups.</p>
+              </div>
+
+              <!-- Dropbox Provider (unified card) -->
+              <div class="cloud-provider-card" id="cloudCard_dropbox">
+                <div class="cloud-provider-card-header">
+                  <span class="cloud-provider-card-title">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:-2px"><path d="M6 2l6 3.6L6 9.2 0 5.6zm12 0l6 3.6-6 3.6-6-3.6zm-12 8l6 3.6-6 3.6-6-3.6zm12 0l6 3.6-6 3.6-6-3.6zM6 18.4l6-3.6 6 3.6-6 3.6z"/></svg>
+                    Dropbox
+                  </span>
+                  <span class="cloud-provider-card-badges">
+                    <span class="cloud-connected-badge" style="display:none">Connected</span>
+                    <span class="cloud-badge cloud-badge--beta">BETA</span>
+                  </span>
                 </div>
 
-                <div class="settings-card-grid">
-                  <!-- Connection Card -->
-                  <div class="settings-card">
-                    <div class="settings-group-label">Connection</div>
-                    <div class="cloud-connection-status" id="cloudStatus_dropbox">
-                      <div class="cloud-status-row">
-                        <span class="cloud-status-label">Status</span>
-                        <span class="cloud-status-value cloud-status-indicator" data-state="disconnected">
-                          <span class="cloud-status-dot"></span>
-                          <span class="cloud-status-text">Not connected</span>
-                        </span>
-                      </div>
-                      <div class="cloud-status-row">
-                        <span class="cloud-status-label">Last sync</span>
-                        <span class="cloud-status-value cloud-status-sync">Never</span>
-                      </div>
-                      <div class="cloud-status-row">
-                        <span class="cloud-status-label">Items backed up</span>
-                        <span class="cloud-status-value cloud-status-items">&mdash;</span>
-                      </div>
-                    </div>
-                    <div class="cloud-connection-actions">
-                      <div class="cloud-login-area">
-                        <button class="btn cloud-connect-btn" data-provider="dropbox">
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:0.3rem"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
-                          Login to Dropbox
-                        </button>
-                      </div>
-                      <button class="btn danger cloud-disconnect-btn" data-provider="dropbox" style="display:none">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:0.3rem"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-                        Disconnect
-                      </button>
-                    </div>
+                <!-- Status rows -->
+                <div class="cloud-connection-status" id="cloudStatus_dropbox">
+                  <div class="cloud-status-row">
+                    <span class="cloud-status-label">Status</span>
+                    <span class="cloud-status-value cloud-status-indicator" data-state="disconnected">
+                      <span class="cloud-status-dot"></span>
+                      <span class="cloud-status-text">Not connected</span>
+                    </span>
                   </div>
+                  <div class="cloud-status-row">
+                    <span class="cloud-status-label">Last sync</span>
+                    <span class="cloud-status-value cloud-status-sync">Never</span>
+                  </div>
+                  <div class="cloud-status-row">
+                    <span class="cloud-status-label">Items backed up</span>
+                    <span class="cloud-status-value cloud-status-items">&mdash;</span>
+                  </div>
+                </div>
 
-                  <!-- Backup & Restore Card -->
-                  <div class="settings-card">
-                    <div class="settings-group-label">Backup &amp; Restore</div>
-                    <p class="settings-subtext">Encrypted vault backups stored in /StakTrakr on your Dropbox.</p>
-                    <div class="cloud-provider-actions">
-                      <button class="btn success cloud-backup-btn" data-provider="dropbox" disabled>
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:0.3rem"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                        Backup Now
-                      </button>
-                      <button class="btn cloud-restore-btn" data-provider="dropbox" disabled>
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:0.3rem"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                        Restore
-                      </button>
-                    </div>
-                    <div class="cloud-status-detail"></div>
-                    <div class="cloud-backup-list" id="cloudBackupList_dropbox" style="display:none"></div>
+                <!-- Actions -->
+                <div class="cloud-provider-card-actions">
+                  <div class="cloud-login-area">
+                    <button class="btn cloud-connect-btn" data-provider="dropbox">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:0.3rem"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+                      Login to Dropbox
+                    </button>
                   </div>
+                  <button class="btn danger cloud-disconnect-btn" data-provider="dropbox" style="display:none">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:0.3rem"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                    Disconnect
+                  </button>
+                  <button class="btn success cloud-backup-btn" data-provider="dropbox" disabled>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:0.3rem"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                    Backup Now
+                  </button>
+                  <button class="btn cloud-restore-btn" data-provider="dropbox" disabled>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:0.3rem"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    Restore
+                  </button>
+                </div>
+                <div class="cloud-status-detail"></div>
+                <div class="cloud-backup-list" id="cloudBackupList_dropbox" style="display:none"></div>
+
+                <!-- Disclaimer -->
+                <div class="cloud-provider-disclaimer">
+                  Backups are stored in <strong>/StakTrakr</strong> on your Dropbox. Your vault password encrypts the data &mdash; if you lose it, backups cannot be recovered.
                 </div>
               </div>
 
-              <!-- pCloud (disabled until token-exchange worker is configured)
-              <div class="settings-fieldset" id="cloudCard_pcloud">
-                <div class="settings-fieldset-title">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:-2px;margin-right:0.3rem"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
-                  pCloud
-                  <span class="cloud-connected-badge" style="display:none">Connected</span>
-                </div>
-                <div class="settings-card-grid">
-                  <div class="settings-card">
-                    <div class="settings-group-label">Connection</div>
-                    <div class="cloud-connection-status" id="cloudStatus_pcloud">
-                      <div class="cloud-status-row"><span class="cloud-status-label">Status</span><span class="cloud-status-value cloud-status-indicator" data-state="disconnected"><span class="cloud-status-dot"></span><span class="cloud-status-text">Not connected</span></span></div>
-                      <div class="cloud-status-row"><span class="cloud-status-label">Last sync</span><span class="cloud-status-value cloud-status-sync">Never</span></div>
-                      <div class="cloud-status-row"><span class="cloud-status-label">Items backed up</span><span class="cloud-status-value cloud-status-items">&mdash;</span></div>
-                    </div>
-                    <div class="cloud-connection-actions">
-                      <div class="cloud-login-area"><button class="btn cloud-connect-btn" data-provider="pcloud">Login to pCloud</button></div>
-                      <button class="btn danger cloud-disconnect-btn" data-provider="pcloud" style="display:none">Disconnect</button>
-                    </div>
-                  </div>
-                  <div class="settings-card">
-                    <div class="settings-group-label">Backup &amp; Restore</div>
-                    <p class="settings-subtext">Encrypted vault backups stored in /StakTrakr on your pCloud.</p>
-                    <div class="cloud-provider-actions">
-                      <button class="btn success cloud-backup-btn" data-provider="pcloud" disabled>Backup Now</button>
-                      <button class="btn cloud-restore-btn" data-provider="pcloud" disabled>Restore</button>
-                    </div>
-                    <div class="cloud-status-detail"></div>
-                    <div class="cloud-backup-list" id="cloudBackupList_pcloud" style="display:none"></div>
-                  </div>
-                </div>
-              </div>
-              -->
-
-              <!-- Box (disabled until token-exchange worker is configured)
-              <div class="settings-fieldset" id="cloudCard_box">
-                <div class="settings-fieldset-title">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:-2px;margin-right:0.3rem"><path d="M2 4h20v16H2V4zm2 2v12h16V6H4z"/></svg>
-                  Box
-                  <span class="cloud-connected-badge" style="display:none">Connected</span>
-                </div>
-                <div class="settings-card-grid">
-                  <div class="settings-card">
-                    <div class="settings-group-label">Connection</div>
-                    <div class="cloud-connection-status" id="cloudStatus_box">
-                      <div class="cloud-status-row"><span class="cloud-status-label">Status</span><span class="cloud-status-value cloud-status-indicator" data-state="disconnected"><span class="cloud-status-dot"></span><span class="cloud-status-text">Not connected</span></span></div>
-                      <div class="cloud-status-row"><span class="cloud-status-label">Last sync</span><span class="cloud-status-value cloud-status-sync">Never</span></div>
-                      <div class="cloud-status-row"><span class="cloud-status-label">Items backed up</span><span class="cloud-status-value cloud-status-items">&mdash;</span></div>
-                    </div>
-                    <div class="cloud-connection-actions">
-                      <div class="cloud-login-area"><button class="btn cloud-connect-btn" data-provider="box">Login to Box</button></div>
-                      <button class="btn danger cloud-disconnect-btn" data-provider="box" style="display:none">Disconnect</button>
-                    </div>
-                  </div>
-                  <div class="settings-card">
-                    <div class="settings-group-label">Backup &amp; Restore</div>
-                    <p class="settings-subtext">Encrypted vault backups stored in /StakTrakr on your Box.</p>
-                    <div class="cloud-provider-actions">
-                      <button class="btn success cloud-backup-btn" data-provider="box" disabled>Backup Now</button>
-                      <button class="btn cloud-restore-btn" data-provider="box" disabled>Restore</button>
-                    </div>
-                    <div class="cloud-status-detail"></div>
-                    <div class="cloud-backup-list" id="cloudBackupList_box" style="display:none"></div>
-                  </div>
-                </div>
-              </div>
-              -->
-
-              <!-- Quick Access -->
+              <!-- More Providers -->
               <div class="settings-fieldset">
-                <div class="settings-fieldset-title">Quick Access</div>
+                <div class="settings-fieldset-title">More Providers</div>
                 <div class="settings-card-grid">
-                  <div class="settings-card">
-                    <div class="settings-group-label">Session password cache</div>
-                    <p class="settings-subtext">Your vault password is automatically remembered for this browser session after the first backup or restore. Closing the browser clears it.</p>
-                    <div class="cloud-status-row" style="margin-top:0.5rem">
-                      <span class="cloud-status-label">Cache status</span>
-                      <span class="cloud-status-value" id="cloudPwCacheStatus">Not cached</span>
+                  <!-- Google Drive -->
+                  <div class="cloud-provider-card cloud-provider-card--coming-soon" style="margin:0">
+                    <div class="cloud-provider-card-header">
+                      <span class="cloud-provider-card-title">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:-2px"><path d="M7.71 3.5l-5.5 9.5h5.6l5.5-9.5H7.71zm1.1 10.5H1.39L4.59 20h8.71l-4.49-6zm8.68-10.5l-5.5 9.5 3.39 5.5 5.5-9.5-3.39-5.5z"/></svg>
+                        Google Drive
+                      </span>
+                      <span class="cloud-provider-card-badges">
+                        <span class="cloud-badge cloud-badge--coming-soon">COMING SOON</span>
+                      </span>
                     </div>
                   </div>
+                  <!-- OneDrive -->
+                  <div class="cloud-provider-card cloud-provider-card--coming-soon" style="margin:0">
+                    <div class="cloud-provider-card-header">
+                      <span class="cloud-provider-card-title">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:-2px"><path d="M10.5 18H6a4 4 0 0 1-.83-7.91A5.5 5.5 0 0 1 14.28 8 3.5 3.5 0 0 1 18 11.5h.5a2.5 2.5 0 0 1 0 5H15"/><path d="M10 15l3-3 3 3"/></svg>
+                        OneDrive
+                      </span>
+                      <span class="cloud-provider-card-badges">
+                        <span class="cloud-badge cloud-badge--coming-soon">COMING SOON</span>
+                      </span>
+                    </div>
+                  </div>
+                  <!-- pCloud -->
+                  <div class="cloud-provider-card cloud-provider-card--coming-soon" style="margin:0">
+                    <div class="cloud-provider-card-header">
+                      <span class="cloud-provider-card-title">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
+                        pCloud
+                      </span>
+                      <span class="cloud-provider-card-badges">
+                        <span class="cloud-badge cloud-badge--coming-soon">COMING SOON</span>
+                      </span>
+                    </div>
+                  </div>
+                  <!-- Box -->
+                  <div class="cloud-provider-card cloud-provider-card--coming-soon" style="margin:0">
+                    <div class="cloud-provider-card-header">
+                      <span class="cloud-provider-card-title">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 3H8L2 7h20l-6-4z"/></svg>
+                        Box
+                      </span>
+                      <span class="cloud-provider-card-badges">
+                        <span class="cloud-badge cloud-badge--coming-soon">COMING SOON</span>
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Session Cache (demoted) -->
+              <div class="settings-fieldset cloud-session-cache">
+                <div class="settings-fieldset-title">Session Password Cache</div>
+                <p class="settings-subtext">Your vault password is remembered for this browser session after the first backup or restore. Closing the browser clears it.</p>
+                <div class="cloud-status-row" style="margin-top:0.5rem">
+                  <span class="cloud-status-label">Cache status</span>
+                  <span class="cloud-status-value" id="cloudPwCacheStatus">Not cached</span>
                 </div>
               </div>
 
@@ -3059,22 +2940,90 @@
             <div class="settings-section-panel" id="settingsPanel_system" style="display: none">
               <h3>Inventory</h3>
 
-              <div class="settings-group">
-                <label>Bulk Editor</label>
-                <p class="settings-subtext">
-                  Select multiple inventory items and apply batch operations &mdash;
-                  edit shared fields, duplicate entries, or remove items in bulk.
-                </p>
-                <button class="btn settings-action-btn" id="bulkEditBtn" type="button">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:0.35rem;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                  Open Bulk Editor
-                </button>
+              <!-- ── Bulk Editor ── -->
+              <div class="settings-fieldset">
+                <div class="settings-fieldset-title">Bulk Editor</div>
+                <div class="settings-card-grid">
+                  <div class="settings-card">
+                    <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.35rem">
+                      <div class="settings-group-label" style="margin:0">Bulk Editor</div>
+                      <span class="cloud-badge cloud-badge--beta">BETA</span>
+                    </div>
+                    <p class="settings-subtext">Select multiple inventory items and apply batch operations — edit shared fields, duplicate entries, or remove items in bulk. This feature is actively developed; please report any issues on GitHub.</p>
+                    <div class="settings-btn-row">
+                      <button class="btn settings-action-btn" id="bulkEditBtn" type="button">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:0.35rem;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                        Open Bulk Editor
+                      </button>
+                    </div>
+                  </div>
+                </div>
               </div>
 
-              <!-- ── Backup & Security ── -->
+              <!-- ── Import ── -->
               <div class="settings-fieldset">
-                <div class="settings-fieldset-title">Backup &amp; Security</div>
+                <div class="settings-fieldset-title">Import</div>
                 <div class="settings-card-grid">
+                  <div class="settings-card">
+                    <h3>Import</h3>
+                    <p class="settings-subtext">Import your data files.</p>
+                    <div class="import-block">
+                      <div class="import-export-grid">
+                        <div class="import-csv-grid">
+                          <button class="btn warning" id="importCsvOverride">Import CSV</button>
+                          <button class="btn success" id="importCsvMerge">Merge CSV</button>
+                          <input accept=".csv" hidden id="importCsvFile" type="file" />
+                        </div>
+                        <div class="import-json-grid">
+                          <button class="btn warning" id="importJsonOverride">Import JSON</button>
+                          <button class="btn success" id="importJsonMerge">Merge JSON</button>
+                          <input accept=".json" hidden id="importJsonFile" type="file" />
+                        </div>
+                        <div>
+                          <button class="btn warning" id="importZipBtn">Restore ZIP Backup</button>
+                          <input accept=".zip" hidden id="importZipFile" type="file" />
+                        </div>
+                      </div>
+                      <progress class="import-progress" id="importProgress" value="0" max="0"></progress>
+                      <div class="import-progress-text" id="importProgressText"></div>
+                    </div>
+                    <p class="settings-subtext" style="margin-top:0.5rem">
+                      New here? <a href="sample.csv" download="sample.csv">Download sample CSV</a> to try importing.
+                    </p>
+                  </div>
+                  <div class="settings-card">
+                    <h3>Third-Party</h3>
+                    <p class="settings-subtext">Import data from external services like Numista.</p>
+                    <div class="third-party-block">
+                      <div class="import-export-grid">
+                        <div class="grid grid-2">
+                          <button class="btn warning" id="importNumistaBtn">Import Numista CSV</button>
+                          <button class="btn success" id="mergeNumistaBtn">Merge Numista CSV</button>
+                        </div>
+                        <input type="file" id="numistaImportFile" accept=".csv" hidden />
+                        <div class="beta-warning">Numista import is a beta feature</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- ── Export ── -->
+              <div class="settings-fieldset">
+                <div class="settings-fieldset-title">Export</div>
+                <div class="settings-card-grid">
+                  <div class="settings-card">
+                    <h3>Export</h3>
+                    <p class="settings-subtext">Export your data files.</p>
+                    <div class="export-block">
+                      <div class="import-export-grid">
+                        <button class="btn info" id="exportCsvBtn">Export CSV</button>
+                        <button class="btn info" id="exportJsonBtn">Export JSON</button>
+                        <button class="btn info" id="exportPdfBtn">Export PDF</button>
+                        <button class="btn info" id="exportZipBtn">Export ZIP Backup</button>
+                      </div>
+                    </div>
+                  </div>
                   <div class="settings-card">
                     <div class="settings-group-label">Encrypted Backup</div>
                     <p class="settings-subtext">AES-GCM encrypted vault file. Use to back up and restore all inventory data.</p>
@@ -3084,8 +3033,74 @@
                     </div>
                     <input type="file" id="vaultImportFile" accept=".stvault" hidden />
                   </div>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- ===== STORAGE ===== -->
+            <div class="settings-section-panel" id="settingsPanel_storage" style="display: none">
+              <h3>Storage</h3>
+
+              <!-- ── Summary Cards ── -->
+              <div class="storage-summary-grid" id="storageSummaryGrid">
+                <div class="storage-stat-card">
+                  <div class="storage-stat-label">localStorage</div>
+                  <div class="storage-stat-value" id="storageStat_ls">—</div>
+                  <div class="storage-stat-bar-wrap">
+                    <div class="storage-stat-bar storage-stat-bar--ls" id="storageStatBar_ls"></div>
+                  </div>
+                  <div class="storage-stat-sub" id="storageStat_ls_sub">of 5,120 KB</div>
+                </div>
+                <div class="storage-stat-card">
+                  <div class="storage-stat-label">IndexedDB (Images)</div>
+                  <div class="storage-stat-value" id="storageStat_idb">—</div>
+                  <div class="storage-stat-bar-wrap">
+                    <div class="storage-stat-bar storage-stat-bar--idb" id="storageStatBar_idb"></div>
+                  </div>
+                  <div class="storage-stat-sub" id="storageStat_idb_sub">of 50 MB</div>
+                </div>
+                <div class="storage-stat-card">
+                  <div class="storage-stat-label">Combined</div>
+                  <div class="storage-stat-value" id="storageStat_combined">—</div>
+                  <div class="storage-stat-bar-wrap storage-stat-bar-wrap--stacked">
+                    <div class="storage-stat-bar storage-stat-bar--ls" id="storageStatBar_combined_ls"></div>
+                    <div class="storage-stat-bar storage-stat-bar--idb" id="storageStatBar_combined_idb"></div>
+                  </div>
+                  <div class="storage-stat-sub" id="storageStat_combined_sub">of ~55 MB cap</div>
+                </div>
+              </div>
+
+              <!-- ── localStorage Keys ── -->
+              <div class="settings-fieldset">
+                <div class="storage-fieldset-header">
+                  <div class="settings-fieldset-title" style="margin:0">localStorage Keys</div>
+                  <div class="storage-fieldset-actions">
+                    <button class="storage-toggle-tiny btn-link" id="storageToggleTiny">Show minor keys</button>
+                    <button class="btn storage-refresh-btn" id="storageRefreshBtn" title="Refresh storage stats">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+                      Refresh
+                    </button>
+                  </div>
+                </div>
+                <div id="storageKeyTable" class="storage-key-table">
+                  <div class="storage-key-table-loading">Loading…</div>
+                </div>
+              </div>
+
+              <!-- ── IndexedDB Stores ── -->
+              <div class="settings-fieldset">
+                <div class="settings-fieldset-title">IndexedDB Stores</div>
+                <div id="storageIdbTable" class="storage-key-table">
+                  <div class="storage-key-table-loading">Loading…</div>
+                </div>
+              </div>
+
+              <!-- ── Data Reset ── -->
+              <div class="settings-fieldset">
+                <div class="settings-fieldset-title">Data Reset</div>
+                <div class="settings-card-grid">
                   <div class="settings-card boating-accident-section">
-                    <div class="settings-group-label">Data Reset</div>
                     <p class="settings-subtext">Permanently remove inventory or wipe all app data. These actions cannot be undone.</p>
                     <div class="settings-btn-row">
                       <button class="btn warning" id="removeInventoryDataBtn">Remove Inventory</button>
@@ -3332,6 +3347,259 @@
               </div>
 
             </div>
+
+            <!-- ===== FAQ ===== -->
+            <div class="settings-section-panel" id="settingsPanel_faq" style="display: none">
+              <h3>Frequently Asked Questions</h3>
+
+              <!-- Section 1: Your Data & Privacy -->
+              <div class="settings-fieldset">
+                <div class="settings-fieldset-title">🔒 Your Data &amp; Privacy</div>
+
+                <details class="faq-item">
+                  <summary class="faq-question">Who can see my inventory?</summary>
+                  <div class="faq-answer">
+                    <p>Only you. Your inventory is stored entirely on your own device using your browser's localStorage (and IndexedDB for images). No data is ever sent to any server unless you explicitly choose to use a cloud backup feature like Dropbox.</p>
+                    <p>Even when you use cloud backup, the data is encrypted on your device <em>before</em> it leaves — the cloud provider receives an encrypted blob they cannot read.</p>
+                  </div>
+                </details>
+
+                <details class="faq-item">
+                  <summary class="faq-question">Can the developer see my data?</summary>
+                  <div class="faq-answer">
+                    <p>No. There is no server-side component, no database, and no analytics that transmit your inventory. The developer has no technical means to access your data.</p>
+                    <p>The only outbound network requests the app makes are:</p>
+                    <ul class="faq-list">
+                      <li>Spot price lookups from public metal pricing APIs (no inventory data included)</li>
+                      <li>Numista / PCGS catalog searches when you use those features</li>
+                      <li>Version check against <code>staktrakr.com/version.json</code> (no inventory data included)</li>
+                      <li>Exchange rate data from Open Exchange Rates (no inventory data included)</li>
+                    </ul>
+                  </div>
+                </details>
+
+                <details class="faq-item">
+                  <summary class="faq-question">Does this app use cookies or tracking?</summary>
+                  <div class="faq-answer">
+                    <p><strong>No cookies. No advertising SDKs. No tracking pixels.</strong> The app itself uses browser localStorage and IndexedDB solely to store your inventory and preferences on your own device.</p>
+                    <p>However, when you use the <strong>hosted version</strong> at staktrakr.com (served via Cloudflare Pages), <a href="https://www.cloudflare.com/web-analytics/" target="_blank" rel="noopener">Cloudflare Web Analytics</a> is active at the network edge. It collects aggregated, anonymous page view metrics — things like visit counts, countries, and browser types — to help the developer understand usage. Cloudflare does this without cookies and without building individual user profiles.</p>
+                    <p>No inventory data is ever included. If you download and run the app locally from a ZIP file, no analytics run at all.</p>
+                    <details class="faq-technical">
+                      <summary>What Cloudflare Web Analytics does and does not do</summary>
+                      <p><strong>Does not:</strong> set cookies · use localStorage · fingerprint individuals · share data with advertisers · track you across sites<br><strong>Does:</strong> log page views at the network edge · process IP addresses server-side (not stored individually) · report aggregated metrics to the site owner only</p>
+                    </details>
+                  </div>
+                </details>
+
+                <details class="faq-item">
+                  <summary class="faq-question">What happens if I clear my browser history?</summary>
+                  <div class="faq-answer">
+                    <p>If you clear browser storage (not just history), your inventory data stored in localStorage will be deleted. Browser history alone does not affect your data.</p>
+                    <p><strong>Recommendation:</strong> Export a backup regularly using the ZIP or vault export options. This gives you a file you control, independent of any browser.</p>
+                  </div>
+                </details>
+
+                <details class="faq-item">
+                  <summary class="faq-question">Is this app safe from viruses or malware?</summary>
+                  <div class="faq-answer">
+                    <p>StakTrakr is open-source software — anyone can read the code at <a href="https://github.com/lbruton/StakTrakr" target="_blank" rel="noopener">github.com/lbruton/StakTrakr</a>. There is no hidden code.</p>
+                    <p>The app loads several trusted third-party libraries (Chart.js, PapaParse, jsPDF, Bootstrap) from CDNs. These are industry-standard libraries used by millions of websites.</p>
+                    <p>Like any web app, your device's security is part of the equation. Keep your browser and operating system updated, and be cautious about browser extensions that have broad permissions.</p>
+                  </div>
+                </details>
+              </div>
+
+              <!-- Section 2: Backups & Export -->
+              <div class="settings-fieldset">
+                <div class="settings-fieldset-title">📦 Backups &amp; Export</div>
+
+                <details class="faq-item">
+                  <summary class="faq-question">How do I get my data out if I want to leave?</summary>
+                  <div class="faq-answer">
+                    <p>Your data is never locked in. You can export at any time in multiple formats:</p>
+                    <ul class="faq-list">
+                      <li><strong>CSV</strong> — opens in Excel, Google Sheets, or any spreadsheet app</li>
+                      <li><strong>PDF</strong> — a formatted report for printing or archiving</li>
+                      <li><strong>ZIP backup</strong> — a complete snapshot including settings, importable into any future StakTrakr install</li>
+                      <li><strong>Encrypted vault (.stvault)</strong> — a password-protected backup file</li>
+                    </ul>
+                    <p>All export options are in the <strong>Inventory → Export</strong> menu.</p>
+                  </div>
+                </details>
+
+                <details class="faq-item">
+                  <summary class="faq-question">Will this app keep working in the future?</summary>
+                  <div class="faq-answer">
+                    <p>Yes. Because the app runs entirely in your browser with no server requirement, a downloaded copy will continue to work indefinitely — even without an internet connection — as long as browsers continue to support standard web APIs (localStorage, IndexedDB, JavaScript).</p>
+                    <p>You can always save a ZIP of the app and open it locally. The app is designed from the ground up to work with the <code>file://</code> protocol.</p>
+                  </div>
+                </details>
+
+                <details class="faq-item">
+                  <summary class="faq-question">What if the developer stops maintaining it?</summary>
+                  <div class="faq-answer">
+                    <p>The app is MIT licensed and open source. If development stops, anyone in the community can fork the project and continue it. Your data remains yours in exportable formats regardless.</p>
+                    <p>The offline-first, single-file design means the app won't simply stop working the way a subscription service would.</p>
+                  </div>
+                </details>
+              </div>
+
+              <!-- Section 3: Cloud Storage -->
+              <div class="settings-fieldset">
+                <div class="settings-fieldset-title">☁️ Cloud Storage</div>
+
+                <details class="faq-item">
+                  <summary class="faq-question">If I use Dropbox, can Dropbox see my data?</summary>
+                  <div class="faq-answer">
+                    <p>No. When you use the cloud backup feature, your inventory is encrypted on your device before it is uploaded. Dropbox only ever receives an encrypted file — they cannot read what's inside it.</p>
+                    <details class="faq-technical">
+                      <summary>Technical details</summary>
+                      <p>Encryption uses <strong>AES-256-GCM</strong> (symmetric authenticated encryption) with a key derived from your password via <strong>PBKDF2-SHA256 with 100,000 iterations</strong>. The encryption happens entirely in your browser using the <a href="https://developer.mozilla.org/en-US/docs/Web/API/Web_Crypto_API" target="_blank" rel="noopener">Web Crypto API</a> — the same cryptographic standard used by password managers and secure messaging apps. The cloud provider receives only the ciphertext and a random salt, never your password or plaintext data.</p>
+                    </details>
+                  </div>
+                </details>
+
+                <details class="faq-item">
+                  <summary class="faq-question">What is encryption and how does it protect me?</summary>
+                  <div class="faq-answer">
+                    <p>Encryption transforms your data into unreadable scrambled text using a secret key derived from your password. Without the correct password, the data is mathematically impossible to read — even if someone intercepts the file or the cloud provider is breached.</p>
+                    <p>Think of it like a safe deposit box: the bank (Dropbox) holds the box, but only you have the key. The bank has no way to open it.</p>
+                    <p><strong>Important:</strong> If you lose your vault password, the data cannot be recovered. Store your password somewhere safe.</p>
+                  </div>
+                </details>
+              </div>
+
+              <!-- Section 4: Security -->
+              <div class="settings-fieldset">
+                <div class="settings-fieldset-title">🛡️ Security</div>
+
+                <details class="faq-item">
+                  <summary class="faq-question">Is my data safe from hackers?</summary>
+                  <div class="faq-answer">
+                    <p>Your local data (in localStorage/IndexedDB) is protected by your browser's same-origin security model — other websites cannot read it. The vault encryption protects backups with strong cryptography.</p>
+                    <p>The practical risks are the same as any local software:</p>
+                    <ul class="faq-list">
+                      <li>Malware on your device that can read browser storage</li>
+                      <li>Browser extensions with broad permissions</li>
+                      <li>Physical access to an unlocked device</li>
+                    </ul>
+                    <p>Standard device security hygiene — OS updates, reputable extensions only, device lock screens — provides strong protection.</p>
+                  </div>
+                </details>
+              </div>
+
+              <!-- Section 5: About the App -->
+              <div class="settings-fieldset">
+                <div class="settings-fieldset-title">💡 About the App</div>
+
+                <details class="faq-item">
+                  <summary class="faq-question">How is this different from other precious metals apps?</summary>
+                  <div class="faq-answer">
+                    <p>Most precious metals apps store your data on their servers and require accounts. StakTrakr is different:</p>
+                    <ul class="faq-list">
+                      <li><strong>Fully local</strong> — your data never leaves your device unless you choose cloud backup</li>
+                      <li><strong>No account required</strong> — no email, no password to create, no profile</li>
+                      <li><strong>Open source</strong> — the code is publicly readable; there are no hidden behaviors</li>
+                      <li><strong>No subscription</strong> — the core app is free forever; optional sponsor perks cover infrastructure costs</li>
+                      <li><strong>Works offline</strong> — once loaded, the app works without internet (spot prices require connectivity)</li>
+                      <li><strong>Portable</strong> — download a ZIP, open <code>index.html</code>, and it runs anywhere</li>
+                    </ul>
+                  </div>
+                </details>
+
+                <details class="faq-item">
+                  <summary class="faq-question">Does this app have any subscriptions or costs?</summary>
+                  <div class="faq-answer">
+                    <p><strong>The core app is free and always will be.</strong> Every feature you see today — full inventory management, spot price sync, CSV/PDF/ZIP export, encrypted vault backups, Dropbox cloud sync, Numista/PCGS integration — is included with no account required and no paywall.</p>
+                    <p>Running the app costs real money: the domain renewal, and the API provider that supplies hourly live spot prices for all users on a best-effort basis. Sponsoring at $1/month or more on GitHub helps cover those costs directly.</p>
+                    <p>As a thank-you, sponsors will get access to <strong>optional infrastructure perks</strong> as they are built out:</p>
+                    <ul class="faq-list">
+                      <li><strong>Now:</strong> Dropbox cloud backup is free for everyone</li>
+                      <li><strong>Coming for sponsors:</strong> a hosted cloud storage key (Supabase-backed) — same encryption guarantees as Dropbox, no third-party account needed</li>
+                      <li><strong>Further out:</strong> early access to real-time encrypted cloud sync (live CRUD to the cloud, not just manual backup/restore), as the user base and infrastructure grows</li>
+                    </ul>
+                    <p>None of these are features being removed from the free tier — they are new infrastructure that costs money to operate. If sponsorship never materializes, the core app stays exactly as it is. If it grows, everyone benefits from a more sustainable project.</p>
+                    <p>The hourly API spot prices are provided on a best-effort basis. If infrastructure costs become unsustainable, that service may be reduced — but the app itself, and Dropbox sync, will always remain free and open source.</p>
+                  </div>
+                </details>
+              </div>
+
+              <!-- Section 6: Honest Limitations -->
+              <div class="settings-fieldset faq-limitations-section">
+                <div class="settings-fieldset-title faq-limitations-title">⚖️ Honest Limitations</div>
+                <p class="faq-limitations-intro">We believe in transparency. Here are real trade-offs you should know about.</p>
+
+                <details class="faq-item">
+                  <summary class="faq-question">localStorage can be cleared unexpectedly</summary>
+                  <div class="faq-answer">
+                    <p>Browser localStorage is not permanent storage. It can be cleared by:</p>
+                    <ul class="faq-list">
+                      <li>"Clear site data" or "Clear browsing data" in browser settings</li>
+                      <li>Private/incognito browsing sessions (data is lost when the window closes)</li>
+                      <li><strong>iOS Safari storage eviction</strong> — Apple may automatically delete localStorage for apps that haven't been used recently if the device is low on storage</li>
+                    </ul>
+                    <p><strong>Mitigation:</strong> Export a ZIP or vault backup regularly, especially on iOS. Consider connecting a cloud backup provider.</p>
+                  </div>
+                </details>
+
+                <details class="faq-item">
+                  <summary class="faq-question">Opening via file:// protocol on some browsers</summary>
+                  <div class="faq-answer">
+                    <p>The app is designed to work with the <code>file://</code> protocol (opening <code>index.html</code> directly from your filesystem). However, a small number of browser configurations restrict localStorage persistence in <code>file://</code> contexts.</p>
+                    <p>If you experience data not persisting when opening the file directly, try serving it from a local web server (e.g., <code>python3 -m http.server</code>) or use the hosted version at staktrakr.com.</p>
+                  </div>
+                </details>
+
+                <details class="faq-item">
+                  <summary class="faq-question">No formal third-party security audit — but here's what we do run</summary>
+                  <div class="faq-answer">
+                    <p>StakTrakr is a one-person project. A paid independent cryptographic audit hasn't been commissioned — that's the honest limitation. But the codebase is not unreviewed. Every commit runs through a layered set of automated security and quality checks:</p>
+                    <ul class="faq-list">
+                      <li><strong>Codacy</strong> — continuous code quality gate, A+ rating maintained on every PR</li>
+                      <li><strong>CodeQL</strong> — GitHub's semantic code analysis, scans for security vulnerabilities on every push</li>
+                      <li><strong>Semgrep</strong> — static analysis for common security anti-patterns</li>
+                      <li><strong>PMD</strong> — additional static analysis for code quality issues</li>
+                      <li><strong>ESLint</strong> — JavaScript linting with security-aware rules</li>
+                      <li><strong>GitHub Copilot &amp; Codex</strong> — AI-assisted code review on pull requests</li>
+                    </ul>
+                    <p>Development is also assisted by <strong>Claude Code</strong> (Anthropic's AI coding assistant), which is explicitly instructed to flag security concerns — SQL injection, XSS, insecure storage patterns, and similar issues — during implementation.</p>
+                    <p>This is the realistic security posture of a well-maintained open-source personal project: comprehensive automated tooling, no paid human audit. For most users tracking a personal collection, this is a reasonable level of assurance. Users with very high threat models may wish to verify the encryption implementation themselves — the source is fully public.</p>
+                  </div>
+                </details>
+
+                <details class="faq-item">
+                  <summary class="faq-question">Only Dropbox is active — other cloud providers are coming soon</summary>
+                  <div class="faq-answer">
+                    <p><strong>Dropbox is the only fully active cloud backup provider.</strong> The Cloud tab in Settings also shows placeholder cards for four future providers: Google Drive, OneDrive, pCloud, and Box. These are shown to communicate the roadmap, not as functional options. All will use the same client-side AES-256-GCM encryption as Dropbox — the provider never sees your plaintext data.</p>
+                  </div>
+                </details>
+
+                <details class="faq-item">
+                  <summary class="faq-question">Spot prices are reference data, not transaction prices</summary>
+                  <div class="faq-answer">
+                    <p>The spot prices displayed are fetched from public metal pricing APIs and represent the theoretical melt value of metal at that moment. They are <strong>not</strong> buy/sell prices from a dealer.</p>
+                    <p>Actual transaction prices will differ due to dealer premiums, bid/ask spreads, and market conditions. The "Melt Value" shown is a reference floor, not a guaranteed sale price.</p>
+                  </div>
+                </details>
+              </div>
+
+              <!-- Section 7: More Information -->
+              <div class="settings-fieldset">
+                <div class="settings-fieldset-title">📄 More Information</div>
+                <div class="resources-grid">
+                  <button class="resource-btn" onclick="if(window.openModalById)openModalById('privacyModal')">
+                    🔒 Privacy Policy
+                  </button>
+                  <a class="resource-btn" href="https://github.com/lbruton/StakTrakr" target="_blank" rel="noopener">
+                    📁 Source Code
+                  </a>
+                  <a class="resource-btn" href="https://www.reddit.com/r/staktrakr/" target="_blank" rel="noopener">
+                    💬 Community
+                  </a>
+                </div>
+              </div>
+
+            </div><!-- #settingsPanel_faq -->
 
           </div><!-- .settings-content-area -->
         </div><!-- .settings-modal-layout -->
@@ -3801,9 +4069,129 @@
       </div>
     </div>
 
+    <!-- Privacy Policy Modal -->
+    <div class="modal" id="privacyModal" style="display: none">
+      <div class="modal-content" style="max-width:760px">
+        <div class="modal-header">
+          <h3>Privacy Policy</h3>
+          <button aria-label="Close modal" class="modal-close" onclick="if(window.closeModalById)closeModalById('privacyModal');else this.closest('.modal').style.display='none';">&times;</button>
+        </div>
+        <div class="modal-body" style="padding:1rem 1.5rem;overflow-y:auto;max-height:70vh">
+
+          <!-- Overview -->
+          <div class="about-section">
+            <div class="section-title">🏠 Overview</div>
+            <p style="font-size:0.95rem;line-height:1.6">StakTrakr is a client-side web application for tracking precious metals inventory. Your data stays on your device — we do not operate servers that store user data. <em>Last updated: February 17, 2026.</em></p>
+          </div>
+
+          <!-- Your Data -->
+          <div class="about-section">
+            <div class="section-title">💾 Your Data</div>
+
+            <details class="faq-item">
+              <summary class="faq-question">Where is my data stored?</summary>
+              <div class="faq-answer">
+                <p>All inventory data, settings, and preferences are stored locally in your browser using <strong>localStorage</strong> and <strong>IndexedDB</strong> (for images). Nothing is transmitted to StakTrakr servers.</p>
+              </div>
+            </details>
+
+            <details class="faq-item">
+              <summary class="faq-question">Can this data be lost?</summary>
+              <div class="faq-answer">
+                <p>Browser localStorage is not permanent storage. It can be cleared by browser settings, private/incognito sessions, or on iOS if the device is low on storage and the app hasn't been used recently.</p>
+                <p><strong>Recommendation:</strong> Export a ZIP or vault backup regularly, especially on iOS. Consider connecting a cloud backup provider.</p>
+              </div>
+            </details>
+          </div>
+
+          <!-- Cloud Backup -->
+          <div class="about-section">
+            <div class="section-title">☁️ Cloud Backup</div>
+
+            <details class="faq-item">
+              <summary class="faq-question">What happens when I connect Dropbox, pCloud, or Box?</summary>
+              <div class="faq-answer">
+                <p>StakTrakr will request authorization to read and write files in a <code>/StakTrakr/</code> folder on your account. It stores an OAuth access token in your browser's localStorage to maintain the connection. StakTrakr does not access any other files in your cloud storage account.</p>
+              </div>
+            </details>
+
+            <details class="faq-item">
+              <summary class="faq-question">Can my cloud provider read my data?</summary>
+              <div class="faq-answer">
+                <p>No. Your backup is encrypted on your device with <strong>AES-256-GCM</strong> before it is uploaded. The cloud provider receives only ciphertext and a random salt — never your password or plaintext data. The key is derived from your password via PBKDF2-SHA256 with 100,000 iterations using the browser's <a href="https://developer.mozilla.org/en-US/docs/Web/API/Web_Crypto_API" target="_blank" rel="noopener">Web Crypto API</a>.</p>
+              </div>
+            </details>
+
+            <details class="faq-item">
+              <summary class="faq-question">How do I disconnect?</summary>
+              <div class="faq-answer">
+                <p>You can disconnect at any time in <strong>Settings → Cloud</strong>. Disconnecting removes the stored OAuth token from your browser. Your cloud files are not automatically deleted — you can remove them manually from your cloud provider's file manager.</p>
+              </div>
+            </details>
+          </div>
+
+          <!-- Third-Party APIs -->
+          <div class="about-section">
+            <div class="section-title">🔌 Third-Party APIs</div>
+
+            <details class="faq-item">
+              <summary class="faq-question">What external services does StakTrakr contact?</summary>
+              <div class="faq-answer">
+                <p>StakTrakr may contact external services for spot price data, exchange rates, and catalog lookups. These requests contain no personal information — only metal type or coin identifiers. No cookies or tracking identifiers are sent. Specific services include:</p>
+                <ul class="faq-list">
+                  <li>Public metal pricing APIs (spot prices)</li>
+                  <li>Open Exchange Rates (currency conversion)</li>
+                  <li>Numista &amp; PCGS APIs (coin catalog lookups, when you use those features)</li>
+                  <li><code>staktrakr.com/version.json</code> (version update check)</li>
+                </ul>
+              </div>
+            </details>
+          </div>
+
+          <!-- Analytics & Tracking -->
+          <div class="about-section">
+            <div class="section-title">📊 Analytics &amp; Tracking</div>
+
+            <details class="faq-item">
+              <summary class="faq-question">Does the app track me?</summary>
+              <div class="faq-answer">
+                <p>No. The app itself does not use analytics, tracking pixels, fingerprinting, or advertising of any kind. There are no third-party scripts embedded in the app that collect user behavior.</p>
+              </div>
+            </details>
+
+            <details class="faq-item">
+              <summary class="faq-question">What about the hosted version at staktrakr.com?</summary>
+              <div class="faq-answer">
+                <p>When you use the hosted version at staktrakr.com (served via Cloudflare Pages), <a href="https://www.cloudflare.com/web-analytics/" target="_blank" rel="noopener">Cloudflare Web Analytics</a> is active at the network edge. It collects aggregated, anonymous page-view metrics (visit counts, countries, browser types) <strong>without cookies</strong> and without building individual user profiles. No inventory data is ever included. If you run the app locally from a downloaded ZIP, no analytics run at all.</p>
+              </div>
+            </details>
+          </div>
+
+          <!-- Cookies -->
+          <div class="about-section">
+            <div class="section-title">🍪 Cookies</div>
+            <p style="font-size:0.95rem;line-height:1.6">StakTrakr does not set cookies. OAuth providers may set their own cookies during the authorization flow in the popup window. Cloudflare Web Analytics does not use cookies.</p>
+          </div>
+
+          <!-- Children -->
+          <div class="about-section">
+            <div class="section-title">👶 Children</div>
+            <p style="font-size:0.95rem;line-height:1.6">StakTrakr is not directed at children under 13 and does not knowingly collect information from children.</p>
+          </div>
+
+          <!-- Changes & Contact -->
+          <div class="about-section">
+            <div class="section-title">📝 Changes &amp; Contact</div>
+            <p style="font-size:0.95rem;line-height:1.6">If this policy changes, the updated version will appear in the app with a new date. Questions about this policy can be directed to the project's <a href="https://github.com/lbruton/StakTrakr/issues" target="_blank" rel="noopener">GitHub Issues</a> page.</p>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
     <!-- =============================================================================
        JAVASCRIPT MODULE LOADING
-       
+
        Modular architecture with proper dependency order:
        1. constants.js - Global configuration and version
        2. state.js - Application state and DOM element caching
@@ -3859,6 +4247,7 @@
     <script defer src="./js/vault.js"></script>
     <script defer src="./js/cloud-storage.js"></script>
     <script defer src="./js/about.js"></script>
+    <script defer src="./js/faq.js"></script>
     <script defer src="./js/customMapping.js"></script>
     <script defer src="./js/settings.js"></script>
     <script defer src="./js/settings-listeners.js"></script>
