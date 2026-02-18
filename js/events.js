@@ -1610,6 +1610,9 @@ const setupNoteAndModalListeners = () => {
   optionalListener(elements.settingsPriceHistoryClearBtn, "click",
     () => { if (typeof clearItemPriceHistory === "function") clearItemPriceHistory(); },
     "Settings price history clear button");
+  optionalListener(elements.settingsCloudActivityClearBtn, "click",
+    () => { if (typeof clearCloudActivityLog === "function") clearCloudActivityLog(); },
+    "Settings cloud activity clear button");
 
   // Price History filter input (STACK-44)
   optionalListener(elements.priceHistoryFilterInput, "input",
@@ -1797,16 +1800,24 @@ const setupDataManagementListeners = () => {
 
   optionalListener(elements.boatingAccidentBtn, "click", () => {
     if (confirm("Did you really lose it all in a boating accident? This will wipe all local data.")) {
-      localStorage.removeItem(LS_KEY);
-      localStorage.removeItem(SPOT_HISTORY_KEY);
-      localStorage.removeItem(API_KEY_STORAGE_KEY);
-      localStorage.removeItem(API_CACHE_KEY);
-      Object.values(METALS).forEach((metalConfig) => {
-        localStorage.removeItem(metalConfig.localStorageKey);
+      // Nuclear wipe: clear every allowed localStorage key
+      ALLOWED_STORAGE_KEYS.forEach((key) => {
+        localStorage.removeItem(key);
       });
-      // STACK-62: Clear autocomplete cache with everything else
-      if (typeof clearLookupCache === 'function') clearLookupCache();
       sessionStorage.clear();
+
+      // Clear IndexedDB image cache
+      if (window.imageCache && typeof imageCache.clearAll === 'function') {
+        imageCache.clearAll().catch(() => {});
+      }
+
+      // Reset in-memory log/history arrays
+      if (typeof changeLog !== 'undefined') changeLog = [];
+      if (typeof catalogHistory !== 'undefined') catalogHistory = [];
+      if (typeof spotHistory !== 'undefined') spotHistory = {};
+
+      // Disconnect cloud providers (UI reset)
+      if (typeof syncCloudUI === 'function') syncCloudUI();
 
       loadInventory();
       renderTable();

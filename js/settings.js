@@ -140,6 +140,7 @@ const LOG_TAB_RENDERERS = {
   metals: 'renderSpotHistoryTable',
   catalogs: 'renderCatalogHistoryForSettings',
   pricehistory: 'renderItemPriceHistoryTable',
+  cloud: 'renderCloudActivityTable',
 };
 
 /**

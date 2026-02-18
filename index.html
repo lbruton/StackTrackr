@@ -3225,6 +3225,7 @@
                 <button class="settings-log-tab" data-log-tab="metals" type="button">Metals</button>
                 <button class="settings-log-tab" data-log-tab="catalogs" type="button">Catalogs</button>
                 <button class="settings-log-tab" data-log-tab="pricehistory" type="button">Price History</button>
+                <button class="settings-log-tab" data-log-tab="cloud" type="button">Cloud</button>
               </div>
 
               <!-- Changelog panel (existing) -->
@@ -3313,6 +3314,29 @@
                         <th>Spot</th>
                         <th>Melt</th>
                         <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody></tbody>
+                  </table>
+                </div>
+              </div>
+
+              <!-- Cloud panel -->
+              <div class="settings-log-panel" id="logPanel_cloud" style="display: none">
+                <p class="settings-subtext">Cloud sync activity — backups, restores, connections, and token refreshes.</p>
+                <div class="settings-changelog-actions">
+                  <button class="btn btn-secondary" id="settingsCloudActivityClearBtn" type="button">Clear Cloud Log</button>
+                </div>
+                <div class="settings-changelog-wrap">
+                  <table id="settingsCloudActivityTable">
+                    <thead>
+                      <tr>
+                        <th>Time</th>
+                        <th>Action</th>
+                        <th>Provider</th>
+                        <th>Result</th>
+                        <th>Detail</th>
+                        <th>Duration</th>
                       </tr>
                     </thead>
                     <tbody></tbody>
