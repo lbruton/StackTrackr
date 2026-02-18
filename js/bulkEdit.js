@@ -17,6 +17,8 @@ let bulkFieldValues = {};           // { fieldId: value } for enabled fields
 let bulkEnabledFields = new Set();  // Which field checkboxes are checked
 let bulkSearchTerm = '';            // Current search/filter text
 let bulkSearchTimer = null;         // Debounce timer for search input
+let bulkSortCol = null;             // Column key to sort by, or null
+let bulkSortDir = 'asc';            // 'asc' | 'desc'
 
 // =============================================================================
 // SEARCH FILTER HELPER
@@ -127,6 +129,15 @@ const BULK_EDITABLE_FIELDS = [
   { id: 'serialNumber',     label: 'Serial Number',     inputType: 'text' },
   { id: 'notes',            label: 'Notes',             inputType: 'textarea' },
   { id: 'numistaId',        label: 'Numista ID',        inputType: 'text' },
+  { id: 'obverseImageUrl',  label: 'Obverse URL',       inputType: 'text',
+    attrs: { placeholder: 'https://example.com/obverse.jpg' } },
+  { id: 'reverseImageUrl',  label: 'Reverse URL',       inputType: 'text',
+    attrs: { placeholder: 'https://example.com/reverse.jpg' } },
+  { id: 'collectable',      label: 'Collectable',       inputType: 'select',
+    options: [
+      { value: 'true',  label: 'Yes — Collectable' },
+      { value: 'false', label: 'No — Bullion / Melt' },
+    ] },
 ];
 
 // =============================================================================
@@ -209,6 +220,7 @@ const FIELD_COERCIONS = {
   price:       (v) => { const n = parseFloat(v);    return (isNaN(n) || n < 0)            ? 0   : n; },
   marketValue: (v) => { const n = parseFloat(v);    return (isNaN(n) || n < 0)            ? 0   : n; },
   purity:      (v) => { const n = parseFloat(v);    return (isNaN(n) || n <= 0 || n > 1)  ? 1.0 : n; },
+  collectable: (v) => v === 'true',
 };
 
 /**
@@ -251,6 +263,23 @@ const buildBulkItemRow = (item, isPinned) => {
   cbTd.appendChild(cb);
   tr.appendChild(cbTd);
 
+  // Image thumbnail cell
+  const imgTd = document.createElement('td');
+  imgTd.className = 'bulk-img-cell';
+  if (item.obverseImageUrl) {
+    const img = document.createElement('img');
+    img.src = item.obverseImageUrl;
+    img.alt = '';
+    img.loading = 'lazy';
+    img.className = 'bulk-img-thumb';
+    imgTd.appendChild(img);
+  } else {
+    const ph = document.createElement('span');
+    ph.className = 'bulk-img-placeholder';
+    imgTd.appendChild(ph);
+  }
+  tr.appendChild(imgTd);
+
   // Data cells
   const addCell = (text) => {
     const td = document.createElement('td');
@@ -264,8 +293,13 @@ const buildBulkItemRow = (item, isPinned) => {
   addCell(item.type);
   addCell(item.qty != null ? String(item.qty) : '1');
   addCell(item.weight != null ? (typeof formatWeight === 'function' ? formatWeight(item.weight, item.weightUnit) : String(item.weight)) : '');
-  addCell(item.year);
-  addCell(item.storageLocation);
+  addCell(item.purity != null ? String(item.purity) : '');
+  addCell(item.year || '');
+  addCell(item.grade || '');
+  addCell(item.price != null ? (typeof formatCurrency === 'function' ? formatCurrency(item.price) : String(item.price)) : '');
+  addCell(item.storageLocation || '');
+  addCell(item.purchaseLocation || '');
+  addCell(item.date || '');
 
   return tr;
 };
@@ -562,16 +596,34 @@ const renderBulkTableBody = () => {
 
   // Column definitions
   const columns = [
-    { key: 'cb',     label: '' },
-    { key: 'name',   label: 'Name' },
-    { key: 'metal',  label: 'Metal' },
-    { key: 'type',   label: 'Type' },
-    { key: 'qty',    label: 'Qty' },
-    { key: 'weight', label: 'Weight' },
-    { key: 'year',   label: 'Year' },
+    { key: 'cb',              label: '',              nosort: true },
+    { key: 'img',             label: 'Img',           nosort: true },
+    { key: 'name',            label: 'Name' },
+    { key: 'metal',           label: 'Metal' },
+    { key: 'type',            label: 'Type' },
+    { key: 'qty',             label: 'Qty' },
+    { key: 'weight',          label: 'Weight' },
+    { key: 'purity',          label: 'Purity' },
+    { key: 'year',            label: 'Year' },
+    { key: 'grade',           label: 'Grade' },
+    { key: 'price',           label: 'Price' },
     { key: 'storageLocation', label: 'Location' },
+    { key: 'purchaseLocation',label: 'Purchased At' },
+    { key: 'date',            label: 'Date' },
   ];
   const colCount = columns.length;
+
+  // Sort filtered items (preserves original array for selection state checks)
+  const sortedFiltered = bulkSortCol
+    ? [...filtered].sort((a, b) => {
+        const av = a[bulkSortCol] ?? '';
+        const bv = b[bulkSortCol] ?? '';
+        const cmp = (typeof av === 'number' && typeof bv === 'number')
+          ? av - bv
+          : String(av).localeCompare(String(bv), undefined, { numeric: true });
+        return bulkSortDir === 'asc' ? cmp : -cmp;
+      })
+    : filtered;
 
   // Master checkbox state (based on filtered items only, excludes pinned)
   const allFilteredSelected = filtered.length > 0 &&
@@ -593,8 +645,23 @@ const renderBulkTableBody = () => {
       masterCb.indeterminate = someFilteredSelected;
       masterCb.addEventListener('change', () => selectAllItems(masterCb.checked));
       th.appendChild(masterCb);
+    } else if (col.nosort) {
+      th.textContent = col.label;
     } else {
       th.textContent = col.label;
+      th.classList.add('bulk-sortable');
+      if (bulkSortCol === col.key) {
+        th.classList.add(bulkSortDir === 'asc' ? 'sort-asc' : 'sort-desc');
+      }
+      th.addEventListener('click', () => {
+        if (bulkSortCol === col.key) {
+          bulkSortDir = bulkSortDir === 'asc' ? 'desc' : 'asc';
+        } else {
+          bulkSortCol = col.key;
+          bulkSortDir = 'asc';
+        }
+        renderBulkTableBody();
+      });
     }
     headerRow.appendChild(th);
   });
@@ -629,8 +696,8 @@ const renderBulkTableBody = () => {
     tbody.appendChild(divTr);
   }
 
-  // Filtered rows
-  filtered.forEach(item => {
+  // Filtered rows (sorted)
+  sortedFiltered.forEach(item => {
     tbody.appendChild(buildBulkItemRow(item, false));
   });
 
