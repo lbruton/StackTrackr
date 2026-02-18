@@ -1108,25 +1108,40 @@ const bindCloudCacheListeners = () => {
 };
 
 /**
- * Perform a cached-password cloud backup (encrypt + upload, no vault modal).
+ * Run an async action while showing a loading state on a button.
+ * Saves innerHTML, disables the button, runs the action, then restores.
+ * @param {HTMLElement} btn
+ * @param {string} label - loading text to show (e.g. 'Uploading…')
+ * @param {Function} action - async function to execute
+ * @param {string} errorPrefix - prefix for alert on failure
+ * @param {Function} [finallyFn] - optional cleanup in finally block
  */
-const _cloudBackupWithCachedPw = async (provider, password, btn) => {
+const _cloudBtnAction = async (btn, label, action, errorPrefix, finallyFn) => {
   var origHtml = btn.innerHTML;
   btn.disabled = true;
-  btn.textContent = 'Encrypting\u2026';
+  btn.textContent = label;
   try {
-    var fileBytes = await vaultEncryptToBytes(password);
-    btn.textContent = 'Uploading\u2026';
-    await cloudUploadVault(provider, fileBytes);
-    if (typeof showCloudToast === 'function') showCloudToast('Backup complete.');
-    if (typeof showKrakenToastIfFirst === 'function') showKrakenToastIfFirst();
+    await action(btn);
   } catch (err) {
-    alert('Backup failed: ' + err.message);
+    alert(errorPrefix + err.message);
   } finally {
     btn.disabled = false;
     btn.innerHTML = origHtml;
+    if (finallyFn) { try { await finallyFn(); } catch (_) { /* ignore */ } }
   }
 };
+
+/**
+ * Perform a cached-password cloud backup (encrypt + upload, no vault modal).
+ */
+const _cloudBackupWithCachedPw = (provider, password, btn) =>
+  _cloudBtnAction(btn, 'Encrypting\u2026', async (b) => {
+    var fileBytes = await vaultEncryptToBytes(password);
+    b.textContent = 'Uploading\u2026';
+    await cloudUploadVault(provider, fileBytes);
+    if (typeof showCloudToast === 'function') showCloudToast('Backup complete.');
+    if (typeof showKrakenToastIfFirst === 'function') showKrakenToastIfFirst();
+  }, 'Backup failed: ');
 
 /**
  * Perform a cached-password cloud restore (decrypt + restore, no vault modal).
@@ -1164,11 +1179,7 @@ const bindCloudStorageListeners = () => {
       if (typeof cloudDisconnect === 'function') cloudDisconnect(provider);
 
     } else if (btn.classList.contains('cloud-backup-btn')) {
-      var backupOrigHtml = btn.innerHTML;
-      btn.disabled = true;
-      btn.textContent = 'Checking\u2026';
-      try {
-        // Check for conflicts
+      await _cloudBtnAction(btn, 'Checking\u2026', async () => {
         var conflict = await cloudCheckConflict(provider);
         if (conflict.conflict) {
           var rd = new Date(conflict.remote.timestamp);
@@ -1179,55 +1190,34 @@ const bindCloudStorageListeners = () => {
             return;
           }
         }
-        // Try cached password
         var cachedPw = typeof cloudGetCachedPassword === 'function' ? cloudGetCachedPassword(provider) : null;
         if (cachedPw) {
           await _cloudBackupWithCachedPw(provider, cachedPw, btn);
           return;
         }
-        // Open vault modal for password entry
         openVaultModal('cloud-export', { provider: provider });
         if (typeof showKrakenToastIfFirst === 'function') showKrakenToastIfFirst();
-      } catch (err) {
-        alert('Conflict check failed: ' + err.message);
-      } finally {
-        btn.disabled = false;
-        btn.innerHTML = backupOrigHtml;
-      }
+      }, 'Conflict check failed: ');
 
     } else if (btn.classList.contains('cloud-restore-btn')) {
-      // Toggle backup list
       var listEl = document.getElementById('cloudBackupList_' + provider);
       if (listEl && listEl.style.display !== 'none' && listEl.innerHTML) {
         listEl.style.display = 'none';
         listEl.innerHTML = '';
         return;
       }
-
-      var restoreOrigHtml = btn.innerHTML;
-      btn.disabled = true;
-      btn.textContent = 'Loading\u2026';
-      try {
+      await _cloudBtnAction(btn, 'Loading\u2026', async () => {
         var backups = await cloudListBackups(provider);
         renderCloudBackupList(provider, backups);
-      } catch (err) {
-        alert('Failed to list backups: ' + err.message);
-      } finally {
-        btn.disabled = false;
-        btn.innerHTML = restoreOrigHtml;
-      }
+      }, 'Failed to list backups: ');
 
     } else if (btn.classList.contains('cloud-backup-entry')) {
-      // Clicked a specific backup to restore
       var filename = btn.dataset.filename;
       var size = parseInt(btn.dataset.size, 10) || 0;
       var sizeStr = size < 1024 ? size + ' B' : size < 1048576 ? (size / 1024).toFixed(0) + ' KB' : (size / 1048576).toFixed(1) + ' MB';
       if (!confirm('Restore "' + filename + '" (' + sizeStr + ')?\n\nThis will overwrite all local data.')) return;
-      btn.disabled = true;
-      btn.textContent = 'Downloading\u2026';
-      try {
+      await _cloudBtnAction(btn, 'Downloading\u2026', async () => {
         var fileBytes = await cloudDownloadVaultByName(provider, filename);
-        // Try cached password
         var savedPw = typeof cloudGetCachedPassword === 'function' ? cloudGetCachedPassword(provider) : null;
         if (savedPw) {
           await _cloudRestoreWithCachedPw(provider, savedPw, fileBytes);
@@ -1239,18 +1229,13 @@ const bindCloudStorageListeners = () => {
           filename: filename,
           size: size,
         });
-      } catch (err) {
-        alert('Download failed: ' + err.message);
-      } finally {
-        // Re-render the list to restore button state
+      }, 'Download failed: ', async () => {
         var parentList = btn.closest('.cloud-backup-list');
         if (parentList) {
-          try {
-            var refreshed = await cloudListBackups(provider);
-            renderCloudBackupList(provider, refreshed);
-          } catch (_) { /* ignore */ }
+          var refreshed = await cloudListBackups(provider);
+          renderCloudBackupList(provider, refreshed);
         }
-      }
+      });
     }
   });
 };

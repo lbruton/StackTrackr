@@ -503,6 +503,18 @@ function cloudBuildVersionedFilename() {
 }
 
 // ---------------------------------------------------------------------------
+// Shared helpers
+// ---------------------------------------------------------------------------
+
+function cloudSafeItemCount() {
+  try { return typeof inventory !== 'undefined' ? inventory.length : 0; } catch (_) { return 0; }
+}
+
+function cloudSafeAppVersion() {
+  return typeof APP_VERSION !== 'undefined' ? APP_VERSION : 'unknown';
+}
+
+// ---------------------------------------------------------------------------
 // Upload vault to cloud (accepts pre-built fileBytes)
 // ---------------------------------------------------------------------------
 
@@ -536,13 +548,11 @@ async function cloudUploadVault(provider, fileBytes) {
     });
 
     // Upload latest.json pointer
-    var itemCount = 0;
-    try { itemCount = typeof inventory !== 'undefined' ? inventory.length : 0; } catch (_) { /* ignore */ }
     var latestData = {
       filename: filename,
       timestamp: now,
-      appVersion: typeof APP_VERSION !== 'undefined' ? APP_VERSION : 'unknown',
-      itemCount: itemCount,
+      appVersion: cloudSafeAppVersion(),
+      itemCount: cloudSafeItemCount(),
     };
     var latestBytes = new TextEncoder().encode(JSON.stringify(latestData));
     var latestArg = JSON.stringify({
@@ -581,19 +591,17 @@ async function cloudUploadVault(provider, fileBytes) {
     });
   }
 
+  var safeCount = cloudSafeItemCount();
   var backupMeta = {
     provider: provider,
     timestamp: now,
     filename: filename,
-    appVersion: typeof APP_VERSION !== 'undefined' ? APP_VERSION : 'unknown',
-    itemCount: 0,
+    appVersion: cloudSafeAppVersion(),
+    itemCount: safeCount,
   };
-  try { backupMeta.itemCount = typeof inventory !== 'undefined' ? inventory.length : 0; } catch (_) { /* ignore */ }
   localStorage.setItem('cloud_last_backup', JSON.stringify(backupMeta));
 
-  var itemCount = 0;
-  try { itemCount = typeof inventory !== 'undefined' ? inventory.length : 0; } catch (_) { /* ignore */ }
-  recordCloudActivity({ action: 'backup', provider: provider, result: 'success', detail: filename + ' (' + itemCount + ' items)', duration: Date.now() - uploadStart });
+  recordCloudActivity({ action: 'backup', provider: provider, result: 'success', detail: filename + ' (' + safeCount + ' items)', duration: Date.now() - uploadStart });
 
   if (typeof syncCloudUI === 'function') syncCloudUI();
   debugLog('[CloudStorage] Backup uploaded to ' + config.name + ' as ' + filename);
