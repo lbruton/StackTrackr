@@ -1323,16 +1323,46 @@ const _openBulkImagePopover = (imgTd, item) => {
 
   // --- Load existing images into previews ---
   const _loadPreview = async (previewEl, removeBtn, side) => {
-    if (!window.imageCache?.isAvailable()) return;
     let url = null;
-    const rec = await imageCache.resolveImageForItem(item);
-    if (rec?.source === 'user') {
-      url = await imageCache.getUserImageUrl(item.uuid, side);
+    let source = null;
+
+    if (window.imageCache?.isAvailable()) {
+      const rec = await imageCache.resolveImageForItem(item);
+      source = rec?.source || null;
+      if (source === 'user') {
+        url = await imageCache.getUserImageUrl(item.uuid, side);
+      } else if (source === 'pattern') {
+        url = await imageCache.getPatternImageUrl(rec.catalogId, side);
+      } else if (source === 'numista') {
+        url = await imageCache.getImageUrl(rec.catalogId, side);
+      }
     }
+
+    if (!url) {
+      url = side === 'obverse' ? (item.obverseImageUrl || null) : (item.reverseImageUrl || null);
+    }
+    if (!url && imgTd) {
+      const rowThumb = imgTd.querySelector(`img.bulk-img-thumb[data-side="${side}"]`);
+      if (rowThumb && rowThumb.src) {
+        url = rowThumb.src;
+      }
+    }
+
     if (url) {
       _bulkBlobUrls.add(url);
-      previewEl.innerHTML = `<img src="${url}" alt="${side}" class="bulk-img-popover-img" />`;
-      removeBtn.style.display = '';
+      const img = document.createElement('img');
+      img.src = url;
+      img.alt = side;
+      img.className = 'bulk-img-popover-img';
+      img.onerror = () => { img.style.display = 'none'; };
+      previewEl.innerHTML = '';
+      previewEl.appendChild(img);
+
+      // "Remove" only applies to user-uploaded images stored in userImages.
+      removeBtn.style.display = source === 'user' ? '' : 'none';
+    } else {
+      previewEl.innerHTML = '';
+      removeBtn.style.display = 'none';
     }
   };
 
