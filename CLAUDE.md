@@ -68,19 +68,19 @@ source of truth and apply sender-side checks first.
 1. Confirm intent and scope:
    - Include target repo/path and expected outcome.
    - Avoid ambiguous "run this" prompts with mixed unrelated tasks.
-2. Classify requested command risk up front:
+1. Classify requested command risk up front:
    - read-only/local inspection,
    - workspace write,
    - network access,
    - privileged/escalated execution,
    - destructive action.
-3. Be explicit for sensitive operations:
+1. Be explicit for sensitive operations:
    - Call out when network access or elevated permissions are actually required.
    - Require explicit human confirmation for destructive operations.
-4. Keep secrets out of handoffs:
+1. Keep secrets out of handoffs:
    - Never forward raw secrets/tokens in relay payloads.
    - If secret context is needed, pass references/identifiers only.
-5. Keep durable traceability for non-trivial work:
+1. Keep durable traceability for non-trivial work:
    - Prefer the existing dual-write handoff pattern (Linear + Memento) with attribution.
 
 ## Critical Development Patterns

@@ -27,11 +27,11 @@ Use this skill after major repo instruction or skill updates.
 Compare key sections:
 
 1. Script loading order
-2. Global architecture notes
-3. Storage and security rules
-4. Version/release sync rules
-5. Handoff protocol guidance
-6. Claude-relay permission/network safeguards
+1. Global architecture notes
+1. Storage and security rules
+1. Version/release sync rules
+1. Handoff protocol guidance
+1. Claude-relay permission/network safeguards
 
 Report concrete mismatches before editing.
 
@@ -47,15 +47,15 @@ For mirrored skills, diff corresponding files and classify:
 For each drifted skill choose one:
 
 1. Claude -> Codex
-2. Codex -> Claude
-3. Manual merge
-4. Keep intentional divergence
+1. Codex -> Claude
+1. Manual merge
+1. Keep intentional divergence
 
 ### Phase 4: Validate
 
 1. Confirm frontmatter validity (`name`, `description`) in all touched skills.
-2. Confirm no stale file paths or tool names remain.
-3. Summarize exact files changed and why.
+1. Confirm no stale file paths or tool names remain.
+1. Summarize exact files changed and why.
 
 ## Current Tracked Repo Skills
 
