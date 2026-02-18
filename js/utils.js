@@ -751,7 +751,7 @@ const parseFraction = (str) => {
  * @param {number} grams - Weight in grams
  * @returns {number} Weight in troy ounces
  */
-const gramsToOzt = (grams) => grams / 31.1034768;
+const gramsToOzt = (grams) => grams / 31.1035;
 
 /**
  * Converts troy ounces to grams
@@ -759,7 +759,7 @@ const gramsToOzt = (grams) => grams / 31.1034768;
  * @param {number} ozt - Weight in troy ounces
  * @returns {number} Weight in grams
  */
-const oztToGrams = (ozt) => ozt * 31.1034768;
+const oztToGrams = (ozt) => ozt * 31.1035;
 
 /**
  * Formats a weight in troy ounces to either grams or ounces.
@@ -775,6 +775,9 @@ const formatWeight = (ozt, weightUnit) => {
     return `${(w % 1 === 0) ? w : w.toFixed(1)} gb`;
   }
   const weight = parseFloat(ozt);
+  if (weightUnit === 'g') {
+    return `${oztToGrams(weight).toFixed(2)} g`;
+  }
   if (weight < 1) {
     return `${oztToGrams(weight).toFixed(2)} g`;
   }
