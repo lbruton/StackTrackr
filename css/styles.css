@@ -6061,6 +6061,12 @@ a.about-badge:hover {
   box-sizing: border-box;
 }
 
+.filter-chip-excluded {
+  outline: 1px dashed rgba(0, 0, 0, 0.35);
+  outline-offset: 1px;
+  opacity: 0.86;
+}
+
 .filter-chip:hover {
   opacity: 0.9;
   transform: translateY(-1px);
