@@ -10,7 +10,7 @@ Requires: METAL_PRICE_API_KEY in environment or devops/spot-poller/.env
 import json
 import os
 import sys
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
 
 try:
