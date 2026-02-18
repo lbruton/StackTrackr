@@ -2771,61 +2771,174 @@
             <!-- ===== CLOUD SYNC ===== -->
             <div class="settings-section-panel" id="settingsPanel_cloud" style="display: none">
               <h3>Cloud Sync</h3>
-              <p class="settings-description">Back up your encrypted vault to your own cloud storage. Files are encrypted locally before upload — your provider never sees your data.</p>
-              <p class="settings-description" style="font-size:0.82em;opacity:0.7">Requires HTTPS. Uses the same password-based encryption as .stvault files. <a href="./privacy.html" target="_blank" rel="noopener">Privacy Policy</a></p>
 
-              <!-- Dropbox -->
-              <div class="cloud-provider-card" id="cloudCard_dropbox">
-                <div class="cloud-provider-header">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M6 2l6 3.6L6 9.2 0 5.6zm12 0l6 3.6-6 3.6-6-3.6zm-12 8l6 3.6-6 3.6-6-3.6zm12 0l6 3.6-6 3.6-6-3.6zM6 18.4l6-3.6 6 3.6-6 3.6z"/></svg>
-                  <span class="cloud-provider-name">Dropbox</span>
-                  <span class="cloud-status"></span>
+              <!-- Security Disclaimer -->
+              <div class="encryption-warning">
+                <p><strong>All data is encrypted with AES-256-GCM before it leaves StakTrakr.</strong> Your cloud provider never sees unencrypted data.</p>
+                <p><strong>Never share your vault password.</strong> If you lose it, your backups cannot be recovered. StakTrakr does not store, transmit, or have access to your password.</p>
+                <p style="margin-bottom:0"><a href="./privacy.html" target="_blank" rel="noopener">Privacy Policy</a></p>
+              </div>
+
+              <!-- Dropbox Provider -->
+              <div class="settings-fieldset" id="cloudCard_dropbox">
+                <div class="settings-fieldset-title">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:-2px;margin-right:0.3rem"><path d="M6 2l6 3.6L6 9.2 0 5.6zm12 0l6 3.6-6 3.6-6-3.6zm-12 8l6 3.6-6 3.6-6-3.6zm12 0l6 3.6-6 3.6-6-3.6zM6 18.4l6-3.6 6 3.6-6 3.6z"/></svg>
+                  Dropbox
+                  <span class="cloud-connected-badge" style="display:none">Connected</span>
                 </div>
-                <div class="cloud-provider-actions">
-                  <button class="btn btn-sm btn-outline-primary cloud-connect-btn" data-provider="dropbox">Connect</button>
-                  <button class="btn btn-sm btn-outline-danger cloud-disconnect-btn" data-provider="dropbox" style="display:none">Disconnect</button>
-                  <span class="cloud-actions" style="display:none">
-                    <button class="btn btn-sm btn-outline-secondary cloud-backup-btn" data-provider="dropbox">Backup Now</button>
-                    <button class="btn btn-sm btn-outline-secondary cloud-restore-btn" data-provider="dropbox">Restore</button>
-                  </span>
+
+                <div class="settings-card-grid">
+                  <!-- Connection Card -->
+                  <div class="settings-card">
+                    <div class="settings-group-label">Connection</div>
+                    <div class="cloud-connection-status" id="cloudStatus_dropbox">
+                      <div class="cloud-status-row">
+                        <span class="cloud-status-label">Status</span>
+                        <span class="cloud-status-value cloud-status-indicator" data-state="disconnected">
+                          <span class="cloud-status-dot"></span>
+                          <span class="cloud-status-text">Not connected</span>
+                        </span>
+                      </div>
+                      <div class="cloud-status-row">
+                        <span class="cloud-status-label">Last sync</span>
+                        <span class="cloud-status-value cloud-status-sync">Never</span>
+                      </div>
+                      <div class="cloud-status-row">
+                        <span class="cloud-status-label">Items backed up</span>
+                        <span class="cloud-status-value cloud-status-items">&mdash;</span>
+                      </div>
+                    </div>
+                    <div class="cloud-connection-actions">
+                      <div class="cloud-login-area">
+                        <button class="btn cloud-connect-btn" data-provider="dropbox">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:0.3rem"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+                          Login to Dropbox
+                        </button>
+                      </div>
+                      <button class="btn danger cloud-disconnect-btn" data-provider="dropbox" style="display:none">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:0.3rem"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                        Disconnect
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- Backup & Restore Card -->
+                  <div class="settings-card">
+                    <div class="settings-group-label">Backup &amp; Restore</div>
+                    <p class="settings-subtext">Encrypted vault backups stored in /StakTrakr on your Dropbox.</p>
+                    <div class="cloud-provider-actions">
+                      <button class="btn success cloud-backup-btn" data-provider="dropbox" disabled>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:0.3rem"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                        Backup Now
+                      </button>
+                      <button class="btn cloud-restore-btn" data-provider="dropbox" disabled>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:0.3rem"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                        Restore
+                      </button>
+                    </div>
+                    <div class="cloud-status-detail"></div>
+                    <div class="cloud-backup-list" id="cloudBackupList_dropbox" style="display:none"></div>
+                  </div>
                 </div>
               </div>
 
               <!-- pCloud (disabled until token-exchange worker is configured)
-              <div class="cloud-provider-card" id="cloudCard_pcloud">
-                <div class="cloud-provider-header">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
-                  <span class="cloud-provider-name">pCloud</span>
-                  <span class="cloud-status"></span>
+              <div class="settings-fieldset" id="cloudCard_pcloud">
+                <div class="settings-fieldset-title">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:-2px;margin-right:0.3rem"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
+                  pCloud
+                  <span class="cloud-connected-badge" style="display:none">Connected</span>
                 </div>
-                <div class="cloud-provider-actions">
-                  <button class="btn btn-sm btn-outline-primary cloud-connect-btn" data-provider="pcloud">Connect</button>
-                  <button class="btn btn-sm btn-outline-danger cloud-disconnect-btn" data-provider="pcloud" style="display:none">Disconnect</button>
-                  <span class="cloud-actions" style="display:none">
-                    <button class="btn btn-sm btn-outline-secondary cloud-backup-btn" data-provider="pcloud">Backup Now</button>
-                    <button class="btn btn-sm btn-outline-secondary cloud-restore-btn" data-provider="pcloud">Restore</button>
-                  </span>
+                <div class="settings-card-grid">
+                  <div class="settings-card">
+                    <div class="settings-group-label">Connection</div>
+                    <div class="cloud-connection-status" id="cloudStatus_pcloud">
+                      <div class="cloud-status-row"><span class="cloud-status-label">Status</span><span class="cloud-status-value cloud-status-indicator" data-state="disconnected"><span class="cloud-status-dot"></span><span class="cloud-status-text">Not connected</span></span></div>
+                      <div class="cloud-status-row"><span class="cloud-status-label">Last sync</span><span class="cloud-status-value cloud-status-sync">Never</span></div>
+                      <div class="cloud-status-row"><span class="cloud-status-label">Items backed up</span><span class="cloud-status-value cloud-status-items">&mdash;</span></div>
+                    </div>
+                    <div class="cloud-connection-actions">
+                      <div class="cloud-login-area"><button class="btn cloud-connect-btn" data-provider="pcloud">Login to pCloud</button></div>
+                      <button class="btn danger cloud-disconnect-btn" data-provider="pcloud" style="display:none">Disconnect</button>
+                    </div>
+                  </div>
+                  <div class="settings-card">
+                    <div class="settings-group-label">Backup &amp; Restore</div>
+                    <p class="settings-subtext">Encrypted vault backups stored in /StakTrakr on your pCloud.</p>
+                    <div class="cloud-provider-actions">
+                      <button class="btn success cloud-backup-btn" data-provider="pcloud" disabled>Backup Now</button>
+                      <button class="btn cloud-restore-btn" data-provider="pcloud" disabled>Restore</button>
+                    </div>
+                    <div class="cloud-status-detail"></div>
+                    <div class="cloud-backup-list" id="cloudBackupList_pcloud" style="display:none"></div>
+                  </div>
                 </div>
               </div>
               -->
 
               <!-- Box (disabled until token-exchange worker is configured)
-              <div class="cloud-provider-card" id="cloudCard_box">
-                <div class="cloud-provider-header">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M2 4h20v16H2V4zm2 2v12h16V6H4z"/></svg>
-                  <span class="cloud-provider-name">Box</span>
-                  <span class="cloud-status"></span>
+              <div class="settings-fieldset" id="cloudCard_box">
+                <div class="settings-fieldset-title">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:-2px;margin-right:0.3rem"><path d="M2 4h20v16H2V4zm2 2v12h16V6H4z"/></svg>
+                  Box
+                  <span class="cloud-connected-badge" style="display:none">Connected</span>
                 </div>
-                <div class="cloud-provider-actions">
-                  <button class="btn btn-sm btn-outline-primary cloud-connect-btn" data-provider="box">Connect</button>
-                  <button class="btn btn-sm btn-outline-danger cloud-disconnect-btn" data-provider="box" style="display:none">Disconnect</button>
-                  <span class="cloud-actions" style="display:none">
-                    <button class="btn btn-sm btn-outline-secondary cloud-backup-btn" data-provider="box">Backup Now</button>
-                    <button class="btn btn-sm btn-outline-secondary cloud-restore-btn" data-provider="box">Restore</button>
-                  </span>
+                <div class="settings-card-grid">
+                  <div class="settings-card">
+                    <div class="settings-group-label">Connection</div>
+                    <div class="cloud-connection-status" id="cloudStatus_box">
+                      <div class="cloud-status-row"><span class="cloud-status-label">Status</span><span class="cloud-status-value cloud-status-indicator" data-state="disconnected"><span class="cloud-status-dot"></span><span class="cloud-status-text">Not connected</span></span></div>
+                      <div class="cloud-status-row"><span class="cloud-status-label">Last sync</span><span class="cloud-status-value cloud-status-sync">Never</span></div>
+                      <div class="cloud-status-row"><span class="cloud-status-label">Items backed up</span><span class="cloud-status-value cloud-status-items">&mdash;</span></div>
+                    </div>
+                    <div class="cloud-connection-actions">
+                      <div class="cloud-login-area"><button class="btn cloud-connect-btn" data-provider="box">Login to Box</button></div>
+                      <button class="btn danger cloud-disconnect-btn" data-provider="box" style="display:none">Disconnect</button>
+                    </div>
+                  </div>
+                  <div class="settings-card">
+                    <div class="settings-group-label">Backup &amp; Restore</div>
+                    <p class="settings-subtext">Encrypted vault backups stored in /StakTrakr on your Box.</p>
+                    <div class="cloud-provider-actions">
+                      <button class="btn success cloud-backup-btn" data-provider="box" disabled>Backup Now</button>
+                      <button class="btn cloud-restore-btn" data-provider="box" disabled>Restore</button>
+                    </div>
+                    <div class="cloud-status-detail"></div>
+                    <div class="cloud-backup-list" id="cloudBackupList_box" style="display:none"></div>
+                  </div>
                 </div>
               </div>
               -->
+
+              <!-- Quick Access -->
+              <div class="settings-fieldset">
+                <div class="settings-fieldset-title">Quick Access</div>
+                <div class="settings-card-grid">
+                  <div class="settings-card">
+                    <div class="settings-group-label">Remember password</div>
+                    <p class="settings-subtext">Cache your vault password so backup/restore skips the password prompt.</p>
+                    <div class="chip-sort-toggle" id="cloudPwCacheToggle">
+                      <button type="button" class="chip-sort-btn" data-val="yes">On</button>
+                      <button type="button" class="chip-sort-btn active" data-val="no">Off</button>
+                    </div>
+                    <div class="cloud-status-row" style="margin-top:0.5rem">
+                      <span class="cloud-status-label">Cache status</span>
+                      <span class="cloud-status-value" id="cloudPwCacheStatus">Not cached</span>
+                    </div>
+                  </div>
+                  <div class="settings-card">
+                    <div class="settings-group-label">Cache duration</div>
+                    <p class="settings-subtext">How long to remember the password before it expires.</p>
+                    <select id="cloudPwCacheDays" class="form-select form-select-sm" style="width:auto">
+                      <option value="1">1 day</option>
+                      <option value="3" selected>3 days</option>
+                      <option value="7">7 days</option>
+                    </select>
+                    <p class="settings-subtext" style="margin-top:0.75rem">Password is XOR-obfuscated in localStorage. Only enable on trusted personal devices.</p>
+                  </div>
+                </div>
+              </div>
+
             </div>
 
             <!-- ===== IMAGES (STACK-96) ===== -->

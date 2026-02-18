@@ -167,15 +167,33 @@ function cloudAuthStart(provider) {
   }
 }
 
+// Surface auth failures to the user (toast with alert fallback).
+function cloudNotifyAuthFailure(provider, message, details) {
+  var providerName = (CLOUD_PROVIDERS[provider] && CLOUD_PROVIDERS[provider].name) || 'Cloud provider';
+  var fullMessage = providerName + ' authentication failed: ' + message;
+
+  debugLog('[CloudStorage] ' + fullMessage, details || '');
+  if (details) {
+    try { console.error('[CloudStorage] OAuth error details:', details); } catch (_) { /* ignore */ }
+  }
+
+  if (typeof showCloudToast === 'function') {
+    showCloudToast(fullMessage, 7000);
+  } else {
+    alert(fullMessage);
+  }
+}
+
 // Exchange an OAuth authorization code for an access token.
-function cloudExchangeCode(code, state) {
+async function cloudExchangeCode(code, state) {
   var savedState = sessionStorage.getItem('cloud_oauth_state');
+  var provider = (state || '').split('_')[0] || 'dropbox';
+
   if (state !== savedState) {
-    debugLog('[CloudStorage] OAuth state mismatch');
+    cloudNotifyAuthFailure(provider, 'OAuth state mismatch. Please try again.');
     return;
   }
 
-  var provider = state.split('_')[0];
   var config = CLOUD_PROVIDERS[provider];
   if (!config) return;
 
@@ -192,28 +210,43 @@ function cloudExchangeCode(code, state) {
     sessionStorage.removeItem('cloud_pkce_verifier');
   }
 
-  fetch(config.tokenUrl, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: body,
-  })
-    .then(function (resp) { return resp.json(); })
-    .then(function (data) {
-      if (data.access_token) {
-        var tokenData = {
-          access_token: data.access_token,
-          refresh_token: data.refresh_token || null,
-          expires_at: data.expires_in ? Date.now() + data.expires_in * 1000 : null,
-        };
-        cloudStoreToken(provider, tokenData);
-        sessionStorage.removeItem('cloud_oauth_state');
-        if (typeof syncCloudUI === 'function') syncCloudUI();
-        debugLog('[CloudStorage] Connected to ' + config.name);
-      }
-    })
-    .catch(function (err) {
-      debugLog('[CloudStorage] Token exchange failed', err);
+  try {
+    var resp = await fetch(config.tokenUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: body,
     });
+
+    var raw = await resp.text();
+    var data = {};
+    if (raw) {
+      try { data = JSON.parse(raw); } catch (_) { data = { rawResponse: raw }; }
+    }
+
+    if (!resp.ok) {
+      var errText = data.error_summary || data.error_description || data.error || 'Unknown error';
+      cloudNotifyAuthFailure(provider, 'Token exchange failed (' + resp.status + '). ' + String(errText), data);
+      return;
+    }
+
+    if (!data.access_token) {
+      cloudNotifyAuthFailure(provider, 'Token exchange response did not include an access token.', data);
+      return;
+    }
+
+    var tokenData = {
+      access_token: data.access_token,
+      refresh_token: data.refresh_token || null,
+      expires_at: data.expires_in ? Date.now() + data.expires_in * 1000 : null,
+    };
+    cloudStoreToken(provider, tokenData);
+    sessionStorage.removeItem('cloud_oauth_state');
+    if (typeof syncCloudUI === 'function') syncCloudUI();
+    if (typeof showCloudToast === 'function') showCloudToast('Connected to ' + config.name + '.');
+    debugLog('[CloudStorage] Connected to ' + config.name);
+  } catch (err) {
+    cloudNotifyAuthFailure(provider, 'Token exchange request failed. Check redirect URI/domain registration and try again.', err);
+  }
 }
 
 // Primary: listen for OAuth callback postMessage from popup
@@ -249,6 +282,13 @@ window.addEventListener('storage', function (event) {
 document.addEventListener('visibilitychange', function () {
   if (!document.hidden) cloudCheckOAuthRelay();
 });
+
+// Check on page load (main-window redirect lands here after oauth-callback.html)
+if (document.readyState === 'complete') {
+  cloudCheckOAuthRelay();
+} else {
+  window.addEventListener('load', cloudCheckOAuthRelay);
+}
 
 function cloudDisconnect(provider) {
   cloudClearToken(provider);
@@ -561,34 +601,51 @@ function syncCloudUI() {
     var card = document.getElementById('cloudCard_' + key);
     if (!card) return;
 
-    // Toggle disconnected vs connected state
+    // Toggle login vs disconnect buttons
     var loginArea = card.querySelector('.cloud-login-area');
-    var connectedArea = card.querySelector('.cloud-connected-area');
     var connectedBadge = card.querySelector('.cloud-connected-badge');
     var disconnectBtn = card.querySelector('.cloud-disconnect-btn');
-    var statusEl = card.querySelector('.cloud-status-detail');
     var backupListEl = document.getElementById('cloudBackupList_' + key);
 
     if (loginArea) loginArea.style.display = connected ? 'none' : '';
-    if (connectedArea) connectedArea.style.display = connected ? '' : 'none';
     if (connectedBadge) connectedBadge.style.display = connected ? '' : 'none';
     if (disconnectBtn) disconnectBtn.style.display = connected ? '' : 'none';
 
-    if (statusEl) {
-      if (connected && lastBackup && lastBackup.provider === key) {
-        var d = new Date(lastBackup.timestamp);
-        var meta = '';
-        if (lastBackup.itemCount) meta += lastBackup.itemCount + ' items';
-        if (lastBackup.appVersion) meta += (meta ? ', ' : '') + 'v' + lastBackup.appVersion;
-        statusEl.textContent = 'Last backup: ' + d.toLocaleDateString() + ' ' +
-          d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) +
-          (meta ? ' (' + meta + ')' : '');
-      } else if (connected) {
-        statusEl.textContent = 'No backups yet';
-      } else {
-        statusEl.textContent = '';
-      }
+    // Enable/disable backup & restore buttons based on connection
+    card.querySelectorAll('.cloud-backup-btn, .cloud-restore-btn').forEach(function (btn) {
+      btn.disabled = !connected;
+    });
+
+    // Update status indicator
+    var indicator = card.querySelector('.cloud-status-indicator');
+    if (indicator) {
+      indicator.dataset.state = connected ? 'connected' : 'disconnected';
+      var textEl = indicator.querySelector('.cloud-status-text');
+      if (textEl) textEl.textContent = connected ? 'Connected' : 'Not connected';
     }
+
+    // Update sync & item count rows
+    var syncEl = card.querySelector('.cloud-status-sync');
+    var itemsEl = card.querySelector('.cloud-status-items');
+    if (connected && lastBackup && lastBackup.provider === key) {
+      var d = new Date(lastBackup.timestamp);
+      if (syncEl) {
+        syncEl.textContent = d.toLocaleDateString() + ' ' +
+          d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+      }
+      if (itemsEl) {
+        var meta = lastBackup.itemCount ? lastBackup.itemCount.toLocaleString() : '0';
+        if (lastBackup.appVersion) meta += ' (v' + lastBackup.appVersion + ')';
+        itemsEl.textContent = meta;
+      }
+    } else {
+      if (syncEl) syncEl.textContent = connected ? 'No backups yet' : 'Never';
+      if (itemsEl) itemsEl.textContent = '\u2014';
+    }
+
+    // Update legacy status detail text
+    var statusEl = card.querySelector('.cloud-status-detail');
+    if (statusEl) statusEl.textContent = '';
 
     // Hide backup list when disconnected
     if (backupListEl && !connected) {
@@ -596,6 +653,34 @@ function syncCloudUI() {
       backupListEl.innerHTML = '';
     }
   });
+
+  // Update password cache status
+  var pwStatusEl = document.getElementById('cloudPwCacheStatus');
+  if (pwStatusEl) {
+    try {
+      var raw = localStorage.getItem('cloud_vault_pw_cache');
+      if (raw) {
+        var payload = JSON.parse(raw);
+        var remaining = payload.expires - Date.now();
+        if (remaining > 0) {
+          var hours = Math.floor(remaining / 3600000);
+          var days = Math.floor(hours / 24);
+          pwStatusEl.textContent = days > 0 ? 'Expires in ' + days + 'd ' + (hours % 24) + 'h' :
+            hours > 0 ? 'Expires in ' + hours + 'h' : 'Expires soon';
+          pwStatusEl.style.color = 'var(--success)';
+        } else {
+          pwStatusEl.textContent = 'Expired';
+          pwStatusEl.style.color = 'var(--text-secondary)';
+        }
+      } else {
+        pwStatusEl.textContent = 'Not cached';
+        pwStatusEl.style.color = 'var(--text-secondary)';
+      }
+    } catch (_) {
+      pwStatusEl.textContent = 'Not cached';
+      pwStatusEl.style.color = 'var(--text-secondary)';
+    }
+  }
 }
 
 // ---------------------------------------------------------------------------

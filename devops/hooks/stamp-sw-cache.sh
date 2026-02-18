@@ -54,7 +54,9 @@ if [ "$NEED_STAMP" = false ]; then
 fi
 
 # Extract APP_VERSION from constants.js (e.g. "3.30.08")
-APP_VERSION=$(grep -oP 'APP_VERSION\s*=\s*"\K[^"]+' js/constants.js 2>/dev/null || echo "0.0.0")
+# Use sed instead of grep -P for macOS compatibility
+APP_VERSION=$(sed -n "s/.*APP_VERSION\s*=\s*\"\([^\"]*\)\".*/\1/p" js/constants.js 2>/dev/null | head -1)
+APP_VERSION="${APP_VERSION:-0.0.0}"
 
 # Build timestamp (Unix epoch seconds)
 BUILD_TS=$(date +%s)
@@ -62,14 +64,20 @@ BUILD_TS=$(date +%s)
 NEW_CACHE="staktrakr-v${APP_VERSION}-b${BUILD_TS}"
 
 # Current CACHE_NAME value
-CURRENT=$(grep -oP "CACHE_NAME\s*=\s*'\K[^']+" "$SW_FILE" 2>/dev/null || echo "")
+CURRENT=$(sed -n "s/.*CACHE_NAME\s*=\s*'\([^']*\)'.*/\1/p" "$SW_FILE" 2>/dev/null | head -1)
 
 if [ "$CURRENT" = "$NEW_CACHE" ]; then
   exit 0
 fi
 
-# Replace CACHE_NAME in sw.js
-sed -i "s|const CACHE_NAME = '.*';|const CACHE_NAME = '${NEW_CACHE}';|" "$SW_FILE"
+# Replace CACHE_NAME in sw.js (macOS-compatible sed -i '')
+if sed --version >/dev/null 2>&1; then
+  # GNU sed
+  sed -i "s|const CACHE_NAME = '.*';|const CACHE_NAME = '${NEW_CACHE}';|" "$SW_FILE"
+else
+  # BSD/macOS sed
+  sed -i '' "s|const CACHE_NAME = '.*';|const CACHE_NAME = '${NEW_CACHE}';|" "$SW_FILE"
+fi
 
 # Re-stage sw.js so the commit includes the updated cache name
 git add "$SW_FILE"
