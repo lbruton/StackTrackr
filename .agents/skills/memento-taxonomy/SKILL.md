@@ -109,7 +109,9 @@ Secret entries should keep `ABSTRACT` non-sensitive (identify service, not full 
 6. Use `read_graph` only for full-graph diagnostics.
 7. **Fallback**: If `search_nodes` returns 0 results, always retry with `semantic_search`.
 
-**Critical**: Never space-split colon-delimited entity names. `HANDSHAKE CODEX 2026-02-18` (spaces) returns 0 results — use `HANDSHAKE:CODEX:2026-02-18` (colons preserved). Colons are part of the name token in the search index.
+**Critical**: Never space-split colon-delimited entity names. `HANDSHAKE CODEX 2026-02-18` (spaces)
+returns 0 results — use `HANDSHAKE:CODEX:2026-02-18` (colons preserved).
+Colons are part of the name token in the search index.
 
 ## Handoff Standard
 
@@ -120,9 +122,11 @@ For cross-agent handoff, create both:
 
 ### Linear Developers Team
 
-The **Developers** team (`38d57c9f-388c-41ec-9cd2-259a21a5df1c`) is a shared scratch space for all agents and the human — handoffs, notes, plans, brainstorming, ideas.
+The **Developers** team (`38d57c9f-388c-41ec-9cd2-259a21a5df1c`) is a shared scratch space
+for all agents and the human — handoffs, notes, plans, brainstorming, ideas.
 
-**Projects in Developers** = repos/codebases (StakTrakr, HexTrackr, etc.) for sorting notes. This differs from the StakTrakr project team where projects = feature groups and sprints.
+**Projects in Developers** = repos/codebases (StakTrakr, HexTrackr, etc.) for sorting notes.
+This differs from the StakTrakr project team where projects = feature groups and sprints.
 
 ### Handoff Routing
 
@@ -163,6 +167,7 @@ Agent handoff update:
 
 ## Secrets Policy
 
-- **Memento**: Secrets allowed only with explicit user approval (low-risk items like test API keys). Warn before save, confirm before reveal. Tag with `type:secret`, `sensitivity:secret`, `status:active`.
+- **Memento**: Secrets allowed only with explicit user approval (low-risk items like test API keys).
+  Warn before save, confirm before reveal. Tag with `type:secret`, `sensitivity:secret`, `status:active`.
 - **Linear**: No secrets ever. Reference only (e.g., "key stored in Memento entity X").
 - **Prefer references** over raw values.
