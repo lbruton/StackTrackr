@@ -1655,7 +1655,6 @@
     <div class="modal" id="aboutModal" style="display: none">
       <div class="modal-content about-modal-content">
         <div class="modal-header about-modal-header">
-          <h1>About</h1>
           <button
             aria-label="Close modal"
             class="modal-close"
@@ -1696,83 +1695,36 @@
                 <svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
                 Sponsor
               </a>
+              <button class="about-badge" onclick="if(window.showFaqModal)window.showFaqModal()">
+                ❓ FAQ
+              </button>
+              <button class="about-badge" onclick="if(window.openModalById)openModalById('privacyModal')">
+                🔒 Privacy
+              </button>
             </div>
           </div>
 
-          <div class="about-alert">
-            <div class="alert-header">
-              <span class="alert-icon">⚠️</span>
-              <strong>Important Privacy &amp; Data Notice</strong>
-            </div>
-            <div class="alert-content">
-              <p>
-                <strong>Your Privacy is Protected:</strong> All data is stored
-                locally in your browser using localStorage and
-                <em>never transmitted to any server</em>. Your precious metals
-                inventory information remains completely private and under your
-                control.
-              </p>
-
-              <p>
-                <strong>Data Backup Responsibility:</strong> Since data is
-                stored locally, it will be lost if you clear browser history,
-                reset browser data, or use private browsing mode. Remember to
-                export your data regularly to keep a copy.
-              </p>
-
-              <p>
-                <strong>Use at Your Own Risk:</strong> This tool is provided for
-                informational and organizational purposes only. The developer
-                assumes no responsibility for any financial decisions,
-                investment choices, or data loss. Always verify spot prices and
-                calculations independently.
-              </p>
-
-              <p>
-                <strong>Spot Price Accuracy:</strong> Prices displayed are for
-                reference only and may not reflect real-time market conditions.
-                Always confirm current pricing with your dealer or official
-                market sources before making transactions.
-              </p>
-            </div>
+          <div class="about-alert about-alert-compact">
+            <span class="alert-icon">⚠️</span>
+            All data is stored locally in your browser and never sent to a server.
+            Export regularly to keep a backup. See <button class="about-alert-link" onclick="if(window.showFaqModal)window.showFaqModal()">FAQ</button> for full details.
           </div>
           <!-- What's New and Roadmap -->
           <div class="about-info-grid">
             <div class="about-section">
               <div class="section-title">🚀 What's New in <span id="aboutCurrentVersion"></span></div>
               <ul id="aboutChangelogLatest" class="changelog-list"></ul>
+              <div class="about-section-footer">
+                <button class="about-card-link" id="aboutShowChangelogBtn">View Full Changelog →</button>
+              </div>
             </div>
 
             <div class="about-section" id="aboutRoadmapSection">
               <div class="section-title">🗺️ Development Roadmap</div>
               <ul id="aboutRoadmapList" class="changelog-list"></ul>
-            </div>
-          </div>
-
-          <!-- Resources Section -->
-          <div class="about-section">
-            <div class="section-title">📄 Resources & Links</div>
-            <div class="resources-grid">
-              <button class="resource-btn" onclick="if(window.showFaqModal)window.showFaqModal()">
-                ❓ FAQ &amp; Help
-              </button>
-              <a class="resource-btn" href="sample.csv" download="sample.csv">
-                📄 Download Sample Data
-              </a>
-              <a
-                class="resource-btn"
-                href="https://github.com/lbruton/StakTrakr"
-                target="_blank"
-                rel="noopener"
-              >
-                📁 View Source Code
-              </a>
-              <button class="resource-btn" id="aboutShowChangelogBtn">
-                📜 View Full Changelog
-              </button>
-              <button class="resource-btn" onclick="if(window.openModalById)openModalById('privacyModal')">
-                🔒 Privacy Policy
-              </button>
+              <div class="about-section-footer">
+                <a class="about-card-link" href="https://github.com/lbruton/StakTrakr/blob/main/docs/announcements.md" target="_blank" rel="noopener">View Full Roadmap →</a>
+              </div>
             </div>
           </div>
         </div>
@@ -2061,30 +2013,17 @@
             <div class="about-section">
               <div class="section-title">🚀 What's New</div>
               <ul id="versionChanges" class="changelog-list"></ul>
+              <div class="about-section-footer">
+                <button class="about-card-link" id="versionShowChangelogBtn">View Full Changelog →</button>
+              </div>
             </div>
 
             <div class="about-section">
               <div class="section-title">🗺️ Development Roadmap</div>
               <ul id="versionRoadmapList" class="changelog-list"></ul>
-            </div>
-          </div>
-
-          <div class="about-section">
-            <div class="section-title">📄 Resources &amp; Links</div>
-            <div class="resources-grid">
-              <a class="resource-btn" href="sample.csv" download="sample.csv">
-                📄 Download Sample Data
-              </a>
-              <a
-                class="resource-btn"
-                href="https://github.com/lbruton/StakTrakr"
-                target="_blank"
-                rel="noopener"
-              >
-                📁 View Source Code
-              </a>
-              <button class="resource-btn" id="versionShowChangelogBtn">📜 View Full Changelog</button>
-              <button class="resource-btn" onclick="if(window.openModalById)openModalById('privacyModal')">🔒 Privacy Policy</button>
+              <div class="about-section-footer">
+                <a class="about-card-link" href="https://github.com/lbruton/StakTrakr/blob/main/docs/announcements.md" target="_blank" rel="noopener">View Full Roadmap →</a>
+              </div>
             </div>
           </div>
 
@@ -3336,6 +3275,9 @@
                       <progress class="import-progress" id="importProgress" value="0" max="0"></progress>
                       <div class="import-progress-text" id="importProgressText"></div>
                     </div>
+                    <p class="settings-subtext" style="margin-top:0.5rem">
+                      New here? <a href="sample.csv" download="sample.csv">Download sample CSV</a> to try importing.
+                    </p>
                   </div>
                   <div class="settings-card">
                     <h3>Third-Party</h3>

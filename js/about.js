@@ -140,9 +140,18 @@ const loadAnnouncements = async () => {
 
     const whatsNewItems = parseList(section("What's New"));
     if (whatsNewTargets.length) {
+      // Filter to current version branch (e.g., 3.31.x) before slicing
+      const versionBranch = typeof APP_VERSION !== 'undefined'
+        ? APP_VERSION.split('.').slice(0, 2).join('.')
+        : null;
+      const filteredWhatsNew = versionBranch
+        ? whatsNewItems.filter(i => i.includes(`v${versionBranch}.`) || i.includes(`(v${versionBranch}`))
+        : whatsNewItems;
+      const displayItems = filteredWhatsNew.length > 0 ? filteredWhatsNew : whatsNewItems;
+
       const html =
-        whatsNewItems.length > 0
-          ? whatsNewItems
+        displayItems.length > 0
+          ? displayItems
               .slice(0, 5)
               .map((i) => `<li>${i}</li>`)
               .join("")
@@ -276,9 +285,6 @@ const getEmbeddedWhatsNew = () => {
   return `
     <li><strong>v3.31.1 &ndash; FAQ Modal &amp; Privacy Improvements</strong>: Interactive FAQ with 13 questions added to Settings sidebar tab, About modal, and footer. ZIP export/import exposed in Settings. Files tab merged into Inventory. privacy.html theme and back-link fixed. pCloud and Box added as coming-soon cloud providers. r/Silverbugs community credit in footer</li>
     <li><strong>v3.31.0 &ndash; Cloud Storage Backup</strong>: Encrypted .stvault backup to Dropbox via OAuth PKCE popup flow. Privacy policy page for provider compliance. Favicon and PWA icons updated to ST branding</li>
-    <li><strong>v3.30.09 &ndash; Settings &amp; Header Controls Overhaul</strong>: Optional Trend and Sync buttons added to header (enable in Appearance &gt; Header Buttons). Global spot trend/sync bar removed. Settings Appearance panel reorganized with Header Buttons grid, Layout card, and Inventory View cards. Images panel restructured with actions row, camera capture, and fieldset cards. Metal Order and Inline Chips consolidated into Chips panel</li>
-    <li><strong>v3.30.08 &ndash; Default Settings Overhaul &amp; Seed Pattern Images</strong>: New user defaults &mdash; dark theme, Name A-Z sort, all rows visible, Goldback pricing ON. Per-rule enable/disable toggles for built-in Numista patterns. Seed coin photos (ASE, Gold Maple) as demo custom pattern rules for first-time user coaching</li>
-    <li><strong>v3.30.07 &ndash; Save Search as Filter Chip</strong>: Bookmark button inside search input saves multi-term comma-separated searches as custom filter chips. Smart enable/disable logic activates only for valid multi-term queries that aren&rsquo;t already saved. Disabled during fuzzy search mode (STAK-104)</li>
   `;
 };
 
