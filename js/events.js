@@ -1640,14 +1640,6 @@ const setupNoteAndModalListeners = () => {
     () => { if (typeof clearChangeLog === "function") clearChangeLog(); },
     "Change log clear button");
 
-  optionalListener(safeGetElement('goldbackExchangeRateLink'), 'click', (e) => {
-    e.preventDefault();
-    window.open(
-      'https://www.goldback.com/exchange-rates/',
-      'goldback_rates',
-      'width=1250,height=800,scrollbars=yes,resizable=yes,toolbar=no,location=no,menubar=no,status=no',
-    );
-  }, 'Goldback exchange rates link');
 };
 
 /**
