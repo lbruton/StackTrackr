@@ -657,6 +657,19 @@ document.addEventListener("DOMContentLoaded", async () => {
     // Phase 16: Storage optimization pass
     if (typeof optimizeStoragePhase1C === 'function') { optimizeStoragePhase1C(); }
 
+    // Phase 17: Hash deep-link handling (runs after event listeners are wired)
+    // Supports privacy.html redirect shim and any direct #privacy / #faq links.
+    setTimeout(() => {
+      const hash = window.location.hash;
+      if (hash === '#privacy') {
+        window.location.hash = '';
+        if (window.openModalById) openModalById('privacyModal');
+      } else if (hash === '#faq') {
+        window.location.hash = '';
+        if (typeof showSettingsModal === 'function') showSettingsModal('faq');
+      }
+    }, 250);
+
   } catch (error) {
     console.error("=== CRITICAL INITIALIZATION ERROR ===");
     console.error("Error:", error.message);

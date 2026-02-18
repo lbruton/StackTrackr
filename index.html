@@ -1710,278 +1710,6 @@
         </div>
       </div>
     </div>
-    <!-- =============================================================================
-       FAQ MODAL
-       Frequently asked questions organized into topic sections with native
-       <details>/<summary> accordions — no JS needed for expand/collapse.
-       ============================================================================= -->
-    <div class="modal" id="faqModal" style="display: none">
-      <div class="modal-content about-modal-content">
-        <div class="modal-header about-modal-header">
-          <h1>Frequently Asked Questions</h1>
-          <button aria-label="Close modal" class="modal-close" id="faqCloseBtn">&times;</button>
-        </div>
-        <div class="modal-body about-modal-body">
-
-          <!-- Section 1: Your Data & Privacy -->
-          <div class="about-section">
-            <div class="section-title">🔒 Your Data &amp; Privacy</div>
-
-            <details class="faq-item">
-              <summary class="faq-question">Who can see my inventory?</summary>
-              <div class="faq-answer">
-                <p>Only you. Your inventory is stored entirely on your own device using your browser's localStorage (and IndexedDB for images). No data is ever sent to any server unless you explicitly choose to use a cloud backup feature like Dropbox.</p>
-                <p>Even when you use cloud backup, the data is encrypted on your device <em>before</em> it leaves — the cloud provider receives an encrypted blob they cannot read.</p>
-              </div>
-            </details>
-
-            <details class="faq-item">
-              <summary class="faq-question">Can the developer see my data?</summary>
-              <div class="faq-answer">
-                <p>No. There is no server-side component, no database, and no analytics that transmit your inventory. The developer has no technical means to access your data.</p>
-                <p>The only outbound network requests the app makes are:</p>
-                <ul class="faq-list">
-                  <li>Spot price lookups from public metal pricing APIs (no inventory data included)</li>
-                  <li>Numista / PCGS catalog searches when you use those features</li>
-                  <li>Version check against <code>staktrakr.com/version.json</code> (no inventory data included)</li>
-                  <li>Exchange rate data from Open Exchange Rates (no inventory data included)</li>
-                </ul>
-              </div>
-            </details>
-
-            <details class="faq-item">
-              <summary class="faq-question">Does this app use cookies or tracking?</summary>
-              <div class="faq-answer">
-                <p><strong>No cookies. No advertising SDKs. No tracking pixels.</strong> The app itself uses browser localStorage and IndexedDB solely to store your inventory and preferences on your own device.</p>
-                <p>However, when you use the <strong>hosted version</strong> at staktrakr.com (served via Cloudflare Pages), <a href="https://www.cloudflare.com/web-analytics/" target="_blank" rel="noopener">Cloudflare Web Analytics</a> is active at the network edge. It collects aggregated, anonymous page view metrics — things like visit counts, countries, and browser types — to help the developer understand usage. Cloudflare does this without cookies and without building individual user profiles.</p>
-                <p>No inventory data is ever included. If you download and run the app locally from a ZIP file, no analytics run at all.</p>
-                <details class="faq-technical">
-                  <summary>What Cloudflare Web Analytics does and does not do</summary>
-                  <p><strong>Does not:</strong> set cookies · use localStorage · fingerprint individuals · share data with advertisers · track you across sites<br><strong>Does:</strong> log page views at the network edge · process IP addresses server-side (not stored individually) · report aggregated metrics to the site owner only</p>
-                </details>
-              </div>
-            </details>
-
-            <details class="faq-item">
-              <summary class="faq-question">What happens if I clear my browser history?</summary>
-              <div class="faq-answer">
-                <p>If you clear browser storage (not just history), your inventory data stored in localStorage will be deleted. Browser history alone does not affect your data.</p>
-                <p><strong>Recommendation:</strong> Export a backup regularly using the ZIP or vault export options. This gives you a file you control, independent of any browser.</p>
-              </div>
-            </details>
-
-            <details class="faq-item">
-              <summary class="faq-question">Is this app safe from viruses or malware?</summary>
-              <div class="faq-answer">
-                <p>StakTrakr is open-source software — anyone can read the code at <a href="https://github.com/lbruton/StakTrakr" target="_blank" rel="noopener">github.com/lbruton/StakTrakr</a>. There is no hidden code.</p>
-                <p>The app loads several trusted third-party libraries (Chart.js, PapaParse, jsPDF, Bootstrap) from CDNs. These are industry-standard libraries used by millions of websites.</p>
-                <p>Like any web app, your device's security is part of the equation. Keep your browser and operating system updated, and be cautious about browser extensions that have broad permissions.</p>
-              </div>
-            </details>
-          </div>
-
-          <!-- Section 2: Backups & Export -->
-          <div class="about-section">
-            <div class="section-title">📦 Backups &amp; Export</div>
-
-            <details class="faq-item">
-              <summary class="faq-question">How do I get my data out if I want to leave?</summary>
-              <div class="faq-answer">
-                <p>Your data is never locked in. You can export at any time in multiple formats:</p>
-                <ul class="faq-list">
-                  <li><strong>CSV</strong> — opens in Excel, Google Sheets, or any spreadsheet app</li>
-                  <li><strong>PDF</strong> — a formatted report for printing or archiving</li>
-                  <li><strong>ZIP backup</strong> — a complete snapshot including settings, importable into any future StakTrakr install</li>
-                  <li><strong>Encrypted vault (.stvault)</strong> — a password-protected backup file</li>
-                </ul>
-                <p>All export options are in the <strong>Inventory → Export</strong> menu.</p>
-              </div>
-            </details>
-
-            <details class="faq-item">
-              <summary class="faq-question">Will this app keep working in the future?</summary>
-              <div class="faq-answer">
-                <p>Yes. Because the app runs entirely in your browser with no server requirement, a downloaded copy will continue to work indefinitely — even without an internet connection — as long as browsers continue to support standard web APIs (localStorage, IndexedDB, JavaScript).</p>
-                <p>You can always save a ZIP of the app and open it locally. The app is designed from the ground up to work with the <code>file://</code> protocol.</p>
-              </div>
-            </details>
-
-            <details class="faq-item">
-              <summary class="faq-question">What if the developer stops maintaining it?</summary>
-              <div class="faq-answer">
-                <p>The app is MIT licensed and open source. If development stops, anyone in the community can fork the project and continue it. Your data remains yours in exportable formats regardless.</p>
-                <p>The offline-first, single-file design means the app won't simply stop working the way a subscription service would.</p>
-              </div>
-            </details>
-          </div>
-
-          <!-- Section 3: Cloud Storage -->
-          <div class="about-section">
-            <div class="section-title">☁️ Cloud Storage</div>
-
-            <details class="faq-item">
-              <summary class="faq-question">If I use Dropbox, can Dropbox see my data?</summary>
-              <div class="faq-answer">
-                <p>No. When you use the cloud backup feature, your inventory is encrypted on your device before it is uploaded. Dropbox only ever receives an encrypted file — they cannot read what's inside it.</p>
-                <details class="faq-technical">
-                  <summary>Technical details</summary>
-                  <p>Encryption uses <strong>AES-256-GCM</strong> (symmetric authenticated encryption) with a key derived from your password via <strong>PBKDF2-SHA256 with 100,000 iterations</strong>. The encryption happens entirely in your browser using the <a href="https://developer.mozilla.org/en-US/docs/Web/API/Web_Crypto_API" target="_blank" rel="noopener">Web Crypto API</a> — the same cryptographic standard used by password managers and secure messaging apps. The cloud provider receives only the ciphertext and a random salt, never your password or plaintext data.</p>
-                </details>
-              </div>
-            </details>
-
-            <details class="faq-item">
-              <summary class="faq-question">What is encryption and how does it protect me?</summary>
-              <div class="faq-answer">
-                <p>Encryption transforms your data into unreadable scrambled text using a secret key derived from your password. Without the correct password, the data is mathematically impossible to read — even if someone intercepts the file or the cloud provider is breached.</p>
-                <p>Think of it like a safe deposit box: the bank (Dropbox) holds the box, but only you have the key. The bank has no way to open it.</p>
-                <p><strong>Important:</strong> If you lose your vault password, the data cannot be recovered. Store your password somewhere safe.</p>
-              </div>
-            </details>
-          </div>
-
-          <!-- Section 4: Security -->
-          <div class="about-section">
-            <div class="section-title">🛡️ Security</div>
-
-            <details class="faq-item">
-              <summary class="faq-question">Is my data safe from hackers?</summary>
-              <div class="faq-answer">
-                <p>Your local data (in localStorage/IndexedDB) is protected by your browser's same-origin security model — other websites cannot read it. The vault encryption protects backups with strong cryptography.</p>
-                <p>The practical risks are the same as any local software:</p>
-                <ul class="faq-list">
-                  <li>Malware on your device that can read browser storage</li>
-                  <li>Browser extensions with broad permissions</li>
-                  <li>Physical access to an unlocked device</li>
-                </ul>
-                <p>Standard device security hygiene — OS updates, reputable extensions only, device lock screens — provides strong protection.</p>
-              </div>
-            </details>
-          </div>
-
-          <!-- Section 5: About the App -->
-          <div class="about-section">
-            <div class="section-title">💡 About the App</div>
-
-            <details class="faq-item">
-              <summary class="faq-question">How is this different from other precious metals apps?</summary>
-              <div class="faq-answer">
-                <p>Most precious metals apps store your data on their servers and require accounts. StakTrakr is different:</p>
-                <ul class="faq-list">
-                  <li><strong>Fully local</strong> — your data never leaves your device unless you choose cloud backup</li>
-                  <li><strong>No account required</strong> — no email, no password to create, no profile</li>
-                  <li><strong>Open source</strong> — the code is publicly readable; there are no hidden behaviors</li>
-                  <li><strong>No subscription</strong> — the core app is free forever; optional sponsor perks cover infrastructure costs</li>
-                  <li><strong>Works offline</strong> — once loaded, the app works without internet (spot prices require connectivity)</li>
-                  <li><strong>Portable</strong> — download a ZIP, open <code>index.html</code>, and it runs anywhere</li>
-                </ul>
-              </div>
-            </details>
-
-            <details class="faq-item">
-              <summary class="faq-question">Does this app have any subscriptions or costs?</summary>
-              <div class="faq-answer">
-                <p><strong>The core app is free and always will be.</strong> Every feature you see today — full inventory management, spot price sync, CSV/PDF/ZIP export, encrypted vault backups, Dropbox cloud sync, Numista/PCGS integration — is included with no account required and no paywall.</p>
-                <p>Running the app costs real money: the domain renewal, and the API provider that supplies hourly live spot prices for all users on a best-effort basis. Sponsoring at $1/month or more on GitHub helps cover those costs directly.</p>
-                <p>As a thank-you, sponsors will get access to <strong>optional infrastructure perks</strong> as they are built out:</p>
-                <ul class="faq-list">
-                  <li><strong>Now:</strong> Dropbox cloud backup is free for everyone</li>
-                  <li><strong>Coming for sponsors:</strong> a hosted cloud storage key (Supabase-backed) — same encryption guarantees as Dropbox, no third-party account needed</li>
-                  <li><strong>Further out:</strong> early access to real-time encrypted cloud sync (live CRUD to the cloud, not just manual backup/restore), as the user base and infrastructure grow</li>
-                </ul>
-                <p>None of these are features being removed from the free tier — they are new infrastructure that costs money to operate. If sponsorship never materializes, the core app stays exactly as it is. If it grows, everyone benefits from a more sustainable project.</p>
-                <p>The hourly API spot prices are provided on a best-effort basis. If infrastructure costs become unsustainable, that service may be reduced — but the app itself, and Dropbox sync, will always remain free and open source.</p>
-              </div>
-            </details>
-          </div>
-
-          <!-- Section 6: Honest Limitations -->
-          <div class="about-section faq-limitations-section">
-            <div class="section-title faq-limitations-title">⚖️ Honest Limitations</div>
-            <p class="faq-limitations-intro">We believe in transparency. Here are real trade-offs you should know about.</p>
-
-            <details class="faq-item">
-              <summary class="faq-question">localStorage can be cleared unexpectedly</summary>
-              <div class="faq-answer">
-                <p>Browser localStorage is not permanent storage. It can be cleared by:</p>
-                <ul class="faq-list">
-                  <li>"Clear site data" or "Clear browsing data" in browser settings</li>
-                  <li>Private/incognito browsing sessions (data is lost when the window closes)</li>
-                  <li><strong>iOS Safari storage eviction</strong> — Apple may automatically delete localStorage for apps that haven't been used recently if the device is low on storage</li>
-                </ul>
-                <p><strong>Mitigation:</strong> Export a ZIP or vault backup regularly, especially on iOS. Consider connecting a cloud backup provider.</p>
-              </div>
-            </details>
-
-            <details class="faq-item">
-              <summary class="faq-question">Opening via file:// protocol on some browsers</summary>
-              <div class="faq-answer">
-                <p>The app is designed to work with the <code>file://</code> protocol (opening <code>index.html</code> directly from your filesystem). However, a small number of browser configurations restrict localStorage persistence in <code>file://</code> contexts.</p>
-                <p>If you experience data not persisting when opening the file directly, try serving it from a local web server (e.g., <code>python3 -m http.server</code>) or use the hosted version at staktrakr.com.</p>
-              </div>
-            </details>
-
-            <details class="faq-item">
-              <summary class="faq-question">No formal third-party security audit — but here's what we do run</summary>
-              <div class="faq-answer">
-                <p>StakTrakr is a one-person project. A paid independent cryptographic audit hasn't been commissioned — that's the honest limitation. But the codebase is not unreviewed. Every commit runs through a layered set of automated security and quality checks:</p>
-                <ul class="faq-list">
-                  <li><strong>Codacy</strong> — continuous code quality gate, A+ rating maintained on every PR</li>
-                  <li><strong>CodeQL</strong> — GitHub's semantic code analysis, scans for security vulnerabilities on every push</li>
-                  <li><strong>Semgrep</strong> — static analysis for common security anti-patterns</li>
-                  <li><strong>PMD</strong> — additional static analysis for code quality issues</li>
-                  <li><strong>ESLint</strong> — JavaScript linting with security-aware rules</li>
-                  <li><strong>GitHub Copilot &amp; Codex</strong> — AI-assisted code review on pull requests</li>
-                </ul>
-                <p>Development is also assisted by <strong>Claude Code</strong> (Anthropic's AI coding assistant), which is explicitly instructed to flag security concerns — SQL injection, XSS, insecure storage patterns, and similar issues — during implementation.</p>
-                <p>This is the realistic security posture of a well-maintained open-source personal project: comprehensive automated tooling, no paid human audit. For most users tracking a personal collection, this is a reasonable level of assurance. Users with very high threat models may wish to verify the encryption implementation themselves — the source is fully public.</p>
-              </div>
-            </details>
-
-            <details class="faq-item">
-              <summary class="faq-question">Only Dropbox is active — other cloud providers are coming soon</summary>
-              <div class="faq-answer">
-                <p><strong>Dropbox is the only fully active cloud backup provider.</strong> The Cloud tab in Settings also shows placeholder cards for four future providers:</p>
-                <ul class="faq-list">
-                  <li><strong>Google Drive</strong> — coming soon</li>
-                  <li><strong>OneDrive</strong> — coming soon</li>
-                  <li><strong>pCloud</strong> — coming soon</li>
-                  <li><strong>Box</strong> — coming soon</li>
-                </ul>
-                <p>These are shown to communicate the roadmap, not as functional options. All will use the same client-side AES-256-GCM encryption as Dropbox — the provider never sees your plaintext data.</p>
-              </div>
-            </details>
-
-            <details class="faq-item">
-              <summary class="faq-question">Spot prices are reference data, not transaction prices</summary>
-              <div class="faq-answer">
-                <p>The spot prices displayed are fetched from public metal pricing APIs and represent the theoretical melt value of metal at that moment. They are <strong>not</strong> buy/sell prices from a dealer.</p>
-                <p>Actual transaction prices will differ due to dealer premiums, bid/ask spreads, and market conditions. The "Melt Value" shown is a reference floor, not a guaranteed sale price.</p>
-              </div>
-            </details>
-          </div>
-
-          <!-- Section 7: More Information -->
-          <div class="about-section">
-            <div class="section-title">📄 More Information</div>
-            <div class="resources-grid">
-              <button class="resource-btn" onclick="if(window.openModalById)openModalById('privacyModal')">
-                🔒 Privacy Policy
-              </button>
-              <a class="resource-btn" href="https://github.com/lbruton/StakTrakr" target="_blank" rel="noopener">
-                📁 Source Code
-              </a>
-              <a class="resource-btn" href="https://www.reddit.com/r/staktrakr/" target="_blank" rel="noopener">
-                💬 Community
-              </a>
-            </div>
-          </div>
-
-        </div>
-      </div>
-    </div>
-    <!-- END FAQ MODAL -->
-
     <div class="modal" id="versionModal" style="display: none">
       <div class="modal-content about-modal-content">
         <div class="modal-header about-modal-header">
@@ -4348,8 +4076,115 @@
           <h3>Privacy Policy</h3>
           <button aria-label="Close modal" class="modal-close" onclick="if(window.closeModalById)closeModalById('privacyModal');else this.closest('.modal').style.display='none';">&times;</button>
         </div>
-        <div class="modal-body" style="padding:0;overflow:hidden;border-radius:0 0 var(--radius-lg,0.5rem) var(--radius-lg,0.5rem)">
-          <iframe src="./privacy.html" style="width:100%;height:60vh;border:none;display:block" title="Privacy Policy"></iframe>
+        <div class="modal-body" style="padding:1rem 1.5rem;overflow-y:auto;max-height:70vh">
+
+          <!-- Overview -->
+          <div class="about-section">
+            <div class="section-title">🏠 Overview</div>
+            <p style="font-size:0.95rem;line-height:1.6">StakTrakr is a client-side web application for tracking precious metals inventory. Your data stays on your device — we do not operate servers that store user data. <em>Last updated: February 17, 2026.</em></p>
+          </div>
+
+          <!-- Your Data -->
+          <div class="about-section">
+            <div class="section-title">💾 Your Data</div>
+
+            <details class="faq-item">
+              <summary class="faq-question">Where is my data stored?</summary>
+              <div class="faq-answer">
+                <p>All inventory data, settings, and preferences are stored locally in your browser using <strong>localStorage</strong> and <strong>IndexedDB</strong> (for images). Nothing is transmitted to StakTrakr servers.</p>
+              </div>
+            </details>
+
+            <details class="faq-item">
+              <summary class="faq-question">Can this data be lost?</summary>
+              <div class="faq-answer">
+                <p>Browser localStorage is not permanent storage. It can be cleared by browser settings, private/incognito sessions, or on iOS if the device is low on storage and the app hasn't been used recently.</p>
+                <p><strong>Recommendation:</strong> Export a ZIP or vault backup regularly, especially on iOS. Consider connecting a cloud backup provider.</p>
+              </div>
+            </details>
+          </div>
+
+          <!-- Cloud Backup -->
+          <div class="about-section">
+            <div class="section-title">☁️ Cloud Backup</div>
+
+            <details class="faq-item">
+              <summary class="faq-question">What happens when I connect Dropbox, pCloud, or Box?</summary>
+              <div class="faq-answer">
+                <p>StakTrakr will request authorization to read and write files in a <code>/StakTrakr/</code> folder on your account. It stores an OAuth access token in your browser's localStorage to maintain the connection. StakTrakr does not access any other files in your cloud storage account.</p>
+              </div>
+            </details>
+
+            <details class="faq-item">
+              <summary class="faq-question">Can my cloud provider read my data?</summary>
+              <div class="faq-answer">
+                <p>No. Your backup is encrypted on your device with <strong>AES-256-GCM</strong> before it is uploaded. The cloud provider receives only ciphertext and a random salt — never your password or plaintext data. The key is derived from your password via PBKDF2-SHA256 with 100,000 iterations using the browser's <a href="https://developer.mozilla.org/en-US/docs/Web/API/Web_Crypto_API" target="_blank" rel="noopener">Web Crypto API</a>.</p>
+              </div>
+            </details>
+
+            <details class="faq-item">
+              <summary class="faq-question">How do I disconnect?</summary>
+              <div class="faq-answer">
+                <p>You can disconnect at any time in <strong>Settings → Cloud</strong>. Disconnecting removes the stored OAuth token from your browser. Your cloud files are not automatically deleted — you can remove them manually from your cloud provider's file manager.</p>
+              </div>
+            </details>
+          </div>
+
+          <!-- Third-Party APIs -->
+          <div class="about-section">
+            <div class="section-title">🔌 Third-Party APIs</div>
+
+            <details class="faq-item">
+              <summary class="faq-question">What external services does StakTrakr contact?</summary>
+              <div class="faq-answer">
+                <p>StakTrakr may contact external services for spot price data, exchange rates, and catalog lookups. These requests contain no personal information — only metal type or coin identifiers. No cookies or tracking identifiers are sent. Specific services include:</p>
+                <ul class="faq-list">
+                  <li>Public metal pricing APIs (spot prices)</li>
+                  <li>Open Exchange Rates (currency conversion)</li>
+                  <li>Numista &amp; PCGS APIs (coin catalog lookups, when you use those features)</li>
+                  <li><code>staktrakr.com/version.json</code> (version update check)</li>
+                </ul>
+              </div>
+            </details>
+          </div>
+
+          <!-- Analytics & Tracking -->
+          <div class="about-section">
+            <div class="section-title">📊 Analytics &amp; Tracking</div>
+
+            <details class="faq-item">
+              <summary class="faq-question">Does the app track me?</summary>
+              <div class="faq-answer">
+                <p>No. The app itself does not use analytics, tracking pixels, fingerprinting, or advertising of any kind. There are no third-party scripts embedded in the app that collect user behavior.</p>
+              </div>
+            </details>
+
+            <details class="faq-item">
+              <summary class="faq-question">What about the hosted version at staktrakr.com?</summary>
+              <div class="faq-answer">
+                <p>When you use the hosted version at staktrakr.com (served via Cloudflare Pages), <a href="https://www.cloudflare.com/web-analytics/" target="_blank" rel="noopener">Cloudflare Web Analytics</a> is active at the network edge. It collects aggregated, anonymous page-view metrics (visit counts, countries, browser types) <strong>without cookies</strong> and without building individual user profiles. No inventory data is ever included. If you run the app locally from a downloaded ZIP, no analytics run at all.</p>
+              </div>
+            </details>
+          </div>
+
+          <!-- Cookies -->
+          <div class="about-section">
+            <div class="section-title">🍪 Cookies</div>
+            <p style="font-size:0.95rem;line-height:1.6">StakTrakr does not set cookies. OAuth providers may set their own cookies during the authorization flow in the popup window. Cloudflare Web Analytics does not use cookies.</p>
+          </div>
+
+          <!-- Children -->
+          <div class="about-section">
+            <div class="section-title">👶 Children</div>
+            <p style="font-size:0.95rem;line-height:1.6">StakTrakr is not directed at children under 13 and does not knowingly collect information from children.</p>
+          </div>
+
+          <!-- Changes & Contact -->
+          <div class="about-section">
+            <div class="section-title">📝 Changes &amp; Contact</div>
+            <p style="font-size:0.95rem;line-height:1.6">If this policy changes, the updated version will appear in the app with a new date. Questions about this policy can be directed to the project's <a href="https://github.com/lbruton/StakTrakr/issues" target="_blank" rel="noopener">GitHub Issues</a> page.</p>
+          </div>
+
         </div>
       </div>
     </div>
