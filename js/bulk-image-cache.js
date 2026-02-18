@@ -153,6 +153,17 @@ const BulkImageCache = (() => {
             await imageCache.cacheMetadata(catalogId, apiResult);
           } catch { /* ignore */ }
         }
+
+        // Apply Numista tags to all inventory items sharing this catalog ID
+        // This ensures filter chips show tags without requiring the view modal to be opened
+        if (apiResult.tags && apiResult.tags.length > 0 && typeof applyNumistaTags === 'function') {
+          for (const invItem of (typeof inventory !== 'undefined' ? inventory : [])) {
+            if (invItem.uuid && invItem.numistaId === catalogId) {
+              applyNumistaTags(invItem.uuid, apiResult.tags);
+            }
+          }
+        }
+
         synced++;
         if (onLog) onLog({ catalogId, status: 'metadata', message: 'Synced' });
       } else if (!hasMetaCached) {
@@ -167,6 +178,11 @@ const BulkImageCache = (() => {
     }
 
     _running = false;
+
+    // Persist any tag updates written during the sync loop
+    if (synced > 0 && typeof saveItemTags === 'function') {
+      saveItemTags();
+    }
 
     // Persist any URL updates back to localStorage
     if (synced > 0 && typeof saveInventory === 'function') {
