@@ -1118,22 +1118,6 @@ const bindImageImportExportListeners = () => {
         return;
       }
 
-      // Preflight: test one URL before committing to the full loop (skip if no URLs known yet)
-      const firstWithUrl = toFetch.find(e => e.item.obverseImageUrl || e.item.reverseImageUrl);
-      if (firstWithUrl) {
-        const firstUrl = firstWithUrl.item.obverseImageUrl || firstWithUrl.item.reverseImageUrl;
-        try {
-          const testResp = await fetch(firstUrl);
-          if (!testResp.ok) throw new Error(`HTTP ${testResp.status}`);
-        } catch (preflightErr) {
-          alert(
-            'Could not fetch images \u2014 network error or image server unavailable.\n\n' +
-            `Detail: ${preflightErr.message}`
-          );
-          return;
-        }
-      }
-
       const progressEl = document.createElement('div');
       progressEl.id = 'imageCdnProgress';
       progressEl.innerHTML = '<span id="imageCdnProgressText">Preparing\u2026</span>' +
@@ -1174,22 +1158,10 @@ const bindImageImportExportListeners = () => {
             } catch { /* skip — will just have no image for this entry */ }
           }
 
-          if (obvUrl) {
-            try {
-              const raw = await (await fetch(obvUrl)).blob();
-              const result = await imageProcessor.processFile(raw, { maxDim: 1200, quality: 0.85 });
-              obvBlob = result?.blob || raw;
-            } catch { /* skip */ }
-          }
-          if (revUrl) {
-            try {
-              const raw = await (await fetch(revUrl)).blob();
-              const result = await imageProcessor.processFile(raw, { maxDim: 1200, quality: 0.85 });
-              revBlob = result?.blob || raw;
-            } catch { /* skip */ }
-          }
+          if (obvUrl) obvBlob = await imageCache._fetchAndResize(obvUrl).catch(() => null);
+          if (revUrl) revBlob = await imageCache._fetchAndResize(revUrl).catch(() => null);
 
-          // imageProcessor.processFile already outputs WebP — use blobs directly
+          // _fetchAndResize already outputs WebP via imageProcessor — use blobs directly
           const folder = useCdn ? 'cdn' : 'user';
           const obvFile = obvBlob ? `${folder}/${key}_obverse.webp` : null;
           const revFile = revBlob ? `${folder}/${key}_reverse.webp` : null;
