@@ -956,6 +956,8 @@ const attachAutocomplete = (inputEl, sourceType) => {
       e.preventDefault();
       selectItem(items[activeIndex].text);
     } else if (e.key === 'Escape') {
+      e.preventDefault();
+      e.stopPropagation();
       hideDropdown();
     } else if (e.key === 'Tab' && activeIndex >= 0) {
       selectItem(items[activeIndex].text);
@@ -1023,8 +1025,16 @@ const initializeAutocomplete = (inventory) => {
   }
 };
 
+/**
+ * Dismiss all open autocomplete dropdowns (e.g. when the modal closes).
+ */
+const dismissAllAutocompletes = () => {
+  document.querySelectorAll('.autocomplete-dropdown').forEach(dd => dd.remove());
+};
+
 // Export functions for use by other modules
 if (typeof window !== 'undefined') {
+  window.dismissAllAutocompletes = dismissAllAutocompletes;
   window.initializeAutocomplete = initializeAutocomplete;
   window.clearLookupCache = clearLookupCache;
   window.autocomplete = {

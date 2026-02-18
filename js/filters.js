@@ -276,6 +276,17 @@ const renderActiveFilters = () => {
   const filteredInventory = filterInventoryAdvanced();
   
   if (filteredInventory.length === 0) {
+    // Show a hint when search narrows to 0 results instead of hiding chips entirely (UX-004)
+    if (searchQuery && searchQuery.trim()) {
+      container.style.display = '';
+      const hint = document.createElement('span');
+      hint.className = 'filter-chip search-hint-chip';
+      hint.style.opacity = '0.55';
+      hint.style.cursor = 'default';
+      hint.textContent = 'Clear search to use filter chips';
+      container.appendChild(hint);
+      return;
+    }
     container.style.display = 'none';
     return;
   }

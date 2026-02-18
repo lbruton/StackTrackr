@@ -2539,6 +2539,101 @@ input[type="submit"] {
   to { opacity: 0; transform: translateY(1rem); }
 }
 
+/* Cloud beta banner & provider cards */
+.cloud-beta-banner {
+  position: relative;
+  background: color-mix(in srgb, var(--warning, #f0ad4e) 10%, var(--bg-secondary));
+  border: 1px solid color-mix(in srgb, var(--warning, #f0ad4e) 35%, var(--border));
+  border-radius: var(--radius-lg, 0.5rem);
+  padding: 1rem 1.25rem;
+  margin-bottom: 1rem;
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+.cloud-beta-banner p { margin: 0 0 0.5rem; }
+.cloud-beta-banner p:last-child { margin-bottom: 0; }
+.cloud-beta-title {
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+.cloud-beta-badge {
+  position: absolute;
+  top: 0.6rem;
+  right: 0.75rem;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--warning, #f0ad4e);
+  border: 1px solid var(--warning, #f0ad4e);
+  border-radius: 1rem;
+  padding: 0.1rem 0.5rem;
+}
+.cloud-provider-card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg, 0.5rem);
+  padding: 1rem 1.25rem;
+  margin-bottom: 1rem;
+  background: var(--bg-card, var(--bg-secondary));
+}
+.cloud-provider-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+.cloud-provider-card-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+.cloud-provider-card-badges {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.cloud-provider-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-top: 0.75rem;
+}
+.cloud-provider-disclaimer {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  margin-top: 0.75rem;
+  padding-top: 0.6rem;
+  border-top: 1px solid var(--border);
+  line-height: 1.45;
+}
+.cloud-provider-card--coming-soon {
+  opacity: 0.55;
+  pointer-events: none;
+}
+.cloud-badge {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0.12rem 0.45rem;
+  border-radius: 1rem;
+  white-space: nowrap;
+}
+.cloud-badge--beta {
+  color: var(--warning, #f0ad4e);
+  border: 1px solid var(--warning, #f0ad4e);
+}
+.cloud-badge--coming-soon {
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+}
+.cloud-session-cache {
+  opacity: 0.7;
+}
+
 /* Footer bar */
 .settings-footer {
   padding: 0.5rem 1rem;
@@ -4909,6 +5004,174 @@ a.about-badge:hover {
   to {
     opacity: 1;
     transform: scale(1) translateY(0);
+  }
+}
+
+/* =============================================================================
+   FAQ MODAL — Accordion styles
+   ============================================================================= */
+
+.faq-item {
+  border: 1px solid var(--border-color, rgba(0, 0, 0, 0.1));
+  border-radius: var(--border-radius, 8px);
+  background: var(--bg-secondary, #f8fafc);
+  margin-bottom: 0.5rem;
+  overflow: hidden;
+  transition: border-color 0.2s ease;
+}
+
+.faq-item[open] {
+  border-color: var(--primary, #3b82f6);
+}
+
+.faq-question {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.85rem 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  list-style: none;
+  gap: 0.75rem;
+  color: var(--text-primary, #1e293b);
+}
+
+.faq-question::-webkit-details-marker {
+  display: none;
+}
+
+.faq-question::after {
+  content: "▾";
+  font-size: 0.85rem;
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+  color: var(--text-secondary, #64748b);
+}
+
+.faq-item[open] > .faq-question::after {
+  transform: rotate(-180deg);
+}
+
+.faq-answer {
+  padding: 0 1rem 1rem 1rem;
+  color: var(--text-secondary, #475569);
+  line-height: 1.65;
+  font-size: 0.9rem;
+}
+
+.faq-answer p + p {
+  margin-top: 0.6rem;
+}
+
+.faq-answer a {
+  color: var(--primary, #3b82f6);
+}
+
+.faq-list {
+  list-style: disc;
+  padding-left: 1.5rem;
+  margin: 0.5rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+/* Nested technical sub-accordion */
+.faq-technical {
+  border: 1px dashed var(--border-color, rgba(0, 0, 0, 0.15));
+  border-radius: var(--border-radius-sm, 6px);
+  background: var(--bg-primary, #f1f5f9);
+  margin-top: 0.75rem;
+  padding: 0;
+  overflow: hidden;
+}
+
+.faq-technical > summary {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--text-secondary, #64748b);
+  list-style: none;
+  letter-spacing: 0.01em;
+}
+
+.faq-technical > summary::-webkit-details-marker {
+  display: none;
+}
+
+.faq-technical > summary::before {
+  content: "▸ ";
+  font-size: 0.75rem;
+}
+
+.faq-technical[open] > summary::before {
+  content: "▾ ";
+}
+
+.faq-technical > p {
+  padding: 0 0.75rem 0.65rem 0.75rem;
+  font-size: 0.8rem;
+  font-family: monospace;
+  line-height: 1.6;
+  color: var(--text-secondary, #475569);
+}
+
+/* Honest Limitations section */
+.faq-limitations-section {
+  border-left: 3px solid var(--warning, #f59e0b);
+  padding-left: 0.75rem;
+}
+
+.faq-limitations-title {
+  color: var(--warning, #b45309) !important;
+}
+
+.faq-limitations-intro {
+  font-style: italic;
+  color: var(--text-secondary, #64748b);
+  margin-bottom: 0.75rem;
+  font-size: 0.9rem;
+}
+
+/* Dark theme overrides */
+[data-theme="dark"] .faq-item {
+  background: rgba(30, 41, 59, 0.4);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="dark"] .faq-item[open] {
+  border-color: var(--primary, #3b82f6);
+}
+
+[data-theme="dark"] .faq-technical {
+  background: rgba(15, 23, 42, 0.5);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Sepia theme overrides */
+[data-theme="sepia"] .faq-item {
+  background: rgba(120, 90, 40, 0.08);
+  border-color: rgba(120, 90, 40, 0.15);
+}
+
+[data-theme="sepia"] .faq-technical {
+  background: rgba(120, 90, 40, 0.05);
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .faq-question {
+    padding: 0.7rem 0.85rem;
+    font-size: 0.9rem;
+  }
+
+  .faq-answer {
+    padding: 0 0.85rem 0.85rem 0.85rem;
+  }
+
+  .faq-limitations-section {
+    padding-left: 0.5rem;
   }
 }
 
