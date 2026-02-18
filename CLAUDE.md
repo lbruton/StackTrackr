@@ -52,7 +52,8 @@ Skills live at two levels, each agent owning its own copies:
 **User-level skills** (outside repo, project-agnostic via `project.json` detection):
 `memento-taxonomy`, `remember`, `sync-instructions`, `prime`, `sw-cache`, `agent-routing`
 
-**Codex copies** in `.agents/skills/` include all of the above as independent copies. Codex may tune descriptions, path references, or tool names for its runtime without affecting Claude Code.
+**Codex copies** in `.agents/skills/` include all of the above as independent copies.
+Codex may tune descriptions, path references, or tool names for its runtime without affecting Claude Code.
 
 The `/sync-instructions` skill flags drift between copies and lets the human decide sync direction.
 
@@ -225,7 +226,8 @@ Local developers have these MCP servers configured:
 - **Memento** -- Knowledge graph for session persistence, handoffs, insights (shared Neo4j instance, tag with `project:staktrakr`)
 - **Claude-Context** -- Semantic code search (AST-indexed, Milvus vector DB)
 - **Brave Search** -- Web search API
-- **Claude-in-Chrome** -- Built-in browser automation (always available, no MCP config needed). Enable **Chrome DevTools** MCP for deeper debugging (console monitoring, DOM inspection, script evaluation)
+- **Claude-in-Chrome** -- Built-in browser automation (always available, no MCP config needed).
+  Enable **Chrome DevTools** MCP for deeper debugging (console monitoring, DOM inspection, script evaluation)
 - **Context7** -- Library documentation lookup (Chart.js, Bootstrap, jsPDF, etc.)
 - **Codacy** -- Code quality analysis
 
