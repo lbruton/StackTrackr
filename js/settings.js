@@ -1702,9 +1702,6 @@ if (typeof window !== 'undefined') {
   window.renderInlineChipConfigTable = renderInlineChipConfigTable;
   window.renderFilterChipCategoryTable = renderFilterChipCategoryTable;
   window.renderLayoutSectionConfigTable = renderLayoutSectionConfigTable;
-  window.setupProviderTabDrag = setupProviderTabDrag;
-  window.loadProviderTabOrder = loadProviderTabOrder;
-  window.saveProviderTabOrder = saveProviderTabOrder;
   window.syncGoldbackSettingsUI = syncGoldbackSettingsUI;
   window.syncCurrencySettingsUI = syncCurrencySettingsUI;
   window.syncHeaderToggleUI = syncHeaderToggleUI;
