@@ -3570,10 +3570,38 @@ td[data-column="name"] {
   flex-shrink: 0;
   background: var(--bg-tertiary, #2a2a2a);
   vertical-align: middle;
+  cursor: pointer;
+  transition: box-shadow 0.15s ease, transform 0.15s ease;
+}
+.table-thumb:hover {
+  box-shadow: 0 0 0 2px var(--primary);
+  transform: scale(1.12);
+  z-index: 1;
+  position: relative;
 }
 /* Rectangular thumbnails for bars, notes, aurum, sets */
 .table-thumb.table-thumb-rect {
   border-radius: var(--radius);
+}
+.table-thumb.table-thumb-rect:hover {
+  border-radius: var(--radius);
+}
+
+/* Thumb popover — wider variant of the bulk-img-popover */
+.thumb-popover {
+  width: 300px;
+}
+.thumb-popover-preview {
+  aspect-ratio: 1;
+  min-height: 110px;
+}
+.thumb-popover-empty {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+/* Make the whole image cell feel clickable */
+#inventoryTable td[data-column="image"] {
+  cursor: pointer;
 }
 /* Back to top floating button */
 .back-to-top {
