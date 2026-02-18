@@ -1071,13 +1071,102 @@ const bindImageSettingsListeners = () => {
 };
 
 /**
+ * Render the backup list for a cloud provider.
+ */
+const renderCloudBackupList = (provider, backups) => {
+  const listEl = document.getElementById('cloudBackupList_' + provider);
+  if (!listEl) return;
+
+  if (!backups || backups.length === 0) {
+    listEl.style.display = '';
+    listEl.innerHTML = '<div class="cloud-backup-empty">No backups found</div>';
+    return;
+  }
+
+  listEl.style.display = '';
+  // nosemgrep: javascript.browser.security.insecure-innerhtml.insecure-innerhtml
+  listEl.innerHTML = backups.map(function (b) {
+    const d = new Date(b.server_modified);
+    const dateStr = d.toLocaleDateString([], { month: 'short', day: 'numeric' }) +
+      ' ' + d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+    const sizeStr = b.size < 1024 ? b.size + ' B' :
+      b.size < 1048576 ? (b.size / 1024).toFixed(0) + ' KB' :
+        (b.size / 1048576).toFixed(1) + ' MB';
+    return '<button class="cloud-backup-entry" data-provider="' + sanitizeHtml(provider) +
+      '" data-filename="' + sanitizeHtml(b.name) + '" data-size="' + b.size + '">' +
+      '<span class="cloud-backup-date">' + sanitizeHtml(dateStr) + '</span>' +
+      '<span class="cloud-backup-size">' + sanitizeHtml(sizeStr) + '</span>' +
+      '</button>';
+  }).join('');
+};
+
+/**
  * Wires cloud storage connect/disconnect/backup/restore buttons.
  */
+const bindCloudCacheListeners = () => {
+  // Session-only password cache — no toggle needed, auto-caches on first use
+};
+
+/**
+ * Run an async action while showing a loading state on a button.
+ * Saves innerHTML, disables the button, runs the action, then restores.
+ * @param {HTMLElement} btn
+ * @param {string} label - loading text to show (e.g. 'Uploading…')
+ * @param {Function} action - async function to execute
+ * @param {string} errorPrefix - prefix for alert on failure
+ * @param {Function} [finallyFn] - optional cleanup in finally block
+ */
+const _cloudBtnAction = async (btn, label, action, errorPrefix, finallyFn) => {
+  var origHtml = btn.innerHTML;
+  btn.disabled = true;
+  btn.textContent = label;
+  try {
+    await action(btn);
+  } catch (err) {
+    alert(errorPrefix + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = origHtml;
+    if (finallyFn) { try { await finallyFn(); } catch (_) { /* ignore */ } }
+  }
+};
+
+/**
+ * Perform a cached-password cloud backup (encrypt + upload, no vault modal).
+ */
+const _cloudBackupWithCachedPw = (provider, password, btn) =>
+  _cloudBtnAction(btn, 'Encrypting\u2026', async (b) => {
+    var fileBytes = await vaultEncryptToBytes(password);
+    b.textContent = 'Uploading\u2026';
+    await cloudUploadVault(provider, fileBytes);
+    if (typeof showCloudToast === 'function') showCloudToast('Backup complete.');
+    if (typeof showKrakenToastIfFirst === 'function') showKrakenToastIfFirst();
+  }, 'Backup failed: ');
+
+/**
+ * Perform a cached-password cloud restore (decrypt + restore, no vault modal).
+ */
+const _cloudRestoreWithCachedPw = async (provider, password, fileBytes) => {
+  try {
+    await vaultDecryptAndRestore(fileBytes, password);
+    if (typeof showCloudToast === 'function') showCloudToast('Restore complete. Reloading\u2026');
+    setTimeout(function () { location.reload(); }, 1200);
+  } catch (err) {
+    alert('Decryption failed. Opening password prompt.');
+    openVaultModal('cloud-import', {
+      provider: provider,
+      fileBytes: fileBytes,
+    });
+  }
+};
+
 const bindCloudStorageListeners = () => {
   var panel = document.getElementById('settingsPanel_cloud');
   if (!panel) return;
 
-  panel.addEventListener('click', function (e) {
+  bindCloudCacheListeners();
+
+  panel.addEventListener('click', async function (e) {
     var btn = e.target.closest('button');
     if (!btn) return;
     var provider = btn.dataset.provider;
@@ -1085,39 +1174,68 @@ const bindCloudStorageListeners = () => {
 
     if (btn.classList.contains('cloud-connect-btn')) {
       if (typeof cloudAuthStart === 'function') cloudAuthStart(provider);
+
     } else if (btn.classList.contains('cloud-disconnect-btn')) {
       if (typeof cloudDisconnect === 'function') cloudDisconnect(provider);
+
     } else if (btn.classList.contains('cloud-backup-btn')) {
-      var pw = prompt('Enter vault password for encryption:');
-      if (!pw) return;
-      btn.disabled = true;
-      btn.textContent = 'Uploading\u2026';
-      cloudUploadVault(provider, pw)
-        .then(function () { alert('Backup uploaded to ' + (CLOUD_PROVIDERS[provider]?.name || provider) + '.'); })
-        .catch(function (err) { alert('Backup failed: ' + err.message); })
-        .finally(function () { btn.disabled = false; btn.textContent = 'Backup Now'; });
+      await _cloudBtnAction(btn, 'Checking\u2026', async () => {
+        var conflict = await cloudCheckConflict(provider);
+        if (conflict.conflict) {
+          var rd = new Date(conflict.remote.timestamp);
+          var remoteInfo = rd.toLocaleDateString() + ' ' + rd.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+          if (conflict.remote.itemCount) remoteInfo += ' (' + conflict.remote.itemCount + ' items)';
+          if (!confirm('A newer backup exists on the server:\n' + remoteInfo +
+            '\n\nOverwrite with current local data?')) {
+            return;
+          }
+        }
+        var cachedPw = typeof cloudGetCachedPassword === 'function' ? cloudGetCachedPassword(provider) : null;
+        if (cachedPw) {
+          await _cloudBackupWithCachedPw(provider, cachedPw, btn);
+          return;
+        }
+        openVaultModal('cloud-export', { provider: provider });
+        if (typeof showKrakenToastIfFirst === 'function') showKrakenToastIfFirst();
+      }, 'Conflict check failed: ');
+
     } else if (btn.classList.contains('cloud-restore-btn')) {
-      if (!confirm('This will replace all local data with the cloud backup. Continue?')) return;
-      btn.disabled = true;
-      btn.textContent = 'Downloading\u2026';
-      cloudDownloadVault(provider)
-        .then(function (fileBytes) {
-          var pw = prompt('Enter vault password to decrypt:');
-          if (!pw) throw new Error('Cancelled');
-          var parsed = parseVaultFile(fileBytes);
-          return vaultDeriveKey(pw, parsed.salt, parsed.iterations).then(function (key) {
-            return vaultDecrypt(parsed.ciphertext, key, parsed.iv);
-          }).then(function (plainBytes) {
-            var payload = JSON.parse(new TextDecoder().decode(plainBytes));
-            restoreVaultData(payload);
-            alert('Restore complete. The page will reload.');
-            location.reload();
-          });
-        })
-        .catch(function (err) {
-          if (err.message !== 'Cancelled') alert('Restore failed: ' + err.message);
-        })
-        .finally(function () { btn.disabled = false; btn.textContent = 'Restore'; });
+      var listEl = document.getElementById('cloudBackupList_' + provider);
+      if (listEl && listEl.style.display !== 'none' && listEl.innerHTML) {
+        listEl.style.display = 'none';
+        listEl.innerHTML = '';
+        return;
+      }
+      await _cloudBtnAction(btn, 'Loading\u2026', async () => {
+        var backups = await cloudListBackups(provider);
+        renderCloudBackupList(provider, backups);
+      }, 'Failed to list backups: ');
+
+    } else if (btn.classList.contains('cloud-backup-entry')) {
+      var filename = btn.dataset.filename;
+      var size = parseInt(btn.dataset.size, 10) || 0;
+      var sizeStr = size < 1024 ? size + ' B' : size < 1048576 ? (size / 1024).toFixed(0) + ' KB' : (size / 1048576).toFixed(1) + ' MB';
+      if (!confirm('Restore "' + filename + '" (' + sizeStr + ')?\n\nThis will overwrite all local data.')) return;
+      await _cloudBtnAction(btn, 'Downloading\u2026', async () => {
+        var fileBytes = await cloudDownloadVaultByName(provider, filename);
+        var savedPw = typeof cloudGetCachedPassword === 'function' ? cloudGetCachedPassword(provider) : null;
+        if (savedPw) {
+          await _cloudRestoreWithCachedPw(provider, savedPw, fileBytes);
+          return;
+        }
+        openVaultModal('cloud-import', {
+          provider: provider,
+          fileBytes: fileBytes,
+          filename: filename,
+          size: size,
+        });
+      }, 'Download failed: ', async () => {
+        var parentList = btn.closest('.cloud-backup-list');
+        if (parentList) {
+          var refreshed = await cloudListBackups(provider);
+          renderCloudBackupList(provider, refreshed);
+        }
+      });
     }
   });
 };

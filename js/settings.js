@@ -57,6 +57,11 @@ const switchSettingsSection = (name) => {
     populateApiSection();
   }
 
+  // Sync cloud UI when switching to Cloud section
+  if (name === 'cloud' && typeof syncCloudUI === 'function') {
+    syncCloudUI();
+  }
+
   // Populate Images data and sync toggles when switching to Images section (STACK-96)
   if (name === 'images') {
     syncChipToggle('tableImagesToggle', localStorage.getItem('tableImagesEnabled') !== 'false');
@@ -135,6 +140,7 @@ const LOG_TAB_RENDERERS = {
   metals: 'renderSpotHistoryTable',
   catalogs: 'renderCatalogHistoryForSettings',
   pricehistory: 'renderItemPriceHistoryTable',
+  cloud: 'renderCloudActivityTable',
 };
 
 /**
@@ -1702,9 +1708,6 @@ if (typeof window !== 'undefined') {
   window.renderInlineChipConfigTable = renderInlineChipConfigTable;
   window.renderFilterChipCategoryTable = renderFilterChipCategoryTable;
   window.renderLayoutSectionConfigTable = renderLayoutSectionConfigTable;
-  window.setupProviderTabDrag = setupProviderTabDrag;
-  window.loadProviderTabOrder = loadProviderTabOrder;
-  window.saveProviderTabOrder = saveProviderTabOrder;
   window.syncGoldbackSettingsUI = syncGoldbackSettingsUI;
   window.syncCurrencySettingsUI = syncCurrencySettingsUI;
   window.syncHeaderToggleUI = syncHeaderToggleUI;

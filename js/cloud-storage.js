@@ -2,6 +2,125 @@
 // CLOUD STORAGE — Dropbox, pCloud, Box OAuth + vault backup/restore
 // =============================================================================
 
+// ---------------------------------------------------------------------------
+// Cloud Activity Log — records all cloud sync transactions
+// ---------------------------------------------------------------------------
+
+var CLOUD_ACTIVITY_KEY = 'cloud_activity_log';
+var CLOUD_ACTIVITY_MAX = 500;
+var CLOUD_ACTIVITY_MAX_AGE_DAYS = 180;
+
+function loadCloudActivityLog() {
+  try {
+    return typeof loadDataSync === 'function' ? loadDataSync(CLOUD_ACTIVITY_KEY, []) : JSON.parse(localStorage.getItem(CLOUD_ACTIVITY_KEY) || '[]');
+  } catch (_) { return []; }
+}
+
+function saveCloudActivityLog(log) {
+  try {
+    if (typeof saveDataSync === 'function') { saveDataSync(CLOUD_ACTIVITY_KEY, log); }
+    else { localStorage.setItem(CLOUD_ACTIVITY_KEY, JSON.stringify(log)); }
+  } catch (e) { console.warn('[CloudStorage] Failed to save activity log', e); }
+}
+
+function recordCloudActivity(entry) {
+  var log = loadCloudActivityLog();
+
+  // Purge old entries
+  var cutoff = Date.now() - CLOUD_ACTIVITY_MAX_AGE_DAYS * 86400000;
+  log = log.filter(function (e) { return e.timestamp >= cutoff; });
+
+  log.unshift({
+    timestamp: Date.now(),
+    action: entry.action || '',
+    provider: entry.provider || '',
+    result: entry.result || 'success',
+    detail: entry.detail || '',
+    duration: entry.duration != null ? entry.duration : null,
+  });
+
+  // Cap at max entries
+  if (log.length > CLOUD_ACTIVITY_MAX) log.length = CLOUD_ACTIVITY_MAX;
+
+  saveCloudActivityLog(log);
+}
+
+/** @type {string|null} Sort column for settings cloud activity table */
+var settingsCloudSortColumn = null;
+/** @type {boolean} Sort ascending for settings cloud activity table */
+var settingsCloudSortAsc = true;
+
+function renderCloudActivityTable() {
+  var table = document.getElementById('settingsCloudActivityTable');
+  if (!table) return;
+
+  var data = loadCloudActivityLog();
+
+  // Sort
+  if (settingsCloudSortColumn) {
+    var col = settingsCloudSortColumn;
+    var asc = settingsCloudSortAsc;
+    data.sort(function (a, b) {
+      var valA = a[col], valB = b[col];
+      if (valA < valB) return asc ? -1 : 1;
+      if (valA > valB) return asc ? 1 : -1;
+      return 0;
+    });
+  }
+  // Default: newest first (already stored newest-first, but sort explicitly)
+  if (!settingsCloudSortColumn) {
+    data.sort(function (a, b) { return b.timestamp - a.timestamp; });
+  }
+
+  var tbody = table.querySelector('tbody');
+  if (!tbody) return;
+
+  if (data.length === 0) {
+    // nosemgrep: javascript.browser.security.insecure-innerhtml.insecure-innerhtml
+    tbody.innerHTML = '<tr class="settings-log-empty"><td colspan="6">No cloud activity recorded yet.</td></tr>';
+    return;
+  }
+
+  var rows = data.map(function (e) {
+    var d = new Date(e.timestamp);
+    var pad = function (n) { return n < 10 ? '0' + n : String(n); };
+    var timeStr = d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + ' ' +
+      pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());
+    var resultStyle = e.result === 'fail' ? ' style="color: var(--danger, #e74c3c);"' : '';
+    var durationStr = e.duration != null ? e.duration + 'ms' : '—';
+    var safeDetail = String(e.detail || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    return '<tr><td>' + timeStr + '</td><td>' + (e.action || '') + '</td><td>' + (e.provider || '') +
+      '</td><td' + resultStyle + '>' + (e.result || '') + '</td><td>' + safeDetail + '</td><td>' + durationStr + '</td></tr>';
+  });
+
+  // nosemgrep: javascript.browser.security.insecure-innerhtml.insecure-innerhtml
+  tbody.innerHTML = rows.join('');
+
+  // Sortable headers
+  var cols = ['timestamp', 'action', 'provider', 'result', 'detail', 'duration'];
+  table.querySelectorAll('th').forEach(function (th, idx) {
+    th.style.cursor = 'pointer';
+    th.onclick = function () {
+      var c = cols[idx];
+      if (settingsCloudSortColumn === c) {
+        settingsCloudSortAsc = !settingsCloudSortAsc;
+      } else {
+        settingsCloudSortColumn = c;
+        settingsCloudSortAsc = true;
+      }
+      renderCloudActivityTable();
+    };
+  });
+}
+
+function clearCloudActivityLog() {
+  if (!confirm('Clear all cloud activity log? This cannot be undone.')) return;
+  saveCloudActivityLog([]);
+  var panel = document.getElementById('logPanel_cloud');
+  if (panel) delete panel.dataset.rendered;
+  renderCloudActivityTable();
+}
+
 /**
  * Cloud provider configurations.
  * Client IDs are placeholder — replace with real registered app IDs.
@@ -39,7 +158,21 @@ const CLOUD_PROVIDERS = {
   },
 };
 
-const CLOUD_REDIRECT_URI = 'https://staktrakr.com/oauth-callback.html';
+const CLOUD_REDIRECT_URI = window.location.origin + '/oauth-callback.html';
+
+// Fallback: if we landed on index.html with OAuth params (user navigated back
+// from a stale oauth-callback.html, or redirect URI was changed), capture them.
+(function checkUrlForOAuthParams() {
+  var params = new URLSearchParams(window.location.search);
+  var code = params.get('code');
+  var state = params.get('state');
+  if (code) {
+    history.replaceState(null, '', window.location.pathname);
+    try {
+      localStorage.setItem('staktrakr_oauth_result', JSON.stringify({ code: code, state: state }));
+    } catch (e) { /* ignore */ }
+  }
+})();
 const CLOUD_LATEST_FILENAME = 'staktrakr-latest.json';
 
 // ---------------------------------------------------------------------------
@@ -104,9 +237,12 @@ async function cloudGetToken(provider) {
   // Attempt refresh
   if (!stored.refresh_token) {
     cloudClearToken(provider);
+    if (typeof syncCloudUI === 'function') syncCloudUI();
+    recordCloudActivity({ action: 'auth_fail', provider: provider, result: 'fail', detail: 'No refresh token — session expired' });
     return null;
   }
 
+  var refreshStart = Date.now();
   try {
     var body = new URLSearchParams({
       grant_type: 'refresh_token',
@@ -126,10 +262,13 @@ async function cloudGetToken(provider) {
       expires_at: Date.now() + (data.expires_in || 14400) * 1000,
     };
     cloudStoreToken(provider, updated);
+    recordCloudActivity({ action: 'refresh', provider: provider, result: 'success', detail: 'Token refreshed', duration: Date.now() - refreshStart });
     return updated.access_token;
   } catch (e) {
+    recordCloudActivity({ action: 'refresh', provider: provider, result: 'fail', detail: String(e.message || e), duration: Date.now() - refreshStart });
     debugLog('[CloudStorage] Token refresh failed for ' + provider, e);
     cloudClearToken(provider);
+    if (typeof syncCloudUI === 'function') syncCloudUI();
     return null;
   }
 }
@@ -153,29 +292,62 @@ function cloudAuthStart(provider) {
     token_access_type: 'offline',
   });
 
+  // Open popup synchronously (in click handler context) to avoid popup blockers,
+  // then navigate it after the async PKCE challenge is computed.
+  var popup = window.open('about:blank', 'staktrakr_oauth', 'width=600,height=700');
+
   if (config.usePKCE) {
     var verifier = cloudGenerateVerifier();
     sessionStorage.setItem('cloud_pkce_verifier', verifier);
-    // Challenge computed async — build URL after
     cloudGenerateChallenge(verifier).then(function (challenge) {
       params.set('code_challenge', challenge);
       params.set('code_challenge_method', 'S256');
-      window.open(config.authUrl + '?' + params.toString(), 'cloudOAuth', 'width=600,height=700');
+      var url = config.authUrl + '?' + params.toString();
+      if (popup && !popup.closed) {
+        popup.location.href = url;
+      } else {
+        // Popup was blocked — fall back to main-window redirect
+        window.location.href = url;
+      }
     });
   } else {
-    window.open(config.authUrl + '?' + params.toString(), 'cloudOAuth', 'width=600,height=700');
+    var url = config.authUrl + '?' + params.toString();
+    if (popup && !popup.closed) {
+      popup.location.href = url;
+    } else {
+      window.location.href = url;
+    }
+  }
+}
+
+// Surface auth failures to the user (toast with alert fallback).
+function cloudNotifyAuthFailure(provider, message, details) {
+  var providerName = (CLOUD_PROVIDERS[provider] && CLOUD_PROVIDERS[provider].name) || 'Cloud provider';
+  var fullMessage = providerName + ' authentication failed: ' + message;
+
+  recordCloudActivity({ action: 'auth_fail', provider: provider, result: 'fail', detail: message });
+  debugLog('[CloudStorage] ' + fullMessage, details || '');
+  if (details) {
+    try { console.error('[CloudStorage] OAuth error details:', details); } catch (_) { /* ignore */ }
+  }
+
+  if (typeof showCloudToast === 'function') {
+    showCloudToast(fullMessage, 7000);
+  } else {
+    alert(fullMessage);
   }
 }
 
 // Exchange an OAuth authorization code for an access token.
-function cloudExchangeCode(code, state) {
+async function cloudExchangeCode(code, state) {
   var savedState = sessionStorage.getItem('cloud_oauth_state');
+  var provider = (state || '').split('_')[0] || 'dropbox';
+
   if (state !== savedState) {
-    debugLog('[CloudStorage] OAuth state mismatch');
+    cloudNotifyAuthFailure(provider, 'OAuth state mismatch. Please try again.');
     return;
   }
 
-  var provider = state.split('_')[0];
   var config = CLOUD_PROVIDERS[provider];
   if (!config) return;
 
@@ -192,32 +364,49 @@ function cloudExchangeCode(code, state) {
     sessionStorage.removeItem('cloud_pkce_verifier');
   }
 
-  fetch(config.tokenUrl, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: body,
-  })
-    .then(function (resp) { return resp.json(); })
-    .then(function (data) {
-      if (data.access_token) {
-        var tokenData = {
-          access_token: data.access_token,
-          refresh_token: data.refresh_token || null,
-          expires_at: data.expires_in ? Date.now() + data.expires_in * 1000 : null,
-        };
-        cloudStoreToken(provider, tokenData);
-        sessionStorage.removeItem('cloud_oauth_state');
-        if (typeof syncCloudUI === 'function') syncCloudUI();
-        debugLog('[CloudStorage] Connected to ' + config.name);
-      }
-    })
-    .catch(function (err) {
-      debugLog('[CloudStorage] Token exchange failed', err);
+  try {
+    var resp = await fetch(config.tokenUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: body,
     });
+
+    var raw = await resp.text();
+    var data = {};
+    if (raw) {
+      try { data = JSON.parse(raw); } catch (_) { data = { rawResponse: raw }; }
+    }
+
+    if (!resp.ok) {
+      var errText = data.error_summary || data.error_description || data.error || 'Unknown error';
+      cloudNotifyAuthFailure(provider, 'Token exchange failed (' + resp.status + '). ' + String(errText), data);
+      return;
+    }
+
+    if (!data.access_token) {
+      cloudNotifyAuthFailure(provider, 'Token exchange response did not include an access token.', data);
+      return;
+    }
+
+    var tokenData = {
+      access_token: data.access_token,
+      refresh_token: data.refresh_token || null,
+      expires_at: data.expires_in ? Date.now() + data.expires_in * 1000 : null,
+    };
+    cloudStoreToken(provider, tokenData);
+    sessionStorage.removeItem('cloud_oauth_state');
+    if (typeof syncCloudUI === 'function') syncCloudUI();
+    if (typeof showCloudToast === 'function') showCloudToast('Connected to ' + config.name + '.');
+    recordCloudActivity({ action: 'connect', provider: provider, result: 'success', detail: 'Connected to ' + config.name });
+    debugLog('[CloudStorage] Connected to ' + config.name);
+  } catch (err) {
+    cloudNotifyAuthFailure(provider, 'Token exchange request failed. Check redirect URI/domain registration and try again.', err);
+  }
 }
 
 // Primary: listen for OAuth callback postMessage from popup
 window.addEventListener('message', function (event) {
+  if (event.origin !== window.location.origin) return;
   if (!event.data || event.data.type !== 'staktrakr-oauth') return;
   var code = event.data.code;
   var state = event.data.state;
@@ -250,9 +439,18 @@ document.addEventListener('visibilitychange', function () {
   if (!document.hidden) cloudCheckOAuthRelay();
 });
 
+// Check on page load (main-window redirect lands here after oauth-callback.html)
+if (document.readyState === 'complete') {
+  cloudCheckOAuthRelay();
+} else {
+  window.addEventListener('load', cloudCheckOAuthRelay);
+}
+
 function cloudDisconnect(provider) {
   cloudClearToken(provider);
   localStorage.removeItem('cloud_last_backup');
+  var providerName = (CLOUD_PROVIDERS[provider] && CLOUD_PROVIDERS[provider].name) || provider;
+  recordCloudActivity({ action: 'disconnect', provider: provider, result: 'success', detail: 'Disconnected from ' + providerName });
   if (typeof syncCloudUI === 'function') syncCloudUI();
 }
 
@@ -305,10 +503,23 @@ function cloudBuildVersionedFilename() {
 }
 
 // ---------------------------------------------------------------------------
+// Shared helpers
+// ---------------------------------------------------------------------------
+
+function cloudSafeItemCount() {
+  try { return typeof inventory !== 'undefined' ? inventory.length : 0; } catch (_) { return 0; }
+}
+
+function cloudSafeAppVersion() {
+  return typeof APP_VERSION !== 'undefined' ? APP_VERSION : 'unknown';
+}
+
+// ---------------------------------------------------------------------------
 // Upload vault to cloud (accepts pre-built fileBytes)
 // ---------------------------------------------------------------------------
 
 async function cloudUploadVault(provider, fileBytes) {
+  var uploadStart = Date.now();
   var token = await cloudGetToken(provider);
   if (!token) throw new Error('Not connected to ' + CLOUD_PROVIDERS[provider].name);
 
@@ -337,13 +548,11 @@ async function cloudUploadVault(provider, fileBytes) {
     });
 
     // Upload latest.json pointer
-    var itemCount = 0;
-    try { itemCount = typeof inventory !== 'undefined' ? inventory.length : 0; } catch (_) { /* ignore */ }
     var latestData = {
       filename: filename,
       timestamp: now,
-      appVersion: typeof APP_VERSION !== 'undefined' ? APP_VERSION : 'unknown',
-      itemCount: itemCount,
+      appVersion: cloudSafeAppVersion(),
+      itemCount: cloudSafeItemCount(),
     };
     var latestBytes = new TextEncoder().encode(JSON.stringify(latestData));
     var latestArg = JSON.stringify({
@@ -382,15 +591,17 @@ async function cloudUploadVault(provider, fileBytes) {
     });
   }
 
+  var safeCount = cloudSafeItemCount();
   var backupMeta = {
     provider: provider,
     timestamp: now,
     filename: filename,
-    appVersion: typeof APP_VERSION !== 'undefined' ? APP_VERSION : 'unknown',
-    itemCount: 0,
+    appVersion: cloudSafeAppVersion(),
+    itemCount: safeCount,
   };
-  try { backupMeta.itemCount = typeof inventory !== 'undefined' ? inventory.length : 0; } catch (_) { /* ignore */ }
   localStorage.setItem('cloud_last_backup', JSON.stringify(backupMeta));
+
+  recordCloudActivity({ action: 'backup', provider: provider, result: 'success', detail: filename + ' (' + safeCount + ' items)', duration: Date.now() - uploadStart });
 
   if (typeof syncCloudUI === 'function') syncCloudUI();
   debugLog('[CloudStorage] Backup uploaded to ' + config.name + ' as ' + filename);
@@ -431,6 +642,7 @@ async function cloudGetRemoteLatest(provider) {
 // ---------------------------------------------------------------------------
 
 async function cloudListBackups(provider) {
+  var listStart = Date.now();
   var token = await cloudGetToken(provider);
   if (!token) throw new Error('Not connected to ' + CLOUD_PROVIDERS[provider].name);
 
@@ -470,6 +682,8 @@ async function cloudListBackups(provider) {
     return new Date(b.server_modified) - new Date(a.server_modified);
   });
 
+  recordCloudActivity({ action: 'list', provider: provider, result: 'success', detail: backups.length + ' backups found', duration: Date.now() - listStart });
+
   return backups;
 }
 
@@ -478,6 +692,7 @@ async function cloudListBackups(provider) {
 // ---------------------------------------------------------------------------
 
 async function cloudDownloadVaultByName(provider, filename) {
+  var dlStart = Date.now();
   var token = await cloudGetToken(provider);
   if (!token) throw new Error('Not connected to ' + CLOUD_PROVIDERS[provider].name);
 
@@ -493,7 +708,10 @@ async function cloudDownloadVaultByName(provider, filename) {
       },
     });
     if (!resp.ok) throw new Error('Download failed: ' + resp.status);
-    return new Uint8Array(await resp.arrayBuffer());
+    var bytes = new Uint8Array(await resp.arrayBuffer());
+    var sizeKB = Math.round(bytes.byteLength / 1024);
+    recordCloudActivity({ action: 'restore', provider: provider, result: 'success', detail: filename + ' (' + sizeKB + ' KB)', duration: Date.now() - dlStart });
+    return bytes;
   }
 
   throw new Error('Download by name not supported for ' + provider);
@@ -561,34 +779,51 @@ function syncCloudUI() {
     var card = document.getElementById('cloudCard_' + key);
     if (!card) return;
 
-    // Toggle disconnected vs connected state
+    // Toggle login vs disconnect buttons
     var loginArea = card.querySelector('.cloud-login-area');
-    var connectedArea = card.querySelector('.cloud-connected-area');
     var connectedBadge = card.querySelector('.cloud-connected-badge');
     var disconnectBtn = card.querySelector('.cloud-disconnect-btn');
-    var statusEl = card.querySelector('.cloud-status-detail');
     var backupListEl = document.getElementById('cloudBackupList_' + key);
 
     if (loginArea) loginArea.style.display = connected ? 'none' : '';
-    if (connectedArea) connectedArea.style.display = connected ? '' : 'none';
     if (connectedBadge) connectedBadge.style.display = connected ? '' : 'none';
     if (disconnectBtn) disconnectBtn.style.display = connected ? '' : 'none';
 
-    if (statusEl) {
-      if (connected && lastBackup && lastBackup.provider === key) {
-        var d = new Date(lastBackup.timestamp);
-        var meta = '';
-        if (lastBackup.itemCount) meta += lastBackup.itemCount + ' items';
-        if (lastBackup.appVersion) meta += (meta ? ', ' : '') + 'v' + lastBackup.appVersion;
-        statusEl.textContent = 'Last backup: ' + d.toLocaleDateString() + ' ' +
-          d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) +
-          (meta ? ' (' + meta + ')' : '');
-      } else if (connected) {
-        statusEl.textContent = 'No backups yet';
-      } else {
-        statusEl.textContent = '';
-      }
+    // Enable/disable backup & restore buttons based on connection
+    card.querySelectorAll('.cloud-backup-btn, .cloud-restore-btn').forEach(function (btn) {
+      btn.disabled = !connected;
+    });
+
+    // Update status indicator
+    var indicator = card.querySelector('.cloud-status-indicator');
+    if (indicator) {
+      indicator.dataset.state = connected ? 'connected' : 'disconnected';
+      var textEl = indicator.querySelector('.cloud-status-text');
+      if (textEl) textEl.textContent = connected ? 'Connected' : 'Not connected';
     }
+
+    // Update sync & item count rows
+    var syncEl = card.querySelector('.cloud-status-sync');
+    var itemsEl = card.querySelector('.cloud-status-items');
+    if (connected && lastBackup && lastBackup.provider === key) {
+      var d = new Date(lastBackup.timestamp);
+      if (syncEl) {
+        syncEl.textContent = d.toLocaleDateString() + ' ' +
+          d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+      }
+      if (itemsEl) {
+        var meta = lastBackup.itemCount ? lastBackup.itemCount.toLocaleString() : '0';
+        if (lastBackup.appVersion) meta += ' (v' + lastBackup.appVersion + ')';
+        itemsEl.textContent = meta;
+      }
+    } else {
+      if (syncEl) syncEl.textContent = connected ? 'No backups yet' : 'Never';
+      if (itemsEl) itemsEl.textContent = '\u2014';
+    }
+
+    // Update legacy status detail text
+    var statusEl = card.querySelector('.cloud-status-detail');
+    if (statusEl) statusEl.textContent = '';
 
     // Hide backup list when disconnected
     if (backupListEl && !connected) {
@@ -596,13 +831,26 @@ function syncCloudUI() {
       backupListEl.innerHTML = '';
     }
   });
+
+  // Update password cache status (session-only)
+  var pwStatusEl = typeof safeGetElement === 'function' ? safeGetElement('cloudPwCacheStatus') : document.getElementById('cloudPwCacheStatus');
+  if (pwStatusEl) {
+    var cached = sessionStorage.getItem('cloud_vault_pw_cache');
+    if (cached) {
+      pwStatusEl.textContent = 'Cached (this session)';
+      pwStatusEl.style.color = 'var(--success)';
+    } else {
+      pwStatusEl.textContent = 'Not cached';
+      pwStatusEl.style.color = 'var(--text-secondary)';
+    }
+  }
 }
 
 // ---------------------------------------------------------------------------
-// Password cache (XOR obfuscation — NOT cryptographic, just prevents plaintext)
+// Password cache (session-only — never persisted to localStorage)
 // ---------------------------------------------------------------------------
 
-function cloudCachePassword(provider, password, days) {
+function cloudCachePassword(provider, password) {
   var len = password.length;
   var nonce = new Uint8Array(len);
   crypto.getRandomValues(nonce);
@@ -612,22 +860,17 @@ function cloudCachePassword(provider, password, days) {
   var payload = {
     nonce: btoa(String.fromCharCode.apply(null, nonce)),
     data: btoa(String.fromCharCode.apply(null, data)),
-    expires: Date.now() + (days || 3) * 86400000,
     provider: provider,
   };
-  localStorage.setItem('cloud_vault_pw_cache', JSON.stringify(payload));
+  sessionStorage.setItem('cloud_vault_pw_cache', JSON.stringify(payload));
 }
 
 function cloudGetCachedPassword(provider) {
   try {
-    var raw = localStorage.getItem('cloud_vault_pw_cache');
+    var raw = sessionStorage.getItem('cloud_vault_pw_cache');
     if (!raw) return null;
     var payload = JSON.parse(raw);
     if (payload.provider !== provider) return null;
-    if (Date.now() > payload.expires) {
-      cloudClearCachedPassword();
-      return null;
-    }
     var nonce = Uint8Array.from(atob(payload.nonce), function (c) { return c.charCodeAt(0); });
     var data = Uint8Array.from(atob(payload.data), function (c) { return c.charCodeAt(0); });
     var decoded = new Uint8Array(data.length);
@@ -639,7 +882,7 @@ function cloudGetCachedPassword(provider) {
 }
 
 function cloudClearCachedPassword() {
-  localStorage.removeItem('cloud_vault_pw_cache');
+  sessionStorage.removeItem('cloud_vault_pw_cache');
 }
 
 // ---------------------------------------------------------------------------
@@ -684,3 +927,6 @@ window.cloudGetCachedPassword = cloudGetCachedPassword;
 window.cloudClearCachedPassword = cloudClearCachedPassword;
 window.showCloudToast = showCloudToast;
 window.showKrakenToastIfFirst = showKrakenToastIfFirst;
+window.recordCloudActivity = recordCloudActivity;
+window.renderCloudActivityTable = renderCloudActivityTable;
+window.clearCloudActivityLog = clearCloudActivityLog;
