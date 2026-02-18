@@ -23,8 +23,13 @@ If ambiguous, ask one direct clarifying question.
 
 1. Classify entity type (Session/Insight/Handoff/Bug/Feature/Sprint).
 2. Build standardized name and ID using UTC timestamp.
-3. Create entity with ordered observations.
-4. Add required and contextual tags.
+3. Create entity with ordered observations, including:
+   - `TIMESTAMP: <ISO-8601 UTC>`
+   - `DATE_TOKEN: <YYYYMMDDHHMMSS>`
+4. Add required and contextual tags, including date buckets:
+   - `TAG: date:YYYYMMDD`
+   - `TAG: date:YYYYMM`
+   - `TAG: date:YYYY`
 5. Link related entities when appropriate.
 6. Confirm what was saved and how to recall it.
 
@@ -52,10 +57,14 @@ Prefer storing references when possible.
 ## RECALL Workflow
 
 1. Choose strategy:
-   - exact/tag query -> `search_nodes`
-   - conceptual query -> `semantic_search` with `hybrid_search: true`
-2. Expand relevant results with `open_nodes`.
-3. Present concise summary first, details on demand.
+   - Colon-delimited name (e.g., `HANDSHAKE:CODEX:2026-02-18`) -> `search_nodes` with exact colon string (never space-split)
+   - Tag prefix (e.g., `project:staktrakr`, `agent:codex`) -> `search_nodes` with exact tag
+   - Date token/time slice -> `search_nodes` with progressive prefixes (`YYYYMMDDHH` -> `YYYYMMDD` -> `YYYYMM` -> `YYYY`)
+   - Conceptual/natural language query -> `semantic_search` with `hybrid_search: true`
+2. For day/week recency requests, prefer date tags first (for example `date:20260218`) before semantic recall.
+3. **Fallback**: If `search_nodes` returns 0 results, always retry with `semantic_search` using the same query as natural language.
+4. Expand relevant results with `open_nodes`.
+5. Present concise summary first, details on demand.
 
 ## Secret Handling in RECALL Mode
 
@@ -79,8 +88,11 @@ Skip if session content is trivial and user did not explicitly ask.
 When content is agent handoff related:
 
 1. Create Memento handoff entity.
-2. If issue is known and Linear is available, post handoff comment.
-3. Report handoff entity name and comment result.
+2. Post to Linear **Developers** team (`38d57c9f-388c-41ec-9cd2-259a21a5df1c`):
+   - If a related issue exists: post handoff comment on that issue.
+   - If no related issue: create a new Developers team issue.
+3. **Never include secrets in Linear** — use Memento entity references only.
+4. Report handoff entity name and Linear comment/issue result.
 
 ## Output Format
 
