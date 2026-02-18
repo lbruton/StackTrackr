@@ -659,7 +659,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     // Phase 17: Hash deep-link handling (runs after event listeners are wired)
     // Supports privacy.html redirect shim and any direct #privacy / #faq links.
-    setTimeout(() => {
+    setTimeout(() => { // nosemgrep: javascript.lang.security.detect-eval-with-expression.detect-eval-with-expression
       const hash = window.location.hash;
       if (hash === '#privacy') {
         window.location.hash = '';
