@@ -42,7 +42,7 @@ Use the `/sync-instructions` skill after significant codebase changes to keep al
 
 ### 1. Script Loading Order (MANDATORY)
 
-48 scripts load in strict dependency order via `index.html`. Breaking this order causes undefined variable errors. The full chain:
+50 scripts load in strict dependency order via `index.html`. Breaking this order causes undefined variable errors. The full chain:
 
 ```
 file-protocol-fix.js  (no defer -- loads FIRST)
@@ -53,12 +53,13 @@ utils.js
 image-processor.js -> image-cache.js -> bulk-image-cache.js -> image-cache-modal.js
 fuzzy-search.js -> autocomplete.js
 numista-lookup.js
+seed-images.js
 versionCheck.js
 changeLog.js
 charts.js
 theme.js
 search.js
-chip-grouping.js -> filters.js
+chip-grouping.js -> tags.js -> filters.js
 sorting.js
 pagination.js
 detailsModal.js -> viewModal.js -> debugModal.js
@@ -71,10 +72,10 @@ api.js
 catalog-api.js -> pcgs-api.js -> catalog-providers.js -> catalog-manager.js
 inventory.js
 card-view.js
-vault.js
+vault.js -> cloud-storage.js
 about.js
 customMapping.js
-settings.js
+settings.js -> settings-listeners.js
 bulkEdit.js
 events.js
 test-loader.js
@@ -116,6 +117,7 @@ Use `saveData()`/`loadData()` (async, preferred) or `saveDataSync()`/`loadDataSy
 - **`js/sorting.js`** -- Multi-column table sorting (qty-adjusted for computed columns)
 - **`js/filters.js`** -- Advanced column filtering, summary chip system, category-based chip rendering
 - **`js/chip-grouping.js`** -- Custom chip groups, dynamic name grouping for filter chips
+- **`js/tags.js`** -- Per-item tagging system (Numista API tags + custom user tags), tag management UI
 - **`js/search.js`** & **`js/fuzzy-search.js`** -- Search functionality with fuzzy matching
 - **`js/charts.js`** -- Chart.js spot price visualization
 - **`js/pagination.js`** -- Table pagination
@@ -123,6 +125,7 @@ Use `saveData()`/`loadData()` (async, preferred) or `saveDataSync()`/`loadDataSy
 - **`js/autocomplete.js`** -- Input autocomplete with fuzzy matching
 - **`js/card-view.js`** -- Card view rendering engine (styles A/B/C/D)
 - **`js/settings.js`** -- Settings modal UI, all configuration panels (API, display, Goldback, Numista rules, image storage, layout sections)
+- **`js/settings-listeners.js`** -- Settings modal event listener binders, split from `settings.js` for maintainability
 
 ### Image System
 
@@ -154,11 +157,13 @@ Use `saveData()`/`loadData()` (async, preferred) or `saveDataSync()`/`loadDataSy
 
 - **`js/customMapping.js`** -- Regex-based rule engine for CSV field mapping
 - **`js/vault.js`** -- Encrypted backup/restore (.stvault format, AES-GCM, PBKDF2 key derivation, password strength meter)
+- **`js/cloud-storage.js`** -- Cloud sync via Dropbox/pCloud/Box OAuth, cloud vault backup/restore, activity logging
 - CSV via PapaParse, PDF via jsPDF + AutoTable, ZIP backup via JSZip
 
 ### Data & Infrastructure
 
 - **`js/seed-data.js`** -- Demo/seed data for first-run experience
+- **`js/seed-images.js`** -- Embedded sample coin images for first-run Numista lookup demo
 - **`js/test-loader.js`** -- Playwright test harness loader (localhost only)
 - **`sw.js`** -- Service worker for PWA offline support, cache-first strategy with network fallback, `CACHE_NAME` must match `APP_VERSION`
 - **`data/spot-history-bundle.js`** -- Bundled historical spot prices loaded at runtime
