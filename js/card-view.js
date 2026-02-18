@@ -3,18 +3,264 @@
 
 /**
  * Returns the active card style from localStorage.
- * @returns {'A'|'B'|'C'}
+ * @returns {'A'|'B'|'C'|'D'}
  */
 const getCardStyle = () => localStorage.getItem(CARD_STYLE_KEY) || 'A';
 
 /**
- * Returns true when the card view should be rendered instead of the table.
- * Card view activates on mobile (≤1350px) or when the desktop toggle is on.
+ * Returns true when the card view (A/B/C) should be rendered instead of the table.
+ * Style D = table view. When D is selected, returns false so inventory.js renders the table.
  * @returns {boolean}
  */
-const isCardViewActive = () =>
-  window.innerWidth <= 1350 ||
-  document.body.classList.contains('force-card-view');
+function isCardViewActive() {
+  return getCardStyle() !== 'D';
+}
+
+/**
+ * Computes portfolio summary totals for currently filtered items.
+ * @returns {{ purchase: number, melt: number, retail: number, gainLoss: number, count: number }}
+ */
+function _computePortfolioSummary() {
+  const items = (typeof filterInventory === 'function') ? filterInventory() : (inventory || []);
+  let purchase = 0, melt = 0, retail = 0, count = 0;
+  items.forEach(item => {
+    const spot = (typeof spotPrices !== 'undefined' ? spotPrices[(item.metal || '').toLowerCase()] : 0) || 0;
+    const qty = Number(item.qty) || 1;
+    const itemMelt = (typeof computeMeltValue === 'function') ? computeMeltValue(item, spot) : 0;
+    const gbPrice = (typeof getGoldbackRetailPrice === 'function') ? getGoldbackRetailPrice(item) : null;
+    const mktVal = parseFloat(item.marketValue) || 0;
+    const itemRetail = gbPrice ? gbPrice * qty : (mktVal > 0 ? mktVal * qty : itemMelt);
+    const itemPurchase = (typeof item.price === 'number' ? item.price : parseFloat(item.price) || 0) * qty;
+    purchase += itemPurchase;
+    melt += itemMelt;
+    retail += itemRetail;
+    count++;
+  });
+  return { purchase, melt, retail, gainLoss: retail - purchase, count };
+}
+
+/**
+ * Ensures the sort bar is always visible and syncs controls to the active view style.
+ * Called after every renderTable() — works around inventory.js hiding the bar in table mode.
+ */
+function _syncSortBar() {
+  const style = getCardStyle();
+  const bar = document.getElementById('cardSortBar');
+  if (!bar) return;
+
+  // Always show the bar
+  bar.style.display = 'flex';
+
+  // Sort controls: invisible when in table view (D) — visibility:hidden preserves
+  // layout so the summary stays centered; display:none would shift it right.
+  const sortLeft = bar.querySelector('.card-sort-left');
+  if (sortLeft) sortLeft.style.visibility = style === 'D' ? 'hidden' : '';
+
+  // Sync style toggle active state
+  const styleToggle = document.getElementById('cardStyleToggle');
+  if (styleToggle) {
+    styleToggle.querySelectorAll('.chip-sort-btn[data-style]').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.style === style);
+    });
+  }
+
+  // Update summary
+  _renderSortBarSummary();
+
+  // Body class for CSS hooks
+  document.body.classList.toggle('view-mode-d', style === 'D');
+
+  // Set table min-width directly (inline style beats any CSS specificity issue).
+  // 1200px forces the table wider than typical tablet/mobile viewports so .portal-scroll scrolls.
+  // At desktop (>1200px) width:100% naturally fills the container — no forced overflow there.
+  const table = document.getElementById('inventoryTable');
+  if (table) table.style.minWidth = style === 'D' ? '1200px' : '';
+
+  // Custom horizontal scrollbar (show in D mode, hide in card modes)
+  _syncHScrollBar(style === 'D');
+}
+
+// ---------------------------------------------------------------------------
+// Custom horizontal scrollbar for D (table) mode
+// ---------------------------------------------------------------------------
+
+/** Whether the custom H-scroll bar event listeners have been wired */
+let _hScrollWired = false;
+
+/**
+ * Creates the scrollbar DOM node (once) and inserts it after .portal-scroll.
+ * @returns {{ track: HTMLElement, thumb: HTMLElement }|null}
+ */
+function _getOrCreateHScrollBar() {
+  let track = document.getElementById('tableHScrollTrack');
+  if (track) return { track, thumb: document.getElementById('tableHScrollThumb') };
+
+  const portal = document.querySelector('.portal-scroll');
+  if (!portal) return null;
+
+  track = document.createElement('div');
+  track.id = 'tableHScrollTrack';
+  track.className = 'h-scroll-track';
+  track.setAttribute('aria-hidden', 'true');
+
+  const thumb = document.createElement('div');
+  thumb.id = 'tableHScrollThumb';
+  thumb.className = 'h-scroll-thumb';
+  track.appendChild(thumb);
+
+  // Insert immediately after the portal-scroll container
+  portal.parentNode.insertBefore(track, portal.nextSibling);
+  return { track, thumb };
+}
+
+/**
+ * Recalculates thumb size and position from portal scroll state.
+ */
+function _updateHScrollThumb() {
+  const track = document.getElementById('tableHScrollTrack');
+  const thumb = document.getElementById('tableHScrollThumb');
+  const portal = document.querySelector('.portal-scroll');
+  const table = document.getElementById('inventoryTable');
+  if (!track || !thumb || !portal || !table) return;
+
+  const scrollWidth = table.scrollWidth;
+  const clientWidth = portal.clientWidth;
+
+  // Hide the bar if content fits (no scroll needed)
+  if (scrollWidth <= clientWidth + 2) {
+    track.hidden = true;
+    return;
+  }
+  track.hidden = false;
+
+  const trackWidth = track.clientWidth || track.offsetWidth;
+  const thumbWidth = Math.max(44, (clientWidth / scrollWidth) * trackWidth);
+  const maxLeft = trackWidth - thumbWidth;
+  const scrollPct = portal.scrollLeft / (scrollWidth - clientWidth);
+
+  thumb.style.width = thumbWidth + 'px';
+  thumb.style.transform = `translateX(${scrollPct * maxLeft}px)`;
+}
+
+/**
+ * Shows or hides the custom H-scroll bar and wires events (once).
+ * @param {boolean} show
+ */
+function _syncHScrollBar(show) {
+  const result = _getOrCreateHScrollBar();
+  if (!result) return;
+  const { track, thumb } = result;
+
+  // Constrain table-section so it can't inflate beyond its parent container.
+  // Without this, table-section expands to match the table's min-width (1200px),
+  // making portal.clientWidth === table.scrollWidth → no perceived overflow → scrollbar hidden.
+  // overflow-x:hidden creates a BFC that locks the element to its parent's width.
+  const tableSection = document.getElementById('tableSectionEl');
+  if (tableSection) {
+    tableSection.style.overflowX = show ? 'hidden' : '';
+  }
+
+  // Switch portal-scroll to always-show scroll mode so iOS creates a real scroll container
+  const portal = document.querySelector('.portal-scroll');
+  if (portal) {
+    portal.style.overflowX = show ? 'scroll' : '';
+    portal.style.maxWidth = show ? '100%' : '';
+  }
+
+  if (!show) {
+    track.hidden = true;
+    return;
+  }
+
+  _updateHScrollThumb();
+
+  // Wire all events only once
+  if (_hScrollWired) return;
+  _hScrollWired = true;
+
+  // Sync native scroll → thumb position
+  if (portal) {
+    portal.addEventListener('scroll', _updateHScrollThumb, { passive: true });
+  }
+  window.addEventListener('resize', _updateHScrollThumb, { passive: true });
+
+  // ── Drag logic ──────────────────────────────────────────────────────────
+  let dragging = false;
+  let dragStartX = 0;
+  let dragStartScrollLeft = 0;
+
+  function clientX(e) {
+    return (e.touches && e.touches.length) ? e.touches[0].clientX : e.clientX;
+  }
+
+  function onDragStart(e) {
+    if (!portal) return;
+    dragging = true;
+    dragStartX = clientX(e);
+    dragStartScrollLeft = portal.scrollLeft;
+    thumb.style.cursor = 'grabbing';
+    e.preventDefault();
+  }
+
+  function onDragMove(e) {
+    if (!dragging || !portal) return;
+    const table = document.getElementById('inventoryTable');
+    if (!table) return;
+    const dx = clientX(e) - dragStartX;
+    const trackWidth = track.clientWidth || track.offsetWidth;
+    const thumbWidth = thumb.offsetWidth;
+    const maxLeft = trackWidth - thumbWidth;
+    const maxScroll = table.scrollWidth - portal.clientWidth;
+    if (maxLeft <= 0) return;
+    portal.scrollLeft = dragStartScrollLeft + (dx / maxLeft) * maxScroll;
+    _updateHScrollThumb();
+    e.preventDefault();
+  }
+
+  function onDragEnd() {
+    dragging = false;
+    thumb.style.cursor = '';
+  }
+
+  thumb.addEventListener('mousedown', onDragStart);
+  thumb.addEventListener('touchstart', onDragStart, { passive: false });
+  document.addEventListener('mousemove', onDragMove);
+  document.addEventListener('touchmove', onDragMove, { passive: false });
+  document.addEventListener('mouseup', onDragEnd);
+  document.addEventListener('touchend', onDragEnd);
+
+  // Click-on-track to jump scroll position
+  track.addEventListener('click', (e) => {
+    if (!portal || e.target === thumb) return;
+    const table = document.getElementById('inventoryTable');
+    if (!table) return;
+    const rect = track.getBoundingClientRect();
+    const clickFrac = (clientX(e) - rect.left) / rect.width;
+    portal.scrollLeft = clickFrac * (table.scrollWidth - portal.clientWidth);
+    _updateHScrollThumb();
+  });
+}
+
+/**
+ * Renders the portfolio summary strip in the sort bar.
+ */
+function _renderSortBarSummary() {
+  const el = document.getElementById('cardSortSummary');
+  if (!el) return;
+  const fmt = (typeof formatCurrency === 'function') ? formatCurrency : v => '$' + v.toFixed(2);
+  const s = _computePortfolioSummary();
+  const gl = s.gainLoss;
+  const glClass = gl >= 0 ? 'summary-positive' : 'summary-negative';
+  const glSign = gl >= 0 ? '+' : '';
+  el.innerHTML =
+    `<span class="summary-item"><span class="summary-label">Buy</span><span class="summary-val">${fmt(s.purchase)}</span></span>` +
+    `<span class="summary-sep">·</span>` +
+    `<span class="summary-item"><span class="summary-label">Melt</span><span class="summary-val">${fmt(s.melt)}</span></span>` +
+    `<span class="summary-sep">·</span>` +
+    `<span class="summary-item"><span class="summary-label">Market</span><span class="summary-val">${fmt(s.retail)}</span></span>` +
+    `<span class="summary-sep">·</span>` +
+    `<span class="summary-item ${glClass}"><span class="summary-label">G/L</span><span class="summary-val">${glSign}${fmt(gl)}</span></span>`;
+}
 
 // ---------------------------------------------------------------------------
 // SVG Sparkline helpers
@@ -792,12 +1038,10 @@ let _cardSortBarBound = false;
 
 /**
  * Updates the card sort bar UI to reflect current sort state and card style.
- * Called from renderTable() whenever card view is active.
+ * Called from renderTable() whenever card view (A/B/C) is active.
+ * For D mode, _syncSortBar handles everything via MutationObserver.
  */
 const updateCardSortBar = () => {
-  const bar = document.getElementById('cardSortBar');
-  if (!bar) return;
-
   // Sync sort dropdown with current sortColumn
   const colSelect = document.getElementById('cardSortColumn');
   if (colSelect && colSelect.value !== String(sortColumn)) {
@@ -811,18 +1055,12 @@ const updateCardSortBar = () => {
     dirBtn.title = sortDirection === 'asc' ? 'Ascending — click to reverse' : 'Descending — click to reverse';
   }
 
-  // Sync card style toggle
-  const style = getCardStyle();
-  const styleToggle = document.getElementById('cardStyleToggle');
-  if (styleToggle) {
-    styleToggle.querySelectorAll('.chip-sort-btn').forEach(btn => {
-      btn.classList.toggle('active', btn.dataset.style === style);
-    });
-  }
+  _syncSortBar();
 };
 
 /**
  * Binds event listeners on the card sort bar (once).
+ * Also sets up the MutationObserver that keeps the bar visible in D (table) mode.
  */
 const initCardSortBar = () => {
   if (_cardSortBarBound) return;
@@ -846,18 +1084,187 @@ const initCardSortBar = () => {
     });
   }
 
-  // Card style A/B/C toggle
+  // Style A/B/C/D toggle
   const styleToggle = document.getElementById('cardStyleToggle');
   if (styleToggle) {
     styleToggle.addEventListener('click', (e) => {
       const btn = e.target.closest('.chip-sort-btn');
       if (!btn || !btn.dataset.style) return;
-      localStorage.setItem(CARD_STYLE_KEY, btn.dataset.style);
-      // Sync settings select if open
+      const newStyle = btn.dataset.style;
+      localStorage.setItem(CARD_STYLE_KEY, newStyle);
+      // Sync settings dropdown (D is not in the settings list, skip it)
       const styleSelect = document.getElementById('settingsCardStyle');
-      if (styleSelect) styleSelect.value = btn.dataset.style;
+      if (styleSelect && newStyle !== 'D') styleSelect.value = newStyle;
       if (typeof renderTable === 'function') renderTable();
+      // After renderTable(), inventory.js may have hidden bar (D mode) — restore it
+      _syncSortBar();
     });
   }
+
+  // MutationObserver: when inventory.js hides the bar in table mode (D), immediately restore it.
+  // inventory.js sets cardSortBar.style.display='none' when isCardViewActive()===false.
+  const bar = document.getElementById('cardSortBar');
+  if (bar) {
+    new MutationObserver(() => {
+      if (getCardStyle() === 'D' && bar.style.display === 'none') {
+        _syncSortBar();
+      }
+    }).observe(bar, { attributes: true, attributeFilter: ['style'] });
+  }
 };
+
+// =============================================================================
+// GLOBAL SPOT CONTROLS
+// =============================================================================
+
+/**
+ * Trend period presets and labels for the header trend cycle button.
+ */
+const TREND_PRESETS = ['1', '7', '30', '90', '365', '1095'];
+const TREND_LABELS  = { '1': '1d', '7': '7d', '30': '30d', '90': '90d', '365': '1Y', '1095': '3Y' };
+
+/**
+ * Applies a trend period value to all four metal sparkline selects and updates
+ * the header trend label.
+ * @param {string} val - The trend period value to apply.
+ */
+const _applyTrend = (val) => {
+  ['Silver', 'Gold', 'Platinum', 'Palladium'].forEach(m => {
+    const sel = document.getElementById(`spotRange${m}`);
+    if (sel && sel.value !== val) { sel.value = val; sel.dispatchEvent(new Event('change')); }
+  });
+  const label = document.getElementById('headerTrendLabel');
+  if (label) label.textContent = TREND_LABELS[val] || val + 'd';
+};
+
+/**
+ * Cycles through trend period presets, persists the selection, and applies it.
+ */
+const cycleSpotTrend = () => {
+  const current = localStorage.getItem('spotTrendPeriod') || '90';
+  const next = TREND_PRESETS[(TREND_PRESETS.indexOf(current) + 1) % TREND_PRESETS.length];
+  localStorage.setItem('spotTrendPeriod', next);
+  _applyTrend(next);
+};
+window.cycleSpotTrend = cycleSpotTrend;
+
+/**
+ * Initialises spot controls: applies the persisted trend period on load.
+ *
+ * The per-card <select> elements remain in the DOM (hidden via CSS) so that
+ * the existing spot.js sparkline listeners continue to work.
+ */
+const _initSpotControls = () => {
+  _applyTrend(localStorage.getItem('spotTrendPeriod') || '90');
+};
+
+// =============================================================================
+// TOTALS CAROUSEL
+// =============================================================================
+
+/**
+ * Initialises the totals cards carousel:
+ *  - Generates one dot per card inside #totalsDots
+ *  - Wires prev/next buttons to scroll by one card width
+ *  - Wires the scroll event to update the active dot and button states
+ *
+ * At ≥1350px the nav buttons and dots are hidden via CSS; the carousel
+ * degenerates to a plain flex row with no overflow.
+ */
+/**
+ * Rebuilds totals carousel dots after metal order/visibility changes.
+ * Safe to call multiple times — does not re-wire scroll or nav listeners.
+ */
+const refreshTotalsDots = () => {
+  const carousel = document.getElementById('totalsCarousel');
+  const dotsEl   = document.getElementById('totalsDots');
+  if (!carousel || !dotsEl) return;
+  const cards = [...carousel.querySelectorAll('.total-card')].filter(c => c.style.display !== 'none');
+  dotsEl.innerHTML = '';
+  cards.forEach((card, i) => {
+    const dot = document.createElement('button');
+    dot.className = 'totals-dot' + (i === 0 ? ' active' : '');
+    dot.setAttribute('aria-label', `Go to card ${i + 1}`);
+    dot.addEventListener('click', () => carousel.scrollTo({ left: card.offsetLeft, behavior: 'smooth' }));
+    dotsEl.appendChild(dot);
+  });
+};
+window.refreshTotalsDots = refreshTotalsDots;
+
+const _initTotalsCarousel = () => {
+  const carousel = document.getElementById('totalsCarousel');
+  const prevBtn  = document.getElementById('totalsPrev');
+  const nextBtn  = document.getElementById('totalsNext');
+  const dotsEl   = document.getElementById('totalsDots');
+
+  if (!carousel || !prevBtn || !nextBtn || !dotsEl) return;
+
+  const cards = Array.from(carousel.querySelectorAll('.total-card'));
+  if (!cards.length) return;
+
+  // Sort by visual (rendered) left offset so CSS `order` is respected.
+  // All Metals has order:-1 so it renders first but is last in DOM order.
+  const sortedCards = [...cards].sort((a, b) => a.offsetLeft - b.offsetLeft);
+
+  // --- Build dots ---
+  dotsEl.innerHTML = '';
+  const dots = sortedCards.map((card, i) => {
+    const dot = document.createElement('button');
+    dot.className = 'totals-dot' + (i === 0 ? ' active' : '');
+    dot.setAttribute('aria-label', `Go to card ${i + 1}`);
+    dot.addEventListener('click', () => {
+      carousel.scrollTo({ left: card.offsetLeft, behavior: 'smooth' });
+    });
+    dotsEl.appendChild(dot);
+    return dot;
+  });
+
+  // --- Helpers ---
+  const getCardWidth = () => {
+    const card = sortedCards[0];
+    const gap  = parseFloat(getComputedStyle(carousel).gap) || 0;
+    return card.getBoundingClientRect().width + gap;
+  };
+
+  const updateState = () => {
+    const scrollLeft = carousel.scrollLeft;
+    const maxScroll  = carousel.scrollWidth - carousel.clientWidth;
+
+    prevBtn.disabled = scrollLeft < 4;
+    nextBtn.disabled = scrollLeft >= maxScroll - 1;
+
+    // Highlight the dot whose card is most in view
+    const activeIdx = Math.round(scrollLeft / getCardWidth());
+    dots.forEach((d, i) => d.classList.toggle('active', i === activeIdx));
+  };
+
+  // --- Button clicks ---
+  prevBtn.addEventListener('click', () => {
+    carousel.scrollBy({ left: -getCardWidth(), behavior: 'smooth' });
+  });
+  nextBtn.addEventListener('click', () => {
+    carousel.scrollBy({ left: getCardWidth(), behavior: 'smooth' });
+  });
+
+  // --- Scroll tracking ---
+  let scrollTimer;
+  carousel.addEventListener('scroll', () => {
+    clearTimeout(scrollTimer);
+    scrollTimer = setTimeout(updateState, 50);
+  }, { passive: true });
+
+  // --- Initial state ---
+  updateState();
+};
+
+// On page load: initialise sort bar event handlers (needed even in D mode where
+// inventory.js never calls initCardSortBar) and fix initial bar visibility.
+document.addEventListener('DOMContentLoaded', () => {
+  initCardSortBar();
+  _initSpotControls();
+  _initTotalsCarousel();
+  // requestAnimationFrame runs after all DOMContentLoaded handlers (including init.js)
+  // so the sort bar has already been shown/hidden by inventory.js by this point.
+  requestAnimationFrame(_syncSortBar);
+});
 

@@ -82,8 +82,190 @@
     <link rel="icon" type="image/svg+xml" href="./favicon.svg?v=3.27.03" />
     <link rel="icon" type="image/png" sizes="32x32" href="./favicon.png?v=3.27.03" />
     <link rel="icon" type="image/png" sizes="192x192" href="./images/icon-192.png?v=3.27.03" />
+
+    <!-- PROTOTYPE: STAK-144 — 4-way view toggle (A/B/C/D) + always-visible sort bar + summary row -->
+    <style>
+      /* ── Fix: body overflow-x:hidden blocks child horizontal scroll ───────
+         overflow-x:clip prevents body-level layout overflow (same visual result)
+         but does NOT create a new scroll container, so .portal-scroll can scroll
+         horizontally on mobile Safari / iOS WebView. ─────────────────────────── */
+      body {
+        overflow-x: clip !important;
+      }
+
+      /* ── Sort bar: borderless, blends into content below ───────────────── */
+      #cardSortBar {
+        border: none !important;
+        background: transparent !important;
+        padding-bottom: 0.5rem !important;
+        margin-bottom: 0 !important;
+      }
+
+      /* ── Portfolio summary bar (full-width bottom of filter chips section) ─ */
+      .card-sort-summary {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        justify-content: center;
+        flex-wrap: nowrap;
+        font-size: 0.75rem;
+        width: 100%;
+        padding: 0.35rem 0 0;
+        border-top: 1px solid var(--border-color, var(--border));
+        margin-top: 0.25rem;
+        overflow: hidden;
+      }
+      .card-sort-summary .summary-item {
+        display: inline-flex;
+        align-items: baseline;
+        gap: 0.2rem;
+      }
+      .card-sort-summary .summary-label {
+        color: var(--text-muted, var(--text-secondary));
+        font-size: 0.68rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+      }
+      .card-sort-summary .summary-val {
+        color: var(--text-primary);
+        font-weight: 600;
+      }
+      .card-sort-summary .summary-positive .summary-val { color: var(--gain, #22c55e); }
+      .card-sort-summary .summary-negative .summary-val { color: var(--loss, #ef4444); }
+      .card-sort-summary .summary-sep {
+        color: var(--border);
+        padding: 0 0.1rem;
+      }
+
+      /* ── Table scroll: portal-scroll must fill its container for touch drag ─ */
+      .portal-scroll {
+        width: 100%;
+      }
+
+      /* ── Custom horizontal scrollbar (D mode) ───────────────────────────── */
+      .h-scroll-track {
+        position: relative;
+        height: 10px;
+        margin: 4px 6px 6px;
+        border-radius: 5px;
+        background: var(--bg-tertiary, rgba(128,128,128,0.15));
+        cursor: pointer;
+        /* Hide when .hidden attribute is set */
+      }
+      .h-scroll-track[hidden] { display: none; }
+      .h-scroll-thumb {
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 100%;
+        min-width: 44px;
+        background: var(--primary, #6366f1);
+        border-radius: 5px;
+        cursor: grab;
+        will-change: transform;
+        /* Smooth reposition during scroll */
+        transition: transform 0.05s linear;
+      }
+      .h-scroll-thumb:active { cursor: grabbing; }
+      /* Hide native horizontal scrollbar when using custom one */
+      body.view-mode-d .portal-scroll::-webkit-scrollbar { height: 0; }
+      body.view-mode-d .portal-scroll { scrollbar-width: none; }
+
+      /* ── Table (D mode): constrain container + force overflow ──────────────
+         table-section must be overflow:hidden so it can't inflate to match
+         the table's 1200px min-width (otherwise portal.clientWidth === 1200
+         and no scroll is detected). overflow:hidden creates a BFC that locks
+         the element to its parent container's width (~565px on mobile).       */
+      body.view-mode-d #tableSectionEl {
+        overflow-x: hidden;
+      }
+      body.view-mode-d .portal-scroll {
+        overflow-x: scroll;
+        max-width: 100%;
+      }
+      body.view-mode-d #inventoryTable {
+        min-width: 1200px;
+      }
+
+      /* ── Table header: slightly darker so it reads as a distinct header ─── */
+      #inventoryTable thead th {
+        /* box-shadow overlay avoids creating a new stacking context (filter would
+           break position:sticky in some browsers) */
+        box-shadow: inset 0 0 0 9999px rgba(0, 0, 0, 0.18);
+      }
+
+      /* ── Touch-friendly table rows at narrow viewports ──────────────────── */
+      @media (max-width: 900px) {
+        #inventoryTable tbody td {
+          padding-top: 0.55rem;
+          padding-bottom: 0.55rem;
+        }
+      }
+
+      /* ── Portfolio summary + sort bar compact scaling (<= 480px) ──────────── */
+      @media (max-width: 480px) {
+        .card-sort-summary {
+          font-size: 0.65rem;
+          gap: 0.3rem;
+          padding: 0.35rem 0 0;
+        }
+        .card-sort-summary .summary-label {
+          font-size: 0.58rem;
+        }
+        .card-sort-summary .summary-sep {
+          display: none; /* drop separators at very narrow widths */
+        }
+        .card-sort-summary .summary-item {
+          gap: 0.1rem;
+        }
+        #cardSortBar .control-label {
+          font-size: 0.7rem;
+        }
+        #cardSortBar .control-select {
+          font-size: 0.72rem;
+          min-width: 5.5rem;
+        }
+      }
+
+      /* ── DEBUG OVERLAY ──────────────────────────────────────────────────── */
+      #proto-debug {
+        position: fixed; bottom: 12px; left: 12px; z-index: 99999;
+        background: rgba(0,0,0,0.88); color: #0f0; font: 11px/1.6 monospace;
+        padding: 8px 10px; border-radius: 6px; max-width: 400px;
+      }
+      #proto-debug b { color: #ff0; }
+      #proto-debug button {
+        margin-top: 6px; padding: 3px 8px; font: 11px monospace;
+        background: #333; color: #fff; border: 1px solid #0f0;
+        border-radius: 3px; cursor: pointer; display: block; width: 100%;
+      }
+    </style>
   </head>
   <body>
+    <!-- PROTOTYPE DEBUG OVERLAY — remove before production -->
+    <div id="proto-debug">loading…</div>
+    <script>
+      (function () {
+        function refresh() {
+          var el = document.getElementById('proto-debug');
+          if (!el) return;
+          var style = localStorage.getItem('cardViewStyle') || 'A';
+          var icva = typeof isCardViewActive === 'function'
+            ? String(isCardViewActive()) : '(fn not yet loaded)';
+          var w = window.innerWidth;
+          var barDisplay = (document.getElementById('cardSortBar') || {}).style && document.getElementById('cardSortBar').style.display;
+          el.innerHTML =
+            'PROTO DEBUG<br>' +
+            'cardViewStyle: <b>' + style + '</b><br>' +
+            'isCardViewActive(): <b>' + icva + '</b><br>' +
+            'window.innerWidth: <b>' + w + 'px</b><br>' +
+            'sort bar display: <b>' + barDisplay + '</b><br>' +
+            '<button onclick="localStorage.removeItem(\'cardViewStyle\');if(typeof renderTable===\'function\')renderTable();">Reset style &amp; re-render</button>';
+        }
+        setInterval(refresh, 800);
+        refresh();
+      }());
+    </script>
     <!-- Application Header -->
     <div class="app-header">
       <div>
@@ -201,7 +383,7 @@
           </svg>
         </h1>
       </div>
-      <div style="margin-left: auto; display: flex; gap: 0.5rem">
+      <div class="app-header-actions">
         <!-- Theme cycle button (STACK-54) -->
         <button class="btn theme-btn header-toggle-btn" id="headerThemeBtn"
                 title="Cycle theme" aria-label="Cycle theme">
@@ -227,13 +409,23 @@
             <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
           </svg>
         </button>
-        <!-- Card/Table toggle button (STAK-118) -->
-        <button class="btn theme-btn header-toggle-btn" id="headerCardViewBtn"
-                title="Toggle card/table view" aria-label="Toggle card/table view" style="display:none">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+        <!-- Trend cycle button -->
+        <button class="btn theme-btn header-toggle-btn" id="headerTrendBtn"
+                title="Trend period" aria-label="Trend period" style="display:none">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="1" y="3" width="7" height="7" rx="1"/><rect x="10" y="3" width="7" height="7" rx="1"/>
-            <rect x="1" y="14" width="7" height="7" rx="1"/><rect x="10" y="14" width="7" height="7" rx="1"/>
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+          </svg>
+          <span class="header-trend-label" id="headerTrendLabel">90d</span>
+        </button>
+        <!-- Sync all spot prices button -->
+        <button class="btn theme-btn header-toggle-btn" id="headerSyncBtn"
+                title="Sync all spot prices" aria-label="Sync all spot prices" style="display:none">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21.5 2v6h-6"/><path d="M2.5 22v-6h6"/>
+            <path d="M2.5 11.5a10 10 0 0 1 18.4-4.5"/>
+            <path d="M21.5 12.5a10 10 0 0 1-18.4 4.5"/>
           </svg>
         </button>
         <button class="btn theme-btn" id="aboutBtn" title="About" aria-label="About">
@@ -394,7 +586,9 @@
          Values are updated automatically when inventory changes
          ============================================================================= -->
       <section class="totals-section" id="totalsSectionEl">
-        <div class="totals">
+        <div class="totals-wrapper">
+          <button class="totals-nav-btn totals-prev" id="totalsPrev" aria-label="Previous card">&#8249;</button>
+          <div class="totals" id="totalsCarousel">
           <!-- Silver totals card -->
           <div class="total-card silver">
             <div class="total-title" data-metal="Silver">Silver</div>
@@ -575,7 +769,10 @@
               </div>
             </div>
           </div>
-        </div>
+          </div><!-- /.totals -->
+          <button class="totals-nav-btn totals-next" id="totalsNext" aria-label="Next card">&#8250;</button>
+          <div class="totals-dots" id="totalsDots"></div>
+        </div><!-- /.totals-wrapper -->
       </section>
       <!-- =============================================================================
          INVENTORY FORM SECTION
@@ -693,6 +890,8 @@
               <div class="search-results-info" id="searchResultsInfo"></div>
             </div>
           </div>
+          <!-- Portfolio summary: Buy / Melt / Market / G/L — full-width bottom row -->
+          <div class="card-sort-summary" id="cardSortSummary"></div>
         </section>
         <!-- =============================================================================
            INVENTORY TABLE SECTION
@@ -708,7 +907,8 @@
          Portal view shows all items in a scrollable table with sticky headers
          ============================================================================= -->
         <section class="table-section" id="tableSectionEl">
-          <div class="card-sort-bar" id="cardSortBar" style="display:none">
+          <!-- PROTOTYPE: Sort bar always visible. Style D = table view. -->
+          <div class="card-sort-bar" id="cardSortBar">
             <div class="card-sort-left">
               <span class="control-label">Sort:</span>
               <select id="cardSortColumn" class="control-select" title="Sort cards by column">
@@ -732,11 +932,16 @@
               </button>
             </div>
             <div class="card-sort-right">
-              <span class="control-label">Style:</span>
+              <span class="control-label">View:</span>
               <div class="chip-sort-toggle" id="cardStyleToggle">
-                <button type="button" class="chip-sort-btn active" data-style="A" title="Chart cards">A</button>
+                <button type="button" class="chip-sort-btn active" data-style="A" title="Sparkline cards">A</button>
                 <button type="button" class="chip-sort-btn" data-style="B" title="Hero cards">B</button>
                 <button type="button" class="chip-sort-btn" data-style="C" title="Split cards">C</button>
+                <button type="button" class="chip-sort-btn" data-style="D" title="Table view">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="9" x2="9" y2="21"/><line x1="15" y1="9" x2="15" y2="21"/>
+                  </svg>
+                </button>
               </div>
             </div>
           </div>
@@ -1661,15 +1866,6 @@
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r="2.5"/><circle cx="19" cy="13" r="2.5"/><circle cx="16" cy="20" r="2.5"/><circle cx="7" cy="20" r="2.5"/><circle cx="4" cy="13" r="2.5"/><circle cx="12" cy="13" r="3"/></svg>
               Appearance
             </button>
-            <button class="settings-nav-item" data-section="layout">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                   stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="3" y="3" width="18" height="18" rx="2"/>
-                <line x1="3" y1="9" x2="21" y2="9"/>
-                <line x1="9" y1="21" x2="9" y2="9"/>
-              </svg>
-              Layout
-            </button>
             <button class="settings-nav-item" data-section="images">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
               Images
@@ -1677,10 +1873,6 @@
             <button class="settings-nav-item" data-section="system">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
               System
-            </button>
-            <button class="settings-nav-item" data-section="table">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
-              Inventory
             </button>
             <button class="settings-nav-item" data-section="grouping">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
@@ -1734,17 +1926,125 @@
                     <button class="theme-option" data-theme="sepia" title="Sepia">&#128220; Sepia</button>
                   </div>
                 </div>
-                <div class="settings-group">
-                  <div class="settings-group-label">Header theme button</div>
-                  <p class="settings-subtext">Show a quick theme cycle button in the app header.</p>
-                  <div class="chip-sort-toggle" id="settingsHeaderThemeBtn">
-                    <button type="button" class="chip-sort-btn" data-val="yes">On</button>
-                    <button type="button" class="chip-sort-btn" data-val="no">Off</button>
+              </div>
+
+              <!-- Currency, Image Display, and Card View sections moved to their own tabs -->
+
+              <!-- ── Header Buttons ── -->
+              <div class="settings-fieldset">
+                <div class="settings-fieldset-title">Header Buttons</div>
+                <p class="settings-subtext">Optional buttons shown in the top-right of the app header.</p>
+                <div class="settings-card-grid settings-card-grid--compact">
+                  <div class="settings-card">
+                    <div class="settings-group-label">Theme</div>
+                    <p class="settings-subtext">Cycle color theme.</p>
+                    <div class="chip-sort-toggle" id="settingsHeaderThemeBtn_hdr">
+                      <button type="button" class="chip-sort-btn" data-val="yes">On</button>
+                      <button type="button" class="chip-sort-btn" data-val="no">Off</button>
+                    </div>
+                  </div>
+                  <div class="settings-card">
+                    <div class="settings-group-label">Currency</div>
+                    <p class="settings-subtext">Switch display currency.</p>
+                    <div class="chip-sort-toggle" id="settingsHeaderCurrencyBtn_hdr">
+                      <button type="button" class="chip-sort-btn" data-val="yes">On</button>
+                      <button type="button" class="chip-sort-btn" data-val="no">Off</button>
+                    </div>
+                  </div>
+                  <div class="settings-card">
+                    <div class="settings-group-label">Trend</div>
+                    <p class="settings-subtext">Cycle sparkline period.</p>
+                    <div class="chip-sort-toggle" id="settingsHeaderTrendBtn_hdr">
+                      <button type="button" class="chip-sort-btn" data-val="yes">On</button>
+                      <button type="button" class="chip-sort-btn" data-val="no">Off</button>
+                    </div>
+                  </div>
+                  <div class="settings-card">
+                    <div class="settings-group-label">Sync</div>
+                    <p class="settings-subtext">Sync all spot prices.</p>
+                    <div class="chip-sort-toggle" id="settingsHeaderSyncBtn_hdr">
+                      <button type="button" class="chip-sort-btn" data-val="yes">On</button>
+                      <button type="button" class="chip-sort-btn" data-val="no">Off</button>
+                    </div>
                   </div>
                 </div>
               </div>
 
-              <!-- Currency, Image Display, and Card View sections moved to their own tabs -->
+              <!-- ── Layout ── -->
+              <div class="settings-fieldset">
+                <div class="settings-fieldset-title">Layout</div>
+                <div class="settings-group">
+                  <div class="settings-group-label">Visible sections</div>
+                  <p class="settings-subtext">Toggle visibility and reorder major page sections.</p>
+                  <div class="chip-grouping-table-container" id="layoutSectionConfigContainer">
+                    <div class="chip-grouping-empty">Loading...</div>
+                  </div>
+                </div>
+                <div class="settings-group">
+                  <div class="settings-group-label">Item detail modal</div>
+                  <p class="settings-subtext">Reorder and toggle sections in the item view modal.</p>
+                  <div class="chip-grouping-table-container" id="viewModalSectionConfigContainer">
+                    <div class="chip-grouping-empty">Loading...</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- ── Inventory View ── -->
+              <div class="settings-fieldset">
+                <div class="settings-fieldset-title">Inventory View</div>
+                <div class="settings-card-grid settings-card-grid--compact settings-card-grid--3col">
+                  <div class="settings-card">
+                    <div class="settings-group-label">Card View</div>
+                    <p class="settings-subtext">Select layout style.</p>
+                    <div class="chip-sort-toggle" id="settingsCardStyleToggle">
+                      <button type="button" class="chip-sort-btn active" data-style="A" title="Sparkline cards">A</button>
+                      <button type="button" class="chip-sort-btn" data-style="B" title="Hero cards">B</button>
+                      <button type="button" class="chip-sort-btn" data-style="C" title="Split cards">C</button>
+                      <button type="button" class="chip-sort-btn" data-style="D" title="Table view">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                          <rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="9" x2="9" y2="21"/><line x1="15" y1="9" x2="15" y2="21"/>
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                  <div class="settings-card">
+                    <div class="settings-group-label">Default Sort</div>
+                    <p class="settings-subtext">Sort field and direction on load.</p>
+                    <select id="settingsDefaultSortColumn" style="margin-bottom:0.4rem">
+                      <option value="0">Date</option>
+                      <option value="1">Metal</option>
+                      <option value="2">Type</option>
+                      <option value="4" selected>Name</option>
+                      <option value="5">Qty</option>
+                      <option value="6">Weight</option>
+                      <option value="7">Purchase</option>
+                      <option value="8">Melt Value</option>
+                      <option value="9">Retail</option>
+                      <option value="10">Gain/Loss</option>
+                      <option value="11">Source</option>
+                    </select>
+                    <div class="chip-sort-toggle" id="settingsDefaultSortDir">
+                      <button type="button" class="chip-sort-btn active" data-val="asc">↑ Asc</button>
+                      <button type="button" class="chip-sort-btn" data-val="desc">↓ Desc</button>
+                    </div>
+                  </div>
+                  <div class="settings-card">
+                    <div class="settings-group-label">Visible Items</div>
+                    <p class="settings-subtext">Max items shown before scrolling (cards + table).</p>
+                    <select id="settingsItemsPerPage">
+                      <option value="3">3</option>
+                      <option value="6">6</option>
+                      <option value="12">12</option>
+                      <option value="24">24</option>
+                      <option value="48">48</option>
+                      <option value="96">96</option>
+                      <option value="128">128</option>
+                      <option value="512">512</option>
+                      <option value="all">All</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
 
               <!-- ── Custom Themes (placeholder) ── -->
               <div class="settings-fieldset" style="text-align:center; opacity:0.6;">
@@ -1754,87 +2054,31 @@
 
             </div>
 
-            <!-- ===== LAYOUT SETTINGS (STACK-54) ===== -->
-            <div class="settings-section-panel" id="settingsPanel_layout" style="display: none">
-              <h3>Layout</h3>
-
-              <div class="settings-group">
-                <div class="settings-group-label">Visible sections</div>
-                <p class="settings-subtext">Toggle visibility and reorder major page sections.</p>
-                <div class="chip-grouping-table-container" id="layoutSectionConfigContainer">
-                  <div class="chip-grouping-empty">Loading...</div>
-                </div>
-              </div>
-
-              <div class="settings-group">
-                <div class="settings-group-label">Item detail modal</div>
-                <p class="settings-subtext">Reorder and toggle sections in the item view modal.</p>
-                <div class="chip-grouping-table-container" id="viewModalSectionConfigContainer">
-                  <div class="chip-grouping-empty">Loading...</div>
-                </div>
-              </div>
-
-            </div>
-
             <!-- ===== TABLE SETTINGS ===== -->
-            <div class="settings-section-panel" id="settingsPanel_table" style="display: none">
-              <h3>Table Display</h3>
-
-              <div class="settings-group">
-                <div class="settings-group-label">Visible rows</div>
-                <select id="settingsItemsPerPage">
-                  <option value="3">3</option>
-                  <option value="6">6</option>
-                  <option value="12">12</option>
-                  <option value="24">24</option>
-                  <option value="48">48</option>
-                  <option value="96">96</option>
-                  <option value="128">128</option>
-                  <option value="512">512</option>
-                  <option value="all">All</option>
-                </select>
-              </div>
-
-              <div class="settings-group">
-                <div class="settings-group-label">Inline Name chips</div>
-                <p class="settings-subtext">Choose which badges appear next to item names in the table.</p>
-                <div class="chip-grouping-table-container" id="inlineChipConfigContainer">
-                  <div class="chip-grouping-empty">Loading...</div>
-                </div>
-              </div>
-
-              <!-- ── Card View (STAK-118) ── -->
-              <h3>Card View</h3>
-              <div class="settings-group">
-                <div class="settings-group-label">Card style</div>
-                <p class="settings-subtext">Choose the card layout used in mobile and optional desktop card view.</p>
-                <select id="settingsCardStyle">
-                  <option value="A">A: Sparkline Header</option>
-                  <option value="B">B: Full-Bleed Overlay</option>
-                  <option value="C">C: Split Card</option>
-                </select>
-              </div>
-              <div class="settings-group">
-                <div class="settings-group-label">Desktop card view</div>
-                <p class="settings-subtext">Show cards instead of the table on wide screens. Cards are always used on mobile.</p>
-                <div class="chip-sort-toggle" id="settingsDesktopCardView">
-                  <button type="button" class="chip-sort-btn" data-val="yes">On</button>
-                  <button type="button" class="chip-sort-btn" data-val="no">Off</button>
-                </div>
-              </div>
-              <div class="settings-group">
-                <div class="settings-group-label">Header card view button</div>
-                <p class="settings-subtext">Show a quick card/table toggle button in the app header.</p>
-                <div class="chip-sort-toggle" id="settingsHeaderCardViewBtn">
-                  <button type="button" class="chip-sort-btn" data-val="yes">On</button>
-                  <button type="button" class="chip-sort-btn" data-val="no">Off</button>
-                </div>
-              </div>
-            </div>
-
             <!-- ===== CHIPS ===== -->
             <div class="settings-section-panel" id="settingsPanel_grouping" style="display: none">
               <h3>Filter Chips</h3>
+
+              <!-- ── Metals & Inline Chips ── -->
+              <div class="settings-fieldset">
+                <div class="settings-fieldset-title">Metals &amp; Inline Chips</div>
+                <div class="settings-card-grid">
+                  <div class="settings-card">
+                    <div class="settings-group-label">Metal Order</div>
+                    <p class="settings-subtext">Reorder and show/hide spot price and summary cards. Drag rows to reorder.</p>
+                    <div class="chip-grouping-table-container" id="metalOrderConfigContainer">
+                      <div class="chip-grouping-empty">Loading...</div>
+                    </div>
+                  </div>
+                  <div class="settings-card">
+                    <div class="settings-group-label">Inline Name Chips</div>
+                    <p class="settings-subtext">Choose which badges appear next to item names in the table.</p>
+                    <div class="chip-grouping-table-container" id="inlineChipConfigContainer">
+                      <div class="chip-grouping-empty">Loading...</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
 
               <div class="settings-group">
                 <div class="settings-group-label">Filter chip threshold</div>
@@ -2551,59 +2795,75 @@
             <div class="settings-section-panel" id="settingsPanel_images" style="display: none">
               <h3>Images</h3>
 
-              <!-- Storage Stats -->
-              <div class="settings-group">
-                <div class="settings-group-label">Storage</div>
-                <div id="imageStorageStats" class="image-storage-stats">
-                  <span class="stat-item">Loading...</span>
+              <!-- ── Cache Actions ── -->
+              <div class="settings-fieldset">
+                <div class="settings-fieldset-title">Image Cache</div>
+                <div class="image-actions-row">
+                  <button class="btn" id="importImagesBtn" type="button">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:0.3rem"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    Import
+                  </button>
+                  <button class="btn" id="exportAllImagesBtn" type="button">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:0.3rem"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                    Export
+                  </button>
+                  <button class="btn secondary" id="syncImageUrlsBtn" type="button">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:0.3rem"><path d="M21.5 2v6h-6"/><path d="M2.5 22v-6h6"/><path d="M2.5 11.5a10 10 0 0 1 18.4-4.5"/><path d="M21.5 12.5a10 10 0 0 1-18.4 4.5"/></svg>
+                    Download URLs
+                  </button>
+                  <button class="btn danger" id="clearAllImagesBtn" type="button">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:0.3rem"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
+                    Clear Cache
+                  </button>
+                  <input type="file" id="importImagesFile" accept=".zip" style="display:none" />
                 </div>
               </div>
 
               <!-- ── Image Display ── -->
               <div class="settings-fieldset">
                 <div class="settings-fieldset-title">Image Display</div>
-                <div class="settings-group">
-                  <div class="settings-group-label">Table thumbnails</div>
-                  <p class="settings-subtext">Show coin images in the table. Uses cached images from uploads, pattern rules, and Numista lookups.</p>
-                  <div class="chip-sort-toggle" id="tableImagesToggle">
-                    <button type="button" class="chip-sort-btn" data-val="yes">On</button>
-                    <button type="button" class="chip-sort-btn" data-val="no">Off</button>
+                <div class="settings-card-grid settings-card-grid--compact settings-card-grid--3col">
+                  <div class="settings-card">
+                    <div class="settings-group-label">Table thumbnails</div>
+                    <p class="settings-subtext">Show coin images in the table.</p>
+                    <div class="chip-sort-toggle" id="tableImagesToggle">
+                      <button type="button" class="chip-sort-btn" data-val="yes">On</button>
+                      <button type="button" class="chip-sort-btn" data-val="no">Off</button>
+                    </div>
                   </div>
-                </div>
-                <div class="settings-group">
-                  <div class="settings-group-label">Table image sides</div>
-                  <p class="settings-subtext">Choose which coin sides to display in the table image column.</p>
-                  <div class="chip-sort-toggle" id="tableImageSidesToggle">
-                    <button type="button" class="chip-sort-btn" data-val="both">Both</button>
-                    <button type="button" class="chip-sort-btn" data-val="obverse">Obverse</button>
-                    <button type="button" class="chip-sort-btn" data-val="reverse">Reverse</button>
+                  <div class="settings-card">
+                    <div class="settings-group-label">Image sides</div>
+                    <p class="settings-subtext">Which coin sides to show.</p>
+                    <div class="chip-sort-toggle" id="tableImageSidesToggle">
+                      <button type="button" class="chip-sort-btn" data-val="both">Both</button>
+                      <button type="button" class="chip-sort-btn" data-val="obverse">Obv</button>
+                      <button type="button" class="chip-sort-btn" data-val="reverse">Rev</button>
+                    </div>
                   </div>
-                </div>
-                <div class="settings-group">
-                  <div class="settings-group-label">Numista priority override</div>
-                  <p class="settings-subtext">When on, Numista API images take priority over your uploads and pattern rules.</p>
-                  <div class="chip-sort-toggle" id="numistaOverrideToggle">
-                    <button type="button" class="chip-sort-btn" data-val="yes">On</button>
-                    <button type="button" class="chip-sort-btn" data-val="no">Off</button>
+                  <div class="settings-card">
+                    <div class="settings-group-label">Numista override</div>
+                    <p class="settings-subtext">Numista images take priority.</p>
+                    <div class="chip-sort-toggle" id="numistaOverrideToggle">
+                      <button type="button" class="chip-sort-btn" data-val="yes">On</button>
+                      <button type="button" class="chip-sort-btn" data-val="no">Off</button>
+                    </div>
                   </div>
                 </div>
               </div>
 
-              <!-- Add Pattern Image Rule -->
-              <div class="settings-group">
-                <div class="settings-group-label">Add Pattern Image Rule</div>
-                <p style="font-size:0.85em;color:var(--text-secondary);margin:0 0 0.5rem">
-                  Create rules that automatically assign images to items matching a name pattern.
-                </p>
+              <!-- ── Add Pattern Image Rule ── -->
+              <div class="settings-fieldset">
+                <div class="settings-fieldset-title">Add Pattern Image Rule</div>
+                <p class="settings-subtext">Create rules that automatically assign images to items matching a name pattern.</p>
                 <div class="pattern-rule-form" id="patternRuleForm">
                   <div class="pattern-rule-form-row">
                     <div class="pattern-rule-field">
                       <label for="patternRulePattern">
                         Name Pattern
-                        <span class="pattern-mode-toggle">
-                          <button type="button" id="patternModeKeywords" class="pattern-mode-btn active" title="Comma or semicolon separated keywords">Keywords</button>
-                          <button type="button" id="patternModeRegex" class="pattern-mode-btn" title="Regular expression">Regex</button>
-                        </span>
+                        <div class="chip-sort-toggle pattern-mode-toggle" id="patternModeToggle" style="display:inline-flex;margin-left:0.4rem;vertical-align:middle;">
+                          <button type="button" id="patternModeKeywords" class="chip-sort-btn active" title="Comma or semicolon separated keywords">Keywords</button>
+                          <button type="button" id="patternModeRegex" class="chip-sort-btn" title="Regular expression">Regex</button>
+                        </div>
                       </label>
                       <input type="text" id="patternRulePattern" class="form-control" placeholder="e.g. morgan, peace, walking liberty" />
                       <small id="patternRuleTip" class="pattern-rule-tip">Separate keywords with commas or semicolons. Matches item names containing any keyword.</small>
@@ -2612,11 +2872,23 @@
                   <div class="pattern-rule-form-row">
                     <div class="pattern-rule-field">
                       <label for="patternRuleObverse">Obverse Image</label>
-                      <input type="file" id="patternRuleObverse" accept="image/*" />
+                      <div class="image-input-row">
+                        <input type="file" id="patternRuleObverse" accept="image/*" />
+                        <button type="button" class="btn btn-icon camera-capture-btn" id="patternRuleObverseCamera" title="Take photo" aria-label="Take photo with camera">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                        </button>
+                        <input type="file" id="patternRuleObverseCapture" accept="image/*" capture="environment" style="display:none" aria-hidden="true" />
+                      </div>
                     </div>
                     <div class="pattern-rule-field">
                       <label for="patternRuleReverse">Reverse Image</label>
-                      <input type="file" id="patternRuleReverse" accept="image/*" />
+                      <div class="image-input-row">
+                        <input type="file" id="patternRuleReverse" accept="image/*" />
+                        <button type="button" class="btn btn-icon camera-capture-btn" id="patternRuleReverseCamera" title="Take photo" aria-label="Take photo with camera">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                        </button>
+                        <input type="file" id="patternRuleReverseCapture" accept="image/*" capture="environment" style="display:none" aria-hidden="true" />
+                      </div>
                     </div>
                     <div class="pattern-rule-field pattern-rule-field-narrow" style="align-self:flex-end">
                       <button class="btn" id="addPatternRuleBtn" type="button">Add Rule</button>
@@ -2625,34 +2897,23 @@
                 </div>
               </div>
 
-              <!-- Custom Pattern Rules -->
-              <div class="settings-group">
-                <div class="settings-group-label">Custom Pattern Rules</div>
+              <!-- ── Custom Pattern Rules ── -->
+              <div class="settings-fieldset">
+                <div class="settings-fieldset-title">Custom Pattern Rules</div>
                 <div id="customPatternImageRules"></div>
               </div>
 
-              <!-- User Images -->
-              <div class="settings-group">
-                <div class="settings-group-label">Per-Item User Images</div>
+              <!-- ── Per-Item User Images ── -->
+              <div class="settings-fieldset">
+                <div class="settings-fieldset-title">Per-Item User Images</div>
                 <div id="userImageGrid"></div>
               </div>
 
-              <!-- Import / Export -->
-              <div class="settings-group">
-                <div class="settings-group-label">Image Backup</div>
-                <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
-                  <button class="btn" id="exportAllImagesBtn" type="button">Export All Images</button>
-                  <button class="btn" id="importImagesBtn" type="button">Import Images</button>
-                  <input type="file" id="importImagesFile" accept=".zip" style="display:none" />
-                </div>
-              </div>
-
-              <!-- Actions -->
-              <div class="settings-group">
-                <div class="settings-group-label">Actions</div>
-                <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
-                  <button class="btn danger" id="clearAllImagesBtn" type="button">Clear All Images</button>
-                  <button class="btn secondary" id="syncImageUrlsBtn" type="button">Sync Image URLs from Numista</button>
+              <!-- ── Storage (bottom) ── -->
+              <div class="settings-fieldset">
+                <div class="settings-fieldset-title">Storage</div>
+                <div id="imageStorageStats" class="image-storage-stats">
+                  <span class="stat-item">Loading...</span>
                 </div>
               </div>
             </div>
@@ -3460,5 +3721,23 @@
         <polyline points="18 15 12 9 6 15"/>
       </svg>
     </button>
+
+    <!-- PROTOTYPE: STAK-144 — sync Settings card style dropdown with view toggle on open -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function () {
+        var modal = document.getElementById('settingsModal');
+        if (modal) {
+          new MutationObserver(function () {
+            if (modal.classList.contains('show')) {
+              // Reflect current style (A/B/C/D) in settings card style dropdown
+              // D is not in the dropdown; for D mode show nothing selected / keep last
+              var cur = localStorage.getItem('cardViewStyle') || 'A';
+              var sel = document.getElementById('settingsCardStyle');
+              if (sel && cur !== 'D') sel.value = cur;
+            }
+          }).observe(modal, { attributes: true, attributeFilter: ['class'] });
+        }
+      });
+    </script>
   </body>
 </html>
