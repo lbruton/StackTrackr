@@ -368,6 +368,17 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     // Load data
     loadInventory();
+
+    // Migrate: existing users keep header theme button visible
+    if (inventory.length > 0 && localStorage.getItem('headerThemeBtnVisible') === null) {
+      localStorage.setItem('headerThemeBtnVisible', 'true');
+    }
+
+    // Load seed rule toggles before seed inventory (so migration sees real user data)
+    if (typeof NumistaLookup !== 'undefined' && typeof NumistaLookup.loadEnabledSeedRules === 'function') {
+      NumistaLookup.loadEnabledSeedRules();
+    }
+
     // Seed sample inventory for first-time users
     if (typeof loadSeedInventory === 'function') {
       loadSeedInventory();
@@ -382,6 +393,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     // Load per-item price history (STACK-43)
     if (typeof loadItemPriceHistory === 'function') {
       loadItemPriceHistory();
+    }
+
+    // Load item tags (STAK-126)
+    if (typeof loadItemTags === 'function') {
+      loadItemTags();
+      debugLog(`Loaded tags for ${Object.keys(itemTags).length} items`);
     }
 
     // Load Goldback denomination pricing (STACK-45)
@@ -425,9 +442,9 @@ document.addEventListener("DOMContentLoaded", async () => {
           }
         }
       } else {
-        // No saved preference — default to 12
-        itemsPerPage = 12;
-        if (elements.itemsPerPage) elements.itemsPerPage.value = '12';
+        // No saved preference — default to all
+        itemsPerPage = Infinity;
+        if (elements.itemsPerPage) elements.itemsPerPage.value = 'all';
       }
     } catch (e) { /* ignore */ }
 
@@ -503,6 +520,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     // Apply header toggle & layout visibility from saved prefs (STACK-54)
     if (typeof applyHeaderToggleVisibility === 'function') applyHeaderToggleVisibility();
     if (typeof applyLayoutOrder === 'function') applyLayoutOrder();
+    if (typeof applyMetalOrder === 'function') applyMetalOrder();
 
     // Phase 13: Initial Rendering
     debugLog("Phase 13: Rendering initial display...");
@@ -522,6 +540,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     // Load Numista search lookup custom rules
     if (typeof NumistaLookup !== 'undefined' && typeof NumistaLookup.loadCustomRules === 'function') {
       NumistaLookup.loadCustomRules();
+    }
+
+    // Load seed custom pattern rules + images for first-time users
+    // Must run after loadCustomRules() so addRule() doesn't clobber existing rules
+    if (typeof loadSeedImages === 'function') {
+      await loadSeedImages();
     }
 
     // STACK-62: Initialize autocomplete/fuzzy search system

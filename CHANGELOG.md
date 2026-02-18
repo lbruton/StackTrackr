@@ -9,6 +9,54 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.31.0] - 2026-02-17
+
+### Added — Cloud Storage Backup (Dropbox)
+
+- **Added**: Cloud storage backup — encrypt and upload .stvault files to Dropbox via OAuth PKCE popup flow
+- **Added**: Privacy policy page for OAuth provider compliance
+- **Added**: Cloudflare Pages Function scaffold for future pCloud/Box token exchange proxy
+- **Fixed**: Favicon and PWA SVG icons updated to match ST branding (gold ST on navy)
+
+---
+
+## [3.30.09] - 2026-02-17
+
+### Added — Settings & Header Controls Overhaul
+
+- **Added**: Optional Trend and Sync buttons in header (hidden by default, enable in Appearance > Header Buttons)
+- **Changed**: Removed global spot trend/sync bar; trend cycling and sync now available as header buttons
+- **Changed**: Settings Appearance panel reorganized — Header Buttons 2×2 grid, Layout card, Inventory View cards (Card View A/B/C/D, Default Sort, Visible Items)
+- **Changed**: Images panel restructured — actions row at top, 1×3 display grid, camera capture support, fieldset cards
+- **Changed**: Metal Order and Inline Chips consolidated into Chips panel; removed Table Display tab
+- **Changed**: Currency header button hidden by default; Trend and Sync default to ON
+
+---
+
+## [3.30.08] - 2026-02-17
+
+### Added — Default Settings Overhaul & Seed Pattern Images
+
+- **Changed**: Default sort to Name ascending, show all rows, dark theme for new users
+- **Changed**: Header theme button hidden by default (existing users migrated to keep visible)
+- **Changed**: Dynamic Name Chips disabled by default
+- **Changed**: Goldback denomination pricing and real-time estimation enabled by default
+- **Added**: Per-rule enable/disable toggles for built-in Numista lookup patterns with Enable All / Disable All controls
+- **Added**: Seed pattern images — American Silver Eagle and Canadian Gold Maple demo rules with coin photos in Custom Pattern Rules for first-time user coaching
+
+---
+
+## [3.30.07] - 2026-02-17
+
+### Added — STAK-104: Save Search as Filter Chip
+
+- **Added**: Bookmark button inside search input to save multi-term comma-separated searches as custom filter chips (STAK-104)
+- **Added**: Smart enable/disable logic — button activates only for 2+ comma-separated terms that don't already exist as a saved group or auto-generated chip
+- **Added**: Button disabled during fuzzy search mode to prevent saving approximate matches
+- **Added**: Save button state syncs with filter clear and filter remove actions
+
+---
+
 ## [3.30.06] - 2026-02-17
 
 ### Added — Card View Sort Controls & UX Polish

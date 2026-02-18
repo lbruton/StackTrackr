@@ -1,9 +1,11 @@
 // APPLICATION STATE
 // =============================================================================
 
-/** @type {Object} Sorting state tracking */
-let sortColumn = 0; // Default to date column (index 0) - most recent first
-let sortDirection = "desc"; // 'asc' or 'desc' - default to descending for recent dates first
+/** @type {Object} Sorting state tracking — initialized from user preference or factory default */
+const _storedSortCol = localStorage.getItem('defaultSortColumn');
+let sortColumn = _storedSortCol !== null ? parseInt(_storedSortCol, 10) : 4;
+const _storedSortDir = localStorage.getItem('defaultSortDir');
+let sortDirection = _storedSortDir || "asc";
 
 /** @type {number|null} Index of item being edited (null = no edit in progress) */
 let editingIndex = null;
@@ -13,7 +15,7 @@ let notesIndex = null;
 let editingChangeLogIndex = null;
 
 /** @type {number} Number of visible rows in the portal (scrollable table) view */
-let itemsPerPage = 12;
+let itemsPerPage = Infinity;
 
 /** @type {string} Current search query */
 let searchQuery = "";
@@ -315,6 +317,9 @@ let displayCurrency = DEFAULT_CURRENCY;
 
 /** @type {Object<string, number>} Cached exchange rates: 1 USD = rate × target currency (STACK-50) */
 let exchangeRates = {};
+
+/** @type {Object} Item tags mapping: { [uuid]: string[] } (STAK-126) */
+let itemTags = {};
 
 /** @type {Array} Catalog API call history records */
 let catalogHistory = [];

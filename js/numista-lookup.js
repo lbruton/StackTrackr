@@ -156,8 +156,9 @@ const NumistaLookup = (() => {
       }
     }
 
-    // Then check seed rules
+    // Then check seed rules (skip disabled ones)
     for (const rule of SEED_RULES) {
+      if (!isSeedRuleEnabled(rule.id)) continue;
       const re = getRegex(rule);
       if (re && re.test(text)) {
         return { rule, replacement: rule.replacement, numistaId: rule.numistaId || null };
@@ -307,6 +308,94 @@ const NumistaLookup = (() => {
     }
   };
 
+  // =========================================================================
+  // SEED RULE ENABLE/DISABLE — per-rule toggles with migration
+  // =========================================================================
+
+  /** @type {Set<string>} IDs of enabled seed rules */
+  let enabledSeedRuleIds = new Set();
+
+  /**
+   * Loads enabled seed rule IDs from localStorage with migration.
+   * - Key missing + inventory has items (existing user) → all enabled, persist
+   * - Key missing + no inventory (new user) → all disabled (empty set), persist
+   * - Key exists → use stored array
+   */
+  const loadEnabledSeedRules = () => {
+    try {
+      const raw = localStorage.getItem('enabledSeedRules');
+      if (raw !== null) {
+        const parsed = JSON.parse(raw);
+        enabledSeedRuleIds = new Set(Array.isArray(parsed) ? parsed : []);
+        return;
+      }
+      // Migration: key missing
+      const hasInventory = typeof inventory !== 'undefined' && Array.isArray(inventory) && inventory.length > 0;
+      if (hasInventory) {
+        // Existing user: enable all seed rules
+        enabledSeedRuleIds = new Set(SEED_RULES.map(r => r.id));
+      } else {
+        // New user: all disabled
+        enabledSeedRuleIds = new Set();
+      }
+      saveEnabledSeedRules();
+    } catch (e) {
+      console.warn('NumistaLookup: failed to load enabled seed rules:', e);
+      enabledSeedRuleIds = new Set();
+    }
+  };
+
+  /**
+   * Persists the enabled seed rule IDs set as a JSON array.
+   */
+  const saveEnabledSeedRules = () => {
+    try {
+      localStorage.setItem('enabledSeedRules', JSON.stringify([...enabledSeedRuleIds]));
+    } catch (e) {
+      console.warn('NumistaLookup: failed to save enabled seed rules:', e);
+    }
+  };
+
+  /**
+   * Checks if a seed rule is enabled.
+   * @param {string} ruleId - The rule ID to check
+   * @returns {boolean}
+   */
+  const isSeedRuleEnabled = (ruleId) => enabledSeedRuleIds.has(ruleId);
+
+  /**
+   * Toggles a single seed rule on/off and persists.
+   * @param {string} ruleId - The rule ID to toggle
+   * @param {boolean} enabled - Whether to enable or disable
+   */
+  const setSeedRuleEnabled = (ruleId, enabled) => {
+    if (enabled) {
+      enabledSeedRuleIds.add(ruleId);
+    } else {
+      enabledSeedRuleIds.delete(ruleId);
+    }
+    saveEnabledSeedRules();
+  };
+
+  /**
+   * Bulk enable/disable all seed rules and persist.
+   * @param {boolean} enabled - Whether to enable or disable all
+   */
+  const setAllSeedRulesEnabled = (enabled) => {
+    if (enabled) {
+      enabledSeedRuleIds = new Set(SEED_RULES.map(r => r.id));
+    } else {
+      enabledSeedRuleIds = new Set();
+    }
+    saveEnabledSeedRules();
+  };
+
+  /**
+   * Returns the count of currently enabled seed rules.
+   * @returns {number}
+   */
+  const getEnabledSeedRuleCount = () => enabledSeedRuleIds.size;
+
   // Compile seed rules on module load
   compileSeedRules();
 
@@ -319,6 +408,11 @@ const NumistaLookup = (() => {
     listSeedRules,
     listCustomRules,
     loadCustomRules,
+    loadEnabledSeedRules,
+    isSeedRuleEnabled,
+    setSeedRuleEnabled,
+    setAllSeedRulesEnabled,
+    getEnabledSeedRuleCount,
   };
 })();
 

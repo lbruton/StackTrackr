@@ -1,5 +1,9 @@
 <!doctype html>
 <!--
+  DEPRECATED (v3.30.09): This prototype file has been promoted to index.html.
+  Kept for reference — will be removed in a future release.
+-->
+<!--
   StakTrakr - Main Application Interface
   
   A comprehensive client-side web application for tracking precious metal investments
@@ -78,7 +82,7 @@
       src="https://cdnjs.cloudflare.com/ajax/libs/forge/0.10.0/forge.min.js"
     ></script>
 
-    <link rel="stylesheet" href="./css/styles.css" />
+    <link rel="stylesheet" href="./css/styles2.css" />
     <link rel="icon" type="image/svg+xml" href="./favicon.svg?v=3.27.03" />
     <link rel="icon" type="image/png" sizes="32x32" href="./favicon.png?v=3.27.03" />
     <link rel="icon" type="image/png" sizes="192x192" href="./images/icon-192.png?v=3.27.03" />
@@ -227,9 +231,45 @@
         }
       }
 
+      /* ── DEBUG OVERLAY ──────────────────────────────────────────────────── */
+      #proto-debug {
+        position: fixed; bottom: 12px; left: 12px; z-index: 99999;
+        background: rgba(0,0,0,0.88); color: #0f0; font: 11px/1.6 monospace;
+        padding: 8px 10px; border-radius: 6px; max-width: 400px;
+      }
+      #proto-debug b { color: #ff0; }
+      #proto-debug button {
+        margin-top: 6px; padding: 3px 8px; font: 11px monospace;
+        background: #333; color: #fff; border: 1px solid #0f0;
+        border-radius: 3px; cursor: pointer; display: block; width: 100%;
+      }
     </style>
   </head>
   <body>
+    <!-- PROTOTYPE DEBUG OVERLAY — remove before production -->
+    <div id="proto-debug">loading…</div>
+    <script>
+      (function () {
+        function refresh() {
+          var el = document.getElementById('proto-debug');
+          if (!el) return;
+          var style = localStorage.getItem('cardViewStyle') || 'A';
+          var icva = typeof isCardViewActive === 'function'
+            ? String(isCardViewActive()) : '(fn not yet loaded)';
+          var w = window.innerWidth;
+          var barDisplay = (document.getElementById('cardSortBar') || {}).style && document.getElementById('cardSortBar').style.display;
+          el.innerHTML =
+            'PROTO DEBUG<br>' +
+            'cardViewStyle: <b>' + style + '</b><br>' +
+            'isCardViewActive(): <b>' + icva + '</b><br>' +
+            'window.innerWidth: <b>' + w + 'px</b><br>' +
+            'sort bar display: <b>' + barDisplay + '</b><br>' +
+            '<button onclick="localStorage.removeItem(\'cardViewStyle\');if(typeof renderTable===\'function\')renderTable();">Reset style &amp; re-render</button>';
+        }
+        setInterval(refresh, 800);
+        refresh();
+      }());
+    </script>
     <!-- Application Header -->
     <div class="app-header">
       <div>
@@ -1836,7 +1876,7 @@
             </button>
             <button class="settings-nav-item" data-section="system">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
-              Inventory
+              System
             </button>
             <button class="settings-nav-item" data-section="grouping">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
@@ -1879,49 +1919,15 @@
             <div class="settings-section-panel" id="settingsPanel_site" style="display: block">
               <h3>Appearance</h3>
 
-              <!-- ── Theme + Timezone side-by-side ── -->
+              <!-- ── Theme ── -->
               <div class="settings-fieldset">
-                <div class="settings-card-grid">
-                  <div class="settings-card">
-                    <div class="settings-fieldset-title">Theme</div>
-                    <div class="settings-group">
-                      <div class="settings-group-label">Color scheme</div>
-                      <div class="theme-picker">
-                        <button class="theme-option" data-theme="light" title="Light">&#9728;&#65039; Light</button>
-                        <button class="theme-option" data-theme="dark" title="Dark">&#127769; Dark</button>
-                        <button class="theme-option" data-theme="sepia" title="Sepia">&#128220; Sepia</button>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="settings-card">
-                    <div class="settings-fieldset-title">Display Timezone</div>
-                    <div class="settings-group">
-                      <div class="settings-group-label">Timezone</div>
-                      <p class="settings-subtext">Choose which timezone to use when displaying timestamps. Stored data is always UTC.</p>
-                      <select id="settingsTimezone" class="form-control">
-                        <option value="auto">Auto (browser default)</option>
-                        <option value="UTC">UTC</option>
-                        <optgroup label="Americas">
-                          <option value="America/New_York">Eastern (New York)</option>
-                          <option value="America/Chicago">Central (Chicago)</option>
-                          <option value="America/Denver">Mountain (Denver)</option>
-                          <option value="America/Los_Angeles">Pacific (Los Angeles)</option>
-                          <option value="America/Anchorage">Alaska</option>
-                          <option value="Pacific/Honolulu">Hawaii</option>
-                        </optgroup>
-                        <optgroup label="Europe">
-                          <option value="Europe/London">London (GMT/BST)</option>
-                          <option value="Europe/Paris">Paris / CET</option>
-                          <option value="Europe/Moscow">Moscow</option>
-                        </optgroup>
-                        <optgroup label="Asia / Pacific">
-                          <option value="Asia/Tokyo">Tokyo (JST)</option>
-                          <option value="Asia/Shanghai">Shanghai (CST)</option>
-                          <option value="Asia/Kolkata">Kolkata (IST)</option>
-                          <option value="Australia/Sydney">Sydney (AEST)</option>
-                        </optgroup>
-                      </select>
-                    </div>
+                <div class="settings-fieldset-title">Theme</div>
+                <div class="settings-group">
+                  <div class="settings-group-label">Color scheme</div>
+                  <div class="theme-picker">
+                    <button class="theme-option" data-theme="light" title="Light">&#9728;&#65039; Light</button>
+                    <button class="theme-option" data-theme="dark" title="Dark">&#127769; Dark</button>
+                    <button class="theme-option" data-theme="sepia" title="Sepia">&#128220; Sepia</button>
                   </div>
                 </div>
               </div>
@@ -2765,67 +2771,28 @@
                     </div>
                   </div>
                 </div>
+                <div class="settings-card boating-accident-section">
+                  <h3>Backup, Restore, Clear</h3>
+                  <p class="settings-subtext">Manage local application data.</p>
+                  <div class="backup-buttons">
+                    <button class="btn" id="vaultExportBtn">Export Encrypted Backup</button>
+                    <button class="btn info" id="vaultImportBtn">Import Encrypted Backup</button>
+                    <input type="file" id="vaultImportFile" accept=".stvault" hidden />
+                    <hr class="vault-separator" />
+                    <button class="btn warning" id="removeInventoryDataBtn">Remove Inventory Data</button>
+                    <button class="btn danger" id="boatingAccidentBtn">Wipe All Data</button>
+                  </div>
+                </div>
               </div>
             </div>
 
-            <!-- ===== CLOUD SYNC ===== -->
+            <!-- ===== CLOUD SYNC (placeholder) ===== -->
             <div class="settings-section-panel" id="settingsPanel_cloud" style="display: none">
               <h3>Cloud Sync</h3>
-              <p class="settings-description">Back up your encrypted vault to your own cloud storage. Files are encrypted locally before upload — your provider never sees your data.</p>
-              <p class="settings-description" style="font-size:0.82em;opacity:0.7">Requires HTTPS. Uses the same password-based encryption as .stvault files. <a href="./privacy.html" target="_blank" rel="noopener">Privacy Policy</a></p>
-
-              <!-- Dropbox -->
-              <div class="cloud-provider-card" id="cloudCard_dropbox">
-                <div class="cloud-provider-header">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M6 2l6 3.6L6 9.2 0 5.6zm12 0l6 3.6-6 3.6-6-3.6zm-12 8l6 3.6-6 3.6-6-3.6zm12 0l6 3.6-6 3.6-6-3.6zM6 18.4l6-3.6 6 3.6-6 3.6z"/></svg>
-                  <span class="cloud-provider-name">Dropbox</span>
-                  <span class="cloud-status"></span>
-                </div>
-                <div class="cloud-provider-actions">
-                  <button class="btn btn-sm btn-outline-primary cloud-connect-btn" data-provider="dropbox">Connect</button>
-                  <button class="btn btn-sm btn-outline-danger cloud-disconnect-btn" data-provider="dropbox" style="display:none">Disconnect</button>
-                  <span class="cloud-actions" style="display:none">
-                    <button class="btn btn-sm btn-outline-secondary cloud-backup-btn" data-provider="dropbox">Backup Now</button>
-                    <button class="btn btn-sm btn-outline-secondary cloud-restore-btn" data-provider="dropbox">Restore</button>
-                  </span>
-                </div>
+              <div class="settings-placeholder">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.3"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
+                <p>BYO-Backend (Supabase) coming soon.</p>
               </div>
-
-              <!-- pCloud (disabled until token-exchange worker is configured)
-              <div class="cloud-provider-card" id="cloudCard_pcloud">
-                <div class="cloud-provider-header">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
-                  <span class="cloud-provider-name">pCloud</span>
-                  <span class="cloud-status"></span>
-                </div>
-                <div class="cloud-provider-actions">
-                  <button class="btn btn-sm btn-outline-primary cloud-connect-btn" data-provider="pcloud">Connect</button>
-                  <button class="btn btn-sm btn-outline-danger cloud-disconnect-btn" data-provider="pcloud" style="display:none">Disconnect</button>
-                  <span class="cloud-actions" style="display:none">
-                    <button class="btn btn-sm btn-outline-secondary cloud-backup-btn" data-provider="pcloud">Backup Now</button>
-                    <button class="btn btn-sm btn-outline-secondary cloud-restore-btn" data-provider="pcloud">Restore</button>
-                  </span>
-                </div>
-              </div>
-              -->
-
-              <!-- Box (disabled until token-exchange worker is configured)
-              <div class="cloud-provider-card" id="cloudCard_box">
-                <div class="cloud-provider-header">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M2 4h20v16H2V4zm2 2v12h16V6H4z"/></svg>
-                  <span class="cloud-provider-name">Box</span>
-                  <span class="cloud-status"></span>
-                </div>
-                <div class="cloud-provider-actions">
-                  <button class="btn btn-sm btn-outline-primary cloud-connect-btn" data-provider="box">Connect</button>
-                  <button class="btn btn-sm btn-outline-danger cloud-disconnect-btn" data-provider="box" style="display:none">Disconnect</button>
-                  <span class="cloud-actions" style="display:none">
-                    <button class="btn btn-sm btn-outline-secondary cloud-backup-btn" data-provider="box">Backup Now</button>
-                    <button class="btn btn-sm btn-outline-secondary cloud-restore-btn" data-provider="box">Restore</button>
-                  </span>
-                </div>
-              </div>
-              -->
             </div>
 
             <!-- ===== IMAGES (STACK-96) ===== -->
@@ -2955,9 +2922,9 @@
               </div>
             </div>
 
-            <!-- ===== INVENTORY ===== -->
+            <!-- ===== SYSTEM ===== -->
             <div class="settings-section-panel" id="settingsPanel_system" style="display: none">
-              <h3>Inventory</h3>
+              <h3>System</h3>
 
               <div class="settings-group">
                 <label>Bulk Editor</label>
@@ -2971,28 +2938,35 @@
                 </button>
               </div>
 
-              <!-- ── Backup & Security ── -->
-              <div class="settings-fieldset">
-                <div class="settings-fieldset-title">Backup &amp; Security</div>
-                <div class="settings-card-grid">
-                  <div class="settings-card">
-                    <div class="settings-group-label">Encrypted Backup</div>
-                    <p class="settings-subtext">AES-GCM encrypted vault file. Use to back up and restore all inventory data.</p>
-                    <div class="settings-btn-row">
-                      <button class="btn" id="vaultExportBtn">Export Backup</button>
-                      <button class="btn info" id="vaultImportBtn">Restore Backup</button>
-                    </div>
-                    <input type="file" id="vaultImportFile" accept=".stvault" hidden />
-                  </div>
-                  <div class="settings-card boating-accident-section">
-                    <div class="settings-group-label">Data Reset</div>
-                    <p class="settings-subtext">Permanently remove inventory or wipe all app data. These actions cannot be undone.</p>
-                    <div class="settings-btn-row">
-                      <button class="btn warning" id="removeInventoryDataBtn">Remove Inventory</button>
-                      <button class="btn danger" id="boatingAccidentBtn">Wipe All Data</button>
-                    </div>
-                  </div>
-                </div>
+              <div class="settings-group">
+                <label for="settingsTimezone">Display Timezone</label>
+                <p class="settings-subtext">
+                  Choose which timezone to use when displaying timestamps throughout StakTrakr.
+                  Stored data is always UTC &mdash; this only affects how dates appear on screen.
+                </p>
+                <select id="settingsTimezone" class="form-control" style="max-width:280px;">
+                  <option value="auto">Auto (browser default)</option>
+                  <option value="UTC">UTC</option>
+                  <optgroup label="Americas">
+                    <option value="America/New_York">Eastern (New York)</option>
+                    <option value="America/Chicago">Central (Chicago)</option>
+                    <option value="America/Denver">Mountain (Denver)</option>
+                    <option value="America/Los_Angeles">Pacific (Los Angeles)</option>
+                    <option value="America/Anchorage">Alaska</option>
+                    <option value="Pacific/Honolulu">Hawaii</option>
+                  </optgroup>
+                  <optgroup label="Europe">
+                    <option value="Europe/London">London (GMT/BST)</option>
+                    <option value="Europe/Paris">Paris / CET</option>
+                    <option value="Europe/Moscow">Moscow</option>
+                  </optgroup>
+                  <optgroup label="Asia / Pacific">
+                    <option value="Asia/Tokyo">Tokyo (JST)</option>
+                    <option value="Asia/Shanghai">Shanghai (CST)</option>
+                    <option value="Asia/Kolkata">Kolkata (IST)</option>
+                    <option value="Australia/Sydney">Sydney (AEST)</option>
+                  </optgroup>
+                </select>
               </div>
 
             </div>
@@ -3731,9 +3705,8 @@
     <script defer src="./js/catalog-providers.js"></script>
     <script defer src="./js/catalog-manager.js"></script>
     <script defer src="./js/inventory.js"></script>
-    <script defer src="./js/card-view.js"></script>
+    <script defer src="./js/card-view2.js"></script>
     <script defer src="./js/vault.js"></script>
-    <script defer src="./js/cloud-storage.js"></script>
     <script defer src="./js/about.js"></script>
     <script defer src="./js/customMapping.js"></script>
     <script defer src="./js/settings.js"></script>
