@@ -8567,6 +8567,7 @@ th {
 }
 
 .bulk-edit-table-wrap {
+  overflow-x: auto;
   overflow-y: auto;
   flex: 1;
   border: 1px solid var(--border);
@@ -8711,6 +8712,48 @@ th {
 .bulk-edit-numista-btn:hover {
   border-color: var(--primary);
   color: var(--primary);
+}
+
+/* Sortable column headers */
+.bulk-edit-table th.bulk-sortable {
+  cursor: pointer;
+  user-select: none;
+}
+.bulk-edit-table th.bulk-sortable:hover {
+  color: var(--text);
+}
+.bulk-edit-table th.bulk-sortable::after {
+  content: ' ⇅';
+  opacity: 0.35;
+  font-size: 0.7em;
+}
+.bulk-edit-table th.sort-asc::after {
+  content: ' ↑';
+  opacity: 1;
+}
+.bulk-edit-table th.sort-desc::after {
+  content: ' ↓';
+  opacity: 1;
+}
+
+/* Image thumbnail column */
+.bulk-img-cell {
+  width: 38px;
+  padding: 0.15rem 0.3rem !important;
+}
+.bulk-img-thumb {
+  width: 32px;
+  height: 32px;
+  object-fit: cover;
+  border-radius: 3px;
+  display: block;
+}
+.bulk-img-placeholder {
+  display: block;
+  width: 32px;
+  height: 32px;
+  background: var(--border);
+  border-radius: 3px;
 }
 
 /* Responsive: stack on small screens */
