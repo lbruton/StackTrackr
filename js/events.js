@@ -1868,6 +1868,23 @@ const setupImportExportListeners = () => {
   optionalListener(elements.exportCsvBtn, "click", exportCsv, "CSV export");
   optionalListener(elements.exportJsonBtn, "click", exportJson, "JSON export");
   optionalListener(elements.exportPdfBtn, "click", exportPdf, "PDF export");
+  optionalListener(document.getElementById("exportZipBtn"), "click", () => {
+    if (typeof createBackupZip === "function") createBackupZip();
+  }, "ZIP export");
+
+  // ZIP import
+  const importZipBtn = document.getElementById("importZipBtn");
+  const importZipFile = document.getElementById("importZipFile");
+  if (importZipBtn && importZipFile) {
+    importZipBtn.addEventListener("click", () => importZipFile.click());
+    importZipFile.addEventListener("change", (e) => {
+      const file = e.target.files && e.target.files[0];
+      if (file && typeof restoreBackupZip === "function") {
+        restoreBackupZip(file);
+        importZipFile.value = "";
+      }
+    });
+  }
 
   // Cloud Sync modal
   optionalListener(elements.cloudSyncBtn, "click", () => {

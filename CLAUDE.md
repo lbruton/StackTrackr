@@ -58,6 +58,31 @@ The `/sync-instructions` skill flags drift between copies and lets the human dec
 
 Use the `/sync-instructions` skill after significant codebase changes to keep all files and skills aligned.
 
+## Claude -> Codex Invocation Safety
+
+When invoking Codex directly (for example from a second terminal or via relay skills), treat `AGENTS.md` as the execution
+source of truth and apply sender-side checks first.
+
+### Sender-side checks before invoking Codex
+
+1. Confirm intent and scope:
+   - Include target repo/path and expected outcome.
+   - Avoid ambiguous "run this" prompts with mixed unrelated tasks.
+2. Classify requested command risk up front:
+   - read-only/local inspection,
+   - workspace write,
+   - network access,
+   - privileged/escalated execution,
+   - destructive action.
+3. Be explicit for sensitive operations:
+   - Call out when network access or elevated permissions are actually required.
+   - Require explicit human confirmation for destructive operations.
+4. Keep secrets out of handoffs:
+   - Never forward raw secrets/tokens in relay payloads.
+   - If secret context is needed, pass references/identifiers only.
+5. Keep durable traceability for non-trivial work:
+   - Prefer the existing dual-write handoff pattern (Linear + Memento) with attribution.
+
 ## Critical Development Patterns
 
 ### 1. Script Loading Order (MANDATORY)
