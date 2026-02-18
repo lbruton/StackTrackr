@@ -172,9 +172,11 @@ const deleteTagGlobal = (tag) => {
  * Capitalizes the first letter of each tag. Skips duplicates.
  * @param {string} uuid - Item UUID
  * @param {string[]} numistaTags - Array of tag strings from Numista API
+ * @param {boolean} [persist=true] - Whether to call saveItemTags() after applying.
+ *   Pass false when calling in a loop; caller is responsible for a single saveItemTags() after.
  * @returns {number} Number of tags added
  */
-const applyNumistaTags = (uuid, numistaTags) => {
+const applyNumistaTags = (uuid, numistaTags, persist = true) => {
   if (!uuid || !Array.isArray(numistaTags) || numistaTags.length === 0) return 0;
   let added = 0;
   for (const raw of numistaTags) {
@@ -186,7 +188,7 @@ const applyNumistaTags = (uuid, numistaTags) => {
       added++;
     }
   }
-  if (added > 0) saveItemTags();
+  if (persist && added > 0) saveItemTags();
   return added;
 };
 
