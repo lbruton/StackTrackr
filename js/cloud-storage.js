@@ -743,8 +743,9 @@ async function cloudDownloadVault(provider) {
 
 async function cloudCheckConflict(provider) {
   var remote = await cloudGetRemoteLatest(provider);
+  var localCount = cloudSafeItemCount();
   if (!remote || !remote.timestamp) {
-    return { conflict: false };
+    return { conflict: false, local: { itemCount: localCount } };
   }
 
   var local = null;
@@ -754,14 +755,35 @@ async function cloudCheckConflict(provider) {
 
   if (!local || !local.timestamp) {
     // No local record — remote is newer by definition
-    return { conflict: true, remote: remote };
+    return {
+      conflict: true,
+      reason: 'no_local_backup_record',
+      remote: remote,
+      local: { itemCount: localCount },
+    };
   }
 
   if (remote.timestamp > local.timestamp) {
-    return { conflict: true, remote: remote };
+    return {
+      conflict: true,
+      reason: 'remote_newer',
+      remote: remote,
+      local: {
+        timestamp: local.timestamp,
+        lastBackupItemCount: Number(local.itemCount) || 0,
+        itemCount: localCount,
+      },
+    };
   }
 
-  return { conflict: false };
+  return {
+    conflict: false,
+    local: {
+      timestamp: local.timestamp,
+      lastBackupItemCount: Number(local.itemCount) || 0,
+      itemCount: localCount,
+    },
+  };
 }
 
 // ---------------------------------------------------------------------------
