@@ -9484,3 +9484,68 @@ th {
 [data-theme="dark"] .tag-autocomplete-option:hover {
   background: rgba(129, 140, 248, 0.12);
 }
+
+/* =============================================================================
+   CDN Image Export Progress + Settings Button Row
+   ============================================================================= */
+
+#imageCdnProgress {
+  /* Break out of the flex button row and sit full-width below it */
+  flex: 0 0 100%;
+  width: 100%;
+  max-width: 480px;
+  margin-top: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: var(--bg-secondary, #f1f5f9);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+#imageCdnProgress progress {
+  display: block;
+  width: 100%;
+  height: 6px;
+  margin-top: 0.25rem;
+  accent-color: var(--primary);
+  /* Reset native appearance so background colour shows in all browsers */
+  -webkit-appearance: none;
+  appearance: none;
+  border: none;
+  border-radius: 3px;
+  background: var(--border);
+  overflow: hidden;
+}
+
+#imageCdnProgress progress::-webkit-progress-bar {
+  background: var(--border);
+  border-radius: 3px;
+}
+
+#imageCdnProgress progress::-webkit-progress-value {
+  background: var(--primary);
+  border-radius: 3px;
+  transition: width 0.15s ease;
+}
+
+#imageCdnProgress progress::-moz-progress-bar {
+  background: var(--primary);
+  border-radius: 3px;
+}
+
+[data-theme="dark"] #imageCdnProgress {
+  background: var(--bg-secondary, #1e1e2e);
+}
+
+[data-theme="sepia"] #imageCdnProgress {
+  background: var(--bg-secondary, #f5f0e8);
+}
+
+.settings-btn-row {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-top: 0.4rem;
+}

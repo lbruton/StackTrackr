@@ -777,6 +777,137 @@ const bindCardAndTableImageListeners = () => {
   });
 };
 
+// ---------------------------------------------------------------------------
+// Image Export/Import helpers
+// ---------------------------------------------------------------------------
+
+const blobToWebP = (blob, quality = 0.85) => new Promise((resolve) => {
+  if (!blob) return resolve(null);
+  const url = URL.createObjectURL(blob);
+  const img = new Image();
+  img.onload = () => {
+    URL.revokeObjectURL(url);
+    const canvas = document.createElement('canvas');
+    canvas.width = img.naturalWidth;
+    canvas.height = img.naturalHeight;
+    canvas.getContext('2d').drawImage(img, 0, 0);
+    canvas.toBlob(resolve, 'image/webp', quality);
+  };
+  img.onerror = () => { URL.revokeObjectURL(url); resolve(blob); };
+  img.src = url;
+});
+
+const buildImageExportZip = async ({ includeCdn = false, onProgress = null } = {}) => {
+  const zip = new JSZip();
+  const manifest = [];
+  const addedCatalogIds = new Set();
+
+  // 1. User images
+  const userImages = await imageCache.exportAllUserImages();
+  for (const rec of userImages) {
+    if (rec.obverse) zip.file(`user/${rec.uuid}_obverse.webp`, rec.obverse);
+    if (rec.reverse) zip.file(`user/${rec.uuid}_reverse.webp`, rec.reverse);
+  }
+
+  // 2. Pattern images + rules
+  const patternImages = await imageCache.exportAllPatternImages();
+  for (const rec of patternImages) {
+    if (rec.obverse) zip.file(`pattern/${rec.ruleId}_obverse.webp`, rec.obverse);
+    if (rec.reverse) zip.file(`pattern/${rec.ruleId}_reverse.webp`, rec.reverse);
+  }
+  const customRules = NumistaLookup.listCustomRules();
+  zip.file('pattern_rules.json', JSON.stringify(customRules, null, 2));
+
+  // 3. Existing coinImages from IndexedDB (always included)
+  const coinImages = await imageCache.exportAllCoinImages();
+  for (const rec of coinImages) {
+    const { catalogId } = rec;
+    addedCatalogIds.add(catalogId);
+    const obvWebP = await blobToWebP(rec.obverse);
+    const revWebP = await blobToWebP(rec.reverse);
+    if (obvWebP) zip.file(`cdn/${catalogId}_obverse.webp`, obvWebP);
+    if (revWebP) zip.file(`cdn/${catalogId}_reverse.webp`, revWebP);
+    const item = typeof inventory !== 'undefined'
+      ? inventory.find(i => BulkImageCache.resolveCatalogId(i) === catalogId)
+      : null;
+    manifest.push({
+      catalogId,
+      uuid: item?.uuid || '',
+      name: item?.name || '',
+      numistaId: item?.numistaId || '',
+      obverseFile: obvWebP ? `cdn/${catalogId}_obverse.webp` : null,
+      reverseFile: revWebP ? `cdn/${catalogId}_reverse.webp` : null,
+    });
+  }
+
+  // 4. Optionally fetch CDN images not yet in IndexedDB
+  if (includeCdn) {
+    const eligible = BulkImageCache.buildEligibleList();
+    const toFetch = eligible.filter(e => !addedCatalogIds.has(e.catalogId));
+    for (let i = 0; i < toFetch.length; i++) {
+      const { item, catalogId } = toFetch[i];
+      if (onProgress) onProgress(i + 1, toFetch.length, catalogId);
+      if (item.obverseImageUrl || item.reverseImageUrl) {
+        await imageCache.cacheImages(catalogId, item.obverseImageUrl || '', item.reverseImageUrl || '');
+      }
+      const rec = await imageCache.getImages(catalogId);
+      if (rec) {
+        const obvWebP = await blobToWebP(rec.obverse);
+        const revWebP = await blobToWebP(rec.reverse);
+        if (obvWebP) zip.file(`cdn/${catalogId}_obverse.webp`, obvWebP);
+        if (revWebP) zip.file(`cdn/${catalogId}_reverse.webp`, revWebP);
+        manifest.push({
+          catalogId,
+          uuid: item.uuid || '',
+          name: item.name || '',
+          numistaId: item.numistaId || '',
+          obverseFile: obvWebP ? `cdn/${catalogId}_obverse.webp` : null,
+          reverseFile: revWebP ? `cdn/${catalogId}_reverse.webp` : null,
+        });
+      }
+      await new Promise(r => setTimeout(r, 1000));
+    }
+  }
+
+  if (manifest.length > 0) {
+    zip.file('manifest.json', JSON.stringify(manifest, null, 2));
+  }
+
+  return zip;
+};
+
+const _restoreCdnFolderFromZip = async (zip) => {
+  const cdnFolder = zip.folder('cdn');
+  if (!cdnFolder) return;
+  const cdnMap = new Map();
+  cdnFolder.forEach((relativePath, zipEntry) => {
+    const match = relativePath.match(/^(.+)_(obverse|reverse)\.webp$/);
+    if (match) {
+      const [, catalogId, side] = match;
+      if (!cdnMap.has(catalogId)) cdnMap.set(catalogId, {});
+      cdnMap.get(catalogId)[side] = zipEntry;
+    }
+  });
+  for (const [catalogId, sides] of cdnMap) {
+    const alreadyCached = await imageCache.hasImages(catalogId);
+    if (alreadyCached) continue;
+    const obverse = sides.obverse ? await sides.obverse.async('blob') : null;
+    const reverse = sides.reverse ? await sides.reverse.async('blob') : null;
+    const item = typeof inventory !== 'undefined'
+      ? inventory.find(i => BulkImageCache.resolveCatalogId(i) === catalogId)
+      : null;
+    await imageCache._put('coinImages', {
+      catalogId,
+      obverse,
+      reverse,
+      obverseUrl: item?.obverseImageUrl || '',
+      reverseUrl: item?.reverseImageUrl || '',
+      cachedAt: Date.now(),
+      size: (obverse?.size || 0) + (reverse?.size || 0),
+    });
+  }
+};
+
 const bindImageImportExportListeners = () => {
   const exportBtn = getExistingElement('exportAllImagesBtn');
   if (exportBtn) {
@@ -790,26 +921,39 @@ const bindImageImportExportListeners = () => {
         return;
       }
 
-      exportBtn.textContent = 'Exporting...';
+      const eligibleCount = typeof BulkImageCache !== 'undefined'
+        ? BulkImageCache.buildEligibleList().length
+        : 0;
+      // nosemgrep: javascript.browser.security.insecure-document-method.insecure-document-method
+      const includeCdn = eligibleCount > 0 && confirm(
+        'Download CDN catalog images for offline use?\n\n' +
+        'This fetches images for items with Numista IDs (1 second between each). ' +
+        'Already-cached images are included automatically.'
+      );
+
+      let progressEl = null;
+      if (includeCdn) {
+        progressEl = document.createElement('div');
+        progressEl.id = 'imageCdnProgress';
+        progressEl.innerHTML = '<span id="imageCdnProgressText">Preparing\u2026</span>' +
+          '<progress id="imageCdnProgressBar" value="0" max="1"></progress>';
+        exportBtn.parentNode.insertBefore(progressEl, exportBtn.nextSibling);
+      }
+
       exportBtn.disabled = true;
+      exportBtn.textContent = 'Exporting\u2026';
 
       try {
-        const zip = new JSZip();
-
-        const userImages = await imageCache.exportAllUserImages();
-        for (const rec of userImages) {
-          if (rec.obverse) zip.file(`user/${rec.uuid}_obverse.webp`, rec.obverse);
-          if (rec.reverse) zip.file(`user/${rec.uuid}_reverse.webp`, rec.reverse);
-        }
-
-        const patternImages = await imageCache.exportAllPatternImages();
-        for (const rec of patternImages) {
-          if (rec.obverse) zip.file(`pattern/${rec.ruleId}_obverse.webp`, rec.obverse);
-          if (rec.reverse) zip.file(`pattern/${rec.ruleId}_reverse.webp`, rec.reverse);
-        }
-
-        const customRules = NumistaLookup.listCustomRules();
-        zip.file('pattern_rules.json', JSON.stringify(customRules, null, 2));
+        const zip = await buildImageExportZip({
+          includeCdn,
+          onProgress: (current, total, catalogId) => {
+            if (!progressEl) return;
+            const textEl = document.getElementById('imageCdnProgressText');
+            const barEl = document.getElementById('imageCdnProgressBar');
+            if (textEl) textEl.textContent = `Fetching ${catalogId} (${current} of ${total})\u2026`;
+            if (barEl) { barEl.value = current; barEl.max = total; }
+          },
+        });
 
         const blob = await zip.generateAsync({ type: 'blob' });
         const url = URL.createObjectURL(blob);
@@ -826,6 +970,7 @@ const bindImageImportExportListeners = () => {
       } finally {
         exportBtn.textContent = 'Export All Images';
         exportBtn.disabled = false;
+        if (progressEl) progressEl.remove();
       }
     });
   }
@@ -900,6 +1045,9 @@ const bindImageImportExportListeners = () => {
           }
         }
 
+        // Restore CDN catalog images
+        await _restoreCdnFolderFromZip(zip);
+
         populateImagesSection();
       } catch (err) {
         console.error('Image import failed:', err);
@@ -908,6 +1056,162 @@ const bindImageImportExportListeners = () => {
         importBtn.textContent = 'Import Images';
         importBtn.disabled = false;
         importFile.value = '';
+      }
+    });
+  }
+
+  // ── URL → ZIP: fetch every image URL in the collection and package for offline use ──
+  const urlToZipBtn = getExistingElement('urlToZipBtn');
+  if (urlToZipBtn) {
+    urlToZipBtn.addEventListener('click', async () => {
+      if (!window.imageCache?.isAvailable()) {
+        alert('IndexedDB unavailable.');
+        return;
+      }
+      if (typeof JSZip === 'undefined') {
+        alert('JSZip not loaded.');
+        return;
+      }
+      if (typeof inventory === 'undefined' || !inventory.length) {
+        alert('No inventory items found.');
+        return;
+      }
+
+      // Collect all items that have image URLs, deduped by catalogId or uuid
+      const toFetch = [];
+      const seenKeys = new Set();
+      for (const item of inventory) {
+        if (!item.obverseImageUrl && !item.reverseImageUrl) continue;
+        const catalogId = typeof BulkImageCache !== 'undefined'
+          ? BulkImageCache.resolveCatalogId(item) : '';
+        const key = catalogId || item.uuid;
+        if (!key || seenKeys.has(key)) continue;
+        seenKeys.add(key);
+        toFetch.push({ item, catalogId, key, useCdn: !!catalogId });
+      }
+
+      if (!toFetch.length) {
+        alert('No items with image URLs found.\nRun \u201CDownload URLs\u201D first to sync catalog image URLs from Numista.');
+        return;
+      }
+
+      // Preflight: block immediately on file:// where cross-origin fetch will never work
+      if (window.location.protocol === 'file:') {
+        alert(
+          'URL\u2192ZIP requires the app to be served over HTTP.\n\n' +
+          'Open a terminal in the StakTrakr folder and run:\n' +
+          '  python3 -m http.server 8080\n\n' +
+          'Then open http://localhost:8080 in your browser.'
+        );
+        return;
+      }
+
+      // Preflight: test one URL before committing to the full loop
+      const firstUrl = toFetch[0].item.obverseImageUrl || toFetch[0].item.reverseImageUrl;
+      try {
+        const testResp = await fetch(firstUrl, { mode: 'cors' });
+        if (!testResp.ok) throw new Error(`HTTP ${testResp.status}`);
+      } catch (preflightErr) {
+        alert(
+          'Could not fetch images \u2014 the image server is blocking cross-origin requests.\n\n' +
+          'Try opening a Numista item in the view modal first (this caches images locally),\n' +
+          'then run URL\u2192ZIP to package the cached copies.\n\n' +
+          `Detail: ${preflightErr.message}`
+        );
+        return;
+      }
+
+      const progressEl = document.createElement('div');
+      progressEl.id = 'imageCdnProgress';
+      progressEl.innerHTML = '<span id="imageCdnProgressText">Preparing\u2026</span>' +
+        `<progress id="imageCdnProgressBar" value="0" max="${toFetch.length}"></progress>`;
+      urlToZipBtn.parentNode.insertBefore(progressEl, urlToZipBtn.nextSibling);
+
+      urlToZipBtn.disabled = true;
+      urlToZipBtn.textContent = 'Building\u2026';
+
+      try {
+        const zip = new JSZip();
+        const manifest = [];
+
+        for (let i = 0; i < toFetch.length; i++) {
+          const { item, catalogId, key, useCdn } = toFetch[i];
+          const textEl = document.getElementById('imageCdnProgressText');
+          const barEl = document.getElementById('imageCdnProgressBar');
+          if (textEl) textEl.textContent = `Fetching ${item.name || key} (${i + 1} of ${toFetch.length})\u2026`;
+          if (barEl) barEl.value = i + 1;
+
+          let obvBlob = null;
+          let revBlob = null;
+
+          // 1. Check IndexedDB first — free for items already cached via view modal
+          if (useCdn) {
+            const cached = await imageCache.getImages(catalogId);
+            if (cached) { obvBlob = cached.obverse; revBlob = cached.reverse; }
+          }
+
+          // 2. For any side still missing, fetch directly via _fetchAndResize
+          //    (bypasses cacheImages quota gate and skip-if-already-cached check)
+          if (!obvBlob && item.obverseImageUrl) {
+            obvBlob = await imageCache._fetchAndResize(item.obverseImageUrl).catch(() => null);
+          }
+          if (!revBlob && item.reverseImageUrl) {
+            revBlob = await imageCache._fetchAndResize(item.reverseImageUrl).catch(() => null);
+          }
+
+          const folder = useCdn ? 'cdn' : 'user';
+          const obvWebP = obvBlob ? await blobToWebP(obvBlob) : null;
+          const revWebP = revBlob ? await blobToWebP(revBlob) : null;
+          const obvFile = obvWebP ? `${folder}/${key}_obverse.webp` : null;
+          const revFile = revWebP ? `${folder}/${key}_reverse.webp` : null;
+
+          if (obvWebP) zip.file(obvFile, obvWebP);
+          if (revWebP) zip.file(revFile, revWebP);
+
+          if (obvWebP || revWebP) {
+            manifest.push({
+              catalogId: catalogId || '',
+              uuid: item.uuid || '',
+              name: item.name || '',
+              numistaId: item.numistaId || '',
+              obverseFile: obvFile,
+              reverseFile: revFile,
+            });
+          }
+
+          if (i < toFetch.length - 1) {
+            await new Promise(r => setTimeout(r, 250));
+          }
+        }
+
+        if (!manifest.length) {
+          alert(
+            'No images could be fetched.\n\n' +
+            'Possible causes:\n' +
+            '\u2022 Run \u201CDownload URLs\u201D first to sync image URLs from Numista.\n' +
+            '\u2022 Serve the app over HTTP (not file://) \u2014 cross-origin image fetches require a real origin.\n' +
+            '\u2022 Network connectivity issue.'
+          );
+          return;
+        }
+
+        zip.file('manifest.json', JSON.stringify(manifest, null, 2));
+        const blob = await zip.generateAsync({ type: 'blob' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'staktrakr-images.zip';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+      } catch (err) {
+        console.error('URLtoZIP failed:', err);
+        alert('Failed: ' + err.message);
+      } finally {
+        urlToZipBtn.disabled = false;
+        urlToZipBtn.textContent = 'URL\u2192ZIP';
+        progressEl.remove();
       }
     });
   }
