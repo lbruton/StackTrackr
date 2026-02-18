@@ -2915,26 +2915,12 @@
                 <div class="settings-fieldset-title">Quick Access</div>
                 <div class="settings-card-grid">
                   <div class="settings-card">
-                    <div class="settings-group-label">Remember password</div>
-                    <p class="settings-subtext">Cache your vault password so backup/restore skips the password prompt.</p>
-                    <div class="chip-sort-toggle" id="cloudPwCacheToggle">
-                      <button type="button" class="chip-sort-btn" data-val="yes">On</button>
-                      <button type="button" class="chip-sort-btn active" data-val="no">Off</button>
-                    </div>
+                    <div class="settings-group-label">Session password cache</div>
+                    <p class="settings-subtext">Your vault password is automatically remembered for this browser session after the first backup or restore. Closing the browser clears it.</p>
                     <div class="cloud-status-row" style="margin-top:0.5rem">
                       <span class="cloud-status-label">Cache status</span>
                       <span class="cloud-status-value" id="cloudPwCacheStatus">Not cached</span>
                     </div>
-                  </div>
-                  <div class="settings-card">
-                    <div class="settings-group-label">Cache duration</div>
-                    <p class="settings-subtext">How long to remember the password before it expires.</p>
-                    <select id="cloudPwCacheDays" class="form-select form-select-sm" style="width:auto">
-                      <option value="1">1 day</option>
-                      <option value="3" selected>3 days</option>
-                      <option value="7">7 days</option>
-                    </select>
-                    <p class="settings-subtext" style="margin-top:0.75rem">Password is XOR-obfuscated in localStorage. Only enable on trusted personal devices.</p>
                   </div>
                 </div>
               </div>

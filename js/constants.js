@@ -691,10 +691,7 @@ const ALLOWED_STORAGE_KEYS = [
   "cloud_token_pcloud",                        // JSON: pCloud OAuth token data
   "cloud_token_box",                           // JSON: Box OAuth token data
   "cloud_last_backup",                         // JSON: { provider, timestamp } last cloud backup info
-  "cloud_vault_pw_cache",                      // JSON: obfuscated cached password + expiry
   "cloud_kraken_seen",                         // boolean string: easter egg flag
-  "cloud_pw_cache_enabled",                    // boolean string: "true"/"false" — password cache toggle
-  "cloud_pw_cache_days",                       // string: "1"|"3"|"7" — cache duration in days
   "staktrakr_oauth_result",                    // JSON: transient OAuth callback relay (cleared after read)
   "cloud_activity_log",                        // JSON: cloud sync activity log entries
 ];
