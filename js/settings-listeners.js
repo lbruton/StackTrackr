@@ -101,28 +101,54 @@ const bindAppearanceAndHeaderListeners = () => {
     defaultVal: false,
     onApply: () => applyHeaderToggleVisibility(),
   });
-
-  wireStorageToggle('settingsHeaderCurrencyBtn', 'headerCurrencyBtnVisible', {
-    defaultVal: true,
-    onApply: () => applyHeaderToggleVisibility(),
-  });
-
-  wireStorageToggle('settingsHeaderCardViewBtn', 'headerCardViewBtnVisible', {
+  wireStorageToggle('settingsHeaderThemeBtn_hdr', 'headerThemeBtnVisible', {
     defaultVal: false,
     onApply: () => applyHeaderToggleVisibility(),
   });
 
-  // Card view header button (STAK-131).
-  const headerCardViewBtn = getExistingElement('headerCardViewBtn');
-  if (headerCardViewBtn) {
-    headerCardViewBtn.addEventListener('click', () => {
-      const isCard = localStorage.getItem(DESKTOP_CARD_VIEW_KEY) === 'true';
-      const newVal = !isCard;
-      localStorage.setItem(DESKTOP_CARD_VIEW_KEY, String(newVal));
-      document.body.classList.toggle('force-card-view', newVal);
-      applyViewIpp();
-      syncChipToggle('settingsDesktopCardView', newVal);
-      if (typeof renderTable === 'function') renderTable();
+  wireStorageToggle('settingsHeaderCurrencyBtn', 'headerCurrencyBtnVisible', {
+    defaultVal: false,
+    onApply: () => applyHeaderToggleVisibility(),
+  });
+  wireStorageToggle('settingsHeaderCurrencyBtn_hdr', 'headerCurrencyBtnVisible', {
+    defaultVal: false,
+    onApply: () => applyHeaderToggleVisibility(),
+  });
+
+  wireStorageToggle('settingsHeaderTrendBtn', HEADER_TREND_BTN_KEY, {
+    defaultVal: true,
+    onApply: () => applyHeaderToggleVisibility(),
+  });
+  wireStorageToggle('settingsHeaderTrendBtn_hdr', HEADER_TREND_BTN_KEY, {
+    defaultVal: true,
+    onApply: () => applyHeaderToggleVisibility(),
+  });
+
+  wireStorageToggle('settingsHeaderSyncBtn', HEADER_SYNC_BTN_KEY, {
+    defaultVal: true,
+    onApply: () => applyHeaderToggleVisibility(),
+  });
+  wireStorageToggle('settingsHeaderSyncBtn_hdr', HEADER_SYNC_BTN_KEY, {
+    defaultVal: true,
+    onApply: () => applyHeaderToggleVisibility(),
+  });
+
+  // Trend cycle header button.
+  const headerTrendBtn = safeGetElement('headerTrendBtn');
+  if (headerTrendBtn) {
+    headerTrendBtn.addEventListener('click', () => {
+      if (typeof window.cycleSpotTrend === 'function') window.cycleSpotTrend();
+    });
+  }
+
+  // Sync all spot prices header button.
+  const headerSyncBtn = safeGetElement('headerSyncBtn');
+  if (headerSyncBtn) {
+    headerSyncBtn.addEventListener('click', () => {
+      ['Silver', 'Gold', 'Platinum', 'Palladium'].forEach(m => {
+        const btn = document.getElementById(`syncIcon${m}`);
+        if (btn && !btn.disabled) btn.click();
+      });
     });
   }
 
@@ -558,6 +584,24 @@ const bindPatternRuleModeListeners = () => {
     attachAutocomplete(patternInput, 'names');
   }
 
+  // Camera capture buttons — bridge capture input → main file input via DataTransfer
+  [['patternRuleObverseCamera', 'patternRuleObverseCapture', 'patternRuleObverse'],
+   ['patternRuleReverseCamera', 'patternRuleReverseCapture', 'patternRuleReverse']].forEach(([btnId, captureId, mainId]) => {
+    const btn = getExistingElement(btnId);
+    const captureInput = getExistingElement(captureId);
+    const mainInput = getExistingElement(mainId);
+    if (btn && captureInput && mainInput) {
+      btn.addEventListener('click', () => captureInput.click());
+      captureInput.addEventListener('change', () => {
+        if (!captureInput.files?.length) return;
+        const dt = new DataTransfer();
+        dt.items.add(captureInput.files[0]);
+        mainInput.files = dt.files;
+        mainInput.dispatchEvent(new Event('change'));
+      });
+    }
+  });
+
   const addPatternRuleBtn = getExistingElement('addPatternRuleBtn');
   if (addPatternRuleBtn) {
     addPatternRuleBtn.addEventListener('click', async () => {
@@ -644,10 +688,57 @@ const bindPatternRuleModeListeners = () => {
 };
 
 const bindCardAndTableImageListeners = () => {
-  const cardStyleEl = getExistingElement('settingsCardStyle');
-  if (cardStyleEl) {
-    cardStyleEl.addEventListener('change', () => {
-      localStorage.setItem(CARD_STYLE_KEY, cardStyleEl.value);
+  // Card style toggle (A/B/C/D chip buttons in Appearance > Inventory)
+  const cardStyleToggleEl = getExistingElement('settingsCardStyleToggle');
+  if (cardStyleToggleEl) {
+    const savedStyle = localStorage.getItem(CARD_STYLE_KEY) || 'A';
+    cardStyleToggleEl.querySelectorAll('.chip-sort-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.style === savedStyle);
+    });
+    cardStyleToggleEl.addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-style]');
+      if (!btn) return;
+      const val = btn.dataset.style;
+      localStorage.setItem(CARD_STYLE_KEY, val);
+      cardStyleToggleEl.querySelectorAll('.chip-sort-btn').forEach(b => b.classList.toggle('active', b === btn));
+      // Sync live sort bar toggle
+      const liveSortToggle = document.getElementById('cardStyleToggle');
+      if (liveSortToggle) {
+        liveSortToggle.querySelectorAll('[data-style]').forEach(b => b.classList.toggle('active', b.dataset.style === val));
+      }
+      if (typeof renderTable === 'function') renderTable();
+    });
+  }
+
+  // Default sort column
+  const defaultSortColEl = getExistingElement('settingsDefaultSortColumn');
+  if (defaultSortColEl) {
+    const savedCol = localStorage.getItem(DEFAULT_SORT_COL_KEY);
+    if (savedCol !== null) defaultSortColEl.value = savedCol;
+    defaultSortColEl.addEventListener('change', () => {
+      const val = parseInt(defaultSortColEl.value, 10);
+      localStorage.setItem(DEFAULT_SORT_COL_KEY, String(val));
+      sortColumn = val;
+      if (typeof updateCardSortBar === 'function') updateCardSortBar();
+      if (typeof renderTable === 'function') renderTable();
+    });
+  }
+
+  // Default sort direction
+  const defaultSortDirEl = getExistingElement('settingsDefaultSortDir');
+  if (defaultSortDirEl) {
+    const savedDir = localStorage.getItem(DEFAULT_SORT_DIR_KEY) || 'asc';
+    defaultSortDirEl.querySelectorAll('.chip-sort-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.val === savedDir);
+    });
+    defaultSortDirEl.addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-val]');
+      if (!btn) return;
+      const val = btn.dataset.val;
+      localStorage.setItem(DEFAULT_SORT_DIR_KEY, val);
+      sortDirection = val;
+      defaultSortDirEl.querySelectorAll('.chip-sort-btn').forEach(b => b.classList.toggle('active', b === btn));
+      if (typeof updateCardSortBar === 'function') updateCardSortBar();
       if (typeof renderTable === 'function') renderTable();
     });
   }

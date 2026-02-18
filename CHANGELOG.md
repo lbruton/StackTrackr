@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.30.09] - 2026-02-17
+
+### Added — Settings & Header Controls Overhaul
+
+- **Added**: Optional Trend and Sync buttons in header (hidden by default, enable in Appearance > Header Buttons)
+- **Changed**: Removed global spot trend/sync bar; trend cycling and sync now available as header buttons
+- **Changed**: Settings Appearance panel reorganized — Header Buttons 2×2 grid, Layout card, Inventory View cards (Card View A/B/C/D, Default Sort, Visible Items)
+- **Changed**: Images panel restructured — actions row at top, 1×3 display grid, camera capture support, fieldset cards
+- **Changed**: Metal Order and Inline Chips consolidated into Chips panel; removed Table Display tab
+- **Changed**: Currency header button hidden by default; Trend and Sync default to ON
+
+---
+
 ## [3.30.08] - 2026-02-17
 
 ### Added — Default Settings Overhaul & Seed Pattern Images
