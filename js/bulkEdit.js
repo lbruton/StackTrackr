@@ -66,6 +66,7 @@ const BULK_EDITABLE_FIELDS = [
       { value: '0.9995', label: '.9995 — Pure Platinum' },
       { value: '0.999',  label: '.999 — Fine' },
       { value: '0.925',  label: '.925 — Sterling' },
+      { value: '0.9167', label: '.9167 — 22K (Krugerrand)' },
       { value: '0.900',  label: '.900 — 90% Silver' },
       { value: '0.800',  label: '.800 — 80% (European)' },
       { value: '0.600',  label: '.600 — 60%' },
@@ -231,7 +232,8 @@ const FIELD_COERCIONS = {
  */
 const coerceFieldValue = (fieldId, value) => {
   const coerce = FIELD_COERCIONS[fieldId];
-  return coerce ? coerce(value) : value;
+  if (coerce) return coerce(value);
+  return (typeof value === 'string') ? sanitizeHtml(value) : value;
 };
 
 /**
@@ -859,6 +861,18 @@ const applyBulkEdit = () => {
 
     // Keep the original string; coercion logic will normalize as needed.
     valuesToApply.purity = rawPurity;
+  }
+
+  // Convert gram weight to ozt for storage (matches parseWeight in events.js)
+  if (bulkEnabledFields.has('weight') && valuesToApply.weight !== undefined) {
+    const unitSelect = safeGetElement('bulkFieldVal_weightUnit');
+    const effectiveUnit = valuesToApply.weightUnit || (unitSelect ? unitSelect.value : null);
+    if (effectiveUnit === 'g') {
+      const grams = parseFloat(valuesToApply.weight);
+      if (!isNaN(grams)) {
+        valuesToApply.weight = String(gramsToOzt(grams));
+      }
+    }
   }
 
   // When gb denomination mode is active, read weight from the denomination picker
