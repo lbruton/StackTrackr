@@ -220,6 +220,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     elements.settingsSpotHistoryClearBtn = safeGetElement("settingsSpotHistoryClearBtn");
     elements.settingsCatalogHistoryClearBtn = safeGetElement("settingsCatalogHistoryClearBtn");
     elements.settingsPriceHistoryClearBtn = safeGetElement("settingsPriceHistoryClearBtn");
+    elements.settingsCloudActivityClearBtn = safeGetElement("settingsCloudActivityClearBtn");
     elements.priceHistoryFilterInput = safeGetElement("priceHistoryFilterInput");
 
     // Pagination elements
