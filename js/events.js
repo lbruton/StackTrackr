@@ -1641,7 +1641,7 @@ const setupNoteAndModalListeners = () => {
 
   optionalListener(elements.storageReportLink, "click", (e) => {
     e.preventDefault();
-    if (typeof openStorageReportPopup === "function") openStorageReportPopup();
+    if (typeof showSettingsModal === "function") showSettingsModal("storage");
   }, "Storage report link");
 
   optionalListener(elements.changeLogCloseBtn, "click", () => {
@@ -2487,8 +2487,6 @@ const setupApiEvents = () => {
           const notesModal = document.getElementById("notesModal");
           const detailsModal = document.getElementById("detailsModal");
           const changeLogModal = document.getElementById("changeLogModal");
-          const storageReportModal = document.getElementById("storageReportModal");
-
           // Close sub-modals (stacking overlays) before settings modal
           if (
             infoModal &&
@@ -2540,9 +2538,6 @@ const setupApiEvents = () => {
             notesIndex = null;
           } else if (changeLogModal && changeLogModal.style.display === "flex") {
             changeLogModal.style.display = "none";
-            document.body.style.overflow = "";
-          } else if (storageReportModal && storageReportModal.style.display === "flex") {
-            storageReportModal.style.display = "none";
             document.body.style.overflow = "";
           } else if (
             detailsModal &&
