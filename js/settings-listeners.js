@@ -1240,9 +1240,9 @@ const bindCloudStorageListeners = () => {
       try {
         var fileBytes = await cloudDownloadVaultByName(provider, filename);
         // Try cached password
-        var cachedPw = typeof cloudGetCachedPassword === 'function' ? cloudGetCachedPassword(provider) : null;
-        if (cachedPw) {
-          await _cloudRestoreWithCachedPw(provider, cachedPw, fileBytes);
+        var savedPw = typeof cloudGetCachedPassword === 'function' ? cloudGetCachedPassword(provider) : null;
+        if (savedPw) {
+          await _cloudRestoreWithCachedPw(provider, savedPw, fileBytes);
           return;
         }
         openVaultModal('cloud-import', {
