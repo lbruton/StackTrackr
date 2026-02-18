@@ -4,15 +4,22 @@
 <body>
 <p>Authenticating&hellip;</p>
 <script>
-  // Forward OAuth params to the main app page via redirect.
-  // This is the most reliable approach because:
-  //  - It works regardless of popup vs main-window flow
-  //  - It survives stale service-worker caches
-  //  - cloud-storage.js checkUrlForOAuthParams() handles the rest
-  var search = location.search;
-  if (search) {
-    // Redirect to app root with OAuth params preserved in query string
-    window.location.replace(location.origin + '/' + search);
+  var params = new URLSearchParams(location.search);
+  var code = params.get('code');
+  var state = params.get('state');
+
+  if (code) {
+    // Popup path: postMessage back to opener and close
+    if (window.opener && !window.opener.closed) {
+      window.opener.postMessage({ type: 'staktrakr-oauth', code: code, state: state }, location.origin);
+      window.close();
+    } else {
+      // Main-window redirect fallback: relay via localStorage for the app to pick up
+      try {
+        localStorage.setItem('staktrakr_oauth_result', JSON.stringify({ code: code, state: state }));
+      } catch (e) { /* ignore */ }
+      window.location.replace(location.origin + '/');
+    }
   } else {
     window.location.replace(location.origin + '/');
   }

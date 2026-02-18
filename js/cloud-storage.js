@@ -292,21 +292,31 @@ function cloudAuthStart(provider) {
     token_access_type: 'offline',
   });
 
+  // Open popup synchronously (in click handler context) to avoid popup blockers,
+  // then navigate it after the async PKCE challenge is computed.
+  var popup = window.open('about:blank', 'staktrakr_oauth', 'width=600,height=700');
+
   if (config.usePKCE) {
     var verifier = cloudGenerateVerifier();
     sessionStorage.setItem('cloud_pkce_verifier', verifier);
-    // SHA-256 challenge is async — compute it, then redirect the main window.
-    // We use main-window redirect instead of a popup because:
-    //  1. Popup blockers silently eat window.open in async callbacks
-    //  2. Setting popup.location.href on about:blank fails in some browsers
-    //  3. oauth-callback.html handles the main-window return path gracefully
     cloudGenerateChallenge(verifier).then(function (challenge) {
       params.set('code_challenge', challenge);
       params.set('code_challenge_method', 'S256');
-      window.location.href = config.authUrl + '?' + params.toString();
+      var url = config.authUrl + '?' + params.toString();
+      if (popup && !popup.closed) {
+        popup.location.href = url;
+      } else {
+        // Popup was blocked — fall back to main-window redirect
+        window.location.href = url;
+      }
     });
   } else {
-    window.location.href = config.authUrl + '?' + params.toString();
+    var url = config.authUrl + '?' + params.toString();
+    if (popup && !popup.closed) {
+      popup.location.href = url;
+    } else {
+      window.location.href = url;
+    }
   }
 }
 
