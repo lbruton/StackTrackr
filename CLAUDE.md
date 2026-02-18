@@ -36,7 +36,27 @@ Three instruction files serve different agents -- keep them in sync:
 | `AGENTS.md` | Codex, Claude Code web, remote agents | Yes | Codebase context only, no local tooling |
 | `.github/copilot-instructions.md` | GitHub Copilot PR reviews | Yes | PR review rules, globals, ESLint, patterns |
 
-Use the `/sync-instructions` skill after significant codebase changes to keep all three aligned.
+### Skills Architecture (Two Tiers)
+
+Skills live at two levels, each agent owning its own copies:
+
+| Tier | Location | Audience | Git-tracked |
+|------|----------|----------|-------------|
+| User-level | `~/.claude/skills/` | Claude Code (all projects) | No (outside repo) |
+| Project-level | `.claude/skills/` | Claude Code (this project) | Yes (4 skills) |
+| Project-level | `.agents/skills/` | Codex | Yes (independent copies) |
+
+**Project-level skills** (git-tracked, project-specific):
+`coding-standards`, `markdown-standards`, `release`, `seed-sync`
+
+**User-level skills** (outside repo, project-agnostic via `project.json` detection):
+`memento-taxonomy`, `remember`, `sync-instructions`, `prime`, `sw-cache`, `agent-routing`
+
+**Codex copies** in `.agents/skills/` include all of the above as independent copies. Codex may tune descriptions, path references, or tool names for its runtime without affecting Claude Code.
+
+The `/sync-instructions` skill flags drift between copies and lets the human decide sync direction.
+
+Use the `/sync-instructions` skill after significant codebase changes to keep all files and skills aligned.
 
 ## Critical Development Patterns
 
@@ -180,7 +200,7 @@ Local developers have these MCP servers configured:
 - **Memento** -- Knowledge graph for session persistence, handoffs, insights (shared Neo4j instance, tag with `project:staktrakr`)
 - **Claude-Context** -- Semantic code search (AST-indexed, Milvus vector DB)
 - **Brave Search** -- Web search API
-- **Chrome DevTools** -- Browser automation for UI testing
+- **Claude-in-Chrome** -- Built-in browser automation (always available, no MCP config needed). Enable **Chrome DevTools** MCP for deeper debugging (console monitoring, DOM inspection, script evaluation)
 - **Context7** -- Library documentation lookup (Chart.js, Bootstrap, jsPDF, etc.)
 - **Codacy** -- Code quality analysis
 
@@ -199,8 +219,15 @@ Skills and commands in `.claude/` are gitignored (except 4 tracked skills). Key 
 
 ### Tracked Skills (in git)
 
-Only these 4 skills are tracked and available to all environments:
+4 project-specific skills tracked in `.claude/skills/` (also mirrored in `.agents/skills/` for Codex):
+
 - `coding-standards` -- StakTrakr coding standards
 - `markdown-standards` -- Markdown linting rules
 - `release` -- Release workflow
 - `seed-sync` -- Spot price seed data synchronization
+
+3 user-level skills at `~/.claude/skills/` (also mirrored in `.agents/skills/` for Codex):
+
+- `memento-taxonomy` -- Knowledge graph taxonomy, entity types, tag conventions
+- `remember` -- Natural language save/recall interface to Memento
+- `sync-instructions` -- Instruction file & skills reconciliation across agents
