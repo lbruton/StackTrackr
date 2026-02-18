@@ -1144,19 +1144,17 @@ const bindImageImportExportListeners = () => {
           let obvBlob = null;
           let revBlob = null;
 
-          // 1. Check IndexedDB first — free for items already cached via view modal
-          if (useCdn) {
-            const cached = await imageCache.getImages(catalogId);
-            if (cached) { obvBlob = cached.obverse; revBlob = cached.reverse; }
+          if (item.obverseImageUrl) {
+            try {
+              const resp = await fetch(item.obverseImageUrl, { mode: 'cors' });
+              if (resp.ok) obvBlob = await resp.blob();
+            } catch { /* CORS or network failure — skip */ }
           }
-
-          // 2. For any side still missing, fetch directly via _fetchAndResize
-          //    (bypasses cacheImages quota gate and skip-if-already-cached check)
-          if (!obvBlob && item.obverseImageUrl) {
-            obvBlob = await imageCache._fetchAndResize(item.obverseImageUrl).catch(() => null);
-          }
-          if (!revBlob && item.reverseImageUrl) {
-            revBlob = await imageCache._fetchAndResize(item.reverseImageUrl).catch(() => null);
+          if (item.reverseImageUrl) {
+            try {
+              const resp = await fetch(item.reverseImageUrl, { mode: 'cors' });
+              if (resp.ok) revBlob = await resp.blob();
+            } catch { /* CORS or network failure — skip */ }
           }
 
           const folder = useCdn ? 'cdn' : 'user';
