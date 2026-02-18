@@ -40,6 +40,20 @@ const CLOUD_PROVIDERS = {
 };
 
 const CLOUD_REDIRECT_URI = window.location.origin + '/oauth-callback.html';
+
+// Fallback: if we landed on index.html with OAuth params (user navigated back
+// from a stale oauth-callback.html, or redirect URI was changed), capture them.
+(function checkUrlForOAuthParams() {
+  var params = new URLSearchParams(window.location.search);
+  var code = params.get('code');
+  var state = params.get('state');
+  if (code) {
+    history.replaceState(null, '', window.location.pathname);
+    try {
+      localStorage.setItem('staktrakr_oauth_result', JSON.stringify({ code: code, state: state }));
+    } catch (e) { /* ignore */ }
+  }
+})();
 const CLOUD_LATEST_FILENAME = 'staktrakr-latest.json';
 
 // ---------------------------------------------------------------------------
