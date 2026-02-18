@@ -2768,12 +2768,61 @@
               </div>
             </div>
 
-            <!-- ===== CLOUD SYNC (placeholder) ===== -->
+            <!-- ===== CLOUD SYNC ===== -->
             <div class="settings-section-panel" id="settingsPanel_cloud" style="display: none">
               <h3>Cloud Sync</h3>
-              <div class="settings-placeholder">
-                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.3"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
-                <p>BYO-Backend (Supabase) coming soon.</p>
+              <p class="settings-description">Back up your encrypted vault to your own cloud storage. Files are encrypted locally before upload — your provider never sees your data.</p>
+              <p class="settings-description" style="font-size:0.82em;opacity:0.7">Requires HTTPS. Uses the same password-based encryption as .stvault files.</p>
+
+              <!-- Dropbox -->
+              <div class="cloud-provider-card" id="cloudCard_dropbox">
+                <div class="cloud-provider-header">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M6 2l6 3.6L6 9.2 0 5.6zm12 0l6 3.6-6 3.6-6-3.6zm-12 8l6 3.6-6 3.6-6-3.6zm12 0l6 3.6-6 3.6-6-3.6zM6 18.4l6-3.6 6 3.6-6 3.6z"/></svg>
+                  <span class="cloud-provider-name">Dropbox</span>
+                  <span class="cloud-status"></span>
+                </div>
+                <div class="cloud-provider-actions">
+                  <button class="btn btn-sm btn-outline-primary cloud-connect-btn" data-provider="dropbox">Connect</button>
+                  <button class="btn btn-sm btn-outline-danger cloud-disconnect-btn" data-provider="dropbox" style="display:none">Disconnect</button>
+                  <span class="cloud-actions" style="display:none">
+                    <button class="btn btn-sm btn-outline-secondary cloud-backup-btn" data-provider="dropbox">Backup Now</button>
+                    <button class="btn btn-sm btn-outline-secondary cloud-restore-btn" data-provider="dropbox">Restore</button>
+                  </span>
+                </div>
+              </div>
+
+              <!-- pCloud -->
+              <div class="cloud-provider-card" id="cloudCard_pcloud">
+                <div class="cloud-provider-header">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
+                  <span class="cloud-provider-name">pCloud</span>
+                  <span class="cloud-status"></span>
+                </div>
+                <div class="cloud-provider-actions">
+                  <button class="btn btn-sm btn-outline-primary cloud-connect-btn" data-provider="pcloud">Connect</button>
+                  <button class="btn btn-sm btn-outline-danger cloud-disconnect-btn" data-provider="pcloud" style="display:none">Disconnect</button>
+                  <span class="cloud-actions" style="display:none">
+                    <button class="btn btn-sm btn-outline-secondary cloud-backup-btn" data-provider="pcloud">Backup Now</button>
+                    <button class="btn btn-sm btn-outline-secondary cloud-restore-btn" data-provider="pcloud">Restore</button>
+                  </span>
+                </div>
+              </div>
+
+              <!-- Box -->
+              <div class="cloud-provider-card" id="cloudCard_box">
+                <div class="cloud-provider-header">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M2 4h20v16H2V4zm2 2v12h16V6H4z"/></svg>
+                  <span class="cloud-provider-name">Box</span>
+                  <span class="cloud-status"></span>
+                </div>
+                <div class="cloud-provider-actions">
+                  <button class="btn btn-sm btn-outline-primary cloud-connect-btn" data-provider="box">Connect</button>
+                  <button class="btn btn-sm btn-outline-danger cloud-disconnect-btn" data-provider="box" style="display:none">Disconnect</button>
+                  <span class="cloud-actions" style="display:none">
+                    <button class="btn btn-sm btn-outline-secondary cloud-backup-btn" data-provider="box">Backup Now</button>
+                    <button class="btn btn-sm btn-outline-secondary cloud-restore-btn" data-provider="box">Restore</button>
+                  </span>
+                </div>
               </div>
             </div>
 
@@ -2792,10 +2841,6 @@
                   <button class="btn" id="exportAllImagesBtn" type="button">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:0.3rem"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
                     Export
-                  </button>
-                  <button class="btn secondary" id="urlToZipBtn" type="button">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:0.3rem"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-                    URL&rarr;ZIP
                   </button>
                   <button class="btn secondary" id="syncImageUrlsBtn" type="button">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:0.3rem"><path d="M21.5 2v6h-6"/><path d="M2.5 22v-6h6"/><path d="M2.5 11.5a10 10 0 0 1 18.4-4.5"/><path d="M21.5 12.5a10 10 0 0 1-18.4 4.5"/></svg>
@@ -3686,6 +3731,7 @@
     <script defer src="./js/inventory.js"></script>
     <script defer src="./js/card-view.js"></script>
     <script defer src="./js/vault.js"></script>
+    <script defer src="./js/cloud-storage.js"></script>
     <script defer src="./js/about.js"></script>
     <script defer src="./js/customMapping.js"></script>
     <script defer src="./js/settings.js"></script>
