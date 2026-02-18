@@ -3,7 +3,7 @@
 // Cache version: auto-stamped by devops/hooks/stamp-sw-cache.sh pre-commit hook
 
 const DEV_MODE = false; // Set to true during development — bypasses all caching
-const CACHE_NAME = 'staktrakr-v3.31.0-b1771394938';
+const CACHE_NAME = 'staktrakr-v3.31.0-b1771395565';
 
 // Offline fallback for navigation requests when all cache/network strategies fail
 const OFFLINE_HTML = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>StakTrakr</title></head>' +
@@ -57,7 +57,6 @@ const CORE_ASSETS = [
   './js/inventory.js',
   './js/vault.js',
   './js/cloud-storage.js',
-  './oauth-callback.html',
   './privacy.html',
   './js/about.js',
   './js/customMapping.js',
@@ -127,6 +126,9 @@ self.addEventListener('fetch', (event) => {
   // Dev mode: bypass all caching, go straight to network
   if (DEV_MODE) return;
   const url = new URL(event.request.url);
+
+  // Never cache OAuth callback — must always hit network for fresh code
+  if (url.pathname.includes('oauth-callback')) return;
 
   // Network-first for API calls (spot prices, catalog lookups)
   if (API_HOSTS.some((host) => url.hostname === host)) {
