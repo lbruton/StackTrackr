@@ -145,6 +145,7 @@ const switchLogTab = (key) => {
 const LOG_TAB_RENDERERS = {
   changelog: 'renderChangeLog',
   metals: 'renderSpotHistoryTable',
+  lbma: 'renderLbmaHistoryTable',
   catalogs: 'renderCatalogHistoryForSettings',
   pricehistory: 'renderItemPriceHistoryTable',
   cloud: 'renderCloudActivityTable',

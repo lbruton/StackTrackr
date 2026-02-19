@@ -3270,6 +3270,7 @@
               <div class="settings-log-tabs">
                 <button class="settings-log-tab active" data-log-tab="changelog" type="button">Changelog</button>
                 <button class="settings-log-tab" data-log-tab="metals" type="button">Metals</button>
+                <button class="settings-log-tab" data-log-tab="lbma" type="button">LBMA History</button>
                 <button class="settings-log-tab" data-log-tab="catalogs" type="button">Catalogs</button>
                 <button class="settings-log-tab" data-log-tab="pricehistory" type="button">Price History</button>
                 <button class="settings-log-tab" data-log-tab="cloud" type="button">Cloud</button>
@@ -3312,6 +3313,37 @@
                         <th>Metal</th>
                         <th>Spot Price</th>
                         <th>Source</th>
+                        <th>Provider</th>
+                      </tr>
+                    </thead>
+                    <tbody></tbody>
+                  </table>
+                </div>
+              </div>
+
+              <!-- LBMA History (Reference Seed Data) panel -->
+              <div class="settings-log-panel" id="logPanel_lbma" style="display: none">
+                <p class="settings-subtext">Historical LBMA reference prices from bundled seed data (read-only).</p>
+                <div class="settings-pricehistory-controls">
+                  <select class="settings-filter-input" id="settingsLbmaMetalFilter">
+                    <option value="all">All Metals</option>
+                    <option value="silver">Silver</option>
+                    <option value="gold">Gold</option>
+                    <option value="platinum">Platinum</option>
+                    <option value="palladium">Palladium</option>
+                  </select>
+                  <input class="settings-filter-input" id="settingsLbmaStartDate" type="date">
+                  <input class="settings-filter-input" id="settingsLbmaEndDate" type="date">
+                  <button class="btn btn-secondary" id="settingsLbmaResetBtn" type="button">Reset</button>
+                  <span class="settings-subtext" id="settingsLbmaResultCount" style="margin-left:auto;"></span>
+                </div>
+                <div class="settings-changelog-wrap">
+                  <table id="settingsLbmaHistoryTable">
+                    <thead>
+                      <tr>
+                        <th>Date</th>
+                        <th>Metal</th>
+                        <th>Spot Price</th>
                         <th>Provider</th>
                       </tr>
                     </thead>
