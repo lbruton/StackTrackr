@@ -173,7 +173,7 @@ const NumistaLookup = (() => {
    * @param {string} pattern - Regex pattern string
    * @param {string} replacement - Rewritten Numista query
    * @param {string} [numistaId] - Optional Numista N# for direct lookup
-   * @returns {{ success: boolean, error?: string }}
+   * @returns {{ success: boolean, error: (string|undefined) }}
    */
   const addRule = (pattern, replacement, numistaId, seedImageId) => {
     if (!pattern || !replacement) {
@@ -208,7 +208,7 @@ const NumistaLookup = (() => {
    * Updates an existing custom rule by ID. Only specified fields are changed.
    * @param {string} id - Rule ID to update
    * @param {Object} updates - Fields to update (pattern, replacement, numistaId, seedImageId)
-   * @returns {{ success: boolean, error?: string }}
+   * @returns {{ success: boolean, error: (string|undefined) }}
    */
   const updateRule = (id, updates) => {
     const rule = customRules.find(r => r.id === id);

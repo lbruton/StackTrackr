@@ -270,6 +270,11 @@ Bug reports and pull requests are welcome. Please open an [issue](https://github
 
 The app must remain a **zero-install, single-page, vanilla JS** application — no build step, no framework, works on `file://` protocol. Development tooling (tests, linters, build scripts) lives in `devops/` and is fine.
 
+## API Documentation
+
+- Generated JSDoc portal: `docs/api/index.html`
+- Regenerate from tooling config: `cd devops && npm run jsdoc`
+
 ---
 
 ## License

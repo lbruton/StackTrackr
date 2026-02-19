@@ -427,8 +427,8 @@ const generateSparklineSVG = (item, w, h, opts = {}) => {
 
 /**
  * Interpolate null gaps in an array for SVG rendering (equivalent to Chart.js spanGaps).
- * @param {(number|null)[]} arr
- * @returns {number[]}
+ * @param {Array.<(number|null)>} arr
+ * @returns {Array.<number>}
  */
 const _interpolateNulls = (arr) => {
   const result = [...arr];
