@@ -103,7 +103,9 @@ Where:
     }],
     generationConfig: {
       temperature: 0,
-      maxOutputTokens: 256,
+      maxOutputTokens: 1024,
+      // Disable thinking for gemini-2.5-flash to avoid token budget issues
+      thinkingConfig: { thinkingBudget: 0 },
     },
   };
 
@@ -121,7 +123,9 @@ Where:
   }
 
   const json = await response.json();
-  const rawText = json?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+  // With thinking models, parts[0] may be thinking content — get the last text part
+  const parts = json?.candidates?.[0]?.content?.parts ?? [];
+  const rawText = (parts.filter(p => p.text && !p.thought).pop()?.text ?? parts[0]?.text ?? "").trim();
 
   if (!rawText) {
     throw new Error("Empty response from Gemini");
