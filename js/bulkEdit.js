@@ -24,6 +24,127 @@ let bulkSortDir = 'asc';            // 'asc' | 'desc'
 // when the modal closes, preventing memory leaks.
 const _bulkBlobUrls = new Set();
 
+const BULK_COLUMN_PRIORITY = [
+  'name',
+  'metal',
+  'composition',
+  'type',
+  'qty',
+  'weight',
+  'weightUnit',
+  'purity',
+  'price',
+  'marketValue',
+  'spotPriceAtPurchase',
+  'premiumPerOz',
+  'totalPremium',
+  'year',
+  'grade',
+  'gradingAuthority',
+  'certNumber',
+  'pcgsNumber',
+  'serialNumber',
+  'numistaId',
+  'purchaseLocation',
+  'storageLocation',
+  'date',
+  'notes',
+  'collectable',
+  'pcgsVerified',
+  'obverseImageUrl',
+  'reverseImageUrl',
+  'serial',
+  'uuid'
+];
+
+const BULK_COLUMN_LABEL_OVERRIDES = {
+  qty: 'Qty',
+  marketValue: 'Retail Price',
+  spotPriceAtPurchase: 'Spot At Purchase',
+  premiumPerOz: 'Premium / Oz',
+  totalPremium: 'Total Premium',
+  gradingAuthority: 'Grading Authority',
+  certNumber: 'Cert #',
+  pcgsNumber: 'PCGS #',
+  numistaId: 'Numista #',
+  purchaseLocation: 'Purchased At',
+  storageLocation: 'Storage Location',
+  obverseImageUrl: 'Obverse URL',
+  reverseImageUrl: 'Reverse URL',
+  uuid: 'UUID'
+};
+
+const normalizeBulkValue = (value) => {
+  if (value === null || value === undefined) return '';
+  if (Array.isArray(value)) {
+    return value.map((entry) => normalizeBulkValue(entry)).join(' ');
+  }
+  if (typeof value === 'object') {
+    try {
+      return JSON.stringify(value);
+    } catch (error) {
+      return String(value);
+    }
+  }
+  return String(value);
+};
+
+const getBulkTableDataKeys = () => {
+  if (typeof inventory === 'undefined' || !Array.isArray(inventory)) return [];
+  const keySet = new Set();
+  inventory.forEach((item) => {
+    if (!item || typeof item !== 'object') return;
+    Object.keys(item).forEach((key) => keySet.add(key));
+  });
+  const prioritized = BULK_COLUMN_PRIORITY.filter((key) => keySet.has(key));
+  const remaining = [...keySet]
+    .filter((key) => !BULK_COLUMN_PRIORITY.includes(key))
+    .sort((a, b) => a.localeCompare(b));
+  return [...prioritized, ...remaining];
+};
+
+const getBulkColumnLabel = (key) => {
+  if (BULK_COLUMN_LABEL_OVERRIDES[key]) return BULK_COLUMN_LABEL_OVERRIDES[key];
+  return key
+    .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+    .replace(/[_-]+/g, ' ')
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+};
+
+const getBulkSortableValue = (item, key) => {
+  if (!item || !key) return '';
+  return normalizeBulkValue(item[key]);
+};
+
+const formatBulkCellValue = (item, key) => {
+  if (!item || !key) return '';
+  const value = item[key];
+  if (value === null || value === undefined) return '';
+
+  switch (key) {
+    case 'weight':
+      return typeof formatWeight === 'function'
+        ? formatWeight(item.weight, item.weightUnit)
+        : String(value);
+    case 'price':
+    case 'marketValue':
+    case 'spotPriceAtPurchase':
+    case 'premiumPerOz':
+    case 'totalPremium': {
+      const numeric = Number(value);
+      if (typeof formatCurrency === 'function' && !Number.isNaN(numeric)) {
+        return formatCurrency(numeric);
+      }
+      return String(value);
+    }
+    default:
+      if (typeof value === 'boolean') return value ? 'true' : 'false';
+      if (Array.isArray(value)) return value.map((entry) => normalizeBulkValue(entry)).join(', ');
+      if (typeof value === 'object') return normalizeBulkValue(value);
+      return String(value);
+  }
+};
+
 // =============================================================================
 // SEARCH FILTER HELPER
 // =============================================================================
@@ -34,31 +155,9 @@ const getFilteredItems = (term) => {
   if (!t) return inventory.slice();
   return inventory.filter((item) => {
     const tagText = typeof getItemTags === 'function' ? getItemTags(item.uuid).join(' ') : '';
-    const searchText = [
-      item.name,
-      item.metal,
-      item.composition,
-      item.type,
-      item.year,
-      item.grade,
-      item.gradingAuthority,
-      item.certNumber,
-      item.serialNumber,
-      item.numistaId,
-      item.pcgsNumber,
-      item.storageLocation,
-      item.purchaseLocation,
-      item.notes,
-      item.purity,
-      item.weight,
-      item.weightUnit,
-      item.qty,
-      item.price,
-      item.marketValue,
-      item.serial,
-      tagText
-    ]
-      .map((value) => String(value ?? '').toLowerCase())
+    const itemValues = Object.keys(item || {}).map((key) => normalizeBulkValue(item[key]));
+    const searchText = [...itemValues, tagText]
+      .map((value) => String(value || '').toLowerCase())
       .join(' ');
     return searchText.includes(t);
   });
@@ -265,7 +364,7 @@ const coerceFieldValue = (fieldId, value) => {
  * @param {boolean} isPinned - Whether the row is in the pinned section
  * @returns {HTMLTableRowElement} The constructed row
  */
-const buildBulkItemRow = (item, isPinned) => {
+const buildBulkItemRow = (item, isPinned, dataColumns) => {
   const serial = String(item.serial);
   const tr = document.createElement('tr');
   tr.setAttribute('data-serial', serial);
@@ -314,18 +413,9 @@ const buildBulkItemRow = (item, isPinned) => {
     tr.appendChild(td);
   };
 
-  addCell(item.name);
-  addCell(item.metal);
-  addCell(item.type);
-  addCell(item.qty != null ? String(item.qty) : '1');
-  addCell(item.weight != null ? (typeof formatWeight === 'function' ? formatWeight(item.weight, item.weightUnit) : String(item.weight)) : '');
-  addCell(item.purity != null ? String(item.purity) : '');
-  addCell(item.year || '');
-  addCell(item.grade || '');
-  addCell(item.price != null ? (typeof formatCurrency === 'function' ? formatCurrency(item.price) : String(item.price)) : '');
-  addCell(item.storageLocation || '');
-  addCell(item.purchaseLocation || '');
-  addCell(item.date || '');
+  dataColumns.forEach((column) => {
+    addCell(formatBulkCellValue(item, column.key));
+  });
 
   return tr;
 };
@@ -620,33 +710,37 @@ const renderBulkTableBody = () => {
   const table = document.createElement('table');
   table.className = 'bulk-edit-table';
 
+  const dataColumns = getBulkTableDataKeys().map((key) => ({
+    key,
+    label: getBulkColumnLabel(key)
+  }));
+
+  if (bulkSortCol && !dataColumns.some((column) => column.key === bulkSortCol)) {
+    bulkSortCol = null;
+  }
+
   // Column definitions
   const columns = [
     { key: 'cb',              label: '',              nosort: true },
     { key: 'img',             label: 'Img',           nosort: true },
-    { key: 'name',            label: 'Name' },
-    { key: 'metal',           label: 'Metal' },
-    { key: 'type',            label: 'Type' },
-    { key: 'qty',             label: 'Qty' },
-    { key: 'weight',          label: 'Weight' },
-    { key: 'purity',          label: 'Purity' },
-    { key: 'year',            label: 'Year' },
-    { key: 'grade',           label: 'Grade' },
-    { key: 'price',           label: 'Price' },
-    { key: 'storageLocation', label: 'Location' },
-    { key: 'purchaseLocation',label: 'Purchased At' },
-    { key: 'date',            label: 'Date' },
+    ...dataColumns
   ];
   const colCount = columns.length;
 
   // Sort filtered items (preserves original array for selection state checks)
   const sortedFiltered = bulkSortCol
     ? [...filtered].sort((a, b) => {
-        const av = a[bulkSortCol] ?? '';
-        const bv = b[bulkSortCol] ?? '';
-        const cmp = (typeof av === 'number' && typeof bv === 'number')
-          ? av - bv
-          : String(av).localeCompare(String(bv), undefined, { numeric: true });
+        const av = getBulkSortableValue(a, bulkSortCol);
+        const bv = getBulkSortableValue(b, bulkSortCol);
+        const numA = Number(av);
+        const numB = Number(bv);
+        const bothNumeric = av !== '' && bv !== '' && !Number.isNaN(numA) && !Number.isNaN(numB);
+        const cmp = bothNumeric
+          ? numA - numB
+          : String(av).localeCompare(String(bv), undefined, {
+            numeric: true,
+            sensitivity: 'base'
+          });
         return bulkSortDir === 'asc' ? cmp : -cmp;
       })
     : filtered;
@@ -710,7 +804,7 @@ const renderBulkTableBody = () => {
 
     // Pinned rows
     pinnedItems.forEach(item => {
-      tbody.appendChild(buildBulkItemRow(item, true));
+      tbody.appendChild(buildBulkItemRow(item, true, dataColumns));
     });
 
     // Divider
@@ -724,7 +818,7 @@ const renderBulkTableBody = () => {
 
   // Filtered rows (sorted)
   sortedFiltered.forEach(item => {
-    tbody.appendChild(buildBulkItemRow(item, false));
+    tbody.appendChild(buildBulkItemRow(item, false, dataColumns));
   });
 
   table.appendChild(tbody);
@@ -880,7 +974,7 @@ const showBulkConfirm = (message) => {
     var msgEl  = document.getElementById('bulkConfirmMessage');
     var okBtn  = document.getElementById('bulkConfirmOkBtn');
     var canBtn = document.getElementById('bulkConfirmCancelBtn');
-    if (!modal || !okBtn || !canBtn) { resolve(window.confirm(message)); return; }
+    if (!modal || !okBtn || !canBtn) { resolve(false); return; }
 
     if (msgEl) msgEl.textContent = message;
     modal.style.display = 'flex';
@@ -1110,7 +1204,7 @@ const triggerBulkNumistaLookup = async () => {
   // Prompt user for search query
   const query = typeof showAppPrompt === 'function'
     ? await showAppPrompt('Enter a coin name or Numista N# to search:', '', 'Numista Lookup')
-    : prompt('Enter a coin name or Numista N# to search:');
+    : null;
   if (!query || !query.trim()) {
     window._bulkEditNumistaCallback = null;
     return;
