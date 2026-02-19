@@ -155,7 +155,7 @@ const recordSpot = (
  * @param {string} metal - Metal key ('silver', 'gold', etc.)
  * @param {number} [points=30] - Number of data points to return
  * @param {boolean} [withTimestamps=false] - If true, returns {ts, spot} objects
- * @returns {number[]|{ts:number,spot:number}[]|null} Array of spot prices, or null if insufficient data
+ * @returns {Array.<number>|Array.<{ts:number,spot:number}>|null} Array of spot prices, or null if insufficient data
  */
 const getSpotHistoryForMetal = (metal, points = 30, withTimestamps = false) => {
   const metalName = Object.values(METALS).find(m => m.key === metal)?.name || metal;

@@ -1,6 +1,16 @@
+/**
+ * @fileoverview File protocol compatibility bootstrap.
+ * Adds a lightweight localStorage memory fallback when running under `file://`.
+ */
+
 // SIMPLIFIED FILE PROTOCOL COMPATIBILITY
 // =============================================================================
 // Minimal file:// protocol fixes without conflicts
+/**
+ * Logs debug output with the app logger when available.
+ * @param {...*} args
+ * @returns {void}
+ */
 const safeDebug = (...args) => {
   if (typeof debugLog === 'function') {
     debugLog(...args);

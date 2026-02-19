@@ -1,3 +1,12 @@
+/**
+ * @fileoverview Debug modal open/close helpers.
+ * Exposes `showDebugModal` and `hideDebugModal` on `window`.
+ */
+
+/**
+ * Displays the debug modal and renders buffered debug history text.
+ * @returns {void}
+ */
 const showDebugModal = () => {
   const modal = document.getElementById('debugModal');
   const content = document.getElementById('debugModalContent');
@@ -11,6 +20,10 @@ const showDebugModal = () => {
   }
 };
 
+/**
+ * Hides the debug modal and restores body scrolling.
+ * @returns {void}
+ */
 const hideDebugModal = () => {
   if (window.closeModalById) closeModalById('debugModal');
   else {
