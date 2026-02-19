@@ -61,7 +61,6 @@ const createBackupZip = async () => {
         storageLocation: item.storageLocation,
         notes: item.notes,
         spotPriceAtPurchase: item.spotPriceAtPurchase,
-        isCollectable: item.isCollectable,
         premiumPerOz: item.premiumPerOz,
         totalPremium: item.totalPremium,
         marketValue: item.marketValue || 0,
@@ -206,7 +205,6 @@ const createBackupZip = async () => {
         purchaseLocation: item.purchaseLocation,
         storageLocation: item.storageLocation,
         notes: item.notes,
-        isCollectable: item.isCollectable,
         numistaId: item.numistaId,
         serialNumber: item.serialNumber || '',
         marketValue: item.marketValue || 0,
@@ -502,7 +500,7 @@ const generateBackupHtml = (sortedInventory, timeFormatted) => {
       <tr>
         <th>Composition</th><th>Name</th><th>Qty</th><th>Type</th><th>Weight</th>
         <th>Purchase Price</th><th>Purchase Location</th><th>Storage Location</th>
-        <th>Notes</th><th>Date</th><th>Collectable</th>
+        <th>Notes</th><th>Date</th>
       </tr>
     </thead>
     <tbody>
@@ -518,7 +516,6 @@ const generateBackupHtml = (sortedInventory, timeFormatted) => {
           <td>${item.storageLocation || ''}</td>
           <td>${item.notes || ''}</td>
           <td>${item.date}</td>
-          <td>${item.isCollectable ? 'Yes' : 'No'}</td>
         </tr>
       `).join('')}
     </tbody>
@@ -635,6 +632,8 @@ const saveInventory = () => {
   // CatalogManager handles its own saving, no need to explicitly save catalogMap
   // STACK-62: Invalidate autocomplete cache so lookup table rebuilds with current inventory
   if (typeof clearLookupCache === 'function') clearLookupCache();
+  // STAK-149: Trigger debounced cloud auto-sync push (no-op if sync disabled or not connected)
+  if (typeof scheduleSyncPush === 'function') scheduleSyncPush();
 };
 
 /**
@@ -701,7 +700,6 @@ const loadInventory = () => {
         spotPriceAtPurchase: spotPrice,
         premiumPerOz,
         totalPremium,
-        isCollectable: item.isCollectable !== undefined ? item.isCollectable : false,
         composition: item.composition || item.metal || "",
         purity: parseFloat(item.purity) || 1.0
       };
@@ -720,7 +718,6 @@ const loadInventory = () => {
         certNumber: item.certNumber || '',
         pcgsNumber: item.pcgsNumber || '',
         pcgsVerified: item.pcgsVerified || false,
-        isCollectable: item.isCollectable !== undefined ? item.isCollectable : false,
         composition: item.composition || item.metal || "",
         purity: parseFloat(item.purity) || 1.0
       };
@@ -1912,7 +1909,6 @@ const editItem = (idx, logIdx = null) => {
   if (elements.itemObverseImageUrl) elements.itemObverseImageUrl.value = item.obverseImageUrl || '';
   if (elements.itemReverseImageUrl) elements.itemReverseImageUrl.value = item.reverseImageUrl || '';
   if (elements.itemSerial) elements.itemSerial.value = item.serial;
-  if (elements.itemCollectable) elements.itemCollectable.checked = !!item.isCollectable;
 
   // Pre-fill purity: match a preset or show custom input
   const purityVal = parseFloat(item.purity) || 1.0;
@@ -2080,20 +2076,6 @@ const duplicateItem = (idx) => {
 };
 
 /**
- * Toggles collectable status for inventory item
- * Legacy function — now a no-op stub. The collectable toggle has been removed
- * from the UI in the portfolio redesign. Kept to prevent runtime errors.
- *
- * @param {number} idx - Index of item (unused)
-*/
-const toggleCollectable = (idx) => {
-  // No-op: collectable toggle removed in portfolio redesign
-  saveInventory();
-  renderTable();
-  logItemChanges(oldItem, item);
-};
-
-/**
  * Toggles price display between purchase price and market value
  * 
  * @param {number} idx - Index of item to toggle price view for
@@ -2208,9 +2190,6 @@ const importCsv = (file, override = false) => {
             ? parseFloat(retailStr.replace(/[^\d.-]+/g, '')) || 0
             : parseFloat(retailStr) || 0;
 
-          // Legacy field support for backward compatibility
-          const isCollectable = row['Collectable'] === 'Yes' || row['Collectable'] === 'true' || row['isCollectable'] === 'true';
-
           let spotPriceAtPurchase;
           if (row['Spot Price ($/oz)']) {
             const spotStr = row['Spot Price ($/oz)'].toString();
@@ -2262,7 +2241,6 @@ const importCsv = (file, override = false) => {
             spotPriceAtPurchase,
             premiumPerOz,
             totalPremium,
-            isCollectable: false,
             numistaId,
             serialNumber,
             serial,
@@ -2435,8 +2413,6 @@ const importNumistaCsv = (file, override = false) => {
           }
           const weight = parseFloat(gramsToOzt(weightGrams).toFixed(6));
 
-          const isCollectable = false;
-
           const priceKey = Object.keys(row).find(k => /^(buying price|purchase price|price paid)/i.test(k));
           const estimateKey = Object.keys(row).find(k => /^estimate/i.test(k));
           const parsePriceField = (key) => {
@@ -2525,7 +2501,6 @@ const importNumistaCsv = (file, override = false) => {
             spotPriceAtPurchase,
             premiumPerOz,
             totalPremium,
-            isCollectable,
             numistaId,
             year: issuedYear,
             grade: '',
@@ -2890,7 +2865,6 @@ const importJson = (file, override = false) => {
           spotPriceAtPurchase,
           premiumPerOz,
           totalPremium,
-          isCollectable: false,
           numistaId,
           year,
           grade,
@@ -3061,7 +3035,6 @@ const exportJson = () => {
     reverseImageUrl: item.reverseImageUrl || '',
     // Legacy fields preserved for backward compatibility
     spotPriceAtPurchase: item.spotPriceAtPurchase,
-    isCollectable: item.isCollectable,
     composition: item.composition
   }));
 
@@ -3206,7 +3179,6 @@ window.importJson = importJson;
 window.exportJson = exportJson;
 window.exportPdf = exportPdf;
 window.updateSummary = updateSummary;
-window.toggleCollectable = toggleCollectable;
 window.togglePriceView = togglePriceView;
 window.toggleGlobalPriceView = toggleGlobalPriceView;
 window.editItem = editItem;

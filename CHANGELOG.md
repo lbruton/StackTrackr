@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.31.5] - 2026-02-19
+
+### Added — STAK-149: Cloud Auto-Sync, Bulk Edit Fixes & Code Cleanup
+
+- **Added**: Real-time encrypted auto-sync to Dropbox — inventory changes push automatically and other devices are notified with an "Update Available" modal showing item count, timestamp, and device before pulling (STAK-149)
+- **Added**: Per-backup delete button in cloud backup list — remove individual backups from Dropbox without logging in (STAK-149)
+- **Added**: View Sync Log shortcut in Dropbox card footer navigates directly to cloud activity log (STAK-149)
+- **Fixed**: Bulk Edit Delete, Copy, and Apply operations now work correctly inside the modal — replaced window.confirm/alert with modal-based confirmations
+- **Removed**: isCollectable field removed from inventory items, bulk editor, import/export, and seed data — superseded by the tag system
+
+---
+
 ## [3.31.4] - 2026-02-19
 
 ### Added — Vendored Libraries & True Offline Support

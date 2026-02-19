@@ -282,7 +282,7 @@ const CERT_LOOKUP_URLS = {
  * Updated: 2026-02-12 - STACK-38/STACK-31: Responsive card view + mobile layout
  */
 
-const APP_VERSION = "3.31.4";
+const APP_VERSION = "3.31.5";
 
 /**
  * Numista metadata cache TTL: 30 days in milliseconds.
@@ -621,6 +621,37 @@ const IMAGE_MAX_BYTES = 512000;
  */
 const VAULT_FILE_EXTENSION = '.stvault';
 
+// =============================================================================
+// CLOUD AUTO-SYNC CONSTANTS (STAK-149)
+// =============================================================================
+
+/** Poll interval for remote change detection (10 minutes in ms) */
+const SYNC_POLL_INTERVAL = 600000;
+
+/** Debounce delay before pushing after a saveInventory() call (2 seconds) */
+const SYNC_PUSH_DEBOUNCE = 2000;
+
+/** Dropbox path for the rolling sync vault file */
+const SYNC_FILE_PATH = '/StakTrakr/staktrakr-sync.stvault';
+
+/** Dropbox path for the lightweight sync metadata pointer */
+const SYNC_META_PATH = '/StakTrakr/staktrakr-sync.json';
+
+/**
+ * Keys included in a sync vault (excludes API keys, tokens, spot history).
+ * Only inventory data + display preferences that are meaningful across devices.
+ */
+const SYNC_SCOPE_KEYS = [
+  'metalInventory',   // LS_KEY — inventory items
+  'itemTags',         // ITEM_TAGS_KEY — per-item tags
+  'displayCurrency',  // DISPLAY_CURRENCY_KEY — active display currency
+  'appTheme',         // THEME_KEY — light/dark/sepia/system theme
+  'inlineChipConfig', // inline chip config (grade, year, etc.)
+  'filterChipCategoryConfig', // filter chip category config
+  'viewModalSectionConfig',   // view modal section visibility
+  'chipMinCount',     // minimum count for filter chips
+];
+
 const ALLOWED_STORAGE_KEYS = [
   LS_KEY,
   SERIAL_KEY,
@@ -701,6 +732,12 @@ const ALLOWED_STORAGE_KEYS = [
   "cloud_kraken_seen",                         // boolean string: easter egg flag
   "staktrakr_oauth_result",                    // JSON: transient OAuth callback relay (cleared after read)
   "cloud_activity_log",                        // JSON: cloud sync activity log entries
+  // STAK-149: Auto-sync keys
+  "cloud_sync_enabled",                        // boolean string: "true"/"false" — master auto-sync toggle
+  "cloud_sync_last_push",                      // JSON: { syncId, timestamp, rev, itemCount } — last push from this device
+  "cloud_sync_last_pull",                      // JSON: { syncId, timestamp, rev } — last pull on this device
+  "cloud_sync_device_id",                      // UUID string: stable per-device identifier
+  "cloud_sync_cursor",                         // Dropbox rev string: for efficient change detection
 ];
 
 // =============================================================================
@@ -1476,6 +1513,12 @@ if (typeof window !== "undefined") {
   window.disableFeature = disableFeature;
   window.toggleFeature = toggleFeature;
   window.ALLOWED_STORAGE_KEYS = ALLOWED_STORAGE_KEYS;
+  // STAK-149: Cloud auto-sync constants
+  window.SYNC_POLL_INTERVAL = SYNC_POLL_INTERVAL;
+  window.SYNC_PUSH_DEBOUNCE = SYNC_PUSH_DEBOUNCE;
+  window.SYNC_FILE_PATH = SYNC_FILE_PATH;
+  window.SYNC_META_PATH = SYNC_META_PATH;
+  window.SYNC_SCOPE_KEYS = SYNC_SCOPE_KEYS;
   window.CERT_LOOKUP_URLS = CERT_LOOKUP_URLS;
   // Inline chip config
   window.INLINE_CHIP_DEFAULTS = INLINE_CHIP_DEFAULTS;

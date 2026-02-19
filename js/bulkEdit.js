@@ -138,11 +138,6 @@ const BULK_EDITABLE_FIELDS = [
     attrs: { placeholder: 'https://example.com/obverse.jpg' } },
   { id: 'reverseImageUrl',  label: 'Reverse URL',       inputType: 'text',
     attrs: { placeholder: 'https://example.com/reverse.jpg' } },
-  { id: 'collectable',      label: 'Collectable',       inputType: 'select',
-    options: [
-      { value: 'true',  label: 'Yes — Collectable' },
-      { value: 'false', label: 'No — Bullion / Melt' },
-    ] },
 ];
 
 // =============================================================================
@@ -229,7 +224,6 @@ const FIELD_COERCIONS = {
   price:       (v) => { const n = parseFloat(v);    return (isNaN(n) || n < 0)            ? 0   : n; },
   marketValue: (v) => { const n = parseFloat(v);    return (isNaN(n) || n < 0)            ? 0   : n; },
   purity:      (v) => { const n = parseFloat(v);    return (isNaN(n) || n <= 0 || n > 1)  ? 1.0 : n; },
-  collectable: (v) => v === 'true',
 };
 
 /**
@@ -850,10 +844,45 @@ const renderBulkFooter = () => {
 };
 
 // =============================================================================
+// CONFIRM HELPER (replaces window.confirm suppressed inside modal context)
+// =============================================================================
+
+/**
+ * Show an inline confirmation modal and return a Promise<boolean>.
+ * Resolves true on Confirm, false on Cancel or close.
+ * @param {string} message
+ * @returns {Promise<boolean>}
+ */
+const showBulkConfirm = (message) => {
+  return new Promise(function (resolve) {
+    var modal  = document.getElementById('bulkConfirmModal');
+    var msgEl  = document.getElementById('bulkConfirmMessage');
+    var okBtn  = document.getElementById('bulkConfirmOkBtn');
+    var canBtn = document.getElementById('bulkConfirmCancelBtn');
+    if (!modal || !okBtn || !canBtn) { resolve(window.confirm(message)); return; }
+
+    if (msgEl) msgEl.textContent = message;
+    modal.style.display = 'flex';
+
+    function cleanup(result) {
+      modal.style.display = 'none';
+      okBtn.removeEventListener('click', onOk);
+      canBtn.removeEventListener('click', onCancel);
+      resolve(result);
+    }
+    function onOk()     { cleanup(true); }
+    function onCancel() { cleanup(false); }
+
+    okBtn.addEventListener('click', onOk);
+    canBtn.addEventListener('click', onCancel);
+  });
+};
+
+// =============================================================================
 // BULK ACTIONS
 // =============================================================================
 
-const applyBulkEdit = () => {
+const applyBulkEdit = async () => {
   const count = bulkSelection.size;
   const enabledCount = bulkEnabledFields.size;
   if (count === 0 || enabledCount === 0) return;
@@ -871,7 +900,7 @@ const applyBulkEdit = () => {
     const numericPurity = Number(rawPurity);
 
     if (!rawPurity || !Number.isFinite(numericPurity) || numericPurity < 0.001 || numericPurity > 1) {
-      alert('Please enter a custom purity between 0.001 and 1 before applying bulk changes.');
+      if (typeof showCloudToast === 'function') showCloudToast('Please enter a custom purity between 0.001 and 1 before applying bulk changes.');
       return;
     }
 
@@ -909,7 +938,7 @@ const applyBulkEdit = () => {
     return def ? def.label : id;
   }).join(', ');
 
-  if (!confirm('Apply ' + enabledCount + ' field(s) (' + fieldNames + ') to ' + count + ' item(s)?')) {
+  if (!await showBulkConfirm('Apply ' + enabledCount + ' field(s) (' + fieldNames + ') to ' + count + ' item(s)?')) {
     return;
   }
 
@@ -949,18 +978,18 @@ const applyBulkEdit = () => {
   if (typeof renderTable === 'function') renderTable();
   if (typeof renderActiveFilters === 'function') renderActiveFilters();
 
-  alert('Updated ' + updated + ' item(s).');
+  if (typeof showCloudToast === 'function') showCloudToast('Updated ' + updated + ' item(s).');
 
   // Refresh bulk table to reflect changes
   renderBulkTable();
   renderBulkFooter();
 };
 
-const copySelectedItems = () => {
+const copySelectedItems = async () => {
   const count = bulkSelection.size;
   if (count === 0) return;
 
-  if (!confirm('Copy ' + count + ' item(s)? New copies will be added to your inventory.')) {
+  if (!await showBulkConfirm('Copy ' + count + ' item(s)? New copies will be added to your inventory.')) {
     return;
   }
 
@@ -994,17 +1023,17 @@ const copySelectedItems = () => {
   if (typeof saveInventory === 'function') saveInventory();
   if (typeof renderTable === 'function') renderTable();
 
-  alert('Copied ' + copied + ' item(s).');
+  if (typeof showCloudToast === 'function') showCloudToast('Copied ' + copied + ' item(s).');
 
   renderBulkTable();
   renderBulkFooter();
 };
 
-const deleteSelectedItems = () => {
+const deleteSelectedItems = async () => {
   const count = bulkSelection.size;
   if (count === 0) return;
 
-  if (!confirm('Delete ' + count + ' item(s)? You can undo deletions from the Change Log.')) {
+  if (!await showBulkConfirm('Delete ' + count + ' item(s)? You can undo deletions from the Change Log.')) {
     return;
   }
 
@@ -1038,7 +1067,7 @@ const deleteSelectedItems = () => {
   if (typeof renderTable === 'function') renderTable();
   if (typeof renderActiveFilters === 'function') renderActiveFilters();
 
-  alert('Deleted ' + indicesToDelete.length + ' item(s).');
+  if (typeof showCloudToast === 'function') showCloudToast('Deleted ' + indicesToDelete.length + ' item(s).');
 
   renderBulkTable();
   renderBulkFooter();
@@ -1050,7 +1079,7 @@ const deleteSelectedItems = () => {
 
 const triggerBulkNumistaLookup = () => {
   if (!catalogAPI || !catalogAPI.activeProvider) {
-    alert('Configure Numista API key in Settings first.');
+    if (typeof showCloudToast === 'function') showCloudToast('Configure Numista API key in Settings first.');
     return;
   }
 
@@ -1085,7 +1114,7 @@ const triggerBulkNumistaLookup = () => {
       }
     } catch (error) {
       console.error('Bulk Numista search error:', error);
-      alert('Numista search failed: ' + error.message);
+      if (typeof showCloudToast === 'function') showCloudToast('Numista search failed: ' + error.message);
       window._bulkEditNumistaCallback = null;
     }
   })();
