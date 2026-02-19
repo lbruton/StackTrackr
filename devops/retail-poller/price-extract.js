@@ -53,65 +53,85 @@ function warn(msg) {
 // Price extraction from Firecrawl markdown
 // ---------------------------------------------------------------------------
 
-// Plausible per-coin price ranges by metal type.
-// Used to filter out accessories, roll totals, and spot ticker values.
-const METAL_PRICE_RANGE = {
-  silver:   { min: 50,   max: 500   },
-  gold:     { min: 1500, max: 20000 },
-  platinum: { min: 500,  max: 8000  },
-  palladium: { min: 300, max: 8000  },
+// Per-oz price ranges by metal type.
+// Multiplied by weight_oz to get the expected price range for each coin.
+// Filters out accessories, spot ticker values, and unrelated products.
+const METAL_PRICE_RANGE_PER_OZ = {
+  silver:    { min: 40,   max: 200   },  // 1oz: $40-200, 10oz bar: $400-2000
+  gold:      { min: 1500, max: 15000 },  // 1oz: $1500-15000
+  platinum:  { min: 500,  max: 6000  },
+  palladium: { min: 300,  max: 6000  },
 };
+
+// Provider IDs that use "As Low As" as their primary price indicator.
+// For other providers (APMEX), the pricing table is more reliable.
+const USES_AS_LOW_AS = new Set(["jmbullion", "monumentmetals", "sdbullion"]);
 
 /**
  * Extract the lowest plausible per-coin price from scraped markdown.
  *
- * All candidate prices are filtered against the metal's expected range to
- * exclude accessories (capsules, tubes), bulk roll totals, and spot tickers.
+ * Strategy order varies by provider to avoid picking up related-product prices:
  *
- * Strategy order:
- *  1. "As Low As $XX.XX" — JM Bullion, Monument Metals, SD Bullion
- *  2. First standalone dollar amount on its own line — APMEX
- *  3. Lowest plausible price in a markdown table column
+ *  For APMEX (table-first):
+ *    1. Lowest price in the main pricing table — avoids "As Low As" from
+ *       related products (e.g. 1/2 oz AGE) that appear later in the page.
+ *    2. "As Low As" fallback.
+ *
+ *  For JM Bullion, Monument Metals, SD Bullion (as-low-as-first):
+ *    1. "As Low As $XX.XX" minimum in weight-adjusted range.
+ *       Taking minimum handles JM pages that show roll totals ("As Low As
+ *       $1,902") before per-coin price ("As Low As $93.81").
+ *    2. Table fallback.
+ *
+ * All candidates are filtered by weight-adjusted price range to exclude
+ * accessories, spot ticker values, and fractional coin prices.
  */
-function extractPrice(markdown, metal) {
+function extractPrice(markdown, metal, weightOz = 1, providerId = "") {
   if (!markdown) return null;
 
-  const range = METAL_PRICE_RANGE[metal] || { min: 5, max: 200_000 };
+  const perOz = METAL_PRICE_RANGE_PER_OZ[metal] || { min: 5, max: 200_000 };
+  const range = { min: perOz.min * weightOz, max: perOz.max * weightOz };
 
   function inRange(p) {
     return p >= range.min && p <= range.max;
   }
 
-  // Strategy 1: All "As Low As $XX.XX" occurrences filtered to coin range.
-  // Taking the minimum of in-range matches handles pages that show both
-  // per-coin ("As Low As $93.81") and roll totals ("As Low As $1,902").
-  const asLowAsPattern = /[Aa]s\s+[Ll]ow\s+[Aa]s[\s\\]*\$?([\d,]+\.\d{2})/g;
-  const asLowAsPrices = [];
-  let m;
-  while ((m = asLowAsPattern.exec(markdown)) !== null) {
-    const p = parseFloat(m[1].replace(/,/g, ""));
-    if (inRange(p)) asLowAsPrices.push(p);
-  }
-  if (asLowAsPrices.length > 0) return Math.min(...asLowAsPrices);
-
-  // Strategy 2: Standalone dollar amount on its own line (APMEX top-of-page price)
-  const lines = markdown.split("\n");
-  for (const line of lines) {
-    const standalone = line.trim().match(/^\$?([\d,]+\.\d{2})\$?\\?$/);
-    if (standalone) {
-      const p = parseFloat(standalone[1].replace(/,/g, ""));
-      if (inRange(p)) return p;
+  function tablePrices() {
+    const prices = [];
+    let m;
+    const pat = /\|\s*\*{0,2}\$?([\d,]+\.\d{2})\*{0,2}\s*\|/g;
+    while ((m = pat.exec(markdown)) !== null) {
+      const p = parseFloat(m[1].replace(/,/g, ""));
+      if (inRange(p)) prices.push(p);
     }
+    return prices;
   }
 
-  // Strategy 3: Plausible prices in markdown table cells
-  const tablePrices = [];
-  const tableCellPattern = /\|\s*\*{0,2}\$?([\d,]+\.\d{2})\*{0,2}\s*\|/g;
-  while ((m = tableCellPattern.exec(markdown)) !== null) {
-    const p = parseFloat(m[1].replace(/,/g, ""));
-    if (inRange(p)) tablePrices.push(p);
+  function asLowAsPrices() {
+    const prices = [];
+    let m;
+    const pat = /[Aa]s\s+[Ll]ow\s+[Aa]s[\s\\]*\$?([\d,]+\.\d{2})/g;
+    while ((m = pat.exec(markdown)) !== null) {
+      const p = parseFloat(m[1].replace(/,/g, ""));
+      if (inRange(p)) prices.push(p);
+    }
+    return prices;
   }
-  if (tablePrices.length > 0) return Math.min(...tablePrices);
+
+  if (USES_AS_LOW_AS.has(providerId)) {
+    // JM Bullion / Monument / SD: "As Low As" first, table as fallback
+    const ala = asLowAsPrices();
+    if (ala.length > 0) return Math.min(...ala);
+    const tbl = tablePrices();
+    if (tbl.length > 0) return Math.min(...tbl);
+  } else {
+    // APMEX and others: table first (avoids related-product "As Low As"),
+    // fall back to "As Low As" if no table found
+    const tbl = tablePrices();
+    if (tbl.length > 0) return Math.min(...tbl);
+    const ala = asLowAsPrices();
+    if (ala.length > 0) return Math.min(...ala);
+  }
 
   return null;
 }
@@ -124,9 +144,22 @@ function sleep(ms) {
   return new Promise(r => setTimeout(r, ms));
 }
 
-async function scrapeUrl(url, attempt = 1) {
+// Providers that need extra wait time to render prices (JS-heavy pages)
+const SLOW_PROVIDERS = new Set(["jmbullion"]);
+
+async function scrapeUrl(url, providerId = "", attempt = 1) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), SCRAPE_TIMEOUT_MS);
+
+  const body = {
+    url,
+    formats: ["markdown"],
+    onlyMainContent: true,
+  };
+  // JM Bullion is heavily JS-rendered; give it time to load prices
+  if (SLOW_PROVIDERS.has(providerId)) {
+    body.waitFor = 4000;
+  }
 
   try {
     const response = await fetch("https://api.firecrawl.dev/v1/scrape", {
@@ -135,11 +168,7 @@ async function scrapeUrl(url, attempt = 1) {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${FIRECRAWL_API_KEY}`,
       },
-      body: JSON.stringify({
-        url,
-        formats: ["markdown"],
-        onlyMainContent: true,
-      }),
+      body: JSON.stringify(body),
       signal: controller.signal,
     });
 
@@ -155,7 +184,7 @@ async function scrapeUrl(url, attempt = 1) {
     if (attempt < RETRY_ATTEMPTS) {
       warn(`Retry ${attempt}/${RETRY_ATTEMPTS} for ${url}: ${err.message}`);
       await sleep(RETRY_DELAY_MS * attempt);
-      return scrapeUrl(url, attempt + 1);
+      return scrapeUrl(url, providerId, attempt + 1);
     }
     throw err;
   } finally {
@@ -275,8 +304,8 @@ async function main() {
   const tasks = targets.map(({ coinSlug, coin, provider }) => async () => {
     log(`Scraping ${coinSlug}/${provider.id}`);
     try {
-      const markdown = await scrapeUrl(provider.url);
-      const price = extractPrice(markdown, coin.metal);
+      const markdown = await scrapeUrl(provider.url, provider.id);
+      const price = extractPrice(markdown, coin.metal, coin.weight_oz || 1, provider.id);
       if (price !== null) {
         log(`  ✓ ${coinSlug}/${provider.id}: $${price.toFixed(2)}`);
       } else {
