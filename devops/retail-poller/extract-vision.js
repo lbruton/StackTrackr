@@ -142,7 +142,7 @@ Where:
         // fall through
       }
     }
-    throw new Error(`Could not parse Gemini response: ${rawText.slice(0, 100)}`);
+    throw new Error(`Could not parse Gemini response (len=${rawText.length}): ${rawText.slice(0, 300)}`);
   }
 }
 
