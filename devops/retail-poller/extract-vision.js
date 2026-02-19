@@ -37,7 +37,7 @@ const MANIFEST_PATH = (() => {
   return join(DATA_DIR, "retail", "_artifacts", today, "manifest.json");
 })();
 
-const GEMINI_MODEL = "gemini-2.0-flash";
+const GEMINI_MODEL = "gemini-2.0-flash-001";
 const CONCURRENCY = 4;  // Gemini free tier allows higher concurrency
 
 // ---------------------------------------------------------------------------
