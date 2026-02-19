@@ -283,11 +283,11 @@ const setupAckModalEvents = () => {
  */
 const getEmbeddedWhatsNew = () => {
   return `
+    <li><strong>v3.31.5 &ndash; Cloud Auto-Sync &amp; Bulk Edit Fixes</strong>: Real-time encrypted auto-sync to Dropbox &mdash; inventory changes push automatically and other devices see an &ldquo;Update Available&rdquo; modal. Bulk Edit Delete/Copy/Apply now work correctly inside the modal. isCollectable field removed (superseded by tag system) (STAK-149)</li>
     <li><strong>v3.31.4 &ndash; Vendored Libraries &amp; True Offline Support</strong>: All CDN dependencies (PapaParse, jsPDF, Chart.js, JSZip, Forge) are now bundled locally &mdash; the app works fully offline and on file:// protocol with no internet required. CDN fallback fires automatically if a local file fails</li>
     <li><strong>v3.31.3 &ndash; Filter Chip Active-State UX</strong>: Filter chips now hide &times; on idle &mdash; only active/search chips show a remove button and themed border ring. Clicking &times; on an active chip now correctly removes the filter. Card view pagination, mobile image tap, and bulk popover rendering polished</li>
     <li><strong>v3.31.2 &ndash; Numista Metadata Pipeline Fixes</strong>: Tags now write eagerly on bulk sync and restore correctly after vault restore. View modal skips API when metadata is already cached. Weight pre-fills automatically from Numista search results (STAK-168)</li>
     <li><strong>v3.31.1 &ndash; FAQ Modal &amp; Privacy Improvements</strong>: Interactive FAQ with 13 questions added to Settings sidebar tab, About modal, and footer. ZIP export/import exposed in Settings. Files tab merged into Inventory. privacy.html theme and back-link fixed. pCloud and Box added as coming-soon cloud providers. r/Silverbugs community credit in footer</li>
-    <li><strong>v3.31.0 &ndash; Cloud Storage Backup</strong>: Encrypted .stvault backup to Dropbox via OAuth PKCE popup flow. Privacy policy page for provider compliance. Favicon and PWA icons updated to ST branding</li>
   `;
 };
 
@@ -300,7 +300,6 @@ const getEmbeddedRoadmap = () => {
     <li><strong>Cloud Backup Conflict Detection (STAK-150)</strong>: Smarter conflict resolution using item count direction, not just timestamps</li>
     <li><strong>Accessible Table Mode (STAK-144)</strong>: Style D with horizontal scroll, long-press to edit, 300% zoom support</li>
     <li><strong>Custom Theme Editor (STAK-121)</strong>: User-defined color themes with CSS variable overrides</li>
-    <li><strong>Cloud Sync at Rest (STAK-149)</strong>: Real-time encrypted inventory sync across devices</li>
   `;
 };
 

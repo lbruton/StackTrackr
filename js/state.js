@@ -68,7 +68,6 @@ const elements = {
   itemNotes: null,
   itemDate: null,
   itemSpotPrice: null,
-  itemCollectable: null,
   itemCatalog: null,
   itemYear: null,
   itemGrade: null,
@@ -219,8 +218,6 @@ const elements = {
       purchased: null, // Total purchase price
       avgPrice: null, // Average price per ounce
       avgPremium: null, // Average premium per ounce
-      avgCollectablePrice: null, // Average collectable price per ounce
-      avgNonCollectablePrice: null, // Average non-collectable price per ounce
       premium: null, // Total premium paid
       lossProfit: null, // Total loss/profit
     },
@@ -232,8 +229,6 @@ const elements = {
       purchased: null,
       avgPrice: null,
       avgPremium: null,
-      avgCollectablePrice: null,
-      avgNonCollectablePrice: null,
       premium: null, // Total premium paid
       lossProfit: null, // Total loss/profit
     },
@@ -244,8 +239,6 @@ const elements = {
       purchased: null,
       avgPrice: null,
       avgPremium: null,
-      avgCollectablePrice: null,
-      avgNonCollectablePrice: null,
       premium: null, // Total premium paid
       lossProfit: null, // Total loss/profit
     },
@@ -256,8 +249,6 @@ const elements = {
       purchased: null,
       avgPrice: null,
       avgPremium: null,
-      avgCollectablePrice: null,
-      avgNonCollectablePrice: null,
       premium: null, // Total premium paid
       lossProfit: null, // Total loss/profit
     },
@@ -269,8 +260,6 @@ const elements = {
       purchased: null,
       avgPrice: null,
       avgPremium: null,
-      avgCollectablePrice: null,
-      avgNonCollectablePrice: null,
       premium: null, // Total premium paid
       lossProfit: null, // Total loss/profit
     },

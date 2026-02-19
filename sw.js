@@ -3,7 +3,7 @@
 // Cache version: auto-stamped by devops/hooks/stamp-sw-cache.sh pre-commit hook
 
 const DEV_MODE = false; // Set to true during development — bypasses all caching
-const CACHE_NAME = 'staktrakr-v3.31.4-b1771466023';
+const CACHE_NAME = 'staktrakr-v3.31.5-b1771474883';
 
 // Offline fallback for navigation requests when all cache/network strategies fail
 const OFFLINE_HTML = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>StakTrakr</title></head>' +
@@ -57,6 +57,7 @@ const CORE_ASSETS = [
   './js/inventory.js',
   './js/vault.js',
   './js/cloud-storage.js',
+  './js/cloud-sync.js',
   './privacy.html',
   './js/about.js',
   './js/faq.js',
