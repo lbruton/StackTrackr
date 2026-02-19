@@ -197,6 +197,20 @@ const clearUploadState = () => {
 };
 
 /**
+ * Update Numista API status dot in item modal action bar (STAK-173).
+ * Reads catalogConfig.isNumistaEnabled() to set connected/disconnected state.
+ */
+const updateNumistaModalDot = () => {
+  const dot = document.getElementById('numistaModalStatusDot');
+  if (!dot) return;
+  const connected = typeof catalogConfig !== 'undefined'
+    && catalogConfig.isNumistaEnabled && catalogConfig.isNumistaEnabled();
+  dot.classList.toggle('connected', !!connected);
+  dot.classList.toggle('disconnected', !connected);
+  dot.title = connected ? 'Numista API: connected' : 'Numista API: disconnected';
+};
+
+/**
  * Save the pending upload blob(s) to IndexedDB for the given item UUID.
  * @param {string} uuid
  * @returns {Promise<boolean>}
@@ -318,8 +332,12 @@ const setupFormatImport = (overrideBtn, mergeBtn, fileInput, importFn, formatNam
   let isOverride = false;
 
   if (overrideBtn && fileInput) {
-    safeAttachListener(overrideBtn, "click", () => {
-      if (confirm(`Importing ${formatName} will overwrite all existing data. To combine data, choose Merge instead. Press OK to continue.`)) {
+    safeAttachListener(overrideBtn, "click", async () => {
+      const confirmed = await appConfirm(
+        `Importing ${formatName} will overwrite all existing data. To combine data, choose Merge instead. Press OK to continue.`,
+        `${formatName} Import`,
+      );
+      if (confirmed) {
         isOverride = true;
         fileInput.click();
       }
@@ -337,7 +355,7 @@ const setupFormatImport = (overrideBtn, mergeBtn, fileInput, importFn, formatNam
     if (e.target.files.length > 0) {
       const file = e.target.files[0];
       if (!checkFileSize(file)) {
-        alert("File exceeds 2MB limit. Enable cloud backup for larger uploads.");
+        appAlert("File exceeds 2MB limit. Enable cloud backup for larger uploads.");
       } else {
         importFn(file, isOverride);
       }
@@ -883,7 +901,7 @@ const parseItemFormFields = (isEditing, existingItem) => {
     storageLocation: elements.storageLocation.value.trim(),
     serialNumber: elements.itemSerialNumber?.value?.trim() ?? '',
     notes: elements.itemNotes.value.trim(),
-    date: elements.itemDate.value || (isEditing ? (existingItem.date || '') : todayStr()),
+    date: document.getElementById('itemDateNA')?.checked ? '' : (elements.itemDate.value || (isEditing ? (existingItem.date || '') : todayStr())),
     catalog: elements.itemCatalog ? elements.itemCatalog.value.trim() : '',
     year: elements.itemYear?.value?.trim() ?? '',
     grade: elements.itemGrade?.value?.trim() ?? '',
@@ -895,7 +913,52 @@ const parseItemFormFields = (isEditing, existingItem) => {
     currency: displayCurrency,
     obverseImageUrl: elements.itemObverseImageUrl?.value?.trim() ?? '',
     reverseImageUrl: elements.itemReverseImageUrl?.value?.trim() ?? '',
+    // Numista metadata — stored per-item, seeded by API, user edits override
+    numistaData: parseNumistaDataFields(isEditing, existingItem),
   };
+};
+
+/**
+ * Read Numista Data form fields into a flat object.
+ * Only stores non-empty values to keep items lean.
+ * @param {boolean} isEditing
+ * @param {Object} existingItem
+ * @returns {Object} Numista data fields with source tracking
+ */
+const parseNumistaDataFields = (isEditing, existingItem) => {
+  const get = (id) => (document.getElementById(id)?.value?.trim() ?? '');
+  const prev = (isEditing && existingItem?.numistaData) ? existingItem.numistaData : {};
+
+  const fields = {
+    country: get('numistaCountry') || prev.country || '',
+    denomination: get('numistaDenomination') || prev.denomination || '',
+    composition: get('numistaComposition') || prev.composition || '',
+    shape: get('numistaShape') || prev.shape || '',
+    diameter: get('numistaDiameter') || prev.diameter || '',
+    thickness: get('numistaThickness') || prev.thickness || '',
+    orientation: get('numistaOrientation') || prev.orientation || '',
+    technique: get('numistaTechnique') || prev.technique || '',
+    mintage: get('numistaMintage') || prev.mintage || '',
+    rarityIndex: get('numistaRarity') || prev.rarityIndex || '',
+    kmRef: get('numistaKmRef') || prev.kmRef || '',
+    commemorative: document.getElementById('numistaCommemorative')?.checked || false,
+    commemorativeDesc: get('numistaCommemorativeDesc') || prev.commemorativeDesc || '',
+    obverseDesc: get('numistaObverseDesc') || prev.obverseDesc || '',
+    reverseDesc: get('numistaReverseDesc') || prev.reverseDesc || '',
+    edgeDesc: get('numistaEdgeDesc') || prev.edgeDesc || '',
+  };
+
+  // Track data source: 'user' if any field was manually changed from the API value,
+  // 'api' if purely from cache, or preserve existing source
+  fields.source = prev.source || 'api';
+  fields.updatedAt = Date.now();
+
+  // Strip empty fields to keep storage lean
+  const result = {};
+  for (const [k, v] of Object.entries(fields)) {
+    if (v !== '' && v !== false && v !== 0) result[k] = v;
+  }
+  return result;
 };
 
 /**
@@ -943,6 +1006,7 @@ const commitItemToInventory = (f, isEditing, editIdx) => {
       ...oldItem,
       ...buildItemFields(f),
       numistaId: f.catalog,
+      numistaData: f.numistaData,
       currency: f.currency,
       obverseImageUrl: f.obverseImageUrl || window.selectedNumistaResult?.imageUrl || oldItem.obverseImageUrl || '',
       reverseImageUrl: f.reverseImageUrl || window.selectedNumistaResult?.reverseImageUrl || oldItem.reverseImageUrl || '',
@@ -1000,6 +1064,7 @@ const commitItemToInventory = (f, isEditing, editIdx) => {
       serial,
       uuid: generateUUID(),
       numistaId: f.catalog,
+      numistaData: f.numistaData,
       currency: f.currency,
       obverseImageUrl: f.obverseImageUrl || window.selectedNumistaResult?.imageUrl || '',
       reverseImageUrl: f.reverseImageUrl || window.selectedNumistaResult?.reverseImageUrl || '',
@@ -1082,7 +1147,7 @@ const setupItemFormListeners = () => {
 
         const fields = parseItemFormFields(isEditing, existingItem);
         const error = validateItemFields(fields);
-        if (error) { alert(error); return; }
+        if (error) { appAlert(error); return; }
 
         // Capture index before commit — commitItemToInventory nulls editingIndex
         const savedEditIdx = editingIndex;
@@ -1249,10 +1314,25 @@ const setupItemFormListeners = () => {
     });
   }
 
-  // IMAGE URL FIELDS — show when COIN_IMAGES enabled
-  const imageUrlGroup = document.getElementById('imageUrlGroup');
-  if (imageUrlGroup && featureFlags.isEnabled('COIN_IMAGES')) {
-    imageUrlGroup.style.display = '';
+  // IMAGE URL FIELDS — show URL buttons + refresh when COIN_IMAGES enabled
+  if (featureFlags.isEnabled('COIN_IMAGES')) {
+    // Show URL toggle buttons and refresh button inline
+    ['Obv', 'Rev'].forEach(suffix => {
+      const urlBtn = document.getElementById('itemImageUrlBtn' + suffix);
+      const urlInput = document.getElementById('itemImageUrlInput' + suffix);
+      if (urlBtn) {
+        urlBtn.style.display = '';
+        urlBtn.addEventListener('click', () => {
+          if (urlInput) {
+            const isHidden = urlInput.style.display === 'none';
+            urlInput.style.display = isHidden ? '' : 'none';
+            urlBtn.classList.toggle('active', isHidden);
+          }
+        });
+      }
+    });
+    const refreshImageUrlsBtnEl = document.getElementById('refreshImageUrlsBtn');
+    if (refreshImageUrlsBtnEl) refreshImageUrlsBtnEl.style.display = '';
   }
 
   // Refresh image URLs button — bypasses SW cache, fetches direct from Numista
@@ -1261,7 +1341,7 @@ const setupItemFormListeners = () => {
     safeAttachListener(refreshImageUrlsBtn, 'click', async () => {
       const catalogId = (elements.itemCatalog?.value || '').trim();
       if (!catalogId) {
-        alert('Enter a Numista # first.');
+        appAlert('Enter a Numista # first.');
         return;
       }
       refreshImageUrlsBtn.disabled = true;
@@ -1269,7 +1349,7 @@ const setupItemFormListeners = () => {
       try {
         const config = typeof catalogConfig !== 'undefined' ? catalogConfig.getNumistaConfig() : null;
         if (!config?.apiKey) {
-          alert('Numista API key not configured.');
+          appAlert('Numista API key not configured.');
           return;
         }
         const url = `https://api.numista.com/v3/types/${catalogId}?lang=en`;
@@ -1283,10 +1363,10 @@ const setupItemFormListeners = () => {
         const rev = data.reverse_thumbnail || data.reverse?.thumbnail || '';
         if (elements.itemObverseImageUrl) elements.itemObverseImageUrl.value = obv;
         if (elements.itemReverseImageUrl) elements.itemReverseImageUrl.value = rev;
-        if (!obv && !rev) alert('No image URLs returned by Numista for this item.');
+        if (!obv && !rev) appAlert('No image URLs returned by Numista for this item.');
       } catch (err) {
         console.error('Image URL refresh failed:', err);
-        alert('Failed to fetch image URLs: ' + err.message);
+        appAlert('Failed to fetch image URLs: ' + err.message);
       } finally {
         refreshImageUrlsBtn.disabled = false;
         refreshImageUrlsBtn.title = 'Fetch image URLs from Numista API (bypasses cache)';
@@ -1391,12 +1471,12 @@ const setupItemFormListeners = () => {
         const nameVal = elements.itemName?.value.trim() || '';
 
         if (!catalogVal && !nameVal) {
-          alert('Enter a Name or Catalog N# to search.');
+          appAlert('Enter a Name or Catalog N# to search.');
           return;
         }
 
         if (!catalogAPI || !catalogAPI.activeProvider) {
-          alert('Configure Numista API key in Settings first.');
+          appAlert('Configure Numista API key in Settings first.');
           return;
         }
 
@@ -1463,7 +1543,7 @@ const setupItemFormListeners = () => {
           }
         } catch (error) {
           console.error('Numista search error:', error);
-          alert('Search failed: ' + error.message);
+          appAlert('Search failed: ' + error.message);
         } finally {
           // nosemgrep: javascript.browser.security.insecure-innerhtml.insecure-innerhtml, javascript.browser.security.insecure-document-method.insecure-document-method
           btn.innerHTML = originalHTML;
@@ -1481,7 +1561,7 @@ const setupItemFormListeners = () => {
       "click",
       async () => {
         if (typeof lookupPcgsFromForm !== 'function') {
-          alert('PCGS lookup is not available.');
+          appAlert('PCGS lookup is not available.');
           return;
         }
 
@@ -1494,7 +1574,7 @@ const setupItemFormListeners = () => {
           const result = await lookupPcgsFromForm();
 
           if (!result.verified) {
-            alert(result.error || 'PCGS lookup failed.');
+            appAlert(result.error || 'PCGS lookup failed.');
             return;
           }
 
@@ -1502,11 +1582,11 @@ const setupItemFormListeners = () => {
           if (typeof showPcgsFieldPicker === 'function') {
             showPcgsFieldPicker(result);
           } else {
-            alert('PCGS field picker not available.');
+            appAlert('PCGS field picker not available.');
           }
         } catch (error) {
           console.error('PCGS lookup error:', error);
-          alert('PCGS lookup failed: ' + error.message);
+          appAlert('PCGS lookup failed: ' + error.message);
         } finally {
           btn.innerHTML = originalHTML;
           btn.disabled = false;
@@ -1549,6 +1629,94 @@ const setupItemFormListeners = () => {
         if (elements.itemSpotPrice) elements.itemSpotPrice.value = '';
       },
       "Metal change clears spot lookup",
+    );
+  }
+
+  // NUMISTA NAME SEARCH — triggers same logic as N# search but forces name-based
+  if (elements.searchNumistaNameBtn) {
+    safeAttachListener(
+      elements.searchNumistaNameBtn,
+      "click",
+      () => {
+        // Delegate to the main Numista search button click
+        if (elements.searchNumistaBtn) elements.searchNumistaBtn.click();
+      },
+      "Numista name search button",
+    );
+  }
+
+  // CLONE ITEM BUTTON — duplicate current item as new entry (STAK-173)
+  if (elements.cloneItemBtn) {
+    safeAttachListener(
+      elements.cloneItemBtn,
+      "click",
+      () => {
+        if (typeof editingIndex === 'number' && editingIndex >= 0 && typeof duplicateItem === 'function') {
+          const modal = document.getElementById('itemModal');
+          if (modal) modal.style.display = 'none';
+          duplicateItem(editingIndex);
+        }
+      },
+      "Clone item button",
+    );
+  }
+
+  // VIEW ITEM BUTTON — open view modal from edit mode (STAK-173)
+  if (elements.viewItemFromEditBtn) {
+    safeAttachListener(
+      elements.viewItemFromEditBtn,
+      "click",
+      () => {
+        if (typeof editingIndex === 'number' && editingIndex >= 0 && typeof showViewModal === 'function') {
+          const modal = document.getElementById('itemModal');
+          if (modal) modal.style.display = 'none';
+          showViewModal(editingIndex);
+        }
+      },
+      "View item from edit button",
+    );
+  }
+
+  // COMMEMORATIVE CHECKBOX — toggle description field (STAK-173)
+  const numistaCommemorative = document.getElementById('numistaCommemorative');
+  const numistaCommemorativeDescWrap = document.getElementById('numistaCommemorativeDescWrap');
+  if (numistaCommemorative && numistaCommemorativeDescWrap) {
+    safeAttachListener(
+      numistaCommemorative,
+      "change",
+      () => {
+        numistaCommemorativeDescWrap.style.display = numistaCommemorative.checked ? '' : 'none';
+      },
+      "Commemorative checkbox toggle",
+    );
+  }
+
+  // ESTIMATE RETAIL FROM SPOT — toggle modifier field (STAK-173)
+  const itemDateNA = document.getElementById("itemDateNA");
+  if (itemDateNA && elements.itemDate) {
+    safeAttachListener(
+      itemDateNA,
+      "change",
+      () => {
+        elements.itemDate.disabled = itemDateNA.checked;
+        if (itemDateNA.checked) {
+          elements.itemDate.value = "";
+        }
+      },
+      "Date N/A checkbox",
+    );
+  }
+
+  if (elements.estimateRetailFromSpot) {
+    safeAttachListener(
+      elements.estimateRetailFromSpot,
+      "change",
+      () => {
+        if (elements.retailSpotModifier) {
+          elements.retailSpotModifier.disabled = !elements.estimateRetailFromSpot.checked;
+        }
+      },
+      "Estimate retail checkbox",
     );
   }
 };
@@ -1681,7 +1849,7 @@ const setupSpotPriceListeners = () => {
           if (typeof syncSpotPricesFromApi === "function") {
             syncSpotPricesFromApi(true);
           } else {
-            alert(
+            appAlert(
               "API sync functionality requires Metals API configuration. Please configure an API provider first.",
             );
           }
@@ -1804,7 +1972,7 @@ const setupDataManagementListeners = () => {
   optionalListener(elements.removeInventoryDataBtn, "click", async () => {
     const confirmed = typeof showAppConfirm === "function"
       ? await showAppConfirm("Remove all inventory items? This cannot be undone.", "Data Management")
-      : confirm("Remove all inventory items? This cannot be undone.");
+      : false;
     if (confirmed) {
       localStorage.removeItem(LS_KEY);
       // STACK-62: Clear stale autocomplete cache so it rebuilds from fresh inventory
@@ -1813,14 +1981,13 @@ const setupDataManagementListeners = () => {
       renderTable();
       renderActiveFilters();
       if (typeof showAppAlert === "function") await showAppAlert("Inventory data cleared.", "Data Management");
-      else alert("Inventory data cleared.");
     }
   }, "Remove inventory data button");
 
   optionalListener(elements.boatingAccidentBtn, "click", async () => {
     const confirmed = typeof showAppConfirm === "function"
       ? await showAppConfirm("Did you really lose it all in a boating accident? This will wipe all local data.", "Data Management")
-      : confirm("Did you really lose it all in a boating accident? This will wipe all local data.");
+      : false;
     if (confirmed) {
       // Nuclear wipe: clear every allowed localStorage key
       ALLOWED_STORAGE_KEYS.forEach((key) => {
@@ -1852,7 +2019,6 @@ const setupDataManagementListeners = () => {
       updateSyncButtonStates();
 
       if (typeof showAppAlert === "function") await showAppAlert("All data has been erased. Hope your scuba gear is ready!", "Data Management");
-      else alert("All data has been erased. Hope your scuba gear is ready!");
     }
   }, "Boating accident button");
 };
@@ -2159,6 +2325,23 @@ const setupSearch = () => {
           if (typeof updateModalCurrencyUI === 'function') updateModalCurrencyUI();
           // Clear image upload state for fresh add (STACK-32)
           if (typeof clearUploadState === 'function') clearUploadState();
+          // Hide inline URL inputs in add mode
+          ['Obv', 'Rev'].forEach(s => {
+            const urlInput = document.getElementById('itemImageUrlInput' + s);
+            if (urlInput) urlInput.style.display = 'none';
+          });
+          // Update Numista API status dot (STAK-173)
+          if (typeof updateNumistaModalDot === 'function') updateNumistaModalDot();
+          // Hide clone/view buttons in add mode (STAK-173)
+          if (elements.cloneItemBtn) elements.cloneItemBtn.style.display = 'none';
+          if (elements.viewItemFromEditBtn) elements.viewItemFromEditBtn.style.display = 'none';
+          // Reset date N/A checkbox
+          const addDateNA = document.getElementById('itemDateNA');
+          if (addDateNA) { addDateNA.checked = false; }
+          if (elements.itemDate) elements.itemDate.disabled = false;
+          // Reset estimate retail checkbox
+          if (elements.estimateRetailFromSpot) elements.estimateRetailFromSpot.checked = false;
+          if (elements.retailSpotModifier) { elements.retailSpotModifier.value = ''; elements.retailSpotModifier.disabled = true; }
           // Open modal
           if (elements.itemModal) {
             if (window.openModalById) openModalById('itemModal');
@@ -2370,11 +2553,11 @@ const setupApiEvents = () => {
       safeAttachListener(
         flushCacheBtn,
         "click",
-        () => {
+        async () => {
           if (typeof clearApiCache === "function") {
             const warnMessage =
               "This will delete the API cache and history. Click OK to continue or Cancel to keep it.";
-            if (confirm(warnMessage)) {
+            if (await appConfirm(warnMessage, 'Flush API Cache')) {
               clearApiCache();
             }
           }
@@ -2423,7 +2606,7 @@ const setupApiEvents = () => {
               .filter(([_, status]) => status !== "skipped")
               .map(([prov, status]) => `${API_PROVIDERS[prov]?.name || prov}: ${status}`)
               .join("\n");
-            alert(`Synced ${updatedCount} prices.\n\n${summary}`);
+            appAlert(`Synced ${updatedCount} prices.\n\n${summary}`);
           }
         },
         "Sync all providers button",

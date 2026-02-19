@@ -636,6 +636,127 @@ select:focus {
 }
 
 /* =============================================================================
+   COLLAPSIBLE FORM SECTIONS — <details>/<summary> based, zero JS
+   ============================================================================= */
+
+.form-section {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 0.75rem;
+  overflow: hidden;
+}
+
+.form-section-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.7rem;
+  background: var(--bg-secondary);
+  cursor: pointer;
+  list-style: none;
+  font-weight: 600;
+  font-size: 0.8rem;
+  color: var(--text-primary);
+  user-select: none;
+  -webkit-user-select: none;
+  transition: background var(--transition);
+  min-height: 36px;
+  box-sizing: border-box;
+}
+
+/* Remove default marker in all browsers */
+.form-section-header::-webkit-details-marker { display: none; }
+.form-section-header::marker { content: ""; }
+
+/* Chevron indicator via CSS borders */
+.form-section-header::after {
+  content: "";
+  display: inline-block;
+  margin-left: auto;
+  width: 0.45rem;
+  height: 0.45rem;
+  border-right: 2px solid var(--text-secondary);
+  border-bottom: 2px solid var(--text-secondary);
+  transform: rotate(-45deg);
+  transition: transform 0.2s ease;
+  flex-shrink: 0;
+}
+
+.form-section[open] > .form-section-header::after {
+  transform: rotate(45deg);
+}
+
+.form-section-header:hover {
+  background: var(--bg-tertiary, var(--bg-secondary));
+}
+
+.form-section-icon {
+  display: inline-flex;
+  align-items: center;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+.form-section-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.25rem;
+  height: 1.25rem;
+  padding: 0 0.35rem;
+  border-radius: 999px;
+  background: var(--primary);
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.form-section-body {
+  padding: 0.55rem 0.7rem 0.65rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+/* Inline URL input below upload row */
+.image-url-input {
+  margin-top: 0.35rem;
+}
+
+.image-url-input input {
+  font-size: 0.8rem;
+  padding: 0.45rem 0.6rem;
+}
+
+/* Numista API status dot on button */
+.api-status-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  margin-left: 0.3rem;
+  vertical-align: middle;
+  background: var(--text-muted, #999);
+}
+
+.api-status-dot.connected {
+  background: var(--success, #16a34a);
+}
+
+.api-status-dot.disconnected {
+  background: var(--text-muted, #999);
+}
+
+/* Sepia theme adjustments */
+[data-theme="sepia"] .form-section-header {
+  background: var(--bg-secondary);
+}
+[data-theme="sepia"] .form-section-header:hover {
+  background: var(--bg-tertiary, var(--bg-secondary));
+}
+
+/* =============================================================================
    BUTTONS - Enhanced for file:// protocol compatibility
    ============================================================================= */
 
@@ -2267,7 +2388,7 @@ input[type="submit"] {
 .image-pattern-toggle-group .pattern-rule-tip { display: block; margin-top: 0.2rem; color: var(--text-muted, #888); font-size: 0.78rem; }
 .image-upload-sides {
   display: flex;
-  gap: 1rem;
+  gap: 0.5rem;
 }
 .image-upload-side {
   flex: 1;
@@ -2282,24 +2403,93 @@ input[type="submit"] {
   text-transform: uppercase;
   letter-spacing: 0.03em;
 }
-.image-upload-row {
+/* Image card — preview left, buttons stacked right */
+.image-card {
   display: flex;
+  align-items: stretch;
   gap: 0.5rem;
-  align-items: center;
-  flex-wrap: wrap;
+  min-height: 100px;
 }
+
 .image-upload-preview {
-  margin-top: 0.5rem;
-  max-width: 120px;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
+
 .image-upload-preview img {
-  width: 100%;
+  max-width: 100%;
+  max-height: 140px;
   border-radius: var(--radius);
   border: 1px solid var(--border);
+  object-fit: contain;
 }
+
+.image-card-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* Pill buttons with color coding */
+.img-btn {
+  border-radius: 999px !important;
+  padding: 0.3rem 0.7rem !important;
+  font-size: 0.72rem !important;
+  font-weight: 600 !important;
+  min-height: 0 !important;
+  white-space: nowrap;
+  border: 1px solid transparent !important;
+  transition: opacity 0.15s ease, background 0.15s ease;
+}
+
+.img-btn-upload {
+  background: var(--primary) !important;
+  color: #fff !important;
+  border-color: var(--primary) !important;
+}
+
+.img-btn-upload:hover { opacity: 0.85; }
+
+.img-btn-url {
+  background: rgba(16, 185, 129, 0.15) !important;
+  color: #10b981 !important;
+  border-color: rgba(16, 185, 129, 0.3) !important;
+}
+
+.img-btn-url:hover {
+  background: rgba(16, 185, 129, 0.25) !important;
+}
+
+.img-btn-camera {
+  background: rgba(139, 92, 246, 0.15) !important;
+  color: #8b5cf6 !important;
+  border-color: rgba(139, 92, 246, 0.3) !important;
+}
+
+.img-btn-camera:hover {
+  background: rgba(139, 92, 246, 0.25) !important;
+}
+
+.img-btn-remove {
+  background: rgba(239, 68, 68, 0.12) !important;
+  color: #ef4444 !important;
+  border-color: rgba(239, 68, 68, 0.25) !important;
+}
+
+.img-btn-remove:hover {
+  background: rgba(239, 68, 68, 0.22) !important;
+}
+
 .image-size-info {
-  font-size: 0.75rem;
+  font-size: 0.68rem;
   color: var(--text-secondary);
+  margin-top: 0.2rem;
+  display: block;
 }
 .btn-sm {
   padding: 0.25rem 0.6rem;
@@ -7909,6 +8099,400 @@ th {
 }
 
 /* =============================================================================
+   ITEM MODAL — Glassmorphic Redesign (STAK-173)
+   Scoped to #itemModal / #inventoryForm so other modals are unaffected.
+   Translates Stitch V3 "Refined Bottom Sheet" prototype into theme-aware CSS.
+   ============================================================================= */
+
+/* --- Modernized modal header — replace bright blue gradient -------------- */
+#itemModal .modal-header {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  padding: var(--spacing) var(--spacing-xl);
+  border-bottom: 1px solid var(--border);
+  box-shadow: none;
+}
+
+#itemModal .modal-header h2 {
+  color: var(--text-primary);
+  font-size: 0.92rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+#itemModal .modal-close {
+  color: var(--text-secondary);
+}
+
+#itemModal .modal-close:hover {
+  color: var(--text-primary);
+}
+
+/* --- Glass-style form inputs -------------------------------------------- */
+#inventoryForm input,
+#inventoryForm select {
+  background: var(--glass-input-bg, rgba(0, 0, 0, 0.03));
+  border: 1.5px solid var(--glass-input-border, var(--border));
+  border-radius: 8px;
+  padding: 0.4rem 0.6rem;
+  font-size: 0.85rem;
+  min-height: 0;
+  transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+#inventoryForm input:focus,
+#inventoryForm select:focus {
+  background: var(--glass-input-focus-bg, rgba(0, 0, 0, 0.05));
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15);
+}
+
+/* Dark theme glass tokens */
+[data-theme="dark"] #inventoryForm {
+  --glass-input-bg: rgba(255, 255, 255, 0.05);
+  --glass-input-border: rgba(255, 255, 255, 0.1);
+  --glass-input-focus-bg: rgba(255, 255, 255, 0.08);
+}
+
+/* Sepia theme glass tokens */
+[data-theme="sepia"] #inventoryForm {
+  --glass-input-bg: rgba(139, 69, 19, 0.04);
+  --glass-input-border: rgba(139, 69, 19, 0.15);
+  --glass-input-focus-bg: rgba(139, 69, 19, 0.07);
+}
+
+/* --- Uppercase micro-labels --------------------------------------------- */
+#inventoryForm label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-secondary);
+  margin-bottom: 0.2rem;
+}
+
+/* Restore hint spans inside labels */
+#inventoryForm label span[style*="font-weight:normal"] {
+  font-weight: 400 !important;
+  text-transform: none;
+  letter-spacing: normal;
+  font-size: 0.65rem;
+}
+
+/* --- Refined field group spacing ---------------------------------------- */
+#inventoryForm .grid {
+  gap: 0.5rem;
+  margin-bottom: 0.4rem;
+}
+
+#inventoryForm {
+  gap: 0.5rem;
+}
+
+/* --- Image upload slots — dashed drop-zone style ------------------------ */
+#inventoryForm .image-upload-side {
+  border: 2px dashed var(--border);
+  border-radius: 8px;
+  padding: 0.5rem;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+#inventoryForm .image-upload-side:hover {
+  border-color: var(--primary);
+  background: rgba(59, 130, 246, 0.03);
+}
+
+[data-theme="dark"] #inventoryForm .image-upload-side:hover {
+  background: rgba(59, 130, 246, 0.06);
+}
+
+#inventoryForm .image-side-label {
+  font-size: 0.6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted, var(--text-secondary));
+}
+
+/* --- Collapsible sections — refined for prototype look ------------------ */
+#inventoryForm .form-section {
+  border: 1px solid var(--glass-input-border, var(--border));
+  border-radius: 8px;
+  margin-bottom: 0.5rem;
+  background: transparent;
+}
+
+#inventoryForm .form-section-header {
+  background: transparent;
+  padding: 0.55rem 0.7rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+
+#inventoryForm .form-section-header:hover {
+  background: var(--glass-input-bg, rgba(0, 0, 0, 0.02));
+}
+
+#inventoryForm .form-section-icon {
+  color: var(--primary);
+}
+
+/* --- Action bar — pill buttons with icons ------------------------------- */
+#inventoryForm .item-modal-actions {
+  margin-top: 0.85rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border);
+  gap: 0.4rem;
+  justify-content: flex-end;
+}
+
+#inventoryForm .item-modal-actions-right .btn {
+  border-radius: 999px;
+  padding: 0.35rem 0.9rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+#inventoryForm .item-modal-actions-right .btn.secondary {
+  background: var(--glass-input-bg, rgba(0, 0, 0, 0.04));
+  border: 1px solid var(--glass-input-border, var(--border));
+  color: var(--text-primary);
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+#inventoryForm .item-modal-actions-right .btn.secondary:hover {
+  background: var(--glass-input-focus-bg, rgba(0, 0, 0, 0.07));
+  border-color: var(--primary);
+}
+
+/* Cancel button */
+#inventoryForm #cancelItem {
+  background: var(--glass-input-bg, rgba(0, 0, 0, 0.04));
+  border: 1px solid var(--glass-input-border, var(--border));
+  color: var(--text-secondary);
+}
+
+/* Submit button — premium gold/accent treatment */
+#inventoryForm #itemModalSubmit.premium {
+  border-radius: 999px;
+  padding: 0.35rem 1rem;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+}
+
+/* --- Numista status dot — position fix inside pill button --------------- */
+#inventoryForm .api-status-dot {
+  margin-left: 0.35rem;
+}
+
+/* --- Inline search buttons next to inputs ------------------------------- */
+.input-with-action {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  position: relative;
+}
+
+.input-with-action input,
+.input-with-action select {
+  flex: 1;
+  min-width: 0;
+  border-top-right-radius: 0 !important;
+  border-bottom-right-radius: 0 !important;
+}
+
+.inline-search-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  min-height: 32px;
+  padding: 0.25rem;
+  background: var(--glass-input-bg, rgba(0, 0, 0, 0.03));
+  border: 1.5px solid var(--glass-input-border, var(--border));
+  border-left: none;
+  border-radius: 0 8px 8px 0;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+
+.inline-search-btn:hover {
+  color: var(--primary);
+  background: var(--glass-input-focus-bg, rgba(0, 0, 0, 0.05));
+}
+
+.inline-search-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.inline-search-btn .api-status-dot {
+  width: 6px;
+  height: 6px;
+  margin-left: 2px;
+}
+
+/* --- Pattern toggle row — checkbox + refresh side-by-side --------------- */
+.pattern-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.pattern-toggle-label {
+  flex: 1;
+  min-height: 30px;
+  display: flex;
+  align-items: center;
+}
+
+.pattern-toggle-label input[type="checkbox"] {
+  width: 15px;
+  height: 15px;
+}
+
+.pattern-refresh-btn {
+  min-width: 30px;
+  min-height: 30px;
+  padding: 0.3rem !important;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+}
+
+/* --- Date N/A checkbox --------------------------------------------------- */
+.date-na-label {
+  display: inline-flex !important;
+  align-items: center;
+  gap: 0.3rem;
+  margin-top: 0.25rem;
+  font-size: 0.7rem !important;
+  text-transform: none !important;
+  letter-spacing: normal !important;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.date-na-label input[type="checkbox"] {
+  width: 13px;
+  height: 13px;
+  min-height: 0;
+}
+
+.date-na-label span {
+  font-weight: 500 !important;
+  text-transform: none !important;
+  letter-spacing: normal !important;
+}
+
+/* --- Estimate Retail checkbox styling ----------------------------------- */
+.estimate-retail-label {
+  min-height: 30px;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.25rem;
+}
+
+.estimate-retail-label input[type="checkbox"] {
+  width: 14px;
+  height: 14px;
+}
+
+/* --- Numista data section — read-only/API-populated fields -------------- */
+.numista-data-fields input {
+  color: var(--text-secondary);
+}
+
+.numista-data-fields input:focus {
+  color: var(--text-primary);
+}
+
+/* --- Tags section -------------------------------------------------------- */
+.tags-edit-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.tags-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.tags-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  min-height: 28px;
+  align-items: center;
+}
+
+.tag-empty-hint {
+  font-size: 0.72rem;
+  color: var(--text-muted, var(--text-secondary));
+  opacity: 0.6;
+  font-style: italic;
+}
+
+.tags-add-row {
+  display: flex;
+  gap: 0.35rem;
+  align-items: center;
+  margin-top: 0.25rem;
+}
+
+.tags-add-row .tag-input {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.82rem;
+}
+
+.tags-add-row .btn {
+  min-width: 30px;
+  min-height: 30px;
+  padding: 0.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 3-column equal grid for Numista dimensions row */
+.grid-3-equal {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: var(--spacing);
+}
+
+/* --- Currency input inside glass form ----------------------------------- */
+#inventoryForm .currency-input {
+  --currency-padding: 1.4rem;
+}
+
+#inventoryForm .currency-input::before {
+  left: 0.5rem;
+  font-size: 0.85rem;
+}
+
+#inventoryForm .currency-input input {
+  border-radius: 8px;
+  padding-left: var(--currency-padding, 1.4rem);
+}
+
+/* --- Currency input with inline button ---------------------------------- */
+#inventoryForm .currency-input.input-with-action input {
+  border-radius: 8px 0 0 8px;
+}
+
+#inventoryForm .currency-input.input-with-action .inline-search-btn {
+  min-height: 100%;
+  align-self: stretch;
+}
+
+/* =============================================================================
    NUMISTA RESULTS MODAL — Stacked modal for search results / field picker
    ============================================================================= */
 #numistaResultsModal {
@@ -9424,10 +10008,13 @@ th {
   flex: 1;
   border: 1px solid var(--border);
   border-radius: var(--radius);
+  -webkit-overflow-scrolling: touch;
 }
 
 .bulk-edit-table {
-  width: 100%;
+  width: max-content;
+  min-width: 100%;
+  table-layout: auto;
   border-collapse: collapse;
   font-size: 0.82rem;
 }
@@ -9449,6 +10036,7 @@ th {
   color: var(--text-secondary);
   border-bottom: 2px solid var(--border);
   white-space: nowrap;
+  min-width: 7rem;
 }
 
 .bulk-edit-table input[type="checkbox"] {
@@ -9464,6 +10052,12 @@ th {
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 200px;
+  min-width: 7rem;
+}
+
+.bulk-edit-table th:first-child,
+.bulk-edit-table td:first-child {
+  min-width: 2.5rem;
 }
 
 .bulk-edit-table tr {
@@ -9814,11 +10408,11 @@ th {
   #itemModal select,
   #itemModal textarea {
     min-height: 44px;
-    font-size: 1rem;
-    padding: 0.5rem 0.75rem;
+    font-size: 0.9rem;
+    padding: 0.45rem 0.65rem;
   }
 
-  #itemModal .btn { min-height: 44px; font-size: 0.9rem; }
+  #itemModal .btn { min-height: 44px; font-size: 0.85rem; }
 
   /* Stack action rows: Save/Cancel on top, lookup buttons below */
   .item-modal-actions {

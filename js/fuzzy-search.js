@@ -174,7 +174,7 @@ const fuzzyMatch = (query, target, options = {}) => {
  * @param {number} [options.threshold=0.6] - Minimum similarity score
  * @param {number} [options.maxResults=Infinity] - Maximum results to return
  * @param {boolean} [options.caseSensitive=false] - Case sensitive matching
- * @returns {{text: string, score: number}[]} Array of results
+ * @returns {Array.<{text: string, score: number}>} Array of results
  */
 const fuzzySearch = (query, targets, options = {}) => {
   if (!Array.isArray(targets)) {
@@ -214,4 +214,3 @@ if (typeof window !== "undefined") {
   window.fuzzyMatch = fuzzyMatch;
   window.fuzzySearch = fuzzySearch;
 }
-

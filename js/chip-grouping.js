@@ -1,3 +1,8 @@
+/**
+ * @fileoverview Chip grouping helpers for dynamic and custom filter chips.
+ * Provides global CRUD and matching helpers consumed by filtering UI modules.
+ */
+
 // CHIP GROUPING MODULE
 // =============================================================================
 // Custom grouping rules, chip blacklist, and dynamic chip extraction.

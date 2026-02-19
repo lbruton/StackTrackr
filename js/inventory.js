@@ -247,10 +247,10 @@ const createBackupZip = async () => {
       backupBtn.disabled = false;
     }
     
-    alert('Backup created successfully!');
+    appAlert('Backup created successfully!');
   } catch (error) {
     console.error('Backup creation failed:', error);
-    alert('Backup creation failed: ' + error.message);
+    appAlert('Backup creation failed: ' + error.message);
     
     // Restore button state on error
     const backupBtn = document.getElementById('backupAllBtn');
@@ -449,11 +449,11 @@ const restoreBackupZip = async (file) => {
     }
 
     fetchSpotPrice();
-    alert("Data imported successfully. The page will now reload.");
+    await appAlert("Data imported successfully. The page will now reload.");
     location.reload();
   } catch (err) {
     console.error("Restore failed", err);
-    alert("Restore failed: " + err.message);
+    appAlert("Restore failed: " + err.message);
   }
 };
 
@@ -1090,7 +1090,7 @@ const startCellEdit = (idx, field, element) => {
   const saveEdit = () => {
     const value = input.value;
     if (!validateFieldValue(field, value)) {
-      alert(`Invalid value for ${field}`);
+      appAlert(`Invalid value for ${field}`);
       cancelEdit();
       return;
     }
@@ -1775,7 +1775,7 @@ const deleteItem = async (idx) => {
   const itemLabel = item ? item.name : 'this item';
   const confirmed = typeof showAppConfirm === 'function'
     ? await showAppConfirm(`Delete ${itemLabel}?\n\nThis can be undone from the Activity Log.`, 'Delete Item')
-    : confirm(`Delete ${itemLabel}?\n\nThis can be undone from the Activity Log.`);
+    : false;
   if (confirmed) {
     inventory.splice(idx, 1);
     saveInventory();
@@ -1830,6 +1830,100 @@ const showNotes = (idx) => {
 
 
 /**
+ * Populate Numista Data form fields.
+ * Priority: item.numistaData (user/saved) > IndexedDB cache (API) > empty.
+ * When called from a fresh Numista search, itemData is null and cache is used.
+ *
+ * @param {string} catalogId - Numista catalog ID (N#)
+ * @param {Object} [itemData] - Stored numistaData from the inventory item
+ */
+const populateNumistaDataFields = (catalogId, itemData) => {
+  const set = (id, val) => {
+    const el = document.getElementById(id);
+    if (el) el.value = val || '';
+  };
+
+  // Field mapping: formId → { itemKey, cacheKey }
+  const fieldMap = [
+    { id: 'numistaCountry',       itemKey: 'country',       cacheKey: 'country' },
+    { id: 'numistaDenomination',   itemKey: 'denomination',  cacheKey: 'denomination' },
+    { id: 'numistaComposition',    itemKey: 'composition',   cacheKey: 'composition' },
+    { id: 'numistaShape',          itemKey: 'shape',         cacheKey: 'shape' },
+    { id: 'numistaDiameter',       itemKey: 'diameter',      cacheKey: 'diameter' },
+    { id: 'numistaThickness',      itemKey: 'thickness',     cacheKey: 'thickness' },
+    { id: 'numistaOrientation',    itemKey: 'orientation',   cacheKey: 'orientation' },
+    { id: 'numistaTechnique',      itemKey: 'technique',     cacheKey: 'technique' },
+    { id: 'numistaMintage',        itemKey: 'mintage',       cacheKey: null },
+    { id: 'numistaRarity',         itemKey: 'rarityIndex',   cacheKey: 'rarityIndex' },
+    { id: 'numistaKmRef',          itemKey: 'kmRef',         cacheKey: null },
+    { id: 'numistaObverseDesc',    itemKey: 'obverseDesc',   cacheKey: 'obverseDesc' },
+    { id: 'numistaReverseDesc',    itemKey: 'reverseDesc',   cacheKey: 'reverseDesc' },
+    { id: 'numistaEdgeDesc',       itemKey: 'edgeDesc',      cacheKey: 'edgeDesc' },
+  ];
+
+  // Clear all fields
+  fieldMap.forEach(f => set(f.id, ''));
+  const commCb = document.getElementById('numistaCommemorative');
+  if (commCb) commCb.checked = false;
+  const commDescWrap = document.getElementById('numistaCommemorativeDescWrap');
+  if (commDescWrap) commDescWrap.style.display = 'none';
+  const commDesc = document.getElementById('numistaCommemorativeDesc');
+  if (commDesc) commDesc.value = '';
+
+  /**
+   * Apply a data source to the form fields.
+   * Only fills fields that are still empty (preserves higher-rank data).
+   */
+  const applySource = (getData) => {
+    fieldMap.forEach(f => {
+      const el = document.getElementById(f.id);
+      if (el && !el.value) {
+        const val = getData(f);
+        if (val) el.value = val;
+      }
+    });
+    // Commemorative
+    if (commCb && !commCb.checked) {
+      const isComm = getData({ itemKey: 'commemorative', cacheKey: 'commemorative' });
+      if (isComm) {
+        commCb.checked = true;
+        if (commDescWrap) commDescWrap.style.display = '';
+        const desc = getData({ itemKey: 'commemorativeDesc', cacheKey: 'commemorativeDesc' });
+        if (commDesc && desc) commDesc.value = desc;
+      }
+    }
+  };
+
+  // Layer 1 (highest rank): Item's stored numistaData (user edits persist here)
+  if (itemData && Object.keys(itemData).length > 0) {
+    applySource(f => itemData[f.itemKey] || '');
+  }
+
+  // Layer 2 (fallback): IndexedDB cache from API
+  if (catalogId && window.imageCache?.isAvailable()) {
+    imageCache.getMetadata(catalogId).then(meta => {
+      if (!meta) return;
+      applySource(f => {
+        if (!f.cacheKey) {
+          // Special handling for computed fields
+          if (f.itemKey === 'mintage' && meta.mintageByYear?.length > 0) {
+            const first = meta.mintageByYear[0];
+            return typeof first.mintage === 'number' ? first.mintage.toLocaleString() : first.mintage;
+          }
+          if (f.itemKey === 'kmRef' && meta.kmReferences?.length > 0) {
+            return meta.kmReferences.map(r =>
+              typeof r === 'object' ? `${r.catalogue || 'KM'}# ${r.number || ''}` : r
+            ).join(', ');
+          }
+          return '';
+        }
+        return meta[f.cacheKey] || '';
+      });
+    }).catch(() => {});
+  }
+};
+
+/**
  * Prepares and displays edit modal for specified inventory item
  *
  * @param {number} idx - Index of item to edit
@@ -1878,7 +1972,13 @@ const editItem = (idx, logIdx = null) => {
   elements.storageLocation.value = item.storageLocation && item.storageLocation !== 'Unknown' ? item.storageLocation : '';
   if (elements.itemSerialNumber) elements.itemSerialNumber.value = item.serialNumber || '';
   if (elements.itemNotes) elements.itemNotes.value = item.notes || '';
-  elements.itemDate.value = item.date;
+  elements.itemDate.value = item.date || '';
+  // Set date N/A checkbox based on whether item has a date
+  const editDateNA = document.getElementById('itemDateNA');
+  if (editDateNA) {
+    editDateNA.checked = !item.date;
+    elements.itemDate.disabled = !item.date;
+  }
   // Reset spot lookup state for edit mode (STACK-49)
   if (elements.itemSpotPrice) elements.itemSpotPrice.value = '';
   if (elements.spotLookupBtn) elements.spotLookupBtn.disabled = !item.date;
@@ -1929,37 +2029,74 @@ const editItem = (idx, logIdx = null) => {
 
   // Preload user images (obverse + reverse) into upload previews (STACK-32)
   if (typeof clearUploadState === 'function') clearUploadState();
+
+  /**
+   * Show a preview thumbnail for a given side.
+   * Works for both blob object-URLs and remote image URLs.
+   * @param {string} url - Image source URL
+   * @param {'Obv'|'Rev'} suffix - DOM element suffix
+   * @param {'obverse'|'reverse'} side - Side name for setEditPreviewUrl
+   */
+  const showPreview = (url, suffix, side) => {
+    const previewContainer = document.getElementById('itemImagePreview' + suffix);
+    const previewImg = document.getElementById('itemImagePreviewImg' + suffix);
+    const removeBtn = document.getElementById('itemImageRemoveBtn' + suffix);
+    if (previewImg) previewImg.src = url;
+    if (previewContainer) previewContainer.style.display = 'block';
+    if (removeBtn) removeBtn.style.display = '';
+    if (typeof setEditPreviewUrl === 'function') setEditPreviewUrl(url, side);
+  };
+
+  /** Fall back to image URL fields when no user-uploaded blob exists */
+  const showUrlPreviewFallback = (loadedSides) => {
+    if (!loadedSides.obverse && item.obverseImageUrl) {
+      showPreview(item.obverseImageUrl, 'Obv', 'obverse');
+    }
+    if (!loadedSides.reverse && item.reverseImageUrl) {
+      showPreview(item.reverseImageUrl, 'Rev', 'reverse');
+    }
+  };
+
   if (item.uuid && window.imageCache?.isAvailable()) {
     imageCache.getUserImage(item.uuid).then(rec => {
-      if (!rec) return;
-      // Preload obverse
-      if (rec.obverse) {
+      const loaded = { obverse: false, reverse: false };
+      if (rec?.obverse) {
         try {
-          const url = URL.createObjectURL(rec.obverse);
-          const previewContainer = document.getElementById('itemImagePreviewObv');
-          const previewImg = document.getElementById('itemImagePreviewImgObv');
-          const removeBtn = document.getElementById('itemImageRemoveBtnObv');
-          if (previewImg) previewImg.src = url;
-          if (previewContainer) previewContainer.style.display = 'block';
-          if (removeBtn) removeBtn.style.display = '';
-          if (typeof setEditPreviewUrl === 'function') setEditPreviewUrl(url, 'obverse');
+          showPreview(URL.createObjectURL(rec.obverse), 'Obv', 'obverse');
+          loaded.obverse = true;
         } catch { /* ignore */ }
       }
-      // Preload reverse
-      if (rec.reverse) {
+      if (rec?.reverse) {
         try {
-          const url = URL.createObjectURL(rec.reverse);
-          const previewContainer = document.getElementById('itemImagePreviewRev');
-          const previewImg = document.getElementById('itemImagePreviewImgRev');
-          const removeBtn = document.getElementById('itemImageRemoveBtnRev');
-          if (previewImg) previewImg.src = url;
-          if (previewContainer) previewContainer.style.display = 'block';
-          if (removeBtn) removeBtn.style.display = '';
-          if (typeof setEditPreviewUrl === 'function') setEditPreviewUrl(url, 'reverse');
+          showPreview(URL.createObjectURL(rec.reverse), 'Rev', 'reverse');
+          loaded.reverse = true;
         } catch { /* ignore */ }
       }
-    }).catch(() => {});
+      showUrlPreviewFallback(loaded);
+    }).catch(() => {
+      showUrlPreviewFallback({ obverse: false, reverse: false });
+    });
+  } else {
+    // No IndexedDB — go straight to URL fallback
+    showUrlPreviewFallback({ obverse: false, reverse: false });
   }
+
+  // Update Numista API status dot (STAK-173)
+  if (typeof updateNumistaModalDot === 'function') updateNumistaModalDot();
+  // Show URL inputs if item has URL values (STAK-173)
+  ['Obv', 'Rev'].forEach(suffix => {
+    const urlInputWrap = document.getElementById('itemImageUrlInput' + suffix);
+    const urlField = suffix === 'Obv' ? elements.itemObverseImageUrl : elements.itemReverseImageUrl;
+    if (urlInputWrap && urlField && urlField.value) urlInputWrap.style.display = '';
+    else if (urlInputWrap) urlInputWrap.style.display = 'none';
+  });
+
+  // Show clone/view buttons in edit mode (STAK-173)
+  if (elements.cloneItemBtn) elements.cloneItemBtn.style.display = '';
+  if (elements.viewItemFromEditBtn) elements.viewItemFromEditBtn.style.display = '';
+
+  // Populate Numista Data fields: item data first, API cache as fallback (STAK-173)
+  populateNumistaDataFields(item.numistaId || item.catalog || '', item.numistaData);
 
   // Open unified modal
   if (window.openModalById) openModalById('itemModal');
@@ -2114,7 +2251,7 @@ const endImportProgress = () => {
  */
 const importCsv = (file, override = false) => {
   if (typeof Papa === 'undefined') {
-    alert('CSV library (PapaParse) failed to load. Please check your internet connection and reload the page.');
+    appAlert('CSV library (PapaParse) failed to load. Please check your internet connection and reload the page.');
     return;
   }
   try {
@@ -2251,10 +2388,18 @@ const importCsv = (file, override = false) => {
 
         // Report skipped non-precious-metal items
         if (skippedNonPM.length > 0) {
-          alert(`${skippedNonPM.length} item(s) skipped: no precious metal content\n\n${skippedNonPM.join('\n')}`);
+          if (typeof showAppAlert === 'function') {
+            showAppAlert(
+              `${skippedNonPM.length} item(s) skipped: no precious metal content\n\n${skippedNonPM.join('\n')}`,
+              'CSV Import',
+            );
+          }
         }
 
-        if (imported.length === 0) return alert('No items to import.');
+        if (imported.length === 0) {
+          if (typeof showAppAlert === 'function') showAppAlert('No items to import.', 'CSV Import');
+          return;
+        }
 
         const existingSerials = new Set(override ? [] : inventory.map(item => item.serial));
         const existingKeys = new Set(
@@ -2280,7 +2425,10 @@ const importCsv = (file, override = false) => {
           console.info(`${duplicateCount} duplicate items skipped during import.`);
         }
 
-        if (deduped.length === 0) return alert('No items to import.');
+        if (deduped.length === 0) {
+          if (typeof showAppAlert === 'function') showAppAlert('No items to import.', 'CSV Import');
+          return;
+        }
 
         for (const item of deduped) {
           if (typeof registerName === "function") {
@@ -2329,7 +2477,7 @@ const importCsv = (file, override = false) => {
  */
 const importNumistaCsv = (file, override = false) => {
   if (typeof Papa === 'undefined') {
-    alert('CSV library (PapaParse) failed to load. Please check your internet connection and reload the page.');
+    appAlert('CSV library (PapaParse) failed to load. Please check your internet connection and reload the page.');
     return;
   }
   try {
@@ -2502,10 +2650,18 @@ const importNumistaCsv = (file, override = false) => {
 
         // Report skipped non-precious-metal items
         if (skippedNonPM.length > 0) {
-          alert(`${skippedNonPM.length} item(s) skipped: no precious metal content\n\n${skippedNonPM.join('\n')}`);
+          if (typeof showAppAlert === 'function') {
+            showAppAlert(
+              `${skippedNonPM.length} item(s) skipped: no precious metal content\n\n${skippedNonPM.join('\n')}`,
+              'Numista Import',
+            );
+          }
         }
 
-        if (imported.length === 0) return alert('No items to import.');
+        if (imported.length === 0) {
+          if (typeof showAppAlert === 'function') showAppAlert('No items to import.', 'Numista Import');
+          return;
+        }
 
         const existingSerials = new Set(override ? [] : inventory.map(item => item.serial));
         const existingKeys = new Set(
@@ -2531,7 +2687,10 @@ const importNumistaCsv = (file, override = false) => {
           console.info(`${duplicateCount} duplicate items skipped during import.`);
         }
 
-        if (deduped.length === 0) return alert('No items to import.');
+        if (deduped.length === 0) {
+          if (typeof showAppAlert === 'function') showAppAlert('No items to import.', 'Numista Import');
+          return;
+        }
 
         for (const item of deduped) {
           if (typeof registerName === "function") {
@@ -2667,7 +2826,7 @@ const exportNumistaCsv = () => {
  */
 const exportCsv = () => {
   if (typeof Papa === 'undefined') {
-    alert('CSV library (PapaParse) failed to load. Please check your internet connection and reload the page.');
+    appAlert('CSV library (PapaParse) failed to load. Please check your internet connection and reload the page.');
     return;
   }
   debugLog('exportCsv start', inventory.length, 'items');
@@ -2749,7 +2908,10 @@ const importJson = (file, override = false) => {
 
       // Validate data structure
       if (!Array.isArray(data)) {
-        return alert("Invalid JSON format. Expected an array of inventory items.");
+        if (typeof showAppAlert === 'function') {
+          showAppAlert('Invalid JSON format. Expected an array of inventory items.', 'JSON Import');
+        }
+        return;
       }
 
       // Process each item
@@ -2891,15 +3053,23 @@ const importJson = (file, override = false) => {
 
       // Report skipped non-precious-metal items
       if (skippedNonPM.length > 0) {
-        alert(`${skippedNonPM.length} item(s) skipped: no precious metal content\n\n${skippedNonPM.join('\n')}`);
+        if (typeof showAppAlert === 'function') {
+          showAppAlert(
+            `${skippedNonPM.length} item(s) skipped: no precious metal content\n\n${skippedNonPM.join('\n')}`,
+            'JSON Import',
+          );
+        }
       }
 
       if (skippedDetails.length > 0) {
-        alert('Skipped entries:\n' + skippedDetails.join('\n'));
+        if (typeof showAppAlert === 'function') {
+          showAppAlert(`Skipped entries:\n${skippedDetails.join('\n')}`, 'JSON Import');
+        }
       }
 
       if (imported.length === 0) {
-        return alert("No valid items found in JSON file.");
+        if (typeof showAppAlert === 'function') showAppAlert('No valid items found in JSON file.', 'JSON Import');
+        return;
       }
 
       const existingSerials = new Set(override ? [] : inventory.map(item => item.serial));
@@ -2927,7 +3097,8 @@ const importJson = (file, override = false) => {
       }
 
       if (deduped.length === 0) {
-        return alert('No items to import.');
+        if (typeof showAppAlert === 'function') showAppAlert('No items to import.', 'JSON Import');
+        return;
       }
 
       if (typeof addItemTag === 'function') {
@@ -2969,7 +3140,9 @@ const importJson = (file, override = false) => {
       }
     } catch (error) {
       endImportProgress();
-      alert("Error parsing JSON file: " + error.message);
+      if (typeof showAppAlert === 'function') {
+        showAppAlert(`Error parsing JSON file: ${error.message}`, 'JSON Import');
+      }
     }
   };
 
@@ -3034,7 +3207,7 @@ const exportJson = () => {
  */
 const exportPdf = () => {
   if (!window.jspdf || !window.jspdf.jsPDF) {
-    alert('PDF library (jsPDF) failed to load. Please check your internet connection and reload the page.');
+    appAlert('PDF library (jsPDF) failed to load. Please check your internet connection and reload the page.');
     return;
   }
   const { jsPDF } = window.jspdf;
@@ -3158,6 +3331,7 @@ window.togglePriceView = togglePriceView;
 window.toggleGlobalPriceView = toggleGlobalPriceView;
 window.editItem = editItem;
 window.duplicateItem = duplicateItem;
+window.populateNumistaDataFields = populateNumistaDataFields;
 window.deleteItem = deleteItem;
 window.showNotes = showNotes;
 
@@ -3273,7 +3447,7 @@ document.addEventListener('click', (e) => {
       const popup = window.open(url, `pcgs_${pcgsNo}`,
         'width=1250,height=800,scrollbars=yes,resizable=yes,toolbar=no,location=no,menubar=no,status=no');
       if (!popup) {
-        alert(`Popup blocked! Please allow popups or manually visit:\n${url}`);
+        appAlert(`Popup blocked! Please allow popups or manually visit:\n${url}`);
       } else {
         popup.focus();
       }
@@ -3295,7 +3469,7 @@ document.addEventListener('click', (e) => {
       const popup = window.open(url, `cert_${authority}_${certNum || Date.now()}`,
         'width=1250,height=800,scrollbars=yes,resizable=yes,toolbar=no,location=no,menubar=no,status=no');
       if (!popup) {
-        alert(`Popup blocked! Please allow popups or manually visit:\n${url}`);
+        appAlert(`Popup blocked! Please allow popups or manually visit:\n${url}`);
       } else {
         popup.focus();
       }

@@ -155,7 +155,7 @@ const recordSpot = (
  * @param {string} metal - Metal key ('silver', 'gold', etc.)
  * @param {number} [points=30] - Number of data points to return
  * @param {boolean} [withTimestamps=false] - If true, returns {ts, spot} objects
- * @returns {number[]|{ts:number,spot:number}[]|null} Array of spot prices, or null if insufficient data
+ * @returns {Array.<number>|Array.<{ts:number,spot:number}>|null} Array of spot prices, or null if insufficient data
  */
 const getSpotHistoryForMetal = (metal, points = 30, withTimestamps = false) => {
   const metalName = Object.values(METALS).find(m => m.key === metal)?.name || metal;
@@ -281,7 +281,7 @@ const updateManualSpot = (metalKey) => {
 
   const num = parseFloat(value);
   if (isNaN(num) || num <= 0)
-    return alert(`Invalid ${metalConfig.name.toLowerCase()} spot price.`);
+    return appAlert(`Invalid ${metalConfig.name.toLowerCase()} spot price.`);
 
   localStorage.setItem(metalConfig.localStorageKey, num);
   spotPrices[metalKey] = num;
@@ -1253,8 +1253,9 @@ const renderLbmaHistoryTable = async () => {
 /**
  * Clears all spot price history after user confirmation.
  */
-const clearSpotHistory = () => {
-  if (!confirm('Clear all spot price history? This cannot be undone.')) return;
+const clearSpotHistory = async () => {
+  const confirmed = await appConfirm('Clear all spot price history? This cannot be undone.', 'Spot History');
+  if (!confirmed) return;
   spotHistory = [];
   saveSpotHistory();
   // Reset rendered flag so it re-renders fresh

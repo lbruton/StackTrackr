@@ -380,7 +380,7 @@ const hideGoldbackHistoryModal = () => {
 const exportGoldbackHistory = () => {
   const data = flattenGoldbackHistory();
   if (data.length === 0) {
-    alert('No Goldback price history to export.');
+    appAlert('No Goldback price history to export.');
     return;
   }
 

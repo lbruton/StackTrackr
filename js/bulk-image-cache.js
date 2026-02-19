@@ -1,3 +1,8 @@
+/**
+ * @fileoverview Bulk metadata sync utilities for Numista-linked inventory items.
+ * Exposes the `BulkImageCache` global singleton used by settings-driven cache workflows.
+ */
+
 // BULK SYNC (STACK-87/88)
 // =============================================================================
 // Syncs metadata for inventory items that have Numista catalog IDs.
@@ -7,7 +12,6 @@
 // Image caching is handled on-demand by the view modal (viewModal.js).
 // =============================================================================
 
-// eslint-disable-next-line no-unused-vars
 const BulkImageCache = (() => {
   let _aborted = false;
   let _running = false;
@@ -32,7 +36,7 @@ const BulkImageCache = (() => {
 
   /**
    * Build the list of unique {item, catalogId} entries eligible for caching.
-   * @returns {Array<{item: Object, catalogId: string}>}
+   * @returns {Array.<{item:Object, catalogId:string}>}
    */
   function buildEligibleList() {
     const seen = new Set();
