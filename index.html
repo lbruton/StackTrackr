@@ -12,11 +12,18 @@
 <html lang="en">
   <head>
     <!--
-    Content Security Policy is intentionally relaxed to ensure test
-    local file execution when opening this tool with the file:// protocol.
-    The previous strict policy blocked external scripts and prevented
-    the interface from rendering. The simplified policy below permits
-    all sources while keeping inline execution restrictions.
+    Content Security Policy — intentionally permissive (see DEVS-22).
+
+    StakTrakr's primary distribution is local (file:// protocol or
+    extracted ZIP). The file:// origin requires 'unsafe-inline' for
+    inline handlers/styles and 'unsafe-eval' for vendor libraries
+    (JSZip, Forge). A strict CSP breaks both execution paths.
+
+    Runtime mitigations in place:
+      - All user-controlled HTML is escaped via sanitizeHtml() (utils.js)
+      - OAuth tokens scoped to localStorage; vault password cached in
+        sessionStorage with XOR obfuscation + auto-clear idle timer
+      - No server-stored user data; compromise requires local access
   -->
     <meta
       http-equiv="Content-Security-Policy"

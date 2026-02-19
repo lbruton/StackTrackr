@@ -654,7 +654,8 @@ const updateProviderHistoryTables = () => {
     const usedPercent = Math.min((usage.used / usage.quota) * 100, 100);
     const remainingPercent = 100 - usedPercent;
     const warning = usage.used / usage.quota >= 0.9;
-    const usageHtml = `<div class="api-usage" data-quota-provider="${prov}" style="cursor:pointer" title="Click to edit quota"><div class="usage-bar"><div class="used" style="width:${usedPercent}%"></div><div class="remaining" style="width:${remainingPercent}%"></div></div><div class="usage-text">${usage.used}/${usage.quota} calls${warning ? " 🚩" : ""}</div></div>`;
+    const safeProv = sanitizeHtml(prov);
+    const usageHtml = `<div class="api-usage" data-quota-provider="${safeProv}" style="cursor:pointer" title="Click to edit quota"><div class="usage-bar"><div class="used" style="width:${usedPercent}%"></div><div class="remaining" style="width:${remainingPercent}%"></div></div><div class="usage-text">${usage.used}/${usage.quota} calls${warning ? " 🚩" : ""}</div></div>`;
     // nosemgrep: javascript.browser.security.insecure-innerhtml.insecure-innerhtml, javascript.browser.security.insecure-document-method.insecure-document-method
     container.innerHTML = usageHtml;
 
