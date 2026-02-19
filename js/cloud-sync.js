@@ -87,6 +87,80 @@ function syncIsEnabled() {
 }
 
 // ---------------------------------------------------------------------------
+// Override backup — snapshot local data before a remote pull overwrites it
+// ---------------------------------------------------------------------------
+
+/**
+ * Snapshot all SYNC_SCOPE_KEYS raw localStorage strings into a single JSON blob.
+ * Called immediately before vaultDecryptAndRestore() in pullSyncVault().
+ */
+function syncSaveOverrideBackup() {
+  try {
+    var keys = typeof SYNC_SCOPE_KEYS !== 'undefined' ? SYNC_SCOPE_KEYS : [];
+    var data = {};
+    for (var i = 0; i < keys.length; i++) {
+      var raw = localStorage.getItem(keys[i]);
+      if (raw !== null) data[keys[i]] = raw;
+    }
+    var backup = {
+      timestamp: Date.now(),
+      itemCount: typeof inventory !== 'undefined' ? inventory.length : 0,
+      appVersion: typeof APP_VERSION !== 'undefined' ? APP_VERSION : 'unknown',
+      data: data,
+    };
+    localStorage.setItem('cloud_sync_override_backup', JSON.stringify(backup));
+    debugLog('[CloudSync] Override backup saved:', Object.keys(data).length, 'keys');
+  } catch (err) {
+    debugLog('[CloudSync] Override backup failed:', err);
+  }
+}
+
+/**
+ * Restore the pre-pull local snapshot saved by syncSaveOverrideBackup().
+ * Prompts for confirmation, writes raw strings back, and refreshes the UI.
+ */
+async function syncRestoreOverrideBackup() {
+  var backup = null;
+  try { backup = JSON.parse(localStorage.getItem('cloud_sync_override_backup') || 'null'); } catch (_) {}
+
+  if (!backup || !backup.data) {
+    if (typeof showAppAlert === 'function') await showAppAlert('No snapshot available.', 'Sync History');
+    return;
+  }
+
+  var ts = new Date(backup.timestamp).toLocaleString();
+  var msg = 'Restore local snapshot from ' + ts + '?\n\n' +
+    'Items at snapshot: ' + (backup.itemCount || '?') + '\n' +
+    'App version: v' + (backup.appVersion || '?') + '\n\n' +
+    'This will overwrite your current inventory and cannot be undone.';
+
+  var confirmed = typeof showAppConfirm === 'function'
+    ? await showAppConfirm(msg, 'Restore Snapshot')
+    : window.confirm(msg);
+  if (!confirmed) return;
+
+  try {
+    var bkeys = Object.keys(backup.data);
+    for (var j = 0; j < bkeys.length; j++) {
+      if (typeof ALLOWED_STORAGE_KEYS !== 'undefined' && ALLOWED_STORAGE_KEYS.indexOf(bkeys[j]) !== -1) {
+        localStorage.setItem(bkeys[j], backup.data[bkeys[j]]);
+      }
+    }
+    if (typeof loadItemTags === 'function') loadItemTags();
+    if (typeof loadInventory === 'function') loadInventory();
+    if (typeof renderTable === 'function') renderTable();
+    if (typeof renderActiveFilters === 'function') renderActiveFilters();
+    if (typeof loadSpotHistory === 'function') loadSpotHistory();
+    logCloudSyncActivity('override_restore', 'success', 'Snapshot from ' + ts + ' restored');
+    if (typeof showCloudToast === 'function') showCloudToast('Local snapshot restored successfully.');
+    if (typeof renderSyncHistorySection === 'function') renderSyncHistorySection();
+  } catch (err) {
+    debugLog('[CloudSync] Restore failed:', err);
+    if (typeof showAppAlert === 'function') await showAppAlert('Restore failed: ' + String(err.message || err), 'Sync History');
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Sync status indicator (small badge in Settings cloud card)
 // ---------------------------------------------------------------------------
 
@@ -158,6 +232,8 @@ function refreshSyncUI() {
       updateSyncStatusIndicator('idle', 'Not yet synced');
     }
   }
+
+  if (typeof renderSyncHistorySection === 'function') renderSyncHistorySection();
 }
 
 /** Format a timestamp as a relative time string ("just now", "5 min ago", etc.) */
@@ -622,6 +698,8 @@ async function pullSyncVault(remoteMeta) {
 
     var bytes = new Uint8Array(await resp.arrayBuffer());
 
+    syncSaveOverrideBackup();
+
     if (typeof vaultDecryptAndRestore === 'function') {
       await vaultDecryptAndRestore(bytes, password);
     } else {
@@ -876,3 +954,5 @@ window.refreshSyncUI = refreshSyncUI;
 window.updateSyncStatusIndicator = updateSyncStatusIndicator;
 window.getSyncDeviceId = getSyncDeviceId;
 window.syncIsEnabled = syncIsEnabled;
+window.syncSaveOverrideBackup = syncSaveOverrideBackup;
+window.syncRestoreOverrideBackup = syncRestoreOverrideBackup;
