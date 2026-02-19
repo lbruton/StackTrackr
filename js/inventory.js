@@ -1830,22 +1830,39 @@ const showNotes = (idx) => {
 
 
 /**
- * Populate Numista Data form fields from IndexedDB cached metadata.
- * Fires asynchronously — fields fill after modal is already visible.
+ * Populate Numista Data form fields.
+ * Priority: item.numistaData (user/saved) > IndexedDB cache (API) > empty.
+ * When called from a fresh Numista search, itemData is null and cache is used.
+ *
  * @param {string} catalogId - Numista catalog ID (N#)
+ * @param {Object} [itemData] - Stored numistaData from the inventory item
  */
-const populateNumistaDataFields = (catalogId) => {
-  // Clear all fields first
-  const ids = [
-    'numistaCountry', 'numistaDenomination', 'numistaComposition', 'numistaShape',
-    'numistaDiameter', 'numistaThickness', 'numistaOrientation', 'numistaTechnique',
-    'numistaMintage', 'numistaRarity', 'numistaKmRef',
-    'numistaObverseDesc', 'numistaReverseDesc', 'numistaEdgeDesc'
-  ];
-  ids.forEach(id => {
+const populateNumistaDataFields = (catalogId, itemData) => {
+  const set = (id, val) => {
     const el = document.getElementById(id);
-    if (el) el.value = '';
-  });
+    if (el) el.value = val || '';
+  };
+
+  // Field mapping: formId → { itemKey, cacheKey }
+  const fieldMap = [
+    { id: 'numistaCountry',       itemKey: 'country',       cacheKey: 'country' },
+    { id: 'numistaDenomination',   itemKey: 'denomination',  cacheKey: 'denomination' },
+    { id: 'numistaComposition',    itemKey: 'composition',   cacheKey: 'composition' },
+    { id: 'numistaShape',          itemKey: 'shape',         cacheKey: 'shape' },
+    { id: 'numistaDiameter',       itemKey: 'diameter',      cacheKey: 'diameter' },
+    { id: 'numistaThickness',      itemKey: 'thickness',     cacheKey: 'thickness' },
+    { id: 'numistaOrientation',    itemKey: 'orientation',   cacheKey: 'orientation' },
+    { id: 'numistaTechnique',      itemKey: 'technique',     cacheKey: 'technique' },
+    { id: 'numistaMintage',        itemKey: 'mintage',       cacheKey: null },
+    { id: 'numistaRarity',         itemKey: 'rarityIndex',   cacheKey: 'rarityIndex' },
+    { id: 'numistaKmRef',          itemKey: 'kmRef',         cacheKey: null },
+    { id: 'numistaObverseDesc',    itemKey: 'obverseDesc',   cacheKey: 'obverseDesc' },
+    { id: 'numistaReverseDesc',    itemKey: 'reverseDesc',   cacheKey: 'reverseDesc' },
+    { id: 'numistaEdgeDesc',       itemKey: 'edgeDesc',      cacheKey: 'edgeDesc' },
+  ];
+
+  // Clear all fields
+  fieldMap.forEach(f => set(f.id, ''));
   const commCb = document.getElementById('numistaCommemorative');
   if (commCb) commCb.checked = false;
   const commDescWrap = document.getElementById('numistaCommemorativeDescWrap');
@@ -1853,50 +1870,57 @@ const populateNumistaDataFields = (catalogId) => {
   const commDesc = document.getElementById('numistaCommemorativeDesc');
   if (commDesc) commDesc.value = '';
 
-  if (!catalogId || !window.imageCache?.isAvailable()) return;
-
-  imageCache.getMetadata(catalogId).then(meta => {
-    if (!meta) return;
-    const set = (id, val) => {
-      const el = document.getElementById(id);
-      if (el && val) el.value = val;
-    };
-    set('numistaCountry', meta.country);
-    set('numistaDenomination', meta.denomination);
-    set('numistaComposition', meta.composition);
-    set('numistaShape', meta.shape);
-    set('numistaDiameter', meta.diameter);
-    set('numistaThickness', meta.thickness);
-    set('numistaOrientation', meta.orientation);
-    set('numistaTechnique', meta.technique);
-    set('numistaRarity', meta.rarityIndex);
-
-    // KM references — join array into comma-separated string
-    if (meta.kmReferences && meta.kmReferences.length > 0) {
-      set('numistaKmRef', meta.kmReferences.map(r =>
-        typeof r === 'object' ? `${r.catalogue || 'KM'}# ${r.number || ''}` : r
-      ).join(', '));
-    }
-
-    // Mintage — show total or first year
-    if (meta.mintageByYear && meta.mintageByYear.length > 0) {
-      const first = meta.mintageByYear[0];
-      const mintVal = typeof first.mintage === 'number' ? first.mintage.toLocaleString() : first.mintage;
-      set('numistaMintage', mintVal);
-    }
-
+  /**
+   * Apply a data source to the form fields.
+   * Only fills fields that are still empty (preserves higher-rank data).
+   */
+  const applySource = (getData) => {
+    fieldMap.forEach(f => {
+      const el = document.getElementById(f.id);
+      if (el && !el.value) {
+        const val = getData(f);
+        if (val) el.value = val;
+      }
+    });
     // Commemorative
-    if (commCb && meta.commemorative) {
-      commCb.checked = true;
-      if (commDescWrap) commDescWrap.style.display = '';
-      if (commDesc && meta.commemorativeDesc) commDesc.value = meta.commemorativeDesc;
+    if (commCb && !commCb.checked) {
+      const isComm = getData({ itemKey: 'commemorative', cacheKey: 'commemorative' });
+      if (isComm) {
+        commCb.checked = true;
+        if (commDescWrap) commDescWrap.style.display = '';
+        const desc = getData({ itemKey: 'commemorativeDesc', cacheKey: 'commemorativeDesc' });
+        if (commDesc && desc) commDesc.value = desc;
+      }
     }
+  };
 
-    // Descriptions
-    set('numistaObverseDesc', meta.obverseDesc);
-    set('numistaReverseDesc', meta.reverseDesc);
-    set('numistaEdgeDesc', meta.edgeDesc);
-  }).catch(() => {});
+  // Layer 1 (highest rank): Item's stored numistaData (user edits persist here)
+  if (itemData && Object.keys(itemData).length > 0) {
+    applySource(f => itemData[f.itemKey] || '');
+  }
+
+  // Layer 2 (fallback): IndexedDB cache from API
+  if (catalogId && window.imageCache?.isAvailable()) {
+    imageCache.getMetadata(catalogId).then(meta => {
+      if (!meta) return;
+      applySource(f => {
+        if (!f.cacheKey) {
+          // Special handling for computed fields
+          if (f.itemKey === 'mintage' && meta.mintageByYear?.length > 0) {
+            const first = meta.mintageByYear[0];
+            return typeof first.mintage === 'number' ? first.mintage.toLocaleString() : first.mintage;
+          }
+          if (f.itemKey === 'kmRef' && meta.kmReferences?.length > 0) {
+            return meta.kmReferences.map(r =>
+              typeof r === 'object' ? `${r.catalogue || 'KM'}# ${r.number || ''}` : r
+            ).join(', ');
+          }
+          return '';
+        }
+        return meta[f.cacheKey] || '';
+      });
+    }).catch(() => {});
+  }
 };
 
 /**
@@ -2051,8 +2075,8 @@ const editItem = (idx, logIdx = null) => {
   if (elements.cloneItemBtn) elements.cloneItemBtn.style.display = '';
   if (elements.viewItemFromEditBtn) elements.viewItemFromEditBtn.style.display = '';
 
-  // Populate Numista Data fields from cached metadata (STAK-173)
-  populateNumistaDataFields(item.numistaId || item.catalog || '');
+  // Populate Numista Data fields: item data first, API cache as fallback (STAK-173)
+  populateNumistaDataFields(item.numistaId || item.catalog || '', item.numistaData);
 
   // Open unified modal
   if (window.openModalById) openModalById('itemModal');
