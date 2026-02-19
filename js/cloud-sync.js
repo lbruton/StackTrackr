@@ -178,23 +178,82 @@ function _syncRelativeTime(ts) {
 // ---------------------------------------------------------------------------
 
 /**
- * Get the session-cached sync password, or prompt the user if not cached.
- * @returns {Promise<string|null>} password or null if user cancelled
+ * Get the session-cached sync password, or open the sync password modal.
+ * Returns a Promise that resolves with the password string, or null if cancelled.
+ * @returns {Promise<string|null>}
  */
-async function getSyncPassword() {
+function getSyncPassword() {
   // Try cached password first
   var cached = typeof cloudGetCachedPassword === 'function'
     ? cloudGetCachedPassword(_syncProvider)
     : null;
-  if (cached) return cached;
+  if (cached) return Promise.resolve(cached);
 
-  // Prompt user
-  var pw = window.prompt('Enter your StakTrakr vault password to enable auto-sync.\n\nThis password encrypts your data before it leaves your device.');
-  if (!pw) return null;
+  // Open the dedicated sync password modal and resolve when the user submits/cancels
+  return new Promise(function (resolve) {
+    var modal = document.getElementById('cloudSyncPasswordModal');
+    var input = document.getElementById('syncPasswordInput');
+    var confirmBtn = document.getElementById('syncPasswordConfirmBtn');
+    var cancelBtn = document.getElementById('syncPasswordCancelBtn');
+    var cancelBtn2 = document.getElementById('syncPasswordCancelBtn2');
+    var errorEl = document.getElementById('syncPasswordError');
 
-  // Cache for session
-  if (typeof cloudCachePassword === 'function') cloudCachePassword(_syncProvider, pw);
-  return pw;
+    if (!modal || !input || !confirmBtn) {
+      // DOM not ready — last-resort fallback only used during startup edge cases
+      var pw = window.prompt('Vault password for sync:');
+      if (pw && typeof cloudCachePassword === 'function') cloudCachePassword(_syncProvider, pw);
+      resolve(pw || null);
+      return;
+    }
+
+    // Reset state
+    input.value = '';
+    if (errorEl) { errorEl.textContent = ''; errorEl.style.display = 'none'; }
+
+    var cleanup = function () {
+      confirmBtn.removeEventListener('click', onConfirm);
+      if (cancelBtn) cancelBtn.removeEventListener('click', onCancel);
+      if (cancelBtn2) cancelBtn2.removeEventListener('click', onCancel);
+      input.removeEventListener('keydown', onKeydown);
+      if (typeof closeModalById === 'function') closeModalById('cloudSyncPasswordModal');
+      else modal.style.display = 'none';
+    };
+
+    var onConfirm = function () {
+      var pw = input.value;
+      if (!pw || pw.length < 8) {
+        if (errorEl) {
+          errorEl.textContent = 'Password must be at least 8 characters.';
+          errorEl.style.display = '';
+        }
+        return;
+      }
+      cleanup();
+      if (typeof cloudCachePassword === 'function') cloudCachePassword(_syncProvider, pw);
+      resolve(pw);
+    };
+
+    var onCancel = function () {
+      cleanup();
+      resolve(null);
+    };
+
+    var onKeydown = function (e) {
+      if (e.key === 'Enter') onConfirm();
+      if (e.key === 'Escape') onCancel();
+    };
+
+    confirmBtn.addEventListener('click', onConfirm);
+    if (cancelBtn) cancelBtn.addEventListener('click', onCancel);
+    if (cancelBtn2) cancelBtn2.addEventListener('click', onCancel);
+    input.addEventListener('keydown', onKeydown);
+
+    if (typeof openModalById === 'function') openModalById('cloudSyncPasswordModal');
+    else modal.style.display = 'flex';
+
+    // Focus the input after the modal opens
+    setTimeout(function () { input.focus(); }, 50);
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -638,12 +697,16 @@ async function enableCloudSync(provider) {
   // Ensure we have a device ID
   getSyncDeviceId();
 
-  // Initial push
+  // Update UI immediately so Sync Now button is enabled before the async push
+  refreshSyncUI();
+
+  // Initial push (this will open the password modal if no cached password)
   await pushSyncVault();
 
   // Start the poller
   startSyncPoller();
 
+  // Update UI again with post-push state (last-synced timestamp)
   refreshSyncUI();
 
   if (typeof showCloudToast === 'function') showCloudToast('Auto-sync enabled. Your inventory will sync automatically.');
