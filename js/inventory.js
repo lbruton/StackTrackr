@@ -1791,10 +1791,13 @@ const updateSummary = () => {
  * 
  * @param {number} idx - Index of item to delete
  */
-const deleteItem = (idx) => {
+const deleteItem = async (idx) => {
   const item = inventory[idx];
   const itemLabel = item ? item.name : 'this item';
-  if (confirm(`Delete ${itemLabel}?\n\nThis can be undone from the Activity Log.`)) {
+  const confirmed = typeof showAppConfirm === 'function'
+    ? await showAppConfirm(`Delete ${itemLabel}?\n\nThis can be undone from the Activity Log.`, 'Delete Item')
+    : confirm(`Delete ${itemLabel}?\n\nThis can be undone from the Activity Log.`);
+  if (confirmed) {
     inventory.splice(idx, 1);
     saveInventory();
     renderTable();

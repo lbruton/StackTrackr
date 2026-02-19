@@ -2860,11 +2860,18 @@ input[type="submit"] {
   padding: 0.75rem;
   font-size: 0.85rem;
 }
+[data-theme="dark"] .cloud-sync-update-meta {
+  background: rgba(51, 65, 85, 0.6);
+  border-color: rgba(148, 163, 184, 0.25);
+}
 .cloud-sync-update-row {
   display: flex;
   justify-content: space-between;
   gap: 0.5rem;
   padding: 0.15rem 0;
+  color: var(--text-muted);
+}
+.cloud-sync-update-row strong {
   color: var(--text-primary);
 }
 .cloud-sync-update-row:not(:last-child) {
