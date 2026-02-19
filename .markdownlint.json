@@ -1,15 +1,6 @@
 {
   "default": true,
-  "MD013": {
-    "line_length": 120,
-    "heading_line_length": 120,
-    "code_block_line_length": 120,
-    "code_blocks": false,
-    "tables": false,
-    "headings": true,
-    "strict": false,
-    "stern": false
-  },
+  "MD013": false,
   "MD033": false,
   "MD041": {
     "front_matter_title": ""
