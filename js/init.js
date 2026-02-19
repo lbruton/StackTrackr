@@ -97,7 +97,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     elements.itemNotes = safeGetElement("itemNotes");
     elements.itemDate = safeGetElement("itemDate", true);
     elements.itemSpotPrice = safeGetElement("itemSpotPrice");
-    elements.itemCollectable = safeGetElement("itemCollectable");
     elements.itemCatalog = safeGetElement("itemCatalog");
     elements.itemYear = safeGetElement("itemYear");
     elements.itemGrade = safeGetElement("itemGrade");
@@ -711,7 +710,6 @@ function setupBasicEventListeners() {
 }
 
 // Make functions available globally for inline event handlers
-window.toggleCollectable = toggleCollectable;
 window.showDetailsModal = showDetailsModal;
 window.closeDetailsModal = closeDetailsModal;
 window.showViewModal = typeof showViewModal !== 'undefined' ? showViewModal : () => {};

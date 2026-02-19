@@ -138,11 +138,6 @@ const BULK_EDITABLE_FIELDS = [
     attrs: { placeholder: 'https://example.com/obverse.jpg' } },
   { id: 'reverseImageUrl',  label: 'Reverse URL',       inputType: 'text',
     attrs: { placeholder: 'https://example.com/reverse.jpg' } },
-  { id: 'collectable',      label: 'Collectable',       inputType: 'select',
-    options: [
-      { value: 'true',  label: 'Yes — Collectable' },
-      { value: 'false', label: 'No — Bullion / Melt' },
-    ] },
 ];
 
 // =============================================================================
@@ -229,7 +224,6 @@ const FIELD_COERCIONS = {
   price:       (v) => { const n = parseFloat(v);    return (isNaN(n) || n < 0)            ? 0   : n; },
   marketValue: (v) => { const n = parseFloat(v);    return (isNaN(n) || n < 0)            ? 0   : n; },
   purity:      (v) => { const n = parseFloat(v);    return (isNaN(n) || n <= 0 || n > 1)  ? 1.0 : n; },
-  collectable: (v) => v === 'true',
 };
 
 /**
