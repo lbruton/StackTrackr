@@ -32,15 +32,36 @@ const getFilteredItems = (term) => {
   if (typeof inventory === 'undefined' || !Array.isArray(inventory)) return [];
   const t = (term || '').toLowerCase().trim();
   if (!t) return inventory.slice();
-  return inventory.filter(item =>
-    (item.name || '').toLowerCase().includes(t) ||
-    (item.metal || '').toLowerCase().includes(t) ||
-    (item.type || '').toLowerCase().includes(t) ||
-    (item.year || '').toLowerCase().includes(t) ||
-    (item.storageLocation || '').toLowerCase().includes(t) ||
-    (item.purchaseLocation || '').toLowerCase().includes(t) ||
-    String(item.serial).includes(t)
-  );
+  return inventory.filter((item) => {
+    const tagText = typeof getItemTags === 'function' ? getItemTags(item.uuid).join(' ') : '';
+    const searchText = [
+      item.name,
+      item.metal,
+      item.composition,
+      item.type,
+      item.year,
+      item.grade,
+      item.gradingAuthority,
+      item.certNumber,
+      item.serialNumber,
+      item.numistaId,
+      item.pcgsNumber,
+      item.storageLocation,
+      item.purchaseLocation,
+      item.notes,
+      item.purity,
+      item.weight,
+      item.weightUnit,
+      item.qty,
+      item.price,
+      item.marketValue,
+      item.serial,
+      tagText
+    ]
+      .map((value) => String(value ?? '').toLowerCase())
+      .join(' ');
+    return searchText.includes(t);
+  });
 };
 
 // =============================================================================
