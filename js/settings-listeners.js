@@ -1230,7 +1230,7 @@ const bindCloudStorageListeners = () => {
 
     } else if (btn.classList.contains('cloud-backup-delete-btn')) {
       var delFilename = btn.dataset.filename;
-      if (!confirm('Delete "' + delFilename + '" from Dropbox?\n\nThis cannot be undone.')) return;
+      if (!await showBulkConfirm('Delete "' + delFilename + '" from cloud storage?\n\nThis cannot be undone.')) return;
       await _cloudBtnAction(btn, '\u2026', async () => {
         await cloudDeleteBackup(provider, delFilename);
         if (typeof showCloudToast === 'function') showCloudToast('"' + delFilename + '" deleted.');
