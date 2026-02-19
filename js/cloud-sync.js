@@ -155,7 +155,7 @@ function refreshSyncUI() {
     if (lp && lp.timestamp) {
       updateSyncStatusIndicator('idle', _syncRelativeTime(lp.timestamp));
     } else {
-      updateSyncStatusIndicator('disabled', 'Not yet synced');
+      updateSyncStatusIndicator('idle', 'Not yet synced');
     }
   }
 }
@@ -281,30 +281,30 @@ function logCloudSyncActivity(action, result, detail, duration) {
  * Skips silently if not connected or sync is disabled.
  */
 async function pushSyncVault() {
-  console.log('[CloudSync] pushSyncVault called. enabled:', syncIsEnabled(), 'provider:', _syncProvider);
+  debugLog('[CloudSync] pushSyncVault called. enabled:', syncIsEnabled(), 'provider:', _syncProvider);
 
   if (!syncIsEnabled()) {
-    console.log('[CloudSync] Push skipped — sync not enabled');
+    debugLog('[CloudSync] Push skipped — sync not enabled');
     return;
   }
 
   var token = typeof cloudGetToken === 'function' ? await cloudGetToken(_syncProvider) : null;
-  console.log('[CloudSync] Token obtained:', !!token);
+  debugLog('[CloudSync] Token obtained:', !!token);
   if (!token) {
-    console.warn('[CloudSync] No token — push skipped');
+    debugLog('[CloudSync] No token — push skipped');
     updateSyncStatusIndicator('error', 'Not connected');
     return;
   }
 
   if (_syncPushInFlight) {
-    console.log('[CloudSync] Push already in flight — skipped');
+    debugLog('[CloudSync] Push already in flight — skipped');
     return;
   }
 
   var password = await getSyncPassword();
-  console.log('[CloudSync] Password obtained:', !!password);
+  debugLog('[CloudSync] Password obtained:', !!password);
   if (!password) {
-    console.log('[CloudSync] No password — push skipped');
+    debugLog('[CloudSync] No password — push skipped');
     return;
   }
 
@@ -314,11 +314,11 @@ async function pushSyncVault() {
 
   try {
     // Encrypt sync-scoped payload
-    console.log('[CloudSync] Encrypting payload…');
+    debugLog('[CloudSync] Encrypting payload…');
     var fileBytes = typeof vaultEncryptToBytesScoped === 'function'
       ? await vaultEncryptToBytesScoped(password)
       : await vaultEncryptToBytes(password);
-    console.log('[CloudSync] Encrypted:', fileBytes.byteLength, 'bytes');
+    debugLog('[CloudSync] Encrypted:', fileBytes.byteLength, 'bytes');
 
     var syncId = typeof generateUUID === 'function' ? generateUUID() : _syncFallbackUUID();
     var now = Date.now();
@@ -327,7 +327,7 @@ async function pushSyncVault() {
     var deviceId = getSyncDeviceId();
 
     // Upload the vault file (overwrite)
-    console.log('[CloudSync] Uploading vault to', SYNC_FILE_PATH, '…');
+    debugLog('[CloudSync] Uploading vault to', SYNC_FILE_PATH, '…');
     var vaultArg = JSON.stringify({
       path: SYNC_FILE_PATH,
       mode: 'overwrite',
@@ -343,7 +343,7 @@ async function pushSyncVault() {
       },
       body: fileBytes,
     });
-    console.log('[CloudSync] Vault upload response:', vaultResp.status);
+    debugLog('[CloudSync] Vault upload response:', vaultResp.status);
 
     if (vaultResp.status === 429) {
       _syncRetryDelay = Math.min(_syncRetryDelay * 2, 300000); // cap at 5 min
@@ -507,7 +507,7 @@ function syncHasLocalChanges() {
 function showSyncUpdateModal(remoteMeta) {
   return new Promise(function (resolve) {
     var modal = document.getElementById('cloudSyncUpdateModal');
-    if (!modal) { resolve(true); return; } // fallback: proceed if no modal in DOM
+    if (!modal) { resolve(false); return; } // fallback: decline if no modal in DOM
 
     // Populate metadata fields
     var itemCountEl = document.getElementById('syncUpdateItemCount');
@@ -789,7 +789,7 @@ async function enableCloudSync(provider) {
 }
 
 /**
- * Disable auto-sync: stop the poller and clear sync state.
+ * Disable auto-sync: persist the disabled flag, stop the poller, and update UI.
  */
 function disableCloudSync() {
   try { localStorage.setItem('cloud_sync_enabled', 'false'); } catch (_) { /* ignore */ }
@@ -814,9 +814,13 @@ function initCloudSync() {
     scheduleSyncPush = debounce(pushSyncVault, SYNC_PUSH_DEBOUNCE);
   } else {
     // Fallback: simple delayed call (no de-duplication)
-    scheduleSyncPush = function () {
-      setTimeout(pushSyncVault, SYNC_PUSH_DEBOUNCE);
-    };
+    scheduleSyncPush = (function () {
+      var _timer = null;
+      return function () {
+        clearTimeout(_timer);
+        _timer = setTimeout(pushSyncVault, SYNC_PUSH_DEBOUNCE);
+      };
+    }());
   }
 
   // Expose globally so saveInventory() hook can reach it
