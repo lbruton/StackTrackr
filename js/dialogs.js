@@ -154,4 +154,20 @@
    * @returns {Promise<?string>}
    */
   window.showAppPrompt = (message, defaultValue, title) => showDialog({ mode: 'prompt', message, defaultValue, title });
+
+  /**
+   * Shared async wrappers used across the app to eliminate native dialogs.
+   */
+  window.appAlert = (message, title = 'Notice') => {
+    if (typeof window.showAppAlert === 'function') return window.showAppAlert(message, title);
+    return Promise.resolve();
+  };
+  window.appConfirm = async (message, title = 'Confirm') => {
+    if (typeof window.showAppConfirm === 'function') return !!(await window.showAppConfirm(message, title));
+    return false;
+  };
+  window.appPrompt = async (message, defaultValue = '', title = 'Input') => {
+    if (typeof window.showAppPrompt === 'function') return window.showAppPrompt(message, defaultValue, title);
+    return null;
+  };
 }());

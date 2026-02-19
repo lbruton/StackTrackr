@@ -244,14 +244,14 @@ const bindFilterAndNumistaListeners = () => {
       const numistaId = idInput ? idInput.value.trim() : '';
 
       if (!pattern || !replacement) {
-        alert('Pattern and Numista query are required.');
+        appAlert('Pattern and Numista query are required.');
         return;
       }
 
       if (!window.NumistaLookup) return;
       const result = NumistaLookup.addRule(pattern, replacement, numistaId || null);
       if (!result.success) {
-        alert(result.error);
+        appAlert(result.error);
         return;
       }
 
@@ -416,7 +416,7 @@ const bindGoldbackActionListeners = () => {
       if (!input) return;
       const rate = parseFloat(input.value);
       if (isNaN(rate) || rate <= 0) {
-        alert('Enter a valid 1 Goldback rate.');
+        appAlert('Enter a valid 1 Goldback rate.');
         return;
       }
       const tbody = getExistingElement('goldbackPriceTableBody');
@@ -469,7 +469,11 @@ const bindImageSyncListeners = () => {
   const clearImagesBtn = getExistingElement('clearAllImagesBtn');
   if (clearImagesBtn) {
     clearImagesBtn.addEventListener('click', async () => {
-      if (!confirm('Clear all cached images, pattern rules, user uploads, AND image URLs from inventory items?')) return;
+      const confirmed = await appConfirm(
+        'Clear all cached images, pattern rules, user uploads, AND image URLs from inventory items?',
+        'Image Data',
+      );
+      if (!confirmed) return;
       if (window.imageCache?.isAvailable()) await imageCache.clearAll();
       let cleared = 0;
       for (const item of inventory) {
@@ -482,7 +486,7 @@ const bindImageSyncListeners = () => {
       if (cleared > 0 && typeof saveInventory === 'function') saveInventory();
       populateImagesSection();
       if (typeof renderTable === 'function') renderTable();
-      alert(`Cleared all image data. ${cleared} item URL(s) reset.`);
+      appAlert(`Cleared all image data. ${cleared} item URL(s) reset.`);
     });
   }
 
@@ -491,15 +495,19 @@ const bindImageSyncListeners = () => {
     syncImageUrlsBtn.addEventListener('click', async () => {
       const config = typeof catalogConfig !== 'undefined' ? catalogConfig.getNumistaConfig() : null;
       if (!config?.apiKey) {
-        alert('Numista API key not configured.');
+        appAlert('Numista API key not configured.');
         return;
       }
       const eligible = inventory.filter(i => i.numistaId);
       if (!eligible.length) {
-        alert('No items with Numista IDs found.');
+        appAlert('No items with Numista IDs found.');
         return;
       }
-      if (!confirm(`Sync image URLs for ${eligible.length} items from Numista API?\nThis bypasses cache and uses your API quota.`)) {
+      const shouldSync = await appConfirm(
+        `Sync image URLs for ${eligible.length} items from Numista API?\nThis bypasses cache and uses your API quota.`,
+        'Sync Image URLs',
+      );
+      if (!shouldSync) {
         return;
       }
 
@@ -553,7 +561,7 @@ const bindImageSyncListeners = () => {
         }
         if (typeof saveInventory === 'function') saveInventory();
         populateImagesSection();
-        alert(`Image URL sync complete.\n${synced} synced, ${failed} failed, ${skipped} skipped (dupes).`);
+        appAlert(`Image URL sync complete.\n${synced} synced, ${failed} failed, ${skipped} skipped (dupes).`);
       } finally {
         syncImageUrlsBtn.disabled = false;
         syncImageUrlsBtn.textContent = 'Sync Image URLs from Numista';
@@ -620,7 +628,7 @@ const bindPatternRuleModeListeners = () => {
       const replacement = rawPattern || '';
 
       if (!rawPattern) {
-        alert('Pattern is required.');
+        appAlert('Pattern is required.');
         return;
       }
 
@@ -628,7 +636,7 @@ const bindPatternRuleModeListeners = () => {
       if (_patternMode === 'keywords') {
         const terms = rawPattern.split(/[,;]/).map(t => t.trim()).filter(t => t.length > 0);
         if (terms.length === 0) {
-          alert('Enter at least one keyword.');
+          appAlert('Enter at least one keyword.');
           return;
         }
         pattern = terms.map(t => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|');
@@ -637,12 +645,12 @@ const bindPatternRuleModeListeners = () => {
       try {
         new RegExp(pattern, 'i');
       } catch (e) {
-        alert('Invalid pattern: ' + e.message);
+        appAlert('Invalid pattern: ' + e.message);
         return;
       }
 
       if (!obverseInput?.files?.[0] && !reverseInput?.files?.[0]) {
-        alert('Please select at least one image (obverse or reverse).');
+        appAlert('Please select at least one image (obverse or reverse).');
         return;
       }
 
@@ -670,14 +678,14 @@ const bindPatternRuleModeListeners = () => {
         }
       } catch (err) {
         console.error('Image processing failed:', err);
-        alert('Failed to process image: ' + err.message);
+        appAlert('Failed to process image: ' + err.message);
         return;
       }
 
       const ruleId = 'custom-img-' + Date.now();
       const addResult = NumistaLookup.addRule(pattern, replacement, null, ruleId);
       if (!addResult.success) {
-        alert(addResult.error || 'Failed to add rule.');
+        appAlert(addResult.error || 'Failed to add rule.');
         return;
       }
 
@@ -943,11 +951,11 @@ const bindImageImportExportListeners = () => {
   if (exportBtn) {
     exportBtn.addEventListener('click', async () => {
       if (!window.imageCache?.isAvailable()) {
-        alert('IndexedDB unavailable.');
+        appAlert('IndexedDB unavailable.');
         return;
       }
       if (typeof JSZip === 'undefined') {
-        alert('JSZip not loaded.');
+        appAlert('JSZip not loaded.');
         return;
       }
 
@@ -955,10 +963,11 @@ const bindImageImportExportListeners = () => {
         ? BulkImageCache.buildEligibleList().length
         : 0;
       // nosemgrep: javascript.browser.security.insecure-document-method.insecure-document-method
-      const includeCdn = eligibleCount > 0 && confirm(
+      const includeCdn = eligibleCount > 0 && await appConfirm(
         'Download CDN catalog images for offline use?\n\n' +
         'This fetches images for items with Numista IDs (1 second between each). ' +
-        'Already-cached images are included automatically.'
+        'Already-cached images are included automatically.',
+        'Export Images',
       );
 
       let progressEl = null;
@@ -996,7 +1005,7 @@ const bindImageImportExportListeners = () => {
         URL.revokeObjectURL(url);
       } catch (err) {
         console.error('Image export failed:', err);
-        alert('Export failed: ' + err.message);
+        appAlert('Export failed: ' + err.message);
       } finally {
         exportBtn.textContent = 'Export All Images';
         exportBtn.disabled = false;
@@ -1013,11 +1022,11 @@ const bindImageImportExportListeners = () => {
       const file = e.target.files?.[0];
       if (!file) return;
       if (typeof JSZip === 'undefined') {
-        alert('JSZip not loaded.');
+        appAlert('JSZip not loaded.');
         return;
       }
       if (!window.imageCache?.isAvailable()) {
-        alert('IndexedDB unavailable.');
+        appAlert('IndexedDB unavailable.');
         return;
       }
 
@@ -1081,7 +1090,7 @@ const bindImageImportExportListeners = () => {
         populateImagesSection();
       } catch (err) {
         console.error('Image import failed:', err);
-        alert('Import failed: ' + err.message);
+        appAlert('Import failed: ' + err.message);
       } finally {
         importBtn.textContent = 'Import Images';
         importBtn.disabled = false;
@@ -1164,7 +1173,7 @@ const _cloudBtnAction = async (btn, label, action, errorPrefix, finallyFn) => {
   try {
     await action(btn);
   } catch (err) {
-    alert(errorPrefix + err.message);
+    appAlert(errorPrefix + err.message);
   } finally {
     btn.disabled = false;
     btn.innerHTML = origHtml;
@@ -1193,7 +1202,7 @@ const _cloudRestoreWithCachedPw = async (provider, password, fileBytes) => {
     if (typeof showCloudToast === 'function') showCloudToast('Restore complete. Reloading\u2026');
     setTimeout(function () { location.reload(); }, 1200);
   } catch (err) {
-    alert('Decryption failed. Opening password prompt.');
+    appAlert('Decryption failed. Opening password prompt.');
     openVaultModal('cloud-import', {
       provider: provider,
       fileBytes: fileBytes,
@@ -1231,12 +1240,14 @@ const bindCloudStorageListeners = () => {
           var localInfo = localItems.toLocaleString() + ' items';
           var remoteLine = 'Remote: ' + remoteItems.toLocaleString() + ' items (' + remoteInfo + ')';
           var localLine = 'Local: ' + localInfo;
-          if (!confirm(
+          const shouldOverwrite = await appConfirm(
             'A newer remote backup exists.\n\n' +
             remoteLine + '\n' +
             localLine + '\n\n' +
-            'Do you want to overwrite the remote backup with current local data?'
-          )) {
+            'Do you want to overwrite the remote backup with current local data?',
+            'Cloud Backup Conflict',
+          );
+          if (!shouldOverwrite) {
             return;
           }
         }
@@ -1265,7 +1276,11 @@ const bindCloudStorageListeners = () => {
       var filename = btn.dataset.filename;
       var size = parseInt(btn.dataset.size, 10) || 0;
       var sizeStr = size < 1024 ? size + ' B' : size < 1048576 ? (size / 1024).toFixed(0) + ' KB' : (size / 1048576).toFixed(1) + ' MB';
-      if (!confirm('Restore "' + filename + '" (' + sizeStr + ')?\n\nThis will overwrite all local data.')) return;
+      const restoreConfirmed = await appConfirm(
+        `Restore "${filename}" (${sizeStr})?\n\nThis will overwrite all local data.`,
+        'Cloud Restore',
+      );
+      if (!restoreConfirmed) return;
       await _cloudBtnAction(btn, 'Downloading\u2026', async () => {
         var fileBytes = await cloudDownloadVaultByName(provider, filename);
         var savedPw = typeof cloudGetCachedPassword === 'function' ? cloudGetCachedPassword(provider) : null;

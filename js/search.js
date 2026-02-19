@@ -476,7 +476,7 @@ const handleSaveSearchPattern = async () => {
   const defaultLabel = deriveSearchLabel(patterns);
   const label = typeof showAppPrompt === 'function'
     ? await showAppPrompt('Label for saved filter chip:', defaultLabel, 'Save Search Pattern')
-    : window.prompt('Label for saved filter chip:', defaultLabel);
+    : null;
   if (!label || !label.trim()) {
     updateSaveSearchButton(query, fuzzyUsed);
     return;

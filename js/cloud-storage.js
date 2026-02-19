@@ -153,7 +153,7 @@ function renderSyncHistorySection() {
 async function clearCloudActivityLog() {
   const confirmed = typeof showAppConfirm === 'function'
     ? await showAppConfirm('Clear all cloud activity log? This cannot be undone.', 'Cloud Sync')
-    : confirm('Clear all cloud activity log? This cannot be undone.');
+    : false;
   if (!confirmed) return;
   saveCloudActivityLog([]);
   var panel = document.getElementById('logPanel_cloud');
@@ -377,7 +377,7 @@ function cloudNotifyAuthFailure(provider, message, details) {
     if (typeof showAppAlert === 'function') {
       showAppAlert(fullMessage, 'Cloud Sync');
     } else {
-      alert(fullMessage);
+      appAlert(fullMessage);
     }
   }
 }
