@@ -500,8 +500,57 @@ function syncHasLocalChanges() {
 }
 
 /**
+ * Show the "Update available" modal and return a Promise that resolves true
+ * (user accepted) or false (user dismissed / closed).
+ * @param {object} remoteMeta - The parsed staktrakr-sync.json content
+ * @returns {Promise<boolean>}
+ */
+function showSyncUpdateModal(remoteMeta) {
+  return new Promise(function (resolve) {
+    var modal = document.getElementById('cloudSyncUpdateModal');
+    if (!modal) { resolve(true); return; } // fallback: proceed if no modal in DOM
+
+    // Populate metadata fields
+    var itemCountEl = document.getElementById('syncUpdateItemCount');
+    var timestampEl = document.getElementById('syncUpdateTimestamp');
+    var deviceEl    = document.getElementById('syncUpdateDevice');
+
+    if (itemCountEl) itemCountEl.textContent = remoteMeta.itemCount != null ? String(remoteMeta.itemCount) : '—';
+    if (timestampEl) {
+      var ts = remoteMeta.timestamp ? new Date(remoteMeta.timestamp) : null;
+      timestampEl.textContent = ts ? ts.toLocaleString() : '—';
+    }
+    if (deviceEl) {
+      var devId = remoteMeta.deviceId || '';
+      deviceEl.textContent = devId ? devId.slice(0, 8) + '\u2026' : 'unknown';
+    }
+
+    modal.style.display = 'flex';
+
+    function cleanup(result) {
+      modal.style.display = 'none';
+      acceptBtn.removeEventListener('click', onAccept);
+      dismissBtn.removeEventListener('click', onDismiss);
+      dismissX.removeEventListener('click', onDismiss);
+      resolve(result);
+    }
+
+    function onAccept()  { cleanup(true); }
+    function onDismiss() { cleanup(false); }
+
+    var acceptBtn  = document.getElementById('syncUpdateAcceptBtn');
+    var dismissBtn = document.getElementById('syncUpdateDismissBtn');
+    var dismissX   = document.getElementById('syncUpdateDismissX');
+
+    if (acceptBtn)  acceptBtn.addEventListener('click', onAccept);
+    if (dismissBtn) dismissBtn.addEventListener('click', onDismiss);
+    if (dismissX)   dismissX.addEventListener('click', onDismiss);
+  });
+}
+
+/**
  * Handle a detected remote change.
- * If no local changes → auto-pull silently.
+ * If no local changes → show update-available modal, then pull on Accept.
  * If both sides changed → show conflict modal.
  * @param {object} remoteMeta - The parsed staktrakr-sync.json content
  */
@@ -509,8 +558,13 @@ async function handleRemoteChange(remoteMeta) {
   var hasLocal = syncHasLocalChanges();
 
   if (!hasLocal) {
-    // Auto-pull: no local changes to lose
-    debugLog('[CloudSync] Auto-pulling remote change (no local changes)');
+    // Show the update-available modal — let user decide before password prompt
+    debugLog('[CloudSync] Remote change detected — showing update modal');
+    var accepted = await showSyncUpdateModal(remoteMeta);
+    if (!accepted) {
+      debugLog('[CloudSync] User dismissed update — will retry next poll');
+      return;
+    }
     await pullSyncVault(remoteMeta);
     return;
   }
@@ -807,6 +861,7 @@ window.pushSyncVault = pushSyncVault;
 window.pullSyncVault = pullSyncVault;
 window.pollForRemoteChanges = pollForRemoteChanges;
 window.showSyncConflictModal = showSyncConflictModal;
+window.showSyncUpdateModal = showSyncUpdateModal;
 window.refreshSyncUI = refreshSyncUI;
 window.updateSyncStatusIndicator = updateSyncStatusIndicator;
 window.getSyncDeviceId = getSyncDeviceId;
