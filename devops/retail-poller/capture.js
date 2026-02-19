@@ -61,30 +61,34 @@ function loadProviders() {
 }
 
 /**
- * Build target list grouped by provider.
- * Returns: Map<providerId, Array<{coin, metal, provider, url}>>
+ * Build target list grouped by coin.
+ * Each coin gets its own session (4 providers × ~8s = ~35s, well under 5-min limit).
+ * 11 coins fits under the 25-concurrent-browser account limit.
+ *
+ * Returns: Map<coinSlug, Array<{coin, metal, provider, url}>>
  */
-function buildTargetsByProvider(providersJson) {
-  const byProvider = new Map();
+function buildTargetsByCoin(providersJson) {
+  const byCoin = new Map();
   for (const coinSlug of COINS) {
     const coin = providersJson.coins[coinSlug];
     if (!coin) {
       log(`WARN: coin "${coinSlug}" not found in providers.json, skipping`);
       continue;
     }
+    const targets = [];
     for (const provider of coin.providers) {
       if (!PROVIDERS.includes(provider.id)) continue;
       if (!provider.enabled || !provider.url) continue;
-      if (!byProvider.has(provider.id)) byProvider.set(provider.id, []);
-      byProvider.get(provider.id).push({
+      targets.push({
         coin: coinSlug,
         metal: coin.metal,
         provider: provider.id,
         url: provider.url,
       });
     }
+    if (targets.length > 0) byCoin.set(coinSlug, targets);
   }
-  return byProvider;
+  return byCoin;
 }
 
 // ---------------------------------------------------------------------------
@@ -98,7 +102,7 @@ async function createBrowserbaseSession() {
       "Content-Type": "application/json",
       "x-bb-api-key": BROWSERBASE_API_KEY,
     },
-    body: JSON.stringify({ projectId: BROWSERBASE_PROJECT_ID, timeout: 300 }),
+    body: JSON.stringify({ projectId: BROWSERBASE_PROJECT_ID }),
   });
 
   if (!response.ok) {
@@ -122,10 +126,10 @@ async function connectBrowserbaseSession(sessionId) {
 }
 
 // ---------------------------------------------------------------------------
-// Capture one provider's targets using a dedicated browser session
+// Capture one coin's targets using a dedicated browser session
 // ---------------------------------------------------------------------------
 
-async function captureProvider(providerId, targets, outDir) {
+async function captureCoin(coinSlug, targets, outDir) {
   const results = [];
 
   let browser, page;
@@ -138,9 +142,9 @@ async function captureProvider(providerId, targets, outDir) {
     });
     page = await ctx.newPage();
   } else {
-    log(`[${providerId}] Creating Browserbase session...`);
+    log(`[${coinSlug}] Creating Browserbase session...`);
     const sessionId = await createBrowserbaseSession();
-    log(`[${providerId}] Session: ${sessionId}`);
+    log(`[${coinSlug}] Session: ${sessionId}`);
     ({ browser, page } = await connectBrowserbaseSession(sessionId));
   }
 
@@ -148,7 +152,7 @@ async function captureProvider(providerId, targets, outDir) {
     const filename = `${target.coin}_${target.provider}.png`;
     const filepath = join(outDir, filename);
 
-    log(`[${providerId}] ${target.coin} → ${target.url}`);
+    log(`[${coinSlug}/${target.provider}] → ${target.url}`);
 
     try {
       const response = await page.goto(target.url, {
@@ -172,7 +176,7 @@ async function captureProvider(providerId, targets, outDir) {
         ok: status === 200 && !title.toLowerCase().includes("not found"),
       });
 
-      log(`[${providerId}]   ✓ ${status} "${title.slice(0, 55)}" → ${filename}`);
+      log(`[${coinSlug}/${target.provider}]   ✓ ${status} "${title.slice(0, 50)}" → ${filename}`);
     } catch (err) {
       results.push({
         coin: target.coin,
@@ -185,7 +189,7 @@ async function captureProvider(providerId, targets, outDir) {
         ok: false,
         error: err.message.slice(0, 200),
       });
-      log(`[${providerId}]   ✗ ${target.coin}: ${err.message.slice(0, 80)}`);
+      log(`[${coinSlug}/${target.provider}]   ✗ ${err.message.slice(0, 80)}`);
     }
 
     if (targets.indexOf(target) < targets.length - 1) {
@@ -208,26 +212,27 @@ async function captureAll() {
   }
 
   const providersJson = loadProviders();
-  const byProvider = buildTargetsByProvider(providersJson);
+  const byCoin = buildTargetsByCoin(providersJson);
 
-  if (byProvider.size === 0) {
+  if (byCoin.size === 0) {
     console.error("No targets to capture. Check COINS/PROVIDERS env vars.");
     process.exit(1);
   }
 
-  const totalTargets = [...byProvider.values()].reduce((n, arr) => n + arr.length, 0);
-  log(`Capturing ${totalTargets} pages across ${byProvider.size} providers (parallel sessions)`);
+  const totalTargets = [...byCoin.values()].reduce((n, arr) => n + arr.length, 0);
+  log(`Capturing ${totalTargets} pages — ${byCoin.size} parallel sessions (one per coin, 4 providers each)`);
 
   const dateStr = today();
   const outDir = join(DATA_DIR, "retail", "_artifacts", dateStr);
   mkdirSync(outDir, { recursive: true });
 
-  // Launch one session per provider, all in parallel
-  const providerJobs = [...byProvider.entries()].map(([providerId, targets]) =>
-    captureProvider(providerId, targets, outDir)
+  // Launch one session per coin, all in parallel — each session only ~35s,
+  // well within Browserbase's 5-min session limit. 11 sessions < 25 account limit.
+  const coinJobs = [...byCoin.entries()].map(([coinSlug, targets]) =>
+    captureCoin(coinSlug, targets, outDir)
   );
 
-  const allResults = (await Promise.all(providerJobs)).flat();
+  const allResults = (await Promise.all(coinJobs)).flat();
 
   // Write manifest
   const manifest = {
