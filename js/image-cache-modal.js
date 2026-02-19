@@ -336,7 +336,6 @@ const clearAllCachedData = async () => {
     return;
   }
 
-  // eslint-disable-next-line no-restricted-globals
   if (!confirm(`Delete all ${usage.count} cached entries (images + metadata)? This cannot be undone.`)) return;
 
   const ok = await imageCache.clearAll();
