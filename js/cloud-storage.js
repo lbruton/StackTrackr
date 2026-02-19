@@ -718,6 +718,45 @@ async function cloudDownloadVaultByName(provider, filename) {
 }
 
 // ---------------------------------------------------------------------------
+// Delete a backup file from cloud
+// ---------------------------------------------------------------------------
+
+async function cloudDeleteBackup(provider, filename) {
+  var deleteStart = Date.now();
+  var token = await cloudGetToken(provider);
+  if (!token) throw new Error('Not connected to ' + CLOUD_PROVIDERS[provider].name);
+
+  var config = CLOUD_PROVIDERS[provider];
+
+  if (provider === 'dropbox') {
+    var resp = await fetch('https://api.dropboxapi.com/2/files/delete_v2', {
+      method: 'POST',
+      headers: {
+        Authorization: 'Bearer ' + token,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ path: config.folder + '/' + filename }),
+    });
+    if (!resp.ok) throw new Error('Delete failed: ' + resp.status);
+
+    // If this was also the latest pointer, clear the pointer too
+    var latest = null;
+    try {
+      latest = JSON.parse(localStorage.getItem('cloud_last_backup'));
+    } catch (_) { /* ignore */ }
+    if (latest && latest.filename === filename) {
+      localStorage.removeItem('cloud_last_backup');
+      if (typeof syncCloudUI === 'function') syncCloudUI();
+    }
+
+    recordCloudActivity({ action: 'delete', provider: provider, result: 'success', detail: filename, duration: Date.now() - deleteStart });
+    return;
+  }
+
+  throw new Error('Delete not supported for ' + provider);
+}
+
+// ---------------------------------------------------------------------------
 // Download vault from cloud (legacy — downloads latest)
 // ---------------------------------------------------------------------------
 
@@ -866,6 +905,9 @@ function syncCloudUI() {
       pwStatusEl.style.color = 'var(--text-secondary)';
     }
   }
+
+  // STAK-149: Refresh auto-sync UI (toggle, last-synced, status dot)
+  if (typeof refreshSyncUI === 'function') refreshSyncUI();
 }
 
 // ---------------------------------------------------------------------------
@@ -939,6 +981,7 @@ window.cloudDisconnect = cloudDisconnect;
 window.cloudUploadVault = cloudUploadVault;
 window.cloudDownloadVault = cloudDownloadVault;
 window.cloudDownloadVaultByName = cloudDownloadVaultByName;
+window.cloudDeleteBackup = cloudDeleteBackup;
 window.cloudListBackups = cloudListBackups;
 window.cloudGetRemoteLatest = cloudGetRemoteLatest;
 window.cloudCheckConflict = cloudCheckConflict;

@@ -1066,11 +1066,19 @@ const renderCloudBackupList = (provider, backups) => {
     const sizeStr = b.size < 1024 ? b.size + ' B' :
       b.size < 1048576 ? (b.size / 1024).toFixed(0) + ' KB' :
         (b.size / 1048576).toFixed(1) + ' MB';
-    return '<button class="cloud-backup-entry" data-provider="' + sanitizeHtml(provider) +
-      '" data-filename="' + sanitizeHtml(b.name) + '" data-size="' + b.size + '">' +
-      '<span class="cloud-backup-date">' + sanitizeHtml(dateStr) + '</span>' +
-      '<span class="cloud-backup-size">' + sanitizeHtml(sizeStr) + '</span>' +
-      '</button>';
+    const safeProvider = sanitizeHtml(provider);
+    const safeFilename = sanitizeHtml(b.name);
+    return '<div class="cloud-backup-row">' +
+      '<button class="cloud-backup-entry" data-provider="' + safeProvider +
+        '" data-filename="' + safeFilename + '" data-size="' + b.size + '">' +
+        '<span class="cloud-backup-name" title="' + safeFilename + '">' + sanitizeHtml(dateStr) + '</span>' +
+        '<span class="cloud-backup-size">' + sanitizeHtml(sizeStr) + '</span>' +
+      '</button>' +
+      '<button class="cloud-backup-delete-btn" data-provider="' + safeProvider +
+        '" data-filename="' + safeFilename + '" title="Delete this backup from Dropbox" aria-label="Delete ' + safeFilename + '">' +
+        '&times;' +
+      '</button>' +
+    '</div>';
   }).join('');
 };
 
@@ -1213,6 +1221,20 @@ const bindCloudStorageListeners = () => {
           size: size,
         });
       }, 'Download failed: ', async () => {
+        var parentList = btn.closest('.cloud-backup-list');
+        if (parentList) {
+          var refreshed = await cloudListBackups(provider);
+          renderCloudBackupList(provider, refreshed);
+        }
+      });
+
+    } else if (btn.classList.contains('cloud-backup-delete-btn')) {
+      var delFilename = btn.dataset.filename;
+      if (!confirm('Delete "' + delFilename + '" from Dropbox?\n\nThis cannot be undone.')) return;
+      await _cloudBtnAction(btn, '\u2026', async () => {
+        await cloudDeleteBackup(provider, delFilename);
+        if (typeof showCloudToast === 'function') showCloudToast('"' + delFilename + '" deleted.');
+      }, 'Delete failed: ', async () => {
         var parentList = btn.closest('.cloud-backup-list');
         if (parentList) {
           var refreshed = await cloudListBackups(provider);
