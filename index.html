@@ -1089,7 +1089,12 @@
             <!-- Hidden fields -->
             <input type="hidden" id="itemSerial" value="" />
             <input type="hidden" id="itemSpotPrice" value="" />
-            <!-- First row of form fields -->
+
+            <!-- ═══════════════════════════════════════════════════════
+                 CORE FIELDS — Always visible
+                 ═══════════════════════════════════════════════════════ -->
+
+            <!-- Row: Metal & Type -->
             <div class="grid grid-2">
               <div>
                 <label for="itemMetal">Metal</label>
@@ -1134,11 +1139,11 @@
               </div>
               <div>
                 <label for="itemQty">Quantity</label>
-                <input id="itemQty" min="1" required step="1" type="number" />
+                <input id="itemQty" min="1" required step="1" type="number" value="1" />
               </div>
               <div>
                 <label for="itemWeight" id="itemWeightLabel">Weight</label>
-                <input id="itemWeight" inputmode="decimal" placeholder="1, 0.5, 1/10" required type="text" />
+                <input id="itemWeight" inputmode="decimal" placeholder="1, 0.5, 1/10" required type="text" value="1" />
                 <select id="itemGbDenom" style="display:none;">
                   <option value="0.5">½ Goldback</option>
                   <option value="1" selected>1 Goldback</option>
@@ -1165,236 +1170,457 @@
                 <input id="itemPurity" type="number" min="0.001" max="1" step="0.0001" placeholder="e.g. 0.9995" />
               </div>
             </div>
-            <!-- Row: Name & Year (Name wider) -->
+            <!-- Row: Name & Year -->
             <div class="grid grid-name-year">
               <div>
                 <label for="itemName">Name</label>
-                <input id="itemName" required type="text" />
+                <div class="input-with-action">
+                  <input id="itemName" required type="text" />
+                  <button class="inline-search-btn" id="searchNumistaNameBtn" type="button"
+                          title="Search Numista catalog by name">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                         stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                      <circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="21" y2="21"/>
+                    </svg>
+                  </button>
+                </div>
               </div>
               <div>
                 <label for="itemYear">Year <span style="font-weight:normal;opacity:0.6;">(optional)</span></label>
                 <input id="itemYear" type="text" placeholder="e.g. 2024" />
               </div>
             </div>
-            <!-- Row: Grade, Authority & Cert # -->
-            <div class="grid grid-grade">
-              <div>
-                <label for="itemGrade">Grade <span style="font-weight:normal;opacity:0.6;">(optional)</span></label>
-                <select id="itemGrade">
-                  <option value="">-- None --</option>
-                  <optgroup label="Standard">
-                    <option value="AG">AG - About Good</option>
-                    <option value="G">G - Good</option>
-                    <option value="VG">VG - Very Good</option>
-                    <option value="F">F - Fine</option>
-                    <option value="VF">VF - Very Fine</option>
-                    <option value="XF">XF - Extremely Fine</option>
-                    <option value="AU">AU - About Uncirculated</option>
-                    <option value="UNC">UNC - Uncirculated</option>
-                    <option value="BU">BU - Brilliant Uncirculated</option>
-                  </optgroup>
-                  <optgroup label="Mint State">
-                    <option value="MS-60">MS-60</option>
-                    <option value="MS-61">MS-61</option>
-                    <option value="MS-62">MS-62</option>
-                    <option value="MS-63">MS-63</option>
-                    <option value="MS-64">MS-64</option>
-                    <option value="MS-65">MS-65</option>
-                    <option value="MS-66">MS-66</option>
-                    <option value="MS-67">MS-67</option>
-                    <option value="MS-68">MS-68</option>
-                    <option value="MS-69">MS-69</option>
-                    <option value="MS-70">MS-70</option>
-                  </optgroup>
-                  <optgroup label="Proof">
-                    <option value="PF-60">PF-60</option>
-                    <option value="PF-61">PF-61</option>
-                    <option value="PF-62">PF-62</option>
-                    <option value="PF-63">PF-63</option>
-                    <option value="PF-64">PF-64</option>
-                    <option value="PF-65">PF-65</option>
-                    <option value="PF-66">PF-66</option>
-                    <option value="PF-67">PF-67</option>
-                    <option value="PF-68">PF-68</option>
-                    <option value="PF-69">PF-69</option>
-                    <option value="PF-70">PF-70</option>
-                  </optgroup>
-                </select>
-              </div>
-              <div>
-                <label for="itemGradingAuthority">Authority <span style="font-weight:normal;opacity:0.6;">(optional)</span></label>
-                <select id="itemGradingAuthority">
-                  <option value="">-- None --</option>
-                  <option value="PCGS">PCGS</option>
-                  <option value="NGC">NGC</option>
-                  <option value="ANACS">ANACS</option>
-                  <option value="ICG">ICG</option>
-                </select>
-              </div>
-              <div>
-                <label for="itemCertNumber">Cert #
-                  <span id="certVerifiedIcon" style="display:none;color:#16a34a;margin-left:0.25rem;vertical-align:middle;" title="PCGS Verified"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></span>
-                  <span style="font-weight:normal;opacity:0.6;">(optional)</span></label>
-                <input id="itemCertNumber" type="text" placeholder="e.g. 12345678" />
-              </div>
-            </div>
-            <!-- Row: Storage Location & Serial # -->
-            <div class="grid grid-2">
-              <div>
-                <label for="storageLocation">Storage Location</label>
-                <input id="storageLocation" type="text" placeholder="Vault A, Safe B, etc..." />
-              </div>
-              <div>
-                <label for="itemSerialNumber">Serial # <span style="font-weight:normal;opacity:0.6;">(optional)</span></label>
-                <input id="itemSerialNumber" type="text" placeholder="Bar or note serial number" />
-              </div>
-            </div>
             <!-- Row: Purchase Date & Purchase Price -->
             <div class="grid grid-2">
               <div id="dateField">
-                <label for="itemDate">Purchase Date</label>
-                <input id="itemDate" required type="date" />
+                <label for="itemDate">Purchase Date <span style="font-weight:normal;opacity:0.6;">(optional)</span></label>
+                <input id="itemDate" type="date" />
+                <label class="date-na-label">
+                  <input type="checkbox" id="itemDateNA" /> <span>N/A</span>
+                </label>
               </div>
               <div>
                 <label for="itemPrice">Purchase Price</label>
-                <div class="currency-input">
+                <div class="currency-input input-with-action">
                   <input id="itemPrice" min="0" step="0.01" type="number" />
+                  <button class="inline-search-btn" id="spotLookupBtn" type="button" disabled
+                          title="Search for spot price on purchase date">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                         stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                      <line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                    </svg>
+                  </button>
                 </div>
               </div>
             </div>
-            <!-- Row: Purchase Location & Retail Price -->
+            <!-- Row: Purchase Location & Storage Location -->
             <div class="grid grid-2">
               <div>
                 <label for="purchaseLocation">Purchase Location</label>
                 <input id="purchaseLocation" type="text" />
               </div>
-              <div id="marketValueField">
-                <label for="itemMarketValue">Retail Price <span style="font-weight:normal;opacity:0.6;">(optional)</span>
-                  <span id="retailPriceHistoryLink" class="field-history-link" title="View price history">&#x1f4c8;</span>
-                </label>
-                <div class="currency-input">
-                  <input id="itemMarketValue" min="0" step="0.01" type="number" placeholder="Defaults to melt value" />
-                </div>
-              </div>
-            </div>
-            <!-- Row: Numista # & PCGS # -->
-            <div class="grid grid-2">
               <div>
-                <label for="itemCatalog">Numista #</label>
-                <input id="itemCatalog" type="text" placeholder="e.g. 95694" />
-              </div>
-              <div>
-                <label for="itemPcgsNumber">PCGS # <span style="font-weight:normal;opacity:0.6;">(optional)</span>
-                  <a href="https://www.pcgs.com/pcgsnolookup" target="_blank" rel="noopener" title="Look up PCGS coin numbers" class="form-info-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-                  </a>
-                </label>
-                <input id="itemPcgsNumber" type="text" placeholder="e.g. 786060" />
+                <label for="storageLocation">Storage Location</label>
+                <input id="storageLocation" type="text" placeholder="Vault A, Safe B, etc..." />
               </div>
             </div>
-            <!-- Row: Notes -->
-            <div>
-              <label for="itemNotes">Notes</label>
-              <input id="itemNotes" type="text" placeholder="Additional notes or comments..." />
-            </div>
-            <!-- Image URLs — Obverse + Reverse -->
-            <div id="imageUrlGroup" class="image-upload-group" style="display:none">
-              <label>Image URLs
-                <button id="refreshImageUrlsBtn" type="button" class="btn secondary btn-sm" style="margin-left:0.5rem;padding:0.15rem 0.4rem" title="Fetch image URLs from Numista API (bypasses cache)">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none"
-                       stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
-                       style="vertical-align: -1px;">
-                    <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/>
-                    <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
-                  </svg>
-                </button>
-              </label>
-              <div class="image-upload-sides">
-                <div class="image-upload-side">
-                  <span class="image-side-label">Obverse</span>
-                  <input id="itemObverseImageUrl" type="url" class="form-control" placeholder="https://example.com/obverse.jpg" />
-                </div>
-                <div class="image-upload-side">
-                  <span class="image-side-label">Reverse</span>
-                  <input id="itemReverseImageUrl" type="url" class="form-control" placeholder="https://example.com/reverse.jpg" />
-                </div>
-              </div>
-            </div>
-            <!-- Image upload — Obverse + Reverse (STACK-32/33) -->
+            <!-- Images — Unified upload / camera / URL per slot -->
             <div id="imageUploadGroup" class="image-upload-group" style="display:none">
-              <label>Photos</label>
+              <label>Images</label>
               <div class="image-upload-sides">
                 <!-- Obverse -->
                 <div class="image-upload-side">
                   <span class="image-side-label">Obverse</span>
-                  <div class="image-upload-row">
-                    <input type="file" id="itemImageFileObv" accept="image/jpeg,image/png,image/webp" style="display:none" />
-                    <button class="btn secondary btn-sm" id="itemImageUploadBtnObv" type="button">Upload</button>
-                    <button class="btn secondary btn-sm" id="itemImageCameraBtnObv" type="button" style="display:none">Camera</button>
-                    <button class="btn secondary btn-sm" id="itemImageRemoveBtnObv" type="button" style="display:none">Remove</button>
-                    <span id="itemImageSizeInfoObv" class="image-size-info"></span>
+                  <div class="image-card">
+                    <div id="itemImagePreviewObv" class="image-upload-preview" style="display:none">
+                      <img id="itemImagePreviewImgObv" alt="Obverse preview" />
+                    </div>
+                    <div class="image-card-actions">
+                      <input type="file" id="itemImageFileObv" accept="image/jpeg,image/png,image/webp" style="display:none" />
+                      <button class="btn img-btn img-btn-upload" id="itemImageUploadBtnObv" type="button">Upload</button>
+                      <button class="btn img-btn img-btn-url" id="itemImageUrlBtnObv" type="button" style="display:none">URL</button>
+                      <button class="btn img-btn img-btn-camera" id="itemImageCameraBtnObv" type="button" style="display:none">Camera</button>
+                      <button class="btn img-btn img-btn-remove" id="itemImageRemoveBtnObv" type="button" style="display:none">Remove</button>
+                    </div>
                   </div>
-                  <div id="itemImagePreviewObv" class="image-upload-preview" style="display:none">
-                    <img id="itemImagePreviewImgObv" alt="Obverse preview" />
+                  <span id="itemImageSizeInfoObv" class="image-size-info"></span>
+                  <div id="itemImageUrlInputObv" class="image-url-input" style="display:none">
+                    <input id="itemObverseImageUrl" type="url" class="form-control" placeholder="https://example.com/obverse.jpg" />
                   </div>
                 </div>
                 <!-- Reverse -->
                 <div class="image-upload-side">
                   <span class="image-side-label">Reverse</span>
-                  <div class="image-upload-row">
-                    <input type="file" id="itemImageFileRev" accept="image/jpeg,image/png,image/webp" style="display:none" />
-                    <button class="btn secondary btn-sm" id="itemImageUploadBtnRev" type="button">Upload</button>
-                    <button class="btn secondary btn-sm" id="itemImageCameraBtnRev" type="button" style="display:none">Camera</button>
-                    <button class="btn secondary btn-sm" id="itemImageRemoveBtnRev" type="button" style="display:none">Remove</button>
-                    <span id="itemImageSizeInfoRev" class="image-size-info"></span>
+                  <div class="image-card">
+                    <div id="itemImagePreviewRev" class="image-upload-preview" style="display:none">
+                      <img id="itemImagePreviewImgRev" alt="Reverse preview" />
+                    </div>
+                    <div class="image-card-actions">
+                      <input type="file" id="itemImageFileRev" accept="image/jpeg,image/png,image/webp" style="display:none" />
+                      <button class="btn img-btn img-btn-upload" id="itemImageUploadBtnRev" type="button">Upload</button>
+                      <button class="btn img-btn img-btn-url" id="itemImageUrlBtnRev" type="button" style="display:none">URL</button>
+                      <button class="btn img-btn img-btn-camera" id="itemImageCameraBtnRev" type="button" style="display:none">Camera</button>
+                      <button class="btn img-btn img-btn-remove" id="itemImageRemoveBtnRev" type="button" style="display:none">Remove</button>
+                    </div>
                   </div>
-                  <div id="itemImagePreviewRev" class="image-upload-preview" style="display:none">
-                    <img id="itemImagePreviewImgRev" alt="Reverse preview" />
+                  <span id="itemImageSizeInfoRev" class="image-size-info"></span>
+                  <div id="itemImageUrlInputRev" class="image-url-input" style="display:none">
+                    <input id="itemReverseImageUrl" type="url" class="form-control" placeholder="https://example.com/reverse.jpg" />
                   </div>
                 </div>
               </div>
+              <!-- Hidden wrapper preserved for feature-flag JS compatibility -->
+              <div id="imageUrlGroup" style="display:none"></div>
               <div id="imagePatternToggleGroup" class="image-pattern-toggle-group" style="display:none">
-                <label class="settings-checkbox-label">
-                  <input type="checkbox" id="imagePatternToggle" />
-                  Apply to all matching items
-                </label>
+                <div class="pattern-toggle-row">
+                  <label class="settings-checkbox-label pattern-toggle-label">
+                    <input type="checkbox" id="imagePatternToggle" />
+                    Apply to all matching items
+                  </label>
+                  <button id="refreshImageUrlsBtn" type="button" class="btn secondary btn-sm pattern-refresh-btn" style="display:none" title="Fetch image URLs from Numista API (bypasses cache)">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                         stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/>
+                      <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+                    </svg>
+                  </button>
+                </div>
                 <div id="imagePatternKeywordsGroup" style="display:none">
                   <input type="text" id="imagePatternKeywords" class="form-control" placeholder="e.g. American Silver Eagle, 2024" />
                   <small class="pattern-rule-tip">Pre-filled with the item name. Add year or keywords separated by commas to narrow matches.</small>
                 </div>
               </div>
             </div>
+
+            <!-- ═══════════════════════════════════════════════════════
+                 COLLAPSIBLE — Grading & Certification
+                 ═══════════════════════════════════════════════════════ -->
+            <details class="form-section">
+              <summary class="form-section-header">
+                <span class="form-section-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                       stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/>
+                  </svg>
+                </span>
+                Grading &amp; Certification
+              </summary>
+              <div class="form-section-body">
+                <div class="grid grid-grade">
+                  <div>
+                    <label for="itemGrade">Grade <span style="font-weight:normal;opacity:0.6;">(optional)</span></label>
+                    <select id="itemGrade">
+                      <option value="">-- None --</option>
+                      <optgroup label="Standard">
+                        <option value="AG">AG - About Good</option>
+                        <option value="G">G - Good</option>
+                        <option value="VG">VG - Very Good</option>
+                        <option value="F">F - Fine</option>
+                        <option value="VF">VF - Very Fine</option>
+                        <option value="XF">XF - Extremely Fine</option>
+                        <option value="AU">AU - About Uncirculated</option>
+                        <option value="UNC">UNC - Uncirculated</option>
+                        <option value="BU">BU - Brilliant Uncirculated</option>
+                      </optgroup>
+                      <optgroup label="Mint State">
+                        <option value="MS-60">MS-60</option>
+                        <option value="MS-61">MS-61</option>
+                        <option value="MS-62">MS-62</option>
+                        <option value="MS-63">MS-63</option>
+                        <option value="MS-64">MS-64</option>
+                        <option value="MS-65">MS-65</option>
+                        <option value="MS-66">MS-66</option>
+                        <option value="MS-67">MS-67</option>
+                        <option value="MS-68">MS-68</option>
+                        <option value="MS-69">MS-69</option>
+                        <option value="MS-70">MS-70</option>
+                      </optgroup>
+                      <optgroup label="Proof">
+                        <option value="PF-60">PF-60</option>
+                        <option value="PF-61">PF-61</option>
+                        <option value="PF-62">PF-62</option>
+                        <option value="PF-63">PF-63</option>
+                        <option value="PF-64">PF-64</option>
+                        <option value="PF-65">PF-65</option>
+                        <option value="PF-66">PF-66</option>
+                        <option value="PF-67">PF-67</option>
+                        <option value="PF-68">PF-68</option>
+                        <option value="PF-69">PF-69</option>
+                        <option value="PF-70">PF-70</option>
+                      </optgroup>
+                    </select>
+                  </div>
+                  <div>
+                    <label for="itemGradingAuthority">Authority <span style="font-weight:normal;opacity:0.6;">(optional)</span></label>
+                    <select id="itemGradingAuthority">
+                      <option value="">-- None --</option>
+                      <option value="PCGS">PCGS</option>
+                      <option value="NGC">NGC</option>
+                      <option value="ANACS">ANACS</option>
+                      <option value="ICG">ICG</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label for="itemCertNumber">Cert #
+                      <span id="certVerifiedIcon" style="display:none;color:#16a34a;margin-left:0.25rem;vertical-align:middle;" title="PCGS Verified"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></span>
+                      <span style="font-weight:normal;opacity:0.6;">(optional)</span></label>
+                    <div class="input-with-action">
+                      <input id="itemCertNumber" type="text" placeholder="e.g. 12345678" />
+                      <button class="inline-search-btn" id="lookupPcgsBtn" type="button"
+                              title="Look up coin via PCGS Cert# or PCGS#">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                             stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                          <circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="21" y2="21"/>
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                <div class="grid grid-2">
+                  <div>
+                    <label for="itemCatalog">Numista #</label>
+                    <div class="input-with-action">
+                      <input id="itemCatalog" type="text" placeholder="e.g. 95694" />
+                      <button class="inline-search-btn" id="searchNumistaBtn" type="button"
+                              title="Search Numista catalog by N#">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                             stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                          <circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="21" y2="21"/>
+                        </svg>
+                        <span id="numistaModalStatusDot" class="api-status-dot disconnected" title="Numista API: disconnected"></span>
+                      </button>
+                    </div>
+                  </div>
+                  <div>
+                    <label for="itemPcgsNumber">PCGS # <span style="font-weight:normal;opacity:0.6;">(optional)</span>
+                      <a href="https://www.pcgs.com/pcgsnolookup" target="_blank" rel="noopener" title="Look up PCGS coin numbers" class="form-info-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                      </a>
+                    </label>
+                    <input id="itemPcgsNumber" type="text" placeholder="e.g. 786060" />
+                  </div>
+                </div>
+              </div>
+            </details>
+
+            <!-- ═══════════════════════════════════════════════════════
+                 COLLAPSIBLE — Pricing & Details
+                 ═══════════════════════════════════════════════════════ -->
+            <details class="form-section">
+              <summary class="form-section-header">
+                <span class="form-section-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                       stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                  </svg>
+                </span>
+                Pricing &amp; Details
+              </summary>
+              <div class="form-section-body">
+                <div class="grid grid-2">
+                  <div id="marketValueField">
+                    <label for="itemMarketValue">Retail Price <span style="font-weight:normal;opacity:0.6;">(optional)</span>
+                      <span id="retailPriceHistoryLink" class="field-history-link" title="View price history">&#x1f4c8;</span>
+                    </label>
+                    <div class="currency-input">
+                      <input id="itemMarketValue" min="0" step="0.01" type="number" placeholder="Defaults to melt value" />
+                    </div>
+                  </div>
+                  <div>
+                    <label for="itemSerialNumber">Serial # <span style="font-weight:normal;opacity:0.6;">(optional)</span></label>
+                    <input id="itemSerialNumber" type="text" placeholder="Bar or note serial number" />
+                  </div>
+                </div>
+                <div class="grid grid-2" style="margin-top:0.35rem;">
+                  <div>
+                    <label class="settings-checkbox-label estimate-retail-label">
+                      <input type="checkbox" id="estimateRetailFromSpot" />
+                      Estimate Retail From Spot
+                    </label>
+                  </div>
+                  <div>
+                    <label for="retailSpotModifier">Modifier <span style="font-weight:normal;opacity:0.6;">(%)</span></label>
+                    <input id="retailSpotModifier" type="number" min="0" step="0.1" placeholder="e.g. 5" disabled />
+                  </div>
+                </div>
+              </div>
+            </details>
+
+            <!-- ═══════════════════════════════════════════════════════
+                 COLLAPSIBLE — Numista Data
+                 ═══════════════════════════════════════════════════════ -->
+            <details class="form-section" id="numistaDataSection">
+              <summary class="form-section-header">
+                <span class="form-section-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                       stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>
+                  </svg>
+                </span>
+                Numista Data
+              </summary>
+              <div class="form-section-body numista-data-fields">
+                <div class="grid grid-2">
+                  <div>
+                    <label for="numistaCountry">Country</label>
+                    <input id="numistaCountry" type="text" placeholder="e.g. United States" />
+                  </div>
+                  <div>
+                    <label for="numistaDenomination">Denomination</label>
+                    <input id="numistaDenomination" type="text" placeholder="e.g. 1 Dollar" />
+                  </div>
+                </div>
+                <div class="grid grid-2">
+                  <div>
+                    <label for="numistaComposition">Composition</label>
+                    <input id="numistaComposition" type="text" placeholder="e.g. Silver (.999)" />
+                  </div>
+                  <div>
+                    <label for="numistaShape">Shape</label>
+                    <input id="numistaShape" type="text" placeholder="e.g. Round" />
+                  </div>
+                </div>
+                <div class="grid grid-3-equal">
+                  <div>
+                    <label for="numistaDiameter">Diameter <span style="font-weight:normal;opacity:0.6;">(mm)</span></label>
+                    <input id="numistaDiameter" type="text" placeholder="e.g. 40.6" />
+                  </div>
+                  <div>
+                    <label for="numistaThickness">Thickness <span style="font-weight:normal;opacity:0.6;">(mm)</span></label>
+                    <input id="numistaThickness" type="text" placeholder="e.g. 2.98" />
+                  </div>
+                  <div>
+                    <label for="numistaOrientation">Orientation</label>
+                    <input id="numistaOrientation" type="text" placeholder="e.g. Coin" />
+                  </div>
+                </div>
+                <div class="grid grid-2">
+                  <div>
+                    <label for="numistaTechnique">Technique</label>
+                    <input id="numistaTechnique" type="text" placeholder="e.g. Milled" />
+                  </div>
+                  <div>
+                    <label for="numistaMintage">Mintage</label>
+                    <input id="numistaMintage" type="text" placeholder="e.g. 500,000" />
+                  </div>
+                </div>
+                <div class="grid grid-2">
+                  <div>
+                    <label for="numistaRarity">Rarity Index</label>
+                    <input id="numistaRarity" type="text" placeholder="e.g. 85" />
+                  </div>
+                  <div>
+                    <label for="numistaKmRef">KM Reference</label>
+                    <input id="numistaKmRef" type="text" placeholder="e.g. KM#273" />
+                  </div>
+                </div>
+                <div>
+                  <label class="settings-checkbox-label">
+                    <input type="checkbox" id="numistaCommemorative" />
+                    Commemorative
+                  </label>
+                </div>
+                <div id="numistaCommemorativeDescWrap" style="display:none;">
+                  <label for="numistaCommemorativeDesc">Commemorative Description</label>
+                  <input id="numistaCommemorativeDesc" type="text" placeholder="What this coin commemorates..." />
+                </div>
+                <div>
+                  <label for="numistaObverseDesc">Obverse Description</label>
+                  <input id="numistaObverseDesc" type="text" placeholder="Obverse design description..." />
+                </div>
+                <div>
+                  <label for="numistaReverseDesc">Reverse Description</label>
+                  <input id="numistaReverseDesc" type="text" placeholder="Reverse design description..." />
+                </div>
+                <div>
+                  <label for="numistaEdgeDesc">Edge Description</label>
+                  <input id="numistaEdgeDesc" type="text" placeholder="Edge design description..." />
+                </div>
+              </div>
+            </details>
+
+            <!-- ═══════════════════════════════════════════════════════
+                 COLLAPSIBLE — Notes
+                 ═══════════════════════════════════════════════════════ -->
+            <details class="form-section">
+              <summary class="form-section-header">
+                <span class="form-section-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                       stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
+                  </svg>
+                </span>
+                Notes
+              </summary>
+              <div class="form-section-body">
+                <div>
+                  <label for="itemNotes">Notes</label>
+                  <input id="itemNotes" type="text" placeholder="Additional notes or comments..." />
+                </div>
+              </div>
+            </details>
+
+            <!-- ═══════════════════════════════════════════════════════
+                 COLLAPSIBLE — Tags
+                 ═══════════════════════════════════════════════════════ -->
+            <details class="form-section" id="tagsSection">
+              <summary class="form-section-header">
+                <span class="form-section-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                       stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/>
+                  </svg>
+                </span>
+                Tags
+              </summary>
+              <div class="form-section-body">
+                <div id="itemModalTagsContainer" class="tags-edit-container">
+                  <div id="itemModalNumistaTags" class="tags-row">
+                    <label>Numista Tags</label>
+                    <div class="tags-chips" id="numistaTagsChips">
+                      <span class="tag-empty-hint">No Numista tags</span>
+                    </div>
+                  </div>
+                  <div id="itemModalCustomTags" class="tags-row">
+                    <label>Custom Tags</label>
+                    <div class="tags-chips" id="customTagsChips">
+                      <span class="tag-empty-hint">No custom tags</span>
+                    </div>
+                    <div class="tags-add-row">
+                      <input type="text" id="newTagInput" placeholder="Add a tag..." class="form-control tag-input" />
+                      <button type="button" id="addTagBtn" class="btn secondary btn-sm" title="Add tag">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                             stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                          <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </details>
+
             <!-- Form action buttons -->
             <div class="item-modal-actions">
-              <div class="item-modal-actions-left">
-                <button class="btn secondary" id="searchNumistaBtn" type="button"
-                        title="Search Numista catalog using the Name or N# field">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
-                       stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
-                       style="vertical-align: -2px; margin-right: 0.3rem;">
-                    <circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="21" y2="21"/>
-                  </svg>Numista
-                </button>
-                <button class="btn secondary" id="lookupPcgsBtn" type="button"
-                        title="Look up coin via PCGS Cert# or PCGS# field">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
-                       stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
-                       style="vertical-align: -2px; margin-right: 0.3rem;">
-                    <circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="21" y2="21"/>
-                  </svg>PCGS
-                </button>
-                <button class="btn secondary" id="spotLookupBtn" type="button" disabled
-                        title="Look up spot price on the purchase date">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
-                       stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
-                       style="vertical-align: -2px; margin-right: 0.3rem;">
-                    <line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
-                  </svg>Spot
-                </button>
-              </div>
               <div class="item-modal-actions-right">
                 <button class="btn" id="undoChangeBtn" type="button" style="display:none">Undo</button>
                 <button class="btn" id="cancelItem" type="button">Cancel</button>
+                <button class="btn secondary" id="cloneItemBtn" type="button" style="display:none"
+                        title="Clone this item as a new entry">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                       stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                       style="vertical-align: -2px; margin-right: 0.2rem;">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                  </svg>Clone
+                </button>
+                <button class="btn secondary" id="viewItemFromEditBtn" type="button" style="display:none"
+                        title="View this item in read-only mode">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                       stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                       style="vertical-align: -2px; margin-right: 0.2rem;">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+                  </svg>View
+                </button>
                 <button class="btn premium" id="itemModalSubmit" type="submit">Add to Inventory</button>
               </div>
             </div>
