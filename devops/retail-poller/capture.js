@@ -120,7 +120,7 @@ async function connectBrowser() {
       "Content-Type": "application/json",
       "x-bb-api-key": BROWSERBASE_API_KEY,
     },
-    body: JSON.stringify({ projectId: BROWSERBASE_PROJECT_ID }),
+    body: JSON.stringify({ projectId: BROWSERBASE_PROJECT_ID, timeout: 600 }),
   });
 
   if (!response.ok) {
