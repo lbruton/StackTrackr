@@ -46,5 +46,6 @@ jobs:
           else
             DATE=$(date -u +%Y-%m-%d)
             git commit -m "retail: ${DATE} daily price data"
+            git pull --rebase origin data
             git push
           fi
