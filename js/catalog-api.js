@@ -1505,6 +1505,17 @@ const fillFormFromNumistaResult = () => {
       }
     }
   });
+
+  // Auto-populate Numista Data fields from the selected result (STAK-173)
+  if (selectedNumistaResult && typeof populateNumistaDataFields === 'function') {
+    // Cache the metadata first so populateNumistaDataFields can read it
+    const catId = selectedNumistaResult.catalogId;
+    if (catId && window.imageCache?.isAvailable()) {
+      imageCache.cacheMetadata(catId, selectedNumistaResult).then(() => {
+        populateNumistaDataFields(catId);
+      }).catch(() => {});
+    }
+  }
 };
 
 /**
