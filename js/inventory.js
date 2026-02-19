@@ -2149,6 +2149,10 @@ const endImportProgress = () => {
  * @param {boolean} [override=false] - Replace existing inventory instead of merging
  */
 const importCsv = (file, override = false) => {
+  if (typeof Papa === 'undefined') {
+    alert('CSV library (PapaParse) failed to load. Please check your internet connection and reload the page.');
+    return;
+  }
   try {
     debugLog('importCsv start', file.name);
     Papa.parse(file, {
@@ -2364,6 +2368,10 @@ const importCsv = (file, override = false) => {
  * @param {boolean} [override=false] - Replace existing inventory instead of merging
  */
 const importNumistaCsv = (file, override = false) => {
+  if (typeof Papa === 'undefined') {
+    alert('CSV library (PapaParse) failed to load. Please check your internet connection and reload the page.');
+    return;
+  }
   try {
     const reader = new FileReader();
     reader.onload = function(e) {
@@ -2701,6 +2709,10 @@ const exportNumistaCsv = () => {
  * Exports current inventory to CSV format
  */
 const exportCsv = () => {
+  if (typeof Papa === 'undefined') {
+    alert('CSV library (PapaParse) failed to load. Please check your internet connection and reload the page.');
+    return;
+  }
   debugLog('exportCsv start', inventory.length, 'items');
   const timestamp = new Date().toISOString().slice(0,10).replace(/-/g,'');
   const headers = [
@@ -3070,6 +3082,10 @@ const exportJson = () => {
  * Exports current inventory to PDF format
  */
 const exportPdf = () => {
+  if (!window.jspdf || !window.jspdf.jsPDF) {
+    alert('PDF library (jsPDF) failed to load. Please check your internet connection and reload the page.');
+    return;
+  }
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF('landscape');
 

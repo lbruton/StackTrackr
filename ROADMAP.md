@@ -6,28 +6,62 @@ Project direction and planned work. Each item links to its full Linear issue for
 
 ---
 
-## Near-Term — Search & Discovery
+## Near-Term — Sprint 1: App Health & Dialog Refactor
 
-Extend the filter chip and search systems with user-facing feature adds.
+Replace all native `alert()`/`confirm()`/`prompt()` calls with in-app modal equivalents.
+Unblocks browser automation, E2E testing, and PWA polish. Sequenced: shared utility first,
+then each feature area.
 
-| Issue | Title | Priority |
-|-------|-------|----------|
-| [STAK-104](https://linear.app/hextrackr/issue/STAK-104) | Save Search as Custom Filter Chip from Search Bar | High |
-| [STAK-98](https://linear.app/hextrackr/issue/STAK-98) | Item tags system: Numista tags + custom user tags with filter chip integration | Medium |
+| Issue | Title | Priority | Notes |
+|-------|-------|----------|-------|
+| [STAK-166](https://linear.app/hextrackr/issue/STAK-166) | Replace alert/confirm/prompt with in-app modal utility | High | Shared prereq — do first |
+| [STAK-161](https://linear.app/hextrackr/issue/STAK-161) | Replace native dialogs: Vault / Encrypted Backup flows | High | After STAK-166 |
+| [STAK-162](https://linear.app/hextrackr/issue/STAK-162) | Replace native dialogs: Cloud Storage flows | High | After STAK-166 |
+| [STAK-163](https://linear.app/hextrackr/issue/STAK-163) | Replace native dialogs: Import / Export / Restore flows | High | After STAK-166 |
+| [STAK-164](https://linear.app/hextrackr/issue/STAK-164) | Replace native dialogs: Settings & Configuration flows | Medium | After STAK-166 |
+| [STAK-165](https://linear.app/hextrackr/issue/STAK-165) | Replace native dialogs: Inventory & Bulk Edit flows | Medium | After STAK-166 |
 
 ---
 
+## Near-Term — Sprint 2: Accessibility & UX Polish
+
+Accessibility improvements and quality-of-life UX refinements.
+
+| Issue | Title | Priority | Notes |
+|-------|-------|----------|-------|
+| [STAK-169](https://linear.app/hextrackr/issue/STAK-169) | Style D: Accessible Table Card View | High | WCAG-compliant card layout |
+| [STAK-123](https://linear.app/hextrackr/issue/STAK-123) | View Modal Inline Editing | Medium | Edit fields without opening edit modal |
+
 ---
 
-## Medium-Term — Feature Depth
+## Medium-Term — Sprint 3: Portfolio Depth
 
-Deeper feature work — charts, API integrations, portfolio tracking, and documentation.
+Deeper portfolio intelligence — realized gains tracking and PCGS deep integration.
+
+| Issue | Title | Priority | Notes |
+|-------|-------|----------|-------|
+| [STAK-72](https://linear.app/hextrackr/issue/STAK-72) | Realized gains/losses: track sold, lost, and disposed items | Medium | Most-requested portfolio feature |
+| [STAK-99](https://linear.app/hextrackr/issue/STAK-99) | PCGS API Deep Integration — View Modal Verification & Price Guide Lookup | Medium | Extends existing PCGS infrastructure |
+
+---
+
+## Medium-Term — Sprint 4: Custom Theme
+
+User-controlled theming via CSS variable sliders.
+
+| Issue | Title | Priority | Notes |
+|-------|-------|----------|-------|
+| [STAK-121](https://linear.app/hextrackr/issue/STAK-121) | CSS variable slider-based theme editor | Medium | Four-theme system foundation already in place |
+
+---
+
+## Medium-Term — Feature Depth (Backlog)
+
+Deeper feature work — charts, API integrations, and documentation.
 
 | Issue | Title | Priority | Notes |
 |-------|-------|----------|-------|
 | [STAK-48](https://linear.app/hextrackr/issue/STAK-48) | Chart system overhaul: migrate to ApexCharts, add time-series trends | Low | Unblocked (STAK-43 done) |
-| [STAK-99](https://linear.app/hextrackr/issue/STAK-99) | PCGS API Deep Integration — View Modal Verification & Price Guide Lookup | Medium | Extends existing PCGS infrastructure |
-| [STAK-72](https://linear.app/hextrackr/issue/STAK-72) | Realized gains/losses: track sold, lost, and disposed items | Medium | Most-requested portfolio feature |
 | [STAK-112](https://linear.app/hextrackr/issue/STAK-112) | Settings: Add field selection options for View Modal display | Low | After core modal improvements |
 | [STAK-105](https://linear.app/hextrackr/issue/STAK-105) | Full JSDoc coverage and documentation portal | Medium | Community/contributor enablement |
 | [STAK-101](https://linear.app/hextrackr/issue/STAK-101) | Numista OAuth 2.0 Integration — Cloud Sync for User Collections | Low | Requires server-side token exchange |
@@ -84,6 +118,7 @@ Encrypted cloud sync for sponsors ($3/month). Zero-knowledge architecture — da
 <details>
 <summary>Shipped features (click to expand)</summary>
 
+- **v3.31.x** — STAK-98/104: Item tags system (Numista + custom tags, filter chip integration), Save Search as Custom Filter Chip
 - **v3.30.00** — STAK-118/106/124/125/126: Card View Engine, Mobile Overhaul & UI Polish — three card styles with sparkline headers, CDN image URLs, mobile viewport overhaul, rows-per-page with back-to-top, theme-aware sparklines
 - **v3.29.06** — STAK-115/116/117: Design System & Settings Polish — unified toggle styles, Appearance tab fieldset redesign, living style guide (style.html), CSS design system coding standards
 - **v3.29.04** — STAK-110/111/113: View Modal Visual Sprint — cert badge overlay with authority colors, chart range pills (1Y/5Y/10Y/Purchased), valuation-first default order, purchase date in valuation

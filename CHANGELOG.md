@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.31.4] - 2026-02-19
+
+### Added — Vendored Libraries & True Offline Support
+
+- **Added**: All CDN dependencies (PapaParse, jsPDF, Chart.js, JSZip, Forge, and plugins) bundled locally in `vendor/` — app is now fully functional with no internet connection and on `file://` protocol
+- **Added**: CDN fallback loader fires automatically if a vendor file fails to define its global — no silent failures
+- **Fixed**: `importCsv`, `exportCsv`, `importNumistaCsv`, and `exportPdf` now show a clear user-facing error if the required library failed to load, instead of a silent crash
+- **Added**: Vendor files pre-cached in service worker `CORE_ASSETS` — offline PWA install now bundles all dependencies
+- **Added**: `vendor/**` excluded from Codacy analysis to prevent false positives on minified third-party code
+
+---
+
 ## [3.31.3] - 2026-02-19
 
 ### Added — Filter Chip Active-State UX & Bug Fixes
