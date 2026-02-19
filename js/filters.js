@@ -468,13 +468,13 @@ const renderActiveFilters = () => {
       const criteria = activeFilters[f.field];
       if (criteria && Array.isArray(criteria.values) && !criteria.exclude) {
         if (f.field === 'customGroup') {
-          // customGroup expands to name values — active if any name filter exists
+          // customGroup expands to name values — active if any non-excluded name filter exists
           const nc = activeFilters['name'];
-          isActiveFilter = !!(nc && nc.values && nc.values.length > 0);
+          isActiveFilter = !!(nc && !nc.exclude && nc.values && nc.values.length > 0);
         } else if (f.field === 'dynamicName') {
           // dynamicName expands to name values — same check
           const nc = activeFilters['name'];
-          isActiveFilter = !!(nc && nc.values && nc.values.length > 0);
+          isActiveFilter = !!(nc && !nc.exclude && nc.values && nc.values.length > 0);
         } else {
           isActiveFilter = criteria.values.includes(f.value);
         }
