@@ -2736,6 +2736,37 @@
                 <div class="cloud-status-detail"></div>
                 <div class="cloud-backup-list" id="cloudBackupList_dropbox" style="display:none"></div>
 
+                <!-- STAK-149: Auto-Sync Controls -->
+                <div class="cloud-autosync-section" style="margin-top:0.75rem;border-top:1px solid var(--border-color,#ddd);padding-top:0.75rem">
+                  <div class="cloud-status-row" style="align-items:center">
+                    <span class="cloud-status-label">
+                      <strong>Auto-sync</strong>
+                      <span class="settings-subtext" style="display:block;font-size:0.75rem">Sync inventory automatically on every change</span>
+                    </span>
+                    <label class="settings-toggle-switch" style="margin-left:auto">
+                      <input type="checkbox" id="cloudAutoSyncToggle" onchange="if(this.checked){enableCloudSync('dropbox');}else{disableCloudSync();}">
+                      <span class="settings-toggle-slider"></span>
+                    </label>
+                  </div>
+                  <div class="cloud-status-row" id="cloudAutoSyncStatus" style="align-items:center;margin-top:0.35rem">
+                    <span class="cloud-status-label">Status</span>
+                    <span class="cloud-status-value" style="display:flex;align-items:center;gap:0.4rem">
+                      <span class="cloud-sync-dot"></span>
+                      <span class="cloud-sync-status-text">Auto-sync off</span>
+                    </span>
+                  </div>
+                  <div class="cloud-status-row" style="align-items:center;margin-top:0.35rem">
+                    <span class="cloud-status-label">Last synced</span>
+                    <span class="cloud-status-value" id="cloudAutoSyncLastSync">Never</span>
+                  </div>
+                  <div style="margin-top:0.5rem">
+                    <button class="btn" id="cloudSyncNowBtn" disabled onclick="if(typeof pushSyncVault==='function')pushSyncVault();" style="font-size:0.8rem;padding:0.25rem 0.6rem">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:0.25rem"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+                      Sync Now
+                    </button>
+                  </div>
+                </div>
+
                 <!-- Disclaimer -->
                 <div class="cloud-provider-disclaimer">
                   Backups are stored in <strong>/StakTrakr</strong> on your Dropbox. Your vault password encrypts the data &mdash; if you lose it, backups cannot be recovered.
@@ -3706,6 +3737,43 @@
       </div>
     </div>
 
+    <!-- STAK-149: Cloud Auto-Sync Conflict Modal -->
+    <div class="modal" id="cloudSyncConflictModal" style="display: none">
+      <div class="modal-content" style="max-width: 520px">
+        <div class="modal-header">
+          <h2>Sync Conflict</h2>
+          <button aria-label="Close modal" class="modal-close" id="syncConflictSkip">&times;</button>
+        </div>
+        <div class="modal-body">
+          <p class="settings-subtext" style="margin-bottom:1rem">Both this device and another device have changes since the last sync. Choose which version to keep.</p>
+          <div class="cloud-conflict-grid">
+            <div class="cloud-conflict-col">
+              <div class="cloud-conflict-col-label">This Device</div>
+              <div class="cloud-conflict-row"><span>Items</span><strong id="syncConflictLocalItems">&mdash;</strong></div>
+              <div class="cloud-conflict-row"><span>Changed</span><strong id="syncConflictLocalTime">&mdash;</strong></div>
+              <div class="cloud-conflict-row"><span>Version</span><strong id="syncConflictLocalVersion">&mdash;</strong></div>
+            </div>
+            <div class="cloud-conflict-divider">vs</div>
+            <div class="cloud-conflict-col">
+              <div class="cloud-conflict-col-label">Remote (another device)</div>
+              <div class="cloud-conflict-row"><span>Items</span><strong id="syncConflictRemoteItems">&mdash;</strong></div>
+              <div class="cloud-conflict-row"><span>Changed</span><strong id="syncConflictRemoteTime">&mdash;</strong></div>
+              <div class="cloud-conflict-row"><span>Version</span><strong id="syncConflictRemoteVersion">&mdash;</strong></div>
+              <div class="cloud-conflict-row"><span>Device</span><strong id="syncConflictRemoteDevice">&mdash;</strong></div>
+            </div>
+          </div>
+          <div class="encryption-warning" style="margin-top:1rem">
+            <strong>Note:</strong> The losing version will be overwritten and cannot be recovered.
+          </div>
+          <div class="encryption-actions" style="margin-top:1rem;gap:0.5rem;flex-wrap:wrap">
+            <button class="btn success" id="syncConflictKeepMine">Keep Mine (push local)</button>
+            <button class="btn info" id="syncConflictKeepTheirs">Keep Theirs (pull remote)</button>
+            <button class="btn" id="syncConflictSkipBtn" onclick="document.getElementById('cloudSyncConflictModal').style.display='none'">Skip for now</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div class="modal" id="apiQuotaModal" style="display: none">
       <div class="modal-content">
         <div class="modal-header">
@@ -4246,6 +4314,7 @@
     <script defer src="./js/card-view.js"></script>
     <script defer src="./js/vault.js"></script>
     <script defer src="./js/cloud-storage.js"></script>
+    <script defer src="./js/cloud-sync.js"></script>
     <script defer src="./js/about.js"></script>
     <script defer src="./js/faq.js"></script>
     <script defer src="./js/customMapping.js"></script>

@@ -170,6 +170,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     elements.apiHistoryModal = safeGetElement("apiHistoryModal");
     elements.goldbackHistoryModal = safeGetElement("goldbackHistoryModal");
     elements.cloudSyncModal = safeGetElement("cloudSyncModal");
+    elements.cloudSyncConflictModal = safeGetElement("cloudSyncConflictModal");
     elements.vaultModal = safeGetElement("vaultModal");
     elements.apiQuotaModal = safeGetElement("apiQuotaModal");
     elements.aboutModal = safeGetElement("aboutModal");
@@ -540,6 +541,11 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (typeof updateStorageStats === "function") {
         updateStorageStats();
       }
+
+    // STAK-149: Initialize cloud auto-sync (starts poller if previously enabled)
+    if (typeof initCloudSync === 'function') {
+      initCloudSync();
+    }
 
     // Load Numista search lookup custom rules
     if (typeof NumistaLookup !== 'undefined' && typeof NumistaLookup.loadCustomRules === 'function') {

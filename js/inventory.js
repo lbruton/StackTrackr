@@ -635,6 +635,8 @@ const saveInventory = () => {
   // CatalogManager handles its own saving, no need to explicitly save catalogMap
   // STACK-62: Invalidate autocomplete cache so lookup table rebuilds with current inventory
   if (typeof clearLookupCache === 'function') clearLookupCache();
+  // STAK-149: Trigger debounced cloud auto-sync push (no-op if sync disabled or not connected)
+  if (typeof scheduleSyncPush === 'function') scheduleSyncPush();
 };
 
 /**

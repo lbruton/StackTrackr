@@ -295,23 +295,31 @@ function parseVaultFile(fileBytes) {
 // =============================================================================
 
 /**
- * Collect all localStorage data for vault export.
+ * Collect localStorage data for vault export.
+ * @param {string} [scope='full'] - 'full' collects all ALLOWED_STORAGE_KEYS;
+ *   'sync' collects only SYNC_SCOPE_KEYS (inventory + display prefs, no API keys or tokens)
  * @returns {object|null} Payload object or null if empty
  */
-function collectVaultData() {
+function collectVaultData(scope) {
+  scope = scope || 'full';
+
+  var keysToCollect = scope === 'sync' && typeof SYNC_SCOPE_KEYS !== 'undefined'
+    ? SYNC_SCOPE_KEYS
+    : ALLOWED_STORAGE_KEYS;
+
   var payload = {
     _meta: {
       appVersion: typeof APP_VERSION !== "undefined" ? APP_VERSION : "unknown",
       exportTimestamp: new Date().toISOString(),
-      userAgent: navigator.userAgent,
+      scope: scope,
     },
     data: {},
   };
 
   var hasData = false;
 
-  for (var i = 0; i < ALLOWED_STORAGE_KEYS.length; i++) {
-    var key = ALLOWED_STORAGE_KEYS[i];
+  for (var i = 0; i < keysToCollect.length; i++) {
+    var key = keysToCollect[i];
     try {
       var val = localStorage.getItem(key);
       if (val !== null) {
@@ -432,8 +440,25 @@ function getPasswordStrength(password) {
  * @returns {Promise<Uint8Array>} serialized vault file bytes
  */
 async function vaultEncryptToBytes(password) {
-  var payload = collectVaultData();
+  var payload = collectVaultData('full');
   if (!payload) throw new Error("No data to export.");
+  var plaintext = new TextEncoder().encode(JSON.stringify(payload));
+  var salt = vaultRandomBytes(32);
+  var iv = vaultRandomBytes(12);
+  var key = await vaultDeriveKey(password, salt, VAULT_PBKDF2_ITERATIONS);
+  var ciphertext = await vaultEncrypt(plaintext, key, iv);
+  return serializeVaultFile(salt, iv, VAULT_PBKDF2_ITERATIONS, ciphertext);
+}
+
+/**
+ * Encrypt sync-scoped data (inventory + display prefs only) and return raw vault bytes.
+ * Used by cloud auto-sync to avoid pushing API keys or cloud tokens to remote storage.
+ * @param {string} password
+ * @returns {Promise<Uint8Array>} serialized vault file bytes
+ */
+async function vaultEncryptToBytesScoped(password) {
+  var payload = collectVaultData('sync');
+  if (!payload) throw new Error("No inventory data to sync.");
   var plaintext = new TextEncoder().encode(JSON.stringify(payload));
   var salt = vaultRandomBytes(32);
   var iv = vaultRandomBytes(12);
@@ -861,3 +886,7 @@ function toggleVaultPasswordVisibility(inputId, toggleBtn) {
 
 window.openVaultModal = openVaultModal;
 window.closeVaultModal = closeVaultModal;
+window.vaultEncryptToBytes = vaultEncryptToBytes;
+window.vaultEncryptToBytesScoped = vaultEncryptToBytesScoped;
+window.vaultDecryptAndRestore = vaultDecryptAndRestore;
+window.collectVaultData = collectVaultData;
