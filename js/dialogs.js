@@ -95,8 +95,8 @@
     };
 
     const onKeyDown = (event) => {
-      if (event.key === 'Escape' && mode !== 'alert') finish(mode === 'prompt' ? null : false);
-      if (event.key === 'Enter') {
+      if (event.key === 'Escape') finish(mode === 'prompt' ? null : mode === 'confirm' ? false : undefined);
+      if (event.key === 'Enter' && document.activeElement !== cancelBtn) {
         if (mode === 'prompt') finish(inputEl.value);
         else if (mode === 'confirm') finish(true);
         else finish(undefined);
