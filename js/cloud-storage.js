@@ -1024,6 +1024,7 @@ function _onUserActivity() {
 }
 
 function _startIdleLockTimer() {
+  _stopIdleLockTimer();
   _resetIdleLockTimer();
   document.addEventListener('mousemove', _onUserActivity);
   document.addEventListener('keydown', _onUserActivity);

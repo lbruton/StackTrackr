@@ -44,7 +44,17 @@
     return root;
   };
 
-  const showDialog = ({ title, message, mode = 'alert', defaultValue = '' }) => new Promise((resolve) => {
+  const dialogQueue = [];
+  let dialogActive = false;
+
+  const processQueue = () => {
+    if (dialogActive || dialogQueue.length === 0) return;
+    const next = dialogQueue.shift();
+    presentDialog(next.options, next.resolve);
+  };
+
+  const presentDialog = ({ title, message, mode = 'alert', defaultValue = '' }, resolve) => {
+    dialogActive = true;
     const modal = ensureDialogRoot();
     const titleEl = document.getElementById('appDialogTitle');
     const messageEl = document.getElementById('appDialogMessage');
@@ -54,7 +64,9 @@
     const okBtn = document.getElementById('appDialogOk');
 
     if (!titleEl || !messageEl || !inputEl || !closeBtn || !cancelBtn || !okBtn) {
+      dialogActive = false;
       resolve(mode === 'prompt' ? null : mode === 'confirm' ? false : undefined);
+      processQueue();
       return;
     }
 
@@ -78,7 +90,9 @@
 
     const finish = (result) => {
       cleanup();
+      dialogActive = false;
       resolve(result);
+      processQueue();
     };
 
     const onKeyDown = (event) => {
@@ -98,6 +112,11 @@
     modal.style.display = 'flex';
     if (mode === 'prompt') inputEl.focus();
     else okBtn.focus();
+  };
+
+  const showDialog = (options) => new Promise((resolve) => {
+    dialogQueue.push({ options, resolve });
+    processQueue();
   });
 
   window.showAppAlert = (message, title) => showDialog({ mode: 'alert', message, title });
