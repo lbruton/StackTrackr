@@ -260,7 +260,7 @@ function getSyncPassword() {
 // Activity logging
 // ---------------------------------------------------------------------------
 
-function logSyncActivity(action, result, detail, duration) {
+function logCloudSyncActivity(action, result, detail, duration) {
   if (typeof recordCloudActivity === 'function') {
     recordCloudActivity({
       action: action,
@@ -394,7 +394,7 @@ async function pushSyncVault() {
     syncSetCursor(rev);
 
     var duration = Date.now() - pushStart;
-    logSyncActivity('auto_sync_push', 'success', itemCount + ' items, ' + Math.round(fileBytes.byteLength / 1024) + ' KB', duration);
+    logCloudSyncActivity('auto_sync_push', 'success', itemCount + ' items, ' + Math.round(fileBytes.byteLength / 1024) + ' KB', duration);
     debugLog('[CloudSync] Push complete:', syncId, 'rev:', rev, '(' + duration + 'ms)');
     updateSyncStatusIndicator('idle', 'just now');
     refreshSyncUI();
@@ -402,7 +402,7 @@ async function pushSyncVault() {
   } catch (err) {
     var errMsg = String(err.message || err);
     console.error('[CloudSync] Push failed:', errMsg, err);
-    logSyncActivity('auto_sync_push', 'fail', errMsg);
+    logCloudSyncActivity('auto_sync_push', 'fail', errMsg);
     updateSyncStatusIndicator('error', errMsg.slice(0, 60));
   } finally {
     _syncPushInFlight = false;
@@ -472,7 +472,7 @@ async function pollForRemoteChanges() {
     }
 
     debugLog('[CloudSync] Poll: remote change detected — syncId:', remoteMeta.syncId);
-    logSyncActivity('auto_sync_poll', 'success', 'Remote change detected: ' + remoteMeta.itemCount + ' items');
+    logCloudSyncActivity('auto_sync_poll', 'success', 'Remote change detected: ' + remoteMeta.itemCount + ' items');
     await handleRemoteChange(remoteMeta);
 
   } catch (err) {
@@ -584,7 +584,7 @@ async function pullSyncVault(remoteMeta) {
     syncSetLastPull(pullMeta);
 
     var duration = Date.now() - pullStart;
-    logSyncActivity('auto_sync_pull', 'success', (remoteMeta ? remoteMeta.itemCount : '?') + ' items restored', duration);
+    logCloudSyncActivity('auto_sync_pull', 'success', (remoteMeta ? remoteMeta.itemCount : '?') + ' items restored', duration);
     debugLog('[CloudSync] Pull complete (' + duration + 'ms)');
 
     if (typeof showCloudToast === 'function') {
@@ -596,7 +596,7 @@ async function pullSyncVault(remoteMeta) {
   } catch (err) {
     var errMsg = String(err.message || err);
     debugLog('[CloudSync] Pull failed:', errMsg);
-    logSyncActivity('auto_sync_pull', 'fail', errMsg);
+    logCloudSyncActivity('auto_sync_pull', 'fail', errMsg);
     updateSyncStatusIndicator('error', errMsg.slice(0, 60));
     if (typeof showCloudToast === 'function') showCloudToast('Auto-sync pull failed: ' + errMsg);
   }
@@ -725,7 +725,7 @@ async function enableCloudSync(provider) {
   refreshSyncUI();
 
   if (typeof showCloudToast === 'function') showCloudToast('Auto-sync enabled. Your inventory will sync automatically.');
-  logSyncActivity('auto_sync_enable', 'success', 'Auto-sync enabled');
+  logCloudSyncActivity('auto_sync_enable', 'success', 'Auto-sync enabled');
 }
 
 /**
@@ -736,7 +736,7 @@ function disableCloudSync() {
   stopSyncPoller();
   refreshSyncUI();
   updateSyncStatusIndicator('disabled');
-  logSyncActivity('auto_sync_disable', 'success', 'Auto-sync disabled');
+  logCloudSyncActivity('auto_sync_disable', 'success', 'Auto-sync disabled');
   debugLog('[CloudSync] Auto-sync disabled');
 }
 
