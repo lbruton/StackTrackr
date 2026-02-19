@@ -27,6 +27,9 @@ const __dirname = fileURLToPath(new URL(".", import.meta.url));
 // ---------------------------------------------------------------------------
 
 const FIRECRAWL_API_KEY = process.env.FIRECRAWL_API_KEY;
+// Self-hosted Firecrawl: set FIRECRAWL_BASE_URL=http://localhost:3002
+// Cloud Firecrawl (default): leave unset or set to https://api.firecrawl.dev
+const FIRECRAWL_BASE_URL = (process.env.FIRECRAWL_BASE_URL || "https://api.firecrawl.dev").replace(/\/$/, "");
 const DATA_DIR = resolve(process.env.DATA_DIR || join(__dirname, "../../data"));
 const DRY_RUN = process.env.DRY_RUN === "1";
 const COIN_FILTER = process.env.COINS ? process.env.COINS.split(",").map(s => s.trim()) : null;
@@ -162,11 +165,11 @@ async function scrapeUrl(url, providerId = "", attempt = 1) {
   }
 
   try {
-    const response = await fetch("https://api.firecrawl.dev/v1/scrape", {
+    const response = await fetch(`${FIRECRAWL_BASE_URL}/v1/scrape`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${FIRECRAWL_API_KEY}`,
+        ...(FIRECRAWL_API_KEY ? { "Authorization": `Bearer ${FIRECRAWL_API_KEY}` } : {}),
       },
       body: JSON.stringify(body),
       signal: controller.signal,
@@ -271,8 +274,10 @@ function updateProviderCandidates(failures, dateStr) {
 // ---------------------------------------------------------------------------
 
 async function main() {
-  if (!FIRECRAWL_API_KEY) {
-    console.error("Error: FIRECRAWL_API_KEY is required.");
+  const isLocal = !FIRECRAWL_BASE_URL.includes("api.firecrawl.dev");
+  if (!FIRECRAWL_API_KEY && !isLocal) {
+    console.error("Error: FIRECRAWL_API_KEY is required for cloud Firecrawl.");
+    console.error("For self-hosted: set FIRECRAWL_BASE_URL=http://localhost:3002");
     process.exit(1);
   }
 
