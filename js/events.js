@@ -913,7 +913,52 @@ const parseItemFormFields = (isEditing, existingItem) => {
     currency: displayCurrency,
     obverseImageUrl: elements.itemObverseImageUrl?.value?.trim() ?? '',
     reverseImageUrl: elements.itemReverseImageUrl?.value?.trim() ?? '',
+    // Numista metadata — stored per-item, seeded by API, user edits override
+    numistaData: parseNumistaDataFields(isEditing, existingItem),
   };
+};
+
+/**
+ * Read Numista Data form fields into a flat object.
+ * Only stores non-empty values to keep items lean.
+ * @param {boolean} isEditing
+ * @param {Object} existingItem
+ * @returns {Object} Numista data fields with source tracking
+ */
+const parseNumistaDataFields = (isEditing, existingItem) => {
+  const get = (id) => (document.getElementById(id)?.value?.trim() ?? '');
+  const prev = (isEditing && existingItem?.numistaData) ? existingItem.numistaData : {};
+
+  const fields = {
+    country: get('numistaCountry') || prev.country || '',
+    denomination: get('numistaDenomination') || prev.denomination || '',
+    composition: get('numistaComposition') || prev.composition || '',
+    shape: get('numistaShape') || prev.shape || '',
+    diameter: get('numistaDiameter') || prev.diameter || '',
+    thickness: get('numistaThickness') || prev.thickness || '',
+    orientation: get('numistaOrientation') || prev.orientation || '',
+    technique: get('numistaTechnique') || prev.technique || '',
+    mintage: get('numistaMintage') || prev.mintage || '',
+    rarityIndex: get('numistaRarity') || prev.rarityIndex || '',
+    kmRef: get('numistaKmRef') || prev.kmRef || '',
+    commemorative: document.getElementById('numistaCommemorative')?.checked || false,
+    commemorativeDesc: get('numistaCommemorativeDesc') || prev.commemorativeDesc || '',
+    obverseDesc: get('numistaObverseDesc') || prev.obverseDesc || '',
+    reverseDesc: get('numistaReverseDesc') || prev.reverseDesc || '',
+    edgeDesc: get('numistaEdgeDesc') || prev.edgeDesc || '',
+  };
+
+  // Track data source: 'user' if any field was manually changed from the API value,
+  // 'api' if purely from cache, or preserve existing source
+  fields.source = prev.source || 'api';
+  fields.updatedAt = Date.now();
+
+  // Strip empty fields to keep storage lean
+  const result = {};
+  for (const [k, v] of Object.entries(fields)) {
+    if (v !== '' && v !== false && v !== 0) result[k] = v;
+  }
+  return result;
 };
 
 /**
@@ -961,6 +1006,7 @@ const commitItemToInventory = (f, isEditing, editIdx) => {
       ...oldItem,
       ...buildItemFields(f),
       numistaId: f.catalog,
+      numistaData: f.numistaData,
       currency: f.currency,
       obverseImageUrl: f.obverseImageUrl || window.selectedNumistaResult?.imageUrl || oldItem.obverseImageUrl || '',
       reverseImageUrl: f.reverseImageUrl || window.selectedNumistaResult?.reverseImageUrl || oldItem.reverseImageUrl || '',
@@ -1018,6 +1064,7 @@ const commitItemToInventory = (f, isEditing, editIdx) => {
       serial,
       uuid: generateUUID(),
       numistaId: f.catalog,
+      numistaData: f.numistaData,
       currency: f.currency,
       obverseImageUrl: f.obverseImageUrl || window.selectedNumistaResult?.imageUrl || '',
       reverseImageUrl: f.reverseImageUrl || window.selectedNumistaResult?.reverseImageUrl || '',
