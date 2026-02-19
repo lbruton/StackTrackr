@@ -25,15 +25,21 @@ function _computePortfolioSummary() {
   let purchase = 0, melt = 0, retail = 0, count = 0;
   items.forEach(item => {
     const spot = (typeof spotPrices !== 'undefined' ? spotPrices[(item.metal || '').toLowerCase()] : 0) || 0;
-    const qty = Number(item.qty) || 1;
-    const itemMelt = (typeof computeMeltValue === 'function') ? computeMeltValue(item, spot) : 0;
-    const gbPrice = (typeof getGoldbackRetailPrice === 'function') ? getGoldbackRetailPrice(item) : null;
-    const mktVal = parseFloat(item.marketValue) || 0;
-    const itemRetail = gbPrice ? gbPrice * qty : (mktVal > 0 ? mktVal * qty : itemMelt);
-    const itemPurchase = (typeof item.price === 'number' ? item.price : parseFloat(item.price) || 0) * qty;
-    purchase += itemPurchase;
-    melt += itemMelt;
-    retail += itemRetail;
+    const valuation = (typeof computeItemValuation === 'function')
+      ? computeItemValuation(item, spot)
+      : {
+          meltValue: (typeof computeMeltValue === 'function') ? computeMeltValue(item, spot) : 0,
+          purchaseTotal: (typeof item.price === 'number' ? item.price : parseFloat(item.price) || 0) * (Number(item.qty) || 1),
+          retailTotal: (() => {
+            const qty = Number(item.qty) || 1;
+            const gbPrice = (typeof getGoldbackRetailPrice === 'function') ? getGoldbackRetailPrice(item) : null;
+            const mktVal = parseFloat(item.marketValue) || 0;
+            return gbPrice ? gbPrice * qty : (mktVal > 0 ? mktVal * qty : ((typeof computeMeltValue === 'function') ? computeMeltValue(item, spot) : 0));
+          })(),
+        };
+    purchase += valuation.purchaseTotal || 0;
+    melt += valuation.meltValue || 0;
+    retail += valuation.retailTotal || 0;
     count++;
   });
   return { purchase, melt, retail, gainLoss: retail - purchase, count };
@@ -664,17 +670,18 @@ const renderCardView = (sortedItems, container) => {
   const html = sortedItems.map(item => {
     const originalIdx = inventory.indexOf(item);
     const currentSpot = (typeof spotPrices !== 'undefined' ? spotPrices[(item.metal || '').toLowerCase()] : 0) || 0;
-    const qty = Number(item.qty) || 1;
-    const meltValue = typeof computeMeltValue === 'function' ? computeMeltValue(item, currentSpot) : 0;
-    const gbDenomPrice = (typeof getGoldbackRetailPrice === 'function') ? getGoldbackRetailPrice(item) : null;
-    const marketValue = parseFloat(item.marketValue) || 0;
-    const isManualRetail = !gbDenomPrice && marketValue > 0;
-    const retailTotal = gbDenomPrice ? gbDenomPrice * qty
-                      : isManualRetail ? marketValue * qty
-                      : meltValue;
+    const valuation = (typeof computeItemValuation === 'function')
+      ? computeItemValuation(item, currentSpot)
+      : null;
     const purchasePrice = typeof item.price === 'number' ? item.price : parseFloat(item.price) || 0;
-    const purchaseTotal = purchasePrice * qty;
-    const gainLoss = (currentSpot > 0 || isManualRetail || gbDenomPrice) ? retailTotal - purchaseTotal : null;
+    const qty = Number(item.qty) || 1;
+    const meltValue = valuation ? valuation.meltValue : (typeof computeMeltValue === 'function' ? computeMeltValue(item, currentSpot) : 0);
+    const purchaseTotal = valuation ? valuation.purchaseTotal : purchasePrice * qty;
+    const retailTotal = valuation ? valuation.retailTotal : meltValue;
+    const fallbackHasRetailSignal = currentSpot > 0
+      || (parseFloat(item.marketValue) || 0) > 0
+      || !!((typeof getGoldbackRetailPrice === 'function') ? getGoldbackRetailPrice(item) : null);
+    const gainLoss = valuation ? valuation.gainLoss : (fallbackHasRetailSignal ? (retailTotal - purchaseTotal) : null);
 
     return renderer(item, originalIdx, { purchaseTotal, retailTotal, meltValue, gainLoss });
   });
@@ -964,22 +971,11 @@ async function _loadCardImage(img) {
 
     // Try IDB resolution cascade (user → pattern → numista cache)
     if (window.imageCache?.isAvailable()) {
-      const resolved = await imageCache.resolveImageForItem(item);
-      if (resolved) {
-        let blobUrl;
-        if (resolved.source === 'user') {
-          blobUrl = await imageCache.getUserImageUrl(resolved.catalogId, side);
-        } else if (resolved.source === 'pattern') {
-          blobUrl = await imageCache.getPatternImageUrl(resolved.catalogId, side);
-        } else {
-          blobUrl = await imageCache.getImageUrl(resolved.catalogId, side);
-        }
-
-        if (blobUrl) {
-          _cvBlobUrls.push(blobUrl);
-          _showCardImage(img, blobUrl);
-          return;
-        }
+      const blobUrl = await imageCache.resolveImageUrlForItem(item, side);
+      if (blobUrl) {
+        _cvBlobUrls.push(blobUrl);
+        _showCardImage(img, blobUrl);
+        return;
       }
     }
 
@@ -1267,4 +1263,3 @@ document.addEventListener('DOMContentLoaded', () => {
   // so the sort bar has already been shown/hidden by inventory.js by this point.
   requestAnimationFrame(_syncSortBar);
 });
-
