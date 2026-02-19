@@ -57,8 +57,10 @@ __pycache__/
 # DevOps tooling — spot-poller and hooks are public, other scripts stay private
 devops/*
 !devops/spot-poller/
+!devops/retail-poller/
 !devops/hooks/
 
 
 # AI/MCP configuration files are tracked for project consistency
 # (removed: .github/instructions/codacy.instructions.md)
+.firecrawl/
