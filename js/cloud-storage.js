@@ -88,9 +88,9 @@ function renderCloudActivityTable() {
       pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());
     var resultStyle = e.result === 'fail' ? ' style="color: var(--danger, #e74c3c);"' : '';
     var durationStr = e.duration != null ? e.duration + 'ms' : '—';
-    var safeDetail = String(e.detail || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-    return '<tr><td>' + timeStr + '</td><td>' + (e.action || '') + '</td><td>' + (e.provider || '') +
-      '</td><td' + resultStyle + '>' + (e.result || '') + '</td><td>' + safeDetail + '</td><td>' + durationStr + '</td></tr>';
+    var safeDetail = sanitizeHtml(e.detail);
+    return '<tr><td>' + timeStr + '</td><td>' + sanitizeHtml(e.action) + '</td><td>' + sanitizeHtml(e.provider) +
+      '</td><td' + resultStyle + '>' + sanitizeHtml(e.result) + '</td><td>' + safeDetail + '</td><td>' + durationStr + '</td></tr>';
   });
 
   // nosemgrep: javascript.browser.security.insecure-innerhtml.insecure-innerhtml
@@ -113,8 +113,48 @@ function renderCloudActivityTable() {
   });
 }
 
-function clearCloudActivityLog() {
-  if (!confirm('Clear all cloud activity log? This cannot be undone.')) return;
+/**
+ * Render the Sync History section in Settings → Cloud.
+ * Shows metadata for the pre-pull local snapshot (if any) and a restore button.
+ */
+function renderSyncHistorySection() {
+  var container = document.getElementById('cloudSyncHistorySection');
+  if (!container) return;
+
+  var backup = null;
+  try { backup = JSON.parse(localStorage.getItem('cloud_sync_override_backup') || 'null'); } catch (_) {}
+
+  if (!backup || !backup.timestamp) {
+    // nosemgrep: javascript.browser.security.insecure-innerhtml.insecure-innerhtml
+    container.innerHTML = '<p class="settings-subtext" style="margin:0">No snapshot available. A local snapshot is saved automatically before any remote pull is accepted.</p>';
+    return;
+  }
+
+  var d = new Date(backup.timestamp);
+  var pad = function (n) { return n < 10 ? '0' + n : String(n); };
+  var timeStr = d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) +
+    ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+
+  // nosemgrep: javascript.browser.security.insecure-innerhtml.insecure-innerhtml
+  container.innerHTML =
+    '<div class="cloud-sync-update-meta">' +
+      '<div class="cloud-sync-update-row"><span>Snapshot taken</span><strong>' + timeStr + '</strong></div>' +
+      '<div class="cloud-sync-update-row"><span>Items</span><strong>' + (backup.itemCount != null ? backup.itemCount : '?') + '</strong></div>' +
+      (backup.appVersion ? '<div class="cloud-sync-update-row"><span>Version</span><strong>v' + sanitizeHtml(String(backup.appVersion)) + '</strong></div>' : '') +
+    '</div>' +
+    '<div style="margin-top:0.6rem">' +
+      '<button class="btn warning" type="button" style="font-size:0.8rem;padding:0.25rem 0.6rem" ' +
+        'onclick="if(typeof syncRestoreOverrideBackup===\'function\')syncRestoreOverrideBackup();">' +
+        'Restore This Snapshot' +
+      '</button>' +
+    '</div>';
+}
+
+async function clearCloudActivityLog() {
+  const confirmed = typeof showAppConfirm === 'function'
+    ? await showAppConfirm('Clear all cloud activity log? This cannot be undone.', 'Cloud Sync')
+    : confirm('Clear all cloud activity log? This cannot be undone.');
+  if (!confirmed) return;
   saveCloudActivityLog([]);
   var panel = document.getElementById('logPanel_cloud');
   if (panel) delete panel.dataset.rendered;
@@ -334,7 +374,11 @@ function cloudNotifyAuthFailure(provider, message, details) {
   if (typeof showCloudToast === 'function') {
     showCloudToast(fullMessage, 7000);
   } else {
-    alert(fullMessage);
+    if (typeof showAppAlert === 'function') {
+      showAppAlert(fullMessage, 'Cloud Sync');
+    } else {
+      alert(fullMessage);
+    }
   }
 }
 
@@ -927,6 +971,7 @@ function cloudCachePassword(provider, password) {
     provider: provider,
   };
   sessionStorage.setItem('cloud_vault_pw_cache', JSON.stringify(payload));
+  _startIdleLockTimer();
 }
 
 function cloudGetCachedPassword(provider) {
@@ -947,6 +992,52 @@ function cloudGetCachedPassword(provider) {
 
 function cloudClearCachedPassword() {
   sessionStorage.removeItem('cloud_vault_pw_cache');
+  _stopIdleLockTimer();
+}
+
+// ---------------------------------------------------------------------------
+// Idle auto-lock: clear cached vault password after inactivity
+// ---------------------------------------------------------------------------
+
+const IDLE_LOCK_TIMEOUT_MS = 15 * 60 * 1000; // 15 minutes
+let _idleLockTimer = null;
+let _idleThrottleTimer = null;
+
+function _resetIdleLockTimer() {
+  if (!sessionStorage.getItem('cloud_vault_pw_cache')) return;
+  clearTimeout(_idleLockTimer);
+  _idleLockTimer = setTimeout(function () {
+    if (!sessionStorage.getItem('cloud_vault_pw_cache')) return;
+    cloudClearCachedPassword();
+    if (typeof showCloudToast === 'function') {
+      showCloudToast('Cloud vault password cleared (idle timeout)');
+    }
+    debugLog('[CloudStorage] Vault password cache cleared due to inactivity');
+  }, IDLE_LOCK_TIMEOUT_MS);
+}
+
+function _onUserActivity() {
+  if (_idleThrottleTimer) return;
+  _idleThrottleTimer = setTimeout(function () { _idleThrottleTimer = null; }, 30000);
+  _resetIdleLockTimer();
+}
+
+function _startIdleLockTimer() {
+  _stopIdleLockTimer();
+  _resetIdleLockTimer();
+  document.addEventListener('mousemove', _onUserActivity);
+  document.addEventListener('keydown', _onUserActivity);
+  document.addEventListener('touchstart', _onUserActivity);
+}
+
+function _stopIdleLockTimer() {
+  clearTimeout(_idleLockTimer);
+  clearTimeout(_idleThrottleTimer);
+  _idleLockTimer = null;
+  _idleThrottleTimer = null;
+  document.removeEventListener('mousemove', _onUserActivity);
+  document.removeEventListener('keydown', _onUserActivity);
+  document.removeEventListener('touchstart', _onUserActivity);
 }
 
 // ---------------------------------------------------------------------------
@@ -995,3 +1086,4 @@ window.showKrakenToastIfFirst = showKrakenToastIfFirst;
 window.recordCloudActivity = recordCloudActivity;
 window.renderCloudActivityTable = renderCloudActivityTable;
 window.clearCloudActivityLog = clearCloudActivityLog;
+window.renderSyncHistorySection = renderSyncHistorySection;

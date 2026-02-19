@@ -487,6 +487,28 @@ class ImageCache {
   }
 
   /**
+   * Resolves and returns an object URL for the best available image side.
+   * Uses resolveImageForItem() to select source, then loads the requested side.
+   *
+   * @param {Object} item - Inventory item with uuid/numistaId/name metadata
+   * @param {'obverse'|'reverse'} [side='obverse']
+   * @returns {Promise<string|null>} Object URL (caller must revoke) or null
+   */
+  async resolveImageUrlForItem(item, side = 'obverse') {
+    const normalizedSide = side === 'reverse' ? 'reverse' : 'obverse';
+    const resolved = await this.resolveImageForItem(item);
+    if (!resolved) return null;
+
+    if (resolved.source === 'user') {
+      return this.getUserImageUrl(resolved.catalogId, normalizedSide);
+    }
+    if (resolved.source === 'pattern') {
+      return this.getPatternImageUrl(resolved.catalogId, normalizedSide);
+    }
+    return this.getImageUrl(resolved.catalogId, normalizedSide);
+  }
+
+  /**
    * Get a user-uploaded image as an object URL.
    * Caller must revoke the URL when done.
    * @param {string} uuid - Item UUID

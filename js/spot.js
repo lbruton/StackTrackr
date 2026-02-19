@@ -2,7 +2,9 @@
 // =============================================================================
 
 /**
- * Saves spot history to localStorage
+ * Saves spot history to localStorage.
+ * Writes the content of `spotHistory` to the `SPOT_HISTORY_KEY`.
+ * @returns {void}
  */
 const saveSpotHistory = () => {
   try {
@@ -1059,6 +1061,195 @@ const renderSpotHistoryTable = () => {
   });
 };
 
+/** @type {string} Current sort column for settings LBMA reference table */
+let settingsLbmaSortColumn = '';
+/** @type {boolean} Sort ascending for settings LBMA reference table */
+let settingsLbmaSortAsc = true;
+/** @type {Array<Object>|null} Cached LBMA reference entries */
+let settingsLbmaReferenceCache = null;
+/** @type {Promise<Array<Object>>|null} In-flight LBMA load promise */
+let settingsLbmaLoadPromise = null;
+/** @type {boolean} Prevent duplicate LBMA control binding */
+let settingsLbmaControlsBound = false;
+
+/**
+ * Returns the seed years configured for bundled LBMA reference data.
+ * Falls back to current year when the seed config is unavailable.
+ *
+ * @returns {number[]} Sorted list of years
+ */
+const getLbmaReferenceYears = () => {
+  if (typeof SEED_DATA_YEARS !== 'undefined' && Array.isArray(SEED_DATA_YEARS) && SEED_DATA_YEARS.length > 0) {
+    return [...new Set(
+      SEED_DATA_YEARS
+        .map((y) => parseInt(y, 10))
+        .filter((y) => Number.isFinite(y))
+    )].sort((a, b) => a - b);
+  }
+  return [new Date().getFullYear()];
+};
+
+/**
+ * Loads and caches LBMA reference entries from yearly seed files.
+ * Uses fetchYearFile() for file:// and HTTP compatibility.
+ *
+ * @returns {Promise<Array<Object>>} Flattened LBMA reference entries
+ */
+const loadLbmaReferenceEntries = async () => {
+  if (Array.isArray(settingsLbmaReferenceCache)) return settingsLbmaReferenceCache;
+  if (settingsLbmaLoadPromise) return settingsLbmaLoadPromise;
+
+  settingsLbmaLoadPromise = Promise.all(getLbmaReferenceYears().map(fetchYearFile))
+    .then((yearArrays) => {
+      let entries = yearArrays
+        .flat()
+        .filter((e) => e && typeof e.spot === 'number' && e.metal && e.timestamp)
+        .filter((e) => e.source === 'seed' || String(e.provider || '').toUpperCase() === 'LBMA');
+
+      // Final fallback for unusual file:// cases where year files fail entirely.
+      if (entries.length === 0 && typeof getEmbeddedSeedData === 'function') {
+        entries = getEmbeddedSeedData().filter(
+          (e) => e && typeof e.spot === 'number' && e.metal && e.timestamp
+        );
+      }
+
+      settingsLbmaReferenceCache = entries.map((e) => ({
+        ...e,
+        provider: e.provider || 'LBMA',
+      }));
+      return settingsLbmaReferenceCache;
+    })
+    .catch(() => {
+      settingsLbmaReferenceCache = [];
+      return settingsLbmaReferenceCache;
+    })
+    .finally(() => {
+      settingsLbmaLoadPromise = null;
+    });
+
+  return settingsLbmaLoadPromise;
+};
+
+/**
+ * Binds LBMA history filter controls once.
+ */
+const bindLbmaHistoryControls = () => {
+  if (settingsLbmaControlsBound) return;
+
+  const metalFilter = document.getElementById('settingsLbmaMetalFilter');
+  const startDate = document.getElementById('settingsLbmaStartDate');
+  const endDate = document.getElementById('settingsLbmaEndDate');
+  const resetBtn = document.getElementById('settingsLbmaResetBtn');
+  if (!metalFilter || !startDate || !endDate || !resetBtn) return;
+
+  const rerender = () => {
+    renderLbmaHistoryTable();
+  };
+
+  metalFilter.addEventListener('change', rerender);
+  startDate.addEventListener('change', rerender);
+  endDate.addEventListener('change', rerender);
+  resetBtn.addEventListener('click', () => {
+    metalFilter.value = 'all';
+    startDate.value = '';
+    endDate.value = '';
+    renderLbmaHistoryTable();
+  });
+
+  settingsLbmaControlsBound = true;
+};
+
+/**
+ * Renders the Settings > Activity Log > LBMA History reference table.
+ * Data source is bundled year files (seed reference data), not user spotHistory.
+ */
+const renderLbmaHistoryTable = async () => {
+  const table = document.getElementById('settingsLbmaHistoryTable');
+  if (!table) return;
+  bindLbmaHistoryControls();
+
+  const tbody = table.querySelector('tbody');
+  if (!tbody) return;
+
+  const resultCountEl = document.getElementById('settingsLbmaResultCount');
+  // nosemgrep: javascript.browser.security.insecure-innerhtml.insecure-innerhtml
+  tbody.innerHTML = '<tr class="settings-log-empty"><td colspan="4">Loading LBMA reference history…</td></tr>';
+
+  const allEntries = await loadLbmaReferenceEntries();
+  const metalFilter = (document.getElementById('settingsLbmaMetalFilter')?.value || 'all').toLowerCase();
+  const startDate = document.getElementById('settingsLbmaStartDate')?.value || '';
+  const endDate = document.getElementById('settingsLbmaEndDate')?.value || '';
+
+  let data = [...allEntries];
+
+  if (metalFilter !== 'all') {
+    data = data.filter((e) => String(e.metal || '').toLowerCase() === metalFilter);
+  }
+  if (startDate) {
+    data = data.filter((e) => String(e.timestamp || '').slice(0, 10) >= startDate);
+  }
+  if (endDate) {
+    data = data.filter((e) => String(e.timestamp || '').slice(0, 10) <= endDate);
+  }
+
+  if (settingsLbmaSortColumn) {
+    data.sort((a, b) => {
+      const getSortVal = (entry) => {
+        if (settingsLbmaSortColumn === 'spot') return Number(entry.spot) || 0;
+        if (settingsLbmaSortColumn === 'metal') return String(entry.metal || '').toLowerCase();
+        if (settingsLbmaSortColumn === 'provider') return String(entry.provider || '').toLowerCase();
+        return String(entry.timestamp || '');
+      };
+      const valA = getSortVal(a);
+      const valB = getSortVal(b);
+      if (valA < valB) return settingsLbmaSortAsc ? -1 : 1;
+      if (valA > valB) return settingsLbmaSortAsc ? 1 : -1;
+      return 0;
+    });
+  } else {
+    data.sort((a, b) => (a.timestamp < b.timestamp ? 1 : -1));
+  }
+
+  if (resultCountEl) {
+    resultCountEl.textContent = `${data.length.toLocaleString()} rows`;
+  }
+
+  if (data.length === 0) {
+    // nosemgrep: javascript.browser.security.insecure-innerhtml.insecure-innerhtml
+    tbody.innerHTML = '<tr class="settings-log-empty"><td colspan="4">No LBMA reference rows match the current filters.</td></tr>';
+  } else {
+    const rows = data.map((entry) => {
+      const rawDate = String(entry.timestamp || '').slice(0, 10);
+      const dateLabel = rawDate
+        ? (typeof formatDisplayDate === 'function' ? formatDisplayDate(rawDate) : rawDate)
+        : '';
+      const metal = escapeHtml(entry.metal || '');
+      const spot = typeof formatCurrency === 'function'
+        ? formatCurrency(entry.spot)
+        : `$${Number(entry.spot).toFixed(2)}`;
+      const provider = escapeHtml(entry.provider || 'LBMA');
+      return `<tr><td>${dateLabel}</td><td>${metal}</td><td>${spot}</td><td>${provider}</td></tr>`;
+    });
+    // nosemgrep: javascript.browser.security.insecure-innerhtml.insecure-innerhtml
+    tbody.innerHTML = rows.join('');
+  }
+
+  table.querySelectorAll('th').forEach((th, idx) => {
+    th.style.cursor = 'pointer';
+    th.onclick = () => {
+      const cols = ['date', 'metal', 'spot', 'provider'];
+      const nextCol = cols[idx];
+      if (settingsLbmaSortColumn === nextCol) {
+        settingsLbmaSortAsc = !settingsLbmaSortAsc;
+      } else {
+        settingsLbmaSortColumn = nextCol;
+        settingsLbmaSortAsc = true;
+      }
+      renderLbmaHistoryTable();
+    };
+  });
+};
+
 /**
  * Clears all spot price history after user confirmation.
  */
@@ -1081,6 +1272,10 @@ const clearSpotHistory = () => {
 // Compact format: { year: { metal: [[MM-DD, price], ...] } }
 // Expands into full historicalDataCache entries so fetchYearFile() finds
 // cached data immediately without network requests.
+/**
+ * Loads the spot history seed bundle into the cache.
+ * @param {Object} bundle - The spot history seed bundle.
+ */
 window._loadSpotSeedBundle = function(bundle) {
   let loaded = 0;
   for (const yearStr of Object.keys(bundle)) {
@@ -1119,6 +1314,7 @@ window.getMetalColor = getMetalColor;
 window.loadTrendRanges = loadTrendRanges;
 window.saveTrendRange = saveTrendRange;
 window.renderSpotHistoryTable = renderSpotHistoryTable;
+window.renderLbmaHistoryTable = renderLbmaHistoryTable;
 window.clearSpotHistory = clearSpotHistory;
 window.getHistoricalSparklineData = getHistoricalSparklineData;
 window.getRequiredYears = getRequiredYears;

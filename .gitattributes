@@ -6,6 +6,10 @@
 .claude/              export-ignore
 CLAUDE.md             export-ignore
 AGENTS.md             export-ignore
+GEMINI.md             export-ignore
+
+# Documentation (generated)
+docs/api/             export-ignore
 
 # DevOps tooling
 devops/               export-ignore

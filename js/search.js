@@ -330,6 +330,12 @@ const filterInventory = () => {
 
 // Note: applyColumnFilter function is now in filters.js for advanced filtering
 
+/**
+ * Safely retrieves a DOM element by ID, using safeGetElement if available.
+ *
+ * @param {string} id - The ID of the element to retrieve
+ * @returns {HTMLElement|null} The DOM element or null
+ */
 const resolveElement = (id) => {
   if (typeof safeGetElement === 'function') {
     return safeGetElement(id);
@@ -337,16 +343,35 @@ const resolveElement = (id) => {
   return document.getElementById(id);
 };
 
+/**
+ * Normalizes a list of search patterns for comparison.
+ * Trims, lowercases, and sorts the patterns.
+ *
+ * @param {string[]} list - The list of patterns to normalize
+ * @returns {string[]} The normalized list
+ */
 const _normalizePatterns = (list) => list
   .map(p => p.trim().toLowerCase())
   .filter(p => p.length > 0)
   .sort();
 
+/**
+ * Parses a comma-separated search query into individual patterns.
+ *
+ * @param {string} query - The search query string
+ * @returns {string[]} Array of individual search patterns
+ */
 const parseSearchPatterns = (query) => {
   if (!query || typeof query !== 'string') return [];
   return query.split(',').map(part => part.trim()).filter(Boolean);
 };
 
+/**
+ * Checks if a set of search patterns already exists as a custom group.
+ *
+ * @param {string[]} patterns - The patterns to check
+ * @returns {boolean} True if a matching custom group exists
+ */
 const searchPatternExistsInCustomGroups = (patterns) => {
   if (!patterns.length) return false;
   if (typeof loadCustomGroups !== 'function') return false;
@@ -358,6 +383,12 @@ const searchPatternExistsInCustomGroups = (patterns) => {
   });
 };
 
+/**
+ * Checks if a set of search patterns matches any auto-generated chips.
+ *
+ * @param {string[]} patterns - The patterns to check
+ * @returns {boolean} True if any pattern matches an auto-chip
+ */
 const searchPatternMatchesAutoChip = (patterns) => {
   if (!patterns.length) return false;
   if (typeof generateCategorySummary !== 'function') return false;
@@ -386,6 +417,13 @@ const searchPatternMatchesAutoChip = (patterns) => {
   return patterns.some(p => autoValues.has(p.toLowerCase()));
 };
 
+/**
+ * Determines whether the "Save Search" button should be displayed.
+ *
+ * @param {string} query - The current search query
+ * @param {boolean} fuzzyUsed - Whether fuzzy matching was used for this query
+ * @returns {boolean} True if the save button should be shown
+ */
 const shouldShowSearchSaveButton = (query, fuzzyUsed) => {
   const patterns = parseSearchPatterns(query);
   if (patterns.length < 2) return false;
@@ -395,6 +433,12 @@ const shouldShowSearchSaveButton = (query, fuzzyUsed) => {
   return true;
 };
 
+/**
+ * Updates the visibility of the "Save Search" button based on the query.
+ *
+ * @param {string} query - The search query string
+ * @param {boolean} [fuzzyUsed=false] - Whether fuzzy matching was active
+ */
 const updateSaveSearchButton = (query, fuzzyUsed = false) => {
   const group = resolveElement('saveSearchPatternGroup');
   if (!group || !group.id) return;
@@ -402,13 +446,23 @@ const updateSaveSearchButton = (query, fuzzyUsed = false) => {
   group.style.display = canSave ? '' : 'none';
 };
 
+/**
+ * Derives a default display label for a set of search patterns.
+ *
+ * @param {string[]} patterns - The patterns to derive a label from
+ * @returns {string} The derived display label
+ */
 const deriveSearchLabel = (patterns) => {
   if (!patterns.length) return '';
   const pretty = patterns.map(p => p.charAt(0).toUpperCase() + p.slice(1));
   return pretty.join(' / ');
 };
 
-const handleSaveSearchPattern = () => {
+/**
+ * Handles the "Save Search" button click event.
+ * Prompts the user for a label and creates a new custom group.
+ */
+const handleSaveSearchPattern = async () => {
   const input = resolveElement('searchInput');
   if (!input || !input.id) return;
   const query = input.value || '';
@@ -420,7 +474,9 @@ const handleSaveSearchPattern = () => {
 
   const patterns = parseSearchPatterns(query);
   const defaultLabel = deriveSearchLabel(patterns);
-  const label = window.prompt('Label for saved filter chip:', defaultLabel);
+  const label = typeof showAppPrompt === 'function'
+    ? await showAppPrompt('Label for saved filter chip:', defaultLabel, 'Save Search Pattern')
+    : window.prompt('Label for saved filter chip:', defaultLabel);
   if (!label || !label.trim()) {
     updateSaveSearchButton(query, fuzzyUsed);
     return;

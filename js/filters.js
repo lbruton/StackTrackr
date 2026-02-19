@@ -4,6 +4,7 @@
 /**
  * Advanced filtering system
  */
+/** @type {Object.<string, FilterConfig>} */
 let activeFilters = {};
 
 /**
@@ -742,8 +743,10 @@ const getChipColors = (field, value, index) => {
 };
 
 /**
- * Enhanced filter inventory function that includes advanced filters
- * @returns {Array} Filtered inventory items
+ * Enhanced filter inventory function that includes advanced filters.
+ * Applies all active filters in `activeFilters` to the inventory.
+ *
+ * @returns {Array<InventoryItem>} Filtered inventory items
  */
 const filterInventoryAdvanced = () => {
   let result = inventory;
@@ -1017,10 +1020,13 @@ const filterInventoryAdvanced = () => {
  * Supports 3-level deep filtering - clicking same filter removes it, clicking different filters stacks them
  * @param {string} field - The field to filter by
  * @param {string} value - The value to filter for
- * @param {boolean} [isGrouped=false] - Whether this is a grouped name filter
+ * @param {boolean} [isGrouped=false] - Whether this is a grouped/special filter (uses 'include' logic)
  * @param {boolean} [exclude=false] - Whether to apply the filter in exclusion mode
  */
 const applyQuickFilter = (field, value, isGrouped = false, exclude = false) => {
+  // Fields that support OR-logic multi-select (filter engine already handles these natively)
+  const isMultiSelect = field === 'tags' || field === 'metal' || field === 'type';
+
   // Handle custom group chip click
   if (field === 'customGroup') {
     const groups = typeof window.loadCustomGroups === 'function' ? window.loadCustomGroups() : [];
@@ -1088,8 +1094,8 @@ const applyQuickFilter = (field, value, isGrouped = false, exclude = false) => {
     return;
   }
 
-  // If this exact filter is already active, remove it (toggle behavior)
-  if (activeFilters[field]?.values?.[0] === value && activeFilters[field]?.exclude === exclude && !isGrouped) {
+  // If this exact filter is already active, remove it (toggle behavior — single-select fields only)
+  if (!isMultiSelect && activeFilters[field]?.values?.[0] === value && activeFilters[field]?.exclude === exclude && !isGrouped) {
     delete activeFilters[field];
   } else if (field === 'name' && isGrouped && window.featureFlags && window.featureFlags.isEnabled('GROUPED_NAME_CHIPS')) {
     // Handle grouped name filtering
@@ -1128,8 +1134,22 @@ const applyQuickFilter = (field, value, isGrouped = false, exclude = false) => {
       // Fallback to regular filtering if normalization is not available
       activeFilters[field] = { values: [value], exclude };
     }
+  } else if (isMultiSelect && activeFilters[field] && activeFilters[field].exclude === exclude) {
+    // Accumulate: toggle individual values in/out of the active set
+    const existing = activeFilters[field].values;
+    const idx = existing.indexOf(value);
+    if (idx !== -1) {
+      const updated = existing.filter(v => v !== value);
+      if (updated.length === 0) {
+        delete activeFilters[field];
+      } else {
+        activeFilters[field] = { values: updated, exclude };
+      }
+    } else {
+      activeFilters[field] = { values: [...existing, value], exclude };
+    }
   } else {
-    // Add or replace the filter for this field
+    // Single-select fields, first click, or switching exclude mode: replace
     activeFilters[field] = { values: [value], exclude };
   }
 

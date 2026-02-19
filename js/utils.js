@@ -1162,6 +1162,90 @@ const getGoldbackRetailPrice = (item) => {
 };
 
 /**
+ * Calculates qty-adjusted retail value using the portfolio hierarchy:
+ * Goldback denomination price → manual market value → melt value.
+ *
+ * @param {Object} item - Inventory item
+ * @param {number} currentSpot - Current spot price for the item's metal
+ * @returns {{
+ *   qty: number,
+ *   marketValue: number,
+ *   meltValue: number,
+ *   gbDenomPrice: number|null,
+ *   isManualRetail: boolean,
+ *   retailTotal: number
+ * }}
+ */
+const calculateRetailPrice = (item, currentSpot) => {
+  const qty = Number(item?.qty) || 1;
+  const marketValue = parseFloat(item?.marketValue) || 0;
+  const meltValue = computeMeltValue(item, Number(currentSpot) || 0);
+  const gbDenomPrice = (typeof getGoldbackRetailPrice === 'function') ? getGoldbackRetailPrice(item) : null;
+  const isManualRetail = !gbDenomPrice && marketValue > 0;
+  const retailTotal = gbDenomPrice ? gbDenomPrice * qty
+    : isManualRetail ? marketValue * qty
+      : meltValue;
+
+  return {
+    qty,
+    marketValue,
+    meltValue,
+    gbDenomPrice,
+    isManualRetail,
+    retailTotal,
+  };
+};
+
+/**
+ * Computes normalized valuation values for an inventory item.
+ * Centralizes purchase, melt, retail, and gain/loss calculations.
+ *
+ * @param {Object} item - Inventory item
+ * @param {number} currentSpot - Current spot price for the item's metal
+ * @returns {{
+ *   qty: number,
+ *   purchasePrice: number,
+ *   purchaseTotal: number,
+ *   marketValue: number,
+ *   meltValue: number,
+ *   gbDenomPrice: number|null,
+ *   isManualRetail: boolean,
+ *   retailTotal: number,
+ *   hasRetailSignal: boolean,
+ *   gainLoss: number|null
+ * }}
+ */
+const computeItemValuation = (item, currentSpot) => {
+  const normalizedSpot = Number(currentSpot) || 0;
+  const {
+    qty,
+    marketValue,
+    meltValue,
+    gbDenomPrice,
+    isManualRetail,
+    retailTotal,
+  } = calculateRetailPrice(item, normalizedSpot);
+
+  const purchasePrice = typeof item?.price === 'number' ? item.price : parseFloat(item?.price) || 0;
+  const purchaseTotal = purchasePrice * qty;
+  const hasRetailSignal = normalizedSpot > 0 || isManualRetail || !!gbDenomPrice;
+  const gainLoss = hasRetailSignal ? retailTotal - purchaseTotal : null;
+
+  return {
+    qty,
+    purchasePrice,
+    purchaseTotal,
+    marketValue,
+    meltValue,
+    gbDenomPrice,
+    isManualRetail,
+    retailTotal,
+    hasRetailSignal,
+    gainLoss,
+  };
+};
+
+/**
  * Handles errors with user-friendly messaging
  *
  * @param {Error|string} error - Error to handle
@@ -3003,6 +3087,8 @@ if (typeof window !== 'undefined') {
   window.openEbaySoldSearch = openEbaySoldSearch;
   window.cleanSearchTerm = cleanSearchTerm;
   window.computeMeltValue = computeMeltValue;
+  window.calculateRetailPrice = calculateRetailPrice;
+  window.computeItemValuation = computeItemValuation;
   // Multi-currency support (STACK-50)
   window.loadDisplayCurrency = loadDisplayCurrency;
   window.saveDisplayCurrency = saveDisplayCurrency;
@@ -3020,6 +3106,8 @@ if (typeof module !== 'undefined' && module.exports) {
     sanitizeObjectFields,
     sanitizeImportedItem,
     computeMeltValue,
+    calculateRetailPrice,
+    computeItemValuation,
     getContrastColor,
     debounce,
     generateUUID,

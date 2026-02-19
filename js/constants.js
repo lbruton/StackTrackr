@@ -738,6 +738,7 @@ const ALLOWED_STORAGE_KEYS = [
   "cloud_sync_last_pull",                      // JSON: { syncId, timestamp, rev } — last pull on this device
   "cloud_sync_device_id",                      // UUID string: stable per-device identifier
   "cloud_sync_cursor",                         // Dropbox rev string: for efficient change detection
+  "cloud_sync_override_backup",                // JSON: { timestamp, itemCount, appVersion, data: {...} } — pre-pull local snapshot
 ];
 
 // =============================================================================

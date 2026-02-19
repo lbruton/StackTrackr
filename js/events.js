@@ -10,10 +10,10 @@
 
 /**
  * Safely attaches event listener with fallback methods
- * @param {HTMLElement} element - Element to attach listener to
+ * @param {HTMLElement|Window|Document} element - Element to attach listener to
  * @param {string} event - Event type
  * @param {Function} handler - Event handler function
- * @param {string} description - Description for logging
+ * @param {string} [description=""] - Description for logging
  * @returns {boolean} Success status
  */
 const safeAttachListener = (element, event, handler, description = "") => {
@@ -767,6 +767,10 @@ const setupTableSortListeners = () => {
   // Swaps weight text input ↔ denomination select when unit changes to/from 'gb'.
   // Auto-fills hidden weight value from the selected denomination.
   const showEl = (el, visible) => { if (el) el.style.display = visible ? '' : 'none'; };
+  /**
+   * Toggles the visible input between weight and goldback denomination.
+   * Auto-fills hidden weight value from the selected denomination when in 'gb' mode.
+   */
   window.toggleGbDenomPicker = () => {
     const isGb = elements.itemWeightUnit?.value === 'gb';
     const denomSelect = elements.itemGbDenom;
@@ -1797,20 +1801,27 @@ const setupVaultListeners = () => {
  * Sets up data-destructive action listeners (remove data, boating accident).
  */
 const setupDataManagementListeners = () => {
-  optionalListener(elements.removeInventoryDataBtn, "click", () => {
-    if (confirm("Remove all inventory items? This cannot be undone.")) {
+  optionalListener(elements.removeInventoryDataBtn, "click", async () => {
+    const confirmed = typeof showAppConfirm === "function"
+      ? await showAppConfirm("Remove all inventory items? This cannot be undone.", "Data Management")
+      : confirm("Remove all inventory items? This cannot be undone.");
+    if (confirmed) {
       localStorage.removeItem(LS_KEY);
       // STACK-62: Clear stale autocomplete cache so it rebuilds from fresh inventory
       if (typeof clearLookupCache === 'function') clearLookupCache();
       loadInventory();
       renderTable();
       renderActiveFilters();
-      alert("Inventory data cleared.");
+      if (typeof showAppAlert === "function") await showAppAlert("Inventory data cleared.", "Data Management");
+      else alert("Inventory data cleared.");
     }
   }, "Remove inventory data button");
 
-  optionalListener(elements.boatingAccidentBtn, "click", () => {
-    if (confirm("Did you really lose it all in a boating accident? This will wipe all local data.")) {
+  optionalListener(elements.boatingAccidentBtn, "click", async () => {
+    const confirmed = typeof showAppConfirm === "function"
+      ? await showAppConfirm("Did you really lose it all in a boating accident? This will wipe all local data.", "Data Management")
+      : confirm("Did you really lose it all in a boating accident? This will wipe all local data.");
+    if (confirmed) {
       // Nuclear wipe: clear every allowed localStorage key
       ALLOWED_STORAGE_KEYS.forEach((key) => {
         localStorage.removeItem(key);
@@ -1840,7 +1851,8 @@ const setupDataManagementListeners = () => {
       apiCache = null;
       updateSyncButtonStates();
 
-      alert("All data has been erased. Hope your scuba gear is ready!");
+      if (typeof showAppAlert === "function") await showAppAlert("All data has been erased. Hope your scuba gear is ready!", "Data Management");
+      else alert("All data has been erased. Hope your scuba gear is ready!");
     }
   }, "Boating accident button");
 };
@@ -2199,6 +2211,10 @@ const updateThemeButton = () => {
 
 window.updateThemeButton = updateThemeButton;
 
+/**
+ * Sets up the theme toggle logic and listeners.
+ * Initializes the theme based on saved preference or system settings.
+ */
 const setupThemeToggle = () => {
   debugLog("Setting up theme toggle...");
 
