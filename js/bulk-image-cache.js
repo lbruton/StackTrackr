@@ -7,7 +7,6 @@
 // Image caching is handled on-demand by the view modal (viewModal.js).
 // =============================================================================
 
-// eslint-disable-next-line no-unused-vars
 const BulkImageCache = (() => {
   let _aborted = false;
   let _running = false;
