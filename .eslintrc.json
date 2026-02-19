@@ -4,7 +4,22 @@
     "es2020": true
   },
   "rules": {
-    "no-undef": "off"
+    "no-undef": "off",
+    "no-restricted-globals": [
+      "error",
+      {
+        "name": "alert",
+        "message": "Use showAppAlert/appAlert instead of native alert()."
+      },
+      {
+        "name": "confirm",
+        "message": "Use showAppConfirm/appConfirm instead of native confirm()."
+      },
+      {
+        "name": "prompt",
+        "message": "Use showAppPrompt/appPrompt instead of native prompt()."
+      }
+    ]
   },
   "plugins": [],
   "parserOptions": {
