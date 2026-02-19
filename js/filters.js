@@ -453,6 +453,8 @@ const renderActiveFilters = () => {
   chips.forEach((f, i) => {
     const chip = document.createElement('span');
     chip.className = 'filter-chip';
+    chip.setAttribute('role', 'button');
+    chip.setAttribute('tabindex', '0');
     if (f.exclude) chip.classList.add('filter-chip-excluded');
     // All chip categories render visually identical — no italic/bold distinction
     const firstValue = String(f.value).split(', ')[0];
@@ -531,34 +533,46 @@ const renderActiveFilters = () => {
     }
 
     // Different tooltip and click behavior for different chip types
+    let onChipActivate = () => {};
     if (f.count !== undefined && f.total !== undefined) {
       // Category summary chips - clicking adds filter; shift+click blacklists supported chip names.
       const canBlacklist = f.field === 'name' || f.field === 'dynamicName' || f.field === 'customGroup' || f.field === 'tags';
       const chipNameForBlacklist = f.field === 'customGroup' ? (f.displayLabel || f.value) : f.value;
       chip.title = `Click to filter by ${f.field}: ${displayValue} (${f.count} items)` +
         (canBlacklist ? ' · Shift+click to ignore' : '');
-      chip.addEventListener('click', (e) => {
+      onChipActivate = (e) => {
         if (canBlacklist && e.shiftKey && typeof window.showBlacklistConfirm === 'function') {
           e.preventDefault();
           window.showBlacklistConfirm(e.clientX, e.clientY, chipNameForBlacklist);
           return;
         }
         applyQuickFilter(f.field, f.value, f.isGrouped || f.isCustomGroup || f.isDynamic || false);
-      });
+      };
     } else {
       // Active filter chips - clicking removes filter
       chip.title = f.field === 'search'
         ? `Search term: ${displayValue} (click to remove)`
         : `Active ${f.exclude ? 'excluded' : 'included'} filter: ${f.field} = ${displayValue} (click to remove)`;
-      chip.addEventListener('click', () => {
+      onChipActivate = () => {
         removeFilter(f.field, f.value);
         renderActiveFilters();
-      });
+      };
     }
+    chip.addEventListener('click', onChipActivate);
+    chip.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        onChipActivate(e);
+      }
+    });
+
     // Make the close glyph interactive and keyboard accessible (removes the filter)
     close.setAttribute('role', 'button');
     close.setAttribute('tabindex', '0');
-    close.setAttribute('aria-label', `Remove filter ${displayValue}`);
+    const closeActionLabel = isActiveFilter
+      ? `Remove filter ${displayValue}`
+      : `Exclude ${displayValue}`;
+    close.setAttribute('aria-label', closeActionLabel);
     close.onclick = (e) => {
       e.stopPropagation();
       if (isActiveFilter) {
