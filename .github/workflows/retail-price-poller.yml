@@ -6,6 +6,9 @@
 #   GEMINI_API_KEY         — Google AI Studio API key
 #   BROWSERBASE_API_KEY    — Browserbase cloud browser API key
 #   BROWSERBASE_PROJECT_ID — Browserbase project ID
+#
+# Strategy: scripts run from the triggering branch (main/dev), output written
+# to the `data` branch via a secondary checkout at ./data-out/
 name: Retail Price Poller
 
 on:
@@ -30,10 +33,16 @@ jobs:
       date: ${{ steps.date.outputs.date }}
 
     steps:
-      - name: Checkout data branch
+      - name: Checkout scripts branch
+        uses: actions/checkout@v4
+        with:
+          path: scripts
+
+      - name: Checkout data branch (output target)
         uses: actions/checkout@v4
         with:
           ref: data
+          path: data-out
           fetch-depth: 1
 
       - name: Set up Node.js
@@ -48,14 +57,15 @@ jobs:
       - name: Run Firecrawl price extractor
         env:
           FIRECRAWL_API_KEY: ${{ secrets.FIRECRAWL_API_KEY }}
-          DATA_DIR: ${{ github.workspace }}/data
+          DATA_DIR: ${{ github.workspace }}/data-out/data
+        working-directory: scripts
         run: node devops/retail-poller/price-extract.js
 
       - name: Upload Firecrawl results
         uses: actions/upload-artifact@v4
         with:
           name: firecrawl-prices
-          path: data/retail/**/${{ steps.date.outputs.date }}.json
+          path: data-out/data/retail/**/${{ steps.date.outputs.date }}.json
           retention-days: 3
 
   # ──────────────────────────────────────────────────────────────
@@ -70,10 +80,16 @@ jobs:
       date: ${{ steps.date.outputs.date }}
 
     steps:
-      - name: Checkout data branch
+      - name: Checkout scripts branch
+        uses: actions/checkout@v4
+        with:
+          path: scripts
+
+      - name: Checkout data branch (output target)
         uses: actions/checkout@v4
         with:
           ref: data
+          path: data-out
           fetch-depth: 1
 
       - name: Set up Node.js
@@ -82,6 +98,7 @@ jobs:
           node-version: '20'
 
       - name: Install Playwright (for capture.js)
+        working-directory: scripts
         run: npm install playwright-core dotenv
 
       - name: Get date
@@ -94,36 +111,37 @@ jobs:
           BROWSERBASE_API_KEY: ${{ secrets.BROWSERBASE_API_KEY }}
           BROWSERBASE_PROJECT_ID: ${{ secrets.BROWSERBASE_PROJECT_ID }}
           BROWSER_MODE: browserbase
-          DATA_DIR: ${{ github.workspace }}/data
-          # Capture all 4 providers for all coins
+          DATA_DIR: ${{ github.workspace }}/data-out/data
           COINS: ase,maple-silver,britannia-silver,krugerrand-silver,generic-silver-round,generic-silver-bar-10oz,age,buffalo,maple-gold,krugerrand-gold,ape
           PROVIDERS: jmbullion,apmex,sdbullion,monumentmetals
+        working-directory: scripts
         run: node devops/retail-poller/capture.js
 
       - name: Extract prices via Gemini Vision
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          DATA_DIR: ${{ github.workspace }}/data
+          DATA_DIR: ${{ github.workspace }}/data-out/data
+        working-directory: scripts
         run: |
-          MANIFEST="data/retail/_artifacts/${{ steps.date.outputs.date }}/manifest.json"
+          MANIFEST="${{ github.workspace }}/data-out/data/retail/_artifacts/${{ steps.date.outputs.date }}/manifest.json"
           node devops/retail-poller/extract-vision.js "$MANIFEST"
 
       - name: Upload Vision results
         uses: actions/upload-artifact@v4
         with:
           name: vision-prices
-          path: data/retail/**/${{ steps.date.outputs.date }}-vision.json
+          path: data-out/data/retail/**/${{ steps.date.outputs.date }}-vision.json
           retention-days: 3
 
       - name: Upload screenshots (for debugging)
         uses: actions/upload-artifact@v4
         with:
           name: screenshots
-          path: data/retail/_artifacts/${{ steps.date.outputs.date }}/
+          path: data-out/data/retail/_artifacts/${{ steps.date.outputs.date }}/
           retention-days: 7
 
   # ──────────────────────────────────────────────────────────────
-  # Merge: Confidence scoring + final commit
+  # Merge: Confidence scoring + final commit to data branch
   # ──────────────────────────────────────────────────────────────
   merge:
     name: Merge & Commit
@@ -135,10 +153,16 @@ jobs:
       contents: write
 
     steps:
-      - name: Checkout data branch
+      - name: Checkout scripts branch
+        uses: actions/checkout@v4
+        with:
+          path: scripts
+
+      - name: Checkout data branch (output target)
         uses: actions/checkout@v4
         with:
           ref: data
+          path: data-out
           fetch-depth: 1
 
       - name: Set up Node.js
@@ -154,22 +178,24 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: firecrawl-prices
-          path: data/retail/
+          path: data-out/data/retail/
         continue-on-error: true
 
       - name: Download Vision results
         uses: actions/download-artifact@v4
         with:
           name: vision-prices
-          path: data/retail/
+          path: data-out/data/retail/
         continue-on-error: true
 
       - name: Run confidence merger
         env:
-          DATA_DIR: ${{ github.workspace }}/data
+          DATA_DIR: ${{ github.workspace }}/data-out/data
+        working-directory: scripts
         run: node devops/retail-poller/merge-prices.js ${{ steps.date.outputs.date }}
 
       - name: Commit and push all data
+        working-directory: data-out
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
