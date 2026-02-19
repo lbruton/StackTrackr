@@ -49,9 +49,8 @@ function getSyncDeviceId() {
 
 /** Fallback UUID generator when generateUUID from utils.js is unavailable */
 function _syncFallbackUUID() {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-    var r = Math.random() * 16 | 0;
-    return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+  return ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, function (c) {
+    return (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16);
   });
 }
 
@@ -449,7 +448,7 @@ async function pollForRemoteChanges() {
       debugLog('[CloudSync] Poll meta fetch failed:', resp.status);
       return;
     }
-    _syncRetryDelay = 2000;
+    _syncRetryDelay = SYNC_POLL_INTERVAL;
 
     var remoteMeta = await resp.json();
     if (!remoteMeta || !remoteMeta.syncId) return;
@@ -731,19 +730,26 @@ function showSyncConflictModal(opts) {
 // Poller lifecycle
 // ---------------------------------------------------------------------------
 
-/** Start the background polling interval. */
-function startSyncPoller() {
-  stopSyncPoller();
-  _syncPollerTimer = setInterval(function () {
-    pollForRemoteChanges();
-  }, SYNC_POLL_INTERVAL);
-  debugLog('[CloudSync] Poller started (every', SYNC_POLL_INTERVAL / 60000, 'min)');
+/** Schedule the next poll using the current _syncRetryDelay (respects backoff). */
+function _schedulePoll() {
+  _syncPollerTimer = setTimeout(async function () {
+    await pollForRemoteChanges();
+    if (_syncPollerTimer !== null) _schedulePoll();
+  }, _syncRetryDelay);
 }
 
-/** Stop the background polling interval. */
+/** Start the background polling loop. Uses setTimeout so backoff delay is honoured. */
+function startSyncPoller() {
+  stopSyncPoller();
+  _syncRetryDelay = SYNC_POLL_INTERVAL;
+  _schedulePoll();
+  debugLog('[CloudSync] Poller started (initial delay', SYNC_POLL_INTERVAL / 60000, 'min)');
+}
+
+/** Stop the background polling loop. */
 function stopSyncPoller() {
   if (_syncPollerTimer !== null) {
-    clearInterval(_syncPollerTimer);
+    clearTimeout(_syncPollerTimer);
     _syncPollerTimer = null;
     debugLog('[CloudSync] Poller stopped');
   }
