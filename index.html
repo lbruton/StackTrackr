@@ -3800,6 +3800,28 @@
       </div>
     </div>
 
+    <!-- STAK-149: Cloud Auto-Sync Update Available Modal -->
+    <div class="modal" id="cloudSyncUpdateModal" style="display: none">
+      <div class="modal-content" style="max-width: 420px">
+        <div class="modal-header">
+          <h2>Sync Update Available</h2>
+          <button aria-label="Close modal" class="modal-close" id="syncUpdateDismissX">&times;</button>
+        </div>
+        <div class="modal-body">
+          <p class="settings-subtext" style="margin-bottom:1rem">Another device has pushed a newer version of your inventory. Would you like to update now?</p>
+          <div class="cloud-sync-update-meta">
+            <div class="cloud-sync-update-row"><span>Items</span><strong id="syncUpdateItemCount">&mdash;</strong></div>
+            <div class="cloud-sync-update-row"><span>Updated</span><strong id="syncUpdateTimestamp">&mdash;</strong></div>
+            <div class="cloud-sync-update-row"><span>Device</span><strong id="syncUpdateDevice">&mdash;</strong></div>
+          </div>
+          <div class="encryption-actions" style="margin-top:1.2rem;gap:0.5rem;flex-wrap:wrap">
+            <button class="btn success" id="syncUpdateAcceptBtn">Accept Update</button>
+            <button class="btn" id="syncUpdateDismissBtn">Not Now</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div class="modal" id="apiQuotaModal" style="display: none">
       <div class="modal-content">
         <div class="modal-header">
