@@ -4176,6 +4176,22 @@
       </div>
     </div>
 
+    <!-- Bulk Edit inline confirmation (replaces window.confirm suppressed by modal context) -->
+    <div class="modal" id="bulkConfirmModal" style="display: none; z-index: 1100">
+      <div class="modal-content" style="max-width: 380px">
+        <div class="modal-header">
+          <h2>Confirm</h2>
+        </div>
+        <div class="modal-body">
+          <p id="bulkConfirmMessage" style="margin: 0 0 1.2rem"></p>
+          <div class="encryption-actions" style="gap: 0.5rem">
+            <button class="btn btn-danger" id="bulkConfirmOkBtn">Confirm</button>
+            <button class="btn" id="bulkConfirmCancelBtn">Cancel</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Privacy Policy Modal -->
     <div class="modal" id="privacyModal" style="display: none">
       <div class="modal-content" style="max-width:760px">
