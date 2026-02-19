@@ -408,7 +408,108 @@ const deriveSearchLabel = (patterns) => {
   return pretty.join(' / ');
 };
 
-const handleSaveSearchPattern = () => {
+const showSearchLabelModal = (defaultLabel) => {
+  return new Promise((resolve) => {
+    const fallbackToPrompt = () => {
+      const value = window.prompt('Label for saved filter chip:', defaultLabel);
+      resolve(value === null ? null : String(value));
+    };
+
+    if (!document || !document.body) {
+      fallbackToPrompt();
+      return;
+    }
+
+    const backdrop = document.createElement('div');
+    backdrop.style.position = 'fixed';
+    backdrop.style.inset = '0';
+    backdrop.style.background = 'rgba(0, 0, 0, 0.45)';
+    backdrop.style.display = 'flex';
+    backdrop.style.alignItems = 'center';
+    backdrop.style.justifyContent = 'center';
+    backdrop.style.padding = '16px';
+    backdrop.style.zIndex = '11000';
+
+    const panel = document.createElement('div');
+    panel.style.width = 'min(460px, 100%)';
+    panel.style.background = 'var(--panel-bg, #1f242d)';
+    panel.style.color = 'var(--text-color, #e5e7eb)';
+    panel.style.border = '1px solid var(--border-color, rgba(255,255,255,0.16))';
+    panel.style.borderRadius = '12px';
+    panel.style.boxShadow = '0 12px 30px rgba(0, 0, 0, 0.35)';
+    panel.style.padding = '16px';
+
+    const title = document.createElement('h3');
+    title.textContent = 'Save search as filter chip';
+    title.style.margin = '0 0 10px 0';
+    title.style.fontSize = '1rem';
+
+    const help = document.createElement('p');
+    help.textContent = 'Choose a label for this saved chip.';
+    help.style.margin = '0 0 12px 0';
+    help.style.opacity = '0.9';
+
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.value = defaultLabel || '';
+    input.maxLength = 120;
+    input.style.width = '100%';
+    input.style.boxSizing = 'border-box';
+    input.style.padding = '10px 12px';
+    input.style.borderRadius = '8px';
+    input.style.border = '1px solid var(--border-color, rgba(255,255,255,0.2))';
+    input.style.background = 'var(--input-bg, rgba(0,0,0,0.2))';
+    input.style.color = 'inherit';
+
+    const actions = document.createElement('div');
+    actions.style.marginTop = '14px';
+    actions.style.display = 'flex';
+    actions.style.gap = '10px';
+    actions.style.justifyContent = 'flex-end';
+
+    const cancelBtn = document.createElement('button');
+    cancelBtn.type = 'button';
+    cancelBtn.className = 'btn btn-secondary';
+    cancelBtn.textContent = 'Cancel';
+
+    const saveBtn = document.createElement('button');
+    saveBtn.type = 'button';
+    saveBtn.className = 'btn';
+    saveBtn.textContent = 'Save';
+
+    const cleanup = (value) => {
+      backdrop.remove();
+      resolve(value);
+    };
+
+    cancelBtn.addEventListener('click', () => cleanup(null));
+    saveBtn.addEventListener('click', () => cleanup(input.value));
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        cleanup(input.value);
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        cleanup(null);
+      }
+    });
+    backdrop.addEventListener('click', (e) => {
+      if (e.target === backdrop) cleanup(null);
+    });
+
+    actions.append(cancelBtn, saveBtn);
+    panel.append(title, help, input, actions);
+    backdrop.appendChild(panel);
+    document.body.appendChild(backdrop);
+
+    setTimeout(() => {
+      input.focus();
+      input.select();
+    }, 0);
+  });
+};
+
+const handleSaveSearchPattern = async () => {
   const input = resolveElement('searchInput');
   if (!input || !input.id) return;
   const query = input.value || '';
@@ -420,7 +521,7 @@ const handleSaveSearchPattern = () => {
 
   const patterns = parseSearchPatterns(query);
   const defaultLabel = deriveSearchLabel(patterns);
-  const label = window.prompt('Label for saved filter chip:', defaultLabel);
+  const label = await showSearchLabelModal(defaultLabel);
   if (!label || !label.trim()) {
     updateSaveSearchButton(query, fuzzyUsed);
     return;
