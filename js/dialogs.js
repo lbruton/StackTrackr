@@ -97,7 +97,11 @@
 
     const onKeyDown = (event) => {
       if (event.key === 'Escape' && mode !== 'alert') finish(mode === 'prompt' ? null : false);
-      if (event.key === 'Enter' && mode === 'prompt') finish(inputEl.value);
+      if (event.key === 'Enter') {
+        if (mode === 'prompt') finish(inputEl.value);
+        else if (mode === 'confirm') finish(true);
+        else finish(undefined);
+      }
     };
 
     closeBtn.onclick = () => finish(mode === 'alert' ? undefined : (mode === 'prompt' ? null : false));

@@ -88,10 +88,9 @@ function renderCloudActivityTable() {
       pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());
     var resultStyle = e.result === 'fail' ? ' style="color: var(--danger, #e74c3c);"' : '';
     var durationStr = e.duration != null ? e.duration + 'ms' : '—';
-    var esc = function (s) { return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); };
-    var safeDetail = esc(e.detail);
-    return '<tr><td>' + timeStr + '</td><td>' + esc(e.action) + '</td><td>' + esc(e.provider) +
-      '</td><td' + resultStyle + '>' + esc(e.result) + '</td><td>' + safeDetail + '</td><td>' + durationStr + '</td></tr>';
+    var safeDetail = sanitizeHtml(e.detail);
+    return '<tr><td>' + timeStr + '</td><td>' + sanitizeHtml(e.action) + '</td><td>' + sanitizeHtml(e.provider) +
+      '</td><td' + resultStyle + '>' + sanitizeHtml(e.result) + '</td><td>' + safeDetail + '</td><td>' + durationStr + '</td></tr>';
   });
 
   // nosemgrep: javascript.browser.security.insecure-innerhtml.insecure-innerhtml
@@ -1000,9 +999,9 @@ function cloudClearCachedPassword() {
 // Idle auto-lock: clear cached vault password after inactivity
 // ---------------------------------------------------------------------------
 
-var IDLE_LOCK_TIMEOUT_MS = 15 * 60 * 1000; // 15 minutes
-var _idleLockTimer = null;
-var _idleThrottleTimer = null;
+const IDLE_LOCK_TIMEOUT_MS = 15 * 60 * 1000; // 15 minutes
+let _idleLockTimer = null;
+let _idleThrottleTimer = null;
 
 function _resetIdleLockTimer() {
   if (!sessionStorage.getItem('cloud_vault_pw_cache')) return;
