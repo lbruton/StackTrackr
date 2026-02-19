@@ -11,9 +11,6 @@ let _viewModalObjectUrls = [];
 /** @type {Chart|null} Price history chart instance — destroyed on modal close */
 let _viewModalChartInstance = null;
 
-/** @type {number} Metadata cache TTL: 30 days in ms */
-const VIEW_METADATA_TTL = 30 * 24 * 60 * 60 * 1000;
-
 /** @type {number[]} Available chart range options (0 = all, -1 = from purchase date) */
 const _VIEW_CHART_RANGES = [7, 14, 30, 60, 90, 180, 365, 1825, 3650, -1, 0];
 
@@ -80,8 +77,17 @@ async function showViewModal(index) {
   const imagesLoaded = cacheResult.loaded;
   const imageSource = cacheResult.source;
 
-  // If images or metadata are needed, do a single API lookup
-  if (catalogId && (!imagesLoaded || body.querySelector('#viewNumistaSection'))) {
+  // Check whether metadata is already cached in IndexedDB
+  let metaCached = false;
+  if (catalogId && window.imageCache?.isAvailable()) {
+    try {
+      const cachedMeta = await imageCache.getMetadata(catalogId);
+      metaCached = !!(cachedMeta && (Date.now() - (cachedMeta.cachedAt || 0)) < VIEW_METADATA_TTL);
+    } catch { /* ignore */ }
+  }
+
+  // Only hit the API when images are missing OR metadata is not in cache
+  if (catalogId && (!imagesLoaded || !metaCached)) {
     apiResult = await _fetchNumistaResult(catalogId);
   }
 

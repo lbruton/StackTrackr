@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.31.2] - 2026-02-18
+
+### Added — Numista Metadata Pipeline Fixes
+
+- **Fixed**: Vault restore now reloads in-memory item tags immediately — filter chips show correct tags without requiring a page reload (STAK-168)
+- **Fixed**: Bulk sync now writes Numista tags to all matching inventory items eagerly — filter chips no longer require opening each item's view modal (STAK-168)
+- **Fixed**: View modal skips API call when metadata is already cached in IndexedDB — eliminates reload delay for previously bulk-synced items (STAK-168)
+- **Fixed**: Numista search result weight field now pre-checked by default when value is available (STAK-168)
+
+---
+
 ## [3.31.1] - 2026-02-18
 
 ### Added — FAQ Modal, Settings Consolidation & Privacy Improvements

@@ -4,36 +4,11 @@
  * Keeps listener wiring split by concern while preserving existing behavior.
  */
 
-// Saved table items-per-page value used when toggling card view.
-let _savedTableIpp = null;
 let _patternMode = 'keywords';
 
 const getExistingElement = (id) => {
   const el = safeGetElement(id);
   return el && el.id ? el : null;
-};
-
-const applyViewIpp = () => {
-  const enteringCard = localStorage.getItem(DESKTOP_CARD_VIEW_KEY) === 'true';
-  let ippStr;
-  if (enteringCard) {
-    // Save current table IPP before overwriting.
-    if (_savedTableIpp === null && itemsPerPage !== Infinity) {
-      _savedTableIpp = String(itemsPerPage);
-    }
-    itemsPerPage = Infinity;
-    ippStr = 'all';
-  } else {
-    // Restore table IPP.
-    const restored = _savedTableIpp || 'all';
-    _savedTableIpp = null;
-    itemsPerPage = restored === 'all' ? Infinity : Number(restored);
-    ippStr = restored;
-  }
-  try { localStorage.setItem(ITEMS_PER_PAGE_KEY, ippStr); } catch (e) { /* ignore */ }
-  if (elements.itemsPerPage) elements.itemsPerPage.value = ippStr;
-  const settingsIpp = getExistingElement('settingsItemsPerPage');
-  if (settingsIpp) settingsIpp.value = ippStr;
 };
 
 const bindSettingsNavigationListeners = () => {
@@ -747,7 +722,6 @@ const bindCardAndTableImageListeners = () => {
     defaultVal: false,
     onApply: (isEnabled) => {
       document.body.classList.toggle('force-card-view', isEnabled);
-      applyViewIpp();
       if (typeof renderTable === 'function') renderTable();
     },
   });

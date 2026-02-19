@@ -1185,6 +1185,7 @@ const _loadBulkRowImages = async (tr, item) => {
 
   // Resolve best source via the same cascade inventory table uses
   const resolved = await imageCache.resolveImageForItem(item);
+  if (!tr.isConnected) return;
 
   /**
    * Get a URL for one side from the resolved source.
@@ -1217,7 +1218,6 @@ const _loadBulkRowImages = async (tr, item) => {
   const _makeImg = (url, side) => {
     const img = document.createElement('img');
     img.alt = '';
-    img.loading = 'lazy';
     img.className = 'bulk-img-thumb';
     img.dataset.side = side;
     if (url) {
@@ -1265,10 +1265,23 @@ const _openBulkImagePopover = (imgTd, item) => {
     if (existing.dataset.forSerial === String(item.serial)) return;
   }
 
+  const { showObv, showRev } = _getBulkImageSides();
+
   const pop = document.createElement('div');
   pop.id = 'bulkImagePopover';
   pop.className = 'bulk-img-popover';
   pop.dataset.forSerial = String(item.serial);
+
+  const _sideHtml = (key, label) => `
+    <div class="bulk-img-popover-side">
+      <span class="bulk-img-popover-label">${label}</span>
+      <div class="bulk-img-popover-preview" id="bulkPop${key}Preview"></div>
+      <div class="bulk-img-popover-actions">
+        <input type="file" id="bulkPop${key}File" accept="image/jpeg,image/png,image/webp" style="display:none" />
+        <button class="btn btn-sm" id="bulkPop${key}Upload" type="button">Upload</button>
+        <button class="btn btn-sm btn-danger" id="bulkPop${key}Remove" type="button" style="display:none">Remove</button>
+      </div>
+    </div>`;
 
   pop.innerHTML = `
     <div class="bulk-img-popover-header">
@@ -1276,24 +1289,8 @@ const _openBulkImagePopover = (imgTd, item) => {
       <button class="bulk-img-popover-close" type="button" aria-label="Close">×</button>
     </div>
     <div class="bulk-img-popover-sides">
-      <div class="bulk-img-popover-side">
-        <span class="bulk-img-popover-label">Obverse</span>
-        <div class="bulk-img-popover-preview" id="bulkPopObvPreview"></div>
-        <div class="bulk-img-popover-actions">
-          <input type="file" id="bulkPopObvFile" accept="image/jpeg,image/png,image/webp" style="display:none" />
-          <button class="btn btn-sm" id="bulkPopObvUpload" type="button">Upload</button>
-          <button class="btn btn-sm" id="bulkPopObvRemove" type="button" style="display:none">Remove</button>
-        </div>
-      </div>
-      <div class="bulk-img-popover-side">
-        <span class="bulk-img-popover-label">Reverse</span>
-        <div class="bulk-img-popover-preview" id="bulkPopRevPreview"></div>
-        <div class="bulk-img-popover-actions">
-          <input type="file" id="bulkPopRevFile" accept="image/jpeg,image/png,image/webp" style="display:none" />
-          <button class="btn btn-sm" id="bulkPopRevUpload" type="button">Upload</button>
-          <button class="btn btn-sm" id="bulkPopRevRemove" type="button" style="display:none">Remove</button>
-        </div>
-      </div>
+      ${showObv ? _sideHtml('Obv', 'Obverse') : ''}
+      ${showRev ? _sideHtml('Rev', 'Reverse') : ''}
     </div>
   `;
 
@@ -1361,7 +1358,7 @@ const _openBulkImagePopover = (imgTd, item) => {
       // "Remove" only applies to user-uploaded images stored in userImages.
       removeBtn.style.display = source === 'user' ? '' : 'none';
     } else {
-      previewEl.innerHTML = '';
+      previewEl.innerHTML = '<span class="thumb-popover-empty">No image</span>';
       removeBtn.style.display = 'none';
     }
   };
@@ -1371,8 +1368,8 @@ const _openBulkImagePopover = (imgTd, item) => {
   const obvRemove   = pop.querySelector('#bulkPopObvRemove');
   const revRemove   = pop.querySelector('#bulkPopRevRemove');
 
-  _loadPreview(obvPreview, obvRemove, 'obverse');
-  _loadPreview(revPreview, revRemove, 'reverse');
+  if (showObv) _loadPreview(obvPreview, obvRemove, 'obverse');
+  if (showRev) _loadPreview(revPreview, revRemove, 'reverse');
 
   // --- Upload handlers ---
   const _handleUpload = async (file, side) => {
@@ -1419,8 +1416,8 @@ const _openBulkImagePopover = (imgTd, item) => {
     file.addEventListener('change', () => { if (file.files[0]) _handleUpload(file.files[0], side); });
   };
 
-  _wireUpload('bulkPopObvUpload', 'bulkPopObvFile', 'obverse');
-  _wireUpload('bulkPopRevUpload', 'bulkPopRevFile', 'reverse');
+  if (showObv) _wireUpload('bulkPopObvUpload', 'bulkPopObvFile', 'obverse');
+  if (showRev) _wireUpload('bulkPopRevUpload', 'bulkPopRevFile', 'reverse');
 
   // --- Remove handlers ---
   const _handleRemove = async (side) => {
@@ -1441,15 +1438,15 @@ const _openBulkImagePopover = (imgTd, item) => {
 
     const previewEl = side === 'obverse' ? obvPreview : revPreview;
     const removeBtn = side === 'obverse' ? obvRemove  : revRemove;
-    previewEl.innerHTML = '';
+    previewEl.innerHTML = '<span class="thumb-popover-empty">No image</span>';
     removeBtn.style.display = 'none';
 
     const tr = imgTd.closest('tr');
     if (tr) _loadBulkRowImages(tr, item);
   };
 
-  obvRemove.addEventListener('click', () => _handleRemove('obverse'));
-  revRemove.addEventListener('click', () => _handleRemove('reverse'));
+  if (obvRemove) obvRemove.addEventListener('click', () => _handleRemove('obverse'));
+  if (revRemove) revRemove.addEventListener('click', () => _handleRemove('reverse'));
 };
 
 // =============================================================================
