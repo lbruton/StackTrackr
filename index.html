@@ -44,39 +44,39 @@
     <!-- FILE PROTOCOL COMPATIBILITY - MUST LOAD FIRST -->
     <script src="./js/file-protocol-fix.js"></script>
 
-    <!-- External libraries for data import/export functionality -->
-    <script
-      defer=""
-      src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"
-    ></script>
-    <script
-      defer=""
-      src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"
-    ></script>
-    <script
-      defer=""
-      src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"
-    ></script>
-    <!-- Chart.js for pie charts -->
-    <script
-      defer=""
-      src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"
-    ></script>
-    <!-- Chart.js datalabels plugin for pie chart percentage labels (STACK-71) -->
-    <script
-      defer=""
-      src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js"
-    ></script>
-    <!-- JSZip for backup functionality -->
-    <script
-      defer=""
-      src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"
-    ></script>
-    <!-- forge.js for encryption fallback on file:// protocol -->
-    <script
-      defer=""
-      src="https://cdnjs.cloudflare.com/ajax/libs/forge/0.10.0/forge.min.js"
-    ></script>
+    <!-- Vendored libraries: loaded locally for offline + file:// compatibility.
+         CDN fallbacks fire automatically if the local copy fails to define its global. -->
+    <script defer src="./vendor/papaparse.min.js"></script>
+    <script defer src="./vendor/jspdf.umd.min.js"></script>
+    <script defer src="./vendor/jspdf.plugin.autotable.min.js"></script>
+    <script defer src="./vendor/chart.min.js"></script>
+    <script defer src="./vendor/chartjs-plugin-datalabels.min.js"></script>
+    <script defer src="./vendor/jszip.min.js"></script>
+    <script defer src="./vendor/forge.min.js"></script>
+    <!-- CDN fallbacks — only execute if the local vendor copy failed to load -->
+    <script>
+      window.__vendorFallbacks = [
+        { global: 'Papa',                   src: 'https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js' },
+        { global: 'jspdf',                  src: 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js' },
+        { check: function() { return !!(window.jspdf && window.jspdf.jsPDF && window.jspdf.jsPDF.prototype.autoTable); }, src: 'https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js' },
+        { global: 'Chart',                  src: 'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js' },
+        { global: 'ChartDataLabels',        src: 'https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js' },
+        { global: 'JSZip',                  src: 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js' },
+        { global: 'forge',                  src: 'https://cdnjs.cloudflare.com/ajax/libs/forge/0.10.0/forge.min.js' },
+      ];
+      document.addEventListener('DOMContentLoaded', function () {
+        window.__vendorFallbacks.forEach(function (lib) {
+          var missing = lib.check ? !lib.check() : !window[lib.global];
+          if (missing) {
+            var label = lib.global || lib.src.split('/').pop();
+            console.warn('[vendor] ' + label + ' not loaded from local — falling back to CDN');
+            var s = document.createElement('script');
+            s.src = lib.src;
+            document.head.appendChild(s);
+          }
+        });
+      });
+    </script>
 
     <link rel="stylesheet" href="./css/styles.css" />
     <link rel="icon" type="image/svg+xml" href="./favicon.svg?v=3.27.03" />

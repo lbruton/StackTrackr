@@ -6,3 +6,4 @@ exclude_paths:
   - "style.html"
   - "about/**"
   - "docs/announcements.md"
+  - "vendor/**"
