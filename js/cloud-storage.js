@@ -140,7 +140,7 @@ function renderSyncHistorySection() {
     '<div class="cloud-sync-update-meta">' +
       '<div class="cloud-sync-update-row"><span>Snapshot taken</span><strong>' + timeStr + '</strong></div>' +
       '<div class="cloud-sync-update-row"><span>Items</span><strong>' + (backup.itemCount != null ? backup.itemCount : '?') + '</strong></div>' +
-      (backup.appVersion ? '<div class="cloud-sync-update-row"><span>Version</span><strong>v' + String(backup.appVersion).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</strong></div>' : '') +
+      (backup.appVersion ? '<div class="cloud-sync-update-row"><span>Version</span><strong>v' + sanitizeHtml(String(backup.appVersion)) + '</strong></div>' : '') +
     '</div>' +
     '<div style="margin-top:0.6rem">' +
       '<button class="btn warning" type="button" style="font-size:0.8rem;padding:0.25rem 0.6rem" ' +
