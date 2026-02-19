@@ -154,7 +154,7 @@ const handleStaktrakrHistoryPull = async () => {
   const totalDays = daysSelect ? parseInt(daysSelect.value, 10) : 7;
   const totalHours = totalDays * 24;
 
-  const proceed = confirm(
+  const proceed = await showAppConfirm(
     `Pull ${totalDays} day${totalDays > 1 ? 's' : ''} of hourly history from StakTrakr.\n\n` +
     `This will fetch up to ${totalHours} hourly files (skipping already-fetched hours).\n\nProceed?`
   );
@@ -177,7 +177,7 @@ const handleStaktrakrHistoryPull = async () => {
       }
     }
 
-    alert(
+    showAppAlert(
       `History pull complete!\n\n` +
       `Added ${newCount} new entries from ${fetchCount} hourly files.`
     );
@@ -185,7 +185,7 @@ const handleStaktrakrHistoryPull = async () => {
     if (typeof updateAllSparklines === "function") updateAllSparklines();
   } catch (err) {
     console.error("StakTrakr history pull failed:", err);
-    alert("History pull failed: " + err.message);
+    showAppAlert("History pull failed: " + err.message);
   } finally {
     if (btn) { btn.textContent = origText; btn.disabled = false; }
   }
@@ -445,7 +445,7 @@ const clearApiCache = () => {
   localStorage.removeItem(API_CACHE_KEY);
   apiCache = null;
   clearApiHistory(true);
-  alert(
+  showAppAlert(
     "API cache and history cleared. Next sync will pull fresh data from the API.",
   );
 };
@@ -913,7 +913,7 @@ const clearApiHistory = (silent = false) => {
 const setDefaultProvider = (provider) => {
   const config = loadApiConfig();
   if (!config.keys[provider] && providerRequiresKey(provider)) {
-    alert("Please enter your API key first");
+    showAppAlert("Please enter your API key first");
     return;
   }
   config.provider = provider;
@@ -1605,20 +1605,20 @@ const handleHistoryPull = async (provider) => {
   const config = loadApiConfig();
   const apiKey = config.keys?.[provider];
   if (!apiKey) {
-    alert("No API key configured for this provider. Please save your key first.");
+    showAppAlert("No API key configured for this provider. Please save your key first.");
     return;
   }
 
   const providerConfig = API_PROVIDERS[provider];
   if (!providerConfig || !providerConfig.batchSupported) {
-    alert("This provider does not support history pulls.");
+    showAppAlert("This provider does not support history pulls.");
     return;
   }
 
   const selected = config.metals?.[provider] || {};
   const selectedMetals = Object.keys(selected).filter((m) => selected[m] !== false);
   if (selectedMetals.length === 0) {
-    alert("No metals selected. Please select at least one metal to track.");
+    showAppAlert("No metals selected. Please select at least one metal to track.");
     return;
   }
 
@@ -1643,7 +1643,7 @@ const handleHistoryPull = async (provider) => {
   const remaining = Math.max(0, usage.quota - usage.used);
 
   const modeLabel = isHourly ? "hourly" : "daily";
-  const proceed = confirm(
+  const proceed = await showAppConfirm(
     `Pull ${totalDays} days of ${modeLabel} history from ${providerConfig.name}.\n\n` +
     `This will use ${totalCalls} API call${totalCalls > 1 ? "s" : ""} ` +
     `(${remaining} remaining this month).\n\nProceed?`
@@ -1662,7 +1662,7 @@ const handleHistoryPull = async (provider) => {
     } else {
       result = await fetchHistoryBatched(provider, apiKey, selectedMetals, totalDays);
     }
-    alert(
+    showAppAlert(
       `History pull complete!\n\n` +
       `Pulled ${result.totalEntries} data points using ${result.callsMade} API call${result.callsMade > 1 ? "s" : ""}.`
     );
@@ -1670,7 +1670,7 @@ const handleHistoryPull = async (provider) => {
     if (typeof updateAllSparklines === "function") updateAllSparklines();
   } catch (err) {
     console.error("History pull failed:", err);
-    alert("History pull failed: " + err.message);
+    showAppAlert("History pull failed: " + err.message);
   } finally {
     if (btn) { btn.textContent = origText; btn.disabled = false; }
   }
@@ -1692,7 +1692,7 @@ const syncSpotPricesFromApi = async (
 
   if (!hasAnyKey && !hasKeylessProvider) {
     if (showProgress) {
-      alert(
+      showAppAlert(
         "No Metals API configuration found. Please configure an API provider first.",
       );
     }
@@ -1715,7 +1715,7 @@ const syncSpotPricesFromApi = async (
             ? `${hoursAgo} hours ago`
             : `${minutesAgo} minutes ago`;
 
-        const override = confirm(
+        const override = await showAppConfirm(
           `Cached prices from ${timeText}.\n\nFetch fresh prices from the API?`,
         );
         if (!override) {
@@ -1736,9 +1736,9 @@ const syncSpotPricesFromApi = async (
       .filter(([_, status]) => status !== "skipped")
       .map(([prov, status]) => `${API_PROVIDERS[prov]?.name || prov}: ${status}`)
       .join("\n");
-    alert(`Synced ${updatedCount} prices.\n\n${summary}`);
+    showAppAlert(`Synced ${updatedCount} prices.\n\n${summary}`);
   } else if (showProgress && !anySucceeded) {
-    alert("Failed to sync prices from any provider.");
+    showAppAlert("Failed to sync prices from any provider.");
   }
 
   return anySucceeded;
@@ -1813,7 +1813,7 @@ const handleProviderSync = async (provider) => {
     if (!keyInput) return;
     apiKey = keyInput.value.trim();
     if (!apiKey) {
-      alert("Please enter your API key");
+      showAppAlert("Please enter your API key");
       return;
     }
   }
@@ -1829,7 +1829,7 @@ const handleProviderSync = async (provider) => {
     const format =
       document.getElementById("apiFormat_CUSTOM")?.value || "symbol";
     if (!base || !endpoint) {
-      alert("Please enter base URL and endpoint");
+      showAppAlert("Please enter base URL and endpoint");
       return;
     }
     config.customConfig = { baseUrl: base, endpoint, format };
@@ -1843,7 +1843,7 @@ const handleProviderSync = async (provider) => {
   // Test connection
   const ok = await testApiConnection(provider, apiKey);
   if (!ok) {
-    alert("API connection test failed.");
+    showAppAlert("API connection test failed.");
     setProviderStatus(provider, "error");
     return;
   }
@@ -1883,17 +1883,17 @@ const handleProviderSync = async (provider) => {
       }
       setProviderStatus(provider, "connected");
       updateProviderHistoryTables();
-      alert(
+      showAppAlert(
         `Successfully synced ${updatedCount} metal prices from ${API_PROVIDERS[provider].name}`,
       );
     } else {
       setProviderStatus(provider, "error");
-      alert("No valid prices retrieved from API");
+      showAppAlert("No valid prices retrieved from API");
     }
   } catch (error) {
     console.error("API sync error:", error);
     setProviderStatus(provider, "error");
-    alert("Failed to sync prices: " + error.message);
+    showAppAlert("Failed to sync prices: " + error.message);
   }
 };
 
@@ -2610,12 +2610,12 @@ ${
 
     downloadFile(`backup-info-${timestamp}.md`, apiInfo, "text/markdown");
 
-    alert(
+    showAppAlert(
       `Complete backup created! Downloaded files:\n\n✓ Inventory CSV (${inventory.length} items)\n✓ Spot price history (${spotHistory.length} entries)\n✓ Complete JSON backup\n✓ Documentation & restoration guide\n\nCheck your Downloads folder.`,
     );
   } catch (error) {
     console.error("Backup error:", error);
-    alert("Error creating backup: " + error.message);
+    showAppAlert("Error creating backup: " + error.message);
   }
 };
 
@@ -2629,7 +2629,7 @@ ${
 const exportSpotHistory = () => {
   loadSpotHistory();
   if (!spotHistory.length) {
-    alert("No spot history to export.");
+    showAppAlert("No spot history to export.");
     return;
   }
 
@@ -2676,12 +2676,12 @@ const importSpotHistory = (file) => {
           .filter((entry) => entry.timestamp && entry.metal && entry.spot > 0);
       }
     } catch (err) {
-      alert("Failed to parse file: " + err.message);
+      showAppAlert("Failed to parse file: " + err.message);
       return;
     }
 
     if (entries.length === 0) {
-      alert("No valid entries found in file.");
+      showAppAlert("No valid entries found in file.");
       return;
     }
 
@@ -2698,7 +2698,7 @@ const importSpotHistory = (file) => {
       imported++;
     });
 
-    alert(`Imported ${imported} spot history entries.`);
+    showAppAlert(`Imported ${imported} spot history entries.`);
     if (typeof updateAllSparklines === "function") updateAllSparklines();
 
     // Refresh the visible history table after import

@@ -279,7 +279,7 @@ const updateManualSpot = (metalKey) => {
 
   const num = parseFloat(value);
   if (isNaN(num) || num <= 0)
-    return alert(`Invalid ${metalConfig.name.toLowerCase()} spot price.`);
+    return showAppAlert(`Invalid ${metalConfig.name.toLowerCase()} spot price.`);
 
   localStorage.setItem(metalConfig.localStorageKey, num);
   spotPrices[metalKey] = num;
@@ -1062,8 +1062,8 @@ const renderSpotHistoryTable = () => {
 /**
  * Clears all spot price history after user confirmation.
  */
-const clearSpotHistory = () => {
-  if (!confirm('Clear all spot price history? This cannot be undone.')) return;
+const clearSpotHistory = async () => {
+  if (!await showAppConfirm('Clear all spot price history? This cannot be undone.')) return;
   spotHistory = [];
   saveSpotHistory();
   // Reset rendered flag so it re-renders fresh

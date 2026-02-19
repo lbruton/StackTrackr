@@ -1175,7 +1175,7 @@ const handleError = (error, context = "") => {
 
   // Show user-friendly message
   const userMessage = getUserFriendlyMessage(errorMessage);
-  alert(`Error: ${userMessage}`);
+  showAppAlert(`Error: ${userMessage}`);
 };
 
 /**
@@ -1337,7 +1337,7 @@ const downloadStorageReport = () => {
         downloadFile(`storage-report-${timestamp}.zip`, zipContent, 'application/zip');
       } catch (error) {
         console.error('Error creating ZIP file:', error);
-        alert('Error creating compressed report. Please try again.');
+        showAppAlert('Error creating compressed report. Please try again.');
       }
     });
   }
@@ -1360,7 +1360,7 @@ const openStorageReportPopup = async () => {
   const iframe = document.getElementById('storageReportFrame');
 
   if (!modal || !iframe) {
-    alert('Storage report modal not found.');
+    showAppAlert('Storage report modal not found.');
     return;
   }
 

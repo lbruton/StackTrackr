@@ -318,8 +318,8 @@ const setupFormatImport = (overrideBtn, mergeBtn, fileInput, importFn, formatNam
   let isOverride = false;
 
   if (overrideBtn && fileInput) {
-    safeAttachListener(overrideBtn, "click", () => {
-      if (confirm(`Importing ${formatName} will overwrite all existing data. To combine data, choose Merge instead. Press OK to continue.`)) {
+    safeAttachListener(overrideBtn, "click", async () => {
+      if (await showAppConfirm(`Importing ${formatName} will overwrite all existing data. To combine data, choose Merge instead. Press OK to continue.`)) {
         isOverride = true;
         fileInput.click();
       }
@@ -337,7 +337,7 @@ const setupFormatImport = (overrideBtn, mergeBtn, fileInput, importFn, formatNam
     if (e.target.files.length > 0) {
       const file = e.target.files[0];
       if (!checkFileSize(file)) {
-        alert("File exceeds 2MB limit. Enable cloud backup for larger uploads.");
+        showAppAlert("File exceeds 2MB limit. Enable cloud backup for larger uploads.");
       } else {
         importFn(file, isOverride);
       }
@@ -1078,7 +1078,7 @@ const setupItemFormListeners = () => {
 
         const fields = parseItemFormFields(isEditing, existingItem);
         const error = validateItemFields(fields);
-        if (error) { alert(error); return; }
+        if (error) { showAppAlert(error); return; }
 
         // Capture index before commit — commitItemToInventory nulls editingIndex
         const savedEditIdx = editingIndex;
@@ -1257,7 +1257,7 @@ const setupItemFormListeners = () => {
     safeAttachListener(refreshImageUrlsBtn, 'click', async () => {
       const catalogId = (elements.itemCatalog?.value || '').trim();
       if (!catalogId) {
-        alert('Enter a Numista # first.');
+        showAppAlert('Enter a Numista # first.');
         return;
       }
       refreshImageUrlsBtn.disabled = true;
@@ -1265,7 +1265,7 @@ const setupItemFormListeners = () => {
       try {
         const config = typeof catalogConfig !== 'undefined' ? catalogConfig.getNumistaConfig() : null;
         if (!config?.apiKey) {
-          alert('Numista API key not configured.');
+          showAppAlert('Numista API key not configured.');
           return;
         }
         const url = `https://api.numista.com/v3/types/${catalogId}?lang=en`;
@@ -1279,10 +1279,10 @@ const setupItemFormListeners = () => {
         const rev = data.reverse_thumbnail || data.reverse?.thumbnail || '';
         if (elements.itemObverseImageUrl) elements.itemObverseImageUrl.value = obv;
         if (elements.itemReverseImageUrl) elements.itemReverseImageUrl.value = rev;
-        if (!obv && !rev) alert('No image URLs returned by Numista for this item.');
+        if (!obv && !rev) showAppAlert('No image URLs returned by Numista for this item.');
       } catch (err) {
         console.error('Image URL refresh failed:', err);
-        alert('Failed to fetch image URLs: ' + err.message);
+        showAppAlert('Failed to fetch image URLs: ' + err.message);
       } finally {
         refreshImageUrlsBtn.disabled = false;
         refreshImageUrlsBtn.title = 'Fetch image URLs from Numista API (bypasses cache)';
@@ -1387,12 +1387,12 @@ const setupItemFormListeners = () => {
         const nameVal = elements.itemName?.value.trim() || '';
 
         if (!catalogVal && !nameVal) {
-          alert('Enter a Name or Catalog N# to search.');
+          showAppAlert('Enter a Name or Catalog N# to search.');
           return;
         }
 
         if (!catalogAPI || !catalogAPI.activeProvider) {
-          alert('Configure Numista API key in Settings first.');
+          showAppAlert('Configure Numista API key in Settings first.');
           return;
         }
 
@@ -1459,7 +1459,7 @@ const setupItemFormListeners = () => {
           }
         } catch (error) {
           console.error('Numista search error:', error);
-          alert('Search failed: ' + error.message);
+          showAppAlert('Search failed: ' + error.message);
         } finally {
           // nosemgrep: javascript.browser.security.insecure-innerhtml.insecure-innerhtml, javascript.browser.security.insecure-document-method.insecure-document-method
           btn.innerHTML = originalHTML;
@@ -1477,7 +1477,7 @@ const setupItemFormListeners = () => {
       "click",
       async () => {
         if (typeof lookupPcgsFromForm !== 'function') {
-          alert('PCGS lookup is not available.');
+          showAppAlert('PCGS lookup is not available.');
           return;
         }
 
@@ -1490,7 +1490,7 @@ const setupItemFormListeners = () => {
           const result = await lookupPcgsFromForm();
 
           if (!result.verified) {
-            alert(result.error || 'PCGS lookup failed.');
+            showAppAlert(result.error || 'PCGS lookup failed.');
             return;
           }
 
@@ -1498,11 +1498,11 @@ const setupItemFormListeners = () => {
           if (typeof showPcgsFieldPicker === 'function') {
             showPcgsFieldPicker(result);
           } else {
-            alert('PCGS field picker not available.');
+            showAppAlert('PCGS field picker not available.');
           }
         } catch (error) {
           console.error('PCGS lookup error:', error);
-          alert('PCGS lookup failed: ' + error.message);
+          showAppAlert('PCGS lookup failed: ' + error.message);
         } finally {
           btn.innerHTML = originalHTML;
           btn.disabled = false;
@@ -1677,7 +1677,7 @@ const setupSpotPriceListeners = () => {
           if (typeof syncSpotPricesFromApi === "function") {
             syncSpotPricesFromApi(true);
           } else {
-            alert(
+            showAppAlert(
               "API sync functionality requires Metals API configuration. Please configure an API provider first.",
             );
           }
@@ -1797,20 +1797,20 @@ const setupVaultListeners = () => {
  * Sets up data-destructive action listeners (remove data, boating accident).
  */
 const setupDataManagementListeners = () => {
-  optionalListener(elements.removeInventoryDataBtn, "click", () => {
-    if (confirm("Remove all inventory items? This cannot be undone.")) {
+  optionalListener(elements.removeInventoryDataBtn, "click", async () => {
+    if (await showAppConfirm("Remove all inventory items? This cannot be undone.")) {
       localStorage.removeItem(LS_KEY);
       // STACK-62: Clear stale autocomplete cache so it rebuilds from fresh inventory
       if (typeof clearLookupCache === 'function') clearLookupCache();
       loadInventory();
       renderTable();
       renderActiveFilters();
-      alert("Inventory data cleared.");
+      showAppAlert("Inventory data cleared.");
     }
   }, "Remove inventory data button");
 
-  optionalListener(elements.boatingAccidentBtn, "click", () => {
-    if (confirm("Did you really lose it all in a boating accident? This will wipe all local data.")) {
+  optionalListener(elements.boatingAccidentBtn, "click", async () => {
+    if (await showAppConfirm("Did you really lose it all in a boating accident? This will wipe all local data.")) {
       // Nuclear wipe: clear every allowed localStorage key
       ALLOWED_STORAGE_KEYS.forEach((key) => {
         localStorage.removeItem(key);
@@ -1840,7 +1840,7 @@ const setupDataManagementListeners = () => {
       apiCache = null;
       updateSyncButtonStates();
 
-      alert("All data has been erased. Hope your scuba gear is ready!");
+      showAppAlert("All data has been erased. Hope your scuba gear is ready!");
     }
   }, "Boating accident button");
 };
@@ -2354,11 +2354,11 @@ const setupApiEvents = () => {
       safeAttachListener(
         flushCacheBtn,
         "click",
-        () => {
+        async () => {
           if (typeof clearApiCache === "function") {
             const warnMessage =
               "This will delete the API cache and history. Click OK to continue or Cancel to keep it.";
-            if (confirm(warnMessage)) {
+            if (await showAppConfirm(warnMessage)) {
               clearApiCache();
             }
           }
@@ -2407,7 +2407,7 @@ const setupApiEvents = () => {
               .filter(([_, status]) => status !== "skipped")
               .map(([prov, status]) => `${API_PROVIDERS[prov]?.name || prov}: ${status}`)
               .join("\n");
-            alert(`Synced ${updatedCount} prices.\n\n${summary}`);
+            showAppAlert(`Synced ${updatedCount} prices.\n\n${summary}`);
           }
         },
         "Sync all providers button",

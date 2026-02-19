@@ -408,7 +408,7 @@ const deriveSearchLabel = (patterns) => {
   return pretty.join(' / ');
 };
 
-const handleSaveSearchPattern = () => {
+const handleSaveSearchPattern = async () => {
   const input = resolveElement('searchInput');
   if (!input || !input.id) return;
   const query = input.value || '';
@@ -420,7 +420,7 @@ const handleSaveSearchPattern = () => {
 
   const patterns = parseSearchPatterns(query);
   const defaultLabel = deriveSearchLabel(patterns);
-  const label = window.prompt('Label for saved filter chip:', defaultLabel);
+  const label = await showAppPrompt('Label for saved filter chip:', defaultLabel);
   if (!label || !label.trim()) {
     updateSaveSearchButton(query, fuzzyUsed);
     return;

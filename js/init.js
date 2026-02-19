@@ -682,7 +682,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     // Try to show a user-friendly error message
     setTimeout(() => {
-      alert(
+      showAppAlert(
         `Application initialization failed: ${error.message}\n\nPlease refresh the page and try again. If the problem persists, check the browser console for more details.`,
       );
     }, 100);

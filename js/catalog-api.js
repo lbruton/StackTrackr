@@ -1683,8 +1683,8 @@ const renderCatalogHistoryForSettings = () => {
 /**
  * Clears all catalog API history after user confirmation.
  */
-const clearCatalogHistory = () => {
-  if (!confirm('Clear all catalog history? This cannot be undone.')) return;
+const clearCatalogHistory = async () => {
+  if (!await showAppConfirm('Clear all catalog history? This cannot be undone.')) return;
   catalogHistory = [];
   saveCatalogHistory();
   const panel = document.getElementById('logPanel_catalogs');
@@ -1745,13 +1745,13 @@ document.addEventListener('DOMContentLoaded', function() {
     saveNumistaBtn.addEventListener('click', function() {
       const apiKey = numistaApiKeyInput?.value.trim();
       if (!apiKey) {
-        alert('Please enter your Numista API key first');
+        showAppAlert('Please enter your Numista API key first');
         return;
       }
       catalogConfig.setNumistaConfig(apiKey, 2000);
       catalogAPI.initializeProviders();
       renderNumistaUsageBar();
-      alert('Numista API key saved.');
+      showAppAlert('Numista API key saved.');
     });
   }
 
@@ -1760,7 +1760,7 @@ document.addEventListener('DOMContentLoaded', function() {
     testNumistaBtn.addEventListener('click', async function() {
       const apiKey = numistaApiKeyInput?.value.trim();
       if (!apiKey) {
-        alert('Please enter your Numista API key first');
+        showAppAlert('Please enter your Numista API key first');
         return;
       }
 
@@ -1776,12 +1776,12 @@ document.addEventListener('DOMContentLoaded', function() {
         const result = await testNumistaAPI();
         if (result) {
           renderNumistaUsageBar();
-          alert('✅ Numista API connection successful!');
+          showAppAlert('✅ Numista API connection successful!');
         } else {
-          alert('❌ Numista API connection failed. Please check your API key.');
+          showAppAlert('❌ Numista API connection failed. Please check your API key.');
         }
       } catch (error) {
-        alert('❌ Connection failed: ' + error.message);
+        showAppAlert('❌ Connection failed: ' + error.message);
       } finally {
         this.textContent = 'Test Connection';
         this.disabled = false;
@@ -1791,8 +1791,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Clear API key button
   if (clearNumistaBtn) {
-    clearNumistaBtn.addEventListener('click', function() {
-      if (confirm('Are you sure you want to clear your Numista API key?')) {
+    clearNumistaBtn.addEventListener('click', async function() {
+      if (await showAppConfirm('Are you sure you want to clear your Numista API key?')) {
         catalogConfig.clearNumistaKey();
         if (numistaApiKeyInput) {
           numistaApiKeyInput.value = '';
@@ -1824,7 +1824,7 @@ document.addEventListener('DOMContentLoaded', function() {
     savePcgsBtn.addEventListener('click', function() {
       const token = pcgsTokenInput?.value.trim();
       if (!token) {
-        alert('Please enter your PCGS bearer token first');
+        showAppAlert('Please enter your PCGS bearer token first');
         return;
       }
       catalogConfig.setPcgsConfig(token);
@@ -1838,7 +1838,7 @@ document.addEventListener('DOMContentLoaded', function() {
       }
       if (typeof renderApiStatusSummary === 'function') renderApiStatusSummary();
       renderPcgsUsageBar();
-      alert('PCGS bearer token saved.');
+      showAppAlert('PCGS bearer token saved.');
     });
   }
 
@@ -1846,7 +1846,7 @@ document.addEventListener('DOMContentLoaded', function() {
     testPcgsBtn.addEventListener('click', async function() {
       const token = pcgsTokenInput?.value.trim();
       if (!token) {
-        alert('Please enter your PCGS bearer token first');
+        showAppAlert('Please enter your PCGS bearer token first');
         return;
       }
 
@@ -1861,15 +1861,15 @@ document.addEventListener('DOMContentLoaded', function() {
           const result = await verifyPcgsCert('00000000');
           // Even a "not found" response means the API is reachable
           if (pcgsStatus) pcgsStatus.textContent = 'Connected — API reachable.';
-          alert('PCGS API connection successful!');
+          showAppAlert('PCGS API connection successful!');
         } else {
           if (pcgsStatus) pcgsStatus.textContent = 'pcgs-api.js not loaded.';
-          alert('PCGS API module not loaded. Ensure pcgs-api.js is included.');
+          showAppAlert('PCGS API module not loaded. Ensure pcgs-api.js is included.');
         }
       } catch (error) {
         const msg = error.message || 'Unknown error';
         if (pcgsStatus) pcgsStatus.textContent = 'Connection failed: ' + msg;
-        alert('PCGS API connection failed: ' + msg);
+        showAppAlert('PCGS API connection failed: ' + msg);
       } finally {
         this.textContent = 'Test Connection';
         this.disabled = false;
@@ -1878,8 +1878,8 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   if (clearPcgsBtn) {
-    clearPcgsBtn.addEventListener('click', function() {
-      if (confirm('Are you sure you want to clear your PCGS bearer token?')) {
+    clearPcgsBtn.addEventListener('click', async function() {
+      if (await showAppConfirm('Are you sure you want to clear your PCGS bearer token?')) {
         catalogConfig.clearPcgsToken();
         if (pcgsTokenInput) pcgsTokenInput.value = '';
         if (pcgsStatus) pcgsStatus.textContent = 'Token cleared.';

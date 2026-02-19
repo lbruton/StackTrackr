@@ -188,8 +188,8 @@ const toggleChange = (logIdx) => {
 /**
  * Clears all change log entries after confirmation
  */
-const clearChangeLog = () => {
-  if (!confirm('Clear change log?')) return;
+const clearChangeLog = async () => {
+  if (!await showAppConfirm('Clear change log?')) return;
   changeLog = [];
   localStorage.setItem('changeLog', JSON.stringify(changeLog));
   renderChangeLog();

@@ -1536,7 +1536,7 @@ const renderCustomPatternRules = async () => {
       const newNumistaId = editForm.querySelector('.edit-numista-id').value.trim();
 
       if (!newPattern || !newReplacement) {
-        alert('Pattern and replacement are required.');
+        showAppAlert('Pattern and replacement are required.');
         return;
       }
 
@@ -1547,7 +1547,7 @@ const renderCustomPatternRules = async () => {
       });
 
       if (!result.success) {
-        alert(result.error || 'Failed to update rule.');
+        showAppAlert(result.error || 'Failed to update rule.');
         return;
       }
 
@@ -1569,7 +1569,7 @@ const renderCustomPatternRules = async () => {
           }
         } catch (err) {
           console.error('Image processing failed:', err);
-          alert('Failed to process image: ' + err.message);
+          showAppAlert('Failed to process image: ' + err.message);
           return;
         }
 
@@ -1694,7 +1694,7 @@ const renderUserImageGrid = async () => {
     deleteBtn.className = 'btn danger';
     deleteBtn.textContent = 'Delete';
     deleteBtn.addEventListener('click', async () => {
-      if (!confirm('Delete images for "' + name + '"?')) return;
+      if (!await showAppConfirm('Delete images for "' + name + '"?')) return;
       await imageCache.deleteUserImage(rec.uuid);
       renderUserImageGrid();
       renderImageStorageStats();

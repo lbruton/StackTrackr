@@ -859,7 +859,7 @@ const showBulkConfirm = (message) => {
     var msgEl  = document.getElementById('bulkConfirmMessage');
     var okBtn  = document.getElementById('bulkConfirmOkBtn');
     var canBtn = document.getElementById('bulkConfirmCancelBtn');
-    if (!modal || !okBtn || !canBtn) { resolve(window.confirm(message)); return; }
+    if (!modal || !okBtn || !canBtn) { resolve(window.showAppConfirm(message)); return; }
 
     if (msgEl) msgEl.textContent = message;
     modal.style.display = 'flex';
@@ -1077,7 +1077,7 @@ const deleteSelectedItems = async () => {
 // NUMISTA INTEGRATION
 // =============================================================================
 
-const triggerBulkNumistaLookup = () => {
+const triggerBulkNumistaLookup = async () => {
   if (!catalogAPI || !catalogAPI.activeProvider) {
     if (typeof showCloudToast === 'function') showCloudToast('Configure Numista API key in Settings first.');
     return;
@@ -1087,7 +1087,7 @@ const triggerBulkNumistaLookup = () => {
   window._bulkEditNumistaCallback = receiveBulkNumistaResult;
 
   // Prompt user for search query
-  const query = prompt('Enter a coin name or Numista N# to search:');
+  const query = await showAppPrompt('Enter a coin name or Numista N# to search:');
   if (!query || !query.trim()) {
     window._bulkEditNumistaCallback = null;
     return;

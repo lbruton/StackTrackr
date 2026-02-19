@@ -181,7 +181,7 @@ function _syncRelativeTime(ts) {
  * Returns a Promise that resolves with the password string, or null if cancelled.
  * @returns {Promise<string|null>}
  */
-function getSyncPassword() {
+async function getSyncPassword() {
   // Try cached password first
   var cached = typeof cloudGetCachedPassword === 'function'
     ? cloudGetCachedPassword(_syncProvider)
@@ -199,9 +199,10 @@ function getSyncPassword() {
 
     if (!modal || !input || !confirmBtn) {
       // DOM not ready — last-resort fallback only used during startup edge cases
-      var pw = window.prompt('Vault password for sync:');
-      if (pw && typeof cloudCachePassword === 'function') cloudCachePassword(_syncProvider, pw);
-      resolve(pw || null);
+      showAppPrompt('Vault password for sync:').then(function (pw) {
+        if (pw && typeof cloudCachePassword === 'function') cloudCachePassword(_syncProvider, pw);
+        resolve(pw || null);
+      });
       return;
     }
 
@@ -663,7 +664,7 @@ async function pullSyncVault(remoteMeta) {
  * Show the sync conflict modal with local vs. remote comparison.
  * @param {{local: object, remote: object, remoteMeta: object}} opts
  */
-function showSyncConflictModal(opts) {
+async function showSyncConflictModal(opts) {
   var modal = document.getElementById('cloudSyncConflictModal');
   if (!modal) {
     // Fallback: simple confirm if modal not in DOM
@@ -671,7 +672,7 @@ function showSyncConflictModal(opts) {
       'Local:  ' + opts.local.itemCount + ' items\n' +
       'Remote: ' + opts.remote.itemCount + ' items\n\n' +
       'Keep YOUR local version? (Cancel to keep the remote version)';
-    if (window.confirm(msg)) {
+    if (await showAppConfirm(msg)) {
       pushSyncVault();
     } else {
       pullSyncVault(opts.remoteMeta);

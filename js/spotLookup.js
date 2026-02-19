@@ -286,7 +286,7 @@ const openSpotLookupModal = async () => {
   const metalVal = elements.itemMetal ? elements.itemMetal.value : '';
 
   if (!dateVal) {
-    alert('Please select a purchase date first.');
+    showAppAlert('Please select a purchase date first.');
     return;
   }
 
@@ -299,7 +299,7 @@ const openSpotLookupModal = async () => {
     : composition;
 
   if (!metalName || metalName === 'Alloy') {
-    alert('Please select a supported metal (Silver, Gold, Platinum, or Palladium).');
+    showAppAlert('Please select a supported metal (Silver, Gold, Platinum, or Palladium).');
     return;
   }
 

@@ -982,7 +982,7 @@ function _openExternalPopup(url, name) {
   );
   if (!popup) {
     // Popup blocked — let user know
-    alert(`Popup blocked! Please allow popups or manually visit:\n${url}`);
+    showAppAlert(`Popup blocked! Please allow popups or manually visit:\n${url}`);
   } else {
     popup.focus();
   }

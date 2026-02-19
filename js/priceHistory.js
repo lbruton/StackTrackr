@@ -331,8 +331,8 @@ const filterItemPriceHistoryTable = () => {
 /**
  * Clears all item price history after user confirmation.
  */
-const clearItemPriceHistory = () => {
-  if (!confirm('Clear all item price history? This cannot be undone.')) return;
+const clearItemPriceHistory = async () => {
+  if (!await showAppConfirm('Clear all item price history? This cannot be undone.')) return;
   itemPriceHistory = {};
   saveItemPriceHistory();
   const panel = document.getElementById('logPanel_pricehistory');
