@@ -3,7 +3,7 @@
 // Cache version: auto-stamped by devops/hooks/stamp-sw-cache.sh pre-commit hook
 
 const DEV_MODE = false; // Set to true during development — bypasses all caching
-const CACHE_NAME = 'staktrakr-v3.31.2-b1771458636';
+const CACHE_NAME = 'staktrakr-v3.31.4-b1771466023';
 
 // Offline fallback for navigation requests when all cache/network strategies fail
 const OFFLINE_HTML = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>StakTrakr</title></head>' +
@@ -73,7 +73,14 @@ const CORE_ASSETS = [
   './images/staktrakr-logo.svg',
   './images/icon-192.png',
   './images/icon-512.png',
-  './manifest.json'
+  './manifest.json',
+  './vendor/papaparse.min.js',
+  './vendor/jspdf.umd.min.js',
+  './vendor/jspdf.plugin.autotable.min.js',
+  './vendor/chart.min.js',
+  './vendor/chartjs-plugin-datalabels.min.js',
+  './vendor/jszip.min.js',
+  './vendor/forge.min.js'
 ];
 
 // API domains that should use network-first strategy

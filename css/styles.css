@@ -42,6 +42,8 @@
   --text-primary: var(--text);
   --text-secondary: var(--text-muted);
   --chip-text: #1b232c;
+  --chip-active-outline: rgba(0, 0, 0, 0.75);
+  --chip-search-outline: rgba(34, 197, 94, 0.75);
 
   /* Border & Shadow - Light grays */
   --border: #cbd5e1;
@@ -138,6 +140,8 @@
   --text-secondary: #cbd5e1;
   --text-muted: #94a3b8;
   --chip-text: #f8fafc;
+  --chip-active-outline: rgba(255, 255, 255, 0.9);
+  --chip-search-outline: rgba(34, 197, 94, 0.8);
 
   /* Border & Shadow - Dark Mode */
   --border: #334155;
@@ -199,6 +203,8 @@
   --text-secondary: #4f3f2c;
   --text-muted: #5c4e3a;
   --chip-text: #3e2f1e;
+  --chip-active-outline: rgba(62, 47, 30, 0.8);
+  --chip-search-outline: rgba(80, 120, 50, 0.75);
 
   /* Border & Shadow - Sepia Mode */
   --border: #d1c2a5;
@@ -6078,6 +6084,23 @@ a.about-badge:hover {
   font-weight: 700;
   opacity: 0.95;
   cursor: pointer;
+}
+
+/* Hide × on idle chips; only show on active-filter or search chips */
+.filter-chip:not(.filter-chip-active):not(.filter-chip-search) .chip-close {
+  display: none;
+}
+
+/* Active filter chip — themed border ring signals selection */
+.filter-chip-active {
+  outline: 2px solid var(--chip-active-outline);
+  outline-offset: 1px;
+}
+
+/* Search chip — themed green outline */
+.filter-chip-search {
+  outline: 2px solid var(--chip-search-outline);
+  outline-offset: 1px;
 }
 
 .filter-chip:active {

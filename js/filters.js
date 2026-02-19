@@ -461,6 +461,32 @@ const renderActiveFilters = () => {
     chip.style.backgroundColor = bg;
     chip.style.color = textColor || getContrastColor(bg);
 
+    // Determine if this chip represents a currently active filter
+    let isActiveFilter = false;
+    if (f.count !== undefined && f.total !== undefined) {
+      // Summary chip — active only if its value is in activeFilters
+      const criteria = activeFilters[f.field];
+      if (criteria && Array.isArray(criteria.values) && !criteria.exclude) {
+        if (f.field === 'customGroup') {
+          // customGroup expands to name values — active if any non-excluded name filter exists
+          const nc = activeFilters['name'];
+          isActiveFilter = !!(nc && !nc.exclude && nc.values && nc.values.length > 0);
+        } else if (f.field === 'dynamicName') {
+          // dynamicName expands to name values — same check
+          const nc = activeFilters['name'];
+          isActiveFilter = !!(nc && !nc.exclude && nc.values && nc.values.length > 0);
+        } else {
+          isActiveFilter = criteria.values.includes(f.value);
+        }
+      }
+    } else {
+      // Fallback active-filter chips (below minCount or excluded) are always "active"
+      isActiveFilter = true;
+    }
+
+    if (isActiveFilter) chip.classList.add('filter-chip-active');
+    if (f.field === 'search') chip.classList.add('filter-chip-search');
+
     // Display simplified value for most chips, but keep full base name for name chips
     // Custom groups use their display label; dynamic chips are italic (via CSS class)
     const displayValue = f.isCustomGroup ? f.displayLabel
@@ -535,8 +561,12 @@ const renderActiveFilters = () => {
     close.setAttribute('aria-label', `Remove filter ${displayValue}`);
     close.onclick = (e) => {
       e.stopPropagation();
-      if (f.count !== undefined && f.total !== undefined && f.field !== 'search') {
-        // Exclude summary/result chip while keeping existing filters intact.
+      if (isActiveFilter) {
+        // Active filter chip × — always removes the filter (de-activate, not exclude)
+        removeFilter(f.field, f.value);
+        renderActiveFilters();
+      } else if (f.count !== undefined && f.total !== undefined && f.field !== 'search') {
+        // Idle summary chip × — exclude this value while keeping other filters intact
         applyQuickFilter(f.field, f.value, f.isGrouped || f.isCustomGroup || f.isDynamic || false, true);
       } else {
         removeFilter(f.field, f.value);
@@ -547,7 +577,10 @@ const renderActiveFilters = () => {
       if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault();
         e.stopPropagation();
-        if (f.count !== undefined && f.total !== undefined && f.field !== 'search') {
+        if (isActiveFilter) {
+          removeFilter(f.field, f.value);
+          renderActiveFilters();
+        } else if (f.count !== undefined && f.total !== undefined && f.field !== 'search') {
           applyQuickFilter(f.field, f.value, f.isGrouped || f.isCustomGroup || f.isDynamic || false, true);
         } else {
           removeFilter(f.field, f.value);
