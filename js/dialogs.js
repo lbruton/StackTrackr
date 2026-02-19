@@ -1,3 +1,8 @@
+/**
+ * @fileoverview Promise-based in-app dialog helpers (alert, confirm, prompt).
+ * Creates a shared dialog root and serializes dialog requests through a queue.
+ */
+
 /* global sanitizeHtml */
 (function () {
   // Note: getElementById is used here intentionally. ensureDialogRoot() guarantees
@@ -121,7 +126,48 @@
     processQueue();
   });
 
+  /**
+   * Displays an application-styled alert dialog.
+   * @global
+   * @function showAppAlert
+   * @param {string} message
+   * @param {string} [title]
+   * @returns {Promise<void>}
+   */
   window.showAppAlert = (message, title) => showDialog({ mode: 'alert', message, title });
+  /**
+   * Displays an application-styled confirmation dialog.
+   * @global
+   * @function showAppConfirm
+   * @param {string} message
+   * @param {string} [title]
+   * @returns {Promise<boolean>}
+   */
   window.showAppConfirm = (message, title) => showDialog({ mode: 'confirm', message, title });
+  /**
+   * Displays an application-styled prompt dialog.
+   * @global
+   * @function showAppPrompt
+   * @param {string} message
+   * @param {string} [defaultValue]
+   * @param {string} [title]
+   * @returns {Promise<?string>}
+   */
   window.showAppPrompt = (message, defaultValue, title) => showDialog({ mode: 'prompt', message, defaultValue, title });
+
+  /**
+   * Shared async wrappers used across the app to eliminate native dialogs.
+   */
+  window.appAlert = (message, title = 'Notice') => {
+    if (typeof window.showAppAlert === 'function') return window.showAppAlert(message, title);
+    return Promise.resolve();
+  };
+  window.appConfirm = async (message, title = 'Confirm') => {
+    if (typeof window.showAppConfirm === 'function') return !!(await window.showAppConfirm(message, title));
+    return false;
+  };
+  window.appPrompt = async (message, defaultValue = '', title = 'Input') => {
+    if (typeof window.showAppPrompt === 'function') return window.showAppPrompt(message, defaultValue, title);
+    return null;
+  };
 }());

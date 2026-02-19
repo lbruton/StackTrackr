@@ -9,6 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.31.6] - 2026-02-19
+
+### Added — STAK-173: Collapsible Form Modal, Numista Data Persistence & Dialog Migration
+
+- **Added**: Collapsible add/edit form with glassmorphic sections — core fields always visible, Grading & Certification, Pricing & Details, Numista Data, and Notes collapse via native `<details>`/`<summary>` (STAK-173)
+- **Added**: Per-item Numista metadata persistence — API data seeds fields, user edits override, layered provider priority for future catalog APIs (STAK-173)
+- **Added**: Numista Data fields auto-populate from IndexedDB cache on edit and after Numista search (STAK-173)
+- **Added**: Date N/A checkbox to blank out purchase date for items without acquisition dates (STAK-173)
+- **Added**: Color-coded image upload pill buttons (Upload/URL/Camera/Remove) with card layout (STAK-173)
+- **Changed**: Migrate all native alert/confirm/prompt calls to async appDialog wrappers across 18 modules
+- **Changed**: Expand bulk edit search to match across Numista metadata fields (STAK-175)
+- **Fixed**: Currency symbol ($) no longer overlaps placeholder text in purchase/retail price fields (STAK-173)
+
+---
+
 ## [3.31.5] - 2026-02-19
 
 ### Added — STAK-149: Cloud Auto-Sync, Bulk Edit Fixes & Code Cleanup

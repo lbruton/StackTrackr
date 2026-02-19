@@ -1505,6 +1505,17 @@ const fillFormFromNumistaResult = () => {
       }
     }
   });
+
+  // Auto-populate Numista Data fields from the selected result (STAK-173)
+  if (selectedNumistaResult && typeof populateNumistaDataFields === 'function') {
+    // Cache the metadata first so populateNumistaDataFields can read it
+    const catId = selectedNumistaResult.catalogId;
+    if (catId && window.imageCache?.isAvailable()) {
+      imageCache.cacheMetadata(catId, selectedNumistaResult).then(() => {
+        populateNumistaDataFields(catId);
+      }).catch(() => {});
+    }
+  }
 };
 
 /**
@@ -1683,8 +1694,9 @@ const renderCatalogHistoryForSettings = () => {
 /**
  * Clears all catalog API history after user confirmation.
  */
-const clearCatalogHistory = () => {
-  if (!confirm('Clear all catalog history? This cannot be undone.')) return;
+const clearCatalogHistory = async () => {
+  const confirmed = await appConfirm('Clear all catalog history? This cannot be undone.', 'Catalog History');
+  if (!confirmed) return;
   catalogHistory = [];
   saveCatalogHistory();
   const panel = document.getElementById('logPanel_catalogs');
@@ -1745,13 +1757,13 @@ document.addEventListener('DOMContentLoaded', function() {
     saveNumistaBtn.addEventListener('click', function() {
       const apiKey = numistaApiKeyInput?.value.trim();
       if (!apiKey) {
-        alert('Please enter your Numista API key first');
+        appAlert('Please enter your Numista API key first');
         return;
       }
       catalogConfig.setNumistaConfig(apiKey, 2000);
       catalogAPI.initializeProviders();
       renderNumistaUsageBar();
-      alert('Numista API key saved.');
+      appAlert('Numista API key saved.');
     });
   }
 
@@ -1760,7 +1772,7 @@ document.addEventListener('DOMContentLoaded', function() {
     testNumistaBtn.addEventListener('click', async function() {
       const apiKey = numistaApiKeyInput?.value.trim();
       if (!apiKey) {
-        alert('Please enter your Numista API key first');
+        appAlert('Please enter your Numista API key first');
         return;
       }
 
@@ -1776,12 +1788,12 @@ document.addEventListener('DOMContentLoaded', function() {
         const result = await testNumistaAPI();
         if (result) {
           renderNumistaUsageBar();
-          alert('✅ Numista API connection successful!');
+          appAlert('✅ Numista API connection successful!');
         } else {
-          alert('❌ Numista API connection failed. Please check your API key.');
+          appAlert('❌ Numista API connection failed. Please check your API key.');
         }
       } catch (error) {
-        alert('❌ Connection failed: ' + error.message);
+        appAlert('❌ Connection failed: ' + error.message);
       } finally {
         this.textContent = 'Test Connection';
         this.disabled = false;
@@ -1791,8 +1803,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Clear API key button
   if (clearNumistaBtn) {
-    clearNumistaBtn.addEventListener('click', function() {
-      if (confirm('Are you sure you want to clear your Numista API key?')) {
+    clearNumistaBtn.addEventListener('click', async function() {
+      if (await appConfirm('Are you sure you want to clear your Numista API key?', 'Numista API')) {
         catalogConfig.clearNumistaKey();
         if (numistaApiKeyInput) {
           numistaApiKeyInput.value = '';
@@ -1824,7 +1836,7 @@ document.addEventListener('DOMContentLoaded', function() {
     savePcgsBtn.addEventListener('click', function() {
       const token = pcgsTokenInput?.value.trim();
       if (!token) {
-        alert('Please enter your PCGS bearer token first');
+        appAlert('Please enter your PCGS bearer token first');
         return;
       }
       catalogConfig.setPcgsConfig(token);
@@ -1838,7 +1850,7 @@ document.addEventListener('DOMContentLoaded', function() {
       }
       if (typeof renderApiStatusSummary === 'function') renderApiStatusSummary();
       renderPcgsUsageBar();
-      alert('PCGS bearer token saved.');
+      appAlert('PCGS bearer token saved.');
     });
   }
 
@@ -1846,7 +1858,7 @@ document.addEventListener('DOMContentLoaded', function() {
     testPcgsBtn.addEventListener('click', async function() {
       const token = pcgsTokenInput?.value.trim();
       if (!token) {
-        alert('Please enter your PCGS bearer token first');
+        appAlert('Please enter your PCGS bearer token first');
         return;
       }
 
@@ -1861,15 +1873,15 @@ document.addEventListener('DOMContentLoaded', function() {
           const result = await verifyPcgsCert('00000000');
           // Even a "not found" response means the API is reachable
           if (pcgsStatus) pcgsStatus.textContent = 'Connected — API reachable.';
-          alert('PCGS API connection successful!');
+          appAlert('PCGS API connection successful!');
         } else {
           if (pcgsStatus) pcgsStatus.textContent = 'pcgs-api.js not loaded.';
-          alert('PCGS API module not loaded. Ensure pcgs-api.js is included.');
+          appAlert('PCGS API module not loaded. Ensure pcgs-api.js is included.');
         }
       } catch (error) {
         const msg = error.message || 'Unknown error';
         if (pcgsStatus) pcgsStatus.textContent = 'Connection failed: ' + msg;
-        alert('PCGS API connection failed: ' + msg);
+        appAlert('PCGS API connection failed: ' + msg);
       } finally {
         this.textContent = 'Test Connection';
         this.disabled = false;
@@ -1878,8 +1890,8 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   if (clearPcgsBtn) {
-    clearPcgsBtn.addEventListener('click', function() {
-      if (confirm('Are you sure you want to clear your PCGS bearer token?')) {
+    clearPcgsBtn.addEventListener('click', async function() {
+      if (await appConfirm('Are you sure you want to clear your PCGS bearer token?', 'PCGS API')) {
         catalogConfig.clearPcgsToken();
         if (pcgsTokenInput) pcgsTokenInput.value = '';
         if (pcgsStatus) pcgsStatus.textContent = 'Token cleared.';

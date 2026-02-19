@@ -1,0 +1,50 @@
+# Daily retail price poller — scrapes 4 dealer sites via Firecrawl
+# Writes to data/retail/{coin-slug}/{YYYY-MM-DD}.json on the `data` branch
+# Requires repository secret: FIRECRAWL_API_KEY
+name: Retail Price Poller
+
+on:
+  schedule:
+    # 11:00 AM EST = 16:00 UTC (shift to 15:00 UTC cron during EDT)
+    - cron: '0 16 * * *'
+  workflow_dispatch: # Manual trigger for testing
+
+env:
+  TZ: UTC
+
+jobs:
+  poll:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout data branch
+        uses: actions/checkout@v4
+        with:
+          ref: data
+          fetch-depth: 1
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Run price extractor
+        env:
+          FIRECRAWL_API_KEY: ${{ secrets.FIRECRAWL_API_KEY }}
+          DATA_DIR: ${{ github.workspace }}/data
+        run: node devops/retail-poller/price-extract.js
+
+      - name: Commit and push data
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/retail/
+          if git diff --cached --quiet; then
+            echo "No new data to commit."
+          else
+            DATE=$(date -u +%Y-%m-%d)
+            git commit -m "retail: ${DATE} daily price data"
+            git push
+          fi

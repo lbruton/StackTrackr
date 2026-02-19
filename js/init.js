@@ -112,6 +112,15 @@ document.addEventListener("DOMContentLoaded", async () => {
     elements.itemPuritySelect = safeGetElement("itemPuritySelect");
     elements.itemPurity = safeGetElement("itemPurity");
     elements.purityCustomWrapper = safeGetElement("purityCustomWrapper");
+    elements.searchNumistaNameBtn = safeGetElement("searchNumistaNameBtn");
+    elements.cloneItemBtn = safeGetElement("cloneItemBtn");
+    elements.viewItemFromEditBtn = safeGetElement("viewItemFromEditBtn");
+    elements.estimateRetailFromSpot = safeGetElement("estimateRetailFromSpot");
+    elements.retailSpotModifier = safeGetElement("retailSpotModifier");
+    elements.numistaDataSection = safeGetElement("numistaDataSection");
+    elements.tagsSection = safeGetElement("tagsSection");
+    elements.newTagInput = safeGetElement("newTagInput");
+    elements.addTagBtn = safeGetElement("addTagBtn");
 
     // Header buttons - CRITICAL
     debugLog("Phase 2: Initializing header buttons...");
@@ -682,7 +691,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     // Try to show a user-friendly error message
     setTimeout(() => {
-      alert(
+      appAlert(
         `Application initialization failed: ${error.message}\n\nPlease refresh the page and try again. If the problem persists, check the browser console for more details.`,
       );
     }, 100);

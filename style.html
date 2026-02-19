@@ -264,6 +264,8 @@
       <a href="#cards">Cards</a>
       <a href="#tables">Tables</a>
       <a href="#modals">Modals</a>
+      <a href="#collapsible">Collapsible Sections</a>
+      <a href="#image-uploads">Image Uploads</a>
       <a href="#badges">Badges & Indicators</a>
     </nav>
 
@@ -699,6 +701,169 @@
             </div>
           </div>
           <span class="sg-label">.modal-content { backdrop-filter: blur(16px); border-radius: var(--radius-lg) }</span>
+        </div>
+      </section>
+
+      <!-- ════════════════════════════════════════════════════════
+           COLLAPSIBLE SECTIONS
+           ════════════════════════════════════════════════════════ -->
+      <section class="sg-section" id="collapsible">
+        <h2>Collapsible Sections</h2>
+        <p class="sg-desc">Native <code>&lt;details&gt;</code>/<code>&lt;summary&gt;</code> disclosure widgets for grouping form fields. Zero JavaScript required &mdash; works on <code>file://</code> protocol.</p>
+
+        <div class="sg-subsection">
+          <h3>Default (closed)</h3>
+          <div class="sg-showcase">
+            <details class="form-section">
+              <summary class="form-section-header">Section Title</summary>
+              <div class="form-section-body">
+                <p style="margin:0;font-size:0.85rem;color:var(--text-secondary);">Content is hidden until the user clicks the header. The chevron rotates on open.</p>
+              </div>
+            </details>
+            <span class="sg-label">&lt;details class="form-section"&gt; (default closed)</span>
+          </div>
+        </div>
+
+        <div class="sg-subsection">
+          <h3>Open</h3>
+          <div class="sg-showcase">
+            <details class="form-section" open>
+              <summary class="form-section-header">Section Title (Open)</summary>
+              <div class="form-section-body">
+                <p style="margin:0;font-size:0.85rem;color:var(--text-secondary);">Expanded state showing the chevron rotated downward.</p>
+              </div>
+            </details>
+            <span class="sg-label">&lt;details class="form-section" open&gt;</span>
+          </div>
+        </div>
+
+        <div class="sg-subsection">
+          <h3>With Icon</h3>
+          <div class="sg-showcase">
+            <details class="form-section">
+              <summary class="form-section-header">
+                <span class="form-section-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                       stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/>
+                  </svg>
+                </span>
+                Grading &amp; Certification
+              </summary>
+              <div class="form-section-body">
+                <p style="margin:0;font-size:0.85rem;color:var(--text-secondary);">Icon is placed in a <code>.form-section-icon</code> span before the label text.</p>
+              </div>
+            </details>
+            <span class="sg-label">.form-section-icon inside summary</span>
+          </div>
+        </div>
+
+        <div class="sg-subsection">
+          <h3>With Badge Count</h3>
+          <div class="sg-showcase">
+            <details class="form-section">
+              <summary class="form-section-header">
+                <span class="form-section-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                       stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                  </svg>
+                </span>
+                Pricing &amp; Details
+                <span class="form-section-count">3</span>
+              </summary>
+              <div class="form-section-body">
+                <p style="margin:0;font-size:0.85rem;color:var(--text-secondary);">Badge shows count of filled fields. Positioned via flex auto-margin on the chevron.</p>
+              </div>
+            </details>
+            <span class="sg-label">.form-section-count badge (future use)</span>
+          </div>
+        </div>
+
+        <div class="sg-subsection">
+          <h3>With Form Fields</h3>
+          <div class="sg-showcase">
+            <details class="form-section" open>
+              <summary class="form-section-header">
+                <span class="form-section-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                       stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
+                  </svg>
+                </span>
+                Notes
+              </summary>
+              <div class="form-section-body">
+                <div>
+                  <label for="sg-demo-notes">Notes</label>
+                  <input id="sg-demo-notes" type="text" placeholder="Additional notes or comments..." />
+                </div>
+              </div>
+            </details>
+            <span class="sg-label">Form fields inside .form-section-body</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- ════════════════════════════════════════════════════════
+           IMAGE UPLOADS
+           ════════════════════════════════════════════════════════ -->
+      <section class="sg-section" id="image-uploads">
+        <h2>Image Uploads</h2>
+        <p class="sg-desc">Dual-slot obverse/reverse image upload pattern used in the Add/Edit Item modal. Controlled via <code>style.display</code> toggle in JS.</p>
+
+        <div class="sg-subsection">
+          <h3>Upload Group</h3>
+          <div class="sg-showcase">
+            <div class="image-upload-group">
+              <label>Photos</label>
+              <div class="image-upload-sides">
+                <div class="image-upload-side">
+                  <span class="image-side-label">Obverse</span>
+                  <div class="image-upload-row">
+                    <button class="btn secondary btn-sm" type="button">Upload</button>
+                    <button class="btn secondary btn-sm" type="button">Camera</button>
+                    <span class="image-size-info">24 KB</span>
+                  </div>
+                  <div class="image-upload-preview" style="display:flex;align-items:center;justify-content:center;height:80px;background:var(--bg-secondary);border-radius:var(--radius);font-size:0.75rem;color:var(--text-secondary);">
+                    Preview area
+                  </div>
+                </div>
+                <div class="image-upload-side">
+                  <span class="image-side-label">Reverse</span>
+                  <div class="image-upload-row">
+                    <button class="btn secondary btn-sm" type="button">Upload</button>
+                    <button class="btn secondary btn-sm" type="button">Camera</button>
+                    <span class="image-size-info">18 KB</span>
+                  </div>
+                  <div class="image-upload-preview" style="display:flex;align-items:center;justify-content:center;height:80px;background:var(--bg-secondary);border-radius:var(--radius);font-size:0.75rem;color:var(--text-secondary);">
+                    Preview area
+                  </div>
+                </div>
+              </div>
+            </div>
+            <span class="sg-label">.image-upload-group > .image-upload-sides > .image-upload-side</span>
+          </div>
+        </div>
+
+        <div class="sg-subsection">
+          <h3>URL Input Group</h3>
+          <div class="sg-showcase">
+            <div class="image-upload-group">
+              <label>Image URLs</label>
+              <div class="image-upload-sides">
+                <div class="image-upload-side">
+                  <span class="image-side-label">Obverse</span>
+                  <input type="url" class="form-control" placeholder="https://example.com/obverse.jpg" />
+                </div>
+                <div class="image-upload-side">
+                  <span class="image-side-label">Reverse</span>
+                  <input type="url" class="form-control" placeholder="https://example.com/reverse.jpg" />
+                </div>
+              </div>
+            </div>
+            <span class="sg-label">#imageUrlGroup — URL-based image inputs</span>
+          </div>
         </div>
       </section>
 

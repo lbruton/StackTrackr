@@ -136,7 +136,7 @@ async function syncRestoreOverrideBackup() {
 
   var confirmed = typeof showAppConfirm === 'function'
     ? await showAppConfirm(msg, 'Restore Snapshot')
-    : window.confirm(msg);
+    : false;
   if (!confirmed) return;
 
   try {
@@ -275,10 +275,14 @@ function getSyncPassword() {
     var errorEl = document.getElementById('syncPasswordError');
 
     if (!modal || !input || !confirmBtn) {
-      // DOM not ready — last-resort fallback only used during startup edge cases
-      var pw = window.prompt('Vault password for sync:');
-      if (pw && typeof cloudCachePassword === 'function') cloudCachePassword(_syncProvider, pw);
-      resolve(pw || null);
+      if (typeof appPrompt === 'function') {
+        appPrompt('Vault password for sync:', '', 'Cloud Sync Password').then(function (pw) {
+          if (pw && typeof cloudCachePassword === 'function') cloudCachePassword(_syncProvider, pw);
+          resolve(pw || null);
+        });
+      } else {
+        resolve(null);
+      }
       return;
     }
 
@@ -745,15 +749,15 @@ async function pullSyncVault(remoteMeta) {
 function showSyncConflictModal(opts) {
   var modal = document.getElementById('cloudSyncConflictModal');
   if (!modal) {
-    // Fallback: simple confirm if modal not in DOM
     var msg = 'Sync conflict detected.\n\n' +
       'Local:  ' + opts.local.itemCount + ' items\n' +
       'Remote: ' + opts.remote.itemCount + ' items\n\n' +
       'Keep YOUR local version? (Cancel to keep the remote version)';
-    if (window.confirm(msg)) {
-      pushSyncVault();
-    } else {
-      pullSyncVault(opts.remoteMeta);
+    if (typeof appConfirm === 'function') {
+      appConfirm(msg, 'Sync Conflict').then(function (keepMine) {
+        if (keepMine) pushSyncVault();
+        else pullSyncVault(opts.remoteMeta);
+      });
     }
     return;
   }
