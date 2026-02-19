@@ -1,11 +1,16 @@
-# Daily retail price poller — scrapes 4 dealer sites via Firecrawl
-# Writes to data/retail/{coin-slug}/{YYYY-MM-DD}.json on the `data` branch
-# Requires repository secret: FIRECRAWL_API_KEY
+# Daily retail price poller — dual pipeline (Firecrawl text + Gemini Vision)
+# Writes to data/retail/{coin-slug}/{YYYY-MM-DD}*.json on the `data` branch
+#
+# Required repository secrets:
+#   FIRECRAWL_API_KEY      — Firecrawl REST API key
+#   GEMINI_API_KEY         — Google AI Studio API key
+#   BROWSERBASE_API_KEY    — Browserbase cloud browser API key
+#   BROWSERBASE_PROJECT_ID — Browserbase project ID
 name: Retail Price Poller
 
 on:
   schedule:
-    # 11:00 AM EST = 16:00 UTC (shift to 15:00 UTC cron during EDT)
+    # 11:00 AM EST = 16:00 UTC (adjust to 15:00 UTC during EDT if needed)
     - cron: '0 16 * * *'
   workflow_dispatch: # Manual trigger for testing
 
@@ -13,8 +18,118 @@ env:
   TZ: UTC
 
 jobs:
-  poll:
+  # ──────────────────────────────────────────────────────────────
+  # Lane A: Firecrawl text extraction (fast, cheap, all providers)
+  # ──────────────────────────────────────────────────────────────
+  firecrawl:
+    name: Firecrawl Lane
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      date: ${{ steps.date.outputs.date }}
+
+    steps:
+      - name: Checkout data branch
+        uses: actions/checkout@v4
+        with:
+          ref: data
+          fetch-depth: 1
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Get date
+        id: date
+        run: echo "date=$(date -u +%Y-%m-%d)" >> "$GITHUB_OUTPUT"
+
+      - name: Run Firecrawl price extractor
+        env:
+          FIRECRAWL_API_KEY: ${{ secrets.FIRECRAWL_API_KEY }}
+          DATA_DIR: ${{ github.workspace }}/data
+        run: node devops/retail-poller/price-extract.js
+
+      - name: Upload Firecrawl results
+        uses: actions/upload-artifact@v4
+        with:
+          name: firecrawl-prices
+          path: data/retail/**/${{ steps.date.outputs.date }}.json
+          retention-days: 3
+
+  # ──────────────────────────────────────────────────────────────
+  # Lane B: Browserbase screenshots + Gemini Vision extraction
+  # ──────────────────────────────────────────────────────────────
+  vision:
+    name: Vision Lane
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      date: ${{ steps.date.outputs.date }}
+
+    steps:
+      - name: Checkout data branch
+        uses: actions/checkout@v4
+        with:
+          ref: data
+          fetch-depth: 1
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Playwright (for capture.js)
+        run: npm install playwright-core dotenv
+
+      - name: Get date
+        id: date
+        run: echo "date=$(date -u +%Y-%m-%d)" >> "$GITHUB_OUTPUT"
+
+      - name: Capture screenshots via Browserbase
+        env:
+          BROWSERBASE_API_KEY: ${{ secrets.BROWSERBASE_API_KEY }}
+          BROWSERBASE_PROJECT_ID: ${{ secrets.BROWSERBASE_PROJECT_ID }}
+          BROWSER_MODE: browserbase
+          DATA_DIR: ${{ github.workspace }}/data
+          # Capture all 4 providers for all coins
+          COINS: ase,maple-silver,britannia-silver,krugerrand-silver,generic-silver-round,generic-silver-bar-10oz,age,buffalo,maple-gold,krugerrand-gold,ape
+          PROVIDERS: jmbullion,apmex,sdbullion,monumentmetals
+        run: node devops/retail-poller/capture.js
+
+      - name: Extract prices via Gemini Vision
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          DATA_DIR: ${{ github.workspace }}/data
+        run: |
+          MANIFEST="data/retail/_artifacts/${{ steps.date.outputs.date }}/manifest.json"
+          node devops/retail-poller/extract-vision.js "$MANIFEST"
+
+      - name: Upload Vision results
+        uses: actions/upload-artifact@v4
+        with:
+          name: vision-prices
+          path: data/retail/**/${{ steps.date.outputs.date }}-vision.json
+          retention-days: 3
+
+      - name: Upload screenshots (for debugging)
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshots
+          path: data/retail/_artifacts/${{ steps.date.outputs.date }}/
+          retention-days: 7
+
+  # ──────────────────────────────────────────────────────────────
+  # Merge: Confidence scoring + final commit
+  # ──────────────────────────────────────────────────────────────
+  merge:
+    name: Merge & Commit
+    runs-on: ubuntu-latest
+    needs: [firecrawl, vision]
+    # Run merge even if one lane fails — partial data is better than none
+    if: always() && (needs.firecrawl.result == 'success' || needs.vision.result == 'success')
     permissions:
       contents: write
 
@@ -30,13 +145,30 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Run price extractor
-        env:
-          FIRECRAWL_API_KEY: ${{ secrets.FIRECRAWL_API_KEY }}
-          DATA_DIR: ${{ github.workspace }}/data
-        run: node devops/retail-poller/price-extract.js
+      - name: Get date
+        id: date
+        run: echo "date=$(date -u +%Y-%m-%d)" >> "$GITHUB_OUTPUT"
 
-      - name: Commit and push data
+      - name: Download Firecrawl results
+        uses: actions/download-artifact@v4
+        with:
+          name: firecrawl-prices
+          path: data/retail/
+        continue-on-error: true
+
+      - name: Download Vision results
+        uses: actions/download-artifact@v4
+        with:
+          name: vision-prices
+          path: data/retail/
+        continue-on-error: true
+
+      - name: Run confidence merger
+        env:
+          DATA_DIR: ${{ github.workspace }}/data
+        run: node devops/retail-poller/merge-prices.js ${{ steps.date.outputs.date }}
+
+      - name: Commit and push all data
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
@@ -44,7 +176,8 @@ jobs:
           if git diff --cached --quiet; then
             echo "No new data to commit."
           else
-            DATE=$(date -u +%Y-%m-%d)
-            git commit -m "retail: ${DATE} daily price data"
+            DATE=${{ steps.date.outputs.date }}
+            git commit -m "retail: ${DATE} daily price data (firecrawl + vision)"
+            git pull --rebase origin data
             git push
           fi
