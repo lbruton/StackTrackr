@@ -145,6 +145,7 @@ const switchLogTab = (key) => {
 const LOG_TAB_RENDERERS = {
   changelog: 'renderChangeLog',
   metals: 'renderSpotHistoryTable',
+  lbma: 'renderLbmaHistoryTable',
   catalogs: 'renderCatalogHistoryForSettings',
   pricehistory: 'renderItemPriceHistoryTable',
   cloud: 'renderCloudActivityTable',
@@ -1471,8 +1472,8 @@ const renderCustomPatternRules = async () => {
     // Info
     const info = document.createElement('div');
     info.className = 'pattern-rule-info';
-    info.innerHTML = `<div class="rule-pattern">/${rule.pattern}/i</div>
-      <div class="rule-replacement">${rule.replacement || '\u2014'}${rule.numistaId ? ' (N#' + rule.numistaId + ')' : ''}</div>`;
+    info.innerHTML = `<div class="rule-pattern">/${sanitizeHtml(rule.pattern)}/i</div>
+      <div class="rule-replacement">${sanitizeHtml(rule.replacement) || '\u2014'}${rule.numistaId ? ' (N#' + sanitizeHtml(String(rule.numistaId)) + ')' : ''}</div>`;
     row.appendChild(info);
 
     // Actions
@@ -1877,7 +1878,7 @@ const renderStorageSection = async (silent = false) => {
     const sizeStr = it.sizeKB >= 1 ? `${it.sizeKB.toFixed(1)} KB` : `${(it.sizeKB * 1024).toFixed(0)} B`;
     return `<tr class="storage-key-row">
       <td class="storage-key-icon">${it.icon}</td>
-      <td class="storage-key-label">${sanitizeHtml ? sanitizeHtml(it.label) : it.label}<span class="storage-key-raw">${sanitizeHtml ? sanitizeHtml(it.key) : it.key}</span></td>
+      <td class="storage-key-label">${sanitizeHtml(it.label)}<span class="storage-key-raw">${sanitizeHtml(it.key)}</span></td>
       <td class="storage-key-size">${sizeStr}</td>
       <td class="storage-key-bar-cell"><div class="storage-key-bar-wrap"><div class="storage-key-bar" style="width:${barPct.toFixed(1)}%"></div></div></td>
       <td class="storage-key-pct">${barPct.toFixed(1)}%</td>

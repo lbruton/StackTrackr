@@ -1077,7 +1077,7 @@ const deleteSelectedItems = async () => {
 // NUMISTA INTEGRATION
 // =============================================================================
 
-const triggerBulkNumistaLookup = () => {
+const triggerBulkNumistaLookup = async () => {
   if (!catalogAPI || !catalogAPI.activeProvider) {
     if (typeof showCloudToast === 'function') showCloudToast('Configure Numista API key in Settings first.');
     return;
@@ -1087,7 +1087,9 @@ const triggerBulkNumistaLookup = () => {
   window._bulkEditNumistaCallback = receiveBulkNumistaResult;
 
   // Prompt user for search query
-  const query = prompt('Enter a coin name or Numista N# to search:');
+  const query = typeof showAppPrompt === 'function'
+    ? await showAppPrompt('Enter a coin name or Numista N# to search:', '', 'Numista Lookup')
+    : prompt('Enter a coin name or Numista N# to search:');
   if (!query || !query.trim()) {
     window._bulkEditNumistaCallback = null;
     return;

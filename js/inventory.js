@@ -146,17 +146,12 @@ const createBackupZip = async () => {
     const csvRows = [];
     for (const item of sortedInventory) {
       const currentSpot = spotPrices[item.metal.toLowerCase()] || 0;
-      const qty = Number(item.qty) || 1;
-      const meltValue = computeMeltValue(item, currentSpot);
-      const gbDenomPrice = (typeof getGoldbackRetailPrice === 'function') ? getGoldbackRetailPrice(item) : null;
-      const marketValue = parseFloat(item.marketValue) || 0;
-      const isManualRetail = !gbDenomPrice && marketValue > 0;
-      const retailTotal = gbDenomPrice   ? gbDenomPrice * qty
-                        : isManualRetail ? marketValue * qty
-                        : meltValue;
-      const purchasePrice = typeof item.price === 'number' ? item.price : parseFloat(item.price) || 0;
-      const purchaseTotal = purchasePrice * qty;
-      const gainLoss = (currentSpot > 0 || isManualRetail || gbDenomPrice) ? retailTotal - purchaseTotal : null;
+      const valuation = (typeof computeItemValuation === 'function')
+        ? computeItemValuation(item, currentSpot)
+        : null;
+      const purchasePrice = valuation ? valuation.purchasePrice : (typeof item.price === 'number' ? item.price : parseFloat(item.price) || 0);
+      const meltValue = valuation ? valuation.meltValue : computeMeltValue(item, currentSpot);
+      const gainLoss = valuation ? valuation.gainLoss : null;
 
       csvRows.push([
         item.date,
@@ -1287,24 +1282,12 @@ async function _loadThumbImage(img) {
       return;
     }
 
-    const resolved = await imageCache.resolveImageForItem(item);
-
-    if (resolved) {
-      let blobUrl;
-      if (resolved.source === 'user') {
-        blobUrl = await imageCache.getUserImageUrl(resolved.catalogId, side);
-      } else if (resolved.source === 'pattern') {
-        blobUrl = await imageCache.getPatternImageUrl(resolved.catalogId, side);
-      } else {
-        blobUrl = await imageCache.getImageUrl(resolved.catalogId, side);
-      }
-
-      if (blobUrl) {
-        _thumbBlobUrls.push(blobUrl);
-        img.src = blobUrl;
-        img.style.visibility = '';
-        return;
-      }
+    const blobUrl = await imageCache.resolveImageUrlForItem(item, side);
+    if (blobUrl) {
+      _thumbBlobUrls.push(blobUrl);
+      img.src = blobUrl;
+      img.style.visibility = '';
+      return;
     }
 
     // Fallback: CDN URL
@@ -1377,18 +1360,16 @@ const renderTable = () => {
 
       // Portfolio computed values (all financial columns are qty-adjusted totals)
       const currentSpot = spotPrices[item.metal.toLowerCase()] || 0;
-      const qty = Number(item.qty) || 1;
-      const meltValue = computeMeltValue(item, currentSpot);
-      // Retail hierarchy: gb denomination > manual marketValue > melt
-      const gbDenomPrice = (typeof getGoldbackRetailPrice === 'function') ? getGoldbackRetailPrice(item) : null;
-      const marketValue = parseFloat(item.marketValue) || 0;
-      const isManualRetail = !gbDenomPrice && marketValue > 0;
-      const retailTotal = gbDenomPrice   ? gbDenomPrice * qty
-                        : isManualRetail ? marketValue * qty
-                        : meltValue;
-      const purchasePrice = typeof item.price === 'number' ? item.price : parseFloat(item.price) || 0;
-      const purchaseTotal = purchasePrice * qty;
-      const gainLoss = (currentSpot > 0 || isManualRetail || gbDenomPrice) ? retailTotal - purchaseTotal : null;
+      const valuation = (typeof computeItemValuation === 'function')
+        ? computeItemValuation(item, currentSpot)
+        : null;
+      const purchasePrice = valuation ? valuation.purchasePrice : (typeof item.price === 'number' ? item.price : parseFloat(item.price) || 0);
+      const meltValue = valuation ? valuation.meltValue : computeMeltValue(item, currentSpot);
+      const gbDenomPrice = valuation ? valuation.gbDenomPrice : null;
+      const isManualRetail = valuation ? valuation.isManualRetail : false;
+      const retailTotal = valuation ? valuation.retailTotal : meltValue;
+      const gainLoss = valuation ? valuation.gainLoss : null;
+      const hasRetailSignal = valuation ? valuation.hasRetailSignal : (currentSpot > 0);
 
       // Resolve Numista catalog ID for inline tag
       const numistaId = item.numistaId || (typeof catalogManager !== 'undefined'
@@ -1504,8 +1485,8 @@ const renderTable = () => {
 
       // Format computed displays
       const meltDisplay = currentSpot > 0 ? formatCurrency(meltValue) : '—';
-      const retailDisplay = currentSpot > 0 || isManualRetail || gbDenomPrice ? formatCurrency(retailTotal) : '—';
-      const gainLossDisplay = gainLoss !== null && (currentSpot > 0 || isManualRetail || gbDenomPrice) ? formatCurrency(Math.abs(gainLoss)) : '—';
+      const retailDisplay = hasRetailSignal ? formatCurrency(retailTotal) : '—';
+      const gainLossDisplay = gainLoss !== null && hasRetailSignal ? formatCurrency(Math.abs(gainLoss)) : '—';
       const gainLossColor = gainLoss > 0 ? 'var(--success, #4caf50)' : gainLoss < 0 ? 'var(--danger, #f44336)' : 'var(--text-primary)';
       const gainLossPrefix = gainLoss > 0 ? '+' : gainLoss < 0 ? '-' : '';
 
@@ -1673,21 +1654,19 @@ const updateSummary = () => {
 
         // Melt value: weight x qty x current spot x purity
         const currentSpot = spotPrices[item.metal.toLowerCase()] || 0;
+        const valuation = (typeof computeItemValuation === 'function')
+          ? computeItemValuation(item, currentSpot)
+          : null;
         const purity = parseFloat(item.purity) || 1.0;
-        const meltValue = currentSpot * itemWeight * purity;
+        const meltValue = valuation ? valuation.meltValue : (currentSpot * itemWeight * purity);
         totalMeltValue += meltValue;
 
         // Purchase price total (price already converted)
-        const purchaseTotal = qty * price;
+        const purchaseTotal = valuation ? valuation.purchaseTotal : (qty * price);
         totalPurchased += purchaseTotal;
 
         // Retail total: (1) gb denomination price, (2) manual marketValue, (3) melt
-        const gbDenomPrice = (typeof getGoldbackRetailPrice === 'function') ? getGoldbackRetailPrice(item) : null;
-        const marketValue = parseFloat(item.marketValue) || 0;
-        const isManualRetail = !gbDenomPrice && marketValue > 0;
-        const retailTotal = gbDenomPrice   ? gbDenomPrice * qty
-                          : isManualRetail ? marketValue * qty
-                          : meltValue;
+        const retailTotal = valuation ? valuation.retailTotal : meltValue;
         totalRetailValue += retailTotal;
 
         // Gain/loss: retail minus purchase (both in USD; converted at display time)
@@ -1791,10 +1770,13 @@ const updateSummary = () => {
  * 
  * @param {number} idx - Index of item to delete
  */
-const deleteItem = (idx) => {
+const deleteItem = async (idx) => {
   const item = inventory[idx];
   const itemLabel = item ? item.name : 'this item';
-  if (confirm(`Delete ${itemLabel}?\n\nThis can be undone from the Activity Log.`)) {
+  const confirmed = typeof showAppConfirm === 'function'
+    ? await showAppConfirm(`Delete ${itemLabel}?\n\nThis can be undone from the Activity Log.`, 'Delete Item')
+    : confirm(`Delete ${itemLabel}?\n\nThis can be undone from the Activity Log.`);
+  if (confirmed) {
     inventory.splice(idx, 1);
     saveInventory();
     renderTable();
@@ -2702,16 +2684,12 @@ const exportCsv = () => {
 
   for (const i of sortedInventory) {
     const currentSpot = spotPrices[i.metal.toLowerCase()] || 0;
-    const qty = Number(i.qty) || 1;
-    const meltValue = computeMeltValue(i, currentSpot);
-    const gbDenomPrice = (typeof getGoldbackRetailPrice === 'function') ? getGoldbackRetailPrice(i) : null;
-    const isManualRetail = !gbDenomPrice && i.marketValue && i.marketValue > 0;
-    const retailTotal = gbDenomPrice   ? gbDenomPrice * qty
-                      : isManualRetail ? i.marketValue * qty
-                      : meltValue;
-    const purchasePrice = typeof i.price === 'number' ? i.price : parseFloat(i.price) || 0;
-    const purchaseTotal = purchasePrice * qty;
-    const gainLoss = (currentSpot > 0 || isManualRetail || gbDenomPrice) ? retailTotal - purchaseTotal : null;
+    const valuation = (typeof computeItemValuation === 'function')
+      ? computeItemValuation(i, currentSpot)
+      : null;
+    const purchasePrice = valuation ? valuation.purchasePrice : (typeof i.price === 'number' ? i.price : parseFloat(i.price) || 0);
+    const meltValue = valuation ? valuation.meltValue : computeMeltValue(i, currentSpot);
+    const gainLoss = valuation ? valuation.gainLoss : null;
 
     rows.push([
       i.date,
@@ -3076,16 +3054,13 @@ const exportPdf = () => {
   // Prepare table data with computed portfolio columns
   const tableData = sortedInventory.map(item => {
     const currentSpot = spotPrices[item.metal.toLowerCase()] || 0;
-    const qty = Number(item.qty) || 1;
-    const meltValue = computeMeltValue(item, currentSpot);
-    const gbDenomPrice = (typeof getGoldbackRetailPrice === 'function') ? getGoldbackRetailPrice(item) : null;
-    const isManualRetail = !gbDenomPrice && item.marketValue && item.marketValue > 0;
-    const retailTotal = gbDenomPrice   ? gbDenomPrice * qty
-                      : isManualRetail ? item.marketValue * qty
-                      : meltValue;
-    const purchasePrice = typeof item.price === 'number' ? item.price : parseFloat(item.price) || 0;
-    const purchaseTotal = purchasePrice * qty;
-    const gainLoss = (currentSpot > 0 || isManualRetail || gbDenomPrice) ? retailTotal - purchaseTotal : null;
+    const valuation = (typeof computeItemValuation === 'function')
+      ? computeItemValuation(item, currentSpot)
+      : null;
+    const purchasePrice = valuation ? valuation.purchasePrice : (typeof item.price === 'number' ? item.price : parseFloat(item.price) || 0);
+    const meltValue = valuation ? valuation.meltValue : computeMeltValue(item, currentSpot);
+    const retailTotal = valuation ? valuation.retailTotal : meltValue;
+    const gainLoss = valuation ? valuation.gainLoss : null;
 
     return [
       item.date,
@@ -3465,14 +3440,7 @@ function _openThumbPopover(cell, item) {
 
     let url = null;
     if (window.imageCache?.isAvailable()) {
-      const resolved = await imageCache.resolveImageForItem(item);
-      if (resolved?.source === 'user') {
-        url = _track(await imageCache.getUserImageUrl(item.uuid, side));
-      } else if (resolved?.source === 'pattern') {
-        url = _track(await imageCache.getPatternImageUrl(resolved.catalogId, side));
-      } else if (resolved?.source === 'numista') {
-        url = _track(await imageCache.getImageUrl(resolved.catalogId, side));
-      }
+      url = _track(await imageCache.resolveImageUrlForItem(item, side));
     }
     // Fallback to CDN URL strings
     if (!url) {

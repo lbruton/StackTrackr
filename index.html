@@ -12,11 +12,18 @@
 <html lang="en">
   <head>
     <!--
-    Content Security Policy is intentionally relaxed to ensure test
-    local file execution when opening this tool with the file:// protocol.
-    The previous strict policy blocked external scripts and prevented
-    the interface from rendering. The simplified policy below permits
-    all sources while keeping inline execution restrictions.
+    Content Security Policy — intentionally permissive (see DEVS-22).
+
+    StakTrakr's primary distribution is local (file:// protocol or
+    extracted ZIP). The file:// origin requires 'unsafe-inline' for
+    inline handlers/styles and 'unsafe-eval' for vendor libraries
+    (JSZip, Forge). A strict CSP breaks both execution paths.
+
+    Runtime mitigations in place:
+      - All user-controlled HTML is escaped via sanitizeHtml() (utils.js)
+      - OAuth tokens scoped to localStorage; vault password cached in
+        sessionStorage with XOR obfuscation + auto-clear idle timer
+      - No server-stored user data; compromise requires local access
   -->
     <meta
       http-equiv="Content-Security-Policy"
@@ -2758,6 +2765,17 @@
                   </div>
                 </div>
 
+                <!-- Sync History (pre-pull local snapshot) -->
+                <div class="cloud-autosync-section" style="margin-top:0.75rem;border-top:1px solid var(--border-color,#ddd);padding-top:0.75rem">
+                  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem">
+                    <strong style="font-size:0.85rem">Sync History</strong>
+                    <span class="settings-subtext" style="font-size:0.75rem">Last local snapshot</span>
+                  </div>
+                  <div id="cloudSyncHistorySection">
+                    <p class="settings-subtext" style="margin:0">No snapshot available.</p>
+                  </div>
+                </div>
+
                 <!-- Disclaimer -->
                 <div class="cloud-provider-disclaimer" style="display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap">
                   <span>Backups are stored in <strong>/StakTrakr</strong> on your Dropbox. Your vault password encrypts the data &mdash; if you lose it, backups cannot be recovered.</span>
@@ -3252,6 +3270,7 @@
               <div class="settings-log-tabs">
                 <button class="settings-log-tab active" data-log-tab="changelog" type="button">Changelog</button>
                 <button class="settings-log-tab" data-log-tab="metals" type="button">Metals</button>
+                <button class="settings-log-tab" data-log-tab="lbma" type="button">LBMA History</button>
                 <button class="settings-log-tab" data-log-tab="catalogs" type="button">Catalogs</button>
                 <button class="settings-log-tab" data-log-tab="pricehistory" type="button">Price History</button>
                 <button class="settings-log-tab" data-log-tab="cloud" type="button">Cloud</button>
@@ -3294,6 +3313,37 @@
                         <th>Metal</th>
                         <th>Spot Price</th>
                         <th>Source</th>
+                        <th>Provider</th>
+                      </tr>
+                    </thead>
+                    <tbody></tbody>
+                  </table>
+                </div>
+              </div>
+
+              <!-- LBMA History (Reference Seed Data) panel -->
+              <div class="settings-log-panel" id="logPanel_lbma" style="display: none">
+                <p class="settings-subtext">Historical LBMA reference prices from bundled seed data (read-only).</p>
+                <div class="settings-pricehistory-controls">
+                  <select class="settings-filter-input" id="settingsLbmaMetalFilter">
+                    <option value="all">All Metals</option>
+                    <option value="silver">Silver</option>
+                    <option value="gold">Gold</option>
+                    <option value="platinum">Platinum</option>
+                    <option value="palladium">Palladium</option>
+                  </select>
+                  <input class="settings-filter-input" id="settingsLbmaStartDate" type="date">
+                  <input class="settings-filter-input" id="settingsLbmaEndDate" type="date">
+                  <button class="btn btn-secondary" id="settingsLbmaResetBtn" type="button">Reset</button>
+                  <span class="settings-subtext" id="settingsLbmaResultCount" style="margin-left:auto;"></span>
+                </div>
+                <div class="settings-changelog-wrap">
+                  <table id="settingsLbmaHistoryTable">
+                    <thead>
+                      <tr>
+                        <th>Date</th>
+                        <th>Metal</th>
+                        <th>Spot Price</th>
                         <th>Provider</th>
                       </tr>
                     </thead>
@@ -4332,6 +4382,7 @@
   <script defer src="./js/constants.js"></script>
   <script defer src="./js/state.js"></script>
   <script defer src="./js/utils.js"></script>
+  <script defer src="./js/dialogs.js"></script>
   <script defer src="./js/image-processor.js"></script>
   <script defer src="./js/image-cache.js"></script>
   <script defer src="./js/bulk-image-cache.js"></script>

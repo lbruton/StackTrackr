@@ -21,17 +21,17 @@
     /* Disclaimer warning color */
     --disclaimer-color: var(--warning);
 
-  /* Background Tokens - Clean Light Mode */
-  --bg: #eef2f7;
-  --bg-elev-1: #e2e8f0;
-  --bg-elev-2: #d5dce6;
-  --surface: #ffffff;
-  --surface-alt: #e2e8f0;
+  /* Background Tokens - Slate/Blue-Gray Mode (Dimmed) */
+  --bg: #cbd5e1;       /* Slate 300 */
+  --bg-elev-1: #e2e8f0; /* Slate 200 */
+  --bg-elev-2: #94a3b8; /* Slate 400 */
+  --surface: #f1f5f9;   /* Slate 100 - Cards */
+  --surface-alt: #f8fafc; /* Slate 50 */
 
   /* Map existing background variables */
   --bg-primary: var(--bg);
   --bg-secondary: var(--bg-elev-1);
-  --bg-tertiary: var(--bg-elev-2); /* Middle gray-blue for better contrast */
+  --bg-tertiary: var(--bg-elev-2); 
   --bg-card: var(--surface);
 
   /* Text Tokens */
@@ -192,11 +192,11 @@
   --type-other-bg: #6a3fa8;
   --type-other-text: #ffffff;
 
-  /* Background Colors - Sepia Mode */
-  --bg-primary: #f2e7d5;
-  --bg-secondary: #e9ddc8;
-  --bg-tertiary: #d0c4a8; /* Lighter — separates from border-hover */
-  --bg-card: #f2e7d5;
+  /* Background Colors - Sepia Mode (Richer/Darker) */
+  --bg-primary: #dcbfa3;   /* Deep Tan/Buff */
+  --bg-secondary: #d2b48c; /* Tan */
+  --bg-tertiary: #c19a6b;  /* Camel/Light Brown */
+  --bg-card: #e8dcc5;      /* Lighter Beige for cards */
 
   /* Text Colors - Sepia Mode */
   --text-primary: #3e2f1e;
@@ -2841,7 +2841,7 @@ input[type="submit"] {
   justify-content: space-between;
   gap: 0.5rem;
   padding: 0.15rem 0;
-  color: var(--text);
+  color: var(--text-primary);
 }
 .cloud-conflict-divider {
   display: flex;
@@ -2860,12 +2860,19 @@ input[type="submit"] {
   padding: 0.75rem;
   font-size: 0.85rem;
 }
+[data-theme="dark"] .cloud-sync-update-meta {
+  background: rgba(51, 65, 85, 0.6);
+  border-color: rgba(148, 163, 184, 0.25);
+}
 .cloud-sync-update-row {
   display: flex;
   justify-content: space-between;
   gap: 0.5rem;
   padding: 0.15rem 0;
-  color: var(--text);
+  color: var(--text-muted);
+}
+.cloud-sync-update-row strong {
+  color: var(--text-primary);
 }
 .cloud-sync-update-row:not(:last-child) {
   border-bottom: 1px solid var(--border, #dee2e6);
@@ -4296,6 +4303,15 @@ td input:checked + .slider:before {
    Images displayed on a subtle dark field (coin presentation aesthetic).
    Sections separated by faint gradient dividers.
    ============================================================================= */
+
+[data-theme="sepia"] .modal-content {
+  background: rgba(232, 220, 197, 0.95); /* Matches new --bg-card #e8dcc5 */
+  border: 1px solid rgba(139, 69, 19, 0.2);
+  box-shadow: 
+    0 25px 50px -12px rgba(62, 47, 30, 0.25),
+    0 0 0 1px rgba(139, 69, 19, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
 
 /* --- Modal content shell --- */
 #viewItemModal .modal-content {
