@@ -5,8 +5,8 @@
  * Sorts inventory based on the current sort column and direction.
  * Handles special cases for date, numeric, boolean, and string columns.
  *
- * @param {Array<Object>} [data=inventory] - Array of inventory items to sort (defaults to main inventory)
- * @returns {Array<Object>} Sorted inventory data
+ * @param {Array<InventoryItem>} [data=inventory] - Array of inventory items to sort (defaults to main inventory)
+ * @returns {Array<InventoryItem>} Sorted inventory data
  *
  * @example
  * sortInventory([{name: 'A'}, {name: 'B'}]);

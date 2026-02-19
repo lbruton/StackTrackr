@@ -6,11 +6,20 @@
 
 let _patternMode = 'keywords';
 
+/**
+ * Helper to safely get an element by ID, returning null if not found.
+ *
+ * @param {string} id - The DOM element ID
+ * @returns {HTMLElement|null} The element or null
+ */
 const getExistingElement = (id) => {
   const el = safeGetElement(id);
   return el && el.id ? el : null;
 };
 
+/**
+ * Binds listeners for settings modal navigation (sidebar, provider tabs, log tabs).
+ */
 const bindSettingsNavigationListeners = () => {
   // Sidebar navigation.
   document.querySelectorAll('.settings-nav-item').forEach(item => {
@@ -34,6 +43,9 @@ const bindSettingsNavigationListeners = () => {
   });
 };
 
+/**
+ * Binds listeners for appearance settings (theme, display currency, timezone, header toggles).
+ */
 const bindAppearanceAndHeaderListeners = () => {
   // Theme picker buttons.
   document.querySelectorAll('.theme-option').forEach(btn => {
@@ -167,6 +179,9 @@ const bindAppearanceAndHeaderListeners = () => {
   }
 };
 
+/**
+ * Binds listeners for filter settings and Numista integration options.
+ */
 const bindFilterAndNumistaListeners = () => {
   const chipMinSetting = getExistingElement('settingsChipMinCount');
   if (chipMinSetting) {
@@ -253,6 +268,9 @@ const bindFilterAndNumistaListeners = () => {
   }
 };
 
+/**
+ * Binds listeners for Numista bulk sync operations.
+ */
 const bindNumistaBulkSyncListeners = () => {
   const nsStartBtn = getExistingElement('numistaSyncStartBtn');
   if (nsStartBtn) {
@@ -277,6 +295,9 @@ const bindNumistaBulkSyncListeners = () => {
   }
 };
 
+/**
+ * Binds listeners for the settings modal shell (close button, background click).
+ */
 const bindSettingsModalShellListeners = () => {
   const closeBtn = getExistingElement('settingsCloseBtn');
   if (closeBtn) {
@@ -294,6 +315,9 @@ const bindSettingsModalShellListeners = () => {
   setupProviderPriority();
 };
 
+/**
+ * Binds listeners for Goldback feature toggles and estimation settings.
+ */
 const bindGoldbackToggleListeners = () => {
   const gbToggle = getExistingElement('settingsGoldbackEnabled');
   if (gbToggle) {
@@ -356,6 +380,9 @@ const bindGoldbackToggleListeners = () => {
   }
 };
 
+/**
+ * Binds listeners for Goldback price entry and history actions.
+ */
 const bindGoldbackActionListeners = () => {
   const gbSaveBtn = getExistingElement('goldbackSavePricesBtn');
   if (gbSaveBtn) {
@@ -435,6 +462,9 @@ const bindGoldbackActionListeners = () => {
   }
 };
 
+/**
+ * Binds listeners for image sync and cache clearing operations.
+ */
 const bindImageSyncListeners = () => {
   const clearImagesBtn = getExistingElement('clearAllImagesBtn');
   if (clearImagesBtn) {
@@ -532,6 +562,9 @@ const bindImageSyncListeners = () => {
   }
 };
 
+/**
+ * Binds listeners for pattern rule mode switching and creation.
+ */
 const bindPatternRuleModeListeners = () => {
   const patternModeKeywords = getExistingElement('patternModeKeywords');
   const patternModeRegex = getExistingElement('patternModeRegex');
@@ -662,6 +695,9 @@ const bindPatternRuleModeListeners = () => {
   }
 };
 
+/**
+ * Binds listeners for card style and table image toggles.
+ */
 const bindCardAndTableImageListeners = () => {
   // Card style toggle (A/B/C/D chip buttons in Appearance > Inventory)
   const cardStyleToggleEl = getExistingElement('settingsCardStyleToggle');
@@ -755,6 +791,12 @@ const bindCardAndTableImageListeners = () => {
 // Image Export/Import helpers
 // ---------------------------------------------------------------------------
 
+/**
+ * Converts a Blob to WebP format.
+ * @param {Blob} blob - The source image blob.
+ * @param {number} [quality=0.85] - WebP quality (0 to 1).
+ * @returns {Promise<Blob|null>} WebP blob or null if failed.
+ */
 const blobToWebP = (blob, quality = 0.85) => new Promise((resolve) => {
   if (!blob) return resolve(null);
   const url = URL.createObjectURL(blob);
@@ -771,6 +813,13 @@ const blobToWebP = (blob, quality = 0.85) => new Promise((resolve) => {
   img.src = url;
 });
 
+/**
+ * Builds a ZIP archive of all exported images.
+ * @param {Object} options - Export options.
+ * @param {boolean} [options.includeCdn=false] - Whether to include CDN images.
+ * @param {Function} [options.onProgress=null] - Progress callback.
+ * @returns {Promise<JSZip>} The generated ZIP object.
+ */
 const buildImageExportZip = async ({ includeCdn = false, onProgress = null } = {}) => {
   const zip = new JSZip();
   const manifest = [];
@@ -850,6 +899,10 @@ const buildImageExportZip = async ({ includeCdn = false, onProgress = null } = {
   return zip;
 };
 
+/**
+ * Restores CDN images from an imported ZIP file.
+ * @param {JSZip} zip - The loaded ZIP object.
+ */
 const _restoreCdnFolderFromZip = async (zip) => {
   const cdnFolder = zip.folder('cdn');
   if (!cdnFolder) return;
@@ -882,6 +935,9 @@ const _restoreCdnFolderFromZip = async (zip) => {
   }
 };
 
+/**
+ * Binds listeners for image import/export buttons.
+ */
 const bindImageImportExportListeners = () => {
   const exportBtn = getExistingElement('exportAllImagesBtn');
   if (exportBtn) {
@@ -1037,6 +1093,9 @@ const bindImageImportExportListeners = () => {
 
 };
 
+/**
+ * Aggregates all image-related settings listeners.
+ */
 const bindImageSettingsListeners = () => {
   bindImageSyncListeners();
   bindPatternRuleModeListeners();

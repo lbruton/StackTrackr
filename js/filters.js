@@ -4,6 +4,7 @@
 /**
  * Advanced filtering system
  */
+/** @type {Object.<string, FilterConfig>} */
 let activeFilters = {};
 
 /**
@@ -742,8 +743,10 @@ const getChipColors = (field, value, index) => {
 };
 
 /**
- * Enhanced filter inventory function that includes advanced filters
- * @returns {Array} Filtered inventory items
+ * Enhanced filter inventory function that includes advanced filters.
+ * Applies all active filters in `activeFilters` to the inventory.
+ *
+ * @returns {Array<InventoryItem>} Filtered inventory items
  */
 const filterInventoryAdvanced = () => {
   let result = inventory;
@@ -1017,7 +1020,7 @@ const filterInventoryAdvanced = () => {
  * Supports 3-level deep filtering - clicking same filter removes it, clicking different filters stacks them
  * @param {string} field - The field to filter by
  * @param {string} value - The value to filter for
- * @param {boolean} [isGrouped=false] - Whether this is a grouped name filter
+ * @param {boolean} [isGrouped=false] - Whether this is a grouped/special filter (uses 'include' logic)
  * @param {boolean} [exclude=false] - Whether to apply the filter in exclusion mode
  */
 const applyQuickFilter = (field, value, isGrouped = false, exclude = false) => {

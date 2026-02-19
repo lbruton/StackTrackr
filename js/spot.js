@@ -2,7 +2,9 @@
 // =============================================================================
 
 /**
- * Saves spot history to localStorage
+ * Saves spot history to localStorage.
+ * Writes the content of `spotHistory` to the `SPOT_HISTORY_KEY`.
+ * @returns {void}
  */
 const saveSpotHistory = () => {
   try {
@@ -1081,6 +1083,10 @@ const clearSpotHistory = () => {
 // Compact format: { year: { metal: [[MM-DD, price], ...] } }
 // Expands into full historicalDataCache entries so fetchYearFile() finds
 // cached data immediately without network requests.
+/**
+ * Loads the spot history seed bundle into the cache.
+ * @param {Object} bundle - The spot history seed bundle.
+ */
 window._loadSpotSeedBundle = function(bundle) {
   let loaded = 0;
   for (const yearStr of Object.keys(bundle)) {

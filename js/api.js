@@ -191,6 +191,10 @@ const handleStaktrakrHistoryPull = async () => {
   }
 };
 
+/**
+ * Renders a status summary row in the header for all configured API providers.
+ * Displays connection status (connected/disconnected/cached) and last sync time.
+ */
 const renderApiStatusSummary = () => {
   const container = document.getElementById("apiHeaderStatusRow");
   if (!container) return;
@@ -251,10 +255,13 @@ const renderApiStatusSummary = () => {
   });
 };
 
-// API history table state
+/** @type {Array<Object>} In-memory buffer for API history log entries */
 let apiHistoryEntries = [];
+/** @type {string} Current sort column for the API history table */
 let apiHistorySortColumn = "";
+/** @type {boolean} Sort direction for the API history table */
 let apiHistorySortAsc = true;
+/** @type {string} Active filter text for searching API history */
 let apiHistoryFilterText = "";
 
 /**
@@ -511,8 +518,10 @@ const setProviderStatus = (provider, status) => {
 };
 
 /**
- * Updates the history pull cost indicator for a provider
- * @param {string} provider - Provider key
+ * Updates the visual cost indicator for a history pull from a given provider.
+ * Displays total API calls or file fetches expected based on current settings.
+ *
+ * @param {string} provider - The unique key of the API provider
  */
 const updateHistoryPullCost = (provider) => {
   const config = loadApiConfig();
@@ -555,8 +564,10 @@ const updateHistoryPullCost = (provider) => {
 };
 
 /**
- * Updates provider settings from form inputs
- * @param {string} provider - Provider key
+ * Updates persistent provider settings (like cache duration) from form inputs.
+ * Persists the updated configuration to localStorage.
+ *
+ * @param {string} provider - The unique key of the API provider
  */
 const updateProviderSettings = (provider) => {
   const config = loadApiConfig();
@@ -572,8 +583,10 @@ const updateProviderSettings = (provider) => {
 };
 
 /**
- * Sets up event listeners for provider settings
- * @param {string} provider - Provider key
+ * Attaches DOM event listeners to the settings controls for a specific provider.
+ * Handles cache changes, history pull parameters, and metal selection checkboxes.
+ *
+ * @param {string} provider - The unique key of the API provider
  */
 const setupProviderSettingsListeners = (provider) => {
   // Cache timeout change
@@ -624,7 +637,8 @@ const setupProviderSettingsListeners = (provider) => {
 };
 
 /**
- * Renders API usage/quota data for each provider
+ * Renders the API usage/quota visualization (progress bars) for each provider.
+ * Displays usage vs quota and handles clicks for quota adjustment modals.
  */
 const updateProviderHistoryTables = () => {
   const config = loadApiConfig();
@@ -665,7 +679,8 @@ const updateProviderHistoryTables = () => {
 };
 
 /**
- * Refreshes provider statuses based on stored keys and cache age
+ * Periodically refreshes connection status icons based on key presence and cache age.
+ * Determines if a provider is fully connected, cached (needs sync), or disconnected.
  */
 const refreshProviderStatuses = () => {
   const config = loadApiConfig();
@@ -708,8 +723,8 @@ const refreshProviderStatuses = () => {
 };
 
 /**
- * Auto-selects the default provider based on tab order and key availability.
- * Tab order determines priority: first tab with an API key becomes the primary provider.
+ * Automatically selects the primary API provider based on priority and availability.
+ * The highest-priority provider that has a stored API key is selected as default.
  */
 const autoSelectDefaultProvider = () => {
   const config = loadApiConfig();
@@ -740,10 +755,10 @@ const autoSelectDefaultProvider = () => {
 const updateDefaultProviderButtons = autoSelectDefaultProvider;
 
 /**
- * Returns the metals provider priority order from localStorage (STACK-90).
- * Reads providerPriority first (new system), falls back to legacy apiProviderOrder.
- * Disabled providers (priority 0) are excluded.
- * @returns {string[]} Provider keys in priority order
+ * Returns the effective priority order for API providers.
+ * Merges user-defined priority with legacy order and hardcoded defaults.
+ *
+ * @returns {string[]} Ordered list of provider keys
  */
 const getProviderOrder = () => {
   try {
@@ -768,10 +783,11 @@ const getProviderOrder = () => {
 };
 
 /**
- * Returns default sync mode for a provider based on priority position.
- * First provider with an API key → "always", rest → "backup".
- * @param {string} provider - Provider key
- * @returns {string} "always" or "backup"
+ * Determines the default synchronization behavior for a provider.
+ * Higher priority providers default to 'always', others to 'backup'.
+ *
+ * @param {string} provider - The unique key of the API provider
+ * @returns {"always"|"backup"} Recommended sync mode
  */
 const getDefaultSyncMode = (provider) => {
   const order = getProviderOrder();
@@ -835,7 +851,8 @@ const renderApiHistoryTable = () => {
 };
 
 /**
- * Shows API history modal with table
+ * Opens the API history modal and populates it with filtered spot history data.
+ * Displays only 'api', 'api-hourly', and 'seed' entries in the log.
  */
 const showApiHistoryModal = () => {
   const modal = document.getElementById("apiHistoryModal");
@@ -866,7 +883,7 @@ const showApiHistoryModal = () => {
 };
 
 /**
- * Hides API history modal
+ * Closes the API history modal.
  */
 const hideApiHistoryModal = () => {
   const modal = document.getElementById("apiHistoryModal");
@@ -874,7 +891,7 @@ const hideApiHistoryModal = () => {
 };
 
 /**
- * Shows API providers modal
+ * Opens the API provider selection modal (redirects to the API section of Settings).
  */
 const showApiProvidersModal = () => {
   // Redirect to Settings modal API section
@@ -884,7 +901,7 @@ const showApiProvidersModal = () => {
 };
 
 /**
- * Hides API providers modal
+ * Closes the API providers modal (legacy wrapper for hideSettingsModal).
  */
 const hideApiProvidersModal = () => {
   // Legacy — Settings modal handles its own close
@@ -894,8 +911,9 @@ const hideApiProvidersModal = () => {
 };
 
 /**
- * Clears stored API price history
- * @param {boolean} [silent=false] - When true, does not reopen the history modal
+ * Clears all stored spot price history from localStorage and re-renders UI.
+ *
+ * @param {boolean} [silent=false] - If true, suppresses reopening the history modal
  */
 const clearApiHistory = (silent = false) => {
   spotHistory = [];
@@ -907,8 +925,10 @@ const clearApiHistory = (silent = false) => {
 };
 
 /**
- * Updates default provider selection in config
- * @param {string} provider
+ * Updates the active API provider in configuration.
+ * Validates that the provider has a key (if required) before switching.
+ *
+ * @param {string} provider - The unique key of the API provider
  */
 const setDefaultProvider = (provider) => {
   const config = loadApiConfig();
@@ -923,8 +943,10 @@ const setDefaultProvider = (provider) => {
 };
 
 /**
- * Clears stored API key for a provider
- * @param {string} provider
+ * Removes the stored API key for a given provider from configuration.
+ * Also handles fallback to other available providers if necessary.
+ *
+ * @param {string} provider - The unique key of the API provider
  */
 const clearApiKey = (provider) => {
   const config = loadApiConfig();
@@ -955,8 +977,10 @@ const clearApiKey = (provider) => {
 };
 
 /**
- * Refreshes display using cached data without making API calls
- * @returns {boolean} Success status
+ * Force-refreshes all spot price displays using the most recent cached data.
+ * Does not make external network requests.
+ *
+ * @returns {boolean} True if display was successfully updated from cache
  */
 const refreshFromCache = () => {
   const cache = loadApiCache();
@@ -1008,8 +1032,10 @@ const refreshFromCache = () => {
 };
 
 /**
- * Loads cached API data from localStorage
- * @returns {Object|null} Cached data or null if expired/not found
+ * Retrieves valid cached API response data from localStorage.
+ * Checks against the provider's specific cache duration before returning.
+ *
+ * @returns {Object|null} Cached response or null if expired/not found
  */
 const loadApiCache = () => {
   try {
@@ -1033,8 +1059,11 @@ const loadApiCache = () => {
 };
 
 /**
- * Saves API data to cache
- * @param {Object} data - Data to cache
+ * Persists API response data to the local browser cache.
+ * Uses provider-specific cache duration settings.
+ *
+ * @param {Object} data - Standardized price data object
+ * @param {string} provider - Key of the data provider
  */
 const saveApiCache = (data, provider) => {
   try {
@@ -1057,8 +1086,10 @@ const saveApiCache = (data, provider) => {
 };
 
 /**
- * Automatically syncs spot prices if API keys exist and cache is stale
- * @returns {Promise<void>} Resolves when sync completes or immediately if no sync needed
+ * Triggers an automatic background spot price synchronization.
+ * Only runs if API keys are configured and local data is stale.
+ *
+ * @returns {Promise<void>} Resolves when background sync process ends
  */
 const autoSyncSpotPrices = async () => {
   const config = loadApiConfig();
@@ -1071,9 +1102,10 @@ const autoSyncSpotPrices = async () => {
 };
 
 /**
- * Gets the last sync timestamp for a specific provider from spot history
- * @param {string} provider - Provider key
- * @returns {number|null} Timestamp in ms or null if never synced
+ * Scans the spot history log to find the most recent successful sync for a provider.
+ *
+ * @param {string} provider - The unique key of the API provider
+ * @returns {number|null} Millisecond timestamp of last sync, or null
  */
 const getLastProviderSyncTime = (provider) => {
   try {
@@ -1095,11 +1127,13 @@ const getLastProviderSyncTime = (provider) => {
 };
 
 /**
- * Calculates API usage for batch vs individual requests
- * @param {Array} selectedMetals - Array of metal keys
- * @param {number} historyDays - Number of history days
- * @param {boolean} batchSupported - Whether provider supports batch requests
- * @returns {Object} Usage calculation result
+ * Calculates the expected API usage (call count) for a given sync operation.
+ * Accounts for batch support and historical data backfill.
+ *
+ * @param {string[]} selectedMetals - Array of metal keys to fetch
+ * @param {number} [historyDays=0] - Number of days of history to include
+ * @param {boolean} [batchSupported=false] - Whether the provider supports batch calls
+ * @returns {Object} Usage breakdown including calls, type, and potential savings
  */
 const calculateApiUsage = (selectedMetals, historyDays = 0, batchSupported = false) => {
   if (batchSupported && selectedMetals.length > 1) {
@@ -1124,14 +1158,13 @@ const calculateApiUsage = (selectedMetals, historyDays = 0, batchSupported = fal
 };
 
 /**
- * Fetches today's prices only using individual /latest endpoints (no timeseries).
- * For providers that support batch latest (metals.dev), uses a single call.
- * Cost: 1 API call total (metals.dev batch) or 1 per metal (other providers).
+ * Fetches the most recent spot prices for selected metals using individual endpoints.
+ * Optimized for low-cost, real-time updates without full history backfill.
  *
- * @param {string} provider - Provider key from API_PROVIDERS
- * @param {string} apiKey - API key
- * @param {Array} selectedMetals - Array of metal keys to fetch
- * @returns {Promise<Object>} Promise resolving to { silver: 29.50, gold: 2650.00, ... }
+ * @param {string} provider - The unique key of the API provider
+ * @param {string} apiKey - The API key for the provider
+ * @param {string[]} selectedMetals - Array of metal keys to fetch
+ * @returns {Promise<Object<string, number>>} Map of metal keys to spot prices
  */
 const fetchLatestPrices = async (provider, apiKey, selectedMetals) => {
   const providerConfig = API_PROVIDERS[provider];
@@ -1237,13 +1270,15 @@ const fetchLatestPrices = async (provider, apiKey, selectedMetals) => {
 };
 
 /**
- * Makes batch API request for multiple metals
- * @param {string} provider - Provider key from API_PROVIDERS
- * @param {string} apiKey - API key
- * @param {Array} selectedMetals - Array of metal keys to fetch
- * @param {number} historyDays - Number of historical days to fetch
- * @param {Array} historyTimes - Array of HH:MM times to fetch each day
- * @returns {Promise<Object>} Promise resolving to spot prices data
+ * Executes a batch API request to retrieve spot prices for multiple metals simultaneously.
+ * Supports historical data range requests if provided by the underlying API.
+ *
+ * @param {string} provider - The unique key of the API provider
+ * @param {string} apiKey - The API key for the provider
+ * @param {string[]} selectedMetals - Array of metal keys to fetch
+ * @param {number} [historyDays=0] - Number of days of history to include
+ * @param {string[]} [historyTimes=[]] - Array of HH:MM times for granular history
+ * @returns {Promise<Object<string, number>>} Map of metal keys to spot prices
  */
 const fetchBatchSpotPrices = async (provider, apiKey, selectedMetals, historyDays = 0, historyTimes = []) => {
   const providerConfig = API_PROVIDERS[provider];
@@ -1357,13 +1392,12 @@ const fetchBatchSpotPrices = async (provider, apiKey, selectedMetals, historyDay
 };
 
 /**
- * Makes API request for spot prices — latest only (no history backfill).
- * Uses fetchLatestPrices() for efficient single-call sync.
- * History pulls are now user-initiated via handleHistoryPull().
+ * Standard interface for fetching spot prices from any supported API provider.
+ * Automatically chooses between individual latest endpoints or batch calls.
  *
- * @param {string} provider - Provider key from API_PROVIDERS
- * @param {string} apiKey - API key
- * @returns {Promise<Object>} Promise resolving to spot prices data
+ * @param {string} provider - The unique key of the API provider
+ * @param {string} apiKey - The API key for the provider
+ * @returns {Promise<Object<string, number>>} Map of metal keys to spot prices
  */
 const fetchSpotPricesFromApi = async (provider, apiKey) => {
   const providerConfig = API_PROVIDERS[provider];
@@ -1397,10 +1431,12 @@ const fetchSpotPricesFromApi = async (provider, apiKey) => {
 // =============================================================================
 
 /**
- * Splits a total number of days into date range chunks respecting provider limits.
- * @param {number} totalDays - Total days of history to fetch
- * @param {number} maxPerRequest - Maximum days per single API request
- * @returns {Array<{start: Date, end: Date}>} Array of date range chunks (newest first)
+ * Splits a requested historical time range into smaller date chunks.
+ * Ensures each request stays within the provider's maximum allowed days per call.
+ *
+ * @param {number} totalDays - Total number of days to fetch
+ * @param {number} maxPerRequest - Maximum days allowed per API request
+ * @returns {Array<{start: Date, end: Date}>} Array of date range objects, newest first
  */
 const getDateChunks = (totalDays, maxPerRequest) => {
   const chunks = [];
@@ -1419,15 +1455,14 @@ const getDateChunks = (totalDays, maxPerRequest) => {
 };
 
 /**
- * Fetches historical spot price data in batches, respecting per-provider limits.
- * Generic batching that works across all 3 providers by using their existing
- * batchEndpoint + parseBatchResponse infrastructure.
+ * Orchestrates a series of batched API requests to backfill historical spot price data.
+ * Automates the chunking process and parses results for multiple metals.
  *
- * @param {string} provider - Provider key
- * @param {string} apiKey - API key
- * @param {Array<string>} selectedMetals - Metal keys to fetch
- * @param {number} totalDays - Total days of history to pull
- * @returns {Promise<{totalEntries: number, callsMade: number}>} Summary
+ * @param {string} provider - The unique key of the API provider
+ * @param {string} apiKey - The API key for the provider
+ * @param {string[]} selectedMetals - Array of metal keys to fetch
+ * @param {number} totalDays - Total number of days of history to pull
+ * @returns {Promise<{totalEntries: number, callsMade: number}>} Summary of the batch operation
  */
 const fetchHistoryBatched = async (provider, apiKey, selectedMetals, totalDays) => {
   const providerConfig = API_PROVIDERS[provider];
@@ -1515,12 +1550,13 @@ const fetchHistoryBatched = async (provider, apiKey, selectedMetals, totalDays) 
 };
 
 /**
- * Fetches hourly historical data from MetalPriceAPI.
- * Uses the /hourly endpoint (one currency per request).
- * @param {string} apiKey - API key
- * @param {Array<string>} selectedMetals - Metal keys to fetch
- * @param {number} totalDays - Number of days of hourly data
- * @returns {Promise<{totalEntries: number, callsMade: number}>}
+ * Specialized history fetcher for MetalPriceAPI's hourly endpoint.
+ * Requests granular hourly data for a specific date range.
+ *
+ * @param {string} apiKey - The API key for MetalPriceAPI
+ * @param {string[]} selectedMetals - Array of metal keys to fetch
+ * @param {number} totalDays - Number of days of history to pull
+ * @returns {Promise<{totalEntries: number, callsMade: number}>} Summary of the operation
  */
 const fetchMetalPriceApiHourly = async (apiKey, selectedMetals, totalDays) => {
   const baseUrl = API_PROVIDERS.METAL_PRICE_API.baseUrl;
@@ -1591,10 +1627,10 @@ const fetchMetalPriceApiHourly = async (apiKey, selectedMetals, totalDays) => {
 };
 
 /**
- * Handles a user-initiated history pull for a specific provider.
- * Reads the dropdown selection, calculates cost, confirms, and executes.
+ * UI entry point for initiating a historical data pull for a provider.
+ * Validates requirements, shows cost/quota confirmation, and executes pull.
  *
- * @param {string} provider - Provider key
+ * @param {string} provider - The unique key of the API provider
  */
 const handleHistoryPull = async (provider) => {
   // STAKTRAKR has its own hourly pull logic (no API key needed)
@@ -1677,10 +1713,12 @@ const handleHistoryPull = async (provider) => {
 };
 
 /**
- * Syncs spot prices from API and updates the application
- * @param {boolean} showProgress - Whether to show progress indicators
- * @param {boolean} forceSync - Whether to force sync even if cache is valid
- * @returns {Promise<boolean>} Promise resolving to success status
+ * Initiates the spot price synchronization process across all configured providers.
+ * Handles user interaction, cache validation prompts, and UI status updates.
+ *
+ * @param {boolean} [showProgress=true] - Whether to display alerts and progress UI
+ * @param {boolean} [forceSync=false] - If true, ignores the local cache and forces API calls
+ * @returns {Promise<boolean>} True if at least one provider successfully synced prices
  */
 const syncSpotPricesFromApi = async (
   showProgress = true,
@@ -1745,10 +1783,12 @@ const syncSpotPricesFromApi = async (
 };
 
 /**
- * Tests API connection
- * @param {string} provider - Provider key
- * @param {string} apiKey - API key to test
- * @returns {Promise<boolean>} Promise resolving to connection test result
+ * Validates an API provider's connectivity by making a lightweight test request.
+ * Usually attempts to fetch a single metal's price (e.g., silver) to verify the key.
+ *
+ * @param {string} provider - The unique key of the API provider
+ * @param {string} apiKey - The API key to be tested
+ * @returns {Promise<boolean>} True if the connection test was successful
  */
 const testApiConnection = async (provider, apiKey) => {
   try {
@@ -1803,8 +1843,11 @@ const testApiConnection = async (provider, apiKey) => {
 };
 
 /**
- * Handles testing and syncing for a specific provider
- * @param {string} provider - Provider key
+ * Handles the UI-triggered synchronization of a single specific provider.
+ * Useful for per-provider settings cards and troubleshooting.
+ *
+ * @param {string} provider - The unique key of the API provider
+ * @returns {Promise<void>} Resolves when the provider sync attempt completes
  */
 const handleProviderSync = async (provider) => {
   let apiKey = '';
@@ -1898,7 +1941,9 @@ const handleProviderSync = async (provider) => {
 };
 
 /**
- * Syncs all configured providers and records results
+ * Triggers a background sync across all providers.
+ *
+ * @returns {Promise<number>} Total number of prices updated
  */
 const syncAllProviders = async () => {
   const { updatedCount } = await syncProviderChain({ showProgress: false, forceSync: true });
@@ -1907,15 +1952,13 @@ const syncAllProviders = async () => {
 };
 
 /**
- * Core sync engine — runs providers in priority order respecting sync modes.
+ * Core engine that iterates through configured API providers in priority order.
+ * Respects sync modes ('always' vs 'backup') and handles cascading failover.
  *
- * "Always" providers run unconditionally (subject to cache).
- * "Backup" providers only run if no provider has succeeded yet.
- *
- * @param {Object} opts
- * @param {boolean} opts.showProgress - Show syncing UI state
- * @param {boolean} opts.forceSync    - Ignore per-provider cache
- * @returns {Promise<{results: Object, updatedCount: number, anySucceeded: boolean}>}
+ * @param {Object} options
+ * @param {boolean} [options.showProgress=false] - If true, updates sync button UI states
+ * @param {boolean} [options.forceSync=false] - If true, ignores provider-specific cache durations
+ * @returns {Promise<{results: Object, updatedCount: number, anySucceeded: boolean}>} Sync operation summary
  */
 const syncProviderChain = async ({ showProgress = false, forceSync = false } = {}) => {
   const config = loadApiConfig();

@@ -10,10 +10,10 @@
 
 /**
  * Safely attaches event listener with fallback methods
- * @param {HTMLElement} element - Element to attach listener to
+ * @param {HTMLElement|Window|Document} element - Element to attach listener to
  * @param {string} event - Event type
  * @param {Function} handler - Event handler function
- * @param {string} description - Description for logging
+ * @param {string} [description=""] - Description for logging
  * @returns {boolean} Success status
  */
 const safeAttachListener = (element, event, handler, description = "") => {
@@ -767,6 +767,10 @@ const setupTableSortListeners = () => {
   // Swaps weight text input ↔ denomination select when unit changes to/from 'gb'.
   // Auto-fills hidden weight value from the selected denomination.
   const showEl = (el, visible) => { if (el) el.style.display = visible ? '' : 'none'; };
+  /**
+   * Toggles the visible input between weight and goldback denomination.
+   * Auto-fills hidden weight value from the selected denomination when in 'gb' mode.
+   */
   window.toggleGbDenomPicker = () => {
     const isGb = elements.itemWeightUnit?.value === 'gb';
     const denomSelect = elements.itemGbDenom;
@@ -2207,6 +2211,10 @@ const updateThemeButton = () => {
 
 window.updateThemeButton = updateThemeButton;
 
+/**
+ * Sets up the theme toggle logic and listeners.
+ * Initializes the theme based on saved preference or system settings.
+ */
 const setupThemeToggle = () => {
   debugLog("Setting up theme toggle...");
 
