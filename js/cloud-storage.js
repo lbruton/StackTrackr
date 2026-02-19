@@ -113,8 +113,11 @@ function renderCloudActivityTable() {
   });
 }
 
-function clearCloudActivityLog() {
-  if (!confirm('Clear all cloud activity log? This cannot be undone.')) return;
+async function clearCloudActivityLog() {
+  const confirmed = typeof showAppConfirm === 'function'
+    ? await showAppConfirm('Clear all cloud activity log? This cannot be undone.', 'Cloud Sync')
+    : confirm('Clear all cloud activity log? This cannot be undone.');
+  if (!confirmed) return;
   saveCloudActivityLog([]);
   var panel = document.getElementById('logPanel_cloud');
   if (panel) delete panel.dataset.rendered;
@@ -334,7 +337,11 @@ function cloudNotifyAuthFailure(provider, message, details) {
   if (typeof showCloudToast === 'function') {
     showCloudToast(fullMessage, 7000);
   } else {
-    alert(fullMessage);
+    if (typeof showAppAlert === 'function') {
+      showAppAlert(fullMessage, 'Cloud Sync');
+    } else {
+      alert(fullMessage);
+    }
   }
 }
 

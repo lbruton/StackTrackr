@@ -1797,20 +1797,27 @@ const setupVaultListeners = () => {
  * Sets up data-destructive action listeners (remove data, boating accident).
  */
 const setupDataManagementListeners = () => {
-  optionalListener(elements.removeInventoryDataBtn, "click", () => {
-    if (confirm("Remove all inventory items? This cannot be undone.")) {
+  optionalListener(elements.removeInventoryDataBtn, "click", async () => {
+    const confirmed = typeof showAppConfirm === "function"
+      ? await showAppConfirm("Remove all inventory items? This cannot be undone.", "Data Management")
+      : confirm("Remove all inventory items? This cannot be undone.");
+    if (confirmed) {
       localStorage.removeItem(LS_KEY);
       // STACK-62: Clear stale autocomplete cache so it rebuilds from fresh inventory
       if (typeof clearLookupCache === 'function') clearLookupCache();
       loadInventory();
       renderTable();
       renderActiveFilters();
-      alert("Inventory data cleared.");
+      if (typeof showAppAlert === "function") await showAppAlert("Inventory data cleared.", "Data Management");
+      else alert("Inventory data cleared.");
     }
   }, "Remove inventory data button");
 
-  optionalListener(elements.boatingAccidentBtn, "click", () => {
-    if (confirm("Did you really lose it all in a boating accident? This will wipe all local data.")) {
+  optionalListener(elements.boatingAccidentBtn, "click", async () => {
+    const confirmed = typeof showAppConfirm === "function"
+      ? await showAppConfirm("Did you really lose it all in a boating accident? This will wipe all local data.", "Data Management")
+      : confirm("Did you really lose it all in a boating accident? This will wipe all local data.");
+    if (confirmed) {
       // Nuclear wipe: clear every allowed localStorage key
       ALLOWED_STORAGE_KEYS.forEach((key) => {
         localStorage.removeItem(key);
@@ -1840,7 +1847,8 @@ const setupDataManagementListeners = () => {
       apiCache = null;
       updateSyncButtonStates();
 
-      alert("All data has been erased. Hope your scuba gear is ready!");
+      if (typeof showAppAlert === "function") await showAppAlert("All data has been erased. Hope your scuba gear is ready!", "Data Management");
+      else alert("All data has been erased. Hope your scuba gear is ready!");
     }
   }, "Boating accident button");
 };
