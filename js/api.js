@@ -2470,7 +2470,6 @@ const downloadCompleteBackup = async () => {
         "Storage Location",
         "Notes",
         "Date",
-        "Collectable",
       ];
       const sortedInventory = [...inventory].sort(
         (a, b) => new Date(b.date) - new Date(a.date),
@@ -2483,14 +2482,13 @@ const downloadCompleteBackup = async () => {
         item.type,
         parseFloat(item.weight).toFixed(4),
         formatCurrency(item.price),
-        item.isCollectable ? "N/A" : formatCurrency(item.spotPriceAtPurchase),
-        item.isCollectable ? "N/A" : formatCurrency(item.premiumPerOz),
-        item.isCollectable ? "N/A" : formatCurrency(item.totalPremium),
+        formatCurrency(item.spotPriceAtPurchase),
+        formatCurrency(item.premiumPerOz),
+        formatCurrency(item.totalPremium),
         item.purchaseLocation,
         item.storageLocation || "Unknown",
         item.notes || "",
         item.date,
-        item.isCollectable ? "Yes" : "No",
       ]);
 
       const inventoryCsv = Papa.unparse([headers, ...rows]);

@@ -502,18 +502,17 @@ const updateColumnVisibility = () => {
   const hidden = new Set();
 
   const breakpoints = [
-    { width: 1400, hide: ["collectable"] },
-    { width: 1200, hide: ["collectable", "notes"] },
-    { width: 992, hide: ["collectable", "notes", "premium"] },
-    { width: 768, hide: ["collectable", "notes", "premium", "spot"] },
+    { width: 1400, hide: ["notes"] },
+    { width: 1200, hide: ["notes"] },
+    { width: 992, hide: ["notes", "premium"] },
+    { width: 768, hide: ["notes", "premium", "spot"] },
     {
       width: 640,
-      hide: ["collectable", "notes", "premium", "spot", "weight"],
+      hide: ["notes", "premium", "spot", "weight"],
     },
     {
       width: 576,
       hide: [
-        "collectable",
         "notes",
         "premium",
         "spot",
@@ -551,7 +550,6 @@ const updateColumnVisibility = () => {
     "purchaseLocation",
     "storageLocation",
     "numista",
-    "collectable",
     "notes",
     "actions",
   ];
@@ -940,7 +938,6 @@ const commitItemToInventory = (f, isEditing, editIdx) => {
     inventory[editIdx] = {
       ...oldItem,
       ...buildItemFields(f),
-      isCollectable: !!(elements.itemCollectable && elements.itemCollectable.checked),
       numistaId: f.catalog,
       currency: f.currency,
       obverseImageUrl: f.obverseImageUrl || window.selectedNumistaResult?.imageUrl || oldItem.obverseImageUrl || '',
@@ -996,7 +993,6 @@ const commitItemToInventory = (f, isEditing, editIdx) => {
       spotPriceAtPurchase,
       premiumPerOz: 0,
       totalPremium: 0,
-      isCollectable: !!(elements.itemCollectable && elements.itemCollectable.checked),
       serial,
       uuid: generateUUID(),
       numistaId: f.catalog,
@@ -2550,8 +2546,6 @@ const setupApiEvents = () => {
       },
       "ESC key modal close",
     );
-
-    // Collectable toggle listeners removed — portfolio redesign
 
     debugLog("✓ API events setup complete");
   } catch (error) {

@@ -4,7 +4,7 @@
   
   A comprehensive client-side web application for tracking precious metal investments
   including silver, gold, platinum, and palladium. Features include spot price management,
-  premium calculations, collectable item handling, and multi-format data import/export.
+  premium calculations, and multi-format data import/export.
   
   All data is stored locally using localStorage - no server required.
   Application version is managed dynamically via constants.js
@@ -542,8 +542,8 @@
          Comprehensive financial summary cards for each metal type showing:
          - Total items and weight in inventory
          - Purchase price vs current value calculations
-         - Average prices (overall, collectable, non-collectable)
-         - Premium analysis and profit/loss calculations
+         - Average prices and premium analysis
+         - Profit/loss calculations
          - Clickable totals titles opening analytics modals with pie charts
 
          All calculations are performed by updateSummary() in inventory.js
@@ -768,7 +768,6 @@
            Searches across all relevant fields including:
            - Metal type, name, type, purchase/storage locations, date
            - Quantity, weight, price values
-           - Collectable status (yes/no)
 
            Search is case-insensitive and supports partial matches
            Implementation in search.js with filterInventory() function
@@ -863,7 +862,6 @@
            Main data display table showing all inventory items with:
            - Sortable columns (click headers to sort ascending/descending)
            - Clickable item names for editing (opens edit modal)
-           - Collectable status checkboxes for quick toggle
            - Delete buttons with confirmation
            - Responsive design with column resizing capability
 
@@ -1107,13 +1105,6 @@
                   <option value="Other">Other</option>
                 </select>
               </div>
-            </div>
-            <!-- Collectable toggle (BUG-007) -->
-            <div style="margin:-0.25rem 0 0.5rem">
-              <label class="settings-checkbox-label" style="font-size:0.85rem">
-                <input type="checkbox" id="itemCollectable" />
-                Collectable <span style="font-weight:normal;opacity:0.6">(not valued at melt)</span>
-              </label>
             </div>
             <!-- Row: Purity, Quantity, Weight, Unit -->
             <div class="grid grid-purity-row">
