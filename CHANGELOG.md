@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [3.31.5] - 2026-02-18
+## [3.31.5] - 2026-02-19
 
 ### Added — STAK-149: Cloud Auto-Sync, Bulk Edit Fixes & Code Cleanup
 
