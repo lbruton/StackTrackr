@@ -127,12 +127,21 @@ Where:
     throw new Error("Empty response from Gemini");
   }
 
-  // Parse the JSON response
+  // Parse the JSON response — handle markdown fences and trailing content
   try {
-    // Strip markdown code fences if present
-    const cleaned = rawText.replace(/^```json?\s*/i, "").replace(/```\s*$/, "").trim();
-    return JSON.parse(cleaned);
+    // Try direct parse first
+    return JSON.parse(rawText);
   } catch {
+    // Strip markdown fences and extract the first {...} object
+    const stripped = rawText.replace(/^```json?\s*/i, "").replace(/```[\s\S]*$/m, "").trim();
+    const match = stripped.match(/\{[\s\S]*\}/);
+    if (match) {
+      try {
+        return JSON.parse(match[0]);
+      } catch {
+        // fall through
+      }
+    }
     throw new Error(`Could not parse Gemini response: ${rawText.slice(0, 100)}`);
   }
 }
