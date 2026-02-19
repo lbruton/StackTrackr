@@ -282,7 +282,14 @@ const CERT_LOOKUP_URLS = {
  * Updated: 2026-02-12 - STACK-38/STACK-31: Responsive card view + mobile layout
  */
 
-const APP_VERSION = "3.31.1";
+const APP_VERSION = "3.31.2";
+
+/**
+ * Numista metadata cache TTL: 30 days in milliseconds.
+ * Used by viewModal.js to skip re-fetching recently cached metadata.
+ * @constant {number}
+ */
+const VIEW_METADATA_TTL = 30 * 24 * 60 * 60 * 1000;
 
 /**
  * @constant {string} DEFAULT_CURRENCY - Default currency code for monetary formatting

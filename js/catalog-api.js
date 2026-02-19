@@ -1188,7 +1188,7 @@ const renderNumistaFieldCheckboxes = (result) => {
       defaultOn: false,
       warn: result.type && !typeValid ? `"${result.type}" — not in form options` : ''
     },
-    { key: 'weight', label: 'Weight (g)', value: result.weight ? String(result.weight) : '', available: result.weight > 0, defaultOn: false },
+    { key: 'weight', label: 'Weight (g)', value: result.weight ? String(result.weight) : '', available: result.weight > 0, defaultOn: result.weight > 0 },
   ];
 
   // Keep the heading, rebuild field rows
