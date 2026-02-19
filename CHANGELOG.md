@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.31.3] - 2026-02-19
+
+### Added — Filter Chip Active-State UX & Bug Fixes
+
+- **Added**: Filter chips now hide × on idle — only active/search chips show the remove button and a themed border ring, eliminating visual noise from ~60 always-visible × buttons (STAK-172)
+- **Fixed**: Clicking × on an active filter chip now correctly removes the filter instead of erroneously replacing it with an exclude entry
+- **Fixed**: Card view pagination, mobile image tap, and bulk popover rendering polish
+- **Fixed**: VIEW_METADATA_TTL promoted to global scope; O(1) Map pre-built for Numista tag lookup (PR #257 review)
+- **Fixed**: MD013 disabled in markdownlint config to match Codacy dashboard setting
+
+---
+
 ## [3.31.2] - 2026-02-18
 
 ### Added — Numista Metadata Pipeline Fixes
