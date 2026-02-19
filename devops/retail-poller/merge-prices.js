@@ -186,6 +186,7 @@ async function main() {
   let totalCoins = 0;
   let totalProviders = 0;
   let highConfidence = 0;
+  const visionNeeded = []; // targets that need vision follow-up
 
   const coins = COIN_FILTER
     ? Object.entries(providersJson.coins).filter(([slug]) => COIN_FILTER.includes(slug))
@@ -255,6 +256,15 @@ async function main() {
         methodsBySite[providerId] = result.method;
         if (result.flags.length) flagsBySite[providerId] = result.flags;
         if (result.score >= 70) highConfidence++;
+        // Flag for vision follow-up if confidence is low and vision hasn't run yet
+        if (result.score < 50 && !visionPrices[providerId]) {
+          const coin = providersJson.coins[coinSlug];
+          visionNeeded.push({ coinSlug, providerId, url: coin?.providers.find(p => p.id === providerId)?.url, score: result.score });
+        }
+      } else if (!visionPrices[providerId]) {
+        // No price at all and vision hasn't run — definitely needs vision
+        const coin = providersJson.coins[coinSlug];
+        visionNeeded.push({ coinSlug, providerId, url: coin?.providers.find(p => p.id === providerId)?.url, score: 0 });
       }
       totalProviders++;
     }
@@ -297,6 +307,21 @@ async function main() {
   }
 
   log(`Done: ${totalCoins} coins, ${totalProviders} provider slots, ${highConfidence} high-confidence prices`);
+
+  // Write vision-needed.json — consumed by the GH Actions vision-on-demand step
+  const visionNeededPath = join(DATA_DIR, "retail", `${dateStr}-vision-needed.json`);
+  if (visionNeeded.length > 0) {
+    const payload = { date: dateStr, targets: visionNeeded };
+    if (DRY_RUN) {
+      log(`[DRY RUN] ${visionNeededPath}`);
+      console.log(JSON.stringify(payload, null, 2));
+    } else {
+      writeFileSync(visionNeededPath, JSON.stringify(payload, null, 2) + "\n");
+      log(`Vision needed: ${visionNeeded.length} targets → ${visionNeededPath}`);
+    }
+  } else {
+    log("Vision needed: 0 targets — firecrawl confidence is high across the board");
+  }
 }
 
 main().catch(err => {

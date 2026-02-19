@@ -1,42 +1,61 @@
-# Daily retail price poller — dual pipeline (Firecrawl text + Gemini Vision)
-# Writes to data/retail/{coin-slug}/{YYYY-MM-DD}*.json on the `data` branch
+# Retail price vision follow-up — runs after local Firecrawl poller commits data
+#
+# Triggered when the local Docker cron pushes to the `data` branch.
+# Reads {date}-vision-needed.json, captures screenshots only for low-confidence
+# targets, extracts prices via Gemini Vision, re-merges, and commits.
+#
+# Full pipeline (typical day, ~10-15 targets):
+#   Local Docker cron → price-extract.js (Firecrawl) → merge-prices.js
+#     → commits {date}.json + {date}-vision-needed.json → push to data branch
+#       → triggers this workflow
+#         → capture.js (Browserbase, flagged targets only)
+#         → extract-vision.js (Gemini)
+#         → merge-prices.js (final merge with vision data)
+#         → commits {date}-final.json
 #
 # Required repository secrets:
-#   FIRECRAWL_API_KEY      — Firecrawl REST API key
 #   GEMINI_API_KEY         — Google AI Studio API key
 #   BROWSERBASE_API_KEY    — Browserbase cloud browser API key
 #   BROWSERBASE_PROJECT_ID — Browserbase project ID
 #
-# Strategy: scripts run from the triggering branch (main/dev), output written
-# to the `data` branch via a secondary checkout at ./data-out/
-name: Retail Price Poller
+# Optional (for manual full runs or fallback):
+#   FIRECRAWL_API_KEY      — Only needed if running Firecrawl lane in Actions
+name: Retail Price Vision Follow-up
 
 on:
-  schedule:
-    # 11:00 AM EST = 16:00 UTC (adjust to 15:00 UTC during EDT if needed)
-    - cron: '0 16 * * *'
-  workflow_dispatch: # Manual trigger for testing
+  push:
+    branches:
+      - data
+    paths:
+      - 'data/retail/*-vision-needed.json'
+  workflow_dispatch:
+    inputs:
+      date:
+        description: 'Date to process (YYYY-MM-DD, default: today)'
+        required: false
+      force_full:
+        description: 'Run vision on all 44 targets (ignore vision-needed.json)'
+        type: boolean
+        required: false
+        default: false
 
 env:
   TZ: UTC
 
 jobs:
-  # ──────────────────────────────────────────────────────────────
-  # Lane A: Firecrawl text extraction (fast, cheap, all providers)
-  # ──────────────────────────────────────────────────────────────
-  firecrawl:
-    name: Firecrawl Lane
+  vision-followup:
+    name: Vision Follow-up
     runs-on: ubuntu-latest
     permissions:
       contents: write
-    outputs:
-      date: ${{ steps.date.outputs.date }}
 
     steps:
       - name: Checkout scripts branch
         uses: actions/checkout@v4
         with:
           path: scripts
+          # Use default branch (main) for scripts
+          ref: main
 
       - name: Checkout data branch (output target)
         uses: actions/checkout@v4
@@ -50,62 +69,71 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Get date
-        id: date
-        run: echo "date=$(date -u +%Y-%m-%d)" >> "$GITHUB_OUTPUT"
-
-      - name: Run Firecrawl price extractor
-        env:
-          FIRECRAWL_API_KEY: ${{ secrets.FIRECRAWL_API_KEY }}
-          DATA_DIR: ${{ github.workspace }}/data-out/data
-        working-directory: scripts
-        run: node devops/retail-poller/price-extract.js
-
-      - name: Upload Firecrawl results
-        uses: actions/upload-artifact@v4
-        with:
-          name: firecrawl-prices
-          path: data-out/data/retail/**/${{ steps.date.outputs.date }}.json
-          retention-days: 3
-
-  # ──────────────────────────────────────────────────────────────
-  # Lane B: Browserbase screenshots + Gemini Vision extraction
-  # ──────────────────────────────────────────────────────────────
-  vision:
-    name: Vision Lane
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    outputs:
-      date: ${{ steps.date.outputs.date }}
-
-    steps:
-      - name: Checkout scripts branch
-        uses: actions/checkout@v4
-        with:
-          path: scripts
-
-      - name: Checkout data branch (output target)
-        uses: actions/checkout@v4
-        with:
-          ref: data
-          path: data-out
-          fetch-depth: 1
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - name: Install Playwright (for capture.js)
+      - name: Install Playwright
         working-directory: scripts
         run: npm install playwright-core dotenv
 
       - name: Get date
         id: date
-        run: echo "date=$(date -u +%Y-%m-%d)" >> "$GITHUB_OUTPUT"
+        run: |
+          DATE="${{ github.event.inputs.date }}"
+          if [ -z "$DATE" ]; then DATE=$(date -u +%Y-%m-%d); fi
+          echo "date=$DATE" >> "$GITHUB_OUTPUT"
 
-      - name: Capture screenshots via Browserbase
+      - name: Check vision-needed targets
+        id: targets
+        run: |
+          NEEDED="data-out/data/retail/${{ steps.date.outputs.date }}-vision-needed.json"
+          FORCE="${{ github.event.inputs.force_full }}"
+          if [ "$FORCE" = "true" ]; then
+            echo "mode=full" >> "$GITHUB_OUTPUT"
+            echo "count=44" >> "$GITHUB_OUTPUT"
+          elif [ -f "$NEEDED" ]; then
+            COUNT=$(python3 -c "import json; d=json.load(open('$NEEDED')); print(len(d['targets']))")
+            echo "mode=targeted" >> "$GITHUB_OUTPUT"
+            echo "count=$COUNT" >> "$GITHUB_OUTPUT"
+            echo "path=$NEEDED" >> "$GITHUB_OUTPUT"
+          else
+            echo "mode=none" >> "$GITHUB_OUTPUT"
+            echo "count=0" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Skip if no targets
+        if: steps.targets.outputs.mode == 'none'
+        run: |
+          echo "No vision-needed.json found for ${{ steps.date.outputs.date }} — firecrawl confidence is high, nothing to do."
+          exit 0
+
+      - name: Build targeted coin/provider list
+        if: steps.targets.outputs.mode == 'targeted'
+        id: coinlist
+        run: |
+          python3 - <<'EOF'
+          import json, os
+          d = json.load(open("data-out/data/retail/${{ steps.date.outputs.date }}-vision-needed.json"))
+          coins = sorted(set(t['coinSlug'] for t in d['targets']))
+          providers = sorted(set(t['providerId'] for t in d['targets']))
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+              f.write(f"coins={','.join(coins)}\n")
+              f.write(f"providers={','.join(providers)}\n")
+          print(f"Targeting {len(d['targets'])} flagged items: {coins} × {providers}")
+          EOF
+
+      - name: Capture screenshots (targeted)
+        if: steps.targets.outputs.mode == 'targeted'
+        continue-on-error: true
+        env:
+          BROWSERBASE_API_KEY: ${{ secrets.BROWSERBASE_API_KEY }}
+          BROWSERBASE_PROJECT_ID: ${{ secrets.BROWSERBASE_PROJECT_ID }}
+          BROWSER_MODE: browserbase
+          DATA_DIR: ${{ github.workspace }}/data-out/data
+          COINS: ${{ steps.coinlist.outputs.coins }}
+          PROVIDERS: ${{ steps.coinlist.outputs.providers }}
+        working-directory: scripts
+        run: node devops/retail-poller/capture.js
+
+      - name: Capture screenshots (full — manual override)
+        if: steps.targets.outputs.mode == 'full'
         continue-on-error: true
         env:
           BROWSERBASE_API_KEY: ${{ secrets.BROWSERBASE_API_KEY }}
@@ -126,85 +154,23 @@ jobs:
           MANIFEST="${{ github.workspace }}/data-out/data/retail/_artifacts/${{ steps.date.outputs.date }}/manifest.json"
           node devops/retail-poller/extract-vision.js "$MANIFEST"
 
-      - name: Upload Vision results
-        uses: actions/upload-artifact@v4
-        with:
-          name: vision-prices
-          path: data-out/data/retail/**/${{ steps.date.outputs.date }}-vision.json
-          retention-days: 3
-
-      - name: Upload screenshots (for debugging)
-        uses: actions/upload-artifact@v4
-        with:
-          name: screenshots
-          path: data-out/data/retail/_artifacts/${{ steps.date.outputs.date }}/
-          retention-days: 7
-
-  # ──────────────────────────────────────────────────────────────
-  # Merge: Confidence scoring + final commit to data branch
-  # ──────────────────────────────────────────────────────────────
-  merge:
-    name: Merge & Commit
-    runs-on: ubuntu-latest
-    needs: [firecrawl, vision]
-    # Run merge even if one lane fails — partial data is better than none
-    if: always() && (needs.firecrawl.result == 'success' || needs.vision.result == 'success')
-    permissions:
-      contents: write
-
-    steps:
-      - name: Checkout scripts branch
-        uses: actions/checkout@v4
-        with:
-          path: scripts
-
-      - name: Checkout data branch (output target)
-        uses: actions/checkout@v4
-        with:
-          ref: data
-          path: data-out
-          fetch-depth: 1
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - name: Get date
-        id: date
-        run: echo "date=$(date -u +%Y-%m-%d)" >> "$GITHUB_OUTPUT"
-
-      - name: Download Firecrawl results
-        uses: actions/download-artifact@v4
-        with:
-          name: firecrawl-prices
-          path: data-out/data/retail/
-        continue-on-error: true
-
-      - name: Download Vision results
-        uses: actions/download-artifact@v4
-        with:
-          name: vision-prices
-          path: data-out/data/retail/
-        continue-on-error: true
-
-      - name: Run confidence merger
+      - name: Re-merge with vision data
         env:
           DATA_DIR: ${{ github.workspace }}/data-out/data
         working-directory: scripts
         run: node devops/retail-poller/merge-prices.js ${{ steps.date.outputs.date }}
 
-      - name: Commit and push all data
+      - name: Commit and push final data
         working-directory: data-out
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add data/retail/
           if git diff --cached --quiet; then
-            echo "No new data to commit."
+            echo "No changes after vision merge."
           else
             DATE=${{ steps.date.outputs.date }}
-            git commit -m "retail: ${DATE} daily price data (firecrawl + vision)"
+            git commit -m "retail: ${DATE} vision follow-up (${{ steps.targets.outputs.count }} targets)"
             git pull --rebase origin data
             git push
           fi
