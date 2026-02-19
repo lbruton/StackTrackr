@@ -200,6 +200,15 @@ const resyncCachedEntry = async (catalogId) => {
       if (item) {
         if (result?.imageUrl && !item.obverseImageUrl) item.obverseImageUrl = result.imageUrl;
         if (result?.reverseImageUrl && !item.reverseImageUrl) item.reverseImageUrl = result.reverseImageUrl;
+        if (result?.tags && result.tags.length > 0 && typeof applyNumistaTags === 'function') {
+          const allItems = typeof inventory !== 'undefined' ? inventory : [];
+          allItems.forEach(invItem => {
+            const resolved = window.BulkImageCache ? BulkImageCache.resolveCatalogId(invItem) : '';
+            if (resolved === catalogId && invItem.uuid) {
+              applyNumistaTags(invItem.uuid, result.tags);
+            }
+          });
+        }
         if (typeof saveInventory === 'function') saveInventory();
       }
       await imageCache.cacheMetadata(catalogId, result);
@@ -320,6 +329,9 @@ const startBulkSync = () => {
       // Refresh Numista usage bar + settings footer storage display
       if (typeof renderNumistaUsageBar === 'function') renderNumistaUsageBar();
       if (typeof updateSettingsFooter === 'function') updateSettingsFooter();
+
+      // Refresh filter chips so newly-applied tags appear immediately
+      if (typeof renderActiveFilters === 'function') renderActiveFilters();
     }
   });
 };

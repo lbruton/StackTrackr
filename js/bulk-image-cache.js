@@ -80,11 +80,13 @@ const BulkImageCache = (() => {
     const entries = buildEligibleList();
     const total = entries.length;
 
-    // Pre-build a Map<catalogId, uuid[]> for O(1) tag application inside the loop
+    // Pre-build a Map<catalogId, uuid[]> for O(1) tag application inside the loop.
+    // Uses resolveCatalogId() (same as buildEligibleList) to cover catalogManager items
+    // that may not have numistaId directly set on the inventory item.
     const catalogIdToUuids = new Map();
     for (const invItem of (typeof inventory !== 'undefined' ? inventory : [])) {
-      if (!invItem.uuid || !invItem.numistaId) continue;
-      const cid = String(invItem.numistaId).trim();
+      if (!invItem.uuid) continue;
+      const cid = BulkImageCache.resolveCatalogId(invItem);
       if (!cid) continue;
       if (!catalogIdToUuids.has(cid)) catalogIdToUuids.set(cid, []);
       catalogIdToUuids.get(cid).push(invItem.uuid);
@@ -113,7 +115,16 @@ const BulkImageCache = (() => {
       const hasMetaCached = !!(await imageCache.getMetadata(catalogId));
 
       if (hasMetaCached && obverseUrl) {
-        // Metadata synced and URLs already on item — nothing to do
+        // Metadata synced and URLs already on item — apply cached tags then skip
+        try {
+          const cached = await imageCache.getMetadata(catalogId);
+          if (cached && cached.tags && cached.tags.length > 0 && typeof applyNumistaTags === 'function') {
+            const uuids = catalogIdToUuids.get(catalogId) || [];
+            for (const uuid of uuids) {
+              applyNumistaTags(uuid, cached.tags, false);
+            }
+          }
+        } catch { /* non-fatal — tag hydration is best-effort */ }
         skipped++;
         if (onLog) onLog({ catalogId, status: 'skip-cached', message: 'Already synced' });
         continue;
@@ -188,8 +199,8 @@ const BulkImageCache = (() => {
 
     _running = false;
 
-    // Persist any tag updates written during the sync loop
-    if (synced > 0 && typeof saveItemTags === 'function') {
+    // Persist any tag updates written during the sync loop (synced items + skip-cached tag hydration)
+    if ((synced > 0 || skipped > 0) && typeof saveItemTags === 'function') {
       saveItemTags();
     }
 
