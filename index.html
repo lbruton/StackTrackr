@@ -3737,6 +3737,27 @@
       </div>
     </div>
 
+    <!-- STAK-149: Sync Password Modal -->
+    <div class="modal" id="cloudSyncPasswordModal" style="display: none">
+      <div class="modal-content" style="max-width: 400px">
+        <div class="modal-header">
+          <h2>Sync Password</h2>
+          <button aria-label="Close modal" class="modal-close" id="syncPasswordCancelBtn">&times;</button>
+        </div>
+        <div class="modal-body">
+          <p class="settings-subtext" style="margin-bottom:1rem">Enter your vault password to encrypt your inventory before syncing. This password never leaves your device.</p>
+          <div class="password-input-group">
+            <input type="password" id="syncPasswordInput" placeholder="Vault password" autocomplete="current-password" style="width:100%"/>
+          </div>
+          <div id="syncPasswordError" style="color:var(--danger);font-size:0.8rem;margin-top:0.4rem;display:none"></div>
+          <div class="encryption-actions" style="margin-top:1rem">
+            <button class="btn success" id="syncPasswordConfirmBtn">Encrypt &amp; Sync</button>
+            <button class="btn" id="syncPasswordCancelBtn2">Cancel</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- STAK-149: Cloud Auto-Sync Conflict Modal -->
     <div class="modal" id="cloudSyncConflictModal" style="display: none">
       <div class="modal-content" style="max-width: 520px">
