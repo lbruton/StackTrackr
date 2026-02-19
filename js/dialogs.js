@@ -84,7 +84,6 @@
       cancelBtn.onclick = null;
       okBtn.onclick = null;
       modal.onclick = null;
-      inputEl.onkeydown = null;
       document.removeEventListener('keydown', onKeyDown);
     };
 
@@ -110,7 +109,6 @@
     modal.onclick = (event) => {
       if (event.target === modal && mode !== 'alert') finish(mode === 'prompt' ? null : false);
     };
-    inputEl.onkeydown = onKeyDown;
     document.addEventListener('keydown', onKeyDown);
 
     modal.style.display = 'flex';
