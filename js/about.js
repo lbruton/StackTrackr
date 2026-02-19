@@ -283,9 +283,11 @@ const setupAckModalEvents = () => {
  */
 const getEmbeddedWhatsNew = () => {
   return `
+    <li><strong>v3.31.3 &ndash; Filter Chip Active-State UX</strong>: Filter chips now hide &times; on idle &mdash; only active/search chips show a remove button and themed border ring. Clicking &times; on an active chip now correctly removes the filter. Card view pagination, mobile image tap, and bulk popover rendering polished</li>
     <li><strong>v3.31.2 &ndash; Numista Metadata Pipeline Fixes</strong>: Tags now write eagerly on bulk sync and restore correctly after vault restore. View modal skips API when metadata is already cached. Weight pre-fills automatically from Numista search results (STAK-168)</li>
     <li><strong>v3.31.1 &ndash; FAQ Modal &amp; Privacy Improvements</strong>: Interactive FAQ with 13 questions added to Settings sidebar tab, About modal, and footer. ZIP export/import exposed in Settings. Files tab merged into Inventory. privacy.html theme and back-link fixed. pCloud and Box added as coming-soon cloud providers. r/Silverbugs community credit in footer</li>
     <li><strong>v3.31.0 &ndash; Cloud Storage Backup</strong>: Encrypted .stvault backup to Dropbox via OAuth PKCE popup flow. Privacy policy page for provider compliance. Favicon and PWA icons updated to ST branding</li>
+    <li><strong>v3.30.09 &ndash; Settings &amp; Header Controls Overhaul</strong>: Optional Trend and Sync buttons added to header (enable in Appearance &gt; Header Buttons). Global spot trend/sync bar removed. Settings Appearance panel reorganized with Header Buttons grid, Layout card, and Inventory View cards</li>
   `;
 };
 
