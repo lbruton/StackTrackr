@@ -282,23 +282,30 @@ function logSyncActivity(action, result, detail, duration) {
  * Skips silently if not connected or sync is disabled.
  */
 async function pushSyncVault() {
-  if (!syncIsEnabled()) return;
+  console.log('[CloudSync] pushSyncVault called. enabled:', syncIsEnabled(), 'provider:', _syncProvider);
+
+  if (!syncIsEnabled()) {
+    console.log('[CloudSync] Push skipped — sync not enabled');
+    return;
+  }
 
   var token = typeof cloudGetToken === 'function' ? await cloudGetToken(_syncProvider) : null;
+  console.log('[CloudSync] Token obtained:', !!token);
   if (!token) {
-    debugLog('[CloudSync] No token — push skipped');
+    console.warn('[CloudSync] No token — push skipped');
     updateSyncStatusIndicator('error', 'Not connected');
     return;
   }
 
   if (_syncPushInFlight) {
-    debugLog('[CloudSync] Push already in flight — skipped');
+    console.log('[CloudSync] Push already in flight — skipped');
     return;
   }
 
   var password = await getSyncPassword();
+  console.log('[CloudSync] Password obtained:', !!password);
   if (!password) {
-    debugLog('[CloudSync] No password — push skipped');
+    console.log('[CloudSync] No password — push skipped');
     return;
   }
 
@@ -308,9 +315,11 @@ async function pushSyncVault() {
 
   try {
     // Encrypt sync-scoped payload
+    console.log('[CloudSync] Encrypting payload…');
     var fileBytes = typeof vaultEncryptToBytesScoped === 'function'
       ? await vaultEncryptToBytesScoped(password)
       : await vaultEncryptToBytes(password);
+    console.log('[CloudSync] Encrypted:', fileBytes.byteLength, 'bytes');
 
     var syncId = typeof generateUUID === 'function' ? generateUUID() : _syncFallbackUUID();
     var now = Date.now();
@@ -319,6 +328,7 @@ async function pushSyncVault() {
     var deviceId = getSyncDeviceId();
 
     // Upload the vault file (overwrite)
+    console.log('[CloudSync] Uploading vault to', SYNC_FILE_PATH, '…');
     var vaultArg = JSON.stringify({
       path: SYNC_FILE_PATH,
       mode: 'overwrite',
@@ -334,17 +344,22 @@ async function pushSyncVault() {
       },
       body: fileBytes,
     });
+    console.log('[CloudSync] Vault upload response:', vaultResp.status);
 
     if (vaultResp.status === 429) {
       _syncRetryDelay = Math.min(_syncRetryDelay * 2, 300000); // cap at 5 min
       throw new Error('Rate limited (429). Retry in ' + Math.round(_syncRetryDelay / 1000) + 's');
     }
 
-    if (!vaultResp.ok) throw new Error('Vault upload failed: ' + vaultResp.status);
+    if (!vaultResp.ok) {
+      var errBody = await vaultResp.text().catch(function () { return ''; });
+      throw new Error('Vault upload failed: ' + vaultResp.status + ' ' + errBody);
+    }
     _syncRetryDelay = 2000; // reset backoff on success
 
     var vaultResult = await vaultResp.json();
     var rev = vaultResult.rev || '';
+    console.log('[CloudSync] Vault uploaded, rev:', rev);
 
     // Upload the metadata pointer JSON
     var metaPayload = {
@@ -386,7 +401,7 @@ async function pushSyncVault() {
 
   } catch (err) {
     var errMsg = String(err.message || err);
-    debugLog('[CloudSync] Push failed:', errMsg);
+    console.error('[CloudSync] Push failed:', errMsg, err);
     logSyncActivity('auto_sync_push', 'fail', errMsg);
     updateSyncStatusIndicator('error', errMsg.slice(0, 60));
   } finally {
