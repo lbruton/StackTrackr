@@ -2029,36 +2029,56 @@ const editItem = (idx, logIdx = null) => {
 
   // Preload user images (obverse + reverse) into upload previews (STACK-32)
   if (typeof clearUploadState === 'function') clearUploadState();
+
+  /**
+   * Show a preview thumbnail for a given side.
+   * Works for both blob object-URLs and remote image URLs.
+   * @param {string} url - Image source URL
+   * @param {'Obv'|'Rev'} suffix - DOM element suffix
+   * @param {'obverse'|'reverse'} side - Side name for setEditPreviewUrl
+   */
+  const showPreview = (url, suffix, side) => {
+    const previewContainer = document.getElementById('itemImagePreview' + suffix);
+    const previewImg = document.getElementById('itemImagePreviewImg' + suffix);
+    const removeBtn = document.getElementById('itemImageRemoveBtn' + suffix);
+    if (previewImg) previewImg.src = url;
+    if (previewContainer) previewContainer.style.display = 'block';
+    if (removeBtn) removeBtn.style.display = '';
+    if (typeof setEditPreviewUrl === 'function') setEditPreviewUrl(url, side);
+  };
+
+  /** Fall back to image URL fields when no user-uploaded blob exists */
+  const showUrlPreviewFallback = (loadedSides) => {
+    if (!loadedSides.obverse && item.obverseImageUrl) {
+      showPreview(item.obverseImageUrl, 'Obv', 'obverse');
+    }
+    if (!loadedSides.reverse && item.reverseImageUrl) {
+      showPreview(item.reverseImageUrl, 'Rev', 'reverse');
+    }
+  };
+
   if (item.uuid && window.imageCache?.isAvailable()) {
     imageCache.getUserImage(item.uuid).then(rec => {
-      if (!rec) return;
-      // Preload obverse
-      if (rec.obverse) {
+      const loaded = { obverse: false, reverse: false };
+      if (rec?.obverse) {
         try {
-          const url = URL.createObjectURL(rec.obverse);
-          const previewContainer = document.getElementById('itemImagePreviewObv');
-          const previewImg = document.getElementById('itemImagePreviewImgObv');
-          const removeBtn = document.getElementById('itemImageRemoveBtnObv');
-          if (previewImg) previewImg.src = url;
-          if (previewContainer) previewContainer.style.display = 'block';
-          if (removeBtn) removeBtn.style.display = '';
-          if (typeof setEditPreviewUrl === 'function') setEditPreviewUrl(url, 'obverse');
+          showPreview(URL.createObjectURL(rec.obverse), 'Obv', 'obverse');
+          loaded.obverse = true;
         } catch { /* ignore */ }
       }
-      // Preload reverse
-      if (rec.reverse) {
+      if (rec?.reverse) {
         try {
-          const url = URL.createObjectURL(rec.reverse);
-          const previewContainer = document.getElementById('itemImagePreviewRev');
-          const previewImg = document.getElementById('itemImagePreviewImgRev');
-          const removeBtn = document.getElementById('itemImageRemoveBtnRev');
-          if (previewImg) previewImg.src = url;
-          if (previewContainer) previewContainer.style.display = 'block';
-          if (removeBtn) removeBtn.style.display = '';
-          if (typeof setEditPreviewUrl === 'function') setEditPreviewUrl(url, 'reverse');
+          showPreview(URL.createObjectURL(rec.reverse), 'Rev', 'reverse');
+          loaded.reverse = true;
         } catch { /* ignore */ }
       }
-    }).catch(() => {});
+      showUrlPreviewFallback(loaded);
+    }).catch(() => {
+      showUrlPreviewFallback({ obverse: false, reverse: false });
+    });
+  } else {
+    // No IndexedDB — go straight to URL fallback
+    showUrlPreviewFallback({ obverse: false, reverse: false });
   }
 
   // Update Numista API status dot (STAK-173)
