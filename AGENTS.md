@@ -228,11 +228,24 @@ No compile step is required.
 
 - `open index.html` -- run directly via `file://` for quick checks
 - `python -m http.server 8000` -- run over HTTP at `http://localhost:8000`
-- `npx eslint js/*.js` -- lint JavaScript using `.eslintrc.json`
+- `npx eslint js/*.js` -- lint JavaScript using `eslint.config.cjs`
 
 Validate both launch paths (`file://` and localhost). Smoke test core flows: add/edit/delete inventory, import/export, settings persistence, and spot-price sync.
 
-If adding browser tests, place them under `tests/` with `*.test.js` naming and load via `js/test-loader.js` for localhost runs.
+### Playwright Testing (Browserless)
+
+Browser tests run via Playwright connected to a self-hosted **browserless** Docker container. No cloud browser account required.
+
+- Test files: `tests/*.spec.js` (`.spec.js` extension, NOT `.test.js`)
+- `npm test` -- run full spec suite via browserless
+- `npm run test:smoke` -- run `@smoke`-tagged specs only
+- `BROWSER_BACKEND` env var switches between `browserless` (default, local Docker) and `browserbase` (cloud, paid, requires approval)
+- When serving locally, use `TEST_URL=http://host.docker.internal:8765` so the browser inside Docker can reach the host machine
+- `127.0.0.1` inside Docker refers to the container, NOT the host -- always use `host.docker.internal` for local targets
+
+**Browserbase** (cloud) requires explicit user approval before use -- it costs real money. Default to browserless for all scripted checks.
+
+Playwright test harness (`js/test-loader.js`) loads in localhost-only mode and is NOT part of the spec runner -- it's a separate browser-side shim for localhost development.
 
 ## Coding Style
 

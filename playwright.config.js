@@ -20,7 +20,9 @@ export default defineConfig({
   timeout: 60_000,
   use: {
     connectOptions: { wsEndpoint: wsEndpoints[backend] },
-    baseURL: process.env.TEST_URL || 'http://127.0.0.1:8765',
+    // host.docker.internal resolves to the host machine from inside Docker (macOS/Windows).
+    // Use TEST_URL env var to override for CI or remote targets.
+    baseURL: process.env.TEST_URL || 'http://host.docker.internal:8765',
   },
   projects: [
     { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
