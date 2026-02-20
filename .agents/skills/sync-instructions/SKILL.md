@@ -86,11 +86,12 @@ When a new MCP server is added or removed, update all three agent config files:
 - Add row to `AGENTS.md` → MCP server table
 
 **Checklist per new server:**
-- [ ] `.mcp.json` (raw keys, gitignored)
-- [ ] `.gemini/settings.json` (env var refs)
-- [ ] `.codex/config.toml` (env var refs, TOML)
+- [ ] `StakTrakr/.mcp.json` (gitignored, Claude Code)
+- [ ] `~/.gemini/settings.json` (Gemini CLI, home dir)
+- [ ] `~/.codex/config.toml` (Codex CLI, home dir)
 - [ ] `GEMINI.md` MCP usage block
 - [ ] `AGENTS.md` MCP table row
+- [ ] Refresh secrets backup in `~/.claude/backups/`
 
 ## Phase 5: Backup — Two Tiers, Two Destinations
 
