@@ -67,6 +67,7 @@ devops/*
 !devops/spot-poller/
 !devops/retail-poller/
 !devops/hooks/
+!devops/claude-backup/
 
 
 # AI/MCP configuration files are tracked for project consistency
