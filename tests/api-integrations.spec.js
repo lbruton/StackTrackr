@@ -53,3 +53,47 @@ test('STAK-222: new cache keys are in ALLOWED_STORAGE_KEYS', async ({ page }) =>
   expect(result.hasNumista).toBe(true);
   expect(result.hasPcgs).toBe(true);
 });
+
+test('STAK-222: Numista cache read/write roundtrip', async ({ page }) => {
+  await page.goto('/');
+  const result = await page.evaluate(() => {
+    // Write a fake entry to the cache
+    const fakeData = { title: [{ text: 'Test Coin' }] };
+    window.saveNumistaCache('type-99999', fakeData);
+
+    // Read it back
+    const hit = window.loadNumistaCache('type-99999');
+    const miss = window.loadNumistaCache('type-00000');
+
+    // Write a stale entry (31 days old) and verify it's rejected
+    const key = window.NUMISTA_RESPONSE_CACHE_KEY;
+    const cache = window.loadDataSync(key) || {};
+    cache['type-stale'] = {
+      data: { title: [{ text: 'Stale' }] },
+      fetchedAt: new Date(Date.now() - 32 * 24 * 60 * 60 * 1000).toISOString(),
+      ttlDays: 30,
+    };
+    window.saveDataSync(key, cache);
+    const staleHit = window.loadNumistaCache('type-stale');
+
+    return { hit: !!hit, miss: miss === null, staleRejected: staleHit === null };
+  });
+  expect(result.hit).toBe(true);
+  expect(result.miss).toBe(true);
+  expect(result.staleRejected).toBe(true);
+});
+
+test('STAK-222: PCGS cache read/write roundtrip', async ({ page }) => {
+  await page.goto('/');
+  const result = await page.evaluate(() => {
+    const fakeData = { PCGSNo: '1234567', Grade: 65, Name: 'Test Coin MS-65' };
+    window.savePcgsCache('cert-99999999', fakeData);
+
+    const hit = window.loadPcgsCache('cert-99999999');
+    const miss = window.loadPcgsCache('cert-00000000');
+
+    return { hit: !!hit, miss: miss === null };
+  });
+  expect(result.hit).toBe(true);
+  expect(result.miss).toBe(true);
+});

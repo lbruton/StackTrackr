@@ -3125,6 +3125,9 @@ if (typeof window !== 'undefined') {
   window.fetchExchangeRates = fetchExchangeRates;
   window.setButtonLoading = setButtonLoading;
   window.escapeHtml = escapeHtml;
+  // STAK-222: Expose storage helpers for testing and cache utilities
+  window.saveDataSync = saveDataSync;
+  window.loadDataSync = loadDataSync;
 }
 
 if (typeof module !== 'undefined' && module.exports) {
