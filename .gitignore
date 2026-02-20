@@ -25,9 +25,11 @@ docs/UI-WIREFRAME.md
 versionbump.py
 generate-seed-data.py
 
-# Jules AI agent artifacts (journals, patch scripts, verification screenshots)
-.jules/
-.Jules/
+# Jules AI agent artifacts — journals (.md) are tracked, scripts/screenshots are not
+.jules/*
+!.jules/*.md
+.Jules/*
+!.Jules/*.md
 verification/
 modify_*.py
 
