@@ -81,7 +81,9 @@ const saveRetailPrices = () => {
 
 const loadRetailPriceHistory = () => {
   try {
-    retailPriceHistory = loadDataSync(RETAIL_PRICE_HISTORY_KEY) || {};
+    const loaded = loadDataSync(RETAIL_PRICE_HISTORY_KEY);
+    // Guard: stored value must be a plain object; arrays (corrupt/legacy data) are discarded.
+    retailPriceHistory = (loaded && !Array.isArray(loaded) && typeof loaded === "object") ? loaded : {};
   } catch (err) {
     console.error("[retail] Failed to load retail price history:", err);
     retailPriceHistory = {};
@@ -112,17 +114,22 @@ const getRetailHistoryForSlug = (slug) => retailPriceHistory[slug] || [];
 // ---------------------------------------------------------------------------
 
 /**
- * Fetches manifest then all per-slug final JSON files in parallel.
- * Appends new entries to history (deduped by date). Saves to localStorage.
+ * Fetches manifest then all per-slug final JSON files for any dates not
+ * already in history. Appends new entries (deduped by date). Saves to localStorage.
+ * @param {{ ui?: boolean }} [opts]
+ *   ui=true (default) updates the Sync button and status text.
+ *   ui=false runs silently in the background.
  * @returns {Promise<void>}
  */
-const syncRetailPrices = async () => {
+const syncRetailPrices = async ({ ui = true } = {}) => {
   const syncBtn = safeGetElement("retailSyncBtn");
   const syncStatus = safeGetElement("retailSyncStatus");
 
-  syncBtn.disabled = true;
-  syncBtn.textContent = "Syncing…";
-  syncStatus.textContent = "";
+  if (ui) {
+    syncBtn.disabled = true;
+    syncBtn.textContent = "Syncing…";
+    syncStatus.textContent = "";
+  }
   _retailSyncInProgress = true;
   renderRetailCards();
 
@@ -130,58 +137,118 @@ const syncRetailPrices = async () => {
     const manifestResp = await fetch(`${RETAIL_BASE_URL}/manifest.json`);
     if (!manifestResp.ok) throw new Error(`Manifest fetch failed: ${manifestResp.status}`);
     const manifest = await manifestResp.json();
-    const targetDate = manifest.latestDate;
-    if (!targetDate) throw new Error("Manifest missing latestDate");
+    if (!manifest.latestDate) throw new Error("Manifest missing latestDate");
 
-    const results = await Promise.allSettled(
-      RETAIL_SLUGS.map(async (slug) => {
-        const resp = await fetch(`${RETAIL_BASE_URL}/${slug}/${targetDate}-final.json`);
-        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-        const data = await resp.json();
-        return { slug, data };
-      })
-    );
+    // Determine which dates need fetching — all dates in manifest not already in history.
+    // manifest.dates is an array of available date strings (ISO, e.g. "2026-02-19").
+    // Fall back to [latestDate] for older manifest formats that lack the dates array.
+    const allDates = Array.isArray(manifest.dates) && manifest.dates.length
+      ? manifest.dates
+      : [manifest.latestDate];
 
-    const prices = {};
-    let fetchCount = 0;
-    results.forEach((r, i) => {
-      if (r.status === "fulfilled") {
-        const { slug, data } = r.value;
-        prices[slug] = {
-          average_price:  data.average_price,
-          median_price:   data.median_price,
-          lowest_price:   data.lowest_price,
-          prices_by_site: data.prices_by_site || {},
-          scores_by_site: data.scores_by_site || {},
+    // A date is "complete" if the representative slug (ase) already has it in history.
+    const alreadyHave = new Set((retailPriceHistory["ase"] || []).map((e) => e.date));
+    const datesToFetch = allDates
+      .filter((d) => !alreadyHave.has(d))
+      .sort((a, b) => b.localeCompare(a)) // newest first
+      .slice(0, 30);                       // safety cap
+
+    let totalFetched = 0;
+
+    if (datesToFetch.length === 0) {
+      debugLog("[retail] All dates already in history — nothing to fetch", "info");
+    }
+
+    for (const targetDate of datesToFetch) {
+      const results = await Promise.allSettled(
+        RETAIL_SLUGS.map(async (slug) => {
+          const resp = await fetch(`${RETAIL_BASE_URL}/${slug}/${targetDate}-final.json`);
+          if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+          const data = await resp.json();
+          return { slug, data };
+        })
+      );
+
+      const prices = {};
+      let fetchCount = 0;
+      results.forEach((r, i) => {
+        if (r.status === "fulfilled") {
+          const { slug, data } = r.value;
+          prices[slug] = {
+            average_price:  data.average_price,
+            median_price:   data.median_price,
+            lowest_price:   data.lowest_price,
+            prices_by_site: data.prices_by_site || {},
+            scores_by_site: data.scores_by_site || {},
+          };
+          fetchCount++;
+        } else {
+          debugLog(`[retail] ${targetDate} — ${RETAIL_SLUGS[i]}: ${r.reason?.message || r.reason}`, "warn");
+        }
+      });
+
+      // Update history for this date (deduped per slug)
+      Object.entries(prices).forEach(([slug, priceData]) => {
+        if (!retailPriceHistory[slug]) retailPriceHistory[slug] = [];
+        const existing = retailPriceHistory[slug];
+        if (!existing.some((e) => e.date === targetDate)) {
+          existing.unshift({ date: targetDate, ...priceData });
+          if (existing.length > 365) existing.splice(365);
+        }
+      });
+
+      // Keep retailPrices pointing at the latest date's snapshot
+      if (targetDate === manifest.latestDate) {
+        retailPrices = { lastSync: new Date().toISOString(), date: targetDate, prices };
+      }
+
+      totalFetched += fetchCount;
+    }
+
+    // If latestDate wasn't in datesToFetch (already had it), ensure retailPrices is set
+    if (!retailPrices || retailPrices.date !== manifest.latestDate) {
+      // Reconstruct from history for the latest date
+      const latestPrices = {};
+      RETAIL_SLUGS.forEach((slug) => {
+        const entry = (retailPriceHistory[slug] || []).find((e) => e.date === manifest.latestDate);
+        if (entry) {
+          const { date: _d, ...priceData } = entry;
+          latestPrices[slug] = priceData;
+        }
+      });
+      if (Object.keys(latestPrices).length > 0) {
+        retailPrices = {
+          lastSync: retailPrices ? retailPrices.lastSync : new Date().toISOString(),
+          date: manifest.latestDate,
+          prices: latestPrices,
         };
-        fetchCount++;
-      } else {
-        debugLog(`[retail] Failed to fetch ${RETAIL_SLUGS[i]}: ${r.reason?.message || r.reason}`, "warn");
       }
-    });
+    }
 
-    retailPrices = { lastSync: new Date().toISOString(), date: targetDate, prices };
     saveRetailPrices();
-
-    Object.entries(prices).forEach(([slug, priceData]) => {
-      if (!retailPriceHistory[slug]) retailPriceHistory[slug] = [];
-      const existing = retailPriceHistory[slug];
-      if (!existing.some((e) => e.date === targetDate)) {
-        existing.unshift({ date: targetDate, ...priceData });
-        if (existing.length > 365) existing.splice(365);
-      }
-    });
     saveRetailPriceHistory();
 
-    syncStatus.textContent = `Updated ${fetchCount}/${RETAIL_SLUGS.length} coins · ${targetDate}`;
+    const newDatesCount = datesToFetch.length;
+    const statusMsg = newDatesCount > 0
+      ? `Fetched ${newDatesCount} date(s) · ${totalFetched} coin records · latest: ${manifest.latestDate}`
+      : `Up to date · ${manifest.latestDate}`;
+    if (ui) syncStatus.textContent = statusMsg;
+    debugLog(`[retail] Sync complete: ${statusMsg}`, "info");
   } catch (err) {
     debugLog(`[retail] Sync error: ${err.message}`, "warn");
     syncStatus.textContent = `Sync failed: ${err.message}`;
   } finally {
     _retailSyncInProgress = false;
     renderRetailCards();
-    syncBtn.disabled = false;
-    syncBtn.textContent = "Sync Now";
+    // Also refresh history table if the market log tab is currently visible
+    const mktLogActive = document.querySelector('[data-log-tab="market"].active');
+    if (mktLogActive && typeof renderRetailHistoryTable === "function") {
+      renderRetailHistoryTable();
+    }
+    if (ui) {
+      syncBtn.disabled = false;
+      syncBtn.textContent = "Sync Now";
+    }
   }
 };
 
