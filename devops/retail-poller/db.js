@@ -132,6 +132,21 @@ export function writeConfidenceScores(db, scores) {
   updateMany(scores);
 }
 
+/**
+ * Returns all (coin_slug, vendor) pairs that failed today (is_failed = 1).
+ * Used by PATCH_GAPS mode to find which vendors need FBP gap-fill.
+ * @param {import('better-sqlite3').Database} db
+ * @returns {Array<{coin_slug: string, vendor: string}>}
+ */
+export function readTodayFailures(db) {
+  const today = new Date().toISOString().slice(0, 10);
+  return db.prepare(`
+    SELECT coin_slug, vendor FROM price_snapshots
+    WHERE is_failed = 1 AND substr(window_start, 1, 10) = ?
+    GROUP BY coin_slug, vendor
+  `).all(today);
+}
+
 // ---------------------------------------------------------------------------
 // Read operations
 // ---------------------------------------------------------------------------

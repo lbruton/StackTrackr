@@ -4,7 +4,7 @@
  * ==================================
  * Reads providers.json, scrapes each dealer URL via Firecrawl (with a
  * Playwright/browserless fallback for JS-heavy pages), extracts the lowest
- * in-stock price, writes daily JSON files, and records each result to SQLite.
+ * in-stock price, and records each result to SQLite.
  *
  * Usage:
  *   FIRECRAWL_API_KEY=fc-... node price-extract.js
@@ -18,10 +18,10 @@
  *   DRY_RUN             Set to "1" to skip writing files
  */
 
-import { readFileSync, writeFileSync, mkdirSync, existsSync } from "node:fs";
+import { readFileSync, existsSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { openDb, writeSnapshot, windowFloor } from "./db.js";
+import { openDb, writeSnapshot, windowFloor, readTodayFailures } from "./db.js";
 
 const __dirname = fileURLToPath(new URL(".", import.meta.url));
 
@@ -39,8 +39,8 @@ const BROWSERLESS_URL = process.env.BROWSERLESS_URL || null;
 const DATA_DIR = resolve(process.env.DATA_DIR || join(__dirname, "../../data"));
 const DRY_RUN = process.env.DRY_RUN === "1";
 const COIN_FILTER = process.env.COINS ? process.env.COINS.split(",").map(s => s.trim()) : null;
-// PATCH_GAPS: reads today's coin files, finds failed_sites, scrapes FBP only for
-// those coins, and patches the existing daily JSON files with recovered prices.
+// PATCH_GAPS: queries SQLite for today's failed vendors, scrapes FBP only for
+// those coins, and writes recovered prices back to SQLite.
 // Run at 3pm ET after the 11am full scrape.
 const PATCH_GAPS = process.env.PATCH_GAPS === "1";
 
@@ -341,63 +341,6 @@ async function scrapeWithPlaywright(url, providerId = "") {
 }
 
 // ---------------------------------------------------------------------------
-// File writers
-// ---------------------------------------------------------------------------
-
-function writeDailyJson(coinSlug, dateStr, data) {
-  const dir = join(DATA_DIR, "retail", coinSlug);
-  const filePath = join(dir, `${dateStr}.json`);
-  if (DRY_RUN) {
-    log(`[DRY RUN] ${filePath}`);
-    console.log(JSON.stringify(data, null, 2));
-    return;
-  }
-  mkdirSync(dir, { recursive: true });
-  writeFileSync(filePath, JSON.stringify(data, null, 2) + "\n");
-  log(`Wrote ${filePath}`);
-}
-
-function updateProviderCandidates(failures, dateStr) {
-  if (failures.length === 0) return;
-  const candidatesPath = join(DATA_DIR, "retail", "provider_candidates.json");
-  let doc = { schema_version: 1, last_updated: dateStr, candidates: [] };
-
-  if (existsSync(candidatesPath)) {
-    try {
-      doc = JSON.parse(readFileSync(candidatesPath, "utf-8"));
-    } catch {
-      warn("Could not parse provider_candidates.json, starting fresh");
-    }
-  }
-
-  doc.last_updated = dateStr;
-  for (const { coinSlug, providerId, url, error } of failures) {
-    const key = `${coinSlug}/${providerId}`;
-    const existing = doc.candidates.find(c => c.key === key);
-    if (existing) {
-      existing.consecutive_failures = (existing.consecutive_failures || 0) + 1;
-      existing.last_error = error;
-      existing.last_attempted = dateStr;
-    } else {
-      doc.candidates.push({
-        key,
-        coin: coinSlug,
-        provider: providerId,
-        url,
-        consecutive_failures: 1,
-        last_error: error,
-        last_attempted: dateStr,
-        last_working_date: null,
-      });
-    }
-  }
-
-  if (DRY_RUN) { log("[DRY RUN] Would update provider_candidates.json"); return; }
-  writeFileSync(candidatesPath, JSON.stringify(doc, null, 2) + "\n");
-  log(`Updated provider_candidates.json (${failures.length} failures logged)`);
-}
-
-// ---------------------------------------------------------------------------
 // Main
 // ---------------------------------------------------------------------------
 
@@ -417,86 +360,64 @@ async function main() {
 
   const providersJson = JSON.parse(readFileSync(providersPath, "utf-8"));
   const dateStr = new Date().toISOString().slice(0, 10);
-  const generatedAt = new Date().toISOString();
 
-  // ---------------------------------------------------------------------------
-  // PATCH_GAPS mode: 3pm ET follow-up run.
-  // Reads today's coin files, finds any remaining failed_sites, scrapes FBP
-  // only for those coins, and patches the existing daily JSON files in place.
-  // ---------------------------------------------------------------------------
   if (PATCH_GAPS) {
     log(`Gap-fill run for ${dateStr}`);
-    if (DRY_RUN) log("DRY RUN — no files written");
+    if (DRY_RUN) log("DRY RUN — no SQLite writes");
 
-    // Find coins that still have failed_sites in today's output
-    const gapsByCoin = {};
-    for (const [coinSlug, coinData] of Object.entries(providersJson.coins)) {
-      if (COIN_FILTER && !COIN_FILTER.includes(coinSlug)) continue;
-      const filePath = join(DATA_DIR, "retail", coinSlug, `${dateStr}.json`);
-      if (!existsSync(filePath)) continue;
-      let daily;
-      try { daily = JSON.parse(readFileSync(filePath, "utf-8")); } catch (err) { warn(`Skipping ${coinSlug}: could not parse ${filePath}: ${err.message}`); continue; }
-      if (!daily.failed_sites?.length) continue;
-      if (!coinData.fbp_url) continue;
-      gapsByCoin[coinSlug] = { coinData, filePath, daily, gaps: daily.failed_sites };
-    }
-
-    const gapCoins = Object.keys(gapsByCoin);
-    if (gapCoins.length === 0) {
-      log("No gaps found — all providers succeeded at 11am. Nothing to do.");
-      return;
-    }
-    log(`Gaps found in ${gapCoins.length} coin(s): ${gapCoins.join(", ")}`);
-
-    let totalFilled = 0;
-    for (const [coinSlug, { coinData, filePath, daily, gaps }] of Object.entries(gapsByCoin)) {
-      log(`Scraping FBP for ${coinSlug} (gaps: ${gaps.join(", ")})`);
-      try {
-        const md = await scrapeUrl(coinData.fbp_url, "fbp");
-        const fbpPrices = extractFbpPrices(md, coinData.metal, coinData.weight_oz || 1);
-
-        let filled = 0;
-        daily.prices_by_site = daily.prices_by_site || {};
-        daily.extraction_methods = daily.extraction_methods || {};
-        for (const providerId of gaps) {
-          const fbp = fbpPrices[providerId];
-          if (!fbp) continue;
-          daily.prices_by_site[providerId] = fbp.ach;
-          daily.extraction_methods[providerId] = "fbp_gap_fill";
-          filled++;
-          log(`  ↩ ${coinSlug}/${providerId}: $${fbp.ach.toFixed(2)} ACH (fbp_gap_fill)`);
-        }
-
-        if (filled > 0) {
-          // Rebuild derived fields
-          daily.failed_sites = gaps.filter(id => fbpPrices[id] === undefined);
-          const prices = Object.values(daily.prices_by_site);
-          const sorted = [...prices].sort((a, b) => a - b);
-          daily.source_count = prices.length;
-          daily.average_price = Math.round(prices.reduce((a, b) => a + b, 0) / prices.length * 100) / 100;
-          daily.median_price = sorted[Math.floor(sorted.length / 2)];
-          daily.lowest_price = sorted[0];
-
-          if (DRY_RUN) {
-            log(`[DRY RUN] Would patch ${filePath}`);
-            console.log(JSON.stringify(daily, null, 2));
-          } else {
-            writeFileSync(filePath, JSON.stringify(daily, null, 2) + "\n");
-            log(`Patched ${filePath} (${filled} gap(s) filled)`);
-          }
-          totalFilled += filled;
-        } else {
-          warn(`  FBP had no data for gaps in ${coinSlug}`);
-        }
-      } catch (err) {
-        warn(`  ✗ FBP scrape failed for ${coinSlug}: ${err.message.slice(0, 120)}`);
+    const gapDb = DRY_RUN ? null : openDb(DATA_DIR);
+    try {
+      // Query SQLite for failed vendors today
+      const failures = DRY_RUN ? [] : readTodayFailures(gapDb);
+      if (failures.length === 0) {
+        log("No gaps found — all vendors succeeded today. Nothing to do.");
+        return;
       }
-    }
 
-    log(`Gap-fill done: ${totalFilled} price(s) recovered across ${gapCoins.length} coin(s)`);
-    if (totalFilled === 0 && gapCoins.length > 0) {
-      console.error("Gap-fill failed: all FBP scrapes failed, no prices recovered.");
-      process.exit(1);
+      // Group by coin slug
+      const gapsByCoin = {};
+      for (const { coin_slug, vendor } of failures) {
+        if (!gapsByCoin[coin_slug]) gapsByCoin[coin_slug] = [];
+        gapsByCoin[coin_slug].push(vendor);
+      }
+
+      const gapCoins = Object.keys(gapsByCoin);
+      log(`Gaps found in ${gapCoins.length} coin(s): ${gapCoins.join(", ")}`);
+
+      let totalFilled = 0;
+      const scrapedAt = new Date().toISOString();
+      const winStart = windowFloor();
+
+      for (const [coinSlug, vendors] of Object.entries(gapsByCoin)) {
+        const coinData = providersJson.coins[coinSlug];
+        if (!coinData?.fbp_url) { warn(`No fbp_url for ${coinSlug} — skipping`); continue; }
+        log(`Scraping FBP for ${coinSlug} (gaps: ${vendors.join(", ")})`);
+        try {
+          const md = await scrapeUrl(coinData.fbp_url, "fbp");
+          const fbpPrices = extractFbpPrices(md, coinData.metal, coinData.weight_oz || 1);
+
+          for (const providerId of vendors) {
+            const fbp = fbpPrices[providerId];
+            if (!fbp) { warn(`  FBP had no data for ${coinSlug}/${providerId}`); continue; }
+            const price = fbp.ach;
+            log(`  \u21a9 ${coinSlug}/${providerId}: $${price.toFixed(2)} ACH (fbp)`);
+            if (!DRY_RUN) {
+              writeSnapshot(gapDb, { scrapedAt, winStart, coinSlug, vendor: providerId, price, source: "fbp", isFailed: 0 });
+            }
+            totalFilled++;
+          }
+        } catch (err) {
+          warn(`  \u2717 FBP scrape failed for ${coinSlug}: ${err.message.slice(0, 120)}`);
+        }
+      }
+
+      log(`Gap-fill done: ${totalFilled} price(s) recovered`);
+      if (totalFilled === 0 && gapCoins.length > 0) {
+        console.error("Gap-fill failed: no prices recovered from FBP.");
+        process.exit(1);
+      }
+    } finally {
+      if (gapDb) gapDb.close();
     }
     return;
   }
@@ -513,7 +434,7 @@ async function main() {
   shuffleArray(targets);
 
   log(`Retail price extraction: ${targets.length} targets (sequential + jitter)`);
-  if (DRY_RUN) log("DRY RUN — no files written");
+  if (DRY_RUN) log("DRY RUN — no SQLite writes");
 
   // Open SQLite for this run — closed in finally block to ensure cleanup on fatal errors
   const db = DRY_RUN ? null : openDb(DATA_DIR);
@@ -624,30 +545,16 @@ async function main() {
     }
   }
 
-  // Aggregate per coin and write output
-  const allFailures = [];
-
+  // Aggregate per coin and apply FBP backfill
   for (const coinSlug of coinSlugs) {
     const coinResults = scrapeResults.filter(r => r.coinSlug === coinSlug);
-    const successful = coinResults.filter(r => r.ok);
     const failed = coinResults.filter(r => !r.ok);
-
-    const pricesBySite = {};
-    const extractionMethods = {};
-    const urlsUsed = [];
-    for (const r of successful) {
-      pricesBySite[r.providerId] = r.price;
-      extractionMethods[r.providerId] = r.source; // "firecrawl" or "playwright"
-      urlsUsed.push(r.url);
-    }
 
     // Apply FBP backfill for any providers that failed
     const fbpPrices = fbpFillResults[coinSlug] || {};
     for (const r of failed) {
       const fbp = fbpPrices[r.providerId];
       if (fbp !== undefined) {
-        pricesBySite[r.providerId] = fbp.ach;
-        extractionMethods[r.providerId] = "fbp_fallback";
         log(`  ↩ ${coinSlug}/${r.providerId}: $${fbp.ach.toFixed(2)} ACH (fbp_fallback)`);
         // Record FBP fallback result to SQLite
         if (db) {
@@ -663,30 +570,7 @@ async function main() {
         }
       }
     }
-
-    const prices = Object.values(pricesBySite);
-    const sorted = [...prices].sort((a, b) => a - b);
-
-    writeDailyJson(coinSlug, dateStr, {
-      date: dateStr,
-      window_start: winStart,  // 15-min floor of scrape time; used by merge-prices for SQLite confidence writes
-      generated_at_utc: generatedAt,
-      currency: "USD",
-      prices_by_site: pricesBySite,
-      extraction_methods: extractionMethods,
-      source_count: prices.length,
-      average_price: prices.length ? Math.round(prices.reduce((a, b) => a + b, 0) / prices.length * 100) / 100 : null,
-      median_price: sorted.length ? sorted[Math.floor(sorted.length / 2)] : null,
-      failed_sites: failed.filter(r => fbpPrices[r.providerId] === undefined).map(r => r.providerId),
-      urls_used: urlsUsed,
-    });
-
-    for (const r of failed) {
-      allFailures.push({ coinSlug, providerId: r.providerId, url: r.url, error: r.error });
-    }
   }
-
-  updateProviderCandidates(allFailures, dateStr);
 
   const ok = scrapeResults.filter(r => r.ok).length;
   const fail = scrapeResults.length - ok;
