@@ -11332,6 +11332,27 @@ th {
   transform: rotate(90deg);
 }
 
+/* STAK-217: Loading skeleton shimmer */
+@keyframes retail-shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+.retail-skel {
+  background: linear-gradient(
+    90deg,
+    var(--bg-secondary, #f1f5f9) 25%,
+    var(--border-color, #e2e8f0) 50%,
+    var(--bg-secondary, #f1f5f9) 75%
+  );
+  background-size: 200% 100%;
+  animation: retail-shimmer 1.4s infinite;
+  border-radius: 4px;
+  margin-bottom: 0.5rem;
+}
+.retail-skel--title   { height: 1.2rem; width: 65%; }
+.retail-skel--stats   { height: 2.5rem; width: 100%; }
+.retail-skel--vendors { height: 3.5rem; width: 85%; }
+
 
 /* History table in Activity Log */
 .retail-history-controls {

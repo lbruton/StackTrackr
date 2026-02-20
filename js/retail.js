@@ -52,6 +52,9 @@ let retailPrices = null;
 /** @type {Object.<string, Array>} History keyed by slug */
 let retailPriceHistory = {};
 
+/** True while syncRetailPrices() is running — triggers skeleton render */
+let _retailSyncInProgress = false;
+
 // ---------------------------------------------------------------------------
 // Persistence
 // ---------------------------------------------------------------------------
@@ -117,6 +120,8 @@ const syncRetailPrices = async () => {
   syncBtn.disabled = true;
   syncBtn.textContent = "Syncing…";
   syncStatus.textContent = "";
+  _retailSyncInProgress = true;
+  renderRetailCards();
 
   try {
     const manifestResp = await fetch(`${RETAIL_BASE_URL}/manifest.json`);
@@ -165,12 +170,14 @@ const syncRetailPrices = async () => {
     });
     saveRetailPriceHistory();
 
+    _retailSyncInProgress = false;
     renderRetailCards();
     syncStatus.textContent = `Updated ${fetchCount}/${RETAIL_SLUGS.length} coins · ${targetDate}`;
   } catch (err) {
     debugLog(`[retail] Sync error: ${err.message}`, "warn");
     syncStatus.textContent = `Sync failed: ${err.message}`;
   } finally {
+    _retailSyncInProgress = false;
     syncBtn.disabled = false;
     syncBtn.textContent = "Sync Now";
   }
@@ -182,6 +189,26 @@ const syncRetailPrices = async () => {
 
 /**
  * Renders all coin price cards into #retailCardsGrid.
+/**
+ * Builds a shimmer skeleton placeholder card for the loading state.
+ * @returns {HTMLElement}
+ */
+const _buildSkeletonCard = () => {
+  const card = document.createElement("div");
+  card.className = "retail-price-card retail-price-card--skeleton";
+  [
+    "retail-skel retail-skel--title",
+    "retail-skel retail-skel--stats",
+    "retail-skel retail-skel--vendors",
+  ].forEach((cls) => {
+    const el = document.createElement("div");
+    el.className = cls;
+    card.appendChild(el);
+  });
+  return card;
+};
+
+/**
  * Called on market section open and after each sync.
  */
 const renderRetailCards = () => {
@@ -196,6 +223,10 @@ const renderRetailCards = () => {
   }
 
   grid.innerHTML = "";
+  if (_retailSyncInProgress) {
+    RETAIL_SLUGS.forEach(() => grid.appendChild(_buildSkeletonCard()));
+    return;
+  }
   RETAIL_SLUGS.forEach((slug) => {
     const meta = RETAIL_COIN_META[slug];
     const priceData = retailPrices && retailPrices.prices ? retailPrices.prices[slug] || null : null;
