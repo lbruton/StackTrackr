@@ -303,7 +303,7 @@
       delBtn.textContent = '\u{1F5D1}';
       delBtn.addEventListener('click', async () => {
         try {
-          const r = await fetch('/api/sessions/' + s.id, { method: 'DELETE' });
+          const r = await fetch('/api/sessions/' + encodeURIComponent(s.id), { method: 'DELETE' });
           if (!r.ok) throw new Error((await r.json()).error);
           showToast('Session deleted', 'ok');
           await fetchSessions();
@@ -410,7 +410,15 @@
   document.getElementById('lightboxClose').addEventListener('click', () => lightbox.classList.remove('open'));
   videoLightbox.addEventListener('click', e => { if (e.target === videoLightbox || e.target.id === 'videoLightboxClose') closeVideoLightbox(); });
   document.querySelector('#videoLightboxClose').addEventListener('click', closeVideoLightbox);
-  document.addEventListener('keydown', e => { if (e.key === 'Escape') { lightbox.classList.remove('open'); closeVideoLightbox(); } });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+      lightbox.classList.remove('open');
+      closeVideoLightbox();
+      confirmOverlay.classList.remove('open');
+      confirmInput.value = '';
+      confirmOk.disabled = true;
+    }
+  });
 
   autoRefresh.addEventListener('change', () => {
     if (autoRefresh.checked) startRefresh(); else stopRefresh();
@@ -446,6 +454,13 @@
       allSessions = [];
       await refresh();
     } catch (err) { showToast('Delete failed: ' + err.message, 'err'); }
+  });
+  confirmOverlay.addEventListener('click', e => {
+    if (e.target === confirmOverlay) {
+      confirmOverlay.classList.remove('open');
+      confirmInput.value = '';
+      confirmOk.disabled = true;
+    }
   });
 
   captureBtn.addEventListener('click', async () => {
