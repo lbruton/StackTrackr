@@ -67,9 +67,11 @@ For each drifted skill choose one:
 - `remember`
 - `sync-instructions`
 
-## Phase 5: Backup Gitignored Claude Config
+## Phase 5: Backup — Two Tiers, Two Destinations
 
-After any sync that touches `CLAUDE.md` or local-only skills, regenerate the backup zip:
+Backups split by sensitivity. Run both after any sync.
+
+### Tier 1 — Non-secret config → `devops/claude-backup/` (tracked in git)
 
 ```bash
 zip -r devops/claude-backup/claude-local-$(date +%Y-%m-%d).zip \
@@ -80,9 +82,17 @@ zip -r devops/claude-backup/claude-local-$(date +%Y-%m-%d).zip \
 git add devops/claude-backup/
 ```
 
-Include in the sync commit. `devops/claude-backup/` is tracked in git via the
-`!devops/claude-backup/` exception in `.gitignore`. This preserves gitignored Claude config
-in GitHub without causing conflicts when agents run in cloud/web environments.
+Safe to commit — no secrets. `.gitignore` has `!devops/claude-backup/` exception.
+
+### Tier 2 — Secrets → `~/.claude/backups/` (local only, never in git)
+
+```bash
+zip -j ~/.claude/backups/staktrakr-secrets-$(date +%Y-%m-%d).zip \
+  /path/to/StakTrakr/.mcp.json
+```
+
+`~/.claude/backups/` lives outside the repo — never commit `.mcp.json` or any file with API keys.
+Back up via Time Machine or encrypted offsite storage.
 
 ## Guardrails
 
