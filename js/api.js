@@ -2290,6 +2290,14 @@ const populateApiSection = () => {
     initSpotHistoryButtons();
   }
 
+  // Render Numista bulk sync UI for the default active tab (STACK-87/88)
+  // switchProviderTab only fires on explicit tab clicks, so the default NUMISTA
+  // tab never triggers renderNumistaSyncUI without this call.
+  const syncGroup = document.getElementById('numistaBulkSyncGroup');
+  if (syncGroup && syncGroup.style.display !== 'none' && typeof renderNumistaSyncUI === 'function') {
+    renderNumistaSyncUI();
+  }
+
   // STAK-222: Update cache stat counts
   const numistaCountEl = document.getElementById('numistaResponseCacheCount');
   if (numistaCountEl && typeof getNumistaCacheCount === 'function') {
