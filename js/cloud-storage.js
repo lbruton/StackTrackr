@@ -190,7 +190,7 @@ const CLOUD_PROVIDERS = {
     name: 'Box',
     authUrl: 'https://account.box.com/api/oauth2/authorize',
     tokenUrl: 'https://api.box.com/oauth2/token',
-    clientId: 'TODO_REPLACE_BOX_CLIENT_ID',
+    clientId: '', // Configurable via localStorage (cloud_client_id_box)
     scopes: '',
     folder: 'StakTrakr',
     usePKCE: false,
@@ -233,8 +233,16 @@ async function cloudGenerateChallenge(verifier) {
     .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 
+
+function cloudGetClientId(provider) {
+  var override = localStorage.getItem('cloud_client_id_' + provider);
+  if (override && override.trim()) return override.trim();
+  return CLOUD_PROVIDERS[provider].clientId;
+}
+
 // ---------------------------------------------------------------------------
 // Token management
+
 // ---------------------------------------------------------------------------
 
 function cloudGetStorageKey(provider) {
@@ -287,7 +295,7 @@ async function cloudGetToken(provider) {
     var body = new URLSearchParams({
       grant_type: 'refresh_token',
       refresh_token: stored.refresh_token,
-      client_id: config.clientId,
+      client_id: cloudGetClientId(provider),
     });
     var resp = await fetch(config.tokenUrl, {
       method: 'POST',
@@ -326,7 +334,7 @@ function cloudAuthStart(provider) {
 
   var params = new URLSearchParams({
     response_type: 'code',
-    client_id: config.clientId,
+    client_id: cloudGetClientId(provider),
     redirect_uri: CLOUD_REDIRECT_URI,
     state: state,
     token_access_type: 'offline',
@@ -398,7 +406,7 @@ async function cloudExchangeCode(code, state) {
   var body = new URLSearchParams({
     grant_type: 'authorization_code',
     code: code,
-    client_id: config.clientId,
+    client_id: cloudGetClientId(provider),
     redirect_uri: CLOUD_REDIRECT_URI,
   });
 

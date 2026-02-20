@@ -728,6 +728,7 @@ const ALLOWED_STORAGE_KEYS = [
   "cloud_token_dropbox",                       // JSON: Dropbox OAuth token data
   "cloud_token_pcloud",                        // JSON: pCloud OAuth token data
   "cloud_token_box",                           // JSON: Box OAuth token data
+  "cloud_client_id_box",                       // String: User-configured Box Client ID
   "cloud_last_backup",                         // JSON: { provider, timestamp } last cloud backup info
   "cloud_kraken_seen",                         // boolean string: easter egg flag
   "staktrakr_oauth_result",                    // JSON: transient OAuth callback relay (cleared after read)
