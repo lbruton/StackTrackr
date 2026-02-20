@@ -11164,6 +11164,15 @@ th {
   color: var(--text-muted, var(--bs-secondary-color));
 }
 
+.retail-vendor-link {
+  color: var(--primary);
+  text-decoration: none;
+}
+
+.retail-vendor-link:hover {
+  text-decoration: underline;
+}
+
 .retail-vendor-price {
   font-weight: 500;
 }
@@ -11501,6 +11510,14 @@ th {
   position: relative;
   height: 220px;
   margin-bottom: 1rem;
+}
+
+.retail-view-disclaimer {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border-color-subtle, var(--bs-border-color));
 }
 
 /* =============================================================================

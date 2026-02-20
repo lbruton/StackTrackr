@@ -31,7 +31,21 @@ const openRetailViewModal = (slug) => {
       const tr = document.createElement("tr");
 
       const tdLabel = document.createElement("td");
-      tdLabel.textContent = label;
+      const vendorUrl = RETAIL_VENDOR_URLS[key];
+      if (vendorUrl) {
+        const link = document.createElement("a");
+        link.href = "#";
+        link.textContent = label;
+        link.style.cssText = "color:var(--primary);text-decoration:none;";
+        link.addEventListener("click", (e) => {
+          e.preventDefault();
+          const popup = window.open(vendorUrl, `retail_vendor_${key}`, "width=1250,height=800,scrollbars=yes,resizable=yes,toolbar=no,location=no,menubar=no,status=no");
+          if (!popup) window.open(vendorUrl, "_blank");
+        });
+        tdLabel.appendChild(link);
+      } else {
+        tdLabel.textContent = label;
+      }
 
       const tdPrice = document.createElement("td");
       tdPrice.textContent = `$${Number(price).toFixed(2)}`;
@@ -77,12 +91,17 @@ const openRetailViewModal = (slug) => {
     historyTableBody.appendChild(tr);
   });
 
-  // Chart (average price over time)
+  // Chart (average price over time) — hide the chart wrap when insufficient data
+  const chartWrap = chartCanvas instanceof HTMLCanvasElement
+    ? chartCanvas.closest(".retail-view-chart-wrap")
+    : null;
   if (_retailViewModalChart) {
     _retailViewModalChart.destroy();
     _retailViewModalChart = null;
   }
-  if (history.length > 1 && chartCanvas instanceof HTMLCanvasElement && typeof Chart !== "undefined") {
+  const hasEnoughHistory = history.length > 1;
+  if (chartWrap) chartWrap.style.display = hasEnoughHistory ? "" : "none";
+  if (hasEnoughHistory && chartCanvas instanceof HTMLCanvasElement && typeof Chart !== "undefined") {
     const sorted = [...history].reverse();
     _retailViewModalChart = new Chart(chartCanvas, {
       type: "line",

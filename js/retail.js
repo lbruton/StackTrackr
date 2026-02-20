@@ -34,6 +34,14 @@ const RETAIL_VENDOR_NAMES = {
   jmbullion:      "JM",
 };
 
+/** Vendor homepage URLs for popup links */
+const RETAIL_VENDOR_URLS = {
+  apmex:          "https://www.apmex.com",
+  monumentmetals: "https://www.monumentmetals.com",
+  sdbullion:      "https://www.sdbullion.com",
+  jmbullion:      "https://www.jmbullion.com",
+};
+
 /**
  * Formats a price value as USD string, or "—" if null/undefined.
  * Retail prices are USD source data — display in USD regardless of user currency setting.
@@ -439,6 +447,7 @@ const _buildRetailCard = (slug, meta, priceData) => {
 
     const vendorDetails = document.createElement("details");
     vendorDetails.className = "retail-vendor-details";
+    vendorDetails.open = true;
 
     const vendorSummary = document.createElement("summary");
     vendorSummary.className = "retail-vendor-summary";
@@ -461,7 +470,21 @@ const _buildRetailCard = (slug, meta, priceData) => {
 
       const nameEl = document.createElement("span");
       nameEl.className = "retail-vendor-name";
-      nameEl.textContent = label;
+      const vendorUrl = RETAIL_VENDOR_URLS[key];
+      if (vendorUrl) {
+        const link = document.createElement("a");
+        link.href = "#";
+        link.textContent = label;
+        link.className = "retail-vendor-link";
+        link.addEventListener("click", (e) => {
+          e.preventDefault();
+          const popup = window.open(vendorUrl, `retail_vendor_${key}`, "width=1250,height=800,scrollbars=yes,resizable=yes,toolbar=no,location=no,menubar=no,status=no");
+          if (!popup) window.open(vendorUrl, "_blank");
+        });
+        nameEl.appendChild(link);
+      } else {
+        nameEl.textContent = label;
+      }
 
       const priceEl = document.createElement("span");
       priceEl.className = "retail-vendor-price";
@@ -665,6 +688,7 @@ if (typeof window !== "undefined") {
   window.RETAIL_COIN_META = RETAIL_COIN_META;
   window.RETAIL_SLUGS = RETAIL_SLUGS;
   window.RETAIL_VENDOR_NAMES = RETAIL_VENDOR_NAMES;
+  window.RETAIL_VENDOR_URLS = RETAIL_VENDOR_URLS;
 }
 
 // =============================================================================
