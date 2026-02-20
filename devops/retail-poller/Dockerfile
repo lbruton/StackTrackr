@@ -1,33 +1,23 @@
 FROM node:20-slim
 
-# Install git, cron, and Playwright system deps
+# Install git, cron, and TLS certs
 RUN apt-get update && apt-get install -y \
     git \
     cron \
     ca-certificates \
-    fonts-liberation \
-    libatk-bridge2.0-0 \
-    libatk1.0-0 \
-    libcups2 \
-    libdbus-1-3 \
-    libgbm1 \
-    libgtk-3-0 \
-    libnss3 \
-    libxcomposite1 \
-    libxdamage1 \
-    libxrandr2 \
-    xdg-utils \
     --no-install-recommends && \
     rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-# Install Node deps (playwright-core + dotenv)
+# Install Node deps (dotenv only — native fetch used for Firecrawl API calls)
 COPY package.json ./
-RUN npm install && npx playwright install chromium
+RUN npm install --omit=dev
 
-# Copy poller scripts
+# Copy poller scripts and shell scripts
 COPY *.js ./
+COPY run-local.sh run-fbp.sh docker-entrypoint.sh ./
+RUN chmod +x run-local.sh run-fbp.sh docker-entrypoint.sh
 
 # Git config for committing
 ARG GIT_USER_NAME="StakTrakr Poller"
@@ -36,13 +26,11 @@ RUN git config --global user.name "${GIT_USER_NAME}" && \
     git config --global user.email "${GIT_USER_EMAIL}"
 
 # Cron jobs:
-#   11:00 AM ET (16:00 UTC) — full direct-dealer scrape via Firecrawl
-#   3:00 PM ET  (20:00 UTC) — FBP gap-fill (patches failed providers from 11am run)
-RUN (echo "0 16 * * * root /app/run-local.sh >> /var/log/retail-poller.log 2>&1"; \
-     echo "0 20 * * * root /app/run-fbp.sh >> /var/log/retail-poller.log 2>&1") > /etc/cron.d/retail-poller && \
+#   Hourly (5 past each hour) — full Firecrawl scrape, commit, push to data branch
+#   3:00 PM ET (20:00 UTC) daily — FBP gap-fill for any failed providers from hourly runs
+RUN (echo "5 * * * * root . /etc/environment; /app/run-local.sh >> /var/log/retail-poller.log 2>&1"; \
+     echo "0 20 * * * root . /etc/environment; /app/run-fbp.sh >> /var/log/retail-poller.log 2>&1") > /etc/cron.d/retail-poller && \
     chmod 0644 /etc/cron.d/retail-poller
 
-COPY run-local.sh run-fbp.sh ./
-RUN chmod +x run-local.sh run-fbp.sh
-
+ENTRYPOINT ["/app/docker-entrypoint.sh"]
 CMD ["cron", "-f"]

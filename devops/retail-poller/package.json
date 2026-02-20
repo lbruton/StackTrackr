@@ -2,17 +2,9 @@
   "name": "staktrakr-retail-poller",
   "version": "1.0.0",
   "private": true,
-  "description": "Screenshot capture for retail precious metals price extraction",
+  "description": "Retail precious metals price extraction via local Firecrawl Docker",
   "type": "module",
-  "scripts": {
-    "capture": "node capture.js",
-    "capture:local": "BROWSER_MODE=local node capture.js"
-  },
   "dependencies": {
-    "playwright-core": "^1.49.0",
     "dotenv": "^16.4.0"
-  },
-  "devDependencies": {
-    "playwright": "^1.49.0"
   }
 }
