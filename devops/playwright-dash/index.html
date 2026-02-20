@@ -77,6 +77,30 @@
   .pill-pass { background: rgba(34,197,94,0.15); color: var(--success); }
   .pill-fail { background: rgba(239,68,68,0.15); color: var(--danger); }
   .pill-total { background: var(--primary-dim); color: var(--primary); }
+  /* Delete controls */
+  .del-btn { position: absolute; top: 6px; right: 6px; width: 22px; height: 22px;
+    border-radius: 50%; border: none; background: rgba(239,68,68,0.85); color: #fff;
+    font-size: 14px; line-height: 22px; text-align: center; cursor: pointer;
+    display: none; z-index: 10; }
+  .card { position: relative; }
+  .card:hover .del-btn { display: block; }
+  .del-btn:hover { background: var(--danger); }
+  .del-btn-session { background: transparent; border: none; color: var(--muted);
+    cursor: pointer; font-size: 16px; padding: 4px 8px; border-radius: 4px;
+    transition: color 0.15s; flex-shrink: 0; }
+  .del-btn-session:hover { color: var(--danger); }
+  /* Confirmation modal */
+  .confirm-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+    z-index: 400; align-items: center; justify-content: center; }
+  .confirm-overlay.open { display: flex; }
+  .confirm-box { background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 24px 28px; width: 360px; }
+  .confirm-box h2 { font-size: 1rem; font-weight: 600; margin-bottom: 8px; }
+  .confirm-box p { font-size: 13px; color: var(--muted); margin-bottom: 16px; }
+  .confirm-input { width: 100%; padding: 7px 12px; border-radius: 6px;
+    border: 1px solid var(--border); background: var(--bg); color: var(--text);
+    font-size: 13px; margin-bottom: 16px; }
+  .confirm-actions { display: flex; justify-content: flex-end; gap: 8px; }
 </style>
 </head>
 <body>
@@ -96,6 +120,8 @@
     <button class="tab" data-tab="sessions">Sessions</button>
   </div>
   <span class="count" id="countLabel"></span>
+  <button class="btn btn-outline" id="deleteAllBtn"
+    style="color:var(--danger);border-color:var(--danger);">Delete All</button>
   <input class="search" type="search" id="search" placeholder="Filter by name...">
 </div>
 <div class="grid" id="grid"></div>
@@ -121,6 +147,19 @@
   </div>
 </div>
 <div class="toast" id="toast"></div>
+<div class="confirm-overlay" id="confirmOverlay">
+  <div class="confirm-box">
+    <h2>Delete Everything?</h2>
+    <p>This will permanently delete all test sessions and screenshots. Type DELETE to confirm.</p>
+    <input class="confirm-input" id="confirmInput" type="text"
+      placeholder="Type DELETE to confirm" autocomplete="off">
+    <div class="confirm-actions">
+      <button class="btn btn-outline" id="confirmCancel">Cancel</button>
+      <button class="btn btn-primary" id="confirmOk"
+        style="background:var(--danger);" disabled>Delete All</button>
+    </div>
+  </div>
+</div>
 <script>
   let allFiles = [];
   let allSessions = [];
@@ -175,9 +214,9 @@
       const name = basename(f.path);
       const meta = fmtDate(f.mtime) + ' \u00b7 ' + fmt(f.size);
       if (f.type === 'screenshot') {
-        return '<div class="card" data-src="' + f.path + '"><img src="' + f.path + '" alt="' + name + '" loading="lazy"><div class="card-body"><div class="card-name">' + name + '</div><div class="card-meta">' + meta + '</div></div></div>';
+        return '<div class="card" data-src="' + f.path + '"><img src="' + f.path + '" alt="' + name + '" loading="lazy"><div class="card-body"><div class="card-name">' + name + '</div><div class="card-meta">' + meta + '</div></div><button class="del-btn" title="Delete">\u00d7</button></div>';
       }
-      return '<div class="card" data-video="' + f.path + '"><video src="' + f.path + '" preload="metadata"></video><div class="card-body"><div class="card-name">' + name + '</div><div class="card-meta">' + meta + '</div></div></div>';
+      return '<div class="card" data-video="' + f.path + '"><video src="' + f.path + '" preload="metadata"></video><div class="card-body"><div class="card-name">' + name + '</div><div class="card-meta">' + meta + '</div></div><button class="del-btn" title="Delete">\u00d7</button></div>';
     }).join('');
     grid.querySelectorAll('.card[data-src]').forEach(card => {
       card.addEventListener('click', () => {
@@ -190,6 +229,21 @@
         lightboxVideo.src = card.dataset.video;
         videoLightbox.classList.add('open');
         lightboxVideo.play();
+      });
+    });
+    grid.querySelectorAll('.del-btn').forEach(btn => {
+      btn.addEventListener('click', async e => {
+        e.stopPropagation();
+        const card = btn.closest('.card');
+        const p = card.dataset.src || card.dataset.video;
+        try {
+          const r = await fetch('/api/files', { method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ path: p }) });
+          if (!r.ok) throw new Error((await r.json()).error);
+          showToast('Deleted', 'ok');
+          await fetchFiles();
+        } catch (err) { showToast('Delete failed: ' + err.message, 'err'); }
       });
     });
   }
@@ -242,6 +296,21 @@
 
       card.appendChild(info);
       card.appendChild(btn);
+
+      const delBtn = document.createElement('button');
+      delBtn.className = 'del-btn-session';
+      delBtn.title = 'Delete session';
+      delBtn.textContent = '\u{1F5D1}';
+      delBtn.addEventListener('click', async () => {
+        try {
+          const r = await fetch('/api/sessions/' + s.id, { method: 'DELETE' });
+          if (!r.ok) throw new Error((await r.json()).error);
+          showToast('Session deleted', 'ok');
+          await fetchSessions();
+        } catch (err) { showToast('Delete failed: ' + err.message, 'err'); }
+      });
+      card.appendChild(delBtn);
+
       return card;
     });
     sessionsPanel.replaceChildren(...cards);
@@ -345,6 +414,38 @@
 
   autoRefresh.addEventListener('change', () => {
     if (autoRefresh.checked) startRefresh(); else stopRefresh();
+  });
+
+  const deleteAllBtn = document.getElementById('deleteAllBtn');
+  const confirmOverlay = document.getElementById('confirmOverlay');
+  const confirmInput = document.getElementById('confirmInput');
+  const confirmOk = document.getElementById('confirmOk');
+  const confirmCancel = document.getElementById('confirmCancel');
+
+  deleteAllBtn.addEventListener('click', () => confirmOverlay.classList.add('open'));
+  confirmCancel.addEventListener('click', () => {
+    confirmOverlay.classList.remove('open');
+    confirmInput.value = '';
+    confirmOk.disabled = true;
+  });
+  confirmInput.addEventListener('input', () => {
+    confirmOk.disabled = confirmInput.value !== 'DELETE';
+  });
+  confirmOk.addEventListener('click', async () => {
+    confirmOverlay.classList.remove('open');
+    confirmInput.value = '';
+    confirmOk.disabled = true;
+    try {
+      const r = await fetch('/api/all', { method: 'DELETE' });
+      const data = await r.json();
+      if (!r.ok) throw new Error(data.error);
+      showToast('Deleted ' + data.dirs + ' session(s) and ' + data.files + ' file(s)', 'ok');
+      lastFilesKey = '';
+      lastSessionsKey = '';
+      allFiles = [];
+      allSessions = [];
+      await refresh();
+    } catch (err) { showToast('Delete failed: ' + err.message, 'err'); }
   });
 
   captureBtn.addEventListener('click', async () => {
