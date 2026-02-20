@@ -718,6 +718,7 @@ if (typeof window !== "undefined") {
   window.RETAIL_SLUGS = RETAIL_SLUGS;
   window.RETAIL_VENDOR_NAMES = RETAIL_VENDOR_NAMES;
   window.RETAIL_VENDOR_URLS = RETAIL_VENDOR_URLS;
+  window._buildConfidenceBar = _buildConfidenceBar;
 }
 
 // =============================================================================

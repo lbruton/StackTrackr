@@ -16,8 +16,8 @@ const _switchRetailViewTab = (tab) => {
   const isHistory = tab === "history";
   historySection.style.display = isHistory ? "" : "none";
   intradaySection.style.display = isHistory ? "none" : "";
-  histTab.classList.toggle("active", isHistory);
-  intTab.classList.toggle("active", !isHistory);
+  if (histTab.classList) histTab.classList.toggle("active", isHistory);
+  if (intTab.classList) intTab.classList.toggle("active", !isHistory);
 };
 
 /**
@@ -42,7 +42,8 @@ const _buildIntradayChart = (slug) => {
 
   if (windows.length >= 2 && canvas instanceof HTMLCanvasElement && typeof Chart !== "undefined") {
     const labels = windows.map((w) => {
-      const d = new Date(w.window);
+      const d = w.window ? new Date(w.window) : null;
+      if (!d || isNaN(d)) return "--:--";
       return `${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`;
     });
     _retailViewIntradayChart = new Chart(canvas, {
@@ -107,8 +108,10 @@ const _buildIntradayChart = (slug) => {
     recent.forEach((w) => {
       const tr = document.createElement("tr");
       const fmt = (v) => (v != null ? `$${Number(v).toFixed(2)}` : "\u2014");
-      const d = new Date(w.window);
-      const timeLabel = `${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`;
+      const d = w.window ? new Date(w.window) : null;
+      const timeLabel = (d && !isNaN(d))
+        ? `${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`
+        : "--:--";
       [timeLabel, fmt(w.median), fmt(w.low)].forEach((text) => {
         const td = document.createElement("td");
         td.textContent = text;
