@@ -118,6 +118,16 @@ const createBackupZip = async () => {
     };
     zip.file('spot_price_history.json', JSON.stringify(spotHistoryData, null, 2));
 
+    // 3a-retail. Add retail market prices (STAK-217)
+    const retailPricesData = loadDataSync(RETAIL_PRICES_KEY) || null;
+    const retailHistoryData = loadDataSync(RETAIL_PRICE_HISTORY_KEY) || {};
+    if (retailPricesData) {
+      zip.file('retail_prices.json', JSON.stringify(retailPricesData, null, 2));
+    }
+    if (Object.keys(retailHistoryData).length > 0) {
+      zip.file('retail_price_history.json', JSON.stringify(retailHistoryData, null, 2));
+    }
+
     // 3b. Add per-item price history (STACK-43)
     const itemPriceHistoryData = {
       version: APP_VERSION,
@@ -403,6 +413,22 @@ const restoreBackupZip = async (file) => {
     }
     itemTags = restoredTags || {};
     if (typeof saveItemTags === 'function') saveItemTags();
+
+    // Restore retail market prices (STAK-217)
+    const retailPricesStr = await zip.file("retail_prices.json")?.async("string");
+    if (retailPricesStr) {
+      const retailPricesRestored = JSON.parse(retailPricesStr);
+      saveDataSync(RETAIL_PRICES_KEY, retailPricesRestored);
+      if (typeof loadRetailPrices === 'function') loadRetailPrices();
+    }
+    const retailHistoryStr = await zip.file("retail_price_history.json")?.async("string");
+    if (retailHistoryStr) {
+      const retailHistoryRestored = JSON.parse(retailHistoryStr);
+      if (!Array.isArray(retailHistoryRestored) && typeof retailHistoryRestored === 'object') {
+        saveDataSync(RETAIL_PRICE_HISTORY_KEY, retailHistoryRestored);
+        if (typeof loadRetailPriceHistory === 'function') loadRetailPriceHistory();
+      }
+    }
 
     // Restore cached coin images (STACK-88)
     if (window.imageCache?.isAvailable()) {
