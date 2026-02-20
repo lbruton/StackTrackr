@@ -14,7 +14,11 @@ if (backend === 'browserbase' && (!process.env.BROWSERBASE_API_KEY || !process.e
   throw new Error('BROWSERBASE_API_KEY and BROWSERBASE_PROJECT_ID must be set when BROWSER_BACKEND=browserbase');
 }
 
+const runId = process.env.TEST_RUN_ID ||
+  new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
+
 export default defineConfig({
+  outputDir: `test-results/${runId}`,
   testDir: './tests',
   testMatch: ['**/*.spec.js'],
   timeout: 60_000,
@@ -23,6 +27,9 @@ export default defineConfig({
     // host.docker.internal resolves to the host machine from inside Docker (macOS/Windows).
     // Use TEST_URL env var to override for CI or remote targets.
     baseURL: process.env.TEST_URL || 'http://host.docker.internal:8765',
+    screenshot: 'on',
+    video: 'on',
+    trace: 'retain-on-failure',
   },
   projects: [
     { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
