@@ -60,7 +60,16 @@ const openRetailViewModal = (slug) => {
   history.forEach((entry) => {
     const tr = document.createElement("tr");
     const fmt = (v) => (v != null ? `$${Number(v).toFixed(2)}` : "\u2014");
-    [entry.date, fmt(entry.average_price), fmt(entry.median_price), fmt(entry.lowest_price)].forEach((text) => {
+    [
+      entry.date,
+      fmt(entry.average_price),
+      fmt(entry.median_price),
+      fmt(entry.lowest_price),
+      fmt(entry.prices_by_site?.apmex),
+      fmt(entry.prices_by_site?.monumentmetals),
+      fmt(entry.prices_by_site?.sdbullion),
+      fmt(entry.prices_by_site?.jmbullion),
+    ].forEach((text) => {
       const td = document.createElement("td");
       td.textContent = text;
       tr.appendChild(td);

@@ -2,11 +2,12 @@
 // =============================================================================
 
 /**
- * Updates the max-height of .table-section to show at most `itemsPerPage` items.
- * Measures actual rendered heights (thead + first row) so it adapts to font
+ * Updates the max-height of .portal-scroll (table view) and #cardViewGrid (card
+ * view) to show at most `itemsPerPage` items. Measures actual rendered heights
+ * (thead + first row for table, first card + gap for grid) so it adapts to font
  * scaling, browser zoom, and responsive breakpoints.
  *
- * If all rows fit within the computed height, max-height is removed to avoid
+ * If all items fit within the computed height, max-height is removed to avoid
  * an unnecessary scrollbar.
  *
  * Called by renderTable() after rows are inserted into the DOM.

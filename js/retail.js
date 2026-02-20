@@ -23,7 +23,7 @@ const RETAIL_COIN_META = {
   "buffalo":                 { name: "American Gold Buffalo",    weight: 1.0,  metal: "gold"     },
   "maple-gold":              { name: "Gold Maple Leaf",          weight: 1.0,  metal: "gold"     },
   "krugerrand-gold":         { name: "Gold Krugerrand",          weight: 1.0,  metal: "gold"     },
-  "ape":                     { name: "Australian Platinum Eagle", weight: 1.0, metal: "platinum" },
+  "ape":                     { name: "American Platinum Eagle",   weight: 1.0, metal: "platinum" },
 };
 
 /** Vendor display names */
@@ -136,7 +136,7 @@ const syncRetailPrices = async () => {
 
     const prices = {};
     let fetchCount = 0;
-    results.forEach((r) => {
+    results.forEach((r, i) => {
       if (r.status === "fulfilled") {
         const { slug, data } = r.value;
         prices[slug] = {
@@ -147,6 +147,8 @@ const syncRetailPrices = async () => {
           scores_by_site: data.scores_by_site || {},
         };
         fetchCount++;
+      } else {
+        debugLog(`[retail] Failed to fetch ${RETAIL_SLUGS[i]}: ${r.reason?.message || r.reason}`, "warn");
       }
     });
 
