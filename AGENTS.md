@@ -275,6 +275,18 @@ PRs should include:
 - Screenshots or short clips for UI changes
 - Notes for docs/version updates when behavior changes
 
+## Test Credentials
+
+Test and sandbox credentials live at **`~/.staktrakr/secrets.env`** — outside the repo directory
+tree, so git cannot reach them regardless of `.gitignore` state.
+
+```bash
+source ~/.staktrakr/secrets.env   # in test scripts
+```
+
+Contains: Dropbox OAuth test app, metal price API sandbox keys, Numista, OXR, PCGS, smoke test URLs.
+Backed up to `~/.claude/backups/`. Fill values before running any test that requires external auth.
+
 ## MCP Servers Available In This Session
 
 The following MCP servers were live-tested in this session on **2026-02-20**. Availability can vary by environment.
