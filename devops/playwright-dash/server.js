@@ -1,10 +1,12 @@
 #!/usr/bin/env node
-'use strict';
 
-const http = require('http');
-const fs = require('fs');
-const path = require('path');
-const { spawnSync } = require('child_process');
+import http from 'http';
+import fs from 'fs';
+import path from 'path';
+import { spawnSync } from 'child_process';
+import { fileURLToPath } from 'url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const PORT = process.env.DASH_PORT || 8766;
 const REPO_ROOT = path.resolve(__dirname, '..', '..');
@@ -58,6 +60,35 @@ function getFiles() {
   return [...screenshots, ...videos].sort((a, b) => b.mtime - a.mtime);
 }
 
+function getSessions() {
+  if (!fs.existsSync(TEST_RESULTS_DIR)) return [];
+  return fs.readdirSync(TEST_RESULTS_DIR, { withFileTypes: true })
+    .filter(e => e.isDirectory())
+    .filter(e => fs.existsSync(path.join(TEST_RESULTS_DIR, e.name, 'report.html')))
+    .map(e => {
+      const runDir = path.join(TEST_RESULTS_DIR, e.name);
+      const stat = fs.statSync(path.join(runDir, 'report.html'));
+      let total = 0, passed = 0, failed = 0;
+      try {
+        const raw = JSON.parse(fs.readFileSync(path.join(runDir, 'results.json'), 'utf8'));
+        total = (raw.stats?.expected ?? 0) + (raw.stats?.unexpected ?? 0) + (raw.stats?.skipped ?? 0);
+        passed = raw.stats?.expected ?? 0;
+        failed = raw.stats?.unexpected ?? 0;
+      } catch {
+        total = fs.readdirSync(runDir, { withFileTypes: true }).filter(x => x.isDirectory()).length;
+      }
+      return {
+        id: e.name,
+        reportUrl: `/files/test-results/${e.name}/report.html`,
+        mtime: stat.mtimeMs,
+        total,
+        passed,
+        failed,
+      };
+    })
+    .sort((a, b) => b.mtime - a.mtime);
+}
+
 function resolveFilePath(urlPath) {
   const rel = urlPath.slice('/files/'.length);
   const parts = rel.split('/');
@@ -99,6 +130,18 @@ const server = http.createServer((req, res) => {
       const files = getFiles();
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify(files));
+    } catch (e) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: e.message }));
+    }
+    return;
+  }
+
+  if (method === 'GET' && url === '/api/sessions') {
+    try {
+      const sessions = getSessions();
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(sessions));
     } catch (e) {
       res.writeHead(500, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ error: e.message }));

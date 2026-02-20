@@ -66,6 +66,17 @@
   .speed-btn.active { background: var(--primary); border-color: var(--primary); color: #fff; }
   .spinner { display: inline-block; width: 12px; height: 12px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle; margin-right: 6px; }
   @keyframes spin { to { transform: rotate(360deg); } }
+  /* Sessions tab */
+  .sessions-panel { padding: 20px; }
+  .session-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; display: flex; align-items: center; gap: 14px; margin-bottom: 10px; transition: border-color 0.15s; }
+  .session-card:hover { border-color: var(--primary); }
+  .session-info { flex: 1; }
+  .session-ts { font-size: 13px; font-weight: 500; color: var(--text); }
+  .session-meta { font-size: 11px; color: var(--muted); margin-top: 4px; }
+  .pill { display: inline-block; font-size: 11px; font-weight: 600; border-radius: 999px; padding: 2px 8px; margin-right: 4px; }
+  .pill-pass { background: rgba(34,197,94,0.15); color: var(--success); }
+  .pill-fail { background: rgba(239,68,68,0.15); color: var(--danger); }
+  .pill-total { background: var(--primary-dim); color: var(--primary); }
 </style>
 </head>
 <body>
@@ -82,11 +93,13 @@
   <div class="tabs">
     <button class="tab active" data-tab="screenshot">Screenshots</button>
     <button class="tab" data-tab="video">Videos</button>
+    <button class="tab" data-tab="sessions">Sessions</button>
   </div>
   <span class="count" id="countLabel"></span>
   <input class="search" type="search" id="search" placeholder="Filter by name...">
 </div>
 <div class="grid" id="grid"></div>
+<div class="sessions-panel" id="sessionsPanel" style="display:none;"></div>
 <div class="lightbox" id="lightbox">
   <span class="lightbox-close" id="lightboxClose">&times;</span>
   <img id="lightboxImg" src="" alt="">
@@ -97,24 +110,27 @@
     <video id="lightboxVideo" controls style="max-width:90vw;max-height:80vh;border-radius:8px;background:#000;"></video>
     <div id="speedControls" style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;">
       <span style="font-size:11px;color:var(--muted);align-self:center;margin-right:4px;">Speed:</span>
-      <button class="speed-btn" data-rate="0.1">0.1×</button>
-      <button class="speed-btn" data-rate="0.2">0.2×</button>
-      <button class="speed-btn" data-rate="0.5">0.5×</button>
-      <button class="speed-btn active" data-rate="1">1×</button>
-      <button class="speed-btn" data-rate="2">2×</button>
-      <button class="speed-btn" data-rate="5">5×</button>
-      <button class="speed-btn" data-rate="10">10×</button>
+      <button class="speed-btn" data-rate="0.1">0.1&times;</button>
+      <button class="speed-btn" data-rate="0.2">0.2&times;</button>
+      <button class="speed-btn" data-rate="0.5">0.5&times;</button>
+      <button class="speed-btn active" data-rate="1">1&times;</button>
+      <button class="speed-btn" data-rate="2">2&times;</button>
+      <button class="speed-btn" data-rate="5">5&times;</button>
+      <button class="speed-btn" data-rate="10">10&times;</button>
     </div>
   </div>
 </div>
 <div class="toast" id="toast"></div>
 <script>
   let allFiles = [];
+  let allSessions = [];
   let activeTab = 'screenshot';
   let refreshTimer = null;
   let fetchController = null;
   let lastFilesKey = '';
+  let lastSessionsKey = '';
   const grid = document.getElementById('grid');
+  const sessionsPanel = document.getElementById('sessionsPanel');
   const search = document.getElementById('search');
   const statusBadge = document.getElementById('statusBadge');
   const countLabel = document.getElementById('countLabel');
@@ -136,6 +152,12 @@
     return new Date(ms).toLocaleString();
   }
 
+  function fmtRunId(id) {
+    const m = id.match(/^(\d{4})-(\d{2})-(\d{2})-(\d{2})-(\d{2})-(\d{2})$/);
+    if (!m) return id;
+    return new Date(+m[1], +m[2]-1, +m[3], +m[4], +m[5], +m[6]).toLocaleString();
+  }
+
   function basename(p) {
     return p.split('/').pop();
   }
@@ -151,7 +173,7 @@
     }
     grid.innerHTML = items.map(f => {
       const name = basename(f.path);
-      const meta = fmtDate(f.mtime) + ' · ' + fmt(f.size);
+      const meta = fmtDate(f.mtime) + ' \u00b7 ' + fmt(f.size);
       if (f.type === 'screenshot') {
         return '<div class="card" data-src="' + f.path + '"><img src="' + f.path + '" alt="' + name + '" loading="lazy"><div class="card-body"><div class="card-name">' + name + '</div><div class="card-meta">' + meta + '</div></div></div>';
       }
@@ -172,6 +194,59 @@
     });
   }
 
+  function renderSessions(sessions) {
+    countLabel.textContent = sessions.length + ' session' + (sessions.length !== 1 ? 's' : '');
+    if (sessions.length === 0) {
+      sessionsPanel.innerHTML = '<div class="empty" style="grid-column:unset"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg><p>No sessions yet \u2014 run <code>npm test</code> to generate one</p></div>';
+      return;
+    }
+    const cards = sessions.map(s => {
+      const card = document.createElement('div');
+      card.className = 'session-card';
+
+      const info = document.createElement('div');
+      info.className = 'session-info';
+
+      const ts = document.createElement('div');
+      ts.className = 'session-ts';
+      ts.textContent = fmtRunId(s.id);
+
+      const meta = document.createElement('div');
+      meta.className = 'session-meta';
+
+      const pTotal = document.createElement('span');
+      pTotal.className = 'pill pill-total';
+      pTotal.textContent = s.total + ' total';
+
+      const pPass = document.createElement('span');
+      pPass.className = 'pill pill-pass';
+      pPass.textContent = '\u2705 ' + s.passed + ' passed';
+
+      meta.appendChild(pTotal);
+      meta.appendChild(pPass);
+
+      if (s.failed > 0) {
+        const pFail = document.createElement('span');
+        pFail.className = 'pill pill-fail';
+        pFail.textContent = '\u274c ' + s.failed + ' failed';
+        meta.appendChild(pFail);
+      }
+
+      info.appendChild(ts);
+      info.appendChild(meta);
+
+      const btn = document.createElement('button');
+      btn.className = 'btn btn-outline';
+      btn.textContent = 'Open Report';
+      btn.addEventListener('click', () => window.open(s.reportUrl, '_blank'));
+
+      card.appendChild(info);
+      card.appendChild(btn);
+      return card;
+    });
+    sessionsPanel.replaceChildren(...cards);
+  }
+
   async function fetchFiles() {
     if (fetchController) fetchController.abort();
     fetchController = new AbortController();
@@ -184,16 +259,34 @@
       if (key !== lastFilesKey) {
         lastFilesKey = key;
         allFiles = files;
-        renderGrid();
+        if (activeTab !== 'sessions') renderGrid();
       }
     } catch (e) {
       if (e.name !== 'AbortError') statusBadge.textContent = 'error';
     }
   }
 
+  async function fetchSessions() {
+    try {
+      const res = await fetch('/api/sessions');
+      const sessions = await res.json();
+      const key = sessions.map(s => s.id + s.mtime).join('|');
+      if (key !== lastSessionsKey) {
+        lastSessionsKey = key;
+        allSessions = sessions;
+        if (activeTab === 'sessions') renderSessions(sessions);
+      }
+    } catch { /* ignore */ }
+  }
+
+  async function refresh() {
+    await fetchFiles();
+    await fetchSessions();
+  }
+
   function startRefresh() {
     if (refreshTimer) return;
-    refreshTimer = setInterval(fetchFiles, 3000);
+    refreshTimer = setInterval(refresh, 3000);
   }
   function stopRefresh() {
     clearInterval(refreshTimer);
@@ -211,7 +304,18 @@
       document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
       tab.classList.add('active');
       activeTab = tab.dataset.tab;
-      renderGrid();
+      if (activeTab === 'sessions') {
+        grid.style.display = 'none';
+        sessionsPanel.style.display = 'block';
+        search.style.display = 'none';
+        renderSessions(allSessions);
+        fetchSessions();
+      } else {
+        grid.style.display = '';
+        sessionsPanel.style.display = 'none';
+        search.style.display = '';
+        renderGrid();
+      }
     });
   });
 
@@ -254,6 +358,9 @@
       await fetchFiles();
       activeTab = 'screenshot';
       document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === 'screenshot'));
+      grid.style.display = '';
+      sessionsPanel.style.display = 'none';
+      search.style.display = '';
       renderGrid();
     } catch (e) {
       showToast('Capture failed: ' + e.message, 'err');
@@ -263,7 +370,7 @@
     }
   });
 
-  fetchFiles();
+  refresh();
   startRefresh();
 </script>
 </body>
