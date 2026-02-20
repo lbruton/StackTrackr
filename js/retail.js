@@ -708,11 +708,12 @@ const startRetailBackgroundSync = () => {
     });
   };
 
-  // Sync immediately if no data or data is stale (older than RETAIL_STALE_MS)
+  // Sync immediately if no data, data is stale, or providers.json hasn't been fetched yet
   const lastSync = retailPrices && retailPrices.lastSync ? new Date(retailPrices.lastSync).getTime() : 0;
   const isStale = Date.now() - lastSync > RETAIL_STALE_MS;
-  if (isStale) {
-    debugLog("[retail] Data absent or stale — triggering background sync", "info");
+  const missingProviders = !retailProviders || Object.keys(retailProviders).length === 0;
+  if (isStale || missingProviders) {
+    debugLog(`[retail] Background sync triggered (stale=${isStale}, missingProviders=${missingProviders})`, "info");
     _runSilentSync();
   }
 
