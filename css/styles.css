@@ -11250,6 +11250,9 @@ th {
   font-style: italic;
 }
 
+/* Reset footer margin — gap on .retail-price-card handles spacing */
+.retail-price-card > .retail-card-footer { margin-top: 0; }
+
 /* History table in Activity Log */
 .retail-history-controls {
   display: flex;
