@@ -89,7 +89,7 @@ const server = http.createServer((req, res) => {
 
   if (method === 'GET' && url === '/') {
     const html = fs.readFileSync(INDEX_HTML);
-    res.writeHead(200, { 'Content-Type': 'text/html' });
+    res.writeHead(200, { 'Content-Type': 'text/html', 'Cache-Control': 'no-cache' });
     res.end(html);
     return;
   }
