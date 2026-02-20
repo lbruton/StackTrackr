@@ -83,6 +83,14 @@ test('STAK-222: Numista cache read/write roundtrip', async ({ page }) => {
   expect(result.staleRejected).toBe(true);
 });
 
+test('STAK-222: startSpotBackgroundSync is defined and callable', async ({ page }) => {
+  await page.goto('/');
+  const result = await page.evaluate(() => {
+    return typeof window.startSpotBackgroundSync === 'function';
+  });
+  expect(result).toBe(true);
+});
+
 test('STAK-222: PCGS cache read/write roundtrip', async ({ page }) => {
   await page.goto('/');
   const result = await page.evaluate(() => {

@@ -344,6 +344,7 @@ const loadApiConfig = () => {
         historyDays,
         historyTimes,
         syncMode: config.syncMode || {},
+        autoRefresh: config.autoRefresh || { STAKTRAKR: true },
         usageMonth: currentMonth,
       };
       if (needsSave) {
@@ -380,6 +381,7 @@ const loadApiConfig = () => {
     historyDays,
     historyTimes,
     syncMode: {},
+    autoRefresh: { STAKTRAKR: true },
     usageMonth: currentMonthKey(),
   };
 };
@@ -406,6 +408,7 @@ const saveApiConfig = (config) => {
       historyDays: config.historyDays || {},
       historyTimes: config.historyTimes || {},
       syncMode: config.syncMode || {},
+      autoRefresh: config.autoRefresh || { STAKTRAKR: true },
       usageMonth: config.usageMonth || currentMonthKey(),
     };
     Object.keys(config.keys || {}).forEach((p) => {
@@ -1100,6 +1103,53 @@ const autoSyncSpotPrices = async () => {
 
   await syncProviderChain({ showProgress: false, forceSync: false });
   updateSyncButtonStates();
+};
+
+/** Interval ID for spot price background sync — null when not running */
+let _spotSyncIntervalId = null;
+
+/**
+ * Starts background spot price auto-sync for all providers that have autoRefresh enabled.
+ * Immediately syncs if data is absent or stale, then re-syncs on each provider's cache TTL interval.
+ * Safe to call multiple times — clears any existing interval before setting a new one.
+ * Called from init.js after autoSyncSpotPrices().
+ */
+const startSpotBackgroundSync = () => {
+  if (_spotSyncIntervalId !== null) {
+    clearInterval(_spotSyncIntervalId);
+    _spotSyncIntervalId = null;
+  }
+
+  const config = loadApiConfig();
+  const autoRefresh = config.autoRefresh || { STAKTRAKR: true };
+
+  // Find shortest enabled interval to drive the master setInterval tick
+  const enabledProviders = Object.keys(API_PROVIDERS).filter(p => autoRefresh[p]);
+  if (enabledProviders.length === 0) return;
+
+  // Use StakTrakr's interval (1h = 3600000ms) as the base tick if enabled,
+  // otherwise fall back to the shortest configured cache TTL.
+  const staktrakrEnabled = !!autoRefresh['STAKTRAKR'];
+  const tickMs = staktrakrEnabled
+    ? 60 * 60 * 1000  // 1 hour — StakTrakr updates hourly
+    : Math.min(...enabledProviders.map(p => (config.cacheTimeouts?.[p] ?? 24) * 60 * 60 * 1000));
+
+  const _runSilentSync = () => {
+    syncProviderChain({ showProgress: false, forceSync: false }).catch(err => {
+      debugLog(`[spot-bg-sync] Silent sync failed: ${err.message}`, 'warn');
+    });
+  };
+
+  // Sync immediately if data is stale or missing
+  const cache = loadApiCache();
+  const isStale = !cache || !cache.timestamp || (Date.now() - cache.timestamp > tickMs);
+  if (isStale) {
+    debugLog('[spot-bg-sync] Starting immediate sync (stale or no cache)', 'info');
+    _runSilentSync();
+  }
+
+  _spotSyncIntervalId = setInterval(_runSilentSync, tickMs);
+  debugLog(`[spot-bg-sync] Background sync started — tick every ${tickMs / 60000}min`, 'info');
 };
 
 /**
@@ -2382,6 +2432,7 @@ window.clearApiHistory = clearApiHistory;
 window.syncAllProviders = syncAllProviders;
 window.syncProviderChain = syncProviderChain;
 window.autoSyncSpotPrices = autoSyncSpotPrices;
+window.startSpotBackgroundSync = startSpotBackgroundSync;
 window.handleHistoryPull = handleHistoryPull;
 window.updateHistoryPullCost = updateHistoryPullCost;
 window.fetchHistoryBatched = fetchHistoryBatched;
