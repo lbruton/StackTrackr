@@ -3,7 +3,7 @@
 // Cache version: auto-stamped by devops/hooks/stamp-sw-cache.sh pre-commit hook
 
 const DEV_MODE = false; // Set to true during development — bypasses all caching
-const CACHE_NAME = 'staktrakr-v3.31.6-b1771567773';
+const CACHE_NAME = 'staktrakr-v3.31.6-b1771567824';
 
 // Offline fallback for navigation requests when all cache/network strategies fail
 const OFFLINE_HTML = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>StakTrakr</title></head>' +
@@ -50,6 +50,8 @@ const CORE_ASSETS = [
   './js/priceHistory.js',
   './js/spotLookup.js',
   './js/goldback.js',
+  './js/retail.js',
+  './js/retail-view-modal.js',
   './js/api.js',
   './js/catalog-api.js',
   './js/pcgs-api.js',
