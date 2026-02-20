@@ -414,19 +414,27 @@ const restoreBackupZip = async (file) => {
     itemTags = restoredTags || {};
     if (typeof saveItemTags === 'function') saveItemTags();
 
-    // Restore retail market prices (STAK-217)
+    // Restore retail market prices
     const retailPricesStr = await zip.file("retail_prices.json")?.async("string");
     if (retailPricesStr) {
-      const retailPricesRestored = JSON.parse(retailPricesStr);
-      saveDataSync(RETAIL_PRICES_KEY, retailPricesRestored);
-      if (typeof loadRetailPrices === 'function') loadRetailPrices();
+      try {
+        const retailPricesRestored = JSON.parse(retailPricesStr);
+        saveDataSync(RETAIL_PRICES_KEY, retailPricesRestored);
+        if (typeof loadRetailPrices === 'function') loadRetailPrices();
+      } catch (e) {
+        debugWarn('restoreBackupZip: retail_prices.json parse error', e);
+      }
     }
     const retailHistoryStr = await zip.file("retail_price_history.json")?.async("string");
     if (retailHistoryStr) {
-      const retailHistoryRestored = JSON.parse(retailHistoryStr);
-      if (!Array.isArray(retailHistoryRestored) && typeof retailHistoryRestored === 'object') {
-        saveDataSync(RETAIL_PRICE_HISTORY_KEY, retailHistoryRestored);
-        if (typeof loadRetailPriceHistory === 'function') loadRetailPriceHistory();
+      try {
+        const retailHistoryRestored = JSON.parse(retailHistoryStr);
+        if (!Array.isArray(retailHistoryRestored) && typeof retailHistoryRestored === 'object') {
+          saveDataSync(RETAIL_PRICE_HISTORY_KEY, retailHistoryRestored);
+          if (typeof loadRetailPriceHistory === 'function') loadRetailPriceHistory();
+        }
+      } catch (e) {
+        debugWarn('restoreBackupZip: retail_price_history.json parse error', e);
       }
     }
 
