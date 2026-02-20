@@ -281,6 +281,7 @@ The following MCP servers were live-tested in this session on **2026-02-18**. Av
 
 | MCP Server | Status | Lightweight test used |
 |---|---|---|
+| `code-graph-context` | 🐳 docker-required | `docker exec cgc-server cgc list` |
 | `memento` | ✅ reachable | `mcp__memento__read_graph` |
 | `sequential-thinking` | ✅ reachable | `mcp__sequential-thinking__sequentialthinking` |
 | `linear` | ✅ reachable | `mcp__linear__list_teams` |
@@ -292,7 +293,11 @@ The following MCP servers were live-tested in this session on **2026-02-18**. Av
 
 ### MCP Usage Quick Guide
 
-- `memento`: Persistent memory graph for entities/relations, semantic recall, and historical context.  
+- `code-graph-context`: Structural graph analysis — call chains, callers, dead code, complexity, import/export graph.
+  Requires the cgc-server Docker container running (`cd devops/cgc && docker compose up -d`).
+  Index a project once with `docker exec cgc-server cgc index /workspace/StakTrakr` before querying.
+  Use for: "What calls `syncRetailPrices()`?", "What breaks if I change `formatCurrency()`?", dead code in `retail.js`.
+- `memento`: Persistent memory graph for entities/relations, semantic recall, and historical context.
   Start with `read_graph`, `search_nodes`, or `semantic_search`; write using `create_entities`,
   `add_observations`, and `create_relations`.
 - `sequential-thinking`: Structured iterative reasoning for complex planning/debugging tasks.  
