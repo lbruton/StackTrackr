@@ -73,7 +73,7 @@ const openRetailViewModal = (slug) => {
     _retailViewModalChart.destroy();
     _retailViewModalChart = null;
   }
-  if (history.length > 1 && chartCanvas && typeof Chart !== "undefined") {
+  if (history.length > 1 && chartCanvas instanceof HTMLCanvasElement && typeof Chart !== "undefined") {
     const sorted = [...history].reverse();
     _retailViewModalChart = new Chart(chartCanvas, {
       type: "line",
@@ -90,8 +90,16 @@ const openRetailViewModal = (slug) => {
       },
       options: {
         responsive: true,
+        maintainAspectRatio: false,
         plugins: { legend: { display: false } },
-        scales: { y: { ticks: { callback: (v) => `$${v}` } } },
+        scales: {
+          y: {
+            ticks: {
+              color: typeof getChartTextColor === "function" ? getChartTextColor() : undefined,
+              callback: (v) => `$${Number(v).toFixed(2)}`,
+            },
+          },
+        },
       },
     });
   }
