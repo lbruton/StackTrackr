@@ -2289,6 +2289,16 @@ const populateApiSection = () => {
   if (typeof initSpotHistoryButtons === 'function') {
     initSpotHistoryButtons();
   }
+
+  // STAK-222: Update cache stat counts
+  const numistaCountEl = document.getElementById('numistaResponseCacheCount');
+  if (numistaCountEl && typeof getNumistaCacheCount === 'function') {
+    numistaCountEl.textContent = getNumistaCacheCount();
+  }
+  const pcgsCountEl = document.getElementById('pcgsResponseCacheCount');
+  if (pcgsCountEl && typeof getPcgsCacheCount === 'function') {
+    pcgsCountEl.textContent = getPcgsCacheCount();
+  }
 };
 
 /**
