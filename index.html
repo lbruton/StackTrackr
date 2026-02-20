@@ -2015,6 +2015,12 @@
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v12"/><path d="M9 9a3 3 0 0 1 3-1.5c2 0 3 1 3 2.5s-1 2.5-3 2.5-3 1-3 2.5a3 3 0 0 0 3 2.5"/></svg>
               Goldback
             </button>
+          <button class="settings-nav-item" data-section="market" onclick="switchSettingsSection('market')" aria-label="Market Prices settings section">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M0 0h1v15h15v1H0V0Zm14.817 3.113a.5.5 0 0 1 .07.704l-4.5 5.5a.5.5 0 0 1-.74.037L7.06 6.767l-3.656 5.027a.5.5 0 0 1-.808-.588l4-5.5a.5.5 0 0 1 .76-.063l2.573 2.565 4.15-5.073a.5.5 0 0 1 .704-.07z"/>
+            </svg>
+            Market
+          </button>
             <button class="settings-nav-item" data-section="storage">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.66 4.03 3 9 3s9-1.34 9-3V5"/><path d="M3 12c0 1.66 4.03 3 9 3s9-1.34 9-3"/></svg>
               Storage
@@ -3491,6 +3497,25 @@
               </div>
             </div>
 
+        <!-- ===== MARKET PRICES ===== -->
+        <div id="settingsPanel_market" class="settings-panel" style="display:none;" role="tabpanel" aria-labelledby="marketNavBtn">
+          <div class="settings-panel-header">
+            <h2 class="settings-panel-title">Market Prices</h2>
+            <div class="settings-panel-actions">
+              <span id="retailLastSynced" class="settings-panel-subtitle"></span>
+              <button id="syncRetailBtn" class="btn btn-sm btn-primary" onclick="syncRetailPrices()">Sync Now</button>
+            </div>
+          </div>
+
+          <div id="retailCardsGrid" class="retail-cards-grid" aria-live="polite" aria-label="Retail coin price cards">
+            <!-- Cards rendered by renderRetailCards() -->
+          </div>
+
+          <div id="retailEmptyState" class="settings-empty-state" style="display:none;">
+            <p>No market data yet. Click <strong>Sync Now</strong> to load current retail prices.</p>
+          </div>
+        </div>
+
             <!-- ===== ACTIVITY LOG ===== -->
             <div class="settings-section-panel" id="settingsPanel_changelog" style="display: none">
               <h3>Activity Log</h3>
@@ -3504,6 +3529,7 @@
                 <button class="settings-log-tab" data-log-tab="catalogs" type="button">Catalogs</button>
                 <button class="settings-log-tab" data-log-tab="pricehistory" type="button">Price History</button>
                 <button class="settings-log-tab" data-log-tab="cloud" type="button">Cloud</button>
+              <button class="settings-log-tab" data-log-tab="market" aria-selected="false" role="tab">Market</button>
               </div>
 
               <!-- Changelog panel (existing) -->
@@ -3652,6 +3678,48 @@
                   </table>
                 </div>
               </div>
+
+            <div id="logPanel_market" class="settings-log-panel" style="display:none;" role="tabpanel">
+              <div class="retail-history-controls">
+                <label for="retailHistoryCoinSelect" class="retail-history-label">Coin:</label>
+                <select id="retailHistoryCoinSelect" class="form-select form-select-sm retail-history-select">
+                  <option value="ase">American Silver Eagle</option>
+                  <option value="maple-silver">Silver Maple Leaf</option>
+                  <option value="britannia-silver">Silver Britannia</option>
+                  <option value="krugerrand-silver">Silver Krugerrand</option>
+                  <option value="generic-silver-round">Generic Silver Round</option>
+                  <option value="generic-silver-bar-10oz">Generic 10oz Silver Bar</option>
+                  <option value="age">American Gold Eagle</option>
+                  <option value="buffalo">American Gold Buffalo</option>
+                  <option value="maple-gold">Gold Maple Leaf</option>
+                  <option value="krugerrand-gold">Gold Krugerrand</option>
+                  <option value="ape">American Platinum Eagle</option>
+                </select>
+                <div class="retail-timeframe-tabs" role="tablist" aria-label="History timeframe">
+                  <button class="retail-tf-btn active" data-retail-timeframe="7" role="tab" aria-selected="true">7d</button>
+                  <button class="retail-tf-btn" data-retail-timeframe="30" role="tab" aria-selected="false">30d</button>
+                  <button class="retail-tf-btn" data-retail-timeframe="90" role="tab" aria-selected="false">90d</button>
+                  <button class="retail-tf-btn" data-retail-timeframe="all" role="tab" aria-selected="false">All</button>
+                </div>
+              </div>
+              <div class="retail-history-table-wrap">
+                <table id="retailHistoryTable" class="retail-history-table">
+                  <thead>
+                    <tr>
+                      <th>Date</th>
+                      <th>Avg</th>
+                      <th>Median</th>
+                      <th>Lowest</th>
+                      <th>APMEX</th>
+                      <th>Monument</th>
+                      <th>SDB</th>
+                      <th>JM</th>
+                    </tr>
+                  </thead>
+                  <tbody id="retailHistoryTbody"></tbody>
+                </table>
+              </div>
+            </div>
 
             </div>
 
@@ -4688,5 +4756,47 @@
         }
       });
     </script>
+
+  <!-- ===== RETAIL VIEW MODAL ===== -->
+  <div id="retailViewModal" class="modal-overlay" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="retailViewCoinName">
+    <div class="modal-container modal-lg">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <h2 id="retailViewCoinName" class="modal-title"></h2>
+          <div class="modal-subtitle-row">
+            <span id="retailViewMetal" class="badge retail-metal-badge"></span>
+            <span id="retailViewWeight" class="modal-subtitle-text"></span>
+          </div>
+        </div>
+        <button class="modal-close-btn" onclick="closeRetailViewModal()" aria-label="Close market price detail">&times;</button>
+      </div>
+      <div class="modal-body">
+        <h3 class="retail-view-section-title">Current Prices</h3>
+        <div class="retail-view-table-wrap">
+          <table id="retailViewPricesTable" class="retail-view-table">
+            <thead>
+              <tr><th>Vendor</th><th>Price</th><th>Confidence</th></tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <h3 class="retail-view-section-title">Price History</h3>
+        <div class="retail-view-chart-wrap">
+          <canvas id="retailViewChart" aria-label="Retail price history chart"></canvas>
+        </div>
+        <div class="retail-view-table-wrap">
+          <table id="retailViewHistoryTable" class="retail-view-table">
+            <thead>
+              <tr>
+                <th>Date</th><th>Avg</th><th>Median</th><th>Lowest</th>
+                <th>APMEX</th><th>Monument</th><th>SDB</th><th>JM</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
   </body>
 </html>
