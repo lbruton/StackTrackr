@@ -11212,6 +11212,44 @@ th {
   font-weight: 700;
 }
 
+/* STAK-217: Corrected CSS targets matching JS class names */
+.retail-price-card {
+  background: var(--card-bg, var(--bs-body-bg));
+  border: 1px solid var(--border-color, var(--bs-border-color));
+  border-radius: 8px;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.retail-coin-name  { font-weight: 600; font-size: 0.95rem; }
+.retail-coin-weight {
+  font-size: 0.8rem;
+  color: var(--text-muted, var(--bs-secondary-color));
+}
+.retail-summary-row { display: flex; gap: 1rem; font-size: 0.85rem; }
+.retail-summary-item { display: flex; flex-direction: column; gap: 0.1rem; }
+.retail-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  color: var(--text-muted, var(--bs-secondary-color));
+}
+.retail-summary-value { font-weight: 600; }
+.retail-vendor-score {
+  letter-spacing: -0.1em;
+  color: var(--text-muted, var(--bs-secondary-color));
+  font-size: 0.9rem;
+}
+.retail-data-date {
+  font-size: 0.75rem;
+  color: var(--text-muted, var(--bs-secondary-color));
+}
+.retail-no-data {
+  font-size: 0.85rem;
+  color: var(--text-muted, var(--bs-secondary-color));
+  font-style: italic;
+}
+
 /* History table in Activity Log */
 .retail-history-controls {
   display: flex;

@@ -249,8 +249,11 @@ const _buildRetailCard = (slug, meta, priceData) => {
       const lbl = document.createElement("span");
       lbl.className = "retail-label";
       lbl.textContent = label;
+      const valSpan = document.createElement("span");
+      valSpan.className = "retail-summary-value";
+      valSpan.textContent = _fmtRetailPrice(val);
       item.appendChild(lbl);
-      item.appendChild(document.createTextNode(_fmtRetailPrice(val)));
+      item.appendChild(valSpan);
       summary.appendChild(item);
     });
     card.appendChild(summary);
