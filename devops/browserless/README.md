@@ -18,16 +18,32 @@ docker compose up -d
 
 ## Verify
 
-Check the health endpoint — it responds without requiring the auth token:
+The WebSocket endpoint for Playwright (v2 API):
+
+```
+ws://localhost:3000/chromium/playwright?token=local_dev_token
+```
+
+Confirm the service started:
 
 ```sh
-curl http://localhost:3000/health
+docker logs staktrakr-browserless --tail 5
 ```
 
-Or open the API docs in a browser (token required in URL):
+## Running tests
 
+Against the Cloudflare Pages dev deployment:
+
+```sh
+BROWSER_BACKEND=browserless TEST_URL=https://dev.stacktrackr.pages.dev npm run test:smoke
 ```
-http://localhost:3000/docs?token=local_dev_token
+
+Against a local dev server — use `host.docker.internal` (not `127.0.0.1`) so the
+browser running inside Docker can reach the host machine:
+
+```sh
+npx http-server . -p 8765 --silent &
+BROWSER_BACKEND=browserless TEST_URL=http://host.docker.internal:8765 npm run test:smoke
 ```
 
 ## Stop the service

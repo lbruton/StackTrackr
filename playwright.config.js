@@ -3,7 +3,7 @@ import { defineConfig, devices } from '@playwright/test';
 
 const backend = process.env.BROWSER_BACKEND || 'browserless';
 const wsEndpoints = {
-  browserless: `ws://localhost:3000?token=${process.env.BROWSERLESS_TOKEN || 'local_dev_token'}`,
+  browserless: `ws://localhost:3000/chromium/playwright?token=${process.env.BROWSERLESS_TOKEN || 'local_dev_token'}`,
   browserbase: `wss://connect.browserbase.com?apiKey=${process.env.BROWSERBASE_API_KEY}&projectId=${process.env.BROWSERBASE_PROJECT_ID}`,
 };
 
