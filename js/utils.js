@@ -577,6 +577,7 @@ const loadDisplayCurrency = () => {
 const saveDisplayCurrency = (code) => {
   displayCurrency = code;
   saveDataSync(DISPLAY_CURRENCY_KEY, code);
+  if (typeof scheduleSyncPush === 'function') scheduleSyncPush();
 };
 
 /**

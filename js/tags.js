@@ -26,6 +26,7 @@ const loadItemTags = () => {
 const saveItemTags = () => {
   try {
     saveDataSync(ITEM_TAGS_KEY, itemTags);
+    if (typeof scheduleSyncPush === 'function') scheduleSyncPush();
   } catch (e) {
     console.error('Failed to save item tags:', e);
   }

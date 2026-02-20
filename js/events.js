@@ -626,6 +626,7 @@ const setupSearchAndChipListeners = () => {
         if (typeof renderActiveFilters === 'function') {
           renderActiveFilters();
         }
+        if (typeof scheduleSyncPush === 'function') scheduleSyncPush();
       },
       'Chip minimum count dropdown'
     );
@@ -2363,6 +2364,7 @@ const setupSearch = () => {
           if (typeof renderActiveFilters === "function") {
             renderActiveFilters();
           }
+          if (typeof scheduleSyncPush === 'function') scheduleSyncPush();
         },
         "Chip minimum count select",
       );

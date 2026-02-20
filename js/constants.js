@@ -796,6 +796,7 @@ const getInlineChipConfig = () => {
 const saveInlineChipConfig = (config) => {
   try {
     localStorage.setItem('inlineChipConfig', JSON.stringify(config));
+    if (typeof scheduleSyncPush === 'function') scheduleSyncPush();
   } catch (e) {
     console.warn('Failed to save inline chip config:', e);
   }
@@ -858,6 +859,7 @@ const getFilterChipCategoryConfig = () => {
 const saveFilterChipCategoryConfig = (config) => {
   try {
     localStorage.setItem('filterChipCategoryConfig', JSON.stringify(config));
+    if (typeof scheduleSyncPush === 'function') scheduleSyncPush();
   } catch (e) {
     console.warn('Failed to save filter chip category config:', e);
   }
@@ -973,8 +975,10 @@ const getViewModalSectionConfig = () =>
   _loadSectionConfig('viewModalSectionConfig', VIEW_MODAL_SECTION_DEFAULTS);
 
 /** Saves the view modal section config to localStorage. */
-const saveViewModalSectionConfig = (config) =>
+const saveViewModalSectionConfig = (config) => {
   _saveSectionConfig('viewModalSectionConfig', config);
+  if (typeof scheduleSyncPush === 'function') scheduleSyncPush();
+};
 
 // =============================================================================
 // NUMISTA VIEW FIELD CONFIG — controls which fields appear in view modal

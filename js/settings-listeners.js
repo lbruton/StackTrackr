@@ -191,6 +191,7 @@ const bindFilterAndNumistaListeners = () => {
       const chipMinInline = getExistingElement('chipMinCount');
       if (chipMinInline) chipMinInline.value = val;
       if (typeof renderActiveFilters === 'function') renderActiveFilters();
+      if (typeof scheduleSyncPush === 'function') scheduleSyncPush();
     });
   }
 
