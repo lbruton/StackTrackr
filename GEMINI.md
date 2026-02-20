@@ -164,6 +164,23 @@ AST-indexed semantic search over the StakTrakr codebase.
 
 Use this before manual file searches — it finds relevant code faster than grep for conceptual queries.
 
+### Firecrawl Local (Web Scraping — Free)
+
+Self-hosted Firecrawl instance running at `devops/firecrawl-docker/` on port 3002. Use for
+scraping, crawling, and web search without consuming cloud credits.
+
+**When to use:** Any scraping/crawling task, researching external docs, fetching competitor prices.
+
+**Tools available:**
+- `scrape` — Extract clean markdown from a single URL
+- `crawl` — Crawl an entire site asynchronously
+- `search` — Web search with optional content extraction
+- `extract` — Structured data extraction (requires `OPENAI_API_KEY` in Docker env)
+
+**Not available in self-hosted mode:** `/agent` endpoint (cloud only).
+
+**Requires:** `cd devops/firecrawl-docker && docker compose up -d` before use.
+
 ### Context7 (Library Documentation)
 
 Fetches up-to-date documentation and code examples for libraries used by StakTrakr.

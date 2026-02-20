@@ -1,0 +1,56 @@
+# StakTrakr — Codex MCP Server Configuration
+# Secrets must be set as environment variables before running Codex.
+# Local servers (memento, claude-context, firecrawl-local) require
+# their Docker dependencies to be running (see devops/).
+
+[mcp_servers.memento]
+command = "npx"
+args = ["-y", "@gannonh/memento-mcp"]
+env = { NEO4J_URI = "bolt://localhost:7687", NEO4J_USERNAME = "neo4j", NEO4J_PASSWORD = "${NEO4J_PASSWORD}", NEO4J_DATABASE = "neo4j", MEMORY_STORAGE_TYPE = "neo4j", OPENAI_API_KEY = "${OPENAI_API_KEY}", OPENAI_EMBEDDING_MODEL = "text-embedding-3-small", NEO4J_VECTOR_INDEX = "entity_embeddings", NEO4J_VECTOR_DIMENSIONS = "1536", NEO4J_SIMILARITY_FUNCTION = "cosine" }
+startup_timeout_sec = 30
+enabled = true
+
+[mcp_servers.sequential-thinking]
+command = "npx"
+args = ["-y", "@modelcontextprotocol/server-sequential-thinking"]
+enabled = true
+
+[mcp_servers.brave-search]
+command = "npx"
+args = ["-y", "@brave/brave-search-mcp-server"]
+env = { BRAVE_API_KEY = "${BRAVE_API_KEY}" }
+enabled = true
+
+[mcp_servers.claude-context]
+command = "npx"
+args = ["-y", "@zilliz/claude-context-mcp@latest"]
+env = { OPENAI_API_KEY = "${OPENAI_API_KEY}", MILVUS_TOKEN = "${MILVUS_TOKEN}" }
+startup_timeout_sec = 30
+enabled = true
+
+[mcp_servers.context7]
+command = "npx"
+args = ["-y", "@upstash/context7-mcp"]
+env = { CONTEXT7_API_KEY = "${CONTEXT7_API_KEY}" }
+enabled = true
+
+[mcp_servers.codacy]
+command = "npx"
+args = ["-y", "@codacy/codacy-mcp"]
+env = { CODACY_ACCOUNT_TOKEN = "${CODACY_ACCOUNT_TOKEN}" }
+startup_timeout_sec = 30
+enabled = true
+
+[mcp_servers.linear]
+command = "npx"
+args = ["-y", "@linear/mcp-server"]
+env = { LINEAR_API_KEY = "${LINEAR_API_KEY}" }
+enabled = true
+
+[mcp_servers.firecrawl-local]
+# Requires devops/firecrawl-docker stack running: cd devops/firecrawl-docker && docker compose up -d
+# No real API key needed — USE_DB_AUTHENTICATION=false on the local instance.
+command = "npx"
+args = ["-y", "firecrawl-mcp"]
+env = { FIRECRAWL_API_URL = "http://localhost:3002", FIRECRAWL_API_KEY = "local" }
+enabled = true

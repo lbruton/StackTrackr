@@ -171,13 +171,13 @@ const syncRetailPrices = async () => {
     saveRetailPriceHistory();
 
     _retailSyncInProgress = false;
-    renderRetailCards();
     syncStatus.textContent = `Updated ${fetchCount}/${RETAIL_SLUGS.length} coins · ${targetDate}`;
   } catch (err) {
     debugLog(`[retail] Sync error: ${err.message}`, "warn");
     syncStatus.textContent = `Sync failed: ${err.message}`;
   } finally {
     _retailSyncInProgress = false;
+    renderRetailCards();
     syncBtn.disabled = false;
     syncBtn.textContent = "Sync Now";
   }
@@ -187,8 +187,6 @@ const syncRetailPrices = async () => {
 // Render - Settings Panel Cards
 // ---------------------------------------------------------------------------
 
-/**
- * Renders all coin price cards into #retailCardsGrid.
 /**
  * Builds a shimmer skeleton placeholder card for the loading state.
  * @returns {HTMLElement}

@@ -67,6 +67,31 @@ For each drifted skill choose one:
 - `remember`
 - `sync-instructions`
 
+## Phase 4.5: MCP Server Sync (when `.mcp.json` changes)
+
+When a new MCP server is added or removed, update all three agent config files:
+
+| File | Agent | Format | Git-tracked |
+|------|-------|--------|-------------|
+| `.mcp.json` | Claude Code | JSON + keychain | No (raw keys) |
+| `.gemini/settings.json` | Gemini CLI | JSON | Yes |
+| `.codex/config.toml` | Codex CLI | TOML | Yes |
+
+**Rules:**
+- Use `${ENV_VAR_NAME}` for secrets in `.gemini/` and `.codex/` — never embed raw keys
+- Simplify macOS keychain commands to plain env var refs in Gemini/Codex files
+- Include local-only servers (firecrawl-local, memento) with Docker prerequisite comments
+- Skip Claude-specific servers: `chrome-devtools`, `code-graph-context`
+- Add usage block to `GEMINI.md` → `## MCP Server Usage`
+- Add row to `AGENTS.md` → MCP server table
+
+**Checklist per new server:**
+- [ ] `.mcp.json` (raw keys, gitignored)
+- [ ] `.gemini/settings.json` (env var refs)
+- [ ] `.codex/config.toml` (env var refs, TOML)
+- [ ] `GEMINI.md` MCP usage block
+- [ ] `AGENTS.md` MCP table row
+
 ## Phase 5: Backup — Two Tiers, Two Destinations
 
 Backups split by sensitivity. Run both after any sync.

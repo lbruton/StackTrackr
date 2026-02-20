@@ -11344,7 +11344,7 @@ th {
     var(--border-color, #e2e8f0) 50%,
     var(--bg-secondary, #f1f5f9) 75%
   );
-  background-size: 200% 100%;
+  background-size: 400% 100%;
   animation: retail-shimmer 1.4s infinite;
   border-radius: 4px;
   margin-bottom: 0.5rem;
