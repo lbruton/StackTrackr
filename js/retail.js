@@ -210,9 +210,6 @@ const _buildSkeletonCard = () => {
 };
 
 /**
- * Called on market section open and after each sync.
- */
-/**
  * Renders a 7-entry average-price sparkline on a card's canvas.
  * Destroys any prior Chart instance first to prevent Canvas reuse errors.
  * @param {string} slug
@@ -249,6 +246,7 @@ const _renderRetailSparkline = (slug) => {
   _retailSparklines.set(slug, chart);
 };
 
+/** Called on market section open and after each sync. */
 const renderRetailCards = () => {
   const grid = safeGetElement("retailCardsGrid");
   const lastSyncEl = safeGetElement("retailLastSync");
