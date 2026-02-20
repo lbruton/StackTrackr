@@ -227,7 +227,8 @@ const _buildRetailCard = (slug, meta, priceData) => {
 
   const badge = document.createElement("span");
   badge.className = `retail-metal-badge retail-metal-badge--${meta.metal}`;
-  badge.textContent = `${RETAIL_METAL_EMOJI[meta.metal] || ""} ${meta.metal}`;
+  const _emoji = RETAIL_METAL_EMOJI[meta.metal];
+  badge.textContent = _emoji ? `${_emoji} ${meta.metal}` : meta.metal;
 
   header.appendChild(nameSpan);
   header.appendChild(badge);
