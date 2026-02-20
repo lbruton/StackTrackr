@@ -78,19 +78,24 @@ When a new MCP server is added or removed, update all three agent config files:
 | `.codex/config.toml` | Codex CLI | TOML | Yes |
 
 **Rules:**
+
 - Use `${ENV_VAR_NAME}` for secrets in `.gemini/` and `.codex/` — never embed raw keys
 - Simplify macOS keychain commands to plain env var refs in Gemini/Codex files
 - Include local-only servers (firecrawl-local, memento) with Docker prerequisite comments
-- Skip Claude-specific servers: `chrome-devtools`, `code-graph-context`
+- For Firecrawl Local, document Docker prerequisite (`devops/firecrawl-docker`) and endpoint caveats
+- Do not assume MCP parity across agents; if a server is configured but not exposed in an agent runtime,
+  document it as "configured but unavailable in this runtime" instead of deleting it from source config
 - Add usage block to `GEMINI.md` → `## MCP Server Usage`
-- Add row to `AGENTS.md` → MCP server table
+- Add row + usage notes to `AGENTS.md` MCP section (`MCP Servers Available In This Session`)
 
 **Checklist per new server:**
+
 - [ ] `StakTrakr/.mcp.json` (gitignored, Claude Code)
 - [ ] `~/.gemini/settings.json` (Gemini CLI, home dir)
 - [ ] `~/.codex/config.toml` (Codex CLI, home dir)
 - [ ] `GEMINI.md` MCP usage block
-- [ ] `AGENTS.md` MCP table row
+- [ ] `AGENTS.md` MCP table row + quick guide/discovery caveats
+- [ ] Live health-check result captured in docs with date and test call
 - [ ] Refresh secrets backup in `~/.claude/backups/`
 
 ## Phase 5: Backup — Two Tiers, Two Destinations

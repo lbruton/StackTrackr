@@ -19,6 +19,15 @@ Or search for "markdownlint" in the Extensions marketplace.
 - **`.markdownlint.json`** — Project-wide linting rules (already configured)
 - **`.claude/skills/markdown-standards/SKILL.md`** — Comprehensive rule documentation (auto-loads for Claude Code)
 
+### 3. Use the repo-pinned CLI commands
+
+- `npm run lint:md` — Lint staged Markdown files only (recommended for commits)
+- `npm run lint:md:changed` — Lint changed + untracked Markdown files in working tree
+- `npm run lint:md:all` — Lint all Markdown files (legacy debt may still surface)
+
+The changed-file workflow uses `devops/hooks/lint-markdown-changed.sh` and always passes
+`--config .markdownlint.json` so local/global tool drift does not affect results.
+
 ## Most Common Violations
 
 ### MD032: Blank lines around lists

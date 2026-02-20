@@ -6,6 +6,9 @@
   "description": "Precious metals inventory tracker",
   "scripts": {
     "lint": "eslint js/*.js sw.js",
+    "lint:md": "bash devops/hooks/lint-markdown-changed.sh --staged",
+    "lint:md:changed": "bash devops/hooks/lint-markdown-changed.sh --changed",
+    "lint:md:all": "npx --yes markdownlint-cli --config .markdownlint.json \"**/*.md\" --ignore node_modules --ignore .git --ignore test-results",
     "test": "playwright test",
     "test:smoke": "playwright test --grep @smoke"
   },
