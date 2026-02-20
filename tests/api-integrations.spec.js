@@ -36,3 +36,20 @@ test.describe('API Integrations (Requires Keys)', () => {
     // 3. Verify spot prices updated
   });
 });
+
+// =============================================================================
+// STAK-222: API Pipeline Improvements
+// =============================================================================
+
+test('STAK-222: new cache keys are in ALLOWED_STORAGE_KEYS', async ({ page }) => {
+  await page.goto('/');
+  const result = await page.evaluate(() => {
+    const keys = window.ALLOWED_STORAGE_KEYS || [];
+    return {
+      hasNumista: keys.includes('numista_response_cache'),
+      hasPcgs: keys.includes('pcgs_response_cache'),
+    };
+  });
+  expect(result.hasNumista).toBe(true);
+  expect(result.hasPcgs).toBe(true);
+});

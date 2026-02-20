@@ -545,6 +545,12 @@ const API_KEY_STORAGE_KEY = "metalApiConfig";
 /** @constant {string} API_CACHE_KEY - LocalStorage key for cached API data */
 const API_CACHE_KEY = "metalApiCache";
 
+/** @constant {string} NUMISTA_RESPONSE_CACHE_KEY - 30-day per-type-ID Numista response cache */
+const NUMISTA_RESPONSE_CACHE_KEY = "numista_response_cache";
+
+/** @constant {string} PCGS_RESPONSE_CACHE_KEY - 30-day per-cert/pcgs-number PCGS response cache */
+const PCGS_RESPONSE_CACHE_KEY = "pcgs_response_cache";
+
 /** @constant {string} LAST_CACHE_REFRESH_KEY - LocalStorage key for last cache refresh timestamp */
 const LAST_CACHE_REFRESH_KEY = "lastCacheRefresh";
 
@@ -708,6 +714,8 @@ const ALLOWED_STORAGE_KEYS = [
   RETAIL_PRICES_KEY,
   RETAIL_PRICE_HISTORY_KEY,
   RETAIL_PROVIDERS_KEY,
+  NUMISTA_RESPONSE_CACHE_KEY,
+  PCGS_RESPONSE_CACHE_KEY,
   GOLDBACK_ENABLED_KEY,
   GOLDBACK_ESTIMATE_ENABLED_KEY,
   GB_ESTIMATE_MODIFIER_KEY,
@@ -1584,6 +1592,9 @@ if (typeof window !== "undefined") {
   window.EXCHANGE_RATES_KEY = EXCHANGE_RATES_KEY;
   window.EXCHANGE_RATE_API_URL = EXCHANGE_RATE_API_URL;
   window.FALLBACK_EXCHANGE_RATES = FALLBACK_EXCHANGE_RATES;
+  // STAK-222: API pipeline cache keys
+  window.NUMISTA_RESPONSE_CACHE_KEY = NUMISTA_RESPONSE_CACHE_KEY;
+  window.PCGS_RESPONSE_CACHE_KEY = PCGS_RESPONSE_CACHE_KEY;
 }
 
 // Expose APP_VERSION globally for non-module usage
