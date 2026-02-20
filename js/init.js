@@ -580,6 +580,11 @@ document.addEventListener("DOMContentLoaded", async () => {
       autoSyncSpotPrices();
     }
 
+    // STAK-222: Start background spot price polling
+    if (typeof startSpotBackgroundSync === 'function') {
+      startSpotBackgroundSync();
+    }
+
     // Fetch fresh exchange rates in the background (STACK-50)
     if (typeof fetchExchangeRates === 'function') {
       fetchExchangeRates().then(updated => {

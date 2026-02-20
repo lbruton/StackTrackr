@@ -83,6 +83,17 @@ test('STAK-222: Numista cache read/write roundtrip', async ({ page }) => {
   expect(result.staleRejected).toBe(true);
 });
 
+test('STAK-222: background sync starts on page load without errors', async ({ page }) => {
+  const errors = [];
+  page.on('console', msg => {
+    if (msg.type() === 'error') errors.push(msg.text());
+  });
+  await page.goto('/');
+  await page.waitForTimeout(1000); // let init complete
+  const hasErrors = errors.some(e => e.includes('spot-bg-sync') || e.includes('startSpotBackgroundSync'));
+  expect(hasErrors).toBe(false);
+});
+
 test('STAK-222: startSpotBackgroundSync is defined and callable', async ({ page }) => {
   await page.goto('/');
   const result = await page.evaluate(() => {
