@@ -11,7 +11,7 @@ const openRetailViewModal = (slug) => {
   const meta = RETAIL_COIN_META[slug];
   if (!meta) return;
 
-  const titleEl = safeGetElement("retailViewModalTitle");
+  const titleEl = safeGetElement("retailViewCoinName");
   const subtitleEl = safeGetElement("retailViewModalSubtitle");
   const currentTableBody = safeGetElement("retailViewCurrentTableBody");
   const historyTableBody = safeGetElement("retailViewHistoryTableBody");
