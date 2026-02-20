@@ -33,9 +33,10 @@ const FIRECRAWL_BASE_URL = (process.env.FIRECRAWL_BASE_URL || "https://api.firec
 const DATA_DIR = resolve(process.env.DATA_DIR || join(__dirname, "../../data"));
 const DRY_RUN = process.env.DRY_RUN === "1";
 const COIN_FILTER = process.env.COINS ? process.env.COINS.split(",").map(s => s.trim()) : null;
-// FBP_ONLY: skip all direct provider scrapes; just scrape FindBullionPrices for all coins
-// and write data/retail/fbp/{YYYY-MM-DD}.json with the full dealer comparison table.
-const FBP_ONLY = process.env.FBP_ONLY === "1";
+// PATCH_GAPS: reads today's coin files, finds failed_sites, scrapes FBP only for
+// those coins, and patches the existing daily JSON files with recovered prices.
+// Run at 3pm ET after the 11am full scrape.
+const PATCH_GAPS = process.env.PATCH_GAPS === "1";
 
 // Firecrawl free/pay-as-you-go tier = 2 concurrent scrapes
 const CONCURRENCY = 2;
@@ -376,56 +377,77 @@ async function main() {
   const generatedAt = new Date().toISOString();
 
   // ---------------------------------------------------------------------------
-  // FBP_ONLY mode: scrape FindBullionPrices for all coins, write fbp snapshot.
-  // Used by the GH Actions daily workflow (cloud Firecrawl, free tier).
-  // Local Docker runs the full pipeline separately at 11am.
+  // PATCH_GAPS mode: 3pm ET follow-up run.
+  // Reads today's coin files, finds any remaining failed_sites, scrapes FBP
+  // only for those coins, and patches the existing daily JSON files in place.
   // ---------------------------------------------------------------------------
-  if (FBP_ONLY) {
-    const coins = Object.entries(providersJson.coins).filter(([slug]) =>
-      !COIN_FILTER || COIN_FILTER.includes(slug)
-    );
-    log(`FBP-only run: ${coins.length} coin(s)`);
+  if (PATCH_GAPS) {
+    log(`Gap-fill run for ${dateStr}`);
     if (DRY_RUN) log("DRY RUN — no files written");
 
-    const snapshot = {
-      date: dateStr,
-      generated_at_utc: generatedAt,
-      source: "findbullionprices.com",
-      note: "ACH/wire price and credit/card price per dealer. Updated daily at 3pm ET.",
-      coins: {},
-    };
+    // Find coins that still have failed_sites in today's output
+    const gapsByCoin = {};
+    for (const [coinSlug, coinData] of Object.entries(providersJson.coins)) {
+      if (COIN_FILTER && !COIN_FILTER.includes(coinSlug)) continue;
+      const filePath = join(DATA_DIR, "retail", coinSlug, `${dateStr}.json`);
+      if (!existsSync(filePath)) continue;
+      let daily;
+      try { daily = JSON.parse(readFileSync(filePath, "utf-8")); } catch { continue; }
+      if (!daily.failed_sites?.length) continue;
+      if (!coinData.fbp_url) continue;
+      gapsByCoin[coinSlug] = { coinData, filePath, daily, gaps: daily.failed_sites };
+    }
 
-    for (const [coinSlug, coinData] of coins) {
-      if (!coinData.fbp_url) {
-        warn(`No fbp_url for ${coinSlug}, skipping`);
-        continue;
-      }
-      log(`Scraping FBP for ${coinSlug}`);
+    const gapCoins = Object.keys(gapsByCoin);
+    if (gapCoins.length === 0) {
+      log("No gaps found — all providers succeeded at 11am. Nothing to do.");
+      return;
+    }
+    log(`Gaps found in ${gapCoins.length} coin(s): ${gapCoins.join(", ")}`);
+
+    let totalFilled = 0;
+    for (const [coinSlug, { coinData, filePath, daily, gaps }] of Object.entries(gapsByCoin)) {
+      log(`Scraping FBP for ${coinSlug} (gaps: ${gaps.join(", ")})`);
       try {
         const md = await scrapeUrl(coinData.fbp_url, "fbp");
-        const prices = extractFbpPrices(md, coinData.metal, coinData.weight_oz || 1);
-        snapshot.coins[coinSlug] = {
-          name: coinData.name,
-          metal: coinData.metal,
-          dealers: prices,
-        };
-        log(`  ✓ ${coinSlug}: ${Object.keys(prices).length} dealers`);
+        const fbpPrices = extractFbpPrices(md, coinData.metal, coinData.weight_oz || 1);
+
+        let filled = 0;
+        for (const providerId of gaps) {
+          const fbp = fbpPrices[providerId];
+          if (!fbp) continue;
+          daily.prices_by_site[providerId] = fbp.ach;
+          daily.extraction_methods[providerId] = "fbp_gap_fill";
+          filled++;
+          log(`  ↩ ${coinSlug}/${providerId}: $${fbp.ach.toFixed(2)} ACH (fbp_gap_fill)`);
+        }
+
+        if (filled > 0) {
+          // Rebuild derived fields
+          daily.failed_sites = gaps.filter(id => fbpPrices[id] === undefined);
+          const prices = Object.values(daily.prices_by_site);
+          const sorted = [...prices].sort((a, b) => a - b);
+          daily.source_count = prices.length;
+          daily.average_price = Math.round(prices.reduce((a, b) => a + b, 0) / prices.length * 100) / 100;
+          daily.median_price = sorted[Math.floor(sorted.length / 2)];
+
+          if (DRY_RUN) {
+            log(`[DRY RUN] Would patch ${filePath}`);
+            console.log(JSON.stringify(daily, null, 2));
+          } else {
+            writeFileSync(filePath, JSON.stringify(daily, null, 2) + "\n");
+            log(`Patched ${filePath} (${filled} gap(s) filled)`);
+          }
+          totalFilled += filled;
+        } else {
+          warn(`  FBP had no data for gaps in ${coinSlug}`);
+        }
       } catch (err) {
-        warn(`  ✗ ${coinSlug}: ${err.message.slice(0, 120)}`);
-        snapshot.coins[coinSlug] = { name: coinData.name, metal: coinData.metal, dealers: {}, error: err.message.slice(0, 200) };
+        warn(`  ✗ FBP scrape failed for ${coinSlug}: ${err.message.slice(0, 120)}`);
       }
     }
 
-    const outDir = join(DATA_DIR, "retail", "fbp");
-    const outPath = join(outDir, `${dateStr}.json`);
-    if (DRY_RUN) {
-      log(`[DRY RUN] ${outPath}`);
-      console.log(JSON.stringify(snapshot, null, 2));
-    } else {
-      mkdirSync(outDir, { recursive: true });
-      writeFileSync(outPath, JSON.stringify(snapshot, null, 2) + "\n");
-      log(`Wrote ${outPath}`);
-    }
+    log(`Gap-fill done: ${totalFilled} price(s) recovered across ${gapCoins.length} coin(s)`);
     return;
   }
 
