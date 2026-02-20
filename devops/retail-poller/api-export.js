@@ -167,18 +167,18 @@ function aggregateDailyRows(rawRows) {
  * Score a vendor price for a single coin window.
  * Single-source scoring (no Firecrawl+Vision agreement available).
  * @param {number} price - The vendor's price for this window
- * @param {number|null} medianPrice - Median of all vendors for this window
+ * @param {number|null} windowMedian - Median of all vendors for this window
  * @param {number|null} prevMedian - Previous day's median (for day-over-day check)
  * @returns {number} Score 0-100
  */
-function scoreVendorPrice(price, medianPrice, prevMedian) {
+function scoreVendorPrice(price, windowMedian, prevMedian) {
   let score = 50; // base: single source
-  if (medianPrice) {
-    const deviation = Math.abs(price - medianPrice) / medianPrice;
+  if (windowMedian !== null) {
+    const deviation = Math.abs(price - windowMedian) / windowMedian;
     if (deviation <= 0.03) score += 10;
     else if (deviation > 0.08) score -= 15;
   }
-  if (prevMedian) {
+  if (prevMedian !== null) {
     const dayDiff = Math.abs(price - prevMedian) / prevMedian;
     if (dayDiff > 0.10) score -= 20;
   }

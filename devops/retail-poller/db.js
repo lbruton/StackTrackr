@@ -111,7 +111,7 @@ export function writeSnapshot(db, row) {
 
 /**
  * Write confidence scores back for all rows in a given window + coin.
- * Called by merge-prices.js after scoring is complete.
+ * Called by api-export.js during per-slug export.
  *
  * @param {Database.Database} db
  * @param {Array<{coinSlug: string, vendor: string, windowStart: string, confidence: number}>} scores
