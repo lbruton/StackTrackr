@@ -1552,6 +1552,7 @@ if (typeof window !== "undefined") {
   // Goldback denomination pricing (STACK-45)
   window.GOLDBACK_PRICES_KEY = GOLDBACK_PRICES_KEY;
   window.GOLDBACK_PRICE_HISTORY_KEY = GOLDBACK_PRICE_HISTORY_KEY;
+  // Retail market pricing
   window.RETAIL_PRICES_KEY = RETAIL_PRICES_KEY;
   window.RETAIL_PRICE_HISTORY_KEY = RETAIL_PRICE_HISTORY_KEY;
   window.GOLDBACK_ENABLED_KEY = GOLDBACK_ENABLED_KEY;
