@@ -1326,6 +1326,14 @@ const bindCloudStorageListeners = () => {
  * History card buttons, and View card buttons.
  */
 const bindRetailMarketListeners = () => {
+  // Sync Now button
+  const syncBtn = getExistingElement('retailSyncBtn');
+  if (syncBtn) {
+    syncBtn.addEventListener('click', () => {
+      if (typeof syncRetailPrices === 'function') syncRetailPrices();
+    });
+  }
+
   // History coin selector — re-render table when selection changes
   const slugSelect = getExistingElement('retailHistorySlugSelect');
   if (slugSelect) {
