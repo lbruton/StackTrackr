@@ -37,7 +37,7 @@ const openRetailViewModal = (slug) => {
       tdPrice.textContent = `$${Number(price).toFixed(2)}`;
 
       const tdScore = document.createElement("td");
-      tdScore.textContent = score != null ? String(score) : "\u2014";
+      tdScore.appendChild(_buildConfidenceBar(score));
 
       tr.appendChild(tdLabel);
       tr.appendChild(tdPrice);

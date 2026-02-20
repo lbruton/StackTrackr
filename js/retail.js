@@ -312,10 +312,7 @@ const _buildRetailCard = (slug, meta, priceData) => {
       priceEl.className = "retail-vendor-price";
       priceEl.textContent = _fmtRetailPrice(price);
 
-      const scoreEl = document.createElement("span");
-      scoreEl.className = "retail-vendor-score";
-      scoreEl.title = `Confidence: ${score != null ? score : "?"}`;
-      scoreEl.textContent = _buildScoreDots(score);
+      const scoreEl = _buildConfidenceBar(score);
 
       row.appendChild(nameEl);
       row.appendChild(priceEl);
@@ -356,14 +353,22 @@ const _buildRetailCard = (slug, meta, priceData) => {
 };
 
 /**
- * Returns 5-dot confidence indicator string.
+ * Builds a 5-segment colored confidence bar element.
  * @param {number|null} score - 0 to 100
- * @returns {string}
+ * @returns {HTMLElement}
  */
-const _buildScoreDots = (score) => {
-  if (score == null) return "·····";
-  const filled = Math.min(5, Math.round((score / 100) * 5));
-  return "●".repeat(filled) + "○".repeat(5 - filled);
+const _buildConfidenceBar = (score) => {
+  const filled = score != null ? Math.min(5, Math.round((score / 100) * 5)) : 0;
+  const tier = filled <= 2 ? "low" : filled === 3 ? "mid" : "high";
+  const wrap = document.createElement("div");
+  wrap.className = `retail-conf-bar retail-conf-bar--${tier}`;
+  wrap.title = `Confidence: ${score != null ? `${score}/100` : "unknown"}`;
+  for (let i = 0; i < 5; i++) {
+    const seg = document.createElement("span");
+    seg.className = `retail-conf-seg${i < filled ? " retail-conf-seg--fill" : ""}`;
+    wrap.appendChild(seg);
+  }
+  return wrap;
 };
 
 // ---------------------------------------------------------------------------

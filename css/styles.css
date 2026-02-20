@@ -11296,6 +11296,22 @@ th {
   font-weight: 700;
 }
 
+/* STAK-217: Confidence score bar */
+.retail-conf-bar {
+  display: inline-flex;
+  gap: 2px;
+  align-items: center;
+}
+.retail-conf-seg {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  background: var(--border-color, #e2e8f0);
+}
+.retail-conf-bar--low  .retail-conf-seg--fill { background: #ef4444; }
+.retail-conf-bar--mid  .retail-conf-seg--fill { background: #f59e0b; }
+.retail-conf-bar--high .retail-conf-seg--fill { background: #10b981; }
+
 
 /* History table in Activity Log */
 .retail-history-controls {
