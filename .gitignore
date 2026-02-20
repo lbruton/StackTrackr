@@ -62,17 +62,13 @@ logs/
 __pycache__/
 *.pyc
 
-# DevOps tooling — spot-poller, retail-poller, and hooks are public, other scripts stay private
-devops/*
-!devops/spot-poller/
-!devops/retail-poller/
-!devops/hooks/
-!devops/claude-backup/
-!devops/playwright-dash/
-
-
-# Playwright Dashboard captures and test artifacts
+# DevOps tooling — all tracked in git; excluded from releases via .gitattributes export-ignore
+# Keep secrets and build artifacts out
+devops/**/.env
 devops/screenshots/
+devops/node_modules/
+
+# Playwright test artifacts
 test-results/
 
 # AI/MCP configuration files are tracked for project consistency
