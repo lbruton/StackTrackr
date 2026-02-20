@@ -295,12 +295,12 @@ const _buildRetailCard = (slug, meta, priceData) => {
     const _availPrices = Object.values(priceData.prices_by_site || {}).filter((p) => p != null);
     const _lowestPrice = _availPrices.length ? Math.min(..._availPrices) : null;
     Object.entries(RETAIL_VENDOR_NAMES).forEach(([key, label]) => {
-      const price = priceData.prices_by_site && priceData.prices_by_site[key];
+      const price = (priceData.prices_by_site || {})[key];
       const score = priceData.scores_by_site && priceData.scores_by_site[key];
       if (price == null) return;
       const row = document.createElement("div");
       row.className = "retail-vendor-row";
-      if (_lowestPrice !== null && price === _lowestPrice) {
+      if (_lowestPrice !== null && Math.abs(price - _lowestPrice) < 0.001) {
         row.classList.add("retail-vendor-row--best");
       }
 
