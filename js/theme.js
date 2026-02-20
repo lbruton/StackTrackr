@@ -27,6 +27,7 @@ const setTheme = (theme) => {
   if (typeof updateAllSparklines === "function") {
     updateAllSparklines();
   }
+  if (typeof scheduleSyncPush === 'function') scheduleSyncPush();
 };
 
 /**
