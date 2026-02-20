@@ -203,6 +203,9 @@ const renderRetailCards = () => {
   });
 };
 
+/** Metal emoji icons keyed by metal name */
+const RETAIL_METAL_EMOJI = { gold: "🥇", silver: "🥈", platinum: "🔷", palladium: "⬜" };
+
 /**
  * Builds a single coin price card element.
  * @param {string} slug
@@ -223,8 +226,8 @@ const _buildRetailCard = (slug, meta, priceData) => {
   nameSpan.textContent = meta.name;
 
   const badge = document.createElement("span");
-  badge.className = `retail-metal-badge retail-metal-${meta.metal}`;
-  badge.textContent = meta.metal;
+  badge.className = `retail-metal-badge retail-metal-badge--${meta.metal}`;
+  badge.textContent = `${RETAIL_METAL_EMOJI[meta.metal] || ""} ${meta.metal}`;
 
   header.appendChild(nameSpan);
   header.appendChild(badge);
