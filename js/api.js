@@ -841,9 +841,14 @@ const renderApiHistoryTable = () => {
   let html =
     "<tr><th data-column=\"timestamp\">Time</th><th data-column=\"metal\">Metal</th><th data-column=\"spot\">Price</th><th data-column=\"provider\">Source</th></tr>";
   data.forEach((e) => {
-    const sourceLabel = e.source === "api-hourly"
-      ? `${escapeHtml(e.provider || "")} (hourly)`
-      : (escapeHtml(e.provider || ""));
+    let sourceLabel;
+    if (e.source === "cached") {
+      sourceLabel = '<span class="api-history-cached-badge">Cached</span>';
+    } else if (e.source === "api-hourly") {
+      sourceLabel = `${escapeHtml(e.provider || "")} (hourly)`;
+    } else {
+      sourceLabel = escapeHtml(e.provider || e.source || "");
+    }
     html += `<tr><td>${escapeHtml(e.timestamp)}</td><td>${escapeHtml(e.metal)}</td><td>${formatCurrency(
       e.spot,
     )}</td><td>${sourceLabel}</td></tr>`;
@@ -874,7 +879,7 @@ const showApiHistoryModal = () => {
   const modal = document.getElementById("apiHistoryModal");
   if (!modal) return;
   loadSpotHistory();
-  apiHistoryEntries = spotHistory.filter((e) => e.source === "api" || e.source === "api-hourly" || e.source === "seed");
+  apiHistoryEntries = spotHistory.filter((e) => e.source === "api" || e.source === "api-hourly" || e.source === "seed" || e.source === "cached");
   apiHistorySortColumn = "";
   apiHistorySortAsc = true;
   apiHistoryFilterText = "";
@@ -2816,7 +2821,7 @@ const importSpotHistory = (file) => {
     if (typeof updateAllSparklines === "function") updateAllSparklines();
 
     // Refresh the visible history table after import
-    apiHistoryEntries = spotHistory.filter((e) => e.source === "api" || e.source === "api-hourly" || e.source === "seed");
+    apiHistoryEntries = spotHistory.filter((e) => e.source === "api" || e.source === "api-hourly" || e.source === "seed" || e.source === "cached");
     renderApiHistoryTable();
   };
   reader.readAsText(file);

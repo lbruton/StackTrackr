@@ -133,7 +133,7 @@ test('STAK-222: Numista cache stat row and clear button render', async ({ page }
 test('STAK-222: cached entries show muted badge in history log', async ({ page }) => {
   await page.goto('/');
   await dismissAck(page);
-  // Inject a cached entry into spotHistory
+  // Inject a cached entry into spotHistory and persist to localStorage
   await page.evaluate(() => {
     window.spotHistory.push({
       spot: 32.00,
@@ -142,9 +142,11 @@ test('STAK-222: cached entries show muted badge in history log', async ({ page }
       provider: 'StakTrakr',
       timestamp: new Date().toISOString().slice(0, 19).replace('T', ' '),
     });
+    window.saveSpotHistory();
   });
   await page.locator('#settingsBtn').click();
   await page.locator('.settings-nav-item[data-section="api"]').click();
+  await page.locator('#apiHistoryBtn').click();
   // The history table should contain a "Cached" badge
   const cachedBadge = page.locator('.api-history-cached-badge').first();
   await expect(cachedBadge).toBeVisible();

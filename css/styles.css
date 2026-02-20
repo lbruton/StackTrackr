@@ -1756,6 +1756,12 @@ input[type="submit"] {
   cursor: pointer;
 }
 
+.api-history-cached-badge {
+  color: var(--text-muted, #888);
+  font-style: italic;
+  font-size: 0.85em;
+}
+
 #catalogHistoryTable {
   width: 100%;
   min-width: 100%;

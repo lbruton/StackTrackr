@@ -1320,6 +1320,7 @@ window.saveTrendRange = saveTrendRange;
 window.renderSpotHistoryTable = renderSpotHistoryTable;
 window.renderLbmaHistoryTable = renderLbmaHistoryTable;
 window.clearSpotHistory = clearSpotHistory;
+window.saveSpotHistory = saveSpotHistory;
 window.getHistoricalSparklineData = getHistoricalSparklineData;
 window.getRequiredYears = getRequiredYears;
 window.fetchYearFile = fetchYearFile;
