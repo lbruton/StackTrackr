@@ -356,7 +356,7 @@ All three agents run on the same Mac and share the same Docker/IP stack. Full pa
 | `playwright` | ✅ | ✅ | ✅ | Browser automation / test authoring |
 | `browserbase` | ✅ | ✅ | ✅ | Cloud NL tests (paid, use sparingly) |
 | `code-graph-context` | ✅ | ✅ | ✅ | Structural graph (Docker required) |
-| `stitch` | route→Gemini | ✅ primary | — | Google product — Gemini only |
+| `stitch` | ✅ | ✅ primary | ✅ | OAuth via `init`; Gemini preferred for design tasks |
 
 ## Claude Relay Invocation Safeguards
 
