@@ -181,6 +181,85 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  if (method === 'DELETE' && url.startsWith('/api/sessions/')) {
+    const id = url.slice('/api/sessions/'.length);
+    if (!/^\d{4}-\d{2}-\d{2}-\d{2}-\d{2}-\d{2}$/.test(id)) {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Invalid session id' }));
+      return;
+    }
+    const target = path.join(TEST_RESULTS_DIR, id);
+    if (!fs.existsSync(target)) {
+      res.writeHead(404, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Session not found' }));
+      return;
+    }
+    try {
+      fs.rmSync(target, { recursive: true, force: true });
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true }));
+    } catch (e) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: e.message }));
+    }
+    return;
+  }
+
+  if (method === 'DELETE' && url === '/api/files') {
+    let body = '';
+    req.on('data', d => { body += d; });
+    req.on('end', () => {
+      try {
+        const { path: urlPath } = JSON.parse(body);
+        const filePath = resolveFilePath(urlPath);
+        if (!filePath) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Invalid path' }));
+          return;
+        }
+        if (!fs.existsSync(filePath)) {
+          res.writeHead(404, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'File not found' }));
+          return;
+        }
+        fs.unlinkSync(filePath);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true }));
+      } catch (e) {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: e.message }));
+      }
+    });
+    return;
+  }
+
+  if (method === 'DELETE' && url === '/api/all') {
+    try {
+      let dirs = 0, files = 0;
+      if (fs.existsSync(TEST_RESULTS_DIR)) {
+        for (const e of fs.readdirSync(TEST_RESULTS_DIR, { withFileTypes: true })) {
+          if (e.isDirectory()) {
+            fs.rmSync(path.join(TEST_RESULTS_DIR, e.name), { recursive: true, force: true });
+            dirs++;
+          }
+        }
+      }
+      if (fs.existsSync(SCREENSHOTS_DIR)) {
+        for (const e of fs.readdirSync(SCREENSHOTS_DIR, { withFileTypes: true })) {
+          if (e.isFile()) {
+            try { fs.unlinkSync(path.join(SCREENSHOTS_DIR, e.name)); files++; } catch { /* skip */ }
+          }
+        }
+      }
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true, dirs, files }));
+    } catch (e) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: e.message }));
+    }
+    return;
+  }
+
   res.writeHead(404);
   res.end('Not found');
 });
