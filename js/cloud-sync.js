@@ -147,7 +147,7 @@ async function syncRestoreOverrideBackup() {
       }
     }
     if (typeof loadItemTags === 'function') loadItemTags();
-    if (typeof loadInventory === 'function') loadInventory();
+    if (typeof loadInventory === 'function') await loadInventory();
     if (typeof updateSummary === 'function') updateSummary();
     if (typeof renderTable === 'function') renderTable();
     if (typeof renderActiveFilters === 'function') renderActiveFilters();

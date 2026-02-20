@@ -1977,7 +1977,7 @@ const setupDataManagementListeners = () => {
       localStorage.removeItem(LS_KEY);
       // STACK-62: Clear stale autocomplete cache so it rebuilds from fresh inventory
       if (typeof clearLookupCache === 'function') clearLookupCache();
-      loadInventory();
+      await loadInventory();
       renderTable();
       renderActiveFilters();
       if (typeof showAppAlert === "function") await showAppAlert("Inventory data cleared.", "Data Management");
@@ -2008,7 +2008,7 @@ const setupDataManagementListeners = () => {
       // Disconnect cloud providers (UI reset)
       if (typeof syncCloudUI === 'function') syncCloudUI();
 
-      loadInventory();
+      await loadInventory();
       renderTable();
       renderActiveFilters();
       loadSpotHistory();

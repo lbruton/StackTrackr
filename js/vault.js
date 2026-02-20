@@ -358,7 +358,7 @@ function simpleHash(str) {
  * Restore vault data into localStorage and refresh UI.
  * @param {object} payload - Decrypted vault payload
  */
-function restoreVaultData(payload) {
+async function restoreVaultData(payload) {
   var data = payload.data;
   if (!data || typeof data !== "object") {
     throw new Error("Vault file appears corrupted.");
@@ -381,7 +381,7 @@ function restoreVaultData(payload) {
   // Refresh the full UI
   try {
     if (typeof loadItemTags === "function") loadItemTags();
-    if (typeof loadInventory === "function") loadInventory();
+    if (typeof loadInventory === "function") await loadInventory();
     if (typeof renderTable === "function") renderTable();
     if (typeof renderActiveFilters === "function") renderActiveFilters();
     if (typeof loadSpotHistory === "function") loadSpotHistory();
@@ -479,7 +479,7 @@ async function vaultDecryptAndRestore(fileBytes, password) {
   var plainBytes = await vaultDecrypt(parsed.ciphertext, key, parsed.iv);
   var payload = JSON.parse(new TextDecoder().decode(plainBytes));
   if (!payload || !payload.data) throw new Error("Vault file appears corrupted.");
-  restoreVaultData(payload);
+  await restoreVaultData(payload);
 }
 
 // =============================================================================
