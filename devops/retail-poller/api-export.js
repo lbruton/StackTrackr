@@ -33,6 +33,7 @@ import {
   readRecentWindows,
   readRecentWindowStarts,
   readDailyAggregates,
+  writeConfidenceScores,
 } from "./db.js";
 
 const __dirname = fileURLToPath(new URL(".", import.meta.url));
@@ -162,6 +163,28 @@ function aggregateDailyRows(rawRows) {
   return result.sort((a, b) => a.date.localeCompare(b.date));
 }
 
+/**
+ * Score a vendor price for a single coin window.
+ * Single-source scoring (no Firecrawl+Vision agreement available).
+ * @param {number} price - The vendor's price for this window
+ * @param {number|null} medianPrice - Median of all vendors for this window
+ * @param {number|null} prevMedian - Previous day's median (for day-over-day check)
+ * @returns {number} Score 0-100
+ */
+function scoreVendorPrice(price, medianPrice, prevMedian) {
+  let score = 50; // base: single source
+  if (medianPrice) {
+    const deviation = Math.abs(price - medianPrice) / medianPrice;
+    if (deviation <= 0.03) score += 10;
+    else if (deviation > 0.08) score -= 15;
+  }
+  if (prevMedian) {
+    const dayDiff = Math.abs(price - prevMedian) / prevMedian;
+    if (dayDiff > 0.10) score -= 20;
+  }
+  return Math.max(0, Math.min(100, score));
+}
+
 // ---------------------------------------------------------------------------
 // Main
 // ---------------------------------------------------------------------------
@@ -235,6 +258,30 @@ async function main() {
     // latest.json per slug
     const latestRows = readCoinWindow(db, slug, latestWindow);
     const vendors = vendorMap(latestRows);
+
+    // Confidence scoring: score each vendor's price, update SQLite
+    const windowMedian = medianPrice(latestRows);
+
+    // Previous day's median for day-over-day check
+    const raw2d = readDailyAggregates(db, slug, 2);
+    const prevEntries = aggregateDailyRows(raw2d);
+    const today = latestWindow.slice(0, 10);
+    const prevEntry = prevEntries.find((e) => e.date !== today);
+    const prevMedian = prevEntry ? prevEntry.avg_median : null;
+
+    const confidenceUpdates = [];
+    for (const [vendorId, vendorData] of Object.entries(vendors)) {
+      const score = scoreVendorPrice(vendorData.price, windowMedian, prevMedian);
+      vendorData.confidence = score;
+      confidenceUpdates.push({ coinSlug: slug, vendor: vendorId, windowStart: latestWindow, confidence: score });
+    }
+    if (confidenceUpdates.length > 0) {
+      try {
+        writeConfidenceScores(db, confidenceUpdates);
+      } catch (err) {
+        warn(`Could not write confidence scores for ${slug}: ${err.message}`);
+      }
+    }
 
     // 24h windows time series — aggregate across all windows
     const recentRows = readRecentWindows(db, slug, 96);
