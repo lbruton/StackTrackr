@@ -60,10 +60,11 @@ logs/
 __pycache__/
 *.pyc
 
-# DevOps tooling — spot-poller and hooks are public, other scripts stay private
+# DevOps tooling — spot-poller, retail-poller, browserless, and hooks are public, other scripts stay private
 devops/*
 !devops/spot-poller/
 !devops/retail-poller/
+!devops/browserless/
 !devops/hooks/
 
 
