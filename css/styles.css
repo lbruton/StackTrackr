@@ -11088,3 +11088,222 @@ th {
   align-items: center;
   margin-top: 0.4rem;
 }
+
+/* ===== RETAIL MARKET PRICES ===== */
+
+/* Cards grid — responsive 2-3 column layout */
+.retail-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+/* Individual coin price card */
+.retail-card {
+  background: var(--card-bg, var(--bs-body-bg));
+  border: 1px solid var(--border-color, var(--bs-border-color));
+  border-radius: 0.5rem;
+  padding: 1rem;
+}
+
+.retail-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 0.5rem;
+}
+
+.retail-card-title {
+  font-weight: 600;
+  font-size: 0.95rem;
+  margin: 0;
+}
+
+.retail-metal-badge {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.15em 0.5em;
+}
+
+.retail-card-weight {
+  font-size: 0.8rem;
+  color: var(--text-muted, var(--bs-secondary-color));
+  margin-bottom: 0.75rem;
+}
+
+.retail-card-summary {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+  font-size: 0.85rem;
+}
+
+.retail-card-summary-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.retail-card-summary-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  color: var(--text-muted, var(--bs-secondary-color));
+}
+
+.retail-card-summary-value {
+  font-weight: 600;
+}
+
+.retail-vendor-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.2rem 0;
+  font-size: 0.82rem;
+  border-top: 1px solid var(--border-color-subtle, var(--bs-border-color));
+}
+
+.retail-vendor-name {
+  min-width: 5rem;
+  color: var(--text-muted, var(--bs-secondary-color));
+}
+
+.retail-vendor-price {
+  font-weight: 500;
+}
+
+.retail-score-dots {
+  letter-spacing: -0.1em;
+  color: var(--text-muted, var(--bs-secondary-color));
+  font-size: 0.9rem;
+}
+
+.retail-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 0.75rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--border-color-subtle, var(--bs-border-color));
+}
+
+.retail-card-date {
+  font-size: 0.75rem;
+  color: var(--text-muted, var(--bs-secondary-color));
+}
+
+.retail-card-btn-row {
+  display: flex;
+  gap: 0.4rem;
+}
+
+/* History table in Activity Log */
+.retail-history-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.retail-history-label {
+  font-size: 0.85rem;
+  font-weight: 500;
+  margin: 0;
+}
+
+.retail-history-select {
+  width: auto;
+  max-width: 220px;
+}
+
+.retail-timeframe-tabs {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.retail-tf-btn {
+  padding: 0.2rem 0.6rem;
+  font-size: 0.8rem;
+  border: 1px solid var(--border-color, var(--bs-border-color));
+  border-radius: 0.25rem;
+  background: transparent;
+  color: var(--bs-body-color);
+  cursor: pointer;
+  line-height: 1.4;
+}
+
+.retail-tf-btn.active {
+  background: var(--bs-primary);
+  border-color: var(--bs-primary);
+  color: #fff;
+}
+
+.retail-history-table-wrap {
+  overflow-x: auto;
+}
+
+.retail-history-table {
+  width: 100%;
+  font-size: 0.85rem;
+  border-collapse: collapse;
+}
+
+.retail-history-table th,
+.retail-history-table td {
+  padding: 0.35rem 0.6rem;
+  border-bottom: 1px solid var(--border-color-subtle, var(--bs-border-color));
+  white-space: nowrap;
+}
+
+.retail-history-table th {
+  font-weight: 600;
+  text-align: left;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  color: var(--text-muted, var(--bs-secondary-color));
+}
+
+/* Retail view modal */
+.retail-view-section-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted, var(--bs-secondary-color));
+  margin: 1.25rem 0 0.5rem;
+}
+
+.retail-view-table-wrap {
+  overflow-x: auto;
+  margin-bottom: 1rem;
+}
+
+.retail-view-table {
+  width: 100%;
+  font-size: 0.85rem;
+  border-collapse: collapse;
+}
+
+.retail-view-table th,
+.retail-view-table td {
+  padding: 0.35rem 0.6rem;
+  border-bottom: 1px solid var(--border-color-subtle, var(--bs-border-color));
+  white-space: nowrap;
+}
+
+.retail-view-table th {
+  font-weight: 600;
+  text-align: left;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  color: var(--text-muted, var(--bs-secondary-color));
+}
+
+.retail-view-chart-wrap {
+  position: relative;
+  height: 220px;
+  margin-bottom: 1rem;
+}
