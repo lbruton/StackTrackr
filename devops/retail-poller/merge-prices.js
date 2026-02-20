@@ -325,13 +325,13 @@ async function main() {
 
   // Write/update manifest.json — consumed by the StakTrakr app to discover latest data
   const manifestPath = join(DATA_DIR, "retail", "manifest.json");
-  let manifest = { dates: [], slugs: Object.keys(providersJson) };
+  let manifest = { dates: [], slugs: Object.keys(providersJson.coins) };
   if (existsSync(manifestPath)) {
     try {
       manifest = JSON.parse(readFileSync(manifestPath, "utf-8"));
     } catch (_e) {
       warn("Could not parse existing manifest.json — rebuilding");
-      manifest = { dates: [], slugs: Object.keys(providersJson) };
+      manifest = { dates: [], slugs: Object.keys(providersJson.coins) };
     }
   }
   if (!manifest.dates.includes(dateStr)) {
@@ -340,7 +340,7 @@ async function main() {
   manifest.dates = [...new Set(manifest.dates)].sort((a, b) => b.localeCompare(a)).slice(0, 90);
   manifest.latestDate = manifest.dates[0] || dateStr;
   manifest.lastUpdated = generatedAt;
-  manifest.slugs = Object.keys(providersJson);
+  manifest.slugs = Object.keys(providersJson.coins);
 
   if (DRY_RUN) {
     log("[DRY RUN] manifest.json");
