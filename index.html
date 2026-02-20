@@ -2428,17 +2428,31 @@
                   </div>
                   <div id="numistaStatus" class="api-status" style="margin-top: 0.5rem;"></div>
 
-                  <!-- STAK-222: Numista Response Cache stat row -->
-                  <div class="settings-group" style="margin-top: 0.75rem; border-top: 1px solid var(--border); padding-top: 0.5rem;">
-                    <div class="provider-setting-row api-cache-stat-row">
-                      <span id="numistaResponseCacheStat" class="settings-stat">Cached lookups: <strong id="numistaResponseCacheCount">0</strong> entries</span>
-                      <button id="clearNumistaCacheBtn" class="btn secondary btn-sm">Clear cache</button>
-                    </div>
-                  </div>
+                  <!-- Numista Bulk Sync (STACK-87/88) -->
+                  <div class="settings-group" id="numistaBulkSyncGroup" style="margin-top: 1rem; border-top: 1px solid var(--border); padding-top: 0.75rem; display: none;">
+                    <div class="settings-group-label">Metadata Sync</div>
+                    <p class="settings-subtext">
+                      Sync metadata for all inventory items with Numista catalog IDs.
+                      Images are loaded on-demand when viewing items. Uses your API key (counts toward monthly quota).
+                    </p>
 
-                  <!-- View Modal Field Toggles -->
-                  <div class="settings-group" style="margin-top: 1rem; border-top: 1px solid var(--border); padding-top: 0.75rem;">
-                    <details>
+                    <!-- Stats bar -->
+                    <div id="numistaSyncStats" class="settings-subtext" style="margin-bottom:0.25rem;"></div>
+
+                    <!-- STAK-222: API response cache stat (inline with sync stats) -->
+                    <div class="provider-setting-row api-cache-stat-row" style="margin-bottom:0.5rem;">
+                      <span id="numistaResponseCacheStat" class="settings-stat" style="font-size:0.8rem;opacity:0.7;">API response cache: <strong id="numistaResponseCacheCount">0</strong> entries</span>
+                      <button id="clearNumistaCacheBtn" class="btn secondary btn-sm">Clear</button>
+                    </div>
+
+                    <!-- Eligible items table (collapsible) -->
+                    <details style="margin-bottom:0.5rem;">
+                      <summary style="font-size:0.8rem;cursor:pointer;opacity:0.7;">Show eligible items</summary>
+                      <div id="numistaSyncTableContainer" class="chip-grouping-table-container" style="max-height:180px;overflow-y:auto;margin-top:0.35rem;"></div>
+                    </details>
+
+                    <!-- View modal fields (collapsible) -->
+                    <details style="margin-bottom:0.5rem;">
                       <summary style="font-size:0.8rem;cursor:pointer;opacity:0.7;">View modal fields</summary>
                       <div id="numistaViewFieldToggles" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 4px 0.5rem; margin-top: 0.35rem;">
                         <label class="settings-checkbox-label"><input type="checkbox" data-nf="denomination" checked> Denomination</label>
@@ -2457,24 +2471,6 @@
                         <label class="settings-checkbox-label"><input type="checkbox" data-nf="mintage" checked> Mintage</label>
                         <label class="settings-checkbox-label"><input type="checkbox" data-nf="imageTooltips" checked> Image tooltips</label>
                       </div>
-                    </details>
-                  </div>
-
-                  <!-- Numista Bulk Sync (STACK-87/88) -->
-                  <div class="settings-group" id="numistaBulkSyncGroup" style="margin-top: 1rem; border-top: 1px solid var(--border); padding-top: 0.75rem; display: none;">
-                    <div class="settings-group-label">Metadata Sync</div>
-                    <p class="settings-subtext">
-                      Sync metadata for all inventory items with Numista catalog IDs.
-                      Images are loaded on-demand when viewing items. Uses your API key (counts toward monthly quota).
-                    </p>
-
-                    <!-- Stats bar -->
-                    <div id="numistaSyncStats" class="settings-subtext" style="margin-bottom:0.5rem;"></div>
-
-                    <!-- Eligible items table (collapsible) -->
-                    <details style="margin-bottom:0.5rem;">
-                      <summary style="font-size:0.8rem;cursor:pointer;opacity:0.7;">Show eligible items</summary>
-                      <div id="numistaSyncTableContainer" class="chip-grouping-table-container" style="max-height:180px;overflow-y:auto;margin-top:0.35rem;"></div>
                     </details>
 
                     <!-- Activity log (collapsible) -->
