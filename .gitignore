@@ -25,6 +25,12 @@ docs/UI-WIREFRAME.md
 versionbump.py
 generate-seed-data.py
 
+# Jules AI agent artifacts (journals, patch scripts, verification screenshots)
+.jules/
+.Jules/
+verification/
+modify_*.py
+
 # Node modules (if added in future)
 node_modules/
 npm-debug.log*

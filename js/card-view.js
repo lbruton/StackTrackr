@@ -699,7 +699,7 @@ const renderCardView = (sortedItems, container) => {
     const subtext = isFiltered ? "Try adjusting your search or filters." : "Add your first item to start tracking your portfolio.";
     const action = isFiltered
       ? `<button class="btn warning btn-sm" onclick="clearAllFilters()">Clear Filters</button>`
-      : `<button class="btn success btn-sm" onclick="document.getElementById('newItemBtn').click()">Add Item</button>`;
+      : `<button class="btn success btn-sm" onclick="safeGetElement('newItemBtn').click()">Add Item</button>`;
 
     container.innerHTML = `
       <div class="empty-state" style="grid-column: 1 / -1; width: 100%;">

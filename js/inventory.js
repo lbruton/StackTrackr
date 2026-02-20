@@ -1562,7 +1562,7 @@ const renderTable = () => {
       // Use onclick handler that calls global functions exposed on window
       const action = isFiltered
         ? `<button class="btn warning btn-sm" onclick="clearAllFilters()">Clear Filters</button>`
-        : `<button class="btn success btn-sm" onclick="document.getElementById('newItemBtn').click()">Add Item</button>`;
+        : `<button class="btn success btn-sm" onclick="safeGetElement('newItemBtn').click()">Add Item</button>`;
 
       const emptyHtml = `
         <tr class="empty-state-row">
