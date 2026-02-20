@@ -3098,6 +3098,7 @@ if (typeof window !== 'undefined') {
   window.loadExchangeRates = loadExchangeRates;
   window.saveExchangeRates = saveExchangeRates;
   window.fetchExchangeRates = fetchExchangeRates;
+  window.escapeHtml = escapeHtml;
 }
 
 if (typeof module !== 'undefined' && module.exports) {
@@ -3111,5 +3112,6 @@ if (typeof module !== 'undefined' && module.exports) {
     getContrastColor,
     debounce,
     generateUUID,
+    escapeHtml,
   };
 }

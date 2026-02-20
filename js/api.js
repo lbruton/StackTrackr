@@ -827,9 +827,9 @@ const renderApiHistoryTable = () => {
     "<tr><th data-column=\"timestamp\">Time</th><th data-column=\"metal\">Metal</th><th data-column=\"spot\">Price</th><th data-column=\"provider\">Source</th></tr>";
   data.forEach((e) => {
     const sourceLabel = e.source === "api-hourly"
-      ? `${e.provider || ""} (hourly)`
-      : (e.provider || "");
-    html += `<tr><td>${e.timestamp}</td><td>${e.metal}</td><td>${formatCurrency(
+      ? `${escapeHtml(e.provider || "")} (hourly)`
+      : (escapeHtml(e.provider || ""));
+    html += `<tr><td>${escapeHtml(e.timestamp)}</td><td>${escapeHtml(e.metal)}</td><td>${formatCurrency(
       e.spot,
     )}</td><td>${sourceLabel}</td></tr>`;
   });
