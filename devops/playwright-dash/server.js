@@ -92,13 +92,17 @@ function getSessions() {
 function resolveFilePath(urlPath) {
   const rel = urlPath.slice('/files/'.length);
   const parts = rel.split('/');
+  let base;
   if (parts[0] === 'screenshots') {
-    return path.join(SCREENSHOTS_DIR, parts.slice(1).join('/'));
+    base = SCREENSHOTS_DIR;
+  } else if (parts[0] === 'test-results') {
+    base = TEST_RESULTS_DIR;
+  } else {
+    return null;
   }
-  if (parts[0] === 'test-results') {
-    return path.join(TEST_RESULTS_DIR, parts.slice(1).join('/'));
-  }
-  return null;
+  const resolved = path.resolve(base, parts.slice(1).join('/'));
+  if (!resolved.startsWith(base + path.sep) && resolved !== base) return null;
+  return resolved;
 }
 
 function capture(targetUrl) {
@@ -210,7 +214,18 @@ const server = http.createServer((req, res) => {
     req.on('data', d => { body += d; });
     req.on('end', () => {
       try {
-        const { path: urlPath } = JSON.parse(body);
+        let parsed;
+        try { parsed = JSON.parse(body); } catch {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Invalid JSON body' }));
+          return;
+        }
+        const { path: urlPath } = parsed;
+        if (!urlPath || typeof urlPath !== 'string') {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Missing path' }));
+          return;
+        }
         const filePath = resolveFilePath(urlPath);
         if (!filePath) {
           res.writeHead(400, { 'Content-Type': 'application/json' });
