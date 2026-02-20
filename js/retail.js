@@ -336,16 +336,6 @@ const renderRetailHistoryTable = () => {
   const select = safeGetElement("retailHistorySlugSelect");
   const tbody = safeGetElement("retailHistoryTableBody");
 
-  if (select.options.length === 0) {
-    RETAIL_SLUGS.forEach((slug) => {
-      const meta = RETAIL_COIN_META[slug];
-      const opt = document.createElement("option");
-      opt.value = slug;
-      opt.textContent = meta.name;
-      select.appendChild(opt);
-    });
-  }
-
   const slug = select.value || RETAIL_SLUGS[0];
   const allHistory = getRetailHistoryForSlug(slug);
 

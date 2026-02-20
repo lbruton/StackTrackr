@@ -1355,11 +1355,11 @@ const bindRetailMarketListeners = () => {
       const histBtn = e.target.closest('[data-retail-history-slug]');
       if (histBtn) {
         const slug = histBtn.dataset.retailHistorySlug;
-        if (typeof switchSettingsSection === 'function') switchSettingsSection('changelog');
         const select = getExistingElement('retailHistorySlugSelect');
         if (select) {
           select.value = slug;
         }
+        if (typeof switchSettingsSection === 'function') switchSettingsSection('changelog');
         const marketTab = document.querySelector('[data-log-tab="market"]');
         if (marketTab && typeof switchLogTab === 'function') switchLogTab('market');
         return;
