@@ -11368,78 +11368,78 @@ th {
    ============================================================================= */
 
 [data-theme="hello-kitty"] {
-  /* Primary Colors — hot pink + vivid purple */
-  --primary: #db2777;
-  --primary-hover: #be185d;
-  --secondary: #9333ea;
-  --secondary-hover: #7e22ce;
-  --success: #059669;
-  --success-hover: #047857;
-  --info: #7c3aed;
-  --info-hover: #6d28d9;
-  --warning: #d97706;
-  --warning-hover: #b45309;
-  --danger: #e11d48;
-  --danger-hover: #be123c;
-  --disclaimer-color: var(--warning);
+  /* Primary Colors — hot pink + vivid purple, bright on dark (mirrors dark mode) */
+  --primary: #f472b6;
+  --primary-hover: #ec4899;
+  --secondary: #c084fc;
+  --secondary-hover: #a855f7;
+  --success: #34d399;
+  --success-hover: #10b981;
+  --info: #a78bfa;
+  --info-hover: #8b5cf6;
+  --warning: #fbbf24;
+  --warning-hover: #f59e0b;
+  --danger: #fb7185;
+  --danger-hover: #f43f5e;
+  --disclaimer-color: var(--danger);
 
-  /* Metal-specific Colors */
-  --silver: #c084fc;
-  --gold: #f59e0b;
-  --platinum: #e879f9;
-  --palladium: #f472b6;
+  /* Metal-specific Colors — vivid on dark */
+  --silver: #e879f9;
+  --gold: #fbbf24;
+  --platinum: #f9a8d4;
+  --palladium: #c084fc;
 
-  /* Inventory Type Colors — all pink/purple family */
-  --type-coin-bg: #db2777;
+  /* Inventory Type Colors */
+  --type-coin-bg: #ec4899;
   --type-coin-text: #ffffff;
-  --type-round-bg: #9333ea;
+  --type-round-bg: #a855f7;
   --type-round-text: #ffffff;
-  --type-bar-bg: #c026d3;
+  --type-bar-bg: #d946ef;
   --type-bar-text: #ffffff;
-  --type-note-bg: #7c3aed;
+  --type-note-bg: #8b5cf6;
   --type-note-text: #ffffff;
-  --type-set-bg: #be185d;
+  --type-set-bg: #db2777;
   --type-set-text: #ffffff;
-  --type-other-bg: #6d28d9;
+  --type-other-bg: #7c3aed;
   --type-other-text: #ffffff;
 
-  /* Backgrounds — saturated pink → purple gradient tones, no white */
-  --bg-primary: #f472b6;   /* hot pink */
-  --bg-secondary: #e879f9; /* fuchsia */
-  --bg-tertiary: #c084fc;  /* lavender purple */
-  --bg-card: #fce7f3;      /* pale pink (cards pop against hot-pink bg) */
+  /* Backgrounds — dark purple base mirroring dark mode depth levels */
+  --bg-primary: #1a0428;   /* very dark purple  ≈ dark #0f172a */
+  --bg-secondary: #2d0a4e; /* dark purple        ≈ dark #1e293b */
+  --bg-tertiary: #3d1166;  /* medium purple      ≈ dark #334155 */
+  --bg-card: #2d0a4e;      /* card bg            ≈ dark #1e293b */
 
   /* Map legacy tokens */
   --bg: var(--bg-primary);
   --bg-elev-1: var(--bg-secondary);
   --bg-elev-2: var(--bg-tertiary);
-  --surface: #f3d8ff;      /* soft lavender for surfaces */
-  --surface-alt: #f0c8ff;  /* slightly deeper lavender */
+  --surface: var(--bg-card);
+  --surface-alt: #3d1166;
 
-  /* Text — very dark purple for contrast on bright pink */
-  --text-primary: #3b0764;
-  --text-secondary: #581c87;
-  --text-muted: #7e22ce;
+  /* Text — light pink on dark purple (mirrors dark mode's near-white text) */
+  --text-primary: #fce7f3;   /* ≈ dark #f8fafc */
+  --text-secondary: #f9a8d4; /* ≈ dark #cbd5e1 */
+  --text-muted: #f472b6;     /* ≈ dark #94a3b8 */
   --text: var(--text-primary);
-  --chip-text: #3b0764;
-  --chip-active-outline: rgba(59, 7, 100, 0.85);
-  --chip-search-outline: rgba(147, 51, 234, 0.8);
+  --chip-text: #fce7f3;
+  --chip-active-outline: rgba(252, 231, 243, 0.9);
+  --chip-search-outline: rgba(192, 132, 252, 0.85);
 
-  /* Borders & Shadows — vivid magenta */
-  --border: #e879f9;
-  --border-hover: #d946ef;
-  --shadow-sm: 0 1px 2px 0 rgb(219 39 119 / 0.25);
-  --shadow: 0 4px 6px -1px rgb(219 39 119 / 0.3), 0 2px 4px -2px rgb(219 39 119 / 0.2);
+  /* Borders & Shadows */
+  --border: #6d28d9;
+  --border-hover: #7c3aed;
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.4);
+  --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.4), 0 2px 4px -2px rgb(0 0 0 / 0.3);
   --shadow-lg:
-    0 10px 15px -3px rgb(219 39 119 / 0.3), 0 4px 6px -4px rgb(219 39 119 / 0.2);
-  --back-to-top-bg: #f472b6;
-  --back-to-top-border: #e879f9;
-  --back-to-top-text: #3b0764;
-  --back-to-top-hover-bg: #e879f9;
-  --back-to-top-shadow: 0 2px 8px rgb(219 39 119 / 0.35);
+    0 10px 15px -3px rgb(0 0 0 / 0.4), 0 4px 6px -4px rgb(0 0 0 / 0.3);
+  --back-to-top-bg: #2d0a4e;
+  --back-to-top-border: #6d28d9;
+  --back-to-top-text: #fce7f3;
+  --back-to-top-hover-bg: #3d1166;
+  --back-to-top-shadow: 0 2px 8px rgb(0 0 0 / 0.5);
 }
 
-/* Logo: reuse light-mode version in hello-kitty */
-[data-theme="hello-kitty"] .stackr-logo .light-mode { display: block; }
-[data-theme="hello-kitty"] .stackr-logo .dark-mode  { display: none; }
+/* Logo: use dark-mode logo in hello-kitty (light logo on dark background) */
+[data-theme="hello-kitty"] .stackr-logo .light-mode { display: none; }
+[data-theme="hello-kitty"] .stackr-logo .dark-mode  { display: block; }
 [data-theme="hello-kitty"] .stackr-logo .sepia-mode { display: none; }

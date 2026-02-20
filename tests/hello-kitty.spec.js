@@ -35,7 +35,7 @@ test('hello-kitty easter egg: shift+click Sepia applies pink/purple theme', asyn
   const bgColor = await page.evaluate(() =>
     getComputedStyle(document.documentElement).getPropertyValue('--bg-primary').trim()
   );
-  expect(bgColor).toBe('#f472b6');
+  expect(bgColor).toBe('#1a0428');
 
   // Screenshot proof
   await page.screenshot({ path: 'test-results/hello-kitty-theme.png', fullPage: false });

@@ -52,6 +52,7 @@ const bindAppearanceAndHeaderListeners = () => {
     btn.addEventListener('click', (e) => {
       if (e.shiftKey && btn.dataset.theme === 'sepia') {
         document.documentElement.setAttribute('data-theme', 'hello-kitty');
+        saveDataSync(THEME_KEY, 'hello-kitty');
         document.querySelectorAll('.theme-option').forEach((b) => b.classList.remove('active'));
         if (typeof renderTable === 'function') renderTable();
         if (typeof updateAllSparklines === 'function') updateAllSparklines();
