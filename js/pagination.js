@@ -2,7 +2,7 @@
 // =============================================================================
 
 /**
- * Updates the max-height of .table-section to show exactly `itemsPerPage` rows.
+ * Updates the max-height of .table-section to show at most `itemsPerPage` items.
  * Measures actual rendered heights (thead + first row) so it adapts to font
  * scaling, browser zoom, and responsive breakpoints.
  *
@@ -29,13 +29,13 @@ const updatePortalHeight = () => {
     // Determine columns from card width vs container width
     const gridWidth = cardGrid.getBoundingClientRect().width;
     const cols = Math.max(1, Math.round(gridWidth / (cardRect.width + gap)));
-    const totalRows = Math.ceil(totalCards / cols);
 
-    if (totalRows <= itemsPerPage || itemsPerPage === Infinity) {
+    if (itemsPerPage === Infinity || totalCards <= itemsPerPage) {
       cardGrid.style.maxHeight = 'none';
       cardGrid.style.overflowY = '';
     } else {
-      const portalHeight = (itemsPerPage * cardHeight);
+      const rowsToShow = Math.ceil(itemsPerPage / cols);
+      const portalHeight = rowsToShow * cardHeight;
       cardGrid.style.maxHeight = `${portalHeight}px`;
       cardGrid.style.overflowY = 'auto';
     }
