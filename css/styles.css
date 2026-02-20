@@ -11285,6 +11285,17 @@ th {
 .retail-trend--down { background: rgba(239, 68, 68, 0.12);  color: #ef4444; }
 .retail-trend--flat { background: rgba(148, 163, 184, 0.12); color: #94a3b8; }
 
+/* STAK-217: Best price highlight */
+.retail-vendor-row--best .retail-vendor-name::before {
+  content: "★ ";
+  font-size: 0.7rem;
+  color: #10b981;
+}
+.retail-vendor-row--best .retail-vendor-price {
+  color: #10b981;
+  font-weight: 700;
+}
+
 
 /* History table in Activity Log */
 .retail-history-controls {
