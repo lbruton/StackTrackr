@@ -637,6 +637,18 @@ const setupProviderSettingsListeners = (provider) => {
     });
   });
 
+  // Auto-refresh toggle (STAK-222)
+  const autoRefreshToggle = document.getElementById(`autoRefresh_${provider}`);
+  if (autoRefreshToggle) {
+    autoRefreshToggle.addEventListener('change', () => {
+      const config = loadApiConfig();
+      if (!config.autoRefresh) config.autoRefresh = {};
+      config.autoRefresh[provider] = autoRefreshToggle.checked;
+      saveApiConfig(config);
+      if (typeof startSpotBackgroundSync === 'function') startSpotBackgroundSync();
+    });
+  }
+
 };
 
 /**
@@ -2235,6 +2247,12 @@ const populateApiSection = () => {
     const cacheSelect = document.getElementById(`cacheTimeout_${provider}`);
     if (cacheSelect) {
       cacheSelect.value = cfg.cacheTimeouts?.[provider] ?? 24;
+    }
+
+    // Load saved auto-refresh state (STAK-222)
+    const autoRefreshToggle = document.getElementById(`autoRefresh_${provider}`);
+    if (autoRefreshToggle) {
+      autoRefreshToggle.checked = cfg.autoRefresh?.[provider] ?? (provider === 'STAKTRAKR');
     }
 
     // Initialize history pull cost indicator

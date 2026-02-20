@@ -91,3 +91,61 @@ test.describe('UI State Checks', () => {
     await expect(page.locator('#settingsModal')).not.toBeVisible();
   });
 });
+
+// =============================================================================
+// STAK-222: API Pipeline UI checks
+// =============================================================================
+
+const dismissAck = async (page) => {
+  const ackModal = page.locator('#ackModal');
+  if (await ackModal.isVisible()) {
+    await page.locator('#ackAcceptBtn').click();
+    await expect(ackModal).not.toBeVisible();
+  }
+};
+
+test('STAK-222: auto-refresh toggle renders for STAKTRAKR provider', async ({ page }) => {
+  await page.goto('/');
+  await dismissAck(page);
+  await page.locator('#settingsBtn').click();
+  // Navigate to API section then click STAKTRAKR provider tab
+  await page.locator('.settings-nav-item[data-section="api"]').click();
+  await page.locator('.settings-provider-tab[data-provider="STAKTRAKR"]').click();
+  const toggle = page.locator('#autoRefresh_STAKTRAKR');
+  await expect(toggle).toBeVisible();
+  // StakTrakr defaults to checked
+  await expect(toggle).toBeChecked();
+});
+
+test('STAK-222: Numista cache stat row and clear button render', async ({ page }) => {
+  await page.goto('/');
+  await dismissAck(page);
+  await page.locator('#settingsBtn').click();
+  await page.locator('.settings-nav-item[data-section="api"]').click();
+  // Stat row
+  const statRow = page.locator('#numistaResponseCacheStat');
+  await expect(statRow).toBeVisible();
+  // Clear button
+  const clearBtn = page.locator('#clearNumistaCacheBtn');
+  await expect(clearBtn).toBeVisible();
+});
+
+test('STAK-222: cached entries show muted badge in history log', async ({ page }) => {
+  await page.goto('/');
+  await dismissAck(page);
+  // Inject a cached entry into spotHistory
+  await page.evaluate(() => {
+    window.spotHistory.push({
+      spot: 32.00,
+      metal: 'Silver',
+      source: 'cached',
+      provider: 'StakTrakr',
+      timestamp: new Date().toISOString().slice(0, 19).replace('T', ' '),
+    });
+  });
+  await page.locator('#settingsBtn').click();
+  await page.locator('.settings-nav-item[data-section="api"]').click();
+  // The history table should contain a "Cached" badge
+  const cachedBadge = page.locator('.api-history-cached-badge').first();
+  await expect(cachedBadge).toBeVisible();
+});
