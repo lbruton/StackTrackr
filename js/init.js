@@ -422,8 +422,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (typeof loadGoldbackEstimateModifier === 'function') loadGoldbackEstimateModifier();
 
     // Load retail market prices and start background auto-sync
-    if (typeof loadRetailPrices === 'function') loadRetailPrices();
-    if (typeof loadRetailPriceHistory === 'function') loadRetailPriceHistory();
+    if (typeof initRetailPrices === 'function') initRetailPrices();
     if (typeof startRetailBackgroundSync === 'function') startRetailBackgroundSync();
 
     // Load display currency preference and cached exchange rates (STACK-50)

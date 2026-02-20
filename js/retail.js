@@ -124,6 +124,10 @@ const getRetailHistoryForSlug = (slug) => retailPriceHistory[slug] || [];
  * @returns {Promise<void>}
  */
 const syncRetailPrices = async ({ ui = true } = {}) => {
+  if (_retailSyncInProgress) {
+    debugLog("[retail] Sync already in progress — skipping", "info");
+    return;
+  }
   const syncBtn = safeGetElement("retailSyncBtn");
   const syncStatus = safeGetElement("retailSyncStatus");
 
