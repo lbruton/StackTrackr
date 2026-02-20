@@ -37,7 +37,7 @@ const MANIFEST_PATH = (() => {
   return join(DATA_DIR, "retail", "_artifacts", today, "manifest.json");
 })();
 
-const GEMINI_MODEL = "gemini-2.0-flash";
+const GEMINI_MODEL = "gemini-2.5-flash";
 const CONCURRENCY = 4;  // Gemini free tier allows higher concurrency
 
 // ---------------------------------------------------------------------------
@@ -103,7 +103,9 @@ Where:
     }],
     generationConfig: {
       temperature: 0,
-      maxOutputTokens: 256,
+      maxOutputTokens: 1024,
+      // Disable thinking for gemini-2.5-flash to avoid token budget issues
+      thinkingConfig: { thinkingBudget: 0 },
     },
   };
 
@@ -121,19 +123,30 @@ Where:
   }
 
   const json = await response.json();
-  const rawText = json?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+  // With thinking models, parts[0] may be thinking content — get the last text part
+  const parts = json?.candidates?.[0]?.content?.parts ?? [];
+  const rawText = (parts.filter(p => p.text && !p.thought).pop()?.text ?? parts[0]?.text ?? "").trim();
 
   if (!rawText) {
     throw new Error("Empty response from Gemini");
   }
 
-  // Parse the JSON response
+  // Parse the JSON response — handle markdown fences and trailing content
   try {
-    // Strip markdown code fences if present
-    const cleaned = rawText.replace(/^```json?\s*/i, "").replace(/```\s*$/, "").trim();
-    return JSON.parse(cleaned);
+    // Try direct parse first
+    return JSON.parse(rawText);
   } catch {
-    throw new Error(`Could not parse Gemini response: ${rawText.slice(0, 100)}`);
+    // Strip markdown fences and extract the first {...} object
+    const stripped = rawText.replace(/^```json?\s*/i, "").replace(/```[\s\S]*$/m, "").trim();
+    const match = stripped.match(/\{[\s\S]*\}/);
+    if (match) {
+      try {
+        return JSON.parse(match[0]);
+      } catch {
+        // fall through
+      }
+    }
+    throw new Error(`Could not parse Gemini response: ${rawText.slice(0, 200)}`);
   }
 }
 

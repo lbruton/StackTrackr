@@ -4,14 +4,15 @@
  * ================================
  * Visits dealer product pages via Browserbase (cloud) or local Chromium,
  * takes a screenshot of each, and writes a manifest for downstream
- * extraction (Gemini vision, Jules, etc.).
+ * extraction (Gemini vision, etc.).
  *
- * Starter set: 4 coins × 2 providers = 8 screenshots.
- * Expand via COINS / PROVIDERS env vars or by editing providers.json.
+ * Parallel mode (Browserbase): one session per provider, all running
+ * concurrently. 44 pages (4 providers × 11 coins) completes in ~90s
+ * instead of ~6 minutes sequential.
  *
  * Usage:
- *   npm run capture            # Browserbase cloud
- *   npm run capture:local      # Local Chromium (needs `npx playwright install chromium`)
+ *   node capture.js            # Browserbase cloud (parallel)
+ *   BROWSER_MODE=local node capture.js  # Local Chromium (sequential)
  */
 
 import { chromium } from "playwright-core";
@@ -30,32 +31,23 @@ const BROWSERBASE_API_KEY = process.env.BROWSERBASE_API_KEY;
 const BROWSERBASE_PROJECT_ID = process.env.BROWSERBASE_PROJECT_ID;
 const DATA_DIR = resolve(process.env.DATA_DIR || "../../data");
 
-// Starter set — override with COINS=ase,age,... and PROVIDERS=sdbullion,apmex,...
-const DEFAULT_COINS = ["ase", "age", "generic-silver-round", "buffalo"];
-const DEFAULT_PROVIDERS = ["sdbullion", "apmex"];
+const COINS = (process.env.COINS || "ase,age,generic-silver-round,buffalo").split(",").map(s => s.trim());
+const PROVIDERS = (process.env.PROVIDERS || "sdbullion,apmex").split(",").map(s => s.trim());
 
-const COINS = (process.env.COINS || DEFAULT_COINS.join(",")).split(",").map(s => s.trim());
-const PROVIDERS = (process.env.PROVIDERS || DEFAULT_PROVIDERS.join(",")).split(",").map(s => s.trim());
-
-// Per-page delays (ms) — be polite, avoid rate limits
+// Per-page delays (ms) — polite pacing within each session
 const PAGE_LOAD_WAIT = 4000;    // wait after domcontentloaded for JS rendering
-const INTER_PAGE_DELAY = 1500;  // pause between pages
+const INTER_PAGE_DELAY = 1000;  // pause between pages within a session
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
 function today() {
-  return new Date().toISOString().slice(0, 10); // YYYY-MM-DD
-}
-
-function timestamp() {
-  return new Date().toISOString().replace(/[:.]/g, "-");
+  return new Date().toISOString().slice(0, 10);
 }
 
 function log(msg) {
-  const ts = new Date().toISOString().slice(11, 19);
-  console.log(`[${ts}] ${msg}`);
+  console.log(`[${new Date().toISOString().slice(11, 19)}] ${msg}`);
 }
 
 function loadProviders() {
@@ -63,26 +55,30 @@ function loadProviders() {
   try {
     return JSON.parse(readFileSync(providerPath, "utf-8"));
   } catch (err) {
-    console.error(`Failed to read providers.json at ${providerPath}`);
-    console.error(err.message);
+    console.error(`Failed to read providers.json at ${providerPath}: ${err.message}`);
     process.exit(1);
   }
 }
 
-function buildTargetList(providersJson) {
-  const targets = [];
+/**
+ * Build target list grouped by coin.
+ * Each coin gets its own session (4 providers × ~8s = ~35s, well under 5-min limit).
+ * 11 coins fits under the 25-concurrent-browser account limit.
+ *
+ * Returns: Map<coinSlug, Array<{coin, metal, provider, url}>>
+ */
+function buildTargetsByCoin(providersJson) {
+  const byCoin = new Map();
   for (const coinSlug of COINS) {
     const coin = providersJson.coins[coinSlug];
     if (!coin) {
       log(`WARN: coin "${coinSlug}" not found in providers.json, skipping`);
       continue;
     }
+    const targets = [];
     for (const provider of coin.providers) {
       if (!PROVIDERS.includes(provider.id)) continue;
-      if (!provider.enabled || !provider.url) {
-        log(`WARN: ${coinSlug}/${provider.id} disabled or no URL, skipping`);
-        continue;
-      }
+      if (!provider.enabled || !provider.url) continue;
       targets.push({
         coin: coinSlug,
         metal: coin.metal,
@@ -90,30 +86,16 @@ function buildTargetList(providersJson) {
         url: provider.url,
       });
     }
+    if (targets.length > 0) byCoin.set(coinSlug, targets);
   }
-  return targets;
+  return byCoin;
 }
 
 // ---------------------------------------------------------------------------
-// Browser connection
+// Browserbase session management
 // ---------------------------------------------------------------------------
 
-async function connectBrowser() {
-  if (BROWSER_MODE === "local") {
-    log("Launching local Chromium...");
-    // Requires: npx playwright install chromium
-    const { chromium: localChromium } = await import("playwright");
-    return localChromium.launch({ headless: true });
-  }
-
-  // Browserbase cloud via CDP
-  if (!BROWSERBASE_API_KEY || !BROWSERBASE_PROJECT_ID) {
-    console.error("BROWSERBASE_API_KEY and BROWSERBASE_PROJECT_ID required for cloud mode.");
-    console.error("Set BROWSER_MODE=local to use local Chromium instead.");
-    process.exit(1);
-  }
-
-  log("Creating Browserbase session...");
+async function createBrowserbaseSession() {
   const response = await fetch("https://www.browserbase.com/v1/sessions", {
     method: "POST",
     headers: {
@@ -125,58 +107,52 @@ async function connectBrowser() {
 
   if (!response.ok) {
     const text = await response.text();
-    console.error(`Browserbase session creation failed (${response.status}): ${text}`);
-    process.exit(1);
+    throw new Error(`Browserbase session creation failed (${response.status}): ${text.slice(0, 200)}`);
   }
 
   const session = await response.json();
-  log(`Browserbase session: ${session.id}`);
-
-  const wsUrl = `wss://connect.browserbase.com?apiKey=${BROWSERBASE_API_KEY}&sessionId=${session.id}`;
-  log("Connecting via CDP...");
-  return chromium.connectOverCDP(wsUrl);
+  return session.id;
 }
 
-// ---------------------------------------------------------------------------
-// Main capture loop
-// ---------------------------------------------------------------------------
-
-async function captureAll() {
-  const providersJson = loadProviders();
-  const targets = buildTargetList(providersJson);
-
-  if (targets.length === 0) {
-    console.error("No targets to capture. Check COINS/PROVIDERS env vars.");
-    process.exit(1);
-  }
-
-  log(`Capturing ${targets.length} pages (${COINS.length} coins × ${PROVIDERS.length} providers)`);
-
-  // Create output directory: data/retail/_artifacts/YYYY-MM-DD/
-  const dateStr = today();
-  const outDir = join(DATA_DIR, "retail", "_artifacts", dateStr);
-  mkdirSync(outDir, { recursive: true });
-
-  const browser = await connectBrowser();
+async function connectBrowserbaseSession(sessionId) {
+  const wsUrl = `wss://connect.browserbase.com?apiKey=${BROWSERBASE_API_KEY}&sessionId=${sessionId}`;
+  const browser = await chromium.connectOverCDP(wsUrl);
   const context = browser.contexts()[0] || await browser.newContext({
     viewport: { width: 1280, height: 900 },
     userAgent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
   });
   const page = await context.newPage();
+  return { browser, page };
+}
 
-  const manifest = {
-    captured_at: new Date().toISOString(),
-    date: dateStr,
-    coins: COINS,
-    providers: PROVIDERS,
-    results: [],
-  };
+// ---------------------------------------------------------------------------
+// Capture one coin's targets using a dedicated browser session
+// ---------------------------------------------------------------------------
+
+async function captureCoin(coinSlug, targets, outDir) {
+  const results = [];
+
+  let browser, page;
+  if (BROWSER_MODE === "local") {
+    const { chromium: localChromium } = await import("playwright");
+    browser = await localChromium.launch({ headless: true });
+    const ctx = await browser.newContext({
+      viewport: { width: 1280, height: 900 },
+      userAgent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+    });
+    page = await ctx.newPage();
+  } else {
+    log(`[${coinSlug}] Creating Browserbase session...`);
+    const sessionId = await createBrowserbaseSession();
+    log(`[${coinSlug}] Session: ${sessionId}`);
+    ({ browser, page } = await connectBrowserbaseSession(sessionId));
+  }
 
   for (const target of targets) {
     const filename = `${target.coin}_${target.provider}.png`;
     const filepath = join(outDir, filename);
 
-    log(`${target.coin}/${target.provider} → ${target.url}`);
+    log(`[${coinSlug}/${target.provider}] → ${target.url}`);
 
     try {
       const response = await page.goto(target.url, {
@@ -185,15 +161,11 @@ async function captureAll() {
       });
       const status = response ? response.status() : 0;
 
-      // Wait for JS to render prices
       await page.waitForTimeout(PAGE_LOAD_WAIT);
-
-      // Take full-page screenshot
       await page.screenshot({ path: filepath, fullPage: false });
-
       const title = await page.title();
 
-      manifest.results.push({
+      results.push({
         coin: target.coin,
         provider: target.provider,
         metal: target.metal,
@@ -204,9 +176,9 @@ async function captureAll() {
         ok: status === 200 && !title.toLowerCase().includes("not found"),
       });
 
-      log(`  ✓ ${status} "${title.slice(0, 60)}" → ${filename}`);
+      log(`[${coinSlug}/${target.provider}]   ✓ ${status} "${title.slice(0, 50)}" → ${filename}`);
     } catch (err) {
-      manifest.results.push({
+      results.push({
         coin: target.coin,
         provider: target.provider,
         metal: target.metal,
@@ -217,30 +189,70 @@ async function captureAll() {
         ok: false,
         error: err.message.slice(0, 200),
       });
-      log(`  ✗ ERROR: ${err.message.slice(0, 100)}`);
+      log(`[${coinSlug}/${target.provider}]   ✗ ${err.message.slice(0, 80)}`);
     }
 
-    // Polite delay between requests
-    await page.waitForTimeout(INTER_PAGE_DELAY);
+    if (targets.indexOf(target) < targets.length - 1) {
+      await page.waitForTimeout(INTER_PAGE_DELAY);
+    }
   }
 
+  await browser.close();
+  return results;
+}
+
+// ---------------------------------------------------------------------------
+// Main
+// ---------------------------------------------------------------------------
+
+async function captureAll() {
+  if (BROWSER_MODE !== "local" && (!BROWSERBASE_API_KEY || !BROWSERBASE_PROJECT_ID)) {
+    console.error("BROWSERBASE_API_KEY and BROWSERBASE_PROJECT_ID required for cloud mode.");
+    process.exit(1);
+  }
+
+  const providersJson = loadProviders();
+  const byCoin = buildTargetsByCoin(providersJson);
+
+  if (byCoin.size === 0) {
+    console.error("No targets to capture. Check COINS/PROVIDERS env vars.");
+    process.exit(1);
+  }
+
+  const totalTargets = [...byCoin.values()].reduce((n, arr) => n + arr.length, 0);
+  log(`Capturing ${totalTargets} pages — ${byCoin.size} parallel sessions (one per coin, 4 providers each)`);
+
+  const dateStr = today();
+  const outDir = join(DATA_DIR, "retail", "_artifacts", dateStr);
+  mkdirSync(outDir, { recursive: true });
+
+  // Launch one session per coin, all in parallel — each session only ~35s,
+  // well within Browserbase's 5-min session limit. 11 sessions < 25 account limit.
+  const coinJobs = [...byCoin.entries()].map(([coinSlug, targets]) =>
+    captureCoin(coinSlug, targets, outDir)
+  );
+
+  const allResults = (await Promise.all(coinJobs)).flat();
+
   // Write manifest
+  const manifest = {
+    captured_at: new Date().toISOString(),
+    date: dateStr,
+    coins: COINS,
+    providers: PROVIDERS,
+    results: allResults,
+  };
+
   const manifestPath = join(outDir, "manifest.json");
   writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
   log(`Manifest written: ${manifestPath}`);
 
-  // Summary
-  const ok = manifest.results.filter(r => r.ok).length;
-  const fail = manifest.results.filter(r => !r.ok).length;
-  log(`Done: ${ok} captured, ${fail} failed out of ${targets.length} targets`);
+  const ok = allResults.filter(r => r.ok).length;
+  const fail = allResults.filter(r => !r.ok).length;
+  log(`Done: ${ok}/${totalTargets} captured, ${fail} failed`);
 
-  await browser.close();
   return manifest;
 }
-
-// ---------------------------------------------------------------------------
-// Run
-// ---------------------------------------------------------------------------
 
 captureAll().catch(err => {
   console.error("Fatal:", err);
