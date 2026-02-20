@@ -637,6 +637,9 @@ const SYNC_FILE_PATH = '/StakTrakr/staktrakr-sync.stvault';
 /** Dropbox path for the lightweight sync metadata pointer */
 const SYNC_META_PATH = '/StakTrakr/staktrakr-sync.json';
 
+/** Dropbox path for the encrypted user-image vault (IndexedDB photos) */
+const SYNC_IMAGES_PATH = '/StakTrakr/staktrakr-images.stvault';
+
 /**
  * Keys included in a sync vault (excludes API keys, tokens, spot history).
  * Only inventory data + display preferences that are meaningful across devices.
@@ -1523,6 +1526,7 @@ if (typeof window !== "undefined") {
   window.SYNC_PUSH_DEBOUNCE = SYNC_PUSH_DEBOUNCE;
   window.SYNC_FILE_PATH = SYNC_FILE_PATH;
   window.SYNC_META_PATH = SYNC_META_PATH;
+  window.SYNC_IMAGES_PATH = SYNC_IMAGES_PATH;
   window.SYNC_SCOPE_KEYS = SYNC_SCOPE_KEYS;
   window.CERT_LOOKUP_URLS = CERT_LOOKUP_URLS;
   // Inline chip config

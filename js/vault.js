@@ -483,6 +483,127 @@ async function vaultDecryptAndRestore(fileBytes, password) {
 }
 
 // =============================================================================
+// IMAGE VAULT (STAK-181) — cloud sync for user-uploaded IndexedDB photos
+// =============================================================================
+
+/**
+ * Convert a Blob to a base64 string (strips the data-URI prefix).
+ * @param {Blob} blob
+ * @returns {Promise<string>}
+ */
+function _blobToBase64(blob) {
+  return new Promise(function (resolve, reject) {
+    var reader = new FileReader();
+    reader.onload = function () { resolve(reader.result.split(',')[1]); };
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+}
+
+/**
+ * Convert a base64 string back to a Blob.
+ * @param {string} b64
+ * @param {string} mimeType
+ * @returns {Blob}
+ */
+function _base64ToBlob(b64, mimeType) {
+  var byteChars = atob(b64);
+  var bytes = new Uint8Array(byteChars.length);
+  for (var i = 0; i < byteChars.length; i++) { bytes[i] = byteChars.charCodeAt(i); }
+  return new Blob([bytes], { type: mimeType || 'image/webp' });
+}
+
+/**
+ * Export user images from IndexedDB, convert Blobs to base64, and compute a
+ * stable hash so push can skip upload when images haven't changed.
+ * @returns {Promise<{payload: object, hash: string, imageCount: number}|null>}
+ *   null when there are no user-uploaded images
+ */
+async function collectAndHashImageVault() {
+  if (typeof imageCache === 'undefined' || typeof imageCache.exportAllUserImages !== 'function') return null;
+  var records = await imageCache.exportAllUserImages();
+  if (!records || records.length === 0) return null;
+
+  var serialized = [];
+  for (var i = 0; i < records.length; i++) {
+    var r = records[i];
+    var entry = { uuid: r.uuid, cachedAt: r.cachedAt, size: r.size };
+    if (r.obverse instanceof Blob) {
+      entry.obverse = await _blobToBase64(r.obverse);
+      entry.obverseType = r.obverse.type;
+    }
+    if (r.reverse instanceof Blob) {
+      entry.reverse = await _blobToBase64(r.reverse);
+      entry.reverseType = r.reverse.type;
+    }
+    serialized.push(entry);
+  }
+
+  var payload = {
+    _meta: {
+      appVersion: typeof APP_VERSION !== 'undefined' ? APP_VERSION : 'unknown',
+      exportTimestamp: new Date().toISOString(),
+      imageCount: serialized.length,
+    },
+    records: serialized,
+  };
+
+  var hash = simpleHash(JSON.stringify(serialized.map(function (e) { return e.uuid + ':' + e.size; })));
+  return { payload: payload, hash: hash, imageCount: serialized.length };
+}
+
+/**
+ * Encrypt a user-image vault payload into raw bytes for cloud upload.
+ * @param {string} password
+ * @param {object} payload - From collectAndHashImageVault().payload
+ * @returns {Promise<Uint8Array>}
+ */
+async function vaultEncryptImageVault(password, payload) {
+  var plaintext = new TextEncoder().encode(JSON.stringify(payload));
+  var salt = vaultRandomBytes(32);
+  var iv = vaultRandomBytes(12);
+  var key = await vaultDeriveKey(password, salt, VAULT_PBKDF2_ITERATIONS);
+  var ciphertext = await vaultEncrypt(plaintext, key, iv);
+  return serializeVaultFile(salt, iv, VAULT_PBKDF2_ITERATIONS, ciphertext);
+}
+
+/**
+ * Restore user images from a decrypted image vault payload.
+ * @param {object} payload
+ * @returns {Promise<number>} Number of images imported
+ */
+async function restoreImageVaultData(payload) {
+  if (!payload || !Array.isArray(payload.records)) return 0;
+  if (typeof imageCache === 'undefined' || typeof imageCache.importUserImageRecord !== 'function') return 0;
+
+  var count = 0;
+  for (var i = 0; i < payload.records.length; i++) {
+    var r = payload.records[i];
+    if (!r.uuid) continue;
+    var record = { uuid: r.uuid, cachedAt: r.cachedAt, size: r.size };
+    if (r.obverse) record.obverse = _base64ToBlob(r.obverse, r.obverseType);
+    if (r.reverse) record.reverse = _base64ToBlob(r.reverse, r.reverseType);
+    var ok = await imageCache.importUserImageRecord(record);
+    if (ok) count++;
+  }
+  return count;
+}
+
+/**
+ * Decrypt image vault bytes and import all user photos into IndexedDB.
+ * @param {Uint8Array} fileBytes
+ * @param {string} password
+ * @returns {Promise<number>} Number of images restored
+ */
+async function vaultDecryptAndRestoreImages(fileBytes, password) {
+  var parsed = parseVaultFile(new Uint8Array(fileBytes));
+  var key = await vaultDeriveKey(password, parsed.salt, parsed.iterations);
+  var plainBytes = await vaultDecrypt(parsed.ciphertext, key, parsed.iv);
+  var payload = JSON.parse(new TextDecoder().decode(plainBytes));
+  return restoreImageVaultData(payload);
+}
+
+// =============================================================================
 // EXPORT FLOW
 // =============================================================================
 
@@ -890,3 +1011,6 @@ window.vaultEncryptToBytes = vaultEncryptToBytes;
 window.vaultEncryptToBytesScoped = vaultEncryptToBytesScoped;
 window.vaultDecryptAndRestore = vaultDecryptAndRestore;
 window.collectVaultData = collectVaultData;
+window.collectAndHashImageVault = collectAndHashImageVault;
+window.vaultEncryptImageVault = vaultEncryptImageVault;
+window.vaultDecryptAndRestoreImages = vaultDecryptAndRestoreImages;

@@ -441,6 +441,38 @@ async function pushSyncVault() {
     var rev = vaultResult.rev || '';
     console.log('[CloudSync] Vault uploaded, rev:', rev);
 
+    // Upload image vault if user photos exist and have changed (STAK-181)
+    var imageVaultMeta = null;
+    try {
+      if (typeof collectAndHashImageVault === 'function') {
+        var imgData = await collectAndHashImageVault();
+        if (imgData) {
+          var lastPush = syncGetLastPush();
+          var lastImageHash = lastPush ? lastPush.imageHash : null;
+          if (imgData.hash !== lastImageHash) {
+            debugLog('[CloudSync] Image vault changed — uploading', imgData.imageCount, 'photos');
+            var imageBytes = await vaultEncryptImageVault(password, imgData.payload);
+            var imgArg = JSON.stringify({ path: SYNC_IMAGES_PATH, mode: 'overwrite', autorename: false, mute: true });
+            var imgResp = await fetch('https://content.dropboxapi.com/2/files/upload', {
+              method: 'POST',
+              headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/octet-stream', 'Dropbox-API-Arg': imgArg },
+              body: imageBytes,
+            });
+            if (!imgResp.ok) throw new Error('Image vault upload failed: ' + imgResp.status);
+            imageVaultMeta = { imageCount: imgData.imageCount, hash: imgData.hash };
+            debugLog('[CloudSync] Image vault uploaded:', imgData.imageCount, 'photos');
+          } else {
+            // Hash unchanged — carry forward existing meta so other devices can still detect it
+            imageVaultMeta = lastImageHash ? { imageCount: imgData.imageCount, hash: imgData.hash } : null;
+            debugLog('[CloudSync] Image vault unchanged — skipping upload');
+          }
+        }
+      }
+    } catch (imgErr) {
+      // Image vault failure is non-fatal; log and continue
+      console.warn('[CloudSync] Image vault push error (non-fatal):', imgErr);
+    }
+
     // Upload the metadata pointer JSON
     var metaPayload = {
       rev: rev,
@@ -450,6 +482,7 @@ async function pushSyncVault() {
       syncId: syncId,
       deviceId: deviceId,
     };
+    if (imageVaultMeta) metaPayload.imageVault = imageVaultMeta;
     var metaBytes = new TextEncoder().encode(JSON.stringify(metaPayload));
     var metaArg = JSON.stringify({
       path: SYNC_META_PATH,
@@ -470,6 +503,7 @@ async function pushSyncVault() {
 
     // Persist push state
     var pushMeta = { syncId: syncId, timestamp: now, rev: rev, itemCount: itemCount };
+    if (imageVaultMeta) pushMeta.imageHash = imageVaultMeta.hash;
     syncSetLastPush(pushMeta);
     syncSetCursor(rev);
 
@@ -711,12 +745,43 @@ async function pullSyncVault(remoteMeta) {
       throw new Error('vaultDecryptAndRestore not available');
     }
 
+    // Pull image vault if remote has photos we don't have (STAK-181)
+    var pulledImageHash = null;
+    if (remoteMeta && remoteMeta.imageVault && typeof vaultDecryptAndRestoreImages === 'function') {
+      try {
+        var lastPull = syncGetLastPull();
+        var localImageHash = lastPull ? lastPull.imageHash : null;
+        if (remoteMeta.imageVault.hash !== localImageHash) {
+          debugLog('[CloudSync] Image vault changed — pulling', remoteMeta.imageVault.imageCount, 'photos');
+          var imgApiArg = JSON.stringify({ path: SYNC_IMAGES_PATH });
+          var imgPullResp = await fetch('https://content.dropboxapi.com/2/files/download', {
+            method: 'POST',
+            headers: { Authorization: 'Bearer ' + token, 'Dropbox-API-Arg': imgApiArg },
+          });
+          if (imgPullResp.ok) {
+            var imgBytes = new Uint8Array(await imgPullResp.arrayBuffer());
+            var restoredCount = await vaultDecryptAndRestoreImages(imgBytes, password);
+            pulledImageHash = remoteMeta.imageVault.hash;
+            debugLog('[CloudSync] Image vault restored:', restoredCount, 'photos');
+          } else {
+            console.warn('[CloudSync] Image vault download failed:', imgPullResp.status);
+          }
+        } else {
+          debugLog('[CloudSync] Image vault hash matches — no image pull needed');
+          pulledImageHash = localImageHash;
+        }
+      } catch (imgErr) {
+        console.warn('[CloudSync] Image vault pull error (non-fatal):', imgErr);
+      }
+    }
+
     // Record the pull
     var pullMeta = {
       syncId: remoteMeta ? remoteMeta.syncId : null,
       timestamp: remoteMeta ? remoteMeta.timestamp : Date.now(),
       rev: remoteMeta ? remoteMeta.rev : null,
     };
+    if (pulledImageHash) pullMeta.imageHash = pulledImageHash;
     syncSetLastPull(pullMeta);
 
     var duration = Date.now() - pullStart;
