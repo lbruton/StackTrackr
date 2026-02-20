@@ -1413,6 +1413,31 @@ const bindStorageListeners = () => {
 };
 
 /**
+ * Binds clear buttons for Numista and PCGS response caches (STAK-222).
+ */
+const bindApiCacheListeners = () => {
+  const clearNumistaBtn = document.getElementById('clearNumistaCacheBtn');
+  if (clearNumistaBtn) {
+    clearNumistaBtn.addEventListener('click', () => {
+      const count = typeof clearNumistaCache === 'function' ? clearNumistaCache() : 0;
+      if (typeof appAlert === 'function') appAlert(`Cleared ${count} Numista cached lookups.`);
+      const countEl = document.getElementById('numistaResponseCacheCount');
+      if (countEl) countEl.textContent = '0';
+    });
+  }
+
+  const clearPcgsBtn = document.getElementById('clearPcgsCacheBtn');
+  if (clearPcgsBtn) {
+    clearPcgsBtn.addEventListener('click', () => {
+      const count = typeof clearPcgsCache === 'function' ? clearPcgsCache() : 0;
+      if (typeof appAlert === 'function') appAlert(`Cleared ${count} PCGS cached lookups.`);
+      const countEl = document.getElementById('pcgsResponseCacheCount');
+      if (countEl) countEl.textContent = '0';
+    });
+  }
+};
+
+/**
  * Wires up all Settings modal event listeners.
  * Called once during initialization.
  */
@@ -1428,6 +1453,7 @@ const setupSettingsEventListeners = () => {
   bindCloudStorageListeners();
   bindStorageListeners();
   bindRetailMarketListeners();
+  bindApiCacheListeners();
 };
 
 if (typeof window !== 'undefined') {

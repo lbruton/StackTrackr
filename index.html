@@ -2428,6 +2428,14 @@
                   </div>
                   <div id="numistaStatus" class="api-status" style="margin-top: 0.5rem;"></div>
 
+                  <!-- STAK-222: Numista Response Cache stat row -->
+                  <div class="settings-group" style="margin-top: 0.75rem; border-top: 1px solid var(--border); padding-top: 0.5rem;">
+                    <div class="provider-setting-row api-cache-stat-row">
+                      <span id="numistaResponseCacheStat" class="settings-stat">Cached lookups: <strong id="numistaResponseCacheCount">0</strong> entries</span>
+                      <button id="clearNumistaCacheBtn" class="btn secondary btn-sm">Clear cache</button>
+                    </div>
+                  </div>
+
                   <!-- View Modal Field Toggles -->
                   <div class="settings-group" style="margin-top: 1rem; border-top: 1px solid var(--border); padding-top: 0.75rem;">
                     <div class="settings-group-label">View modal fields</div>
@@ -2513,6 +2521,14 @@
                     </div>
                   </div>
                   <div id="pcgsStatus" class="api-status" style="margin-top: 0.5rem;"></div>
+
+                  <!-- STAK-222: PCGS Response Cache stat row -->
+                  <div class="settings-group" style="margin-top: 0.75rem; border-top: 1px solid var(--border); padding-top: 0.5rem;">
+                    <div class="provider-setting-row api-cache-stat-row">
+                      <span id="pcgsResponseCacheStat" class="settings-stat">Cached lookups: <strong id="pcgsResponseCacheCount">0</strong> entries</span>
+                      <button id="clearPcgsCacheBtn" class="btn secondary btn-sm">Clear cache</button>
+                    </div>
+                  </div>
                 </div>
               </div>
 
