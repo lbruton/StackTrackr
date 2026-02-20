@@ -528,16 +528,23 @@ async function collectAndHashImageVault() {
   for (var i = 0; i < records.length; i++) {
     var r = records[i];
     var entry = { uuid: r.uuid, cachedAt: r.cachedAt, size: r.size };
-    if (r.obverse instanceof Blob) {
-      entry.obverse = await _blobToBase64(r.obverse);
-      entry.obverseType = r.obverse.type;
-    }
-    if (r.reverse instanceof Blob) {
-      entry.reverse = await _blobToBase64(r.reverse);
-      entry.reverseType = r.reverse.type;
+    try {
+      if (r.obverse instanceof Blob) {
+        entry.obverse = await _blobToBase64(r.obverse);
+        entry.obverseType = r.obverse.type;
+      }
+      if (r.reverse instanceof Blob) {
+        entry.reverse = await _blobToBase64(r.reverse);
+        entry.reverseType = r.reverse.type;
+      }
+    } catch (blobErr) {
+      debugLog('[Vault] Image vault: skipping blob read failure for uuid', r.uuid, blobErr);
+      continue;
     }
     serialized.push(entry);
   }
+
+  if (serialized.length === 0) return null;
 
   var payload = {
     _meta: {
@@ -548,7 +555,11 @@ async function collectAndHashImageVault() {
     records: serialized,
   };
 
-  var hash = simpleHash(JSON.stringify(serialized.map(function (e) { return e.uuid + ':' + e.size; })));
+  // Hash includes a content sample (first 32 chars of obverse base64) so that
+  // replacing an image with one of identical byte size still triggers an upload.
+  var hash = simpleHash(JSON.stringify(serialized.map(function (e) {
+    return e.uuid + ':' + e.size + ':' + (e.obverse ? e.obverse.slice(0, 32) : '');
+  })));
   return { payload: payload, hash: hash, imageCount: serialized.length };
 }
 
@@ -559,6 +570,7 @@ async function collectAndHashImageVault() {
  * @returns {Promise<Uint8Array>}
  */
 async function vaultEncryptImageVault(password, payload) {
+  if (!password) throw new Error('Image vault encryption requires a non-empty password.');
   var plaintext = new TextEncoder().encode(JSON.stringify(payload));
   var salt = vaultRandomBytes(32);
   var iv = vaultRandomBytes(12);
@@ -577,15 +589,25 @@ async function restoreImageVaultData(payload) {
   if (typeof imageCache === 'undefined' || typeof imageCache.importUserImageRecord !== 'function') return 0;
 
   var count = 0;
+  var failed = 0;
   for (var i = 0; i < payload.records.length; i++) {
     var r = payload.records[i];
     if (!r.uuid) continue;
-    var record = { uuid: r.uuid, cachedAt: r.cachedAt, size: r.size };
-    if (r.obverse) record.obverse = _base64ToBlob(r.obverse, r.obverseType);
-    if (r.reverse) record.reverse = _base64ToBlob(r.reverse, r.reverseType);
-    var ok = await imageCache.importUserImageRecord(record);
-    if (ok) count++;
+    try {
+      var record = { uuid: r.uuid, cachedAt: r.cachedAt, size: r.size };
+      if (r.obverse) record.obverse = _base64ToBlob(r.obverse, r.obverseType);
+      if (r.reverse) record.reverse = _base64ToBlob(r.reverse, r.reverseType);
+      var ok = await imageCache.importUserImageRecord(record);
+      if (ok) { count++; } else {
+        failed++;
+        debugLog('[Vault] Image vault: importUserImageRecord returned false for uuid', r.uuid);
+      }
+    } catch (recErr) {
+      failed++;
+      debugLog('[Vault] Image vault: record import error for uuid', r.uuid, recErr);
+    }
   }
+  if (failed > 0) debugLog('[Vault] Image vault restore: ' + failed + ' of ' + payload.records.length + ' records failed to import.');
   return count;
 }
 
@@ -596,11 +618,20 @@ async function restoreImageVaultData(payload) {
  * @returns {Promise<number>} Number of images restored
  */
 async function vaultDecryptAndRestoreImages(fileBytes, password) {
-  var parsed = parseVaultFile(new Uint8Array(fileBytes));
-  var key = await vaultDeriveKey(password, parsed.salt, parsed.iterations);
-  var plainBytes = await vaultDecrypt(parsed.ciphertext, key, parsed.iv);
-  var payload = JSON.parse(new TextDecoder().decode(plainBytes));
-  return restoreImageVaultData(payload);
+  try {
+    var parsed = parseVaultFile(new Uint8Array(fileBytes));
+    var key = await vaultDeriveKey(password, parsed.salt, parsed.iterations);
+    var plainBytes = await vaultDecrypt(parsed.ciphertext, key, parsed.iv);
+    var payload = JSON.parse(new TextDecoder().decode(plainBytes));
+    return restoreImageVaultData(payload);
+  } catch (err) {
+    // Re-throw with a clear label so callers can surface meaningful messages
+    var msg = String(err.message || err);
+    var isPasswordErr = msg.indexOf('Incorrect password') !== -1 || msg.indexOf('corrupted') !== -1;
+    throw new Error(isPasswordErr
+      ? 'Image vault decryption failed — check your sync password.'
+      : 'Image vault restore failed: ' + msg);
+  }
 }
 
 // =============================================================================

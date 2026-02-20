@@ -469,8 +469,10 @@ async function pushSyncVault() {
         }
       }
     } catch (imgErr) {
-      // Image vault failure is non-fatal; log and continue
-      console.warn('[CloudSync] Image vault push error (non-fatal):', imgErr);
+      // Image vault failure is non-fatal — inventory sync continues
+      var imgErrMsg = String(imgErr.message || imgErr);
+      console.warn('[CloudSync] Image vault push error (non-fatal):', imgErrMsg);
+      logCloudSyncActivity('image_vault_push', 'fail', imgErrMsg);
     }
 
     // Upload the metadata pointer JSON
@@ -763,15 +765,24 @@ async function pullSyncVault(remoteMeta) {
             var restoredCount = await vaultDecryptAndRestoreImages(imgBytes, password);
             pulledImageHash = remoteMeta.imageVault.hash;
             debugLog('[CloudSync] Image vault restored:', restoredCount, 'photos');
+          } else if (imgPullResp.status === 404) {
+            // File not yet uploaded (fresh account or first push in progress) — not an error.
+            // Set hash sentinel to stop retry loop until manifest changes.
+            pulledImageHash = remoteMeta.imageVault.hash;
+            debugLog('[CloudSync] Image vault not found on remote (404) — skipping');
           } else {
-            console.warn('[CloudSync] Image vault download failed:', imgPullResp.status);
+            var imgErrBody = await imgPullResp.text().catch(function () { return ''; });
+            console.warn('[CloudSync] Image vault download failed:', imgPullResp.status, imgErrBody.slice(0, 120));
+            logCloudSyncActivity('image_vault_pull', 'fail', 'HTTP ' + imgPullResp.status);
           }
         } else {
           debugLog('[CloudSync] Image vault hash matches — no image pull needed');
           pulledImageHash = localImageHash;
         }
       } catch (imgErr) {
-        console.warn('[CloudSync] Image vault pull error (non-fatal):', imgErr);
+        var imgPullErrMsg = String(imgErr.message || imgErr);
+        console.warn('[CloudSync] Image vault pull error (non-fatal):', imgPullErrMsg);
+        logCloudSyncActivity('image_vault_pull', 'fail', imgPullErrMsg);
       }
     }
 
