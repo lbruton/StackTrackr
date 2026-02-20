@@ -34,6 +34,14 @@ const RETAIL_VENDOR_NAMES = {
   jmbullion:      "JM",
 };
 
+/**
+ * Formats a price value as USD string, or "—" if null/undefined.
+ * Retail prices are USD source data — display in USD regardless of user currency setting.
+ * @param {number|null|undefined} v
+ * @returns {string}
+ */
+const _fmtRetailPrice = (v) => (v != null ? `$${Number(v).toFixed(2)}` : "\u2014");
+
 // ---------------------------------------------------------------------------
 // State
 // ---------------------------------------------------------------------------
@@ -49,19 +57,37 @@ let retailPriceHistory = {};
 // ---------------------------------------------------------------------------
 
 const loadRetailPrices = () => {
-  retailPrices = loadDataSync(RETAIL_PRICES_KEY) || null;
+  try {
+    retailPrices = loadDataSync(RETAIL_PRICES_KEY) || null;
+  } catch (err) {
+    console.error("[retail] Failed to load retail prices:", err);
+    retailPrices = null;
+  }
 };
 
 const saveRetailPrices = () => {
-  saveDataSync(RETAIL_PRICES_KEY, retailPrices);
+  try {
+    saveDataSync(RETAIL_PRICES_KEY, retailPrices);
+  } catch (err) {
+    console.error("[retail] Failed to save retail prices:", err);
+  }
 };
 
 const loadRetailPriceHistory = () => {
-  retailPriceHistory = loadDataSync(RETAIL_PRICE_HISTORY_KEY) || {};
+  try {
+    retailPriceHistory = loadDataSync(RETAIL_PRICE_HISTORY_KEY) || {};
+  } catch (err) {
+    console.error("[retail] Failed to load retail price history:", err);
+    retailPriceHistory = {};
+  }
 };
 
 const saveRetailPriceHistory = () => {
-  saveDataSync(RETAIL_PRICE_HISTORY_KEY, retailPriceHistory);
+  try {
+    saveDataSync(RETAIL_PRICE_HISTORY_KEY, retailPriceHistory);
+  } catch (err) {
+    console.error("[retail] Failed to save retail price history:", err);
+  }
 };
 
 // ---------------------------------------------------------------------------
@@ -213,8 +239,6 @@ const _buildRetailCard = (slug, meta, priceData) => {
     noData.textContent = "No data — click Sync";
     card.appendChild(noData);
   } else {
-    const fmt = (v) => (v != null ? `$${Number(v).toFixed(2)}` : "—");
-
     const summary = document.createElement("div");
     summary.className = "retail-summary-row";
     [["Avg", priceData.average_price], ["Med", priceData.median_price], ["Low", priceData.lowest_price]].forEach(([label, val]) => {
@@ -224,7 +248,7 @@ const _buildRetailCard = (slug, meta, priceData) => {
       lbl.className = "retail-label";
       lbl.textContent = label;
       item.appendChild(lbl);
-      item.appendChild(document.createTextNode(fmt(val)));
+      item.appendChild(document.createTextNode(_fmtRetailPrice(val)));
       summary.appendChild(item);
     });
     card.appendChild(summary);
@@ -244,7 +268,7 @@ const _buildRetailCard = (slug, meta, priceData) => {
 
       const priceEl = document.createElement("span");
       priceEl.className = "retail-vendor-price";
-      priceEl.textContent = fmt(price);
+      priceEl.textContent = _fmtRetailPrice(price);
 
       const scoreEl = document.createElement("span");
       scoreEl.className = "retail-vendor-score";
@@ -328,16 +352,15 @@ const renderRetailHistoryTable = () => {
 
   history.forEach((entry) => {
     const tr = document.createElement("tr");
-    const fmt = (v) => (v != null ? `$${Number(v).toFixed(2)}` : "—");
     const cells = [
       entry.date,
-      fmt(entry.average_price),
-      fmt(entry.median_price),
-      fmt(entry.lowest_price),
-      fmt(entry.prices_by_site && entry.prices_by_site.apmex),
-      fmt(entry.prices_by_site && entry.prices_by_site.monumentmetals),
-      fmt(entry.prices_by_site && entry.prices_by_site.sdbullion),
-      fmt(entry.prices_by_site && entry.prices_by_site.jmbullion),
+      _fmtRetailPrice(entry.average_price),
+      _fmtRetailPrice(entry.median_price),
+      _fmtRetailPrice(entry.lowest_price),
+      _fmtRetailPrice(entry.prices_by_site && entry.prices_by_site.apmex),
+      _fmtRetailPrice(entry.prices_by_site && entry.prices_by_site.monumentmetals),
+      _fmtRetailPrice(entry.prices_by_site && entry.prices_by_site.sdbullion),
+      _fmtRetailPrice(entry.prices_by_site && entry.prices_by_site.jmbullion),
     ];
     cells.forEach((text) => {
       const td = document.createElement("td");
@@ -361,19 +384,20 @@ const initRetailPrices = () => {
 // Global exposure
 // ---------------------------------------------------------------------------
 
-window.retailPrices = retailPrices;
-window.retailPriceHistory = retailPriceHistory;
-window.syncRetailPrices = syncRetailPrices;
-window.loadRetailPrices = loadRetailPrices;
-window.saveRetailPrices = saveRetailPrices;
-window.loadRetailPriceHistory = loadRetailPriceHistory;
-window.saveRetailPriceHistory = saveRetailPriceHistory;
-window.getRetailHistoryForSlug = getRetailHistoryForSlug;
-window.renderRetailCards = renderRetailCards;
-window.renderRetailHistoryTable = renderRetailHistoryTable;
-window.initRetailPrices = initRetailPrices;
-window.RETAIL_COIN_META = RETAIL_COIN_META;
-window.RETAIL_SLUGS = RETAIL_SLUGS;
-window.RETAIL_VENDOR_NAMES = RETAIL_VENDOR_NAMES;
+if (typeof window !== "undefined") {
+  window.retailPriceHistory = retailPriceHistory;
+  window.syncRetailPrices = syncRetailPrices;
+  window.loadRetailPrices = loadRetailPrices;
+  window.saveRetailPrices = saveRetailPrices;
+  window.loadRetailPriceHistory = loadRetailPriceHistory;
+  window.saveRetailPriceHistory = saveRetailPriceHistory;
+  window.getRetailHistoryForSlug = getRetailHistoryForSlug;
+  window.renderRetailCards = renderRetailCards;
+  window.renderRetailHistoryTable = renderRetailHistoryTable;
+  window.initRetailPrices = initRetailPrices;
+  window.RETAIL_COIN_META = RETAIL_COIN_META;
+  window.RETAIL_SLUGS = RETAIL_SLUGS;
+  window.RETAIL_VENDOR_NAMES = RETAIL_VENDOR_NAMES;
+}
 
 // =============================================================================
