@@ -3711,9 +3711,8 @@
                     <thead>
                       <tr>
                         <th>Date</th>
-                        <th>Avg</th>
-                        <th>Median</th>
-                        <th>Lowest</th>
+                        <th>Avg Median</th>
+                        <th>Avg Low</th>
                         <th>APMEX</th>
                         <th>Monument</th>
                         <th>SDB</th>
@@ -4764,16 +4763,14 @@
     </script>
 
   <!-- ===== RETAIL VIEW MODAL ===== -->
-  <div id="retailViewModal" class="modal-overlay" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="retailViewCoinName">
-    <div class="modal-container modal-lg">
+  <div id="retailViewModal" class="modal" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="retailViewCoinName">
+    <div class="modal-content">
       <div class="modal-header">
-        <div class="modal-title-group">
-          <h2 id="retailViewCoinName" class="modal-title"></h2>
-          <div class="modal-subtitle-row">
-            <span id="retailViewModalSubtitle" class="modal-subtitle-text"></span>
-          </div>
+        <div>
+          <h2 id="retailViewCoinName"></h2>
+          <span id="retailViewModalSubtitle" class="settings-subtext"></span>
         </div>
-        <button class="modal-close-btn" onclick="closeRetailViewModal()" aria-label="Close market price detail">&times;</button>
+        <button class="modal-close" onclick="closeRetailViewModal()" aria-label="Close market price detail">&times;</button>
       </div>
       <div class="modal-body">
         <h3 class="retail-view-section-title">Current Prices</h3>
@@ -4785,21 +4782,41 @@
             <tbody id="retailViewCurrentTableBody"></tbody>
           </table>
         </div>
-        <h3 class="retail-view-section-title">Price History</h3>
-        <div class="retail-view-chart-wrap">
-          <canvas id="retailViewChart" aria-label="Retail price history chart"></canvas>
+        <div class="retail-view-tabs">
+          <button id="retailViewTabHistory" class="retail-view-tab active" type="button" onclick="_switchRetailViewTab('history')">Price History</button>
+          <button id="retailViewTabIntraday" class="retail-view-tab" type="button" onclick="_switchRetailViewTab('intraday')">24h Chart</button>
         </div>
-        <div class="retail-view-table-wrap">
-          <table id="retailViewHistoryTable" class="retail-view-table">
-            <thead>
-              <tr>
-                <th>Date</th><th>Avg</th><th>Median</th><th>Lowest</th>
-                <th>APMEX</th><th>Monument</th><th>SDB</th><th>JM</th>
-              </tr>
-            </thead>
-            <tbody id="retailViewHistoryTableBody"></tbody>
-          </table>
+        <div id="retailViewHistorySection">
+          <div class="retail-view-chart-wrap">
+            <canvas id="retailViewChart" aria-label="Retail price history chart"></canvas>
+          </div>
+          <div class="retail-view-table-wrap">
+            <table id="retailViewHistoryTable" class="retail-view-table">
+              <thead>
+                <tr>
+                  <th>Date</th><th>Avg Median</th><th>Avg Low</th>
+                  <th>APMEX</th><th>Monument</th><th>SDB</th><th>JM</th>
+                </tr>
+              </thead>
+              <tbody id="retailViewHistoryTableBody"></tbody>
+            </table>
+          </div>
         </div>
+        <div id="retailViewIntradaySection" style="display:none;">
+          <div class="retail-intraday-chart-wrap">
+            <canvas id="retailViewIntradayChart" aria-label="24h intraday price chart"></canvas>
+          </div>
+          <p id="retailViewIntradayNoData" class="settings-subtext" style="display:none;text-align:center;padding:1rem;">No intraday data — check back after the next 15-minute sync.</p>
+          <div class="retail-view-table-wrap" style="margin-top:.5rem;">
+            <table class="retail-view-table">
+              <thead>
+                <tr><th>Time (local)</th><th>Median</th><th>Low</th></tr>
+              </thead>
+              <tbody id="retailViewIntradayTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+        <p class="retail-view-disclaimer">Prices sourced from StakTrakr's 15-minute retail price API. Data is for informational purposes only and may not reflect current market rates.</p>
       </div>
     </div>
   </div>

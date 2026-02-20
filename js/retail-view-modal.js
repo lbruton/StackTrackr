@@ -2,6 +2,131 @@
 // =============================================================================
 
 let _retailViewModalChart = null;
+let _retailViewIntradayChart = null;
+
+/**
+ * Switches between the "Price History" and "24h Chart" tabs in the retail view modal.
+ * @param {"history"|"intraday"} tab
+ */
+const _switchRetailViewTab = (tab) => {
+  const historySection = safeGetElement("retailViewHistorySection");
+  const intradaySection = safeGetElement("retailViewIntradaySection");
+  const histTab = safeGetElement("retailViewTabHistory");
+  const intTab = safeGetElement("retailViewTabIntraday");
+  const isHistory = tab === "history";
+  historySection.style.display = isHistory ? "" : "none";
+  intradaySection.style.display = isHistory ? "none" : "";
+  histTab.classList.toggle("active", isHistory);
+  intTab.classList.toggle("active", !isHistory);
+};
+
+/**
+ * Builds the intraday chart (median + low) from windows_24h data for a slug.
+ * @param {string} slug
+ */
+const _buildIntradayChart = (slug) => {
+  const canvas = safeGetElement("retailViewIntradayChart");
+  const noDataEl = safeGetElement("retailViewIntradayNoData");
+  const tableBody = safeGetElement("retailViewIntradayTableBody");
+
+  const intraday = typeof retailIntradayData !== "undefined" ? retailIntradayData[slug] : null;
+  const windows = intraday && Array.isArray(intraday.windows_24h) ? intraday.windows_24h : [];
+
+  if (noDataEl) noDataEl.style.display = windows.length < 2 ? "" : "none";
+  if (canvas) canvas.style.display = windows.length >= 2 ? "" : "none";
+
+  if (_retailViewIntradayChart) {
+    _retailViewIntradayChart.destroy();
+    _retailViewIntradayChart = null;
+  }
+
+  if (windows.length >= 2 && canvas instanceof HTMLCanvasElement && typeof Chart !== "undefined") {
+    const labels = windows.map((w) => {
+      const d = new Date(w.window);
+      return `${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`;
+    });
+    _retailViewIntradayChart = new Chart(canvas, {
+      type: "line",
+      data: {
+        labels,
+        datasets: [
+          {
+            label: "Median",
+            data: windows.map((w) => w.median),
+            borderColor: "#3b82f6",
+            backgroundColor: "transparent",
+            borderWidth: 2,
+            pointRadius: 1,
+            tension: 0.3,
+          },
+          {
+            label: "Low",
+            data: windows.map((w) => w.low),
+            borderColor: "#22c55e",
+            backgroundColor: "transparent",
+            borderWidth: 1.5,
+            borderDash: [4, 3],
+            pointRadius: 1,
+            tension: 0.3,
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: true, position: "top" },
+          tooltip: {
+            callbacks: {
+              label: (ctx) => `$${Number(ctx.raw).toFixed(2)}`,
+            },
+          },
+        },
+        scales: {
+          x: {
+            ticks: {
+              maxTicksLimit: 12,
+              color: typeof getChartTextColor === "function" ? getChartTextColor() : undefined,
+            },
+          },
+          y: {
+            ticks: {
+              color: typeof getChartTextColor === "function" ? getChartTextColor() : undefined,
+              callback: (v) => `$${Number(v).toFixed(2)}`,
+            },
+          },
+        },
+      },
+    });
+  }
+
+  // Compact recent-windows table (5 most recent)
+  if (tableBody) {
+    tableBody.innerHTML = "";
+    const recent = windows.slice(-5).reverse();
+    recent.forEach((w) => {
+      const tr = document.createElement("tr");
+      const fmt = (v) => (v != null ? `$${Number(v).toFixed(2)}` : "\u2014");
+      const d = new Date(w.window);
+      const timeLabel = `${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`;
+      [timeLabel, fmt(w.median), fmt(w.low)].forEach((text) => {
+        const td = document.createElement("td");
+        td.textContent = text;
+        tr.appendChild(td);
+      });
+      tableBody.appendChild(tr);
+    });
+    if (recent.length === 0) {
+      const tr = document.createElement("tr");
+      const td = document.createElement("td");
+      td.colSpan = 3;
+      td.className = "settings-subtext";
+      td.textContent = "No intraday data available.";
+      tr.appendChild(td);
+      tableBody.appendChild(tr);
+    }
+  }
+};
 
 /**
  * Opens the per-coin retail price detail modal.
@@ -20,13 +145,15 @@ const openRetailViewModal = (slug) => {
   titleEl.textContent = meta.name;
   subtitleEl.textContent = `${meta.weight} troy oz \u00b7 ${meta.metal}`;
 
-  // Current prices table
+  // Current prices table — new vendors map shape
   const priceData = retailPrices && retailPrices.prices ? retailPrices.prices[slug] || null : null;
   currentTableBody.innerHTML = "";
   if (priceData) {
+    const vendorMap = priceData.vendors || {};
     Object.entries(RETAIL_VENDOR_NAMES).forEach(([key, label]) => {
-      const price = priceData.prices_by_site && priceData.prices_by_site[key];
-      const score = priceData.scores_by_site && priceData.scores_by_site[key];
+      const vendorData = vendorMap[key];
+      const price = vendorData ? vendorData.price : null;
+      const score = vendorData ? vendorData.confidence : null;
       if (price == null) return;
       const tr = document.createElement("tr");
 
@@ -69,7 +196,7 @@ const openRetailViewModal = (slug) => {
     currentTableBody.appendChild(tr);
   }
 
-  // History table
+  // History table — new avg_median/avg_low/vendors.*.avg shape (7 columns)
   const history = getRetailHistoryForSlug(slug);
   historyTableBody.innerHTML = "";
   history.forEach((entry) => {
@@ -77,13 +204,12 @@ const openRetailViewModal = (slug) => {
     const fmt = (v) => (v != null ? `$${Number(v).toFixed(2)}` : "\u2014");
     [
       entry.date,
-      fmt(entry.average_price),
-      fmt(entry.median_price),
-      fmt(entry.lowest_price),
-      fmt(entry.prices_by_site?.apmex),
-      fmt(entry.prices_by_site?.monumentmetals),
-      fmt(entry.prices_by_site?.sdbullion),
-      fmt(entry.prices_by_site?.jmbullion),
+      fmt(entry.avg_median),
+      fmt(entry.avg_low),
+      fmt(entry.vendors && entry.vendors.apmex && entry.vendors.apmex.avg),
+      fmt(entry.vendors && entry.vendors.monumentmetals && entry.vendors.monumentmetals.avg),
+      fmt(entry.vendors && entry.vendors.sdbullion && entry.vendors.sdbullion.avg),
+      fmt(entry.vendors && entry.vendors.jmbullion && entry.vendors.jmbullion.avg),
     ].forEach((text) => {
       const td = document.createElement("td");
       td.textContent = text;
@@ -92,7 +218,7 @@ const openRetailViewModal = (slug) => {
     historyTableBody.appendChild(tr);
   });
 
-  // Chart (average price over time) — hide the chart wrap when insufficient data
+  // Daily price history chart (avg_median over time)
   const chartWrap = chartCanvas instanceof HTMLCanvasElement
     ? chartCanvas.closest(".retail-view-chart-wrap")
     : null;
@@ -109,8 +235,8 @@ const openRetailViewModal = (slug) => {
       data: {
         labels: sorted.map((e) => e.date),
         datasets: [{
-          label: "Avg Price (USD)",
-          data: sorted.map((e) => e.average_price),
+          label: "Avg Median (USD)",
+          data: sorted.map((e) => e.avg_median),
           borderColor: "var(--accent-primary, #4a9eff)",
           backgroundColor: "transparent",
           pointRadius: 2,
@@ -133,6 +259,12 @@ const openRetailViewModal = (slug) => {
     });
   }
 
+  // Build intraday chart for 24h tab
+  _buildIntradayChart(slug);
+
+  // Default to history tab on open
+  _switchRetailViewTab("history");
+
   if (typeof openModalById === "function") openModalById("retailViewModal");
 };
 
@@ -141,12 +273,17 @@ const closeRetailViewModal = () => {
     _retailViewModalChart.destroy();
     _retailViewModalChart = null;
   }
+  if (_retailViewIntradayChart) {
+    _retailViewIntradayChart.destroy();
+    _retailViewIntradayChart = null;
+  }
   if (typeof closeModalById === "function") closeModalById("retailViewModal");
 };
 
 if (typeof window !== "undefined") {
   window.openRetailViewModal = openRetailViewModal;
   window.closeRetailViewModal = closeRetailViewModal;
+  window._switchRetailViewTab = _switchRetailViewTab;
 }
 
 // =============================================================================
