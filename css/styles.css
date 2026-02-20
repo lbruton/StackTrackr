@@ -11387,6 +11387,13 @@ th {
 .retail-sync-cta:hover { opacity: 0.85; }
 
 
+/* STAK-217: Sparkline micro-chart */
+.retail-sparkline {
+  display: block;
+  margin-left: auto;
+  opacity: 0.75;
+}
+
 /* History table in Activity Log */
 .retail-history-controls {
   display: flex;

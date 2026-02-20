@@ -55,6 +55,9 @@ let retailPriceHistory = {};
 /** True while syncRetailPrices() is running — triggers skeleton render */
 let _retailSyncInProgress = false;
 
+/** Active sparkline Chart instances keyed by slug — destroyed before re-render to prevent Canvas reuse errors */
+const _retailSparklines = new Map();
+
 // ---------------------------------------------------------------------------
 // Persistence
 // ---------------------------------------------------------------------------
@@ -209,6 +212,43 @@ const _buildSkeletonCard = () => {
 /**
  * Called on market section open and after each sync.
  */
+/**
+ * Renders a 7-entry average-price sparkline on a card's canvas.
+ * Destroys any prior Chart instance first to prevent Canvas reuse errors.
+ * @param {string} slug
+ */
+const _renderRetailSparkline = (slug) => {
+  const canvas = safeGetElement(`retail-spark-${slug}`);
+  if (!(canvas instanceof HTMLCanvasElement) || typeof Chart === "undefined") return;
+  const history = (retailPriceHistory[slug] || []).slice(0, 7).reverse();
+  const data = history.map((e) => Number(e.average_price)).filter((v) => isFinite(v));
+  if (data.length < 2) return;
+  if (_retailSparklines.has(slug)) {
+    _retailSparklines.get(slug).destroy();
+  }
+  const chart = new Chart(canvas, {
+    type: "line",
+    data: {
+      labels: Array(data.length).fill(""),
+      datasets: [{
+        data,
+        borderColor: "#3b82f6",
+        borderWidth: 1.5,
+        pointRadius: 0,
+        tension: 0.3,
+        fill: false,
+      }],
+    },
+    options: {
+      responsive: false,
+      plugins: { legend: { display: false }, tooltip: { enabled: false } },
+      scales: { x: { display: false }, y: { display: false } },
+      animation: false,
+    },
+  });
+  _retailSparklines.set(slug, chart);
+};
+
 const renderRetailCards = () => {
   const grid = safeGetElement("retailCardsGrid");
   const lastSyncEl = safeGetElement("retailLastSync");
@@ -236,6 +276,7 @@ const renderRetailCards = () => {
     const priceData = retailPrices && retailPrices.prices ? retailPrices.prices[slug] || null : null;
     grid.appendChild(_buildRetailCard(slug, meta, priceData));
   });
+  RETAIL_SLUGS.forEach((slug) => _renderRetailSparkline(slug));
 };
 
 /** Metal emoji icons keyed by metal name */
@@ -374,6 +415,12 @@ const _buildRetailCard = (slug, meta, priceData) => {
     dateSpan.className = "retail-data-date";
     dateSpan.textContent = `Data: ${retailPrices && retailPrices.date ? retailPrices.date : "—"}`;
     footer.appendChild(dateSpan);
+    const sparkCanvas = document.createElement("canvas");
+    sparkCanvas.id = `retail-spark-${slug}`;
+    sparkCanvas.className = "retail-sparkline";
+    sparkCanvas.width = 80;
+    sparkCanvas.height = 28;
+    footer.appendChild(sparkCanvas);
     card.appendChild(footer);
   }
 
