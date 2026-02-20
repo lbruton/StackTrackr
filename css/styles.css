@@ -11362,3 +11362,84 @@ th {
 .empty-state .btn {
   min-width: 140px;
 }
+
+/* =============================================================================
+   HELLO KITTY THEME (easter egg: shift+click Sepia in settings)
+   ============================================================================= */
+
+[data-theme="hello-kitty"] {
+  /* Primary Colors */
+  --primary: #ec4899;
+  --primary-hover: #db2777;
+  --secondary: #a855f7;
+  --secondary-hover: #9333ea;
+  --success: #10b981;
+  --success-hover: #059669;
+  --info: #8b5cf6;
+  --info-hover: #7c3aed;
+  --warning: #f59e0b;
+  --warning-hover: #d97706;
+  --danger: #f43f5e;
+  --danger-hover: #e11d48;
+  --disclaimer-color: var(--warning);
+
+  /* Metal-specific Colors */
+  --silver: #a78bfa;
+  --gold: #f59e0b;
+  --platinum: #c084fc;
+  --palladium: #ec4899;
+
+  /* Inventory Type Colors */
+  --type-coin-bg: #ec4899;
+  --type-coin-text: #ffffff;
+  --type-round-bg: #a855f7;
+  --type-round-text: #ffffff;
+  --type-bar-bg: #f59e0b;
+  --type-bar-text: #ffffff;
+  --type-note-bg: #10b981;
+  --type-note-text: #ffffff;
+  --type-set-bg: #8b5cf6;
+  --type-set-text: #ffffff;
+  --type-other-bg: #db2777;
+  --type-other-text: #ffffff;
+
+  /* Backgrounds — bubblegum pink */
+  --bg-primary: #fce7f3;
+  --bg-secondary: #fbcfe8;
+  --bg-tertiary: #f9a8d4;
+  --bg-card: #fdf4ff;
+
+  /* Map legacy tokens */
+  --bg: var(--bg-primary);
+  --bg-elev-1: var(--bg-secondary);
+  --bg-elev-2: var(--bg-tertiary);
+  --surface: var(--bg-card);
+  --surface-alt: #fff5fb;
+
+  /* Text — deep rose */
+  --text-primary: #831843;
+  --text-secondary: #9d174d;
+  --text-muted: #be185d;
+  --text: var(--text-primary);
+  --chip-text: #831843;
+  --chip-active-outline: rgba(131, 24, 67, 0.8);
+  --chip-search-outline: rgba(168, 85, 247, 0.75);
+
+  /* Borders & Shadows */
+  --border: #f9a8d4;
+  --border-hover: #f472b6;
+  --shadow-sm: 0 1px 2px 0 rgb(236 72 153 / 0.15);
+  --shadow: 0 4px 6px -1px rgb(236 72 153 / 0.2), 0 2px 4px -2px rgb(236 72 153 / 0.1);
+  --shadow-lg:
+    0 10px 15px -3px rgb(236 72 153 / 0.2), 0 4px 6px -4px rgb(236 72 153 / 0.1);
+  --back-to-top-bg: #fce7f3;
+  --back-to-top-border: #f9a8d4;
+  --back-to-top-text: #831843;
+  --back-to-top-hover-bg: #fbcfe8;
+  --back-to-top-shadow: 0 2px 8px rgb(236 72 153 / 0.25);
+}
+
+/* Logo: reuse light-mode version in hello-kitty */
+[data-theme="hello-kitty"] .stackr-logo .light-mode { display: block; }
+[data-theme="hello-kitty"] .stackr-logo .dark-mode  { display: none; }
+[data-theme="hello-kitty"] .stackr-logo .sepia-mode { display: none; }
