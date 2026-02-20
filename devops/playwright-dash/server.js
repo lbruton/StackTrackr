@@ -105,11 +105,27 @@ function resolveFilePath(urlPath) {
   return resolved;
 }
 
-function capture(targetUrl) {
+async function capture(targetUrl) {
   ensureDir(SCREENSHOTS_DIR);
   const ts = new Date().toISOString().replace(/[:.TZ]/g, '-').slice(0, -1);
   const dest = path.join(SCREENSHOTS_DIR, `capture-${ts}.png`);
   const url = targetUrl || process.env.TEST_URL || 'http://localhost:8765';
+
+  const browserlessUrl = process.env.BROWSERLESS_URL;
+  if (browserlessUrl) {
+    // In Docker: use browserless REST API — no Playwright install needed
+    const token = process.env.BROWSERLESS_TOKEN || 'local_dev_token';
+    const res = await fetch(`${browserlessUrl}/screenshot?token=${encodeURIComponent(token)}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url, options: { fullPage: true } }),
+    });
+    if (!res.ok) throw new Error(`Browserless screenshot failed: ${res.status} ${await res.text()}`);
+    fs.writeFileSync(dest, Buffer.from(await res.arrayBuffer()));
+    return dest;
+  }
+
+  // Local fallback: npx playwright screenshot
   const result = spawnSync('npx', [
     'playwright', 'screenshot', url, dest,
     '--browser=chromium', '--full-page',
@@ -156,10 +172,10 @@ const server = http.createServer((req, res) => {
   if (method === 'POST' && url === '/api/capture') {
     let body = '';
     req.on('data', d => { body += d; });
-    req.on('end', () => {
+    req.on('end', async () => {
       try {
         const { targetUrl } = body ? JSON.parse(body) : {};
-        const dest = capture(targetUrl);
+        const dest = await capture(targetUrl);
         const rel = path.relative(SCREENSHOTS_DIR, dest);
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ path: '/files/screenshots/' + rel }));
