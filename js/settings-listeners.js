@@ -1418,8 +1418,14 @@ const bindStorageListeners = () => {
 const bindApiCacheListeners = () => {
   const clearNumistaBtn = document.getElementById('clearNumistaCacheBtn');
   if (clearNumistaBtn) {
-    clearNumistaBtn.addEventListener('click', () => {
+    clearNumistaBtn.addEventListener('click', async () => {
       const count = typeof clearNumistaCache === 'function' ? clearNumistaCache() : 0;
+      // Also clear IndexedDB sync metadata so next sync re-fetches rather than skipping
+      // (bulk sync skip check uses imageCache.getMetadata(), not the localStorage response cache)
+      if (window.imageCache && window.BulkImageCache) {
+        const eligible = BulkImageCache.buildEligibleList();
+        await Promise.all(eligible.map(({ catalogId }) => imageCache.deleteMetadata(catalogId)));
+      }
       if (typeof appAlert === 'function') appAlert(`Cleared ${count} Numista cached lookups.`);
       if (typeof renderNumistaSyncUI === 'function') renderNumistaSyncUI();
     });
