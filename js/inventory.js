@@ -1660,71 +1660,61 @@ const renderTable = () => {
  * Calculates and updates all financial summary displays across the application
  */
 const updateSummary = () => {
-  /**
-   * Calculates portfolio metrics for specified metal type
-   * Uses the three-value model: Purchase Price, Melt Value, Retail Price
-   * Gain/Loss is based on retail price (which defaults to melt if not manually set)
-   *
-   * @param {string} metal - Metal type to calculate
-   * @returns {Object} Calculated metrics
-   */
-  const calculateTotals = (metal) => {
-    let totalItems = 0;
-    let totalWeight = 0;
-    let totalMeltValue = 0;
-    let totalPurchased = 0;
-    let totalRetailValue = 0;
-    let totalGainLoss = 0;
-
-    for (const item of inventory) {
-      if (item.metal === metal) {
-        const qty = Number(item.qty) || 0;
-        const weight = parseFloat(item.weight) || 0;
-        const price = parseFloat(item.price) || 0;
-
-        totalItems += qty;
-        // Convert gb denomination to troy oz for weight totals
-        const weightOz = (item.weightUnit === 'gb') ? weight * GB_TO_OZT : weight;
-        const itemWeight = qty * weightOz;
-        totalWeight += itemWeight;
-
-        // Melt value: weight x qty x current spot x purity
-        const currentSpot = spotPrices[item.metal.toLowerCase()] || 0;
-        const valuation = (typeof computeItemValuation === 'function')
-          ? computeItemValuation(item, currentSpot)
-          : null;
-        const purity = parseFloat(item.purity) || 1.0;
-        const meltValue = valuation ? valuation.meltValue : (currentSpot * itemWeight * purity);
-        totalMeltValue += meltValue;
-
-        // Purchase price total (price already converted)
-        const purchaseTotal = valuation ? valuation.purchaseTotal : (qty * price);
-        totalPurchased += purchaseTotal;
-
-        // Retail total: (1) gb denomination price, (2) manual marketValue, (3) melt
-        const retailTotal = valuation ? valuation.retailTotal : meltValue;
-        totalRetailValue += retailTotal;
-
-        // Gain/loss: retail minus purchase (both in USD; converted at display time)
-        totalGainLoss += retailTotal - purchaseTotal;
-      }
-    }
-
-    return {
-      totalItems,
-      totalWeight,
-      totalMeltValue,
-      totalPurchased,
-      totalRetailValue,
-      totalGainLoss
-    };
-  };
-
-  // Calculate totals for each metal
+  // Initialize accumulators for each metal
   const metalTotals = {};
+  // Create quick lookup map: metal name -> metal key
+  const metalNameMap = {};
+
   Object.values(METALS).forEach(metalConfig => {
-    metalTotals[metalConfig.key] = calculateTotals(metalConfig.name);
+    metalTotals[metalConfig.key] = {
+      totalItems: 0,
+      totalWeight: 0,
+      totalMeltValue: 0,
+      totalPurchased: 0,
+      totalRetailValue: 0,
+      totalGainLoss: 0
+    };
+    metalNameMap[metalConfig.name] = metalConfig.key;
   });
+
+  // Single pass optimization: O(N) instead of O(N*M)
+  for (const item of inventory) {
+    const metalKey = metalNameMap[item.metal];
+    // Skip items with unknown metal types
+    if (metalKey && metalTotals[metalKey]) {
+      const totals = metalTotals[metalKey];
+
+      const qty = Number(item.qty) || 0;
+      const weight = parseFloat(item.weight) || 0;
+      const price = parseFloat(item.price) || 0;
+
+      totals.totalItems += qty;
+      // Convert gb denomination to troy oz for weight totals
+      const weightOz = (item.weightUnit === 'gb') ? weight * GB_TO_OZT : weight;
+      const itemWeight = qty * weightOz;
+      totals.totalWeight += itemWeight;
+
+      // Use metalKey directly for spot price lookup (optimization)
+      const currentSpot = spotPrices[metalKey] || 0;
+      const valuation = (typeof computeItemValuation === 'function')
+        ? computeItemValuation(item, currentSpot)
+        : null;
+      const purity = parseFloat(item.purity) || 1.0;
+      const meltValue = valuation ? valuation.meltValue : (currentSpot * itemWeight * purity);
+      totals.totalMeltValue += meltValue;
+
+      // Purchase price total (price already converted)
+      const purchaseTotal = valuation ? valuation.purchaseTotal : (qty * price);
+      totals.totalPurchased += purchaseTotal;
+
+      // Retail total: (1) gb denomination price, (2) manual marketValue, (3) melt
+      const retailTotal = valuation ? valuation.retailTotal : meltValue;
+      totals.totalRetailValue += retailTotal;
+
+      // Gain/loss: retail minus purchase (both in USD; converted at display time)
+      totals.totalGainLoss += retailTotal - purchaseTotal;
+    }
+  }
 
   // Update DOM elements
   Object.values(METALS).forEach(metalConfig => {
