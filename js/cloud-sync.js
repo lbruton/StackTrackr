@@ -22,6 +22,9 @@ var _syncPollerTimer = null;
 /** @type {boolean} Whether a push is currently in progress */
 var _syncPushInFlight = false;
 
+/** @type {boolean} Whether the sync password prompt is currently open */
+var _syncPasswordPromptActive = false;
+
 /** @type {number} Retry backoff multiplier for 429 / network errors */
 var _syncRetryDelay = 2000;
 
@@ -291,6 +294,7 @@ function getSyncPassword() {
     if (errorEl) { errorEl.textContent = ''; errorEl.style.display = 'none'; }
 
     var cleanup = function () {
+      _syncPasswordPromptActive = false;
       confirmBtn.removeEventListener('click', onConfirm);
       if (cancelBtn) cancelBtn.removeEventListener('click', onCancel);
       if (cancelBtn2) cancelBtn2.removeEventListener('click', onCancel);
@@ -328,6 +332,7 @@ function getSyncPassword() {
     if (cancelBtn2) cancelBtn2.addEventListener('click', onCancel);
     input.addEventListener('keydown', onKeydown);
 
+    _syncPasswordPromptActive = true;
     if (typeof openModalById === 'function') openModalById('cloudSyncPasswordModal');
     else modal.style.display = 'flex';
 
@@ -671,6 +676,12 @@ function showSyncUpdateModal(remoteMeta) {
  * @param {object} remoteMeta - The parsed staktrakr-sync.json content
  */
 async function handleRemoteChange(remoteMeta) {
+  // Don't interrupt the user mid-password-entry — retry on next poll cycle
+  if (_syncPasswordPromptActive) {
+    debugLog('[CloudSync] Password prompt active — deferring remote change notification');
+    return;
+  }
+
   var hasLocal = syncHasLocalChanges();
 
   if (!hasLocal) {
