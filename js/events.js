@@ -1482,9 +1482,14 @@ const setupItemFormListeners = () => {
         }
 
         const btn = elements.searchNumistaBtn;
-        const originalHTML = btn.innerHTML;
-        btn.textContent = 'Searching...';
-        btn.disabled = true;
+        if (typeof setButtonLoading === 'function') {
+          setButtonLoading(btn, true, 'Searching...');
+        } else {
+          // Fallback if util not loaded
+          btn.dataset.originalHtml = btn.innerHTML;
+          btn.textContent = 'Searching...';
+          btn.disabled = true;
+        }
 
         // Type → Numista category mapping for smarter search results
         const TYPE_TO_NUMISTA_CATEGORY = {
@@ -1546,9 +1551,12 @@ const setupItemFormListeners = () => {
           console.error('Numista search error:', error);
           appAlert('Search failed: ' + error.message);
         } finally {
-          // nosemgrep: javascript.browser.security.insecure-innerhtml.insecure-innerhtml, javascript.browser.security.insecure-document-method.insecure-document-method
-          btn.innerHTML = originalHTML;
-          btn.disabled = false;
+          if (typeof setButtonLoading === 'function') {
+            setButtonLoading(btn, false);
+          } else {
+            btn.innerHTML = btn.dataset.originalHtml || btn.innerHTML;
+            btn.disabled = false;
+          }
         }
       },
       "Search Numista button",
@@ -1567,9 +1575,13 @@ const setupItemFormListeners = () => {
         }
 
         const btn = elements.lookupPcgsBtn;
-        const originalHTML = btn.innerHTML;
-        btn.textContent = 'Looking up...';
-        btn.disabled = true;
+        if (typeof setButtonLoading === 'function') {
+          setButtonLoading(btn, true, 'Looking up...');
+        } else {
+          btn.dataset.originalHtml = btn.innerHTML;
+          btn.textContent = 'Looking up...';
+          btn.disabled = true;
+        }
 
         try {
           const result = await lookupPcgsFromForm();
@@ -1589,8 +1601,12 @@ const setupItemFormListeners = () => {
           console.error('PCGS lookup error:', error);
           appAlert('PCGS lookup failed: ' + error.message);
         } finally {
-          btn.innerHTML = originalHTML;
-          btn.disabled = false;
+          if (typeof setButtonLoading === 'function') {
+            setButtonLoading(btn, false);
+          } else {
+            btn.innerHTML = btn.dataset.originalHtml || btn.innerHTML;
+            btn.disabled = false;
+          }
         }
       },
       "Lookup PCGS button",
