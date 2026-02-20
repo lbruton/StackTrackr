@@ -598,6 +598,49 @@ const initRetailPrices = () => {
   loadRetailPrices();
   loadRetailPriceHistory();
 };
+// ---------------------------------------------------------------------------
+// Background Auto-Sync
+// ---------------------------------------------------------------------------
+
+/** Interval ID for the periodic background sync — stored to allow future cancellation */
+let _retailSyncIntervalId = null;
+
+/** How stale (ms) data must be before a background sync is triggered on startup */
+const RETAIL_STALE_MS = 60 * 60 * 1000; // 1 hour
+
+/** How often (ms) to re-sync in the background while the page is open */
+const RETAIL_POLL_INTERVAL_MS = 4 * 60 * 60 * 1000; // 4 hours
+
+/**
+ * Starts the background retail price auto-sync.
+ * Immediately syncs if data is absent or stale, then re-syncs on a periodic interval.
+ * Safe to call multiple times — only one interval is kept running.
+ * Called from init.js after initRetailPrices().
+ */
+const startRetailBackgroundSync = () => {
+  // Clear any previous interval (safe to call multiple times)
+  if (_retailSyncIntervalId !== null) {
+    clearInterval(_retailSyncIntervalId);
+    _retailSyncIntervalId = null;
+  }
+
+  const _runSilentSync = () => {
+    syncRetailPrices({ ui: false }).catch((err) => {
+      debugLog(`[retail] Background sync failed: ${err.message}`, "warn");
+    });
+  };
+
+  // Sync immediately if no data or data is stale (older than RETAIL_STALE_MS)
+  const lastSync = retailPrices && retailPrices.lastSync ? new Date(retailPrices.lastSync).getTime() : 0;
+  const isStale = Date.now() - lastSync > RETAIL_STALE_MS;
+  if (isStale) {
+    debugLog("[retail] Data absent or stale — triggering background sync", "info");
+    _runSilentSync();
+  }
+
+  // Set up periodic re-sync while the page is open
+  _retailSyncIntervalId = setInterval(_runSilentSync, RETAIL_POLL_INTERVAL_MS);
+};
 
 // ---------------------------------------------------------------------------
 // Global exposure
@@ -614,6 +657,7 @@ if (typeof window !== "undefined") {
   window.renderRetailCards = renderRetailCards;
   window.renderRetailHistoryTable = renderRetailHistoryTable;
   window.initRetailPrices = initRetailPrices;
+  window.startRetailBackgroundSync = startRetailBackgroundSync;
   window.RETAIL_COIN_META = RETAIL_COIN_META;
   window.RETAIL_SLUGS = RETAIL_SLUGS;
   window.RETAIL_VENDOR_NAMES = RETAIL_VENDOR_NAMES;
