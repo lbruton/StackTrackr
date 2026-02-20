@@ -88,6 +88,8 @@ const loadRetailPriceHistory = () => {
     console.error("[retail] Failed to load retail price history:", err);
     retailPriceHistory = {};
   }
+  // Re-export so window.retailPriceHistory reflects the new reference after reassignment.
+  if (typeof window !== "undefined") window.retailPriceHistory = retailPriceHistory;
 };
 
 const saveRetailPriceHistory = () => {
@@ -147,7 +149,7 @@ const syncRetailPrices = async ({ ui = true } = {}) => {
       : [manifest.latestDate];
 
     // A date is "complete" if the representative slug (ase) already has it in history.
-    const alreadyHave = new Set((retailPriceHistory["ase"] || []).map((e) => e.date));
+    const alreadyHave = new Set((retailPriceHistory[RETAIL_SLUGS[0]] || []).map((e) => e.date));
     const datesToFetch = allDates
       .filter((d) => !alreadyHave.has(d))
       .sort((a, b) => b.localeCompare(a)) // newest first
