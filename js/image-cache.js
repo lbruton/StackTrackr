@@ -364,21 +364,23 @@ class ImageCache {
     if (!(await this._ensureDb())) return result;
 
     try {
-      const records = await this._getAll('coinImages');
-      result.count = records.length;
-      result.numistaCount = records.length;
-      for (const rec of records) {
-        result.totalBytes += rec.size || 0;
+      if (this._db.objectStoreNames.contains('coinImages')) {
+        await this._iterate('coinImages', (rec) => {
+          result.count++;
+          result.numistaCount++;
+          result.totalBytes += rec.size || 0;
+        });
       }
     } catch {
       // ignore
     }
 
     try {
-      const metaRecords = await this._getAll('coinMetadata');
-      result.metadataCount = metaRecords.length;
-      for (const rec of metaRecords) {
-        result.totalBytes += new Blob([JSON.stringify(rec)]).size;
+      if (this._db.objectStoreNames.contains('coinMetadata')) {
+        await this._iterate('coinMetadata', (rec) => {
+          result.metadataCount++;
+          result.totalBytes += new Blob([JSON.stringify(rec)]).size;
+        });
       }
     } catch {
       // ignore
@@ -386,11 +388,10 @@ class ImageCache {
 
     try {
       if (this._db.objectStoreNames.contains('userImages')) {
-        const userRecords = await this._getAll('userImages');
-        result.userImageCount = userRecords.length;
-        for (const rec of userRecords) {
+        await this._iterate('userImages', (rec) => {
+          result.userImageCount++;
           result.totalBytes += rec.size || 0;
-        }
+        });
       }
     } catch {
       // ignore
@@ -398,11 +399,10 @@ class ImageCache {
 
     try {
       if (this._db.objectStoreNames.contains('patternImages')) {
-        const patternRecords = await this._getAll('patternImages');
-        result.patternImageCount = patternRecords.length;
-        for (const rec of patternRecords) {
+        await this._iterate('patternImages', (rec) => {
+          result.patternImageCount++;
           result.totalBytes += rec.size || 0;
-        }
+        });
       }
     } catch {
       // ignore
@@ -914,6 +914,34 @@ class ImageCache {
         req.onerror = () => resolve(null);
       } catch {
         resolve(null);
+      }
+    });
+  }
+
+  /**
+   * Iterate over all records in a store using a cursor to minimize memory usage.
+   * O(1) heap relative to store size — avoids loading all records at once.
+   * @param {string} storeName
+   * @param {function(any): void} callback
+   * @returns {Promise<void>}
+   */
+  _iterate(storeName, callback) {
+    return new Promise((resolve, reject) => {
+      try {
+        const tx = this._db.transaction(storeName, 'readonly');
+        const req = tx.objectStore(storeName).openCursor();
+        req.onsuccess = (e) => {
+          const cursor = e.target.result;
+          if (cursor) {
+            callback(cursor.value);
+            cursor.continue();
+          } else {
+            resolve();
+          }
+        };
+        req.onerror = () => reject(req.error);
+      } catch (err) {
+        reject(err);
       }
     });
   }

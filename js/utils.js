@@ -3124,6 +3124,7 @@ if (typeof window !== 'undefined') {
   window.saveExchangeRates = saveExchangeRates;
   window.fetchExchangeRates = fetchExchangeRates;
   window.setButtonLoading = setButtonLoading;
+  window.escapeHtml = escapeHtml;
 }
 
 if (typeof module !== 'undefined' && module.exports) {
@@ -3138,5 +3139,6 @@ if (typeof module !== 'undefined' && module.exports) {
     debounce,
     generateUUID,
     setButtonLoading,
+    escapeHtml,
   };
 }

@@ -382,7 +382,7 @@ const restoreBackupZip = async (file) => {
       );
     }
 
-    loadInventory();
+    await loadInventory();
     renderTable();
     renderActiveFilters();
     loadSpotHistory();
@@ -688,11 +688,9 @@ const sanitizeTablesOnLoad = () => {
  * @returns {void} Updates the global inventory array with migrated data
  * @throws {Error} Logs errors to console if localStorage access fails
  */
-const loadInventory = () => {
+const loadInventory = async () => {
   try {
-    // For now, use synchronous loading to maintain compatibility
-    // TODO: Convert to async when updating all callers
-    const data = loadDataSync(LS_KEY, []);
+    const data = await loadData(LS_KEY, []);
     
     // Ensure data is an array
     if (!Array.isArray(data)) {

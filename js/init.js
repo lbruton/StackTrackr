@@ -380,7 +380,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     // Load data
-    loadInventory();
+    await loadInventory();
 
     // Migrate: existing users keep header theme button visible
     if (inventory.length > 0 && localStorage.getItem('headerThemeBtnVisible') === null) {

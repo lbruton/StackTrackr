@@ -38,6 +38,15 @@ const filterInventory = () => {
   // Support comma-separated terms for multi-value search
   const terms = query.split(',').map(t => t.trim()).filter(t => t);
 
+  // Pre-calculate fuzzy matching settings outside the loop for performance
+  const fuzzyEnabled = typeof window.featureFlags !== 'undefined' &&
+    window.featureFlags.isEnabled('FUZZY_AUTOCOMPLETE') &&
+    typeof fuzzyMatch === 'function';
+  const fuzzyThreshold = (fuzzyEnabled && typeof AUTOCOMPLETE_CONFIG !== 'undefined')
+    ? AUTOCOMPLETE_CONFIG.threshold : 0.3;
+  // Reuse options object to avoid allocation in loop
+  const fuzzyOptions = fuzzyEnabled ? { threshold: fuzzyThreshold } : null;
+
   return result.filter(item => {
     if (!terms.length) return true;
 
@@ -308,18 +317,15 @@ const filterInventory = () => {
       }
 
       // STACK-62: Fuzzy fallback — score item fields when exact matching fails
-      if (typeof window.featureFlags !== 'undefined' &&
-          window.featureFlags.isEnabled('FUZZY_AUTOCOMPLETE') &&
-          typeof fuzzyMatch === 'function') {
-        const fuzzyThreshold = typeof AUTOCOMPLETE_CONFIG !== 'undefined'
-          ? AUTOCOMPLETE_CONFIG.threshold : 0.3;
-        const fieldsToCheck = [item.name, item.purchaseLocation, item.storageLocation || '', item.notes || ''];
-        for (const field of fieldsToCheck) {
-          if (field && fuzzyMatch(q, field, { threshold: fuzzyThreshold }) > 0) {
-            // Mark that fuzzy matching was used (for indicator)
-            if (!window._fuzzyMatchUsed) window._fuzzyMatchUsed = true;
-            return true;
-          }
+      if (fuzzyEnabled) {
+        // Unrolled loop: avoids array allocation per item; skips secondary fields for short queries
+        if ((item.name && fuzzyMatch(q, item.name, fuzzyOptions) > 0) ||
+            (q.length > 2 && item.purchaseLocation && fuzzyMatch(q, item.purchaseLocation, fuzzyOptions) > 0) ||
+            (q.length > 2 && item.storageLocation && fuzzyMatch(q, item.storageLocation, fuzzyOptions) > 0) ||
+            (q.length > 3 && item.notes && fuzzyMatch(q, item.notes, fuzzyOptions) > 0)) {
+          // Mark that fuzzy matching was used (for indicator)
+          if (!window._fuzzyMatchUsed) window._fuzzyMatchUsed = true;
+          return true;
         }
       }
 
