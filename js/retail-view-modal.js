@@ -31,7 +31,8 @@ const openRetailViewModal = (slug) => {
       const tr = document.createElement("tr");
 
       const tdLabel = document.createElement("td");
-      const vendorUrl = RETAIL_VENDOR_URLS[key];
+      const vendorUrl = (retailProviders && retailProviders[slug] && retailProviders[slug][key])
+        || RETAIL_VENDOR_URLS[key];
       if (vendorUrl) {
         const link = document.createElement("a");
         link.href = "#";

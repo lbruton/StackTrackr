@@ -60,6 +60,13 @@ let retailPrices = null;
 /** @type {Object.<string, Array>} History keyed by slug */
 let retailPriceHistory = {};
 
+/**
+ * Per-slug, per-vendor product page URLs fetched from providers.json.
+ * Shape: { "ase": { "apmex": "https://...", "monumentmetals": "https://..." }, ... }
+ * @type {Object.<string, Object.<string, string>>|null}
+ */
+let retailProviders = null;
+
 /** True while syncRetailPrices() is running — triggers skeleton render */
 let _retailSyncInProgress = false;
 
@@ -108,6 +115,26 @@ const saveRetailPriceHistory = () => {
   }
 };
 
+const loadRetailProviders = () => {
+  try {
+    const loaded = loadDataSync(RETAIL_PROVIDERS_KEY, null);
+    retailProviders = (loaded && typeof loaded === "object" && !Array.isArray(loaded)) ? loaded : null;
+  } catch (err) {
+    console.error("[retail] Failed to load retail providers:", err);
+    retailProviders = null;
+  }
+  // Re-export so window.retailProviders reflects the new reference after reassignment.
+  if (typeof window !== "undefined") window.retailProviders = retailProviders;
+};
+
+const saveRetailProviders = () => {
+  try {
+    saveDataSync(RETAIL_PROVIDERS_KEY, retailProviders);
+  } catch (err) {
+    console.error("[retail] Failed to save retail providers:", err);
+  }
+};
+
 // ---------------------------------------------------------------------------
 // Accessors
 // ---------------------------------------------------------------------------
@@ -148,10 +175,31 @@ const syncRetailPrices = async ({ ui = true } = {}) => {
   renderRetailCards();
 
   try {
-    const manifestResp = await fetch(`${RETAIL_BASE_URL}/manifest.json`);
+    const [manifestResp, providersResp] = await Promise.all([
+      fetch(`${RETAIL_BASE_URL}/manifest.json`),
+      fetch(`${RETAIL_BASE_URL}/providers.json`),
+    ]);
     if (!manifestResp.ok) throw new Error(`Manifest fetch failed: ${manifestResp.status}`);
     const manifest = await manifestResp.json();
     if (!manifest.latestDate) throw new Error("Manifest missing latestDate");
+
+    // Build slug → vendorId → url lookup from providers.json (best-effort; non-fatal)
+    if (providersResp.ok) {
+      try {
+        const providersData = await providersResp.json();
+        const lookup = {};
+        Object.entries(providersData.coins || {}).forEach(([slug, coinData]) => {
+          lookup[slug] = {};
+          (coinData.providers || []).forEach(({ id, url }) => {
+            if (id && url) lookup[slug][id] = url;
+          });
+        });
+        retailProviders = lookup;
+        saveRetailProviders();
+      } catch (e) {
+        debugLog(`[retail] providers.json parse error: ${e.message}`, "warn");
+      }
+    }
 
     // Determine which dates need fetching — all dates in manifest not already in history.
     // manifest.dates is an array of available date strings (ISO, e.g. "2026-02-19").
@@ -470,7 +518,9 @@ const _buildRetailCard = (slug, meta, priceData) => {
 
       const nameEl = document.createElement("span");
       nameEl.className = "retail-vendor-name";
-      const vendorUrl = RETAIL_VENDOR_URLS[key];
+      // Prefer specific product page from providers.json; fall back to vendor homepage
+      const vendorUrl = (retailProviders && retailProviders[slug] && retailProviders[slug][key])
+        || RETAIL_VENDOR_URLS[key];
       if (vendorUrl) {
         const link = document.createElement("a");
         link.href = "#";
@@ -624,6 +674,7 @@ const renderRetailHistoryTable = () => {
 const initRetailPrices = () => {
   loadRetailPrices();
   loadRetailPriceHistory();
+  loadRetailProviders();
 };
 // ---------------------------------------------------------------------------
 // Background Auto-Sync
@@ -685,6 +736,9 @@ if (typeof window !== "undefined") {
   window.renderRetailHistoryTable = renderRetailHistoryTable;
   window.initRetailPrices = initRetailPrices;
   window.startRetailBackgroundSync = startRetailBackgroundSync;
+  window.retailProviders = retailProviders;
+  window.loadRetailProviders = loadRetailProviders;
+  window.saveRetailProviders = saveRetailProviders;
   window.RETAIL_COIN_META = RETAIL_COIN_META;
   window.RETAIL_SLUGS = RETAIL_SLUGS;
   window.RETAIL_VENDOR_NAMES = RETAIL_VENDOR_NAMES;

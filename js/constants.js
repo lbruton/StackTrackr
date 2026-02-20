@@ -486,6 +486,9 @@ const RETAIL_PRICES_KEY = "retailPrices";
 /** @constant {string} RETAIL_PRICE_HISTORY_KEY - LocalStorage key for retail price history */
 const RETAIL_PRICE_HISTORY_KEY = "retailPriceHistory";
 
+/** @constant {string} RETAIL_PROVIDERS_KEY - LocalStorage key for cached providers.json lookup map */
+const RETAIL_PROVIDERS_KEY = "retailProviders";
+
 /** @constant {string} GOLDBACK_ENABLED_KEY - LocalStorage key for Goldback pricing toggle (STACK-45) */
 const GOLDBACK_ENABLED_KEY = "goldback-enabled";
 
@@ -704,6 +707,7 @@ const ALLOWED_STORAGE_KEYS = [
   GOLDBACK_PRICE_HISTORY_KEY,
   RETAIL_PRICES_KEY,
   RETAIL_PRICE_HISTORY_KEY,
+  RETAIL_PROVIDERS_KEY,
   GOLDBACK_ENABLED_KEY,
   GOLDBACK_ESTIMATE_ENABLED_KEY,
   GB_ESTIMATE_MODIFIER_KEY,
@@ -1555,6 +1559,7 @@ if (typeof window !== "undefined") {
   // Retail market pricing
   window.RETAIL_PRICES_KEY = RETAIL_PRICES_KEY;
   window.RETAIL_PRICE_HISTORY_KEY = RETAIL_PRICE_HISTORY_KEY;
+  window.RETAIL_PROVIDERS_KEY = RETAIL_PROVIDERS_KEY;
   window.GOLDBACK_ENABLED_KEY = GOLDBACK_ENABLED_KEY;
   window.GB_TO_OZT = GB_TO_OZT;
   window.GOLDBACK_DENOMINATIONS = GOLDBACK_DENOMINATIONS;
