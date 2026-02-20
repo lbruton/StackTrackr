@@ -16,6 +16,7 @@ if (backend === 'browserbase' && (!process.env.BROWSERBASE_API_KEY || !process.e
 
 export default defineConfig({
   testDir: './tests',
+  testMatch: ['**/*.spec.js'],
   timeout: 60_000,
   use: {
     connectOptions: { wsEndpoint: wsEndpoints[backend] },
