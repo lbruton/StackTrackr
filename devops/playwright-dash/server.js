@@ -1,0 +1,149 @@
+#!/usr/bin/env node
+'use strict';
+
+const http = require('http');
+const fs = require('fs');
+const path = require('path');
+const { spawnSync } = require('child_process');
+
+const PORT = process.env.DASH_PORT || 8766;
+const REPO_ROOT = path.resolve(__dirname, '..', '..');
+const SCREENSHOTS_DIR = path.join(REPO_ROOT, 'devops', 'screenshots');
+const TEST_RESULTS_DIR = path.join(REPO_ROOT, 'test-results');
+const INDEX_HTML = path.join(__dirname, 'index.html');
+
+const MIME = {
+  '.html': 'text/html',
+  '.js': 'application/javascript',
+  '.css': 'text/css',
+  '.png': 'image/png',
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.webp': 'image/webp',
+  '.mp4': 'video/mp4',
+  '.webm': 'video/webm',
+};
+
+function ensureDir(dir) {
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+}
+
+function walkDir(dir, exts, prefix) {
+  const results = [];
+  if (!fs.existsSync(dir)) return results;
+  const entries = fs.readdirSync(dir, { withFileTypes: true });
+  for (const e of entries) {
+    const full = path.join(dir, e.name);
+    const rel = path.join(prefix, e.name);
+    if (e.isDirectory()) {
+      results.push(...walkDir(full, exts, rel));
+    } else if (exts.includes(path.extname(e.name).toLowerCase())) {
+      const stat = fs.statSync(full);
+      results.push({ rel, full, mtime: stat.mtimeMs, size: stat.size });
+    }
+  }
+  return results;
+}
+
+function getFiles() {
+  ensureDir(SCREENSHOTS_DIR);
+  ensureDir(TEST_RESULTS_DIR);
+
+  const screenshots = walkDir(SCREENSHOTS_DIR, ['.png', '.jpg', '.jpeg', '.webp'], 'screenshots')
+    .map(f => ({ type: 'screenshot', path: '/files/' + f.rel, mtime: f.mtime, size: f.size }));
+
+  const videos = walkDir(TEST_RESULTS_DIR, ['.mp4', '.webm'], 'test-results')
+    .map(f => ({ type: 'video', path: '/files/' + f.rel, mtime: f.mtime, size: f.size }));
+
+  return [...screenshots, ...videos].sort((a, b) => b.mtime - a.mtime);
+}
+
+function resolveFilePath(urlPath) {
+  const rel = urlPath.slice('/files/'.length);
+  const parts = rel.split('/');
+  if (parts[0] === 'screenshots') {
+    return path.join(SCREENSHOTS_DIR, parts.slice(1).join('/'));
+  }
+  if (parts[0] === 'test-results') {
+    return path.join(TEST_RESULTS_DIR, parts.slice(1).join('/'));
+  }
+  return null;
+}
+
+function capture(targetUrl) {
+  ensureDir(SCREENSHOTS_DIR);
+  const ts = new Date().toISOString().replace(/[:.TZ]/g, '-').slice(0, -1);
+  const dest = path.join(SCREENSHOTS_DIR, `capture-${ts}.png`);
+  const url = targetUrl || process.env.TEST_URL || 'http://localhost:8765';
+  const result = spawnSync('npx', [
+    'playwright', 'screenshot', url, dest,
+    '--browser=chromium', '--full-page',
+  ], { timeout: 30000, encoding: 'utf8' });
+  if (result.error) throw result.error;
+  if (result.status !== 0) throw new Error(result.stderr || 'playwright screenshot failed');
+  return dest;
+}
+
+const server = http.createServer((req, res) => {
+  const { method, url } = req;
+
+  if (method === 'GET' && url === '/') {
+    const html = fs.readFileSync(INDEX_HTML);
+    res.writeHead(200, { 'Content-Type': 'text/html' });
+    res.end(html);
+    return;
+  }
+
+  if (method === 'GET' && url === '/api/files') {
+    try {
+      const files = getFiles();
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(files));
+    } catch (e) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: e.message }));
+    }
+    return;
+  }
+
+  if (method === 'POST' && url === '/api/capture') {
+    let body = '';
+    req.on('data', d => { body += d; });
+    req.on('end', () => {
+      try {
+        const { targetUrl } = body ? JSON.parse(body) : {};
+        const dest = capture(targetUrl);
+        const rel = path.relative(SCREENSHOTS_DIR, dest);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ path: '/files/screenshots/' + rel }));
+      } catch (e) {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: e.message }));
+      }
+    });
+    return;
+  }
+
+  if (method === 'GET' && url.startsWith('/files/')) {
+    const filePath = resolveFilePath(url);
+    if (!filePath || !fs.existsSync(filePath)) {
+      res.writeHead(404);
+      res.end('Not found');
+      return;
+    }
+    const ext = path.extname(filePath).toLowerCase();
+    const mime = MIME[ext] || 'application/octet-stream';
+    res.writeHead(200, { 'Content-Type': mime });
+    fs.createReadStream(filePath).pipe(res);
+    return;
+  }
+
+  res.writeHead(404);
+  res.end('Not found');
+});
+
+server.listen(PORT, () => {
+  console.log(`Playwright Dashboard: http://localhost:${PORT}`);
+  console.log(`Screenshots: ${SCREENSHOTS_DIR}`);
+  console.log(`Test results: ${TEST_RESULTS_DIR}`);
+});

@@ -68,6 +68,7 @@ devops/*
 !devops/retail-poller/
 !devops/hooks/
 !devops/claude-backup/
+!devops/playwright-dash/
 
 
 # AI/MCP configuration files are tracked for project consistency
