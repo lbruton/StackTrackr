@@ -79,6 +79,26 @@ This file provides foundational mandates and project-specific context for Gemini
 
 Gemini has access to the following MCP servers. Use them as described.
 
+### Agent MCP Parity (as of 2026-02-20)
+
+All three agents run on the same Mac and share the same Docker/IP stack.
+
+| Server | Claude | Gemini | Codex | Notes |
+|---|---|---|---|---|
+| `memento` | ✅ | ✅ | ✅ | Shared Neo4j knowledge graph |
+| `sequential-thinking` | ✅ | ✅ | ✅ | Structured reasoning |
+| `brave-search` | ✅ | ✅ | ✅ | Web search |
+| `claude-context` | ✅ | ✅ | ✅ | Semantic code search (Milvus) |
+| `context7` | ✅ | ✅ | ✅ | Library documentation |
+| `firecrawl-local` | ✅ | ✅ | ✅ | Self-hosted scraping (port 3002) |
+| `linear` | ✅ | ✅ | ✅ | Issue tracking |
+| `codacy` | ✅ | ✅ | ✅ | Code quality analysis |
+| `chrome-devtools` | ✅ | — | ✅ | Gemini omits — use Playwright instead |
+| `playwright` | ✅ | ✅ | ✅ | Browser automation / test authoring |
+| `browserbase` | ✅ | ✅ | ✅ | Cloud NL tests (paid, use sparingly) |
+| `code-graph-context` | ✅ | ✅ | ✅ | Structural graph (Docker required) |
+| `stitch` | route→Gemini | ✅ primary | — | Google product — Gemini only |
+
 ### Memento (Knowledge Graph)
 
 Shared persistent memory across all agents (Claude, Codex, Gemini, and the human).

@@ -28,7 +28,7 @@ Future plans include ApexCharts and Tabler integration. Slowly migrating new fea
 
 56 scripts load in strict dependency order via `index.html`. Breaking this order causes undefined variable errors. The full chain:
 
-```
+```text
 file-protocol-fix.js  (no defer -- loads FIRST)
 debug-log.js
 constants.js
@@ -277,7 +277,7 @@ PRs should include:
 
 ## MCP Servers Available In This Session
 
-The following MCP servers were live-tested in this session on **2026-02-18**. Availability can vary by environment.
+The following MCP servers were live-tested in this session on **2026-02-20**. Availability can vary by environment.
 
 | MCP Server | Status | Lightweight test used |
 |---|---|---|
@@ -290,6 +290,7 @@ The following MCP servers were live-tested in this session on **2026-02-18**. Av
 | `claude-context` | ✅ reachable | `mcp__claude-context__get_indexing_status` |
 | `brave-search` | ✅ reachable | `mcp__brave-search__brave_web_search` |
 | `chrome-devtools` | ✅ reachable | `mcp__chrome-devtools__list_pages` |
+| `firecrawl-local` | ✅ reachable | `mcp__firecrawl-local__firecrawl_scrape` |
 
 ### MCP Usage Quick Guide
 
@@ -319,15 +320,43 @@ The following MCP servers were live-tested in this session on **2026-02-18**. Av
 - `chrome-devtools`: Browser automation and inspection for UI/debug flows.  
   Typical flow: `new_page`/`navigate_page` -> `take_snapshot` ->
   interaction tools (`click`, `fill`, `evaluate_script`) -> optional screenshot/network checks.
+- `firecrawl-local`: Self-hosted Firecrawl MCP for scraping/crawling/search (`devops/firecrawl-docker/`).
+  Start with `cd devops/firecrawl-docker && docker compose up -d`, then use
+  `mcp__firecrawl-local__firecrawl_search`, `mcp__firecrawl-local__firecrawl_scrape`,
+  `mcp__firecrawl-local__firecrawl_crawl`, and `mcp__firecrawl-local__firecrawl_extract`.
+  Note: `/agent` endpoint support depends on deployment mode; confirm availability in the current stack.
 
 ### MCP Discovery Notes
 
 - `list_mcp_resources` and `list_mcp_resource_templates` returned empty in this session,
   which is valid and just means no generic shared resources were published.
+- `.mcp.json` may include servers that are not exposed in every Codex runtime (`playwright`,
+  `stitch`, `browserbase`, or `code-graph-context` in non-Docker sessions). Always verify
+  actual tool namespace availability before relying on them in workflow plans.
 - When onboarding new MCP servers, add them to this section with:
   - one confirmed health-check call,
   - intended use cases,
   - and any auth/environment caveats.
+
+### MCP Agent Parity (as of 2026-02-20)
+
+All three agents run on the same Mac and share the same Docker/IP stack. Full parity is maintained.
+
+| Server | Claude | Gemini | Codex | Notes |
+|---|---|---|---|---|
+| `memento` | ✅ | ✅ | ✅ | Shared Neo4j knowledge graph |
+| `sequential-thinking` | ✅ | ✅ | ✅ | Structured reasoning |
+| `brave-search` | ✅ | ✅ | ✅ | Web search |
+| `claude-context` | ✅ | ✅ | ✅ | Semantic code search (Milvus) |
+| `context7` | ✅ | ✅ | ✅ | Library documentation |
+| `firecrawl-local` | ✅ | ✅ | ✅ | Self-hosted scraping (port 3002) |
+| `linear` | ✅ | ✅ | ✅ | Issue tracking |
+| `codacy` | ✅ | ✅ | ✅ | Code quality analysis |
+| `chrome-devtools` | ✅ | — | ✅ | Gemini omits — use Playwright instead |
+| `playwright` | ✅ | ✅ | ✅ | Browser automation / test authoring |
+| `browserbase` | ✅ | ✅ | ✅ | Cloud NL tests (paid, use sparingly) |
+| `code-graph-context` | ✅ | ✅ | ✅ | Structural graph (Docker required) |
+| `stitch` | route→Gemini | ✅ primary | — | Google product — Gemini only |
 
 ## Claude Relay Invocation Safeguards
 
