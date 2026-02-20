@@ -3018,14 +3018,6 @@ function generateStorageReport(){
 }
 
 /**
- * Opens eBay sold listings search for the given item name and metal
- * @param {string} searchTerm - The item name and metal to search for
- */
-function openEbaySearch(searchTerm) {
-  openEbaySoldSearch(searchTerm);
-}
-
-/**
  * Strips search-operator characters from a search term for use in external URLs.
  * Removes quotes, parentheses, and backslashes that act as search operators on eBay.
  * @param {string} term - Raw search term (may contain user-entered punctuation)
@@ -3116,7 +3108,6 @@ if (typeof window !== 'undefined') {
   window.downloadStorageReport = downloadStorageReport;
   window.openStorageReportPopup = openStorageReportPopup;
   window.debounce = debounce;
-  window.openEbaySearch = openEbaySearch;
   window.openEbayBuySearch = openEbayBuySearch;
   window.openEbaySoldSearch = openEbaySoldSearch;
   window.cleanSearchTerm = cleanSearchTerm;
