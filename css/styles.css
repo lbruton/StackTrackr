@@ -11312,6 +11312,26 @@ th {
 .retail-conf-bar--mid  .retail-conf-seg--fill { background: #f59e0b; }
 .retail-conf-bar--high .retail-conf-seg--fill { background: #10b981; }
 
+/* STAK-217: Collapsible vendor section */
+.retail-vendor-details { margin-top: 0.25rem; }
+.retail-vendor-summary {
+  cursor: pointer;
+  list-style: none;
+  font-size: 0.78rem;
+  color: var(--text-muted, var(--bs-secondary-color));
+  padding: 0.2rem 0;
+  user-select: none;
+}
+.retail-vendor-summary::-webkit-details-marker { display: none; }
+.retail-vendor-summary::before {
+  content: "› ";
+  display: inline-block;
+  transition: transform 0.15s;
+}
+.retail-vendor-details[open] .retail-vendor-summary::before {
+  transform: rotate(90deg);
+}
+
 
 /* History table in Activity Log */
 .retail-history-controls {

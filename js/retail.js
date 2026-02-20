@@ -290,8 +290,16 @@ const _buildRetailCard = (slug, meta, priceData) => {
       card.appendChild(trendEl);
     }
 
+    const vendorDetails = document.createElement("details");
+    vendorDetails.className = "retail-vendor-details";
+
+    const vendorSummary = document.createElement("summary");
+    vendorSummary.className = "retail-vendor-summary";
+    vendorDetails.appendChild(vendorSummary);
+
     const vendors = document.createElement("div");
     vendors.className = "retail-vendors";
+
     const _availPrices = Object.values(priceData.prices_by_site || {}).filter((p) => p != null);
     const _lowestPrice = _availPrices.length ? Math.min(..._availPrices) : null;
     Object.entries(RETAIL_VENDOR_NAMES).forEach(([key, label]) => {
@@ -319,7 +327,11 @@ const _buildRetailCard = (slug, meta, priceData) => {
       row.appendChild(scoreEl);
       vendors.appendChild(row);
     });
-    card.appendChild(vendors);
+
+    const count = vendors.children.length;
+    vendorSummary.textContent = `${count} vendor${count !== 1 ? "s" : ""}`;
+    vendorDetails.appendChild(vendors);
+    card.appendChild(vendorDetails);
 
     const footer = document.createElement("div");
     footer.className = "retail-card-footer";
