@@ -11368,75 +11368,75 @@ th {
    ============================================================================= */
 
 [data-theme="hello-kitty"] {
-  /* Primary Colors */
-  --primary: #ec4899;
-  --primary-hover: #db2777;
-  --secondary: #a855f7;
-  --secondary-hover: #9333ea;
-  --success: #10b981;
-  --success-hover: #059669;
-  --info: #8b5cf6;
-  --info-hover: #7c3aed;
-  --warning: #f59e0b;
-  --warning-hover: #d97706;
-  --danger: #f43f5e;
-  --danger-hover: #e11d48;
+  /* Primary Colors — hot pink + vivid purple */
+  --primary: #db2777;
+  --primary-hover: #be185d;
+  --secondary: #9333ea;
+  --secondary-hover: #7e22ce;
+  --success: #059669;
+  --success-hover: #047857;
+  --info: #7c3aed;
+  --info-hover: #6d28d9;
+  --warning: #d97706;
+  --warning-hover: #b45309;
+  --danger: #e11d48;
+  --danger-hover: #be123c;
   --disclaimer-color: var(--warning);
 
   /* Metal-specific Colors */
-  --silver: #a78bfa;
+  --silver: #c084fc;
   --gold: #f59e0b;
-  --platinum: #c084fc;
-  --palladium: #ec4899;
+  --platinum: #e879f9;
+  --palladium: #f472b6;
 
-  /* Inventory Type Colors */
-  --type-coin-bg: #ec4899;
+  /* Inventory Type Colors — all pink/purple family */
+  --type-coin-bg: #db2777;
   --type-coin-text: #ffffff;
-  --type-round-bg: #a855f7;
+  --type-round-bg: #9333ea;
   --type-round-text: #ffffff;
-  --type-bar-bg: #f59e0b;
+  --type-bar-bg: #c026d3;
   --type-bar-text: #ffffff;
-  --type-note-bg: #10b981;
+  --type-note-bg: #7c3aed;
   --type-note-text: #ffffff;
-  --type-set-bg: #8b5cf6;
+  --type-set-bg: #be185d;
   --type-set-text: #ffffff;
-  --type-other-bg: #db2777;
+  --type-other-bg: #6d28d9;
   --type-other-text: #ffffff;
 
-  /* Backgrounds — bubblegum pink */
-  --bg-primary: #fce7f3;
-  --bg-secondary: #fbcfe8;
-  --bg-tertiary: #f9a8d4;
-  --bg-card: #fdf4ff;
+  /* Backgrounds — saturated pink → purple gradient tones, no white */
+  --bg-primary: #f472b6;   /* hot pink */
+  --bg-secondary: #e879f9; /* fuchsia */
+  --bg-tertiary: #c084fc;  /* lavender purple */
+  --bg-card: #fce7f3;      /* pale pink (cards pop against hot-pink bg) */
 
   /* Map legacy tokens */
   --bg: var(--bg-primary);
   --bg-elev-1: var(--bg-secondary);
   --bg-elev-2: var(--bg-tertiary);
-  --surface: var(--bg-card);
-  --surface-alt: #fff5fb;
+  --surface: #f3d8ff;      /* soft lavender for surfaces */
+  --surface-alt: #f0c8ff;  /* slightly deeper lavender */
 
-  /* Text — deep rose */
-  --text-primary: #831843;
-  --text-secondary: #9d174d;
-  --text-muted: #be185d;
+  /* Text — very dark purple for contrast on bright pink */
+  --text-primary: #3b0764;
+  --text-secondary: #581c87;
+  --text-muted: #7e22ce;
   --text: var(--text-primary);
-  --chip-text: #831843;
-  --chip-active-outline: rgba(131, 24, 67, 0.8);
-  --chip-search-outline: rgba(168, 85, 247, 0.75);
+  --chip-text: #3b0764;
+  --chip-active-outline: rgba(59, 7, 100, 0.85);
+  --chip-search-outline: rgba(147, 51, 234, 0.8);
 
-  /* Borders & Shadows */
-  --border: #f9a8d4;
-  --border-hover: #f472b6;
-  --shadow-sm: 0 1px 2px 0 rgb(236 72 153 / 0.15);
-  --shadow: 0 4px 6px -1px rgb(236 72 153 / 0.2), 0 2px 4px -2px rgb(236 72 153 / 0.1);
+  /* Borders & Shadows — vivid magenta */
+  --border: #e879f9;
+  --border-hover: #d946ef;
+  --shadow-sm: 0 1px 2px 0 rgb(219 39 119 / 0.25);
+  --shadow: 0 4px 6px -1px rgb(219 39 119 / 0.3), 0 2px 4px -2px rgb(219 39 119 / 0.2);
   --shadow-lg:
-    0 10px 15px -3px rgb(236 72 153 / 0.2), 0 4px 6px -4px rgb(236 72 153 / 0.1);
-  --back-to-top-bg: #fce7f3;
-  --back-to-top-border: #f9a8d4;
-  --back-to-top-text: #831843;
-  --back-to-top-hover-bg: #fbcfe8;
-  --back-to-top-shadow: 0 2px 8px rgb(236 72 153 / 0.25);
+    0 10px 15px -3px rgb(219 39 119 / 0.3), 0 4px 6px -4px rgb(219 39 119 / 0.2);
+  --back-to-top-bg: #f472b6;
+  --back-to-top-border: #e879f9;
+  --back-to-top-text: #3b0764;
+  --back-to-top-hover-bg: #e879f9;
+  --back-to-top-shadow: 0 2px 8px rgb(219 39 119 / 0.35);
 }
 
 /* Logo: reuse light-mode version in hello-kitty */
