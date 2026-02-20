@@ -225,6 +225,12 @@ const renderRetailCards = () => {
     RETAIL_SLUGS.forEach(() => grid.appendChild(_buildSkeletonCard()));
     return;
   }
+
+  const emptyState = safeGetElement("retailEmptyState");
+  const hasData = retailPrices && retailPrices.prices && Object.keys(retailPrices.prices).length > 0;
+  emptyState.style.display = hasData ? "none" : "";
+  if (!hasData) return;
+
   RETAIL_SLUGS.forEach((slug) => {
     const meta = RETAIL_COIN_META[slug];
     const priceData = retailPrices && retailPrices.prices ? retailPrices.prices[slug] || null : null;

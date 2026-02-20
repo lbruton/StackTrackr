@@ -3512,8 +3512,11 @@
                 <!-- Cards rendered by renderRetailCards() -->
               </div>
 
-              <div id="retailEmptyState" class="settings-empty-state" style="display: none">
-                <p>No market data yet. Click <strong>Sync Now</strong> to load current retail prices.</p>
+              <div id="retailEmptyState" class="retail-empty-state" style="display: none">
+                <div class="retail-empty-icon">📊</div>
+                <p class="retail-empty-title">No market prices yet</p>
+                <p class="retail-empty-desc">Sync to load current bullion retail prices from APMEX, Monument, SDB, and JM Bullion.</p>
+                <button class="retail-sync-cta" type="button" onclick="syncRetailPrices()">Sync Now</button>
               </div>
             </div>
 
