@@ -2,23 +2,26 @@
 /**
  * StakTrakr Retail Price Extractor
  * ==================================
- * Reads providers.json, scrapes each dealer URL via Firecrawl,
- * extracts the lowest in-stock price, and writes daily JSON files
- * to data/retail/{coin-slug}/{YYYY-MM-DD}.json
+ * Reads providers.json, scrapes each dealer URL via Firecrawl (with a
+ * Playwright/browserless fallback for JS-heavy pages), extracts the lowest
+ * in-stock price, writes daily JSON files, and records each result to SQLite.
  *
  * Usage:
  *   FIRECRAWL_API_KEY=fc-... node price-extract.js
  *
  * Environment:
- *   FIRECRAWL_API_KEY  Required. Firecrawl API key.
- *   DATA_DIR           Path to repo data/ folder (default: ../../data)
- *   COINS              Comma-separated coin slugs to run (default: all)
- *   DRY_RUN            Set to "1" to skip writing files
+ *   FIRECRAWL_API_KEY   Required for cloud Firecrawl. Omit for self-hosted.
+ *   FIRECRAWL_BASE_URL  Self-hosted Firecrawl endpoint (default: api.firecrawl.dev)
+ *   BROWSERLESS_URL     ws:// endpoint for Playwright fallback (optional)
+ *   DATA_DIR            Path to repo data/ folder (default: ../../data)
+ *   COINS               Comma-separated coin slugs to run (default: all)
+ *   DRY_RUN             Set to "1" to skip writing files
  */
 
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { openDb, writeSnapshot, windowFloor } from "./db.js";
 
 const __dirname = fileURLToPath(new URL(".", import.meta.url));
 
@@ -30,6 +33,9 @@ const FIRECRAWL_API_KEY = process.env.FIRECRAWL_API_KEY;
 // Self-hosted Firecrawl: set FIRECRAWL_BASE_URL=http://localhost:3002
 // Cloud Firecrawl (default): leave unset or set to https://api.firecrawl.dev
 const FIRECRAWL_BASE_URL = (process.env.FIRECRAWL_BASE_URL || "https://api.firecrawl.dev").replace(/\/$/, "");
+// Playwright/browserless fallback: ws:// endpoint for remote browser
+// e.g. ws://host.docker.internal:3000/chromium/playwright?token=local_dev_token
+const BROWSERLESS_URL = process.env.BROWSERLESS_URL || null;
 const DATA_DIR = resolve(process.env.DATA_DIR || join(__dirname, "../../data"));
 const DRY_RUN = process.env.DRY_RUN === "1";
 const COIN_FILTER = process.env.COINS ? process.env.COINS.split(",").map(s => s.trim()) : null;
@@ -38,11 +44,24 @@ const COIN_FILTER = process.env.COINS ? process.env.COINS.split(",").map(s => s.
 // Run at 3pm ET after the 11am full scrape.
 const PATCH_GAPS = process.env.PATCH_GAPS === "1";
 
-// Firecrawl free/pay-as-you-go tier = 2 concurrent scrapes
-const CONCURRENCY = 2;
+// Sequential with per-request jitter (8-45s) — avoids rate-limit fingerprinting
 const SCRAPE_TIMEOUT_MS = 30_000;
 const RETRY_ATTEMPTS = 2;
 const RETRY_DELAY_MS = 3_000;
+
+// Jitter between requests: 8–45 seconds (randomised anti-pattern fingerprinting)
+function jitter() {
+  return new Promise(r => setTimeout(r, 8_000 + Math.random() * 37_000));
+}
+
+// Fisher-Yates shuffle (in-place)
+function shuffleArray(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
 
 // ---------------------------------------------------------------------------
 // Logging
@@ -281,20 +300,44 @@ async function scrapeUrl(url, providerId = "", attempt = 1) {
 }
 
 // ---------------------------------------------------------------------------
-// Concurrency pool
+// Playwright fallback (browserless remote browser)
 // ---------------------------------------------------------------------------
 
-async function runConcurrent(tasks, concurrency) {
-  const results = new Array(tasks.length);
-  let idx = 0;
-  async function worker() {
-    while (idx < tasks.length) {
-      const i = idx++;
-      results[i] = await tasks[i]();
+/**
+ * Scrape a URL using a remote Playwright/browserless instance.
+ * Called when Firecrawl returns null or throws for a target.
+ * Returns the HTML content as a string (to be passed through extractPrice).
+ *
+ * @param {string} url
+ * @param {string} [providerId]
+ * @returns {Promise<string|null>}  raw HTML/text content, or null on failure
+ */
+async function scrapeWithPlaywright(url, providerId = "") {
+  if (!BROWSERLESS_URL) return null;
+
+  let browser;
+  try {
+    // Dynamic import so the module is only loaded when needed
+    const { chromium } = await import("playwright-core");
+    browser = await chromium.connect(BROWSERLESS_URL);
+    const page = await browser.newPage();
+    // Spoof a realistic user-agent to reduce bot detection
+    await page.setExtraHTTPHeaders({ "Accept-Language": "en-US,en;q=0.9" });
+    await page.goto(url, { waitUntil: "networkidle", timeout: SCRAPE_TIMEOUT_MS });
+    // Extra wait for JS-heavy pages
+    if (SLOW_PROVIDERS.has(providerId)) {
+      await page.waitForTimeout(4_000);
     }
+    const content = await page.content();
+    await browser.close();
+    return content;
+  } catch (err) {
+    warn(`Playwright fallback failed for ${url}: ${err.message.slice(0, 120)}`);
+    if (browser) {
+      try { await browser.close(); } catch { /* ignore close error */ }
+    }
+    return null;
   }
-  await Promise.all(Array.from({ length: concurrency }, worker));
-  return results;
 }
 
 // ---------------------------------------------------------------------------
@@ -458,7 +501,7 @@ async function main() {
     return;
   }
 
-  // Build scrape targets
+  // Build scrape targets — shuffled to avoid rate-limit fingerprinting
   const targets = [];
   for (const [coinSlug, coin] of Object.entries(providersJson.coins)) {
     if (COIN_FILTER && !COIN_FILTER.includes(coinSlug)) continue;
@@ -467,30 +510,93 @@ async function main() {
       targets.push({ coinSlug, coin, provider });
     }
   }
+  shuffleArray(targets);
 
-  log(`Retail price extraction: ${targets.length} targets, ${CONCURRENCY} concurrent`);
+  log(`Retail price extraction: ${targets.length} targets (sequential + jitter)`);
   if (DRY_RUN) log("DRY RUN — no files written");
 
-  // Scrape all targets
+  // Open SQLite for this run — closed in finally block to ensure cleanup on fatal errors
+  const db = DRY_RUN ? null : openDb(DATA_DIR);
+  const scrapedAt = new Date().toISOString();
+  const winStart = windowFloor();
+
+  try {
+
+  // Scrape all targets sequentially with per-request jitter
   const scrapeResults = [];
-  const tasks = targets.map(({ coinSlug, coin, provider }) => async () => {
+  for (let targetIdx = 0; targetIdx < targets.length; targetIdx++) {
+    const { coinSlug, coin, provider } = targets[targetIdx];
     log(`Scraping ${coinSlug}/${provider.id}`);
+    let price = null;
+    let source = "firecrawl";
+
     try {
       const markdown = await scrapeUrl(provider.url, provider.id);
-      const price = extractPrice(markdown, coin.metal, coin.weight_oz || 1, provider.id);
-      if (price !== null) {
+      price = extractPrice(markdown, coin.metal, coin.weight_oz || 1, provider.id);
+
+      // Playwright fallback: if Firecrawl returned a page but no price was found
+      if (price === null && BROWSERLESS_URL) {
+        log(`  ? ${coinSlug}/${provider.id}: no price via Firecrawl — trying Playwright`);
+        const html = await scrapeWithPlaywright(provider.url, provider.id);
+        if (html) {
+          // extractPrice works on HTML too — regex patterns match dollar amounts in either format
+          price = extractPrice(html, coin.metal, coin.weight_oz || 1, provider.id);
+          if (price !== null) {
+            source = "playwright";
+            log(`  ✓ ${coinSlug}/${provider.id}: $${price.toFixed(2)} (playwright)`);
+          } else {
+            warn(`  ? ${coinSlug}/${provider.id}: Playwright page loaded but no price found`);
+          }
+        }
+      } else if (price !== null) {
         log(`  ✓ ${coinSlug}/${provider.id}: $${price.toFixed(2)}`);
       } else {
         warn(`  ? ${coinSlug}/${provider.id}: page loaded but no price found`);
       }
-      scrapeResults.push({ coinSlug, coin, providerId: provider.id, url: provider.url, price, ok: price !== null, error: price === null ? "price_not_found" : null });
-    } catch (err) {
-      warn(`  ✗ ${coinSlug}/${provider.id}: ${err.message.slice(0, 120)}`);
-      scrapeResults.push({ coinSlug, coin, providerId: provider.id, url: provider.url, price: null, ok: false, error: err.message.slice(0, 200) });
-    }
-  });
 
-  await runConcurrent(tasks, CONCURRENCY);
+      scrapeResults.push({ coinSlug, coin, providerId: provider.id, url: provider.url, price, source, ok: price !== null, error: price === null ? "price_not_found" : null });
+    } catch (err) {
+      // Firecrawl threw — try Playwright before giving up
+      if (BROWSERLESS_URL) {
+        log(`  ✗ Firecrawl threw for ${coinSlug}/${provider.id} — trying Playwright`);
+        try {
+          const html = await scrapeWithPlaywright(provider.url, provider.id);
+          if (html) {
+            price = extractPrice(html, coin.metal, coin.weight_oz || 1, provider.id);
+            if (price !== null) {
+              source = "playwright";
+              log(`  ✓ ${coinSlug}/${provider.id}: $${price.toFixed(2)} (playwright)`);
+            }
+          }
+        } catch (pwErr) {
+          warn(`  ✗ Playwright also failed for ${coinSlug}/${provider.id}: ${pwErr.message.slice(0, 80)}`);
+        }
+      }
+
+      if (price === null) {
+        warn(`  ✗ ${coinSlug}/${provider.id}: ${err.message.slice(0, 120)}`);
+      }
+      scrapeResults.push({ coinSlug, coin, providerId: provider.id, url: provider.url, price, source, ok: price !== null, error: price === null ? err.message.slice(0, 200) : null });
+    }
+
+    // Record to SQLite
+    if (db) {
+      writeSnapshot(db, {
+        scrapedAt,
+        windowStart: winStart,
+        coinSlug,
+        vendor:    provider.id,
+        price,
+        source,
+        isFailed:  price === null,
+      });
+    }
+
+    // Jitter before next request (skip after last target)
+    if (targetIdx < targets.length - 1) {
+      await jitter();
+    }
+  }
 
   // FBP backfill: for each coin with failures that has a fbp_url, scrape once
   // and fill in any missing providers. Runs after primary scrapes complete.
@@ -531,7 +637,7 @@ async function main() {
     const urlsUsed = [];
     for (const r of successful) {
       pricesBySite[r.providerId] = r.price;
-      extractionMethods[r.providerId] = "firecrawl";
+      extractionMethods[r.providerId] = r.source; // "firecrawl" or "playwright"
       urlsUsed.push(r.url);
     }
 
@@ -543,6 +649,18 @@ async function main() {
         pricesBySite[r.providerId] = fbp.ach;
         extractionMethods[r.providerId] = "fbp_fallback";
         log(`  ↩ ${coinSlug}/${r.providerId}: $${fbp.ach.toFixed(2)} ACH (fbp_fallback)`);
+        // Record FBP fallback result to SQLite
+        if (db) {
+          writeSnapshot(db, {
+            scrapedAt,
+            windowStart: winStart,
+            coinSlug,
+            vendor:   r.providerId,
+            price:    fbp.ach,
+            source:   "fbp",
+            isFailed: false,
+          });
+        }
       }
     }
 
@@ -551,6 +669,7 @@ async function main() {
 
     writeDailyJson(coinSlug, dateStr, {
       date: dateStr,
+      window_start: winStart,  // 15-min floor of scrape time; used by merge-prices for SQLite confidence writes
       generated_at_utc: generatedAt,
       currency: "USD",
       prices_by_site: pricesBySite,
@@ -576,6 +695,10 @@ async function main() {
   if (ok === 0) {
     console.error("All scrapes failed.");
     process.exit(1);
+  }
+
+  } finally {
+    if (db) db.close();
   }
 }
 

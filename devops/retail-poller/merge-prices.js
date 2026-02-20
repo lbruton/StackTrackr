@@ -2,14 +2,15 @@
 /**
  * StakTrakr Retail Price — Confidence Merger
  * ============================================
- * Reads per-coin Firecrawl JSON ({date}.json) and Vision JSON ({date}-vision.json),
- * applies a confidence scoring model, and writes the final merged daily file:
+ * Reads per-coin Firecrawl/Playwright JSON ({date}.json), applies a confidence
+ * scoring model, and writes the final daily file plus an hourly intra-day snapshot:
  *   data/retail/{coin-slug}/{date}-final.json
+ *   data/retail/{coin-slug}/{date}-{HH}h.json
  *
  * Confidence scoring:
  *   - Method agreement (both within 2%): +40 pts → HIGH confidence
  *   - Single method available: base score 50 pts
- *   - Gemini confidence "high": +15, "medium": +5, "low": -10
+ *   - Vision data (if present from optional follow-up): +15/+5/-10 pts modifier
  *   - Provider agreement (within 3% of median): +10 pts per matching provider
  *   - Day-over-day deviation (>10%): -20 pts warning flag
  *
@@ -25,6 +26,7 @@
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { openDb, writeConfidenceScores } from "./db.js";
 
 const __dirname = fileURLToPath(new URL(".", import.meta.url));
 
@@ -186,7 +188,27 @@ async function main() {
   let totalCoins = 0;
   let totalProviders = 0;
   let highConfidence = 0;
-  const visionNeeded = []; // targets that need vision follow-up
+
+  // Open SQLite for confidence score writes (null if DB doesn't exist yet)
+  let db = null;
+  const dbPath = join(DATA_DIR, "..", "prices.db");
+  if (existsSync(dbPath)) {
+    try {
+      db = openDb(DATA_DIR);
+    } catch (err) {
+      warn(`Could not open prices.db: ${err.message} — confidence scores will not be written`);
+    }
+  }
+
+  // Hourly snapshot path: YYYY-MM-DD-HHh.json alongside the -final.json
+  const hourStr = new Date().toISOString().slice(11, 13); // "14" for 2pm UTC
+  const hourlyDateTag = `${dateStr}-${hourStr}h`;
+
+  // Collect confidence score updates for SQLite bulk write.
+  // window_start is read from the daily JSON (written by price-extract.js) so that
+  // confidence updates match the rows written during the scrape run, even when merge
+  // runs in a later 15-minute window.
+  const confidenceUpdates = [];
 
   const coins = COIN_FILTER
     ? Object.entries(providersJson.coins).filter(([slug]) => COIN_FILTER.includes(slug))
@@ -256,15 +278,12 @@ async function main() {
         methodsBySite[providerId] = result.method;
         if (result.flags.length) flagsBySite[providerId] = result.flags;
         if (result.score >= 70) highConfidence++;
-        // Flag for vision follow-up if confidence is low and vision hasn't run yet
-        if (result.score < 50 && !visionPrices[providerId]) {
-          const coin = providersJson.coins[coinSlug];
-          visionNeeded.push({ coinSlug, providerId, url: coin?.providers.find(p => p.id === providerId)?.url, score: result.score });
+        // Queue SQLite confidence score update.
+        // Use window_start from the daily JSON (written by price-extract) so the UPDATE
+        // matches the actual rows, not a recomputed floor from merge-prices's own start time.
+        if (fcData?.window_start) {
+          confidenceUpdates.push({ coinSlug, vendor: providerId, windowStart: fcData.window_start, confidence: result.score });
         }
-      } else if (!visionPrices[providerId]) {
-        // No price at all and vision hasn't run — definitely needs vision
-        const coin = providersJson.coins[coinSlug];
-        visionNeeded.push({ coinSlug, providerId, url: coin?.providers.find(p => p.id === providerId)?.url, score: 0 });
       }
       totalProviders++;
     }
@@ -287,19 +306,29 @@ async function main() {
       median_price: sortedPrices.length ? sortedPrices[Math.floor(sortedPrices.length / 2)] : null,
       lowest_price: sortedPrices[0] ?? null,
       sources: {
-        firecrawl: fcPath ? (fcData ? "ok" : "missing") : "missing",
-        vision: visionPath ? (visionData ? "ok" : "missing") : "missing",
+        firecrawl: fcData   ? "ok" : "missing",
+        vision:    visionData ? "ok" : "missing",
       },
     };
 
-    const outPath = join(DATA_DIR, "retail", coinSlug, `${dateStr}-final.json`);
+    const coinDir = join(DATA_DIR, "retail", coinSlug);
+    const outPath = join(coinDir, `${dateStr}-final.json`);
     if (DRY_RUN) {
       log(`[DRY RUN] ${outPath}`);
       console.log(JSON.stringify(outData, null, 2));
     } else {
-      mkdirSync(join(DATA_DIR, "retail", coinSlug), { recursive: true });
+      mkdirSync(coinDir, { recursive: true });
       writeFileSync(outPath, JSON.stringify(outData, null, 2) + "\n");
       log(`Wrote ${outPath}`);
+    }
+
+    // Hourly snapshot: {date}-{HH}h.json — intra-day resolution for time-series
+    const hourlyPath = join(coinDir, `${hourlyDateTag}.json`);
+    if (!DRY_RUN) {
+      writeFileSync(hourlyPath, JSON.stringify(outData, null, 2) + "\n");
+      log(`Wrote ${hourlyPath}`);
+    } else {
+      log(`[DRY RUN] ${hourlyPath}`);
     }
 
     totalCoins++;
@@ -308,19 +337,18 @@ async function main() {
 
   log(`Done: ${totalCoins} coins, ${totalProviders} provider slots, ${highConfidence} high-confidence prices`);
 
-  // Write vision-needed.json — consumed by the GH Actions vision-on-demand step
-  const visionNeededPath = join(DATA_DIR, "retail", `${dateStr}-vision-needed.json`);
-  if (visionNeeded.length > 0) {
-    const payload = { date: dateStr, targets: visionNeeded };
-    if (DRY_RUN) {
-      log(`[DRY RUN] ${visionNeededPath}`);
-      console.log(JSON.stringify(payload, null, 2));
-    } else {
-      writeFileSync(visionNeededPath, JSON.stringify(payload, null, 2) + "\n");
-      log(`Vision needed: ${visionNeeded.length} targets → ${visionNeededPath}`);
+  // Write confidence scores back to SQLite
+  if (db && confidenceUpdates.length > 0) {
+    try {
+      writeConfidenceScores(db, confidenceUpdates);
+      log(`Wrote ${confidenceUpdates.length} confidence score(s) to SQLite`);
+    } catch (err) {
+      warn(`Could not write confidence scores to SQLite: ${err.message}`);
+    } finally {
+      db.close();
     }
-  } else {
-    log("Vision needed: 0 targets — firecrawl confidence is high across the board");
+  } else if (db) {
+    db.close();
   }
 
   // Write/update manifest.json — consumed by the StakTrakr app to discover latest data
