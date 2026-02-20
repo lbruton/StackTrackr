@@ -19,6 +19,8 @@ const runId = process.env.TEST_RUN_ID ||
 
 export default defineConfig({
   outputDir: `test-results/${runId}`,
+  globalTeardown: './devops/playwright-dash/report-generator.js',
+  reporter: [['json', { outputFile: `test-results/${runId}/results.json` }]],
   testDir: './tests',
   testMatch: ['**/*.spec.js'],
   timeout: 60_000,
