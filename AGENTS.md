@@ -26,7 +26,7 @@ Future plans include ApexCharts and Tabler integration. Slowly migrating new fea
 
 ### 1. Script Loading Order (MANDATORY)
 
-50 scripts load in strict dependency order via `index.html`. Breaking this order causes undefined variable errors. The full chain:
+54 scripts load in strict dependency order via `index.html`. Breaking this order causes undefined variable errors. The full chain:
 
 ```
 file-protocol-fix.js  (no defer -- loads FIRST)
