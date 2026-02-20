@@ -1353,9 +1353,15 @@ const renderTable = () => {
     const rows = [];
     const chipConfig = typeof getInlineChipConfig === 'function' ? getInlineChipConfig() : [];
 
+    // Optimization: Create a map for O(1) index lookup instead of O(N) indexOf in the loop
+    const itemIndexMap = new Map();
+    for (let j = 0; j < inventory.length; j++) {
+      itemIndexMap.set(inventory[j], j);
+    }
+
     for (let i = 0; i < sortedInventory.length; i++) {
       const item = sortedInventory[i];
-      const originalIdx = inventory.indexOf(item);
+      const originalIdx = itemIndexMap.get(item);
       debugLog('renderTable row', i, item.name);
 
       // Portfolio computed values (all financial columns are qty-adjusted totals)
