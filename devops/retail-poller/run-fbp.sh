@@ -3,7 +3,7 @@
 # Reads today's coin files, finds any remaining failed_sites, scrapes
 # FindBullionPrices only for those coins, and patches the files in place.
 
-set -e
+set -euo pipefail
 
 DATE=$(date -u +%Y-%m-%d)
 echo "[$(date -u +%H:%M:%S)] Starting gap-fill run for $DATE"

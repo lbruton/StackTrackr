@@ -346,8 +346,12 @@ async function main() {
     log("[DRY RUN] manifest.json");
     console.log(JSON.stringify(manifest, null, 2));
   } else {
-    writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + "\n");
-    log(`Wrote manifest.json (${manifest.dates.length} dates, latest: ${manifest.latestDate})`);
+    try {
+      writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + "\n");
+      log(`Wrote manifest.json (${manifest.dates.length} dates, latest: ${manifest.latestDate})`);
+    } catch (err) {
+      warn(`Failed to write manifest.json: ${err.message}`);
+    }
   }
 }
 

@@ -392,7 +392,7 @@ async function main() {
       const filePath = join(DATA_DIR, "retail", coinSlug, `${dateStr}.json`);
       if (!existsSync(filePath)) continue;
       let daily;
-      try { daily = JSON.parse(readFileSync(filePath, "utf-8")); } catch { continue; }
+      try { daily = JSON.parse(readFileSync(filePath, "utf-8")); } catch (err) { warn(`Skipping ${coinSlug}: could not parse ${filePath}: ${err.message}`); continue; }
       if (!daily.failed_sites?.length) continue;
       if (!coinData.fbp_url) continue;
       gapsByCoin[coinSlug] = { coinData, filePath, daily, gaps: daily.failed_sites };
@@ -413,6 +413,8 @@ async function main() {
         const fbpPrices = extractFbpPrices(md, coinData.metal, coinData.weight_oz || 1);
 
         let filled = 0;
+        daily.prices_by_site = daily.prices_by_site || {};
+        daily.extraction_methods = daily.extraction_methods || {};
         for (const providerId of gaps) {
           const fbp = fbpPrices[providerId];
           if (!fbp) continue;
@@ -430,6 +432,7 @@ async function main() {
           daily.source_count = prices.length;
           daily.average_price = Math.round(prices.reduce((a, b) => a + b, 0) / prices.length * 100) / 100;
           daily.median_price = sorted[Math.floor(sorted.length / 2)];
+          daily.lowest_price = sorted[0];
 
           if (DRY_RUN) {
             log(`[DRY RUN] Would patch ${filePath}`);
@@ -448,6 +451,10 @@ async function main() {
     }
 
     log(`Gap-fill done: ${totalFilled} price(s) recovered across ${gapCoins.length} coin(s)`);
+    if (totalFilled === 0 && gapCoins.length > 0) {
+      console.error("Gap-fill failed: all FBP scrapes failed, no prices recovered.");
+      process.exit(1);
+    }
     return;
   }
 

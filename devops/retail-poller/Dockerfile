@@ -37,7 +37,7 @@ RUN git config --global user.name "${GIT_USER_NAME}" && \
 
 # Cron jobs:
 #   11:00 AM ET (16:00 UTC) — full direct-dealer scrape via Firecrawl
-#   3:00 PM ET  (20:00 UTC) — FBP-only snapshot (FindBullionPrices comparison table)
+#   3:00 PM ET  (20:00 UTC) — FBP gap-fill (patches failed providers from 11am run)
 RUN (echo "0 16 * * * root /app/run-local.sh >> /var/log/retail-poller.log 2>&1"; \
      echo "0 20 * * * root /app/run-fbp.sh >> /var/log/retail-poller.log 2>&1") > /etc/cron.d/retail-poller && \
     chmod 0644 /etc/cron.d/retail-poller
