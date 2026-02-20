@@ -20,8 +20,8 @@
 const VAULT_MAGIC = new Uint8Array([0x53, 0x54, 0x56, 0x41, 0x55, 0x4C, 0x54]); // "STVAULT"
 const VAULT_VERSION = 0x01;
 const VAULT_HEADER_SIZE = 56;
-const VAULT_PBKDF2_ITERATIONS = 100000;
-const VAULT_MIN_PASSWORD_LENGTH = 8;
+const VAULT_PBKDF2_ITERATIONS = 600000;
+const VAULT_MIN_PASSWORD_LENGTH = 12;
 const VAULT_MAX_FILE_SIZE = 50 * 1024 * 1024; // 50 MB
 
 // =============================================================================
@@ -686,8 +686,13 @@ async function handleVaultAction() {
 
   var password = passwordEl ? passwordEl.value : "";
 
-  // Validate password length
-  if (password.length < VAULT_MIN_PASSWORD_LENGTH) {
+  // Determine effective mode
+  var isCloudExport = mode === "cloud-export";
+  var isCloudImport = mode === "cloud-import";
+  var effectiveMode = (isCloudExport) ? "export" : (isCloudImport) ? "import" : mode;
+
+  // Validate password length (only for new exports)
+  if (effectiveMode === "export" && password.length < VAULT_MIN_PASSWORD_LENGTH) {
     showVaultStatus(
       "error",
       "Password must be at least " + VAULT_MIN_PASSWORD_LENGTH + " characters.",
@@ -695,10 +700,6 @@ async function handleVaultAction() {
     return;
   }
 
-  // Determine effective mode
-  var isCloudExport = mode === "cloud-export";
-  var isCloudImport = mode === "cloud-import";
-  var effectiveMode = (isCloudExport) ? "export" : (isCloudImport) ? "import" : mode;
 
   if (effectiveMode === "export") {
     var confirm = confirmEl ? confirmEl.value : "";
