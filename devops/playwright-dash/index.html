@@ -61,6 +61,9 @@
   .toast.show { opacity: 1; transform: translateY(0); }
   .toast.ok { background: var(--success); color: #fff; }
   .toast.err { background: var(--danger); color: #fff; }
+  .speed-btn { padding: 3px 10px; border-radius: 999px; border: 1px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; font-size: 12px; transition: all 0.15s; }
+  .speed-btn:hover { border-color: var(--primary); color: var(--primary); }
+  .speed-btn.active { background: var(--primary); border-color: var(--primary); color: #fff; }
   .spinner { display: inline-block; width: 12px; height: 12px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle; margin-right: 6px; }
   @keyframes spin { to { transform: rotate(360deg); } }
 </style>
@@ -90,7 +93,19 @@
 </div>
 <div class="lightbox" id="videoLightbox">
   <span class="lightbox-close" id="videoLightboxClose">&times;</span>
-  <video id="lightboxVideo" controls style="max-width:90vw;max-height:85vh;border-radius:8px;background:#000;"></video>
+  <div style="display:flex;flex-direction:column;align-items:center;gap:10px;">
+    <video id="lightboxVideo" controls style="max-width:90vw;max-height:80vh;border-radius:8px;background:#000;"></video>
+    <div id="speedControls" style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;">
+      <span style="font-size:11px;color:var(--muted);align-self:center;margin-right:4px;">Speed:</span>
+      <button class="speed-btn" data-rate="0.1">0.1×</button>
+      <button class="speed-btn" data-rate="0.2">0.2×</button>
+      <button class="speed-btn" data-rate="0.5">0.5×</button>
+      <button class="speed-btn active" data-rate="1">1×</button>
+      <button class="speed-btn" data-rate="2">2×</button>
+      <button class="speed-btn" data-rate="5">5×</button>
+      <button class="speed-btn" data-rate="10">10×</button>
+    </div>
+  </div>
 </div>
 <div class="toast" id="toast"></div>
 <script>
@@ -202,11 +217,21 @@
 
   search.addEventListener('input', renderGrid);
 
+  function setSpeed(rate) {
+    lightboxVideo.playbackRate = rate;
+    document.querySelectorAll('.speed-btn').forEach(b => b.classList.toggle('active', Number(b.dataset.rate) === rate));
+  }
+
   function closeVideoLightbox() {
     lightboxVideo.pause();
     lightboxVideo.src = '';
     videoLightbox.classList.remove('open');
+    setSpeed(1);
   }
+
+  document.querySelectorAll('.speed-btn').forEach(btn => {
+    btn.addEventListener('click', e => { e.stopPropagation(); setSpeed(Number(btn.dataset.rate)); });
+  });
 
   lightbox.addEventListener('click', e => { if (e.target === lightbox || e.target.id === 'lightboxClose') lightbox.classList.remove('open'); });
   document.getElementById('lightboxClose').addEventListener('click', () => lightbox.classList.remove('open'));
