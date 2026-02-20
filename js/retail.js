@@ -173,7 +173,6 @@ const syncRetailPrices = async () => {
     });
     saveRetailPriceHistory();
 
-    _retailSyncInProgress = false;
     syncStatus.textContent = `Updated ${fetchCount}/${RETAIL_SLUGS.length} coins · ${targetDate}`;
   } catch (err) {
     debugLog(`[retail] Sync error: ${err.message}`, "warn");
@@ -260,6 +259,7 @@ const renderRetailCards = () => {
 
   grid.innerHTML = "";
   if (_retailSyncInProgress) {
+    safeGetElement("retailEmptyState").style.display = "none";
     RETAIL_SLUGS.forEach(() => grid.appendChild(_buildSkeletonCard()));
     return;
   }
@@ -319,8 +319,8 @@ const _buildRetailCard = (slug, meta, priceData) => {
 
   const badge = document.createElement("span");
   badge.className = `retail-metal-badge retail-metal-badge--${meta.metal}`;
-  const _emoji = RETAIL_METAL_EMOJI[meta.metal];
-  badge.textContent = _emoji ? `${_emoji} ${meta.metal}` : meta.metal;
+  const emoji = RETAIL_METAL_EMOJI[meta.metal];
+  badge.textContent = emoji ? `${emoji} ${meta.metal}` : meta.metal;
 
   header.appendChild(nameSpan);
   header.appendChild(badge);
@@ -374,15 +374,15 @@ const _buildRetailCard = (slug, meta, priceData) => {
     const vendors = document.createElement("div");
     vendors.className = "retail-vendors";
 
-    const _availPrices = Object.values(priceData.prices_by_site || {}).filter((p) => p != null);
-    const _lowestPrice = _availPrices.length ? Math.min(..._availPrices) : null;
+    const availPrices = Object.values(priceData.prices_by_site || {}).filter((p) => p != null);
+    const lowestPrice = availPrices.length ? Math.min(...availPrices) : null;
     Object.entries(RETAIL_VENDOR_NAMES).forEach(([key, label]) => {
       const price = (priceData.prices_by_site || {})[key];
       const score = priceData.scores_by_site && priceData.scores_by_site[key];
       if (price == null) return;
       const row = document.createElement("div");
       row.className = "retail-vendor-row";
-      if (_lowestPrice !== null && Math.abs(price - _lowestPrice) < 0.001) {
+      if (lowestPrice !== null && Math.abs(price - lowestPrice) < 0.001) {
         row.classList.add("retail-vendor-row--best");
       }
 
