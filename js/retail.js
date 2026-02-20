@@ -205,6 +205,24 @@ const renderRetailCards = () => {
 
 /** Metal emoji icons keyed by metal name */
 const RETAIL_METAL_EMOJI = { gold: "🥇", silver: "🥈", platinum: "🔷", palladium: "⬜" };
+/**
+ * Computes price trend vs. the previous history entry.
+ * @param {string} slug
+ * @returns {{ dir: 'up'|'down'|'flat', pct: string }|null} null if insufficient history
+ */
+const _computeRetailTrend = (slug) => {
+  const history = retailPriceHistory[slug];
+  if (!history || history.length < 2) return null;
+  const latest = history[0].average_price;
+  const prev = history[1].average_price;
+  if (latest == null || prev == null || prev === 0) return null;
+  const change = ((latest - prev) / prev) * 100;
+  const pct = Math.abs(change).toFixed(1);
+  if (change > 0.05) return { dir: "up", pct };
+  if (change < -0.05) return { dir: "down", pct };
+  return { dir: "flat", pct: "0.0" };
+};
+
 
 /**
  * Builds a single coin price card element.
@@ -261,6 +279,16 @@ const _buildRetailCard = (slug, meta, priceData) => {
       summary.appendChild(item);
     });
     card.appendChild(summary);
+
+    const trend = _computeRetailTrend(slug);
+    if (trend) {
+      const trendEl = document.createElement("span");
+      const arrow = { up: "\u2191", down: "\u2193", flat: "\u2192" }[trend.dir];
+      const sign  = trend.dir === "up" ? "+" : trend.dir === "down" ? "-" : "";
+      trendEl.className = `retail-trend retail-trend--${trend.dir}`;
+      trendEl.textContent = `${arrow} ${sign}${trend.pct}%`;
+      card.appendChild(trendEl);
+    }
 
     const vendors = document.createElement("div");
     vendors.className = "retail-vendors";
