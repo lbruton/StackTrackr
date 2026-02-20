@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Playwright Dashboard</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --border: #2a2d3a;
+    --primary: #3b82f6;
+    --primary-dim: rgba(59,130,246,0.15);
+    --text: #e2e8f0;
+    --muted: #94a3b8;
+    --success: #22c55e;
+    --danger: #ef4444;
+    --radius: 8px;
+  }
+  body { background: var(--bg); color: var(--text); font-family: system-ui, sans-serif; font-size: 14px; min-height: 100vh; }
+  header { display: flex; align-items: center; gap: 12px; padding: 14px 20px; border-bottom: 1px solid var(--border); background: var(--surface); position: sticky; top: 0; z-index: 100; }
+  h1 { font-size: 1rem; font-weight: 600; color: var(--text); flex: 1; }
+  .badge { font-size: 11px; background: var(--primary-dim); color: var(--primary); border: 1px solid var(--primary); border-radius: 999px; padding: 2px 8px; }
+  .toggle-wrap { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); }
+  .toggle { position: relative; width: 36px; height: 20px; }
+  .toggle input { opacity: 0; width: 0; height: 0; }
+  .slider { position: absolute; inset: 0; background: var(--border); border-radius: 20px; cursor: pointer; transition: background 0.2s; }
+  .slider::before { content: ''; position: absolute; width: 14px; height: 14px; left: 3px; top: 3px; background: #fff; border-radius: 50%; transition: transform 0.2s; }
+  .toggle input:checked + .slider { background: var(--primary); }
+  .toggle input:checked + .slider::before { transform: translateX(16px); }
+  .btn { padding: 6px 14px; border-radius: 999px; border: none; cursor: pointer; font-size: 13px; font-weight: 500; transition: opacity 0.15s; }
+  .btn:hover { opacity: 0.85; }
+  .btn-primary { background: var(--primary); color: #fff; }
+  .btn-outline { background: transparent; color: var(--primary); border: 1px solid var(--primary); }
+  .toolbar { display: flex; align-items: center; gap: 10px; padding: 12px 20px; border-bottom: 1px solid var(--border); }
+  .tabs { display: flex; gap: 6px; }
+  .tab { padding: 5px 14px; border-radius: 999px; border: 1px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; font-size: 13px; transition: all 0.15s; }
+  .tab.active { background: var(--primary); border-color: var(--primary); color: #fff; }
+  .search { margin-left: auto; padding: 5px 12px; border-radius: 999px; border: 1px solid var(--border); background: var(--surface); color: var(--text); font-size: 13px; width: 220px; }
+  .search::placeholder { color: var(--muted); }
+  .count { font-size: 12px; color: var(--muted); white-space: nowrap; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; padding: 20px; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; cursor: pointer; transition: border-color 0.15s, transform 0.15s; }
+  .card:hover { border-color: var(--primary); transform: translateY(-2px); }
+  .card img { width: 100%; height: 160px; object-fit: cover; display: block; background: var(--bg); }
+  .card video { width: 100%; height: 160px; display: block; background: #000; }
+  .card-body { padding: 10px 12px; }
+  .card-name { font-size: 12px; font-weight: 500; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .card-meta { font-size: 11px; color: var(--muted); margin-top: 3px; }
+  .empty { grid-column: 1/-1; text-align: center; color: var(--muted); padding: 60px 20px; }
+  .empty svg { margin-bottom: 12px; opacity: 0.3; }
+  /* Lightbox */
+  .lightbox { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 200; align-items: center; justify-content: center; }
+  .lightbox.open { display: flex; }
+  .lightbox img { max-width: 90vw; max-height: 90vh; border-radius: var(--radius); box-shadow: 0 0 60px rgba(0,0,0,0.5); }
+  .lightbox-close { position: absolute; top: 20px; right: 24px; font-size: 28px; color: #fff; cursor: pointer; line-height: 1; opacity: 0.7; }
+  .lightbox-close:hover { opacity: 1; }
+  /* Toast */
+  .toast { position: fixed; bottom: 24px; right: 24px; padding: 10px 18px; border-radius: var(--radius); font-size: 13px; z-index: 300; opacity: 0; transform: translateY(8px); transition: opacity 0.2s, transform 0.2s; pointer-events: none; }
+  .toast.show { opacity: 1; transform: translateY(0); }
+  .toast.ok { background: var(--success); color: #fff; }
+  .toast.err { background: var(--danger); color: #fff; }
+  .spinner { display: inline-block; width: 12px; height: 12px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle; margin-right: 6px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+<header>
+  <h1>Playwright Dashboard</h1>
+  <span class="badge" id="statusBadge">idle</span>
+  <div class="toggle-wrap">
+    <label class="toggle"><input type="checkbox" id="autoRefresh" checked><span class="slider"></span></label>
+    Auto-refresh
+  </div>
+  <button class="btn btn-primary" id="captureBtn">Capture Now</button>
+</header>
+<div class="toolbar">
+  <div class="tabs">
+    <button class="tab active" data-tab="screenshot">Screenshots</button>
+    <button class="tab" data-tab="video">Videos</button>
+  </div>
+  <span class="count" id="countLabel"></span>
+  <input class="search" type="search" id="search" placeholder="Filter by name...">
+</div>
+<div class="grid" id="grid"></div>
+<div class="lightbox" id="lightbox">
+  <span class="lightbox-close" id="lightboxClose">&times;</span>
+  <img id="lightboxImg" src="" alt="">
+</div>
+<div class="toast" id="toast"></div>
+<script>
+  let allFiles = [];
+  let activeTab = 'screenshot';
+  let refreshTimer = null;
+  const grid = document.getElementById('grid');
+  const search = document.getElementById('search');
+  const statusBadge = document.getElementById('statusBadge');
+  const countLabel = document.getElementById('countLabel');
+  const lightbox = document.getElementById('lightbox');
+  const lightboxImg = document.getElementById('lightboxImg');
+  const toast = document.getElementById('toast');
+  const captureBtn = document.getElementById('captureBtn');
+  const autoRefresh = document.getElementById('autoRefresh');
+
+  function fmt(bytes) {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024*1024) return (bytes/1024).toFixed(1) + ' KB';
+    return (bytes/1024/1024).toFixed(1) + ' MB';
+  }
+
+  function fmtDate(ms) {
+    return new Date(ms).toLocaleString();
+  }
+
+  function basename(p) {
+    return p.split('/').pop();
+  }
+
+  function renderGrid() {
+    const q = search.value.toLowerCase();
+    const type = activeTab === 'screenshot' ? 'screenshot' : 'video';
+    const items = allFiles.filter(f => f.type === type && (!q || basename(f.path).toLowerCase().includes(q)));
+    countLabel.textContent = items.length + ' item' + (items.length !== 1 ? 's' : '');
+    if (items.length === 0) {
+      grid.innerHTML = '<div class="empty"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg><p>No ' + type + 's yet</p></div>';
+      return;
+    }
+    grid.innerHTML = items.map(f => {
+      const name = basename(f.path);
+      const meta = fmtDate(f.mtime) + ' · ' + fmt(f.size);
+      if (f.type === 'screenshot') {
+        return '<div class="card" data-src="' + f.path + '"><img src="' + f.path + '" alt="' + name + '" loading="lazy"><div class="card-body"><div class="card-name">' + name + '</div><div class="card-meta">' + meta + '</div></div></div>';
+      }
+      return '<div class="card"><video src="' + f.path + '" controls preload="metadata"></video><div class="card-body"><div class="card-name">' + name + '</div><div class="card-meta">' + meta + '</div></div></div>';
+    }).join('');
+    grid.querySelectorAll('.card[data-src]').forEach(card => {
+      card.addEventListener('click', () => {
+        lightboxImg.src = card.dataset.src;
+        lightbox.classList.add('open');
+      });
+    });
+  }
+
+  async function fetchFiles() {
+    try {
+      statusBadge.textContent = 'refreshing';
+      const res = await fetch('/api/files');
+      allFiles = await res.json();
+      statusBadge.textContent = 'live';
+      renderGrid();
+    } catch (e) {
+      statusBadge.textContent = 'error';
+    }
+  }
+
+  function startRefresh() {
+    if (refreshTimer) return;
+    refreshTimer = setInterval(fetchFiles, 3000);
+  }
+  function stopRefresh() {
+    clearInterval(refreshTimer);
+    refreshTimer = null;
+  }
+
+  function showToast(msg, type) {
+    toast.textContent = msg;
+    toast.className = 'toast show ' + type;
+    setTimeout(() => { toast.className = 'toast'; }, 3000);
+  }
+
+  document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      activeTab = tab.dataset.tab;
+      renderGrid();
+    });
+  });
+
+  search.addEventListener('input', renderGrid);
+
+  lightbox.addEventListener('click', e => { if (e.target === lightbox || e.target.id === 'lightboxClose') lightbox.classList.remove('open'); });
+  document.getElementById('lightboxClose').addEventListener('click', () => lightbox.classList.remove('open'));
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') lightbox.classList.remove('open'); });
+
+  autoRefresh.addEventListener('change', () => {
+    if (autoRefresh.checked) startRefresh(); else stopRefresh();
+  });
+
+  captureBtn.addEventListener('click', async () => {
+    captureBtn.disabled = true;
+    captureBtn.innerHTML = '<span class="spinner"></span>Capturing...';
+    try {
+      const res = await fetch('/api/capture', { method: 'POST' });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      showToast('Screenshot saved', 'ok');
+      await fetchFiles();
+      activeTab = 'screenshot';
+      document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === 'screenshot'));
+      renderGrid();
+    } catch (e) {
+      showToast('Capture failed: ' + e.message, 'err');
+    } finally {
+      captureBtn.disabled = false;
+      captureBtn.textContent = 'Capture Now';
+    }
+  });
+
+  fetchFiles();
+  startRefresh();
+</script>
+</body>
+</html>
