@@ -1,0 +1,109 @@
+# Retail FBP Snapshot — scrapes FindBullionPrices daily for all 11 tracked coins.
+#
+# Runs at 3pm ET (20:00 UTC) — after the local Docker Firecrawl run at 11am ET.
+# Uses cloud Firecrawl (free tier: ~330 credits/month = 11 coins × 30 days).
+#
+# Output: data/retail/fbp/{YYYY-MM-DD}.json
+#   Contains ACH and credit prices for all recognized dealers per coin.
+#   Used by the app's retailer comparison table in the Settings modal.
+#
+# This is best-effort: if FBP is slow/down the job simply produces no output for
+# that day. The app falls back to the nearest available date.
+#
+# Required repository secrets:
+#   FIRECRAWL_API_KEY — Firecrawl cloud API key (api.firecrawl.dev)
+name: Retail FBP Snapshot
+
+on:
+  schedule:
+    - cron: '0 20 * * *'   # 3pm ET (20:00 UTC)
+  workflow_dispatch:
+    inputs:
+      date:
+        description: 'Date override (YYYY-MM-DD, default: today UTC)'
+        required: false
+
+env:
+  TZ: UTC
+
+jobs:
+  fbp-snapshot:
+    name: FBP Snapshot
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout scripts (main branch)
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          path: scripts
+
+      - name: Checkout data branch (output target)
+        uses: actions/checkout@v4
+        with:
+          ref: data
+          path: data-out
+          fetch-depth: 1
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Resolve date
+        id: date
+        env:
+          INPUT_DATE: ${{ github.event.inputs.date }}
+        run: |
+          if [ -n "$INPUT_DATE" ]; then
+            DATE="$INPUT_DATE"
+          else
+            DATE=$(date -u +%Y-%m-%d)
+          fi
+          echo "date=$DATE" >> "$GITHUB_OUTPUT"
+
+      - name: Skip if today's snapshot already exists
+        id: check
+        env:
+          SNAP_DATE: ${{ steps.date.outputs.date }}
+        run: |
+          FILE="data-out/data/retail/fbp/${SNAP_DATE}.json"
+          if [ -f "$FILE" ]; then
+            echo "Snapshot already exists for ${SNAP_DATE}, skipping."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Install Node deps
+        if: steps.check.outputs.skip != 'true'
+        working-directory: scripts/devops/retail-poller
+        run: npm install
+
+      - name: Run FBP-only price extraction
+        if: steps.check.outputs.skip != 'true'
+        env:
+          FIRECRAWL_API_KEY: ${{ secrets.FIRECRAWL_API_KEY }}
+          FBP_ONLY: "1"
+          DATA_DIR: ${{ github.workspace }}/data-out/data
+        working-directory: scripts/devops/retail-poller
+        run: node price-extract.js
+
+      - name: Commit and push snapshot
+        if: steps.check.outputs.skip != 'true'
+        env:
+          SNAP_DATE: ${{ steps.date.outputs.date }}
+        working-directory: data-out
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/retail/fbp/
+          if git diff --cached --quiet; then
+            echo "No FBP data to commit."
+          else
+            git commit -m "retail: ${SNAP_DATE} fbp snapshot"
+            git pull --rebase origin data
+            git push
+          fi

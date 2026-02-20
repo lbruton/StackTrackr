@@ -27,9 +27,15 @@ const __dirname = fileURLToPath(new URL(".", import.meta.url));
 // ---------------------------------------------------------------------------
 
 const FIRECRAWL_API_KEY = process.env.FIRECRAWL_API_KEY;
+// Self-hosted Firecrawl: set FIRECRAWL_BASE_URL=http://localhost:3002
+// Cloud Firecrawl (default): leave unset or set to https://api.firecrawl.dev
+const FIRECRAWL_BASE_URL = (process.env.FIRECRAWL_BASE_URL || "https://api.firecrawl.dev").replace(/\/$/, "");
 const DATA_DIR = resolve(process.env.DATA_DIR || join(__dirname, "../../data"));
 const DRY_RUN = process.env.DRY_RUN === "1";
 const COIN_FILTER = process.env.COINS ? process.env.COINS.split(",").map(s => s.trim()) : null;
+// FBP_ONLY: skip all direct provider scrapes; just scrape FindBullionPrices for all coins
+// and write data/retail/fbp/{YYYY-MM-DD}.json with the full dealer comparison table.
+const FBP_ONLY = process.env.FBP_ONLY === "1";
 
 // Firecrawl free/pay-as-you-go tier = 2 concurrent scrapes
 const CONCURRENCY = 2;
@@ -66,6 +72,24 @@ const METAL_PRICE_RANGE_PER_OZ = {
 // Provider IDs that use "As Low As" as their primary price indicator.
 // For other providers (APMEX), the pricing table is more reliable.
 const USES_AS_LOW_AS = new Set(["jmbullion", "monumentmetals", "sdbullion"]);
+
+// Maps FBP table dealer names → our provider IDs.
+// Only covers providers we track; unrecognized dealers are ignored.
+const FBP_DEALER_NAME_MAP = {
+  "JM Bullion":          "jmbullion",
+  "APMEX":               "apmex",
+  "SD Bullion":          "sdbullion",
+  "Monument Metals":     "monumentmetals",
+  "Hero Bullion":        "herobullion",
+  "Bullion Exchanges":   "bullionexchanges",
+  "Summit Metals":       "summitmetals",
+  "Provident Metals":    "providentmetals",
+  "BGASC":               "bgasc",
+  "Money Metals Exchange": "moneymetals",
+  "BullionStar US":      "bullionstar",
+  "Silver.com":          "silverdotcom",
+  "Bullion Standard":    "bullionstandard",
+};
 
 /**
  * Extract the lowest plausible per-coin price from scraped markdown.
@@ -118,6 +142,26 @@ function extractPrice(markdown, metal, weightOz = 1, providerId = "") {
     return prices;
   }
 
+  // Summit Metals and similar Shopify stores emit "Regular price $XX.XX" or "Sale price $XX.XX"
+  function regularPricePrices() {
+    const prices = [];
+    let m;
+    const pat = /(?:Regular|Sale)\s+price\s+\$?([\d,]+\.\d{2})/g;
+    while ((m = pat.exec(markdown)) !== null) {
+      const p = parseFloat(m[1].replace(/,/g, ""));
+      if (inRange(p)) prices.push(p);
+    }
+    return prices;
+  }
+
+  if (providerId === "summitmetals") {
+    const reg = regularPricePrices();
+    if (reg.length > 0) return Math.min(...reg);
+    const tbl = tablePrices();
+    if (tbl.length > 0) return Math.min(...tbl);
+    return null;
+  }
+
   if (USES_AS_LOW_AS.has(providerId)) {
     // JM Bullion / Monument / SD: "As Low As" first, table as fallback
     const ala = asLowAsPrices();
@@ -136,6 +180,49 @@ function extractPrice(markdown, metal, weightOz = 1, providerId = "") {
   return null;
 }
 
+/**
+ * Parse a FindBullionPrices comparison table.
+ *
+ * FBP table columns: Dealer | icons | ACH/Cash Price | Credit Price | Premium | Link
+ * Returns { providerId -> { ach: number, credit: number } } for all recognized dealers.
+ * ACH price is the wire/check price (lowest); credit price is the card price (~3-4% higher).
+ */
+function extractFbpPrices(markdown, metal, weightOz = 1) {
+  if (!markdown) return {};
+
+  const perOz = METAL_PRICE_RANGE_PER_OZ[metal] || { min: 5, max: 200_000 };
+  const range = { min: perOz.min * weightOz, max: perOz.max * weightOz };
+
+  const results = {};
+  const lines = markdown.split("\n");
+
+  for (const line of lines) {
+    if (!line.startsWith("|") || line.startsWith("| ---") || line.startsWith("| **")) continue;
+
+    // Extract dealer name from first cell (may contain markdown link)
+    const firstCell = line.split("|")[1] || "";
+    const nameMatch = firstCell.match(/\[([^\]]+)\]/) || firstCell.match(/([A-Z][^\[*\n]{2,40})/);
+    if (!nameMatch) continue;
+    const dealerName = nameMatch[1].trim();
+    const providerId = FBP_DEALER_NAME_MAP[dealerName];
+    if (!providerId) continue;
+
+    // Extract all dollar amounts in range from the row; first = ACH, second = credit
+    const prices = [];
+    let m;
+    const pat = /\$?([\d,]+\.\d{2})/g;
+    while ((m = pat.exec(line)) !== null) {
+      const p = parseFloat(m[1].replace(/,/g, ""));
+      if (p >= range.min && p <= range.max) prices.push(p);
+    }
+    if (prices.length > 0) {
+      results[providerId] = { ach: prices[0], credit: prices[1] ?? null };
+    }
+  }
+
+  return results;
+}
+
 // ---------------------------------------------------------------------------
 // Firecrawl API
 // ---------------------------------------------------------------------------
@@ -145,7 +232,7 @@ function sleep(ms) {
 }
 
 // Providers that need extra wait time to render prices (JS-heavy pages)
-const SLOW_PROVIDERS = new Set(["jmbullion"]);
+const SLOW_PROVIDERS = new Set(["jmbullion", "herobullion", "summitmetals"]);
 
 async function scrapeUrl(url, providerId = "", attempt = 1) {
   const controller = new AbortController();
@@ -162,11 +249,11 @@ async function scrapeUrl(url, providerId = "", attempt = 1) {
   }
 
   try {
-    const response = await fetch("https://api.firecrawl.dev/v1/scrape", {
+    const response = await fetch(`${FIRECRAWL_BASE_URL}/v1/scrape`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${FIRECRAWL_API_KEY}`,
+        ...(FIRECRAWL_API_KEY ? { "Authorization": `Bearer ${FIRECRAWL_API_KEY}` } : {}),
       },
       body: JSON.stringify(body),
       signal: controller.signal,
@@ -271,8 +358,10 @@ function updateProviderCandidates(failures, dateStr) {
 // ---------------------------------------------------------------------------
 
 async function main() {
-  if (!FIRECRAWL_API_KEY) {
-    console.error("Error: FIRECRAWL_API_KEY is required.");
+  const isLocal = !FIRECRAWL_BASE_URL.includes("api.firecrawl.dev");
+  if (!FIRECRAWL_API_KEY && !isLocal) {
+    console.error("Error: FIRECRAWL_API_KEY is required for cloud Firecrawl.");
+    console.error("For self-hosted: set FIRECRAWL_BASE_URL=http://localhost:3002");
     process.exit(1);
   }
 
@@ -285,6 +374,60 @@ async function main() {
   const providersJson = JSON.parse(readFileSync(providersPath, "utf-8"));
   const dateStr = new Date().toISOString().slice(0, 10);
   const generatedAt = new Date().toISOString();
+
+  // ---------------------------------------------------------------------------
+  // FBP_ONLY mode: scrape FindBullionPrices for all coins, write fbp snapshot.
+  // Used by the GH Actions daily workflow (cloud Firecrawl, free tier).
+  // Local Docker runs the full pipeline separately at 11am.
+  // ---------------------------------------------------------------------------
+  if (FBP_ONLY) {
+    const coins = Object.entries(providersJson.coins).filter(([slug]) =>
+      !COIN_FILTER || COIN_FILTER.includes(slug)
+    );
+    log(`FBP-only run: ${coins.length} coin(s)`);
+    if (DRY_RUN) log("DRY RUN — no files written");
+
+    const snapshot = {
+      date: dateStr,
+      generated_at_utc: generatedAt,
+      source: "findbullionprices.com",
+      note: "ACH/wire price and credit/card price per dealer. Updated daily via GH Actions.",
+      coins: {},
+    };
+
+    for (const [coinSlug, coinData] of coins) {
+      if (!coinData.fbp_url) {
+        warn(`No fbp_url for ${coinSlug}, skipping`);
+        continue;
+      }
+      log(`Scraping FBP for ${coinSlug}`);
+      try {
+        const md = await scrapeUrl(coinData.fbp_url, "fbp");
+        const prices = extractFbpPrices(md, coinData.metal, coinData.weight_oz || 1);
+        snapshot.coins[coinSlug] = {
+          name: coinData.name,
+          metal: coinData.metal,
+          dealers: prices,
+        };
+        log(`  ✓ ${coinSlug}: ${Object.keys(prices).length} dealers`);
+      } catch (err) {
+        warn(`  ✗ ${coinSlug}: ${err.message.slice(0, 120)}`);
+        snapshot.coins[coinSlug] = { name: coinData.name, metal: coinData.metal, dealers: {}, error: err.message.slice(0, 200) };
+      }
+    }
+
+    const outDir = join(DATA_DIR, "retail", "fbp");
+    const outPath = join(outDir, `${dateStr}.json`);
+    if (DRY_RUN) {
+      log(`[DRY RUN] ${outPath}`);
+      console.log(JSON.stringify(snapshot, null, 2));
+    } else {
+      mkdirSync(outDir, { recursive: true });
+      writeFileSync(outPath, JSON.stringify(snapshot, null, 2) + "\n");
+      log(`Wrote ${outPath}`);
+    }
+    return;
+  }
 
   // Build scrape targets
   const targets = [];
@@ -320,8 +463,33 @@ async function main() {
 
   await runConcurrent(tasks, CONCURRENCY);
 
-  // Aggregate per coin and write output
+  // FBP backfill: for each coin with failures that has a fbp_url, scrape once
+  // and fill in any missing providers. Runs after primary scrapes complete.
   const coinSlugs = [...new Set(scrapeResults.map(r => r.coinSlug))];
+  const fbpFillResults = {};  // coinSlug -> { providerId -> price }
+
+  const coinsNeedingBackfill = coinSlugs.filter(coinSlug => {
+    const failed = scrapeResults.filter(r => r.coinSlug === coinSlug && !r.ok);
+    return failed.length > 0 && providersJson.coins[coinSlug]?.fbp_url;
+  });
+
+  if (coinsNeedingBackfill.length > 0) {
+    log(`FBP backfill: ${coinsNeedingBackfill.length} coin(s) with failures`);
+    for (const coinSlug of coinsNeedingBackfill) {
+      const coinData = providersJson.coins[coinSlug];
+      log(`  Scraping FBP for ${coinSlug}`);
+      try {
+        const fbpMd = await scrapeUrl(coinData.fbp_url, "fbp");
+        const fbpPrices = extractFbpPrices(fbpMd, coinData.metal, coinData.weight_oz || 1);
+        fbpFillResults[coinSlug] = fbpPrices;
+        log(`  FBP ${coinSlug}: ${Object.keys(fbpPrices).length} dealer price(s) found`);
+      } catch (err) {
+        warn(`  FBP scrape failed for ${coinSlug}: ${err.message.slice(0, 120)}`);
+      }
+    }
+  }
+
+  // Aggregate per coin and write output
   const allFailures = [];
 
   for (const coinSlug of coinSlugs) {
@@ -338,6 +506,17 @@ async function main() {
       urlsUsed.push(r.url);
     }
 
+    // Apply FBP backfill for any providers that failed
+    const fbpPrices = fbpFillResults[coinSlug] || {};
+    for (const r of failed) {
+      const fbp = fbpPrices[r.providerId];
+      if (fbp !== undefined) {
+        pricesBySite[r.providerId] = fbp.ach;
+        extractionMethods[r.providerId] = "fbp_fallback";
+        log(`  ↩ ${coinSlug}/${r.providerId}: $${fbp.ach.toFixed(2)} ACH (fbp_fallback)`);
+      }
+    }
+
     const prices = Object.values(pricesBySite);
     const sorted = [...prices].sort((a, b) => a - b);
 
@@ -350,7 +529,7 @@ async function main() {
       source_count: prices.length,
       average_price: prices.length ? Math.round(prices.reduce((a, b) => a + b, 0) / prices.length * 100) / 100 : null,
       median_price: sorted.length ? sorted[Math.floor(sorted.length / 2)] : null,
-      failed_sites: failed.map(r => r.providerId),
+      failed_sites: failed.filter(r => fbpPrices[r.providerId] === undefined).map(r => r.providerId),
       urls_used: urlsUsed,
     });
 
