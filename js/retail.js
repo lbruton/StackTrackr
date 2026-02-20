@@ -236,7 +236,7 @@ const syncRetailPrices = async ({ ui = true } = {}) => {
     debugLog(`[retail] Sync complete: ${statusMsg}`, "info");
   } catch (err) {
     debugLog(`[retail] Sync error: ${err.message}`, "warn");
-    syncStatus.textContent = `Sync failed: ${err.message}`;
+    if (ui) syncStatus.textContent = `Sync failed: ${err.message}`;
   } finally {
     _retailSyncInProgress = false;
     renderRetailCards();
