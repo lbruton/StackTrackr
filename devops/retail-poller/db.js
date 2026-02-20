@@ -144,6 +144,7 @@ export function readTodayFailures(db) {
     SELECT coin_slug, vendor FROM price_snapshots
     WHERE is_failed = 1 AND substr(window_start, 1, 10) = ?
     GROUP BY coin_slug, vendor
+    HAVING SUM(CASE WHEN is_failed = 0 THEN 1 ELSE 0 END) = 0
   `).all(today);
 }
 

@@ -389,6 +389,7 @@ async function main() {
       const winStart = windowFloor();
 
       for (const [coinSlug, vendors] of Object.entries(gapsByCoin)) {
+        if (COIN_FILTER && !COIN_FILTER.includes(coinSlug)) continue;
         const coinData = providersJson.coins[coinSlug];
         if (!coinData?.fbp_url) { warn(`No fbp_url for ${coinSlug} — skipping`); continue; }
         log(`Scraping FBP for ${coinSlug} (gaps: ${vendors.join(", ")})`);
@@ -402,7 +403,7 @@ async function main() {
             const price = fbp.ach;
             log(`  \u21a9 ${coinSlug}/${providerId}: $${price.toFixed(2)} ACH (fbp)`);
             if (!DRY_RUN) {
-              writeSnapshot(gapDb, { scrapedAt, winStart, coinSlug, vendor: providerId, price, source: "fbp", isFailed: 0 });
+              writeSnapshot(gapDb, { scrapedAt, windowStart: winStart, coinSlug, vendor: providerId, price, source: "fbp", isFailed: 0 });
             }
             totalFilled++;
           }
@@ -413,8 +414,7 @@ async function main() {
 
       log(`Gap-fill done: ${totalFilled} price(s) recovered`);
       if (totalFilled === 0 && gapCoins.length > 0) {
-        console.error("Gap-fill failed: no prices recovered from FBP.");
-        process.exit(1);
+        throw new Error("Gap-fill failed: no prices recovered from FBP.");
       }
     } finally {
       if (gapDb) gapDb.close();
