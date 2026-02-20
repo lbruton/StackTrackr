@@ -10,7 +10,9 @@
     "lint:md:changed": "bash devops/hooks/lint-markdown-changed.sh --changed",
     "lint:md:all": "npx --yes markdownlint-cli --config .markdownlint.json \"**/*.md\" --ignore node_modules --ignore .git --ignore test-results",
     "test": "playwright test",
-    "test:smoke": "playwright test --grep @smoke"
+    "test:smoke": "playwright test --grep @smoke",
+    "dash": "node devops/playwright-dash/server.js",
+    "test:ui": "npx playwright test --ui"
   },
   "devDependencies": {
     "@playwright/test": "^1.50.0",
