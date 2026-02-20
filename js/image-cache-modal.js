@@ -26,36 +26,14 @@ const renderNumistaSyncUI = async () => {
 /**
  * Renders the cache statistics bar: count, total size, quota percentage.
  */
-const renderSyncStats = async () => {
+const renderSyncStats = () => {
   const container = document.getElementById('numistaSyncStats');
   if (!container) return;
 
   const apiCount = typeof getNumistaCacheCount === 'function' ? getNumistaCacheCount() : 0;
-
-  if (!window.imageCache?.isAvailable()) {
-    container.textContent = `${apiCount} API cache \u00b7 image cache not available`;
-    return;
-  }
-
-  const usage = await imageCache.getStorageUsage();
-  const sizeMb = (usage.totalBytes / (1024 * 1024)).toFixed(2);
-  const limitMb = (usage.limitBytes / (1024 * 1024)).toFixed(0);
-  const pct = usage.limitBytes > 0 ? ((usage.totalBytes / usage.limitBytes) * 100).toFixed(1) : '0.0';
-
-  // Count eligible items for the summary line
   const eligible = window.BulkImageCache ? BulkImageCache.buildEligibleList() : [];
 
-  container.textContent = '';
-
-  const statsText = document.createElement('span');
-  statsText.textContent = `${apiCount} API cache \u00b7 ${usage.count} image cache \u00b7 ${eligible.length} eligible \u00b7 ${sizeMb} MB / ${limitMb} MB (${pct}%)`;
-  container.appendChild(statsText);
-
-  const bar = document.createElement('progress');
-  bar.value = usage.totalBytes;
-  bar.max = usage.limitBytes;
-  bar.style.cssText = 'width:100%;margin-top:0.35rem;';
-  container.appendChild(bar);
+  container.textContent = `${apiCount} API cache \u00b7 ${eligible.length} eligible`;
 };
 
 // ---------------------------------------------------------------------------
