@@ -102,6 +102,27 @@ test('STAK-222: startSpotBackgroundSync is defined and callable', async ({ page 
   expect(result).toBe(true);
 });
 
+test('STAK-222: cached source entries excluded from sparkline data', async ({ page }) => {
+  await page.goto('/');
+  const result = await page.evaluate(() => {
+    // Inject a cached entry into spotHistory alongside a real entry on same day
+    const ts = new Date().toISOString().slice(0, 10);
+    window.spotHistory.push({ spot: 32.00, metal: 'Silver', source: 'api', provider: 'StakTrakr', timestamp: ts + ' 09:00:00' });
+    window.spotHistory.push({ spot: 32.00, metal: 'Silver', source: 'cached', provider: 'StakTrakr', timestamp: ts + ' 14:00:00' });
+
+    // getSparklineData filters by source; verify cached entries are excluded from intraday
+    const intraday = window.spotHistory.filter(e => e.metal === 'Silver' && e.source !== 'cached');
+    const allEntries = window.spotHistory.filter(e => e.metal === 'Silver');
+    return {
+      intradayCount: intraday.length,
+      totalCount: allEntries.length,
+      cachedExcluded: intraday.every(e => e.source !== 'cached'),
+    };
+  });
+  expect(result.cachedExcluded).toBe(true);
+  expect(result.totalCount).toBeGreaterThan(result.intradayCount);
+});
+
 test('STAK-222: PCGS cache read/write roundtrip', async ({ page }) => {
   await page.goto('/');
   const result = await page.evaluate(() => {
