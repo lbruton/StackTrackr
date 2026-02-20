@@ -1,6 +1,6 @@
 #!/bin/bash
 # StakTrakr Retail Poller — local Docker run script
-# Runs Firecrawl extraction (+ Playwright fallback), merges results,
+# Runs Firecrawl extraction (+ Playwright fallback), writes to SQLite,
 # exports REST API JSON, and pushes to data branch.
 
 set -e
@@ -27,18 +27,13 @@ fi
 cd "$DATA_REPO_PATH"
 git pull --rebase origin data
 
-# Run Firecrawl extraction (with Playwright fallback if BROWSERLESS_URL is set)
+# Run Firecrawl extraction (with Playwright fallback) — writes results to SQLite
 echo "[$(date -u +%H:%M:%S)] Running price extraction..."
 DATA_DIR="$DATA_REPO_PATH/data" \
 FIRECRAWL_BASE_URL="${FIRECRAWL_BASE_URL:-http://firecrawl:3002}" \
 BROWSERLESS_URL="${BROWSERLESS_URL:-}" \
 BROWSER_MODE=local \
 node /app/price-extract.js
-
-# Run merger — scores confidence, writes -final.json and hourly -{HH}h.json
-echo "[$(date -u +%H:%M:%S)] Running confidence merger..."
-DATA_DIR="$DATA_REPO_PATH/data" \
-node /app/merge-prices.js "$DATE"
 
 # Export REST API JSON endpoints from SQLite
 echo "[$(date -u +%H:%M:%S)] Exporting REST API JSON..."
@@ -47,11 +42,11 @@ node /app/api-export.js
 
 # Commit and push
 cd "$DATA_REPO_PATH"
-git add data/retail/ data/api/
+git add data/api/
 if git diff --cached --quiet; then
   echo "[$(date -u +%H:%M:%S)] No new data to commit."
 else
-  git commit -m "retail: ${DATE} prices + api export"
+  git commit -m "retail: ${DATE} api export"
   git pull --rebase origin data
   git push origin data
   echo "[$(date -u +%H:%M:%S)] Pushed to data branch"
