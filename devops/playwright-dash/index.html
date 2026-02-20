@@ -44,7 +44,7 @@
   .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; cursor: pointer; transition: border-color 0.15s, transform 0.15s; }
   .card:hover { border-color: var(--primary); transform: translateY(-2px); }
   .card img { width: 100%; height: 160px; object-fit: cover; display: block; background: var(--bg); }
-  .card video { width: 100%; height: 160px; display: block; background: #000; }
+  .card video { width: 100%; height: 160px; display: block; background: #000; pointer-events: none; }
   .card-body { padding: 10px 12px; }
   .card-name { font-size: 12px; font-weight: 500; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .card-meta { font-size: 11px; color: var(--muted); margin-top: 3px; }
@@ -88,17 +88,25 @@
   <span class="lightbox-close" id="lightboxClose">&times;</span>
   <img id="lightboxImg" src="" alt="">
 </div>
+<div class="lightbox" id="videoLightbox">
+  <span class="lightbox-close" id="videoLightboxClose">&times;</span>
+  <video id="lightboxVideo" controls style="max-width:90vw;max-height:85vh;border-radius:8px;background:#000;"></video>
+</div>
 <div class="toast" id="toast"></div>
 <script>
   let allFiles = [];
   let activeTab = 'screenshot';
   let refreshTimer = null;
+  let fetchController = null;
+  let lastFilesKey = '';
   const grid = document.getElementById('grid');
   const search = document.getElementById('search');
   const statusBadge = document.getElementById('statusBadge');
   const countLabel = document.getElementById('countLabel');
   const lightbox = document.getElementById('lightbox');
   const lightboxImg = document.getElementById('lightboxImg');
+  const videoLightbox = document.querySelector('#videoLightbox');
+  const lightboxVideo = document.querySelector('#lightboxVideo');
   const toast = document.getElementById('toast');
   const captureBtn = document.getElementById('captureBtn');
   const autoRefresh = document.getElementById('autoRefresh');
@@ -132,7 +140,7 @@
       if (f.type === 'screenshot') {
         return '<div class="card" data-src="' + f.path + '"><img src="' + f.path + '" alt="' + name + '" loading="lazy"><div class="card-body"><div class="card-name">' + name + '</div><div class="card-meta">' + meta + '</div></div></div>';
       }
-      return '<div class="card"><video src="' + f.path + '" controls preload="metadata"></video><div class="card-body"><div class="card-name">' + name + '</div><div class="card-meta">' + meta + '</div></div></div>';
+      return '<div class="card" data-video="' + f.path + '"><video src="' + f.path + '" preload="metadata"></video><div class="card-body"><div class="card-name">' + name + '</div><div class="card-meta">' + meta + '</div></div></div>';
     }).join('');
     grid.querySelectorAll('.card[data-src]').forEach(card => {
       card.addEventListener('click', () => {
@@ -140,17 +148,31 @@
         lightbox.classList.add('open');
       });
     });
+    grid.querySelectorAll('.card[data-video]').forEach(card => {
+      card.addEventListener('click', () => {
+        lightboxVideo.src = card.dataset.video;
+        videoLightbox.classList.add('open');
+        lightboxVideo.play();
+      });
+    });
   }
 
   async function fetchFiles() {
+    if (fetchController) fetchController.abort();
+    fetchController = new AbortController();
     try {
       statusBadge.textContent = 'refreshing';
-      const res = await fetch('/api/files');
-      allFiles = await res.json();
+      const res = await fetch('/api/files', { signal: fetchController.signal });
+      const files = await res.json();
+      const key = files.map(f => f.path + f.mtime).join('|');
       statusBadge.textContent = 'live';
-      renderGrid();
+      if (key !== lastFilesKey) {
+        lastFilesKey = key;
+        allFiles = files;
+        renderGrid();
+      }
     } catch (e) {
-      statusBadge.textContent = 'error';
+      if (e.name !== 'AbortError') statusBadge.textContent = 'error';
     }
   }
 
@@ -180,9 +202,17 @@
 
   search.addEventListener('input', renderGrid);
 
+  function closeVideoLightbox() {
+    lightboxVideo.pause();
+    lightboxVideo.src = '';
+    videoLightbox.classList.remove('open');
+  }
+
   lightbox.addEventListener('click', e => { if (e.target === lightbox || e.target.id === 'lightboxClose') lightbox.classList.remove('open'); });
   document.getElementById('lightboxClose').addEventListener('click', () => lightbox.classList.remove('open'));
-  document.addEventListener('keydown', e => { if (e.key === 'Escape') lightbox.classList.remove('open'); });
+  videoLightbox.addEventListener('click', e => { if (e.target === videoLightbox || e.target.id === 'videoLightboxClose') closeVideoLightbox(); });
+  document.querySelector('#videoLightboxClose').addEventListener('click', closeVideoLightbox);
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') { lightbox.classList.remove('open'); closeVideoLightbox(); } });
 
   autoRefresh.addEventListener('change', () => {
     if (autoRefresh.checked) startRefresh(); else stopRefresh();
