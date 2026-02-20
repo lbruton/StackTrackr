@@ -1421,8 +1421,7 @@ const bindApiCacheListeners = () => {
     clearNumistaBtn.addEventListener('click', () => {
       const count = typeof clearNumistaCache === 'function' ? clearNumistaCache() : 0;
       if (typeof appAlert === 'function') appAlert(`Cleared ${count} Numista cached lookups.`);
-      const countEl = document.getElementById('numistaResponseCacheCount');
-      if (countEl) countEl.textContent = '0';
+      if (typeof renderNumistaSyncUI === 'function') renderNumistaSyncUI();
     });
   }
 

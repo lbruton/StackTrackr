@@ -291,8 +291,7 @@ const syncSettingsUI = () => {
   // Numista bulk sync visibility (STACK-87/88)
   const numistaSyncGroup = document.getElementById('numistaBulkSyncGroup');
   if (numistaSyncGroup) {
-    const showBulkSync = window.featureFlags?.isEnabled('COIN_IMAGES') &&
-                         window.imageCache?.isAvailable();
+    const showBulkSync = window.featureFlags?.isEnabled('COIN_IMAGES');
     numistaSyncGroup.style.display = showBulkSync ? '' : 'none';
   }
 

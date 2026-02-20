@@ -30,8 +30,10 @@ const renderSyncStats = async () => {
   const container = document.getElementById('numistaSyncStats');
   if (!container) return;
 
+  const apiCount = typeof getNumistaCacheCount === 'function' ? getNumistaCacheCount() : 0;
+
   if (!window.imageCache?.isAvailable()) {
-    container.textContent = 'Image cache not available';
+    container.textContent = `${apiCount} API cache \u00b7 image cache not available`;
     return;
   }
 
@@ -46,7 +48,7 @@ const renderSyncStats = async () => {
   container.textContent = '';
 
   const statsText = document.createElement('span');
-  statsText.textContent = `${usage.count} cached \u00b7 ${eligible.length} eligible \u00b7 ${sizeMb} MB / ${limitMb} MB (${pct}%)`;
+  statsText.textContent = `${apiCount} API cache \u00b7 ${usage.count} image cache \u00b7 ${eligible.length} eligible \u00b7 ${sizeMb} MB / ${limitMb} MB (${pct}%)`;
   container.appendChild(statsText);
 
   const bar = document.createElement('progress');

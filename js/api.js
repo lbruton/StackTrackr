@@ -2298,11 +2298,7 @@ const populateApiSection = () => {
     renderNumistaSyncUI();
   }
 
-  // STAK-222: Update cache stat counts
-  const numistaCountEl = document.getElementById('numistaResponseCacheCount');
-  if (numistaCountEl && typeof getNumistaCacheCount === 'function') {
-    numistaCountEl.textContent = getNumistaCacheCount();
-  }
+  // STAK-222: Update PCGS cache stat count
   const pcgsCountEl = document.getElementById('pcgsResponseCacheCount');
   if (pcgsCountEl && typeof getPcgsCacheCount === 'function') {
     pcgsCountEl.textContent = getPcgsCacheCount();

@@ -2439,12 +2439,6 @@
                     <!-- Stats bar -->
                     <div id="numistaSyncStats" class="settings-subtext" style="margin-bottom:0.25rem;"></div>
 
-                    <!-- STAK-222: API response cache stat (inline with sync stats) -->
-                    <div class="provider-setting-row api-cache-stat-row" style="margin-bottom:0.5rem;">
-                      <span id="numistaResponseCacheStat" class="settings-stat" style="font-size:0.8rem;opacity:0.7;">API response cache: <strong id="numistaResponseCacheCount">0</strong> entries</span>
-                      <button id="clearNumistaCacheBtn" class="btn secondary btn-sm">Clear</button>
-                    </div>
-
                     <!-- Eligible items table (collapsible) -->
                     <details style="margin-bottom:0.5rem;">
                       <summary style="font-size:0.8rem;cursor:pointer;opacity:0.7;">Show eligible items</summary>
@@ -2487,6 +2481,7 @@
                       <button type="button" class="btn info" id="numistaSyncStartBtn">Sync Metadata</button>
                       <button type="button" class="btn warning" id="numistaSyncCancelBtn" style="display:none;">Cancel</button>
                       <button type="button" class="btn danger" id="numistaSyncClearBtn" style="font-size:0.8rem;">Clear Cache</button>
+                      <button type="button" class="btn secondary" id="clearNumistaCacheBtn" style="font-size:0.8rem;">Clear API Cache</button>
                     </div>
                   </div>
                 </div>

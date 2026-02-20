@@ -117,15 +117,15 @@ test('STAK-222: auto-refresh toggle renders for STAKTRAKR provider', async ({ pa
   await expect(toggle).toBeChecked();
 });
 
-test('STAK-222: Numista cache stat row and clear button render', async ({ page }) => {
+test('STAK-222: Numista sync stats bar and clear API cache button render', async ({ page }) => {
   await page.goto('/');
   await dismissAck(page);
   await page.locator('#settingsBtn').click();
   await page.locator('.settings-nav-item[data-section="api"]').click();
-  // Stat row
-  const statRow = page.locator('#numistaResponseCacheStat');
-  await expect(statRow).toBeVisible();
-  // Clear button
+  // Stats bar (populated async by renderSyncStats)
+  const statsBar = page.locator('#numistaSyncStats');
+  await expect(statsBar).toBeVisible({ timeout: 5000 });
+  // Clear API Cache button (now in action buttons row inside numistaBulkSyncGroup)
   const clearBtn = page.locator('#clearNumistaCacheBtn');
   await expect(clearBtn).toBeVisible();
 });
