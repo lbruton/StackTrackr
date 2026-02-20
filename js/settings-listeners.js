@@ -1321,6 +1321,62 @@ const bindCloudStorageListeners = () => {
 };
 
 /**
+ * Wires up Market Prices section listeners.
+ * Handles coin selector change, timeframe button clicks,
+ * History card buttons, and View card buttons.
+ */
+const bindRetailMarketListeners = () => {
+  // History coin selector — re-render table when selection changes
+  const slugSelect = getExistingElement('retailHistorySlugSelect');
+  if (slugSelect) {
+    slugSelect.addEventListener('change', () => {
+      if (typeof renderRetailHistoryTable === 'function') renderRetailHistoryTable();
+    });
+  }
+
+  // Timeframe buttons — delegated on the logPanel_market container
+  const logPanelMarket = getExistingElement('logPanel_market');
+  if (logPanelMarket) {
+    logPanelMarket.addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-retail-timeframe]');
+      if (!btn) return;
+      logPanelMarket.querySelectorAll('[data-retail-timeframe]').forEach((b) => {
+        b.classList.toggle('active', b === btn);
+      });
+      if (typeof renderRetailHistoryTable === 'function') renderRetailHistoryTable();
+    });
+  }
+
+  // History and View card buttons — delegated on retailCardsGrid
+  const cardsGrid = getExistingElement('retailCardsGrid');
+  if (cardsGrid) {
+    cardsGrid.addEventListener('click', (e) => {
+      // "History" button — switch to Activity Log market tab and set coin selector
+      const histBtn = e.target.closest('[data-retail-history-slug]');
+      if (histBtn) {
+        const slug = histBtn.dataset.retailHistorySlug;
+        if (typeof switchSettingsSection === 'function') switchSettingsSection('changelog');
+        const select = getExistingElement('retailHistorySlugSelect');
+        if (select) {
+          select.value = slug;
+          select.dispatchEvent(new Event('change'));
+        }
+        const marketTab = document.querySelector('[data-log-tab="market"]');
+        if (marketTab && typeof switchLogTab === 'function') switchLogTab('market');
+        return;
+      }
+
+      // "View" button — open per-coin detail modal
+      const viewBtn = e.target.closest('[data-retail-view-slug]');
+      if (viewBtn) {
+        const slug = viewBtn.dataset.retailViewSlug;
+        if (typeof openRetailViewModal === 'function') openRetailViewModal(slug);
+      }
+    });
+  }
+};
+
+/**
  * Wires up Storage section listeners (Refresh button, tiny-key toggle).
  */
 const bindStorageListeners = () => {
@@ -1356,6 +1412,7 @@ const setupSettingsEventListeners = () => {
   bindImageSettingsListeners();
   bindCloudStorageListeners();
   bindStorageListeners();
+  bindRetailMarketListeners();
 };
 
 if (typeof window !== 'undefined') {

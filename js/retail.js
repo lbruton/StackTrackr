@@ -291,12 +291,24 @@ const _buildRetailCard = (slug, meta, priceData) => {
     card.appendChild(footer);
   }
 
+  const btnRow = document.createElement("div");
+  btnRow.className = "retail-card-btn-row";
+
+  const viewBtn = document.createElement("button");
+  viewBtn.className = "btn btn-sm btn-outline-primary retail-view-btn";
+  viewBtn.type = "button";
+  viewBtn.dataset.retailViewSlug = slug;
+  viewBtn.textContent = "View";
+  btnRow.appendChild(viewBtn);
+
   const histBtn = document.createElement("button");
-  histBtn.className = "btn btn-secondary retail-history-btn";
+  histBtn.className = "btn btn-sm btn-secondary retail-history-btn";
   histBtn.type = "button";
-  histBtn.dataset.slug = slug;
+  histBtn.dataset.retailHistorySlug = slug;
   histBtn.textContent = "History";
-  card.appendChild(histBtn);
+  btnRow.appendChild(histBtn);
+
+  card.appendChild(btnRow);
 
   return card;
 };
