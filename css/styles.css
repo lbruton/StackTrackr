@@ -11520,6 +11520,51 @@ th {
   border-top: 1px solid var(--border-color-subtle, var(--bs-border-color));
 }
 
+/* Retail view modal — tab toggle */
+.retail-view-tabs {
+  display: flex;
+  gap: 0.25rem;
+  margin: 0.75rem 0 0.5rem;
+  border-bottom: 1px solid var(--border-color-subtle, var(--bs-border-color));
+}
+
+.retail-view-tab {
+  padding: 0.35rem 0.85rem;
+  font-size: 0.85rem;
+  background: none;
+  border: 1px solid transparent;
+  border-bottom: none;
+  border-radius: 4px 4px 0 0;
+  cursor: pointer;
+  color: var(--text-muted);
+  transition: color 0.15s, background 0.15s;
+  margin-bottom: -1px;
+}
+
+.retail-view-tab:hover {
+  color: var(--text-primary);
+  background: var(--bg-hover, rgba(0,0,0,.04));
+}
+
+.retail-view-tab.active {
+  color: var(--text-primary);
+  background: var(--bg-card, var(--bs-body-bg));
+  border-color: var(--border-color-subtle, var(--bs-border-color));
+  font-weight: 600;
+}
+
+/* Retail view modal — intraday chart */
+.retail-intraday-chart-wrap {
+  position: relative;
+  height: 200px;
+  margin-bottom: 0.75rem;
+}
+
+.retail-intraday-chart-wrap canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+
 /* =============================================================================
    EMPTY STATE COMPONENT
    ============================================================================= */
