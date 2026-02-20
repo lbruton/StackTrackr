@@ -243,17 +243,33 @@ function cloudGetStorageKey(provider) {
 
 function cloudGetStoredToken(provider) {
   try {
-    var raw = localStorage.getItem(cloudGetStorageKey(provider));
-    return raw ? JSON.parse(raw) : null;
+    // Check session storage first (secure)
+    var key = cloudGetStorageKey(provider);
+    var raw = sessionStorage.getItem(key);
+    if (raw) return JSON.parse(raw);
+
+    // Fallback: Check local storage (insecure legacy) and migrate if found
+    raw = localStorage.getItem(key);
+    if (raw) {
+      sessionStorage.setItem(key, raw);
+      localStorage.removeItem(key);
+      return JSON.parse(raw);
+    }
+    return null;
   } catch { return null; }
 }
 
 function cloudStoreToken(provider, tokenData) {
-  localStorage.setItem(cloudGetStorageKey(provider), JSON.stringify(tokenData));
+  var key = cloudGetStorageKey(provider);
+  sessionStorage.setItem(key, JSON.stringify(tokenData));
+  // Ensure legacy storage is cleared
+  localStorage.removeItem(key);
 }
 
 function cloudClearToken(provider) {
-  localStorage.removeItem(cloudGetStorageKey(provider));
+  var key = cloudGetStorageKey(provider);
+  sessionStorage.removeItem(key);
+  localStorage.removeItem(key);
 }
 
 function cloudIsConnected(provider) {
