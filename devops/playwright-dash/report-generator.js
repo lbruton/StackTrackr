@@ -155,6 +155,54 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'){imgLb.classList.rem
 </html>`;
 }
 
+/**
+ * Delete test-result run dirs and screenshot files older than DASH_RETAIN_DAYS (default 7).
+ * Run dirs use the YYYY-MM-DD-HH-MM-SS naming convention so date is parsed from the name.
+ * Screenshot files are pruned by mtime (no date in filename).
+ */
+function pruneOld() {
+  const RETAIN_MS = (Number(process.env.DASH_RETAIN_DAYS) || 7) * 24 * 60 * 60 * 1000;
+  const cutoff = Date.now() - RETAIN_MS;
+
+  const resultsDir = path.resolve(__dirname, '..', '..', 'test-results');
+  const screenshotsDir = path.resolve(__dirname, '..', 'screenshots');
+
+  let prunedDirs = 0;
+  let prunedFiles = 0;
+
+  // Prune run directories by parsing date from name (YYYY-MM-DD-HH-MM-SS)
+  if (fs.existsSync(resultsDir)) {
+    for (const entry of fs.readdirSync(resultsDir, { withFileTypes: true })) {
+      if (!entry.isDirectory()) continue;
+      const m = entry.name.match(/^(\d{4})-(\d{2})-(\d{2})-(\d{2})-(\d{2})-(\d{2})$/);
+      if (!m) continue;
+      const runMs = new Date(+m[1], +m[2]-1, +m[3], +m[4], +m[5], +m[6]).getTime();
+      if (runMs < cutoff) {
+        fs.rmSync(path.join(resultsDir, entry.name), { recursive: true, force: true });
+        prunedDirs++;
+      }
+    }
+  }
+
+  // Prune screenshot files by mtime
+  if (fs.existsSync(screenshotsDir)) {
+    for (const entry of fs.readdirSync(screenshotsDir, { withFileTypes: true })) {
+      if (!entry.isFile()) continue;
+      const full = path.join(screenshotsDir, entry.name);
+      const { mtimeMs } = fs.statSync(full);
+      if (mtimeMs < cutoff) {
+        fs.unlinkSync(full);
+        prunedFiles++;
+      }
+    }
+  }
+
+  if (prunedDirs > 0 || prunedFiles > 0) {
+    const days = process.env.DASH_RETAIN_DAYS || 7;
+    console.log(`\n🧹 Pruned ${prunedDirs} run dir(s), ${prunedFiles} screenshot(s) older than ${days} days`);
+  }
+}
+
 export default async function globalTeardown(config) {
   const outputDir = config.outputDir;
   if (!outputDir || !fs.existsSync(outputDir)) {
@@ -200,4 +248,5 @@ export default async function globalTeardown(config) {
   const reportPath = path.join(outputDir, 'report.html');
   fs.writeFileSync(reportPath, html, 'utf8');
   console.log(`\n📋 Report generated: ${reportPath}`);
+  pruneOld();
 }
