@@ -1554,6 +1554,36 @@ const renderTable = () => {
     }
     _thumbBlobUrls = [];
 
+    // Handle empty state: no items or no search results
+    if (sortedInventory.length === 0) {
+      const isFiltered = inventory.length > 0;
+      const message = isFiltered ? "No matching items found." : "Your stack is empty.";
+      const subtext = isFiltered ? "Try adjusting your search or filters." : "Add your first item to start tracking your portfolio.";
+      // Use onclick handler that calls global functions exposed on window
+      const action = isFiltered
+        ? `<button class="btn warning btn-sm" onclick="clearAllFilters()">Clear Filters</button>`
+        : `<button class="btn success btn-sm" onclick="document.getElementById('newItemBtn').click()">Add Item</button>`;
+
+      const emptyHtml = `
+        <tr class="empty-state-row">
+          <td colspan="100%">
+            <div class="empty-state">
+              <svg class="empty-state-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                ${isFiltered
+                  ? '<circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>' // Search icon
+                  : '<rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>' // Stack icon
+                }
+              </svg>
+              <h3>${message}</h3>
+              <p>${subtext}</p>
+              ${action}
+            </div>
+          </td>
+        </tr>
+      `;
+      rows.push(emptyHtml);
+    }
+
     // nosemgrep: javascript.browser.security.insecure-innerhtml.insecure-innerhtml, javascript.browser.security.insecure-document-method.insecure-document-method
     tbody.innerHTML = rows.join('');
 
