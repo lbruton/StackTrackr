@@ -60,6 +60,9 @@ let retailPrices = null;
 /** @type {Object.<string, Array>} History keyed by slug */
 let retailPriceHistory = {};
 
+/** @type {Object.<string, {window_start: string, windows_24h: Array}>} Intraday 15-min window data keyed by slug */
+let retailIntradayData = {};
+
 /**
  * Per-slug, per-vendor product page URLs fetched from providers.json.
  * Shape: { "ase": { "apmex": "https://...", "monumentmetals": "https://..." }, ... }
@@ -115,6 +118,25 @@ const saveRetailPriceHistory = () => {
   }
 };
 
+const loadRetailIntradayData = () => {
+  try {
+    const loaded = loadDataSync(RETAIL_INTRADAY_KEY);
+    retailIntradayData = (loaded && typeof loaded === "object" && !Array.isArray(loaded)) ? loaded : {};
+  } catch (err) {
+    console.error("[retail] Failed to load intraday data:", err);
+    retailIntradayData = {};
+  }
+  if (typeof window !== "undefined") window.retailIntradayData = retailIntradayData;
+};
+
+const saveRetailIntradayData = () => {
+  try {
+    saveDataSync(RETAIL_INTRADAY_KEY, retailIntradayData);
+  } catch (err) {
+    console.error("[retail] Failed to save intraday data:", err);
+  }
+};
+
 const loadRetailProviders = () => {
   try {
     const loaded = loadDataSync(RETAIL_PROVIDERS_KEY, null);
@@ -151,8 +173,9 @@ const getRetailHistoryForSlug = (slug) => retailPriceHistory[slug] || [];
 // ---------------------------------------------------------------------------
 
 /**
- * Fetches manifest then all per-slug final JSON files for any dates not
- * already in history. Appends new entries (deduped by date). Saves to localStorage.
+ * Fetches manifest then all per-slug latest.json and history-30d.json from the
+ * REST API. Updates retailPrices (current snapshot), retailPriceHistory (daily),
+ * and retailIntradayData (15-min windows). Saves all three to localStorage.
  * @param {{ ui?: boolean }} [opts]
  *   ui=true (default) updates the Sync button and status text.
  *   ui=false runs silently in the background.
@@ -175,125 +198,65 @@ const syncRetailPrices = async ({ ui = true } = {}) => {
   renderRetailCards();
 
   try {
-    const [manifestResp, providersResp] = await Promise.all([
-      fetch(`${RETAIL_BASE_URL}/manifest.json`),
-      fetch(`${RETAIL_BASE_URL}/providers.json`),
-    ]);
+    const manifestResp = await fetch(`${RETAIL_API_BASE_URL}/manifest.json`);
     if (!manifestResp.ok) throw new Error(`Manifest fetch failed: ${manifestResp.status}`);
     const manifest = await manifestResp.json();
-    if (!manifest.latestDate) throw new Error("Manifest missing latestDate");
+    const slugs = Array.isArray(manifest.slugs) && manifest.slugs.length ? manifest.slugs : RETAIL_SLUGS;
 
-    // Build slug → vendorId → url lookup from providers.json (best-effort; non-fatal)
-    if (providersResp.ok) {
-      try {
-        const providersData = await providersResp.json();
-        const lookup = {};
-        Object.entries(providersData.coins || {}).forEach(([slug, coinData]) => {
-          lookup[slug] = {};
-          (coinData.providers || []).forEach(({ id, url }) => {
-            if (id && url) lookup[slug][id] = url;
-          });
-        });
-        retailProviders = lookup;
-        saveRetailProviders();
-      } catch (e) {
-        debugLog(`[retail] providers.json parse error: ${e.message}`, "warn");
+    const results = await Promise.allSettled(
+      slugs.map(async (slug) => {
+        const [latestResp, histResp] = await Promise.all([
+          fetch(`${RETAIL_API_BASE_URL}/${slug}/latest.json`),
+          fetch(`${RETAIL_API_BASE_URL}/${slug}/history-30d.json`),
+        ]);
+        const latest = latestResp.ok ? await latestResp.json() : null;
+        const hist30 = histResp.ok ? await histResp.json() : null;
+        return { slug, latest, hist30 };
+      })
+    );
+
+    let successCount = 0;
+    const newPrices = {};
+
+    results.forEach((r) => {
+      if (r.status !== "fulfilled") {
+        debugLog(`[retail] Slug fetch failed: ${r.reason?.message || r.reason}`, "warn");
+        return;
       }
-    }
+      const { slug, latest, hist30 } = r.value;
 
-    // Determine which dates need fetching — all dates in manifest not already in history.
-    // manifest.dates is an array of available date strings (ISO, e.g. "2026-02-19").
-    // Fall back to [latestDate] for older manifest formats that lack the dates array.
-    const allDates = Array.isArray(manifest.dates) && manifest.dates.length
-      ? manifest.dates
-      : [manifest.latestDate];
-
-    // A date is "complete" if the representative slug (ase) already has it in history.
-    const alreadyHave = new Set((retailPriceHistory[RETAIL_SLUGS[0]] || []).map((e) => e.date));
-    const datesToFetch = allDates
-      .filter((d) => !alreadyHave.has(d))
-      .sort((a, b) => b.localeCompare(a)) // newest first
-      .slice(0, 30);                       // safety cap
-
-    let totalFetched = 0;
-
-    if (datesToFetch.length === 0) {
-      debugLog("[retail] All dates already in history — nothing to fetch", "info");
-    }
-
-    for (const targetDate of datesToFetch) {
-      const results = await Promise.allSettled(
-        RETAIL_SLUGS.map(async (slug) => {
-          const resp = await fetch(`${RETAIL_BASE_URL}/${slug}/${targetDate}-final.json`);
-          if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-          const data = await resp.json();
-          return { slug, data };
-        })
-      );
-
-      const prices = {};
-      let fetchCount = 0;
-      results.forEach((r, i) => {
-        if (r.status === "fulfilled") {
-          const { slug, data } = r.value;
-          prices[slug] = {
-            average_price:  data.average_price,
-            median_price:   data.median_price,
-            lowest_price:   data.lowest_price,
-            prices_by_site: data.prices_by_site || {},
-            scores_by_site: data.scores_by_site || {},
-          };
-          fetchCount++;
-        } else {
-          debugLog(`[retail] ${targetDate} — ${RETAIL_SLUGS[i]}: ${r.reason?.message || r.reason}`, "warn");
-        }
-      });
-
-      // Update history for this date (deduped per slug)
-      Object.entries(prices).forEach(([slug, priceData]) => {
-        if (!retailPriceHistory[slug]) retailPriceHistory[slug] = [];
-        const existing = retailPriceHistory[slug];
-        if (!existing.some((e) => e.date === targetDate)) {
-          existing.unshift({ date: targetDate, ...priceData });
-          if (existing.length > 365) existing.splice(365);
-        }
-      });
-
-      // Keep retailPrices pointing at the latest date's snapshot
-      if (targetDate === manifest.latestDate) {
-        retailPrices = { lastSync: new Date().toISOString(), date: targetDate, prices };
-      }
-
-      totalFetched += fetchCount;
-    }
-
-    // If latestDate wasn't in datesToFetch (already had it), ensure retailPrices is set
-    if (!retailPrices || retailPrices.date !== manifest.latestDate) {
-      // Reconstruct from history for the latest date
-      const latestPrices = {};
-      RETAIL_SLUGS.forEach((slug) => {
-        const entry = (retailPriceHistory[slug] || []).find((e) => e.date === manifest.latestDate);
-        if (entry) {
-          const { date: _d, ...priceData } = entry;
-          latestPrices[slug] = priceData;
-        }
-      });
-      if (Object.keys(latestPrices).length > 0) {
-        retailPrices = {
-          lastSync: retailPrices ? retailPrices.lastSync : new Date().toISOString(),
-          date: manifest.latestDate,
-          prices: latestPrices,
+      if (latest) {
+        newPrices[slug] = {
+          median_price: latest.median_price,
+          lowest_price: latest.lowest_price,
+          vendors: latest.vendors || {},
         };
+        // Update intraday window data
+        retailIntradayData[slug] = {
+          window_start: latest.window_start,
+          windows_24h: Array.isArray(latest.windows_24h) ? latest.windows_24h : [],
+        };
+        successCount++;
       }
+
+      if (hist30 && Array.isArray(hist30)) {
+        retailPriceHistory[slug] = hist30;
+      }
+    });
+
+    if (successCount > 0) {
+      retailPrices = {
+        lastSync: new Date().toISOString(),
+        window_start: manifest.latest_window || null,
+        prices: newPrices,
+      };
     }
 
     saveRetailPrices();
     saveRetailPriceHistory();
+    saveRetailIntradayData();
 
-    const newDatesCount = datesToFetch.length;
-    const statusMsg = newDatesCount > 0
-      ? `Fetched ${newDatesCount} date(s) · ${totalFetched} coin records · latest: ${manifest.latestDate}`
-      : `Up to date · ${manifest.latestDate}`;
+    const statusMsg = `Synced ${successCount} coin(s) · ${manifest.latest_window || "unknown window"}`;
     if (ui) syncStatus.textContent = statusMsg;
     debugLog(`[retail] Sync complete: ${statusMsg}`, "info");
   } catch (err) {
@@ -302,7 +265,6 @@ const syncRetailPrices = async ({ ui = true } = {}) => {
   } finally {
     _retailSyncInProgress = false;
     renderRetailCards();
-    // Also refresh history table if the market log tab is currently visible
     const mktLogActive = document.querySelector('[data-log-tab="market"].active');
     if (mktLogActive && typeof renderRetailHistoryTable === "function") {
       renderRetailHistoryTable();
@@ -338,15 +300,23 @@ const _buildSkeletonCard = () => {
 };
 
 /**
- * Renders a 7-entry average-price sparkline on a card's canvas.
+ * Renders a 15-min intraday sparkline on a card's canvas (last 48 windows = 12h).
+ * Falls back to 7-day daily history if no intraday data is available.
  * Destroys any prior Chart instance first to prevent Canvas reuse errors.
  * @param {string} slug
  */
 const _renderRetailSparkline = (slug) => {
   const canvas = safeGetElement(`retail-spark-${slug}`);
   if (!(canvas instanceof HTMLCanvasElement) || typeof Chart === "undefined") return;
-  const history = (retailPriceHistory[slug] || []).slice(0, 7).reverse();
-  const data = history.map((e) => Number(e.average_price)).filter((v) => isFinite(v));
+  const intraday = retailIntradayData[slug];
+  let data;
+  if (intraday && Array.isArray(intraday.windows_24h) && intraday.windows_24h.length >= 2) {
+    data = intraday.windows_24h.slice(-48).map((w) => Number(w.median)).filter((v) => isFinite(v));
+  } else {
+    // Fallback: 7-day daily history
+    data = (retailPriceHistory[slug] || []).slice(0, 7).reverse()
+      .map((e) => Number(e.avg_median ?? e.average_price)).filter((v) => isFinite(v));
+  }
   if (data.length < 2) return;
   if (_retailSparklines.has(slug)) {
     _retailSparklines.get(slug).destroy();
@@ -416,8 +386,8 @@ const RETAIL_METAL_EMOJI = { gold: "🥇", silver: "🥈", platinum: "🔷", pal
 const _computeRetailTrend = (slug) => {
   const history = retailPriceHistory[slug];
   if (!history || history.length < 2) return null;
-  const latest = Number(history[0].average_price);
-  const prev   = Number(history[1].average_price);
+  const latest = Number(history[0].avg_median);
+  const prev   = Number(history[1].avg_median);
   if (!isFinite(latest) || !isFinite(prev) || prev === 0) return null;
   const change = ((latest - prev) / prev) * 100;
   const pct = Math.abs(change).toFixed(1);
@@ -468,7 +438,7 @@ const _buildRetailCard = (slug, meta, priceData) => {
   } else {
     const summary = document.createElement("div");
     summary.className = "retail-summary-row";
-    [["Avg", priceData.average_price], ["Med", priceData.median_price], ["Low", priceData.lowest_price]].forEach(([label, val]) => {
+    [["Med", priceData.median_price], ["Low", priceData.lowest_price]].forEach(([label, val]) => {
       const item = document.createElement("span");
       item.className = "retail-summary-item";
       const lbl = document.createElement("span");
@@ -504,11 +474,13 @@ const _buildRetailCard = (slug, meta, priceData) => {
     const vendors = document.createElement("div");
     vendors.className = "retail-vendors";
 
-    const availPrices = Object.values(priceData.prices_by_site || {}).filter((p) => p != null);
+    const vendorMap = priceData.vendors || {};
+    const availPrices = Object.values(vendorMap).map((v) => v.price).filter((p) => p != null);
     const lowestPrice = availPrices.length ? Math.min(...availPrices) : null;
     Object.entries(RETAIL_VENDOR_NAMES).forEach(([key, label]) => {
-      const price = (priceData.prices_by_site || {})[key];
-      const score = priceData.scores_by_site && priceData.scores_by_site[key];
+      const vendorData = vendorMap[key];
+      const price = vendorData ? vendorData.price : null;
+      const score = vendorData ? vendorData.confidence : null;
       if (price == null) return;
       const row = document.createElement("div");
       row.className = "retail-vendor-row";
@@ -557,7 +529,7 @@ const _buildRetailCard = (slug, meta, priceData) => {
     footer.className = "retail-card-footer";
     const dateSpan = document.createElement("span");
     dateSpan.className = "retail-data-date";
-    dateSpan.textContent = `Data: ${retailPrices && retailPrices.date ? retailPrices.date : "—"}`;
+    dateSpan.textContent = retailPrices && retailPrices.window_start ? "today" : "—";
     footer.appendChild(dateSpan);
     const sparkCanvas = document.createElement("canvas");
     sparkCanvas.id = `retail-spark-${slug}`;
@@ -650,13 +622,12 @@ const renderRetailHistoryTable = () => {
     const tr = document.createElement("tr");
     const cells = [
       entry.date,
-      _fmtRetailPrice(entry.average_price),
-      _fmtRetailPrice(entry.median_price),
-      _fmtRetailPrice(entry.lowest_price),
-      _fmtRetailPrice(entry.prices_by_site && entry.prices_by_site.apmex),
-      _fmtRetailPrice(entry.prices_by_site && entry.prices_by_site.monumentmetals),
-      _fmtRetailPrice(entry.prices_by_site && entry.prices_by_site.sdbullion),
-      _fmtRetailPrice(entry.prices_by_site && entry.prices_by_site.jmbullion),
+      _fmtRetailPrice(entry.avg_median),
+      _fmtRetailPrice(entry.avg_low),
+      _fmtRetailPrice(entry.vendors && entry.vendors.apmex && entry.vendors.apmex.avg),
+      _fmtRetailPrice(entry.vendors && entry.vendors.monumentmetals && entry.vendors.monumentmetals.avg),
+      _fmtRetailPrice(entry.vendors && entry.vendors.sdbullion && entry.vendors.sdbullion.avg),
+      _fmtRetailPrice(entry.vendors && entry.vendors.jmbullion && entry.vendors.jmbullion.avg),
     ];
     cells.forEach((text) => {
       const td = document.createElement("td");
@@ -674,6 +645,7 @@ const renderRetailHistoryTable = () => {
 const initRetailPrices = () => {
   loadRetailPrices();
   loadRetailPriceHistory();
+  loadRetailIntradayData();
   loadRetailProviders();
 };
 // ---------------------------------------------------------------------------
@@ -687,7 +659,7 @@ let _retailSyncIntervalId = null;
 const RETAIL_STALE_MS = 60 * 60 * 1000; // 1 hour
 
 /** How often (ms) to re-sync in the background while the page is open */
-const RETAIL_POLL_INTERVAL_MS = 4 * 60 * 60 * 1000; // 4 hours
+const RETAIL_POLL_INTERVAL_MS = 20 * 60 * 1000; // 20 minutes (data updates every 15 min)
 
 /**
  * Starts the background retail price auto-sync.
@@ -740,6 +712,9 @@ if (typeof window !== "undefined") {
   window.retailProviders = retailProviders;
   window.loadRetailProviders = loadRetailProviders;
   window.saveRetailProviders = saveRetailProviders;
+  window.retailIntradayData = retailIntradayData;
+  window.loadRetailIntradayData = loadRetailIntradayData;
+  window.saveRetailIntradayData = saveRetailIntradayData;
   window.RETAIL_COIN_META = RETAIL_COIN_META;
   window.RETAIL_SLUGS = RETAIL_SLUGS;
   window.RETAIL_VENDOR_NAMES = RETAIL_VENDOR_NAMES;
