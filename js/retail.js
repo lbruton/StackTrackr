@@ -347,7 +347,16 @@ const renderRetailHistoryTable = () => {
   }
 
   const slug = select.value || RETAIL_SLUGS[0];
-  const history = getRetailHistoryForSlug(slug);
+  const allHistory = getRetailHistoryForSlug(slug);
+
+  const tfBtn = document.querySelector("#logPanel_market [data-retail-timeframe].active");
+  const days = tfBtn ? tfBtn.dataset.retailTimeframe : "7";
+  const history = days === "all" ? allHistory : (() => {
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - parseInt(days, 10));
+    const cutoffStr = cutoff.toISOString().slice(0, 10);
+    return allHistory.filter((entry) => entry.date >= cutoffStr);
+  })();
   tbody.innerHTML = "";
 
   if (!history.length) {

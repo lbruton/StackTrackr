@@ -1359,7 +1359,6 @@ const bindRetailMarketListeners = () => {
         const select = getExistingElement('retailHistorySlugSelect');
         if (select) {
           select.value = slug;
-          select.dispatchEvent(new Event('change'));
         }
         const marketTab = document.querySelector('[data-log-tab="market"]');
         if (marketTab && typeof switchLogTab === 'function') switchLogTab('market');
