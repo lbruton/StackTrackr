@@ -189,9 +189,15 @@ function pruneOld() {
     for (const entry of fs.readdirSync(screenshotsDir, { withFileTypes: true })) {
       if (!entry.isFile()) continue;
       const full = path.join(screenshotsDir, entry.name);
-      const { mtimeMs } = fs.statSync(full);
-      if (mtimeMs < cutoff) {
-        fs.unlinkSync(full);
+      let stat;
+      try {
+        stat = fs.statSync(full);
+      } catch (e) {
+        if (e.code !== 'ENOENT') throw e;
+        continue;
+      }
+      if (stat.mtimeMs < cutoff) {
+        fs.rmSync(full, { force: true });
         prunedFiles++;
       }
     }
