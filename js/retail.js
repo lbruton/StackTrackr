@@ -1,9 +1,6 @@
 // RETAIL MARKET PRICES
 // =============================================================================
 
-/** Base URL for retail price data */
-const RETAIL_BASE_URL = "https://api.staktrakr.com/data/retail";
-
 /** All tracked coin slugs, display order */
 const RETAIL_SLUGS = [
   "ase", "maple-silver", "britannia-silver", "krugerrand-silver",
@@ -54,7 +51,7 @@ const _fmtRetailPrice = (v) => (v != null ? `$${Number(v).toFixed(2)}` : "\u2014
 // State
 // ---------------------------------------------------------------------------
 
-/** @type {{lastSync: string, date: string, prices: Object}|null} */
+/** @type {{lastSync: string, window_start: string|null, prices: Object}|null} */
 let retailPrices = null;
 
 /** @type {Object.<string, Array>} History keyed by slug */
@@ -252,9 +249,11 @@ const syncRetailPrices = async ({ ui = true } = {}) => {
       };
     }
 
-    saveRetailPrices();
-    saveRetailPriceHistory();
-    saveRetailIntradayData();
+    if (successCount > 0) {
+      saveRetailPrices();
+      saveRetailPriceHistory();
+      saveRetailIntradayData();
+    }
 
     const statusMsg = `Synced ${successCount} coin(s) · ${manifest.latest_window || "unknown window"}`;
     if (ui) syncStatus.textContent = statusMsg;
@@ -609,7 +608,7 @@ const renderRetailHistoryTable = () => {
   if (!history.length) {
     const tr = document.createElement("tr");
     const td = document.createElement("td");
-    td.colSpan = 8;
+    td.colSpan = 7;
     td.className = "settings-subtext";
     td.style.textAlign = "center";
     td.textContent = "No history yet — sync from the Market Prices section.";
