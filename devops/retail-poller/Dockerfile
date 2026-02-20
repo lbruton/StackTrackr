@@ -35,10 +35,14 @@ ARG GIT_USER_EMAIL="poller@staktrakr.local"
 RUN git config --global user.name "${GIT_USER_NAME}" && \
     git config --global user.email "${GIT_USER_EMAIL}"
 
-# Cron job: run at 11:00 AM EST (16:00 UTC)
-RUN echo "0 16 * * * cd /app && node /app/run-local.sh >> /var/log/retail-poller.log 2>&1" | crontab -
+# Cron jobs:
+#   11:00 AM ET (16:00 UTC) — full direct-dealer scrape via Firecrawl
+#   3:00 PM ET  (20:00 UTC) — FBP-only snapshot (FindBullionPrices comparison table)
+RUN (echo "0 16 * * * root /app/run-local.sh >> /var/log/retail-poller.log 2>&1"; \
+     echo "0 20 * * * root /app/run-fbp.sh >> /var/log/retail-poller.log 2>&1") > /etc/cron.d/retail-poller && \
+    chmod 0644 /etc/cron.d/retail-poller
 
-COPY run-local.sh ./
-RUN chmod +x run-local.sh
+COPY run-local.sh run-fbp.sh ./
+RUN chmod +x run-local.sh run-fbp.sh
 
 CMD ["cron", "-f"]

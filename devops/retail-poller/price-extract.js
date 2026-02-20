@@ -391,7 +391,7 @@ async function main() {
       date: dateStr,
       generated_at_utc: generatedAt,
       source: "findbullionprices.com",
-      note: "ACH/wire price and credit/card price per dealer. Updated daily via GH Actions.",
+      note: "ACH/wire price and credit/card price per dealer. Updated daily at 3pm ET.",
       coins: {},
     };
 
