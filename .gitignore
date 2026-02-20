@@ -71,6 +71,10 @@ devops/*
 !devops/playwright-dash/
 
 
+# Playwright Dashboard captures and test artifacts
+devops/screenshots/
+test-results/
+
 # AI/MCP configuration files are tracked for project consistency
 # (removed: .github/instructions/codacy.instructions.md)
 .firecrawl/
