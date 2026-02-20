@@ -18,7 +18,17 @@ docker compose up -d
 
 ## Verify
 
-Navigate to `http://localhost:3000/docs` — the Browserless API docs page should load, confirming the service is healthy and the token is accepted.
+Check the health endpoint — it responds without requiring the auth token:
+
+```sh
+curl http://localhost:3000/health
+```
+
+Or open the API docs in a browser (token required in URL):
+
+```
+http://localhost:3000/docs?token=local_dev_token
+```
 
 ## Stop the service
 

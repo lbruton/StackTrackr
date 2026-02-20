@@ -1,8 +1,11 @@
 services:
   browserless:
     image: ghcr.io/browserless/chromium
+    container_name: staktrakr-browserless
     ports:
       - "3000:3000"
+    # TOKEN uses an inline default so the service works without copying .env.example.
+    # Docker Compose also auto-loads .env for variable substitution when it exists.
     environment:
       - TOKEN=${BROWSERLESS_TOKEN:-local_dev_token}
       - CONCURRENT=5
