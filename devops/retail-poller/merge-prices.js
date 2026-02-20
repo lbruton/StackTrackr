@@ -322,6 +322,33 @@ async function main() {
   } else {
     log("Vision needed: 0 targets — firecrawl confidence is high across the board");
   }
+
+  // Write/update manifest.json — consumed by the StakTrakr app to discover latest data
+  const manifestPath = join(DATA_DIR, "retail", "manifest.json");
+  let manifest = { dates: [], slugs: Object.keys(providersJson) };
+  if (existsSync(manifestPath)) {
+    try {
+      manifest = JSON.parse(readFileSync(manifestPath, "utf-8"));
+    } catch (_e) {
+      warn("Could not parse existing manifest.json — rebuilding");
+      manifest = { dates: [], slugs: Object.keys(providersJson) };
+    }
+  }
+  if (!manifest.dates.includes(dateStr)) {
+    manifest.dates.unshift(dateStr);
+  }
+  manifest.dates = [...new Set(manifest.dates)].sort((a, b) => b.localeCompare(a)).slice(0, 90);
+  manifest.latestDate = manifest.dates[0] || dateStr;
+  manifest.lastUpdated = generatedAt;
+  manifest.slugs = Object.keys(providersJson);
+
+  if (DRY_RUN) {
+    log("[DRY RUN] manifest.json");
+    console.log(JSON.stringify(manifest, null, 2));
+  } else {
+    writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + "\n");
+    log(`Wrote manifest.json (${manifest.dates.length} dates, latest: ${manifest.latestDate})`);
+  }
 }
 
 main().catch(err => {
