@@ -4,7 +4,7 @@ Custom review instructions for GitHub Copilot PR reviews.
 
 ## Project Context
 
-StakTrakr is a single-page vanilla JavaScript app (no framework, no build step). It runs on both `file://` protocol and HTTP servers. The runtime artifact is `index.html` plus JS/CSS assets -- no bundler, no transpiler. 54 script files load in strict dependency order via `<script defer>` tags.
+StakTrakr is a single-page vanilla JavaScript app (no framework, no build step). It runs on both `file://` protocol and HTTP servers. The runtime artifact is `index.html` plus JS/CSS assets -- no bundler, no transpiler. 56 script files load in strict dependency order via `<script defer>` tags.
 
 For full codebase context, see `AGENTS.md` in the repository root.
 
@@ -107,6 +107,17 @@ Scripts load via `<script>` tags in `index.html` in strict dependency order. `fi
 
 - `goldbackPrices`, `goldbackPriceHistory`, `goldbackEnabled`, `goldbackEstimateEnabled`, `goldbackEstimateModifier` -- Goldback state
 - `computeGoldbackEstimatedRate()`, `saveGoldbackPrices()`, `isGoldbackPricingActive()` -- Goldback functions
+
+**From `js/retail.js`:**
+
+- `retailPrices`, `retailPriceHistory` -- retail market price snapshot and history (let variables, accessible as bare identifiers in later scripts)
+- `syncRetailPrices()`, `renderRetailCards()`, `renderRetailHistoryTable()` -- sync and render functions
+- `loadRetailPrices()`, `saveRetailPrices()`, `loadRetailPriceHistory()`, `saveRetailPriceHistory()` -- persistence
+- `getRetailHistoryForSlug(slug)` -- history accessor
+
+**From `js/retail-view-modal.js`:**
+
+- `openRetailViewModal(slug)`, `closeRetailViewModal()` -- per-coin detail modal
 
 **From `js/priceHistory.js`:**
 
