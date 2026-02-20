@@ -2,11 +2,15 @@
   "name": "staktrakr",
   "private": true,
   "version": "3.31.0",
+  "type": "module",
   "description": "Precious metals inventory tracker",
   "scripts": {
-    "lint": "eslint js/*.js sw.js"
+    "lint": "eslint js/*.js sw.js",
+    "test": "playwright test",
+    "test:smoke": "playwright test --grep @smoke"
   },
   "devDependencies": {
+    "@playwright/test": "^1.50.0",
     "eslint": "^9.21.0"
   }
 }
