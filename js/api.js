@@ -18,7 +18,7 @@ const providerRequiresKey = (prov) => API_PROVIDERS[prov]?.requiresKey !== false
  * Walks back up to 6 hours from the current UTC hour to find data.
  */
 const fetchStaktrakrPrices = async (selectedMetals) => {
-  const baseUrl = API_PROVIDERS.STAKTRAKR.hourlyBaseUrl;
+  const baseUrls = API_PROVIDERS.STAKTRAKR.hourlyBaseUrls;
   const now = new Date();
 
   for (let offset = 0; offset <= 23; offset++) {
@@ -27,27 +27,29 @@ const fetchStaktrakrPrices = async (selectedMetals) => {
     const mm = String(target.getUTCMonth() + 1).padStart(2, '0');
     const dd = String(target.getUTCDate()).padStart(2, '0');
     const hh = String(target.getUTCHours()).padStart(2, '0');
+    const path = `/${yyyy}/${mm}/${dd}/${hh}.json`;
 
-    const url = `${baseUrl}/${yyyy}/${mm}/${dd}/${hh}.json`;
-    try {
-      const resp = await fetch(url, { mode: 'cors' });
-      if (!resp.ok) continue;
-      const data = await resp.json();
-      const { current } = API_PROVIDERS.STAKTRAKR.parseBatchResponse(data);
-      const results = {};
-      selectedMetals.forEach(metal => {
-        if (current[metal] > 0) results[metal] = current[metal];
-      });
-      if (Object.keys(results).length > 0) {
-        // Track usage for STAKTRAKR
-        const cfg = loadApiConfig();
-        if (cfg.usage?.STAKTRAKR) {
-          cfg.usage.STAKTRAKR.used++;
-          saveApiConfig(cfg);
+    for (const baseUrl of baseUrls) {
+      try {
+        const resp = await fetch(`${baseUrl}${path}`, { mode: 'cors' });
+        if (!resp.ok) continue;
+        const data = await resp.json();
+        const { current } = API_PROVIDERS.STAKTRAKR.parseBatchResponse(data);
+        const results = {};
+        selectedMetals.forEach(metal => {
+          if (current[metal] > 0) results[metal] = current[metal];
+        });
+        if (Object.keys(results).length > 0) {
+          // Track usage for STAKTRAKR
+          const cfg = loadApiConfig();
+          if (cfg.usage?.STAKTRAKR) {
+            cfg.usage.STAKTRAKR.used++;
+            saveApiConfig(cfg);
+          }
+          return results;
         }
-        return results;
-      }
-    } catch { continue; }
+      } catch { continue; }
+    }
   }
   throw new Error('No hourly data available from StakTrakr API');
 };

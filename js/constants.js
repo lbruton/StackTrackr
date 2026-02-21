@@ -19,6 +19,10 @@ const API_PROVIDERS = {
     requiresKey: false,
     documentation: "https://www.staktrakr.com",
     hourlyBaseUrl: "https://api.staktrakr.com/data/hourly",
+    hourlyBaseUrls: [
+      "https://api.staktrakr.com/data/hourly",  // Fly.io — primary
+      "https://api1.staktrakr.com/hourly",       // GitHub Pages — fallback
+    ],
     endpoints: { silver: "", gold: "", platinum: "", palladium: "" },
     getEndpoint: () => "",
     parseResponse: () => null,
