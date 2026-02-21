@@ -18,6 +18,7 @@
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from "node:fs";
 import { join, resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
+import { openTursoDb, writeSnapshot, windowFloor } from "./db.js";
 
 const __dirname = fileURLToPath(new URL(".", import.meta.url));
 
@@ -40,6 +41,90 @@ const MANIFEST_PATH = (() => {
 const GEMINI_MODEL = "gemini-2.5-flash";
 const CONCURRENCY = 4;  // Gemini free tier allows higher concurrency
 
+const PRICE_RANGE_HINTS = {
+  silver:   { min: 65,   max: 200 },
+  gold:     { min: 3000, max: 15000 },
+  platinum: { min: 800,  max: 6000 },
+  palladium:{ min: 800,  max: 6000 },
+};
+
+/**
+ * Vendor-specific extraction hints to guide Gemini Vision to the correct price
+ * on each dealer's page layout. Overrides the generic "look in the pricing table"
+ * instruction with vendor-specific guidance.
+ */
+const VENDOR_PRICE_HINTS = {
+  jmbullion: `JM Bullion specific: Look in the **pricing table** (usually below product images).
+- Find the row for quantity "1-19" or "1-9"
+- Use the **eCheck/Wire column** (usually leftmost price column, NOT Card/PayPal)
+- The "As Low As" banner shows bulk discounts (500+ qty) — ignore it unless table is missing
+- eCheck/Wire price is typically 2-4% lower than Card/PayPal price`,
+
+  apmex: `APMEX specific: Look in the **quantity pricing table** near product details.
+- Find row "1-19" or "1+"
+- Use the **Check/Wire price** (leftmost column)
+- Ignore "Starting At" or "As Low As" labels (those are bulk discounts)`,
+
+  monumentmetals: `Monument Metals specific: Look in the **pricing table** (below "As Low As" banner).
+- Find the row for quantity "1-24" or "1-99"
+- Use the **(e)Check/Wire column** (leftmost price column)
+- The "As Low As" banner shows bulk discounts (500+ qty) — ignore it, use the table`,
+
+  sdbullion: `SD Bullion specific: Look for the **quantity pricing table**.
+- Find the "1-19" or "1+" row
+- Use the **eCheck/Wire column** (first price column)
+- Ignore credit card pricing (usually higher)`,
+
+  herobullion: `Hero Bullion specific: Check the **pricing grid** (quantity table).
+- Find the "1-19" or "1+" quantity tier
+- Use the **wire/check price** (typically the lower price shown)`,
+
+  bullionexchanges: `Bullion Exchanges specific: Look for the **quantity discount table**.
+- Find row for "1-9" or "1-19" units
+- Use the **wire transfer/check price** (usually shown as the primary price)`,
+
+  summitmetals: `Summit Metals specific: Look in the **pricing table by quantity**.
+- Find the "1-19" or single unit row
+- Use the **check/wire price** (lower price, not credit card)`,
+};
+
+/**
+ * Build vendor-specific instruction for Gemini Vision prompt.
+ * Returns the hint string if available, or empty string if generic handling.
+ */
+function getVendorHint(vendorId) {
+  return VENDOR_PRICE_HINTS[vendorId] || "";
+}
+
+/**
+ * Load today's Firecrawl prices from Turso.
+ * Returns { slugSlug: { vendorId: price, ... }, ... } or {} if DB unavailable.
+ */
+async function loadFirecrawlPrices() {
+  try {
+    const db = await openTursoDb();
+    const today = new Date().toISOString().slice(0, 10);
+    const result = await db.execute({
+      sql: `SELECT coin_slug, vendor, price FROM price_snapshots
+            WHERE date(scraped_at) = ? AND price IS NOT NULL`,
+      args: [today],
+    });
+    db.close();
+    const out = {};
+    for (const row of result.rows) {
+      const coin_slug = row.coin_slug || row[0];
+      const vendor = row.vendor || row[1];
+      const price = row.price || row[2];
+      if (!out[coin_slug]) out[coin_slug] = {};
+      out[coin_slug][vendor] = price;
+    }
+    return out;
+  } catch (err) {
+    warn(`Could not load Firecrawl prices from Turso: ${err.message}`);
+    return {};
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Logging
 // ---------------------------------------------------------------------------
@@ -56,7 +141,7 @@ function warn(msg) {
 // Gemini Vision API
 // ---------------------------------------------------------------------------
 
-async function extractPriceFromImage(imagePath, coinName, metal, weightOz) {
+async function extractPriceFromImage(imagePath, coinName, metal, weightOz, firecrawlPrice = null, vendorId = null) {
   if (!existsSync(imagePath)) {
     throw new Error(`Screenshot not found: ${imagePath}`);
   }
@@ -65,29 +150,51 @@ async function extractPriceFromImage(imagePath, coinName, metal, weightOz) {
   const base64Image = imageBytes.toString("base64");
   const mimeType = "image/png";
 
+  const range = PRICE_RANGE_HINTS[metal] || { min: 0, max: 99999 };
+  const minPrice = Math.round(range.min * weightOz);
+  const maxPrice = Math.round(range.max * weightOz);
+  const firecrawlHint = firecrawlPrice !== null
+    ? `Firecrawl text-parser extracted: $${firecrawlPrice.toFixed(2)} — does the screenshot confirm this?`
+    : "Firecrawl text-parser found no price for this vendor.";
+
+  const vendorHint = vendorId ? getVendorHint(vendorId) : "";
+  const vendorGuidance = vendorHint
+    ? `\n\n**VENDOR-SPECIFIC GUIDANCE:**\n${vendorHint}\n`
+    : "";
+
   const prompt = `You are a price extraction bot for a precious metals price tracker.
 
-Look at this screenshot of a coin dealer product page for: ${coinName} (${metal}, ${weightOz} troy oz)
+Look at this screenshot of a coin dealer product page.
+Coin: ${coinName} (${metal}, ${weightOz} troy oz)
+Expected 1-unit price range: $${minPrice}–$${maxPrice}
+${firecrawlHint}${vendorGuidance}
+**STOCK STATUS CHECK:**
+- Is this product currently in stock and available to purchase?
+- Look for: "Out of Stock" badges, red "Sold Out" labels, "Notify Me" buttons, disabled "Add to Cart" buttons
+- Check the product title in the screenshot: does it show ${weightOz} troy oz (or ${weightOz} oz)?
+  If you see "1/2 oz" or "1/4 oz" or any fractional weight when expecting ${weightOz} oz, mark as out of stock
+  (this means the main product is unavailable and a related fractional product is shown instead)
+- If out of stock, return: in_stock = false, stock_label = "description of what you saw"
+- If in stock, return: in_stock = true, stock_label = "Add to Cart enabled" or similar
 
-Extract ONLY the primary "buy" price for this specific coin in USD. This is typically shown as:
-- "As Low As $XX.XX" (the per-coin price, not totals for rolls/tubes)
-- The main price displayed prominently on the product page
-- The lowest per-unit price in a quantity pricing table
+Find the **1-unit Check/Wire price** — the price a customer pays for exactly 1 coin using check or wire transfer.
+- Look in the pricing/quantity table for the "1" or "1-9" row under Check/Wire columns
+- Do NOT use "As Low As" bulk discount prices (those are for large quantities)
+- Do NOT use credit card prices (usually higher)
+- Do NOT use roll, tube, or accessory prices
+- For gold: use the 1 troy oz version, ignore 1/2 oz or 1/4 oz
+- If the price clearly matches what Firecrawl found (within 3%), say agrees_with_firecrawl = true
 
-Rules:
-- Return the per-COIN price, NOT a roll/tube total (if a roll of 20 coins is $1,902, the per-coin price is $95.10)
-- Ignore accessory prices (capsules, tubes, etc.)
-- Ignore related product prices shown in a "You May Also Like" section
-- For gold coins, ignore prices for fractional versions (1/2 oz, 1/4 oz) — look for the 1 oz price
-- The price should be roughly: silver 1oz ~$35-60, gold 1oz ~$2,800-3,500, platinum 1oz ~$1,000-1,500
-
-Respond with ONLY a JSON object in this exact format (no markdown, no explanation):
-{"price": 99.99, "confidence": "high", "label": "As Low As per coin"}
+Respond ONLY as JSON (no markdown, no explanation):
+{"price": 99.99, "confidence": "high", "agrees_with_firecrawl": true, "label": "1-unit wire row", "in_stock": true, "stock_label": "Add to Cart button enabled"}
 
 Where:
-- price: the numeric USD price (no $ sign, no commas), or null if not found
-- confidence: "high" (clear unambiguous price), "medium" (best guess), or "low" (uncertain)
-- label: brief description of where you found the price`;
+- price: numeric USD price or null if not found OR if out of stock
+- confidence: "high" (unambiguous), "medium" (best guess), "low" (uncertain), or "none" if out of stock
+- agrees_with_firecrawl: true if price matches Firecrawl within ~3%, false if not, null if Firecrawl had no price
+- label: brief description of where you found the price
+- in_stock: true if product is available to purchase, false if out of stock
+- stock_label: description of stock status indicator you observed`;
 
   const body = {
     contents: [{
@@ -212,6 +319,16 @@ async function main() {
   log(`Vision extraction: ${manifest.results.length} screenshots from ${MANIFEST_PATH}`);
   if (DRY_RUN) log("DRY RUN — no files written");
 
+  const firecrawlPrices = await loadFirecrawlPrices();
+  log(`Loaded Firecrawl prices for ${Object.keys(firecrawlPrices).length} coin(s) from Turso`);
+
+  // Open Turso database for writing vision results
+  const db = DRY_RUN ? null : await openTursoDb();
+  const scrapedAt = new Date().toISOString();
+  const winStart = windowFloor();
+
+  try {
+
   // Only process successful captures
   const targets = manifest.results.filter(r => r.ok && r.screenshot);
 
@@ -226,13 +343,53 @@ async function main() {
 
     log(`Vision: ${result.coin}/${result.provider}`);
     try {
+      const firecrawlPrice = firecrawlPrices[result.coin]?.[result.provider] ?? null;
       const extracted = await extractPriceFromImage(
         imagePath,
         coin.name,
         coin.metal,
-        coin.weight_oz || 1
+        coin.weight_oz || 1,
+        firecrawlPrice,
+        result.provider  // Pass vendor ID for vendor-specific hints
       );
 
+      // Vision detected out of stock
+      if (extracted.in_stock === false) {
+        log(`  ⚠ ${result.coin}/${result.provider}: OUT OF STOCK — ${extracted.stock_label || "vision detected"}`);
+        if (extracted.price !== null) {
+          warn(`  ⚠ Vision returned price despite in_stock=false: $${extracted.price}`);
+        }
+        extractionResults.push({
+          coinSlug: result.coin,
+          providerId: result.provider,
+          price: null,
+          confidence: "none",
+          agreesWithFirecrawl: null,
+          firecrawlPrice: firecrawlPrice,
+          label: extracted.stock_label || "out of stock",
+          inStock: false,
+          stockLabel: extracted.stock_label ? extracted.stock_label.slice(0, 200) : null,
+          ok: false,  // OOS counts as failed extraction
+          error: `out_of_stock: ${extracted.stock_label || "detected"}`,
+        });
+
+        // Record out-of-stock result to Turso
+        if (db) {
+          await writeSnapshot(db, {
+            scrapedAt,
+            windowStart: winStart,
+            coinSlug: result.coin,
+            vendor: result.provider,
+            price: null,
+            source: "gemini-vision",
+            isFailed: true,
+            inStock: false,
+          });
+        }
+        return;
+      }
+
+      // Continue with normal price handling
       if (extracted.price !== null) {
         log(`  ✓ ${result.coin}/${result.provider}: $${extracted.price} [${extracted.confidence}] — ${extracted.label}`);
       } else {
@@ -244,9 +401,30 @@ async function main() {
         providerId: result.provider,
         price: extracted.price,
         confidence: extracted.confidence,
+        agreesWithFirecrawl: extracted.agrees_with_firecrawl ?? null,
+        firecrawlPrice: firecrawlPrice,
         label: extracted.label,
+        inStock: extracted.in_stock === true,  // explicit check: missing field defaults to false
+        stockLabel: extracted.stock_label ? extracted.stock_label.slice(0, 200) : null,
         ok: extracted.price !== null,
+        error: extracted.price === null
+          ? (extracted.label ? `no price: ${extracted.label}` : "no price returned")
+          : undefined,
       });
+
+      // Record vision extraction result to Turso
+      if (db) {
+        await writeSnapshot(db, {
+          scrapedAt,
+          windowStart: winStart,
+          coinSlug: result.coin,
+          vendor: result.provider,
+          price: extracted.price,
+          source: "gemini-vision",
+          isFailed: extracted.price === null,
+          inStock: extracted.in_stock === true,
+        });
+      }
     } catch (err) {
       warn(`  ✗ ${result.coin}/${result.provider}: ${err.message.slice(0, 120)}`);
       extractionResults.push({
@@ -254,10 +432,26 @@ async function main() {
         providerId: result.provider,
         price: null,
         confidence: "none",
+        agreesWithFirecrawl: null,
+        firecrawlPrice: firecrawlPrice,
         label: null,
         ok: false,
         error: err.message.slice(0, 200),
       });
+
+      // Record error result to Turso
+      if (db) {
+        await writeSnapshot(db, {
+          scrapedAt,
+          windowStart: winStart,
+          coinSlug: result.coin,
+          vendor: result.provider,
+          price: null,
+          source: "gemini-vision",
+          isFailed: true,
+          inStock: true,  // assume in stock unless we know otherwise
+        });
+      }
     }
   });
 
@@ -273,14 +467,33 @@ async function main() {
 
     const pricesBySite = {};
     const confidenceBySite = {};
+    const firecrawlBySite = {};
+    const agreementBySite = {};
+    const availabilityBySite = {};
     for (const r of successful) {
       pricesBySite[r.providerId] = r.price;
       confidenceBySite[r.providerId] = r.confidence;
+      availabilityBySite[r.providerId] = r.inStock;
+      if (r.firecrawlPrice !== null) firecrawlBySite[r.providerId] = r.firecrawlPrice;
+      if (r.agreesWithFirecrawl !== null) agreementBySite[r.providerId] = r.agreesWithFirecrawl;
+    }
+
+    // Also mark failed sites as out of stock if stockLabel indicates OOS
+    for (const r of failed) {
+      if (r.inStock === false) {
+        availabilityBySite[r.providerId] = false;
+      }
     }
 
     const prices = Object.values(pricesBySite);
     const sorted = [...prices].sort((a, b) => a - b);
 
+    if (failed.length > 0) {
+      warn(
+        `[vision] ${coinSlug}: ${failed.length} vendor(s) failed — ` +
+        failed.map((f) => `${f.providerId}(${f.error || "unknown error"})`).join(", ")
+      );
+    }
     writeVisionJson(coinSlug, dateStr, {
       date: dateStr,
       generated_at_utc: generatedAt,
@@ -289,6 +502,9 @@ async function main() {
       currency: "USD",
       prices_by_site: pricesBySite,
       confidence_by_site: confidenceBySite,
+      firecrawl_by_site: firecrawlBySite,
+      agreement_by_site: agreementBySite,
+      availability_by_site: availabilityBySite,
       source_count: prices.length,
       average_price: prices.length ? Math.round(prices.reduce((a, b) => a + b, 0) / prices.length * 100) / 100 : null,
       median_price: sorted.length ? sorted[Math.floor(sorted.length / 2)] : null,
@@ -303,6 +519,10 @@ async function main() {
   if (ok === 0 && extractionResults.length > 0) {
     console.error("All vision extractions failed.");
     process.exit(1);
+  }
+
+  } finally {
+    if (db) db.close();
   }
 }
 

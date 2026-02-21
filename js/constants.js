@@ -282,7 +282,7 @@ const CERT_LOOKUP_URLS = {
  * Updated: 2026-02-12 - STACK-38/STACK-31: Responsive card view + mobile layout
  */
 
-const APP_VERSION = "3.31.6";
+const APP_VERSION = "3.32.0";
 
 /**
  * Numista metadata cache TTL: 30 days in milliseconds.
@@ -480,6 +480,32 @@ const GOLDBACK_PRICES_KEY = "goldback-prices";
 /** @constant {string} GOLDBACK_PRICE_HISTORY_KEY - LocalStorage key for Goldback price history (STACK-45) */
 const GOLDBACK_PRICE_HISTORY_KEY = "goldback-price-history";
 
+/** @constant {string} RETAIL_PRICES_KEY - LocalStorage key for current retail price snapshot */
+const RETAIL_PRICES_KEY = "retailPrices";
+
+/** @constant {string} RETAIL_PRICE_HISTORY_KEY - LocalStorage key for retail price history */
+const RETAIL_PRICE_HISTORY_KEY = "retailPriceHistory";
+
+/** @constant {string} RETAIL_PROVIDERS_KEY - LocalStorage key for cached providers.json lookup map */
+const RETAIL_PROVIDERS_KEY = "retailProviders";
+
+/** @constant {string[]} RETAIL_API_ENDPOINTS - Ordered list of retail API endpoints (primary first) */
+const RETAIL_API_ENDPOINTS = [
+  "https://api.staktrakr.com/data/api",    // api1 (Fly.io) — primary
+  "https://api1.staktrakr.com/data/api",   // GitHub Pages — fallback (serves local Mac poller data)
+];
+/** @constant {string} RETAIL_API_BASE_URL - Primary endpoint (backward compat) */
+const RETAIL_API_BASE_URL = RETAIL_API_ENDPOINTS[0];
+
+/** @constant {string} RETAIL_INTRADAY_KEY - LocalStorage key for 15-min intraday window data */
+const RETAIL_INTRADAY_KEY = "retailIntradayData";
+
+/** @constant {string} RETAIL_SYNC_LOG_KEY - LocalStorage key for retail background sync event log */
+const RETAIL_SYNC_LOG_KEY = "retailSyncLog";
+
+/** Retail price availability data (out-of-stock detection) */
+const RETAIL_AVAILABILITY_KEY = "retailAvailability";
+
 /** @constant {string} GOLDBACK_ENABLED_KEY - LocalStorage key for Goldback pricing toggle (STACK-45) */
 const GOLDBACK_ENABLED_KEY = "goldback-enabled";
 
@@ -535,6 +561,12 @@ const API_KEY_STORAGE_KEY = "metalApiConfig";
 
 /** @constant {string} API_CACHE_KEY - LocalStorage key for cached API data */
 const API_CACHE_KEY = "metalApiCache";
+
+/** @constant {string} NUMISTA_RESPONSE_CACHE_KEY - 30-day per-type-ID Numista response cache */
+const NUMISTA_RESPONSE_CACHE_KEY = "numista_response_cache";
+
+/** @constant {string} PCGS_RESPONSE_CACHE_KEY - 30-day per-cert/pcgs-number PCGS response cache */
+const PCGS_RESPONSE_CACHE_KEY = "pcgs_response_cache";
 
 /** @constant {string} LAST_CACHE_REFRESH_KEY - LocalStorage key for last cache refresh timestamp */
 const LAST_CACHE_REFRESH_KEY = "lastCacheRefresh";
@@ -602,6 +634,9 @@ const HEADER_TREND_BTN_KEY = "headerTrendBtnVisible";
 /** @constant {string} HEADER_SYNC_BTN_KEY - LocalStorage key for header sync button visibility */
 const HEADER_SYNC_BTN_KEY = "headerSyncBtnVisible";
 
+/** @constant {string} HEADER_MARKET_BTN_KEY - LocalStorage key for header market button visibility */
+const HEADER_MARKET_BTN_KEY = "headerMarketBtnVisible";
+
 // =============================================================================
 // IMAGE PROCESSOR DEFAULTS (STACK-95)
 // =============================================================================
@@ -636,6 +671,9 @@ const SYNC_FILE_PATH = '/StakTrakr/staktrakr-sync.stvault';
 
 /** Dropbox path for the lightweight sync metadata pointer */
 const SYNC_META_PATH = '/StakTrakr/staktrakr-sync.json';
+
+/** Dropbox path for the encrypted user-image vault (IndexedDB photos) */
+const SYNC_IMAGES_PATH = '/StakTrakr/staktrakr-images.stvault';
 
 /**
  * Keys included in a sync vault (excludes API keys, tokens, spot history).
@@ -693,6 +731,14 @@ const ALLOWED_STORAGE_KEYS = [
   "chipSortOrder",
   GOLDBACK_PRICES_KEY,
   GOLDBACK_PRICE_HISTORY_KEY,
+  RETAIL_PRICES_KEY,
+  RETAIL_PRICE_HISTORY_KEY,
+  RETAIL_PROVIDERS_KEY,
+  RETAIL_INTRADAY_KEY,
+  RETAIL_SYNC_LOG_KEY,
+  RETAIL_AVAILABILITY_KEY,
+  NUMISTA_RESPONSE_CACHE_KEY,
+  PCGS_RESPONSE_CACHE_KEY,
   GOLDBACK_ENABLED_KEY,
   GOLDBACK_ESTIMATE_ENABLED_KEY,
   GB_ESTIMATE_MODIFIER_KEY,
@@ -703,6 +749,7 @@ const ALLOWED_STORAGE_KEYS = [
   SPOT_TREND_KEY,             // string: trend period ("1"|"7"|"30"|"90"|"365"|"1095")
   HEADER_TREND_BTN_KEY,       // boolean string: "true"/"false" — header trend button visibility
   HEADER_SYNC_BTN_KEY,        // boolean string: "true"/"false" — header sync button visibility
+  HEADER_MARKET_BTN_KEY,      // boolean string: "true"/"false" — header market button visibility
   "layoutVisibility",         // JSON object: { spotPrices, totals, search, table } (STACK-54) — legacy, migrated to layoutSectionConfig
   "layoutSectionConfig",      // JSON array: ordered section config [{ id, label, enabled }] (STACK-54)
   LAST_VERSION_CHECK_KEY,     // timestamp: last remote version check (STACK-67)
@@ -796,6 +843,7 @@ const getInlineChipConfig = () => {
 const saveInlineChipConfig = (config) => {
   try {
     localStorage.setItem('inlineChipConfig', JSON.stringify(config));
+    if (typeof scheduleSyncPush === 'function') scheduleSyncPush();
   } catch (e) {
     console.warn('Failed to save inline chip config:', e);
   }
@@ -858,6 +906,7 @@ const getFilterChipCategoryConfig = () => {
 const saveFilterChipCategoryConfig = (config) => {
   try {
     localStorage.setItem('filterChipCategoryConfig', JSON.stringify(config));
+    if (typeof scheduleSyncPush === 'function') scheduleSyncPush();
   } catch (e) {
     console.warn('Failed to save filter chip category config:', e);
   }
@@ -973,8 +1022,10 @@ const getViewModalSectionConfig = () =>
   _loadSectionConfig('viewModalSectionConfig', VIEW_MODAL_SECTION_DEFAULTS);
 
 /** Saves the view modal section config to localStorage. */
-const saveViewModalSectionConfig = (config) =>
+const saveViewModalSectionConfig = (config) => {
   _saveSectionConfig('viewModalSectionConfig', config);
+  if (typeof scheduleSyncPush === 'function') scheduleSyncPush();
+};
 
 // =============================================================================
 // NUMISTA VIEW FIELD CONFIG — controls which fields appear in view modal
@@ -1519,6 +1570,7 @@ if (typeof window !== "undefined") {
   window.SYNC_PUSH_DEBOUNCE = SYNC_PUSH_DEBOUNCE;
   window.SYNC_FILE_PATH = SYNC_FILE_PATH;
   window.SYNC_META_PATH = SYNC_META_PATH;
+  window.SYNC_IMAGES_PATH = SYNC_IMAGES_PATH;
   window.SYNC_SCOPE_KEYS = SYNC_SCOPE_KEYS;
   window.CERT_LOOKUP_URLS = CERT_LOOKUP_URLS;
   // Inline chip config
@@ -1536,6 +1588,15 @@ if (typeof window !== "undefined") {
   // Goldback denomination pricing (STACK-45)
   window.GOLDBACK_PRICES_KEY = GOLDBACK_PRICES_KEY;
   window.GOLDBACK_PRICE_HISTORY_KEY = GOLDBACK_PRICE_HISTORY_KEY;
+  // Retail market pricing
+  window.RETAIL_PRICES_KEY = RETAIL_PRICES_KEY;
+  window.RETAIL_PRICE_HISTORY_KEY = RETAIL_PRICE_HISTORY_KEY;
+  window.RETAIL_PROVIDERS_KEY = RETAIL_PROVIDERS_KEY;
+  window.RETAIL_API_ENDPOINTS = RETAIL_API_ENDPOINTS;
+  window.RETAIL_API_BASE_URL = RETAIL_API_BASE_URL;
+  window.RETAIL_INTRADAY_KEY = RETAIL_INTRADAY_KEY;
+  window.RETAIL_SYNC_LOG_KEY = RETAIL_SYNC_LOG_KEY;
+  window.RETAIL_AVAILABILITY_KEY = RETAIL_AVAILABILITY_KEY;
   window.GOLDBACK_ENABLED_KEY = GOLDBACK_ENABLED_KEY;
   window.GB_TO_OZT = GB_TO_OZT;
   window.GOLDBACK_DENOMINATIONS = GOLDBACK_DENOMINATIONS;
@@ -1560,6 +1621,9 @@ if (typeof window !== "undefined") {
   window.EXCHANGE_RATES_KEY = EXCHANGE_RATES_KEY;
   window.EXCHANGE_RATE_API_URL = EXCHANGE_RATE_API_URL;
   window.FALLBACK_EXCHANGE_RATES = FALLBACK_EXCHANGE_RATES;
+  // STAK-222: API pipeline cache keys
+  window.NUMISTA_RESPONSE_CACHE_KEY = NUMISTA_RESPONSE_CACHE_KEY;
+  window.PCGS_RESPONSE_CACHE_KEY = PCGS_RESPONSE_CACHE_KEY;
 }
 
 // Expose APP_VERSION globally for non-module usage

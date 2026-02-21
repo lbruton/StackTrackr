@@ -364,48 +364,48 @@ class ImageCache {
     if (!(await this._ensureDb())) return result;
 
     try {
-      const records = await this._getAll('coinImages');
-      result.count = records.length;
-      result.numistaCount = records.length;
-      for (const rec of records) {
-        result.totalBytes += rec.size || 0;
+      if (this._db.objectStoreNames.contains('coinImages')) {
+        await this._iterate('coinImages', (rec) => {
+          result.count++;
+          result.numistaCount++;
+          result.totalBytes += rec.size || 0;
+        });
       }
-    } catch {
-      // ignore
+    } catch (err) {
+      debugLog('[ImageCache] Failed to iterate store: ' + err.message, 'warn');
     }
 
     try {
-      const metaRecords = await this._getAll('coinMetadata');
-      result.metadataCount = metaRecords.length;
-      for (const rec of metaRecords) {
-        result.totalBytes += new Blob([JSON.stringify(rec)]).size;
+      if (this._db.objectStoreNames.contains('coinMetadata')) {
+        await this._iterate('coinMetadata', (rec) => {
+          result.metadataCount++;
+          result.totalBytes += new Blob([JSON.stringify(rec)]).size;
+        });
       }
-    } catch {
-      // ignore
+    } catch (err) {
+      debugLog('[ImageCache] Failed to iterate store: ' + err.message, 'warn');
     }
 
     try {
       if (this._db.objectStoreNames.contains('userImages')) {
-        const userRecords = await this._getAll('userImages');
-        result.userImageCount = userRecords.length;
-        for (const rec of userRecords) {
+        await this._iterate('userImages', (rec) => {
+          result.userImageCount++;
           result.totalBytes += rec.size || 0;
-        }
+        });
       }
-    } catch {
-      // ignore
+    } catch (err) {
+      debugLog('[ImageCache] Failed to iterate store: ' + err.message, 'warn');
     }
 
     try {
       if (this._db.objectStoreNames.contains('patternImages')) {
-        const patternRecords = await this._getAll('patternImages');
-        result.patternImageCount = patternRecords.length;
-        for (const rec of patternRecords) {
+        await this._iterate('patternImages', (rec) => {
+          result.patternImageCount++;
           result.totalBytes += rec.size || 0;
-        }
+        });
       }
-    } catch {
-      // ignore
+    } catch (err) {
+      debugLog('[ImageCache] Failed to iterate store: ' + err.message, 'warn');
     }
 
     return result;
@@ -815,7 +815,8 @@ class ImageCache {
           quality: this._quality,
         });
         return result?.blob || null;
-      } catch {
+      } catch (err) {
+        debugLog('[ImageCache] WebP encode failed, using JPEG fallback: ' + err.message, 'info');
         // Fall through to legacy path
       }
     }
@@ -840,7 +841,8 @@ class ImageCache {
           this._quality
         );
       });
-    } catch {
+    } catch (err) {
+      debugLog('[ImageCache] Canvas resize failed: ' + err.message, 'warn');
       return null;
     }
   }
@@ -856,7 +858,9 @@ class ImageCache {
     try {
       const resp = await fetch(url);
       if (resp.ok) return await resp.blob();
-    } catch { /* fall through */ }
+    } catch (err) {
+      debugLog('[ImageCache] CORS fetch attempt failed for ' + url + ': ' + err.message, 'info');
+    }
 
     // Try no-cors fetch — only accept non-opaque blobs (opaque blobs report
     // size === 0 and lose their data during IDB structured clone round-trips)
@@ -864,7 +868,9 @@ class ImageCache {
       const resp = await fetch(url, { mode: 'no-cors' });
       const blob = await resp.blob();
       if (blob && blob.size > 0) return blob;
-    } catch { /* fall through */ }
+    } catch (err) {
+      debugLog('[ImageCache] no-cors fetch attempt failed for ' + url + ': ' + err.message, 'info');
+    }
 
     return null;
   }
@@ -914,6 +920,34 @@ class ImageCache {
         req.onerror = () => resolve(null);
       } catch {
         resolve(null);
+      }
+    });
+  }
+
+  /**
+   * Iterate over all records in a store using a cursor to minimize memory usage.
+   * O(1) heap relative to store size — avoids loading all records at once.
+   * @param {string} storeName
+   * @param {function(any): void} callback
+   * @returns {Promise<void>}
+   */
+  _iterate(storeName, callback) {
+    return new Promise((resolve, reject) => {
+      try {
+        const tx = this._db.transaction(storeName, 'readonly');
+        const req = tx.objectStore(storeName).openCursor();
+        req.onsuccess = (e) => {
+          const cursor = e.target.result;
+          if (cursor) {
+            callback(cursor.value);
+            cursor.continue();
+          } else {
+            resolve();
+          }
+        };
+        req.onerror = () => reject(req.error);
+      } catch (err) {
+        reject(err);
       }
     });
   }

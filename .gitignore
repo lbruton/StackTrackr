@@ -12,8 +12,8 @@
 !.claude/skills/markdown-standards/
 !.claude/skills/release/
 !.claude/skills/seed-sync/
+!.claude/skills/ui-design/
 .claude/commands/
-CLAUDE.md
 .mcp.json
 SPRINT.md
 
@@ -24,6 +24,14 @@ docs/UI-WIREFRAME.md
 # Internal dev scripts
 versionbump.py
 generate-seed-data.py
+
+# Jules AI agent artifacts — journals (.md) are tracked, scripts/screenshots are not
+.jules/*
+!.jules/*.md
+.Jules/*
+!.Jules/*.md
+verification/
+modify_*.py
 
 # Node modules (if added in future)
 node_modules/
@@ -54,12 +62,14 @@ logs/
 __pycache__/
 *.pyc
 
-# DevOps tooling — spot-poller and hooks are public, other scripts stay private
-devops/*
-!devops/spot-poller/
-!devops/retail-poller/
-!devops/hooks/
+# DevOps tooling — all tracked in git; excluded from releases via .gitattributes export-ignore
+# Keep secrets and build artifacts out
+devops/**/.env
+devops/screenshots/
+devops/node_modules/
 
+# Playwright test artifacts
+test-results/
 
 # AI/MCP configuration files are tracked for project consistency
 # (removed: .github/instructions/codacy.instructions.md)

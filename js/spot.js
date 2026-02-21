@@ -575,8 +575,11 @@ const getHistoricalSparklineData = async (metalName, days) => {
   const cutoff = new Date();
   cutoff.setDate(cutoff.getDate() - days);
 
-  // Combine: historical + live spotHistory
-  const combined = [...allHistorical, ...spotHistory]
+  // Combine: historical + live spotHistory (STAK-222: exclude cached entries from charts)
+  const combined = [
+    ...allHistorical,
+    ...spotHistory.filter(e => e.source !== 'cached'),
+  ]
     .filter((e) => e.metal === metalName && new Date(e.timestamp) >= cutoff)
     .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
 
@@ -621,7 +624,7 @@ const getSparklineData = (metalName, days, intraday = false) => {
   }
 
   const entries = spotHistory
-    .filter((e) => e.metal === metalName && new Date(e.timestamp) >= cutoff)
+    .filter((e) => e.metal === metalName && e.source !== 'cached' && new Date(e.timestamp) >= cutoff)
     .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
 
   if (intraday) {
@@ -1317,7 +1320,10 @@ window.saveTrendRange = saveTrendRange;
 window.renderSpotHistoryTable = renderSpotHistoryTable;
 window.renderLbmaHistoryTable = renderLbmaHistoryTable;
 window.clearSpotHistory = clearSpotHistory;
+window.saveSpotHistory = saveSpotHistory;
 window.getHistoricalSparklineData = getHistoricalSparklineData;
 window.getRequiredYears = getRequiredYears;
 window.fetchYearFile = fetchYearFile;
 window.historicalDataCache = historicalDataCache;
+// STAK-222: Expose spotHistory via getter so window.spotHistory always reflects current array
+Object.defineProperty(window, 'spotHistory', { get: () => spotHistory, configurable: true });

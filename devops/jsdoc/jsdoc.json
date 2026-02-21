@@ -1,0 +1,27 @@
+{
+  "plugins": [
+    "plugins/markdown"
+  ],
+  "source": {
+    "include": [
+      "../js",
+      "../sw.js"
+    ],
+    "includePattern": ".+\\.js(doc|x)?$",
+    "excludePattern": "(^|\\/|\\\\)_"
+  },
+  "opts": {
+    "destination": "../docs/api",
+    "recurse": true,
+    "template": "templates/default",
+    "readme": "../README.md"
+  },
+  "templates": {
+    "cleverLinks": true,
+    "monospaceLinks": true,
+    "default": {
+      "outputSourceFiles": true,
+      "includeDate": true
+    }
+  }
+}

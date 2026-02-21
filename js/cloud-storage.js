@@ -179,7 +179,7 @@ const CLOUD_PROVIDERS = {
   pcloud: {
     name: 'pCloud',
     authUrl: 'https://my.pcloud.com/oauth2/authorize',
-    tokenUrl: 'https://api.pcloud.com/oauth2_token',
+    tokenUrl: '/api/token-exchange',
     clientId: 'TODO_REPLACE_PCLOUD_CLIENT_ID',
     scopes: '',
     folder: '/StakTrakr',
@@ -189,7 +189,7 @@ const CLOUD_PROVIDERS = {
   box: {
     name: 'Box',
     authUrl: 'https://account.box.com/api/oauth2/authorize',
-    tokenUrl: 'https://api.box.com/oauth2/token',
+    tokenUrl: '/api/token-exchange',
     clientId: 'TODO_REPLACE_BOX_CLIENT_ID',
     scopes: '',
     folder: 'StakTrakr',
@@ -284,14 +284,29 @@ async function cloudGetToken(provider) {
 
   var refreshStart = Date.now();
   try {
-    var body = new URLSearchParams({
-      grant_type: 'refresh_token',
-      refresh_token: stored.refresh_token,
-      client_id: config.clientId,
-    });
+    var isProxy = config.tokenUrl.startsWith('/api/');
+    var headers = isProxy
+      ? { 'Content-Type': 'application/json' }
+      : { 'Content-Type': 'application/x-www-form-urlencoded' };
+
+    var body;
+    if (isProxy) {
+      body = JSON.stringify({
+        provider: provider,
+        grant_type: 'refresh_token',
+        refresh_token: stored.refresh_token,
+      });
+    } else {
+      body = new URLSearchParams({
+        grant_type: 'refresh_token',
+        refresh_token: stored.refresh_token,
+        client_id: config.clientId,
+      });
+    }
+
     var resp = await fetch(config.tokenUrl, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      headers: headers,
       body: body,
     });
     if (!resp.ok) throw new Error('Refresh failed');
@@ -395,23 +410,40 @@ async function cloudExchangeCode(code, state) {
   var config = CLOUD_PROVIDERS[provider];
   if (!config) return;
 
-  var body = new URLSearchParams({
-    grant_type: 'authorization_code',
-    code: code,
-    client_id: config.clientId,
-    redirect_uri: CLOUD_REDIRECT_URI,
-  });
-
   var verifier = sessionStorage.getItem('cloud_pkce_verifier');
   if (verifier) {
-    body.set('code_verifier', verifier);
     sessionStorage.removeItem('cloud_pkce_verifier');
+  }
+
+  var isProxy = config.tokenUrl.startsWith('/api/');
+  var headers = isProxy
+    ? { 'Content-Type': 'application/json' }
+    : { 'Content-Type': 'application/x-www-form-urlencoded' };
+
+  var body;
+  if (isProxy) {
+    body = JSON.stringify({
+      provider: provider,
+      code: code,
+      redirect_uri: CLOUD_REDIRECT_URI,
+      code_verifier: verifier || undefined,
+    });
+  } else {
+    body = new URLSearchParams({
+      grant_type: 'authorization_code',
+      code: code,
+      client_id: config.clientId,
+      redirect_uri: CLOUD_REDIRECT_URI,
+    });
+    if (verifier) {
+      body.set('code_verifier', verifier);
+    }
   }
 
   try {
     var resp = await fetch(config.tokenUrl, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      headers: headers,
       body: body,
     });
 

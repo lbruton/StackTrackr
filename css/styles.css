@@ -1613,18 +1613,25 @@ input[type="submit"] {
   border-color: var(--primary);
 }
 
+/* Theme button colors driven by [data-theme] attribute so they apply immediately
+   when the inline head script sets data-theme — before any JS runs. The .dark/.light/.sepia
+   class variants below are kept for backwards compatibility but are now redundant. */
+[data-theme="dark"] .theme-btn,
 .theme-btn.dark {
   background: #1e293b;
   color: #f8fafc;
   border-color: #334155;
 }
 
+:root:not([data-theme]) .theme-btn,
+[data-theme="light"] .theme-btn,
 .theme-btn.light {
   background: #f8fafc;
   color: #1e293b;
   border-color: #cbd5e1;
 }
 
+[data-theme="sepia"] .theme-btn,
 .theme-btn.sepia {
   background: #f2e7d5;
   color: #3e2f1e;
@@ -1756,6 +1763,12 @@ input[type="submit"] {
   cursor: pointer;
 }
 
+.api-history-cached-badge {
+  color: var(--text-muted, #888);
+  font-style: italic;
+  font-size: 0.85em;
+}
+
 #catalogHistoryTable {
   width: 100%;
   min-width: 100%;
@@ -1814,17 +1827,17 @@ input[type="submit"] {
 }
 
 .settings-modal-content > .modal-header {
-  background: linear-gradient(135deg, var(--primary), var(--primary-hover));
-  color: #f8fafc;
+  background: transparent;
+  border-bottom: 1px solid var(--border-color-subtle, var(--bs-border-color));
   padding: var(--spacing) var(--spacing-xl);
   border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-  box-shadow: var(--shadow);
   flex-shrink: 0;
 }
 
 .settings-modal-content > .modal-header h2 {
   margin: 0;
-  color: #f8fafc;
+  font-size: 1.05rem;
+  color: var(--text-primary);
 }
 
 /* Sidebar + content layout */
@@ -3899,11 +3912,10 @@ td[data-column="name"] {
   background: var(--bg-tertiary, #2a2a2a);
   vertical-align: middle;
   cursor: pointer;
-  transition: box-shadow 0.15s ease, transform 0.15s ease;
+  transition: box-shadow 0.15s ease;
 }
 .table-thumb:hover {
   box-shadow: 0 0 0 2px var(--primary);
-  transform: scale(1.12);
   z-index: 1;
   position: relative;
 }
@@ -8363,26 +8375,47 @@ th {
 }
 
 /* --- Date N/A checkbox --------------------------------------------------- */
-.date-na-label {
+.date-na-label,
+.date-na-inline {
   display: inline-flex !important;
   align-items: center;
-  gap: 0.3rem;
-  margin-top: 0.25rem;
-  font-size: 0.7rem !important;
+  justify-content: center;
+  gap: 0.25rem;
+  min-width: 44px;
+  min-height: 32px;
+  padding: 0.25rem 0.5rem;
+  background: var(--glass-input-bg, rgba(0, 0, 0, 0.03));
+  border: 1.5px solid var(--glass-input-border, var(--border));
+  border-left: none;
+  border-radius: 0 8px 8px 0;
+  font-size: 0.72rem !important;
+  font-weight: 600 !important;
   text-transform: none !important;
   letter-spacing: normal !important;
   color: var(--text-secondary);
   cursor: pointer;
+  transition: color 0.15s ease, background 0.15s ease;
+  margin-top: 0 !important;
 }
 
-.date-na-label input[type="checkbox"] {
-  width: 13px;
-  height: 13px;
+.date-na-label:hover,
+.date-na-inline:hover {
+  color: var(--primary);
+  background: var(--glass-input-focus-bg, rgba(0, 0, 0, 0.05));
+}
+
+.date-na-label input[type="checkbox"],
+.date-na-inline input[type="checkbox"] {
+  width: 12px;
+  height: 12px;
   min-height: 0;
+  margin: 0;
+  cursor: pointer;
 }
 
-.date-na-label span {
-  font-weight: 500 !important;
+.date-na-label span,
+.date-na-inline span {
+  font-weight: 600 !important;
   text-transform: none !important;
   letter-spacing: normal !important;
 }
@@ -11088,3 +11121,691 @@ th {
   align-items: center;
   margin-top: 0.4rem;
 }
+
+/* ===== RETAIL MARKET PRICES ===== */
+
+/* Cards grid — responsive 2-3 column layout */
+.retail-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+/* Individual coin price card */
+.retail-card {
+  background: var(--card-bg, var(--bs-body-bg));
+  border: 1px solid var(--border-color, var(--bs-border-color));
+  border-radius: 0.5rem;
+  padding: 1rem;
+}
+
+.retail-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 0.5rem;
+}
+
+.retail-card-title {
+  font-weight: 600;
+  font-size: 0.95rem;
+  margin: 0;
+}
+
+
+.retail-card-weight {
+  font-size: 0.8rem;
+  color: var(--text-muted, var(--bs-secondary-color));
+  margin-bottom: 0.75rem;
+}
+
+.retail-card-summary {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+  font-size: 0.85rem;
+}
+
+.retail-card-summary-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.retail-card-summary-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  color: var(--text-muted, var(--bs-secondary-color));
+}
+
+.retail-card-summary-value {
+  font-weight: 600;
+}
+
+.retail-vendor-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.2rem 0;
+  font-size: 0.82rem;
+  border-top: 1px solid var(--border-color-subtle, var(--bs-border-color));
+}
+
+.retail-vendor-name {
+  min-width: 5rem;
+  color: var(--text-muted, var(--bs-secondary-color));
+}
+
+.retail-vendor-link {
+  color: var(--primary);
+  text-decoration: none;
+}
+
+.retail-vendor-link:hover {
+  text-decoration: underline;
+}
+
+.retail-vendor-price {
+  font-weight: 500;
+}
+
+.retail-score-dots {
+  letter-spacing: -0.1em;
+  color: var(--text-muted, var(--bs-secondary-color));
+  font-size: 0.9rem;
+}
+
+.retail-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 0.75rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--border-color-subtle, var(--bs-border-color));
+}
+
+.retail-card-date {
+  font-size: 0.75rem;
+  color: var(--text-muted, var(--bs-secondary-color));
+}
+
+.retail-card-btn-row {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.retail-card-action {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.22rem 0.7rem;
+  font-size: 0.78rem;
+  font-weight: 500;
+  border: 1px solid var(--border-color, rgba(148,163,184,.3));
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+}
+
+.retail-card-action:hover {
+  color: var(--text-primary);
+  border-color: var(--primary, #3b82f6);
+  background: rgba(59,130,246,.08);
+}
+
+#retailSyncBtn {
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.retail-disclaimer-inline {
+  display: block;
+  font-size: 0.72rem;
+  color: var(--text-muted, var(--bs-secondary-color));
+  background: var(--bs-tertiary-bg, rgba(148,163,184,.06));
+  border: 1px solid var(--border-color-subtle, rgba(148,163,184,.18));
+  border-radius: 6px;
+  padding: 0.3rem 0.65rem;
+  line-height: 1.45;
+}
+
+.retail-disclaimer-inline .bi {
+  margin-right: 0.25rem;
+  opacity: 0.55;
+}
+
+/* STAK-217: Corrected CSS targets matching JS class names */
+.retail-price-card {
+  background: var(--bs-secondary-bg, var(--bg-card, rgba(255,255,255,.05)));
+  border: 1px solid var(--border-color, var(--bs-border-color));
+  border-radius: 8px;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,.12);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+/* STAK-217: Card hover lift */
+.retail-price-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.22);
+  border-color: var(--primary, #3b82f6);
+}
+.retail-coin-name  { font-weight: 600; font-size: 0.95rem; }
+.retail-coin-weight {
+  font-size: 0.8rem;
+  color: var(--bs-secondary-color, #6c757d);
+}
+.retail-summary-row { display: flex; align-items: center; gap: 1rem; font-size: 0.85rem; }
+.retail-summary-item { display: flex; flex-direction: column; gap: 0.1rem; }
+.retail-label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--bs-secondary-color, #6c757d);
+}
+.retail-summary-value { font-weight: 600; }
+.retail-vendor-score {
+  letter-spacing: -0.1em;
+  color: var(--text-muted, var(--bs-secondary-color));
+  font-size: 0.9rem;
+}
+.retail-data-date {
+  font-size: 0.75rem;
+  color: var(--bs-secondary-color, #6c757d);
+}
+.retail-no-data {
+  font-size: 0.85rem;
+  color: var(--text-muted, var(--bs-secondary-color));
+  font-style: italic;
+}
+
+/* Reset footer margin — gap on .retail-price-card handles spacing */
+.retail-price-card > .retail-card-footer { margin-top: 0; }
+
+/* STAK-217: Metal badge color coding */
+.retail-metal-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+.retail-metal-badge--gold      { background: rgba(245,158,11,0.15); color: #f59e0b; }
+.retail-metal-badge--silver    { background: rgba(139,147,166,0.15); color: var(--bs-secondary-color, #6c757d); }
+.retail-metal-badge--platinum  { background: rgba(6,182,212,0.15);   color: #06b6d4; }
+.retail-metal-badge--palladium { background: rgba(148,163,184,0.15); color: #94a3b8; }
+/* STAK-217: Trend indicator */
+.retail-trend {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  width: fit-content;
+  margin-left: auto;
+  white-space: nowrap;
+}
+.retail-trend--up   { background: rgba(16, 185, 129, 0.12); color: #10b981; }
+.retail-trend--down { background: rgba(239, 68, 68, 0.12);  color: #ef4444; }
+.retail-trend--flat { background: rgba(148, 163, 184, 0.12); color: #94a3b8; }
+
+/* STAK-217: Medal ranking for top 3 high-confidence in-stock vendors */
+.retail-vendor-row--medal-1 { --medal-icon: "🥇 "; }
+.retail-vendor-row--medal-2 { --medal-icon: "🥈 "; }
+.retail-vendor-row--medal-3 { --medal-icon: "🥉 "; }
+.retail-vendor-row--medal-1 .retail-vendor-name::before,
+.retail-vendor-row--medal-2 .retail-vendor-name::before,
+.retail-vendor-row--medal-3 .retail-vendor-name::before {
+  content: var(--medal-icon);
+  font-size: 0.85rem;
+}
+.retail-vendor-row--medal-1 .retail-vendor-price {
+  color: #10b981;
+  font-weight: 700;
+}
+.retail-vendor-row--medal-2 .retail-vendor-price {
+  color: #64748b;
+  font-weight: 600;
+}
+.retail-vendor-row--medal-3 .retail-vendor-price {
+  color: #92400e;
+  font-weight: 600;
+}
+
+/* Out-of-stock vendor styling */
+.retail-vendor-row--out-of-stock {
+  opacity: 0.6;
+  background-color: var(--bs-gray-100);
+}
+
+.retail-vendor-row--out-of-stock .retail-vendor-name {
+  color: var(--bs-gray-600);
+}
+
+.retail-vendor-row--out-of-stock .retail-vendor-price del {
+  text-decoration: line-through;
+  color: var(--bs-gray-500);
+}
+
+/* Confidence percentage chip — uses Bootstrap 5.3 semantic emphasis vars that adapt per theme */
+.retail-conf-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.15rem 0.4rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  border-radius: 999px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.retail-conf-chip--low  { background: color-mix(in srgb, var(--danger)  12%, transparent); color: var(--danger); }
+.retail-conf-chip--mid  { background: color-mix(in srgb, var(--warning) 12%, transparent); color: var(--warning); }
+.retail-conf-chip--high { background: color-mix(in srgb, var(--success) 12%, transparent); color: var(--success); }
+
+.retail-vendor-details { margin-top: 0.25rem; }
+
+/* STAK-217: Loading skeleton shimmer */
+@keyframes retail-shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+.retail-skel {
+  background: linear-gradient(
+    90deg,
+    var(--bg-secondary, #f1f5f9) 25%,
+    var(--border-color, #e2e8f0) 50%,
+    var(--bg-secondary, #f1f5f9) 75%
+  );
+  background-size: 400% 100%;
+  animation: retail-shimmer 1.4s infinite;
+  border-radius: 4px;
+  margin-bottom: 0.5rem;
+}
+.retail-skel--title   { height: 1.2rem; width: 65%; }
+.retail-skel--stats   { height: 2.5rem; width: 100%; }
+.retail-skel--vendors { height: 3.5rem; width: 85%; }
+
+/* STAK-217: No-data empty state */
+.retail-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 3rem 1rem;
+  text-align: center;
+  color: var(--text-muted, var(--bs-secondary-color));
+}
+.retail-empty-icon { font-size: 2.5rem; }
+.retail-empty-title {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0;
+  color: var(--text-primary, var(--bs-body-color));
+}
+.retail-empty-desc { font-size: 0.85rem; margin: 0; }
+.retail-sync-cta {
+  margin-top: 0.5rem;
+  padding: 0.4rem 1.2rem;
+  border-radius: 999px;
+  background: var(--primary, #3b82f6);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: opacity 0.2s;
+}
+.retail-sync-cta:hover { opacity: 0.85; }
+
+
+/* STAK-217: Sparkline micro-chart */
+.retail-sparkline {
+  display: block;
+  margin-left: auto;
+  opacity: 0.75;
+}
+
+/* History table in Activity Log */
+.retail-history-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.retail-history-label {
+  font-size: 0.85rem;
+  font-weight: 500;
+  margin: 0;
+}
+
+.retail-history-select {
+  width: auto;
+  max-width: 220px;
+}
+
+.retail-timeframe-tabs {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.retail-tf-btn {
+  padding: 0.2rem 0.6rem;
+  font-size: 0.8rem;
+  border: 1px solid var(--border-color, var(--bs-border-color));
+  border-radius: 0.25rem;
+  background: transparent;
+  color: var(--bs-body-color);
+  cursor: pointer;
+  line-height: 1.4;
+}
+
+.retail-tf-btn.active {
+  background: var(--bs-primary);
+  border-color: var(--bs-primary);
+  color: #fff;
+}
+
+.retail-history-table-wrap {
+  overflow-x: auto;
+}
+
+.retail-history-table {
+  width: 100%;
+  font-size: 0.85rem;
+  border-collapse: collapse;
+}
+
+.retail-history-table th,
+.retail-history-table td {
+  padding: 0.35rem 0.6rem;
+  border-bottom: 1px solid var(--border-color-subtle, var(--bs-border-color));
+  white-space: nowrap;
+}
+
+.retail-history-table th {
+  font-weight: 600;
+  text-align: left;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  color: var(--text-muted, var(--bs-secondary-color));
+}
+
+/* Retail view modal */
+.retail-view-section-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted, var(--bs-secondary-color));
+  margin: 1.25rem 0 0.5rem;
+}
+
+.retail-view-table-wrap {
+  overflow-x: auto;
+  margin-bottom: 1rem;
+}
+
+.retail-view-table {
+  width: 100%;
+  font-size: 0.85rem;
+  border-collapse: collapse;
+}
+
+.retail-view-table th,
+.retail-view-table td {
+  padding: 0.35rem 0.6rem;
+  border-bottom: 1px solid var(--border-color-subtle, var(--bs-border-color));
+  white-space: nowrap;
+}
+
+.retail-view-table th {
+  font-weight: 600;
+  text-align: left;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  color: var(--text-muted, var(--bs-secondary-color));
+}
+
+.retail-view-chart-wrap {
+  position: relative;
+  height: 220px;
+  margin-bottom: 1rem;
+}
+
+.retail-view-disclaimer {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border-color-subtle, var(--bs-border-color));
+}
+
+/* Retail view modal — vendor legend (replaces "Current Prices" table) */
+.retail-vendor-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1.25rem;
+  padding: 0.5rem 0.25rem 0.75rem;
+}
+
+.retail-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  text-decoration: none;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.retail-legend-item:hover .retail-legend-name {
+  text-decoration: underline;
+}
+
+.retail-legend-swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.retail-legend-name {
+  font-weight: 500;
+}
+
+.retail-legend-price {
+  color: var(--text-primary);
+  font-size: 0.82rem;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Retail view modal — tab toggle (pill style) */
+.retail-view-tabs {
+  display: flex;
+  gap: 0.2rem;
+  margin: 0 0 0.5rem;
+  padding: 0.2rem;
+  background: var(--bg-subtle, rgba(0,0,0,.06));
+  border-radius: 8px;
+}
+
+.retail-view-tab {
+  flex: 1;
+  text-align: center;
+  padding: 0.3rem 0.85rem;
+  font-size: 0.85rem;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--text-muted);
+  transition: color 0.15s, background 0.15s, box-shadow 0.15s;
+}
+
+.retail-view-tab:hover {
+  color: var(--text-primary);
+}
+
+.retail-view-tab.active {
+  color: var(--text-primary);
+  background: var(--bg-card, var(--bs-body-bg));
+  font-weight: 600;
+  box-shadow: 0 1px 3px rgba(0,0,0,.12);
+}
+
+/* Retail view modal — intraday/history panels */
+#retailViewIntradaySection,
+#retailViewHistorySection {
+  background: var(--bg-subtle, rgba(0,0,0,.03));
+  border: 1px solid var(--border-color-subtle, var(--bs-border-color));
+  border-radius: 8px;
+  padding: 0.75rem;
+}
+
+/* Retail view modal — intraday chart */
+.retail-intraday-chart-wrap {
+  position: relative;
+  height: 200px;
+  margin-bottom: 0.75rem;
+}
+
+.retail-intraday-chart-wrap canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* =============================================================================
+   EMPTY STATE COMPONENT
+   ============================================================================= */
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 1.5rem;
+  text-align: center;
+  color: var(--text-secondary);
+  background: var(--bg-primary);
+  border-radius: var(--radius);
+}
+
+.empty-state-icon {
+  width: 48px;
+  height: 48px;
+  margin-bottom: 1rem;
+  color: var(--border-hover);
+  fill: currentColor;
+}
+
+.empty-state h3 {
+  margin: 0 0 0.5rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.empty-state p {
+  margin: 0 0 1.5rem;
+  font-size: 0.9rem;
+  max-width: 400px;
+  line-height: 1.5;
+}
+
+.empty-state .btn {
+  min-width: 140px;
+}
+
+/* =============================================================================
+   HELLO KITTY THEME (easter egg: shift+click Sepia in settings)
+   ============================================================================= */
+
+[data-theme="hello-kitty"] {
+  /* Primary Colors — hot pink + vivid purple, bright on dark (mirrors dark mode) */
+  --primary: #f472b6;
+  --primary-hover: #ec4899;
+  --secondary: #c084fc;
+  --secondary-hover: #a855f7;
+  --success: #34d399;
+  --success-hover: #10b981;
+  --info: #a78bfa;
+  --info-hover: #8b5cf6;
+  --warning: #fbbf24;
+  --warning-hover: #f59e0b;
+  --danger: #fb7185;
+  --danger-hover: #f43f5e;
+  --disclaimer-color: var(--danger);
+
+  /* Metal-specific Colors — vivid on dark */
+  --silver: #e879f9;
+  --gold: #fbbf24;
+  --platinum: #f9a8d4;
+  --palladium: #c084fc;
+
+  /* Inventory Type Colors */
+  --type-coin-bg: #ec4899;
+  --type-coin-text: #ffffff;
+  --type-round-bg: #a855f7;
+  --type-round-text: #ffffff;
+  --type-bar-bg: #d946ef;
+  --type-bar-text: #ffffff;
+  --type-note-bg: #8b5cf6;
+  --type-note-text: #ffffff;
+  --type-set-bg: #db2777;
+  --type-set-text: #ffffff;
+  --type-other-bg: #7c3aed;
+  --type-other-text: #ffffff;
+
+  /* Backgrounds — dark purple base mirroring dark mode depth levels */
+  --bg-primary: #1a0428;   /* very dark purple  ≈ dark #0f172a */
+  --bg-secondary: #2d0a4e; /* dark purple        ≈ dark #1e293b */
+  --bg-tertiary: #3d1166;  /* medium purple      ≈ dark #334155 */
+  --bg-card: #2d0a4e;      /* card bg            ≈ dark #1e293b */
+
+  /* Map legacy tokens */
+  --bg: var(--bg-primary);
+  --bg-elev-1: var(--bg-secondary);
+  --bg-elev-2: var(--bg-tertiary);
+  --surface: var(--bg-card);
+  --surface-alt: #3d1166;
+
+  /* Text — light pink on dark purple (mirrors dark mode's near-white text) */
+  --text-primary: #fce7f3;   /* ≈ dark #f8fafc */
+  --text-secondary: #f9a8d4; /* ≈ dark #cbd5e1 */
+  --text-muted: #f472b6;     /* ≈ dark #94a3b8 */
+  --text: var(--text-primary);
+  --chip-text: #fce7f3;
+  --chip-active-outline: rgba(252, 231, 243, 0.9);
+  --chip-search-outline: rgba(192, 132, 252, 0.85);
+
+  /* Borders & Shadows */
+  --border: #6d28d9;
+  --border-hover: #7c3aed;
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.4);
+  --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.4), 0 2px 4px -2px rgb(0 0 0 / 0.3);
+  --shadow-lg:
+    0 10px 15px -3px rgb(0 0 0 / 0.4), 0 4px 6px -4px rgb(0 0 0 / 0.3);
+  --back-to-top-bg: #2d0a4e;
+  --back-to-top-border: #6d28d9;
+  --back-to-top-text: #fce7f3;
+  --back-to-top-hover-bg: #3d1166;
+  --back-to-top-shadow: 0 2px 8px rgb(0 0 0 / 0.5);
+}
+
+/* Logo: use dark-mode logo in hello-kitty (light logo on dark background) */
+[data-theme="hello-kitty"] .stackr-logo .light-mode { display: none; }
+[data-theme="hello-kitty"] .stackr-logo .dark-mode  { display: block; }
+[data-theme="hello-kitty"] .stackr-logo .sepia-mode { display: none; }

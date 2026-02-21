@@ -121,7 +121,7 @@ const fetchStaktrakrHourlyRange = async (hoursBack) => {
 
   if (newCount > 0) {
     saveSpotHistory();
-    console.log(`[StakTrakr] Added ${newCount} hourly entries (${fetchCount} files fetched)`);
+    debugLog(`[StakTrakr] Added ${newCount} hourly entries (${fetchCount} files fetched)`);
   }
 
   return { newCount, fetchCount };
@@ -344,6 +344,7 @@ const loadApiConfig = () => {
         historyDays,
         historyTimes,
         syncMode: config.syncMode || {},
+        autoRefresh: config.autoRefresh || { STAKTRAKR: true },
         usageMonth: currentMonth,
       };
       if (needsSave) {
@@ -380,6 +381,7 @@ const loadApiConfig = () => {
     historyDays,
     historyTimes,
     syncMode: {},
+    autoRefresh: { STAKTRAKR: true },
     usageMonth: currentMonthKey(),
   };
 };
@@ -406,6 +408,7 @@ const saveApiConfig = (config) => {
       historyDays: config.historyDays || {},
       historyTimes: config.historyTimes || {},
       syncMode: config.syncMode || {},
+      autoRefresh: config.autoRefresh || { STAKTRAKR: true },
       usageMonth: config.usageMonth || currentMonthKey(),
     };
     Object.keys(config.keys || {}).forEach((p) => {
@@ -462,6 +465,8 @@ const clearApiCache = () => {
  * @returns {number} Cache duration
  */
 const getCacheDurationMs = (provider) => {
+  // STAKTRAKR reads static hourly files — no rate limit, always fetch fresh
+  if (provider === 'STAKTRAKR') return 0;
   let hours;
   if (provider && Number.isFinite(apiConfig?.cacheTimeouts?.[provider])) {
     hours = apiConfig.cacheTimeouts[provider];
@@ -633,6 +638,18 @@ const setupProviderSettingsListeners = (provider) => {
       updateHistoryPullCost(provider);
     });
   });
+
+  // Auto-refresh toggle (STAK-222)
+  const autoRefreshToggle = safeGetElement(`autoRefresh_${provider}`);
+  if (autoRefreshToggle) {
+    autoRefreshToggle.addEventListener('change', () => {
+      const config = loadApiConfig();
+      if (!config.autoRefresh) config.autoRefresh = {};
+      config.autoRefresh[provider] = autoRefreshToggle.checked;
+      saveApiConfig(config);
+      if (typeof startSpotBackgroundSync === 'function') startSpotBackgroundSync();
+    });
+  }
 
 };
 
@@ -826,10 +843,15 @@ const renderApiHistoryTable = () => {
   let html =
     "<tr><th data-column=\"timestamp\">Time</th><th data-column=\"metal\">Metal</th><th data-column=\"spot\">Price</th><th data-column=\"provider\">Source</th></tr>";
   data.forEach((e) => {
-    const sourceLabel = e.source === "api-hourly"
-      ? `${e.provider || ""} (hourly)`
-      : (e.provider || "");
-    html += `<tr><td>${e.timestamp}</td><td>${e.metal}</td><td>${formatCurrency(
+    let sourceLabel;
+    if (e.source === "cached") {
+      sourceLabel = '<span class="api-history-cached-badge">Cached</span>';
+    } else if (e.source === "api-hourly") {
+      sourceLabel = `${escapeHtml(e.provider || "")} (hourly)`;
+    } else {
+      sourceLabel = escapeHtml(e.provider || e.source || "");
+    }
+    html += `<tr><td>${escapeHtml(e.timestamp)}</td><td>${escapeHtml(e.metal)}</td><td>${formatCurrency(
       e.spot,
     )}</td><td>${sourceLabel}</td></tr>`;
   });
@@ -859,7 +881,7 @@ const showApiHistoryModal = () => {
   const modal = document.getElementById("apiHistoryModal");
   if (!modal) return;
   loadSpotHistory();
-  apiHistoryEntries = spotHistory.filter((e) => e.source === "api" || e.source === "api-hourly" || e.source === "seed");
+  apiHistoryEntries = spotHistory.filter((e) => e.source === "api" || e.source === "api-hourly" || e.source === "seed" || e.source === "cached");
   apiHistorySortColumn = "";
   apiHistorySortAsc = true;
   apiHistoryFilterText = "";
@@ -1100,6 +1122,53 @@ const autoSyncSpotPrices = async () => {
 
   await syncProviderChain({ showProgress: false, forceSync: false });
   updateSyncButtonStates();
+};
+
+/** Interval ID for spot price background sync — null when not running */
+let _spotSyncIntervalId = null;
+
+/**
+ * Starts background spot price auto-sync for all providers that have autoRefresh enabled.
+ * Immediately syncs if data is absent or stale, then re-syncs on each provider's cache TTL interval.
+ * Safe to call multiple times — clears any existing interval before setting a new one.
+ * Called from init.js after autoSyncSpotPrices().
+ */
+const startSpotBackgroundSync = () => {
+  if (_spotSyncIntervalId !== null) {
+    clearInterval(_spotSyncIntervalId);
+    _spotSyncIntervalId = null;
+  }
+
+  const config = loadApiConfig();
+  const autoRefresh = config.autoRefresh || { STAKTRAKR: true };
+
+  // Find shortest enabled interval to drive the master setInterval tick
+  const enabledProviders = Object.keys(API_PROVIDERS).filter(p => autoRefresh[p]);
+  if (enabledProviders.length === 0) return;
+
+  // Use StakTrakr's interval (1h = 3600000ms) as the base tick if enabled,
+  // otherwise fall back to the shortest configured cache TTL.
+  const staktrakrEnabled = !!autoRefresh['STAKTRAKR'];
+  const tickMs = staktrakrEnabled
+    ? 60 * 60 * 1000  // 1 hour — StakTrakr updates hourly
+    : Math.min(...enabledProviders.map(p => (config.cacheTimeouts?.[p] ?? 24) * 60 * 60 * 1000));
+
+  const _runSilentSync = () => {
+    syncProviderChain({ showProgress: false, forceSync: false }).catch(err => {
+      debugLog(`[spot-bg-sync] Silent sync failed: ${err.message}`, 'warn');
+    });
+  };
+
+  // Sync immediately if data is stale or missing
+  const cache = loadApiCache();
+  const isStale = !cache || !cache.timestamp || (Date.now() - cache.timestamp > tickMs);
+  if (isStale) {
+    debugLog('[spot-bg-sync] Starting immediate sync (stale or no cache)', 'info');
+    _runSilentSync();
+  }
+
+  _spotSyncIntervalId = setInterval(_runSilentSync, tickMs);
+  debugLog(`[spot-bg-sync] Background sync started — tick every ${tickMs / 60000}min`, 'info');
 };
 
 /**
@@ -2187,6 +2256,12 @@ const populateApiSection = () => {
       cacheSelect.value = cfg.cacheTimeouts?.[provider] ?? 24;
     }
 
+    // Load saved auto-refresh state (STAK-222)
+    const autoRefreshToggle = safeGetElement(`autoRefresh_${provider}`);
+    if (autoRefreshToggle) {
+      autoRefreshToggle.checked = cfg.autoRefresh?.[provider] ?? (provider === 'STAKTRAKR');
+    }
+
     // Initialize history pull cost indicator
     if (typeof updateHistoryPullCost === 'function') {
       updateHistoryPullCost(provider);
@@ -2215,6 +2290,20 @@ const populateApiSection = () => {
   // Wire up spot history export/import buttons
   if (typeof initSpotHistoryButtons === 'function') {
     initSpotHistoryButtons();
+  }
+
+  // Render Numista bulk sync UI for the default active tab (STACK-87/88)
+  // switchProviderTab only fires on explicit tab clicks, so the default NUMISTA
+  // tab never triggers renderNumistaSyncUI without this call.
+  const syncGroup = safeGetElement('numistaBulkSyncGroup');
+  if (syncGroup && syncGroup.style.display !== 'none' && typeof renderNumistaSyncUI === 'function') {
+    renderNumistaSyncUI();
+  }
+
+  // STAK-222: Update PCGS cache stat count
+  const pcgsCountEl = safeGetElement('pcgsResponseCacheCount');
+  if (pcgsCountEl && typeof getPcgsCacheCount === 'function') {
+    pcgsCountEl.textContent = getPcgsCacheCount();
   }
 };
 
@@ -2382,6 +2471,7 @@ window.clearApiHistory = clearApiHistory;
 window.syncAllProviders = syncAllProviders;
 window.syncProviderChain = syncProviderChain;
 window.autoSyncSpotPrices = autoSyncSpotPrices;
+window.startSpotBackgroundSync = startSpotBackgroundSync;
 window.handleHistoryPull = handleHistoryPull;
 window.updateHistoryPullCost = updateHistoryPullCost;
 window.fetchHistoryBatched = fetchHistoryBatched;
@@ -2747,7 +2837,7 @@ const importSpotHistory = (file) => {
     if (typeof updateAllSparklines === "function") updateAllSparklines();
 
     // Refresh the visible history table after import
-    apiHistoryEntries = spotHistory.filter((e) => e.source === "api" || e.source === "api-hourly" || e.source === "seed");
+    apiHistoryEntries = spotHistory.filter((e) => e.source === "api" || e.source === "api-hourly" || e.source === "seed" || e.source === "cached");
     renderApiHistoryTable();
   };
   reader.readAsText(file);

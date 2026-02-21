@@ -49,7 +49,15 @@ const bindSettingsNavigationListeners = () => {
 const bindAppearanceAndHeaderListeners = () => {
   // Theme picker buttons.
   document.querySelectorAll('.theme-option').forEach(btn => {
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', (e) => {
+      if (e.shiftKey && btn.dataset.theme === 'sepia') {
+        document.documentElement.setAttribute('data-theme', 'hello-kitty');
+        saveDataSync(THEME_KEY, 'hello-kitty');
+        document.querySelectorAll('.theme-option').forEach((b) => b.classList.remove('active'));
+        if (typeof renderTable === 'function') renderTable();
+        if (typeof updateAllSparklines === 'function') updateAllSparklines();
+        return;
+      }
       const theme = btn.dataset.theme;
       if (typeof setTheme === 'function') {
         setTheme(theme);
@@ -120,6 +128,15 @@ const bindAppearanceAndHeaderListeners = () => {
     onApply: () => applyHeaderToggleVisibility(),
   });
 
+  wireStorageToggle('settingsHeaderMarketBtn', HEADER_MARKET_BTN_KEY, {
+    defaultVal: true,
+    onApply: () => applyHeaderToggleVisibility(),
+  });
+  wireStorageToggle('settingsHeaderMarketBtn_hdr', HEADER_MARKET_BTN_KEY, {
+    defaultVal: true,
+    onApply: () => applyHeaderToggleVisibility(),
+  });
+
   // Trend cycle header button.
   const headerTrendBtn = safeGetElement('headerTrendBtn');
   if (headerTrendBtn) {
@@ -159,6 +176,16 @@ const bindAppearanceAndHeaderListeners = () => {
     });
   }
 
+  // Market button - open Settings → Market tab.
+  const headerMarketBtn = safeGetElement('headerMarketBtn');
+  if (headerMarketBtn) {
+    headerMarketBtn.addEventListener('click', () => {
+      if (typeof showSettingsModal === 'function') {
+        showSettingsModal('market');
+      }
+    });
+  }
+
   const ippSelect = getExistingElement('settingsItemsPerPage');
   if (ippSelect) {
     ippSelect.addEventListener('change', () => {
@@ -191,6 +218,7 @@ const bindFilterAndNumistaListeners = () => {
       const chipMinInline = getExistingElement('chipMinCount');
       if (chipMinInline) chipMinInline.value = val;
       if (typeof renderActiveFilters === 'function') renderActiveFilters();
+      if (typeof scheduleSyncPush === 'function') scheduleSyncPush();
     });
   }
 
@@ -1320,6 +1348,69 @@ const bindCloudStorageListeners = () => {
 };
 
 /**
+ * Wires up Market Prices section listeners.
+ * Handles coin selector change, timeframe button clicks,
+ * History card buttons, and View card buttons.
+ */
+const bindRetailMarketListeners = () => {
+  // Sync Now button
+  const syncBtn = getExistingElement('retailSyncBtn');
+  if (syncBtn) {
+    syncBtn.addEventListener('click', () => {
+      if (typeof syncRetailPrices === 'function') syncRetailPrices();
+    });
+  }
+
+  // History coin selector — re-render table when selection changes
+  const slugSelect = getExistingElement('retailHistorySlugSelect');
+  if (slugSelect) {
+    slugSelect.addEventListener('change', () => {
+      if (typeof renderRetailHistoryTable === 'function') renderRetailHistoryTable();
+    });
+  }
+
+  // Timeframe buttons — delegated on the logPanel_market container
+  const logPanelMarket = getExistingElement('logPanel_market');
+  if (logPanelMarket) {
+    logPanelMarket.addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-retail-timeframe]');
+      if (!btn) return;
+      logPanelMarket.querySelectorAll('[data-retail-timeframe]').forEach((b) => {
+        b.classList.toggle('active', b === btn);
+      });
+      if (typeof renderRetailHistoryTable === 'function') renderRetailHistoryTable();
+    });
+  }
+
+  // History and View card buttons — delegated on retailCardsGrid
+  const cardsGrid = getExistingElement('retailCardsGrid');
+  if (cardsGrid) {
+    cardsGrid.addEventListener('click', (e) => {
+      // "History" button — switch to Activity Log market tab and set coin selector
+      const histBtn = e.target.closest('[data-retail-history-slug]');
+      if (histBtn) {
+        const slug = histBtn.dataset.retailHistorySlug;
+        const select = getExistingElement('retailHistorySlugSelect');
+        if (select) {
+          select.value = slug;
+        }
+        if (typeof switchSettingsSection === 'function') switchSettingsSection('changelog');
+        const marketTab = document.querySelector('[data-log-tab="market"]');
+        if (marketTab && typeof switchLogTab === 'function') switchLogTab('market');
+        return;
+      }
+
+      // "View" button — open per-coin detail modal
+      const viewBtn = e.target.closest('[data-retail-view-slug]');
+      if (viewBtn) {
+        const slug = viewBtn.dataset.retailViewSlug;
+        if (typeof openRetailViewModal === 'function') openRetailViewModal(slug);
+      }
+    });
+  }
+};
+
+/**
  * Wires up Storage section listeners (Refresh button, tiny-key toggle).
  */
 const bindStorageListeners = () => {
@@ -1341,6 +1432,36 @@ const bindStorageListeners = () => {
 };
 
 /**
+ * Binds clear buttons for Numista and PCGS response caches (STAK-222).
+ */
+const bindApiCacheListeners = () => {
+  const clearNumistaBtn = safeGetElement('clearNumistaCacheBtn');
+  if (clearNumistaBtn) {
+    clearNumistaBtn.addEventListener('click', async () => {
+      const count = typeof clearNumistaCache === 'function' ? clearNumistaCache() : 0;
+      // Also clear IndexedDB sync metadata so next sync re-fetches rather than skipping
+      // (bulk sync skip check uses imageCache.getMetadata(), not the localStorage response cache)
+      if (window.imageCache && window.BulkImageCache) {
+        const eligible = BulkImageCache.buildEligibleList();
+        await Promise.all(eligible.map(({ catalogId }) => imageCache.deleteMetadata(catalogId)));
+      }
+      if (typeof appAlert === 'function') appAlert(`Cleared ${count} Numista cached lookups.`);
+      if (typeof renderNumistaSyncUI === 'function') renderNumistaSyncUI();
+    });
+  }
+
+  const clearPcgsBtn = safeGetElement('clearPcgsCacheBtn');
+  if (clearPcgsBtn) {
+    clearPcgsBtn.addEventListener('click', () => {
+      const count = typeof clearPcgsCache === 'function' ? clearPcgsCache() : 0;
+      if (typeof appAlert === 'function') appAlert(`Cleared ${count} PCGS cached lookups.`);
+      const countEl = safeGetElement('pcgsResponseCacheCount');
+      if (countEl) countEl.textContent = '0';
+    });
+  }
+};
+
+/**
  * Wires up all Settings modal event listeners.
  * Called once during initialization.
  */
@@ -1355,6 +1476,8 @@ const setupSettingsEventListeners = () => {
   bindImageSettingsListeners();
   bindCloudStorageListeners();
   bindStorageListeners();
+  bindRetailMarketListeners();
+  bindApiCacheListeners();
 };
 
 if (typeof window !== 'undefined') {

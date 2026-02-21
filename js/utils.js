@@ -38,7 +38,15 @@ const generateUUID = () => {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
     return crypto.randomUUID();
   }
-  // RFC 4122 v4 fallback
+  // CSPRNG fallback (file:// protocol or older browsers)
+  if (typeof crypto !== 'undefined' && typeof crypto.getRandomValues === 'function') {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+      const r = crypto.getRandomValues(new Uint8Array(1))[0] % 16;
+      const v = c === 'x' ? r : (r & 0x3) | 0x8;
+      return v.toString(16);
+    });
+  }
+  // RFC 4122 v4 fallback (insecure Math.random)
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
     const r = (Math.random() * 16) | 0;
     const v = c === 'x' ? r : (r & 0x3) | 0x8;
@@ -577,6 +585,7 @@ const loadDisplayCurrency = () => {
 const saveDisplayCurrency = (code) => {
   displayCurrency = code;
   saveDataSync(DISPLAY_CURRENCY_KEY, code);
+  if (typeof scheduleSyncPush === 'function') scheduleSyncPush();
 };
 
 /**
@@ -705,9 +714,12 @@ const formatLossProfit = (value, percent) => {
  */
 const sanitizeHtml = (text) => {
   if (!text) return "";
-  const div = document.createElement("div");
-  div.textContent = text.toString();
-  return div.innerHTML;
+  return String(text)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 };
 
 /**
@@ -863,7 +875,7 @@ const sanitizeObjectFields = (obj) => {
       if (key === 'obverseImageUrl' || key === 'reverseImageUrl') continue;
       const allowHyphen = key === 'date';
       cleaned[key] =
-        (key === 'name' || key === 'purchaseLocation' || key === 'year' || key === 'grade' || key === 'gradingAuthority' || key === 'certNumber')
+        (key === 'name' || key === 'purchaseLocation' || key === 'year' || key === 'grade' || key === 'gradingAuthority' || key === 'certNumber' || key === 'serialNumber')
           ? cleanString(cleaned[key])
           : stripNonAlphanumeric(cleaned[key], { allowHyphen });
     }
@@ -3014,14 +3026,6 @@ function generateStorageReport(){
 }
 
 /**
- * Opens eBay sold listings search for the given item name and metal
- * @param {string} searchTerm - The item name and metal to search for
- */
-function openEbaySearch(searchTerm) {
-  openEbaySoldSearch(searchTerm);
-}
-
-/**
  * Strips search-operator characters from a search term for use in external URLs.
  * Removes quotes, parentheses, and backslashes that act as search operators on eBay.
  * @param {string} term - Raw search term (may contain user-entered punctuation)
@@ -3051,6 +3055,37 @@ function openEbaySoldSearch(searchTerm) {
   const ebayUrl = `https://www.ebay.com/sch/i.html?_from=R40&_nkw=${encodedTerm}&_sacat=0&LH_Sold=1&LH_Complete=1&_sop=13`;
   window.open(ebayUrl, `ebay_sold_${Date.now()}`, 'width=1250,height=800,scrollbars=yes,resizable=yes,toolbar=no,location=no,menubar=no,status=no');
 }
+
+
+/**
+ * Sets a button's loading state, preserving its width and original content.
+ * @param {HTMLButtonElement} btn - The button element
+ * @param {boolean} isLoading - Whether to set loading state
+ * @param {string} [loadingText] - Optional text to show next to spinner
+ */
+const setButtonLoading = (btn, isLoading, loadingText = '') => {
+  if (!btn) return;
+  if (isLoading) {
+    if (!btn.dataset.originalHtml) {
+      btn.dataset.originalHtml = btn.innerHTML;
+      // Lock width to prevent layout jump
+      const rect = btn.getBoundingClientRect();
+      if (rect.width > 0) btn.style.width = rect.width + 'px';
+    }
+    btn.disabled = true;
+    // Spinner SVG (reusing existing spin animation)
+    const spinner = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="animation:spin 0.8s linear infinite; margin-right:0.4em; vertical-align: middle;"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>';
+    // nosemgrep: javascript.browser.security.insecure-document-method.insecure-document-method
+    btn.innerHTML = spinner + escapeHtml(loadingText || 'Loading...');
+  } else {
+    if (btn.dataset.originalHtml) {
+      btn.innerHTML = btn.dataset.originalHtml;
+      delete btn.dataset.originalHtml;
+    }
+    btn.style.width = '';
+    btn.disabled = false;
+  }
+};
 
 if (typeof window !== 'undefined') {
   window.getContrastColor = getContrastColor;
@@ -3082,7 +3117,6 @@ if (typeof window !== 'undefined') {
   window.downloadStorageReport = downloadStorageReport;
   window.openStorageReportPopup = openStorageReportPopup;
   window.debounce = debounce;
-  window.openEbaySearch = openEbaySearch;
   window.openEbayBuySearch = openEbayBuySearch;
   window.openEbaySoldSearch = openEbaySoldSearch;
   window.cleanSearchTerm = cleanSearchTerm;
@@ -3098,6 +3132,11 @@ if (typeof window !== 'undefined') {
   window.loadExchangeRates = loadExchangeRates;
   window.saveExchangeRates = saveExchangeRates;
   window.fetchExchangeRates = fetchExchangeRates;
+  window.setButtonLoading = setButtonLoading;
+  window.escapeHtml = escapeHtml;
+  // STAK-222: Expose storage helpers for testing and cache utilities
+  window.saveDataSync = saveDataSync;
+  window.loadDataSync = loadDataSync;
 }
 
 if (typeof module !== 'undefined' && module.exports) {
@@ -3111,5 +3150,7 @@ if (typeof module !== 'undefined' && module.exports) {
     getContrastColor,
     debounce,
     generateUUID,
+    setButtonLoading,
+    escapeHtml,
   };
 }

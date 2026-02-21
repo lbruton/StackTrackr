@@ -118,6 +118,16 @@ const createBackupZip = async () => {
     };
     zip.file('spot_price_history.json', JSON.stringify(spotHistoryData, null, 2));
 
+    // 3a-retail. Add retail market prices (STAK-217)
+    const retailPricesData = loadDataSync(RETAIL_PRICES_KEY) || null;
+    const retailHistoryData = loadDataSync(RETAIL_PRICE_HISTORY_KEY) || {};
+    if (retailPricesData) {
+      zip.file('retail_prices.json', JSON.stringify(retailPricesData, null, 2));
+    }
+    if (Object.keys(retailHistoryData).length > 0) {
+      zip.file('retail_price_history.json', JSON.stringify(retailHistoryData, null, 2));
+    }
+
     // 3b. Add per-item price history (STACK-43)
     const itemPriceHistoryData = {
       version: APP_VERSION,
@@ -226,6 +236,26 @@ const createBackupZip = async () => {
           count: allMeta.length,
           metadata: allMeta
         }, null, 2));
+      }
+
+      // User-uploaded photos (keyed by item UUID) — STAK-225
+      const allUserImages = await imageCache.exportAllUserImages();
+      if (allUserImages.length > 0) {
+        const userImgFolder = zip.folder('user_images');
+        for (const rec of allUserImages) {
+          if (rec.obverse) userImgFolder.file(`${rec.uuid}_obverse.jpg`, rec.obverse);
+          if (rec.reverse) userImgFolder.file(`${rec.uuid}_reverse.jpg`, rec.reverse);
+        }
+      }
+
+      // Custom pattern rule images (keyed by rule ID) — STAK-225
+      const allPatternImages = await imageCache.exportAllPatternImages();
+      if (allPatternImages.length > 0) {
+        const patternImgFolder = zip.folder('pattern_images');
+        for (const rec of allPatternImages) {
+          if (rec.obverse) patternImgFolder.file(`${rec.ruleId}_obverse.jpg`, rec.obverse);
+          if (rec.reverse) patternImgFolder.file(`${rec.ruleId}_reverse.jpg`, rec.reverse);
+        }
       }
     }
 
@@ -372,7 +402,7 @@ const restoreBackupZip = async (file) => {
       );
     }
 
-    loadInventory();
+    await loadInventory();
     renderTable();
     renderActiveFilters();
     loadSpotHistory();
@@ -403,6 +433,30 @@ const restoreBackupZip = async (file) => {
     }
     itemTags = restoredTags || {};
     if (typeof saveItemTags === 'function') saveItemTags();
+
+    // Restore retail market prices
+    const retailPricesStr = await zip.file("retail_prices.json")?.async("string");
+    if (retailPricesStr) {
+      try {
+        const retailPricesRestored = JSON.parse(retailPricesStr);
+        saveDataSync(RETAIL_PRICES_KEY, retailPricesRestored);
+        if (typeof loadRetailPrices === 'function') loadRetailPrices();
+      } catch (e) {
+        debugWarn('restoreBackupZip: retail_prices.json parse error', e);
+      }
+    }
+    const retailHistoryStr = await zip.file("retail_price_history.json")?.async("string");
+    if (retailHistoryStr) {
+      try {
+        const retailHistoryRestored = JSON.parse(retailHistoryStr);
+        if (!Array.isArray(retailHistoryRestored) && typeof retailHistoryRestored === 'object') {
+          saveDataSync(RETAIL_PRICE_HISTORY_KEY, retailHistoryRestored);
+          if (typeof loadRetailPriceHistory === 'function') loadRetailPriceHistory();
+        }
+      } catch (e) {
+        debugWarn('restoreBackupZip: retail_price_history.json parse error', e);
+      }
+    }
 
     // Restore cached coin images (STACK-88)
     if (window.imageCache?.isAvailable()) {
@@ -444,6 +498,52 @@ const restoreBackupZip = async (file) => {
           for (const rec of metaObj.metadata) {
             await imageCache.importMetadataRecord(rec);
           }
+        }
+      }
+
+      // Restore user-uploaded photos (STAK-225)
+      const userImgFolder = zip.folder('user_images');
+      if (userImgFolder) {
+        const userEntries = [];
+        userImgFolder.forEach((path, file) => userEntries.push({ path, file }));
+        const userImageMap = new Map();
+        for (const { path, file } of userEntries) {
+          const m = path.match(/^(.+)_(obverse|reverse)\.jpg$/);
+          if (!m) continue;
+          if (!userImageMap.has(m[1])) userImageMap.set(m[1], {});
+          userImageMap.get(m[1])[m[2]] = await file.async('blob');
+        }
+        for (const [uuid, sides] of userImageMap) {
+          await imageCache.importUserImageRecord({
+            uuid,
+            obverse: sides.obverse || null,
+            reverse: sides.reverse || null,
+            cachedAt: Date.now(),
+            size: (sides.obverse?.size || 0) + (sides.reverse?.size || 0),
+          });
+        }
+      }
+
+      // Restore custom pattern rule images (STAK-225)
+      const patternImgFolder = zip.folder('pattern_images');
+      if (patternImgFolder) {
+        const patternEntries = [];
+        patternImgFolder.forEach((path, file) => patternEntries.push({ path, file }));
+        const patternImageMap = new Map();
+        for (const { path, file } of patternEntries) {
+          const m = path.match(/^(.+)_(obverse|reverse)\.jpg$/);
+          if (!m) continue;
+          if (!patternImageMap.has(m[1])) patternImageMap.set(m[1], {});
+          patternImageMap.get(m[1])[m[2]] = await file.async('blob');
+        }
+        for (const [ruleId, sides] of patternImageMap) {
+          await imageCache.importPatternImageRecord({
+            ruleId,
+            obverse: sides.obverse || null,
+            reverse: sides.reverse || null,
+            cachedAt: Date.now(),
+            size: (sides.obverse?.size || 0) + (sides.reverse?.size || 0),
+          });
         }
       }
     }
@@ -654,11 +754,9 @@ const sanitizeTablesOnLoad = () => {
  * @returns {void} Updates the global inventory array with migrated data
  * @throws {Error} Logs errors to console if localStorage access fails
  */
-const loadInventory = () => {
+const loadInventory = async () => {
   try {
-    // For now, use synchronous loading to maintain compatibility
-    // TODO: Convert to async when updating all callers
-    const data = loadDataSync(LS_KEY, []);
+    const data = await loadData(LS_KEY, []);
     
     // Ensure data is an array
     if (!Array.isArray(data)) {
@@ -1285,6 +1383,16 @@ async function _loadThumbImage(img) {
     const blobUrl = await imageCache.resolveImageUrlForItem(item, side);
     if (blobUrl) {
       _thumbBlobUrls.push(blobUrl);
+      img.onerror = () => {
+        img.onerror = null;
+        // Stale/revoked blob — fall through to CDN URL or placeholder
+        if (cdnUrl) {
+          img.src = cdnUrl;
+        } else {
+          img.src = _getThumbPlaceholder(item.metal, item.type);
+          img.classList.add('table-thumb-placeholder');
+        }
+      };
       img.src = blobUrl;
       img.style.visibility = '';
       return;
@@ -1353,9 +1461,15 @@ const renderTable = () => {
     const rows = [];
     const chipConfig = typeof getInlineChipConfig === 'function' ? getInlineChipConfig() : [];
 
+    // Optimization: Create a map for O(1) index lookup instead of O(N) indexOf in the loop
+    const itemIndexMap = new Map();
+    for (let j = 0; j < inventory.length; j++) {
+      itemIndexMap.set(inventory[j], j);
+    }
+
     for (let i = 0; i < sortedInventory.length; i++) {
       const item = sortedInventory[i];
-      const originalIdx = inventory.indexOf(item);
+      const originalIdx = itemIndexMap.get(item);
       debugLog('renderTable row', i, item.name);
 
       // Portfolio computed values (all financial columns are qty-adjusted totals)
@@ -1467,10 +1581,10 @@ const renderTable = () => {
       const thumbHtml = _tableImagesOn && featureFlags.isEnabled('COIN_IMAGES')
         ? (_showObv ? `<img class="table-thumb${_thumbShapeClass}"${obvSrcAttr}
                ${_sharedThumbAttrs} data-side="obverse"
-               alt="" loading="lazy" onerror="this.style.display='none'" />` : '')
+               alt="" loading="lazy" />` : '')
         + (_showRev ? `<img class="table-thumb${_thumbShapeClass}"${revSrcAttr}
                ${_sharedThumbAttrs} data-side="reverse"
-               alt="" loading="lazy" onerror="this.style.display='none'" />` : '')
+               alt="" loading="lazy" />` : '')
         : '';
 
       // STAK-126: Inline tags chip (show first 2 tags, ellipsis if more)
@@ -1548,6 +1662,36 @@ const renderTable = () => {
     }
     _thumbBlobUrls = [];
 
+    // Handle empty state: no items or no search results
+    if (sortedInventory.length === 0) {
+      const isFiltered = inventory.length > 0;
+      const message = isFiltered ? "No matching items found." : "Your stack is empty.";
+      const subtext = isFiltered ? "Try adjusting your search or filters." : "Add your first item to start tracking your portfolio.";
+      // Use onclick handler that calls global functions exposed on window
+      const action = isFiltered
+        ? `<button class="btn warning btn-sm" onclick="clearAllFilters()">Clear Filters</button>`
+        : `<button class="btn success btn-sm" onclick="safeGetElement('newItemBtn').click()">Add Item</button>`;
+
+      const emptyHtml = `
+        <tr class="empty-state-row">
+          <td colspan="100%">
+            <div class="empty-state">
+              <svg class="empty-state-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                ${isFiltered
+                  ? '<circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>' // Search icon
+                  : '<rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>' // Stack icon
+                }
+              </svg>
+              <h3>${message}</h3>
+              <p>${subtext}</p>
+              ${action}
+            </div>
+          </td>
+        </tr>
+      `;
+      rows.push(emptyHtml);
+    }
+
     // nosemgrep: javascript.browser.security.insecure-innerhtml.insecure-innerhtml, javascript.browser.security.insecure-document-method.insecure-document-method
     tbody.innerHTML = rows.join('');
 
@@ -1624,71 +1768,61 @@ const renderTable = () => {
  * Calculates and updates all financial summary displays across the application
  */
 const updateSummary = () => {
-  /**
-   * Calculates portfolio metrics for specified metal type
-   * Uses the three-value model: Purchase Price, Melt Value, Retail Price
-   * Gain/Loss is based on retail price (which defaults to melt if not manually set)
-   *
-   * @param {string} metal - Metal type to calculate
-   * @returns {Object} Calculated metrics
-   */
-  const calculateTotals = (metal) => {
-    let totalItems = 0;
-    let totalWeight = 0;
-    let totalMeltValue = 0;
-    let totalPurchased = 0;
-    let totalRetailValue = 0;
-    let totalGainLoss = 0;
-
-    for (const item of inventory) {
-      if (item.metal === metal) {
-        const qty = Number(item.qty) || 0;
-        const weight = parseFloat(item.weight) || 0;
-        const price = parseFloat(item.price) || 0;
-
-        totalItems += qty;
-        // Convert gb denomination to troy oz for weight totals
-        const weightOz = (item.weightUnit === 'gb') ? weight * GB_TO_OZT : weight;
-        const itemWeight = qty * weightOz;
-        totalWeight += itemWeight;
-
-        // Melt value: weight x qty x current spot x purity
-        const currentSpot = spotPrices[item.metal.toLowerCase()] || 0;
-        const valuation = (typeof computeItemValuation === 'function')
-          ? computeItemValuation(item, currentSpot)
-          : null;
-        const purity = parseFloat(item.purity) || 1.0;
-        const meltValue = valuation ? valuation.meltValue : (currentSpot * itemWeight * purity);
-        totalMeltValue += meltValue;
-
-        // Purchase price total (price already converted)
-        const purchaseTotal = valuation ? valuation.purchaseTotal : (qty * price);
-        totalPurchased += purchaseTotal;
-
-        // Retail total: (1) gb denomination price, (2) manual marketValue, (3) melt
-        const retailTotal = valuation ? valuation.retailTotal : meltValue;
-        totalRetailValue += retailTotal;
-
-        // Gain/loss: retail minus purchase (both in USD; converted at display time)
-        totalGainLoss += retailTotal - purchaseTotal;
-      }
-    }
-
-    return {
-      totalItems,
-      totalWeight,
-      totalMeltValue,
-      totalPurchased,
-      totalRetailValue,
-      totalGainLoss
-    };
-  };
-
-  // Calculate totals for each metal
+  // Initialize accumulators for each metal
   const metalTotals = {};
+  // Create quick lookup map: metal name -> metal key
+  const metalNameMap = {};
+
   Object.values(METALS).forEach(metalConfig => {
-    metalTotals[metalConfig.key] = calculateTotals(metalConfig.name);
+    metalTotals[metalConfig.key] = {
+      totalItems: 0,
+      totalWeight: 0,
+      totalMeltValue: 0,
+      totalPurchased: 0,
+      totalRetailValue: 0,
+      totalGainLoss: 0
+    };
+    metalNameMap[metalConfig.name] = metalConfig.key;
   });
+
+  // Single pass optimization: O(N) instead of O(N*M)
+  for (const item of inventory) {
+    const metalKey = metalNameMap[item.metal];
+    // Skip items with unknown metal types
+    if (metalKey && metalTotals[metalKey]) {
+      const totals = metalTotals[metalKey];
+
+      const qty = Number(item.qty) || 0;
+      const weight = parseFloat(item.weight) || 0;
+      const price = parseFloat(item.price) || 0;
+
+      totals.totalItems += qty;
+      // Convert gb denomination to troy oz for weight totals
+      const weightOz = (item.weightUnit === 'gb') ? weight * GB_TO_OZT : weight;
+      const itemWeight = qty * weightOz;
+      totals.totalWeight += itemWeight;
+
+      // Use metalKey directly for spot price lookup (optimization)
+      const currentSpot = spotPrices[metalKey] || 0;
+      const valuation = (typeof computeItemValuation === 'function')
+        ? computeItemValuation(item, currentSpot)
+        : null;
+      const purity = parseFloat(item.purity) || 1.0;
+      const meltValue = valuation ? valuation.meltValue : (currentSpot * itemWeight * purity);
+      totals.totalMeltValue += meltValue;
+
+      // Purchase price total (price already converted)
+      const purchaseTotal = valuation ? valuation.purchaseTotal : (qty * price);
+      totals.totalPurchased += purchaseTotal;
+
+      // Retail total: (1) gb denomination price, (2) manual marketValue, (3) melt
+      const retailTotal = valuation ? valuation.retailTotal : meltValue;
+      totals.totalRetailValue += retailTotal;
+
+      // Gain/loss: retail minus purchase (both in USD; converted at display time)
+      totals.totalGainLoss += retailTotal - purchaseTotal;
+    }
+  }
 
   // Update DOM elements
   Object.values(METALS).forEach(metalConfig => {
@@ -2058,7 +2192,7 @@ const editItem = (idx, logIdx = null) => {
   };
 
   if (item.uuid && window.imageCache?.isAvailable()) {
-    imageCache.getUserImage(item.uuid).then(rec => {
+    imageCache.getUserImage(item.uuid).then(async rec => {
       const loaded = { obverse: false, reverse: false };
       if (rec?.obverse) {
         try {
@@ -2072,7 +2206,20 @@ const editItem = (idx, logIdx = null) => {
           loaded.reverse = true;
         } catch { /* ignore */ }
       }
+      // Fall back to URL fields
       showUrlPreviewFallback(loaded);
+      // If still missing sides, try pattern image resolution
+      if (!loaded.obverse || !loaded.reverse) {
+        const itemMeta = { uuid: item.uuid, numistaId: item.numistaId || '', name: item.name || '', metal: item.metal || '', type: item.type || '' };
+        if (!loaded.obverse) {
+          const obvUrl = await imageCache.resolveImageUrlForItem(itemMeta, 'obverse').catch(() => null);
+          if (obvUrl && !item.obverseImageUrl) showPreview(obvUrl, 'Obv', 'obverse');
+        }
+        if (!loaded.reverse) {
+          const revUrl = await imageCache.resolveImageUrlForItem(itemMeta, 'reverse').catch(() => null);
+          if (revUrl && !item.reverseImageUrl) showPreview(revUrl, 'Rev', 'reverse');
+        }
+      }
     }).catch(() => {
       showUrlPreviewFallback({ obverse: false, reverse: false });
     });
@@ -2199,15 +2346,6 @@ const duplicateItem = (idx) => {
  * 
  * @param {number} idx - Index of item to toggle price view for
  */
-/**
- * Legacy function kept for compatibility - no longer used
- * Market value now has its own dedicated column
- */
-const togglePriceView = (idx) => {
-  // Function kept for compatibility but no longer used
-  console.warn('togglePriceView is deprecated - using separate columns now');
-};
-
 /**
  * Legacy function kept for compatibility - no longer used  
  * Market value now has its own dedicated column
@@ -3253,6 +3391,7 @@ const exportPdf = () => {
       item.grade || '',
       item.gradingAuthority || '',
       item.certNumber || '',
+      item.serialNumber || '',
       item.notes || '',
       (item.uuid || '').slice(0, 8)
     ];
@@ -3261,7 +3400,7 @@ const exportPdf = () => {
   // Add table
   doc.autoTable({
     head: [['Date', 'Metal', 'Type', 'Name', 'Qty', 'Weight', 'Purity', 'Purchase',
-            'Melt Value', 'Retail', 'Gain/Loss', 'Location', 'N#', 'PCGS#', 'Grade', 'Auth', 'Cert#', 'Notes', 'UUID']],
+            'Melt Value', 'Retail', 'Gain/Loss', 'Location', 'N#', 'PCGS#', 'Grade', 'Auth', 'Cert#', 'Serial #', 'Notes', 'UUID']],
     body: tableData,
     startY: 30,
     theme: 'striped',
@@ -3327,7 +3466,6 @@ window.importJson = importJson;
 window.exportJson = exportJson;
 window.exportPdf = exportPdf;
 window.updateSummary = updateSummary;
-window.togglePriceView = togglePriceView;
 window.toggleGlobalPriceView = toggleGlobalPriceView;
 window.editItem = editItem;
 window.duplicateItem = duplicateItem;

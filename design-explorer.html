@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StakTrakr Design Explorer</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+  background: #0a0f1a;
+  color: #e2e8f0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  font-size: 13px;
+}
+
+/* ── Left panel ── */
+#controls {
+  width: 310px;
+  min-width: 310px;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: #111827;
+  border-right: 1px solid #1f2937;
+}
+#ctrl-top {
+  padding: 0.7rem 0.9rem 0.5rem;
+  border-bottom: 1px solid #1f2937;
+  flex-shrink: 0;
+}
+#ctrl-top h1 {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #4b5563;
+  margin-bottom: 0.45rem;
+}
+#theme-strip {
+  display: flex;
+  gap: 0.3rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+#theme-strip span { font-size: 0.68rem; color: #4b5563; }
+.theme-btn {
+  padding: 0.18rem 0.5rem;
+  background: #1f2937;
+  border: 1px solid #374151;
+  border-radius: 4px;
+  color: #9ca3af;
+  cursor: pointer;
+  font-size: 0.68rem;
+}
+.theme-btn.active { background: #374151; color: #e2e8f0; border-color: #4b5563; }
+#var-search {
+  margin-top: 0.45rem;
+  width: 100%;
+  background: #1f2937;
+  border: 1px solid #374151;
+  border-radius: 4px;
+  color: #e2e8f0;
+  padding: 0.28rem 0.55rem;
+  font-size: 0.73rem;
+}
+#var-search::placeholder { color: #4b5563; }
+#var-stats {
+  margin-top: 0.3rem;
+  font-size: 0.65rem;
+  color: #374151;
+}
+
+/* ── Var list ── */
+#var-list { flex: 1; overflow-y: auto; }
+
+.cat-header {
+  padding: 0.3rem 0.9rem 0.15rem;
+  font-size: 0.63rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: #4b5563;
+  border-top: 1px solid #1f2937;
+  margin-top: 0.35rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.cat-header:first-child { border-top: none; margin-top: 0; }
+.cat-count { font-weight: 400; opacity: 0.6; }
+
+.var-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.2rem 0.9rem;
+  min-height: 28px;
+}
+.var-row:hover { background: rgba(255,255,255,0.02); }
+.var-row.changed { background: rgba(59,130,246,0.08); }
+.var-name {
+  flex: 1;
+  font-size: 0.68rem;
+  color: #9ca3af;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+.var-row.changed .var-name { color: #60a5fa; }
+
+.color-wrap { display: flex; align-items: center; gap: 0.3rem; flex-shrink: 0; }
+input[type="color"] {
+  width: 28px; height: 20px; padding: 1px 2px;
+  border: 1px solid #374151; border-radius: 3px;
+  cursor: pointer; background: transparent;
+}
+.color-swatch {
+  width: 14px; height: 14px; border-radius: 2px;
+  border: 1px solid rgba(255,255,255,0.15); flex-shrink: 0;
+}
+
+.range-wrap { display: flex; align-items: center; gap: 0.3rem; flex-shrink: 0; width: 130px; }
+.range-wrap input[type="range"] { flex: 1; accent-color: #3b82f6; cursor: pointer; min-width: 0; }
+.range-wrap input[type="number"] {
+  width: 44px; background: #1f2937; border: 1px solid #374151; border-radius: 3px;
+  color: #e2e8f0; padding: 0.12rem 0.3rem; font-size: 0.68rem; text-align: right;
+  -moz-appearance: textfield;
+}
+.range-wrap input[type="number"]::-webkit-inner-spin-button { display: none; }
+
+.text-val {
+  font-size: 0.62rem; color: #374151; font-family: 'SF Mono', 'Fira Code', monospace;
+  max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
+#reset-row {
+  padding: 0.5rem 0.9rem; border-top: 1px solid #1f2937;
+  flex-shrink: 0; display: flex; gap: 0.4rem;
+}
+.ctrl-btn {
+  flex: 1; padding: 0.35rem; background: #1f2937; border: 1px solid #374151;
+  border-radius: 4px; color: #9ca3af; cursor: pointer; font-size: 0.68rem; text-align: center;
+}
+.ctrl-btn:hover { color: #e2e8f0; border-color: #4b5563; }
+.ctrl-btn.danger:hover { color: #f87171; border-color: #dc2626; }
+
+/* ── Right panel ── */
+#right-panel { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+#preview-wrap { flex: 1; overflow: hidden; position: relative; background: #0d1320; }
+#preview-frame { width: 100%; height: 100%; border: none; display: block; }
+#loading-msg {
+  position: absolute; inset: 0; display: flex; align-items: center;
+  justify-content: center; font-size: 0.8rem; color: #4b5563; pointer-events: none;
+}
+#output-area {
+  border-top: 1px solid #1f2937; background: #0a0f1a;
+  padding: 0.55rem 1rem; display: flex; gap: 0.75rem; align-items: center; min-height: 40px;
+}
+#output {
+  flex: 1; font-family: 'SF Mono', 'Fira Code', monospace; font-size: 0.7rem;
+  color: #7dd3fc; white-space: pre; overflow-x: auto; line-height: 1.5;
+}
+#copy-btn {
+  padding: 0.3rem 0.75rem; background: #3b82f6; border: none; border-radius: 4px;
+  color: #fff; font-size: 0.7rem; cursor: pointer; white-space: nowrap; flex-shrink: 0;
+}
+#copy-btn:hover { background: #2563eb; }
+</style>
+</head>
+<body>
+
+<!-- ══ LEFT ══ -->
+<div id="controls">
+  <div id="ctrl-top">
+    <h1>StakTrakr CSS Vars Inspector</h1>
+    <div id="theme-strip">
+      <span>Theme:</span>
+      <button class="theme-btn active" data-theme="light">Light</button>
+      <button class="theme-btn" data-theme="dark">Dark</button>
+      <button class="theme-btn" data-theme="sepia">Sepia</button>
+      <button class="theme-btn" data-theme="hk" style="color:#ec4899;">🎀 HK</button>
+    </div>
+    <input id="var-search" type="text" placeholder="Filter vars…">
+    <div id="var-stats"></div>
+  </div>
+  <div id="var-list">
+    <div style="padding:1rem;font-size:.72rem;color:#374151;">Loading app…</div>
+  </div>
+  <div id="reset-row">
+    <button class="ctrl-btn danger" id="reset-btn">↺ Reset all</button>
+    <button class="ctrl-btn" id="refresh-btn">⟳ Re-read</button>
+  </div>
+</div>
+
+<!-- ══ RIGHT ══ -->
+<div id="right-panel">
+  <div id="preview-wrap">
+    <div id="loading-msg">Loading StakTrakr…</div>
+    <iframe id="preview-frame" src="index.html"></iframe>
+  </div>
+  <div id="output-area">
+    <pre id="output">/* No changes */</pre>
+    <button id="copy-btn">Copy changed vars</button>
+  </div>
+</div>
+
+<script>
+const HK_CSS = '[data-theme="hk"]{--primary:#ec4899;--primary-hover:#db2777;--secondary:#a855f7;--secondary-hover:#9333ea;--success:#7c3aed;--success-hover:#6d28d9;--danger:#f43f5e;--danger-hover:#e11d48;--warning:#f97316;--warning-hover:#ea580c;--info:#c026d3;--info-hover:#a21caf;--bg-primary:#fdf2f8;--bg-secondary:#fce7f3;--bg-tertiary:#f9a8d4;--bg-card:#fff5fb;--text-primary:#500724;--text-secondary:#9d174d;--border:#fbcfe8;--border-hover:#f9a8d4;--shadow-sm:0 1px 3px 0 rgb(236 72 153/.15);--shadow:0 4px 12px 0 rgb(236 72 153/.18);--shadow-lg:0 8px 24px 0 rgb(236 72 153/.22);--silver:#c084fc;--gold:#f472b6;--platinum:#a855f7;--palladium:#e879f9;}';
+
+let varDefs = [], changed = {}, frameReady = false, currentTheme = 'light', searchQuery = '';
+
+function getFrameDoc() {
+  const f = document.getElementById('preview-frame');
+  try { return f.contentDocument || f.contentWindow?.document; }
+  catch (e) { return null; }
+}
+
+function resolveColorVar(varName, doc) {
+  try {
+    const el = doc.createElement('div');
+    el.style.cssText = 'position:absolute;visibility:hidden;pointer-events:none;';
+    el.style.color = `var(${varName})`;
+    doc.body.appendChild(el);
+    const rgb = getComputedStyle(el).color;
+    el.remove();
+    if (!rgb || rgb === 'rgba(0, 0, 0, 0)') return null;
+    const m = rgb.match(/[\d.]+/g);
+    if (!m || m.length < 3) return null;
+    return '#' + m.slice(0, 3).map(n => Math.round(+n).toString(16).padStart(2, '0')).join('');
+  } catch (e) { return null; }
+}
+
+const COLOR_HINTS = ['primary','secondary','success','danger','warning','info','bg','text',
+                     'border','silver','gold','platinum','palladium','type-','chip','surface',
+                     'color','disclaimer','back-to-top'];
+
+function looksLikeColor(name, raw) {
+  if (!raw) return false;
+  if (/^#[0-9a-f]{3,8}$/i.test(raw)) return true;
+  if (raw.startsWith('rgb') || raw.startsWith('hsl')) return true;
+  if (raw.startsWith('var(')) return COLOR_HINTS.some(h => name.includes(h));
+  return false;
+}
+
+function collectVars(doc) {
+  const map = new Map();
+  try {
+    for (const sheet of doc.styleSheets) {
+      try {
+        for (const rule of sheet.cssRules) {
+          if (rule.type !== 1 || rule.selectorText !== ':root') continue;
+          for (const prop of rule.style) {
+            if (prop.startsWith('--')) map.set(prop.trim(), rule.style.getPropertyValue(prop).trim());
+          }
+        }
+      } catch (e) {}
+    }
+  } catch (e) {}
+  return map;
+}
+
+function buildDefs(rawMap, doc) {
+  return [...rawMap.entries()].map(([name, raw]) => {
+    let type, value, unit = '', max = 0;
+    if (looksLikeColor(name, raw)) {
+      const hex = resolveColorVar(name, doc);
+      if (hex) { type = 'color'; value = hex; }
+      else { type = 'text'; value = raw; }
+    } else {
+      const px = raw.match(/^([\d.]+)px$/), rem = raw.match(/^([\d.]+)rem$/);
+      if (px)  { type = 'px';  value = parseFloat(px[1]);  unit = 'px';  max = Math.max(value * 4, 32); }
+      else if (rem) { type = 'rem'; value = parseFloat(rem[1]); unit = 'rem'; max = Math.max(value * 4, 3); }
+      else { type = 'text'; value = raw; }
+    }
+    return { name, raw, type, value, defaultValue: value, unit, max };
+  });
+}
+
+function categorize(name) {
+  if (/^--(primary|secondary|success|danger|warning|info)/.test(name)) return 'Accent Colors';
+  if (/^--(bg|surface)/.test(name) || name.includes('back-to-top-bg')) return 'Backgrounds';
+  if (/^--(text|chip-text|chip-active|chip-search)/.test(name) || name.includes('back-to-top-text')) return 'Text & Chips';
+  if (/^--border/.test(name) || name.includes('back-to-top-border')) return 'Borders';
+  if (/^--shadow/.test(name) || name.includes('back-to-top-shadow')) return 'Shadows';
+  if (/^--radius/.test(name)) return 'Shape';
+  if (/^--spacing/.test(name)) return 'Spacing';
+  if (/^--(silver|gold|platinum|palladium)$/.test(name)) return 'Metals';
+  if (/^--type-/.test(name)) return 'Item Types';
+  return 'Other';
+}
+
+const CAT_ORDER = ['Accent Colors','Backgrounds','Text & Chips','Borders',
+                   'Shadows','Shape','Spacing','Metals','Item Types','Other'];
+
+function renderPanel() {
+  const list = document.getElementById('var-list');
+  const q = searchQuery.toLowerCase();
+  const filtered = q ? varDefs.filter(d => d.name.toLowerCase().includes(q)) : varDefs;
+
+  const bycat = {};
+  for (const def of filtered) {
+    const cat = categorize(def.name);
+    (bycat[cat] = bycat[cat] || []).push(def);
+  }
+
+  while (list.firstChild) list.removeChild(list.firstChild);
+
+  let hasAny = false;
+  for (const cat of CAT_ORDER) {
+    const defs = bycat[cat];
+    if (!defs?.length) continue;
+    hasAny = true;
+
+    const hdr = document.createElement('div');
+    hdr.className = 'cat-header';
+    const lbl = document.createElement('span');
+    lbl.textContent = cat;
+    const cnt = document.createElement('span');
+    cnt.className = 'cat-count';
+    cnt.textContent = defs.length;
+    hdr.appendChild(lbl);
+    hdr.appendChild(cnt);
+    list.appendChild(hdr);
+
+    for (const def of defs) list.appendChild(buildRow(def));
+  }
+
+  if (!hasAny) {
+    const msg = document.createElement('div');
+    msg.style.cssText = 'padding:1rem;font-size:.72rem;color:#374151;';
+    msg.textContent = 'No vars match filter.';
+    list.appendChild(msg);
+  }
+
+  updateStats(filtered.length);
+}
+
+function buildRow(def) {
+  const isChanged = Object.prototype.hasOwnProperty.call(changed, def.name);
+  const row = document.createElement('div');
+  row.className = 'var-row' + (isChanged ? ' changed' : '');
+  row.dataset.rowVar = def.name;
+
+  const nameEl = document.createElement('div');
+  nameEl.className = 'var-name';
+  nameEl.title = def.name;
+  nameEl.textContent = def.name.slice(2);
+  row.appendChild(nameEl);
+
+  if (def.type === 'color') {
+    const curHex = isChanged ? changed[def.name] : def.value;
+    const wrap = document.createElement('div');
+    wrap.className = 'color-wrap';
+    const swatch = document.createElement('div');
+    swatch.className = 'color-swatch';
+    swatch.dataset.swatch = def.name;
+    swatch.style.background = curHex;
+    const picker = document.createElement('input');
+    picker.type = 'color';
+    picker.value = curHex;
+    picker.addEventListener('input', () => {
+      swatch.style.background = picker.value;
+      onVarChange(def.name, picker.value, def);
+    });
+    wrap.appendChild(swatch);
+    wrap.appendChild(picker);
+    row.appendChild(wrap);
+
+  } else if (def.type === 'px' || def.type === 'rem') {
+    const curNum = isChanged ? parseFloat(changed[def.name]) : def.value;
+    const step = def.type === 'rem' ? 0.05 : 1;
+    const wrap = document.createElement('div');
+    wrap.className = 'range-wrap';
+    const slider = document.createElement('input');
+    slider.type = 'range';
+    slider.min = 0; slider.max = def.max; slider.step = step; slider.value = curNum;
+    const num = document.createElement('input');
+    num.type = 'number';
+    num.min = 0; num.max = def.max; num.step = step; num.value = curNum;
+    slider.addEventListener('input', () => { num.value = slider.value; onVarChange(def.name, slider.value + def.unit, def); });
+    num.addEventListener('input', () => { slider.value = num.value; onVarChange(def.name, num.value + def.unit, def); });
+    wrap.appendChild(slider);
+    wrap.appendChild(num);
+    row.appendChild(wrap);
+
+  } else {
+    row.style.opacity = '0.55';
+    const tv = document.createElement('div');
+    tv.className = 'text-val';
+    const s = String(def.value);
+    tv.title = s;
+    tv.textContent = s.length > 55 ? s.substring(0, 52) + '…' : s;
+    row.appendChild(tv);
+  }
+
+  return row;
+}
+
+function onVarChange(varName, newVal, def) {
+  const doc = getFrameDoc();
+  if (doc) doc.documentElement.style.setProperty(varName, newVal);
+  const isDefault = def.type === 'color' ? newVal === def.defaultValue : parseFloat(newVal) === def.defaultValue;
+  if (isDefault) delete changed[varName];
+  else changed[varName] = newVal;
+  const row = document.querySelector(`.var-row[data-row-var="${CSS.escape(varName)}"]`);
+  if (row) row.className = 'var-row' + (Object.prototype.hasOwnProperty.call(changed, varName) ? ' changed' : '');
+  updateOutput();
+  updateStats();
+}
+
+function setTheme(t) {
+  currentTheme = t;
+  const doc = getFrameDoc();
+  if (doc) {
+    if (t === 'light') doc.documentElement.removeAttribute('data-theme');
+    else doc.documentElement.setAttribute('data-theme', t);
+  }
+  document.querySelectorAll('.theme-btn').forEach(b => b.classList.toggle('active', b.dataset.theme === t));
+  if (frameReady) refreshValues();
+}
+
+function refreshValues() {
+  const doc = getFrameDoc();
+  if (!doc) return;
+  for (const def of varDefs) {
+    if (def.type === 'color') {
+      const hex = resolveColorVar(def.name, doc);
+      if (hex) { def.defaultValue = hex; def.value = hex; }
+    }
+  }
+  changed = {};
+  renderPanel();
+  updateOutput();
+}
+
+function updateOutput() {
+  const lines = Object.entries(changed).map(([k, v]) => `  ${k}: ${v};`);
+  document.getElementById('output').textContent = lines.length
+    ? ':root {\n' + lines.join('\n') + '\n}'
+    : '/* No changes */';
+}
+
+function updateStats(count) {
+  const total = count !== undefined ? count : varDefs.length;
+  document.getElementById('var-stats').textContent =
+    `${total} vars · ${Object.keys(changed).length} changed`;
+}
+
+// Iframe load
+const frame = document.getElementById('preview-frame');
+frame.addEventListener('load', () => {
+  const doc = getFrameDoc();
+  if (!doc) {
+    document.getElementById('var-list').innerHTML = '';
+    const err = document.createElement('div');
+    err.style.cssText = 'padding:1rem;font-size:.72rem;color:#ef4444;line-height:1.6;';
+    err.textContent = 'Cannot access iframe.\nServe via HTTP (not file://):\n\npython3 -m http.server 8765';
+    document.getElementById('var-list').appendChild(err);
+    return;
+  }
+  document.getElementById('loading-msg').style.display = 'none';
+  if (!doc.getElementById('hk-style')) {
+    const s = doc.createElement('style');
+    s.id = 'hk-style';
+    s.textContent = HK_CSS;
+    doc.head.appendChild(s);
+  }
+  const appTheme = doc.documentElement.getAttribute('data-theme') || 'light';
+  currentTheme = appTheme;
+  document.querySelectorAll('.theme-btn').forEach(b => b.classList.toggle('active', b.dataset.theme === (appTheme || 'light')));
+  varDefs = buildDefs(collectVars(doc), doc);
+  frameReady = true;
+  renderPanel();
+  updateOutput();
+  updateStats();
+});
+
+document.querySelectorAll('.theme-btn').forEach(b => b.addEventListener('click', () => setTheme(b.dataset.theme)));
+document.getElementById('reset-btn').addEventListener('click', () => {
+  const doc = getFrameDoc();
+  if (doc) Object.keys(changed).forEach(v => doc.documentElement.style.removeProperty(v));
+  changed = {};
+  renderPanel();
+  updateOutput();
+  updateStats();
+});
+document.getElementById('refresh-btn').addEventListener('click', () => { if (frameReady) refreshValues(); });
+document.getElementById('var-search').addEventListener('input', e => { searchQuery = e.target.value; renderPanel(); });
+document.getElementById('copy-btn').addEventListener('click', () => {
+  navigator.clipboard.writeText(document.getElementById('output').textContent).then(() => {
+    const btn = document.getElementById('copy-btn');
+    btn.textContent = '✓ Copied!';
+    setTimeout(() => { btn.textContent = 'Copy changed vars'; }, 1800);
+  });
+});
+</script>
+</body>
+</html>

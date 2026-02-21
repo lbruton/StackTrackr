@@ -626,6 +626,7 @@ const setupSearchAndChipListeners = () => {
         if (typeof renderActiveFilters === 'function') {
           renderActiveFilters();
         }
+        if (typeof scheduleSyncPush === 'function') scheduleSyncPush();
       },
       'Chip minimum count dropdown'
     );
@@ -968,11 +969,11 @@ const parseNumistaDataFields = (isEditing, existingItem) => {
  */
 const validateItemFields = (f) => {
   if (
-    !f.name || !f.date || !f.type || !f.metal ||
+    !f.name || !f.type || !f.metal ||
     isNaN(f.weight) || f.weight <= 0 ||
     isNaN(f.qty) || f.qty < 1 || !Number.isInteger(f.qty)
   ) {
-    return "Please enter valid values for Name, Date, Type, Metal, Weight, and Quantity.";
+    return "Please enter valid values for Name, Type, Metal, Weight, and Quantity.";
   }
   return null;
 };
@@ -1001,6 +1002,14 @@ const commitItemToInventory = (f, isEditing, editIdx) => {
   if (isEditing) {
     const oldItem = { ...inventory[editIdx] };
     const serial = oldItem.serial;
+
+    // STAK-244: Clear stale Numista image cache when N# changes
+    const numistaIdChanged = oldItem.numistaId && f.catalog && oldItem.numistaId !== f.catalog;
+    if (numistaIdChanged && window.imageCache?.isAvailable()) {
+      debugLog(`commitItemToInventory: N# changed from ${oldItem.numistaId} to ${f.catalog}, clearing old cache`);
+      imageCache.deleteImages(oldItem.numistaId).catch(err => debugLog(`commitItemToInventory: Failed to clear old Numista images: ${err.message}`, 'warn'));
+      imageCache.deleteMetadata(oldItem.numistaId).catch(err => debugLog(`commitItemToInventory: Failed to clear old Numista metadata: ${err.message}`, 'warn'));
+    }
 
     inventory[editIdx] = {
       ...oldItem,
@@ -1414,7 +1423,7 @@ const setupItemFormListeners = () => {
       }
 
       if (removeBtn) {
-        removeBtn.addEventListener('click', () => {
+        removeBtn.addEventListener('click', async () => {
           // Clear just this side
           if (side === 'reverse') {
             _pendingReverseBlob = null;
@@ -1433,6 +1442,18 @@ const setupItemFormListeners = () => {
           if (sizeInfo) sizeInfo.textContent = '';
           if (removeBtn) removeBtn.style.display = 'none';
           if (fileInput) fileInput.value = '';
+
+          // STAK-244: Also clear Numista image cache if user is removing a catalog-synced image
+          const catalogId = elements.itemCatalog?.value?.trim() || '';
+          if (catalogId && window.imageCache?.isAvailable()) {
+            debugLog(`Remove button: clearing Numista cache for ${catalogId}`);
+            try {
+              await imageCache.deleteImages(catalogId);
+              await imageCache.deleteMetadata(catalogId);
+            } catch (err) {
+              debugLog(`Failed to clear Numista image cache on remove: ${err.message}`, 'warn');
+            }
+          }
         });
       }
     });
@@ -1481,9 +1502,14 @@ const setupItemFormListeners = () => {
         }
 
         const btn = elements.searchNumistaBtn;
-        const originalHTML = btn.innerHTML;
-        btn.textContent = 'Searching...';
-        btn.disabled = true;
+        if (typeof setButtonLoading === 'function') {
+          setButtonLoading(btn, true, 'Searching...');
+        } else {
+          // Fallback if util not loaded
+          btn.dataset.originalHtml = btn.innerHTML;
+          btn.textContent = 'Searching...';
+          btn.disabled = true;
+        }
 
         // Type → Numista category mapping for smarter search results
         const TYPE_TO_NUMISTA_CATEGORY = {
@@ -1545,9 +1571,7 @@ const setupItemFormListeners = () => {
           console.error('Numista search error:', error);
           appAlert('Search failed: ' + error.message);
         } finally {
-          // nosemgrep: javascript.browser.security.insecure-innerhtml.insecure-innerhtml, javascript.browser.security.insecure-document-method.insecure-document-method
-          btn.innerHTML = originalHTML;
-          btn.disabled = false;
+          setButtonLoading(btn, false);
         }
       },
       "Search Numista button",
@@ -1566,9 +1590,13 @@ const setupItemFormListeners = () => {
         }
 
         const btn = elements.lookupPcgsBtn;
-        const originalHTML = btn.innerHTML;
-        btn.textContent = 'Looking up...';
-        btn.disabled = true;
+        if (typeof setButtonLoading === 'function') {
+          setButtonLoading(btn, true, 'Looking up...');
+        } else {
+          btn.dataset.originalHtml = btn.innerHTML;
+          btn.textContent = 'Looking up...';
+          btn.disabled = true;
+        }
 
         try {
           const result = await lookupPcgsFromForm();
@@ -1588,8 +1616,7 @@ const setupItemFormListeners = () => {
           console.error('PCGS lookup error:', error);
           appAlert('PCGS lookup failed: ' + error.message);
         } finally {
-          btn.innerHTML = originalHTML;
-          btn.disabled = false;
+          setButtonLoading(btn, false);
         }
       },
       "Lookup PCGS button",
@@ -1977,7 +2004,7 @@ const setupDataManagementListeners = () => {
       localStorage.removeItem(LS_KEY);
       // STACK-62: Clear stale autocomplete cache so it rebuilds from fresh inventory
       if (typeof clearLookupCache === 'function') clearLookupCache();
-      loadInventory();
+      await loadInventory();
       renderTable();
       renderActiveFilters();
       if (typeof showAppAlert === "function") await showAppAlert("Inventory data cleared.", "Data Management");
@@ -2008,7 +2035,7 @@ const setupDataManagementListeners = () => {
       // Disconnect cloud providers (UI reset)
       if (typeof syncCloudUI === 'function') syncCloudUI();
 
-      loadInventory();
+      await loadInventory();
       renderTable();
       renderActiveFilters();
       loadSpotHistory();
@@ -2363,6 +2390,7 @@ const setupSearch = () => {
           if (typeof renderActiveFilters === "function") {
             renderActiveFilters();
           }
+          if (typeof scheduleSyncPush === 'function') scheduleSyncPush();
         },
         "Chip minimum count select",
       );
