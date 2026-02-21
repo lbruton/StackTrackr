@@ -11,4 +11,7 @@ if [ -n "${GH_TOKEN}" ]; then
   chmod 600 /root/.git-credentials
 fi
 
+# Start HTTP server in background (serves StakTrakrApi data at api.staktrakr.com)
+node /app/serve.js >> /var/log/http-server.log 2>&1 &
+
 exec "$@"

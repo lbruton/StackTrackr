@@ -19,8 +19,8 @@ RUN npm install --omit=dev
 
 # Copy poller scripts and shell scripts
 COPY *.js ./
-COPY run-local.sh run-fbp.sh run-goldback.sh docker-entrypoint.sh ./
-RUN chmod +x run-local.sh run-fbp.sh run-goldback.sh docker-entrypoint.sh
+COPY run-local.sh run-fbp.sh run-goldback.sh docker-entrypoint.sh serve.js ./
+RUN chmod +x run-local.sh run-fbp.sh run-goldback.sh docker-entrypoint.sh serve.js
 
 # Git config for committing
 ARG GIT_USER_NAME="StakTrakr Poller"
