@@ -282,7 +282,7 @@ const CERT_LOOKUP_URLS = {
  * Updated: 2026-02-12 - STACK-38/STACK-31: Responsive card view + mobile layout
  */
 
-const APP_VERSION = "3.32.0";
+const APP_VERSION = "3.32.3";
 
 /**
  * Numista metadata cache TTL: 30 days in milliseconds.
@@ -489,8 +489,13 @@ const RETAIL_PRICE_HISTORY_KEY = "retailPriceHistory";
 /** @constant {string} RETAIL_PROVIDERS_KEY - LocalStorage key for cached providers.json lookup map */
 const RETAIL_PROVIDERS_KEY = "retailProviders";
 
-/** @constant {string} RETAIL_API_BASE_URL - Base URL for the REST API served from the data branch */
-const RETAIL_API_BASE_URL = "https://api.staktrakr.com/data/api";
+/** @constant {string[]} RETAIL_API_ENDPOINTS - Ordered list of retail API endpoints (primary first) */
+const RETAIL_API_ENDPOINTS = [
+  "https://api.staktrakr.com/data/api",    // api1 (Fly.io) — primary
+  "https://api1.staktrakr.com/data/api",   // GitHub Pages — fallback (serves local Mac poller data)
+];
+/** @constant {string} RETAIL_API_BASE_URL - Primary endpoint (backward compat) */
+const RETAIL_API_BASE_URL = RETAIL_API_ENDPOINTS[0];
 
 /** @constant {string} RETAIL_INTRADAY_KEY - LocalStorage key for 15-min intraday window data */
 const RETAIL_INTRADAY_KEY = "retailIntradayData";
@@ -1587,6 +1592,7 @@ if (typeof window !== "undefined") {
   window.RETAIL_PRICES_KEY = RETAIL_PRICES_KEY;
   window.RETAIL_PRICE_HISTORY_KEY = RETAIL_PRICE_HISTORY_KEY;
   window.RETAIL_PROVIDERS_KEY = RETAIL_PROVIDERS_KEY;
+  window.RETAIL_API_ENDPOINTS = RETAIL_API_ENDPOINTS;
   window.RETAIL_API_BASE_URL = RETAIL_API_BASE_URL;
   window.RETAIL_INTRADAY_KEY = RETAIL_INTRADAY_KEY;
   window.RETAIL_SYNC_LOG_KEY = RETAIL_SYNC_LOG_KEY;

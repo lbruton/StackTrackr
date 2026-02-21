@@ -4,6 +4,11 @@
 let _retailViewModalChart = null;
 let _retailViewIntradayChart = null;
 
+const _retailYTicks = () => ({
+  color: typeof getChartTextColor === "function" ? getChartTextColor() : undefined,
+  callback: (v) => `$${Number(v).toFixed(2)}`,
+});
+
 /**
  * Switches between the "Price History" and "24h Chart" tabs in the retail view modal.
  * @param {"history"|"intraday"} tab
@@ -172,12 +177,7 @@ const _buildIntradayChart = (slug) => {
               color: typeof getChartTextColor === "function" ? getChartTextColor() : undefined,
             },
           },
-          y: {
-            ticks: {
-              color: typeof getChartTextColor === "function" ? getChartTextColor() : undefined,
-              callback: (v) => `$${Number(v).toFixed(2)}`,
-            },
-          },
+          y: { ticks: _retailYTicks() },
         },
       },
     });
@@ -340,12 +340,7 @@ const openRetailViewModal = (slug) => {
           }
         },
         scales: {
-          y: {
-            ticks: {
-              color: typeof getChartTextColor === "function" ? getChartTextColor() : undefined,
-              callback: (v) => `$${Number(v).toFixed(2)}`,
-            },
-          },
+          y: { ticks: _retailYTicks() },
         },
       },
     });
@@ -361,7 +356,7 @@ const openRetailViewModal = (slug) => {
 
   // Async refresh: fetch fresh data for this coin so the modal always shows
   // current vendor-level intraday data regardless of localStorage staleness.
-  const _apiBase = typeof RETAIL_API_BASE_URL !== "undefined" ? RETAIL_API_BASE_URL : null;
+  const _apiBase = typeof _lastSuccessfulApiBase !== "undefined" ? _lastSuccessfulApiBase : (typeof RETAIL_API_BASE_URL !== "undefined" ? RETAIL_API_BASE_URL : null);
   if (_apiBase) {
     Promise.all([
       fetch(`${_apiBase}/${slug}/latest.json`).catch((err) => { debugLog(`[retail-view-modal] latest fetch failed: ${err.message}`, "warn"); return null; }),

@@ -3912,14 +3912,10 @@ td[data-column="name"] {
   background: var(--bg-tertiary, #2a2a2a);
   vertical-align: middle;
   cursor: pointer;
-  transition: box-shadow 0.15s ease, transform 0.15s ease;
-  /* Force hardware acceleration to prevent Firefox blob URL revalidation */
-  will-change: transform;
-  transform: translateZ(0);
+  transition: box-shadow 0.15s ease;
 }
 .table-thumb:hover {
   box-shadow: 0 0 0 2px var(--primary);
-  transform: translateZ(0) scale(1.14);
   z-index: 1;
   position: relative;
 }
@@ -8379,26 +8375,47 @@ th {
 }
 
 /* --- Date N/A checkbox --------------------------------------------------- */
-.date-na-label {
+.date-na-label,
+.date-na-inline {
   display: inline-flex !important;
   align-items: center;
-  gap: 0.3rem;
-  margin-top: 0.25rem;
-  font-size: 0.7rem !important;
+  justify-content: center;
+  gap: 0.25rem;
+  min-width: 44px;
+  min-height: 32px;
+  padding: 0.25rem 0.5rem;
+  background: var(--glass-input-bg, rgba(0, 0, 0, 0.03));
+  border: 1.5px solid var(--glass-input-border, var(--border));
+  border-left: none;
+  border-radius: 0 8px 8px 0;
+  font-size: 0.72rem !important;
+  font-weight: 600 !important;
   text-transform: none !important;
   letter-spacing: normal !important;
   color: var(--text-secondary);
   cursor: pointer;
+  transition: color 0.15s ease, background 0.15s ease;
+  margin-top: 0 !important;
 }
 
-.date-na-label input[type="checkbox"] {
-  width: 13px;
-  height: 13px;
+.date-na-label:hover,
+.date-na-inline:hover {
+  color: var(--primary);
+  background: var(--glass-input-focus-bg, rgba(0, 0, 0, 0.05));
+}
+
+.date-na-label input[type="checkbox"],
+.date-na-inline input[type="checkbox"] {
+  width: 12px;
+  height: 12px;
   min-height: 0;
+  margin: 0;
+  cursor: pointer;
 }
 
-.date-na-label span {
-  font-weight: 500 !important;
+.date-na-label span,
+.date-na-inline span {
+  font-weight: 600 !important;
   text-transform: none !important;
   letter-spacing: normal !important;
 }
@@ -11283,7 +11300,7 @@ th {
   font-size: 0.8rem;
   color: var(--bs-secondary-color, #6c757d);
 }
-.retail-summary-row { display: flex; gap: 1rem; font-size: 0.85rem; }
+.retail-summary-row { display: flex; align-items: center; gap: 1rem; font-size: 0.85rem; }
 .retail-summary-item { display: flex; flex-direction: column; gap: 0.1rem; }
 .retail-label {
   font-size: 0.72rem;
@@ -11336,6 +11353,8 @@ th {
   padding: 0.1rem 0.45rem;
   border-radius: 999px;
   width: fit-content;
+  margin-left: auto;
+  white-space: nowrap;
 }
 .retail-trend--up   { background: rgba(16, 185, 129, 0.12); color: #10b981; }
 .retail-trend--down { background: rgba(239, 68, 68, 0.12);  color: #ef4444; }

@@ -1383,6 +1383,16 @@ async function _loadThumbImage(img) {
     const blobUrl = await imageCache.resolveImageUrlForItem(item, side);
     if (blobUrl) {
       _thumbBlobUrls.push(blobUrl);
+      img.onerror = () => {
+        img.onerror = null;
+        // Stale/revoked blob — fall through to CDN URL or placeholder
+        if (cdnUrl) {
+          img.src = cdnUrl;
+        } else {
+          img.src = _getThumbPlaceholder(item.metal, item.type);
+          img.classList.add('table-thumb-placeholder');
+        }
+      };
       img.src = blobUrl;
       img.style.visibility = '';
       return;
@@ -2182,7 +2192,7 @@ const editItem = (idx, logIdx = null) => {
   };
 
   if (item.uuid && window.imageCache?.isAvailable()) {
-    imageCache.getUserImage(item.uuid).then(rec => {
+    imageCache.getUserImage(item.uuid).then(async rec => {
       const loaded = { obverse: false, reverse: false };
       if (rec?.obverse) {
         try {
@@ -2196,7 +2206,20 @@ const editItem = (idx, logIdx = null) => {
           loaded.reverse = true;
         } catch { /* ignore */ }
       }
+      // Fall back to URL fields
       showUrlPreviewFallback(loaded);
+      // If still missing sides, try pattern image resolution
+      if (!loaded.obverse || !loaded.reverse) {
+        const itemMeta = { uuid: item.uuid, numistaId: item.numistaId || '', name: item.name || '', metal: item.metal || '', type: item.type || '' };
+        if (!loaded.obverse) {
+          const obvUrl = await imageCache.resolveImageUrlForItem(itemMeta, 'obverse').catch(() => null);
+          if (obvUrl && !item.obverseImageUrl) showPreview(obvUrl, 'Obv', 'obverse');
+        }
+        if (!loaded.reverse) {
+          const revUrl = await imageCache.resolveImageUrlForItem(itemMeta, 'reverse').catch(() => null);
+          if (revUrl && !item.reverseImageUrl) showPreview(revUrl, 'Rev', 'reverse');
+        }
+      }
     }).catch(() => {
       showUrlPreviewFallback({ obverse: false, reverse: false });
     });

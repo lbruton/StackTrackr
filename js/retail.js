@@ -103,6 +103,13 @@ const _retailSparklines = new Map();
 // Persistence
 // ---------------------------------------------------------------------------
 
+const _handleSaveError = (label, err) => {
+  const msg = `Failed to save ${label}: ${err.message}. Your browser storage may be full.`;
+  debugLog(`[retail] ${msg}`, "error");
+  if (typeof showAppAlert === "function") showAppAlert(msg, "Storage Error");
+  if (typeof window !== "undefined") window._retailStorageFailure = true;
+};
+
 const loadRetailPrices = () => {
   try {
     retailPrices = loadDataSync(RETAIL_PRICES_KEY) || null;
@@ -116,14 +123,7 @@ const saveRetailPrices = () => {
   try {
     saveDataSync(RETAIL_PRICES_KEY, retailPrices);
   } catch (err) {
-    const msg = `Failed to save retail prices: ${err.message}. Your browser storage may be full.`;
-    debugLog(`[retail] ${msg}`, "error");
-    if (typeof showAppAlert === "function") {
-      showAppAlert(msg, "Storage Error");
-    }
-    if (typeof window !== "undefined") {
-      window._retailStorageFailure = true;
-    }
+    _handleSaveError("retail prices", err);
   }
 };
 
@@ -144,14 +144,7 @@ const saveRetailPriceHistory = () => {
   try {
     saveDataSync(RETAIL_PRICE_HISTORY_KEY, retailPriceHistory);
   } catch (err) {
-    const msg = `Failed to save retail price history: ${err.message}. Your browser storage may be full.`;
-    debugLog(`[retail] ${msg}`, "error");
-    if (typeof showAppAlert === "function") {
-      showAppAlert(msg, "Storage Error");
-    }
-    if (typeof window !== "undefined") {
-      window._retailStorageFailure = true;
-    }
+    _handleSaveError("retail price history", err);
   }
 };
 
@@ -170,14 +163,7 @@ const saveRetailIntradayData = () => {
   try {
     saveDataSync(RETAIL_INTRADAY_KEY, retailIntradayData);
   } catch (err) {
-    const msg = `Failed to save retail intraday data: ${err.message}. Your browser storage may be full.`;
-    debugLog(`[retail] ${msg}`, "error");
-    if (typeof showAppAlert === "function") {
-      showAppAlert(msg, "Storage Error");
-    }
-    if (typeof window !== "undefined") {
-      window._retailStorageFailure = true;
-    }
+    _handleSaveError("retail intraday data", err);
   }
 };
 
@@ -216,14 +202,7 @@ const saveRetailProviders = () => {
   try {
     saveDataSync(RETAIL_PROVIDERS_KEY, retailProviders);
   } catch (err) {
-    const msg = `Failed to save retail providers: ${err.message}. Your browser storage may be full.`;
-    debugLog(`[retail] ${msg}`, "error");
-    if (typeof showAppAlert === "function") {
-      showAppAlert(msg, "Storage Error");
-    }
-    if (typeof window !== "undefined") {
-      window._retailStorageFailure = true;
-    }
+    _handleSaveError("retail providers", err);
   }
 };
 
@@ -262,14 +241,7 @@ const saveRetailAvailability = () => {
     };
     saveDataSync(RETAIL_AVAILABILITY_KEY, data);
   } catch (err) {
-    const msg = `Failed to save retail availability: ${err.message}. Your browser storage may be full.`;
-    debugLog(`[retail] ${msg}`, "error");
-    if (typeof showAppAlert === "function") {
-      showAppAlert(msg, "Storage Error");
-    }
-    if (typeof window !== "undefined") {
-      window._retailStorageFailure = true;
-    }
+    _handleSaveError("retail availability", err);
   }
 };
 
@@ -283,6 +255,35 @@ const saveRetailAvailability = () => {
  * @returns {Array}
  */
 const getRetailHistoryForSlug = (slug) => retailPriceHistory[slug] || [];
+
+/** Last API base URL that returned a valid manifest — used by retail-view-modal.js */
+let _lastSuccessfulApiBase = typeof RETAIL_API_ENDPOINTS !== "undefined" ? RETAIL_API_ENDPOINTS[0] : "https://api.staktrakr.com/data/api";
+
+/**
+ * Fetch manifest.json from all configured endpoints, return ranked by freshness.
+ * Uses Promise.allSettled so one slow/down endpoint doesn't block the others.
+ * @returns {Promise<Array<{base: string, manifest: Object, ts: string}> | null>}
+ */
+async function _pickFreshestEndpoint() {
+  const endpoints = typeof RETAIL_API_ENDPOINTS !== "undefined" ? RETAIL_API_ENDPOINTS : [RETAIL_API_BASE_URL];
+  const results = await Promise.allSettled(
+    endpoints.map(async (base) => {
+      const resp = await fetch(`${base}/manifest.json`, { signal: AbortSignal.timeout(8000) });
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      const manifest = await resp.json();
+      return { base, manifest, ts: manifest.generated_at || "" };
+    })
+  );
+  const valid = results
+    .filter(r => r.status === "fulfilled")
+    .map(r => r.value)
+    .sort((a, b) => {
+      const ta = a.ts ? new Date(a.ts).getTime() : 0;
+      const tb = b.ts ? new Date(b.ts).getTime() : 0;
+      return tb - ta;
+    });
+  return valid.length ? valid : null;
+}
 
 // ---------------------------------------------------------------------------
 // Sync
@@ -314,21 +315,25 @@ const syncRetailPrices = async ({ ui = true } = {}) => {
   renderRetailCards();
 
   try {
-    // Fetch manifest with fallback to hardcoded slugs
-    let manifest;
-    try {
-      const manifestResp = await fetch(`${RETAIL_API_BASE_URL}/manifest.json`);
-      if (!manifestResp.ok) throw new Error(`HTTP ${manifestResp.status}`);
-      manifest = await manifestResp.json();
-    } catch (manifestErr) {
-      debugLog(`[retail] Manifest fetch failed (${manifestErr.message}), using fallback slug list`, "warn");
+    // Multi-endpoint: race all configured APIs, pick freshest manifest
+    let apiBase, manifest;
+    const ranked = await _pickFreshestEndpoint();
+    if (ranked) {
+      apiBase = ranked[0].base;
+      manifest = ranked[0].manifest;
+      _lastSuccessfulApiBase = apiBase;
+      window._lastSuccessfulApiBase = apiBase;
+      debugLog(`[retail] Using ${apiBase} (generated: ${ranked[0].ts}, ${ranked.length} endpoint(s) reachable)`, "info");
+    } else {
+      debugLog("[retail] All endpoints unreachable, using fallback slug list", "warn");
+      apiBase = RETAIL_API_ENDPOINTS[0];
       manifest = { slugs: RETAIL_SLUGS, latest_window: null };
     }
     const slugs = Array.isArray(manifest.slugs) && manifest.slugs.length ? manifest.slugs : RETAIL_SLUGS;
 
     // Fetch providers.json (product page URLs for each coin+vendor)
     try {
-      const providersResp = await fetch(`${RETAIL_API_BASE_URL}/providers.json`);
+      const providersResp = await fetch(`${apiBase}/providers.json`);
       if (providersResp.ok) {
         retailProviders = await providersResp.json();
         saveRetailProviders();
@@ -343,8 +348,8 @@ const syncRetailPrices = async ({ ui = true } = {}) => {
     const results = await Promise.allSettled(
       slugs.map(async (slug) => {
         const [latestResp, histResp] = await Promise.all([
-          fetch(`${RETAIL_API_BASE_URL}/${slug}/latest.json`),
-          fetch(`${RETAIL_API_BASE_URL}/${slug}/history-30d.json`),
+          fetch(`${apiBase}/${slug}/latest.json`),
+          fetch(`${apiBase}/${slug}/history-30d.json`),
         ]);
         const latest = latestResp.ok ? await latestResp.json() : null;
         const hist30 = histResp.ok ? await histResp.json() : null;
@@ -973,7 +978,7 @@ let _retailSyncIntervalId = null;
 const RETAIL_STALE_MS = 60 * 60 * 1000; // 1 hour
 
 /** How often (ms) to re-sync in the background while the page is open */
-const RETAIL_POLL_INTERVAL_MS = 20 * 60 * 1000; // 20 minutes (data updates every 15 min)
+const RETAIL_POLL_INTERVAL_MS = 10 * 60 * 1000; // 10 minutes (pollers stagger every ~7 min)
 
 /**
  * Starts the background retail price auto-sync.
@@ -1040,6 +1045,7 @@ if (typeof window !== "undefined") {
   window.retailLastAvailableDates = retailLastAvailableDates;
   window.loadRetailAvailability = loadRetailAvailability;
   window.saveRetailAvailability = saveRetailAvailability;
+  window._lastSuccessfulApiBase = _lastSuccessfulApiBase;
 }
 
 // =============================================================================

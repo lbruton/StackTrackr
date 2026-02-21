@@ -55,7 +55,20 @@ if [ -n "$_GIT_TOKEN" ] && [ ! -d "$API_EXPORT_DIR" ]; then
   echo "[entrypoint] Repo ready at $API_EXPORT_DIR (branch: $POLLER_ID)"
 fi
 
-# ── 5. Create log files ───────────────────────────────────────────────
+# ── 5.5. Dynamic cron schedule (overrides Dockerfile baked-in crontab) ──
+CRON_SCHEDULE="${CRON_SCHEDULE:-*/15}"
+if ! echo "$CRON_SCHEDULE" | grep -qE '^[0-9*/,\-]+$'; then
+  echo "[entrypoint] ERROR: Invalid CRON_SCHEDULE '${CRON_SCHEDULE}' — aborting." >&2
+  exit 1
+fi
+echo "[entrypoint] Writing cron schedule: ${CRON_SCHEDULE}"
+(echo "${CRON_SCHEDULE} * * * * root . /etc/environment; /app/run-local.sh >> /var/log/retail-poller.log 2>&1"; \
+ echo "0 20 * * * root . /etc/environment; /app/run-fbp.sh >> /var/log/retail-poller.log 2>&1"; \
+ echo "1 17 * * * root . /etc/environment; /app/run-goldback.sh >> /var/log/goldback-poller.log 2>&1") \
+  > /etc/cron.d/retail-poller
+chmod 0644 /etc/cron.d/retail-poller
+
+# ── 6. Create log files ───────────────────────────────────────────────
 touch /var/log/retail-poller.log /var/log/goldback-poller.log /var/log/http-server.log
 
 echo "[entrypoint] Handing off to supervisord..."
