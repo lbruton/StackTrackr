@@ -101,7 +101,14 @@ const saveRetailPrices = () => {
   try {
     saveDataSync(RETAIL_PRICES_KEY, retailPrices);
   } catch (err) {
-    console.error("[retail] Failed to save retail prices:", err);
+    const msg = `Failed to save retail prices: ${err.message}. Your browser storage may be full.`;
+    debugLog(`[retail] ${msg}`, "error");
+    if (typeof showAppAlert === "function") {
+      showAppAlert(msg, "Storage Error");
+    }
+    if (typeof window !== "undefined") {
+      window._retailStorageFailure = true;
+    }
   }
 };
 
@@ -122,7 +129,14 @@ const saveRetailPriceHistory = () => {
   try {
     saveDataSync(RETAIL_PRICE_HISTORY_KEY, retailPriceHistory);
   } catch (err) {
-    console.error("[retail] Failed to save retail price history:", err);
+    const msg = `Failed to save retail price history: ${err.message}. Your browser storage may be full.`;
+    debugLog(`[retail] ${msg}`, "error");
+    if (typeof showAppAlert === "function") {
+      showAppAlert(msg, "Storage Error");
+    }
+    if (typeof window !== "undefined") {
+      window._retailStorageFailure = true;
+    }
   }
 };
 
@@ -141,7 +155,14 @@ const saveRetailIntradayData = () => {
   try {
     saveDataSync(RETAIL_INTRADAY_KEY, retailIntradayData);
   } catch (err) {
-    console.error("[retail] Failed to save intraday data:", err);
+    const msg = `Failed to save retail intraday data: ${err.message}. Your browser storage may be full.`;
+    debugLog(`[retail] ${msg}`, "error");
+    if (typeof showAppAlert === "function") {
+      showAppAlert(msg, "Storage Error");
+    }
+    if (typeof window !== "undefined") {
+      window._retailStorageFailure = true;
+    }
   }
 };
 
@@ -180,7 +201,14 @@ const saveRetailProviders = () => {
   try {
     saveDataSync(RETAIL_PROVIDERS_KEY, retailProviders);
   } catch (err) {
-    console.error("[retail] Failed to save retail providers:", err);
+    const msg = `Failed to save retail providers: ${err.message}. Your browser storage may be full.`;
+    debugLog(`[retail] ${msg}`, "error");
+    if (typeof showAppAlert === "function") {
+      showAppAlert(msg, "Storage Error");
+    }
+    if (typeof window !== "undefined") {
+      window._retailStorageFailure = true;
+    }
   }
 };
 
@@ -225,9 +253,16 @@ const syncRetailPrices = async ({ ui = true } = {}) => {
   renderRetailCards();
 
   try {
-    const manifestResp = await fetch(`${RETAIL_API_BASE_URL}/manifest.json`);
-    if (!manifestResp.ok) throw new Error(`Manifest fetch failed: ${manifestResp.status}`);
-    const manifest = await manifestResp.json();
+    // Fetch manifest with fallback to hardcoded slugs
+    let manifest;
+    try {
+      const manifestResp = await fetch(`${RETAIL_API_BASE_URL}/manifest.json`);
+      if (!manifestResp.ok) throw new Error(`HTTP ${manifestResp.status}`);
+      manifest = await manifestResp.json();
+    } catch (manifestErr) {
+      debugLog(`[retail] Manifest fetch failed (${manifestErr.message}), using fallback slug list`, "warn");
+      manifest = { slugs: RETAIL_SLUGS, latest_window: null };
+    }
     const slugs = Array.isArray(manifest.slugs) && manifest.slugs.length ? manifest.slugs : RETAIL_SLUGS;
 
     const results = await Promise.allSettled(
@@ -277,6 +312,15 @@ const syncRetailPrices = async ({ ui = true } = {}) => {
         window_start: manifest.latest_window || null,
         prices: newPrices,
       };
+    }
+
+    // Check if all fetches failed
+    if (successCount === 0 && slugs.length > 0) {
+      const errorMsg = "All coin price fetches failed — check your network connection.";
+      debugLog(`[retail] ${errorMsg}`, "error");
+      if (ui) syncStatus.textContent = errorMsg;
+      _appendSyncLogEntry({ success: false, coins: 0, window: null, error: errorMsg });
+      return;
     }
 
     if (successCount > 0) {
