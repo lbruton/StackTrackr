@@ -215,7 +215,7 @@ source of truth and apply sender-side checks first.
 
 56 scripts load in strict dependency order via `index.html`. Breaking this order causes undefined variable errors. The full chain:
 
-```
+```text
 file-protocol-fix.js  (no defer -- loads FIRST)
 debug-log.js
 constants.js
