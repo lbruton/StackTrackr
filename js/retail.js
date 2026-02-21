@@ -62,7 +62,7 @@ const RETAIL_VENDOR_COLORS = {
  * @param {number|null|undefined} v
  * @returns {string}
  */
-const _fmtRetailPrice = (v) => (v != null ? `$${Number(v).toFixed(2)}` : "\u2014");
+const _fmtRetailPrice = (v) => (v != null ? `$${Number(v).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "\u2014");
 
 // ---------------------------------------------------------------------------
 // State
@@ -333,6 +333,8 @@ const syncRetailPrices = async ({ ui = true } = {}) => {
         retailProviders = await providersResp.json();
         saveRetailProviders();
         debugLog(`[retail] Loaded ${Object.keys(retailProviders || {}).length} coin provider mappings`, "info");
+      } else {
+        debugLog(`[retail] Providers fetch returned HTTP ${providersResp.status} — using fallback URLs`, "warn");
       }
     } catch (providersErr) {
       debugLog(`[retail] Providers fetch failed (${providersErr.message}) — using homepage fallback URLs`, "warn");
@@ -584,7 +586,8 @@ const _buildRetailCard = (slug, meta, priceData) => {
   const badge = document.createElement("span");
   badge.className = `retail-metal-badge retail-metal-badge--${meta.metal}`;
   const emoji = RETAIL_METAL_EMOJI[meta.metal];
-  badge.textContent = emoji ? `${emoji} ${meta.metal}` : meta.metal;
+  const metalLabel = meta.metal === "platinum" ? "PLAT" : meta.metal.toUpperCase();
+  badge.textContent = emoji ? `${emoji} ${metalLabel}` : metalLabel;
 
   header.appendChild(nameSpan);
   header.appendChild(badge);
@@ -616,8 +619,8 @@ const _buildRetailCard = (slug, meta, priceData) => {
       item.appendChild(valSpan);
       summary.appendChild(item);
     });
-    card.appendChild(summary);
 
+    // Add trend chip to the right side of the summary row
     const trend = _computeRetailTrend(slug);
     if (trend) {
       const trendEl = document.createElement("span");
@@ -625,8 +628,10 @@ const _buildRetailCard = (slug, meta, priceData) => {
       const sign  = trend.dir === "up" ? "+" : trend.dir === "down" ? "-" : "";
       trendEl.className = `retail-trend retail-trend--${trend.dir}`;
       trendEl.textContent = `${arrow} ${sign}${trend.pct}%`;
-      card.appendChild(trendEl);
+      summary.appendChild(trendEl);
     }
+
+    card.appendChild(summary);
 
     const vendorDetails = document.createElement("div");
     vendorDetails.className = "retail-vendor-details";
@@ -638,9 +643,6 @@ const _buildRetailCard = (slug, meta, priceData) => {
     const availability = retailAvailability[slug] || {};
     const lastKnownPrices = retailLastKnownPrices[slug] || {};
     const lastKnownDates = retailLastAvailableDates[slug] || {};
-
-    const availPrices = Object.values(vendorMap).map((v) => v.price).filter((p) => p != null);
-    const lowestPrice = availPrices.length ? Math.min(...availPrices) : null;
 
     // Build list of all vendors (in-stock and OOS)
     const allVendorKeys = new Set([
@@ -673,6 +675,12 @@ const _buildRetailCard = (slug, meta, priceData) => {
         return 0;
       });
 
+    // Award medals to top 3 high-confidence (≥60%) in-stock vendors by price
+    const qualifyingVendors = sortedVendorEntries
+      .filter(({ isAvailable, score }) => isAvailable && score != null && score >= 60);
+    const top3 = qualifyingVendors.slice(0, 3).map(({ key }) => key);
+    const medals = { 0: "🥇", 1: "🥈", 2: "🥉" };
+
     sortedVendorEntries.forEach(({ key, label, price, score, isAvailable }) => {
       if (!isAvailable) {
         // Render out-of-stock vendor
@@ -684,8 +692,10 @@ const _buildRetailCard = (slug, meta, priceData) => {
       // Render in-stock vendor (existing logic)
       const row = document.createElement("div");
       row.className = "retail-vendor-row";
-      if (lowestPrice !== null && Math.abs(price - lowestPrice) < 0.001) {
-        row.classList.add("retail-vendor-row--best");
+      const medalIndex = top3.indexOf(key);
+      if (medalIndex !== -1) {
+        row.classList.add(`retail-vendor-row--medal-${medalIndex + 1}`);
+        row.dataset.medal = medals[medalIndex];
       }
 
       const nameEl = document.createElement("span");

@@ -364,13 +364,13 @@ const openRetailViewModal = (slug) => {
   const _apiBase = typeof RETAIL_API_BASE_URL !== "undefined" ? RETAIL_API_BASE_URL : null;
   if (_apiBase) {
     Promise.all([
-      fetch(`${_apiBase}/${slug}/latest.json`).catch(() => null),
-      fetch(`${_apiBase}/${slug}/history-30d.json`).catch(() => null),
+      fetch(`${_apiBase}/${slug}/latest.json`).catch((err) => { debugLog(`[retail-view-modal] latest fetch failed: ${err.message}`, "warn"); return null; }),
+      fetch(`${_apiBase}/${slug}/history-30d.json`).catch((err) => { debugLog(`[retail-view-modal] history fetch failed: ${err.message}`, "warn"); return null; }),
     ]).then(async ([latestResp, histResp]) => {
       let intradayUpdated = false;
       let anySuccess = false;
       if (latestResp && latestResp.ok) {
-        const latest = await latestResp.json().catch(() => null);
+        const latest = await latestResp.json().catch((err) => { debugLog(`[retail-view-modal] JSON parse failed for latest: ${err.message}`, "warn"); return null; });
         if (latest) {
           anySuccess = true;
           if (typeof retailIntradayData !== "undefined") {
@@ -392,7 +392,7 @@ const openRetailViewModal = (slug) => {
         }
       }
       if (histResp && histResp.ok) {
-        const hist = await histResp.json().catch(() => null);
+        const hist = await histResp.json().catch((err) => { debugLog(`[retail-view-modal] JSON parse failed for history: ${err.message}`, "warn"); return null; });
         if (Array.isArray(hist) && typeof retailPriceHistory !== "undefined") {
           anySuccess = true;
           retailPriceHistory[slug] = hist;
@@ -401,7 +401,7 @@ const openRetailViewModal = (slug) => {
       }
       // Show staleness warning if both fetches failed
       if (!anySuccess) {
-        const modalBody = safeGetElement('retailModalBody');
+        const modalBody = document.querySelector('#retailViewModal .modal-body');
         if (modalBody && !modalBody.querySelector('.retail-stale-data-warning')) {
           const banner = document.createElement('div');
           banner.className = 'retail-stale-data-warning';
