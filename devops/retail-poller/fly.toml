@@ -10,7 +10,7 @@ primary_region = 'iad'
 [env]
   POLLER_ID = "api1"
   API_DATA_REPO = "https://github.com/lbruton/StakTrakrApi.git"
-  API_EXPORT_DIR = "/tmp/staktrakr-api-export"
+  API_EXPORT_DIR = "/data/staktrakr-api-export"
   # Firecrawl runs inside this container
   FIRECRAWL_BASE_URL = "http://localhost:3002"
   BROWSER_MODE = "local"
@@ -32,7 +32,11 @@ primary_region = 'iad'
     hard_limit = 250
     soft_limit = 200
 
+[[mounts]]
+  source = "staktrakr_data"
+  destination = "/data"
+
 [[vm]]
-  memory = '8192'
+  memory = '2048'
   cpu_kind = 'shared'
   cpus = 4
