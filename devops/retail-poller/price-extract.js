@@ -93,9 +93,10 @@ const METAL_PRICE_RANGE_PER_OZ = {
 };
 
 // Provider IDs that use "As Low As" as their primary price indicator.
-// Monument Metals shows "As Low As" but no pricing table.
-// All others (APMEX, JM Bullion, SD Bullion, etc.) have pricing tables — use table-first strategy.
-const USES_AS_LOW_AS = new Set(["monumentmetals"]);
+// UPDATE 2026-02-21: Monument Metals DOES have a pricing table (1-24 row with eCheck/Wire column).
+// "As Low As" is bulk discount (500+) — use table-first extraction like all other vendors.
+// Empty set = all vendors now use table-first strategy.
+const USES_AS_LOW_AS = new Set([]);
 
 const MARKDOWN_CUTOFF_PATTERNS = {
   sdbullion: [
@@ -251,17 +252,19 @@ function extractPrice(markdown, metal, weightOz = 1, providerId = "") {
     const tblFirst = firstTableRowFirstPrice();
     if (tblFirst !== null) return tblFirst;
   } else if (USES_AS_LOW_AS.has(providerId)) {
-    // Monument Metals: "As Low As" first (no pricing table on their pages)
+    // Reserved for vendors that have no pricing table, only "As Low As" display.
+    // Currently empty — all vendors now use table-first extraction.
     const ala = asLowAsPrices();
     if (ala.length > 0) return Math.min(...ala);
     const tbl = tablePrices();
     if (tbl.length > 0) return Math.min(...tbl);
   } else {
-    // APMEX, SDB, Hero Bullion, Bullion Exchanges, etc.
+    // ALL VENDORS: APMEX, SDB, Monument, Hero Bullion, Bullion Exchanges, Summit, etc.
     // Tables have columns: Check/Wire | Crypto | Card; rows: 1-unit → bulk.
     // firstTableRowFirstPrice() returns the 1-unit Check/Wire (ACH) price.
     // firstInRangePriceProse() handles SPAs (e.g. Bullion Exchanges) that
     // render the price grid as prose rather than markdown pipe tables.
+    // "As Low As" is last resort (bulk discount fallback if table parsing fails).
     const tblFirst = firstTableRowFirstPrice();
     if (tblFirst !== null) return tblFirst;
     const prose = firstInRangePriceProse();

@@ -65,9 +65,10 @@ const VENDOR_PRICE_HINTS = {
 - Use the **Check/Wire price** (leftmost column)
 - Ignore "Starting At" or "As Low As" labels (those are bulk discounts)`,
 
-  monumentmetals: `Monument Metals specific: They show **"As Low As"** prominently but no pricing table.
-- Use the "As Low As $XXX.XX" price shown near the product title
-- This is their standard single-unit pricing display`,
+  monumentmetals: `Monument Metals specific: Look in the **pricing table** (below "As Low As" banner).
+- Find the row for quantity "1-24" or "1-99"
+- Use the **(e)Check/Wire column** (leftmost price column)
+- The "As Low As" banner shows bulk discounts (500+ qty) — ignore it, use the table`,
 
   sdbullion: `SD Bullion specific: Look for the **quantity pricing table**.
 - Find the "1-19" or "1+" row
