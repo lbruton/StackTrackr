@@ -2324,15 +2324,6 @@ const duplicateItem = (idx) => {
  * @param {number} idx - Index of item to toggle price view for
  */
 /**
- * Legacy function kept for compatibility - no longer used
- * Market value now has its own dedicated column
- */
-const togglePriceView = (idx) => {
-  // Function kept for compatibility but no longer used
-  console.warn('togglePriceView is deprecated - using separate columns now');
-};
-
-/**
  * Legacy function kept for compatibility - no longer used  
  * Market value now has its own dedicated column
  */
@@ -3451,7 +3442,6 @@ window.importJson = importJson;
 window.exportJson = exportJson;
 window.exportPdf = exportPdf;
 window.updateSummary = updateSummary;
-window.togglePriceView = togglePriceView;
 window.toggleGlobalPriceView = toggleGlobalPriceView;
 window.editItem = editItem;
 window.duplicateItem = duplicateItem;
