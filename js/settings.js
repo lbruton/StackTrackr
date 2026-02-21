@@ -1057,12 +1057,13 @@ const syncGoldbackSettingsUI = () => {
  * Syncs the header shortcut checkboxes in Settings with stored state.
  */
 const syncHeaderToggleUI = () => {
-  const themeVisible = localStorage.getItem('headerThemeBtnVisible') === 'true';
-  const currencyVisible = localStorage.getItem('headerCurrencyBtnVisible') === 'true';
+  const themeVisible = localStorage.getItem('headerThemeBtnVisible') !== 'false';
+  const currencyVisible = localStorage.getItem('headerCurrencyBtnVisible') !== 'false';
   const trendStored = localStorage.getItem(HEADER_TREND_BTN_KEY);
   const trendVisible = trendStored !== null ? trendStored === 'true' : true;
   const syncStored = localStorage.getItem(HEADER_SYNC_BTN_KEY);
   const syncVisible = syncStored !== null ? syncStored === 'true' : true;
+  const marketVisible = localStorage.getItem(HEADER_MARKET_BTN_KEY) !== 'false';
 
   syncChipToggle('settingsHeaderThemeBtn', themeVisible);
   syncChipToggle('settingsHeaderThemeBtn_hdr', themeVisible);
@@ -1072,21 +1073,24 @@ const syncHeaderToggleUI = () => {
   syncChipToggle('settingsHeaderTrendBtn_hdr', trendVisible);
   syncChipToggle('settingsHeaderSyncBtn', syncVisible);
   syncChipToggle('settingsHeaderSyncBtn_hdr', syncVisible);
+  syncChipToggle('settingsHeaderMarketBtn', marketVisible);
+  syncChipToggle('settingsHeaderMarketBtn_hdr', marketVisible);
 
   applyHeaderToggleVisibility();
 };
 
 /**
  * Shows/hides the header shortcut buttons based on stored preferences.
- * Theme and Currency default hidden; Trend and Sync default visible.
+ * All buttons default visible for new users.
  */
 const applyHeaderToggleVisibility = () => {
-  const themeVisible = localStorage.getItem('headerThemeBtnVisible') === 'true';
-  const currencyVisible = localStorage.getItem('headerCurrencyBtnVisible') === 'true';
+  const themeVisible = localStorage.getItem('headerThemeBtnVisible') !== 'false';
+  const currencyVisible = localStorage.getItem('headerCurrencyBtnVisible') !== 'false';
   const trendStored = localStorage.getItem(HEADER_TREND_BTN_KEY);
   const trendVisible = trendStored !== null ? trendStored === 'true' : true;
   const syncStored = localStorage.getItem(HEADER_SYNC_BTN_KEY);
   const syncVisible = syncStored !== null ? syncStored === 'true' : true;
+  const marketVisible = localStorage.getItem(HEADER_MARKET_BTN_KEY) !== 'false';
 
   if (elements.headerThemeBtn) {
     elements.headerThemeBtn.style.display = themeVisible ? '' : 'none';
@@ -1096,6 +1100,12 @@ const applyHeaderToggleVisibility = () => {
   }
   safeGetElement('headerTrendBtn').style.display = trendVisible ? '' : 'none';
   safeGetElement('headerSyncBtn').style.display = syncVisible ? '' : 'none';
+
+  // Market button
+  const marketBtn = safeGetElement('headerMarketBtn');
+  if (marketBtn) {
+    marketBtn.style.display = marketVisible ? '' : 'none';
+  }
 };
 window.applyHeaderToggleVisibility = applyHeaderToggleVisibility;
 
