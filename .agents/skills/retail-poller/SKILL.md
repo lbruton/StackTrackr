@@ -25,7 +25,7 @@ api-export.js  (SQLite → data/api/ JSON files → data branch)
 Path on disk: `$DATA_REPO_PATH/data/retail/providers.json`
 The poller never runs against the local `StakTrakr/data/` folder — that's spot price data only.
 
-**Vision pipeline (as of 2026-02-20):** `capture.js` + `extract-vision.js` are now wired into `run-local.sh` as a non-fatal block, gated on `GEMINI_API_KEY` and `BROWSERLESS_URL`. Vision results write to per-coin JSON files (`{slug}-vision.json`) in `ARTIFACT_DIR` (default: `/tmp/retail-screenshots/{date}`). `api-export.js` loads these files via `loadVisionData()` and merges confidence scores via `mergeVendorWithVision()` — pushing above the 60% single-source ceiling when Firecrawl and Vision agree. `merge-prices.js` is legacy and not called. `BROWSER_MODE=browserless` in `capture.js` connects via `chromium.connectOverCDP(BROWSERLESS_WS)`.
+**Vision pipeline (as of 2026-02-20):** `capture.js` + `extract-vision.js` are now wired into `run-local.sh` as a non-fatal block, gated on `GEMINI_API_KEY` and `BROWSERLESS_URL`. Vision results write to per-coin JSON files at `DATA_DIR/retail/{slug}/{date}-vision.json`. `api-export.js` loads these files via `loadVisionData()` and merges confidence scores via `mergeVendorWithVision()` — pushing above the 60% single-source ceiling when Firecrawl and Vision agree. Screenshots go to `ARTIFACT_DIR` (default: `/tmp/retail-poller-screenshots/{date}`); vision JSON goes to `DATA_DIR/retail/{slug}/`. `merge-prices.js` is legacy and not called. `BROWSER_MODE=browserless` in `capture.js` connects via `chromium.connectOverCDP(BROWSERLESS_WS)`.
 
 ---
 

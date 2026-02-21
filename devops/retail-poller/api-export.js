@@ -194,11 +194,8 @@ function scoreVendorPrice(price, windowMedian, prevMedian) {
  */
 function loadVisionData(dataDir, slug) {
   const today = new Date().toISOString().slice(0, 10);
-  // ARTIFACT_DIR is the full date-scoped path (same semantics as capture.js).
-  // Default: DATA_DIR/retail/_artifacts/{today}
-  const artifactDir = process.env.ARTIFACT_DIR ||
-    join(dataDir, "retail", "_artifacts", today);
-  const filePath = join(artifactDir, `${slug}-vision.json`);
+  // extract-vision.js writes per-coin vision files to DATA_DIR/retail/{slug}/{date}-vision.json
+  const filePath = join(dataDir, "retail", slug, `${today}-vision.json`);
   if (!existsSync(filePath)) return null;
   try {
     return JSON.parse(readFileSync(filePath, "utf-8"));
