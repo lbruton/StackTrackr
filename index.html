@@ -3752,6 +3752,7 @@
                     <button class="retail-tf-btn" data-retail-timeframe="all" type="button">All</button>
                   </div>
                 </div>
+                <div id="retailSyncLogContainer"></div>
                 <div class="retail-history-table-wrap">
                   <table id="retailHistoryTable" class="retail-history-table">
                     <thead>
@@ -4819,14 +4820,16 @@
         <button class="modal-close" onclick="closeRetailViewModal()" aria-label="Close market price detail">&times;</button>
       </div>
       <div class="modal-body">
-        <h3 class="retail-view-section-title">Current Prices</h3>
-        <div class="retail-view-table-wrap">
-          <table id="retailViewPricesTable" class="retail-view-table">
-            <thead>
-              <tr><th>Vendor</th><th>Price</th><th>Confidence</th></tr>
-            </thead>
-            <tbody id="retailViewCurrentTableBody"></tbody>
-          </table>
+        <div class="retail-view-current-card">
+          <h3 class="retail-view-section-title">Current Prices</h3>
+          <div class="retail-view-table-wrap">
+            <table id="retailViewPricesTable" class="retail-view-table">
+              <thead>
+                <tr><th>Vendor</th><th>Price</th><th>Confidence</th></tr>
+              </thead>
+              <tbody id="retailViewCurrentTableBody"></tbody>
+            </table>
+          </div>
         </div>
         <div class="retail-view-tabs">
           <button id="retailViewTabIntraday" class="retail-view-tab active" type="button" onclick="_switchRetailViewTab('intraday')">24h Chart</button>

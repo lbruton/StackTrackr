@@ -495,6 +495,9 @@ const RETAIL_API_BASE_URL = "https://api.staktrakr.com/data/api";
 /** @constant {string} RETAIL_INTRADAY_KEY - LocalStorage key for 15-min intraday window data */
 const RETAIL_INTRADAY_KEY = "retailIntradayData";
 
+/** @constant {string} RETAIL_SYNC_LOG_KEY - LocalStorage key for retail background sync event log */
+const RETAIL_SYNC_LOG_KEY = "retailSyncLog";
+
 /** @constant {string} GOLDBACK_ENABLED_KEY - LocalStorage key for Goldback pricing toggle (STACK-45) */
 const GOLDBACK_ENABLED_KEY = "goldback-enabled";
 
@@ -721,6 +724,7 @@ const ALLOWED_STORAGE_KEYS = [
   RETAIL_PRICE_HISTORY_KEY,
   RETAIL_PROVIDERS_KEY,
   RETAIL_INTRADAY_KEY,
+  RETAIL_SYNC_LOG_KEY,
   NUMISTA_RESPONSE_CACHE_KEY,
   PCGS_RESPONSE_CACHE_KEY,
   GOLDBACK_ENABLED_KEY,
@@ -1577,6 +1581,7 @@ if (typeof window !== "undefined") {
   window.RETAIL_PROVIDERS_KEY = RETAIL_PROVIDERS_KEY;
   window.RETAIL_API_BASE_URL = RETAIL_API_BASE_URL;
   window.RETAIL_INTRADAY_KEY = RETAIL_INTRADAY_KEY;
+  window.RETAIL_SYNC_LOG_KEY = RETAIL_SYNC_LOG_KEY;
   window.GOLDBACK_ENABLED_KEY = GOLDBACK_ENABLED_KEY;
   window.GB_TO_OZT = GB_TO_OZT;
   window.GOLDBACK_DENOMINATIONS = GOLDBACK_DENOMINATIONS;

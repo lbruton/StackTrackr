@@ -134,6 +134,25 @@ const saveRetailIntradayData = () => {
   }
 };
 
+// Max sync log entries kept in localStorage
+const RETAIL_SYNC_LOG_MAX = 50;
+
+/**
+ * Appends one entry to the retail sync log and persists it.
+ * @param {{success: boolean, coins: number, window: string|null, error: string|null}} entry
+ */
+const _appendSyncLogEntry = (entry) => {
+  try {
+    const existing = loadDataSync(RETAIL_SYNC_LOG_KEY) || [];
+    const log = Array.isArray(existing) ? existing : [];
+    log.push({ ts: new Date().toISOString(), ...entry });
+    if (log.length > RETAIL_SYNC_LOG_MAX) log.splice(0, log.length - RETAIL_SYNC_LOG_MAX);
+    saveDataSync(RETAIL_SYNC_LOG_KEY, log);
+  } catch (err) {
+    debugLog(`[retail] Failed to save sync log: ${err.message}`, "warn");
+  }
+};
+
 const loadRetailProviders = () => {
   try {
     const loaded = loadDataSync(RETAIL_PROVIDERS_KEY, null);
@@ -258,9 +277,11 @@ const syncRetailPrices = async ({ ui = true } = {}) => {
     const statusMsg = `Synced ${successCount} coin(s) · ${manifest.latest_window || "unknown window"}`;
     if (ui) syncStatus.textContent = statusMsg;
     debugLog(`[retail] Sync complete: ${statusMsg}`, "info");
+    _appendSyncLogEntry({ success: true, coins: successCount, window: manifest.latest_window || null, error: null });
   } catch (err) {
     debugLog(`[retail] Sync error: ${err.message}`, "warn");
     if (ui) syncStatus.textContent = `Sync failed: ${err.message}`;
+    _appendSyncLogEntry({ success: false, coins: 0, window: null, error: err.message });
   } finally {
     _retailSyncInProgress = false;
     renderRetailCards();
@@ -589,6 +610,69 @@ const _buildConfidenceBar = (score) => {
  * Called by switchLogTab('market') via LOG_TAB_RENDERERS.
  */
 const renderRetailHistoryTable = () => {
+  // Sync log section — rendered at top of Market tab
+  const syncLogContainer = safeGetElement("retailSyncLogContainer");
+  while (syncLogContainer.firstChild) syncLogContainer.removeChild(syncLogContainer.firstChild);
+  try {
+    const rawLog = loadDataSync(RETAIL_SYNC_LOG_KEY);
+    const syncLog = Array.isArray(rawLog) ? rawLog : [];
+    const recent = syncLog.slice(-10).reverse();
+
+    const heading = document.createElement("p");
+    heading.className = "retail-history-label";
+    heading.style.cssText = "font-weight:600;margin:0 0 0.4rem;";
+    heading.textContent = "Recent Syncs";
+    syncLogContainer.appendChild(heading);
+
+    if (recent.length === 0) {
+      const msg = document.createElement("p");
+      msg.className = "settings-subtext";
+      msg.style.marginBottom = "0.75rem";
+      msg.textContent = "No sync events yet — waiting for first background poll.";
+      syncLogContainer.appendChild(msg);
+    } else {
+      const wrap = document.createElement("div");
+      wrap.className = "retail-history-table-wrap";
+      wrap.style.marginBottom = "1rem";
+      const table = document.createElement("table");
+      table.className = "retail-history-table";
+      const thead = document.createElement("thead");
+      const hrow = document.createElement("tr");
+      ["Time", "Status", "Coins", "Window (UTC)"].forEach((label) => {
+        const th = document.createElement("th");
+        th.textContent = label;
+        hrow.appendChild(th);
+      });
+      thead.appendChild(hrow);
+      table.appendChild(thead);
+      const tbody2 = document.createElement("tbody");
+      recent.forEach((entry) => {
+        const tr = document.createElement("tr");
+        const ts = entry.ts ? new Date(entry.ts) : null;
+        const timeStr = (ts && !isNaN(ts))
+          ? `${ts.toLocaleDateString()} ${ts.getHours().toString().padStart(2, "0")}:${ts.getMinutes().toString().padStart(2, "0")}`
+          : "--";
+        const windowStr = (() => {
+          if (!entry.window) return "\u2014";
+          const wd = new Date(entry.window);
+          if (isNaN(wd)) return "\u2014";
+          return `${wd.getUTCHours().toString().padStart(2, "0")}:${wd.getUTCMinutes().toString().padStart(2, "0")}`;
+        })();
+        [timeStr, entry.success ? "\u2705 OK" : "\u274C Failed", entry.success ? String(entry.coins) : "\u2014", windowStr].forEach((text) => {
+          const td = document.createElement("td");
+          td.textContent = text;
+          tr.appendChild(td);
+        });
+        tbody2.appendChild(tr);
+      });
+      table.appendChild(tbody2);
+      wrap.appendChild(table);
+      syncLogContainer.appendChild(wrap);
+    }
+  } catch (err) {
+    debugLog(`[retail] Failed to render sync log: ${err.message}`, "warn");
+  }
+
   const select = safeGetElement("retailHistorySlugSelect");
   const tbody = safeGetElement("retailHistoryTableBody");
 

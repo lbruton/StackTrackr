@@ -11526,37 +11526,56 @@ th {
   border-top: 1px solid var(--border-color-subtle, var(--bs-border-color));
 }
 
-/* Retail view modal — tab toggle */
+/* Retail view modal — current prices card */
+.retail-view-current-card {
+  background: var(--bg-card, var(--bs-body-bg));
+  border: 1px solid var(--border-color-subtle, var(--bs-border-color));
+  border-radius: 8px;
+  padding: 0.75rem 0.75rem 0.1rem;
+  margin-bottom: 0.75rem;
+}
+
+/* Retail view modal — tab toggle (pill style) */
 .retail-view-tabs {
   display: flex;
-  gap: 0.25rem;
-  margin: 0.75rem 0 0.5rem;
-  border-bottom: 1px solid var(--border-color-subtle, var(--bs-border-color));
+  gap: 0.2rem;
+  margin: 0 0 0.5rem;
+  padding: 0.2rem;
+  background: var(--bg-subtle, rgba(0,0,0,.06));
+  border-radius: 8px;
 }
 
 .retail-view-tab {
-  padding: 0.35rem 0.85rem;
+  flex: 1;
+  text-align: center;
+  padding: 0.3rem 0.85rem;
   font-size: 0.85rem;
-  background: none;
-  border: 1px solid transparent;
-  border-bottom: none;
-  border-radius: 4px 4px 0 0;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
   cursor: pointer;
   color: var(--text-muted);
-  transition: color 0.15s, background 0.15s;
-  margin-bottom: -1px;
+  transition: color 0.15s, background 0.15s, box-shadow 0.15s;
 }
 
 .retail-view-tab:hover {
   color: var(--text-primary);
-  background: var(--bg-hover, rgba(0,0,0,.04));
 }
 
 .retail-view-tab.active {
   color: var(--text-primary);
   background: var(--bg-card, var(--bs-body-bg));
-  border-color: var(--border-color-subtle, var(--bs-border-color));
   font-weight: 600;
+  box-shadow: 0 1px 3px rgba(0,0,0,.12);
+}
+
+/* Retail view modal — intraday/history panels */
+#retailViewIntradaySection,
+#retailViewHistorySection {
+  background: var(--bg-subtle, rgba(0,0,0,.03));
+  border: 1px solid var(--border-color-subtle, var(--bs-border-color));
+  border-radius: 8px;
+  padding: 0.75rem;
 }
 
 /* Retail view modal — intraday chart */
