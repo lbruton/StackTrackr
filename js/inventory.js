@@ -237,6 +237,26 @@ const createBackupZip = async () => {
           metadata: allMeta
         }, null, 2));
       }
+
+      // User-uploaded photos (keyed by item UUID) — STAK-225
+      const allUserImages = await imageCache.exportAllUserImages();
+      if (allUserImages.length > 0) {
+        const userImgFolder = zip.folder('user_images');
+        for (const rec of allUserImages) {
+          if (rec.obverse) userImgFolder.file(`${rec.uuid}_obverse.jpg`, rec.obverse);
+          if (rec.reverse) userImgFolder.file(`${rec.uuid}_reverse.jpg`, rec.reverse);
+        }
+      }
+
+      // Custom pattern rule images (keyed by rule ID) — STAK-225
+      const allPatternImages = await imageCache.exportAllPatternImages();
+      if (allPatternImages.length > 0) {
+        const patternImgFolder = zip.folder('pattern_images');
+        for (const rec of allPatternImages) {
+          if (rec.obverse) patternImgFolder.file(`${rec.ruleId}_obverse.jpg`, rec.obverse);
+          if (rec.reverse) patternImgFolder.file(`${rec.ruleId}_reverse.jpg`, rec.reverse);
+        }
+      }
     }
 
     // Generate and download the ZIP file
@@ -478,6 +498,52 @@ const restoreBackupZip = async (file) => {
           for (const rec of metaObj.metadata) {
             await imageCache.importMetadataRecord(rec);
           }
+        }
+      }
+
+      // Restore user-uploaded photos (STAK-225)
+      const userImgFolder = zip.folder('user_images');
+      if (userImgFolder) {
+        const userEntries = [];
+        userImgFolder.forEach((path, file) => userEntries.push({ path, file }));
+        const userImageMap = new Map();
+        for (const { path, file } of userEntries) {
+          const m = path.match(/^(.+)_(obverse|reverse)\.jpg$/);
+          if (!m) continue;
+          if (!userImageMap.has(m[1])) userImageMap.set(m[1], {});
+          userImageMap.get(m[1])[m[2]] = await file.async('blob');
+        }
+        for (const [uuid, sides] of userImageMap) {
+          await imageCache.importUserImageRecord({
+            uuid,
+            obverse: sides.obverse || null,
+            reverse: sides.reverse || null,
+            cachedAt: Date.now(),
+            size: (sides.obverse?.size || 0) + (sides.reverse?.size || 0),
+          });
+        }
+      }
+
+      // Restore custom pattern rule images (STAK-225)
+      const patternImgFolder = zip.folder('pattern_images');
+      if (patternImgFolder) {
+        const patternEntries = [];
+        patternImgFolder.forEach((path, file) => patternEntries.push({ path, file }));
+        const patternImageMap = new Map();
+        for (const { path, file } of patternEntries) {
+          const m = path.match(/^(.+)_(obverse|reverse)\.jpg$/);
+          if (!m) continue;
+          if (!patternImageMap.has(m[1])) patternImageMap.set(m[1], {});
+          patternImageMap.get(m[1])[m[2]] = await file.async('blob');
+        }
+        for (const [ruleId, sides] of patternImageMap) {
+          await imageCache.importPatternImageRecord({
+            ruleId,
+            obverse: sides.obverse || null,
+            reverse: sides.reverse || null,
+            cachedAt: Date.now(),
+            size: (sides.obverse?.size || 0) + (sides.reverse?.size || 0),
+          });
         }
       }
     }
