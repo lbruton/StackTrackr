@@ -128,6 +128,15 @@ const bindAppearanceAndHeaderListeners = () => {
     onApply: () => applyHeaderToggleVisibility(),
   });
 
+  wireStorageToggle('settingsHeaderMarketBtn', HEADER_MARKET_BTN_KEY, {
+    defaultVal: true,
+    onApply: () => applyHeaderToggleVisibility(),
+  });
+  wireStorageToggle('settingsHeaderMarketBtn_hdr', HEADER_MARKET_BTN_KEY, {
+    defaultVal: true,
+    onApply: () => applyHeaderToggleVisibility(),
+  });
+
   // Trend cycle header button.
   const headerTrendBtn = safeGetElement('headerTrendBtn');
   if (headerTrendBtn) {
