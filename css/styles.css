@@ -3912,12 +3912,12 @@ td[data-column="name"] {
   background: var(--bg-tertiary, #2a2a2a);
   vertical-align: middle;
   cursor: pointer;
-  transition: box-shadow 0.15s ease, transform 0.15s ease;
-  will-change: transform;
+  transition: box-shadow 0.15s ease, width 0.15s ease, height 0.15s ease;
 }
 .table-thumb:hover {
   box-shadow: 0 0 0 2px var(--primary);
-  transform: scale(1.12);
+  width: 32px;
+  height: 32px;
   z-index: 1;
   position: relative;
 }
@@ -11339,15 +11339,24 @@ th {
 .retail-trend--down { background: rgba(239, 68, 68, 0.12);  color: #ef4444; }
 .retail-trend--flat { background: rgba(148, 163, 184, 0.12); color: #94a3b8; }
 
-/* STAK-217: Best price highlight */
-.retail-vendor-row--best .retail-vendor-name::before {
-  content: "★ ";
-  font-size: 0.7rem;
-  color: #10b981;
+/* STAK-217: Medal ranking for top 3 high-confidence in-stock vendors */
+.retail-vendor-row--medal-1 .retail-vendor-name::before,
+.retail-vendor-row--medal-2 .retail-vendor-name::before,
+.retail-vendor-row--medal-3 .retail-vendor-name::before {
+  content: attr(data-medal) " ";
+  font-size: 0.85rem;
 }
-.retail-vendor-row--best .retail-vendor-price {
+.retail-vendor-row--medal-1 .retail-vendor-price {
   color: #10b981;
   font-weight: 700;
+}
+.retail-vendor-row--medal-2 .retail-vendor-price {
+  color: #64748b;
+  font-weight: 600;
+}
+.retail-vendor-row--medal-3 .retail-vendor-price {
+  color: #92400e;
+  font-weight: 600;
 }
 
 /* Out-of-stock vendor styling */
