@@ -34,6 +34,8 @@ const BROWSERBASE_PROJECT_ID = process.env.BROWSERBASE_PROJECT_ID;
 const BROWSERLESS_WS = process.env.BROWSERLESS_URL ||
   "ws://localhost:3000/chromium/playwright?token=local_dev_token";
 const DATA_DIR = resolve(process.env.DATA_DIR || "../../data");
+const ARTIFACT_DIR = process.env.ARTIFACT_DIR ||
+  join(tmpdir(), "retail-poller-screenshots", new Date().toISOString().slice(0, 10));
 
 const COINS = (process.env.COINS || "ase,age,generic-silver-round,buffalo").split(",").map(s => s.trim());
 const PROVIDERS = (process.env.PROVIDERS || "sdbullion,apmex").split(",").map(s => s.trim());
@@ -242,9 +244,6 @@ async function captureAll() {
   const totalTargets = [...byCoin.values()].reduce((n, arr) => n + arr.length, 0);
   log(`Capturing ${totalTargets} pages — ${byCoin.size} parallel sessions (one per coin, 4 providers each)`);
 
-  const dateStr = today();
-  const ARTIFACT_DIR = process.env.ARTIFACT_DIR ||
-    join(tmpdir(), "retail-poller-screenshots", dateStr);
   mkdirSync(ARTIFACT_DIR, { recursive: true });
 
   // Launch one session per coin, all in parallel — each session only ~35s,
