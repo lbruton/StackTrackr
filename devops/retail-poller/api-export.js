@@ -188,6 +188,79 @@ function scoreVendorPrice(price, windowMedian, prevMedian) {
   }
   return Math.max(0, Math.min(100, score));
 }
+/**
+ * Load today's Gemini Vision extraction results for a coin slug.
+ * Returns null if no vision file exists for today.
+ */
+function loadVisionData(dataDir, slug) {
+  const today = new Date().toISOString().slice(0, 10);
+  const artifactDir = process.env.ARTIFACT_DIR ||
+    join(dataDir, "retail", "_artifacts", today);
+  const filePath = join(artifactDir, `${slug}-vision.json`);
+  if (!existsSync(filePath)) return null;
+  try {
+    return JSON.parse(readFileSync(filePath, "utf-8"));
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Score a vendor price incorporating Vision cross-validation when available.
+ * Returns { price, confidence, method }.
+ *
+ * Confidence tiers when both Firecrawl and Vision are present and agree:
+ *   ≤2% diff  → 90 base
+ *   ≤5% diff  → 70 base
+ *   >5% diff  → 35 base (disagreement)
+ *
+ * Falls back to scoreVendorPrice() when no vision data available.
+ */
+function mergeVendorWithVision(firecrawlPrice, visionData, vendorId, windowMedian, prevMedian) {
+  if (!visionData || !visionData.prices_by_site) {
+    return {
+      price: firecrawlPrice,
+      confidence: scoreVendorPrice(firecrawlPrice, windowMedian, prevMedian),
+      method: "firecrawl",
+    };
+  }
+
+  const visionPrice = visionData.prices_by_site[vendorId];
+  const visionConfidence = visionData.confidence_by_site?.[vendorId] ?? "low";
+
+  if (!visionPrice) {
+    return {
+      price: firecrawlPrice,
+      confidence: scoreVendorPrice(firecrawlPrice, windowMedian, prevMedian),
+      method: "firecrawl",
+    };
+  }
+
+  const diff = Math.abs(firecrawlPrice - visionPrice) /
+    Math.max(firecrawlPrice, visionPrice);
+
+  let base = diff <= 0.02 ? 90 : diff <= 0.05 ? 70 : 35;
+  const visionMod = visionConfidence === "high" ? 5 : visionConfidence === "medium" ? 0 : -10;
+
+  let medianMod = 0;
+  if (windowMedian !== null) {
+    const deviation = Math.abs(firecrawlPrice - windowMedian) / windowMedian;
+    if (deviation <= 0.03) medianMod = 5;
+    else if (deviation > 0.08) medianMod = -10;
+  }
+
+  let dodMod = 0;
+  if (prevMedian !== null) {
+    const dayDiff = Math.abs(firecrawlPrice - prevMedian) / prevMedian;
+    if (dayDiff > 0.10) dodMod = -15;
+  }
+
+  return {
+    price: firecrawlPrice,
+    confidence: Math.max(0, Math.min(100, base + visionMod + medianMod + dodMod)),
+    method: "firecrawl+vision",
+  };
+}
 
 // ---------------------------------------------------------------------------
 // Main
@@ -273,11 +346,16 @@ async function main() {
     const prevEntry = prevEntries.find((e) => e.date !== today);
     const prevMedian = prevEntry ? prevEntry.avg_median : null;
 
+    const visionData = loadVisionData(DATA_DIR, slug);
+
     const confidenceUpdates = [];
     for (const [vendorId, vendorData] of Object.entries(vendors)) {
-      const score = scoreVendorPrice(vendorData.price, windowMedian, prevMedian);
-      vendorData.confidence = score;
-      confidenceUpdates.push({ coinSlug: slug, vendor: vendorId, windowStart: latestWindow, confidence: score });
+      const { price, confidence, method } = mergeVendorWithVision(
+        vendorData.price, visionData, vendorId, windowMedian, prevMedian
+      );
+      vendorData.confidence = confidence;
+      vendorData.method = method;
+      confidenceUpdates.push({ coinSlug: slug, vendor: vendorId, windowStart: latestWindow, confidence });
     }
     if (confidenceUpdates.length > 0) {
       try {
