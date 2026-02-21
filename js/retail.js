@@ -364,9 +364,47 @@ const _renderRetailSparkline = (slug) => {
   _retailSparklines.set(slug, chart);
 };
 
+/**
+ * Prepends a best-effort pricing disclaimer banner to the retail card container.
+ * Idempotent — skips if banner already present.
+ * @param {Element} container - The retail cards grid element.
+ */
+const renderRetailDisclaimer = (container) => {
+  if (container.querySelector(".retail-disclaimer")) return;
+
+  const wrapper = document.createElement("div");
+  wrapper.className = "retail-disclaimer alert alert-secondary d-flex gap-2 mb-3 small py-2";
+  wrapper.setAttribute("role", "note");
+
+  const icon = document.createElement("i");
+  icon.className = "bi bi-info-circle-fill flex-shrink-0 mt-1";
+  icon.setAttribute("aria-hidden", "true");
+
+  const body = document.createElement("div");
+
+  const strong1 = document.createElement("strong");
+  strong1.textContent = "Best-effort pricing.";
+
+  const text1 = document.createTextNode(
+    " Prices are sourced from public data and updated periodically. They may not reflect real-time availability or credit card pricing. "
+  );
+
+  const strong2 = document.createElement("strong");
+  strong2.textContent = "Confidence scores (0–100)";
+
+  const text2 = document.createTextNode(
+    " reflect agreement across data sources: 60 = aligned with the median, 35 = slight outlier, 15 = significant outlier."
+  );
+
+  body.append(strong1, text1, strong2, text2);
+  wrapper.append(icon, body);
+  container.prepend(wrapper);
+};
+
 /** Called on market section open and after each sync. */
 const renderRetailCards = () => {
   const grid = safeGetElement("retailCardsGrid");
+  renderRetailDisclaimer(grid);
   const lastSyncEl = safeGetElement("retailLastSync");
 
   if (retailPrices && retailPrices.lastSync) {
