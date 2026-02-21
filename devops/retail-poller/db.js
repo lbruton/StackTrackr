@@ -10,6 +10,7 @@
  */
 
 import Database from "better-sqlite3";
+import { appendFileSync, mkdirSync } from "node:fs";
 import { join, resolve } from "node:path";
 
 // ---------------------------------------------------------------------------
@@ -77,6 +78,36 @@ export function openDb(dataDir) {
 // ---------------------------------------------------------------------------
 
 /**
+ * Append one line to the local JSONL price log (outside the git data repo).
+ * Only logs successful scrapes (price !== null). Non-fatal — never throws.
+ * Controlled by PRICE_LOG_DIR env var; no-ops if unset.
+ *
+ * Log format: one JSON object per line in prices-YYYY-MM-DD.jsonl
+ * Recovery:   node import-from-log.js <file.jsonl>
+ *
+ * @param {object} row  same shape as writeSnapshot row
+ */
+function appendPriceLog(row) {
+  const logDir = process.env.PRICE_LOG_DIR;
+  if (!logDir || row.price == null) return;
+  try {
+    const date = row.scrapedAt.slice(0, 10);
+    mkdirSync(logDir, { recursive: true });
+    const line = JSON.stringify({
+      scraped_at:   row.scrapedAt,
+      window_start: row.windowStart,
+      coin_slug:    row.coinSlug,
+      vendor:       row.vendor,
+      price:        row.price,
+      source:       row.source,
+    }) + "\n";
+    appendFileSync(join(logDir, `prices-${date}.jsonl`), line);
+  } catch {
+    // Non-fatal — a log write failure is never worth crashing the scrape
+  }
+}
+
+/**
  * Insert a single price snapshot row.
  *
  * @param {Database.Database} db
@@ -107,6 +138,7 @@ export function writeSnapshot(db, row) {
     confidence:  row.confidence ?? null,
     isFailed:    row.isFailed ? 1 : 0,
   });
+  appendPriceLog(row);
 }
 
 /**

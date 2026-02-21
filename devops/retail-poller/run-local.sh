@@ -17,6 +17,11 @@ touch $LOCKFILE
 DATE=$(date -u +%Y-%m-%d)
 echo "[$(date -u +%H:%M:%S)] Starting retail price run for $DATE"
 
+# Prune price log files older than 30 days (non-fatal)
+if [ -n "${PRICE_LOG_DIR:-}" ]; then
+  find "$PRICE_LOG_DIR" -name "prices-*.jsonl" -mtime +30 -delete 2>/dev/null || true
+fi
+
 # Required: DATA_REPO_PATH must be a git checkout of the data branch
 if [ -z "$DATA_REPO_PATH" ]; then
   echo "ERROR: DATA_REPO_PATH not set (path to data branch git checkout)"
