@@ -3368,6 +3368,7 @@ const exportPdf = () => {
       item.grade || '',
       item.gradingAuthority || '',
       item.certNumber || '',
+      item.serialNumber || '',
       item.notes || '',
       (item.uuid || '').slice(0, 8)
     ];
@@ -3376,7 +3377,7 @@ const exportPdf = () => {
   // Add table
   doc.autoTable({
     head: [['Date', 'Metal', 'Type', 'Name', 'Qty', 'Weight', 'Purity', 'Purchase',
-            'Melt Value', 'Retail', 'Gain/Loss', 'Location', 'N#', 'PCGS#', 'Grade', 'Auth', 'Cert#', 'Notes', 'UUID']],
+            'Melt Value', 'Retail', 'Gain/Loss', 'Location', 'N#', 'PCGS#', 'Grade', 'Auth', 'Cert#', 'Serial #', 'Notes', 'UUID']],
     body: tableData,
     startY: 30,
     theme: 'striped',

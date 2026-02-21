@@ -875,7 +875,7 @@ const sanitizeObjectFields = (obj) => {
       if (key === 'obverseImageUrl' || key === 'reverseImageUrl') continue;
       const allowHyphen = key === 'date';
       cleaned[key] =
-        (key === 'name' || key === 'purchaseLocation' || key === 'year' || key === 'grade' || key === 'gradingAuthority' || key === 'certNumber')
+        (key === 'name' || key === 'purchaseLocation' || key === 'year' || key === 'grade' || key === 'gradingAuthority' || key === 'certNumber' || key === 'serialNumber')
           ? cleanString(cleaned[key])
           : stripNonAlphanumeric(cleaned[key], { allowHyphen });
     }
