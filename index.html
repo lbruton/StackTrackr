@@ -3545,14 +3545,20 @@
 
             <!-- ===== MARKET PRICES ===== -->
             <div id="settingsPanel_market" class="settings-section-panel" style="display: none">
-              <div class="d-flex justify-content-between align-items-center mb-3">
-                <h3>Market Prices</h3>
-                <div style="display:flex;align-items:center;gap:0.5rem;">
+              <h3 class="mb-2">Market Prices</h3>
+              <div class="d-flex align-items-center gap-3 mb-3">
+                <div style="display:flex;flex-direction:column;gap:0.15rem;flex-shrink:0;">
                   <span id="retailLastSync" class="settings-subtext"></span>
-                  <button id="retailSyncBtn" class="retail-card-action" type="button">Sync Now</button>
+                  <span id="retailSyncStatus" class="settings-subtext"></span>
+                </div>
+                <div style="flex:1;display:flex;align-items:center;gap:0.5rem;justify-content:flex-end;">
+                  <div id="retailDisclaimer" class="retail-disclaimer-inline" style="display:none;" role="status">
+                    <i class="bi bi-info-circle" aria-hidden="true"></i>
+                    Best-effort pricing · Sourced from public data, may not reflect real-time or credit card pricing · Confidence: 60=aligned · 35=outlier · 15=significant outlier
+                  </div>
+                  <button id="retailSyncBtn" class="retail-card-action flex-shrink-0" type="button">Sync Now</button>
                 </div>
               </div>
-              <span id="retailSyncStatus" class="settings-subtext"></span>
 
               <div id="retailCardsGrid" class="retail-cards-grid" aria-live="polite" aria-label="Retail coin price cards">
                 <!-- Cards rendered by renderRetailCards() -->
