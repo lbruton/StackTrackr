@@ -1,0 +1,58 @@
+[
+  {
+    "date": "2026-02-20",
+    "avg_median": 5237.95,
+    "avg_low": 5052.1,
+    "sample_count": 16,
+    "vendors": {
+      "apmex": {
+        "avg": 5242.59,
+        "inStock": true
+      },
+      "jmbullion": {
+        "avg": 5237.95,
+        "inStock": true
+      },
+      "monumentmetals": {
+        "avg": null,
+        "inStock": true
+      },
+      "sdbullion": {
+        "avg": 5052.1,
+        "inStock": true
+      }
+    }
+  },
+  {
+    "date": "2026-02-21",
+    "avg_median": 5192.64,
+    "avg_low": 2712.47,
+    "sample_count": 303,
+    "vendors": {
+      "apmex": {
+        "avg": 5250.51,
+        "inStock": true
+      },
+      "bullionexchanges": {
+        "avg": 5125.99,
+        "inStock": true
+      },
+      "herobullion": {
+        "avg": 5192.64,
+        "inStock": true
+      },
+      "jmbullion": {
+        "avg": 4792.28,
+        "inStock": true
+      },
+      "monumentmetals": {
+        "avg": 5178.67,
+        "inStock": true
+      },
+      "sdbullion": {
+        "avg": 5234.19,
+        "inStock": true
+      }
+    }
+  }
+]

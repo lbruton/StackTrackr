@@ -1,0 +1,30 @@
+[
+  {
+    "spot": 5023.33,
+    "metal": "Gold",
+    "source": "hourly",
+    "provider": "MetalPriceAPI",
+    "timestamp": "2026-02-20 12:00:00"
+  },
+  {
+    "spot": 78.75,
+    "metal": "Silver",
+    "source": "hourly",
+    "provider": "MetalPriceAPI",
+    "timestamp": "2026-02-20 12:00:00"
+  },
+  {
+    "spot": 2080.19,
+    "metal": "Platinum",
+    "source": "hourly",
+    "provider": "MetalPriceAPI",
+    "timestamp": "2026-02-20 12:00:00"
+  },
+  {
+    "spot": 1692.33,
+    "metal": "Palladium",
+    "source": "hourly",
+    "provider": "MetalPriceAPI",
+    "timestamp": "2026-02-20 12:00:00"
+  }
+]

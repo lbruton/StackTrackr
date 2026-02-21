@@ -1,0 +1,26 @@
+{
+  "date": "2026-02-20",
+  "generated_at_utc": "2026-02-20T20:05:01.707Z",
+  "currency": "USD",
+  "prices_by_site": {
+    "apmex": 88.58,
+    "sdbullion": 50.02,
+    "jmbullion": 90.57
+  },
+  "extraction_methods": {
+    "apmex": "firecrawl",
+    "sdbullion": "firecrawl",
+    "jmbullion": "firecrawl"
+  },
+  "source_count": 3,
+  "average_price": 76.39,
+  "median_price": 88.58,
+  "failed_sites": [
+    "monumentmetals"
+  ],
+  "urls_used": [
+    "https://www.apmex.com/product/23/1-oz-silver-round-secondary-market",
+    "https://sdbullion.com/1-oz-silver-buffalo-round",
+    "https://www.jmbullion.com/1-oz-silver-round/"
+  ]
+}

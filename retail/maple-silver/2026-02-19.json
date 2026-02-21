@@ -1,0 +1,27 @@
+{
+  "date": "2026-02-19",
+  "generated_at_utc": "2026-02-19T23:21:46.293Z",
+  "currency": "USD",
+  "prices_by_site": {
+    "jmbullion": 88.26,
+    "apmex": 91.25,
+    "monumentmetals": 88.02,
+    "sdbullion": 91.26
+  },
+  "extraction_methods": {
+    "jmbullion": "firecrawl",
+    "apmex": "firecrawl",
+    "monumentmetals": "firecrawl",
+    "sdbullion": "firecrawl"
+  },
+  "source_count": 4,
+  "average_price": 89.7,
+  "median_price": 91.25,
+  "failed_sites": [],
+  "urls_used": [
+    "https://www.jmbullion.com/2026-1-oz-canadian-silver-maple-leaf-coin/",
+    "https://www.apmex.com/product/1090/1-oz-canadian-silver-maple-leaf-coin-bu-random-year",
+    "https://monumentmetals.com/2026-canada-silver-maple-leaf.html",
+    "https://sdbullion.com/canadian-silver-maple-leaf-coin-random-year"
+  ]
+}

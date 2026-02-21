@@ -1,0 +1,206 @@
+{
+  "schema_version": 1,
+  "last_updated": "2026-02-20",
+  "candidates": [
+    {
+      "key": "maple-silver/jmbullion",
+      "coin": "maple-silver",
+      "provider": "jmbullion",
+      "url": "https://www.jmbullion.com/2026-1-oz-canadian-silver-maple-leaf-coin/",
+      "consecutive_failures": 1,
+      "last_error": "price_not_found",
+      "last_attempted": "2026-02-19",
+      "last_working_date": null
+    },
+    {
+      "key": "britannia-silver/jmbullion",
+      "coin": "britannia-silver",
+      "provider": "jmbullion",
+      "url": "https://www.jmbullion.com/1-oz-british-silver-britannia-coin-vy/",
+      "consecutive_failures": 1,
+      "last_error": "price_not_found",
+      "last_attempted": "2026-02-19",
+      "last_working_date": null
+    },
+    {
+      "key": "krugerrand-silver/jmbullion",
+      "coin": "krugerrand-silver",
+      "provider": "jmbullion",
+      "url": "https://www.jmbullion.com/2026-1-oz-south-african-silver-krugerrand-coin/",
+      "consecutive_failures": 2,
+      "last_error": "price_not_found",
+      "last_attempted": "2026-02-19",
+      "last_working_date": null
+    },
+    {
+      "key": "krugerrand-silver/monumentmetals",
+      "coin": "krugerrand-silver",
+      "provider": "monumentmetals",
+      "url": "https://monumentmetals.com/2026-south-africa-1-oz-silver-krugerrand-bu.html",
+      "consecutive_failures": 4,
+      "last_error": "price_not_found",
+      "last_attempted": "2026-02-20",
+      "last_working_date": null
+    },
+    {
+      "key": "generic-silver-round/jmbullion",
+      "coin": "generic-silver-round",
+      "provider": "jmbullion",
+      "url": "https://www.jmbullion.com/1-oz-silver-round/",
+      "consecutive_failures": 2,
+      "last_error": "price_not_found",
+      "last_attempted": "2026-02-19",
+      "last_working_date": null
+    },
+    {
+      "key": "generic-silver-bar-10oz/jmbullion",
+      "coin": "generic-silver-bar-10oz",
+      "provider": "jmbullion",
+      "url": "https://www.jmbullion.com/10-oz-silver-bar/",
+      "consecutive_failures": 1,
+      "last_error": "price_not_found",
+      "last_attempted": "2026-02-19",
+      "last_working_date": null
+    },
+    {
+      "key": "generic-silver-bar-10oz/monumentmetals",
+      "coin": "generic-silver-bar-10oz",
+      "provider": "monumentmetals",
+      "url": "https://monumentmetals.com/10oz-elemetal-silver-bar.html",
+      "consecutive_failures": 3,
+      "last_error": "price_not_found",
+      "last_attempted": "2026-02-20",
+      "last_working_date": null
+    },
+    {
+      "key": "buffalo/jmbullion",
+      "coin": "buffalo",
+      "provider": "jmbullion",
+      "url": "https://www.jmbullion.com/2026-1-oz-american-gold-buffalo-coin/",
+      "consecutive_failures": 1,
+      "last_error": "price_not_found",
+      "last_attempted": "2026-02-19",
+      "last_working_date": null
+    },
+    {
+      "key": "buffalo/monumentmetals",
+      "coin": "buffalo",
+      "provider": "monumentmetals",
+      "url": "https://monumentmetals.com/2026-1-oz-american-gold-buffalo-bu.html",
+      "consecutive_failures": 4,
+      "last_error": "price_not_found",
+      "last_attempted": "2026-02-20",
+      "last_working_date": null
+    },
+    {
+      "key": "krugerrand-gold/jmbullion",
+      "coin": "krugerrand-gold",
+      "provider": "jmbullion",
+      "url": "https://www.jmbullion.com/1-oz-south-african-gold-krugerrand/",
+      "consecutive_failures": 2,
+      "last_error": "price_not_found",
+      "last_attempted": "2026-02-19",
+      "last_working_date": null
+    },
+    {
+      "key": "krugerrand-gold/monumentmetals",
+      "coin": "krugerrand-gold",
+      "provider": "monumentmetals",
+      "url": "https://monumentmetals.com/random-date-1oz-gold-krugerrand.html",
+      "consecutive_failures": 4,
+      "last_error": "price_not_found",
+      "last_attempted": "2026-02-20",
+      "last_working_date": null
+    },
+    {
+      "key": "ape/monumentmetals",
+      "coin": "ape",
+      "provider": "monumentmetals",
+      "url": "https://monumentmetals.com/random-date-1oz-platinum-eagle.html",
+      "consecutive_failures": 4,
+      "last_error": "price_not_found",
+      "last_attempted": "2026-02-20",
+      "last_working_date": null
+    },
+    {
+      "key": "ase/jmbullion",
+      "coin": "ase",
+      "provider": "jmbullion",
+      "url": "https://www.jmbullion.com/2026-1-oz-american-silver-eagle-coin/",
+      "consecutive_failures": 1,
+      "last_error": "price_not_found",
+      "last_attempted": "2026-02-19",
+      "last_working_date": null
+    },
+    {
+      "key": "ase/bullionexchanges",
+      "coin": "ase",
+      "provider": "bullionexchanges",
+      "url": "https://www.bullionexchanges.com/2026-1-oz-silver-american-eagle-1-coin-bu",
+      "consecutive_failures": 2,
+      "last_error": "price_not_found",
+      "last_attempted": "2026-02-20",
+      "last_working_date": null
+    },
+    {
+      "key": "maple-silver/monumentmetals",
+      "coin": "maple-silver",
+      "provider": "monumentmetals",
+      "url": "https://monumentmetals.com/2026-canada-silver-maple-leaf.html",
+      "consecutive_failures": 2,
+      "last_error": "price_not_found",
+      "last_attempted": "2026-02-20",
+      "last_working_date": null
+    },
+    {
+      "key": "britannia-silver/monumentmetals",
+      "coin": "britannia-silver",
+      "provider": "monumentmetals",
+      "url": "https://monumentmetals.com/doc-silver-britannia.html",
+      "consecutive_failures": 2,
+      "last_error": "price_not_found",
+      "last_attempted": "2026-02-20",
+      "last_working_date": null
+    },
+    {
+      "key": "generic-silver-round/monumentmetals",
+      "coin": "generic-silver-round",
+      "provider": "monumentmetals",
+      "url": "https://monumentmetals.com/elemetal-1oz-silver-round.html",
+      "consecutive_failures": 2,
+      "last_error": "price_not_found",
+      "last_attempted": "2026-02-20",
+      "last_working_date": null
+    },
+    {
+      "key": "age/monumentmetals",
+      "coin": "age",
+      "provider": "monumentmetals",
+      "url": "https://monumentmetals.com/2026-american-1-oz-gold-eagle-bu.html",
+      "consecutive_failures": 2,
+      "last_error": "price_not_found",
+      "last_attempted": "2026-02-20",
+      "last_working_date": null
+    },
+    {
+      "key": "maple-gold/monumentmetals",
+      "coin": "maple-gold",
+      "provider": "monumentmetals",
+      "url": "https://monumentmetals.com/2026-1oz-gold-maple.html",
+      "consecutive_failures": 1,
+      "last_error": "price_not_found",
+      "last_attempted": "2026-02-20",
+      "last_working_date": null
+    },
+    {
+      "key": "ase/monumentmetals",
+      "coin": "ase",
+      "provider": "monumentmetals",
+      "url": "https://monumentmetals.com/2026-american-silver-eagle.html",
+      "consecutive_failures": 1,
+      "last_error": "price_not_found",
+      "last_attempted": "2026-02-20",
+      "last_working_date": null
+    }
+  ]
+}

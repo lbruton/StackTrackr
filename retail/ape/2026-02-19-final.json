@@ -1,0 +1,40 @@
+{
+  "date": "2026-02-19",
+  "generated_at_utc": "2026-02-19T23:26:27.460Z",
+  "currency": "USD",
+  "prices_by_site": {
+    "jmbullion": 2417.79,
+    "apmex": 2431.99,
+    "sdbullion": 2237.39
+  },
+  "scores_by_site": {
+    "jmbullion": 5,
+    "apmex": 40,
+    "sdbullion": 30
+  },
+  "methods_by_site": {
+    "jmbullion": "vision(median-preferred)",
+    "apmex": "firecrawl+vision",
+    "sdbullion": "firecrawl(median-preferred)"
+  },
+  "flags_by_site": {
+    "jmbullion": [
+      "method_disagree_fc671.35_v2417.79",
+      "outlier_8.1pct_from_median"
+    ],
+    "apmex": [
+      "outlier_8.7pct_from_median"
+    ],
+    "sdbullion": [
+      "method_disagree_fc2237.39_v2389.79"
+    ]
+  },
+  "source_count": 3,
+  "average_price": 2362.39,
+  "median_price": 2417.79,
+  "lowest_price": 2237.39,
+  "sources": {
+    "firecrawl": "ok",
+    "vision": "ok"
+  }
+}

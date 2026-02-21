@@ -1,0 +1,26 @@
+{
+  "date": "2026-02-19",
+  "generated_at_utc": "2026-02-19T23:21:46.293Z",
+  "currency": "USD",
+  "prices_by_site": {
+    "jmbullion": 671.35,
+    "apmex": 2431.99,
+    "sdbullion": 2237.39
+  },
+  "extraction_methods": {
+    "jmbullion": "firecrawl",
+    "apmex": "firecrawl",
+    "sdbullion": "firecrawl"
+  },
+  "source_count": 3,
+  "average_price": 1780.24,
+  "median_price": 2237.39,
+  "failed_sites": [
+    "monumentmetals"
+  ],
+  "urls_used": [
+    "https://www.jmbullion.com/1-oz-american-platinum-eagle-varied/",
+    "https://www.apmex.com/product/52/1-oz-american-platinum-eagle-coin-bu-random-year-1997-2023",
+    "https://sdbullion.com/1-oz-platinum-american-eagle-coin-random-dates"
+  ]
+}

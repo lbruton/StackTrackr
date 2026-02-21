@@ -1,0 +1,479 @@
+{
+  "schema_version": 1,
+  "last_updated": "2026-02-19",
+  "currency": "USD",
+  "pricing_model": "per_coin",
+  "notes": "URLs point to specific product pages (BU / random-year SKUs). All URLs verified 2026-02-19. fbp_url: FindBullionPrices comparison page used as fallback when primary scrapes fail.",
+  "coins": {
+    "ase": {
+      "name": "American Silver Eagle 1 oz",
+      "metal": "silver",
+      "weight_oz": 1.0,
+      "fbp_url": "https://findbullionprices.com/p/2026-american-silver-eagle-1-oz-bu-coin/",
+      "providers": [
+        {
+          "id": "jmbullion",
+          "name": "JM Bullion",
+          "enabled": true,
+          "url": "https://www.jmbullion.com/2026-1-oz-american-silver-eagle-coin/"
+        },
+        {
+          "id": "apmex",
+          "name": "APMEX",
+          "enabled": true,
+          "url": "https://www.apmex.com/product/23331/1-oz-american-silver-eagle-coin-bu-random-year"
+        },
+        {
+          "id": "sdbullion",
+          "name": "SD Bullion",
+          "enabled": true,
+          "url": "https://sdbullion.com/2026-1-oz-american-silver-eagle-coin-bu"
+        },
+        {
+          "id": "monumentmetals",
+          "name": "Monument Metals",
+          "enabled": true,
+          "url": "https://monumentmetals.com/2026-american-silver-eagle.html"
+        },
+        {
+          "id": "herobullion",
+          "name": "Hero Bullion",
+          "enabled": true,
+          "url": "https://www.herobullion.com/2026-1-oz-american-silver-eagle-coin/"
+        },
+        {
+          "id": "bullionexchanges",
+          "name": "Bullion Exchanges",
+          "enabled": true,
+          "url": "https://www.bullionexchanges.com/2026-1-oz-silver-american-eagle-1-coin-bu"
+        },
+        {
+          "id": "summitmetals",
+          "name": "Summit Metals",
+          "enabled": true,
+          "url": "https://www.summitmetals.com/collections/american-silver-eagles/products/2026-1-oz-american-silver-eagle-bu-pre-sale"
+        }
+      ]
+    },
+    "maple-silver": {
+      "name": "Canadian Silver Maple Leaf 1 oz",
+      "metal": "silver",
+      "weight_oz": 1.0,
+      "fbp_url": "https://findbullionprices.com/p/2026-canadian-silver-maple-leaf-1-oz/",
+      "providers": [
+        {
+          "id": "jmbullion",
+          "name": "JM Bullion",
+          "enabled": true,
+          "url": "https://www.jmbullion.com/2026-1-oz-canadian-silver-maple-leaf-coin/"
+        },
+        {
+          "id": "apmex",
+          "name": "APMEX",
+          "enabled": true,
+          "url": "https://www.apmex.com/product/1090/1-oz-canadian-silver-maple-leaf-coin-bu-random-year"
+        },
+        {
+          "id": "sdbullion",
+          "name": "SD Bullion",
+          "enabled": true,
+          "url": "https://sdbullion.com/canadian-silver-maple-leaf-coin-random-year"
+        },
+        {
+          "id": "monumentmetals",
+          "name": "Monument Metals",
+          "enabled": true,
+          "url": "https://monumentmetals.com/2026-canada-silver-maple-leaf.html"
+        },
+        {
+          "id": "herobullion",
+          "enabled": true,
+          "url": "https://www.herobullion.com/canadian-silver-maple-1-oz-coin/"
+        },
+        {
+          "id": "bullionexchanges",
+          "enabled": true,
+          "url": "https://www.bullionexchanges.com/2026-1-oz-canadian-silver-maple-leaf-coin-bu"
+        }
+      ]
+    },
+    "britannia-silver": {
+      "name": "British Silver Britannia 1 oz",
+      "metal": "silver",
+      "weight_oz": 1.0,
+      "fbp_url": "https://findbullionprices.com/p/2026-british-silver-britannia-1-oz/",
+      "providers": [
+        {
+          "id": "jmbullion",
+          "name": "JM Bullion",
+          "enabled": true,
+          "url": "https://www.jmbullion.com/1-oz-british-silver-britannia-coin-vy/"
+        },
+        {
+          "id": "apmex",
+          "name": "APMEX",
+          "enabled": true,
+          "url": "https://www.apmex.com/product/53532/great-britain-1-oz-silver-britannia-bu-random-year"
+        },
+        {
+          "id": "sdbullion",
+          "name": "SD Bullion",
+          "enabled": true,
+          "url": "https://sdbullion.com/2026-1-oz-silver-britannia-coin"
+        },
+        {
+          "id": "monumentmetals",
+          "name": "Monument Metals",
+          "enabled": true,
+          "url": "https://monumentmetals.com/doc-silver-britannia.html"
+        },
+        {
+          "id": "herobullion",
+          "enabled": true,
+          "url": "https://www.herobullion.com/1-oz-british-silver-britannia-coin/"
+        },
+        {
+          "id": "bullionexchanges",
+          "enabled": true,
+          "url": "https://www.bullionexchanges.com/great-britain-silver-1-oz-britannia-coin-bu-random-year"
+        }
+      ]
+    },
+    "krugerrand-silver": {
+      "name": "South African Silver Krugerrand 1 oz",
+      "metal": "silver",
+      "weight_oz": 1.0,
+      "fbp_url": "https://findbullionprices.com/p/2026-south-african-silver-krugerrand-1-oz/",
+      "providers": [
+        {
+          "id": "jmbullion",
+          "name": "JM Bullion",
+          "enabled": true,
+          "url": "https://www.jmbullion.com/2026-1-oz-south-african-silver-krugerrand-coin/"
+        },
+        {
+          "id": "apmex",
+          "name": "APMEX",
+          "enabled": true,
+          "url": "https://www.apmex.com/product/322171/2026-south-africa-1-oz-silver-krugerrand-bu"
+        },
+        {
+          "id": "sdbullion",
+          "name": "SD Bullion",
+          "enabled": true,
+          "url": "https://sdbullion.com/2026-1-oz-south-african-silver-krugerrand-coin-bu"
+        },
+        {
+          "id": "monumentmetals",
+          "name": "Monument Metals",
+          "enabled": true,
+          "url": "https://monumentmetals.com/2026-south-africa-1-oz-silver-krugerrand-bu.html"
+        },
+        {
+          "id": "herobullion",
+          "enabled": true,
+          "url": "https://www.herobullion.com/1-oz-south-african-silver-krugerrand/"
+        },
+        {
+          "id": "bullionexchanges",
+          "enabled": true,
+          "url": "https://www.bullionexchanges.com/2026-south-africa-1-oz-silver-krugerrand-coin-bu"
+        }
+      ]
+    },
+    "generic-silver-round": {
+      "name": "Generic Silver Round 1 oz (.999)",
+      "metal": "silver",
+      "weight_oz": 1.0,
+      "fbp_url": "https://findbullionprices.com/p/1-oz-silver-round-generic/",
+      "providers": [
+        {
+          "id": "jmbullion",
+          "name": "JM Bullion",
+          "enabled": true,
+          "url": "https://www.jmbullion.com/1-oz-silver-round/"
+        },
+        {
+          "id": "apmex",
+          "name": "APMEX",
+          "enabled": true,
+          "url": "https://www.apmex.com/product/23/1-oz-silver-round-secondary-market"
+        },
+        {
+          "id": "sdbullion",
+          "name": "SD Bullion",
+          "enabled": true,
+          "url": "https://sdbullion.com/1-oz-silver-buffalo-round"
+        },
+        {
+          "id": "monumentmetals",
+          "name": "Monument Metals",
+          "enabled": true,
+          "url": "https://monumentmetals.com/elemetal-1oz-silver-round.html"
+        },
+        {
+          "id": "herobullion",
+          "enabled": true,
+          "url": "https://www.herobullion.com/1-oz-silver-round-any-mint-any-condition/"
+        },
+        {
+          "id": "bullionexchanges",
+          "enabled": true,
+          "url": "https://www.bullionexchanges.com/1-oz-silver-generic-rounds"
+        }
+      ]
+    },
+    "generic-silver-bar-10oz": {
+      "name": "Generic Silver Bar 10 oz (.999)",
+      "metal": "silver",
+      "weight_oz": 10.0,
+      "fbp_url": "https://findbullionprices.com/p/10-oz-silver-bar-generic/",
+      "providers": [
+        {
+          "id": "jmbullion",
+          "name": "JM Bullion",
+          "enabled": true,
+          "url": "https://www.jmbullion.com/10-oz-silver-bar/"
+        },
+        {
+          "id": "apmex",
+          "name": "APMEX",
+          "enabled": true,
+          "url": "https://www.apmex.com/product/21/10-oz-silver-bar-secondary-market"
+        },
+        {
+          "id": "sdbullion",
+          "name": "SD Bullion",
+          "enabled": true,
+          "url": "https://sdbullion.com/10-oz-sd-bullion-proclaim-liberty-silver-bar"
+        },
+        {
+          "id": "monumentmetals",
+          "name": "Monument Metals",
+          "enabled": true,
+          "url": "https://monumentmetals.com/10oz-elemetal-silver-bar.html"
+        },
+        {
+          "id": "herobullion",
+          "enabled": true,
+          "url": "https://www.herobullion.com/10-oz-silver-bar-any-mint-any-condition/"
+        },
+        {
+          "id": "bullionexchanges",
+          "enabled": true,
+          "url": "https://www.bullionexchanges.com/10-oz-generic-silver-bar"
+        }
+      ]
+    },
+    "age": {
+      "name": "American Gold Eagle 1 oz",
+      "metal": "gold",
+      "weight_oz": 1.0,
+      "fbp_url": "https://findbullionprices.com/p/2026-american-gold-eagle-1-oz-bu-coin/",
+      "providers": [
+        {
+          "id": "jmbullion",
+          "name": "JM Bullion",
+          "enabled": true,
+          "url": "https://www.jmbullion.com/1-oz-american-gold-eagle/"
+        },
+        {
+          "id": "apmex",
+          "name": "APMEX",
+          "enabled": true,
+          "url": "https://www.apmex.com/product/1/1-oz-american-gold-eagle-coin-bu-random-year"
+        },
+        {
+          "id": "sdbullion",
+          "name": "SD Bullion",
+          "enabled": true,
+          "url": "https://sdbullion.com/2025-1-oz-american-gold-eagle-coin"
+        },
+        {
+          "id": "monumentmetals",
+          "name": "Monument Metals",
+          "enabled": true,
+          "url": "https://monumentmetals.com/2026-american-1-oz-gold-eagle-bu.html"
+        },
+        {
+          "id": "herobullion",
+          "enabled": true,
+          "url": "https://www.herobullion.com/american-gold-eagle-1-oz-coin/"
+        },
+        {
+          "id": "bullionexchanges",
+          "enabled": true,
+          "url": "https://www.bullionexchanges.com/1-oz-american-eagle-gold-coin-random-year"
+        }
+      ]
+    },
+    "buffalo": {
+      "name": "American Gold Buffalo 1 oz",
+      "metal": "gold",
+      "weight_oz": 1.0,
+      "fbp_url": "https://findbullionprices.com/p/2026-american-gold-buffalo-1-oz-bu-coin/",
+      "providers": [
+        {
+          "id": "jmbullion",
+          "name": "JM Bullion",
+          "enabled": true,
+          "url": "https://www.jmbullion.com/2026-1-oz-american-gold-buffalo-coin/"
+        },
+        {
+          "id": "apmex",
+          "name": "APMEX",
+          "enabled": true,
+          "url": "https://www.apmex.com/product/39598/1-oz-gold-buffalo-bu-random-year"
+        },
+        {
+          "id": "sdbullion",
+          "name": "SD Bullion",
+          "enabled": true,
+          "url": "https://sdbullion.com/1-oz-american-gold-buffalo-coin-random-year"
+        },
+        {
+          "id": "monumentmetals",
+          "name": "Monument Metals",
+          "enabled": true,
+          "url": "https://monumentmetals.com/2026-1-oz-american-gold-buffalo-bu.html"
+        },
+        {
+          "id": "herobullion",
+          "enabled": true,
+          "url": "https://www.herobullion.com/american-gold-buffalo-1-oz-coin/"
+        },
+        {
+          "id": "bullionexchanges",
+          "enabled": true,
+          "url": "https://www.bullionexchanges.com/1-oz-gold-american-buffalo-random-year"
+        }
+      ]
+    },
+    "maple-gold": {
+      "name": "Canadian Gold Maple Leaf 1 oz",
+      "metal": "gold",
+      "weight_oz": 1.0,
+      "fbp_url": "https://findbullionprices.com/p/2026-canadian-gold-maple-leaf-1-oz/",
+      "providers": [
+        {
+          "id": "jmbullion",
+          "name": "JM Bullion",
+          "enabled": true,
+          "url": "https://www.jmbullion.com/1-oz-canadian-gold-maple-leaf-any-year/"
+        },
+        {
+          "id": "apmex",
+          "name": "APMEX",
+          "enabled": true,
+          "url": "https://www.apmex.com/product/9/canada-1-oz-gold-maple-leaf-9999-fine-bu-random-year"
+        },
+        {
+          "id": "sdbullion",
+          "name": "SD Bullion",
+          "enabled": true,
+          "url": "https://sdbullion.com/2026-1-oz-gold-maple-leaf-coin"
+        },
+        {
+          "id": "monumentmetals",
+          "name": "Monument Metals",
+          "enabled": true,
+          "url": "https://monumentmetals.com/2026-1oz-gold-maple.html"
+        },
+        {
+          "id": "herobullion",
+          "enabled": true,
+          "url": "https://www.herobullion.com/canadian-gold-maple-1-oz-coin/"
+        },
+        {
+          "id": "bullionexchanges",
+          "enabled": true,
+          "url": "https://www.bullionexchanges.com/1-oz-canadian-gold-maple-leaf-50-coin-random-year"
+        }
+      ]
+    },
+    "krugerrand-gold": {
+      "name": "South African Gold Krugerrand 1 oz",
+      "metal": "gold",
+      "weight_oz": 1.0,
+      "fbp_url": "https://findbullionprices.com/p/2026-south-african-gold-krugerrand-1-oz/",
+      "providers": [
+        {
+          "id": "jmbullion",
+          "name": "JM Bullion",
+          "enabled": true,
+          "url": "https://www.jmbullion.com/1-oz-south-african-gold-krugerrand/"
+        },
+        {
+          "id": "apmex",
+          "name": "APMEX",
+          "enabled": true,
+          "url": "https://www.apmex.com/product/62/south-african-1-oz-gold-krugerrand-coin-bu-random-year"
+        },
+        {
+          "id": "sdbullion",
+          "name": "SD Bullion",
+          "enabled": true,
+          "url": "https://sdbullion.com/1-oz-south-african-gold-krugerrand-coin-random-year"
+        },
+        {
+          "id": "monumentmetals",
+          "name": "Monument Metals",
+          "enabled": true,
+          "url": "https://monumentmetals.com/random-date-1oz-gold-krugerrand.html"
+        },
+        {
+          "id": "herobullion",
+          "enabled": true,
+          "url": "https://www.herobullion.com/south-african-gold-krugerrand-1-oz-coin/"
+        },
+        {
+          "id": "bullionexchanges",
+          "enabled": true,
+          "url": "https://www.bullionexchanges.com/1-oz-south-african-krugerrand-gold-coin-random-year"
+        }
+      ]
+    },
+    "ape": {
+      "name": "American Platinum Eagle 1 oz",
+      "metal": "platinum",
+      "weight_oz": 1.0,
+      "fbp_url": "https://findbullionprices.com/p/2026-american-platinum-eagle-1-oz-bu-coin/",
+      "providers": [
+        {
+          "id": "jmbullion",
+          "name": "JM Bullion",
+          "enabled": true,
+          "url": "https://www.jmbullion.com/1-oz-american-platinum-eagle-varied/"
+        },
+        {
+          "id": "apmex",
+          "name": "APMEX",
+          "enabled": true,
+          "url": "https://www.apmex.com/product/52/1-oz-american-platinum-eagle-coin-bu-random-year-1997-2023"
+        },
+        {
+          "id": "sdbullion",
+          "name": "SD Bullion",
+          "enabled": true,
+          "url": "https://sdbullion.com/1-oz-platinum-american-eagle-coin-random-dates"
+        },
+        {
+          "id": "monumentmetals",
+          "name": "Monument Metals",
+          "enabled": true,
+          "url": "https://monumentmetals.com/random-date-1oz-platinum-eagle.html"
+        },
+        {
+          "id": "herobullion",
+          "enabled": true,
+          "url": "https://www.herobullion.com/american-platinum-eagle-1-oz-coin/"
+        },
+        {
+          "id": "bullionexchanges",
+          "enabled": true,
+          "url": "https://www.bullionexchanges.com/1-oz-platinum-american-eagle"
+        }
+      ]
+    }
+  }
+}

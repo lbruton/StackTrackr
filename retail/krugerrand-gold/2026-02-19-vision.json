@@ -1,0 +1,23 @@
+{
+  "date": "2026-02-19",
+  "generated_at_utc": "2026-02-19T23:25:47.745Z",
+  "method": "gemini-vision",
+  "model": "gemini-2.5-flash",
+  "currency": "USD",
+  "prices_by_site": {
+    "apmex": 5138.09,
+    "jmbullion": 5129.89,
+    "sdbullion": 5130.47,
+    "monumentmetals": 5064.22
+  },
+  "confidence_by_site": {
+    "apmex": "high",
+    "jmbullion": "high",
+    "sdbullion": "high",
+    "monumentmetals": "high"
+  },
+  "source_count": 4,
+  "average_price": 5115.67,
+  "median_price": 5130.47,
+  "failed_sites": []
+}

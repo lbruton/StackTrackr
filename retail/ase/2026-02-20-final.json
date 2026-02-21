@@ -1,0 +1,63 @@
+{
+  "date": "2026-02-20",
+  "generated_at_utc": "2026-02-20T20:05:59.880Z",
+  "currency": "USD",
+  "prices_by_site": {
+    "apmex": 98.08,
+    "sdbullion": 99.05,
+    "jmbullion": 100.06,
+    "herobullion": 97.48,
+    "summitmetals": 99.22,
+    "monumentmetals": 96.59,
+    "bullionexchanges": 96.62
+  },
+  "scores_by_site": {
+    "apmex": 60,
+    "sdbullion": 60,
+    "jmbullion": 60,
+    "herobullion": 60,
+    "summitmetals": 60,
+    "monumentmetals": 60,
+    "bullionexchanges": 60
+  },
+  "methods_by_site": {
+    "apmex": "firecrawl",
+    "sdbullion": "firecrawl",
+    "jmbullion": "firecrawl",
+    "herobullion": "firecrawl",
+    "summitmetals": "firecrawl",
+    "monumentmetals": "firecrawl",
+    "bullionexchanges": "firecrawl"
+  },
+  "flags_by_site": {
+    "apmex": [
+      "vision_unavailable"
+    ],
+    "sdbullion": [
+      "vision_unavailable"
+    ],
+    "jmbullion": [
+      "vision_unavailable"
+    ],
+    "herobullion": [
+      "vision_unavailable"
+    ],
+    "summitmetals": [
+      "vision_unavailable"
+    ],
+    "monumentmetals": [
+      "vision_unavailable"
+    ],
+    "bullionexchanges": [
+      "vision_unavailable"
+    ]
+  },
+  "source_count": 7,
+  "average_price": 98.16,
+  "median_price": 98.08,
+  "lowest_price": 96.59,
+  "sources": {
+    "firecrawl": "ok",
+    "vision": "missing"
+  }
+}

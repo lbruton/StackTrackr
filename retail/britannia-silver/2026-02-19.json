@@ -1,0 +1,27 @@
+{
+  "date": "2026-02-19",
+  "generated_at_utc": "2026-02-19T23:21:46.293Z",
+  "currency": "USD",
+  "prices_by_site": {
+    "jmbullion": 85.26,
+    "apmex": 90.25,
+    "monumentmetals": 85.9,
+    "sdbullion": 88.76
+  },
+  "extraction_methods": {
+    "jmbullion": "firecrawl",
+    "apmex": "firecrawl",
+    "monumentmetals": "firecrawl",
+    "sdbullion": "firecrawl"
+  },
+  "source_count": 4,
+  "average_price": 87.54,
+  "median_price": 88.76,
+  "failed_sites": [],
+  "urls_used": [
+    "https://www.jmbullion.com/1-oz-british-silver-britannia-coin-vy/",
+    "https://www.apmex.com/product/53532/great-britain-1-oz-silver-britannia-bu-random-year",
+    "https://monumentmetals.com/doc-silver-britannia.html",
+    "https://sdbullion.com/2026-1-oz-silver-britannia-coin"
+  ]
+}

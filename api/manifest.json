@@ -1,0 +1,26 @@
+{
+  "generated_at": "2026-02-21T20:42:23.900Z",
+  "latest_window": "2026-02-21T20:30:00Z",
+  "window_count": 63,
+  "coin_count": 11,
+  "coins": [
+    "age",
+    "ape",
+    "ase",
+    "britannia-silver",
+    "buffalo",
+    "generic-silver-bar-10oz",
+    "generic-silver-round",
+    "krugerrand-gold",
+    "krugerrand-silver",
+    "maple-gold",
+    "maple-silver"
+  ],
+  "endpoints": {
+    "latest": "api/latest.json",
+    "slug_latest": "api/{slug}/latest.json",
+    "history_7d": "api/{slug}/history-7d.json",
+    "history_30d": "api/{slug}/history-30d.json",
+    "providers": "api/providers.json"
+  }
+}

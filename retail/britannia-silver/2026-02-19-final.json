@@ -1,0 +1,39 @@
+{
+  "date": "2026-02-19",
+  "generated_at_utc": "2026-02-19T23:26:27.460Z",
+  "currency": "USD",
+  "prices_by_site": {
+    "jmbullion": 91.18,
+    "apmex": 90.25,
+    "monumentmetals": 85.9,
+    "sdbullion": 88.76
+  },
+  "scores_by_site": {
+    "jmbullion": 30,
+    "apmex": 65,
+    "monumentmetals": 55,
+    "sdbullion": 45
+  },
+  "methods_by_site": {
+    "jmbullion": "vision(median-preferred)",
+    "apmex": "firecrawl+vision",
+    "monumentmetals": "firecrawl+vision",
+    "sdbullion": "firecrawl+vision(close)"
+  },
+  "flags_by_site": {
+    "jmbullion": [
+      "method_disagree_fc85.26_v91.18"
+    ],
+    "sdbullion": [
+      "method_diff_4.2pct"
+    ]
+  },
+  "source_count": 4,
+  "average_price": 89.02,
+  "median_price": 90.25,
+  "lowest_price": 85.9,
+  "sources": {
+    "firecrawl": "ok",
+    "vision": "ok"
+  }
+}

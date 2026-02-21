@@ -1,0 +1,31 @@
+{
+  "date": "2026-02-21",
+  "generated_at_utc": "2026-02-21T20:42:20.677Z",
+  "method": "gemini-vision",
+  "model": "gemini-2.5-flash",
+  "currency": "USD",
+  "prices_by_site": {
+    "apmex": 90.83,
+    "sdbullion": 91.31
+  },
+  "confidence_by_site": {
+    "apmex": "high",
+    "sdbullion": "high"
+  },
+  "firecrawl_by_site": {
+    "apmex": 90.83,
+    "sdbullion": 91.31
+  },
+  "agreement_by_site": {
+    "apmex": true,
+    "sdbullion": true
+  },
+  "availability_by_site": {
+    "apmex": true,
+    "sdbullion": true
+  },
+  "source_count": 2,
+  "average_price": 91.07,
+  "median_price": 91.31,
+  "failed_sites": []
+}

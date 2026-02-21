@@ -1,0 +1,643 @@
+{
+  "slug": "age",
+  "window_start": "2026-02-21T20:30:00Z",
+  "median_price": 5425.57,
+  "lowest_price": 5120.96,
+  "vendors": {
+    "jmbullion": {
+      "price": 5120.96,
+      "confidence": 50,
+      "source": "firecrawl",
+      "inStock": true
+    },
+    "sdbullion": {
+      "price": 5425.57,
+      "confidence": 99,
+      "source": "firecrawl+vision",
+      "inStock": true
+    },
+    "apmex": {
+      "price": 5352.59,
+      "confidence": 80,
+      "source": "vision",
+      "inStock": false
+    }
+  },
+  "availability_by_site": {
+    "jmbullion": true,
+    "monumentmetals": false,
+    "herobullion": false,
+    "sdbullion": true,
+    "bullionexchanges": false,
+    "apmex": true
+  },
+  "last_known_price_by_site": {
+    "monumentmetals": 5340.05,
+    "herobullion": 5359.39,
+    "bullionexchanges": 5190.99
+  },
+  "last_available_date_by_site": {
+    "monumentmetals": "2026-02-21",
+    "herobullion": "2026-02-21",
+    "bullionexchanges": "2026-02-21"
+  },
+  "windows_24h": [
+    {
+      "window": "2026-02-20T22:15:00Z",
+      "median": 5238.45,
+      "low": 5120.96,
+      "vendors": {
+        "jmbullion": 5120.96,
+        "sdbullion": 5238.45,
+        "apmex": 5337.59
+      }
+    },
+    {
+      "window": "2026-02-20T22:45:00Z",
+      "median": 5238.45,
+      "low": 5120.96,
+      "vendors": {
+        "sdbullion": 5238.45,
+        "apmex": 5337.59,
+        "jmbullion": 5120.96
+      }
+    },
+    {
+      "window": "2026-02-20T23:15:00Z",
+      "median": 5238.45,
+      "low": 5120.96,
+      "vendors": {
+        "sdbullion": 5238.45,
+        "jmbullion": 5120.96,
+        "apmex": 5337.59
+      }
+    },
+    {
+      "window": "2026-02-20T23:45:00Z",
+      "median": 5238.45,
+      "low": 5120.96,
+      "vendors": {
+        "jmbullion": 5120.96,
+        "apmex": 5337.59,
+        "sdbullion": 5238.45
+      }
+    },
+    {
+      "window": "2026-02-21T00:30:00Z",
+      "median": 5120.96,
+      "low": 2789.22,
+      "vendors": {
+        "apmex": 5337.59,
+        "jmbullion": 5120.96,
+        "sdbullion": 2789.22
+      }
+    },
+    {
+      "window": "2026-02-21T00:45:00Z",
+      "median": 5120.96,
+      "low": 2789.22,
+      "vendors": {
+        "jmbullion": 5120.96,
+        "sdbullion": 2789.22,
+        "apmex": 5337.59
+      }
+    },
+    {
+      "window": "2026-02-21T01:00:00Z",
+      "median": 5120.96,
+      "low": 2789.22,
+      "vendors": {
+        "sdbullion": 2789.22,
+        "apmex": 5337.59,
+        "jmbullion": 5120.96
+      }
+    },
+    {
+      "window": "2026-02-21T03:30:00Z",
+      "median": 2789.22,
+      "low": 2720.47,
+      "vendors": {
+        "apmex": 5337.59,
+        "sdbullion": 2789.22,
+        "jmbullion": 2720.47
+      }
+    },
+    {
+      "window": "2026-02-21T03:45:00Z",
+      "median": 5337.59,
+      "low": 2720.47,
+      "vendors": {
+        "apmex": 5337.59,
+        "jmbullion": 2720.47,
+        "sdbullion": 5374.38
+      }
+    },
+    {
+      "window": "2026-02-21T04:00:00Z",
+      "median": 5337.59,
+      "low": 2720.47,
+      "vendors": {
+        "jmbullion": 2720.47,
+        "sdbullion": 5374.38,
+        "apmex": 5337.59
+      }
+    },
+    {
+      "window": "2026-02-21T04:15:00Z",
+      "median": 5337.59,
+      "low": 5120.96,
+      "vendors": {
+        "sdbullion": 5374.38,
+        "apmex": 5337.59,
+        "jmbullion": 5120.96
+      }
+    },
+    {
+      "window": "2026-02-21T04:30:00Z",
+      "median": 5340.05,
+      "low": 5337.59,
+      "vendors": {
+        "monumentmetals": 5340.05,
+        "sdbullion": 5374.38,
+        "apmex": 5337.59
+      }
+    },
+    {
+      "window": "2026-02-21T04:45:00Z",
+      "median": 5374.38,
+      "low": 5337.59,
+      "vendors": {
+        "sdbullion": 5374.38,
+        "apmex": 5337.59
+      }
+    },
+    {
+      "window": "2026-02-21T05:00:00Z",
+      "median": 5337.59,
+      "low": 5120.96,
+      "vendors": {
+        "jmbullion": 5120.96,
+        "apmex": 5337.59,
+        "sdbullion": 5374.38
+      }
+    },
+    {
+      "window": "2026-02-21T05:15:00Z",
+      "median": 5337.59,
+      "low": 5120.96,
+      "vendors": {
+        "apmex": 5337.59,
+        "sdbullion": 5374.38,
+        "jmbullion": 5120.96,
+        "herobullion": 5332.99
+      }
+    },
+    {
+      "window": "2026-02-21T07:00:00Z",
+      "median": 5337.59,
+      "low": 5337.59,
+      "vendors": {
+        "apmex": 5337.59
+      }
+    },
+    {
+      "window": "2026-02-21T07:15:00Z",
+      "median": 5352.59,
+      "low": 5120.96,
+      "vendors": {
+        "bullionexchanges": 5190.99,
+        "monumentmetals": 5340.05,
+        "jmbullion": 5120.96,
+        "apmex": 5352.59,
+        "herobullion": 5359.39,
+        "sdbullion": 5425.57
+      }
+    },
+    {
+      "window": "2026-02-21T07:30:00Z",
+      "median": 5352.59,
+      "low": 5120.96,
+      "vendors": {
+        "apmex": 5352.59,
+        "herobullion": 5359.39,
+        "monumentmetals": 5340.05,
+        "jmbullion": 5120.96,
+        "sdbullion": 5425.57,
+        "bullionexchanges": 5190.99
+      }
+    },
+    {
+      "window": "2026-02-21T08:00:00Z",
+      "median": 5352.59,
+      "low": 5120.96,
+      "vendors": {
+        "apmex": 5352.59,
+        "jmbullion": 5120.96,
+        "bullionexchanges": 5190.99,
+        "sdbullion": 5425.57,
+        "monumentmetals": 5340.05,
+        "herobullion": 5359.39
+      }
+    },
+    {
+      "window": "2026-02-21T08:15:00Z",
+      "median": 5352.59,
+      "low": 5190.99,
+      "vendors": {
+        "apmex": 5352.59,
+        "bullionexchanges": 5190.99,
+        "sdbullion": 5425.57,
+        "monumentmetals": 5340.05,
+        "herobullion": 5359.39
+      }
+    },
+    {
+      "window": "2026-02-21T09:15:00Z",
+      "median": 5352.59,
+      "low": 5190.99,
+      "vendors": {
+        "herobullion": 5359.39,
+        "sdbullion": 5425.57,
+        "monumentmetals": 5340.05,
+        "apmex": 5352.59,
+        "bullionexchanges": 5190.99
+      }
+    },
+    {
+      "window": "2026-02-21T09:30:00Z",
+      "median": 5352.59,
+      "low": 5120.96,
+      "vendors": {
+        "herobullion": 5359.39,
+        "jmbullion": 5120.96,
+        "apmex": 5352.59,
+        "bullionexchanges": 5190.99,
+        "sdbullion": 5425.57,
+        "monumentmetals": 5340.05
+      }
+    },
+    {
+      "window": "2026-02-21T10:00:00Z",
+      "median": 5190.99,
+      "low": 5190.99,
+      "vendors": {
+        "bullionexchanges": 5190.99
+      }
+    },
+    {
+      "window": "2026-02-21T10:15:00Z",
+      "median": 5352.59,
+      "low": 5120.96,
+      "vendors": {
+        "jmbullion": 5120.96,
+        "monumentmetals": 5340.05,
+        "herobullion": 5359.39,
+        "sdbullion": 5425.57,
+        "apmex": 5352.59,
+        "bullionexchanges": 5190.99
+      }
+    },
+    {
+      "window": "2026-02-21T10:30:00Z",
+      "median": 5352.59,
+      "low": 5120.96,
+      "vendors": {
+        "monumentmetals": 5340.05,
+        "jmbullion": 5120.96,
+        "herobullion": 5359.39,
+        "sdbullion": 5425.57,
+        "apmex": 5352.59,
+        "bullionexchanges": 5190.99
+      }
+    },
+    {
+      "window": "2026-02-21T10:45:00Z",
+      "median": 5352.59,
+      "low": 5120.96,
+      "vendors": {
+        "jmbullion": 5120.96,
+        "sdbullion": 5425.57,
+        "herobullion": 5359.39,
+        "bullionexchanges": 5190.99,
+        "apmex": 5352.59,
+        "monumentmetals": 5340.05
+      }
+    },
+    {
+      "window": "2026-02-21T11:00:00Z",
+      "median": 5352.59,
+      "low": 5190.99,
+      "vendors": {
+        "apmex": 5352.59,
+        "sdbullion": 5425.57,
+        "herobullion": 5359.39,
+        "monumentmetals": 5340.05,
+        "bullionexchanges": 5190.99
+      }
+    },
+    {
+      "window": "2026-02-21T11:15:00Z",
+      "median": 5352.59,
+      "low": 5190.99,
+      "vendors": {
+        "sdbullion": 5425.57,
+        "bullionexchanges": 5190.99,
+        "herobullion": 5359.39,
+        "apmex": 5352.59,
+        "monumentmetals": 5340.05
+      }
+    },
+    {
+      "window": "2026-02-21T11:30:00Z",
+      "median": 5352.59,
+      "low": 5120.96,
+      "vendors": {
+        "apmex": 5352.59,
+        "herobullion": 5359.39,
+        "sdbullion": 5425.57,
+        "jmbullion": 5120.96,
+        "monumentmetals": 5340.05,
+        "bullionexchanges": 5190.99
+      }
+    },
+    {
+      "window": "2026-02-21T11:45:00Z",
+      "median": 5352.59,
+      "low": 5120.96,
+      "vendors": {
+        "apmex": 5352.59,
+        "sdbullion": 5425.57,
+        "herobullion": 5359.39,
+        "bullionexchanges": 5190.99,
+        "jmbullion": 5120.96,
+        "monumentmetals": 5340.05
+      }
+    },
+    {
+      "window": "2026-02-21T12:00:00Z",
+      "median": 5340.05,
+      "low": 5120.96,
+      "vendors": {
+        "herobullion": 5359.39,
+        "jmbullion": 5120.96,
+        "bullionexchanges": 5190.99,
+        "monumentmetals": 5340.05
+      }
+    },
+    {
+      "window": "2026-02-21T12:15:00Z",
+      "median": 5425.57,
+      "low": 5425.57,
+      "vendors": {
+        "sdbullion": 5425.57
+      }
+    },
+    {
+      "window": "2026-02-21T12:45:00Z",
+      "median": 5425.57,
+      "low": 5120.96,
+      "vendors": {
+        "jmbullion": 5120.96,
+        "sdbullion": 5425.57
+      }
+    },
+    {
+      "window": "2026-02-21T13:00:00Z",
+      "median": 5425.57,
+      "low": 5120.96,
+      "vendors": {
+        "sdbullion": 5425.57,
+        "jmbullion": 5120.96
+      }
+    },
+    {
+      "window": "2026-02-21T13:15:00Z",
+      "median": 5425.57,
+      "low": 5120.96,
+      "vendors": {
+        "jmbullion": 5120.96,
+        "sdbullion": 5425.57
+      }
+    },
+    {
+      "window": "2026-02-21T13:30:00Z",
+      "median": 5425.57,
+      "low": 5120.96,
+      "vendors": {
+        "jmbullion": 5120.96,
+        "sdbullion": 5425.57
+      }
+    },
+    {
+      "window": "2026-02-21T13:45:00Z",
+      "median": 5425.57,
+      "low": 5120.96,
+      "vendors": {
+        "jmbullion": 5120.96,
+        "sdbullion": 5425.57
+      }
+    },
+    {
+      "window": "2026-02-21T14:15:00Z",
+      "median": 5425.57,
+      "low": 5120.96,
+      "vendors": {
+        "sdbullion": 5425.57,
+        "jmbullion": 5120.96
+      }
+    },
+    {
+      "window": "2026-02-21T14:30:00Z",
+      "median": 5425.57,
+      "low": 5120.96,
+      "vendors": {
+        "jmbullion": 5120.96,
+        "sdbullion": 5425.57
+      }
+    },
+    {
+      "window": "2026-02-21T14:45:00Z",
+      "median": 5425.57,
+      "low": 5120.96,
+      "vendors": {
+        "sdbullion": 5425.57,
+        "jmbullion": 5120.96
+      }
+    },
+    {
+      "window": "2026-02-21T15:00:00Z",
+      "median": 5425.57,
+      "low": 5425.57,
+      "vendors": {
+        "sdbullion": 5425.57
+      }
+    },
+    {
+      "window": "2026-02-21T15:15:00Z",
+      "median": 5425.57,
+      "low": 5120.96,
+      "vendors": {
+        "jmbullion": 5120.96,
+        "sdbullion": 5425.57
+      }
+    },
+    {
+      "window": "2026-02-21T15:30:00Z",
+      "median": 5425.57,
+      "low": 5120.96,
+      "vendors": {
+        "jmbullion": 5120.96,
+        "sdbullion": 5425.57
+      }
+    },
+    {
+      "window": "2026-02-21T15:45:00Z",
+      "median": 5425.57,
+      "low": 5120.96,
+      "vendors": {
+        "sdbullion": 5425.57,
+        "jmbullion": 5120.96
+      }
+    },
+    {
+      "window": "2026-02-21T16:00:00Z",
+      "median": 5425.57,
+      "low": 5120.96,
+      "vendors": {
+        "sdbullion": 5425.57,
+        "jmbullion": 5120.96
+      }
+    },
+    {
+      "window": "2026-02-21T16:15:00Z",
+      "median": 5425.57,
+      "low": 5120.96,
+      "vendors": {
+        "jmbullion": 5120.96,
+        "sdbullion": 5425.57
+      }
+    },
+    {
+      "window": "2026-02-21T16:45:00Z",
+      "median": 5425.57,
+      "low": 5120.96,
+      "vendors": {
+        "jmbullion": 5120.96,
+        "sdbullion": 5425.57
+      }
+    },
+    {
+      "window": "2026-02-21T17:00:00Z",
+      "median": 5425.57,
+      "low": 5120.96,
+      "vendors": {
+        "sdbullion": 5425.57,
+        "jmbullion": 5120.96
+      }
+    },
+    {
+      "window": "2026-02-21T17:15:00Z",
+      "median": 5425.57,
+      "low": 5120.96,
+      "vendors": {
+        "sdbullion": 5425.57,
+        "jmbullion": 5120.96
+      }
+    },
+    {
+      "window": "2026-02-21T17:30:00Z",
+      "median": 5425.57,
+      "low": 5120.96,
+      "vendors": {
+        "sdbullion": 5425.57,
+        "jmbullion": 5120.96
+      }
+    },
+    {
+      "window": "2026-02-21T17:45:00Z",
+      "median": 5425.57,
+      "low": 5425.57,
+      "vendors": {
+        "sdbullion": 5425.57
+      }
+    },
+    {
+      "window": "2026-02-21T18:00:00Z",
+      "median": 5425.57,
+      "low": 5120.96,
+      "vendors": {
+        "jmbullion": 5120.96,
+        "sdbullion": 5425.57
+      }
+    },
+    {
+      "window": "2026-02-21T18:30:00Z",
+      "median": 5425.57,
+      "low": 5425.57,
+      "vendors": {
+        "sdbullion": 5425.57
+      }
+    },
+    {
+      "window": "2026-02-21T19:00:00Z",
+      "median": 5425.57,
+      "low": 5425.57,
+      "vendors": {
+        "sdbullion": 5425.57
+      }
+    },
+    {
+      "window": "2026-02-21T19:15:00Z",
+      "median": 5425.57,
+      "low": 5120.96,
+      "vendors": {
+        "sdbullion": 5425.57,
+        "jmbullion": 5120.96
+      }
+    },
+    {
+      "window": "2026-02-21T19:30:00Z",
+      "median": 5425.57,
+      "low": 5425.57,
+      "vendors": {
+        "sdbullion": 5425.57
+      }
+    },
+    {
+      "window": "2026-02-21T19:45:00Z",
+      "median": 5425.57,
+      "low": 5120.96,
+      "vendors": {
+        "sdbullion": 5425.57,
+        "jmbullion": 5120.96
+      }
+    },
+    {
+      "window": "2026-02-21T20:00:00Z",
+      "median": 5425.57,
+      "low": 5120.96,
+      "vendors": {
+        "sdbullion": 5425.57,
+        "jmbullion": 5120.96
+      }
+    },
+    {
+      "window": "2026-02-21T20:15:00Z",
+      "median": 5425.57,
+      "low": 5120.96,
+      "vendors": {
+        "jmbullion": 5120.96,
+        "sdbullion": 5425.57
+      }
+    },
+    {
+      "window": "2026-02-21T20:30:00Z",
+      "median": 5425.57,
+      "low": 5120.96,
+      "vendors": {
+        "jmbullion": 5120.96,
+        "sdbullion": 5425.57
+      }
+    }
+  ]
+}

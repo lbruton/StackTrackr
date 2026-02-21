@@ -1,0 +1,26 @@
+{
+  "date": "2026-02-20",
+  "generated_at_utc": "2026-02-20T20:05:01.707Z",
+  "currency": "USD",
+  "prices_by_site": {
+    "apmex": 885.9,
+    "sdbullion": 460.26,
+    "jmbullion": 928.7
+  },
+  "extraction_methods": {
+    "apmex": "firecrawl",
+    "sdbullion": "firecrawl",
+    "jmbullion": "firecrawl"
+  },
+  "source_count": 3,
+  "average_price": 758.29,
+  "median_price": 885.9,
+  "failed_sites": [
+    "monumentmetals"
+  ],
+  "urls_used": [
+    "https://www.apmex.com/product/21/10-oz-silver-bar-secondary-market",
+    "https://sdbullion.com/10-oz-sd-bullion-proclaim-liberty-silver-bar",
+    "https://www.jmbullion.com/10-oz-silver-bar/"
+  ]
+}

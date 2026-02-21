@@ -1,0 +1,91 @@
+{
+  "ase": {
+    "jmbullion": "https://www.jmbullion.com/2026-1-oz-american-silver-eagle-coin/",
+    "apmex": "https://www.apmex.com/product/23331/1-oz-american-silver-eagle-coin-bu-random-year",
+    "sdbullion": "https://sdbullion.com/2026-1-oz-american-silver-eagle-coin-bu",
+    "monumentmetals": "https://monumentmetals.com/2026-american-silver-eagle.html",
+    "herobullion": "https://www.herobullion.com/2026-1-oz-american-silver-eagle-coin/",
+    "bullionexchanges": "https://www.bullionexchanges.com/2026-1-oz-silver-american-eagle-1-coin-bu",
+    "summitmetals": "https://www.summitmetals.com/collections/american-silver-eagles/products/2026-1-oz-american-silver-eagle-bu-pre-sale"
+  },
+  "maple-silver": {
+    "jmbullion": "https://www.jmbullion.com/2026-1-oz-canadian-silver-maple-leaf-coin/",
+    "apmex": "https://www.apmex.com/product/1090/1-oz-canadian-silver-maple-leaf-coin-bu-random-year",
+    "sdbullion": "https://sdbullion.com/canadian-silver-maple-leaf-coin-random-year",
+    "monumentmetals": "https://monumentmetals.com/2026-canada-silver-maple-leaf.html",
+    "herobullion": "https://www.herobullion.com/canadian-silver-maple-1-oz-coin/",
+    "bullionexchanges": "https://www.bullionexchanges.com/2026-1-oz-canadian-silver-maple-leaf-coin-bu"
+  },
+  "britannia-silver": {
+    "jmbullion": "https://www.jmbullion.com/1-oz-british-silver-britannia-coin-vy/",
+    "apmex": "https://www.apmex.com/product/53532/great-britain-1-oz-silver-britannia-bu-random-year",
+    "sdbullion": "https://sdbullion.com/2026-1-oz-silver-britannia-coin",
+    "monumentmetals": "https://monumentmetals.com/doc-silver-britannia.html",
+    "herobullion": "https://www.herobullion.com/1-oz-british-silver-britannia-coin/",
+    "bullionexchanges": "https://www.bullionexchanges.com/great-britain-silver-1-oz-britannia-coin-bu-random-year"
+  },
+  "krugerrand-silver": {
+    "jmbullion": "https://www.jmbullion.com/2026-1-oz-south-african-silver-krugerrand-coin/",
+    "apmex": "https://www.apmex.com/product/322171/2026-south-africa-1-oz-silver-krugerrand-bu",
+    "sdbullion": "https://sdbullion.com/2026-1-oz-south-african-silver-krugerrand-coin-bu",
+    "monumentmetals": "https://monumentmetals.com/2026-south-africa-1-oz-silver-krugerrand-bu.html",
+    "herobullion": "https://www.herobullion.com/1-oz-south-african-silver-krugerrand/",
+    "bullionexchanges": "https://www.bullionexchanges.com/2026-south-africa-1-oz-silver-krugerrand-coin-bu"
+  },
+  "generic-silver-round": {
+    "jmbullion": "https://www.jmbullion.com/1-oz-silver-round/",
+    "apmex": "https://www.apmex.com/product/23/1-oz-silver-round-secondary-market",
+    "sdbullion": "https://sdbullion.com/1-oz-silver-buffalo-round",
+    "monumentmetals": "https://monumentmetals.com/elemetal-1oz-silver-round.html",
+    "herobullion": "https://www.herobullion.com/1-oz-silver-round-any-mint-any-condition/",
+    "bullionexchanges": "https://www.bullionexchanges.com/1-oz-silver-generic-rounds"
+  },
+  "generic-silver-bar-10oz": {
+    "jmbullion": "https://www.jmbullion.com/10-oz-silver-bar/",
+    "apmex": "https://www.apmex.com/product/21/10-oz-silver-bar-secondary-market",
+    "sdbullion": "https://sdbullion.com/10-oz-sd-bullion-proclaim-liberty-silver-bar",
+    "monumentmetals": "https://monumentmetals.com/10oz-elemetal-silver-bar.html",
+    "herobullion": "https://www.herobullion.com/10-oz-silver-bar-any-mint-any-condition/",
+    "bullionexchanges": "https://www.bullionexchanges.com/10-oz-generic-silver-bar"
+  },
+  "age": {
+    "jmbullion": "https://www.jmbullion.com/1-oz-american-gold-eagle/",
+    "apmex": "https://www.apmex.com/product/1/1-oz-american-gold-eagle-coin-bu-random-year",
+    "sdbullion": "https://sdbullion.com/2025-1-oz-american-gold-eagle-coin",
+    "monumentmetals": "https://monumentmetals.com/2026-american-1-oz-gold-eagle-bu.html",
+    "herobullion": "https://www.herobullion.com/american-gold-eagle-1-oz-coin/",
+    "bullionexchanges": "https://www.bullionexchanges.com/1-oz-american-eagle-gold-coin-random-year"
+  },
+  "buffalo": {
+    "jmbullion": "https://www.jmbullion.com/2026-1-oz-american-gold-buffalo-coin/",
+    "apmex": "https://www.apmex.com/product/39598/1-oz-gold-buffalo-bu-random-year",
+    "sdbullion": "https://sdbullion.com/1-oz-american-gold-buffalo-coin-random-year",
+    "monumentmetals": "https://monumentmetals.com/2026-1-oz-american-gold-buffalo-bu.html",
+    "herobullion": "https://www.herobullion.com/american-gold-buffalo-1-oz-coin/",
+    "bullionexchanges": "https://www.bullionexchanges.com/1-oz-gold-american-buffalo-random-year"
+  },
+  "maple-gold": {
+    "jmbullion": "https://www.jmbullion.com/1-oz-canadian-gold-maple-leaf-any-year/",
+    "apmex": "https://www.apmex.com/product/9/canada-1-oz-gold-maple-leaf-9999-fine-bu-random-year",
+    "sdbullion": "https://sdbullion.com/2026-1-oz-gold-maple-leaf-coin",
+    "monumentmetals": "https://monumentmetals.com/2026-1oz-gold-maple.html",
+    "herobullion": "https://www.herobullion.com/canadian-gold-maple-1-oz-coin/",
+    "bullionexchanges": "https://www.bullionexchanges.com/1-oz-canadian-gold-maple-leaf-50-coin-random-year"
+  },
+  "krugerrand-gold": {
+    "jmbullion": "https://www.jmbullion.com/1-oz-south-african-gold-krugerrand/",
+    "apmex": "https://www.apmex.com/product/62/south-african-1-oz-gold-krugerrand-coin-bu-random-year",
+    "sdbullion": "https://sdbullion.com/1-oz-south-african-gold-krugerrand-coin-random-year",
+    "monumentmetals": "https://monumentmetals.com/random-date-1oz-gold-krugerrand.html",
+    "herobullion": "https://www.herobullion.com/south-african-gold-krugerrand-1-oz-coin/",
+    "bullionexchanges": "https://www.bullionexchanges.com/1-oz-south-african-krugerrand-gold-coin-random-year"
+  },
+  "ape": {
+    "jmbullion": "https://www.jmbullion.com/1-oz-american-platinum-eagle-varied/",
+    "apmex": "https://www.apmex.com/product/52/1-oz-american-platinum-eagle-coin-bu-random-year-1997-2023",
+    "sdbullion": "https://sdbullion.com/1-oz-platinum-american-eagle-coin-random-dates",
+    "monumentmetals": "https://monumentmetals.com/random-date-1oz-platinum-eagle.html",
+    "herobullion": "https://www.herobullion.com/american-platinum-eagle-1-oz-coin/",
+    "bullionexchanges": "https://www.bullionexchanges.com/1-oz-platinum-american-eagle"
+  }
+}

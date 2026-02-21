@@ -1,0 +1,73 @@
+{
+  "window_start": "2026-02-21T20:30:00Z",
+  "generated_at": "2026-02-21T20:42:23.900Z",
+  "coin_count": 11,
+  "coins": {
+    "age": {
+      "window_start": "2026-02-21T20:30:00Z",
+      "median_price": 5425.57,
+      "lowest_price": 5120.96,
+      "vendor_count": 6
+    },
+    "ape": {
+      "window_start": "2026-02-21T20:30:00Z",
+      "median_price": 2497.89,
+      "lowest_price": 2469.89,
+      "vendor_count": 6
+    },
+    "ase": {
+      "window_start": "2026-02-21T20:30:00Z",
+      "median_price": 101.61,
+      "lowest_price": 98.13,
+      "vendor_count": 7
+    },
+    "britannia-silver": {
+      "window_start": "2026-02-21T20:30:00Z",
+      "median_price": 97.31,
+      "lowest_price": 93.39,
+      "vendor_count": 6
+    },
+    "buffalo": {
+      "window_start": "2026-02-21T20:30:00Z",
+      "median_price": 5405.09,
+      "lowest_price": 5361.99,
+      "vendor_count": 6
+    },
+    "generic-silver-bar-10oz": {
+      "window_start": "2026-02-21T20:30:00Z",
+      "median_price": 941.1,
+      "lowest_price": 898.3,
+      "vendor_count": 6
+    },
+    "generic-silver-round": {
+      "window_start": "2026-02-21T20:30:00Z",
+      "median_price": 91.81,
+      "lowest_price": 90.83,
+      "vendor_count": 6
+    },
+    "krugerrand-gold": {
+      "window_start": "2026-02-21T20:30:00Z",
+      "median_price": 5238.45,
+      "lowest_price": 5182.08,
+      "vendor_count": 5
+    },
+    "krugerrand-silver": {
+      "window_start": "2026-02-21T20:30:00Z",
+      "median_price": 98.31,
+      "lowest_price": 94.66,
+      "vendor_count": 5
+    },
+    "maple-gold": {
+      "window_start": "2026-02-21T20:30:00Z",
+      "median_price": 5273.45,
+      "lowest_price": 5233.81,
+      "vendor_count": 5
+    },
+    "maple-silver": {
+      "window_start": "2026-02-21T20:30:00Z",
+      "median_price": 96.33,
+      "lowest_price": 95.52,
+      "vendor_count": 6
+    }
+  }
+}

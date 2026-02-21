@@ -1,0 +1,26 @@
+{
+  "date": "2026-02-20",
+  "generated_at_utc": "2026-02-20T20:05:01.707Z",
+  "currency": "USD",
+  "prices_by_site": {
+    "apmex": 97.08,
+    "sdbullion": 88.55,
+    "jmbullion": 94.57
+  },
+  "extraction_methods": {
+    "apmex": "firecrawl",
+    "sdbullion": "firecrawl",
+    "jmbullion": "firecrawl"
+  },
+  "source_count": 3,
+  "average_price": 93.4,
+  "median_price": 94.57,
+  "failed_sites": [
+    "monumentmetals"
+  ],
+  "urls_used": [
+    "https://www.apmex.com/product/322171/2026-south-africa-1-oz-silver-krugerrand-bu",
+    "https://sdbullion.com/2026-1-oz-south-african-silver-krugerrand-coin-bu",
+    "https://www.jmbullion.com/2026-1-oz-south-african-silver-krugerrand-coin/"
+  ]
+}

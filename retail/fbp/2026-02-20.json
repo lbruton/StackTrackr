@@ -1,0 +1,74 @@
+{
+  "date": "2026-02-20",
+  "generated_at_utc": "2026-02-20T00:23:21.636Z",
+  "source": "findbullionprices.com",
+  "note": "ACH/wire price and credit/card price per dealer. Updated daily via GH Actions.",
+  "coins": {
+    "ase": {
+      "name": "American Silver Eagle 1 oz",
+      "metal": "silver",
+      "dealers": {},
+      "error": "HTTP 402: {\"success\":false,\"error\":\"Insufficient credits to perform this request. For more credits, you can upgrade your plan at https://firecrawl.dev/pricing or try changing the request limit to a lo"
+    },
+    "maple-silver": {
+      "name": "Canadian Silver Maple Leaf 1 oz",
+      "metal": "silver",
+      "dealers": {},
+      "error": "HTTP 402: {\"success\":false,\"error\":\"Insufficient credits to perform this request. For more credits, you can upgrade your plan at https://firecrawl.dev/pricing or try changing the request limit to a lo"
+    },
+    "britannia-silver": {
+      "name": "British Silver Britannia 1 oz",
+      "metal": "silver",
+      "dealers": {},
+      "error": "HTTP 402: {\"success\":false,\"error\":\"Insufficient credits to perform this request. For more credits, you can upgrade your plan at https://firecrawl.dev/pricing or try changing the request limit to a lo"
+    },
+    "krugerrand-silver": {
+      "name": "South African Silver Krugerrand 1 oz",
+      "metal": "silver",
+      "dealers": {},
+      "error": "HTTP 402: {\"success\":false,\"error\":\"Insufficient credits to perform this request. For more credits, you can upgrade your plan at https://firecrawl.dev/pricing or try changing the request limit to a lo"
+    },
+    "generic-silver-round": {
+      "name": "Generic Silver Round 1 oz (.999)",
+      "metal": "silver",
+      "dealers": {},
+      "error": "HTTP 402: {\"success\":false,\"error\":\"Insufficient credits to perform this request. For more credits, you can upgrade your plan at https://firecrawl.dev/pricing or try changing the request limit to a lo"
+    },
+    "generic-silver-bar-10oz": {
+      "name": "Generic Silver Bar 10 oz (.999)",
+      "metal": "silver",
+      "dealers": {},
+      "error": "HTTP 402: {\"success\":false,\"error\":\"Insufficient credits to perform this request. For more credits, you can upgrade your plan at https://firecrawl.dev/pricing or try changing the request limit to a lo"
+    },
+    "age": {
+      "name": "American Gold Eagle 1 oz",
+      "metal": "gold",
+      "dealers": {},
+      "error": "HTTP 402: {\"success\":false,\"error\":\"Insufficient credits to perform this request. For more credits, you can upgrade your plan at https://firecrawl.dev/pricing or try changing the request limit to a lo"
+    },
+    "buffalo": {
+      "name": "American Gold Buffalo 1 oz",
+      "metal": "gold",
+      "dealers": {},
+      "error": "HTTP 402: {\"success\":false,\"error\":\"Insufficient credits to perform this request. For more credits, you can upgrade your plan at https://firecrawl.dev/pricing or try changing the request limit to a lo"
+    },
+    "maple-gold": {
+      "name": "Canadian Gold Maple Leaf 1 oz",
+      "metal": "gold",
+      "dealers": {},
+      "error": "HTTP 402: {\"success\":false,\"error\":\"Insufficient credits to perform this request. For more credits, you can upgrade your plan at https://firecrawl.dev/pricing or try changing the request limit to a lo"
+    },
+    "krugerrand-gold": {
+      "name": "South African Gold Krugerrand 1 oz",
+      "metal": "gold",
+      "dealers": {},
+      "error": "HTTP 402: {\"success\":false,\"error\":\"Insufficient credits to perform this request. For more credits, you can upgrade your plan at https://firecrawl.dev/pricing or try changing the request limit to a lo"
+    },
+    "ape": {
+      "name": "American Platinum Eagle 1 oz",
+      "metal": "platinum",
+      "dealers": {},
+      "error": "HTTP 402: {\"success\":false,\"error\":\"Insufficient credits to perform this request. For more credits, you can upgrade your plan at https://firecrawl.dev/pricing or try changing the request limit to a lo"
+    }
+  }
+}

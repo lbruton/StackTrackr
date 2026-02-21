@@ -1,0 +1,27 @@
+{
+  "date": "2026-02-20",
+  "generated_at_utc": "2026-02-20T20:05:01.707Z",
+  "currency": "USD",
+  "prices_by_site": {
+    "apmex": 5236.49,
+    "sdbullion": 2199.99,
+    "monumentmetals": 5192.57,
+    "jmbullion": 5228.91
+  },
+  "extraction_methods": {
+    "apmex": "firecrawl",
+    "sdbullion": "firecrawl",
+    "monumentmetals": "firecrawl",
+    "jmbullion": "firecrawl"
+  },
+  "source_count": 4,
+  "average_price": 4464.49,
+  "median_price": 5228.91,
+  "failed_sites": [],
+  "urls_used": [
+    "https://www.apmex.com/product/9/canada-1-oz-gold-maple-leaf-9999-fine-bu-random-year",
+    "https://sdbullion.com/2026-1-oz-gold-maple-leaf-coin",
+    "https://monumentmetals.com/2026-1oz-gold-maple.html",
+    "https://www.jmbullion.com/1-oz-canadian-gold-maple-leaf-any-year/"
+  ]
+}

@@ -1,0 +1,34 @@
+{
+  "date": "2026-02-20",
+  "generated_at_utc": "2026-02-20T20:05:01.707Z",
+  "currency": "USD",
+  "prices_by_site": {
+    "apmex": 98.08,
+    "sdbullion": 99.05,
+    "jmbullion": 100.06,
+    "herobullion": 97.48,
+    "summitmetals": 99.22,
+    "monumentmetals": 96.59,
+    "bullionexchanges": 96.62
+  },
+  "extraction_methods": {
+    "apmex": "firecrawl",
+    "sdbullion": "firecrawl",
+    "jmbullion": "firecrawl",
+    "herobullion": "firecrawl",
+    "summitmetals": "firecrawl",
+    "monumentmetals": "fbp_fallback",
+    "bullionexchanges": "fbp_fallback"
+  },
+  "source_count": 7,
+  "average_price": 98.16,
+  "median_price": 98.08,
+  "failed_sites": [],
+  "urls_used": [
+    "https://www.apmex.com/product/23331/1-oz-american-silver-eagle-coin-bu-random-year",
+    "https://sdbullion.com/2026-1-oz-american-silver-eagle-coin-bu",
+    "https://www.jmbullion.com/2026-1-oz-american-silver-eagle-coin/",
+    "https://www.herobullion.com/2026-1-oz-american-silver-eagle-coin/",
+    "https://www.summitmetals.com/collections/american-silver-eagles/products/2026-1-oz-american-silver-eagle-bu-pre-sale"
+  ]
+}

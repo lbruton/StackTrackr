@@ -1,0 +1,27 @@
+{
+  "date": "2026-02-19",
+  "generated_at_utc": "2026-02-19T23:21:46.293Z",
+  "currency": "USD",
+  "prices_by_site": {
+    "jmbullion": 2664.97,
+    "apmex": 5159.09,
+    "monumentmetals": 5225.08,
+    "sdbullion": 2703.65
+  },
+  "extraction_methods": {
+    "jmbullion": "firecrawl",
+    "apmex": "firecrawl",
+    "monumentmetals": "firecrawl",
+    "sdbullion": "firecrawl"
+  },
+  "source_count": 4,
+  "average_price": 3938.2,
+  "median_price": 5159.09,
+  "failed_sites": [],
+  "urls_used": [
+    "https://www.jmbullion.com/1-oz-american-gold-eagle/",
+    "https://www.apmex.com/product/1/1-oz-american-gold-eagle-coin-bu-random-year",
+    "https://monumentmetals.com/2026-american-1-oz-gold-eagle-bu.html",
+    "https://sdbullion.com/2025-1-oz-american-gold-eagle-coin"
+  ]
+}

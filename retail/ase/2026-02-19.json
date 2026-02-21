@@ -1,0 +1,26 @@
+{
+  "date": "2026-02-19",
+  "generated_at_utc": "2026-02-19T23:21:46.293Z",
+  "currency": "USD",
+  "prices_by_site": {
+    "apmex": 93.17,
+    "monumentmetals": 90.93,
+    "sdbullion": 94.17
+  },
+  "extraction_methods": {
+    "apmex": "firecrawl",
+    "monumentmetals": "firecrawl",
+    "sdbullion": "firecrawl"
+  },
+  "source_count": 3,
+  "average_price": 92.76,
+  "median_price": 93.17,
+  "failed_sites": [
+    "jmbullion"
+  ],
+  "urls_used": [
+    "https://www.apmex.com/product/23331/1-oz-american-silver-eagle-coin-bu-random-year",
+    "https://monumentmetals.com/2026-american-silver-eagle.html",
+    "https://sdbullion.com/2026-1-oz-american-silver-eagle-coin-bu"
+  ]
+}

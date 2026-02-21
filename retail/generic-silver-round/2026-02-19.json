@@ -1,0 +1,26 @@
+{
+  "date": "2026-02-19",
+  "generated_at_utc": "2026-02-19T23:21:46.293Z",
+  "currency": "USD",
+  "prices_by_site": {
+    "apmex": 83.75,
+    "monumentmetals": 82.14,
+    "sdbullion": 47.62
+  },
+  "extraction_methods": {
+    "apmex": "firecrawl",
+    "monumentmetals": "firecrawl",
+    "sdbullion": "firecrawl"
+  },
+  "source_count": 3,
+  "average_price": 71.17,
+  "median_price": 82.14,
+  "failed_sites": [
+    "jmbullion"
+  ],
+  "urls_used": [
+    "https://www.apmex.com/product/23/1-oz-silver-round-secondary-market",
+    "https://monumentmetals.com/elemetal-1oz-silver-round.html",
+    "https://sdbullion.com/1-oz-silver-buffalo-round"
+  ]
+}

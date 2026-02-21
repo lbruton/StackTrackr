@@ -1,0 +1,24 @@
+{
+  "date": "2026-02-19",
+  "generated_at_utc": "2026-02-19T23:21:46.293Z",
+  "currency": "USD",
+  "prices_by_site": {
+    "apmex": 5134.39,
+    "sdbullion": 5117.46
+  },
+  "extraction_methods": {
+    "apmex": "firecrawl",
+    "sdbullion": "firecrawl"
+  },
+  "source_count": 2,
+  "average_price": 5125.93,
+  "median_price": 5134.39,
+  "failed_sites": [
+    "jmbullion",
+    "monumentmetals"
+  ],
+  "urls_used": [
+    "https://www.apmex.com/product/62/south-african-1-oz-gold-krugerrand-coin-bu-random-year",
+    "https://sdbullion.com/1-oz-south-african-gold-krugerrand-coin-random-year"
+  ]
+}

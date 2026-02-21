@@ -1,0 +1,35 @@
+{
+  "date": "2026-02-20",
+  "targets": [
+    {
+      "coinSlug": "maple-silver",
+      "providerId": "jmbullion",
+      "url": "https://www.jmbullion.com/2026-1-oz-canadian-silver-maple-leaf-coin/",
+      "score": 40
+    },
+    {
+      "coinSlug": "generic-silver-round",
+      "providerId": "sdbullion",
+      "url": "https://sdbullion.com/1-oz-silver-buffalo-round",
+      "score": 15
+    },
+    {
+      "coinSlug": "generic-silver-bar-10oz",
+      "providerId": "sdbullion",
+      "url": "https://sdbullion.com/10-oz-sd-bullion-proclaim-liberty-silver-bar",
+      "score": 35
+    },
+    {
+      "coinSlug": "age",
+      "providerId": "sdbullion",
+      "url": "https://sdbullion.com/2025-1-oz-american-gold-eagle-coin",
+      "score": 15
+    },
+    {
+      "coinSlug": "maple-gold",
+      "providerId": "sdbullion",
+      "url": "https://sdbullion.com/2026-1-oz-gold-maple-leaf-coin",
+      "score": 15
+    }
+  ]
+}

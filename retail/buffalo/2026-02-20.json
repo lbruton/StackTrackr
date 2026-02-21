@@ -1,0 +1,26 @@
+{
+  "date": "2026-02-20",
+  "generated_at_utc": "2026-02-20T20:05:01.707Z",
+  "currency": "USD",
+  "prices_by_site": {
+    "apmex": 5396.49,
+    "sdbullion": 5208.97,
+    "jmbullion": 5448.91
+  },
+  "extraction_methods": {
+    "apmex": "firecrawl",
+    "sdbullion": "firecrawl",
+    "jmbullion": "firecrawl"
+  },
+  "source_count": 3,
+  "average_price": 5351.46,
+  "median_price": 5396.49,
+  "failed_sites": [
+    "monumentmetals"
+  ],
+  "urls_used": [
+    "https://www.apmex.com/product/39598/1-oz-gold-buffalo-bu-random-year",
+    "https://sdbullion.com/1-oz-american-gold-buffalo-coin-random-year",
+    "https://www.jmbullion.com/2026-1-oz-american-gold-buffalo-coin/"
+  ]
+}

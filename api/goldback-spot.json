@@ -1,0 +1,14 @@
+{
+  "date": "2026-02-21",
+  "scraped_at": "2026-02-21T17:01:02.535Z",
+  "g1_usd": 10.14,
+  "denominations": {
+    "g1": 10.14,
+    "g5": 50.7,
+    "g10": 101.4,
+    "g25": 253.5,
+    "g50": 507
+  },
+  "source": "goldback.com",
+  "confidence": "high"
+}
