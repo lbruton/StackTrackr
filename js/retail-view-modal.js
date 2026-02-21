@@ -347,9 +347,11 @@ const openRetailViewModal = (slug) => {
       fetch(`${_apiBase}/${slug}/history-30d.json`).catch(() => null),
     ]).then(async ([latestResp, histResp]) => {
       let intradayUpdated = false;
+      let anySuccess = false;
       if (latestResp && latestResp.ok) {
         const latest = await latestResp.json().catch(() => null);
         if (latest) {
+          anySuccess = true;
           if (typeof retailIntradayData !== "undefined") {
             retailIntradayData[slug] = {
               window_start: latest.window_start,
@@ -371,8 +373,19 @@ const openRetailViewModal = (slug) => {
       if (histResp && histResp.ok) {
         const hist = await histResp.json().catch(() => null);
         if (Array.isArray(hist) && typeof retailPriceHistory !== "undefined") {
+          anySuccess = true;
           retailPriceHistory[slug] = hist;
           if (typeof saveRetailPriceHistory === "function") saveRetailPriceHistory();
+        }
+      }
+      // Show staleness warning if both fetches failed
+      if (!anySuccess) {
+        const modalBody = safeGetElement('retailModalBody');
+        if (modalBody && !modalBody.querySelector('.retail-stale-data-warning')) {
+          const banner = document.createElement('div');
+          banner.className = 'retail-stale-data-warning';
+          banner.textContent = '\u26a0 Could not refresh live data \u2014 showing cached prices';
+          modalBody.insertBefore(banner, modalBody.firstChild);
         }
       }
       // Rebuild intraday chart and vendor legend with fresh data
