@@ -246,6 +246,9 @@ async function main() {
         confidence: extracted.confidence,
         label: extracted.label,
         ok: extracted.price !== null,
+        error: extracted.price === null
+          ? (extracted.label ? `no price: ${extracted.label}` : "no price returned")
+          : undefined,
       });
     } catch (err) {
       warn(`  ✗ ${result.coin}/${result.provider}: ${err.message.slice(0, 120)}`);
@@ -281,6 +284,12 @@ async function main() {
     const prices = Object.values(pricesBySite);
     const sorted = [...prices].sort((a, b) => a - b);
 
+    if (failed.length > 0) {
+      warn(
+        `[vision] ${coinSlug}: ${failed.length} vendor(s) failed — ` +
+        failed.map((f) => `${f.providerId}(${f.error || "unknown error"})`).join(", ")
+      );
+    }
     writeVisionJson(coinSlug, dateStr, {
       date: dateStr,
       generated_at_utc: generatedAt,
@@ -294,12 +303,6 @@ async function main() {
       median_price: sorted.length ? sorted[Math.floor(sorted.length / 2)] : null,
       failed_sites: failed.map(r => r.providerId),
     });
-    if (failed.length > 0) {
-      warn(
-        `[vision] ${coinSlug}: ${failed.length} vendor(s) failed — ` +
-        failed.map((f) => `${f.providerId}(${f.error || "unknown error"})`).join(", ")
-      );
-    }
   }
 
   const ok = extractionResults.filter(r => r.ok).length;
