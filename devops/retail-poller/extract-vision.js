@@ -49,6 +49,53 @@ const PRICE_RANGE_HINTS = {
 };
 
 /**
+ * Vendor-specific extraction hints to guide Gemini Vision to the correct price
+ * on each dealer's page layout. Overrides the generic "look in the pricing table"
+ * instruction with vendor-specific guidance.
+ */
+const VENDOR_PRICE_HINTS = {
+  jmbullion: `JM Bullion specific: Look in the **pricing table** (usually below product images).
+- Find the row for quantity "1-19" or "1-9"
+- Use the **eCheck/Wire column** (usually leftmost price column, NOT Card/PayPal)
+- The "As Low As" banner shows bulk discounts (500+ qty) — ignore it unless table is missing
+- eCheck/Wire price is typically 2-4% lower than Card/PayPal price`,
+
+  apmex: `APMEX specific: Look in the **quantity pricing table** near product details.
+- Find row "1-19" or "1+"
+- Use the **Check/Wire price** (leftmost column)
+- Ignore "Starting At" or "As Low As" labels (those are bulk discounts)`,
+
+  monumentmetals: `Monument Metals specific: They show **"As Low As"** prominently but no pricing table.
+- Use the "As Low As $XXX.XX" price shown near the product title
+- This is their standard single-unit pricing display`,
+
+  sdbullion: `SD Bullion specific: Look for the **quantity pricing table**.
+- Find the "1-19" or "1+" row
+- Use the **eCheck/Wire column** (first price column)
+- Ignore credit card pricing (usually higher)`,
+
+  herobullion: `Hero Bullion specific: Check the **pricing grid** (quantity table).
+- Find the "1-19" or "1+" quantity tier
+- Use the **wire/check price** (typically the lower price shown)`,
+
+  bullionexchanges: `Bullion Exchanges specific: Look for the **quantity discount table**.
+- Find row for "1-9" or "1-19" units
+- Use the **wire transfer/check price** (usually shown as the primary price)`,
+
+  summitmetals: `Summit Metals specific: Look in the **pricing table by quantity**.
+- Find the "1-19" or single unit row
+- Use the **check/wire price** (lower price, not credit card)`,
+};
+
+/**
+ * Build vendor-specific instruction for Gemini Vision prompt.
+ * Returns the hint string if available, or empty string if generic handling.
+ */
+function getVendorHint(vendorId) {
+  return VENDOR_PRICE_HINTS[vendorId] || "";
+}
+
+/**
  * Load today's Firecrawl prices from prices.db.
  * Returns { slugSlug: { vendorId: price, ... }, ... } or {} if DB unavailable.
  */
@@ -91,7 +138,7 @@ function warn(msg) {
 // Gemini Vision API
 // ---------------------------------------------------------------------------
 
-async function extractPriceFromImage(imagePath, coinName, metal, weightOz, firecrawlPrice = null) {
+async function extractPriceFromImage(imagePath, coinName, metal, weightOz, firecrawlPrice = null, vendorId = null) {
   if (!existsSync(imagePath)) {
     throw new Error(`Screenshot not found: ${imagePath}`);
   }
@@ -107,13 +154,17 @@ async function extractPriceFromImage(imagePath, coinName, metal, weightOz, firec
     ? `Firecrawl text-parser extracted: $${firecrawlPrice.toFixed(2)} — does the screenshot confirm this?`
     : "Firecrawl text-parser found no price for this vendor.";
 
+  const vendorHint = vendorId ? getVendorHint(vendorId) : "";
+  const vendorGuidance = vendorHint
+    ? `\n\n**VENDOR-SPECIFIC GUIDANCE:**\n${vendorHint}\n`
+    : "";
+
   const prompt = `You are a price extraction bot for a precious metals price tracker.
 
 Look at this screenshot of a coin dealer product page.
 Coin: ${coinName} (${metal}, ${weightOz} troy oz)
 Expected 1-unit price range: $${minPrice}–$${maxPrice}
-${firecrawlHint}
-
+${firecrawlHint}${vendorGuidance}
 Find the **1-unit Check/Wire price** — the price a customer pays for exactly 1 coin using check or wire transfer.
 - Look in the pricing/quantity table for the "1" or "1-9" row under Check/Wire columns
 - Do NOT use "As Low As" bulk discount prices (those are for large quantities)
@@ -277,7 +328,8 @@ async function main() {
         coin.name,
         coin.metal,
         coin.weight_oz || 1,
-        firecrawlPrice
+        firecrawlPrice,
+        result.provider  // Pass vendor ID for vendor-specific hints
       );
 
       if (extracted.price !== null) {
