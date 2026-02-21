@@ -21,7 +21,7 @@
 import { readFileSync, existsSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { openDb, writeSnapshot, windowFloor, readTodayFailures } from "./db.js";
+import { openTursoDb, writeSnapshot, windowFloor, readTodayFailures } from "./db.js";
 
 const __dirname = fileURLToPath(new URL(".", import.meta.url));
 
@@ -507,7 +507,7 @@ async function main() {
     log(`Gap-fill run for ${dateStr}`);
     if (DRY_RUN) log("DRY RUN — no SQLite writes");
 
-    const gapDb = DRY_RUN ? null : openDb(DATA_DIR);
+    const gapDb = DRY_RUN ? null : await openTursoDb();
     try {
       // Query SQLite for failed vendors today
       const failures = DRY_RUN ? [] : readTodayFailures(gapDb);
@@ -545,7 +545,7 @@ async function main() {
             const price = fbp.ach;
             log(`  \u21a9 ${coinSlug}/${providerId}: $${price.toFixed(2)} ACH (fbp)`);
             if (!DRY_RUN) {
-              writeSnapshot(gapDb, { scrapedAt, windowStart: winStart, coinSlug, vendor: providerId, price, source: "fbp", isFailed: 0, inStock: true });
+              await writeSnapshot(gapDb, { scrapedAt, windowStart: winStart, coinSlug, vendor: providerId, price, source: "fbp", isFailed: 0, inStock: true });
             }
             totalFilled++;
           }
@@ -579,7 +579,7 @@ async function main() {
   if (DRY_RUN) log("DRY RUN — no SQLite writes");
 
   // Open SQLite for this run — closed in finally block to ensure cleanup on fatal errors
-  const db = DRY_RUN ? null : openDb(DATA_DIR);
+  const db = DRY_RUN ? null : await openTursoDb();
   const scrapedAt = new Date().toISOString();
   const winStart = windowFloor();
 
@@ -688,7 +688,7 @@ async function main() {
 
     // Record to SQLite
     if (db) {
-      writeSnapshot(db, {
+      await writeSnapshot(db, {
         scrapedAt,
         windowStart: winStart,
         coinSlug,
@@ -745,7 +745,7 @@ async function main() {
         log(`  ↩ ${coinSlug}/${r.providerId}: $${fbp.ach.toFixed(2)} ACH (fbp_fallback)`);
         // Record FBP fallback result to SQLite
         if (db) {
-          writeSnapshot(db, {
+          await writeSnapshot(db, {
             scrapedAt,
             windowStart: winStart,
             coinSlug,
