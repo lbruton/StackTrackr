@@ -13,6 +13,11 @@ services:
       - TIMEOUT=120000
       - HEALTH=true
       - TZ=America/New_York
+    volumes:
+      # Read-only mount of the project root for file:// protocol testing.
+      # Allows Playwright to navigate to file:///workspace/StakTrakr/index.html
+      # without needing an HTTP server. Matches SMOKE_TEST_BASE_URL_FILEMODE in Infisical.
+      - ../../:/workspace/StakTrakr:ro
     restart: unless-stopped
 
   playwright-dash:
