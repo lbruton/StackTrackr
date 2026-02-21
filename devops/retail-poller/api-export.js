@@ -2,8 +2,9 @@
 /**
  * StakTrakr Retail Poller — REST API JSON Exporter
  * ==================================================
- * Reads prices.db (SQLite) and writes static JSON endpoints to
- * DATA_DIR/api/. Called by run-local.sh after merge-prices.js.
+ * Reads from Turso (source of truth), writes static JSON endpoints to
+ * DATA_DIR/api/, and exports a read-only SQLite snapshot.
+ * Called by run-local.sh after merge-prices.js.
  *
  * Output structure:
  *   data/api/
@@ -13,6 +14,7 @@
  *       latest.json            ← single coin: current prices + 96-window 24h series
  *       history-7d.json        ← daily aggregates, last 7 days
  *       history-30d.json       ← daily aggregates, last 30 days
+ *   prices.db                  ← read-only SQLite snapshot exported from Turso
  *
  * Usage:
  *   DATA_DIR=/path/to/data node api-export.js
@@ -25,8 +27,10 @@
 import { writeFileSync, mkdirSync, existsSync, readFileSync } from "node:fs";
 import { join, resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
+import Database from "better-sqlite3";
 import {
-  openDb,
+  openTursoDb,
+  openLocalDb,
   readLatestWindow,
   readCoinSlugs,
   readCoinWindow,
@@ -407,14 +411,80 @@ function resolveVendorPrice(coinSlug, vendorId, firecrawlData, visionData, db, w
 // ---------------------------------------------------------------------------
 
 async function main() {
-  const dbPath = join(DATA_DIR, "..", "prices.db");
-  if (!existsSync(dbPath)) {
-    warn(`prices.db not found at ${dbPath} — nothing to export`);
-    process.exit(0);
+  log("Reading from Turso (source of truth)...");
+  const tursoClient = await openTursoDb();
+  const generatedAt = new Date().toISOString();
+
+  // Query all recent price data from Turso (last 30 days to cover all aggregates)
+  const cutoff = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+  const result = await tursoClient.execute({
+    sql: `
+      SELECT coin_slug, vendor, price, window_start, scraped_at, source, confidence, in_stock
+      FROM price_snapshots
+      WHERE window_start >= ?
+      ORDER BY window_start DESC
+    `,
+    args: [cutoff],
+  });
+  const tursoRows = result.rows;
+  tursoClient.close();
+
+  if (!tursoRows.length) {
+    warn("No price data in Turso — skipping API export");
+    return;
   }
 
-  const db = openDb(DATA_DIR);
-  const generatedAt = new Date().toISOString();
+  log(`Loaded ${tursoRows.length} price snapshots from Turso`);
+
+  // Create in-memory SQLite database for processing
+  const db = new Database(":memory:");
+
+  // Create schema
+  db.exec(`
+    CREATE TABLE price_snapshots (
+      id           INTEGER PRIMARY KEY AUTOINCREMENT,
+      scraped_at   TEXT NOT NULL,
+      window_start TEXT NOT NULL,
+      coin_slug    TEXT NOT NULL,
+      vendor       TEXT NOT NULL,
+      price        REAL,
+      source       TEXT NOT NULL,
+      confidence   INTEGER,
+      is_failed    INTEGER NOT NULL DEFAULT 0,
+      in_stock     INTEGER NOT NULL DEFAULT 1
+    );
+    CREATE INDEX idx_coin_window ON price_snapshots(coin_slug, window_start);
+    CREATE INDEX idx_window ON price_snapshots(window_start);
+    CREATE INDEX idx_coin_date ON price_snapshots(coin_slug, substr(window_start, 1, 10));
+    CREATE INDEX idx_coin_vendor_stock ON price_snapshots(coin_slug, vendor, in_stock, scraped_at DESC);
+  `);
+
+  // Populate in-memory database
+  const insertStmt = db.prepare(`
+    INSERT INTO price_snapshots (
+      scraped_at, window_start, coin_slug, vendor, price,
+      source, confidence, is_failed, in_stock
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `);
+
+  const insertMany = db.transaction((rows) => {
+    for (const row of rows) {
+      insertStmt.run(
+        row.scraped_at,
+        row.window_start,
+        row.coin_slug,
+        row.vendor,
+        row.price,
+        row.source,
+        row.confidence || null,
+        0, // is_failed not in Turso yet
+        row.in_stock !== undefined ? row.in_stock : 1
+      );
+    }
+  });
+
+  insertMany(tursoRows);
+  log("In-memory database populated");
 
   try {
 
@@ -623,6 +693,71 @@ async function main() {
   }
 
   log(`API export complete: ${coinSlugs.length} coin(s), ${windowCount} window(s) in history`);
+
+  // --------------------------------------------------------------------------
+  // Export read-only SQLite snapshot from Turso data
+  // --------------------------------------------------------------------------
+  if (!DRY_RUN) {
+    log("Exporting SQLite snapshot from Turso data...");
+    const snapshotPath = resolve(join(DATA_DIR, "..", "prices.db"));
+    const snapshot = new Database(snapshotPath);
+
+    // Create schema
+    const CREATE_TABLE = `
+      CREATE TABLE IF NOT EXISTS price_snapshots (
+        id           INTEGER PRIMARY KEY AUTOINCREMENT,
+        scraped_at   TEXT NOT NULL,
+        window_start TEXT NOT NULL,
+        coin_slug    TEXT NOT NULL,
+        vendor       TEXT NOT NULL,
+        price        REAL,
+        source       TEXT NOT NULL,
+        confidence   INTEGER,
+        is_failed    INTEGER NOT NULL DEFAULT 0,
+        in_stock     INTEGER NOT NULL DEFAULT 1
+      );
+    `;
+
+    const CREATE_INDEXES = [
+      "CREATE INDEX IF NOT EXISTS idx_coin_window ON price_snapshots(coin_slug, window_start);",
+      "CREATE INDEX IF NOT EXISTS idx_window ON price_snapshots(window_start);",
+      "CREATE INDEX IF NOT EXISTS idx_coin_date ON price_snapshots(coin_slug, substr(window_start, 1, 10));",
+      "CREATE INDEX IF NOT EXISTS idx_coin_vendor_stock ON price_snapshots(coin_slug, vendor, in_stock, scraped_at DESC);",
+    ];
+
+    snapshot.exec(CREATE_TABLE);
+    for (const idx of CREATE_INDEXES) {
+      snapshot.exec(idx);
+    }
+
+    // Copy Turso data to snapshot
+    const snapshotInsertStmt = snapshot.prepare(`
+      INSERT INTO price_snapshots (
+        scraped_at, window_start, coin_slug, vendor, price,
+        source, confidence, is_failed, in_stock
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+
+    const snapshotInsertMany = snapshot.transaction((rows) => {
+      for (const row of rows) {
+        snapshotInsertStmt.run(
+          row.scraped_at,
+          row.window_start,
+          row.coin_slug,
+          row.vendor,
+          row.price,
+          row.source,
+          row.confidence || null,
+          0, // is_failed not in Turso yet
+          row.in_stock !== undefined ? row.in_stock : 1
+        );
+      }
+    });
+
+    snapshotInsertMany(tursoRows);
+    snapshot.close();
+    log(`SQLite snapshot exported: ${snapshotPath}`);
+  }
 
   } finally {
     db.close();
