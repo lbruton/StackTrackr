@@ -291,6 +291,32 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  if (method === 'GET' && /^\/api\/sessions\/[^/]+\/videos$/.test(url)) {
+    const id = decodeURIComponent(url.split('/')[3]);
+    if (!/^\d{4}-\d{2}-\d{2}-\d{2}-\d{2}-\d{2}$/.test(id)) {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Invalid session id' }));
+      return;
+    }
+    const sessionDir = path.join(TEST_RESULTS_DIR, id);
+    if (!fs.existsSync(sessionDir)) {
+      res.writeHead(404, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Session not found' }));
+      return;
+    }
+    const videos = walkDir(sessionDir, ['.webm', '.mp4'], path.join('test-results', id))
+      .sort((a, b) => a.mtime - b.mtime)
+      .map(f => {
+        const parts = f.rel.split(path.sep);
+        // parts: ['test-results', sessionId, testDir, 'video.webm']
+        const label = parts.length >= 3 ? parts[parts.length - 2] : basename(f.rel);
+        return { path: '/files/' + f.rel.split(path.sep).join('/'), label };
+      });
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify(videos));
+    return;
+  }
+
   res.writeHead(404);
   res.end('Not found');
 });

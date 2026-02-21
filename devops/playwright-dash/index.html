@@ -66,6 +66,11 @@
   .speed-btn.active { background: var(--primary); border-color: var(--primary); color: #fff; }
   .spinner { display: inline-block; width: 12px; height: 12px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle; margin-right: 6px; }
   @keyframes spin { to { transform: rotate(360deg); } }
+  /* Playlist bar */
+  .playlist-bar { display: flex; align-items: center; gap: 10px; width: 100%; max-width: 640px; }
+  .playlist-info { flex: 1; text-align: center; }
+  .playlist-count { font-size: 13px; font-weight: 600; color: var(--text); }
+  .playlist-name { font-size: 11px; color: var(--muted); margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   /* Sessions tab */
   .sessions-panel { padding: 20px; }
   .session-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; display: flex; align-items: center; gap: 14px; margin-bottom: 10px; transition: border-color 0.15s; }
@@ -132,8 +137,16 @@
 </div>
 <div class="lightbox" id="videoLightbox">
   <span class="lightbox-close" id="videoLightboxClose">&times;</span>
-  <div style="display:flex;flex-direction:column;align-items:center;gap:10px;">
-    <video id="lightboxVideo" controls style="max-width:90vw;max-height:80vh;border-radius:8px;background:#000;"></video>
+  <div style="display:flex;flex-direction:column;align-items:center;gap:10px;max-width:90vw;width:90vw;">
+    <video id="lightboxVideo" controls style="width:100%;max-height:72vh;border-radius:8px;background:#000;"></video>
+    <div id="playlistBar" class="playlist-bar" style="display:none;">
+      <button id="playlistPrevBtn" class="speed-btn" style="flex-shrink:0;">&#8249; Prev</button>
+      <div class="playlist-info">
+        <div class="playlist-count" id="playlistCounter"></div>
+        <div class="playlist-name" id="playlistName"></div>
+      </div>
+      <button id="playlistNextBtn" class="speed-btn" style="flex-shrink:0;">Next &#8250;</button>
+    </div>
     <div id="speedControls" style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;">
       <span style="font-size:11px;color:var(--muted);align-self:center;margin-right:4px;">Speed:</span>
       <button class="speed-btn" data-rate="0.1">0.1&times;</button>
@@ -180,6 +193,13 @@
   const toast = document.getElementById('toast');
   const captureBtn = document.getElementById('captureBtn');
   const autoRefresh = document.getElementById('autoRefresh');
+  const playlistBar = document.getElementById('playlistBar');
+  const playlistCounter = document.getElementById('playlistCounter');
+  const playlistName = document.getElementById('playlistName');
+  const playlistPrevBtn = document.getElementById('playlistPrevBtn');
+  const playlistNextBtn = document.getElementById('playlistNextBtn');
+  let playlist = [];
+  let playlistIdx = 0;
 
   function fmt(bytes) {
     if (bytes < 1024) return bytes + ' B';
@@ -226,6 +246,8 @@
     });
     grid.querySelectorAll('.card[data-video]').forEach(card => {
       card.addEventListener('click', () => {
+        playlist = [];
+        playlistBar.style.display = 'none';
         lightboxVideo.src = card.dataset.video;
         videoLightbox.classList.add('open');
         lightboxVideo.play();
@@ -289,13 +311,24 @@
       info.appendChild(ts);
       info.appendChild(meta);
 
-      const btn = document.createElement('button');
-      btn.className = 'btn btn-outline';
-      btn.textContent = 'Open Report';
-      btn.addEventListener('click', () => window.open(s.reportUrl, '_blank'));
+      const btns = document.createElement('div');
+      btns.style.cssText = 'display:flex;gap:6px;flex-shrink:0;';
 
+      const playBtn = document.createElement('button');
+      playBtn.className = 'btn btn-primary';
+      playBtn.style.fontSize = '12px';
+      playBtn.textContent = '▶ Play Run';
+      playBtn.addEventListener('click', () => openPlaylist(s.id));
+
+      const reportBtn = document.createElement('button');
+      reportBtn.className = 'btn btn-outline';
+      reportBtn.textContent = 'Open Report';
+      reportBtn.addEventListener('click', () => window.open(s.reportUrl, '_blank'));
+
+      btns.appendChild(playBtn);
+      btns.appendChild(reportBtn);
       card.appendChild(info);
-      card.appendChild(btn);
+      card.appendChild(btns);
 
       const delBtn = document.createElement('button');
       delBtn.className = 'del-btn-session';
@@ -400,6 +433,9 @@
     lightboxVideo.src = '';
     videoLightbox.classList.remove('open');
     setSpeed(1);
+    playlist = [];
+    playlistIdx = 0;
+    playlistBar.style.display = 'none';
   }
 
   document.querySelectorAll('.speed-btn').forEach(btn => {
@@ -485,6 +521,57 @@
       captureBtn.textContent = 'Capture Now';
     }
   });
+
+  // ── Playlist player ─────────────────────────────────────────────────────────
+
+  function playlistLoad(idx) {
+    playlistIdx = Math.max(0, Math.min(idx, playlist.length - 1));
+    const entry = playlist[playlistIdx];
+    lightboxVideo.src = entry.path;
+    lightboxVideo.play().catch(() => {});
+    playlistCounter.textContent = (playlistIdx + 1) + ' / ' + playlist.length;
+    // Clean up the Playwright test-dir name: remove -chromium suffix, replace - with space
+    playlistName.textContent = entry.label
+      .replace(/-chromium$/, '')
+      .replace(/-[0-9a-f]{5}-/g, ' ')
+      .replace(/-/g, ' ');
+    playlistPrevBtn.disabled = playlistIdx === 0;
+    playlistNextBtn.disabled = playlistIdx === playlist.length - 1;
+  }
+
+  async function openPlaylist(sessionId) {
+    try {
+      const res = await fetch('/api/sessions/' + encodeURIComponent(sessionId) + '/videos');
+      if (!res.ok) throw new Error('Server error ' + res.status);
+      const videos = await res.json();
+      if (!videos.length) { showToast('No videos in this session', 'err'); return; }
+      playlist = videos;
+      playlistIdx = 0;
+      playlistBar.style.display = 'flex';
+      videoLightbox.classList.add('open');
+      playlistLoad(0);
+    } catch (e) {
+      showToast('Failed to load playlist: ' + e.message, 'err');
+    }
+  }
+
+  lightboxVideo.addEventListener('ended', () => {
+    if (playlist.length > 0 && playlistIdx < playlist.length - 1) {
+      playlistLoad(playlistIdx + 1);
+    }
+  });
+
+  playlistPrevBtn.addEventListener('click', e => {
+    e.stopPropagation();
+    if (playlistIdx > 0) playlistLoad(playlistIdx - 1);
+  });
+
+  playlistNextBtn.addEventListener('click', e => {
+    e.stopPropagation();
+    if (playlistIdx < playlist.length - 1) playlistLoad(playlistIdx + 1);
+  });
+
+  // ─────────────────────────────────────────────────────────────────────────────
 
   refresh();
   startRefresh();
