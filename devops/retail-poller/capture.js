@@ -6,9 +6,9 @@
  * or local Chromium, takes a screenshot of each, and writes a manifest for
  * downstream extraction (Gemini vision, etc.).
  *
- * Parallel mode (Browserbase): one session per provider, all running
- * concurrently. 44 pages (4 providers × 11 coins) completes in ~90s
- * instead of ~6 minutes sequential.
+ * Parallel mode (Browserbase): one session per coin, all running
+ * concurrently. ~67 pages (7 providers × 11 coins) completes in ~2 min
+ * instead of ~8 minutes sequential.
  *
  * Usage:
  *   node capture.js                          # Browserbase cloud (parallel)
@@ -37,8 +37,8 @@ const DATA_DIR = resolve(process.env.DATA_DIR || "../../data");
 const ARTIFACT_DIR = process.env.ARTIFACT_DIR ||
   join(tmpdir(), "retail-poller-screenshots", new Date().toISOString().slice(0, 10));
 
-const COINS = (process.env.COINS || "ase,age,generic-silver-round,buffalo").split(",").map(s => s.trim());
-const PROVIDERS = (process.env.PROVIDERS || "sdbullion,apmex").split(",").map(s => s.trim());
+const COINS = (process.env.COINS || "ase,age,ape,buffalo,maple-silver,maple-gold,britannia-silver,krugerrand-silver,krugerrand-gold,generic-silver-round,generic-silver-bar-10oz").split(",").map(s => s.trim());
+const PROVIDERS = (process.env.PROVIDERS || "apmex,sdbullion,jmbullion,monumentmetals,herobullion,bullionexchanges,summitmetals").split(",").map(s => s.trim());
 
 // Per-page delays (ms) — polite pacing within each session
 const PAGE_LOAD_WAIT = 4000;    // wait after domcontentloaded for JS rendering
@@ -251,7 +251,7 @@ async function captureAll() {
   }
 
   const totalTargets = [...byCoin.values()].reduce((n, arr) => n + arr.length, 0);
-  log(`Capturing ${totalTargets} pages — ${byCoin.size} parallel sessions (one per coin, 4 providers each)`);
+  log(`Capturing ${totalTargets} pages — ${byCoin.size} parallel sessions (one per coin)`);
 
   mkdirSync(ARTIFACT_DIR, { recursive: true });
 
