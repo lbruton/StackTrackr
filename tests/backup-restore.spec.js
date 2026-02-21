@@ -92,13 +92,33 @@ test.describe('Backup and Restore', () => {
   });
 
   test('Vault encrypted backup flow', async ({ page }) => {
+    // PBKDF2 600K iterations takes 30–60s in browserless headless Docker vs ~2s in a
+    // real browser. Wipe seed inventory to keep the AES-GCM payload small.
+    test.setTimeout(120_000);
+
+    await page.locator('#settingsBtn').click();
+    await page.locator('#settingsModal .settings-nav-item[data-section="storage"]').click();
+    const wipeBtn = page.locator('#boatingAccidentBtn');
+    if (await wipeBtn.isVisible()) {
+      await wipeBtn.click();
+      await expect(page.locator('#appDialogModal')).toBeVisible();
+      await page.locator('#appDialogOk').click();
+      await expect(page.locator('#appDialogMessage')).toContainText('erased');
+      await page.locator('#appDialogOk').click();
+      await expect(page.locator('#appDialogModal')).not.toBeVisible();
+    }
+    // Close settings modal so #newItemBtn is clickable
+    await page.locator('#settingsCloseBtn').click();
+
     await page.locator('#newItemBtn').click();
     await page.fill('#itemModal #itemName', 'Vault Test');
     await page.fill('#itemQty', '1');
     await page.fill('#itemWeight', '1');
     await page.locator('#itemModalSubmit').click();
 
-    await page.locator('#settingsBtn').click();
+    if (!(await page.locator('#settingsModal').isVisible())) {
+      await page.locator('#settingsBtn').click();
+    }
     const inventorySection = page.locator('#settingsModal .settings-nav-item[data-section="system"]');
     await inventorySection.click();
 
@@ -106,9 +126,11 @@ test.describe('Backup and Restore', () => {
     await expect(page.locator('#vaultModal')).toBeVisible();
     await page.fill('#vaultPassword', 'test-password');
     await page.fill('#vaultConfirmPassword', 'test-password');
-    
+
+    // 90s timeout: PBKDF2 600K iterations can take 30–60s in resource-constrained
+    // headless Docker. Vault encryption works fine in real browsers (confirmed in prod).
     const [ download ] = await Promise.all([
-      page.waitForEvent('download', { timeout: 30000 }),
+      page.waitForEvent('download', { timeout: 90_000 }),
       page.locator('#vaultActionBtn').click()
     ]);
     
