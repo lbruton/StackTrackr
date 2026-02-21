@@ -74,9 +74,13 @@ function writeApiFile(relPath, data) {
 
 /**
  * Compute median price from an array of price_snapshots rows.
+ * Excludes out-of-stock vendors (in_stock = 0).
  */
 function medianPrice(rows) {
-  const prices = rows.map((r) => r.price).filter((p) => p !== null && p !== undefined);
+  const prices = rows
+    .filter((r) => r.in_stock === 1)  // Only in-stock vendors
+    .map((r) => r.price)
+    .filter((p) => p !== null && p !== undefined);
   if (!prices.length) return null;
   const sorted = [...prices].sort((a, b) => a - b);
   return Math.round(sorted[Math.floor(sorted.length / 2)] * 100) / 100;
@@ -84,15 +88,19 @@ function medianPrice(rows) {
 
 /**
  * Compute lowest price from an array of rows.
+ * Excludes out-of-stock vendors (in_stock = 0).
  */
 function lowestPrice(rows) {
-  const prices = rows.map((r) => r.price).filter((p) => p !== null && p !== undefined);
+  const prices = rows
+    .filter((r) => r.in_stock === 1)  // Only in-stock vendors
+    .map((r) => r.price)
+    .filter((p) => p !== null && p !== undefined);
   if (!prices.length) return null;
   return Math.round(Math.min(...prices) * 100) / 100;
 }
 
 /**
- * Build a vendor map { vendorId: { price, confidence, source } } from rows.
+ * Build a vendor map { vendorId: { price, confidence, source, inStock } } from rows.
  */
 function vendorMap(rows) {
   const map = {};
@@ -102,6 +110,7 @@ function vendorMap(rows) {
         price:      Math.round(row.price * 100) / 100,
         confidence: row.confidence ?? null,
         source:     row.source,
+        inStock:    row.in_stock === 1,  // SQLite stores as INTEGER 0/1
       };
     }
   }
@@ -112,11 +121,12 @@ function vendorMap(rows) {
  * Aggregate window rows into {window, median, low, vendors} entries.
  * Groups by window_start, computes median/low across all vendors and
  * includes per-vendor prices for individual chart lines.
+ * Excludes out-of-stock vendors (in_stock = 0).
  */
 function aggregateWindows(allRows) {
   const byWindow = new Map();
   for (const row of allRows) {
-    if (row.price === null) continue;
+    if (row.price === null || row.in_stock !== 1) continue;  // Skip OOS
     if (!byWindow.has(row.window_start)) byWindow.set(row.window_start, { prices: [], vendors: {} });
     const entry = byWindow.get(row.window_start);
     entry.prices.push(row.price);
@@ -205,6 +215,25 @@ function loadVisionData(dataDir, slug) {
 }
 
 /**
+ * Query SQLite for the most recent in-stock price for a coin+vendor.
+ * Returns { price, date } or null if never had an in-stock price.
+ */
+function getLastKnownPrice(db, coinSlug, vendorId) {
+  const row = db.prepare(`
+    SELECT price, date(scraped_at) as date
+    FROM price_snapshots
+    WHERE coin_slug = ?
+      AND vendor = ?
+      AND in_stock = 1
+      AND price IS NOT NULL
+    ORDER BY scraped_at DESC
+    LIMIT 1
+  `).get(coinSlug, vendorId);
+
+  return row ? { price: row.price, date: row.date } : null;
+}
+
+/**
  * Score a vendor price incorporating Vision cross-validation when available.
  * Returns { price, confidence, method }.
  *
@@ -225,61 +254,141 @@ function loadVisionData(dataDir, slug) {
  *   Firecrawl only          → existing scoreVendorPrice(), no change
  *   Neither                 → { price: null, confidence: 0, source: null }
  *
- * @param {number|null} firecrawlPrice
- * @param {object|null} visionData - Full vision JSON for this coin (may include agreement_by_site)
+ * Stock status consensus:
+ *   Both OOS                → out of stock (both_oos)
+ *   Vision OOS              → trust Vision (vision_oos)
+ *   Firecrawl OOS, Vision in-stock → trust Vision (vision_override)
+ *
+ * @param {string} coinSlug
  * @param {string} vendorId
+ * @param {object|null} firecrawlData - { price, inStock }
+ * @param {object|null} visionData - Full vision JSON for this coin
+ * @param {import('better-sqlite3').Database} db
  * @param {number|null} windowMedian
  * @param {number|null} prevMedian
  */
-function resolveVendorPrice(firecrawlPrice, visionData, vendorId, windowMedian, prevMedian) {
-  const vp = visionData?.prices_by_site?.[vendorId] ?? null;
-  const vc = visionData?.confidence_by_site?.[vendorId] ?? null;
+function resolveVendorPrice(coinSlug, vendorId, firecrawlData, visionData, db, windowMedian, prevMedian) {
+  const fcPrice = firecrawlData?.price ?? null;
+  const fcInStock = firecrawlData?.inStock ?? true;
+  const visionPrice = visionData?.prices_by_site?.[vendorId] ?? null;
+  const visionInStock = visionData?.availability_by_site?.[vendorId] ?? true;
+  const visionConf = visionData?.confidence_by_site?.[vendorId] ?? null;
   // New field from updated extract-vision.js; fall back to diff calc for old JSONs
   const agreedField = visionData?.agreement_by_site?.[vendorId] ?? null;
+
+  // CONSENSUS LOGIC: Trust Vision on stock status disagreement
+  let finalInStock = true;
+  let stockReason = "in_stock";
+
+  if (!fcInStock && !visionInStock) {
+    // Both say out of stock
+    finalInStock = false;
+    stockReason = "both_oos";
+  } else if (!visionInStock) {
+    // Vision says OOS, Firecrawl says in stock → trust Vision
+    finalInStock = false;
+    stockReason = "vision_oos";
+  } else if (!fcInStock) {
+    // Firecrawl says OOS, Vision says in stock → trust Vision
+    finalInStock = true;
+    stockReason = "vision_override";
+  }
+
+  // If out of stock, return null price with availability metadata
+  if (!finalInStock) {
+    const lastKnown = getLastKnownPrice(db, coinSlug, vendorId);
+    return {
+      price: null,
+      confidence: null,
+      source: "consensus_oos",
+      inStock: false,
+      lastKnownPrice: lastKnown?.price ?? null,
+      lastAvailableDate: lastKnown?.date ?? null,
+      stockReason,
+    };
+  }
+
+  // --- IN STOCK: Continue with existing price resolution logic ---
 
   // Determine agreement: prefer Gemini's own judgement; fall back to ≤3% diff check
   const agrees = (() => {
     if (agreedField !== null) return agreedField;
-    if (firecrawlPrice !== null && vp !== null) {
-      const diff = Math.abs(firecrawlPrice - vp) / Math.max(firecrawlPrice, vp);
+    if (fcPrice !== null && visionPrice !== null) {
+      const diff = Math.abs(fcPrice - visionPrice) / Math.max(fcPrice, visionPrice);
       return diff <= 0.03;
     }
     return null;
   })();
 
   // CASE 1: Both sources agree → 99% confidence
-  if (firecrawlPrice !== null && vp !== null && agrees === true) {
-    return { price: firecrawlPrice, confidence: 99, source: "firecrawl+vision" };
+  if (fcPrice !== null && visionPrice !== null && agrees === true) {
+    return {
+      price: fcPrice,
+      confidence: 99,
+      source: "firecrawl+vision",
+      inStock: true,
+      lastKnownPrice: null,
+      lastAvailableDate: null,
+      stockReason: "in_stock",
+    };
   }
 
   // CASE 2: Both present, disagree → prefer price closest to window median
-  if (firecrawlPrice !== null && vp !== null && agrees === false) {
-    const ref = windowMedian ?? (firecrawlPrice + vp) / 2;
-    const useFirecrawl = Math.abs(firecrawlPrice - ref) <= Math.abs(vp - ref);
-    const price = useFirecrawl ? firecrawlPrice : vp;
+  if (fcPrice !== null && visionPrice !== null && agrees === false) {
+    const ref = windowMedian ?? (fcPrice + visionPrice) / 2;
+    const useFirecrawl = Math.abs(fcPrice - ref) <= Math.abs(visionPrice - ref);
+    const price = useFirecrawl ? fcPrice : visionPrice;
     const base = scoreVendorPrice(price, windowMedian, prevMedian);
-    return { price, confidence: Math.min(base, 70), source: useFirecrawl ? "firecrawl" : "vision" };
+    return {
+      price,
+      confidence: Math.min(base, 70),
+      source: useFirecrawl ? "firecrawl" : "vision",
+      inStock: true,
+      lastKnownPrice: null,
+      lastAvailableDate: null,
+      stockReason: "in_stock",
+    };
   }
 
   // CASE 3: Firecrawl null, Vision has a price → Vision as primary
-  if (firecrawlPrice === null && vp !== null) {
-    const vcMod = vc === "high" ? 10 : vc === "medium" ? 0 : -15;
+  if (fcPrice === null && visionPrice !== null) {
+    const vcMod = visionConf === "high" ? 10 : visionConf === "medium" ? 0 : -15;
     const base = Math.max(0, 70 + vcMod);
-    const medianScore = scoreVendorPrice(vp, windowMedian, prevMedian);
-    return { price: vp, confidence: Math.min(base, medianScore + 20), source: "vision" };
+    const medianScore = scoreVendorPrice(visionPrice, windowMedian, prevMedian);
+    return {
+      price: visionPrice,
+      confidence: Math.min(base, medianScore + 20),
+      source: "vision",
+      inStock: true,
+      lastKnownPrice: null,
+      lastAvailableDate: null,
+      stockReason: "in_stock",
+    };
   }
 
   // CASE 4: Firecrawl only (no vision data for this vendor)
-  if (firecrawlPrice !== null) {
+  if (fcPrice !== null) {
     return {
-      price: firecrawlPrice,
-      confidence: scoreVendorPrice(firecrawlPrice, windowMedian, prevMedian),
+      price: fcPrice,
+      confidence: scoreVendorPrice(fcPrice, windowMedian, prevMedian),
       source: "firecrawl",
+      inStock: true,
+      lastKnownPrice: null,
+      lastAvailableDate: null,
+      stockReason: "in_stock",
     };
   }
 
   // CASE 5: Neither source has a price
-  return { price: null, confidence: 0, source: null };
+  return {
+    price: null,
+    confidence: 0,
+    source: null,
+    inStock: true,  // Default to in-stock if no data
+    lastKnownPrice: null,
+    lastAvailableDate: null,
+    stockReason: "no_data",
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -387,16 +496,43 @@ async function main() {
     }
 
     const confidenceUpdates = [];
+    const availabilityBySite = {};
+    const lastKnownPriceBySite = {};
+    const lastAvailableDateBySite = {};
+
     for (const [vendorId, vendorData] of Object.entries(vendors)) {
-      const { price, confidence, source } = resolveVendorPrice(
-        vendorData.price, visionData, vendorId, windowMedian, prevMedian
+      // Build Firecrawl data object from SQLite row
+      const firecrawlData = {
+        price: vendorData.price,
+        inStock: vendorData.inStock ?? true,
+      };
+
+      const resolved = resolveVendorPrice(
+        slug,
+        vendorId,
+        firecrawlData,
+        visionData,
+        db,
+        windowMedian,
+        prevMedian
       );
-      vendorData.price = price;
-      vendorData.confidence = confidence;
-      vendorData.source = source;
+
+      vendorData.price = resolved.price;
+      vendorData.confidence = resolved.confidence;
+      vendorData.source = resolved.source;
+
+      // Capture availability metadata
+      availabilityBySite[vendorId] = resolved.inStock;
+      if (resolved.lastKnownPrice !== null) {
+        lastKnownPriceBySite[vendorId] = resolved.lastKnownPrice;
+      }
+      if (resolved.lastAvailableDate !== null) {
+        lastAvailableDateBySite[vendorId] = resolved.lastAvailableDate;
+      }
+
       // Only write back to SQLite for rows that came from SQLite
-      if (sqliteVendorIds.has(vendorId) && confidence > 0) {
-        confidenceUpdates.push({ coinSlug: slug, vendor: vendorId, windowStart: latestWindow, confidence });
+      if (sqliteVendorIds.has(vendorId) && resolved.confidence > 0) {
+        confidenceUpdates.push({ coinSlug: slug, vendor: vendorId, windowStart: latestWindow, confidence: resolved.confidence });
       }
     }
 
@@ -424,6 +560,9 @@ async function main() {
       median_price:  medianPrice(latestRows),
       lowest_price:  lowestPrice(latestRows),
       vendors,
+      availability_by_site: availabilityBySite,
+      last_known_price_by_site: lastKnownPriceBySite,
+      last_available_date_by_site: lastAvailableDateBySite,
       windows_24h:   windows24h,
     });
 
