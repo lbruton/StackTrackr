@@ -248,6 +248,10 @@ const openRetailViewModal = (slug) => {
   titleEl.textContent = meta.name;
   subtitleEl.textContent = `${meta.weight} troy oz \u00b7 ${meta.metal}`;
 
+  // Clear any stale staleness banner from a previous modal open
+  const existingBanner = document.querySelector('#retailViewModal .retail-stale-data-warning');
+  if (existingBanner) existingBanner.remove();
+
   // Vendor legend — colored swatch + clickable name + current price
   _buildVendorLegend(slug);
 

@@ -1007,8 +1007,8 @@ const commitItemToInventory = (f, isEditing, editIdx) => {
     const numistaIdChanged = oldItem.numistaId && f.catalog && oldItem.numistaId !== f.catalog;
     if (numistaIdChanged && window.imageCache?.isAvailable()) {
       debugLog(`commitItemToInventory: N# changed from ${oldItem.numistaId} to ${f.catalog}, clearing old cache`);
-      imageCache.deleteImages(oldItem.numistaId).catch(err => console.warn('Failed to clear old Numista images:', err));
-      imageCache.deleteMetadata(oldItem.numistaId).catch(err => console.warn('Failed to clear old Numista metadata:', err));
+      imageCache.deleteImages(oldItem.numistaId).catch(err => debugLog(`commitItemToInventory: Failed to clear old Numista images: ${err.message}`, 'warn'));
+      imageCache.deleteMetadata(oldItem.numistaId).catch(err => debugLog(`commitItemToInventory: Failed to clear old Numista metadata: ${err.message}`, 'warn'));
     }
 
     inventory[editIdx] = {
@@ -1451,7 +1451,7 @@ const setupItemFormListeners = () => {
               await imageCache.deleteImages(catalogId);
               await imageCache.deleteMetadata(catalogId);
             } catch (err) {
-              console.warn('Failed to clear Numista image cache on remove:', err);
+              debugLog(`Failed to clear Numista image cache on remove: ${err.message}`, 'warn');
             }
           }
         });

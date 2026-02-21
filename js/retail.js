@@ -268,7 +268,9 @@ async function _pickFreshestEndpoint() {
   const endpoints = typeof RETAIL_API_ENDPOINTS !== "undefined" ? RETAIL_API_ENDPOINTS : [RETAIL_API_BASE_URL];
   const results = await Promise.allSettled(
     endpoints.map(async (base) => {
-      const resp = await fetch(`${base}/manifest.json`, { signal: AbortSignal.timeout(8000) });
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 8000);
+      const resp = await fetch(`${base}/manifest.json`, { signal: controller.signal }).finally(() => clearTimeout(timeoutId));
       if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
       const manifest = await resp.json();
       return { base, manifest, ts: manifest.generated_at || "" };
