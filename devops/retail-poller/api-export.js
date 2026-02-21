@@ -307,10 +307,11 @@ async function main() {
 
   // Read coin slugs from providers.json for complete coverage
   let coinSlugs = readCoinSlugs(db);
+  let providersJson = null;
   const providersPath = join(DATA_DIR, "retail", "providers.json");
   if (existsSync(providersPath)) {
     try {
-      const providersJson = JSON.parse(readFileSync(providersPath, "utf-8"));
+      providersJson = JSON.parse(readFileSync(providersPath, "utf-8"));
       const allSlugs = Object.keys(providersJson.coins);
       // Merge: include any slug in providers.json even if not yet in DB
       coinSlugs = [...new Set([...allSlugs, ...coinSlugs])].sort();
@@ -371,16 +372,38 @@ async function main() {
     // Build set of vendor IDs that have SQLite rows (for confidence write-back)
     const sqliteVendorIds = new Set(Object.keys(vendors));
 
+    // Augment vendors map: add null-price stubs for providers configured in providers.json
+    // but absent from SQLite (i.e., Firecrawl returned null for them).
+    // resolveVendorPrice() will try Vision for these.
+    if (providersJson?.coins?.[slug]) {
+      const configuredProviders = providersJson.coins[slug].providers
+        ?.filter(p => p.enabled !== false)
+        ?.map(p => p.id) ?? [];
+      for (const vendorId of configuredProviders) {
+        if (!vendors[vendorId]) {
+          vendors[vendorId] = { price: null, confidence: null, source: null };
+        }
+      }
+    }
+
     const confidenceUpdates = [];
     for (const [vendorId, vendorData] of Object.entries(vendors)) {
       const { price, confidence, source } = resolveVendorPrice(
         vendorData.price, visionData, vendorId, windowMedian, prevMedian
       );
+      vendorData.price = price;
       vendorData.confidence = confidence;
       vendorData.source = source;
       // Only write back to SQLite for rows that came from SQLite
       if (sqliteVendorIds.has(vendorId) && confidence > 0) {
         confidenceUpdates.push({ coinSlug: slug, vendor: vendorId, windowStart: latestWindow, confidence });
+      }
+    }
+
+    // Remove vendors where resolveVendorPrice found no price from either source
+    for (const vendorId of Object.keys(vendors)) {
+      if (vendors[vendorId].price === null) {
+        delete vendors[vendorId];
       }
     }
     if (confidenceUpdates.length > 0) {
