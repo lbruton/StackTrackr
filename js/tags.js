@@ -9,6 +9,17 @@
 // =============================================================================
 
 /**
+ * Invalidates the search cache for an item by UUID (called when tags change).
+ * @param {string} uuid - Item UUID
+ */
+const _invalidateCacheForUuid = (uuid) => {
+  if (typeof window.invalidateSearchCache === 'function' && typeof inventory !== 'undefined') {
+    const item = inventory.find(i => i.uuid === uuid);
+    if (item) window.invalidateSearchCache(item);
+  }
+};
+
+/**
  * Load item tags from localStorage into the global `itemTags` object.
  */
 const loadItemTags = () => {
@@ -67,6 +78,7 @@ const addItemTag = (uuid, tag, persist = true) => {
   itemTags[uuid].push(trimmed);
 
   if (persist) saveItemTags();
+  _invalidateCacheForUuid(uuid);
   return true;
 };
 
@@ -90,6 +102,7 @@ const removeItemTag = (uuid, tag) => {
   }
 
   saveItemTags();
+  _invalidateCacheForUuid(uuid);
   return true;
 };
 

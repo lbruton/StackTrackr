@@ -1209,6 +1209,10 @@ const startCellEdit = (idx, field, element) => {
     const oldValue = item[field];
     item[field] = finalValue;
 
+    if (typeof window.invalidateSearchCache === 'function') {
+      window.invalidateSearchCache(item);
+    }
+
     // Log the change
     if (typeof logChange === 'function') {
       logChange(item.name || `Item ${idx + 1}`, field, oldValue, finalValue, idx);

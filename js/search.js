@@ -2,6 +2,59 @@
 // =============================================================================
 
 /**
+ * Cache for searchable item text strings.
+ * WeakMap allows entries to be garbage collected when item objects are removed.
+ */
+const searchCache = new WeakMap();
+
+/**
+ * Retrieves or computes the searchable text for an inventory item.
+ * Caches the result to avoid expensive string construction on every filter pass.
+ *
+ * @param {Object} item - Inventory item object
+ * @returns {string} Lowercase searchable text
+ */
+const getSearchText = (item) => {
+  if (searchCache.has(item)) {
+    return searchCache.get(item);
+  }
+
+  // STAK-126: include tags in searchable text
+  const _searchTags = typeof getItemTags === 'function' ? getItemTags(item.uuid).join(' ') : '';
+  const text = [
+    item.metal,
+    item.composition || '',
+    item.name,
+    item.type,
+    item.purchaseLocation,
+    item.storageLocation || '',
+    item.notes || '',
+    String(item.year || ''),
+    item.grade || '',
+    item.gradingAuthority || '',
+    String(item.certNumber || ''),
+    String(item.numistaId || ''),
+    item.serialNumber || '',
+    String(item.pcgsNumber || ''),
+    String(item.purity || ''),
+    _searchTags
+  ].join(' ').toLowerCase();
+
+  searchCache.set(item, text);
+  return text;
+};
+
+/**
+ * Invalidates the search cache for a specific item.
+ * Called when an item is modified in-place (e.g. inline edit, tag update).
+ *
+ * @param {Object} item - Inventory item object
+ */
+window.invalidateSearchCache = (item) => {
+  if (item) searchCache.delete(item);
+};
+
+/**
  * Filters inventory based on the current search query and active column filters.
  * Handles advanced multi-term, phrase, and series-specific logic for coins and metals.
  *
@@ -69,26 +122,8 @@ const filterInventory = () => {
         // For multi-word searches, check if the exact phrase exists or
         // if all words exist as separate word boundaries without conflicting words
         const exactPhrase = q.toLowerCase();
-        // STAK-126: include tags in searchable text
-        const _searchTags = typeof getItemTags === 'function' ? getItemTags(item.uuid).join(' ') : '';
-        const itemText = [
-          item.metal,
-          item.composition || '',
-          item.name,
-          item.type,
-          item.purchaseLocation,
-          item.storageLocation || '',
-          item.notes || '',
-          String(item.year || ''),
-          item.grade || '',
-          item.gradingAuthority || '',
-          String(item.certNumber || ''),
-          String(item.numistaId || ''),
-          item.serialNumber || '',
-          String(item.pcgsNumber || ''),
-          String(item.purity || ''),
-          _searchTags
-        ].join(' ').toLowerCase();
+        // Use cached search text
+        const itemText = getSearchText(item);
         
         // Check for exact phrase match first
         if (itemText.includes(exactPhrase)) {
