@@ -347,6 +347,9 @@ async function main() {
       // Vision detected out of stock
       if (extracted.in_stock === false) {
         log(`  ⚠ ${result.coin}/${result.provider}: OUT OF STOCK — ${extracted.stock_label || "vision detected"}`);
+        if (extracted.price !== null) {
+          warn(`  ⚠ Vision returned price despite in_stock=false: $${extracted.price}`);
+        }
         extractionResults.push({
           coinSlug: result.coin,
           providerId: result.provider,
@@ -356,7 +359,7 @@ async function main() {
           firecrawlPrice: firecrawlPrice,
           label: extracted.stock_label || "out of stock",
           inStock: false,
-          stockLabel: extracted.stock_label,
+          stockLabel: extracted.stock_label ? extracted.stock_label.slice(0, 200) : null,
           ok: false,  // OOS counts as failed extraction
           error: `out_of_stock: ${extracted.stock_label || "detected"}`,
         });
@@ -378,8 +381,8 @@ async function main() {
         agreesWithFirecrawl: extracted.agrees_with_firecrawl ?? null,
         firecrawlPrice: firecrawlPrice,
         label: extracted.label,
-        inStock: extracted.in_stock !== false,  // default true if field missing
-        stockLabel: extracted.stock_label || null,
+        inStock: extracted.in_stock === true,  // explicit check: missing field defaults to false
+        stockLabel: extracted.stock_label ? extracted.stock_label.slice(0, 200) : null,
         ok: extracted.price !== null,
         error: extracted.price === null
           ? (extracted.label ? `no price: ${extracted.label}` : "no price returned")
