@@ -452,8 +452,25 @@ async function main() {
       slug_latest: "api/{slug}/latest.json",
       history_7d:  "api/{slug}/history-7d.json",
       history_30d: "api/{slug}/history-30d.json",
+      providers:   "api/providers.json",
     },
   });
+
+  // --------------------------------------------------------------------------
+  // providers.json — flatten product URLs for frontend consumption
+  // --------------------------------------------------------------------------
+  if (providersJson) {
+    const frontendProviders = {};
+    for (const [slug, coinData] of Object.entries(providersJson.coins || {})) {
+      frontendProviders[slug] = {};
+      for (const provider of (coinData.providers || [])) {
+        if (provider.enabled !== false && provider.url) {
+          frontendProviders[slug][provider.id] = provider.url;
+        }
+      }
+    }
+    writeApiFile("providers.json", frontendProviders);
+  }
 
   log(`API export complete: ${coinSlugs.length} coin(s), ${windowCount} window(s) in history`);
 

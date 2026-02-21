@@ -25,18 +25,24 @@ const RETAIL_COIN_META = {
 
 /** Vendor display names */
 const RETAIL_VENDOR_NAMES = {
-  apmex:          "APMEX",
-  monumentmetals: "Monument",
-  sdbullion:      "SDB",
-  jmbullion:      "JM",
+  apmex:            "APMEX",
+  monumentmetals:   "Monument",
+  sdbullion:        "SDB",
+  jmbullion:        "JM",
+  herobullion:      "Hero",
+  bullionexchanges: "BullionX",
+  summitmetals:     "Summit",
 };
 
 /** Vendor homepage URLs for popup links */
 const RETAIL_VENDOR_URLS = {
-  apmex:          "https://www.apmex.com",
-  monumentmetals: "https://www.monumentmetals.com",
-  sdbullion:      "https://www.sdbullion.com",
-  jmbullion:      "https://www.jmbullion.com",
+  apmex:            "https://www.apmex.com",
+  monumentmetals:   "https://www.monumentmetals.com",
+  sdbullion:        "https://www.sdbullion.com",
+  jmbullion:        "https://www.jmbullion.com",
+  herobullion:      "https://www.herobullion.com",
+  bullionexchanges: "https://www.bullionexchanges.com",
+  summitmetals:     "https://www.summitmetals.com",
 };
 
 /** Per-vendor brand colors — shared with retail-view-modal.js for chart lines and card labels */
@@ -264,6 +270,18 @@ const syncRetailPrices = async ({ ui = true } = {}) => {
       manifest = { slugs: RETAIL_SLUGS, latest_window: null };
     }
     const slugs = Array.isArray(manifest.slugs) && manifest.slugs.length ? manifest.slugs : RETAIL_SLUGS;
+
+    // Fetch providers.json (product page URLs for each coin+vendor)
+    try {
+      const providersResp = await fetch(`${RETAIL_API_BASE_URL}/providers.json`);
+      if (providersResp.ok) {
+        retailProviders = await providersResp.json();
+        saveRetailProviders();
+        debugLog(`[retail] Loaded ${Object.keys(retailProviders || {}).length} coin provider mappings`, "info");
+      }
+    } catch (providersErr) {
+      debugLog(`[retail] Providers fetch failed (${providersErr.message}) — using homepage fallback URLs`, "warn");
+    }
 
     const results = await Promise.allSettled(
       slugs.map(async (slug) => {
