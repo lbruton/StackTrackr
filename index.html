@@ -2442,28 +2442,42 @@
                     <!-- Eligible items table (collapsible) -->
                     <details style="margin-bottom:0.5rem;">
                       <summary style="font-size:0.8rem;cursor:pointer;opacity:0.7;">Show eligible items</summary>
-                      <div id="numistaSyncTableContainer" class="chip-grouping-table-container" style="max-height:180px;overflow-y:auto;margin-top:0.35rem;"></div>
+                      <div id="numistaSyncTableContainer" class="chip-grouping-table-container" style="max-height:165px;overflow-y:auto;margin-top:0.35rem;"></div>
                     </details>
 
                     <!-- View modal fields (collapsible) -->
                     <details style="margin-bottom:0.5rem;">
                       <summary style="font-size:0.8rem;cursor:pointer;opacity:0.7;">View modal fields</summary>
-                      <div id="numistaViewFieldToggles" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 4px 0.5rem; margin-top: 0.35rem;">
-                        <label class="settings-checkbox-label"><input type="checkbox" data-nf="denomination" checked> Denomination</label>
-                        <label class="settings-checkbox-label"><input type="checkbox" data-nf="shape" checked> Shape</label>
-                        <label class="settings-checkbox-label"><input type="checkbox" data-nf="diameter" checked> Diameter</label>
-                        <label class="settings-checkbox-label"><input type="checkbox" data-nf="thickness" checked> Thickness</label>
-                        <label class="settings-checkbox-label"><input type="checkbox" data-nf="orientation" checked> Orientation</label>
-                        <label class="settings-checkbox-label"><input type="checkbox" data-nf="composition" checked> Composition</label>
-                        <label class="settings-checkbox-label"><input type="checkbox" data-nf="country" checked> Country</label>
-                        <label class="settings-checkbox-label"><input type="checkbox" data-nf="technique" checked> Technique</label>
-                        <label class="settings-checkbox-label"><input type="checkbox" data-nf="references" checked> References (KM#)</label>
-                        <label class="settings-checkbox-label"><input type="checkbox" data-nf="edge" checked> Edge</label>
-                        <label class="settings-checkbox-label"><input type="checkbox" data-nf="tags" checked> Tags</label>
-                        <label class="settings-checkbox-label"><input type="checkbox" data-nf="commemorative" checked> Commemorative</label>
-                        <label class="settings-checkbox-label"><input type="checkbox" data-nf="rarity" checked> Rarity</label>
-                        <label class="settings-checkbox-label"><input type="checkbox" data-nf="mintage" checked> Mintage</label>
-                        <label class="settings-checkbox-label"><input type="checkbox" data-nf="imageTooltips" checked> Image tooltips</label>
+                      <div id="numistaViewFieldToggles" class="chip-grouping-table-container" style="margin-top:0.35rem;">
+                        <table class="chip-grouping-table">
+                          <tbody>
+                            <tr>
+                              <td><label class="settings-checkbox-label"><input type="checkbox" data-nf="denomination" checked> Denomination</label></td>
+                              <td><label class="settings-checkbox-label"><input type="checkbox" data-nf="shape" checked> Shape</label></td>
+                              <td><label class="settings-checkbox-label"><input type="checkbox" data-nf="diameter" checked> Diameter</label></td>
+                            </tr>
+                            <tr>
+                              <td><label class="settings-checkbox-label"><input type="checkbox" data-nf="thickness" checked> Thickness</label></td>
+                              <td><label class="settings-checkbox-label"><input type="checkbox" data-nf="orientation" checked> Orientation</label></td>
+                              <td><label class="settings-checkbox-label"><input type="checkbox" data-nf="composition" checked> Composition</label></td>
+                            </tr>
+                            <tr>
+                              <td><label class="settings-checkbox-label"><input type="checkbox" data-nf="country" checked> Country</label></td>
+                              <td><label class="settings-checkbox-label"><input type="checkbox" data-nf="technique" checked> Technique</label></td>
+                              <td><label class="settings-checkbox-label"><input type="checkbox" data-nf="references" checked> References (KM#)</label></td>
+                            </tr>
+                            <tr>
+                              <td><label class="settings-checkbox-label"><input type="checkbox" data-nf="edge" checked> Edge</label></td>
+                              <td><label class="settings-checkbox-label"><input type="checkbox" data-nf="tags" checked> Tags</label></td>
+                              <td><label class="settings-checkbox-label"><input type="checkbox" data-nf="commemorative" checked> Commemorative</label></td>
+                            </tr>
+                            <tr>
+                              <td><label class="settings-checkbox-label"><input type="checkbox" data-nf="rarity" checked> Rarity</label></td>
+                              <td><label class="settings-checkbox-label"><input type="checkbox" data-nf="mintage" checked> Mintage</label></td>
+                              <td><label class="settings-checkbox-label"><input type="checkbox" data-nf="imageTooltips" checked> Image tooltips</label></td>
+                            </tr>
+                          </tbody>
+                        </table>
                       </div>
                     </details>
 
