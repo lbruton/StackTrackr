@@ -1,14 +1,14 @@
-# Full retail price pipeline: Firecrawl extraction + Browserbase screenshots +
-# Gemini Vision extraction + confidence scoring + REST API export.
+# Retail price poller — cloud failsafe.
 #
-# Runs on schedule and on workflow_dispatch. Vision runs on every poll —
-# no separate follow-up step needed.
+# Local Docker (self-hosted Firecrawl + browserless) is the PRIMARY data source.
+# This workflow only activates when the local poller hasn't pushed fresh data
+# to the data branch within the expected window (>5 hours since last poll).
 #
-# prices.db is persisted in the data branch so the 24h history chart
-# has rolling data across runs.
+# When triggered manually (workflow_dispatch) the staleness check is skipped
+# and the pipeline always runs — useful for testing or emergency re-polls.
 #
 # Required repository secrets:
-#   FIRECRAWL_API_KEY      — api.firecrawl.dev key
+#   FIRECRAWL_API_KEY      — api.firecrawl.dev key (cloud fallback)
 #   BROWSERBASE_API_KEY    — Browserbase cloud browser API key
 #   BROWSERBASE_PROJECT_ID — Browserbase project ID
 #   GEMINI_API_KEY         — Google AI Studio API key
@@ -16,7 +16,7 @@ name: Retail Price Poller
 
 on:
   schedule:
-    - cron: '10 */4 * * *'  # Every 4 hours at :10 past the hour
+    - cron: '15 */4 * * *'  # Check every 4h — matches local poller cadence
   workflow_dispatch:
     inputs:
       coins:
@@ -37,21 +37,17 @@ on:
 
 env:
   TZ: UTC
+  # Retail poller runs every ~4h. Allow 5h before treating data as stale.
+  STALE_SECONDS: '18000'
 
 jobs:
   poll:
-    name: Retail Price Poll
+    name: Retail Price Poll (failsafe)
     runs-on: ubuntu-latest
     permissions:
       contents: write
 
     steps:
-      - name: Checkout scripts
-        uses: actions/checkout@v4
-        with:
-          path: scripts
-          ref: ${{ github.event.inputs.scripts_ref || 'main' }}
-
       - name: Checkout data branch
         uses: actions/checkout@v4
         with:
@@ -59,24 +55,58 @@ jobs:
           path: data-out
           fetch-depth: 1
 
+      # Check manifest.json generated_at — skip if local Docker pushed recently
+      - name: Check data freshness
+        id: freshness
+        if: github.event_name == 'schedule'
+        run: |
+          MANIFEST="data-out/data/api/manifest.json"
+          if [ ! -f "$MANIFEST" ]; then
+            echo "No manifest found — data branch not yet initialised. Running pipeline."
+            echo "stale=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          GENERATED_AT=$(python3 -c "import json; print(json.load(open('$MANIFEST'))['generated_at'])")
+          AGE=$(( $(date +%s) - $(date -d "$GENERATED_AT" +%s) ))
+          echo "Retail data age: $((AGE / 3600))h $(( (AGE % 3600) / 60 ))m (generated_at: $GENERATED_AT)"
+          if [ "$AGE" -gt "$STALE_SECONDS" ]; then
+            echo "Data is STALE — local Docker appears down. Running cloud fallback."
+            echo "stale=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "Data is fresh — local Docker is healthy. Skipping cloud pipeline."
+            echo "stale=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Checkout scripts
+        if: github.event_name == 'workflow_dispatch' || steps.freshness.outputs.stale == 'true'
+        uses: actions/checkout@v4
+        with:
+          path: scripts
+          ref: ${{ github.event.inputs.scripts_ref || 'main' }}
+
       - name: Set up Node.js
+        if: github.event_name == 'workflow_dispatch' || steps.freshness.outputs.stale == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: '20'
 
       - name: Install poller dependencies
+        if: github.event_name == 'workflow_dispatch' || steps.freshness.outputs.stale == 'true'
         working-directory: scripts/devops/retail-poller
         run: npm ci
 
       - name: Set run context
         id: ctx
+        if: github.event_name == 'workflow_dispatch' || steps.freshness.outputs.stale == 'true'
         run: |
           DATE=$(date -u +%Y-%m-%d)
           echo "date=$DATE" >> "$GITHUB_OUTPUT"
-          echo "artifact_dir=${{ github.workspace }}/data-out/data/retail/_artifacts/$DATE" >> "$GITHUB_OUTPUT"
+          ARTIFACT_DIR="${{ github.workspace }}/data-out/data/retail/_artifacts/$DATE"
+          echo "artifact_dir=$ARTIFACT_DIR" >> "$GITHUB_OUTPUT"
 
-      # Step 1: Firecrawl extraction → SQLite (prices.db in data-out/)
+      # Step 1: Firecrawl extraction → SQLite
       - name: Extract prices via Firecrawl
+        if: github.event_name == 'workflow_dispatch' || steps.freshness.outputs.stale == 'true'
         env:
           FIRECRAWL_API_KEY: ${{ secrets.FIRECRAWL_API_KEY }}
           DATA_DIR: ${{ github.workspace }}/data-out/data
@@ -87,6 +117,7 @@ jobs:
 
       # Step 2: Browserbase screenshots → manifest.json + PNGs in artifact_dir
       - name: Capture screenshots via Browserbase
+        if: github.event_name == 'workflow_dispatch' || steps.freshness.outputs.stale == 'true'
         continue-on-error: true
         env:
           BROWSERBASE_API_KEY: ${{ secrets.BROWSERBASE_API_KEY }}
@@ -101,6 +132,7 @@ jobs:
 
       # Step 3: Gemini Vision extraction → data/retail/{slug}/{date}-vision.json
       - name: Extract vision prices via Gemini
+        if: github.event_name == 'workflow_dispatch' || steps.freshness.outputs.stale == 'true'
         continue-on-error: true
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
@@ -109,17 +141,19 @@ jobs:
         working-directory: scripts/devops/retail-poller
         run: node extract-vision.js "$MANIFEST_PATH"
 
-      # Step 4: SQLite + vision JSON → data/api/ REST endpoints with confidence scores
+      # Step 4: SQLite + vision JSON → data/api/ REST endpoints
       - name: Export REST API JSON
+        if: github.event_name == 'workflow_dispatch' || steps.freshness.outputs.stale == 'true'
         env:
           DATA_DIR: ${{ github.workspace }}/data-out/data
           DRY_RUN: ${{ github.event.inputs.dry_run == 'true' && '1' || '0' }}
         working-directory: scripts/devops/retail-poller
         run: node api-export.js
 
-      # Commit updated REST endpoints + prices.db (for rolling 24h history)
       - name: Commit and push
-        if: ${{ github.event.inputs.dry_run != 'true' }}
+        if: |
+          (github.event_name == 'workflow_dispatch' || steps.freshness.outputs.stale == 'true') &&
+          github.event.inputs.dry_run != 'true'
         env:
           POLL_DATE: ${{ steps.ctx.outputs.date }}
         working-directory: data-out
@@ -130,7 +164,7 @@ jobs:
           if git diff --cached --quiet; then
             echo "No new data to commit."
           else
-            git commit -m "retail: ${POLL_DATE} poll"
+            git commit -m "retail: ${POLL_DATE} cloud fallback poll"
             git pull --rebase origin data
             git push
           fi
