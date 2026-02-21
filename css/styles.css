@@ -11235,14 +11235,13 @@ th {
 }
 
 .retail-disclaimer-inline {
+  display: block;
   font-size: 0.72rem;
   color: var(--text-muted, var(--bs-secondary-color));
   background: var(--bs-tertiary-bg, rgba(148,163,184,.06));
   border: 1px solid var(--border-color-subtle, rgba(148,163,184,.18));
   border-radius: 6px;
   padding: 0.3rem 0.65rem;
-  flex: 1;
-  min-width: 0;
   line-height: 1.45;
 }
 
