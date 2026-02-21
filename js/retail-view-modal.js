@@ -24,16 +24,6 @@ const _switchRetailViewTab = (tab) => {
  * Builds the intraday chart (median + low) from windows_24h data for a slug.
  * @param {string} slug
  */
-// Per-vendor chart colors — consistent across all coin modals
-const _VENDOR_COLORS = {
-  apmex:          "#3b82f6",  // blue
-  jmbullion:      "#f59e0b",  // amber
-  sdbullion:      "#10b981",  // emerald
-  monumentmetals: "#a78bfa",  // violet
-  herobullion:    "#f87171",  // red
-  bullionexchanges: "#ec4899", // pink
-  summitmetals:   "#06b6d4",  // cyan
-};
 
 /**
  * Builds the vendor legend: colored swatch + clickable vendor name + current price.
@@ -57,7 +47,7 @@ const _buildVendorLegend = (slug) => {
     const price = vendorData ? vendorData.price : null;
     if (price == null) return;
 
-    const color = _VENDOR_COLORS[vendorId] || "#94a3b8";
+    const color = RETAIL_VENDOR_COLORS[vendorId] || "#94a3b8";
     const label = (typeof RETAIL_VENDOR_NAMES !== "undefined" && RETAIL_VENDOR_NAMES[vendorId]) || vendorId;
     const vendorUrl = (typeof retailProviders !== "undefined" && retailProviders && retailProviders[slug] && retailProviders[slug][vendorId])
       || (typeof RETAIL_VENDOR_URLS !== "undefined" && RETAIL_VENDOR_URLS[vendorId])
@@ -127,7 +117,7 @@ const _buildIntradayChart = (slug) => {
     const datasets = useVendorLines
       ? activeVendors.map((vendorId) => {
           const label = (typeof RETAIL_VENDOR_NAMES !== "undefined" && RETAIL_VENDOR_NAMES[vendorId]) || vendorId;
-          const color = _VENDOR_COLORS[vendorId] || "#94a3b8";
+          const color = RETAIL_VENDOR_COLORS[vendorId] || "#94a3b8";
           return {
             label,
             data: windows.map((w) => (w.vendors && w.vendors[vendorId] != null ? w.vendors[vendorId] : null)),
@@ -305,7 +295,7 @@ const openRetailViewModal = (slug) => {
       ? activeHistVendors.map((vendorId) => ({
           label: (typeof RETAIL_VENDOR_NAMES !== "undefined" && RETAIL_VENDOR_NAMES[vendorId]) || vendorId,
           data: sorted.map((e) => (e.vendors && e.vendors[vendorId] ? e.vendors[vendorId].avg : null)),
-          borderColor: _VENDOR_COLORS[vendorId] || "#94a3b8",
+          borderColor: RETAIL_VENDOR_COLORS[vendorId] || "#94a3b8",
           backgroundColor: "transparent",
           borderWidth: 1.5,
           pointRadius: 2,

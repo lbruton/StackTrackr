@@ -39,6 +39,17 @@ const RETAIL_VENDOR_URLS = {
   jmbullion:      "https://www.jmbullion.com",
 };
 
+/** Per-vendor brand colors — shared with retail-view-modal.js for chart lines and card labels */
+const RETAIL_VENDOR_COLORS = {
+  apmex:            "#3b82f6",  // blue
+  jmbullion:        "#f59e0b",  // amber
+  sdbullion:        "#10b981",  // emerald
+  monumentmetals:   "#a78bfa",  // violet
+  herobullion:      "#f87171",  // red
+  bullionexchanges: "#ec4899",  // pink
+  summitmetals:     "#06b6d4",  // cyan
+};
+
 /**
  * Formats a price value as USD string, or "—" if null/undefined.
  * Retail prices are USD source data — display in USD regardless of user currency setting.
@@ -521,6 +532,7 @@ const _buildRetailCard = (slug, meta, priceData) => {
 
       const nameEl = document.createElement("span");
       nameEl.className = "retail-vendor-name";
+      const vendorColor = RETAIL_VENDOR_COLORS[key] || null;
       // Prefer specific product page from providers.json; fall back to vendor homepage
       const vendorUrl = (retailProviders && retailProviders[slug] && retailProviders[slug][key])
         || RETAIL_VENDOR_URLS[key];
@@ -529,6 +541,7 @@ const _buildRetailCard = (slug, meta, priceData) => {
         link.href = "#";
         link.textContent = label;
         link.className = "retail-vendor-link";
+        if (vendorColor) link.style.color = vendorColor;
         link.addEventListener("click", (e) => {
           e.preventDefault();
           const popup = window.open(vendorUrl, `retail_vendor_${key}`, "width=1250,height=800,scrollbars=yes,resizable=yes,toolbar=no,location=no,menubar=no,status=no");
@@ -537,6 +550,7 @@ const _buildRetailCard = (slug, meta, priceData) => {
         nameEl.appendChild(link);
       } else {
         nameEl.textContent = label;
+        if (vendorColor) nameEl.style.color = vendorColor;
       }
 
       const priceEl = document.createElement("span");
@@ -806,6 +820,7 @@ if (typeof window !== "undefined") {
   window.RETAIL_SLUGS = RETAIL_SLUGS;
   window.RETAIL_VENDOR_NAMES = RETAIL_VENDOR_NAMES;
   window.RETAIL_VENDOR_URLS = RETAIL_VENDOR_URLS;
+  window.RETAIL_VENDOR_COLORS = RETAIL_VENDOR_COLORS;
   window._buildConfidenceBar = _buildConfidenceBar;
 }
 
