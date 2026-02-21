@@ -98,6 +98,19 @@ const METAL_PRICE_RANGE_PER_OZ = {
 // Empty set = all vendors now use table-first strategy.
 const USES_AS_LOW_AS = new Set([]);
 
+// Out-of-stock text patterns
+const OUT_OF_STOCK_PATTERNS = [
+  /out of stock/i,
+  /sold out/i,
+  /currently unavailable/i,
+  /notify me when available/i,
+  /email when in stock/i,
+  /temporarily out of stock/i,
+  /back ?order/i,
+  /pre-?order/i,
+  /notify\s+me/i,  // "Notify Me" buttons
+];
+
 const MARKDOWN_CUTOFF_PATTERNS = {
   sdbullion: [
     /^\*\*Add on Items\*\*/im,              // Firecrawl markdown bold header
@@ -145,6 +158,56 @@ const FBP_DEALER_NAME_MAP = {
   "Silver.com":          "silverdotcom",
   "Bullion Standard":    "bullionstandard",
 };
+
+/**
+ * Detect stock status from Firecrawl markdown.
+ *
+ * @param {string} markdown  Firecrawl-scraped markdown
+ * @param {number} expectedWeightOz  Expected product weight (e.g., 1 for 1 oz)
+ * @returns {{inStock: boolean, reason: string, detectedText: string|null}}
+ */
+function detectStockStatus(markdown, expectedWeightOz = 1) {
+  if (!markdown) {
+    return { inStock: true, reason: "no_markdown", detectedText: null };
+  }
+
+  // Check for out-of-stock text patterns
+  for (const pattern of OUT_OF_STOCK_PATTERNS) {
+    const match = markdown.match(pattern);
+    if (match) {
+      return {
+        inStock: false,
+        reason: "out_of_stock",
+        detectedText: match[0]
+      };
+    }
+  }
+
+  // Check for fractional weight mismatch (related product substitution)
+  // Example: expecting "1 oz" but page shows "1/2 oz Platinum Eagle"
+  if (expectedWeightOz >= 1) {
+    const fractionalPatterns = [
+      /\b1\/2\s*oz\b/i,
+      /\b1\/4\s*oz\b/i,
+      /\b1\/10\s*oz\b/i,
+      /\bhalf\s*ounce\b/i,
+      /\bquarter\s*ounce\b/i,
+    ];
+
+    for (const pattern of fractionalPatterns) {
+      const match = markdown.match(pattern);
+      if (match) {
+        return {
+          inStock: false,
+          reason: "fractional_weight",
+          detectedText: match[0]
+        };
+      }
+    }
+  }
+
+  return { inStock: true, reason: "in_stock", detectedText: null };
+}
 
 /**
  * Extract the lowest plausible per-coin price from scraped markdown.
@@ -482,7 +545,7 @@ async function main() {
             const price = fbp.ach;
             log(`  \u21a9 ${coinSlug}/${providerId}: $${price.toFixed(2)} ACH (fbp)`);
             if (!DRY_RUN) {
-              writeSnapshot(gapDb, { scrapedAt, windowStart: winStart, coinSlug, vendor: providerId, price, source: "fbp", isFailed: 0 });
+              writeSnapshot(gapDb, { scrapedAt, windowStart: winStart, coinSlug, vendor: providerId, price, source: "fbp", isFailed: 0, inStock: true });
             }
             totalFilled++;
           }
@@ -529,29 +592,59 @@ async function main() {
     log(`Scraping ${coinSlug}/${provider.id}`);
     let price = null;
     let source = "firecrawl";
+    let inStock = true;
+    let stockReason = "in_stock";
+    let detectedText = null;
 
     try {
       const markdown = await scrapeUrl(provider.url, provider.id);
       const cleanedMarkdown = preprocessMarkdown(markdown, provider.id);
-      price = extractPrice(cleanedMarkdown, coin.metal, coin.weight_oz || 1, provider.id);
 
-      // Playwright fallback: if Firecrawl returned a page but no price was found
-      if (price === null && BROWSERLESS_URL) {
+      // Detect stock status BEFORE price extraction
+      const stockStatus = detectStockStatus(cleanedMarkdown, coin.weight_oz || 1);
+      inStock = stockStatus.inStock;
+      stockReason = stockStatus.reason;
+      detectedText = stockStatus.detectedText;
+
+      if (!inStock) {
+        log(`  ⚠ ${provider.id}: ${stockReason} — ${detectedText || "detected"}`);
+        // Skip price extraction if out of stock
+        price = null;
+      } else {
+        // Extract price only if in stock
+        price = extractPrice(cleanedMarkdown, coin.metal, coin.weight_oz || 1, provider.id);
+      }
+
+      // Playwright fallback: if Firecrawl returned a page but no price was found AND in stock
+      if (price === null && inStock && BROWSERLESS_URL) {
         log(`  ? ${coinSlug}/${provider.id}: no price via Firecrawl — trying Playwright`);
         const html = await scrapeWithPlaywright(provider.url, provider.id);
         if (html) {
-          // extractPrice works on HTML too — regex patterns match dollar amounts in either format
           const cleanedHtml = preprocessMarkdown(html, provider.id);
-          price = extractPrice(cleanedHtml, coin.metal, coin.weight_oz || 1, provider.id);
-          if (price !== null) {
-            source = "playwright";
-            log(`  ✓ ${coinSlug}/${provider.id}: $${price.toFixed(2)} (playwright)`);
+          // Re-check stock status with Playwright HTML
+          const pwStockStatus = detectStockStatus(cleanedHtml, coin.weight_oz || 1);
+          inStock = pwStockStatus.inStock;
+          stockReason = pwStockStatus.reason;
+          detectedText = pwStockStatus.detectedText;
+
+          if (!inStock) {
+            log(`  ⚠ ${provider.id}: ${stockReason} — ${detectedText || "detected"} (playwright)`);
+            price = null;
           } else {
-            warn(`  ? ${coinSlug}/${provider.id}: Playwright page loaded but no price found`);
+            // extractPrice works on HTML too — regex patterns match dollar amounts in either format
+            price = extractPrice(cleanedHtml, coin.metal, coin.weight_oz || 1, provider.id);
+            if (price !== null) {
+              source = "playwright";
+              log(`  ✓ ${coinSlug}/${provider.id}: $${price.toFixed(2)} (playwright)`);
+            } else {
+              warn(`  ? ${coinSlug}/${provider.id}: Playwright page loaded but no price found`);
+            }
           }
         }
       } else if (price !== null) {
         log(`  ✓ ${coinSlug}/${provider.id}: $${price.toFixed(2)}`);
+      } else if (!inStock) {
+        // Already logged above
       } else {
         warn(`  ? ${coinSlug}/${provider.id}: page loaded but no price found`);
       }
@@ -565,10 +658,21 @@ async function main() {
           const html = await scrapeWithPlaywright(provider.url, provider.id);
           if (html) {
             const cleanedHtml = preprocessMarkdown(html, provider.id);
-            price = extractPrice(cleanedHtml, coin.metal, coin.weight_oz || 1, provider.id);
-            if (price !== null) {
-              source = "playwright";
-              log(`  ✓ ${coinSlug}/${provider.id}: $${price.toFixed(2)} (playwright)`);
+            // Check stock status with Playwright HTML
+            const pwStockStatus = detectStockStatus(cleanedHtml, coin.weight_oz || 1);
+            inStock = pwStockStatus.inStock;
+            stockReason = pwStockStatus.reason;
+            detectedText = pwStockStatus.detectedText;
+
+            if (!inStock) {
+              log(`  ⚠ ${provider.id}: ${stockReason} — ${detectedText || "detected"} (playwright)`);
+              price = null;
+            } else {
+              price = extractPrice(cleanedHtml, coin.metal, coin.weight_oz || 1, provider.id);
+              if (price !== null) {
+                source = "playwright";
+                log(`  ✓ ${coinSlug}/${provider.id}: $${price.toFixed(2)} (playwright)`);
+              }
             }
           }
         } catch (pwErr) {
@@ -576,10 +680,10 @@ async function main() {
         }
       }
 
-      if (price === null) {
+      if (price === null && inStock) {
         warn(`  ✗ ${coinSlug}/${provider.id}: ${err.message.slice(0, 120)}`);
       }
-      scrapeResults.push({ coinSlug, coin, providerId: provider.id, url: provider.url, price, source, ok: price !== null, error: price === null ? err.message.slice(0, 200) : null });
+      scrapeResults.push({ coinSlug, coin, providerId: provider.id, url: provider.url, price, source, ok: price !== null, error: price === null && inStock ? err.message.slice(0, 200) : null });
     }
 
     // Record to SQLite
@@ -591,7 +695,8 @@ async function main() {
         vendor:    provider.id,
         price,
         source,
-        isFailed:  price === null,
+        isFailed:  price === null && inStock,  // Only failed if in stock but no price
+        inStock,
       });
     }
 
@@ -648,6 +753,7 @@ async function main() {
             price:    fbp.ach,
             source:   "fbp",
             isFailed: false,
+            inStock: true,
           });
         }
       }
