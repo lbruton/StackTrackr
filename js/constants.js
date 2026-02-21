@@ -496,7 +496,7 @@ const RETAIL_PROVIDERS_KEY = "retailProviders";
 /** @constant {string[]} RETAIL_API_ENDPOINTS - Ordered list of retail API endpoints (primary first) */
 const RETAIL_API_ENDPOINTS = [
   "https://api.staktrakr.com/data/api",    // api1 (Fly.io) — primary
-  "https://api1.staktrakr.com/data/api",   // GitHub Pages — fallback (serves local Mac poller data)
+  "https://api1.staktrakr.com/api",         // GitHub Pages — fallback (serves local Mac poller data)
 ];
 /** @constant {string} RETAIL_API_BASE_URL - Primary endpoint (backward compat) */
 const RETAIL_API_BASE_URL = RETAIL_API_ENDPOINTS[0];
