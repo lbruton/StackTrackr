@@ -55,6 +55,8 @@ const _buildIntradayChart = (slug) => {
   // Collect the vendor set across all windows (preserves display order from RETAIL_VENDOR_NAMES)
   const knownVendors = typeof RETAIL_VENDOR_NAMES !== "undefined" ? Object.keys(RETAIL_VENDOR_NAMES) : [];
   const activeVendors = knownVendors.filter((v) => windows.some((w) => w.vendors && w.vendors[v] != null));
+  // Fall back to median+low when windows predate the per-vendor format
+  const useVendorLines = activeVendors.length > 0;
 
   if (windows.length >= 2 && canvas instanceof HTMLCanvasElement && typeof Chart !== "undefined") {
     const labels = windows.map((w) => {
@@ -63,20 +65,42 @@ const _buildIntradayChart = (slug) => {
       return `${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`;
     });
 
-    const datasets = activeVendors.map((vendorId) => {
-      const label = (typeof RETAIL_VENDOR_NAMES !== "undefined" && RETAIL_VENDOR_NAMES[vendorId]) || vendorId;
-      const color = _VENDOR_COLORS[vendorId] || "#94a3b8";
-      return {
-        label,
-        data: windows.map((w) => (w.vendors && w.vendors[vendorId] != null ? w.vendors[vendorId] : null)),
-        borderColor: color,
-        backgroundColor: "transparent",
-        borderWidth: 1.5,
-        pointRadius: 2,
-        tension: 0.2,
-        spanGaps: true,
-      };
-    });
+    const datasets = useVendorLines
+      ? activeVendors.map((vendorId) => {
+          const label = (typeof RETAIL_VENDOR_NAMES !== "undefined" && RETAIL_VENDOR_NAMES[vendorId]) || vendorId;
+          const color = _VENDOR_COLORS[vendorId] || "#94a3b8";
+          return {
+            label,
+            data: windows.map((w) => (w.vendors && w.vendors[vendorId] != null ? w.vendors[vendorId] : null)),
+            borderColor: color,
+            backgroundColor: "transparent",
+            borderWidth: 1.5,
+            pointRadius: 2,
+            tension: 0.2,
+            spanGaps: true,
+          };
+        })
+      : [
+          {
+            label: "Median",
+            data: windows.map((w) => w.median),
+            borderColor: "#3b82f6",
+            backgroundColor: "transparent",
+            borderWidth: 2,
+            pointRadius: 2,
+            tension: 0.3,
+          },
+          {
+            label: "Low",
+            data: windows.map((w) => w.low),
+            borderColor: "#22c55e",
+            backgroundColor: "transparent",
+            borderWidth: 1.5,
+            borderDash: [4, 3],
+            pointRadius: 2,
+            tension: 0.3,
+          },
+        ];
 
     _retailViewIntradayChart = new Chart(canvas, {
       type: "line",
@@ -110,13 +134,14 @@ const _buildIntradayChart = (slug) => {
     });
   }
 
-  // Update table header with per-vendor columns
+  // Update table header — per-vendor when data available, median+low fallback otherwise
+  const tableColumns = useVendorLines
+    ? activeVendors.map((v) => (typeof RETAIL_VENDOR_NAMES !== "undefined" && RETAIL_VENDOR_NAMES[v]) || v)
+    : ["Median", "Low"];
   if (tableHead) {
     tableHead.innerHTML = "";
     const headerRow = document.createElement("tr");
-    ["Time (local)", ...activeVendors.map((v) =>
-      (typeof RETAIL_VENDOR_NAMES !== "undefined" && RETAIL_VENDOR_NAMES[v]) || v
-    )].forEach((label) => {
+    ["Time (local)", ...tableColumns].forEach((label) => {
       const th = document.createElement("th");
       th.textContent = label;
       headerRow.appendChild(th);
@@ -124,7 +149,7 @@ const _buildIntradayChart = (slug) => {
     tableHead.appendChild(headerRow);
   }
 
-  // Compact recent-windows table (5 most recent, per-vendor columns)
+  // Compact recent-windows table (5 most recent)
   if (tableBody) {
     tableBody.innerHTML = "";
     const recent = windows.slice(-5).reverse();
@@ -135,14 +160,17 @@ const _buildIntradayChart = (slug) => {
       const timeLabel = (d && !isNaN(d))
         ? `${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`
         : "--:--";
-      [timeLabel, ...activeVendors.map((v) => fmt(w.vendors && w.vendors[v]))].forEach((text) => {
+      const rowValues = useVendorLines
+        ? activeVendors.map((v) => fmt(w.vendors && w.vendors[v]))
+        : [fmt(w.median), fmt(w.low)];
+      [timeLabel, ...rowValues].forEach((text) => {
         const td = document.createElement("td");
         td.textContent = text;
         tr.appendChild(td);
       });
       tableBody.appendChild(tr);
     });
-    const colCount = activeVendors.length + 1;
+    const colCount = tableColumns.length + 1;
     if (recent.length === 0) {
       const tr = document.createElement("tr");
       const td = document.createElement("td");
