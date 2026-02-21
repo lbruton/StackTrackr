@@ -46,7 +46,8 @@ if [ -n "${GEMINI_API_KEY:-}" ] && [ -n "${BROWSERLESS_URL:-}" ]; then
     || echo "[$(date -u +%H:%M:%S)] WARN: vision capture failed (non-fatal)"
 
   echo "[$(date -u +%H:%M:%S)] Running vision extraction..."
-  ARTIFACT_DIR="$_ARTIFACT_DIR" \
+  MANIFEST_PATH="$_ARTIFACT_DIR/manifest.json" \
+    ARTIFACT_DIR="$_ARTIFACT_DIR" \
     DATA_DIR="$DATA_REPO_PATH/data" \
     node /app/extract-vision.js \
     || echo "[$(date -u +%H:%M:%S)] WARN: vision extraction failed (non-fatal)"

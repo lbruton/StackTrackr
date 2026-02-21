@@ -23,17 +23,17 @@ extract-vision.js  (Gemini Vision → per-coin vision JSON)
 api-export.js  (SQLite + vision JSON → data/api/ REST endpoints → data branch)
 ```
 
-**Two equivalent pipelines — same scripts, different browser backend:**
+**Local Docker is PRIMARY — GitHub Action is cloud FAILSAFE only:**
 
-| Pipeline | Browser | Trigger |
-|----------|---------|---------|
-| **GitHub Action** (`retail-price-poller.yml`) | Browserbase (cloud) | Schedule every 4h + `workflow_dispatch` |
-| **Local Docker** (`run-local.sh`) | Browserless (self-hosted) | Manual / local cron |
+| Pipeline | Browser | Role | Trigger |
+|----------|---------|------|---------|
+| **Local Docker** (`run-local.sh`) | Browserless (self-hosted) | **Primary** | Every 15 min via Docker cron |
+| **GitHub Action** (`retail-price-poller.yml`) | Browserbase (cloud) | **Failsafe** | Checks every 4h; only runs if local Docker hasn't pushed in >5h (`manifest.json` staleness check) |
 
 **Key constraint:** `providers.json` lives on the **`data` branch**, not `main` or `dev`.
 Path on disk: `$DATA_REPO_PATH/data/retail/providers.json`
 
-**Vision on every poll (as of 2026-02-20):** Vision runs inline — no separate follow-up step. Screenshots go to `ARTIFACT_DIR` (`DATA_DIR/retail/_artifacts/{date}` in Action, `/tmp/retail-screenshots/{date}` locally). Vision JSON writes to `DATA_DIR/retail/{slug}/{date}-vision.json`. `api-export.js` loads via `loadVisionData()` and merges via `mergeVendorWithVision()` — pushing above the 60% single-source ceiling when Firecrawl and Vision agree. `prices.db` is committed to the data branch for rolling 24h history across Action runs. `merge-prices.js` is legacy and not called in either pipeline.
+**Vision on every poll (as of 2026-02-20):** Vision runs inline — no separate follow-up step. Screenshots go to `ARTIFACT_DIR` (`DATA_DIR/retail/_artifacts/{date}` in Action, `/tmp/retail-screenshots/{date}` locally). `extract-vision.js` reads `MANIFEST_PATH` (auto-detected from `ARTIFACT_DIR` in the Action; explicitly set in `run-local.sh`). Vision JSON writes to `DATA_DIR/retail/{slug}/{date}-vision.json`. `api-export.js` loads via `loadVisionData()` and merges via `mergeVendorWithVision()` — pushing above the 80% single-source ceiling when Firecrawl and Vision agree. `prices.db` is committed to the data branch for rolling 24h history across Action runs. `merge-prices.js` is legacy and not called in either pipeline.
 
 ---
 
@@ -96,11 +96,11 @@ To add a new vendor: add to `FBP_DEALER_NAME_MAP` in `price-extract.js` AND add 
 
 Two provider groups with different strategies:
 
-**`USES_AS_LOW_AS` providers** (sdbullion, jmbullion, monumentmetals):
+**`USES_AS_LOW_AS` providers** (jmbullion, monumentmetals):
 1. Scan all `"As Low As $XX.XX"` matches → filter by weight-adjusted metal range → take **minimum**
 2. Fallback: table cell prices
 
-**All other providers** (apmex, etc.):
+**All other providers** (apmex, sdbullion, etc.):
 1. Pricing table cells first (avoids picking up related-product "As Low As")
 2. Fallback: "As Low As" scan
 
@@ -215,8 +215,8 @@ The StakTrakr app fetches `data/api/{slug}/latest.json` in `retail-view-modal.js
 | `FIRECRAWL_BASE_URL` | price-extract.js | Self-hosted: `http://localhost:3002`; default: cloud |
 | `BROWSERLESS_URL` | price-extract.js, capture.js | `ws://host.docker.internal:3000/chromium/playwright?token=local_dev_token` — Playwright fallback in price-extract AND browserless CDP in capture.js (`BROWSER_MODE=browserless`) |
 | `BROWSER_MODE` | capture.js | `browserbase` (cloud, default in Action), `browserless` (self-hosted Docker), or `local` (local Chromium via `playwright.launch()`) |
-| `ARTIFACT_DIR` | capture.js, extract-vision.js | Screenshots output dir. Action: `DATA_DIR/retail/_artifacts/{date}`. Local: `/tmp/retail-screenshots/{date}`. capture.js writes `manifest.json` here. |
-| `MANIFEST_PATH` | extract-vision.js | Full path to `manifest.json` written by capture.js. Action passes as CLI arg: `node extract-vision.js "$MANIFEST_PATH"`. |
+| `ARTIFACT_DIR` | capture.js | Screenshots output dir. Action: `DATA_DIR/retail/_artifacts/{date}`. Local: `/tmp/retail-screenshots/{date}`. capture.js writes `manifest.json` here. |
+| `MANIFEST_PATH` | extract-vision.js | Full path to `manifest.json` written by capture.js. `run-local.sh` sets this to `$ARTIFACT_DIR/manifest.json`. Action passes as `${{ steps.ctx.outputs.artifact_dir }}/manifest.json`. |
 | `BROWSERBASE_API_KEY` | capture.js | Cloud Browserbase only — not needed when using browserless Docker |
 | `BROWSERBASE_PROJECT_ID` | capture.js | Cloud Browserbase only |
 | `GEMINI_API_KEY` | extract-vision.js | Google AI Studio key for vision extraction |
@@ -251,7 +251,7 @@ PATCH_GAPS=1 DATA_DIR=/path/to/data-branch/data node price-extract.js
 
 ## Common Debugging Patterns
 
-**Low confidence on SDB prices:** Check if SDB page shows fractional coin "As Low As" values — the `Math.min()` on all in-range matches picks the fractional price. Compare the extracted price vs the coin's `weight_oz × spot` estimate.
+**Low confidence on SDB prices (fixed 2026-02-20):** `sdbullion` was removed from `USES_AS_LOW_AS` and now uses table-first strategy. `preprocessMarkdown()` strips the "Add on Items" carousel before price extraction. If SDB prices still look wrong, check that the page pricing table structure hasn't changed — use `DRY_RUN=1 COINS=ase` with console logging to inspect what's extracted.
 
 **80% confidence ceiling:** Single-source only (no Vision). 50 base + 30 (within 3% of median) = 80. This is the ceiling without Vision data. Normal for Firecrawl-only runs.
 
