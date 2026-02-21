@@ -544,7 +544,7 @@ const renderRetailCards = () => {
 };
 
 /** Metal emoji icons keyed by metal name */
-const RETAIL_METAL_EMOJI = { gold: "🥇", silver: "🥈", platinum: "🔷", palladium: "⬜" };
+const RETAIL_METAL_EMOJI = { gold: "🟡", silver: "⚪", platinum: "🔷", palladium: "⬜" };
 /**
  * Computes price trend vs. the previous history entry.
  * @param {string} slug
@@ -695,7 +695,6 @@ const _buildRetailCard = (slug, meta, priceData) => {
       const medalIndex = top3.indexOf(key);
       if (medalIndex !== -1) {
         row.classList.add(`retail-vendor-row--medal-${medalIndex + 1}`);
-        row.dataset.medal = medals[medalIndex];
       }
 
       const nameEl = document.createElement("span");
