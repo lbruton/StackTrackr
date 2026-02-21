@@ -94,7 +94,28 @@ const METAL_PRICE_RANGE_PER_OZ = {
 
 // Provider IDs that use "As Low As" as their primary price indicator.
 // For other providers (APMEX), the pricing table is more reliable.
-const USES_AS_LOW_AS = new Set(["jmbullion", "monumentmetals", "sdbullion"]);
+const USES_AS_LOW_AS = new Set(["jmbullion", "monumentmetals"]);
+
+const MARKDOWN_CUTOFF_PATTERNS = {
+  sdbullion: [
+    /\*\*Add on Items\*\*/i,
+    /^Add on Items\s*$/im,
+    /\*\*Customers Also Purchased\*\*/i,
+    /^Customers Also Purchased\s*$/im,
+  ],
+};
+
+function preprocessMarkdown(markdown, providerId) {
+  const patterns = MARKDOWN_CUTOFF_PATTERNS[providerId];
+  if (!patterns || !markdown) return markdown;
+  let cutIndex = markdown.length;
+  for (const pattern of patterns) {
+    const match = markdown.search(pattern);
+    if (match !== -1 && match < cutIndex) cutIndex = match;
+  }
+  return markdown.slice(0, cutIndex);
+}
+
 
 // Maps FBP table dealer names → our provider IDs.
 // Only covers providers we track; unrecognized dealers are ignored.
@@ -456,7 +477,8 @@ async function main() {
 
     try {
       const markdown = await scrapeUrl(provider.url, provider.id);
-      price = extractPrice(markdown, coin.metal, coin.weight_oz || 1, provider.id);
+      const cleanedMarkdown = preprocessMarkdown(markdown, provider.id);
+      price = extractPrice(cleanedMarkdown, coin.metal, coin.weight_oz || 1, provider.id);
 
       // Playwright fallback: if Firecrawl returned a page but no price was found
       if (price === null && BROWSERLESS_URL) {
@@ -464,7 +486,8 @@ async function main() {
         const html = await scrapeWithPlaywright(provider.url, provider.id);
         if (html) {
           // extractPrice works on HTML too — regex patterns match dollar amounts in either format
-          price = extractPrice(html, coin.metal, coin.weight_oz || 1, provider.id);
+          const cleanedHtml = preprocessMarkdown(html, provider.id);
+          price = extractPrice(cleanedHtml, coin.metal, coin.weight_oz || 1, provider.id);
           if (price !== null) {
             source = "playwright";
             log(`  ✓ ${coinSlug}/${provider.id}: $${price.toFixed(2)} (playwright)`);
@@ -486,7 +509,8 @@ async function main() {
         try {
           const html = await scrapeWithPlaywright(provider.url, provider.id);
           if (html) {
-            price = extractPrice(html, coin.metal, coin.weight_oz || 1, provider.id);
+            const cleanedHtml = preprocessMarkdown(html, provider.id);
+            price = extractPrice(cleanedHtml, coin.metal, coin.weight_oz || 1, provider.id);
             if (price !== null) {
               source = "playwright";
               log(`  ✓ ${coinSlug}/${provider.id}: $${price.toFixed(2)} (playwright)`);
