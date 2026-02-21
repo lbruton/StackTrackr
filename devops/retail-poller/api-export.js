@@ -148,7 +148,7 @@ function aggregateWindows(allRows) {
 
 /**
  * Aggregate daily rows (from readDailyAggregates) into per-date summaries.
- * Input rows have: { date, avg_price, min_price, sample_count, vendor }
+ * Input rows have: { date, avg_price, min_price, sample_count, vendor, in_stock }
  */
 function aggregateDailyRows(rawRows) {
   const byDate = new Map();
@@ -160,8 +160,11 @@ function aggregateDailyRows(rawRows) {
     if (row.avg_price !== null) entry.prices.push(row.avg_price);
     if (row.min_price !== null)  entry.mins.push(row.min_price);
     entry.sampleCount += row.sample_count || 0;
-    if (row.vendor && row.avg_price !== null) {
-      entry.vendors[row.vendor] = { avg: Math.round(row.avg_price * 100) / 100 };
+    if (row.vendor) {
+      entry.vendors[row.vendor] = {
+        avg: row.avg_price !== null ? Math.round(row.avg_price * 100) / 100 : null,
+        inStock: row.in_stock === 1,
+      };
     }
   }
   const result = [];

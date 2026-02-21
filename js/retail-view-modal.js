@@ -294,13 +294,18 @@ const openRetailViewModal = (slug) => {
     const histDatasets = useVendorHistLines
       ? activeHistVendors.map((vendorId) => ({
           label: (typeof RETAIL_VENDOR_NAMES !== "undefined" && RETAIL_VENDOR_NAMES[vendorId]) || vendorId,
-          data: sorted.map((e) => (e.vendors && e.vendors[vendorId] ? e.vendors[vendorId].avg : null)),
+          data: sorted.map((e) => {
+            const vendorData = e.vendors && e.vendors[vendorId];
+            // If vendor is out of stock, return null to create gap
+            if (vendorData && vendorData.inStock === false) return null;
+            return vendorData ? vendorData.avg : null;
+          }),
           borderColor: RETAIL_VENDOR_COLORS[vendorId] || "#94a3b8",
           backgroundColor: "transparent",
           borderWidth: 1.5,
           pointRadius: 2,
           tension: 0.3,
-          spanGaps: true,
+          spanGaps: false,
         }))
       : [{
           label: "Avg Median",
@@ -317,7 +322,23 @@ const openRetailViewModal = (slug) => {
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        plugins: { legend: { display: !useVendorHistLines } },
+        plugins: {
+          legend: { display: !useVendorHistLines },
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                const label = context.dataset.label || "";
+                const value = context.parsed.y;
+
+                if (value === null) {
+                  return `${label}: Out of stock`;
+                }
+
+                return `${label}: $${Number(value).toFixed(2)}`;
+              }
+            }
+          }
+        },
         scales: {
           y: {
             ticks: {

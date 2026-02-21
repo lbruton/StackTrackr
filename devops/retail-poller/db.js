@@ -241,10 +241,10 @@ export function readDailyAggregates(db, coinSlug, days = 30) {
         COUNT(*)                    AS sample_count,
         AVG(price)                  AS avg_price,
         MIN(price)                  AS min_price,
-        vendor
+        vendor,
+        MAX(in_stock)               AS in_stock
       FROM price_snapshots
       WHERE coin_slug   = ?
-        AND price       IS NOT NULL
         AND substr(window_start, 1, 10) >= date('now', ? || ' days')
       GROUP BY date, vendor
       ORDER BY date ASC, vendor ASC
