@@ -14,18 +14,26 @@ Reference guide for the retail market price polling system. Scrapes dealer websi
 ```
 providers.json (data branch)
        ↓
-price-extract.js  (Firecrawl scrape → SQLite)         ← live cron
+price-extract.js  (Firecrawl → SQLite)
        +
-capture.js + extract-vision.js  (optional: screenshot → Gemini Vision)
-       ↓                         ← NOT yet wired into live cron
-api-export.js  (SQLite → data/api/ JSON files → data branch)
+capture.js  (Browserbase/browserless → screenshots)
+       +
+extract-vision.js  (Gemini Vision → per-coin vision JSON)
+       ↓
+api-export.js  (SQLite + vision JSON → data/api/ REST endpoints → data branch)
 ```
+
+**Two equivalent pipelines — same scripts, different browser backend:**
+
+| Pipeline | Browser | Trigger |
+|----------|---------|---------|
+| **GitHub Action** (`retail-price-poller.yml`) | Browserbase (cloud) | Schedule every 4h + `workflow_dispatch` |
+| **Local Docker** (`run-local.sh`) | Browserless (self-hosted) | Manual / local cron |
 
 **Key constraint:** `providers.json` lives on the **`data` branch**, not `main` or `dev`.
 Path on disk: `$DATA_REPO_PATH/data/retail/providers.json`
-The poller never runs against the local `StakTrakr/data/` folder — that's spot price data only.
 
-**Vision pipeline (as of 2026-02-20):** `capture.js` + `extract-vision.js` are now wired into `run-local.sh` as a non-fatal block, gated on `GEMINI_API_KEY` and `BROWSERLESS_URL`. Vision results write to per-coin JSON files at `DATA_DIR/retail/{slug}/{date}-vision.json`. `api-export.js` loads these files via `loadVisionData()` and merges confidence scores via `mergeVendorWithVision()` — pushing above the 60% single-source ceiling when Firecrawl and Vision agree. Screenshots go to `ARTIFACT_DIR` (default: `/tmp/retail-poller-screenshots/{date}`); vision JSON goes to `DATA_DIR/retail/{slug}/`. `merge-prices.js` is legacy and not called. `BROWSER_MODE=browserless` in `capture.js` connects via `chromium.connectOverCDP(BROWSERLESS_WS)`.
+**Vision on every poll (as of 2026-02-20):** Vision runs inline — no separate follow-up step. Screenshots go to `ARTIFACT_DIR` (`DATA_DIR/retail/_artifacts/{date}` in Action, `/tmp/retail-screenshots/{date}` locally). Vision JSON writes to `DATA_DIR/retail/{slug}/{date}-vision.json`. `api-export.js` loads via `loadVisionData()` and merges via `mergeVendorWithVision()` — pushing above the 60% single-source ceiling when Firecrawl and Vision agree. `prices.db` is committed to the data branch for rolling 24h history across Action runs. `merge-prices.js` is legacy and not called in either pipeline.
 
 ---
 
@@ -34,12 +42,13 @@ The poller never runs against the local `StakTrakr/data/` folder — that's spot
 | File | Purpose |
 |------|---------|
 | `devops/retail-poller/price-extract.js` | Primary scraper — Firecrawl + Playwright fallback → SQLite |
-| `devops/retail-poller/capture.js` | Screenshot capture — `BROWSER_MODE=browserless` (browserless Docker via `connectOverCDP`, default for vision runs), `browserbase` (cloud CDP), or `local` (local Chromium `playwright.launch()`). `ARTIFACT_DIR` sets screenshot output dir. |
-| `devops/retail-poller/extract-vision.js` | Gemini Vision price extraction from screenshots → per-coin JSON files (not SQLite) |
-| `devops/retail-poller/merge-prices.js` | Confidence merger — combines Firecrawl + Vision JSON files |
-| `devops/retail-poller/api-export.js` | SQLite → `data/api/` static JSON endpoints |
+| `devops/retail-poller/capture.js` | Screenshot capture — `BROWSER_MODE=browserless` (browserless Docker via `connectOverCDP`), `browserbase` (cloud CDP), or `local` (local Chromium). `ARTIFACT_DIR` sets output dir; writes `manifest.json`. |
+| `devops/retail-poller/extract-vision.js` | Gemini Vision price extraction from screenshots → per-coin JSON files (not SQLite). Reads `MANIFEST_PATH`. |
+| `devops/retail-poller/api-export.js` | SQLite + vision JSON → `data/api/` static JSON endpoints with confidence scoring |
+| `devops/retail-poller/vision-patch.js` | Standalone utility — patches `data/api/{slug}/latest.json` confidence scores using vision JSON, without SQLite. For manual one-off runs. |
+| `devops/retail-poller/merge-prices.js` | **Legacy** — not called in either pipeline. Reads flat `{date}.json` files that no longer exist in SQLite arch. |
 | `devops/retail-poller/db.js` | SQLite helper — schema, read/write functions |
-| `devops/retail-poller/run-local.sh` | Full local run: extract → export → push |
+| `devops/retail-poller/run-local.sh` | Full local run: extract → capture → vision → export → push |
 | `devops/retail-poller/run-fbp.sh` | Gap-fill run: failed vendors → FindBullionPrices scrape |
 
 ---
@@ -155,11 +164,11 @@ After primary scrapes, any coin with failures scrapes `fbp_url` (FindBullionPric
 | Condition | Score delta |
 |-----------|-------------|
 | Base (single source) | +50 |
-| Within 3% of window median | +10 |
+| Within 3% of window median | +30 |
 | >8% from window median | -15 |
 | >10% day-over-day from prev median | -20 |
 
-**Result:** 60% = no outlier (50+10), 50% = mild outlier (50), 35% = strong outlier (50-15), 15% = outlier AND large day-over-day shift (50-15-20).
+**Result:** 80% = no outlier (50+30), 50% = mild outlier (50), 35% = strong outlier (50-15), 15% = outlier AND large day-over-day shift (50-15-20).
 
 ### merge-prices.js (when both Firecrawl + Vision are available)
 
@@ -204,9 +213,10 @@ The StakTrakr app fetches `data/api/{slug}/latest.json` in `retail-view-modal.js
 | `DATA_DIR` | all scripts | `$DATA_REPO_PATH/data` |
 | `FIRECRAWL_API_KEY` | price-extract.js | Cloud Firecrawl; omit for self-hosted |
 | `FIRECRAWL_BASE_URL` | price-extract.js | Self-hosted: `http://localhost:3002`; default: cloud |
-| `BROWSERLESS_URL` | price-extract.js | `ws://host.docker.internal:3000/...` for Playwright fallback |
-| `BROWSER_MODE` | capture.js | `browserbase` (cloud, default) or `local` (local Chromium via `playwright.launch()`) |
-| `BROWSERLESS_URL` | price-extract.js | `ws://host.docker.internal:3000/chromium/playwright?token=local_dev_token` — Playwright fallback in price-extract; **capture.js local mode does NOT use this**, it calls `playwright.launch()` directly (gap: capture.js needs modification to connect via WS for browserless Docker support) |
+| `BROWSERLESS_URL` | price-extract.js, capture.js | `ws://host.docker.internal:3000/chromium/playwright?token=local_dev_token` — Playwright fallback in price-extract AND browserless CDP in capture.js (`BROWSER_MODE=browserless`) |
+| `BROWSER_MODE` | capture.js | `browserbase` (cloud, default in Action), `browserless` (self-hosted Docker), or `local` (local Chromium via `playwright.launch()`) |
+| `ARTIFACT_DIR` | capture.js, extract-vision.js | Screenshots output dir. Action: `DATA_DIR/retail/_artifacts/{date}`. Local: `/tmp/retail-screenshots/{date}`. capture.js writes `manifest.json` here. |
+| `MANIFEST_PATH` | extract-vision.js | Full path to `manifest.json` written by capture.js. Action passes as CLI arg: `node extract-vision.js "$MANIFEST_PATH"`. |
 | `BROWSERBASE_API_KEY` | capture.js | Cloud Browserbase only — not needed when using browserless Docker |
 | `BROWSERBASE_PROJECT_ID` | capture.js | Cloud Browserbase only |
 | `GEMINI_API_KEY` | extract-vision.js | Google AI Studio key for vision extraction |
@@ -243,7 +253,7 @@ PATCH_GAPS=1 DATA_DIR=/path/to/data-branch/data node price-extract.js
 
 **Low confidence on SDB prices:** Check if SDB page shows fractional coin "As Low As" values — the `Math.min()` on all in-range matches picks the fractional price. Compare the extracted price vs the coin's `weight_oz × spot` estimate.
 
-**60% confidence (not 100%):** Single-source only (no Vision). 50 base + 10 (within 3% of median) = 60. This is the ceiling without Vision data. Normal for Firecrawl-only runs.
+**80% confidence ceiling:** Single-source only (no Vision). 50 base + 30 (within 3% of median) = 80. This is the ceiling without Vision data. Normal for Firecrawl-only runs.
 
 **15% confidence:** Vendor price is far from median AND large day-over-day change. Usually wrong extraction. Check FBP or the actual URL.
 

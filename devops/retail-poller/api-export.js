@@ -179,7 +179,7 @@ function scoreVendorPrice(price, windowMedian, prevMedian) {
   let score = 50; // base: single source
   if (windowMedian !== null && windowMedian !== 0) {
     const deviation = Math.abs(price - windowMedian) / windowMedian;
-    if (deviation <= 0.03) score += 10;
+    if (deviation <= 0.03) score += 30;
     else if (deviation > 0.08) score -= 15;
   }
   if (prevMedian !== null && prevMedian !== 0) {
