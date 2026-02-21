@@ -8,6 +8,7 @@
  *   data/retail/{coin-slug}/{date}-{HH}h.json
  *
  * Confidence scoring:
+ *   - Exact match (firecrawl === vision): instant 99 — highest possible confidence
  *   - Method agreement (both within 2%): +40 pts → HIGH confidence
  *   - Single method available: base score 50 pts
  *   - Vision data (if present from optional follow-up): +15/+5/-10 pts modifier
@@ -77,7 +78,10 @@ function scorePrice({ firecrawlPrice, visionPrice, visionConfidence, prevPrice, 
 
   if (hasFirecrawl && hasVision) {
     const diff = Math.abs(firecrawlPrice - visionPrice) / Math.max(firecrawlPrice, visionPrice);
-    if (diff <= 0.02) {
+    if (diff === 0) {
+      // Exact match — highest possible confidence, no further modifiers needed
+      return { bestPrice: firecrawlPrice, score: 99, method: "firecrawl+vision(exact)", flags: [] };
+    } else if (diff <= 0.02) {
       // Both methods agree within 2% — high confidence, use firecrawl (more precise)
       score += 40;
       bestPrice = firecrawlPrice;

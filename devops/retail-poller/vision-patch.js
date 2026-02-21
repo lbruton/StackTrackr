@@ -73,6 +73,10 @@ function mergeVendorWithVision(firecrawlPrice, visionData, vendorId, windowMedia
     return { price: firecrawlPrice, confidence: scoreVendorPrice(firecrawlPrice, windowMedian, prevMedian), method: "firecrawl" };
   }
   const diff = Math.abs(firecrawlPrice - visionPrice) / Math.max(firecrawlPrice, visionPrice);
+  // Exact match (within rounding) — highest possible confidence
+  if (diff === 0) {
+    return { price: firecrawlPrice, confidence: 99, method: "firecrawl+vision(exact)" };
+  }
   let base = diff <= 0.02 ? 90 : diff <= 0.05 ? 70 : 35;
   const visionMod = visionConfidence === "high" ? 5 : visionConfidence === "medium" ? 0 : -10;
   let medianMod = 0;
