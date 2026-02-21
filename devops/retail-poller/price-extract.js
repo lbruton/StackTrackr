@@ -222,10 +222,12 @@ function extractPrice(markdown, metal, weightOz = 1, providerId = "") {
     const tbl = tablePrices();
     if (tbl.length > 0) return Math.min(...tbl);
   } else {
-    // APMEX and others: table first (avoids related-product "As Low As"),
-    // fall back to "As Low As" if no table found
+    // APMEX, SDB, Hero Bullion, Bullion Exchanges, etc.: table first.
+    // Quantity-discount tables show: 1-unit (highest) → bulk (lowest).
+    // Math.max selects the 1-unit retail price; Math.min would give the
+    // 1600+ bulk price. Fall back to "As Low As" if no table rows found.
     const tbl = tablePrices();
-    if (tbl.length > 0) return Math.min(...tbl);
+    if (tbl.length > 0) return Math.max(...tbl);
     const ala = asLowAsPrices();
     if (ala.length > 0) return Math.min(...ala);
   }
