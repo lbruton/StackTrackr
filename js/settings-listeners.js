@@ -180,10 +180,8 @@ const bindAppearanceAndHeaderListeners = () => {
   const headerMarketBtn = safeGetElement('headerMarketBtn');
   if (headerMarketBtn) {
     headerMarketBtn.addEventListener('click', () => {
-      openSettings();
-      // Switch to Market tab
-      if (typeof switchSettingsSection === 'function') {
-        switchSettingsSection('market');
+      if (typeof showSettingsModal === 'function') {
+        showSettingsModal('market');
       }
     });
   }
