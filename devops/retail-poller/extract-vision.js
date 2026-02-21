@@ -40,6 +40,13 @@ const MANIFEST_PATH = (() => {
 const GEMINI_MODEL = "gemini-2.5-flash";
 const CONCURRENCY = 4;  // Gemini free tier allows higher concurrency
 
+const PRICE_RANGE_HINTS = {
+  silver:   { min: 65,   max: 200 },
+  gold:     { min: 3000, max: 15000 },
+  platinum: { min: 800,  max: 6000 },
+  palladium:{ min: 800,  max: 6000 },
+};
+
 // ---------------------------------------------------------------------------
 // Logging
 // ---------------------------------------------------------------------------
@@ -56,7 +63,7 @@ function warn(msg) {
 // Gemini Vision API
 // ---------------------------------------------------------------------------
 
-async function extractPriceFromImage(imagePath, coinName, metal, weightOz) {
+async function extractPriceFromImage(imagePath, coinName, metal, weightOz, firecrawlPrice = null) {
   if (!existsSync(imagePath)) {
     throw new Error(`Screenshot not found: ${imagePath}`);
   }
@@ -65,28 +72,35 @@ async function extractPriceFromImage(imagePath, coinName, metal, weightOz) {
   const base64Image = imageBytes.toString("base64");
   const mimeType = "image/png";
 
+  const range = PRICE_RANGE_HINTS[metal] || { min: 0, max: 99999 };
+  const minPrice = Math.round(range.min * weightOz);
+  const maxPrice = Math.round(range.max * weightOz);
+  const firecrawlHint = firecrawlPrice !== null
+    ? `Firecrawl text-parser extracted: $${firecrawlPrice.toFixed(2)} — does the screenshot confirm this?`
+    : "Firecrawl text-parser found no price for this vendor.";
+
   const prompt = `You are a price extraction bot for a precious metals price tracker.
 
-Look at this screenshot of a coin dealer product page for: ${coinName} (${metal}, ${weightOz} troy oz)
+Look at this screenshot of a coin dealer product page.
+Coin: ${coinName} (${metal}, ${weightOz} troy oz)
+Expected 1-unit price range: $${minPrice}–$${maxPrice}
+${firecrawlHint}
 
-Extract ONLY the primary "buy" price for this specific coin in USD. This is typically shown as:
-- "As Low As $XX.XX" (the per-coin price, not totals for rolls/tubes)
-- The main price displayed prominently on the product page
-- The lowest per-unit price in a quantity pricing table
+Find the **1-unit Check/Wire price** — the price a customer pays for exactly 1 coin using check or wire transfer.
+- Look in the pricing/quantity table for the "1" or "1-9" row under Check/Wire columns
+- Do NOT use "As Low As" bulk discount prices (those are for large quantities)
+- Do NOT use credit card prices (usually higher)
+- Do NOT use roll, tube, or accessory prices
+- For gold: use the 1 troy oz version, ignore 1/2 oz or 1/4 oz
+- If the price clearly matches what Firecrawl found (within 3%), say agrees_with_firecrawl = true
 
-Rules:
-- Return the per-COIN price, NOT a roll/tube total (if a roll of 20 coins is $1,902, the per-coin price is $95.10)
-- Ignore accessory prices (capsules, tubes, etc.)
-- Ignore related product prices shown in a "You May Also Like" section
-- For gold coins, ignore prices for fractional versions (1/2 oz, 1/4 oz) — look for the 1 oz price
-- The price should be roughly: silver 1oz ~$35-60, gold 1oz ~$2,800-3,500, platinum 1oz ~$1,000-1,500
-
-Respond with ONLY a JSON object in this exact format (no markdown, no explanation):
-{"price": 99.99, "confidence": "high", "label": "As Low As per coin"}
+Respond ONLY as JSON (no markdown, no explanation):
+{"price": 99.99, "confidence": "high", "agrees_with_firecrawl": true, "label": "1-unit wire row"}
 
 Where:
-- price: the numeric USD price (no $ sign, no commas), or null if not found
-- confidence: "high" (clear unambiguous price), "medium" (best guess), or "low" (uncertain)
+- price: numeric USD price or null if not found
+- confidence: "high" (unambiguous), "medium" (best guess), "low" (uncertain)
+- agrees_with_firecrawl: true if price matches Firecrawl within ~3%, false if not, null if Firecrawl had no price
 - label: brief description of where you found the price`;
 
   const body = {
