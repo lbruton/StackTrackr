@@ -2440,11 +2440,6 @@
                     <div id="numistaSyncStats" class="settings-subtext" style="margin-bottom:0.25rem;"></div>
 
                     <!-- Eligible items table (collapsible) -->
-                    <details style="margin-bottom:0.5rem;">
-                      <summary style="font-size:0.8rem;cursor:pointer;opacity:0.7;">Show eligible items</summary>
-                      <div id="numistaSyncTableContainer" class="chip-grouping-table-container" style="max-height:165px;overflow-y:auto;margin-top:0.35rem;"></div>
-                    </details>
-
                     <!-- View modal fields (collapsible) -->
                     <details style="margin-bottom:0.5rem;">
                       <summary style="font-size:0.8rem;cursor:pointer;opacity:0.7;">View modal fields</summary>
@@ -2479,6 +2474,11 @@
                           </tbody>
                         </table>
                       </div>
+                    </details>
+
+                    <details style="margin-bottom:0.5rem;">
+                      <summary style="font-size:0.8rem;cursor:pointer;opacity:0.7;">Show eligible items</summary>
+                      <div id="numistaSyncTableContainer" class="chip-grouping-table-container" style="max-height:165px;overflow-y:auto;margin-top:0.35rem;"></div>
                     </details>
 
                     <!-- Activity log (collapsible) -->
@@ -4829,10 +4829,24 @@
           </table>
         </div>
         <div class="retail-view-tabs">
-          <button id="retailViewTabHistory" class="retail-view-tab active" type="button" onclick="_switchRetailViewTab('history')">Price History</button>
-          <button id="retailViewTabIntraday" class="retail-view-tab" type="button" onclick="_switchRetailViewTab('intraday')">24h Chart</button>
+          <button id="retailViewTabIntraday" class="retail-view-tab active" type="button" onclick="_switchRetailViewTab('intraday')">24h Chart</button>
+          <button id="retailViewTabHistory" class="retail-view-tab" type="button" onclick="_switchRetailViewTab('history')">Price History</button>
         </div>
-        <div id="retailViewHistorySection">
+        <div id="retailViewIntradaySection">
+          <div class="retail-intraday-chart-wrap">
+            <canvas id="retailViewIntradayChart" aria-label="24h intraday price chart"></canvas>
+          </div>
+          <p id="retailViewIntradayNoData" class="settings-subtext" style="display:none;text-align:center;padding:1rem;">No intraday data — check back after the next 15-minute sync.</p>
+          <div class="retail-view-table-wrap" style="margin-top:.5rem;">
+            <table class="retail-view-table">
+              <thead id="retailViewIntradayTableHead">
+                <tr><th>Time (local)</th></tr>
+              </thead>
+              <tbody id="retailViewIntradayTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+        <div id="retailViewHistorySection" style="display:none;">
           <div class="retail-view-chart-wrap">
             <canvas id="retailViewChart" aria-label="Retail price history chart"></canvas>
           </div>
@@ -4845,20 +4859,6 @@
                 </tr>
               </thead>
               <tbody id="retailViewHistoryTableBody"></tbody>
-            </table>
-          </div>
-        </div>
-        <div id="retailViewIntradaySection" style="display:none;">
-          <div class="retail-intraday-chart-wrap">
-            <canvas id="retailViewIntradayChart" aria-label="24h intraday price chart"></canvas>
-          </div>
-          <p id="retailViewIntradayNoData" class="settings-subtext" style="display:none;text-align:center;padding:1rem;">No intraday data — check back after the next 15-minute sync.</p>
-          <div class="retail-view-table-wrap" style="margin-top:.5rem;">
-            <table class="retail-view-table">
-              <thead>
-                <tr><th>Time (local)</th><th>Median</th><th>Low</th></tr>
-              </thead>
-              <tbody id="retailViewIntradayTableBody"></tbody>
             </table>
           </div>
         </div>

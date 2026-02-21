@@ -44,14 +44,17 @@ const COIN_FILTER = process.env.COINS ? process.env.COINS.split(",").map(s => s.
 // Run at 3pm ET after the 11am full scrape.
 const PATCH_GAPS = process.env.PATCH_GAPS === "1";
 
-// Sequential with per-request jitter (8-45s) — avoids rate-limit fingerprinting
+// Sequential with per-request jitter (2-8s) — avoids rate-limit fingerprinting.
+// Targets are shuffled so the same vendor is never hit consecutively;
+// per-vendor effective gap ≈ (47/7 vendors) × avg_jitter ≈ ~30s — well within limits.
+// Kept short so each full run completes in <10 min and fits inside the 15-min cron window.
 const SCRAPE_TIMEOUT_MS = 30_000;
 const RETRY_ATTEMPTS = 2;
 const RETRY_DELAY_MS = 3_000;
 
-// Jitter between requests: 8–45 seconds (randomised anti-pattern fingerprinting)
+// Jitter between requests: 2–8 seconds (randomised anti-pattern fingerprinting)
 function jitter() {
-  return new Promise(r => setTimeout(r, 8_000 + Math.random() * 37_000));
+  return new Promise(r => setTimeout(r, 2_000 + Math.random() * 6_000));
 }
 
 // Fisher-Yates shuffle (in-place)

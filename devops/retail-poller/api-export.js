@@ -109,23 +109,27 @@ function vendorMap(rows) {
 }
 
 /**
- * Aggregate window rows into {window, median, low} entries.
- * Groups by window_start, computes median and low price per window.
+ * Aggregate window rows into {window, median, low, vendors} entries.
+ * Groups by window_start, computes median/low across all vendors and
+ * includes per-vendor prices for individual chart lines.
  */
 function aggregateWindows(allRows) {
   const byWindow = new Map();
   for (const row of allRows) {
     if (row.price === null) continue;
-    if (!byWindow.has(row.window_start)) byWindow.set(row.window_start, []);
-    byWindow.get(row.window_start).push(row.price);
+    if (!byWindow.has(row.window_start)) byWindow.set(row.window_start, { prices: [], vendors: {} });
+    const entry = byWindow.get(row.window_start);
+    entry.prices.push(row.price);
+    entry.vendors[row.vendor] = Math.round(row.price * 100) / 100;
   }
   const result = [];
-  for (const [window, prices] of byWindow) {
+  for (const [window, { prices, vendors }] of byWindow) {
     const sorted = [...prices].sort((a, b) => a - b);
     result.push({
       window,
-      median: Math.round(sorted[Math.floor(sorted.length / 2)] * 100) / 100,
-      low:    Math.round(sorted[0] * 100) / 100,
+      median:  Math.round(sorted[Math.floor(sorted.length / 2)] * 100) / 100,
+      low:     Math.round(sorted[0] * 100) / 100,
+      vendors,
     });
   }
   return result.sort((a, b) => a.window.localeCompare(b.window));
