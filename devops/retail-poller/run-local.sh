@@ -66,12 +66,17 @@ node /app/api-export.js
 
 # Commit and push
 cd "$DATA_REPO_PATH"
-git add data/api/
+# Stage api output + vision JSONs + DB snapshot. Including data/retail/ ensures
+# vision JSON files written by extract-vision.js are staged before the pre-push
+# rebase — if left unstaged they cause "uncommitted changes" rebase aborts.
+git add data/api/ data/retail/ prices.db 2>/dev/null || git add data/api/
 if git diff --cached --quiet; then
   echo "[$(date -u +%H:%M:%S)] No new data to commit."
 else
   git commit -m "retail: ${DATE} api export"
-  git pull --rebase origin data
+  # Pre-push rebase: replay our export commit on top of any concurrent pushes.
+  # Use fetch+rebase (not pull --rebase) to avoid re-reading the pull config.
+  git fetch origin data && git rebase origin/data
   git push origin data
   echo "[$(date -u +%H:%M:%S)] Pushed to data branch"
 fi
