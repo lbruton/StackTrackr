@@ -629,6 +629,9 @@ const HEADER_TREND_BTN_KEY = "headerTrendBtnVisible";
 /** @constant {string} HEADER_SYNC_BTN_KEY - LocalStorage key for header sync button visibility */
 const HEADER_SYNC_BTN_KEY = "headerSyncBtnVisible";
 
+/** @constant {string} HEADER_MARKET_BTN_KEY - LocalStorage key for header market button visibility */
+const HEADER_MARKET_BTN_KEY = "headerMarketBtnVisible";
+
 // =============================================================================
 // IMAGE PROCESSOR DEFAULTS (STACK-95)
 // =============================================================================
@@ -741,6 +744,7 @@ const ALLOWED_STORAGE_KEYS = [
   SPOT_TREND_KEY,             // string: trend period ("1"|"7"|"30"|"90"|"365"|"1095")
   HEADER_TREND_BTN_KEY,       // boolean string: "true"/"false" — header trend button visibility
   HEADER_SYNC_BTN_KEY,        // boolean string: "true"/"false" — header sync button visibility
+  HEADER_MARKET_BTN_KEY,      // boolean string: "true"/"false" — header market button visibility
   "layoutVisibility",         // JSON object: { spotPrices, totals, search, table } (STACK-54) — legacy, migrated to layoutSectionConfig
   "layoutSectionConfig",      // JSON array: ordered section config [{ id, label, enabled }] (STACK-54)
   LAST_VERSION_CHECK_KEY,     // timestamp: last remote version check (STACK-67)
