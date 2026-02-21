@@ -107,6 +107,8 @@ services:
       # Playwright/browserless fallback — use self-hosted browserless Docker on the host
       # host.docker.internal resolves to the Docker host from inside a container (macOS/Windows)
       BROWSERLESS_URL: ws://host.docker.internal:3000/chromium/playwright?token=local_dev_token
+      # Gemini Vision API for screenshot-based price verification and OOS detection
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
       # Local JSONL price log — append-only backup outside the git data repo.
       # Survives container rebuilds via named volume. Recovery: import-from-log.js
       PRICE_LOG_DIR: /var/log/retail-prices
