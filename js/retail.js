@@ -374,7 +374,7 @@ const renderRetailDisclaimer = (container) => {
 
   const wrapper = document.createElement("div");
   wrapper.className = "retail-disclaimer alert alert-secondary d-flex gap-2 mb-3 small py-2";
-  wrapper.setAttribute("role", "note");
+  wrapper.setAttribute("role", "status");
 
   const icon = document.createElement("i");
   icon.className = "bi bi-info-circle-fill flex-shrink-0 mt-1";
@@ -414,8 +414,8 @@ const renderRetailCards = () => {
   }
 
   grid.innerHTML = "";
-  renderRetailDisclaimer(grid);
   if (_retailSyncInProgress) {
+    renderRetailDisclaimer(grid);
     safeGetElement("retailEmptyState").style.display = "none";
     RETAIL_SLUGS.forEach(() => grid.appendChild(_buildSkeletonCard()));
     return;
@@ -426,6 +426,7 @@ const renderRetailCards = () => {
   emptyState.style.display = hasData ? "none" : "";
   if (!hasData) return;
 
+  renderRetailDisclaimer(grid);
   RETAIL_SLUGS.forEach((slug) => {
     const meta = RETAIL_COIN_META[slug];
     const priceData = retailPrices && retailPrices.prices ? retailPrices.prices[slug] || null : null;
