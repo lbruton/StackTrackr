@@ -105,6 +105,13 @@ const MARKDOWN_CUTOFF_PATTERNS = {
     /<[^>]*>\s*Add on Items/i,              // Playwright HTML header
     /<[^>]*>\s*Customers Also Purchased/i,  // Playwright HTML header
   ],
+  // JM pages show "Similar Products You May Like" carousel with fractional coin
+  // "As Low As" prices (1/2 oz, 1/4 oz, 1/10 oz) that fall within the metal
+  // price range and cause Math.min() to pick a fractional price instead of 1oz.
+  jmbullion: [
+    /^Similar Products You May Like/im,    // Firecrawl markdown section heading
+    /<[^>]*>\s*Similar Products You May Like/i, // Playwright HTML heading
+  ],
 };
 
 function preprocessMarkdown(markdown, providerId) {
