@@ -177,12 +177,12 @@ function aggregateDailyRows(rawRows) {
  */
 function scoreVendorPrice(price, windowMedian, prevMedian) {
   let score = 50; // base: single source
-  if (windowMedian !== null) {
+  if (windowMedian !== null && windowMedian !== 0) {
     const deviation = Math.abs(price - windowMedian) / windowMedian;
     if (deviation <= 0.03) score += 10;
     else if (deviation > 0.08) score -= 15;
   }
-  if (prevMedian !== null) {
+  if (prevMedian !== null && prevMedian !== 0) {
     const dayDiff = Math.abs(price - prevMedian) / prevMedian;
     if (dayDiff > 0.10) score -= 20;
   }
@@ -194,6 +194,8 @@ function scoreVendorPrice(price, windowMedian, prevMedian) {
  */
 function loadVisionData(dataDir, slug) {
   const today = new Date().toISOString().slice(0, 10);
+  // ARTIFACT_DIR is the full date-scoped path (same semantics as capture.js).
+  // Default: DATA_DIR/retail/_artifacts/{today}
   const artifactDir = process.env.ARTIFACT_DIR ||
     join(dataDir, "retail", "_artifacts", today);
   const filePath = join(artifactDir, `${slug}-vision.json`);
@@ -226,7 +228,9 @@ function mergeVendorWithVision(firecrawlPrice, visionData, vendorId, windowMedia
   }
 
   const visionPrice = visionData.prices_by_site[vendorId];
-  const visionConfidence = visionData.confidence_by_site?.[vendorId] ?? "low";
+  // Default to "medium" (0 mod) when confidence field absent — avoids penalizing a
+  // vendor whose price validates fine but whose confidence_by_site entry is missing.
+  const visionConfidence = visionData.confidence_by_site?.[vendorId] ?? "medium";
 
   if (!visionPrice) {
     return {
@@ -243,14 +247,14 @@ function mergeVendorWithVision(firecrawlPrice, visionData, vendorId, windowMedia
   const visionMod = visionConfidence === "high" ? 5 : visionConfidence === "medium" ? 0 : -10;
 
   let medianMod = 0;
-  if (windowMedian !== null) {
+  if (windowMedian !== null && windowMedian !== 0) {
     const deviation = Math.abs(firecrawlPrice - windowMedian) / windowMedian;
     if (deviation <= 0.03) medianMod = 5;
     else if (deviation > 0.08) medianMod = -10;
   }
 
   let dodMod = 0;
-  if (prevMedian !== null) {
+  if (prevMedian !== null && prevMedian !== 0) {
     const dayDiff = Math.abs(firecrawlPrice - prevMedian) / prevMedian;
     if (dayDiff > 0.10) dodMod = -15;
   }
