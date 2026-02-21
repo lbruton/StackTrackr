@@ -81,7 +81,7 @@ const server = createServer(async (req, res) => {
   }
 });
 
-server.listen(PORT, () => {
-  console.log(`StakTrakrApi HTTP server listening on port ${PORT}`);
+server.listen(PORT, '0.0.0.0', () => {
+  console.log(`StakTrakrApi HTTP server listening on 0.0.0.0:${PORT}`);
   console.log(`Serving files from ${DATA_DIR}`);
 });
