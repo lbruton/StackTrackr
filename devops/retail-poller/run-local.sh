@@ -23,9 +23,13 @@ if [ -z "$DATA_REPO_PATH" ]; then
   exit 1
 fi
 
-# Pull latest data branch before writing
+# Sync to latest data branch before writing.
+# Use fetch + reset (not pull --rebase) — the container's local branch has no
+# durable state worth preserving since all output is regenerated from SQLite.
+# pull --rebase causes a stuck rebase-merge when another agent commits between
+# our start and our final push, silently freezing retail exports for hours.
 cd "$DATA_REPO_PATH"
-git pull --rebase origin data
+git fetch origin data && git reset --hard origin/data
 
 # Run Firecrawl extraction (with Playwright fallback) — writes results to SQLite
 echo "[$(date -u +%H:%M:%S)] Running price extraction..."
