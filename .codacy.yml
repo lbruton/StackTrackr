@@ -8,6 +8,7 @@ exclude_paths:
   - "deprecated/**"
   - "devops/**"
   - "docs/devops/**"
+  - "docs/plans/**"
   - "GEMINI.md"
   - "style.html"
   - "about/**"
