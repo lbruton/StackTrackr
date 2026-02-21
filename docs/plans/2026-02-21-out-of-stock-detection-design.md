@@ -1,8 +1,10 @@
 # Out-of-Stock Detection and UI Degradation Design
 
 **Date:** 2026-02-21
-**Status:** Approved
+**Status:** ✅ Implemented (2026-02-21)
 **Author:** Claude Sonnet 4.5
+**Implementation:** Tasks 1-6 completed, see commits 3d52156 → 56ef67d
+**Testing:** Integration test checklist in `2026-02-21-oos-integration-test-checklist.md`
 
 ---
 
