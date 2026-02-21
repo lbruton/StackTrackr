@@ -93,8 +93,9 @@ const METAL_PRICE_RANGE_PER_OZ = {
 };
 
 // Provider IDs that use "As Low As" as their primary price indicator.
-// For other providers (APMEX), the pricing table is more reliable.
-const USES_AS_LOW_AS = new Set(["jmbullion", "monumentmetals"]);
+// Monument Metals shows "As Low As" but no pricing table.
+// All others (APMEX, JM Bullion, SD Bullion, etc.) have pricing tables — use table-first strategy.
+const USES_AS_LOW_AS = new Set(["monumentmetals"]);
 
 const MARKDOWN_CUTOFF_PATTERNS = {
   sdbullion: [
@@ -154,11 +155,9 @@ const FBP_DEALER_NAME_MAP = {
  *       related products (e.g. 1/2 oz AGE) that appear later in the page.
  *    2. "As Low As" fallback.
  *
- *  For JM Bullion, Monument Metals (as-low-as-first):
- *    1. "As Low As $XX.XX" minimum in weight-adjusted range.
- *       Taking minimum handles JM pages that show roll totals ("As Low As
- *       $1,902") before per-coin price ("As Low As $93.81").
- *    2. Table fallback.
+ *  For Monument Metals (as-low-as-first):
+ *    1. "As Low As $XX.XX" — Monument shows this but no pricing table.
+ *    2. Table fallback (won't find one for Monument).
  *
  * All candidates are filtered by weight-adjusted price range to exclude
  * accessories, spot ticker values, and fractional coin prices.
@@ -244,8 +243,15 @@ function extractPrice(markdown, metal, weightOz = 1, providerId = "") {
     return null;
   }
 
-  if (USES_AS_LOW_AS.has(providerId)) {
-    // JM Bullion / Monument / SD: "As Low As" first, table as fallback
+  if (providerId === "jmbullion") {
+    // JM Bullion: "As Low As" is reliable and shows eCheck price.
+    // Table extraction picks wrong column (Card/PayPal) — use As Low As first.
+    const ala = asLowAsPrices();
+    if (ala.length > 0) return Math.min(...ala);
+    const tblFirst = firstTableRowFirstPrice();
+    if (tblFirst !== null) return tblFirst;
+  } else if (USES_AS_LOW_AS.has(providerId)) {
+    // Monument Metals: "As Low As" first (no pricing table on their pages)
     const ala = asLowAsPrices();
     if (ala.length > 0) return Math.min(...ala);
     const tbl = tablePrices();
