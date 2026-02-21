@@ -13,6 +13,7 @@ This document maps the UI elements and functionalities discovered during the ini
 - **Settings Button** (`#settingsBtn`): Opens the comprehensive settings sidebar.
 
 ### Spot Prices
+
 - Cards for **Silver, Gold, Platinum, Palladium**.
 - Displays current price, 24h change, and sparkline.
 - **Shift+Click** on a price allows manual override.
