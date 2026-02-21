@@ -14,6 +14,9 @@ primary_region = 'iad'
   # Firecrawl runs inside this container
   FIRECRAWL_BASE_URL = "http://localhost:3002"
   BROWSER_MODE = "local"
+  # Enable local Playwright launch for fallback scraping (JM Bullion gold pages)
+  PLAYWRIGHT_LAUNCH = "1"
+  PLAYWRIGHT_BROWSERS_PATH = "/usr/local/share/playwright"
 
 # HTTP service — serve.js on port 8080, proxied by Fly
 [http_service]

@@ -36,6 +36,10 @@ const FIRECRAWL_BASE_URL = (process.env.FIRECRAWL_BASE_URL || "https://api.firec
 // Playwright/browserless fallback: ws:// endpoint for remote browser
 // e.g. ws://host.docker.internal:3000/chromium/playwright?token=local_dev_token
 const BROWSERLESS_URL = process.env.BROWSERLESS_URL || null;
+// PLAYWRIGHT_LAUNCH: set to "1" to launch Chromium locally instead of connecting
+// to a remote browserless. Useful on Fly.io where browsers are installed but no
+// external browserless service is running.
+const PLAYWRIGHT_LAUNCH = process.env.PLAYWRIGHT_LAUNCH === "1";
 const DATA_DIR = resolve(process.env.DATA_DIR || join(__dirname, "../../data"));
 const DRY_RUN = process.env.DRY_RUN === "1";
 const COIN_FILTER = process.env.COINS ? process.env.COINS.split(",").map(s => s.trim()) : null;
@@ -129,15 +133,43 @@ const MARKDOWN_CUTOFF_PATTERNS = {
   ],
 };
 
+// Patterns that match the START of the actual product content, used to strip
+// site-wide header/nav containing spot price tickers that otherwise get mistaken
+// for product prices (e.g. JM Bullion nav shows Gold Ask $5,120.96).
+const MARKDOWN_HEADER_SKIP_PATTERNS = {
+  // JM Bullion header ends with a timestamp like "Feb 21, 2026 at 13:30 EST"
+  // followed by the nav mega-menu. The product area starts after the nav.
+  // We skip past the spot ticker to avoid false gold-price matches.
+  jmbullion: /\b(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{1,2},\s+\d{4}\s+at\s+\d{1,2}:\d{2}\s+[A-Z]{2,4}/,
+};
+
 function preprocessMarkdown(markdown, providerId) {
-  const patterns = MARKDOWN_CUTOFF_PATTERNS[providerId];
-  if (!patterns || !markdown) return markdown ?? "";
-  let cutIndex = markdown.length;
-  for (const pattern of patterns) {
-    const match = markdown.search(pattern);
-    if (match !== -1 && match < cutIndex) cutIndex = match;
+  if (!markdown) return "";
+  let result = markdown;
+
+  // Strip site-wide header/nav (spot price tickers) to prevent false matches
+  const headerPattern = MARKDOWN_HEADER_SKIP_PATTERNS[providerId];
+  if (headerPattern) {
+    const headerMatch = result.search(headerPattern);
+    if (headerMatch !== -1) {
+      // Find end of the matched timestamp line and skip past it
+      const afterMatch = result.indexOf("\n", headerMatch);
+      if (afterMatch !== -1) result = result.slice(afterMatch + 1);
+    }
   }
-  return markdown.slice(0, cutIndex);
+
+  // Trim tail: cut at first "related products" section to avoid carousel noise
+  const patterns = MARKDOWN_CUTOFF_PATTERNS[providerId];
+  if (patterns) {
+    let cutIndex = result.length;
+    for (const pattern of patterns) {
+      const match = result.search(pattern);
+      if (match !== -1 && match < cutIndex) cutIndex = match;
+    }
+    result = result.slice(0, cutIndex);
+  }
+
+  return result;
 }
 
 
@@ -485,22 +517,41 @@ async function scrapeUrl(url, providerId = "", attempt = 1) {
  * @returns {Promise<string|null>}  raw HTML/text content, or null on failure
  */
 async function scrapeWithPlaywright(url, providerId = "") {
-  if (!BROWSERLESS_URL) return null;
+  if (!BROWSERLESS_URL && !PLAYWRIGHT_LAUNCH) return null;
 
   let browser;
   try {
     // Dynamic import so the module is only loaded when needed
     const { chromium } = await import("playwright-core");
-    browser = await chromium.connect(BROWSERLESS_URL);
-    const page = await browser.newPage();
+
+    if (PLAYWRIGHT_LAUNCH) {
+      // Local launch: headless Chromium with installed browsers (Fly.io container).
+      // Note: direct Playwright launch gets bot-blocked by some sites (JM Bullion).
+      // For those, use Browserbase/Stagehand hourly fallback instead.
+      browser = await chromium.launch({
+        headless: true,
+        args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"],
+      });
+    } else {
+      // Remote connect: browserless WebSocket endpoint (local Mac Docker)
+      browser = await chromium.connect(BROWSERLESS_URL);
+    }
+
+    const context = await browser.newContext({
+      userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+      viewport: { width: 1920, height: 1080 },
+    });
+    const page = await context.newPage();
     // Spoof a realistic user-agent to reduce bot detection
     await page.setExtraHTTPHeaders({ "Accept-Language": "en-US,en;q=0.9" });
     await page.goto(url, { waitUntil: "networkidle", timeout: SCRAPE_TIMEOUT_MS });
     // Extra wait for JS-heavy SPAs (Monument Metals, JM Bullion, Hero Bullion)
     if (SLOW_PROVIDERS.has(providerId)) {
-      await page.waitForTimeout(6_000);
+      await page.waitForTimeout(8_000);
     }
-    const content = await page.content();
+    // Return innerText (plain text) instead of raw HTML so extractPrice
+    // regex patterns work the same way as with Firecrawl markdown output.
+    const content = await page.evaluate(() => document.body.innerText);
     await browser.close();
     return content;
   } catch (err) {
@@ -646,7 +697,7 @@ async function main() {
       }
 
       // Playwright fallback: if Firecrawl returned a page but no price was found AND in stock
-      if (price === null && inStock && BROWSERLESS_URL) {
+      if (price === null && inStock && (BROWSERLESS_URL || PLAYWRIGHT_LAUNCH)) {
         log(`  ? ${coinSlug}/${provider.id}: no price via Firecrawl — trying Playwright`);
         const html = await scrapeWithPlaywright(provider.url, provider.id);
         if (html) {
@@ -682,7 +733,7 @@ async function main() {
       scrapeResults.push({ coinSlug, coin, providerId: provider.id, url: provider.url, price, source, ok: price !== null, error: price === null ? "price_not_found" : null });
     } catch (err) {
       // Firecrawl threw — try Playwright before giving up
-      if (BROWSERLESS_URL) {
+      if (BROWSERLESS_URL || PLAYWRIGHT_LAUNCH) {
         log(`  ✗ Firecrawl threw for ${coinSlug}/${provider.id} — trying Playwright`);
         try {
           const html = await scrapeWithPlaywright(provider.url, provider.id);
