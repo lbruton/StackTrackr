@@ -11349,6 +11349,21 @@ th {
   font-weight: 700;
 }
 
+/* Out-of-stock vendor styling */
+.retail-vendor-row--out-of-stock {
+  opacity: 0.6;
+  background-color: var(--bs-gray-100);
+}
+
+.retail-vendor-row--out-of-stock .retail-vendor-name {
+  color: var(--bs-gray-600);
+}
+
+.retail-vendor-row--out-of-stock .retail-vendor-price del {
+  text-decoration: line-through;
+  color: var(--bs-gray-500);
+}
+
 /* Confidence percentage chip — uses Bootstrap 5.3 semantic emphasis vars that adapt per theme */
 .retail-conf-chip {
   display: inline-flex;

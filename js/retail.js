@@ -84,6 +84,15 @@ let retailIntradayData = {};
  */
 let retailProviders = null;
 
+/** @type {Object.<string, Object.<string, boolean>>} Out-of-stock status by slug and vendorId */
+let retailAvailability = {};
+
+/** @type {Object.<string, Object.<string, number>>} Last known prices by slug and vendorId */
+let retailLastKnownPrices = {};
+
+/** @type {Object.<string, Object.<string, string>>} Last available dates by slug and vendorId */
+let retailLastAvailableDates = {};
+
 /** True while syncRetailPrices() is running — triggers skeleton render */
 let _retailSyncInProgress = false;
 
@@ -218,6 +227,52 @@ const saveRetailProviders = () => {
   }
 };
 
+const loadRetailAvailability = () => {
+  try {
+    const loaded = loadDataSync(RETAIL_AVAILABILITY_KEY, null);
+    if (loaded && typeof loaded === "object" && !Array.isArray(loaded)) {
+      retailAvailability = loaded.availability || {};
+      retailLastKnownPrices = loaded.lastKnownPrices || {};
+      retailLastAvailableDates = loaded.lastAvailableDates || {};
+    } else {
+      retailAvailability = {};
+      retailLastKnownPrices = {};
+      retailLastAvailableDates = {};
+    }
+  } catch (err) {
+    console.error("[retail] Failed to load retail availability:", err);
+    retailAvailability = {};
+    retailLastKnownPrices = {};
+    retailLastAvailableDates = {};
+  }
+  if (typeof window !== "undefined") {
+    window.retailAvailability = retailAvailability;
+    window.retailLastKnownPrices = retailLastKnownPrices;
+    window.retailLastAvailableDates = retailLastAvailableDates;
+  }
+};
+
+const saveRetailAvailability = () => {
+  try {
+    const data = {
+      availability: retailAvailability,
+      lastKnownPrices: retailLastKnownPrices,
+      lastAvailableDates: retailLastAvailableDates,
+      date: new Date().toISOString().slice(0, 10),
+    };
+    saveDataSync(RETAIL_AVAILABILITY_KEY, data);
+  } catch (err) {
+    const msg = `Failed to save retail availability: ${err.message}. Your browser storage may be full.`;
+    debugLog(`[retail] ${msg}`, "error");
+    if (typeof showAppAlert === "function") {
+      showAppAlert(msg, "Storage Error");
+    }
+    if (typeof window !== "undefined") {
+      window._retailStorageFailure = true;
+    }
+  }
+};
+
 // ---------------------------------------------------------------------------
 // Accessors
 // ---------------------------------------------------------------------------
@@ -316,6 +371,19 @@ const syncRetailPrices = async ({ ui = true } = {}) => {
           window_start: latest.window_start,
           windows_24h: Array.isArray(latest.windows_24h) ? latest.windows_24h : [],
         };
+        // Update availability data
+        if (latest.availability_by_site) {
+          if (!retailAvailability[slug]) retailAvailability[slug] = {};
+          Object.assign(retailAvailability[slug], latest.availability_by_site);
+        }
+        if (latest.last_known_price_by_site) {
+          if (!retailLastKnownPrices[slug]) retailLastKnownPrices[slug] = {};
+          Object.assign(retailLastKnownPrices[slug], latest.last_known_price_by_site);
+        }
+        if (latest.last_available_date_by_site) {
+          if (!retailLastAvailableDates[slug]) retailLastAvailableDates[slug] = {};
+          Object.assign(retailLastAvailableDates[slug], latest.last_available_date_by_site);
+        }
         successCount++;
       }
 
@@ -345,6 +413,7 @@ const syncRetailPrices = async ({ ui = true } = {}) => {
       saveRetailPrices();
       saveRetailPriceHistory();
       saveRetailIntradayData();
+      saveRetailAvailability();
     }
 
     const statusMsg = `Synced ${successCount} coin(s) · ${manifest.latest_window || "unknown window"}`;
@@ -566,17 +635,36 @@ const _buildRetailCard = (slug, meta, priceData) => {
     vendors.className = "retail-vendors";
 
     const vendorMap = priceData.vendors || {};
+    const availability = retailAvailability[slug] || {};
+    const lastKnownPrices = retailLastKnownPrices[slug] || {};
+    const lastKnownDates = retailLastAvailableDates[slug] || {};
+
     const availPrices = Object.values(vendorMap).map((v) => v.price).filter((p) => p != null);
     const lowestPrice = availPrices.length ? Math.min(...availPrices) : null;
 
-    // Sort: high-confidence vendors (≥60) by price asc, then low-confidence vendors
-    const sortedVendorEntries = Object.entries(RETAIL_VENDOR_NAMES)
-      .map(([key, label]) => {
+    // Build list of all vendors (in-stock and OOS)
+    const allVendorKeys = new Set([
+      ...Object.keys(vendorMap),
+      ...Object.keys(availability),
+    ]);
+
+    // Sort: high-confidence in-stock vendors (≥60) by price asc, then low-confidence, then OOS vendors
+    const sortedVendorEntries = Array.from(allVendorKeys)
+      .map((key) => {
         const vendorData = vendorMap[key];
-        return { key, label, price: vendorData ? vendorData.price : null, score: vendorData ? vendorData.confidence : null };
+        const isAvailable = availability[key] !== false; // default true if not specified
+        const price = vendorData ? vendorData.price : null;
+        const score = vendorData ? vendorData.confidence : null;
+        const label = RETAIL_VENDOR_NAMES[key] || key;
+        return { key, label, price, score, isAvailable };
       })
-      .filter(({ price }) => price != null)
+      .filter(({ price, isAvailable }) => price != null || !isAvailable) // show if has price OR is OOS
       .sort((a, b) => {
+        // OOS vendors always go last
+        if (!a.isAvailable && b.isAvailable) return 1;
+        if (a.isAvailable && !b.isAvailable) return -1;
+        if (!a.isAvailable && !b.isAvailable) return 0; // both OOS, maintain order
+        // Both in-stock: sort by confidence and price
         const aHigh = a.score != null && a.score >= 60;
         const bHigh = b.score != null && b.score >= 60;
         if (aHigh && bHigh) return a.price - b.price;
@@ -585,7 +673,15 @@ const _buildRetailCard = (slug, meta, priceData) => {
         return 0;
       });
 
-    sortedVendorEntries.forEach(({ key, label, price, score }) => {
+    sortedVendorEntries.forEach(({ key, label, price, score, isAvailable }) => {
+      if (!isAvailable) {
+        // Render out-of-stock vendor
+        const oosRow = _buildOOSVendorRow(key, lastKnownPrices[key], lastKnownDates[key]);
+        vendors.appendChild(oosRow);
+        return;
+      }
+
+      // Render in-stock vendor (existing logic)
       const row = document.createElement("div");
       row.className = "retail-vendor-row";
       if (lowestPrice !== null && Math.abs(price - lowestPrice) < 0.001) {
@@ -679,6 +775,51 @@ const _buildConfidenceBar = (score) => {
   chip.textContent = score != null ? `${Math.round(score)}%` : "?";
   chip.title = `Confidence: ${score != null ? `${Math.round(score)}/100` : "unknown"}`;
   return chip;
+};
+
+/**
+ * Builds a grayed-out vendor row for out-of-stock items.
+ * @param {string} vendorId - Vendor key (e.g., "apmex")
+ * @param {number|null} lastKnownPrice - Last known price before going OOS
+ * @param {string|null} lastAvailableDate - Last date item was in stock (YYYY-MM-DD)
+ * @returns {HTMLElement}
+ */
+const _buildOOSVendorRow = (vendorId, lastKnownPrice, lastAvailableDate) => {
+  const row = document.createElement("div");
+  row.className = "retail-vendor-row retail-vendor-row--out-of-stock";
+
+  const nameEl = document.createElement("span");
+  nameEl.className = "retail-vendor-name text-muted";
+  const vendorLabel = RETAIL_VENDOR_NAMES[vendorId] || vendorId;
+  nameEl.textContent = vendorLabel;
+
+  const priceEl = document.createElement("span");
+  priceEl.className = "retail-vendor-price";
+
+  const priceText = document.createElement("del");
+  priceText.textContent = lastKnownPrice ? _fmtRetailPrice(lastKnownPrice) : "\u2014";
+  priceEl.appendChild(priceText);
+
+  const oosLabel = document.createElement("small");
+  oosLabel.className = "text-danger ms-1";
+  oosLabel.textContent = "OOS";
+  oosLabel.title = "Out of stock";
+  priceEl.appendChild(oosLabel);
+
+  const badgeEl = document.createElement("span");
+  badgeEl.className = "retail-conf-chip badge-muted";
+  badgeEl.textContent = "\u2014";
+
+  const tooltipText = lastAvailableDate
+    ? `Out of stock (last seen: ${priceText.textContent} on ${lastAvailableDate})`
+    : "Out of stock";
+  row.title = tooltipText;
+
+  row.appendChild(nameEl);
+  row.appendChild(priceEl);
+  row.appendChild(badgeEl);
+
+  return row;
 };
 
 // ---------------------------------------------------------------------------
@@ -810,6 +951,7 @@ const initRetailPrices = () => {
   loadRetailPriceHistory();
   loadRetailIntradayData();
   loadRetailProviders();
+  loadRetailAvailability();
 };
 // ---------------------------------------------------------------------------
 // Background Auto-Sync
@@ -884,6 +1026,11 @@ if (typeof window !== "undefined") {
   window.RETAIL_VENDOR_URLS = RETAIL_VENDOR_URLS;
   window.RETAIL_VENDOR_COLORS = RETAIL_VENDOR_COLORS;
   window._buildConfidenceBar = _buildConfidenceBar;
+  window.retailAvailability = retailAvailability;
+  window.retailLastKnownPrices = retailLastKnownPrices;
+  window.retailLastAvailableDates = retailLastAvailableDates;
+  window.loadRetailAvailability = loadRetailAvailability;
+  window.saveRetailAvailability = saveRetailAvailability;
 }
 
 // =============================================================================
