@@ -41,7 +41,8 @@ const CREATE_TABLE = `
     price        REAL,
     source       TEXT NOT NULL,
     confidence   INTEGER,
-    is_failed    INTEGER NOT NULL DEFAULT 0
+    is_failed    INTEGER NOT NULL DEFAULT 0,
+    in_stock     INTEGER NOT NULL DEFAULT 1
   );
 `;
 
@@ -100,6 +101,7 @@ function appendPriceLog(row) {
       vendor:       row.vendor,
       price:        row.price,
       source:       row.source,
+      in_stock:     row.inStock !== false ? 1 : 0,
     }) + "\n";
     appendFileSync(join(logDir, `prices-${date}.jsonl`), line);
   } catch {
@@ -120,13 +122,14 @@ function appendPriceLog(row) {
  * @param {string} row.source       "firecrawl" | "playwright" | "fbp"
  * @param {number|null} [row.confidence]  populated later by merge step
  * @param {boolean} [row.isFailed]  true if this scrape returned no price
+ * @param {boolean} [row.inStock]   false if product is out of stock (defaults to true)
  */
 export function writeSnapshot(db, row) {
   const stmt = db.prepare(`
     INSERT INTO price_snapshots
-      (scraped_at, window_start, coin_slug, vendor, price, source, confidence, is_failed)
+      (scraped_at, window_start, coin_slug, vendor, price, source, confidence, is_failed, in_stock)
     VALUES
-      (@scrapedAt, @windowStart, @coinSlug, @vendor, @price, @source, @confidence, @isFailed)
+      (@scrapedAt, @windowStart, @coinSlug, @vendor, @price, @source, @confidence, @isFailed, @inStock)
   `);
   stmt.run({
     scrapedAt:   row.scrapedAt,
@@ -137,6 +140,7 @@ export function writeSnapshot(db, row) {
     source:      row.source,
     confidence:  row.confidence ?? null,
     isFailed:    row.isFailed ? 1 : 0,
+    inStock:     row.inStock !== false ? 1 : 0,
   });
   appendPriceLog(row);
 }
