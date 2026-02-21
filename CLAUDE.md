@@ -1,5 +1,11 @@
 # CLAUDE.md
 
+**For Claude Code (Desktop CLI)** — Local Mac development with MCP servers and skills.
+
+**For Claude.ai (Web)** — Use `AGENTS.md` instead. This file contains local tooling instructions not applicable to web sessions.
+
+---
+
 Instructions for Claude Code when working in this repository (local Mac development).
 
 ## BEFORE WRITING ANY CODE — MANDATORY
