@@ -294,6 +294,12 @@ async function main() {
       median_price: sorted.length ? sorted[Math.floor(sorted.length / 2)] : null,
       failed_sites: failed.map(r => r.providerId),
     });
+    if (failed.length > 0) {
+      warn(
+        `[vision] ${coinSlug}: ${failed.length} vendor(s) failed — ` +
+        failed.map((f) => `${f.providerId}(${f.error || "unknown error"})`).join(", ")
+      );
+    }
   }
 
   const ok = extractionResults.filter(r => r.ok).length;
