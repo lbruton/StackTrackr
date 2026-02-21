@@ -183,9 +183,15 @@ function detectStockStatus(markdown, expectedWeightOz = 1) {
     }
   }
 
-  // Check for fractional weight mismatch (related product substitution)
-  // Example: expecting "1 oz" but page shows "1/2 oz Platinum Eagle"
+  // Check for fractional weight mismatch (related product substitution).
+  // Only check the product title area (first H1/H2 or first ~500 chars of main content),
+  // NOT the full page — nav menus on Bullion Exchanges etc. contain "1/2 oz" category
+  // links that cause false positives on every page.
   if (expectedWeightOz >= 1) {
+    // Extract the product title: first markdown heading (# or ##) or first 500 chars
+    const headingMatch = markdown.match(/^#{1,2}\s+(.+)$/m);
+    const titleArea = headingMatch ? headingMatch[1] : markdown.slice(0, 500);
+
     const fractionalPatterns = [
       /\b1\/2\s*oz\b/i,
       /\b1\/4\s*oz\b/i,
@@ -195,7 +201,7 @@ function detectStockStatus(markdown, expectedWeightOz = 1) {
     ];
 
     for (const pattern of fractionalPatterns) {
-      const match = markdown.match(pattern);
+      const match = titleArea.match(pattern);
       if (match) {
         return {
           inStock: false,
@@ -277,6 +283,24 @@ function extractPrice(markdown, metal, weightOz = 1, providerId = "") {
     return null;
   }
 
+  // JM Bullion gold pages render the pricing table as plain text (not pipe tables).
+  // Structure: "(e)Check/Wire" header → "1-9" qty tier → "$X,XXX.XX" (Check/Wire price).
+  // Returns the first in-range price after the Check/Wire header + first qty tier.
+  function jmPriceFromProseTable() {
+    const checkWireIdx = markdown.search(/\(e\)Check\s*\/\s*Wire/i);
+    if (checkWireIdx === -1) return null;
+    // Find the first qty tier label after the header (e.g. "1-9", "1-19", "1+")
+    const afterHeader = markdown.slice(checkWireIdx);
+    const tierMatch = afterHeader.match(/\n\s*(\d+-\d+|\d+\+)\s*\n/);
+    if (!tierMatch) return null;
+    // Search for the first price after the tier label
+    const afterTier = afterHeader.slice(tierMatch.index + tierMatch[0].length);
+    const priceMatch = afterTier.match(/\$\s*([\d,]+\.\d{2})/);
+    if (!priceMatch) return null;
+    const p = parseFloat(priceMatch[1].replace(/,/g, ""));
+    return inRange(p) ? p : null;
+  }
+
   // Fallback for SPAs (e.g. Bullion Exchanges) that render prices as prose rather
   // than markdown pipe tables. Returns the first $XX.XX value in the metal range.
   function firstInRangePriceProse() {
@@ -308,12 +332,16 @@ function extractPrice(markdown, metal, weightOz = 1, providerId = "") {
   }
 
   if (providerId === "jmbullion") {
-    // JM Bullion: "As Low As" is reliable and shows eCheck price.
-    // Table extraction picks wrong column (Card/PayPal) — use As Low As first.
-    const ala = asLowAsPrices();
-    if (ala.length > 0) return Math.min(...ala);
+    // JM Bullion: pipe table → prose table → "As Low As" fallback.
+    // Silver pages often render pipe tables; gold pages render as plain text.
+    // jmPriceFromProseTable() handles the plain-text layout:
+    //   "(e)Check/Wire" header → "1-9" qty tier → first dollar amount.
     const tblFirst = firstTableRowFirstPrice();
     if (tblFirst !== null) return tblFirst;
+    const proseTbl = jmPriceFromProseTable();
+    if (proseTbl !== null) return proseTbl;
+    const ala = asLowAsPrices();
+    if (ala.length > 0) return Math.min(...ala);
   } else if (USES_AS_LOW_AS.has(providerId)) {
     // Reserved for vendors that have no pricing table, only "As Low As" display.
     // Currently empty — all vendors now use table-first extraction.
@@ -403,7 +431,9 @@ async function scrapeUrl(url, providerId = "", attempt = 1) {
   const body = {
     url,
     formats: ["markdown"],
-    onlyMainContent: true,
+    // JM Bullion's React pages sometimes return empty markdown with onlyMainContent.
+    // Disable it for JM — our MARKDOWN_CUTOFF_PATTERNS handle noise removal instead.
+    onlyMainContent: providerId !== "jmbullion",
   };
   // JS-heavy SPAs need time to mount and render prices; 6s covers all slow providers
   if (SLOW_PROVIDERS.has(providerId)) {
