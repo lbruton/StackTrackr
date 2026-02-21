@@ -39,9 +39,9 @@ if [ ! -d "$API_EXPORT_DIR" ]; then
 fi
 
 cd "$API_EXPORT_DIR"
-git fetch origin "$POLLER_ID" || git checkout -b "$POLLER_ID"
-git checkout "$POLLER_ID"
-git pull origin "$POLLER_ID" || true  # May fail if branch doesn't exist on remote yet
+git fetch origin "$POLLER_ID" 2>/dev/null || true
+git checkout "$POLLER_ID" 2>/dev/null || git checkout -b "$POLLER_ID"
+git pull origin "$POLLER_ID" 2>/dev/null || true  # May fail if branch doesn't exist on remote yet
 
 # Run Firecrawl extraction (with Playwright fallback) — writes results to SQLite
 echo "[$(date -u +%H:%M:%S)] Running price extraction..."
