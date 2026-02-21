@@ -969,11 +969,11 @@ const parseNumistaDataFields = (isEditing, existingItem) => {
  */
 const validateItemFields = (f) => {
   if (
-    !f.name || !f.date || !f.type || !f.metal ||
+    !f.name || !f.type || !f.metal ||
     isNaN(f.weight) || f.weight <= 0 ||
     isNaN(f.qty) || f.qty < 1 || !Number.isInteger(f.qty)
   ) {
-    return "Please enter valid values for Name, Date, Type, Metal, Weight, and Quantity.";
+    return "Please enter valid values for Name, Type, Metal, Weight, and Quantity.";
   }
   return null;
 };
@@ -1002,6 +1002,14 @@ const commitItemToInventory = (f, isEditing, editIdx) => {
   if (isEditing) {
     const oldItem = { ...inventory[editIdx] };
     const serial = oldItem.serial;
+
+    // STAK-244: Clear stale Numista image cache when N# changes
+    const numistaIdChanged = oldItem.numistaId && f.catalog && oldItem.numistaId !== f.catalog;
+    if (numistaIdChanged && window.imageCache?.isAvailable()) {
+      debugLog(`commitItemToInventory: N# changed from ${oldItem.numistaId} to ${f.catalog}, clearing old cache`);
+      imageCache.deleteImages(oldItem.numistaId).catch(err => console.warn('Failed to clear old Numista images:', err));
+      imageCache.deleteMetadata(oldItem.numistaId).catch(err => console.warn('Failed to clear old Numista metadata:', err));
+    }
 
     inventory[editIdx] = {
       ...oldItem,
@@ -1415,7 +1423,7 @@ const setupItemFormListeners = () => {
       }
 
       if (removeBtn) {
-        removeBtn.addEventListener('click', () => {
+        removeBtn.addEventListener('click', async () => {
           // Clear just this side
           if (side === 'reverse') {
             _pendingReverseBlob = null;
@@ -1434,6 +1442,18 @@ const setupItemFormListeners = () => {
           if (sizeInfo) sizeInfo.textContent = '';
           if (removeBtn) removeBtn.style.display = 'none';
           if (fileInput) fileInput.value = '';
+
+          // STAK-244: Also clear Numista image cache if user is removing a catalog-synced image
+          const catalogId = elements.itemCatalog?.value?.trim() || '';
+          if (catalogId && window.imageCache?.isAvailable()) {
+            debugLog(`Remove button: clearing Numista cache for ${catalogId}`);
+            try {
+              await imageCache.deleteImages(catalogId);
+              await imageCache.deleteMetadata(catalogId);
+            } catch (err) {
+              console.warn('Failed to clear Numista image cache on remove:', err);
+            }
+          }
         });
       }
     });
