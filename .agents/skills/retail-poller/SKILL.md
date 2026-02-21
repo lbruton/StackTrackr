@@ -249,6 +249,110 @@ PATCH_GAPS=1 DATA_DIR=/path/to/data-branch/data node price-extract.js
 
 ---
 
+## Data Branch Git Safety
+
+**The data branch is a write-only output channel for the poller.** It must be treated with extra care — multiple agents (local Docker, GitHub Action, manual commits) push to it concurrently.
+
+### Known Fragility: `git pull --rebase` at run start
+
+`run-local.sh` uses `git pull --rebase origin data` before each scrape. If another agent commits to the data branch **between** the poller's pull and its final push, the rebase of the local export commit will fail with:
+
+```
+fatal: It seems that there is already a rebase-merge directory
+```
+
+Every subsequent 15-minute cron tick will hit the same error and silently no-op. **Retail prices freeze while spot prices continue normally** — the key symptom.
+
+### Safer pre-run sync (recommended future fix)
+
+Replace the start-of-run `git pull --rebase` with a hard reset — since the container's local branch is regenerated from scratch every run, preserving local commits before a pull is unnecessary:
+
+```bash
+# Instead of: git pull --rebase origin data
+git fetch origin data && git reset --hard origin/data
+```
+
+Keep the final `git pull --rebase origin data` before push (that one is correct — it replays the fresh export commit on top of any commits that landed during the scrape).
+
+### Pausing the GitHub Action failsafe during manual data branch work
+
+The `retail-price-poller.yml` Action runs every 4h as a cloud failsafe and pushes to the data branch. If you are doing manual work on the data branch (backfilling data, patching providers.json, running recovery steps), **disable the Action first** to prevent a race condition during your work:
+
+```bash
+# Disable before working on data branch
+gh workflow disable retail-price-poller.yml
+
+# ... do your data branch work ...
+
+# Re-enable when done
+gh workflow enable retail-price-poller.yml
+```
+
+The local Docker poller continues running every 15 min regardless — only the cloud Action is paused. Re-enable it before ending your session.
+
+**Verify Action is disabled:**
+```bash
+gh workflow list | grep retail
+# Shows "disabled" status when off
+```
+
+### After any commit directly to the data branch
+
+**Always verify the retail-poller container recovered.** A commit to data can race with a running poll and leave a stuck rebase. After pushing any commit to data (providers.json updates, manual patches, backfill scripts):
+
+```bash
+# 1. Check container logs for rebase errors
+docker exec firecrawl-docker-retail-poller-1 tail -20 /var/log/retail-poller.log
+
+# 2. If you see "rebase-merge directory" errors:
+docker exec firecrawl-docker-retail-poller-1 bash -c '
+  cd /data-repo
+  git rebase --abort 2>/dev/null || true
+  git checkout -- data/api/ 2>/dev/null || true
+  git fetch origin data && git reset --hard origin/data
+  echo "Data branch reset OK"
+  git log --oneline -3
+'
+
+# 3. Confirm next cron tick runs clean (watch for ~15 min)
+docker exec firecrawl-docker-retail-poller-1 tail -f /var/log/retail-poller.log
+```
+
+### Verifying retail data freshness
+
+Check the data branch directly — `window_start` should be within the last 20 minutes:
+
+```bash
+curl -s https://api.staktrakr.com/data/api/ase/latest.json | python3 -m json.tool | grep window_start
+```
+
+Or check the last 5 data branch commits:
+
+```bash
+gh api "repos/lbruton/StakTrakr/commits?sha=data&per_page=5" \
+  --jq '.[].commit | {message: .message, date: .author.date}'
+```
+
+If the most recent `retail: YYYY-MM-DD api export` commit is >20 minutes old, the container is stuck — run the recovery steps above.
+
+### `prices.db.corrupt` file
+
+If `prices.db.corrupt` appears in `/data-repo/`, it's a better-sqlite3 auto-backup made when the DB was opened in a suspect state. The live `prices.db` should still be valid. Verify:
+
+```bash
+docker exec firecrawl-docker-retail-poller-1 node -e "
+import Database from 'better-sqlite3';
+const db = new Database('/data-repo/prices.db');
+const r = db.prepare('SELECT COUNT(*) as n FROM price_snapshots').get();
+console.log('rows:', r.n);
+db.close();
+"
+```
+
+The `.corrupt` file can be removed once confirmed safe — it is not tracked by git.
+
+---
+
 ## Common Debugging Patterns
 
 **Low confidence on SDB prices (fixed 2026-02-20):** `sdbullion` was removed from `USES_AS_LOW_AS` and now uses table-first strategy. `preprocessMarkdown()` strips the "Add on Items" carousel before price extraction. If SDB prices still look wrong, check that the page pricing table structure hasn't changed — use `DRY_RUN=1 COINS=ase` with console logging to inspect what's extracted.
@@ -260,3 +364,5 @@ PATCH_GAPS=1 DATA_DIR=/path/to/data-branch/data node price-extract.js
 **price = null:** Firecrawl got a page but no parseable price, AND Playwright fallback also failed. Check if the URL is still valid and page structure changed.
 
 **FBP fallback triggered:** Check `source: "fbp"` in SQLite — means primary scrape failed. FBP prices are wire/ACH prices (lowest available).
+
+**Retail prices frozen, spot still updating:** Stuck rebase in the container. See Data Branch Git Safety section above.
