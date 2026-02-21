@@ -12,6 +12,7 @@
 import Database from "better-sqlite3";
 import { appendFileSync, mkdirSync } from "node:fs";
 import { join, resolve } from "node:path";
+import { createTursoClient, initTursoSchema } from "./turso-client.js";
 
 // ---------------------------------------------------------------------------
 // Window floor utility (shared by price-extract and api-export)
@@ -58,13 +59,27 @@ const CREATE_INDEXES = [
 // ---------------------------------------------------------------------------
 
 /**
- * Opens prices.db relative to dataDir (one level up).
+ * Opens Turso cloud database connection.
  * Creates the table and indexes if they don't exist.
+ * Replaces local SQLite openDb() function.
  *
- * @param {string} dataDir  Path to the data/ folder (process.env.DATA_DIR)
+ * @returns {Promise<import("@libsql/client").Client>}
+ */
+export async function openTursoDb() {
+  const client = createTursoClient();
+  await initTursoSchema(client);
+  return client;
+}
+
+/**
+ * DEPRECATED: Opens local SQLite database.
+ * Kept for generating read-only snapshots from Turso data.
+ * Use openTursoDb() for live database operations.
+ *
+ * @param {string} dataDir  Path to the data/ folder
  * @returns {Database.Database}
  */
-export function openDb(dataDir) {
+export function openLocalDb(dataDir) {
   const dbPath = resolve(join(dataDir, "..", "prices.db"));
   const db = new Database(dbPath);
   db.pragma("journal_mode = WAL");
@@ -113,7 +128,7 @@ function appendPriceLog(row) {
 /**
  * Insert a single price snapshot row.
  *
- * @param {Database.Database} db
+ * @param {import("@libsql/client").Client} client
  * @param {object} row
  * @param {string} row.scrapedAt    ISO8601 UTC timestamp of scrape
  * @param {string} row.windowStart  15-min floor ISO8601 UTC
@@ -125,25 +140,28 @@ function appendPriceLog(row) {
  * @param {boolean} [row.isFailed]  true if this scrape returned no price
  * @param {boolean} [row.inStock]   false if product is out of stock (defaults to true)
  */
-export function writeSnapshot(db, row) {
-  const stmt = db.prepare(`
-    INSERT INTO price_snapshots
-      (scraped_at, window_start, coin_slug, vendor, price, source, confidence, is_failed, in_stock)
-    VALUES
-      (@scrapedAt, @windowStart, @coinSlug, @vendor, @price, @source, @confidence, @isFailed, @inStock)
-  `);
-  stmt.run({
-    scrapedAt:   row.scrapedAt,
-    windowStart: row.windowStart,
-    coinSlug:    row.coinSlug,
-    vendor:      row.vendor,
-    price:       row.price ?? null,
-    source:      row.source,
-    confidence:  row.confidence ?? null,
-    isFailed:    row.isFailed ? 1 : 0,
-    inStock:     row.inStock !== false ? 1 : 0,
-  });
+export async function writeSnapshot(client, row) {
   appendPriceLog(row);
+
+  await client.execute({
+    sql: `
+      INSERT INTO price_snapshots (
+        scraped_at, window_start, coin_slug, vendor, price,
+        source, confidence, is_failed, in_stock
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `,
+    args: [
+      row.scrapedAt,
+      row.windowStart,
+      row.coinSlug,
+      row.vendor,
+      row.price,
+      row.source,
+      row.confidence || null,
+      row.isFailed ? 1 : 0,
+      row.inStock === false ? 0 : 1,
+    ],
+  });
 }
 
 /**
@@ -305,4 +323,29 @@ export function readRecentWindowStarts(db, limit = 96) {
     .all(limit)
     .map((r) => r.window_start)
     .reverse();
+}
+
+/**
+ * Returns all price snapshots from the last N hours (for Turso async operations).
+ *
+ * @param {import("@libsql/client").Client} client
+ * @param {number} [hoursBack=24]
+ * @returns {Promise<Array<object>>}
+ */
+export async function readLatestPrices(client, hoursBack = 24) {
+  const cutoff = new Date(Date.now() - hoursBack * 60 * 60 * 1000).toISOString();
+
+  const result = await client.execute({
+    sql: `
+      SELECT
+        scraped_at, window_start, coin_slug, vendor, price,
+        source, confidence, is_failed, in_stock
+      FROM price_snapshots
+      WHERE scraped_at >= ?
+      ORDER BY scraped_at DESC
+    `,
+    args: [cutoff],
+  });
+
+  return result.rows;
 }
