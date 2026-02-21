@@ -98,16 +98,18 @@ const USES_AS_LOW_AS = new Set(["jmbullion", "monumentmetals"]);
 
 const MARKDOWN_CUTOFF_PATTERNS = {
   sdbullion: [
-    /\*\*Add on Items\*\*/i,
-    /^Add on Items\s*$/im,
-    /\*\*Customers Also Purchased\*\*/i,
-    /^Customers Also Purchased\s*$/im,
+    /^\*\*Add on Items\*\*/im,              // Firecrawl markdown bold header
+    /^Add on Items\s*$/im,                  // Firecrawl plain-text header
+    /^\*\*Customers Also Purchased\*\*/im,  // Firecrawl markdown bold header
+    /^Customers Also Purchased\s*$/im,      // Firecrawl plain-text header
+    /<[^>]*>\s*Add on Items/i,              // Playwright HTML header
+    /<[^>]*>\s*Customers Also Purchased/i,  // Playwright HTML header
   ],
 };
 
 function preprocessMarkdown(markdown, providerId) {
   const patterns = MARKDOWN_CUTOFF_PATTERNS[providerId];
-  if (!patterns || !markdown) return markdown;
+  if (!patterns || !markdown) return markdown ?? "";
   let cutIndex = markdown.length;
   for (const pattern of patterns) {
     const match = markdown.search(pattern);
@@ -145,7 +147,7 @@ const FBP_DEALER_NAME_MAP = {
  *       related products (e.g. 1/2 oz AGE) that appear later in the page.
  *    2. "As Low As" fallback.
  *
- *  For JM Bullion, Monument Metals, SD Bullion (as-low-as-first):
+ *  For JM Bullion, Monument Metals (as-low-as-first):
  *    1. "As Low As $XX.XX" minimum in weight-adjusted range.
  *       Taking minimum handles JM pages that show roll totals ("As Low As
  *       $1,902") before per-coin price ("As Low As $93.81").
