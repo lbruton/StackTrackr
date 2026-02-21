@@ -314,13 +314,57 @@ const openRetailViewModal = (slug) => {
     });
   }
 
-  // Build intraday chart for 24h tab
+  // Build intraday chart for 24h tab using cached data
   _buildIntradayChart(slug);
 
   // Default to 24h chart on open (switch to history once dataset is larger)
   _switchRetailViewTab("intraday");
 
   if (typeof openModalById === "function") openModalById("retailViewModal");
+
+  // Async refresh: fetch fresh data for this coin so the modal always shows
+  // current vendor-level intraday data regardless of localStorage staleness.
+  const _apiBase = typeof RETAIL_API_BASE_URL !== "undefined" ? RETAIL_API_BASE_URL : null;
+  if (_apiBase) {
+    Promise.all([
+      fetch(`${_apiBase}/${slug}/latest.json`).catch(() => null),
+      fetch(`${_apiBase}/${slug}/history-30d.json`).catch(() => null),
+    ]).then(async ([latestResp, histResp]) => {
+      let intradayUpdated = false;
+      if (latestResp && latestResp.ok) {
+        const latest = await latestResp.json().catch(() => null);
+        if (latest) {
+          if (typeof retailIntradayData !== "undefined") {
+            retailIntradayData[slug] = {
+              window_start: latest.window_start,
+              windows_24h: Array.isArray(latest.windows_24h) ? latest.windows_24h : [],
+            };
+            if (typeof saveRetailIntradayData === "function") saveRetailIntradayData();
+            intradayUpdated = true;
+          }
+          if (latest.vendors && typeof retailPrices !== "undefined" && retailPrices && retailPrices.prices) {
+            retailPrices.prices[slug] = {
+              median_price: latest.median_price,
+              lowest_price: latest.lowest_price,
+              vendors: latest.vendors,
+            };
+            if (typeof saveRetailPrices === "function") saveRetailPrices();
+          }
+        }
+      }
+      if (histResp && histResp.ok) {
+        const hist = await histResp.json().catch(() => null);
+        if (Array.isArray(hist) && typeof retailPriceHistory !== "undefined") {
+          retailPriceHistory[slug] = hist;
+          if (typeof saveRetailPriceHistory === "function") saveRetailPriceHistory();
+        }
+      }
+      // Rebuild intraday chart now that fresh vendor data is loaded
+      if (intradayUpdated) _buildIntradayChart(slug);
+    }).catch((err) => {
+      debugLog(`[retail-view-modal] Background refresh failed: ${err.message}`, "warn");
+    });
+  }
 };
 
 const closeRetailViewModal = () => {
