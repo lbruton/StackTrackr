@@ -284,8 +284,10 @@ function sleep(ms) {
   return new Promise(r => setTimeout(r, ms));
 }
 
-// Providers that need extra wait time to render prices (JS-heavy pages)
-const SLOW_PROVIDERS = new Set(["jmbullion", "herobullion", "summitmetals"]);
+// Providers that need extra wait time to render prices (JS-heavy SPAs).
+// jmbullion/herobullion: Next.js/React, needs ~5s to populate price tables.
+// monumentmetals: full SPA (React Native Web), router doesn't mount until ~6s.
+const SLOW_PROVIDERS = new Set(["jmbullion", "herobullion", "monumentmetals", "summitmetals"]);
 
 async function scrapeUrl(url, providerId = "", attempt = 1) {
   const controller = new AbortController();
@@ -296,9 +298,9 @@ async function scrapeUrl(url, providerId = "", attempt = 1) {
     formats: ["markdown"],
     onlyMainContent: true,
   };
-  // JM Bullion is heavily JS-rendered; give it time to load prices
+  // JS-heavy SPAs need time to mount and render prices; 6s covers all slow providers
   if (SLOW_PROVIDERS.has(providerId)) {
-    body.waitFor = 4000;
+    body.waitFor = 6000;
   }
 
   try {
@@ -357,9 +359,9 @@ async function scrapeWithPlaywright(url, providerId = "") {
     // Spoof a realistic user-agent to reduce bot detection
     await page.setExtraHTTPHeaders({ "Accept-Language": "en-US,en;q=0.9" });
     await page.goto(url, { waitUntil: "networkidle", timeout: SCRAPE_TIMEOUT_MS });
-    // Extra wait for JS-heavy pages
+    // Extra wait for JS-heavy SPAs (Monument Metals, JM Bullion, Hero Bullion)
     if (SLOW_PROVIDERS.has(providerId)) {
-      await page.waitForTimeout(4_000);
+      await page.waitForTimeout(6_000);
     }
     const content = await page.content();
     await browser.close();
