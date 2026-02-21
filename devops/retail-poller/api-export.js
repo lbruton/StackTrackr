@@ -105,9 +105,10 @@ function lowestPrice(rows) {
 function vendorMap(rows) {
   const map = {};
   for (const row of rows) {
-    if (row.price !== null) {
+    // Include OOS rows (in_stock=0) even with null price
+    if (row.price !== null || row.in_stock === 0) {
       map[row.vendor] = {
-        price:      Math.round(row.price * 100) / 100,
+        price:      row.price !== null ? Math.round(row.price * 100) / 100 : null,
         confidence: row.confidence ?? null,
         source:     row.source,
         inStock:    row.in_stock === 1,  // SQLite stores as INTEGER 0/1
@@ -271,7 +272,9 @@ function resolveVendorPrice(coinSlug, vendorId, firecrawlData, visionData, db, w
   const fcPrice = firecrawlData?.price ?? null;
   const fcInStock = firecrawlData?.inStock ?? true;
   const visionPrice = visionData?.prices_by_site?.[vendorId] ?? null;
-  const visionInStock = visionData?.availability_by_site?.[vendorId] ?? true;
+  // Extract Vision stock status (undefined if Vision has no data for this vendor)
+  const visionInStock = visionData?.availability_by_site?.[vendorId];
+  const visionHasData = visionInStock !== undefined;
   const visionConf = visionData?.confidence_by_site?.[vendorId] ?? null;
   // New field from updated extract-vision.js; fall back to diff calc for old JSONs
   const agreedField = visionData?.agreement_by_site?.[vendorId] ?? null;
@@ -281,18 +284,23 @@ function resolveVendorPrice(coinSlug, vendorId, firecrawlData, visionData, db, w
   let stockReason = "in_stock";
 
   if (!fcInStock && !visionInStock) {
-    // Both say out of stock
+    // Both say out of stock (or Vision missing but Firecrawl OOS)
     finalInStock = false;
-    stockReason = "both_oos";
-  } else if (!visionInStock) {
-    // Vision says OOS, Firecrawl says in stock → trust Vision
+    stockReason = !visionHasData ? "firecrawl_oos" : "both_oos";
+  } else if (visionHasData && !visionInStock) {
+    // Vision explicitly says OOS → trust Vision
     finalInStock = false;
     stockReason = "vision_oos";
-  } else if (!fcInStock) {
-    // Firecrawl says OOS, Vision says in stock → trust Vision
+  } else if (!fcInStock && visionHasData && visionInStock) {
+    // Firecrawl OOS, Vision explicitly says in-stock → trust Vision
     finalInStock = true;
     stockReason = "vision_override";
+  } else if (!fcInStock) {
+    // Firecrawl OOS, Vision has no data → trust Firecrawl
+    finalInStock = false;
+    stockReason = "firecrawl_oos";
   }
+  // else: both in-stock (default finalInStock = true already set)
 
   // If out of stock, return null price with availability metadata
   if (!finalInStock) {

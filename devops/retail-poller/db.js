@@ -50,6 +50,7 @@ const CREATE_INDEXES = [
   "CREATE INDEX IF NOT EXISTS idx_coin_window ON price_snapshots(coin_slug, window_start);",
   "CREATE INDEX IF NOT EXISTS idx_window      ON price_snapshots(window_start);",
   "CREATE INDEX IF NOT EXISTS idx_coin_date   ON price_snapshots(coin_slug, substr(window_start, 1, 10));",
+  "CREATE INDEX IF NOT EXISTS idx_coin_vendor_stock ON price_snapshots(coin_slug, vendor, in_stock, scraped_at DESC);",
 ];
 
 // ---------------------------------------------------------------------------
