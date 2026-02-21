@@ -1,176 +1,170 @@
-# Retail price vision follow-up — runs after local Firecrawl poller commits data
+# Retail price poller — cloud failsafe.
 #
-# Triggered when the local Docker cron pushes to the `data` branch.
-# Reads {date}-vision-needed.json, captures screenshots only for low-confidence
-# targets, extracts prices via Gemini Vision, re-merges, and commits.
+# Local Docker (self-hosted Firecrawl + browserless) is the PRIMARY data source.
+# This workflow only activates when the local poller hasn't pushed fresh data
+# to the data branch within the expected window (>5 hours since last poll).
 #
-# Full pipeline (typical day, ~10-15 targets):
-#   Local Docker cron → price-extract.js (Firecrawl) → merge-prices.js
-#     → commits {date}.json + {date}-vision-needed.json → push to data branch
-#       → triggers this workflow
-#         → capture.js (Browserbase, flagged targets only)
-#         → extract-vision.js (Gemini)
-#         → merge-prices.js (final merge with vision data)
-#         → commits {date}-final.json
+# When triggered manually (workflow_dispatch) the staleness check is skipped
+# and the pipeline always runs — useful for testing or emergency re-polls.
 #
 # Required repository secrets:
-#   GEMINI_API_KEY         — Google AI Studio API key
+#   FIRECRAWL_API_KEY      — api.firecrawl.dev key (cloud fallback)
 #   BROWSERBASE_API_KEY    — Browserbase cloud browser API key
 #   BROWSERBASE_PROJECT_ID — Browserbase project ID
-#
-# Optional (for manual full runs or fallback):
-#   FIRECRAWL_API_KEY      — Only needed if running Firecrawl lane in Actions
-name: Retail Price Vision Follow-up
+#   GEMINI_API_KEY         — Google AI Studio API key
+name: Retail Price Poller
 
 on:
-  push:
-    branches:
-      - data
-    paths:
-      - 'data/retail/*-vision-needed.json'
+  schedule:
+    - cron: '15 */4 * * *'  # Check every 4h — matches local poller cadence
   workflow_dispatch:
     inputs:
-      date:
-        description: 'Date to process (YYYY-MM-DD, default: today)'
+      coins:
+        description: 'Coin slugs to poll (comma-separated, default: all)'
         required: false
-      force_full:
-        description: 'Run vision on all 44 targets (ignore vision-needed.json)'
+      providers:
+        description: 'Providers to capture (comma-separated, default: all)'
+        required: false
+      dry_run:
+        description: 'Skip writing files'
         type: boolean
         required: false
         default: false
+      scripts_ref:
+        description: 'Scripts branch (default: main — use dev for testing)'
+        required: false
+        default: 'main'
 
 env:
   TZ: UTC
+  # Retail poller runs every ~4h. Allow 5h before treating data as stale.
+  STALE_SECONDS: '18000'
 
 jobs:
-  vision-followup:
-    name: Vision Follow-up
+  poll:
+    name: Retail Price Poll (failsafe)
     runs-on: ubuntu-latest
     permissions:
       contents: write
 
     steps:
-      - name: Checkout scripts branch
-        uses: actions/checkout@v4
-        with:
-          path: scripts
-          # Use default branch (main) for scripts
-          ref: main
-
-      - name: Checkout data branch (output target)
+      - name: Checkout data branch
         uses: actions/checkout@v4
         with:
           ref: data
           path: data-out
           fetch-depth: 1
 
+      # Check manifest.json generated_at — skip if local Docker pushed recently
+      - name: Check data freshness
+        id: freshness
+        if: github.event_name == 'schedule'
+        run: |
+          MANIFEST="data-out/data/api/manifest.json"
+          if [ ! -f "$MANIFEST" ]; then
+            echo "No manifest found — data branch not yet initialised. Running pipeline."
+            echo "stale=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          GENERATED_AT=$(python3 -c "import json; print(json.load(open('$MANIFEST'))['generated_at'])")
+          AGE=$(( $(date +%s) - $(date -d "$GENERATED_AT" +%s) ))
+          echo "Retail data age: $((AGE / 3600))h $(( (AGE % 3600) / 60 ))m (generated_at: $GENERATED_AT)"
+          if [ "$AGE" -gt "$STALE_SECONDS" ]; then
+            echo "Data is STALE — local Docker appears down. Running cloud fallback."
+            echo "stale=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "Data is fresh — local Docker is healthy. Skipping cloud pipeline."
+            echo "stale=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Checkout scripts
+        if: github.event_name == 'workflow_dispatch' || steps.freshness.outputs.stale == 'true'
+        uses: actions/checkout@v4
+        with:
+          path: scripts
+          ref: ${{ github.event.inputs.scripts_ref || 'main' }}
+
       - name: Set up Node.js
+        if: github.event_name == 'workflow_dispatch' || steps.freshness.outputs.stale == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: '20'
 
-      - name: Install Playwright
-        working-directory: scripts
-        run: npm install playwright-core dotenv
+      - name: Install poller dependencies
+        if: github.event_name == 'workflow_dispatch' || steps.freshness.outputs.stale == 'true'
+        working-directory: scripts/devops/retail-poller
+        run: npm ci
 
-      - name: Get date
-        id: date
+      - name: Set run context
+        id: ctx
+        if: github.event_name == 'workflow_dispatch' || steps.freshness.outputs.stale == 'true'
         run: |
-          DATE="${{ github.event.inputs.date }}"
-          if [ -z "$DATE" ]; then DATE=$(date -u +%Y-%m-%d); fi
+          DATE=$(date -u +%Y-%m-%d)
           echo "date=$DATE" >> "$GITHUB_OUTPUT"
+          ARTIFACT_DIR="${{ github.workspace }}/data-out/data/retail/_artifacts/$DATE"
+          echo "artifact_dir=$ARTIFACT_DIR" >> "$GITHUB_OUTPUT"
 
-      - name: Check vision-needed targets
-        id: targets
-        run: |
-          NEEDED="data-out/data/retail/${{ steps.date.outputs.date }}-vision-needed.json"
-          FORCE="${{ github.event.inputs.force_full }}"
-          if [ "$FORCE" = "true" ]; then
-            echo "mode=full" >> "$GITHUB_OUTPUT"
-            echo "count=44" >> "$GITHUB_OUTPUT"
-          elif [ -f "$NEEDED" ]; then
-            COUNT=$(python3 -c "import json; d=json.load(open('$NEEDED')); print(len(d['targets']))")
-            echo "mode=targeted" >> "$GITHUB_OUTPUT"
-            echo "count=$COUNT" >> "$GITHUB_OUTPUT"
-            echo "path=$NEEDED" >> "$GITHUB_OUTPUT"
-          else
-            echo "mode=none" >> "$GITHUB_OUTPUT"
-            echo "count=0" >> "$GITHUB_OUTPUT"
-          fi
+      # Step 1: Firecrawl extraction → SQLite
+      - name: Extract prices via Firecrawl
+        if: github.event_name == 'workflow_dispatch' || steps.freshness.outputs.stale == 'true'
+        env:
+          FIRECRAWL_API_KEY: ${{ secrets.FIRECRAWL_API_KEY }}
+          DATA_DIR: ${{ github.workspace }}/data-out/data
+          COINS: ${{ github.event.inputs.coins }}
+          DRY_RUN: ${{ github.event.inputs.dry_run == 'true' && '1' || '0' }}
+        working-directory: scripts/devops/retail-poller
+        run: node price-extract.js
 
-      - name: Skip if no targets
-        if: steps.targets.outputs.mode == 'none'
-        run: |
-          echo "No vision-needed.json found for ${{ steps.date.outputs.date }} — firecrawl confidence is high, nothing to do."
-          exit 0
-
-      - name: Build targeted coin/provider list
-        if: steps.targets.outputs.mode == 'targeted'
-        id: coinlist
-        run: |
-          python3 - <<'EOF'
-          import json, os
-          d = json.load(open("data-out/data/retail/${{ steps.date.outputs.date }}-vision-needed.json"))
-          coins = sorted(set(t['coinSlug'] for t in d['targets']))
-          providers = sorted(set(t['providerId'] for t in d['targets']))
-          with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
-              f.write(f"coins={','.join(coins)}\n")
-              f.write(f"providers={','.join(providers)}\n")
-          print(f"Targeting {len(d['targets'])} flagged items: {coins} × {providers}")
-          EOF
-
-      - name: Capture screenshots (targeted)
-        if: steps.targets.outputs.mode == 'targeted'
+      # Step 2: Browserbase screenshots → manifest.json + PNGs in artifact_dir
+      - name: Capture screenshots via Browserbase
+        if: github.event_name == 'workflow_dispatch' || steps.freshness.outputs.stale == 'true'
         continue-on-error: true
         env:
           BROWSERBASE_API_KEY: ${{ secrets.BROWSERBASE_API_KEY }}
           BROWSERBASE_PROJECT_ID: ${{ secrets.BROWSERBASE_PROJECT_ID }}
           BROWSER_MODE: browserbase
           DATA_DIR: ${{ github.workspace }}/data-out/data
-          COINS: ${{ steps.coinlist.outputs.coins }}
-          PROVIDERS: ${{ steps.coinlist.outputs.providers }}
-        working-directory: scripts
-        run: node devops/retail-poller/capture.js
+          ARTIFACT_DIR: ${{ steps.ctx.outputs.artifact_dir }}
+          COINS: ${{ github.event.inputs.coins }}
+          PROVIDERS: ${{ github.event.inputs.providers || 'jmbullion,apmex,sdbullion,monumentmetals' }}
+        working-directory: scripts/devops/retail-poller
+        run: node capture.js
 
-      - name: Capture screenshots (full — manual override)
-        if: steps.targets.outputs.mode == 'full'
+      # Step 3: Gemini Vision extraction → data/retail/{slug}/{date}-vision.json
+      - name: Extract vision prices via Gemini
+        if: github.event_name == 'workflow_dispatch' || steps.freshness.outputs.stale == 'true'
         continue-on-error: true
-        env:
-          BROWSERBASE_API_KEY: ${{ secrets.BROWSERBASE_API_KEY }}
-          BROWSERBASE_PROJECT_ID: ${{ secrets.BROWSERBASE_PROJECT_ID }}
-          BROWSER_MODE: browserbase
-          DATA_DIR: ${{ github.workspace }}/data-out/data
-          COINS: ase,maple-silver,britannia-silver,krugerrand-silver,generic-silver-round,generic-silver-bar-10oz,age,buffalo,maple-gold,krugerrand-gold,ape
-          PROVIDERS: jmbullion,apmex,sdbullion,monumentmetals
-        working-directory: scripts
-        run: node devops/retail-poller/capture.js
-
-      - name: Extract prices via Gemini Vision
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           DATA_DIR: ${{ github.workspace }}/data-out/data
-        working-directory: scripts
-        run: |
-          MANIFEST="${{ github.workspace }}/data-out/data/retail/_artifacts/${{ steps.date.outputs.date }}/manifest.json"
-          node devops/retail-poller/extract-vision.js "$MANIFEST"
+          MANIFEST_PATH: ${{ steps.ctx.outputs.artifact_dir }}/manifest.json
+        working-directory: scripts/devops/retail-poller
+        run: node extract-vision.js "$MANIFEST_PATH"
 
-      - name: Re-merge with vision data
+      # Step 4: SQLite + vision JSON → data/api/ REST endpoints
+      - name: Export REST API JSON
+        if: github.event_name == 'workflow_dispatch' || steps.freshness.outputs.stale == 'true'
         env:
           DATA_DIR: ${{ github.workspace }}/data-out/data
-        working-directory: scripts
-        run: node devops/retail-poller/merge-prices.js ${{ steps.date.outputs.date }}
+          DRY_RUN: ${{ github.event.inputs.dry_run == 'true' && '1' || '0' }}
+        working-directory: scripts/devops/retail-poller
+        run: node api-export.js
 
-      - name: Commit and push final data
+      - name: Commit and push
+        if: |
+          (github.event_name == 'workflow_dispatch' || steps.freshness.outputs.stale == 'true') &&
+          github.event.inputs.dry_run != 'true'
+        env:
+          POLL_DATE: ${{ steps.ctx.outputs.date }}
         working-directory: data-out
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add data/retail/
+          git add data/api/ prices.db
           if git diff --cached --quiet; then
-            echo "No changes after vision merge."
+            echo "No new data to commit."
           else
-            DATE=${{ steps.date.outputs.date }}
-            git commit -m "retail: ${DATE} vision follow-up (${{ steps.targets.outputs.count }} targets)"
+            git commit -m "retail: ${POLL_DATE} cloud fallback poll"
             git pull --rebase origin data
             git push
           fi

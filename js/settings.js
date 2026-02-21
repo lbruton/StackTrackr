@@ -3,7 +3,7 @@
 
 /**
  * Opens the unified Settings modal, optionally navigating to a section.
- * @param {string} [section='site'] - Section to display: 'site', 'system', 'table', 'grouping', 'api', 'cloud', 'images', 'storage', 'goldback', 'changelog'
+ * @param {string} [section='site'] - Section to display: 'site', 'system', 'table', 'grouping', 'api', 'cloud', 'images', 'storage', 'goldback', 'changelog', 'market'
  */
 const showSettingsModal = (section = 'site') => {
   const modal = document.getElementById('settingsModal');
@@ -35,7 +35,7 @@ const hideSettingsModal = () => {
 
 /**
  * Switches the visible section panel in the Settings modal.
- * @param {string} name - Section key: 'site', 'system', 'table', 'grouping', 'api', 'cloud', 'images', 'storage', 'goldback', 'changelog'
+ * @param {string} name - Section key: 'site', 'system', 'table', 'grouping', 'api', 'cloud', 'images', 'storage', 'goldback', 'changelog', 'market'
  */
 const switchSettingsSection = (name) => {
   const targetName = document.getElementById(`settingsPanel_${name}`) ? name : 'system';
@@ -81,6 +81,11 @@ const switchSettingsSection = (name) => {
     const activeTab = document.querySelector('.settings-log-tab.active');
     const activeKey = activeTab ? activeTab.dataset.logTab : 'changelog';
     switchLogTab(activeKey);
+  }
+
+  // Render coin price cards when switching to the market section
+  if (targetName === 'market' && typeof renderRetailCards === 'function') {
+    renderRetailCards();
   }
 
   // Populate Storage section when switching to it
@@ -149,6 +154,7 @@ const LOG_TAB_RENDERERS = {
   catalogs: 'renderCatalogHistoryForSettings',
   pricehistory: 'renderItemPriceHistoryTable',
   cloud: 'renderCloudActivityTable',
+  market: 'renderRetailHistoryTable',
 };
 
 /**
@@ -285,8 +291,7 @@ const syncSettingsUI = () => {
   // Numista bulk sync visibility (STACK-87/88)
   const numistaSyncGroup = document.getElementById('numistaBulkSyncGroup');
   if (numistaSyncGroup) {
-    const showBulkSync = window.featureFlags?.isEnabled('COIN_IMAGES') &&
-                         window.imageCache?.isAvailable();
+    const showBulkSync = window.featureFlags?.isEnabled('COIN_IMAGES');
     numistaSyncGroup.style.display = showBulkSync ? '' : 'none';
   }
 
@@ -1052,12 +1057,13 @@ const syncGoldbackSettingsUI = () => {
  * Syncs the header shortcut checkboxes in Settings with stored state.
  */
 const syncHeaderToggleUI = () => {
-  const themeVisible = localStorage.getItem('headerThemeBtnVisible') === 'true';
-  const currencyVisible = localStorage.getItem('headerCurrencyBtnVisible') === 'true';
+  const themeVisible = localStorage.getItem('headerThemeBtnVisible') !== 'false';
+  const currencyVisible = localStorage.getItem('headerCurrencyBtnVisible') !== 'false';
   const trendStored = localStorage.getItem(HEADER_TREND_BTN_KEY);
   const trendVisible = trendStored !== null ? trendStored === 'true' : true;
   const syncStored = localStorage.getItem(HEADER_SYNC_BTN_KEY);
   const syncVisible = syncStored !== null ? syncStored === 'true' : true;
+  const marketVisible = localStorage.getItem(HEADER_MARKET_BTN_KEY) !== 'false';
 
   syncChipToggle('settingsHeaderThemeBtn', themeVisible);
   syncChipToggle('settingsHeaderThemeBtn_hdr', themeVisible);
@@ -1067,21 +1073,24 @@ const syncHeaderToggleUI = () => {
   syncChipToggle('settingsHeaderTrendBtn_hdr', trendVisible);
   syncChipToggle('settingsHeaderSyncBtn', syncVisible);
   syncChipToggle('settingsHeaderSyncBtn_hdr', syncVisible);
+  syncChipToggle('settingsHeaderMarketBtn', marketVisible);
+  syncChipToggle('settingsHeaderMarketBtn_hdr', marketVisible);
 
   applyHeaderToggleVisibility();
 };
 
 /**
  * Shows/hides the header shortcut buttons based on stored preferences.
- * Theme and Currency default hidden; Trend and Sync default visible.
+ * All buttons default visible for new users.
  */
 const applyHeaderToggleVisibility = () => {
-  const themeVisible = localStorage.getItem('headerThemeBtnVisible') === 'true';
-  const currencyVisible = localStorage.getItem('headerCurrencyBtnVisible') === 'true';
+  const themeVisible = localStorage.getItem('headerThemeBtnVisible') !== 'false';
+  const currencyVisible = localStorage.getItem('headerCurrencyBtnVisible') !== 'false';
   const trendStored = localStorage.getItem(HEADER_TREND_BTN_KEY);
   const trendVisible = trendStored !== null ? trendStored === 'true' : true;
   const syncStored = localStorage.getItem(HEADER_SYNC_BTN_KEY);
   const syncVisible = syncStored !== null ? syncStored === 'true' : true;
+  const marketVisible = localStorage.getItem(HEADER_MARKET_BTN_KEY) !== 'false';
 
   if (elements.headerThemeBtn) {
     elements.headerThemeBtn.style.display = themeVisible ? '' : 'none';
@@ -1091,6 +1100,12 @@ const applyHeaderToggleVisibility = () => {
   }
   safeGetElement('headerTrendBtn').style.display = trendVisible ? '' : 'none';
   safeGetElement('headerSyncBtn').style.display = syncVisible ? '' : 'none';
+
+  // Market button
+  const marketBtn = safeGetElement('headerMarketBtn');
+  if (marketBtn) {
+    marketBtn.style.display = marketVisible ? '' : 'none';
+  }
 };
 window.applyHeaderToggleVisibility = applyHeaderToggleVisibility;
 

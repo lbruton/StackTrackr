@@ -3,6 +3,81 @@
 // Provides one-click PCGS cert verification and PCGS# lookup via the PCGS
 // Public API. Requires a bearer token configured in Settings > API > PCGS.
 
+// ---------------------------------------------------------------------------
+// PCGS Response Cache (STAK-222)
+// ---------------------------------------------------------------------------
+
+const PCGS_CACHE_TTL_DAYS = 30;
+
+/**
+ * Loads a cached PCGS API response by cache key.
+ * Keys: "cert-{certNumber}" for cert lookups, "pcgs-{pcgsNumber}" for CoinFacts.
+ * Returns null if not found or older than 30 days.
+ * @param {string} cacheKey
+ * @returns {Object|null}
+ */
+const loadPcgsCache = (cacheKey) => {
+  try {
+    const cache = loadDataSync(PCGS_RESPONSE_CACHE_KEY, {});
+    const entry = cache[cacheKey];
+    if (!entry) return null;
+    const ageMs = Date.now() - new Date(entry.fetchedAt).getTime();
+    if (ageMs > entry.ttlDays * 24 * 60 * 60 * 1000) return null;
+    return entry.data;
+  } catch (e) {
+    debugLog('[pcgs-cache] Load error: ' + e.message, 'warn');
+    return null;
+  }
+};
+
+/**
+ * Saves a raw PCGS API response to the 30-day cache.
+ * @param {string} cacheKey
+ * @param {Object} data
+ */
+const savePcgsCache = (cacheKey, data) => {
+  try {
+    const cache = loadDataSync(PCGS_RESPONSE_CACHE_KEY, {});
+    cache[cacheKey] = { data, fetchedAt: new Date().toISOString(), ttlDays: PCGS_CACHE_TTL_DAYS };
+    saveDataSync(PCGS_RESPONSE_CACHE_KEY, cache);
+  } catch (e) {
+    debugLog('[pcgs-cache] Save error: ' + e.message, 'warn');
+  }
+};
+
+/**
+ * Clears the entire PCGS response cache.
+ * @returns {number} Count of entries cleared
+ */
+const clearPcgsCache = () => {
+  try {
+    const cache = loadDataSync(PCGS_RESPONSE_CACHE_KEY, {});
+    const count = Object.keys(cache).length;
+    saveDataSync(PCGS_RESPONSE_CACHE_KEY, {});
+    return count;
+  } catch (e) {
+    debugLog('[pcgs-cache] Clear error: ' + e.message, 'warn');
+    return 0;
+  }
+};
+
+/**
+ * Returns count of valid (non-expired) entries in the PCGS cache.
+ * @returns {number}
+ */
+const getPcgsCacheCount = () => {
+  try {
+    const cache = loadDataSync(PCGS_RESPONSE_CACHE_KEY, {});
+    const now = Date.now();
+    return Object.values(cache).filter(entry => {
+      const ageMs = now - new Date(entry.fetchedAt).getTime();
+      return ageMs <= entry.ttlDays * 24 * 60 * 60 * 1000;
+    }).length;
+  } catch (e) {
+    return 0;
+  }
+};
+
 /**
  * Shared pre-flight checks for all PCGS API calls.
  * @returns {Object|null} Error result if checks fail, null if OK
@@ -23,9 +98,19 @@ const pcgsPreflightCheck = () => {
 /**
  * Shared fetch wrapper for PCGS API calls.
  * @param {string} url - Full API URL
+ * @param {string|null} [cacheKey] - Optional cache key (e.g. "cert-12345", "pcgs-786060")
  * @returns {Promise<Object>} Parsed JSON or error result
  */
-const pcgsFetch = async (url) => {
+const pcgsFetch = async (url, cacheKey = null) => {
+  // STAK-222: Check response cache first
+  if (cacheKey) {
+    const cached = loadPcgsCache(cacheKey);
+    if (cached) {
+      debugLog(`[pcgs-cache] Cache hit: ${cacheKey}`, 'info');
+      return cached;
+    }
+  }
+
   const config = catalogConfig.getPcgsConfig();
   catalogConfig.incrementPcgsUsage();
   if (typeof renderPcgsUsageBar === 'function') renderPcgsUsageBar();
@@ -48,7 +133,14 @@ const pcgsFetch = async (url) => {
     return { _error: true, verified: false, error: `PCGS API error: HTTP ${response.status}` };
   }
 
-  return response.json();
+  const data = await response.json();
+
+  // STAK-222: Cache the successful response
+  if (cacheKey && !data._error) {
+    savePcgsCache(cacheKey, data);
+  }
+
+  return data;
 };
 
 /**
@@ -101,7 +193,7 @@ const verifyPcgsCert = async (certNumber) => {
   const startTime = Date.now();
   try {
     const url = `https://api.pcgs.com/publicapi/coindetail/GetCoinFactsByCertNo/${encodeURIComponent(certNumber)}`;
-    const data = await pcgsFetch(url);
+    const data = await pcgsFetch(url, `cert-${certNumber}`);
     if (data._error) {
       if (typeof recordCatalogHistory === 'function') {
         recordCatalogHistory({ action: 'pcgs_verify', query: certNumber, result: 'fail', itemCount: 0, provider: 'PCGS', duration: Date.now() - startTime, error: data.error });
@@ -139,7 +231,7 @@ const lookupPcgsByNumber = async (pcgsNumber, gradeNumber) => {
   try {
     const grade = gradeNumber || '0';
     const url = `https://api.pcgs.com/publicapi/coindetail/GetCoinFactsByPCGSNo/${encodeURIComponent(pcgsNumber)}/${encodeURIComponent(grade)}`;
-    const data = await pcgsFetch(url);
+    const data = await pcgsFetch(url, `pcgs-${pcgsNumber}`);
     if (data._error) {
       if (typeof recordCatalogHistory === 'function') {
         recordCatalogHistory({ action: 'pcgs_lookup', query: pcgsNumber, result: 'fail', itemCount: 0, provider: 'PCGS', duration: Date.now() - startTime, error: data.error });
@@ -486,4 +578,9 @@ if (typeof window !== 'undefined') {
   window.lookupPcgsFromForm = lookupPcgsFromForm;
   window.showPcgsFieldPicker = showPcgsFieldPicker;
   window.closePcgsFieldPicker = closePcgsFieldPicker;
+  // STAK-222: PCGS response cache
+  window.loadPcgsCache = loadPcgsCache;
+  window.savePcgsCache = savePcgsCache;
+  window.clearPcgsCache = clearPcgsCache;
+  window.getPcgsCacheCount = getPcgsCacheCount;
 }

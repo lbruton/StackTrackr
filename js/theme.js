@@ -27,6 +27,7 @@ const setTheme = (theme) => {
   if (typeof updateAllSparklines === "function") {
     updateAllSparklines();
   }
+  if (typeof scheduleSyncPush === 'function') scheduleSyncPush();
 };
 
 /**
@@ -38,7 +39,9 @@ const initTheme = () => {
     window.matchMedia &&
     window.matchMedia("(prefers-color-scheme: dark)").matches;
 
-  if (savedTheme && ["dark", "light", "sepia"].includes(savedTheme)) {
+  if (savedTheme === "hello-kitty") {
+    document.documentElement.setAttribute("data-theme", "hello-kitty");
+  } else if (savedTheme && ["dark", "light", "sepia"].includes(savedTheme)) {
     setTheme(savedTheme);
   } else {
     // Default to dark theme on first load

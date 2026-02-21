@@ -79,6 +79,26 @@ This file provides foundational mandates and project-specific context for Gemini
 
 Gemini has access to the following MCP servers. Use them as described.
 
+### Agent MCP Parity (as of 2026-02-20)
+
+All three agents run on the same Mac and share the same Docker/IP stack.
+
+| Server | Claude | Gemini | Codex | Notes |
+|---|---|---|---|---|
+| `memento` | ✅ | ✅ | ✅ | Shared Neo4j knowledge graph |
+| `sequential-thinking` | ✅ | ✅ | ✅ | Structured reasoning |
+| `brave-search` | ✅ | ✅ | ✅ | Web search |
+| `claude-context` | ✅ | ✅ | ✅ | Semantic code search (Milvus) |
+| `context7` | ✅ | ✅ | ✅ | Library documentation |
+| `firecrawl-local` | ✅ | ✅ | ✅ | Self-hosted scraping (port 3002) |
+| `linear` | ✅ | ✅ | ✅ | Issue tracking |
+| `codacy` | ✅ | ✅ | ✅ | Code quality analysis |
+| `chrome-devtools` | ✅ | — | ✅ | Gemini omits — use Playwright instead |
+| `playwright` | ✅ | ✅ | ✅ | Browser automation / test authoring |
+| `browserbase` | ✅ | ✅ | ✅ | Cloud NL tests (paid, use sparingly) |
+| `code-graph-context` | ✅ | ✅ | ✅ | Structural graph (Docker required) |
+| `stitch` | ✅ | ✅ primary | ✅ | OAuth via `init`; Gemini preferred for design tasks |
+
 ### Memento (Knowledge Graph)
 
 Shared persistent memory across all agents (Claude, Codex, Gemini, and the human).
@@ -164,6 +184,48 @@ AST-indexed semantic search over the StakTrakr codebase.
 
 Use this before manual file searches — it finds relevant code faster than grep for conceptual queries.
 
+### Firecrawl Local (Web Scraping — Free)
+
+Self-hosted Firecrawl instance running at `devops/firecrawl-docker/` on port 3002. Use for
+scraping, crawling, and web search without consuming cloud credits.
+
+**When to use:** Any scraping/crawling task, researching external docs, fetching competitor prices.
+
+**Tools available:**
+- `scrape` — Extract clean markdown from a single URL
+- `map` — Discover all URLs on a site (essential for finding specific pages)
+- `crawl` — Crawl an entire site asynchronously
+- `search` — Web search with optional content extraction
+- `extract` — Structured data extraction (requires `OPENAI_API_KEY` in Docker env)
+
+**Not available in self-hosted mode:** `/agent` endpoint (cloud only).
+
+**Requires:** `cd devops/firecrawl-docker && docker compose up -d` before use.
+
+### Stitch (UI Design & Prototyping — Gemini Primary)
+
+Stitch is a Google product. **Gemini is the designated Stitch agent for StakTrakr** — Claude and
+Codex route Stitch tasks here. Use the `ui-mockup` skill workflow when generating mockups.
+
+**Tools available:**
+- `create_project` — Create a container for designs
+- `generate_screen_from_text` — Generate a new UI screen from a prompt
+- `edit_screens` — Modify existing screens via prompt
+- `generate_variants` — Explore design alternatives
+- `get_screen` / `list_screens` — Retrieve generated assets
+
+### Browserbase (Cloud Browser Automation)
+
+Cloud-based browser infrastructure used for high-fidelity web scraping and automated visual regression testing.
+
+**When to use:** Use for complex retail scraping (e.g., `devops/retail-poller/capture.js`) or when local Chromium is insufficient.
+
+**Usage Details:**
+- **Cost:** Real-world cost applies. **Requires explicit user approval** before initiating new sessions.
+- **Backend:** Switched via `BROWSER_MODE=browserbase`.
+- **Requirements:** `BROWSERBASE_API_KEY` and `BROWSERBASE_PROJECT_ID` environment variables.
+- **Integration:** Integrated with Playwright (see `playwright.config.js`) and custom scrapers.
+
 ### Context7 (Library Documentation)
 
 Fetches up-to-date documentation and code examples for libraries used by StakTrakr.
@@ -172,6 +234,47 @@ Useful libraries to query: Chart.js, Bootstrap 5, jsPDF, PapaParse, JSZip, Web C
 
 - `resolve-library-id` — Find the Context7 ID for a library
 - `query-docs` — Fetch documentation by topic
+
+### Codacy (Code Quality)
+
+Code quality analysis against the StakTrakr repository. Use during PR reviews and before marking
+any PR ready to merge.
+
+**Tools available:**
+- `codacy_get_file_issues` — Issues on a specific file
+- `codacy_list_pull_request_issues` — All issues on a PR
+- `codacy_get_repository_with_analysis` — Repo-level quality summary
+- `codacy_get_pull_request_git_diff` — PR diff with analysis context
+- `codacy_list_repository_tools` — Active quality tools
+
+**When to use:** After writing or reviewing code, before handing off to Claude for merge.
+
+### Playwright (Browser Automation)
+
+Playwright MCP for scripted browser control. Used with the self-hosted **Browserless** Docker
+container (`devops/browserless/`) for free local test runs.
+
+**When to use:** Writing or running Playwright specs, smoke tests, regression checks.
+
+**Start Browserless:** `cd devops/browserless && docker compose up -d`
+**Run tests:** `BROWSER_BACKEND=browserless TEST_URL=http://localhost:8765 npm test`
+
+### Code Graph Context (Structural Code Analysis)
+
+AST-level structural analysis of the StakTrakr codebase via the `cgc-server` Docker container.
+Complements `claude-context` (semantic) with precise structural queries.
+
+**When to use:** Finding all callers of a function, tracing call chains, detecting dead code,
+measuring complexity, understanding import graphs.
+
+**Tools available:**
+- Callers / callees of any function
+- Call chain tracing end-to-end
+- Dead code detection
+- Complexity scoring
+- Import/dependency graph
+
+**Requires:** `cgc-server` Docker container running locally.
 
 ### Sequential Thinking
 

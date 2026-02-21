@@ -56,12 +56,36 @@ If mode is missing, ask user to choose `release` or `patch`.
 3. Check seed data integrity if changed (valid JSON and sensible diff).
 4. Run lint/check commands relevant to edited files when feasible.
 
-### Phase 4: Commit and PR prep
+### Phase 4: Commit and Draft PR
 
 1. Stage release files and any approved seed files.
 2. Create release commit message in repo format (`vX.Y.Z -- ...`).
-3. Prepare PR summary with user-visible changes and file list.
-4. Call out any unchecked items explicitly.
+3. Push to remote: `git push origin dev`.
+4. Check for an existing draft PR: `gh pr list --base main --head dev --state open --json number,isDraft`.
+   - **No PR exists**: Create as **draft** (`--draft`) with a brief WIP body noting it will be updated before merge.
+   - **Draft PR exists**: Update the body to append new changes.
+5. Do NOT mark the PR ready — that happens in Phase 4.5 when the branch is QA-complete.
+
+### Phase 4.5: Mark PR Ready (Pre-Merge — separate invocation)
+
+Run only when the user confirms the branch is QA-complete and ready to ship.
+
+1. `git log --oneline main..dev` — audit every commit since last merge.
+2. Collect all STAK-### references; fetch Linear titles for accuracy.
+3. Write a **comprehensive PR title and body** covering everything in the branch (not just day-1 work).
+4. `gh pr edit [number] --title "..." --body "..."` — update the PR.
+5. `gh pr ready [number]` — remove draft status.
+6. Run `/pr-resolve` to clear all Codacy/Copilot threads before final review.
+7. Mark all STAK-### issues Done in Linear.
+
+### Phase 5: GitHub Release (Post-Merge Only)
+
+Create the GitHub Release **after** the PR merges to main. Always target `main`, never target dev.
+
+```bash
+git fetch origin main
+gh release create vX.Y.Z --target main --title "vX.Y.Z — TITLE" --latest --notes "..."
+```
 
 ## Guardrails
 
@@ -69,6 +93,8 @@ If mode is missing, ask user to choose `release` or `patch`.
 - Never leave announcements/about drift.
 - Never ignore seed updates that were intentionally generated for release.
 - If unrelated dirty changes exist, ask whether to include or exclude.
+- Never create a GitHub Release targeting dev — always post-merge to main.
+- Never mark PR ready without first updating the title/body to reflect the full branch contents.
 
 ## Reporting
 
@@ -76,5 +102,5 @@ At completion provide:
 
 1. New version.
 2. Exact files changed.
-3. Validation steps run.
+3. PR status (draft or ready).
 4. Any residual risks or manual follow-ups.

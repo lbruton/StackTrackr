@@ -85,6 +85,19 @@
       });
     </script>
 
+    <!-- THEME FLASH PREVENTION: set data-theme before CSS renders so :root light-mode
+         vars never paint. Runs synchronously (no defer) after file-protocol-fix.js so
+         the localStorage polyfill is already in place. Uses hardcoded key/values to
+         avoid any dependency on constants.js (which loads deferred). -->
+    <script>
+      try {
+        var __t = localStorage.getItem('appTheme') || 'dark';
+        if (__t && __t !== 'light' && __t !== 'system') {
+          document.documentElement.setAttribute('data-theme', __t);
+        }
+      } catch (e) {}
+    </script>
+
     <link rel="stylesheet" href="./css/styles.css" />
     <link rel="icon" type="image/svg+xml" href="./favicon.svg?v=3.27.03" />
     <link rel="icon" type="image/png" sizes="32x32" href="./favicon.png?v=3.27.03" />
@@ -378,6 +391,16 @@
                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <line x1="12" y1="1" x2="12" y2="23"/>
             <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+          </svg>
+        </button>
+        <!-- Market button -->
+        <button class="btn theme-btn header-toggle-btn" id="headerMarketBtn"
+                title="Market prices" aria-label="Market prices">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+            <line x1="3" y1="6" x2="21" y2="6"/>
+            <path d="M16 10a4 4 0 0 1-8 0"/>
           </svg>
         </button>
         <!-- Trend cycle button -->
@@ -1194,10 +1217,13 @@
             <div class="grid grid-2">
               <div id="dateField">
                 <label for="itemDate">Purchase Date <span style="font-weight:normal;opacity:0.6;">(optional)</span></label>
-                <input id="itemDate" type="date" />
-                <label class="date-na-label">
-                  <input type="checkbox" id="itemDateNA" /> <span>N/A</span>
-                </label>
+                <div class="input-with-action">
+                  <input id="itemDate" type="date" />
+                  <label class="date-na-inline" for="itemDateNA" title="Mark purchase date as N/A">
+                    <input type="checkbox" id="itemDateNA" />
+                    <span>N/A</span>
+                  </label>
+                </div>
               </div>
               <div>
                 <label for="itemPrice">Purchase Price</label>
@@ -2015,6 +2041,12 @@
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v12"/><path d="M9 9a3 3 0 0 1 3-1.5c2 0 3 1 3 2.5s-1 2.5-3 2.5-3 1-3 2.5a3 3 0 0 0 3 2.5"/></svg>
               Goldback
             </button>
+            <button class="settings-nav-item" data-section="market">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M0 0h1v15h15v1H0V0Zm14.817 3.113a.5.5 0 0 1 .07.704l-4.5 5.5a.5.5 0 0 1-.74.037L7.06 6.767l-3.656 5.027a.5.5 0 0 1-.808-.588l4-5.5a.5.5 0 0 1 .76-.063l2.573 2.565 4.15-5.073a.5.5 0 0 1 .704-.07z"/>
+              </svg>
+              Market
+            </button>
             <button class="settings-nav-item" data-section="storage">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.66 4.03 3 9 3s9-1.34 9-3V5"/><path d="M3 12c0 1.66 4.03 3 9 3s9-1.34 9-3"/></svg>
               Storage
@@ -2110,6 +2142,14 @@
                     <div class="settings-group-label">Currency</div>
                     <p class="settings-subtext">Switch display currency.</p>
                     <div class="chip-sort-toggle" id="settingsHeaderCurrencyBtn_hdr">
+                      <button type="button" class="chip-sort-btn" data-val="yes">On</button>
+                      <button type="button" class="chip-sort-btn" data-val="no">Off</button>
+                    </div>
+                  </div>
+                  <div class="settings-card">
+                    <div class="settings-group-label">Market</div>
+                    <p class="settings-subtext">Open market prices.</p>
+                    <div class="chip-sort-toggle" id="settingsHeaderMarketBtn_hdr">
                       <button type="button" class="chip-sort-btn" data-val="yes">On</button>
                       <button type="button" class="chip-sort-btn" data-val="no">Off</button>
                     </div>
@@ -2422,29 +2462,6 @@
                   </div>
                   <div id="numistaStatus" class="api-status" style="margin-top: 0.5rem;"></div>
 
-                  <!-- View Modal Field Toggles -->
-                  <div class="settings-group" style="margin-top: 1rem; border-top: 1px solid var(--border); padding-top: 0.75rem;">
-                    <div class="settings-group-label">View modal fields</div>
-                    <p class="settings-subtext">Choose which Numista data fields appear in the item view modal.</p>
-                    <div id="numistaViewFieldToggles" style="display: grid; grid-template-columns: 1fr 1fr; gap: 2px 1rem;">
-                      <label class="settings-checkbox-label"><input type="checkbox" data-nf="denomination" checked> Denomination</label>
-                      <label class="settings-checkbox-label"><input type="checkbox" data-nf="shape" checked> Shape</label>
-                      <label class="settings-checkbox-label"><input type="checkbox" data-nf="diameter" checked> Diameter</label>
-                      <label class="settings-checkbox-label"><input type="checkbox" data-nf="thickness" checked> Thickness</label>
-                      <label class="settings-checkbox-label"><input type="checkbox" data-nf="orientation" checked> Orientation</label>
-                      <label class="settings-checkbox-label"><input type="checkbox" data-nf="composition" checked> Composition</label>
-                      <label class="settings-checkbox-label"><input type="checkbox" data-nf="country" checked> Country</label>
-                      <label class="settings-checkbox-label"><input type="checkbox" data-nf="technique" checked> Technique</label>
-                      <label class="settings-checkbox-label"><input type="checkbox" data-nf="references" checked> References (KM#)</label>
-                      <label class="settings-checkbox-label"><input type="checkbox" data-nf="edge" checked> Edge</label>
-                      <label class="settings-checkbox-label"><input type="checkbox" data-nf="tags" checked> Tags</label>
-                      <label class="settings-checkbox-label"><input type="checkbox" data-nf="commemorative" checked> Commemorative</label>
-                      <label class="settings-checkbox-label"><input type="checkbox" data-nf="rarity" checked> Rarity</label>
-                      <label class="settings-checkbox-label"><input type="checkbox" data-nf="mintage" checked> Mintage</label>
-                      <label class="settings-checkbox-label"><input type="checkbox" data-nf="imageTooltips" checked> Image tooltips</label>
-                    </div>
-                  </div>
-
                   <!-- Numista Bulk Sync (STACK-87/88) -->
                   <div class="settings-group" id="numistaBulkSyncGroup" style="margin-top: 1rem; border-top: 1px solid var(--border); padding-top: 0.75rem; display: none;">
                     <div class="settings-group-label">Metadata Sync</div>
@@ -2454,12 +2471,48 @@
                     </p>
 
                     <!-- Stats bar -->
-                    <div id="numistaSyncStats" class="settings-subtext" style="margin-bottom:0.5rem;"></div>
+                    <div id="numistaSyncStats" class="settings-subtext" style="margin-bottom:0.25rem;"></div>
 
                     <!-- Eligible items table (collapsible) -->
+                    <!-- View modal fields (collapsible) -->
+                    <details style="margin-bottom:0.5rem;">
+                      <summary style="font-size:0.8rem;cursor:pointer;opacity:0.7;">View modal fields</summary>
+                      <div id="numistaViewFieldToggles" class="chip-grouping-table-container" style="margin-top:0.35rem;">
+                        <table class="chip-grouping-table">
+                          <tbody>
+                            <tr>
+                              <td><label class="settings-checkbox-label"><input type="checkbox" data-nf="denomination" checked> Denomination</label></td>
+                              <td><label class="settings-checkbox-label"><input type="checkbox" data-nf="shape" checked> Shape</label></td>
+                              <td><label class="settings-checkbox-label"><input type="checkbox" data-nf="diameter" checked> Diameter</label></td>
+                            </tr>
+                            <tr>
+                              <td><label class="settings-checkbox-label"><input type="checkbox" data-nf="thickness" checked> Thickness</label></td>
+                              <td><label class="settings-checkbox-label"><input type="checkbox" data-nf="orientation" checked> Orientation</label></td>
+                              <td><label class="settings-checkbox-label"><input type="checkbox" data-nf="composition" checked> Composition</label></td>
+                            </tr>
+                            <tr>
+                              <td><label class="settings-checkbox-label"><input type="checkbox" data-nf="country" checked> Country</label></td>
+                              <td><label class="settings-checkbox-label"><input type="checkbox" data-nf="technique" checked> Technique</label></td>
+                              <td><label class="settings-checkbox-label"><input type="checkbox" data-nf="references" checked> References (KM#)</label></td>
+                            </tr>
+                            <tr>
+                              <td><label class="settings-checkbox-label"><input type="checkbox" data-nf="edge" checked> Edge</label></td>
+                              <td><label class="settings-checkbox-label"><input type="checkbox" data-nf="tags" checked> Tags</label></td>
+                              <td><label class="settings-checkbox-label"><input type="checkbox" data-nf="commemorative" checked> Commemorative</label></td>
+                            </tr>
+                            <tr>
+                              <td><label class="settings-checkbox-label"><input type="checkbox" data-nf="rarity" checked> Rarity</label></td>
+                              <td><label class="settings-checkbox-label"><input type="checkbox" data-nf="mintage" checked> Mintage</label></td>
+                              <td><label class="settings-checkbox-label"><input type="checkbox" data-nf="imageTooltips" checked> Image tooltips</label></td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                    </details>
+
                     <details style="margin-bottom:0.5rem;">
                       <summary style="font-size:0.8rem;cursor:pointer;opacity:0.7;">Show eligible items</summary>
-                      <div id="numistaSyncTableContainer" class="chip-grouping-table-container" style="max-height:180px;overflow-y:auto;margin-top:0.35rem;"></div>
+                      <div id="numistaSyncTableContainer" class="chip-grouping-table-container" style="max-height:165px;overflow-y:auto;margin-top:0.35rem;"></div>
                     </details>
 
                     <!-- Activity log (collapsible) -->
@@ -2475,7 +2528,7 @@
                     <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
                       <button type="button" class="btn info" id="numistaSyncStartBtn">Sync Metadata</button>
                       <button type="button" class="btn warning" id="numistaSyncCancelBtn" style="display:none;">Cancel</button>
-                      <button type="button" class="btn danger" id="numistaSyncClearBtn" style="font-size:0.8rem;">Clear Cache</button>
+                      <button type="button" class="btn secondary" id="clearNumistaCacheBtn" style="font-size:0.8rem;">Clear API Cache</button>
                     </div>
                   </div>
                 </div>
@@ -2507,6 +2560,14 @@
                     </div>
                   </div>
                   <div id="pcgsStatus" class="api-status" style="margin-top: 0.5rem;"></div>
+
+                  <!-- STAK-222: PCGS Response Cache stat row -->
+                  <div class="settings-group" style="margin-top: 0.75rem; border-top: 1px solid var(--border); padding-top: 0.5rem;">
+                    <div class="provider-setting-row api-cache-stat-row">
+                      <span id="pcgsResponseCacheStat" class="settings-stat">Cached lookups: <strong id="pcgsResponseCacheCount">0</strong> entries</span>
+                      <button id="clearPcgsCacheBtn" class="btn secondary btn-sm">Clear cache</button>
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -2533,6 +2594,11 @@
                         <option value="12">12 hours</option>
                         <option value="24">24 hours</option>
                       </select>
+                    </div>
+                    <div class="provider-setting-row api-autorefresh-row">
+                      <label for="autoRefresh_STAKTRAKR">Background auto-refresh</label>
+                      <input type="checkbox" id="autoRefresh_STAKTRAKR" class="api-autorefresh-toggle" data-provider="STAKTRAKR" checked>
+                      <span class="settings-hint">Polls on cache TTL interval. Free, on by default.</span>
                     </div>
                     <div class="provider-setting-row">
                       <label for="providerPriority_STAKTRAKR">Sync Priority:</label>
@@ -2604,6 +2670,11 @@
                         <option value="24" selected>24 hours</option>
                       </select>
                     </div>
+                    <div class="provider-setting-row api-autorefresh-row">
+                      <label for="autoRefresh_METALS_DEV">Background auto-refresh</label>
+                      <input type="checkbox" id="autoRefresh_METALS_DEV" class="api-autorefresh-toggle" data-provider="METALS_DEV">
+                      <span class="settings-hint">Polls on cache TTL interval.</span>
+                    </div>
                     <div class="provider-setting-row">
                       <label for="providerPriority_METALS_DEV">Sync Priority:</label>
                       <select class="provider-priority-select" id="providerPriority_METALS_DEV" data-provider="METALS_DEV">
@@ -2674,6 +2745,11 @@
                         <option value="12">12 hours</option>
                         <option value="24" selected>24 hours</option>
                       </select>
+                    </div>
+                    <div class="provider-setting-row api-autorefresh-row">
+                      <label for="autoRefresh_METALS_API">Background auto-refresh</label>
+                      <input type="checkbox" id="autoRefresh_METALS_API" class="api-autorefresh-toggle" data-provider="METALS_API">
+                      <span class="settings-hint">Polls on cache TTL interval.</span>
                     </div>
                     <div class="provider-setting-row">
                       <label for="providerPriority_METALS_API">Sync Priority:</label>
@@ -2749,6 +2825,11 @@
                         <option value="12">12 hours</option>
                         <option value="24" selected>24 hours</option>
                       </select>
+                    </div>
+                    <div class="provider-setting-row api-autorefresh-row">
+                      <label for="autoRefresh_METAL_PRICE_API">Background auto-refresh</label>
+                      <input type="checkbox" id="autoRefresh_METAL_PRICE_API" class="api-autorefresh-toggle" data-provider="METAL_PRICE_API">
+                      <span class="settings-hint">Polls on cache TTL interval.</span>
                     </div>
                     <div class="provider-setting-row">
                       <label for="providerPriority_METAL_PRICE_API">Sync Priority:</label>
@@ -2842,6 +2923,11 @@
                         <option value="12">12 hours</option>
                         <option value="24" selected>24 hours</option>
                       </select>
+                    </div>
+                    <div class="provider-setting-row api-autorefresh-row">
+                      <label for="autoRefresh_CUSTOM">Background auto-refresh</label>
+                      <input type="checkbox" id="autoRefresh_CUSTOM" class="api-autorefresh-toggle" data-provider="CUSTOM">
+                      <span class="settings-hint">Polls on cache TTL interval.</span>
                     </div>
                     <div class="provider-setting-row">
                       <label for="providerPriority_CUSTOM">Sync Priority:</label>
@@ -3491,6 +3577,32 @@
               </div>
             </div>
 
+            <!-- ===== MARKET PRICES ===== -->
+            <div id="settingsPanel_market" class="settings-section-panel" style="display: none">
+              <h3 style="margin-bottom:0.75rem;">Market Prices</h3>
+              <div style="display:flex; align-items:center; justify-content:space-between; gap:0.75rem; margin-bottom:0.5rem;">
+                <div style="display:flex;flex-direction:column;gap:0.15rem;">
+                  <span id="retailLastSync" class="settings-subtext"></span>
+                  <span id="retailSyncStatus" class="settings-subtext"></span>
+                </div>
+                <button id="retailSyncBtn" class="retail-card-action" type="button">Sync Now</button>
+              </div>
+              <div id="retailDisclaimer" class="retail-disclaimer-inline" style="display:none; margin-bottom:0.75rem;" role="status">
+                Best-effort pricing · Sourced from public data, may not reflect real-time or credit card pricing · Confidence: 80=aligned · 35=outlier · 15=significant outlier
+              </div>
+
+              <div id="retailCardsGrid" class="retail-cards-grid" aria-live="polite" aria-label="Retail coin price cards">
+                <!-- Cards rendered by renderRetailCards() -->
+              </div>
+
+              <div id="retailEmptyState" class="retail-empty-state" style="display: none">
+                <div class="retail-empty-icon">📊</div>
+                <p class="retail-empty-title">No market prices yet</p>
+                <p class="retail-empty-desc">Sync to load current bullion retail prices from APMEX, Monument, SDB, and JM Bullion.</p>
+                <button class="retail-sync-cta" type="button" onclick="syncRetailPrices()">Sync Now</button>
+              </div>
+            </div>
+
             <!-- ===== ACTIVITY LOG ===== -->
             <div class="settings-section-panel" id="settingsPanel_changelog" style="display: none">
               <h3>Activity Log</h3>
@@ -3504,6 +3616,7 @@
                 <button class="settings-log-tab" data-log-tab="catalogs" type="button">Catalogs</button>
                 <button class="settings-log-tab" data-log-tab="pricehistory" type="button">Price History</button>
                 <button class="settings-log-tab" data-log-tab="cloud" type="button">Cloud</button>
+                <button class="settings-log-tab" data-log-tab="market" type="button">Market</button>
               </div>
 
               <!-- Changelog panel (existing) -->
@@ -3649,6 +3762,48 @@
                       </tr>
                     </thead>
                     <tbody></tbody>
+                  </table>
+                </div>
+              </div>
+
+              <div id="logPanel_market" class="settings-log-panel" style="display: none">
+                <div class="retail-history-controls">
+                  <label for="retailHistorySlugSelect" class="retail-history-label">Coin:</label>
+                  <select id="retailHistorySlugSelect" class="form-select form-select-sm retail-history-select">
+                    <option value="ase">American Silver Eagle</option>
+                    <option value="maple-silver">Silver Maple Leaf</option>
+                    <option value="britannia-silver">Silver Britannia</option>
+                    <option value="krugerrand-silver">Silver Krugerrand</option>
+                    <option value="generic-silver-round">Generic Silver Round</option>
+                    <option value="generic-silver-bar-10oz">Generic 10oz Silver Bar</option>
+                    <option value="age">American Gold Eagle</option>
+                    <option value="buffalo">American Gold Buffalo</option>
+                    <option value="maple-gold">Gold Maple Leaf</option>
+                    <option value="krugerrand-gold">Gold Krugerrand</option>
+                    <option value="ape">American Platinum Eagle</option>
+                  </select>
+                  <div class="retail-timeframe-tabs">
+                    <button class="retail-tf-btn active" data-retail-timeframe="7" type="button">7d</button>
+                    <button class="retail-tf-btn" data-retail-timeframe="30" type="button">30d</button>
+                    <button class="retail-tf-btn" data-retail-timeframe="90" type="button">90d</button>
+                    <button class="retail-tf-btn" data-retail-timeframe="all" type="button">All</button>
+                  </div>
+                </div>
+                <div id="retailSyncLogContainer"></div>
+                <div class="retail-history-table-wrap">
+                  <table id="retailHistoryTable" class="retail-history-table">
+                    <thead>
+                      <tr>
+                        <th>Date</th>
+                        <th>Avg Median</th>
+                        <th>Avg Low</th>
+                        <th>APMEX</th>
+                        <th>Monument</th>
+                        <th>SDB</th>
+                        <th>JM</th>
+                      </tr>
+                    </thead>
+                    <tbody id="retailHistoryTableBody"></tbody>
                   </table>
                 </div>
               </div>
@@ -4641,6 +4796,8 @@
     <script defer src="./js/priceHistory.js"></script>
     <script defer src="./js/spotLookup.js"></script>
     <script defer src="./js/goldback.js"></script>
+    <script defer src="./js/retail.js"></script>
+    <script defer src="./js/retail-view-modal.js"></script>
     <script defer src="./js/api.js"></script>
     <script defer src="./js/catalog-api.js"></script>
     <script defer src="./js/pcgs-api.js"></script>
@@ -4688,5 +4845,56 @@
         }
       });
     </script>
+
+  <!-- ===== RETAIL VIEW MODAL ===== -->
+  <div id="retailViewModal" class="modal" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="retailViewCoinName">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div>
+          <h2 id="retailViewCoinName"></h2>
+          <span id="retailViewModalSubtitle" class="settings-subtext"></span>
+        </div>
+        <button class="modal-close" onclick="closeRetailViewModal()" aria-label="Close market price detail">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div id="retailViewVendorLegend" class="retail-vendor-legend"></div>
+        <div class="retail-view-tabs">
+          <button id="retailViewTabIntraday" class="retail-view-tab active" type="button" onclick="_switchRetailViewTab('intraday')">24h Chart</button>
+          <button id="retailViewTabHistory" class="retail-view-tab" type="button" onclick="_switchRetailViewTab('history')">Price History</button>
+        </div>
+        <div id="retailViewIntradaySection">
+          <div class="retail-intraday-chart-wrap">
+            <canvas id="retailViewIntradayChart" aria-label="24h intraday price chart"></canvas>
+          </div>
+          <p id="retailViewIntradayNoData" class="settings-subtext" style="display:none;text-align:center;padding:1rem;">No intraday data — check back after the next 15-minute sync.</p>
+          <div class="retail-view-table-wrap" style="margin-top:.5rem;">
+            <table class="retail-view-table">
+              <thead id="retailViewIntradayTableHead">
+                <tr><th>Time (local)</th></tr>
+              </thead>
+              <tbody id="retailViewIntradayTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+        <div id="retailViewHistorySection" style="display:none;">
+          <div class="retail-view-chart-wrap">
+            <canvas id="retailViewChart" aria-label="Retail price history chart"></canvas>
+          </div>
+          <div class="retail-view-table-wrap">
+            <table id="retailViewHistoryTable" class="retail-view-table">
+              <thead>
+                <tr>
+                  <th>Date</th><th>Avg Median</th><th>Avg Low</th>
+                  <th>APMEX</th><th>Monument</th><th>SDB</th><th>JM</th>
+                </tr>
+              </thead>
+              <tbody id="retailViewHistoryTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+        <p class="retail-view-disclaimer">Prices sourced from StakTrakr's 15-minute retail price API. Data is for informational purposes only and may not reflect current market rates.</p>
+      </div>
+    </div>
+  </div>
   </body>
 </html>

@@ -380,7 +380,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     // Load data
-    loadInventory();
+    await loadInventory();
 
     // Migrate: existing users keep header theme button visible
     if (inventory.length > 0 && localStorage.getItem('headerThemeBtnVisible') === null) {
@@ -420,6 +420,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (typeof loadGoldbackEnabled === 'function') loadGoldbackEnabled();
     if (typeof loadGoldbackEstimateEnabled === 'function') loadGoldbackEstimateEnabled();
     if (typeof loadGoldbackEstimateModifier === 'function') loadGoldbackEstimateModifier();
+
+    // Load retail market prices and start background auto-sync
+    if (typeof initRetailPrices === 'function') initRetailPrices();
+    if (typeof startRetailBackgroundSync === 'function') startRetailBackgroundSync();
 
     // Load display currency preference and cached exchange rates (STACK-50)
     if (typeof loadDisplayCurrency === 'function') loadDisplayCurrency();
@@ -574,6 +578,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     // Automatically sync prices if cache is stale and API keys are available
     if (typeof autoSyncSpotPrices === "function") {
       autoSyncSpotPrices();
+    }
+
+    // STAK-222: Start background spot price polling
+    if (typeof startSpotBackgroundSync === 'function') {
+      startSpotBackgroundSync();
     }
 
     // Fetch fresh exchange rates in the background (STACK-50)

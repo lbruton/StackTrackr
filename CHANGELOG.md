@@ -9,6 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.32.0] - 2026-02-21
+
+### Added — Market Prices Module, OOS Detection & Image Vault Sync
+
+- **Added**: Market Prices Module — live bullion retail prices from APMEX, Monument Metals, SDB, and JM Bullion with per-coin cards, 30-day price history, and intraday 15-min data (retail.js, retail-view-modal.js)
+- **Added**: Out-of-stock detection via AI vision (Gemini) and Firecrawl scraping consensus — OOS coins display strikethrough pricing and gaps in history charts
+- **Added**: Image Vault Sync — user-uploaded coin photos sync to cloud via encrypted image vault (STAK-181)
+- **Added**: Serial Number column in PDF export (STAK-234)
+- **Added**: Retail poller PATCH_GAPS gap-fill mode — backfills missing hourly windows without re-scraping existing data (replaces FBP GHA workflow)
+- **Fixed**: Numista cache now clears on N# change; added remove button for cached Numista data (STAK-244)
+- **Fixed**: Card view portal height calculation corrected for multi-row layouts (STAK-206)
+- **Fixed**: UUID generation upgraded to CSPRNG (`crypto.getRandomValues`) for all item IDs
+
+---
+
 ## [3.31.6] - 2026-02-19
 
 ### Added — STAK-173: Collapsible Form Modal, Numista Data Persistence & Dialog Migration

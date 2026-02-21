@@ -692,6 +692,31 @@ const renderCardView = (sortedItems, container) => {
   }
   _cvBlobUrls = [];
 
+  // Handle empty state: no items or no search results
+  if (html.length === 0) {
+    const isFiltered = (typeof inventory !== 'undefined' && inventory.length > 0);
+    const message = isFiltered ? "No matching items found." : "Your stack is empty.";
+    const subtext = isFiltered ? "Try adjusting your search or filters." : "Add your first item to start tracking your portfolio.";
+    const action = isFiltered
+      ? `<button class="btn warning btn-sm" onclick="clearAllFilters()">Clear Filters</button>`
+      : `<button class="btn success btn-sm" onclick="safeGetElement('newItemBtn').click()">Add Item</button>`;
+
+    container.innerHTML = `
+      <div class="empty-state" style="grid-column: 1 / -1; width: 100%;">
+        <svg class="empty-state-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          ${isFiltered
+            ? '<circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>' // Search icon
+            : '<rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>' // Stack icon
+          }
+        </svg>
+        <h3>${message}</h3>
+        <p>${subtext}</p>
+        ${action}
+      </div>
+    `;
+    return;
+  }
+
   // nosemgrep: javascript.browser.security.insecure-innerhtml.insecure-innerhtml
   container.innerHTML = html.join('');
 

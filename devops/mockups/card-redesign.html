@@ -1,0 +1,1090 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>STAK-118 — Card Redesign Mockups</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
+<style>
+/* ============================================================================
+   THEME SYSTEM — mirrors StakTrakr's actual CSS variables
+   ============================================================================ */
+:root {
+  --primary: #3b82f6;
+  --success: #059669;
+  --danger: #dc2626;
+  --warning: #d97706;
+  --bg: #eef2f7;
+  --bg-elev-1: #e2e8f0;
+  --bg-elev-2: #d5dce6;
+  --surface: #ffffff;
+  --text: #1b232c;
+  --text-muted: #344351;
+  --text-secondary: #64748b;
+  --border: #cbd5e1;
+  --border-hover: #94a3b8;
+  --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.08);
+  --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 25px -5px rgb(0 0 0 / 0.12);
+  --radius: 8px;
+  --radius-lg: 12px;
+  --spacing-xs: 0.2rem;
+  --spacing-sm: 0.4rem;
+  --spacing: 0.75rem;
+  --spacing-lg: 1.25rem;
+  --silver: #5f6673;
+  --gold: #a04808;
+  --platinum: #4b5563;
+  --palladium: #6d35d0;
+  --silver-accent: #9ca3af;
+  --gold-accent: #d97706;
+  --platinum-accent: #6b7280;
+  --palladium-accent: #8b5cf6;
+  --type-coin-bg: #b85f00;
+  --type-coin-text: #fff;
+  --type-bar-bg: #946d00;
+  --type-bar-text: #fff;
+}
+
+[data-theme="dark"] {
+  --primary: #3b82f6;
+  --success: #10b981;
+  --danger: #ef4444;
+  --warning: #f59e0b;
+  --bg: #0f172a;
+  --bg-elev-1: #1e293b;
+  --bg-elev-2: #334155;
+  --surface: #1e293b;
+  --text: #f8fafc;
+  --text-muted: #94a3b8;
+  --text-secondary: #cbd5e1;
+  --border: #334155;
+  --border-hover: #475569;
+  --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.3);
+  --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.3);
+  --shadow-lg: 0 10px 25px -5px rgb(0 0 0 / 0.4);
+  --silver: #d1d5db;
+  --gold: #fbbf24;
+  --platinum: #f3f4f6;
+  --palladium: #d8b4fe;
+  --silver-accent: #9ca3af;
+  --gold-accent: #f59e0b;
+  --platinum-accent: #d1d5db;
+  --palladium-accent: #a78bfa;
+  --type-coin-bg: #b45309;
+  --type-coin-text: #fff;
+  --type-bar-bg: #fde047;
+  --type-bar-text: #1e293b;
+}
+
+[data-theme="sepia"] {
+  --primary: #b35c1f;
+  --success: #698f3f;
+  --danger: #dc2626;
+  --warning: #d97706;
+  --bg: #f5f0e8;
+  --bg-elev-1: #e8e0d4;
+  --bg-elev-2: #ddd4c4;
+  --surface: #faf7f2;
+  --text: #3d2e1e;
+  --text-muted: #6b5c4a;
+  --text-secondary: #8b7355;
+  --border: #d4c8b8;
+  --border-hover: #b8a892;
+  --shadow-sm: 0 1px 3px 0 rgb(60 40 20 / 0.08);
+  --shadow: 0 4px 6px -1px rgb(60 40 20 / 0.1);
+  --shadow-lg: 0 10px 25px -5px rgb(60 40 20 / 0.12);
+  --silver: #706b66;
+  --gold: #80620a;
+  --platinum: #5a5a5a;
+  --palladium: #6b5640;
+  --silver-accent: #8a8580;
+  --gold-accent: #a67c0a;
+  --platinum-accent: #7a7a7a;
+  --palladium-accent: #8b7560;
+  --type-coin-bg: #a35008;
+  --type-coin-text: #fff;
+  --type-bar-bg: #8a6b00;
+  --type-bar-text: #fff;
+}
+
+/* ============================================================================
+   BASE RESET & TYPOGRAPHY
+   ============================================================================ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'DM Sans', system-ui, -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.5;
+  transition: background 0.3s, color 0.3s;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ============================================================================
+   NAVIGATION — sticky toolbar
+   ============================================================================ */
+.toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+  padding: 0.6rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.toolbar-title {
+  font-weight: 700;
+  font-size: 0.85rem;
+  letter-spacing: -0.01em;
+  margin-right: auto;
+  white-space: nowrap;
+}
+
+.toolbar-title span {
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+.nav-btn {
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+  font-family: inherit;
+}
+
+.nav-btn:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: var(--bg-elev-1);
+}
+
+.nav-btn.active {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+}
+
+.theme-toggle {
+  display: flex;
+  gap: 0;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  overflow: hidden;
+  margin-left: 0.5rem;
+}
+
+.theme-btn {
+  padding: 0.3rem 0.6rem;
+  border: none;
+  background: var(--bg);
+  color: var(--text-muted);
+  font-size: 0.7rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: inherit;
+}
+
+.theme-btn.active {
+  background: var(--primary);
+  color: #fff;
+}
+
+/* ============================================================================
+   SECTION LAYOUT
+   ============================================================================ */
+.section {
+  max-width: 420px;
+  margin: 0 auto;
+  padding: 1.5rem 1rem;
+  display: none;
+}
+
+.section.visible { display: block; }
+
+.section-header {
+  margin-bottom: 1.25rem;
+}
+
+.section-header h2 {
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin-bottom: 0.25rem;
+}
+
+.section-header p {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+.card-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+/* ============================================================================
+   SHARED CARD PRIMITIVES
+   ============================================================================ */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+
+.chip-year {
+  background: var(--bg-elev-2);
+  color: var(--text-muted);
+}
+
+.chip-grade {
+  background: var(--primary);
+  color: #fff;
+}
+
+.chip-qty {
+  background: var(--bg-elev-2);
+  color: var(--text-muted);
+}
+
+.chip-weight {
+  background: var(--bg-elev-2);
+  color: var(--text-muted);
+}
+
+.chip-type {
+  font-size: 0.6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.chip-type.coin { background: var(--type-coin-bg); color: var(--type-coin-text); }
+.chip-type.bar { background: var(--type-bar-bg); color: var(--type-bar-text); }
+
+.gain { color: var(--success); }
+.loss { color: var(--danger); }
+
+/* Coin image placeholder */
+.coin-img {
+  border-radius: 50%;
+  object-fit: cover;
+  background: var(--bg-elev-2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.coin-img.bar-shape {
+  border-radius: var(--radius);
+}
+
+.coin-img .placeholder-icon {
+  font-size: 1.2rem;
+  color: var(--text-muted);
+  opacity: 0.5;
+}
+
+/* Metal left-border accent */
+.metal-silver { --metal-color: var(--silver-accent); }
+.metal-gold { --metal-color: var(--gold-accent); }
+.metal-platinum { --metal-color: var(--platinum-accent); }
+.metal-palladium { --metal-color: var(--palladium-accent); }
+
+/* ============================================================================
+   DRAFT A — Sparkline Header + Stacked Images
+   ============================================================================ */
+.card-a {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--metal-color);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  cursor: pointer;
+  transition: box-shadow 0.2s, transform 0.15s;
+  position: relative;
+}
+
+.card-a:hover {
+  box-shadow: var(--shadow);
+  transform: translateY(-1px);
+}
+
+.card-a:active {
+  transform: scale(0.985);
+  box-shadow: var(--shadow-sm);
+}
+
+.card-a .sparkline-header {
+  position: relative;
+  height: 60px;
+  padding: 0.4rem 0.75rem 0;
+  overflow: hidden;
+}
+
+.card-a .sparkline-header svg {
+  width: 100%;
+  height: 100%;
+}
+
+.card-a .sparkline-fade {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 20px;
+  background: linear-gradient(to bottom, transparent, var(--surface));
+}
+
+.card-a .card-body {
+  padding: 0.5rem 0.75rem 0.65rem;
+}
+
+.card-a .images-row {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.card-a .coin-img {
+  width: 64px;
+  height: 64px;
+}
+
+.card-a .item-name {
+  font-size: 0.88rem;
+  font-weight: 600;
+  line-height: 1.3;
+  margin-bottom: 0.35rem;
+  letter-spacing: -0.01em;
+}
+
+.card-a .chips-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.card-a .value-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  font-size: 0.78rem;
+  gap: 0.5rem;
+}
+
+.card-a .value-journey {
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+.card-a .value-journey .arrow {
+  margin: 0 0.2rem;
+  opacity: 0.5;
+}
+
+.card-a .value-gain {
+  font-weight: 700;
+  font-size: 0.82rem;
+  white-space: nowrap;
+}
+
+/* ============================================================================
+   DRAFT B — Full-Bleed Sparkline + Overlay
+   ============================================================================ */
+.card-b {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  cursor: pointer;
+  transition: box-shadow 0.2s, transform 0.15s;
+  position: relative;
+  min-height: 160px;
+}
+
+.card-b:hover {
+  box-shadow: var(--shadow);
+  transform: translateY(-1px);
+}
+
+.card-b:active {
+  transform: scale(0.985);
+}
+
+.card-b .sparkline-bg {
+  position: absolute;
+  inset: 0;
+  opacity: 0.08;
+  pointer-events: none;
+}
+
+.card-b .sparkline-bg svg {
+  width: 100%;
+  height: 100%;
+}
+
+.card-b .card-content {
+  position: relative;
+  z-index: 1;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.6rem;
+}
+
+.card-b .metal-indicator {
+  width: 100%;
+  height: 3px;
+  border-radius: 999px;
+  background: var(--metal-color);
+  opacity: 0.7;
+}
+
+.card-b .images-row {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+}
+
+.card-b .coin-img {
+  width: 80px;
+  height: 80px;
+  border: 2px solid var(--border);
+}
+
+.card-b .item-name {
+  font-size: 0.92rem;
+  font-weight: 700;
+  line-height: 1.3;
+  letter-spacing: -0.015em;
+}
+
+.card-b .value-hero {
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+.card-b .value-detail {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+.card-b .chips-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  justify-content: center;
+}
+
+/* ============================================================================
+   DRAFT C — Split Card (Image Left, Data Right)
+   ============================================================================ */
+.card-c {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  cursor: pointer;
+  transition: box-shadow 0.2s, transform 0.15s;
+  display: flex;
+  min-height: 120px;
+}
+
+.card-c:hover {
+  box-shadow: var(--shadow);
+  transform: translateY(-1px);
+}
+
+.card-c:active {
+  transform: scale(0.985);
+}
+
+.card-c .image-col {
+  flex: 0 0 100px;
+  background: var(--bg-elev-1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 0.5rem;
+  position: relative;
+}
+
+.card-c .image-col::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 10%;
+  bottom: 10%;
+  width: 1px;
+  background: var(--border);
+}
+
+.card-c .coin-img {
+  width: 56px;
+  height: 56px;
+}
+
+.card-c .sparkline-strip {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  overflow: hidden;
+}
+
+.card-c .sparkline-strip svg {
+  width: 100%;
+  height: 100%;
+}
+
+.card-c .data-col {
+  flex: 1;
+  padding: 0.6rem 0.75rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.3rem;
+}
+
+.card-c .metal-bar {
+  width: 2rem;
+  height: 3px;
+  border-radius: 999px;
+  background: var(--metal-color);
+  margin-bottom: 0.1rem;
+}
+
+.card-c .item-name {
+  font-size: 0.82rem;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+}
+
+.card-c .chips-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.2rem;
+}
+
+.card-c .value-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  padding-top: 0.2rem;
+  border-top: 1px solid var(--border);
+  margin-top: 0.15rem;
+  gap: 0.5rem;
+}
+
+.card-c .value-journey {
+  color: var(--text-muted);
+}
+
+.card-c .value-journey .arrow {
+  margin: 0 0.15rem;
+  opacity: 0.5;
+}
+
+.card-c .value-gain {
+  font-weight: 700;
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+
+/* ============================================================================
+   DRAFT D — Compact Row Card
+   ============================================================================ */
+.card-d {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  cursor: pointer;
+  transition: box-shadow 0.2s, transform 0.15s;
+}
+
+.card-d:hover {
+  box-shadow: var(--shadow);
+  transform: translateY(-1px);
+}
+
+.card-d:active {
+  transform: scale(0.985);
+}
+
+.card-d .card-top {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.5rem 0.65rem;
+}
+
+.card-d .coin-img {
+  width: 44px;
+  height: 44px;
+}
+
+.card-d .card-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.card-d .item-name {
+  font-size: 0.78rem;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.card-d .chips-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.2rem;
+  margin-top: 0.15rem;
+}
+
+.card-d .card-gain {
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.card-d .card-gain .gain-amount {
+  font-size: 0.82rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.card-d .card-gain .gain-pct {
+  font-size: 0.62rem;
+  color: var(--text-muted);
+}
+
+.card-d .sparkline-row {
+  height: 24px;
+  padding: 0 0.65rem;
+  overflow: hidden;
+}
+
+.card-d .sparkline-row svg {
+  width: 100%;
+  height: 100%;
+}
+
+.card-d .value-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.3rem 0.65rem 0.45rem;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  border-top: 1px solid var(--border);
+}
+
+.card-d .value-row .retail-val {
+  font-weight: 600;
+  color: var(--text);
+}
+
+.card-d .metal-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--metal-color);
+  flex-shrink: 0;
+}
+
+/* ============================================================================
+   UTILITIES
+   ============================================================================ */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 999px; }
+</style>
+</head>
+<body>
+
+<!-- =========================================================================
+   TOOLBAR
+   ========================================================================= -->
+<nav class="toolbar">
+  <div class="toolbar-title">STAK-118 <span>Card Mockups</span></div>
+  <button class="nav-btn active" data-section="draft-a">A: Sparkline</button>
+  <button class="nav-btn" data-section="draft-b">B: Overlay</button>
+  <button class="nav-btn" data-section="draft-c">C: Split</button>
+  <button class="nav-btn" data-section="draft-d">D: Compact</button>
+  <div class="theme-toggle">
+    <button class="theme-btn" data-theme="">Light</button>
+    <button class="theme-btn active" data-theme="dark">Dark</button>
+    <button class="theme-btn" data-theme="sepia">Sepia</button>
+  </div>
+</nav>
+
+<!-- =========================================================================
+   DRAFT A — Sparkline Header + Stacked Images
+   ========================================================================= -->
+<section class="section visible" id="draft-a">
+  <div class="section-header">
+    <h2>Draft A: Sparkline Header</h2>
+    <p>Sparkline fills top 40% as gradient background. Obverse/reverse side-by-side below. Metal-colored left border accent. Most balanced design — good data density with visual appeal.</p>
+  </div>
+  <div class="card-grid" id="grid-a"></div>
+</section>
+
+<!-- =========================================================================
+   DRAFT B — Full-Bleed Sparkline + Overlay
+   ========================================================================= -->
+<section class="section" id="draft-b">
+  <div class="section-header">
+    <h2>Draft B: Full-Bleed Overlay</h2>
+    <p>Sparkline covers entire card at 8% opacity. Larger centered images. Gain/loss as the hero number. Most visually dramatic — the "Apple Stocks" aesthetic.</p>
+  </div>
+  <div class="card-grid" id="grid-b"></div>
+</section>
+
+<!-- =========================================================================
+   DRAFT C — Split Card (Image Left, Data Right)
+   ========================================================================= -->
+<section class="section" id="draft-c">
+  <div class="section-header">
+    <h2>Draft C: Split Card</h2>
+    <p>Left 35% for images, right 65% for data. Vertical sparkline strip accent. Most information-dense — closest to the current card view's data coverage.</p>
+  </div>
+  <div class="card-grid" id="grid-c"></div>
+</section>
+
+<!-- =========================================================================
+   DRAFT D — Compact Row Card
+   ========================================================================= -->
+<section class="section" id="draft-d">
+  <div class="section-header">
+    <h2>Draft D: Compact Row</h2>
+    <p>Single image, inline chips, 24px sparkline strip, single-line value summary. Most space-efficient — 8-10 cards visible on screen. Think "watchlist row" in a trading app.</p>
+  </div>
+  <div class="card-grid" id="grid-d"></div>
+</section>
+
+<script>
+/* ==========================================================================
+   DATA
+   ========================================================================== */
+const ITEMS = [
+  {
+    name: '1 Dollar "American Silver Eagle"',
+    metal: 'silver', type: 'coin', year: 2002, grade: 'MS65',
+    qty: 1, weight: '1 oz', purchase: 55.95, melt: 33.50, retail: 77.44,
+    gain: 21.49, gainPct: 38.4, hasImage: true
+  },
+  {
+    name: 'Canadian Gold Maple Leaf',
+    metal: 'gold', type: 'coin', year: 2020, grade: 'BU',
+    qty: 1, weight: '1 oz', purchase: 1850, melt: 2050, retail: 2150,
+    gain: 300, gainPct: 16.2, hasImage: true
+  },
+  {
+    name: '10 oz Silver Bar — Generic',
+    metal: 'silver', type: 'bar', year: null, grade: null,
+    qty: 1, weight: '10 oz', purchase: 280, melt: 335, retail: 350,
+    gain: 70, gainPct: 25, hasImage: false
+  },
+  {
+    name: 'American Gold Eagle 1/4 oz',
+    metal: 'gold', type: 'coin', year: 2019, grade: null,
+    qty: 2, weight: '0.25 oz', purchase: 480, melt: 512.50, retail: 550,
+    gain: 70, gainPct: 14.6, hasImage: true
+  },
+  {
+    name: 'Silver Britannia',
+    metal: 'silver', type: 'coin', year: 2023, grade: 'MS70',
+    qty: 3, weight: '1 oz', purchase: 35, melt: 33.50, retail: 45,
+    gain: 10, gainPct: 28.6, hasImage: true
+  },
+  {
+    name: 'Palladium Maple Leaf',
+    metal: 'palladium', type: 'coin', year: 2022, grade: 'BU',
+    qty: 1, weight: '1 oz', purchase: 2200, melt: 950, retail: 1100,
+    gain: -1100, gainPct: -50, hasImage: true
+  }
+];
+
+/* ==========================================================================
+   SPARKLINE SVG GENERATOR
+   ========================================================================== */
+function generateSparkData(base, volatility, points) {
+  const data = [base];
+  for (let i = 1; i < points; i++) {
+    const change = (Math.random() - 0.45) * volatility;
+    data.push(Math.max(base * 0.7, data[i - 1] + change));
+  }
+  return data;
+}
+
+function dataToPolyline(data, width, height, padY) {
+  padY = padY || 4;
+  const min = Math.min(...data);
+  const max = Math.max(...data);
+  const range = max - min || 1;
+  return data.map((v, i) => {
+    const x = (i / (data.length - 1)) * width;
+    const y = padY + ((max - v) / range) * (height - padY * 2);
+    return x.toFixed(1) + ',' + y.toFixed(1);
+  }).join(' ');
+}
+
+function sparklineSVG(item, w, h, opts) {
+  opts = opts || {};
+  const opacity = opts.opacity || 1;
+  const pts = opts.points || 30;
+  const purchaseData = generateSparkData(item.purchase, item.purchase * 0.02, pts);
+  const meltData = generateSparkData(item.melt, item.melt * 0.03, pts);
+  const retailData = generateSparkData(item.retail, item.retail * 0.025, pts);
+
+  const purchaseLine = dataToPolyline(purchaseData, w, h);
+  const meltLine = dataToPolyline(meltData, w, h);
+  const retailLine = dataToPolyline(retailData, w, h);
+
+  // Gradient fill for melt line
+  const meltFillPoints = meltLine + ' ' + w + ',' + h + ' 0,' + h;
+
+  const colors = {
+    purchase: 'var(--danger)',
+    melt: 'var(--success)',
+    retail: 'var(--primary)'
+  };
+
+  return '<svg viewBox="0 0 ' + w + ' ' + h + '" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" style="opacity:' + opacity + '">' +
+    '<defs><linearGradient id="meltFill-' + item.name.replace(/[^a-z]/gi,'') + '" x1="0" y1="0" x2="0" y2="1">' +
+    '<stop offset="0%" stop-color="' + colors.melt + '" stop-opacity="0.15"/>' +
+    '<stop offset="100%" stop-color="' + colors.melt + '" stop-opacity="0"/>' +
+    '</linearGradient></defs>' +
+    '<polygon points="' + meltFillPoints + '" fill="url(#meltFill-' + item.name.replace(/[^a-z]/gi,'') + ')"/>' +
+    '<polyline points="' + purchaseLine + '" fill="none" stroke="' + colors.purchase + '" stroke-width="1" stroke-dasharray="3,2" opacity="0.6"/>' +
+    '<polyline points="' + meltLine + '" fill="none" stroke="' + colors.melt + '" stroke-width="1.5" stroke-linecap="round"/>' +
+    '<polyline points="' + retailLine + '" fill="none" stroke="' + colors.retail + '" stroke-width="1.5" stroke-linecap="round"/>' +
+    '</svg>';
+}
+
+/* ==========================================================================
+   HELPERS
+   ========================================================================== */
+function fmt(n) {
+  return '$' + Math.abs(n).toLocaleString('en-US', { minimumFractionDigits: n < 100 ? 2 : 0, maximumFractionDigits: 2 });
+}
+
+function gainClass(item) {
+  return item.gain >= 0 ? 'gain' : 'loss';
+}
+
+function gainSign(item) {
+  return item.gain >= 0 ? '+' : '-';
+}
+
+function gainArrow(item) {
+  return item.gain >= 0 ? '&#9650;' : '&#9660;';
+}
+
+function metalLabel(m) {
+  return m.charAt(0).toUpperCase() + m.slice(1);
+}
+
+function coinPlaceholder(item) {
+  if (item.hasImage) {
+    // Use a colored circle with metal initial as placeholder for real images
+    var bgMap = { silver: '#6b7280', gold: '#b45309', platinum: '#6b7280', palladium: '#7c3aed' };
+    var bg = bgMap[item.metal] || '#6b7280';
+    return '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:' + bg + ';color:#fff;font-weight:700;font-size:inherit;letter-spacing:0.02em;">' + metalLabel(item.metal).charAt(0) + '</div>';
+  }
+  return '<span class="placeholder-icon">&#9671;</span>';
+}
+
+function chipsHTML(item, small) {
+  var s = small ? ' style="font-size:0.58rem;padding:0.05rem 0.35rem"' : '';
+  var h = '<span class="chip chip-type ' + item.type + '"' + s + '>' + item.type + '</span>';
+  if (item.year) h += '<span class="chip chip-year"' + s + '>' + item.year + '</span>';
+  if (item.grade) h += '<span class="chip chip-grade"' + s + '>' + item.grade + '</span>';
+  if (item.qty > 1) h += '<span class="chip chip-qty"' + s + '>x' + item.qty + '</span>';
+  h += '<span class="chip chip-weight"' + s + '>' + item.weight + '</span>';
+  return h;
+}
+
+/* ==========================================================================
+   CARD RENDERERS
+   ========================================================================== */
+
+// Draft A
+function renderCardA(item) {
+  var shape = item.type === 'bar' ? ' bar-shape' : '';
+  return '<article class="card-a metal-' + item.metal + '">' +
+    '<div class="sparkline-header">' + sparklineSVG(item, 400, 60) + '<div class="sparkline-fade"></div></div>' +
+    '<div class="card-body">' +
+      '<div class="images-row">' +
+        '<div class="coin-img' + shape + '" style="font-size:1.5rem">' + coinPlaceholder(item) + '</div>' +
+        (item.hasImage ? '<div class="coin-img' + shape + '" style="font-size:1.5rem">' + coinPlaceholder(item) + '</div>' : '') +
+      '</div>' +
+      '<div class="item-name">' + item.name + '</div>' +
+      '<div class="chips-row">' + chipsHTML(item) + '</div>' +
+      '<div class="value-row">' +
+        '<span class="value-journey">' + fmt(item.purchase) + '<span class="arrow">&rarr;</span>' + fmt(item.retail) + '</span>' +
+        '<span class="value-gain ' + gainClass(item) + '">' + gainArrow(item) + ' ' + gainSign(item) + fmt(item.gain) + ' (' + gainSign(item) + Math.abs(item.gainPct) + '%)</span>' +
+      '</div>' +
+    '</div>' +
+  '</article>';
+}
+
+// Draft B
+function renderCardB(item) {
+  var shape = item.type === 'bar' ? ' bar-shape' : '';
+  return '<article class="card-b metal-' + item.metal + '">' +
+    '<div class="sparkline-bg">' + sparklineSVG(item, 400, 180) + '</div>' +
+    '<div class="card-content">' +
+      '<div class="metal-indicator"></div>' +
+      '<div class="images-row">' +
+        '<div class="coin-img' + shape + '" style="font-size:1.8rem">' + coinPlaceholder(item) + '</div>' +
+        (item.hasImage ? '<div class="coin-img' + shape + '" style="font-size:1.8rem">' + coinPlaceholder(item) + '</div>' : '') +
+      '</div>' +
+      '<div class="item-name">' + item.name + '</div>' +
+      '<div class="chips-row">' + chipsHTML(item) + '</div>' +
+      '<div class="value-hero ' + gainClass(item) + '">' + gainSign(item) + fmt(item.gain) + '</div>' +
+      '<div class="value-detail">' + fmt(item.purchase) + ' cost &rarr; ' + fmt(item.retail) + ' retail &middot; ' + gainSign(item) + Math.abs(item.gainPct) + '%</div>' +
+    '</div>' +
+  '</article>';
+}
+
+// Draft C
+function renderCardC(item) {
+  var shape = item.type === 'bar' ? ' bar-shape' : '';
+  return '<article class="card-c metal-' + item.metal + '">' +
+    '<div class="image-col">' +
+      '<div class="coin-img' + shape + '" style="font-size:1.3rem">' + coinPlaceholder(item) + '</div>' +
+      (item.hasImage ? '<div class="coin-img' + shape + '" style="font-size:1.3rem">' + coinPlaceholder(item) + '</div>' : '') +
+      '<div class="sparkline-strip">' +
+        '<svg viewBox="0 0 4 120" preserveAspectRatio="none"><rect width="4" height="120" rx="2" fill="var(--metal-color)" opacity="0.3"/></svg>' +
+      '</div>' +
+    '</div>' +
+    '<div class="data-col">' +
+      '<div class="metal-bar"></div>' +
+      '<div class="item-name">' + item.name + '</div>' +
+      '<div class="chips-row">' + chipsHTML(item, true) + '</div>' +
+      '<div class="value-row">' +
+        '<span class="value-journey">' + fmt(item.purchase) + '<span class="arrow">&rarr;</span>' + fmt(item.retail) + '</span>' +
+        '<span class="value-gain ' + gainClass(item) + '">' + gainArrow(item) + ' ' + gainSign(item) + fmt(item.gain) + '</span>' +
+      '</div>' +
+    '</div>' +
+  '</article>';
+}
+
+// Draft D
+function renderCardD(item) {
+  var shape = item.type === 'bar' ? ' bar-shape' : '';
+  return '<article class="card-d metal-' + item.metal + '">' +
+    '<div class="card-top">' +
+      '<div class="coin-img' + shape + '" style="font-size:1rem">' + coinPlaceholder(item) + '</div>' +
+      '<div class="card-info">' +
+        '<div class="item-name">' + item.name + '</div>' +
+        '<div class="chips-row">' + chipsHTML(item, true) + '</div>' +
+      '</div>' +
+      '<div class="card-gain">' +
+        '<div class="gain-amount ' + gainClass(item) + '">' + gainSign(item) + fmt(item.gain) + '</div>' +
+        '<div class="gain-pct ' + gainClass(item) + '">' + gainSign(item) + Math.abs(item.gainPct) + '%</div>' +
+      '</div>' +
+    '</div>' +
+    '<div class="sparkline-row">' + sparklineSVG(item, 400, 24, { opacity: 0.7, points: 40 }) + '</div>' +
+    '<div class="value-row">' +
+      '<div class="metal-dot"></div>' +
+      '<span>' + metalLabel(item.metal) + ' &middot; ' + fmt(item.purchase) + ' cost</span>' +
+      '<span class="retail-val">' + fmt(item.retail) + '</span>' +
+    '</div>' +
+  '</article>';
+}
+
+/* ==========================================================================
+   RENDER ALL GRIDS
+   ========================================================================== */
+function renderAll() {
+  document.getElementById('grid-a').innerHTML = ITEMS.map(renderCardA).join('');
+  document.getElementById('grid-b').innerHTML = ITEMS.map(renderCardB).join('');
+  document.getElementById('grid-c').innerHTML = ITEMS.map(renderCardC).join('');
+  document.getElementById('grid-d').innerHTML = ITEMS.map(renderCardD).join('');
+}
+
+renderAll();
+
+/* ==========================================================================
+   NAV + THEME LOGIC
+   ========================================================================== */
+document.querySelectorAll('.nav-btn[data-section]').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('.nav-btn[data-section]').forEach(function(b) { b.classList.remove('active'); });
+    btn.classList.add('active');
+    document.querySelectorAll('.section').forEach(function(s) { s.classList.remove('visible'); });
+    document.getElementById(btn.dataset.section).classList.add('visible');
+  });
+});
+
+document.querySelectorAll('.theme-btn').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('.theme-btn').forEach(function(b) { b.classList.remove('active'); });
+    btn.classList.add('active');
+    var theme = btn.dataset.theme;
+    if (theme) {
+      document.documentElement.setAttribute('data-theme', theme);
+    } else {
+      document.documentElement.removeAttribute('data-theme');
+    }
+    // Re-render to pick up new sparkline gradient IDs with theme colors
+    renderAll();
+  });
+});
+</script>
+</body>
+</html>

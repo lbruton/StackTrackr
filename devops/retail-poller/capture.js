@@ -2,22 +2,24 @@
 /**
  * StakTrakr Retail Price Capture
  * ================================
- * Visits dealer product pages via Browserbase (cloud) or local Chromium,
- * takes a screenshot of each, and writes a manifest for downstream
- * extraction (Gemini vision, etc.).
+ * Visits dealer product pages via Browserbase (cloud), self-hosted Browserless,
+ * or local Chromium, takes a screenshot of each, and writes a manifest for
+ * downstream extraction (Gemini vision, etc.).
  *
- * Parallel mode (Browserbase): one session per provider, all running
- * concurrently. 44 pages (4 providers × 11 coins) completes in ~90s
- * instead of ~6 minutes sequential.
+ * Parallel mode (Browserbase): one session per coin, all running
+ * concurrently. ~67 pages (7 providers × 11 coins) completes in ~2 min
+ * instead of ~8 minutes sequential.
  *
  * Usage:
- *   node capture.js            # Browserbase cloud (parallel)
- *   BROWSER_MODE=local node capture.js  # Local Chromium (sequential)
+ *   node capture.js                          # Browserbase cloud (parallel)
+ *   BROWSER_MODE=local node capture.js       # Local Chromium (sequential)
+ *   BROWSER_MODE=browserless node capture.js # Self-hosted Browserless (sequential)
  */
 
 import { chromium } from "playwright-core";
 import { readFileSync, mkdirSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
+import { tmpdir } from "node:os";
 import { config } from "dotenv";
 
 config(); // load .env
@@ -29,10 +31,14 @@ config(); // load .env
 const BROWSER_MODE = process.env.BROWSER_MODE || "browserbase";
 const BROWSERBASE_API_KEY = process.env.BROWSERBASE_API_KEY;
 const BROWSERBASE_PROJECT_ID = process.env.BROWSERBASE_PROJECT_ID;
+const BROWSERLESS_WS = process.env.BROWSERLESS_URL ||
+  "ws://localhost:3000/chromium/playwright?token=local_dev_token";
 const DATA_DIR = resolve(process.env.DATA_DIR || "../../data");
+const ARTIFACT_DIR = process.env.ARTIFACT_DIR ||
+  join(tmpdir(), "retail-poller-screenshots", new Date().toISOString().slice(0, 10));
 
-const COINS = (process.env.COINS || "ase,age,generic-silver-round,buffalo").split(",").map(s => s.trim());
-const PROVIDERS = (process.env.PROVIDERS || "sdbullion,apmex").split(",").map(s => s.trim());
+const COINS = (process.env.COINS || "ase,age,ape,buffalo,maple-silver,maple-gold,britannia-silver,krugerrand-silver,krugerrand-gold,generic-silver-round,generic-silver-bar-10oz").split(",").map(s => s.trim());
+const PROVIDERS = (process.env.PROVIDERS || "apmex,sdbullion,jmbullion,monumentmetals,herobullion,bullionexchanges,summitmetals").split(",").map(s => s.trim());
 
 // Per-page delays (ms) — polite pacing within each session
 const PAGE_LOAD_WAIT = 4000;    // wait after domcontentloaded for JS rendering
@@ -125,6 +131,25 @@ async function connectBrowserbaseSession(sessionId) {
   return { browser, page };
 }
 
+async function connectBrowserlessSession() {
+  const { chromium: coreChromium } = await import("playwright-core");
+  // Browserless v2 uses Playwright wire protocol, not CDP
+  // Use .connect() instead of .connectOverCDP()
+  const browser = await coreChromium.connect(BROWSERLESS_WS);
+  try {
+    // Create a new context with explicit viewport and userAgent
+    // Browserless allows full context control via Playwright wire protocol
+    const context = await browser.newContext({
+      viewport: { width: 1280, height: 900 },
+      userAgent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+    });
+    return { browser, context };
+  } catch (err) {
+    await browser.close();
+    throw err;
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Capture one coin's targets using a dedicated browser session
 // ---------------------------------------------------------------------------
@@ -141,6 +166,11 @@ async function captureCoin(coinSlug, targets, outDir) {
       userAgent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
     });
     page = await ctx.newPage();
+  } else if (BROWSER_MODE === "browserless") {
+    log(`[${coinSlug}] Connecting to Browserless at ${BROWSERLESS_WS}...`);
+    const { browser: blBrowser, context: blContext } = await connectBrowserlessSession();
+    browser = blBrowser;
+    page = await blContext.newPage();
   } else {
     log(`[${coinSlug}] Creating Browserbase session...`);
     const sessionId = await createBrowserbaseSession();
@@ -206,7 +236,8 @@ async function captureCoin(coinSlug, targets, outDir) {
 // ---------------------------------------------------------------------------
 
 async function captureAll() {
-  if (BROWSER_MODE !== "local" && (!BROWSERBASE_API_KEY || !BROWSERBASE_PROJECT_ID)) {
+  if (BROWSER_MODE !== "local" && BROWSER_MODE !== "browserless" &&
+      (!BROWSERBASE_API_KEY || !BROWSERBASE_PROJECT_ID)) {
     console.error("BROWSERBASE_API_KEY and BROWSERBASE_PROJECT_ID required for cloud mode.");
     process.exit(1);
   }
@@ -220,16 +251,14 @@ async function captureAll() {
   }
 
   const totalTargets = [...byCoin.values()].reduce((n, arr) => n + arr.length, 0);
-  log(`Capturing ${totalTargets} pages — ${byCoin.size} parallel sessions (one per coin, 4 providers each)`);
+  log(`Capturing ${totalTargets} pages — ${byCoin.size} parallel sessions (one per coin)`);
 
-  const dateStr = today();
-  const outDir = join(DATA_DIR, "retail", "_artifacts", dateStr);
-  mkdirSync(outDir, { recursive: true });
+  mkdirSync(ARTIFACT_DIR, { recursive: true });
 
   // Launch one session per coin, all in parallel — each session only ~35s,
   // well within Browserbase's 5-min session limit. 11 sessions < 25 account limit.
   const coinJobs = [...byCoin.entries()].map(([coinSlug, targets]) =>
-    captureCoin(coinSlug, targets, outDir)
+    captureCoin(coinSlug, targets, ARTIFACT_DIR)
   );
 
   const allResults = (await Promise.all(coinJobs)).flat();
@@ -237,13 +266,13 @@ async function captureAll() {
   // Write manifest
   const manifest = {
     captured_at: new Date().toISOString(),
-    date: dateStr,
+    date: today(),
     coins: COINS,
     providers: PROVIDERS,
     results: allResults,
   };
 
-  const manifestPath = join(outDir, "manifest.json");
+  const manifestPath = join(ARTIFACT_DIR, "manifest.json");
   writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
   log(`Manifest written: ${manifestPath}`);
 

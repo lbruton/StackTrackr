@@ -264,6 +264,80 @@ const catalogConfig = new CatalogConfig();
 
 console.log('🔌 Catalog API system ready - configure API keys through settings');
 
+// ---------------------------------------------------------------------------
+// Numista Response Cache (STAK-222)
+// ---------------------------------------------------------------------------
+
+const NUMISTA_CACHE_TTL_DAYS = 30;
+
+/**
+ * Loads a cached Numista API response for a given type ID.
+ * Returns null if not cached or entry is older than NUMISTA_CACHE_TTL_DAYS.
+ * @param {string} typeId - Numista type ID string
+ * @returns {Object|null} Cached response data or null
+ */
+const loadNumistaCache = (typeId) => {
+  try {
+    const cache = loadDataSync(NUMISTA_RESPONSE_CACHE_KEY, {});
+    const entry = cache[typeId];
+    if (!entry) return null;
+    const ageMs = Date.now() - new Date(entry.fetchedAt).getTime();
+    if (ageMs > entry.ttlDays * 24 * 60 * 60 * 1000) return null;
+    return entry.data;
+  } catch (e) {
+    debugLog('[numista-cache] Load error: ' + e.message, 'warn');
+    return null;
+  }
+};
+
+/**
+ * Saves a Numista API response to the 30-day response cache.
+ * @param {string} typeId - Numista type ID string
+ * @param {Object} data - Raw API response to cache
+ */
+const saveNumistaCache = (typeId, data) => {
+  try {
+    const cache = loadDataSync(NUMISTA_RESPONSE_CACHE_KEY, {});
+    cache[typeId] = { data, fetchedAt: new Date().toISOString(), ttlDays: NUMISTA_CACHE_TTL_DAYS };
+    saveDataSync(NUMISTA_RESPONSE_CACHE_KEY, cache);
+  } catch (e) {
+    debugLog('[numista-cache] Save error: ' + e.message, 'warn');
+  }
+};
+
+/**
+ * Clears the entire Numista response cache.
+ * @returns {number} Count of entries cleared
+ */
+const clearNumistaCache = () => {
+  try {
+    const cache = loadDataSync(NUMISTA_RESPONSE_CACHE_KEY, {});
+    const count = Object.keys(cache).length;
+    saveDataSync(NUMISTA_RESPONSE_CACHE_KEY, {});
+    return count;
+  } catch (e) {
+    debugLog('[numista-cache] Clear error: ' + e.message, 'warn');
+    return 0;
+  }
+};
+
+/**
+ * Returns count of valid (non-expired) entries in the Numista cache.
+ * @returns {number}
+ */
+const getNumistaCacheCount = () => {
+  try {
+    const cache = loadDataSync(NUMISTA_RESPONSE_CACHE_KEY, {});
+    const now = Date.now();
+    return Object.values(cache).filter(entry => {
+      const ageMs = now - new Date(entry.fetchedAt).getTime();
+      return ageMs <= entry.ttlDays * 24 * 60 * 60 * 1000;
+    }).length;
+  } catch (e) {
+    return 0;
+  }
+};
+
 /**
  * Base interface for all catalog providers
  * Ensures consistent API regardless of provider
@@ -396,6 +470,13 @@ class NumistaProvider extends CatalogProvider {
   async lookupItem(catalogId) {
     if (!catalogId) throw new Error('Catalog ID is required');
 
+    // STAK-222: Check response cache before hitting the API
+    const cached = loadNumistaCache(catalogId);
+    if (cached) {
+      debugLog(`[numista-cache] Cache hit for type ${catalogId}`, 'info');
+      return this.normalizeItemData(cached);
+    }
+
     const url = `${this.baseUrl}/types/${catalogId}?lang=en`;
 
     try {
@@ -408,6 +489,9 @@ class NumistaProvider extends CatalogProvider {
         if (data.obverse) window.debugLog(`  obverse keys: ${Object.keys(data.obverse).join(',')}`);
         if (data.reverse) window.debugLog(`  reverse keys: ${Object.keys(data.reverse).join(',')}`);
       }
+
+      // STAK-222: Cache the raw response for 30 days
+      saveNumistaCache(catalogId, data);
 
       return this.normalizeItemData(data);
     } catch (error) {
@@ -1724,6 +1808,11 @@ if (typeof window !== 'undefined') {
   window.renderPcgsUsageBar = renderPcgsUsageBar;
   window.renderCatalogHistoryForSettings = renderCatalogHistoryForSettings;
   window.clearCatalogHistory = clearCatalogHistory;
+  // STAK-222: Numista response cache
+  window.loadNumistaCache = loadNumistaCache;
+  window.saveNumistaCache = saveNumistaCache;
+  window.clearNumistaCache = clearNumistaCache;
+  window.getNumistaCacheCount = getNumistaCacheCount;
 }
 
 // Initialize UI event handlers when DOM is ready

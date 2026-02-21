@@ -20,7 +20,7 @@
 const VAULT_MAGIC = new Uint8Array([0x53, 0x54, 0x56, 0x41, 0x55, 0x4C, 0x54]); // "STVAULT"
 const VAULT_VERSION = 0x01;
 const VAULT_HEADER_SIZE = 56;
-const VAULT_PBKDF2_ITERATIONS = 100000;
+const VAULT_PBKDF2_ITERATIONS = 600000;
 const VAULT_MIN_PASSWORD_LENGTH = 8;
 const VAULT_MAX_FILE_SIZE = 50 * 1024 * 1024; // 50 MB
 
@@ -41,15 +41,15 @@ function getCryptoBackend() {
     ) {
       return "native";
     }
-  } catch (_) {
-    /* ignore */
+  } catch (err) {
+    debugLog('[Vault] Crypto backend detection failed: ' + err.message, 'info');
   }
   try {
     if (typeof forge !== "undefined" && forge.cipher && forge.pkcs5) {
       return "forge";
     }
-  } catch (_) {
-    /* ignore */
+  } catch (err) {
+    debugLog('[Vault] Crypto backend detection failed: ' + err.message, 'info');
   }
   return null;
 }
@@ -358,7 +358,7 @@ function simpleHash(str) {
  * Restore vault data into localStorage and refresh UI.
  * @param {object} payload - Decrypted vault payload
  */
-function restoreVaultData(payload) {
+async function restoreVaultData(payload) {
   var data = payload.data;
   if (!data || typeof data !== "object") {
     throw new Error("Vault file appears corrupted.");
@@ -381,7 +381,7 @@ function restoreVaultData(payload) {
   // Refresh the full UI
   try {
     if (typeof loadItemTags === "function") loadItemTags();
-    if (typeof loadInventory === "function") loadInventory();
+    if (typeof loadInventory === "function") await loadInventory();
     if (typeof renderTable === "function") renderTable();
     if (typeof renderActiveFilters === "function") renderActiveFilters();
     if (typeof loadSpotHistory === "function") loadSpotHistory();
@@ -479,7 +479,172 @@ async function vaultDecryptAndRestore(fileBytes, password) {
   var plainBytes = await vaultDecrypt(parsed.ciphertext, key, parsed.iv);
   var payload = JSON.parse(new TextDecoder().decode(plainBytes));
   if (!payload || !payload.data) throw new Error("Vault file appears corrupted.");
-  restoreVaultData(payload);
+  await restoreVaultData(payload);
+}
+
+// =============================================================================
+// IMAGE VAULT (STAK-181) — cloud sync for user-uploaded IndexedDB photos
+// =============================================================================
+
+/**
+ * Convert a Blob to a base64 string (strips the data-URI prefix).
+ * @param {Blob} blob
+ * @returns {Promise<string>}
+ */
+function _blobToBase64(blob) {
+  return new Promise(function (resolve, reject) {
+    var reader = new FileReader();
+    reader.onload = function () { resolve(reader.result.split(',')[1]); };
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+}
+
+/**
+ * Convert a base64 string back to a Blob.
+ * @param {string} b64
+ * @param {string} mimeType
+ * @returns {Blob}
+ */
+function _base64ToBlob(b64, mimeType) {
+  var byteChars = atob(b64);
+  var bytes = new Uint8Array(byteChars.length);
+  for (var i = 0; i < byteChars.length; i++) { bytes[i] = byteChars.charCodeAt(i); }
+  return new Blob([bytes], { type: mimeType || 'image/webp' });
+}
+
+/**
+ * Export user images from IndexedDB, convert Blobs to base64, and compute a
+ * stable hash so push can skip upload when images haven't changed.
+ * @returns {Promise<{payload: object, hash: string, imageCount: number}|null>}
+ *   null when there are no user-uploaded images
+ */
+async function collectAndHashImageVault() {
+  if (typeof imageCache === 'undefined' || typeof imageCache.exportAllUserImages !== 'function') return null;
+  var records = await imageCache.exportAllUserImages();
+  if (!records || records.length === 0) return null;
+
+  var serialized = [];
+  var failedCount = 0;
+  for (var i = 0; i < records.length; i++) {
+    var r = records[i];
+    var entry = { uuid: r.uuid, cachedAt: r.cachedAt, size: r.size };
+    try {
+      if (r.obverse instanceof Blob) {
+        entry.obverse = await _blobToBase64(r.obverse);
+        entry.obverseType = r.obverse.type;
+      }
+      if (r.reverse instanceof Blob) {
+        entry.reverse = await _blobToBase64(r.reverse);
+        entry.reverseType = r.reverse.type;
+      }
+    } catch (blobErr) {
+      failedCount++;
+      debugLog('[Vault] Image vault: blob conversion failed for uuid', r.uuid, blobErr);
+      continue;
+    }
+    serialized.push(entry);
+  }
+
+  if (failedCount > 0) {
+    debugLog('[Vault] Image vault: ' + failedCount + ' of ' + records.length + ' images failed to export', 'warn');
+  }
+  if (serialized.length === 0 && records.length > 0) {
+    throw new Error('Image vault export failed — could not read any of ' + records.length + ' images.');
+  }
+
+  if (serialized.length === 0) return null;
+
+  var payload = {
+    _meta: {
+      appVersion: typeof APP_VERSION !== 'undefined' ? APP_VERSION : 'unknown',
+      exportTimestamp: new Date().toISOString(),
+      imageCount: serialized.length,
+    },
+    records: serialized,
+  };
+
+  // Hash includes a content sample (first 32 chars of obverse base64) so that
+  // replacing an image with one of identical byte size still triggers an upload.
+  var hash = simpleHash(JSON.stringify(serialized.map(function (e) {
+    return e.uuid + ':' + e.size + ':' + (e.obverse ? e.obverse.slice(0, 32) : '');
+  })));
+  return { payload: payload, hash: hash, imageCount: serialized.length };
+}
+
+/**
+ * Encrypt a user-image vault payload into raw bytes for cloud upload.
+ * @param {string} password
+ * @param {object} payload - From collectAndHashImageVault().payload
+ * @returns {Promise<Uint8Array>}
+ */
+async function vaultEncryptImageVault(password, payload) {
+  if (!password) throw new Error('Image vault encryption requires a non-empty password.');
+  var plaintext = new TextEncoder().encode(JSON.stringify(payload));
+  var salt = vaultRandomBytes(32);
+  var iv = vaultRandomBytes(12);
+  var key = await vaultDeriveKey(password, salt, VAULT_PBKDF2_ITERATIONS);
+  var ciphertext = await vaultEncrypt(plaintext, key, iv);
+  return serializeVaultFile(salt, iv, VAULT_PBKDF2_ITERATIONS, ciphertext);
+}
+
+/**
+ * Restore user images from a decrypted image vault payload.
+ * @param {object} payload
+ * @returns {Promise<number>} Number of images imported
+ */
+async function restoreImageVaultData(payload) {
+  if (!payload || !Array.isArray(payload.records)) return 0;
+  if (typeof imageCache === 'undefined' || typeof imageCache.importUserImageRecord !== 'function') return 0;
+
+  var count = 0;
+  var failed = 0;
+  for (var i = 0; i < payload.records.length; i++) {
+    var r = payload.records[i];
+    if (!r.uuid) continue;
+    try {
+      var record = { uuid: r.uuid, cachedAt: r.cachedAt, size: r.size };
+      if (r.obverse) record.obverse = _base64ToBlob(r.obverse, r.obverseType);
+      if (r.reverse) record.reverse = _base64ToBlob(r.reverse, r.reverseType);
+      var ok = await imageCache.importUserImageRecord(record);
+      if (ok) { count++; } else {
+        failed++;
+        debugLog('[Vault] Image vault: importUserImageRecord returned false for uuid', r.uuid);
+      }
+    } catch (recErr) {
+      failed++;
+      debugLog('[Vault] Image vault: record import error for uuid', r.uuid, recErr);
+    }
+  }
+  if (failed > 0) {
+    var msg = 'Image vault restore: ' + failed + ' of ' + payload.records.length + ' images failed to import.';
+    debugLog('[Vault] ' + msg, 'error');
+    throw new Error(msg);
+  }
+  return count;
+}
+
+/**
+ * Decrypt image vault bytes and import all user photos into IndexedDB.
+ * @param {Uint8Array} fileBytes
+ * @param {string} password
+ * @returns {Promise<number>} Number of images restored
+ */
+async function vaultDecryptAndRestoreImages(fileBytes, password) {
+  try {
+    var parsed = parseVaultFile(new Uint8Array(fileBytes));
+    var key = await vaultDeriveKey(password, parsed.salt, parsed.iterations);
+    var plainBytes = await vaultDecrypt(parsed.ciphertext, key, parsed.iv);
+    var payload = JSON.parse(new TextDecoder().decode(plainBytes));
+    return restoreImageVaultData(payload);
+  } catch (err) {
+    // Re-throw with a clear label so callers can surface meaningful messages
+    var msg = String(err.message || err);
+    var isPasswordErr = msg.indexOf('Incorrect password') !== -1 || msg.indexOf('corrupted') !== -1;
+    throw new Error(isPasswordErr
+      ? 'Image vault decryption failed — check your sync password.'
+      : 'Image vault restore failed: ' + msg);
+  }
 }
 
 // =============================================================================
@@ -890,3 +1055,6 @@ window.vaultEncryptToBytes = vaultEncryptToBytes;
 window.vaultEncryptToBytesScoped = vaultEncryptToBytesScoped;
 window.vaultDecryptAndRestore = vaultDecryptAndRestore;
 window.collectVaultData = collectVaultData;
+window.collectAndHashImageVault = collectAndHashImageVault;
+window.vaultEncryptImageVault = vaultEncryptImageVault;
+window.vaultDecryptAndRestoreImages = vaultDecryptAndRestoreImages;

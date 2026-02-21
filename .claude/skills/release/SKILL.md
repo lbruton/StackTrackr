@@ -194,30 +194,28 @@ Commit message format: `vNEW_VERSION — TITLE`
 
 If there are other uncommitted changes beyond the 5 version files, ask the user whether to include them in this commit or leave them staged separately.
 
-## Phase 4: Push & PR
+## Phase 4: Push & Draft PR
 
 1. Push dev to remote:
    ```bash
    git push origin dev
    ```
 
-2. Create PR from dev → main:
+2. Check whether a draft PR already exists from dev → main:
    ```bash
-   gh pr create --base main --head dev --label "codacy-review" --title "vNEW_VERSION — TITLE" --body "$(cat <<'EOF'
-   ## Summary
+   gh pr list --base main --head dev --state open --json number,title,isDraft,url
+   ```
 
-   - [bullet points from changelog, condensed]
+   **If no PR exists:** Create as a draft. The PR will grow to include all future commits — the title and body will be updated to be comprehensive before merge (Phase 4.5):
+   ```bash
+   gh pr create --base main --head dev --draft --label "codacy-review" \
+     --title "WIP: vNEW_VERSION — [brief description of initial work]" \
+     --body "$(cat <<'EOF'
+   > **Draft — do not merge.** PR description will be updated to reflect all changes before merge.
 
-   ## Files Updated
+   ## Changes so far
 
-   - `js/constants.js` — APP_VERSION → NEW_VERSION
-   - `sw.js` — CACHE_NAME → NEW_VERSION
-   - `CHANGELOG.md` — new section
-   - `docs/announcements.md` — new What's New entry
-   - `js/about.js` — embedded What's New fallback
-   - `version.json` — remote version check endpoint
-   - `data/spot-history-*.json` — accumulated seed price data from Docker poller
-   [- any other files changed on dev since last merge]
+   - [brief bullet points for this commit/batch]
 
    ## Linear Issues
 
@@ -228,40 +226,89 @@ If there are other uncommitted changes beyond the 5 version files, ask the user 
    )"
    ```
 
-3. (Optional — requires Linear MCP) If Linear issues are referenced and Linear MCP is available, update their status to **Done**.
+   **If a draft PR already exists:** Update it to reflect the new commits:
+   ```bash
+   gh pr edit [number] --body "$(cat <<'EOF'
+   [updated body — append new changes to existing list]
+   EOF
+   )"
+   ```
 
-## Phase 5: GitHub Release & Tag
+3. (Optional — requires Linear MCP) If Linear issues are referenced, update status to **In Progress** (not Done — that happens at merge time).
 
-**CRITICAL: This step creates the actual GitHub Release that users see.** Without it, `version.json`'s `releaseUrl` (pointing to `/releases/latest`) resolves to a stale version.
+## Phase 4.5: Mark PR Ready (Pre-Merge — Run separately when ready to ship)
 
-### Option A: PR already merged (preferred)
+This phase is triggered when the dev branch is QA-complete and ready to merge to main. It makes the draft PR comprehensive and opens it for final review.
 
-If the user has already merged the PR (or merges it now), create the release targeting main:
+**Do not run this as part of a normal version bump.** Run it only when the user explicitly says they are ready to release.
+
+### Step 1: Audit the branch
 
 ```bash
-# Tag the merge commit on main
-git fetch origin main
-gh release create vNEW_VERSION \
-  --target main \
-  --title "vNEW_VERSION — TITLE" \
-  --latest \
-  --notes "$(cat <<'EOF'
-## TITLE
+git log --oneline main..dev
+```
 
-- [changelog bullets from Phase 1, verbatim]
+Collect every commit since the last merge. Group by feature/fix/chore. Identify all STAK-### references.
+
+### Step 2: Fetch Linear issue titles
+
+For each STAK-### found, call `get_issue` (Linear MCP) to get the current title and status. This ensures the PR description is accurate, not just copy-pasted from commit messages.
+
+### Step 3: Write a comprehensive PR title and body
+
+The PR title should reflect the **full contents of the branch**, not just the first day's work:
+
+```
+vNEW_VERSION — [primary feature/fix] + [secondary] + [tertiary if notable]
+```
+
+The body should be a complete, accurate summary of everything in the branch:
+
+```bash
+gh pr edit [number] --title "vNEW_VERSION — [comprehensive title]" --body "$(cat <<'EOF'
+## Summary
+
+- [bullet per feature/fix, grouped logically]
+- [not just commit messages — user-readable descriptions]
+
+## Files Changed
+
+- [key files, not a complete list — focus on non-obvious ones]
+
+## Linear Issues
+
+- STAK-XX: [title] — [url]
+- STAK-XX: [title] — [url]
+
+## QA Notes
+
+- [anything the reviewer should test or verify]
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
 EOF
 )"
 ```
 
-### Option B: PR not yet merged
-
-If the PR hasn't been merged yet, create the release targeting the version commit on dev. After the PR merges, the tag will already exist and GitHub will associate it correctly:
+### Step 4: Mark ready and resolve
 
 ```bash
-# Get the commit hash of the version bump commit
-VERSION_SHA=$(git rev-parse HEAD)
+gh pr ready [number]
+```
+
+Then run `/pr-resolve` to clear all open Codacy and Copilot review threads before the PR goes to final review.
+
+### Step 5: Update Linear issues
+
+Mark all referenced STAK-### issues as **Done** (they ship with this merge).
+
+## Phase 5: GitHub Release & Tag (Post-Merge Only)
+
+**CRITICAL: Only run this after the PR has been merged to main.** The release tag must target main so `version.json`'s `releaseUrl` resolves correctly.
+
+```bash
+git fetch origin main
 gh release create vNEW_VERSION \
-  --target "$VERSION_SHA" \
+  --target main \
   --title "vNEW_VERSION — TITLE" \
   --latest \
   --notes "$(cat <<'EOF'
@@ -280,7 +327,6 @@ EOF
 
 ### Verify
 
-After creating the release:
 ```bash
 gh release list --limit 3
 ```
@@ -293,11 +339,9 @@ Release complete!
 
 Version:  vNEW_VERSION
 Commit:   [hash] [message]
-PR:       #XX — [url]
+PR:       #XX merged — [url]
 Release:  https://github.com/lbruton/StakTrakr/releases/tag/vNEW_VERSION
-Linear:   STAK-XX → Done (if Linear MCP available)
-
-Next: merge the PR on GitHub when ready (release tag already created).
+Linear:   STAK-XX → Done
 ```
 
 ## Dry Run Mode

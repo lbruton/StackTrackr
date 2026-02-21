@@ -5,8 +5,17 @@
 export async function onRequestPost(context) {
   const { request, env } = context;
 
-  const body = await request.json();
-  const { provider, code, redirect_uri, code_verifier } = body;
+  let body;
+  try {
+    body = await request.json();
+  } catch (e) {
+    return new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+
+  const { provider, code, redirect_uri, code_verifier, refresh_token, grant_type } = body;
 
   const configs = {
     pcloud: {
@@ -29,15 +38,32 @@ export async function onRequestPost(context) {
     });
   }
 
-  const params = new URLSearchParams({
-    grant_type: 'authorization_code',
-    code,
-    client_id: config.clientId,
-    client_secret: config.clientSecret,
-    redirect_uri,
-  });
+  const params = new URLSearchParams();
+  params.set('client_id', config.clientId);
+  params.set('client_secret', config.clientSecret);
 
-  if (code_verifier) params.set('code_verifier', code_verifier);
+  if (grant_type === 'refresh_token') {
+    if (!refresh_token) {
+      return new Response(JSON.stringify({ error: 'Missing refresh_token' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+    params.set('grant_type', 'refresh_token');
+    params.set('refresh_token', refresh_token);
+  } else {
+    // Default to authorization_code
+    if (!code) {
+      return new Response(JSON.stringify({ error: 'Missing code' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+    params.set('grant_type', 'authorization_code');
+    params.set('code', code);
+    params.set('redirect_uri', redirect_uri);
+    if (code_verifier) params.set('code_verifier', code_verifier);
+  }
 
   const resp = await fetch(config.tokenUrl, {
     method: 'POST',

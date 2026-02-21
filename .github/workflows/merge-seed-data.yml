@@ -1,11 +1,14 @@
-# Nightly merge of seed/hourly data from `data` branch into `dev`
+# Frequent merge of data branch into dev — keeps api data current in dev/main.
+# Runs every 5 minutes (GitHub minimum). Local Docker is the primary data source;
+# this just ensures data branch commits land in dev quickly.
+# Nightly run also syncs dev scripts back to data branch.
 name: Merge Seed Data
 
 on:
   schedule:
-    # 5:00 AM UTC = midnight EST — merge after the day's data is complete
-    - cron: '0 5 * * *'
-  workflow_dispatch: # Manual trigger
+    - cron: '*/5 * * * *'  # Every 5 min — data branch → dev
+    - cron: '0 5 * * *'    # Nightly 5am UTC — also syncs dev scripts → data
+  workflow_dispatch:
 
 jobs:
   merge:
@@ -34,7 +37,9 @@ jobs:
             exit 1
           fi
 
+      # Only sync scripts back on the nightly run — not every 5 minutes
       - name: Sync dev scripts back to data branch
+        if: github.event.schedule == '0 5 * * *' || github.event_name == 'workflow_dispatch'
         run: |
           git switch data
           git merge origin/dev --no-edit -m "sync: dev scripts → data" || true
