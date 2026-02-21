@@ -283,7 +283,7 @@ const openRetailViewModal = (slug) => {
     historyTableBody.appendChild(tr);
   });
 
-  // Daily price history chart (avg_median over time)
+  // Daily price history chart — per-vendor lines matching the 24h chart colors
   const chartWrap = chartCanvas instanceof HTMLCanvasElement
     ? chartCanvas.closest(".retail-view-chart-wrap")
     : null;
@@ -295,23 +295,39 @@ const openRetailViewModal = (slug) => {
   if (chartWrap) chartWrap.style.display = hasEnoughHistory ? "" : "none";
   if (hasEnoughHistory && chartCanvas instanceof HTMLCanvasElement && typeof Chart !== "undefined") {
     const sorted = [...history].reverse();
-    _retailViewModalChart = new Chart(chartCanvas, {
-      type: "line",
-      data: {
-        labels: sorted.map((e) => e.date),
-        datasets: [{
-          label: "Avg Median (USD)",
+    const knownVendors = typeof RETAIL_VENDOR_NAMES !== "undefined" ? Object.keys(RETAIL_VENDOR_NAMES) : [];
+    const activeHistVendors = knownVendors.filter((v) =>
+      sorted.some((e) => e.vendors && e.vendors[v] && e.vendors[v].avg != null)
+    );
+    const useVendorHistLines = activeHistVendors.length > 0;
+
+    const histDatasets = useVendorHistLines
+      ? activeHistVendors.map((vendorId) => ({
+          label: (typeof RETAIL_VENDOR_NAMES !== "undefined" && RETAIL_VENDOR_NAMES[vendorId]) || vendorId,
+          data: sorted.map((e) => (e.vendors && e.vendors[vendorId] ? e.vendors[vendorId].avg : null)),
+          borderColor: _VENDOR_COLORS[vendorId] || "#94a3b8",
+          backgroundColor: "transparent",
+          borderWidth: 1.5,
+          pointRadius: 2,
+          tension: 0.3,
+          spanGaps: true,
+        }))
+      : [{
+          label: "Avg Median",
           data: sorted.map((e) => e.avg_median),
           borderColor: "var(--accent-primary, #4a9eff)",
           backgroundColor: "transparent",
           pointRadius: 2,
           tension: 0.3,
-        }],
-      },
+        }];
+
+    _retailViewModalChart = new Chart(chartCanvas, {
+      type: "line",
+      data: { labels: sorted.map((e) => e.date), datasets: histDatasets },
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        plugins: { legend: { display: false } },
+        plugins: { legend: { display: !useVendorHistLines } },
         scales: {
           y: {
             ticks: {
