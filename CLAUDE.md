@@ -24,7 +24,7 @@ These rules fire before any implementation, no exceptions:
 - "Let me just quickly add this..." → brainstorming first
 - "I'll fix this real fast..." → systematic-debugging first
 - "It should work now" → verification-before-completion first
-- "Let me explore the codebase..." → `mcp__claude-context__search_code` first, not Explore agents
+- "Let me explore the codebase..." → try MCP tools first (CGC → claude-context → Grep/Glob), then Explore agents if those aren't enough — don't skip exploration entirely
 - "I'll do these three things..." → dispatching-parallel-agents
 - "New multi-element UI component with uncertain layout..." → consider `ui-mockup` skill (Stitch)
 
@@ -140,14 +140,14 @@ Single-element additions (a button, a badge, a tooltip) skip straight to impleme
 
 **Service Worker Cache**: `sw.js` CACHE_NAME is auto-stamped by a pre-commit hook (`devops/hooks/stamp-sw-cache.sh`). Format: `staktrakr-v{VERSION}-b{EPOCH}`. The hook fires when any cached asset is staged, reads `APP_VERSION`, appends a build timestamp, and re-stages `sw.js`. New `.js` files must be added to `sw.js` CORE_ASSETS. See the `sw-cache` skill. Install hook: `ln -sf ../../devops/hooks/stamp-sw-cache.sh .git/hooks/pre-commit`
 
-**Quality Gates** StakTrakr uses Codacy for Code Quality Gates and maintains an A+ Rating. All commits and PR's must be approved by Codacy. 
+**Quality Gates** StakTrakr uses Codacy for Code Quality Gates and maintains an A+ Rating. All commits and PR's must be approved by Codacy.
 
 **Code Search Strategy**: Four-tier approach — use the cheapest tool that answers the question:
 
 1. `mcp__code-graph-context__*` — structural graph queries: callers, call chains, dead code, complexity, imports. Ask: "What calls `syncRetailPrices()`?", "What breaks if I change `formatCurrency()`?"
 2. `mcp__claude-context__search_code` — semantic/conceptual discovery: "find code related to X pattern". Fast, token-cheap, cloud-hosted.
 3. `Grep` / `Glob` — literal string or filename matches.
-4. Explore agents — comprehensive open-ended exploration. Last resort.
+4. Explore agents — comprehensive open-ended exploration. Use after tiers 1-3 are insufficient, not as a replacement for understanding the code.
 
 **CGC setup**: `cd devops/cgc && docker compose up -d`. Container mounts `/Volumes/DATA/GitHub` → indexes any local project. Multi-project: `docker exec cgc-server cgc index /workspace/<ProjectName>`.
 
