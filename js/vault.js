@@ -525,6 +525,7 @@ async function collectAndHashImageVault() {
   if (!records || records.length === 0) return null;
 
   var serialized = [];
+  var failedCount = 0;
   for (var i = 0; i < records.length; i++) {
     var r = records[i];
     var entry = { uuid: r.uuid, cachedAt: r.cachedAt, size: r.size };
@@ -538,10 +539,18 @@ async function collectAndHashImageVault() {
         entry.reverseType = r.reverse.type;
       }
     } catch (blobErr) {
-      debugLog('[Vault] Image vault: skipping blob read failure for uuid', r.uuid, blobErr);
+      failedCount++;
+      debugLog('[Vault] Image vault: blob conversion failed for uuid', r.uuid, blobErr);
       continue;
     }
     serialized.push(entry);
+  }
+
+  if (failedCount > 0) {
+    debugLog('[Vault] Image vault: ' + failedCount + ' of ' + records.length + ' images failed to export', 'warn');
+  }
+  if (serialized.length === 0 && records.length > 0) {
+    throw new Error('Image vault export failed — could not read any of ' + records.length + ' images.');
   }
 
   if (serialized.length === 0) return null;
@@ -607,7 +616,11 @@ async function restoreImageVaultData(payload) {
       debugLog('[Vault] Image vault: record import error for uuid', r.uuid, recErr);
     }
   }
-  if (failed > 0) debugLog('[Vault] Image vault restore: ' + failed + ' of ' + payload.records.length + ' records failed to import.');
+  if (failed > 0) {
+    var msg = 'Image vault restore: ' + failed + ' of ' + payload.records.length + ' images failed to import.';
+    debugLog('[Vault] ' + msg, 'error');
+    throw new Error(msg);
+  }
   return count;
 }
 
