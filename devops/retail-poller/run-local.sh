@@ -22,23 +22,30 @@ if [ -n "${PRICE_LOG_DIR:-}" ]; then
   find "$PRICE_LOG_DIR" -name "prices-*.jsonl" -mtime +30 -delete 2>/dev/null || true
 fi
 
-# Required: DATA_REPO_PATH must be a git checkout of the data branch
-if [ -z "$DATA_REPO_PATH" ]; then
-  echo "ERROR: DATA_REPO_PATH not set (path to data branch git checkout)"
+# StakTrakrApi repo configuration
+API_DATA_REPO="${API_DATA_REPO:-https://github.com/lbruton/StakTrakrApi.git}"
+API_EXPORT_DIR="${API_EXPORT_DIR:-/tmp/staktrakr-api-export}"
+POLLER_ID="${POLLER_ID:-api1}"
+
+if [ -z "$GITHUB_TOKEN" ]; then
+  echo "ERROR: GITHUB_TOKEN not set (required for pushing to StakTrakrApi)"
   exit 1
 fi
 
-# Sync to latest data branch before writing.
-# Use fetch + reset (not pull --rebase) — the container's local branch has no
-# durable state worth preserving since all output is regenerated from SQLite.
-# pull --rebase causes a stuck rebase-merge when another agent commits between
-# our start and our final push, silently freezing retail exports for hours.
-cd "$DATA_REPO_PATH"
-git fetch origin data && git reset --hard origin/data
+# Clone/update StakTrakrApi repo
+if [ ! -d "$API_EXPORT_DIR" ]; then
+  echo "[$(date -u +%H:%M:%S)] Cloning StakTrakrApi repo..."
+  git clone "https://${GITHUB_TOKEN}@github.com/lbruton/StakTrakrApi.git" "$API_EXPORT_DIR"
+fi
+
+cd "$API_EXPORT_DIR"
+git fetch origin "$POLLER_ID" || git checkout -b "$POLLER_ID"
+git checkout "$POLLER_ID"
+git pull origin "$POLLER_ID" || true  # May fail if branch doesn't exist on remote yet
 
 # Run Firecrawl extraction (with Playwright fallback) — writes results to SQLite
 echo "[$(date -u +%H:%M:%S)] Running price extraction..."
-DATA_DIR="$DATA_REPO_PATH/data" \
+DATA_DIR="$API_EXPORT_DIR/data" \
 FIRECRAWL_BASE_URL="${FIRECRAWL_BASE_URL:-http://firecrawl:3002}" \
 BROWSERLESS_URL="${BROWSERLESS_URL:-}" \
 BROWSER_MODE=local \
@@ -50,14 +57,14 @@ if [ -n "${GEMINI_API_KEY:-}" ] && [ -n "${BROWSERLESS_URL:-}" ]; then
   echo "[$(date -u +%H:%M:%S)] Running vision capture..."
   BROWSER_MODE=browserless \
     ARTIFACT_DIR="$_ARTIFACT_DIR" \
-    DATA_DIR="$DATA_REPO_PATH/data" \
+    DATA_DIR="$API_EXPORT_DIR/data" \
     node /app/capture.js \
     || echo "[$(date -u +%H:%M:%S)] WARN: vision capture failed (non-fatal)"
 
   echo "[$(date -u +%H:%M:%S)] Running vision extraction..."
   MANIFEST_PATH="$_ARTIFACT_DIR/manifest.json" \
     ARTIFACT_DIR="$_ARTIFACT_DIR" \
-    DATA_DIR="$DATA_REPO_PATH/data" \
+    DATA_DIR="$API_EXPORT_DIR/data" \
     node /app/extract-vision.js \
     || echo "[$(date -u +%H:%M:%S)] WARN: vision extraction failed (non-fatal)"
 else
@@ -66,24 +73,20 @@ fi
 
 # Export REST API JSON endpoints from SQLite
 echo "[$(date -u +%H:%M:%S)] Exporting REST API JSON..."
-DATA_DIR="$DATA_REPO_PATH/data" \
+DATA_DIR="$API_EXPORT_DIR/data" \
 node /app/api-export.js
 
-# Commit and push
-cd "$DATA_REPO_PATH"
-# Stage api output + vision JSONs + DB snapshot. Including data/retail/ ensures
-# vision JSON files written by extract-vision.js are staged before the pre-push
-# rebase — if left unstaged they cause "uncommitted changes" rebase aborts.
+# Commit and push to poller branch
+cd "$API_EXPORT_DIR"
 git add data/api/ data/retail/ prices.db 2>/dev/null || git add data/api/
+
 if git diff --cached --quiet; then
   echo "[$(date -u +%H:%M:%S)] No new data to commit."
 else
-  git commit -m "retail: ${DATE} api export"
-  # Pre-push rebase: replay our export commit on top of any concurrent pushes.
-  # Use fetch+rebase (not pull --rebase) to avoid re-reading the pull config.
-  git fetch origin data && git rebase origin/data
-  git push origin data
-  echo "[$(date -u +%H:%M:%S)] Pushed to data branch"
+  git commit -m "${POLLER_ID}: ${DATE} $(date -u +%H:%M) export"
+  # Force push since this poller owns its branch exclusively
+  git push --force-with-lease "https://${GITHUB_TOKEN}@github.com/lbruton/StakTrakrApi.git" "$POLLER_ID"
+  echo "[$(date -u +%H:%M:%S)] Pushed to ${POLLER_ID} branch"
 fi
 
 echo "[$(date -u +%H:%M:%S)] Done."
