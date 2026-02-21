@@ -166,6 +166,15 @@ Look at this screenshot of a coin dealer product page.
 Coin: ${coinName} (${metal}, ${weightOz} troy oz)
 Expected 1-unit price range: $${minPrice}–$${maxPrice}
 ${firecrawlHint}${vendorGuidance}
+**STOCK STATUS CHECK:**
+- Is this product currently in stock and available to purchase?
+- Look for: "Out of Stock" badges, red "Sold Out" labels, "Notify Me" buttons, disabled "Add to Cart" buttons
+- Check the product title in the screenshot: does it show ${weightOz} troy oz (or ${weightOz} oz)?
+  If you see "1/2 oz" or "1/4 oz" or any fractional weight when expecting ${weightOz} oz, mark as out of stock
+  (this means the main product is unavailable and a related fractional product is shown instead)
+- If out of stock, return: in_stock = false, stock_label = "description of what you saw"
+- If in stock, return: in_stock = true, stock_label = "Add to Cart enabled" or similar
+
 Find the **1-unit Check/Wire price** — the price a customer pays for exactly 1 coin using check or wire transfer.
 - Look in the pricing/quantity table for the "1" or "1-9" row under Check/Wire columns
 - Do NOT use "As Low As" bulk discount prices (those are for large quantities)
@@ -175,13 +184,15 @@ Find the **1-unit Check/Wire price** — the price a customer pays for exactly 1
 - If the price clearly matches what Firecrawl found (within 3%), say agrees_with_firecrawl = true
 
 Respond ONLY as JSON (no markdown, no explanation):
-{"price": 99.99, "confidence": "high", "agrees_with_firecrawl": true, "label": "1-unit wire row"}
+{"price": 99.99, "confidence": "high", "agrees_with_firecrawl": true, "label": "1-unit wire row", "in_stock": true, "stock_label": "Add to Cart button enabled"}
 
 Where:
-- price: numeric USD price or null if not found
-- confidence: "high" (unambiguous), "medium" (best guess), "low" (uncertain)
+- price: numeric USD price or null if not found OR if out of stock
+- confidence: "high" (unambiguous), "medium" (best guess), "low" (uncertain), or "none" if out of stock
 - agrees_with_firecrawl: true if price matches Firecrawl within ~3%, false if not, null if Firecrawl had no price
-- label: brief description of where you found the price`;
+- label: brief description of where you found the price
+- in_stock: true if product is available to purchase, false if out of stock
+- stock_label: description of stock status indicator you observed`;
 
   const body = {
     contents: [{
@@ -333,6 +344,26 @@ async function main() {
         result.provider  // Pass vendor ID for vendor-specific hints
       );
 
+      // Vision detected out of stock
+      if (extracted.in_stock === false) {
+        log(`  ⚠ ${result.coin}/${result.provider}: OUT OF STOCK — ${extracted.stock_label || "vision detected"}`);
+        extractionResults.push({
+          coinSlug: result.coin,
+          providerId: result.provider,
+          price: null,
+          confidence: "none",
+          agreesWithFirecrawl: null,
+          firecrawlPrice: firecrawlPrice,
+          label: extracted.stock_label || "out of stock",
+          inStock: false,
+          stockLabel: extracted.stock_label,
+          ok: false,  // OOS counts as failed extraction
+          error: `out_of_stock: ${extracted.stock_label || "detected"}`,
+        });
+        return;
+      }
+
+      // Continue with normal price handling
       if (extracted.price !== null) {
         log(`  ✓ ${result.coin}/${result.provider}: $${extracted.price} [${extracted.confidence}] — ${extracted.label}`);
       } else {
@@ -347,6 +378,8 @@ async function main() {
         agreesWithFirecrawl: extracted.agrees_with_firecrawl ?? null,
         firecrawlPrice: firecrawlPrice,
         label: extracted.label,
+        inStock: extracted.in_stock !== false,  // default true if field missing
+        stockLabel: extracted.stock_label || null,
         ok: extracted.price !== null,
         error: extracted.price === null
           ? (extracted.label ? `no price: ${extracted.label}` : "no price returned")
@@ -382,11 +415,20 @@ async function main() {
     const confidenceBySite = {};
     const firecrawlBySite = {};
     const agreementBySite = {};
+    const availabilityBySite = {};
     for (const r of successful) {
       pricesBySite[r.providerId] = r.price;
       confidenceBySite[r.providerId] = r.confidence;
+      availabilityBySite[r.providerId] = r.inStock;
       if (r.firecrawlPrice !== null) firecrawlBySite[r.providerId] = r.firecrawlPrice;
       if (r.agreesWithFirecrawl !== null) agreementBySite[r.providerId] = r.agreesWithFirecrawl;
+    }
+
+    // Also mark failed sites as out of stock if stockLabel indicates OOS
+    for (const r of failed) {
+      if (r.inStock === false) {
+        availabilityBySite[r.providerId] = false;
+      }
     }
 
     const prices = Object.values(pricesBySite);
@@ -408,6 +450,7 @@ async function main() {
       confidence_by_site: confidenceBySite,
       firecrawl_by_site: firecrawlBySite,
       agreement_by_site: agreementBySite,
+      availability_by_site: availabilityBySite,
       source_count: prices.length,
       average_price: prices.length ? Math.round(prices.reduce((a, b) => a + b, 0) / prices.length * 100) / 100 : null,
       median_price: sorted.length ? sorted[Math.floor(sorted.length / 2)] : null,
