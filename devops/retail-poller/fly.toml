@@ -1,7 +1,5 @@
-# fly.toml app configuration file generated for staktrakr on 2026-02-21T15:15:33Z
-#
-# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
-#
+# fly.toml — StakTrakr All-in-One (retail-poller + Firecrawl + serve.js)
+# Fly.io app configuration for the complete scraping/API pipeline.
 
 app = 'staktrakr'
 primary_region = 'iad'
@@ -13,10 +11,11 @@ primary_region = 'iad'
   POLLER_ID = "api1"
   API_DATA_REPO = "https://github.com/lbruton/StakTrakrApi.git"
   API_EXPORT_DIR = "/tmp/staktrakr-api-export"
-  FIRECRAWL_BASE_URL = "http://firecrawl:3002"
+  # Firecrawl runs inside this container
+  FIRECRAWL_BASE_URL = "http://localhost:3002"
   BROWSER_MODE = "local"
 
-# HTTP service for serving StakTrakrApi data (redundancy with GitHub Pages)
+# HTTP service — serve.js on port 8080, proxied by Fly
 [http_service]
   internal_port = 8080
   force_https = true
@@ -31,6 +30,6 @@ primary_region = 'iad'
     soft_limit = 200
 
 [[vm]]
-  memory = '1gb'
+  memory = '8192'
   cpu_kind = 'shared'
-  cpus = 1
+  cpus = 4
