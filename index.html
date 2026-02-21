@@ -85,6 +85,19 @@
       });
     </script>
 
+    <!-- THEME FLASH PREVENTION: set data-theme before CSS renders so :root light-mode
+         vars never paint. Runs synchronously (no defer) after file-protocol-fix.js so
+         the localStorage polyfill is already in place. Uses hardcoded key/values to
+         avoid any dependency on constants.js (which loads deferred). -->
+    <script>
+      try {
+        var __t = localStorage.getItem('appTheme') || 'dark';
+        if (__t === 'dark' || __t === 'sepia') {
+          document.documentElement.setAttribute('data-theme', __t);
+        }
+      } catch (e) {}
+    </script>
+
     <link rel="stylesheet" href="./css/styles.css" />
     <link rel="icon" type="image/svg+xml" href="./favicon.svg?v=3.27.03" />
     <link rel="icon" type="image/png" sizes="32x32" href="./favicon.png?v=3.27.03" />

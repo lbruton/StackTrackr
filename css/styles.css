@@ -1613,18 +1613,25 @@ input[type="submit"] {
   border-color: var(--primary);
 }
 
+/* Theme button colors driven by [data-theme] attribute so they apply immediately
+   when the inline head script sets data-theme — before any JS runs. The .dark/.light/.sepia
+   class variants below are kept for backwards compatibility but are now redundant. */
+[data-theme="dark"] .theme-btn,
 .theme-btn.dark {
   background: #1e293b;
   color: #f8fafc;
   border-color: #334155;
 }
 
+:root:not([data-theme]) .theme-btn,
+[data-theme="light"] .theme-btn,
 .theme-btn.light {
   background: #f8fafc;
   color: #1e293b;
   border-color: #cbd5e1;
 }
 
+[data-theme="sepia"] .theme-btn,
 .theme-btn.sepia {
   background: #f2e7d5;
   color: #3e2f1e;
