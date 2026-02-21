@@ -1,0 +1,29 @@
+# Fly.io configuration for retail-poller (api1 - primary)
+app = "staktrakr-retail-poller-api1"
+primary_region = "ams"  # Amsterdam
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  POLLER_ID = "api1"
+  API_DATA_REPO = "https://github.com/lbruton/StakTrakrApi.git"
+  API_EXPORT_DIR = "/tmp/staktrakr-api-export"
+  FIRECRAWL_BASE_URL = "http://firecrawl:3002"
+  BROWSER_MODE = "local"
+
+# Secrets set via: fly secrets set TURSO_DATABASE_URL=... TURSO_AUTH_TOKEN=... GITHUB_TOKEN=...
+# GEMINI_API_KEY optional (Vision pipeline - can add later)
+
+[http_service]
+  internal_port = 8080
+  force_https = false
+  auto_stop_machines = false
+  auto_start_machines = false
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "256mb"
+
+# Cron schedule: every 15 minutes at :00, :15, :30, :45
+# Implemented via Fly Machines schedule (not cron inside container)
