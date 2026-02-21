@@ -21,7 +21,7 @@ const fetchStaktrakrPrices = async (selectedMetals) => {
   const baseUrl = API_PROVIDERS.STAKTRAKR.hourlyBaseUrl;
   const now = new Date();
 
-  for (let offset = 0; offset <= 6; offset++) {
+  for (let offset = 0; offset <= 23; offset++) {
     const target = new Date(now.getTime() - offset * 3600000);
     const yyyy = target.getUTCFullYear();
     const mm = String(target.getUTCMonth() + 1).padStart(2, '0');
