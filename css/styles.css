@@ -11526,13 +11526,42 @@ th {
   border-top: 1px solid var(--border-color-subtle, var(--bs-border-color));
 }
 
-/* Retail view modal — current prices card */
-.retail-view-current-card {
-  background: var(--bg-card, var(--bs-body-bg));
-  border: 1px solid var(--border-color-subtle, var(--bs-border-color));
-  border-radius: 8px;
-  padding: 0.75rem 0.75rem 0.1rem;
-  margin-bottom: 0.75rem;
+/* Retail view modal — vendor legend (replaces "Current Prices" table) */
+.retail-vendor-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1.25rem;
+  padding: 0.5rem 0.25rem 0.75rem;
+}
+
+.retail-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  text-decoration: none;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.retail-legend-item:hover .retail-legend-name {
+  text-decoration: underline;
+}
+
+.retail-legend-swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.retail-legend-name {
+  font-weight: 500;
+}
+
+.retail-legend-price {
+  color: var(--text-primary);
+  font-size: 0.82rem;
+  font-variant-numeric: tabular-nums;
 }
 
 /* Retail view modal — tab toggle (pill style) */

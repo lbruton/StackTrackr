@@ -4820,17 +4820,7 @@
         <button class="modal-close" onclick="closeRetailViewModal()" aria-label="Close market price detail">&times;</button>
       </div>
       <div class="modal-body">
-        <div class="retail-view-current-card">
-          <h3 class="retail-view-section-title">Current Prices</h3>
-          <div class="retail-view-table-wrap">
-            <table id="retailViewPricesTable" class="retail-view-table">
-              <thead>
-                <tr><th>Vendor</th><th>Price</th><th>Confidence</th></tr>
-              </thead>
-              <tbody id="retailViewCurrentTableBody"></tbody>
-            </table>
-          </div>
-        </div>
+        <div id="retailViewVendorLegend" class="retail-vendor-legend"></div>
         <div class="retail-view-tabs">
           <button id="retailViewTabIntraday" class="retail-view-tab active" type="button" onclick="_switchRetailViewTab('intraday')">24h Chart</button>
           <button id="retailViewTabHistory" class="retail-view-tab" type="button" onclick="_switchRetailViewTab('history')">Price History</button>

@@ -35,6 +35,65 @@ const _VENDOR_COLORS = {
   summitmetals:   "#06b6d4",  // cyan
 };
 
+/**
+ * Builds the vendor legend: colored swatch + clickable vendor name + current price.
+ * Replaces the "Current Prices" table. No-ops if no price data is available.
+ * @param {string} slug
+ */
+const _buildVendorLegend = (slug) => {
+  const container = safeGetElement("retailViewVendorLegend");
+  while (container.firstChild) container.removeChild(container.firstChild);
+
+  const priceData = typeof retailPrices !== "undefined" && retailPrices && retailPrices.prices
+    ? retailPrices.prices[slug]
+    : null;
+  const vendorMap = priceData ? priceData.vendors || {} : {};
+  const knownVendors = typeof RETAIL_VENDOR_NAMES !== "undefined" ? Object.keys(RETAIL_VENDOR_NAMES) : [];
+  const hasAny = knownVendors.some((v) => vendorMap[v] && vendorMap[v].price != null);
+  if (!hasAny) return;
+
+  knownVendors.forEach((vendorId) => {
+    const vendorData = vendorMap[vendorId];
+    const price = vendorData ? vendorData.price : null;
+    if (price == null) return;
+
+    const color = _VENDOR_COLORS[vendorId] || "#94a3b8";
+    const label = (typeof RETAIL_VENDOR_NAMES !== "undefined" && RETAIL_VENDOR_NAMES[vendorId]) || vendorId;
+    const vendorUrl = (typeof retailProviders !== "undefined" && retailProviders && retailProviders[slug] && retailProviders[slug][vendorId])
+      || (typeof RETAIL_VENDOR_URLS !== "undefined" && RETAIL_VENDOR_URLS[vendorId])
+      || null;
+
+    const item = document.createElement(vendorUrl ? "a" : "span");
+    item.className = "retail-legend-item";
+    if (vendorUrl) {
+      item.href = "#";
+      item.addEventListener("click", (e) => {
+        e.preventDefault();
+        const popup = window.open(vendorUrl, `retail_vendor_${vendorId}`, "width=1250,height=800,scrollbars=yes,resizable=yes,toolbar=no,location=no,menubar=no,status=no");
+        if (!popup) window.open(vendorUrl, "_blank");
+      });
+    }
+
+    const swatch = document.createElement("span");
+    swatch.className = "retail-legend-swatch";
+    swatch.style.background = color;
+
+    const nameEl = document.createElement("span");
+    nameEl.className = "retail-legend-name";
+    nameEl.textContent = label;
+    nameEl.style.color = color;
+
+    const priceEl = document.createElement("span");
+    priceEl.className = "retail-legend-price";
+    priceEl.textContent = `$${Number(price).toFixed(2)}`;
+
+    item.appendChild(swatch);
+    item.appendChild(nameEl);
+    item.appendChild(priceEl);
+    container.appendChild(item);
+  });
+};
+
 const _buildIntradayChart = (slug) => {
   const canvas = safeGetElement("retailViewIntradayChart");
   const noDataEl = safeGetElement("retailViewIntradayNoData");
@@ -109,7 +168,7 @@ const _buildIntradayChart = (slug) => {
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
-          legend: { display: true, position: "top", labels: { boxWidth: 12, font: { size: 11 } } },
+          legend: { display: !useVendorLines, position: "top", labels: { boxWidth: 12, font: { size: 11 } } },
           tooltip: {
             callbacks: {
               label: (ctx) => `${ctx.dataset.label}: $${Number(ctx.raw).toFixed(2)}`,
@@ -193,63 +252,14 @@ const openRetailViewModal = (slug) => {
 
   const titleEl = safeGetElement("retailViewCoinName");
   const subtitleEl = safeGetElement("retailViewModalSubtitle");
-  const currentTableBody = safeGetElement("retailViewCurrentTableBody");
   const historyTableBody = safeGetElement("retailViewHistoryTableBody");
   const chartCanvas = safeGetElement("retailViewChart");
 
   titleEl.textContent = meta.name;
   subtitleEl.textContent = `${meta.weight} troy oz \u00b7 ${meta.metal}`;
 
-  // Current prices table — new vendors map shape
-  const priceData = retailPrices && retailPrices.prices ? retailPrices.prices[slug] || null : null;
-  currentTableBody.innerHTML = "";
-  if (priceData) {
-    const vendorMap = priceData.vendors || {};
-    Object.entries(RETAIL_VENDOR_NAMES).forEach(([key, label]) => {
-      const vendorData = vendorMap[key];
-      const price = vendorData ? vendorData.price : null;
-      const score = vendorData ? vendorData.confidence : null;
-      if (price == null) return;
-      const tr = document.createElement("tr");
-
-      const tdLabel = document.createElement("td");
-      const vendorUrl = (retailProviders && retailProviders[slug] && retailProviders[slug][key])
-        || RETAIL_VENDOR_URLS[key];
-      if (vendorUrl) {
-        const link = document.createElement("a");
-        link.href = "#";
-        link.textContent = label;
-        link.style.cssText = "color:var(--primary);text-decoration:none;";
-        link.addEventListener("click", (e) => {
-          e.preventDefault();
-          const popup = window.open(vendorUrl, `retail_vendor_${key}`, "width=1250,height=800,scrollbars=yes,resizable=yes,toolbar=no,location=no,menubar=no,status=no");
-          if (!popup) window.open(vendorUrl, "_blank");
-        });
-        tdLabel.appendChild(link);
-      } else {
-        tdLabel.textContent = label;
-      }
-
-      const tdPrice = document.createElement("td");
-      tdPrice.textContent = `$${Number(price).toFixed(2)}`;
-
-      const tdScore = document.createElement("td");
-      tdScore.appendChild(_buildConfidenceBar(score));
-
-      tr.appendChild(tdLabel);
-      tr.appendChild(tdPrice);
-      tr.appendChild(tdScore);
-      currentTableBody.appendChild(tr);
-    });
-  } else {
-    const tr = document.createElement("tr");
-    const td = document.createElement("td");
-    td.colSpan = 3;
-    td.className = "settings-subtext";
-    td.textContent = "No current data";
-    tr.appendChild(td);
-    currentTableBody.appendChild(tr);
-  }
+  // Vendor legend — colored swatch + clickable name + current price
+  _buildVendorLegend(slug);
 
   // History table — new avg_median/avg_low/vendors.*.avg shape (7 columns)
   const history = getRetailHistoryForSlug(slug);
@@ -359,8 +369,9 @@ const openRetailViewModal = (slug) => {
           if (typeof saveRetailPriceHistory === "function") saveRetailPriceHistory();
         }
       }
-      // Rebuild intraday chart now that fresh vendor data is loaded
+      // Rebuild intraday chart and vendor legend with fresh data
       if (intradayUpdated) _buildIntradayChart(slug);
+      _buildVendorLegend(slug);
     }).catch((err) => {
       debugLog(`[retail-view-modal] Background refresh failed: ${err.message}`, "warn");
     });
