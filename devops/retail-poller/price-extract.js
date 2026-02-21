@@ -195,6 +195,35 @@ function extractPrice(markdown, metal, weightOz = 1, providerId = "") {
     return prices;
   }
 
+  // Returns the Check/Wire (leftmost) price from the first data row of a markdown
+  // pricing table. Pricing tables list tiers smallest-first (1-unit → bulk) with
+  // columns: Check/Wire | Crypto | Card. Taking prices[0] from the first matching
+  // row gives the 1-unit ACH price — the fairest cross-vendor comparison point.
+  function firstTableRowFirstPrice() {
+    const lines = markdown.split("\n");
+    for (const line of lines) {
+      if (!line.startsWith("|")) continue;
+      if (/^\|\s*[-:]+/.test(line)) continue; // skip separator rows
+      const prices = [];
+      for (const m of line.matchAll(/\|\s*\*{0,2}\$?([\d,]+\.\d{2})\*{0,2}\s*(?:\|)/g)) {
+        const p = parseFloat(m[1].replace(/,/g, ""));
+        if (inRange(p)) prices.push(p);
+      }
+      if (prices.length > 0) return prices[0];
+    }
+    return null;
+  }
+
+  // Fallback for SPAs (e.g. Bullion Exchanges) that render prices as prose rather
+  // than markdown pipe tables. Returns the first $XX.XX value in the metal range.
+  function firstInRangePriceProse() {
+    for (const m of markdown.matchAll(/\$\s*([\d,]+\.\d{2})/g)) {
+      const p = parseFloat(m[1].replace(/,/g, ""));
+      if (inRange(p)) return p;
+    }
+    return null;
+  }
+
   // Summit Metals and similar Shopify stores emit "Regular price $XX.XX" or "Sale price $XX.XX"
   function regularPricePrices() {
     const prices = [];
@@ -222,12 +251,15 @@ function extractPrice(markdown, metal, weightOz = 1, providerId = "") {
     const tbl = tablePrices();
     if (tbl.length > 0) return Math.min(...tbl);
   } else {
-    // APMEX, SDB, Hero Bullion, Bullion Exchanges, etc.: table first.
-    // Quantity-discount tables show: 1-unit (highest) → bulk (lowest).
-    // Math.max selects the 1-unit retail price; Math.min would give the
-    // 1600+ bulk price. Fall back to "As Low As" if no table rows found.
-    const tbl = tablePrices();
-    if (tbl.length > 0) return Math.max(...tbl);
+    // APMEX, SDB, Hero Bullion, Bullion Exchanges, etc.
+    // Tables have columns: Check/Wire | Crypto | Card; rows: 1-unit → bulk.
+    // firstTableRowFirstPrice() returns the 1-unit Check/Wire (ACH) price.
+    // firstInRangePriceProse() handles SPAs (e.g. Bullion Exchanges) that
+    // render the price grid as prose rather than markdown pipe tables.
+    const tblFirst = firstTableRowFirstPrice();
+    if (tblFirst !== null) return tblFirst;
+    const prose = firstInRangePriceProse();
+    if (prose !== null) return prose;
     const ala = asLowAsPrices();
     if (ala.length > 0) return Math.min(...ala);
   }
@@ -289,7 +321,8 @@ function sleep(ms) {
 // Providers that need extra wait time to render prices (JS-heavy SPAs).
 // jmbullion/herobullion: Next.js/React, needs ~5s to populate price tables.
 // monumentmetals: full SPA (React Native Web), router doesn't mount until ~6s.
-const SLOW_PROVIDERS = new Set(["jmbullion", "herobullion", "monumentmetals", "summitmetals"]);
+// bullionexchanges: React/Magento SPA, pricing grid doesn't render until ~6-8s.
+const SLOW_PROVIDERS = new Set(["jmbullion", "herobullion", "monumentmetals", "summitmetals", "bullionexchanges"]);
 
 async function scrapeUrl(url, providerId = "", attempt = 1) {
   const controller = new AbortController();
