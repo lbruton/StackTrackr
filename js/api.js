@@ -640,7 +640,7 @@ const setupProviderSettingsListeners = (provider) => {
   });
 
   // Auto-refresh toggle (STAK-222)
-  const autoRefreshToggle = document.getElementById(`autoRefresh_${provider}`);
+  const autoRefreshToggle = safeGetElement(`autoRefresh_${provider}`);
   if (autoRefreshToggle) {
     autoRefreshToggle.addEventListener('change', () => {
       const config = loadApiConfig();
@@ -2257,7 +2257,7 @@ const populateApiSection = () => {
     }
 
     // Load saved auto-refresh state (STAK-222)
-    const autoRefreshToggle = document.getElementById(`autoRefresh_${provider}`);
+    const autoRefreshToggle = safeGetElement(`autoRefresh_${provider}`);
     if (autoRefreshToggle) {
       autoRefreshToggle.checked = cfg.autoRefresh?.[provider] ?? (provider === 'STAKTRAKR');
     }
@@ -2295,13 +2295,13 @@ const populateApiSection = () => {
   // Render Numista bulk sync UI for the default active tab (STACK-87/88)
   // switchProviderTab only fires on explicit tab clicks, so the default NUMISTA
   // tab never triggers renderNumistaSyncUI without this call.
-  const syncGroup = document.getElementById('numistaBulkSyncGroup');
+  const syncGroup = safeGetElement('numistaBulkSyncGroup');
   if (syncGroup && syncGroup.style.display !== 'none' && typeof renderNumistaSyncUI === 'function') {
     renderNumistaSyncUI();
   }
 
   // STAK-222: Update PCGS cache stat count
-  const pcgsCountEl = document.getElementById('pcgsResponseCacheCount');
+  const pcgsCountEl = safeGetElement('pcgsResponseCacheCount');
   if (pcgsCountEl && typeof getPcgsCacheCount === 'function') {
     pcgsCountEl.textContent = getPcgsCacheCount();
   }

@@ -27,7 +27,7 @@ const renderNumistaSyncUI = async () => {
  * Renders the cache statistics bar: count, total size, quota percentage.
  */
 const renderSyncStats = () => {
-  const container = document.getElementById('numistaSyncStats');
+  const container = safeGetElement('numistaSyncStats');
   if (!container) return;
 
   const apiCount = typeof getNumistaCacheCount === 'function' ? getNumistaCacheCount() : 0;

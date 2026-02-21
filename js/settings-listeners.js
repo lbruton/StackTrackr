@@ -1416,7 +1416,7 @@ const bindStorageListeners = () => {
  * Binds clear buttons for Numista and PCGS response caches (STAK-222).
  */
 const bindApiCacheListeners = () => {
-  const clearNumistaBtn = document.getElementById('clearNumistaCacheBtn');
+  const clearNumistaBtn = safeGetElement('clearNumistaCacheBtn');
   if (clearNumistaBtn) {
     clearNumistaBtn.addEventListener('click', async () => {
       const count = typeof clearNumistaCache === 'function' ? clearNumistaCache() : 0;
@@ -1431,12 +1431,12 @@ const bindApiCacheListeners = () => {
     });
   }
 
-  const clearPcgsBtn = document.getElementById('clearPcgsCacheBtn');
+  const clearPcgsBtn = safeGetElement('clearPcgsCacheBtn');
   if (clearPcgsBtn) {
     clearPcgsBtn.addEventListener('click', () => {
       const count = typeof clearPcgsCache === 'function' ? clearPcgsCache() : 0;
       if (typeof appAlert === 'function') appAlert(`Cleared ${count} PCGS cached lookups.`);
-      const countEl = document.getElementById('pcgsResponseCacheCount');
+      const countEl = safeGetElement('pcgsResponseCacheCount');
       if (countEl) countEl.textContent = '0';
     });
   }

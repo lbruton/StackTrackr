@@ -1551,12 +1551,7 @@ const setupItemFormListeners = () => {
           console.error('Numista search error:', error);
           appAlert('Search failed: ' + error.message);
         } finally {
-          if (typeof setButtonLoading === 'function') {
-            setButtonLoading(btn, false);
-          } else {
-            btn.innerHTML = btn.dataset.originalHtml || btn.innerHTML;
-            btn.disabled = false;
-          }
+          setButtonLoading(btn, false);
         }
       },
       "Search Numista button",
@@ -1601,12 +1596,7 @@ const setupItemFormListeners = () => {
           console.error('PCGS lookup error:', error);
           appAlert('PCGS lookup failed: ' + error.message);
         } finally {
-          if (typeof setButtonLoading === 'function') {
-            setButtonLoading(btn, false);
-          } else {
-            btn.innerHTML = btn.dataset.originalHtml || btn.innerHTML;
-            btn.disabled = false;
-          }
+          setButtonLoading(btn, false);
         }
       },
       "Lookup PCGS button",
