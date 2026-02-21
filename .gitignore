@@ -74,3 +74,5 @@ test-results/
 # AI/MCP configuration files are tracked for project consistency
 # (removed: .github/instructions/codacy.instructions.md)
 .firecrawl/
+
+devops/mem0/.env
