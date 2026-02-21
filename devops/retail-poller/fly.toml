@@ -1,6 +1,6 @@
 # Fly.io configuration for retail-poller (api1 - primary)
 app = "staktrakr-retail-poller-api1"
-primary_region = "ams"  # Amsterdam
+primary_region = "iad"  # Ashburn, Virginia (Washington DC) - closer to US vendors
 
 [build]
   dockerfile = "Dockerfile"
