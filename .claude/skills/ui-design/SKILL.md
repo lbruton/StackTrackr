@@ -12,6 +12,16 @@ The living reference is `style.html` (open in a browser). All components, tokens
 
 **Do NOT use the `frontend-design` plugin for StakTrakr work.** It generates creative, divergent UI. StakTrakr needs consistency, not creativity.
 
+## Mandatory: Playground Mockup Before Integrating
+
+**Before writing any HTML into StakTrakr, generate a playground mockup first.**
+
+1. Invoke the `playground` skill to build a self-contained interactive HTML file
+2. Open it in the browser — let the user adjust sliders, tweak values, and approve
+3. Only integrate into the codebase after explicit user approval
+
+This applies to all UI work: new modals, settings panels, cards, form groups, button arrangements — anything with layout decisions. Skip only for single-element trivial additions (e.g., adding one `.btn-sm` to an existing row).
+
 ---
 
 ## Anti-Patterns — Stop Before Writing
