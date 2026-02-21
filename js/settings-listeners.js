@@ -167,6 +167,18 @@ const bindAppearanceAndHeaderListeners = () => {
     });
   }
 
+  // Market button - open Settings → Market tab.
+  const headerMarketBtn = safeGetElement('headerMarketBtn');
+  if (headerMarketBtn) {
+    headerMarketBtn.addEventListener('click', () => {
+      openSettings();
+      // Switch to Market tab
+      if (typeof switchSettingsSection === 'function') {
+        switchSettingsSection('market');
+      }
+    });
+  }
+
   const ippSelect = getExistingElement('settingsItemsPerPage');
   if (ippSelect) {
     ippSelect.addEventListener('change', () => {
