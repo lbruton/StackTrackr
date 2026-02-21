@@ -19,6 +19,7 @@ This document maps the UI elements and functionalities discovered during the ini
 - **Shift+Click** on a price allows manual override.
 
 ### Totals/Analytics
+
 - Carousel of summary cards showing items, weight, value, and gain/loss per metal.
 - Detail modals with charts (Type breakdown, Location breakdown).
 
@@ -27,7 +28,7 @@ This document maps the UI elements and functionalities discovered during the ini
 - **Search Bar** (`#searchInput`): Real-time filtering.
 - **Change Log** (`#changeLogBtn`): Activity history.
 - **Filter Chips**: Group items by metal, type, name, etc.
-- **View Toggles**: 
+- **View Toggles**:
   - Sparkline cards (A)
   - Hero cards (B)
   - Split cards (C)

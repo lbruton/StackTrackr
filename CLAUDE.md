@@ -95,7 +95,7 @@ StakTrakr developers have future plans for ApexCharts and Tabler integration. Sl
 
 **Versioning Skills** This project has a `/release` skill that outlines the full release process. This skill must also be updated anytime changes are made to the version system.
 
-**PR Lifecycle (live site — do not fast-merge to main)**
+### PR Lifecycle (live site — do not fast-merge to main)
 
 StakTrakr has real users. The PR workflow is:
 
@@ -111,7 +111,7 @@ StakTrakr has real users. The PR workflow is:
 
 **Red flag**: If the PR title still says "WIP" or only describes the first feature added, the PR body has not been updated yet — do not merge.
 
-**Jules PRs — Always review before merging**
+### Jules PRs — Always review before merging
 
 Jules runs nightly and scheduled automated scans against `dev` and submits draft PRs. Jules does not have full project context — she has no access to Memento, Linear, or CLAUDE.md, and may not be aware of in-progress sprint work, architectural decisions, or recent changes made in the same session. Treat every Jules PR as coming from a well-intentioned but context-blind agent.
 
@@ -127,7 +127,7 @@ Before approving any Jules PR:
 3. **Run `/pr-resolve`** on the Jules PR before considering merge — Codacy will catch additional issues Jules missed.
 4. **Never auto-merge** — Jules PRs are always draft for a reason. Mark ready only after the checklist above is clear.
 
-**UI Design Workflow (three stages — never skip to implementation)**
+### UI Design Workflow (three stages — never skip to implementation)
 
 For any non-trivial UI component (card grid, modal, settings panel, dashboard section), follow this sequence:
 
