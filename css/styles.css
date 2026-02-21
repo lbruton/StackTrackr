@@ -3912,12 +3912,14 @@ td[data-column="name"] {
   background: var(--bg-tertiary, #2a2a2a);
   vertical-align: middle;
   cursor: pointer;
-  transition: box-shadow 0.15s ease, width 0.15s ease, height 0.15s ease;
+  transition: box-shadow 0.15s ease, transform 0.15s ease;
+  /* Force hardware acceleration to prevent Firefox blob URL revalidation */
+  will-change: transform;
+  transform: translateZ(0);
 }
 .table-thumb:hover {
   box-shadow: 0 0 0 2px var(--primary);
-  width: 32px;
-  height: 32px;
+  transform: translateZ(0) scale(1.14);
   z-index: 1;
   position: relative;
 }
