@@ -18,6 +18,7 @@
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from "node:fs";
 import { join, resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
+import Database from "better-sqlite3";
 
 const __dirname = fileURLToPath(new URL(".", import.meta.url));
 
@@ -46,6 +47,33 @@ const PRICE_RANGE_HINTS = {
   platinum: { min: 800,  max: 6000 },
   palladium:{ min: 800,  max: 6000 },
 };
+
+/**
+ * Load today's Firecrawl prices from prices.db.
+ * Returns { slugSlug: { vendorId: price, ... }, ... } or {} if DB unavailable.
+ */
+function loadFirecrawlPrices(dataDir) {
+  const dbPath = resolve(join(dataDir, "..", "prices.db"));
+  if (!existsSync(dbPath)) return {};
+  try {
+    const db = new Database(dbPath, { readonly: true });
+    const today = new Date().toISOString().slice(0, 10);
+    const rows = db.prepare(
+      `SELECT coin_slug, vendor, price FROM price_snapshots
+       WHERE date(scraped_at) = ? AND price IS NOT NULL`
+    ).all(today);
+    db.close();
+    const out = {};
+    for (const { coin_slug, vendor, price } of rows) {
+      if (!out[coin_slug]) out[coin_slug] = {};
+      out[coin_slug][vendor] = price;
+    }
+    return out;
+  } catch (err) {
+    warn(`Could not load Firecrawl prices from SQLite: ${err.message}`);
+    return {};
+  }
+}
 
 // ---------------------------------------------------------------------------
 // Logging
@@ -226,6 +254,9 @@ async function main() {
   log(`Vision extraction: ${manifest.results.length} screenshots from ${MANIFEST_PATH}`);
   if (DRY_RUN) log("DRY RUN — no files written");
 
+  const firecrawlPrices = loadFirecrawlPrices(DATA_DIR);
+  log(`Loaded Firecrawl prices for ${Object.keys(firecrawlPrices).length} coin(s) from SQLite`);
+
   // Only process successful captures
   const targets = manifest.results.filter(r => r.ok && r.screenshot);
 
@@ -240,11 +271,13 @@ async function main() {
 
     log(`Vision: ${result.coin}/${result.provider}`);
     try {
+      const firecrawlPrice = firecrawlPrices[result.coin]?.[result.provider] ?? null;
       const extracted = await extractPriceFromImage(
         imagePath,
         coin.name,
         coin.metal,
-        coin.weight_oz || 1
+        coin.weight_oz || 1,
+        firecrawlPrice
       );
 
       if (extracted.price !== null) {
@@ -258,6 +291,8 @@ async function main() {
         providerId: result.provider,
         price: extracted.price,
         confidence: extracted.confidence,
+        agreesWithFirecrawl: extracted.agrees_with_firecrawl ?? null,
+        firecrawlPrice: firecrawlPrice,
         label: extracted.label,
         ok: extracted.price !== null,
         error: extracted.price === null
@@ -271,6 +306,8 @@ async function main() {
         providerId: result.provider,
         price: null,
         confidence: "none",
+        agreesWithFirecrawl: null,
+        firecrawlPrice: firecrawlPrice,
         label: null,
         ok: false,
         error: err.message.slice(0, 200),
@@ -290,9 +327,13 @@ async function main() {
 
     const pricesBySite = {};
     const confidenceBySite = {};
+    const firecrawlBySite = {};
+    const agreementBySite = {};
     for (const r of successful) {
       pricesBySite[r.providerId] = r.price;
       confidenceBySite[r.providerId] = r.confidence;
+      if (r.firecrawlPrice !== null) firecrawlBySite[r.providerId] = r.firecrawlPrice;
+      if (r.agreesWithFirecrawl !== null) agreementBySite[r.providerId] = r.agreesWithFirecrawl;
     }
 
     const prices = Object.values(pricesBySite);
@@ -312,6 +353,8 @@ async function main() {
       currency: "USD",
       prices_by_site: pricesBySite,
       confidence_by_site: confidenceBySite,
+      firecrawl_by_site: firecrawlBySite,
+      agreement_by_site: agreementBySite,
       source_count: prices.length,
       average_price: prices.length ? Math.round(prices.reduce((a, b) => a + b, 0) / prices.length * 100) / 100 : null,
       median_price: sorted.length ? sorted[Math.floor(sorted.length / 2)] : null,
