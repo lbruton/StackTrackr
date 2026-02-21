@@ -393,7 +393,7 @@ const renderRetailDisclaimer = (container) => {
   strong2.textContent = "Confidence scores (0–100)";
 
   const text2 = document.createTextNode(
-    " reflect agreement across data sources: 60 = aligned with the median, 35 = slight outlier, 15 = significant outlier."
+    " reflect agreement across data sources: 60 = median, 35 = outlier, 15 = significant outlier."
   );
 
   body.append(strong1, text1, strong2, text2);
@@ -404,7 +404,6 @@ const renderRetailDisclaimer = (container) => {
 /** Called on market section open and after each sync. */
 const renderRetailCards = () => {
   const grid = safeGetElement("retailCardsGrid");
-  renderRetailDisclaimer(grid);
   const lastSyncEl = safeGetElement("retailLastSync");
 
   if (retailPrices && retailPrices.lastSync) {
@@ -415,6 +414,7 @@ const renderRetailCards = () => {
   }
 
   grid.innerHTML = "";
+  renderRetailDisclaimer(grid);
   if (_retailSyncInProgress) {
     safeGetElement("retailEmptyState").style.display = "none";
     RETAIL_SLUGS.forEach(() => grid.appendChild(_buildSkeletonCard()));
