@@ -1571,10 +1571,10 @@ const renderTable = () => {
       const thumbHtml = _tableImagesOn && featureFlags.isEnabled('COIN_IMAGES')
         ? (_showObv ? `<img class="table-thumb${_thumbShapeClass}"${obvSrcAttr}
                ${_sharedThumbAttrs} data-side="obverse"
-               alt="" loading="lazy" onerror="this.style.display='none'" />` : '')
+               alt="" loading="lazy" />` : '')
         + (_showRev ? `<img class="table-thumb${_thumbShapeClass}"${revSrcAttr}
                ${_sharedThumbAttrs} data-side="reverse"
-               alt="" loading="lazy" onerror="this.style.display='none'" />` : '')
+               alt="" loading="lazy" />` : '')
         : '';
 
       // STAK-126: Inline tags chip (show first 2 tags, ellipsis if more)

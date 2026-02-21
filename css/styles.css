@@ -3913,6 +3913,7 @@ td[data-column="name"] {
   vertical-align: middle;
   cursor: pointer;
   transition: box-shadow 0.15s ease, transform 0.15s ease;
+  will-change: transform;
 }
 .table-thumb:hover {
   box-shadow: 0 0 0 2px var(--primary);
