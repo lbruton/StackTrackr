@@ -19,8 +19,8 @@ RUN npm install --omit=dev
 
 # Copy poller scripts and shell scripts
 COPY *.js ./
-COPY run-local.sh run-fbp.sh docker-entrypoint.sh ./
-RUN chmod +x run-local.sh run-fbp.sh docker-entrypoint.sh
+COPY run-local.sh run-fbp.sh run-goldback.sh docker-entrypoint.sh ./
+RUN chmod +x run-local.sh run-fbp.sh run-goldback.sh docker-entrypoint.sh
 
 # Git config for committing
 ARG GIT_USER_NAME="StakTrakr Poller"
@@ -35,7 +35,8 @@ RUN git config --global user.name "${GIT_USER_NAME}" && \
 #   Every 15 min — full scrape (Firecrawl + Playwright fallback), commit, push to data branch
 #   3:00 PM ET (20:00 UTC) daily — FBP gap-fill for any failed providers
 RUN (echo "*/15 * * * * root . /etc/environment; /app/run-local.sh >> /var/log/retail-poller.log 2>&1"; \
-     echo "0 20 * * * root . /etc/environment; /app/run-fbp.sh >> /var/log/retail-poller.log 2>&1") > /etc/cron.d/retail-poller && \
+     echo "0 20 * * * root . /etc/environment; /app/run-fbp.sh >> /var/log/retail-poller.log 2>&1"; \
+     echo "1 17 * * * root . /etc/environment; /app/run-goldback.sh >> /var/log/goldback-poller.log 2>&1") > /etc/cron.d/retail-poller && \
     chmod 0644 /etc/cron.d/retail-poller
 
 ENTRYPOINT ["/app/docker-entrypoint.sh"]
