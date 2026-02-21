@@ -11340,10 +11340,13 @@ th {
 .retail-trend--flat { background: rgba(148, 163, 184, 0.12); color: #94a3b8; }
 
 /* STAK-217: Medal ranking for top 3 high-confidence in-stock vendors */
+.retail-vendor-row--medal-1 { --medal-icon: "🥇 "; }
+.retail-vendor-row--medal-2 { --medal-icon: "🥈 "; }
+.retail-vendor-row--medal-3 { --medal-icon: "🥉 "; }
 .retail-vendor-row--medal-1 .retail-vendor-name::before,
 .retail-vendor-row--medal-2 .retail-vendor-name::before,
 .retail-vendor-row--medal-3 .retail-vendor-name::before {
-  content: attr(data-medal) " ";
+  content: var(--medal-icon);
   font-size: 0.85rem;
 }
 .retail-vendor-row--medal-1 .retail-vendor-price {
