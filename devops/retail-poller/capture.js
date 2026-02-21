@@ -134,11 +134,16 @@ async function connectBrowserbaseSession(sessionId) {
 async function connectBrowserlessSession() {
   const { chromium: coreChromium } = await import("playwright-core");
   const browser = await coreChromium.connectOverCDP(BROWSERLESS_WS);
-  const context = await browser.newContext({
-    viewport: { width: 1280, height: 900 },
-    userAgent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
-  });
-  return { browser, context };
+  try {
+    // connectOverCDP wraps the remote browser's existing default context.
+    // browser.newContext() silently drops options (viewport/userAgent) over CDP;
+    // use contexts()[0] to get the pre-created context instead.
+    const context = browser.contexts()[0] ?? await browser.newContext();
+    return { browser, context };
+  } catch (err) {
+    await browser.close();
+    throw err;
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -257,7 +262,7 @@ async function captureAll() {
   // Write manifest
   const manifest = {
     captured_at: new Date().toISOString(),
-    date: dateStr,
+    date: today(),
     coins: COINS,
     providers: PROVIDERS,
     results: allResults,
