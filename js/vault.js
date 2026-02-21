@@ -41,15 +41,15 @@ function getCryptoBackend() {
     ) {
       return "native";
     }
-  } catch (_) {
-    /* ignore */
+  } catch (err) {
+    debugLog('[Vault] Crypto backend detection failed: ' + err.message, 'info');
   }
   try {
     if (typeof forge !== "undefined" && forge.cipher && forge.pkcs5) {
       return "forge";
     }
-  } catch (_) {
-    /* ignore */
+  } catch (err) {
+    debugLog('[Vault] Crypto backend detection failed: ' + err.message, 'info');
   }
   return null;
 }

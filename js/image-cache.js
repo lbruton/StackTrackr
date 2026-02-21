@@ -371,8 +371,8 @@ class ImageCache {
           result.totalBytes += rec.size || 0;
         });
       }
-    } catch {
-      // ignore
+    } catch (err) {
+      debugLog('[ImageCache] Failed to iterate store: ' + err.message, 'warn');
     }
 
     try {
@@ -382,8 +382,8 @@ class ImageCache {
           result.totalBytes += new Blob([JSON.stringify(rec)]).size;
         });
       }
-    } catch {
-      // ignore
+    } catch (err) {
+      debugLog('[ImageCache] Failed to iterate store: ' + err.message, 'warn');
     }
 
     try {
@@ -393,8 +393,8 @@ class ImageCache {
           result.totalBytes += rec.size || 0;
         });
       }
-    } catch {
-      // ignore
+    } catch (err) {
+      debugLog('[ImageCache] Failed to iterate store: ' + err.message, 'warn');
     }
 
     try {
@@ -404,8 +404,8 @@ class ImageCache {
           result.totalBytes += rec.size || 0;
         });
       }
-    } catch {
-      // ignore
+    } catch (err) {
+      debugLog('[ImageCache] Failed to iterate store: ' + err.message, 'warn');
     }
 
     return result;
@@ -815,7 +815,8 @@ class ImageCache {
           quality: this._quality,
         });
         return result?.blob || null;
-      } catch {
+      } catch (err) {
+        debugLog('[ImageCache] WebP encode failed, using JPEG fallback: ' + err.message, 'info');
         // Fall through to legacy path
       }
     }
@@ -840,7 +841,8 @@ class ImageCache {
           this._quality
         );
       });
-    } catch {
+    } catch (err) {
+      debugLog('[ImageCache] Canvas resize failed: ' + err.message, 'warn');
       return null;
     }
   }
@@ -856,7 +858,9 @@ class ImageCache {
     try {
       const resp = await fetch(url);
       if (resp.ok) return await resp.blob();
-    } catch { /* fall through */ }
+    } catch (err) {
+      debugLog('[ImageCache] CORS fetch attempt failed for ' + url + ': ' + err.message, 'info');
+    }
 
     // Try no-cors fetch — only accept non-opaque blobs (opaque blobs report
     // size === 0 and lose their data during IDB structured clone round-trips)
@@ -864,7 +868,9 @@ class ImageCache {
       const resp = await fetch(url, { mode: 'no-cors' });
       const blob = await resp.blob();
       if (blob && blob.size > 0) return blob;
-    } catch { /* fall through */ }
+    } catch (err) {
+      debugLog('[ImageCache] no-cors fetch attempt failed for ' + url + ': ' + err.message, 'info');
+    }
 
     return null;
   }
