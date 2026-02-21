@@ -18,7 +18,7 @@
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from "node:fs";
 import { join, resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import Database from "better-sqlite3";
+import { openTursoDb, writeSnapshot, windowFloor } from "./db.js";
 
 const __dirname = fileURLToPath(new URL(".", import.meta.url));
 
@@ -97,28 +97,30 @@ function getVendorHint(vendorId) {
 }
 
 /**
- * Load today's Firecrawl prices from prices.db.
+ * Load today's Firecrawl prices from Turso.
  * Returns { slugSlug: { vendorId: price, ... }, ... } or {} if DB unavailable.
  */
-function loadFirecrawlPrices(dataDir) {
-  const dbPath = resolve(join(dataDir, "..", "prices.db"));
-  if (!existsSync(dbPath)) return {};
+async function loadFirecrawlPrices() {
   try {
-    const db = new Database(dbPath, { readonly: true });
+    const db = await openTursoDb();
     const today = new Date().toISOString().slice(0, 10);
-    const rows = db.prepare(
-      `SELECT coin_slug, vendor, price FROM price_snapshots
-       WHERE date(scraped_at) = ? AND price IS NOT NULL`
-    ).all(today);
+    const result = await db.execute({
+      sql: `SELECT coin_slug, vendor, price FROM price_snapshots
+            WHERE date(scraped_at) = ? AND price IS NOT NULL`,
+      args: [today],
+    });
     db.close();
     const out = {};
-    for (const { coin_slug, vendor, price } of rows) {
+    for (const row of result.rows) {
+      const coin_slug = row.coin_slug || row[0];
+      const vendor = row.vendor || row[1];
+      const price = row.price || row[2];
       if (!out[coin_slug]) out[coin_slug] = {};
       out[coin_slug][vendor] = price;
     }
     return out;
   } catch (err) {
-    warn(`Could not load Firecrawl prices from SQLite: ${err.message}`);
+    warn(`Could not load Firecrawl prices from Turso: ${err.message}`);
     return {};
   }
 }
@@ -317,8 +319,15 @@ async function main() {
   log(`Vision extraction: ${manifest.results.length} screenshots from ${MANIFEST_PATH}`);
   if (DRY_RUN) log("DRY RUN — no files written");
 
-  const firecrawlPrices = loadFirecrawlPrices(DATA_DIR);
-  log(`Loaded Firecrawl prices for ${Object.keys(firecrawlPrices).length} coin(s) from SQLite`);
+  const firecrawlPrices = await loadFirecrawlPrices();
+  log(`Loaded Firecrawl prices for ${Object.keys(firecrawlPrices).length} coin(s) from Turso`);
+
+  // Open Turso database for writing vision results
+  const db = DRY_RUN ? null : await openTursoDb();
+  const scrapedAt = new Date().toISOString();
+  const winStart = windowFloor();
+
+  try {
 
   // Only process successful captures
   const targets = manifest.results.filter(r => r.ok && r.screenshot);
@@ -363,6 +372,20 @@ async function main() {
           ok: false,  // OOS counts as failed extraction
           error: `out_of_stock: ${extracted.stock_label || "detected"}`,
         });
+
+        // Record out-of-stock result to Turso
+        if (db) {
+          await writeSnapshot(db, {
+            scrapedAt,
+            windowStart: winStart,
+            coinSlug: result.coin,
+            vendor: result.provider,
+            price: null,
+            source: "gemini-vision",
+            isFailed: true,
+            inStock: false,
+          });
+        }
         return;
       }
 
@@ -388,6 +411,20 @@ async function main() {
           ? (extracted.label ? `no price: ${extracted.label}` : "no price returned")
           : undefined,
       });
+
+      // Record vision extraction result to Turso
+      if (db) {
+        await writeSnapshot(db, {
+          scrapedAt,
+          windowStart: winStart,
+          coinSlug: result.coin,
+          vendor: result.provider,
+          price: extracted.price,
+          source: "gemini-vision",
+          isFailed: extracted.price === null,
+          inStock: extracted.in_stock === true,
+        });
+      }
     } catch (err) {
       warn(`  ✗ ${result.coin}/${result.provider}: ${err.message.slice(0, 120)}`);
       extractionResults.push({
@@ -401,6 +438,20 @@ async function main() {
         ok: false,
         error: err.message.slice(0, 200),
       });
+
+      // Record error result to Turso
+      if (db) {
+        await writeSnapshot(db, {
+          scrapedAt,
+          windowStart: winStart,
+          coinSlug: result.coin,
+          vendor: result.provider,
+          price: null,
+          source: "gemini-vision",
+          isFailed: true,
+          inStock: true,  // assume in stock unless we know otherwise
+        });
+      }
     }
   });
 
@@ -468,6 +519,10 @@ async function main() {
   if (ok === 0 && extractionResults.length > 0) {
     console.error("All vision extractions failed.");
     process.exit(1);
+  }
+
+  } finally {
+    if (db) db.close();
   }
 }
 
