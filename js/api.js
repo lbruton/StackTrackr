@@ -121,7 +121,7 @@ const fetchStaktrakrHourlyRange = async (hoursBack) => {
 
   if (newCount > 0) {
     saveSpotHistory();
-    console.log(`[StakTrakr] Added ${newCount} hourly entries (${fetchCount} files fetched)`);
+    debugLog(`[StakTrakr] Added ${newCount} hourly entries (${fetchCount} files fetched)`);
   }
 
   return { newCount, fetchCount };

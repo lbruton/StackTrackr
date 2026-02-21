@@ -444,7 +444,7 @@ async function pushSyncVault() {
 
     var vaultResult = await vaultResp.json();
     var rev = vaultResult.rev || '';
-    console.log('[CloudSync] Vault uploaded, rev:', rev);
+    debugLog('[CloudSync] Vault uploaded, rev:', rev);
 
     // Upload image vault if user photos exist and have changed (STAK-181)
     var imageVaultMeta = null;
