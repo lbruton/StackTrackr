@@ -15,7 +15,8 @@ const providerRequiresKey = (prov) => API_PROVIDERS[prov]?.requiresKey !== false
 
 /**
  * Fetch spot prices from StakTrakr hourly JSON files.
- * Walks back up to 6 hours from the current UTC hour to find data.
+ * Walks back up to 23 hours from the current UTC hour to find data.
+ * Tries each endpoint in hourlyBaseUrls before advancing to the next hour.
  */
 const fetchStaktrakrPrices = async (selectedMetals) => {
   const baseUrls = API_PROVIDERS.STAKTRAKR.hourlyBaseUrls;
@@ -30,8 +31,10 @@ const fetchStaktrakrPrices = async (selectedMetals) => {
     const path = `/${yyyy}/${mm}/${dd}/${hh}.json`;
 
     for (const baseUrl of baseUrls) {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 8000);
       try {
-        const resp = await fetch(`${baseUrl}${path}`, { mode: 'cors' });
+        const resp = await fetch(`${baseUrl}${path}`, { mode: 'cors', signal: controller.signal }).finally(() => clearTimeout(timeoutId));
         if (!resp.ok) continue;
         const data = await resp.json();
         const { current } = API_PROVIDERS.STAKTRAKR.parseBatchResponse(data);
@@ -48,7 +51,7 @@ const fetchStaktrakrPrices = async (selectedMetals) => {
           }
           return results;
         }
-      } catch { continue; }
+      } catch (err) { debugLog(`[StakTrakr] fetch failed (${baseUrl}${path}): ${err.message}`, 'warn'); continue; }
     }
   }
   throw new Error('No hourly data available from StakTrakr API');
@@ -61,7 +64,7 @@ const fetchStaktrakrPrices = async (selectedMetals) => {
  * @returns {Promise<{newCount: number, fetchCount: number}>} Counts of new entries and successful fetches
  */
 const fetchStaktrakrHourlyRange = async (hoursBack) => {
-  const baseUrl = API_PROVIDERS.STAKTRAKR.hourlyBaseUrl;
+  const baseUrls = API_PROVIDERS.STAKTRAKR.hourlyBaseUrls;
   const now = new Date();
 
   // Build list of UTC hours as Date objects
@@ -89,15 +92,20 @@ const fetchStaktrakrHourlyRange = async (hoursBack) => {
       const mm = String(h.getUTCMonth() + 1).padStart(2, '0');
       const dd = String(h.getUTCDate()).padStart(2, '0');
       const hh = String(h.getUTCHours()).padStart(2, '0');
-      const url = `${baseUrl}/${yyyy}/${mm}/${dd}/${hh}.json`;
-      try {
-        const resp = await fetch(url, { mode: 'cors' });
-        if (!resp.ok) return null;
-        const data = await resp.json();
-        const { current } = API_PROVIDERS.STAKTRAKR.parseBatchResponse(data);
-        // Use ISO-format UTC timestamp so recordSpot normalizes consistently
-        return { current, timestamp: `${yyyy}-${mm}-${dd}T${hh}:00:00Z` };
-      } catch { return null; }
+      const path = `/${yyyy}/${mm}/${dd}/${hh}.json`;
+      for (const baseUrl of baseUrls) {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 8000);
+        try {
+          const resp = await fetch(`${baseUrl}${path}`, { mode: 'cors', signal: controller.signal }).finally(() => clearTimeout(timeoutId));
+          if (!resp.ok) continue;
+          const data = await resp.json();
+          const { current } = API_PROVIDERS.STAKTRAKR.parseBatchResponse(data);
+          // Use ISO-format UTC timestamp so recordSpot normalizes consistently
+          return { current, timestamp: `${yyyy}-${mm}-${dd}T${hh}:00:00Z` };
+        } catch (err) { debugLog(`[StakTrakr] range fetch failed (${baseUrl}${path}): ${err.message}`, 'warn'); continue; }
+      }
+      return null;
     }));
 
     results.forEach(result => {
