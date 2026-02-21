@@ -215,52 +215,71 @@ function loadVisionData(dataDir, slug) {
  *
  * Falls back to scoreVendorPrice() when no vision data available.
  */
-function mergeVendorWithVision(firecrawlPrice, visionData, vendorId, windowMedian, prevMedian) {
-  if (!visionData || !visionData.prices_by_site) {
+/**
+ * Resolve the canonical vendor price using Firecrawl result and Vision verification.
+ *
+ * Decision matrix:
+ *   Both agree  (≤3%)       → use Firecrawl price, 99% confidence
+ *   Both present, disagree  → use price closest to window median, ≤70% confidence
+ *   Firecrawl null, Vision  → Vision as primary, ~70% confidence
+ *   Firecrawl only          → existing scoreVendorPrice(), no change
+ *   Neither                 → { price: null, confidence: 0, source: null }
+ *
+ * @param {number|null} firecrawlPrice
+ * @param {object|null} visionData - Full vision JSON for this coin (may include agreement_by_site)
+ * @param {string} vendorId
+ * @param {number|null} windowMedian
+ * @param {number|null} prevMedian
+ */
+function resolveVendorPrice(firecrawlPrice, visionData, vendorId, windowMedian, prevMedian) {
+  const vp = visionData?.prices_by_site?.[vendorId] ?? null;
+  const vc = visionData?.confidence_by_site?.[vendorId] ?? null;
+  // New field from updated extract-vision.js; fall back to diff calc for old JSONs
+  const agreedField = visionData?.agreement_by_site?.[vendorId] ?? null;
+
+  // Determine agreement: prefer Gemini's own judgement; fall back to ≤3% diff check
+  const agrees = (() => {
+    if (agreedField !== null) return agreedField;
+    if (firecrawlPrice !== null && vp !== null) {
+      const diff = Math.abs(firecrawlPrice - vp) / Math.max(firecrawlPrice, vp);
+      return diff <= 0.03;
+    }
+    return null;
+  })();
+
+  // CASE 1: Both sources agree → 99% confidence
+  if (firecrawlPrice !== null && vp !== null && agrees === true) {
+    return { price: firecrawlPrice, confidence: 99, source: "firecrawl+vision" };
+  }
+
+  // CASE 2: Both present, disagree → prefer price closest to window median
+  if (firecrawlPrice !== null && vp !== null && agrees === false) {
+    const ref = windowMedian ?? (firecrawlPrice + vp) / 2;
+    const useFirecrawl = Math.abs(firecrawlPrice - ref) <= Math.abs(vp - ref);
+    const price = useFirecrawl ? firecrawlPrice : vp;
+    const base = scoreVendorPrice(price, windowMedian, prevMedian);
+    return { price, confidence: Math.min(base, 70), source: useFirecrawl ? "firecrawl" : "vision" };
+  }
+
+  // CASE 3: Firecrawl null, Vision has a price → Vision as primary
+  if (firecrawlPrice === null && vp !== null) {
+    const vcMod = vc === "high" ? 10 : vc === "medium" ? 0 : -15;
+    const base = Math.max(0, 70 + vcMod);
+    const medianScore = scoreVendorPrice(vp, windowMedian, prevMedian);
+    return { price: vp, confidence: Math.min(base, medianScore + 20), source: "vision" };
+  }
+
+  // CASE 4: Firecrawl only (no vision data for this vendor)
+  if (firecrawlPrice !== null) {
     return {
       price: firecrawlPrice,
       confidence: scoreVendorPrice(firecrawlPrice, windowMedian, prevMedian),
-      method: "firecrawl",
+      source: "firecrawl",
     };
   }
 
-  const visionPrice = visionData.prices_by_site[vendorId];
-  // Default to "medium" (0 mod) when confidence field absent — avoids penalizing a
-  // vendor whose price validates fine but whose confidence_by_site entry is missing.
-  const visionConfidence = visionData.confidence_by_site?.[vendorId] ?? "medium";
-
-  if (!visionPrice) {
-    return {
-      price: firecrawlPrice,
-      confidence: scoreVendorPrice(firecrawlPrice, windowMedian, prevMedian),
-      method: "firecrawl",
-    };
-  }
-
-  const diff = Math.abs(firecrawlPrice - visionPrice) /
-    Math.max(firecrawlPrice, visionPrice);
-
-  let base = diff <= 0.02 ? 90 : diff <= 0.05 ? 70 : 35;
-  const visionMod = visionConfidence === "high" ? 5 : visionConfidence === "medium" ? 0 : -10;
-
-  let medianMod = 0;
-  if (windowMedian !== null && windowMedian !== 0) {
-    const deviation = Math.abs(firecrawlPrice - windowMedian) / windowMedian;
-    if (deviation <= 0.03) medianMod = 5;
-    else if (deviation > 0.08) medianMod = -10;
-  }
-
-  let dodMod = 0;
-  if (prevMedian !== null && prevMedian !== 0) {
-    const dayDiff = Math.abs(firecrawlPrice - prevMedian) / prevMedian;
-    if (dayDiff > 0.10) dodMod = -15;
-  }
-
-  return {
-    price: firecrawlPrice,
-    confidence: Math.max(0, Math.min(100, base + visionMod + medianMod + dodMod)),
-    method: "firecrawl+vision",
-  };
+  // CASE 5: Neither source has a price
+  return { price: null, confidence: 0, source: null };
 }
 
 // ---------------------------------------------------------------------------
@@ -349,14 +368,20 @@ async function main() {
 
     const visionData = loadVisionData(DATA_DIR, slug);
 
+    // Build set of vendor IDs that have SQLite rows (for confidence write-back)
+    const sqliteVendorIds = new Set(Object.keys(vendors));
+
     const confidenceUpdates = [];
     for (const [vendorId, vendorData] of Object.entries(vendors)) {
-      const { price, confidence, method } = mergeVendorWithVision(
+      const { price, confidence, source } = resolveVendorPrice(
         vendorData.price, visionData, vendorId, windowMedian, prevMedian
       );
       vendorData.confidence = confidence;
-      vendorData.method = method;
-      confidenceUpdates.push({ coinSlug: slug, vendor: vendorId, windowStart: latestWindow, confidence });
+      vendorData.source = source;
+      // Only write back to SQLite for rows that came from SQLite
+      if (sqliteVendorIds.has(vendorId) && confidence > 0) {
+        confidenceUpdates.push({ coinSlug: slug, vendor: vendorId, windowStart: latestWindow, confidence });
+      }
     }
     if (confidenceUpdates.length > 0) {
       try {
