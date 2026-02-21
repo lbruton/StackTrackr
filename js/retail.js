@@ -483,13 +483,8 @@ const _buildRetailCard = (slug, meta, priceData) => {
       card.appendChild(trendEl);
     }
 
-    const vendorDetails = document.createElement("details");
+    const vendorDetails = document.createElement("div");
     vendorDetails.className = "retail-vendor-details";
-    vendorDetails.open = true;
-
-    const vendorSummary = document.createElement("summary");
-    vendorSummary.className = "retail-vendor-summary";
-    vendorDetails.appendChild(vendorSummary);
 
     const vendors = document.createElement("div");
     vendors.className = "retail-vendors";
@@ -553,8 +548,6 @@ const _buildRetailCard = (slug, meta, priceData) => {
       vendors.appendChild(row);
     });
 
-    const count = vendors.children.length;
-    vendorSummary.textContent = `${count} vendor${count !== 1 ? "s" : ""}`;
     vendorDetails.appendChild(vendors);
     card.appendChild(vendorDetails);
 
