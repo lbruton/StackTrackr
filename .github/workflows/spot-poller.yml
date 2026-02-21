@@ -1,11 +1,12 @@
-# Hourly spot price poller — writes to the `data` branch
+# Spot price poller — writes to the `data` branch
+# Runs twice per hour (:05 and :35) for 30-min freshness.
 # Requires repository secret: METAL_PRICE_API_KEY
 name: Spot Price Poller
 
 on:
   schedule:
-    # Every hour at :05 (avoid the :00 rush on GitHub Actions)
-    - cron: '5 * * * *'
+    - cron: '5 * * * *'   # :05 — primary run
+    - cron: '35 * * * *'  # :35 — staggered run (30-min freshness)
   workflow_dispatch: # Manual trigger for testing
 
 env:
