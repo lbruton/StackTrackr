@@ -465,6 +465,8 @@ const clearApiCache = () => {
  * @returns {number} Cache duration
  */
 const getCacheDurationMs = (provider) => {
+  // STAKTRAKR reads static hourly files — no rate limit, always fetch fresh
+  if (provider === 'STAKTRAKR') return 0;
   let hours;
   if (provider && Number.isFinite(apiConfig?.cacheTimeouts?.[provider])) {
     hours = apiConfig.cacheTimeouts[provider];
