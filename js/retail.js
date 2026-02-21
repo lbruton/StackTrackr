@@ -497,11 +497,24 @@ const _buildRetailCard = (slug, meta, priceData) => {
     const vendorMap = priceData.vendors || {};
     const availPrices = Object.values(vendorMap).map((v) => v.price).filter((p) => p != null);
     const lowestPrice = availPrices.length ? Math.min(...availPrices) : null;
-    Object.entries(RETAIL_VENDOR_NAMES).forEach(([key, label]) => {
-      const vendorData = vendorMap[key];
-      const price = vendorData ? vendorData.price : null;
-      const score = vendorData ? vendorData.confidence : null;
-      if (price == null) return;
+
+    // Sort: high-confidence vendors (≥60) by price asc, then low-confidence vendors
+    const sortedVendorEntries = Object.entries(RETAIL_VENDOR_NAMES)
+      .map(([key, label]) => {
+        const vendorData = vendorMap[key];
+        return { key, label, price: vendorData ? vendorData.price : null, score: vendorData ? vendorData.confidence : null };
+      })
+      .filter(({ price }) => price != null)
+      .sort((a, b) => {
+        const aHigh = a.score != null && a.score >= 60;
+        const bHigh = b.score != null && b.score >= 60;
+        if (aHigh && bHigh) return a.price - b.price;
+        if (aHigh) return -1;
+        if (bHigh) return 1;
+        return 0;
+      });
+
+    sortedVendorEntries.forEach(({ key, label, price, score }) => {
       const row = document.createElement("div");
       row.className = "retail-vendor-row";
       if (lowestPrice !== null && Math.abs(price - lowestPrice) < 0.001) {
@@ -564,14 +577,14 @@ const _buildRetailCard = (slug, meta, priceData) => {
   btnRow.className = "retail-card-btn-row";
 
   const viewBtn = document.createElement("button");
-  viewBtn.className = "btn btn-sm btn-outline-primary retail-view-btn";
+  viewBtn.className = "retail-card-action retail-view-btn";
   viewBtn.type = "button";
   viewBtn.dataset.retailViewSlug = slug;
   viewBtn.textContent = "View";
   btnRow.appendChild(viewBtn);
 
   const histBtn = document.createElement("button");
-  histBtn.className = "btn btn-sm btn-secondary retail-history-btn";
+  histBtn.className = "retail-card-action retail-history-btn";
   histBtn.type = "button";
   histBtn.dataset.retailHistorySlug = slug;
   histBtn.textContent = "History";
@@ -583,22 +596,17 @@ const _buildRetailCard = (slug, meta, priceData) => {
 };
 
 /**
- * Builds a 5-segment colored confidence bar element.
+ * Builds a compact confidence percentage chip.
  * @param {number|null} score - 0 to 100
  * @returns {HTMLElement}
  */
 const _buildConfidenceBar = (score) => {
-  const filled = score != null ? Math.min(5, Math.round((score / 100) * 5)) : 0;
-  const tier = filled <= 2 ? "low" : filled === 3 ? "mid" : "high";
-  const wrap = document.createElement("div");
-  wrap.className = `retail-conf-bar retail-conf-bar--${tier}`;
-  wrap.title = `Confidence: ${score != null ? `${score}/100` : "unknown"}`;
-  for (let i = 0; i < 5; i++) {
-    const seg = document.createElement("span");
-    seg.className = `retail-conf-seg${i < filled ? " retail-conf-seg--fill" : ""}`;
-    wrap.appendChild(seg);
-  }
-  return wrap;
+  const chip = document.createElement("span");
+  const tier = (score == null) ? "low" : score >= 60 ? "high" : score >= 40 ? "mid" : "low";
+  chip.className = `retail-conf-chip retail-conf-chip--${tier}`;
+  chip.textContent = score != null ? `${Math.round(score)}%` : "?";
+  chip.title = `Confidence: ${score != null ? `${Math.round(score)}/100` : "unknown"}`;
+  return chip;
 };
 
 // ---------------------------------------------------------------------------

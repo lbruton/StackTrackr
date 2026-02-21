@@ -1820,17 +1820,17 @@ input[type="submit"] {
 }
 
 .settings-modal-content > .modal-header {
-  background: linear-gradient(135deg, var(--primary), var(--primary-hover));
-  color: #f8fafc;
+  background: transparent;
+  border-bottom: 1px solid var(--border-color-subtle, var(--bs-border-color));
   padding: var(--spacing) var(--spacing-xl);
   border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-  box-shadow: var(--shadow);
   flex-shrink: 0;
 }
 
 .settings-modal-content > .modal-header h2 {
   margin: 0;
-  color: #f8fafc;
+  font-size: 1.05rem;
+  color: var(--text-primary);
 }
 
 /* Sidebar + content layout */
@@ -11208,11 +11208,24 @@ th {
   gap: 0.4rem;
 }
 
-.retail-card-btn-row .btn {
+.retail-card-action {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.22rem 0.7rem;
+  font-size: 0.78rem;
+  font-weight: 500;
+  border: 1px solid var(--border-color, rgba(148,163,184,.3));
   border-radius: 999px;
-  padding: 0.25rem 0.75rem;
-  font-size: 0.75rem;
-  font-weight: 600;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+}
+
+.retail-card-action:hover {
+  color: var(--text-primary);
+  border-color: var(--primary, #3b82f6);
+  background: rgba(59,130,246,.08);
 }
 
 #retailSyncBtn {
@@ -11223,7 +11236,7 @@ th {
 
 /* STAK-217: Corrected CSS targets matching JS class names */
 .retail-price-card {
-  background: var(--card-bg, var(--bs-body-bg));
+  background: var(--bs-secondary-bg, var(--bg-card, rgba(255,255,255,.05)));
   border: 1px solid var(--border-color, var(--bs-border-color));
   border-radius: 8px;
   padding: 1rem;
@@ -11311,21 +11324,20 @@ th {
   font-weight: 700;
 }
 
-/* STAK-217: Confidence score bar */
-.retail-conf-bar {
+/* Confidence percentage chip */
+.retail-conf-chip {
   display: inline-flex;
-  gap: 2px;
   align-items: center;
+  padding: 0.1rem 0.35rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  border-radius: 999px;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
-.retail-conf-seg {
-  width: 8px;
-  height: 8px;
-  border-radius: 2px;
-  background: var(--border-color, #e2e8f0);
-}
-.retail-conf-bar--low  .retail-conf-seg--fill { background: #ef4444; }
-.retail-conf-bar--mid  .retail-conf-seg--fill { background: #f59e0b; }
-.retail-conf-bar--high .retail-conf-seg--fill { background: #10b981; }
+.retail-conf-chip--low  { background: rgba(239,68,68,.15);  color: #ef4444; }
+.retail-conf-chip--mid  { background: rgba(245,158,11,.15); color: #f59e0b; }
+.retail-conf-chip--high { background: rgba(16,185,129,.15); color: #10b981; }
 
 /* STAK-217: Collapsible vendor section */
 .retail-vendor-details { margin-top: 0.25rem; }
