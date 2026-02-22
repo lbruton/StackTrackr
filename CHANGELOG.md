@@ -9,6 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.32.11] - 2026-02-22
+
+### Fixed — PR #395 Review Fixes — Code Quality & Correctness
+
+- **Fixed**: `logItemChanges` null-dereference on item-add/delete — guarded `forEach` loop for null `oldItem`/`newItem`; now records single Added/Deleted entry
+- **Fixed**: `changeLog` raw `localStorage.setItem` calls replaced with `saveDataSync()` across all callsites
+- **Fixed**: `getManifestEntries`/`markSynced` exposed as `window.*` globals — array property approach lost on `changeLog = []` reassignment
+- **Fixed**: Sync toast showed wrong provider — status string was `"success"` but `syncProviderChain` returns `"ok"`
+- **Fixed**: Swallowed post-reset backfill error now logs to `console.warn` for debuggability
+- **Fixed**: `api-health.js` modal calls use `window.` prefix; `readyState` guard added for late-loading scripts
+- **Fixed**: `safeGetElement` used in `initSpotHistoryButtons` (was raw `document.getElementById`)
+
+---
+
 ## [3.32.10] - 2026-02-22
 
 ### Added — Worktree Protocol & Branch Protection Infrastructure

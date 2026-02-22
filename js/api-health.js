@@ -107,14 +107,14 @@ const showApiHealthModal = () => {
   } else {
     _setModalLoading();
   }
-  if (window.openModalById) openModalById("apiHealthModal");
+  if (window.openModalById) window.openModalById("apiHealthModal");
 };
 
 /**
  * Hides the API health modal.
  */
 const hideApiHealthModal = () => {
-  if (window.closeModalById) closeModalById("apiHealthModal");
+  if (window.closeModalById) window.closeModalById("apiHealthModal");
 };
 
 // Guard to ensure the keydown listener is registered only once
@@ -162,4 +162,8 @@ if (typeof window !== "undefined") {
   window.initApiHealth = initApiHealth;
 }
 
-document.addEventListener("DOMContentLoaded", initApiHealth);
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", initApiHealth);
+} else {
+  initApiHealth();
+}

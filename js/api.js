@@ -2969,7 +2969,7 @@ const initSpotHistoryButtons = () => {
   const exportBtn = document.getElementById("exportSpotHistoryBtn");
   if (exportBtn) exportBtn.addEventListener("click", exportSpotHistory);
 
-  const restoreBtn = document.getElementById("restoreHistoricalDataBtn");
+  const restoreBtn = safeGetElement("restoreHistoricalDataBtn");
   if (restoreBtn) restoreBtn.addEventListener("click", restoreHistoricalSpotData);
 
   const importBtn = document.getElementById("importSpotHistoryBtn");
