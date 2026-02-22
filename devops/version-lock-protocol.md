@@ -66,6 +66,18 @@ while this lock is held.
 The `/release patch` skill reads `js/constants.js` relative to the worktree CWD, so
 it correctly bumps to the locked version.
 
+### Step 5b — SYNC with latest origin/dev before pushing
+
+Before pushing, merge any commits that landed in `dev` while you were working:
+
+```bash
+git fetch origin
+git merge origin/dev  # inside the worktree
+```
+
+This surfaces conflicts early (before the PR opens) and ensures the Cloudflare preview
+reflects the combined state. If there are no concurrent commits it's a no-op.
+
 ### Step 6 — PUSH branch and open PR to dev
 
 ```bash
