@@ -978,10 +978,10 @@ const syncGoldbackSettingsUI = () => {
     });
   }
 
-  // Refresh button — visible only when estimation ON
+  // Refresh button — visible whenever Goldback pricing is ON (API fetch is independent of estimation)
   const refreshBtn = document.getElementById('goldbackEstimateRefreshBtn');
   if (refreshBtn) {
-    refreshBtn.style.display = goldbackEstimateEnabled ? '' : 'none';
+    refreshBtn.style.display = goldbackEnabled ? '' : 'none';
   }
 
   // Modifier row — visible only when estimation ON
