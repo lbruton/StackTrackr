@@ -79,13 +79,13 @@ This file provides foundational mandates and project-specific context for Gemini
 
 Gemini has access to the following MCP servers. Use them as described.
 
-### Agent MCP Parity (as of 2026-02-21)
+### Agent MCP Parity (as of 2026-02-22)
 
 All agents run on the same Mac and share the same Docker/IP stack.
 
 | Server | Claude | Gemini | Codex | Notes |
 |---|---|---|---|---|
-| `mem0` | ✅ | ✅ | ✅ | Sole memory backend (primary as of 2026-02-22) |
+| `mem0` | ✅ | ✅ | ✅ | Sole memory backend — Memento retired 2026-02-22 |
 | `memento` | ⛔ | ⛔ | ⛔ | Retired 2026-02-22 — historical archive, do not call |
 | `sequential-thinking` | ✅ | ✅ | ✅ | Structured reasoning |
 | `brave-search` | ✅ | ✅ | ✅ | Web search |
@@ -99,6 +99,7 @@ All agents run on the same Mac and share the same Docker/IP stack.
 | `browserbase` | ✅ | ✅ | ✅ | Cloud NL tests (paid, use sparingly) |
 | `code-graph-context` | ✅ | ✅ | ✅ | Structural graph (Docker required) |
 | `infisical` | ✅ | ✅ | ✅ | Self-hosted secrets manager |
+| `stitch` | — | — | — | Removed from all configs 2026-02-22 |
 
 ### mem0 (Primary Memory Backend)
 
@@ -187,21 +188,13 @@ scraping, crawling, and web search without consuming cloud credits.
 
 **Requires:** `cd devops/firecrawl-docker && docker compose up -d` before use.
 
-### Stitch (UI Design & Prototyping — Gemini Primary)
+### Stitch (UI Design — REMOVED)
 
-Stitch is a Google product. **Gemini is the designated Stitch agent for StakTrakr** — Claude and
-Codex route Stitch tasks here. Use the `ui-mockup` skill workflow when generating mockups.
+Stitch MCP extension has been removed from all agent configs as of 2026-02-22. Do not attempt to
+call `mcp__stitch__*` tools — they will not resolve.
 
-**Note:** Stitch MCP server has been removed from `.mcp.json`. Use Stitch via Gemini's native
-integration or the Google AI Studio interface instead.
-
-**Tools available (when connected):**
-
-- `create_project` — Create a container for designs
-- `generate_screen_from_text` — Generate a new UI screen from a prompt
-- `edit_screens` — Modify existing screens via prompt
-- `generate_variants` — Explore design alternatives
-- `get_screen` / `list_screens` — Retrieve generated assets
+For UI mockup work, use the `ui-mockup` skill via Claude Code or the Google AI Studio interface
+directly if Gemini native integration is available.
 
 ### Browserbase (Cloud Browser Automation)
 
@@ -303,6 +296,36 @@ Agent handoff update:
 - Memory: <mem0 topic keyword for recall>
 - Risks: <known risks/assumptions>
 ```
+
+## Version Lock Protocol (Multi-Agent Safety)
+
+Multiple AI agents (Claude, Gemini, Codex) work concurrently on the same local repo. To prevent
+two agents bumping to the same version number simultaneously, a file-based mutex is used.
+
+### Lock file: `devops/version.lock`
+
+```json
+{
+  "locked": "3.32.09",
+  "locked_by": "gemini / STAK-XX",
+  "locked_at": "2026-02-22T19:00:00Z",
+  "expires_at": "2026-02-22T19:30:00Z"
+}
+```
+
+This file is **gitignored** — it should never appear in a commit diff. If you see it in a diff,
+that is a bug.
+
+### Protocol
+
+1. **Before any version bump:** Read `devops/version.lock`. If locked and not expired, STOP and
+   inform the user who holds the lock.
+2. **If lock is expired (> 30 min old):** Take it over, save a mem0 note noting the takeover.
+3. **If unlocked:** Compute `next_version` from `js/constants.js`, write the lock file.
+4. **After committing the version bump:** Delete the lock file (`rm devops/version.lock`).
+
+The locked version becomes the **anchor** for all associated work: Linear issues, changelog entries,
+commit messages, and mem0 handoffs should all reference the locked version number.
 
 ## Quality Gates
 

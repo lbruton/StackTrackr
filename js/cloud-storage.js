@@ -364,6 +364,11 @@ function cloudAuthStart(provider) {
         // Popup was blocked — fall back to main-window redirect
         window.location.href = url;
       }
+    }).catch(function (err) {
+      sessionStorage.removeItem('cloud_oauth_state');
+      sessionStorage.removeItem('cloud_pkce_verifier');
+      if (popup && !popup.closed) popup.close();
+      cloudNotifyAuthFailure(provider, 'PKCE challenge generation failed. Please try again.', err);
     });
   } else {
     var url = config.authUrl + '?' + params.toString();
@@ -400,12 +405,15 @@ function cloudNotifyAuthFailure(provider, message, details) {
 // Exchange an OAuth authorization code for an access token.
 async function cloudExchangeCode(code, state) {
   var savedState = sessionStorage.getItem('cloud_oauth_state');
-  var provider = (state || '').split('_')[0] || 'dropbox';
 
   if (state !== savedState) {
-    cloudNotifyAuthFailure(provider, 'OAuth state mismatch. Please try again.');
+    // Parse provider from savedState (trusted), not from the attacker-controlled state param
+    var failProvider = savedState ? savedState.split('_')[0] : 'unknown';
+    cloudNotifyAuthFailure(failProvider, 'OAuth state mismatch. Please try again.');
     return;
   }
+
+  var provider = (savedState || '').split('_')[0] || 'dropbox';
 
   var config = CLOUD_PROVIDERS[provider];
   if (!config) return;
@@ -476,6 +484,7 @@ async function cloudExchangeCode(code, state) {
     recordCloudActivity({ action: 'connect', provider: provider, result: 'success', detail: 'Connected to ' + config.name });
     debugLog('[CloudStorage] Connected to ' + config.name);
   } catch (err) {
+    sessionStorage.removeItem('cloud_oauth_state');
     cloudNotifyAuthFailure(provider, 'Token exchange request failed. Check redirect URI/domain registration and try again.', err);
   }
 }
