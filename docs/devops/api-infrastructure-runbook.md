@@ -233,7 +233,9 @@ from datetime import datetime, timezone
 
 def age_min(ts_str):
     ts_str = ts_str.strip()
-    if not ts_str.endswith('Z') and '+' not in ts_str:
+    # Append Z only if no timezone info present (no Z, no +HH:MM, no -HH:MM offset)
+    import re
+    if not re.search(r'[zZ]$|[+-]\d{2}:?\d{2}$', ts_str):
         ts_str = ts_str.replace(' ', 'T') + 'Z'
     ts = datetime.fromisoformat(ts_str.replace('Z', '+00:00'))
     return (datetime.now(timezone.utc) - ts).total_seconds() / 60

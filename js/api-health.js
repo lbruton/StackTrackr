@@ -11,7 +11,8 @@ const API_HEALTH_GOLDBACK_STALE_MIN = 25 * 60; // 25 hours in minutes
 
 /**
  * Normalizes naive "YYYY-MM-DD HH:MM:SS" timestamps (no timezone suffix) to
- * UTC ISO-8601 before parsing. Timestamps that already carry "Z" or "+" pass
+ * UTC ISO-8601 before parsing. Timestamps that already carry "Z", a positive
+ * offset ("+HH:MM"), or a negative offset ("-HH:MM" after position 18) pass
  * through unchanged.
  * "2026-02-22 12:00:00" → "2026-02-22T12:00:00Z"
  * @param {string|*} ts
@@ -19,7 +20,7 @@ const API_HEALTH_GOLDBACK_STALE_MIN = 25 * 60; // 25 hours in minutes
  */
 const _normalizeTs = (ts) => {
   if (!ts || typeof ts !== "string") return ts;
-  if (ts.includes("Z") || ts.includes("+")) return ts;
+  if (/[zZ]$|[+-]\d{2}:?\d{2}$/.test(ts)) return ts;
   return ts.trim().replace(" ", "T") + "Z";
 };
 
@@ -70,7 +71,7 @@ const fetchApiHealth = async () => {
     return `${dataBase}/hourly/${y}/${mo}/${dy}/${hr}.json`;
   };
   const spotFetch = _fetchWithTimeout(_hourlyUrl(0))
-    .catch(() => _fetchWithTimeout(_hourlyUrl(1)));
+    .catch((e) => { console.debug("Spot hour-0 miss, trying previous hour:", e.message); return _fetchWithTimeout(_hourlyUrl(1)); });
 
   const [marketResult, spotResult, goldbackResult] = await Promise.allSettled([
     _fetchWithTimeout(`${base}/manifest.json`),
@@ -102,9 +103,14 @@ const fetchApiHealth = async () => {
     const last    = Array.isArray(entries) && entries[entries.length - 1];
     const ts      = last && last.timestamp;
     if (ts) {
-      spot.ageMin = Math.max(0, Math.floor((Date.now() - new Date(_normalizeTs(ts)).getTime()) / 60000));
-      spot.ago    = _timeAgo(ts);
-      spot.ok     = spot.ageMin <= API_HEALTH_SPOT_STALE_MIN;
+      const spotDate = new Date(_normalizeTs(ts));
+      if (!isNaN(spotDate.getTime())) {
+        spot.ageMin = Math.max(0, Math.floor((Date.now() - spotDate.getTime()) / 60000));
+        spot.ago    = _timeAgo(ts);
+        spot.ok     = spot.ageMin <= API_HEALTH_SPOT_STALE_MIN;
+      } else {
+        spot.error = `Invalid timestamp: ${ts}`;
+      }
     } else {
       spot.error = "No entries found";
     }
