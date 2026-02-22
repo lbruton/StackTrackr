@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.32.13] - 2026-02-22
+
+### Fixed — API Health Modal z-index + Three-Feed Freshness Checks
+
+- **Fixed**: API health modal now renders above the About modal (z-index raised to 10000)
+- **Improved**: API health now checks three feeds independently — market prices (15 min threshold), spot prices (75 min), and Goldback daily scrape; badges show per-feed freshness
+- **Changed**: Footer and About modal badge text now shows `✅ Market Xm · Spot Xm` format
+
+---
+
 ## [3.32.12] - 2026-02-22
 
 ### Added — Configurable Vault Password Idle Timeout (STAK-183)
