@@ -286,7 +286,7 @@ const CERT_LOOKUP_URLS = {
  * Updated: 2026-02-12 - STACK-38/STACK-31: Responsive card view + mobile layout
  */
 
-const APP_VERSION = "3.32.11";
+const APP_VERSION = "3.32.12";
 
 /**
  * Numista metadata cache TTL: 30 days in milliseconds.
@@ -794,6 +794,7 @@ const ALLOWED_STORAGE_KEYS = [
   "cloud_sync_device_id",                      // UUID string: stable per-device identifier
   "cloud_sync_cursor",                         // Dropbox rev string: for efficient change detection
   "cloud_sync_override_backup",                // JSON: { timestamp, itemCount, appVersion, data: {...} } — pre-pull local snapshot
+  "cloud_vault_idle_timeout",                  // number string: vault password idle lock timeout in minutes (15|30|60|120|0=never)
 ];
 
 // =============================================================================
