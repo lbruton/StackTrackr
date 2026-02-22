@@ -760,8 +760,8 @@ window.getNextSerial = getNextSerial;
 /**
  * Saves current inventory to localStorage
  */
-const saveInventory = () => {
-  saveData(LS_KEY, inventory);
+const saveInventory = async () => {
+  await saveData(LS_KEY, inventory);
   // CatalogManager handles its own saving, no need to explicitly save catalogMap
   // STACK-62: Invalidate autocomplete cache so lookup table rebuilds with current inventory
   if (typeof clearLookupCache === 'function') clearLookupCache();
