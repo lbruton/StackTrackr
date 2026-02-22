@@ -2908,7 +2908,7 @@ const restoreHistoricalSpotData = async () => {
     // --- Pass 2: API files — fills year gaps not yet covered by seed pass ---
     const apiBaseUrls = [
       `${API_PROVIDERS.STAKTRAKR.baseUrl}`,
-      "https://api1.staktrakr.com/data",
+      // "https://api1.staktrakr.com/data", // Planned fallback (temporarily disabled during single-API cutover)
     ];
 
     for (const year of years) {
