@@ -144,6 +144,14 @@ async function syncRestoreOverrideBackup() {
 
   try {
     var bkeys = Object.keys(backup.data);
+    // Guard: only clear scope keys when the snapshot is non-empty.
+    // An empty snapshot likely indicates corruption — don't wipe localStorage.
+    if (bkeys.length > 0 && typeof SYNC_SCOPE_KEYS !== 'undefined') {
+      for (var k = 0; k < SYNC_SCOPE_KEYS.length; k++) {
+        localStorage.removeItem(SYNC_SCOPE_KEYS[k]);
+      }
+      debugLog('[CloudSync] Cleared', SYNC_SCOPE_KEYS.length, 'scope keys before restore');
+    }
     for (var j = 0; j < bkeys.length; j++) {
       if (typeof ALLOWED_STORAGE_KEYS !== 'undefined' && ALLOWED_STORAGE_KEYS.indexOf(bkeys[j]) !== -1) {
         localStorage.setItem(bkeys[j], backup.data[bkeys[j]]);

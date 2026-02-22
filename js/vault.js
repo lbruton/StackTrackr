@@ -1045,6 +1045,131 @@ function toggleVaultPasswordVisibility(inputId, toggleBtn) {
   }
 }
 
+
+// =============================================================================
+// MANIFEST CRYPTO (STAK-188) — .stmanifest encrypt/decrypt
+//
+// Binary format (53-byte header + ciphertext):
+//   0-3   : "STMF" magic bytes (0x53 0x54 0x4D 0x46)
+//   4     : format version (0x01)
+//   5-8   : PBKDF2 iterations (uint32 big-endian)
+//   9-40  : 32-byte random salt
+//   41-52 : 12-byte random IV/nonce
+//   53+   : AES-256-GCM ciphertext (includes 16-byte auth tag)
+// =============================================================================
+
+const MANIFEST_MAGIC = new Uint8Array([0x53, 0x54, 0x4D, 0x46]); // "STMF"
+const MANIFEST_VERSION = 0x01;
+const MANIFEST_HEADER_SIZE = 53; // 4 magic + 1 version + 4 iterations + 32 salt + 12 IV
+
+/**
+ * Encrypt a manifest object into a .stmanifest binary blob.
+ *
+ * Uses the same AES-256-GCM + PBKDF2-SHA256 crypto as vault files but with
+ * a distinct "STMF" magic header so manifest files are cryptographically
+ * separable from .stvault files.
+ *
+ * @param {object} manifestJson - Plain JS object to encrypt (will be JSON.stringify'd)
+ * @param {string} password
+ * @returns {Promise<ArrayBuffer>} Encrypted manifest bytes
+ */
+async function encryptManifest(manifestJson, password) {
+  var plaintext = new TextEncoder().encode(JSON.stringify(manifestJson));
+  var salt = vaultRandomBytes(32);
+  var iv = vaultRandomBytes(12);
+  var key = await vaultDeriveKey(password, salt, VAULT_PBKDF2_ITERATIONS);
+  var ciphertext = await vaultEncrypt(plaintext, key, iv);
+
+  var file = new Uint8Array(MANIFEST_HEADER_SIZE + ciphertext.length);
+  // Magic bytes "STMF"
+  file.set(MANIFEST_MAGIC, 0);
+  // Version
+  file[4] = MANIFEST_VERSION;
+  // Iterations (uint32 big-endian)
+  file[5] = (VAULT_PBKDF2_ITERATIONS >>> 24) & 0xff;
+  file[6] = (VAULT_PBKDF2_ITERATIONS >>> 16) & 0xff;
+  file[7] = (VAULT_PBKDF2_ITERATIONS >>> 8) & 0xff;
+  file[8] = VAULT_PBKDF2_ITERATIONS & 0xff;
+  // Salt (32 bytes at offset 9)
+  file.set(salt, 9);
+  // IV (12 bytes at offset 41)
+  file.set(iv, 41);
+  // Ciphertext
+  file.set(ciphertext, MANIFEST_HEADER_SIZE);
+
+  return file.buffer;
+}
+
+/**
+ * Decrypt a .stmanifest binary blob and return the parsed JS object.
+ *
+ * Validates the "STMF" magic header and explicitly rejects .stvault files
+ * with a distinct error message.
+ *
+ * @param {ArrayBuffer|Uint8Array} encryptedData
+ * @param {string} password
+ * @returns {Promise<object>} Parsed manifest object
+ * @throws {Error} "This is a .stvault file, not a .stmanifest file" — if STVAULT magic detected
+ * @throws {Error} "Not a valid .stmanifest file" — if magic is unrecognised
+ * @throws {Error} "Failed to decrypt manifest — wrong password or corrupt file" — on decryption failure
+ */
+async function decryptManifest(encryptedData, password) {
+  var fileBytes = encryptedData instanceof Uint8Array
+    ? encryptedData
+    : new Uint8Array(encryptedData);
+
+  if (fileBytes.length < MANIFEST_HEADER_SIZE + 16) {
+    throw new Error('Not a valid .stmanifest file');
+  }
+
+  // Check for .stvault magic ("STVAULT" = 0x53 0x54 0x56 0x41 0x55 0x4C 0x54)
+  // First four bytes of STVAULT are 0x53 0x54 0x56 0x41; STMF starts 0x53 0x54 0x4D 0x46.
+  // Byte index 2 distinguishes them: 0x56 ('V') vs 0x4D ('M').
+  if (
+    fileBytes[0] === 0x53 &&
+    fileBytes[1] === 0x54 &&
+    fileBytes[2] === 0x56 &&
+    fileBytes[3] === 0x41
+  ) {
+    throw new Error('This is a .stvault file, not a .stmanifest file');
+  }
+
+  // Validate STMF magic
+  if (
+    fileBytes[0] !== MANIFEST_MAGIC[0] ||
+    fileBytes[1] !== MANIFEST_MAGIC[1] ||
+    fileBytes[2] !== MANIFEST_MAGIC[2] ||
+    fileBytes[3] !== MANIFEST_MAGIC[3]
+  ) {
+    throw new Error('Not a valid .stmanifest file');
+  }
+
+  // Check version
+  var version = fileBytes[4];
+  if (version > MANIFEST_VERSION) {
+    throw new Error('Manifest created by a newer StakTrakr version. Please update.');
+  }
+
+  // Parse iterations (uint32 big-endian at offset 5)
+  var iterations =
+    ((fileBytes[5] << 24) |
+     (fileBytes[6] << 16) |
+     (fileBytes[7] << 8) |
+      fileBytes[8]) >>> 0; // ensure unsigned
+
+  var salt = fileBytes.slice(9, 41);
+  var iv = fileBytes.slice(41, 53);
+  var ciphertext = fileBytes.slice(MANIFEST_HEADER_SIZE);
+
+  try {
+    var key = await vaultDeriveKey(password, salt, iterations);
+    var plainBytes = await vaultDecrypt(ciphertext, key, iv);
+    return JSON.parse(new TextDecoder().decode(plainBytes));
+  } catch (_) {
+    throw new Error('Failed to decrypt manifest — wrong password or corrupt file');
+  }
+}
+
 // =============================================================================
 // WINDOW EXPORTS
 // =============================================================================
@@ -1058,3 +1183,5 @@ window.collectVaultData = collectVaultData;
 window.collectAndHashImageVault = collectAndHashImageVault;
 window.vaultEncryptImageVault = vaultEncryptImageVault;
 window.vaultDecryptAndRestoreImages = vaultDecryptAndRestoreImages;
+window.encryptManifest = encryptManifest;
+window.decryptManifest = decryptManifest;

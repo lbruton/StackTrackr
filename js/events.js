@@ -2030,7 +2030,7 @@ const setupDataManagementListeners = () => {
       // Reset in-memory log/history arrays
       if (typeof changeLog !== 'undefined') changeLog = [];
       if (typeof catalogHistory !== 'undefined') catalogHistory = [];
-      if (typeof spotHistory !== 'undefined') spotHistory = {};
+      if (typeof spotHistory !== 'undefined') spotHistory = [];
 
       // Disconnect cloud providers (UI reset)
       if (typeof syncCloudUI === 'function') syncCloudUI();
@@ -2040,6 +2040,15 @@ const setupDataManagementListeners = () => {
       renderActiveFilters();
       loadSpotHistory();
       fetchSpotPrice();
+      // Backfill 24h of hourly data after wipe — runs unconditionally since apiConfig
+      // is cleared at this point and fetchSpotPrice won't trigger the internal backfill.
+      // fetchStaktrakrHourlyRange's existingKeys dedup prevents double-inserts if
+      // fetchSpotPrice does happen to succeed with a configured provider.
+      if (typeof backfillStaktrakrHourly === 'function') {
+        backfillStaktrakrHourly()
+          .then(() => { if (typeof updateAllSparklines === 'function') updateAllSparklines(); })
+          .catch(() => {});
+      }
 
       apiConfig = { provider: "", keys: {} };
       apiCache = null;

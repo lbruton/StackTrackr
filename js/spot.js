@@ -628,10 +628,16 @@ const getSparklineData = (metalName, days, intraday = false) => {
     .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
 
   if (intraday) {
-    // Return individual entries for hourly resolution
+    // Deduplicate by timestamp — bulk hourly seed loads can produce duplicate timestamps
+    const seen = new Set();
+    const deduped = entries.filter((e) => {
+      if (seen.has(e.timestamp)) return false;
+      seen.add(e.timestamp);
+      return true;
+    });
     return {
-      labels: entries.map((e) => e.timestamp.slice(11, 16)),  // "HH:MM"
-      data: entries.map((e) => e.spot),
+      labels: deduped.map((e) => e.timestamp.slice(11, 16)),  // "HH:MM"
+      data: deduped.map((e) => e.spot),
     };
   }
 
@@ -729,6 +735,7 @@ const updateSparkline = async (metalKey) => {
           borderWidth: 1.5,
           pointRadius: 0,
           tension: isIntraday ? 0 : 0.3,
+          spanGaps: true,
         },
       ],
     },
@@ -747,7 +754,15 @@ const updateSparkline = async (metalKey) => {
           min: 0,
           max: data.length - 1,
         },
-        y: { display: false, beginAtZero: false, grace: '50%' },
+        y: {
+          display: false,
+          beginAtZero: false,
+          // Ensure Y axis spans at least 2% of the current price so flat
+          // intraday data (e.g. Gold ±$1 on a $5100 base) doesn't over-zoom
+          // and render micro-fluctuations as jarring spikes.
+          suggestedMin: data.length ? Math.min(...data) * 0.99 : undefined,
+          suggestedMax: data.length ? Math.max(...data) * 1.01 : undefined,
+        },
       },
       animation: { duration: 400 },
       interaction: { enabled: false },

@@ -9,6 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.32.07] - 2026-02-22
+
+### Fixed — Backend Data Integrity & Sparkline Fix
+
+- **Fixed**: Sync restore now clears all scoped localStorage keys before writing backup data — prevents stale entries leaking across restore (STAK-183)
+- **Added**: DiffEngine module — pure-data compare, merge, and conflict detection for inventory sync (STAK-186)
+- **Added**: changeLog manifest entries — scope tags, itemKey, type fields, and markSynced() for sync audit trail (STAK-187)
+- **Added**: Vault manifest crypto — AES-256-GCM encryptManifest/decryptManifest with STMF header magic (STAK-188)
+- **Fixed**: Sparkline intraday dedup removes duplicate timestamps that caused V-spike artifacts on spot price cards
+- **Fixed**: Sparkline Y-axis normalized to ±1% of price range — eliminates over-zoom on flat intraday data
+- **Fixed**: Post-wipe spot history initialized as array (not object) and triggers backfill correctly
+
+---
+
 ## [3.32.05] - 2026-02-22
 
 ### Fixed — Service Worker Cache Coverage
