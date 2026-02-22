@@ -287,6 +287,37 @@ async function _pickFreshestEndpoint() {
   return valid.length ? valid : null;
 }
 
+const _processSlugResult = (slug, latest, hist30) => {
+  const result = {
+    slug,
+    hasLatest: false,
+    price: null,
+    intraday: null,
+    availabilityBySite: null,
+    lastKnownPriceBySite: null,
+    lastAvailableDateBySite: null,
+    history30: Array.isArray(hist30) ? hist30 : null,
+  };
+
+  if (!latest) return result;
+
+  result.hasLatest = true;
+  result.price = {
+    median_price: latest.median_price,
+    lowest_price: latest.lowest_price,
+    vendors: latest.vendors || {},
+  };
+  result.intraday = {
+    window_start: latest.window_start,
+    windows_24h: Array.isArray(latest.windows_24h) ? latest.windows_24h : [],
+  };
+  result.availabilityBySite = latest.availability_by_site || null;
+  result.lastKnownPriceBySite = latest.last_known_price_by_site || null;
+  result.lastAvailableDateBySite = latest.last_available_date_by_site || null;
+
+  return result;
+};
+
 // ---------------------------------------------------------------------------
 // Sync
 // ---------------------------------------------------------------------------
@@ -368,36 +399,29 @@ const syncRetailPrices = async ({ ui = true } = {}) => {
         return;
       }
       const { slug, latest, hist30 } = r.value;
+      const processed = _processSlugResult(slug, latest, hist30);
 
-      if (latest) {
-        newPrices[slug] = {
-          median_price: latest.median_price,
-          lowest_price: latest.lowest_price,
-          vendors: latest.vendors || {},
-        };
-        // Update intraday window data
-        retailIntradayData[slug] = {
-          window_start: latest.window_start,
-          windows_24h: Array.isArray(latest.windows_24h) ? latest.windows_24h : [],
-        };
+      if (processed.hasLatest) {
+        newPrices[slug] = processed.price;
+        retailIntradayData[slug] = processed.intraday;
         // Update availability data
-        if (latest.availability_by_site) {
+        if (processed.availabilityBySite) {
           if (!retailAvailability[slug]) retailAvailability[slug] = {};
-          Object.assign(retailAvailability[slug], latest.availability_by_site);
+          Object.assign(retailAvailability[slug], processed.availabilityBySite);
         }
-        if (latest.last_known_price_by_site) {
+        if (processed.lastKnownPriceBySite) {
           if (!retailLastKnownPrices[slug]) retailLastKnownPrices[slug] = {};
-          Object.assign(retailLastKnownPrices[slug], latest.last_known_price_by_site);
+          Object.assign(retailLastKnownPrices[slug], processed.lastKnownPriceBySite);
         }
-        if (latest.last_available_date_by_site) {
+        if (processed.lastAvailableDateBySite) {
           if (!retailLastAvailableDates[slug]) retailLastAvailableDates[slug] = {};
-          Object.assign(retailLastAvailableDates[slug], latest.last_available_date_by_site);
+          Object.assign(retailLastAvailableDates[slug], processed.lastAvailableDateBySite);
         }
         successCount++;
       }
 
-      if (hist30 && Array.isArray(hist30)) {
-        retailPriceHistory[slug] = hist30;
+      if (processed.history30) {
+        retailPriceHistory[slug] = processed.history30;
       }
     });
 

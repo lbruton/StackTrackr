@@ -1,14 +1,12 @@
 import { test, expect } from '@playwright/test';
 import * as fs from 'fs';
 import * as path from 'path';
+import { dismissAckModal } from './test-utils.js';
 
 test.describe('Backup and Restore', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
-    const ackModal = page.locator('#ackModal');
-    if (await ackModal.isVisible()) {
-      await page.locator('#ackAcceptBtn').click();
-    }
+    await dismissAckModal(page);
   });
 
   test('Export Inventory as CSV', async ({ page }) => {
@@ -139,11 +137,7 @@ test.describe('Backup and Restore', () => {
     
     await page.evaluate(() => { localStorage.clear(); });
     await page.reload();
-
-    const ackModal = page.locator('#ackModal');
-    if (await ackModal.isVisible()) {
-      await page.locator('#ackAcceptBtn').click();
-    }
+    await dismissAckModal(page);
     
     await expect(page.locator('article', { hasText: 'Vault Test' })).not.toBeVisible();
 

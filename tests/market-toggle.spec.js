@@ -1,18 +1,13 @@
 // @ts-check
 import { test, expect } from '@playwright/test';
+import { dismissAckModal } from './test-utils.js';
 
 const TEST_URL = process.env.TEST_URL || 'http://localhost:8765';
 
 test.describe('Market Icon Toggle Feature', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto(TEST_URL);
-
-    // Dismiss acknowledgment modal if present
-    const ackModal = page.locator('#ackModal');
-    if (await ackModal.isVisible()) {
-      await page.locator('#ackAcceptBtn').click();
-      await expect(ackModal).not.toBeVisible();
-    }
+    await dismissAckModal(page);
   });
 
   test('Test 1: New user sees all 5 header buttons by default', async ({ page }) => {

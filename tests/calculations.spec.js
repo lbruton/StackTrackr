@@ -1,12 +1,10 @@
 import { test, expect } from '@playwright/test';
+import { dismissAckModal } from './test-utils.js';
 
 test.describe('Valuation and Calculations', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
-    const ackModal = page.locator('#ackModal');
-    if (await ackModal.isVisible()) {
-      await page.locator('#ackAcceptBtn').click();
-    }
+    await dismissAckModal(page);
   });
 
   test('Verify melt value calculation for Silver', async ({ page }) => {
