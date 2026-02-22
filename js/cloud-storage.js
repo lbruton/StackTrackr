@@ -1067,10 +1067,13 @@ function _getIdleLockTimeoutMs() {
 function _resetIdleLockTimer() {
   if (!sessionStorage.getItem('cloud_vault_pw_cache')) return;
   clearTimeout(_idleLockTimer);
-  clearTimeout(_idleThrottleTimer);
-  _idleThrottleTimer = null;
   var timeoutMs = _getIdleLockTimeoutMs();
-  if (timeoutMs === 0) return; // "Never" — no auto-lock
+  if (timeoutMs === 0) {
+    // "Never" — cancel throttle too so activity listeners become true no-ops
+    clearTimeout(_idleThrottleTimer);
+    _idleThrottleTimer = null;
+    return;
+  }
   _idleLockTimer = setTimeout(function () {
     if (!sessionStorage.getItem('cloud_vault_pw_cache')) return;
     cloudClearCachedPassword();
