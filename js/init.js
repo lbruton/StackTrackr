@@ -677,6 +677,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     debugLog("  - Settings button:", !!elements.settingsBtn);
     debugLog("  - Inventory form:", !!elements.inventoryForm);
     debugLog("  - Inventory table:", !!elements.inventoryTable);
+    // API health badge — runs after safeGetElement and all DOM setup are ready
+    if (typeof initApiHealth === 'function') initApiHealth();
+
     // Phase 16: Storage optimization pass
     if (typeof optimizeStoragePhase1C === 'function') { optimizeStoragePhase1C(); }
 
