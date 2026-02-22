@@ -1184,6 +1184,14 @@ const renderCloudBackupList = (provider, backups) => {
  */
 const bindCloudCacheListeners = () => {
   // Session-only password cache — no toggle needed, auto-caches on first use
+  var idleSelect = safeGetElement('cloudVaultIdleTimeout');
+  if (idleSelect) {
+    idleSelect.addEventListener('change', function () {
+      var key = typeof CLOUD_VAULT_IDLE_TIMEOUT_KEY !== 'undefined' ? CLOUD_VAULT_IDLE_TIMEOUT_KEY : 'cloud_vault_idle_timeout';
+      localStorage.setItem(key, this.value);
+      if (typeof _resetIdleLockTimer === 'function') _resetIdleLockTimer();
+    });
+  }
 };
 
 /**

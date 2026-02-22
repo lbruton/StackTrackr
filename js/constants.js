@@ -563,6 +563,9 @@ const THEME_KEY = "appTheme";
 /** @constant {string} ACK_DISMISSED_KEY - LocalStorage key for acknowledgment dismissal */
 const ACK_DISMISSED_KEY = "ackDismissed";
 
+/** @constant {string} CLOUD_VAULT_IDLE_TIMEOUT_KEY - LocalStorage key for vault password idle lock timeout in minutes (15|30|60|120|0=never) */
+const CLOUD_VAULT_IDLE_TIMEOUT_KEY = "cloud_vault_idle_timeout";
+
 /** @constant {string} API_KEY_STORAGE_KEY - LocalStorage key for API provider information */
 const API_KEY_STORAGE_KEY = "metalApiConfig";
 
@@ -794,7 +797,7 @@ const ALLOWED_STORAGE_KEYS = [
   "cloud_sync_device_id",                      // UUID string: stable per-device identifier
   "cloud_sync_cursor",                         // Dropbox rev string: for efficient change detection
   "cloud_sync_override_backup",                // JSON: { timestamp, itemCount, appVersion, data: {...} } — pre-pull local snapshot
-  "cloud_vault_idle_timeout",                  // number string: vault password idle lock timeout in minutes (15|30|60|120|0=never)
+  CLOUD_VAULT_IDLE_TIMEOUT_KEY,                // number string: vault password idle lock timeout in minutes (15|30|60|120|0=never)
 ];
 
 // =============================================================================
@@ -1627,6 +1630,7 @@ if (typeof window !== "undefined") {
   window.MAX_TAG_LENGTH = MAX_TAG_LENGTH;
   // Multi-currency support (STACK-50)
   window.SUPPORTED_CURRENCIES = SUPPORTED_CURRENCIES;
+  window.CLOUD_VAULT_IDLE_TIMEOUT_KEY = CLOUD_VAULT_IDLE_TIMEOUT_KEY;
   window.DISPLAY_CURRENCY_KEY = DISPLAY_CURRENCY_KEY;
   window.EXCHANGE_RATES_KEY = EXCHANGE_RATES_KEY;
   window.EXCHANGE_RATE_API_URL = EXCHANGE_RATE_API_URL;

@@ -992,10 +992,16 @@ function syncCloudUI() {
   }
 
   // Sync idle timeout select to stored preference
-  var idleSelect = typeof safeGetElement === 'function' ? safeGetElement('cloudVaultIdleTimeout') : document.getElementById('cloudVaultIdleTimeout');
+  var idleSelect = safeGetElement('cloudVaultIdleTimeout');
   if (idleSelect) {
-    var storedTimeout = localStorage.getItem('cloud_vault_idle_timeout');
-    idleSelect.value = storedTimeout !== null ? storedTimeout : '15';
+    var storedTimeout = localStorage.getItem(CLOUD_VAULT_IDLE_TIMEOUT_KEY);
+    var idleVal = storedTimeout !== null ? storedTimeout : '15';
+    // If stored value isn't a valid option, clamp to default and persist
+    if (!['0', '15', '30', '60', '120'].includes(idleVal)) {
+      idleVal = '15';
+      localStorage.setItem(CLOUD_VAULT_IDLE_TIMEOUT_KEY, idleVal);
+    }
+    idleSelect.value = idleVal;
   }
 
   // STAK-149: Refresh auto-sync UI (toggle, last-synced, status dot)
@@ -1052,15 +1058,17 @@ let _idleThrottleTimer = null;
 
 /** Returns the vault idle lock timeout in ms. 0 means never lock. */
 function _getIdleLockTimeoutMs() {
-  var stored = localStorage.getItem('cloud_vault_idle_timeout');
+  var stored = localStorage.getItem(CLOUD_VAULT_IDLE_TIMEOUT_KEY);
   var minutes = stored !== null ? parseInt(stored, 10) : 15;
-  if (isNaN(minutes) || minutes < 0) minutes = 15;
+  if (isNaN(minutes) || ![0, 15, 30, 60, 120].includes(minutes)) minutes = 15;
   return minutes === 0 ? 0 : minutes * 60 * 1000;
 }
 
 function _resetIdleLockTimer() {
   if (!sessionStorage.getItem('cloud_vault_pw_cache')) return;
   clearTimeout(_idleLockTimer);
+  clearTimeout(_idleThrottleTimer);
+  _idleThrottleTimer = null;
   var timeoutMs = _getIdleLockTimeoutMs();
   if (timeoutMs === 0) return; // "Never" — no auto-lock
   _idleLockTimer = setTimeout(function () {
@@ -1138,7 +1146,6 @@ window.syncCloudUI = syncCloudUI;
 window.cloudCachePassword = cloudCachePassword;
 window.cloudGetCachedPassword = cloudGetCachedPassword;
 window.cloudClearCachedPassword = cloudClearCachedPassword;
-window._resetIdleLockTimer = _resetIdleLockTimer;
 window.showCloudToast = showCloudToast;
 window.showKrakenToastIfFirst = showKrakenToastIfFirst;
 window.recordCloudActivity = recordCloudActivity;
