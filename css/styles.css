@@ -3268,6 +3268,14 @@ input[type="submit"] {
   grid-template-columns: repeat(3, 1fr);
 }
 
+.settings-card-grid--mini .settings-card {
+  padding: 0.6rem 0.75rem;
+  gap: 0;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+
 /* Image actions row — flex wrap of action buttons */
 .image-actions-row {
   display: flex;
