@@ -3171,7 +3171,7 @@
                 </div>
                 <div class="cloud-status-row" style="margin-top:0.5rem">
                   <label class="cloud-status-label" for="cloudVaultIdleTimeout">Auto-lock after idle</label>
-                  <select id="cloudVaultIdleTimeout" class="control-select" title="Clear cached vault password after this period of inactivity" onchange="localStorage.setItem('cloud_vault_idle_timeout',this.value);if(typeof _resetIdleLockTimer==='function')_resetIdleLockTimer();">
+                  <select id="cloudVaultIdleTimeout" class="control-select" title="Clear cached vault password after this period of inactivity">
                     <option value="15">15 minutes</option>
                     <option value="30">30 minutes</option>
                     <option value="60">1 hour</option>
