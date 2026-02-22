@@ -501,6 +501,9 @@ const RETAIL_API_ENDPOINTS = [
 /** @constant {string} RETAIL_API_BASE_URL - Primary endpoint (backward compat) */
 const RETAIL_API_BASE_URL = RETAIL_API_ENDPOINTS[0];
 
+/** @constant {string} GOLDBACK_API_URL - Goldback daily spot price endpoint (g1_usd + denominations) */
+const GOLDBACK_API_URL = "https://api.staktrakr.com/data/api/goldback-spot.json";
+
 /** @constant {string} RETAIL_INTRADAY_KEY - LocalStorage key for 15-min intraday window data */
 const RETAIL_INTRADAY_KEY = "retailIntradayData";
 
@@ -761,6 +764,7 @@ const ALLOWED_STORAGE_KEYS = [
   LATEST_REMOTE_URL_KEY,      // string: cached latest remote release URL (STACK-67)
   "ff_migration_fuzzy_autocomplete", // one-time migration flag (v3.26.01)
   "migration_hourlySource",          // one-time migration flag: re-tag StakTrakr hourly entries
+  "migration_seedHistoryMerge",      // one-time migration flag: backfill full historical seed data (v3.32.01)
   "numistaLookupRules",              // custom Numista search lookup rules (JSON array)
   "numistaViewFields",               // view modal Numista field visibility config (JSON object)
   TIMEZONE_KEY,                        // string: "auto" | "UTC" | IANA zone (STACK-63)
@@ -1601,6 +1605,7 @@ if (typeof window !== "undefined") {
   window.RETAIL_INTRADAY_KEY = RETAIL_INTRADAY_KEY;
   window.RETAIL_SYNC_LOG_KEY = RETAIL_SYNC_LOG_KEY;
   window.RETAIL_AVAILABILITY_KEY = RETAIL_AVAILABILITY_KEY;
+  window.GOLDBACK_API_URL = GOLDBACK_API_URL;
   window.GOLDBACK_ENABLED_KEY = GOLDBACK_ENABLED_KEY;
   window.GB_TO_OZT = GB_TO_OZT;
   window.GOLDBACK_DENOMINATIONS = GOLDBACK_DENOMINATIONS;

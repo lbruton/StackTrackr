@@ -3527,12 +3527,9 @@
                   Auto-estimate prices from gold spot: <code>2 &times; (spot&thinsp;/&thinsp;1000) &times; modifier</code>.
                   Manual edits will be overwritten on the next spot refresh.
                 </p>
-                <div style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;">
-                  <div id="settingsGoldbackEstimateEnabled" class="chip-sort-group">
-                    <button class="chip-sort-btn" data-val="on" type="button">On</button>
-                    <button class="chip-sort-btn active" data-val="off" type="button">Off</button>
-                  </div>
-                  <button class="btn btn-primary" id="goldbackEstimateRefreshBtn" type="button" style="display:none;">Refresh from API</button>
+                <div id="settingsGoldbackEstimateEnabled" class="chip-sort-group">
+                  <button class="chip-sort-btn" data-val="on" type="button">On</button>
+                  <button class="chip-sort-btn active" data-val="off" type="button">Off</button>
                 </div>
                 <div id="goldbackEstimateModifierRow" style="display:none;margin-top:0.5rem;">
                   <label style="font-size:0.85em;">
@@ -3545,6 +3542,12 @@
                   </div>
                 </div>
                 <p id="goldbackEstimateInfo" class="settings-subtext" style="display:none;margin-top:0.5rem;"></p>
+              </div>
+
+              <div class="settings-group">
+                <label>Refresh from API</label>
+                <p class="settings-subtext">Fetch today's official Goldback exchange rate from the StakTrakr API and populate all denomination prices automatically.</p>
+                <button class="btn btn-primary" id="goldbackEstimateRefreshBtn" type="button" style="display:none;">Refresh from API</button>
               </div>
 
               <div class="settings-group">

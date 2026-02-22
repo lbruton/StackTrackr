@@ -231,6 +231,49 @@ const onGoldSpotPriceChanged = () => {
 };
 
 // =============================================================================
+// GOLDBACK API FETCH (STAK-241)
+// =============================================================================
+
+/**
+ * Fetches today's Goldback rate from the StakTrakr API and populates all
+ * denomination prices from g1_usd. Saves and records history on success.
+ * @returns {Promise<{ok: boolean, g1_usd?: number, error?: string}>}
+ */
+const fetchGoldbackApiPrices = async () => {
+  if (typeof GOLDBACK_API_URL === 'undefined') {
+    return { ok: false, error: 'GOLDBACK_API_URL not defined' };
+  }
+  let data;
+  try {
+    const res = await fetch(GOLDBACK_API_URL, { cache: 'no-store' });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    data = await res.json();
+  } catch (err) {
+    return { ok: false, error: String(err) };
+  }
+
+  const g1 = typeof data.g1_usd === 'number' && data.g1_usd > 0 ? data.g1_usd : null;
+  if (!g1) return { ok: false, error: 'Invalid or missing g1_usd in API response' };
+
+  const now = Date.now();
+  if (typeof GOLDBACK_DENOMINATIONS === 'undefined') {
+    return { ok: false, error: 'GOLDBACK_DENOMINATIONS not defined' };
+  }
+
+  for (const d of GOLDBACK_DENOMINATIONS) {
+    const key = String(d.weight);
+    const price = Math.round(g1 * d.weight * 100) / 100;
+    goldbackPrices[key] = { price, updatedAt: now, source: 'api' };
+  }
+
+  if (typeof saveGoldbackPrices === 'function') saveGoldbackPrices();
+  if (typeof recordGoldbackPrices === 'function') recordGoldbackPrices();
+  if (typeof syncGoldbackSettingsUI === 'function') syncGoldbackSettingsUI();
+
+  return { ok: true, g1_usd: g1 };
+};
+
+// =============================================================================
 // GOLDBACK PRICE HISTORY MODAL
 // =============================================================================
 
@@ -422,6 +465,7 @@ if (typeof window !== 'undefined') {
   window.recordGoldbackPrices = recordGoldbackPrices;
   window.getGoldbackDenominationPrice = getGoldbackDenominationPrice;
   window.isGoldbackPricingActive = isGoldbackPricingActive;
+  window.fetchGoldbackApiPrices = fetchGoldbackApiPrices;
   window.showGoldbackHistoryModal = showGoldbackHistoryModal;
   window.hideGoldbackHistoryModal = hideGoldbackHistoryModal;
   window.exportGoldbackHistory = exportGoldbackHistory;

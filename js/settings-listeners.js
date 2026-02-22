@@ -376,14 +376,15 @@ const bindGoldbackToggleListeners = () => {
   const gbEstRefreshBtn = getExistingElement('goldbackEstimateRefreshBtn');
   if (gbEstRefreshBtn) {
     gbEstRefreshBtn.addEventListener('click', async () => {
-      if (typeof syncProviderChain !== 'function') return;
+      if (typeof fetchGoldbackApiPrices !== 'function') return;
       const origText = gbEstRefreshBtn.textContent;
-      gbEstRefreshBtn.textContent = 'Refreshing...';
+      gbEstRefreshBtn.textContent = 'Fetching...';
       gbEstRefreshBtn.disabled = true;
       try {
-        await syncProviderChain({ showProgress: false, forceSync: true });
+        const result = await fetchGoldbackApiPrices();
+        if (!result.ok) console.warn('Goldback API fetch failed:', result.error);
       } catch (err) {
-        console.warn('Goldback estimate refresh failed:', err);
+        console.warn('Goldback API fetch error:', err);
       } finally {
         gbEstRefreshBtn.textContent = origText;
         gbEstRefreshBtn.disabled = false;
