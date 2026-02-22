@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.32.05] - 2026-02-22
+
+### Fixed — Service Worker Cache Coverage
+
+- **Fixed**: Add `image-processor.js`, `bulk-image-cache.js`, and `image-cache-modal.js` to `sw.js` CORE_ASSETS — offline image workflows no longer 404 on first offline visit
+
+---
+
 ## [3.32.04] - 2026-02-22
 
 ### Fixed — Async Save Reliability
