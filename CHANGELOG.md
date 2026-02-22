@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.32.02] - 2026-02-22
+
+### Changed — Appearance Settings Redesign
+
+- **Changed**: Appearance tab redesigned — Color scheme and Inventory View as compact pill-button pickers in one card; Timezone, Default Sort, and Visible Items as full-width dropdowns in a second card; thumb-friendly touch targets throughout (STAK-258)
+
+---
+
 ## [3.32.01] - 2026-02-21
 
 ### Fixed — Dual-Poller API Endpoint & Spot Pipeline Fixes
