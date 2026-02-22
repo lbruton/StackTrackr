@@ -252,12 +252,18 @@ try:
 except Exception as e:
     print(f"Market  ❌  {e}")
 
-# Spot (seed file — expect 600+ min; check GH Actions for live freshness)
+# Spot (live hourly file — current UTC hour, fallback to previous)
 try:
-    d = fetch('https://api.staktrakr.com/data/spot-history-2026.json')
+    from datetime import timedelta
+    now = datetime.now(timezone.utc)
+    def _hourly_url(dt): return f"https://api.staktrakr.com/data/hourly/{dt.year}/{dt.month:02d}/{dt.day:02d}/{dt.hour:02d}.json"
+    try:
+        d = fetch(_hourly_url(now))
+    except Exception:
+        d = fetch(_hourly_url(now - timedelta(hours=1)))
     last = d[-1]
     age = age_min(last['timestamp'])
-    print(f"Spot    {'✅' if age <= 75 else '⚠️'}  {age:.0f}m ago  (seed file — see hourly/ for live)")
+    print(f"Spot    {'✅' if age <= 75 else '⚠️'}  {age:.0f}m ago")
 except Exception as e:
     print(f"Spot    ❌  {e}")
 
