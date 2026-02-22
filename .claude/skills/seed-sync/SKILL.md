@@ -1,3 +1,8 @@
+---
+name: seed-sync
+description: Seed data sync — check Docker spot-price poller output and stage new seed data for commit. Use before releases or after merging PRs.
+---
+
 # Seed Data Sync — StakTrakr
 
 Check the Docker spot-price poller output and stage any new seed data for commit. Can also fetch today's prices directly without Docker.

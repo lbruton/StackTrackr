@@ -80,11 +80,12 @@ Add to `.mcp.json`:
 ```json
 "infisical": {
   "command": "npx",
-  "args": ["@infisical/mcp-server"],
+  "args": ["-y", "@infisical/mcp"],
   "env": {
-    "INFISICAL_SITE_URL": "http://localhost:8700",
+    "INFISICAL_HOST_URL": "http://localhost:8700",
     "INFISICAL_UNIVERSAL_AUTH_CLIENT_ID": "<client-id>",
-    "INFISICAL_UNIVERSAL_AUTH_CLIENT_SECRET": "<client-secret>"
+    "INFISICAL_UNIVERSAL_AUTH_CLIENT_SECRET": "<client-secret>",
+    "INFISICAL_PROJECT_ID": "<project-id>"
   }
 }
 ```

@@ -79,13 +79,14 @@ This file provides foundational mandates and project-specific context for Gemini
 
 Gemini has access to the following MCP servers. Use them as described.
 
-### Agent MCP Parity (as of 2026-02-20)
+### Agent MCP Parity (as of 2026-02-21)
 
-All three agents run on the same Mac and share the same Docker/IP stack.
+All agents run on the same Mac and share the same Docker/IP stack.
 
 | Server | Claude | Gemini | Codex | Notes |
 |---|---|---|---|---|
-| `memento` | ✅ | ✅ | ✅ | Shared Neo4j knowledge graph |
+| `mem0` | ✅ | ✅ | ✅ | Episodic memory (cloud trial, active) |
+| `memento` | ✅ | ✅ | ✅ | Neo4j knowledge graph (paused for mem0 trial) |
 | `sequential-thinking` | ✅ | ✅ | ✅ | Structured reasoning |
 | `brave-search` | ✅ | ✅ | ✅ | Web search |
 | `claude-context` | ✅ | ✅ | ✅ | Semantic code search (Milvus) |
@@ -97,14 +98,30 @@ All three agents run on the same Mac and share the same Docker/IP stack.
 | `playwright` | ✅ | ✅ | ✅ | Browser automation / test authoring |
 | `browserbase` | ✅ | ✅ | ✅ | Cloud NL tests (paid, use sparingly) |
 | `code-graph-context` | ✅ | ✅ | ✅ | Structural graph (Docker required) |
-| `stitch` | ✅ | ✅ primary | ✅ | OAuth via `init`; Gemini preferred for design tasks |
+| `infisical` | ✅ | ✅ | ✅ | Self-hosted secrets manager |
 
-### Memento (Knowledge Graph)
+### mem0 (Episodic Memory — Active)
+
+Cloud-based episodic memory system (active trial, replacing Memento for day-to-day use).
+Automatically saves conversational context, preferences, and decisions across sessions.
+
+**When to use:** Recall what was discussed in previous sessions, save preferences, store session insights.
+
+**Tools available:**
+
+- `search_memories` — Find relevant memories by keyword or concept
+- `add_memory` — Explicitly save an insight, preference, or decision
+- `get_memories` — List all stored memories
+- `get_memory` — Retrieve a specific memory by ID
+- `delete_memory` — Remove a specific memory
+
+### Memento (Knowledge Graph — Paused)
 
 Shared persistent memory across all agents (Claude, Codex, Gemini, and the human).
 Backed by Neo4j with vector embeddings for semantic search.
+**Currently paused** for mem0 cloud trial. Still configured in `.mcp.json` — use if mem0 trial ends.
 
-**When to use:** Save session summaries, insights, handoffs, and decisions. Recall prior context before starting work. Check for existing knowledge before duplicating effort.
+**When to use:** Structured knowledge storage with entity relationships, semantic recall, and historical context. Prefer mem0 for simple recall; use Memento when you need graph relationships between entities.
 
 **Tools available:**
 
@@ -207,7 +224,11 @@ scraping, crawling, and web search without consuming cloud credits.
 Stitch is a Google product. **Gemini is the designated Stitch agent for StakTrakr** — Claude and
 Codex route Stitch tasks here. Use the `ui-mockup` skill workflow when generating mockups.
 
-**Tools available:**
+**Note:** Stitch MCP server has been removed from `.mcp.json`. Use Stitch via Gemini's native
+integration or the Google AI Studio interface instead.
+
+**Tools available (when connected):**
+
 - `create_project` — Create a container for designs
 - `generate_screen_from_text` — Generate a new UI screen from a prompt
 - `edit_screens` — Modify existing screens via prompt
@@ -297,9 +318,9 @@ StakTrakr uses a multi-agent development workflow. Four agents collaborate:
 
 When completing work or passing context to another agent:
 
-1. **Save to Memento** — Create a handoff entity following the taxonomy
+1. **Save to mem0/Memento** — Create a handoff entry (mem0 `add_memory` for simple context; Memento entity for structured graph relationships)
 2. **Post to Linear** — Comment on the related issue, or create an issue in the Developers team
-3. **Include all fields:** scope, validation, next steps, owner, risks, Memento entity name
+3. **Include all fields:** scope, validation, next steps, owner, risks, memory reference
 
 ### Handoff comment template
 
@@ -311,7 +332,7 @@ Agent handoff update:
 - Validation: <what was run/verified>
 - Next: <explicit next step + owner>
 - Links: <Linear issue/PR links>
-- Memory: <Memento entity name(s)>
+- Memory: <mem0/Memento reference(s)>
 - Risks: <known risks/assumptions>
 ```
 
@@ -325,4 +346,4 @@ Agent handoff update:
 
 ---
 
-*Last Updated: 2026-02-19*
+*Last Updated: 2026-02-21*

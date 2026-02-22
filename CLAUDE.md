@@ -24,7 +24,7 @@ These rules fire before any implementation, no exceptions:
 - "It should work now" → verification-before-completion first
 - "Let me explore the codebase..." → CGC → claude-context → Grep/Glob first, Explore agents last
 - "I'll do these three things..." → dispatching-parallel-agents
-- "New multi-element UI component..." → ui-mockup skill (Stitch) + playground before coding
+- "New multi-element UI component..." → ui-mockup skill + playground before coding
 
 ## Code Search — Cheapest First
 
@@ -78,23 +78,45 @@ For CSS/HTML guidance, use `frontend-design` plugin or `ui-design` project skill
 |------|----------|---------|
 | `CLAUDE.md` | Claude Code (local Mac) | No (gitignored) |
 | `AGENTS.md` | Codex, web agents | Yes |
+| `GEMINI.md` | Gemini CLI | Yes |
 | `.github/copilot-instructions.md` | Copilot PR reviews | Yes |
 
-**Skills**: `superpowers` fork at `~/.claude/plugins/cache/lbruton/superpowers/fork/` — 25 skills, all migrated from `~/.claude/skills/` and user-level commands. Project skills in `.claude/skills/`: `coding-standards`, `markdown-standards`, `release`, `seed-sync`, `ui-mockup`.
+**Skills**: Official `superpowers@claude-plugins-official` plugin (auto-updates) + user overrides in `~/.claude/skills/` (25 skills). Project skills in `.claude/skills/`: `coding-standards`, `markdown-standards`, `release`, `seed-sync`, `ui-design`, `ui-mockup`, `bb-test`, `smoke-test`, `retail-poller`, `browserbase-test-maintenance`.
 
 Use `/sync-instructions` after significant codebase changes.
 
 ## MCP Tools — Use Proactively
 
-- `mcp__mem0__*` — save insights, recall handoffs, store session notes (Memento paused for 1-week mem0 cloud trial)
+- `mcp__mem0__*` — episodic memory: save insights, recall handoffs, store session notes (mem0 cloud trial active; Memento paused)
 - `mcp__claude_ai_Linear__*` — all Linear ops (team: `f876864d-ff80-4231-ae6c-a8e5cb69aca4`)
 - `mcp__codacy__*` — quality/PR issues; use during `/pr-resolve`
 - `mcp__context7__*` — library docs (Chart.js, Bootstrap, jsPDF) before implementing
 - `mcp__firecrawl-local__*` — free local scraping (port 3002; `cd devops/firecrawl-docker && docker compose up -d`)
-- `mcp__stitch__*` — UI design (Gemini preferred; use `ui-mockup` skill)
 - `mcp__browserbase__*` — Stagehand NL tests only, **requires explicit user approval** (paid)
+- `mcp__infisical__*` — secrets management at `http://localhost:8700`. See `secrets` skill.
 - **Browserless** — scripted Playwright, free (`cd devops/browserless && docker compose up -d`, use `/smoke-test`)
-- **Secrets**: Infisical at `http://localhost:8700` ("Infant Si Cal"). See `secrets` skill.
+- **Memento** (`mcp__memento__*`) — Neo4j knowledge graph, currently paused for mem0 cloud trial. Still configured in `.mcp.json`.
+
+## MCP Agent Parity (as of 2026-02-21)
+
+All agents run on the same Mac and share the same Docker/IP stack.
+
+| Server | Claude | Gemini | Codex | Notes |
+|---|---|---|---|---|
+| `mem0` | ✅ | ✅ | ✅ | Episodic memory (cloud trial, active) |
+| `memento` | ✅ | ✅ | ✅ | Neo4j knowledge graph (paused for mem0 trial) |
+| `sequential-thinking` | ✅ | ✅ | ✅ | Structured reasoning |
+| `brave-search` | ✅ | ✅ | ✅ | Web search |
+| `claude-context` | ✅ | ✅ | ✅ | Semantic code search (Milvus) |
+| `context7` | ✅ | ✅ | ✅ | Library documentation |
+| `firecrawl-local` | ✅ | ✅ | ✅ | Self-hosted scraping (port 3002) |
+| `linear` | ✅ | ✅ | ✅ | Issue tracking |
+| `codacy` | ✅ | ✅ | ✅ | Code quality analysis |
+| `chrome-devtools` | ✅ | — | ✅ | Gemini omits — use Playwright instead |
+| `playwright` | ✅ | ✅ | ✅ | Browser automation / test authoring |
+| `browserbase` | ✅ | ✅ | ✅ | Cloud NL tests (paid, use sparingly) |
+| `code-graph-context` | ✅ | ✅ | ✅ | Structural graph (Docker required) |
+| `infisical` | ✅ | ✅ | ✅ | Self-hosted secrets manager |
 
 ## Codex Invocation Safety
 
