@@ -1,46 +1,28 @@
-# Frequent merge of data branch into dev — keeps api data current in dev/main.
-# Runs every 5 minutes (GitHub minimum). Local Docker is the primary data source;
-# this just ensures data branch commits land in dev quickly.
-# Nightly run also syncs dev scripts back to data branch.
+# DISABLED — data branch was rebuilt as an orphan (no shared history with dev).
+# The spot-poller.yml workflow now uses dual-checkout (dev for code, data for files)
+# so scripts no longer need to be synced to the data branch.
+# Dev gets price data via live API endpoints, not via branch merge.
+#
+# To re-enable: rebuild the data branch from dev with shared ancestry,
+# or rewrite this workflow to use file-level rsync instead of git merge.
 name: Merge Seed Data
 
 on:
-  schedule:
-    - cron: '*/5 * * * *'  # Every 5 min — data branch → dev
-    - cron: '0 5 * * *'    # Nightly 5am UTC — also syncs dev scripts → data
-  workflow_dispatch:
+  workflow_dispatch: # Keep manual trigger for debugging
+
+# Scheduled runs disabled until data branch shares history with dev again
+# on:
+#   schedule:
+#     - cron: '*/5 * * * *'  # Every 5 min — data branch → dev
+#     - cron: '0 5 * * *'    # Nightly 5am UTC — also syncs dev scripts → data
 
 jobs:
   merge:
     runs-on: ubuntu-latest
+    if: false  # Disabled — see comment above
     permissions:
       contents: write
 
     steps:
-      - name: Checkout dev branch
-        uses: actions/checkout@v4
-        with:
-          ref: dev
-          fetch-depth: 0 # Full history needed for merge
-
-      - name: Merge data branch into dev
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git fetch origin data
-          if git merge origin/data --no-edit; then
-            git push
-            echo "Merged data → dev successfully."
-          else
-            echo "::error::Merge conflict merging data → dev. Resolve manually."
-            git merge --abort
-            exit 1
-          fi
-
-      # Only sync scripts back on the nightly run — not every 5 minutes
-      - name: Sync dev scripts back to data branch
-        if: github.event.schedule == '0 5 * * *' || github.event_name == 'workflow_dispatch'
-        run: |
-          git switch data
-          git merge origin/dev --no-edit -m "sync: dev scripts → data" || true
-          git push || true
+      - name: Placeholder
+        run: echo "Workflow disabled — data branch has unrelated history"

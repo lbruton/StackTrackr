@@ -1,7 +1,10 @@
 services:
   infisical:
-    image: infisical/infisical:latest
+    image: infisical/infisical:v0.158.5
     container_name: staktrakr-infisical
+    # Override entrypoint to cap the cert-update step at 10s.
+    # v0.158.x introduced update-ca-certificates which hangs indefinitely on macOS Docker.
+    entrypoint: ["sh", "-c", "timeout 10 update-ca-certificates || true; exec node --enable-source-maps /backend/dist/main.mjs"]
     ports:
       - "8700:8080"
     env_file: .env
@@ -10,6 +13,12 @@ services:
         condition: service_healthy
       infisical-redis:
         condition: service_started
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 300s
     networks:
       - default
       - infra

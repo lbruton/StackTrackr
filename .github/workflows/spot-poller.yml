@@ -1,5 +1,9 @@
 # Hourly spot price poller — writes to the `data` branch
 # Requires repository secret: METAL_PRICE_API_KEY
+#
+# Architecture: Checks out `dev` for poller code, `data` for data files.
+# The `data` branch contains only data (no source code), so the poller
+# scripts must come from `dev`.
 name: Spot Price Poller
 
 on:
@@ -18,10 +22,17 @@ jobs:
       contents: write
 
     steps:
-      - name: Checkout data branch
+      - name: Checkout dev (for poller code)
+        uses: actions/checkout@v4
+        with:
+          ref: dev
+          path: code
+
+      - name: Checkout data branch (for data files)
         uses: actions/checkout@v4
         with:
           ref: data
+          path: data-branch
           fetch-depth: 1
 
       - name: Set up Python
@@ -30,24 +41,25 @@ jobs:
           python-version: '3.12'
 
       - name: Install dependencies
-        run: pip install -r devops/spot-poller/requirements.txt
+        run: pip install -r code/devops/spot-poller/requirements.txt
 
-      - name: Run poller (single shot)
+      - name: Run poller (single shot with backfill)
         env:
           METAL_PRICE_API_KEY: ${{ secrets.METAL_PRICE_API_KEY }}
-          DATA_DIR: ${{ github.workspace }}/data
-        run: python devops/spot-poller/poller.py --once
+          DATA_DIR: ${{ github.workspace }}/data-branch
+        run: python code/devops/spot-poller/poller.py --once
 
       - name: Commit and push data
+        working-directory: data-branch
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add data/
+          git add .
           if git diff --cached --quiet; then
             echo "No new data to commit."
           else
-            HOUR=$(date +%H)
-            DATE=$(date +%Y-%m-%d)
+            HOUR=$(date -u +%H)
+            DATE=$(date -u +%Y-%m-%d)
             git commit -m "spot: ${DATE} hour ${HOUR} price data"
             git push
           fi
