@@ -888,7 +888,7 @@ const filterInventoryAdvanced = () => {
         const exactPhrase = q.toLowerCase();
         // STAK-126: include tags in searchable text
         let itemText = searchCache.get(item);
-        if (!itemText) {
+        if (itemText === undefined) {
           const _searchTags = typeof getItemTags === 'function' ? getItemTags(item.uuid).join(' ') : '';
           itemText = [
             item.metal,

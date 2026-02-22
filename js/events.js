@@ -1765,6 +1765,9 @@ const setupNoteAndModalListeners = () => {
 
     const oldItem = { ...inventory[notesIndex] };
     inventory[notesIndex].notes = text;
+    if (typeof window.invalidateSearchCache === 'function') {
+      window.invalidateSearchCache(inventory[notesIndex]);
+    }
     saveInventory();
     renderTable();
     logItemChanges(oldItem, inventory[notesIndex]);

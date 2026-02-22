@@ -230,11 +230,6 @@ const applyNumistaTags = (uuid, numistaTags, persist = true) => {
   }
   if (persist && added > 0) saveItemTags();
 
-  if (added > 0 && typeof window.invalidateSearchCache === 'function') {
-    const item = findItemByUuid(uuid);
-    if (item) window.invalidateSearchCache(item);
-  }
-
   return added;
 };
 
