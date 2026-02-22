@@ -136,24 +136,34 @@ When any version-related file changes, verify all are in sync:
 | `version.json` | `"version"` field |
 | `data/spot-history-*.json` | Seed data should be refreshed |
 
-### 9. Version Lock Protocol (Multi-Agent Safety)
+### 9. Version Lock + Worktree Protocol (Multi-Agent Safety)
 
-Multiple agents work concurrently on the same local repo. Before any version bump:
+Multiple agents work concurrently on the same local repo. The version lock prevents version
+number collisions; worktrees prevent filesystem conflicts.
+
+**Full 9-step protocol** is in `devops/version-lock-protocol.md`. Summary:
 
 1. Check `devops/version.lock` — if present and not expired, **stop and report the conflict**
 2. If unlocked (or expired): compute next version, write the lock file immediately
-3. All changelog bullets, mem0 entries, and Linear comments for the release must reference the locked version
-4. After committing: `rm devops/version.lock`
+3. Create worktree + branch: `git worktree add .claude/worktrees/patch-VERSION -b patch/VERSION`
+4. Do all work inside `.claude/worktrees/patch-VERSION/`
+5. Push branch → open draft PR `patch/VERSION → dev` (Cloudflare generates preview)
+6. QA preview → merge to dev
+7. Cleanup: `git worktree remove .claude/worktrees/patch-VERSION --force && git branch -d patch/VERSION && rm devops/version.lock`
 
-Lock format:
-```
-locked_by: <agent>
-locked_at: <ISO 8601>
-next_version: <X.Y.Z>
-expires_at: <locked_at + 30 min>
+Lock format (JSON):
+```json
+{
+  "locked": "3.32.09",
+  "locked_by": "codex / STAK-XX description",
+  "locked_at": "2026-02-22T19:00:00Z",
+  "expires_at": "2026-02-22T19:30:00Z"
+}
 ```
 
-See `devops/version-lock-protocol.md` for full details. `devops/version.lock` is gitignored.
+- `devops/version.lock` is gitignored — **never commit it**
+- `.claude/worktrees/` is gitignored — worktree content dirs are transient
+- **Never push directly to `main`** — it auto-deploys to staktrakr.com via Cloudflare Pages
 
 ### 10. Announcements Rotation
 
