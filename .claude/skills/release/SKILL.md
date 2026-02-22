@@ -8,11 +8,17 @@ allowed-tools: Bash, Read, Write, Edit, Grep, Glob
 
 End-to-end release workflow: bump version across all 7 files, commit to dev, and create a PR to main.
 
+## When to Run
+
+**`patch` is the default dev workflow** — run it after every meaningful committed change (bug fix, UX tweak, feature addition). Each patch tag is a breadcrumb for the final changelog. Rule: **one meaningful change = one patch tag, one git tag**.
+
+**`release`** is for bumping the RELEASE number when shipping a major batch to main via PR.
+
 ## Arguments
 
 $ARGUMENTS can be:
 - `release` — bump RELEASE number (3.23.01 → 3.24.00)
-- `patch` — bump PATCH number (3.23.01 → 3.23.02)
+- `patch` — bump PATCH number (3.23.01 → 3.23.02) — use after every meaningful commit on dev
 - `dry-run` — preview all changes without writing
 
 If no argument provided, ask the user whether this is a `release` or `patch`.
