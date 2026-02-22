@@ -297,10 +297,13 @@ Agent handoff update:
 - Risks: <known risks/assumptions>
 ```
 
-## Version Lock Protocol (Multi-Agent Safety)
+## Version Lock + Worktree Protocol (Multi-Agent Safety)
 
-Multiple AI agents (Claude, Gemini, Codex) work concurrently on the same local repo. To prevent
-two agents bumping to the same version number simultaneously, a file-based mutex is used.
+Multiple AI agents (Claude, Gemini, Codex, Jules) work concurrently on the same local repo.
+The **version lock** prevents two agents claiming the same version number. The **worktree**
+gives each agent an isolated filesystem so concurrent edits don't conflict.
+
+Full protocol: `devops/version-lock-protocol.md`. Summary:
 
 ### Lock file: `devops/version.lock`
 
@@ -313,19 +316,27 @@ two agents bumping to the same version number simultaneously, a file-based mutex
 }
 ```
 
-This file is **gitignored** — it should never appear in a commit diff. If you see it in a diff,
-that is a bug.
+Both `devops/version.lock` and `.claude/worktrees/` are **gitignored** — neither should ever
+appear in a commit diff. If you see them in a diff, that is a bug.
 
 ### Protocol
 
-1. **Before any version bump:** Read `devops/version.lock`. If locked and not expired, STOP and
-   inform the user who holds the lock.
-2. **If lock is expired (> 30 min old):** Take it over, save a mem0 note noting the takeover.
+1. **Check:** Read `devops/version.lock`. If locked and not expired, STOP and inform user.
+2. **If expired (> 30 min):** Take it over, save a mem0 note.
 3. **If unlocked:** Compute `next_version` from `js/constants.js`, write the lock file.
-4. **After committing the version bump:** Delete the lock file (`rm devops/version.lock`).
+4. **Create worktree + branch:**
+   `git worktree add .claude/worktrees/patch-VERSION -b patch/VERSION`
+5. **Do all work in the worktree** — file edits, version bump, commit.
+6. **Push + open draft PR** `patch/VERSION → dev`. Cloudflare generates a preview URL.
+7. **QA preview → merge to dev.**
+8. **Cleanup after merge:**
+   `git worktree remove .claude/worktrees/patch-VERSION --force`
+   `git branch -d patch/VERSION && rm devops/version.lock`
 
-The locked version becomes the **anchor** for all associated work: Linear issues, changelog entries,
-commit messages, and mem0 handoffs should all reference the locked version number.
+The locked version is the **anchor** — all Linear notes, changelog entries, and mem0 handoffs
+reference it.
+
+**Never push directly to `main`** — Cloudflare auto-deploys to staktrakr.com on every push.
 
 ## Quality Gates
 
