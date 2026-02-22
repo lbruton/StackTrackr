@@ -3100,6 +3100,7 @@ const importJson = (file, override = false) => {
         const certNumber = (raw.certNumber || '').toString().trim();
         const pcgsNumber = (raw.pcgsNumber || raw['PCGS #'] || raw['PCGS Number'] || '').toString().trim();
         const pcgsVerified = raw.pcgsVerified || false;
+        const serialNumber = (raw.serialNumber || raw['Serial Number'] || '').toString().trim();
         const date = parseDate(raw.date);
 
         // Parse marketValue (retail price), backward-compatible with legacy fields
@@ -3148,6 +3149,7 @@ const importJson = (file, override = false) => {
           grade,
           gradingAuthority,
           certNumber,
+          serialNumber,
           pcgsNumber,
           pcgsVerified,
           purity,
