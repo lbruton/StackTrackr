@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.32.08] - 2026-02-22
+
+### Fixed — OAuth State Security Hardening & Agent Instruction Sync
+
+- **Fixed**: OAuth provider now parsed from trusted `savedState` after CSRF validation — not attacker-controlled `state` string before check (`js/cloud-storage.js`)
+- **Fixed**: PKCE challenge promise now has `.catch()` handler — cleans `sessionStorage` and closes popup on failure
+- **Fixed**: OAuth exchange failure path removes stale `cloud_oauth_state` from `sessionStorage` to prevent replay
+- **Changed**: `AGENTS.md`, `GEMINI.md` updated — version lock protocol, Stitch removal, MCP parity sync (2026-02-22)
+- **Changed**: `.gitignore` — added `devops/version.lock` multi-agent version mutex entry
+
+---
+
 ## [3.32.07] - 2026-02-22
 
 ### Fixed — Backend Data Integrity & Sparkline Fix

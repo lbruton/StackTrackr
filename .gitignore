@@ -76,3 +76,6 @@ test-results/
 .firecrawl/
 
 devops/mem0/.env
+
+# Version lock — transient runtime file, not project history
+devops/version.lock
