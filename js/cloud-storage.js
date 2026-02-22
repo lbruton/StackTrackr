@@ -332,11 +332,30 @@ async function cloudGetToken(provider) {
 // OAuth popup flow
 // ---------------------------------------------------------------------------
 
+function cloudGenerateOAuthState(provider) {
+  if (typeof crypto === 'undefined' || typeof crypto.getRandomValues !== 'function') {
+    throw new Error('crypto.getRandomValues is unavailable; cannot generate a secure OAuth state.');
+  }
+  var arr = new Uint8Array(16);
+  crypto.getRandomValues(arr);
+  var hex = Array.from(arr).map(b => b.toString(16).padStart(2, '0')).join('');
+  return provider + '_' + hex;
+}
+
 function cloudAuthStart(provider) {
   var config = CLOUD_PROVIDERS[provider];
   if (!config) return;
 
-  var state = provider + '_' + generateUUID();
+  var state;
+  try {
+    state = cloudGenerateOAuthState(provider);
+  } catch (e) {
+    debugLog('[cloud] OAuth aborted: ' + e.message, 'error');
+    if (typeof showAppAlert === 'function') {
+      showAppAlert('Cloud login is not available: your browser does not support the required security APIs.');
+    }
+    return;
+  }
   sessionStorage.setItem('cloud_oauth_state', state);
 
   var params = new URLSearchParams({
