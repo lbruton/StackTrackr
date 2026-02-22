@@ -1853,13 +1853,16 @@ const syncSpotPricesFromApi = async (
   });
 
   if (showProgress && updatedCount > 0) {
-    const summary = Object.entries(results)
-      .filter(([_, status]) => status !== "skipped")
-      .map(([prov, status]) => `${API_PROVIDERS[prov]?.name || prov}: ${status}`)
-      .join("\n");
-    appAlert(`Synced ${updatedCount} prices.\n\n${summary}`);
+    const providerName = Object.entries(results)
+      .find(([_, status]) => status === "ok")?.[0];
+    const label = providerName ? (API_PROVIDERS[providerName]?.name || providerName) : "API";
+    if (typeof showToast === "function") {
+      showToast(`\u2713 Synced ${updatedCount} prices from ${label}`);
+    }
   } else if (showProgress && !anySucceeded) {
-    appAlert("Failed to sync prices from any provider.");
+    if (typeof showToast === "function") {
+      showToast("Spot sync failed — check API settings");
+    }
   }
 
   return anySucceeded;

@@ -2629,12 +2629,16 @@ const setupApiEvents = () => {
         "click",
         async () => {
           if (typeof syncProviderChain === "function") {
-            const { updatedCount, results } = await syncProviderChain({ showProgress: true, forceSync: true });
-            const summary = Object.entries(results)
-              .filter(([_, status]) => status !== "skipped")
-              .map(([prov, status]) => `${API_PROVIDERS[prov]?.name || prov}: ${status}`)
-              .join("\n");
-            appAlert(`Synced ${updatedCount} prices.\n\n${summary}`);
+            const { updatedCount, anySucceeded, results } = await syncProviderChain({ showProgress: true, forceSync: true });
+            if (typeof showToast === "function") {
+              if (updatedCount > 0) {
+                const providerName = Object.entries(results).find(([_, s]) => s === "success")?.[0];
+                const label = providerName ? (API_PROVIDERS[providerName]?.name || providerName) : "API";
+                showToast(`\u2713 Synced ${updatedCount} prices from ${label}`);
+              } else if (!anySucceeded) {
+                showToast("Spot sync failed \u2014 check API settings");
+              }
+            }
           }
         },
         "Sync all providers button",
