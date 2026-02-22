@@ -195,9 +195,22 @@ const data = loadDataSync(LS_KEY, []);
 
 **Never** use `localStorage.getItem()` / `localStorage.setItem()` directly for application data. The helpers handle JSON serialization, compression, and error recovery.
 
+**Exception — scalar string preferences:** Plain string scalar values that are NOT JSON objects or arrays (e.g., a timeout value in minutes like `'15'`, a boolean string like `'true'`) may use `localStorage.getItem/setItem` directly with a named constant key. `loadData()`/`saveData()` are async and add JSON.stringify wrapping — wrong for values that are already simple strings. Use `localStorage.getItem(NAMED_KEY_CONSTANT)` directly and add a `// nosemgrep` comment to suppress Codacy false positives:
+
+```javascript
+// nosemgrep: javascript.browser.security.insecure-document-method.insecure-document-method
+const stored = localStorage.getItem(CLOUD_VAULT_IDLE_TIMEOUT_KEY);
+
+// Example of setting a scalar string preference
+const timeoutMinutes = '15';
+localStorage.setItem(CLOUD_VAULT_IDLE_TIMEOUT_KEY, timeoutMinutes);
+```
+
+Named constant must still be registered in `ALLOWED_STORAGE_KEYS` in `constants.js`.
+
 ### localStorage key whitelist
 
-Every localStorage key **must** be registered in `ALLOWED_STORAGE_KEYS` in `constants.js` before use. The security cleanup routine (`cleanupLocalStorage`) deletes any key not in this list. Forgetting to register a key means data loss on next cleanup.
+Every localStorage key **must** be registered in `ALLOWED_STORAGE_KEYS` in `constants.js` before use. The security cleanup routine (`cleanupStorage` in `js/utils.js`) deletes any key not in this list. Forgetting to register a key means data loss on next cleanup.
 
 ### Mutation cycle
 
