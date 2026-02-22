@@ -1811,7 +1811,7 @@
        API HEALTH MODAL
        Shows manifest.json staleness status, generated_at timestamp, and coin count.
        ============================================================================= -->
-    <div class="modal" id="apiHealthModal" style="display: none">
+    <div class="modal" id="apiHealthModal" style="display: none; z-index: 10000">
       <div class="modal-content" style="max-width:480px">
         <div class="modal-header">
           <h3>API Health Status</h3>
@@ -1821,8 +1821,9 @@
           <div class="about-section">
             <div class="section-title">Status: <span id="apiHealthStatus">Checking…</span></div>
             <table style="width:100%;font-size:0.9rem;border-collapse:collapse;margin-top:0.5rem">
-              <tr><td style="padding:0.3rem 0;color:var(--text-muted)">Last updated</td><td id="apiHealthGeneratedAt" style="text-align:right">&#x2014;</td></tr>
-              <tr><td style="padding:0.3rem 0;color:var(--text-muted)">Data age</td><td id="apiHealthAge" style="text-align:right">&#x2014;</td></tr>
+              <tr><td style="padding:0.3rem 0;color:var(--text-muted)">Market prices</td><td id="apiHealthMarket" style="text-align:right">&#x2014;</td></tr>
+              <tr><td style="padding:0.3rem 0;color:var(--text-muted)">Spot prices</td><td id="apiHealthSpot" style="text-align:right">&#x2014;</td></tr>
+              <tr><td style="padding:0.3rem 0;color:var(--text-muted)">Goldback (daily)</td><td id="apiHealthGoldback" style="text-align:right">&#x2014;</td></tr>
               <tr><td style="padding:0.3rem 0;color:var(--text-muted)">Coverage</td><td id="apiHealthCoins" style="text-align:right">&#x2014;</td></tr>
             </table>
           </div>
