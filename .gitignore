@@ -79,3 +79,6 @@ devops/mem0/.env
 
 # Version lock — transient runtime file, not project history
 devops/version.lock
+
+# Git worktrees for isolated agent work — content dirs are transient, not project history
+.claude/worktrees/

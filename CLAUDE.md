@@ -56,12 +56,21 @@ Works on `file://` and HTTP. Runtime artifact: zero build step, zero install. Se
 
 ## PR Lifecycle (live site — do not fast-merge to main)
 
-1. Open draft PR early: `gh pr create --draft`
-2. Commit freely to `dev`
-3. QA-complete → `/release` Phase 4.5: audit commits, rewrite PR body, `gh pr ready`, `/pr-resolve`
-4. After review passes → merge to main → create GitHub Release tag (always targets main)
+**Multi-agent patch workflow (when concurrent work is in flight):**
 
-**Jules PRs**: always draft, always context-blind. Run `/pr-resolve` and verify critical patterns above before approving.
+1. `/release patch` → claims version lock → creates worktree `patch/VERSION` at `.claude/worktrees/patch-VERSION/`
+2. All work happens in the worktree (file edits, version bump, commit)
+3. Push `patch/VERSION` → open draft PR `patch/VERSION → dev` → Cloudflare generates preview URL
+4. QA the preview → merge to `dev` → cleanup worktree + release lock
+5. (Repeat for each concurrent agent's patch)
+6. When batch is QA-complete → `/release` Phase 4.5: audit, rewrite PR body `dev → main`, `gh pr ready`, `/pr-resolve`
+7. After review passes → merge to main → create GitHub Release tag (always targets main)
+
+**Solo/simple patches** (single agent, no concurrent work): skip worktree, commit directly to `dev`, run `/release patch` as before.
+
+**Never push directly to `main`** — it deploys to staktrakr.com immediately via Cloudflare Pages.
+
+**Jules PRs**: always draft, always context-blind. Verify PR targets `dev` not `main`. Run `/pr-resolve` before approving.
 
 ## UI Design Workflow (non-trivial components only)
 
