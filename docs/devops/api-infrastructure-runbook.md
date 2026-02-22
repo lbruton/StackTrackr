@@ -277,7 +277,7 @@ EOF
 
 | Issue | Status | Fix |
 |---|---|---|
-| `api-health.js` checks seed file for spot freshness | Open | Check `data/hourly/` latest file instead |
-| `sync-api-repos.yml` fails daily (`StakTrakrApi1` deleted) | Open | Delete workflow or remove `api1` steps |
+| `api-health.js` checks seed file for spot freshness | Fixed in v3.32.14 | Now fetches `data/hourly/YYYY/MM/DD/HH.json` with previous-hour fallback |
+| `sync-api-repos.yml` fails daily (`StakTrakrApi1` deleted) | Fixed in v3.32.14 | Workflow deleted in PR #406 |
 | Firecrawl cloud credits exhausted (HTTP 402) | Open | Top up credits or rely on local Docker |
 | Goldback stale ~39h | Open | Run local goldback-scraper.js manually |
