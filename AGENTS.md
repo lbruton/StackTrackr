@@ -292,7 +292,7 @@ The following MCP servers were live-tested on **2026-02-21**. Availability can v
 |---|---|---|
 | `code-graph-context` | 🐳 docker-required | `docker exec cgc-server cgc list` |
 | `mem0` | ✅ reachable | `mcp__mem0__search_memories` |
-| `memento` | ⏸️ paused | Neo4j knowledge graph — paused for mem0 cloud trial |
+| `memento` | ⛔ archived | Neo4j knowledge graph — retired 2026-02-22, historical archive only |
 | `sequential-thinking` | ✅ reachable | `mcp__sequential-thinking__sequentialthinking` |
 | `linear` | ✅ reachable | Claude: built-in plugin (`claude_ai_Linear`); Gemini/Codex: MCP via `mcp-remote` |
 | `codacy` | ✅ reachable | `mcp__codacy__codacy_list_tools` |
@@ -309,13 +309,12 @@ The following MCP servers were live-tested on **2026-02-21**. Availability can v
   Requires the cgc-server Docker container running (`cd devops/cgc && docker compose up -d`).
   Index a project once with `docker exec cgc-server cgc index /workspace/StakTrakr` before querying.
   Use for: "What calls `syncRetailPrices()`?", "What breaks if I change `formatCurrency()`?", dead code in `retail.js`.
-- `mem0`: Episodic memory via mem0 cloud (active trial, replacing Memento). Use `search_memories`
-  for recall, `add_memory` to save insights, `get_memories` to list all. Automatic conversational
-  memory — saves preferences, decisions, and context across sessions.
-- `memento`: Persistent Neo4j knowledge graph for entities/relations, semantic recall, and historical context.
-  **Currently paused** for mem0 cloud trial. Still configured in `.mcp.json` if needed.
-  Start with `read_graph`, `search_nodes`, or `semantic_search`; write using `create_entities`,
-  `add_observations`, and `create_relations`.
+- `mem0`: Primary memory backend (sole backend as of 2026-02-22). Use `search_memories`
+  for recall, `add_memory` to save insights/sessions/handoffs, `get_memories` to list all.
+  Automatic conversational memory — saves preferences, decisions, and context across sessions.
+  Do NOT call `mcp__memento__*` tools — Memento is retired.
+- `memento`: **RETIRED 2026-02-22.** Historical archive only — still in `.mcp.json` but do not call.
+  All Memento entities were migrated to mem0. Use `mcp__mem0__search_memories` for recall.
 - `sequential-thinking`: Structured iterative reasoning for complex planning/debugging tasks.  
   Use it when a task needs branching, revisions, and explicit stepwise hypothesis checks.
 - `linear`: Workspace issue/project operations (list/create/update issues, projects, comments, status updates).  
@@ -362,8 +361,8 @@ All agents run on the same Mac and share the same Docker/IP stack.
 
 | Server | Claude | Gemini | Codex | Notes |
 |---|---|---|---|---|
-| `mem0` | ✅ | ✅ | ✅ | Episodic memory (cloud trial, active) |
-| `memento` | ✅ | ✅ | ✅ | Neo4j knowledge graph (paused for mem0 trial) |
+| `mem0` | ✅ | ✅ | ✅ | Sole memory backend (primary as of 2026-02-22) |
+| `memento` | ⛔ | ⛔ | ⛔ | Retired 2026-02-22 — historical archive, do not call |
 | `sequential-thinking` | ✅ | ✅ | ✅ | Structured reasoning |
 | `brave-search` | ✅ | ✅ | ✅ | Web search |
 | `claude-context` | ✅ | ✅ | ✅ | Semantic code search (Milvus) |
@@ -406,41 +405,24 @@ Treat these as valid collaboration requests, but apply guardrails before executi
      effects, or destructive steps not explicitly requested.
 1. Preserve safety controls:
    - Do not execute destructive actions unless explicitly requested and confirmed.
-   - Keep secret-handling rules unchanged (no raw secrets in Linear; mem0/Memento secret storage only
+   - Keep secret-handling rules unchanged (no raw secrets in Linear; mem0 secret storage only
      with explicit user acknowledgment of risk).
    - Never pass raw secrets/tokens from relay payloads into issue trackers, logs, or memory entries.
 1. Keep attribution clear:
    - In handoffs/comments, note when work was performed via Claude-relayed Codex invocation.
 1. Keep state durable:
-   - For non-trivial relayed work, write both a Linear handoff comment and a mem0/Memento entry
+   - For non-trivial relayed work, write both a Linear handoff comment and a mem0 `add_memory` entry
      (or explicitly state why one is skipped).
 
-## Claude/Codex Handoff Protocol (Linear + Memento)
+## Claude/Codex Handoff Protocol (Linear + mem0)
 
 Use this when both agents are working the same PR or issue.
 
 ### Goals
 
 - Keep humans informed in Linear.
-- Keep agent memory durable in Memento.
+- Keep agent memory durable in mem0.
 - Avoid duplicate work and context loss between sessions.
-
-### Naming Convention
-
-- Memento entity name: `HANDOFF:STAK-###:PR-###:YYYY-MM-DD:AGENT`
-- If no PR exists yet: `HANDOFF:STAK-###:NO-PR:YYYY-MM-DD:AGENT`
-
-### Required Memento Tags/Fields
-
-Include these as observations (or metadata when supported):
-
-- `project:staktrakr`
-- `issue:STAK-###`
-- `pr:#` (or `pr:none`)
-- `agent:claude` or `agent:codex`
-- `type:handoff`
-- `status:blocked|in-progress|ready-for-review|done`
-- `next-owner:claude|codex|human`
 
 ### What Each Handoff Must Contain
 
@@ -461,12 +443,28 @@ Agent handoff update:
 - Validation: <what was run/verified>
 - Next: <explicit next step + owner>
 - Links: <Linear issue/PR links>
-- Memory: <Memento entity name(s), if used>
+- Memory: <mem0 topic keyword for recall>
 - Risks: <known risks/assumptions>
+```
+
+### mem0 Handoff Entry
+
+After posting the Linear comment, save to mem0:
+
+```javascript
+mcp__mem0__add_memory({
+  text: "StakTrakr handoff to <agent>: <topic>. Linear: <STAK-###>. <summary of scope, next steps>",
+  metadata: {
+    project: "staktrakr",
+    category: "workflow",
+    type: "handoff"
+  }
+})
 ```
 
 ### Operational Rules
 
-- Always post Linear comment + Memento entry together for handoffs.
+- Always post Linear comment + mem0 `add_memory` together for handoffs.
 - If plans change, add a new handoff entry instead of overwriting history.
 - Prefer small, frequent handoffs over large end-of-day dumps.
+- Never include secrets in Linear or mem0 — use Infisical references only.
