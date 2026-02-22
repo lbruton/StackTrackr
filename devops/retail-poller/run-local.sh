@@ -25,7 +25,7 @@ fi
 # StakTrakrApi repo configuration
 API_DATA_REPO="${API_DATA_REPO:-https://github.com/lbruton/StakTrakrApi.git}"
 API_EXPORT_DIR="${API_EXPORT_DIR:-/tmp/staktrakr-api-export}"
-POLLER_ID="${POLLER_ID:-api1}"
+POLLER_ID="${POLLER_ID:-api}"
 
 if [ -z "$GITHUB_TOKEN" ]; then
   echo "ERROR: GITHUB_TOKEN not set (required for pushing to StakTrakrApi)"
@@ -84,8 +84,9 @@ if git diff --cached --quiet; then
   echo "[$(date -u +%H:%M:%S)] No new data to commit."
 else
   git commit -m "${POLLER_ID}: ${DATE} $(date -u +%H:%M) export"
-  # Force push since this poller owns its branch exclusively
-  git push --force-with-lease "https://${GITHUB_TOKEN}@github.com/lbruton/StakTrakrApi.git" "$POLLER_ID"
+  # Rebase onto any remote changes (e.g. manual backfills) before pushing
+  git pull --rebase origin "$POLLER_ID" 2>/dev/null || true
+  git push "https://${GITHUB_TOKEN}@github.com/lbruton/StakTrakrApi.git" "$POLLER_ID"
   echo "[$(date -u +%H:%M:%S)] Pushed to ${POLLER_ID} branch"
 fi
 
