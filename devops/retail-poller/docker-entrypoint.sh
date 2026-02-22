@@ -43,7 +43,7 @@ fi
 
 # ── 4. Clone StakTrakrApi repo (so serve.js has data on first boot) ────
 API_EXPORT_DIR="${API_EXPORT_DIR:-/tmp/staktrakr-api-export}"
-POLLER_ID="${POLLER_ID:-api1}"
+POLLER_ID="${POLLER_ID:-api}"
 
 if [ -n "$_GIT_TOKEN" ] && [ ! -d "$API_EXPORT_DIR" ]; then
   echo "[entrypoint] Cloning StakTrakrApi repo..."
