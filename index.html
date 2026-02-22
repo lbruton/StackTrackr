@@ -1797,7 +1797,7 @@
     <footer class="app-footer">
       <div class="storage-line">Storage: <span id="storageUsage"></span> <div class="storage-bar" id="storageBar"><div class="storage-bar-ls" id="storageBarLs" title="localStorage"></div><div class="storage-bar-idb" id="storageBarIdb" title="IndexedDB Images"></div></div> <a href="#" id="storageReportLink">Storage report</a></div>
       <div class="footer-meta">
-        <span>Thank you for using <span id="footerBrand">StakTrakr</span> <a id="versionBadge" class="version-badge" style="display: none"></a>. &copy; 2025-2026 <a id="footerDomain" href="https://staktrakr.com" target="_blank" rel="noopener">staktrakr.com</a>. Special thanks to the <a href="https://www.reddit.com/r/Silverbugs/" target="_blank" rel="noopener">r/Silverbugs</a> community for the feedback, bug reports, and encouragement that shaped this app. &middot; <a href="#" onclick="if(window.showFaqModal){event.preventDefault();window.showFaqModal();}">FAQ</a></span>
+        <span>Thank you for using <span id="footerBrand">StakTrakr</span> <a id="versionBadge" class="version-badge" style="display: none"></a>. &copy; 2025-2026 <a id="footerDomain" href="https://staktrakr.com" target="_blank" rel="noopener">staktrakr.com</a>. Special thanks to the <a href="https://www.reddit.com/r/Silverbugs/" target="_blank" rel="noopener">r/Silverbugs</a> community for the feedback, bug reports, and encouragement that shaped this app. &middot; <a href="#" onclick="if(window.showFaqModal){event.preventDefault();window.showFaqModal();}">FAQ</a> &middot; <button type="button" class="api-health-badge" id="apiHealthBadge" onclick="if(window.showApiHealthModal)window.showApiHealthModal()">Checking API…</button></span>
         <div class="footer-badges">
           <a href="https://github.com/lbruton/StakTrakr" target="_blank" rel="noopener"><img src="https://img.shields.io/github/license/lbruton/StakTrakr?style=flat-square" alt="MIT License" height="20"></a>
           <a href="https://app.codacy.com/gh/lbruton/StakTrakr/dashboard?utm_source=gh&amp;utm_medium=referral&amp;utm_content=&amp;utm_campaign=Badge_grade" target="_blank" rel="noopener"><img src="https://app.codacy.com/project/badge/Grade/b8d30126676546cb958fa6a7e0174da8" alt="Codacy Badge" height="20"></a>
@@ -1807,6 +1807,31 @@
         </div>
       </div>
     </footer>
+    <!-- =============================================================================
+       API HEALTH MODAL
+       Shows manifest.json staleness status, generated_at timestamp, and coin count.
+       ============================================================================= -->
+    <div class="modal" id="apiHealthModal" style="display: none">
+      <div class="modal-content" style="max-width:480px">
+        <div class="modal-header">
+          <h3>API Health Status</h3>
+          <button aria-label="Close modal" class="modal-close" id="apiHealthCloseBtn">&times;</button>
+        </div>
+        <div class="modal-body" style="padding:1rem 1.5rem">
+          <div class="about-section">
+            <div class="section-title">Status: <span id="apiHealthStatus">Checking…</span></div>
+            <table style="width:100%;font-size:0.9rem;border-collapse:collapse;margin-top:0.5rem">
+              <tr><td style="padding:0.3rem 0;color:var(--text-muted)">Last updated</td><td id="apiHealthGeneratedAt" style="text-align:right">&#x2014;</td></tr>
+              <tr><td style="padding:0.3rem 0;color:var(--text-muted)">Data age</td><td id="apiHealthAge" style="text-align:right">&#x2014;</td></tr>
+              <tr><td style="padding:0.3rem 0;color:var(--text-muted)">Coverage</td><td id="apiHealthCoins" style="text-align:right">&#x2014;</td></tr>
+            </table>
+          </div>
+          <div class="about-alert about-alert-compact" style="margin-top:1rem">
+            <span id="apiHealthVerdict">Fetching status…</span>
+          </div>
+        </div>
+      </div>
+    </div>
     <!-- =============================================================================
        ABOUT & DISCLAIMER MODAL
        Comprehensive application information and disclaimer modal similar to the
@@ -1934,6 +1959,9 @@
               </button>
               <button class="about-badge" onclick="if(window.openModalById)openModalById('privacyModal')">
                 🔒 Privacy
+              </button>
+              <button class="about-badge" id="apiHealthBadgeAbout" onclick="if(window.showApiHealthModal)window.showApiHealthModal()">
+                📡 API Health
               </button>
             </div>
           </div>
@@ -4757,6 +4785,7 @@
   <script defer src="./js/seed-images.js"></script>
   <script defer src="./js/versionCheck.js"></script>
   <script defer src="./js/changeLog.js"></script>
+  <script defer src="./js/diff-engine.js"></script>
     <script defer src="./js/charts.js"></script>
     <script defer src="./js/theme.js"></script>
     <script defer src="./js/search.js"></script>
@@ -4788,6 +4817,7 @@
     <script defer src="./js/cloud-storage.js"></script>
     <script defer src="./js/cloud-sync.js"></script>
     <script defer src="./js/about.js"></script>
+    <script defer src="./js/api-health.js"></script>
     <script defer src="./js/faq.js"></script>
     <script defer src="./js/customMapping.js"></script>
     <script defer src="./js/settings.js"></script>

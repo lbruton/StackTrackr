@@ -283,6 +283,7 @@ const setupAckModalEvents = () => {
  */
 const getEmbeddedWhatsNew = () => {
   return `
+    <li><strong>v3.32.06 &ndash; API Health Badge</strong>: Footer and About modal now show live API data freshness status &mdash; click the badge for details on last update time and coin coverage</li>
     <li><strong>v3.32.05 &ndash; Service Worker Cache Coverage</strong>: image-processor.js, bulk-image-cache.js, and image-cache-modal.js added to sw.js CORE_ASSETS &mdash; offline image workflows no longer 404 on first offline visit</li>
     <li><strong>v3.32.04 &ndash; Async Save Reliability</strong>: Storage calls in spot price sync, catalog manager, and inventory save now properly await saveData() &mdash; prevents silently dropped errors if localStorage throws</li>
     <li><strong>v3.32.03 &ndash; Sync Toast &amp; UX Polish</strong>: Spot price sync completion now shows a non-blocking toast notification instead of a blocking modal dialog</li>
