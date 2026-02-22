@@ -1141,8 +1141,8 @@ const initCardSortBar = () => {
 /**
  * Trend period presets and labels for the header trend cycle button.
  */
-const TREND_PRESETS = ['1', '7', '30', '90', '365', '1095'];
-const TREND_LABELS  = { '1': '1d', '7': '7d', '30': '30d', '90': '90d', '365': '1Y', '1095': '3Y' };
+const TREND_PRESETS = ['1', '7', '30', '90', '365', '1095', '1825', '3650'];
+const TREND_LABELS  = { '1': '1d', '7': '7d', '30': '30d', '90': '90d', '365': '1Y', '1095': '3Y', '1825': '5Y', '3650': '10Y' };
 
 /**
  * Applies a trend period value to all four metal sparkline selects and updates
