@@ -4,7 +4,7 @@ Custom review instructions for GitHub Copilot PR reviews.
 
 ## Project Context
 
-StakTrakr is a single-page vanilla JavaScript app (no framework, no build step). It runs on both `file://` protocol and HTTP servers. The runtime artifact is `index.html` plus JS/CSS assets -- no bundler, no transpiler. 56 script files load in strict dependency order via `<script defer>` tags.
+StakTrakr is a single-page vanilla JavaScript app (no framework, no build step). It runs on both `file://` protocol and HTTP servers. The runtime artifact is `index.html` plus JS/CSS assets -- no bundler, no transpiler. 57 script files load in strict dependency order via `<script defer>` tags (55 js/ files + `file-protocol-fix.js` + `data/spot-history-bundle.js`).
 
 For full codebase context, see `AGENTS.md` in the repository root.
 
@@ -34,7 +34,7 @@ Prefer `saveData()`/`loadData()` (async) or `saveDataSync()`/`loadDataSync()` fr
 
 Scripts load via `<script>` tags in `index.html` in strict dependency order. `file-protocol-fix.js` loads first (no `defer`), `init.js` loads last. If a PR adds a new script file, verify it's placed correctly in `index.html`.
 
-**CRITICAL: Do not flag "undefined" globals** -- this is a vanilla JS app with global scope across 50 files. The following globals are defined in other files and are intentionally available throughout the app:
+**CRITICAL: Do not flag "undefined" globals** -- this is a vanilla JS app with global scope across 57 files. The following globals are defined in other files and are intentionally available throughout the app:
 
 **From `js/state.js`:**
 
@@ -82,6 +82,23 @@ Scripts load via `<script>` tags in `index.html` in strict dependency order. `fi
 **From `js/changeLog.js`:**
 
 - `logChange(name, action, oldVal, newVal, idx)` -- change tracking
+
+**From `js/diff-engine.js`:**
+
+- `DiffEngine` (object) -- pure-data diff/merge singleton for cloud sync
+  - `DiffEngine.computeItemKey(item)` -- derives stable dedup key
+  - `DiffEngine.matchItems(local, remote)` -- pairs items by key
+  - `DiffEngine.compareItems(local, remote)` -- classifies added/modified/deleted/unchanged
+  - `DiffEngine.compareSettings(local, remote)` -- flat key→value diff
+  - `DiffEngine.detectConflicts(localChanges, remoteChanges)` -- identifies field conflicts
+  - `DiffEngine.applySelectedChanges(inventory, changes)` -- non-destructive apply
+
+**From `js/api-health.js`:**
+
+- `fetchApiHealth()` -- async, fetches retail poller manifest, returns `{generatedAt, ageMinutes, coins, isStale}`
+- `updateHealthBadges(health)` -- updates badge elements (`apiHealthBadge`, `apiHealthBadgeAbout`)
+- `showApiHealthModal()`, `hideApiHealthModal()` -- modal open/close
+- `initApiHealth()` -- init function (called on DOMContentLoaded)
 
 **From `js/spot.js`:**
 
@@ -162,9 +179,9 @@ Scripts load via `<script>` tags in `index.html` in strict dependency order. `fi
 
 - `loadSeedImages()` -- first-run seed image loader
 
-- Plus many others across 54 script files
+- Plus many others across 57 script files
 
-**IMPORTANT: Do NOT flag any variable as "not defined" in PR reviews.** This is a vanilla JS app with global scope across 50 files. The `no-undef` ESLint rule is intentionally OFF. Every "X is not defined" comment is a false positive. If you are uncertain whether a variable exists, check the other script files before flagging -- it will be defined in another file loaded earlier in the script order.
+**IMPORTANT: Do NOT flag any variable as "not defined" in PR reviews.** This is a vanilla JS app with global scope across 57 files. The `no-undef` ESLint rule is intentionally OFF. Every "X is not defined" comment is a false positive. If you are uncertain whether a variable exists, check the other script files before flagging -- it will be defined in another file loaded earlier in the script order.
 
 ### 4. Service Worker -- respondWith() Must Always Resolve to a Response
 
@@ -202,6 +219,10 @@ When any version-related file changes, verify all 7 are in sync:
 | `data/spot-history-*.json` | Seed data should be refreshed |
 
 If only some files are updated, flag the missing ones.
+
+**Version Lock**: Multiple AI agents work concurrently on this repo. A `devops/version.lock`
+file (gitignored) is used as a mutual-exclusion token. If you see an orphaned lock file in a
+diff, that is a bug -- it should never be committed.
 
 ### 6. XSS Prevention
 
