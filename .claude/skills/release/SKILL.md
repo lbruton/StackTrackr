@@ -280,9 +280,16 @@ rm -f devops/version.lock
 
 ## Phase 4: Push & Draft PR
 
-1. Push dev to remote:
+1. Sync with latest `origin/dev` before pushing — other agents may have merged while you worked:
    ```bash
-   git push origin dev
+   git fetch origin
+   git merge origin/dev   # inside the worktree; no-op if nothing new
+   ```
+   Resolve any conflicts now, before the PR opens, so the Cloudflare preview reflects the combined state.
+
+2. Push the patch branch:
+   ```bash
+   git push origin patch/VERSION
    ```
 
 2. Check whether a draft PR already exists from dev → main:
