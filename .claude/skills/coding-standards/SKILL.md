@@ -199,14 +199,18 @@ const data = loadDataSync(LS_KEY, []);
 
 ```javascript
 // nosemgrep: javascript.browser.security.insecure-document-method.insecure-document-method
-var stored = localStorage.getItem(CLOUD_VAULT_IDLE_TIMEOUT_KEY);
+const stored = localStorage.getItem(CLOUD_VAULT_IDLE_TIMEOUT_KEY);
+
+// Example of setting a scalar string preference
+const timeoutMinutes = '15';
+localStorage.setItem(CLOUD_VAULT_IDLE_TIMEOUT_KEY, timeoutMinutes);
 ```
 
 Named constant must still be registered in `ALLOWED_STORAGE_KEYS` in `constants.js`.
 
 ### localStorage key whitelist
 
-Every localStorage key **must** be registered in `ALLOWED_STORAGE_KEYS` in `constants.js` before use. The security cleanup routine (`cleanupLocalStorage`) deletes any key not in this list. Forgetting to register a key means data loss on next cleanup.
+Every localStorage key **must** be registered in `ALLOWED_STORAGE_KEYS` in `constants.js` before use. The security cleanup routine (`cleanupStorage` in `js/utils.js`) deletes any key not in this list. Forgetting to register a key means data loss on next cleanup.
 
 ### Mutation cycle
 
