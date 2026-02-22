@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.32.10] - 2026-02-22
+
+### Added — Worktree Protocol & Branch Protection Infrastructure
+
+- **Added**: Version lock + worktree protocol — agents now create isolated `patch/VERSION` git worktrees in `.claude/worktrees/` for concurrent work, preventing filesystem conflicts between agents
+- **Added**: `main` branch protection — Codacy Static Code Analysis required, no force pushes, prevents direct pushes to production
+- **Changed**: Release skill Step 0a now creates worktree + branch on lock claim; Phase 3 cleanup removes them after merge
+- **Changed**: `CLAUDE.md`, `AGENTS.md`, `GEMINI.md` updated with full worktree workflow and "never push directly to main" rule
+- **Changed**: `devops/version-lock-protocol.md` — full 9-step lock+worktree protocol replacing the previous 5-step lock-only protocol
+
+---
+
 ## [3.32.09] - 2026-02-22
 
 ### Fixed — WeakMap Search Cache Correctness
