@@ -102,8 +102,6 @@ services:
     environment:
       # Firecrawl API is the 'api' service on this network
       FIRECRAWL_BASE_URL: http://api:3002
-      # /data-repo is mounted from the host data branch worktree (DATA_REPO_HOST_PATH in .env)
-      DATA_REPO_PATH: /data-repo
       # Playwright/browserless fallback — use self-hosted browserless Docker on the host
       # host.docker.internal resolves to the Docker host from inside a container (macOS/Windows)
       BROWSERLESS_URL: ws://host.docker.internal:3000/chromium/playwright?token=local_dev_token
@@ -120,7 +118,6 @@ services:
       # Staggered cron: fires at :10/:25/:40/:55 (Fly.io 'api' fires at :00/:15/:30/:45)
       CRON_SCHEDULE: "10,25,40,55"
     volumes:
-      - ${DATA_REPO_HOST_PATH}:/data-repo
       - retail-price-logs:/var/log/retail-prices
     depends_on:
       api:
