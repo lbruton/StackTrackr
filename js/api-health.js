@@ -242,10 +242,12 @@ let _keydownRegistered = false;
 
 /**
  * Sets up event listeners for the health modal.
+ * Uses document.getElementById directly — safeGetElement lives in init.js
+ * which loads after this file in the defer queue.
  */
 const setupApiHealthModalEvents = () => {
-  const closeBtn = safeGetElement("apiHealthCloseBtn");
-  const modal    = safeGetElement("apiHealthModal");
+  const closeBtn = document.getElementById("apiHealthCloseBtn");
+  const modal    = document.getElementById("apiHealthModal");
   if (closeBtn) closeBtn.addEventListener("click", hideApiHealthModal);
   if (modal) {
     modal.addEventListener("click", (e) => {
@@ -290,8 +292,6 @@ if (typeof window !== "undefined") {
   window.initApiHealth      = initApiHealth;
 }
 
-if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", initApiHealth);
-} else {
-  initApiHealth();
-}
+// initApiHealth() is called by init.js after safeGetElement and all DOM setup
+// are complete. Do NOT auto-init here — init.js (script #64) runs after this
+// file (script #56) in the defer queue, so safeGetElement is not yet defined.
