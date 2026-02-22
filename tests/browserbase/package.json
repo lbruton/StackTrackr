@@ -18,5 +18,9 @@
     "@types/node": "^22.5.5",
     "tsx": "^4.19.2",
     "typescript": "^5.7.2"
+  },
+  "overrides": {
+    "minimatch": ">=10.2.1",
+    "langsmith": ">=0.4.6"
   }
 }
