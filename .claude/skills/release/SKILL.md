@@ -25,6 +25,67 @@ If no argument provided, ask the user whether this is a `release` or `patch`.
 
 ## Phase 0: Gather Context
 
+### Step 0a: Version Lock Check (REQUIRED FIRST)
+
+Before anything else, check whether another agent has claimed the next version:
+
+```bash
+cat devops/version.lock 2>/dev/null || echo "UNLOCKED"
+```
+
+**If locked and not expired** (`expires_at` is in the future): **STOP.** Report to the user:
+```
+⛔ Version lock held by: [locked_by]
+   Claimed version: [next_version]
+   Expires at: [expires_at]
+   Wait for that agent to finish, or ask the user if the lock is stale.
+```
+
+**If absent or expired:** claim the lock immediately — before reading any files or computing the version. Compute `next_version` as `APP_VERSION + 1` (read `js/constants.js`), then write:
+
+```
+locked_by: Claude Code (session [first 6 chars of conversation ID or task hint])
+locked_at: [current ISO timestamp]
+next_version: [X.Y.Z]
+expires_at: [locked_at + 30 minutes]
+```
+
+```bash
+# Write the lock
+cat > devops/version.lock << 'EOF'
+locked_by: Claude Code (session ...)
+locked_at: 2026-...
+next_version: 3.XX.YY
+expires_at: 2026-...
+EOF
+```
+
+Use `next_version` as the target for all subsequent version bump steps — do not re-derive it from `APP_VERSION` later.
+
+**Create the worktree + branch immediately after writing the lock:**
+
+```bash
+git worktree add .claude/worktrees/patch-NEXT_VERSION -b patch/NEXT_VERSION
+```
+
+Example: `git worktree add .claude/worktrees/patch-3.32.09 -b patch/3.32.09`
+
+**All subsequent work (file edits, version bumps, commits) happens inside the worktree directory.**
+If you are running as an interactive Claude Code session, inform the user:
+
+```
+Worktree created at: .claude/worktrees/patch-NEXT_VERSION/
+Branch: patch/NEXT_VERSION
+
+All work for this release will happen in that worktree.
+After merging to dev, run cleanup:
+  git worktree remove .claude/worktrees/patch-NEXT_VERSION --force
+  git branch -d patch/NEXT_VERSION
+  rm devops/version.lock
+```
+
+See `devops/version-lock-protocol.md` for full protocol details.
+
 ### Step 0 (prerequisite): Seed Data Sync
 
 Before gathering release context, run the `/seed-sync` workflow to check for unstaged seed data from the Docker poller. The poller writes to `data/spot-history-*.json` continuously, but these changes are invisible in normal development — they only show up in `git status` if you look for them. Stage any new seed data now so it's included in the release commit.
@@ -199,6 +260,23 @@ Commit message format: `vNEW_VERSION — TITLE`
 - Match the pattern from existing commits: `v3.23.01 — STAK-52: Goldback real-time estimation, Settings reorganization`
 
 If there are other uncommitted changes beyond the 5 version files, ask the user whether to include them in this commit or leave them staged separately.
+
+**After a successful commit, push the patch branch and open a PR to dev** (Phase 4 covers this).
+**After the PR is merged to dev — run full cleanup:**
+
+```bash
+# Remove the worktree
+git worktree remove .claude/worktrees/patch-VERSION --force
+
+# Delete the local branch
+git branch -d patch/VERSION
+
+# Delete the remote branch
+git push origin --delete patch/VERSION
+
+# Release the version lock
+rm -f devops/version.lock
+```
 
 ## Phase 4: Push & Draft PR
 
