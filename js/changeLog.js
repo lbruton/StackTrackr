@@ -213,6 +213,9 @@ const toggleChange = (logIdx) => {
     if (item.serial) {
       catalogMap[item.serial] = item.numistaId || "";
     }
+    if (typeof window.invalidateSearchCache === 'function') {
+      window.invalidateSearchCache(item);
+    }
   }
   saveInventory();
   renderTable();
