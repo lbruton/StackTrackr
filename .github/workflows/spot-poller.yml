@@ -1,9 +1,9 @@
-# Spot price poller — writes hourly data to StakTrakrApi1 (api1.staktrakr.com)
+# Spot price poller — writes hourly data to StakTrakrApi `api` branch (api.staktrakr.com)
 # Runs twice per hour (:05 and :35) for 30-min freshness.
 # Requires repository secrets: METAL_PRICE_API_KEY, API_PUSH_TOKEN
 #
-# Architecture: Checks out `dev` for poller code, StakTrakrApi1 for data files.
-# Hourly JSON files land in data/hourly/YYYY/MM/DD/HH.json on StakTrakrApi1 main.
+# Architecture: Checks out `dev` for poller code, StakTrakrApi `api` branch for data files.
+# Hourly JSON files land in data/hourly/YYYY/MM/DD/HH.json on StakTrakrApi api branch.
 name: Spot Price Poller
 
 on:
@@ -28,11 +28,11 @@ jobs:
           ref: dev
           path: code
 
-      - name: Checkout StakTrakrApi1 (for data files)
+      - name: Checkout StakTrakrApi (for data files)
         uses: actions/checkout@v4
         with:
-          repository: lbruton/StakTrakrApi1
-          ref: main
+          repository: lbruton/StakTrakrApi
+          ref: api
           path: data-branch
           token: ${{ secrets.API_PUSH_TOKEN }}
           fetch-depth: 1
@@ -63,5 +63,6 @@ jobs:
             HOUR=$(date -u +%H)
             DATE=$(date -u +%Y-%m-%d)
             git commit -m "spot: ${DATE} hour ${HOUR} price data"
+            git pull --rebase origin api || true
             git push
           fi
