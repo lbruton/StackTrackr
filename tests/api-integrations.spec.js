@@ -156,12 +156,12 @@ test('STAK-255: hourlyBaseUrls and RETAIL_API_ENDPOINTS use correct paths', asyn
     const hourly = window.API_PROVIDERS?.STAKTRAKR?.hourlyBaseUrls || [];
     const retail = window.RETAIL_API_ENDPOINTS || [];
     return {
-      // api1 (GitHub Pages data branch) serves hourly at /hourly/ — no /data/ prefix
-      api1HourlyCorrect: hourly.some(u => u.includes('api1.staktrakr.com/hourly') && !u.includes('/data/hourly')),
+      // Both hourly endpoints use /data/hourly path
+      api1HourlyCorrect: hourly.some(u => u.includes('api1.staktrakr.com/data/hourly')),
       // api (Fly.io) serves retail at /data/api/
       apiFlyRetailCorrect: retail.some(u => u.includes('api.staktrakr.com/data/api')),
-      // api1 (GitHub Pages) serves retail at /api/ — no /data/ prefix
-      api1RetailCorrect: retail.some(u => u.includes('api1.staktrakr.com/api') && !u.includes('/data/api')),
+      // api1 (GitHub Pages) also serves retail at /data/api/
+      api1RetailCorrect: retail.some(u => u.includes('api1.staktrakr.com/data/api')),
       hourlyCount: hourly.length,
       retailCount: retail.length,
     };
