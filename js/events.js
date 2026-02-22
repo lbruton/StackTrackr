@@ -2050,7 +2050,7 @@ const setupDataManagementListeners = () => {
       if (typeof backfillStaktrakrHourly === 'function') {
         backfillStaktrakrHourly()
           .then(() => { if (typeof updateAllSparklines === 'function') updateAllSparklines(); })
-          .catch(() => {});
+          .catch((err) => { console.warn('[StakTrakr] Post-reset backfill failed:', err); });
       }
 
       apiConfig = { provider: "", keys: {} };
@@ -2644,7 +2644,7 @@ const setupApiEvents = () => {
             const { updatedCount, anySucceeded, results } = await syncProviderChain({ showProgress: true, forceSync: true });
             if (typeof showToast === "function") {
               if (updatedCount > 0) {
-                const providerName = Object.entries(results).find(([_, s]) => s === "success")?.[0];
+                const providerName = Object.entries(results).find(([_, s]) => s === "ok")?.[0];
                 const label = providerName ? (API_PROVIDERS[providerName]?.name || providerName) : "API";
                 showToast(`\u2713 Synced ${updatedCount} prices from ${label}`);
               } else if (!anySucceeded) {

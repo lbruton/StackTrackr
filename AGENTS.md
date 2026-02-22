@@ -152,6 +152,7 @@ number collisions; worktrees prevent filesystem conflicts.
 7. Cleanup: `git worktree remove .claude/worktrees/patch-VERSION --force && git branch -d patch/VERSION && rm devops/version.lock`
 
 Lock format (JSON):
+
 ```json
 {
   "locked": "3.32.09",
