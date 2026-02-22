@@ -85,6 +85,76 @@ def run_catchup(api_key, data_dir):
 
 NOON_HOUR = 17  # noon EST = 17:00 UTC — market reference price for daily seed
 
+# ---------------------------------------------------------------------------
+# 24-hour backfill (fills gaps from missed polls)
+# ---------------------------------------------------------------------------
+
+def backfill_recent_hours(api_key, data_dir, hours_back=24):
+    """
+    Backfill missing hourly files from the last N hours.
+    Uses /timeframe endpoint for accurate historical prices.
+    Called in --once mode (GitHub Actions) to ensure no 404s.
+    """
+    now = datetime.utcnow()
+    missing = []
+
+    # Scan for missing hourly files
+    for h in range(1, hours_back + 1):
+        target = now - timedelta(hours=h)
+        hour_str = f"{target.hour:02d}"
+        target_date = target.date()
+        hourly_dir = (
+            Path(data_dir) / "hourly"
+            / str(target_date.year)
+            / f"{target_date.month:02d}"
+            / f"{target_date.day:02d}"
+        )
+        path = hourly_dir / f"{hour_str}.json"
+        if not path.exists():
+            missing.append((target_date, hour_str))
+
+    if not missing:
+        log("Backfill: no gaps in last 24 hours.")
+        return
+
+    log(f"Backfill: {len(missing)} missing hourly files found.")
+
+    # Group missing by date for efficient /timeframe calls
+    dates_needed = sorted(set(d for d, _ in missing))
+    start_date = dates_needed[0]
+    end_date = dates_needed[-1]
+
+    try:
+        data = seed.fetch_timeframe(api_key, start_date, end_date)
+        rates_by_date = data.get("rates", {})
+    except Exception as e:
+        log(f"Backfill: /timeframe fetch failed: {e}")
+        return
+
+    filled = 0
+    for target_date, hour_str in missing:
+        date_str = target_date.strftime("%Y-%m-%d")
+        if date_str not in rates_by_date:
+            continue
+        inverted = seed.invert_rates(rates_by_date[date_str])
+        entries = []
+        for symbol in ["XAU", "XAG", "XPT", "XPD"]:
+            if symbol not in inverted:
+                continue
+            entries.append({
+                "spot": inverted[symbol],
+                "metal": seed.SYMBOL_TO_METAL[symbol],
+                "source": "hourly",
+                "provider": "MetalPriceAPI",
+                "timestamp": f"{date_str} {hour_str}:00:00",
+            })
+        if entries:
+            written = seed.save_hourly_file(data_dir, entries, target_date, hour_str)
+            if written:
+                filled += 1
+
+    log(f"Backfill: filled {filled} of {len(missing)} missing hourly files.")
+
 def write_hourly(entries, data_dir, hour_str, date_obj):
     """
     Write hourly price snapshot to data/hourly/YYYY/MM/DD/HH.json.
@@ -138,8 +208,15 @@ def poll_once(api_key, data_dir):
         log("Poll: no valid entries after transformation.")
         return
 
-    # Always write hourly data
-    write_hourly(entries, data_dir, hour_str, today)
+    # Fix timestamps for hourly files — use actual hour, not hardcoded noon
+    hourly_entries = []
+    for e in entries:
+        he = dict(e)
+        he["timestamp"] = f"{today_str} {hour_str}:00:00"
+        hourly_entries.append(he)
+
+    # Always write hourly data (with actual-hour timestamps)
+    write_hourly(hourly_entries, data_dir, hour_str, today)
 
     # At noon EST (or later if missed), write daily seed
     if hour >= NOON_HOUR:
@@ -182,6 +259,8 @@ def main():
 
     if once:
         # Single poll — used by GitHub Actions
+        # First backfill any missing hours from the last 24h (prevents 404s)
+        backfill_recent_hours(api_key, data_dir)
         poll_once(api_key, data_dir)
         log("Done (single-shot).")
         return
