@@ -137,12 +137,9 @@ test.describe('Backup and Restore', () => {
     const downloadPath = path.join(process.cwd(), 'test-results', 'backup.stvault');
     await download.saveAs(downloadPath);
     
-    await page.evaluate(() => {
-      localStorage.clear();
-      window.location.reload();
-    });
-    
-    await page.goto('/');
+    await page.evaluate(() => { localStorage.clear(); });
+    await page.reload();
+
     const ackModal = page.locator('#ackModal');
     if (await ackModal.isVisible()) {
       await page.locator('#ackAcceptBtn').click();
