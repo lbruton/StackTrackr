@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.32.12] - 2026-02-22
+
+### Added — Configurable Vault Password Idle Timeout (STAK-183)
+
+- **Added**: "Auto-lock after idle" dropdown in Settings → Cloud Sync → Session Password Cache — choose 15 min, 30 min, 1 hour, 2 hours, or Never
+- **Changed**: Vault password idle lock reads the user's setting at arm time instead of a hardcoded 15-minute constant; "Never" disables auto-clear entirely
+
+---
+
 ## [3.32.11] - 2026-02-22
 
 ### Fixed — PR #395 Review Fixes — Code Quality & Correctness
