@@ -6,7 +6,7 @@ set -e
 
 API_DATA_REPO="${API_DATA_REPO:-https://github.com/lbruton/StakTrakrApi.git}"
 API_EXPORT_DIR="${API_EXPORT_DIR:-/tmp/staktrakr-api-export}"
-BRANCH="spot-data"
+BRANCH="main"
 COMMIT_INTERVAL=3600  # Commit every hour (matches POLL_INTERVAL_SECONDS)
 
 if [ -z "$GITHUB_TOKEN" ]; then
