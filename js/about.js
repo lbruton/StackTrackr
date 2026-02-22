@@ -283,11 +283,11 @@ const setupAckModalEvents = () => {
  */
 const getEmbeddedWhatsNew = () => {
   return `
+    <li><strong>v3.32.05 &ndash; Service Worker Cache Coverage</strong>: image-processor.js, bulk-image-cache.js, and image-cache-modal.js added to sw.js CORE_ASSETS &mdash; offline image workflows no longer 404 on first offline visit</li>
     <li><strong>v3.32.04 &ndash; Async Save Reliability</strong>: Storage calls in spot price sync, catalog manager, and inventory save now properly await saveData() &mdash; prevents silently dropped errors if localStorage throws</li>
     <li><strong>v3.32.03 &ndash; Sync Toast &amp; UX Polish</strong>: Spot price sync completion now shows a non-blocking toast notification instead of a blocking modal dialog</li>
     <li><strong>v3.32.02 &ndash; Appearance Settings Redesign</strong>: Appearance tab redesigned &mdash; Color scheme and Inventory View as compact pill-button pickers; Timezone, Default Sort, and Visible Items as full-width dropdowns; thumb-friendly touch targets throughout. Restore Historical Data button added to API settings (STAK-258)</li>
     <li><strong>v3.32.01 &ndash; Dual-Poller API &amp; Spot Pipeline Fixes</strong>: Corrected retail endpoint paths for api1.staktrakr.com fallback. Fixed pollers cross-wired to wrong API repos. Repaired hourly spot data pipeline &mdash; backfill, dual-checkout, and endpoint migration. Added nightly sync between StakTrakrApi and StakTrakrApi1 via GitHub Actions (STAK-255)</li>
-    <li><strong>v3.32.0 &ndash; Market Prices Module &amp; OOS Detection</strong>: Live bullion retail prices from APMEX, Monument, SDB, and JM Bullion with per-coin cards, 30-day price history, and intraday 15-min data. Out-of-stock detection via AI vision and scraping consensus &mdash; OOS coins show strikethrough pricing and gaps in charts. Encrypted image vault syncs user-uploaded coin photos to cloud. Serial Number in PDF exports. Numista cache clears on N# change (STAK-181, STAK-234, STAK-244)</li>
   `;
 };
 
