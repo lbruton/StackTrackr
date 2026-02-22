@@ -1,13 +1,27 @@
 // API HEALTH CHECK
 // =============================================================================
 // Three independent freshness checks:
-//   Market prices  — manifest.json       — stale after 15 min
+//   Market prices  — manifest.json       — stale after 30 min
 //   Spot prices    — spot-history-YYYY   — stale after 75 min
 //   Goldback       — goldback-spot.json  — stale after 25 hr (daily scrape)
 
-const API_HEALTH_MARKET_STALE_MIN   = 15;
+const API_HEALTH_MARKET_STALE_MIN   = 30;  // poller runs every ~15-20 min; 30 min gives comfortable margin
 const API_HEALTH_SPOT_STALE_MIN     = 75;
 const API_HEALTH_GOLDBACK_STALE_MIN = 25 * 60; // 25 hours in minutes
+
+/**
+ * Normalizes naive "YYYY-MM-DD HH:MM:SS" timestamps (no timezone suffix) to
+ * UTC ISO-8601 before parsing. Timestamps that already carry "Z" or "+" pass
+ * through unchanged.
+ * "2026-02-22 12:00:00" → "2026-02-22T12:00:00Z"
+ * @param {string|*} ts
+ * @returns {string|*}
+ */
+const _normalizeTs = (ts) => {
+  if (!ts || typeof ts !== "string") return ts;
+  if (ts.includes("Z") || ts.includes("+")) return ts;
+  return ts.trim().replace(" ", "T") + "Z";
+};
 
 /**
  * Returns a compact relative time string ("8m ago", "2h ago", "1d ago").
@@ -17,7 +31,7 @@ const API_HEALTH_GOLDBACK_STALE_MIN = 25 * 60; // 25 hours in minutes
  */
 const _timeAgo = (timestamp) => {
   if (!timestamp) return "unknown";
-  const ageMs = Date.now() - new Date(timestamp).getTime();
+  const ageMs = Date.now() - new Date(_normalizeTs(timestamp)).getTime();
   if (isNaN(ageMs) || ageMs < 0) return "just now";
   const minutes = Math.floor(ageMs / 60000);
   const hours   = Math.floor(ageMs / 3600000);
@@ -58,7 +72,7 @@ const fetchApiHealth = async () => {
   let market = { ok: false, ageMin: null, ago: null, coins: [], error: null };
   if (marketResult.status === "fulfilled") {
     const data = marketResult.value;
-    const generatedAt = new Date(data.generated_at);
+    const generatedAt = new Date(_normalizeTs(data.generated_at));
     if (!isNaN(generatedAt.getTime())) {
       market.ageMin = Math.max(0, Math.floor((Date.now() - generatedAt.getTime()) / 60000));
       market.ago    = _timeAgo(data.generated_at);
@@ -78,7 +92,7 @@ const fetchApiHealth = async () => {
     const last    = Array.isArray(entries) && entries[entries.length - 1];
     const ts      = last && last.timestamp;
     if (ts) {
-      spot.ageMin = Math.max(0, Math.floor((Date.now() - new Date(ts).getTime()) / 60000));
+      spot.ageMin = Math.max(0, Math.floor((Date.now() - new Date(_normalizeTs(ts)).getTime()) / 60000));
       spot.ago    = _timeAgo(ts);
       spot.ok     = spot.ageMin <= API_HEALTH_SPOT_STALE_MIN;
     } else {
@@ -92,7 +106,7 @@ const fetchApiHealth = async () => {
   let goldback = { ok: false, ago: null, error: null };
   if (goldbackResult.status === "fulfilled") {
     const data     = goldbackResult.value;
-    const scrapedAt = new Date(data.scraped_at);
+    const scrapedAt = new Date(_normalizeTs(data.scraped_at));
     if (data.scraped_at && !isNaN(scrapedAt.getTime())) {
       const ageMin    = Math.max(0, Math.floor((Date.now() - scrapedAt.getTime()) / 60000));
       goldback.ago    = _timeAgo(data.scraped_at);
