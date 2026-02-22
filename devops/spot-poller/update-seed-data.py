@@ -211,7 +211,7 @@ def transform_to_seed_format(rates_by_date):
                 "spot": inverted[symbol],
                 "metal": metal,
                 "source": "seed",
-                "provider": "MetalPriceAPI",
+                "provider": "StakTrakr",
                 "timestamp": f"{date_str} 12:00:00",
             })
     return entries
@@ -234,7 +234,7 @@ def transform_latest_to_seed(rates, date_str):
             "spot": inverted[symbol],
             "metal": metal,
             "source": "seed",
-            "provider": "MetalPriceAPI",
+            "provider": "StakTrakr",
             "timestamp": f"{date_str} 12:00:00",
         })
     return entries

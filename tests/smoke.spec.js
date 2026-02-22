@@ -1,15 +1,10 @@
 import { test, expect } from '@playwright/test';
+import { dismissAckModal } from './test-utils.js';
 
 test.describe('StakTrakr Smoke Tests', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
-    
-    // Dismiss acknowledgment modal if present
-    const ackModal = page.locator('#ackModal');
-    if (await ackModal.isVisible()) {
-      await page.locator('#ackAcceptBtn').click();
-      await expect(ackModal).not.toBeVisible();
-    }
+    await dismissAckModal(page);
   });
 
   test('Page title and main components are visible', async ({ page }) => {

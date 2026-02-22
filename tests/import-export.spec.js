@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 import * as fs from 'fs';
 import * as path from 'path';
+import { dismissAckModal } from './test-utils.js';
 
 // The item modal has collapsible <details> sections that must be expanded
 // before filling or reading fields inside them:
@@ -16,10 +17,7 @@ const expandNotesSection = (page) =>
 test.describe('Import/Export Round-Trip', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
-    const ackModal = page.locator('#ackModal');
-    if (await ackModal.isVisible()) {
-      await page.locator('#ackAcceptBtn').click();
-    }
+    await dismissAckModal(page);
 
     // Clear all existing data via Storage settings
     await page.locator('#settingsBtn').click();
