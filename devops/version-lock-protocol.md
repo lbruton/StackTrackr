@@ -16,7 +16,28 @@ The actual lock state lives in `devops/version.lock` (gitignored). Worktrees liv
 
 ---
 
-## Full Protocol (9 steps)
+## Full Protocol (10 steps)
+
+### Step 0 — SYNC with remote before starting
+
+Before claiming the version lock or creating a worktree, confirm local `dev` is in sync
+with `origin/dev`. A worktree created from a stale HEAD produces PRs that conflict with
+or silently drop remote commits that landed while you were offline.
+
+```bash
+git fetch origin
+git rev-list HEAD..origin/dev --count
+```
+
+- **Count is 0:** Proceed to Step 1. ✅
+- **Count > 0:** HARD STOP. Show the incoming commits and require a pull:
+
+```bash
+git log --oneline HEAD..origin/dev   # show what you'd be missing
+git pull origin dev                   # pull, then restart from Step 0
+```
+
+Do not proceed until `git rev-list HEAD..origin/dev --count` returns `0`.
 
 ### Step 1 — SYNC local dev with origin/dev
 
