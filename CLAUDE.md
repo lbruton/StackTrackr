@@ -18,6 +18,7 @@ These rules fire before any implementation, no exceptions:
 7. **PR ready?** → `/pr-resolve` with Phase 0 parallel agents before touching any threads.
 
 **Red flags — stop and invoke the right skill:**
+
 - "Let me just quickly add this..." → brainstorming first
 - "I'll fix this real fast..." → systematic-debugging first
 - "It should work now" → verification-before-completion first
@@ -63,12 +64,13 @@ Works on `file://` and HTTP. Runtime artifact: zero build step, zero install. Se
 ## UI Design Workflow (non-trivial components only)
 
 ≥3 data elements or uncertain layout → full three-stage flow:
+
 1. **Stitch** (`ui-mockup` skill) — visual concept
 2. **Playground** (`playground` skill) — interactive prototype
 3. **Implementation** (`writing-plans` → `subagent-driven-development`) — only after Playground approval
 
 Single-element additions (button, badge, tooltip) → skip straight to implementation.
-**`frontend-design` plugin is BANNED** — use `ui-design` skill instead.
+For CSS/HTML guidance, use `frontend-design` plugin or `ui-design` project skill.
 
 ## Instruction Files & Skills
 
@@ -84,7 +86,7 @@ Use `/sync-instructions` after significant codebase changes.
 
 ## MCP Tools — Use Proactively
 
-- `mcp__memento__*` — save insights, recall handoffs, store session notes (`project:staktrakr` tag)
+- `mcp__mem0__*` — save insights, recall handoffs, store session notes (Memento paused for 1-week mem0 cloud trial)
 - `mcp__claude_ai_Linear__*` — all Linear ops (team: `f876864d-ff80-4231-ae6c-a8e5cb69aca4`)
 - `mcp__codacy__*` — quality/PR issues; use during `/pr-resolve`
 - `mcp__context7__*` — library docs (Chart.js, Bootstrap, jsPDF) before implementing
@@ -98,4 +100,4 @@ Use `/sync-instructions` after significant codebase changes.
 
 Always pass: target path, expected outcome, risk classification (read/write/network/destructive).
 Never forward raw secrets. For destructive ops, require explicit human confirmation.
-Dual-write handoff: Linear issue + Memento entity with attribution.
+Dual-write handoff: Linear issue + mem0 `add_memory` with attribution.
