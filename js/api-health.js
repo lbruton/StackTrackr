@@ -2,7 +2,7 @@
 // =============================================================================
 // Three independent freshness checks:
 //   Market prices  — manifest.json       — stale after 30 min
-//   Spot prices    — spot-history-YYYY   — stale after 75 min
+//   Spot prices    — hourly/YYYY/MM/DD/HH.json — stale after 75 min
 //   Goldback       — goldback-spot.json  — stale after 25 hr (daily scrape)
 
 const API_HEALTH_MARKET_STALE_MIN   = 30;  // poller runs every ~15-20 min; 30 min gives comfortable margin
@@ -52,8 +52,6 @@ const fetchApiHealth = async () => {
     ? RETAIL_API_BASE_URL
     : "https://api.staktrakr.com/data/api";
   const dataBase = base.replace(/\/api$/, "");
-  const year = new Date().getFullYear();
-
   const _fetchWithTimeout = (url, ms = 10000) => {
     const ctrl = new AbortController();
     const tid  = setTimeout(() => ctrl.abort(), ms);
@@ -62,9 +60,21 @@ const fetchApiHealth = async () => {
       .catch((e) => { clearTimeout(tid); throw e; });
   };
 
+  // Hourly spot URL: try current UTC hour, fall back to previous hour
+  const _hourlyUrl = (offsetHours = 0) => {
+    const d  = new Date(Date.now() - offsetHours * 3600000);
+    const y  = d.getUTCFullYear();
+    const mo = String(d.getUTCMonth() + 1).padStart(2, "0");
+    const dy = String(d.getUTCDate()).padStart(2, "0");
+    const hr = String(d.getUTCHours()).padStart(2, "0");
+    return `${dataBase}/hourly/${y}/${mo}/${dy}/${hr}.json`;
+  };
+  const spotFetch = _fetchWithTimeout(_hourlyUrl(0))
+    .catch(() => _fetchWithTimeout(_hourlyUrl(1)));
+
   const [marketResult, spotResult, goldbackResult] = await Promise.allSettled([
     _fetchWithTimeout(`${base}/manifest.json`),
-    _fetchWithTimeout(`${dataBase}/spot-history-${year}.json`),
+    spotFetch,
     _fetchWithTimeout(`${base}/goldback-spot.json`),
   ]);
 
@@ -85,7 +95,7 @@ const fetchApiHealth = async () => {
     market.error = marketResult.reason?.message || String(marketResult.reason);
   }
 
-  // --- Spot prices (spot-history-YYYY.json, last entry) ---
+  // --- Spot prices (hourly file: data/hourly/YYYY/MM/DD/HH.json, last entry) ---
   let spot = { ok: false, ageMin: null, ago: null, error: null };
   if (spotResult.status === "fulfilled") {
     const entries = spotResult.value;
