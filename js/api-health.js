@@ -17,7 +17,8 @@ const API_HEALTH_GOLDBACK_STALE_MIN = 25 * 60; // 25 hours in minutes
  */
 const _timeAgo = (timestamp) => {
   if (!timestamp) return "unknown";
-  const ageMs   = Date.now() - new Date(timestamp).getTime();
+  const ageMs = Date.now() - new Date(timestamp).getTime();
+  if (isNaN(ageMs) || ageMs < 0) return "just now";
   const minutes = Math.floor(ageMs / 60000);
   const hours   = Math.floor(ageMs / 3600000);
   const days    = Math.floor(ageMs / 86400000);
@@ -39,19 +40,18 @@ const fetchApiHealth = async () => {
   const dataBase = base.replace(/\/api$/, "");
   const year = new Date().getFullYear();
 
+  const _fetchWithTimeout = (url, ms = 10000) => {
+    const ctrl = new AbortController();
+    const tid  = setTimeout(() => ctrl.abort(), ms);
+    return fetch(url, { cache: "no-store", signal: ctrl.signal })
+      .then((r) => { clearTimeout(tid); if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+      .catch((e) => { clearTimeout(tid); throw e; });
+  };
+
   const [marketResult, spotResult, goldbackResult] = await Promise.allSettled([
-    fetch(`${base}/manifest.json`, { cache: "no-store" }).then((r) => {
-      if (!r.ok) throw new Error(`HTTP ${r.status}`);
-      return r.json();
-    }),
-    fetch(`${dataBase}/spot-history-${year}.json`, { cache: "no-store" }).then((r) => {
-      if (!r.ok) throw new Error(`HTTP ${r.status}`);
-      return r.json();
-    }),
-    fetch(`${base}/goldback-spot.json`, { cache: "no-store" }).then((r) => {
-      if (!r.ok) throw new Error(`HTTP ${r.status}`);
-      return r.json();
-    }),
+    _fetchWithTimeout(`${base}/manifest.json`),
+    _fetchWithTimeout(`${dataBase}/spot-history-${year}.json`),
+    _fetchWithTimeout(`${base}/goldback-spot.json`),
   ]);
 
   // --- Market prices (manifest.json) ---
@@ -68,7 +68,7 @@ const fetchApiHealth = async () => {
       market.error = `Invalid timestamp: ${data.generated_at}`;
     }
   } else {
-    market.error = marketResult.reason.message;
+    market.error = marketResult.reason?.message || String(marketResult.reason);
   }
 
   // --- Spot prices (spot-history-YYYY.json, last entry) ---
@@ -85,22 +85,25 @@ const fetchApiHealth = async () => {
       spot.error = "No entries found";
     }
   } else {
-    spot.error = spotResult.reason.message;
+    spot.error = spotResult.reason?.message || String(spotResult.reason);
   }
 
   // --- Goldback daily scrape (informational only — does not affect overall status) ---
   let goldback = { ok: false, ago: null, error: null };
   if (goldbackResult.status === "fulfilled") {
-    const data = goldbackResult.value;
-    if (data.scraped_at) {
-      const ageMin    = Math.max(0, Math.floor((Date.now() - new Date(data.scraped_at).getTime()) / 60000));
+    const data     = goldbackResult.value;
+    const scrapedAt = new Date(data.scraped_at);
+    if (data.scraped_at && !isNaN(scrapedAt.getTime())) {
+      const ageMin    = Math.max(0, Math.floor((Date.now() - scrapedAt.getTime()) / 60000));
       goldback.ago    = _timeAgo(data.scraped_at);
       goldback.ok     = ageMin <= API_HEALTH_GOLDBACK_STALE_MIN;
+    } else if (data.scraped_at) {
+      goldback.error = `Invalid timestamp: ${data.scraped_at}`;
     } else {
       goldback.error = "No scraped_at field";
     }
   } else {
-    goldback.error = goldbackResult.reason.message;
+    goldback.error = goldbackResult.reason?.message || String(goldbackResult.reason);
   }
 
   return { market, spot, goldback };
@@ -116,8 +119,8 @@ const updateHealthBadges = (health) => {
   const allOk = market.ok && spot.ok;
   const icon  = allOk ? "✅" : "⚠️";
 
-  const marketPart = market.error ? "Market ❌" : `Market ${market.ago}`;
-  const spotPart   = spot.error   ? "Spot ❌"   : `Spot ${spot.ago}`;
+  const marketPart = market.error ? "Market ❌" : `Market ${market.ago ?? "?"}`;
+  const spotPart   = spot.error   ? "Spot ❌"   : `Spot ${spot.ago ?? "?"}`;
 
   const label = `${icon} ${marketPart} · ${spotPart}`;
   ["apiHealthBadge", "apiHealthBadgeAbout"].forEach((id) => {
@@ -147,7 +150,7 @@ const populateApiHealthModal = (health) => {
     marketEl.textContent = market.error
       ? `❌ ${market.error}`
       : market.ok
-        ? `✅ ${market.ago} (${market.ageMin}m)`
+        ? `✅ ${market.ago}`
         : `⚠️ ${market.ago} — stale (>${API_HEALTH_MARKET_STALE_MIN}m)`;
   }
 
@@ -155,7 +158,7 @@ const populateApiHealthModal = (health) => {
     spotEl.textContent = spot.error
       ? `❌ ${spot.error}`
       : spot.ok
-        ? `✅ ${spot.ago} (${spot.ageMin}m)`
+        ? `✅ ${spot.ago}`
         : `⚠️ ${spot.ago} — stale (>${API_HEALTH_SPOT_STALE_MIN}m)`;
   }
 
@@ -274,13 +277,16 @@ const initApiHealth = async () => {
     const health = await fetchApiHealth();
     _lastHealth  = health;
     updateHealthBadges(health);
-    // If the modal is open and showing placeholder text, push the result in now
-    const modal = safeGetElement("apiHealthModal");
+    // If the modal is open, push the result in now rather than leaving placeholder text.
+    // Use getElementById directly — safeGetElement returns a dummy whose style.display
+    // is always undefined (never "none"), which would make this guard always true.
+    const modal = document.getElementById("apiHealthModal");
     if (modal && modal.style.display !== "none") {
       populateApiHealthModal(health);
     }
   } catch (err) {
     console.warn("API health check failed:", err);
+    _lastHealth = null; // clear stale data so modal shows error state, not old green result
     populateApiHealthModalError(err);
   }
 };
