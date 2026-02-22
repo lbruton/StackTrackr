@@ -15,31 +15,38 @@ const providerRequiresKey = (prov) => API_PROVIDERS[prov]?.requiresKey !== false
 
 /**
  * Fetch spot prices from StakTrakr hourly JSON files.
- * Walks back up to 6 hours from the current UTC hour to find data.
+ * Walks back up to 24 hours from the current UTC hour to find data.
+ * Races all configured baseUrls in parallel per hour — takes the first success.
+ * Staggered pollers mean the freshest hour may only be on one endpoint; older
+ * hours resolve from whichever endpoint responds first.
  */
 const fetchStaktrakrPrices = async (selectedMetals) => {
-  const baseUrl = API_PROVIDERS.STAKTRAKR.hourlyBaseUrl;
+  const baseUrls = API_PROVIDERS.STAKTRAKR.hourlyBaseUrls;
   const now = new Date();
 
-  for (let offset = 0; offset <= 6; offset++) {
+  for (let offset = 0; offset <= 23; offset++) {
     const target = new Date(now.getTime() - offset * 3600000);
     const yyyy = target.getUTCFullYear();
     const mm = String(target.getUTCMonth() + 1).padStart(2, '0');
     const dd = String(target.getUTCDate()).padStart(2, '0');
     const hh = String(target.getUTCHours()).padStart(2, '0');
+    const path = `/${yyyy}/${mm}/${dd}/${hh}.json`;
 
-    const url = `${baseUrl}/${yyyy}/${mm}/${dd}/${hh}.json`;
     try {
-      const resp = await fetch(url, { mode: 'cors' });
-      if (!resp.ok) continue;
-      const data = await resp.json();
+      // Race all endpoints in parallel — first successful response with valid data wins
+      const data = await Promise.any(
+        baseUrls.map(async (baseUrl) => {
+          const resp = await fetch(`${baseUrl}${path}`, { mode: 'cors' });
+          if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+          return resp.json();
+        })
+      );
       const { current } = API_PROVIDERS.STAKTRAKR.parseBatchResponse(data);
       const results = {};
       selectedMetals.forEach(metal => {
         if (current[metal] > 0) results[metal] = current[metal];
       });
       if (Object.keys(results).length > 0) {
-        // Track usage for STAKTRAKR
         const cfg = loadApiConfig();
         if (cfg.usage?.STAKTRAKR) {
           cfg.usage.STAKTRAKR.used++;
@@ -59,7 +66,7 @@ const fetchStaktrakrPrices = async (selectedMetals) => {
  * @returns {Promise<{newCount: number, fetchCount: number}>} Counts of new entries and successful fetches
  */
 const fetchStaktrakrHourlyRange = async (hoursBack) => {
-  const baseUrl = API_PROVIDERS.STAKTRAKR.hourlyBaseUrl;
+  const baseUrls = API_PROVIDERS.STAKTRAKR.hourlyBaseUrls;
   const now = new Date();
 
   // Build list of UTC hours as Date objects
@@ -87,11 +94,16 @@ const fetchStaktrakrHourlyRange = async (hoursBack) => {
       const mm = String(h.getUTCMonth() + 1).padStart(2, '0');
       const dd = String(h.getUTCDate()).padStart(2, '0');
       const hh = String(h.getUTCHours()).padStart(2, '0');
-      const url = `${baseUrl}/${yyyy}/${mm}/${dd}/${hh}.json`;
+      const path = `/${yyyy}/${mm}/${dd}/${hh}.json`;
       try {
-        const resp = await fetch(url, { mode: 'cors' });
-        if (!resp.ok) return null;
-        const data = await resp.json();
+        // Race all endpoints — first success wins (freshest hour wins on current offset)
+        const data = await Promise.any(
+          baseUrls.map(async (base) => {
+            const resp = await fetch(`${base}${path}`, { mode: 'cors' });
+            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+            return resp.json();
+          })
+        );
         const { current } = API_PROVIDERS.STAKTRAKR.parseBatchResponse(data);
         // Use ISO-format UTC timestamp so recordSpot normalizes consistently
         return { current, timestamp: `${yyyy}-${mm}-${dd}T${hh}:00:00Z` };

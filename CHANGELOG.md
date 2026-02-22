@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.32.01] - 2026-02-21
+
+### Fixed — Dual-Poller API Endpoint & Spot Pipeline Fixes
+
+- **Fixed**: Correct retail endpoint paths for api1.staktrakr.com fallback — both RETAIL_API_ENDPOINTS now resolve to valid URLs
+- **Fixed**: Point all pollers to correct API repos — StakTrakrApi (Fly.io) and StakTrakrApi1 (Mac) no longer cross-wired
+- **Fixed**: Hourly spot data pipeline — backfill, dual-checkout, and endpoint migration corrected (STAK-255)
+- **Fixed**: Race both hourlyBaseUrls in parallel per hour for spec compliance
+- **Added**: Nightly sync between StakTrakrApi and StakTrakrApi1 repos via GitHub Actions
+
+---
+
 ## [3.32.0] - 2026-02-21
 
 ### Added — Market Prices Module, OOS Detection & Image Vault Sync

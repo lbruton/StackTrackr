@@ -283,12 +283,11 @@ const setupAckModalEvents = () => {
  */
 const getEmbeddedWhatsNew = () => {
   return `
+    <li><strong>v3.32.01 &ndash; Dual-Poller API &amp; Spot Pipeline Fixes</strong>: Corrected retail endpoint paths for api1.staktrakr.com fallback. Fixed pollers cross-wired to wrong API repos. Repaired hourly spot data pipeline &mdash; backfill, dual-checkout, and endpoint migration. Added nightly sync between StakTrakrApi and StakTrakrApi1 via GitHub Actions (STAK-255)</li>
     <li><strong>v3.32.0 &ndash; Market Prices Module &amp; OOS Detection</strong>: Live bullion retail prices from APMEX, Monument, SDB, and JM Bullion with per-coin cards, 30-day price history, and intraday 15-min data. Out-of-stock detection via AI vision and scraping consensus &mdash; OOS coins show strikethrough pricing and gaps in charts. Encrypted image vault syncs user-uploaded coin photos to cloud. Serial Number in PDF exports. Numista cache clears on N# change (STAK-181, STAK-234, STAK-244)</li>
     <li><strong>v3.31.6 &ndash; Collapsible Form Modal &amp; Numista Data Persistence</strong>: Add/edit form now uses collapsible sections &mdash; core fields always visible, Grading, Pricing, Numista Data, and Notes collapse with native details/summary. Per-item Numista metadata persists with layered provider priority. All native alert/confirm/prompt migrated to async appDialog wrappers. Bulk edit search expanded across metadata fields (STAK-173, STAK-175)</li>
     <li><strong>v3.31.5 &ndash; Cloud Auto-Sync &amp; Bulk Edit Fixes</strong>: Real-time encrypted auto-sync to Dropbox &mdash; inventory changes push automatically and other devices see an &ldquo;Update Available&rdquo; modal. Bulk Edit Delete/Copy/Apply now work correctly inside the modal. isCollectable field removed (superseded by tag system) (STAK-149)</li>
     <li><strong>v3.31.4 &ndash; Vendored Libraries &amp; True Offline Support</strong>: All CDN dependencies (PapaParse, jsPDF, Chart.js, JSZip, Forge) are now bundled locally &mdash; the app works fully offline and on file:// protocol with no internet required. CDN fallback fires automatically if a local file fails</li>
-    <li><strong>v3.31.3 &ndash; Filter Chip Active-State UX</strong>: Filter chips now hide &times; on idle &mdash; only active/search chips show a remove button and themed border ring. Clicking &times; on an active chip now correctly removes the filter. Card view pagination, mobile image tap, and bulk popover rendering polished</li>
-    <li><strong>v3.31.2 &ndash; Numista Metadata Pipeline Fixes</strong>: Tags now write eagerly on bulk sync and restore correctly after vault restore. View modal skips API when metadata is already cached. Weight pre-fills automatically from Numista search results (STAK-168)</li>
   `;
 };
 
