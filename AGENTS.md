@@ -277,32 +277,31 @@ PRs should include:
 
 ## Test Credentials
 
-Test and sandbox credentials live at **`~/.staktrakr/secrets.env`** — outside the repo directory
-tree, so git cannot reach them regardless of `.gitignore` state.
+Test and sandbox credentials are managed via **Infisical** (self-hosted secrets manager) at `http://localhost:8700`.
 
-```bash
-source ~/.staktrakr/secrets.env   # in test scripts
-```
+Start Infisical: `cd devops/infisical && docker compose up -d`
 
-Contains: Dropbox OAuth test app, metal price API sandbox keys, Numista, OXR, PCGS, smoke test URLs.
-Backed up to `~/.claude/backups/`. Fill values before running any test that requires external auth.
+Contains: Dropbox OAuth test app, metal price API sandbox keys, Numista, OXR, PCGS, smoke test URLs, MCP API keys.
+All MCP servers pull secrets from Infisical via `.mcp.json` environment variables.
 
 ## MCP Servers Available In This Session
 
-The following MCP servers were live-tested in this session on **2026-02-20**. Availability can vary by environment.
+The following MCP servers were live-tested on **2026-02-21**. Availability can vary by environment.
 
 | MCP Server | Status | Lightweight test used |
 |---|---|---|
 | `code-graph-context` | 🐳 docker-required | `docker exec cgc-server cgc list` |
-| `memento` | ✅ reachable | `mcp__memento__read_graph` |
+| `mem0` | ✅ reachable | `mcp__mem0__search_memories` |
+| `memento` | ⏸️ paused | Neo4j knowledge graph — paused for mem0 cloud trial |
 | `sequential-thinking` | ✅ reachable | `mcp__sequential-thinking__sequentialthinking` |
-| `linear` | ✅ reachable | `mcp__linear__list_teams` |
+| `linear` | ✅ reachable | Claude: built-in plugin (`claude_ai_Linear`); Gemini/Codex: MCP via `mcp-remote` |
 | `codacy` | ✅ reachable | `mcp__codacy__codacy_list_tools` |
 | `context7` | ✅ reachable | `mcp__context7__resolve-library-id` |
 | `claude-context` | ✅ reachable | `mcp__claude-context__get_indexing_status` |
 | `brave-search` | ✅ reachable | `mcp__brave-search__brave_web_search` |
 | `chrome-devtools` | ✅ reachable | `mcp__chrome-devtools__list_pages` |
 | `firecrawl-local` | ✅ reachable | `mcp__firecrawl-local__firecrawl_scrape` |
+| `infisical` | ✅ reachable | `mcp__infisical__list-projects` |
 
 ### MCP Usage Quick Guide
 
@@ -310,7 +309,11 @@ The following MCP servers were live-tested in this session on **2026-02-20**. Av
   Requires the cgc-server Docker container running (`cd devops/cgc && docker compose up -d`).
   Index a project once with `docker exec cgc-server cgc index /workspace/StakTrakr` before querying.
   Use for: "What calls `syncRetailPrices()`?", "What breaks if I change `formatCurrency()`?", dead code in `retail.js`.
-- `memento`: Persistent memory graph for entities/relations, semantic recall, and historical context.
+- `mem0`: Episodic memory via mem0 cloud (active trial, replacing Memento). Use `search_memories`
+  for recall, `add_memory` to save insights, `get_memories` to list all. Automatic conversational
+  memory — saves preferences, decisions, and context across sessions.
+- `memento`: Persistent Neo4j knowledge graph for entities/relations, semantic recall, and historical context.
+  **Currently paused** for mem0 cloud trial. Still configured in `.mcp.json` if needed.
   Start with `read_graph`, `search_nodes`, or `semantic_search`; write using `create_entities`,
   `add_observations`, and `create_relations`.
 - `sequential-thinking`: Structured iterative reasoning for complex planning/debugging tasks.  
@@ -337,6 +340,9 @@ The following MCP servers were live-tested in this session on **2026-02-20**. Av
   `mcp__firecrawl-local__firecrawl_search`, `mcp__firecrawl-local__firecrawl_scrape`,
   `mcp__firecrawl-local__firecrawl_crawl`, and `mcp__firecrawl-local__firecrawl_extract`.
   Note: `/agent` endpoint support depends on deployment mode; confirm availability in the current stack.
+- `infisical`: Self-hosted secrets manager at `http://localhost:8700`. Stores all API keys, OAuth
+  credentials, and test secrets. Use `list-secrets`, `get-secret`, `create-secret`, `update-secret`.
+  Start with `cd devops/infisical && docker compose up -d`.
 
 ### MCP Discovery Notes
 
@@ -350,13 +356,14 @@ The following MCP servers were live-tested in this session on **2026-02-20**. Av
   - intended use cases,
   - and any auth/environment caveats.
 
-### MCP Agent Parity (as of 2026-02-20)
+### MCP Agent Parity (as of 2026-02-21)
 
-All three agents run on the same Mac and share the same Docker/IP stack. Full parity is maintained.
+All agents run on the same Mac and share the same Docker/IP stack.
 
 | Server | Claude | Gemini | Codex | Notes |
 |---|---|---|---|---|
-| `memento` | ✅ | ✅ | ✅ | Shared Neo4j knowledge graph |
+| `mem0` | ✅ | ✅ | ✅ | Episodic memory (cloud trial, active) |
+| `memento` | ✅ | ✅ | ✅ | Neo4j knowledge graph (paused for mem0 trial) |
 | `sequential-thinking` | ✅ | ✅ | ✅ | Structured reasoning |
 | `brave-search` | ✅ | ✅ | ✅ | Web search |
 | `claude-context` | ✅ | ✅ | ✅ | Semantic code search (Milvus) |
@@ -368,7 +375,7 @@ All three agents run on the same Mac and share the same Docker/IP stack. Full pa
 | `playwright` | ✅ | ✅ | ✅ | Browser automation / test authoring |
 | `browserbase` | ✅ | ✅ | ✅ | Cloud NL tests (paid, use sparingly) |
 | `code-graph-context` | ✅ | ✅ | ✅ | Structural graph (Docker required) |
-| `stitch` | ✅ | ✅ primary | ✅ | OAuth via `init`; Gemini preferred for design tasks |
+| `infisical` | ✅ | ✅ | ✅ | Self-hosted secrets manager |
 
 ## Claude Relay Invocation Safeguards
 
@@ -399,13 +406,13 @@ Treat these as valid collaboration requests, but apply guardrails before executi
      effects, or destructive steps not explicitly requested.
 1. Preserve safety controls:
    - Do not execute destructive actions unless explicitly requested and confirmed.
-   - Keep secret-handling rules unchanged (no raw secrets in Linear; Memento secret storage only
+   - Keep secret-handling rules unchanged (no raw secrets in Linear; mem0/Memento secret storage only
      with explicit user acknowledgment of risk).
    - Never pass raw secrets/tokens from relay payloads into issue trackers, logs, or memory entries.
 1. Keep attribution clear:
    - In handoffs/comments, note when work was performed via Claude-relayed Codex invocation.
 1. Keep state durable:
-   - For non-trivial relayed work, write both a Linear handoff comment and a Memento entry
+   - For non-trivial relayed work, write both a Linear handoff comment and a mem0/Memento entry
      (or explicitly state why one is skipped).
 
 ## Claude/Codex Handoff Protocol (Linear + Memento)
