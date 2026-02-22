@@ -58,6 +58,8 @@ Works on `file://` and HTTP. Runtime artifact: zero build step, zero install. Se
 
 **Multi-agent patch workflow (when concurrent work is in flight):**
 
+> **Prerequisite:** `git fetch origin && git pull origin dev` — local dev must be in sync with remote before starting any patch. Hard gate — do not skip.
+
 1. `/release patch` → claims version lock → creates worktree `patch/VERSION` at `.claude/worktrees/patch-VERSION/`
 2. All work happens in the worktree (file edits, version bump, commit)
 3. Push `patch/VERSION` → open draft PR `patch/VERSION → dev` → Cloudflare generates preview URL
