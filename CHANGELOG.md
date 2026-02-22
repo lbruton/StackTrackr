@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.32.04] - 2026-02-22
+
+### Fixed — Async Save Reliability
+
+- **Fixed**: `await saveData()` in `updateLastTimestamps`, `CatalogManager._save`, and `saveInventory` — prevents silently dropped Promises if localStorage throws
+
+---
+
 ## [3.32.03] - 2026-02-22
 
 ### Fixed — Sync Toast
