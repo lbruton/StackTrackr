@@ -25,6 +25,40 @@ If no argument provided, ask the user whether this is a `release` or `patch`.
 
 ## Phase 0: Gather Context
 
+### Step 0: Remote Sync Gate (REQUIRED BEFORE LOCK CHECK)
+
+Before claiming a version lock or creating a worktree, ensure local `dev` matches `origin/dev`.
+A worktree created from a stale HEAD will produce PRs that conflict with or silently drop
+remote commits.
+
+```bash
+git fetch origin
+BEHIND=$(git rev-list HEAD..origin/dev --count)
+```
+
+**If `BEHIND` is 0:** Continue to Step 0a. ✅
+
+**If `BEHIND` > 0:** HARD STOP. Do not proceed.
+
+```
+⛔ Local dev is N commits behind origin/dev.
+
+Incoming commits:
+[git log --oneline HEAD..origin/dev]
+
+Run: git pull origin dev
+Then re-run /release patch.
+```
+
+Pull first, then restart from Step 0.
+
+```bash
+git pull origin dev
+```
+
+> **Why here and not later?** The worktree branches from current HEAD. If HEAD is stale,
+> every file diff in the PR will be relative to the wrong base. Pull first — worktree second.
+
 ### Step 0a: Version Lock Check (REQUIRED FIRST)
 
 Before anything else, check whether another agent has claimed the next version:
@@ -280,14 +314,7 @@ rm -f devops/version.lock
 
 ## Phase 4: Push & Draft PR
 
-1. Sync with latest `origin/dev` before pushing — other agents may have merged while you worked:
-   ```bash
-   git fetch origin
-   git merge origin/dev   # inside the worktree; no-op if nothing new
-   ```
-   Resolve any conflicts now, before the PR opens, so the Cloudflare preview reflects the combined state.
-
-2. Push the patch branch:
+1. Push the patch branch:
    ```bash
    git push origin patch/VERSION
    ```
