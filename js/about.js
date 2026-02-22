@@ -283,6 +283,7 @@ const setupAckModalEvents = () => {
  */
 const getEmbeddedWhatsNew = () => {
   return `
+    <li><strong>v3.32.09 &ndash; WeakMap Search Cache Correctness</strong>: Cache miss guard uses strict undefined check; notes edits invalidate search cache immediately; undo/redo now reflects reverted field values in search</li>
     <li><strong>v3.32.08 &ndash; OAuth State Security Hardening</strong>: Provider now parsed from trusted savedState after CSRF check; PKCE challenge adds .catch() to clean sessionStorage on failure; stale oauth state removed on exchange failure</li>
     <li><strong>v3.32.07 &ndash; Backend Data Integrity &amp; Sparkline Fix</strong>: Sync restore clears scoped keys before writing; DiffEngine module added for inventory merge; vault manifest AES-256-GCM crypto; sparkline spikes fixed via intraday dedup and &plusmn;1% Y-axis normalization (STAK-183, STAK-186, STAK-187, STAK-188)</li>
     <li><strong>v3.32.06 &ndash; API Health Badge</strong>: Footer and About modal now show live API data freshness status &mdash; click the badge for details on last update time and coin coverage</li>

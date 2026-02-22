@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.32.09] - 2026-02-22
+
+### Fixed — WeakMap Search Cache Correctness
+
+- **Fixed**: Cache miss check uses `=== undefined` instead of falsy — prevents treating a valid cached empty string as a miss (`js/filters.js`)
+- **Fixed**: Notes save handler now invalidates search cache after in-place mutation — multi-word search reflects updated notes immediately (`js/events.js`)
+- **Fixed**: Removed redundant post-loop `invalidateSearchCache` from `applyNumistaTags()` — `addItemTag()` already invalidates per item, eliminating a duplicate O(N) scan per tag (`js/tags.js`)
+- **Fixed**: Undo/redo now invalidates search cache after in-place field mutation — multi-word searches reflect reverted values immediately (`js/changeLog.js`)
+
+---
+
 ## [3.32.08] - 2026-02-22
 
 ### Fixed — OAuth State Security Hardening & Agent Instruction Sync
