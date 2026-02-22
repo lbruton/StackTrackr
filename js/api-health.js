@@ -262,6 +262,9 @@ const setupApiHealthModalEvents = () => {
 
 /**
  * Main entry point — fetches health data and wires up the UI.
+ * If the modal is already open when the fetch resolves (user opened it while
+ * data was in-flight), populate it immediately rather than leaving it on
+ * the "Checking…" placeholder.
  */
 const initApiHealth = async () => {
   setupApiHealthModalEvents();
@@ -269,6 +272,11 @@ const initApiHealth = async () => {
     const health = await fetchApiHealth();
     _lastHealth  = health;
     updateHealthBadges(health);
+    // If the modal is open and showing placeholder text, push the result in now
+    const modal = safeGetElement("apiHealthModal");
+    if (modal && modal.style.display !== "none") {
+      populateApiHealthModal(health);
+    }
   } catch (err) {
     console.warn("API health check failed:", err);
     populateApiHealthModalError(err);
