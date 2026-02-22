@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.32.03] - 2026-02-22
+
+### Fixed — Sync Toast
+
+- **Fixed**: Spot price sync completion now shows a non-blocking toast instead of a blocking modal dialog
+
+---
+
 ## [3.32.02] - 2026-02-22
 
 ### Changed — Appearance Settings Redesign

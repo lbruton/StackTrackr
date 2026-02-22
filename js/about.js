@@ -283,10 +283,10 @@ const setupAckModalEvents = () => {
  */
 const getEmbeddedWhatsNew = () => {
   return `
+    <li><strong>v3.32.03 &ndash; Sync Toast &amp; UX Polish</strong>: Spot price sync completion now shows a non-blocking toast notification instead of a blocking modal dialog</li>
     <li><strong>v3.32.02 &ndash; Appearance Settings Redesign</strong>: Appearance tab redesigned &mdash; Color scheme and Inventory View as compact pill-button pickers; Timezone, Default Sort, and Visible Items as full-width dropdowns; thumb-friendly touch targets throughout. Restore Historical Data button added to API settings (STAK-258)</li>
     <li><strong>v3.32.01 &ndash; Dual-Poller API &amp; Spot Pipeline Fixes</strong>: Corrected retail endpoint paths for api1.staktrakr.com fallback. Fixed pollers cross-wired to wrong API repos. Repaired hourly spot data pipeline &mdash; backfill, dual-checkout, and endpoint migration. Added nightly sync between StakTrakrApi and StakTrakrApi1 via GitHub Actions (STAK-255)</li>
     <li><strong>v3.32.0 &ndash; Market Prices Module &amp; OOS Detection</strong>: Live bullion retail prices from APMEX, Monument, SDB, and JM Bullion with per-coin cards, 30-day price history, and intraday 15-min data. Out-of-stock detection via AI vision and scraping consensus &mdash; OOS coins show strikethrough pricing and gaps in charts. Encrypted image vault syncs user-uploaded coin photos to cloud. Serial Number in PDF exports. Numista cache clears on N# change (STAK-181, STAK-234, STAK-244)</li>
-    <li><strong>v3.31.6 &ndash; Collapsible Form Modal &amp; Numista Data Persistence</strong>: Add/edit form now uses collapsible sections &mdash; core fields always visible, Grading, Pricing, Numista Data, and Notes collapse with native details/summary. Per-item Numista metadata persists with layered provider priority. All native alert/confirm/prompt migrated to async appDialog wrappers. Bulk edit search expanded across metadata fields (STAK-173, STAK-175)</li>
     <li><strong>v3.31.5 &ndash; Cloud Auto-Sync &amp; Bulk Edit Fixes</strong>: Real-time encrypted auto-sync to Dropbox &mdash; inventory changes push automatically and other devices see an &ldquo;Update Available&rdquo; modal. Bulk Edit Delete/Copy/Apply now work correctly inside the modal. isCollectable field removed (superseded by tag system) (STAK-149)</li>
   `;
 };
