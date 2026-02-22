@@ -112,10 +112,13 @@ services:
       # Local JSONL price log — append-only backup outside the git data repo.
       # Survives container rebuilds via named volume. Recovery: import-from-log.js
       PRICE_LOG_DIR: /var/log/retail-prices
-      # Poller identity — api2 pushes to the 'api2' branch in StakTrakrApi
-      POLLER_ID: api2
-      # Staggered cron: fires at :07/:22/:37/:52 (api1 Fly.io fires at :00/:15/:30/:45)
-      CRON_SCHEDULE: "7,22,37,52"
+      # Poller identity — Mac pushes to 'main' branch in StakTrakrApi1
+      POLLER_ID: main
+      # StakTrakrApi1 repo — Mac poller's dedicated repo (serves api1.staktrakr.com)
+      API_DATA_REPO: https://github.com/lbruton/StakTrakrApi1.git
+      API_EXPORT_DIR: /tmp/staktrakr-api-export
+      # Staggered cron: fires at :10/:25/:40/:55 (Fly.io 'api' fires at :00/:15/:30/:45)
+      CRON_SCHEDULE: "10,25,40,55"
     volumes:
       - ${DATA_REPO_HOST_PATH}:/data-repo
       - retail-price-logs:/var/log/retail-prices
