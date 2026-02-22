@@ -85,8 +85,8 @@ All agents run on the same Mac and share the same Docker/IP stack.
 
 | Server | Claude | Gemini | Codex | Notes |
 |---|---|---|---|---|
-| `mem0` | ✅ | ✅ | ✅ | Episodic memory (cloud trial, active) |
-| `memento` | ✅ | ✅ | ✅ | Neo4j knowledge graph (paused for mem0 trial) |
+| `mem0` | ✅ | ✅ | ✅ | Sole memory backend (primary as of 2026-02-22) |
+| `memento` | ⛔ | ⛔ | ⛔ | Retired 2026-02-22 — historical archive, do not call |
 | `sequential-thinking` | ✅ | ✅ | ✅ | Structured reasoning |
 | `brave-search` | ✅ | ✅ | ✅ | Web search |
 | `claude-context` | ✅ | ✅ | ✅ | Semantic code search (Milvus) |
@@ -100,71 +100,39 @@ All agents run on the same Mac and share the same Docker/IP stack.
 | `code-graph-context` | ✅ | ✅ | ✅ | Structural graph (Docker required) |
 | `infisical` | ✅ | ✅ | ✅ | Self-hosted secrets manager |
 
-### mem0 (Episodic Memory — Active)
+### mem0 (Primary Memory Backend)
 
-Cloud-based episodic memory system (active trial, replacing Memento for day-to-day use).
+Sole memory backend for all agents as of 2026-02-22. Memento has been retired.
 Automatically saves conversational context, preferences, and decisions across sessions.
 
-**When to use:** Recall what was discussed in previous sessions, save preferences, store session insights.
+**When to use:** Recall what was discussed in previous sessions, save preferences, store session insights, handoffs, decisions. Use mem0 for everything — do NOT call `mcp__memento__*` tools.
 
 **Tools available:**
 
 - `search_memories` — Find relevant memories by keyword or concept
-- `add_memory` — Explicitly save an insight, preference, or decision
+- `add_memory` — Explicitly save an insight, preference, decision, or handoff
 - `get_memories` — List all stored memories
 - `get_memory` — Retrieve a specific memory by ID
 - `delete_memory` — Remove a specific memory
 
-### Memento (Knowledge Graph — Paused)
+**Save format:**
 
-Shared persistent memory across all agents (Claude, Codex, Gemini, and the human).
-Backed by Neo4j with vector embeddings for semantic search.
-**Currently paused** for mem0 cloud trial. Still configured in `.mcp.json` — use if mem0 trial ends.
+```javascript
+mcp__mem0__add_memory({
+  text: "StakTrakr <type>: <what, why, how to apply — self-contained>",
+  metadata: {
+    project: "staktrakr",
+    category: "<frontend|backend|infra|security|workflow>",
+    type: "<insight|decision|session|handoff>"
+  }
+})
+```
 
-**When to use:** Structured knowledge storage with entity relationships, semantic recall, and historical context. Prefer mem0 for simple recall; use Memento when you need graph relationships between entities.
+**Secrets policy:** Never store raw secrets in mem0 without explicit user approval. Prefer references (env var name, Infisical label) — not raw values.
 
-**Tools available:**
+### Memento (Knowledge Graph — RETIRED)
 
-- `create_entities` / `add_observations` — Save new knowledge
-- `search_nodes` — Exact name/tag/keyword lookup
-- `semantic_search` — Conceptual/natural language recall (use `hybrid_search: true`)
-- `open_nodes` — Expand entity details after search
-- `create_relations` — Link related entities
-
-**Taxonomy rules (MUST follow):**
-
-Entity types use `PROJECT:DOMAIN:TYPE` format:
-
-| Type | entityType | Name Format |
-|------|------------|-------------|
-| Session | `STAKTRAKR:DEVELOPMENT:SESSION` | `Session: STAKTRAKR-KEYWORD-YYYYMMDD-HHMMSS` |
-| Insight | `STAKTRAKR:DOMAIN:INSIGHT` | `Insight: STAKTRAKR-INSIGHT-YYYYMMDD-HHMMSS` |
-| Handoff | `STAKTRAKR:DEVELOPMENT:HANDOFF` | `HANDOFF:STAK-###:PR-###:YYYY-MM-DD:AGENT` |
-
-Required observations (in this order):
-
-1. `TIMESTAMP: <ISO-8601 UTC>`
-2. `DATE_TOKEN: <YYYYMMDDHHMMSS>` (UTC, 14 digits, canonical)
-3. `ABSTRACT: <one-line summary>`
-4. `SUMMARY: <detailed context>`
-5. ID field (`SESSION_ID`, `INSIGHT_ID`, etc.)
-
-Required tags on every entity:
-
-- `TAG: project:staktrakr`
-- `TAG: agent:gemini`
-- `TAG: <category>` (e.g., `documentation`, `frontend`, `api`)
-- `TAG: <status>` (`completed`, `in-progress`, `blocked`)
-- `TAG: date:YYYYMMDD` / `TAG: date:YYYYMM` / `TAG: date:YYYY`
-
-Search strategy:
-
-1. Exact names via `search_nodes` (preserve colons — never space-split)
-2. Date-scoped via progressive prefix: `YYYYMMDDHH` then `YYYYMMDD` then `YYYYMM` then `YYYY`
-3. Conceptual via `semantic_search` with `hybrid_search: true`
-4. **Fallback:** If `search_nodes` returns 0, always retry with `semantic_search`
-
-**Secrets policy:** Never store raw secrets in Memento without explicit user approval. Prefer references (env var name, vault label). Tag secrets with `type:secret`, `sensitivity:secret`, `status:active`.
+**RETIRED 2026-02-22.** Do not call `mcp__memento__*` tools. Historical archive only — still in `.mcp.json` but inactive. All Memento entities were migrated to mem0. Use `mcp__mem0__search_memories` for recall.
 
 ### Linear (Project Management)
 
@@ -182,7 +150,7 @@ Issue tracking and project management for StakTrakr.
 - Reference issues as `STAK-###` in commit messages and documentation
 - Update issue status as work progresses (`Todo` -> `In Progress` -> `Done`)
 - Post handoff comments using the standard template (see Handoff section)
-- **Never put secrets in Linear** — use Memento entity references only
+- **Never put secrets in Linear** — use Infisical label references only
 - When creating issues, set appropriate priority (1=Urgent, 2=High, 3=Normal, 4=Low)
 
 **Agent delegation labels:** Issues may carry labels like `Codex`, `Sonnet`, `Opus` indicating which AI agent should handle them. Gemini-delegated work should use a `Gemini` label.
@@ -318,7 +286,7 @@ StakTrakr uses a multi-agent development workflow. Four agents collaborate:
 
 When completing work or passing context to another agent:
 
-1. **Save to mem0/Memento** — Create a handoff entry (mem0 `add_memory` for simple context; Memento entity for structured graph relationships)
+1. **Save to mem0** — Call `mcp__mem0__add_memory` with `type: handoff` and Linear issue ID in the text
 2. **Post to Linear** — Comment on the related issue, or create an issue in the Developers team
 3. **Include all fields:** scope, validation, next steps, owner, risks, memory reference
 
@@ -332,7 +300,7 @@ Agent handoff update:
 - Validation: <what was run/verified>
 - Next: <explicit next step + owner>
 - Links: <Linear issue/PR links>
-- Memory: <mem0/Memento reference(s)>
+- Memory: <mem0 topic keyword for recall>
 - Risks: <known risks/assumptions>
 ```
 
@@ -346,4 +314,4 @@ Agent handoff update:
 
 ---
 
-*Last Updated: 2026-02-21*
+*Last Updated: 2026-02-22*
