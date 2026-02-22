@@ -34,7 +34,7 @@ const logChange = (itemName, field, oldValue, newValue, idx) => {
     idx,
     undone: false,
   });
-  localStorage.setItem('changeLog', JSON.stringify(changeLog));
+  saveDataSync('changeLog', changeLog);
 };
 
 /**
@@ -66,6 +66,26 @@ const logItemChanges = (oldItem, newItem) => {
     : newItem === null ? 'item-delete'
     : 'item-edit';
 
+  // For add/delete, only one side exists — skip per-field diff and record a single entry
+  if (type === 'item-add' || type === 'item-delete') {
+    const item = refItem;
+    const idx = inventory.indexOf(item);
+    changeLog.push({
+      timestamp: Date.now(),
+      itemName: item.name || '',
+      field: type === 'item-add' ? 'Added' : 'Deleted',
+      oldValue: type === 'item-delete' ? JSON.stringify(item) : null,
+      newValue: type === 'item-add' ? JSON.stringify(item) : null,
+      idx,
+      undone: false,
+      scope,
+      itemKey,
+      type,
+    });
+    saveDataSync('changeLog', changeLog);
+    return;
+  }
+
   fields.forEach((field) => {
     if (oldItem[field] !== newItem[field]) {
       const idx = inventory.indexOf(newItem);
@@ -83,7 +103,7 @@ const logItemChanges = (oldItem, newItem) => {
       });
     }
   });
-  localStorage.setItem('changeLog', JSON.stringify(changeLog));
+  saveDataSync('changeLog', changeLog);
 };
 
 /**
@@ -181,7 +201,7 @@ const toggleChange = (logIdx) => {
     if (typeof renderItemPriceHistoryTable === 'function') renderItemPriceHistoryTable();
     if (typeof renderItemPriceHistoryModalTable === 'function') renderItemPriceHistoryModalTable();
     renderChangeLog();
-    localStorage.setItem('changeLog', JSON.stringify(changeLog));
+    saveDataSync('changeLog', changeLog);
     return;
   }
 
@@ -220,7 +240,7 @@ const toggleChange = (logIdx) => {
   saveInventory();
   renderTable();
   renderChangeLog();
-  localStorage.setItem('changeLog', JSON.stringify(changeLog));
+  saveDataSync('changeLog', changeLog);
 };
 
 /**
@@ -232,7 +252,7 @@ const clearChangeLog = async () => {
     : false;
   if (!confirmed) return;
   changeLog = [];
-  localStorage.setItem('changeLog', JSON.stringify(changeLog));
+  saveDataSync('changeLog', changeLog);
   renderChangeLog();
 };
 
@@ -269,14 +289,8 @@ const getManifestEntries = (sinceTimestamp) => {
  */
 const markSynced = (syncId, timestamp) => {
   changeLog.push({ type: 'sync-marker', syncId, timestamp });
-  localStorage.setItem('changeLog', JSON.stringify(changeLog));
+  saveDataSync('changeLog', changeLog);
 };
-
-// Attach manifest helpers as named properties on the changeLog array.
-// state.js declares changeLog before changeLog.js loads (confirmed by index.html script order),
-// so changeLog is a live array here. Arrays are objects — property assignment is valid.
-changeLog.getManifestEntries = getManifestEntries;
-changeLog.markSynced = markSynced;
 
 window.computeItemKey = computeItemKey;
 window.logChange = logChange;
@@ -284,6 +298,8 @@ window.logItemChanges = logItemChanges;
 window.renderChangeLog = renderChangeLog;
 window.toggleChange = toggleChange;
 window.clearChangeLog = clearChangeLog;
+window.getManifestEntries = getManifestEntries;
+window.markSynced = markSynced;
 window.editFromChangeLog = (idx, logIdx) => {
   const modal = document.getElementById('changeLogModal');
   if (modal) {
