@@ -23,7 +23,11 @@ DATE=$(date +%Y-%m-%d)
 echo "[$(date -u +%H:%M:%S)] Goldback rate poll for ${DATE}"
 
 cd "$DATA_REPO_PATH"
-git pull --rebase origin data
+git rebase --abort 2>/dev/null || true
+git merge --abort 2>/dev/null || true
+git fetch origin main
+git checkout main
+git reset --hard origin/main
 
 DATA_DIR="$DATA_REPO_PATH/data" \
 FIRECRAWL_BASE_URL="${FIRECRAWL_BASE_URL:-http://firecrawl:3002}" \
@@ -38,8 +42,7 @@ if git diff --cached --quiet; then
   echo "[$(date -u +%H:%M:%S)] No new Goldback data to commit."
 else
   git commit -m "data: goldback spot ${DATE}"
-  git pull --rebase origin data
-  git push origin data
+  git push origin main
   echo "[$(date -u +%H:%M:%S)] Pushed Goldback rate to data branch"
 fi
 
