@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.32.19] - 2026-02-23
+
+### Added — 15-Min Spot Price Endpoint
+
+- **Added**: New `data/15min/YYYY/MM/DD/HHMM.json` API endpoint — immutable sub-hourly price snapshots written every 15 min by the spot poller (GHA :05/:20/:35/:50)
+- **Added**: `fetchStaktrakr15minRange()` fetches 24h of 15-min spot data into spotHistory, tagged `api-15min` and visible in the API history table
+
+---
+
 ## [3.32.18] - 2026-02-23
 
 ### Added — Cloud Sync Header Status Icon (STAK-264)
