@@ -19,7 +19,7 @@ StakTrakr pulls from three independent data feeds, all served via GitHub Pages f
 ```
 Fly.io container                        GitHub Actions (GH)
        │                                       │
-       │  every 15 min (retail prices)         │  :05 and :35 every hour (spot prices)
+       │  every 15 min (retail prices)         │  :05, :20, :35, :50 every hour (spot prices)
        │  daily 17:01 UTC (goldback)           │
        │  daily 20:00 UTC (fbp gap-fill)       │
        ▼                                       ▼
@@ -174,8 +174,9 @@ most recent `data/hourly/` file.
 1. **Local Docker spot poller** (`devops/spot-poller/`) — writes noon UTC daily entry to
    `spot-history-YYYY.json` in the local `data/` directory
 2. **`/seed-sync` skill** — stages and commits local changes to the repo
-3. **`spot-poller.yml` GH Action** — runs at `:05` and `:35` every hour, writes hourly
-   files to `StakTrakrApi` `api` branch at `data/hourly/YYYY/MM/DD/HH.json`
+3. **`spot-poller.yml` GH Action** — runs at `:05`, `:20`, `:35`, `:50` every hour (15-min
+   freshness; metalpriceapi.com updated every 10 min), writes hourly files to `StakTrakrApi`
+   `api` branch at `data/hourly/YYYY/MM/DD/HH.json`
 
 ### Live spot data location (hourly)
 
