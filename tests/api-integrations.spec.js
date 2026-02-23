@@ -139,9 +139,10 @@ test('STAK-222: PCGS cache read/write roundtrip', async ({ page }) => {
 });
 
 // =============================================================================
-// STAK-255 / STAK-271: Single-endpoint path correctness
+// STAK-255 / STAK-271: Endpoint path correctness
 // Regression guard: ensures hourlyBaseUrls and RETAIL_API_ENDPOINTS use the
 // correct api.staktrakr.com paths. (api1.staktrakr.com removed in STAK-271.)
+// api2.staktrakr.com added as backup endpoint — counts are now 2.
 // =============================================================================
 
 /** Minimal valid hourly spot price array matching parseBatchResponse expectations. */
@@ -156,18 +157,24 @@ test('STAK-255: hourlyBaseUrls and RETAIL_API_ENDPOINTS use correct paths', asyn
     const hourly = window.API_PROVIDERS?.STAKTRAKR?.hourlyBaseUrls || [];
     const retail = window.RETAIL_API_ENDPOINTS || [];
     return {
-      // Single endpoint serves hourly spot data at /data/hourly
+      // Primary endpoint serves hourly spot data at /data/hourly
       apiHourlyCorrect: hourly.some(u => u.includes('api.staktrakr.com/data/hourly')),
-      // Single endpoint serves retail at /data/api/
+      // Backup endpoint also present
+      api2HourlyCorrect: hourly.some(u => u.includes('api2.staktrakr.com/data/hourly')),
+      // Primary endpoint serves retail at /data/api/
       apiRetailCorrect: retail.some(u => u.includes('api.staktrakr.com/data/api')),
+      // Backup endpoint also present
+      api2RetailCorrect: retail.some(u => u.includes('api2.staktrakr.com/data/api')),
       hourlyCount: hourly.length,
       retailCount: retail.length,
     };
   });
   expect(result.apiHourlyCorrect).toBe(true);
+  expect(result.api2HourlyCorrect).toBe(true);
   expect(result.apiRetailCorrect).toBe(true);
-  expect(result.hourlyCount).toBe(1);
-  expect(result.retailCount).toBe(1);
+  expect(result.api2RetailCorrect).toBe(true);
+  expect(result.hourlyCount).toBe(2);
+  expect(result.retailCount).toBe(2);
 });
 
 // =============================================================================

@@ -14,11 +14,34 @@ const providerStatuses = {
 const providerRequiresKey = (prov) => API_PROVIDERS[prov]?.requiresKey !== false;
 
 /**
+ * Fetch a single JSON file from the first responsive StakTrakr endpoint.
+ * Tries each URL in order; moves to the next after a 5-second timeout or error.
+ * @param {string[]} urls - Ordered base URLs (primary first)
+ * @param {string} path - Path appended to each base URL
+ * @returns {Promise<any>} Parsed JSON from the first successful endpoint
+ */
+const _staktrakrFetch = async (urls, path) => {
+  let lastErr;
+  for (const base of urls) {
+    const ctrl = new AbortController();
+    const tid = setTimeout(() => ctrl.abort(), 5000);
+    try {
+      const resp = await fetch(`${base}${path}`, { mode: 'cors', signal: ctrl.signal });
+      clearTimeout(tid);
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      return await resp.json();
+    } catch (err) {
+      clearTimeout(tid);
+      lastErr = err;
+    }
+  }
+  throw lastErr || new Error('All StakTrakr endpoints failed');
+};
+
+/**
  * Fetch spot prices from StakTrakr hourly JSON files.
  * Walks back up to 24 hours from the current UTC hour to find data.
- * Races all configured baseUrls in parallel per hour — takes the first success.
- * Staggered pollers mean the freshest hour may only be on one endpoint; older
- * hours resolve from whichever endpoint responds first.
+ * Tries the primary endpoint first; falls back to backup after 5 s timeout or error.
  */
 const fetchStaktrakrPrices = async (selectedMetals) => {
   const baseUrls = API_PROVIDERS.STAKTRAKR.hourlyBaseUrls;
@@ -33,14 +56,8 @@ const fetchStaktrakrPrices = async (selectedMetals) => {
     const path = `/${yyyy}/${mm}/${dd}/${hh}.json`;
 
     try {
-      // Race all endpoints in parallel — first successful response with valid data wins
-      const data = await Promise.any(
-        baseUrls.map(async (baseUrl) => {
-          const resp = await fetch(`${baseUrl}${path}`, { mode: 'cors' });
-          if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-          return resp.json();
-        })
-      );
+      // Try primary endpoint first; fall back to backup after 5-second timeout or error
+      const data = await _staktrakrFetch(baseUrls, path);
       const { current } = API_PROVIDERS.STAKTRAKR.parseBatchResponse(data);
       const results = {};
       selectedMetals.forEach(metal => {
@@ -96,14 +113,8 @@ const fetchStaktrakrHourlyRange = async (hoursBack) => {
       const hh = String(h.getUTCHours()).padStart(2, '0');
       const path = `/${yyyy}/${mm}/${dd}/${hh}.json`;
       try {
-        // Race all endpoints — first success wins (freshest hour wins on current offset)
-        const data = await Promise.any(
-          baseUrls.map(async (base) => {
-            const resp = await fetch(`${base}${path}`, { mode: 'cors' });
-            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-            return resp.json();
-          })
-        );
+        // Try primary endpoint first; fall back to backup after 5-second timeout or error
+        const data = await _staktrakrFetch(baseUrls, path);
         const { current } = API_PROVIDERS.STAKTRAKR.parseBatchResponse(data);
         // Use ISO-format UTC timestamp so recordSpot normalizes consistently
         return { current, timestamp: `${yyyy}-${mm}-${dd}T${hh}:00:00Z` };
@@ -138,6 +149,81 @@ const fetchStaktrakrHourlyRange = async (hoursBack) => {
 
   return { newCount, fetchCount };
 };
+
+const fetchStaktrakr15minRange = async (slotsBack = 96) => {
+  const baseUrls = API_PROVIDERS.STAKTRAKR.fifteenMinBaseUrls;
+  const now = new Date();
+
+  // Build list of 15-min slots as Date objects, snapped down to nearest 15 min
+  const slots = [];
+  for (let i = 0; i < slotsBack; i++) {
+    const slotMs = now.getTime() - i * 15 * 60000;
+    const slotDate = new Date(slotMs);
+    // Snap minutes down to nearest 15
+    const snappedMin = Math.floor(slotDate.getUTCMinutes() / 15) * 15;
+    slotDate.setUTCMinutes(snappedMin, 0, 0);
+    slots.push(slotDate);
+  }
+
+  // Purge once, then build dedup set for batch append (avoids N×save)
+  purgeSpotHistory();
+  const existingKeys = new Set(
+    spotHistory.map(e => `${e.timestamp}|${e.metal}`)
+  );
+
+  // Fetch slots in batches of 6 (96 slots = 24 h of 15-min coverage)
+  let newCount = 0;
+  let fetchCount = 0;
+  const batchSize = 6;
+  const providerName = API_PROVIDERS.STAKTRAKR.name;
+
+  for (let i = 0; i < slots.length; i += batchSize) {
+    const batch = slots.slice(i, i + batchSize);
+    const results = await Promise.all(batch.map(async (s) => {
+      const yyyy = s.getUTCFullYear();
+      const mm = String(s.getUTCMonth() + 1).padStart(2, '0');
+      const dd = String(s.getUTCDate()).padStart(2, '0');
+      const hh = String(s.getUTCHours()).padStart(2, '0');
+      const min15 = String(s.getUTCMinutes()).padStart(2, '0');
+      const path = `/${yyyy}/${mm}/${dd}/${hh}${min15}.json`;
+      try {
+        // Try primary endpoint first; fall back to backup after 5-second timeout or error
+        const data = await _staktrakrFetch(baseUrls, path);
+        const { current } = API_PROVIDERS.STAKTRAKR.parseBatchResponse(data);
+        // Use ISO-format UTC timestamp so normalisation is consistent with hourly
+        return { current, timestamp: `${yyyy}-${mm}-${dd}T${hh}:${min15}:00Z` };
+      } catch { return null; }
+    }));
+
+    results.forEach(result => {
+      if (!result) return;
+      fetchCount++;
+      Object.entries(result.current).forEach(([metalKey, spot]) => {
+        if (spot <= 0) return;
+        const metalConfig = Object.values(METALS).find(m => m.key === metalKey);
+        if (!metalConfig) return;
+        const entryTimestamp = result.timestamp.replace("T", " ").replace("Z", "");
+        const isDuplicate = existingKeys.has(`${entryTimestamp}|${metalConfig.name}`);
+        if (!isDuplicate) {
+          spotHistory.push({
+            spot, metal: metalConfig.name, source: "api-15min",
+            provider: providerName, timestamp: entryTimestamp,
+          });
+          existingKeys.add(`${entryTimestamp}|${metalConfig.name}`);
+          newCount++;
+        }
+      });
+    });
+  }
+
+  if (newCount > 0) {
+    saveSpotHistory();
+    debugLog(`[StakTrakr] Added ${newCount} 15-min entries (${fetchCount} files fetched)`);
+  }
+
+  return { newCount, fetchCount };
+};
+
 
 /**
  * Backfills the last 24 hours of hourly spot data from StakTrakr into spotHistory.
@@ -858,6 +944,8 @@ const renderApiHistoryTable = () => {
     let sourceLabel;
     if (e.source === "cached") {
       sourceLabel = '<span class="api-history-cached-badge">Cached</span>';
+    } else if (e.source === "api-15min") {
+      sourceLabel = `${escapeHtml(e.provider || "")} (15min)`;
     } else if (e.source === "api-hourly") {
       sourceLabel = `${escapeHtml(e.provider || "")} (hourly)`;
     } else {
@@ -893,7 +981,7 @@ const showApiHistoryModal = () => {
   const modal = document.getElementById("apiHistoryModal");
   if (!modal) return;
   loadSpotHistory();
-  apiHistoryEntries = spotHistory.filter((e) => e.source === "api" || e.source === "api-hourly" || e.source === "seed" || e.source === "cached");
+  apiHistoryEntries = spotHistory.filter((e) => e.source === "api" || e.source === "api-hourly" || e.source === "api-15min" || e.source === "seed" || e.source === "cached");
   apiHistorySortColumn = "";
   apiHistorySortAsc = true;
   apiHistoryFilterText = "";
@@ -1196,7 +1284,7 @@ const getLastProviderSyncTime = (provider) => {
     // Find most recent API entry from this provider
     for (let i = spotHistory.length - 1; i >= 0; i--) {
       const entry = spotHistory[i];
-      if ((entry.source === "api" || entry.source === "api-hourly") && entry.provider === providerName) {
+      if ((entry.source === "api" || entry.source === "api-hourly" || entry.source === "api-15min") && entry.provider === providerName) {
         // Parse timestamp string "YYYY-MM-DD HH:MM:SS" to ms
         const ts = new Date(entry.timestamp).getTime();
         if (!isNaN(ts)) return ts;
@@ -2852,7 +2940,7 @@ const importSpotHistory = (file) => {
     if (typeof updateAllSparklines === "function") updateAllSparklines();
 
     // Refresh the visible history table after import
-    apiHistoryEntries = spotHistory.filter((e) => e.source === "api" || e.source === "api-hourly" || e.source === "seed" || e.source === "cached");
+    apiHistoryEntries = spotHistory.filter((e) => e.source === "api" || e.source === "api-hourly" || e.source === "api-15min" || e.source === "seed" || e.source === "cached");
     renderApiHistoryTable();
   };
   reader.readAsText(file);
@@ -2909,20 +2997,15 @@ const restoreHistoricalSpotData = async () => {
     }
 
     // --- Pass 2: API files — fills year gaps not yet covered by seed pass ---
-    const apiBaseUrls = [
-      `${API_PROVIDERS.STAKTRAKR.baseUrl}`,
-    ];
+    // Derive data-root base URLs from RETAIL_API_ENDPOINTS (strip /api suffix)
+    const apiBaseUrls = (typeof RETAIL_API_ENDPOINTS !== "undefined" && RETAIL_API_ENDPOINTS.length)
+      ? RETAIL_API_ENDPOINTS.map(ep => ep.replace(/\/api$/, ""))
+      : [`${API_PROVIDERS.STAKTRAKR.baseUrl}`];
 
     for (const year of years) {
       if (btn) btn.textContent = `Restoring... (${year})`;
       try {
-        const entries = await Promise.any(
-          apiBaseUrls.map(async (base) => {
-            const resp = await fetch(`${base}/spot-history-${year}.json`);
-            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-            return resp.json();
-          })
-        );
+        const entries = await _staktrakrFetch(apiBaseUrls, `/spot-history-${year}.json`);
         if (!Array.isArray(entries)) continue;
         let addedThisYear = false;
         for (const e of entries) {

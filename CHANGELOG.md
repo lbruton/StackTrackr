@@ -9,6 +9,44 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.32.20] - 2026-02-23
+
+### Added — api2 Backup Endpoint
+
+- **Added**: `api2.staktrakr.com` as a fallback for all three API feeds — spot (hourly + 15-min), market (manifest.json), and goldback (goldback-spot.json)
+- **Changed**: All API fetches now try the primary endpoint with a 5-second timeout; if unreachable, automatically fall through to api2 before giving up
+- **Changed**: API Health modal now shows per-endpoint columns (api vs api2) with live drift benchmarking in the verdict line
+
+---
+
+## [3.32.19] - 2026-02-23
+
+### Added — 15-Min Spot Price Endpoint
+
+- **Added**: New `data/15min/YYYY/MM/DD/HHMM.json` API endpoint — immutable sub-hourly price snapshots written every 15 min by the spot poller (GHA :05/:20/:35/:50)
+- **Added**: `fetchStaktrakr15minRange()` fetches 24h of 15-min spot data into spotHistory, tagged `api-15min` and visible in the API history table
+
+---
+
+## [3.32.18] - 2026-02-23
+
+### Added — Cloud Sync Header Status Icon (STAK-264)
+
+- **Added**: Ambient cloud sync status icon in the header replaces the jarring on-load vault password modal — orange when password is needed (tap to unlock), green when active, gray when not yet configured (STAK-264)
+
+---
+
+## [3.32.17] - 2026-02-23
+
+### Added — STAK-270: 24hr Intraday Chart Improvements
+
+- **Improved**: 24hr intraday chart now buckets raw API windows into clean 30-min aligned slots, eliminating irregular tick spacing caused by poller timing variance
+- **Improved**: Chart X-axis now visually distinguishes hour marks (full opacity, 11px) from half-hour marks (dimmed, 9px) for faster time-at-a-glance reading
+- **Added**: Intraday table extended from 5 rows to configurable 12/24/48 rows with scrollable container and row-count dropdown
+- **Added**: Trend column (▲/▼/—) in intraday table shows price direction vs. previous 30-min slot
+
+---
+
 ## [3.32.16] - 2026-02-22
 
 ### Fixed — Market Chart Timezone + Seed Sync Automation (STAK-275, STAK-266)

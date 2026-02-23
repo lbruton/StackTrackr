@@ -19,13 +19,27 @@ const sortInventory = (data = inventory) => {
   // 0:Date 1:Metal 2:Type 3:Image 4:Name 5:Qty 6:Weight 7:Purchase 8:Melt 9:Retail 10:Gain/Loss 11:Source 12:Actions
   const mapped = data.map((item) => {
     let val;
+    let secondaryVal = 0; // secondary sort key; only populated for column 4 (Name)
     const spot = spotPrices[(item.metal || '').toLowerCase()] || 0;
     switch(sortColumn) {
-      case 0: val = item.date; break; // Date
+      case 0: { // Date
+        // Optimized: pre-parse date to timestamp (or Infinity for invalid/empty)
+        const dateStr = String(item.date || '').trim();
+        if (!item.date || dateStr === '' || dateStr === '—') {
+          val = Infinity;
+        } else {
+          const d = new Date(dateStr);
+          val = isNaN(d.getTime()) ? Infinity : d.getTime();
+        }
+        break;
+      }
       case 1: val = item.composition || item.metal; break; // Metal
       case 2: val = item.type; break; // Type
       case 3: val = 0; break; // Image (non-sortable)
-      case 4: val = item.name; break; // Name
+      case 4: // Name
+        val = item.name;
+        secondaryVal = parseInt(item.year, 10) || 0; // Pre-calc secondary sort key
+        break;
       case 5: val = item.qty; break; // Qty
       case 6: val = parseFloat(item.weight) || 0; break; // Weight
       case 7: val = parseFloat(item.price) || 0; break; // Purchase Price
@@ -48,7 +62,7 @@ const sortInventory = (data = inventory) => {
       case 11: val = item.purchaseLocation; break; // Source
       default: val = 0;
     }
-    return { item, val };
+    return { item, val, secondaryVal };
   });
 
   mapped.sort((aWrapper, bWrapper) => {
@@ -57,19 +71,13 @@ const sortInventory = (data = inventory) => {
 
     // Special handling for date: empty/unknown dates should always sort to the bottom
     if (sortColumn === 0) {
-      const emptyA = !valA || String(valA).trim() === '' || String(valA).trim() === '—';
-      const emptyB = !valB || String(valB).trim() === '' || String(valB).trim() === '—';
-      if (emptyA && emptyB) return 0;
-      if (emptyA) return 1; // push A down
-      if (emptyB) return -1; // push B down
+      // Simple numeric comparison for pre-calculated timestamps
+      // Handle Infinity (Empty)
+      if (valA === Infinity && valB === Infinity) return 0;
+      if (valA === Infinity) return 1; // Empty always at bottom
+      if (valB === Infinity) return -1; // Empty always at bottom
 
-      // compare as ISO date strings (or fallback to string compare)
-      const dateA = new Date(valA);
-      const dateB = new Date(valB);
-      if (!isNaN(dateA) && !isNaN(dateB)) {
-        return sortDirection === 'asc' ? dateA - dateB : dateB - dateA;
-      }
-      return sortDirection === 'asc' ? String(valA).localeCompare(String(valB)) : String(valB).localeCompare(String(valA));
+      return sortDirection === 'asc' ? valA - valB : valB - valA;
     }
 
     // Numeric comparison for numbers
@@ -83,8 +91,9 @@ const sortInventory = (data = inventory) => {
         : String(valB).localeCompare(String(valA));
       // Secondary sort by year when names are equal
       if (cmp === 0 && sortColumn === 4) {
-        const yearA = parseInt(aWrapper.item.year, 10) || 0;
-        const yearB = parseInt(bWrapper.item.year, 10) || 0;
+        // Use pre-calculated secondaryVal
+        const yearA = aWrapper.secondaryVal;
+        const yearB = bWrapper.secondaryVal;
         return sortDirection === 'asc' ? yearA - yearB : yearB - yearA;
       }
       return cmp;

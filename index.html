@@ -422,6 +422,15 @@
             <path d="M21.5 12.5a10 10 0 0 1-18.4 4.5"/>
           </svg>
         </button>
+        <!-- Cloud sync status button (STAK-264) -->
+        <button class="btn theme-btn header-toggle-btn" id="headerCloudSyncBtn"
+                title="Cloud sync status" aria-label="Cloud sync status" style="display:none;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/>
+          </svg>
+          <span class="cloud-sync-dot header-cloud-dot" id="headerCloudDot"></span>
+        </button>
         <button class="btn theme-btn" id="aboutBtn" title="About" aria-label="About">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -1816,7 +1825,7 @@
        (spot-history-YYYY.json), and Goldback daily scrape (goldback-spot.json).
        ============================================================================= -->
     <div class="modal" id="apiHealthModal" style="display: none; z-index: 10000">
-      <div class="modal-content" style="max-width:480px">
+      <div class="modal-content" style="max-width:580px">
         <div class="modal-header">
           <h3>API Health Status</h3>
           <button aria-label="Close modal" class="modal-close" id="apiHealthCloseBtn">&times;</button>
@@ -1825,10 +1834,34 @@
           <div class="about-section">
             <div class="section-title">Status: <span id="apiHealthStatus">Checking…</span></div>
             <table style="width:100%;font-size:0.9rem;border-collapse:collapse;margin-top:0.5rem">
-              <tr><td style="padding:0.3rem 0;color:var(--text-muted)">Market prices</td><td id="apiHealthMarket" style="text-align:right">&#x2014;</td></tr>
-              <tr><td style="padding:0.3rem 0;color:var(--text-muted)">Spot prices</td><td id="apiHealthSpot" style="text-align:right">&#x2014;</td></tr>
-              <tr><td style="padding:0.3rem 0;color:var(--text-muted)">Goldback (daily)</td><td id="apiHealthGoldback" style="text-align:right">&#x2014;</td></tr>
-              <tr><td style="padding:0.3rem 0;color:var(--text-muted)">Coverage</td><td id="apiHealthCoins" style="text-align:right">&#x2014;</td></tr>
+              <thead>
+                <tr>
+                  <th style="padding:0.3rem 0;text-align:left;color:var(--text-muted);font-weight:normal">Feed</th>
+                  <th style="padding:0.3rem 0;text-align:right;color:var(--text-muted);font-weight:normal">api (primary)</th>
+                  <th style="padding:0.3rem 0;text-align:right;color:var(--text-muted);font-weight:normal">api2 (backup)</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td style="padding:0.3rem 0;color:var(--text-muted)">Market prices</td>
+                  <td id="apiHealthMarket" style="text-align:right">&#x2014;</td>
+                  <td id="apiHealthMarket2" style="text-align:right">&#x2014;</td>
+                </tr>
+                <tr>
+                  <td style="padding:0.3rem 0;color:var(--text-muted)">Spot prices</td>
+                  <td id="apiHealthSpot" style="text-align:right">&#x2014;</td>
+                  <td id="apiHealthSpot2" style="text-align:right">&#x2014;</td>
+                </tr>
+                <tr>
+                  <td style="padding:0.3rem 0;color:var(--text-muted)">Goldback (daily)</td>
+                  <td id="apiHealthGoldback" style="text-align:right">&#x2014;</td>
+                  <td id="apiHealthGoldback2" style="text-align:right">&#x2014;</td>
+                </tr>
+                <tr>
+                  <td style="padding:0.3rem 0;color:var(--text-muted)">Coverage</td>
+                  <td id="apiHealthCoins" colspan="2" style="text-align:right">&#x2014;</td>
+                </tr>
+              </tbody>
             </table>
           </div>
           <div class="about-alert about-alert-compact" style="margin-top:1rem">
@@ -4891,11 +4924,17 @@
             <canvas id="retailViewIntradayChart" aria-label="24h intraday price chart"></canvas>
           </div>
           <p id="retailViewIntradayNoData" class="settings-subtext" style="display:none;text-align:center;padding:1rem;">No intraday data — check back after the next 15-minute sync.</p>
-          <div class="retail-view-table-wrap" style="margin-top:.5rem;">
-            <table class="retail-view-table">
-              <thead id="retailViewIntradayTableHead">
-                <tr><th>Time (local)</th></tr>
-              </thead>
+          <div class="d-flex align-items-center justify-content-between mb-1" style="gap:8px;">
+            <label for="retailViewIntradayRowCount" class="settings-subtext" id="retailViewIntradayTableLabel">Recent windows</label>
+            <select id="retailViewIntradayRowCount" class="form-select form-select-sm" style="width:auto;">
+              <option value="12">12 rows</option>
+              <option value="24" selected>24 rows</option>
+              <option value="48">48 rows</option>
+            </select>
+          </div>
+          <div style="max-height:360px;overflow-y:auto;">
+            <table class="table table-sm table-borderless mb-0">
+              <thead id="retailViewIntradayTableHead"></thead>
               <tbody id="retailViewIntradayTableBody"></tbody>
             </table>
           </div>

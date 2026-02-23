@@ -204,6 +204,58 @@ function updateSyncStatusIndicator(state, detail) {
     else label = 'Auto-sync off';
     text.textContent = label;
   }
+
+  // Keep header icon in sync
+  updateCloudSyncHeaderBtn();
+}
+
+/**
+ * Update the header cloud sync icon button state and visibility.
+ * Called alongside updateSyncStatusIndicator() at every state change.
+ * States: hidden (sync disabled) | gray (not connected) | orange (needs password) | green (synced)
+ */
+function updateCloudSyncHeaderBtn() {
+  var btn = safeGetElement('headerCloudSyncBtn');
+  var dot = safeGetElement('headerCloudDot');
+  if (!btn) return;
+
+  // Hide entirely only when sync is explicitly disabled (stored as 'false')
+  // null means never configured — show gray to promote discoverability
+  if (localStorage.getItem('cloud_sync_enabled') === 'false') {
+    btn.style.display = 'none';
+    return;
+  }
+
+  btn.style.display = '';
+
+  if (!dot) return;
+  dot.className = 'cloud-sync-dot header-cloud-dot';
+
+  var hasCachedPw = typeof cloudGetCachedPassword === 'function'
+    ? !!cloudGetCachedPassword(_syncProvider)
+    : false;
+  var connected = typeof cloudIsConnected === 'function'
+    ? cloudIsConnected(_syncProvider)
+    : false;
+
+  if (hasCachedPw) {
+    // Green: password cached, sync is running normally
+    dot.classList.add('header-cloud-dot--green');
+    btn.title = 'Cloud sync active';
+    btn.setAttribute('aria-label', 'Cloud sync active');
+    btn.dataset.syncState = 'green';
+  } else if (connected) {
+    // Orange: connected but password expired/missing
+    dot.classList.add('header-cloud-dot--orange');
+    btn.title = 'Cloud sync needs your password';
+    btn.setAttribute('aria-label', 'Cloud sync needs your password');
+    btn.dataset.syncState = 'orange';
+  } else {
+    // Gray: sync on but not yet connected/configured
+    btn.title = 'Set up cloud sync';
+    btn.setAttribute('aria-label', 'Set up cloud sync');
+    btn.dataset.syncState = 'gray';
+  }
 }
 
 /**
@@ -322,6 +374,9 @@ function getSyncPassword() {
       }
       cleanup();
       if (typeof cloudCachePassword === 'function') cloudCachePassword(_syncProvider, pw);
+      // Update header icon to green immediately; if modal was opened from header icon, trigger a push
+      if (typeof updateCloudSyncHeaderBtn === 'function') updateCloudSyncHeaderBtn();
+      setTimeout(function () { if (typeof pushSyncVault === 'function') pushSyncVault(); }, 100);
       resolve(pw);
     };
 
@@ -1006,16 +1061,39 @@ function initCloudSync() {
 
   if (!syncIsEnabled()) {
     debugLog('[CloudSync] Auto-sync is disabled — poller not started');
+    updateCloudSyncHeaderBtn();
     return;
   }
 
   var connected = typeof cloudIsConnected === 'function' ? cloudIsConnected(_syncProvider) : false;
   if (!connected) {
     debugLog('[CloudSync] Auto-sync enabled but not connected to', _syncProvider);
+    updateCloudSyncHeaderBtn();
     return;
   }
 
   debugLog('[CloudSync] Resuming auto-sync from previous session');
+
+  // Check if password is available before starting any sync that would prompt for it
+  var hasCachedPw = typeof cloudGetCachedPassword === 'function'
+    ? !!cloudGetCachedPassword(_syncProvider)
+    : false;
+
+  if (!hasCachedPw) {
+    // No password cached — skip the auto-push/poll that would open the modal.
+    // Show the header icon in orange and a polite toast instead.
+    debugLog('[CloudSync] No cached password on load — skipping initial push, showing toast');
+    updateCloudSyncHeaderBtn();
+    setTimeout(function () {
+      if (typeof showCloudToast === 'function') {
+        showCloudToast('Cloud sync needs your password — tap the sync icon to unlock', 5000);
+      }
+    }, 1000);
+    // Still start the poller — it will skip pushes until getSyncPassword() succeeds
+    startSyncPoller();
+    return;
+  }
+
   startSyncPoller();
 
   // Poll immediately on startup to catch any changes while app was closed
@@ -1052,6 +1130,7 @@ window.showSyncConflictModal = showSyncConflictModal;
 window.showSyncUpdateModal = showSyncUpdateModal;
 window.refreshSyncUI = refreshSyncUI;
 window.updateSyncStatusIndicator = updateSyncStatusIndicator;
+window.updateCloudSyncHeaderBtn = updateCloudSyncHeaderBtn;
 window.getSyncDeviceId = getSyncDeviceId;
 window.syncIsEnabled = syncIsEnabled;
 window.syncSaveOverrideBackup = syncSaveOverrideBackup;

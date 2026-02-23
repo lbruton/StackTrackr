@@ -1,5 +1,5 @@
 # Spot price poller — writes hourly data to StakTrakrApi `api` branch (api.staktrakr.com)
-# Runs twice per hour (:05 and :35) for 30-min freshness.
+# Runs four times per hour (:05, :20, :35, :50) for 15-min freshness.
 # Requires repository secrets: METAL_PRICE_API_KEY, API_PUSH_TOKEN
 #
 # Architecture: Checks out `dev` for poller code, StakTrakrApi `api` branch for data files.
@@ -9,7 +9,9 @@ name: Spot Price Poller
 on:
   schedule:
     - cron: '5 * * * *'   # :05 — primary run
-    - cron: '35 * * * *'  # :35 — staggered run (30-min freshness)
+    - cron: '20 * * * *'  # :20 — 15-min freshness
+    - cron: '35 * * * *'  # :35 — 15-min freshness
+    - cron: '50 * * * *'  # :50 — 15-min freshness
   workflow_dispatch: # Manual trigger for testing
 
 env:
