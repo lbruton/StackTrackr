@@ -2898,6 +2898,9 @@ function handleAdvancedSavePassword() {
   if (typeof changeVaultPassword === 'function') {
     changeVaultPassword(pw).then(function (ok) {
       if (!ok && errorEl) { errorEl.textContent = 'Failed to update password.'; errorEl.style.display = ''; }
+    }).catch(function (err) {
+      if (errorEl) { errorEl.textContent = 'An error occurred — try again.'; errorEl.style.display = ''; }
+      if (typeof debugLog === 'function') debugLog('[Cloud] changeVaultPassword threw:', err);
     });
   }
 }

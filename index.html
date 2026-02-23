@@ -4231,6 +4231,7 @@
             <p class="settings-subtext" style="margin:0.3rem 0 0.5rem">Remembered in this browser. Change it here — your next sync will re-encrypt your backup.</p>
             <div style="display:flex;gap:0.4rem;align-items:flex-start">
               <input type="password" id="cloudAdvancedNewPassword" placeholder="New password (min 8 chars)"
+                aria-label="New vault password"
                 autocomplete="new-password"
                 style="flex:1;font-size:0.85rem;padding:0.35rem 0.5rem;border:1px solid var(--border);border-radius:4px;background:var(--bg-tertiary);color:var(--text-primary)">
               <button class="btn" id="cloudAdvancedSavePasswordBtn"
@@ -4287,7 +4288,7 @@
           <button aria-label="Close modal" class="modal-close" id="syncPasswordCancelBtn">&times;</button>
         </div>
         <div class="modal-body">
-          <p id="syncPasswordModalSubtitle" class="settings-subtext" style="margin-bottom:1rem">Enter your vault password to encrypt your inventory before syncing. This password never leaves your device.</p>
+          <p id="syncPasswordModalSubtitle" class="settings-subtext" style="margin-bottom:1rem">Enter your vault password to encrypt your inventory before syncing. Your password is stored in this browser and combined with your Dropbox account ID to create the encryption key — it is never transmitted over the network.</p>
           <div class="password-input-group">
             <input type="password" id="syncPasswordInput" placeholder="Vault password" autocomplete="current-password" style="width:100%"/>
           </div>
