@@ -1067,6 +1067,27 @@ function initCloudSync() {
   }
 
   debugLog('[CloudSync] Resuming auto-sync from previous session');
+
+  // Check if password is available before starting any sync that would prompt for it
+  var hasCachedPw = typeof cloudGetCachedPassword === 'function'
+    ? !!cloudGetCachedPassword(_syncProvider)
+    : false;
+
+  if (!hasCachedPw) {
+    // No password cached — skip the auto-push/poll that would open the modal.
+    // Show the header icon in orange and a polite toast instead.
+    debugLog('[CloudSync] No cached password on load — skipping initial push, showing toast');
+    updateCloudSyncHeaderBtn();
+    setTimeout(function () {
+      if (typeof showCloudToast === 'function') {
+        showCloudToast('Cloud sync needs your password — tap the sync icon to unlock', 5000);
+      }
+    }, 1000);
+    // Still start the poller — it will skip pushes until getSyncPassword() succeeds
+    startSyncPoller();
+    return;
+  }
+
   startSyncPoller();
 
   // Poll immediately on startup to catch any changes while app was closed
