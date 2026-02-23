@@ -14,6 +14,7 @@ All feeds served from `lbruton/StakTrakrApi` `main` branch via GitHub Pages at `
 | **Market prices** | `data/api/manifest.json` | Fly.io `staktrakr` cron (`*/15 min`) | 30 min |
 | **Spot prices** | `data/hourly/YYYY/MM/DD/HH.json` | `spot-poller.yml` GHA (`:05` + `:35`/hr) | 75 min |
 | **Goldback** | `data/api/goldback-spot.json` | Fly.io `staktrakr` cron (daily 17:01 UTC) | 25h (info only) |
+| **Turso** | `price_snapshots` table | retail-poller only | internal write store |
 
 **Critical:** `spot-history-YYYY.json` is a **seed file** (noon UTC daily) — never use it for freshness checks. Live spot data is always in `data/hourly/`.
 
@@ -40,12 +41,26 @@ All feeds served from `lbruton/StakTrakrApi` `main` branch via GitHub Pages at `
 
 ---
 
+## Turso Data Store
+
+Turso is a free-tier cloud libSQL database — internal to the retail poller. NOT a public endpoint.
+
+- **Database:** `staktrakrapi-lbruton.aws-us-east-2.turso.io`
+- **Credentials:** `TURSO_DATABASE_URL` + `TURSO_AUTH_TOKEN` (Infisical)
+- **Table:** `price_snapshots` — one row per scrape attempt, per vendor, per 15-min window
+- **Used by:** `price-extract.js`, `extract-vision.js`, `api-export.js` (retail-poller only)
+- **NOT used by:** spot-poller (Python GHA), goldback-scraper
+- **Free tier:** zero cost, zero ops — no action needed
+- `prices.db` is a read-only SQLite snapshot exported to StakTrakrApi each cycle (offline use only)
+
+---
+
 ## When Making Changes — Update ALL of These
 
 | Location | What to update |
 |----------|---------------|
 | `js/api-health.js` | Stale thresholds, feed URLs, `_normalizeTs` logic |
-| `docs/devops/api-infrastructure-runbook.md` | Architecture, per-feed details, diagnosis commands |
+| `docs/devops/api-infrastructure-runbook.md` | Architecture, per-feed details, diagnosis commands, Turso section if schema or credentials change |
 | `CLAUDE.md` API Infrastructure table | Feed/threshold/healthy-check summary |
 | Notion — **API Infrastructure** page | Human-readable runbook (sync from markdown) |
 | Notion — **CI/CD & Deployment** page | GHA workflow table if workflows change |
