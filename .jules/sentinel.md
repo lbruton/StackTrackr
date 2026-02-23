@@ -12,3 +12,8 @@
 **Vulnerability:** Use of `Date.now()` for OAuth `state` parameter generation.
 **Learning:** Using a predictable timestamp for the `state` parameter in OAuth flows significantly weakens protection against CSRF attacks, as an attacker can potentially guess the state.
 **Prevention:** Always use a cryptographically secure random string (like a UUID v4) for OAuth state parameters to ensure unpredictability and robust CSRF protection.
+
+## 2026-05-23 - Robust Global Util Access
+**Vulnerability:** Potential runtime error if global utility `generateUUID` is accessed before definition.
+**Learning:** In a vanilla JS architecture without modules, relying on global scope order can be fragile. Even if `index.html` order is correct, unit tests or future refactors might break it.
+**Prevention:** Always guard calls to global utility functions with `typeof func === 'function'` checks or fallback logic when used in self-contained modules like `NumistaLookup`.
