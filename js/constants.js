@@ -290,7 +290,7 @@ const CERT_LOOKUP_URLS = {
  * Updated: 2026-02-12 - STACK-38/STACK-31: Responsive card view + mobile layout
  */
 
-const APP_VERSION = "3.32.20";
+const APP_VERSION = "3.32.22";
 
 /**
  * Numista metadata cache TTL: 30 days in milliseconds.
@@ -570,6 +570,9 @@ const ACK_DISMISSED_KEY = "ackDismissed";
 /** @constant {string} CLOUD_VAULT_IDLE_TIMEOUT_KEY - LocalStorage key for vault password idle lock timeout in minutes (15|30|60|120|0=never) */
 const CLOUD_VAULT_IDLE_TIMEOUT_KEY = "cloud_vault_idle_timeout";
 
+/** App-namespace salt for Simple mode key derivation. Never change — changing invalidates all Simple-mode syncs. */
+const STAKTRAKR_SIMPLE_SALT = '53544b52:53494d504c45:76310000';
+
 /** @constant {string} API_KEY_STORAGE_KEY - LocalStorage key for API provider information */
 const API_KEY_STORAGE_KEY = "metalApiConfig";
 
@@ -802,6 +805,8 @@ const ALLOWED_STORAGE_KEYS = [
   "cloud_sync_cursor",                         // Dropbox rev string: for efficient change detection
   "cloud_sync_override_backup",                // JSON: { timestamp, itemCount, appVersion, data: {...} } — pre-pull local snapshot
   CLOUD_VAULT_IDLE_TIMEOUT_KEY,                // number string: vault password idle lock timeout in minutes (15|30|60|120|0=never)
+  "cloud_sync_mode",                           // string: "simple" | "secure" — sync encryption mode
+  "cloud_dropbox_account_id",                  // string: Dropbox account_id for Simple mode key derivation
 ];
 
 // =============================================================================
@@ -1635,6 +1640,7 @@ if (typeof window !== "undefined") {
   // Multi-currency support (STACK-50)
   window.SUPPORTED_CURRENCIES = SUPPORTED_CURRENCIES;
   window.CLOUD_VAULT_IDLE_TIMEOUT_KEY = CLOUD_VAULT_IDLE_TIMEOUT_KEY;
+  window.STAKTRAKR_SIMPLE_SALT = STAKTRAKR_SIMPLE_SALT;
   window.DISPLAY_CURRENCY_KEY = DISPLAY_CURRENCY_KEY;
   window.EXCHANGE_RATES_KEY = EXCHANGE_RATES_KEY;
   window.EXCHANGE_RATE_API_URL = EXCHANGE_RATE_API_URL;
