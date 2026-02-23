@@ -19,18 +19,20 @@ const sortInventory = (data = inventory) => {
   // 0:Date 1:Metal 2:Type 3:Image 4:Name 5:Qty 6:Weight 7:Purchase 8:Melt 9:Retail 10:Gain/Loss 11:Source 12:Actions
   const mapped = data.map((item) => {
     let val;
-    let secondaryVal; // Added for sortColumn 4
+    let secondaryVal = 0; // secondary sort key; only populated for column 4 (Name)
     const spot = spotPrices[(item.metal || '').toLowerCase()] || 0;
     switch(sortColumn) {
-      case 0: // Date
+      case 0: { // Date
         // Optimized: pre-parse date to timestamp (or Infinity for invalid/empty)
-        if (!item.date || String(item.date).trim() === '' || String(item.date).trim() === '—') {
+        const dateStr = String(item.date || '').trim();
+        if (!item.date || dateStr === '' || dateStr === '—') {
           val = Infinity;
         } else {
-          const d = new Date(item.date);
-          val = isNaN(d) ? Infinity : d.getTime();
+          const d = new Date(dateStr);
+          val = isNaN(d.getTime()) ? Infinity : d.getTime();
         }
         break;
+      }
       case 1: val = item.composition || item.metal; break; // Metal
       case 2: val = item.type; break; // Type
       case 3: val = 0; break; // Image (non-sortable)
