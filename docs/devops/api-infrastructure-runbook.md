@@ -25,6 +25,7 @@ Fly.io container                        GitHub Actions (GH)
        ▼                                       ▼
 StakTrakrApi api branch             StakTrakrApi api branch
   data/api/manifest.json              data/hourly/YYYY/MM/DD/HH.json
+                                     data/15min/YYYY/MM/DD/HHMM.json
   data/api/goldback-spot.json
        │                                       │
        └───────────────────────────────────────┘
@@ -176,7 +177,7 @@ most recent `data/hourly/` file.
 2. **`/seed-sync` skill** — stages and commits local changes to the repo
 3. **`spot-poller.yml` GH Action** — runs at `:05`, `:20`, `:35`, `:50` every hour (15-min
    freshness; metalpriceapi.com updated every 10 min), writes hourly files to `StakTrakrApi`
-   `api` branch at `data/hourly/YYYY/MM/DD/HH.json`
+   `api` branch at `data/hourly/YYYY/MM/DD/HH.json` and `data/15min/YYYY/MM/DD/HHMM.json`
 
 ### Live spot data location (hourly)
 
@@ -281,6 +282,59 @@ fly ssh console --app staktrakr -C "/app/run-goldback.sh"
 ```
 
 ---
+
+## Feed 4: 15-Min Spot Prices (`data/15min/`)
+
+**Endpoint:** `https://api.staktrakr.com/data/15min/YYYY/MM/DD/HHMM.json`
+(e.g. `data/15min/2026/02/23/0852.json`)
+**Field checked:** last entry `timestamp`
+**Stale threshold:** 20 min
+
+### How it's updated
+
+1. **`spot-poller.yml` GH Action** — runs at `:05`, `:20`, `:35`, `:50` every hour, writes
+   an immutable snapshot to `StakTrakrApi` `api` branch at
+   `data/15min/YYYY/MM/DD/HHMM.json`. Files are never overwritten.
+   Each file contains 4 entries (Gold, Silver, Platinum, Palladium) with
+   `source: "hourly"` and timestamps at the exact poll minute.
+
+### Healthy
+
+- Last 15-min file within 20 min of current UTC
+- `spot-poller.yml`: all recent runs `success`
+
+### Broken signals
+
+- `spot-poller.yml` failing → check `METAL_PRICE_API_KEY` secret; check MetalPriceAPI quota
+- 15-min files more than 25 min old on `api` branch → GH Action failed or paused
+
+### Quick diagnosis
+
+```bash
+# Fetch the current 15-min snapshot and show age
+python3 -c "
+import urllib.request, json
+from datetime import datetime, timezone
+now = datetime.now(timezone.utc)
+hhmm = f'{(now.hour):02d}{(now.minute // 15 * 15):02d}'
+url = f'https://api.staktrakr.com/data/15min/{now.year}/{now.month:02d}/{now.day:02d}/{hhmm}.json'
+print(f'Fetching: {url}')
+try:
+    with urllib.request.urlopen(url, timeout=10) as r:
+        d = json.load(r)
+    last = d[-1]
+    ts = datetime.fromisoformat(last['timestamp'].replace(' ', 'T') + '+00:00')
+    age = (datetime.now(timezone.utc) - ts).total_seconds() / 60
+    print(f'timestamp: {last["timestamp"]}')
+    print(f'Age: {age:.0f} min')
+    print(f'Status: {"OK FRESH" if age <= 20 else "STALE"}')
+except Exception as e:
+    print(f'Error: {e}')
+"
+
+# Check recent spot-poller.yml runs
+gh run list --repo lbruton/StakTrakr --workflow "spot-poller.yml" --limit 5
+```
 
 
 ## All-Feeds Health Check (one command)
