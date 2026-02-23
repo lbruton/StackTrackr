@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.32.15] - 2026-02-22
+
+### Fixed — Nitpick Polish — API Health Modal Wording + Desktop Footer Layout (STAK-272, STAK-273)
+
+- **Fixed**: API health modal Coverage row now shows "items tracked" instead of "coins" — rounds and bars are not coins (STAK-272)
+- **Fixed**: Desktop footer restructured — badges moved to top row, "Special thanks to r/Silverbugs" moved to its own line below the main footer text (STAK-273)
+
+---
+
 ## [3.32.14] - 2026-02-22
 
 ### Fixed — API Health Stale Timestamp Parsing (STAK-265)
