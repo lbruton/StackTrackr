@@ -2932,5 +2932,9 @@ function cancelSyncModeSwitch() {
 
 // =============================================================================
 
+window.handleSyncModeChange = handleSyncModeChange;
+window.confirmSyncModeSwitch = confirmSyncModeSwitch;
+window.cancelSyncModeSwitch = cancelSyncModeSwitch;
+
 // Early cleanup of stray localStorage entries before application initialization
 document.addEventListener('DOMContentLoaded', cleanupStorage);
