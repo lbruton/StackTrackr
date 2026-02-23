@@ -298,6 +298,7 @@ function refreshSyncUI() {
   }
 
   if (typeof renderSyncHistorySection === 'function') renderSyncHistorySection();
+  if (typeof refreshSyncModeUI === 'function') refreshSyncModeUI();
 }
 
 /** Format a timestamp as a relative time string ("just now", "5 min ago", etc.) */
@@ -1053,6 +1054,56 @@ function disableCloudSync() {
   logCloudSyncActivity('auto_sync_disable', 'success', 'Auto-sync disabled');
   debugLog('[CloudSync] Auto-sync disabled');
 }
+/**
+ * Switch the sync encryption mode.
+ * Called after user confirms the mode-switch warning.
+ * @param {'simple'|'secure'} mode
+ */
+function setSyncMode(mode) {
+  var currentMode = localStorage.getItem('cloud_sync_mode') || 'secure';
+  if (mode === currentMode) return;
+
+  localStorage.setItem('cloud_sync_mode', mode);
+
+  // Clear the cached password — it's mode-specific
+  if (typeof cloudClearCachedPassword === 'function') cloudClearCachedPassword();
+
+  logCloudSyncActivity('mode_switch', 'success', 'Switched to ' + mode + ' mode');
+  updateCloudSyncHeaderBtn();
+
+  if (syncIsEnabled() && typeof scheduleSyncPush === 'function') {
+    scheduleSyncPush();
+  }
+
+  var label = mode === 'simple' ? 'Simple (Dropbox account)' : 'Secure (vault password)';
+  if (typeof showCloudToast === 'function') showCloudToast('Sync mode: ' + label, 4000);
+  debugLog('[CloudSync] Sync mode switched to', mode);
+}
+
+/**
+ * Update the sync mode radio selector in Settings → Cloud.
+ * Called from refreshSyncUI() whenever the cloud panel is rendered.
+ */
+function refreshSyncModeUI() {
+  var modeSec = safeGetElement('cloudSyncModeSection');
+  if (!modeSec) return;
+
+  var connected = typeof cloudIsConnected === 'function' ? cloudIsConnected('dropbox') : false;
+  var enabled = syncIsEnabled();
+  modeSec.style.display = (connected && enabled) ? '' : 'none';
+
+  if (!connected || !enabled) return;
+
+  var currentMode = localStorage.getItem('cloud_sync_mode') || 'secure';
+  var simpleRadio = safeGetElement('cloudSyncModeSimple');
+  var secureRadio = safeGetElement('cloudSyncModeSecure');
+  if (simpleRadio) simpleRadio.checked = currentMode === 'simple';
+  if (secureRadio) secureRadio.checked = currentMode !== 'simple';
+
+  // Hide the confirmation warning on re-render
+  var warning = safeGetElement('cloudSyncModeSwitchWarning');
+  if (warning) warning.style.display = 'none';
+}
 
 // ---------------------------------------------------------------------------
 // Initialization (called from init.js Phase 13)
@@ -1175,3 +1226,5 @@ window.getSyncPasswordSilent = getSyncPasswordSilent;
 window.syncIsEnabled = syncIsEnabled;
 window.syncSaveOverrideBackup = syncSaveOverrideBackup;
 window.syncRestoreOverrideBackup = syncRestoreOverrideBackup;
+window.setSyncMode = setSyncMode;
+window.refreshSyncModeUI = refreshSyncModeUI;
