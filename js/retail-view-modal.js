@@ -179,7 +179,7 @@ const _buildIntradayTable = (slug, bucketed) => {
     const headerRow = document.createElement("tr");
     const tz = (typeof TIMEZONE_KEY !== 'undefined' && localStorage.getItem(TIMEZONE_KEY)) || undefined;
     const timeColLabel = tz && tz !== 'auto' ? `Time (${tz})` : 'Time (local)';
-    [timeColLabel, ...tableColumns, 'Trend'].forEach((label) => {
+    [timeColLabel, ...tableColumns].forEach((label) => {
       const th = document.createElement("th");
       th.textContent = label;
       headerRow.appendChild(th);
@@ -196,33 +196,45 @@ const _buildIntradayTable = (slug, bucketed) => {
       const tr = document.createElement("tr");
       const d = w.window ? new Date(w.window) : null;
       const timeLabel = _fmtIntradayTime(d);
-      const rowValues = useVendorLines
-        ? activeVendors.map((v) => fmt(w.vendors && w.vendors[v]))
-        : [fmt(w.median), fmt(w.low)];
-      [timeLabel, ...rowValues].forEach((text) => {
-        const td = document.createElement("td");
-        td.textContent = text;
-        tr.appendChild(td);
-      });
-      // Trend: compare current slot price to the previous (older) slot
-      const getRowPrice = (w) => {
-        if (useVendorLines) {
-          const prices = activeVendors.map(v => w.vendors && w.vendors[v]).filter(p => p != null);
-          return prices.length ? prices.reduce((a, b) => a + b, 0) / prices.length : null;
-        }
-        return w.median != null ? w.median : null;
-      };
-      const currPrice = getRowPrice(w);
-      const prevPrice = idx + 1 < recent.length ? getRowPrice(recent[idx + 1]) : null;
-      const glyph = _trendGlyph(currPrice, prevPrice);
-      const cls = _trendClass(currPrice, prevPrice);
-      const trendTd = document.createElement("td");
-      trendTd.textContent = glyph;
-      if (cls) trendTd.className = cls;
-      tr.appendChild(trendTd);
+
+      // Time cell
+      const timeTd = document.createElement("td");
+      timeTd.textContent = timeLabel;
+      tr.appendChild(timeTd);
+
+      // Per-vendor (or median/low) cells — each gets its own trend glyph + color
+      if (useVendorLines) {
+        activeVendors.forEach((v) => {
+          const currVal = w.vendors && w.vendors[v] != null ? w.vendors[v] : null;
+          const prevVal = idx + 1 < recent.length
+            ? (recent[idx + 1].vendors && recent[idx + 1].vendors[v] != null ? recent[idx + 1].vendors[v] : null)
+            : null;
+          const glyph = _trendGlyph(currVal, prevVal);
+          const cls = _trendClass(currVal, prevVal);
+          const td = document.createElement("td");
+          td.className = cls || '';
+          td.textContent = currVal != null ? `${fmt(currVal)} ${glyph}` : '\u2014';
+          tr.appendChild(td);
+        });
+      } else {
+        // Median cell with trend
+        const currMedian = w.median != null ? w.median : null;
+        const prevMedian = idx + 1 < recent.length ? (recent[idx + 1].median != null ? recent[idx + 1].median : null) : null;
+        const medGlyph = _trendGlyph(currMedian, prevMedian);
+        const medCls = _trendClass(currMedian, prevMedian);
+        const medTd = document.createElement("td");
+        medTd.className = medCls || '';
+        medTd.textContent = currMedian != null ? `${fmt(currMedian)} ${medGlyph}` : '\u2014';
+        tr.appendChild(medTd);
+        // Low cell (no trend — less meaningful for low)
+        const lowTd = document.createElement("td");
+        lowTd.textContent = fmt(w.low);
+        tr.appendChild(lowTd);
+      }
+
       tableBody.appendChild(tr);
     });
-    const colCount = tableColumns.length + 2; // +1 for Time, +1 for Trend
+    const colCount = tableColumns.length + 1; // +1 for Time
     if (recent.length === 0) {
       const tr = document.createElement("tr");
       const td = document.createElement("td");
@@ -278,7 +290,8 @@ const _buildIntradayChart = (slug) => {
             borderColor: color,
             backgroundColor: "transparent",
             borderWidth: 1.5,
-            pointRadius: 2,
+            pointRadius: 0,
+            pointHoverRadius: 3,
             tension: 0.2,
             spanGaps: true,
           };
@@ -290,7 +303,8 @@ const _buildIntradayChart = (slug) => {
             borderColor: "#3b82f6",
             backgroundColor: "transparent",
             borderWidth: 2,
-            pointRadius: 2,
+            pointRadius: 0,
+            pointHoverRadius: 3,
             tension: 0.3,
           },
           {
@@ -300,7 +314,8 @@ const _buildIntradayChart = (slug) => {
             backgroundColor: "transparent",
             borderWidth: 1.5,
             borderDash: [4, 3],
-            pointRadius: 2,
+            pointRadius: 0,
+            pointHoverRadius: 3,
             tension: 0.3,
           },
         ];
@@ -322,7 +337,9 @@ const _buildIntradayChart = (slug) => {
         scales: {
           x: {
             ticks: {
-              maxTicksLimit: 48,
+              maxTicksLimit: 12,
+              autoSkip: true,
+              maxRotation: 0,
               color: function(context) {
                 const label = context.chart.data.labels[context.index] || '';
                 const mins = label.split(':')[1];
