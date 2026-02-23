@@ -1004,7 +1004,7 @@ let _retailSyncIntervalId = null;
 const RETAIL_STALE_MS = 60 * 60 * 1000; // 1 hour
 
 /** How often (ms) to re-sync in the background while the page is open */
-const RETAIL_POLL_INTERVAL_MS = 10 * 60 * 1000; // 10 minutes (pollers stagger every ~7 min)
+const RETAIL_POLL_INTERVAL_MS = 30 * 60 * 1000; // 30 minutes (poller cron runs every 30 min)
 
 /**
  * Starts the background retail price auto-sync.
