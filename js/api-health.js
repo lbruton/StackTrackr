@@ -45,41 +45,14 @@ const _timeAgo = (timestamp) => {
 };
 
 /**
- * Fetches all three API feeds in parallel and returns a combined health result.
- * Each feed resolves independently — a failure in one does not block the others.
- * @returns {Promise<{market: object, spot: object, goldback: object}>}
+ * Parses the raw Promise.allSettled results from a single endpoint into the
+ * standard {market, spot, goldback} health shape.
+ * @param {PromiseSettledResult} marketResult
+ * @param {PromiseSettledResult} spotResult
+ * @param {PromiseSettledResult} goldbackResult
+ * @returns {{market: object, spot: object, goldback: object}}
  */
-const fetchApiHealth = async () => {
-  const base = (typeof RETAIL_API_BASE_URL !== "undefined")
-    ? RETAIL_API_BASE_URL
-    : "https://api.staktrakr.com/data/api";
-  const dataBase = base.replace(/\/api$/, "");
-  const _fetchWithTimeout = (url, ms = 10000) => {
-    const ctrl = new AbortController();
-    const tid  = setTimeout(() => ctrl.abort(), ms);
-    return fetch(url, { cache: "no-store", signal: ctrl.signal })
-      .then((r) => { clearTimeout(tid); if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
-      .catch((e) => { clearTimeout(tid); throw e; });
-  };
-
-  // Hourly spot URL: try current UTC hour, fall back to previous hour
-  const _hourlyUrl = (offsetHours = 0) => {
-    const d  = new Date(Date.now() - offsetHours * 3600000);
-    const y  = d.getUTCFullYear();
-    const mo = String(d.getUTCMonth() + 1).padStart(2, "0");
-    const dy = String(d.getUTCDate()).padStart(2, "0");
-    const hr = String(d.getUTCHours()).padStart(2, "0");
-    return `${dataBase}/hourly/${y}/${mo}/${dy}/${hr}.json`;
-  };
-  const spotFetch = _fetchWithTimeout(_hourlyUrl(0))
-    .catch((e) => { console.debug("Spot hour-0 miss, trying previous hour:", e.message); return _fetchWithTimeout(_hourlyUrl(1)); });
-
-  const [marketResult, spotResult, goldbackResult] = await Promise.allSettled([
-    _fetchWithTimeout(`${base}/manifest.json`),
-    spotFetch,
-    _fetchWithTimeout(`${base}/goldback-spot.json`),
-  ]);
-
+const _parseEndpointHealth = (marketResult, spotResult, goldbackResult) => {
   // --- Market prices (manifest.json) ---
   let market = { ok: false, ageMin: null, ago: null, coins: [], error: null };
   if (marketResult.status === "fulfilled") {
@@ -122,12 +95,12 @@ const fetchApiHealth = async () => {
   // --- Goldback daily scrape (informational only — does not affect overall status) ---
   let goldback = { ok: false, ago: null, error: null };
   if (goldbackResult.status === "fulfilled") {
-    const data     = goldbackResult.value;
+    const data      = goldbackResult.value;
     const scrapedAt = new Date(_normalizeTs(data.scraped_at));
     if (data.scraped_at && !isNaN(scrapedAt.getTime())) {
-      const ageMin    = Math.max(0, Math.floor((Date.now() - scrapedAt.getTime()) / 60000));
-      goldback.ago    = _timeAgo(data.scraped_at);
-      goldback.ok     = ageMin <= API_HEALTH_GOLDBACK_STALE_MIN;
+      const ageMin  = Math.max(0, Math.floor((Date.now() - scrapedAt.getTime()) / 60000));
+      goldback.ago  = _timeAgo(data.scraped_at);
+      goldback.ok   = ageMin <= API_HEALTH_GOLDBACK_STALE_MIN;
     } else if (data.scraped_at) {
       goldback.error = `Invalid timestamp: ${data.scraped_at}`;
     } else {
@@ -141,12 +114,58 @@ const fetchApiHealth = async () => {
 };
 
 /**
- * Updates both health badge elements with a compact per-feed summary.
- * Badge reflects market + spot only (goldback is informational).
- * @param {{market: object, spot: object, goldback: object}} health
+ * Fetches all three API feeds independently from every configured endpoint in
+ * parallel. Returns per-endpoint health so the modal can benchmark drift.
+ * @returns {Promise<{primary: object, backup: object|null}>}
  */
-const updateHealthBadges = (health) => {
-  const { market, spot } = health;
+const fetchApiHealth = async () => {
+  const apiEndpoints = (typeof RETAIL_API_ENDPOINTS !== "undefined" && RETAIL_API_ENDPOINTS.length)
+    ? RETAIL_API_ENDPOINTS
+    : ["https://api.staktrakr.com/data/api"];
+
+  const _fetchWithTimeout = (url, ms = 5000) => {
+    const ctrl = new AbortController();
+    const tid  = setTimeout(() => ctrl.abort(), ms);
+    return fetch(url, { cache: "no-store", signal: ctrl.signal })
+      .then((r) => { clearTimeout(tid); if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+      .catch((e) => { clearTimeout(tid); throw e; });
+  };
+
+  const _hourlyUrl = (dataBase, offsetHours = 0) => {
+    const d  = new Date(Date.now() - offsetHours * 3600000);
+    const y  = d.getUTCFullYear();
+    const mo = String(d.getUTCMonth() + 1).padStart(2, "0");
+    const dy = String(d.getUTCDate()).padStart(2, "0");
+    const hr = String(d.getUTCHours()).padStart(2, "0");
+    return `${dataBase}/hourly/${y}/${mo}/${dy}/${hr}.json`;
+  };
+
+  // Fetch all 3 feeds from a single endpoint independently
+  const _fetchFromEndpoint = async (ep) => {
+    const dataEp = ep.replace(/\/api$/, "");
+    const spotFetch = _fetchWithTimeout(_hourlyUrl(dataEp, 0))
+      .catch((e) => { console.debug(`[api-health] ${ep} hour-0 miss:`, e.message); return _fetchWithTimeout(_hourlyUrl(dataEp, 1)); });
+    return Promise.allSettled([
+      _fetchWithTimeout(`${ep}/manifest.json`),
+      spotFetch,
+      _fetchWithTimeout(`${ep}/goldback-spot.json`),
+    ]);
+  };
+
+  // Probe all endpoints in parallel — each endpoint is fully independent
+  const endpointRaws = await Promise.all(apiEndpoints.map(_fetchFromEndpoint));
+  const parsed = endpointRaws.map(([m, s, g]) => _parseEndpointHealth(m, s, g));
+
+  return { primary: parsed[0], backup: parsed[1] ?? null };
+};
+
+/**
+ * Updates both health badge elements with a compact per-feed summary.
+ * Badge reflects the primary endpoint only (goldback is informational).
+ * @param {{primary: object, backup: object|null}} health
+ */
+const updateHealthBadges = ({ primary }) => {
+  const { market, spot } = primary;
   const allOk = market.ok && spot.ok;
   const icon  = allOk ? "✅" : "⚠️";
 
@@ -161,44 +180,75 @@ const updateHealthBadges = (health) => {
 };
 
 /**
- * Populates the health detail modal table with fetched data.
- * @param {{market: object, spot: object, goldback: object}} health
+ * Fills a single feed cell (market or spot) with status text.
+ * @param {string} id - Element ID
+ * @param {{ok: boolean, ago: string|null, error: string|null}} feed
+ * @param {number} staleMin - Stale threshold in minutes (for warning label)
  */
-const populateApiHealthModal = (health) => {
-  const { market, spot, goldback } = health;
-  const allOk = market.ok && spot.ok;
+const _setFeedCell = (id, feed, staleMin) => {
+  const el = safeGetElement(id);
+  if (!el) return;
+  if (!feed) { el.textContent = "—"; return; }
+  el.textContent = feed.error
+    ? `❌ ${feed.error}`
+    : feed.ok
+      ? `✅ ${feed.ago}`
+      : `⚠️ ${feed.ago} — stale (>${staleMin}m)`;
+};
 
-  const statusEl   = safeGetElement("apiHealthStatus");
-  const marketEl   = safeGetElement("apiHealthMarket");
-  const spotEl     = safeGetElement("apiHealthSpot");
-  const goldbackEl = safeGetElement("apiHealthGoldback");
-  const coinsEl    = safeGetElement("apiHealthCoins");
-  const verdictEl  = safeGetElement("apiHealthVerdict");
+/**
+ * Fills a goldback cell (no stale-minute label — daily cadence).
+ * @param {string} id - Element ID
+ * @param {{ok: boolean, ago: string|null, error: string|null}|null} gb
+ */
+const _setGoldbackCell = (id, gb) => {
+  const el = safeGetElement(id);
+  if (!el) return;
+  if (!gb) { el.textContent = "—"; return; }
+  el.textContent = gb.error
+    ? `❌ ${gb.error}`
+    : gb.ok
+      ? `✅ ${gb.ago}`
+      : `⚠️ ${gb.ago} — missed scrape?`;
+};
 
-  if (statusEl) statusEl.textContent = allOk ? "✅ Healthy" : "⚠️ Check feeds";
+/**
+ * Populates the health detail modal table with per-endpoint data.
+ * Shows primary and backup columns for drift benchmarking.
+ * @param {{primary: object, backup: object|null}} health
+ */
+const populateApiHealthModal = ({ primary, backup }) => {
+  const { market, spot, goldback } = primary;
+  const primaryOk  = market.ok && spot.ok;
+  const backupOk   = backup && backup.market.ok && backup.spot.ok;
 
-  if (marketEl) {
-    marketEl.textContent = market.error
-      ? `❌ ${market.error}`
-      : market.ok
-        ? `✅ ${market.ago}`
-        : `⚠️ ${market.ago} — stale (>${API_HEALTH_MARKET_STALE_MIN}m)`;
+  const statusEl  = safeGetElement("apiHealthStatus");
+  const coinsEl   = safeGetElement("apiHealthCoins");
+  const verdictEl = safeGetElement("apiHealthVerdict");
+
+  if (statusEl) {
+    statusEl.textContent = primaryOk
+      ? "✅ Healthy"
+      : backupOk
+        ? "⚠️ Primary degraded — backup serving"
+        : "⚠️ Check feeds";
   }
 
-  if (spotEl) {
-    spotEl.textContent = spot.error
-      ? `❌ ${spot.error}`
-      : spot.ok
-        ? `✅ ${spot.ago}`
-        : `⚠️ ${spot.ago} — stale (>${API_HEALTH_SPOT_STALE_MIN}m)`;
-  }
+  // Primary column
+  _setFeedCell("apiHealthMarket",  market,  API_HEALTH_MARKET_STALE_MIN);
+  _setFeedCell("apiHealthSpot",    spot,    API_HEALTH_SPOT_STALE_MIN);
+  _setGoldbackCell("apiHealthGoldback", goldback);
 
-  if (goldbackEl) {
-    goldbackEl.textContent = goldback.error
-      ? `❌ ${goldback.error}`
-      : goldback.ok
-        ? `✅ ${goldback.ago}`
-        : `⚠️ ${goldback.ago} — missed scrape?`;
+  // Backup column
+  if (backup) {
+    _setFeedCell("apiHealthMarket2",  backup.market,  API_HEALTH_MARKET_STALE_MIN);
+    _setFeedCell("apiHealthSpot2",    backup.spot,    API_HEALTH_SPOT_STALE_MIN);
+    _setGoldbackCell("apiHealthGoldback2", backup.goldback);
+  } else {
+    ["apiHealthMarket2", "apiHealthSpot2", "apiHealthGoldback2"].forEach((id) => {
+      const el = safeGetElement(id);
+      if (el) el.textContent = "—";
+    });
   }
 
   if (coinsEl) {
@@ -206,7 +256,23 @@ const populateApiHealthModal = (health) => {
   }
 
   if (verdictEl) {
-    if (market.error || spot.error) {
+    if (primaryOk && backupOk) {
+      // Both healthy — compute drift
+      const driftParts = [];
+      if (market.ageMin !== null && backup.market.ageMin !== null) {
+        const d = backup.market.ageMin - market.ageMin;
+        if (Math.abs(d) >= 1) driftParts.push(`market ${Math.abs(d)}m ${d > 0 ? "behind" : "ahead"}`);
+      }
+      if (spot.ageMin !== null && backup.spot.ageMin !== null) {
+        const d = backup.spot.ageMin - spot.ageMin;
+        if (Math.abs(d) >= 1) driftParts.push(`spot ${Math.abs(d)}m ${d > 0 ? "behind" : "ahead"}`);
+      }
+      verdictEl.textContent = driftParts.length
+        ? `Both healthy. api2 ${driftParts.join(", ")}.`
+        : "Both endpoints healthy and in sync.";
+    } else if (!primaryOk && backupOk) {
+      verdictEl.textContent = "Primary degraded — backup is currently serving data.";
+    } else if (market.error || spot.error) {
       verdictEl.textContent = "One or more feeds unreachable — check Fly.io dashboard.";
     } else if (!market.ok && !spot.ok) {
       verdictEl.textContent = "Both market and spot feeds are stale — poller may be down.";
@@ -229,7 +295,8 @@ const populateApiHealthModalError = (err) => {
   const verdictEl = safeGetElement("apiHealthVerdict");
   if (statusEl)  statusEl.textContent  = "❌ Unreachable";
   if (verdictEl) verdictEl.textContent = `Could not reach API: ${err.message}`;
-  ["apiHealthMarket", "apiHealthSpot", "apiHealthGoldback", "apiHealthCoins"].forEach((id) => {
+  ["apiHealthMarket", "apiHealthSpot", "apiHealthGoldback", "apiHealthCoins",
+   "apiHealthMarket2", "apiHealthSpot2", "apiHealthGoldback2"].forEach((id) => {
     const el = safeGetElement(id);
     if (el) el.textContent = "—";
   });

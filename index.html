@@ -1825,7 +1825,7 @@
        (spot-history-YYYY.json), and Goldback daily scrape (goldback-spot.json).
        ============================================================================= -->
     <div class="modal" id="apiHealthModal" style="display: none; z-index: 10000">
-      <div class="modal-content" style="max-width:480px">
+      <div class="modal-content" style="max-width:580px">
         <div class="modal-header">
           <h3>API Health Status</h3>
           <button aria-label="Close modal" class="modal-close" id="apiHealthCloseBtn">&times;</button>
@@ -1834,10 +1834,34 @@
           <div class="about-section">
             <div class="section-title">Status: <span id="apiHealthStatus">Checking…</span></div>
             <table style="width:100%;font-size:0.9rem;border-collapse:collapse;margin-top:0.5rem">
-              <tr><td style="padding:0.3rem 0;color:var(--text-muted)">Market prices</td><td id="apiHealthMarket" style="text-align:right">&#x2014;</td></tr>
-              <tr><td style="padding:0.3rem 0;color:var(--text-muted)">Spot prices</td><td id="apiHealthSpot" style="text-align:right">&#x2014;</td></tr>
-              <tr><td style="padding:0.3rem 0;color:var(--text-muted)">Goldback (daily)</td><td id="apiHealthGoldback" style="text-align:right">&#x2014;</td></tr>
-              <tr><td style="padding:0.3rem 0;color:var(--text-muted)">Coverage</td><td id="apiHealthCoins" style="text-align:right">&#x2014;</td></tr>
+              <thead>
+                <tr>
+                  <th style="padding:0.3rem 0;text-align:left;color:var(--text-muted);font-weight:normal">Feed</th>
+                  <th style="padding:0.3rem 0;text-align:right;color:var(--text-muted);font-weight:normal">api (primary)</th>
+                  <th style="padding:0.3rem 0;text-align:right;color:var(--text-muted);font-weight:normal">api2 (backup)</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td style="padding:0.3rem 0;color:var(--text-muted)">Market prices</td>
+                  <td id="apiHealthMarket" style="text-align:right">&#x2014;</td>
+                  <td id="apiHealthMarket2" style="text-align:right">&#x2014;</td>
+                </tr>
+                <tr>
+                  <td style="padding:0.3rem 0;color:var(--text-muted)">Spot prices</td>
+                  <td id="apiHealthSpot" style="text-align:right">&#x2014;</td>
+                  <td id="apiHealthSpot2" style="text-align:right">&#x2014;</td>
+                </tr>
+                <tr>
+                  <td style="padding:0.3rem 0;color:var(--text-muted)">Goldback (daily)</td>
+                  <td id="apiHealthGoldback" style="text-align:right">&#x2014;</td>
+                  <td id="apiHealthGoldback2" style="text-align:right">&#x2014;</td>
+                </tr>
+                <tr>
+                  <td style="padding:0.3rem 0;color:var(--text-muted)">Coverage</td>
+                  <td id="apiHealthCoins" colspan="2" style="text-align:right">&#x2014;</td>
+                </tr>
+              </tbody>
             </table>
           </div>
           <div class="about-alert about-alert-compact" style="margin-top:1rem">
