@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.32.18] - 2026-02-23
+
+### Added — Cloud Sync Header Status Icon (STAK-264)
+
+- **Added**: Ambient cloud sync status icon in the header replaces the jarring on-load vault password modal — orange when password is needed (tap to unlock), green when active, gray when not yet configured (STAK-264)
+
+---
+
 ## [3.32.17] - 2026-02-23
 
 ### Added — STAK-270: 24hr Intraday Chart Improvements
