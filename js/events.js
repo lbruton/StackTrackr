@@ -696,6 +696,36 @@ const setupHeaderButtonListeners = () => {
     );
   }
 
+  // Cloud sync header icon button (STAK-264)
+  var headerCloudSyncBtn = safeGetElement('headerCloudSyncBtn');
+  if (headerCloudSyncBtn) {
+    safeAttachListener(
+      headerCloudSyncBtn,
+      'click',
+      function (e) {
+        e.preventDefault();
+        var state = headerCloudSyncBtn.dataset.syncState;
+        if (state === 'orange') {
+          // Needs password: open the password modal; confirm handler triggers push
+          if (typeof openModalById === 'function') {
+            openModalById('cloudSyncPasswordModal');
+          }
+        } else if (state === 'green') {
+          // Already synced: show last-synced toast
+          var lp = typeof syncGetLastPush === 'function' ? syncGetLastPush() : null;
+          var msg = lp && lp.timestamp
+            ? 'Cloud sync active — last synced recently'
+            : 'Cloud sync active';
+          if (typeof showCloudToast === 'function') showCloudToast(msg, 2500);
+        } else {
+          // Gray: not configured — open cloud settings
+          if (typeof showSettingsModal === 'function') showSettingsModal('cloud');
+        }
+      },
+      'Cloud Sync Header Button'
+    );
+  }
+
   // About Button
   if (elements.aboutBtn) {
     safeAttachListener(
