@@ -373,6 +373,9 @@ function getSyncPassword() {
       }
       cleanup();
       if (typeof cloudCachePassword === 'function') cloudCachePassword(_syncProvider, pw);
+      // Update header icon to green immediately; if modal was opened from header icon, trigger a push
+      if (typeof updateCloudSyncHeaderBtn === 'function') updateCloudSyncHeaderBtn();
+      setTimeout(function () { if (typeof pushSyncVault === 'function') pushSyncVault(); }, 100);
       resolve(pw);
     };
 
