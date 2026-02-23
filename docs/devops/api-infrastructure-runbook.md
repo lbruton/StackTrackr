@@ -1,6 +1,6 @@
 # API Infrastructure Runbook
 
-> **Last verified:** 2026-02-22 — retail-price-poller.yml removed (STAK-268)
+> **Last verified:** 2026-02-23 — GH Pages serves `api` branch (not `main`); `run-goldback.sh` fixed to push `api`
 >
 > Quick-check commands at the bottom. For each feed: what it is, where it comes from,
 > how to diagnose, and what healthy vs. broken looks like.
@@ -10,7 +10,11 @@
 ## Architecture Overview
 
 StakTrakr pulls from three independent data feeds, all served via GitHub Pages from
-`lbruton/StakTrakrApi` (`main` branch → `api.staktrakr.com`).
+`lbruton/StakTrakrApi` (**`api` branch** → `api.staktrakr.com`).
+
+> **⚠️ Branch note:** GitHub Pages is configured to serve the **`api` branch** directly —
+> NOT `main`. All pollers write live data to `api`. `Merge Poller Branches` keeps `main`
+> in sync as a downstream copy, but `main` is not the branch GH Pages serves.
 
 ```
 Fly.io container                        GitHub Actions (GH)
@@ -22,14 +26,17 @@ Fly.io container                        GitHub Actions (GH)
 StakTrakrApi api branch             StakTrakrApi api branch
   data/api/manifest.json              data/hourly/YYYY/MM/DD/HH.json
   data/api/goldback-spot.json
-                     │
-                     │  Merge Poller Branches (*/15 min)
-                     ▼
-             StakTrakrApi main branch
-                     │
-                     │  GH Pages deploy (~3 min)
-                     ▼
-             api.staktrakr.com   ←── StakTrakr UI
+       │                                       │
+       └───────────────────────────────────────┘
+                         │
+                         │  GH Pages serves api branch directly (~3 min)
+                         ▼
+               api.staktrakr.com   ←── StakTrakr UI
+                         │
+       ┌─────────────────┘
+       │  Merge Poller Branches (*/15 min) — downstream sync only
+       ▼
+StakTrakrApi main branch  (NOT served by GH Pages)
 ```
 
 **Note:** `retail-price-poller.yml` (GHA cloud failsafe) was deleted 2026-02-22. It was
@@ -42,7 +49,7 @@ scraping now runs exclusively in the Fly.io container via self-hosted Firecrawl.
 | Repo | Purpose |
 |---|---|
 | `lbruton/StakTrakr` | App code + workflows that trigger pollers |
-| `lbruton/StakTrakrApi` | Data store — `api` branch = live data, `main` = merged/served |
+| `lbruton/StakTrakrApi` | Data store — `api` branch = live data, **served by GH Pages**. `main` = downstream sync copy only. |
 
 ---
 
@@ -218,12 +225,18 @@ print(f'Total entries: {len(entries)}')
 1. **Fly.io container** (`run-goldback.sh`) — `goldback-scraper.js` scrapes
    `goldback.com/exchange-rate/` via self-hosted Firecrawl at `http://localhost:3002`.
    Runs daily at 17:01 UTC. Writes to `data/api/goldback-spot.json` and `data/goldback-YYYY.json`
-   on the `main` branch of `StakTrakrApi`.
+   on the **`api` branch** of `StakTrakrApi` (GH Pages serves the `api` branch).
 
-### Current status (as of 2026-02-22)
+### ⚠️ Branch note
 
-- `scraped_at`: `2026-02-22T23:49:23Z` — recovered ✅
-- Fly.io cron running daily at 17:01 UTC via `run-goldback.sh`
+GitHub Pages for `api.staktrakr.com` is configured to serve the **`api` branch** (not `main`).
+`run-goldback.sh` must push to `api`. Fixed 2026-02-23 — was incorrectly pushing to `main`,
+which caused all goldback cron updates to be silently discarded since Fly.io was deployed.
+
+### Current status (as of 2026-02-23)
+
+- `scraped_at`: `2026-02-23T01:00:22Z` — recovered ✅
+- `run-goldback.sh` now pushes to `api` branch (fix deployed 2026-02-23)
 - Cloud fallback (`retail-price-poller.yml`) deleted — all scraping on Fly.io
 
 ### Healthy
@@ -316,3 +329,21 @@ EOF
 | Issue | Status | Fix |
 |---|---|---|
 | `api-health.js` checks seed file for spot freshness | Open | Check `data/hourly/` latest file instead |
+
+---
+
+## Architecture Notes
+
+### GitHub Pages Branch
+
+`api.staktrakr.com` is served from the **`api` branch** of `StakTrakrApi` (not `main`).
+All pollers that write live data **must push to `api`**:
+
+| Poller | Writes to | Correct? |
+|--------|-----------|---------|
+| `spot-poller.yml` (GHA) | `api` branch | ✅ |
+| `run-local.sh` (Fly.io retail) | `api` branch via `run-fbp.sh` merge | ✅ |
+| `run-goldback.sh` (Fly.io goldback) | `api` branch (fixed 2026-02-23) | ✅ |
+
+The `Merge Poller Branches` workflow (StakTrakrApi, `*/15 min`) merges `api → main` to keep
+`main` up to date, but GH Pages is served from `api` directly.
