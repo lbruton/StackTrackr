@@ -1066,6 +1066,7 @@ function initCloudSync() {
   var connected = typeof cloudIsConnected === 'function' ? cloudIsConnected(_syncProvider) : false;
   if (!connected) {
     debugLog('[CloudSync] Auto-sync enabled but not connected to', _syncProvider);
+    updateCloudSyncHeaderBtn();
     return;
   }
 
