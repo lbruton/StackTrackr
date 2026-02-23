@@ -45,6 +45,43 @@ Works on `file://` and HTTP. Runtime artifact: zero build step, zero install. Se
 
 **Patch versioning habit**: Run `/release patch` after every meaningful committed change — bug fix, UX tweak, feature addition. Each patch tag (`v3.32.03`) is a breadcrumb that lets us reconstruct a clean changelog at release time. Don't batch multiple changes under one version bump. The rule: **one meaningful change = one patch tag**.
 
+## API Infrastructure
+
+**Runbook:** `docs/devops/api-infrastructure-runbook.md` — full architecture, per-feed diagnosis, and quick-check commands.
+
+Three feeds served from `lbruton/StakTrakrApi` main branch via GitHub Pages at `api.staktrakr.com`:
+
+| Feed | File | Poller | Stale threshold | Healthy check |
+|---|---|---|---|---|
+| Market prices | `data/api/manifest.json` | Fly.io `run-local.sh` (*/15 min cron) | 30 min | `generated_at` within 30 min |
+| Spot prices | `data/hourly/YYYY/MM/DD/HH.json` | `spot-poller.yml` (:05 and :35 GHA) | 75 min | Last hourly file within 35 min |
+| Goldback | `data/api/goldback-spot.json` | Fly.io `run-goldback.sh` (daily 17:01 UTC) | 25h | `scraped_at` within 25h |
+
+**Critical:** `spot-history-YYYY.json` is a **seed file** (noon UTC daily), NOT live data. `api-health.js` currently checks it for spot freshness — always shows ~10h stale even when poller is healthy. Open bug (STAK-265 follow-up).
+
+**No active failures as of 2026-02-22.** `sync-api-repos.yml` and `retail-price-poller.yml` deleted — both are gone.
+
+**Quick health check:**
+```bash
+# One-liner — paste into terminal
+curl -s https://api.staktrakr.com/data/api/manifest.json | python3 -c "
+import sys,json; from datetime import datetime,timezone; d=json.load(sys.stdin)
+age=(datetime.now(timezone.utc)-datetime.fromisoformat(d['generated_at'].replace('Z','+00:00'))).total_seconds()/60
+print(f'Market: {age:.0f}m ago  {\"✅\" if age<=30 else \"⚠️\"}')"
+gh run list --repo lbruton/StakTrakr --workflow "spot-poller.yml" --limit 3
+gh run list --repo lbruton/StakTrakrApi --workflow "Merge Poller Branches" --limit 3
+```
+
+**mem0 recall:** `/remember api infrastructure` or `/remember active poller failures`
+
+## Core Behavior
+
+When the user says "fix", "clean up", or "resolve" — **execute immediately**. Do not produce a plan document or ask for confirmation unless the change is destructive (deleting data, force-pushing). Small deletions, config edits, and code fixes should be applied right now.
+
+When resolving PR review threads, always verify the PR is still open first: `gh pr view <number> --json state`. If closed, ask which PR to target instead of analyzing a dead one.
+
+When editing frontend code, check `events.js` AND `api.js` for duplicate function definitions before making changes — edits to the wrong file are a recurring source of lost time.
+
 ## Critical Patterns (Jules/Copilot commonly miss these)
 
 - **DOM**: `safeGetElement(id)` — never raw `document.getElementById()` (except startup in `about.js` / `init.js`)
@@ -94,7 +131,7 @@ For CSS/HTML guidance, use `frontend-design` plugin or `ui-design` project skill
 | `GEMINI.md` | Gemini CLI | Yes |
 | `.github/copilot-instructions.md` | Copilot PR reviews | Yes |
 
-**Skills**: Official `superpowers@claude-plugins-official` plugin (auto-updates) + user overrides in `~/.claude/skills/` (25 skills). Project skills in `.claude/skills/`: `coding-standards`, `markdown-standards`, `release`, `seed-sync`, `ui-design`, `ui-mockup`, `bb-test`, `smoke-test`, `retail-poller`, `browserbase-test-maintenance`.
+**Skills**: Official `superpowers@claude-plugins-official` plugin (auto-updates) + user overrides in `~/.claude/skills/` (25 skills). Project skills in `.claude/skills/`: `coding-standards`, `markdown-standards`, `release`, `seed-sync`, `ui-design`, `ui-mockup`, `bb-test`, `smoke-test`, `retail-poller`, `browserbase-test-maintenance`, `api-infrastructure`.
 
 Use `/sync-instructions` after significant codebase changes.
 

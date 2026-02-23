@@ -1,6 +1,6 @@
 # API Infrastructure Runbook
 
-> **Last verified:** 2026-02-22 — STAK-265 investigation
+> **Last verified:** 2026-02-22 — retail-price-poller.yml removed (STAK-268)
 >
 > Quick-check commands at the bottom. For each feed: what it is, where it comes from,
 > how to diagnose, and what healthy vs. broken looks like.
@@ -13,21 +13,29 @@ StakTrakr pulls from three independent data feeds, all served via GitHub Pages f
 `lbruton/StakTrakrApi` (`main` branch → `api.staktrakr.com`).
 
 ```
-Local Docker (spot-poller)      GitHub Actions (GH)
-       │                              │
-       │  noon UTC daily              │  :05 and :35 every hour
-       ▼                              ▼
-data/spot-history-YYYY.json     StakTrakrApi api branch
-  (seed file — daily only)        data/hourly/YYYY/MM/DD/HH.json
-                                        │
-                                        │  Merge Poller Branches (*/15 min)
-                                        ▼
-                              StakTrakrApi main branch
-                                        │
-                                        │  GH Pages deploy (~3 min)
-                                        ▼
-                              api.staktrakr.com   ←── StakTrakr UI
+Fly.io container                        GitHub Actions (GH)
+       │                                       │
+       │  every 15 min (retail prices)         │  :05 and :35 every hour (spot prices)
+       │  daily 17:01 UTC (goldback)           │
+       │  daily 20:00 UTC (fbp gap-fill)       │
+       ▼                                       ▼
+StakTrakrApi api branch             StakTrakrApi api branch
+  data/api/manifest.json              data/hourly/YYYY/MM/DD/HH.json
+  data/api/goldback-spot.json
+                     │
+                     │  Merge Poller Branches (*/15 min)
+                     ▼
+             StakTrakrApi main branch
+                     │
+                     │  GH Pages deploy (~3 min)
+                     ▼
+             api.staktrakr.com   ←── StakTrakr UI
 ```
+
+**Note:** `retail-price-poller.yml` (GHA cloud failsafe) was deleted 2026-02-22. It was
+incorrectly calling the public Firecrawl cloud API (`api.firecrawl.dev`) instead of the
+self-hosted Firecrawl in the Fly.io container — exhausting paid credits (STAK-268). All
+scraping now runs exclusively in the Fly.io container via self-hosted Firecrawl.
 
 **Key repos:**
 
@@ -35,7 +43,6 @@ data/spot-history-YYYY.json     StakTrakrApi api branch
 |---|---|
 | `lbruton/StakTrakr` | App code + workflows that trigger pollers |
 | `lbruton/StakTrakrApi` | Data store — `api` branch = live data, `main` = merged/served |
-| `lbruton/StakTrakrApi1` | Secondary API (was a fallback; `StakTrakrApi1` repo deleted — `sync-api-repos.yml` now fails) |
 
 ---
 
@@ -47,12 +54,10 @@ data/spot-history-YYYY.json     StakTrakrApi api branch
 
 ### How it's updated
 
-1. **Local Docker retail poller** (primary) — runs every ~4h, writes `manifest.json` to
-   `StakTrakrApi` `api` branch via `API_PUSH_TOKEN`
-2. **`retail-price-poller.yml`** (cloud fallback) — fires every 4h if local Docker is stale
-   (checks `generated_at` against `STALE_SECONDS=18000`); uses Firecrawl cloud + Browserbase
-3. **`Merge Poller Branches`** — runs `*/15 * * * *`, merges `api` + `api1` branches into
-   `main`, picks whichever has the newer `generated_at`
+1. **Fly.io retail poller** (`run-local.sh`) — runs every 15 min, writes `manifest.json` to
+   `StakTrakrApi` `api` branch via `GITHUB_TOKEN`
+2. **`Merge Poller Branches`** — runs `*/15 * * * *`, merges `api` branch into
+   `main`
 
 ### Healthy
 
@@ -62,8 +67,8 @@ data/spot-history-YYYY.json     StakTrakrApi api branch
 
 ### Broken signals
 
-- `generated_at` > 4h old → local Docker retail poller is down
-- `generated_at` > 5h old → cloud fallback also failed (check Firecrawl credits)
+- `generated_at` > 30 min old → Fly.io retail poller missed a run; check `fly logs --app staktrakr`
+- `generated_at` > 4h old → Fly.io container may be down; check `fly status --app staktrakr`
 - `Merge Poller Branches` failing → check workflow logs
 
 ### Quick diagnosis
@@ -87,11 +92,22 @@ gh run list --repo lbruton/StakTrakrApi --workflow "Merge Poller Branches" --lim
 
 ---
 
-## Feed 2: Spot Prices (`hourly/YYYY/MM/DD/HH.json`)
+## Feed 2: Spot Prices (`spot-history-YYYY.json`)
 
-**Endpoint:** `https://api.staktrakr.com/data/hourly/YYYY/MM/DD/HH.json` (current UTC hour, falls back to previous hour)
+**Endpoint:** `https://api.staktrakr.com/data/spot-history-2026.json`
 **Field checked:** last entry `timestamp` (naive `"YYYY-MM-DD HH:MM:SS"` — treated as UTC after v3.32.14 fix)
 **Stale threshold:** 75 min
+
+### ⚠️ IMPORTANT: This file is a seed file, not live data
+
+`spot-history-YYYY.json` is populated by the **local Docker spot poller** writing one
+entry per day at noon UTC. It contains `"source": "seed"` entries. The live hourly data
+lives in `data/hourly/YYYY/MM/DD/HH.json` on the `StakTrakrApi` `api` branch.
+
+**This means `api-health.js` checking `spot-history-YYYY.json` will always show ~10-12h
+stale (current UTC minus noon UTC of today), even when the live spot poller is perfectly
+healthy.** This is a known mismatch — the correct file to check for live freshness is the
+most recent `data/hourly/` file.
 
 ### How it's updated
 
@@ -153,20 +169,16 @@ print(f'Total entries: {len(entries)}')
 
 ### How it's updated
 
-1. **Local Docker** (primary) — `devops/retail-poller/goldback-scraper.js` scrapes
-   `goldback.com/exchange-rate/` via self-hosted Firecrawl at `http://firecrawl:3002`
-   (port 3002, `devops/firecrawl-docker/`). Writes to `data/api/goldback-spot.json`
-   and `data/goldback-YYYY.json`
-2. **`retail-price-poller.yml`** (cloud fallback) — uses Firecrawl cloud API
-   (`FIRECRAWL_API_KEY` secret). Goldback scraping is bundled here.
+1. **Fly.io container** (`run-goldback.sh`) — `goldback-scraper.js` scrapes
+   `goldback.com/exchange-rate/` via self-hosted Firecrawl at `http://localhost:3002`.
+   Runs daily at 17:01 UTC. Writes to `data/api/goldback-spot.json` and `data/goldback-YYYY.json`
+   on the `main` branch of `StakTrakrApi`.
 
 ### Current status (as of 2026-02-22)
 
-- `scraped_at`: `2026-02-21T07:05:29.274Z` (~39h old)
-- `retail-price-poller.yml` last run: `2026-02-19T23:24` — **FAILED**
-- Failure reason: **Firecrawl cloud HTTP 402 — "Insufficient credits"**
-- Cloud fallback has been broken since 2026-02-19
-- Local Docker is the only path to fix this; check if local Firecrawl is running
+- `scraped_at`: `2026-02-22T23:49:23Z` — recovered ✅
+- Fly.io cron running daily at 17:01 UTC via `run-goldback.sh`
+- Cloud fallback (`retail-price-poller.yml`) deleted — all scraping on Fly.io
 
 ### Healthy
 
@@ -175,9 +187,8 @@ print(f'Total entries: {len(entries)}')
 
 ### Broken signals
 
-- `scraped_at` > 25h → scraper missed a run
-- `retail-price-poller.yml` HTTP 402 → Firecrawl cloud credits exhausted
-- `scraped_at` > 48h → both local Docker and cloud fallback are down
+- `scraped_at` > 25h → `run-goldback.sh` missed its daily cron; check `fly logs --app staktrakr | grep goldback`
+- `scraped_at` > 48h → Fly.io container down or Firecrawl not responding inside container
 
 ### Quick diagnosis
 
@@ -192,37 +203,18 @@ age = (datetime.now(timezone.utc) - ts).total_seconds() / 60
 print(f'scraped_at: {d[\"scraped_at\"]}')
 print(f'Age: {age:.0f} min ({age/60:.1f}h)')
 print(f'Status: {\"✅ FRESH\" if age <= 1500 else \"⚠️ STALE\"}')
-print(f'G1 price: ${d.get(\"g1_usd\")}')
+print(f'G1 price: \${d.get(\"g1_usd\")}')
 "
 
-# Check retail poller workflow status
-gh run list --repo lbruton/StakTrakr --workflow "retail-price-poller.yml" --limit 5
+# Check Fly.io goldback cron logs
+fly logs --app staktrakr | grep goldback
 
-# Manually trigger goldback scrape (if local Docker firecrawl is running)
-cd devops/firecrawl-docker && docker compose up -d
-DATA_DIR=/Volumes/DATA/GitHub/StakTrakr/data \
-  FIRECRAWL_BASE_URL=http://localhost:3002 \
-  node devops/retail-poller/goldback-scraper.js
+# Manually trigger goldback scrape on Fly.io
+fly ssh console --app staktrakr -C "/app/run-goldback.sh"
 ```
 
 ---
 
-## Known Broken: `sync-api-repos.yml`
-
-**Workflow:** `.github/workflows/sync-api-repos.yml` in `StakTrakr`
-**Schedule:** `0 5 * * *` (5am UTC daily)
-**Purpose:** Bidirectional file sync between `StakTrakrApi` and `StakTrakrApi1`
-**Status:** ❌ **PERMANENTLY FAILING** — `lbruton/StakTrakrApi1` repo was deleted
-
-```
-fatal: repository 'https://github.com/lbruton/StakTrakrApi1/' not found
-```
-
-**Impact:** Low — `StakTrakrApi1` was a redundant failsafe. The primary `StakTrakrApi`
-pipeline is fully operational. This workflow should either be deleted or updated to
-remove the `StakTrakrApi1` references.
-
----
 
 ## All-Feeds Health Check (one command)
 
@@ -233,9 +225,7 @@ from datetime import datetime, timezone
 
 def age_min(ts_str):
     ts_str = ts_str.strip()
-    # Append Z only if no timezone info present (no Z, no +HH:MM, no -HH:MM offset)
-    import re
-    if not re.search(r'[zZ]$|[+-]\d{2}:?\d{2}$', ts_str):
+    if not ts_str.endswith('Z') and '+' not in ts_str:
         ts_str = ts_str.replace(' ', 'T') + 'Z'
     ts = datetime.fromisoformat(ts_str.replace('Z', '+00:00'))
     return (datetime.now(timezone.utc) - ts).total_seconds() / 60
@@ -254,18 +244,12 @@ try:
 except Exception as e:
     print(f"Market  ❌  {e}")
 
-# Spot (live hourly file — current UTC hour, fallback to previous)
+# Spot (seed file — expect 600+ min; check GH Actions for live freshness)
 try:
-    from datetime import timedelta
-    now = datetime.now(timezone.utc)
-    def _hourly_url(dt): return f"https://api.staktrakr.com/data/hourly/{dt.year}/{dt.month:02d}/{dt.day:02d}/{dt.hour:02d}.json"
-    try:
-        d = fetch(_hourly_url(now))
-    except Exception:
-        d = fetch(_hourly_url(now - timedelta(hours=1)))
+    d = fetch('https://api.staktrakr.com/data/spot-history-2026.json')
     last = d[-1]
     age = age_min(last['timestamp'])
-    print(f"Spot    {'✅' if age <= 75 else '⚠️'}  {age:.0f}m ago")
+    print(f"Spot    {'✅' if age <= 75 else '⚠️'}  {age:.0f}m ago  (seed file — see hourly/ for live)")
 except Exception as e:
     print(f"Spot    ❌  {e}")
 
@@ -285,7 +269,4 @@ EOF
 
 | Issue | Status | Fix |
 |---|---|---|
-| `api-health.js` checks seed file for spot freshness | Fixed in v3.32.14 | Now fetches `data/hourly/YYYY/MM/DD/HH.json` with previous-hour fallback |
-| `sync-api-repos.yml` fails daily (`StakTrakrApi1` deleted) | Fixed in v3.32.14 | Workflow deleted in PR #406 |
-| Firecrawl cloud credits exhausted (HTTP 402) | Open | Top up credits or rely on local Docker |
-| Goldback stale ~39h | Open | Run local goldback-scraper.js manually |
+| `api-health.js` checks seed file for spot freshness | Open | Check `data/hourly/` latest file instead |
