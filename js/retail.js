@@ -260,31 +260,25 @@ const getRetailHistoryForSlug = (slug) => retailPriceHistory[slug] || [];
 let _lastSuccessfulApiBase = typeof RETAIL_API_ENDPOINTS !== "undefined" ? RETAIL_API_ENDPOINTS[0] : "https://api.staktrakr.com/data/api";
 
 /**
- * Fetch manifest.json from all configured endpoints, return ranked by freshness.
- * Uses Promise.allSettled so one slow/down endpoint doesn't block the others.
+ * Fetch manifest.json from configured endpoints in order (primary first).
+ * Tries each endpoint with a 5-second timeout; returns on the first success.
  * @returns {Promise<Array<{base: string, manifest: Object, ts: string}> | null>}
  */
 async function _pickFreshestEndpoint() {
   const endpoints = typeof RETAIL_API_ENDPOINTS !== "undefined" ? RETAIL_API_ENDPOINTS : [RETAIL_API_BASE_URL];
-  const results = await Promise.allSettled(
-    endpoints.map(async (base) => {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 8000);
+  for (const base of endpoints) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+    try {
       const resp = await fetch(`${base}/manifest.json`, { signal: controller.signal }).finally(() => clearTimeout(timeoutId));
       if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
       const manifest = await resp.json();
-      return { base, manifest, ts: manifest.generated_at || "" };
-    })
-  );
-  const valid = results
-    .filter(r => r.status === "fulfilled")
-    .map(r => r.value)
-    .sort((a, b) => {
-      const ta = a.ts ? new Date(a.ts).getTime() : 0;
-      const tb = b.ts ? new Date(b.ts).getTime() : 0;
-      return tb - ta;
-    });
-  return valid.length ? valid : null;
+      return [{ base, manifest, ts: manifest.generated_at || "" }];
+    } catch {
+      // try next endpoint
+    }
+  }
+  return null;
 }
 
 const _processSlugResult = (slug, latest, hist30) => {

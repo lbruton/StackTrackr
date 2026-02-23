@@ -21,9 +21,11 @@ const API_PROVIDERS = {
     hourlyBaseUrl: "https://api.staktrakr.com/data/hourly",
     hourlyBaseUrls: [
       "https://api.staktrakr.com/data/hourly",
+      "https://api2.staktrakr.com/data/hourly",
     ],
     fifteenMinBaseUrls: [
       "https://api.staktrakr.com/data/15min",
+      "https://api2.staktrakr.com/data/15min",
     ],
     endpoints: { silver: "", gold: "", platinum: "", palladium: "" },
     getEndpoint: () => "",
@@ -288,7 +290,7 @@ const CERT_LOOKUP_URLS = {
  * Updated: 2026-02-12 - STACK-38/STACK-31: Responsive card view + mobile layout
  */
 
-const APP_VERSION = "3.32.19";
+const APP_VERSION = "3.32.20";
 
 /**
  * Numista metadata cache TTL: 30 days in milliseconds.
@@ -498,6 +500,7 @@ const RETAIL_PROVIDERS_KEY = "retailProviders";
 /** @constant {string[]} RETAIL_API_ENDPOINTS - Ordered list of retail API endpoints (primary first) */
 const RETAIL_API_ENDPOINTS = [
   "https://api.staktrakr.com/data/api",
+  "https://api2.staktrakr.com/data/api",
 ];
 /** @constant {string} RETAIL_API_BASE_URL - Primary endpoint (backward compat) */
 const RETAIL_API_BASE_URL = RETAIL_API_ENDPOINTS[0];

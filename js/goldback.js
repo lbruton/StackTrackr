@@ -240,17 +240,28 @@ const onGoldSpotPriceChanged = () => {
  * @returns {Promise<{ok: boolean, g1_usd?: number, error?: string}>}
  */
 const fetchGoldbackApiPrices = async () => {
-  if (typeof GOLDBACK_API_URL === 'undefined') {
-    return { ok: false, error: 'GOLDBACK_API_URL not defined' };
-  }
+  const goldbackUrls = (typeof RETAIL_API_ENDPOINTS !== 'undefined' && RETAIL_API_ENDPOINTS.length)
+    ? RETAIL_API_ENDPOINTS.map(ep => `${ep}/goldback-spot.json`)
+    : (typeof GOLDBACK_API_URL !== 'undefined' ? [GOLDBACK_API_URL] : null);
+  if (!goldbackUrls) return { ok: false, error: 'GOLDBACK_API_URL not defined' };
+
   let data;
-  try {
-    const res = await fetch(GOLDBACK_API_URL, { cache: 'no-store' });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    data = await res.json();
-  } catch (err) {
-    return { ok: false, error: String(err) };
+  let lastErr;
+  for (const url of goldbackUrls) {
+    const ctrl = new AbortController();
+    const tid = setTimeout(() => ctrl.abort(), 5000);
+    try {
+      const res = await fetch(url, { cache: 'no-store', signal: ctrl.signal });
+      clearTimeout(tid);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      data = await res.json();
+      break;
+    } catch (err) {
+      clearTimeout(tid);
+      lastErr = err;
+    }
   }
+  if (!data) return { ok: false, error: String(lastErr) };
 
   const g1 = typeof data.g1_usd === 'number' && data.g1_usd > 0 ? data.g1_usd : null;
   if (!g1) return { ok: false, error: 'Invalid or missing g1_usd in API response' };

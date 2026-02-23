@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.32.20] - 2026-02-23
+
+### Added — api2 Backup Endpoint
+
+- **Added**: `api2.staktrakr.com` as a fallback for all three API feeds — spot (hourly + 15-min), market (manifest.json), and goldback (goldback-spot.json)
+- **Changed**: All API fetches now try the primary endpoint with a 5-second timeout; if unreachable, automatically fall through to api2 before giving up
+- **Changed**: API Health modal now shows per-endpoint columns (api vs api2) with live drift benchmarking in the verdict line
+
+---
+
 ## [3.32.19] - 2026-02-23
 
 ### Added — 15-Min Spot Price Endpoint

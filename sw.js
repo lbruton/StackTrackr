@@ -6,7 +6,7 @@ const DEV_MODE = false; // Set to true during development — bypasses all cachi
 
 
 
-const CACHE_NAME = 'staktrakr-v3.32.19-b1771838936';
+const CACHE_NAME = 'staktrakr-v3.32.20-b1771855108';
 
 
 
@@ -187,8 +187,8 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Stale-while-revalidate for StakTrakr hourly price API
-  if (url.hostname === 'api.staktrakr.com') {
+  // Stale-while-revalidate for StakTrakr hourly price API (primary + backup)
+  if (url.hostname === 'api.staktrakr.com' || url.hostname === 'api2.staktrakr.com') {
     event.respondWith(staleWhileRevalidate(event.request));
     return;
   }
