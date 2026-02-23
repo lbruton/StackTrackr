@@ -3038,6 +3038,10 @@ input[type="submit"] {
   background: var(--info, #0dcaf0);
   animation: cloudSyncPulse 1s ease-in-out infinite;
 }
+/* Cloud sync header button needs relative positioning for dot overlay (STAK-264) */
+#headerCloudSyncBtn {
+  position: relative;
+}
 @keyframes cloudSyncPulse {
   0%, 100% { opacity: 1; transform: scale(1); }
   50% { opacity: 0.5; transform: scale(0.85); }
