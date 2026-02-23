@@ -9,28 +9,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [3.32.22] - 2026-02-23
-
-### Fixed — Sync UI Dark-Theme CSS Fix
-
-- **Fixed**: Cloud sync header popover now uses correct dark-theme CSS variables (`--bg-card`, `--border`, `--bg-tertiary`) — previously appeared white/light on dark theme
-- **Fixed**: Mode selector in Settings → Cloud uses correct border and background variables across all themes
-- **Fixed**: Backup warning banner uses transparent amber tint instead of hardcoded light-yellow (`#fff8e6`)
-- **Fixed**: Popover header label uses SVG lock icon matching the app's stroke-icon style
-
----
-
-## [3.32.21] - 2026-02-23
-
-### Added — Sync UX Overhaul + Simple Mode
-
-- **Added**: "Simple" sync mode — Dropbox account acts as encryption key; no vault password needed on any device
-- **Added**: Mode selector in Settings → Cloud (Simple / Secure) with backup warning before switching modes
-- **Fixed**: Sync password modal no longer auto-opens on page load; replaced with ambient toast + orange header dot
-- **Changed**: Header cloud button is mode-aware — orange-simple reconnects Dropbox; orange (Secure) opens an inline password popover below the header button
-
----
-
 ## [3.32.20] - 2026-02-23
 
 ### Added — api2 Backup Endpoint
