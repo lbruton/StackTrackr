@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.32.23] - 2026-02-23
+
+### Changed — Cloud Settings Redesign + Unified Encryption
+
+- **Changed**: Cloud settings compacted to ≤400px card — Dropbox configuration moved to Advanced sub-modal
+- **Changed**: Unified encryption mode — vault password stored in browser, combined with Dropbox account for zero-knowledge encryption (replaces Simple/Secure toggle)
+- **Fixed**: Action buttons (Disconnect, Backup, Restore) use compact app button style, removed from main card view
+- **Removed**: Encryption mode selector (Simple/Secure radio buttons) — single seamless mode replaces both
+
+---
+
 ## [3.32.22] - 2026-02-23
 
 ### Fixed — Sync UI Dark-Theme CSS Fix
