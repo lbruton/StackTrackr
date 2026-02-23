@@ -739,6 +739,13 @@ const setupHeaderButtonListeners = () => {
     if (popover && popover.style.display !== 'none') {
       if (wrapper && !wrapper.contains(e.target)) {
         popover.style.display = 'none';
+        // Clear handlers so stale state doesn't persist on next open
+        var inputEl = safeGetElement('cloudSyncPopoverInput');
+        var unlockEl = safeGetElement('cloudSyncPopoverUnlockBtn');
+        var cancelEl = safeGetElement('cloudSyncPopoverCancelBtn');
+        if (inputEl) inputEl.onkeydown = null;
+        if (unlockEl) unlockEl.onclick = null;
+        if (cancelEl) cancelEl.onclick = null;
       }
     }
   });

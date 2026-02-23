@@ -1252,3 +1252,5 @@ window.syncSaveOverrideBackup = syncSaveOverrideBackup;
 window.syncRestoreOverrideBackup = syncRestoreOverrideBackup;
 window.setSyncMode = setSyncMode;
 window.refreshSyncModeUI = refreshSyncModeUI;
+window.syncGetLastPush = syncGetLastPush;
+window._syncRelativeTime = _syncRelativeTime;
