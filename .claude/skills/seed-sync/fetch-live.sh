@@ -34,5 +34,8 @@ for year in $(seq 2023 "$CURRENT_YEAR"); do
     continue
   fi
 
-  python3 "${SCRIPT_DIR}/merge-seed.py" "$local_file" "$tmpfile"
+  if ! python3 "${SCRIPT_DIR}/merge-seed.py" "$local_file" "$tmpfile"; then
+    echo "⚠️  ${year}: merge failed — skipping (local file unchanged)"
+    continue
+  fi
 done
