@@ -81,8 +81,9 @@ def main():
             json.dump(merged, f, indent=2)
             f.write("\n")
         os.replace(tmp_path, local_path)
-    except Exception:
+    except Exception as e:
         os.unlink(tmp_path)
+        print(f"Error: failed to write {local_path}: {e}", file=sys.stderr)
         raise
 
     print(f"{local_path.name}: +{new_count} new entries from live (total: {len(merged)})")
