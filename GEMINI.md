@@ -79,13 +79,14 @@ This file provides foundational mandates and project-specific context for Gemini
 
 Gemini has access to the following MCP servers. Use them as described.
 
-### Agent MCP Parity (as of 2026-02-20)
+### Agent MCP Parity (as of 2026-02-22)
 
-All three agents run on the same Mac and share the same Docker/IP stack.
+All agents run on the same Mac and share the same Docker/IP stack.
 
 | Server | Claude | Gemini | Codex | Notes |
 |---|---|---|---|---|
-| `memento` | ✅ | ✅ | ✅ | Shared Neo4j knowledge graph |
+| `mem0` | ✅ | ✅ | ✅ | Sole memory backend — Memento retired 2026-02-22 |
+| `memento` | ⛔ | ⛔ | ⛔ | Retired 2026-02-22 — historical archive, do not call |
 | `sequential-thinking` | ✅ | ✅ | ✅ | Structured reasoning |
 | `brave-search` | ✅ | ✅ | ✅ | Web search |
 | `claude-context` | ✅ | ✅ | ✅ | Semantic code search (Milvus) |
@@ -97,57 +98,42 @@ All three agents run on the same Mac and share the same Docker/IP stack.
 | `playwright` | ✅ | ✅ | ✅ | Browser automation / test authoring |
 | `browserbase` | ✅ | ✅ | ✅ | Cloud NL tests (paid, use sparingly) |
 | `code-graph-context` | ✅ | ✅ | ✅ | Structural graph (Docker required) |
-| `stitch` | ✅ | ✅ primary | ✅ | OAuth via `init`; Gemini preferred for design tasks |
+| `infisical` | ✅ | ✅ | ✅ | Self-hosted secrets manager |
+| `stitch` | — | — | — | Removed from all configs 2026-02-22 |
 
-### Memento (Knowledge Graph)
+### mem0 (Primary Memory Backend)
 
-Shared persistent memory across all agents (Claude, Codex, Gemini, and the human).
-Backed by Neo4j with vector embeddings for semantic search.
+Sole memory backend for all agents as of 2026-02-22. Memento has been retired.
+Automatically saves conversational context, preferences, and decisions across sessions.
 
-**When to use:** Save session summaries, insights, handoffs, and decisions. Recall prior context before starting work. Check for existing knowledge before duplicating effort.
+**When to use:** Recall what was discussed in previous sessions, save preferences, store session insights, handoffs, decisions. Use mem0 for everything — do NOT call `mcp__memento__*` tools.
 
 **Tools available:**
 
-- `create_entities` / `add_observations` — Save new knowledge
-- `search_nodes` — Exact name/tag/keyword lookup
-- `semantic_search` — Conceptual/natural language recall (use `hybrid_search: true`)
-- `open_nodes` — Expand entity details after search
-- `create_relations` — Link related entities
+- `search_memories` — Find relevant memories by keyword or concept
+- `add_memory` — Explicitly save an insight, preference, decision, or handoff
+- `get_memories` — List all stored memories
+- `get_memory` — Retrieve a specific memory by ID
+- `delete_memory` — Remove a specific memory
 
-**Taxonomy rules (MUST follow):**
+**Save format:**
 
-Entity types use `PROJECT:DOMAIN:TYPE` format:
+```javascript
+mcp__mem0__add_memory({
+  text: "StakTrakr <type>: <what, why, how to apply — self-contained>",
+  metadata: {
+    project: "staktrakr",
+    category: "<frontend|backend|infra|security|workflow>",
+    type: "<insight|decision|session|handoff>"
+  }
+})
+```
 
-| Type | entityType | Name Format |
-|------|------------|-------------|
-| Session | `STAKTRAKR:DEVELOPMENT:SESSION` | `Session: STAKTRAKR-KEYWORD-YYYYMMDD-HHMMSS` |
-| Insight | `STAKTRAKR:DOMAIN:INSIGHT` | `Insight: STAKTRAKR-INSIGHT-YYYYMMDD-HHMMSS` |
-| Handoff | `STAKTRAKR:DEVELOPMENT:HANDOFF` | `HANDOFF:STAK-###:PR-###:YYYY-MM-DD:AGENT` |
+**Secrets policy:** Never store raw secrets in mem0 without explicit user approval. Prefer references (env var name, Infisical label) — not raw values.
 
-Required observations (in this order):
+### Memento (Knowledge Graph — RETIRED)
 
-1. `TIMESTAMP: <ISO-8601 UTC>`
-2. `DATE_TOKEN: <YYYYMMDDHHMMSS>` (UTC, 14 digits, canonical)
-3. `ABSTRACT: <one-line summary>`
-4. `SUMMARY: <detailed context>`
-5. ID field (`SESSION_ID`, `INSIGHT_ID`, etc.)
-
-Required tags on every entity:
-
-- `TAG: project:staktrakr`
-- `TAG: agent:gemini`
-- `TAG: <category>` (e.g., `documentation`, `frontend`, `api`)
-- `TAG: <status>` (`completed`, `in-progress`, `blocked`)
-- `TAG: date:YYYYMMDD` / `TAG: date:YYYYMM` / `TAG: date:YYYY`
-
-Search strategy:
-
-1. Exact names via `search_nodes` (preserve colons — never space-split)
-2. Date-scoped via progressive prefix: `YYYYMMDDHH` then `YYYYMMDD` then `YYYYMM` then `YYYY`
-3. Conceptual via `semantic_search` with `hybrid_search: true`
-4. **Fallback:** If `search_nodes` returns 0, always retry with `semantic_search`
-
-**Secrets policy:** Never store raw secrets in Memento without explicit user approval. Prefer references (env var name, vault label). Tag secrets with `type:secret`, `sensitivity:secret`, `status:active`.
+**RETIRED 2026-02-22.** Do not call `mcp__memento__*` tools. Historical archive only — still in `.mcp.json` but inactive. All Memento entities were migrated to mem0. Use `mcp__mem0__search_memories` for recall.
 
 ### Linear (Project Management)
 
@@ -165,7 +151,7 @@ Issue tracking and project management for StakTrakr.
 - Reference issues as `STAK-###` in commit messages and documentation
 - Update issue status as work progresses (`Todo` -> `In Progress` -> `Done`)
 - Post handoff comments using the standard template (see Handoff section)
-- **Never put secrets in Linear** — use Memento entity references only
+- **Never put secrets in Linear** — use Infisical label references only
 - When creating issues, set appropriate priority (1=Urgent, 2=High, 3=Normal, 4=Low)
 
 **Agent delegation labels:** Issues may carry labels like `Codex`, `Sonnet`, `Opus` indicating which AI agent should handle them. Gemini-delegated work should use a `Gemini` label.
@@ -202,17 +188,13 @@ scraping, crawling, and web search without consuming cloud credits.
 
 **Requires:** `cd devops/firecrawl-docker && docker compose up -d` before use.
 
-### Stitch (UI Design & Prototyping — Gemini Primary)
+### Stitch (UI Design — REMOVED)
 
-Stitch is a Google product. **Gemini is the designated Stitch agent for StakTrakr** — Claude and
-Codex route Stitch tasks here. Use the `ui-mockup` skill workflow when generating mockups.
+Stitch MCP extension has been removed from all agent configs as of 2026-02-22. Do not attempt to
+call `mcp__stitch__*` tools — they will not resolve.
 
-**Tools available:**
-- `create_project` — Create a container for designs
-- `generate_screen_from_text` — Generate a new UI screen from a prompt
-- `edit_screens` — Modify existing screens via prompt
-- `generate_variants` — Explore design alternatives
-- `get_screen` / `list_screens` — Retrieve generated assets
+For UI mockup work, use the `ui-mockup` skill via Claude Code or the Google AI Studio interface
+directly if Gemini native integration is available.
 
 ### Browserbase (Cloud Browser Automation)
 
@@ -297,9 +279,9 @@ StakTrakr uses a multi-agent development workflow. Four agents collaborate:
 
 When completing work or passing context to another agent:
 
-1. **Save to Memento** — Create a handoff entity following the taxonomy
+1. **Save to mem0** — Call `mcp__mem0__add_memory` with `type: handoff` and Linear issue ID in the text
 2. **Post to Linear** — Comment on the related issue, or create an issue in the Developers team
-3. **Include all fields:** scope, validation, next steps, owner, risks, Memento entity name
+3. **Include all fields:** scope, validation, next steps, owner, risks, memory reference
 
 ### Handoff comment template
 
@@ -311,9 +293,50 @@ Agent handoff update:
 - Validation: <what was run/verified>
 - Next: <explicit next step + owner>
 - Links: <Linear issue/PR links>
-- Memory: <Memento entity name(s)>
+- Memory: <mem0 topic keyword for recall>
 - Risks: <known risks/assumptions>
 ```
+
+## Version Lock + Worktree Protocol (Multi-Agent Safety)
+
+Multiple AI agents (Claude, Gemini, Codex, Jules) work concurrently on the same local repo.
+The **version lock** prevents two agents claiming the same version number. The **worktree**
+gives each agent an isolated filesystem so concurrent edits don't conflict.
+
+Full protocol: `devops/version-lock-protocol.md`. Summary:
+
+### Lock file: `devops/version.lock`
+
+```json
+{
+  "locked": "3.32.09",
+  "locked_by": "gemini / STAK-XX",
+  "locked_at": "2026-02-22T19:00:00Z",
+  "expires_at": "2026-02-22T19:30:00Z"
+}
+```
+
+Both `devops/version.lock` and `.claude/worktrees/` are **gitignored** — neither should ever
+appear in a commit diff. If you see them in a diff, that is a bug.
+
+### Protocol
+
+1. **Check:** Read `devops/version.lock`. If locked and not expired, STOP and inform user.
+2. **If expired (> 30 min):** Take it over, save a mem0 note.
+3. **If unlocked:** Compute `next_version` from `js/constants.js`, write the lock file.
+4. **Create worktree + branch:**
+   `git worktree add .claude/worktrees/patch-VERSION -b patch/VERSION`
+5. **Do all work in the worktree** — file edits, version bump, commit.
+6. **Push + open draft PR** `patch/VERSION → dev`. Cloudflare generates a preview URL.
+7. **QA preview → merge to dev.**
+8. **Cleanup after merge:**
+   `git worktree remove .claude/worktrees/patch-VERSION --force`
+   `git branch -d patch/VERSION && rm devops/version.lock`
+
+The locked version is the **anchor** — all Linear notes, changelog entries, and mem0 handoffs
+reference it.
+
+**Never push directly to `main`** — Cloudflare auto-deploys to staktrakr.com on every push.
 
 ## Quality Gates
 
@@ -325,4 +348,4 @@ Agent handoff update:
 
 ---
 
-*Last Updated: 2026-02-19*
+*Last Updated: 2026-02-22*

@@ -126,10 +126,10 @@ class CatalogManager {
    * 
    * @private
    */
-  _save() {
+  async _save() {
     try {
       // Save in legacy format for backward compatibility
-      saveData(this.storageKey, this._mappings);
+      await saveData(this.storageKey, this._mappings);
       
       if (this.saveCallback && typeof this.saveCallback === 'function') {
         this.saveCallback();

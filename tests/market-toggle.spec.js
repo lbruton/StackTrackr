@@ -1,17 +1,13 @@
 // @ts-check
 import { test, expect } from '@playwright/test';
+import { dismissAckModal } from './test-utils.js';
 
 const TEST_URL = process.env.TEST_URL || 'http://localhost:8765';
 
 test.describe('Market Icon Toggle Feature', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto(TEST_URL);
-
-    // Dismiss acknowledgment modal if present
-    const ackModal = page.locator('#ackModal');
-    if (await ackModal.isVisible()) {
-      await page.click('#ackModal .close-btn, #ackModal [aria-label="Close"]').catch(() => {});
-    }
+    await dismissAckModal(page);
   });
 
   test('Test 1: New user sees all 5 header buttons by default', async ({ page }) => {
@@ -50,7 +46,7 @@ test.describe('Market Icon Toggle Feature', () => {
     // Open Settings → Appearance
     await page.click('#settingsBtn');
     await page.waitForSelector('#settingsModal', { state: 'visible' });
-    await page.click('[data-section="appearance"]');
+    await page.click('[data-section="site"]');
 
     // Verify Market toggle shows "On" by default
     const marketToggle = page.locator('#settingsHeaderMarketBtn_hdr');
@@ -84,25 +80,25 @@ test.describe('Market Icon Toggle Feature', () => {
   test('Test 4: Responsive grid layout (3-col → 2-col → 1-col)', async ({ page }) => {
     await page.click('#settingsBtn');
     await page.waitForSelector('#settingsModal', { state: 'visible' });
-    await page.click('[data-section="appearance"]');
+    await page.click('[data-section="site"]');
 
     const grid = page.locator('.settings-card-grid--compact').first();
 
-    // Desktop: 3 columns
+    // Desktop/tablet: 2 columns (≥600px breakpoint)
     await page.setViewportSize({ width: 1200, height: 800 });
     const desktopCols = await grid.evaluate((el) =>
       getComputedStyle(el).gridTemplateColumns
     );
-    expect(desktopCols.split(' ').length).toBe(3);
+    expect(desktopCols.split(' ').length).toBe(2);
 
-    // Tablet: 2 columns
+    // Tablet: still 2 columns
     await page.setViewportSize({ width: 900, height: 800 });
     const tabletCols = await grid.evaluate((el) =>
       getComputedStyle(el).gridTemplateColumns
     );
     expect(tabletCols.split(' ').length).toBe(2);
 
-    // Mobile: 1 column
+    // Mobile: 1 column (<600px breakpoint)
     await page.setViewportSize({ width: 500, height: 800 });
     const mobileCols = await grid.evaluate((el) =>
       getComputedStyle(el).gridTemplateColumns
@@ -147,7 +143,7 @@ test.describe('Market Icon Toggle Feature', () => {
     // Perform normal user actions
     await page.click('#headerMarketBtn');
     await page.waitForSelector('#settingsModal', { state: 'visible' });
-    await page.click('[data-section="appearance"]');
+    await page.click('[data-section="site"]');
 
     // Toggle Market button off/on
     const marketToggle = page.locator('#settingsHeaderMarketBtn_hdr');
@@ -156,8 +152,7 @@ test.describe('Market Icon Toggle Feature', () => {
     await marketToggle.locator('[data-val="yes"]').click();
 
     // Close modal
-    const closeBtn = page.locator('#settingsModal .close-btn, #settingsModal [aria-label="Close"]').first();
-    await closeBtn.click();
+    await page.locator('#settingsCloseBtn').click();
 
     // Verify no console errors
     expect(consoleErrors).toEqual([]);

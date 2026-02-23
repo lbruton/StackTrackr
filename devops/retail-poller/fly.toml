@@ -8,9 +8,10 @@ primary_region = 'iad'
   dockerfile = "Dockerfile"
 
 [env]
-  POLLER_ID = "main"
+  POLLER_ID = "api"
   API_DATA_REPO = "https://github.com/lbruton/StakTrakrApi.git"
   API_EXPORT_DIR = "/data/staktrakr-api-export"
+  DATA_REPO_PATH = "/data/staktrakr-api-export"
   # Firecrawl runs inside this container
   FIRECRAWL_BASE_URL = "http://localhost:3002"
   BROWSER_MODE = "local"

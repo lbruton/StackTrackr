@@ -9,6 +9,147 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.32.16] - 2026-02-22
+
+### Fixed — Market Chart Timezone + Seed Sync Automation (STAK-275, STAK-266)
+
+- **Fixed**: 24hr market price chart X-axis and table now display times in the user's selected timezone instead of UTC (STAK-275)
+- **Added**: seed-sync skill gains Phase 5 — fetches latest spot-history from live API and merges before staging, ensuring releases ship with up-to-date seed data (STAK-266)
+
+---
+
+## [3.32.15] - 2026-02-22
+
+### Fixed — Nitpick Polish — API Health Modal Wording + Desktop Footer Layout (STAK-272, STAK-273)
+
+- **Fixed**: API health modal Coverage row now shows "items tracked" instead of "coins" — rounds and bars are not coins (STAK-272)
+- **Fixed**: Desktop footer restructured — badges moved to top row, "Special thanks to r/Silverbugs" moved to its own line below the main footer text (STAK-273)
+
+---
+
+## [3.32.14] - 2026-02-22
+
+### Fixed — API Health Stale Timestamp Parsing (STAK-265)
+
+- **Fixed**: Naive `"YYYY-MM-DD HH:MM:SS"` timestamps from spot history and Goldback feeds now normalized to UTC before parsing — previously treated as local time, inflating staleness readings by the user's UTC offset (e.g. 6 hours on CST)
+- **Changed**: Market feed stale threshold raised from 15 → 30 min to match typical poller cadence and prevent false-positive stale warnings
+
+---
+
+## [3.32.13] - 2026-02-22
+
+### Fixed — API Health Modal z-index + Three-Feed Freshness Checks
+
+- **Fixed**: API health modal now renders above the About modal (z-index raised to 10000)
+- **Improved**: API health now checks three feeds independently — market prices (15 min threshold), spot prices (75 min), and Goldback daily scrape; badges show per-feed freshness
+- **Changed**: Footer and About modal badge text now shows `✅ Market Xm · Spot Xm` format
+
+---
+
+## [3.32.12] - 2026-02-22
+
+### Added — Configurable Vault Password Idle Timeout (STAK-183)
+
+- **Added**: "Auto-lock after idle" dropdown in Settings → Cloud Sync → Session Password Cache — choose 15 min, 30 min, 1 hour, 2 hours, or Never
+- **Changed**: Vault password idle lock reads the user's setting at arm time instead of a hardcoded 15-minute constant; "Never" disables auto-clear entirely
+
+---
+
+## [3.32.11] - 2026-02-22
+
+### Fixed — PR #395 Review Fixes — Code Quality & Correctness
+
+- **Fixed**: `logItemChanges` null-dereference on item-add/delete — guarded `forEach` loop for null `oldItem`/`newItem`; now records single Added/Deleted entry
+- **Fixed**: `changeLog` raw `localStorage.setItem` calls replaced with `saveDataSync()` across all callsites
+- **Fixed**: `getManifestEntries`/`markSynced` exposed as `window.*` globals — array property approach lost on `changeLog = []` reassignment
+- **Fixed**: Sync toast showed wrong provider — status string was `"success"` but `syncProviderChain` returns `"ok"`
+- **Fixed**: Swallowed post-reset backfill error now logs to `console.warn` for debuggability
+- **Fixed**: `api-health.js` modal calls use `window.` prefix; `readyState` guard added for late-loading scripts
+- **Fixed**: `safeGetElement` used in `initSpotHistoryButtons` (was raw `document.getElementById`)
+
+---
+
+## [3.32.10] - 2026-02-22
+
+### Added — Worktree Protocol & Branch Protection Infrastructure
+
+- **Added**: Version lock + worktree protocol — agents now create isolated `patch/VERSION` git worktrees in `.claude/worktrees/` for concurrent work, preventing filesystem conflicts between agents
+- **Added**: `main` branch protection — Codacy Static Code Analysis required, no force pushes, prevents direct pushes to production
+- **Changed**: Release skill Step 0a now creates worktree + branch on lock claim; Phase 3 cleanup removes them after merge
+- **Changed**: `CLAUDE.md`, `AGENTS.md`, `GEMINI.md` updated with full worktree workflow and "never push directly to main" rule
+- **Changed**: `devops/version-lock-protocol.md` — full 9-step lock+worktree protocol replacing the previous 5-step lock-only protocol
+
+---
+
+## [3.32.09] - 2026-02-22
+
+### Fixed — WeakMap Search Cache Correctness
+
+- **Fixed**: Cache miss check uses `=== undefined` instead of falsy — prevents treating a valid cached empty string as a miss (`js/filters.js`)
+- **Fixed**: Notes save handler now invalidates search cache after in-place mutation — multi-word search reflects updated notes immediately (`js/events.js`)
+- **Fixed**: Removed redundant post-loop `invalidateSearchCache` from `applyNumistaTags()` — `addItemTag()` already invalidates per item, eliminating a duplicate O(N) scan per tag (`js/tags.js`)
+- **Fixed**: Undo/redo now invalidates search cache after in-place field mutation — multi-word searches reflect reverted values immediately (`js/changeLog.js`)
+
+---
+
+## [3.32.08] - 2026-02-22
+
+### Fixed — OAuth State Security Hardening & Agent Instruction Sync
+
+- **Fixed**: OAuth provider now parsed from trusted `savedState` after CSRF validation — not attacker-controlled `state` string before check (`js/cloud-storage.js`)
+- **Fixed**: PKCE challenge promise now has `.catch()` handler — cleans `sessionStorage` and closes popup on failure
+- **Fixed**: OAuth exchange failure path removes stale `cloud_oauth_state` from `sessionStorage` to prevent replay
+- **Changed**: `AGENTS.md`, `GEMINI.md` updated — version lock protocol, Stitch removal, MCP parity sync (2026-02-22)
+- **Changed**: `.gitignore` — added `devops/version.lock` multi-agent version mutex entry
+
+---
+
+## [3.32.07] - 2026-02-22
+
+### Fixed — Backend Data Integrity & Sparkline Fix
+
+- **Fixed**: Sync restore now clears all scoped localStorage keys before writing backup data — prevents stale entries leaking across restore (STAK-183)
+- **Added**: DiffEngine module — pure-data compare, merge, and conflict detection for inventory sync (STAK-186)
+- **Added**: changeLog manifest entries — scope tags, itemKey, type fields, and markSynced() for sync audit trail (STAK-187)
+- **Added**: Vault manifest crypto — AES-256-GCM encryptManifest/decryptManifest with STMF header magic (STAK-188)
+- **Fixed**: Sparkline intraday dedup removes duplicate timestamps that caused V-spike artifacts on spot price cards
+- **Fixed**: Sparkline Y-axis normalized to ±1% of price range — eliminates over-zoom on flat intraday data
+- **Fixed**: Post-wipe spot history initialized as array (not object) and triggers backfill correctly
+
+---
+
+## [3.32.05] - 2026-02-22
+
+### Fixed — Service Worker Cache Coverage
+
+- **Fixed**: Add `image-processor.js`, `bulk-image-cache.js`, and `image-cache-modal.js` to `sw.js` CORE_ASSETS — offline image workflows no longer 404 on first offline visit
+
+---
+
+## [3.32.04] - 2026-02-22
+
+### Fixed — Async Save Reliability
+
+- **Fixed**: `await saveData()` in `updateLastTimestamps`, `CatalogManager._save`, and `saveInventory` — prevents silently dropped Promises if localStorage throws
+
+---
+
+## [3.32.03] - 2026-02-22
+
+### Fixed — Sync Toast
+
+- **Fixed**: Spot price sync completion now shows a non-blocking toast instead of a blocking modal dialog
+
+---
+
+## [3.32.02] - 2026-02-22
+
+### Changed — Appearance Settings Redesign
+
+- **Changed**: Appearance tab redesigned — Color scheme and Inventory View as compact pill-button pickers in one card; Timezone, Default Sort, and Visible Items as full-width dropdowns in a second card; thumb-friendly touch targets throughout (STAK-258)
+
+---
+
 ## [3.32.01] - 2026-02-21
 
 ### Fixed — Dual-Poller API Endpoint & Spot Pipeline Fixes

@@ -112,11 +112,21 @@ const _buildIntradayChart = (slug) => {
   // Fall back to median+low when windows predate the per-vendor format
   const useVendorLines = activeVendors.length > 0;
 
+  const tz = (typeof TIMEZONE_KEY !== 'undefined' && localStorage.getItem(TIMEZONE_KEY)) || undefined;
+  const tzOpts = tz && tz !== 'auto' ? { timeZone: tz } : {};
+  const fmtTime = (d) => {
+    if (!d || isNaN(d.getTime())) return '--:--';
+    try {
+      return d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', hour12: false, ...tzOpts });
+    } catch (e) {
+      return d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', hour12: false });
+    }
+  };
+
   if (windows.length >= 2 && canvas instanceof HTMLCanvasElement && typeof Chart !== "undefined") {
     const labels = windows.map((w) => {
       const d = w.window ? new Date(w.window) : null;
-      if (!d || isNaN(d)) return "--:--";
-      return `${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`;
+      return fmtTime(d);
     });
 
     const datasets = useVendorLines
@@ -190,7 +200,8 @@ const _buildIntradayChart = (slug) => {
   if (tableHead) {
     tableHead.innerHTML = "";
     const headerRow = document.createElement("tr");
-    ["Time (local)", ...tableColumns].forEach((label) => {
+    const timeColLabel = Object.keys(tzOpts).length > 0 ? `Time (${tz})` : "Time (local)";
+    [timeColLabel, ...tableColumns].forEach((label) => {
       const th = document.createElement("th");
       th.textContent = label;
       headerRow.appendChild(th);
@@ -206,9 +217,7 @@ const _buildIntradayChart = (slug) => {
     recent.forEach((w) => {
       const tr = document.createElement("tr");
       const d = w.window ? new Date(w.window) : null;
-      const timeLabel = (d && !isNaN(d))
-        ? `${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`
-        : "--:--";
+      const timeLabel = fmtTime(d);
       const rowValues = useVendorLines
         ? activeVendors.map((v) => fmt(w.vendors && w.vendors[v]))
         : [fmt(w.median), fmt(w.low)];

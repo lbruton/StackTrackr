@@ -31,11 +31,13 @@ const updatePortalHeight = () => {
     const gridWidth = cardGrid.getBoundingClientRect().width;
     const cols = Math.max(1, Math.round(gridWidth / (cardRect.width + gap)));
 
-    if (itemsPerPage === Infinity || totalCards <= itemsPerPage) {
+    // itemsPerPage = rows (consistent with table view: "3" means 3 rows, not 3 cards)
+    const totalRows = Math.ceil(totalCards / cols);
+    if (itemsPerPage === Infinity || totalRows <= itemsPerPage) {
       cardGrid.style.maxHeight = 'none';
       cardGrid.style.overflowY = '';
     } else {
-      const rowsToShow = Math.ceil(itemsPerPage / cols);
+      const rowsToShow = itemsPerPage;
       const portalHeight = rowsToShow * cardHeight;
       cardGrid.style.maxHeight = `${portalHeight}px`;
       cardGrid.style.overflowY = 'auto';

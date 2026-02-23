@@ -145,7 +145,7 @@ def backfill_recent_hours(api_key, data_dir, hours_back=24):
                 "spot": inverted[symbol],
                 "metal": seed.SYMBOL_TO_METAL[symbol],
                 "source": "hourly",
-                "provider": "MetalPriceAPI",
+                "provider": "StakTrakr",
                 "timestamp": f"{date_str} {hour_str}:00:00",
             })
         if entries:

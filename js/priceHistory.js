@@ -2,7 +2,7 @@
 // =============================================================================
 // Silent per-item price history recording.
 // Mirrors the spotHistory pattern in spot.js: save/load/record/purge with dedup.
-// Data structure: { "uuid": [{ ts, retail, spot, melt }, ...], ... }
+// Data structure: { "uuid": [{ ts, itemName, retail, spot, melt }, ...], ... }
 // =============================================================================
 
 /**
@@ -54,6 +54,25 @@ const purgeItemPriceHistory = (days = 365) => {
 };
 
 /**
+ * Safely reads a snapshot item name from a history entry.
+ * Supports both `itemName` (current) and legacy/alternate `name`.
+ *
+ * @param {Object} entry - Item price history entry
+ * @returns {string} Trimmed snapshot name or empty string
+ */
+const getSnapshotItemName = (entry) => {
+  if (!entry || typeof entry !== 'object') return '';
+
+  if (typeof entry.itemName === 'string' && entry.itemName.trim()) {
+    return entry.itemName.trim();
+  }
+  if (typeof entry.name === 'string' && entry.name.trim()) {
+    return entry.name.trim();
+  }
+  return '';
+};
+
+/**
  * Records a single price data point for an inventory item.
  * Applies deduplication rules:
  *   - add/edit/bulk: skip exact duplicates only (same retail + spot + melt)
@@ -69,6 +88,7 @@ const recordItemPrice = (item, trigger = 'spot-sync') => {
   if (!item || !item.uuid) return false;
 
   const uuid = item.uuid;
+  const itemName = (typeof item.name === 'string' && item.name.trim()) ? item.name.trim() : 'Unnamed';
   const metalKey = (item.metal || 'Silver').toLowerCase();
   const spot = spotPrices[metalKey] || 0;
   const melt = parseFloat(computeMeltValue(item, spot).toFixed(2));
@@ -117,6 +137,7 @@ const recordItemPrice = (item, trigger = 'spot-sync') => {
 
   entries.push({
     ts: now,
+    itemName: itemName,
     retail: retail,
     spot: spot,
     melt: melt
@@ -240,8 +261,12 @@ const preparePriceHistoryRows = (filterUuid) => {
   const uuids = filterUuid ? [[filterUuid, itemPriceHistory[filterUuid] || []]] : Object.entries(itemPriceHistory);
   for (const [uuid, entries] of uuids) {
     const item = inventory.find(i => i.uuid === uuid);
-    const name = item ? (item.name || 'Unnamed') : `(deleted: ${uuid.slice(0, 8)})`;
+    const liveName = (item && typeof item.name === 'string' && item.name.trim()) ? item.name.trim() : '';
     for (const e of entries) {
+      const snapshotName = getSnapshotItemName(e);
+      const name = item
+        ? (liveName || snapshotName || 'Unnamed')
+        : (snapshotName ? `${snapshotName} (deleted)` : `(deleted: ${uuid.slice(0, 8)})`);
       rows.push({ ts: e.ts, name, uuid, retail: e.retail, spot: e.spot, melt: e.melt });
     }
   }
@@ -439,7 +464,11 @@ const deleteItemPriceEntry = (uuid, timestamp) => {
 
   // Log to change log for undo support
   const item = inventory.find(i => i.uuid === uuid);
-  const itemName = item ? (item.name || 'Unnamed') : `(deleted: ${uuid.slice(0, 8)})`;
+  const snapshotName = getSnapshotItemName(deletedEntry);
+  const liveName = (item && typeof item.name === 'string' && item.name.trim()) ? item.name.trim() : '';
+  const itemName = item
+    ? (liveName || snapshotName || 'Unnamed')
+    : (snapshotName ? `${snapshotName} (deleted)` : `(deleted: ${uuid.slice(0, 8)})`);
   if (typeof logChange === 'function') {
     logChange(itemName, 'priceHistoryDelete',
       JSON.stringify({ uuid, entry: deletedEntry }), null, -1);

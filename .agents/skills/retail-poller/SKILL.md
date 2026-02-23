@@ -23,17 +23,20 @@ extract-vision.js  (Gemini Vision → per-coin vision JSON)
 api-export.js  (SQLite + vision JSON → data/api/ REST endpoints → data branch)
 ```
 
-**Local Docker is PRIMARY — GitHub Action is cloud FAILSAFE only:**
+**Fly.io container is the sole scraping pipeline — no GHA cloud fallback:**
 
 | Pipeline | Browser | Role | Trigger |
 |----------|---------|------|---------|
-| **Local Docker** (`run-local.sh`) | Browserless (self-hosted) | **Primary** | Every 15 min via Docker cron |
-| **GitHub Action** (`retail-price-poller.yml`) | Browserbase (cloud) | **Failsafe** | Checks every 4h; only runs if local Docker hasn't pushed in >5h (`manifest.json` staleness check) |
+| **Fly.io** (`run-local.sh`) | Playwright (self-hosted, `localhost:3002`) | **Primary + only** | Every 15 min via container cron |
+
+`retail-price-poller.yml` (GHA cloud failsafe) was deleted 2026-02-22 — it was sending
+requests to the public Firecrawl cloud API instead of the self-hosted instance in the
+Fly.io container, burning paid credits (STAK-268).
 
 **Key constraint:** `providers.json` lives on the **`data` branch**, not `main` or `dev`.
 Path on disk: `$DATA_REPO_PATH/data/retail/providers.json`
 
-**Vision verification + fallback (as of 2026-02-21):** Vision runs inline — no separate follow-up step. Screenshots go to `ARTIFACT_DIR` (`DATA_DIR/retail/_artifacts/{date}` in Action, `/tmp/retail-screenshots/{date}` locally). `extract-vision.js` reads `MANIFEST_PATH` (auto-detected from `ARTIFACT_DIR` in the Action; explicitly set in `run-local.sh`) AND reads Firecrawl prices from `prices.db` to pass as context in the Gemini prompt. Vision JSON writes to `DATA_DIR/retail/{slug}/{date}-vision.json` with new fields: `firecrawl_by_site` (Firecrawl prices for comparison) and `agreement_by_site` (per-vendor boolean: does Vision confirm Firecrawl's price?). `api-export.js` loads via `loadVisionData()` and resolves via `resolveVendorPrice()` — 99% confidence when both agree, Vision-only fallback when Firecrawl returns null, median-based tiebreaker when they disagree. `prices.db` is committed to the data branch for rolling 24h history across Action runs. `merge-prices.js` is legacy and not called in either pipeline.
+**Vision verification + fallback:** Vision runs inline — no separate follow-up step. Screenshots go to `ARTIFACT_DIR` (`/tmp/retail-screenshots/{date}` on Fly.io). `extract-vision.js` reads `MANIFEST_PATH` AND reads Firecrawl prices from `prices.db` to pass as context in the Gemini prompt. Vision JSON writes to `DATA_DIR/retail/{slug}/{date}-vision.json` with fields: `firecrawl_by_site` (Firecrawl prices for comparison) and `agreement_by_site` (per-vendor boolean: does Vision confirm Firecrawl's price?). `api-export.js` loads via `loadVisionData()` and resolves via `resolveVendorPrice()` — 99% confidence when both agree, Vision-only fallback when Firecrawl returns null, median-based tiebreaker when they disagree. `prices.db` is committed to the data branch for rolling 24h history. `merge-prices.js` is legacy and not called.
 
 ---
 
@@ -274,27 +277,21 @@ git fetch origin data && git reset --hard origin/data
 
 Keep the final `git pull --rebase origin data` before push (that one is correct — it replays the fresh export commit on top of any commits that landed during the scrape).
 
-### Pausing the GitHub Action failsafe during manual data branch work
+### Manual data branch work safety
 
-The `retail-price-poller.yml` Action runs every 4h as a cloud failsafe and pushes to the data branch. If you are doing manual work on the data branch (backfilling data, patching providers.json, running recovery steps), **disable the Action first** to prevent a race condition during your work:
+The Fly.io retail poller commits to the `api` branch every 15 min. If doing manual data
+branch work (backfilling, patching providers.json, recovery steps), be aware that a cron
+run may land mid-operation. The `run-local.sh` script uses a lockfile (`/tmp/retail-poller.lock`)
+which prevents overlap within the container, but git push conflicts are still possible.
 
+For extended manual work, you can pause cron inside the container:
 ```bash
-# Disable before working on data branch
-gh workflow disable retail-price-poller.yml
-
-# ... do your data branch work ...
-
-# Re-enable when done
-gh workflow enable retail-price-poller.yml
+fly ssh console --app staktrakr -C "bash -c 'pkill cron; echo manual mode'"
+# ... do data branch work ...
+fly ssh console --app staktrakr -C "bash -c 'cron'"
 ```
 
-The local Docker poller continues running every 15 min regardless — only the cloud Action is paused. Re-enable it before ending your session.
-
-**Verify Action is disabled:**
-```bash
-gh workflow list | grep retail
-# Shows "disabled" status when off
-```
+Or simply work fast and use `git pull --rebase origin api` before pushing.
 
 ### After any commit directly to the data branch
 

@@ -2,11 +2,11 @@ import { test, expect } from '@playwright/test';
 
 /**
  * API Integration Tests
- * 
+ *
  * These tests require API keys and external service access.
  * Once 1Password integration is ready, keys can be retrieved from environment variables
  * or a secure vault.
- * 
+ *
  * TODO: Integrate with 1Password for credentials.
  */
 
@@ -139,9 +139,9 @@ test('STAK-222: PCGS cache read/write roundtrip', async ({ page }) => {
 });
 
 // =============================================================================
-// STAK-255: Dual-poller endpoint resilience — spot hourly + retail path correctness
-// Regression guard: ensures both endpoints are called in parallel and the correct
-// URL paths are configured for the staggered dual-poller architecture.
+// STAK-255 / STAK-271: Single-endpoint path correctness
+// Regression guard: ensures hourlyBaseUrls and RETAIL_API_ENDPOINTS use the
+// correct api.staktrakr.com paths. (api1.staktrakr.com removed in STAK-271.)
 // =============================================================================
 
 /** Minimal valid hourly spot price array matching parseBatchResponse expectations. */
@@ -156,73 +156,114 @@ test('STAK-255: hourlyBaseUrls and RETAIL_API_ENDPOINTS use correct paths', asyn
     const hourly = window.API_PROVIDERS?.STAKTRAKR?.hourlyBaseUrls || [];
     const retail = window.RETAIL_API_ENDPOINTS || [];
     return {
-      // Both hourly endpoints use /data/hourly path
-      api1HourlyCorrect: hourly.some(u => u.includes('api1.staktrakr.com/data/hourly')),
-      // api (Fly.io) serves retail at /data/api/
-      apiFlyRetailCorrect: retail.some(u => u.includes('api.staktrakr.com/data/api')),
-      // api1 (GitHub Pages) also serves retail at /data/api/
-      api1RetailCorrect: retail.some(u => u.includes('api1.staktrakr.com/data/api')),
+      // Single endpoint serves hourly spot data at /data/hourly
+      apiHourlyCorrect: hourly.some(u => u.includes('api.staktrakr.com/data/hourly')),
+      // Single endpoint serves retail at /data/api/
+      apiRetailCorrect: retail.some(u => u.includes('api.staktrakr.com/data/api')),
       hourlyCount: hourly.length,
       retailCount: retail.length,
     };
   });
-  expect(result.api1HourlyCorrect).toBe(true);
-  expect(result.apiFlyRetailCorrect).toBe(true);
-  expect(result.api1RetailCorrect).toBe(true);
-  expect(result.hourlyCount).toBeGreaterThanOrEqual(2);
-  expect(result.retailCount).toBeGreaterThanOrEqual(2);
+  expect(result.apiHourlyCorrect).toBe(true);
+  expect(result.apiRetailCorrect).toBe(true);
+  expect(result.hourlyCount).toBe(1);
+  expect(result.retailCount).toBe(1);
 });
 
-test('STAK-255: spot sync succeeds when primary hourly endpoint is down (fallback resilience)', async ({ page }) => {
-  // Block api1.staktrakr.com/hourly (primary) — return 404 for all hourly files
-  await page.route('**/api1.staktrakr.com/hourly/**', route => route.fulfill({ status: 404, body: 'Not Found' }));
-  // Serve valid spot data from api.staktrakr.com/data/hourly (fallback)
-  await page.route('**/api.staktrakr.com/data/hourly/**', route =>
-    route.fulfill({ status: 200, contentType: 'application/json', body: MOCK_HOURLY_SPOT })
-  );
+// =============================================================================
+// STAK-215: Surface retail price save failures to the user
+// =============================================================================
 
-  await page.goto('/');
-  await page.waitForFunction(() => typeof window.syncProviderChain === 'function');
-
-  // Force a sync using StakTrakr as provider
-  await page.evaluate(async () => {
-    // Set StakTrakr as rank-1 provider so fetchStaktrakrPrices is the active path
-    const cfg = window.loadApiConfig ? window.loadApiConfig() : {};
-    if (cfg.providers) {
-      cfg.providers.STAKTRAKR = { ...(cfg.providers.STAKTRAKR || {}), rank: 1, enabled: true };
-    }
-    if (window.saveApiConfig) window.saveApiConfig(cfg);
-    await window.syncProviderChain({ showProgress: false, forceSync: true });
-  });
-
-  const hasHourlyData = await page.evaluate(() => {
-    return (window.spotHistory || []).some(e => e.source === 'api-hourly' || e.provider === 'StakTrakr');
-  });
-  expect(hasHourlyData).toBe(true);
+/** Minimal manifest sufficient for syncRetailPrices to attempt coin fetches. */
+const MOCK_RETAIL_MANIFEST = JSON.stringify({
+  generated_at: new Date().toISOString(),
+  slugs: ['ase'],
+  latest_window: '2026-02-22T12:00:00Z',
 });
 
-test('STAK-255: spot sync succeeds when fallback hourly endpoint is down (primary resilience)', async ({ page }) => {
-  // Serve valid spot data from api1.staktrakr.com/hourly (primary)
-  await page.route('**/api1.staktrakr.com/hourly/**', route =>
-    route.fulfill({ status: 200, contentType: 'application/json', body: MOCK_HOURLY_SPOT })
+/** Minimal latest.json for a single slug. */
+const MOCK_RETAIL_LATEST = JSON.stringify({
+  median_price: 35.00,
+  lowest_price: 34.50,
+  vendors: {},
+  window_start: '2026-02-22T12:00:00Z',
+  windows_24h: [],
+});
+
+/** Mounts route handlers that serve minimal valid retail API responses. */
+async function mountRetailMocks(page) {
+  await page.route('**/manifest.json', route =>
+    route.fulfill({ status: 200, contentType: 'application/json', body: MOCK_RETAIL_MANIFEST })
   );
-  // Block api.staktrakr.com/data/hourly (fallback)
-  await page.route('**/api.staktrakr.com/data/hourly/**', route => route.fulfill({ status: 404, body: 'Not Found' }));
+  await page.route('**/providers.json', route =>
+    route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({}) })
+  );
+  await page.route('**/ase/latest.json', route =>
+    route.fulfill({ status: 200, contentType: 'application/json', body: MOCK_RETAIL_LATEST })
+  );
+  await page.route('**/ase/history-30d.json', route =>
+    route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify([]) })
+  );
+}
 
+test('STAK-215: syncStatus shows save-failure message when localStorage quota is exceeded', async ({ page }) => {
+  await mountRetailMocks(page);
   await page.goto('/');
-  await page.waitForFunction(() => typeof window.syncProviderChain === 'function');
+  await page.waitForFunction(() => typeof window.syncRetailPrices === 'function');
 
-  await page.evaluate(async () => {
-    const cfg = window.loadApiConfig ? window.loadApiConfig() : {};
-    if (cfg.providers) {
-      cfg.providers.STAKTRAKR = { ...(cfg.providers.STAKTRAKR || {}), rank: 1, enabled: true };
-    }
-    if (window.saveApiConfig) window.saveApiConfig(cfg);
-    await window.syncProviderChain({ showProgress: false, forceSync: true });
+  // Navigate to the Retail tab so the retailSyncStatus element is in the DOM
+  await page.evaluate(() => {
+    const retailTab = document.querySelector('[data-tab="retail"], [data-section="retail"], #retailTab');
+    if (retailTab) retailTab.click();
   });
 
-  const hasHourlyData = await page.evaluate(() => {
-    return (window.spotHistory || []).some(e => e.source === 'api-hourly' || e.provider === 'StakTrakr');
+  const statusText = await page.evaluate(async () => {
+    // Reset any prior failure flag
+    window._retailStorageFailure = false;
+
+    // Make localStorage.setItem throw a QuotaExceededError for retail keys
+    const _origSetItem = localStorage.setItem.bind(localStorage);
+    const retailKeys = new Set(['retailPrices', 'retailPriceHistory', 'retailIntradayData', 'retailAvailability']);
+    localStorage.__proto__.setItem = function(key, value) {
+      if (retailKeys.has(key)) {
+        const err = new DOMException('QuotaExceededError', 'QuotaExceededError');
+        err.name = 'QuotaExceededError';
+        throw err;
+      }
+      return _origSetItem(key, value);
+    };
+
+    await window.syncRetailPrices({ ui: true });
+
+    // Restore
+    localStorage.__proto__.setItem = _origSetItem;
+
+    const el = document.getElementById('retailSyncStatus');
+    return el ? el.textContent : null;
   });
-  expect(hasHourlyData).toBe(true);
+
+  expect(statusText).toBeTruthy();
+  expect(statusText).toContain('could not save');
+});
+
+test('STAK-215: syncStatus shows success message on happy path (saves succeed)', async ({ page }) => {
+  await mountRetailMocks(page);
+  await page.goto('/');
+  await page.waitForFunction(() => typeof window.syncRetailPrices === 'function');
+
+  await page.evaluate(() => {
+    const retailTab = document.querySelector('[data-tab="retail"], [data-section="retail"], #retailTab');
+    if (retailTab) retailTab.click();
+  });
+
+  const statusText = await page.evaluate(async () => {
+    window._retailStorageFailure = false;
+    await window.syncRetailPrices({ ui: true });
+    const el = document.getElementById('retailSyncStatus');
+    return el ? el.textContent : null;
+  });
+
+  expect(statusText).toBeTruthy();
+  expect(statusText).toMatch(/Synced/i);
+  expect(statusText).not.toContain('could not save');
 });

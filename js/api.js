@@ -1853,13 +1853,16 @@ const syncSpotPricesFromApi = async (
   });
 
   if (showProgress && updatedCount > 0) {
-    const summary = Object.entries(results)
-      .filter(([_, status]) => status !== "skipped")
-      .map(([prov, status]) => `${API_PROVIDERS[prov]?.name || prov}: ${status}`)
-      .join("\n");
-    appAlert(`Synced ${updatedCount} prices.\n\n${summary}`);
+    const providerName = Object.entries(results)
+      .find(([_, status]) => status === "ok")?.[0];
+    const label = providerName ? (API_PROVIDERS[providerName]?.name || providerName) : "API";
+    if (typeof showToast === "function") {
+      showToast(`\u2713 Synced ${updatedCount} prices from ${label}`);
+    }
   } else if (showProgress && !anySucceeded) {
-    appAlert("Failed to sync prices from any provider.");
+    if (typeof showToast === "function") {
+      showToast("Spot sync failed — check API settings");
+    }
   }
 
   return anySucceeded;
@@ -2859,9 +2862,114 @@ const importSpotHistory = (file) => {
  * Wires up spot history export/import button event listeners.
  * Called during populateApiSection() or init.
  */
+/**
+ * Fetches all available spot-history-YYYY.json files from local seed files
+ * and the live API, merges new entries into spotHistory (dedup by date+metal,
+ * existing live data always wins), then re-renders sparklines.
+ *
+ * Safe to run multiple times — dedup prevents duplicates.
+ */
+const restoreHistoricalSpotData = async () => {
+  const btn = safeGetElement("restoreHistoricalDataBtn");
+  const origText = btn ? btn.textContent : "";
+  if (btn) { btn.disabled = true; }
+
+  try {
+    loadSpotHistory();
+    const existing = Array.isArray(spotHistory) ? spotHistory : [];
+
+    // Build dedup Set from existing entries — these always win
+    const existingKeys = new Set();
+    for (const e of existing) {
+      if (e && e.timestamp && e.metal) {
+        existingKeys.add(e.timestamp.slice(0, 10) + "|" + e.metal);
+      }
+    }
+
+    const allNew = [];
+    const years = typeof SEED_DATA_YEARS !== "undefined" ? SEED_DATA_YEARS : [];
+    let yearsWithData = 0;
+
+    // --- Pass 1: Local seed files (lowest priority) ---
+    for (const year of years) {
+      try {
+        const resp = await fetch(`data/spot-history-${year}.json`);
+        if (!resp.ok) continue;
+        const entries = await resp.json();
+        if (!Array.isArray(entries)) continue;
+        for (const e of entries) {
+          if (!e || typeof e.spot !== "number" || !e.metal || !e.timestamp) continue;
+          const key = e.timestamp.slice(0, 10) + "|" + e.metal;
+          if (!existingKeys.has(key)) {
+            allNew.push(e);
+            existingKeys.add(key); // prevent API pass from double-adding same slot
+          }
+        }
+      } catch (_) { /* network or parse error — skip year */ }
+    }
+
+    // --- Pass 2: API files — fills year gaps not yet covered by seed pass ---
+    const apiBaseUrls = [
+      `${API_PROVIDERS.STAKTRAKR.baseUrl}`,
+    ];
+
+    for (const year of years) {
+      if (btn) btn.textContent = `Restoring... (${year})`;
+      try {
+        const entries = await Promise.any(
+          apiBaseUrls.map(async (base) => {
+            const resp = await fetch(`${base}/spot-history-${year}.json`);
+            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+            return resp.json();
+          })
+        );
+        if (!Array.isArray(entries)) continue;
+        let addedThisYear = false;
+        for (const e of entries) {
+          if (!e || typeof e.spot !== "number" || !e.metal || !e.timestamp) continue;
+          const key = e.timestamp.slice(0, 10) + "|" + e.metal;
+          if (!existingKeys.has(key)) {
+            allNew.push(e);
+            existingKeys.add(key);
+            addedThisYear = true;
+          }
+        }
+        if (addedThisYear) yearsWithData++;
+      } catch (_) { /* all endpoints failed for this year — skip */ }
+    }
+
+    if (allNew.length === 0) {
+      appAlert("Already up to date — no new entries found.");
+      return;
+    }
+
+    // Merge, sort, save
+    const merged = existing.concat(allNew);
+    merged.sort((a, b) => a.timestamp.localeCompare(b.timestamp));
+    spotHistory = merged;
+    saveSpotHistory();
+
+    if (typeof updateAllSparklines === "function") updateAllSparklines();
+
+    appAlert(
+      `Restored ${allNew.length.toLocaleString()} new entries` +
+      (yearsWithData > 0 ? ` across ${yearsWithData} year${yearsWithData !== 1 ? "s" : ""} from API.` : " from local seed files.")
+    );
+
+  } catch (err) {
+    console.error("Restore historical data failed:", err);
+    appAlert("Restore failed: " + err.message);
+  } finally {
+    if (btn) { btn.textContent = origText; btn.disabled = false; }
+  }
+};
+
 const initSpotHistoryButtons = () => {
   const exportBtn = document.getElementById("exportSpotHistoryBtn");
   if (exportBtn) exportBtn.addEventListener("click", exportSpotHistory);
+
+  const restoreBtn = safeGetElement("restoreHistoricalDataBtn");
+  if (restoreBtn) restoreBtn.addEventListener("click", restoreHistoricalSpotData);
 
   const importBtn = document.getElementById("importSpotHistoryBtn");
   const importFile = document.getElementById("importSpotHistoryFile");
@@ -2879,5 +2987,6 @@ const initSpotHistoryButtons = () => {
 window.exportSpotHistory = exportSpotHistory;
 window.importSpotHistory = importSpotHistory;
 window.initSpotHistoryButtons = initSpotHistoryButtons;
+window.restoreHistoricalSpotData = restoreHistoricalSpotData;
 
 // =============================================================================

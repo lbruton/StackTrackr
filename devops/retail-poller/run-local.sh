@@ -11,7 +11,6 @@ if [ -f "$LOCKFILE" ]; then
   echo "[$(date -u +%H:%M:%S)] Previous run still active, skipping"
   exit 0
 fi
-trap "rm -f $LOCKFILE" EXIT
 touch $LOCKFILE
 
 DATE=$(date -u +%Y-%m-%d)
@@ -23,25 +22,26 @@ if [ -n "${PRICE_LOG_DIR:-}" ]; then
 fi
 
 # StakTrakrApi repo configuration
-API_DATA_REPO="${API_DATA_REPO:-https://github.com/lbruton/StakTrakrApi.git}"
-API_EXPORT_DIR="${API_EXPORT_DIR:-/tmp/staktrakr-api-export}"
-POLLER_ID="${POLLER_ID:-api1}"
+POLLER_ID="${POLLER_ID:-api}"
 
 if [ -z "$GITHUB_TOKEN" ]; then
   echo "ERROR: GITHUB_TOKEN not set (required for pushing to StakTrakrApi)"
   exit 1
 fi
 
-# Clone/update StakTrakrApi repo
-if [ ! -d "$API_EXPORT_DIR" ]; then
-  echo "[$(date -u +%H:%M:%S)] Cloning StakTrakrApi repo..."
-  git clone "https://${GITHUB_TOKEN}@github.com/lbruton/StakTrakrApi.git" "$API_EXPORT_DIR"
-fi
-
+# Clone fresh into a temp dir each run — stateless, no persistent git state to corrupt
+API_EXPORT_DIR=$(mktemp -d /tmp/staktrakr-push-XXXXXX)
+trap 'rm -f "$LOCKFILE"; rm -rf "$API_EXPORT_DIR"' EXIT
+echo "[$(date -u +%H:%M:%S)] Cloning StakTrakrApi repo (shallow)..."
+git clone --depth=1 --branch "$POLLER_ID" \
+  "https://${GITHUB_TOKEN}@github.com/lbruton/StakTrakrApi.git" \
+  "$API_EXPORT_DIR" 2>/dev/null \
+  || git clone --depth=1 \
+    "https://${GITHUB_TOKEN}@github.com/lbruton/StakTrakrApi.git" \
+    "$API_EXPORT_DIR"
 cd "$API_EXPORT_DIR"
-git fetch origin "$POLLER_ID" 2>/dev/null || true
-git checkout "$POLLER_ID" 2>/dev/null || git checkout -b "$POLLER_ID"
-git pull origin "$POLLER_ID" 2>/dev/null || true  # May fail if branch doesn't exist on remote yet
+# Ensure we're on the correct branch (handles first-run case)
+git checkout -B "$POLLER_ID" 2>/dev/null || true
 
 # Run Firecrawl extraction (with Playwright fallback) — writes results to SQLite
 echo "[$(date -u +%H:%M:%S)] Running price extraction..."
@@ -78,14 +78,16 @@ node /app/api-export.js
 
 # Commit and push to poller branch
 cd "$API_EXPORT_DIR"
-git add data/api/ data/retail/ prices.db 2>/dev/null || git add data/api/
+git add data/api/ data/retail/ 2>/dev/null || git add data/api/
 
 if git diff --cached --quiet; then
   echo "[$(date -u +%H:%M:%S)] No new data to commit."
 else
   git commit -m "${POLLER_ID}: ${DATE} $(date -u +%H:%M) export"
-  # Force push since this poller owns its branch exclusively
-  git push --force-with-lease "https://${GITHUB_TOKEN}@github.com/lbruton/StakTrakrApi.git" "$POLLER_ID"
+  # Rebase onto any commits pushed by concurrent runs since we cloned
+  git fetch --depth=1 origin "$POLLER_ID" 2>/dev/null || true
+  git rebase "origin/$POLLER_ID" 2>/dev/null || true
+  git push "https://${GITHUB_TOKEN}@github.com/lbruton/StakTrakrApi.git" "$POLLER_ID"
   echo "[$(date -u +%H:%M:%S)] Pushed to ${POLLER_ID} branch"
 fi
 

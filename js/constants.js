@@ -20,8 +20,7 @@ const API_PROVIDERS = {
     documentation: "https://www.staktrakr.com",
     hourlyBaseUrl: "https://api.staktrakr.com/data/hourly",
     hourlyBaseUrls: [
-      "https://api.staktrakr.com/data/hourly",   // Fly.io (StakTrakrApi, api branch)
-      "https://api1.staktrakr.com/data/hourly",  // GitHub Pages (StakTrakrApi1, main branch)
+      "https://api.staktrakr.com/data/hourly",
     ],
     endpoints: { silver: "", gold: "", platinum: "", palladium: "" },
     getEndpoint: () => "",
@@ -286,7 +285,7 @@ const CERT_LOOKUP_URLS = {
  * Updated: 2026-02-12 - STACK-38/STACK-31: Responsive card view + mobile layout
  */
 
-const APP_VERSION = "3.32.01";
+const APP_VERSION = "3.32.16";
 
 /**
  * Numista metadata cache TTL: 30 days in milliseconds.
@@ -495,11 +494,13 @@ const RETAIL_PROVIDERS_KEY = "retailProviders";
 
 /** @constant {string[]} RETAIL_API_ENDPOINTS - Ordered list of retail API endpoints (primary first) */
 const RETAIL_API_ENDPOINTS = [
-  "https://api.staktrakr.com/data/api",    // Fly.io (StakTrakrApi) — primary
-  "https://api1.staktrakr.com/data/api",   // GitHub Pages (StakTrakrApi1) — fallback
+  "https://api.staktrakr.com/data/api",
 ];
 /** @constant {string} RETAIL_API_BASE_URL - Primary endpoint (backward compat) */
 const RETAIL_API_BASE_URL = RETAIL_API_ENDPOINTS[0];
+
+/** @constant {string} GOLDBACK_API_URL - Goldback daily spot price endpoint (g1_usd + denominations) */
+const GOLDBACK_API_URL = "https://api.staktrakr.com/data/api/goldback-spot.json";
 
 /** @constant {string} RETAIL_INTRADAY_KEY - LocalStorage key for 15-min intraday window data */
 const RETAIL_INTRADAY_KEY = "retailIntradayData";
@@ -559,6 +560,9 @@ const THEME_KEY = "appTheme";
 
 /** @constant {string} ACK_DISMISSED_KEY - LocalStorage key for acknowledgment dismissal */
 const ACK_DISMISSED_KEY = "ackDismissed";
+
+/** @constant {string} CLOUD_VAULT_IDLE_TIMEOUT_KEY - LocalStorage key for vault password idle lock timeout in minutes (15|30|60|120|0=never) */
+const CLOUD_VAULT_IDLE_TIMEOUT_KEY = "cloud_vault_idle_timeout";
 
 /** @constant {string} API_KEY_STORAGE_KEY - LocalStorage key for API provider information */
 const API_KEY_STORAGE_KEY = "metalApiConfig";
@@ -761,6 +765,7 @@ const ALLOWED_STORAGE_KEYS = [
   LATEST_REMOTE_URL_KEY,      // string: cached latest remote release URL (STACK-67)
   "ff_migration_fuzzy_autocomplete", // one-time migration flag (v3.26.01)
   "migration_hourlySource",          // one-time migration flag: re-tag StakTrakr hourly entries
+  "migration_seedHistoryMerge",      // one-time migration flag: backfill full historical seed data (v3.32.01)
   "numistaLookupRules",              // custom Numista search lookup rules (JSON array)
   "numistaViewFields",               // view modal Numista field visibility config (JSON object)
   TIMEZONE_KEY,                        // string: "auto" | "UTC" | IANA zone (STACK-63)
@@ -790,6 +795,7 @@ const ALLOWED_STORAGE_KEYS = [
   "cloud_sync_device_id",                      // UUID string: stable per-device identifier
   "cloud_sync_cursor",                         // Dropbox rev string: for efficient change detection
   "cloud_sync_override_backup",                // JSON: { timestamp, itemCount, appVersion, data: {...} } — pre-pull local snapshot
+  CLOUD_VAULT_IDLE_TIMEOUT_KEY,                // number string: vault password idle lock timeout in minutes (15|30|60|120|0=never)
 ];
 
 // =============================================================================
@@ -1601,6 +1607,7 @@ if (typeof window !== "undefined") {
   window.RETAIL_INTRADAY_KEY = RETAIL_INTRADAY_KEY;
   window.RETAIL_SYNC_LOG_KEY = RETAIL_SYNC_LOG_KEY;
   window.RETAIL_AVAILABILITY_KEY = RETAIL_AVAILABILITY_KEY;
+  window.GOLDBACK_API_URL = GOLDBACK_API_URL;
   window.GOLDBACK_ENABLED_KEY = GOLDBACK_ENABLED_KEY;
   window.GB_TO_OZT = GB_TO_OZT;
   window.GOLDBACK_DENOMINATIONS = GOLDBACK_DENOMINATIONS;
@@ -1621,6 +1628,7 @@ if (typeof window !== "undefined") {
   window.MAX_TAG_LENGTH = MAX_TAG_LENGTH;
   // Multi-currency support (STACK-50)
   window.SUPPORTED_CURRENCIES = SUPPORTED_CURRENCIES;
+  window.CLOUD_VAULT_IDLE_TIMEOUT_KEY = CLOUD_VAULT_IDLE_TIMEOUT_KEY;
   window.DISPLAY_CURRENCY_KEY = DISPLAY_CURRENCY_KEY;
   window.EXCHANGE_RATES_KEY = EXCHANGE_RATES_KEY;
   window.EXCHANGE_RATE_API_URL = EXCHANGE_RATE_API_URL;

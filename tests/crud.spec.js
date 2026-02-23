@@ -1,14 +1,10 @@
 import { test, expect } from '@playwright/test';
+import { dismissAckModal } from './test-utils.js';
 
 test.describe('Inventory CRUD Operations', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
-    
-    // Dismiss acknowledgment modal
-    const ackModal = page.locator('#ackModal');
-    if (await ackModal.isVisible()) {
-      await page.locator('#ackAcceptBtn').click();
-    }
+    await dismissAckModal(page);
 
     // Clear all existing data via Storage settings
     await page.locator('#settingsBtn').click();
