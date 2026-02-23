@@ -116,7 +116,11 @@ const _buildIntradayChart = (slug) => {
   const tzOpts = tz && tz !== 'auto' ? { timeZone: tz } : {};
   const fmtTime = (d) => {
     if (!d || isNaN(d.getTime())) return '--:--';
-    return d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', hour12: false, ...tzOpts });
+    try {
+      return d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', hour12: false, ...tzOpts });
+    } catch (e) {
+      return d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', hour12: false });
+    }
   };
 
   if (windows.length >= 2 && canvas instanceof HTMLCanvasElement && typeof Chart !== "undefined") {
