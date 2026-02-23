@@ -219,39 +219,58 @@ function updateCloudSyncHeaderBtn() {
   var dot = safeGetElement('headerCloudDot');
   if (!btn) return;
 
-  // Hide entirely only when sync is explicitly disabled (stored as 'false')
-  // null means never configured — show gray to promote discoverability
+  // Hide entirely only when sync is explicitly disabled
   if (localStorage.getItem('cloud_sync_enabled') === 'false') {
     btn.style.display = 'none';
     return;
   }
 
   btn.style.display = '';
-
   if (!dot) return;
   dot.className = 'cloud-sync-dot header-cloud-dot';
 
-  var hasCachedPw = typeof cloudGetCachedPassword === 'function'
-    ? !!cloudGetCachedPassword(_syncProvider)
-    : false;
   var connected = typeof cloudIsConnected === 'function'
     ? cloudIsConnected(_syncProvider)
     : false;
+  var isSimple = localStorage.getItem('cloud_sync_mode') === 'simple';
+
+  if (isSimple) {
+    var accountId = localStorage.getItem('cloud_dropbox_account_id');
+    if (connected && accountId) {
+      dot.classList.add('header-cloud-dot--green');
+      btn.title = 'Cloud sync active (Simple mode)';
+      btn.setAttribute('aria-label', 'Cloud sync active');
+      btn.dataset.syncState = 'green';
+    } else if (connected) {
+      // Connected but account ID missing — needs re-fetch via reconnect
+      dot.classList.add('header-cloud-dot--orange');
+      btn.title = 'Cloud sync needs to reconnect to Dropbox';
+      btn.setAttribute('aria-label', 'Cloud sync needs to reconnect');
+      btn.dataset.syncState = 'orange-simple';
+    } else {
+      btn.title = 'Set up cloud sync';
+      btn.setAttribute('aria-label', 'Set up cloud sync');
+      btn.dataset.syncState = 'gray';
+    }
+    return;
+  }
+
+  // Secure mode (original behavior)
+  var hasCachedPw = typeof cloudGetCachedPassword === 'function'
+    ? !!cloudGetCachedPassword(_syncProvider)
+    : false;
 
   if (hasCachedPw) {
-    // Green: password cached, sync is running normally
     dot.classList.add('header-cloud-dot--green');
     btn.title = 'Cloud sync active';
     btn.setAttribute('aria-label', 'Cloud sync active');
     btn.dataset.syncState = 'green';
   } else if (connected) {
-    // Orange: connected but password expired/missing
     dot.classList.add('header-cloud-dot--orange');
     btn.title = 'Cloud sync needs your password';
     btn.setAttribute('aria-label', 'Cloud sync needs your password');
     btn.dataset.syncState = 'orange';
   } else {
-    // Gray: sync on but not yet connected/configured
     btn.title = 'Set up cloud sync';
     btn.setAttribute('aria-label', 'Set up cloud sync');
     btn.dataset.syncState = 'gray';
@@ -298,6 +317,7 @@ function refreshSyncUI() {
   }
 
   if (typeof renderSyncHistorySection === 'function') renderSyncHistorySection();
+  if (typeof refreshSyncModeUI === 'function') refreshSyncModeUI();
 }
 
 /** Format a timestamp as a relative time string ("just now", "5 min ago", etc.) */
@@ -404,6 +424,27 @@ function getSyncPassword() {
   });
 }
 
+/**
+ * Get the sync password/key without any user interaction.
+ * Simple mode: returns the Dropbox account ID derived key.
+ * Secure mode: returns the cached session password or null.
+ * Never opens a modal or popover — safe to call from background processes.
+ * @returns {string|null}
+ */
+function getSyncPasswordSilent() {
+  if (localStorage.getItem('cloud_sync_mode') === 'simple') {
+    var accountId = localStorage.getItem('cloud_dropbox_account_id');
+    if (!accountId) return null;
+    // Prefix with app salt to namespace away from user-chosen passwords.
+    // The vault module's own PBKDF2 derives the actual key from this string.
+    return STAKTRAKR_SIMPLE_SALT + ':' + accountId;
+  }
+  // Secure mode: return cached password or null
+  return typeof cloudGetCachedPassword === 'function'
+    ? cloudGetCachedPassword(_syncProvider)
+    : null;
+}
+
 // ---------------------------------------------------------------------------
 // Activity logging
 // ---------------------------------------------------------------------------
@@ -450,10 +491,10 @@ async function pushSyncVault() {
     return;
   }
 
-  var password = await getSyncPassword();
-  debugLog('[CloudSync] Password obtained:', !!password);
+  var password = getSyncPasswordSilent();
+  debugLog('[CloudSync] Password obtained (silent):', !!password);
   if (!password) {
-    debugLog('[CloudSync] No password — push skipped');
+    debugLog('[CloudSync] No password — push deferred (tap cloud icon to unlock)');
     return;
   }
 
@@ -787,7 +828,12 @@ async function handleRemoteChange(remoteMeta) {
  * @param {object} remoteMeta - Remote sync metadata (from pollForRemoteChanges)
  */
 async function pullSyncVault(remoteMeta) {
-  var password = await getSyncPassword();
+  // Try silent key first (Simple mode or cached Secure password)
+  var password = getSyncPasswordSilent();
+  if (!password) {
+    // Secure mode with no cached password — prompt interactively
+    password = await getSyncPassword();
+  }
   if (!password) {
     debugLog('[CloudSync] Pull cancelled — no password');
     return;
@@ -1032,6 +1078,56 @@ function disableCloudSync() {
   logCloudSyncActivity('auto_sync_disable', 'success', 'Auto-sync disabled');
   debugLog('[CloudSync] Auto-sync disabled');
 }
+/**
+ * Switch the sync encryption mode.
+ * Called after user confirms the mode-switch warning.
+ * @param {'simple'|'secure'} mode
+ */
+function setSyncMode(mode) {
+  var currentMode = localStorage.getItem('cloud_sync_mode') || 'secure';
+  if (mode === currentMode) return;
+
+  localStorage.setItem('cloud_sync_mode', mode);
+
+  // Clear the cached password — it's mode-specific
+  if (typeof cloudClearCachedPassword === 'function') cloudClearCachedPassword();
+
+  logCloudSyncActivity('mode_switch', 'success', 'Switched to ' + mode + ' mode');
+  updateCloudSyncHeaderBtn();
+
+  if (syncIsEnabled() && typeof scheduleSyncPush === 'function') {
+    scheduleSyncPush();
+  }
+
+  var label = mode === 'simple' ? 'Simple (Dropbox account)' : 'Secure (vault password)';
+  if (typeof showCloudToast === 'function') showCloudToast('Sync mode: ' + label, 4000);
+  debugLog('[CloudSync] Sync mode switched to', mode);
+}
+
+/**
+ * Update the sync mode radio selector in Settings → Cloud.
+ * Called from refreshSyncUI() whenever the cloud panel is rendered.
+ */
+function refreshSyncModeUI() {
+  var modeSec = safeGetElement('cloudSyncModeSection');
+  if (!modeSec) return;
+
+  var connected = typeof cloudIsConnected === 'function' ? cloudIsConnected('dropbox') : false;
+  var enabled = syncIsEnabled();
+  modeSec.style.display = (connected && enabled) ? '' : 'none';
+
+  if (!connected || !enabled) return;
+
+  var currentMode = localStorage.getItem('cloud_sync_mode') || 'secure';
+  var simpleRadio = safeGetElement('cloudSyncModeSimple');
+  var secureRadio = safeGetElement('cloudSyncModeSecure');
+  if (simpleRadio) simpleRadio.checked = currentMode === 'simple';
+  if (secureRadio) secureRadio.checked = currentMode !== 'simple';
+
+  // Hide the confirmation warning on re-render
+  var warning = safeGetElement('cloudSyncModeSwitchWarning');
+  if (warning) warning.style.display = 'none';
+}
 
 // ---------------------------------------------------------------------------
 // Initialization (called from init.js Phase 13)
@@ -1074,29 +1170,47 @@ function initCloudSync() {
 
   debugLog('[CloudSync] Resuming auto-sync from previous session');
 
-  // Check if password is available before starting any sync that would prompt for it
+  var isSimple = localStorage.getItem('cloud_sync_mode') === 'simple';
+
+  if (isSimple) {
+    var accountId = localStorage.getItem('cloud_dropbox_account_id');
+    updateCloudSyncHeaderBtn();
+    if (!accountId) {
+      // Simple mode connected but account ID missing — need a fresh OAuth
+      debugLog('[CloudSync] Simple mode: no account ID — showing reconnect toast');
+      setTimeout(function () {
+        if (typeof showCloudToast === 'function') {
+          showCloudToast('Cloud sync paused — tap the cloud icon to reconnect Dropbox', 5000);
+        }
+      }, 1000);
+    }
+    // Simple mode always starts the poller and polls immediately — no password needed
+    startSyncPoller();
+    setTimeout(function () { pollForRemoteChanges(); }, 3000);
+    return;
+  }
+
+  // Secure mode: check for cached session password
   var hasCachedPw = typeof cloudGetCachedPassword === 'function'
     ? !!cloudGetCachedPassword(_syncProvider)
     : false;
 
   if (!hasCachedPw) {
-    // No password cached — skip the auto-push/poll that would open the modal.
-    // Show the header icon in orange and a polite toast instead.
-    debugLog('[CloudSync] No cached password on load — skipping initial push, showing toast');
+    debugLog('[CloudSync] Secure mode: no cached password on load — showing toast');
     updateCloudSyncHeaderBtn();
     setTimeout(function () {
       if (typeof showCloudToast === 'function') {
-        showCloudToast('Cloud sync needs your password — tap the sync icon to unlock', 5000);
+        showCloudToast('Cloud sync needs your password — tap the cloud icon to unlock', 5000);
       }
     }, 1000);
-    // Still start the poller — it will skip pushes until getSyncPassword() succeeds
+    // Start poller — background pushes will skip silently until password is provided
     startSyncPoller();
     return;
   }
 
+  // Secure mode with cached password: full resume
+  updateCloudSyncHeaderBtn();
   startSyncPoller();
-
-  // Poll immediately on startup to catch any changes while app was closed
   setTimeout(function () { pollForRemoteChanges(); }, 3000);
 }
 
@@ -1132,6 +1246,11 @@ window.refreshSyncUI = refreshSyncUI;
 window.updateSyncStatusIndicator = updateSyncStatusIndicator;
 window.updateCloudSyncHeaderBtn = updateCloudSyncHeaderBtn;
 window.getSyncDeviceId = getSyncDeviceId;
+window.getSyncPasswordSilent = getSyncPasswordSilent;
 window.syncIsEnabled = syncIsEnabled;
 window.syncSaveOverrideBackup = syncSaveOverrideBackup;
 window.syncRestoreOverrideBackup = syncRestoreOverrideBackup;
+window.setSyncMode = setSyncMode;
+window.refreshSyncModeUI = refreshSyncModeUI;
+window.syncGetLastPush = syncGetLastPush;
+window._syncRelativeTime = _syncRelativeTime;
