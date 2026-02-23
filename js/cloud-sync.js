@@ -443,6 +443,7 @@ async function changeVaultPassword(newPassword) {
     if (typeof showCloudToast === 'function') showCloudToast('Vault password updated — syncing now', 3000);
     return true;
   } catch (err) {
+    if (typeof debugLog === 'function') debugLog('[CloudSync] changeVaultPassword failed:', err);
     if (typeof showCloudToast === 'function') showCloudToast('Failed to update password — try again', 3000);
     return false;
   }
