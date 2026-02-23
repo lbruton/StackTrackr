@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.32.22] - 2026-02-23
+
+### Fixed — Sync UI Dark-Theme CSS Fix
+
+- **Fixed**: Cloud sync header popover now uses correct dark-theme CSS variables (`--bg-card`, `--border`, `--bg-tertiary`) — previously appeared white/light on dark theme
+- **Fixed**: Mode selector in Settings → Cloud uses correct border and background variables across all themes
+- **Fixed**: Backup warning banner uses transparent amber tint instead of hardcoded light-yellow (`#fff8e6`)
+- **Fixed**: Popover header label uses SVG lock icon matching the app's stroke-icon style
+
+---
+
 ## [3.32.21] - 2026-02-23
 
 ### Added — Sync UX Overhaul + Simple Mode

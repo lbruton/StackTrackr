@@ -433,12 +433,12 @@
             <span class="cloud-sync-dot header-cloud-dot" id="headerCloudDot"></span>
           </button>
           <!-- Secure mode: inline password popover (never auto-opens) -->
-          <div id="cloudSyncHeaderPopover" role="dialog" aria-label="Sync password" style="display:none;position:absolute;top:calc(100% + 6px);right:0;background:var(--card-bg,#fff);border:1px solid var(--border-color,#ddd);border-radius:8px;padding:0.75rem;box-shadow:0 4px 16px rgba(0,0,0,0.18);z-index:999;min-width:240px">
-            <div style="font-size:0.8rem;font-weight:600;margin-bottom:0.5rem;color:var(--text-primary)">&#x1F512; Vault Password</div>
+          <div id="cloudSyncHeaderPopover" role="dialog" aria-label="Sync password" style="display:none;position:absolute;top:calc(100% + 6px);right:0;background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:0.75rem;box-shadow:0 8px 32px rgba(0,0,0,0.5);z-index:999;min-width:240px">
+            <div style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:0.5rem;color:var(--text-muted)"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:4px"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Vault Password</div>
             <div style="display:flex;gap:0.4rem">
               <input type="password" id="cloudSyncPopoverInput" placeholder="Enter password"
                      autocomplete="current-password"
-                     style="flex:1;font-size:0.85rem;padding:0.3rem 0.5rem;border:1px solid var(--border-color,#ddd);border-radius:4px;background:var(--input-bg,#fff);color:var(--text-primary)">
+                     style="flex:1;font-size:0.85rem;padding:0.3rem 0.5rem;border:1px solid var(--border);border-radius:4px;background:var(--bg-tertiary);color:var(--text-primary)">
               <button class="btn success" id="cloudSyncPopoverUnlockBtn" style="font-size:0.8rem;padding:0.3rem 0.6rem">Unlock</button>
             </div>
             <div id="cloudSyncPopoverError" style="color:var(--danger,#e74c3c);font-size:0.75rem;margin-top:0.3rem;display:none"></div>
@@ -3129,7 +3129,7 @@
                     <span class="cloud-status-value" id="cloudAutoSyncLastSync">Never</span>
                   </div>
                   <!-- Sync Mode selector (shown only when connected + enabled) -->
-                  <div id="cloudSyncModeSection" style="display:none;margin-top:0.6rem;padding:0.5rem 0.6rem;border:1px solid var(--border-color,#ddd);border-radius:6px;background:var(--card-bg-alt,rgba(0,0,0,0.02))">
+                  <div id="cloudSyncModeSection" style="display:none;margin-top:0.6rem;padding:0.5rem 0.6rem;border:1px solid var(--border);border-radius:6px;background:var(--bg-tertiary)">
                     <div style="font-size:0.8rem;font-weight:600;margin-bottom:0.4rem;color:var(--text-primary)">Encryption Mode</div>
                     <label style="display:flex;align-items:flex-start;gap:0.5rem;margin-bottom:0.4rem;cursor:pointer">
                       <input type="radio" name="cloudSyncMode" id="cloudSyncModeSimple" value="simple" style="margin-top:2px" onchange="if(typeof handleSyncModeChange==='function')handleSyncModeChange('simple')">
@@ -3145,7 +3145,7 @@
                         <span class="settings-subtext" style="display:block;font-size:0.72rem">Encrypt with your own vault password — zero-knowledge from Dropbox.</span>
                       </span>
                     </label>
-                    <div id="cloudSyncModeSwitchWarning" style="display:none;margin-top:0.5rem;padding:0.4rem 0.5rem;background:var(--warning-bg,#fff8e6);border:1px solid var(--warning-border,#ffc107);border-radius:4px;font-size:0.75rem;color:var(--text-primary)">
+                    <div id="cloudSyncModeSwitchWarning" style="display:none;margin-top:0.5rem;padding:0.4rem 0.5rem;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.35);border-radius:4px;font-size:0.75rem;color:var(--text-primary)">
                       &#x26A0;&#xFE0F; <strong>Make a manual backup first.</strong> Old syncs encrypted in the previous mode won't be readable in the new mode.
                       <div style="margin-top:0.4rem;display:flex;gap:0.4rem">
                         <button class="btn warning" id="cloudSyncModeConfirmBtn" style="font-size:0.75rem;padding:0.2rem 0.5rem" onclick="if(typeof confirmSyncModeSwitch==='function')confirmSyncModeSwitch()">Switch Mode</button>
