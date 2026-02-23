@@ -219,39 +219,58 @@ function updateCloudSyncHeaderBtn() {
   var dot = safeGetElement('headerCloudDot');
   if (!btn) return;
 
-  // Hide entirely only when sync is explicitly disabled (stored as 'false')
-  // null means never configured — show gray to promote discoverability
+  // Hide entirely only when sync is explicitly disabled
   if (localStorage.getItem('cloud_sync_enabled') === 'false') {
     btn.style.display = 'none';
     return;
   }
 
   btn.style.display = '';
-
   if (!dot) return;
   dot.className = 'cloud-sync-dot header-cloud-dot';
 
-  var hasCachedPw = typeof cloudGetCachedPassword === 'function'
-    ? !!cloudGetCachedPassword(_syncProvider)
-    : false;
   var connected = typeof cloudIsConnected === 'function'
     ? cloudIsConnected(_syncProvider)
     : false;
+  var isSimple = localStorage.getItem('cloud_sync_mode') === 'simple';
+
+  if (isSimple) {
+    var accountId = localStorage.getItem('cloud_dropbox_account_id');
+    if (connected && accountId) {
+      dot.classList.add('header-cloud-dot--green');
+      btn.title = 'Cloud sync active (Simple mode)';
+      btn.setAttribute('aria-label', 'Cloud sync active');
+      btn.dataset.syncState = 'green';
+    } else if (connected) {
+      // Connected but account ID missing — needs re-fetch via reconnect
+      dot.classList.add('header-cloud-dot--orange');
+      btn.title = 'Cloud sync needs to reconnect to Dropbox';
+      btn.setAttribute('aria-label', 'Cloud sync needs to reconnect');
+      btn.dataset.syncState = 'orange-simple';
+    } else {
+      btn.title = 'Set up cloud sync';
+      btn.setAttribute('aria-label', 'Set up cloud sync');
+      btn.dataset.syncState = 'gray';
+    }
+    return;
+  }
+
+  // Secure mode (original behavior)
+  var hasCachedPw = typeof cloudGetCachedPassword === 'function'
+    ? !!cloudGetCachedPassword(_syncProvider)
+    : false;
 
   if (hasCachedPw) {
-    // Green: password cached, sync is running normally
     dot.classList.add('header-cloud-dot--green');
     btn.title = 'Cloud sync active';
     btn.setAttribute('aria-label', 'Cloud sync active');
     btn.dataset.syncState = 'green';
   } else if (connected) {
-    // Orange: connected but password expired/missing
     dot.classList.add('header-cloud-dot--orange');
     btn.title = 'Cloud sync needs your password';
     btn.setAttribute('aria-label', 'Cloud sync needs your password');
     btn.dataset.syncState = 'orange';
   } else {
-    // Gray: sync on but not yet connected/configured
     btn.title = 'Set up cloud sync';
     btn.setAttribute('aria-label', 'Set up cloud sync');
     btn.dataset.syncState = 'gray';
