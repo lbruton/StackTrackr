@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.32.16] - 2026-02-22
+
+### Fixed — Market Chart Timezone + Seed Sync Automation (STAK-275, STAK-266)
+
+- **Fixed**: 24hr market price chart X-axis and table now display times in the user's selected timezone instead of UTC (STAK-275)
+- **Added**: seed-sync skill gains Phase 5 — fetches latest spot-history from live API and merges before staging, ensuring releases ship with up-to-date seed data (STAK-266)
+
+---
+
 ## [3.32.15] - 2026-02-22
 
 ### Fixed — Nitpick Polish — API Health Modal Wording + Desktop Footer Layout (STAK-272, STAK-273)

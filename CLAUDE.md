@@ -53,7 +53,7 @@ Three feeds served from `lbruton/StakTrakrApi` main branch via GitHub Pages at `
 
 | Feed | File | Poller | Stale threshold | Healthy check |
 |---|---|---|---|---|
-| Market prices | `data/api/manifest.json` | Fly.io `run-local.sh` (*/15 min cron) | 30 min | `generated_at` within 30 min |
+| Market prices | `data/api/manifest.json` | Fly.io `run-local.sh` (*/30 min cron) | 30 min | `generated_at` within 30 min |
 | Spot prices | `data/hourly/YYYY/MM/DD/HH.json` | `spot-poller.yml` (:05 and :35 GHA) | 75 min | Last hourly file within 35 min |
 | Goldback | `data/api/goldback-spot.json` | Fly.io `run-goldback.sh` (daily 17:01 UTC) | 25h | `scraped_at` within 25h |
 
