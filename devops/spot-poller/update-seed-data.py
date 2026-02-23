@@ -90,11 +90,12 @@ def save_year_file(data_dir, year, entries):
         json.dump(entries, f, separators=(", ", ": "))
 
 
-def save_hourly_file(data_dir, entries, date_obj, hour_str):
+def save_hourly_file(data_dir, entries, date_obj, hour_str, overwrite=False):
     """
     Write hourly price snapshot to data/hourly/YYYY/MM/DD/HH.json.
 
-    Returns True if written, False if file already exists (idempotent).
+    Returns True if written, False if file already exists and overwrite=False.
+    Pass overwrite=True to always update (used by live pollers for 15-min freshness).
     """
     hourly_dir = (
         Path(data_dir) / "hourly"
@@ -104,7 +105,7 @@ def save_hourly_file(data_dir, entries, date_obj, hour_str):
     )
     hourly_dir.mkdir(parents=True, exist_ok=True)
     path = hourly_dir / f"{hour_str}.json"
-    if path.exists():
+    if path.exists() and not overwrite:
         return False
     with open(path, "w", encoding="utf-8") as f:
         json.dump(entries, f, indent=2)
