@@ -216,6 +216,14 @@ def poll_once(api_key, data_dir):
     # Always write hourly data (with actual-hour timestamps)
     write_hourly(hourly_entries, data_dir, hour_str, today)
 
+    # Write 15-min snapshot (immutable per-poll, never overwritten)
+    written_15min = seed.save_15min_file(data_dir, hourly_entries, today, hour_str, minute_str)
+    if written_15min:
+        log(f"15min: wrote {len(hourly_entries)} entries → "
+            f"15min/{today.year}/{today.month:02d}/{today.day:02d}/{hour_str}{minute_str}.json")
+    else:
+        log(f"15min: {hour_str}{minute_str}.json already exists — skipped.")
+
     # At noon EST (or later if missed), write daily seed
     if hour >= NOON_HOUR:
         year_data = seed.load_year_file(data_dir, str(today.year))

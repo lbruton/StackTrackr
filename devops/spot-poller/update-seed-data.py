@@ -111,6 +111,33 @@ def save_hourly_file(data_dir, entries, date_obj, hour_str, overwrite=False):
         json.dump(entries, f, indent=2)
     return True
 
+
+def save_15min_file(data_dir, entries, date_obj, hour_str, minute_str):
+    # No overwrite param — each 15-min slot is a permanent point-in-time snapshot.
+    # Unlike hourly files, they are never refreshed by a later poller run.
+    """
+    Write 15-min price snapshot to data/15min/YYYY/MM/DD/HHMM.json.
+
+    HHMM = zero-padded hour + minute (e.g. "0705", "0720", "0735", "0750").
+    hour_str and minute_str must each be zero-padded to two digits (e.g. "07", "05").
+    Files are immutable — each poll produces its own permanent snapshot.
+    Returns True if written, False if file already exists (idempotent per-poll).
+    """
+    min_dir = (
+        Path(data_dir) / "15min"
+        / str(date_obj.year)
+        / f"{date_obj.month:02d}"
+        / f"{date_obj.day:02d}"
+    )
+    min_dir.mkdir(parents=True, exist_ok=True)
+    filename = f"{hour_str}{minute_str}.json"
+    path = min_dir / filename
+    if path.exists():
+        return False
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(entries, f, indent=2)
+    return True
+
 # ---------------------------------------------------------------------------
 # Gap detection
 # ---------------------------------------------------------------------------
