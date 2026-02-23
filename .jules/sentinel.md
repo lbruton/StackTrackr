@@ -12,3 +12,8 @@
 **Vulnerability:** Use of `Date.now()` for OAuth `state` parameter generation.
 **Learning:** Using a predictable timestamp for the `state` parameter in OAuth flows significantly weakens protection against CSRF attacks, as an attacker can potentially guess the state.
 **Prevention:** Always use a cryptographically secure random string (like a UUID v4) for OAuth state parameters to ensure unpredictability and robust CSRF protection.
+
+## 2026-05-23 - Cryptographic Fallback Integrity
+**Vulnerability:** Security degradation when `generateUUID` is unavailable and the fallback uses `Math.random()`, undermining the hardening provided by `crypto.randomUUID()` / `crypto.getRandomValues()`.
+**Learning:** Fallback implementations for security utilities must preserve the same cryptographic properties as the primary implementation. In a vanilla JS, global-scope architecture, load-order fragility can accidentally route calls to insecure fallbacks, effectively undoing security upgrades even if no runtime errors occur.
+**Prevention:** Avoid using weak PRNGs such as `Math.random()` in ID or token generation paths. When designing fallbacks for globals like `generateUUID`, use `crypto.getRandomValues()` directly — it is available in every targeted environment (modern browsers, file:// protocol, Node 15+) and matches the precedent in `cloud-sync.js`.
