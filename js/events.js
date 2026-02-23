@@ -77,6 +77,9 @@ let _deleteObverseOnSave = false;
 /** @type {boolean} User clicked Remove on reverse — delete on save */
 let _deleteReverseOnSave = false;
 
+/** Pending sync mode selection — set before showing the switch-warning UI. */
+var _pendingSyncMode = null;
+
 /**
  * Process a user-selected image file and show preview for a specific side.
  * @param {File} file
@@ -711,13 +714,13 @@ const setupHeaderButtonListeners = () => {
         if (state === 'orange' && !isSimple) {
           // Secure mode needs password — open inline popover
           _openCloudSyncPopover();
-        } else if (state === 'orange-simple' || (state === 'orange' && isSimple)) {
+        } else if (state === 'orange-simple') {
           // Simple mode needs Dropbox reconnect
           if (typeof cloudAuthStart === 'function') cloudAuthStart('dropbox');
         } else if (state === 'green') {
           var lp = typeof syncGetLastPush === 'function' ? syncGetLastPush() : null;
           var msg = lp && lp.timestamp
-            ? 'Cloud sync active \u2014 last synced ' + _syncRelativeTimeLocal(lp.timestamp)
+            ? 'Cloud sync active \u2014 last synced ' + (typeof _syncRelativeTime === 'function' ? _syncRelativeTime(lp.timestamp) : '')
             : 'Cloud sync active';
           if (typeof showCloudToast === 'function') showCloudToast(msg, 2500);
         } else {
@@ -2888,22 +2891,13 @@ function _openCloudSyncPopover() {
   }
 }
 
-/** Format a timestamp relative to now for the header toast (mirrors _syncRelativeTime in cloud-sync.js). */
-function _syncRelativeTimeLocal(ts) {
-  var diff = Math.floor((Date.now() - ts) / 1000);
-  if (diff < 10) return 'just now';
-  if (diff < 60) return diff + 's ago';
-  if (diff < 3600) return Math.floor(diff / 60) + ' min ago';
-  return Math.floor(diff / 3600) + 'h ago';
-}
-
 /** Called when user clicks a sync mode radio — shows warning before applying. */
 function handleSyncModeChange(newMode) {
   var currentMode = localStorage.getItem('cloud_sync_mode') || 'secure';
   if (newMode === currentMode) return;
 
   // Store the pending mode so confirmSyncModeSwitch knows what to apply
-  window._pendingSyncMode = newMode;
+  _pendingSyncMode = newMode;
 
   var warning = safeGetElement('cloudSyncModeSwitchWarning');
   if (warning) warning.style.display = '';
@@ -2917,9 +2911,9 @@ function handleSyncModeChange(newMode) {
 
 /** Applies the pending mode switch after user clicks "Switch Mode". */
 function confirmSyncModeSwitch() {
-  var mode = window._pendingSyncMode;
+  var mode = _pendingSyncMode;
   if (!mode) return;
-  window._pendingSyncMode = null;
+  _pendingSyncMode = null;
 
   var warning = safeGetElement('cloudSyncModeSwitchWarning');
   if (warning) warning.style.display = 'none';
@@ -2930,7 +2924,7 @@ function confirmSyncModeSwitch() {
 
 /** Cancels a pending mode switch. */
 function cancelSyncModeSwitch() {
-  window._pendingSyncMode = null;
+  _pendingSyncMode = null;
   var warning = safeGetElement('cloudSyncModeSwitchWarning');
   if (warning) warning.style.display = 'none';
   if (typeof refreshSyncModeUI === 'function') refreshSyncModeUI(); // resets radios
