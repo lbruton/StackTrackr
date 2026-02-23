@@ -219,8 +219,9 @@ function updateCloudSyncHeaderBtn() {
   var dot = safeGetElement('headerCloudDot');
   if (!btn) return;
 
-  // Hide entirely when sync is explicitly disabled
-  if (!syncIsEnabled()) {
+  // Hide entirely only when sync is explicitly disabled (stored as 'false')
+  // null means never configured — show gray to promote discoverability
+  if (localStorage.getItem('cloud_sync_enabled') === 'false') {
     btn.style.display = 'none';
     return;
   }
@@ -1060,6 +1061,7 @@ function initCloudSync() {
 
   if (!syncIsEnabled()) {
     debugLog('[CloudSync] Auto-sync is disabled — poller not started');
+    updateCloudSyncHeaderBtn();
     return;
   }
 
