@@ -828,7 +828,12 @@ async function handleRemoteChange(remoteMeta) {
  * @param {object} remoteMeta - Remote sync metadata (from pollForRemoteChanges)
  */
 async function pullSyncVault(remoteMeta) {
-  var password = await getSyncPassword();
+  // Try silent key first (Simple mode or cached Secure password)
+  var password = getSyncPasswordSilent();
+  if (!password) {
+    // Secure mode with no cached password — prompt interactively
+    password = await getSyncPassword();
+  }
   if (!password) {
     debugLog('[CloudSync] Pull cancelled — no password');
     return;
