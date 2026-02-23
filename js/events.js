@@ -704,27 +704,41 @@ const setupHeaderButtonListeners = () => {
       'click',
       function (e) {
         e.preventDefault();
+        e.stopPropagation();
         var state = headerCloudSyncBtn.dataset.syncState;
-        if (state === 'orange') {
-          // Route through getSyncPassword so _syncPasswordPromptActive is set correctly
-          if (typeof getSyncPassword === 'function') {
-            getSyncPassword();
-          }
+        var isSimple = localStorage.getItem('cloud_sync_mode') === 'simple';
+
+        if (state === 'orange' && !isSimple) {
+          // Secure mode needs password — open inline popover
+          _openCloudSyncPopover();
+        } else if (state === 'orange-simple' || (state === 'orange' && isSimple)) {
+          // Simple mode needs Dropbox reconnect
+          if (typeof cloudAuthStart === 'function') cloudAuthStart('dropbox');
         } else if (state === 'green') {
-          // Already synced: show last-synced toast
           var lp = typeof syncGetLastPush === 'function' ? syncGetLastPush() : null;
           var msg = lp && lp.timestamp
-            ? 'Cloud sync active — last synced recently'
+            ? 'Cloud sync active \u2014 last synced ' + _syncRelativeTimeLocal(lp.timestamp)
             : 'Cloud sync active';
           if (typeof showCloudToast === 'function') showCloudToast(msg, 2500);
         } else {
-          // Gray: not configured — open cloud settings
+          // Gray: not configured
           if (typeof showSettingsModal === 'function') showSettingsModal('cloud');
         }
       },
       'Cloud Sync Header Button'
     );
   }
+
+  // Close popover on outside click
+  document.addEventListener('mousedown', function (e) {
+    var wrapper = safeGetElement('headerCloudSyncWrapper');
+    var popover = safeGetElement('cloudSyncHeaderPopover');
+    if (popover && popover.style.display !== 'none') {
+      if (wrapper && !wrapper.contains(e.target)) {
+        popover.style.display = 'none';
+      }
+    }
+  });
 
   // About Button
   if (elements.aboutBtn) {
@@ -2825,6 +2839,102 @@ const setupApiEvents = () => {
     console.error("❌ Error setting up API events:", error);
   }
 };
+
+// =============================================================================
+
+/** Open the inline Secure-mode password popover below the header cloud button. */
+function _openCloudSyncPopover() {
+  var popover = safeGetElement('cloudSyncHeaderPopover');
+  var input = safeGetElement('cloudSyncPopoverInput');
+  var unlockBtn = safeGetElement('cloudSyncPopoverUnlockBtn');
+  var cancelBtn = safeGetElement('cloudSyncPopoverCancelBtn');
+  var errorEl = safeGetElement('cloudSyncPopoverError');
+  if (!popover) return;
+
+  if (input) input.value = '';
+  if (errorEl) { errorEl.style.display = 'none'; errorEl.textContent = ''; }
+  popover.style.display = '';
+  if (input) setTimeout(function () { input.focus(); }, 50);
+
+  function cleanup() {
+    popover.style.display = 'none';
+    if (unlockBtn) unlockBtn.onclick = null;
+    if (cancelBtn) cancelBtn.onclick = null;
+    if (input) input.onkeydown = null;
+  }
+
+  function onUnlock() {
+    var pw = input ? input.value : '';
+    if (!pw || pw.length < 8) {
+      if (errorEl) {
+        errorEl.textContent = 'Password must be at least 8 characters.';
+        errorEl.style.display = '';
+      }
+      return;
+    }
+    cleanup();
+    if (typeof cloudCachePassword === 'function') cloudCachePassword('dropbox', pw);
+    if (typeof updateCloudSyncHeaderBtn === 'function') updateCloudSyncHeaderBtn();
+    setTimeout(function () { if (typeof pushSyncVault === 'function') pushSyncVault(); }, 100);
+  }
+
+  if (unlockBtn) unlockBtn.onclick = onUnlock;
+  if (cancelBtn) cancelBtn.onclick = cleanup;
+  if (input) {
+    input.onkeydown = function (e) {
+      if (e.key === 'Enter') onUnlock();
+      if (e.key === 'Escape') cleanup();
+    };
+  }
+}
+
+/** Format a timestamp relative to now for the header toast (mirrors _syncRelativeTime in cloud-sync.js). */
+function _syncRelativeTimeLocal(ts) {
+  var diff = Math.floor((Date.now() - ts) / 1000);
+  if (diff < 10) return 'just now';
+  if (diff < 60) return diff + 's ago';
+  if (diff < 3600) return Math.floor(diff / 60) + ' min ago';
+  return Math.floor(diff / 3600) + 'h ago';
+}
+
+/** Called when user clicks a sync mode radio — shows warning before applying. */
+function handleSyncModeChange(newMode) {
+  var currentMode = localStorage.getItem('cloud_sync_mode') || 'secure';
+  if (newMode === currentMode) return;
+
+  // Store the pending mode so confirmSyncModeSwitch knows what to apply
+  window._pendingSyncMode = newMode;
+
+  var warning = safeGetElement('cloudSyncModeSwitchWarning');
+  if (warning) warning.style.display = '';
+
+  // Revert radio to current mode visually until user confirms
+  var simpleRadio = safeGetElement('cloudSyncModeSimple');
+  var secureRadio = safeGetElement('cloudSyncModeSecure');
+  if (simpleRadio) simpleRadio.checked = currentMode === 'simple';
+  if (secureRadio) secureRadio.checked = currentMode !== 'simple';
+}
+
+/** Applies the pending mode switch after user clicks "Switch Mode". */
+function confirmSyncModeSwitch() {
+  var mode = window._pendingSyncMode;
+  if (!mode) return;
+  window._pendingSyncMode = null;
+
+  var warning = safeGetElement('cloudSyncModeSwitchWarning');
+  if (warning) warning.style.display = 'none';
+
+  if (typeof setSyncMode === 'function') setSyncMode(mode);
+  if (typeof refreshSyncModeUI === 'function') refreshSyncModeUI();
+}
+
+/** Cancels a pending mode switch. */
+function cancelSyncModeSwitch() {
+  window._pendingSyncMode = null;
+  var warning = safeGetElement('cloudSyncModeSwitchWarning');
+  if (warning) warning.style.display = 'none';
+  if (typeof refreshSyncModeUI === 'function') refreshSyncModeUI(); // resets radios
+}
 
 // =============================================================================
 
