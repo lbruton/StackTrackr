@@ -478,6 +478,25 @@ async function cloudExchangeCode(code, state) {
       expires_at: data.expires_in ? Date.now() + data.expires_in * 1000 : null,
     };
     cloudStoreToken(provider, tokenData);
+
+    // Fetch Dropbox account ID for Simple mode key derivation (non-blocking, Dropbox-only)
+    if (provider === 'dropbox') {
+      fetch('https://api.dropboxapi.com/2/users/get_current_account', {
+        method: 'POST',
+        headers: {
+          Authorization: 'Bearer ' + tokenData.access_token,
+          'Content-Type': 'application/json',
+        },
+        body: 'null',
+      }).then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (info) {
+          if (info && info.account_id) {
+            localStorage.setItem('cloud_dropbox_account_id', info.account_id);
+            debugLog('[CloudStorage] Stored Dropbox account ID for Simple mode');
+          }
+        })
+        .catch(function (e) { debugLog('[CloudStorage] Failed to fetch Dropbox account ID', e); });
+    }
     sessionStorage.removeItem('cloud_oauth_state');
     if (typeof syncCloudUI === 'function') syncCloudUI();
     if (typeof showCloudToast === 'function') showCloudToast('Connected to ' + config.name + '.');
@@ -534,6 +553,9 @@ if (document.readyState === 'complete') {
 function cloudDisconnect(provider) {
   cloudClearToken(provider);
   localStorage.removeItem('cloud_last_backup');
+  if (provider === 'dropbox') {
+    localStorage.removeItem('cloud_dropbox_account_id');
+  }
   var providerName = (CLOUD_PROVIDERS[provider] && CLOUD_PROVIDERS[provider].name) || provider;
   recordCloudActivity({ action: 'disconnect', provider: provider, result: 'success', detail: 'Disconnected from ' + providerName });
   if (typeof syncCloudUI === 'function') syncCloudUI();
