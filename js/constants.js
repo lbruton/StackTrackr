@@ -20,8 +20,7 @@ const API_PROVIDERS = {
     documentation: "https://www.staktrakr.com",
     hourlyBaseUrl: "https://api.staktrakr.com/data/hourly",
     hourlyBaseUrls: [
-      "https://api.staktrakr.com/data/hourly",   // Fly.io (StakTrakrApi, api branch)
-      // "https://api1.staktrakr.com/data/hourly",  // Planned fallback (temporarily disabled during single-API cutover)
+      "https://api.staktrakr.com/data/hourly",
     ],
     endpoints: { silver: "", gold: "", platinum: "", palladium: "" },
     getEndpoint: () => "",
@@ -495,8 +494,7 @@ const RETAIL_PROVIDERS_KEY = "retailProviders";
 
 /** @constant {string[]} RETAIL_API_ENDPOINTS - Ordered list of retail API endpoints (primary first) */
 const RETAIL_API_ENDPOINTS = [
-  "https://api.staktrakr.com/data/api",    // Fly.io (StakTrakrApi) — primary
-  // "https://api1.staktrakr.com/data/api",   // Planned fallback (temporarily disabled during single-API cutover)
+  "https://api.staktrakr.com/data/api",
 ];
 /** @constant {string} RETAIL_API_BASE_URL - Primary endpoint (backward compat) */
 const RETAIL_API_BASE_URL = RETAIL_API_ENDPOINTS[0];
