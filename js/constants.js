@@ -22,6 +22,9 @@ const API_PROVIDERS = {
     hourlyBaseUrls: [
       "https://api.staktrakr.com/data/hourly",
     ],
+    fifteenMinBaseUrls: [
+      "https://api.staktrakr.com/data/15min",
+    ],
     endpoints: { silver: "", gold: "", platinum: "", palladium: "" },
     getEndpoint: () => "",
     parseResponse: () => null,
