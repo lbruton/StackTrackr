@@ -138,8 +138,9 @@ const _bucketWindows = (windows) => {
     const key = slotDate.toISOString();
     // Keep the most recent window for each slot
     const existing = slotMap.get(key);
-    if (!existing || d.getTime() > new Date(existing.window).getTime()) {
-      slotMap.set(key, { ...w, window: key });
+    // Compare original timestamps (not slot keys) so the most recent poll wins
+    if (!existing || d.getTime() > new Date(existing._originalWindow).getTime()) {
+      slotMap.set(key, { ...w, window: key, _originalWindow: w.window });
     }
   }
   // Sort chronologically
