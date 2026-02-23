@@ -398,16 +398,6 @@ const formatTimestamp = (date, options = {}) => {
 };
 
 /**
- * Formats a date for display (date only, no time) using the user's timezone preference.
- *
- * @param {Date|string|number} date - Date object, ISO string, or epoch ms
- * @returns {string} Formatted date string
- */
-const formatDateOnly = (date) => {
-  return formatTimestamp(date, { hour: undefined, minute: undefined });
-};
-
-/**
  * Formats a date for display (time only, no date) using the user's timezone preference.
  *
  * @param {Date|string|number} date - Date object, ISO string, or epoch ms

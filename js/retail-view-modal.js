@@ -3,6 +3,36 @@
 
 let _retailViewModalChart = null;
 let _retailViewIntradayChart = null;
+let _intradayRowCount = 24;
+/**
+ * Formats a Date as HH:MM in the user's selected timezone (or local if unset).
+ * @param {Date} d
+ * @returns {string}
+ */
+const _fmtIntradayTime = (d) => {
+  if (!d || isNaN(d.getTime())) return '--:--';
+  const tz = (typeof TIMEZONE_KEY !== 'undefined' && localStorage.getItem(TIMEZONE_KEY)) || undefined;
+  const tzOpts = tz && tz !== 'auto' ? { timeZone: tz } : {};
+  try {
+    return d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', hour12: false, ...tzOpts });
+  } catch (e) {
+    return d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', hour12: false });
+  }
+};
+
+const _trendGlyph = (current, previous) => {
+  if (previous == null || current == null) return '—'; // —
+  if (current > previous) return '▲'; // ▲
+  if (current < previous) return '▼'; // ▼
+  return '—'; // —
+};
+
+const _trendClass = (current, previous) => {
+  if (previous == null || current == null) return '';
+  if (current > previous) return 'text-success';
+  if (current < previous) return 'text-danger';
+  return '';
+};
 
 const _retailYTicks = () => ({
   color: typeof getChartTextColor === "function" ? getChartTextColor() : undefined,
@@ -24,11 +54,6 @@ const _switchRetailViewTab = (tab) => {
   if (histTab.classList) histTab.classList.toggle("active", isHistory);
   if (intTab.classList) intTab.classList.toggle("active", !isHistory);
 };
-
-/**
- * Builds the intraday chart (median + low) from windows_24h data for a slug.
- * @param {string} slug
- */
 
 /**
  * Builds the vendor legend: colored swatch + clickable vendor name + current price.
@@ -89,44 +114,170 @@ const _buildVendorLegend = (slug) => {
   });
 };
 
-const _buildIntradayChart = (slug) => {
-  const canvas = safeGetElement("retailViewIntradayChart");
-  const noDataEl = safeGetElement("retailViewIntradayNoData");
+/**
+ * Buckets raw windows_24h into 30-min aligned slots (HH:00 and HH:30).
+ * For each slot, picks the most recent window whose timestamp falls within it.
+ * Returns up to 48 entries covering the 24h window, oldest first.
+ * @param {Array} windows - raw windows_24h from API
+ * @returns {Array}
+ */
+const _bucketWindows = (windows) => {
+  if (!windows || windows.length === 0) return [];
+  // Build a map: slotKey (ISO :00 or :30) → most recent window in that slot
+  const slotMap = new Map();
+  for (const w of windows) {
+    if (!w.window) continue;
+    const d = new Date(w.window);
+    if (isNaN(d.getTime())) continue;
+    // Round down to nearest 30-min boundary
+    const mins = d.getUTCMinutes() >= 30 ? 30 : 0;
+    const slotDate = new Date(Date.UTC(
+      d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(),
+      d.getUTCHours(), mins, 0, 0
+    ));
+    const key = slotDate.toISOString();
+    // Keep the most recent window for each slot
+    const existing = slotMap.get(key);
+    // Compare original timestamps (not slot keys) so the most recent poll wins
+    if (!existing || d.getTime() > new Date(existing._originalWindow).getTime()) {
+      slotMap.set(key, { ...w, window: key, _originalWindow: w.window });
+    }
+  }
+  // Sort chronologically
+  return Array.from(slotMap.values()).sort((a, b) => a.window < b.window ? -1 : 1);
+};
+
+/**
+ * Renders the intraday data table for a given slug.
+ * Accepts an optional pre-bucketed array; if omitted, re-buckets from retailIntradayData.
+ * Slices to the _intradayRowCount most recent rows.
+ * @param {string} slug
+ * @param {Array} [bucketed]
+ */
+const _buildIntradayTable = (slug, bucketed) => {
   const tableBody = safeGetElement("retailViewIntradayTableBody");
   const tableHead = safeGetElement("retailViewIntradayTableHead");
 
+  // Fall back to re-bucketing from live data if bucketed not provided
+  if (!bucketed) {
+    const intraday = typeof retailIntradayData !== "undefined" ? retailIntradayData[slug] : null;
+    const windows = intraday && Array.isArray(intraday.windows_24h) ? intraday.windows_24h : [];
+    bucketed = _bucketWindows(windows);
+  }
+
+  // Collect the vendor set across all bucketed entries
+  const knownVendors = typeof RETAIL_VENDOR_NAMES !== "undefined" ? Object.keys(RETAIL_VENDOR_NAMES) : [];
+  const activeVendors = knownVendors.filter((v) => bucketed.some((w) => w.vendors && w.vendors[v] != null));
+  const useVendorLines = activeVendors.length > 0;
+
+  // Update table header — per-vendor when data available, median+low fallback otherwise
+  const tableColumns = useVendorLines
+    ? activeVendors.map((v) => (typeof RETAIL_VENDOR_NAMES !== "undefined" && RETAIL_VENDOR_NAMES[v]) || v)
+    : ["Median", "Low"];
+  if (tableHead) {
+    tableHead.innerHTML = "";
+    const headerRow = document.createElement("tr");
+    const tz = (typeof TIMEZONE_KEY !== 'undefined' && localStorage.getItem(TIMEZONE_KEY)) || undefined;
+    const timeColLabel = tz && tz !== 'auto' ? `Time (${tz})` : 'Time (local)';
+    [timeColLabel, ...tableColumns].forEach((label) => {
+      const th = document.createElement("th");
+      th.textContent = label;
+      headerRow.appendChild(th);
+    });
+    tableHead.appendChild(headerRow);
+  }
+
+  // Compact recent-windows table (slice to _intradayRowCount most recent, newest first)
+  if (tableBody) {
+    tableBody.innerHTML = "";
+    const recent = bucketed.slice(-_intradayRowCount).reverse();
+    const fmt = (v) => (v != null ? `$${Number(v).toFixed(2)}` : "\u2014");
+    recent.forEach((w, idx) => {
+      const tr = document.createElement("tr");
+      const d = w.window ? new Date(w.window) : null;
+      const timeLabel = _fmtIntradayTime(d);
+
+      // Time cell
+      const timeTd = document.createElement("td");
+      timeTd.textContent = timeLabel;
+      tr.appendChild(timeTd);
+
+      // Per-vendor (or median/low) cells — each gets its own trend glyph + color
+      if (useVendorLines) {
+        activeVendors.forEach((v) => {
+          const currVal = w.vendors && w.vendors[v] != null ? w.vendors[v] : null;
+          const prevVal = idx + 1 < recent.length
+            ? (recent[idx + 1].vendors && recent[idx + 1].vendors[v] != null ? recent[idx + 1].vendors[v] : null)
+            : null;
+          const glyph = _trendGlyph(currVal, prevVal);
+          const cls = _trendClass(currVal, prevVal);
+          const td = document.createElement("td");
+          td.className = cls || '';
+          td.textContent = currVal != null ? `${fmt(currVal)} ${glyph}` : '\u2014';
+          tr.appendChild(td);
+        });
+      } else {
+        // Median cell with trend
+        const currMedian = w.median != null ? w.median : null;
+        const prevMedian = idx + 1 < recent.length ? (recent[idx + 1].median != null ? recent[idx + 1].median : null) : null;
+        const medGlyph = _trendGlyph(currMedian, prevMedian);
+        const medCls = _trendClass(currMedian, prevMedian);
+        const medTd = document.createElement("td");
+        medTd.className = medCls || '';
+        medTd.textContent = currMedian != null ? `${fmt(currMedian)} ${medGlyph}` : '\u2014';
+        tr.appendChild(medTd);
+        // Low cell (no trend — less meaningful for low)
+        const lowTd = document.createElement("td");
+        lowTd.textContent = fmt(w.low);
+        tr.appendChild(lowTd);
+      }
+
+      tableBody.appendChild(tr);
+    });
+    const colCount = tableColumns.length + 1; // +1 for Time
+    if (recent.length === 0) {
+      const tr = document.createElement("tr");
+      const td = document.createElement("td");
+      td.colSpan = colCount;
+      td.className = "settings-subtext";
+      td.textContent = "No intraday data available.";
+      tr.appendChild(td);
+      tableBody.appendChild(tr);
+    }
+  }
+};
+
+/**
+ * Builds the intraday chart from bucketed windows_24h data for a slug.
+ * Also calls _buildIntradayTable to render the time-series table below.
+ * @param {string} slug
+ */
+const _buildIntradayChart = (slug) => {
+  const canvas = safeGetElement("retailViewIntradayChart");
+  const noDataEl = safeGetElement("retailViewIntradayNoData");
+
   const intraday = typeof retailIntradayData !== "undefined" ? retailIntradayData[slug] : null;
   const windows = intraday && Array.isArray(intraday.windows_24h) ? intraday.windows_24h : [];
+  const bucketed = _bucketWindows(windows);
 
-  if (noDataEl) noDataEl.style.display = windows.length < 2 ? "" : "none";
-  if (canvas) canvas.style.display = windows.length >= 2 ? "" : "none";
+  if (noDataEl) noDataEl.style.display = bucketed.length < 2 ? "" : "none";
+  if (canvas) canvas.style.display = bucketed.length >= 2 ? "" : "none";
 
   if (_retailViewIntradayChart) {
     _retailViewIntradayChart.destroy();
     _retailViewIntradayChart = null;
   }
 
-  // Collect the vendor set across all windows (preserves display order from RETAIL_VENDOR_NAMES)
+  // Collect the vendor set across all bucketed entries (preserves display order from RETAIL_VENDOR_NAMES)
   const knownVendors = typeof RETAIL_VENDOR_NAMES !== "undefined" ? Object.keys(RETAIL_VENDOR_NAMES) : [];
-  const activeVendors = knownVendors.filter((v) => windows.some((w) => w.vendors && w.vendors[v] != null));
+  const activeVendors = knownVendors.filter((v) => bucketed.some((w) => w.vendors && w.vendors[v] != null));
   // Fall back to median+low when windows predate the per-vendor format
   const useVendorLines = activeVendors.length > 0;
 
-  const tz = (typeof TIMEZONE_KEY !== 'undefined' && localStorage.getItem(TIMEZONE_KEY)) || undefined;
-  const tzOpts = tz && tz !== 'auto' ? { timeZone: tz } : {};
-  const fmtTime = (d) => {
-    if (!d || isNaN(d.getTime())) return '--:--';
-    try {
-      return d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', hour12: false, ...tzOpts });
-    } catch (e) {
-      return d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', hour12: false });
-    }
-  };
-
-  if (windows.length >= 2 && canvas instanceof HTMLCanvasElement && typeof Chart !== "undefined") {
-    const labels = windows.map((w) => {
+  if (bucketed.length >= 2 && canvas instanceof HTMLCanvasElement && typeof Chart !== "undefined") {
+    const labels = bucketed.map((w) => {
       const d = w.window ? new Date(w.window) : null;
-      return fmtTime(d);
+      return _fmtIntradayTime(d);
     });
 
     const datasets = useVendorLines
@@ -135,11 +286,12 @@ const _buildIntradayChart = (slug) => {
           const color = RETAIL_VENDOR_COLORS[vendorId] || "#94a3b8";
           return {
             label,
-            data: windows.map((w) => (w.vendors && w.vendors[vendorId] != null ? w.vendors[vendorId] : null)),
+            data: bucketed.map((w) => (w.vendors && w.vendors[vendorId] != null ? w.vendors[vendorId] : null)),
             borderColor: color,
             backgroundColor: "transparent",
             borderWidth: 1.5,
-            pointRadius: 2,
+            pointRadius: 0,
+            pointHoverRadius: 3,
             tension: 0.2,
             spanGaps: true,
           };
@@ -147,21 +299,23 @@ const _buildIntradayChart = (slug) => {
       : [
           {
             label: "Median",
-            data: windows.map((w) => w.median),
+            data: bucketed.map((w) => w.median),
             borderColor: "#3b82f6",
             backgroundColor: "transparent",
             borderWidth: 2,
-            pointRadius: 2,
+            pointRadius: 0,
+            pointHoverRadius: 3,
             tension: 0.3,
           },
           {
             label: "Low",
-            data: windows.map((w) => w.low),
+            data: bucketed.map((w) => w.low),
             borderColor: "#22c55e",
             backgroundColor: "transparent",
             borderWidth: 1.5,
             borderDash: [4, 3],
-            pointRadius: 2,
+            pointRadius: 0,
+            pointHoverRadius: 3,
             tension: 0.3,
           },
         ];
@@ -184,7 +338,20 @@ const _buildIntradayChart = (slug) => {
           x: {
             ticks: {
               maxTicksLimit: 12,
-              color: typeof getChartTextColor === "function" ? getChartTextColor() : undefined,
+              autoSkip: true,
+              maxRotation: 0,
+              color: function(context) {
+                const label = context.chart.data.labels[context.index] || '';
+                const mins = label.split(':')[1];
+                const base = typeof getChartTextColor === "function" ? getChartTextColor() : '#94a3b8';
+                if (mins === '00') return base;
+                return base.startsWith('#') && base.length === 7 ? base + '80' : base;
+              },
+              font: function(context) {
+                const label = context.chart.data.labels[context.index] || '';
+                const mins = label.split(':')[1];
+                return { size: mins === '00' ? 11 : 9 };
+              },
             },
           },
           y: { ticks: _retailYTicks() },
@@ -193,52 +360,7 @@ const _buildIntradayChart = (slug) => {
     });
   }
 
-  // Update table header — per-vendor when data available, median+low fallback otherwise
-  const tableColumns = useVendorLines
-    ? activeVendors.map((v) => (typeof RETAIL_VENDOR_NAMES !== "undefined" && RETAIL_VENDOR_NAMES[v]) || v)
-    : ["Median", "Low"];
-  if (tableHead) {
-    tableHead.innerHTML = "";
-    const headerRow = document.createElement("tr");
-    const timeColLabel = Object.keys(tzOpts).length > 0 ? `Time (${tz})` : "Time (local)";
-    [timeColLabel, ...tableColumns].forEach((label) => {
-      const th = document.createElement("th");
-      th.textContent = label;
-      headerRow.appendChild(th);
-    });
-    tableHead.appendChild(headerRow);
-  }
-
-  // Compact recent-windows table (5 most recent)
-  if (tableBody) {
-    tableBody.innerHTML = "";
-    const recent = windows.slice(-5).reverse();
-    const fmt = (v) => (v != null ? `$${Number(v).toFixed(2)}` : "\u2014");
-    recent.forEach((w) => {
-      const tr = document.createElement("tr");
-      const d = w.window ? new Date(w.window) : null;
-      const timeLabel = fmtTime(d);
-      const rowValues = useVendorLines
-        ? activeVendors.map((v) => fmt(w.vendors && w.vendors[v]))
-        : [fmt(w.median), fmt(w.low)];
-      [timeLabel, ...rowValues].forEach((text) => {
-        const td = document.createElement("td");
-        td.textContent = text;
-        tr.appendChild(td);
-      });
-      tableBody.appendChild(tr);
-    });
-    const colCount = tableColumns.length + 1;
-    if (recent.length === 0) {
-      const tr = document.createElement("tr");
-      const td = document.createElement("td");
-      td.colSpan = colCount;
-      td.className = "settings-subtext";
-      td.textContent = "No intraday data available.";
-      tr.appendChild(td);
-      tableBody.appendChild(tr);
-    }
-  }
+  _buildIntradayTable(slug, bucketed);
 };
 
 /**
@@ -362,6 +484,16 @@ const openRetailViewModal = (slug) => {
   // Build intraday chart for 24h tab using cached data
   _buildIntradayChart(slug);
 
+  // Wire row-count dropdown
+  const rowCountSel = safeGetElement('retailViewIntradayRowCount');
+  if (rowCountSel) {
+    rowCountSel.value = String(_intradayRowCount);
+    rowCountSel.onchange = () => {
+      _intradayRowCount = Number(rowCountSel.value);
+      _buildIntradayTable(slug);
+    };
+  }
+
   // Default to 24h chart on open (switch to history once dataset is larger)
   _switchRetailViewTab("intraday");
 
@@ -442,6 +574,8 @@ if (typeof window !== "undefined") {
   window.openRetailViewModal = openRetailViewModal;
   window.closeRetailViewModal = closeRetailViewModal;
   window._switchRetailViewTab = _switchRetailViewTab;
+  window._bucketWindows = _bucketWindows;
+  window._buildIntradayTable = _buildIntradayTable;
 }
 
 // =============================================================================
