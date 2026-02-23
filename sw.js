@@ -3,7 +3,13 @@
 // Cache version: auto-stamped by devops/hooks/stamp-sw-cache.sh pre-commit hook
 
 const DEV_MODE = false; // Set to true during development — bypasses all caching
-const CACHE_NAME = 'staktrakr-v3.32.16-b1771823624';
+
+
+
+const CACHE_NAME = 'staktrakr-v3.32.20-b1771855108';
+
+
+
 
 // Offline fallback for navigation requests when all cache/network strategies fail
 const OFFLINE_HTML = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>StakTrakr</title></head>' +
@@ -181,8 +187,8 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Stale-while-revalidate for StakTrakr hourly price API
-  if (url.hostname === 'api.staktrakr.com') {
+  // Stale-while-revalidate for StakTrakr hourly price API (primary + backup)
+  if (url.hostname === 'api.staktrakr.com' || url.hostname === 'api2.staktrakr.com') {
     event.respondWith(staleWhileRevalidate(event.request));
     return;
   }

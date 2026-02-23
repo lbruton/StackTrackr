@@ -283,11 +283,11 @@ const setupAckModalEvents = () => {
  */
 const getEmbeddedWhatsNew = () => {
   return `
+    <li><strong>v3.32.20 &ndash; api2 Backup Endpoint</strong>: Dual-endpoint fallback for all API feeds &mdash; spot, market, and goldback. Primary (api.staktrakr.com) tried first with 5-second timeout; api2.staktrakr.com serves as automatic fallback. Health modal shows per-endpoint drift benchmarking.</li>
+    <li><strong>v3.32.19 &ndash; 15-Min Spot Price Endpoint</strong>: New sub-hourly price snapshots at data/15min/YYYY/MM/DD/HHMM.json &mdash; written every 15 min by the spot poller. Frontend fetchStaktrakr15minRange() loads 24h of 15-min data tagged api-15min.</li>
+    <li><strong>v3.32.18 &ndash; Cloud Sync Status Icon</strong>: Ambient header icon replaces the on-load password modal. Orange = needs password (tap to unlock), green = active, gray = not configured.</li>
+    <li><strong>v3.32.17 &ndash; 24hr Chart Improvements</strong>: Intraday chart now uses clean 30-min bucketed ticks with styled hour/half-hour marks. Table extended to 12/24/48 configurable rows with trend indicators (&#9650;/&#9660;/&mdash;) per slot.</li>
     <li><strong>v3.32.16 &ndash; Market Chart Timezone Fix</strong>: 24hr price chart and table now show times in your selected timezone. seed-sync skill gains Phase 5 &mdash; syncs from live API before releases.</li>
-    <li><strong>v3.32.15 &ndash; Nitpick Polish</strong>: API health modal now says &ldquo;items tracked&rdquo; instead of &ldquo;coins&rdquo;. Desktop footer restructured &mdash; badges on top, Special thanks on its own line.</li>
-    <li><strong>v3.32.14 &ndash; API Health Stale Timestamp Fix</strong>: Spot history and Goldback timestamps now parsed as UTC &mdash; fixes inflated staleness readings in negative-offset timezones (CST, PST, etc.). Market stale threshold raised from 15 &rarr; 30 min to match actual poller cadence.</li>
-    <li><strong>v3.32.13 &ndash; API Health Modal Fix + Three-Feed Checks</strong>: Health modal no longer renders behind About modal. Health check now monitors market prices (15 min), spot prices (75 min), and Goldback daily separately; badges show per-feed freshness.</li>
-    <li><strong>v3.32.12 &ndash; Configurable Vault Idle Timeout</strong>: New &ldquo;Auto-lock after idle&rdquo; dropdown in Settings &rarr; Cloud Sync &mdash; choose 15 min, 30 min, 1 hour, 2 hours, or Never before the vault password cache clears automatically</li>
   `;
 };
 

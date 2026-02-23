@@ -1,6 +1,0 @@
-node_modules
-*.log
-.env
-*.md
-price.db
-docs/

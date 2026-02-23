@@ -12,7 +12,8 @@ All feeds served from `lbruton/StakTrakrApi` `main` branch via GitHub Pages at `
 | Feed | File | Poller | Threshold |
 |------|------|--------|-----------|
 | **Market prices** | `data/api/manifest.json` | Fly.io `staktrakr` cron (`*/30 min`) | 30 min |
-| **Spot prices** | `data/hourly/YYYY/MM/DD/HH.json` | `spot-poller.yml` GHA (`:05` + `:35`/hr) | 75 min |
+| **Spot prices** | `data/hourly/YYYY/MM/DD/HH.json` | `spot-poller.yml` GHA (`:05`, `:20`, `:35`, `:50`/hr) | 20 min |
+| **Spot prices (15-min)** | `data/15min/YYYY/MM/DD/HHMM.json` | `spot-poller.yml` GHA (`:05/:20/:35/:50`) | 20 min |
 | **Goldback** | `data/api/goldback-spot.json` | Fly.io `staktrakr` cron (daily 17:01 UTC) | 25h (info only) |
 | **Turso** | `price_snapshots` table | retail-poller only | internal write store |
 
@@ -36,7 +37,7 @@ All feeds served from `lbruton/StakTrakrApi` `main` branch via GitHub Pages at `
 
 | Workflow | Repo | Schedule | Purpose |
 |----------|------|----------|---------|
-| `spot-poller.yml` | `StakTrakr` | `:05` + `:35` every hour | Python → MetalPriceAPI → `data/hourly/` |
+| `spot-poller.yml` | `StakTrakr` | `:05`, `:20`, `:35`, `:50` every hour | Python → MetalPriceAPI → `data/hourly/` |
 | `Merge Poller Branches` | `StakTrakrApi` | `*/15 min` | Merges `api` → `main` → triggers GH Pages |
 
 ---
