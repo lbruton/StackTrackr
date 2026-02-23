@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.32.17] - 2026-02-23
+
+### Added — STAK-270: 24hr Intraday Chart Improvements
+
+- **Improved**: 24hr intraday chart now buckets raw API windows into clean 30-min aligned slots, eliminating irregular tick spacing caused by poller timing variance
+- **Improved**: Chart X-axis now visually distinguishes hour marks (full opacity, 11px) from half-hour marks (dimmed, 9px) for faster time-at-a-glance reading
+- **Added**: Intraday table extended from 5 rows to configurable 12/24/48 rows with scrollable container and row-count dropdown
+- **Added**: Trend column (▲/▼/—) in intraday table shows price direction vs. previous 30-min slot
+
+---
+
 ## [3.32.16] - 2026-02-22
 
 ### Fixed — Market Chart Timezone + Seed Sync Automation (STAK-275, STAK-266)
