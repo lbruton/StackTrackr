@@ -202,7 +202,7 @@ const populateApiHealthModal = (health) => {
   }
 
   if (coinsEl) {
-    coinsEl.textContent = market.coins.length ? `${market.coins.length} coins tracked` : "—";
+    coinsEl.textContent = market.coins.length ? `${market.coins.length} items tracked` : "—";
   }
 
   if (verdictEl) {
