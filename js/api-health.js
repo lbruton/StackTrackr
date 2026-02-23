@@ -2,11 +2,11 @@
 // =============================================================================
 // Three independent freshness checks:
 //   Market prices  — manifest.json       — stale after 30 min
-//   Spot prices    — hourly/YYYY/MM/DD/HH.json — stale after 75 min
+//   Spot prices    — hourly/YYYY/MM/DD/HH.json — stale after 20 min
 //   Goldback       — goldback-spot.json  — stale after 25 hr (daily scrape)
 
 const API_HEALTH_MARKET_STALE_MIN   = 30;  // poller runs every ~15-20 min; 30 min gives comfortable margin
-const API_HEALTH_SPOT_STALE_MIN     = 75;
+const API_HEALTH_SPOT_STALE_MIN     = 20;  // metalpriceapi.com updated every 10 min; poller runs every 15 min
 const API_HEALTH_GOLDBACK_STALE_MIN = 25 * 60; // 25 hours in minutes
 
 /**

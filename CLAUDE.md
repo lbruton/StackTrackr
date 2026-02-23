@@ -54,7 +54,7 @@ Three feeds served from `lbruton/StakTrakrApi` main branch via GitHub Pages at `
 | Feed | File | Poller | Stale threshold | Healthy check |
 |---|---|---|---|---|
 | Market prices | `data/api/manifest.json` | Fly.io `run-local.sh` (*/30 min cron) | 30 min | `generated_at` within 30 min |
-| Spot prices | `data/hourly/YYYY/MM/DD/HH.json` | `spot-poller.yml` (:05 and :35 GHA) | 75 min | Last hourly file within 35 min |
+| Spot prices | `data/hourly/YYYY/MM/DD/HH.json` | `spot-poller.yml` (:05, :20, :35, :50 GHA) | 20 min | Last hourly file within 20 min |
 | Goldback | `data/api/goldback-spot.json` | Fly.io `run-goldback.sh` (daily 17:01 UTC) | 25h | `scraped_at` within 25h |
 
 **Critical:** `spot-history-YYYY.json` is a **seed file** (noon UTC daily), NOT live data. `api-health.js` currently checks it for spot freshness — always shows ~10h stale even when poller is healthy. Open bug (STAK-265 follow-up).
