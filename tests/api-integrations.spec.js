@@ -139,9 +139,9 @@ test('STAK-222: PCGS cache read/write roundtrip', async ({ page }) => {
 });
 
 // =============================================================================
-// STAK-255: Dual-poller endpoint resilience — spot hourly + retail path correctness
-// Regression guard: ensures both endpoints are called in parallel and the correct
-// URL paths are configured for the staggered dual-poller architecture.
+// STAK-255 / STAK-271: Single-endpoint path correctness
+// Regression guard: ensures hourlyBaseUrls and RETAIL_API_ENDPOINTS use the
+// correct api.staktrakr.com paths. (api1.staktrakr.com removed in STAK-271.)
 // =============================================================================
 
 /** Minimal valid hourly spot price array matching parseBatchResponse expectations. */
@@ -156,75 +156,18 @@ test('STAK-255: hourlyBaseUrls and RETAIL_API_ENDPOINTS use correct paths', asyn
     const hourly = window.API_PROVIDERS?.STAKTRAKR?.hourlyBaseUrls || [];
     const retail = window.RETAIL_API_ENDPOINTS || [];
     return {
-      // Both hourly endpoints use /data/hourly path
-      api1HourlyCorrect: hourly.some(u => u.includes('api1.staktrakr.com/data/hourly')),
-      // api (Fly.io) serves retail at /data/api/
-      apiFlyRetailCorrect: retail.some(u => u.includes('api.staktrakr.com/data/api')),
-      // api1 (GitHub Pages) also serves retail at /data/api/
-      api1RetailCorrect: retail.some(u => u.includes('api1.staktrakr.com/data/api')),
+      // Single endpoint serves hourly spot data at /data/hourly
+      apiHourlyCorrect: hourly.some(u => u.includes('api.staktrakr.com/data/hourly')),
+      // Single endpoint serves retail at /data/api/
+      apiRetailCorrect: retail.some(u => u.includes('api.staktrakr.com/data/api')),
       hourlyCount: hourly.length,
       retailCount: retail.length,
     };
   });
-  expect(result.api1HourlyCorrect).toBe(true);
-  expect(result.apiFlyRetailCorrect).toBe(true);
-  expect(result.api1RetailCorrect).toBe(true);
-  expect(result.hourlyCount).toBeGreaterThanOrEqual(2);
-  expect(result.retailCount).toBeGreaterThanOrEqual(2);
-});
-
-test('STAK-255: spot sync succeeds when primary hourly endpoint is down (fallback resilience)', async ({ page }) => {
-  // Block api1.staktrakr.com/hourly (primary) — return 404 for all hourly files
-  await page.route('**/api1.staktrakr.com/hourly/**', route => route.fulfill({ status: 404, body: 'Not Found' }));
-  // Serve valid spot data from api.staktrakr.com/data/hourly (fallback)
-  await page.route('**/api.staktrakr.com/data/hourly/**', route =>
-    route.fulfill({ status: 200, contentType: 'application/json', body: MOCK_HOURLY_SPOT })
-  );
-
-  await page.goto('/');
-  await page.waitForFunction(() => typeof window.syncProviderChain === 'function');
-
-  // Force a sync using StakTrakr as provider
-  await page.evaluate(async () => {
-    // Set StakTrakr as rank-1 provider so fetchStaktrakrPrices is the active path
-    const cfg = window.loadApiConfig ? window.loadApiConfig() : {};
-    if (cfg.providers) {
-      cfg.providers.STAKTRAKR = { ...(cfg.providers.STAKTRAKR || {}), rank: 1, enabled: true };
-    }
-    if (window.saveApiConfig) window.saveApiConfig(cfg);
-    await window.syncProviderChain({ showProgress: false, forceSync: true });
-  });
-
-  const hasHourlyData = await page.evaluate(() => {
-    return (window.spotHistory || []).some(e => e.source === 'api-hourly' || e.provider === 'StakTrakr');
-  });
-  expect(hasHourlyData).toBe(true);
-});
-
-test('STAK-255: spot sync succeeds when fallback hourly endpoint is down (primary resilience)', async ({ page }) => {
-  // Serve valid spot data from api1.staktrakr.com/hourly (primary)
-  await page.route('**/api1.staktrakr.com/hourly/**', route =>
-    route.fulfill({ status: 200, contentType: 'application/json', body: MOCK_HOURLY_SPOT })
-  );
-  // Block api.staktrakr.com/data/hourly (fallback)
-  await page.route('**/api.staktrakr.com/data/hourly/**', route => route.fulfill({ status: 404, body: 'Not Found' }));
-
-  await page.goto('/');
-  await page.waitForFunction(() => typeof window.syncProviderChain === 'function');
-
-  await page.evaluate(async () => {
-    const cfg = window.loadApiConfig ? window.loadApiConfig() : {};
-    if (cfg.providers) {
-      cfg.providers.STAKTRAKR = { ...(cfg.providers.STAKTRAKR || {}), rank: 1, enabled: true };
-    }
-    if (window.saveApiConfig) window.saveApiConfig(cfg);
-    await window.syncProviderChain({ showProgress: false, forceSync: true });
-  });
-
-  const hasHourlyData = await page.evaluate(() => {
-    return (window.spotHistory || []).some(e => e.source === 'api-hourly' || e.provider === 'StakTrakr');
-  });
-  expect(hasHourlyData).toBe(true);
+  expect(result.apiHourlyCorrect).toBe(true);
+  expect(result.apiRetailCorrect).toBe(true);
+  expect(result.hourlyCount).toBe(1);
+  expect(result.retailCount).toBe(1);
 });
 
 // =============================================================================

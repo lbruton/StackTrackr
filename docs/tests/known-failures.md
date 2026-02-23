@@ -23,7 +23,6 @@ After editing this file, copy the active/resolved tables into `.claude/skills/sm
 
 | ID | Spec | Test Name | Status | Root Cause | First Seen |
 |----|------|-----------|--------|------------|------------|
-| KF-001 | `api-integrations.spec.js` | `STAK-255: hourlyBaseUrls and RETAIL_API_ENDPOINTS use correct paths` | ⚠️ Flaky | Asserts exact URL structure (`api1.staktrakr.com/data/hourly`) in `window.API_PROVIDERS.STAKTRAKR.hourlyBaseUrls`; breaks when API constants are reorganised | 2026-02-22 |
 | KF-002 | `api-integrations.spec.js` | `STAK-215: syncStatus shows save-failure message when localStorage quota is exceeded` | ⚠️ Flaky | Forces `localStorage.setItem` to throw a quota error via mock; not reproducible against Cloudflare Pages (different storage policy) | 2026-02-22 |
 | KF-003 | `live-demo.spec.js` | `live demo — load, hover spot cards, open About` | ⚠️ Flaky | No hard assertions — pure timing test; ack modal dismiss timing differs on HTTPS vs local HTTP; fails intermittently against preview URLs | 2026-02-22 |
 | KF-004 | `market-toggle.spec.js` | `Test 1: New user sees all 5 header buttons by default` | 🔴 Broken | `#headerMarketBtn` not visible on fresh load — selector may have changed or button render order changed since test was written | 2026-02-22 |
@@ -37,6 +36,7 @@ After editing this file, copy the active/resolved tables into `.claude/skills/sm
 
 | ID | Spec | Test Name | Status | Resolved In | Notes |
 |----|------|-----------|--------|-------------|-------|
+| KF-001 | `api-integrations.spec.js` | `STAK-255: hourlyBaseUrls and RETAIL_API_ENDPOINTS use correct paths` | ✅ Resolved | STAK-271 | `api1.staktrakr.com` fallback removed; single endpoint only — assertion now stable |
 | BUG-001 | `ui-checks.spec.js` | Search returns 0 results intermittently | ✅ Resolved | dev | Confirmed not triggered across multiple runs |
 | BUG-002 | `crud.spec.js` | Autocomplete ghost text persists after modal close | ✅ Resolved | dev | Confirmed not triggered across multiple runs |
 | BUG-006 | `crud.spec.js` | Delete executed immediately with no confirmation dialog | ✅ Resolved | v3.31.5 | Replaced with `showBulkConfirm` DOM modal |
