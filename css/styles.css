@@ -476,6 +476,7 @@ section {
   flex-wrap: wrap;
   gap: 6px;
   margin-top: 6px;
+  margin-bottom: 10px;
 }
 
 .footer-badges img {
@@ -498,6 +499,11 @@ section {
 .version-badge--current {
   background: var(--success);
   color: #fff;
+}
+
+[data-theme="dark"] .version-badge--current,
+[data-theme="hello-kitty"] .version-badge--current {
+  color: #0f2318;
 }
 
 .version-badge--update {
