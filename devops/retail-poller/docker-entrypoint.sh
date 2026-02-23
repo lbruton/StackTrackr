@@ -41,19 +41,8 @@ else
   chown -R postgres:postgres /var/lib/postgresql
 fi
 
-# ── 4. Clone StakTrakrApi repo (so serve.js has data on first boot) ────
-API_EXPORT_DIR="${API_EXPORT_DIR:-/tmp/staktrakr-api-export}"
-POLLER_ID="${POLLER_ID:-api1}"
-
-if [ -n "$_GIT_TOKEN" ] && [ ! -d "$API_EXPORT_DIR" ]; then
-  echo "[entrypoint] Cloning StakTrakrApi repo..."
-  git clone "https://${_GIT_TOKEN}@github.com/lbruton/StakTrakrApi.git" "$API_EXPORT_DIR" 2>&1
-  cd "$API_EXPORT_DIR"
-  git fetch origin "$POLLER_ID" 2>/dev/null || true
-  git checkout "$POLLER_ID" 2>/dev/null || git checkout -b "$POLLER_ID"
-  git pull origin "$POLLER_ID" 2>/dev/null || true
-  echo "[entrypoint] Repo ready at $API_EXPORT_DIR (branch: $POLLER_ID)"
-fi
+# ── 4. (Clone removed) run-local.sh clones fresh each run ──────────────
+# API repo is no longer cloned at entrypoint — stateless clone in run-local.sh
 
 # ── 5.5. Dynamic cron schedule (overrides Dockerfile baked-in crontab) ──
 CRON_SCHEDULE="${CRON_SCHEDULE:-*/15}"

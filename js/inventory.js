@@ -242,10 +242,23 @@ const createBackupZip = async () => {
       const allUserImages = await imageCache.exportAllUserImages();
       if (allUserImages.length > 0) {
         const userImgFolder = zip.folder('user_images');
+        const userImageManifest = { version: APP_VERSION, exportDate: new Date().toISOString(), entries: [] };
         for (const rec of allUserImages) {
           if (rec.obverse) userImgFolder.file(`${rec.uuid}_obverse.jpg`, rec.obverse);
           if (rec.reverse) userImgFolder.file(`${rec.uuid}_reverse.jpg`, rec.reverse);
+          const item = typeof inventory !== 'undefined' ? inventory.find(i => i.uuid === rec.uuid) : null;
+          userImageManifest.entries.push({
+            uuid: rec.uuid,
+            itemName: item?.name || '',
+            hasObverse: !!rec.obverse,
+            hasReverse: !!rec.reverse,
+            obverseFile: rec.obverse ? `user_images/${rec.uuid}_obverse.jpg` : null,
+            reverseFile: rec.reverse ? `user_images/${rec.uuid}_reverse.jpg` : null,
+            cachedAt: rec.cachedAt || null,
+            size: rec.size || 0,
+          });
         }
+        zip.file('user_image_manifest.json', JSON.stringify(userImageManifest, null, 2));
       }
 
       // Custom pattern rule images (keyed by rule ID) — STAK-225
@@ -501,26 +514,46 @@ const restoreBackupZip = async (file) => {
         }
       }
 
-      // Restore user-uploaded photos (STAK-225)
+      // Restore user-uploaded photos (STAK-225 / STAK-226)
       const userImgFolder = zip.folder('user_images');
       if (userImgFolder) {
-        const userEntries = [];
-        userImgFolder.forEach((path, file) => userEntries.push({ path, file }));
-        const userImageMap = new Map();
-        for (const { path, file } of userEntries) {
-          const m = path.match(/^(.+)_(obverse|reverse)\.jpg$/);
-          if (!m) continue;
-          if (!userImageMap.has(m[1])) userImageMap.set(m[1], {});
-          userImageMap.get(m[1])[m[2]] = await file.async('blob');
-        }
-        for (const [uuid, sides] of userImageMap) {
-          await imageCache.importUserImageRecord({
-            uuid,
-            obverse: sides.obverse || null,
-            reverse: sides.reverse || null,
-            cachedAt: Date.now(),
-            size: (sides.obverse?.size || 0) + (sides.reverse?.size || 0),
-          });
+        // STAK-226: use manifest when present for reliable UUID→file mapping
+        const manifestFile = zip.file('user_image_manifest.json');
+        if (manifestFile) {
+          const manifestData = JSON.parse(await manifestFile.async('string'));
+          for (const entry of (manifestData.entries || [])) {
+            const obverseFile = entry.obverseFile ? zip.file(entry.obverseFile) : null;
+            const reverseFile = entry.reverseFile ? zip.file(entry.reverseFile) : null;
+            const obverse = obverseFile ? await obverseFile.async('blob') : null;
+            const reverse = reverseFile ? await reverseFile.async('blob') : null;
+            await imageCache.importUserImageRecord({
+              uuid: entry.uuid,
+              obverse,
+              reverse,
+              cachedAt: entry.cachedAt || Date.now(),
+              size: entry.size || (obverse?.size || 0) + (reverse?.size || 0),
+            });
+          }
+        } else {
+          // Fallback: filename parsing for ZIPs created before STAK-226
+          const userEntries = [];
+          userImgFolder.forEach((path, file) => userEntries.push({ path, file }));
+          const userImageMap = new Map();
+          for (const { path, file } of userEntries) {
+            const m = path.match(/^(.+)_(obverse|reverse)\.jpg$/);
+            if (!m) continue;
+            if (!userImageMap.has(m[1])) userImageMap.set(m[1], {});
+            userImageMap.get(m[1])[m[2]] = await file.async('blob');
+          }
+          for (const [uuid, sides] of userImageMap) {
+            await imageCache.importUserImageRecord({
+              uuid,
+              obverse: sides.obverse || null,
+              reverse: sides.reverse || null,
+              cachedAt: Date.now(),
+              size: (sides.obverse?.size || 0) + (sides.reverse?.size || 0),
+            });
+          }
         }
       }
 
@@ -678,6 +711,11 @@ FILE CONTENTS:
    - Enriched Numista metadata for cached coins
    - Restored alongside images for offline viewing
 
+10. user_image_manifest.json (if user-uploaded photos exist)
+   - Links each photo to its item UUID and name
+   - Used by the importer for reliable restore; human-readable
+   - Falls back to filename parsing for ZIPs without this file
+
 RESTORATION INSTRUCTIONS:
 ------------------------
 
@@ -722,8 +760,8 @@ window.getNextSerial = getNextSerial;
 /**
  * Saves current inventory to localStorage
  */
-const saveInventory = () => {
-  saveData(LS_KEY, inventory);
+const saveInventory = async () => {
+  await saveData(LS_KEY, inventory);
   // CatalogManager handles its own saving, no need to explicitly save catalogMap
   // STACK-62: Invalidate autocomplete cache so lookup table rebuilds with current inventory
   if (typeof clearLookupCache === 'function') clearLookupCache();

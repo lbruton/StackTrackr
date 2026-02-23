@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { dismissAckModal } from './test-utils.js';
 
 /**
  * Numista API — End-to-End Tests
@@ -21,11 +22,7 @@ const COIN_MATCH     = 'F:D:';   // unique text in the target result card
 // ── Shared helpers ─────────────────────────────────────────────────────────
 
 async function dismissAck(page) {
-  const modal = page.locator('#ackModal');
-  if (await modal.isVisible()) {
-    await page.locator('#ackAcceptBtn').click();
-    await expect(modal).not.toBeVisible();
-  }
+  await dismissAckModal(page);
 }
 
 async function dismissVersionModal(page) {

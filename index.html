@@ -1795,18 +1795,48 @@
       </div>
     </div>
     <footer class="app-footer">
-      <div class="storage-line">Storage: <span id="storageUsage"></span> <div class="storage-bar" id="storageBar"><div class="storage-bar-ls" id="storageBarLs" title="localStorage"></div><div class="storage-bar-idb" id="storageBarIdb" title="IndexedDB Images"></div></div> <a href="#" id="storageReportLink">Storage report</a></div>
+      <div class="footer-badges">
+        <a href="https://github.com/lbruton/StakTrakr" target="_blank" rel="noopener"><img src="https://img.shields.io/github/license/lbruton/StakTrakr?style=flat-square" alt="MIT License" height="20"></a>
+        <a href="https://app.codacy.com/gh/lbruton/StakTrakr/dashboard?utm_source=gh&amp;utm_medium=referral&amp;utm_content=&amp;utm_campaign=Badge_grade" target="_blank" rel="noopener"><img src="https://app.codacy.com/project/badge/Grade/b8d30126676546cb958fa6a7e0174da8" alt="Codacy Badge" height="20"></a>
+        <a href="https://github.com/lbruton/StakTrakr/issues" target="_blank" rel="noopener"><img src="https://img.shields.io/github/issues/lbruton/StakTrakr?style=flat-square" alt="GitHub Issues" height="20"></a>
+        <a href="https://www.reddit.com/r/staktrakr/" target="_blank" rel="noopener"><img src="https://img.shields.io/reddit/subreddit-subscribers/staktrakr?style=flat-square&amp;label=community" alt="Community" height="20"></a>
+        <a href="https://github.com/sponsors/lbruton" target="_blank" rel="noopener"><img src="https://img.shields.io/badge/sponsor-%E2%99%A1-ea4aaa?style=flat-square" alt="Sponsor" height="20"></a>
+      </div>
+      <div class="storage-line">Storage: <span id="storageUsage"></span> <div class="storage-bar" id="storageBar"><div class="storage-bar-ls" id="storageBarLs" title="localStorage"></div><div class="storage-bar-idb" id="storageBarIdb" title="IndexedDB Images"></div></div></div>
       <div class="footer-meta">
-        <span>Thank you for using <span id="footerBrand">StakTrakr</span> <a id="versionBadge" class="version-badge" style="display: none"></a>. &copy; 2025-2026 <a id="footerDomain" href="https://staktrakr.com" target="_blank" rel="noopener">staktrakr.com</a>. Special thanks to the <a href="https://www.reddit.com/r/Silverbugs/" target="_blank" rel="noopener">r/Silverbugs</a> community for the feedback, bug reports, and encouragement that shaped this app. &middot; <a href="#" onclick="if(window.showFaqModal){event.preventDefault();window.showFaqModal();}">FAQ</a></span>
-        <div class="footer-badges">
-          <a href="https://github.com/lbruton/StakTrakr" target="_blank" rel="noopener"><img src="https://img.shields.io/github/license/lbruton/StakTrakr?style=flat-square" alt="MIT License" height="20"></a>
-          <a href="https://app.codacy.com/gh/lbruton/StakTrakr/dashboard?utm_source=gh&amp;utm_medium=referral&amp;utm_content=&amp;utm_campaign=Badge_grade" target="_blank" rel="noopener"><img src="https://app.codacy.com/project/badge/Grade/b8d30126676546cb958fa6a7e0174da8" alt="Codacy Badge" height="20"></a>
-          <a href="https://github.com/lbruton/StakTrakr/issues" target="_blank" rel="noopener"><img src="https://img.shields.io/github/issues/lbruton/StakTrakr?style=flat-square" alt="GitHub Issues" height="20"></a>
-          <a href="https://www.reddit.com/r/staktrakr/" target="_blank" rel="noopener"><img src="https://img.shields.io/reddit/subreddit-subscribers/staktrakr?style=flat-square&amp;label=community" alt="Community" height="20"></a>
-          <a href="https://github.com/sponsors/lbruton" target="_blank" rel="noopener"><img src="https://img.shields.io/badge/sponsor-%E2%99%A1-ea4aaa?style=flat-square" alt="Sponsor" height="20"></a>
-        </div>
+        <span>Thank you for using <span id="footerBrand">StakTrakr</span> <a id="versionBadge" class="version-badge" style="display: none"></a>. &copy; 2025-2026 <a id="footerDomain" href="https://staktrakr.com" target="_blank" rel="noopener">staktrakr.com</a>. &middot; <a href="#" onclick="if(window.showFaqModal){event.preventDefault();window.showFaqModal();}">FAQ</a> &middot; <button type="button" class="api-health-badge" id="apiHealthBadge" onclick="if(window.showApiHealthModal)window.showApiHealthModal()">Checking API…</button></span>
+      </div>
+      <div class="footer-thanks">
+        Special thanks to the <a href="https://www.reddit.com/r/Silverbugs/" target="_blank" rel="noopener">r/Silverbugs</a> community for the feedback, bug reports, and encouragement that shaped this app.
       </div>
     </footer>
+    <!-- =============================================================================
+       API HEALTH MODAL
+       Shows per-feed freshness: market prices (manifest.json), spot prices
+       (spot-history-YYYY.json), and Goldback daily scrape (goldback-spot.json).
+       ============================================================================= -->
+    <div class="modal" id="apiHealthModal" style="display: none; z-index: 10000">
+      <div class="modal-content" style="max-width:480px">
+        <div class="modal-header">
+          <h3>API Health Status</h3>
+          <button aria-label="Close modal" class="modal-close" id="apiHealthCloseBtn">&times;</button>
+        </div>
+        <div class="modal-body" style="padding:1rem 1.5rem">
+          <div class="about-section">
+            <div class="section-title">Status: <span id="apiHealthStatus">Checking…</span></div>
+            <table style="width:100%;font-size:0.9rem;border-collapse:collapse;margin-top:0.5rem">
+              <tr><td style="padding:0.3rem 0;color:var(--text-muted)">Market prices</td><td id="apiHealthMarket" style="text-align:right">&#x2014;</td></tr>
+              <tr><td style="padding:0.3rem 0;color:var(--text-muted)">Spot prices</td><td id="apiHealthSpot" style="text-align:right">&#x2014;</td></tr>
+              <tr><td style="padding:0.3rem 0;color:var(--text-muted)">Goldback (daily)</td><td id="apiHealthGoldback" style="text-align:right">&#x2014;</td></tr>
+              <tr><td style="padding:0.3rem 0;color:var(--text-muted)">Coverage</td><td id="apiHealthCoins" style="text-align:right">&#x2014;</td></tr>
+            </table>
+          </div>
+          <div class="about-alert about-alert-compact" style="margin-top:1rem">
+            <span id="apiHealthVerdict">Fetching status…</span>
+          </div>
+        </div>
+      </div>
+    </div>
     <!-- =============================================================================
        ABOUT & DISCLAIMER MODAL
        Comprehensive application information and disclaimer modal similar to the
@@ -1934,6 +1964,9 @@
               </button>
               <button class="about-badge" onclick="if(window.openModalById)openModalById('privacyModal')">
                 🔒 Privacy
+              </button>
+              <button class="about-badge" id="apiHealthBadgeAbout" onclick="if(window.showApiHealthModal)window.showApiHealthModal()">
+                📡 API Health
               </button>
             </div>
           </div>
@@ -2076,49 +2109,91 @@
             <div class="settings-section-panel" id="settingsPanel_site" style="display: block">
               <h3>Appearance</h3>
 
-              <!-- ── Theme + Timezone side-by-side ── -->
+              <!-- ── Card 1: Visual style pickers ── -->
               <div class="settings-fieldset">
-                <div class="settings-card-grid">
-                  <div class="settings-card">
-                    <div class="settings-fieldset-title">Theme</div>
-                    <div class="settings-group">
-                      <div class="settings-group-label">Color scheme</div>
-                      <div class="theme-picker">
-                        <button class="theme-option" data-theme="light" title="Light">&#9728;&#65039; Light</button>
-                        <button class="theme-option" data-theme="dark" title="Dark">&#127769; Dark</button>
-                        <button class="theme-option" data-theme="sepia" title="Sepia">&#128220; Sepia</button>
-                      </div>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:0.75rem 1.5rem; align-items:end;">
+                  <div style="display:flex; flex-direction:column; gap:0.35rem;">
+                    <div class="settings-group-label">Color scheme</div>
+                    <div class="theme-picker" style="display:flex; flex-wrap:nowrap; gap:0;">
+                      <button class="theme-option" data-theme="light" title="Light" style="padding:0.55rem 1rem; font-size:0.8125rem; border-radius:var(--radius) 0 0 var(--radius); border-right-width:0;">&#9728;&#65039; Light</button>
+                      <button class="theme-option" data-theme="dark" title="Dark" style="padding:0.55rem 1rem; font-size:0.8125rem; border-radius:0; border-right-width:0;">&#127769; Dark</button>
+                      <button class="theme-option" data-theme="sepia" title="Sepia" style="padding:0.55rem 1rem; font-size:0.8125rem; border-radius:0 var(--radius) var(--radius) 0;">&#128220; Sepia</button>
                     </div>
                   </div>
-                  <div class="settings-card">
-                    <div class="settings-fieldset-title">Display Timezone</div>
-                    <div class="settings-group">
-                      <div class="settings-group-label">Timezone</div>
-                      <p class="settings-subtext">Choose which timezone to use when displaying timestamps. Stored data is always UTC.</p>
-                      <select id="settingsTimezone" class="form-control">
-                        <option value="auto">Auto (browser default)</option>
-                        <option value="UTC">UTC</option>
-                        <optgroup label="Americas">
-                          <option value="America/New_York">Eastern (New York)</option>
-                          <option value="America/Chicago">Central (Chicago)</option>
-                          <option value="America/Denver">Mountain (Denver)</option>
-                          <option value="America/Los_Angeles">Pacific (Los Angeles)</option>
-                          <option value="America/Anchorage">Alaska</option>
-                          <option value="Pacific/Honolulu">Hawaii</option>
-                        </optgroup>
-                        <optgroup label="Europe">
-                          <option value="Europe/London">London (GMT/BST)</option>
-                          <option value="Europe/Paris">Paris / CET</option>
-                          <option value="Europe/Moscow">Moscow</option>
-                        </optgroup>
-                        <optgroup label="Asia / Pacific">
-                          <option value="Asia/Tokyo">Tokyo (JST)</option>
-                          <option value="Asia/Shanghai">Shanghai (CST)</option>
-                          <option value="Asia/Kolkata">Kolkata (IST)</option>
-                          <option value="Australia/Sydney">Sydney (AEST)</option>
-                        </optgroup>
-                      </select>
+                  <div style="display:flex; flex-direction:column; gap:0.35rem;">
+                    <div class="settings-group-label">Inventory View</div>
+                    <div class="chip-sort-toggle" id="settingsCardStyleToggle" style="width:fit-content;">
+                      <button type="button" class="chip-sort-btn active" data-style="A" title="Sparkline cards" style="padding:0.55rem 1rem; font-size:0.8125rem; min-width:2.5rem;">A</button>
+                      <button type="button" class="chip-sort-btn" data-style="B" title="Hero cards" style="padding:0.55rem 1rem; font-size:0.8125rem; min-width:2.5rem;">B</button>
+                      <button type="button" class="chip-sort-btn" data-style="C" title="Split cards" style="padding:0.55rem 1rem; font-size:0.8125rem; min-width:2.5rem;">C</button>
+                      <button type="button" class="chip-sort-btn" data-style="D" title="Table view" style="padding:0.55rem 0.9rem; font-size:0.8125rem; min-width:2.5rem;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                          <rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="9" x2="9" y2="21"/><line x1="15" y1="9" x2="15" y2="21"/>
+                        </svg>
+                      </button>
                     </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- ── Card 2: Display preference dropdowns ── -->
+              <div class="settings-fieldset">
+                <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:0.75rem 1rem; align-items:end;">
+                  <div style="display:flex; flex-direction:column; gap:0.35rem;">
+                    <div class="settings-group-label">Timezone</div>
+                    <select id="settingsTimezone" class="form-control">
+                      <option value="auto">Auto</option>
+                      <option value="UTC">UTC</option>
+                      <optgroup label="Americas">
+                        <option value="America/New_York">Eastern (New York)</option>
+                        <option value="America/Chicago">Central (Chicago)</option>
+                        <option value="America/Denver">Mountain (Denver)</option>
+                        <option value="America/Los_Angeles">Pacific (Los Angeles)</option>
+                        <option value="America/Anchorage">Alaska</option>
+                        <option value="Pacific/Honolulu">Hawaii</option>
+                      </optgroup>
+                      <optgroup label="Europe">
+                        <option value="Europe/London">London (GMT/BST)</option>
+                        <option value="Europe/Paris">Paris / CET</option>
+                        <option value="Europe/Moscow">Moscow</option>
+                      </optgroup>
+                      <optgroup label="Asia / Pacific">
+                        <option value="Asia/Tokyo">Tokyo (JST)</option>
+                        <option value="Asia/Shanghai">Shanghai (CST)</option>
+                        <option value="Asia/Kolkata">Kolkata (IST)</option>
+                        <option value="Australia/Sydney">Sydney (AEST)</option>
+                      </optgroup>
+                    </select>
+                  </div>
+                  <div style="display:flex; flex-direction:column; gap:0.35rem;">
+                    <div class="settings-group-label">Default Sort</div>
+                    <select id="settingsDefaultSortColumn">
+                      <option value="0">Date</option>
+                      <option value="1">Metal</option>
+                      <option value="2">Type</option>
+                      <option value="4" selected>Name</option>
+                      <option value="5">Qty</option>
+                      <option value="6">Weight</option>
+                      <option value="7">Purchase</option>
+                      <option value="8">Melt Value</option>
+                      <option value="9">Retail</option>
+                      <option value="10">Gain/Loss</option>
+                      <option value="11">Source</option>
+                    </select>
+                  </div>
+                  <div style="display:flex; flex-direction:column; gap:0.35rem;">
+                    <div class="settings-group-label">Visible Items</div>
+                    <select id="settingsItemsPerPage">
+                      <option value="3">3</option>
+                      <option value="6">6</option>
+                      <option value="12">12</option>
+                      <option value="24">24</option>
+                      <option value="48">48</option>
+                      <option value="96">96</option>
+                      <option value="128">128</option>
+                      <option value="512">512</option>
+                      <option value="all">All</option>
+                    </select>
                   </div>
                 </div>
               </div>
@@ -2129,10 +2204,9 @@
               <div class="settings-fieldset">
                 <div class="settings-fieldset-title">Header Buttons</div>
                 <p class="settings-subtext">Optional buttons shown in the top-right of the app header.</p>
-                <div class="settings-card-grid settings-card-grid--compact">
+                <div class="settings-card-grid settings-card-grid--3col settings-card-grid--mini">
                   <div class="settings-card">
                     <div class="settings-group-label">Theme</div>
-                    <p class="settings-subtext">Cycle color theme.</p>
                     <div class="chip-sort-toggle" id="settingsHeaderThemeBtn_hdr">
                       <button type="button" class="chip-sort-btn" data-val="yes">On</button>
                       <button type="button" class="chip-sort-btn" data-val="no">Off</button>
@@ -2140,7 +2214,6 @@
                   </div>
                   <div class="settings-card">
                     <div class="settings-group-label">Currency</div>
-                    <p class="settings-subtext">Switch display currency.</p>
                     <div class="chip-sort-toggle" id="settingsHeaderCurrencyBtn_hdr">
                       <button type="button" class="chip-sort-btn" data-val="yes">On</button>
                       <button type="button" class="chip-sort-btn" data-val="no">Off</button>
@@ -2148,7 +2221,6 @@
                   </div>
                   <div class="settings-card">
                     <div class="settings-group-label">Market</div>
-                    <p class="settings-subtext">Open market prices.</p>
                     <div class="chip-sort-toggle" id="settingsHeaderMarketBtn_hdr">
                       <button type="button" class="chip-sort-btn" data-val="yes">On</button>
                       <button type="button" class="chip-sort-btn" data-val="no">Off</button>
@@ -2156,7 +2228,6 @@
                   </div>
                   <div class="settings-card">
                     <div class="settings-group-label">Trend</div>
-                    <p class="settings-subtext">Cycle sparkline period.</p>
                     <div class="chip-sort-toggle" id="settingsHeaderTrendBtn_hdr">
                       <button type="button" class="chip-sort-btn" data-val="yes">On</button>
                       <button type="button" class="chip-sort-btn" data-val="no">Off</button>
@@ -2164,7 +2235,6 @@
                   </div>
                   <div class="settings-card">
                     <div class="settings-group-label">Sync</div>
-                    <p class="settings-subtext">Sync all spot prices.</p>
                     <div class="chip-sort-toggle" id="settingsHeaderSyncBtn_hdr">
                       <button type="button" class="chip-sort-btn" data-val="yes">On</button>
                       <button type="button" class="chip-sort-btn" data-val="no">Off</button>
@@ -2192,68 +2262,6 @@
                 </div>
               </div>
 
-              <!-- ── Inventory View ── -->
-              <div class="settings-fieldset">
-                <div class="settings-fieldset-title">Inventory View</div>
-                <div class="settings-card-grid settings-card-grid--compact settings-card-grid--3col">
-                  <div class="settings-card">
-                    <div class="settings-group-label">Card View</div>
-                    <p class="settings-subtext">Select layout style.</p>
-                    <div class="chip-sort-toggle" id="settingsCardStyleToggle">
-                      <button type="button" class="chip-sort-btn active" data-style="A" title="Sparkline cards">A</button>
-                      <button type="button" class="chip-sort-btn" data-style="B" title="Hero cards">B</button>
-                      <button type="button" class="chip-sort-btn" data-style="C" title="Split cards">C</button>
-                      <button type="button" class="chip-sort-btn" data-style="D" title="Table view">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                          <rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="9" x2="9" y2="21"/><line x1="15" y1="9" x2="15" y2="21"/>
-                        </svg>
-                      </button>
-                    </div>
-                  </div>
-                  <div class="settings-card">
-                    <div class="settings-group-label">Default Sort</div>
-                    <p class="settings-subtext">Sort field and direction on load.</p>
-                    <select id="settingsDefaultSortColumn" style="margin-bottom:0.4rem">
-                      <option value="0">Date</option>
-                      <option value="1">Metal</option>
-                      <option value="2">Type</option>
-                      <option value="4" selected>Name</option>
-                      <option value="5">Qty</option>
-                      <option value="6">Weight</option>
-                      <option value="7">Purchase</option>
-                      <option value="8">Melt Value</option>
-                      <option value="9">Retail</option>
-                      <option value="10">Gain/Loss</option>
-                      <option value="11">Source</option>
-                    </select>
-                    <div class="chip-sort-toggle" id="settingsDefaultSortDir">
-                      <button type="button" class="chip-sort-btn active" data-val="asc">↑ Asc</button>
-                      <button type="button" class="chip-sort-btn" data-val="desc">↓ Desc</button>
-                    </div>
-                  </div>
-                  <div class="settings-card">
-                    <div class="settings-group-label">Visible Items</div>
-                    <p class="settings-subtext">Max items shown before scrolling (cards + table).</p>
-                    <select id="settingsItemsPerPage">
-                      <option value="3">3</option>
-                      <option value="6">6</option>
-                      <option value="12">12</option>
-                      <option value="24">24</option>
-                      <option value="48">48</option>
-                      <option value="96">96</option>
-                      <option value="128">128</option>
-                      <option value="512">512</option>
-                      <option value="all">All</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-
-              <!-- ── Custom Themes (placeholder) ── -->
-              <div class="settings-fieldset" style="text-align:center; opacity:0.6;">
-                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.3"><circle cx="13.5" cy="6.5" r="2.5"/><circle cx="19" cy="13" r="2.5"/><circle cx="16" cy="20" r="2.5"/><circle cx="7" cy="20" r="2.5"/><circle cx="4" cy="13" r="2.5"/><circle cx="12" cy="13" r="3"/></svg>
-                <p style="margin-top:0.5rem; font-size:0.85rem;">Custom themes coming soon &mdash; build your own color scheme.</p>
-              </div>
 
             </div>
 
@@ -3166,6 +3174,16 @@
                   <span class="cloud-status-label">Cache status</span>
                   <span class="cloud-status-value" id="cloudPwCacheStatus">Not cached</span>
                 </div>
+                <div class="cloud-status-row" style="margin-top:0.5rem">
+                  <label class="cloud-status-label" for="cloudVaultIdleTimeout">Auto-lock after idle</label>
+                  <select id="cloudVaultIdleTimeout" class="control-select" title="Clear cached vault password after this period of inactivity">
+                    <option value="15">15 minutes</option>
+                    <option value="30">30 minutes</option>
+                    <option value="60">1 hour</option>
+                    <option value="120">2 hours</option>
+                    <option value="0">Never</option>
+                  </select>
+                </div>
               </div>
 
             </div>
@@ -3527,12 +3545,9 @@
                   Auto-estimate prices from gold spot: <code>2 &times; (spot&thinsp;/&thinsp;1000) &times; modifier</code>.
                   Manual edits will be overwritten on the next spot refresh.
                 </p>
-                <div style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;">
-                  <div id="settingsGoldbackEstimateEnabled" class="chip-sort-group">
-                    <button class="chip-sort-btn" data-val="on" type="button">On</button>
-                    <button class="chip-sort-btn active" data-val="off" type="button">Off</button>
-                  </div>
-                  <button class="btn btn-primary" id="goldbackEstimateRefreshBtn" type="button" style="display:none;">Refresh from API</button>
+                <div id="settingsGoldbackEstimateEnabled" class="chip-sort-group">
+                  <button class="chip-sort-btn" data-val="on" type="button">On</button>
+                  <button class="chip-sort-btn active" data-val="off" type="button">Off</button>
                 </div>
                 <div id="goldbackEstimateModifierRow" style="display:none;margin-top:0.5rem;">
                   <label style="font-size:0.85em;">
@@ -3545,6 +3560,12 @@
                   </div>
                 </div>
                 <p id="goldbackEstimateInfo" class="settings-subtext" style="display:none;margin-top:0.5rem;"></p>
+              </div>
+
+              <div class="settings-group">
+                <label>Refresh from API</label>
+                <p class="settings-subtext">Fetch today's official Goldback exchange rate from the StakTrakr API and populate all denomination prices automatically.</p>
+                <button class="btn btn-primary" id="goldbackEstimateRefreshBtn" type="button" style="display:none;">Refresh from API</button>
               </div>
 
               <div class="settings-group">
@@ -4319,6 +4340,7 @@
         <div class="modal-footer api-history-footer">
           <button type="button" class="btn" id="exportSpotHistoryBtn">Export History</button>
           <button type="button" class="btn" id="importSpotHistoryBtn">Import History</button>
+          <button type="button" class="btn btn-secondary" id="restoreHistoricalDataBtn">Restore Historical Data</button>
           <input type="file" id="importSpotHistoryFile" accept=".csv,.json" style="display:none">
         </div>
       </div>
@@ -4778,6 +4800,7 @@
   <script defer src="./js/seed-images.js"></script>
   <script defer src="./js/versionCheck.js"></script>
   <script defer src="./js/changeLog.js"></script>
+  <script defer src="./js/diff-engine.js"></script>
     <script defer src="./js/charts.js"></script>
     <script defer src="./js/theme.js"></script>
     <script defer src="./js/search.js"></script>
@@ -4809,6 +4832,7 @@
     <script defer src="./js/cloud-storage.js"></script>
     <script defer src="./js/cloud-sync.js"></script>
     <script defer src="./js/about.js"></script>
+    <script defer src="./js/api-health.js"></script>
     <script defer src="./js/faq.js"></script>
     <script defer src="./js/customMapping.js"></script>
     <script defer src="./js/settings.js"></script>

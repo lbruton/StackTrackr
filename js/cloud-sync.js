@@ -144,6 +144,14 @@ async function syncRestoreOverrideBackup() {
 
   try {
     var bkeys = Object.keys(backup.data);
+    // Guard: only clear scope keys when the snapshot is non-empty.
+    // An empty snapshot likely indicates corruption — don't wipe localStorage.
+    if (bkeys.length > 0 && typeof SYNC_SCOPE_KEYS !== 'undefined') {
+      for (var k = 0; k < SYNC_SCOPE_KEYS.length; k++) {
+        localStorage.removeItem(SYNC_SCOPE_KEYS[k]);
+      }
+      debugLog('[CloudSync] Cleared', SYNC_SCOPE_KEYS.length, 'scope keys before restore');
+    }
     for (var j = 0; j < bkeys.length; j++) {
       if (typeof ALLOWED_STORAGE_KEYS !== 'undefined' && ALLOWED_STORAGE_KEYS.indexOf(bkeys[j]) !== -1) {
         localStorage.setItem(bkeys[j], backup.data[bkeys[j]]);
@@ -174,7 +182,7 @@ async function syncRestoreOverrideBackup() {
  * @param {string} [detail] optional status text (e.g. "Just now", error message)
  */
 function updateSyncStatusIndicator(state, detail) {
-  var el = document.getElementById('cloudAutoSyncStatus');
+  var el = safeGetElement('cloudAutoSyncStatus');
   if (!el) return;
 
   var dot = el.querySelector('.cloud-sync-dot');
@@ -204,12 +212,12 @@ function updateSyncStatusIndicator(state, detail) {
  */
 function refreshSyncUI() {
   // Sync toggle
-  var toggle = document.getElementById('cloudAutoSyncToggle');
+  var toggle = safeGetElement('cloudAutoSyncToggle');
   if (toggle) toggle.checked = syncIsEnabled();
 
   // Last synced label
   var lastPush = syncGetLastPush();
-  var lastSyncEl = document.getElementById('cloudAutoSyncLastSync');
+  var lastSyncEl = safeGetElement('cloudAutoSyncLastSync');
   if (lastSyncEl) {
     if (lastPush && lastPush.timestamp) {
       lastSyncEl.textContent = _syncRelativeTime(lastPush.timestamp);
@@ -219,7 +227,7 @@ function refreshSyncUI() {
   }
 
   // Sync Now button — enabled only when connected AND sync is on
-  var syncNowBtn = document.getElementById('cloudSyncNowBtn');
+  var syncNowBtn = safeGetElement('cloudSyncNowBtn');
   if (syncNowBtn) {
     var connected = typeof cloudIsConnected === 'function' ? cloudIsConnected(_syncProvider) : false;
     syncNowBtn.disabled = !(syncIsEnabled() && connected);
@@ -270,12 +278,12 @@ function getSyncPassword() {
 
   // Open the dedicated sync password modal and resolve when the user submits/cancels
   return new Promise(function (resolve) {
-    var modal = document.getElementById('cloudSyncPasswordModal');
-    var input = document.getElementById('syncPasswordInput');
-    var confirmBtn = document.getElementById('syncPasswordConfirmBtn');
-    var cancelBtn = document.getElementById('syncPasswordCancelBtn');
-    var cancelBtn2 = document.getElementById('syncPasswordCancelBtn2');
-    var errorEl = document.getElementById('syncPasswordError');
+    var modal = safeGetElement('cloudSyncPasswordModal');
+    var input = safeGetElement('syncPasswordInput');
+    var confirmBtn = safeGetElement('syncPasswordConfirmBtn');
+    var cancelBtn = safeGetElement('syncPasswordCancelBtn');
+    var cancelBtn2 = safeGetElement('syncPasswordCancelBtn2');
+    var errorEl = safeGetElement('syncPasswordError');
 
     if (!modal || !input || !confirmBtn) {
       if (typeof appPrompt === 'function') {
@@ -628,13 +636,13 @@ function syncHasLocalChanges() {
  */
 function showSyncUpdateModal(remoteMeta) {
   return new Promise(function (resolve) {
-    var modal = document.getElementById('cloudSyncUpdateModal');
+    var modal = safeGetElement('cloudSyncUpdateModal');
     if (!modal) { resolve(false); return; } // fallback: decline if no modal in DOM
 
     // Populate metadata fields
-    var itemCountEl = document.getElementById('syncUpdateItemCount');
-    var timestampEl = document.getElementById('syncUpdateTimestamp');
-    var deviceEl    = document.getElementById('syncUpdateDevice');
+    var itemCountEl = safeGetElement('syncUpdateItemCount');
+    var timestampEl = safeGetElement('syncUpdateTimestamp');
+    var deviceEl    = safeGetElement('syncUpdateDevice');
 
     if (itemCountEl) itemCountEl.textContent = remoteMeta.itemCount != null ? String(remoteMeta.itemCount) : '—';
     if (timestampEl) {
@@ -659,9 +667,9 @@ function showSyncUpdateModal(remoteMeta) {
     function onAccept()  { cleanup(true); }
     function onDismiss() { cleanup(false); }
 
-    var acceptBtn  = document.getElementById('syncUpdateAcceptBtn');
-    var dismissBtn = document.getElementById('syncUpdateDismissBtn');
-    var dismissX   = document.getElementById('syncUpdateDismissX');
+    var acceptBtn  = safeGetElement('syncUpdateAcceptBtn');
+    var dismissBtn = safeGetElement('syncUpdateDismissBtn');
+    var dismissX   = safeGetElement('syncUpdateDismissX');
 
     if (acceptBtn)  acceptBtn.addEventListener('click', onAccept);
     if (dismissBtn) dismissBtn.addEventListener('click', onDismiss);
@@ -834,7 +842,7 @@ async function pullSyncVault(remoteMeta) {
  * @param {{local: object, remote: object, remoteMeta: object}} opts
  */
 function showSyncConflictModal(opts) {
-  var modal = document.getElementById('cloudSyncConflictModal');
+  var modal = safeGetElement('cloudSyncConflictModal');
   if (!modal) {
     var msg = 'Sync conflict detected.\n\n' +
       'Local:  ' + opts.local.itemCount + ' items\n' +
@@ -851,7 +859,7 @@ function showSyncConflictModal(opts) {
 
   // Populate modal fields
   var setEl = function (id, text) {
-    var el = document.getElementById(id);
+    var el = safeGetElement(id);
     if (el) el.textContent = text || '\u2014';
   };
 
@@ -864,9 +872,9 @@ function showSyncConflictModal(opts) {
   setEl('syncConflictRemoteDevice', opts.remote.deviceId ? opts.remote.deviceId.slice(0, 8) + '\u2026' : 'Another device');
 
   // Wire buttons
-  var keepMineBtn = document.getElementById('syncConflictKeepMine');
-  var keepTheirsBtn = document.getElementById('syncConflictKeepTheirs');
-  var skipBtn = document.getElementById('syncConflictSkip');
+  var keepMineBtn = safeGetElement('syncConflictKeepMine');
+  var keepTheirsBtn = safeGetElement('syncConflictKeepTheirs');
+  var skipBtn = safeGetElement('syncConflictSkip');
 
   var closeModal = function () {
     modal.style.display = 'none';

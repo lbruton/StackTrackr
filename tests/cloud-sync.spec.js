@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { dismissAckModal } from './test-utils.js';
 
 // ── Mock data ─────────────────────────────────────────────────────────────────
 
@@ -92,11 +93,7 @@ test.describe('Cloud Sync — Dropbox (mocked API)', () => {
     await injectDropboxToken(page);
     await mockDropboxRoutes(page);
     await page.goto('/');
-
-    const ackModal = page.locator('#ackModal');
-    if (await ackModal.isVisible()) {
-      await page.locator('#ackAcceptBtn').click();
-    }
+    await dismissAckModal(page);
   });
 
   // ── 1. Connected state ──────────────────────────────────────────────────────

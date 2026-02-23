@@ -475,7 +475,7 @@ section {
   align-items: center;
   flex-wrap: wrap;
   gap: 6px;
-  margin-top: 6px;
+  margin-bottom: 10px;
 }
 
 .footer-badges img {
@@ -500,6 +500,11 @@ section {
   color: #fff;
 }
 
+[data-theme="dark"] .version-badge--current,
+[data-theme="hello-kitty"] .version-badge--current {
+  color: #0f2318;
+}
+
 .version-badge--update {
   background: var(--warning);
   color: #fff;
@@ -510,6 +515,27 @@ section {
   background: var(--bg-tertiary);
   color: var(--text-secondary);
   cursor: pointer;
+}
+
+.api-health-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 10px;
+  border: 1px solid var(--border-color);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  line-height: 1.4;
+  vertical-align: middle;
+  font-family: inherit;
+  white-space: nowrap;
+}
+.api-health-badge:hover {
+  color: var(--text-primary);
+  border-color: var(--text-muted);
 }
 
 .storage-line a {
@@ -3266,6 +3292,14 @@ input[type="submit"] {
 
 .settings-card-grid--3col {
   grid-template-columns: repeat(3, 1fr);
+}
+
+.settings-card-grid--mini .settings-card {
+  padding: 0.6rem 0.75rem;
+  gap: 0;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
 }
 
 /* Image actions row — flex wrap of action buttons */

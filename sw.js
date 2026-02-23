@@ -3,7 +3,7 @@
 // Cache version: auto-stamped by devops/hooks/stamp-sw-cache.sh pre-commit hook
 
 const DEV_MODE = false; // Set to true during development — bypasses all caching
-const CACHE_NAME = 'staktrakr-v3.32.01-b1771732900';
+const CACHE_NAME = 'staktrakr-v3.32.16-b1771823624';
 
 // Offline fallback for navigation requests when all cache/network strategies fail
 const OFFLINE_HTML = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>StakTrakr</title></head>' +
@@ -26,12 +26,16 @@ const CORE_ASSETS = [
   './js/utils.js',
   './js/dialogs.js',
   './js/image-cache.js',
+  './js/image-processor.js',
+  './js/bulk-image-cache.js',
+  './js/image-cache-modal.js',
   './js/fuzzy-search.js',
   './js/autocomplete.js',
   './js/numista-lookup.js',
   './js/seed-images.js',
   './js/versionCheck.js',
   './js/changeLog.js',
+  './js/diff-engine.js',
   './js/charts.js',
   './js/theme.js',
   './js/search.js',
@@ -63,6 +67,7 @@ const CORE_ASSETS = [
   './js/cloud-sync.js',
   './privacy.html',
   './js/about.js',
+  './js/api-health.js',
   './js/faq.js',
   './js/customMapping.js',
   './js/settings.js',

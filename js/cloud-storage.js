@@ -336,7 +336,7 @@ function cloudAuthStart(provider) {
   var config = CLOUD_PROVIDERS[provider];
   if (!config) return;
 
-  var state = provider + '_' + Date.now();
+  var state = provider + '_' + generateUUID();
   sessionStorage.setItem('cloud_oauth_state', state);
 
   var params = new URLSearchParams({
@@ -364,6 +364,11 @@ function cloudAuthStart(provider) {
         // Popup was blocked — fall back to main-window redirect
         window.location.href = url;
       }
+    }).catch(function (err) {
+      sessionStorage.removeItem('cloud_oauth_state');
+      sessionStorage.removeItem('cloud_pkce_verifier');
+      if (popup && !popup.closed) popup.close();
+      cloudNotifyAuthFailure(provider, 'PKCE challenge generation failed. Please try again.', err);
     });
   } else {
     var url = config.authUrl + '?' + params.toString();
@@ -400,12 +405,15 @@ function cloudNotifyAuthFailure(provider, message, details) {
 // Exchange an OAuth authorization code for an access token.
 async function cloudExchangeCode(code, state) {
   var savedState = sessionStorage.getItem('cloud_oauth_state');
-  var provider = (state || '').split('_')[0] || 'dropbox';
 
   if (state !== savedState) {
-    cloudNotifyAuthFailure(provider, 'OAuth state mismatch. Please try again.');
+    // Parse provider from savedState (trusted), not from the attacker-controlled state param
+    var failProvider = savedState ? savedState.split('_')[0] : 'unknown';
+    cloudNotifyAuthFailure(failProvider, 'OAuth state mismatch. Please try again.');
     return;
   }
+
+  var provider = (savedState || '').split('_')[0] || 'dropbox';
 
   var config = CLOUD_PROVIDERS[provider];
   if (!config) return;
@@ -476,6 +484,7 @@ async function cloudExchangeCode(code, state) {
     recordCloudActivity({ action: 'connect', provider: provider, result: 'success', detail: 'Connected to ' + config.name });
     debugLog('[CloudStorage] Connected to ' + config.name);
   } catch (err) {
+    sessionStorage.removeItem('cloud_oauth_state');
     cloudNotifyAuthFailure(provider, 'Token exchange request failed. Check redirect URI/domain registration and try again.', err);
   }
 }
@@ -982,6 +991,19 @@ function syncCloudUI() {
     }
   }
 
+  // Sync idle timeout select to stored preference
+  var idleSelect = safeGetElement('cloudVaultIdleTimeout');
+  if (idleSelect) {
+    var storedTimeout = localStorage.getItem(CLOUD_VAULT_IDLE_TIMEOUT_KEY);
+    var idleVal = storedTimeout !== null ? storedTimeout : '15';
+    // If stored value isn't a valid option, clamp to default and persist
+    if (!['0', '15', '30', '60', '120'].includes(idleVal)) {
+      idleVal = '15';
+      localStorage.setItem(CLOUD_VAULT_IDLE_TIMEOUT_KEY, idleVal);
+    }
+    idleSelect.value = idleVal;
+  }
+
   // STAK-149: Refresh auto-sync UI (toggle, last-synced, status dot)
   if (typeof refreshSyncUI === 'function') refreshSyncUI();
 }
@@ -1031,13 +1053,27 @@ function cloudClearCachedPassword() {
 // Idle auto-lock: clear cached vault password after inactivity
 // ---------------------------------------------------------------------------
 
-const IDLE_LOCK_TIMEOUT_MS = 15 * 60 * 1000; // 15 minutes
 let _idleLockTimer = null;
 let _idleThrottleTimer = null;
+
+/** Returns the vault idle lock timeout in ms. 0 means never lock. */
+function _getIdleLockTimeoutMs() {
+  var stored = localStorage.getItem(CLOUD_VAULT_IDLE_TIMEOUT_KEY);
+  var minutes = stored !== null ? parseInt(stored, 10) : 15;
+  if (isNaN(minutes) || ![0, 15, 30, 60, 120].includes(minutes)) minutes = 15;
+  return minutes === 0 ? 0 : minutes * 60 * 1000;
+}
 
 function _resetIdleLockTimer() {
   if (!sessionStorage.getItem('cloud_vault_pw_cache')) return;
   clearTimeout(_idleLockTimer);
+  var timeoutMs = _getIdleLockTimeoutMs();
+  if (timeoutMs === 0) {
+    // "Never" — cancel throttle too so activity listeners become true no-ops
+    clearTimeout(_idleThrottleTimer);
+    _idleThrottleTimer = null;
+    return;
+  }
   _idleLockTimer = setTimeout(function () {
     if (!sessionStorage.getItem('cloud_vault_pw_cache')) return;
     cloudClearCachedPassword();
@@ -1045,7 +1081,7 @@ function _resetIdleLockTimer() {
       showCloudToast('Cloud vault password cleared (idle timeout)');
     }
     debugLog('[CloudStorage] Vault password cache cleared due to inactivity');
-  }, IDLE_LOCK_TIMEOUT_MS);
+  }, timeoutMs);
 }
 
 function _onUserActivity() {

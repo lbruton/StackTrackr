@@ -1,3 +1,8 @@
+---
+name: seed-sync
+description: Seed data sync — check Docker spot-price poller output and stage new seed data for commit. Use before releases or after merging PRs.
+---
+
 # Seed Data Sync — StakTrakr
 
 Check the Docker spot-price poller output and stage any new seed data for commit. Can also fetch today's prices directly without Docker.
@@ -76,6 +81,24 @@ Quick checks on any changed seed files:
 
 Report any issues found. Do NOT auto-fix — flag for the user.
 
+## Phase 5: Sync from Live API
+
+Before staging for a release, pull the latest entries from the live API and merge them into local seed files. This ensures the release ships with data at least as fresh as what's already live at `api.staktrakr.com`.
+
+Run from repo root:
+
+```bash
+bash .claude/skills/seed-sync/fetch-live.sh
+```
+
+The script:
+1. Curls `https://api.staktrakr.com/data/spot-history-YYYY.json` for 2023 through the current year
+2. Calls `merge-seed.py` to merge remote entries into the local file
+3. Deduplicates by `(timestamp, metal)` — live API wins on conflict
+4. Prints a per-file summary: `spot-history-2026.json: +N new entries from live`
+
+After running, review the output and proceed to Phase 3 (Stage & Report) to commit the merged data.
+
 ## Integration with /release
 
 The `/release` skill should invoke `/seed-sync` at the start of Phase 0 (before gathering context). This ensures seed data is staged before the release commit is created. The release skill's Phase 2 step 6 and Phase 3 `git add` already handle the files — this skill just makes the check explicit and visible.
@@ -94,5 +117,7 @@ devops/spot-poller/          # Docker-based continuous poller (public)
 
 .claude/skills/seed-sync/    # Claude Code skill
   ├── SKILL.md               # This file
-  └── update-today.py        # Slim one-shot script (no Docker needed)
+  ├── update-today.py        # Slim one-shot script (no Docker needed)
+  ├── fetch-live.sh          # Phase 5: fetch + merge from live API
+  └── merge-seed.py          # Merge helper (dedup by timestamp+metal)
 ```

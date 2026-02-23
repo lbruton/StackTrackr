@@ -1,16 +1,13 @@
 import { test, expect } from '@playwright/test';
+import { dismissAckModal } from './test-utils.js';
 
 test('live demo — load, hover spot cards, open About', async ({ page }) => {
   await page.goto('/');
   await page.waitForTimeout(2000);
   await expect(page).toHaveTitle(/StakTrakr/);
 
-  // Dismiss acknowledgment modal if present (first-run)
-  const ackModal = page.locator('#ackModal');
-  if (await ackModal.isVisible()) {
-    await page.locator('#ackModal button, #ackModal .btn').first().click();
-    await page.waitForTimeout(800);
-  }
+  await dismissAckModal(page);
+  await page.waitForTimeout(800);
 
   // Hover over each spot price card
   const cards = page.locator('.spot-card');

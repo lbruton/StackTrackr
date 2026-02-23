@@ -1,14 +1,11 @@
 import { test, expect } from '@playwright/test';
+import { dismissAckModal } from './test-utils.js';
 
 const setup = async (page) => {
   await page.goto('/');
   await page.evaluate(() => localStorage.clear());
   await page.reload();
-  const ackModal = page.locator('#ackModal');
-  if (await ackModal.isVisible()) {
-    await page.locator('#ackAcceptBtn').click();
-    await expect(ackModal).not.toBeVisible();
-  }
+  await dismissAckModal(page);
 };
 
 test.describe('UI State Checks', () => {
@@ -97,11 +94,7 @@ test.describe('UI State Checks', () => {
 // =============================================================================
 
 const dismissAck = async (page) => {
-  const ackModal = page.locator('#ackModal');
-  if (await ackModal.isVisible()) {
-    await page.locator('#ackAcceptBtn').click();
-    await expect(ackModal).not.toBeVisible();
-  }
+  await dismissAckModal(page);
 };
 
 test('STAK-222: auto-refresh toggle renders for STAKTRAKR provider', async ({ page }) => {

@@ -1765,6 +1765,9 @@ const setupNoteAndModalListeners = () => {
 
     const oldItem = { ...inventory[notesIndex] };
     inventory[notesIndex].notes = text;
+    if (typeof window.invalidateSearchCache === 'function') {
+      window.invalidateSearchCache(inventory[notesIndex]);
+    }
     saveInventory();
     renderTable();
     logItemChanges(oldItem, inventory[notesIndex]);
@@ -2030,7 +2033,7 @@ const setupDataManagementListeners = () => {
       // Reset in-memory log/history arrays
       if (typeof changeLog !== 'undefined') changeLog = [];
       if (typeof catalogHistory !== 'undefined') catalogHistory = [];
-      if (typeof spotHistory !== 'undefined') spotHistory = {};
+      if (typeof spotHistory !== 'undefined') spotHistory = [];
 
       // Disconnect cloud providers (UI reset)
       if (typeof syncCloudUI === 'function') syncCloudUI();
@@ -2040,6 +2043,15 @@ const setupDataManagementListeners = () => {
       renderActiveFilters();
       loadSpotHistory();
       fetchSpotPrice();
+      // Backfill 24h of hourly data after wipe — runs unconditionally since apiConfig
+      // is cleared at this point and fetchSpotPrice won't trigger the internal backfill.
+      // fetchStaktrakrHourlyRange's existingKeys dedup prevents double-inserts if
+      // fetchSpotPrice does happen to succeed with a configured provider.
+      if (typeof backfillStaktrakrHourly === 'function') {
+        backfillStaktrakrHourly()
+          .then(() => { if (typeof updateAllSparklines === 'function') updateAllSparklines(); })
+          .catch((err) => { console.warn('[StakTrakr] Post-reset backfill failed:', err); });
+      }
 
       apiConfig = { provider: "", keys: {} };
       apiCache = null;
@@ -2629,12 +2641,16 @@ const setupApiEvents = () => {
         "click",
         async () => {
           if (typeof syncProviderChain === "function") {
-            const { updatedCount, results } = await syncProviderChain({ showProgress: true, forceSync: true });
-            const summary = Object.entries(results)
-              .filter(([_, status]) => status !== "skipped")
-              .map(([prov, status]) => `${API_PROVIDERS[prov]?.name || prov}: ${status}`)
-              .join("\n");
-            appAlert(`Synced ${updatedCount} prices.\n\n${summary}`);
+            const { updatedCount, anySucceeded, results } = await syncProviderChain({ showProgress: true, forceSync: true });
+            if (typeof showToast === "function") {
+              if (updatedCount > 0) {
+                const providerName = Object.entries(results).find(([_, s]) => s === "ok")?.[0];
+                const label = providerName ? (API_PROVIDERS[providerName]?.name || providerName) : "API";
+                showToast(`\u2713 Synced ${updatedCount} prices from ${label}`);
+              } else if (!anySucceeded) {
+                showToast("Spot sync failed \u2014 check API settings");
+              }
+            }
           }
         },
         "Sync all providers button",

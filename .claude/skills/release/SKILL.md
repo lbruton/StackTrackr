@@ -8,16 +8,117 @@ allowed-tools: Bash, Read, Write, Edit, Grep, Glob
 
 End-to-end release workflow: bump version across all 7 files, commit to dev, and create a PR to main.
 
+## When to Run
+
+**`patch` is the default dev workflow** — run it after every meaningful committed change (bug fix, UX tweak, feature addition). Each patch tag is a breadcrumb for the final changelog. Rule: **one meaningful change = one patch tag, one git tag**.
+
+**`release`** is for bumping the RELEASE number when shipping a major batch to main via PR.
+
 ## Arguments
 
 $ARGUMENTS can be:
 - `release` — bump RELEASE number (3.23.01 → 3.24.00)
-- `patch` — bump PATCH number (3.23.01 → 3.23.02)
+- `patch` — bump PATCH number (3.23.01 → 3.23.02) — use after every meaningful commit on dev
 - `dry-run` — preview all changes without writing
 
 If no argument provided, ask the user whether this is a `release` or `patch`.
 
 ## Phase 0: Gather Context
+
+### Step 0: Remote Sync Gate (REQUIRED BEFORE LOCK CHECK)
+
+Before claiming a version lock or creating a worktree, ensure local `dev` matches `origin/dev`.
+A worktree created from a stale HEAD will produce PRs that conflict with or silently drop
+remote commits.
+
+```bash
+git fetch origin
+BEHIND=$(git rev-list HEAD..origin/dev --count)
+```
+
+**If `BEHIND` is 0:** Continue to Step 0a. ✅
+
+**If `BEHIND` > 0:** HARD STOP. Do not proceed.
+
+```
+⛔ Local dev is N commits behind origin/dev.
+
+Incoming commits:
+[git log --oneline HEAD..origin/dev]
+
+Run: git pull origin dev
+Then re-run /release patch.
+```
+
+Pull first, then restart from Step 0.
+
+```bash
+git pull origin dev
+```
+
+> **Why here and not later?** The worktree branches from current HEAD. If HEAD is stale,
+> every file diff in the PR will be relative to the wrong base. Pull first — worktree second.
+
+### Step 0a: Version Lock Check (REQUIRED FIRST)
+
+Before anything else, check whether another agent has claimed the next version:
+
+```bash
+cat devops/version.lock 2>/dev/null || echo "UNLOCKED"
+```
+
+**If locked and not expired** (`expires_at` is in the future): **STOP.** Report to the user:
+```
+⛔ Version lock held by: [locked_by]
+   Claimed version: [next_version]
+   Expires at: [expires_at]
+   Wait for that agent to finish, or ask the user if the lock is stale.
+```
+
+**If absent or expired:** claim the lock immediately — before reading any files or computing the version. Compute `next_version` as `APP_VERSION + 1` (read `js/constants.js`), then write:
+
+```
+locked_by: Claude Code (session [first 6 chars of conversation ID or task hint])
+locked_at: [current ISO timestamp]
+next_version: [X.Y.Z]
+expires_at: [locked_at + 30 minutes]
+```
+
+```bash
+# Write the lock
+cat > devops/version.lock << 'EOF'
+locked_by: Claude Code (session ...)
+locked_at: 2026-...
+next_version: 3.XX.YY
+expires_at: 2026-...
+EOF
+```
+
+Use `next_version` as the target for all subsequent version bump steps — do not re-derive it from `APP_VERSION` later.
+
+**Create the worktree + branch immediately after writing the lock:**
+
+```bash
+git worktree add .claude/worktrees/patch-NEXT_VERSION -b patch/NEXT_VERSION
+```
+
+Example: `git worktree add .claude/worktrees/patch-3.32.09 -b patch/3.32.09`
+
+**All subsequent work (file edits, version bumps, commits) happens inside the worktree directory.**
+If you are running as an interactive Claude Code session, inform the user:
+
+```
+Worktree created at: .claude/worktrees/patch-NEXT_VERSION/
+Branch: patch/NEXT_VERSION
+
+All work for this release will happen in that worktree.
+After merging to dev, run cleanup:
+  git worktree remove .claude/worktrees/patch-NEXT_VERSION --force
+  git branch -d patch/NEXT_VERSION
+  rm devops/version.lock
+```
+
+See `devops/version-lock-protocol.md` for full protocol details.
 
 ### Step 0 (prerequisite): Seed Data Sync
 
@@ -194,11 +295,33 @@ Commit message format: `vNEW_VERSION — TITLE`
 
 If there are other uncommitted changes beyond the 5 version files, ask the user whether to include them in this commit or leave them staged separately.
 
+**After a successful commit, push the patch branch and open a PR to dev** (Phase 4 covers this).
+**After the PR is merged to dev — tag the patch commit and run full cleanup:**
+
+```bash
+# Tag the patch on dev (the merge commit SHA) so it shows in GitHub Releases list
+git fetch origin dev
+git tag vNEW_VERSION origin/dev
+git push origin vNEW_VERSION
+
+# Remove the worktree
+git worktree remove .claude/worktrees/patch-VERSION --force
+
+# Delete the local branch
+git branch -d patch/VERSION
+
+# Delete the remote branch
+git push origin --delete patch/VERSION
+
+# Release the version lock
+rm -f devops/version.lock
+```
+
 ## Phase 4: Push & Draft PR
 
-1. Push dev to remote:
+1. Push the patch branch:
    ```bash
-   git push origin dev
+   git push origin patch/VERSION
    ```
 
 2. Check whether a draft PR already exists from dev → main:

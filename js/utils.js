@@ -967,7 +967,7 @@ const loadData = async (key, defaultValue = []) => {
 };
 
 // Synchronous versions for backward compatibility where async isn't supported
-const saveDataSync = (key, data) => { try { const raw = JSON.stringify(data); const out = __compressIfNeeded(raw); localStorage.setItem(key, out); } catch(e) { console.error('saveDataSync failed', e); } };
+const saveDataSync = (key, data) => { try { const raw = JSON.stringify(data); const out = __compressIfNeeded(raw); localStorage.setItem(key, out); } catch(e) { console.error('saveDataSync failed', e); throw e; } };
 const loadDataSync = (key, defaultValue = []) => { try { const raw = localStorage.getItem(key); if(raw == null) return defaultValue; const str = __decompressIfNeeded(raw); return JSON.parse(str); } catch(e) { return defaultValue; } };
 
 /**
@@ -3089,6 +3089,7 @@ const setButtonLoading = (btn, isLoading, loadingText = '') => {
 
 if (typeof window !== 'undefined') {
   window.getContrastColor = getContrastColor;
+  window.generateUUID = generateUUID;
   window.generateStorageReport = generateStorageReport;
   window.updateSpotTimestamp = updateSpotTimestamp;
   /**
