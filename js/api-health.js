@@ -20,8 +20,9 @@ const API_HEALTH_GOLDBACK_STALE_MIN = 25 * 60; // 25 hours in minutes
  */
 const _normalizeTs = (ts) => {
   if (!ts || typeof ts !== "string") return ts;
-  if (/[zZ]$|[+-]\d{2}:?\d{2}$/.test(ts)) return ts;
-  return ts.trim().replace(" ", "T") + "Z";
+  const trimmed = ts.trim();
+  if (/[zZ]$|[+-]\d{2}:?\d{2}$/.test(trimmed)) return trimmed;
+  return trimmed.replace(" ", "T") + "Z";
 };
 
 /**
