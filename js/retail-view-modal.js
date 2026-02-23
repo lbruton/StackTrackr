@@ -89,6 +89,38 @@ const _buildVendorLegend = (slug) => {
   });
 };
 
+/**
+ * Buckets raw windows_24h into 30-min aligned slots (HH:00 and HH:30).
+ * For each slot, picks the most recent window whose timestamp falls within it.
+ * Returns up to 48 entries covering the 24h window, oldest first.
+ * @param {Array} windows - raw windows_24h from API
+ * @returns {Array}
+ */
+const _bucketWindows = (windows) => {
+  if (!windows || windows.length === 0) return [];
+  // Build a map: slotKey (ISO :00 or :30) → most recent window in that slot
+  const slotMap = new Map();
+  for (const w of windows) {
+    if (!w.window) continue;
+    const d = new Date(w.window);
+    if (isNaN(d.getTime())) continue;
+    // Round down to nearest 30-min boundary
+    const mins = d.getUTCMinutes() >= 30 ? 30 : 0;
+    const slotDate = new Date(Date.UTC(
+      d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(),
+      d.getUTCHours(), mins, 0, 0
+    ));
+    const key = slotDate.toISOString();
+    // Keep the most recent window for each slot
+    const existing = slotMap.get(key);
+    if (!existing || new Date(w.window) > new Date(existing.window)) {
+      slotMap.set(key, { ...w, window: key });
+    }
+  }
+  // Sort chronologically
+  return Array.from(slotMap.values()).sort((a, b) => a.window < b.window ? -1 : 1);
+};
+
 const _buildIntradayChart = (slug) => {
   const canvas = safeGetElement("retailViewIntradayChart");
   const noDataEl = safeGetElement("retailViewIntradayNoData");
@@ -442,6 +474,7 @@ if (typeof window !== "undefined") {
   window.openRetailViewModal = openRetailViewModal;
   window.closeRetailViewModal = closeRetailViewModal;
   window._switchRetailViewTab = _switchRetailViewTab;
+  window._bucketWindows = _bucketWindows;
 }
 
 // =============================================================================
