@@ -404,6 +404,27 @@ function getSyncPassword() {
   });
 }
 
+/**
+ * Get the sync password/key without any user interaction.
+ * Simple mode: returns the Dropbox account ID derived key.
+ * Secure mode: returns the cached session password or null.
+ * Never opens a modal or popover — safe to call from background processes.
+ * @returns {string|null}
+ */
+function getSyncPasswordSilent() {
+  if (localStorage.getItem('cloud_sync_mode') === 'simple') {
+    var accountId = localStorage.getItem('cloud_dropbox_account_id');
+    if (!accountId) return null;
+    // Prefix with app salt to namespace away from user-chosen passwords.
+    // The vault module's own PBKDF2 derives the actual key from this string.
+    return STAKTRAKR_SIMPLE_SALT + ':' + accountId;
+  }
+  // Secure mode: return cached password or null
+  return typeof cloudGetCachedPassword === 'function'
+    ? cloudGetCachedPassword(_syncProvider)
+    : null;
+}
+
 // ---------------------------------------------------------------------------
 // Activity logging
 // ---------------------------------------------------------------------------
@@ -450,10 +471,10 @@ async function pushSyncVault() {
     return;
   }
 
-  var password = await getSyncPassword();
-  debugLog('[CloudSync] Password obtained:', !!password);
+  var password = getSyncPasswordSilent();
+  debugLog('[CloudSync] Password obtained (silent):', !!password);
   if (!password) {
-    debugLog('[CloudSync] No password — push skipped');
+    debugLog('[CloudSync] No password — push deferred (tap cloud icon to unlock)');
     return;
   }
 
@@ -1132,6 +1153,7 @@ window.refreshSyncUI = refreshSyncUI;
 window.updateSyncStatusIndicator = updateSyncStatusIndicator;
 window.updateCloudSyncHeaderBtn = updateCloudSyncHeaderBtn;
 window.getSyncDeviceId = getSyncDeviceId;
+window.getSyncPasswordSilent = getSyncPasswordSilent;
 window.syncIsEnabled = syncIsEnabled;
 window.syncSaveOverrideBackup = syncSaveOverrideBackup;
 window.syncRestoreOverrideBackup = syncRestoreOverrideBackup;
