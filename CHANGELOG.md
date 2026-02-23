@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.32.14] - 2026-02-22
+
+### Fixed — API Health Stale Timestamp Parsing (STAK-265)
+
+- **Fixed**: Naive `"YYYY-MM-DD HH:MM:SS"` timestamps from spot history and Goldback feeds now normalized to UTC before parsing — previously treated as local time, inflating staleness readings by the user's UTC offset (e.g. 6 hours on CST)
+- **Changed**: Market feed stale threshold raised from 15 → 30 min to match typical poller cadence and prevent false-positive stale warnings
+
+---
+
 ## [3.32.13] - 2026-02-22
 
 ### Fixed — API Health Modal z-index + Three-Feed Freshness Checks
