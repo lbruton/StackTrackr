@@ -1090,5 +1090,33 @@
     "source": "seed",
     "provider": "MetalPriceAPI",
     "timestamp": "2026-02-21 12:00:00"
+  },
+  {
+    "spot": 5105.45,
+    "metal": "Gold",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2026-02-22 12:00:00"
+  },
+  {
+    "spot": 1766.71,
+    "metal": "Palladium",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2026-02-22 12:00:00"
+  },
+  {
+    "spot": 2163.5,
+    "metal": "Platinum",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2026-02-22 12:00:00"
+  },
+  {
+    "spot": 84.75,
+    "metal": "Silver",
+    "source": "seed",
+    "provider": "StakTrakr",
+    "timestamp": "2026-02-22 12:00:00"
   }
 ]

@@ -4900,11 +4900,17 @@
             <canvas id="retailViewIntradayChart" aria-label="24h intraday price chart"></canvas>
           </div>
           <p id="retailViewIntradayNoData" class="settings-subtext" style="display:none;text-align:center;padding:1rem;">No intraday data — check back after the next 15-minute sync.</p>
-          <div class="retail-view-table-wrap" style="margin-top:.5rem;">
-            <table class="retail-view-table">
-              <thead id="retailViewIntradayTableHead">
-                <tr><th>Time (local)</th></tr>
-              </thead>
+          <div class="d-flex align-items-center justify-content-between mb-1" style="gap:8px;">
+            <label for="retailViewIntradayRowCount" class="settings-subtext" id="retailViewIntradayTableLabel">Recent windows</label>
+            <select id="retailViewIntradayRowCount" class="form-select form-select-sm" style="width:auto;">
+              <option value="12">12 rows</option>
+              <option value="24" selected>24 rows</option>
+              <option value="48">48 rows</option>
+            </select>
+          </div>
+          <div style="max-height:360px;overflow-y:auto;">
+            <table class="table table-sm table-borderless mb-0">
+              <thead id="retailViewIntradayTableHead"></thead>
               <tbody id="retailViewIntradayTableBody"></tbody>
             </table>
           </div>
