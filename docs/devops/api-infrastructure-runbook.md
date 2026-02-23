@@ -74,14 +74,21 @@ One row per scrape attempt, per vendor, per 15-min window:
 
 ### Why Turso (not SQLite)
 
-Original local SQLite was prone to corruption under concurrent writes when multiple
-poller instances ran simultaneously. Turso's `@libsql/client` is a near drop-in
-replacement for `better-sqlite3` and handles concurrent writes safely.
+Original local SQLite was prone to corruption under concurrent writes and when the
+Fly.io persistent volume got into a bad state across redeploys. Turso's `@libsql/client`
+is a near drop-in replacement for `better-sqlite3` and handles concurrent writes safely.
 
-### prices.db (SQLite snapshot)
+### Fly.io Persistent Volume (`staktrakr_data`, mounted at `/data`)
 
-`api-export.js` exports a read-only SQLite snapshot to the StakTrakrApi repo each cycle.
-Useful for offline analysis. Not used in production reads — static JSON files are the API.
+The volume's **only** job is holding `PRICE_LOG_DIR` JSONL audit logs
+(`/data/retail-poller-logs/prices-YYYY-MM-DD.jsonl`). These are append-only daily logs
+of every price scraped — useful for recovery if Turso ever has an outage.
+
+- If the volume wipes on redeploy, the next run creates fresh log files. No data loss —
+  Turso holds the canonical copy.
+- The git clone (`/data/staktrakr-api-export`) was removed 2026-02-23. `run-local.sh`
+  now clones fresh into a `mktemp -d` temp dir on every run and deletes it on exit.
+  Git corruption on the persistent volume is no longer possible.
 
 ### Forward note: Expanding to all three feeds
 

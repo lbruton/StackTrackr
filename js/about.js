@@ -283,11 +283,11 @@ const setupAckModalEvents = () => {
  */
 const getEmbeddedWhatsNew = () => {
   return `
+    <li><strong>v3.32.16 &ndash; Market Chart Timezone Fix</strong>: 24hr price chart and table now show times in your selected timezone. seed-sync skill gains Phase 5 &mdash; syncs from live API before releases.</li>
     <li><strong>v3.32.15 &ndash; Nitpick Polish</strong>: API health modal now says &ldquo;items tracked&rdquo; instead of &ldquo;coins&rdquo;. Desktop footer restructured &mdash; badges on top, Special thanks on its own line.</li>
     <li><strong>v3.32.14 &ndash; API Health Stale Timestamp Fix</strong>: Spot history and Goldback timestamps now parsed as UTC &mdash; fixes inflated staleness readings in negative-offset timezones (CST, PST, etc.). Market stale threshold raised from 15 &rarr; 30 min to match actual poller cadence.</li>
     <li><strong>v3.32.13 &ndash; API Health Modal Fix + Three-Feed Checks</strong>: Health modal no longer renders behind About modal. Health check now monitors market prices (15 min), spot prices (75 min), and Goldback daily separately; badges show per-feed freshness.</li>
     <li><strong>v3.32.12 &ndash; Configurable Vault Idle Timeout</strong>: New &ldquo;Auto-lock after idle&rdquo; dropdown in Settings &rarr; Cloud Sync &mdash; choose 15 min, 30 min, 1 hour, 2 hours, or Never before the vault password cache clears automatically</li>
-    <li><strong>v3.32.11 &ndash; PR #395 Review Fixes</strong>: logItemChanges null-guard for add/delete; changeLog writes use saveDataSync(); getManifestEntries/markSynced exposed as window globals; sync toast provider fixed (&ldquo;ok&rdquo; not &ldquo;success&rdquo;); backfill catch logs warn; api-health readyState guard; safeGetElement in initSpotHistoryButtons</li>
   `;
 };
 
