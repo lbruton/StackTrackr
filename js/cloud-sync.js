@@ -1095,29 +1095,47 @@ function initCloudSync() {
 
   debugLog('[CloudSync] Resuming auto-sync from previous session');
 
-  // Check if password is available before starting any sync that would prompt for it
+  var isSimple = localStorage.getItem('cloud_sync_mode') === 'simple';
+
+  if (isSimple) {
+    var accountId = localStorage.getItem('cloud_dropbox_account_id');
+    updateCloudSyncHeaderBtn();
+    if (!accountId) {
+      // Simple mode connected but account ID missing — need a fresh OAuth
+      debugLog('[CloudSync] Simple mode: no account ID — showing reconnect toast');
+      setTimeout(function () {
+        if (typeof showCloudToast === 'function') {
+          showCloudToast('Cloud sync paused — tap the cloud icon to reconnect Dropbox', 5000);
+        }
+      }, 1000);
+    }
+    // Simple mode always starts the poller and polls immediately — no password needed
+    startSyncPoller();
+    setTimeout(function () { pollForRemoteChanges(); }, 3000);
+    return;
+  }
+
+  // Secure mode: check for cached session password
   var hasCachedPw = typeof cloudGetCachedPassword === 'function'
     ? !!cloudGetCachedPassword(_syncProvider)
     : false;
 
   if (!hasCachedPw) {
-    // No password cached — skip the auto-push/poll that would open the modal.
-    // Show the header icon in orange and a polite toast instead.
-    debugLog('[CloudSync] No cached password on load — skipping initial push, showing toast');
+    debugLog('[CloudSync] Secure mode: no cached password on load — showing toast');
     updateCloudSyncHeaderBtn();
     setTimeout(function () {
       if (typeof showCloudToast === 'function') {
-        showCloudToast('Cloud sync needs your password — tap the sync icon to unlock', 5000);
+        showCloudToast('Cloud sync needs your password — tap the cloud icon to unlock', 5000);
       }
     }, 1000);
-    // Still start the poller — it will skip pushes until getSyncPassword() succeeds
+    // Start poller — background pushes will skip silently until password is provided
     startSyncPoller();
     return;
   }
 
+  // Secure mode with cached password: full resume
+  updateCloudSyncHeaderBtn();
   startSyncPoller();
-
-  // Poll immediately on startup to catch any changes while app was closed
   setTimeout(function () { pollForRemoteChanges(); }, 3000);
 }
 
