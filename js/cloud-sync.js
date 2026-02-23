@@ -204,6 +204,57 @@ function updateSyncStatusIndicator(state, detail) {
     else label = 'Auto-sync off';
     text.textContent = label;
   }
+
+  // Keep header icon in sync
+  updateCloudSyncHeaderBtn();
+}
+
+/**
+ * Update the header cloud sync icon button state and visibility.
+ * Called alongside updateSyncStatusIndicator() at every state change.
+ * States: hidden (sync disabled) | gray (not connected) | orange (needs password) | green (synced)
+ */
+function updateCloudSyncHeaderBtn() {
+  var btn = safeGetElement('headerCloudSyncBtn');
+  var dot = safeGetElement('headerCloudDot');
+  if (!btn) return;
+
+  // Hide entirely when sync is explicitly disabled
+  if (!syncIsEnabled()) {
+    btn.style.display = 'none';
+    return;
+  }
+
+  btn.style.display = '';
+
+  if (!dot) return;
+  dot.className = 'cloud-sync-dot header-cloud-dot';
+
+  var hasCachedPw = typeof cloudGetCachedPassword === 'function'
+    ? !!cloudGetCachedPassword(_syncProvider)
+    : false;
+  var connected = typeof cloudIsConnected === 'function'
+    ? cloudIsConnected(_syncProvider)
+    : false;
+
+  if (hasCachedPw) {
+    // Green: password cached, sync is running normally
+    dot.classList.add('header-cloud-dot--green');
+    btn.title = 'Cloud sync active';
+    btn.setAttribute('aria-label', 'Cloud sync active');
+    btn.dataset.syncState = 'green';
+  } else if (connected) {
+    // Orange: connected but password expired/missing
+    dot.classList.add('header-cloud-dot--orange');
+    btn.title = 'Cloud sync needs your password';
+    btn.setAttribute('aria-label', 'Cloud sync needs your password');
+    btn.dataset.syncState = 'orange';
+  } else {
+    // Gray: sync on but not yet connected/configured
+    btn.title = 'Set up cloud sync';
+    btn.setAttribute('aria-label', 'Set up cloud sync');
+    btn.dataset.syncState = 'gray';
+  }
 }
 
 /**
@@ -1052,6 +1103,7 @@ window.showSyncConflictModal = showSyncConflictModal;
 window.showSyncUpdateModal = showSyncUpdateModal;
 window.refreshSyncUI = refreshSyncUI;
 window.updateSyncStatusIndicator = updateSyncStatusIndicator;
+window.updateCloudSyncHeaderBtn = updateCloudSyncHeaderBtn;
 window.getSyncDeviceId = getSyncDeviceId;
 window.syncIsEnabled = syncIsEnabled;
 window.syncSaveOverrideBackup = syncSaveOverrideBackup;
