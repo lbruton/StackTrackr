@@ -11,7 +11,7 @@ All feeds served from `lbruton/StakTrakrApi` `main` branch via GitHub Pages at `
 
 | Feed | File | Poller | Threshold |
 |------|------|--------|-----------|
-| **Market prices** | `data/api/manifest.json` | Fly.io `staktrakr` cron (`*/15 min`) | 30 min |
+| **Market prices** | `data/api/manifest.json` | Fly.io `staktrakr` cron (`*/30 min`) | 30 min |
 | **Spot prices** | `data/hourly/YYYY/MM/DD/HH.json` | `spot-poller.yml` GHA (`:05` + `:35`/hr) | 75 min |
 | **Goldback** | `data/api/goldback-spot.json` | Fly.io `staktrakr` cron (daily 17:01 UTC) | 25h (info only) |
 | **Turso** | `price_snapshots` table | retail-poller only | internal write store |
