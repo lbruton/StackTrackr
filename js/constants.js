@@ -22,6 +22,9 @@ const API_PROVIDERS = {
     hourlyBaseUrls: [
       "https://api.staktrakr.com/data/hourly",
     ],
+    fifteenMinBaseUrls: [
+      "https://api.staktrakr.com/data/15min",
+    ],
     endpoints: { silver: "", gold: "", platinum: "", palladium: "" },
     getEndpoint: () => "",
     parseResponse: () => null,
@@ -285,7 +288,7 @@ const CERT_LOOKUP_URLS = {
  * Updated: 2026-02-12 - STACK-38/STACK-31: Responsive card view + mobile layout
  */
 
-const APP_VERSION = "3.32.16";
+const APP_VERSION = "3.32.19";
 
 /**
  * Numista metadata cache TTL: 30 days in milliseconds.
