@@ -296,10 +296,10 @@ Commit message format: `vNEW_VERSION — TITLE`
 If there are other uncommitted changes beyond the 5 version files, ask the user whether to include them in this commit or leave them staged separately.
 
 **After a successful commit, push the patch branch and open a PR to dev** (Phase 4 covers this).
-**After the PR is merged to dev — tag the patch commit and run full cleanup:**
+**After the PR is merged to dev — tag the patch commit on dev and run worktree cleanup:**
 
 ```bash
-# Tag the patch on dev (the merge commit SHA) so it shows in GitHub Releases list
+# Tag the patch on dev (the merge commit SHA) — breadcrumb for changelog reconstruction
 git fetch origin dev
 git tag vNEW_VERSION origin/dev
 git push origin vNEW_VERSION
@@ -316,6 +316,8 @@ git push origin --delete patch/VERSION
 # Release the version lock
 rm -f devops/version.lock
 ```
+
+> **Note:** This tag lands on `dev`, NOT `main`. A git tag is NOT a GitHub Release — it only appears in the Tags tab. The actual GitHub Release (`gh release create`) is created in Phase 5 after the `dev → main` merge. Do not skip Phase 5.
 
 ## Phase 4: Push & Draft PR
 
@@ -424,9 +426,13 @@ Then run `/pr-resolve` to clear all open Codacy and Copilot review threads befor
 
 Mark all referenced STAK-### issues as **Done** (they ship with this merge).
 
-## Phase 5: GitHub Release & Tag (Post-Merge Only)
+### Step 6: After the PR merges to main — run Phase 5 immediately
 
-**CRITICAL: Only run this after the PR has been merged to main.** The release tag must target main so `version.json`'s `releaseUrl` resolves correctly.
+**MANDATORY.** Do not consider the release complete until Phase 5 is done. The GitHub Release is the public-facing artifact — the "Latest" badge on GitHub, the release notes users read, and what `version.json`'s `releaseUrl` resolves to. Without it, the GH Releases page is stale.
+
+## Phase 5: GitHub Release & Tag (Post-Merge Only — MANDATORY)
+
+**CRITICAL: Only run this after the PR has been merged to main.** The release tag must target main so `version.json`'s `releaseUrl` resolves correctly. This phase is REQUIRED for every `dev → main` merge — without it the GitHub Releases page shows a stale version and the "Latest" badge is wrong.
 
 ```bash
 git fetch origin main
