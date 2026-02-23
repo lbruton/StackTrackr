@@ -159,7 +159,7 @@ def write_hourly(entries, data_dir, hour_str, date_obj):
     """
     Write hourly price snapshot to data/hourly/YYYY/MM/DD/HH.json.
     Uses the source "hourly" instead of "seed" for provenance.
-    Skips if the file already exists (idempotent).
+    Always overwrites — poller runs every 15 min for freshness.
     """
     # Re-tag entries with "hourly" source for the sharded files
     hourly_entries = []
@@ -168,12 +168,9 @@ def write_hourly(entries, data_dir, hour_str, date_obj):
         hourly_entry["source"] = "hourly"
         hourly_entries.append(hourly_entry)
 
-    written = seed.save_hourly_file(data_dir, hourly_entries, date_obj, hour_str)
-    if written:
-        log(f"Hourly: wrote {len(hourly_entries)} entries → "
-            f"hourly/{date_obj.year}/{date_obj.month:02d}/{date_obj.day:02d}/{hour_str}.json")
-    else:
-        log(f"Hourly: {hour_str}.json already exists — skipped.")
+    seed.save_hourly_file(data_dir, hourly_entries, date_obj, hour_str, overwrite=True)
+    log(f"Hourly: wrote {len(hourly_entries)} entries → "
+        f"hourly/{date_obj.year}/{date_obj.month:02d}/{date_obj.day:02d}/{hour_str}.json")
 
 # ---------------------------------------------------------------------------
 # Hourly poll
@@ -208,11 +205,12 @@ def poll_once(api_key, data_dir):
         log("Poll: no valid entries after transformation.")
         return
 
-    # Fix timestamps for hourly files — use actual hour, not hardcoded noon
+    # Fix timestamps for hourly files — use actual poll time (not floored to hour)
+    minute_str = f"{now.minute:02d}"
     hourly_entries = []
     for e in entries:
         he = dict(e)
-        he["timestamp"] = f"{today_str} {hour_str}:00:00"
+        he["timestamp"] = f"{today_str} {hour_str}:{minute_str}:00"
         hourly_entries.append(he)
 
     # Always write hourly data (with actual-hour timestamps)
