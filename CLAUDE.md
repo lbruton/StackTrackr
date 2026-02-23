@@ -47,15 +47,18 @@ Works on `file://` and HTTP. Runtime artifact: zero build step, zero install. Se
 
 ## API Infrastructure
 
+> **Separation of duties:** `StakTrakr` = frontend only. All API backend poller code, Fly.io devops, and GHA data workflows live in `lbruton/StakTrakrApi`. Do not add poller scripts, Fly.io config, or data-pipeline workflows to this repo.
+
 **Runbook:** `docs/devops/api-infrastructure-runbook.md` — full architecture, per-feed diagnosis, and quick-check commands.
 
 Three feeds served from `lbruton/StakTrakrApi` main branch via GitHub Pages at `api.staktrakr.com`:
 
 | Feed | File | Poller | Stale threshold | Healthy check |
 |---|---|---|---|---|
-| Market prices | `data/api/manifest.json` | Fly.io `run-local.sh` (*/30 min cron) | 30 min | `generated_at` within 30 min |
-| Spot prices | `data/hourly/YYYY/MM/DD/HH.json` | `spot-poller.yml` (:05, :20, :35, :50 GHA) | 20 min | Last hourly file within 20 min |
-| Goldback | `data/api/goldback-spot.json` | Fly.io `run-goldback.sh` (daily 17:01 UTC) | 25h | `scraped_at` within 25h |
+| Market prices | `data/api/manifest.json` | Fly.io retail cron (StakTrakrApi) | 30 min | `generated_at` within 30 min |
+| Spot prices | `data/hourly/YYYY/MM/DD/HH.json` | `spot-poller.yml` GHA (StakTrakrApi) | 20 min | Last hourly file within 20 min |
+| 15-min spot | `data/15min/YYYY/MM/DD/HHMM.json` | `spot-poller.yml` GHA (StakTrakrApi) | 20 min | Last 15-min file within 20 min |
+| Goldback | `data/api/goldback-spot.json` | Fly.io goldback cron (StakTrakrApi) | 25h | `scraped_at` within 25h |
 
 **Critical:** `spot-history-YYYY.json` is a **seed file** (noon UTC daily), NOT live data. `api-health.js` currently checks it for spot freshness — always shows ~10h stale even when poller is healthy. Open bug (STAK-265 follow-up).
 
@@ -68,7 +71,7 @@ curl -s https://api.staktrakr.com/data/api/manifest.json | python3 -c "
 import sys,json; from datetime import datetime,timezone; d=json.load(sys.stdin)
 age=(datetime.now(timezone.utc)-datetime.fromisoformat(d['generated_at'].replace('Z','+00:00'))).total_seconds()/60
 print(f'Market: {age:.0f}m ago  {\"✅\" if age<=30 else \"⚠️\"}')"
-gh run list --repo lbruton/StakTrakr --workflow "spot-poller.yml" --limit 3
+gh run list --repo lbruton/StakTrakrApi --workflow "spot-poller.yml" --limit 3
 gh run list --repo lbruton/StakTrakrApi --workflow "Merge Poller Branches" --limit 3
 ```
 
@@ -131,7 +134,7 @@ For CSS/HTML guidance, use `frontend-design` plugin or `ui-design` project skill
 | `GEMINI.md` | Gemini CLI | Yes |
 | `.github/copilot-instructions.md` | Copilot PR reviews | Yes |
 
-**Skills**: Official `superpowers@claude-plugins-official` plugin (auto-updates) + user overrides in `~/.claude/skills/` (25 skills). Project skills in `.claude/skills/`: `coding-standards`, `markdown-standards`, `release`, `seed-sync`, `ui-design`, `ui-mockup`, `bb-test`, `smoke-test`, `retail-poller`, `browserbase-test-maintenance`, `api-infrastructure`.
+**Skills**: Official `superpowers@claude-plugins-official` plugin (auto-updates) + user overrides in `~/.claude/skills/` (25 skills). Project skills in `.claude/skills/`: `coding-standards`, `markdown-standards`, `release`, `seed-sync`, `ui-design`, `ui-mockup`, `bb-test`, `smoke-test`, `browserbase-test-maintenance`, `api-infrastructure`.
 
 Use `/sync-instructions` after significant codebase changes.
 
@@ -141,10 +144,10 @@ Use `/sync-instructions` after significant codebase changes.
 - `mcp__claude_ai_Linear__*` — all Linear ops (team: `f876864d-ff80-4231-ae6c-a8e5cb69aca4`)
 - `mcp__codacy__*` — quality/PR issues; use during `/pr-resolve`
 - `mcp__context7__*` — library docs (Chart.js, Bootstrap, jsPDF) before implementing
-- `mcp__firecrawl-local__*` — free local scraping (port 3002; `cd devops/firecrawl-docker && docker compose up -d`)
+- `mcp__firecrawl-local__*` — free local scraping (port 3002; self-hosted Firecrawl — see StakTrakrApi devops)
 - `mcp__browserbase__*` — Stagehand NL tests only, **requires explicit user approval** (paid)
 - `mcp__infisical__*` — secrets management at `http://localhost:8700`. See `secrets` skill.
-- **Browserless** — scripted Playwright, free (`cd devops/browserless && docker compose up -d`, use `/smoke-test`)
+- **Browserless** — scripted Playwright, free (use `/smoke-test`)
 - **Memento** (`mcp__memento__*`) — Neo4j knowledge graph, currently paused for mem0 cloud trial. Still configured in `.mcp.json`.
 
 ## MCP Agent Parity (as of 2026-02-21)
