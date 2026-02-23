@@ -46,6 +46,52 @@ scraping now runs exclusively in the Fly.io container via self-hosted Firecrawl.
 
 ---
 
+## Data Store — Turso (Retail Poller Only)
+
+Turso is a free-tier cloud libSQL database used internally by the retail poller.
+It is NOT a public endpoint.
+
+| Property | Value |
+|---|---|
+| Provider | Turso cloud (libsql://) |
+| Database | staktrakrapi-lbruton.aws-us-east-2.turso.io |
+| Credentials | TURSO_DATABASE_URL + TURSO_AUTH_TOKEN (Infisical) |
+| Used by | retail-poller only (price-extract.js, extract-vision.js, api-export.js) |
+| NOT used by | spot-poller (Python GHA), goldback-scraper |
+| Free tier | Yes — zero cost, no ops |
+
+### Table: price_snapshots
+
+One row per scrape attempt, per vendor, per 15-min window:
+`scraped_at`, `window_start`, `coin_slug`, `vendor`, `price`, `source`, `confidence`, `is_failed`, `in_stock`
+
+### Why Turso (not SQLite)
+
+Original local SQLite was prone to corruption under concurrent writes when multiple
+poller instances ran simultaneously. Turso's `@libsql/client` is a near drop-in
+replacement for `better-sqlite3` and handles concurrent writes safely.
+
+### prices.db (SQLite snapshot)
+
+`api-export.js` exports a read-only SQLite snapshot to the StakTrakrApi repo each cycle.
+Useful for offline analysis. Not used in production reads — static JSON files are the API.
+
+### Forward note: Expanding to all three feeds
+
+Spot and goldback data currently write only to GitHub Pages JSON files.
+If we ever move away from GitHub Pages (self-host on our own domain), wiring
+spot and goldback into Turso would be straightforward:
+
+- **spot:** Python `poller.py` adds one INSERT per MetalPriceAPI poll (one row / 30 min)
+- **goldback:** `goldback-scraper.js` adds one INSERT per scrape (one row / day)
+
+No schema change needed — both fit naturally in `price_snapshots` with `coin_slug="spot-gold"`
+etc., or in a second table (`spot_snapshots`) if we want cleaner separation.
+This would give a single Turso database as the canonical data store for all three feeds,
+making a migration to self-hosted serving trivial (query Turso → serve JSON, no GitHub Pages dependency).
+
+---
+
 ## Feed 1: Market Prices (`manifest.json`)
 
 **Endpoint:** `https://api.staktrakr.com/data/api/manifest.json`
