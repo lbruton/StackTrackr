@@ -706,9 +706,9 @@ const setupHeaderButtonListeners = () => {
         e.preventDefault();
         var state = headerCloudSyncBtn.dataset.syncState;
         if (state === 'orange') {
-          // Needs password: open the password modal; confirm handler triggers push
-          if (typeof openModalById === 'function') {
-            openModalById('cloudSyncPasswordModal');
+          // Route through getSyncPassword so _syncPasswordPromptActive is set correctly
+          if (typeof getSyncPassword === 'function') {
+            getSyncPassword();
           }
         } else if (state === 'green') {
           // Already synced: show last-synced toast
