@@ -187,10 +187,13 @@ const NumistaLookup = (() => {
       return { success: false, error: 'Invalid regex pattern: ' + e.message };
     }
 
-    // Security enhancement: Use CSPRNG via generateUUID() if available
+    // Security enhancement: prefer CSPRNG via generateUUID(); fall back to
+    // crypto.getRandomValues() to maintain cryptographic strength when
+    // generateUUID is not yet in scope (unit tests, future refactors).
     const randomPart = (typeof generateUUID === 'function')
       ? generateUUID().split('-')[0]
-      : Math.random().toString(36).slice(2, 6);
+      : Array.from(crypto.getRandomValues(new Uint8Array(4)))
+          .map(b => b.toString(16).padStart(2, '0')).join('');
     const id = 'custom-' + Date.now() + '-' + randomPart;
     const rule = {
       id,
