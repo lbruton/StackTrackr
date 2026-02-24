@@ -2,6 +2,38 @@
 
 /** Blob URLs created by _enhanceTableThumbnails — revoked on each re-render */
 let _thumbBlobUrls = [];
+
+/**
+ * Cached map of inventory items to their original indices.
+ * Optimized for O(1) lookup during rendering to avoid O(N) indexOf calls.
+ * @type {Map<Object, number>|null}
+ */
+let _cachedItemIndexMap = null;
+
+/**
+ * Invalidates the cached item index map.
+ * Should be called whenever the inventory array is mutated (add/remove/reorder).
+ */
+const invalidateItemIndexMap = () => {
+  _cachedItemIndexMap = null;
+};
+window.invalidateItemIndexMap = invalidateItemIndexMap;
+
+/**
+ * Retrieves or builds the cached item index map.
+ * @returns {Map<Object, number>} Map of item objects to their indices
+ */
+const getItemIndexMap = () => {
+  if (_cachedItemIndexMap) return _cachedItemIndexMap;
+
+  _cachedItemIndexMap = new Map();
+  // Build map: key = item object reference, value = index in main inventory array
+  for (let j = 0; j < inventory.length; j++) {
+    _cachedItemIndexMap.set(inventory[j], j);
+  }
+  return _cachedItemIndexMap;
+};
+
 window.addEventListener('beforeunload', () => {
   for (const url of _thumbBlobUrls) {
     try { URL.revokeObjectURL(url); } catch { /* ignore */ }
@@ -763,6 +795,9 @@ window.getNextSerial = getNextSerial;
  * Saves current inventory to localStorage
  */
 const saveInventory = async () => {
+  // Invalidate cached index map as inventory has likely changed
+  invalidateItemIndexMap();
+
   await saveData(LS_KEY, inventory);
   // CatalogManager handles its own saving, no need to explicitly save catalogMap
   // STACK-62: Invalidate autocomplete cache so lookup table rebuilds with current inventory
@@ -778,7 +813,7 @@ const saveInventory = async () => {
  */
 const sanitizeTablesOnLoad = () => {
   inventory = inventory.map(item => sanitizeObjectFields(item));
-
+  invalidateItemIndexMap();
 };
 
 /**
@@ -887,6 +922,9 @@ const loadInventory = async () => {
       console.log(`Removed ${removed} orphaned catalog mappings`);
     }
   }
+
+  // Invalidate cache after loading fresh data
+  invalidateItemIndexMap();
   } catch (error) {
     console.error('Error loading inventory:', error);
     inventory = [];
@@ -1475,7 +1513,11 @@ const renderTable = () => {
         if (typeof initCardSortBar === 'function') initCardSortBar();
         if (typeof updateCardSortBar === 'function') updateCardSortBar();
 
-        renderCardView(sortedInventory, cardGrid);
+        // Optimization: Pass cached index map to avoid O(N^2) lookups in card view
+        // Note: itemIndexMap is already retrieved via getItemIndexMap() below, but we need it here.
+        // We'll move the retrieval up.
+        const itemIndexMap = getItemIndexMap();
+        renderCardView(sortedInventory, cardGrid, itemIndexMap);
         bindCardClickHandler(cardGrid);
 
         // Defer portal height calc to next frame so cards have their layout
@@ -1501,11 +1543,8 @@ const renderTable = () => {
     const rows = [];
     const chipConfig = typeof getInlineChipConfig === 'function' ? getInlineChipConfig() : [];
 
-    // Optimization: Create a map for O(1) index lookup instead of O(N) indexOf in the loop
-    const itemIndexMap = new Map();
-    for (let j = 0; j < inventory.length; j++) {
-      itemIndexMap.set(inventory[j], j);
-    }
+    // Optimization: Use cached map for O(1) index lookup instead of O(N) indexOf in the loop
+    const itemIndexMap = getItemIndexMap();
 
     for (let i = 0; i < sortedInventory.length; i++) {
       const item = sortedInventory[i];
