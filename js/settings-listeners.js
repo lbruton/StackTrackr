@@ -96,16 +96,8 @@ const bindAppearanceAndHeaderListeners = () => {
     defaultVal: false,
     onApply: () => applyHeaderToggleVisibility(),
   });
-  wireStorageToggle('settingsHeaderThemeBtn_hdr', 'headerThemeBtnVisible', {
-    defaultVal: false,
-    onApply: () => applyHeaderToggleVisibility(),
-  });
 
   wireStorageToggle('settingsHeaderCurrencyBtn', 'headerCurrencyBtnVisible', {
-    defaultVal: false,
-    onApply: () => applyHeaderToggleVisibility(),
-  });
-  wireStorageToggle('settingsHeaderCurrencyBtn_hdr', 'headerCurrencyBtnVisible', {
     defaultVal: false,
     onApply: () => applyHeaderToggleVisibility(),
   });
@@ -114,16 +106,8 @@ const bindAppearanceAndHeaderListeners = () => {
     defaultVal: true,
     onApply: () => applyHeaderToggleVisibility(),
   });
-  wireStorageToggle('settingsHeaderTrendBtn_hdr', HEADER_TREND_BTN_KEY, {
-    defaultVal: true,
-    onApply: () => applyHeaderToggleVisibility(),
-  });
 
   wireStorageToggle('settingsHeaderSyncBtn', HEADER_SYNC_BTN_KEY, {
-    defaultVal: true,
-    onApply: () => applyHeaderToggleVisibility(),
-  });
-  wireStorageToggle('settingsHeaderSyncBtn_hdr', HEADER_SYNC_BTN_KEY, {
     defaultVal: true,
     onApply: () => applyHeaderToggleVisibility(),
   });
@@ -132,18 +116,7 @@ const bindAppearanceAndHeaderListeners = () => {
     defaultVal: true,
     onApply: () => applyHeaderToggleVisibility(),
   });
-  wireStorageToggle('settingsHeaderMarketBtn_hdr', HEADER_MARKET_BTN_KEY, {
-    defaultVal: true,
-    onApply: () => applyHeaderToggleVisibility(),
-  });
-  wireStorageToggle('settingsHeaderVaultBtn_hdr', HEADER_VAULT_BTN_KEY, {
-    defaultVal: true,
-    onApply: () => applyHeaderToggleVisibility(),
-  });
-  wireStorageToggle('settingsHeaderRestoreBtn_hdr', HEADER_RESTORE_BTN_KEY, {
-    defaultVal: true,
-    onApply: () => applyHeaderToggleVisibility(),
-  });
+
   wireStorageToggle('settingsHeaderShowText_hdr', HEADER_BTN_SHOW_TEXT_KEY, {
     defaultVal: false,
     onApply: () => applyHeaderToggleVisibility(),
@@ -233,58 +206,6 @@ const bindAppearanceAndHeaderListeners = () => {
     });
   }
 
-  setupHeaderBtnDragSort();
-};
-
-/**
- * Wires drag-to-sort for the header buttons settings grid (STAK-320).
- * Saves card order to localStorage `headerBtnOrder` on each drop.
- */
-const setupHeaderBtnDragSort = () => {
-  const grid = document.getElementById('headerBtnSortGrid');
-  if (!grid) return;
-
-  let dragSrc = null;
-
-  grid.addEventListener('dragstart', (e) => {
-    const card = e.target.closest('.settings-card[data-btn-key]');
-    if (!card) return;
-    dragSrc = card;
-    e.dataTransfer.effectAllowed = 'move';
-    card.classList.add('dragging');
-  });
-
-  grid.addEventListener('dragend', (e) => {
-    const card = e.target.closest('.settings-card[data-btn-key]');
-    if (card) card.classList.remove('dragging');
-    dragSrc = null;
-  });
-
-  grid.addEventListener('dragover', (e) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-    if (!dragSrc) return;
-    const card = e.target.closest('.settings-card[data-btn-key]');
-    if (!card || card === dragSrc) return;
-    const rect = card.getBoundingClientRect();
-    const after = e.clientX > rect.left + rect.width / 2;
-    if (after) {
-      grid.insertBefore(dragSrc, card.nextSibling);
-    } else {
-      grid.insertBefore(dragSrc, card);
-    }
-  });
-
-  grid.addEventListener('drop', (e) => {
-    e.preventDefault();
-    const order = [...grid.querySelectorAll('.settings-card[data-btn-key]')]
-      .map(c => c.dataset.btnKey);
-    try {
-      localStorage.setItem('headerBtnOrder', JSON.stringify(order));
-    } catch (err) {
-      console.warn('[HeaderBtnSort] could not save order:', err);
-    }
-  });
 };
 
 /**
