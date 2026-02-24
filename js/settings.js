@@ -1163,6 +1163,13 @@ const applyHeaderToggleVisibility = () => {
     vaultBtn.style.display = vaultVisible ? '' : 'none';
   }
 
+  // Restore button (hidden by default)
+  const restoreVisible = localStorage.getItem(HEADER_RESTORE_BTN_KEY) === 'true';
+  const restoreBtn = safeGetElement('headerRestoreBtn');
+  if (restoreBtn) {
+    restoreBtn.style.display = restoreVisible ? '' : 'none';
+  }
+
   // Show text toggle
   const showText = localStorage.getItem(HEADER_BTN_SHOW_TEXT_KEY) === 'true';
   const btnContainer = safeGetElement('headerBtnContainer');

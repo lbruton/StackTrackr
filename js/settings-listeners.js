@@ -140,6 +140,10 @@ const bindAppearanceAndHeaderListeners = () => {
     defaultVal: true,
     onApply: () => applyHeaderToggleVisibility(),
   });
+  wireStorageToggle('settingsHeaderRestoreBtn_hdr', HEADER_RESTORE_BTN_KEY, {
+    defaultVal: false,
+    onApply: () => applyHeaderToggleVisibility(),
+  });
   wireStorageToggle('settingsHeaderShowText_hdr', HEADER_BTN_SHOW_TEXT_KEY, {
     defaultVal: false,
     onApply: () => applyHeaderToggleVisibility(),
@@ -199,6 +203,14 @@ const bindAppearanceAndHeaderListeners = () => {
   if (headerVaultBtn) {
     headerVaultBtn.addEventListener('click', () => {
       if (typeof openVaultModal === 'function') openVaultModal('export');
+    });
+  }
+
+  // Restore header button — opens vault modal in import mode (STAK-314).
+  const headerRestoreBtn = safeGetElement('headerRestoreBtn');
+  if (headerRestoreBtn) {
+    headerRestoreBtn.addEventListener('click', () => {
+      if (typeof openVaultModal === 'function') openVaultModal('import');
     });
   }
 

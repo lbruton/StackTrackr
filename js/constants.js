@@ -663,6 +663,9 @@ const HEADER_MARKET_BTN_KEY = "headerMarketBtnVisible";
 /** @constant {string} HEADER_VAULT_BTN_KEY - LocalStorage key for header vault button visibility */
 const HEADER_VAULT_BTN_KEY = "headerVaultBtnVisible";
 
+/** @constant {string} HEADER_RESTORE_BTN_KEY - LocalStorage key for header restore button visibility */
+const HEADER_RESTORE_BTN_KEY = "headerRestoreBtnVisible";
+
 /** @constant {string} HEADER_BTN_SHOW_TEXT_KEY - LocalStorage key for show-text-under-icons toggle */
 const HEADER_BTN_SHOW_TEXT_KEY = "headerBtnShowText";
 
@@ -786,6 +789,7 @@ const ALLOWED_STORAGE_KEYS = [
   HEADER_SYNC_BTN_KEY,        // boolean string: "true"/"false" — header sync button visibility
   HEADER_MARKET_BTN_KEY,      // boolean string: "true"/"false" — header market button visibility
   HEADER_VAULT_BTN_KEY,       // boolean string: null=show, "false"=hide, "true"=show — vault button visibility
+  HEADER_RESTORE_BTN_KEY,     // boolean string: "true"/"false" — restore button visibility
   HEADER_BTN_SHOW_TEXT_KEY,   // boolean string: "true"/"false" — show text labels under header icons
   RETAIL_MANIFEST_TS_KEY,     // string ISO timestamp — market manifest generated_at cache
   "layoutVisibility",         // JSON object: { spotPrices, totals, search, table } (STACK-54) — legacy, migrated to layoutSectionConfig
@@ -1676,6 +1680,7 @@ if (typeof window !== "undefined") {
   window.IMAGE_ZIP_MANIFEST_VERSION = IMAGE_ZIP_MANIFEST_VERSION;
   // Header button visibility keys (STAK-314)
   window.HEADER_VAULT_BTN_KEY = HEADER_VAULT_BTN_KEY;
+  window.HEADER_RESTORE_BTN_KEY = HEADER_RESTORE_BTN_KEY;
   window.HEADER_BTN_SHOW_TEXT_KEY = HEADER_BTN_SHOW_TEXT_KEY;
   window.RETAIL_MANIFEST_TS_KEY = RETAIL_MANIFEST_TS_KEY;
 }
