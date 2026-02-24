@@ -211,6 +211,25 @@ const updateNumistaModalDot = () => {
 };
 
 /**
+ * Request persistent storage the first time a user uploads an image.
+ * Stores the browser's response under STORAGE_PERSIST_GRANTED_KEY so the
+ * prompt fires at most once per device.
+ */
+const _requestStoragePersistOnce = async () => {
+  if (localStorage.getItem(STORAGE_PERSIST_GRANTED_KEY) !== null) return; // already asked
+  if (!navigator?.storage?.persist) {
+    localStorage.setItem(STORAGE_PERSIST_GRANTED_KEY, 'false');
+    return;
+  }
+  try {
+    const granted = await navigator.storage.persist();
+    localStorage.setItem(STORAGE_PERSIST_GRANTED_KEY, granted ? 'true' : 'false');
+  } catch {
+    localStorage.setItem(STORAGE_PERSIST_GRANTED_KEY, 'false');
+  }
+};
+
+/**
  * Save the pending upload blob(s) to IndexedDB for the given item UUID.
  * @param {string} uuid
  * @returns {Promise<boolean>}
@@ -239,6 +258,7 @@ const saveUserImageForItem = async (uuid) => {
     return false;
   }
 
+  _requestStoragePersistOnce(); // fire-and-forget — no await needed
   // Priority 2: New uploads - merge with existing or replace deleted sides
   debugLog(`saveUserImageForItem: saving images for ${uuid}`);
 
@@ -1059,6 +1079,8 @@ const commitItemToInventory = (f, isEditing, editIdx) => {
       currency: f.currency,
       obverseImageUrl: f.obverseImageUrl || window.selectedNumistaResult?.imageUrl || oldItem.obverseImageUrl || '',
       reverseImageUrl: f.reverseImageUrl || window.selectedNumistaResult?.reverseImageUrl || oldItem.reverseImageUrl || '',
+      obverseSharedImageId: oldItem.obverseSharedImageId || null,
+      reverseSharedImageId: oldItem.reverseSharedImageId || null,
     };
 
     addCompositionOption(f.composition);
@@ -1119,6 +1141,8 @@ const commitItemToInventory = (f, isEditing, editIdx) => {
       currency: f.currency,
       obverseImageUrl: f.obverseImageUrl || window.selectedNumistaResult?.imageUrl || '',
       reverseImageUrl: f.reverseImageUrl || window.selectedNumistaResult?.reverseImageUrl || '',
+      obverseSharedImageId: null,
+      reverseSharedImageId: null,
     });
 
     typeof registerName === "function" && registerName(f.name);
