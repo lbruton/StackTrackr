@@ -110,7 +110,7 @@ const updateLastTimestamps = async (source, provider, timestamp) => {
  */
 const updateSpotSyncHealthDot = () => {
   const dot = safeGetElement('headerSyncDot');
-  if (!dot) return;
+  if (!dot.classList) return;
   dot.className = 'cloud-sync-dot header-cloud-dot';
   let entry = null;
   try { entry = loadDataSync(LAST_API_SYNC_KEY); } catch (e) { /* ignore */ }
@@ -118,7 +118,8 @@ const updateSpotSyncHealthDot = () => {
     dot.classList.add('header-cloud-dot--red');
     return;
   }
-  const ageMin = Math.floor((Date.now() - new Date(entry.timestamp).getTime()) / 60000);
+  const normalized = entry.timestamp.replace(' ', 'T') + (entry.timestamp.includes('Z') || entry.timestamp.includes('+') ? '' : 'Z');
+  const ageMin = Math.floor((Date.now() - new Date(normalized).getTime()) / 60000);
   if (ageMin < 60) {
     dot.classList.add('header-cloud-dot--green');
   } else if (ageMin < 1440) {
