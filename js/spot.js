@@ -94,6 +94,7 @@ const updateLastTimestamps = async (source, provider, timestamp) => {
   if (source === "api") {
     await saveData(LAST_API_SYNC_KEY, apiEntry);
     await saveData(LAST_CACHE_REFRESH_KEY, apiEntry);
+    if (typeof window.updateSpotSyncHealthDot === 'function') window.updateSpotSyncHealthDot();
   } else if (source === "cached") {
     const cacheEntry = {
       provider: provider ? `${provider} (cached)` : "Cached",
@@ -102,6 +103,24 @@ const updateLastTimestamps = async (source, provider, timestamp) => {
     await saveData(LAST_CACHE_REFRESH_KEY, cacheEntry);
   }
 };
+
+/**
+ * Updates the #headerSyncDot color based on last spot sync age.
+ * Green: < 60 min, Orange: 60 min – 24 hr, Red: > 24 hr or no data.
+ */
+const updateSpotSyncHealthDot = () => {
+  const dot = safeGetElement('headerSyncDot');
+  if (!dot.classList) return;
+  dot.className = 'cloud-sync-dot header-cloud-dot';
+  let entry = null;
+  try { entry = loadDataSync(LAST_API_SYNC_KEY); } catch (e) { /* ignore */ }
+  if (!entry || !entry.timestamp) {
+    dot.classList.add('header-cloud-dot--red');
+    return;
+  }
+  dot.classList.add(`header-cloud-dot${getHealthStatusClass(entry.timestamp)}`);
+};
+window.updateSpotSyncHealthDot = updateSpotSyncHealthDot;
 
 /**
  * Records a new spot price entry in history

@@ -3041,6 +3041,23 @@ const setButtonLoading = (btn, isLoading, loadingText = '') => {
   }
 };
 
+/**
+ * Returns CSS modifier class for a health-status dot based on timestamp age.
+ * Handles both ISO and "YYYY-MM-DD HH:MM:SS" (local-stripped) formats.
+ * @param {string|null} timestamp
+ * @returns {'--green'|'--orange'|'--red'}
+ */
+function getHealthStatusClass(timestamp) {
+  if (!timestamp) return '--red';
+  const normalized = timestamp.replace(' ', 'T') +
+    (timestamp.includes('Z') || timestamp.includes('+') ? '' : 'Z');
+  const ageMin = Math.floor((Date.now() - new Date(normalized).getTime()) / 60000);
+  if (ageMin < 60) return '--green';
+  if (ageMin < 1440) return '--orange';
+  return '--red';
+}
+window.getHealthStatusClass = getHealthStatusClass;
+
 if (typeof window !== 'undefined') {
   window.getContrastColor = getContrastColor;
   window.generateUUID = generateUUID;

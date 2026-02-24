@@ -316,7 +316,7 @@ label {
 .app-header-actions {
   margin-left: auto;
   display: grid;
-  grid-template-columns: repeat(2, auto);
+  grid-template-columns: repeat(2, 1fr);
   gap: 0.5rem;
   align-items: start;
   flex-shrink: 0;
@@ -990,6 +990,13 @@ input[type="submit"] {
   text-overflow: ellipsis;
   min-width: 0;
 }
+.spot-card-period {
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-left: auto;
+  line-height: 1;
+}
 
 /* Per-card controls hidden — trend period controlled via header trend button */
 .spot-card-controls {
@@ -1554,9 +1561,57 @@ input[type="submit"] {
 }
 
 /* Header toggle buttons (STACK-54) */
+.header-toggle-btn {
+  width: 56px;
+  height: 56px;
+  padding: 0;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  position: relative;
+}
+
 .header-toggle-btn svg {
   width: 18px;
   height: 18px;
+  flex-shrink: 0;
+}
+
+/* Cloud wrapper must match button dimensions */
+#headerCloudSyncWrapper {
+  width: 56px;
+  height: 56px;
+  flex-shrink: 0;
+}
+#headerCloudSyncWrapper > .btn {
+  width: 100%;
+  height: 100%;
+}
+
+.header-buttons--show-text .header-toggle-btn {
+  height: auto;
+  min-height: 56px;
+  padding: 4px 4px;
+}
+.header-buttons--show-text #headerCloudSyncWrapper {
+  height: auto;
+}
+.header-buttons--show-text #headerCloudSyncWrapper > .btn {
+  height: auto;
+  min-height: 56px;
+}
+
+.header-btn-text {
+  display: none;
+  font-size: 0.6rem;
+  line-height: 1;
+  margin-top: 1px;
+  text-align: center;
+}
+
+.header-buttons--show-text .header-btn-text {
+  display: block;
 }
 
 /* Settings checkbox labels (STACK-54) */
@@ -3096,6 +3151,10 @@ input[type="submit"] {
 .header-cloud-dot--orange {
   background: var(--warning, #f59e0b);
   box-shadow: 0 0 4px var(--warning, #f59e0b);
+}
+.header-cloud-dot--red {
+  background: var(--danger, #dc2626);
+  box-shadow: 0 0 4px var(--danger, #dc2626);
 }
 @keyframes cloudSyncPulse {
   0%, 100% { opacity: 1; transform: scale(1); }
