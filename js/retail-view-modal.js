@@ -120,7 +120,7 @@ const _buildVendorLegend = (slug) => {
       const lkp = lkpMap && lkpMap[slug] && lkpMap[slug][vendorId];
       const lad = ladMap && ladMap[slug] && ladMap[slug][vendorId];
       const priceText = document.createElement("del");
-      priceText.textContent = lkp ? `$${Number(lkp).toFixed(2)}` : '\u2014';
+      priceText.textContent = lkp != null ? `$${Number(lkp).toFixed(2)}` : '\u2014';
       priceEl.appendChild(priceText);
       const badge = document.createElement("small");
       badge.className = "text-danger ms-1";
