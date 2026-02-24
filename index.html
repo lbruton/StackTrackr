@@ -3313,7 +3313,17 @@
               <div class="settings-fieldset">
                 <div class="settings-fieldset-title">Storage</div>
                 <div id="imageStorageStats" class="image-storage-stats">
-                  <span class="stat-item">Loading...</span>
+                  <div class="storage-gauge-row">
+                    <span class="storage-gauge-label">📷 Your Photos</span>
+                    <div class="storage-gauge-bar-wrap"><div id="gaugeUserBar" class="storage-gauge-bar"></div></div>
+                    <span id="gaugeUserSize" class="storage-gauge-size">—</span>
+                  </div>
+                  <div class="storage-gauge-row">
+                    <span class="storage-gauge-label">🪙 Numista Cache</span>
+                    <div class="storage-gauge-bar-wrap"><div id="gaugeNumistaBar" class="storage-gauge-bar"></div></div>
+                    <span id="gaugeNumistaSize" class="storage-gauge-size">—</span>
+                  </div>
+                  <div id="gaugePersistLine" class="storage-gauge-persist">—</div>
                 </div>
               </div>
             </div>
