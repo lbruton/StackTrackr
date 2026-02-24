@@ -96,16 +96,29 @@ const switchSettingsSection = (name) => {
   // Populate Inventory Summary card and show/hide Cloud section when switching to Inventory
   if (targetName === 'system') {
     const countEl = document.getElementById('invSummaryCount');
+    const weightEl = document.getElementById('invSummaryWeight');
     const meltEl = document.getElementById('invSummaryMelt');
     const modEl = document.getElementById('invSummaryModified');
-    if (countEl || meltEl || modEl) {
+    if (countEl || weightEl || meltEl || modEl) {
       try {
         const items = loadDataSync(LS_KEY, []);
         if (countEl) countEl.textContent = items.length + ' items';
+        // Total weight — sum all items in troy oz (convert Goldback denominations)
+        if (weightEl) {
+          const totalOz = items.reduce((sum, it) => {
+            const w = parseFloat(it.weight) || 0;
+            const qty = Number(it.qty) || 1;
+            const oz = (it.weightUnit === 'gb' && typeof GB_TO_OZT !== 'undefined') ? w * GB_TO_OZT : w;
+            return sum + oz * qty;
+          }, 0);
+          weightEl.textContent = typeof formatWeight === 'function' ? formatWeight(totalOz) : `${totalOz.toFixed(2)} oz`;
+        }
+        // Melt value — read from footer DOM (already computed by renderTable)
         const meltDom = document.querySelector('[data-totals="all"] .totals-value, #totalMeltValue, .totals-melt');
         if (meltEl) {
           meltEl.textContent = (meltDom && meltDom.textContent) ? meltDom.textContent.trim() : '—';
         }
+        // Last modified — newest updatedAt across all items
         if (modEl) {
           const newest = items.reduce((max, it) => {
             const ts = it.updatedAt || it.dateAdded || 0;
