@@ -232,6 +232,59 @@ const bindAppearanceAndHeaderListeners = () => {
       if (typeof updateAllSparklines === 'function') updateAllSparklines();
     });
   }
+
+  setupHeaderBtnDragSort();
+};
+
+/**
+ * Wires drag-to-sort for the header buttons settings grid (STAK-320).
+ * Saves card order to localStorage `headerBtnOrder` on each drop.
+ */
+const setupHeaderBtnDragSort = () => {
+  const grid = document.getElementById('headerBtnSortGrid');
+  if (!grid) return;
+
+  let dragSrc = null;
+
+  grid.addEventListener('dragstart', (e) => {
+    const card = e.target.closest('.settings-card[data-btn-key]');
+    if (!card) return;
+    dragSrc = card;
+    e.dataTransfer.effectAllowed = 'move';
+    card.classList.add('dragging');
+  });
+
+  grid.addEventListener('dragend', (e) => {
+    const card = e.target.closest('.settings-card[data-btn-key]');
+    if (card) card.classList.remove('dragging');
+    dragSrc = null;
+  });
+
+  grid.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    if (!dragSrc) return;
+    const card = e.target.closest('.settings-card[data-btn-key]');
+    if (!card || card === dragSrc) return;
+    const rect = card.getBoundingClientRect();
+    const after = e.clientX > rect.left + rect.width / 2;
+    if (after) {
+      grid.insertBefore(dragSrc, card.nextSibling);
+    } else {
+      grid.insertBefore(dragSrc, card);
+    }
+  });
+
+  grid.addEventListener('drop', (e) => {
+    e.preventDefault();
+    const order = [...grid.querySelectorAll('.settings-card[data-btn-key]')]
+      .map(c => c.dataset.btnKey);
+    try {
+      localStorage.setItem('headerBtnOrder', JSON.stringify(order));
+    } catch (err) {
+      console.warn('[HeaderBtnSort] could not save order:', err);
+    }
+  });
 };
 
 /**
