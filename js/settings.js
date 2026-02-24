@@ -59,11 +59,6 @@ const switchSettingsSection = (name) => {
     populateApiSection();
   }
 
-  // Sync cloud UI when switching to Cloud section
-  if (targetName === 'cloud' && typeof syncCloudUI === 'function') {
-    syncCloudUI();
-  }
-
   // Populate Images data and sync toggles when switching to Images section (STACK-96)
   if (targetName === 'images') {
     syncChipToggle('tableImagesToggle', localStorage.getItem('tableImagesEnabled') !== 'false');
@@ -91,6 +86,52 @@ const switchSettingsSection = (name) => {
   // Populate Storage section when switching to it
   if (targetName === 'storage' && typeof renderStorageSection === 'function') {
     renderStorageSection();
+  }
+
+  // Populate Inventory Summary card and show/hide Cloud section when switching to Inventory
+  if (targetName === 'system') {
+    const countEl = safeGetElement('invSummaryCount');
+    const weightEl = safeGetElement('invSummaryWeight');
+    const meltEl = safeGetElement('invSummaryMelt');
+    const modEl = safeGetElement('invSummaryModified');
+    if (countEl || weightEl || meltEl || modEl) {
+      try {
+        const items = loadDataSync(LS_KEY, []);
+        if (countEl) countEl.textContent = items.length + ' items';
+        // Total weight — sum all items in troy oz (convert Goldback denominations)
+        if (weightEl) {
+          const totalOz = items.reduce((sum, it) => {
+            const w = parseFloat(it.weight) || 0;
+            const qty = Number(it.qty) || 1;
+            const oz = (it.weightUnit === 'gb' && typeof GB_TO_OZT !== 'undefined') ? w * GB_TO_OZT : w;
+            return sum + oz * qty;
+          }, 0);
+          weightEl.textContent = typeof formatWeight === 'function' ? formatWeight(totalOz) : `${totalOz.toFixed(2)} oz`;
+        }
+        // Melt value — use canonical computeMeltValue() helper from utils.js
+        if (meltEl) {
+          const totalMelt = items.reduce((sum, it) => {
+            const metalKey = (it.metal || 'silver').toLowerCase();
+            const spot = (typeof spotPrices !== 'undefined' && spotPrices[metalKey]) || 0;
+            return spot ? sum + computeMeltValue(it, spot) : sum;
+          }, 0);
+          meltEl.textContent = totalMelt > 0 ? (typeof formatCurrency === 'function' ? formatCurrency(totalMelt) : `$${totalMelt.toFixed(2)}`) : '—';
+        }
+        // Last modified — newest updatedAt across all items
+        if (modEl) {
+          const newest = items.reduce((max, it) => {
+            const ts = it.updatedAt || it.dateAdded || 0;
+            return ts > max ? ts : max;
+          }, 0);
+          modEl.textContent = newest
+            ? new Date(newest).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
+            : '—';
+        }
+      } catch (e) { console.warn('[settings] Inventory Summary card failed to populate:', e); }
+    }
+
+    // Sync cloud UI state (connected/disconnected badges, button states)
+    if (typeof syncCloudUI === 'function') syncCloudUI();
   }
 };
 
@@ -331,6 +372,13 @@ const syncSettingsUI = () => {
   const anyVisible = document.querySelector('.settings-provider-panel[style*="display: block"]');
   if (!anyVisible) {
     switchProviderTab('NUMISTA');
+  }
+
+  // Hide Cloud nav item when no provider is connected (STAK-317)
+  const cloudNavItem = document.querySelector('.settings-nav-item[data-section="cloud"]');
+  if (cloudNavItem && typeof cloudIsConnected === 'function' && typeof CLOUD_PROVIDERS !== 'undefined') {
+    const connectedCount = Object.keys(CLOUD_PROVIDERS).filter(p => cloudIsConnected(p)).length;
+    cloudNavItem.style.display = connectedCount >= 1 ? '' : 'none';
   }
 };
 
@@ -1105,6 +1153,28 @@ const applyHeaderToggleVisibility = () => {
   const marketBtn = safeGetElement('headerMarketBtn');
   if (marketBtn) {
     marketBtn.style.display = marketVisible ? '' : 'none';
+  }
+
+  // Vault button (three-state: null = show by default for discoverability)
+  const vaultStored = localStorage.getItem(HEADER_VAULT_BTN_KEY);
+  const vaultVisible = vaultStored !== null ? vaultStored === 'true' : true;
+  const vaultBtn = safeGetElement('headerVaultBtn');
+  if (vaultBtn) {
+    vaultBtn.style.display = vaultVisible ? '' : 'none';
+  }
+
+  // Restore button (visible by default)
+  const restoreVisible = localStorage.getItem(HEADER_RESTORE_BTN_KEY) !== 'false';
+  const restoreBtn = safeGetElement('headerRestoreBtn');
+  if (restoreBtn) {
+    restoreBtn.style.display = restoreVisible ? '' : 'none';
+  }
+
+  // Show text toggle
+  const showText = localStorage.getItem(HEADER_BTN_SHOW_TEXT_KEY) === 'true';
+  const btnContainer = safeGetElement('headerBtnContainer');
+  if (btnContainer.classList) {
+    btnContainer.classList.toggle('header-buttons--show-text', showText);
   }
 };
 window.applyHeaderToggleVisibility = applyHeaderToggleVisibility;

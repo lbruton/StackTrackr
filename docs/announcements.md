@@ -1,10 +1,10 @@
 ## What's New
 
+- **Menu Enhancements (v3.32.30)**: Trend period labels on spot cards update with trend button. Health dots on Sync and Market buttons reflect data freshness. Vault header button opens backup/restore. Show Text toggle displays icon labels. Uniform column-flex button layout (STAK-314).
+- **Parallel Agent Workflow (v3.32.29)**: Claims-array version lock replaces binary lock — multiple agents can claim concurrent patch versions without blocking each other. Brainstorming skill now enforces worktree gate before any implementation starts.
 - **Image Storage Expansion (v3.32.27)**: Dynamic IndexedDB quota via navigator.storage.estimate() replaces hardcoded 50 MB cap. Persistent storage request on first upload prevents silent eviction. Settings → Images → Storage shows split progress bars for Your Photos vs. Numista Cache. sharedImageId foundation for future image reuse across items (STAK-305).
 - **Bug Fixes — Storage Quota, Chrome Init Race, Numista Data Integrity (v3.32.26)**: Fixed localStorage quota overflow for retailIntradayData on large collections. Fixed Chrome "Cannot access inventory before initialization" crash on page refresh. Fixed Numista N# and photos repopulating after deletion due to stale serial mapping (STAK-300, STAK-301, STAK-302).
 - **Vendor Price Carry-Forward + OOS Legend Links (v3.32.25)**: Carry-forward prices in 24h chart and table show ~$XX.XX in muted style when vendor data is missing for a window. OOS vendors now appear in coin legend as clickable links with strikethrough last-known price and OOS badge (STAK-299).
-- **Cloud Sync Reliability Fixes (v3.32.24)**: Fixed vault-overwrite race condition where debounced startup push could discard other device's changes during conflict resolution. Fixed getSyncPassword fast-path break for Simple-mode migration and Manual Backup password persistence on page reload.
-- **Cloud Settings Redesign + Unified Encryption (v3.32.23)**: Compact ≤400px Dropbox card. Backup/Restore/Disconnect/Change Password moved to Advanced sub-modal. Simplified unified encryption replaces Simple/Secure toggle.
 
 ## Development Roadmap
 

@@ -136,6 +136,18 @@ const bindAppearanceAndHeaderListeners = () => {
     defaultVal: true,
     onApply: () => applyHeaderToggleVisibility(),
   });
+  wireStorageToggle('settingsHeaderVaultBtn_hdr', HEADER_VAULT_BTN_KEY, {
+    defaultVal: true,
+    onApply: () => applyHeaderToggleVisibility(),
+  });
+  wireStorageToggle('settingsHeaderRestoreBtn_hdr', HEADER_RESTORE_BTN_KEY, {
+    defaultVal: true,
+    onApply: () => applyHeaderToggleVisibility(),
+  });
+  wireStorageToggle('settingsHeaderShowText_hdr', HEADER_BTN_SHOW_TEXT_KEY, {
+    defaultVal: false,
+    onApply: () => applyHeaderToggleVisibility(),
+  });
 
   // Trend cycle header button.
   const headerTrendBtn = safeGetElement('headerTrendBtn');
@@ -183,6 +195,22 @@ const bindAppearanceAndHeaderListeners = () => {
       if (typeof showSettingsModal === 'function') {
         showSettingsModal('market');
       }
+    });
+  }
+
+  // Vault header button — opens Settings → System (backup/restore) (STAK-314).
+  const headerVaultBtn = safeGetElement('headerVaultBtn');
+  if (headerVaultBtn) {
+    headerVaultBtn.addEventListener('click', () => {
+      if (typeof showSettingsModal === 'function') showSettingsModal('system');
+    });
+  }
+
+  // Restore header button — opens Settings → System (backup/restore) (STAK-314).
+  const headerRestoreBtn = safeGetElement('headerRestoreBtn');
+  if (headerRestoreBtn) {
+    headerRestoreBtn.addEventListener('click', () => {
+      if (typeof showSettingsModal === 'function') showSettingsModal('system');
     });
   }
 
@@ -1241,7 +1269,7 @@ const _cloudRestoreWithCachedPw = async (provider, password, fileBytes) => {
 };
 
 const bindCloudStorageListeners = () => {
-  var panel = document.getElementById('settingsPanel_cloud');
+  var panel = document.getElementById('inventoryCloudSection') || document.getElementById('settingsPanel_cloud');
   if (!panel) return;
 
   bindCloudCacheListeners();

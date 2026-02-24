@@ -1158,6 +1158,10 @@ const _applyTrend = (val) => {
   });
   const label = document.getElementById('headerTrendLabel');
   if (label) label.textContent = TREND_LABELS[val] || val + 'd';
+  ['Silver', 'Gold', 'Platinum', 'Palladium'].forEach(m => {
+    const period = document.getElementById('spotPeriod' + m);
+    if (period) period.textContent = TREND_LABELS[val] || val + 'd';
+  });
 };
 
 /**

@@ -22,6 +22,7 @@ These rules fire before any implementation, no exceptions:
 5. **Multiple independent tasks?** → `superpowers:dispatching-parallel-agents` — subagents implement, we orchestrate.
 6. **Implementing a plan?** → `superpowers:subagent-driven-development`.
 7. **PR ready?** → `/pr-resolve` with Phase 0 parallel agents before touching any threads.
+8. **Starting any implementation?** → Check `devops/version.lock` → create a worktree via `/release patch` or `/start-patch` before making any edits.
 
 **Red flags — stop and invoke the right skill:**
 
