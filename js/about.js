@@ -283,11 +283,11 @@ const setupAckModalEvents = () => {
  */
 const getEmbeddedWhatsNew = () => {
   return `
+    <li><strong>v3.32.29 &ndash; Parallel Agent Workflow</strong>: Claims-array version lock replaces binary lock &mdash; multiple agents can now hold concurrent patch versions without blocking. Brainstorming skill enforces worktree gate before any implementation starts.</li>
     <li><strong>v3.32.27 &ndash; Image Storage Expansion</strong>: Dynamic IndexedDB quota via navigator.storage.estimate() replaces hardcoded 50 MB cap. Persistent storage request on first upload prevents silent eviction. Settings &rarr; Images &rarr; Storage shows split progress bars for Your Photos vs. Numista Cache. sharedImageId foundation for future image reuse (STAK-305).</li>
     <li><strong>v3.32.26 &ndash; Bug Fixes &mdash; Storage Quota, Chrome Init Race, Numista Data Integrity</strong>: Fixed localStorage quota overflow for retailIntradayData on large collections. Fixed Chrome &ldquo;Cannot access inventory before initialization&rdquo; crash on page refresh. Fixed Numista N# and photos repopulating after deletion due to stale serial mapping (STAK-300, STAK-301, STAK-302).</li>
     <li><strong>v3.32.25 &ndash; Vendor Price Carry-Forward + OOS Legend Links</strong>: Carry-forward prices in 24h chart and table show ~$XX.XX in muted style when vendor data is missing for a window. OOS vendors now appear in coin legend as clickable links with strikethrough last-known price and OOS badge (STAK-299).</li>
     <li><strong>v3.32.24 &ndash; Cloud Sync Reliability Fixes</strong>: Fixed vault-overwrite race condition where debounced startup push could discard other device&apos;s changes during conflict resolution. Fixed getSyncPassword fast-path break for Simple-mode migration and Manual Backup password persistence on page reload.</li>
-    <li><strong>v3.32.23 &ndash; Cloud Settings Redesign + Unified Encryption</strong>: Compact &le;400px Dropbox card. Backup/Restore/Disconnect/Change Password moved to Advanced sub-modal. Simplified unified encryption replaces Simple/Secure toggle.</li>
   `;
 };
 
