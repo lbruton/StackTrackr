@@ -242,8 +242,9 @@ class CatalogManager {
     if (item.numistaId && !this._mappings[serialKey]) {
       this.setCatalogId(serialKey, item.numistaId);
     }
-    // Case 2: Item has no numistaId but mapping exists
-    else if (!item.numistaId && this._mappings[serialKey]) {
+    // Case 2: Item numistaId was never set (null/undefined) but mapping exists — restore it.
+    // STAK-302: do NOT restore when numistaId is '' (explicitly cleared by user on save)
+    else if ((item.numistaId === undefined || item.numistaId === null) && this._mappings[serialKey]) {
       item.numistaId = this._mappings[serialKey];
     }
     // Case 3: Both exist but different - prioritize item.numistaId
