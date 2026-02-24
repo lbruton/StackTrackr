@@ -15,6 +15,10 @@
 !.claude/skills/seed-sync/
 !.claude/skills/ui-design/
 !.claude/skills/api-infrastructure/
+!.claude/skills/wiki-update/
+!.claude/skills/wiki-audit/
+!.claude/skills/wiki-sweep/
+!.claude/skills/ship/
 .claude/commands/
 .mcp.json
 SPRINT.md

@@ -295,6 +295,12 @@ Commit message format: `vNEW_VERSION — TITLE`
 
 If there are other uncommitted changes beyond the 5 version files, ask the user whether to include them in this commit or leave them staged separately.
 
+**After a successful commit, dispatch a background wiki update:**
+
+Invoke the `wiki-update` skill (Skill tool) as a background Task agent. It identifies
+which wiki pages were affected by this patch and pushes updates to `StakTrakrWiki`.
+Do not wait for it — proceed to Phase 4 immediately.
+
 **After a successful commit, push the patch branch and open a PR to dev** (Phase 4 covers this).
 **After the PR is merged to dev — tag the patch commit on dev and run worktree cleanup:**
 
