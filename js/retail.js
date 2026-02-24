@@ -1055,7 +1055,7 @@ const startRetailBackgroundSync = () => {
  */
 const updateMarketHealthDot = () => {
   const dot = safeGetElement('headerMarketDot');
-  if (!dot) return;
+  if (!dot.classList) return;
   dot.className = 'cloud-sync-dot header-cloud-dot';
   let ts = null;
   try { ts = localStorage.getItem(RETAIL_MANIFEST_TS_KEY); } catch (e) { /* ignore */ }
