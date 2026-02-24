@@ -414,7 +414,6 @@
                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
           </svg>
-          <span class="header-trend-label" id="headerTrendLabel">90d</span>
           <span class="header-btn-text">Trend</span>
         </button>
         <!-- Sync all spot prices button -->
@@ -2271,7 +2270,16 @@
 
               <!-- ── Header Buttons ── -->
               <div class="settings-fieldset">
-                <div class="settings-fieldset-title">Header Buttons</div>
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.25rem">
+                  <div class="settings-fieldset-title" style="margin-bottom:0">Header Buttons</div>
+                  <div style="display:flex;align-items:center;gap:0.5rem">
+                    <span style="font-size:0.75rem;color:var(--text-secondary);font-weight:500">Show text</span>
+                    <div class="chip-sort-toggle" id="settingsHeaderShowText_hdr">
+                      <button type="button" class="chip-sort-btn" data-val="yes">On</button>
+                      <button type="button" class="chip-sort-btn" data-val="no">Off</button>
+                    </div>
+                  </div>
+                </div>
                 <p class="settings-subtext">Optional buttons shown in the top-right of the app header.</p>
                 <div class="settings-card-grid settings-card-grid--3col settings-card-grid--mini">
                   <div class="settings-card">
