@@ -1792,61 +1792,6 @@ const getStorageItemDescription = (key) => {
 };
 
 /**
- * Generates data table for storage item
- */
-const generateItemDataTable = (item) => {
-  if (!item.parsedData) {
-    return `<div class="data-preview"><strong>Raw Data:</strong><pre>${item.value}</pre></div>`;
-  }
-  
-  if (Array.isArray(item.parsedData)) {
-    if (item.parsedData.length === 0) {
-      return '<p class="no-data">No records found</p>';
-    }
-    
-    // For inventory data, create a proper table
-    if (item.key === 'precious-metals-inventory') {
-      const headers = Object.keys(item.parsedData[0] || {});
-      return `
-        <div class="data-table-container">
-          <table class="data-table">
-            <thead>
-              <tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr>
-            </thead>
-            <tbody>
-              ${item.parsedData.slice(0, 50).map(record => 
-                `<tr>${headers.map(h => `<td>${sanitizeHtml(record[h]?.toString() || '')}</td>`).join('')}</tr>`
-              ).join('')}
-            </tbody>
-          </table>
-          ${item.parsedData.length > 50 ? `<p class="truncated">Showing first 50 of ${item.parsedData.length} records</p>` : ''}
-        </div>
-      `;
-    }
-    
-    // For other arrays, show a summary
-    return `
-      <div class="array-summary">
-        <p><strong>Array with ${item.parsedData.length} items</strong></p>
-        <div class="data-preview"><pre>${JSON.stringify(item.parsedData.slice(0, 3), null, 2)}${item.parsedData.length > 3 ? '\n...and ' + (item.parsedData.length - 3) + ' more items' : ''}</pre></div>
-      </div>
-    `;
-  }
-  
-  if (typeof item.parsedData === 'object') {
-    const keys = Object.keys(item.parsedData);
-    return `
-      <div class="object-summary">
-        <p><strong>Object with ${keys.length} properties</strong></p>
-        <div class="data-preview"><pre>${JSON.stringify(item.parsedData, null, 2)}</pre></div>
-      </div>
-    `;
-  }
-  
-  return `<div class="data-preview"><pre>${JSON.stringify(item.parsedData, null, 2)}</pre></div>`;
-};
-
-/**
  * Gets enhanced CSS styles for the storage report with theme support
  */
 const getStorageReportCSS = () => {
