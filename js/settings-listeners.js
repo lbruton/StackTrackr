@@ -136,6 +136,14 @@ const bindAppearanceAndHeaderListeners = () => {
     defaultVal: true,
     onApply: () => applyHeaderToggleVisibility(),
   });
+  wireStorageToggle('settingsHeaderVaultBtn_hdr', HEADER_VAULT_BTN_KEY, {
+    defaultVal: true,
+    onApply: () => applyHeaderToggleVisibility(),
+  });
+  wireStorageToggle('settingsHeaderShowText_hdr', HEADER_BTN_SHOW_TEXT_KEY, {
+    defaultVal: false,
+    onApply: () => applyHeaderToggleVisibility(),
+  });
 
   // Trend cycle header button.
   const headerTrendBtn = safeGetElement('headerTrendBtn');
@@ -183,6 +191,14 @@ const bindAppearanceAndHeaderListeners = () => {
       if (typeof showSettingsModal === 'function') {
         showSettingsModal('market');
       }
+    });
+  }
+
+  // Vault header button — opens vault modal in export mode (STAK-314).
+  const headerVaultBtn = safeGetElement('headerVaultBtn');
+  if (headerVaultBtn) {
+    headerVaultBtn.addEventListener('click', () => {
+      if (typeof openVaultModal === 'function') openVaultModal('export');
     });
   }
 
