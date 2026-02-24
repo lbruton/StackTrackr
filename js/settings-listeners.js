@@ -141,7 +141,7 @@ const bindAppearanceAndHeaderListeners = () => {
     onApply: () => applyHeaderToggleVisibility(),
   });
   wireStorageToggle('settingsHeaderRestoreBtn_hdr', HEADER_RESTORE_BTN_KEY, {
-    defaultVal: false,
+    defaultVal: true,
     onApply: () => applyHeaderToggleVisibility(),
   });
   wireStorageToggle('settingsHeaderShowText_hdr', HEADER_BTN_SHOW_TEXT_KEY, {
