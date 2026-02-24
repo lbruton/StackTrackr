@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.32.27] - 2026-02-23
+
+### Added — Image Storage Expansion — Dynamic Quota, Split Gauge, sharedImageId Foundation (STAK-305)
+
+- **Added**: Dynamic IndexedDB quota via `navigator.storage.estimate()` — replaces hardcoded 50 MB cap; adapts to 60% of available disk space (min 500 MB, max 4 GB)
+- **Added**: Persistent storage request on first photo upload — prevents browser from silently evicting user images
+- **Added**: Split storage gauge in Settings → Images → Storage — separate rows for Your Photos vs. Numista Cache, each with progress bar and byte count
+- **Added**: `sharedImageId` field on `userImages` records and `obverseSharedImageId`/`reverseSharedImageId` on inventory items — foundation for future image reuse across items
+
+---
+
 ## [3.32.26] - 2026-02-23
 
 ### Fixed — Storage Quota, Chrome Init Race, Numista Data Integrity
