@@ -1,6 +1,7 @@
 ## What's New
 
 - **Cloud Backup Labels (v3.32.32)**: Backup list now shows "Inventory backup" or "Image backup" label on each row so you can tell at a glance which files contain your items vs. your photos (STAK-316).
+- **Code Cleanup (v3.32.31)**: Removed unused internal utility function from utils.js with zero impact on app behavior.
 - **Menu Enhancements (v3.32.30)**: Trend period labels on spot cards update with trend button. Health dots on Sync and Market buttons reflect data freshness. Vault header button opens backup/restore. Show Text toggle displays icon labels. Uniform column-flex button layout (STAK-314).
 - **Parallel Agent Workflow (v3.32.29)**: Claims-array version lock replaces binary lock — multiple agents can claim concurrent patch versions without blocking each other. Brainstorming skill now enforces worktree gate before any implementation starts.
 - **Image Storage Expansion (v3.32.27)**: Dynamic IndexedDB quota via navigator.storage.estimate() replaces hardcoded 50 MB cap. Persistent storage request on first upload prevents silent eviction. Settings → Images → Storage shows split progress bars for Your Photos vs. Numista Cache. sharedImageId foundation for future image reuse across items (STAK-305).
