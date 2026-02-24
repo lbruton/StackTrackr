@@ -6,7 +6,7 @@ allowed-tools: Bash, Read, Write, Edit, Grep, Glob
 
 # Release — StakTrakr
 
-End-to-end release workflow: bump version across all 7 files, commit to dev, and create a PR to main.
+End-to-end release workflow: bump version across all 7 files, commit to the patch branch, and open a draft PR to dev. The `dev → main` PR is created separately at Phase 4.5 only when you explicitly say you're ready to ship.
 
 ## When to Run
 
@@ -348,79 +348,54 @@ rm -f devops/version.lock
    )"
    ```
 
-3. **Check the long-running `dev → main` accumulator PR** (do NOT merge — this accumulates all patches and is only merged in Phase 4.5 on explicit user instruction):
-   ```bash
-   gh pr list --base main --head dev --state open --json number,title,isDraft,url
-   ```
+3. (Optional — requires Linear MCP) If Linear issues are referenced, update status to **In Progress** (not Done — that happens at merge time).
 
-   **If no accumulator PR exists yet:** Create one as a permanent draft. It will grow to include all future patches — title/body updated comprehensively at Phase 4.5:
-   ```bash
-   gh pr create --base main --head dev --draft --label "codacy-review" \
-     --title "WIP: vNEW_VERSION — [brief description of initial work]" \
-     --body "$(cat <<'EOF'
-   > **Draft — do not merge.** This PR accumulates all dev patches. PR description will be updated to reflect all changes before merge (Phase 4.5). Only merge on explicit user instruction.
+> **No `dev → main` PR here.** The patch branch PRs to `dev` only. The `dev → main` PR is created at Phase 4.5, using version tags on `dev` as the changelog source. Do not create or touch any PR targeting `main` during Phase 4.
 
-   ## Changes so far
+## Phase 4.5: Create `dev → main` PR and Ship (Run only when user says "release", "ready to ship", or "merge to main")
 
-   - [brief bullet points for this commit/batch]
+This phase is triggered when `dev` is QA-complete and you want to ship to main. It collects the version tags on `dev` as the changelog source, creates the PR, and prepares it for final review.
 
-   ## Linear Issues
-
-   - [STAK-XX: title — link] (if applicable)
-
-   🤖 Generated with [Claude Code](https://claude.com/claude-code)
-   EOF
-   )"
-   ```
-
-   **If the accumulator draft PR already exists:** Update it to append the new changes:
-   ```bash
-   gh pr edit [number] --body "$(cat <<'EOF'
-   [updated body — append new changes to existing list]
-   EOF
-   )"
-   ```
-
-4. (Optional — requires Linear MCP) If Linear issues are referenced, update status to **In Progress** (not Done — that happens at merge time).
-
-## Phase 4.5: Mark PR Ready (Pre-Merge — Run separately when ready to ship)
-
-This phase is triggered when the dev branch is QA-complete and ready to merge to main. It makes the draft PR comprehensive and opens it for final review.
-
-**Do not run this as part of a normal version bump.** Run it only when the user explicitly says they are ready to release.
+**Hard gate:** Do NOT run this unless the user has explicitly said they are ready to release in the current session.
 
 ### Step 1: Audit the branch
 
+Run both in parallel:
+
 ```bash
-git log --oneline main..dev
+git fetch origin
+git log --oneline main..origin/dev
+git tag --merged origin/dev --sort=-version:refname | grep '^v3\.' | head -20
 ```
 
-Collect every commit since the last merge. Group by feature/fix/chore. Identify all STAK-### references.
+The tag list gives you every patch breadcrumb on `dev` that hasn't shipped to main yet. These are your changelog source — more reliable than commit messages alone.
 
 ### Step 2: Fetch Linear issue titles
 
-For each STAK-### found, call `get_issue` (Linear MCP) to get the current title and status. This ensures the PR description is accurate, not just copy-pasted from commit messages.
+For each STAK-### found across commits and tag names, call `get_issue` (Linear MCP) to get the current title and status. This ensures the PR description is accurate, not just copy-pasted from commit messages.
 
-### Step 3: Write a comprehensive PR title and body
+### Step 3: Create the `dev → main` PR
 
-The PR title should reflect the **full contents of the branch**, not just the first day's work:
+The PR title should reflect the **full contents of the branch**:
 
 ```
-vNEW_VERSION — [primary feature/fix] + [secondary] + [tertiary if notable]
+vLATEST_VERSION — [primary feature/fix] + [secondary] + [tertiary if notable]
 ```
-
-The body should be a complete, accurate summary of everything in the branch:
 
 ```bash
-gh pr edit [number] --title "vNEW_VERSION — [comprehensive title]" --body "$(cat <<'EOF'
+gh pr create --base main --head dev --label "codacy-review" \
+  --title "vLATEST_VERSION — [comprehensive title]" \
+  --body "$(cat <<'EOF'
 ## Summary
 
-- [bullet per feature/fix, grouped logically]
-- [not just commit messages — user-readable descriptions]
+- [bullet per feature/fix, grouped logically by version tag]
+- [user-readable descriptions — not raw commit messages]
 
-## Files Changed
+## Version Tags Included
 
-- [key files, not a complete list — focus on non-obvious ones]
+- vX.X.X — [title]
+- vX.X.X — [title]
+- ...
 
 ## Linear Issues
 
