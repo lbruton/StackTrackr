@@ -13,6 +13,7 @@ const CACHE_NAME = 'staktrakr-v3.32.31-b1771973679';
 
 
 
+
 // Offline fallback for navigation requests when all cache/network strategies fail
 const OFFLINE_HTML = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>StakTrakr</title></head>' +
   '<body style="font-family:system-ui;text-align:center;padding:4rem">' +
