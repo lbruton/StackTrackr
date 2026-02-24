@@ -3091,13 +3091,11 @@
                     Connect
                   </button>
                   <button class="btn success cloud-backup-btn" data-provider="dropbox" disabled
-                    onclick="if(typeof pushSyncVault==='function')pushSyncVault();"
                     style="font-size:0.82rem;padding:0.4rem 0.9rem;min-height:0">
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:0.3rem"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
                     Backup
                   </button>
                   <button class="btn cloud-restore-btn" data-provider="dropbox" disabled
-                    onclick="if(typeof pullSyncVault==='function')pullSyncVault();"
                     style="font-size:0.82rem;padding:0.4rem 0.9rem;min-height:0">
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:0.3rem"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                     Restore
@@ -4211,14 +4209,12 @@
             <div class="settings-fieldset-title">Backup &amp; Restore</div>
             <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.5rem">
               <button class="btn success cloud-backup-btn" data-provider="dropbox" disabled
-                style="font-size:0.82rem;padding:0.4rem 0.9rem;min-height:0"
-                onclick="if(typeof pushSyncVault==='function')pushSyncVault();">
+                style="font-size:0.82rem;padding:0.4rem 0.9rem;min-height:0">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:0.3rem"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
                 Backup Now
               </button>
               <button class="btn cloud-restore-btn" data-provider="dropbox" disabled
-                style="font-size:0.82rem;padding:0.4rem 0.9rem;min-height:0"
-                onclick="if(typeof pullSyncVault==='function')pullSyncVault();">
+                style="font-size:0.82rem;padding:0.4rem 0.9rem;min-height:0">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:0.3rem"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                 Restore
               </button>
@@ -4265,8 +4261,7 @@
             <div class="settings-fieldset-title" style="color:var(--danger,#e74c3c)">Danger Zone</div>
             <p class="settings-subtext" style="margin:0.3rem 0 0.5rem">Disconnecting removes Dropbox access from this device. Your encrypted backups on Dropbox are not deleted.</p>
             <button class="btn danger cloud-disconnect-btn" data-provider="dropbox"
-              style="font-size:0.82rem;padding:0.4rem 0.9rem;min-height:0"
-              onclick="if(typeof disconnectCloud==='function')disconnectCloud('dropbox');">
+              style="font-size:0.82rem;padding:0.4rem 0.9rem;min-height:0">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:0.3rem"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
               Disconnect Dropbox
             </button>
