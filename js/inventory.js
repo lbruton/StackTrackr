@@ -17,7 +17,6 @@ let _cachedItemIndexMap = null;
 const invalidateItemIndexMap = () => {
   _cachedItemIndexMap = null;
 };
-window.invalidateItemIndexMap = invalidateItemIndexMap;
 
 /**
  * Retrieves or builds the cached item index map.
@@ -837,9 +836,10 @@ const loadInventory = async () => {
     if (!Array.isArray(data)) {
       console.warn('Inventory data is not an array, resetting to empty array');
       inventory = [];
+      invalidateItemIndexMap();
       return;
     }
-    
+
     // Migrate legacy data to include new fields
     inventory = data.map(item => {
     let normalized;
@@ -928,6 +928,7 @@ const loadInventory = async () => {
   } catch (error) {
     console.error('Error loading inventory:', error);
     inventory = [];
+    invalidateItemIndexMap();
   }
 };
 
@@ -1513,9 +1514,7 @@ const renderTable = () => {
         if (typeof initCardSortBar === 'function') initCardSortBar();
         if (typeof updateCardSortBar === 'function') updateCardSortBar();
 
-        // Optimization: Pass cached index map to avoid O(N^2) lookups in card view
-        // Note: itemIndexMap is already retrieved via getItemIndexMap() below, but we need it here.
-        // We'll move the retrieval up.
+        // Optimization: Pass cached index map for O(1) index lookups in card view
         const itemIndexMap = getItemIndexMap();
         renderCardView(sortedInventory, cardGrid, itemIndexMap);
         bindCardClickHandler(cardGrid);
