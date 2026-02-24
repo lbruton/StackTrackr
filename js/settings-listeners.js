@@ -198,19 +198,19 @@ const bindAppearanceAndHeaderListeners = () => {
     });
   }
 
-  // Vault header button — opens vault modal in export mode (STAK-314).
+  // Vault header button — opens Settings → System (backup/restore) (STAK-314).
   const headerVaultBtn = safeGetElement('headerVaultBtn');
   if (headerVaultBtn) {
     headerVaultBtn.addEventListener('click', () => {
-      if (typeof openVaultModal === 'function') openVaultModal('export');
+      if (typeof showSettingsModal === 'function') showSettingsModal('system');
     });
   }
 
-  // Restore header button — opens vault modal in import mode (STAK-314).
+  // Restore header button — opens Settings → System (backup/restore) (STAK-314).
   const headerRestoreBtn = safeGetElement('headerRestoreBtn');
   if (headerRestoreBtn) {
     headerRestoreBtn.addEventListener('click', () => {
-      if (typeof openVaultModal === 'function') openVaultModal('import');
+      if (typeof showSettingsModal === 'function') showSettingsModal('system');
     });
   }
 

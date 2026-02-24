@@ -15,7 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Added**: Trend period labels (e.g. "90d") on spot card headers that update in sync with the trend cycle button (STAK-314)
 - **Added**: Health status dots on Sync and Market header buttons reflecting spot and market data freshness — green < 60 min, orange < 24 hr, red > 24 hr (STAK-314)
-- **Added**: Vault header button (shown by default; can be hidden in Settings → Header Buttons) that opens the backup/restore modal (STAK-314)
+- **Added**: Vault and Restore header buttons (shown by default; can be hidden in Settings → Header Buttons) that open Settings → System for backup/restore (STAK-314)
 - **Added**: Show Text toggle in Settings → Header Buttons that displays icon labels beneath all header buttons (STAK-314)
 - **Added**: `flex-direction: column` layout on header buttons for uniform sizing and show-text mode support (STAK-314)
 
