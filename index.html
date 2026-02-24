@@ -63,13 +63,13 @@
     <!-- CDN fallbacks — only execute if the local vendor copy failed to load -->
     <script>
       window.__vendorFallbacks = [
-        { global: 'Papa',                   src: 'https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js' },
-        { global: 'jspdf',                  src: 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js' },
-        { check: function() { return !!(window.jspdf && window.jspdf.jsPDF && window.jspdf.jsPDF.prototype.autoTable); }, src: 'https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js' },
-        { global: 'Chart',                  src: 'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js' },
-        { global: 'ChartDataLabels',        src: 'https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js' },
-        { global: 'JSZip',                  src: 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js' },
-        { global: 'forge',                  src: 'https://cdnjs.cloudflare.com/ajax/libs/forge/0.10.0/forge.min.js' },
+        { global: 'Papa',                   src: 'https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js', integrity: 'sha512-dfX5uYVXzyU8+KHqj8bjo7UkOdg18PaOtpa48djpNbZHwExddghZ+ZmzWT06R5v6NSk3ZUfsH6FNEDepLx9hPQ==' },
+        { global: 'jspdf',                  src: 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js', integrity: 'sha512-qZvrmS2ekKPF2mSznTQsxqPgnpkI4DNTlrdUmTzrDgektczlKNRRhy5X5AAOnx5S09ydFYWWNSfcEqDTTHgtNA==' },
+        { check: function() { return !!(window.jspdf && window.jspdf.jsPDF && window.jspdf.jsPDF.prototype.autoTable); }, src: 'https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js', integrity: 'sha512-SgWewGM3r8xXm8LNXt4ZHqKVKu/7eKrJ1aBCbMaX44xXXaCcIvCAvD2kj9qnC1lhyjAu04mcPiTzcc/CaACnUQ==' },
+        { global: 'Chart',                  src: 'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js', integrity: 'sha512-ElRFoEQdI5Ht6kZvyzXhYG9NqjtkmlkfYk0wr6wHxU9JEHakS7UJZNeml5ALk+8IKlU6jDgMabC3vkumRokgJA==' },
+        { global: 'ChartDataLabels',        src: 'https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js', integrity: 'sha512-JPcRR8yFa8mmCsfrw4TNte1ZvF1e3+1SdGMslZvmrzDYxS69J7J49vkFL8u6u8PlPJK+H3voElBtUCzaXj+6ig==' },
+        { global: 'JSZip',                  src: 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js', integrity: 'sha512-XMVd28F1oH/O71fzwBnV7HucLxVwtxf26XV8P4wPk26EDxuGZ91N8bsOttmnomcCD3CS5ZMRL50H0GgOHvegtg==' },
+        { global: 'forge',                  src: 'https://cdnjs.cloudflare.com/ajax/libs/forge/0.10.0/forge.min.js', integrity: 'sha512-S/UB/AdGt16YP1OyopwfVG1BO93nkwVNY7No5zfALnztixutqOuP3DGvo7G4YqB77uL791jWNjQnT/63CjOZNw==' },
       ];
       document.addEventListener('DOMContentLoaded', function () {
         window.__vendorFallbacks.forEach(function (lib) {
@@ -79,6 +79,13 @@
             console.warn('[vendor] ' + label + ' not loaded from local — falling back to CDN');
             var s = document.createElement('script');
             s.src = lib.src;
+            if (lib.integrity) {
+              s.integrity = lib.integrity;
+              s.crossOrigin = 'anonymous';
+            }
+            s.addEventListener('error', function () {
+              console.error('[vendor] SRI/network failure: ' + label + ' — ' + lib.src);
+            });
             document.head.appendChild(s);
           }
         });
