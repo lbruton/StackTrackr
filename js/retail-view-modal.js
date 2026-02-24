@@ -311,12 +311,10 @@ const _buildIntradayChart = (slug) => {
       ? activeVendors.map((vendorId) => {
           const label = (typeof RETAIL_VENDOR_NAMES !== "undefined" && RETAIL_VENDOR_NAMES[vendorId]) || vendorId;
           const color = RETAIL_VENDOR_COLORS[vendorId] || "#94a3b8";
-          const carriedIndices = new Set(
-            bucketed.reduce((acc, w, i) => {
-              if (w._carriedVendors && w._carriedVendors.has(vendorId)) acc.push(i);
-              return acc;
-            }, [])
-          );
+          const carriedIndices = new Set();
+          bucketed.forEach((w, i) => {
+            if (w._carriedVendors && w._carriedVendors.has(vendorId)) carriedIndices.add(i);
+          });
           return {
             label,
             data: bucketed.map((w) => (w.vendors && w.vendors[vendorId] != null ? w.vendors[vendorId] : null)),
@@ -365,6 +363,7 @@ const _buildIntradayChart = (slug) => {
           tooltip: {
             callbacks: {
               label: (ctx) => {
+                if (ctx.raw == null) return null;
                 const carried = ctx.dataset._carriedIndices && ctx.dataset._carriedIndices.has(ctx.dataIndex);
                 return `${ctx.dataset.label}: ${carried ? '~' : ''}$${Number(ctx.raw).toFixed(2)}`;
               },
