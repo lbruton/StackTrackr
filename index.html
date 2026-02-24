@@ -4135,13 +4135,30 @@
           </button>
         </div>
         <div class="modal-body">
-          <div class="encryption-info">
-            <strong>Included:</strong> All inventory data, settings, API keys, and price history.
+          <div id="vaultDescExport" class="encryption-info">
+            <strong>Included:</strong> All inventory data, settings, API keys, and price history. Your photos will be saved as a separate companion file.
+          </div>
+
+          <div id="vaultDescImport" class="encryption-info" style="display:none">
+            <strong>Included:</strong> All inventory data, settings, API keys, and price history. To also restore photos, add the companion <em>-images.stvault</em> file below.
           </div>
 
           <div id="vaultFileInfo" class="encryption-info" style="display: none">
             <strong>File:</strong> <span id="vaultFileName"></span>
             (<span id="vaultFileSize"></span>)
+          </div>
+
+          <!-- Image vault companion file (import mode only) -->
+          <div id="vaultImageFileRow" style="display:none">
+            <div class="encryption-info" id="vaultImageFileInfo" style="display:none">
+              <strong>Photos:</strong> <span id="vaultImageFileName"></span>
+              (<span id="vaultImageFileSize"></span>)
+            </div>
+            <div class="settings-btn-row" id="vaultImagePickerRow">
+              <label class="btn" style="cursor:pointer" for="vaultImageImportFile">+ Add Photos File</label>
+              <small style="opacity:0.65">Optional: <em>-images.stvault</em> from the same export</small>
+            </div>
+            <input type="file" id="vaultImageImportFile" accept=".stvault" hidden />
           </div>
 
           <div class="form-row">
