@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.32.31] - 2026-02-24
+
+### Removed — STAK-321: Dead code cleanup
+
+- **Removed**: `generateItemDataTable()` from `js/utils.js` — zero call sites remaining after PR #490 removed its only caller `createStorageItemModal` (STAK-321)
+
+---
+
 ## [3.32.30] - 2026-02-24
 
 ### Added — STAK-314: Menu Enhancements
