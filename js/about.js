@@ -283,6 +283,7 @@ const setupAckModalEvents = () => {
  */
 const getEmbeddedWhatsNew = () => {
   return `
+    <li><strong>v3.32.34 &ndash; Force Refresh Button</strong>: New button in Settings &rarr; System &rarr; App Updates. Unregisters service workers and reloads to fetch the latest version. Use if the app appears stuck on an old version after an update (STAK-324).</li>
     <li><strong>v3.32.33 &ndash; Bug Fix &mdash; 7-Day Sparklines</strong>: Fresh load sparklines now draw a full 7-day curve. Hourly backfill extends to 7 days on first load to bridge the LBMA seed data lag (STAK-303).</li>
     <li><strong>v3.32.32 &ndash; Cloud Backup Labels</strong>: Backup list now shows &ldquo;Inventory backup&rdquo; or &ldquo;Image backup&rdquo; label on each row so you can tell at a glance which files contain your items vs. your photos (STAK-316).</li>
     <li><strong>v3.32.31 &ndash; Code Cleanup</strong>: Removed unused internal utility function from utils.js with zero impact on app behavior.</li>

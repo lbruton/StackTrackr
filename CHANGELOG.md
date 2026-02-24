@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.32.34] - 2026-02-24
+
+### Added — STAK-324: Force Refresh button
+
+- **Added**: Force Refresh button in Settings → System → App Updates — unregisters all service workers and reloads to fetch the latest version from the network; inventory data is not affected (STAK-324)
+
+---
+
 ## [3.32.33] - 2026-02-24
 
 ### Fixed — STAK-303: 7-day sparklines straight line on fresh load

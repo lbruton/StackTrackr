@@ -167,6 +167,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     elements.numistaApiKey = safeGetElement("numistaApiKey");
     elements.removeInventoryDataBtn = safeGetElement("removeInventoryDataBtn");
     elements.boatingAccidentBtn = safeGetElement("boatingAccidentBtn");
+    elements.forceRefreshBtn = safeGetElement("forceRefreshBtn");
     elements.vaultExportBtn = safeGetElement("vaultExportBtn");
     elements.vaultImportBtn = safeGetElement("vaultImportBtn");
     elements.vaultImportFile = safeGetElement("vaultImportFile");
