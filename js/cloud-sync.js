@@ -315,9 +315,11 @@ function _syncRelativeTime(ts) {
  * @returns {Promise<string|null>}
  */
 function getSyncPassword() {
-  // If already have both values, return silently
+  // If getSyncPasswordSilent already has a valid key, return it immediately.
+  // Do not add a redundant localStorage check — getSyncPasswordSilent() handles
+  // both Unified mode (password+accountId) and Simple-mode migration (accountId only).
   var silent = getSyncPasswordSilent();
-  if (silent && localStorage.getItem('cloud_vault_password')) return Promise.resolve(silent);
+  if (silent) return Promise.resolve(silent);
 
   var accountId = localStorage.getItem('cloud_dropbox_account_id');
   var isNewAccount = !localStorage.getItem('cloud_vault_password');
