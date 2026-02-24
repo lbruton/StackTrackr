@@ -953,7 +953,9 @@ function syncCloudUI() {
     var disconnectBtn = document.querySelector('.cloud-disconnect-btn[data-provider="' + key + '"]');
     var backupListEl = document.getElementById('cloudBackupList_' + key);
 
-    if (loginArea) loginArea.style.display = connected ? 'none' : '';
+    // Hide only the Connect button when connected — Backup/Restore remain visible in the same row
+    var connectBtn = loginArea ? loginArea.querySelector('.cloud-connect-btn') : null;
+    if (connectBtn) connectBtn.style.display = connected ? 'none' : '';
     if (connectedBadge) connectedBadge.style.display = connected ? '' : 'none';
     if (disconnectBtn) disconnectBtn.style.display = connected ? '' : 'none';
 
