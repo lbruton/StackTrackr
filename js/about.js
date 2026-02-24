@@ -283,7 +283,7 @@ const setupAckModalEvents = () => {
  */
 const getEmbeddedWhatsNew = () => {
   return `
-    <li><strong>v3.32.31 &ndash; Code Cleanup</strong>: Removed unused internal utility function from utils.js with zero impact on app behavior. Inventory rendering optimization from PR #489 now cached for O(1) index lookups.</li>
+    <li><strong>v3.32.31 &ndash; Code Cleanup</strong>: Removed unused internal utility function from utils.js with zero impact on app behavior.</li>
     <li><strong>v3.32.30 &ndash; Menu Enhancements</strong>: Trend period labels on spot cards update with trend button. Health dots on Sync and Market header buttons reflect data freshness. Vault header button opens backup/restore (enable in Settings). Show Text toggle for icon labels. Uniform column-flex button layout (STAK-314).</li>
     <li><strong>v3.32.29 &ndash; Parallel Agent Workflow</strong>: Claims-array version lock replaces binary lock &mdash; multiple agents can now hold concurrent patch versions without blocking. Brainstorming skill enforces worktree gate before any implementation starts.</li>
     <li><strong>v3.32.27 &ndash; Image Storage Expansion</strong>: Dynamic IndexedDB quota via navigator.storage.estimate() replaces hardcoded 50 MB cap. Persistent storage request on first upload prevents silent eviction. Settings &rarr; Images &rarr; Storage shows split progress bars for Your Photos vs. Numista Cache. sharedImageId foundation for future image reuse (STAK-305).</li>
