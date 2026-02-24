@@ -1154,6 +1154,28 @@ const applyHeaderToggleVisibility = () => {
   if (marketBtn) {
     marketBtn.style.display = marketVisible ? '' : 'none';
   }
+
+  // Vault button (three-state: null = show by default for discoverability)
+  const vaultStored = localStorage.getItem(HEADER_VAULT_BTN_KEY);
+  const vaultVisible = vaultStored !== null ? vaultStored === 'true' : true;
+  const vaultBtn = safeGetElement('headerVaultBtn');
+  if (vaultBtn) {
+    vaultBtn.style.display = vaultVisible ? '' : 'none';
+  }
+
+  // Restore button (visible by default)
+  const restoreVisible = localStorage.getItem(HEADER_RESTORE_BTN_KEY) !== 'false';
+  const restoreBtn = safeGetElement('headerRestoreBtn');
+  if (restoreBtn) {
+    restoreBtn.style.display = restoreVisible ? '' : 'none';
+  }
+
+  // Show text toggle
+  const showText = localStorage.getItem(HEADER_BTN_SHOW_TEXT_KEY) === 'true';
+  const btnContainer = safeGetElement('headerBtnContainer');
+  if (btnContainer.classList) {
+    btnContainer.classList.toggle('header-buttons--show-text', showText);
+  }
 };
 window.applyHeaderToggleVisibility = applyHeaderToggleVisibility;
 

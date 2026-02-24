@@ -367,33 +367,29 @@
           </svg>
         </h1>
       </div>
-      <div class="app-header-actions">
-        <!-- Theme cycle button (STACK-54) -->
-        <button class="btn theme-btn header-toggle-btn" id="headerThemeBtn"
-                title="Cycle theme" aria-label="Cycle theme">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-               stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="5"/>
-            <line x1="12" y1="1" x2="12" y2="3"/>
-            <line x1="12" y1="21" x2="12" y2="23"/>
-            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
-            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
-            <line x1="1" y1="12" x2="3" y2="12"/>
-            <line x1="21" y1="12" x2="23" y2="12"/>
-            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
-            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+      <div class="app-header-actions" id="headerBtnContainer">
+        <!-- Spot sync button (STAK-314) — order: 1 -->
+        <button class="btn theme-btn header-toggle-btn" id="headerSyncBtn"
+                title="Sync spot prices" aria-label="Sync spot prices" style="display:none;position:relative">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21.5 2v6h-6"/><path d="M2.5 22v-6h6"/>
+            <path d="M2.5 11.5a10 10 0 0 1 18.4-4.5"/>
+            <path d="M21.5 12.5a10 10 0 0 1-18.4 4.5"/>
           </svg>
+          <span class="cloud-sync-dot header-cloud-dot" id="headerSyncDot"></span>
+          <span class="header-btn-text">Spot</span>
         </button>
-        <!-- Currency toggle button (STACK-54) -->
-        <button class="btn theme-btn header-toggle-btn" id="headerCurrencyBtn"
-                title="Toggle currency" aria-label="Toggle currency">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+        <!-- Trend cycle button — order: 2 -->
+        <button class="btn theme-btn header-toggle-btn" id="headerTrendBtn"
+                title="Trend period" aria-label="Trend period" style="display:none">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="12" y1="1" x2="12" y2="23"/>
-            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
           </svg>
+          <span class="header-btn-text">Trend</span>
         </button>
-        <!-- Market button -->
+        <!-- Market button — order: 3 -->
         <button class="btn theme-btn header-toggle-btn" id="headerMarketBtn"
                 title="Market prices" aria-label="Market prices">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -402,27 +398,20 @@
             <line x1="3" y1="6" x2="21" y2="6"/>
             <path d="M16 10a4 4 0 0 1-8 0"/>
           </svg>
+          <span class="cloud-sync-dot header-cloud-dot" id="headerMarketDot"></span>
+          <span class="header-btn-text">Market</span>
         </button>
-        <!-- Trend cycle button -->
-        <button class="btn theme-btn header-toggle-btn" id="headerTrendBtn"
-                title="Trend period" aria-label="Trend period" style="display:none">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+        <!-- Currency toggle button — order: 4 -->
+        <button class="btn theme-btn header-toggle-btn" id="headerCurrencyBtn"
+                title="Toggle currency" aria-label="Toggle currency">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+            <line x1="12" y1="1" x2="12" y2="23"/>
+            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
           </svg>
-          <span class="header-trend-label" id="headerTrendLabel">90d</span>
+          <span class="header-btn-text">Currency</span>
         </button>
-        <!-- Sync all spot prices button -->
-        <button class="btn theme-btn header-toggle-btn" id="headerSyncBtn"
-                title="Sync all spot prices" aria-label="Sync all spot prices" style="display:none">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-               stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M21.5 2v6h-6"/><path d="M2.5 22v-6h6"/>
-            <path d="M2.5 11.5a10 10 0 0 1 18.4-4.5"/>
-            <path d="M21.5 12.5a10 10 0 0 1-18.4 4.5"/>
-          </svg>
-        </button>
-        <!-- Cloud sync status button + inline popover wrapper (STAK-264) -->
+        <!-- Cloud sync status button + inline popover wrapper — order: 5 (STAK-264) -->
         <div style="position:relative;display:inline-flex" id="headerCloudSyncWrapper">
           <button class="btn theme-btn header-toggle-btn" id="headerCloudSyncBtn"
                   title="Cloud sync status" aria-label="Cloud sync status" style="display:none;">
@@ -431,6 +420,7 @@
               <path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/>
             </svg>
             <span class="cloud-sync-dot header-cloud-dot" id="headerCloudDot"></span>
+            <span class="header-btn-text">Cloud</span>
           </button>
           <!-- Secure mode: inline password popover (never auto-opens) -->
           <div id="cloudSyncHeaderPopover" role="dialog" aria-label="Sync password" style="display:none;position:absolute;top:calc(100% + 6px);right:0;background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:0.75rem;box-shadow:0 8px 32px rgba(0,0,0,0.5);z-index:999;min-width:240px">
@@ -445,16 +435,56 @@
             <button id="cloudSyncPopoverCancelBtn" style="background:none;border:none;color:var(--text-secondary);font-size:0.75rem;margin-top:0.4rem;cursor:pointer;padding:0">Cancel</button>
           </div>
         </div>
-        <button class="btn theme-btn" id="aboutBtn" title="About" aria-label="About">
+        <!-- Vault backup button — order: 6 (STAK-314) -->
+        <button class="btn theme-btn header-toggle-btn" id="headerVaultBtn"
+                title="Backup" aria-label="Backup" style="display:none">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
+          <span class="header-btn-text">Backup</span>
+        </button>
+        <!-- Restore button — order: 7 (STAK-314) -->
+        <button class="btn theme-btn header-toggle-btn" id="headerRestoreBtn"
+                title="Restore" aria-label="Restore" style="display:none">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="1 4 1 10 7 10"/>
+            <path d="M3.51 15a9 9 0 1 0 .49-4.51"/>
+          </svg>
+          <span class="header-btn-text">Restore</span>
+        </button>
+        <!-- Theme cycle button — order: 8 (STACK-54) -->
+        <button class="btn theme-btn header-toggle-btn" id="headerThemeBtn"
+                title="Cycle theme" aria-label="Cycle theme">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="5"/>
+            <line x1="12" y1="1" x2="12" y2="3"/>
+            <line x1="12" y1="21" x2="12" y2="23"/>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+            <line x1="1" y1="12" x2="3" y2="12"/>
+            <line x1="21" y1="12" x2="23" y2="12"/>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+          </svg>
+          <span class="header-btn-text">Theme</span>
+        </button>
+        <!-- Info button — order: 9 -->
+        <button class="btn theme-btn header-toggle-btn" id="aboutBtn" title="About" aria-label="About">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="12" cy="12" r="10"/>
             <line x1="12" y1="16" x2="12" y2="12"/>
             <line x1="12" y1="8" x2="12.01" y2="8"/>
           </svg>
+          <span class="header-btn-text">Info</span>
         </button>
-        <button class="btn theme-btn" id="settingsBtn" title="Settings" aria-label="Settings">
+        <button class="btn theme-btn header-toggle-btn" id="settingsBtn" title="Settings" aria-label="Settings">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          <span class="header-btn-text">Settings</span>
         </button>
       </div>
     </div>
@@ -478,6 +508,7 @@
               <canvas class="spot-sparkline" id="sparklineSilver" aria-hidden="true"></canvas>
               <div class="spot-card-header">
                 <div class="spot-card-label">Silver Spot Price</div>
+                <span class="spot-card-period" id="spotPeriodSilver">90d</span>
                 <div class="spot-card-controls">
                   <select class="spot-range-select" id="spotRangeSilver" title="Trend period">
                     <option value="1">1d</option>
@@ -507,6 +538,7 @@
               <canvas class="spot-sparkline" id="sparklineGold" aria-hidden="true"></canvas>
               <div class="spot-card-header">
                 <div class="spot-card-label">Gold Spot Price</div>
+                <span class="spot-card-period" id="spotPeriodGold">90d</span>
                 <div class="spot-card-controls">
                   <select class="spot-range-select" id="spotRangeGold" title="Trend period">
                     <option value="1">1d</option>
@@ -536,6 +568,7 @@
               <canvas class="spot-sparkline" id="sparklinePlatinum" aria-hidden="true"></canvas>
               <div class="spot-card-header">
                 <div class="spot-card-label">Platinum Spot Price</div>
+                <span class="spot-card-period" id="spotPeriodPlatinum">90d</span>
                 <div class="spot-card-controls">
                   <select class="spot-range-select" id="spotRangePlatinum" title="Trend period">
                     <option value="1">1d</option>
@@ -565,6 +598,7 @@
               <canvas class="spot-sparkline" id="sparklinePalladium" aria-hidden="true"></canvas>
               <div class="spot-card-header">
                 <div class="spot-card-label">Palladium Spot Price</div>
+                <span class="spot-card-period" id="spotPeriodPalladium">90d</span>
                 <div class="spot-card-controls">
                   <select class="spot-range-select" id="spotRangePalladium" title="Trend period">
                     <option value="1">1d</option>
@@ -2249,7 +2283,16 @@
 
               <!-- ── Header Buttons ── -->
               <div class="settings-fieldset">
-                <div class="settings-fieldset-title">Header Buttons</div>
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.25rem">
+                  <div class="settings-fieldset-title" style="margin-bottom:0">Header Buttons</div>
+                  <div style="display:flex;align-items:center;gap:0.5rem">
+                    <span style="font-size:0.75rem;color:var(--text-secondary);font-weight:500">Show text</span>
+                    <div class="chip-sort-toggle" id="settingsHeaderShowText_hdr">
+                      <button type="button" class="chip-sort-btn" data-val="yes">On</button>
+                      <button type="button" class="chip-sort-btn" data-val="no">Off</button>
+                    </div>
+                  </div>
+                </div>
                 <p class="settings-subtext">Optional buttons shown in the top-right of the app header.</p>
                 <div class="settings-card-grid settings-card-grid--3col settings-card-grid--mini">
                   <div class="settings-card">
@@ -2281,8 +2324,22 @@
                     </div>
                   </div>
                   <div class="settings-card">
-                    <div class="settings-group-label">Sync</div>
+                    <div class="settings-group-label">Spot Sync</div>
                     <div class="chip-sort-toggle" id="settingsHeaderSyncBtn_hdr">
+                      <button type="button" class="chip-sort-btn" data-val="yes">On</button>
+                      <button type="button" class="chip-sort-btn" data-val="no">Off</button>
+                    </div>
+                  </div>
+                  <div class="settings-card">
+                    <div class="settings-group-label">Backup</div>
+                    <div class="chip-sort-toggle" id="settingsHeaderVaultBtn_hdr">
+                      <button type="button" class="chip-sort-btn" data-val="yes">On</button>
+                      <button type="button" class="chip-sort-btn" data-val="no">Off</button>
+                    </div>
+                  </div>
+                  <div class="settings-card">
+                    <div class="settings-group-label">Restore</div>
+                    <div class="chip-sort-toggle" id="settingsHeaderRestoreBtn_hdr">
                       <button type="button" class="chip-sort-btn" data-val="yes">On</button>
                       <button type="button" class="chip-sort-btn" data-val="no">Off</button>
                     </div>
