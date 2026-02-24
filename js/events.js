@@ -1079,6 +1079,8 @@ const commitItemToInventory = (f, isEditing, editIdx) => {
       currency: f.currency,
       obverseImageUrl: f.obverseImageUrl || window.selectedNumistaResult?.imageUrl || oldItem.obverseImageUrl || '',
       reverseImageUrl: f.reverseImageUrl || window.selectedNumistaResult?.reverseImageUrl || oldItem.reverseImageUrl || '',
+      obverseSharedImageId: oldItem.obverseSharedImageId || null,
+      reverseSharedImageId: oldItem.reverseSharedImageId || null,
     };
 
     addCompositionOption(f.composition);
@@ -1139,6 +1141,8 @@ const commitItemToInventory = (f, isEditing, editIdx) => {
       currency: f.currency,
       obverseImageUrl: f.obverseImageUrl || window.selectedNumistaResult?.imageUrl || '',
       reverseImageUrl: f.reverseImageUrl || window.selectedNumistaResult?.reverseImageUrl || '',
+      obverseSharedImageId: null,
+      reverseSharedImageId: null,
     });
 
     typeof registerName === "function" && registerName(f.name);

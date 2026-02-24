@@ -566,9 +566,10 @@ class ImageCache {
    * @param {string} uuid - Item UUID
    * @param {Blob} obverse - Processed obverse image blob
    * @param {Blob} [reverse] - Optional reverse image blob
+   * @param {string|null} [sharedImageId] - Source item UUID if this image was copied from another item's upload; null for original uploads
    * @returns {Promise<boolean>}
    */
-  async cacheUserImage(uuid, obverse, reverse = null) {
+  async cacheUserImage(uuid, obverse, reverse = null, sharedImageId = null) {
     if (!uuid || !obverse) {
       debugLog('ImageCache.cacheUserImage: missing uuid or obverse blob');
       return false;
@@ -593,6 +594,7 @@ class ImageCache {
       uuid,
       obverse,
       reverse: reverse || null,
+      sharedImageId: sharedImageId || null,
       cachedAt: Date.now(),
       size,
     };
