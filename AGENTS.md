@@ -26,7 +26,7 @@ Future plans include ApexCharts and Tabler integration. Slowly migrating new fea
 
 ### 1. Script Loading Order (MANDATORY)
 
-56 scripts load in strict dependency order via `index.html`. Breaking this order causes undefined variable errors. The full chain:
+67 scripts load in strict dependency order via `index.html`. Breaking this order causes undefined variable errors. The full chain:
 
 ```text
 file-protocol-fix.js  (no defer -- loads FIRST)
@@ -289,6 +289,34 @@ Playwright test harness (`js/test-loader.js`) loads in localhost-only mode and i
 - Keep shared constants in `js/constants.js` -- avoid hardcoding keys/URLs in feature files
 - Use `safeGetElement()` for DOM access
 - No `eval()` or `Function()` constructor
+
+## Documentation (StakTrakrWiki)
+
+StakTrakr maintains a private wiki at `github.com/lbruton/StakTrakrWiki` as the single source of truth for the codebase. Reference it before making architectural changes. Pages are maintained by agents — do not let docs drift after meaningful patches.
+
+### Frontend pages (maintained by Claude Code / StakTrakr agents)
+
+| Page | Contents |
+|------|----------|
+| [Frontend Overview](https://github.com/lbruton/StakTrakrWiki/blob/main/frontend-overview.md) | File structure, 67-script load order, service worker, PWA |
+| [Data Model](https://github.com/lbruton/StakTrakrWiki/blob/main/data-model.md) | Portfolio model, storage keys, coin/entry schema |
+| [Storage Patterns](https://github.com/lbruton/StakTrakrWiki/blob/main/storage-patterns.md) | saveData/loadData wrappers, sync variants, key validation |
+| [DOM Patterns](https://github.com/lbruton/StakTrakrWiki/blob/main/dom-patterns.md) | safeGetElement, sanitizeHtml, event delegation |
+| [Cloud Sync](https://github.com/lbruton/StakTrakrWiki/blob/main/sync-cloud.md) | Cloudflare R2 backup/restore, vault encryption, sync flow |
+| [Retail Modal](https://github.com/lbruton/StakTrakrWiki/blob/main/retail-modal.md) | Coin detail modal, vendor legend, OOS detection, price carry-forward |
+| [API Consumption](https://github.com/lbruton/StakTrakrWiki/blob/main/api-consumption.md) | Spot feed, market price feed, goldback feed, health checks |
+| [Release Workflow](https://github.com/lbruton/StakTrakrWiki/blob/main/release-workflow.md) | Patch cycle, version bump, worktree pattern, ship to main |
+| [Service Worker](https://github.com/lbruton/StakTrakrWiki/blob/main/service-worker.md) | CORE_ASSETS, cache strategy, pre-commit stamp hook |
+
+### Infrastructure pages (maintained by StakTrakrApi agents)
+
+Architecture, data pipelines, Fly.io, pollers, secrets — see `github.com/lbruton/StakTrakrWiki` README for full index.
+
+### Wiki update policy
+
+- Use `/wiki-update` after any patch that changes JS, CSS, skills, or devops files
+- Use `/wiki-audit` for background drift detection and auto-correction
+- Raw pages accessible at `raw.githubusercontent.com/lbruton/StakTrakrWiki/main/<page>.md`
 
 ## Commit & Pull Request Guidelines
 
