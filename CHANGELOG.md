@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.32.25] - 2026-02-23
+
+### Added — Vendor Price Carry-Forward + OOS Legend Links (STAK-299)
+
+- **Added**: `_forwardFillVendors` — post-bucketing enrichment pass that fills vendor gaps with the most recent known price, annotating each window with `_carriedVendors: Set`
+- **Added**: 24h chart carries forward vendor prices — carried data points render with `~` tooltip prefix and a muted/dashed dataset line; trend glyphs suppressed for carried entries
+- **Added**: "Recent windows" table carries forward vendor prices — gap windows show `~$XX.XX` in muted italic with no trend glyph
+- **Added**: OOS vendors shown in coin detail legend as clickable links — opens product page popup, `opacity: 0.5`, strikethrough last-known price, `OOS` badge in red
+- **Fixed**: Vendor legend was hidden for coins where all vendors are currently OOS — `hasAny` guard now includes availability feed check
+
+---
+
 ## [3.32.24] - 2026-02-23
 
 ### Fixed — Cloud Sync Reliability
