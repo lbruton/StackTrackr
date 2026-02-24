@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.32.24] - 2026-02-23
+
+### Fixed — Cloud Sync Reliability
+
+- **Fixed**: Vault-overwrite race condition — debounced startup push could overwrite remote vault during conflict resolution, causing "Keep Remote" to silently discard the other device's changes. Both devices must be on v3.32.24+ for the race to be fully closed.
+- **Fixed**: `getSyncPassword()` fast-path incorrectly gated on a plain localStorage read, breaking Simple-mode migration path on page reload.
+- **Fixed**: Manual Backup button now reads cached localStorage password on page reload — no re-entry required after refresh.
+- **Fixed**: Two bare `pullSyncVault()` calls in conflict modal had no `.catch()` — silent unhandled rejections on no-token pull failures now surface as status indicator errors.
+- **Fixed**: `changeLog` IIFE parse failures now emit `console.warn` instead of silently returning `[]`.
+
+---
+
 ## [3.32.23] - 2026-02-23
 
 ### Changed — Cloud Settings Redesign + Unified Encryption
