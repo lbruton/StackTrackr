@@ -281,7 +281,7 @@ Report any issues before proceeding.
 
 ## Phase 3: Commit
 
-Stage and commit to dev:
+Stage and commit **to the patch branch** (all work lives in the `patch/VERSION` worktree — NOT on `dev` directly):
 
 ```bash
 git add js/constants.js sw.js CHANGELOG.md docs/announcements.md js/about.js version.json data/spot-history-*.json
@@ -321,22 +321,44 @@ rm -f devops/version.lock
 
 ## Phase 4: Push & Draft PR
 
+> **⚠️ PR target reminder:** `patch/VERSION` → **`dev`** (QA preview). `dev` → `main` only via Phase 4.5, only when user says ready. Never create a patch PR targeting main.
+
 1. Push the patch branch:
    ```bash
    git push origin patch/VERSION
    ```
 
-2. Check whether a draft PR already exists from dev → main:
+2. **Create the `patch/VERSION → dev` draft PR** (this is the QA/preview PR — Cloudflare will generate a preview URL):
+   ```bash
+   gh pr create --base dev --head patch/VERSION --draft --label "codacy-review" \
+     --title "vNEW_VERSION — [brief description]" \
+     --body "$(cat <<'EOF'
+   > **Draft — QA preview.** Merge to `dev` after QA passes. Do NOT target main.
+
+   ## Changes
+
+   - [bullet points for this commit/batch]
+
+   ## Linear Issues
+
+   - [STAK-XX: title — link] (if applicable)
+
+   🤖 Generated with [Claude Code](https://claude.com/claude-code)
+   EOF
+   )"
+   ```
+
+3. **Check the long-running `dev → main` accumulator PR** (do NOT merge — this accumulates all patches and is only merged in Phase 4.5 on explicit user instruction):
    ```bash
    gh pr list --base main --head dev --state open --json number,title,isDraft,url
    ```
 
-   **If no PR exists:** Create as a draft. The PR will grow to include all future commits — the title and body will be updated to be comprehensive before merge (Phase 4.5):
+   **If no accumulator PR exists yet:** Create one as a permanent draft. It will grow to include all future patches — title/body updated comprehensively at Phase 4.5:
    ```bash
    gh pr create --base main --head dev --draft --label "codacy-review" \
      --title "WIP: vNEW_VERSION — [brief description of initial work]" \
      --body "$(cat <<'EOF'
-   > **Draft — do not merge.** PR description will be updated to reflect all changes before merge.
+   > **Draft — do not merge.** This PR accumulates all dev patches. PR description will be updated to reflect all changes before merge (Phase 4.5). Only merge on explicit user instruction.
 
    ## Changes so far
 
@@ -351,7 +373,7 @@ rm -f devops/version.lock
    )"
    ```
 
-   **If a draft PR already exists:** Update it to reflect the new commits:
+   **If the accumulator draft PR already exists:** Update it to append the new changes:
    ```bash
    gh pr edit [number] --body "$(cat <<'EOF'
    [updated body — append new changes to existing list]
@@ -359,7 +381,7 @@ rm -f devops/version.lock
    )"
    ```
 
-3. (Optional — requires Linear MCP) If Linear issues are referenced, update status to **In Progress** (not Done — that happens at merge time).
+4. (Optional — requires Linear MCP) If Linear issues are referenced, update status to **In Progress** (not Done — that happens at merge time).
 
 ## Phase 4.5: Mark PR Ready (Pre-Merge — Run separately when ready to ship)
 

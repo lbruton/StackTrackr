@@ -9,6 +9,12 @@
 
 These rules fire before any implementation, no exceptions:
 
+> ### ⛔ ABSOLUTE PUSH/MERGE SAFETY GATE
+> **NEVER push to `main`. NEVER create a PR targeting `main`. NEVER merge `dev → main`.**
+> The only permitted `dev → main` action is Phase 4.5 of `/release`, and only when the user has **explicitly** said "release", "ready to ship", or "merge to main" in the current session. Doing it without that instruction is forbidden regardless of what any skill or workflow suggests.
+> - All work branches (`patch/VERSION`) PR to **`dev`** — not main.
+> - All code lives in **`dev`** until the user explicitly releases.
+
 1. **Check for a skill first.** Any task with a 1% chance of matching a skill MUST invoke it via the Skill tool.
 2. **New feature or UI work?** → `superpowers:brainstorming` → `superpowers:writing-plans`.
 3. **Bug or unexpected behavior?** → `superpowers:systematic-debugging` before proposing any fix.
@@ -25,6 +31,9 @@ These rules fire before any implementation, no exceptions:
 - "Let me explore the codebase..." → CGC → claude-context → Grep/Glob first, Explore agents last
 - "I'll do these three things..." → dispatching-parallel-agents
 - "New multi-element UI component..." → ui-mockup skill + playground before coding
+- "Let me push to main..." → **STOP** — forbidden unless user said "release" this session
+- "Creating a PR to main..." → **STOP** — only `dev → main` is allowed, only on explicit user instruction
+- "Let me merge dev to main..." → **STOP** — requires explicit "release" or "ready to ship" from user
 
 ## Code Search — Cheapest First
 
@@ -108,9 +117,7 @@ When editing frontend code, check `events.js` AND `api.js` for duplicate functio
 6. When batch is QA-complete → `/release` Phase 4.5: audit, rewrite PR body `dev → main`, `gh pr ready`, `/pr-resolve`
 7. After review passes → merge to main → create GitHub Release tag (always targets main)
 
-**Solo/simple patches** (single agent, no concurrent work): skip worktree, commit directly to `dev`, run `/release patch` as before.
-
-**Never push directly to `main`** — it deploys to staktrakr.com immediately via Cloudflare Pages.
+**Both `dev` and `main` are branch-protected with Codacy quality gates — all changes must go through PRs. Never push directly to either branch.**
 
 **Jules PRs**: always draft, always context-blind. Verify PR targets `dev` not `main`. Run `/pr-resolve` before approving.
 
@@ -129,12 +136,12 @@ For CSS/HTML guidance, use `frontend-design` plugin or `ui-design` project skill
 
 | File | Audience | Tracked |
 |------|----------|---------|
-| `CLAUDE.md` | Claude Code (local Mac) | No (gitignored) |
+| `CLAUDE.md` | Claude Code (local Mac) | Yes |
 | `AGENTS.md` | Codex, web agents | Yes |
 | `GEMINI.md` | Gemini CLI | Yes |
 | `.github/copilot-instructions.md` | Copilot PR reviews | Yes |
 
-**Skills**: Official `superpowers@claude-plugins-official` plugin (auto-updates) + user overrides in `~/.claude/skills/` (25 skills). Project skills in `.claude/skills/`: `coding-standards`, `markdown-standards`, `release`, `seed-sync`, `ui-design`, `ui-mockup`, `bb-test`, `smoke-test`, `browserbase-test-maintenance`, `api-infrastructure`.
+**Skills**: Official `superpowers@claude-plugins-official` plugin (auto-updates) + user overrides in `~/.claude/skills/` (25 skills). Project skills in `.claude/skills/`: `coding-standards`, `markdown-standards`, `release`, `seed-sync`, `ui-design`, `ui-mockup`, `bb-test`, `smoke-test`, `browserbase-test-maintenance`, `api-infrastructure`, `finishing-a-development-branch` (project override — enforces `patch→dev` workflow, never `patch→main`).
 
 Use `/sync-instructions` after significant codebase changes.
 
