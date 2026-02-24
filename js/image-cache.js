@@ -20,14 +20,30 @@ class ImageCache {
     this._db = null;
     /** @type {boolean} */
     this._available = false;
-    /** @type {number} Default storage quota in bytes (50 MB) */
-    this._quotaBytes = 50 * 1024 * 1024;
+    /** @type {number} Default storage quota in bytes (500 MB); updated async by _initQuota() */
+    this._quotaBytes = 500 * 1024 * 1024; // 500 MB default; updated async by _initQuota()
     /** @type {number} Max image dimension (px) for resize */
     this._maxDim = typeof IMAGE_MAX_DIM !== 'undefined' ? IMAGE_MAX_DIM : 600;
     /** @type {number} Compression quality (0-1) */
     this._quality = typeof IMAGE_QUALITY !== 'undefined' ? IMAGE_QUALITY : 0.75;
   }
 
+
+  async _initQuota() {
+    try {
+      if (!navigator?.storage?.estimate) return;
+      const { quota = 0, usage = 0 } = await navigator.storage.estimate();
+      const available = quota - usage;
+      if (available <= 0) return; // file:// or estimate unavailable
+      // 60% of available space, min 500 MB, max 4 GB
+      this._quotaBytes = Math.min(
+        Math.max(available * 0.6, 500 * 1024 * 1024),
+        4 * 1024 * 1024 * 1024
+      );
+    } catch {
+      // Leave at 500 MB default
+    }
+  }
   // ---------------------------------------------------------------------------
   // Lifecycle
   // ---------------------------------------------------------------------------
@@ -81,6 +97,7 @@ class ImageCache {
 
       this._available = true;
       debugLog('ImageCache: initialized');
+      this._initQuota(); // non-blocking, updates _quotaBytes async
       return true;
     } catch (err) {
       console.warn('ImageCache: failed to open DB', err);
@@ -360,7 +377,19 @@ class ImageCache {
    * @returns {Promise<{count: number, totalBytes: number, limitBytes: number, metadataCount: number, userImageCount: number, patternImageCount: number, numistaCount: number}>}
    */
   async getStorageUsage() {
-    const result = { count: 0, totalBytes: 0, metadataCount: 0, userImageCount: 0, patternImageCount: 0, numistaCount: 0, limitBytes: this._quotaBytes };
+    const result = {
+      count: 0,
+      totalBytes: 0,
+      numistaBytes: 0,
+      userImageBytes: 0,
+      patternImageBytes: 0,
+      metadataBytes: 0,
+      metadataCount: 0,
+      userImageCount: 0,
+      patternImageCount: 0,
+      numistaCount: 0,
+      limitBytes: this._quotaBytes,
+    };
     if (!(await this._ensureDb())) return result;
 
     try {
@@ -368,6 +397,7 @@ class ImageCache {
         await this._iterate('coinImages', (rec) => {
           result.count++;
           result.numistaCount++;
+          result.numistaBytes += rec.size || 0;
           result.totalBytes += rec.size || 0;
         });
       }
@@ -379,6 +409,7 @@ class ImageCache {
       if (this._db.objectStoreNames.contains('coinMetadata')) {
         await this._iterate('coinMetadata', (rec) => {
           result.metadataCount++;
+          result.metadataBytes += new Blob([JSON.stringify(rec)]).size;
           result.totalBytes += new Blob([JSON.stringify(rec)]).size;
         });
       }
@@ -390,6 +421,7 @@ class ImageCache {
       if (this._db.objectStoreNames.contains('userImages')) {
         await this._iterate('userImages', (rec) => {
           result.userImageCount++;
+          result.userImageBytes += rec.size || 0;
           result.totalBytes += rec.size || 0;
         });
       }
@@ -401,6 +433,7 @@ class ImageCache {
       if (this._db.objectStoreNames.contains('patternImages')) {
         await this._iterate('patternImages', (rec) => {
           result.patternImageCount++;
+          result.patternImageBytes += rec.size || 0;
           result.totalBytes += rec.size || 0;
         });
       }
