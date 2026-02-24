@@ -2869,6 +2869,7 @@ function _openCloudSyncPopover() {
       return;
     }
     cleanup();
+    try { localStorage.setItem('cloud_vault_password', pw); } catch (_) {}
     if (typeof cloudCachePassword === 'function') cloudCachePassword('dropbox', pw);
     if (typeof updateCloudSyncHeaderBtn === 'function') updateCloudSyncHeaderBtn();
     setTimeout(function () { if (typeof pushSyncVault === 'function') pushSyncVault(); }, 100);

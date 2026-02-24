@@ -209,6 +209,11 @@ function updateSyncStatusIndicator(state, detail) {
   updateCloudSyncHeaderBtn();
 }
 
+/**
+ * Updates the header cloud sync button state (green/orange/gray) based on
+ * connection status, vault password, and Dropbox account ID presence.
+ * Called on init, password change, and sync enable/disable.
+ */
 function updateCloudSyncHeaderBtn() {
   var btn = safeGetElement('headerCloudSyncBtn');
   var dot = safeGetElement('headerCloudDot');

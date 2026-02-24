@@ -1246,7 +1246,7 @@ const bindCloudStorageListeners = () => {
 
   bindCloudCacheListeners();
 
-  panel.addEventListener('click', async function (e) {
+  var _cloudBtnHandler = async function (e) {
     var btn = e.target.closest('button');
     if (!btn) return;
     var provider = btn.dataset.provider;
@@ -1346,7 +1346,13 @@ const bindCloudStorageListeners = () => {
         }
       });
     }
-  });
+  };
+
+  panel.addEventListener('click', _cloudBtnHandler);
+
+  // Advanced modal is rendered at body level (outside settingsPanel_cloud), so it needs its own listener.
+  var advancedModal = document.getElementById('cloudSyncAdvancedModal');
+  if (advancedModal) advancedModal.addEventListener('click', _cloudBtnHandler);
 };
 
 /**
