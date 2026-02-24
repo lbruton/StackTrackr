@@ -3332,33 +3332,61 @@
             <div class="settings-section-panel" id="settingsPanel_system" style="display: none">
               <h3>Inventory</h3>
 
-              <!-- ── Bulk Editor ── -->
-              <div class="settings-fieldset">
-                <div class="settings-fieldset-title">Bulk Editor</div>
-                <div class="settings-card-grid">
-                  <div class="settings-card">
-                    <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.35rem">
-                      <div class="settings-group-label" style="margin:0">Bulk Editor</div>
+              <!-- ── Bulk Editor + Inventory Summary ── -->
+              <div class="settings-card-grid" style="margin-bottom:1rem">
+                <div class="cloud-provider-card">
+                  <div class="cloud-provider-card-header">
+                    <span class="cloud-provider-card-title">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                      Bulk Editor
+                    </span>
+                    <span class="cloud-provider-card-badges">
                       <span class="cloud-badge cloud-badge--beta">BETA</span>
+                    </span>
+                  </div>
+                  <p class="settings-subtext">Select multiple inventory items and apply batch operations — edit shared fields, duplicate entries, or remove items in bulk. This feature is actively developed; please report any issues on GitHub.</p>
+                  <div style="border-top:1px solid var(--border);padding-top:0.6rem;margin-top:0.5rem">
+                    <button class="btn settings-action-btn" id="bulkEditBtn" type="button" style="font-size:0.82rem;padding:0.4rem 0.9rem;min-height:0">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:0.35rem;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                      Open Bulk Editor
+                    </button>
+                  </div>
+                </div>
+                <div class="cloud-provider-card" id="inventorySummaryCard">
+                  <div class="cloud-provider-card-header">
+                    <span class="cloud-provider-card-title">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                      Inventory
+                    </span>
+                  </div>
+                  <div class="cloud-connection-status" id="inventorySummaryRows">
+                    <div class="cloud-status-row">
+                      <span class="cloud-status-label">Items</span>
+                      <span class="cloud-status-value" id="invSummaryCount">—</span>
                     </div>
-                    <p class="settings-subtext">Select multiple inventory items and apply batch operations — edit shared fields, duplicate entries, or remove items in bulk. This feature is actively developed; please report any issues on GitHub.</p>
-                    <div class="settings-btn-row">
-                      <button class="btn settings-action-btn" id="bulkEditBtn" type="button">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:0.35rem;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                        Open Bulk Editor
-                      </button>
+                    <div class="cloud-status-row">
+                      <span class="cloud-status-label">Melt value</span>
+                      <span class="cloud-status-value" id="invSummaryMelt">—</span>
+                    </div>
+                    <div class="cloud-status-row">
+                      <span class="cloud-status-label">Last modified</span>
+                      <span class="cloud-status-value" id="invSummaryModified">—</span>
                     </div>
                   </div>
                 </div>
               </div>
 
-              <!-- ── Import ── -->
-              <div class="settings-fieldset">
-                <div class="settings-fieldset-title">Import</div>
-                <div class="settings-card-grid">
-                  <div class="settings-card">
-                    <h3>Import</h3>
-                    <p class="settings-subtext">Import your data files.</p>
+              <!-- ── Import + Third-Party ── -->
+              <div class="settings-card-grid" style="margin-bottom:1rem">
+                <div class="cloud-provider-card">
+                  <div class="cloud-provider-card-header">
+                    <span class="cloud-provider-card-title">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                      Import
+                    </span>
+                  </div>
+                  <p class="settings-subtext">Import your data files. New here? <a href="sample.csv" download="sample.csv">Download sample CSV</a> to try importing.</p>
+                  <div style="border-top:1px solid var(--border);padding-top:0.6rem;margin-top:0.5rem">
                     <div class="import-block">
                       <div class="import-export-grid">
                         <div class="import-csv-grid">
@@ -3379,13 +3407,17 @@
                       <progress class="import-progress" id="importProgress" value="0" max="0"></progress>
                       <div class="import-progress-text" id="importProgressText"></div>
                     </div>
-                    <p class="settings-subtext" style="margin-top:0.5rem">
-                      New here? <a href="sample.csv" download="sample.csv">Download sample CSV</a> to try importing.
-                    </p>
                   </div>
-                  <div class="settings-card">
-                    <h3>Third-Party</h3>
-                    <p class="settings-subtext">Import data from external services like Numista.</p>
+                </div>
+                <div class="cloud-provider-card">
+                  <div class="cloud-provider-card-header">
+                    <span class="cloud-provider-card-title">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                      Third-Party
+                    </span>
+                  </div>
+                  <p class="settings-subtext">Import data from external services like Numista.</p>
+                  <div style="border-top:1px solid var(--border);padding-top:0.6rem;margin-top:0.5rem">
                     <div class="third-party-block">
                       <div class="import-export-grid">
                         <div class="grid grid-2">
@@ -3400,13 +3432,17 @@
                 </div>
               </div>
 
-              <!-- ── Export ── -->
-              <div class="settings-fieldset">
-                <div class="settings-fieldset-title">Export</div>
-                <div class="settings-card-grid">
-                  <div class="settings-card">
-                    <h3>Export</h3>
-                    <p class="settings-subtext">Export your data files.</p>
+              <!-- ── Export + Encrypted Backup ── -->
+              <div class="settings-card-grid" style="margin-bottom:1rem">
+                <div class="cloud-provider-card">
+                  <div class="cloud-provider-card-header">
+                    <span class="cloud-provider-card-title">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                      Export
+                    </span>
+                  </div>
+                  <p class="settings-subtext">Export your data files.</p>
+                  <div style="border-top:1px solid var(--border);padding-top:0.6rem;margin-top:0.5rem">
                     <div class="export-block">
                       <div class="import-export-grid">
                         <button class="btn info" id="exportCsvBtn">Export CSV</button>
@@ -3416,12 +3452,19 @@
                       </div>
                     </div>
                   </div>
-                  <div class="settings-card">
-                    <div class="settings-group-label">Encrypted Backup</div>
-                    <p class="settings-subtext">AES-GCM encrypted vault file. Use to back up and restore all inventory data.</p>
-                    <div class="settings-btn-row">
-                      <button class="btn" id="vaultExportBtn">Export Backup</button>
-                      <button class="btn info" id="vaultImportBtn">Restore Backup</button>
+                </div>
+                <div class="cloud-provider-card">
+                  <div class="cloud-provider-card-header">
+                    <span class="cloud-provider-card-title">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                      Encrypted Backup
+                    </span>
+                  </div>
+                  <p class="settings-subtext">AES-GCM encrypted vault file. Use to back up and restore all inventory data.</p>
+                  <div style="border-top:1px solid var(--border);padding-top:0.6rem;margin-top:0.5rem">
+                    <div style="display:flex;gap:0.4rem;flex-wrap:wrap">
+                      <button class="btn" id="vaultExportBtn" style="font-size:0.82rem;padding:0.4rem 0.9rem;min-height:0">Export Backup</button>
+                      <button class="btn info" id="vaultImportBtn" style="font-size:0.82rem;padding:0.4rem 0.9rem;min-height:0">Restore Backup</button>
                     </div>
                     <input type="file" id="vaultImportFile" accept=".stvault" hidden />
                   </div>
