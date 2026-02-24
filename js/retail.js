@@ -160,6 +160,18 @@ const loadRetailIntradayData = () => {
 };
 
 const saveRetailIntradayData = () => {
+  // STAK-300: cap windows_24h to last 96 entries per slug (24h of 15-min data)
+  // to prevent localStorage quota overflow on large collections
+  const pruned = {};
+  for (const [slug, entry] of Object.entries(retailIntradayData)) {
+    if (entry && Array.isArray(entry.windows_24h)) {
+      pruned[slug] = { ...entry, windows_24h: entry.windows_24h.slice(-96) };
+    } else {
+      pruned[slug] = entry;
+    }
+  }
+  retailIntradayData = pruned;
+  if (typeof window !== 'undefined') window.retailIntradayData = retailIntradayData;
   try {
     saveDataSync(RETAIL_INTRADAY_KEY, retailIntradayData);
   } catch (err) {

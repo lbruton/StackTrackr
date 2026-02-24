@@ -283,11 +283,11 @@ const setupAckModalEvents = () => {
  */
 const getEmbeddedWhatsNew = () => {
   return `
+    <li><strong>v3.32.26 &ndash; Bug Fixes &mdash; Storage Quota, Chrome Init Race, Numista Data Integrity</strong>: Fixed localStorage quota overflow for retailIntradayData on large collections. Fixed Chrome &ldquo;Cannot access inventory before initialization&rdquo; crash on page refresh. Fixed Numista N# and photos repopulating after deletion due to stale serial mapping (STAK-300, STAK-301, STAK-302).</li>
     <li><strong>v3.32.25 &ndash; Vendor Price Carry-Forward + OOS Legend Links</strong>: Carry-forward prices in 24h chart and table show ~$XX.XX in muted style when vendor data is missing for a window. OOS vendors now appear in coin legend as clickable links with strikethrough last-known price and OOS badge (STAK-299).</li>
     <li><strong>v3.32.24 &ndash; Cloud Sync Reliability Fixes</strong>: Fixed vault-overwrite race condition where debounced startup push could discard other device&apos;s changes during conflict resolution. Fixed getSyncPassword fast-path break for Simple-mode migration and Manual Backup password persistence on page reload.</li>
     <li><strong>v3.32.23 &ndash; Cloud Settings Redesign + Unified Encryption</strong>: Compact &le;400px Dropbox card. Backup/Restore/Disconnect/Change Password moved to Advanced sub-modal. Simplified unified encryption replaces Simple/Secure toggle.</li>
     <li><strong>v3.32.22 &ndash; Sync UI Dark-Theme CSS Fix</strong>: Header sync popover, mode selector, and backup warning now render correctly across all themes &mdash; corrected misnamed CSS variables and replaced hardcoded light-color fallbacks.</li>
-    <li><strong>v3.32.21 &ndash; Sync UX Overhaul + Simple Mode</strong>: No more on-load password popups &mdash; choose Simple mode (Dropbox account as key, no extra password on any device) or Secure mode (vault password, zero-knowledge). Orange dot + toast replaces auto-opening modals; inline popover handles Secure-mode unlock from the header button.</li>
   `;
 };
 

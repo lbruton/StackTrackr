@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.32.26] - 2026-02-23
+
+### Fixed — Storage Quota, Chrome Init Race, Numista Data Integrity
+
+- **Fixed**: `retailIntradayData` capped at 96 windows per slug — prevents localStorage quota overflow for users with large collections or many item images (STAK-300)
+- **Fixed**: Chrome initialization race — "Cannot access 'inventory' before initialization" error on page refresh no longer appears (STAK-301)
+- **Fixed**: Numista N# and photos no longer repopulate after being deleted from an item — `syncItem` now respects explicitly-cleared fields (STAK-302)
+- **Fixed**: Numista serial→catalogId mapping cleared on save when N# is removed — stale mappings no longer cause cross-item data bleed (STAK-302)
+
+---
+
 ## [3.32.25] - 2026-02-23
 
 ### Added — Vendor Price Carry-Forward + OOS Legend Links (STAK-299)
