@@ -75,7 +75,9 @@ const createBackupZip = async () => {
         serial: item.serial,
         uuid: item.uuid,
         obverseImageUrl: item.obverseImageUrl || '',
-        reverseImageUrl: item.reverseImageUrl || ''
+        reverseImageUrl: item.reverseImageUrl || '',
+        obverseSharedImageId: item.obverseSharedImageId || null,
+        reverseSharedImageId: item.reverseSharedImageId || null
       }))
     };
     zip.file('inventory_data.json', JSON.stringify(inventoryData, null, 2));
