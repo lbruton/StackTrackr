@@ -1163,8 +1163,8 @@ const applyHeaderToggleVisibility = () => {
     vaultBtn.style.display = vaultVisible ? '' : 'none';
   }
 
-  // Restore button (hidden by default)
-  const restoreVisible = localStorage.getItem(HEADER_RESTORE_BTN_KEY) === 'true';
+  // Restore button (visible by default)
+  const restoreVisible = localStorage.getItem(HEADER_RESTORE_BTN_KEY) !== 'false';
   const restoreBtn = safeGetElement('headerRestoreBtn');
   if (restoreBtn) {
     restoreBtn.style.display = restoreVisible ? '' : 'none';
