@@ -148,6 +148,33 @@ const _bucketWindows = (windows) => {
 };
 
 /**
+ * Forward-fills missing vendor prices across a bucketed windows array.
+ * For each vendor, carries the most recently seen price into any gap window within the 24h set.
+ * Returns a new array — source objects are not mutated.
+ * Each returned window gains _carriedVendors: Set<vendorId> listing which prices were carried.
+ * @param {Array} bucketed - Chronologically sorted (oldest first) from _bucketWindows
+ * @returns {Array}
+ */
+const _forwardFillVendors = (bucketed) => {
+  if (!bucketed || bucketed.length === 0) return bucketed;
+  const knownVendors = typeof RETAIL_VENDOR_NAMES !== 'undefined' ? Object.keys(RETAIL_VENDOR_NAMES) : [];
+  const lastSeen = {};
+  return bucketed.map((w) => {
+    const vendors = w.vendors ? { ...w.vendors } : {};
+    const carriedVendors = new Set();
+    knownVendors.forEach((v) => {
+      if (vendors[v] != null) {
+        lastSeen[v] = vendors[v];
+      } else if (lastSeen[v] != null) {
+        vendors[v] = lastSeen[v];
+        carriedVendors.add(v);
+      }
+    });
+    return { ...w, vendors, _carriedVendors: carriedVendors };
+  });
+};
+
+/**
  * Renders the intraday data table for a given slug.
  * Accepts an optional pre-bucketed array; if omitted, re-buckets from retailIntradayData.
  * Slices to the _intradayRowCount most recent rows.
@@ -575,6 +602,7 @@ if (typeof window !== "undefined") {
   window.closeRetailViewModal = closeRetailViewModal;
   window._switchRetailViewTab = _switchRetailViewTab;
   window._bucketWindows = _bucketWindows;
+  window._forwardFillVendors = _forwardFillVendors;
   window._buildIntradayTable = _buildIntradayTable;
 }
 
