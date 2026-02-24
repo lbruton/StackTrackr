@@ -287,7 +287,7 @@ const getEmbeddedWhatsNew = () => {
     <li><strong>v3.32.23 &ndash; Cloud Settings Redesign + Unified Encryption</strong>: Compact &le;400px Dropbox card. Backup/Restore/Disconnect/Change Password moved to Advanced sub-modal. Simplified unified encryption replaces Simple/Secure toggle.</li>
     <li><strong>v3.32.22 &ndash; Sync UI Dark-Theme CSS Fix</strong>: Header sync popover, mode selector, and backup warning now render correctly across all themes &mdash; corrected misnamed CSS variables and replaced hardcoded light-color fallbacks.</li>
     <li><strong>v3.32.21 &ndash; Sync UX Overhaul + Simple Mode</strong>: No more on-load password popups &mdash; choose Simple mode (Dropbox account as key, no extra password on any device) or Secure mode (vault password, zero-knowledge). Orange dot + toast replaces auto-opening modals; inline popover handles Secure-mode unlock from the header button.</li>
-    <li><strong>v3.32.20 &ndash; api2 Backup Endpoint</strong>: Dual-endpoint fallback for all API feeds &mdash; spot, market, and goldback. Primary (api.staktrakr.com) tried first with 5-second timeout; api2.staktrakr.com serves as automatic fallback. Health modal shows per-endpoint drift benchmarking.</li>
+    <li><strong>v3.32.20 &ndash; api2 Backup Endpoint</strong>: Dual-endpoint fallback for all API feeds &mdash; spot, market, and goldback. Primary (api.staktrakr.com) tried first with 5-second timeout; api2.staktrakr.com serves as automatic fallback. Health modal now shows per-endpoint drift benchmarking.</li>
   `;
 };
 
