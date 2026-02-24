@@ -35,9 +35,9 @@ class ImageCache {
       const { quota = 0, usage = 0 } = await navigator.storage.estimate();
       const available = quota - usage;
       if (available <= 0) return; // file:// or estimate unavailable
-      // 60% of available space, min 500 MB, max 4 GB
+      // 60% of available space, min 500 MB (capped at available), max 4 GB
       this._quotaBytes = Math.min(
-        Math.max(available * 0.6, 500 * 1024 * 1024),
+        Math.max(available * 0.6, Math.min(available, 500 * 1024 * 1024)),
         4 * 1024 * 1024 * 1024
       );
     } catch {
@@ -408,9 +408,10 @@ class ImageCache {
     try {
       if (this._db.objectStoreNames.contains('coinMetadata')) {
         await this._iterate('coinMetadata', (rec) => {
+          const metaSize = JSON.stringify(rec).length;
           result.metadataCount++;
-          result.metadataBytes += new Blob([JSON.stringify(rec)]).size;
-          result.totalBytes += new Blob([JSON.stringify(rec)]).size;
+          result.metadataBytes += metaSize;
+          result.totalBytes += metaSize;
         });
       }
     } catch (err) {
