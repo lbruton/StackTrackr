@@ -961,7 +961,10 @@ function showSyncConflictModal(opts) {
     if (typeof appConfirm === 'function') {
       appConfirm(msg, 'Sync Conflict').then(function (keepMine) {
         if (keepMine) pushSyncVault();
-        else pullSyncVault(opts.remoteMeta);
+        else pullSyncVault(opts.remoteMeta).catch(function (err) {
+          debugLog('[CloudSync] pullSyncVault failed in conflict fallback:', err);
+          updateSyncStatusIndicator('error', 'Pull failed — ' + err.message);
+        });
       });
     }
     return;
@@ -1000,7 +1003,10 @@ function showSyncConflictModal(opts) {
   if (keepTheirsBtn) {
     keepTheirsBtn.onclick = function () {
       closeModal();
-      pullSyncVault(opts.remoteMeta);
+      pullSyncVault(opts.remoteMeta).catch(function (err) {
+        debugLog('[CloudSync] pullSyncVault failed on Keep Theirs:', err);
+        updateSyncStatusIndicator('error', 'Pull failed — ' + err.message);
+      });
     };
   }
   if (skipBtn) {
