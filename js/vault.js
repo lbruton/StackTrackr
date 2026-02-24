@@ -654,7 +654,7 @@ async function vaultDecryptAndRestoreImages(fileBytes, password) {
 /**
  * Export an encrypted vault backup.
  * @param {string} password
- * @returns {Promise<void>}
+ * @returns {Promise<{imageCount: number}|{imageExportFailed: boolean}>}
  */
 async function exportEncryptedBackup(password) {
   var backend = getCryptoBackend();
@@ -702,7 +702,7 @@ async function exportEncryptedBackup(password) {
       debugLog("Vault: image vault export complete,", imgBytes.length, "bytes,", imageCount, "images");
     }
   } catch (imgErr) {
-    debugLog("[Vault] Image vault export failed:", imgErr.message, "warn");
+    debugLog("[Vault] Image vault export failed:", imgErr.message || String(imgErr), "warn");
     // Return a flag so the caller can surface a warning
     return { imageExportFailed: true };
   }
@@ -853,6 +853,8 @@ function openVaultModal(mode, fileOrOpts) {
     }
     // Reset image file state when modal opens
     _vaultPendingImageFile = null;
+    var imgInputEl = safeGetElement("vaultImageImportFile");
+    if (imgInputEl) imgInputEl.value = "";
     var imgFileInfoEl = safeGetElement("vaultImageFileInfo");
     var imgPickerRowEl = safeGetElement("vaultImagePickerRow");
     if (imgFileInfoEl) imgFileInfoEl.style.display = "none";
@@ -947,7 +949,7 @@ async function handleVaultAction() {
       } else {
         var exportResult = await exportEncryptedBackup(password);
         if (exportResult && exportResult.imageExportFailed) {
-          showVaultStatus("warning", "Inventory exported. Photo backup failed \u2014 try again or use Export Images ZIP.");
+          showVaultStatus("warning", "Inventory exported. Photo backup failed \u2014 try again or use Settings \u2192 Export Images.");
         } else if (exportResult && exportResult.imageCount > 0) {
           showVaultStatus("success", "Backup exported \u2014 2 files downloaded (inventory + " + exportResult.imageCount + " photo" + (exportResult.imageCount === 1 ? "" : "s") + ").");
         } else {
