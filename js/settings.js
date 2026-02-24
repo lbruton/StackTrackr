@@ -59,11 +59,6 @@ const switchSettingsSection = (name) => {
     populateApiSection();
   }
 
-  // Sync cloud UI when switching to Cloud section
-  if (targetName === 'cloud' && typeof syncCloudUI === 'function') {
-    syncCloudUI();
-  }
-
   // Populate Images data and sync toggles when switching to Images section (STACK-96)
   if (targetName === 'images') {
     syncChipToggle('tableImagesToggle', localStorage.getItem('tableImagesEnabled') !== 'false');
@@ -379,7 +374,7 @@ const syncSettingsUI = () => {
     switchProviderTab('NUMISTA');
   }
 
-  // Hide Cloud nav item when fewer than 2 providers are connected (STAK-317)
+  // Hide Cloud nav item when no provider is connected (STAK-317)
   const cloudNavItem = document.querySelector('.settings-nav-item[data-section="cloud"]');
   if (cloudNavItem && typeof cloudIsConnected === 'function' && typeof CLOUD_PROVIDERS !== 'undefined') {
     const connectedCount = Object.keys(CLOUD_PROVIDERS).filter(p => cloudIsConnected(p)).length;
