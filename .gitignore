@@ -19,6 +19,7 @@
 !.claude/skills/wiki-audit/
 !.claude/skills/wiki-sweep/
 !.claude/skills/ship/
+!.claude/skills/brainstorming/
 .claude/commands/
 .mcp.json
 SPRINT.md
@@ -38,6 +39,7 @@ generate-seed-data.py
 !.Jules/*.md
 verification/
 modify_*.py
+verify_*.py
 
 # Node modules (if added in future)
 node_modules/

@@ -362,6 +362,10 @@ const syncRetailPrices = async ({ ui = true } = {}) => {
       manifest = ranked[0].manifest;
       _lastSuccessfulApiBase = apiBase;
       window._lastSuccessfulApiBase = apiBase;
+      // Save manifest generated_at for market health dot (STAK-314)
+      if (manifest.generated_at) {
+        try { localStorage.setItem(RETAIL_MANIFEST_TS_KEY, manifest.generated_at); } catch (e) { /* ignore */ }
+      }
       debugLog(`[retail] Using ${apiBase} (generated: ${ranked[0].ts}, ${ranked.length} endpoint(s) reachable)`, "info");
     } else {
       debugLog("[retail] All endpoints unreachable, using fallback slug list", "warn");
@@ -459,6 +463,7 @@ const syncRetailPrices = async ({ ui = true } = {}) => {
     if (ui) syncStatus.textContent = statusMsg;
     debugLog(`[retail] Sync complete: ${statusMsg}`, "info");
     _appendSyncLogEntry({ success: true, coins: successCount, window: manifest.latest_window || null, error: null });
+    if (typeof updateMarketHealthDot === 'function') updateMarketHealthDot();
   } catch (err) {
     debugLog(`[retail] Sync error: ${err.message}`, "warn");
     if (ui) syncStatus.textContent = `Sync failed: ${err.message}`;
@@ -1043,6 +1048,24 @@ const startRetailBackgroundSync = () => {
   // Set up periodic re-sync while the page is open
   _retailSyncIntervalId = setInterval(_runSilentSync, RETAIL_POLL_INTERVAL_MS);
 };
+
+/**
+ * Updates the #headerMarketDot color based on market manifest generated_at age.
+ * Green: < 60 min, Orange: 60 min – 24 hr, Red: > 24 hr or no data.
+ */
+const updateMarketHealthDot = () => {
+  const dot = safeGetElement('headerMarketDot');
+  if (!dot.classList) return;
+  dot.className = 'cloud-sync-dot header-cloud-dot';
+  let ts = null;
+  try { ts = localStorage.getItem(RETAIL_MANIFEST_TS_KEY); } catch (e) { /* ignore */ }
+  if (!ts) {
+    dot.classList.add('header-cloud-dot--red');
+    return;
+  }
+  dot.classList.add(`header-cloud-dot${getHealthStatusClass(ts)}`);
+};
+window.updateMarketHealthDot = updateMarketHealthDot;
 
 // ---------------------------------------------------------------------------
 // Global exposure

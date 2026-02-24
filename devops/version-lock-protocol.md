@@ -20,7 +20,7 @@ The actual lock state lives in `devops/version.lock` (gitignored). Worktrees liv
 
 ### Step 0 — SYNC with remote before starting
 
-Before claiming the version lock or creating a worktree, confirm local `dev` is in sync
+Before claiming a version lock or creating a worktree, confirm local `dev` is in sync
 with `origin/dev`. A worktree created from a stale HEAD produces PRs that conflict with
 or silently drop remote commits that landed while you were offline.
 
@@ -51,33 +51,57 @@ git merge origin/dev --ff-only
 Resolve any conflicts now, in the main working tree, before the worktree is created.
 This guarantees the worktree starts from the freshest possible base.
 
-### Step 2 — CHECK the lock
+### Step 2 — READ and PRUNE the lock file
 
 ```bash
 cat devops/version.lock 2>/dev/null || echo "UNLOCKED"
 ```
 
-- **Locked and not expired:** STOP. Report who holds it to the user. Do not proceed.
-- **Locked but expired (> 30 min old):** Take it over. Log a mem0 entry noting the takeover.
-- **Unlocked:** Proceed to Step 3.
+The lock file now uses a **claims array** — multiple agents can hold concurrent claims on
+different version numbers.
 
-### Step 3 — COMPUTE next version
+**Parse the file (or treat as empty if missing/invalid):**
 
-Read current `APP_VERSION` from `js/constants.js` and increment the PATCH number:
-`3.32.08` → `3.32.09`
+1. Read the `claims` array
+2. Remove any entries where `expires_at` < current UTC time (pruning expired claims)
+3. Write the pruned file back if any entries were removed
 
-### Step 4 — WRITE the lock file
+If the file is missing, treat `claims` as `[]`.
+
+### Step 3 — COMPUTE your version
+
+1. Find the highest `version` string in the active (non-expired) claims
+2. If no active claims exist, read current `APP_VERSION` from `js/constants.js`
+3. Increment the PATCH component by 1 → this is **your version**
+
+Example: active claims hold `3.32.29` and `3.32.30` → your version is `3.32.31`.
+Example: no active claims, `APP_VERSION` is `3.32.28` → your version is `3.32.29`.
+
+### Step 4 — APPEND your claim
+
+Add a new entry to the `claims` array and write the file:
 
 ```json
 {
-  "locked": "3.32.09",
-  "locked_by": "claude-sonnet / STAK-XX feature name",
-  "locked_at": "2026-02-22T19:00:00Z",
-  "expires_at": "2026-02-22T19:30:00Z"
+  "claims": [
+    {
+      "version": "3.32.29",
+      "claimed_by": "claude / STAK-315 vault images",
+      "issue": "STAK-315",
+      "claimed_at": "2026-02-24T10:00:00Z",
+      "expires_at": "2026-02-24T10:30:00Z"
+    }
+  ]
 }
 ```
 
-The `locked` version becomes the **anchor** for all work: Linear notes, changelog bullets,
+Fields:
+- `version` — the version number you are claiming (matches your computed version)
+- `claimed_by` — agent name + brief task description
+- `issue` — Linear issue ID (e.g. `"STAK-315"`), or `null` if not issue-driven
+- `claimed_at` / `expires_at` — ISO 8601 UTC timestamps, 30-minute TTL
+
+The `version` becomes the **anchor** for all work: Linear notes, changelog bullets,
 commit messages, and mem0 handoffs should all reference this version number.
 
 ### Step 5 — CREATE worktree + branch
@@ -86,7 +110,7 @@ commit messages, and mem0 handoffs should all reference this version number.
 git worktree add .claude/worktrees/patch-VERSION -b patch/VERSION
 ```
 
-Example: `git worktree add .claude/worktrees/patch-3.32.09 -b patch/3.32.09`
+Example: `git worktree add .claude/worktrees/patch-3.32.29 -b patch/3.32.29`
 
 The new branch is created off the current HEAD of `dev`.
 
@@ -94,10 +118,10 @@ The new branch is created off the current HEAD of `dev`.
 
 All file edits, the `/release patch` version bump, and test runs happen inside
 `.claude/worktrees/patch-VERSION/`. Do not make changes to the main `dev` working tree
-while this lock is held.
+while your claim is held.
 
 The `/release patch` skill reads `js/constants.js` relative to the worktree CWD, so
-it correctly bumps to the locked version.
+it correctly bumps to the claimed version.
 
 ### Step 7 — PUSH branch and open PR to dev
 
@@ -125,13 +149,23 @@ or a regular merge to preserve individual commits — either is acceptable.
 
 ### Step 10 — CLEANUP
 
+Remove your claim from the lock file **by version match** — do not delete the entire file,
+as other agents may still hold active claims:
+
+```bash
+# Read the lock file, remove your claim entry, write back
+# (If no other active claims remain, the file may be deleted or left as {"claims":[]})
+```
+
+Remove the worktree and branch:
+
 ```bash
 git worktree remove .claude/worktrees/patch-VERSION --force
 git branch -d patch/VERSION
-rm devops/version.lock
 ```
 
 If the remote branch is no longer needed:
+
 ```bash
 git push origin --delete patch/VERSION
 ```
@@ -142,32 +176,62 @@ git push origin --delete patch/VERSION
 
 ```json
 {
-  "locked": "3.32.09",
-  "locked_by": "claude-sonnet / STAK-XX feature name",
-  "locked_at": "2026-02-22T19:00:00Z",
-  "expires_at": "2026-02-22T19:30:00Z"
+  "claims": [
+    {
+      "version": "3.32.29",
+      "claimed_by": "claude / STAK-315 vault images",
+      "issue": "STAK-315",
+      "claimed_at": "2026-02-24T10:00:00Z",
+      "expires_at": "2026-02-24T10:30:00Z"
+    },
+    {
+      "version": "3.32.30",
+      "claimed_by": "user / local hotfix",
+      "issue": null,
+      "claimed_at": "2026-02-24T10:05:00Z",
+      "expires_at": "2026-02-24T10:35:00Z"
+    }
+  ]
 }
 ```
 
-- `locked` — the version number being worked on (matches `APP_VERSION` bump target)
-- `locked_by` — agent name + brief task description (for human visibility)
-- `locked_at` / `expires_at` — ISO 8601 UTC timestamps, 30-minute TTL
+- `version` — the version number being worked on (matches `APP_VERSION` bump target)
+- `claimed_by` — agent name + brief task description (for human visibility)
+- `issue` — Linear issue ID or `null`
+- `claimed_at` / `expires_at` — ISO 8601 UTC timestamps, 30-minute TTL
+
+Multiple agents can hold concurrent claims on **different** version numbers. No agent
+ever takes over another agent's version — each claim is independently owned.
 
 ---
 
 ## TTL Rule
 
-Lock expires **30 minutes** after `locked_at`. Any agent may take over an expired lock,
-but must log the takeover in mem0:
+Each claim expires **30 minutes** after `claimed_at`. An agent **refreshes** its own
+`expires_at` when it makes a commit (proves liveness):
 
-```javascript
-mcp__mem0__add_memory({
-  text: "StakTrakr workflow: Took over expired version lock for 3.32.09. Previous holder: claude-sonnet.",
-  metadata: { project: "staktrakr", category: "workflow", type: "insight" }
-})
+```json
+"expires_at": "<commit time + 30 minutes>"
 ```
 
-Healthy agents always release (delete) the lock before 30 minutes are up.
+Healthy agents always release (remove their entry from the array) before 30 minutes are up.
+
+On any read, prune expired entries before computing the next available version.
+
+If an agent's claim expires with no PR merged, the version is effectively skipped.
+Minor gaps in the version sequence are acceptable.
+
+---
+
+## Parallel Agent Example
+
+Agent A (STAK-315) and Agent B (hotfix) start at the same time:
+
+1. Both read the lock → `claims: []`
+2. Agent A computes `3.32.29`, writes claim → `claims: [{version: "3.32.29", ...}]`
+3. Agent B reads again → sees `3.32.29` → computes `3.32.30`, appends → `claims: [{...29}, {...30}]`
+4. Each creates its own worktree: `patch-3.32.29` and `patch-3.32.30`
+5. Both work independently, push PRs, merge — no blocking, no TTL contention
 
 ---
 
@@ -175,10 +239,9 @@ Healthy agents always release (delete) the lock before 30 minutes are up.
 
 The `/release` skill (`.claude/skills/release/SKILL.md`) integrates this protocol in Phase 0:
 
-- **Step 0a**: Check lock → compute next version → write lock → create worktree → instruct agent
-  to switch to worktree directory
+- **Step 0a**: Read lock → prune expired claims → compute next version → append claim → create worktree
 - **Step 0b**: Seed data sync (unchanged)
-- **Phase 3 cleanup**: After commit, remove worktree, delete branch, delete lock file
+- **Phase 3 cleanup**: After PR merges, remove own claim entry from the array, remove worktree, delete branch
 
 ---
 
@@ -188,7 +251,7 @@ Each version tag is an **anchor** for a batch of work:
 
 - Version number is claimed *before* any code is written
 - All Linear notes, changelog bullets, and mem0 handoffs reference that version
-- The git tag (`v3.32.09`) is the permanent breadcrumb
+- The git tag (`v3.32.29`) is the permanent breadcrumb
 - The PR body is assembled from all the patch tags between the last release and now
 
 This means the version number is the *first* thing decided, not the last.
@@ -202,7 +265,7 @@ This means the version number is the *first* thing decided, not the last.
 git worktree list
 
 # Remove a worktree (after merging)
-git worktree remove .claude/worktrees/patch-3.32.09 --force
+git worktree remove .claude/worktrees/patch-3.32.29 --force
 
 # If a worktree directory was deleted manually, prune stale metadata
 git worktree prune
@@ -210,4 +273,4 @@ git worktree prune
 
 ---
 
-*Protocol established: 2026-02-22 | Worktree flow added: 2026-02-22*
+*Protocol established: 2026-02-22 | Worktree flow added: 2026-02-22 | Claims array: 2026-02-24*
