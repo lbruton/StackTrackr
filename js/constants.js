@@ -290,7 +290,7 @@ const CERT_LOOKUP_URLS = {
  * Updated: 2026-02-12 - STACK-38/STACK-31: Responsive card view + mobile layout
  */
 
-const APP_VERSION = "3.32.27";
+const APP_VERSION = "3.32.30";
 
 /**
  * Numista metadata cache TTL: 30 days in milliseconds.
@@ -660,6 +660,18 @@ const HEADER_SYNC_BTN_KEY = "headerSyncBtnVisible";
 /** @constant {string} HEADER_MARKET_BTN_KEY - LocalStorage key for header market button visibility */
 const HEADER_MARKET_BTN_KEY = "headerMarketBtnVisible";
 
+/** @constant {string} HEADER_VAULT_BTN_KEY - LocalStorage key for header vault button visibility */
+const HEADER_VAULT_BTN_KEY = "headerVaultBtnVisible";
+
+/** @constant {string} HEADER_RESTORE_BTN_KEY - LocalStorage key for header restore button visibility */
+const HEADER_RESTORE_BTN_KEY = "headerRestoreBtnVisible";
+
+/** @constant {string} HEADER_BTN_SHOW_TEXT_KEY - LocalStorage key for show-text-under-icons toggle */
+const HEADER_BTN_SHOW_TEXT_KEY = "headerBtnShowText";
+
+/** @constant {string} RETAIL_MANIFEST_TS_KEY - LocalStorage key for market manifest generated_at timestamp */
+const RETAIL_MANIFEST_TS_KEY = "retailManifestGeneratedAt";
+
 // =============================================================================
 // IMAGE PROCESSOR DEFAULTS (STACK-95)
 // =============================================================================
@@ -678,6 +690,9 @@ const IMAGE_MAX_BYTES = 512000;
  * @constant {string[]}
  */
 const VAULT_FILE_EXTENSION = '.stvault';
+
+/** Filename suffix for the companion image vault file exported alongside a backup */
+const VAULT_IMAGE_FILE_SUFFIX = '-images';
 
 // =============================================================================
 // CLOUD AUTO-SYNC CONSTANTS (STAK-149)
@@ -773,6 +788,10 @@ const ALLOWED_STORAGE_KEYS = [
   HEADER_TREND_BTN_KEY,       // boolean string: "true"/"false" — header trend button visibility
   HEADER_SYNC_BTN_KEY,        // boolean string: "true"/"false" — header sync button visibility
   HEADER_MARKET_BTN_KEY,      // boolean string: "true"/"false" — header market button visibility
+  HEADER_VAULT_BTN_KEY,       // boolean string: null=show, "false"=hide, "true"=show — vault button visibility
+  HEADER_RESTORE_BTN_KEY,     // boolean string: "true"/"false" — restore button visibility
+  HEADER_BTN_SHOW_TEXT_KEY,   // boolean string: "true"/"false" — show text labels under header icons
+  RETAIL_MANIFEST_TS_KEY,     // string ISO timestamp — market manifest generated_at cache
   "layoutVisibility",         // JSON object: { spotPrices, totals, search, table } (STACK-54) — legacy, migrated to layoutSectionConfig
   "layoutSectionConfig",      // JSON array: ordered section config [{ id, label, enabled }] (STACK-54)
   LAST_VERSION_CHECK_KEY,     // timestamp: last remote version check (STACK-67)
@@ -1659,6 +1678,11 @@ if (typeof window !== "undefined") {
   // Image storage expansion (STAK-image-storage)
   window.STORAGE_PERSIST_GRANTED_KEY = STORAGE_PERSIST_GRANTED_KEY;
   window.IMAGE_ZIP_MANIFEST_VERSION = IMAGE_ZIP_MANIFEST_VERSION;
+  // Header button visibility keys (STAK-314)
+  window.HEADER_VAULT_BTN_KEY = HEADER_VAULT_BTN_KEY;
+  window.HEADER_RESTORE_BTN_KEY = HEADER_RESTORE_BTN_KEY;
+  window.HEADER_BTN_SHOW_TEXT_KEY = HEADER_BTN_SHOW_TEXT_KEY;
+  window.RETAIL_MANIFEST_TS_KEY = RETAIL_MANIFEST_TS_KEY;
 }
 
 // Expose APP_VERSION globally for non-module usage

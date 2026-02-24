@@ -662,13 +662,14 @@ const _cardRenderers = { A: renderCardA, B: renderCardB, C: renderCardC };
  * Renders all items as cards into the given container.
  * @param {object[]} sortedItems - Sorted/filtered inventory items
  * @param {HTMLElement} container - Target container element
+ * @param {Map<Object, number>} [itemIndexMap] - Optional map for O(1) index lookup
  */
-const renderCardView = (sortedItems, container) => {
+const renderCardView = (sortedItems, container, itemIndexMap) => {
   const style = getCardStyle();
   const renderer = _cardRenderers[style] || renderCardB;
 
   const html = sortedItems.map(item => {
-    const originalIdx = inventory.indexOf(item);
+    const originalIdx = itemIndexMap ? itemIndexMap.get(item) : inventory.indexOf(item);
     const currentSpot = (typeof spotPrices !== 'undefined' ? spotPrices[(item.metal || '').toLowerCase()] : 0) || 0;
     const valuation = (typeof computeItemValuation === 'function')
       ? computeItemValuation(item, currentSpot)
@@ -1157,6 +1158,10 @@ const _applyTrend = (val) => {
   });
   const label = document.getElementById('headerTrendLabel');
   if (label) label.textContent = TREND_LABELS[val] || val + 'd';
+  ['Silver', 'Gold', 'Platinum', 'Palladium'].forEach(m => {
+    const period = document.getElementById('spotPeriod' + m);
+    if (period) period.textContent = TREND_LABELS[val] || val + 'd';
+  });
 };
 
 /**

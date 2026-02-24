@@ -536,6 +536,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     // Apply header toggle & layout visibility from saved prefs (STACK-54)
     if (typeof applyHeaderToggleVisibility === 'function') applyHeaderToggleVisibility();
+    if (typeof updateSpotSyncHealthDot === 'function') updateSpotSyncHealthDot();
+    if (typeof updateMarketHealthDot === 'function') updateMarketHealthDot();
     if (typeof applyLayoutOrder === 'function') applyLayoutOrder();
     if (typeof applyMetalOrder === 'function') applyMetalOrder();
 
