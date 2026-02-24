@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.32.33] - 2026-02-24
+
+### Fixed — STAK-303: 7-day sparklines straight line on fresh load
+
+- **Fixed**: 7-day sparklines now draw a full curved historical line on fresh load by extending the automatic hourly backfill from 24 h to 7 days when no recent hourly data is present — seed bundle LBMA data can lag ~9 days, leaving the 7-day window empty (STAK-303)
+
+---
+
 ## [3.32.32] - 2026-02-24
 
 ### Added — STAK-316: Cloud backup file type label
