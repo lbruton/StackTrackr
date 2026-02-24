@@ -83,6 +83,9 @@
               s.integrity = lib.integrity;
               s.crossOrigin = 'anonymous';
             }
+            s.addEventListener('error', function () {
+              console.error('[vendor] SRI/network failure: ' + label + ' — ' + lib.src);
+            });
             document.head.appendChild(s);
           }
         });
