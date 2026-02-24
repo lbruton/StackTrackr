@@ -1064,8 +1064,10 @@ const commitItemToInventory = (f, isEditing, editIdx) => {
     addCompositionOption(f.composition);
 
     try {
-      if (window.catalogManager && inventory[editIdx].numistaId) {
-        catalogManager.setCatalogId(serial, inventory[editIdx].numistaId);
+      // STAK-302: always sync the mapping — pass '' when N# is cleared so
+      // setCatalogId deletes the stale serial entry and prevents repopulation on reload
+      if (window.catalogManager) {
+        catalogManager.setCatalogId(serial, inventory[editIdx].numistaId || '');
       }
     } catch (catErr) {
       console.warn('Failed to update catalog mapping:', catErr);
