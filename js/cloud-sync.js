@@ -315,9 +315,11 @@ function _syncRelativeTime(ts) {
  * @returns {Promise<string|null>}
  */
 function getSyncPassword() {
-  // If already have both values, return silently
+  // If getSyncPasswordSilent already has a valid key, return it immediately.
+  // Do not add a redundant localStorage check — getSyncPasswordSilent() handles
+  // both Unified mode (password+accountId) and Simple-mode migration (accountId only).
   var silent = getSyncPasswordSilent();
-  if (silent && localStorage.getItem('cloud_vault_password')) return Promise.resolve(silent);
+  if (silent) return Promise.resolve(silent);
 
   var accountId = localStorage.getItem('cloud_dropbox_account_id');
   var isNewAccount = !localStorage.getItem('cloud_vault_password');
@@ -793,6 +795,15 @@ async function handleRemoteChange(remoteMeta) {
   if (_syncPasswordPromptActive) {
     debugLog('[CloudSync] Password prompt active — deferring remote change notification');
     return;
+  }
+
+  // Cancel any queued debounced push before showing the update/conflict modal.
+  // Without this, the debounced push can fire while the modal is open, overwriting
+  // the remote vault with stale local data. The pull then downloads our own just-pushed
+  // data instead of the remote device's changes — silently discarding them.
+  if (typeof scheduleSyncPush === 'function' && typeof scheduleSyncPush.cancel === 'function') {
+    scheduleSyncPush.cancel();
+    debugLog('[CloudSync] Cancelled queued push — remote change takes priority');
   }
 
   var hasLocal = syncHasLocalChanges();

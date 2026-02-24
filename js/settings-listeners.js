@@ -1281,7 +1281,10 @@ const bindCloudStorageListeners = () => {
             return;
           }
         }
+        // Prefer session cache (hot path), fall back to localStorage so Backup
+        // works after a page reload without re-prompting when password is already stored.
         var cachedPw = typeof cloudGetCachedPassword === 'function' ? cloudGetCachedPassword(provider) : null;
+        if (!cachedPw) cachedPw = localStorage.getItem('cloud_vault_password') || null;
         if (cachedPw) {
           await _cloudBackupWithCachedPw(provider, cachedPw, btn);
           return;
