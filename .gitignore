@@ -39,6 +39,7 @@ generate-seed-data.py
 !.Jules/*.md
 verification/
 modify_*.py
+verify_*.py
 
 # Node modules (if added in future)
 node_modules/
