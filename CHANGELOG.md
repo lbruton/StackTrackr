@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.32.29] - 2026-02-24
+
+### Added — Parallel Agent Workflow Improvements
+
+- **Added**: Claims-array version lock replaces binary lock — multiple agents can now hold concurrent patch versions without blocking each other (supports parallel agent development)
+- **Added**: Brainstorming skill project override with Phase 0 worktree gate — prevents implementation starting outside a `patch/VERSION` worktree
+- **Added**: `devops/version-lock-protocol.md` updated with full claims-array protocol, parallel agent example, and prune-on-read TTL rules
+
+---
+
 ## [3.32.27] - 2026-02-23
 
 ### Added — Image Storage Expansion — Dynamic Quota, Split Gauge, sharedImageId Foundation (STAK-305)
