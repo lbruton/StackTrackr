@@ -189,7 +189,7 @@ const _buildIntradayTable = (slug, bucketed) => {
   if (!bucketed) {
     const intraday = typeof retailIntradayData !== "undefined" ? retailIntradayData[slug] : null;
     const windows = intraday && Array.isArray(intraday.windows_24h) ? intraday.windows_24h : [];
-    bucketed = _bucketWindows(windows);
+    bucketed = _forwardFillVendors(_bucketWindows(windows));
   }
 
   // Collect the vendor set across all bucketed entries
@@ -232,15 +232,23 @@ const _buildIntradayTable = (slug, bucketed) => {
       // Per-vendor (or median/low) cells — each gets its own trend glyph + color
       if (useVendorLines) {
         activeVendors.forEach((v) => {
+          const isCarried = w._carriedVendors && w._carriedVendors.has(v);
           const currVal = w.vendors && w.vendors[v] != null ? w.vendors[v] : null;
-          const prevVal = idx + 1 < recent.length
-            ? (recent[idx + 1].vendors && recent[idx + 1].vendors[v] != null ? recent[idx + 1].vendors[v] : null)
-            : null;
-          const glyph = _trendGlyph(currVal, prevVal);
-          const cls = _trendClass(currVal, prevVal);
           const td = document.createElement("td");
-          td.className = cls || '';
-          td.textContent = currVal != null ? `${fmt(currVal)} ${glyph}` : '\u2014';
+          if (currVal == null) {
+            td.textContent = '\u2014';
+          } else if (isCarried) {
+            td.className = 'text-muted fst-italic';
+            td.textContent = `~${fmt(currVal)}`;
+          } else {
+            const prevVal = idx + 1 < recent.length
+              ? (recent[idx + 1].vendors && recent[idx + 1].vendors[v] != null ? recent[idx + 1].vendors[v] : null)
+              : null;
+            const glyph = _trendGlyph(currVal, prevVal);
+            const cls = _trendClass(currVal, prevVal);
+            td.className = cls || '';
+            td.textContent = `${fmt(currVal)} ${glyph}`;
+          }
           tr.appendChild(td);
         });
       } else {
