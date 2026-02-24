@@ -77,9 +77,6 @@ let _deleteObverseOnSave = false;
 /** @type {boolean} User clicked Remove on reverse — delete on save */
 let _deleteReverseOnSave = false;
 
-/** Pending sync mode selection — set before showing the switch-warning UI. */
-var _pendingSyncMode = null;
-
 /**
  * Process a user-selected image file and show preview for a specific side.
  * @param {File} file
@@ -702,34 +699,23 @@ const setupHeaderButtonListeners = () => {
   // Cloud sync header icon button (STAK-264)
   var headerCloudSyncBtn = safeGetElement('headerCloudSyncBtn');
   if (headerCloudSyncBtn) {
-    safeAttachListener(
-      headerCloudSyncBtn,
-      'click',
-      function (e) {
-        e.preventDefault();
-        e.stopPropagation();
-        var state = headerCloudSyncBtn.dataset.syncState;
-        var isSimple = localStorage.getItem('cloud_sync_mode') === 'simple';
-
-        if (state === 'orange' && !isSimple) {
-          // Secure mode needs password — open inline popover
-          _openCloudSyncPopover();
-        } else if (state === 'orange-simple') {
-          // Simple mode needs Dropbox reconnect
-          if (typeof cloudAuthStart === 'function') cloudAuthStart('dropbox');
-        } else if (state === 'green') {
-          var lp = typeof syncGetLastPush === 'function' ? syncGetLastPush() : null;
-          var msg = lp && lp.timestamp
-            ? 'Cloud sync active \u2014 last synced ' + (typeof _syncRelativeTime === 'function' ? _syncRelativeTime(lp.timestamp) : '')
-            : 'Cloud sync active';
-          if (typeof showCloudToast === 'function') showCloudToast(msg, 2500);
-        } else {
-          // Gray: not configured
-          if (typeof showSettingsModal === 'function') showSettingsModal('cloud');
-        }
-      },
-      'Cloud Sync Header Button'
-    );
+    safeAttachListener(headerCloudSyncBtn, 'click', function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      var state = headerCloudSyncBtn.dataset.syncState;
+      if (state === 'orange') {
+        // Needs password setup — open inline popover
+        if (typeof _openCloudSyncPopover === 'function') _openCloudSyncPopover();
+      } else if (state === 'green') {
+        var lp = typeof syncGetLastPush === 'function' ? syncGetLastPush() : null;
+        var msg = lp && lp.timestamp
+          ? 'Cloud sync active \u2014 last synced ' + (typeof _syncRelativeTime === 'function' ? _syncRelativeTime(lp.timestamp) : '')
+          : 'Cloud sync active';
+        if (typeof showCloudToast === 'function') showCloudToast(msg, 2500);
+      } else {
+        if (typeof showSettingsModal === 'function') showSettingsModal('cloud');
+      }
+    }, 'Cloud Sync Header Button');
   }
 
   // Close popover on outside click
@@ -2883,6 +2869,7 @@ function _openCloudSyncPopover() {
       return;
     }
     cleanup();
+    try { localStorage.setItem('cloud_vault_password', pw); } catch (_) {}
     if (typeof cloudCachePassword === 'function') cloudCachePassword('dropbox', pw);
     if (typeof updateCloudSyncHeaderBtn === 'function') updateCloudSyncHeaderBtn();
     setTimeout(function () { if (typeof pushSyncVault === 'function') pushSyncVault(); }, 100);
@@ -2898,50 +2885,29 @@ function _openCloudSyncPopover() {
   }
 }
 
-/** Called when user clicks a sync mode radio — shows warning before applying. */
-function handleSyncModeChange(newMode) {
-  var currentMode = localStorage.getItem('cloud_sync_mode') || 'secure';
-  if (newMode === currentMode) return;
-
-  // Store the pending mode so confirmSyncModeSwitch knows what to apply
-  _pendingSyncMode = newMode;
-
-  var warning = safeGetElement('cloudSyncModeSwitchWarning');
-  if (warning) warning.style.display = '';
-
-  // Revert radio to current mode visually until user confirms
-  var simpleRadio = safeGetElement('cloudSyncModeSimple');
-  var secureRadio = safeGetElement('cloudSyncModeSecure');
-  if (simpleRadio) simpleRadio.checked = currentMode === 'simple';
-  if (secureRadio) secureRadio.checked = currentMode !== 'simple';
+function handleAdvancedSavePassword() {
+  var input = safeGetElement('cloudAdvancedNewPassword');
+  var errorEl = safeGetElement('cloudAdvancedPasswordError');
+  if (!input) return;
+  var pw = input.value;
+  if (!pw || pw.length < 8) {
+    if (errorEl) { errorEl.textContent = 'Password must be at least 8 characters.'; errorEl.style.display = ''; }
+    return;
+  }
+  if (errorEl) errorEl.style.display = 'none';
+  input.value = '';
+  if (typeof changeVaultPassword === 'function') {
+    changeVaultPassword(pw).then(function (ok) {
+      if (!ok && errorEl) { errorEl.textContent = 'Failed to update password.'; errorEl.style.display = ''; }
+    }).catch(function (err) {
+      if (errorEl) { errorEl.textContent = 'An error occurred — try again.'; errorEl.style.display = ''; }
+      if (typeof debugLog === 'function') debugLog('[Cloud] changeVaultPassword threw:', err);
+    });
+  }
 }
-
-/** Applies the pending mode switch after user clicks "Switch Mode". */
-function confirmSyncModeSwitch() {
-  var mode = _pendingSyncMode;
-  if (!mode) return;
-  _pendingSyncMode = null;
-
-  var warning = safeGetElement('cloudSyncModeSwitchWarning');
-  if (warning) warning.style.display = 'none';
-
-  if (typeof setSyncMode === 'function') setSyncMode(mode);
-  if (typeof refreshSyncModeUI === 'function') refreshSyncModeUI();
-}
-
-/** Cancels a pending mode switch. */
-function cancelSyncModeSwitch() {
-  _pendingSyncMode = null;
-  var warning = safeGetElement('cloudSyncModeSwitchWarning');
-  if (warning) warning.style.display = 'none';
-  if (typeof refreshSyncModeUI === 'function') refreshSyncModeUI(); // resets radios
-}
+window.handleAdvancedSavePassword = handleAdvancedSavePassword;
 
 // =============================================================================
-
-window.handleSyncModeChange = handleSyncModeChange;
-window.confirmSyncModeSwitch = confirmSyncModeSwitch;
-window.cancelSyncModeSwitch = cancelSyncModeSwitch;
 
 // Early cleanup of stray localStorage entries before application initialization
 document.addEventListener('DOMContentLoaded', cleanupStorage);

@@ -1184,14 +1184,7 @@ const renderCloudBackupList = (provider, backups) => {
  */
 const bindCloudCacheListeners = () => {
   // Session-only password cache — no toggle needed, auto-caches on first use
-  var idleSelect = safeGetElement('cloudVaultIdleTimeout');
-  if (idleSelect) {
-    idleSelect.addEventListener('change', function () {
-      var key = typeof CLOUD_VAULT_IDLE_TIMEOUT_KEY !== 'undefined' ? CLOUD_VAULT_IDLE_TIMEOUT_KEY : 'cloud_vault_idle_timeout';
-      localStorage.setItem(key, this.value);
-      if (typeof _resetIdleLockTimer === 'function') _resetIdleLockTimer();
-    });
-  }
+  // Idle timeout select removed with cloud-session-cache fieldset redesign
 };
 
 /**
@@ -1253,7 +1246,7 @@ const bindCloudStorageListeners = () => {
 
   bindCloudCacheListeners();
 
-  panel.addEventListener('click', async function (e) {
+  var _cloudBtnHandler = async function (e) {
     var btn = e.target.closest('button');
     if (!btn) return;
     var provider = btn.dataset.provider;
@@ -1353,7 +1346,13 @@ const bindCloudStorageListeners = () => {
         }
       });
     }
-  });
+  };
+
+  panel.addEventListener('click', _cloudBtnHandler);
+
+  // Advanced modal is rendered at body level (outside settingsPanel_cloud), so it needs its own listener.
+  var advancedModal = document.getElementById('cloudSyncAdvancedModal');
+  if (advancedModal) advancedModal.addEventListener('click', _cloudBtnHandler);
 };
 
 /**
