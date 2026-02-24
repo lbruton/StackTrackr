@@ -2059,6 +2059,37 @@ const setupVaultListeners = () => {
   optionalListener(cpw, "input", () => {
     if (pw) updateMatchIndicator(pw.value, cpw.value);
   }, "Vault confirm password input");
+
+  // Image vault companion file picker (import mode only)
+  const vaultImageImportFile = document.getElementById("vaultImageImportFile");
+  optionalListener(vaultImageImportFile, "change", function (e) {
+    var imgFile = e.target.files && e.target.files[0];
+    if (!imgFile) return;
+    var imgFileInfoEl = document.getElementById("vaultImageFileInfo");
+    var imgPickerRowEl = document.getElementById("vaultImagePickerRow");
+    var imgFileNameEl = document.getElementById("vaultImageFileName");
+    var imgFileSizeEl = document.getElementById("vaultImageFileSize");
+    if (imgFileNameEl) imgFileNameEl.textContent = imgFile.name;
+    if (imgFileSizeEl && typeof formatFileSize === "function") {
+      imgFileSizeEl.textContent = formatFileSize(imgFile.size);
+    }
+    if (imgFileInfoEl) imgFileInfoEl.style.display = "";
+    if (imgPickerRowEl) imgPickerRowEl.style.display = "none";
+    var imgReader = new FileReader();
+    imgReader.onload = function (ev) {
+      if (typeof setVaultPendingImageFile === "function") {
+        setVaultPendingImageFile(new Uint8Array(ev.target.result));
+      }
+    };
+    imgReader.onerror = function () {
+      debugLog("[Vault] Failed to read image file", "error");
+      // Reset picker UI so user can try again
+      if (imgFileInfoEl) imgFileInfoEl.style.display = "none";
+      if (imgPickerRowEl) imgPickerRowEl.style.display = "";
+    };
+    imgReader.readAsArrayBuffer(imgFile);
+    e.target.value = "";
+  }, "Vault image import file input");
 };
 
 /**
