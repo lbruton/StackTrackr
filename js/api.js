@@ -235,7 +235,7 @@ const fetchStaktrakr15minRange = async (slotsBack = 96) => {
  * @returns {Promise<number>} Count of new entries added
  */
 const backfillStaktrakrHourly = async () => {
-  const oneDayAgo = Date.now() - 24 * 3600_000;
+  const oneDayAgo = Date.now() - 24 * 3600000;
   const hasRecentHourly = spotHistory.some(
     (e) => e.source === 'api-hourly' && new Date(e.timestamp).getTime() >= oneDayAgo
   );
