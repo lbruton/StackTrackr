@@ -113,10 +113,19 @@ const switchSettingsSection = (name) => {
           }, 0);
           weightEl.textContent = typeof formatWeight === 'function' ? formatWeight(totalOz) : `${totalOz.toFixed(2)} oz`;
         }
-        // Melt value — read from footer DOM (already computed by renderTable)
-        const meltDom = document.querySelector('[data-totals="all"] .totals-value, #totalMeltValue, .totals-melt');
+        // Melt value — compute directly from items × spotPrices (seed or live)
         if (meltEl) {
-          meltEl.textContent = (meltDom && meltDom.textContent) ? meltDom.textContent.trim() : '—';
+          const totalMelt = items.reduce((sum, it) => {
+            const metalKey = (it.metal || 'silver').toLowerCase();
+            const spot = (typeof spotPrices !== 'undefined' && spotPrices[metalKey]) || 0;
+            if (!spot) return sum;
+            const w = parseFloat(it.weight) || 0;
+            const qty = Number(it.qty) || 1;
+            const purity = parseFloat(it.purity) || 1.0;
+            const oz = (it.weightUnit === 'gb' && typeof GB_TO_OZT !== 'undefined') ? w * GB_TO_OZT : w;
+            return sum + oz * qty * spot * purity;
+          }, 0);
+          meltEl.textContent = totalMelt > 0 ? (typeof formatCurrency === 'function' ? formatCurrency(totalMelt) : `$${totalMelt.toFixed(2)}`) : '—';
         }
         // Last modified — newest updatedAt across all items
         if (modEl) {
