@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.32.32] - 2026-02-24
+
+### Added — STAK-316: Cloud backup file type label
+
+- **Added**: File type label ("Inventory backup" / "Image backup") in each cloud backup row, derived from filename — makes it easy to distinguish between `.stvault` inventory and image backup files at a glance (STAK-316)
+
+---
+
 ## [3.32.30] - 2026-02-24
 
 ### Added — STAK-314: Menu Enhancements

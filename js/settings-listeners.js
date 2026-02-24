@@ -1191,6 +1191,7 @@ const renderCloudBackupList = (provider, backups) => {
     const sizeStr = b.size < 1024 ? b.size + ' B' :
       b.size < 1048576 ? (b.size / 1024).toFixed(0) + ' KB' :
         (b.size / 1048576).toFixed(1) + ' MB';
+    const label = b.name.includes('images') ? 'Image backup' : 'Inventory backup';
     const safeProvider = sanitizeHtml(provider);
     const safeFilename = sanitizeHtml(b.name);
     return '<div class="cloud-backup-row">' +
@@ -1198,6 +1199,7 @@ const renderCloudBackupList = (provider, backups) => {
         '" data-filename="' + safeFilename + '" data-size="' + b.size + '">' +
         '<span class="cloud-backup-name" title="' + safeFilename + '">' + sanitizeHtml(dateStr) + '</span>' +
         '<span class="cloud-backup-size">' + sanitizeHtml(sizeStr) + '</span>' +
+        '<span class="cloud-backup-type">' + label + '</span>' +
       '</button>' +
       '<button class="cloud-backup-delete-btn" data-provider="' + safeProvider +
         '" data-filename="' + safeFilename + '" title="Delete this backup from Dropbox" aria-label="Delete ' + safeFilename + '">' +
