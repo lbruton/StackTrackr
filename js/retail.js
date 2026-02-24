@@ -171,6 +171,7 @@ const saveRetailIntradayData = () => {
     }
   }
   retailIntradayData = pruned;
+  if (typeof window !== 'undefined') window.retailIntradayData = retailIntradayData;
   try {
     saveDataSync(RETAIL_INTRADAY_KEY, retailIntradayData);
   } catch (err) {

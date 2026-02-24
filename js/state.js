@@ -283,7 +283,7 @@ let changeLog = (function () {
 let inventory = [];
 // STAK-301: expose via getter so other scripts can safely access window.inventory
 // without hitting the TDZ on Chrome when empty inventory triggers a faster load path
-Object.defineProperty(window, 'inventory', { get: () => inventory, configurable: true });
+Object.defineProperty(window, 'inventory', { get: () => inventory, set: (val) => { inventory = val; }, configurable: true });
 
 /** @type {Object} Current spot prices for all metals */
 let spotPrices = {
