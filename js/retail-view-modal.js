@@ -285,7 +285,7 @@ const _buildIntradayChart = (slug) => {
 
   const intraday = typeof retailIntradayData !== "undefined" ? retailIntradayData[slug] : null;
   const windows = intraday && Array.isArray(intraday.windows_24h) ? intraday.windows_24h : [];
-  const bucketed = _bucketWindows(windows);
+  const bucketed = _forwardFillVendors(_bucketWindows(windows));
 
   if (noDataEl) noDataEl.style.display = bucketed.length < 2 ? "" : "none";
   if (canvas) canvas.style.display = bucketed.length >= 2 ? "" : "none";
@@ -311,6 +311,12 @@ const _buildIntradayChart = (slug) => {
       ? activeVendors.map((vendorId) => {
           const label = (typeof RETAIL_VENDOR_NAMES !== "undefined" && RETAIL_VENDOR_NAMES[vendorId]) || vendorId;
           const color = RETAIL_VENDOR_COLORS[vendorId] || "#94a3b8";
+          const carriedIndices = new Set(
+            bucketed.reduce((acc, w, i) => {
+              if (w._carriedVendors && w._carriedVendors.has(vendorId)) acc.push(i);
+              return acc;
+            }, [])
+          );
           return {
             label,
             data: bucketed.map((w) => (w.vendors && w.vendors[vendorId] != null ? w.vendors[vendorId] : null)),
@@ -321,6 +327,7 @@ const _buildIntradayChart = (slug) => {
             pointHoverRadius: 3,
             tension: 0.2,
             spanGaps: true,
+            _carriedIndices: carriedIndices,
           };
         })
       : [
@@ -357,7 +364,10 @@ const _buildIntradayChart = (slug) => {
           legend: { display: !useVendorLines, position: "top", labels: { boxWidth: 12, font: { size: 11 } } },
           tooltip: {
             callbacks: {
-              label: (ctx) => `${ctx.dataset.label}: $${Number(ctx.raw).toFixed(2)}`,
+              label: (ctx) => {
+                const carried = ctx.dataset._carriedIndices && ctx.dataset._carriedIndices.has(ctx.dataIndex);
+                return `${ctx.dataset.label}: ${carried ? '~' : ''}$${Number(ctx.raw).toFixed(2)}`;
+              },
             },
           },
         },
