@@ -156,7 +156,7 @@ const _bucketWindows = (windows) => {
  * @returns {Array}
  */
 const _forwardFillVendors = (bucketed) => {
-  if (!bucketed || bucketed.length === 0) return bucketed;
+  if (!bucketed || bucketed.length === 0) return [];
   const knownVendors = typeof RETAIL_VENDOR_NAMES !== 'undefined' ? Object.keys(RETAIL_VENDOR_NAMES) : [];
   const lastSeen = {};
   return bucketed.map((w) => {
