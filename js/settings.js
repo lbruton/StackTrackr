@@ -92,6 +92,40 @@ const switchSettingsSection = (name) => {
   if (targetName === 'storage' && typeof renderStorageSection === 'function') {
     renderStorageSection();
   }
+
+  // Populate Inventory Summary card and show/hide Cloud section when switching to Inventory
+  if (targetName === 'system') {
+    const countEl = document.getElementById('invSummaryCount');
+    const meltEl = document.getElementById('invSummaryMelt');
+    const modEl = document.getElementById('invSummaryModified');
+    if (countEl || meltEl || modEl) {
+      try {
+        const items = loadDataSync(LS_KEY, []);
+        if (countEl) countEl.textContent = items.length + ' items';
+        const meltDom = document.querySelector('[data-totals="all"] .totals-value, #totalMeltValue, .totals-melt');
+        if (meltEl) {
+          meltEl.textContent = (meltDom && meltDom.textContent) ? meltDom.textContent.trim() : '—';
+        }
+        if (modEl) {
+          const newest = items.reduce((max, it) => {
+            const ts = it.updatedAt || it.dateAdded || 0;
+            return ts > max ? ts : max;
+          }, 0);
+          modEl.textContent = newest
+            ? new Date(newest).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
+            : '—';
+        }
+      } catch (e) { /* ignore — summary is non-critical */ }
+    }
+
+    // Cloud section visibility — show only when at least one provider is connected
+    const cloudSection = document.getElementById('inventoryCloudSection');
+    if (cloudSection && typeof cloudIsConnected === 'function' && typeof CLOUD_PROVIDERS !== 'undefined') {
+      const connected = Object.keys(CLOUD_PROVIDERS).some(p => cloudIsConnected(p));
+      cloudSection.style.display = connected ? 'block' : 'none';
+      if (connected && typeof syncCloudUI === 'function') syncCloudUI();
+    }
+  }
 };
 
 /**
@@ -331,6 +365,13 @@ const syncSettingsUI = () => {
   const anyVisible = document.querySelector('.settings-provider-panel[style*="display: block"]');
   if (!anyVisible) {
     switchProviderTab('NUMISTA');
+  }
+
+  // Hide Cloud nav item when fewer than 2 providers are connected (STAK-317)
+  const cloudNavItem = document.querySelector('.settings-nav-item[data-section="cloud"]');
+  if (cloudNavItem && typeof cloudIsConnected === 'function' && typeof CLOUD_PROVIDERS !== 'undefined') {
+    const connectedCount = Object.keys(CLOUD_PROVIDERS).filter(p => cloudIsConnected(p)).length;
+    cloudNavItem.style.display = connectedCount >= 2 ? '' : 'none';
   }
 };
 
