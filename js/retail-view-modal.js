@@ -69,13 +69,16 @@ const _buildVendorLegend = (slug) => {
     : null;
   const vendorMap = priceData ? priceData.vendors || {} : {};
   const knownVendors = typeof RETAIL_VENDOR_NAMES !== "undefined" ? Object.keys(RETAIL_VENDOR_NAMES) : [];
-  const hasAny = knownVendors.some((v) => vendorMap[v] && vendorMap[v].price != null);
+  const avail = typeof retailAvailability !== 'undefined' && retailAvailability;
+  const hasAny = knownVendors.some((v) =>
+    (vendorMap[v] && vendorMap[v].price != null) ||
+    (avail && avail[slug] && avail[slug][v] === false)
+  );
   if (!hasAny) return;
 
   knownVendors.forEach((vendorId) => {
     const vendorData = vendorMap[vendorId];
     const price = vendorData ? vendorData.price : null;
-    const avail = typeof retailAvailability !== 'undefined' && retailAvailability;
     const isOOS = avail && avail[slug] && avail[slug][vendorId] === false;
 
     // Skip vendors with no price and no OOS flag (they don't carry this coin)
