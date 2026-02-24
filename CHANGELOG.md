@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.32.35] - 2026-02-24
+
+### Added — STAK-320: Header Buttons Drag-to-Sort
+
+- **Added**: Drag-to-sort for header button cards in Settings → Appearance → Header Buttons; drag any card to reorder (STAK-320)
+- **Added**: Order persists to `headerBtnOrder` in localStorage and is restored whenever the settings panel is opened (STAK-320)
+
+---
+
 ## [3.32.30] - 2026-02-24
 
 ### Added — STAK-314: Menu Enhancements

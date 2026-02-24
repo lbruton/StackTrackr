@@ -3420,6 +3420,24 @@ input[type="submit"] {
   justify-content: space-between;
 }
 
+/* Header button drag-to-sort handle (STAK-320) */
+.drag-handle {
+  color: var(--text-secondary);
+  cursor: grab;
+  font-size: 0.9rem;
+  margin-right: 0.35rem;
+  user-select: none;
+  flex-shrink: 0;
+  line-height: 1;
+  opacity: 0.6;
+}
+.drag-handle:active {
+  cursor: grabbing;
+}
+.settings-card.dragging {
+  opacity: 0.4;
+}
+
 /* Image actions row — flex wrap of action buttons */
 .image-actions-row {
   display: flex;

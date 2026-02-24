@@ -1176,8 +1176,30 @@ const applyHeaderToggleVisibility = () => {
   if (btnContainer.classList) {
     btnContainer.classList.toggle('header-buttons--show-text', showText);
   }
+
+  // Apply saved drag order to header button settings cards
+  applyHeaderBtnOrder();
 };
 window.applyHeaderToggleVisibility = applyHeaderToggleVisibility;
+
+/**
+ * Reorders header button settings cards based on saved drag order (STAK-320).
+ * Reads `headerBtnOrder` from localStorage and appends cards in that order.
+ */
+const applyHeaderBtnOrder = () => {
+  const stored = localStorage.getItem('headerBtnOrder');
+  if (!stored) return;
+  let order;
+  try { order = JSON.parse(stored); } catch { return; }
+  if (!Array.isArray(order) || !order.length) return;
+  const grid = document.getElementById('headerBtnSortGrid');
+  if (!grid) return;
+  for (const key of order) {
+    const card = grid.querySelector(`[data-btn-key="${key}"]`);
+    if (card) grid.append(card);
+  }
+};
+window.applyHeaderBtnOrder = applyHeaderBtnOrder;
 
 /**
  * Syncs layout section config table in Settings and applies layout order.
