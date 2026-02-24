@@ -276,7 +276,7 @@ let changeLog = (function () {
     // loaded yet when state.js runs.
     if (_raw.startsWith('CMP1:')) _raw = _raw.slice(5);
     return JSON.parse(_raw);
-  } catch (_) { return []; }
+  } catch (e) { console.warn('[state] changeLog parse failed — resetting to []. Error:', e); return []; }
 }());
 
 /** @type {Array} Main inventory data structure */
