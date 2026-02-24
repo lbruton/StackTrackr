@@ -75,7 +75,11 @@ const _buildVendorLegend = (slug) => {
   knownVendors.forEach((vendorId) => {
     const vendorData = vendorMap[vendorId];
     const price = vendorData ? vendorData.price : null;
-    if (price == null) return;
+    const avail = typeof retailAvailability !== 'undefined' && retailAvailability;
+    const isOOS = avail && avail[slug] && avail[slug][vendorId] === false;
+
+    // Skip vendors with no price and no OOS flag (they don't carry this coin)
+    if (price == null && !isOOS) return;
 
     const color = RETAIL_VENDOR_COLORS[vendorId] || "#94a3b8";
     const label = (typeof RETAIL_VENDOR_NAMES !== "undefined" && RETAIL_VENDOR_NAMES[vendorId]) || vendorId;
@@ -85,6 +89,7 @@ const _buildVendorLegend = (slug) => {
 
     const item = document.createElement(vendorUrl ? "a" : "span");
     item.className = "retail-legend-item";
+    if (isOOS) item.style.opacity = "0.5";
     if (vendorUrl) {
       item.href = "#";
       item.addEventListener("click", (e) => {
@@ -105,7 +110,25 @@ const _buildVendorLegend = (slug) => {
 
     const priceEl = document.createElement("span");
     priceEl.className = "retail-legend-price";
-    priceEl.textContent = `$${Number(price).toFixed(2)}`;
+
+    if (isOOS) {
+      const lkpMap = typeof retailLastKnownPrices !== 'undefined' && retailLastKnownPrices;
+      const ladMap = typeof retailLastAvailableDates !== 'undefined' && retailLastAvailableDates;
+      const lkp = lkpMap && lkpMap[slug] && lkpMap[slug][vendorId];
+      const lad = ladMap && ladMap[slug] && ladMap[slug][vendorId];
+      const priceText = document.createElement("del");
+      priceText.textContent = lkp ? `$${Number(lkp).toFixed(2)}` : '\u2014';
+      priceEl.appendChild(priceText);
+      const badge = document.createElement("small");
+      badge.className = "text-danger ms-1";
+      badge.textContent = "OOS";
+      priceEl.appendChild(badge);
+      item.title = lad
+        ? `Out of stock (last seen: ${priceText.textContent} on ${lad})`
+        : "Out of stock";
+    } else {
+      priceEl.textContent = `$${Number(price).toFixed(2)}`;
+    }
 
     item.appendChild(swatch);
     item.appendChild(nameEl);
