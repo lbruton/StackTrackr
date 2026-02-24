@@ -3219,21 +3219,15 @@
                   <p class="settings-subtext">Import your data files. New here? <a href="sample.csv" download="sample.csv">Download sample CSV</a> to try importing.</p>
                   <div style="border-top:1px solid var(--border);padding-top:0.6rem;margin-top:0.5rem">
                     <div class="import-block">
-                      <div class="import-export-grid">
-                        <div class="import-csv-grid">
-                          <button class="btn warning" id="importCsvOverride">Import CSV</button>
-                          <button class="btn success" id="importCsvMerge">Merge CSV</button>
-                          <input accept=".csv" hidden id="importCsvFile" type="file" />
-                        </div>
-                        <div class="import-json-grid">
-                          <button class="btn warning" id="importJsonOverride">Import JSON</button>
-                          <button class="btn success" id="importJsonMerge">Merge JSON</button>
-                          <input accept=".json" hidden id="importJsonFile" type="file" />
-                        </div>
-                        <div>
-                          <button class="btn warning" id="importZipBtn">Restore ZIP Backup</button>
-                          <input accept=".zip" hidden id="importZipFile" type="file" />
-                        </div>
+                      <div style="display:flex;flex-wrap:wrap;gap:0.4rem">
+                        <button class="btn warning" id="importCsvOverride" style="font-size:0.82rem;padding:0.4rem 0.9rem;min-height:0">Import CSV</button>
+                        <button class="btn success" id="importCsvMerge" style="font-size:0.82rem;padding:0.4rem 0.9rem;min-height:0">Merge CSV</button>
+                        <input accept=".csv" hidden id="importCsvFile" type="file" />
+                        <button class="btn warning" id="importJsonOverride" style="font-size:0.82rem;padding:0.4rem 0.9rem;min-height:0">Import JSON</button>
+                        <button class="btn success" id="importJsonMerge" style="font-size:0.82rem;padding:0.4rem 0.9rem;min-height:0">Merge JSON</button>
+                        <input accept=".json" hidden id="importJsonFile" type="file" />
+                        <button class="btn warning" id="importZipBtn" style="font-size:0.82rem;padding:0.4rem 0.9rem;min-height:0">Restore ZIP Backup</button>
+                        <input accept=".zip" hidden id="importZipFile" type="file" />
                       </div>
                       <progress class="import-progress" id="importProgress" value="0" max="0"></progress>
                       <div class="import-progress-text" id="importProgressText"></div>
@@ -3250,14 +3244,12 @@
                   <p class="settings-subtext">Import data from external services like Numista.</p>
                   <div style="border-top:1px solid var(--border);padding-top:0.6rem;margin-top:0.5rem">
                     <div class="third-party-block">
-                      <div class="import-export-grid">
-                        <div class="grid grid-2">
-                          <button class="btn warning" id="importNumistaBtn">Import Numista CSV</button>
-                          <button class="btn success" id="mergeNumistaBtn">Merge Numista CSV</button>
-                        </div>
+                      <div style="display:flex;flex-wrap:wrap;gap:0.4rem">
+                        <button class="btn warning" id="importNumistaBtn" style="font-size:0.82rem;padding:0.4rem 0.9rem;min-height:0">Import Numista CSV</button>
+                        <button class="btn success" id="mergeNumistaBtn" style="font-size:0.82rem;padding:0.4rem 0.9rem;min-height:0">Merge Numista CSV</button>
                         <input type="file" id="numistaImportFile" accept=".csv" hidden />
-                        <div class="beta-warning">Numista import is a beta feature</div>
                       </div>
+                      <div class="beta-warning" style="margin-top:0.4rem">Numista import is a beta feature</div>
                     </div>
                   </div>
                 </div>
@@ -3275,11 +3267,11 @@
                   <p class="settings-subtext">Export your data files.</p>
                   <div style="border-top:1px solid var(--border);padding-top:0.6rem;margin-top:0.5rem">
                     <div class="export-block">
-                      <div class="import-export-grid">
-                        <button class="btn info" id="exportCsvBtn">Export CSV</button>
-                        <button class="btn info" id="exportJsonBtn">Export JSON</button>
-                        <button class="btn info" id="exportPdfBtn">Export PDF</button>
-                        <button class="btn info" id="exportZipBtn">Export ZIP Backup</button>
+                      <div style="display:flex;flex-wrap:wrap;gap:0.4rem">
+                        <button class="btn info" id="exportCsvBtn" style="font-size:0.82rem;padding:0.4rem 0.9rem;min-height:0">Export CSV</button>
+                        <button class="btn info" id="exportJsonBtn" style="font-size:0.82rem;padding:0.4rem 0.9rem;min-height:0">Export JSON</button>
+                        <button class="btn info" id="exportPdfBtn" style="font-size:0.82rem;padding:0.4rem 0.9rem;min-height:0">Export PDF</button>
+                        <button class="btn info" id="exportZipBtn" style="font-size:0.82rem;padding:0.4rem 0.9rem;min-height:0">Export ZIP Backup</button>
                       </div>
                     </div>
                   </div>
