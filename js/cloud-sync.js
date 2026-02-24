@@ -797,6 +797,15 @@ async function handleRemoteChange(remoteMeta) {
     return;
   }
 
+  // Cancel any queued debounced push before showing the update/conflict modal.
+  // Without this, the debounced push can fire while the modal is open, overwriting
+  // the remote vault with stale local data. The pull then downloads our own just-pushed
+  // data instead of the remote device's changes — silently discarding them.
+  if (typeof scheduleSyncPush === 'function' && typeof scheduleSyncPush.cancel === 'function') {
+    scheduleSyncPush.cancel();
+    debugLog('[CloudSync] Cancelled queued push — remote change takes priority');
+  }
+
   var hasLocal = syncHasLocalChanges();
 
   if (!hasLocal) {
