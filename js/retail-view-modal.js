@@ -69,13 +69,20 @@ const _buildVendorLegend = (slug) => {
     : null;
   const vendorMap = priceData ? priceData.vendors || {} : {};
   const knownVendors = typeof RETAIL_VENDOR_NAMES !== "undefined" ? Object.keys(RETAIL_VENDOR_NAMES) : [];
-  const hasAny = knownVendors.some((v) => vendorMap[v] && vendorMap[v].price != null);
+  const avail = typeof retailAvailability !== 'undefined' && retailAvailability;
+  const hasAny = knownVendors.some((v) =>
+    (vendorMap[v] && vendorMap[v].price != null) ||
+    (avail && avail[slug] && avail[slug][v] === false)
+  );
   if (!hasAny) return;
 
   knownVendors.forEach((vendorId) => {
     const vendorData = vendorMap[vendorId];
     const price = vendorData ? vendorData.price : null;
-    if (price == null) return;
+    const isOOS = avail && avail[slug] && avail[slug][vendorId] === false;
+
+    // Skip vendors with no price and no OOS flag (they don't carry this coin)
+    if (price == null && !isOOS) return;
 
     const color = RETAIL_VENDOR_COLORS[vendorId] || "#94a3b8";
     const label = (typeof RETAIL_VENDOR_NAMES !== "undefined" && RETAIL_VENDOR_NAMES[vendorId]) || vendorId;
@@ -85,6 +92,7 @@ const _buildVendorLegend = (slug) => {
 
     const item = document.createElement(vendorUrl ? "a" : "span");
     item.className = "retail-legend-item";
+    if (isOOS) item.style.opacity = "0.5";
     if (vendorUrl) {
       item.href = "#";
       item.addEventListener("click", (e) => {
@@ -105,7 +113,25 @@ const _buildVendorLegend = (slug) => {
 
     const priceEl = document.createElement("span");
     priceEl.className = "retail-legend-price";
-    priceEl.textContent = `$${Number(price).toFixed(2)}`;
+
+    if (isOOS) {
+      const lkpMap = typeof retailLastKnownPrices !== 'undefined' && retailLastKnownPrices;
+      const ladMap = typeof retailLastAvailableDates !== 'undefined' && retailLastAvailableDates;
+      const lkp = lkpMap && lkpMap[slug] && lkpMap[slug][vendorId];
+      const lad = ladMap && ladMap[slug] && ladMap[slug][vendorId];
+      const priceText = document.createElement("del");
+      priceText.textContent = lkp != null ? `$${Number(lkp).toFixed(2)}` : '\u2014';
+      priceEl.appendChild(priceText);
+      const badge = document.createElement("small");
+      badge.className = "text-danger ms-1";
+      badge.textContent = "OOS";
+      priceEl.appendChild(badge);
+      item.title = lad
+        ? `Out of stock (last seen: ${priceText.textContent} on ${lad})`
+        : "Out of stock";
+    } else {
+      priceEl.textContent = `$${Number(price).toFixed(2)}`;
+    }
 
     item.appendChild(swatch);
     item.appendChild(nameEl);
@@ -148,6 +174,33 @@ const _bucketWindows = (windows) => {
 };
 
 /**
+ * Forward-fills missing vendor prices across a bucketed windows array.
+ * For each vendor, carries the most recently seen price into any gap window within the 24h set.
+ * Returns a new array — source objects are not mutated.
+ * Each returned window gains _carriedVendors: Set<vendorId> listing which prices were carried.
+ * @param {Array} bucketed - Chronologically sorted (oldest first) from _bucketWindows
+ * @returns {Array}
+ */
+const _forwardFillVendors = (bucketed) => {
+  if (!bucketed || bucketed.length === 0) return [];
+  const knownVendors = typeof RETAIL_VENDOR_NAMES !== 'undefined' ? Object.keys(RETAIL_VENDOR_NAMES) : [];
+  const lastSeen = {};
+  return bucketed.map((w) => {
+    const vendors = w.vendors ? { ...w.vendors } : {};
+    const carriedVendors = new Set();
+    knownVendors.forEach((v) => {
+      if (vendors[v] != null) {
+        lastSeen[v] = vendors[v];
+      } else if (lastSeen[v] != null) {
+        vendors[v] = lastSeen[v];
+        carriedVendors.add(v);
+      }
+    });
+    return { ...w, vendors, _carriedVendors: carriedVendors };
+  });
+};
+
+/**
  * Renders the intraday data table for a given slug.
  * Accepts an optional pre-bucketed array; if omitted, re-buckets from retailIntradayData.
  * Slices to the _intradayRowCount most recent rows.
@@ -162,7 +215,7 @@ const _buildIntradayTable = (slug, bucketed) => {
   if (!bucketed) {
     const intraday = typeof retailIntradayData !== "undefined" ? retailIntradayData[slug] : null;
     const windows = intraday && Array.isArray(intraday.windows_24h) ? intraday.windows_24h : [];
-    bucketed = _bucketWindows(windows);
+    bucketed = _forwardFillVendors(_bucketWindows(windows));
   }
 
   // Collect the vendor set across all bucketed entries
@@ -205,15 +258,23 @@ const _buildIntradayTable = (slug, bucketed) => {
       // Per-vendor (or median/low) cells — each gets its own trend glyph + color
       if (useVendorLines) {
         activeVendors.forEach((v) => {
+          const isCarried = w._carriedVendors && w._carriedVendors.has(v);
           const currVal = w.vendors && w.vendors[v] != null ? w.vendors[v] : null;
-          const prevVal = idx + 1 < recent.length
-            ? (recent[idx + 1].vendors && recent[idx + 1].vendors[v] != null ? recent[idx + 1].vendors[v] : null)
-            : null;
-          const glyph = _trendGlyph(currVal, prevVal);
-          const cls = _trendClass(currVal, prevVal);
           const td = document.createElement("td");
-          td.className = cls || '';
-          td.textContent = currVal != null ? `${fmt(currVal)} ${glyph}` : '\u2014';
+          if (currVal == null) {
+            td.textContent = '\u2014';
+          } else if (isCarried) {
+            td.className = 'text-muted fst-italic';
+            td.textContent = `~${fmt(currVal)}`;
+          } else {
+            const prevVal = idx + 1 < recent.length
+              ? (recent[idx + 1].vendors && recent[idx + 1].vendors[v] != null ? recent[idx + 1].vendors[v] : null)
+              : null;
+            const glyph = _trendGlyph(currVal, prevVal);
+            const cls = _trendClass(currVal, prevVal);
+            td.className = cls || '';
+            td.textContent = `${fmt(currVal)} ${glyph}`;
+          }
           tr.appendChild(td);
         });
       } else {
@@ -258,7 +319,7 @@ const _buildIntradayChart = (slug) => {
 
   const intraday = typeof retailIntradayData !== "undefined" ? retailIntradayData[slug] : null;
   const windows = intraday && Array.isArray(intraday.windows_24h) ? intraday.windows_24h : [];
-  const bucketed = _bucketWindows(windows);
+  const bucketed = _forwardFillVendors(_bucketWindows(windows));
 
   if (noDataEl) noDataEl.style.display = bucketed.length < 2 ? "" : "none";
   if (canvas) canvas.style.display = bucketed.length >= 2 ? "" : "none";
@@ -284,6 +345,10 @@ const _buildIntradayChart = (slug) => {
       ? activeVendors.map((vendorId) => {
           const label = (typeof RETAIL_VENDOR_NAMES !== "undefined" && RETAIL_VENDOR_NAMES[vendorId]) || vendorId;
           const color = RETAIL_VENDOR_COLORS[vendorId] || "#94a3b8";
+          const carriedIndices = new Set();
+          bucketed.forEach((w, i) => {
+            if (w._carriedVendors && w._carriedVendors.has(vendorId)) carriedIndices.add(i);
+          });
           return {
             label,
             data: bucketed.map((w) => (w.vendors && w.vendors[vendorId] != null ? w.vendors[vendorId] : null)),
@@ -294,6 +359,7 @@ const _buildIntradayChart = (slug) => {
             pointHoverRadius: 3,
             tension: 0.2,
             spanGaps: true,
+            _carriedIndices: carriedIndices,
           };
         })
       : [
@@ -330,7 +396,11 @@ const _buildIntradayChart = (slug) => {
           legend: { display: !useVendorLines, position: "top", labels: { boxWidth: 12, font: { size: 11 } } },
           tooltip: {
             callbacks: {
-              label: (ctx) => `${ctx.dataset.label}: $${Number(ctx.raw).toFixed(2)}`,
+              label: (ctx) => {
+                if (ctx.raw == null) return null;
+                const carried = ctx.dataset._carriedIndices && ctx.dataset._carriedIndices.has(ctx.dataIndex);
+                return `${ctx.dataset.label}: ${carried ? '~' : ''}$${Number(ctx.raw).toFixed(2)}`;
+              },
             },
           },
         },
@@ -575,6 +645,7 @@ if (typeof window !== "undefined") {
   window.closeRetailViewModal = closeRetailViewModal;
   window._switchRetailViewTab = _switchRetailViewTab;
   window._bucketWindows = _bucketWindows;
+  window._forwardFillVendors = _forwardFillVendors;
   window._buildIntradayTable = _buildIntradayTable;
 }
 
