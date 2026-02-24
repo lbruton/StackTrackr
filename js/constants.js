@@ -290,7 +290,7 @@ const CERT_LOOKUP_URLS = {
  * Updated: 2026-02-12 - STACK-38/STACK-31: Responsive card view + mobile layout
  */
 
-const APP_VERSION = "3.32.26";
+const APP_VERSION = "3.32.27";
 
 /**
  * Numista metadata cache TTL: 30 days in milliseconds.
@@ -567,6 +567,12 @@ const THEME_KEY = "appTheme";
 /** @constant {string} ACK_DISMISSED_KEY - LocalStorage key for acknowledgment dismissal */
 const ACK_DISMISSED_KEY = "ackDismissed";
 
+/** @constant {string} STORAGE_PERSIST_GRANTED_KEY - LocalStorage key for storage persistence permission grant */
+const STORAGE_PERSIST_GRANTED_KEY = 'storagePersistGranted';
+
+/** @constant {string} IMAGE_ZIP_MANIFEST_VERSION - Version string for the image ZIP export manifest format */
+const IMAGE_ZIP_MANIFEST_VERSION = '1.0';
+
 /** @constant {string} CLOUD_VAULT_IDLE_TIMEOUT_KEY - LocalStorage key for vault password idle lock timeout in minutes (15|30|60|120|0=never) */
 const CLOUD_VAULT_IDLE_TIMEOUT_KEY = "cloud_vault_idle_timeout";
 
@@ -808,6 +814,7 @@ const ALLOWED_STORAGE_KEYS = [
   "cloud_sync_mode",                           // DEPRECATED: kept for migration only — will be removed after v3.33
   "cloud_dropbox_account_id",                  // string: Dropbox account_id for Simple mode key derivation
   "cloud_vault_password",                      // string: user vault password stored for persistent unlock
+  STORAGE_PERSIST_GRANTED_KEY,                         // boolean string: "true"/"false" — storage persistence grant flag
 ];
 
 // =============================================================================
@@ -1649,6 +1656,9 @@ if (typeof window !== "undefined") {
   // STAK-222: API pipeline cache keys
   window.NUMISTA_RESPONSE_CACHE_KEY = NUMISTA_RESPONSE_CACHE_KEY;
   window.PCGS_RESPONSE_CACHE_KEY = PCGS_RESPONSE_CACHE_KEY;
+  // Image storage expansion (STAK-image-storage)
+  window.STORAGE_PERSIST_GRANTED_KEY = STORAGE_PERSIST_GRANTED_KEY;
+  window.IMAGE_ZIP_MANIFEST_VERSION = IMAGE_ZIP_MANIFEST_VERSION;
 }
 
 // Expose APP_VERSION globally for non-module usage

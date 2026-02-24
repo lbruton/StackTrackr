@@ -2044,6 +2044,41 @@ input[type="submit"] {
   border-radius: var(--radius);
   color: var(--text-primary);
 }
+.storage-gauge-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.4rem;
+  font-size: 0.82em;
+}
+.storage-gauge-label {
+  min-width: 7rem;
+  color: var(--text-secondary);
+}
+.storage-gauge-bar-wrap {
+  flex: 1;
+  height: 6px;
+  background: var(--border, #333);
+  border-radius: 3px;
+  overflow: hidden;
+  min-width: 60px;
+}
+.storage-gauge-bar {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.3s ease;
+  width: 0%;
+}
+.storage-gauge-size {
+  min-width: 8rem;
+  text-align: right;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+.storage-gauge-persist {
+  font-size: 0.78em;
+  margin-top: 0.3rem;
+}
 .image-pattern-table {
   width: 100%;
   font-size: 0.8rem;
