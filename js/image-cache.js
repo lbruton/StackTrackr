@@ -374,7 +374,7 @@ class ImageCache {
 
   /**
    * Calculate current storage usage across all stores.
-   * @returns {Promise<{count: number, totalBytes: number, limitBytes: number, metadataCount: number, userImageCount: number, patternImageCount: number, numistaCount: number}>}
+   * @returns {Promise<{count: number, totalBytes: number, limitBytes: number, metadataCount: number, userImageCount: number, patternImageCount: number, numistaCount: number, numistaBytes: number, userImageBytes: number, patternImageBytes: number, metadataBytes: number}>}
    */
   async getStorageUsage() {
     const result = {
