@@ -267,7 +267,17 @@ const elements = {
 };
 
 /** @type {Array} Change log entries */
-let changeLog = JSON.parse(localStorage.getItem('changeLog') || '[]');
+let changeLog = (function () {
+  try {
+    var _raw = localStorage.getItem('changeLog');
+    if (!_raw) return [];
+    // saveDataSync may prepend 'CMP1:' for payloads ≥ 4 KB (LZString no-op prefix).
+    // Stripping it here mirrors __decompressIfNeeded in utils.js, which isn't
+    // loaded yet when state.js runs.
+    if (_raw.startsWith('CMP1:')) _raw = _raw.slice(5);
+    return JSON.parse(_raw);
+  } catch (_) { return []; }
+}());
 
 /** @type {Array} Main inventory data structure */
 let inventory = [];
