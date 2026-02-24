@@ -95,10 +95,10 @@ const switchSettingsSection = (name) => {
 
   // Populate Inventory Summary card and show/hide Cloud section when switching to Inventory
   if (targetName === 'system') {
-    const countEl = document.getElementById('invSummaryCount');
-    const weightEl = document.getElementById('invSummaryWeight');
-    const meltEl = document.getElementById('invSummaryMelt');
-    const modEl = document.getElementById('invSummaryModified');
+    const countEl = safeGetElement('invSummaryCount');
+    const weightEl = safeGetElement('invSummaryWeight');
+    const meltEl = safeGetElement('invSummaryMelt');
+    const modEl = safeGetElement('invSummaryModified');
     if (countEl || weightEl || meltEl || modEl) {
       try {
         const items = loadDataSync(LS_KEY, []);
@@ -113,17 +113,12 @@ const switchSettingsSection = (name) => {
           }, 0);
           weightEl.textContent = typeof formatWeight === 'function' ? formatWeight(totalOz) : `${totalOz.toFixed(2)} oz`;
         }
-        // Melt value — compute directly from items × spotPrices (seed or live)
+        // Melt value — use canonical computeMeltValue() helper from utils.js
         if (meltEl) {
           const totalMelt = items.reduce((sum, it) => {
             const metalKey = (it.metal || 'silver').toLowerCase();
             const spot = (typeof spotPrices !== 'undefined' && spotPrices[metalKey]) || 0;
-            if (!spot) return sum;
-            const w = parseFloat(it.weight) || 0;
-            const qty = Number(it.qty) || 1;
-            const purity = parseFloat(it.purity) || 1.0;
-            const oz = (it.weightUnit === 'gb' && typeof GB_TO_OZT !== 'undefined') ? w * GB_TO_OZT : w;
-            return sum + oz * qty * spot * purity;
+            return spot ? sum + computeMeltValue(it, spot) : sum;
           }, 0);
           meltEl.textContent = totalMelt > 0 ? (typeof formatCurrency === 'function' ? formatCurrency(totalMelt) : `$${totalMelt.toFixed(2)}`) : '—';
         }
@@ -137,7 +132,7 @@ const switchSettingsSection = (name) => {
             ? new Date(newest).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
             : '—';
         }
-      } catch (e) { /* ignore — summary is non-critical */ }
+      } catch (e) { console.warn('[settings] Inventory Summary card failed to populate:', e); }
     }
 
     // Sync cloud UI state (connected/disconnected badges, button states)
