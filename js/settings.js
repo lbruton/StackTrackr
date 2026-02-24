@@ -1102,9 +1102,11 @@ const syncGoldbackSettingsUI = () => {
 // =============================================================================
 
 /**
- * Syncs the header shortcut checkboxes in Settings with stored state.
+ * Syncs the header shortcut UI in Settings with stored state.
+ * Re-renders the config table and applies current header state.
  */
 const syncHeaderToggleUI = () => {
+  // Sync chip toggles that live in other settings panels (non-_hdr versions)
   const themeVisible = localStorage.getItem('headerThemeBtnVisible') !== 'false';
   const currencyVisible = localStorage.getItem('headerCurrencyBtnVisible') !== 'false';
   const trendStored = localStorage.getItem(HEADER_TREND_BTN_KEY);
@@ -1114,92 +1116,125 @@ const syncHeaderToggleUI = () => {
   const marketVisible = localStorage.getItem(HEADER_MARKET_BTN_KEY) !== 'false';
 
   syncChipToggle('settingsHeaderThemeBtn', themeVisible);
-  syncChipToggle('settingsHeaderThemeBtn_hdr', themeVisible);
   syncChipToggle('settingsHeaderCurrencyBtn', currencyVisible);
-  syncChipToggle('settingsHeaderCurrencyBtn_hdr', currencyVisible);
   syncChipToggle('settingsHeaderTrendBtn', trendVisible);
-  syncChipToggle('settingsHeaderTrendBtn_hdr', trendVisible);
   syncChipToggle('settingsHeaderSyncBtn', syncVisible);
-  syncChipToggle('settingsHeaderSyncBtn_hdr', syncVisible);
   syncChipToggle('settingsHeaderMarketBtn', marketVisible);
-  syncChipToggle('settingsHeaderMarketBtn_hdr', marketVisible);
 
+  renderHeaderBtnConfigTable();
   applyHeaderToggleVisibility();
 };
 
 /**
- * Shows/hides the header shortcut buttons based on stored preferences.
+ * Shows/hides and reorders header shortcut buttons based on stored config.
  * All buttons default visible for new users.
  */
 const applyHeaderToggleVisibility = () => {
-  const themeVisible = localStorage.getItem('headerThemeBtnVisible') !== 'false';
-  const currencyVisible = localStorage.getItem('headerCurrencyBtnVisible') !== 'false';
-  const trendStored = localStorage.getItem(HEADER_TREND_BTN_KEY);
-  const trendVisible = trendStored !== null ? trendStored === 'true' : true;
-  const syncStored = localStorage.getItem(HEADER_SYNC_BTN_KEY);
-  const syncVisible = syncStored !== null ? syncStored === 'true' : true;
-  const marketVisible = localStorage.getItem(HEADER_MARKET_BTN_KEY) !== 'false';
+  const config = getHeaderBtnConfig();
+  const BTN_ID_MAP = {
+    themeBtn:    'headerThemeBtn',
+    currencyBtn: 'headerCurrencyBtn',
+    marketBtn:   'headerMarketBtn',
+    trendBtn:    'headerTrendBtn',
+    syncBtn:     'headerSyncBtn',
+    vaultBtn:    'headerVaultBtn',
+    restoreBtn:  'headerRestoreBtn',
+  };
 
-  if (elements.headerThemeBtn) {
-    elements.headerThemeBtn.style.display = themeVisible ? '' : 'none';
-  }
-  if (elements.headerCurrencyBtn) {
-    elements.headerCurrencyBtn.style.display = currencyVisible ? '' : 'none';
-  }
-  safeGetElement('headerTrendBtn').style.display = trendVisible ? '' : 'none';
-  safeGetElement('headerSyncBtn').style.display = syncVisible ? '' : 'none';
-
-  // Market button
-  const marketBtn = safeGetElement('headerMarketBtn');
-  if (marketBtn) {
-    marketBtn.style.display = marketVisible ? '' : 'none';
+  // Apply visibility
+  for (const { id, enabled } of config) {
+    const btnId = BTN_ID_MAP[id];
+    if (!btnId) continue;
+    const btn = safeGetElement(btnId);
+    if (btn) btn.style.display = enabled ? '' : 'none';
   }
 
-  // Vault button (three-state: null = show by default for discoverability)
-  const vaultStored = localStorage.getItem(HEADER_VAULT_BTN_KEY);
-  const vaultVisible = vaultStored !== null ? vaultStored === 'true' : true;
-  const vaultBtn = safeGetElement('headerVaultBtn');
-  if (vaultBtn) {
-    vaultBtn.style.display = vaultVisible ? '' : 'none';
-  }
-
-  // Restore button (visible by default)
-  const restoreVisible = localStorage.getItem(HEADER_RESTORE_BTN_KEY) !== 'false';
-  const restoreBtn = safeGetElement('headerRestoreBtn');
-  if (restoreBtn) {
-    restoreBtn.style.display = restoreVisible ? '' : 'none';
+  // Apply order to live header container
+  const container = safeGetElement('headerBtnContainer');
+  if (container) {
+    for (const { id } of config) {
+      const btnId = BTN_ID_MAP[id];
+      if (!btnId) continue;
+      const btn = container.querySelector(`#${btnId}`);
+      if (btn) container.append(btn);
+    }
   }
 
   // Show text toggle
   const showText = localStorage.getItem(HEADER_BTN_SHOW_TEXT_KEY) === 'true';
-  const btnContainer = safeGetElement('headerBtnContainer');
-  if (btnContainer.classList) {
-    btnContainer.classList.toggle('header-buttons--show-text', showText);
+  if (container && container.classList) {
+    container.classList.toggle('header-buttons--show-text', showText);
   }
-
-  // Apply saved drag order to header button settings cards
-  applyHeaderBtnOrder();
 };
 window.applyHeaderToggleVisibility = applyHeaderToggleVisibility;
 
 /**
- * Reorders header button settings cards based on saved drag order (STAK-320).
- * Reads `headerBtnOrder` from localStorage and appends cards in that order.
+ * Returns the header button config as [{id, label, enabled}] in saved order.
+ * Reads visibility from individual legacy keys; order from `headerBtnOrder`.
+ * @returns {Array<{id:string, label:string, enabled:boolean}>}
  */
-const applyHeaderBtnOrder = () => {
-  const stored = localStorage.getItem('headerBtnOrder');
-  if (!stored) return;
-  let order;
-  try { order = JSON.parse(stored); } catch { return; }
-  if (!Array.isArray(order) || !order.length) return;
-  const grid = document.getElementById('headerBtnSortGrid');
-  if (!grid) return;
-  for (const key of order) {
-    const card = grid.querySelector(`[data-btn-key="${key}"]`);
-    if (card) grid.append(card);
+const getHeaderBtnConfig = () => {
+  const vis = {
+    themeBtn:    localStorage.getItem('headerThemeBtnVisible') !== 'false',
+    currencyBtn: localStorage.getItem('headerCurrencyBtnVisible') !== 'false',
+    marketBtn:   localStorage.getItem(HEADER_MARKET_BTN_KEY) !== 'false',
+    trendBtn:    (() => { const v = localStorage.getItem(HEADER_TREND_BTN_KEY); return v !== null ? v === 'true' : true; })(),
+    syncBtn:     (() => { const v = localStorage.getItem(HEADER_SYNC_BTN_KEY); return v !== null ? v === 'true' : true; })(),
+    vaultBtn:    (() => { const v = localStorage.getItem(HEADER_VAULT_BTN_KEY); return v !== null ? v === 'true' : true; })(),
+    restoreBtn:  localStorage.getItem(HEADER_RESTORE_BTN_KEY) !== 'false',
+  };
+  const labelMap = {
+    themeBtn: 'Theme', currencyBtn: 'Currency', marketBtn: 'Market',
+    trendBtn: 'Trend', syncBtn: 'Spot Sync', vaultBtn: 'Backup', restoreBtn: 'Restore',
+  };
+  const defaultOrder = Object.keys(vis);
+  const savedOrder = (() => {
+    const o = localStorage.getItem('headerBtnOrder');
+    try { const p = o ? JSON.parse(o) : null; return Array.isArray(p) ? p : null; } catch { return null; }
+  })();
+  const order = savedOrder
+    ? [...savedOrder.filter(k => k in vis), ...defaultOrder.filter(k => !savedOrder.includes(k))]
+    : defaultOrder;
+  return order.map(id => ({ id, label: labelMap[id] || id, enabled: vis[id] ?? true }));
+};
+
+/**
+ * Persists header button config: writes visibility to individual keys and
+ * order to `headerBtnOrder`.
+ * @param {Array<{id:string, enabled:boolean}>} cfg
+ */
+const saveHeaderBtnConfig = (cfg) => {
+  const visKeys = {
+    themeBtn:    'headerThemeBtnVisible',
+    currencyBtn: 'headerCurrencyBtnVisible',
+    marketBtn:   HEADER_MARKET_BTN_KEY,
+    trendBtn:    HEADER_TREND_BTN_KEY,
+    syncBtn:     HEADER_SYNC_BTN_KEY,
+    vaultBtn:    HEADER_VAULT_BTN_KEY,
+    restoreBtn:  HEADER_RESTORE_BTN_KEY,
+  };
+  for (const item of cfg) {
+    const key = visKeys[item.id];
+    if (key) {
+      try { localStorage.setItem(key, item.enabled ? 'true' : 'false'); } catch { /* ignore */ }
+    }
+  }
+  try {
+    localStorage.setItem('headerBtnOrder', JSON.stringify(cfg.map(c => c.id)));
+  } catch (err) {
+    console.warn('[HeaderBtnConfig] could not save order:', err);
   }
 };
-window.applyHeaderBtnOrder = applyHeaderBtnOrder;
+
+/** Renders the header button config table in Settings → Appearance (STAK-320). */
+const renderHeaderBtnConfigTable = () => _renderSectionConfigTable({
+  containerId: 'headerBtnConfigTable',
+  getConfig: getHeaderBtnConfig,
+  saveConfig: saveHeaderBtnConfig,
+  onApply: () => applyHeaderToggleVisibility(),
+  onRender: () => renderHeaderBtnConfigTable(),
+});
+window.renderHeaderBtnConfigTable = renderHeaderBtnConfigTable;
 
 /**
  * Syncs layout section config table in Settings and applies layout order.
