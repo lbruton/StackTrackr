@@ -1191,7 +1191,7 @@ const renderCloudBackupList = (provider, backups) => {
     const sizeStr = b.size < 1024 ? b.size + ' B' :
       b.size < 1048576 ? (b.size / 1024).toFixed(0) + ' KB' :
         (b.size / 1048576).toFixed(1) + ' MB';
-    const label = b.name.includes('images') ? 'Image backup' : 'Inventory backup';
+    const label = b.name.includes(VAULT_IMAGE_FILE_SUFFIX) ? 'Image backup' : 'Inventory backup';
     const safeProvider = sanitizeHtml(provider);
     const safeFilename = sanitizeHtml(b.name);
     return '<div class="cloud-backup-row">' +
