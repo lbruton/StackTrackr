@@ -1241,7 +1241,7 @@ const _cloudRestoreWithCachedPw = async (provider, password, fileBytes) => {
 };
 
 const bindCloudStorageListeners = () => {
-  var panel = document.getElementById('settingsPanel_cloud');
+  var panel = document.getElementById('inventoryCloudSection') || document.getElementById('settingsPanel_cloud');
   if (!panel) return;
 
   bindCloudCacheListeners();

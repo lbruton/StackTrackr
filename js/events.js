@@ -733,7 +733,7 @@ const setupHeaderButtonListeners = () => {
           : 'Cloud sync active';
         if (typeof showCloudToast === 'function') showCloudToast(msg, 2500);
       } else {
-        if (typeof showSettingsModal === 'function') showSettingsModal('cloud');
+        if (typeof showSettingsModal === 'function') showSettingsModal('system');
       }
     }, 'Cloud Sync Header Button');
   }
