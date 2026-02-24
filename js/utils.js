@@ -1792,42 +1792,6 @@ const getStorageItemDescription = (key) => {
 };
 
 /**
- * Creates modal HTML for detailed item view
- */
-const createStorageItemModal = (item) => {
-  const modalId = `modal-${item.key}`;
-  
-  return `
-    <div id="${modalId}" class="storage-modal" style="display: none;">
-        <div class="modal-content-large">
-            <div class="modal-header">
-                <h3>${getStorageItemDisplayName(item.key)} Details</h3>
-                <button class="modal-close" onclick="toggleModal('${item.key}')">&times;</button>
-            </div>
-            <div class="modal-body">
-                <div class="modal-stats">
-                    <div class="stat-item">
-                        <span class="stat-label">Size:</span>
-                        <span class="stat-value">${item.size.toFixed(2)} KB</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">Type:</span>
-                        <span class="stat-value">${item.type}</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">Records:</span>
-                        <span class="stat-value">${item.recordCount}</span>
-                    </div>
-                </div>
-                
-                ${generateItemDataTable(item)}
-            </div>
-        </div>
-    </div>
-  `;
-};
-
-/**
  * Generates data table for storage item
  */
 const generateItemDataTable = (item) => {
@@ -3076,6 +3040,23 @@ const setButtonLoading = (btn, isLoading, loadingText = '') => {
     btn.disabled = false;
   }
 };
+
+/**
+ * Returns CSS modifier class for a health-status dot based on timestamp age.
+ * Handles both ISO and "YYYY-MM-DD HH:MM:SS" (local-stripped) formats.
+ * @param {string|null} timestamp
+ * @returns {'--green'|'--orange'|'--red'}
+ */
+function getHealthStatusClass(timestamp) {
+  if (!timestamp) return '--red';
+  const normalized = timestamp.replace(' ', 'T') +
+    (timestamp.includes('Z') || timestamp.includes('+') ? '' : 'Z');
+  const ageMin = Math.floor((Date.now() - new Date(normalized).getTime()) / 60000);
+  if (ageMin < 60) return '--green';
+  if (ageMin < 1440) return '--orange';
+  return '--red';
+}
+window.getHealthStatusClass = getHealthStatusClass;
 
 if (typeof window !== 'undefined') {
   window.getContrastColor = getContrastColor;
