@@ -679,6 +679,9 @@ const IMAGE_MAX_BYTES = 512000;
  */
 const VAULT_FILE_EXTENSION = '.stvault';
 
+/** Filename suffix for the companion image vault file exported alongside a backup */
+const VAULT_IMAGE_FILE_SUFFIX = '-images';
+
 // =============================================================================
 // CLOUD AUTO-SYNC CONSTANTS (STAK-149)
 // =============================================================================

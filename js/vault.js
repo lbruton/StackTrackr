@@ -654,7 +654,7 @@ async function vaultDecryptAndRestoreImages(fileBytes, password) {
 /**
  * Export an encrypted vault backup.
  * @param {string} password
- * @returns {Promise<void>}
+ * @returns {Promise<{imageCount: number}|{imageExportFailed: boolean}>}
  */
 async function exportEncryptedBackup(password) {
   var backend = getCryptoBackend();
@@ -682,6 +682,32 @@ async function exportEncryptedBackup(password) {
   URL.revokeObjectURL(url);
 
   debugLog("Vault: export complete,", fileBytes.length, "bytes");
+
+  // Export companion image vault if user has photos
+  var imageCount = 0;
+  try {
+    var imgVaultData = await collectAndHashImageVault();
+    if (imgVaultData && imgVaultData.imageCount > 0) {
+      var imgBytes = await vaultEncryptImageVault(password, imgVaultData.payload);
+      var imgBlob = new Blob([imgBytes], { type: "application/octet-stream" });
+      var imgUrl = URL.createObjectURL(imgBlob);
+      var imgA = document.createElement("a");
+      imgA.href = imgUrl;
+      imgA.download = "staktrakr_backup_" + timestamp + VAULT_IMAGE_FILE_SUFFIX + VAULT_FILE_EXTENSION;
+      document.body.appendChild(imgA);
+      imgA.click();
+      document.body.removeChild(imgA);
+      URL.revokeObjectURL(imgUrl);
+      imageCount = imgVaultData.imageCount;
+      debugLog("Vault: image vault export complete,", imgBytes.length, "bytes,", imageCount, "images");
+    }
+  } catch (imgErr) {
+    debugLog("[Vault] Image vault export failed:", imgErr.message || String(imgErr), "warn");
+    // Return a flag so the caller can surface a warning
+    return { imageExportFailed: true };
+  }
+
+  return { imageCount: imageCount };
 }
 
 // =============================================================================
@@ -717,6 +743,9 @@ async function importEncryptedBackup(fileBytes, password) {
 
 /** @type {Uint8Array|null} Pending file bytes for import */
 var _vaultPendingFile = null;
+
+/** @type {Uint8Array|null} Companion image vault bytes loaded by the optional image file picker */
+var _vaultPendingImageFile = null;
 
 /** @type {object|null} Cloud context for cloud-export/cloud-import modes */
 var _cloudContext = null;
@@ -781,12 +810,19 @@ function openVaultModal(mode, fileOrOpts) {
 
   modal.setAttribute("data-vault-mode", mode);
 
+  var imageFileRowEl = safeGetElement("vaultImageFileRow");
+  var descExportEl = safeGetElement("vaultDescExport");
+  var descImportEl = safeGetElement("vaultDescImport");
+
   if (effectiveMode === "export") {
     var exportTitle = _cloudContext ? "Cloud Backup — Enter Password" : "Export Encrypted Backup";
     if (titleEl) titleEl.textContent = exportTitle;
     if (confirmRow) confirmRow.style.display = "";
     if (strengthRow) strengthRow.style.display = "";
     if (fileInfoEl) fileInfoEl.style.display = "none";
+    if (imageFileRowEl) imageFileRowEl.style.display = "none";
+    if (descExportEl) descExportEl.style.display = "";
+    if (descImportEl) descImportEl.style.display = "none";
     if (actionBtn) {
       actionBtn.textContent = _cloudContext ? "Encrypt & Upload" : "Export";
       actionBtn.className = "btn";
@@ -809,6 +845,20 @@ function openVaultModal(mode, fileOrOpts) {
         if (sizeSpan) sizeSpan.textContent = formatFileSize(file.size);
       }
     }
+    if (descExportEl) descExportEl.style.display = "none";
+    if (descImportEl) descImportEl.style.display = "";
+    // Show image file picker only for local import (not cloud import)
+    if (imageFileRowEl) {
+      imageFileRowEl.style.display = _cloudContext ? "none" : "";
+    }
+    // Reset image file state when modal opens
+    _vaultPendingImageFile = null;
+    var imgInputEl = safeGetElement("vaultImageImportFile");
+    if (imgInputEl) imgInputEl.value = "";
+    var imgFileInfoEl = safeGetElement("vaultImageFileInfo");
+    var imgPickerRowEl = safeGetElement("vaultImagePickerRow");
+    if (imgFileInfoEl) imgFileInfoEl.style.display = "none";
+    if (imgPickerRowEl) imgPickerRowEl.style.display = "";
     if (actionBtn) {
       actionBtn.textContent = _cloudContext ? "Decrypt & Restore" : "Import";
       actionBtn.className = "btn info";
@@ -832,6 +882,7 @@ function openVaultModal(mode, fileOrOpts) {
  */
 function closeVaultModal() {
   _vaultPendingFile = null;
+  _vaultPendingImageFile = null;
   _cloudContext = null;
   closeModalById("vaultModal");
 }
@@ -896,8 +947,14 @@ async function handleVaultAction() {
         }
         if (typeof showKrakenToastIfFirst === 'function') showKrakenToastIfFirst();
       } else {
-        await exportEncryptedBackup(password);
-        showVaultStatus("success", "Backup exported successfully.");
+        var exportResult = await exportEncryptedBackup(password);
+        if (exportResult && exportResult.imageExportFailed) {
+          showVaultStatus("warning", "Inventory exported. Photo backup failed \u2014 try again or use Settings \u2192 Export Images.");
+        } else if (exportResult && exportResult.imageCount > 0) {
+          showVaultStatus("success", "Backup exported \u2014 2 files downloaded (inventory + " + exportResult.imageCount + " photo" + (exportResult.imageCount === 1 ? "" : "s") + ").");
+        } else {
+          showVaultStatus("success", "Backup exported successfully.");
+        }
       }
     } catch (err) {
       showVaultStatus("error", err.message || "Export failed.");
@@ -928,7 +985,18 @@ async function handleVaultAction() {
       if (isCloudImport && _cloudContext && typeof cloudCachePassword === 'function') {
         cloudCachePassword(_cloudContext.provider, password);
       }
-      showVaultStatus("success", "Data restored successfully. Reloading\u2026");
+      if (_vaultPendingImageFile) {
+        showVaultStatus("info", "Restoring photos\u2026");
+        try {
+          var imgCount = await vaultDecryptAndRestoreImages(_vaultPendingImageFile, password);
+          showVaultStatus("success", "Data and " + imgCount + " photo" + (imgCount === 1 ? "" : "s") + " restored. Reloading\u2026");
+        } catch (imgErr) {
+          // Inventory already restored — show error but still reload to apply it
+          showVaultStatus("error", "Inventory restored, but photo file failed: " + (imgErr.message || "decryption error") + ". Reloading\u2026");
+        }
+      } else {
+        showVaultStatus("success", "Data restored successfully. Reloading\u2026");
+      }
       setTimeout(function () { location.reload(); }, 1200);
     } catch (err) {
       showVaultStatus("error", err.message || "Import failed.");
@@ -1185,3 +1253,4 @@ window.vaultEncryptImageVault = vaultEncryptImageVault;
 window.vaultDecryptAndRestoreImages = vaultDecryptAndRestoreImages;
 window.encryptManifest = encryptManifest;
 window.decryptManifest = decryptManifest;
+window.setVaultPendingImageFile = function (bytes) { _vaultPendingImageFile = bytes; };
