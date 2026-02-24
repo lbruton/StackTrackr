@@ -140,13 +140,8 @@ const switchSettingsSection = (name) => {
       } catch (e) { /* ignore — summary is non-critical */ }
     }
 
-    // Cloud section visibility — show only when at least one provider is connected
-    const cloudSection = document.getElementById('inventoryCloudSection');
-    if (cloudSection && typeof cloudIsConnected === 'function' && typeof CLOUD_PROVIDERS !== 'undefined') {
-      const connected = Object.keys(CLOUD_PROVIDERS).some(p => cloudIsConnected(p));
-      cloudSection.style.display = connected ? 'block' : 'none';
-      if (connected && typeof syncCloudUI === 'function') syncCloudUI();
-    }
+    // Sync cloud UI state (connected/disconnected badges, button states)
+    if (typeof syncCloudUI === 'function') syncCloudUI();
   }
 };
 
@@ -393,7 +388,7 @@ const syncSettingsUI = () => {
   const cloudNavItem = document.querySelector('.settings-nav-item[data-section="cloud"]');
   if (cloudNavItem && typeof cloudIsConnected === 'function' && typeof CLOUD_PROVIDERS !== 'undefined') {
     const connectedCount = Object.keys(CLOUD_PROVIDERS).filter(p => cloudIsConnected(p)).length;
-    cloudNavItem.style.display = connectedCount >= 2 ? '' : 'none';
+    cloudNavItem.style.display = connectedCount >= 1 ? '' : 'none';
   }
 };
 
