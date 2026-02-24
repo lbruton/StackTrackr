@@ -1569,6 +1569,7 @@ input[type="submit"] {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  position: relative;
 }
 
 .header-toggle-btn svg {

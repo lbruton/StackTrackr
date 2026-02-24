@@ -1063,15 +1063,7 @@ const updateMarketHealthDot = () => {
     dot.classList.add('header-cloud-dot--red');
     return;
   }
-  const normalized = ts.trim().replace(' ', 'T') + (ts.includes('Z') || ts.includes('+') ? '' : 'Z');
-  const ageMin = Math.floor((Date.now() - new Date(normalized).getTime()) / 60000);
-  if (ageMin < 60) {
-    dot.classList.add('header-cloud-dot--green');
-  } else if (ageMin < 1440) {
-    dot.classList.add('header-cloud-dot--orange');
-  } else {
-    dot.classList.add('header-cloud-dot--red');
-  }
+  dot.classList.add(`header-cloud-dot${getHealthStatusClass(ts)}`);
 };
 window.updateMarketHealthDot = updateMarketHealthDot;
 
