@@ -2081,6 +2081,12 @@ const setupVaultListeners = () => {
         setVaultPendingImageFile(new Uint8Array(ev.target.result));
       }
     };
+    imgReader.onerror = function () {
+      debugLog("[Vault] Failed to read image file", "error");
+      // Reset picker UI so user can try again
+      if (imgFileInfoEl) imgFileInfoEl.style.display = "none";
+      if (imgPickerRowEl) imgPickerRowEl.style.display = "";
+    };
     imgReader.readAsArrayBuffer(imgFile);
     e.target.value = "";
   }, "Vault image import file input");
