@@ -1625,17 +1625,55 @@ const renderImageStorageStats = async () => {
   }
 
   const usage = await imageCache.getStorageUsage();
-  const totalMB = (usage.totalBytes / 1024 / 1024).toFixed(1);
-  const limitMB = (usage.limitBytes / 1024 / 1024).toFixed(0);
-  const pct = usage.limitBytes > 0 ? ((usage.totalBytes / usage.limitBytes) * 100).toFixed(1) : 0;
+  const limitBytes = usage.limitBytes || 1;
 
-  container.innerHTML = `
-    <span class="stat-item">Total: ${totalMB} / ${limitMB} MB (${pct}%)</span>
-    <span class="stat-item">Numista: ${usage.numistaCount}</span>
-    <span class="stat-item">Pattern: ${usage.patternImageCount || 0}</span>
-    <span class="stat-item">User: ${usage.userImageCount}</span>
-    <span class="stat-item">Metadata: ${usage.metadataCount}</span>
-  `;
+  const fmt = (b) => {
+    if (b >= 1024 * 1024) return (b / 1024 / 1024).toFixed(1) + ' MB';
+    return Math.round(b / 1024) + ' KB';
+  };
+
+  const pct = (b) => Math.min(100, ((b / limitBytes) * 100)).toFixed(1);
+
+  const barColor = (b) => {
+    const p = (b / limitBytes) * 100;
+    if (p > 90) return 'var(--danger, #e74c3c)';
+    if (p > 70) return 'var(--warning, #f39c12)';
+    return 'var(--accent, #3498db)';
+  };
+
+  const userBar = document.getElementById('gaugeUserBar');
+  const userSize = document.getElementById('gaugeUserSize');
+  const numistaBar = document.getElementById('gaugeNumistaBar');
+  const numistaSize = document.getElementById('gaugeNumistaSize');
+  const persistLine = document.getElementById('gaugePersistLine');
+
+  if (userBar) {
+    userBar.style.width = pct(usage.userImageBytes || 0) + '%';
+    userBar.style.background = barColor(usage.userImageBytes || 0);
+  }
+  if (userSize) {
+    userSize.textContent = `${fmt(usage.userImageBytes || 0)} (${usage.userImageCount} items)`;
+  }
+  if (numistaBar) {
+    numistaBar.style.width = pct(usage.numistaBytes || 0) + '%';
+    numistaBar.style.background = barColor(usage.numistaBytes || 0);
+  }
+  if (numistaSize) {
+    numistaSize.textContent = `${fmt(usage.numistaBytes || 0)} (${usage.numistaCount} coins)`;
+  }
+  if (persistLine) {
+    const granted = localStorage.getItem(STORAGE_PERSIST_GRANTED_KEY);
+    if (granted === 'true') {
+      persistLine.textContent = '✅ Persistent storage granted — browser will not auto-clear your images';
+      persistLine.style.color = 'var(--success, #27ae60)';
+    } else if (granted === 'false') {
+      persistLine.textContent = '⚠️ Persistent storage not granted — consider using Full Backup regularly';
+      persistLine.style.color = 'var(--warning, #f39c12)';
+    } else {
+      persistLine.textContent = 'Upload a photo to request persistent storage protection';
+      persistLine.style.color = 'var(--text-secondary)';
+    }
+  }
 };
 
 /**
