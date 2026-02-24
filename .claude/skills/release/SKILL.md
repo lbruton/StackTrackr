@@ -59,63 +59,69 @@ git pull origin dev
 > **Why here and not later?** The worktree branches from current HEAD. If HEAD is stale,
 > every file diff in the PR will be relative to the wrong base. Pull first — worktree second.
 
-### Step 0a: Version Lock Check (REQUIRED FIRST)
+### Step 0a: Version Lock Claim (REQUIRED FIRST)
 
-Before anything else, check whether another agent has claimed the next version:
+The lock file uses a **claims array** — multiple agents can hold concurrent claims on
+different version numbers. Follow these steps in order:
+
+**1. Read and prune expired claims:**
 
 ```bash
 cat devops/version.lock 2>/dev/null || echo "UNLOCKED"
 ```
 
-**If locked and not expired** (`expires_at` is in the future): **STOP.** Report to the user:
-```
-⛔ Version lock held by: [locked_by]
-   Claimed version: [next_version]
-   Expires at: [expires_at]
-   Wait for that agent to finish, or ask the user if the lock is stale.
+Parse the `claims` array (or treat as `[]` if absent/empty). Remove any entries where
+`expires_at` < now. Write the pruned file back if anything was removed.
+
+**2. Compute your version:**
+
+- Find the highest `version` value in the remaining active claims
+- If no active claims exist, read `APP_VERSION` from `js/constants.js`
+- Increment the PATCH component by 1 → this is **your version**
+
+Example: active claims hold `3.32.29` → your version is `3.32.30`.  
+No active claims, `APP_VERSION` is `3.32.28` → your version is `3.32.29`.
+
+**3. Append your claim and write the file:**
+
+```json
+{
+  "claims": [
+    {
+      "version": "3.32.29",
+      "claimed_by": "claude / STAK-XXX brief description",
+      "issue": "STAK-XXX",
+      "claimed_at": "2026-XX-XXTXX:XX:XXZ",
+      "expires_at": "<claimed_at + 30 minutes>"
+    }
+  ]
+}
 ```
 
-**If absent or expired:** claim the lock immediately — before reading any files or computing the version. Compute `next_version` as `APP_VERSION + 1` (read `js/constants.js`), then write:
+Write the full `claims` array (existing active claims + your new entry) to `devops/version.lock`.
 
-```
-locked_by: Claude Code (session [first 6 chars of conversation ID or task hint])
-locked_at: [current ISO timestamp]
-next_version: [X.Y.Z]
-expires_at: [locked_at + 30 minutes]
-```
+Use the `version` from your claim as the target for all subsequent steps — do not re-derive it from `APP_VERSION` later.
+
+**4. Create the worktree + branch immediately:**
 
 ```bash
-# Write the lock
-cat > devops/version.lock << 'EOF'
-locked_by: Claude Code (session ...)
-locked_at: 2026-...
-next_version: 3.XX.YY
-expires_at: 2026-...
-EOF
+git worktree add .claude/worktrees/patch-VERSION -b patch/VERSION
 ```
 
-Use `next_version` as the target for all subsequent version bump steps — do not re-derive it from `APP_VERSION` later.
-
-**Create the worktree + branch immediately after writing the lock:**
-
-```bash
-git worktree add .claude/worktrees/patch-NEXT_VERSION -b patch/NEXT_VERSION
-```
-
-Example: `git worktree add .claude/worktrees/patch-3.32.09 -b patch/3.32.09`
+Example: `git worktree add .claude/worktrees/patch-3.32.29 -b patch/3.32.29`
 
 **All subsequent work (file edits, version bumps, commits) happens inside the worktree directory.**
 If you are running as an interactive Claude Code session, inform the user:
 
 ```
-Worktree created at: .claude/worktrees/patch-NEXT_VERSION/
-Branch: patch/NEXT_VERSION
+Worktree created at: .claude/worktrees/patch-VERSION/
+Branch: patch/VERSION
 
 All work for this release will happen in that worktree.
 After merging to dev, run cleanup:
-  git worktree remove .claude/worktrees/patch-NEXT_VERSION --force
-  git branch -d patch/NEXT_VERSION
-  rm devops/version.lock
+  git worktree remove .claude/worktrees/patch-VERSION --force
+  git branch -d patch/VERSION
+  Remove your claim entry from devops/version.lock (leave other active claims intact)
 ```
 
 See `devops/version-lock-protocol.md` for full protocol details.
@@ -319,8 +325,9 @@ git branch -d patch/VERSION
 # Delete the remote branch
 git push origin --delete patch/VERSION
 
-# Release the version lock
-rm -f devops/version.lock
+# Release the version lock — remove only your own claim entry by version match
+# Leave other active claims intact. If no other claims remain, the file may be deleted.
+# devops/version.lock is gitignored — safe to edit directly.
 ```
 
 > **Note:** This tag lands on `dev`, NOT `main`. A git tag is NOT a GitHub Release — it only appears in the Tags tab. The actual GitHub Release (`gh release create`) is created in Phase 5 after the `dev → main` merge. Do not skip Phase 5.
