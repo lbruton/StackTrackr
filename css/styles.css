@@ -3051,6 +3051,13 @@ input[type="submit"] {
   flex-shrink: 0;
   margin-left: 0.5rem;
 }
+.cloud-backup-type {
+  color: var(--text-secondary);
+  font-size: 0.7rem;
+  flex-shrink: 0;
+  margin-left: 0.5rem;
+  opacity: 0.8;
+}
 .cloud-backup-delete-btn {
   flex-shrink: 0;
   padding: 0.3rem 0.5rem;

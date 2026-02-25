@@ -2157,6 +2157,29 @@ const setupDataManagementListeners = () => {
       if (typeof showAppAlert === "function") await showAppAlert("All data has been erased. Hope your scuba gear is ready!", "Data Management");
     }
   }, "Boating accident button");
+
+  optionalListener(elements.forceRefreshBtn, "click", async () => {
+    if (!navigator.onLine) {
+      if (typeof showAppAlert === "function") await showAppAlert("Force Refresh requires an internet connection. Your cached app is still available.", "Force Refresh");
+      return;
+    }
+    const confirmed = typeof showAppConfirm === "function"
+      ? await showAppConfirm(
+          "This will reload the app and fetch the latest version from the network. Your inventory data will not be affected.",
+          "Force Refresh"
+        )
+      : false;
+    if (!confirmed) return;
+    try {
+      if ("serviceWorker" in navigator) {
+        const regs = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(regs.map((r) => r.unregister()));
+      }
+    } catch (err) {
+      console.warn("[ForceRefresh] SW unregister failed:", err);
+    }
+    window.location.reload();
+  }, "Force refresh button");
 };
 
 /**

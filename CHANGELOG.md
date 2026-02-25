@@ -18,6 +18,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.32.34] - 2026-02-24
+
+### Added — STAK-324: Force Refresh button
+
+- **Added**: Force Refresh button in Settings → System → App Updates — unregisters all service workers and reloads to fetch the latest version from the network; inventory data is not affected (STAK-324)
+
+---
+
+## [3.32.33] - 2026-02-24
+
+### Fixed — STAK-303: 7-day sparklines straight line on fresh load
+
+- **Fixed**: 7-day sparklines now draw a full curved historical line on fresh load by extending the automatic hourly backfill from 24 h to 7 days when no recent hourly data is present — seed bundle LBMA data can lag ~9 days, leaving the 7-day window empty (STAK-303)
+
+---
+
+## [3.32.32] - 2026-02-24
+
+### Added — STAK-316: Cloud backup file type label
+
+- **Added**: File type label ("Inventory backup" / "Image backup") in each cloud backup row, derived from filename — makes it easy to distinguish between `.stvault` inventory and image backup files at a glance (STAK-316)
+
+---
+
+## [3.32.31] - 2026-02-24
+
+### Removed — STAK-321: Dead code cleanup
+
+- **Removed**: `generateItemDataTable()` from `js/utils.js` — zero call sites remaining after PR #490 removed its only caller `createStorageItemModal` (STAK-321)
+
+---
+
 ## [3.32.30] - 2026-02-24
 
 ### Added — STAK-314: Menu Enhancements
