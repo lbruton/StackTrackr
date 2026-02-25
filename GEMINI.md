@@ -293,6 +293,23 @@ Pages are accessible at:
 
 Use `brave-search` or `firecrawl-local` to fetch if needed. Prefer reading the raw URL directly when context permits.
 
+## Documentation Policy
+
+StakTrakrWiki (`lbruton/StakTrakrWiki`) is the single source of truth for all
+architecture, operational runbooks, and pattern documentation. Do not create
+new markdown documentation in this repo (except `docs/plans/` for planning artifacts).
+
+After any commit that changes behavior, update the relevant wiki page via `gh api`.
+Use `claude-context` to search the wiki: index path `/Volumes/DATA/GitHub/StakTrakrWiki`.
+
+```
+mcp__claude-context__search_code
+  query: "your question about how something works"
+  path: /Volumes/DATA/GitHub/StakTrakrWiki
+```
+
+---
+
 ## Cross-Agent Handoff Protocol
 
 StakTrakr uses a multi-agent development workflow. Four agents collaborate:

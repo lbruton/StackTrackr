@@ -1,3 +1,9 @@
+> ⚠️ DEPRECATED — This file is no longer the authoritative source.
+> See StakTrakrWiki: https://github.com/lbruton/StakTrakrWiki
+> Equivalent pages: health.md, fly-container.md, spot-pipeline.md,
+>   retail-pipeline.md, goldback-pipeline.md, architecture-overview.md
+> This file will be deleted after the next wiki audit confirms parity.
+
 # API Infrastructure Runbook
 
 > **Last verified:** 2026-02-23 — GH Pages serves `api` branch (not `main`); `run-goldback.sh` fixed to push `api`
