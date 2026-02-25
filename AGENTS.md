@@ -318,6 +318,23 @@ Architecture, data pipelines, Fly.io, pollers, secrets — see `github.com/lbrut
 - Use `/wiki-audit` for background drift detection and auto-correction
 - Raw pages accessible at `raw.githubusercontent.com/lbruton/StakTrakrWiki/main/<page>.md`
 
+## Documentation Policy
+
+StakTrakrWiki (`lbruton/StakTrakrWiki`) is the single source of truth for all
+architecture, operational runbooks, and pattern documentation. Do not create
+new markdown documentation in this repo (except `docs/plans/` for planning artifacts).
+
+After any commit that changes behavior, update the relevant wiki page via `gh api`.
+Use `claude-context` to search the wiki: index path `/Volumes/DATA/GitHub/StakTrakrWiki`.
+
+```
+mcp__claude-context__search_code
+  query: "your question about how something works"
+  path: /Volumes/DATA/GitHub/StakTrakrWiki
+```
+
+---
+
 ## Commit & Pull Request Guidelines
 
 Commit message styles:

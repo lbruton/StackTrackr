@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.32.37] - 2026-02-25
+
+### Changed — Wiki-First Documentation Policy
+
+- **Changed**: StakTrakrWiki declared as sole source of truth; Notion infrastructure pages deprecated — do not update them
+- **Changed**: `docs/devops/api-infrastructure-runbook.md` deprecated with banner; wiki pages `health.md`, `fly-container.md`, `spot-pipeline.md` are now authoritative
+- **Added**: `wiki-search` skill for indexing and querying StakTrakrWiki via `mcp__claude-context__search_code` with `path: /Volumes/DATA/GitHub/StakTrakrWiki`
+- **Changed**: `mcp__claude-context__search_code` documented in CLAUDE.md for both code and wiki search
+- **Changed**: `finishing-a-development-branch` skill updated with mandatory Wiki Update Gate before PR creation
+- **Changed**: AGENTS.md, GEMINI.md, copilot-instructions.md updated with Documentation Policy section
+
+---
+
 ## [3.32.36] - 2026-02-25
 
 ### Fixed — STAK-309/STAK-311: Numista Data Integrity

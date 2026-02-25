@@ -39,7 +39,7 @@ These rules fire before any implementation, no exceptions:
 ## Code Search — Cheapest First
 
 1. `mcp__code-graph-context__*` — structural: callers, call chains, imports, dead code
-2. `mcp__claude-context__search_code` — semantic: "find code related to X"
+2. `mcp__claude-context__search_code` — semantic: "find code related to X" (path: `/Volumes/DATA/GitHub/StakTrakr`) OR wiki docs (path: `/Volumes/DATA/GitHub/StakTrakrWiki`) — e.g. "find wiki pages about spot pipeline stale thresholds"
 3. `Grep` / `Glob` — literal strings, filenames
 4. Explore agent — only after tiers 1-3 are insufficient
 
@@ -59,7 +59,7 @@ Works on `file://` and HTTP. Runtime artifact: zero build step, zero install. Se
 
 > **Separation of duties:** `StakTrakr` = frontend only. All API backend poller code, Fly.io devops, and GHA data workflows live in `lbruton/StakTrakrApi`. Do not add poller scripts, Fly.io config, or data-pipeline workflows to this repo.
 
-**Runbook:** `docs/devops/api-infrastructure-runbook.md` — full architecture, per-feed diagnosis, and quick-check commands.
+**Runbook:** See StakTrakrWiki for current runbooks: [`health.md`](https://github.com/lbruton/StakTrakrWiki/blob/main/health.md), [`fly-container.md`](https://github.com/lbruton/StakTrakrWiki/blob/main/fly-container.md), [`spot-pipeline.md`](https://github.com/lbruton/StakTrakrWiki/blob/main/spot-pipeline.md). (`docs/devops/api-infrastructure-runbook.md` is deprecated.)
 
 Three feeds served from `lbruton/StakTrakrApi` main branch via GitHub Pages at `api.staktrakr.com`:
 
@@ -168,7 +168,7 @@ All agents run on the same Mac and share the same Docker/IP stack.
 | `memento` | ✅ | ✅ | ✅ | Neo4j knowledge graph (paused for mem0 trial) |
 | `sequential-thinking` | ✅ | ✅ | ✅ | Structured reasoning |
 | `brave-search` | ✅ | ✅ | ✅ | Web search |
-| `claude-context` | ✅ | ✅ | ✅ | Semantic code search (Milvus) |
+| `claude-context` | ✅ | ✅ | ✅ | Semantic code search AND wiki documentation search (index both repos separately) |
 | `context7` | ✅ | ✅ | ✅ | Library documentation |
 | `firecrawl-local` | ✅ | ✅ | ✅ | Self-hosted scraping (port 3002) |
 | `linear` | ✅ | ✅ | ✅ | Issue tracking |
