@@ -1628,7 +1628,7 @@ const renderCustomPatternRules = async () => {
     const info = document.createElement('div');
     info.className = 'pattern-rule-info';
     info.innerHTML = `<div class="rule-pattern">/${sanitizeHtml(rule.pattern)}/i</div>
-      <div class="rule-replacement">${sanitizeHtml(rule.replacement) || '\u2014'}${rule.numistaId ? ' (N#' + sanitizeHtml(String(rule.numistaId)) + ')' : ''}</div>`;
+      <div class="rule-replacement">${sanitizeHtml(rule.replacement) || '\u2014'}</div>`;
     row.appendChild(info);
 
     // Actions
@@ -1663,7 +1663,6 @@ const renderCustomPatternRules = async () => {
       <div class="edit-form-fields">
         <label>Pattern <input type="text" class="edit-pattern" value="${rule.pattern.replace(/"/g, '&quot;')}" /></label>
         <label>Replacement <input type="text" class="edit-replacement" value="${(rule.replacement || '').replace(/"/g, '&quot;')}" /></label>
-        <label>N# <input type="text" class="edit-numista-id" value="${rule.numistaId || ''}" /></label>
         <label>Obverse <input type="file" class="edit-obverse" accept="image/*" /></label>
         <label>Reverse <input type="file" class="edit-reverse" accept="image/*" /></label>
       </div>
@@ -1689,7 +1688,6 @@ const renderCustomPatternRules = async () => {
     editForm.querySelector('.edit-save-btn').addEventListener('click', async () => {
       const newPattern = editForm.querySelector('.edit-pattern').value.trim();
       const newReplacement = editForm.querySelector('.edit-replacement').value.trim();
-      const newNumistaId = editForm.querySelector('.edit-numista-id').value.trim();
 
       if (!newPattern || !newReplacement) {
         appAlert('Pattern and replacement are required.');
@@ -1699,7 +1697,7 @@ const renderCustomPatternRules = async () => {
       const result = NumistaLookup.updateRule(rule.id, {
         pattern: newPattern,
         replacement: newReplacement,
-        numistaId: newNumistaId || null
+        numistaId: null,  // STAK-306: clear any legacy N# — edit form no longer manages it
       });
 
       if (!result.success) {

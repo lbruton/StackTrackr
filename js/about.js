@@ -283,15 +283,11 @@ const setupAckModalEvents = () => {
  */
 const getEmbeddedWhatsNew = () => {
   return `
+    <li><strong>v3.32.36 &ndash; Bug Fixes &mdash; Numista Data Integrity</strong>: Fixed Numista image URLs and metadata re-populating after being cleared in the edit form. Fixed view modal cross-contaminating images between items. Removed on-load CDN backfill that undid deliberate clears. Added Purge Numista URLs button in Settings &rarr; Images (STAK-309, STAK-311, STAK-306, STAK-312).</li>
     <li><strong>v3.32.35 &ndash; Header Buttons Reorder</strong>: Toggle visibility and reorder header buttons in Settings &rarr; Appearance with the new checkbox table. Order applies to the live header and persists across sessions (STAK-320).</li>
     <li><strong>v3.32.34 &ndash; Force Refresh Button</strong>: New button in Settings &rarr; System &rarr; App Updates. Unregisters service workers and reloads to fetch the latest version. Use if the app appears stuck on an old version after an update (STAK-324).</li>
     <li><strong>v3.32.33 &ndash; Bug Fix &mdash; 7-Day Sparklines</strong>: Fresh load sparklines now draw a full 7-day curve. Hourly backfill extends to 7 days on first load to bridge the LBMA seed data lag (STAK-303).</li>
     <li><strong>v3.32.32 &ndash; Cloud Backup Labels</strong>: Backup list now shows &ldquo;Inventory backup&rdquo; or &ldquo;Image backup&rdquo; label on each row so you can tell at a glance which files contain your items vs. your photos (STAK-316).</li>
-    <li><strong>v3.32.31 &ndash; Code Cleanup</strong>: Removed unused internal utility function from utils.js with zero impact on app behavior.</li>
-    <li><strong>v3.32.30 &ndash; Menu Enhancements</strong>: Trend period labels on spot cards update with trend button. Health dots on Sync and Market header buttons reflect data freshness. Vault header button opens backup/restore (enable in Settings). Show Text toggle for icon labels. Uniform column-flex button layout (STAK-314).</li>
-    <li><strong>v3.32.29 &ndash; Parallel Agent Workflow</strong>: Claims-array version lock replaces binary lock &mdash; multiple agents can now hold concurrent patch versions without blocking. Brainstorming skill enforces worktree gate before any implementation starts.</li>
-    <li><strong>v3.32.27 &ndash; Image Storage Expansion</strong>: Dynamic IndexedDB quota via navigator.storage.estimate() replaces hardcoded 50 MB cap. Persistent storage request on first upload prevents silent eviction. Settings &rarr; Images &rarr; Storage shows split progress bars for Your Photos vs. Numista Cache. sharedImageId foundation for future image reuse (STAK-305).</li>
-    <li><strong>v3.32.26 &ndash; Bug Fixes &mdash; Storage Quota, Chrome Init Race, Numista Data Integrity</strong>: Fixed localStorage quota overflow for retailIntradayData on large collections. Fixed Chrome &ldquo;Cannot access inventory before initialization&rdquo; crash on page refresh. Fixed Numista N# and photos repopulating after deletion due to stale serial mapping (STAK-300, STAK-301, STAK-302).</li>
   `;
 };
 

@@ -117,23 +117,10 @@ async function showViewModal(index) {
     }
   }
 
-  // Persist CDN URLs to the inventory item so table/card views can use them
-  // without needing an API call. Runs regardless of whether images were replaced
-  // in the modal — the URLs are valuable for card/table rendering. Never overwrite.
-  if (apiResult && (apiResult.imageUrl || apiResult.reverseImageUrl)) {
-    let urlsDirty = false;
-    if (apiResult.imageUrl && !item.obverseImageUrl) {
-      item.obverseImageUrl = apiResult.imageUrl;
-      urlsDirty = true;
-    }
-    if (apiResult.reverseImageUrl && !item.reverseImageUrl) {
-      item.reverseImageUrl = apiResult.reverseImageUrl;
-      urlsDirty = true;
-    }
-    if (urlsDirty && typeof saveInventory === 'function') {
-      saveInventory();
-    }
-  }
+  // Do NOT persist CDN URLs from the view modal back to the inventory item (STAK-311).
+  // Writing here bypasses the save-path image priority cascade and can stick URLs to
+  // items that the user has deliberately cleared. URLs are written only via the edit
+  // form save path and the bulk-sync operation.
 
   // Load Numista enrichment section
   await loadViewNumistaData(item, body, apiResult);
