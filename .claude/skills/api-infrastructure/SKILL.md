@@ -63,9 +63,9 @@ Turso is a free-tier cloud libSQL database — internal to the retail poller. NO
 | `js/api-health.js` | Stale thresholds, feed URLs, `_normalizeTs` logic |
 | `docs/devops/api-infrastructure-runbook.md` | Architecture, per-feed details, diagnosis commands, Turso section if schema or credentials change |
 | `CLAUDE.md` API Infrastructure table | Feed/threshold/healthy-check summary |
-| Notion — **API Infrastructure** page | Human-readable runbook (sync from markdown) |
-| Notion — **CI/CD & Deployment** page | GHA workflow table if workflows change |
-| Notion — **Fly.io — All-in-One Container** page | If Fly config, crons, or VM spec changes |
+| StakTrakrWiki: `health.md` + `fly-container.md` | Human-readable runbook (architecture, health checks) |
+| StakTrakrWiki: `fly-container.md` (GHA section) | GHA workflow table if workflows change |
+| StakTrakrWiki: `fly-container.md` | If Fly config, crons, or VM spec changes |
 | `lbruton/StakTrakrApi` `README.md` | If endpoints, branches, or directory structure changes |
 
 ---
@@ -117,15 +117,6 @@ EOF
 | Firecrawl cloud HTTP 402 — credits exhausted | STAK-268 | Open |
 | Goldback stale ~39h | STAK-269 | Open |
 
----
 
-## Notion Pages (Infrastructure WIKI)
-
-All under **StakTrakr — Infrastructure** (parent page ID `31090430-390b-81fe-bba2-e6e0d28f181c`):
-
-| Page | Notion ID | Keep in sync with |
-|------|-----------|-------------------|
-| API Infrastructure | `31090430-390b-811b-821b-cd6388650fa5` | `docs/devops/api-infrastructure-runbook.md` |
-| Fly.io — All-in-One Container | `31090430-390b-81d2-abb4-c471d25120cf` | `devops/retail-poller/fly.toml` + `Dockerfile` |
-| CI/CD & Deployment | `31090430-390b-8122-9e0f-c2f1dd1891e2` | `.github/workflows/` |
-| Secrets & Keys | `31090430-390b-8116-8384-ccd867bf54a2` | GHA secrets + Infisical |
+> **Note:** Notion infrastructure pages are deprecated. Do not update them. StakTrakrWiki is the only target.
+> Deprecated Notion pages: API Infrastructure, Fly.io — All-in-One Container, CI/CD & Deployment, Secrets & Keys.

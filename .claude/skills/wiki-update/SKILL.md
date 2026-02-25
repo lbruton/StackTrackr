@@ -84,6 +84,26 @@ Output when done:
 Wiki updated: [list of pages pushed]
 ```
 
+## Infrastructure Page Mapping (informational)
+
+Infrastructure pages are owned by StakTrakrApi Claude. StakTrakr Claude should **flag** when they may be stale — do not rewrite them directly.
+
+| Changed file (StakTrakr) | May affect wiki page |
+|----------------------------------|---------------------------|
+| `js/api.js`, `js/api-health.js` | `api-consumption.md` |
+| `docs/devops/` | `health.md` (deprecated local runbook — wiki is authoritative) |
+| `.claude/skills/api-infrastructure/` | `architecture-overview.md` |
+| `CLAUDE.md` (API section) | `health.md`, `fly-container.md` |
+
+When any of these patterns are detected in `CHANGED`, add a note to the PR:
+```
+⚠️ API-related change — verify StakTrakrWiki infrastructure pages are current.
+Check: health.md, fly-container.md, spot-pipeline.md as applicable.
+StakTrakrApi Claude owns these pages — flag, don't rewrite.
+```
+
+---
+
 ## Integration point in release skill
 
 This skill is invoked after the version bump commit in Phase 3 of `/release patch`:
