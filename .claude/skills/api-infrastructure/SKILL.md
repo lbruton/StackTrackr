@@ -50,7 +50,7 @@ Turso is a free-tier cloud libSQL database — internal to the retail poller. NO
 - **Credentials:** `TURSO_DATABASE_URL` + `TURSO_AUTH_TOKEN` (Infisical)
 - **Table:** `price_snapshots` — one row per scrape attempt, per vendor, per 15-min window
 - **Used by:** `price-extract.js`, `extract-vision.js`, `api-export.js` (retail-poller only)
-- **NOT used by:** spot-poller (Python GHA), goldback-scraper
+- **NOT used by:** spot-poller (Python, writes to files directly — see STAK-331)
 - **Free tier:** zero cost, zero ops — no action needed
 
 ---
@@ -60,12 +60,20 @@ Turso is a free-tier cloud libSQL database — internal to the retail poller. NO
 | Location | What to update |
 |----------|---------------|
 | `js/api-health.js` | Stale thresholds, feed URLs, `_normalizeTs` logic |
-| `docs/devops/api-infrastructure-runbook.md` | Architecture, per-feed details, diagnosis commands, Turso section if schema or credentials change |
 | `CLAUDE.md` API Infrastructure table | Feed/threshold/healthy-check summary |
-| StakTrakrWiki: `health.md` + `fly-container.md` | Human-readable runbook (architecture, health checks) |
-| StakTrakrWiki: `fly-container.md` (GHA section) | GHA workflow table if workflows change |
-| StakTrakrWiki: `fly-container.md` | If Fly config, crons, or VM spec changes |
+| StakTrakrWiki (single source of truth): | |
+| — `health.md` | Health checks, stale thresholds, diagnosis commands |
+| — `fly-container.md` | Fly config, crons, VM spec, GHA workflow table |
+| — `rest-api-reference.md` | Endpoint map, schemas, confidence tiers |
+| — `turso-schema.md` | Database tables, indexes, key queries |
+| — `cron-schedule.md` | Full cron timeline |
+| — `spot-pipeline.md` | Spot poller architecture |
+| — `goldback-pipeline.md` | Per-state slugs, denomination generation |
+| — `retail-pipeline.md` | Dual-poller, T1–T5 resilience |
 | `lbruton/StakTrakrApi` `README.md` | If endpoints, branches, or directory structure changes |
+
+> **Lookup:** Pull wiki → index → search via `mcp__claude-context__search_code` with `path: /Volumes/DATA/GitHub/StakTrakrWiki`.
+> **Deprecated:** `docs/devops/api-infrastructure-runbook.md` — do not update, will be deleted.
 
 ---
 
@@ -109,13 +117,12 @@ EOF
 
 ---
 
-## Active Issues (2026-02-22)
+## Deprecated Sources — Do NOT Update
 
-| Issue | Linear | Status |
-|-------|--------|--------|
-| Firecrawl cloud HTTP 402 — credits exhausted | STAK-268 | Open |
-| Goldback stale ~39h | STAK-269 | Open |
+| Source | Status |
+|--------|--------|
+| Notion infrastructure pages | Deprecated 2026-02-25 — do not update |
+| `docs/devops/api-infrastructure-runbook.md` | Deprecated — will be deleted after next wiki audit |
 
-
-> **Note:** Notion infrastructure pages are deprecated. Do not update them. StakTrakrWiki is the only target.
-> Deprecated Notion pages: API Infrastructure, Fly.io — All-in-One Container, CI/CD & Deployment, Secrets & Keys.
+**StakTrakrWiki is the single source of truth.** All documentation changes go there.
+See `/wiki-search` for how to pull, index, and query the wiki.
