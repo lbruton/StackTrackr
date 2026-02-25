@@ -835,6 +835,7 @@ const ALLOWED_STORAGE_KEYS = [
   "cloud_vault_password",                      // string: user vault password stored for persistent unlock
   STORAGE_PERSIST_GRANTED_KEY,                         // boolean string: "true"/"false" — storage persistence grant flag
   "headerBtnOrder",                                    // JSON array: header button card order (STAK-320)
+  "headerAboutBtnVisible",                             // boolean string: "true"/"false" — about button visibility (STAK-320)
 ];
 
 // =============================================================================

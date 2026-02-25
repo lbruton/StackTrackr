@@ -1139,6 +1139,8 @@ const applyHeaderToggleVisibility = () => {
     syncBtn:     'headerSyncBtn',
     vaultBtn:    'headerVaultBtn',
     restoreBtn:  'headerRestoreBtn',
+    aboutBtn:    'aboutBtn',
+    settingsBtn: 'settingsBtn',
   };
 
   // Apply visibility
@@ -1149,7 +1151,7 @@ const applyHeaderToggleVisibility = () => {
     if (btn) btn.style.display = enabled ? '' : 'none';
   }
 
-  // Apply order to live header container
+  // Apply order to live header container; settingsBtn is last (it's last in config)
   const container = safeGetElement('headerBtnContainer');
   if (container) {
     for (const { id } of config) {
@@ -1158,6 +1160,9 @@ const applyHeaderToggleVisibility = () => {
       const btn = container.querySelector(`#${btnId}`);
       if (btn) container.append(btn);
     }
+    // Cloud sync wrapper is position-managed by the cloud feature; keep it first
+    const cloudWrapper = container.querySelector('#headerCloudSyncWrapper');
+    if (cloudWrapper) container.prepend(cloudWrapper);
   }
 
   // Show text toggle
@@ -1182,10 +1187,12 @@ const getHeaderBtnConfig = () => {
     syncBtn:     (() => { const v = localStorage.getItem(HEADER_SYNC_BTN_KEY); return v !== null ? v === 'true' : true; })(),
     vaultBtn:    (() => { const v = localStorage.getItem(HEADER_VAULT_BTN_KEY); return v !== null ? v === 'true' : true; })(),
     restoreBtn:  localStorage.getItem(HEADER_RESTORE_BTN_KEY) !== 'false',
+    aboutBtn:    localStorage.getItem('headerAboutBtnVisible') !== 'false',
   };
   const labelMap = {
     themeBtn: 'Theme', currencyBtn: 'Currency', marketBtn: 'Market',
-    trendBtn: 'Trend', syncBtn: 'Spot Sync', vaultBtn: 'Backup', restoreBtn: 'Restore',
+    trendBtn: 'Trend', syncBtn: 'Spot Sync', vaultBtn: 'Backup',
+    restoreBtn: 'Restore', aboutBtn: 'About',
   };
   const defaultOrder = Object.keys(vis);
   const savedOrder = (() => {
@@ -1195,7 +1202,10 @@ const getHeaderBtnConfig = () => {
   const order = savedOrder
     ? [...savedOrder.filter(k => k in vis), ...defaultOrder.filter(k => !savedOrder.includes(k))]
     : defaultOrder;
-  return order.map(id => ({ id, label: labelMap[id] || id, enabled: vis[id] ?? true }));
+  const cfg = order.map(id => ({ id, label: labelMap[id] || id, enabled: vis[id] ?? true }));
+  // Settings is always last and always visible (locked — cannot be hidden or reordered)
+  cfg.push({ id: 'settingsBtn', label: 'Settings', enabled: true, locked: true });
+  return cfg;
 };
 
 /**
@@ -1212,15 +1222,20 @@ const saveHeaderBtnConfig = (cfg) => {
     syncBtn:     HEADER_SYNC_BTN_KEY,
     vaultBtn:    HEADER_VAULT_BTN_KEY,
     restoreBtn:  HEADER_RESTORE_BTN_KEY,
+    aboutBtn:    'headerAboutBtnVisible',
   };
   for (const item of cfg) {
+    if (item.locked) continue;
     const key = visKeys[item.id];
     if (key) {
       try { localStorage.setItem(key, item.enabled ? 'true' : 'false'); } catch { /* ignore */ }
     }
   }
   try {
-    localStorage.setItem('headerBtnOrder', JSON.stringify(cfg.map(c => c.id)));
+    // Exclude locked items from saved order (settingsBtn is always re-appended by getHeaderBtnConfig)
+    localStorage.setItem('headerBtnOrder', JSON.stringify(
+      cfg.filter(c => !c.locked).map(c => c.id)
+    ));
   } catch (err) {
     console.warn('[HeaderBtnConfig] could not save order:', err);
   }
@@ -1278,6 +1293,9 @@ const _renderSectionConfigTable = (opts) => {
   table.className = 'chip-grouping-table';
   const tbody = document.createElement('tbody');
 
+  // Count sortable (non-locked) items to bound arrow movement
+  const sortableCount = config.filter(c => !c.locked).length;
+
   config.forEach((section, idx) => {
     const tr = document.createElement('tr');
     tr.dataset.sectionId = section.id;
@@ -1289,47 +1307,53 @@ const _renderSectionConfigTable = (opts) => {
     cb.type = 'checkbox';
     cb.checked = section.enabled;
     cb.className = 'inline-chip-toggle';
-    cb.title = 'Toggle ' + section.label;
-    cb.addEventListener('change', () => {
-      const cfg = opts.getConfig();
-      const item = cfg.at(idx);
-      if (item) {
-        item.enabled = cb.checked;
-        opts.saveConfig(cfg);
-        if (opts.onApply) opts.onApply();
-      }
-    });
+    cb.title = section.locked ? section.label + ' (always visible)' : 'Toggle ' + section.label;
+    cb.disabled = !!section.locked;
+    if (!section.locked) {
+      cb.addEventListener('change', () => {
+        const cfg = opts.getConfig();
+        const item = cfg.at(idx);
+        if (item) {
+          item.enabled = cb.checked;
+          opts.saveConfig(cfg);
+          if (opts.onApply) opts.onApply();
+        }
+      });
+    }
     tdCheck.appendChild(cb);
 
     // Label cell
     const tdLabel = document.createElement('td');
     tdLabel.textContent = section.label;
 
-    // Arrow buttons cell
+    // Arrow buttons cell (locked items get none)
     const tdMove = document.createElement('td');
     tdMove.style.cssText = 'width:3.5rem;text-align:right;white-space:nowrap';
 
-    const makeBtn = (dir, disabled) => {
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'inline-chip-move';
-      btn.textContent = dir === 'up' ? '\u2191' : '\u2193';
-      btn.title = 'Move ' + dir;
-      btn.disabled = disabled;
-      btn.addEventListener('click', () => {
-        const cfg = opts.getConfig();
-        const j = dir === 'up' ? idx - 1 : idx + 1;
-        if (j < 0 || j >= cfg.length) return;
-        const moved = cfg.splice(idx, 1).at(0);
-        cfg.splice(j, 0, moved);
-        opts.saveConfig(cfg);
-        (opts.onRender || (() => _renderSectionConfigTable(opts)))();
-        if (opts.onApply) opts.onApply();
-      });
-      return btn;
-    };
-    tdMove.appendChild(makeBtn('up', idx === 0));
-    tdMove.appendChild(makeBtn('down', idx === config.length - 1));
+    if (!section.locked) {
+      const makeBtn = (dir, disabled) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'inline-chip-move';
+        btn.textContent = dir === 'up' ? '\u2191' : '\u2193';
+        btn.title = 'Move ' + dir;
+        btn.disabled = disabled;
+        btn.addEventListener('click', () => {
+          const cfg = opts.getConfig();
+          const maxSortable = cfg.filter(c => !c.locked).length;
+          const j = dir === 'up' ? idx - 1 : idx + 1;
+          if (j < 0 || j >= maxSortable) return;
+          const moved = cfg.splice(idx, 1).at(0);
+          cfg.splice(j, 0, moved);
+          opts.saveConfig(cfg);
+          (opts.onRender || (() => _renderSectionConfigTable(opts)))();
+          if (opts.onApply) opts.onApply();
+        });
+        return btn;
+      };
+      tdMove.appendChild(makeBtn('up', idx === 0));
+      tdMove.appendChild(makeBtn('down', idx >= sortableCount - 1));
+    }
 
     tr.append(tdCheck, tdLabel, tdMove);
     tbody.appendChild(tr);
