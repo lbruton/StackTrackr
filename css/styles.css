@@ -3427,6 +3427,7 @@ input[type="submit"] {
   justify-content: space-between;
 }
 
+
 /* Image actions row — flex wrap of action buttons */
 .image-actions-row {
   display: flex;

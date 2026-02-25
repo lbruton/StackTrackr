@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.32.35] - 2026-02-24
+
+### Added — STAK-320: Header Buttons Reorder & Apply to Header
+
+- **Added**: Checkbox + arrow reorder table for header buttons in Settings → Appearance → Header Buttons; toggle visibility and reorder with ↑/↓ arrows (STAK-320)
+- **Added**: Order persists to `headerBtnOrder` in localStorage and is applied both to the settings table and the live app header (STAK-320)
+
+---
+
 ## [3.32.34] - 2026-02-24
 
 ### Added — STAK-324: Force Refresh button

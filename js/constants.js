@@ -290,7 +290,7 @@ const CERT_LOOKUP_URLS = {
  * Updated: 2026-02-12 - STACK-38/STACK-31: Responsive card view + mobile layout
  */
 
-const APP_VERSION = "3.32.34";
+const APP_VERSION = "3.32.35";
 
 /**
  * Numista metadata cache TTL: 30 days in milliseconds.
@@ -834,6 +834,8 @@ const ALLOWED_STORAGE_KEYS = [
   "cloud_dropbox_account_id",                  // string: Dropbox account_id for Simple mode key derivation
   "cloud_vault_password",                      // string: user vault password stored for persistent unlock
   STORAGE_PERSIST_GRANTED_KEY,                         // boolean string: "true"/"false" — storage persistence grant flag
+  "headerBtnOrder",                                    // JSON array: header button card order (STAK-320)
+  "headerAboutBtnVisible",                             // boolean string: "true"/"false" — about button visibility (STAK-320)
 ];
 
 // =============================================================================

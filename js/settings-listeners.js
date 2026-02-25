@@ -92,60 +92,14 @@ const bindAppearanceAndHeaderListeners = () => {
     });
   }
 
-  wireStorageToggle('settingsHeaderThemeBtn', 'headerThemeBtnVisible', {
-    defaultVal: false,
-    onApply: () => applyHeaderToggleVisibility(),
-  });
-  wireStorageToggle('settingsHeaderThemeBtn_hdr', 'headerThemeBtnVisible', {
-    defaultVal: false,
-    onApply: () => applyHeaderToggleVisibility(),
-  });
-
+  // settingsHeaderCurrencyBtn still exists in the Currency settings panel
   wireStorageToggle('settingsHeaderCurrencyBtn', 'headerCurrencyBtnVisible', {
     defaultVal: false,
     onApply: () => applyHeaderToggleVisibility(),
   });
-  wireStorageToggle('settingsHeaderCurrencyBtn_hdr', 'headerCurrencyBtnVisible', {
-    defaultVal: false,
-    onApply: () => applyHeaderToggleVisibility(),
-  });
 
-  wireStorageToggle('settingsHeaderTrendBtn', HEADER_TREND_BTN_KEY, {
-    defaultVal: true,
-    onApply: () => applyHeaderToggleVisibility(),
-  });
-  wireStorageToggle('settingsHeaderTrendBtn_hdr', HEADER_TREND_BTN_KEY, {
-    defaultVal: true,
-    onApply: () => applyHeaderToggleVisibility(),
-  });
-
-  wireStorageToggle('settingsHeaderSyncBtn', HEADER_SYNC_BTN_KEY, {
-    defaultVal: true,
-    onApply: () => applyHeaderToggleVisibility(),
-  });
-  wireStorageToggle('settingsHeaderSyncBtn_hdr', HEADER_SYNC_BTN_KEY, {
-    defaultVal: true,
-    onApply: () => applyHeaderToggleVisibility(),
-  });
-
-  wireStorageToggle('settingsHeaderMarketBtn', HEADER_MARKET_BTN_KEY, {
-    defaultVal: true,
-    onApply: () => applyHeaderToggleVisibility(),
-  });
-  wireStorageToggle('settingsHeaderMarketBtn_hdr', HEADER_MARKET_BTN_KEY, {
-    defaultVal: true,
-    onApply: () => applyHeaderToggleVisibility(),
-  });
-  wireStorageToggle('settingsHeaderVaultBtn_hdr', HEADER_VAULT_BTN_KEY, {
-    defaultVal: true,
-    onApply: () => applyHeaderToggleVisibility(),
-  });
-  wireStorageToggle('settingsHeaderRestoreBtn_hdr', HEADER_RESTORE_BTN_KEY, {
-    defaultVal: true,
-    onApply: () => applyHeaderToggleVisibility(),
-  });
   wireStorageToggle('settingsHeaderShowText_hdr', HEADER_BTN_SHOW_TEXT_KEY, {
-    defaultVal: false,
+    defaultVal: true,
     onApply: () => applyHeaderToggleVisibility(),
   });
 
@@ -232,6 +186,7 @@ const bindAppearanceAndHeaderListeners = () => {
       if (typeof updateAllSparklines === 'function') updateAllSparklines();
     });
   }
+
 };
 
 /**
