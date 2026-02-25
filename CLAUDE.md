@@ -75,6 +75,8 @@ Three feeds served from `lbruton/StakTrakrApi` main branch via GitHub Pages at `
 
 **No active failures as of 2026-02-22.** `sync-api-repos.yml` and `retail-price-poller.yml` deleted — both are gone.
 
+**Home poller SSH:** `ssh -T homepoller '<cmd>'` (LAN) or `ssh -T homepoller-ts '<cmd>'` (Tailscale). Full reference in `homepoller-ssh` skill. User `stakpoller` has NOPASSWD sudo.
+
 **Quick health check:**
 ```bash
 # One-liner — paste into terminal
@@ -143,7 +145,7 @@ For CSS/HTML guidance, use `frontend-design` plugin or `ui-design` project skill
 | `GEMINI.md` | Gemini CLI | Yes |
 | `.github/copilot-instructions.md` | Copilot PR reviews | Yes |
 
-**Skills**: Official `superpowers@claude-plugins-official` plugin (auto-updates) + user overrides in `~/.claude/skills/` (25 skills). Project skills in `.claude/skills/`: `coding-standards`, `markdown-standards`, `release`, `seed-sync`, `ui-design`, `ui-mockup`, `bb-test`, `smoke-test`, `browserbase-test-maintenance`, `api-infrastructure`, `finishing-a-development-branch` (project override — enforces `patch→dev` workflow, never `patch→main`).
+**Skills**: Official `superpowers@claude-plugins-official` plugin (auto-updates) + user overrides in `~/.claude/skills/` (25 skills). Project skills in `.claude/skills/`: `coding-standards`, `markdown-standards`, `release`, `seed-sync`, `ui-design`, `ui-mockup`, `bb-test`, `smoke-test`, `browserbase-test-maintenance`, `api-infrastructure`, `homepoller-ssh`, `finishing-a-development-branch` (project override — enforces `patch→dev` workflow, never `patch→main`).
 
 Use `/sync-instructions` after significant codebase changes.
 
