@@ -502,6 +502,28 @@ const bindImageSyncListeners = () => {
     });
   }
 
+  const purgeNumistaUrlsBtn = getExistingElement('purgeNumistaUrlsBtn');
+  if (purgeNumistaUrlsBtn) {
+    purgeNumistaUrlsBtn.addEventListener('click', async () => {
+      const confirmed = await appConfirm(
+        'Remove all Numista CDN image URLs from inventory items?\nUser-uploaded images and pattern rule images are NOT affected.',
+        'Purge Numista URLs',
+      );
+      if (!confirmed) return;
+      let purged = 0;
+      for (const item of inventory) {
+        if (item.obverseImageUrl || item.reverseImageUrl) {
+          item.obverseImageUrl = '';
+          item.reverseImageUrl = '';
+          purged++;
+        }
+      }
+      if (purged > 0 && typeof saveInventory === 'function') saveInventory();
+      if (typeof renderTable === 'function') renderTable();
+      appAlert(`Purged Numista CDN URLs from ${purged} item(s).`);
+    });
+  }
+
   const syncImageUrlsBtn = getExistingElement('syncImageUrlsBtn');
   if (syncImageUrlsBtn) {
     syncImageUrlsBtn.addEventListener('click', async () => {

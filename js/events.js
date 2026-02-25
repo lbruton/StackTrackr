@@ -975,7 +975,8 @@ const parseItemFormFields = (isEditing, existingItem) => {
     obverseImageUrl: elements.itemObverseImageUrl?.value?.trim() ?? '',
     reverseImageUrl: elements.itemReverseImageUrl?.value?.trim() ?? '',
     // Numista metadata — stored per-item, seeded by API, user edits override
-    numistaData: parseNumistaDataFields(isEditing, existingItem),
+    // Pass catalog so parseNumistaDataFields can wipe metadata when N# is cleared (STAK-309)
+    numistaData: parseNumistaDataFields(isEditing, existingItem, elements.itemCatalog ? elements.itemCatalog.value.trim() : ''),
   };
 };
 
@@ -986,7 +987,10 @@ const parseItemFormFields = (isEditing, existingItem) => {
  * @param {Object} existingItem
  * @returns {Object} Numista data fields with source tracking
  */
-const parseNumistaDataFields = (isEditing, existingItem) => {
+const parseNumistaDataFields = (isEditing, existingItem, catalog = '') => {
+  // When N# is being cleared while editing, wipe all Numista metadata (STAK-309)
+  if (isEditing && !catalog) return {};
+
   const get = (id) => (document.getElementById(id)?.value?.trim() ?? '');
   const prev = (isEditing && existingItem?.numistaData) ? existingItem.numistaData : {};
 
@@ -1064,7 +1068,7 @@ const commitItemToInventory = (f, isEditing, editIdx) => {
     const serial = oldItem.serial;
 
     // STAK-244: Clear stale Numista image cache when N# changes
-    const numistaIdChanged = oldItem.numistaId && f.catalog && oldItem.numistaId !== f.catalog;
+    const numistaIdChanged = oldItem.numistaId && oldItem.numistaId !== f.catalog;
     if (numistaIdChanged && window.imageCache?.isAvailable()) {
       debugLog(`commitItemToInventory: N# changed from ${oldItem.numistaId} to ${f.catalog}, clearing old cache`);
       imageCache.deleteImages(oldItem.numistaId).catch(err => debugLog(`commitItemToInventory: Failed to clear old Numista images: ${err.message}`, 'warn'));
@@ -1077,8 +1081,8 @@ const commitItemToInventory = (f, isEditing, editIdx) => {
       numistaId: f.catalog,
       numistaData: f.numistaData,
       currency: f.currency,
-      obverseImageUrl: f.obverseImageUrl || window.selectedNumistaResult?.imageUrl || oldItem.obverseImageUrl || '',
-      reverseImageUrl: f.reverseImageUrl || window.selectedNumistaResult?.reverseImageUrl || oldItem.reverseImageUrl || '',
+      obverseImageUrl: f.obverseImageUrl || window.selectedNumistaResult?.imageUrl || '',
+      reverseImageUrl: f.reverseImageUrl || window.selectedNumistaResult?.reverseImageUrl || '',
       obverseSharedImageId: oldItem.obverseSharedImageId || null,
       reverseSharedImageId: oldItem.reverseSharedImageId || null,
     };
