@@ -5,7 +5,7 @@
  * Returns the active card style from localStorage.
  * @returns {'A'|'B'|'C'|'D'}
  */
-const getCardStyle = () => localStorage.getItem(CARD_STYLE_KEY) || 'A';
+const getCardStyle = () => localStorage.getItem(CARD_STYLE_KEY) || 'D';
 
 /**
  * Returns true when the card view (A/B/C) should be rendered instead of the table.
@@ -989,13 +989,6 @@ async function _loadCardImage(img) {
         // STAK-332: Pass ignorePatternImages flag to resolveImageForItem
         if (invItem.ignorePatternImages) item.ignorePatternImages = true;
       }
-    }
-
-    // Numista override: CDN URLs (Numista source) win over user/pattern blobs
-    const numistaOverride = localStorage.getItem('numistaOverridePersonal') === 'true';
-    if (numistaOverride && cdnUrl) {
-      _showCardImage(img, cdnUrl);
-      return;
     }
 
     // Try IDB resolution cascade (user → pattern → numista cache)

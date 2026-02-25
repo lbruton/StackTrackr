@@ -251,16 +251,8 @@ const createBackupZip = async () => {
       zip.file('sample_data.json', JSON.stringify(sampleData, null, 2));
     }
 
-    // 9. Add cached coin images (STACK-88)
+    // 9. Add cached coin metadata (STACK-88)
     if (window.imageCache?.isAvailable()) {
-      const allImages = await imageCache.exportAllImages();
-      if (allImages.length > 0) {
-        const imgFolder = zip.folder('images');
-        for (const rec of allImages) {
-          if (rec.obverse) imgFolder.file(`${rec.catalogId}_obverse.jpg`, rec.obverse);
-          if (rec.reverse) imgFolder.file(`${rec.catalogId}_reverse.jpg`, rec.reverse);
-        }
-      }
       const allMeta = await imageCache.exportAllMetadata();
       if (allMeta.length > 0) {
         zip.file('image_metadata.json', JSON.stringify({
@@ -513,27 +505,8 @@ const restoreBackupZip = async (file) => {
       }
 
       if (imgEntries.length > 0) {
-        await imageCache.clearAll();
-        const imageMap = new Map();
-
-        for (const { path, file } of imgEntries) {
-          const m = path.match(/^(.+)_(obverse|reverse)\.jpg$/);
-          if (!m) continue;
-          if (!imageMap.has(m[1])) imageMap.set(m[1], {});
-          imageMap.get(m[1])[m[2]] = await file.async('blob');
-        }
-
-        for (const [catalogId, sides] of imageMap) {
-          await imageCache.importImageRecord({
-            catalogId,
-            obverse: sides.obverse || null,
-            reverse: sides.reverse || null,
-            width: 400,
-            height: 400,
-            cachedAt: Date.now(),
-            size: (sides.obverse?.size || 0) + (sides.reverse?.size || 0)
-          });
-        }
+        // Legacy coinImages from old backups are skipped — no longer importing to dead store
+        debugLog('ZIP restore: skipping legacy coinImages folder (store deprecated)');
       }
 
       // Restore metadata
@@ -1449,14 +1422,6 @@ async function _loadThumbImage(img) {
         const urlKey = side === 'reverse' ? 'reverseImageUrl' : 'obverseImageUrl';
         cdnUrl = (invItem[urlKey] && /^https?:\/\/.+\..+/i.test(invItem[urlKey])) ? invItem[urlKey] : '';
       }
-    }
-
-    // Numista override: CDN URLs (Numista source) win over user/pattern blobs
-    const numistaOverride = localStorage.getItem('numistaOverridePersonal') === 'true';
-    if (numistaOverride && cdnUrl) {
-      img.src = cdnUrl;
-      img.style.visibility = '';
-      return;
     }
 
     const blobUrl = await imageCache.resolveImageUrlForItem(item, side);

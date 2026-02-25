@@ -91,11 +91,8 @@ async function showViewModal(index) {
     apiResult = await _fetchNumistaResult(catalogId);
   }
 
-  // Fill images from API result when:
-  // 1. No images were loaded at all, OR
-  // 2. Override is ON and current images are from user uploads or pattern rules (Numista wins)
-  const numistaOverride = localStorage.getItem('numistaOverridePersonal') === 'true';
-  const shouldReplaceWithApi = !imagesLoaded || (numistaOverride && (imageSource === 'pattern' || imageSource === 'user'));
+  // Fill images from API result when no images were loaded at all
+  const shouldReplaceWithApi = !imagesLoaded;
 
   if (shouldReplaceWithApi && apiResult && (apiResult.imageUrl || apiResult.reverseImageUrl)) {
     const section = body.querySelector('#viewImageSection');
@@ -103,17 +100,6 @@ async function showViewModal(index) {
       const slots = section.querySelectorAll('.view-image-slot');
       if (apiResult.imageUrl) _setSlotImage(slots[0], apiResult.imageUrl);
       if (apiResult.reverseImageUrl) _setSlotImage(slots[1], apiResult.reverseImageUrl);
-
-      // Cache for next time (future resolveImageForItem will find it)
-      if (window.imageCache?.isAvailable()) {
-        imageCache.cacheImages(catalogId, apiResult.imageUrl || '', apiResult.reverseImageUrl || '').catch(() => {});
-      }
-    }
-
-  } else if (!imagesLoaded && apiResult) {
-    // Fallback: cache even if no image URLs (metadata-only result)
-    if (window.imageCache?.isAvailable() && catalogId) {
-      imageCache.cacheImages(catalogId, apiResult.imageUrl || '', apiResult.reverseImageUrl || '').catch(() => {});
     }
   }
 
@@ -698,25 +684,13 @@ async function loadViewImages(item, container) {
     return { loaded: validObv || validRev, source: 'cdn' };
   }
 
-  // Use the resolution cascade (user → pattern → numista)
-  const resolved = await imageCache.resolveImageForItem(item);
-  if (resolved) {
-    let obvUrl, revUrl;
-    if (resolved.source === 'user') {
-      obvUrl = await imageCache.getUserImageUrl(resolved.catalogId, 'obverse');
-      revUrl = await imageCache.getUserImageUrl(resolved.catalogId, 'reverse');
-    } else if (resolved.source === 'pattern') {
-      obvUrl = await imageCache.getPatternImageUrl(resolved.catalogId, 'obverse');
-      revUrl = await imageCache.getPatternImageUrl(resolved.catalogId, 'reverse');
-    } else {
-      obvUrl = await imageCache.getImageUrl(resolved.catalogId, 'obverse');
-      revUrl = await imageCache.getImageUrl(resolved.catalogId, 'reverse');
-    }
+  // Per-side cascade: user upload → pattern → CDN URL (each side independent)
+  const obvUrl = await imageCache.resolveImageUrlForItem(item, 'obverse');
+  const revUrl = await imageCache.resolveImageUrlForItem(item, 'reverse');
 
-    if (obvUrl) { _viewModalObjectUrls.push(obvUrl); _setSlotImage(obvSlot, obvUrl); }
-    if (revUrl) { _viewModalObjectUrls.push(revUrl); _setSlotImage(revSlot, revUrl); }
-    if (obvUrl || revUrl) return { loaded: true, source: resolved.source };
-  }
+  if (obvUrl) { _viewModalObjectUrls.push(obvUrl); _setSlotImage(obvSlot, obvUrl); }
+  if (revUrl) { _viewModalObjectUrls.push(revUrl); _setSlotImage(revSlot, revUrl); }
+  if (obvUrl || revUrl) return { loaded: true, source: 'userOrPattern' };
 
   // Final fallback: CDN URLs stored on the item (validate to skip corrupted URLs)
   const validObv = ImageCache.isValidImageUrl(item.obverseImageUrl);
