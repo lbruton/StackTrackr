@@ -21,6 +21,9 @@
 !.claude/skills/wiki-search/
 !.claude/skills/ship/
 !.claude/skills/brainstorming/
+!.claude/skills/retail-poller/
+!.claude/skills/retail-provider-fix/
+!.claude/skills/repo-boundaries/
 .claude/commands/
 .mcp.json
 SPRINT.md
