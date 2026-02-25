@@ -1166,7 +1166,7 @@ const applyHeaderToggleVisibility = () => {
   }
 
   // Show text toggle
-  const showText = localStorage.getItem(HEADER_BTN_SHOW_TEXT_KEY) === 'true';
+  const showText = localStorage.getItem(HEADER_BTN_SHOW_TEXT_KEY) !== 'false';
   if (container && container.classList) {
     container.classList.toggle('header-buttons--show-text', showText);
   }
