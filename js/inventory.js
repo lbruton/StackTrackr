@@ -2291,6 +2291,100 @@ const editItem = (idx, logIdx = null) => {
   // Populate Numista Data fields: item data first, API cache as fallback (STAK-173)
   populateNumistaDataFields(item.numistaId || item.catalog || '', item.numistaData);
 
+  // STAK-343: Populate tags in edit modal
+  if (item.uuid && typeof getItemTags === 'function') {
+    const itemTagsList = getItemTags(item.uuid);
+    const numistaChips = document.getElementById('numistaTagsChips');
+    const customChips = document.getElementById('customTagsChips');
+
+    // Determine which tags came from Numista (check cached metadata)
+    let numistaTagSet = new Set();
+    const catalogId = item.numistaId || item.catalog || '';
+    if (catalogId && typeof catalogAPI !== 'undefined' && catalogAPI._metaCache) {
+      const cached = catalogAPI._metaCache[catalogId];
+      if (cached && cached.tags) {
+        numistaTagSet = new Set(cached.tags.map(t => String(t).trim().toLowerCase()));
+      }
+    }
+
+    const renderEditTags = () => {
+      const tags = getItemTags(item.uuid);
+      const numistaTags = [];
+      const customTags = [];
+      tags.forEach(t => {
+        if (numistaTagSet.has(t.toLowerCase())) numistaTags.push(t);
+        else customTags.push(t);
+      });
+
+      if (numistaChips) {
+        numistaChips.textContent = '';
+        if (numistaTags.length === 0) {
+          numistaChips.innerHTML = '<span class="tag-empty-hint">No Numista tags</span>';
+        } else {
+          numistaTags.forEach(tag => {
+            const chip = document.createElement('span');
+            chip.className = 'tag-chip tag-chip-numista';
+            chip.textContent = tag;
+            chip.title = `Numista tag: ${tag} (click × to remove)`;
+            const rm = document.createElement('span');
+            rm.className = 'tag-chip-remove';
+            rm.textContent = '\u00d7';
+            rm.setAttribute('role', 'button');
+            rm.setAttribute('tabindex', '0');
+            rm.setAttribute('aria-label', `Remove tag ${tag}`);
+            rm.onclick = (e) => { e.stopPropagation(); removeItemTag(item.uuid, tag); renderEditTags(); };
+            chip.appendChild(rm);
+            numistaChips.appendChild(chip);
+          });
+        }
+      }
+
+      if (customChips) {
+        customChips.textContent = '';
+        if (customTags.length === 0) {
+          customChips.innerHTML = '<span class="tag-empty-hint">No custom tags</span>';
+        } else {
+          customTags.forEach(tag => {
+            const chip = document.createElement('span');
+            chip.className = 'tag-chip tag-chip-custom';
+            chip.textContent = tag;
+            chip.title = `Custom tag: ${tag} (click × to remove)`;
+            const rm = document.createElement('span');
+            rm.className = 'tag-chip-remove';
+            rm.textContent = '\u00d7';
+            rm.setAttribute('role', 'button');
+            rm.setAttribute('tabindex', '0');
+            rm.setAttribute('aria-label', `Remove tag ${tag}`);
+            rm.onclick = (e) => { e.stopPropagation(); removeItemTag(item.uuid, tag); renderEditTags(); };
+            chip.appendChild(rm);
+            customChips.appendChild(chip);
+          });
+        }
+      }
+    };
+
+    renderEditTags();
+
+    // Wire up the add-tag button
+    if (elements.addTagBtn && elements.newTagInput) {
+      const addHandler = () => {
+        const val = elements.newTagInput.value.trim();
+        if (val && typeof addItemTag === 'function') {
+          addItemTag(item.uuid, val);
+          elements.newTagInput.value = '';
+          renderEditTags();
+        }
+      };
+      elements.addTagBtn.onclick = addHandler;
+      elements.newTagInput.onkeydown = (e) => { if (e.key === 'Enter') { e.preventDefault(); addHandler(); } };
+    }
+
+    // Open the tags section if item has tags
+    if (itemTagsList.length > 0 && elements.tagsSection) {
+      elements.tagsSection.open = true;
+    }
+  }
+
   // Open unified modal
   if (window.openModalById) openModalById('itemModal');
   else if (elements.itemModal) elements.itemModal.style.display = 'flex';

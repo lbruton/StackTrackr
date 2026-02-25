@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.32.43] - 2026-02-25
+
+### Fixed — Numista Tag Rendering + Per-Item Tag Deletion
+
+- **Fixed**: Numista tags now visible in edit modal — `numistaTagsChips` and `customTagsChips` containers populated with removable tag chips when editing an item (STAK-343)
+- **Fixed**: Tags now display as chips in card view (all 3 card styles A/B/C), matching the existing table inline behavior (STAK-343)
+- **Fixed**: All tags (including Numista-applied) are now removable per-item via `×` button — previously Numista tags were locked as read-only with no delete path (STAK-344)
+
+---
+
 ## [3.32.42] - 2026-02-25
 
 ### Fixed — Pattern Rule Promotion Bug
