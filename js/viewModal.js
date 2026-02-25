@@ -91,7 +91,7 @@ async function showViewModal(index) {
     apiResult = await _fetchNumistaResult(catalogId);
   }
 
-  // Fill images from API result when no images were loaded from IDB
+  // Fill images from API result when no images were loaded at all
   const shouldReplaceWithApi = !imagesLoaded;
 
   if (shouldReplaceWithApi && apiResult && (apiResult.imageUrl || apiResult.reverseImageUrl)) {
@@ -690,7 +690,7 @@ async function loadViewImages(item, container) {
 
   if (obvUrl) { _viewModalObjectUrls.push(obvUrl); _setSlotImage(obvSlot, obvUrl); }
   if (revUrl) { _viewModalObjectUrls.push(revUrl); _setSlotImage(revSlot, revUrl); }
-  if (obvUrl || revUrl) return { loaded: true, source: 'idb' };
+  if (obvUrl || revUrl) return { loaded: true, source: 'userOrPattern' };
 
   // Final fallback: CDN URLs stored on the item (validate to skip corrupted URLs)
   const validObv = ImageCache.isValidImageUrl(item.obverseImageUrl);

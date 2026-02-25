@@ -744,7 +744,7 @@ const bindCardAndTableImageListeners = () => {
   // Card style toggle (A/B/C/D chip buttons in Appearance > Inventory)
   const cardStyleToggleEl = getExistingElement('settingsCardStyleToggle');
   if (cardStyleToggleEl) {
-    const savedStyle = localStorage.getItem(CARD_STYLE_KEY) || 'A';
+    const savedStyle = localStorage.getItem(CARD_STYLE_KEY) || 'D';
     cardStyleToggleEl.querySelectorAll('.chip-sort-btn').forEach(btn => {
       btn.classList.toggle('active', btn.dataset.style === savedStyle);
     });
