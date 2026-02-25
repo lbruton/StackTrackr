@@ -11,7 +11,7 @@ description: Use when doing any cross-repo work, deploying, or when unsure which
 |------|------|--------------|
 | `lbruton/StakTrakr` | Frontend HTML/JS/CSS, `.claude/` skills, CLAUDE.md, smoke tests | Poller scripts, fly.toml, Dockerfile, devops crons |
 | `lbruton/StakTrakrApi` | ALL backend devops: fly.toml, Dockerfile, all run-*.sh, price-extract.js, api-export.js, spot-poller, providers.json | Frontend code |
-| `lbruton/stakscrapr` | Home VM full stack: identical scraper core + dashboard.js + tinyproxy/Cox residential proxy + Tailscale exit node config | fly.toml authority (StakTrakrApi owns it), `fly deploy` |
+| `lbruton/stakscrapr` | Home VM config repo: CLAUDE.md, env templates, home-only additions (dashboard.js, tinyproxy config). **Managed via SSH from this Mac** — see `homepoller-ssh` skill | fly.toml authority (StakTrakrApi owns it), `fly deploy` |
 | `lbruton/StakTrakrWiki` | Shared infrastructure documentation | Code, config, scripts |
 
 ---
@@ -22,7 +22,7 @@ description: Use when doing any cross-repo work, deploying, or when unsure which
 |--------|-------------|----------------|
 | `fly deploy` | `StakTrakrApi/devops/fly-poller/` on this Mac only | StakTrakr repo, stakscrapr repo, home VM, anywhere else |
 | `git push` to `api` branch (data files) | Fly.io container `run-publish.sh` only — via force-push | Local Mac, home VM, any GHA, manually |
-| PR to `StakTrakrApi` main | StakTrakr Mac Claude or stakscrapr Claude | Direct push to main |
+| PR to `StakTrakrApi` main | StakTrakr Mac Claude (via SSH or local) | Direct push to main |
 | `providers.json` URL fix | Direct push to `api` branch in `StakTrakrApi` | Any other method |
 
 > **⛔ NEVER run `fly deploy` from the StakTrakr repo or the stakscrapr repo.**
@@ -40,7 +40,9 @@ description: Use when doing any cross-repo work, deploying, or when unsure which
 
 ---
 
-## Home VM (192.168.1.48) — What stakscrapr Owns
+## Home VM (192.168.1.81) — SSH-Managed
+
+> **Access:** `ssh -T homepoller '<cmd>'` (LAN) or `ssh -T homepoller-ts '<cmd>'` (Tailscale). See `homepoller-ssh` skill for full reference.
 
 The home VM runs the **identical scraper core** (same price-extract.js, api-export.js as Fly.io) PLUS home-only additions:
 
@@ -48,10 +50,10 @@ The home VM runs the **identical scraper core** (same price-extract.js, api-expo
 |-----------|---------|
 | `dashboard.js` (port 3010) | Monitors both pollers via Turso `poller_runs` table + `/tmp/flyio-health.json` |
 | `check-flyio.sh` | Polls Fly.io health, writes `/tmp/flyio-health.json` for dashboard |
-| tinyproxy (port 8889) | HTTP proxy — routes Fly.io scraper traffic through Cox residential IP |
-| Tailscale exit node (`100.112.198.50`) | Fly.io container traffic exits through home residential IP for bot evasion |
+| tinyproxy (port 8888) | HTTP proxy — routes Fly.io scraper traffic through residential IP |
+| Tailscale (`100.112.198.50`) | Fly.io container traffic exits through home residential IP for bot evasion |
 
-**stakscrapr Claude rule:** NEVER run `fly deploy`. Open a PR to `lbruton/StakTrakrApi` instead.
+**Rule:** NEVER run `fly deploy` on the home VM. Open a PR to `lbruton/StakTrakrApi` instead.
 
 ---
 
@@ -71,11 +73,11 @@ The home VM runs the **identical scraper core** (same price-extract.js, api-expo
 When a code change on the home VM needs to reach Fly.io:
 
 ```
-1. Home Claude edits devops/scraper/ file
-2. Opens PR to StakTrakrApi main
-3. StakTrakr Mac Claude reviews + merges
-4. StakTrakr Mac Claude: cd devops/fly-poller && fly deploy
-5. Home VM: curl raw.githubusercontent.com/StakTrakrApi/main/devops/scraper/<file> -o /opt/poller/<file>
+1. Edit devops/scraper/ file in StakTrakrApi repo (on this Mac)
+2. Open PR to StakTrakrApi main
+3. Review + merge
+4. cd StakTrakrApi/devops/fly-poller && fly deploy
+5. Update home VM via SSH: ssh -T homepoller 'curl -sf https://raw.githubusercontent.com/.../devops/retail-poller/<file> -o /opt/poller/<file>'
 ```
 
 **providers.json URL changes** skip steps 3–5 entirely — push directly to `api` branch (auto-synced every run).
@@ -89,6 +91,6 @@ Both pollers write to the same Turso DB (`price_snapshots` table). Only Fly.io p
 | Poller | POLLER_ID | Writes to | Publishes to Git |
 |--------|-----------|-----------|-----------------|
 | Fly.io container | `api` | Turso | ✅ Yes — `run-publish.sh` force-pushes to `api` branch |
-| Home VM (192.168.1.48) | `home` | Turso | ❌ No — never touches git |
+| Home VM (192.168.1.81) | `home` | Turso | ❌ No — never touches git |
 
 `readLatestPerVendor(db, coinSlug, lookbackHours=2)` — most recent row per vendor within 2h wins at publish time.

@@ -24,6 +24,7 @@
 !.claude/skills/retail-poller/
 !.claude/skills/retail-provider-fix/
 !.claude/skills/repo-boundaries/
+!.claude/skills/homepoller-ssh/
 .claude/commands/
 .mcp.json
 SPRINT.md

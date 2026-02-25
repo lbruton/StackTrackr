@@ -283,11 +283,11 @@ const setupAckModalEvents = () => {
  */
 const getEmbeddedWhatsNew = () => {
   return `
+    <li><strong>v3.32.38 &ndash; Home Poller SSH + Skill Updates</strong>: New homepoller-ssh skill for direct SSH management of the home VM. Updated repo-boundaries with corrected IP and SSH workflow. Skills no longer delegate to OS-level Claude agent.</li>
     <li><strong>v3.32.37 &ndash; Wiki-First Documentation Policy</strong>: StakTrakrWiki established as sole source of truth. Notion infrastructure pages deprecated. New wiki-search skill for querying docs via claude-context. finishing-a-development-branch skill updated with Wiki Update Gate before every PR.</li>
     <li><strong>v3.32.36 &ndash; Bug Fixes &mdash; Numista Data Integrity</strong>: Fixed Numista image URLs and metadata re-populating after being cleared in the edit form. Fixed view modal cross-contaminating images between items. Removed on-load CDN backfill that undid deliberate clears. Added Purge Numista URLs button in Settings &rarr; Images (STAK-309, STAK-311, STAK-306, STAK-312).</li>
     <li><strong>v3.32.35 &ndash; Header Buttons Reorder</strong>: Toggle visibility and reorder header buttons in Settings &rarr; Appearance with the new checkbox table. Order applies to the live header and persists across sessions (STAK-320).</li>
     <li><strong>v3.32.34 &ndash; Force Refresh Button</strong>: New button in Settings &rarr; System &rarr; App Updates. Unregisters service workers and reloads to fetch the latest version. Use if the app appears stuck on an old version after an update (STAK-324).</li>
-    <li><strong>v3.32.33 &ndash; Bug Fix &mdash; 7-Day Sparklines</strong>: Fresh load sparklines now draw a full 7-day curve. Hourly backfill extends to 7 days on first load to bridge the LBMA seed data lag (STAK-303).</li>
   `;
 };
 

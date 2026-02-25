@@ -14,7 +14,7 @@ All feeds served from `lbruton/StakTrakrApi` `main` branch via GitHub Pages at `
 | **Market prices** | `data/api/manifest.json` | Fly.io `run-local.sh` + `run-publish.sh` | 30 min |
 | **Spot prices** | `data/hourly/YYYY/MM/DD/HH.json` | Fly.io `run-spot.sh` cron (`5,20,35,50 * * * *`) | 75 min |
 | **Goldback** | `data/api/goldback-spot.json` | Fly.io via `goldback-g1` coin in `run-local.sh` | 25h (info only) |
-| **Turso** | `price_snapshots` table | Dual-poller write-through (Fly.io `POLLER_ID=api` + home VM `POLLER_ID=home`) | internal |
+| **Turso** | `price_snapshots` table | Dual-poller write-through (Fly.io `POLLER_ID=api` + home VM `POLLER_ID=home`). Home VM: `ssh -T homepoller` — see `homepoller-ssh` skill | internal |
 
 **Critical:** `spot-history-YYYY.json` is a **seed file** (noon UTC daily) — never use it for freshness checks. Live spot data is always in `data/hourly/`.
 

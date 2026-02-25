@@ -31,7 +31,7 @@ api-export.js  (Turso + vision JSON → data/api/ REST endpoints → api branch)
 |----------|---------|------|---------|
 | **Fly.io** (`run-local.sh`) | Playwright (self-hosted, `localhost:3002`) | **Primary + only** | Every 15 min via container cron |
 
-**No GHA cloud failsafe for retail.** `retail-price-poller.yml` was deleted 2026-02-22 (was sending requests to public Firecrawl cloud API, burning paid credits — STAK-268). All retail scraping now runs exclusively in the Fly.io container via self-hosted Firecrawl + the home VM secondary poller.
+**No GHA cloud failsafe for retail.** `retail-price-poller.yml` was deleted 2026-02-22 (was sending requests to public Firecrawl cloud API, burning paid credits — STAK-268). All retail scraping now runs exclusively in the Fly.io container via self-hosted Firecrawl + the home VM secondary poller. **Home VM is SSH-accessible** — see `homepoller-ssh` skill for diagnostics.
 
 **Key constraint:** `providers.json` lives on the **`api` branch**, not `main` or `dev`.
 Path on disk: `$DATA_REPO_PATH/data/retail/providers.json`
@@ -141,7 +141,7 @@ After primary scrapes, any coin with failures scrapes `fbp_url` (FindBullionPric
 
 **Provider:** Turso cloud (libSQL) — NOT local SQLite. Credentials in Infisical + Fly secrets (`TURSO_DATABASE_URL`, `TURSO_AUTH_TOKEN`).
 
-**Dual-poller write-through:** Both Fly.io (`POLLER_ID=api`) and home VM (`POLLER_ID=home`) write to the same Turso DB. `api-export.js` uses `readLatestPerVendor()` to merge — most recent row per vendor within last 2h wins.
+**Dual-poller write-through:** Both Fly.io (`POLLER_ID=api`) and home VM at 192.168.1.81 (`POLLER_ID=home`) write to the same Turso DB. `api-export.js` uses `readLatestPerVendor()` to merge — most recent row per vendor within last 2h wins. To check home poller logs: `ssh -T homepoller 'tail -50 /var/log/retail-poller.log'`.
 
 **Table:** `price_snapshots`
 
