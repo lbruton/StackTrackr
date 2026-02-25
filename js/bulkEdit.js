@@ -1567,9 +1567,7 @@ const _openBulkImagePopover = (imgTd, item) => {
     if (!keepObv && !keepRev) {
       await imageCache.deleteUserImage(item.uuid);
     } else {
-      const obvToSave = keepObv || keepRev;
-      const revToSave = keepObv ? keepRev : null;
-      await imageCache.cacheUserImage(item.uuid, obvToSave, revToSave);
+      await imageCache.cacheUserImage(item.uuid, keepObv, keepRev);
     }
 
     const previewEl = side === 'obverse' ? obvPreview : revPreview;

@@ -281,13 +281,6 @@ const saveUserImageForItem = async (uuid) => {
     } catch { /* ignore */ }
   }
 
-  // cacheUserImage requires at least obverse; pass reverse as optional
-  if (!obvBlob && revBlob) {
-    // Only reverse uploaded — store as obverse (API requirement)
-    obvBlob = revBlob;
-    revBlob = null;
-  }
-
   const saved = await window.imageCache.cacheUserImage(uuid, obvBlob, revBlob);
   debugLog(`saveUserImageForItem: saved=${saved}`);
   clearUploadState();
@@ -329,10 +322,7 @@ const handleImageDeletion = async (uuid) => {
         await window.imageCache.deleteUserImage(uuid);
       } else {
         // Save updated record with one side nullified
-        // cacheUserImage requires obverse, so if only reverse remains, store it as obverse
-        const obvToSave = newObverse || newReverse;
-        const revToSave = newObverse ? newReverse : null;
-        await window.imageCache.cacheUserImage(uuid, obvToSave, revToSave);
+        await window.imageCache.cacheUserImage(uuid, newObverse, newReverse);
       }
     } catch (err) {
       debugLog(`Failed to handle partial deletion: ${err}`, 'warn');
@@ -1274,6 +1264,9 @@ const setupItemFormListeners = () => {
               const saved = await saveUserImageForItem(savedItem.uuid);
               if (!saved) {
                 debugLog('Image save returned false — image may not have been stored');
+              } else {
+                // Re-render so thumbnails reflect the newly saved image
+                renderTable();
               }
             } catch (err) {
               console.warn('Failed to save user image:', err);
