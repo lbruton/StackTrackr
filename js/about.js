@@ -283,6 +283,7 @@ const setupAckModalEvents = () => {
  */
 const getEmbeddedWhatsNew = () => {
   return `
+    <li><strong>v3.32.42 &ndash; Pattern Rule Promotion Fix</strong>: &ldquo;Apply to all matching items&rdquo; now works even when the item was saved previously. Reads from existing per-item IDB record when no pending upload blobs are available; also removes per-item record after promotion (STAK-339-followup).</li>
     <li><strong>v3.32.41 &ndash; Image Pipeline Simplification</strong>: Removed coinImages IDB cache layer entirely. CDN URLs on inventory items are now the sole Numista image source. Eliminates root cause of STAK-309/311/332/333/339 image bugs. Cascade is now: user upload &rarr; pattern image &rarr; CDN URL &rarr; placeholder (STAK-339).</li>
     <li><strong>v3.32.40 &ndash; Numista Image Race Condition Fix</strong>: Numista images now appear in table and card views immediately after applying a result. Previously images only showed after a page refresh due to a fire-and-forget race condition (STAK-337).</li>
     <li><strong>v3.32.39 &ndash; Image Bug Fixes + API Health Refresh</strong>: Fixed CDN URL writeback in resync and bulk cache. Remove button now clears URL fields and sets per-item pattern opt-out flag. API health badge uses cache-busting to defeat service worker staleness (STAK-333, STAK-308, STAK-332, STAK-311, STAK-334).</li>
