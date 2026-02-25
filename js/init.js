@@ -156,7 +156,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     elements.importProgressText = safeGetElement("importProgressText");
     elements.numistaImportBtn = safeGetElement("numistaImportBtn");
     elements.numistaImportFile = safeGetElement("numistaImportFile");
-    elements.numistaOverride = safeGetElement("numistaOverride");
     elements.numistaMerge = safeGetElement("numistaMerge");
       elements.numistaImportOptions = safeGetElement("numistaImportOptions");
       elements.exportCsvBtn = safeGetElement("exportCsvBtn");
