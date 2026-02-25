@@ -60,7 +60,10 @@ test.describe('Numista Data Integrity — Regression (STAK-309 / STAK-311)', () 
     await page.goto('/');
     await dismissAllStartupModals(page);
     // Clear inventory so each test starts clean
-    await page.evaluate(() => localStorage.removeItem('metalInventory'));
+    await page.evaluate(() => {
+      localStorage.removeItem('metalInventory');
+      localStorage.removeItem('staktrakr.catalog.cache');
+    });
   });
 
   // ── STAK-309-a: Clearing N# and URL persists through save + reload ─────────
