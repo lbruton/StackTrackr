@@ -1697,6 +1697,7 @@ const renderCustomPatternRules = async () => {
       const result = NumistaLookup.updateRule(rule.id, {
         pattern: newPattern,
         replacement: newReplacement,
+        numistaId: null,  // STAK-306: clear any legacy N# — edit form no longer manages it
       });
 
       if (!result.success) {
