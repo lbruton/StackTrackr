@@ -1106,20 +1106,9 @@ const syncGoldbackSettingsUI = () => {
  * Re-renders the config table and applies current header state.
  */
 const syncHeaderToggleUI = () => {
-  // Sync chip toggles that live in other settings panels (non-_hdr versions)
-  const themeVisible = localStorage.getItem('headerThemeBtnVisible') !== 'false';
+  // settingsHeaderCurrencyBtn still exists in the Currency settings panel
   const currencyVisible = localStorage.getItem('headerCurrencyBtnVisible') !== 'false';
-  const trendStored = localStorage.getItem(HEADER_TREND_BTN_KEY);
-  const trendVisible = trendStored !== null ? trendStored === 'true' : true;
-  const syncStored = localStorage.getItem(HEADER_SYNC_BTN_KEY);
-  const syncVisible = syncStored !== null ? syncStored === 'true' : true;
-  const marketVisible = localStorage.getItem(HEADER_MARKET_BTN_KEY) !== 'false';
-
-  syncChipToggle('settingsHeaderThemeBtn', themeVisible);
   syncChipToggle('settingsHeaderCurrencyBtn', currencyVisible);
-  syncChipToggle('settingsHeaderTrendBtn', trendVisible);
-  syncChipToggle('settingsHeaderSyncBtn', syncVisible);
-  syncChipToggle('settingsHeaderMarketBtn', marketVisible);
 
   renderHeaderBtnConfigTable();
   applyHeaderToggleVisibility();
