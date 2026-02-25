@@ -1238,11 +1238,12 @@ const setupItemFormListeners = () => {
               // Resolve blobs: prefer pending upload, fall back to already-saved per-item IDB record
               let obvBlob = _pendingObverseBlob;
               let revBlob = _pendingReverseBlob;
-              if ((!obvBlob && !revBlob) && savedItem?.uuid && window.imageCache?.isAvailable()) {
+              // Fill in missing sides from existing per-item IDB record
+              if ((!obvBlob || !revBlob) && savedItem?.uuid && window.imageCache?.isAvailable()) {
                 const existing = await window.imageCache.getUserImage(savedItem.uuid).catch(() => null);
                 if (existing) {
-                  obvBlob = existing.obverse || null;
-                  revBlob = existing.reverse || null;
+                  if (!obvBlob) obvBlob = existing.obverse || null;
+                  if (!revBlob) revBlob = existing.reverse || null;
                 }
               }
 
