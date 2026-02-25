@@ -66,11 +66,12 @@ Three feeds served from `lbruton/StakTrakrApi` main branch via GitHub Pages at `
 | Feed | File | Poller | Stale threshold | Healthy check |
 |---|---|---|---|---|
 | Market prices | `data/api/manifest.json` | Fly.io retail cron (StakTrakrApi) | 30 min | `generated_at` within 30 min |
-| Spot prices | `data/hourly/YYYY/MM/DD/HH.json` | `spot-poller.yml` GHA (StakTrakrApi) | 20 min | Last hourly file within 20 min |
-| 15-min spot | `data/15min/YYYY/MM/DD/HHMM.json` | `spot-poller.yml` GHA (StakTrakrApi) | 20 min | Last 15-min file within 20 min |
+| Spot prices | `data/hourly/YYYY/MM/DD/HH.json` | Fly.io `run-spot.sh` cron (StakTrakrApi) | 75 min | Last hourly file within 75 min |
 | Goldback | `data/api/goldback-spot.json` | Fly.io goldback cron (StakTrakrApi) | 25h | `scraped_at` within 25h |
 
 **Critical:** `spot-history-YYYY.json` is a **seed file** (noon UTC daily), NOT live data. `api-health.js` currently checks it for spot freshness — always shows ~10h stale even when poller is healthy. Open bug (STAK-265 follow-up).
+
+**NEVER start a local Docker spot-poller container.** `devops/spot-poller/` is a ghost directory — no live code, no container, no docker-compose.yml. Spot polling is Fly.io container cron only (`run-spot.sh` at `5,20,35,50 * * * *`).
 
 **No active failures as of 2026-02-22.** `sync-api-repos.yml` and `retail-price-poller.yml` deleted — both are gone.
 
@@ -81,7 +82,7 @@ curl -s https://api.staktrakr.com/data/api/manifest.json | python3 -c "
 import sys,json; from datetime import datetime,timezone; d=json.load(sys.stdin)
 age=(datetime.now(timezone.utc)-datetime.fromisoformat(d['generated_at'].replace('Z','+00:00'))).total_seconds()/60
 print(f'Market: {age:.0f}m ago  {\"✅\" if age<=30 else \"⚠️\"}')"
-gh run list --repo lbruton/StakTrakrApi --workflow "spot-poller.yml" --limit 3
+fly logs --app staktrakr | grep -E 'spot|run-spot' | tail -5
 gh run list --repo lbruton/StakTrakrApi --workflow "Merge Poller Branches" --limit 3
 ```
 
