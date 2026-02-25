@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.32.38] - 2026-02-25
+
+### Added — Home Poller SSH Skill + Skill Updates
+
+- **Added**: `homepoller-ssh` skill — SSH reference for direct access to the home poller VM (192.168.1.81) via `stakpoller` user with NOPASSWD sudo
+- **Changed**: `repo-boundaries` skill — fixed IP (192.168.1.48 → 192.168.1.81), replaced stakscrapr Claude delegation with SSH commands, corrected tinyproxy port (8889 → 8888)
+- **Changed**: `retail-poller` and `api-infrastructure` skills — added SSH diagnostic references for home VM
+- **Changed**: CLAUDE.md — added home poller SSH quick reference and `homepoller-ssh` to skills list
+
+---
+
 ## [3.32.37] - 2026-02-25
 
 ### Changed — Wiki-First Documentation Policy
