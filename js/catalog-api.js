@@ -2029,8 +2029,8 @@ document.addEventListener('DOMContentLoaded', function() {
             selectedNumistaResult.catalogId,
             selectedNumistaResult.imageUrl || '',
             selectedNumistaResult.reverseImageUrl || ''
-          ).then(cached => {
-            if (cached && typeof renderTable === 'function') renderTable();
+          ).then(() => {
+            if (typeof renderTable === 'function') renderTable();
           }).catch(e => console.warn('Image cache failed:', e));
           imageCache.cacheMetadata(
             selectedNumistaResult.catalogId,
