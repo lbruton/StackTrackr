@@ -978,7 +978,7 @@ async function _loadCardImage(img) {
     };
     const side = img.dataset.side || 'obverse';
 
-    // Resolve CDN URL from inventory item
+    // Resolve CDN URL and ignorePatternImages from inventory item
     const idx = img.closest('[data-idx]')?.dataset.idx;
     let cdnUrl = '';
     if (idx !== undefined && typeof inventory !== 'undefined') {
@@ -986,6 +986,8 @@ async function _loadCardImage(img) {
       if (invItem) {
         const urlKey = side === 'reverse' ? 'reverseImageUrl' : 'obverseImageUrl';
         cdnUrl = (invItem[urlKey] && /^https?:\/\/.+\..+/i.test(invItem[urlKey])) ? invItem[urlKey] : '';
+        // STAK-332: Pass ignorePatternImages flag to resolveImageForItem
+        if (invItem.ignorePatternImages) item.ignorePatternImages = true;
       }
     }
 

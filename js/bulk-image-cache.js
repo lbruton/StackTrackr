@@ -162,13 +162,6 @@ const BulkImageCache = (() => {
       }
 
       if (apiResult) {
-        // Persist image URLs back to item for CDN fallback
-        if (!obverseUrl && apiResult.imageUrl) {
-          item.obverseImageUrl = apiResult.imageUrl;
-        }
-        if (!reverseUrl && apiResult.reverseImageUrl) {
-          item.reverseImageUrl = apiResult.reverseImageUrl;
-        }
         // Sync numistaId back to item if it was only in catalogManager
         if (!item.numistaId) item.numistaId = catalogId;
 
