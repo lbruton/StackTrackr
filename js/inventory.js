@@ -2419,20 +2419,6 @@ const duplicateItem = (idx) => {
   else if (elements.itemModal) elements.itemModal.style.display = 'flex';
 };
 
-/**
- * Toggles price display between purchase price and market value
- * 
- * @param {number} idx - Index of item to toggle price view for
- */
-/**
- * Legacy function kept for compatibility - no longer used  
- * Market value now has its own dedicated column
- */
-const toggleGlobalPriceView = () => {
-  // Function kept for compatibility but no longer used
-  console.warn('toggleGlobalPriceView is deprecated - using separate columns now');
-};
-
 // =============================================================================
 // IMPORT/EXPORT FUNCTIONS
 // =============================================================================
@@ -3546,7 +3532,6 @@ window.importJson = importJson;
 window.exportJson = exportJson;
 window.exportPdf = exportPdf;
 window.updateSummary = updateSummary;
-window.toggleGlobalPriceView = toggleGlobalPriceView;
 window.editItem = editItem;
 window.duplicateItem = duplicateItem;
 window.populateNumistaDataFields = populateNumistaDataFields;
