@@ -433,8 +433,8 @@ class ImageCache {
    * @returns {Promise<boolean>}
    */
   async cacheUserImage(uuid, obverse, reverse = null, sharedImageId = null) {
-    if (!uuid || !obverse) {
-      debugLog('ImageCache.cacheUserImage: missing uuid or obverse blob');
+    if (!uuid || (!obverse && !reverse)) {
+      debugLog('ImageCache.cacheUserImage: missing uuid or at least one image blob');
       return false;
     }
     if (!(await this._ensureDb())) {
