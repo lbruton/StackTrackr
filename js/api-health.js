@@ -124,9 +124,10 @@ const fetchApiHealth = async () => {
     : ["https://api.staktrakr.com/data/api"];
 
   const _fetchWithTimeout = (url, ms = 5000) => {
+    const bustUrl = `${url}${url.includes('?') ? '&' : '?'}_t=${Date.now()}`;
     const ctrl = new AbortController();
     const tid  = setTimeout(() => ctrl.abort(), ms);
-    return fetch(url, { cache: "no-store", signal: ctrl.signal })
+    return fetch(bustUrl, { cache: "no-store", signal: ctrl.signal })
       .then((r) => { clearTimeout(tid); if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
       .catch((e) => { clearTimeout(tid); throw e; });
   };

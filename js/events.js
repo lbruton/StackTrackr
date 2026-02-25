@@ -974,6 +974,7 @@ const parseItemFormFields = (isEditing, existingItem) => {
     currency: displayCurrency,
     obverseImageUrl: elements.itemObverseImageUrl?.value?.trim() ?? '',
     reverseImageUrl: elements.itemReverseImageUrl?.value?.trim() ?? '',
+    ignorePatternImages: document.getElementById('itemIgnorePatternImages')?.checked || false,
     // Numista metadata — stored per-item, seeded by API, user edits override
     // Pass catalog so parseNumistaDataFields can wipe metadata when N# is cleared (STAK-309)
     numistaData: parseNumistaDataFields(isEditing, existingItem, elements.itemCatalog ? elements.itemCatalog.value.trim() : ''),
@@ -1081,10 +1082,12 @@ const commitItemToInventory = (f, isEditing, editIdx) => {
       numistaId: f.catalog,
       numistaData: f.numistaData,
       currency: f.currency,
-      obverseImageUrl: f.obverseImageUrl || window.selectedNumistaResult?.imageUrl || '',
-      reverseImageUrl: f.reverseImageUrl || window.selectedNumistaResult?.reverseImageUrl || '',
+      // STAK-308: Use nullish coalescing — empty string is intentional (user cleared URL)
+      obverseImageUrl: f.obverseImageUrl !== '' ? (f.obverseImageUrl || window.selectedNumistaResult?.imageUrl || '') : '',
+      reverseImageUrl: f.reverseImageUrl !== '' ? (f.reverseImageUrl || window.selectedNumistaResult?.reverseImageUrl || '') : '',
       obverseSharedImageId: oldItem.obverseSharedImageId || null,
       reverseSharedImageId: oldItem.reverseSharedImageId || null,
+      ignorePatternImages: f.ignorePatternImages || false,
     };
 
     addCompositionOption(f.composition);
@@ -1143,10 +1146,11 @@ const commitItemToInventory = (f, isEditing, editIdx) => {
       numistaId: f.catalog,
       numistaData: f.numistaData,
       currency: f.currency,
-      obverseImageUrl: f.obverseImageUrl || window.selectedNumistaResult?.imageUrl || '',
-      reverseImageUrl: f.reverseImageUrl || window.selectedNumistaResult?.reverseImageUrl || '',
+      obverseImageUrl: f.obverseImageUrl !== '' ? (f.obverseImageUrl || window.selectedNumistaResult?.imageUrl || '') : '',
+      reverseImageUrl: f.reverseImageUrl !== '' ? (f.reverseImageUrl || window.selectedNumistaResult?.reverseImageUrl || '') : '',
       obverseSharedImageId: null,
       reverseSharedImageId: null,
+      ignorePatternImages: f.ignorePatternImages || false,
     });
 
     typeof registerName === "function" && registerName(f.name);
@@ -1512,6 +1516,12 @@ const setupItemFormListeners = () => {
           if (sizeInfo) sizeInfo.textContent = '';
           if (removeBtn) removeBtn.style.display = 'none';
           if (fileInput) fileInput.value = '';
+          // STAK-308: Clear URL field so deleted CDN URL doesn't persist on save
+          const urlField = side === 'reverse' ? elements.itemReverseImageUrl : elements.itemObverseImageUrl;
+          if (urlField) urlField.value = '';
+          // STAK-332: Flag item to ignore pattern rule images after explicit removal
+          const ignorePatternCheckbox = document.getElementById('itemIgnorePatternImages');
+          if (ignorePatternCheckbox) ignorePatternCheckbox.checked = true;
 
           // STAK-244: Also clear Numista image cache if user is removing a catalog-synced image
           const catalogId = elements.itemCatalog?.value?.trim() || '';
