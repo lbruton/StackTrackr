@@ -11,11 +11,10 @@ All feeds served from `lbruton/StakTrakrApi` `main` branch via GitHub Pages at `
 
 | Feed | File | Poller | Threshold |
 |------|------|--------|-----------|
-| **Market prices** | `data/api/manifest.json` | Fly.io `staktrakr` cron (`*/30 min`) | 30 min |
-| **Spot prices** | `data/hourly/YYYY/MM/DD/HH.json` | `spot-poller.yml` GHA (`:05`, `:20`, `:35`, `:50`/hr) | 20 min |
-| **Spot prices (15-min)** | `data/15min/YYYY/MM/DD/HHMM.json` | `spot-poller.yml` GHA (`:05/:20/:35/:50`) | 20 min |
-| **Goldback** | `data/api/goldback-spot.json` | Fly.io `staktrakr` cron (daily 17:01 UTC) | 25h (info only) |
-| **Turso** | `price_snapshots` table | retail-poller only | internal write store |
+| **Market prices** | `data/api/manifest.json` | Fly.io `run-local.sh` + `run-publish.sh` | 30 min |
+| **Spot prices** | `data/hourly/YYYY/MM/DD/HH.json` | Fly.io `run-spot.sh` cron (`5,20,35,50 * * * *`) | 75 min |
+| **Goldback** | `data/api/goldback-spot.json` | Fly.io via `goldback-g1` coin in `run-local.sh` | 25h (info only) |
+| **Turso** | `price_snapshots` table | Dual-poller write-through (Fly.io `POLLER_ID=api` + home VM `POLLER_ID=home`) | internal |
 
 **Critical:** `spot-history-YYYY.json` is a **seed file** (noon UTC daily) — never use it for freshness checks. Live spot data is always in `data/hourly/`.
 
@@ -23,11 +22,12 @@ All feeds served from `lbruton/StakTrakrApi` `main` branch via GitHub Pages at `
 
 ## Fly.io Container (`staktrakr`)
 
-- **App:** `staktrakr` — region `iad`, always-on (min 1 machine, auto-stop off)
-- **Config:** `devops/retail-poller/fly.toml` + `Dockerfile`
-- **Runs:** Firecrawl + Playwright + retail-poller cron + goldback cron + serve.js
-- **NOT spot prices** — spot is pure GHA, no Docker, no Fly
-- **Deploy:** `cd devops/retail-poller && fly deploy`
+- **App:** `staktrakr` — region `dfw`, 4096MB RAM, 4 shared CPUs
+- **Config:** `StakTrakrApi/devops/fly-poller/fly.toml` + `Dockerfile` — **not in the StakTrakr repo**
+- **Runs:** Firecrawl + Playwright + Redis + RabbitMQ + PostgreSQL + retail cron + spot cron + goldback + serve.js
+- **Spot prices run here** — `run-spot.sh` at `5,20,35,50 * * * *` (NOT GHA)
+- **Deploy:** From `lbruton/StakTrakrApi` repo: `cd devops/fly-poller && fly deploy`
+- **NEVER run `fly deploy` from the StakTrakr or stakscrapr repos**
 - **Logs:** `fly logs --app staktrakr`
 - **SSH:** `fly ssh console --app staktrakr`
 
@@ -37,7 +37,7 @@ All feeds served from `lbruton/StakTrakrApi` `main` branch via GitHub Pages at `
 
 | Workflow | Repo | Schedule | Purpose |
 |----------|------|----------|---------|
-| `spot-poller.yml` | `StakTrakr` | `:05`, `:20`, `:35`, `:50` every hour | Python → MetalPriceAPI → `data/hourly/` |
+| `spot-poller.yml` | `StakTrakr` | **RETIRED 2026-02-23** — `workflow_dispatch` only | Was Python→MetalPriceAPI; now Fly.io `run-spot.sh` |
 | `Merge Poller Branches` | `StakTrakrApi` | `*/15 min` | Merges `api` → `main` → triggers GH Pages |
 
 ---
@@ -52,7 +52,6 @@ Turso is a free-tier cloud libSQL database — internal to the retail poller. NO
 - **Used by:** `price-extract.js`, `extract-vision.js`, `api-export.js` (retail-poller only)
 - **NOT used by:** spot-poller (Python GHA), goldback-scraper
 - **Free tier:** zero cost, zero ops — no action needed
-- `prices.db` is a read-only SQLite snapshot exported to StakTrakrApi each cycle (offline use only)
 
 ---
 

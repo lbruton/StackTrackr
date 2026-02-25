@@ -1,70 +1,22 @@
-# Spot price poller — writes hourly data to StakTrakrApi `api` branch (api.staktrakr.com)
-# Runs four times per hour (:05, :20, :35, :50) for 15-min freshness.
-# Requires repository secrets: METAL_PRICE_API_KEY, API_PUSH_TOKEN
-#
-# Architecture: Checks out `dev` for poller code, StakTrakrApi `api` branch for data files.
-# Hourly JSON files land in data/hourly/YYYY/MM/DD/HH.json on StakTrakrApi api branch.
-name: Spot Price Poller
+# Spot price poller — RETIRED 2026-02-23
+# Spot polling moved to Fly.io container cron (run-spot.sh, 5,20,35,50 * * * *).
+# This workflow is kept ONLY for emergency manual trigger.
+# Do NOT re-enable scheduled runs — poller.py was removed from this repo.
+name: Spot Price Poller (RETIRED)
 
 on:
-  schedule:
-    - cron: '5 * * * *'   # :05 — primary run
-    - cron: '20 * * * *'  # :20 — 15-min freshness
-    - cron: '35 * * * *'  # :35 — 15-min freshness
-    - cron: '50 * * * *'  # :50 — 15-min freshness
-  workflow_dispatch: # Manual trigger for testing
+  workflow_dispatch:  # Manual trigger only — all scheduled crons removed
 
 env:
   TZ: UTC
 
 jobs:
-  poll:
+  redirect:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-
     steps:
-      - name: Checkout dev (for poller code)
-        uses: actions/checkout@v4
-        with:
-          ref: dev
-          path: code
-
-      - name: Checkout StakTrakrApi (for data files)
-        uses: actions/checkout@v4
-        with:
-          repository: lbruton/StakTrakrApi
-          ref: api
-          path: data-branch
-          token: ${{ secrets.API_PUSH_TOKEN }}
-          fetch-depth: 1
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-
-      - name: Install dependencies
-        run: pip install -r code/devops/spot-poller/requirements.txt
-
-      - name: Run poller (single shot with backfill)
-        env:
-          METAL_PRICE_API_KEY: ${{ secrets.METAL_PRICE_API_KEY }}
-          DATA_DIR: ${{ github.workspace }}/data-branch/data
-        run: python code/devops/spot-poller/poller.py --once
-
-      - name: Commit and push data
-        working-directory: data-branch
+      - name: Retired — use Fly.io container
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add .
-          if git diff --cached --quiet; then
-            echo "No new data to commit."
-          else
-            HOUR=$(date -u +%H)
-            DATE=$(date -u +%Y-%m-%d)
-            git commit -m "spot: ${DATE} hour ${HOUR} price data"
-            git pull --rebase origin api || true
-            git push
-          fi
+          echo "⚠️  This workflow is RETIRED."
+          echo "Spot polling runs inside the Fly.io staktrakr container at 5,20,35,50 * * * *."
+          echo "To check spot data: fly logs --app staktrakr | grep spot"
+          echo "To manually trigger: fly ssh console --app staktrakr -C '/app/run-spot.sh'"

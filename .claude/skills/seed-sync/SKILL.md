@@ -1,34 +1,35 @@
 ---
 name: seed-sync
-description: Seed data sync — check Docker spot-price poller output and stage new seed data for commit. Use before releases or after merging PRs.
+description: Seed data sync — fetch live spot price data and stage seed history files for commit. Use before releases or after merging PRs. There is NO local Docker spot-poller container.
 ---
 
 # Seed Data Sync — StakTrakr
 
-Check the Docker spot-price poller output and stage any new seed data for commit. Can also fetch today's prices directly without Docker.
+Fetch the latest spot prices and stage any new seed data for commit.
+
+> **There is NO local Docker spot-poller container.** The `devops/spot-poller/` directory was removed. Do not attempt to start any Docker container for spot prices. Spot prices are polled exclusively by the Fly.io container (`run-spot.sh` at `5,20,35,50 * * * *`).
 
 ## When to Use
 
 - **Before every release** — the `/release` skill references this as a prerequisite
 - **After merging PRs** — seed data may have accumulated while the PR was open
 - **On demand** — `/seed-sync` to check and stage
-- **Manual update** — when the Docker poller isn't running and you need fresh prices
+- **Manual update** — when you need fresh seed data locally
 
-## Phase 1: Docker Poller Health Check
+## Phase 1: Fetch Today's Prices (No Docker Required)
 
-1. Run `docker ps --filter "name=stacktrakr-seed-poller"` to confirm the container is running
-2. Run `docker logs stacktrakr-seed-poller --tail 10` to check for errors or successful polls
-3. Report the container status:
-   - **Running**: show uptime and last log line
-   - **Stopped/Missing**: warn the user and suggest `docker compose -f devops/spot-poller/docker-compose.yml up -d`
-
-**If the poller is not running**, offer to fetch today's prices directly using the built-in script:
+Run the built-in script directly — no container needed:
 
 ```bash
 python3 .claude/skills/seed-sync/update-today.py
 ```
 
-This slim script fetches today's spot prices from MetalPriceAPI and appends them to the appropriate `data/spot-history-{year}.json` file. It reads the API key from the environment or from `devops/spot-poller/.env`. No Docker required.
+This slim script fetches today's spot prices from MetalPriceAPI and appends them to the appropriate `data/spot-history-{year}.json` file. It reads `METAL_PRICE_API_KEY` from the environment. No Docker required.
+
+If the API key is not in the environment, retrieve it from Infisical:
+```bash
+# Key name: METAL_PRICE_API_KEY, project: StakTrakr, environment: dev
+```
 
 ## Phase 2: Seed Data Freshness Audit
 
@@ -106,14 +107,8 @@ The `/release` skill should invoke `/seed-sync` at the start of Phase 0 (before 
 ## File Layout
 
 ```
-devops/spot-poller/          # Docker-based continuous poller (public)
-  ├── docker-compose.yml     # Docker Compose config
-  ├── Dockerfile             # Python 3.12 Alpine image
-  ├── poller.py              # Long-running poll loop (catchup + hourly)
-  ├── update-seed-data.py    # One-shot backfill script (CLI)
-  ├── requirements.txt       # Python dependencies
-  ├── .env.example           # API key template
-  └── README.md              # Setup and usage guide
+[No local spot-poller directory — removed 2026-02-23. Spot polling runs in
+Fly.io container: StakTrakrApi/devops/fly-poller/run-spot.sh]
 
 .claude/skills/seed-sync/    # Claude Code skill
   ├── SKILL.md               # This file
