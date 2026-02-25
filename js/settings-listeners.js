@@ -510,13 +510,13 @@ const bindImageSyncListeners = () => {
         'Purge Numista URLs',
       );
       if (!confirmed) return;
+      const isNumistaUrl = (url) => url && /numista\.com/i.test(url);
       let purged = 0;
       for (const item of inventory) {
-        if (item.obverseImageUrl || item.reverseImageUrl) {
-          item.obverseImageUrl = '';
-          item.reverseImageUrl = '';
-          purged++;
-        }
+        let changed = false;
+        if (isNumistaUrl(item.obverseImageUrl)) { item.obverseImageUrl = ''; changed = true; }
+        if (isNumistaUrl(item.reverseImageUrl)) { item.reverseImageUrl = ''; changed = true; }
+        if (changed) purged++;
       }
       if (purged > 0 && typeof saveInventory === 'function') saveInventory();
       if (typeof renderTable === 'function') renderTable();
