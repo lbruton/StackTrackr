@@ -115,6 +115,7 @@ const elements = {
   // Emergency reset button
   removeInventoryDataBtn: null,
   boatingAccidentBtn: null,
+  forceRefreshBtn: null,
 
 
   // Notes modal elements
