@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.32.36] - 2026-02-25
+
+### Fixed — STAK-309/STAK-311: Numista Data Integrity
+
+- **Fixed**: Numista image URLs no longer re-populate after being cleared in the edit form — removed stale `oldItem` fallback from the save path (STAK-309)
+- **Fixed**: Clearing the N# field now also wipes all associated Numista metadata (country, denomination, etc.) instead of silently preserving it (STAK-309)
+- **Fixed**: CDN backfill on page load removed — URLs were being re-applied from catalog cache on every reload, undoing deliberate clears (STAK-309)
+- **Fixed**: Numista images no longer cross-contaminate between items — view modal no longer mutates the live inventory item object (STAK-311)
+- **Changed**: N# field removed from custom pattern rules edit form — Numista lookup for pattern rules is handled via the pattern replacement query, not a direct catalog ID (STAK-306)
+- **Added**: "Purge Numista URLs" button in Settings → Images — removes all CDN image URLs from inventory items without touching user uploads or pattern rule images (STAK-312)
+
+---
+
 ## [3.32.35] - 2026-02-24
 
 ### Added — STAK-320: Header Buttons Reorder & Apply to Header
