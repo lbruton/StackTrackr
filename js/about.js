@@ -283,11 +283,10 @@ const setupAckModalEvents = () => {
  */
 const getEmbeddedWhatsNew = () => {
   return `
+    <li><strong>v3.32.41 &ndash; Image Pipeline Simplification</strong>: Removed coinImages IDB cache layer entirely. CDN URLs on inventory items are now the sole Numista image source. Eliminates root cause of STAK-309/311/332/333/339 image bugs. Cascade is now: user upload &rarr; pattern image &rarr; CDN URL &rarr; placeholder (STAK-339).</li>
     <li><strong>v3.32.40 &ndash; Numista Image Race Condition Fix</strong>: Numista images now appear in table and card views immediately after applying a result. Previously images only showed after a page refresh due to a fire-and-forget race condition (STAK-337).</li>
     <li><strong>v3.32.39 &ndash; Image Bug Fixes + API Health Refresh</strong>: Fixed CDN URL writeback in resync and bulk cache. Remove button now clears URL fields and sets per-item pattern opt-out flag. API health badge uses cache-busting to defeat service worker staleness (STAK-333, STAK-308, STAK-332, STAK-311, STAK-334).</li>
     <li><strong>v3.32.38 &ndash; Home Poller SSH + Skill Updates</strong>: New homepoller-ssh skill for direct SSH management of the home VM. Updated repo-boundaries with corrected IP and SSH workflow. Skills no longer delegate to OS-level Claude agent.</li>
-    <li><strong>v3.32.37 &ndash; Wiki-First Documentation Policy</strong>: StakTrakrWiki established as sole source of truth. Notion infrastructure pages deprecated. New wiki-search skill for querying docs via claude-context. finishing-a-development-branch skill updated with Wiki Update Gate before every PR.</li>
-    <li><strong>v3.32.36 &ndash; Bug Fixes &mdash; Numista Data Integrity</strong>: Fixed Numista image URLs and metadata re-populating after being cleared in the edit form. Fixed view modal cross-contaminating images between items. Removed on-load CDN backfill that undid deliberate clears. Added Purge Numista URLs button in Settings &rarr; Images (STAK-309, STAK-311, STAK-306, STAK-312).</li>
   `;
 };
 
