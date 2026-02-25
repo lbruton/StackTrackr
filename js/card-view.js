@@ -5,7 +5,7 @@
  * Returns the active card style from localStorage.
  * @returns {'A'|'B'|'C'|'D'}
  */
-const getCardStyle = () => localStorage.getItem(CARD_STYLE_KEY) || 'A';
+const getCardStyle = () => localStorage.getItem(CARD_STYLE_KEY) || 'D';
 
 /**
  * Returns true when the card view (A/B/C) should be rendered instead of the table.
