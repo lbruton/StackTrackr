@@ -860,32 +860,65 @@ const filterInventoryAdvanced = () => {
   // Apply text search
   if (!searchQuery.trim()) return result;
 
-  let query = searchQuery.toLowerCase().trim();
+  const query = searchQuery.toLowerCase().trim();
+  const rawTerms = query.split(',').map(t => t.trim()).filter(t => t);
 
-  const terms = query.split(',').map(t => t.trim()).filter(t => t);
+  // Pre-compile regular expressions and expanded phrases for each term
+  // This avoids O(N*M) regex compilations inside the filter loop (now O(M))
+  const processedTerms = rawTerms.map(term => {
+    const words = term.split(/\s+/).filter(w => w.length > 0);
+    const abbrevs = typeof METAL_ABBREVIATIONS !== 'undefined' ? METAL_ABBREVIATIONS : {};
+
+    // 1. Pre-compile expanded phrase for "exact match" checks
+    const expandedWords = words.map(w => abbrevs[w] || w);
+    const expandedPhrase = expandedWords.join(' '); // already lowercase from query
+
+    // 2. Pre-compile per-word regexes (used in single-word and multi-word logic)
+    const wordMatchers = words.map(word => {
+      const escaped = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const patterns = [escaped];
+      const expansion = abbrevs[word];
+      if (expansion) {
+        patterns.push(expansion.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+      }
+      const combined = patterns.join('|');
+      // nosemgrep: javascript.dos.rule-non-literal-regexp
+      return new RegExp(`\\b(?:${combined})`, 'i');
+    });
+
+    // 3. Pre-compile simple word boundary regexes for the "allWordsPresent" check
+    // (stricter check used in multi-word logic)
+    const strictWordMatchers = words.map(word => {
+      // nosemgrep: javascript.dos.rule-non-literal-regexp
+      return new RegExp(`\\b${word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
+    });
+
+    return {
+      raw: term,
+      words,
+      expandedPhrase,
+      wordMatchers,
+      strictWordMatchers
+    };
+  });
+
+  if (!processedTerms.length) return result;
 
   return result.filter(item => {
-    if (!terms.length) return true;
-
     const formattedDate = formatDisplayDate(item.date).toLowerCase();
-    
+
     // Handle comma-separated terms (OR logic between comma terms)
-    return terms.some(q => {
-      // Split each comma term into individual words for AND logic
-      const words = q.split(/\s+/).filter(w => w.length > 0);
-      
+    return processedTerms.some(termObj => {
+      const { raw: q, words, expandedPhrase, wordMatchers, strictWordMatchers } = termObj;
+
       // Special handling for multi-word searches to prevent partial matches
       // If searching for "American Eagle", it should only match items that have both words
       // but NOT match "American Gold Eagle" (which has an extra word in between)
       if (words.length >= 2) {
-        // STACK-62: Expand abbreviations in the query words for multi-word searches
-        const abbrevs = typeof METAL_ABBREVIATIONS !== 'undefined' ? METAL_ABBREVIATIONS : {};
-        const expandedWords = words.map(w => abbrevs[w.toLowerCase()] || w);
-        const expandedPhrase = expandedWords.join(' ').toLowerCase();
-
         // For multi-word searches, check if the exact phrase exists or
         // if all words exist as separate word boundaries without conflicting words
-        const exactPhrase = q.toLowerCase();
+        const exactPhrase = q; // q is already lowercased term
+
         // STAK-126: include tags in searchable text
         let itemText = searchCache.get(item);
         if (itemText === undefined) {
@@ -927,50 +960,46 @@ const filterInventoryAdvanced = () => {
 
         // For phrase searches like "American Eagle", be more restrictive
         // Check that all words are present as word boundaries
-        const allWordsPresent = words.every(word => {
-          // nosemgrep: javascript.dos.rule-non-literal-regexp
-          const wordRegex = new RegExp(`\\b${word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
-          return wordRegex.test(itemText);
-        });
+        const allWordsPresent = strictWordMatchers.every(regex => regex.test(itemText));
 
         if (!allWordsPresent) {
           return false;
         }
-        
+
         // Prevent cross-metal matching for common coin series
         if (words.length === 2) {
           const seriesResult = matchCoinSeries(words[0], words[1], itemText, exactPhrase);
           if (seriesResult !== null) return seriesResult;
         }
-        
+
         // Handle three-word searches with special patterns
         if (words.length === 3) {
           // Handle "American Gold Eagle" type searches - these should be exact
           const firstWord = words[0];
           const middleWord = words[1];
           const lastWord = words[2];
-          
+
           if (['american', 'canadian', 'british', 'chinese', 'australian', 'south'].includes(firstWord) &&
               ['gold', 'silver', 'platinum', 'palladium'].includes(middleWord) &&
               ['eagle', 'maple', 'britannia', 'krugerrand', 'buffalo', 'panda', 'kangaroo'].includes(lastWord)) {
             // For "American Gold Eagle" type searches, require exact phrase or very close match
-            return itemText.includes(exactPhrase) || 
+            return itemText.includes(exactPhrase) ||
                    (lastWord === 'maple' && itemText.includes(`${firstWord} ${middleWord} maple leaf`));
           }
         }
-        
+
         // Handle fractional weight searches to be more specific
         // "1/4 oz" should be distinct from "1/2 oz" and "1 oz"
         if (words.length >= 2) {
           const hasFraction = words.some(word => word.includes('/'));
           const hasOz = words.some(word => word === 'oz' || word === 'ounce');
-          
+
           if (hasFraction && hasOz) {
             // For fractional searches, require exact phrase match
             return itemText.includes(exactPhrase);
           }
         }
-        
+
         // Prevent overly broad country/origin searches
         const broadTerms = ['american', 'canadian', 'australian', 'british', 'chinese', 'south', 'mexican'];
         if (words.length === 1 && broadTerms.includes(words[0])) {
@@ -978,24 +1007,14 @@ const filterInventoryAdvanced = () => {
           // Return false to prevent matching everything from that country
           return false;
         }
-        
+
         return true;
       }
-      
-      // For single words, use word boundary matching with abbreviation expansion
-      const fieldMatch = words.every(word => {
-        // STACK-62: Build regex with original word + abbreviation expansion
-        const escaped = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        const patterns = [escaped];
-        const abbrevs = typeof METAL_ABBREVIATIONS !== 'undefined' ? METAL_ABBREVIATIONS : {};
-        const expansion = abbrevs[word.toLowerCase()];
-        if (expansion) {
-          patterns.push(expansion.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
-        }
-        const combined = patterns.join('|');
-        // nosemgrep: javascript.dos.rule-non-literal-regexp
-        const wordRegex = new RegExp(`\\b(?:${combined})`, 'i');
 
+      // For single words, use word boundary matching with abbreviation expansion
+      // Uses pre-compiled regexes from step 2
+      const fieldMatch = wordMatchers.every((wordRegex, i) => {
+        const word = words[i]; // for non-regex checks like date/numbers
         return (
           wordRegex.test(item.metal) ||
           (item.composition && wordRegex.test(item.composition)) ||
@@ -1015,6 +1034,7 @@ const filterInventoryAdvanced = () => {
           (item.certNumber && wordRegex.test(String(item.certNumber))) ||
           (item.numistaId && wordRegex.test(String(item.numistaId))) ||
           (item.serialNumber && wordRegex.test(item.serialNumber)) ||
+          (item.pcgsNumber && wordRegex.test(String(item.pcgsNumber))) ||
           (typeof getItemTags === 'function' && getItemTags(item.uuid).some(t => wordRegex.test(t)))
         );
       });
@@ -1031,9 +1051,10 @@ const filterInventoryAdvanced = () => {
           typeof fuzzyMatch === 'function') {
         const fuzzyThreshold = typeof AUTOCOMPLETE_CONFIG !== 'undefined'
           ? AUTOCOMPLETE_CONFIG.threshold : 0.3;
+        const fuzzyOptions = { threshold: fuzzyThreshold };
         const fieldsToCheck = [item.name, item.purchaseLocation, item.storageLocation || '', item.notes || ''];
         for (const field of fieldsToCheck) {
-          if (field && fuzzyMatch(q, field, { threshold: fuzzyThreshold }) > 0) {
+          if (field && fuzzyMatch(q, field, fuzzyOptions) > 0) {
             if (!window._fuzzyMatchUsed) window._fuzzyMatchUsed = true;
             return true;
           }
