@@ -477,6 +477,7 @@ class ImageCache {
 
     // Helper: check pattern images store for a matching rule
     const _checkPatternImage = async () => {
+      if (item.ignorePatternImages) return null;
       if (typeof NumistaLookup === 'undefined') return null;
       const match = NumistaLookup.matchQuery(item.name || '');
       if (!match?.rule?.seedImageId) return null;
