@@ -118,7 +118,7 @@ const bindAppearanceAndHeaderListeners = () => {
   });
 
   wireStorageToggle('settingsHeaderShowText_hdr', HEADER_BTN_SHOW_TEXT_KEY, {
-    defaultVal: false,
+    defaultVal: true,
     onApply: () => applyHeaderToggleVisibility(),
   });
 
