@@ -22,9 +22,17 @@ Use `mcp__claude-context__search_code` to search StakTrakrWiki for documentation
 
 ---
 
-## How to Index the Wiki
+## Before Any Wiki Work — Pull + Index
 
-Run this when the wiki has never been indexed, or after major structural updates:
+**Mandatory before lookups or edits.** The wiki repo must be current locally before indexing.
+
+### Step 1: Pull remote
+
+```bash
+cd /Volumes/DATA/GitHub/StakTrakrWiki && git pull origin main
+```
+
+### Step 2: Index (or re-index)
 
 ```
 mcp__claude-context__index_codebase
@@ -43,6 +51,8 @@ mcp__claude-context__index_codebase
   force: true
 ```
 
+**Do not skip the pull.** Another session or agent may have pushed changes since your last index.
+
 ---
 
 ## Check Index Status
@@ -51,7 +61,7 @@ mcp__claude-context__index_codebase
 mcp__claude-context__get_indexing_status
 ```
 
-The wiki should show ~19 files, ~74 chunks when fully indexed. If counts are lower than expected, run `index_codebase` with `force: true`.
+The wiki should show ~22 files, ~90+ chunks when fully indexed. If counts are lower than expected, run `index_codebase` with `force: true`.
 
 ---
 
@@ -75,7 +85,10 @@ mcp__claude-context__search_code
 | `"safeGetElement pattern"` | `dom-patterns.md` |
 | `"spot pipeline stale thresholds"` | `health.md`, `spot-pipeline.md` |
 | `"release workflow worktree"` | `release-workflow.md` |
-| `"goldback scrape daily"` | `goldback-pipeline.md` |
+| `"goldback per-state slugs"` | `goldback-pipeline.md` |
+| `"Turso readLatestPerVendor"` | `turso-schema.md`, `retail-pipeline.md` |
+| `"REST API confidence scoring"` | `rest-api-reference.md` |
+| `"cron timeline minute by minute"` | `cron-schedule.md` |
 | `"secrets rotation"` | `secrets.md` |
 
 ---
@@ -87,11 +100,14 @@ mcp__claude-context__search_code
 | Page | Topic |
 |------|-------|
 | `architecture-overview.md` | System diagram, repo boundaries, data feeds |
-| `retail-pipeline.md` | Dual-poller, Turso, providers.json, OOS detection |
+| `rest-api-reference.md` | Complete endpoint map, schemas, confidence tiers, vendor reference |
+| `turso-schema.md` | Database tables, indexes, key query patterns, data volume estimates |
+| `cron-schedule.md` | Full timeline view of spot/retail/publish cron interleaving |
+| `retail-pipeline.md` | Dual-poller, Turso, providers.json, OOS detection, T1–T5 resilience |
 | `fly-container.md` | Services, cron, env vars, proxy config, deployment |
 | `home-poller.md` | Proxmox LXC setup, cron, sync process |
-| `spot-pipeline.md` | GitHub Actions, MetalPriceAPI, hourly files |
-| `goldback-pipeline.md` | Daily scrape, run-goldback.sh |
+| `spot-pipeline.md` | MetalPriceAPI, hourly/15min files, backfill logic |
+| `goldback-pipeline.md` | Per-state slugs (8 states × 7 denominations), denomination generation |
 | `providers.md` | URL strategy, year-start patterns, update process |
 | `secrets.md` | Where every secret lives, how to rotate |
 | `health.md` | Quick health checks, stale thresholds, diagnosis commands |
@@ -114,7 +130,10 @@ mcp__claude-context__search_code
 
 ## Notes
 
+- **StakTrakrWiki is the single source of truth** for all project documentation — architecture, patterns, operations, and runbooks.
 - The code index (StakTrakr repo) and wiki index are separate — both can be searched via the `path` parameter.
+- **Always pull before indexing** — another session may have pushed changes.
 - Re-index with `force: true` after major wiki restructuring to ensure accurate results.
 - Infrastructure pages are owned by StakTrakrApi Claude. For infra questions, search first, then verify with `/remember api infrastructure` if needed.
 - Raw pages accessible at: `https://raw.githubusercontent.com/lbruton/StakTrakrWiki/main/<page>.md`
+- Wiki changes should be committed and pushed via `git commit` + `git push origin main` (or PR for large rewrites).
