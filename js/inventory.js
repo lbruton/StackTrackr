@@ -2202,6 +2202,9 @@ const editItem = (idx, logIdx = null) => {
   if (elements.itemPcgsNumber) elements.itemPcgsNumber.value = item.pcgsNumber || '';
   if (elements.itemObverseImageUrl) elements.itemObverseImageUrl.value = item.obverseImageUrl || '';
   if (elements.itemReverseImageUrl) elements.itemReverseImageUrl.value = item.reverseImageUrl || '';
+  // STAK-332: Populate ignorePatternImages checkbox from item data
+  const ignorePatternEl = document.getElementById('itemIgnorePatternImages');
+  if (ignorePatternEl) ignorePatternEl.checked = !!item.ignorePatternImages;
   if (elements.itemSerial) elements.itemSerial.value = item.serial;
 
   // Pre-fill purity: match a preset or show custom input
@@ -2288,7 +2291,7 @@ const editItem = (idx, logIdx = null) => {
       showUrlPreviewFallback(loaded);
       // If still missing sides, try pattern image resolution
       if (!loaded.obverse || !loaded.reverse) {
-        const itemMeta = { uuid: item.uuid, numistaId: item.numistaId || '', name: item.name || '', metal: item.metal || '', type: item.type || '' };
+        const itemMeta = { uuid: item.uuid, numistaId: item.numistaId || '', name: item.name || '', metal: item.metal || '', type: item.type || '', ignorePatternImages: !!item.ignorePatternImages };
         if (!loaded.obverse) {
           const obvUrl = await imageCache.resolveImageUrlForItem(itemMeta, 'obverse').catch(() => null);
           if (obvUrl && !item.obverseImageUrl) showPreview(obvUrl, 'Obv', 'obverse');

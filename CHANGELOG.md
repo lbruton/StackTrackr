@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.32.39] - 2026-02-25
+
+### Fixed — Image Bug Fixes + API Health Refresh
+
+- **Fixed**: `resyncCachedEntry()` and bulk image cache no longer write CDN URLs back to inventory items — IDB cache is the correct storage location (STAK-333)
+- **Fixed**: Remove button now clears hidden URL input fields so deleted CDN URLs don't persist on save (STAK-308)
+- **Added**: Per-item "Ignore image pattern rules" checkbox — prevents pattern rule images from reappearing after explicit removal (STAK-332)
+- **Fixed**: Remaining image cross-contamination paths plugged by CDN writeback removal + pattern opt-out (STAK-311)
+- **Fixed**: API health badge no longer shows stale data due to service worker caching — cache-busting query param defeats SW match (STAK-334)
+
+---
+
 ## [3.32.38] - 2026-02-25
 
 ### Added — Home Poller SSH Skill + Skill Updates
