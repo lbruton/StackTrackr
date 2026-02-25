@@ -568,7 +568,7 @@ const _cardChipsHTML = (item, small = false) => {
   const _cardTags = typeof getItemTags === 'function' ? getItemTags(item.uuid) : [];
   if (_cardTags.length > 0) {
     const tagText = sanitizeHtml(_cardTags.slice(0, 2).join(', ')) + (_cardTags.length > 2 ? '\u2026' : '');
-    h += `<span class="cv-chip cv-chip-tags"${s} title="${escapeAttribute(_cardTags.join(', '))}">${tagText}</span>`;
+    h += `<span class="cv-chip cv-chip-tags"${s} title="${_cvEscapeAttr(_cardTags.join(', '))}">${tagText}</span>`;
   }
 
   return h;
