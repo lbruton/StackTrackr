@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.32.41] - 2026-02-25
+
+### Changed — Image Pipeline Simplification
+
+- **Removed**: `coinImages` IDB cache layer — CDN URLs on inventory items are now the sole Numista image source, eliminating the root cause of STAK-309/311/332/333/339 image bugs (STAK-339)
+- **Removed**: `numistaOverridePersonal` settings toggle — no longer meaningful without cached blobs to prioritize
+- **Removed**: CDN blob export/import from ZIP backup — CDN images are URLs, not local blobs
+- **Simplified**: Image resolution cascade is now: user upload → pattern image → CDN URL → placeholder
+
+---
+
 ## [3.32.40] - 2026-02-25
 
 ### Fixed — Numista Image Race Condition
