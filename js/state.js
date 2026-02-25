@@ -98,7 +98,6 @@ const elements = {
   importProgress: null,
   importProgressText: null,
   numistaImportFile: null,
-  numistaOverride: null,
   numistaMerge: null,
 
   // Export elements

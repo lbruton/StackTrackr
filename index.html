@@ -1361,7 +1361,8 @@
               </div>
               <!-- Hidden wrapper preserved for feature-flag JS compatibility -->
               <div id="imageUrlGroup" style="display:none"></div>
-              <div id="ignorePatternImagesGroup" class="image-pattern-toggle-group">
+              <!-- ignorePatternImagesGroup hidden — per-side cascade makes this redundant (STAK-339); planned for future per-slot control -->
+              <div id="ignorePatternImagesGroup" class="image-pattern-toggle-group" style="display:none">
                 <div class="pattern-toggle-row">
                   <label class="settings-checkbox-label pattern-toggle-label">
                     <input type="checkbox" id="itemIgnorePatternImages" />
@@ -3097,21 +3098,13 @@
                       <button type="button" class="chip-sort-btn" data-val="reverse">Rev</button>
                     </div>
                   </div>
-                  <div class="settings-card">
-                    <div class="settings-group-label">Numista override</div>
-                    <p class="settings-subtext">Numista images take priority.</p>
-                    <div class="chip-sort-toggle" id="numistaOverrideToggle">
-                      <button type="button" class="chip-sort-btn" data-val="yes">On</button>
-                      <button type="button" class="chip-sort-btn" data-val="no">Off</button>
-                    </div>
-                  </div>
                 </div>
               </div>
 
               <!-- ── Add Pattern Image Rule ── -->
               <div class="settings-fieldset">
                 <div class="settings-fieldset-title">Add Pattern Image Rule</div>
-                <p class="settings-subtext">Create rules that automatically assign images to items matching a name pattern.</p>
+                <p class="settings-subtext">Create rules that automatically assign images to items matching a name pattern. Per-item uploads always take priority over pattern images on a per-side basis.</p>
                 <div class="pattern-rule-form" id="patternRuleForm">
                   <div class="pattern-rule-form-row">
                     <div class="pattern-rule-field">

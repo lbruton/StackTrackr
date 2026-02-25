@@ -140,7 +140,7 @@ const renderEligibleItemsTable = async () => {
       delBtn.textContent = '\u2715';
       delBtn.title = 'Delete cached data';
       delBtn.addEventListener('click', async () => {
-        await imageCache.deleteImages(catalogId);
+        await imageCache.deleteMetadata(catalogId);
         logSyncActivity(`Deleted cache for ${catalogId}`, 'warn');
         await renderEligibleItemsTable();
         await renderSyncStats();
@@ -168,8 +168,7 @@ const resyncCachedEntry = async (catalogId) => {
     return resolved === catalogId;
   });
 
-  // Delete both images and metadata for a clean re-sync
-  await imageCache.deleteImages(catalogId);
+  // Delete metadata for a clean re-sync (coinImages store removed — STAK-339)
   await imageCache.deleteMetadata(catalogId);
 
   // Fetch metadata + image URLs from Numista API
