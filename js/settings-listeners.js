@@ -92,28 +92,9 @@ const bindAppearanceAndHeaderListeners = () => {
     });
   }
 
-  wireStorageToggle('settingsHeaderThemeBtn', 'headerThemeBtnVisible', {
-    defaultVal: false,
-    onApply: () => applyHeaderToggleVisibility(),
-  });
-
+  // settingsHeaderCurrencyBtn still exists in the Currency settings panel
   wireStorageToggle('settingsHeaderCurrencyBtn', 'headerCurrencyBtnVisible', {
     defaultVal: false,
-    onApply: () => applyHeaderToggleVisibility(),
-  });
-
-  wireStorageToggle('settingsHeaderTrendBtn', HEADER_TREND_BTN_KEY, {
-    defaultVal: true,
-    onApply: () => applyHeaderToggleVisibility(),
-  });
-
-  wireStorageToggle('settingsHeaderSyncBtn', HEADER_SYNC_BTN_KEY, {
-    defaultVal: true,
-    onApply: () => applyHeaderToggleVisibility(),
-  });
-
-  wireStorageToggle('settingsHeaderMarketBtn', HEADER_MARKET_BTN_KEY, {
-    defaultVal: true,
     onApply: () => applyHeaderToggleVisibility(),
   });
 
