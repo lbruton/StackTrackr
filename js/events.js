@@ -1227,28 +1227,50 @@ const setupItemFormListeners = () => {
         commitItemToInventory(fields, isEditing, editingIndex);
 
         // Save user-uploaded image if pending (STACK-32)
-        // Pattern toggle: create a pattern rule instead of per-item image
+        // Pattern toggle: promote images to a pattern rule instead of (or in addition to) per-item save
         let patternRuleSaved = false;
         const patternToggle = document.getElementById('imagePatternToggle');
-        if ((_pendingObverseBlob || _pendingReverseBlob) && patternToggle?.checked) {
+        const savedItem = isEditing ? inventory[savedEditIdx] : inventory[inventory.length - 1];
+        if (patternToggle?.checked) {
           try {
             const rawKeywords = (document.getElementById('imagePatternKeywords')?.value || '').trim();
             if (rawKeywords) {
-              // Convert keywords to regex: "morgan, peace" → "morgan|peace"
-              const terms = rawKeywords.split(/[,;]/).map(t => t.trim()).filter(t => t.length > 0);
-              const pattern = terms.map(t => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|');
-              // Pre-generate ruleId and pass as seedImageId — the image lookup
-              // chain resolves via rule.seedImageId, not rule.id
-              const ruleId = 'custom-img-' + Date.now();
-              const result = NumistaLookup.addRule(pattern, rawKeywords, null, ruleId);
-              if (result?.success && window.imageCache?.isAvailable()) {
-                await window.imageCache.cachePatternImage(ruleId, _pendingObverseBlob, _pendingReverseBlob);
-                debugLog(`Pattern rule created: ${result.id} (images: ${ruleId}) for "${rawKeywords}"`);
+              // Resolve blobs: prefer pending upload, fall back to already-saved per-item IDB record
+              let obvBlob = _pendingObverseBlob;
+              let revBlob = _pendingReverseBlob;
+              // Fill in missing sides from existing per-item IDB record
+              if ((!obvBlob || !revBlob) && savedItem?.uuid && window.imageCache?.isAvailable()) {
+                const existing = await window.imageCache.getUserImage(savedItem.uuid).catch(() => null);
+                if (existing) {
+                  if (!obvBlob) obvBlob = existing.obverse || null;
+                  if (!revBlob) revBlob = existing.reverse || null;
+                }
+              }
+
+              if (obvBlob || revBlob) {
+                // Convert keywords to regex: "morgan, peace" → "morgan|peace"
+                const terms = rawKeywords.split(/[,;]/).map(t => t.trim()).filter(t => t.length > 0);
+                const pattern = terms.map(t => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|');
+                // Pre-generate ruleId and pass as seedImageId — the image lookup
+                // chain resolves via rule.seedImageId, not rule.id
+                const ruleId = 'custom-img-' + Date.now();
+                const result = NumistaLookup.addRule(pattern, rawKeywords, null, ruleId);
+                if (result?.success && window.imageCache?.isAvailable()) {
+                  await window.imageCache.cachePatternImage(ruleId, obvBlob, revBlob);
+                  debugLog(`Pattern rule created: ${result.id} (images: ${ruleId}) for "${rawKeywords}"`);
+                  // Move: delete the per-item userImages record so it no longer appears in Per-Item section
+                  if (savedItem?.uuid) {
+                    await window.imageCache.deleteUserImage(savedItem.uuid).catch(() => {});
+                  }
+                } else {
+                  debugLog(`Failed to create pattern rule: ${result?.error}`, 'warn');
+                }
               } else {
-                debugLog(`Failed to create pattern rule: ${result?.error}`, 'warn');
+                debugLog('Pattern toggle checked but no images available to promote', 'warn');
               }
               clearUploadState();
               patternRuleSaved = true;
+              renderTable();
             }
           } catch (err) {
             console.warn('Failed to create pattern rule from modal:', err);
@@ -1258,7 +1280,6 @@ const setupItemFormListeners = () => {
         }
         if (!patternRuleSaved && (_pendingObverseBlob || _pendingReverseBlob || _deleteObverseOnSave || _deleteReverseOnSave)) {
           // Per-item save: save blobs against the item's UUID
-          const savedItem = isEditing ? inventory[savedEditIdx] : inventory[inventory.length - 1];
           if (savedItem?.uuid) {
             try {
               const saved = await saveUserImageForItem(savedItem.uuid);
