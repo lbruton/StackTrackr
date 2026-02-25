@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.32.40] - 2026-02-25
+
+### Fixed — Numista Image Race Condition
+
+- **Fixed**: Numista images now appear in table/card views immediately after applying — cacheImages re-renders on completion instead of fire-and-forget (STAK-337)
+
+---
+
 ## [3.32.39] - 2026-02-25
 
 ### Fixed — Image Bug Fixes + API Health Refresh
