@@ -1334,28 +1334,14 @@ const _loadBulkRowImages = async (tr, item) => {
 
   const { showObv, showRev } = _getBulkImageSides();
 
-  // Resolve best source via the same cascade inventory table uses
-  const resolved = await imageCache.resolveImageForItem(item);
+  // Per-side cascade: user upload → pattern → CDN URL (each side independent)
   if (!tr.isConnected) return;
 
-  /**
-   * Get a URL for one side from the resolved source.
-   * @param {'obverse'|'reverse'} side
-   * @returns {Promise<string|null>}
-   */
   const _getUrl = async (side) => {
-    if (!resolved) {
-      // Fall back to item.obverseImageUrl / item.reverseImageUrl strings
-      return side === 'obverse' ? (item.obverseImageUrl || null) : (item.reverseImageUrl || null);
-    }
-    let url = null;
-    if (resolved.source === 'user') {
-      url = await imageCache.getUserImageUrl(item.uuid, side);
-    } else if (resolved.source === 'pattern') {
-      url = await imageCache.getPatternImageUrl(resolved.catalogId, side);
-    }
-    if (url) _bulkBlobUrls.add(url);
-    return url;
+    const url = await imageCache.resolveImageUrlForItem(item, side);
+    if (url) { _bulkBlobUrls.add(url); return url; }
+    // Fall back to CDN URL strings on item
+    return side === 'obverse' ? (item.obverseImageUrl || null) : (item.reverseImageUrl || null);
   };
 
   const obvUrl = showObv ? await _getUrl('obverse') : null;
@@ -1473,12 +1459,15 @@ const _openBulkImagePopover = (imgTd, item) => {
     let source = null;
 
     if (window.imageCache?.isAvailable()) {
-      const rec = await imageCache.resolveImageForItem(item);
-      source = rec?.source || null;
-      if (source === 'user') {
-        url = await imageCache.getUserImageUrl(item.uuid, side);
-      } else if (source === 'pattern') {
-        url = await imageCache.getPatternImageUrl(rec.catalogId, side);
+      // Try user image first for this specific side
+      const userUrl = item.uuid ? await imageCache.getUserImageUrl(item.uuid, side) : null;
+      if (userUrl) {
+        url = userUrl;
+        source = 'user';
+      } else {
+        // Try pattern image for this side
+        url = await imageCache.resolveImageUrlForItem(item, side);
+        source = url ? 'pattern' : null;
       }
     }
 

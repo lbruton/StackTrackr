@@ -372,23 +372,34 @@ class ImageCache {
 
   /**
    * Resolves and returns an object URL for the best available image side.
-   * Uses resolveImageForItem() to select source, then loads the requested side.
+   * Per-side cascade: user upload for this side → pattern image for this side → null.
+   * This allows mixed sources (e.g. user obverse + pattern reverse).
    *
    * @param {Object} item - Inventory item with uuid/numistaId/name metadata
    * @param {'obverse'|'reverse'} [side='obverse']
    * @returns {Promise<string|null>} Object URL (caller must revoke) or null
    */
   async resolveImageUrlForItem(item, side = 'obverse') {
+    if (!item || !(await this._ensureDb())) return null;
     const normalizedSide = side === 'reverse' ? 'reverse' : 'obverse';
-    const resolved = await this.resolveImageForItem(item);
-    if (!resolved) return null;
 
-    if (resolved.source === 'user') {
-      return this.getUserImageUrl(resolved.catalogId, normalizedSide);
+    // 1. Try user-uploaded image for this specific side
+    if (item.uuid) {
+      const userUrl = await this.getUserImageUrl(item.uuid, normalizedSide);
+      if (userUrl) return userUrl;
     }
-    if (resolved.source === 'pattern') {
-      return this.getPatternImageUrl(resolved.catalogId, normalizedSide);
+
+    // 2. Try pattern image for this specific side (unless ignored)
+    if (!item.ignorePatternImages) {
+      if (typeof NumistaLookup !== 'undefined') {
+        const match = NumistaLookup.matchQuery(item.name || '');
+        if (match?.rule?.seedImageId) {
+          const patternUrl = await this.getPatternImageUrl(match.rule.seedImageId, normalizedSide);
+          if (patternUrl) return patternUrl;
+        }
+      }
     }
+
     return null;
   }
 

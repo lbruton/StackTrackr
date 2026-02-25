@@ -684,22 +684,13 @@ async function loadViewImages(item, container) {
     return { loaded: validObv || validRev, source: 'cdn' };
   }
 
-  // Use the resolution cascade (user → pattern)
-  const resolved = await imageCache.resolveImageForItem(item);
-  if (resolved) {
-    let obvUrl, revUrl;
-    if (resolved.source === 'user') {
-      obvUrl = await imageCache.getUserImageUrl(resolved.catalogId, 'obverse');
-      revUrl = await imageCache.getUserImageUrl(resolved.catalogId, 'reverse');
-    } else if (resolved.source === 'pattern') {
-      obvUrl = await imageCache.getPatternImageUrl(resolved.catalogId, 'obverse');
-      revUrl = await imageCache.getPatternImageUrl(resolved.catalogId, 'reverse');
-    }
+  // Per-side cascade: user upload → pattern → CDN URL (each side independent)
+  const obvUrl = await imageCache.resolveImageUrlForItem(item, 'obverse');
+  const revUrl = await imageCache.resolveImageUrlForItem(item, 'reverse');
 
-    if (obvUrl) { _viewModalObjectUrls.push(obvUrl); _setSlotImage(obvSlot, obvUrl); }
-    if (revUrl) { _viewModalObjectUrls.push(revUrl); _setSlotImage(revSlot, revUrl); }
-    if (obvUrl || revUrl) return { loaded: true, source: resolved.source };
-  }
+  if (obvUrl) { _viewModalObjectUrls.push(obvUrl); _setSlotImage(obvSlot, obvUrl); }
+  if (revUrl) { _viewModalObjectUrls.push(revUrl); _setSlotImage(revSlot, revUrl); }
+  if (obvUrl || revUrl) return { loaded: true, source: 'idb' };
 
   // Final fallback: CDN URLs stored on the item (validate to skip corrupted URLs)
   const validObv = ImageCache.isValidImageUrl(item.obverseImageUrl);
