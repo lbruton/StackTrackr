@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.32.42] - 2026-02-25
+
+### Fixed — Pattern Rule Promotion Bug
+
+- **Fixed**: "Apply to all matching items" now correctly promotes images to a pattern rule even when the item was saved previously — reads from existing per-item IDB record when no pending upload blobs are in memory (STAK-339-followup)
+- **Fixed**: Promoting to a pattern rule now removes the per-item `userImages` IDB record (avoids duplicate storage)
+
+---
+
 ## [3.32.41] - 2026-02-25
 
 ### Changed — Image Pipeline Simplification
