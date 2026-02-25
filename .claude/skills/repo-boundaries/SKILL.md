@@ -12,7 +12,7 @@ description: Use when doing any cross-repo work, deploying, or when unsure which
 | `lbruton/StakTrakr` | Frontend HTML/JS/CSS, `.claude/` skills, CLAUDE.md, smoke tests | Poller scripts, fly.toml, Dockerfile, devops crons |
 | `lbruton/StakTrakrApi` | ALL backend devops: fly.toml, Dockerfile, all run-*.sh, price-extract.js, api-export.js, spot-poller, providers.json | Frontend code |
 | `lbruton/stakscrapr` | Home VM config repo: CLAUDE.md, env templates, home-only additions (dashboard.js, tinyproxy config). **Managed via SSH from this Mac** — see `homepoller-ssh` skill | fly.toml authority (StakTrakrApi owns it), `fly deploy` |
-| `lbruton/StakTrakrWiki` | Shared infrastructure documentation | Code, config, scripts |
+| `lbruton/StakTrakrWiki` | **Single source of truth** for all project documentation — architecture, patterns, operations, runbooks. Local path: `/Volumes/DATA/GitHub/StakTrakrWiki`. Lookup: pull → index via `claude-context` → search. **Branch-protected `main`** — all changes require a PR. Never push directly. | Code, config, scripts |
 
 ---
 
