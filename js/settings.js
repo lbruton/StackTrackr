@@ -338,7 +338,7 @@ const syncSettingsUI = () => {
   // Card style (STAK-118)
   const cardStyleSelect = document.getElementById('settingsCardStyle');
   if (cardStyleSelect) {
-    cardStyleSelect.value = localStorage.getItem(CARD_STYLE_KEY) || 'A';
+    cardStyleSelect.value = localStorage.getItem(CARD_STYLE_KEY) || 'D';
   }
 
   // Desktop card view toggle (STAK-118)

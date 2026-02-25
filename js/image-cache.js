@@ -2,11 +2,12 @@
 // =============================================================================
 
 /**
- * ImageCache provides persistent IndexedDB storage for coin images (obverse/reverse)
- * and enriched Numista metadata. Images are resized and compressed to JPEG before storage.
+ * ImageCache provides persistent IndexedDB storage for user-uploaded images,
+ * pattern rule images, and enriched Numista metadata.
  *
  * Schema:
  *   DB: StakTrakrImages v3
+ *   Store "coinImages"    — keyPath: catalogId (LEGACY; retained in schema, no longer read/written)
  *   Store "coinMetadata"  — keyPath: catalogId (Numista N# string)
  *   Store "userImages"    — keyPath: uuid (item UUID string)
  *   Store "patternImages" — keyPath: ruleId (pattern rule ID string)
