@@ -77,7 +77,7 @@ When a code change on the home VM needs to reach Fly.io:
 2. Open PR to StakTrakrApi main
 3. Review + merge
 4. cd StakTrakrApi/devops/fly-poller && fly deploy
-5. Update home VM via SSH: ssh -T homepoller 'curl -sf https://raw.githubusercontent.com/.../devops/scraper/<file> -o /opt/poller/<file>'
+5. Update home VM via SSH: ssh -T homepoller 'curl -sf https://raw.githubusercontent.com/.../devops/retail-poller/<file> -o /opt/poller/<file>'
 ```
 
 **providers.json URL changes** skip steps 3–5 entirely — push directly to `api` branch (auto-synced every run).
