@@ -2022,16 +2022,9 @@ document.addEventListener('DOMContentLoaded', function() {
       if (selectedNumistaResult) {
         fillFormFromNumistaResult();
 
-        // Cache images + metadata in IndexedDB, then re-render so thumbnails update (STAK-337)
+        // Fire-and-forget: cache metadata in IndexedDB
         if (window.imageCache?.isAvailable() && selectedNumistaResult.catalogId &&
             window.featureFlags?.isEnabled('COIN_IMAGES')) {
-          imageCache.cacheImages(
-            selectedNumistaResult.catalogId,
-            selectedNumistaResult.imageUrl || '',
-            selectedNumistaResult.reverseImageUrl || ''
-          ).then(() => {
-            if (typeof renderTable === 'function') renderTable();
-          }).catch(e => console.warn('Image cache failed:', e));
           imageCache.cacheMetadata(
             selectedNumistaResult.catalogId,
             selectedNumistaResult

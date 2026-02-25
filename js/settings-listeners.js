@@ -824,9 +824,7 @@ const bindCardAndTableImageListeners = () => {
     });
   }
 
-  wireStorageToggle('numistaOverrideToggle', 'numistaOverridePersonal', {
-    defaultVal: false,
-  });
+
 };
 
 // ---------------------------------------------------------------------------
@@ -834,38 +832,11 @@ const bindCardAndTableImageListeners = () => {
 // ---------------------------------------------------------------------------
 
 /**
- * Converts a Blob to WebP format.
- * @param {Blob} blob - The source image blob.
- * @param {number} [quality=0.85] - WebP quality (0 to 1).
- * @returns {Promise<Blob|null>} WebP blob or null if failed.
- */
-const blobToWebP = (blob, quality = 0.85) => new Promise((resolve) => {
-  if (!blob) return resolve(null);
-  const url = URL.createObjectURL(blob);
-  const img = new Image();
-  img.onload = () => {
-    URL.revokeObjectURL(url);
-    const canvas = document.createElement('canvas');
-    canvas.width = img.naturalWidth;
-    canvas.height = img.naturalHeight;
-    canvas.getContext('2d').drawImage(img, 0, 0);
-    canvas.toBlob(resolve, 'image/webp', quality);
-  };
-  img.onerror = () => { URL.revokeObjectURL(url); resolve(blob); };
-  img.src = url;
-});
-
-/**
  * Builds a ZIP archive of all exported images.
- * @param {Object} options - Export options.
- * @param {boolean} [options.includeCdn=false] - Whether to include CDN images.
- * @param {Function} [options.onProgress=null] - Progress callback.
  * @returns {Promise<JSZip>} The generated ZIP object.
  */
-const buildImageExportZip = async ({ includeCdn = false, onProgress = null } = {}) => {
+const buildImageExportZip = async () => {
   const zip = new JSZip();
-  const manifest = [];
-  const addedCatalogIds = new Set();
 
   // 1. User images
   const userImages = await imageCache.exportAllUserImages();
@@ -883,99 +854,12 @@ const buildImageExportZip = async ({ includeCdn = false, onProgress = null } = {
   const customRules = NumistaLookup.listCustomRules();
   zip.file('pattern_rules.json', JSON.stringify(customRules, null, 2));
 
-  // 3. Existing coinImages from IndexedDB (always included)
-  const coinImages = await imageCache.exportAllCoinImages();
-  for (const rec of coinImages) {
-    const { catalogId } = rec;
-    addedCatalogIds.add(catalogId);
-    const obvWebP = await blobToWebP(rec.obverse);
-    const revWebP = await blobToWebP(rec.reverse);
-    if (obvWebP) zip.file(`cdn/${catalogId}_obverse.webp`, obvWebP);
-    if (revWebP) zip.file(`cdn/${catalogId}_reverse.webp`, revWebP);
-    const item = typeof inventory !== 'undefined'
-      ? inventory.find(i => BulkImageCache.resolveCatalogId(i) === catalogId)
-      : null;
-    manifest.push({
-      catalogId,
-      uuid: item?.uuid || '',
-      name: item?.name || '',
-      numistaId: item?.numistaId || '',
-      obverseFile: obvWebP ? `cdn/${catalogId}_obverse.webp` : null,
-      reverseFile: revWebP ? `cdn/${catalogId}_reverse.webp` : null,
-    });
-  }
-
-  // 4. Optionally fetch CDN images not yet in IndexedDB
-  if (includeCdn) {
-    const eligible = BulkImageCache.buildEligibleList();
-    const toFetch = eligible.filter(e => !addedCatalogIds.has(e.catalogId));
-    for (let i = 0; i < toFetch.length; i++) {
-      const { item, catalogId } = toFetch[i];
-      if (onProgress) onProgress(i + 1, toFetch.length, catalogId);
-      if (item.obverseImageUrl || item.reverseImageUrl) {
-        await imageCache.cacheImages(catalogId, item.obverseImageUrl || '', item.reverseImageUrl || '');
-      }
-      const rec = await imageCache.getImages(catalogId);
-      if (rec) {
-        const obvWebP = await blobToWebP(rec.obverse);
-        const revWebP = await blobToWebP(rec.reverse);
-        if (obvWebP) zip.file(`cdn/${catalogId}_obverse.webp`, obvWebP);
-        if (revWebP) zip.file(`cdn/${catalogId}_reverse.webp`, revWebP);
-        manifest.push({
-          catalogId,
-          uuid: item.uuid || '',
-          name: item.name || '',
-          numistaId: item.numistaId || '',
-          obverseFile: obvWebP ? `cdn/${catalogId}_obverse.webp` : null,
-          reverseFile: revWebP ? `cdn/${catalogId}_reverse.webp` : null,
-        });
-      }
-      await new Promise(r => setTimeout(r, 1000));
-    }
-  }
-
-  if (manifest.length > 0) {
-    zip.file('manifest.json', JSON.stringify(manifest, null, 2));
-  }
+  // (CDN coinImages export removed — STAK-339 image pipeline simplification)
 
   return zip;
 };
 
-/**
- * Restores CDN images from an imported ZIP file.
- * @param {JSZip} zip - The loaded ZIP object.
- */
-const _restoreCdnFolderFromZip = async (zip) => {
-  const cdnFolder = zip.folder('cdn');
-  if (!cdnFolder) return;
-  const cdnMap = new Map();
-  cdnFolder.forEach((relativePath, zipEntry) => {
-    const match = relativePath.match(/^(.+)_(obverse|reverse)\.webp$/);
-    if (match) {
-      const [, catalogId, side] = match;
-      if (!cdnMap.has(catalogId)) cdnMap.set(catalogId, {});
-      cdnMap.get(catalogId)[side] = zipEntry;
-    }
-  });
-  for (const [catalogId, sides] of cdnMap) {
-    const alreadyCached = await imageCache.hasImages(catalogId);
-    if (alreadyCached) continue;
-    const obverse = sides.obverse ? await sides.obverse.async('blob') : null;
-    const reverse = sides.reverse ? await sides.reverse.async('blob') : null;
-    const item = typeof inventory !== 'undefined'
-      ? inventory.find(i => BulkImageCache.resolveCatalogId(i) === catalogId)
-      : null;
-    await imageCache._put('coinImages', {
-      catalogId,
-      obverse,
-      reverse,
-      obverseUrl: item?.obverseImageUrl || '',
-      reverseUrl: item?.reverseImageUrl || '',
-      cachedAt: Date.now(),
-      size: (obverse?.size || 0) + (reverse?.size || 0),
-    });
-  }
-};
+// (_restoreCdnFolderFromZip removed — STAK-339 image pipeline simplification)
 
 /**
  * Binds listeners for image import/export buttons.
@@ -993,40 +877,11 @@ const bindImageImportExportListeners = () => {
         return;
       }
 
-      const eligibleCount = typeof BulkImageCache !== 'undefined'
-        ? BulkImageCache.buildEligibleList().length
-        : 0;
-      // nosemgrep: javascript.browser.security.insecure-document-method.insecure-document-method
-      const includeCdn = eligibleCount > 0 && await appConfirm(
-        'Download CDN catalog images for offline use?\n\n' +
-        'This fetches images for items with Numista IDs (1 second between each). ' +
-        'Already-cached images are included automatically.',
-        'Export Images',
-      );
-
-      let progressEl = null;
-      if (includeCdn) {
-        progressEl = document.createElement('div');
-        progressEl.id = 'imageCdnProgress';
-        progressEl.innerHTML = '<span id="imageCdnProgressText">Preparing\u2026</span>' +
-          '<progress id="imageCdnProgressBar" value="0" max="1"></progress>';
-        exportBtn.parentNode.insertBefore(progressEl, exportBtn.nextSibling);
-      }
-
       exportBtn.disabled = true;
       exportBtn.textContent = 'Exporting\u2026';
 
       try {
-        const zip = await buildImageExportZip({
-          includeCdn,
-          onProgress: (current, total, catalogId) => {
-            if (!progressEl) return;
-            const textEl = document.getElementById('imageCdnProgressText');
-            const barEl = document.getElementById('imageCdnProgressBar');
-            if (textEl) textEl.textContent = `Fetching ${catalogId} (${current} of ${total})\u2026`;
-            if (barEl) { barEl.value = current; barEl.max = total; }
-          },
-        });
+        const zip = await buildImageExportZip();
 
         const blob = await zip.generateAsync({ type: 'blob' });
         const url = URL.createObjectURL(blob);
@@ -1043,7 +898,6 @@ const bindImageImportExportListeners = () => {
       } finally {
         exportBtn.textContent = 'Export All Images';
         exportBtn.disabled = false;
-        if (progressEl) progressEl.remove();
       }
     });
   }
@@ -1117,9 +971,6 @@ const bindImageImportExportListeners = () => {
             if (obverse) await imageCache.cacheUserImage(uuid, obverse, reverse);
           }
         }
-
-        // Restore CDN catalog images
-        await _restoreCdnFolderFromZip(zip);
 
         populateImagesSection();
       } catch (err) {

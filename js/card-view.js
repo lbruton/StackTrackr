@@ -991,13 +991,6 @@ async function _loadCardImage(img) {
       }
     }
 
-    // Numista override: CDN URLs (Numista source) win over user/pattern blobs
-    const numistaOverride = localStorage.getItem('numistaOverridePersonal') === 'true';
-    if (numistaOverride && cdnUrl) {
-      _showCardImage(img, cdnUrl);
-      return;
-    }
-
     // Try IDB resolution cascade (user → pattern → numista cache)
     if (window.imageCache?.isAvailable()) {
       const blobUrl = await imageCache.resolveImageUrlForItem(item, side);

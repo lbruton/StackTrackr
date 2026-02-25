@@ -1353,8 +1353,6 @@ const _loadBulkRowImages = async (tr, item) => {
       url = await imageCache.getUserImageUrl(item.uuid, side);
     } else if (resolved.source === 'pattern') {
       url = await imageCache.getPatternImageUrl(resolved.catalogId, side);
-    } else if (resolved.source === 'numista') {
-      url = await imageCache.getImageUrl(resolved.catalogId, side);
     }
     if (url) _bulkBlobUrls.add(url);
     return url;
@@ -1481,8 +1479,6 @@ const _openBulkImagePopover = (imgTd, item) => {
         url = await imageCache.getUserImageUrl(item.uuid, side);
       } else if (source === 'pattern') {
         url = await imageCache.getPatternImageUrl(rec.catalogId, side);
-      } else if (source === 'numista') {
-        url = await imageCache.getImageUrl(rec.catalogId, side);
       }
     }
 

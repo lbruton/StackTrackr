@@ -804,7 +804,6 @@ const ALLOWED_STORAGE_KEYS = [
   "numistaViewFields",               // view modal Numista field visibility config (JSON object)
   TIMEZONE_KEY,                        // string: "auto" | "UTC" | IANA zone (STACK-63)
   "viewModalSectionConfig",            // JSON array: ordered view modal section config [{ id, label, enabled }]
-  "numistaOverridePersonal",           // boolean string: "true"/"false" — Numista API overrides user pattern images
   "tableImagesEnabled",                // boolean string: "true"/"false" — show thumbnail images in table rows
   "tableImageSides",                   // string: "both"|"obverse"|"reverse" — which sides to show in table (STAK-118)
   CARD_STYLE_KEY,                        // string: "A"|"B"|"C" — card view style (STAK-118)

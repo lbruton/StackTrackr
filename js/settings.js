@@ -62,7 +62,6 @@ const switchSettingsSection = (name) => {
   // Populate Images data and sync toggles when switching to Images section (STACK-96)
   if (targetName === 'images') {
     syncChipToggle('tableImagesToggle', localStorage.getItem('tableImagesEnabled') !== 'false');
-    syncChipToggle('numistaOverrideToggle', localStorage.getItem('numistaOverridePersonal') === 'true');
     const sidesSync = safeGetElement('tableImageSidesToggle');
     if (sidesSync) {
       const curSides = localStorage.getItem('tableImageSides') || 'both';
@@ -1950,7 +1949,6 @@ const STORAGE_KEY_LABELS = {
   chipSortOrder:                   { label: 'Chip Sort Order',            icon: '⚙️', category: 'Settings' },
   numistaLookupRules:              { label: 'Numista Lookup Rules',       icon: '🔍', category: 'Settings' },
   numistaViewFields:               { label: 'Numista View Fields',        icon: '🔍', category: 'Settings' },
-  numistaOverridePersonal:         { label: 'Numista Image Priority',     icon: '🔍', category: 'Settings' },
   'staktrakr.catalog.settings':   { label: 'Catalog Settings',           icon: '🔍', category: 'Settings' },
   tableImagesEnabled:              { label: 'Table Images',               icon: '🖼', category: 'Settings' },
   tableImageSides:                 { label: 'Table Image Sides',          icon: '🖼', category: 'Settings' },
