@@ -63,9 +63,9 @@ ssh -T homepoller 'curl -sf http://localhost:3002/v1/scrape -X POST -H "Content-
 | Restart all supervisord services | `ssh -T homepoller 'sudo /usr/bin/supervisorctl -c /etc/supervisor/supervisord.conf restart all'` |
 | Restart single service | `ssh -T homepoller 'sudo /usr/bin/supervisorctl -c /etc/supervisor/supervisord.conf restart <name>'` |
 | Clear stuck lockfile | `ssh -T homepoller 'sudo rm -f /tmp/retail-poller.lock'` |
-| Fix log permissions | `ssh -T homepoller 'sudo touch /var/log/retail-poller.log && sudo chmod 666 /var/log/retail-poller.log'` |
+| Fix log permissions | `ssh -T homepoller 'sudo touch /var/log/retail-poller.log && sudo chown stakpoller:stakpoller /var/log/retail-poller.log && sudo chmod 664 /var/log/retail-poller.log'` |
 | View cron schedule | `ssh -T homepoller 'cat /etc/cron.d/retail-poller'` |
-| View .env (secrets) | `ssh -T homepoller 'cat /opt/poller/.env'` |
+| Check .env key names (no values) | `ssh -T homepoller 'grep -oP "^[A-Z_]+" /opt/poller/.env'` |
 | Check disk usage | `ssh -T homepoller 'df -h /'` |
 | Check Node version | `ssh -T homepoller 'node --version'` |
 
