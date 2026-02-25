@@ -10764,6 +10764,7 @@ th {
 .cv-chip-grade { background: var(--primary); color: #fff; }
 .cv-chip-qty { background: var(--bg-tertiary); color: var(--text-muted); }
 .cv-chip-weight { background: var(--bg-tertiary); color: var(--text-muted); }
+.cv-chip-tags { background: var(--info, #2196f3); color: #fff; opacity: 0.85; }
 .cv-chip-type {
   font-size: 0.6rem;
   font-weight: 700;
