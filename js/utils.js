@@ -764,6 +764,38 @@ const gramsToOzt = (grams) => grams / 31.1035;
 const oztToGrams = (ozt) => ozt * 31.1035;
 
 /**
+ * Converts kilograms to troy ounces
+ *
+ * @param {number} kg - Weight in kilograms
+ * @returns {number} Weight in troy ounces
+ */
+const kgToOzt = (kg) => kg * KG_TO_OZT;
+
+/**
+ * Converts troy ounces to kilograms
+ *
+ * @param {number} ozt - Weight in troy ounces
+ * @returns {number} Weight in kilograms
+ */
+const oztToKg = (ozt) => ozt / KG_TO_OZT;
+
+/**
+ * Converts avoirdupois pounds to troy ounces
+ *
+ * @param {number} lb - Weight in pounds
+ * @returns {number} Weight in troy ounces
+ */
+const lbToOzt = (lb) => lb * LB_TO_OZT;
+
+/**
+ * Converts troy ounces to avoirdupois pounds
+ *
+ * @param {number} ozt - Weight in troy ounces
+ * @returns {number} Weight in pounds
+ */
+const oztToLb = (ozt) => ozt / LB_TO_OZT;
+
+/**
  * Formats a weight in troy ounces to either grams or ounces.
  * If weightUnit is 'gb', displays as Goldback denomination (no gram auto-conversion).
  *
@@ -777,6 +809,12 @@ const formatWeight = (ozt, weightUnit) => {
     return `${(w % 1 === 0) ? w : w.toFixed(1)} gb`;
   }
   const weight = parseFloat(ozt);
+  if (weightUnit === 'kg') {
+    return `${oztToKg(weight).toFixed(4)} kg`;
+  }
+  if (weightUnit === 'lb') {
+    return `${oztToLb(weight).toFixed(4)} lb`;
+  }
   if (weightUnit === 'g') {
     return `${oztToGrams(weight).toFixed(2)} g`;
   }

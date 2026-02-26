@@ -181,6 +181,8 @@ const BULK_EDITABLE_FIELDS = [
     options: [
       { value: 'oz', label: 'ounce' },
       { value: 'g',  label: 'gram' },
+      { value: 'kg', label: 'kilogram' },
+      { value: 'lb', label: 'pound' },
       { value: 'gb', label: 'goldback' }
     ] },
   { id: 'purity',           label: 'Purity',             inputType: 'select',

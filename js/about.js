@@ -283,11 +283,11 @@ const setupAckModalEvents = () => {
  */
 const getEmbeddedWhatsNew = () => {
   return `
+    <li><strong>v3.32.44 &ndash; Kilo &amp; Pound Weight Units</strong>: Added kilogram and pound to the weight unit dropdown. Melt values convert correctly. Table, cards, and modals all display in the chosen unit (STAK-338).</li>
     <li><strong>v3.32.43 &ndash; Numista Tag Fixes</strong>: Tags now visible in edit modal and card views. All tags (including Numista-applied) are removable per-item &mdash; no more stuck tags (STAK-343, STAK-344).</li>
     <li><strong>v3.32.42 &ndash; Pattern Rule Promotion Fix</strong>: &ldquo;Apply to all matching items&rdquo; now works even when the item was saved previously. Reads from existing per-item IDB record when no pending upload blobs are available; also removes per-item record after promotion (STAK-339-followup).</li>
     <li><strong>v3.32.41 &ndash; Image Pipeline Simplification</strong>: Removed coinImages IDB cache layer entirely. CDN URLs on inventory items are now the sole Numista image source. Eliminates root cause of STAK-309/311/332/333/339 image bugs (STAK-339).</li>
     <li><strong>v3.32.40 &ndash; Numista Image Race Condition Fix</strong>: Numista images now appear in table and card views immediately after applying a result (STAK-337).</li>
-    <li><strong>v3.32.39 &ndash; Image Bug Fixes + API Health Refresh</strong>: Fixed CDN URL writeback in resync and bulk cache. Remove button now clears URL fields. API health badge uses cache-busting (STAK-333, STAK-308, STAK-332, STAK-311, STAK-334).</li>
   `;
 };
 
