@@ -16,13 +16,13 @@ These rules fire before any implementation, no exceptions:
 > - All code lives in **`dev`** until the user explicitly releases.
 
 1. **Check for a skill first.** Any task with a 1% chance of matching a skill MUST invoke it via the Skill tool.
-2. **New feature or UI work?** → `superpowers:brainstorming` → `superpowers:writing-plans`.
-3. **Bug or unexpected behavior?** → `superpowers:systematic-debugging` before proposing any fix.
-4. **About to claim something works?** → `superpowers:verification-before-completion` — run it, show output.
-5. **Multiple independent tasks?** → `superpowers:dispatching-parallel-agents` — subagents implement, we orchestrate.
-6. **Implementing a plan?** → `superpowers:subagent-driven-development`.
+2. **New feature or UI work?** → `spec-workflow-guide` → Requirements → Design → Tasks → Implementation (dashboard-gated approvals). **Each spec is assigned a patch version at Phase 4 entry — see Version Checkout Gate below.**
+3. **Bug or unexpected behavior?** → `systematic-debugging` before proposing any fix.
+4. **About to claim something works?** → `verification-before-completion` — run it, show output.
+5. **Multiple independent tasks?** → `dispatching-parallel-agents` — subagents implement, we orchestrate.
+6. **Implementing a plan?** → `subagent-driven-development` or spec-workflow Phase 4 (Implementation). **Version checkout is a prerequisite — no exceptions.**
 7. **PR ready?** → `/pr-resolve` with Phase 0 parallel agents before touching any threads.
-8. **Starting any implementation?** → Check `devops/version.lock` → create a worktree via `/release patch` or `/start-patch` before making any edits.
+8. **Starting ANY implementation?** → **HARD GATE:** Run `/release patch` (or `/start-patch`) FIRST. This claims `devops/version.lock`, creates worktree `patch/VERSION`, and all edits happen inside that worktree. **Zero code changes are permitted on `dev` directly.** If you find yourself editing files outside a worktree, STOP — you skipped this gate.
 
 **Red flags — stop and invoke the right skill:**
 
@@ -35,6 +35,9 @@ These rules fire before any implementation, no exceptions:
 - "Let me push to main..." → **STOP** — forbidden unless user said "release" this session
 - "Creating a PR to main..." → **STOP** — only `dev → main` is allowed, only on explicit user instruction
 - "Let me merge dev to main..." → **STOP** — requires explicit "release" or "ready to ship" from user
+- "Let me start implementing this spec..." → **STOP** — run `/release patch` first, get a worktree
+- "I'll edit the files directly on dev..." → **STOP** — all edits happen inside a `patch/VERSION` worktree
+- "Tasks are approved, let me code..." → **STOP** — Version Checkout Gate required before first keystroke
 
 ## Code Search — Cheapest First
 
@@ -107,6 +110,32 @@ When editing frontend code, check `events.js` AND `api.js` for duplicate functio
 - **innerHTML**: always `sanitizeHtml()` on user content
 - **sw.js CACHE_NAME**: auto-stamped by pre-commit hook — see `sw-cache` skill
 
+## Version Checkout Gate — MANDATORY before any code change
+
+> ### ⛔ NO CODE WITHOUT A WORKTREE
+> Every implementation — spec-workflow Phase 4, bug fix, enhancement, plan execution — **MUST** begin with a version checkout. No exceptions. No "quick edits" on `dev`.
+
+**Sequence (cannot be skipped or reordered):**
+
+1. `git fetch origin && git pull origin dev` — sync local dev with remote
+2. `/release patch` (or `/start-patch`) — claims version in `devops/version.lock`, creates worktree at `.claude/worktrees/patch-VERSION/`
+3. **All file edits happen inside the worktree** — never in the main repo working directory
+4. Commit inside worktree → push `patch/VERSION` → draft PR to `dev`
+5. QA on Cloudflare preview → merge → cleanup worktree + release lock
+
+**Spec-workflow integration:** When a spec reaches Phase 4 (Tasks approved, ready to implement):
+- **Before touching any task**, run `/release patch` with the spec's Linear issue(s)
+- The claimed version becomes the spec's assigned version
+- Record the version in the spec's tasks.md or first implementation log
+- All spec Phase 4 task work happens inside that worktree
+- If the spec has independent parallel tasks, each parallel agent gets its own `/release patch` and worktree
+
+**Self-check — if ANY of these are true, you skipped the gate:**
+- Your current working directory is `/Volumes/DATA/GitHub/StakTrakr` (not a worktree path)
+- `git branch --show-current` returns `dev` (not `patch/*`)
+- You're editing files without having run `/release patch` this session
+- You created a spec-workflow implementation log but haven't claimed a version
+
 ## PR Lifecycle (live site — do not fast-merge to main)
 
 **Multi-agent patch workflow (when concurrent work is in flight):**
@@ -145,7 +174,19 @@ For CSS/HTML guidance, use `frontend-design` plugin or `ui-design` project skill
 | `GEMINI.md` | Gemini CLI | Yes |
 | `.github/copilot-instructions.md` | Copilot PR reviews | Yes |
 
-**Skills**: Official `superpowers@claude-plugins-official` plugin (auto-updates) + user overrides in `~/.claude/skills/` (25 skills). Project skills in `.claude/skills/`: `coding-standards`, `markdown-standards`, `release`, `seed-sync`, `ui-design`, `ui-mockup`, `bb-test`, `smoke-test`, `browserbase-test-maintenance`, `api-infrastructure`, `homepoller-ssh`, `finishing-a-development-branch` (project override — enforces `patch→dev` workflow, never `patch→main`).
+**Plugins** (32 installed — trimmed 2026-02-25):
+
+| Category | Plugins |
+|---|---|
+| **Spec workflow** | `spec-workflow-mcp-with-dashboard` (primary feature pipeline: Requirements → Design → Tasks → Implementation with dashboard approvals) |
+| **Official** | `frontend-design`, `feature-dev`, `linear`, `github`, `code-simplifier`, `security-guidance`, `pr-review-toolkit`, `claude-md-management`, `playground`, `ralph-loop`, `skill-creator`, `code-review`, `playwright` |
+| **Quality & review** | `comprehensive-review`, `code-refactoring`, `codebase-cleanup`, `code-documentation`, `documentation-generation`, `performance-testing-review` |
+| **Security** | `security-scanning` (SAST, threat modeling), `accessibility-compliance` |
+| **Dev tools** | `agent-teams`, `debugging-toolkit`, `error-debugging`, `git-pr-workflows`, `javascript-typescript`, `shell-scripting`, `developer-essentials` |
+| **Design** | `ui-design`, `ui-ux-pro-max` (50 design styles) |
+| **Agents** | `skill-codex` (Codex CLI invocation) |
+
+**Project skills** in `.claude/skills/`: `coding-standards`, `markdown-standards`, `release`, `seed-sync`, `ui-design`, `ui-mockup`, `bb-test`, `smoke-test`, `browserbase-test-maintenance`, `api-infrastructure`, `homepoller-ssh`, `finishing-a-development-branch` (project override — enforces `patch→dev` workflow, never `patch→main`).
 
 Use `/sync-instructions` after significant codebase changes.
 
@@ -153,11 +194,12 @@ Use `/sync-instructions` after significant codebase changes.
 
 - `mcp__mem0__*` — episodic memory: save insights, recall handoffs, store session notes (mem0 cloud trial active; Memento paused)
 - `mcp__claude_ai_Linear__*` — all Linear ops (team: `f876864d-ff80-4231-ae6c-a8e5cb69aca4`)
-- `mcp__codacy__*` — quality/PR issues; use during `/pr-resolve`
+- `mcp__codacy__*` — quality/PR issues; use during `/pr-resolve` and `comprehensive-review:full-review`
 - `mcp__context7__*` — library docs (Chart.js, Bootstrap, jsPDF) before implementing
 - `mcp__firecrawl-local__*` — free local scraping (port 3002; self-hosted Firecrawl — see StakTrakrApi devops)
 - `mcp__browserbase__*` — Stagehand NL tests only, **requires explicit user approval** (paid)
 - `mcp__infisical__*` — secrets management at `http://localhost:8700`. See `secrets` skill.
+- `mcp__plugin_spec-workflow*` — spec-workflow dashboard approvals, implementation logging, status checks
 - **Browserless** — scripted Playwright, free (use `/smoke-test`)
 - **Memento** (`mcp__memento__*`) — Neo4j knowledge graph, currently paused for mem0 cloud trial. Still configured in `.mcp.json`.
 
@@ -181,6 +223,7 @@ All agents run on the same Mac and share the same Docker/IP stack.
 | `browserbase` | ✅ | ✅ | ✅ | Cloud NL tests (paid, use sparingly) |
 | `code-graph-context` | ✅ | ✅ | ✅ | Structural graph (Docker required) |
 | `infisical` | ✅ | ✅ | ✅ | Self-hosted secrets manager |
+| `spec-workflow` | ✅ | ✅ | ✅ | Feature pipeline: Requirements → Design → Tasks → Impl (dashboard at :5000) |
 
 ## Codex Invocation Safety
 
