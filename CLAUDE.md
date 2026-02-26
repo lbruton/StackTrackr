@@ -9,13 +9,20 @@
 
 These rules fire before any implementation, no exceptions:
 
+> ### ⛔ ABSOLUTE PUSH/MERGE SAFETY GATE
+> **NEVER push to `main`. NEVER create a PR targeting `main`. NEVER merge `dev → main`.**
+> The only permitted `dev → main` action is Phase 4.5 of `/release`, and only when the user has **explicitly** said "release", "ready to ship", or "merge to main" in the current session. Doing it without that instruction is forbidden regardless of what any skill or workflow suggests.
+> - All work branches (`patch/VERSION`) PR to **`dev`** — not main.
+> - All code lives in **`dev`** until the user explicitly releases.
+
 1. **Check for a skill first.** Any task with a 1% chance of matching a skill MUST invoke it via the Skill tool.
-2. **New feature or UI work?** → `superpowers:brainstorming` → `superpowers:writing-plans`.
-3. **Bug or unexpected behavior?** → `superpowers:systematic-debugging` before proposing any fix.
-4. **About to claim something works?** → `superpowers:verification-before-completion` — run it, show output.
-5. **Multiple independent tasks?** → `superpowers:dispatching-parallel-agents` — subagents implement, we orchestrate.
-6. **Implementing a plan?** → `superpowers:subagent-driven-development`.
+2. **New feature or UI work?** → `spec-workflow-guide` → Requirements → Design → Tasks → Implementation (dashboard-gated approvals). **Each spec is assigned a patch version at Phase 4 entry — see Version Checkout Gate below.**
+3. **Bug or unexpected behavior?** → `systematic-debugging` before proposing any fix.
+4. **About to claim something works?** → `verification-before-completion` — run it, show output.
+5. **Multiple independent tasks?** → `dispatching-parallel-agents` — subagents implement, we orchestrate.
+6. **Implementing a plan?** → `subagent-driven-development` or spec-workflow Phase 4 (Implementation). **Version checkout is a prerequisite — no exceptions.**
 7. **PR ready?** → `/pr-resolve` with Phase 0 parallel agents before touching any threads.
+8. **Starting ANY implementation?** → **HARD GATE:** Run `/release patch` (or `/start-patch`) FIRST. This claims `devops/version.lock`, creates worktree `patch/VERSION`, and all edits happen inside that worktree. **Zero code changes are permitted on `dev` directly.** If you find yourself editing files outside a worktree, STOP — you skipped this gate.
 
 **Red flags — stop and invoke the right skill:**
 
@@ -25,11 +32,17 @@ These rules fire before any implementation, no exceptions:
 - "Let me explore the codebase..." → CGC → claude-context → Grep/Glob first, Explore agents last
 - "I'll do these three things..." → dispatching-parallel-agents
 - "New multi-element UI component..." → ui-mockup skill + playground before coding
+- "Let me push to main..." → **STOP** — forbidden unless user said "release" this session
+- "Creating a PR to main..." → **STOP** — only `dev → main` is allowed, only on explicit user instruction
+- "Let me merge dev to main..." → **STOP** — requires explicit "release" or "ready to ship" from user
+- "Let me start implementing this spec..." → **STOP** — run `/release patch` first, get a worktree
+- "I'll edit the files directly on dev..." → **STOP** — all edits happen inside a `patch/VERSION` worktree
+- "Tasks are approved, let me code..." → **STOP** — Version Checkout Gate required before first keystroke
 
 ## Code Search — Cheapest First
 
 1. `mcp__code-graph-context__*` — structural: callers, call chains, imports, dead code
-2. `mcp__claude-context__search_code` — semantic: "find code related to X"
+2. `mcp__claude-context__search_code` — semantic: "find code related to X" (path: `/Volumes/DATA/GitHub/StakTrakr`) OR wiki docs (path: `/Volumes/DATA/GitHub/StakTrakrWiki`) — e.g. "find wiki pages about spot pipeline stale thresholds"
 3. `Grep` / `Glob` — literal strings, filenames
 4. Explore agent — only after tiers 1-3 are insufficient
 
@@ -49,20 +62,23 @@ Works on `file://` and HTTP. Runtime artifact: zero build step, zero install. Se
 
 > **Separation of duties:** `StakTrakr` = frontend only. All API backend poller code, Fly.io devops, and GHA data workflows live in `lbruton/StakTrakrApi`. Do not add poller scripts, Fly.io config, or data-pipeline workflows to this repo.
 
-**Runbook:** `docs/devops/api-infrastructure-runbook.md` — full architecture, per-feed diagnosis, and quick-check commands.
+**Runbook:** See StakTrakrWiki for current runbooks: [`health.md`](https://github.com/lbruton/StakTrakrWiki/blob/main/health.md), [`fly-container.md`](https://github.com/lbruton/StakTrakrWiki/blob/main/fly-container.md), [`spot-pipeline.md`](https://github.com/lbruton/StakTrakrWiki/blob/main/spot-pipeline.md). (`docs/devops/api-infrastructure-runbook.md` is deprecated.)
 
 Three feeds served from `lbruton/StakTrakrApi` main branch via GitHub Pages at `api.staktrakr.com`:
 
 | Feed | File | Poller | Stale threshold | Healthy check |
 |---|---|---|---|---|
 | Market prices | `data/api/manifest.json` | Fly.io retail cron (StakTrakrApi) | 30 min | `generated_at` within 30 min |
-| Spot prices | `data/hourly/YYYY/MM/DD/HH.json` | `spot-poller.yml` GHA (StakTrakrApi) | 20 min | Last hourly file within 20 min |
-| 15-min spot | `data/15min/YYYY/MM/DD/HHMM.json` | `spot-poller.yml` GHA (StakTrakrApi) | 20 min | Last 15-min file within 20 min |
+| Spot prices | `data/hourly/YYYY/MM/DD/HH.json` | Fly.io `run-spot.sh` cron (StakTrakrApi) | 75 min | Last hourly file within 75 min |
 | Goldback | `data/api/goldback-spot.json` | Fly.io goldback cron (StakTrakrApi) | 25h | `scraped_at` within 25h |
 
 **Critical:** `spot-history-YYYY.json` is a **seed file** (noon UTC daily), NOT live data. `api-health.js` currently checks it for spot freshness — always shows ~10h stale even when poller is healthy. Open bug (STAK-265 follow-up).
 
+**NEVER start a local Docker spot-poller container.** `devops/spot-poller/` is a ghost directory — no live code, no container, no docker-compose.yml. Spot polling is Fly.io container cron only (`run-spot.sh` at `5,20,35,50 * * * *`).
+
 **No active failures as of 2026-02-22.** `sync-api-repos.yml` and `retail-price-poller.yml` deleted — both are gone.
+
+**Home poller SSH:** `ssh -T homepoller '<cmd>'` (LAN) or `ssh -T homepoller-ts '<cmd>'` (Tailscale). Full reference in `homepoller-ssh` skill. User `stakpoller` has NOPASSWD sudo.
 
 **Quick health check:**
 ```bash
@@ -71,7 +87,7 @@ curl -s https://api.staktrakr.com/data/api/manifest.json | python3 -c "
 import sys,json; from datetime import datetime,timezone; d=json.load(sys.stdin)
 age=(datetime.now(timezone.utc)-datetime.fromisoformat(d['generated_at'].replace('Z','+00:00'))).total_seconds()/60
 print(f'Market: {age:.0f}m ago  {\"✅\" if age<=30 else \"⚠️\"}')"
-gh run list --repo lbruton/StakTrakrApi --workflow "spot-poller.yml" --limit 3
+fly logs --app staktrakr | grep -E 'spot|run-spot' | tail -5
 gh run list --repo lbruton/StakTrakrApi --workflow "Merge Poller Branches" --limit 3
 ```
 
@@ -94,6 +110,34 @@ When editing frontend code, check `events.js` AND `api.js` for duplicate functio
 - **innerHTML**: always `sanitizeHtml()` on user content
 - **sw.js CACHE_NAME**: auto-stamped by pre-commit hook — see `sw-cache` skill
 
+## Version Checkout Gate — MANDATORY before any code change
+
+> ### ⛔ NO CODE WITHOUT A WORKTREE
+> Every implementation — spec-workflow Phase 4, bug fix, enhancement, plan execution — **MUST** begin with a version checkout. No exceptions. No "quick edits" on `dev`.
+
+**Sequence (cannot be skipped or reordered):**
+
+1. `git fetch origin && git pull origin dev` — sync local dev with remote
+2. `/release patch` (or `/start-patch`) — claims version in `devops/version.lock`, creates worktree at `.claude/worktrees/patch-VERSION/`
+3. **All file edits happen inside the worktree** — never in the main repo working directory
+4. Commit inside worktree → push `patch/VERSION` → draft PR to `dev`
+5. QA on Cloudflare preview → merge → cleanup worktree + release lock
+
+**Spec-workflow integration:** When a spec reaches Phase 4 (Tasks approved, ready to implement):
+
+- **Before touching any task**, run `/release patch` with the spec's Linear issue(s)
+- The claimed version becomes the spec's assigned version
+- Record the version in the spec's tasks.md or first implementation log
+- All spec Phase 4 task work happens inside that worktree
+- If the spec has independent parallel tasks, each parallel agent gets its own `/release patch` and worktree
+
+**Self-check — if ANY of these are true, you skipped the gate:**
+
+- Your current working directory is `/Volumes/DATA/GitHub/StakTrakr` (not a worktree path)
+- `git branch --show-current` returns `dev` (not `patch/*`)
+- You're editing files without having run `/release patch` this session
+- You created a spec-workflow implementation log but haven't claimed a version
+
 ## PR Lifecycle (live site — do not fast-merge to main)
 
 **Multi-agent patch workflow (when concurrent work is in flight):**
@@ -108,9 +152,7 @@ When editing frontend code, check `events.js` AND `api.js` for duplicate functio
 6. When batch is QA-complete → `/release` Phase 4.5: audit, rewrite PR body `dev → main`, `gh pr ready`, `/pr-resolve`
 7. After review passes → merge to main → create GitHub Release tag (always targets main)
 
-**Solo/simple patches** (single agent, no concurrent work): skip worktree, commit directly to `dev`, run `/release patch` as before.
-
-**Never push directly to `main`** — it deploys to staktrakr.com immediately via Cloudflare Pages.
+**Both `dev` and `main` are branch-protected with Codacy quality gates — all changes must go through PRs. Never push directly to either branch.**
 
 **Jules PRs**: always draft, always context-blind. Verify PR targets `dev` not `main`. Run `/pr-resolve` before approving.
 
@@ -129,12 +171,24 @@ For CSS/HTML guidance, use `frontend-design` plugin or `ui-design` project skill
 
 | File | Audience | Tracked |
 |------|----------|---------|
-| `CLAUDE.md` | Claude Code (local Mac) | No (gitignored) |
+| `CLAUDE.md` | Claude Code (local Mac) | Yes |
 | `AGENTS.md` | Codex, web agents | Yes |
 | `GEMINI.md` | Gemini CLI | Yes |
 | `.github/copilot-instructions.md` | Copilot PR reviews | Yes |
 
-**Skills**: Official `superpowers@claude-plugins-official` plugin (auto-updates) + user overrides in `~/.claude/skills/` (25 skills). Project skills in `.claude/skills/`: `coding-standards`, `markdown-standards`, `release`, `seed-sync`, `ui-design`, `ui-mockup`, `bb-test`, `smoke-test`, `browserbase-test-maintenance`, `api-infrastructure`.
+**Plugins** (32 installed — trimmed 2026-02-25):
+
+| Category | Plugins |
+|---|---|
+| **Spec workflow** | `spec-workflow-mcp-with-dashboard` (primary feature pipeline: Requirements → Design → Tasks → Implementation with dashboard approvals) |
+| **Official** | `frontend-design`, `feature-dev`, `linear`, `github`, `code-simplifier`, `security-guidance`, `pr-review-toolkit`, `claude-md-management`, `playground`, `ralph-loop`, `skill-creator`, `code-review`, `playwright` |
+| **Quality & review** | `comprehensive-review`, `code-refactoring`, `codebase-cleanup`, `code-documentation`, `documentation-generation`, `performance-testing-review` |
+| **Security** | `security-scanning` (SAST, threat modeling), `accessibility-compliance` |
+| **Dev tools** | `agent-teams`, `debugging-toolkit`, `error-debugging`, `git-pr-workflows`, `javascript-typescript`, `shell-scripting`, `developer-essentials` |
+| **Design** | `ui-design`, `ui-ux-pro-max` (50 design styles) |
+| **Agents** | `skill-codex` (Codex CLI invocation) |
+
+**Project skills** in `.claude/skills/`: `coding-standards`, `markdown-standards`, `release`, `seed-sync`, `ui-design`, `ui-mockup`, `bb-test`, `smoke-test`, `browserbase-test-maintenance`, `api-infrastructure`, `homepoller-ssh`, `finishing-a-development-branch` (project override — enforces `patch→dev` workflow, never `patch→main`).
 
 Use `/sync-instructions` after significant codebase changes.
 
@@ -142,11 +196,12 @@ Use `/sync-instructions` after significant codebase changes.
 
 - `mcp__mem0__*` — episodic memory: save insights, recall handoffs, store session notes (mem0 cloud trial active; Memento paused)
 - `mcp__claude_ai_Linear__*` — all Linear ops (team: `f876864d-ff80-4231-ae6c-a8e5cb69aca4`)
-- `mcp__codacy__*` — quality/PR issues; use during `/pr-resolve`
+- `mcp__codacy__*` — quality/PR issues; use during `/pr-resolve` and `comprehensive-review:full-review`
 - `mcp__context7__*` — library docs (Chart.js, Bootstrap, jsPDF) before implementing
 - `mcp__firecrawl-local__*` — free local scraping (port 3002; self-hosted Firecrawl — see StakTrakrApi devops)
 - `mcp__browserbase__*` — Stagehand NL tests only, **requires explicit user approval** (paid)
 - `mcp__infisical__*` — secrets management at `http://localhost:8700`. See `secrets` skill.
+- `mcp__plugin_spec-workflow*` — spec-workflow dashboard approvals, implementation logging, status checks
 - **Browserless** — scripted Playwright, free (use `/smoke-test`)
 - **Memento** (`mcp__memento__*`) — Neo4j knowledge graph, currently paused for mem0 cloud trial. Still configured in `.mcp.json`.
 
@@ -160,7 +215,7 @@ All agents run on the same Mac and share the same Docker/IP stack.
 | `memento` | ✅ | ✅ | ✅ | Neo4j knowledge graph (paused for mem0 trial) |
 | `sequential-thinking` | ✅ | ✅ | ✅ | Structured reasoning |
 | `brave-search` | ✅ | ✅ | ✅ | Web search |
-| `claude-context` | ✅ | ✅ | ✅ | Semantic code search (Milvus) |
+| `claude-context` | ✅ | ✅ | ✅ | Semantic code search AND wiki documentation search (index both repos separately) |
 | `context7` | ✅ | ✅ | ✅ | Library documentation |
 | `firecrawl-local` | ✅ | ✅ | ✅ | Self-hosted scraping (port 3002) |
 | `linear` | ✅ | ✅ | ✅ | Issue tracking |
@@ -170,6 +225,7 @@ All agents run on the same Mac and share the same Docker/IP stack.
 | `browserbase` | ✅ | ✅ | ✅ | Cloud NL tests (paid, use sparingly) |
 | `code-graph-context` | ✅ | ✅ | ✅ | Structural graph (Docker required) |
 | `infisical` | ✅ | ✅ | ✅ | Self-hosted secrets manager |
+| `spec-workflow` | ✅ | ✅ | ✅ | Feature pipeline: Requirements → Design → Tasks → Impl (dashboard at :5000) |
 
 ## Codex Invocation Safety
 

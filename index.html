@@ -63,13 +63,13 @@
     <!-- CDN fallbacks — only execute if the local vendor copy failed to load -->
     <script>
       window.__vendorFallbacks = [
-        { global: 'Papa',                   src: 'https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js' },
-        { global: 'jspdf',                  src: 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js' },
-        { check: function() { return !!(window.jspdf && window.jspdf.jsPDF && window.jspdf.jsPDF.prototype.autoTable); }, src: 'https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js' },
-        { global: 'Chart',                  src: 'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js' },
-        { global: 'ChartDataLabels',        src: 'https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js' },
-        { global: 'JSZip',                  src: 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js' },
-        { global: 'forge',                  src: 'https://cdnjs.cloudflare.com/ajax/libs/forge/0.10.0/forge.min.js' },
+        { global: 'Papa',                   src: 'https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js', integrity: 'sha512-dfX5uYVXzyU8+KHqj8bjo7UkOdg18PaOtpa48djpNbZHwExddghZ+ZmzWT06R5v6NSk3ZUfsH6FNEDepLx9hPQ==' },
+        { global: 'jspdf',                  src: 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js', integrity: 'sha512-qZvrmS2ekKPF2mSznTQsxqPgnpkI4DNTlrdUmTzrDgektczlKNRRhy5X5AAOnx5S09ydFYWWNSfcEqDTTHgtNA==' },
+        { check: function() { return !!(window.jspdf && window.jspdf.jsPDF && window.jspdf.jsPDF.prototype.autoTable); }, src: 'https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js', integrity: 'sha512-SgWewGM3r8xXm8LNXt4ZHqKVKu/7eKrJ1aBCbMaX44xXXaCcIvCAvD2kj9qnC1lhyjAu04mcPiTzcc/CaACnUQ==' },
+        { global: 'Chart',                  src: 'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js', integrity: 'sha512-ElRFoEQdI5Ht6kZvyzXhYG9NqjtkmlkfYk0wr6wHxU9JEHakS7UJZNeml5ALk+8IKlU6jDgMabC3vkumRokgJA==' },
+        { global: 'ChartDataLabels',        src: 'https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js', integrity: 'sha512-JPcRR8yFa8mmCsfrw4TNte1ZvF1e3+1SdGMslZvmrzDYxS69J7J49vkFL8u6u8PlPJK+H3voElBtUCzaXj+6ig==' },
+        { global: 'JSZip',                  src: 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js', integrity: 'sha512-XMVd28F1oH/O71fzwBnV7HucLxVwtxf26XV8P4wPk26EDxuGZ91N8bsOttmnomcCD3CS5ZMRL50H0GgOHvegtg==' },
+        { global: 'forge',                  src: 'https://cdnjs.cloudflare.com/ajax/libs/forge/0.10.0/forge.min.js', integrity: 'sha512-S/UB/AdGt16YP1OyopwfVG1BO93nkwVNY7No5zfALnztixutqOuP3DGvo7G4YqB77uL791jWNjQnT/63CjOZNw==' },
       ];
       document.addEventListener('DOMContentLoaded', function () {
         window.__vendorFallbacks.forEach(function (lib) {
@@ -79,6 +79,13 @@
             console.warn('[vendor] ' + label + ' not loaded from local — falling back to CDN');
             var s = document.createElement('script');
             s.src = lib.src;
+            if (lib.integrity) {
+              s.integrity = lib.integrity;
+              s.crossOrigin = 'anonymous';
+            }
+            s.addEventListener('error', function () {
+              console.error('[vendor] SRI/network failure: ' + label + ' — ' + lib.src);
+            });
             document.head.appendChild(s);
           }
         });
@@ -367,8 +374,95 @@
           </svg>
         </h1>
       </div>
-      <div class="app-header-actions">
-        <!-- Theme cycle button (STACK-54) -->
+      <div class="app-header-actions" id="headerBtnContainer">
+        <!-- Spot sync button (STAK-314) — order: 1 -->
+        <button class="btn theme-btn header-toggle-btn" id="headerSyncBtn"
+                title="Sync spot prices" aria-label="Sync spot prices" style="display:none;position:relative">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21.5 2v6h-6"/><path d="M2.5 22v-6h6"/>
+            <path d="M2.5 11.5a10 10 0 0 1 18.4-4.5"/>
+            <path d="M21.5 12.5a10 10 0 0 1-18.4 4.5"/>
+          </svg>
+          <span class="cloud-sync-dot header-cloud-dot" id="headerSyncDot"></span>
+          <span class="header-btn-text">Spot</span>
+        </button>
+        <!-- Trend cycle button — order: 2 -->
+        <button class="btn theme-btn header-toggle-btn" id="headerTrendBtn"
+                title="Trend period" aria-label="Trend period" style="display:none">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+          </svg>
+          <span class="header-btn-text">Trend</span>
+        </button>
+        <!-- Market button — order: 3 -->
+        <button class="btn theme-btn header-toggle-btn" id="headerMarketBtn"
+                title="Market prices" aria-label="Market prices">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+            <line x1="3" y1="6" x2="21" y2="6"/>
+            <path d="M16 10a4 4 0 0 1-8 0"/>
+          </svg>
+          <span class="cloud-sync-dot header-cloud-dot" id="headerMarketDot"></span>
+          <span class="header-btn-text">Market</span>
+        </button>
+        <!-- Currency toggle button — order: 4 -->
+        <button class="btn theme-btn header-toggle-btn" id="headerCurrencyBtn"
+                title="Toggle currency" aria-label="Toggle currency">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="1" x2="12" y2="23"/>
+            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+          </svg>
+          <span class="header-btn-text">Currency</span>
+        </button>
+        <!-- Cloud sync status button + inline popover wrapper — order: 5 (STAK-264) -->
+        <div style="position:relative;display:inline-flex" id="headerCloudSyncWrapper">
+          <button class="btn theme-btn header-toggle-btn" id="headerCloudSyncBtn"
+                  title="Cloud sync status" aria-label="Cloud sync status" style="display:none;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/>
+            </svg>
+            <span class="cloud-sync-dot header-cloud-dot" id="headerCloudDot"></span>
+            <span class="header-btn-text">Cloud</span>
+          </button>
+          <!-- Secure mode: inline password popover (never auto-opens) -->
+          <div id="cloudSyncHeaderPopover" role="dialog" aria-label="Sync password" style="display:none;position:absolute;top:calc(100% + 6px);right:0;background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:0.75rem;box-shadow:0 8px 32px rgba(0,0,0,0.5);z-index:999;min-width:240px">
+            <div style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:0.5rem;color:var(--text-muted)"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:4px"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Vault Password</div>
+            <div style="display:flex;gap:0.4rem">
+              <input type="password" id="cloudSyncPopoverInput" placeholder="Enter password"
+                     autocomplete="current-password"
+                     style="flex:1;font-size:0.85rem;padding:0.3rem 0.5rem;border:1px solid var(--border);border-radius:4px;background:var(--bg-tertiary);color:var(--text-primary)">
+              <button class="btn success" id="cloudSyncPopoverUnlockBtn" style="font-size:0.8rem;padding:0.3rem 0.6rem">Unlock</button>
+            </div>
+            <div id="cloudSyncPopoverError" style="color:var(--danger,#e74c3c);font-size:0.75rem;margin-top:0.3rem;display:none"></div>
+            <button id="cloudSyncPopoverCancelBtn" style="background:none;border:none;color:var(--text-secondary);font-size:0.75rem;margin-top:0.4rem;cursor:pointer;padding:0">Cancel</button>
+          </div>
+        </div>
+        <!-- Vault backup button — order: 6 (STAK-314) -->
+        <button class="btn theme-btn header-toggle-btn" id="headerVaultBtn"
+                title="Backup" aria-label="Backup" style="display:none">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
+          <span class="header-btn-text">Backup</span>
+        </button>
+        <!-- Restore button — order: 7 (STAK-314) -->
+        <button class="btn theme-btn header-toggle-btn" id="headerRestoreBtn"
+                title="Restore" aria-label="Restore" style="display:none">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="1 4 1 10 7 10"/>
+            <path d="M3.51 15a9 9 0 1 0 .49-4.51"/>
+          </svg>
+          <span class="header-btn-text">Restore</span>
+        </button>
+        <!-- Theme cycle button — order: 8 (STACK-54) -->
         <button class="btn theme-btn header-toggle-btn" id="headerThemeBtn"
                 title="Cycle theme" aria-label="Cycle theme">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -383,64 +477,21 @@
             <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
             <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
           </svg>
+          <span class="header-btn-text">Theme</span>
         </button>
-        <!-- Currency toggle button (STACK-54) -->
-        <button class="btn theme-btn header-toggle-btn" id="headerCurrencyBtn"
-                title="Toggle currency" aria-label="Toggle currency">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-               stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="12" y1="1" x2="12" y2="23"/>
-            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
-          </svg>
-        </button>
-        <!-- Market button -->
-        <button class="btn theme-btn header-toggle-btn" id="headerMarketBtn"
-                title="Market prices" aria-label="Market prices">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-               stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
-            <line x1="3" y1="6" x2="21" y2="6"/>
-            <path d="M16 10a4 4 0 0 1-8 0"/>
-          </svg>
-        </button>
-        <!-- Trend cycle button -->
-        <button class="btn theme-btn header-toggle-btn" id="headerTrendBtn"
-                title="Trend period" aria-label="Trend period" style="display:none">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-               stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
-          </svg>
-          <span class="header-trend-label" id="headerTrendLabel">90d</span>
-        </button>
-        <!-- Sync all spot prices button -->
-        <button class="btn theme-btn header-toggle-btn" id="headerSyncBtn"
-                title="Sync all spot prices" aria-label="Sync all spot prices" style="display:none">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-               stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M21.5 2v6h-6"/><path d="M2.5 22v-6h6"/>
-            <path d="M2.5 11.5a10 10 0 0 1 18.4-4.5"/>
-            <path d="M21.5 12.5a10 10 0 0 1-18.4 4.5"/>
-          </svg>
-        </button>
-        <!-- Cloud sync status button (STAK-264) -->
-        <button class="btn theme-btn header-toggle-btn" id="headerCloudSyncBtn"
-                title="Cloud sync status" aria-label="Cloud sync status" style="display:none;">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-               stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/>
-          </svg>
-          <span class="cloud-sync-dot header-cloud-dot" id="headerCloudDot"></span>
-        </button>
-        <button class="btn theme-btn" id="aboutBtn" title="About" aria-label="About">
+        <!-- Info button — order: 9 -->
+        <button class="btn theme-btn header-toggle-btn" id="aboutBtn" title="About" aria-label="About">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="12" cy="12" r="10"/>
             <line x1="12" y1="16" x2="12" y2="12"/>
             <line x1="12" y1="8" x2="12.01" y2="8"/>
           </svg>
+          <span class="header-btn-text">Info</span>
         </button>
-        <button class="btn theme-btn" id="settingsBtn" title="Settings" aria-label="Settings">
+        <button class="btn theme-btn header-toggle-btn" id="settingsBtn" title="Settings" aria-label="Settings">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          <span class="header-btn-text">Settings</span>
         </button>
       </div>
     </div>
@@ -464,6 +515,7 @@
               <canvas class="spot-sparkline" id="sparklineSilver" aria-hidden="true"></canvas>
               <div class="spot-card-header">
                 <div class="spot-card-label">Silver Spot Price</div>
+                <span class="spot-card-period" id="spotPeriodSilver">90d</span>
                 <div class="spot-card-controls">
                   <select class="spot-range-select" id="spotRangeSilver" title="Trend period">
                     <option value="1">1d</option>
@@ -493,6 +545,7 @@
               <canvas class="spot-sparkline" id="sparklineGold" aria-hidden="true"></canvas>
               <div class="spot-card-header">
                 <div class="spot-card-label">Gold Spot Price</div>
+                <span class="spot-card-period" id="spotPeriodGold">90d</span>
                 <div class="spot-card-controls">
                   <select class="spot-range-select" id="spotRangeGold" title="Trend period">
                     <option value="1">1d</option>
@@ -522,6 +575,7 @@
               <canvas class="spot-sparkline" id="sparklinePlatinum" aria-hidden="true"></canvas>
               <div class="spot-card-header">
                 <div class="spot-card-label">Platinum Spot Price</div>
+                <span class="spot-card-period" id="spotPeriodPlatinum">90d</span>
                 <div class="spot-card-controls">
                   <select class="spot-range-select" id="spotRangePlatinum" title="Trend period">
                     <option value="1">1d</option>
@@ -551,6 +605,7 @@
               <canvas class="spot-sparkline" id="sparklinePalladium" aria-hidden="true"></canvas>
               <div class="spot-card-header">
                 <div class="spot-card-label">Palladium Spot Price</div>
+                <span class="spot-card-period" id="spotPeriodPalladium">90d</span>
                 <div class="spot-card-controls">
                   <select class="spot-range-select" id="spotRangePalladium" title="Trend period">
                     <option value="1">1d</option>
@@ -1192,6 +1247,8 @@
                 <select id="itemWeightUnit">
                   <option value="oz">ounce</option>
                   <option value="g">gram</option>
+                  <option value="kg">kilogram</option>
+                  <option value="lb">pound</option>
                   <option value="gb">goldback</option>
                 </select>
               </div>
@@ -1283,6 +1340,10 @@
                     <input id="itemObverseImageUrl" type="url" class="form-control" placeholder="https://example.com/obverse.jpg" />
                   </div>
                 </div>
+                <!-- Swap obverse/reverse button (STAK-341) -->
+                <div class="image-swap-wrapper d-none" id="swapImagesBtnWrapper">
+                  <button type="button" class="btn btn-icon" id="swapImagesBtn" title="Swap obverse &amp; reverse" aria-label="Swap obverse and reverse images">⇄</button>
+                </div>
                 <!-- Reverse -->
                 <div class="image-upload-side">
                   <span class="image-side-label">Reverse</span>
@@ -1306,6 +1367,15 @@
               </div>
               <!-- Hidden wrapper preserved for feature-flag JS compatibility -->
               <div id="imageUrlGroup" style="display:none"></div>
+              <!-- ignorePatternImagesGroup hidden — per-side cascade makes this redundant (STAK-339); planned for future per-slot control -->
+              <div id="ignorePatternImagesGroup" class="image-pattern-toggle-group" style="display:none">
+                <div class="pattern-toggle-row">
+                  <label class="settings-checkbox-label pattern-toggle-label">
+                    <input type="checkbox" id="itemIgnorePatternImages" />
+                    Ignore image pattern rules for this item
+                  </label>
+                </div>
+              </div>
               <div id="imagePatternToggleGroup" class="image-pattern-toggle-group" style="display:none">
                 <div class="pattern-toggle-row">
                   <label class="settings-checkbox-label pattern-toggle-label">
@@ -2235,45 +2305,18 @@
 
               <!-- ── Header Buttons ── -->
               <div class="settings-fieldset">
-                <div class="settings-fieldset-title">Header Buttons</div>
-                <p class="settings-subtext">Optional buttons shown in the top-right of the app header.</p>
-                <div class="settings-card-grid settings-card-grid--3col settings-card-grid--mini">
-                  <div class="settings-card">
-                    <div class="settings-group-label">Theme</div>
-                    <div class="chip-sort-toggle" id="settingsHeaderThemeBtn_hdr">
-                      <button type="button" class="chip-sort-btn" data-val="yes">On</button>
-                      <button type="button" class="chip-sort-btn" data-val="no">Off</button>
-                    </div>
-                  </div>
-                  <div class="settings-card">
-                    <div class="settings-group-label">Currency</div>
-                    <div class="chip-sort-toggle" id="settingsHeaderCurrencyBtn_hdr">
-                      <button type="button" class="chip-sort-btn" data-val="yes">On</button>
-                      <button type="button" class="chip-sort-btn" data-val="no">Off</button>
-                    </div>
-                  </div>
-                  <div class="settings-card">
-                    <div class="settings-group-label">Market</div>
-                    <div class="chip-sort-toggle" id="settingsHeaderMarketBtn_hdr">
-                      <button type="button" class="chip-sort-btn" data-val="yes">On</button>
-                      <button type="button" class="chip-sort-btn" data-val="no">Off</button>
-                    </div>
-                  </div>
-                  <div class="settings-card">
-                    <div class="settings-group-label">Trend</div>
-                    <div class="chip-sort-toggle" id="settingsHeaderTrendBtn_hdr">
-                      <button type="button" class="chip-sort-btn" data-val="yes">On</button>
-                      <button type="button" class="chip-sort-btn" data-val="no">Off</button>
-                    </div>
-                  </div>
-                  <div class="settings-card">
-                    <div class="settings-group-label">Sync</div>
-                    <div class="chip-sort-toggle" id="settingsHeaderSyncBtn_hdr">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.25rem">
+                  <div class="settings-fieldset-title" style="margin-bottom:0">Header Buttons</div>
+                  <div style="display:flex;align-items:center;gap:0.5rem">
+                    <span style="font-size:0.75rem;color:var(--text-secondary);font-weight:500">Show text</span>
+                    <div class="chip-sort-toggle" id="settingsHeaderShowText_hdr">
                       <button type="button" class="chip-sort-btn" data-val="yes">On</button>
                       <button type="button" class="chip-sort-btn" data-val="no">Off</button>
                     </div>
                   </div>
                 </div>
+                <p class="settings-subtext">Optional buttons shown in the top-right of the app header.</p>
+                <div id="headerBtnConfigTable"></div>
               </div>
 
               <!-- ── Layout ── -->
@@ -3008,219 +3051,6 @@
               </div>
             </div>
 
-            <!-- ===== CLOUD SYNC ===== -->
-            <div class="settings-section-panel" id="settingsPanel_cloud" style="display: none">
-              <h3>Cloud Sync</h3>
-
-              <!-- Beta Banner -->
-              <div class="cloud-beta-banner">
-                <span class="cloud-beta-badge">BETA</span>
-                <p class="cloud-beta-title">&#x1F409; Here be dragons</p>
-                <p>Cloud Sync lets you store <strong>encrypted vault backups</strong> on your own cloud storage account. Your data is encrypted with AES-256-GCM before it leaves StakTrakr &mdash; your provider never sees the plaintext.</p>
-                <p>This feature is in <strong>early beta</strong>. It works, but rough edges remain. We are a small team and your patience means a lot.</p>
-                <p style="margin-bottom:0"><button class="resource-btn" style="font-size:0.8rem;padding:0.35rem 0.75rem" onclick="if(window.openModalById)openModalById('privacyModal')">&#x1F512; Privacy Policy</button></p>
-              </div>
-
-              <!-- StakTrakr Cloud Placeholder -->
-              <div class="cloud-provider-card cloud-provider-card--coming-soon">
-                <div class="cloud-provider-card-header">
-                  <span class="cloud-provider-card-title">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:-2px"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-                    StakTrakr Cloud <span style="font-weight:400;font-size:0.8em">(Sponsors)</span>
-                  </span>
-                  <span class="cloud-provider-card-badges">
-                    <span class="cloud-badge cloud-badge--coming-soon">COMING SOON</span>
-                  </span>
-                </div>
-                <p class="settings-subtext" style="margin:0.5rem 0 0">Supabase-powered cloud storage for StakTrakr sponsors. Zero-config encrypted sync with automatic backups.</p>
-              </div>
-
-              <!-- Dropbox Provider (unified card) -->
-              <div class="cloud-provider-card" id="cloudCard_dropbox">
-                <div class="cloud-provider-card-header">
-                  <span class="cloud-provider-card-title">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:-2px"><path d="M6 2l6 3.6L6 9.2 0 5.6zm12 0l6 3.6-6 3.6-6-3.6zm-12 8l6 3.6-6 3.6-6-3.6zm12 0l6 3.6-6 3.6-6-3.6zM6 18.4l6-3.6 6 3.6-6 3.6z"/></svg>
-                    Dropbox
-                  </span>
-                  <span class="cloud-provider-card-badges">
-                    <span class="cloud-connected-badge" style="display:none">Connected</span>
-                    <span class="cloud-badge cloud-badge--beta">BETA</span>
-                  </span>
-                </div>
-
-                <!-- Status rows -->
-                <div class="cloud-connection-status" id="cloudStatus_dropbox">
-                  <div class="cloud-status-row">
-                    <span class="cloud-status-label">Status</span>
-                    <span class="cloud-status-value cloud-status-indicator" data-state="disconnected">
-                      <span class="cloud-status-dot"></span>
-                      <span class="cloud-status-text">Not connected</span>
-                    </span>
-                  </div>
-                  <div class="cloud-status-row">
-                    <span class="cloud-status-label">Last sync</span>
-                    <span class="cloud-status-value cloud-status-sync">Never</span>
-                  </div>
-                  <div class="cloud-status-row">
-                    <span class="cloud-status-label">Items backed up</span>
-                    <span class="cloud-status-value cloud-status-items">&mdash;</span>
-                  </div>
-                </div>
-
-                <!-- Actions -->
-                <div class="cloud-provider-card-actions">
-                  <div class="cloud-login-area">
-                    <button class="btn cloud-connect-btn" data-provider="dropbox">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:0.3rem"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
-                      Login to Dropbox
-                    </button>
-                  </div>
-                  <button class="btn danger cloud-disconnect-btn" data-provider="dropbox" style="display:none">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:0.3rem"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-                    Disconnect
-                  </button>
-                  <button class="btn success cloud-backup-btn" data-provider="dropbox" disabled>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:0.3rem"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                    Backup Now
-                  </button>
-                  <button class="btn cloud-restore-btn" data-provider="dropbox" disabled>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:0.3rem"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                    Restore
-                  </button>
-                </div>
-                <div class="cloud-status-detail"></div>
-                <div class="cloud-backup-list" id="cloudBackupList_dropbox" style="display:none"></div>
-
-                <!-- STAK-149: Auto-Sync Controls -->
-                <div class="cloud-autosync-section" style="margin-top:0.75rem;border-top:1px solid var(--border-color,#ddd);padding-top:0.75rem">
-                  <div class="cloud-status-row" style="align-items:center">
-                    <span class="cloud-status-label">
-                      <strong>Auto-sync</strong>
-                      <span class="settings-subtext" style="display:block;font-size:0.75rem">Sync inventory automatically on every change</span>
-                    </span>
-                    <label class="settings-toggle-switch" style="margin-left:auto">
-                      <input type="checkbox" id="cloudAutoSyncToggle" onchange="if(this.checked){enableCloudSync('dropbox');}else{disableCloudSync();}">
-                      <span class="settings-toggle-slider"></span>
-                    </label>
-                  </div>
-                  <div class="cloud-status-row" id="cloudAutoSyncStatus" style="align-items:center;margin-top:0.35rem">
-                    <span class="cloud-status-label">Status</span>
-                    <span class="cloud-status-value" style="display:flex;align-items:center;gap:0.4rem">
-                      <span class="cloud-sync-dot"></span>
-                      <span class="cloud-sync-status-text">Auto-sync off</span>
-                    </span>
-                  </div>
-                  <div class="cloud-status-row" style="align-items:center;margin-top:0.35rem">
-                    <span class="cloud-status-label">Last synced</span>
-                    <span class="cloud-status-value" id="cloudAutoSyncLastSync">Never</span>
-                  </div>
-                  <div style="margin-top:0.5rem">
-                    <button class="btn" id="cloudSyncNowBtn" disabled onclick="if(typeof pushSyncVault==='function')pushSyncVault();" style="font-size:0.8rem;padding:0.25rem 0.6rem">
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:0.25rem"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
-                      Sync Now
-                    </button>
-                  </div>
-                </div>
-
-                <!-- Sync History (pre-pull local snapshot) -->
-                <div class="cloud-autosync-section" style="margin-top:0.75rem;border-top:1px solid var(--border-color,#ddd);padding-top:0.75rem">
-                  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem">
-                    <strong style="font-size:0.85rem">Sync History</strong>
-                    <span class="settings-subtext" style="font-size:0.75rem">Last local snapshot</span>
-                  </div>
-                  <div id="cloudSyncHistorySection">
-                    <p class="settings-subtext" style="margin:0">No snapshot available.</p>
-                  </div>
-                </div>
-
-                <!-- Disclaimer -->
-                <div class="cloud-provider-disclaimer" style="display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap">
-                  <span>Backups are stored in <strong>/StakTrakr</strong> on your Dropbox. Your vault password encrypts the data &mdash; if you lose it, backups cannot be recovered.</span>
-                  <button class="btn" style="font-size:0.78rem;padding:0.2rem 0.55rem;white-space:nowrap;flex-shrink:0"
-                    onclick="if(typeof switchLogTab==='function'){switchLogTab('cloud');} if(typeof switchSettingsSection==='function'){switchSettingsSection('changelog');}">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:0.25rem"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-                    View Sync Log
-                  </button>
-                </div>
-              </div>
-
-              <!-- More Providers -->
-              <div class="settings-fieldset">
-                <div class="settings-fieldset-title">More Providers</div>
-                <div class="settings-card-grid">
-                  <!-- Google Drive -->
-                  <div class="cloud-provider-card cloud-provider-card--coming-soon" style="margin:0">
-                    <div class="cloud-provider-card-header">
-                      <span class="cloud-provider-card-title">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:-2px"><path d="M7.71 3.5l-5.5 9.5h5.6l5.5-9.5H7.71zm1.1 10.5H1.39L4.59 20h8.71l-4.49-6zm8.68-10.5l-5.5 9.5 3.39 5.5 5.5-9.5-3.39-5.5z"/></svg>
-                        Google Drive
-                      </span>
-                      <span class="cloud-provider-card-badges">
-                        <span class="cloud-badge cloud-badge--coming-soon">COMING SOON</span>
-                      </span>
-                    </div>
-                  </div>
-                  <!-- OneDrive -->
-                  <div class="cloud-provider-card cloud-provider-card--coming-soon" style="margin:0">
-                    <div class="cloud-provider-card-header">
-                      <span class="cloud-provider-card-title">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:-2px"><path d="M10.5 18H6a4 4 0 0 1-.83-7.91A5.5 5.5 0 0 1 14.28 8 3.5 3.5 0 0 1 18 11.5h.5a2.5 2.5 0 0 1 0 5H15"/><path d="M10 15l3-3 3 3"/></svg>
-                        OneDrive
-                      </span>
-                      <span class="cloud-provider-card-badges">
-                        <span class="cloud-badge cloud-badge--coming-soon">COMING SOON</span>
-                      </span>
-                    </div>
-                  </div>
-                  <!-- pCloud -->
-                  <div class="cloud-provider-card cloud-provider-card--coming-soon" style="margin:0">
-                    <div class="cloud-provider-card-header">
-                      <span class="cloud-provider-card-title">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
-                        pCloud
-                      </span>
-                      <span class="cloud-provider-card-badges">
-                        <span class="cloud-badge cloud-badge--coming-soon">COMING SOON</span>
-                      </span>
-                    </div>
-                  </div>
-                  <!-- Box -->
-                  <div class="cloud-provider-card cloud-provider-card--coming-soon" style="margin:0">
-                    <div class="cloud-provider-card-header">
-                      <span class="cloud-provider-card-title">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 3H8L2 7h20l-6-4z"/></svg>
-                        Box
-                      </span>
-                      <span class="cloud-provider-card-badges">
-                        <span class="cloud-badge cloud-badge--coming-soon">COMING SOON</span>
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Session Cache (demoted) -->
-              <div class="settings-fieldset cloud-session-cache">
-                <div class="settings-fieldset-title">Session Password Cache</div>
-                <p class="settings-subtext">Your vault password is remembered for this browser session after the first backup or restore. Closing the browser clears it.</p>
-                <div class="cloud-status-row" style="margin-top:0.5rem">
-                  <span class="cloud-status-label">Cache status</span>
-                  <span class="cloud-status-value" id="cloudPwCacheStatus">Not cached</span>
-                </div>
-                <div class="cloud-status-row" style="margin-top:0.5rem">
-                  <label class="cloud-status-label" for="cloudVaultIdleTimeout">Auto-lock after idle</label>
-                  <select id="cloudVaultIdleTimeout" class="control-select" title="Clear cached vault password after this period of inactivity">
-                    <option value="15">15 minutes</option>
-                    <option value="30">30 minutes</option>
-                    <option value="60">1 hour</option>
-                    <option value="120">2 hours</option>
-                    <option value="0">Never</option>
-                  </select>
-                </div>
-              </div>
-
-            </div>
-
             <!-- ===== IMAGES (STACK-96) ===== -->
             <div class="settings-section-panel" id="settingsPanel_images" style="display: none">
               <h3>Images</h3>
@@ -3240,6 +3070,10 @@
                   <button class="btn secondary" id="syncImageUrlsBtn" type="button">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:0.3rem"><path d="M21.5 2v6h-6"/><path d="M2.5 22v-6h6"/><path d="M2.5 11.5a10 10 0 0 1 18.4-4.5"/><path d="M21.5 12.5a10 10 0 0 1-18.4 4.5"/></svg>
                     Download URLs
+                  </button>
+                  <button class="btn warning" id="purgeNumistaUrlsBtn" type="button" title="Remove all Numista CDN image URLs from inventory items (keeps user uploads and pattern images)">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:0.3rem"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    Purge Numista URLs
                   </button>
                   <button class="btn danger" id="clearAllImagesBtn" type="button">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:0.3rem"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
@@ -3270,21 +3104,13 @@
                       <button type="button" class="chip-sort-btn" data-val="reverse">Rev</button>
                     </div>
                   </div>
-                  <div class="settings-card">
-                    <div class="settings-group-label">Numista override</div>
-                    <p class="settings-subtext">Numista images take priority.</p>
-                    <div class="chip-sort-toggle" id="numistaOverrideToggle">
-                      <button type="button" class="chip-sort-btn" data-val="yes">On</button>
-                      <button type="button" class="chip-sort-btn" data-val="no">Off</button>
-                    </div>
-                  </div>
                 </div>
               </div>
 
               <!-- ── Add Pattern Image Rule ── -->
               <div class="settings-fieldset">
                 <div class="settings-fieldset-title">Add Pattern Image Rule</div>
-                <p class="settings-subtext">Create rules that automatically assign images to items matching a name pattern.</p>
+                <p class="settings-subtext">Create rules that automatically assign images to items matching a name pattern. Per-item uploads always take priority over pattern images on a per-side basis.</p>
                 <div class="pattern-rule-form" id="patternRuleForm">
                   <div class="pattern-rule-form-row">
                     <div class="pattern-rule-field">
@@ -3343,7 +3169,17 @@
               <div class="settings-fieldset">
                 <div class="settings-fieldset-title">Storage</div>
                 <div id="imageStorageStats" class="image-storage-stats">
-                  <span class="stat-item">Loading...</span>
+                  <div class="storage-gauge-row">
+                    <span class="storage-gauge-label">📷 Your Photos</span>
+                    <div class="storage-gauge-bar-wrap"><div id="gaugeUserBar" class="storage-gauge-bar"></div></div>
+                    <span id="gaugeUserSize" class="storage-gauge-size">—</span>
+                  </div>
+                  <div class="storage-gauge-row">
+                    <span class="storage-gauge-label">🪙 Numista Cache</span>
+                    <div class="storage-gauge-bar-wrap"><div id="gaugeNumistaBar" class="storage-gauge-bar"></div></div>
+                    <span id="gaugeNumistaSize" class="storage-gauge-size">—</span>
+                  </div>
+                  <div id="gaugePersistLine" class="storage-gauge-persist">—</div>
                 </div>
               </div>
             </div>
@@ -3352,100 +3188,248 @@
             <div class="settings-section-panel" id="settingsPanel_system" style="display: none">
               <h3>Inventory</h3>
 
-              <!-- ── Bulk Editor ── -->
-              <div class="settings-fieldset">
-                <div class="settings-fieldset-title">Bulk Editor</div>
-                <div class="settings-card-grid">
-                  <div class="settings-card">
-                    <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.35rem">
-                      <div class="settings-group-label" style="margin:0">Bulk Editor</div>
+              <!-- ── Bulk Editor + Inventory Summary ── -->
+              <div class="settings-card-grid" style="margin-bottom:1rem">
+                <div class="cloud-provider-card">
+                  <div class="cloud-provider-card-header">
+                    <span class="cloud-provider-card-title">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                      Bulk Editor
+                    </span>
+                    <span class="cloud-provider-card-badges">
                       <span class="cloud-badge cloud-badge--beta">BETA</span>
+                    </span>
+                  </div>
+                  <p class="settings-subtext">Select multiple inventory items and apply batch operations — edit shared fields, duplicate entries, or remove items in bulk. This feature is actively developed; please report any issues on GitHub.</p>
+                  <div style="border-top:1px solid var(--border);padding-top:0.6rem;margin-top:0.5rem">
+                    <button class="btn settings-action-btn" id="bulkEditBtn" type="button" style="font-size:0.82rem;padding:0.4rem 0.9rem;min-height:0">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:0.35rem;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                      Open Bulk Editor
+                    </button>
+                  </div>
+                </div>
+                <div class="cloud-provider-card" id="inventorySummaryCard">
+                  <div class="cloud-provider-card-header">
+                    <span class="cloud-provider-card-title">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                      Inventory
+                    </span>
+                  </div>
+                  <div class="cloud-connection-status" id="inventorySummaryRows">
+                    <div class="cloud-status-row">
+                      <span class="cloud-status-label">Items</span>
+                      <span class="cloud-status-value" id="invSummaryCount">—</span>
                     </div>
-                    <p class="settings-subtext">Select multiple inventory items and apply batch operations — edit shared fields, duplicate entries, or remove items in bulk. This feature is actively developed; please report any issues on GitHub.</p>
-                    <div class="settings-btn-row">
-                      <button class="btn settings-action-btn" id="bulkEditBtn" type="button">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:0.35rem;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                        Open Bulk Editor
-                      </button>
+                    <div class="cloud-status-row">
+                      <span class="cloud-status-label">Total weight</span>
+                      <span class="cloud-status-value" id="invSummaryWeight">—</span>
+                    </div>
+                    <div class="cloud-status-row">
+                      <span class="cloud-status-label">Melt value</span>
+                      <span class="cloud-status-value" id="invSummaryMelt">—</span>
+                    </div>
+                    <div class="cloud-status-row">
+                      <span class="cloud-status-label">Last modified</span>
+                      <span class="cloud-status-value" id="invSummaryModified">—</span>
                     </div>
                   </div>
                 </div>
               </div>
 
-              <!-- ── Import ── -->
-              <div class="settings-fieldset">
-                <div class="settings-fieldset-title">Import</div>
-                <div class="settings-card-grid">
-                  <div class="settings-card">
-                    <h3>Import</h3>
-                    <p class="settings-subtext">Import your data files.</p>
+              <!-- ── Import + Third-Party ── -->
+              <div class="settings-card-grid" style="margin-bottom:1rem">
+                <div class="cloud-provider-card">
+                  <div class="cloud-provider-card-header">
+                    <span class="cloud-provider-card-title">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                      Import
+                    </span>
+                  </div>
+                  <p class="settings-subtext">Import your data files. New here? <a href="sample.csv" download="sample.csv">Download sample CSV</a> to try importing.</p>
+                  <div style="border-top:1px solid var(--border);padding-top:0.6rem;margin-top:0.5rem">
                     <div class="import-block">
-                      <div class="import-export-grid">
-                        <div class="import-csv-grid">
-                          <button class="btn warning" id="importCsvOverride">Import CSV</button>
-                          <button class="btn success" id="importCsvMerge">Merge CSV</button>
-                          <input accept=".csv" hidden id="importCsvFile" type="file" />
-                        </div>
-                        <div class="import-json-grid">
-                          <button class="btn warning" id="importJsonOverride">Import JSON</button>
-                          <button class="btn success" id="importJsonMerge">Merge JSON</button>
-                          <input accept=".json" hidden id="importJsonFile" type="file" />
-                        </div>
-                        <div>
-                          <button class="btn warning" id="importZipBtn">Restore ZIP Backup</button>
-                          <input accept=".zip" hidden id="importZipFile" type="file" />
-                        </div>
+                      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:0.4rem">
+                        <button class="btn warning" id="importCsvOverride" style="font-size:0.82rem;padding:0.4rem 0.6rem;min-height:0">Import CSV</button>
+                        <button class="btn success" id="importCsvMerge" style="font-size:0.82rem;padding:0.4rem 0.6rem;min-height:0">Merge CSV</button>
+                        <button class="btn warning" id="importJsonOverride" style="font-size:0.82rem;padding:0.4rem 0.6rem;min-height:0">Import JSON</button>
+                        <button class="btn success" id="importJsonMerge" style="font-size:0.82rem;padding:0.4rem 0.6rem;min-height:0">Merge JSON</button>
                       </div>
+                      <input accept=".csv" hidden id="importCsvFile" type="file" />
+                      <input accept=".json" hidden id="importJsonFile" type="file" />
                       <progress class="import-progress" id="importProgress" value="0" max="0"></progress>
                       <div class="import-progress-text" id="importProgressText"></div>
                     </div>
-                    <p class="settings-subtext" style="margin-top:0.5rem">
-                      New here? <a href="sample.csv" download="sample.csv">Download sample CSV</a> to try importing.
-                    </p>
                   </div>
-                  <div class="settings-card">
-                    <h3>Third-Party</h3>
-                    <p class="settings-subtext">Import data from external services like Numista.</p>
+                </div>
+                <div class="cloud-provider-card">
+                  <div class="cloud-provider-card-header">
+                    <span class="cloud-provider-card-title">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                      Third-Party
+                    </span>
+                  </div>
+                  <p class="settings-subtext">Import data from external services like Numista.</p>
+                  <div style="border-top:1px solid var(--border);padding-top:0.6rem;margin-top:0.5rem">
                     <div class="third-party-block">
-                      <div class="import-export-grid">
-                        <div class="grid grid-2">
-                          <button class="btn warning" id="importNumistaBtn">Import Numista CSV</button>
-                          <button class="btn success" id="mergeNumistaBtn">Merge Numista CSV</button>
-                        </div>
-                        <input type="file" id="numistaImportFile" accept=".csv" hidden />
-                        <div class="beta-warning">Numista import is a beta feature</div>
+                      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:0.4rem">
+                        <button class="btn warning" id="importNumistaBtn" style="font-size:0.82rem;padding:0.4rem 0.6rem;min-height:0">Import Numista</button>
+                        <button class="btn success" id="mergeNumistaBtn" style="font-size:0.82rem;padding:0.4rem 0.6rem;min-height:0">Merge Numista</button>
                       </div>
+                      <input type="file" id="numistaImportFile" accept=".csv" hidden />
+                      <div class="beta-warning" style="margin-top:0.4rem">Numista import is a beta feature</div>
                     </div>
                   </div>
                 </div>
               </div>
 
-              <!-- ── Export ── -->
-              <div class="settings-fieldset">
-                <div class="settings-fieldset-title">Export</div>
-                <div class="settings-card-grid">
-                  <div class="settings-card">
-                    <h3>Export</h3>
-                    <p class="settings-subtext">Export your data files.</p>
+              <!-- ── Export + Encrypted Backup ── -->
+              <div class="settings-card-grid" style="margin-bottom:1rem">
+                <div class="cloud-provider-card">
+                  <div class="cloud-provider-card-header">
+                    <span class="cloud-provider-card-title">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                      Export
+                    </span>
+                  </div>
+                  <p class="settings-subtext">Export your data files.</p>
+                  <div style="border-top:1px solid var(--border);padding-top:0.6rem;margin-top:0.5rem">
                     <div class="export-block">
-                      <div class="import-export-grid">
-                        <button class="btn info" id="exportCsvBtn">Export CSV</button>
-                        <button class="btn info" id="exportJsonBtn">Export JSON</button>
-                        <button class="btn info" id="exportPdfBtn">Export PDF</button>
-                        <button class="btn info" id="exportZipBtn">Export ZIP Backup</button>
+                      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:0.4rem">
+                        <button class="btn info" id="exportCsvBtn" style="font-size:0.82rem;padding:0.4rem 0.6rem;min-height:0">Export CSV</button>
+                        <button class="btn info" id="exportJsonBtn" style="font-size:0.82rem;padding:0.4rem 0.6rem;min-height:0">Export JSON</button>
+                        <button class="btn info" id="exportPdfBtn" style="font-size:0.82rem;padding:0.4rem 0.6rem;min-height:0">Export PDF</button>
+                        <button class="btn info" id="exportZipBtn" style="font-size:0.82rem;padding:0.4rem 0.6rem;min-height:0">Export ZIP</button>
+                        <button class="btn warning" id="importZipBtn" style="font-size:0.82rem;padding:0.4rem 0.6rem;min-height:0;grid-column:span 2">Restore ZIP Backup</button>
+                        <input accept=".zip" hidden id="importZipFile" type="file" />
                       </div>
                     </div>
                   </div>
-                  <div class="settings-card">
-                    <div class="settings-group-label">Encrypted Backup</div>
-                    <p class="settings-subtext">AES-GCM encrypted vault file. Use to back up and restore all inventory data.</p>
-                    <div class="settings-btn-row">
-                      <button class="btn" id="vaultExportBtn">Export Backup</button>
-                      <button class="btn info" id="vaultImportBtn">Restore Backup</button>
+                </div>
+                <div class="cloud-provider-card">
+                  <div class="cloud-provider-card-header">
+                    <span class="cloud-provider-card-title">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                      Encrypted Backup
+                    </span>
+                  </div>
+                  <p class="settings-subtext">AES-GCM encrypted vault file. Use to back up and restore all inventory data.</p>
+                  <div style="border-top:1px solid var(--border);padding-top:0.6rem;margin-top:0.5rem">
+                    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:0.4rem">
+                      <button class="btn" id="vaultExportBtn" style="font-size:0.82rem;padding:0.4rem 0.6rem;min-height:0">Export Backup</button>
+                      <button class="btn info" id="vaultImportBtn" style="font-size:0.82rem;padding:0.4rem 0.6rem;min-height:0">Restore Backup</button>
                     </div>
                     <input type="file" id="vaultImportFile" accept=".stvault" hidden />
                   </div>
                 </div>
+              </div>
+
+              <!-- ── Cloud Backup ── -->
+              <div id="inventoryCloudSection">
+                <div class="settings-card-grid" style="margin-bottom:1rem">
+
+                  <!-- Dropbox card -->
+                  <div class="cloud-provider-card" id="cloudCard_dropbox">
+                    <div class="cloud-provider-card-header">
+                      <span class="cloud-provider-card-title">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:-2px"><path d="M6 2l6 3.6L6 9.2 0 5.6zm12 0l6 3.6-6 3.6-6-3.6zm-12 8l6 3.6-6 3.6-6-3.6zm12 0l6 3.6-6 3.6-6-3.6zM6 18.4l6-3.6 6 3.6-6 3.6z"/></svg>
+                        Dropbox
+                      </span>
+                      <span class="cloud-provider-card-badges">
+                        <span class="cloud-connected-badge" style="display:none">Connected</span>
+                        <span class="cloud-badge cloud-badge--beta">BETA</span>
+                      </span>
+                    </div>
+
+                    <!-- Connection status -->
+                    <div class="cloud-connection-status" id="cloudStatus_dropbox">
+                      <div class="cloud-status-row">
+                        <span class="cloud-status-label">Status</span>
+                        <span class="cloud-status-value cloud-status-indicator" data-state="disconnected">
+                          <span class="cloud-status-dot"></span>
+                          <span class="cloud-status-text">Not connected</span>
+                        </span>
+                      </div>
+                      <div class="cloud-status-row" id="cloudAutoSyncStatus" style="align-items:center">
+                        <span class="cloud-status-label">Sync</span>
+                        <span class="cloud-status-value" style="display:flex;align-items:center;gap:0.4rem">
+                          <span class="cloud-sync-dot"></span>
+                          <span class="cloud-sync-status-text">Auto-sync off</span>
+                        </span>
+                      </div>
+                      <div class="cloud-status-row" style="align-items:center">
+                        <span class="cloud-status-label">Last synced</span>
+                        <span class="cloud-status-value" id="cloudAutoSyncLastSync">Never</span>
+                      </div>
+                    </div>
+
+                    <!-- Connect / Backup / Restore row -->
+                    <div class="cloud-login-area" style="margin-top:0.5rem;display:flex;gap:0.4rem;flex-wrap:wrap">
+                      <button class="btn cloud-connect-btn" data-provider="dropbox" style="font-size:0.82rem;padding:0.4rem 0.9rem;min-height:0">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:0.3rem"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+                        Connect
+                      </button>
+                      <button class="btn success cloud-backup-btn" data-provider="dropbox" disabled style="font-size:0.82rem;padding:0.4rem 0.9rem;min-height:0">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:0.3rem"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                        Backup
+                      </button>
+                      <button class="btn cloud-restore-btn" data-provider="dropbox" disabled style="font-size:0.82rem;padding:0.4rem 0.9rem;min-height:0">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:0.3rem"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                        Restore
+                      </button>
+                    </div>
+
+                    <!-- Auto-sync toggle -->
+                    <div class="cloud-autosync-section" style="margin-top:0.6rem;border-top:1px solid var(--border);padding-top:0.6rem">
+                      <div class="cloud-status-row" style="align-items:center">
+                        <span class="cloud-status-label"><strong>Auto-sync</strong></span>
+                        <label class="settings-toggle-switch" style="margin-left:auto">
+                          <input type="checkbox" id="cloudAutoSyncToggle" onchange="if(this.checked){enableCloudSync('dropbox');}else{disableCloudSync();}">
+                          <span class="settings-toggle-slider"></span>
+                        </label>
+                      </div>
+                    </div>
+
+                    <!-- Sync Now + Advanced -->
+                    <div style="display:flex;gap:0.5rem;margin-top:0.6rem;align-items:center">
+                      <button class="btn" id="cloudSyncNowBtn" disabled onclick="if(typeof pushSyncVault==='function')pushSyncVault();" style="font-size:0.8rem;padding:0.35rem 0.75rem;min-height:0;flex:1">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:0.3rem"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+                        Sync Now
+                      </button>
+                      <button class="btn" id="cloudSyncAdvancedBtn" onclick="if(typeof openModalById==='function')openModalById('cloudSyncAdvancedModal');" style="font-size:0.8rem;padding:0.35rem 0.75rem;min-height:0">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:0.3rem"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
+                        Advanced
+                      </button>
+                    </div>
+
+                    <div class="cloud-status-detail"></div>
+                    <div class="cloud-backup-list" id="cloudBackupList_dropbox" style="display:none"></div>
+                  </div>
+
+                  <!-- Beta info card -->
+                  <div class="cloud-provider-card">
+                    <div class="cloud-provider-card-header">
+                      <span class="cloud-provider-card-title">
+                        &#x1F409; Cloud Sync Beta
+                      </span>
+                      <span class="cloud-provider-card-badges">
+                        <span class="cloud-badge cloud-badge--beta">BETA</span>
+                      </span>
+                    </div>
+                    <p class="settings-subtext">Cloud Sync lets you store <strong>encrypted vault backups</strong> on your own cloud storage account. Your data is encrypted with AES-256-GCM before it leaves StakTrakr &mdash; your provider never sees the plaintext.</p>
+                    <p class="settings-subtext">This feature is in <strong>early beta</strong>. It works, but rough edges remain. We are a small team and your patience means a lot.</p>
+                    <div style="border-top:1px solid var(--border);padding-top:0.6rem;margin-top:0.5rem">
+                      <button class="resource-btn" style="font-size:0.8rem;padding:0.35rem 0.75rem" onclick="if(window.openModalById)openModalById('privacyModal')">&#x1F512; Privacy Policy</button>
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+
+              <!-- ── App Updates ── -->
+              <div class="settings-fieldset">
+                <div class="settings-fieldset-title">App Updates</div>
+                <p class="settings-subtext">If the app appears stuck on an old version after an update, use this to clear the cached files and reload fresh. Your inventory data is not affected.</p>
+                <button class="btn theme-btn" id="forceRefreshBtn">Force Refresh</button>
               </div>
 
             </div>
@@ -4155,13 +4139,30 @@
           </button>
         </div>
         <div class="modal-body">
-          <div class="encryption-info">
-            <strong>Included:</strong> All inventory data, settings, API keys, and price history.
+          <div id="vaultDescExport" class="encryption-info">
+            <strong>Included:</strong> All inventory data, settings, API keys, and price history. Your photos will be saved as a separate companion file.
+          </div>
+
+          <div id="vaultDescImport" class="encryption-info" style="display:none">
+            <strong>Included:</strong> All inventory data, settings, API keys, and price history. To also restore photos, add the companion <em>-images.stvault</em> file below.
           </div>
 
           <div id="vaultFileInfo" class="encryption-info" style="display: none">
             <strong>File:</strong> <span id="vaultFileName"></span>
             (<span id="vaultFileSize"></span>)
+          </div>
+
+          <!-- Image vault companion file (import mode only) -->
+          <div id="vaultImageFileRow" style="display:none">
+            <div class="encryption-info" id="vaultImageFileInfo" style="display:none">
+              <strong>Photos:</strong> <span id="vaultImageFileName"></span>
+              (<span id="vaultImageFileSize"></span>)
+            </div>
+            <div class="settings-btn-row" id="vaultImagePickerRow">
+              <label class="btn" style="cursor:pointer" for="vaultImageImportFile">+ Add Photos File</label>
+              <small style="opacity:0.65">Optional: <em>-images.stvault</em> from the same export</small>
+            </div>
+            <input type="file" id="vaultImageImportFile" accept=".stvault" hidden />
           </div>
 
           <div class="form-row">
@@ -4222,15 +4223,98 @@
       </div>
     </div>
 
+    <!-- Dropbox Advanced Settings Modal -->
+    <div class="modal" id="cloudSyncAdvancedModal" style="display:none" role="dialog" aria-modal="true" aria-labelledby="cloudSyncAdvancedModalTitle">
+      <div class="modal-content" style="max-width:480px;width:90%">
+        <div class="modal-header">
+          <h3 class="modal-title" id="cloudSyncAdvancedModalTitle">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:-2px;margin-right:0.4rem"><path d="M6 2l6 3.6L6 9.2 0 5.6zm12 0l6 3.6-6 3.6-6-3.6zm-12 8l6 3.6-6 3.6-6-3.6zm12 0l6 3.6-6 3.6-6-3.6zM6 18.4l6-3.6 6 3.6-6 3.6z"/></svg>
+            Dropbox Settings
+          </h3>
+          <button class="modal-close" onclick="if(typeof closeModalById==='function')closeModalById('cloudSyncAdvancedModal')" aria-label="Close">&times;</button>
+        </div>
+        <div class="modal-body">
+
+          <!-- Backup / Restore -->
+          <div class="settings-fieldset" style="margin-bottom:0.75rem">
+            <div class="settings-fieldset-title">Backup &amp; Restore</div>
+            <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.5rem">
+              <button class="btn success cloud-backup-btn" data-provider="dropbox" disabled
+                style="font-size:0.82rem;padding:0.4rem 0.9rem;min-height:0">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:0.3rem"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                Backup Now
+              </button>
+              <button class="btn cloud-restore-btn" data-provider="dropbox" disabled
+                style="font-size:0.82rem;padding:0.4rem 0.9rem;min-height:0">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:0.3rem"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Restore
+              </button>
+            </div>
+          </div>
+
+          <!-- Vault Password -->
+          <div class="settings-fieldset" style="margin-bottom:0.75rem">
+            <div class="settings-fieldset-title">Vault Password</div>
+            <p class="settings-subtext" style="margin:0.3rem 0 0.5rem">Remembered in this browser. Change it here — your next sync will re-encrypt your backup.</p>
+            <div style="display:flex;gap:0.4rem;align-items:flex-start">
+              <input type="password" id="cloudAdvancedNewPassword" placeholder="New password (min 8 chars)"
+                aria-label="New vault password"
+                autocomplete="new-password"
+                style="flex:1;font-size:0.85rem;padding:0.35rem 0.5rem;border:1px solid var(--border);border-radius:4px;background:var(--bg-tertiary);color:var(--text-primary)">
+              <button class="btn" id="cloudAdvancedSavePasswordBtn"
+                style="font-size:0.82rem;padding:0.35rem 0.75rem;min-height:0;white-space:nowrap"
+                onclick="if(typeof handleAdvancedSavePassword==='function')handleAdvancedSavePassword()">
+                Save
+              </button>
+            </div>
+            <div id="cloudAdvancedPasswordError" style="color:var(--danger,#e74c3c);font-size:0.75rem;margin-top:0.3rem;display:none"></div>
+          </div>
+
+          <!-- Sync History -->
+          <div class="settings-fieldset" style="margin-bottom:0.75rem">
+            <div class="settings-fieldset-title">Sync History</div>
+            <div id="cloudSyncHistorySection">
+              <p class="settings-subtext" style="margin:0.3rem 0 0">No snapshot available.</p>
+            </div>
+          </div>
+
+          <!-- View Log -->
+          <div style="margin-bottom:0.75rem">
+            <button class="btn" style="font-size:0.82rem;padding:0.4rem 0.9rem;min-height:0"
+              onclick="if(typeof switchLogTab==='function'){switchLogTab('cloud');} if(typeof switchSettingsSection==='function'){switchSettingsSection('changelog');} if(typeof closeModalById==='function')closeModalById('cloudSyncAdvancedModal');">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:0.3rem"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+              View Sync Log
+            </button>
+          </div>
+
+          <!-- Disconnect -->
+          <div class="settings-fieldset" style="border-color:var(--danger,#e74c3c);opacity:0.9">
+            <div class="settings-fieldset-title" style="color:var(--danger,#e74c3c)">Danger Zone</div>
+            <p class="settings-subtext" style="margin:0.3rem 0 0.5rem">Disconnecting removes Dropbox access from this device. Your encrypted backups on Dropbox are not deleted.</p>
+            <button class="btn danger cloud-disconnect-btn" data-provider="dropbox"
+              style="font-size:0.82rem;padding:0.4rem 0.9rem;min-height:0">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:0.3rem"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+              Disconnect Dropbox
+            </button>
+          </div>
+
+          <!-- Disclaimer -->
+          <p class="settings-subtext" style="margin:0.75rem 0 0;font-size:0.72rem">
+            Backups stored in <strong>/StakTrakr</strong> on your Dropbox. If you forget your vault password, backups cannot be recovered from Dropbox (your local data is unaffected).
+          </p>
+        </div>
+      </div>
+    </div>
+
     <!-- STAK-149: Sync Password Modal -->
     <div class="modal" id="cloudSyncPasswordModal" style="display: none">
       <div class="modal-content" style="max-width: 400px">
         <div class="modal-header">
-          <h2>Sync Password</h2>
+          <h2 id="syncPasswordModalTitle">Sync Password</h2>
           <button aria-label="Close modal" class="modal-close" id="syncPasswordCancelBtn">&times;</button>
         </div>
         <div class="modal-body">
-          <p class="settings-subtext" style="margin-bottom:1rem">Enter your vault password to encrypt your inventory before syncing. This password never leaves your device.</p>
+          <p id="syncPasswordModalSubtitle" class="settings-subtext" style="margin-bottom:1rem">Enter your vault password to encrypt your inventory before syncing. Your password is stored in this browser and combined with your Dropbox account ID to create the encryption key — it is never transmitted over the network.</p>
           <div class="password-input-group">
             <input type="password" id="syncPasswordInput" placeholder="Vault password" autocomplete="current-password" style="width:100%"/>
           </div>

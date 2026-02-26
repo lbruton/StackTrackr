@@ -283,11 +283,11 @@ const setupAckModalEvents = () => {
  */
 const getEmbeddedWhatsNew = () => {
   return `
-    <li><strong>v3.32.20 &ndash; api2 Backup Endpoint</strong>: Dual-endpoint fallback for all API feeds &mdash; spot, market, and goldback. Primary (api.staktrakr.com) tried first with 5-second timeout; api2.staktrakr.com serves as automatic fallback. Health modal shows per-endpoint drift benchmarking.</li>
-    <li><strong>v3.32.19 &ndash; 15-Min Spot Price Endpoint</strong>: New sub-hourly price snapshots at data/15min/YYYY/MM/DD/HHMM.json &mdash; written every 15 min by the spot poller. Frontend fetchStaktrakr15minRange() loads 24h of 15-min data tagged api-15min.</li>
-    <li><strong>v3.32.18 &ndash; Cloud Sync Status Icon</strong>: Ambient header icon replaces the on-load password modal. Orange = needs password (tap to unlock), green = active, gray = not configured.</li>
-    <li><strong>v3.32.17 &ndash; 24hr Chart Improvements</strong>: Intraday chart now uses clean 30-min bucketed ticks with styled hour/half-hour marks. Table extended to 12/24/48 configurable rows with trend indicators (&#9650;/&#9660;/&mdash;) per slot.</li>
-    <li><strong>v3.32.16 &ndash; Market Chart Timezone Fix</strong>: 24hr price chart and table now show times in your selected timezone. seed-sync skill gains Phase 5 &mdash; syncs from live API before releases.</li>
+    <li><strong>v3.32.45 &ndash; Retail Anomaly Filter</strong>: Two-pass anomaly detection in 24h retail chart &mdash; temporal spike smoothing (&plusmn;5% neighbor consensus) plus cross-vendor median safety net. Anomalous table cells shown with line-through styling (STAK-325).</li>
+    <li><strong>v3.32.44 &ndash; Kilo &amp; Pound Weight Units</strong>: Added kilogram and pound to the weight unit dropdown. Melt values convert correctly. Table, cards, and modals all display in the chosen unit (STAK-338).</li>
+    <li><strong>v3.32.43 &ndash; Numista Tag Fixes</strong>: Tags now visible in edit modal and card views. All tags (including Numista-applied) are removable per-item &mdash; no more stuck tags (STAK-343, STAK-344).</li>
+    <li><strong>v3.32.42 &ndash; Pattern Rule Promotion Fix</strong>: &ldquo;Apply to all matching items&rdquo; now works even when the item was saved previously (STAK-339-followup).</li>
+    <li><strong>v3.32.41 &ndash; Image Pipeline Simplification</strong>: Removed coinImages IDB cache layer entirely. CDN URLs are now the sole Numista image source (STAK-339).</li>
   `;
 };
 

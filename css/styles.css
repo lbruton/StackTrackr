@@ -316,7 +316,7 @@ label {
 .app-header-actions {
   margin-left: auto;
   display: grid;
-  grid-template-columns: repeat(2, auto);
+  grid-template-columns: repeat(2, 1fr);
   gap: 0.5rem;
   align-items: start;
   flex-shrink: 0;
@@ -990,6 +990,13 @@ input[type="submit"] {
   text-overflow: ellipsis;
   min-width: 0;
 }
+.spot-card-period {
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-left: auto;
+  line-height: 1;
+}
 
 /* Per-card controls hidden — trend period controlled via header trend button */
 .spot-card-controls {
@@ -1554,9 +1561,57 @@ input[type="submit"] {
 }
 
 /* Header toggle buttons (STACK-54) */
+.header-toggle-btn {
+  width: 56px;
+  height: 56px;
+  padding: 0;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  position: relative;
+}
+
 .header-toggle-btn svg {
   width: 18px;
   height: 18px;
+  flex-shrink: 0;
+}
+
+/* Cloud wrapper must match button dimensions */
+#headerCloudSyncWrapper {
+  width: 56px;
+  height: 56px;
+  flex-shrink: 0;
+}
+#headerCloudSyncWrapper > .btn {
+  width: 100%;
+  height: 100%;
+}
+
+.header-buttons--show-text .header-toggle-btn {
+  height: auto;
+  min-height: 56px;
+  padding: 4px 4px;
+}
+.header-buttons--show-text #headerCloudSyncWrapper {
+  height: auto;
+}
+.header-buttons--show-text #headerCloudSyncWrapper > .btn {
+  height: auto;
+  min-height: 56px;
+}
+
+.header-btn-text {
+  display: none;
+  font-size: 0.6rem;
+  line-height: 1;
+  margin-top: 1px;
+  text-align: center;
+}
+
+.header-buttons--show-text .header-btn-text {
+  display: block;
 }
 
 /* Settings checkbox labels (STACK-54) */
@@ -2044,6 +2099,41 @@ input[type="submit"] {
   border-radius: var(--radius);
   color: var(--text-primary);
 }
+.storage-gauge-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.4rem;
+  font-size: 0.82em;
+}
+.storage-gauge-label {
+  min-width: 7rem;
+  color: var(--text-secondary);
+}
+.storage-gauge-bar-wrap {
+  flex: 1;
+  height: 6px;
+  background: var(--border, #333);
+  border-radius: 3px;
+  overflow: hidden;
+  min-width: 60px;
+}
+.storage-gauge-bar {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.3s ease;
+  width: 0%;
+}
+.storage-gauge-size {
+  min-width: 8rem;
+  text-align: right;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+.storage-gauge-persist {
+  font-size: 0.78em;
+  margin-top: 0.3rem;
+}
 .image-pattern-table {
   width: 100%;
   font-size: 0.8rem;
@@ -2432,6 +2522,18 @@ input[type="submit"] {
 .image-upload-side {
   flex: 1;
   min-width: 0;
+}
+.image-swap-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  padding-top: 1.2rem;
+}
+.image-swap-wrapper .btn-icon {
+  font-size: 1.1rem;
+  padding: 0.2rem 0.4rem;
+  line-height: 1;
 }
 .image-side-label {
   display: block;
@@ -2961,6 +3063,13 @@ input[type="submit"] {
   flex-shrink: 0;
   margin-left: 0.5rem;
 }
+.cloud-backup-type {
+  color: var(--text-secondary);
+  font-size: 0.7rem;
+  flex-shrink: 0;
+  margin-left: 0.5rem;
+  opacity: 0.8;
+}
 .cloud-backup-delete-btn {
   flex-shrink: 0;
   padding: 0.3rem 0.5rem;
@@ -3061,6 +3170,10 @@ input[type="submit"] {
 .header-cloud-dot--orange {
   background: var(--warning, #f59e0b);
   box-shadow: 0 0 4px var(--warning, #f59e0b);
+}
+.header-cloud-dot--red {
+  background: var(--danger, #dc2626);
+  box-shadow: 0 0 4px var(--danger, #dc2626);
 }
 @keyframes cloudSyncPulse {
   0%, 100% { opacity: 1; transform: scale(1); }
@@ -3325,6 +3438,7 @@ input[type="submit"] {
   align-items: center;
   justify-content: space-between;
 }
+
 
 /* Image actions row — flex wrap of action buttons */
 .image-actions-row {
@@ -8210,6 +8324,12 @@ th {
   transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
+/* Solid backgrounds for OS-native <option> popups (STAK-353) */
+#inventoryForm select option {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+}
+
 #inventoryForm input:focus,
 #inventoryForm select:focus {
   background: var(--glass-input-focus-bg, rgba(0, 0, 0, 0.05));
@@ -8705,6 +8825,35 @@ th {
   font-size: 0.7rem;
   color: var(--primary);
   font-weight: 600;
+}
+
+.numista-result-id-link {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  padding: 0;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.numista-result-id-link:hover {
+  color: color-mix(in srgb, var(--primary) 75%, white 25%);
+}
+
+.numista-result-id-link:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+
+.numista-result-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
 }
 
 /* Field picker area */
@@ -10662,6 +10811,7 @@ th {
 .cv-chip-grade { background: var(--primary); color: #fff; }
 .cv-chip-qty { background: var(--bg-tertiary); color: var(--text-muted); }
 .cv-chip-weight { background: var(--bg-tertiary); color: var(--text-muted); }
+.cv-chip-tags { background: var(--info, #2196f3); color: #fff; opacity: 0.85; }
 .cv-chip-type {
   font-size: 0.6rem;
   font-weight: 700;

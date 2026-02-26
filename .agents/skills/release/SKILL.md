@@ -1,106 +1,486 @@
 ---
 name: release
-description: StakTrakr release workflow for version bump, changelog/announcements sync, seed-data inclusion, validation, and PR preparation.
+description: Release workflow — version bump, changelog, announcements, commit, and PR.
+allowed-tools: Bash, Read, Write, Edit, Grep, Glob
 ---
 
 # Release — StakTrakr
 
-Use for `release` or `patch` version updates.
+End-to-end release workflow: bump version across all 7 files, commit to the patch branch, and open a draft PR to dev. The `dev → main` PR is created separately at Phase 4.5 only when you explicitly say you're ready to ship.
 
-## Goals
+## When to Run
 
-- Keep all versioned artifacts in sync.
-- Include generated seed spot-history updates when present.
-- Produce a clean commit and PR summary.
+**`patch` is the default dev workflow** — run it after every meaningful committed change (bug fix, UX tweak, feature addition). Each patch tag is a breadcrumb for the final changelog. Rule: **one meaningful change = one patch tag, one git tag**.
 
-## Inputs
+**`release`** is for bumping the RELEASE number when shipping a major batch to main via PR.
 
-- `release`: bump release segment (`X.Y.Z` -> `X.(Y+1).0`)
-- `patch`: bump patch segment (`X.Y.Z` -> `X.Y.(Z+1)`)
-- `dry-run`: plan and preview only, no writes
+## Arguments
 
-If mode is missing, ask user to choose `release` or `patch`.
+$ARGUMENTS can be:
+- `release` — bump RELEASE number (3.23.01 → 3.24.00)
+- `patch` — bump PATCH number (3.23.01 → 3.23.02) — use after every meaningful commit on dev
+- `dry-run` — preview all changes without writing
 
-## Files To Sync
+If no argument provided, ask the user whether this is a `release` or `patch`.
 
-1. `js/constants.js` (`APP_VERSION`)
-2. `sw.js` (`CACHE_NAME` contains version)
-3. `CHANGELOG.md` (new top section)
-4. `docs/announcements.md` (What's New and roadmap)
-5. `js/about.js` (embedded What's New / roadmap mirrors announcements)
-6. `version.json` (`version` + `releaseDate`)
-7. `data/spot-history-*.json` (include updates if present)
+## Phase 0: Gather Context
 
-## Workflow
+### Step 0: Remote Sync Gate (REQUIRED BEFORE LOCK CHECK)
 
-### Phase 1: Gather and plan
+Before claiming a version lock or creating a worktree, ensure local `dev` matches `origin/dev`.
+A worktree created from a stale HEAD will produce PRs that conflict with or silently drop
+remote commits.
 
-1. Read current version from `js/constants.js`.
-2. Compute next version.
-3. Run seed data check (`seed-sync` flow) to detect/stage generated updates.
-4. Draft release title and summary bullets from actual changes.
+```bash
+git fetch origin
+BEHIND=$(git rev-list HEAD..origin/dev --count)
+```
 
-### Phase 2: Apply version updates
+**If `BEHIND` is 0:** Continue to Step 0a. ✅
 
-1. Update `APP_VERSION`.
-2. Update service-worker cache version string.
-3. Prepend changelog entry for new version.
-4. Update announcements with latest 3-5 What's New entries and concise roadmap.
-5. Mirror announcements into `js/about.js` embedded fallback sections.
-6. Update `version.json` with new version and today's date (`YYYY-MM-DD`).
+**If `BEHIND` > 0:** HARD STOP. Do not proceed.
 
-### Phase 3: Validate
+```
+⛔ Local dev is N commits behind origin/dev.
 
-1. Verify all sync files contain the new version where expected.
-2. Ensure announcements and embedded about content are aligned.
-3. Check seed data integrity if changed (valid JSON and sensible diff).
-4. Run lint/check commands relevant to edited files when feasible.
+Incoming commits:
+[git log --oneline HEAD..origin/dev]
 
-### Phase 4: Commit and Draft PR
+Run: git pull origin dev
+Then re-run /release patch.
+```
 
-1. Stage release files and any approved seed files.
-2. Create release commit message in repo format (`vX.Y.Z -- ...`).
-3. Push to remote: `git push origin dev`.
-4. Check for an existing draft PR: `gh pr list --base main --head dev --state open --json number,isDraft`.
-   - **No PR exists**: Create as **draft** (`--draft`) with a brief WIP body noting it will be updated before merge.
-   - **Draft PR exists**: Update the body to append new changes.
-5. Do NOT mark the PR ready — that happens in Phase 4.5 when the branch is QA-complete.
+Pull first, then restart from Step 0.
 
-### Phase 4.5: Mark PR Ready (Pre-Merge — separate invocation)
+```bash
+git pull origin dev
+```
 
-Run only when the user confirms the branch is QA-complete and ready to ship.
+> **Why here and not later?** The worktree branches from current HEAD. If HEAD is stale,
+> every file diff in the PR will be relative to the wrong base. Pull first — worktree second.
 
-1. `git log --oneline main..dev` — audit every commit since last merge.
-2. Collect all STAK-### references; fetch Linear titles for accuracy.
-3. Write a **comprehensive PR title and body** covering everything in the branch (not just day-1 work).
-4. `gh pr edit [number] --title "..." --body "..."` — update the PR.
-5. `gh pr ready [number]` — remove draft status.
-6. Run `/pr-resolve` to clear all Codacy/Copilot threads before final review.
-7. Mark all STAK-### issues Done in Linear.
+### Step 0a: Version Lock Check (REQUIRED FIRST)
 
-### Phase 5: GitHub Release (Post-Merge Only)
+Before anything else, check whether another agent has claimed the next version:
 
-Create the GitHub Release **after** the PR merges to main. Always target `main`, never target dev.
+```bash
+cat devops/version.lock 2>/dev/null || echo "UNLOCKED"
+```
+
+**If locked and not expired** (`expires_at` is in the future): **STOP.** Report to the user:
+```
+⛔ Version lock held by: [locked_by]
+   Claimed version: [next_version]
+   Expires at: [expires_at]
+   Wait for that agent to finish, or ask the user if the lock is stale.
+```
+
+**If absent or expired:** claim the lock immediately — before reading any files or computing the version. Compute `next_version` as `APP_VERSION + 1` (read `js/constants.js`), then write:
+
+```
+locked_by: Claude Code (session [first 6 chars of conversation ID or task hint])
+locked_at: [current ISO timestamp]
+next_version: [X.Y.Z]
+expires_at: [locked_at + 30 minutes]
+```
+
+```bash
+# Write the lock
+cat > devops/version.lock << 'EOF'
+locked_by: Claude Code (session ...)
+locked_at: 2026-...
+next_version: 3.XX.YY
+expires_at: 2026-...
+EOF
+```
+
+Use `next_version` as the target for all subsequent version bump steps — do not re-derive it from `APP_VERSION` later.
+
+**Create the worktree + branch immediately after writing the lock:**
+
+```bash
+git worktree add .claude/worktrees/patch-NEXT_VERSION -b patch/NEXT_VERSION
+```
+
+Example: `git worktree add .claude/worktrees/patch-3.32.09 -b patch/3.32.09`
+
+**All subsequent work (file edits, version bumps, commits) happens inside the worktree directory.**
+If you are running as an interactive Claude Code session, inform the user:
+
+```
+Worktree created at: .claude/worktrees/patch-NEXT_VERSION/
+Branch: patch/NEXT_VERSION
+
+All work for this release will happen in that worktree.
+After merging to dev, run cleanup:
+  git worktree remove .claude/worktrees/patch-NEXT_VERSION --force
+  git branch -d patch/NEXT_VERSION
+  rm devops/version.lock
+```
+
+See `devops/version-lock-protocol.md` for full protocol details.
+
+### Step 0 (prerequisite): Seed Data Sync
+
+Before gathering release context, run the `/seed-sync` workflow to check for unstaged seed data from the Docker poller. The poller writes to `data/spot-history-*.json` continuously, but these changes are invisible in normal development — they only show up in `git status` if you look for them. Stage any new seed data now so it's included in the release commit.
+
+### Step 1: Determine what's being released
+
+1. `git log --oneline main..dev` — list all commits on dev that aren't on main yet
+2. `git diff --stat main..dev` — summary of files changed
+3. (Optional — requires Linear MCP) Check Linear for any **In Progress** or recently **Done** issues on the StakTrakr team (ID: `f876864d-ff80-4231-ae6c-a8e5cb69aca4`) that relate to commits on dev
+
+### Step 2: Read current state
+
+Read these files in parallel:
+- `js/constants.js` — extract current `APP_VERSION`
+- `CHANGELOG.md` — first 5 lines after `## [Unreleased]` to see format
+- `docs/announcements.md` — first 3 lines to see format
+
+### Step 3: Present the release plan
+
+Ask the user to confirm or adjust:
+
+```
+Release Plan
+============
+Current version: 3.XX.YY
+New version:     3.XX.YY (based on [release/patch] bump)
+
+Commits since main:
+- [commit list]
+
+Proposed title: [inferred from commits/Linear issues]
+
+Proposed changelog bullets:
+- **Label**: Description (STAK-XX)
+- ...
+
+Proceed? [Adjust title / Adjust bullets / Go]
+```
+
+Wait for user confirmation before writing any files.
+
+## Phase 1: Version Bump (5 files)
+
+Update each file directly using the patterns below. There is no external script — this skill is the single source of truth for version bumps.
+
+### File 1: `js/constants.js` — APP_VERSION
+
+Find and replace the version string:
+```javascript
+const APP_VERSION = "3.XX.YY";  // ← old
+const APP_VERSION = "3.XX.YY";  // ← new
+```
+
+### File 2: `sw.js` — CACHE_NAME (automatic)
+
+**This is now handled automatically by the pre-commit hook** (`devops/hooks/stamp-sw-cache.sh`). When the commit is created, the hook detects that `js/constants.js` (with the new `APP_VERSION`) is staged, reads the version, generates a build timestamp, and writes:
+
+```javascript
+const CACHE_NAME = 'staktrakr-vNEW_VERSION-bTIMESTAMP';
+```
+
+You do NOT need to manually edit `sw.js` CACHE_NAME during releases. The hook handles it.
+
+**Do verify** that `sw.js` CORE_ASSETS is up to date (any new `.js` files added since last release must be listed). See the `sw-cache` skill for details.
+
+### File 3: `CHANGELOG.md` — New version section
+
+Insert a new section **before** the first `## [x.y.z]` heading (after `## [Unreleased]` and its `---`):
+
+```markdown
+## [NEW_VERSION] - YYYY-MM-DD
+
+### Added — TITLE
+
+- **Label**: Description (STAK-XX)
+- **Label**: Description
+...
+
+---
+
+```
+
+Format rules:
+- Date is today's date in ISO format (YYYY-MM-DD)
+- Section heading is `### Added — TITLE` (use the release title)
+- Bullets use `**Label**: Description` format. Labels are typically `Added`, `Changed`, `Fixed`
+- Each bullet is a single line (no wrapping)
+- STAK-XX references go at the end of the bullet in parentheses
+
+### Files 4 & 6: `docs/announcements.md` + `js/about.js` — MUST STAY IN SYNC
+
+These two files serve the same content to different environments:
+- **`docs/announcements.md`** → parsed via `fetch()` on HTTP servers (About modal + version splash)
+- **`js/about.js`** → `getEmbeddedWhatsNew()` and `getEmbeddedRoadmap()` are the **`file://` fallback** when fetch fails
+
+**CRITICAL: Both must contain the same entries in the same order.** If they drift, HTTP users see one thing and `file://` users see another.
+
+#### announcements.md
+
+**Step 1: Prepend** a single line after `## What's New\n\n`:
+
+```markdown
+- **TITLE (vNEW_VERSION)**: Summary sentence combining all bullets. Summary sentence for next group
+```
+
+Format rules:
+- One line per release, no matter how many bullets
+- Bullets are condensed into period-separated sentences
+
+**Step 2: Trim stale entries.** After prepending, enforce these limits:
+
+- **What's New**: Keep only the **3–5 most recent** entries (lines between `## What's New` and `## Development Roadmap`). Delete older entries beyond 5.
+- **Development Roadmap**: Keep only the **3–4 most relevant** items. Remove completed items (anything shipped in this release or earlier). If the roadmap has grown beyond 4 items, trim the lowest-priority entries and note which were removed in the release plan output.
+
+Read `ROADMAP.md` (and Linear backlog if MCP is available) to determine which roadmap items are still relevant vs. completed.
+
+#### about.js — `getEmbeddedWhatsNew()`
+
+**Must mirror `announcements.md` What's New exactly.** After updating announcements.md:
+
+1. **Replace** the entire contents of `getEmbeddedWhatsNew()` (between `return \`` and the closing `\`;`) with HTML `<li>` versions of the same 3–5 entries from announcements.md
+2. Each entry format: `<li><strong>vVERSION &ndash; TITLE</strong>: Summary sentence</li>`
+3. HTML-escape special characters: `&` → `&amp;`, `<` → `&lt;`, `>` → `&gt;`, `—` → `&mdash;`, `–` → `&ndash;`
+4. **Delete all older entries** — the function should only contain 3–5 `<li>` items matching announcements.md
+
+#### about.js — `getEmbeddedRoadmap()`
+
+**Must mirror `announcements.md` Development Roadmap exactly.** Replace the entire contents with HTML `<li>` versions of the same 3–4 roadmap items.
+
+### File 5: `version.json` — Remote version check endpoint
+
+Update the version and release date at the project root:
+
+```json
+{
+  "version": "NEW_VERSION",
+  "releaseDate": "YYYY-MM-DD",
+  "releaseUrl": "https://github.com/lbruton/StakTrakr/releases/latest"
+}
+```
+
+Format rules:
+- `version` matches `APP_VERSION` exactly (no `v` prefix)
+- `releaseDate` is today's date in ISO format
+- `releaseUrl` always points to `/releases/latest` (GitHub redirects to the correct tag)
+
+## Phase 2: Verify
+
+Run the equivalent of `/verify full`:
+1. Confirm all 7 files were updated (grep for the new version string in each)
+2. Check that the `CHANGELOG.md` section is well-formed
+3. Check that `announcements.md` has 3–5 What's New entries and 3–4 Roadmap items (no stale bloat)
+4. **Sync check**: Verify `getEmbeddedWhatsNew()` in `about.js` contains the same entries as `announcements.md` What's New, and `getEmbeddedRoadmap()` matches the Roadmap section. Flag any drift.
+5. Check that `version.json` has the correct version and today's date
+6. Check for updated seed data: `git diff --stat data/` — if the Docker poller has been running, these files will have new entries. Confirm they'll be included in the commit.
+7. `git diff --stat` — confirm version files + seed data files changed (6 version files + any updated spot-history-*.json)
+
+Report any issues before proceeding.
+
+## Phase 3: Commit
+
+Stage and commit **to the patch branch** (all work lives in the `patch/VERSION` worktree — NOT on `dev` directly):
+
+```bash
+git add js/constants.js sw.js CHANGELOG.md docs/announcements.md js/about.js version.json data/spot-history-*.json
+git commit -m "vNEW_VERSION — TITLE"
+```
+
+Commit message format: `vNEW_VERSION — TITLE`
+- Use em dash (`—`), not hyphen
+- Include STAK-XX references if applicable: `v3.24.00 — STAK-55: Feature name`
+- Match the pattern from existing commits: `v3.23.01 — STAK-52: Goldback real-time estimation, Settings reorganization`
+
+If there are other uncommitted changes beyond the 5 version files, ask the user whether to include them in this commit or leave them staged separately.
+
+**After a successful commit, dispatch a background wiki update:**
+
+Invoke the `wiki-update` skill (Skill tool) as a background Task agent. It identifies
+which wiki pages were affected by this patch and pushes updates to `StakTrakrWiki`.
+Do not wait for it — proceed to Phase 4 immediately.
+
+**After a successful commit, push the patch branch and open a PR to dev** (Phase 4 covers this).
+**After the PR is merged to dev — tag the patch commit on dev and run worktree cleanup:**
+
+```bash
+# Tag the patch on dev (the merge commit SHA) — breadcrumb for changelog reconstruction
+git fetch origin dev
+git tag vNEW_VERSION origin/dev
+git push origin vNEW_VERSION
+
+# Remove the worktree
+git worktree remove .claude/worktrees/patch-VERSION --force
+
+# Delete the local branch
+git branch -d patch/VERSION
+
+# Delete the remote branch
+git push origin --delete patch/VERSION
+
+# Release the version lock
+rm -f devops/version.lock
+```
+
+> **Note:** This tag lands on `dev`, NOT `main`. A git tag is NOT a GitHub Release — it only appears in the Tags tab. The actual GitHub Release (`gh release create`) is created in Phase 5 after the `dev → main` merge. Do not skip Phase 5.
+
+## Phase 4: Push & Draft PR
+
+> **⚠️ PR target reminder:** `patch/VERSION` → **`dev`** (QA preview). `dev` → `main` only via Phase 4.5, only when user says ready. Never create a patch PR targeting main.
+
+1. Push the patch branch:
+   ```bash
+   git push origin patch/VERSION
+   ```
+
+2. **Create the `patch/VERSION → dev` draft PR** (this is the QA/preview PR — Cloudflare will generate a preview URL):
+   ```bash
+   gh pr create --base dev --head patch/VERSION --draft --label "codacy-review" \
+     --title "vNEW_VERSION — [brief description]" \
+     --body "$(cat <<'EOF'
+   > **Draft — QA preview.** Merge to `dev` after QA passes. Do NOT target main.
+
+   ## Changes
+
+   - [bullet points for this commit/batch]
+
+   ## Linear Issues
+
+   - [STAK-XX: title — link] (if applicable)
+
+   🤖 Generated with [Claude Code](https://claude.com/claude-code)
+   EOF
+   )"
+   ```
+
+3. (Optional — requires Linear MCP) If Linear issues are referenced, update status to **In Progress** (not Done — that happens at merge time).
+
+> **No `dev → main` PR here.** The patch branch PRs to `dev` only. The `dev → main` PR is created at Phase 4.5, using version tags on `dev` as the changelog source. Do not create or touch any PR targeting `main` during Phase 4.
+
+## Phase 4.5: Create `dev → main` PR and Ship (Run only when user says "release", "ready to ship", or "merge to main")
+
+This phase is triggered when `dev` is QA-complete and you want to ship to main. It collects the version tags on `dev` as the changelog source, creates the PR, and prepares it for final review.
+
+**Hard gate:** Do NOT run this unless the user has explicitly said they are ready to release in the current session.
+
+### Step 1: Audit the branch
+
+Run both in parallel:
+
+```bash
+git fetch origin
+git log --oneline main..origin/dev
+git tag --merged origin/dev --sort=-version:refname | grep '^v3\.' | head -20
+```
+
+The tag list gives you every patch breadcrumb on `dev` that hasn't shipped to main yet. These are your changelog source — more reliable than commit messages alone.
+
+### Step 2: Fetch Linear issue titles
+
+For each STAK-### found across commits and tag names, call `get_issue` (Linear MCP) to get the current title and status. This ensures the PR description is accurate, not just copy-pasted from commit messages.
+
+### Step 3: Create the `dev → main` PR
+
+The PR title should reflect the **full contents of the branch**:
+
+```
+vLATEST_VERSION — [primary feature/fix] + [secondary] + [tertiary if notable]
+```
+
+```bash
+gh pr create --base main --head dev --label "codacy-review" \
+  --title "vLATEST_VERSION — [comprehensive title]" \
+  --body "$(cat <<'EOF'
+## Summary
+
+- [bullet per feature/fix, grouped logically by version tag]
+- [user-readable descriptions — not raw commit messages]
+
+## Version Tags Included
+
+- vX.X.X — [title]
+- vX.X.X — [title]
+- ...
+
+## Linear Issues
+
+- STAK-XX: [title] — [url]
+- STAK-XX: [title] — [url]
+
+## QA Notes
+
+- [anything the reviewer should test or verify]
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+EOF
+)"
+```
+
+### Step 4: Mark ready and resolve
+
+```bash
+gh pr ready [number]
+```
+
+Then run `/pr-resolve` to clear all open Codacy and Copilot review threads before the PR goes to final review.
+
+### Step 5: Update Linear issues
+
+Mark all referenced STAK-### issues as **Done** (they ship with this merge).
+
+### Step 6: After the PR merges to main — run Phase 5 immediately
+
+**MANDATORY.** Do not consider the release complete until Phase 5 is done. The GitHub Release is the public-facing artifact — the "Latest" badge on GitHub, the release notes users read, and what `version.json`'s `releaseUrl` resolves to. Without it, the GH Releases page is stale.
+
+## Phase 5: GitHub Release & Tag (Post-Merge Only — MANDATORY)
+
+**CRITICAL: Only run this after the PR has been merged to main.** The release tag must target main so `version.json`'s `releaseUrl` resolves correctly. This phase is REQUIRED for every `dev → main` merge — without it the GitHub Releases page shows a stale version and the "Latest" badge is wrong.
 
 ```bash
 git fetch origin main
-gh release create vX.Y.Z --target main --title "vX.Y.Z — TITLE" --latest --notes "..."
+gh release create vNEW_VERSION \
+  --target main \
+  --title "vNEW_VERSION — TITLE" \
+  --latest \
+  --notes "$(cat <<'EOF'
+## TITLE
+
+- [changelog bullets from Phase 1, verbatim]
+EOF
+)"
 ```
 
-## Guardrails
+### Release notes format
 
-- Never bump only one version file.
-- Never leave announcements/about drift.
-- Never ignore seed updates that were intentionally generated for release.
-- If unrelated dirty changes exist, ask whether to include or exclude.
-- Never create a GitHub Release targeting dev — always post-merge to main.
-- Never mark PR ready without first updating the title/body to reflect the full branch contents.
+- Use the changelog section heading as the `## TITLE`
+- Copy changelog bullets verbatim (they're already formatted correctly)
+- Do NOT include file update lists or Linear references — those belong in the PR body, not the release
 
-## Reporting
+### Verify
 
-At completion provide:
+```bash
+gh release list --limit 3
+```
+Confirm the new version shows as `Latest`.
 
-1. New version.
-2. Exact files changed.
-3. PR status (draft or ready).
-4. Any residual risks or manual follow-ups.
+## Phase 6: Confirm
+
+```
+Release complete!
+
+Version:  vNEW_VERSION
+Commit:   [hash] [message]
+PR:       #XX merged — [url]
+Release:  https://github.com/lbruton/StakTrakr/releases/tag/vNEW_VERSION
+Linear:   STAK-XX → Done
+```
+
+## Dry Run Mode
+
+If the argument is `dry-run`:
+- Complete Phase 0 (gather context, present plan)
+- Show exactly what would be written to each file (diffs or excerpts)
+- Show the `gh release create` command that would be run
+- Do NOT write any files, commit, push, create PR, or create release
+- End with: `Dry run complete — no files modified.`

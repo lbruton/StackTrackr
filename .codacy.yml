@@ -5,6 +5,7 @@ exclude_paths:
   - ".claude/**"
   - ".gemini/**"
   - ".github/**"
+  - ".spec-workflow/**"
   - ".jules/**"
   - "deprecated/**"
   - "devops/**"

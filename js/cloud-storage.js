@@ -478,6 +478,25 @@ async function cloudExchangeCode(code, state) {
       expires_at: data.expires_in ? Date.now() + data.expires_in * 1000 : null,
     };
     cloudStoreToken(provider, tokenData);
+
+    // Fetch Dropbox account ID for Simple mode key derivation (non-blocking, Dropbox-only)
+    if (provider === 'dropbox') {
+      fetch('https://api.dropboxapi.com/2/users/get_current_account', {
+        method: 'POST',
+        headers: {
+          Authorization: 'Bearer ' + tokenData.access_token,
+          'Content-Type': 'application/json',
+        },
+        body: 'null',
+      }).then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (info) {
+          if (info && info.account_id) {
+            localStorage.setItem('cloud_dropbox_account_id', info.account_id);
+            debugLog('[CloudStorage] Stored Dropbox account ID for Simple mode');
+          }
+        })
+        .catch(function (e) { debugLog('[CloudStorage] Failed to fetch Dropbox account ID', e); });
+    }
     sessionStorage.removeItem('cloud_oauth_state');
     if (typeof syncCloudUI === 'function') syncCloudUI();
     if (typeof showCloudToast === 'function') showCloudToast('Connected to ' + config.name + '.');
@@ -534,6 +553,9 @@ if (document.readyState === 'complete') {
 function cloudDisconnect(provider) {
   cloudClearToken(provider);
   localStorage.removeItem('cloud_last_backup');
+  if (provider === 'dropbox') {
+    localStorage.removeItem('cloud_dropbox_account_id');
+  }
   var providerName = (CLOUD_PROVIDERS[provider] && CLOUD_PROVIDERS[provider].name) || provider;
   recordCloudActivity({ action: 'disconnect', provider: provider, result: 'success', detail: 'Disconnected from ' + providerName });
   if (typeof syncCloudUI === 'function') syncCloudUI();
@@ -928,15 +950,17 @@ function syncCloudUI() {
     // Toggle login vs disconnect buttons
     var loginArea = card.querySelector('.cloud-login-area');
     var connectedBadge = card.querySelector('.cloud-connected-badge');
-    var disconnectBtn = card.querySelector('.cloud-disconnect-btn');
+    var disconnectBtn = document.querySelector('.cloud-disconnect-btn[data-provider="' + key + '"]');
     var backupListEl = document.getElementById('cloudBackupList_' + key);
 
-    if (loginArea) loginArea.style.display = connected ? 'none' : '';
+    // Hide only the Connect button when connected — Backup/Restore remain visible in the same row
+    var connectBtn = loginArea ? loginArea.querySelector('.cloud-connect-btn') : null;
+    if (connectBtn) connectBtn.style.display = connected ? 'none' : '';
     if (connectedBadge) connectedBadge.style.display = connected ? '' : 'none';
     if (disconnectBtn) disconnectBtn.style.display = connected ? '' : 'none';
 
     // Enable/disable backup & restore buttons based on connection
-    card.querySelectorAll('.cloud-backup-btn, .cloud-restore-btn').forEach(function (btn) {
+    document.querySelectorAll('.cloud-backup-btn[data-provider="' + key + '"], .cloud-restore-btn[data-provider="' + key + '"]').forEach(function (btn) {
       btn.disabled = !connected;
     });
 
@@ -977,32 +1001,6 @@ function syncCloudUI() {
       backupListEl.innerHTML = '';
     }
   });
-
-  // Update password cache status (session-only)
-  var pwStatusEl = typeof safeGetElement === 'function' ? safeGetElement('cloudPwCacheStatus') : document.getElementById('cloudPwCacheStatus');
-  if (pwStatusEl) {
-    var cached = sessionStorage.getItem('cloud_vault_pw_cache');
-    if (cached) {
-      pwStatusEl.textContent = 'Cached (this session)';
-      pwStatusEl.style.color = 'var(--success)';
-    } else {
-      pwStatusEl.textContent = 'Not cached';
-      pwStatusEl.style.color = 'var(--text-secondary)';
-    }
-  }
-
-  // Sync idle timeout select to stored preference
-  var idleSelect = safeGetElement('cloudVaultIdleTimeout');
-  if (idleSelect) {
-    var storedTimeout = localStorage.getItem(CLOUD_VAULT_IDLE_TIMEOUT_KEY);
-    var idleVal = storedTimeout !== null ? storedTimeout : '15';
-    // If stored value isn't a valid option, clamp to default and persist
-    if (!['0', '15', '30', '60', '120'].includes(idleVal)) {
-      idleVal = '15';
-      localStorage.setItem(CLOUD_VAULT_IDLE_TIMEOUT_KEY, idleVal);
-    }
-    idleSelect.value = idleVal;
-  }
 
   // STAK-149: Refresh auto-sync UI (toggle, last-synced, status dot)
   if (typeof refreshSyncUI === 'function') refreshSyncUI();

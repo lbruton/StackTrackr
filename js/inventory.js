@@ -1,7 +1,41 @@
 // INVENTORY FUNCTIONS
 
+/** Weight unit → tooltip label mapping (hoisted to avoid per-row allocation in renderTable) */
+const WEIGHT_UNIT_TOOLTIPS = { oz: 'Troy ounces (ozt)', g: 'Grams (g)', kg: 'Kilograms (kg)', lb: 'Pounds (lb)', gb: 'Goldback denomination' };
+
 /** Blob URLs created by _enhanceTableThumbnails — revoked on each re-render */
 let _thumbBlobUrls = [];
+
+/**
+ * Cached map of inventory items to their original indices.
+ * Optimized for O(1) lookup during rendering to avoid O(N) indexOf calls.
+ * @type {Map<Object, number>|null}
+ */
+let _cachedItemIndexMap = null;
+
+/**
+ * Invalidates the cached item index map.
+ * Should be called whenever the inventory array is mutated (add/remove/reorder).
+ */
+const invalidateItemIndexMap = () => {
+  _cachedItemIndexMap = null;
+};
+
+/**
+ * Retrieves or builds the cached item index map.
+ * @returns {Map<Object, number>} Map of item objects to their indices
+ */
+const getItemIndexMap = () => {
+  if (_cachedItemIndexMap) return _cachedItemIndexMap;
+
+  _cachedItemIndexMap = new Map();
+  // Build map: key = item object reference, value = index in main inventory array
+  for (let j = 0; j < inventory.length; j++) {
+    _cachedItemIndexMap.set(inventory[j], j);
+  }
+  return _cachedItemIndexMap;
+};
+
 window.addEventListener('beforeunload', () => {
   for (const url of _thumbBlobUrls) {
     try { URL.revokeObjectURL(url); } catch { /* ignore */ }
@@ -75,7 +109,9 @@ const createBackupZip = async () => {
         serial: item.serial,
         uuid: item.uuid,
         obverseImageUrl: item.obverseImageUrl || '',
-        reverseImageUrl: item.reverseImageUrl || ''
+        reverseImageUrl: item.reverseImageUrl || '',
+        obverseSharedImageId: item.obverseSharedImageId || null,
+        reverseSharedImageId: item.reverseSharedImageId || null
       }))
     };
     zip.file('inventory_data.json', JSON.stringify(inventoryData, null, 2));
@@ -218,16 +254,8 @@ const createBackupZip = async () => {
       zip.file('sample_data.json', JSON.stringify(sampleData, null, 2));
     }
 
-    // 9. Add cached coin images (STACK-88)
+    // 9. Add cached coin metadata (STACK-88)
     if (window.imageCache?.isAvailable()) {
-      const allImages = await imageCache.exportAllImages();
-      if (allImages.length > 0) {
-        const imgFolder = zip.folder('images');
-        for (const rec of allImages) {
-          if (rec.obverse) imgFolder.file(`${rec.catalogId}_obverse.jpg`, rec.obverse);
-          if (rec.reverse) imgFolder.file(`${rec.catalogId}_reverse.jpg`, rec.reverse);
-        }
-      }
       const allMeta = await imageCache.exportAllMetadata();
       if (allMeta.length > 0) {
         zip.file('image_metadata.json', JSON.stringify({
@@ -480,27 +508,8 @@ const restoreBackupZip = async (file) => {
       }
 
       if (imgEntries.length > 0) {
-        await imageCache.clearAll();
-        const imageMap = new Map();
-
-        for (const { path, file } of imgEntries) {
-          const m = path.match(/^(.+)_(obverse|reverse)\.jpg$/);
-          if (!m) continue;
-          if (!imageMap.has(m[1])) imageMap.set(m[1], {});
-          imageMap.get(m[1])[m[2]] = await file.async('blob');
-        }
-
-        for (const [catalogId, sides] of imageMap) {
-          await imageCache.importImageRecord({
-            catalogId,
-            obverse: sides.obverse || null,
-            reverse: sides.reverse || null,
-            width: 400,
-            height: 400,
-            cachedAt: Date.now(),
-            size: (sides.obverse?.size || 0) + (sides.reverse?.size || 0)
-          });
-        }
+        // Legacy coinImages from old backups are skipped — no longer importing to dead store
+        debugLog('ZIP restore: skipping legacy coinImages folder (store deprecated)');
       }
 
       // Restore metadata
@@ -761,6 +770,9 @@ window.getNextSerial = getNextSerial;
  * Saves current inventory to localStorage
  */
 const saveInventory = async () => {
+  // Invalidate cached index map as inventory has likely changed
+  invalidateItemIndexMap();
+
   await saveData(LS_KEY, inventory);
   // CatalogManager handles its own saving, no need to explicitly save catalogMap
   // STACK-62: Invalidate autocomplete cache so lookup table rebuilds with current inventory
@@ -776,7 +788,7 @@ const saveInventory = async () => {
  */
 const sanitizeTablesOnLoad = () => {
   inventory = inventory.map(item => sanitizeObjectFields(item));
-
+  invalidateItemIndexMap();
 };
 
 /**
@@ -800,9 +812,10 @@ const loadInventory = async () => {
     if (!Array.isArray(data)) {
       console.warn('Inventory data is not an array, resetting to empty array');
       inventory = [];
+      invalidateItemIndexMap();
       return;
     }
-    
+
     // Migrate legacy data to include new fields
     inventory = data.map(item => {
     let normalized;
@@ -885,9 +898,13 @@ const loadInventory = async () => {
       console.log(`Removed ${removed} orphaned catalog mappings`);
     }
   }
+
+  // Invalidate cache after loading fresh data
+  invalidateItemIndexMap();
   } catch (error) {
     console.error('Error loading inventory:', error);
     inventory = [];
+    invalidateItemIndexMap();
   }
 };
 
@@ -1203,7 +1220,13 @@ const startCellEdit = (idx, field, element) => {
     }
     
     // Set input value based on field type
-    if (field === 'weight' && item.weight < 1) {
+    if (field === 'weight' && item.weightUnit === 'kg') {
+      input.value = oztToKg(current).toFixed(4);
+      input.dataset.unit = 'kg';
+    } else if (field === 'weight' && item.weightUnit === 'lb') {
+      input.value = oztToLb(current).toFixed(4);
+      input.dataset.unit = 'lb';
+    } else if (field === 'weight' && (item.weightUnit === 'g' || item.weight < 1)) {
       input.value = oztToGrams(current).toFixed(2);
       input.dataset.unit = 'g';
     } else if (['weight', 'price', 'marketValue'].includes(field)) {
@@ -1238,6 +1261,10 @@ const startCellEdit = (idx, field, element) => {
       finalValue = parseFloat(value);
       if (field === 'weight' && input.dataset.unit === 'g') {
         finalValue = gramsToOzt(finalValue);
+      } else if (field === 'weight' && input.dataset.unit === 'kg') {
+        finalValue = kgToOzt(finalValue);
+      } else if (field === 'weight' && input.dataset.unit === 'lb') {
+        finalValue = lbToOzt(finalValue);
       }
     } else {
       finalValue = value.trim();
@@ -1410,14 +1437,6 @@ async function _loadThumbImage(img) {
       }
     }
 
-    // Numista override: CDN URLs (Numista source) win over user/pattern blobs
-    const numistaOverride = localStorage.getItem('numistaOverridePersonal') === 'true';
-    if (numistaOverride && cdnUrl) {
-      img.src = cdnUrl;
-      img.style.visibility = '';
-      return;
-    }
-
     const blobUrl = await imageCache.resolveImageUrlForItem(item, side);
     if (blobUrl) {
       _thumbBlobUrls.push(blobUrl);
@@ -1473,7 +1492,9 @@ const renderTable = () => {
         if (typeof initCardSortBar === 'function') initCardSortBar();
         if (typeof updateCardSortBar === 'function') updateCardSortBar();
 
-        renderCardView(sortedInventory, cardGrid);
+        // Optimization: Pass cached index map for O(1) index lookups in card view
+        const itemIndexMap = getItemIndexMap();
+        renderCardView(sortedInventory, cardGrid, itemIndexMap);
         bindCardClickHandler(cardGrid);
 
         // Defer portal height calc to next frame so cards have their layout
@@ -1499,11 +1520,8 @@ const renderTable = () => {
     const rows = [];
     const chipConfig = typeof getInlineChipConfig === 'function' ? getInlineChipConfig() : [];
 
-    // Optimization: Create a map for O(1) index lookup instead of O(N) indexOf in the loop
-    const itemIndexMap = new Map();
-    for (let j = 0; j < inventory.length; j++) {
-      itemIndexMap.set(inventory[j], j);
-    }
+    // Optimization: Use cached map for O(1) index lookup instead of O(N) indexOf in the loop
+    const itemIndexMap = getItemIndexMap();
 
     for (let i = 0; i < sortedInventory.length; i++) {
       const item = sortedInventory[i];
@@ -1656,7 +1674,7 @@ const renderTable = () => {
         </div>
       </td>
       <td class="shrink" data-column="qty" data-label="Qty">${filterLink('qty', item.qty, 'var(--text-primary)')}</td>
-      <td class="shrink" data-column="weight" data-label="Weight">${filterLink('weight', item.weight, 'var(--text-primary)', formatWeight(item.weight, item.weightUnit), item.weightUnit === 'gb' ? 'Goldback denomination' : item.weight < 1 ? 'Grams (g)' : 'Troy ounces (ozt)')}</td>
+      <td class="shrink" data-column="weight" data-label="Weight">${filterLink('weight', item.weight, 'var(--text-primary)', formatWeight(item.weight, item.weightUnit), WEIGHT_UNIT_TOOLTIPS[item.weightUnit] || 'Troy ounces (ozt)')}</td>
       <td class="shrink" data-column="purchasePrice" data-label="Purchase" title="Purchase Price (${displayCurrency}) - Click to search eBay active listings" style="color: var(--text-primary);">
         <a href="#" class="ebay-buy-link ebay-price-link" data-search="${escapeAttribute(item.metal + (item.year ? ' ' + item.year : '') + ' ' + item.name)}" title="Search eBay active listings for ${escapeAttribute(item.metal)} ${escapeAttribute(item.name)}">
           ${formatCurrency(purchasePrice)} <svg class="ebay-search-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6" fill="none" stroke="currentColor" stroke-width="2.5"/><line x1="15" y1="15" x2="21" y2="21" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
@@ -2122,9 +2140,16 @@ const editItem = (idx, logIdx = null) => {
     elements.itemWeightUnit.value = 'gb';
     if (denomSelect) denomSelect.value = String(parseFloat(item.weight));
     if (typeof toggleGbDenomPicker === 'function') toggleGbDenomPicker();
-  } else if (item.weight < 1) {
+  } else if (item.weightUnit === 'kg') {
+    elements.itemWeight.value = parseFloat(oztToKg(item.weight).toFixed(4));
+    elements.itemWeightUnit.value = 'kg';
+    if (typeof toggleGbDenomPicker === 'function') toggleGbDenomPicker();
+  } else if (item.weightUnit === 'lb') {
+    elements.itemWeight.value = parseFloat(oztToLb(item.weight).toFixed(4));
+    elements.itemWeightUnit.value = 'lb';
+    if (typeof toggleGbDenomPicker === 'function') toggleGbDenomPicker();
+  } else if (item.weightUnit === 'g' || item.weight < 1) {
     const grams = oztToGrams(item.weight);
-    // Show up to 4 decimal places for sub-gram precision, strip trailing zeros
     elements.itemWeight.value = parseFloat(grams.toFixed(4));
     elements.itemWeightUnit.value = 'g';
     if (typeof toggleGbDenomPicker === 'function') toggleGbDenomPicker();
@@ -2162,6 +2187,9 @@ const editItem = (idx, logIdx = null) => {
   if (elements.itemPcgsNumber) elements.itemPcgsNumber.value = item.pcgsNumber || '';
   if (elements.itemObverseImageUrl) elements.itemObverseImageUrl.value = item.obverseImageUrl || '';
   if (elements.itemReverseImageUrl) elements.itemReverseImageUrl.value = item.reverseImageUrl || '';
+  // STAK-332: Populate ignorePatternImages checkbox from item data
+  const ignorePatternEl = document.getElementById('itemIgnorePatternImages');
+  if (ignorePatternEl) ignorePatternEl.checked = !!item.ignorePatternImages;
   if (elements.itemSerial) elements.itemSerial.value = item.serial;
 
   // Pre-fill purity: match a preset or show custom input
@@ -2248,7 +2276,7 @@ const editItem = (idx, logIdx = null) => {
       showUrlPreviewFallback(loaded);
       // If still missing sides, try pattern image resolution
       if (!loaded.obverse || !loaded.reverse) {
-        const itemMeta = { uuid: item.uuid, numistaId: item.numistaId || '', name: item.name || '', metal: item.metal || '', type: item.type || '' };
+        const itemMeta = { uuid: item.uuid, numistaId: item.numistaId || '', name: item.name || '', metal: item.metal || '', type: item.type || '', ignorePatternImages: !!item.ignorePatternImages };
         if (!loaded.obverse) {
           const obvUrl = await imageCache.resolveImageUrlForItem(itemMeta, 'obverse').catch(() => null);
           if (obvUrl && !item.obverseImageUrl) showPreview(obvUrl, 'Obv', 'obverse');
@@ -2260,10 +2288,13 @@ const editItem = (idx, logIdx = null) => {
       }
     }).catch(() => {
       showUrlPreviewFallback({ obverse: false, reverse: false });
+    }).finally(() => {
+      if (typeof updateSwapButtonVisibility === 'function') updateSwapButtonVisibility();
     });
   } else {
     // No IndexedDB — go straight to URL fallback
     showUrlPreviewFallback({ obverse: false, reverse: false });
+    if (typeof updateSwapButtonVisibility === 'function') updateSwapButtonVisibility();
   }
 
   // Update Numista API status dot (STAK-173)
@@ -2282,6 +2313,100 @@ const editItem = (idx, logIdx = null) => {
 
   // Populate Numista Data fields: item data first, API cache as fallback (STAK-173)
   populateNumistaDataFields(item.numistaId || item.catalog || '', item.numistaData);
+
+  // STAK-343: Populate tags in edit modal
+  if (item.uuid && typeof getItemTags === 'function') {
+    const itemTagsList = getItemTags(item.uuid);
+    const numistaChips = document.getElementById('numistaTagsChips');
+    const customChips = document.getElementById('customTagsChips');
+
+    // Determine which tags came from Numista (check cached metadata)
+    let numistaTagSet = new Set();
+    const catalogId = item.numistaId || item.catalog || '';
+    if (catalogId && typeof catalogAPI !== 'undefined' && catalogAPI._metaCache) {
+      const cached = catalogAPI._metaCache[catalogId];
+      if (cached && cached.tags) {
+        numistaTagSet = new Set(cached.tags.map(t => String(t).trim().toLowerCase()));
+      }
+    }
+
+    const renderEditTags = () => {
+      const tags = getItemTags(item.uuid);
+      const numistaTags = [];
+      const customTags = [];
+      tags.forEach(t => {
+        if (numistaTagSet.has(t.toLowerCase())) numistaTags.push(t);
+        else customTags.push(t);
+      });
+
+      if (numistaChips) {
+        numistaChips.textContent = '';
+        if (numistaTags.length === 0) {
+          numistaChips.innerHTML = '<span class="tag-empty-hint">No Numista tags</span>';
+        } else {
+          numistaTags.forEach(tag => {
+            const chip = document.createElement('span');
+            chip.className = 'tag-chip tag-chip-numista';
+            chip.textContent = tag;
+            chip.title = `Numista tag: ${tag} (click × to remove)`;
+            const rm = document.createElement('span');
+            rm.className = 'tag-chip-remove';
+            rm.textContent = '\u00d7';
+            rm.setAttribute('role', 'button');
+            rm.setAttribute('tabindex', '0');
+            rm.setAttribute('aria-label', `Remove tag ${tag}`);
+            rm.onclick = (e) => { e.stopPropagation(); removeItemTag(item.uuid, tag); renderEditTags(); };
+            chip.appendChild(rm);
+            numistaChips.appendChild(chip);
+          });
+        }
+      }
+
+      if (customChips) {
+        customChips.textContent = '';
+        if (customTags.length === 0) {
+          customChips.innerHTML = '<span class="tag-empty-hint">No custom tags</span>';
+        } else {
+          customTags.forEach(tag => {
+            const chip = document.createElement('span');
+            chip.className = 'tag-chip tag-chip-custom';
+            chip.textContent = tag;
+            chip.title = `Custom tag: ${tag} (click × to remove)`;
+            const rm = document.createElement('span');
+            rm.className = 'tag-chip-remove';
+            rm.textContent = '\u00d7';
+            rm.setAttribute('role', 'button');
+            rm.setAttribute('tabindex', '0');
+            rm.setAttribute('aria-label', `Remove tag ${tag}`);
+            rm.onclick = (e) => { e.stopPropagation(); removeItemTag(item.uuid, tag); renderEditTags(); };
+            chip.appendChild(rm);
+            customChips.appendChild(chip);
+          });
+        }
+      }
+    };
+
+    renderEditTags();
+
+    // Wire up the add-tag button
+    if (elements.addTagBtn && elements.newTagInput) {
+      const addHandler = () => {
+        const val = elements.newTagInput.value.trim();
+        if (val && typeof addItemTag === 'function') {
+          addItemTag(item.uuid, val);
+          elements.newTagInput.value = '';
+          renderEditTags();
+        }
+      };
+      elements.addTagBtn.onclick = addHandler;
+      elements.newTagInput.onkeydown = (e) => { if (e.key === 'Enter') { e.preventDefault(); addHandler(); } };
+    }
+
+    // Open the tags section if item has tags
+    if (itemTagsList.length > 0 && elements.tagsSection) {
+      elements.tagsSection.open = true;
+    }
+  }
 
   // Open unified modal
   if (window.openModalById) openModalById('itemModal');
@@ -2319,7 +2444,15 @@ const duplicateItem = (idx) => {
     elements.itemWeightUnit.value = 'gb';
     if (denomSelect) denomSelect.value = String(parseFloat(item.weight));
     if (typeof toggleGbDenomPicker === 'function') toggleGbDenomPicker();
-  } else if (item.weight < 1) {
+  } else if (item.weightUnit === 'kg') {
+    elements.itemWeight.value = parseFloat(oztToKg(item.weight).toFixed(4));
+    elements.itemWeightUnit.value = 'kg';
+    if (typeof toggleGbDenomPicker === 'function') toggleGbDenomPicker();
+  } else if (item.weightUnit === 'lb') {
+    elements.itemWeight.value = parseFloat(oztToLb(item.weight).toFixed(4));
+    elements.itemWeightUnit.value = 'lb';
+    if (typeof toggleGbDenomPicker === 'function') toggleGbDenomPicker();
+  } else if (item.weightUnit === 'g' || item.weight < 1) {
     const grams = oztToGrams(item.weight);
     elements.itemWeight.value = parseFloat(grams.toFixed(4));
     elements.itemWeightUnit.value = 'g';

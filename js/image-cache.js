@@ -2,12 +2,12 @@
 // =============================================================================
 
 /**
- * ImageCache provides persistent IndexedDB storage for coin images (obverse/reverse)
- * and enriched Numista metadata. Images are resized and compressed to JPEG before storage.
+ * ImageCache provides persistent IndexedDB storage for user-uploaded images,
+ * pattern rule images, and enriched Numista metadata.
  *
  * Schema:
  *   DB: StakTrakrImages v3
- *   Store "coinImages"    — keyPath: catalogId (Numista N# string)
+ *   Store "coinImages"    — keyPath: catalogId (LEGACY; retained in schema, no longer read/written)
  *   Store "coinMetadata"  — keyPath: catalogId (Numista N# string)
  *   Store "userImages"    — keyPath: uuid (item UUID string)
  *   Store "patternImages" — keyPath: ruleId (pattern rule ID string)
@@ -20,14 +20,30 @@ class ImageCache {
     this._db = null;
     /** @type {boolean} */
     this._available = false;
-    /** @type {number} Default storage quota in bytes (50 MB) */
-    this._quotaBytes = 50 * 1024 * 1024;
+    /** @type {number} Default storage quota in bytes (500 MB); updated async by _initQuota() */
+    this._quotaBytes = 500 * 1024 * 1024; // 500 MB default; updated async by _initQuota()
     /** @type {number} Max image dimension (px) for resize */
     this._maxDim = typeof IMAGE_MAX_DIM !== 'undefined' ? IMAGE_MAX_DIM : 600;
     /** @type {number} Compression quality (0-1) */
     this._quality = typeof IMAGE_QUALITY !== 'undefined' ? IMAGE_QUALITY : 0.75;
   }
 
+
+  async _initQuota() {
+    try {
+      if (!navigator?.storage?.estimate) return;
+      const { quota = 0, usage = 0 } = await navigator.storage.estimate();
+      const available = quota - usage;
+      if (available <= 0) return; // file:// or estimate unavailable
+      // 60% of available space, min 500 MB (capped at available), max 4 GB
+      this._quotaBytes = Math.min(
+        Math.max(available * 0.6, Math.min(available, 500 * 1024 * 1024)),
+        4 * 1024 * 1024 * 1024
+      );
+    } catch {
+      // Leave at 500 MB default
+    }
+  }
   // ---------------------------------------------------------------------------
   // Lifecycle
   // ---------------------------------------------------------------------------
@@ -81,6 +97,7 @@ class ImageCache {
 
       this._available = true;
       debugLog('ImageCache: initialized');
+      this._initQuota(); // non-blocking, updates _quotaBytes async
       return true;
     } catch (err) {
       console.warn('ImageCache: failed to open DB', err);
@@ -108,7 +125,7 @@ class ImageCache {
     if (this._db) {
       try {
         // Lightweight probe — creating a transaction will throw if connection is dead
-        this._db.transaction('coinImages', 'readonly');
+        this._db.transaction('coinMetadata', 'readonly');
         return true;
       } catch {
         console.warn('ImageCache: DB connection stale, reconnecting...');
@@ -122,46 +139,6 @@ class ImageCache {
   // ---------------------------------------------------------------------------
   // Image storage
   // ---------------------------------------------------------------------------
-
-  /**
-   * Fetch, resize, compress, and store obverse/reverse images for a coin type.
-   * @param {string} catalogId - Numista N# identifier
-   * @param {string} obverseUrl - CDN URL for obverse image
-   * @param {string} reverseUrl - CDN URL for reverse image
-   * @returns {Promise<boolean>} true if at least one image was cached
-   */
-  async cacheImages(catalogId, obverseUrl, reverseUrl) {
-    if (!catalogId || !(await this._ensureDb())) return false;
-
-    // Skip if already cached
-    if (await this.hasImages(catalogId)) return true;
-
-    // Check quota before proceeding
-    const usage = await this.getStorageUsage();
-    if (usage.totalBytes >= this._quotaBytes) {
-      console.warn('ImageCache: quota exceeded, skipping cache');
-      return false;
-    }
-
-    const obverseBlob = obverseUrl ? await this._fetchAndResize(obverseUrl) : null;
-    const reverseBlob = reverseUrl ? await this._fetchAndResize(reverseUrl) : null;
-
-    if (!obverseBlob && !reverseBlob) return false;
-
-    const size = (obverseBlob?.size || 0) + (reverseBlob?.size || 0);
-
-    const record = {
-      catalogId,
-      obverse: obverseBlob,
-      reverse: reverseBlob,
-      obverseUrl: obverseUrl || '',
-      reverseUrl: reverseUrl || '',
-      cachedAt: Date.now(),
-      size
-    };
-
-    return this._put('coinImages', record);
-  }
 
   /**
    * Store enriched Numista metadata for a coin type.
@@ -200,16 +177,6 @@ class ImageCache {
   }
 
   /**
-   * Retrieve the full image record for a coin type.
-   * @param {string} catalogId
-   * @returns {Promise<Object|null>}
-   */
-  async getImages(catalogId) {
-    if (!catalogId || !(await this._ensureDb())) return null;
-    return this._get('coinImages', catalogId);
-  }
-
-  /**
    * Retrieve the metadata record for a coin type.
    * @param {string} catalogId
    * @returns {Promise<Object|null>}
@@ -217,58 +184,6 @@ class ImageCache {
   async getMetadata(catalogId) {
     if (!catalogId || !(await this._ensureDb())) return null;
     return this._get('coinMetadata', catalogId);
-  }
-
-  /**
-   * Create an object URL from a cached image blob.
-   * Caller is responsible for revoking via URL.revokeObjectURL().
-   * @param {string} catalogId
-   * @param {'obverse'|'reverse'} side
-   * @returns {Promise<string|null>} Object URL or null
-   */
-  async getImageUrl(catalogId, side) {
-    const record = await this.getImages(catalogId);
-    const blob = record?.[side];
-    // Reject empty blobs (e.g. opaque responses that lost data in IDB round-trip)
-    if (!blob || (blob.size === 0 && !blob.type)) return null;
-    return URL.createObjectURL(blob);
-  }
-
-  /**
-   * Quick existence check without loading blobs.
-   * @param {string} catalogId
-   * @returns {Promise<boolean>}
-   */
-  async hasImages(catalogId) {
-    if (!catalogId || !(await this._ensureDb())) return false;
-
-    return new Promise((resolve) => {
-      try {
-        const tx = this._db.transaction('coinImages', 'readonly');
-        const req = tx.objectStore('coinImages').count(IDBKeyRange.only(catalogId));
-        req.onsuccess = () => resolve(req.result > 0);
-        req.onerror = () => resolve(false);
-      } catch {
-        resolve(false);
-      }
-    });
-  }
-
-  /**
-   * List all cached catalog IDs without loading blob data.
-   * Uses key-only cursor for minimal memory footprint.
-   * @returns {Promise<string[]>}
-   */
-  async listAllCachedIds() {
-    if (!(await this._ensureDb())) return [];
-    return new Promise((resolve) => {
-      try {
-        const tx = this._db.transaction('coinImages', 'readonly');
-        const req = tx.objectStore('coinImages').getAllKeys();
-        req.onsuccess = () => resolve(req.result || []);
-        req.onerror = () => resolve([]);
-      } catch { resolve([]); }
-    });
   }
 
   /**
@@ -296,31 +211,12 @@ class ImageCache {
   // ---------------------------------------------------------------------------
 
   /**
-   * Export all image records (with blobs) for backup.
-   * @returns {Promise<Array>}
-   */
-  async exportAllImages() {
-    if (!(await this._ensureDb())) return [];
-    return this._getAll('coinImages');
-  }
-
-  /**
    * Export all metadata records for backup.
    * @returns {Promise<Array>}
    */
   async exportAllMetadata() {
     if (!(await this._ensureDb())) return [];
     return this._getAll('coinMetadata');
-  }
-
-  /**
-   * Import a single image record (from ZIP restore).
-   * @param {Object} record - Image record with catalogId, obverse, reverse blobs
-   * @returns {Promise<boolean>}
-   */
-  async importImageRecord(record) {
-    if (!record?.catalogId || !(await this._ensureDb())) return false;
-    return this._put('coinImages', record);
   }
 
   /**
@@ -357,10 +253,22 @@ class ImageCache {
 
   /**
    * Calculate current storage usage across all stores.
-   * @returns {Promise<{count: number, totalBytes: number, limitBytes: number, metadataCount: number, userImageCount: number, patternImageCount: number, numistaCount: number}>}
+   * @returns {Promise<{count: number, totalBytes: number, limitBytes: number, metadataCount: number, userImageCount: number, patternImageCount: number, numistaCount: number, numistaBytes: number, userImageBytes: number, patternImageBytes: number, metadataBytes: number}>}
    */
   async getStorageUsage() {
-    const result = { count: 0, totalBytes: 0, metadataCount: 0, userImageCount: 0, patternImageCount: 0, numistaCount: 0, limitBytes: this._quotaBytes };
+    const result = {
+      count: 0,
+      totalBytes: 0,
+      numistaBytes: 0,
+      userImageBytes: 0,
+      patternImageBytes: 0,
+      metadataBytes: 0,
+      metadataCount: 0,
+      userImageCount: 0,
+      patternImageCount: 0,
+      numistaCount: 0,
+      limitBytes: this._quotaBytes,
+    };
     if (!(await this._ensureDb())) return result;
 
     try {
@@ -368,6 +276,7 @@ class ImageCache {
         await this._iterate('coinImages', (rec) => {
           result.count++;
           result.numistaCount++;
+          result.numistaBytes += rec.size || 0;
           result.totalBytes += rec.size || 0;
         });
       }
@@ -378,8 +287,10 @@ class ImageCache {
     try {
       if (this._db.objectStoreNames.contains('coinMetadata')) {
         await this._iterate('coinMetadata', (rec) => {
+          const metaSize = JSON.stringify(rec).length;
           result.metadataCount++;
-          result.totalBytes += new Blob([JSON.stringify(rec)]).size;
+          result.metadataBytes += metaSize;
+          result.totalBytes += metaSize;
         });
       }
     } catch (err) {
@@ -390,6 +301,7 @@ class ImageCache {
       if (this._db.objectStoreNames.contains('userImages')) {
         await this._iterate('userImages', (rec) => {
           result.userImageCount++;
+          result.userImageBytes += rec.size || 0;
           result.totalBytes += rec.size || 0;
         });
       }
@@ -401,6 +313,7 @@ class ImageCache {
       if (this._db.objectStoreNames.contains('patternImages')) {
         await this._iterate('patternImages', (rec) => {
           result.patternImageCount++;
+          result.patternImageBytes += rec.size || 0;
           result.totalBytes += rec.size || 0;
         });
       }
@@ -417,19 +330,13 @@ class ImageCache {
 
   /**
    * Resolve the best available image for an inventory item.
-   * Default:  user upload → pattern image → numista cache → null.
-   * Override: numista cache → user upload → pattern image → null.
+   * Cascade: user upload → pattern image → null.
    *
    * @param {Object} item - Inventory item with uuid, numistaId, name, metal, type fields
-   * @returns {Promise<{catalogId: string, source: 'user'|'pattern'|'numista'}|null>}
+   * @returns {Promise<{catalogId: string, source: 'user'|'pattern'}|null>}
    */
   async resolveImageForItem(item) {
     if (!item || !(await this._ensureDb())) return null;
-
-    // Check Numista override toggle
-    // When ON:  numista cache → user upload → pattern image
-    // When OFF: user upload → pattern image → numista cache
-    const numistaOverride = localStorage.getItem('numistaOverridePersonal') === 'true';
 
     // Helper: check user-uploaded image (by UUID in userImages store)
     const _checkUserImage = async () => {
@@ -443,6 +350,7 @@ class ImageCache {
 
     // Helper: check pattern images store for a matching rule
     const _checkPatternImage = async () => {
+      if (item.ignorePatternImages) return null;
       if (typeof NumistaLookup === 'undefined') return null;
       const match = NumistaLookup.matchQuery(item.name || '');
       if (!match?.rule?.seedImageId) return null;
@@ -456,56 +364,44 @@ class ImageCache {
       return null;
     };
 
-    // Helper: check Numista API cache
-    const _checkNumistaCache = async () => {
-      const catalogId = item.numistaId || '';
-      if (catalogId && await this.hasImages(catalogId)) {
-        return { catalogId, source: 'numista' };
-      }
-      return null;
-    };
-
-    if (numistaOverride) {
-      // Override mode: Numista wins over everything
-      const numista = await _checkNumistaCache();
-      if (numista) return numista;
-      const user = await _checkUserImage();
-      if (user) return user;
-      const pattern = await _checkPatternImage();
-      if (pattern) return pattern;
-    } else {
-      // Default: user uploads → pattern rules → Numista cache
-      const user = await _checkUserImage();
-      if (user) return user;
-      const pattern = await _checkPatternImage();
-      if (pattern) return pattern;
-      const numista = await _checkNumistaCache();
-      if (numista) return numista;
-    }
-
+    const user = await _checkUserImage();
+    if (user) return user;
+    const pattern = await _checkPatternImage();
+    if (pattern) return pattern;
     return null;
   }
 
   /**
    * Resolves and returns an object URL for the best available image side.
-   * Uses resolveImageForItem() to select source, then loads the requested side.
+   * Per-side cascade: user upload for this side → pattern image for this side → null.
+   * This allows mixed sources (e.g. user obverse + pattern reverse).
    *
    * @param {Object} item - Inventory item with uuid/numistaId/name metadata
    * @param {'obverse'|'reverse'} [side='obverse']
    * @returns {Promise<string|null>} Object URL (caller must revoke) or null
    */
   async resolveImageUrlForItem(item, side = 'obverse') {
+    if (!item || !(await this._ensureDb())) return null;
     const normalizedSide = side === 'reverse' ? 'reverse' : 'obverse';
-    const resolved = await this.resolveImageForItem(item);
-    if (!resolved) return null;
 
-    if (resolved.source === 'user') {
-      return this.getUserImageUrl(resolved.catalogId, normalizedSide);
+    // 1. Try user-uploaded image for this specific side
+    if (item.uuid) {
+      const userUrl = await this.getUserImageUrl(item.uuid, normalizedSide);
+      if (userUrl) return userUrl;
     }
-    if (resolved.source === 'pattern') {
-      return this.getPatternImageUrl(resolved.catalogId, normalizedSide);
+
+    // 2. Try pattern image for this specific side (unless ignored)
+    if (!item.ignorePatternImages) {
+      if (typeof NumistaLookup !== 'undefined') {
+        const match = NumistaLookup.matchQuery(item.name || '');
+        if (match?.rule?.seedImageId) {
+          const patternUrl = await this.getPatternImageUrl(match.rule.seedImageId, normalizedSide);
+          if (patternUrl) return patternUrl;
+        }
+      }
     }
-    return this.getImageUrl(resolved.catalogId, normalizedSide);
+
+    return null;
   }
 
   /**
@@ -533,11 +429,12 @@ class ImageCache {
    * @param {string} uuid - Item UUID
    * @param {Blob} obverse - Processed obverse image blob
    * @param {Blob} [reverse] - Optional reverse image blob
+   * @param {string|null} [sharedImageId] - Source item UUID if this image was copied from another item's upload; null for original uploads
    * @returns {Promise<boolean>}
    */
-  async cacheUserImage(uuid, obverse, reverse = null) {
-    if (!uuid || !obverse) {
-      debugLog('ImageCache.cacheUserImage: missing uuid or obverse blob');
+  async cacheUserImage(uuid, obverse, reverse = null, sharedImageId = null) {
+    if (!uuid || (!obverse && !reverse)) {
+      debugLog('ImageCache.cacheUserImage: missing uuid or at least one image blob');
       return false;
     }
     if (!(await this._ensureDb())) {
@@ -560,6 +457,7 @@ class ImageCache {
       uuid,
       obverse,
       reverse: reverse || null,
+      sharedImageId: sharedImageId || null,
       cachedAt: Date.now(),
       size,
     };
@@ -685,16 +583,6 @@ class ImageCache {
   }
 
   /**
-   * Export all coin (CDN) image records for backup.
-   * @returns {Promise<Array>}
-   */
-  async exportAllCoinImages() {
-    if (!(await this._ensureDb())) return [];
-    if (!this._db.objectStoreNames.contains('coinImages')) return [];
-    return this._getAll('coinImages');
-  }
-
-  /**
    * Import a single pattern image record (from ZIP restore).
    * @param {Object} record - Pattern image record with ruleId key
    * @returns {Promise<boolean>}
@@ -723,73 +611,6 @@ class ImageCache {
   // ---------------------------------------------------------------------------
   // Image pipeline (private)
   // ---------------------------------------------------------------------------
-
-  /**
-   * Fetch an image URL using a multi-strategy cascade that gracefully
-   * degrades when CORS headers are unavailable (e.g. Numista CDN).
-   *
-   * Strategy A: fetch(CORS) → createImageBitmap → canvas resize → JPEG blob
-   * Strategy B: fetch(CORS) succeeded but canvas tainted → store raw blob
-   * Strategy C: Image element (no crossOrigin) → canvas → JPEG blob
-   * Strategy D: fetch(no-cors) → non-opaque blob if available (opaque blobs rejected — lose data in IDB)
-   *
-   * @param {string} url
-   * @returns {Promise<Blob|null>}
-   */
-  async _fetchAndResize(url) {
-    if (!url || !ImageCache.isValidImageUrl(url)) return null;
-
-    // --- Strategy A: CORS fetch → ImageProcessor pipeline ---
-    try {
-      const resp = await fetch(url, { mode: 'cors' });
-      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-      const blob = await resp.blob();
-
-      // Prefer ImageProcessor (WebP + byte budget) when available
-      if (typeof imageProcessor !== 'undefined') {
-        const result = await imageProcessor.processFile(blob, {
-          maxDim: this._maxDim,
-          quality: this._quality,
-        });
-        if (result?.blob) return result.blob;
-      }
-
-      // Fallback: bitmap → canvas resize
-      const imgBitmap = await createImageBitmap(blob);
-      const resized = await this._resizeAndCompress(imgBitmap);
-      if (resized) return resized;
-
-      // Strategy B: fetch succeeded but canvas failed — use raw blob
-      console.warn('ImageCache: Strategy A canvas failed, using raw blob for', url);
-      return blob;
-    } catch (errA) {
-      console.warn('ImageCache: Strategy A (CORS fetch) failed for', url, errA.message);
-    }
-
-    // --- Strategy C: Image element without crossOrigin → canvas ---
-    try {
-      const img = await this._loadImageElement(url, false);
-      const resized = await this._resizeAndCompress(img);
-      if (resized) return resized;
-      console.warn('ImageCache: Strategy C canvas tainted for', url);
-    } catch (errC) {
-      console.warn('ImageCache: Strategy C (Image element) failed for', url, errC.message);
-    }
-
-    // --- Strategy D: no-cors fetch → opaque blob (displayable via object URL) ---
-    try {
-      const blob = await this._fetchBlobDirect(url);
-      if (blob) {
-        console.warn('ImageCache: Strategy D (no-cors blob) succeeded for', url);
-        return blob;
-      }
-    } catch (errD) {
-      console.warn('ImageCache: Strategy D (no-cors) failed for', url, errD.message);
-    }
-
-    console.warn('ImageCache: all strategies failed for', url);
-    return null;
-  }
 
   /**
    * Resize and compress an image source using ImageProcessor (STACK-95).

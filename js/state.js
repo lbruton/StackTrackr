@@ -98,7 +98,6 @@ const elements = {
   importProgress: null,
   importProgressText: null,
   numistaImportFile: null,
-  numistaOverride: null,
   numistaMerge: null,
 
   // Export elements
@@ -115,6 +114,7 @@ const elements = {
   // Emergency reset button
   removeInventoryDataBtn: null,
   boatingAccidentBtn: null,
+  forceRefreshBtn: null,
 
 
   // Notes modal elements
@@ -267,10 +267,23 @@ const elements = {
 };
 
 /** @type {Array} Change log entries */
-let changeLog = JSON.parse(localStorage.getItem('changeLog') || '[]');
+let changeLog = (function () {
+  try {
+    var _raw = localStorage.getItem('changeLog');
+    if (!_raw) return [];
+    // saveDataSync may prepend 'CMP1:' for payloads ≥ 4 KB (LZString no-op prefix).
+    // Stripping it here mirrors __decompressIfNeeded in utils.js, which isn't
+    // loaded yet when state.js runs.
+    if (_raw.startsWith('CMP1:')) _raw = _raw.slice(5);
+    return JSON.parse(_raw);
+  } catch (e) { console.warn('[state] changeLog parse failed — resetting to []. Error:', e); return []; }
+}());
 
 /** @type {Array} Main inventory data structure */
 let inventory = [];
+// STAK-301: expose via getter so other scripts can safely access window.inventory
+// without hitting the TDZ on Chrome when empty inventory triggers a faster load path
+Object.defineProperty(window, 'inventory', { get: () => inventory, set: (val) => { inventory = val; }, configurable: true });
 
 /** @type {Object} Current spot prices for all metals */
 let spotPrices = {

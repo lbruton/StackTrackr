@@ -156,7 +156,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     elements.importProgressText = safeGetElement("importProgressText");
     elements.numistaImportBtn = safeGetElement("numistaImportBtn");
     elements.numistaImportFile = safeGetElement("numistaImportFile");
-    elements.numistaOverride = safeGetElement("numistaOverride");
     elements.numistaMerge = safeGetElement("numistaMerge");
       elements.numistaImportOptions = safeGetElement("numistaImportOptions");
       elements.exportCsvBtn = safeGetElement("exportCsvBtn");
@@ -167,6 +166,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     elements.numistaApiKey = safeGetElement("numistaApiKey");
     elements.removeInventoryDataBtn = safeGetElement("removeInventoryDataBtn");
     elements.boatingAccidentBtn = safeGetElement("boatingAccidentBtn");
+    elements.forceRefreshBtn = safeGetElement("forceRefreshBtn");
     elements.vaultExportBtn = safeGetElement("vaultExportBtn");
     elements.vaultImportBtn = safeGetElement("vaultImportBtn");
     elements.vaultImportFile = safeGetElement("vaultImportFile");
@@ -484,39 +484,8 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
     }
 
-    // Backfill CDN image URLs from local catalog cache (no API calls).
-    // Items viewed before URL persistence was added may have cached Numista
-    // data in the Local provider but no URLs on the inventory item itself.
-    try {
-      const catalogCache = JSON.parse(localStorage.getItem('staktrakr.catalog.cache') || '{}');
-      const cacheKeys = Object.keys(catalogCache);
-      const itemsWithNid = inventory.filter(i => i.numistaId).length;
-      debugLog(`[CDN Backfill] Catalog cache has ${cacheKeys.length} entries, ${itemsWithNid} items have numistaId`);
-      let backfilled = 0;
-      for (const item of inventory) {
-        const catId = item.numistaId;
-        if (!catId) continue;
-        const cached = catalogCache[catId];
-        if (!cached) {
-          debugLog(`[CDN Backfill] No cache entry for ${catId} (${(item.name || '').slice(0, 30)})`);
-          continue;
-        }
-        if (!item.obverseImageUrl && cached.imageUrl) {
-          item.obverseImageUrl = cached.imageUrl;
-          backfilled++;
-        }
-        if (!item.reverseImageUrl && cached.reverseImageUrl) {
-          item.reverseImageUrl = cached.reverseImageUrl;
-          backfilled++;
-        }
-      }
-      if (backfilled > 0) {
-        saveInventory();
-        debugLog(`[CDN Backfill] Backfilled ${backfilled} CDN image URLs from catalog cache`);
-      } else {
-        debugLog(`[CDN Backfill] Nothing to backfill (items may already have URLs or cache is empty)`);
-      }
-    } catch (e) { debugLog('[CDN Backfill] Error:', e); }
+    // CDN Backfill removed — URLs are written at save/bulk-sync time (STAK-309)
+    debugLog('[Init] Skipping CDN backfill (removed in STAK-309 fix)');
 
     // Clean up stale localStorage keys from removed systems
     try { localStorage.removeItem('seedImagesVersion'); } catch (_) { /* ignore */ }
@@ -536,6 +505,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     // Apply header toggle & layout visibility from saved prefs (STACK-54)
     if (typeof applyHeaderToggleVisibility === 'function') applyHeaderToggleVisibility();
+    if (typeof updateSpotSyncHealthDot === 'function') updateSpotSyncHealthDot();
+    if (typeof updateMarketHealthDot === 'function') updateMarketHealthDot();
     if (typeof applyLayoutOrder === 'function') applyLayoutOrder();
     if (typeof applyMetalOrder === 'function') applyMetalOrder();
 

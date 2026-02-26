@@ -59,15 +59,9 @@ const switchSettingsSection = (name) => {
     populateApiSection();
   }
 
-  // Sync cloud UI when switching to Cloud section
-  if (targetName === 'cloud' && typeof syncCloudUI === 'function') {
-    syncCloudUI();
-  }
-
   // Populate Images data and sync toggles when switching to Images section (STACK-96)
   if (targetName === 'images') {
     syncChipToggle('tableImagesToggle', localStorage.getItem('tableImagesEnabled') !== 'false');
-    syncChipToggle('numistaOverrideToggle', localStorage.getItem('numistaOverridePersonal') === 'true');
     const sidesSync = safeGetElement('tableImageSidesToggle');
     if (sidesSync) {
       const curSides = localStorage.getItem('tableImageSides') || 'both';
@@ -91,6 +85,52 @@ const switchSettingsSection = (name) => {
   // Populate Storage section when switching to it
   if (targetName === 'storage' && typeof renderStorageSection === 'function') {
     renderStorageSection();
+  }
+
+  // Populate Inventory Summary card and show/hide Cloud section when switching to Inventory
+  if (targetName === 'system') {
+    const countEl = safeGetElement('invSummaryCount');
+    const weightEl = safeGetElement('invSummaryWeight');
+    const meltEl = safeGetElement('invSummaryMelt');
+    const modEl = safeGetElement('invSummaryModified');
+    if (countEl || weightEl || meltEl || modEl) {
+      try {
+        const items = loadDataSync(LS_KEY, []);
+        if (countEl) countEl.textContent = items.length + ' items';
+        // Total weight — sum all items in troy oz (convert Goldback denominations)
+        if (weightEl) {
+          const totalOz = items.reduce((sum, it) => {
+            const w = parseFloat(it.weight) || 0;
+            const qty = Number(it.qty) || 1;
+            const oz = (it.weightUnit === 'gb' && typeof GB_TO_OZT !== 'undefined') ? w * GB_TO_OZT : w;
+            return sum + oz * qty;
+          }, 0);
+          weightEl.textContent = typeof formatWeight === 'function' ? formatWeight(totalOz) : `${totalOz.toFixed(2)} oz`;
+        }
+        // Melt value — use canonical computeMeltValue() helper from utils.js
+        if (meltEl) {
+          const totalMelt = items.reduce((sum, it) => {
+            const metalKey = (it.metal || 'silver').toLowerCase();
+            const spot = (typeof spotPrices !== 'undefined' && spotPrices[metalKey]) || 0;
+            return spot ? sum + computeMeltValue(it, spot) : sum;
+          }, 0);
+          meltEl.textContent = totalMelt > 0 ? (typeof formatCurrency === 'function' ? formatCurrency(totalMelt) : `$${totalMelt.toFixed(2)}`) : '—';
+        }
+        // Last modified — newest updatedAt across all items
+        if (modEl) {
+          const newest = items.reduce((max, it) => {
+            const ts = it.updatedAt || it.dateAdded || 0;
+            return ts > max ? ts : max;
+          }, 0);
+          modEl.textContent = newest
+            ? new Date(newest).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
+            : '—';
+        }
+      } catch (e) { console.warn('[settings] Inventory Summary card failed to populate:', e); }
+    }
+
+    // Sync cloud UI state (connected/disconnected badges, button states)
+    if (typeof syncCloudUI === 'function') syncCloudUI();
   }
 };
 
@@ -298,7 +338,7 @@ const syncSettingsUI = () => {
   // Card style (STAK-118)
   const cardStyleSelect = document.getElementById('settingsCardStyle');
   if (cardStyleSelect) {
-    cardStyleSelect.value = localStorage.getItem(CARD_STYLE_KEY) || 'A';
+    cardStyleSelect.value = localStorage.getItem(CARD_STYLE_KEY) || 'D';
   }
 
   // Desktop card view toggle (STAK-118)
@@ -331,6 +371,13 @@ const syncSettingsUI = () => {
   const anyVisible = document.querySelector('.settings-provider-panel[style*="display: block"]');
   if (!anyVisible) {
     switchProviderTab('NUMISTA');
+  }
+
+  // Hide Cloud nav item when no provider is connected (STAK-317)
+  const cloudNavItem = document.querySelector('.settings-nav-item[data-section="cloud"]');
+  if (cloudNavItem && typeof cloudIsConnected === 'function' && typeof CLOUD_PROVIDERS !== 'undefined') {
+    const connectedCount = Object.keys(CLOUD_PROVIDERS).filter(p => cloudIsConnected(p)).length;
+    cloudNavItem.style.display = connectedCount >= 1 ? '' : 'none';
   }
 };
 
@@ -1054,60 +1101,143 @@ const syncGoldbackSettingsUI = () => {
 // =============================================================================
 
 /**
- * Syncs the header shortcut checkboxes in Settings with stored state.
+ * Syncs the header shortcut UI in Settings with stored state.
+ * Re-renders the config table and applies current header state.
  */
 const syncHeaderToggleUI = () => {
-  const themeVisible = localStorage.getItem('headerThemeBtnVisible') !== 'false';
+  // settingsHeaderCurrencyBtn still exists in the Currency settings panel
   const currencyVisible = localStorage.getItem('headerCurrencyBtnVisible') !== 'false';
-  const trendStored = localStorage.getItem(HEADER_TREND_BTN_KEY);
-  const trendVisible = trendStored !== null ? trendStored === 'true' : true;
-  const syncStored = localStorage.getItem(HEADER_SYNC_BTN_KEY);
-  const syncVisible = syncStored !== null ? syncStored === 'true' : true;
-  const marketVisible = localStorage.getItem(HEADER_MARKET_BTN_KEY) !== 'false';
-
-  syncChipToggle('settingsHeaderThemeBtn', themeVisible);
-  syncChipToggle('settingsHeaderThemeBtn_hdr', themeVisible);
   syncChipToggle('settingsHeaderCurrencyBtn', currencyVisible);
-  syncChipToggle('settingsHeaderCurrencyBtn_hdr', currencyVisible);
-  syncChipToggle('settingsHeaderTrendBtn', trendVisible);
-  syncChipToggle('settingsHeaderTrendBtn_hdr', trendVisible);
-  syncChipToggle('settingsHeaderSyncBtn', syncVisible);
-  syncChipToggle('settingsHeaderSyncBtn_hdr', syncVisible);
-  syncChipToggle('settingsHeaderMarketBtn', marketVisible);
-  syncChipToggle('settingsHeaderMarketBtn_hdr', marketVisible);
 
+  renderHeaderBtnConfigTable();
   applyHeaderToggleVisibility();
 };
 
 /**
- * Shows/hides the header shortcut buttons based on stored preferences.
+ * Shows/hides and reorders header shortcut buttons based on stored config.
  * All buttons default visible for new users.
  */
 const applyHeaderToggleVisibility = () => {
-  const themeVisible = localStorage.getItem('headerThemeBtnVisible') !== 'false';
-  const currencyVisible = localStorage.getItem('headerCurrencyBtnVisible') !== 'false';
-  const trendStored = localStorage.getItem(HEADER_TREND_BTN_KEY);
-  const trendVisible = trendStored !== null ? trendStored === 'true' : true;
-  const syncStored = localStorage.getItem(HEADER_SYNC_BTN_KEY);
-  const syncVisible = syncStored !== null ? syncStored === 'true' : true;
-  const marketVisible = localStorage.getItem(HEADER_MARKET_BTN_KEY) !== 'false';
+  const config = getHeaderBtnConfig();
+  const BTN_ID_MAP = {
+    themeBtn:    'headerThemeBtn',
+    currencyBtn: 'headerCurrencyBtn',
+    marketBtn:   'headerMarketBtn',
+    trendBtn:    'headerTrendBtn',
+    syncBtn:     'headerSyncBtn',
+    vaultBtn:    'headerVaultBtn',
+    restoreBtn:  'headerRestoreBtn',
+    aboutBtn:    'aboutBtn',
+    settingsBtn: 'settingsBtn',
+  };
 
-  if (elements.headerThemeBtn) {
-    elements.headerThemeBtn.style.display = themeVisible ? '' : 'none';
+  // Apply visibility
+  for (const { id, enabled } of config) {
+    const btnId = BTN_ID_MAP[id];
+    if (!btnId) continue;
+    const btn = safeGetElement(btnId);
+    if (btn) btn.style.display = enabled ? '' : 'none';
   }
-  if (elements.headerCurrencyBtn) {
-    elements.headerCurrencyBtn.style.display = currencyVisible ? '' : 'none';
-  }
-  safeGetElement('headerTrendBtn').style.display = trendVisible ? '' : 'none';
-  safeGetElement('headerSyncBtn').style.display = syncVisible ? '' : 'none';
 
-  // Market button
-  const marketBtn = safeGetElement('headerMarketBtn');
-  if (marketBtn) {
-    marketBtn.style.display = marketVisible ? '' : 'none';
+  // Apply order to live header container; settingsBtn is last (it's last in config)
+  const container = safeGetElement('headerBtnContainer');
+  if (container) {
+    for (const { id } of config) {
+      const btnId = BTN_ID_MAP[id];
+      if (!btnId) continue;
+      const btn = container.querySelector(`#${btnId}`);
+      if (btn) container.append(btn);
+    }
+    // Cloud sync wrapper is position-managed by the cloud feature; keep it first
+    const cloudWrapper = container.querySelector('#headerCloudSyncWrapper');
+    if (cloudWrapper) container.prepend(cloudWrapper);
+  }
+
+  // Show text toggle
+  const showText = localStorage.getItem(HEADER_BTN_SHOW_TEXT_KEY) !== 'false';
+  if (container && container.classList) {
+    container.classList.toggle('header-buttons--show-text', showText);
   }
 };
 window.applyHeaderToggleVisibility = applyHeaderToggleVisibility;
+
+/**
+ * Returns the header button config as [{id, label, enabled}] in saved order.
+ * Reads visibility from individual legacy keys; order from `headerBtnOrder`.
+ * @returns {Array<{id:string, label:string, enabled:boolean}>}
+ */
+const getHeaderBtnConfig = () => {
+  const vis = {
+    themeBtn:    localStorage.getItem('headerThemeBtnVisible') !== 'false',
+    currencyBtn: localStorage.getItem('headerCurrencyBtnVisible') !== 'false',
+    marketBtn:   localStorage.getItem(HEADER_MARKET_BTN_KEY) !== 'false',
+    trendBtn:    (() => { const v = localStorage.getItem(HEADER_TREND_BTN_KEY); return v !== null ? v === 'true' : true; })(),
+    syncBtn:     (() => { const v = localStorage.getItem(HEADER_SYNC_BTN_KEY); return v !== null ? v === 'true' : true; })(),
+    vaultBtn:    (() => { const v = localStorage.getItem(HEADER_VAULT_BTN_KEY); return v !== null ? v === 'true' : true; })(),
+    restoreBtn:  localStorage.getItem(HEADER_RESTORE_BTN_KEY) !== 'false',
+    aboutBtn:    localStorage.getItem('headerAboutBtnVisible') !== 'false',
+  };
+  const labelMap = {
+    themeBtn: 'Theme', currencyBtn: 'Currency', marketBtn: 'Market',
+    trendBtn: 'Trend', syncBtn: 'Spot Sync', vaultBtn: 'Backup',
+    restoreBtn: 'Restore', aboutBtn: 'About',
+  };
+  const defaultOrder = Object.keys(vis);
+  const savedOrder = (() => {
+    const o = localStorage.getItem('headerBtnOrder');
+    try { const p = o ? JSON.parse(o) : null; return Array.isArray(p) ? p : null; } catch { return null; }
+  })();
+  const order = savedOrder
+    ? [...savedOrder.filter(k => k in vis), ...defaultOrder.filter(k => !savedOrder.includes(k))]
+    : defaultOrder;
+  const cfg = order.map(id => ({ id, label: labelMap[id] || id, enabled: vis[id] ?? true }));
+  // Settings is always last and always visible (locked — cannot be hidden or reordered)
+  cfg.push({ id: 'settingsBtn', label: 'Settings', enabled: true, locked: true });
+  return cfg;
+};
+
+/**
+ * Persists header button config: writes visibility to individual keys and
+ * order to `headerBtnOrder`.
+ * @param {Array<{id:string, enabled:boolean}>} cfg
+ */
+const saveHeaderBtnConfig = (cfg) => {
+  const visKeys = {
+    themeBtn:    'headerThemeBtnVisible',
+    currencyBtn: 'headerCurrencyBtnVisible',
+    marketBtn:   HEADER_MARKET_BTN_KEY,
+    trendBtn:    HEADER_TREND_BTN_KEY,
+    syncBtn:     HEADER_SYNC_BTN_KEY,
+    vaultBtn:    HEADER_VAULT_BTN_KEY,
+    restoreBtn:  HEADER_RESTORE_BTN_KEY,
+    aboutBtn:    'headerAboutBtnVisible',
+  };
+  for (const item of cfg) {
+    if (item.locked) continue;
+    const key = visKeys[item.id];
+    if (key) {
+      try { localStorage.setItem(key, item.enabled ? 'true' : 'false'); } catch { /* ignore */ }
+    }
+  }
+  try {
+    // Exclude locked items from saved order (settingsBtn is always re-appended by getHeaderBtnConfig)
+    localStorage.setItem('headerBtnOrder', JSON.stringify(
+      cfg.filter(c => !c.locked).map(c => c.id)
+    ));
+  } catch (err) {
+    console.warn('[HeaderBtnConfig] could not save order:', err);
+  }
+};
+
+/** Renders the header button config table in Settings → Appearance (STAK-320). */
+const renderHeaderBtnConfigTable = () => _renderSectionConfigTable({
+  containerId: 'headerBtnConfigTable',
+  getConfig: getHeaderBtnConfig,
+  saveConfig: saveHeaderBtnConfig,
+  onApply: () => applyHeaderToggleVisibility(),
+  onRender: () => renderHeaderBtnConfigTable(),
+});
+window.renderHeaderBtnConfigTable = renderHeaderBtnConfigTable;
 
 /**
  * Syncs layout section config table in Settings and applies layout order.
@@ -1151,6 +1281,9 @@ const _renderSectionConfigTable = (opts) => {
   table.className = 'chip-grouping-table';
   const tbody = document.createElement('tbody');
 
+  // Count sortable (non-locked) items to bound arrow movement
+  const sortableCount = config.filter(c => !c.locked).length;
+
   config.forEach((section, idx) => {
     const tr = document.createElement('tr');
     tr.dataset.sectionId = section.id;
@@ -1162,47 +1295,53 @@ const _renderSectionConfigTable = (opts) => {
     cb.type = 'checkbox';
     cb.checked = section.enabled;
     cb.className = 'inline-chip-toggle';
-    cb.title = 'Toggle ' + section.label;
-    cb.addEventListener('change', () => {
-      const cfg = opts.getConfig();
-      const item = cfg.at(idx);
-      if (item) {
-        item.enabled = cb.checked;
-        opts.saveConfig(cfg);
-        if (opts.onApply) opts.onApply();
-      }
-    });
+    cb.title = section.locked ? section.label + ' (always visible)' : 'Toggle ' + section.label;
+    cb.disabled = !!section.locked;
+    if (!section.locked) {
+      cb.addEventListener('change', () => {
+        const cfg = opts.getConfig();
+        const item = cfg.at(idx);
+        if (item) {
+          item.enabled = cb.checked;
+          opts.saveConfig(cfg);
+          if (opts.onApply) opts.onApply();
+        }
+      });
+    }
     tdCheck.appendChild(cb);
 
     // Label cell
     const tdLabel = document.createElement('td');
     tdLabel.textContent = section.label;
 
-    // Arrow buttons cell
+    // Arrow buttons cell (locked items get none)
     const tdMove = document.createElement('td');
     tdMove.style.cssText = 'width:3.5rem;text-align:right;white-space:nowrap';
 
-    const makeBtn = (dir, disabled) => {
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'inline-chip-move';
-      btn.textContent = dir === 'up' ? '\u2191' : '\u2193';
-      btn.title = 'Move ' + dir;
-      btn.disabled = disabled;
-      btn.addEventListener('click', () => {
-        const cfg = opts.getConfig();
-        const j = dir === 'up' ? idx - 1 : idx + 1;
-        if (j < 0 || j >= cfg.length) return;
-        const moved = cfg.splice(idx, 1).at(0);
-        cfg.splice(j, 0, moved);
-        opts.saveConfig(cfg);
-        (opts.onRender || (() => _renderSectionConfigTable(opts)))();
-        if (opts.onApply) opts.onApply();
-      });
-      return btn;
-    };
-    tdMove.appendChild(makeBtn('up', idx === 0));
-    tdMove.appendChild(makeBtn('down', idx === config.length - 1));
+    if (!section.locked) {
+      const makeBtn = (dir, disabled) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'inline-chip-move';
+        btn.textContent = dir === 'up' ? '\u2191' : '\u2193';
+        btn.title = 'Move ' + dir;
+        btn.disabled = disabled;
+        btn.addEventListener('click', () => {
+          const cfg = opts.getConfig();
+          const maxSortable = cfg.filter(c => !c.locked).length;
+          const j = dir === 'up' ? idx - 1 : idx + 1;
+          if (j < 0 || j >= maxSortable) return;
+          const moved = cfg.splice(idx, 1).at(0);
+          cfg.splice(j, 0, moved);
+          opts.saveConfig(cfg);
+          (opts.onRender || (() => _renderSectionConfigTable(opts)))();
+          if (opts.onApply) opts.onApply();
+        });
+        return btn;
+      };
+      tdMove.appendChild(makeBtn('up', idx === 0));
+      tdMove.appendChild(makeBtn('down', idx >= sortableCount - 1));
+    }
 
     tr.append(tdCheck, tdLabel, tdMove);
     tbody.appendChild(tr);
@@ -1488,7 +1627,7 @@ const renderCustomPatternRules = async () => {
     const info = document.createElement('div');
     info.className = 'pattern-rule-info';
     info.innerHTML = `<div class="rule-pattern">/${sanitizeHtml(rule.pattern)}/i</div>
-      <div class="rule-replacement">${sanitizeHtml(rule.replacement) || '\u2014'}${rule.numistaId ? ' (N#' + sanitizeHtml(String(rule.numistaId)) + ')' : ''}</div>`;
+      <div class="rule-replacement">${sanitizeHtml(rule.replacement) || '\u2014'}</div>`;
     row.appendChild(info);
 
     // Actions
@@ -1523,7 +1662,6 @@ const renderCustomPatternRules = async () => {
       <div class="edit-form-fields">
         <label>Pattern <input type="text" class="edit-pattern" value="${rule.pattern.replace(/"/g, '&quot;')}" /></label>
         <label>Replacement <input type="text" class="edit-replacement" value="${(rule.replacement || '').replace(/"/g, '&quot;')}" /></label>
-        <label>N# <input type="text" class="edit-numista-id" value="${rule.numistaId || ''}" /></label>
         <label>Obverse <input type="file" class="edit-obverse" accept="image/*" /></label>
         <label>Reverse <input type="file" class="edit-reverse" accept="image/*" /></label>
       </div>
@@ -1549,7 +1687,6 @@ const renderCustomPatternRules = async () => {
     editForm.querySelector('.edit-save-btn').addEventListener('click', async () => {
       const newPattern = editForm.querySelector('.edit-pattern').value.trim();
       const newReplacement = editForm.querySelector('.edit-replacement').value.trim();
-      const newNumistaId = editForm.querySelector('.edit-numista-id').value.trim();
 
       if (!newPattern || !newReplacement) {
         appAlert('Pattern and replacement are required.');
@@ -1559,7 +1696,7 @@ const renderCustomPatternRules = async () => {
       const result = NumistaLookup.updateRule(rule.id, {
         pattern: newPattern,
         replacement: newReplacement,
-        numistaId: newNumistaId || null
+        numistaId: null,  // STAK-306: clear any legacy N# — edit form no longer manages it
       });
 
       if (!result.success) {
@@ -1625,17 +1762,55 @@ const renderImageStorageStats = async () => {
   }
 
   const usage = await imageCache.getStorageUsage();
-  const totalMB = (usage.totalBytes / 1024 / 1024).toFixed(1);
-  const limitMB = (usage.limitBytes / 1024 / 1024).toFixed(0);
-  const pct = usage.limitBytes > 0 ? ((usage.totalBytes / usage.limitBytes) * 100).toFixed(1) : 0;
+  const limitBytes = usage.limitBytes || 1;
 
-  container.innerHTML = `
-    <span class="stat-item">Total: ${totalMB} / ${limitMB} MB (${pct}%)</span>
-    <span class="stat-item">Numista: ${usage.numistaCount}</span>
-    <span class="stat-item">Pattern: ${usage.patternImageCount || 0}</span>
-    <span class="stat-item">User: ${usage.userImageCount}</span>
-    <span class="stat-item">Metadata: ${usage.metadataCount}</span>
-  `;
+  const fmt = (b) => {
+    if (b >= 1024 * 1024) return (b / 1024 / 1024).toFixed(1) + ' MB';
+    return Math.round(b / 1024) + ' KB';
+  };
+
+  const pct = (b) => Math.min(100, ((b / limitBytes) * 100)).toFixed(1);
+
+  const barColor = (b) => {
+    const p = (b / limitBytes) * 100;
+    if (p > 90) return 'var(--danger, #e74c3c)';
+    if (p > 70) return 'var(--warning, #f39c12)';
+    return 'var(--accent, #3498db)';
+  };
+
+  const userBar = document.getElementById('gaugeUserBar');
+  const userSize = document.getElementById('gaugeUserSize');
+  const numistaBar = document.getElementById('gaugeNumistaBar');
+  const numistaSize = document.getElementById('gaugeNumistaSize');
+  const persistLine = document.getElementById('gaugePersistLine');
+
+  if (userBar) {
+    userBar.style.width = pct(usage.userImageBytes || 0) + '%';
+    userBar.style.background = barColor(usage.userImageBytes || 0);
+  }
+  if (userSize) {
+    userSize.textContent = `${fmt(usage.userImageBytes || 0)} (${usage.userImageCount} items)`;
+  }
+  if (numistaBar) {
+    numistaBar.style.width = pct(usage.numistaBytes || 0) + '%';
+    numistaBar.style.background = barColor(usage.numistaBytes || 0);
+  }
+  if (numistaSize) {
+    numistaSize.textContent = `${fmt(usage.numistaBytes || 0)} (${usage.numistaCount} coins)`;
+  }
+  if (persistLine) {
+    const granted = localStorage.getItem(STORAGE_PERSIST_GRANTED_KEY);
+    if (granted === 'true') {
+      persistLine.textContent = '✅ Persistent storage granted — browser will not auto-clear your images';
+      persistLine.style.color = 'var(--success, #27ae60)';
+    } else if (granted === 'false') {
+      persistLine.textContent = '⚠️ Persistent storage not granted — consider using Full Backup regularly';
+      persistLine.style.color = 'var(--warning, #f39c12)';
+    } else {
+      persistLine.textContent = 'Upload a photo to request persistent storage protection';
+      persistLine.style.color = 'var(--text-secondary)';
+    }
+  }
 };
 
 /**
@@ -1774,7 +1949,6 @@ const STORAGE_KEY_LABELS = {
   chipSortOrder:                   { label: 'Chip Sort Order',            icon: '⚙️', category: 'Settings' },
   numistaLookupRules:              { label: 'Numista Lookup Rules',       icon: '🔍', category: 'Settings' },
   numistaViewFields:               { label: 'Numista View Fields',        icon: '🔍', category: 'Settings' },
-  numistaOverridePersonal:         { label: 'Numista Image Priority',     icon: '🔍', category: 'Settings' },
   'staktrakr.catalog.settings':   { label: 'Catalog Settings',           icon: '🔍', category: 'Settings' },
   tableImagesEnabled:              { label: 'Table Images',               icon: '🖼', category: 'Settings' },
   tableImageSides:                 { label: 'Table Image Sides',          icon: '🖼', category: 'Settings' },

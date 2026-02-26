@@ -125,6 +125,18 @@ const processUploadedImage = async (file, side = 'obverse') => {
     sizeInfo.textContent = `${origKB} KB → ${compKB} KB (${result.format.split('/')[1]})`;
   }
   if (removeBtn) removeBtn.style.display = '';
+  updateSwapButtonVisibility();
+};
+
+/** Show/hide swap button based on whether both image sides have previews (STAK-341) */
+const updateSwapButtonVisibility = () => {
+  const wrapper = document.getElementById('swapImagesBtnWrapper');
+  if (!wrapper) return;
+  const obvPreview = document.getElementById('itemImagePreviewObv');
+  const revPreview = document.getElementById('itemImagePreviewRev');
+  const isVisible = (el) => el && !el.classList.contains('d-none') && el.style.display !== 'none';
+  const bothVisible = isVisible(obvPreview) && isVisible(revPreview);
+  wrapper.classList.toggle('d-none', !bothVisible);
 };
 
 /**
@@ -187,6 +199,10 @@ const clearUploadState = () => {
   if (removeRev) removeRev.style.display = 'none';
   if (fileRev) fileRev.value = '';
 
+  // Hide swap button (STAK-341)
+  const swapWrapper = document.getElementById('swapImagesBtnWrapper');
+  if (swapWrapper) swapWrapper.classList.add('d-none');
+
   // Reset pattern toggle state
   const patternToggle = document.getElementById('imagePatternToggle');
   const patternKeywordsGroup = document.getElementById('imagePatternKeywordsGroup');
@@ -208,6 +224,25 @@ const updateNumistaModalDot = () => {
   dot.classList.toggle('connected', !!connected);
   dot.classList.toggle('disconnected', !connected);
   dot.title = connected ? 'Numista API: connected' : 'Numista API: disconnected';
+};
+
+/**
+ * Request persistent storage the first time a user uploads an image.
+ * Stores the browser's response under STORAGE_PERSIST_GRANTED_KEY so the
+ * prompt fires at most once per device.
+ */
+const _requestStoragePersistOnce = async () => {
+  if (localStorage.getItem(STORAGE_PERSIST_GRANTED_KEY) !== null) return; // already asked
+  if (!navigator?.storage?.persist) {
+    localStorage.setItem(STORAGE_PERSIST_GRANTED_KEY, 'false');
+    return;
+  }
+  try {
+    const granted = await navigator.storage.persist();
+    localStorage.setItem(STORAGE_PERSIST_GRANTED_KEY, granted ? 'true' : 'false');
+  } catch {
+    localStorage.setItem(STORAGE_PERSIST_GRANTED_KEY, 'false');
+  }
 };
 
 /**
@@ -239,6 +274,7 @@ const saveUserImageForItem = async (uuid) => {
     return false;
   }
 
+  _requestStoragePersistOnce(); // fire-and-forget — no await needed
   // Priority 2: New uploads - merge with existing or replace deleted sides
   debugLog(`saveUserImageForItem: saving images for ${uuid}`);
 
@@ -259,13 +295,6 @@ const saveUserImageForItem = async (uuid) => {
         }
       }
     } catch { /* ignore */ }
-  }
-
-  // cacheUserImage requires at least obverse; pass reverse as optional
-  if (!obvBlob && revBlob) {
-    // Only reverse uploaded — store as obverse (API requirement)
-    obvBlob = revBlob;
-    revBlob = null;
   }
 
   const saved = await window.imageCache.cacheUserImage(uuid, obvBlob, revBlob);
@@ -309,10 +338,7 @@ const handleImageDeletion = async (uuid) => {
         await window.imageCache.deleteUserImage(uuid);
       } else {
         // Save updated record with one side nullified
-        // cacheUserImage requires obverse, so if only reverse remains, store it as obverse
-        const obvToSave = newObverse || newReverse;
-        const revToSave = newObverse ? newReverse : null;
-        await window.imageCache.cacheUserImage(uuid, obvToSave, revToSave);
+        await window.imageCache.cacheUserImage(uuid, newObverse, newReverse);
       }
     } catch (err) {
       debugLog(`Failed to handle partial deletion: ${err}`, 'warn');
@@ -699,32 +725,42 @@ const setupHeaderButtonListeners = () => {
   // Cloud sync header icon button (STAK-264)
   var headerCloudSyncBtn = safeGetElement('headerCloudSyncBtn');
   if (headerCloudSyncBtn) {
-    safeAttachListener(
-      headerCloudSyncBtn,
-      'click',
-      function (e) {
-        e.preventDefault();
-        var state = headerCloudSyncBtn.dataset.syncState;
-        if (state === 'orange') {
-          // Route through getSyncPassword so _syncPasswordPromptActive is set correctly
-          if (typeof getSyncPassword === 'function') {
-            getSyncPassword();
-          }
-        } else if (state === 'green') {
-          // Already synced: show last-synced toast
-          var lp = typeof syncGetLastPush === 'function' ? syncGetLastPush() : null;
-          var msg = lp && lp.timestamp
-            ? 'Cloud sync active — last synced recently'
-            : 'Cloud sync active';
-          if (typeof showCloudToast === 'function') showCloudToast(msg, 2500);
-        } else {
-          // Gray: not configured — open cloud settings
-          if (typeof showSettingsModal === 'function') showSettingsModal('cloud');
-        }
-      },
-      'Cloud Sync Header Button'
-    );
+    safeAttachListener(headerCloudSyncBtn, 'click', function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      var state = headerCloudSyncBtn.dataset.syncState;
+      if (state === 'orange') {
+        // Needs password setup — open inline popover
+        if (typeof _openCloudSyncPopover === 'function') _openCloudSyncPopover();
+      } else if (state === 'green') {
+        var lp = typeof syncGetLastPush === 'function' ? syncGetLastPush() : null;
+        var msg = lp && lp.timestamp
+          ? 'Cloud sync active \u2014 last synced ' + (typeof _syncRelativeTime === 'function' ? _syncRelativeTime(lp.timestamp) : '')
+          : 'Cloud sync active';
+        if (typeof showCloudToast === 'function') showCloudToast(msg, 2500);
+      } else {
+        if (typeof showSettingsModal === 'function') showSettingsModal('system');
+      }
+    }, 'Cloud Sync Header Button');
   }
+
+  // Close popover on outside click
+  document.addEventListener('mousedown', function (e) {
+    var wrapper = safeGetElement('headerCloudSyncWrapper');
+    var popover = safeGetElement('cloudSyncHeaderPopover');
+    if (popover && popover.style.display !== 'none') {
+      if (wrapper && !wrapper.contains(e.target)) {
+        popover.style.display = 'none';
+        // Clear handlers so stale state doesn't persist on next open
+        var inputEl = safeGetElement('cloudSyncPopoverInput');
+        var unlockEl = safeGetElement('cloudSyncPopoverUnlockBtn');
+        var cancelEl = safeGetElement('cloudSyncPopoverCancelBtn');
+        if (inputEl) inputEl.onkeydown = null;
+        if (unlockEl) unlockEl.onclick = null;
+        if (cancelEl) cancelEl.onclick = null;
+      }
+    }
+  });
 
   // About Button
   if (elements.aboutBtn) {
@@ -840,7 +876,7 @@ const setupTableSortListeners = () => {
  * Parses weight from form input, handling Goldback denominations,
  * fractions, and gram-to-troy-oz conversion.
  * @param {string} weightRaw - Raw weight input value
- * @param {string} weightUnit - Unit: 'oz', 'g', or 'gb'
+ * @param {string} weightUnit - Unit: 'oz', 'g', 'kg', 'lb', or 'gb'
  * @param {boolean} isEditing - Whether in edit mode
  * @param {Object} existingItem - Existing item (edit mode)
  * @returns {number} Weight in troy ounces (or denomination value for gb)
@@ -852,6 +888,10 @@ const parseWeight = (weightRaw, weightUnit, isEditing, existingItem) => {
   let weight = parseFraction(weightRaw);
   if (weightUnit === 'g') {
     weight = gramsToOzt(weight);
+  } else if (weightUnit === 'kg') {
+    weight = kgToOzt(weight);
+  } else if (weightUnit === 'lb') {
+    weight = lbToOzt(weight);
   }
   // gb: weight stays as raw denomination value (conversion happens in computeMeltValue)
   return isNaN(weight) ? 0 : parseFloat(weight.toFixed(6));
@@ -944,8 +984,10 @@ const parseItemFormFields = (isEditing, existingItem) => {
     currency: displayCurrency,
     obverseImageUrl: elements.itemObverseImageUrl?.value?.trim() ?? '',
     reverseImageUrl: elements.itemReverseImageUrl?.value?.trim() ?? '',
+    ignorePatternImages: document.getElementById('itemIgnorePatternImages')?.checked || false,
     // Numista metadata — stored per-item, seeded by API, user edits override
-    numistaData: parseNumistaDataFields(isEditing, existingItem),
+    // Pass catalog so parseNumistaDataFields can wipe metadata when N# is cleared (STAK-309)
+    numistaData: parseNumistaDataFields(isEditing, existingItem, elements.itemCatalog ? elements.itemCatalog.value.trim() : ''),
   };
 };
 
@@ -956,7 +998,10 @@ const parseItemFormFields = (isEditing, existingItem) => {
  * @param {Object} existingItem
  * @returns {Object} Numista data fields with source tracking
  */
-const parseNumistaDataFields = (isEditing, existingItem) => {
+const parseNumistaDataFields = (isEditing, existingItem, catalog = '') => {
+  // When N# is being cleared while editing, wipe all Numista metadata (STAK-309)
+  if (isEditing && !catalog) return {};
+
   const get = (id) => (document.getElementById(id)?.value?.trim() ?? '');
   const prev = (isEditing && existingItem?.numistaData) ? existingItem.numistaData : {};
 
@@ -1034,7 +1079,7 @@ const commitItemToInventory = (f, isEditing, editIdx) => {
     const serial = oldItem.serial;
 
     // STAK-244: Clear stale Numista image cache when N# changes
-    const numistaIdChanged = oldItem.numistaId && f.catalog && oldItem.numistaId !== f.catalog;
+    const numistaIdChanged = oldItem.numistaId && oldItem.numistaId !== f.catalog;
     if (numistaIdChanged && window.imageCache?.isAvailable()) {
       debugLog(`commitItemToInventory: N# changed from ${oldItem.numistaId} to ${f.catalog}, clearing old cache`);
       imageCache.deleteImages(oldItem.numistaId).catch(err => debugLog(`commitItemToInventory: Failed to clear old Numista images: ${err.message}`, 'warn'));
@@ -1047,15 +1092,21 @@ const commitItemToInventory = (f, isEditing, editIdx) => {
       numistaId: f.catalog,
       numistaData: f.numistaData,
       currency: f.currency,
-      obverseImageUrl: f.obverseImageUrl || window.selectedNumistaResult?.imageUrl || oldItem.obverseImageUrl || '',
-      reverseImageUrl: f.reverseImageUrl || window.selectedNumistaResult?.reverseImageUrl || oldItem.reverseImageUrl || '',
+      // STAK-308: Use nullish coalescing — empty string is intentional (user cleared URL)
+      obverseImageUrl: f.obverseImageUrl !== '' ? (f.obverseImageUrl || window.selectedNumistaResult?.imageUrl || '') : '',
+      reverseImageUrl: f.reverseImageUrl !== '' ? (f.reverseImageUrl || window.selectedNumistaResult?.reverseImageUrl || '') : '',
+      obverseSharedImageId: oldItem.obverseSharedImageId || null,
+      reverseSharedImageId: oldItem.reverseSharedImageId || null,
+      ignorePatternImages: f.ignorePatternImages || false,
     };
 
     addCompositionOption(f.composition);
 
     try {
-      if (window.catalogManager && inventory[editIdx].numistaId) {
-        catalogManager.setCatalogId(serial, inventory[editIdx].numistaId);
+      // STAK-302: always sync the mapping — pass '' when N# is cleared so
+      // setCatalogId deletes the stale serial entry and prevents repopulation on reload
+      if (window.catalogManager) {
+        catalogManager.setCatalogId(serial, inventory[editIdx].numistaId || '');
       }
     } catch (catErr) {
       console.warn('Failed to update catalog mapping:', catErr);
@@ -1105,8 +1156,11 @@ const commitItemToInventory = (f, isEditing, editIdx) => {
       numistaId: f.catalog,
       numistaData: f.numistaData,
       currency: f.currency,
-      obverseImageUrl: f.obverseImageUrl || window.selectedNumistaResult?.imageUrl || '',
-      reverseImageUrl: f.reverseImageUrl || window.selectedNumistaResult?.reverseImageUrl || '',
+      obverseImageUrl: f.obverseImageUrl !== '' ? (f.obverseImageUrl || window.selectedNumistaResult?.imageUrl || '') : '',
+      reverseImageUrl: f.reverseImageUrl !== '' ? (f.reverseImageUrl || window.selectedNumistaResult?.reverseImageUrl || '') : '',
+      obverseSharedImageId: null,
+      reverseSharedImageId: null,
+      ignorePatternImages: f.ignorePatternImages || false,
     });
 
     typeof registerName === "function" && registerName(f.name);
@@ -1193,28 +1247,50 @@ const setupItemFormListeners = () => {
         commitItemToInventory(fields, isEditing, editingIndex);
 
         // Save user-uploaded image if pending (STACK-32)
-        // Pattern toggle: create a pattern rule instead of per-item image
+        // Pattern toggle: promote images to a pattern rule instead of (or in addition to) per-item save
         let patternRuleSaved = false;
         const patternToggle = document.getElementById('imagePatternToggle');
-        if ((_pendingObverseBlob || _pendingReverseBlob) && patternToggle?.checked) {
+        const savedItem = isEditing ? inventory[savedEditIdx] : inventory[inventory.length - 1];
+        if (patternToggle?.checked) {
           try {
             const rawKeywords = (document.getElementById('imagePatternKeywords')?.value || '').trim();
             if (rawKeywords) {
-              // Convert keywords to regex: "morgan, peace" → "morgan|peace"
-              const terms = rawKeywords.split(/[,;]/).map(t => t.trim()).filter(t => t.length > 0);
-              const pattern = terms.map(t => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|');
-              // Pre-generate ruleId and pass as seedImageId — the image lookup
-              // chain resolves via rule.seedImageId, not rule.id
-              const ruleId = 'custom-img-' + Date.now();
-              const result = NumistaLookup.addRule(pattern, rawKeywords, null, ruleId);
-              if (result?.success && window.imageCache?.isAvailable()) {
-                await window.imageCache.cachePatternImage(ruleId, _pendingObverseBlob, _pendingReverseBlob);
-                debugLog(`Pattern rule created: ${result.id} (images: ${ruleId}) for "${rawKeywords}"`);
+              // Resolve blobs: prefer pending upload, fall back to already-saved per-item IDB record
+              let obvBlob = _pendingObverseBlob;
+              let revBlob = _pendingReverseBlob;
+              // Fill in missing sides from existing per-item IDB record
+              if ((!obvBlob || !revBlob) && savedItem?.uuid && window.imageCache?.isAvailable()) {
+                const existing = await window.imageCache.getUserImage(savedItem.uuid).catch(() => null);
+                if (existing) {
+                  if (!obvBlob) obvBlob = existing.obverse || null;
+                  if (!revBlob) revBlob = existing.reverse || null;
+                }
+              }
+
+              if (obvBlob || revBlob) {
+                // Convert keywords to regex: "morgan, peace" → "morgan|peace"
+                const terms = rawKeywords.split(/[,;]/).map(t => t.trim()).filter(t => t.length > 0);
+                const pattern = terms.map(t => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|');
+                // Pre-generate ruleId and pass as seedImageId — the image lookup
+                // chain resolves via rule.seedImageId, not rule.id
+                const ruleId = 'custom-img-' + Date.now();
+                const result = NumistaLookup.addRule(pattern, rawKeywords, null, ruleId);
+                if (result?.success && window.imageCache?.isAvailable()) {
+                  await window.imageCache.cachePatternImage(ruleId, obvBlob, revBlob);
+                  debugLog(`Pattern rule created: ${result.id} (images: ${ruleId}) for "${rawKeywords}"`);
+                  // Move: delete the per-item userImages record so it no longer appears in Per-Item section
+                  if (savedItem?.uuid) {
+                    await window.imageCache.deleteUserImage(savedItem.uuid).catch(() => {});
+                  }
+                } else {
+                  debugLog(`Failed to create pattern rule: ${result?.error}`, 'warn');
+                }
               } else {
-                debugLog(`Failed to create pattern rule: ${result?.error}`, 'warn');
+                debugLog('Pattern toggle checked but no images available to promote', 'warn');
               }
               clearUploadState();
               patternRuleSaved = true;
+              renderTable();
             }
           } catch (err) {
             console.warn('Failed to create pattern rule from modal:', err);
@@ -1224,12 +1300,14 @@ const setupItemFormListeners = () => {
         }
         if (!patternRuleSaved && (_pendingObverseBlob || _pendingReverseBlob || _deleteObverseOnSave || _deleteReverseOnSave)) {
           // Per-item save: save blobs against the item's UUID
-          const savedItem = isEditing ? inventory[savedEditIdx] : inventory[inventory.length - 1];
           if (savedItem?.uuid) {
             try {
               const saved = await saveUserImageForItem(savedItem.uuid);
               if (!saved) {
                 debugLog('Image save returned false — image may not have been stored');
+              } else {
+                // Re-render so thumbnails reflect the newly saved image
+                renderTable();
               }
             } catch (err) {
               console.warn('Failed to save user image:', err);
@@ -1472,6 +1550,13 @@ const setupItemFormListeners = () => {
           if (sizeInfo) sizeInfo.textContent = '';
           if (removeBtn) removeBtn.style.display = 'none';
           if (fileInput) fileInput.value = '';
+          // STAK-308: Clear URL field so deleted CDN URL doesn't persist on save
+          const urlField = side === 'reverse' ? elements.itemReverseImageUrl : elements.itemObverseImageUrl;
+          if (urlField) urlField.value = '';
+          // STAK-332: Flag item to ignore pattern rule images after explicit removal
+          const ignorePatternCheckbox = document.getElementById('itemIgnorePatternImages');
+          if (ignorePatternCheckbox) ignorePatternCheckbox.checked = true;
+          updateSwapButtonVisibility();
 
           // STAK-244: Also clear Numista image cache if user is removing a catalog-synced image
           const catalogId = elements.itemCatalog?.value?.trim() || '';
@@ -1510,6 +1595,72 @@ const setupItemFormListeners = () => {
         }
       });
     }
+  }
+
+  // SWAP OBVERSE/REVERSE BUTTON (STAK-341)
+  const swapBtn = safeGetElement('swapImagesBtn');
+  if (swapBtn) {
+    swapBtn.addEventListener('click', async () => {
+      // Hydrate each missing side from IndexedDB before swap (PR #551 review)
+      // Must hydrate per-side (not gated on both null) to handle mixed
+      // upload+swap: user uploads one side, then swaps before saving.
+      const uuid = editingIndex !== null ? inventory[editingIndex]?.uuid : null;
+      if (uuid && (!_pendingObverseBlob || !_pendingReverseBlob) && window.imageCache?.isAvailable()) {
+        try {
+          const rec = await imageCache.getUserImage(uuid);
+          if (!_pendingObverseBlob && rec?.obverse) _pendingObverseBlob = rec.obverse;
+          if (!_pendingReverseBlob && rec?.reverse) _pendingReverseBlob = rec.reverse;
+        } catch { /* ignore — blobs stay null */ }
+      }
+
+      // Swap pending blobs
+      const tmpBlob = _pendingObverseBlob;
+      _pendingObverseBlob = _pendingReverseBlob;
+      _pendingReverseBlob = tmpBlob;
+
+      // Swap preview URLs
+      const tmpUrl = _pendingObversePreviewUrl;
+      _pendingObversePreviewUrl = _pendingReversePreviewUrl;
+      _pendingReversePreviewUrl = tmpUrl;
+
+      // Swap delete flags
+      const tmpDel = _deleteObverseOnSave;
+      _deleteObverseOnSave = _deleteReverseOnSave;
+      _deleteReverseOnSave = tmpDel;
+
+      // Swap visible preview images
+      const imgObv = document.getElementById('itemImagePreviewImgObv');
+      const imgRev = document.getElementById('itemImagePreviewImgRev');
+      if (imgObv && imgRev) {
+        const tmpSrc = imgObv.src;
+        imgObv.src = imgRev.src;
+        imgRev.src = tmpSrc;
+      }
+
+      // Swap URL fields
+      const urlObv = elements.itemObverseImageUrl;
+      const urlRev = elements.itemReverseImageUrl;
+      if (urlObv && urlRev) {
+        const tmpVal = urlObv.value;
+        urlObv.value = urlRev.value;
+        urlRev.value = tmpVal;
+      }
+
+      // Swap size info text
+      const sizeObv = document.getElementById('itemImageSizeInfoObv');
+      const sizeRev = document.getElementById('itemImageSizeInfoRev');
+      if (sizeObv && sizeRev) {
+        const tmpText = sizeObv.textContent;
+        sizeObv.textContent = sizeRev.textContent;
+        sizeRev.textContent = tmpText;
+      }
+
+      // Clear file inputs to avoid filename mismatch (PR #551 review)
+      const fileObv = document.getElementById('itemImageFileObv');
+      const fileRev = document.getElementById('itemImageFileRev');
+      if (fileObv) fileObv.value = '';
+      if (fileRev) fileRev.value = '';
+    });
   }
 
   // SEARCH NUMISTA BUTTON — lookup by N# or search by name
@@ -2023,6 +2174,37 @@ const setupVaultListeners = () => {
   optionalListener(cpw, "input", () => {
     if (pw) updateMatchIndicator(pw.value, cpw.value);
   }, "Vault confirm password input");
+
+  // Image vault companion file picker (import mode only)
+  const vaultImageImportFile = document.getElementById("vaultImageImportFile");
+  optionalListener(vaultImageImportFile, "change", function (e) {
+    var imgFile = e.target.files && e.target.files[0];
+    if (!imgFile) return;
+    var imgFileInfoEl = document.getElementById("vaultImageFileInfo");
+    var imgPickerRowEl = document.getElementById("vaultImagePickerRow");
+    var imgFileNameEl = document.getElementById("vaultImageFileName");
+    var imgFileSizeEl = document.getElementById("vaultImageFileSize");
+    if (imgFileNameEl) imgFileNameEl.textContent = imgFile.name;
+    if (imgFileSizeEl && typeof formatFileSize === "function") {
+      imgFileSizeEl.textContent = formatFileSize(imgFile.size);
+    }
+    if (imgFileInfoEl) imgFileInfoEl.style.display = "";
+    if (imgPickerRowEl) imgPickerRowEl.style.display = "none";
+    var imgReader = new FileReader();
+    imgReader.onload = function (ev) {
+      if (typeof setVaultPendingImageFile === "function") {
+        setVaultPendingImageFile(new Uint8Array(ev.target.result));
+      }
+    };
+    imgReader.onerror = function () {
+      debugLog("[Vault] Failed to read image file", "error");
+      // Reset picker UI so user can try again
+      if (imgFileInfoEl) imgFileInfoEl.style.display = "none";
+      if (imgPickerRowEl) imgPickerRowEl.style.display = "";
+    };
+    imgReader.readAsArrayBuffer(imgFile);
+    e.target.value = "";
+  }, "Vault image import file input");
 };
 
 /**
@@ -2090,6 +2272,29 @@ const setupDataManagementListeners = () => {
       if (typeof showAppAlert === "function") await showAppAlert("All data has been erased. Hope your scuba gear is ready!", "Data Management");
     }
   }, "Boating accident button");
+
+  optionalListener(elements.forceRefreshBtn, "click", async () => {
+    if (!navigator.onLine) {
+      if (typeof showAppAlert === "function") await showAppAlert("Force Refresh requires an internet connection. Your cached app is still available.", "Force Refresh");
+      return;
+    }
+    const confirmed = typeof showAppConfirm === "function"
+      ? await showAppConfirm(
+          "This will reload the app and fetch the latest version from the network. Your inventory data will not be affected.",
+          "Force Refresh"
+        )
+      : false;
+    if (!confirmed) return;
+    try {
+      if ("serviceWorker" in navigator) {
+        const regs = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(regs.map((r) => r.unregister()));
+      }
+    } catch (err) {
+      console.warn("[ForceRefresh] SW unregister failed:", err);
+    }
+    window.location.reload();
+  }, "Force refresh button");
 };
 
 /**
@@ -2825,6 +3030,77 @@ const setupApiEvents = () => {
     console.error("❌ Error setting up API events:", error);
   }
 };
+
+// =============================================================================
+
+/** Open the inline Secure-mode password popover below the header cloud button. */
+function _openCloudSyncPopover() {
+  var popover = safeGetElement('cloudSyncHeaderPopover');
+  var input = safeGetElement('cloudSyncPopoverInput');
+  var unlockBtn = safeGetElement('cloudSyncPopoverUnlockBtn');
+  var cancelBtn = safeGetElement('cloudSyncPopoverCancelBtn');
+  var errorEl = safeGetElement('cloudSyncPopoverError');
+  if (!popover) return;
+
+  if (input) input.value = '';
+  if (errorEl) { errorEl.style.display = 'none'; errorEl.textContent = ''; }
+  popover.style.display = '';
+  if (input) setTimeout(function () { input.focus(); }, 50);
+
+  function cleanup() {
+    popover.style.display = 'none';
+    if (unlockBtn) unlockBtn.onclick = null;
+    if (cancelBtn) cancelBtn.onclick = null;
+    if (input) input.onkeydown = null;
+  }
+
+  function onUnlock() {
+    var pw = input ? input.value : '';
+    if (!pw || pw.length < 8) {
+      if (errorEl) {
+        errorEl.textContent = 'Password must be at least 8 characters.';
+        errorEl.style.display = '';
+      }
+      return;
+    }
+    cleanup();
+    try { localStorage.setItem('cloud_vault_password', pw); } catch (_) {}
+    if (typeof cloudCachePassword === 'function') cloudCachePassword('dropbox', pw);
+    if (typeof updateCloudSyncHeaderBtn === 'function') updateCloudSyncHeaderBtn();
+    setTimeout(function () { if (typeof pushSyncVault === 'function') pushSyncVault(); }, 100);
+  }
+
+  if (unlockBtn) unlockBtn.onclick = onUnlock;
+  if (cancelBtn) cancelBtn.onclick = cleanup;
+  if (input) {
+    input.onkeydown = function (e) {
+      if (e.key === 'Enter') onUnlock();
+      if (e.key === 'Escape') cleanup();
+    };
+  }
+}
+
+function handleAdvancedSavePassword() {
+  var input = safeGetElement('cloudAdvancedNewPassword');
+  var errorEl = safeGetElement('cloudAdvancedPasswordError');
+  if (!input) return;
+  var pw = input.value;
+  if (!pw || pw.length < 8) {
+    if (errorEl) { errorEl.textContent = 'Password must be at least 8 characters.'; errorEl.style.display = ''; }
+    return;
+  }
+  if (errorEl) errorEl.style.display = 'none';
+  input.value = '';
+  if (typeof changeVaultPassword === 'function') {
+    changeVaultPassword(pw).then(function (ok) {
+      if (!ok && errorEl) { errorEl.textContent = 'Failed to update password.'; errorEl.style.display = ''; }
+    }).catch(function (err) {
+      if (errorEl) { errorEl.textContent = 'An error occurred — try again.'; errorEl.style.display = ''; }
+      if (typeof debugLog === 'function') debugLog('[Cloud] changeVaultPassword threw:', err);
+    });
+  }
+}
+window.handleAdvancedSavePassword = handleAdvancedSavePassword;
 
 // =============================================================================
 

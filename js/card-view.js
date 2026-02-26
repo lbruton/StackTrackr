@@ -5,7 +5,7 @@
  * Returns the active card style from localStorage.
  * @returns {'A'|'B'|'C'|'D'}
  */
-const getCardStyle = () => localStorage.getItem(CARD_STYLE_KEY) || 'A';
+const getCardStyle = () => localStorage.getItem(CARD_STYLE_KEY) || 'D';
 
 /**
  * Returns true when the card view (A/B/C) should be rendered instead of the table.
@@ -561,8 +561,15 @@ const _cardChipsHTML = (item, small = false) => {
   if (item.grade) h += `<span class="cv-chip cv-chip-grade"${s}>${sanitizeHtml(item.grade)}</span>`;
   const qty = Number(item.qty) || 1;
   if (qty > 1) h += `<span class="cv-chip cv-chip-qty"${s}>x${qty}</span>`;
-  const _wUnit = (item.weightUnit || 'oz').toLowerCase() === 'gb' ? 'gb' : (item.weightUnit || 'oz');
-  h += `<span class="cv-chip cv-chip-weight"${s}>${sanitizeHtml(item.weight || '')} ${sanitizeHtml(_wUnit)}</span>`;
+  h += `<span class="cv-chip cv-chip-weight"${s}>${sanitizeHtml(formatWeight(item.weight, item.weightUnit))}</span>`;
+
+  // STAK-343: Inline tags in card view (show first 2, ellipsis if more)
+  const _cardTags = typeof getItemTags === 'function' ? getItemTags(item.uuid) : [];
+  if (_cardTags.length > 0) {
+    const tagText = sanitizeHtml(_cardTags.slice(0, 2).join(', ')) + (_cardTags.length > 2 ? '\u2026' : '');
+    h += `<span class="cv-chip cv-chip-tags"${s} title="${_cvEscapeAttr(_cardTags.join(', '))}">${tagText}</span>`;
+  }
+
   return h;
 };
 
@@ -662,13 +669,14 @@ const _cardRenderers = { A: renderCardA, B: renderCardB, C: renderCardC };
  * Renders all items as cards into the given container.
  * @param {object[]} sortedItems - Sorted/filtered inventory items
  * @param {HTMLElement} container - Target container element
+ * @param {Map<Object, number>} [itemIndexMap] - Optional map for O(1) index lookup
  */
-const renderCardView = (sortedItems, container) => {
+const renderCardView = (sortedItems, container, itemIndexMap) => {
   const style = getCardStyle();
   const renderer = _cardRenderers[style] || renderCardB;
 
   const html = sortedItems.map(item => {
-    const originalIdx = inventory.indexOf(item);
+    const originalIdx = itemIndexMap ? itemIndexMap.get(item) : inventory.indexOf(item);
     const currentSpot = (typeof spotPrices !== 'undefined' ? spotPrices[(item.metal || '').toLowerCase()] : 0) || 0;
     const valuation = (typeof computeItemValuation === 'function')
       ? computeItemValuation(item, currentSpot)
@@ -977,7 +985,7 @@ async function _loadCardImage(img) {
     };
     const side = img.dataset.side || 'obverse';
 
-    // Resolve CDN URL from inventory item
+    // Resolve CDN URL and ignorePatternImages from inventory item
     const idx = img.closest('[data-idx]')?.dataset.idx;
     let cdnUrl = '';
     if (idx !== undefined && typeof inventory !== 'undefined') {
@@ -985,14 +993,9 @@ async function _loadCardImage(img) {
       if (invItem) {
         const urlKey = side === 'reverse' ? 'reverseImageUrl' : 'obverseImageUrl';
         cdnUrl = (invItem[urlKey] && /^https?:\/\/.+\..+/i.test(invItem[urlKey])) ? invItem[urlKey] : '';
+        // STAK-332: Pass ignorePatternImages flag to resolveImageForItem
+        if (invItem.ignorePatternImages) item.ignorePatternImages = true;
       }
-    }
-
-    // Numista override: CDN URLs (Numista source) win over user/pattern blobs
-    const numistaOverride = localStorage.getItem('numistaOverridePersonal') === 'true';
-    if (numistaOverride && cdnUrl) {
-      _showCardImage(img, cdnUrl);
-      return;
     }
 
     // Try IDB resolution cascade (user → pattern → numista cache)
@@ -1157,6 +1160,10 @@ const _applyTrend = (val) => {
   });
   const label = document.getElementById('headerTrendLabel');
   if (label) label.textContent = TREND_LABELS[val] || val + 'd';
+  ['Silver', 'Gold', 'Platinum', 'Palladium'].forEach(m => {
+    const period = document.getElementById('spotPeriod' + m);
+    if (period) period.textContent = TREND_LABELS[val] || val + 'd';
+  });
 };
 
 /**

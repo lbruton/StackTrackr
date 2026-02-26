@@ -64,7 +64,7 @@ This file provides foundational mandates and project-specific context for Gemini
 ## Project Structure
 
 - `index.html`: The single entry point.
-- `js/`: 50+ JavaScript modules loaded in sequence.
+- `js/`: 67 JavaScript modules loaded in sequence.
   - `constants.js`: Global configuration and storage keys.
   - `state.js`: Centralized application state.
   - `utils.js`: Formatting, validation, and storage helpers.
@@ -264,6 +264,52 @@ Structured reasoning tool for complex multi-step analysis.
 
 Use when planning architecture, evaluating trade-offs, or breaking down complex problems before implementation.
 
+## Documentation (StakTrakrWiki)
+
+StakTrakr maintains a private wiki at `github.com/lbruton/StakTrakrWiki` — single source of truth for the codebase architecture and patterns. Reference it before making architectural changes or when researching how a subsystem works.
+
+### Frontend pages (maintained by Claude Code / StakTrakr agents)
+
+| Page | Topic |
+|------|-------|
+| `frontend-overview.md` | File structure, 67-script load order, service worker, PWA |
+| `data-model.md` | Portfolio model, storage keys, coin/entry schema |
+| `storage-patterns.md` | saveData/loadData wrappers, sync variants, key validation |
+| `dom-patterns.md` | safeGetElement, sanitizeHtml, event delegation |
+| `sync-cloud.md` | Cloud backup/restore, vault encryption, sync flow |
+| `retail-modal.md` | Coin detail modal, vendor legend, OOS detection, price carry-forward |
+| `api-consumption.md` | Spot feed, market price feed, goldback feed, health checks |
+| `release-workflow.md` | Patch cycle, version bump, worktree pattern, ship to main |
+| `service-worker.md` | CORE_ASSETS, cache strategy, pre-commit stamp hook |
+
+### Infrastructure pages (maintained by StakTrakrApi agents)
+
+Architecture, data pipelines, Fly.io, pollers, and secrets — see the README at `github.com/lbruton/StakTrakrWiki`.
+
+### Fetching pages
+
+Pages are accessible at:
+`https://raw.githubusercontent.com/lbruton/StakTrakrWiki/main/<page>.md`
+
+Use `brave-search` or `firecrawl-local` to fetch if needed. Prefer reading the raw URL directly when context permits.
+
+## Documentation Policy
+
+StakTrakrWiki (`lbruton/StakTrakrWiki`) is the single source of truth for all
+architecture, operational runbooks, and pattern documentation. Do not create
+new markdown documentation in this repo (except `docs/plans/` for planning artifacts).
+
+After any commit that changes behavior, update the relevant wiki page via `gh api`.
+Use `claude-context` to search the wiki: index path `/Volumes/DATA/GitHub/StakTrakrWiki`.
+
+```
+mcp__claude-context__search_code
+  query: "your question about how something works"
+  path: /Volumes/DATA/GitHub/StakTrakrWiki
+```
+
+---
+
 ## Cross-Agent Handoff Protocol
 
 StakTrakr uses a multi-agent development workflow. Four agents collaborate:
@@ -348,4 +394,4 @@ reference it.
 
 ---
 
-*Last Updated: 2026-02-22*
+*Last Updated: 2026-02-23*

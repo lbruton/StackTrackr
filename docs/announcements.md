@@ -1,10 +1,11 @@
 ## What's New
 
-- **api2 Backup Endpoint (v3.32.20)**: Dual-endpoint fallback for all API feeds — spot, market, and goldback. Primary (api.staktrakr.com) tried first with 5-second timeout; api2.staktrakr.com serves as automatic fallback. Health modal now shows per-endpoint drift benchmarking.
-- **15-Min Spot Price Endpoint (v3.32.19)**: New sub-hourly price snapshots at data/15min/YYYY/MM/DD/HHMM.json — written every 15 min by the spot poller. Frontend fetchStaktrakr15minRange() loads 24h of 15-min data tagged api-15min.
-- **Cloud Sync Status Icon (v3.32.18)**: Ambient header icon replaces the on-load password modal. Orange = needs password (tap to unlock), green = active, gray = not configured.
-- **24hr Chart Improvements (v3.32.17)**: Intraday chart now uses clean 30-min bucketed ticks with styled hour/half-hour marks. Table extended to 12/24/48 configurable rows with trend indicators (▲/▼/—) per slot.
-- **Market Chart Timezone Fix (v3.32.16)**: 24hr price chart and table now show times in your selected timezone. seed-sync skill gains Phase 5 — syncs from live API before releases.
+- **Retail Anomaly Filter (v3.32.45)**: Two-pass anomaly detection in 24h retail chart — temporal spike smoothing (±5% neighbor consensus) plus cross-vendor median safety net. Anomalous table cells shown with line-through styling (STAK-325).
+- **Kilo &amp; Pound Weight Units (v3.32.44)**: Added kilogram and pound to the weight unit dropdown. Melt values convert correctly. Table, cards, and modals all display in the chosen unit (STAK-338).
+- **Numista Tag Fixes (v3.32.43)**: Tags now visible in edit modal and card views. All tags (including Numista-applied) are removable per-item — no more stuck tags (STAK-343, STAK-344).
+- **Pattern Rule Promotion Fix (v3.32.42)**: "Apply to all matching items" now works even when the item was saved previously (STAK-339-followup).
+- **Image Pipeline Simplification (v3.32.41)**: Removed coinImages IDB cache layer entirely. CDN URLs are now the sole Numista image source (STAK-339).
+
 ## Development Roadmap
 
 ### Next Up

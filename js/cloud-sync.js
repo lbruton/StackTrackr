@@ -210,50 +210,42 @@ function updateSyncStatusIndicator(state, detail) {
 }
 
 /**
- * Update the header cloud sync icon button state and visibility.
- * Called alongside updateSyncStatusIndicator() at every state change.
- * States: hidden (sync disabled) | gray (not connected) | orange (needs password) | green (synced)
+ * Updates the header cloud sync button state (green/orange/gray) based on
+ * connection status, vault password, and Dropbox account ID presence.
+ * Called on init, password change, and sync enable/disable.
  */
 function updateCloudSyncHeaderBtn() {
   var btn = safeGetElement('headerCloudSyncBtn');
   var dot = safeGetElement('headerCloudDot');
   if (!btn) return;
 
-  // Hide entirely only when sync is explicitly disabled (stored as 'false')
-  // null means never configured — show gray to promote discoverability
   if (localStorage.getItem('cloud_sync_enabled') === 'false') {
     btn.style.display = 'none';
     return;
   }
 
   btn.style.display = '';
-
   if (!dot) return;
   dot.className = 'cloud-sync-dot header-cloud-dot';
 
-  var hasCachedPw = typeof cloudGetCachedPassword === 'function'
-    ? !!cloudGetCachedPassword(_syncProvider)
-    : false;
-  var connected = typeof cloudIsConnected === 'function'
-    ? cloudIsConnected(_syncProvider)
-    : false;
+  var connected = typeof cloudIsConnected === 'function' ? cloudIsConnected(_syncProvider) : false;
+  var hasPw = !!localStorage.getItem('cloud_vault_password');
+  var hasAccountId = !!localStorage.getItem('cloud_dropbox_account_id');
 
-  if (hasCachedPw) {
-    // Green: password cached, sync is running normally
+  if (connected && hasPw && hasAccountId) {
     dot.classList.add('header-cloud-dot--green');
     btn.title = 'Cloud sync active';
     btn.setAttribute('aria-label', 'Cloud sync active');
     btn.dataset.syncState = 'green';
-  } else if (connected) {
-    // Orange: connected but password expired/missing
+  } else if (connected && (!hasPw || !hasAccountId)) {
     dot.classList.add('header-cloud-dot--orange');
-    btn.title = 'Cloud sync needs your password';
-    btn.setAttribute('aria-label', 'Cloud sync needs your password');
+    btn.title = 'Cloud sync needs setup — tap to configure';
+    btn.setAttribute('aria-label', 'Cloud sync needs setup');
     btn.dataset.syncState = 'orange';
   } else {
-    // Gray: sync on but not yet connected/configured
-    btn.title = 'Set up cloud sync';
-    btn.setAttribute('aria-label', 'Set up cloud sync');
+    dot.classList.add('header-cloud-dot--gray');
+    btn.title = 'Cloud sync — tap to configure';
+    btn.setAttribute('aria-label', 'Cloud sync not configured');
     btn.dataset.syncState = 'gray';
   }
 }
@@ -317,18 +309,21 @@ function _syncRelativeTime(ts) {
 // ---------------------------------------------------------------------------
 
 /**
- * Get the session-cached sync password, or open the sync password modal.
- * Returns a Promise that resolves with the password string, or null if cancelled.
+ * Interactively prompt for / confirm the vault password.
+ * Called when getSyncPasswordSilent() returns null (new device, first connection).
+ * On success: stores password in localStorage, returns combined key string.
  * @returns {Promise<string|null>}
  */
 function getSyncPassword() {
-  // Try cached password first
-  var cached = typeof cloudGetCachedPassword === 'function'
-    ? cloudGetCachedPassword(_syncProvider)
-    : null;
-  if (cached) return Promise.resolve(cached);
+  // If getSyncPasswordSilent already has a valid key, return it immediately.
+  // Do not add a redundant localStorage check — getSyncPasswordSilent() handles
+  // both Unified mode (password+accountId) and Simple-mode migration (accountId only).
+  var silent = getSyncPasswordSilent();
+  if (silent) return Promise.resolve(silent);
 
-  // Open the dedicated sync password modal and resolve when the user submits/cancels
+  var accountId = localStorage.getItem('cloud_dropbox_account_id');
+  var isNewAccount = !localStorage.getItem('cloud_vault_password');
+
   return new Promise(function (resolve) {
     var modal = safeGetElement('cloudSyncPasswordModal');
     var input = safeGetElement('syncPasswordInput');
@@ -336,12 +331,19 @@ function getSyncPassword() {
     var cancelBtn = safeGetElement('syncPasswordCancelBtn');
     var cancelBtn2 = safeGetElement('syncPasswordCancelBtn2');
     var errorEl = safeGetElement('syncPasswordError');
+    var titleEl = safeGetElement('syncPasswordModalTitle');
+    var subtitleEl = safeGetElement('syncPasswordModalSubtitle');
 
     if (!modal || !input || !confirmBtn) {
+      var prompt = isNewAccount ? 'Set a vault password for cloud sync:' : 'Enter your vault password:';
       if (typeof appPrompt === 'function') {
-        appPrompt('Vault password for sync:', '', 'Cloud Sync Password').then(function (pw) {
-          if (pw && typeof cloudCachePassword === 'function') cloudCachePassword(_syncProvider, pw);
-          resolve(pw || null);
+        appPrompt(prompt, '', 'Cloud Sync').then(function (pw) {
+          if (pw && pw.length >= 8) {
+            try { localStorage.setItem('cloud_vault_password', pw); } catch (_) {}
+            resolve(accountId ? pw + ':' + accountId : pw);
+          } else {
+            resolve(null);
+          }
         });
       } else {
         resolve(null);
@@ -349,7 +351,12 @@ function getSyncPassword() {
       return;
     }
 
-    // Reset state
+    // Update modal copy based on new vs returning user
+    if (titleEl) titleEl.textContent = isNewAccount ? 'Set Vault Password' : 'Enter Vault Password';
+    if (subtitleEl) subtitleEl.textContent = isNewAccount
+      ? 'Choose a password to encrypt your Dropbox backups. It will be remembered in this browser.'
+      : 'Enter your vault password to unlock cloud sync on this device.';
+
     input.value = '';
     if (errorEl) { errorEl.textContent = ''; errorEl.style.display = 'none'; }
 
@@ -372,19 +379,14 @@ function getSyncPassword() {
         }
         return;
       }
+      try { localStorage.setItem('cloud_vault_password', pw); } catch (_) {}
       cleanup();
-      if (typeof cloudCachePassword === 'function') cloudCachePassword(_syncProvider, pw);
-      // Update header icon to green immediately; if modal was opened from header icon, trigger a push
       if (typeof updateCloudSyncHeaderBtn === 'function') updateCloudSyncHeaderBtn();
       setTimeout(function () { if (typeof pushSyncVault === 'function') pushSyncVault(); }, 100);
-      resolve(pw);
+      resolve(accountId ? pw + ':' + accountId : pw);
     };
 
-    var onCancel = function () {
-      cleanup();
-      resolve(null);
-    };
-
+    var onCancel = function () { cleanup(); resolve(null); };
     var onKeydown = function (e) {
       if (e.key === 'Enter') onConfirm();
       if (e.key === 'Escape') onCancel();
@@ -398,10 +400,60 @@ function getSyncPassword() {
     _syncPasswordPromptActive = true;
     if (typeof openModalById === 'function') openModalById('cloudSyncPasswordModal');
     else modal.style.display = 'flex';
-
-    // Focus the input after the modal opens
     setTimeout(function () { input.focus(); }, 50);
   });
+}
+
+/**
+ * Get the sync password/key without any user interaction.
+ * Unified mode: combines vault_password (localStorage) + account_id (Dropbox OAuth).
+ * Returns null if either value is missing — caller must prompt user.
+ * Never opens a modal or popover — safe to call from background processes.
+ * @returns {string|null}
+ */
+function getSyncPasswordSilent() {
+  var vaultPw = localStorage.getItem('cloud_vault_password');
+  var accountId = localStorage.getItem('cloud_dropbox_account_id');
+
+  // Unified mode: both required
+  if (vaultPw && accountId) {
+    return vaultPw + ':' + accountId;
+  }
+
+  // Migration: old Simple mode (account_id only) — re-encrypt on next push
+  if (!vaultPw && accountId && localStorage.getItem('cloud_sync_mode') === 'simple') {
+    return STAKTRAKR_SIMPLE_SALT + ':' + accountId;
+  }
+
+  return null;
+}
+
+/**
+ * Change the stored vault password and re-encrypt the vault on Dropbox.
+ * Called from the Advanced sub-modal "Change Password" flow.
+ * @param {string} newPassword
+ * @returns {Promise<boolean>} true on success
+ */
+async function changeVaultPassword(newPassword) {
+  if (!newPassword || newPassword.length < 8) return false;
+
+  try {
+    // Write new password first; next push will re-encrypt the vault with the new key.
+    // If the page closes before the push fires, the next session's getSyncPasswordSilent()
+    // will use the new password — the remote vault remains decryptable with the old key until overwritten.
+    localStorage.setItem('cloud_vault_password', newPassword);
+    logCloudSyncActivity('password_change', 'success', 'Vault password updated');
+    if (typeof updateCloudSyncHeaderBtn === 'function') updateCloudSyncHeaderBtn();
+    if (syncIsEnabled() && typeof scheduleSyncPush === 'function') {
+      scheduleSyncPush();
+    }
+    if (typeof showCloudToast === 'function') showCloudToast('Vault password updated — syncing now', 3000);
+    return true;
+  } catch (err) {
+    if (typeof debugLog === 'function') debugLog('[CloudSync] changeVaultPassword failed:', err);
+    if (typeof showCloudToast === 'function') showCloudToast('Failed to update password — try again', 3000);
+    return false;
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -450,10 +502,10 @@ async function pushSyncVault() {
     return;
   }
 
-  var password = await getSyncPassword();
-  debugLog('[CloudSync] Password obtained:', !!password);
+  var password = getSyncPasswordSilent();
+  debugLog('[CloudSync] Password obtained (silent):', !!password);
   if (!password) {
-    debugLog('[CloudSync] No password — push skipped');
+    debugLog('[CloudSync] No password — push deferred (tap cloud icon to unlock)');
     return;
   }
 
@@ -745,6 +797,15 @@ async function handleRemoteChange(remoteMeta) {
     return;
   }
 
+  // Cancel any queued debounced push before showing the update/conflict modal.
+  // Without this, the debounced push can fire while the modal is open, overwriting
+  // the remote vault with stale local data. The pull then downloads our own just-pushed
+  // data instead of the remote device's changes — silently discarding them.
+  if (typeof scheduleSyncPush === 'function' && typeof scheduleSyncPush.cancel === 'function') {
+    scheduleSyncPush.cancel();
+    debugLog('[CloudSync] Cancelled queued push — remote change takes priority');
+  }
+
   var hasLocal = syncHasLocalChanges();
 
   if (!hasLocal) {
@@ -787,7 +848,12 @@ async function handleRemoteChange(remoteMeta) {
  * @param {object} remoteMeta - Remote sync metadata (from pollForRemoteChanges)
  */
 async function pullSyncVault(remoteMeta) {
-  var password = await getSyncPassword();
+  // Try silent key first (Simple mode or cached Secure password)
+  var password = getSyncPasswordSilent();
+  if (!password) {
+    // Secure mode with no cached password — prompt interactively
+    password = await getSyncPassword();
+  }
   if (!password) {
     debugLog('[CloudSync] Pull cancelled — no password');
     return;
@@ -906,7 +972,10 @@ function showSyncConflictModal(opts) {
     if (typeof appConfirm === 'function') {
       appConfirm(msg, 'Sync Conflict').then(function (keepMine) {
         if (keepMine) pushSyncVault();
-        else pullSyncVault(opts.remoteMeta);
+        else pullSyncVault(opts.remoteMeta).catch(function (err) {
+          debugLog('[CloudSync] pullSyncVault failed in conflict fallback:', err);
+          updateSyncStatusIndicator('error', 'Pull failed — ' + err.message);
+        });
       });
     }
     return;
@@ -945,7 +1014,10 @@ function showSyncConflictModal(opts) {
   if (keepTheirsBtn) {
     keepTheirsBtn.onclick = function () {
       closeModal();
-      pullSyncVault(opts.remoteMeta);
+      pullSyncVault(opts.remoteMeta).catch(function (err) {
+        debugLog('[CloudSync] pullSyncVault failed on Keep Theirs:', err);
+        updateSyncStatusIndicator('error', 'Pull failed — ' + err.message);
+      });
     };
   }
   if (skipBtn) {
@@ -1032,7 +1104,6 @@ function disableCloudSync() {
   logCloudSyncActivity('auto_sync_disable', 'success', 'Auto-sync disabled');
   debugLog('[CloudSync] Auto-sync disabled');
 }
-
 // ---------------------------------------------------------------------------
 // Initialization (called from init.js Phase 13)
 // ---------------------------------------------------------------------------
@@ -1074,29 +1145,21 @@ function initCloudSync() {
 
   debugLog('[CloudSync] Resuming auto-sync from previous session');
 
-  // Check if password is available before starting any sync that would prompt for it
-  var hasCachedPw = typeof cloudGetCachedPassword === 'function'
-    ? !!cloudGetCachedPassword(_syncProvider)
-    : false;
+  var hasPw = getSyncPasswordSilent();
+  updateCloudSyncHeaderBtn();
 
-  if (!hasCachedPw) {
-    // No password cached — skip the auto-push/poll that would open the modal.
-    // Show the header icon in orange and a polite toast instead.
-    debugLog('[CloudSync] No cached password on load — skipping initial push, showing toast');
-    updateCloudSyncHeaderBtn();
+  if (!hasPw) {
+    // No password available — show orange indicator, wait for user to tap
+    debugLog('[CloudSync] No vault password — showing setup toast');
     setTimeout(function () {
       if (typeof showCloudToast === 'function') {
-        showCloudToast('Cloud sync needs your password — tap the sync icon to unlock', 5000);
+        showCloudToast('Cloud sync paused — tap the cloud icon to set your vault password', 5000);
       }
     }, 1000);
-    // Still start the poller — it will skip pushes until getSyncPassword() succeeds
-    startSyncPoller();
     return;
   }
 
   startSyncPoller();
-
-  // Poll immediately on startup to catch any changes while app was closed
   setTimeout(function () { pollForRemoteChanges(); }, 3000);
 }
 
@@ -1132,6 +1195,10 @@ window.refreshSyncUI = refreshSyncUI;
 window.updateSyncStatusIndicator = updateSyncStatusIndicator;
 window.updateCloudSyncHeaderBtn = updateCloudSyncHeaderBtn;
 window.getSyncDeviceId = getSyncDeviceId;
+window.getSyncPasswordSilent = getSyncPasswordSilent;
 window.syncIsEnabled = syncIsEnabled;
 window.syncSaveOverrideBackup = syncSaveOverrideBackup;
 window.syncRestoreOverrideBackup = syncRestoreOverrideBackup;
+window.changeVaultPassword = changeVaultPassword;
+window.syncGetLastPush = syncGetLastPush;
+window._syncRelativeTime = _syncRelativeTime;
