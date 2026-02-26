@@ -124,6 +124,7 @@ When editing frontend code, check `events.js` AND `api.js` for duplicate functio
 5. QA on Cloudflare preview → merge → cleanup worktree + release lock
 
 **Spec-workflow integration:** When a spec reaches Phase 4 (Tasks approved, ready to implement):
+
 - **Before touching any task**, run `/release patch` with the spec's Linear issue(s)
 - The claimed version becomes the spec's assigned version
 - Record the version in the spec's tasks.md or first implementation log
@@ -131,6 +132,7 @@ When editing frontend code, check `events.js` AND `api.js` for duplicate functio
 - If the spec has independent parallel tasks, each parallel agent gets its own `/release patch` and worktree
 
 **Self-check — if ANY of these are true, you skipped the gate:**
+
 - Your current working directory is `/Volumes/DATA/GitHub/StakTrakr` (not a worktree path)
 - `git branch --show-current` returns `dev` (not `patch/*`)
 - You're editing files without having run `/release patch` this session
