@@ -1186,8 +1186,10 @@ const buildNumistaCatalogUrl = (catalogId) => {
   const raw = String(catalogId || '').trim();
   if (!raw) return '';
 
-  const isSet = /^S/i.test(raw);
-  const clean = raw.replace(/^[NS]?#?\s*/i, '').trim();
+  // Strip N# prefix first, THEN detect S for sets
+  const stripped = raw.replace(/^N#\s*/i, '').trim();
+  const isSet = /^S/i.test(stripped);
+  const clean = isSet ? stripped.replace(/^S/i, '').trim() : stripped;
   if (!/^\d+$/.test(clean)) return '';
 
   return isSet
@@ -1201,6 +1203,19 @@ const buildNumistaCatalogUrl = (catalogId) => {
  * @param {number} index - Index in results array
  * @returns {string} HTML string
  */
+/**
+ * Render catalog ID as a clickable link (when URL is available) or plain span.
+ * @param {string} catalogId - Raw catalog ID from Numista
+ * @returns {string} HTML string
+ */
+const renderCatalogIdAction = (catalogId) => {
+  const numistaUrl = buildNumistaCatalogUrl(catalogId);
+  const catalogIdLabel = `N#${escapeHtmlCatalog(catalogId)}`;
+  return numistaUrl
+    ? `<a class="numista-result-id numista-result-id-link" href="${escapeHtmlCatalog(numistaUrl)}" target="_blank" rel="noopener noreferrer" aria-label="Open ${catalogIdLabel} on Numista">${catalogIdLabel}</a>`
+    : `<span class="numista-result-id">${catalogIdLabel}</span>`;
+};
+
 const renderNumistaResultCard = (result, index) => {
   const placeholder = `<div class="numista-img-placeholder">🪙</div>`;
   const obverseImg = result.imageUrl
@@ -1216,11 +1231,7 @@ const renderNumistaResultCard = (result, index) => {
     result.weight ? `${result.weight}g` : '',
     result.type
   ].filter(Boolean).join(' · ');
-  const numistaUrl = buildNumistaCatalogUrl(result.catalogId);
-  const catalogIdLabel = `N#${escapeHtmlCatalog(result.catalogId)}`;
-  const catalogIdAction = numistaUrl
-    ? `<a class="numista-result-id numista-result-id-link" href="${escapeHtmlCatalog(numistaUrl)}" target="_blank" rel="noopener noreferrer" title="Open on Numista" aria-label="Open on Numista">${catalogIdLabel}</a>`
-    : `<span class="numista-result-id">${catalogIdLabel}</span>`;
+  const catalogIdAction = renderCatalogIdAction(result.catalogId);
 
   return `<div class="numista-result-card" data-result-index="${index}">
     <div class="numista-result-images">${obverseImg}${reverseImg}</div>
@@ -1254,11 +1265,7 @@ const renderNumistaSelectedItem = (result) => {
     result.weight ? `${result.weight}g` : '',
     result.type
   ].filter(Boolean).join(' · ');
-  const numistaUrl = buildNumistaCatalogUrl(result.catalogId);
-  const catalogIdLabel = `N#${escapeHtmlCatalog(result.catalogId)}`;
-  const catalogIdAction = numistaUrl
-    ? `<a class="numista-result-id numista-result-id-link" href="${escapeHtmlCatalog(numistaUrl)}" target="_blank" rel="noopener noreferrer" title="Open on Numista" aria-label="Open on Numista">${catalogIdLabel}</a>`
-    : `<span class="numista-result-id">${catalogIdLabel}</span>`;
+  const catalogIdAction = renderCatalogIdAction(result.catalogId);
 
   return `<div class="numista-result-images">${obverseImg}${reverseImg}</div>
     <div class="numista-result-info">
